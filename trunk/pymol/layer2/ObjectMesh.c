@@ -177,15 +177,18 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                       }
                     }
                     if(flag&&(!last_flag)) {
+                      VLACheck(ms->V,float,3*(n_line+1));
                       copy3f(v,ms->V+n_line*3);
                       n_cur++;
                       n_line++;
                     }
                     if(flag&&last_flag) { /* continue segment */
+                      VLACheck(ms->V,float,3*(n_line+1));
                       copy3f(v,ms->V+n_line*3);
                       n_cur++;
                       n_line++;
                     } if((!flag)&&last_flag) { /* terminate segment */
+                      VLACheck(ms->N,int,n_seg);
                       ms->N[n_seg]=n_cur;
                       n_seg++;
                       n_cur=0;
@@ -194,11 +197,13 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                     v+=3;
                   }
                   if(last_flag) { /* terminate segment */
+                    VLACheck(ms->N,int,n_seg);
                     ms->N[n_seg]=n_cur;
                     n_seg++;
                     n_cur=0;
                   }
                 }
+              VLACheck(ms->N,int,n_seg);
               ms->N[n_seg]=0;
               VLAFreeP(old_n);
               VLAFreeP(old_v);
