@@ -281,6 +281,9 @@ void MainDoReshape(int width, int height) /* called internally */
     glViewport(0, 0, (GLint) width, (GLint) height);
   }
   OrthoReshape(width,height);
+  if(SettingGet(cSetting_full_screen))
+    p_glutFullScreen();
+
 }
 /*========================================================================*/
 static void MainInit(void) 
