@@ -6639,7 +6639,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
     ENDFD;
 
   if(sele>=0) {
-	SelectorUpdateTable(G);
+    SelectorUpdateTableSingleObject(G,I,false,NULL,0);
    /* always run on entry */
 	switch(op->code) {
 	case OMOP_ALTR: 
@@ -8700,15 +8700,17 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
       successCnt++;
-      if(successCnt>1) {
-        if(successCnt==2){
+      if(!quiet) {
+        if(successCnt>1) {
+          if(successCnt==2){
+            PRINTFB(G,FB_ObjectMolecule,FB_Actions)
+              " ObjectMolReadPDBStr: read MODEL %d\n",1
+              ENDFB(G);
+          }
           PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-            " ObjectMolReadPDBStr: read MODEL %d\n",1
+            " ObjectMolReadPDBStr: read MODEL %d\n",successCnt
             ENDFB(G);
-            }
-        PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-          " ObjectMolReadPDBStr: read MODEL %d\n",successCnt
-          ENDFB(G);
+        }
       }
     }
     if(restart) {
