@@ -71,7 +71,6 @@ void SettingSetfv(int index,float *v)
     SceneChanged();
     break;
   case cSetting_button_mode:
-    EditorSetActiveObject(NULL,0);
 	 I->Setting[index].Value[0]=v[0];
     SceneDirty();
     break;
@@ -622,7 +621,7 @@ void SettingInit(void)
 			"autohide_selections");
 
   I->NSetting++;
-  I->Setting[cSetting_selection_width].Value[0] = 4.0;
+  I->Setting[cSetting_selection_width].Value[0] = 5.0;
   strcpy(I->Setting[cSetting_selection_width].Name,
 			"selection_width");
 

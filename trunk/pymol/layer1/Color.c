@@ -260,8 +260,8 @@ void ColorInit(void)
 
   strcpy(I->Color[I->NColor].Name,"oxygen");
   I->Color[I->NColor].Color[0]=1.0;
-  I->Color[I->NColor].Color[1]=0.25;
-  I->Color[I->NColor].Color[2]=0.25;
+  I->Color[I->NColor].Color[1]=0.3;
+  I->Color[I->NColor].Color[2]=0.3;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"hydrogen");
