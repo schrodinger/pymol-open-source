@@ -1901,7 +1901,7 @@ SEE ALSO
             if "pk2" in lst:
                if "pk3" in lst:
                   if "pk4" in lst:
-                     pass # measure dihedral
+                     dihedral()
                   else:
                      angle()
                else:

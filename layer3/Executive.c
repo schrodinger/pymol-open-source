@@ -4251,12 +4251,12 @@ float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mo
   return(result);
 }
 
-
+/*========================================================================*/
 float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
                         int labels,int reset,int zoom,int quiet)
 {
   float result = 0.0F;
-  #if 0
+  
   int sele1,sele2,sele3,sele4;
   ObjectDist *obj;
   CObject *anyObj = NULL;
@@ -4287,7 +4287,7 @@ float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,cha
       }
     }
 
-    obj = ObjectDistNewFromDihdedralSele(G,(ObjectDist*)anyObj,
+    obj = ObjectDistNewFromDihedralSele(G,(ObjectDist*)anyObj,
                                          sele1,sele2,sele3,sele4,
                                          mode,labels,&result,reset);
     if(!obj) {
@@ -4310,7 +4310,7 @@ float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,cha
   } else if(sele4<0) {
     ErrMessage(G,"ExecutiveDistance","The fourth selection contains no atoms.");
   }
-  #endif
+
   return(result);
 }
 

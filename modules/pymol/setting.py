@@ -438,6 +438,8 @@ if __name__=='pymol.setting':
       mouse_restart_movie_delay = (404, '')
       angle_size                = (405, '')
       angle_label_position      = (406, '')
+      dihedral_size             = (407, '')
+      dihedral_label_position   = (408, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

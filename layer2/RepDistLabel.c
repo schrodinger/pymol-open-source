@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Text.h"
 
-typedef char DistLabel[6];
+typedef char DistLabel[8];
 
 typedef struct RepDistLabel {
   Rep R;
@@ -144,7 +144,7 @@ Rep *RepDistLabelNew(DistSet *ds)
         average3f(v2,v1,d);
         di = (float)diff3f(v1,v2);
         sprintf(buffer,"%1.2f",di);
-        buffer[5]=0;
+        buffer[7]=0;
         
         VLACheck(I->V,float,3*n+2);
         VLACheck(I->L,DistLabel, n);
@@ -157,12 +157,11 @@ Rep *RepDistLabelNew(DistSet *ds)
     }
 
     if(ds->NAngleIndex) {
-      float d1[3],d2[3];
+      float d1[3],d2[3],n1[3],n2[3];
       float avg[3];
 
       float l1,l2;
       float radius;
-
 
       for(a=0;a<ds->NAngleIndex;a=a+5) {
         v1 = ds->AngleCoord+3*a;
@@ -170,8 +169,11 @@ Rep *RepDistLabelNew(DistSet *ds)
         v3 = ds->AngleCoord+3*(a+2);
         subtract3f(v1,v2,d1);
         subtract3f(v3,v2,d2);
-        average3f(v1,v3,avg);
-        subtract3f(avg,v2,avg);
+        
+        normalize23f(d1,n1);
+        normalize23f(d2,n2);
+
+        average3f(n1,n2,avg);
         
         l1 = (float)length3f(d1);
         l2 = (float)length3f(d2);
@@ -183,7 +185,6 @@ Rep *RepDistLabelNew(DistSet *ds)
         radius *= SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_angle_size) *
           SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_angle_label_position);
           
-
         normalize3f(avg);
         if((avg[0]==0.0F) && (avg[1]==0.0F) && (avg[2]==0.0F))
           avg[0]=1.0F;
@@ -193,7 +194,79 @@ Rep *RepDistLabelNew(DistSet *ds)
 
         di = 180.0F * get_angle3f(d1,d2)/PI;
         sprintf(buffer,"%1.2f",di);
-        buffer[5]=0;
+        buffer[7]=0;
+        
+        VLACheck(I->V,float,3*n+2);
+        VLACheck(I->L,DistLabel, n);
+        v = I->V + 3 * n;
+        strcpy(I->L[n],buffer);
+        copy3f(avg,v);
+        
+        n++;
+      }
+    }
+
+    if(ds->NDihedralIndex) {
+
+      float d12[3], d32[3], d43[3] , n32[3];
+      float p12[3], p43[3], np12[3], np43[3];
+      
+      float a32[3];
+      float l1,l2;
+      float radius;
+      float dihedral_size = SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_dihedral_size);
+      float dihedral_label_position = SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_dihedral_label_position);
+      
+      float *v4, *v5, *v6;
+      float avg[3];
+
+      for(a=0;a<ds->NDihedralIndex;a=a+6) {
+        v1 = ds->DihedralCoord+3*a;
+      v2 = v1 + 3;
+      v3 = v1 + 6;
+      v4 = v1 + 9;
+      v5 = v1 + 12;
+      v6 = v1 + 15;
+      
+      subtract3f(v1,v2,d12);
+      subtract3f(v3,v2,d32);
+      subtract3f(v4,v3,d43);
+      
+      normalize23f(d32,n32);
+
+      remove_component3f(d12,n32,p12);
+      remove_component3f(d43,n32,p43);
+
+      average3f(v2,v3,a32);
+
+      l1 = (float)length3f(p12);
+      l2 = (float)length3f(p43);
+
+      if(l1>l2)
+        radius = l2;
+      else
+        radius = l1;
+      radius *= dihedral_size * dihedral_label_position;
+      
+      normalize23f(p12,np12);
+      normalize23f(p43,np43);
+      
+
+      average3f(np12,np43,avg);
+      
+      normalize3f(avg);
+      if((avg[0]==0.0F) && (avg[1]==0.0F) && (avg[2]==0.0F))
+        copy3f(np12,avg);
+      
+      dump3f(np12,"np12");
+        dump3f(np43,"np43");
+        dump3f(avg,"avg");
+        scale3f(avg,radius,avg);
+        add3f(a32,avg,avg);
+
+        di = 180.0F * get_dihedral3f(v1,v2,v3,v4)/PI;
+        sprintf(buffer,"%1.2f",di);
+        buffer[7]=0;
         
         VLACheck(I->V,float,3*n+2);
         VLACheck(I->L,DistLabel, n);

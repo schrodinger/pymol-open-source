@@ -41,8 +41,10 @@ set, enable, disable
     raw
     ray
     rep
+    repangle
     repcartoon
     repcylbond
+    repdihederal
     repdistdash
     repdistlabel
     repdot
@@ -116,8 +118,10 @@ PyMOL>feedback enable
     raw
     ray
     rep
+    repangle
     repcartoon
     repcylbond
+    repdihederal
     repdistdash
     repdistlabel
     repdot
