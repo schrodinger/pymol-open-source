@@ -482,13 +482,23 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
   TriangleSurfaceRec *I=&TriangleSurface;
   MapType *map;
   float *v1,*v2,*v0,*v4,vt[3],vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
-  int i0,s01,s02,s12,i,j,h,k,l,i4;
+  int i0,s01=0,s02=0,s12,i,j,h,k,l,i4;
   float dif,minDist,d1,d2,dp;
   int flag;
   int used = -1;
 
+  /*  PRINTFD(FB_Triangle)
+      " TriangleBuildObvious-Debug: entered: i1=%d i2=%d n=%d\n",i1,i2,n
+      ENDFD;*/
+
   map=I->map;
   s12 = TriangleEdgeStatus(i1,i2);
+
+  /*  PRINTFD(FB_Triangle)
+    " TriangleBuildObvious-Debug: edge status=%d\n",s12
+    ENDFD;
+  */
+
   if(s12>0) used = I->edge[s12].vert3;
   if(s12>=0) {
     minDist = MAXFLOAT;
@@ -513,6 +523,10 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
 			 }
 		  j=map->EList[i++];
 		}
+      /*      PRINTFD(FB_Triangle)
+        " TriangleBuildObvious-Debug: i0=%d\n",i0
+        ENDFD;*/
+
 		if(i0>=0) {
 		  s01 = TriangleEdgeStatus(i0,i1); s02 = TriangleEdgeStatus(i0,i2);
 		  if(I->vertActive[i0]>0) {
@@ -520,6 +534,11 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
 				i0=-1; /* don't allow non-adjacent joins to active vertices */
 		  }
 		}
+
+      /* PRINTFD(FB_Triangle)
+        " TriangleBuildObvious-Debug: i0=%d s01=%d s02=%d\n",i0,s01,s02
+        ENDFD;*/
+
 		if(i0>=0) {
 		  v0 = v+3*i0;
 		  flag=false;
@@ -530,10 +549,27 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
 				add3f(n0,n1,vt1);
 				add3f(n2,vt1,vt2);
 				normalize3f(vt2);
-				if(dot_product3f(n0,vt2)<0.1) flag=false;
-				if(dot_product3f(n1,vt2)<0.1) flag=false;
-				if(dot_product3f(n2,vt2)<0.1) flag=false;
-			 } /*printf("pass normal sums %i\n",flag);*/
+            /*            if(Feedback(FB_Triangle,FB_Debugging)) {
+                          dump3f(n0,"n0");
+                          dump3f(n1,"n1");
+                          dump3f(n2,"n2");
+                          dump3f(vt2,"vt2");
+                          PRINTF " n0.vt2 = %8.3f\n",dot_product3f(n0,vt2) ENDF;
+                          PRINTF " n1.vt2 = %8.3f\n",dot_product3f(n1,vt2) ENDF;
+                          PRINTF " n2.vt2 = %8.3f\n",dot_product3f(n2,vt2) ENDF;
+                          PRINTF " n0.vt2<0.1 %d\n",dot_product3f(n0,vt2)<0.1 ENDF;
+                          PRINTF " n1.vt2<0.1 %d\n",dot_product3f(n1,vt2)<0.1 ENDF;
+                          PRINTF " n2.vt2<0.1 %d\n",dot_product3f(n2,vt2)<0.1 ENDF;
+                          fflush(stdout);
+                          }*/
+				if(((dot_product3f(n0,vt2))<0.1)||
+               ((dot_product3f(n1,vt2))<0.1)||
+               ((dot_product3f(n2,vt2))<0.1)) flag = false; 
+            /* modified 010916 to effect workaround of apparent bug in GCC's optimizer */
+			 } 
+          /*          PRINTFD(FB_Triangle)
+                      " TriangleBuildObvious-Debug: past normal sums, flag= %d\n",flag
+            ENDFD;*/
 			 if(flag) { /* does the sum of the normals point in the same direction as the triangle? */
 				subtract3f(v1,v0,vt3);
 				subtract3f(v2,v0,vt4);
@@ -542,12 +578,18 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
 				dp = dot_product3f(vt2,tNorm);
 				if(dp<0) scale3f(tNorm,-1.0,tNorm);
 				if(fabs(dp)<0.1) flag = false;
-			 } /*printf("pass tNorm  %i\n",flag);*/
+			 } 
+          /*          PRINTFD(FB_Triangle)
+                      " TriangleBuildObvious-Debug: past tNorm, flag= %d\n",flag
+            ENDFD;*/
 			 if(flag) {
 				if(s12>0) if(dot_product3f(I->vNormal+s12*3,tNorm)<0.1) flag=false; 
 				if(s01>0) if(dot_product3f(I->vNormal+s01*3,tNorm)<0.1) flag=false; 
 				if(s02>0) if(dot_product3f(I->vNormal+s02*3,tNorm)<0.1) flag=false; 
-			 } /*printf("pass compare tNorm %i\n",flag);*/
+			 } 
+          /*          PRINTFD(FB_Triangle)
+                      " TriangleBuildObvious-Debug: past compare tNorm, flag= %d\n",flag
+            ENDFD;*/
 			 if(flag) { /* are all the Blocking vectors pointing outward, and are the triangle normals consistent? */
 				if(s12>0) {
 				  i4 = I->edge[s12].vert3;
@@ -560,7 +602,7 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
 				  remove_component3f(vt2,vt,vt4);
 				  normalize3f(vt3);
 				  normalize3f(vt4);
-				  if(dot_product3f(vt3,vt4)>0.0) flag=false;
+				  if((dot_product3f(vt3,vt4))>0.0) flag=false;
 				}			 
 				if(s01>0) {
 				  i4 = I->edge[s01].vert3;
@@ -573,7 +615,7 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
 				  remove_component3f(vt2,vt,vt4);
 				  normalize3f(vt3);
 				  normalize3f(vt4);
-				  if(dot_product3f(vt3,vt4)>0.0) flag=false;
+				  if((dot_product3f(vt3,vt4))>0.0) flag=false;
 				}
 				if(s02>0) {
 				  i4 = I->edge[s02].vert3;
@@ -586,9 +628,12 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
 				  remove_component3f(vt2,vt,vt4);
 				  normalize3f(vt3);
 				  normalize3f(vt4);
-				  if(dot_product3f(vt3,vt4)>0.0) flag=false;
+				  if((dot_product3f(vt3,vt4))>0.0) flag=false;
 				}
-			 } /*printf("pass blocking %i\n",flag);*/
+			 } 
+          /*          PRINTFD(FB_Triangle)
+            " TriangleBuildObvious-Debug: past blocking, flag= %d\n",flag
+            ENDFD;*/
 		  }
 		  if(flag) TriangleAdd(i0,i1,i2,tNorm,v,vn);
 		}
@@ -605,7 +650,7 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
   TriangleSurfaceRec *I=&TriangleSurface;
   MapType *map;
   float *v1,*v2,*v0,*v4,vt[3],vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
-  int i0,s01,s02,s12,i,j,h,k,l,i4;
+  int i0,s01=0,s02=0,s12,i,j,h,k,l,i4;
   float dif,minDist,d1,d2,dp;
   int flag;
   int used = -1;
@@ -654,9 +699,10 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
 				add3f(n0,n1,vt1);
 				add3f(n2,vt1,vt2);
 				normalize3f(vt2);
-				if(dot_product3f(n0,vt2)<0.1) flag=false;
-				if(dot_product3f(n1,vt2)<0.1) flag=false;
-				if(dot_product3f(n2,vt2)<0.1) flag=false;
+				if(((dot_product3f(n0,vt2))<0.1)||
+               ((dot_product3f(n1,vt2))<0.1)||
+               ((dot_product3f(n2,vt2))<0.1)) flag=false;
+            /* modified 010916 to effect workaround of apparent bug in GCC's optimizer */
 			 } /*printf("pass normal sums %i\n",flag);*/
 			 if(flag) { /* does the sum of the normals point in the same direction as the triangle? */
 				subtract3f(v1,v0,vt3);
@@ -726,7 +772,7 @@ static void TriangleBuildSingle(int i1,int i2,float *v,float *vn,int n)
   TriangleSurfaceRec *I=&TriangleSurface;
   MapType *map;
   float *v1,*v2,*v0,*v4,vt[3],vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
-  int i0,s01,s02,s12,i,j,h,k,l,i4;
+  int i0,s01=0,s02=0,s12,i,j,h,k,l,i4;
   float dif,minDist,d1,d2,dp;
   int flag;
   int used = -1;
@@ -768,9 +814,10 @@ static void TriangleBuildSingle(int i1,int i2,float *v,float *vn,int n)
 				add3f(n0,n1,vt1);
 				add3f(n2,vt1,vt2);
 				normalize3f(vt2);
-				if(dot_product3f(n0,vt2)<0.1) flag=false;
-				if(dot_product3f(n1,vt2)<0.1) flag=false;
-				if(dot_product3f(n2,vt2)<0.1) flag=false;
+				if(((dot_product3f(n0,vt2))<0.1)|| 
+               ((dot_product3f(n1,vt2))<0.1)|| 
+               ((dot_product3f(n2,vt2))<0.1)) flag=false;
+            /* modified 010916 to effect workaround of apparent bug in GCC's optimizer */
 			 } /*printf("pass normal sums %i\n",flag);*/
 			 if(flag) { /* does the sum of the normals point in the same direction as the triangle? */
 				subtract3f(v1,v0,vt3);
@@ -963,6 +1010,11 @@ static void FollowActives(float *v,float *vn,int n,int mode)
   TriangleSurfaceRec *I=&TriangleSurface;
   int i1,i2;
   int cnt;
+  
+  PRINTFD(FB_Triangle)
+    " TriangleFollowActives-Debug: entered: n=%6d     mode=%d\n TriangleFollowActives-Debug:       nTri=%6d nActive=%6d\n",
+    n,mode,I->nTri,I->nActive
+    ENDFD;
 
   cnt = SettingGet(cSetting_max_triangles);
   
@@ -987,6 +1039,12 @@ static void FollowActives(float *v,float *vn,int n,int mode)
 		break;
 	 }
   }
+
+  PRINTFD(FB_Triangle)
+    " TriangleFollowActives-Debug: exiting: nTri=%6d nActive=%6d\n",
+    I->nTri,I->nActive
+    ENDFD;
+
 }
 
 static void TriangleFill(float *v,float *vn,int n)
@@ -998,6 +1056,9 @@ static void TriangleFill(float *v,float *vn,int n)
   int i1,i2=0;
   MapType *map;
 
+  PRINTFD(FB_Triangle)
+    " TriangleFill-Debug: entered: n=%d\n",n
+    ENDFD;
   
   map=I->map;
 
@@ -1054,7 +1115,9 @@ static void TriangleFill(float *v,float *vn,int n)
           }
         } else break;
 	 }
-	 /*		printf("Follow actives 1 %i\n",I->nTri);*/
+    PRINTFD(FB_Triangle)
+      " TriangleFill-Debug: Follow actives 1 nTri=%d\n",I->nTri
+      ENDFD;
 	 lastTri=I->nTri-1;
 	 while(lastTri!=I->nTri) {
 		lastTri=I->nTri;
@@ -1071,22 +1134,30 @@ static void TriangleFill(float *v,float *vn,int n)
 			 {
 				TriangleActivateEdges(a);
 				if(I->nActive) {
-				  /*				  printf("Build single %i %i\n",I->nTri,I->nActive);*/
+              PRINTFD(FB_Triangle)
+                " TriangleFill-Debug: build single:     nTri=%d nActive=%d\n",I->nTri,I->nActive
+                ENDFD;
 				  I->nActive--;
 				  i1 = I->activeEdge[I->nActive*2];
 				  i2 = I->activeEdge[I->nActive*2+1];
 				  TriangleBuildSingle(i1,i2,v,vn,n);
-				  /*				  printf("Follow actives 1  %i %i\n", I->nTri, I->nActive);*/
+              PRINTFD(FB_Triangle)
+                " TriangleFill-Debug: follow actives 1: nTri=%d nActive=%d\n",I->nTri,I->nActive
+                ENDFD;
 				  FollowActives(v,vn,n,1);
 				}
 			 }
 	 }
-	 /*	 printf("Follow Actives 2\n");*/
+    PRINTFD(FB_Triangle)
+                " TriangleFill-Debug: follow actives 2: nTri=%d nActive=%d\n",I->nTri,I->nActive
+      ENDFD;
 	 for(a=0;a<n;a++) 
 		if(I->vertActive[a])
 		  TriangleActivateEdges(a);
 	 FollowActives(v,vn,n,2);
-	 /*	 printf("Follow Actives 3\n");*/
+    PRINTFD(FB_Triangle)
+      " TriangleFill-Debug: follow actives 3: nTri=%d nActive=%d\n",I->nTri,I->nActive
+      ENDFD;
 	 lastTri=I->nTri-1;
 	 while(lastTri!=I->nTri) {
 		lastTri=I->nTri;
@@ -1096,6 +1167,10 @@ static void TriangleFill(float *v,float *vn,int n)
 		FollowActives(v,vn,n,3); /* this is a sloppy, forcing tesselation */
 	 }
   }
+    PRINTFD(FB_Triangle)
+      " TriangleFill: leaving... nTri=%d nActive=%d\n",I->nTri,I->nActive
+      ENDFD;
+
 }
 
 static void TriangleFixProblems(float *v,float *vn,int n) 
@@ -1103,7 +1178,7 @@ static void TriangleFixProblems(float *v,float *vn,int n)
   TriangleSurfaceRec *I=&TriangleSurface;
   int problemFlag;
   int a,l,e;
-  int i0,i1,i2,s01,s02,s12;
+  int i0,i1,i2,s01=0,s02=0,s12;
   int *pFlag = NULL;
   int *vFlag = NULL;
   problemFlag=false;
