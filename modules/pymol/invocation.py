@@ -43,8 +43,9 @@ options.read_stdin = 0
 # Greg Landrum
 options.rpcServer = 0
 
-py_re = re.compile(r"\.py$|\.pym$\.PY$|\.PYM$")
-pyc_re = re.compile(r"\.pyc$|\.PYC$")
+pml_re = re.compile(r"\.pml$|\.PML$")
+py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
+pyc_re = re.compile(r"\.pyc$|\.PYC$") # not yet used
 
 def get_user_config():
    lst = glob.glob(pattern1)
@@ -71,9 +72,13 @@ def get_user_config():
    second = []
    for a in lst:
       if py_re.search(a):
-         first.append("_do__ run "+a) # preceeding "_ " cloaks 
-      elif not pyc_re.search(a): # ignore compiled versions for now
+         first.append("_do__ run "+a) # preceeding "_ " cloaks
+      elif pml_re.search(a):
          second.append("_do__ @"+a) # preceeding "_ " cloaks 
+#      elif pyc_re.search(a): # ignore compiled versions for now
+#         first.append("_do__ run "+a) # preceeding "_ " cloaks
+
+
    first.sort()
    second.sort()
    return first+second
