@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #include<stdio.h>
 #include<GL/gl.h>
 #include<GL/glut.h>
+#include<math.h>
 
 #include"main.h"
 #include"Base.h"
@@ -959,10 +960,10 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
   ObjectMolecule *new_obj = NULL;
   ObjectMoleculeOpRec op;
   MapType *map;
-  int x,y,z,a,b,i,j,h,k,l,n;
+  int x,y,z,a,b,c,i,j,h,k,l,n;
   CoordSet *cs;
-  int keepFlag,sele;
-  float *v2,m[16];
+  int keepFlag,sele,tt[3];
+  float *v2,m[16],tc[3],ts[3];
   OrthoLineType new_name;
   float auto_save;
 
@@ -980,6 +981,22 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
     ErrMessage("ExecutiveSymExp","No symmetry matrices!");    
   } else {
     ErrOk(" ExecutiveSymExp","Generating symmetry mates");
+	 op.code = 'SUMC';
+	 op.i1 =0;
+    op.v1[0]= 0.0;
+    op.v1[1]= 0.0;
+    op.v1[2]= 0.0;
+    ExecutiveObjMolSeleOp(sele,&op);
+    tc[0]=op.v1[0];
+    tc[1]=op.v1[1];
+    tc[2]=op.v1[2];
+    if(op.i1) {
+      tc[0]/=op.i1;
+      tc[1]/=op.i1;
+      tc[2]/=op.i1;
+    }
+    transform33f3f(obj->Symmetry->Crystal->RealToFrac,tc,tc);
+    
 	 op.code = 'VERT';
 	 op.nvv1 =0;
     op.vv1 = VLAlloc(float,10000);
@@ -996,17 +1013,27 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
           for(y=-1;y<2;y++)
             for(z=-1;z<2;z++)
               for(a=0;a<obj->Symmetry->NSymMat;a++) {
-                if(!((!a)&&(!x)&&(!y)&&(!z))) {
+                if(a||x||y||z) {
                   new_obj = ObjectMoleculeCopy(obj);
                   keepFlag=false;
                   for(b=0;b<new_obj->NCSet;b++) 
                     if(new_obj->CSet[b]) {
                       cs = new_obj->CSet[b];
                       CoordSetRealToFrac(cs,obj->Symmetry->Crystal);
-                      copy44f44f(obj->Symmetry->SymMatVLA+(a*16),m);
-                      m[3] += x;
-                      m[7] += y;
-                      m[11] += z; 
+                      CoordSetTransform44f(cs,obj->Symmetry->SymMatVLA+(a*16));
+                      CoordSetGetAverage(cs,ts);
+                      identity44f(m);
+                      for(c=0;c<3;c++) { /* manual rounding - rint broken */
+                        ts[c]=tc[c]-ts[c];
+                        if(ts[c]<0)
+                          ts[c]-=0.5;
+                        else
+                          ts[c]+=0.5;
+                        tt[c]=(int)ts[c];
+                      }
+                      m[3] = tt[0]+x;
+                      m[7] = tt[1]+y;
+                      m[11] = tt[2]+z;
                       CoordSetTransform44f(cs,m);
                       CoordSetFracToReal(cs,obj->Symmetry->Crystal);
                       if(!keepFlag) {

@@ -56,14 +56,16 @@ depends:
 	$(MAKE) .depends
 
 clean: 
-	/bin/rm -f layer*/*.o layer*/*.p 
-	/bin/rm -f layer*/.files layer*/.depends layer*/.includes 
-	/bin/rm -f *.log core */core game.* log.* _pm.def .update .contrib 
-	cd contrib;$(MAKE) clean
+	touch .no_fail
+	/bin/rm -f layer*/*.o layer*/*.p \
+	layer*/.files layer*/.depends layer*/.includes \
+	*.log core */core game.* log.* _pm.def .update .contrib .no_fail*
+#	cd contrib;$(MAKE) clean
 
 distclean: clean
-	/bin/rm -f modules/*.pyc modules/*.so pymol.exe 
-	/bin/rm -f modules/Pmw/*.pyc modules/Pmw/*/*.pyc modules/Pmw/*/*/*.pyc
+	touch .no_fail
+	/bin/rm -f modules/*.pyc modules/*.so pymol.exe \
+	modules/Pmw/*.pyc modules/Pmw/*/*.pyc modules/Pmw/*/*/*.pyc .no_fail*
 	cd contrib;$(MAKE) distclean
 
 dist: distclean

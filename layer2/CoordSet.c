@@ -70,6 +70,27 @@ void CoordSetTransform44f(CoordSet *I,float *mat)
   }  
 }
 /*========================================================================*/
+void CoordSetGetAverage(CoordSet *I,float *v0)
+{
+  int a;
+  float *v;
+  double accum[3];
+  if(I->NIndex) {
+    accum[0]=*(v++);
+    accum[1]=*(v++);
+    accum[2]=*(v++);
+    v=I->Coord;
+    for(a=1;a<I->NIndex;a++) {
+      accum[0]+=*(v++);
+      accum[1]+=*(v++);
+      accum[2]+=*(v++);
+    }
+    v0[0]=accum[0]/I->NIndex;
+    v0[1]=accum[1]/I->NIndex;
+    v0[2]=accum[2]/I->NIndex;
+  }
+}
+/*========================================================================*/
 void CoordSetFracToReal(CoordSet *I,CCrystal *cryst)
 {
   int a;
