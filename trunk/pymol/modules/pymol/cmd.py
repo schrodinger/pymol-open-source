@@ -721,6 +721,14 @@ def get_setting_text(name,object='',state=0):  # INTERNAL
       unlock()
    return r
 
+def get_renderer():  # 
+   try:
+      lock()
+      r = _cmd.get_renderer()
+   finally:
+      unlock()
+   return r
+
 def focus():  # BROKEN
    try:
       lock()

@@ -583,61 +583,61 @@ class PMGApp(AbstractApp):
 
 
       self.menuBar.addmenuitem('Display', 'command', 'Clear Text Output',
-                               label=self.pad+'Clear Text',
+                               label='Clear Text',
                                command = lambda: cmd.do("_ cls"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Hide Text Output',
-                               label=self.pad+'Hide Text',
+                               label='Hide Text',
                                command = lambda: cmd.set("text","0",log=1))
 
       self.menuBar.addmenuitem('Display', 'command', 'Show Text Output',
-                               label=self.pad+'Show Text',
+                               label='Show Text',
                                command = lambda: cmd.set("text","1",log=1))
 
       self.menuBar.addmenuitem('Display', 'separator', '')
       
       self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
-                               label=self.pad+'Stereo On',
+                               label='Stereo On',
                                command = lambda: cmd.do("_ stereo on"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
-                               label=self.pad+'Stereo Off',
+                               label='Stereo Off',
                                command = lambda: cmd.do("_ stereo off"))
 
       self.menuBar.addmenuitem('Display', 'separator', '')
 
       self.menuBar.addmenuitem('Display', 'command', 'Maximum Performance',
-                               label=self.pad+'Maximum Performance',
+                               label='Maximum Performance',
                                command = lambda : cmd.do("_ util.performance(100)"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Reasonable Performance',
-                               label=self.pad+'Reasonable Performance',
+                               label='Reasonable Performance',
                                command = lambda : cmd.do("_ util.performance(66)"))
       
       self.menuBar.addmenuitem('Display', 'command', 'Reasonable Quality',
-                               label=self.pad+'Reasonable Quality',
+                               label='Reasonable Quality',
                                command = lambda : cmd.do("_ util.performance(33)"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Maximum Quality',
-                               label=self.pad+'Maximum Quality',
+                               label='Maximum Quality',
                                command = lambda : cmd.do("_ util.performance(0)"))
 
       self.menuBar.addmenuitem('Display', 'separator', '')
 
       self.menuBar.addmenuitem('Display', 'command', 'Light Shadows',
-                               label=self.pad+'Light Shadows',
+                               label='Light Shadows',
                                command = lambda : cmd.do("_ util.ray_shadows('light')"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Matte Shadows',
-                               label=self.pad+'Matte Shadows',
+                               label='Matte Shadows',
                                command = lambda : cmd.do("_ util.ray_shadows('matte')"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Medium Shadows',
-                               label=self.pad+'Medium Shadows',
+                               label='Medium Shadows',
                                command = lambda : cmd.do("_ util.ray_shadows('medium')"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Heavy Shadows',
-                               label=self.pad+'Heavy Shadows',
+                               label='Heavy Shadows',
                                command = lambda : cmd.do("_ util.ray_shadows('heavy')"))
       
       self.menuBar.addmenu('Settings', 'Configuration Control')
@@ -729,11 +729,11 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
       self.menuBar.addmenuitem('Mouse', 'command', 'Visualization',
-                               label=self.pad+'Visualization',
+                               label='Visualization',
                                command = lambda: cmd.edit_mode("off"))
 
       self.menuBar.addmenuitem('Mouse', 'command', 'Editing',
-                               label=self.pad+'Editing',
+                               label='Editing',
                                command = lambda: cmd.edit_mode("on"))
 
       self.menuBar.addmenu('Cartoons', 'Cartoon Properties')

@@ -443,6 +443,7 @@ void MainBusyIdle(void)
         FinalInitFlag=0;
         PBlock();
         PRunString("launch_gui()");
+        PRunString("adapt_to_hardware()");
         PRunString("exec_deferred()");
         PUnblock();
       }
@@ -519,6 +520,10 @@ void launch(void)
   PyMOLReady = true;
 
   if(PMGUI) {
+    SceneSetCardInfo((char*)glGetString(GL_VENDOR),
+                     (char*)glGetString(GL_RENDERER),
+                     (char*)glGetString(GL_VERSION));
+    
     printf(" OpenGL based graphics front end:\n");
     printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
     printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
@@ -529,6 +534,7 @@ void launch(void)
     } 
     p_glutMainLoop();
   } else {
+    SceneSetCardInfo("none","ray trace only","none");
     printf(" Command mode. No graphics front end.\n");
     MainReshape(WinX,WinY);
     MainDraw(); /* for command line processing */

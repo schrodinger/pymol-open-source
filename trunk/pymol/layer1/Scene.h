@@ -89,6 +89,8 @@ void SceneSetView(SceneViewType view);
 void SceneGetPos(float *pos);
 int SceneMultipick(Multipick *smp);
 
+void SceneSetCardInfo(char *vendor,char *renderer,char *version);
+void SceneGetCardInfo(char **vendor,char **renderer,char **version);
 #endif
 
 

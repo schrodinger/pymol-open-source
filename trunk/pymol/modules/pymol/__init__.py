@@ -65,6 +65,7 @@ def stdin_reader(): # dedicated thread for reading standard input
 		cmd.do(sys.stdin.readline())
 			   
 def exec_deferred():
+   
    try:
       cmd.config_mouse(quiet=1)
       for a in invocation.options.deferred:
@@ -86,6 +87,16 @@ def exec_deferred():
       t = threading.Thread(target=stdin_reader)
       t.setDaemon(1)
       t.start()
+
+def adapt_to_hardware():
+   (vendor,renderer,version) = cmd.get_renderer()
+   if vendor[0:6]=='NVIDIA':
+      if renderer[0:8]=='GeForce2':
+         print " Optimizing for GeForce2 hardware..."
+         cmd.set('line_width','2',quiet=1)
+      elif renderer[0:8]=='GeForce3':
+         print " Optimizing for GeForce3 hardware..."
+         cmd.set('line_width','2',quiet=1)
 
 def launch_gui():
    if invocation.options.external_gui:
