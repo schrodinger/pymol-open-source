@@ -792,7 +792,7 @@ void ColorReset(PyMOLGlobals *G)
   strcpy(I->Color[I->NColor].Name,"deepblue"); /* was "deep" */
   I->Color[I->NColor].Color[0]=0.25F;
   I->Color[I->NColor].Color[1]=0.25F;
-  I->Color[I->NColor].Color[2]=0.65;
+  I->Color[I->NColor].Color[2]=0.65F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"grey"); /* english spelling */
