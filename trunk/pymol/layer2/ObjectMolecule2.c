@@ -3143,7 +3143,7 @@ void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
   AtomInfoType *atInfo;
   int *dAtmToIdx;
 
-  if(!I->DiscreteFlag) {
+  if(!I->DiscreteFlag) { /* currently, discrete objects are never sorted */
 
     index=AtomInfoGetSortedIndex(I->Obj.G,I->AtomInfo,I->NAtom,&outdex);
     for(a=0;a<I->NBond;a++) { /* bonds */
@@ -3192,10 +3192,10 @@ void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
       I->DiscreteAtmToIdx = dAtmToIdx;
     }
     AtomInfoFreeSortedIndexes(I->Obj.G,index,outdex);
-
+    
     UtilSortInPlace(I->Obj.G,I->Bond,I->NBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
     /* sort...important! */
     ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms); /* important */
-
+    
   }
 }

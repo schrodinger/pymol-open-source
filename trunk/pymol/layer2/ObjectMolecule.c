@@ -6182,6 +6182,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
   int repeatFlag=true;
   int successCnt = 0;
   char tmpName[ObjNameMax];
+  int deferred_tasks = false;
 
   *next_entry = NULL;
 
@@ -6258,12 +6259,11 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
         I->CSet[frame] = cset;
       
         if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
-      
-        SceneCountFrames(G);
+        
         ObjectMoleculeExtendIndices(I);
         ObjectMoleculeSort(I);
-        ObjectMoleculeUpdateIDNumbers(I);
-        ObjectMoleculeUpdateNonbonded(I);
+            
+        deferred_tasks = true;
         successCnt++;
         if(!quiet) {
           if(successCnt>1) {
@@ -6289,49 +6289,13 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
       frame=frame+1;
     }
   }
+  if(deferred_tasks&&I) { /* defer time-consuming tasks until all states have been loaded */
+    SceneCountFrames(G);
+    ObjectMoleculeUpdateIDNumbers(I);
+    ObjectMoleculeUpdateNonbonded(I);
+  }
   return(I);
 }
-#if 0
-/*========================================================================*/
-ObjectMolecule *ObjectMoleculeLoadMOL2File(PyMOLGlobals *G,
-                                           ObjectMolecule *obj,
-                                           char *fname,int frame,
-                                           int discrete,int quiet,
-                                           int multiplex)
-{
-  ObjectMolecule* I=NULL;
-  int ok=true;
-  FILE *f;
-  long size;
-  char *buffer,*p;
-
-  f=fopen(fname,"rb");
-  if(!f)
-	 ok=ErrMessage(G,"ObjectMoleculeLoadMOL2File","Unable to open file!");
-  else
-	 {
-      PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-        " ObjectMoleculeLoadMOL2File: Loading from %s.\n",fname
-        ENDFB(G);
-		
-		fseek(f,0,SEEK_END);
-      size=ftell(f);
-		fseek(f,0,SEEK_SET);
-
-		buffer=(char*)mmalloc(size+255);
-		ErrChkPtr(G,buffer);
-		p=buffer;
-		fseek(f,0,SEEK_SET);
-		fread(p,size,1,f);
-		p[size]=0;
-		fclose(f);
-		I=ObjectMoleculeReadMOL2Str(G,obj,buffer,frame,discrete,multiplex,quiet);
-		mfree(buffer);
-	 }
-
-  return(I);
-}
-#endif
 /*========================================================================*/
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
                          CoordSet *cs,int bondSearchFlag,int aic_mask)
