@@ -142,14 +142,15 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
 {
   int ok=true;
   FILE *f;
-  char *buffer,*p,*p_save;
+  char *buffer,*p;
   char cc[MAXLINELEN];  
   int n_read;
   int to_go;
   int skip_first_line = true;
   int periodic=false;
-  float f0,f1,f2,f3,*fp;
-  float box[3],pre[3],post[3];
+  int angles=true;
+  float f0,f1,f2,*fp;
+  float box[3],pre[3],post[3],angle[3];
   float r_cent[3],r_trans[3];
   int r_act,r_val,r_cnt;
   float *r_fp_start=NULL,*r_fp_stop=NULL;
@@ -289,46 +290,71 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                 a=0;
                 if(b) p=nextline(p);
                 b=0;
-                
-                c=0;
-                periodic=true;
-                p_save=p;
-                p = ncopy(cc,p,8);
-                if(sscanf(cc,"%f",&box[0])!=1) 
-                  periodic=false;
-                p = ncopy(cc,p,8);
-                if(sscanf(cc,"%f",&box[1])!=1)
-                  periodic=false;
-                p = ncopy(cc,p,8);
-                if(sscanf(cc,"%f",&box[2])!=1)
-                  periodic=false;
-                p = ncopy(cc,p,8);
-                if(sscanf(cc,"%f",&f3)==1) { /* not a periodic box record */
-                  periodic=false;
-                  p=p_save;
-                } else if(periodic) {
-                  if(!cs->PeriodicBox)
-                    cs->PeriodicBox=CrystalNew();
-                  cs->PeriodicBox->Dim[0] = box[0];
-                  cs->PeriodicBox->Dim[1] = box[1];
-                  cs->PeriodicBox->Dim[2] = box[2];
-                  pre[0]=box[0]*1000.0;
-                  pre[1]=box[1]*1000.0;
-                  pre[2]=box[2]*1000.0;
-                  if(cs->PeriodicBoxType==cCSet_Octahedral) {
-                    pre[0]+=box[0]*0.5;
-                    pre[1]+=box[1]*0.5;
-                    pre[2]+=box[2]*0.5;
-                    post[0]=-box[0]*0.5;
-                    post[1]=-box[1]*0.5;
-                    post[2]=-box[2]*0.5;
-                  } else {
-                    post[0]=0.0;
-                    post[1]=0.0;
-                    post[2]=0.0;
+
+
+                if(cs->PeriodicBoxType!=cCSet_NoPeriodicity) {
+                  /* read periodic box */
+
+                  c=0;
+                  periodic=true;
+                  angles=true;
+                  
+                  p = ncopy(cc,p,8);
+                  if(sscanf(cc,"%f",&box[0])!=1) 
+                    periodic=false;
+                  p = ncopy(cc,p,8);
+                  if(sscanf(cc,"%f",&box[1])!=1)
+                    periodic=false;
+                  p = ncopy(cc,p,8);
+                  if(sscanf(cc,"%f",&box[2])!=1)
+                    periodic=false;
+                  
+                  p = ncopy(cc,p,8);
+                  if(sscanf(cc,"%f",&angle[0])!=1)
+                    angles=false;
+                  
+                  p = ncopy(cc,p,8);
+                  if(sscanf(cc,"%f",&angle[1])!=1)
+                    angles=false;
+                  
+                  p = ncopy(cc,p,8);
+                  if(sscanf(cc,"%f",&angle[2])!=1)
+                    angles=false;
+                  if(periodic) {
+                    if(!cs->PeriodicBox)
+                      cs->PeriodicBox=CrystalNew();
+                    cs->PeriodicBox->Dim[0] = box[0];
+                    cs->PeriodicBox->Dim[1] = box[1];
+                    cs->PeriodicBox->Dim[2] = box[2];
+                    if(angles) {
+                      cs->PeriodicBox->Angle[0] = angle[0];
+                      cs->PeriodicBox->Angle[1] = angle[1];
+                      cs->PeriodicBox->Angle[2] = angle[2];
+                    } else if(cs->PeriodicBoxType==cCSet_Octahedral) {
+                      cs->PeriodicBox->Angle[0]=90.0;
+                      cs->PeriodicBox->Angle[1]=90.0;
+                      cs->PeriodicBox->Angle[2]=90.0;
+                    }
+                    CrystalUpdate(cs->PeriodicBox);
+                    CrystalDump(cs->PeriodicBox);
+                    pre[0]=1000.0;
+                    pre[1]=1000.0;
+                    pre[2]=1000.0;
+                    if(cs->PeriodicBoxType==cCSet_Octahedral) {
+                      pre[0]+=0.5;
+                      pre[1]+=0.5;
+                      pre[2]+=0.5;
+                      post[0]=-0.5;
+                      post[1]=-0.5;
+                      post[2]=-0.5;
+                    } else {
+                      post[0]=0.0;
+                      post[1]=0.0;
+                      post[2]=0.0;
+                    }
+                    p=nextline(p);
+                    b=0;
                   }
-                  p=nextline(p);
-                  b=0;
                 }
                 
                 if((stop>0)&&(cnt>=stop))
@@ -424,12 +450,14 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                               r_cent[0]/=r_cnt;
                               r_cent[1]/=r_cnt;
                               r_cent[2]/=r_cnt;
-                              r_trans[0]=fmod(pre[0]+r_cent[0],box[0])+post[0];
-                              r_trans[1]=fmod(pre[1]+r_cent[1],box[1])+post[1];
-                              r_trans[2]=fmod(pre[2]+r_cent[2],box[2])+post[2];
+                              transform33f3f(cs->PeriodicBox->RealToFrac,r_cent,r_cent);
+                              r_trans[0]=fmod(pre[0]+r_cent[0],1.0)+post[0];
+                              r_trans[1]=fmod(pre[1]+r_cent[1],1.0)+post[1];
+                              r_trans[2]=fmod(pre[2]+r_cent[2],1.0)+post[2];
                               r_trans[0]-=r_cent[0];
                               r_trans[1]-=r_cent[1];
                               r_trans[2]-=r_cent[2];
+                              transform33f3f(cs->PeriodicBox->FracToReal,r_trans,r_trans);
                               fp=r_fp_start;
                               while(fp<r_fp_stop) {
                                 *(fp++)+=r_trans[0];
@@ -705,8 +733,9 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   int MBPER,MGPER,MDPER,IFBOX,NMXRS,IFCAP;
   int NEXTRA,IPOL=0;
   int wid,col;
+  float BETA;
+  float BOX1,BOX2,BOX3;
 
-  
   AtomInfoPrimeColors();
   cset = CoordSetNew();  
 
@@ -732,7 +761,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   
   /* read title */
   if(amber7) {
-    p = findflag(p,"TITLE","20a4");
+    p = findflag(buffer,"TITLE","20a4");
   }
 
   p=ncopy(cc,p,20);
@@ -742,7 +771,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
 
   if(amber7) {
 
-    p = findflag(p,"POINTERS","10I8");
+    p = findflag(buffer,"POINTERS","10I8");
 
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&nAtom)==1);
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NTYPES)==1);
@@ -860,7 +889,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     VLACheck(atInfo,AtomInfoType,nAtom);
 
     if(amber7) {
-      p = findflag(p,"ATOM_NAME","20a4");
+      p = findflag(buffer,"ATOM_NAME","20a4");
     }
     /* read atoms */
 
@@ -889,7 +918,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     /* read charges */
 
     if(amber7) {
-      p = findflag(p,"CHARGE","5E16.8");
+      p = findflag(buffer,"CHARGE","5E16.8");
     }
 
     b=0;
@@ -925,7 +954,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     /* read LJ atom types */
 
     if(amber7) {
-      p = findflag(p,"ATOM_TYPE_INDEX","10I8");
+      p = findflag(buffer,"ATOM_TYPE_INDEX","10I8");
       col=10;
       wid=8;
     } else {
@@ -967,7 +996,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     /* read residue labels */
 
     if(amber7) {
-      p = findflag(p,"RESIDUE_LABEL","20a4");
+      p = findflag(buffer,"RESIDUE_LABEL","20a4");
     }
 
     resn = Alloc(ResName,NRES);
@@ -995,7 +1024,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     /* read residue assignments */
 
     if(amber7) {
-      p = findflag(p,"RESIDUE_POINTER","10I8");
+      p = findflag(buffer,"RESIDUE_POINTER","10I8");
       col=10;
       wid=8;
     } else {
@@ -1091,7 +1120,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     /* read bonds */
 
     if(amber7) {
-      p = findflag(p,"BONDS_INC_HYDROGEN","10I8");
+      p = findflag(buffer,"BONDS_INC_HYDROGEN","10I8");
       col=10;
       wid=8;
     } else {
@@ -1142,7 +1171,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     }
 
     if(amber7) {
-      p = findflag(p,"BONDS_WITHOUT_HYDROGEN","10I8");
+      p = findflag(buffer,"BONDS_WITHOUT_HYDROGEN","10I8");
       col=10;
       wid=8;
     } else {
@@ -1220,7 +1249,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     /* read AMBER atom types */
 
     if(amber7) {
-      p = findflag(p,"AMBER_ATOM_TYPE","20a4");
+      p = findflag(buffer,"AMBER_ATOM_TYPE","20a4");
     }
 
     b=0;
@@ -1257,26 +1286,81 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
       
       p=skip_fortran(nAtom,12,p);
 
-      if(IFBOX>0) {
+    }
 
-        int IPTRES,NSPM,NSPSOL;
-
-        p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&IPTRES);
-        p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPM);
-        p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPSOL);
-    
-        p=nextline_top(p);
-
-        /* skip pressuem scaling */
-
-        p=skip_fortran(NSPM,12,p);
-  
-        /* skip periodic box */
-
-        p=nextline_top(p);
-
+    if(IFBOX>0) {
+      
+      int IPTRES,NSPM,NSPSOL;
+      
+      if(amber7) {
+        p = findflag(buffer,"SOLVENT_POINTERS","3I8");
+        wid=8;
+      } else {
+        wid=6;
+      }
+      p=ncopy(cc,p,wid); ok = ok && (sscanf(cc,"%d",&IPTRES)==1);
+      p=ncopy(cc,p,wid); ok = ok && (sscanf(cc,"%d",&NSPM)==1);
+      p=ncopy(cc,p,wid); ok = ok && (sscanf(cc,"%d",&NSPSOL)==1);
+      
+      p=nextline_top(p);
+      
+      if(amber7) {
+        p = findflag(buffer,"ATOMS_PER_MOLECULE","10I8");
+        col=10;
+      } else {
+        col=12;
       }
       
+      /* skip num atoms per box */
+      
+      p=skip_fortran(NSPM,col,p);
+      
+      if(amber7) {
+        p = findflag(buffer,"BOX_DIMENSIONS","5E16.8");
+      }
+      wid=16;
+      
+      p=ncopy(cc,p,16); ok = ok && (sscanf(cc,"%f",&BETA)==1);
+      p=ncopy(cc,p,16); ok = ok && (sscanf(cc,"%f",&BOX1)==1);
+      p=ncopy(cc,p,16); ok = ok && (sscanf(cc,"%f",&BOX2)==1);
+      p=ncopy(cc,p,16); ok = ok && (sscanf(cc,"%f",&BOX3)==1);
+      
+      if(ok) {
+        if(!cset->PeriodicBox) 
+          cset->PeriodicBox=CrystalNew();
+        cset->PeriodicBox->Dim[0] = BOX1;
+        cset->PeriodicBox->Dim[1] = BOX2;
+        cset->PeriodicBox->Dim[2] = BOX3;
+        if((BETA > 109.47) && (BETA < 109.48)) {
+          cset->PeriodicBoxType=cCSet_Octahedral;
+        }
+        if(cset->PeriodicBoxType==cCSet_Octahedral) {
+          cset->PeriodicBox->Angle[0]=90.0; 
+          cset->PeriodicBox->Angle[1]=90.0;
+          cset->PeriodicBox->Angle[2]=90.0;
+        } else {
+          if(BETA==60.0) {
+            cset->PeriodicBox->Angle[0]=60.0; /* rhombic dodecahedron (from ptraj.c) */
+            cset->PeriodicBox->Angle[1]=90.0;
+            cset->PeriodicBox->Angle[2]=60.0;
+          } else {
+            cset->PeriodicBox->Angle[0]=90.0;
+            cset->PeriodicBox->Angle[1]=BETA;
+            cset->PeriodicBox->Angle[2]=90.0;
+          }
+        }
+        
+        CrystalUpdate(cset->PeriodicBox);
+        CrystalDump(cset->PeriodicBox);
+      }
+      /* skip periodic box */
+      
+      p=nextline_top(p);
+      
+    }
+    
+    if(!amber7) {
+
       if(IFCAP>0) {
         p=nextline_top(p);
         p=nextline_top(p);
