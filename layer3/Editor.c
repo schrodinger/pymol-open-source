@@ -768,6 +768,8 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
 
   CEditor *I = &Editor;
   if(obj) {
+    
+
     I->Obj=obj;
     sele1 = SelectorIndexByName(cEditorSele1);
     if(sele1>=0) {
@@ -779,6 +781,9 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
                                          cEditorComp);
       I->ActiveState=state;
       
+      if(SettingGet(cSetting_autohide_selections))
+        ExecutiveHideSelections();
+
     } else {
       EditorInactive();
     }
@@ -791,8 +796,6 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
 
   }
 
-  if(SettingGet(cSetting_autohide_selections))
-    ExecutiveHideSelections();
 
 }
 /*========================================================================*/
