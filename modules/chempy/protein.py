@@ -2,6 +2,7 @@
 #
 #
 
+import bond_amber
 import protein_residues
 import protein_amber
 
@@ -19,13 +20,17 @@ N_TERMINAL_ATOMS = ('HT','HT1','HT2','HT3','H1','H2','H3',
 C_TERMINAL_ATOMS = ('OXT','O2','OT1','OT2')
 
 #---------------------------------------------------------------------------------
-def generate(model, forcefield = protein_amber, histidine = 'HIE',skip_sort=None ):
+# NOTE: right now, the only way to get N-terminal residues is to
+# submit a structure which contains at least one N_TERMINAL hydrogens
+
+def generate(model, forcefield = protein_amber, histidine = 'HIE',
+             skip_sort=None, bondfield = bond_amber ):
 
    strip_atom_bonds(model) # remove bonds between non-hetatms (ATOM)
    add_bonds(model,forcefield=forcefield)   
    connected = model.convert_to_connected()
    add_hydrogens(connected,forcefield=forcefield,skip_sort=skip_sort)
-   place.simple_unknowns(connected)
+   place.simple_unknowns(connected,bondfield = bondfield)
    return connected.convert_to_indexed()
 
 #---------------------------------------------------------------------------------
