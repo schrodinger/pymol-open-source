@@ -1419,7 +1419,7 @@ float *ColorGet(int index)
     else
       ptr = I->Color[index].Color;
     return(ptr);
- } else
+  } else /* invalid color id, then simply return white */
 	 return(I->Color[0].Color);
 }
 

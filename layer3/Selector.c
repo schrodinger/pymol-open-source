@@ -449,7 +449,7 @@ static int IntInOrder(int *list,int a,int b)
 int SelectorClassifyAtoms(int sele, int preserve,ObjectMolecule *only_object)
 {
   SelectorType *I=&Selector;
-  ObjectMolecule *obj,*last_obj,*obj0,*obj1 = NULL;
+  ObjectMolecule *obj,*last_obj=NULL,*obj0,*obj1 = NULL;
   int a,aa,at,a0,a1;
   AtomInfoType *ai,*last_ai=NULL,*ai0,*ai1;
   unsigned int mask;

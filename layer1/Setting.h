@@ -505,10 +505,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_seq_view_overlay           359
 #define cSetting_auto_classify_atoms        360
 #define cSetting_cartoon_nucleic_acid_mode  361
+#define cSetting_seq_view_color             362
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       362
+#define cSetting_INIT                       363
 
 #endif
 
