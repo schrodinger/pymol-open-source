@@ -1586,6 +1586,8 @@ void OrthoPushMatrix(void)
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
+    if(PyMOLOption->multisample)    
+      glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
    }
   /*  glDisable(GL_ALPHA_TEST);
   glDisable(GL_CULL_FACE);
