@@ -2167,16 +2167,15 @@ void ExecutiveSetAllVisib(int state)
 			 {
 				obj=(ObjectMolecule*)rec->obj;
 				sele = SelectorIndexByName(obj->Obj.Name);
-				for(rep=0;rep<cRepCnt;rep++) {
-				  rec->repOn[rep]=state;
-				  op.code=OMOP_VISI;
-				  op.i1=rep;
-				  op.i2=state;
-				  ObjectMoleculeSeleOp(obj,sele,&op);
-				  op.code=OMOP_INVA;
-				  op.i2=cRepInvVisib;
-				  ObjectMoleculeSeleOp(obj,sele,&op);				
-				}
+            rec->repOn[rep]=state;
+            op.code=OMOP_VISI;
+            op.i1=-1;
+            op.i2=state;
+            ObjectMoleculeSeleOp(obj,sele,&op);
+            op.code=OMOP_INVA;
+            op.i1=-1;
+            op.i2=cRepInvVisib;
+            ObjectMoleculeSeleOp(obj,sele,&op);				
 			 }
 		}
   }
