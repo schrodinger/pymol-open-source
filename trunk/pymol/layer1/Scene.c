@@ -748,9 +748,29 @@ int SceneDrag(Block *block,int x,int y,int mod)
     I->LastX=x;
     I->LastY=y;
     break;
+  case cButModeTransXY:
+
+    vScale = SceneGetScreenVertexScale(I->Origin);
+
+    v2[0] = (x-I->LastX)*vScale;
+    v2[1] = (y-I->LastY)*vScale;
+    v2[2] = 0;
+    
+    if(I->LastX!=x)
+      {
+        I->Pos[0]+=v2[0];
+        I->LastX=x;
+        SceneDirty();
+      }
+    if(I->LastY!=y)
+      {
+        I->Pos[1]+=v2[1];
+        I->LastY=y;
+        SceneDirty();
+      }
+    break;
   case cButModeRotXYZ:
   case cButModeRotZ:
-  case cButModeTransXY:
   case cButModeTransZ:
   case cButModeClipNF:
   case cButModeClipN:    
@@ -814,20 +834,6 @@ int SceneDrag(Block *block,int x,int y,int mod)
 		  {
 			 SceneRotate(omega,axis2[0],axis2[1],-axis2[2]);
 			 I->LastY=y;
-		  }
-		break;
-	 case cButModeTransXY:
-		if(I->LastX!=x)
-		  {
-			 I->Pos[0]+=(((float)x)-I->LastX)/10;
-			 I->LastX=x;
-			 SceneDirty();
-		  }
-		if(I->LastY!=y)
-		  {
-			 I->Pos[1]+=(((float)y)-I->LastY)/10;
-			 I->LastY=y;
-			 SceneDirty();
 		  }
 		break;
 	 case cButModeTransZ:

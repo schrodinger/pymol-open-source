@@ -135,7 +135,6 @@ void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state);
 void ObjectMoleculeUndo(ObjectMolecule *I,int dir);
 void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
-void ObjectMoleculeGetUniqueName(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeCreateSpheroid(ObjectMolecule *I);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
@@ -143,6 +142,7 @@ int ObjectMoleculeVerifyChemistry(ObjectMolecule *I);
 int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index);
 int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int order);
 void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai);
+void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode);
 
 #endif
 

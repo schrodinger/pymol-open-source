@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 #define cEditorSele2 "ed2"
 #define cEditorFragPref "fg"
 #define cEditorBasePref "_fbase"
-#define cEditorComp   "_fcomp"
+#define cEditorComp   "ed"
 
 void EditorInit(void);
 int EditorActive(void);
@@ -41,5 +41,5 @@ void EditorAttach(char *elem,int geom,int valence);
 void EditorRemove(void);
 void EditorRefill(void);
 void EditorCycleValence(void);
-
+void EditorInactive(void);
 #endif

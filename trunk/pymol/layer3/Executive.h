@@ -74,7 +74,8 @@ void ExecutiveUndo(int dir);
 void ExecutiveRebuildAll(void);
 void ExecutiveSpheroid(char *name);
 void ExecutiveAddHydrogens(char *s1);
-
+void ExecutiveFuse(char *s0,char *s1);
+void ExecutiveRenameAtoms(char *s1);
 #endif
 
 

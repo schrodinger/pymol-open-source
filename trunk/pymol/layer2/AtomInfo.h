@@ -81,7 +81,7 @@ typedef struct AtomInfoType {
   int selEntry;
   short int visRep[cRepCnt];
   int color;
-  int id; /* used for reading conect records */
+  int id; 
   unsigned int flags;
   signed char bonded; /* be careful not to write at these as (int*) */
   signed char chemFlag;
@@ -105,5 +105,7 @@ int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);
 float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2);
 int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2);
+void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);
+void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
 
 #endif

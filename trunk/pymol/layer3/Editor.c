@@ -183,6 +183,7 @@ void EditorRefill(void)
         I->Obj->AtomInfo[i0].chemFlag=false;
         ExecutiveAddHydrogens(cEditorSele1);
       }
+      
       if(sele1>=0) {
         if(sele0>=0) 
           sprintf(buffer,"((neighbor %s) and (elem h) and not %s)",
@@ -327,14 +328,24 @@ void EditorRender(int state)
             glEnd();
             glEnable(GL_LIGHTING);
           }
-          
         }
       }
     }
   }
 }
 /*========================================================================*/
+void EditorInactive(void)
+{
+  CEditor *I = &Editor;
+  I->Obj=NULL;
+  SelectorDeletePrefixSet(cEditorFragPref);
+  SelectorDeletePrefixSet(cEditorBasePref);
+  ExecutiveDelete(cEditorSele1);      
+  ExecutiveDelete(cEditorSele2);    
+  ExecutiveDelete(cEditorComp);
 
+}
+/*========================================================================*/
 void EditorSetActiveObject(ObjectMolecule *obj,int state)
 {
   int sele1,sele2;
@@ -345,23 +356,21 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
     sele1 = SelectorIndexByName(cEditorSele1);
     if(sele1>=0) {
       sele2 = SelectorIndexByName(cEditorSele2);
+      ExecutiveDelete(cEditorComp);      
       I->NFrag = SelectorSubdivideObject(cEditorFragPref,obj,
                                          sele1,sele2,
                                          cEditorBasePref,
                                          cEditorComp);
       I->ActiveState=state;
     } else {
-      I->Obj=NULL;
-      ExecutiveDelete(cEditorSele1);      
-      ExecutiveDelete(cEditorSele2);      
+      EditorInactive();
     }
   } else {
-    SelectorSubdivideObject(cEditorFragPref,NULL,0,0,
-                            cEditorBasePref,
-                            cEditorComp);
-    I->Obj=NULL;
-    ExecutiveDelete(cEditorSele1);      
-    ExecutiveDelete(cEditorSele2);      
+      I->NFrag = SelectorSubdivideObject(cEditorFragPref,NULL,
+                                          -1,-1,
+                                         cEditorBasePref,
+                                         cEditorComp);
+    EditorInactive();
   }
 }
 /*========================================================================*/
@@ -373,7 +382,6 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   WordType name;
   int seleFlag= false;
   int i0,i1;
-  float t[3];
   CEditor *I = &Editor;
 
   if(!I->Obj) { /* non-anchored */
@@ -386,18 +394,12 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     EditorSetActiveObject(NULL,0); /* recurses */
     return;
   } else { /* anchored */
-    for(frg=0;frg<I->NFrag;frg++) {
+    for(frg=1;frg<=I->NFrag;frg++) {
       sprintf(name,"%s%1d",cEditorFragPref,frg);
       sele0=SelectorIndexByName(name);
       if(sele0>=0) {
         s=obj->AtomInfo[index].selEntry;
-        while(s) {
-          if(SelectorMatch(s,sele0)) {
-            seleFlag=true;
-            break;
-          }
-          s=SelectorNext(s);
-        }
+        seleFlag=SelectorIsMember(s,sele0);
       }
       if(seleFlag)
         break;
@@ -460,13 +462,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       sele0=SelectorIndexByName(cEditorSele1);
       if(sele0>=0) {
         s=obj->AtomInfo[index].selEntry;
-        while(s) {
-          if(SelectorMatch(s,sele0)) {
-            seleFlag=true;
-            break;
-          }
-          s=SelectorNext(s);
-        }
+        seleFlag = SelectorIsMember(s,sele0);
       }
 
       PRINTF " Editor: grabbing all fragments." ENDF

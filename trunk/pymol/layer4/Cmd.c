@@ -115,6 +115,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args);
+static PyObject *CmdFuse(PyObject *self, 	PyObject *args);
 static PyObject *CmdHAdd(PyObject *self, PyObject *args);
 static PyObject *CmdIdentify(PyObject *dummy, PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
@@ -155,6 +156,7 @@ static PyObject *CmdRebuild(PyObject *self, PyObject *args);
 static PyObject *CmdRefill(PyObject *self, PyObject *args);
 static PyObject *CmdRemove(PyObject *self, PyObject *args);
 static PyObject *CmdRemovePicked(PyObject *self, PyObject *args);
+static PyObject *CmdRename(PyObject *self, 	PyObject *args);
 static PyObject *CmdReplace(PyObject *self, PyObject *args);
 static PyObject *CmdReset(PyObject *self, PyObject *args);
 static PyObject *CmdResetRate(PyObject *dummy, PyObject *args);
@@ -208,6 +210,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"flag",         CmdFlag,         METH_VARARGS },
 	{"frame",	     CmdFrame,        METH_VARARGS },
    {"flush_now",    CmdFlushNow,     METH_VARARGS },
+   {"fuse",         CmdFuse,         METH_VARARGS },
 	{"get",	        CmdGet,          METH_VARARGS },
 	{"get_feedback", CmdGetFeedback,  METH_VARARGS },
 	{"get_matrix",	  CmdGetMatrix,    METH_VARARGS },
@@ -250,6 +253,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"remove",	     CmdRemove,       METH_VARARGS },
 	{"remove_picked",CmdRemovePicked, METH_VARARGS },
 	{"render",	     CmdRay,          METH_VARARGS },
+   {"rename",       CmdRename,       METH_VARARGS },
    {"replace",      CmdReplace,      METH_VARARGS },
 	{"reset",        CmdReset,        METH_VARARGS },
 	{"reset_rate",	  CmdResetRate,    METH_VARARGS },
@@ -1855,6 +1859,38 @@ static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
   PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
   APIEntry();
   EditorAttach(str1,i1,i2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
+static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
+{
+  char *str1,*str2;
+  OrthoLineType s1,s2;
+
+  PyArg_ParseTuple(args,"ss",&str1,&str2);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
+  ExecutiveFuse(s1,s2);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
+static PyObject *CmdRename(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  ExecutiveRenameAtoms(s1);
+  SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;  

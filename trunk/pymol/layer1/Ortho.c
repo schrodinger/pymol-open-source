@@ -87,6 +87,7 @@ static OrthoObject Ortho;
 void OrthoParseCurrentLine(void);
 
 Block *OrthoFindBlock(int x,int y);
+void OrthoKeyControl(unsigned char k);
 
 #define cBusyWidth 180
 #define cBusyHeight 60
@@ -376,6 +377,16 @@ void OrthoRestorePrompt(void)
 	 }
 }
 /*========================================================================*/
+void OrthoKeyControl(unsigned char k) {
+  char buffer[OrthoLineLength];
+
+  PBlockAndUnlockAPI();
+  sprintf(buffer,"cmd._ctrl('%c')",k+64);
+  PRunString(buffer);
+  PLockAPIAndUnblock();      
+
+}
+/*========================================================================*/
 void OrthoKey(unsigned char k,int x,int y,int mod)
 {
   OrthoObject *I=&Ortho;
@@ -429,10 +440,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
     case 4:
     case 127: /* delete */     
       if((!I->CurChar)||(I->CurChar==I->PromptChar)) {
-        PBlockAndUnlockAPI();
-        sprintf(buffer,"cmd._ctrl('%c')",k+64);
-        PRunString(buffer);
-        PLockAPIAndUnblock();      
+        OrthoKeyControl(k);
       } else {
         if(I->CursorChar>=0) {
           if(I->CursorChar<I->CurChar)
@@ -486,24 +494,33 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
           I->CursorChar=I->PromptChar;        
       break;
 	 case 9: /* CTRL I -- tab */
-      if(I->SplashFlag) {
-        OrthoRemoveSplash();
+      if(mod&cOrthoCTRL) {
+        OrthoKeyControl(k); 
       } else {
-        SettingSet(cSetting_text,(float)(!((int)SettingGet(cSetting_text))));
-        if(mod&cOrthoSHIFT) 
-          SettingSet(cSetting_overlay,(float)(!((int)SettingGet(cSetting_overlay))));
+        if(I->SplashFlag) {
+          OrthoRemoveSplash();
+        } else {
+          SettingSet(cSetting_text,(float)(!((int)SettingGet(cSetting_text))));
+          if(mod&cOrthoSHIFT) 
+            SettingSet(cSetting_overlay,(float)(!((int)SettingGet(cSetting_overlay))));
+        }
       }
 		break;
 	 case 13: /* CTRL M -- carriage return */
       OrthoParseCurrentLine();
 		break;
 	 case 11: /* CTRL K -- truncate */
-      if(OrthoArrowsGrabbed())
+      if(OrthoArrowsGrabbed()) {
         if(I->CursorChar>=0) { 
           I->Line[I->CurLine&OrthoSaveLines][I->CursorChar]=0;
           I->CurChar=I->CursorChar;
           I->CursorChar=-1;
         }
+      } else {
+        if(mod&cOrthoCTRL) {
+          OrthoKeyControl(k); 
+        }
+      }
       break;
     case 22: /* CTRL V -- paste */
       PBlockAndUnlockAPI();
@@ -511,10 +528,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       PLockAPIAndUnblock();
       break;
 	 default:
-      PBlockAndUnlockAPI();
-      sprintf(buffer,"cmd._ctrl('%c')",k+64);
-      PRunString(buffer);
-      PLockAPIAndUnblock();      
+      OrthoKeyControl(k);
 		break;
 	 }
   MainDirty();

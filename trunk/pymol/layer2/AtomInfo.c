@@ -28,6 +28,129 @@ static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
 
+
+/*========================================================================*/
+void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1)
+{
+  /* makes sure all names in atInfo1 are unique WRT 0 and 1 */
+
+  /* tricky optimizations to avoid n^2 dependence in this operation */
+
+  int a,b,c;
+  AtomInfoType *ai0,*ai1,*lai1,*lai0;
+  int st1,nd1,st0,nd0;
+  int matchFlag;
+  int bracketFlag;
+  WordType name;
+
+  ai1=atInfo1;
+  lai0=NULL;
+  lai1=NULL;
+  c=1;
+  b=0;
+  while(b<n1) {
+    fflush(stdout);
+    matchFlag=false;
+
+    if(!ai1->name[0])
+      matchFlag=true;
+
+    if(!matchFlag) {
+      /* check within object 1 */
+      
+      if(!lai1) bracketFlag=true;
+      else if(!AtomInfoSameResidue(lai1,ai1))
+        bracketFlag=true;
+      else
+        bracketFlag=false;
+      if(bracketFlag) {
+        c=1;
+        AtomInfoBracketResidue(atInfo1,b,ai1,&st1,&nd1);
+        lai1=ai1;
+      }
+      ai0 = atInfo1 + st1;
+      for(a=st1;a<=b;a++) {
+        if(strcmp(ai1->name,ai0->name))
+          ai0++;
+        else if(ai1!=ai0) {
+          matchFlag=true;
+          break;
+        } else 
+          ai0++;
+      }
+    }
+
+    if(!matchFlag) {
+      if(atInfo0) {
+        /* check within object 2 */
+        
+        if(!lai0) bracketFlag=true;
+        else if(!AtomInfoSameResidue(lai0,ai1))
+          bracketFlag=true;
+        else
+          bracketFlag=false;
+        if(bracketFlag) {
+          AtomInfoBracketResidue(atInfo0,n0,ai1,&st0,&nd0);
+          lai0=ai1;
+        }
+        ai0 = atInfo0 + st0;
+        for(a=st0;a<=nd0;a++) {
+          if(strcmp(ai1->name,ai0->name))
+            ai0++;
+          else if(ai1!=ai0) {
+            matchFlag=true;
+            break;
+          } else 
+            ai0++;
+        }
+      }
+    }
+
+    if(matchFlag) {
+      if(c<100) {
+        if(c<10&&ai1->elem[1]) /* try to keep halogens 3 or under */
+          sprintf(name,"%2s%1d",ai1->elem,c);
+        else 
+          sprintf(name,"%1s%02d",ai1->elem,c);
+      } else {
+        sprintf(name,"%1d%1s%02d",c/100,ai1->elem,c%100);
+      }
+      name[4]=0; /* just is case we go over */
+      strcpy(ai1->name,name);
+      c=c+1;
+    } else {
+      ai1++;
+      b++;
+    }
+  }
+}
+
+/*========================================================================*/
+void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd)
+{
+  /* inefficient but reliable way to find where residue atoms are located in an object 
+   * for purpose of residue-based operations */
+  int a;
+  AtomInfoType *ai1;
+  
+  *st=0;
+  *nd=n0-1;
+  ai1=ai0;
+  for(a=0;a<n0;a++) {
+    if(!AtomInfoSameResidue(ai,ai1++))
+      *st=a;
+    else 
+      break;
+  }
+  ai1=ai0+n0-1;
+  for(a=n0-1;a>=0;a--) {
+    if(!AtomInfoSameResidue(ai,ai1--)) {
+      *nd=a;
+    } else 
+      break;
+  }
+}
+/*========================================================================*/
 void AtomInfoPrimeColors(void)
 {
   NColor=ColorGetIndex("nitrogen");
@@ -38,7 +161,7 @@ void AtomInfoPrimeColors(void)
   MColor=ColorGetIndex("magenta");
   IColor=ColorGetIndex("yellow");
 }
-
+/*========================================================================*/
 float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
 {
   float result = 1.6;
@@ -197,15 +320,16 @@ int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2)
 
 int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2)
 {
-  int result;
+  int result=false;
   if(at1->hetatm==at2->hetatm)
     if(at1->chain[0]==at2->chain[0])
-      if(WordMatch(at1->resi,at2->resi,true)<0)
+      if(WordMatch(at1->resi,at2->resi,true)<0) {
         if(WordMatch(at1->segi,at2->segi,true)<0) {
           result = true;
         } else {
           result = false;
         }
+      }
   return(result);
 }
 

@@ -61,7 +61,8 @@ typedef struct {
 
 typedef struct {
   WordType *Name;
-  int NSelection;
+  int *ID;
+  int NSelection,NActive;
   int TmpCounter;
   MemberType *Member;
   int NMember;
@@ -227,18 +228,72 @@ static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
-void SelectorDeletePrefixSet(char *pref);
+
+/*========================================================================*/
+void SelectorUpdateObjectSele(ObjectMolecule *obj)
+{
+  if(obj->Obj.Name[0]) {
+    SelectorDelete(obj->Obj.Name);  
+    SelectorCreate(obj->Obj.Name,NULL,obj,true); /* create a selection with same name */ 
+  }
+}
+/*========================================================================*/
+int SelectorIsMember(int s,int sele)
+{
+  SelectorType *I=&Selector;
+  MemberType *member,*mem;
+  member=I->Member;
+  while(s) 
+    {
+      mem = member+s;
+      if(mem->selection==sele)
+        break;
+      s = mem->next;
+    }
+  return(s);
+}
+/*========================================================================*/
+ObjectMolecule *SelectorGetSingleObjectMolecule(int sele)
+{
+  int a;
+  ObjectMolecule *result = NULL;
+  ObjectMolecule *obj;
+  SelectorType *I=&Selector;
+  int at1;
+  SelectorUpdateTable();
+
+  for(a=0;a<I->NAtom;a++)
+    {
+      obj=I->Obj[I->Table[a].model];
+      at1=I->Table[a].atom;
+      if(SelectorIsMember(obj->AtomInfo[at1].selEntry,sele)) {
+        if(result) {
+          if(result!=obj) {
+            result=NULL;
+            break;
+          }
+        } else {
+          result=obj;
+        }
+      }
+    }
+  return(result);
+}
 
 /*========================================================================*/
 void SelectorDeletePrefixSet(char *pref)
 {
   int a;
   SelectorType *I=&Selector;
+  WordType name_copy; 
+
   while(1) {
     a = WordIndex(I->Name,pref,strlen(pref),false);
-    if(a>=0) 
-      ExecutiveDelete(I->Name[a]);
-    else
+    if(a>=0) {
+      strcpy(name_copy,I->Name[a]);
+      ExecutiveDelete(name_copy); /* import to use a copy, otherwise 
+                                   * you'll delete all objects  */
+    } else
       break;
   }
 }
@@ -259,19 +314,9 @@ int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
     seleFlag=false;
     ai=obj->AtomInfo+a;
     s=ai->selEntry;
-    while(s) 
-      {
-        if(SelectorMatch(s,sele1)) {
-          seleFlag=true;
-          break;
-        }
-        if(sele2>=0) 
-          if(SelectorMatch(s,sele2)) {
-            seleFlag=true;
-            break;
-          }
-        s=SelectorNext(s);
-      }
+    seleFlag = SelectorIsMember(s,sele1);
+    if(!seleFlag)
+      seleFlag = SelectorIsMember(s,sele2);      
     if(!seleFlag) {
       if(!ai->protected) { /* if not explicitly protected...*/
         atom[a]=1; /* mark this atom into the selection */
@@ -300,7 +345,7 @@ int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
 int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
                             char *fragPref,char *compName)
 {
-  int a,a0,a1;
+  int a,a0,a1,a2;
   int *atom=NULL;
   int *toDo=NULL;
   int *comp=NULL;
@@ -310,6 +355,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
   int *stk=NULL;
   int stkDepth;
   int c,s,n;
+  int cycFlag=false;
   WordType name;
   SelectorDeletePrefixSet(pref);
   SelectorDeletePrefixSet(fragPref);
@@ -353,43 +399,90 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
             *(p1++)=0;
           atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
           comp[a0] = 1;
-          sprintf(name,"%s%1d",fragPref,nFrag);
+          sprintf(name,"%s%1d",fragPref,nFrag+1);
           SelectorEmbedSelection(atom,name,NULL);
           c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
-          sprintf(name,"%s%1d",pref,nFrag);
+          sprintf(name,"%s%1d",pref,nFrag+1);
+
+          /* check for cyclic situation */
+          cycFlag=false;
+          a2 = ObjectMoleculeGetAtomIndex(obj,sele2);
+          if(a2>=0) {
+            stkDepth=0;
+            s=obj->Neighbor[a2]; /* add neighbors onto the stack */
+            s++; /* skip count */
+            while(1) {
+              a1 = obj->Neighbor[s];
+              if (a1<0) break;
+              if((a1>=0)&&(a1!=a0)) {
+                if(!toDo[a1]) {
+                  cycFlag=true; /* we have a cycle...*/
+                  break;
+                }
+              }
+              s+=2;
+            }
+          }
+          if(cycFlag) { /* cyclic situation is a bit complex...*/
+
+            a0 = ObjectMoleculeGetAtomIndex(obj,sele2);
+            if(a0>=0) {
+              stkDepth=0;
+              s=obj->Neighbor[a0]; /* add neighbors onto the stack */
+              s++; /* skip count */
+              while(1) {
+                a1 = obj->Neighbor[s];
+                if(a1>=0) {
+                  if(toDo[a1]) {
+                    VLACheck(stk,int,stkDepth);
+                    stk[stkDepth]=a1;
+                    stkDepth++;
+                  }
+                } else 
+                  break;
+                s+=2;
+              }
+              atom[a0] = 1; 
+              comp[a0] = 1;
+              c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
+            }
+          }
           SelectorEmbedSelection(atom,name,NULL);
           nFrag++;
         }
         
-        a0 = ObjectMoleculeGetAtomIndex(obj,sele2);
-        if(a0>=0) {
-          stkDepth=0;
-          s=obj->Neighbor[a0]; /* add neighbors onto the stack */
-          s++; /* skip count */
-          while(1) {
-            a1 = obj->Neighbor[s];
-            if(a1>=0) {
-              if(toDo[a1]) {
-                VLACheck(stk,int,stkDepth);
-                stk[stkDepth]=a1;
-                stkDepth++;
-              }
-            } else 
-              break;
-            s+=2;
-          }
+        if(!cycFlag) {
+          a0 = ObjectMoleculeGetAtomIndex(obj,sele2);
+          if(a0>=0) {
+            stkDepth=0;
+            s=obj->Neighbor[a0]; /* add neighbors onto the stack */
+            s++; /* skip count */
+            while(1) {
+              a1 = obj->Neighbor[s];
+              if(a1>=0) {
+                if(toDo[a1]) {
+                  VLACheck(stk,int,stkDepth);
+                  stk[stkDepth]=a1;
+                  stkDepth++;
+                }
+              } else 
+                break;
+              s+=2;
+            }
           
-          p1=atom; /* second atom */
-          for(a=0;a<nAtom;a++) 
-            *(p1++)=0;
-          atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
-          comp[a0] = 1;
-          sprintf(name,"%s%1d",fragPref,nFrag);
-          SelectorEmbedSelection(atom,name,NULL);
-          c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
-          sprintf(name,"%s%1d",pref,nFrag);
-          SelectorEmbedSelection(atom,name,NULL);
-          nFrag++;
+            p1=atom; /* second atom */
+            for(a=0;a<nAtom;a++) 
+              *(p1++)=0;
+            atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
+            comp[a0] = 1;
+            sprintf(name,"%s%1d",fragPref,nFrag+1);
+            SelectorEmbedSelection(atom,name,NULL);
+            c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
+            sprintf(name,"%s%1d",pref,nFrag+1);
+            SelectorEmbedSelection(atom,name,NULL);
+            nFrag++;
+          }
+
         }
         
       } else if(sele1>=0) { /* atom mode */
@@ -408,12 +501,12 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               *(p1++)=0;
             atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
             comp[a1] = 1;
-            sprintf(name,"%s%1d",fragPref,nFrag);
+            sprintf(name,"%s%1d",fragPref,nFrag+1);
             SelectorEmbedSelection(atom,name,NULL);
             atom[a1] = 0;
             c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,-1);
             if(c) {
-              sprintf(name,"%s%1d",pref,nFrag);
+              sprintf(name,"%s%1d",pref,nFrag+1);
               SelectorEmbedSelection(atom,name,NULL);
               nFrag++;
             }
@@ -468,12 +561,8 @@ int SelectorGetSeleNCSet(int sele)
     obj=I->Obj[I->Table[a].model];
     at=I->Table[a].atom;
     s=obj->AtomInfo[at].selEntry;
-    while(s) 
-      {
-        if(I->Member[s].selection==sele)
-			 if(result<obj->NCSet) result=obj->NCSet;
-        s=SelectorNext(s);
-		}
+    if(SelectorIsMember(s,sele))
+      if(result<obj->NCSet) result=obj->NCSet;
   }
   return(result);
 }
@@ -568,31 +657,27 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
     at=I->Table[a].atom;
     obj=I->Obj[I->Table[a].model];
     s=obj->AtomInfo[at].selEntry;
-    while(s) 
+    if(SelectorIsMember(s,sele1))
       {
-        if(I->Member[s].selection==sele1)
-          {
-            if(state1<obj->NCSet) 
-              cs=obj->CSet[state1];
+        if(state1<obj->NCSet) 
+          cs=obj->CSet[state1];
+        else
+          cs=NULL;
+        if(cs) {
+          if(obj->DiscreteFlag) {
+            if(cs==obj->DiscreteCSet[at])
+              idx=obj->DiscreteAtmToIdx[at];
             else
-              cs=NULL;
-				if(cs) {
-              if(obj->DiscreteFlag) {
-                if(cs==obj->DiscreteCSet[at])
-                  idx=obj->DiscreteAtmToIdx[at];
-                else
-                  idx=-1;
-              } else 
-                idx=cs->AtmToIdx[at];
-				  if(idx>=0) {
-					 copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
-					 I->Flag1[a]=true;
-					 n1++;
-				  }
-				}
-			 }
-        s=SelectorNext(s);
-		}
+              idx=-1;
+          } else 
+            idx=cs->AtmToIdx[at];
+          if(idx>=0) {
+            copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+            I->Flag1[a]=true;
+            n1++;
+          }
+        }
+      }
   }
   /* now create and apply voxel map */
   c=0;
@@ -605,44 +690,40 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
 		  at=I->Table[a].atom;
 		  obj=I->Obj[I->Table[a].model];
 		  s=obj->AtomInfo[at].selEntry;
-		  while(s) 
-			 {
-				if(I->Member[s].selection==sele2)
-				  {
-                if(state2<obj->NCSet) 
-                  cs=obj->CSet[state2];
+        if(SelectorIsMember(s,sele2))
+          {
+            if(state2<obj->NCSet) 
+              cs=obj->CSet[state2];
+            else
+              cs=NULL;
+            if(cs) {
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[at])
+                  idx=obj->DiscreteAtmToIdx[at];
                 else
-                  cs=NULL;
-					 if(cs) {
-                  if(obj->DiscreteFlag) {
-                    if(cs==obj->DiscreteCSet[at])
-                      idx=obj->DiscreteAtmToIdx[at];
-                    else
-                      idx=-1;
-                  } else 
-                    idx=cs->AtmToIdx[at];
-						if(idx>=0) {
-						  v2 = cs->Coord+(3*idx);
-						  MapLocus(map,v2,&h,&k,&l);
-						  i=*(MapEStart(map,h,k,l));
-						  if(i) {
-							 j=map->EList[i++];
-							 while(j>=0) {
-								if(within3f(I->Vertex+3*j,v2,cutoff)) {
-								  VLACheck((*vla),int,c*2+1);
-								  *((*vla)+c*2)=j;
-								  *((*vla)+c*2+1)=a;
-								  c++;
-								}
-								j=map->EList[i++];
-							 }
-						  }
-						  n2++;
-						}
-					 }
-				  }
-				s=SelectorNext(s);
-			 }
+                  idx=-1;
+              } else 
+                idx=cs->AtmToIdx[at];
+              if(idx>=0) {
+                v2 = cs->Coord+(3*idx);
+                MapLocus(map,v2,&h,&k,&l);
+                i=*(MapEStart(map,h,k,l));
+                if(i) {
+                  j=map->EList[i++];
+                  while(j>=0) {
+                    if(within3f(I->Vertex+3*j,v2,cutoff)) {
+                      VLACheck((*vla),int,c*2+1);
+                      *((*vla)+c*2)=j;
+                      *((*vla)+c*2+1)=a;
+                      c++;
+                    }
+                    j=map->EList[i++];
+                  }
+                }
+                n2++;
+              }
+            }
+          }
 		}
 		MapFree(map);
 	 }
@@ -668,42 +749,37 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
     at=I->Table[a].atom;
     I->Table[a].index=0;
     obj=I->Obj[I->Table[a].model];
-    s=obj->AtomInfo[at].selEntry;
-    while(s) 
+    s = obj->AtomInfo[at].selEntry;
+    if(SelectorIsMember(s,sele)) 
       {
-        if(I->Member[s].selection==sele)
-          {
-            if(state<obj->NCSet) 
-              cs=obj->CSet[state];
+        if(state<obj->NCSet) 
+          cs=obj->CSet[state];
+        else
+          cs=NULL;
+        if(cs) {
+          if(obj->DiscreteFlag) {
+            if(cs==obj->DiscreteCSet[at])
+              idx=obj->DiscreteAtmToIdx[at];
             else
-              cs=NULL;
-            if(cs) {
-              if(obj->DiscreteFlag) {
-                if(cs==obj->DiscreteCSet[at])
-                  idx=obj->DiscreteAtmToIdx[at];
-                else
-                  idx=-1;
-              } else 
-                idx=cs->AtmToIdx[at];
-              if(idx>=0) {
-                I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
-                ai = obj->AtomInfo+at;
-                if(last)
-                  if(!last->hetatm)
-                    if(ai->resv!=last->resv)
-                      if((abs(ai->resv-last->resv)>1)||(ai->hetatm)) {
-                        CoordSetAtomToTERStrVLA(charVLA,&cLen,last,c);
-                        c++;
-                      }
-                CoordSetAtomToPDBStrVLA(charVLA,&cLen,ai,
-                                        obj->CSet[state]->Coord+(3*idx),c);
-                last = ai;
-                c++;
-              }
-              break;
-            }
+              idx=-1;
+          } else 
+            idx=cs->AtmToIdx[at];
+          if(idx>=0) {
+            I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
+            ai = obj->AtomInfo+at;
+            if(last)
+              if(!last->hetatm)
+                if(ai->resv!=last->resv)
+                  if((abs(ai->resv-last->resv)>1)||(ai->hetatm)) {
+                    CoordSetAtomToTERStrVLA(charVLA,&cLen,last,c);
+                    c++;
+                  }
+            CoordSetAtomToPDBStrVLA(charVLA,&cLen,ai,
+                                    obj->CSet[state]->Coord+(3*idx),c);
+            last = ai;
+            c++;
           }
-        s=SelectorNext(s);
+        }
       }
   }
   if(conectFlag) {
@@ -808,30 +884,25 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
       I->Table[a].index=0;
       obj=I->Obj[I->Table[a].model];
       s=obj->AtomInfo[at].selEntry;
-      while(s) 
+      if(SelectorIsMember(s,sele))
         {
-          if(I->Member[s].selection==sele)
-            {
-              if(state<obj->NCSet) 
-                cs=obj->CSet[state];
+          if(state<obj->NCSet) 
+            cs=obj->CSet[state];
+          else
+            cs=NULL;
+          if(cs) {
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[at])
+                idx=obj->DiscreteAtmToIdx[at];
               else
-                cs=NULL;
-              if(cs) {
-                if(obj->DiscreteFlag) {
-                  if(cs==obj->DiscreteCSet[at])
-                    idx=obj->DiscreteAtmToIdx[at];
-                  else
-                    idx=-1;
-                } else 
-                  idx=cs->AtmToIdx[at];
-                if(idx>=0) {
-                  I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
-                  c++;
-                }
-                break;
-              }
+                idx=-1;
+            } else 
+              idx=cs->AtmToIdx[at];
+            if(idx>=0) {
+              I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
+              c++;
             }
-          s=SelectorNext(s);
+          }
         }
     }
     if(c) {
@@ -971,15 +1042,10 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     I->Table[a].index=-1;
     obj=I->Obj[I->Table[a].model];
     s=obj->AtomInfo[at].selEntry;
-    while(s) 
+    if(SelectorIsMember(s,sele))
       {
-        if(I->Member[s].selection==sele)
-          {
-            I->Table[a].index=c; /* Mark records  */
-            c++;
-            break;
-          }
-        s=SelectorNext(s);
+        I->Table[a].index=c; /* Mark records  */
+        c++;
       }
   }
   nAtom=c;
@@ -1038,15 +1104,10 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
         I->Table[a].index=-1;
         obj=I->Obj[I->Table[a].model];
         s=obj->AtomInfo[at].selEntry;
-        while(s) 
+        if(SelectorIsMember(s,sele))
           {
-            if(I->Member[s].selection==sele)
-              {
-                I->Table[a].index=c; /* Mark records  */
-                c++;
-                break;
-              }
-            s=SelectorNext(s);
+            I->Table[a].index=c; /* Mark records  */
+            c++;
           }
       }
     }
@@ -1169,27 +1230,19 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
 
 
 /*========================================================================*/
-int SelectorMatch(int ref,int sele)
-{
-  SelectorType *I=&Selector;
-  return(I->Member[ref].selection==sele);
-}
-/*========================================================================*/
-int SelectorNext(int ref)
-{
-  SelectorType *I=&Selector;
-  return(I->Member[ref].next);
-}
-/*========================================================================*/
 int SelectorIndexByName(char *sname)
 {
  OrthoLineType name;
  SelectorType *I=&Selector;
+ int i=-1;
  if(sname[0]=='%')
 	strcpy(name,&sname[1]);
  else
 	strcpy(name,sname);		  
- return(WordIndex(I->Name,name,1,I->IgnoreCase));
+ i = WordIndex(I->Name,name,1,I->IgnoreCase);
+ if(i>=0) i = I->ID[i];
+ fflush(stdout);
+ return(i);
 }
 /*========================================================================*/
 void SelectorPurgeMembers(int sele) 
@@ -1233,19 +1286,21 @@ void SelectorPurgeMembers(int sele)
 		}
 }
 /*========================================================================*/
-void SelectorDelete(char *sele) /* should (only) be called by Executive */
+void SelectorDelete(char *sele) 
+     /* should (only) be called by Executive or by Selector */
 {
   SelectorType *I=&Selector;
   int n;
+  int index;
   n=WordIndex(I->Name,sele,999,I->IgnoreCase); /* already exist? */
   if(n>=0) /* get rid of existing selection*/
 	 {
-		SelectorPurgeMembers(n);
-		I->Name[n][0]=32; /*set to blank*/
-		I->Name[n][1]=0; /* THIS IS A SMALL BUT VERY REAL MEMORY LEAK,
-                          since every selection will consume WordSize bytes
-                          - TODO FIX! (only store active selections, with
-                       an array of single-use indexes */
+      index = I->ID[n];
+		SelectorPurgeMembers(index);
+      I->NActive--;
+      strcpy(I->Name[n],I->Name[I->NActive]);
+      I->ID[n]=I->ID[I->NActive];
+      I->Name[I->NActive][0]=0;
 	 }
 }
 /*========================================================================*/
@@ -1273,21 +1328,24 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
 
   SelectorType *I=&Selector;
   int flag;
-  int newFlag=false;
-  int n,a,m;
+  int newFlag=true;
+  int n,a,m,sele;
   int c=0;
+  AtomInfoType *ai;
   n=WordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
-  if(n>=0) /* get rid of existing selection*/
-    SelectorPurgeMembers(n);
-  else
-    {
-      n=I->NSelection;
-      VLACheck(I->Name,WordType,n+1);
-      strcpy(I->Name[n],name);
-      strcpy(I->Name[n+1],""); /*reqd for WordIndex */
-      I->NSelection++;
-      newFlag = true;
-    }
+  if(n>=0) /* get rid of existing selection*/ {
+    SelectorDelete(I->Name[n]);
+    newFlag = false;
+  }
+  n=I->NActive;
+  VLACheck(I->Name,WordType,n+1);
+  VLACheck(I->ID,int,n+1);
+  strcpy(I->Name[n],name);
+  I->Name[n+1][0]=0;
+  sele = I->NSelection++;
+  I->ID[n] = sele;
+  I->NActive++;
+  fflush(stdout);
   for(a=0;a<I->NAtom;a++)
     {
       flag=false;
@@ -1298,6 +1356,8 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
       }
       if(flag)
         {
+          ai = I->Obj[I->Table[a].model]->AtomInfo+I->Table[a].atom;
+
           c++;
           if(I->FreeMember>=0) {
             m=I->FreeMember;
@@ -1307,10 +1367,9 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
             m=I->NMember;
             VLACheck(I->Member,MemberType,m);
           }
-          I->Member[m].selection=n;
-          I->Member[m].next = 
-            I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].selEntry;
-          I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].selEntry = m;
+          I->Member[m].selection=sele;
+          I->Member[m].next = ai->selEntry;
+          ai->selEntry = m;
         }
     }
   if(!obj) {
@@ -1969,6 +2028,7 @@ int SelectorSelect1(EvalElem *base)
 		sele=WordIndex(I->Name,base[1].text,1,I->IgnoreCase);
 		if(sele>=0)
 		  {
+          sele=I->ID[sele];
 			 for(a=0;a<I->NAtom;a++)
 				{
 				  base[0].sele[a]=false;
@@ -2793,15 +2853,19 @@ void SelectorFree(void)
   SelectorClean();
   VLAFreeP(I->Member);
   VLAFreeP(I->Name);
+  VLAFreeP(I->ID);
 }
 /*========================================================================*/
 void SelectorInit(void)
 {
   SelectorType *I = &Selector;
   I->NSelection = 0;
+  I->NActive=0;
   I->TmpCounter = 0;
-  I->Name = VLAlloc(WordType,10);
-  I->Member = (MemberType*)VLAMalloc(1000,sizeof(MemberType),5,true);
+  I->Name = VLAlloc(WordType,100);
+  I->ID = VLAlloc(int,100);
+  
+  I->Member = (MemberType*)VLAMalloc(10000,sizeof(MemberType),5,true);
   I->NMember=0;
   I->FreeMember=-1;
   I->NCSet=0;
