@@ -1514,6 +1514,8 @@ void ExecutiveDelete(char *name)
 		  {
 			 if(all_flag||(WordMatch(name_copy,rec->obj->Name,true)<0))
 				{
+              if(rec->obj==(Object*)EditorGetActiveObject())
+                EditorSetActiveObject(NULL,0);
               if(rec->visible) 
                 SceneObjectDel(rec->obj);
 				  SelectorDelete(rec->name);
