@@ -1943,13 +1943,13 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             ENDFB;
           break;
         case cButModeCent:
-          sprintf(buf2,"center (%s),state=0",buffer);        
+          sprintf(buf2,"center (%s),state=-1",buffer);        
           OrthoCommandIn(buf2);
           if(obj->type==cObjectMolecule) {
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
-              sprintf(buffer,"cmd.center(\"%s\",state=0)",buf1);
+              sprintf(buffer,"cmd.center(\"%s\",state=-1)",buf1);
               PLog(buffer,cPLog_pym);
             }
           }

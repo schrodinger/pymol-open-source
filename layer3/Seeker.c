@@ -943,13 +943,14 @@ void SeekerUpdate(void)
   AtomInfoType *ai;
   ObjectMolecule *obj;
   int nRow = 0;
-  int label_flag = false;
+  int label_mode = 0;
   int codes = 0;
   int max_row = 50;
   int default_color = 0;
   CSeqRow *row_vla,*row,*lab=NULL;
   row_vla = VLACalloc(CSeqRow,10);
   /* FIRST PASS: get all the residues represented properly */
+  label_mode = SettingGetGlobal_i(cSetting_seq_view_label_mode);
 
   while(ExecutiveIterateObjectMolecule(&obj,&hidden)) {
     if(obj->Obj.Enabled&&(SettingGet_b(obj->Obj.Setting,NULL,cSetting_seq_view))&&
@@ -978,7 +979,7 @@ void SeekerUpdate(void)
       */
 
       VLACheck(row_vla,CSeqRow,nRow);
-      if(label_flag)
+      if((label_mode==2)||((label_mode==1)&&(!nRow)))
         {
           lab = row_vla + nRow++;
           lab->txt = VLAlloc(char,est_char);
@@ -1017,15 +1018,8 @@ void SeekerUpdate(void)
         l1->stop = lab->len;
         st_len = l1->stop - l1->start;
 
-        /* blank equivalent text for sequence row below the fixed label */
-        VLACheck(row->col,CSeqCol,nCol);
-        r1 = row->col + nCol;
-        r1->start = row->len;
-        UtilFillVLA(&row->txt,&row->len,' ',st_len);
-        r1->stop = row->len;
-        r1->spacer = true;
-        nCol++;
-      } else if(!label_flag) { /* no label rows, so put object name into left-hand column */
+      } 
+      if(label_mode<2) { /* no label rows, so put object name into left-hand column */
 
         /* copy label text */
 
@@ -1034,11 +1028,20 @@ void SeekerUpdate(void)
         r1->start = row->len;
         UtilConcatVLA(&row->txt,&row->len,"/");
         UtilConcatVLA(&row->txt,&row->len,obj->Obj.Name);
-        UtilConcatVLA(&row->txt,&row->len," ");
         r1->stop = row->len;
         r1->spacer = true;
         row->column_label_flag = true;
         row->title_width = row->len;
+        nCol++;
+      }
+      if(label_mode>0) {
+        /* blank equivalent text for sequence row below the fixed label */
+        VLACheck(row->col,CSeqCol,nCol);
+        r1 = row->col + nCol;
+        r1->start = row->len;
+        UtilFillVLA(&row->txt,&row->len,' ',1);
+        r1->stop = row->len;
+        r1->spacer = true;
         nCol++;
       }
 
@@ -1434,7 +1437,7 @@ void SeekerUpdate(void)
       }
     }
     
-  }
+    }
 
   /* THIRD PASS: fill in labels, based on actual residue spacing */
 

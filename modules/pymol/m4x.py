@@ -332,7 +332,7 @@ def setup_contexts(context_info):   # Author: Warren DeLano
         
 def setup_alignment_contexts(context_info):   # Author: Warren DeLano
     (list,dict) = context_info[0:2]
-    doc_list = ['`888Legend:']
+    doc_list = ['\888Legend:']
     obj_name_dict = {}
     for a in list:
         sf = string.find(a,"_")
@@ -346,14 +346,14 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
                     if is_tuple(col_tup):
                         col_int = map(lambda x:int(x*9+0.49999),col_tup)
                         col_str = string.join(map(lambda x:chr(ord('0')+x),col_int),'')
-                        doc_list.append("`"+col_str+object_name+"`---")
+                        doc_list.append("\\"+col_str+object_name+"\\---")
                     
     key_list = [
         'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10', #,'F11','F12',
         'SHFT-F1','SHFT-F2','SHFT-F3','SHFT-F4','SHFT-F5','SHFT-F6','SHFT-F7',
         'SHFT-F8','SHFT-F9','SHFT-F10']# ,'SHFT-F11','SHFT-F12']
     doc_list.append("")
-    doc_list.append("`888Toggles:")
+    doc_list.append("\\888Toggles:")
     zoom_context = 1
                                   
     global labels,ligands,waters,sites,cgos,zooms,dashes

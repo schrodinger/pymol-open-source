@@ -102,6 +102,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeBRIXMap 29
 #define cLoadTypeGRDMap 30
 #define cLoadTypePQR 31
+#define cLoadTypeDXMap 32
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -4012,6 +4013,21 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         }
       } else {
         ObjectMapLoadPHIFile((ObjectMap*)origObj,fname,frame);
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
+                fname,oname);
+      }
+      break;
+    case cLoadTypeDXMap:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading DX Map\n" ENDFD;
+      if(!origObj) {
+        obj=(CObject*)ObjectMapLoadDXFile(NULL,fname,frame);
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject((CObject*)obj,true,false);
+          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
+        }
+      } else {
+        ObjectMapLoadDXFile((ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,oname);
       }

@@ -1257,7 +1257,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
 
   ParseNCopy(cc,p,20);
   PRINTFB(FB_ObjectMap,FB_Details)
-    " PHIMapToStr: %s\n",cc
+    " PHIStrToMap: %s\n",cc
     ENDFB;
   p+=20;
   p+=4;
@@ -1265,12 +1265,12 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   p+=4;
   ParseNCopy(cc,p,10);
   PRINTFB(FB_ObjectMap,FB_Details)
-    " PHIMapToStr: %s\n",cc
+    " PHIStrToMap: %s\n",cc
     ENDFB;
   p+=10;
   ParseNCopy(cc,p,60);
   PRINTFB(FB_ObjectMap,FB_Details)
-    " PHIMapToStr: %s\n",cc
+    " PHIStrToMap: %s\n",cc
     ENDFB;
   p+=60;
   p+=4;
@@ -1297,7 +1297,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
     map_dim = 65;
 
   PRINTFB(FB_Details,FB_ObjectMap) 
-      " PHIMapToStr: Map Size %d x %d x %d\n",map_dim,map_dim,map_dim
+      " PHIStrToMap: Map Size %d x %d x %d\n",map_dim,map_dim,map_dim
       ENDFB;
   p+=4;
 
@@ -1350,7 +1350,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   p+=4;
   ParseNCopy(cc,p,16);
   PRINTFB(FB_ObjectMap,FB_Details)
-    " PHIMapToStr: %s\n",cc
+    " PHIStrToMap: %s\n",cc
     ENDFB;
   p+=16;
   p+=4;
@@ -1849,7 +1849,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     ms->FDim[3] = 3;
 
     PRINTFB(FB_Details,FB_ObjectMap) 
-      " FLDMapToStr: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+      " FLDStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
       ENDFB;
       
     for(a=0;a<3;a++) {
@@ -2645,7 +2645,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
     
     PRINTFB(FB_Details,FB_ObjectMap) 
-      " GRDXMapToStr: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+      " GRDXStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
       ENDFB;
     
     ms->Active=true;
@@ -2887,6 +2887,305 @@ ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state)
 		fclose(f);
 
 		I=ObjectMapReadPHIStr(obj,buffer,size,state);
+
+		mfree(buffer);
+      if(state<0)
+        state=I->NState-1;
+      if(state<I->NState) {
+        ObjectMapState *ms;
+        ms = &I->State[state];
+        if(ms->Active) {
+          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+        }
+      }
+    }
+  return(I);
+
+}
+/*========================================================================*/
+static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
+
+  int n_items = 0;
+
+  char *p;
+  float dens,dens_rev;
+  int a,b,c,d,e;
+  float v[3],maxd,mind;
+  int ok = true;
+  /* DX named from their docs */
+  int map_dim[3];
+
+  int map_bytes;
+  int stage = 0;
+
+  ObjectMapState *ms;
+
+  char cc[MAXLINELEN];
+  char *rev;
+
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+  ms=&I->State[state];
+  ObjectMapStateInit(ms);
+
+  ms->Origin=Alloc(float,3);
+  ms->Grid = Alloc(float,3);
+
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
+  p=DXStr;
+
+  /* get the dimensions */
+
+  ms->FDim[3] = 3;
+
+  while(ok&&(*p)&&(stage==0)) {
+    p = ParseNCopy(cc,p,35);
+    if(strcmp(cc,"object 1 class gridpositions counts")==0) {
+      p = ParseWordCopy(cc,p,10);      
+      if(sscanf(cc,"%d",&ms->FDim[0])==1) {
+        p = ParseWordCopy(cc,p,10);      
+        if(sscanf(cc,"%d",&ms->FDim[1])==1) {
+          p = ParseWordCopy(cc,p,10);      
+          if(sscanf(cc,"%d",&ms->FDim[2])==1) {
+            stage = 1;
+          }
+        }
+      }
+    }
+    p = ParseNextLine(p);
+  }
+
+  if(ok&&(stage==1)) {
+    PRINTFB(FB_ObjectMap,FB_Details)
+      " DXStrToMap: Dimensions: %d %d %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+      ENDFB;
+  }
+
+  /* get the origin */
+
+  while(ok&&(*p)&&(stage==1)) {  
+    p = ParseNCopy(cc,p,6);
+    if(strcmp(cc,"origin")==0) {
+      p = ParseWordCopy(cc,p,20);      
+      if(sscanf(cc,"%f",&ms->Origin[0])==1) {
+        p = ParseWordCopy(cc,p,20);      
+        if(sscanf(cc,"%f",&ms->Origin[1])==1) {
+          p = ParseWordCopy(cc,p,20);      
+          if(sscanf(cc,"%f",&ms->Origin[2])==1) {
+            stage = 2;
+          }
+        }
+      }
+    }
+    p = ParseNextLine(p);
+    
+  }
+
+  if(ok&&(stage==2)) {
+    PRINTFB(FB_ObjectMap,FB_Details)
+      " DXStrToMap: Origin %8.3f %8.3f %8.3f\n",ms->Origin[0],ms->Origin[1],ms->Origin[2]
+      ENDFB;
+  }
+
+
+  while(ok&&(*p)&&(stage==2)) {  
+    p = ParseNCopy(cc,p,5);
+    if(strcmp(cc,"delta")==0) {
+      p = ParseWordCopy(cc,p,20);      
+      if(sscanf(cc,"%f",&ms->Grid[0])==1) {
+        p = ParseNextLine(p);
+        p = ParseWordCopy(cc,p,20);      
+        p = ParseWordCopy(cc,p,20);      
+        p = ParseWordCopy(cc,p,20);      
+        if(sscanf(cc,"%f",&ms->Grid[1])==1) {
+        p = ParseNextLine(p);
+          p = ParseWordCopy(cc,p,20);      
+          p = ParseWordCopy(cc,p,20);      
+          p = ParseWordCopy(cc,p,20);      
+          p = ParseWordCopy(cc,p,20);      
+          if(sscanf(cc,"%f",&ms->Grid[2])==1) {
+            stage = 3;
+          }
+        }
+      }
+    }
+    p = ParseNextLine(p);
+    
+  }
+
+  if(ok&&(stage==3)) {
+    PRINTFB(FB_ObjectMap,FB_Details)
+      " DXStrToMap: Grid %8.3f %8.3f %8.3f\n",ms->Grid[0],ms->Grid[1],ms->Grid[2]
+      ENDFB;
+  }
+
+  while(ok&&(*p)&&(stage==3)) {  
+    p = ParseNCopy(cc,p,6);
+    if(strcmp(cc,"object")==0) {
+      p = ParseWordCopy(cc,p,20);      
+      p = ParseNTrim(cc,p,29);      
+      if(strcmp(cc,"class array type double rank")==0) {
+        p = ParseWordCopy(cc,p,20);      
+        p = ParseWordCopy(cc,p,20);      
+        p = ParseWordCopy(cc,p,20);      
+        if(sscanf(cc,"%d",&n_items)==1) {
+          if(n_items == ms->FDim[0]*ms->FDim[1]*ms->FDim[2])
+            stage = 4;
+        }
+      }
+    }
+    p = ParseNextLine(p);
+  }
+
+  if(stage == 4) {
+
+    if(ok&&(stage==4)) {
+      PRINTFB(FB_ObjectMap,FB_Details)
+        " DXStrToMap: %d data points.\n",n_items
+        ENDFB;
+    }
+    
+    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->MapSource = cMapSourcePHI;
+    ms->Field->save_points=false;
+    
+    for(a=0;a<3;a++) {
+      ms->Div[a] = ms->FDim[a] - 1;
+      ms->Min[a] = 0;
+      ms->Max[a] = ms->FDim[a] - 1;
+    }
+    
+    for(a=0;a<ms->FDim[0];a++) {
+      for(b=0;b<ms->FDim[1];b++) {
+        for(c=0;c<ms->FDim[2];c++) { 
+          
+          p = ParseWordCopy(cc,p,20);      
+          if(!cc[0]) {
+            p = ParseNextLine(p);           
+            p = ParseWordCopy(cc,p,20);      
+          }
+          if(sscanf(cc,"%f",&dens)==1) {
+            if(maxd<dens) maxd = dens;
+            if(mind>dens) mind = dens;
+            F3(ms->Field->data,a,b,c) = dens;
+          } else {
+            ok=false;
+          }
+        }
+      }
+
+    }
+    
+    for(e=0;e<3;e++) {
+      ms->ExtentMin[e] = ms->Origin[e]+ms->Grid[e]*ms->Min[e];
+      ms->ExtentMax[e] = ms->Origin[e]+ms->Grid[e]*ms->Max[e];
+    }
+    
+    for(c=0;c<ms->FDim[2];c++) {
+      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      for(b=0;b<ms->FDim[1];b++) {
+        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+        for(a=0;a<ms->FDim[0];a++) {
+          v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+          for(e=0;e<3;e++) {
+            F4(ms->Field->points,a,b,c,e) = v[e];
+          }
+        }
+      }
+    }
+    
+    d=0;
+    for(c=0;c<ms->FDim[2];c+=ms->FDim[2]-1) {
+      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      
+      for(b=0;b<ms->FDim[1];b+=ms->FDim[1]-1) {
+        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+        
+        for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
+          v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+          copy3f(v,ms->Corner[d]);
+          d++;
+        }
+      }
+    }
+    if(ok)
+      stage = 5;
+  }
+
+  if(stage!=5)
+    ok=false;
+
+  if(!ok) {
+    ErrMessage("ObjectMap","Error reading map");
+  } else {
+    ms->Active=true;
+    ObjectMapUpdateExtents(I);
+    printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
+  }
+  return(ok);
+}
+
+/*========================================================================*/
+static ObjectMap *ObjectMapReadDXStr(ObjectMap *I,char *MapStr,int bytes,int state)
+{
+  int ok=true;
+  int isNew = true;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+  if(ok) {
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew();
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+    ObjectMapDXStrToMap(I,MapStr,bytes,state);
+    SceneChanged();
+    SceneCountFrames();
+  }
+  return(I);
+}
+
+/*========================================================================*/
+ObjectMap *ObjectMapLoadDXFile(ObjectMap *obj,char *fname,int state)
+{
+  ObjectMap *I = NULL;
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer,*p;
+  float mat[9];
+
+  f=fopen(fname,"rb");
+  if(!f)
+	 ok=ErrMessage("ObjectMapLoadDXFile","Unable to open file!");
+  else
+	 {
+		if(Feedback(FB_ObjectMap,FB_Actions))
+		  {
+			printf(" ObjectMapLoadDXFile: Loading from '%s'.\n",fname);
+		  }
+		
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		fclose(f);
+
+		I=ObjectMapReadDXStr(obj,buffer,size,state);
 
 		mfree(buffer);
       if(state<0)

@@ -754,7 +754,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
                   c=*(s++);
                 }
               } /* use_dlst&&simplify */
-            } else {
+            } else { /* not one color */
               if(use_dlst&&simplify) {  /* simplify: try to help display list optimizer */
                 c=*(s++);
                 while(c) {

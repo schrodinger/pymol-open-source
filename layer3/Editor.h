@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #define cEditorChain  "pkchain"
 #define cEditorObject "pkobject"
 #define cEditorComp   "pkmol"
-#define cEditorLink   "pklink"
+#define cEditorLink   "pkfrag"
 
 void EditorInit(void);
 int EditorActive(void); 

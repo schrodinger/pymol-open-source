@@ -378,15 +378,12 @@ static void SeqDraw(Block *block)
           n_real++;
         for(b=1;b<row->nCol;b++) {
           col = row->col+b;
-          if(row->label_flag) {
+          if(row->label_flag || row->column_label_flag) { 
             if(b>1) 
-              first_allowed = I->NSkip + row->title_width + 1;
+              first_allowed = I->NSkip + max_title_width + 1;
             else
-              first_allowed = I->NSkip + row->title_width;
-           }
-          else if(row->column_label_flag) 
-            first_allowed = I->NSkip + max_title_width;
-          else
+              first_allowed = I->NSkip + max_title_width;
+          } else
             first_allowed = I->NSkip;
 
           if(col->offset>=first_allowed) {
