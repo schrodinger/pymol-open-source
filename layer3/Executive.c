@@ -94,6 +94,24 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveMapSetBorder(char *name,float level)
+{
+  int result=false;
+  SpecRec *tRec;
+  ObjectMap *mobj;
+
+  tRec = ExecutiveFindSpec(name);
+  if(tRec) {
+    if(tRec->type==cExecObject)
+      if(tRec->obj->type==cObjectMap) {
+        mobj =(ObjectMap*)tRec->obj;
+        ObjectMapSetBorder(mobj,level);
+        result=true;
+      }
+  }
+  return(result);
+}
+
 void ExecutiveSelectRect(BlockRect *rect,int mode)
 {
   Multipick smp;
@@ -697,14 +715,14 @@ char *ExecutiveGetNames(int mode)
   return(result);
 }
 /*========================================================================*/
-void ExecutiveGetType(char *name,WordType type)
+int ExecutiveGetType(char *name,WordType type)
 {
   SpecRec *rec = NULL;
-
+  int ok=true;
   rec = ExecutiveFindSpec(name);
-  if(!rec)
-    strcpy(type,"nonexistent");
-  else {
+  if(!rec) {
+    ok=false;
+  } else {
     if(rec->type==cExecObject) {
       strcpy(type,"object:");
       if(rec->obj->type==cObjectMolecule)
@@ -719,6 +737,7 @@ void ExecutiveGetType(char *name,WordType type)
       strcpy(type,"selection");
     }
   }
+  return(ok);
 }
 
 /*========================================================================*/
@@ -766,11 +785,12 @@ void ExecutiveRenameObjectAtoms(char *name,int force)
 } 
 
 /*========================================================================*/
-void ExecutiveInvert(char *s0,char *s1,int mode)
+int  ExecutiveInvert(char *s0,char *s1,int mode)
 {
   int i0=-1;
   int i1=-1;
   int sele0,sele1;
+  int ok=false;
   ObjectMolecule *obj0,*obj1;
 
   sele0 = SelectorIndexByName(s0);
@@ -791,9 +811,10 @@ void ExecutiveInvert(char *s0,char *s1,int mode)
     if(!(obj0&&(obj0==obj1)&&(i0>=0)&&(i1>=0)))
       ErrMessage("Invert","Invalid immobile atoms in (lb) and (rb).");
     else {
-      EditorInvert(obj0,sele0,sele1,mode);
+      ok = EditorInvert(obj0,sele0,sele1,mode);
     }
   }
+  return(ok);
 }
 /*========================================================================*/
 void ExecutiveFuse(char *s0,char *s1)
@@ -1840,7 +1861,7 @@ void ExecutiveRay(int width,int height)
   SceneRay(width,height);
 }
 /*========================================================================*/
-void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
+int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                          int state,int quiet,int updates)
 {
   CExecutive *I=&Executive;
@@ -1853,21 +1874,23 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
   SettingName name;
   int nObj=0;
   int unblock;
-
+  int ok =true;
   unblock = PAutoBlock();
   if(sele[0]==0) { 
-    SettingSetTuple(NULL,index,tuple);
-    if(!quiet) {
-      if(Feedback(FB_Setting,FB_Actions)) {
-        SettingGetTextValue(NULL,NULL,index,value);
-        SettingGetName(index,name);
-        PRINTF
-          " Setting: %s set to %s.\n",name,value
-          ENDF;
+    ok = SettingSetTuple(NULL,index,tuple);
+    if(ok) {
+      if(!quiet) {
+        if(Feedback(FB_Setting,FB_Actions)) {
+          SettingGetTextValue(NULL,NULL,index,value);
+          SettingGetName(index,name);
+          PRINTF
+            " Setting: %s set to %s.\n",name,value
+            ENDF;
+        }
       }
+      if(updates) 
+        SettingGenerateSideEffects(index,sele,state);
     }
-    if(updates) 
-      SettingGenerateSideEffects(index,sele,state);
   } 
   else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
     while(ListIterate(I->Spec,rec,next))
@@ -1877,7 +1900,7 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
             handle = rec->obj->fGetSettingHandle(rec->obj,state);
           if(handle) {
             SettingCheckHandle(handle);
-            SettingSetTuple(*handle,index,tuple);
+            ok = SettingSetTuple(*handle,index,tuple);
             if(updates) 
               SettingGenerateSideEffects(index,sele,state);
             nObj++;
@@ -1905,8 +1928,7 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
           }
         }
       }
-  }
- else { /* based on a selection/object name */
+  } else { /* based on a selection/object name */
     sele1=SelectorIndexByName(sele);
     while((sele1>=0)&&(ListIterate(I->Spec,rec,next)))
       if(rec->type==cExecObject)
@@ -1920,39 +1942,42 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
               handle = rec->obj->fGetSettingHandle(rec->obj,state);
               if(handle) {
                 SettingCheckHandle(handle);
-                SettingSetTuple(*handle,index,tuple);
-                if(!quiet) {
-                  if(state<0) { /* object-specific */
-                    if(Feedback(FB_Setting,FB_Actions)) {
-                      SettingGetTextValue(*handle,NULL,index,value);
-                      SettingGetName(index,name);
-                      PRINTF
-                        " Setting: %s set to %s in object '%s'.\n",
-                        name,value,rec->obj->Name
-                        ENDF;
-                      if(updates)
-                        SettingGenerateSideEffects(index,sele,state);
-                      
-                    }
-                  } else { /* state-specific */
-                    if(Feedback(FB_Setting,FB_Actions)) {
-                      SettingGetTextValue(*handle,NULL,index,value);
-                      SettingGetName(index,name);
-                      PRINTF
-                        " Setting: %s set to %s in object '%s', state %d.\n",
-                        name,value,rec->obj->Name,state+1
-                        ENDF;
-                      if(updates) 
-                        SettingGenerateSideEffects(index,sele,state);
-                      
+                ok = SettingSetTuple(*handle,index,tuple);
+                if(ok) {
+                  if(!quiet) {
+                    if(state<0) { /* object-specific */
+                      if(Feedback(FB_Setting,FB_Actions)) {
+                        SettingGetTextValue(*handle,NULL,index,value);
+                        SettingGetName(index,name);
+                        PRINTF
+                          " Setting: %s set to %s in object '%s'.\n",
+                          name,value,rec->obj->Name
+                          ENDF;
+                        if(updates)
+                          SettingGenerateSideEffects(index,sele,state);
+                        
+                      }
+                    } else { /* state-specific */
+                      if(Feedback(FB_Setting,FB_Actions)) {
+                        SettingGetTextValue(*handle,NULL,index,value);
+                        SettingGetName(index,name);
+                        PRINTF
+                          " Setting: %s set to %s in object '%s', state %d.\n",
+                          name,value,rec->obj->Name,state+1
+                          ENDF;
+                        if(updates) 
+                          SettingGenerateSideEffects(index,sele,state);
+                        
+                      }
                     }
                   }
                 }
               }
             }
           }
- }
+  }
   PAutoUnblock(unblock);
+  return(ok);
 }
 /*========================================================================*/
 void ExecutiveColor(char *name,char *color,int flags)

@@ -53,13 +53,13 @@ void SettingInit(CSetting *I);
 void SettingPurge(CSetting *I);
 void SettingCheckHandle(CSetting **handle);
 
-void SettingSet_b(CSetting *I,int index, int value);
-void SettingSet_i(CSetting *I,int index, int value);
-void SettingSet_f(CSetting *I,int index, float value);
-void SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3);
-void SettingSet_3fv(CSetting *I,int index, float *value);
+int SettingSet_b(CSetting *I,int index, int value);
+int SettingSet_i(CSetting *I,int index, int value);
+int SettingSet_f(CSetting *I,int index, float value);
+int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3);
+int SettingSet_3fv(CSetting *I,int index, float *value);
 
-void SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer);
+int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer);
 
 
 int SettingSetTuple(CSetting *I,int index,PyObject *tuple);
@@ -89,10 +89,10 @@ PyObject *SettingGetUpdateList(CSetting *I);
 
 int SettingGetIndex(char *name);
 float SettingGet(int index);
-void SettingSet(int index,float v);
-void SettingSetfv(int index,float *value);
+int SettingSet(int index,float v);
+int SettingSetfv(int index,float *value);
 float *SettingGetfv(int index);
-void SettingSetNamed(char *name,char *value);
+int SettingSetNamed(char *name,char *value);
 float SettingGetNamed(char *name);
 int SettingGetName(int index,SettingName name);
 

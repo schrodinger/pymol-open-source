@@ -50,6 +50,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
 ObjectMap *ObjectMapLoadCObject(ObjectMap *obj,int frame);
 ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
                                   int frame,int discrete);
+int ObjectMapSetBorder(ObjectMap *I,float level);
 
 #endif
 

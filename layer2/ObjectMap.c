@@ -46,6 +46,38 @@ typedef struct {
 
 int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary);
 
+int ObjectMapSetBorder(ObjectMap *I,float level)
+{
+  int result = false;
+  int a,b,c;
+
+  c=I->FDim[2]-2;
+  for(a=0;a<I->FDim[0];a++) 
+    for(b=0;b<I->FDim[1];b++)
+      {
+        F3(I->Field->data,a,b,0) = level;
+        F3(I->Field->data,a,b,c) = level;
+      }
+
+  a=I->FDim[0]-2;
+  for(b=0;b<I->FDim[1];b++) 
+    for(c=0;c<I->FDim[2];c++)
+      {
+        F3(I->Field->data,0,b,c) = level;
+        F3(I->Field->data,a,b,c) = level;
+      }
+
+  b=I->FDim[1]-2;
+  for(a=0;a<I->FDim[0];a++) 
+    for(c=0;c<I->FDim[2];c++)
+      {
+        c=0;
+        F3(I->Field->data,a,0,c) = level;
+        F3(I->Field->data,a,b,c) = level;
+      }
+  return(result);
+}
+
 static void ObjectMapFree(ObjectMap *I);
 
 static void ObjectMapFree(ObjectMap *I) {

@@ -2220,7 +2220,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
 
 }
 /*========================================================================*/
-void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
+int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
                                       int sele,float *TTT,int log,char *sname) 
 {
   /* if sele == -1, then the whole object state is transformed */
@@ -2230,6 +2230,7 @@ void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
   CoordSet *cs;
   AtomInfoType *ai;
   int logging;
+  int ok=true;
   if(state<0) state=0;
   if(I->NCSet==1) state=0;
   state = state % I->NCSet;
@@ -2296,6 +2297,7 @@ void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
       break;
     }
   }
+  return(ok);
 }
 /*========================================================================*/
 int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele)

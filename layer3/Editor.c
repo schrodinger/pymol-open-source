@@ -64,7 +64,7 @@ static void subdivide( int n, float *x, float *y);
 
 
 /*========================================================================*/
-void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
+int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
 {
   CEditor *I = &Editor;
   int sele0,sele1,sele2,sele3;
@@ -79,6 +79,7 @@ void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
   float m[16];
   int state;
   int vf,vf0,vf1;
+  int ok=false;
   WordType name,bname;
 
   if((!I->Obj)||(I->Obj!=obj)) { 
@@ -184,14 +185,14 @@ void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
                   if((frg!=if0)&(frg!=if1)) {
                     sprintf(name,"%s%1d",cEditorFragPref,frg);
                     sele2=SelectorIndexByName(name);
-                    ObjectMoleculeTransformSelection(obj,state,sele2,m,false,NULL);
+                    ok = ObjectMoleculeTransformSelection(obj,state,sele2,m,false,NULL);
                   }
                   break;
                 case 1:
                   if((frg!=if0)&(frg!=if1)) {
                     sprintf(name,"%s%1d",cEditorFragPref,frg);
                     sele2=SelectorIndexByName(name);
-                    ObjectMoleculeTransformSelection(obj,state,sele2,m,false,NULL);
+                    ok = ObjectMoleculeTransformSelection(obj,state,sele2,m,false,NULL);
                   }
                   break;
                 }
@@ -205,9 +206,10 @@ void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
       }
     }
   }
+  return(ok);
 }
 /*========================================================================*/
-void EditorTorsion(float angle)
+int EditorTorsion(float angle)
 {
   CEditor *I = &Editor;
   int sele0,sele1,sele2;
@@ -218,6 +220,7 @@ void EditorTorsion(float angle)
   float m[16];
   int state;
   int vf1,vf2;
+  int ok=false;
   WordType sele;
 
   if(!I->Obj) { 
@@ -265,8 +268,7 @@ void EditorTorsion(float angle)
             m[12] =  v1[0];
             m[13] =  v1[1];
             m[14] =  v1[2];
-            ObjectMoleculeTransformSelection(I->Obj,state,sele2,m,false,NULL);
-            
+            ok = ObjectMoleculeTransformSelection(I->Obj,state,sele2,m,false,NULL);
             SceneDirty();
             
             I->DragIndex=-1;
@@ -277,6 +279,7 @@ void EditorTorsion(float angle)
       }
     }
   }
+  return(ok);
 }
 
 /*========================================================================*/

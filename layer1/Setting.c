@@ -64,10 +64,11 @@ void SettingCheckHandle(CSetting **handle)
     *handle=SettingNew();
 }
 /*========================================================================*/
-void SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer) 
+int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer) 
 /* not range checked */
 {
   int type;
+  int ok=true;
   float *ptr;
   type = SettingGetType(index);
   switch(type) {
@@ -88,7 +89,11 @@ void SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer)
     sprintf(buffer,"[ %1.5f, %1.5f, %1.5f ]",
             ptr[0],ptr[1],ptr[2]);
     break;
+  default:
+    ok=false;
+    break;
   }
+  return(ok);
 }
 
 /*========================================================================*/
@@ -97,7 +102,7 @@ int SettingSetTuple(CSetting *I,int index,PyObject *tuple)
 {
   PyObject *value;
   int type;
-  
+  int ok=true;
   if(!I) I=&Setting; /* fall back on global settings */
 
   /* this data structure has been pre-checked at the python level... */
@@ -120,8 +125,11 @@ int SettingSetTuple(CSetting *I,int index,PyObject *tuple)
                   PyFloat_AsDouble(PyTuple_GetItem(value,1)),
                   PyFloat_AsDouble(PyTuple_GetItem(value,2)));
     break;
+  default:
+    ok=false;
+    break;
   }
-  return 1;
+  return(ok);
 }
 /*========================================================================*/
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
@@ -129,6 +137,7 @@ PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
   PyObject *result;
   float *ptr;
   int type = SettingGetType(index);
+
   switch(type) {
   case cSetting_boolean:
     result = Py_BuildValue("(i(i))",type,
@@ -208,52 +217,63 @@ int SettingGetType(int index)
   return(I->info[index].type);
 }
 /*========================================================================*/
-void SettingSet_b(CSetting *I,int index, int value)
+int SettingSet_b(CSetting *I,int index, int value)
 {
+  int ok=true;
   if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_boolean)) {
     PRINTFB(FB_Setting,FB_Errors)
       "Setting-Error: type mismatch (boolean)\n"
       ENDFB
+      ok=false;
   } else {
     VLACheck(I->info,SettingRec,index);
     *((int*)SettingPtr(I,index,sizeof(int))) = value;
     I->info[index].type = cSetting_boolean;
   }
+  return(ok);
 }
 /*========================================================================*/
-void SettingSet_i(CSetting *I,int index, int value)
+int SettingSet_i(CSetting *I,int index, int value)
 {
+  int ok=true;
   if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_int)) {
     PRINTFB(FB_Setting,FB_Errors)
       "Setting-Error: type mismatch (int)\n"
       ENDFB
+      ok=false;
   } else {
     VLACheck(I->info,SettingRec,index);
     *((int*)SettingPtr(I,index,sizeof(int))) = value;
     I->info[index].type = cSetting_int;
   }
+  return(ok);
 }
 /*========================================================================*/
-void SettingSet_f(CSetting *I,int index, float value)
+int SettingSet_f(CSetting *I,int index, float value)
 {
+  int ok=true;
   if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_float)) {
     PRINTFB(FB_Setting,FB_Errors)
       "Setting-Error: type mismatch (float)\n"
       ENDFB
+      ok=false;
   } else {
     VLACheck(I->info,SettingRec,index);
     *((float*)SettingPtr(I,index,sizeof(float)))=value;
     I->info[index].type = cSetting_float;
   }
+  return(ok);
 }
 /*========================================================================*/
-void SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
+int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
 {
   float *ptr;
+  int ok=true;
   if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_float3)) {
     PRINTFB(FB_Setting,FB_Errors)
       "Setting-Error: type mismatch (float3)\n"
       ENDFB
+      ok=false;
   } else {
     VLACheck(I->info,SettingRec,index);
     ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
@@ -262,15 +282,17 @@ void SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3
     ptr[2]=value3;
     I->info[index].type = cSetting_float3;
   }
+  return(ok);
 }
 /*========================================================================*/
-void SettingSet_3fv(CSetting *I,int index, float *vector)
+int SettingSet_3fv(CSetting *I,int index, float *vector)
 {
   float *ptr;
   VLACheck(I->info,SettingRec,index);
   ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
   copy3f(vector,ptr);
   I->info[index].type = cSetting_float3;
+  return(true);
 }
 /*========================================================================*/
 int   SettingGetGlobal_b(int index) 
@@ -571,9 +593,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   }
 }
 /*========================================================================*/
-void SettingSetfv(int index,float *v)
+int SettingSetfv(int index,float *v)
 {
   CSetting *I=&Setting;
+  int ok=true;
   switch(index) {
   case cSetting_dot_mode:
     SettingSet_f(I,index,v[0]);
@@ -642,19 +665,21 @@ void SettingSetfv(int index,float *v)
   case cSetting_text:
     OrthoDirty();
   default:
-    SettingSet_f(I,index,v[0]);
+    ok = SettingSet_f(I,index,v[0]);
     /*I->Setting[index].Value[0]=v[0];*/
 	 break;
   }
+  return(ok);
 }
 /*========================================================================*/
-void SettingSet(int index,float v)
+int SettingSet(int index,float v)
 {
-  SettingSetfv(index,&v);
+  return(SettingSetfv(index,&v));
 }
 /*========================================================================*/
-void SettingSetNamed(char *name,char *value)
+int SettingSetNamed(char *name,char *value)
 {
+  int ok=true;
   int index = SettingGetIndex(name);
   float v,vv[3];
   SettingName realName;
@@ -713,12 +738,14 @@ void SettingSetNamed(char *name,char *value)
     PRINTFB(FB_Setting,FB_Warnings)
       " Error: Non-Existent Settin\n"
       ENDFB;
+    ok=false;
   }
   if(buffer[0]) {
     PRINTFB(FB_Setting,FB_Actions)
       "%s",buffer
       ENDFB;
   }
+  return(ok);
 }
 /*========================================================================*/
 float SettingGetNamed(char *name)
