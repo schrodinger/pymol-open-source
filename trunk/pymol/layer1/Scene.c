@@ -2488,6 +2488,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       VLAFreeP(lowBitVLA);
       VLAFreeP(highBitVLA);
     } else {
+
       
       /* STANDARD RENDERING */
 
@@ -2501,9 +2502,18 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           stereo_as_mono=true; /* rendering stereo as mono */
         }
 
+      PRINTFD(FB_Scene)
+        " SceneRender: I->StereoMode %d must_render_stereo %d\n    stereo_as_mono %d  StereoCapable %d\n",
+        I->StereoMode, must_render_stereo, stereo_as_mono, StereoCapable
+        ENDFD;
+
       start_time = UtilGetSeconds();
       if(I->StereoMode) {
         /*stereo*/
+
+        PRINTFD(FB_Scene)
+          " SceneRender: left hand stereo...\n"
+          ENDFD;
         
         /* LEFT HAND STEREO */
 
@@ -2513,12 +2523,12 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         case 1: /* hardware */
           glDrawBuffer(GL_BACK_LEFT);
           break;
-        case 2:
+        case 2: /* side by side */
           glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
         
-        glPushMatrix();
+        glPushMatrix(); /* 1 */
         ScenePrepareMatrix(stereo_as_mono ? 0 : 1);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
           rec=NULL;
@@ -2526,37 +2536,44 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           SceneRenderAll(&context,normal,NULL,pass,false);
 
         }
-        glPushMatrix();
+
+        glPushMatrix();  /* 2 */
         glNormal3fv(normal);
         CGORenderGL(DebugCGO,NULL,NULL,NULL);
-        glPopMatrix();
+        glPopMatrix();  /* 1 */
 
 
-        glPushMatrix();
+        glPushMatrix(); /* 2 */
         glNormal3fv(normal);
         ExecutiveRenderSelections(curState);
         EditorRender(curState);
-        glPopMatrix();
+        glPopMatrix(); /* 1 */
 
         /* render transparent */
 
         SceneRenderAll(&context,normal,NULL,-1,false);
-          
+
+        glPopMatrix(); /* 0 */
+
         /* RIGHT HAND STEREO */
 
-        if(stereo_as_mono) {
+        PRINTFD(FB_Scene)
+          " SceneRender: right hand stereo...\n"
+          ENDFD;
+
+        if(stereo_as_mono) { /* double pumped mono */
           glDrawBuffer(GL_BACK_RIGHT);
         } else switch(I->StereoMode) {
-        case 1:
+        case 1: /* hardware */
           glDrawBuffer(GL_BACK_RIGHT);
           break;
-        case 2:
+        case 2: /* side by side */
           glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
         
         glClear(GL_DEPTH_BUFFER_BIT);        
-        glPushMatrix();
+        glPushMatrix(); /* 1 */
         ScenePrepareMatrix(stereo_as_mono ? 0 : 2);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
           
@@ -2564,32 +2581,34 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           
         }
         
-        glPushMatrix();
+        glPushMatrix(); /* 2 */
         glNormal3fv(normal);
         CGORenderGL(DebugCGO,NULL,NULL,NULL);
-        glPopMatrix();
+        glPopMatrix(); /* 1 */
         
-        glPushMatrix();
+        glPushMatrix(); /* 2 */
         glNormal3fv(normal);
         ExecutiveRenderSelections(curState);
         EditorRender(curState);
-        glPopMatrix();
+        glPopMatrix(); /* 1 */
         
         /* render transparent */
         SceneRenderAll(&context,normal,NULL,-1,false);
         
-        glPopMatrix();        
+        glPopMatrix(); /* 0 */
 
         /* restore draw buffer */
 
-        if(must_render_stereo) {
+        if(must_render_stereo) { /* double pumped mono */
           glDrawBuffer(GL_BACK);
         } else switch(I->StereoMode) {
-        case 1:
+        case 1: /* hardware */
+          glDrawBuffer(GL_BACK);
+          break;
+        case 2: /* side by side */
           glDrawBuffer(GL_BACK);
           break;
         }
-
 
       } else {
 
@@ -2689,6 +2708,7 @@ void ScenePrepareMatrix(int mode)
   CScene *I=&Scene;
   float stAng,stShift;
   
+
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
   glLoadIdentity();
 
@@ -2705,21 +2725,30 @@ void ScenePrepareMatrix(int mode)
     /* move the origin to the center of rotation */
     glTranslatef(-I->Origin[0],-I->Origin[1],-I->Origin[2]);
 
-  } else {
+  } else { 
 
     /* stereo */
 
     stAng = SettingGet(cSetting_stereo_angle);
     stShift = SettingGet(cSetting_stereo_shift);
 
+
     stShift = stShift*fabs(I->Pos[2])/100.0;
 
     stAng = stAng*atan(stShift/fabs(I->Pos[2]))*90.0/PI;
 
-    if(mode==2) {
+
+    if(mode==2) { /* left hand */
       stAng=-stAng;
       stShift=-stShift;
     }
+
+      PRINTFD(FB_Scene)
+        " StereoMatrix-Debug: mode %d stAng %8.3f stShift %8.3f \n",mode,stAng,stShift
+        ENDFD;
+
+
+    fflush(stdout);
 
     glRotatef(stAng,0.0,1.0,0.0);
     glTranslatef(I->Pos[0],I->Pos[1],I->Pos[2]);
