@@ -113,7 +113,7 @@ dist (lb),(rb)
 dist tst 
 dist tst2 = (lb),(rb)
 
-bond 
+bond
 unbond 
 bond (lb),(rb),2
 unbond (lb),(rb)
