@@ -194,7 +194,7 @@ static void SphereDump(FILE *f,char *prefix,SphereRec *sp)
 
 }
 
-static void SphereDumpAll()
+static void SphereDumpAll(void)
 {
   FILE *f;
   f = fopen("SphereData.h","w");

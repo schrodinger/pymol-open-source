@@ -124,7 +124,7 @@ static PyObject *concat_fmt=0;
 static PyObject *subclass_watcher=0;  /* Object that subclass events */
 
 static void
-init_py_names()
+init_py_names(void)
 {
 #define INIT_PY_NAME(N) py ## N = PyString_FromString(#N)
   INIT_PY_NAME(__add__);
@@ -189,7 +189,7 @@ CallMethodO(PyObject *self, PyObject *name,
   if (! args && PyErr_Occurred()) return NULL;
   UNLESS(name=PyObject_GetAttr(self,name)) return NULL;
   ASSIGN(name,PyEval_CallObjectWithKeywords(name,args,kw));
-  if (args) Py_DECREF(args);
+  if (args) {Py_DECREF(args);}
   return name;
 }
 
@@ -1588,7 +1588,7 @@ CCL_dealloc(PyExtensionClass *self)
       
       Py_DECREF(self->bases);
     }
-  if (((PyExtensionClass*)self->ob_type) != self) Py_XDECREF(self->ob_type);
+  if (((PyExtensionClass*)self->ob_type) != self) {Py_XDECREF(self->ob_type);};
   PyMem_DEL(self);
 }
   
@@ -2984,7 +2984,7 @@ subclass_dealloc(PyObject *self)
       return; /* we added a reference; don't delete now */
     }
   
-  if (HasInstDict(self)) Py_XDECREF(INSTANCE_DICT(self));
+  if (HasInstDict(self)) {Py_XDECREF(INSTANCE_DICT(self));};
 
   /* See if there was a dealloc handler in a (C) base class.
      If there was, then it deallocates the object and we
@@ -3418,7 +3418,7 @@ TrueExtensionClassCAPI = {
 };
 
 void
-initExtensionClass()
+initExtensionClass(void)
 {
   PyObject *m, *d;
   char *rev="$Revision$";

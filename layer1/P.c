@@ -693,27 +693,27 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
-void	initExtensionClass();
-void	initsglite();
-void    init_opengl();
-void    init_opengl_num();
-void    init_glu();
-void    init_glu_num();
-void    init_glut();
-void    initopenglutil();
-void    initopenglutil_num();
+void	initExtensionClass(void);
+void	initsglite(void);
+void    init_opengl(void);
+void    init_opengl_num(void);
+void    init_glu(void);
+void    init_glu_num(void);
+void    init_glut(void);
+void    initopenglutil(void);
+void    initopenglutil_num(void);
 
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
-void	initExtensionClass();
-void	initsglite();
-void    init_opengl();
-void    init_opengl_num();
-void    init_glu();
-void    init_glu_num();
-void    init_glut();
-void    initopenglutil();
-void    initopenglutil_num();
+void	initExtensionClass(void);
+void	initsglite(void);
+void    init_opengl(void);
+void    init_opengl_num(void);
+void    init_glu(void);
+void    init_glu_num(void);
+void    init_glut(void);
+void    initopenglutil(void);
+void    initopenglutil_num(void);
 #endif
 #endif
 

@@ -109,7 +109,7 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
 
 int ExecutiveRampNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state)
 {
-  ObjectGadgetRamp *obj;
+  ObjectGadgetRamp *obj = NULL;
   int ok =true;
   CObject *map_obj;
 
@@ -123,9 +123,9 @@ int ExecutiveRampNew(char *name,char *map_name,PyObject *range,PyObject *color,i
     }
   }
   ok = ok && (obj=ObjectGadgetRampNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
-  ObjectSetName((CObject*)obj,name);
-  ColorRegisterExt(name,(void*)obj,cColorGadgetRamp);
-  ExecutiveManageObject((CObject*)obj,true);
+  if(ok) ObjectSetName((CObject*)obj,name);
+  if(ok) ColorRegisterExt(name,(void*)obj,cColorGadgetRamp);
+  if(ok) ExecutiveManageObject((CObject*)obj,true);
   return(ok);
 }
 
