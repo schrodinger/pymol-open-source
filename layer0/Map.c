@@ -247,7 +247,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 						for(e = b-1; e <= b+1; e++)
 						{
 							i	= *(iPtr + (e * I->Dim[2]));
-							//i	= *MapFirst(I,d,e,c);
+							/*i	= *MapFirst(I,d,e,c); */
 							
 							if(i > -1)
 							{
@@ -526,7 +526,6 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   int a,c;
   int mapSize;
   int h,k,l;
-  int *i;
   int *list;
   float *v,tmp_f;
   int firstFlag;
