@@ -4,11 +4,11 @@
 #
 #- Choose One Pair ---------------------------------------------------
 #--- Build PyMOL with an embedded Python interpreter (3X performance)
-#MODULE = 
-#BUILD = -o pymol.exe
+MODULE = 
+BUILD = -o pymol.exe
 #--- Build PyMOL as an importable python module (can use system(),fork())
-MODULE = -D_PYMOL_MODULE
-BUILD = -shared -o modules/_pm.so
+#MODULE = -D_PYMOL_MODULE
+#BUILD = -shared -o modules/_pm.so
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------

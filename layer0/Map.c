@@ -230,6 +230,12 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
   if(diagonal[1]>size) size=diagonal[1];
   if(diagonal[2]>size) size=diagonal[2];
 
+  if(size==0.0) {
+    diagonal[0]=1.0;
+    diagonal[1]=1.0;
+    diagonal[2]=1.0;
+    size = 1.0;
+  }
   /* compute maximum number of subdivisions */
   subDiv = (int)(size/(range+MapSafety)); 
   if(subDiv>maxSize ) subDiv = maxSize; /* keep it reasonable - we're talking N^3 here... */
