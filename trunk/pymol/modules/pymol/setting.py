@@ -209,6 +209,7 @@ class SettingIndex:
    fog_start             =192
    state                 =193
    frame                 =194
+   ray_shadows           =195
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

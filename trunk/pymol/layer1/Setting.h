@@ -318,10 +318,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_fog_start                   192
 #define cSetting_state                       193
 #define cSetting_frame                       194
+#define cSetting_ray_shadows                 195
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        195
+#define cSetting_INIT                        196
 
 #endif
 

@@ -104,6 +104,10 @@ In Progress
 
    * real session saves nearing completion...
 
+Changes up to 0.86
+
+   * ray_shadows setting
+
 Changes up to 0.85
 
    * mmatrix now stores the complete view instead of just the rotation matrix
