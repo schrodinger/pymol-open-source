@@ -30,7 +30,7 @@ view_dict = {}
 view_sc = Shortcut(['store','recall'])
 view_dict_sc = Shortcut([])
 
-def zoom(selection="all",buffer=0.0):
+def zoom(selection="all",buffer=0.0,state=0):
    '''
 DESCRIPTION
   
@@ -39,12 +39,12 @@ DESCRIPTION
       
 USAGE
  
-   zoom object-or-selection [,buffer]
-   zoom (selection) [,buffer]
+   zoom object-or-selection [,buffer [, state]]
+   zoom (selection) [,buffer [, state]]
  
 PYMOL API
 
-   cmd.zoom( string object-or-selection [,float buffer] )
+   cmd.zoom( string object-or-selection [,float buffer [, state ]] )
 
 SEE ALSO
 
@@ -55,7 +55,7 @@ SEE ALSO
    #   
    try:
       lock()   
-      r = _cmd.zoom(str(selection),float(buffer))
+      r = _cmd.zoom(str(selection),float(buffer),int(state)-1)
    finally:
       unlock()
    return r
@@ -96,7 +96,7 @@ SEE ALSO
       unlock()
    return r
 
-def origin(selection="(all)",object=None,position=None):
+def origin(selection="(all)",object=None,position=None,state=0):
    '''
 DESCRIPTION
   
@@ -106,7 +106,7 @@ DESCRIPTION
       
 USAGE
  
-   origin selection [, object [,position]]
+   origin selection [, object [,position, [, state]]]
    origin (selection)
    origin position=[1.0,2.0,3.0]
 
@@ -134,12 +134,12 @@ SEE ALSO
                       (float(position[0]),
                        float(position[1]),
                        float(position[2])
-                       ))
+                       ),int(state)-1)
    finally:
       unlock()
    return r
 
-def orient(selection="(all)"):
+def orient(selection="(all)",state=0):
    '''
 DESCRIPTION
   
@@ -149,7 +149,7 @@ DESCRIPTION
       
 USAGE
  
-   orient object-or-selection
+   orient object-or-selection [, state]
    orient (selection)
  
 PYMOL API
@@ -165,7 +165,7 @@ SEE ALSO
    #   
    try:
       lock()
-      r = _cmd.orient(selection)
+      r = _cmd.orient(selection,int(state)-1)
    finally:
       unlock()
    return r

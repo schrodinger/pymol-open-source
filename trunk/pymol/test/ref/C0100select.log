@@ -79,6 +79,16 @@ PyMOL>select (q=1.0)
  Selector: selection "sel23" defined with 2112 atoms.
 PyMOL>select (b=0.0)
  Selector: selection "sel24" defined with 1080 atoms.
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>select tst,pept within 5 of tiny
+ Selector: no atoms selected.
+PyMOL>select tst,pept within 50 of tiny
+ Selector: selection "tst" defined with 67 atoms.
+PyMOL>select tst, pept w. 1 of pept
+ Selector: selection "tst" defined with 107 atoms.
+PyMOL>select tst, pept w. 1 of pept
+ Selector: selection "tst" defined with 107 atoms.
 PyMOL>print cmd.select("(none)")
  Selector: no atoms selected.
 0

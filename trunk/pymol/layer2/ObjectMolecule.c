@@ -4329,6 +4329,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   int match_flag=false;
   CoordSet *cs;
   AtomInfoType *ai,*ai0,*ai_option;
+  
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMoleculeSeleOp-DEBUG: sele %d op->code %d\n",sele,op->code
+    ENDFD;
 
   if(sele>=0) {
 	SelectorUpdateTable();
@@ -4856,23 +4860,96 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
               break;
             }
 			 break;
-           
-#ifdef PYMOL_FUTURE_CODE
-         case OMOP_CSOC: /* specific coordinate set based operations */
-           if(I->NCSet<op->cs1) 
-             if(I->CSet[op->cs1]) {
-               
+
+          /* coord-set based properties, iterating only a single coordinate set */
+         case OMOP_CSetMinMax:          
+         case OMOP_CSetSumVertices:
+         case OMOP_CSetMoment: 
+           if((op->cs1>=0)&&(op->cs1<I->NCSet)) {
+             cs=I->CSet[op->cs1];
+             if(cs) {
                s=I->AtomInfo[a].selEntry;
                if(SelectorIsMember(s,sele))
                  {
                    switch(op->code) {
-                   case OMOP_CSOC: /* object and coordinate index */
+                   case OMOP_CSetSumVertices:
+                     if(I->DiscreteFlag) {
+                       if(cs==I->DiscreteCSet[a])
+                         a1=I->DiscreteAtmToIdx[a];
+                       else
+                         a1=-1;
+                     } else 
+                       a1=cs->AtmToIdx[a];
+                     if(a1>=0)
+                       {
+                         coord = cs->Coord+3*a1;
+                         if(op->i2) /* do we want object-transformed coordinates? */
+                           if(I->Obj.TTTFlag) {
+                             transformTTT44f3f(I->Obj.TTT,coord,v1);
+                             coord=v1;
+                           }
+                         add3f(op->v1,coord,op->v1);
+                         op->i1++;
+                       }
                      break;
+                   case OMOP_CSetMinMax:
+                     if(I->DiscreteFlag) {
+                       if(cs==I->DiscreteCSet[a])
+                         a1=I->DiscreteAtmToIdx[a];
+                       else
+                         a1=-1;
+                     } else 
+                       a1=cs->AtmToIdx[a];
+                     if(a1>=0)
+                       {
+                         coord = cs->Coord+3*a1;
+                         if(op->i2) /* do we want object-transformed coordinates? */
+                           if(I->Obj.TTTFlag) {
+                             transformTTT44f3f(I->Obj.TTT,coord,v1);
+                             coord=v1;
+                           }
+                         if(op->i1) {
+                           for(c=0;c<3;c++) {
+                             if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
+                             if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
+                           }
+                         } else {
+                           for(c=0;c<3;c++) {
+                             *(op->v1+c)=*(coord+c);
+                             *(op->v2+c)=*(coord+c);
+                           }
+                         }
+                         op->i1++;
+                       }
+                     break;
+                   case OMOP_CSetMoment: 
+                     if(I->DiscreteFlag) {
+                       if(cs==I->DiscreteCSet[a])
+                         a1=I->DiscreteAtmToIdx[a];
+                       else
+                         a1=-1;
+                     } else 
+                       a1=cs->AtmToIdx[a];
+                     if(a1>=0) {
+                       subtract3f(cs->Coord+(3*a1),op->v1,v1);
+                       v2=v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]; 
+                       op->d[0][0] += v2 - v1[0] * v1[0];
+                       op->d[0][1] +=    - v1[0] * v1[1];
+                       op->d[0][2] +=    - v1[0] * v1[2];
+                       op->d[1][0] +=    - v1[1] * v1[0];
+                       op->d[1][1] += v2 - v1[1] * v1[1];
+                       op->d[1][2] +=    - v1[1] * v1[2];
+                       op->d[2][0] +=    - v1[2] * v1[0];
+                       op->d[2][1] +=    - v1[2] * v1[1];
+                       op->d[2][2] += v2 - v1[2] * v1[2];
+                     }
+                     break;
+                     
                    }
                  }
              }
-			 break;
-#endif
+           }
+           break;
 		   default: /* coord-set based properties, iterating as all coordsets within atoms */
 			 for(b=0;b<I->NCSet;b++)
 			   if(I->CSet[b])
@@ -4928,9 +5005,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                             for(c=0;c<3;c++) {
                               *(op->v1+c)=*(coord+c);
                               *(op->v2+c)=*(coord+c);
-                              op->i1=1;
                             }
                           }
+                          op->i1++;
 							   }
 							 break;
                     case OMOP_MDST: 

@@ -54,6 +54,7 @@ typedef struct CObject {
   int ExtentFlag,TTTFlag;
   float TTT[16]; /* translate, transform, translate matrix */
   CSetting *Setting;
+  int Enabled; /* read-only... maintained by Scene */
 } CObject;
 
 void ObjectInit(CObject *I);

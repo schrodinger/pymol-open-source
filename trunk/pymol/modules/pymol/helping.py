@@ -514,35 +514,37 @@ DESCRIPTION
    logical operations, object names, selection names and nested
    parenthesis: ( [... [(...) ... ]] )
  
-      name <atom names>            n;<atom names>          
-      resn <residue names>         r;<residue names>
-      resi <residue identifiers>   i;<residue identifiers>
-      chain <chain ID>             c;<chain identifiers>
-      segi <segment identifiers>   s;<segment identifiers>
-      elem <element symbol>        e;<element symbols>
-      flag <number>                f;<number>
+      name <atom names>            n. <atom names>          
+      resn <residue names>         r. <residue names>
+      resi <residue identifiers>   i. <residue identifiers>
+      chain <chain ID>             c. <chain identifiers>
+      segi <segment identifiers>   s. <segment identifiers>
+      elem <element symbol>        e. <element symbols>
+      flag <number>                f. <number>
       alt <code>                   
-      numeric_type <numeric type>  nt;<numeric type>
-      text_type <text type>        tt;<text type>
+      numeric_type <numeric type>  nt. <numeric type>
+      text_type <text type>        tt. <text type>
       b <operator> <value>         
       q <operator> <value>         
-      formal_charge <op> <value>   fc;<operator> <value>
-      partial_charge <op> <value>  pc;<operator> <value>
+      formal_charge <op> <value>   fc. <operator> <value>
+      partial_charge <op> <value>  pc. <operator> <value>
       id <original-index>          
-      hydrogen                     h;
+      hydrogen                     h.
       all                          *
-      visible                      v;
+      visible                      v.
       hetatm                       
-      <selection> and <selection>  <selection>&<selection>
-      <selection> or <selection>   <selection>|<selection>
-      not <selection>              !<selection>
-      byres <selection>            br;<selection>
-      byobj <selection>            bo;<selection>
-      around <distance>            a;<distance>
-      expand <distance>            e;<distance>
+      <selection> and <selection>  <selection> & <selection>
+      <selection> or <selection>   <selection> | <selection>
+      not <selection>              ! <selection>
+      byres <selection>            br. <selection>
+      byobj <selection>            bo. <selection>
+      around <distance>            a. <distance>
+      expand <distance>            e. <distance>
       gap <distance>               
       in <selection>               
-      like <selection>             l;<selection>
+      like <selection>             l. <selection>
+      <selection> within <distance> of <selection>
+                       <selection> w. <distance> of <selection>      
    '''
    cmd.help('selections')
 

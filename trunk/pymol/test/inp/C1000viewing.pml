@@ -284,6 +284,63 @@ zoom resi 10
 zoom resi 5,5
 cmd._dump_floats(cmd.get_view(0))
 
+# coordinate set based zoom, orient, origin
+
+del all
+load dat/1tii.pdb,m1
+load dat/il2.pdb,m1
+load dat/pept.pdb,m1
+
+zoom m1
+cmd._dump_floats(cmd.get_view(0))
+zoom m1,state=0
+cmd._dump_floats(cmd.get_view(0))
+zoom m1,state=1
+cmd._dump_floats(cmd.get_view(0))
+zoom m1,state=2
+cmd._dump_floats(cmd.get_view(0))
+zoom m1,state=3
+cmd._dump_floats(cmd.get_view(0))
+zoom m1,state=4
+cmd._dump_floats(cmd.get_view(0))
+
+
+origin m1
+cmd._dump_floats(cmd.get_view(0))
+origin m1,state=0
+cmd._dump_floats(cmd.get_view(0))
+origin m1,state=1
+cmd._dump_floats(cmd.get_view(0))
+origin m1,state=2
+cmd._dump_floats(cmd.get_view(0))
+origin m1,state=3
+cmd._dump_floats(cmd.get_view(0))
+origin m1,state=4
+cmd._dump_floats(cmd.get_view(0))
+
+orient m1
+cmd._dump_floats(cmd.get_view(0))
+orient m1,state=0
+cmd._dump_floats(cmd.get_view(0))
+orient m1,state=1
+cmd._dump_floats(cmd.get_view(0))
+orient m1,state=2
+cmd._dump_floats(cmd.get_view(0))
+orient m1,state=3
+cmd._dump_floats(cmd.get_view(0))
+orient m1,state=4
+cmd._dump_floats(cmd.get_view(0))
+
+
+
+# safety
+zoom m1,state=-5000 
+zoom (none),state=5
+zoom (all),state=-1
+zoom (all),state=0
+cmd._dump_floats(cmd.get_view(0))
+
+
 /print "END-LOG"
 
 

@@ -227,6 +227,7 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetRenderer(PyObject *self,  PyObject *args);
+static PyObject *CmdGetSession(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args);
@@ -285,12 +286,13 @@ static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args);
 static PyObject *CmdSculptActivate(PyObject *self, PyObject *args);
 static PyObject *CmdSculptIterate(PyObject *self, PyObject *args);
 static PyObject *CmdSelect(PyObject *self, PyObject *args);
-static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdSet(PyObject *self, 	PyObject *args);
 static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetFeedbackMask(PyObject *dummy, PyObject *args);
 static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
+static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
+static PyObject *CmdSetSession(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetTitle(PyObject *self, PyObject *args);
 static PyObject *CmdSetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
@@ -373,6 +375,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
    {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
    {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
+   {"get_session",           CmdGetSession,           METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
 	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
 	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
@@ -449,6 +452,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
    {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
+   {"set_session",           CmdSetSession,           METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
 	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
    {"set_view",              CmdSetView,              METH_VARARGS },
@@ -472,6 +476,18 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+
+static PyObject *CmdGetSession(PyObject *self, PyObject *args)
+{
+  return(APIFailure());
+}
+
+static PyObject *CmdSetSession(PyObject *self, PyObject *args)
+{
+  return(APIFailure());
+}
+
 static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
 {
   int ok=true;
@@ -1401,7 +1417,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
         break;
       case 1:
         SelectorGetTmp(str3,s1);
-        ExecutiveGetExtent(s1,mn,mx,false);
+        ExecutiveGetExtent(s1,mn,mx,false,-1); /* TODO state */
         if(carve>=0.0) {
           vert_vla = ExecutiveGetVertexVLA(s1,state);
           if(fbuf<=R_SMALL4)
@@ -1485,7 +1501,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
         break;
       case 1:
         SelectorGetTmp(str3,s1);
-        ExecutiveGetExtent(s1,mn,mx,false);
+        ExecutiveGetExtent(s1,mn,mx,false,-1); /* TODO state */
         if(carve>=0.0) {
           vert_vla = ExecutiveGetVertexVLA(s1,state);
           if(fbuf<=R_SMALL4)
@@ -2078,14 +2094,14 @@ static PyObject *CmdOrient(PyObject *dummy, PyObject *args)
   Matrix33d m;
   char *str1;
   OrthoLineType s1;
-
+  int state;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"si",&str1,&state);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    if(ExecutiveGetMoment(s1,m))
-      ExecutiveOrient(s1,m); /* TODO STATUS */
+    if(ExecutiveGetMoment(s1,m,state))
+      ExecutiveOrient(s1,m,state); /* TODO STATUS */
     else
       ok=false;
     SelectorFreeTmp(s1); 
@@ -2305,17 +2321,18 @@ static PyObject *CmdRock(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
-static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args)
+static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
 {
   Matrix33d m;
   PyObject *result;
-
   char *str1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  int state;
+
+  ok = PyArg_ParseTuple(args,"si",&str1,&state);
   if (ok) {
     APIEntry();
-    ExecutiveGetMoment(str1,m);
+    ExecutiveGetMoment(str1,m,state);
     APIExit();
   }
   result = Py_BuildValue("(ddd)(ddd)(ddd)", 
@@ -2482,11 +2499,11 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
   int flag;
 
   int ok=false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&state); /* state currently ignored */
+  ok = PyArg_ParseTuple(args,"si",&str1,&state); 
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    flag = ExecutiveGetExtent(s1,mn,mx,false);
+    flag = ExecutiveGetExtent(s1,mn,mx,false,state);
     SelectorFreeTmp(s1);
     if(flag) 
       result = Py_BuildValue("[[fff],[fff]]", 
@@ -2606,11 +2623,12 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
 static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
 {
   char *str1;
+  int int1,int2;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
   if (ok) {
     APIEntry();
-    MoviePNG(str1,(int)SettingGet(cSetting_cache_frames));
+    ok = MoviePNG(str1,(int)SettingGet(cSetting_cache_frames),int1,int2);
     /* TODO STATUS */
     APIExit();
   }
@@ -3451,14 +3469,15 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args)
   OrthoLineType s1;
   float v[3];
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ss(fff)",&str1,&obj,v,v+1,v+2);
+  int state;
+  ok = PyArg_ParseTuple(args,"ss(fff)i",&str1,&obj,v,v+1,v+2,&state);
   if (ok) {
     APIEntry();
     if(str1[0])
       SelectorGetTmp(str1,s1);
     else
       s1[0]=0; /* no selection */
-    ok = ExecutiveCenter(s1,1,obj,v); /* TODO STATUS */
+    ok = ExecutiveCenter(s1,1,obj,v,state); /* TODO STATUS */
     if(str1[0])
     SelectorFreeTmp(s1);
     APIExit();
@@ -3522,13 +3541,13 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   char *str1;
   OrthoLineType s1;
   float buffer;
-
+  int state;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sf",&str1,&buffer);
+  ok = PyArg_ParseTuple(args,"sfi",&str1,&buffer,&state);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ok = ExecutiveWindowZoom(s1,buffer); /* TODO STATUS */
+    ok = ExecutiveWindowZoom(s1,buffer,state); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }

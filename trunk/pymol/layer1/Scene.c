@@ -607,6 +607,7 @@ void SceneObjectAdd(CObject *obj)
   ObjRec *rec = NULL;
   ListElemAlloc(rec,ObjRec);
   rec->next=NULL;
+  obj->Enabled=true;
   rec->obj=obj;
   ListAppend(I->Obj,rec,next,ObjList);
   SceneCountFrames();
@@ -622,6 +623,7 @@ void SceneObjectDel(CObject *obj)
 	 if(rec->obj==obj)
 		break;
   if(rec) {
+    rec->obj->Enabled=false;
 	 ListDetach(I->Obj,rec,next,ObjList);
 	 ListElemFree(rec);
   }

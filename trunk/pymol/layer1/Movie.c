@@ -83,7 +83,7 @@ void MovieSetSize(unsigned int width,unsigned int height)
   I->Height=height;
 }
 /*========================================================================*/
-void MoviePNG(char *prefix,int save)
+int MoviePNG(char *prefix,int save,int start,int stop)
 {
   /* assumed locked api, blocked threads, and master thread on entry */
 
@@ -105,8 +105,14 @@ void MoviePNG(char *prefix,int save)
   if(!nFrame) {
 	 nFrame=SceneGetNFrame();
   }
+  if(start<0) start=0;
+  if(start>nFrame) start=nFrame;
+  if(stop<0) stop=nFrame;
+  if(stop>nFrame) stop=nFrame;
   sprintf(buffer,"Creating movie (%d frames)...",nFrame);
   OrthoBusyMessage(buffer);
+  if((start!=0)||(stop!=(nFrame+1)))
+    
   SceneSetFrame(0,0);
   MoviePlay(cMoviePlay);
   VLACheck(I->Image,ImageType,nFrame);
@@ -123,22 +129,29 @@ void MoviePNG(char *prefix,int save)
 		PFlush();
 		i=MovieFrameToImage(a);
       VLACheck(I->Image,ImageType,i);
-		if(!I->Image[i]) {
-		  SceneMakeMovieImage();
-		}
-		if(!I->Image[i]) 
-		  ErrFatal("MoviePNG","Missing rendering movie image!");
-		MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
-		ExecutiveDrawNow();
-		OrthoBusySlow(a,nFrame);
-		if(PMGUI) p_glutSwapBuffers();
-      PRINTFB(FB_Movie,FB_Debugging)
-        " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
-        ENDFB;
-      if(Feedback(FB_Movie,FB_Actions)) {
-        printf(" MoviePNG: wrote %s\n",fname);
+      if((a>=start)&&(a<=stop)) { /* only render frames in the specified interval */
+        if(!I->Image[i]) {
+          SceneMakeMovieImage();
+        }
+        if(!I->Image[i]) {
+          PRINTFB(FB_Movie,FB_Errors) 
+            "MoviePNG-Error: Missing rendered image.\n"
+            ENDFB;
+        } else {
+          MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
+          ExecutiveDrawNow();
+          OrthoBusySlow(a,nFrame);
+          if(PMGUI) p_glutSwapBuffers();
+          PRINTFB(FB_Movie,FB_Debugging)
+            " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
+            ENDFB;
+          if(Feedback(FB_Movie,FB_Actions)) {
+            printf(" MoviePNG: wrote %s\n",fname);
+          }
+        }
       }
-		mfree(I->Image[i]);
+      if(I->Image[i])
+        mfree(I->Image[i]);
 		I->Image[i]=NULL;
 	 }
   SceneDirty(); /* important */
@@ -147,6 +160,7 @@ void MoviePNG(char *prefix,int save)
     ENDFB;
   SettingSet(cSetting_cache_frames,save);
   MoviePlay(cMovieStop);
+  return(true);
 }
 /*========================================================================*/
 void MovieSequence(char *str)
