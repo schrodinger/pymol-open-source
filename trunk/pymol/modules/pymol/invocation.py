@@ -131,7 +131,23 @@ if __name__=='pymol.invocation':
                break # double hypen signals end of PyMOL arguments
             if ("A" in a) or ("a" in a): # application configuration
                new_args = []
-               # ====== mode 5 - simple helper application ======
+               # ====== mode 1 - simple viewer window ======
+               if a[2:3] == "1": 
+                  if not once_dict.has_key('A1'):
+                     once_dict['A1'] = 1
+                     new_args = ["-qxiF",
+                        "-X","68",
+                        "-Y","100",
+                        ]
+               # ====== mode 3 - internal GUI window ======
+               if a[2:3] == "3": 
+                  if not once_dict.has_key('A3'):
+                     once_dict['A3'] = 3
+                     new_args = ["-qx",
+                        "-X","68",
+                        "-Y","100",
+                        ]
+               # ====== mode 5 - mode 5 helper application ======
                if a[2:3] == "5": 
                   if not once_dict.has_key('A5'):
                      once_dict['A5'] = 1

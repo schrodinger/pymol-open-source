@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 
 typedef struct {
+  int a;
 } CSeeker;
 
 CSeeker Seeker;
