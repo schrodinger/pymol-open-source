@@ -123,11 +123,13 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
   
   char *p;
   int a,b,c,d,e;
-  float v[3],vr[3];
-  char cc[MAXLINELEN];
+  float v[3],vr[3],dens,maxd,mind;
+  char cc[MAXLINELEN],buf[255];
   int n;
   int ok = true;
 
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
   p=XPLORStr;
 
   while(*p) {
@@ -141,6 +143,8 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
         while(n--) {
           p=ParseNextLine(p);          
         } 
+      } else if(strstr(cc,"REMARKS")) {
+        p=ParseNextLine(p);          
       } else {
         break;
       }
@@ -180,24 +184,33 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
       ok=false;
     else {
       CrystalUpdate(I->Crystal);
-          I->Field=IsosurfFieldAlloc(I->FDim);
+      I->Field=IsosurfFieldAlloc(I->FDim);
       for(c=0;c<I->FDim[2];c++)
         {
           v[2]=(c+I->Min[2])/((float)I->Div[2]);
           p=ParseNextLine(p);
-          d=0;
           for(b=0;b<I->FDim[1];b++) {
             v[1]=(b+I->Min[1])/((float)I->Div[1]);
             for(a=0;a<I->FDim[0];a++) {
               v[0]=(a+I->Min[0])/((float)I->Div[0]);
               p=ParseNCopy(cc,p,12);
-                            if(sscanf(cc,"%f",F3Ptr(I->Field->data,a,b,c,I->Field->dimensions))!=1) ok=false;
+              if(!cc[0]) {
+                p=ParseNextLine(p);
+                p=ParseNCopy(cc,p,12);                
+              }
+              if(sscanf(cc,"%f",&dens)!=1) {
+                ok=false;
+              } else {
+                F3(I->Field->data,a,b,c,I->Field->dimensions) = dens;
+                if(maxd<dens) maxd = dens;
+                if(mind>dens) mind = dens;
+              }
               transform33f3f(I->Crystal->FracToReal,v,vr);
-                            for(e=0;e<3;e++) 
-                              F4(I->Field->points,a,b,c,e,I->Field->dimensions) = vr[e];
-              d++; if(d==6) { p=ParseNextLine(p); d=0;}              
+              for(e=0;e<3;e++) 
+                F4(I->Field->points,a,b,c,e,I->Field->dimensions) = vr[e];
             }
           }
+          p=ParseNextLine(p);
         }
       if(ok) {
         d = 0;
@@ -231,7 +244,12 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
     printf("Okay? %d\n",ok);
     fflush(stdout);
 #endif
-
+  if(!ok) {
+    ErrMessage(" ObjectMap:","Error reading map");
+  } else {
+    printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+  }
+    
   return(ok);
 }
 /*========================================================================*/

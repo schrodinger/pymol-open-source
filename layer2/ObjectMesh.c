@@ -71,7 +71,8 @@ void ObjectMeshDump(ObjectMesh *I,char *fname)
 static void ObjectMeshUpdate(ObjectMesh *I) {
   if(I->ResurfaceFlag) {
     I->ResurfaceFlag=false;
-    if(I->Map->Field) IsosurfVolume(I->Map->Field,1.0,&I->N,&I->V,I->Range,I->DotFlag); 
+    PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF
+    if(I->Map->Field) IsosurfVolume(I->Map->Field,I->Level,&I->N,&I->V,I->Range,I->DotFlag); 
   }
   SceneDirty();
 }
