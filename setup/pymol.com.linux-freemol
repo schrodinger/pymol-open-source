@@ -21,5 +21,5 @@ endif
 #
 #dbx /usr/bin/python 
 #gdb /usr/bin/python 
-$FREEMOL/bin/python $PYMOL_PATH/modules/launch_pymol.py $*
+$FREEMOL/bin/python $PYMOL_PATH/modules/pymol/__init__.py $*
 

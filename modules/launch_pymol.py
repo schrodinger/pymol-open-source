@@ -1,6 +1,10 @@
-# NOTE: this file is now obsolete, however it has been left intact and
-# functional in order to promote backwards compatibility with existing
+# NOTE: This file is now obsolete.  However it has been left functional
+# and intact in order to promote backwards compatibility with existing
 # PyMOL installs.
+#
+# Future installations should launch pymol by running:
+#   "python $PYMOL_PATH/modules/pymol/__init__.py" instead.
+# or by importing "pymol" from within a standalone Python script
 
 import thread 
 import threading 
