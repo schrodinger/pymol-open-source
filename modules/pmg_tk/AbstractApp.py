@@ -71,6 +71,7 @@ class AbstractApp(Pmw.MegaWidget):
       pass
       
    def initializeTk(self, root):
+      self.pad = ' ' 
       # Initialize platform-specific options
       if sys.platform == 'mac':
          self.__initializeTk_mac(root)
@@ -91,9 +92,10 @@ class AbstractApp(Pmw.MegaWidget):
                   
    def __initializeTk_win32(self, root):
       self.__initializeTk_colors_common(root)
-      root.option_add('*Font', 'Verdana 10 bold')
-      root.option_add('*EntryField.Entry.Font', 'Courier 10')
-      root.option_add('*Listbox*Font', 'Courier 10')
+      root.option_add('*Font', 'Tahoma 8')
+      self.pad = ' '
+#      root.option_add('*EntryField.Entry.Font', 'Courier 10')
+#      root.option_add('*Listbox*Font', 'Courier 10')
       
    def __initializeTk_mac(self, root):
       self.__initializeTk_colors_common(root)
@@ -150,8 +152,8 @@ class AbstractApp(Pmw.MegaWidget):
       self.menuBar = self.createcomponent('menubar', (), None,
                                  Pmw.MenuBar,
                                  (self._hull,),
-                                 hull_relief=RAISED,
-                                 hull_borderwidth=1,
+#                                 hull_relief=RAISED,
+#                                 hull_borderwidth=0,
                                  balloon=self.balloon())
 
       self.menuBar.pack(fill=X)
