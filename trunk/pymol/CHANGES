@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * bound_to selection operator now complements neighbor...
+
+   * fixed stereo opengl bug & improved opengl debugging capability
+
+   * extended editor to support multiple picked atoms in different objects
+
+   * fixed major bug in mesh representation
+
    * updated setup.py
 
    * surface_type setting:  0 = solid, 1 = dot, 2 = mesh

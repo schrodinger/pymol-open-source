@@ -366,7 +366,8 @@ if __name__=='pymol.cmd':
       match                     =6
       raw                       =7
       isosurface                =8
-
+      opengl                    =9
+      
       color                     =10
       cgo                       =11
       feedback                  =12

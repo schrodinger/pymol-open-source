@@ -5856,8 +5856,9 @@ void ExecutiveDelete(char *name)
             I->LastEdited=NULL;
 			 if(all_flag||(WordMatch(name_copy,rec->obj->Name,true)<0))
 				{
-              if(rec->obj==(CObject*)EditorGetActiveObject())
-                EditorInactivate();
+              if(rec->obj->type == cObjectMolecule)
+                if(EditorIsAnActiveObject((ObjectMolecule*)rec->obj))
+                  EditorInactivate();
               if(rec->visible) 
                 SceneObjectDel(rec->obj);
 				  SelectorDelete(rec->name);

@@ -4,7 +4,7 @@ from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
 
-saved_mode = 0 # color 
+saved_mode = 2 # toggle
 saved_scope = 1 # byres
 saved_what = 3 # sticks
 saved_color = 5 # magenta

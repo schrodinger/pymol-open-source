@@ -95,8 +95,16 @@ typedef struct {
 } TableRec;
 
 typedef struct {
+  int ID;
+  int justOneObjectFlag;
+  ObjectMolecule *theOneObject;
+  int justOneAtomFlag;
+  int theOneAtom;
+} SelectionInfoRec;
+
+typedef struct {
   SelectorWordType *Name;
-  int *ID;
+  SelectionInfoRec *Info;
   int NSelection,NActive;
   int TmpCounter;
   MemberType *Member;
@@ -214,6 +222,7 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_BYM1 ( 0x3600 | STYP_OPR1 | 0x10 )
 #define SELE_BYF1 ( 0x3700 | STYP_OPR1 | 0x10 )
 #define SELE_EXT_ ( 0x3800 | STYP_PRP1 | 0x20 )
+#define SELE_BON1 ( 0x3900 | STYP_OPR1 | 0x40 )
 
 #define SEL_PREMAX 0x8
 
@@ -244,6 +253,9 @@ static WordKeyValue Keyword[] =
   {  "byobj",    SELE_BYO1 },
   {  "bo;",      SELE_BYO1 },/* deprecated */
   {  "bo.",      SELE_BYO1 },
+
+  {  "bound_to", SELE_BON1 },
+  {  "bto.",     SELE_BON1 },
 
   { "bymolecule",SELE_BYM1 },
   {  "bymol",    SELE_BYM1 },
@@ -403,6 +415,12 @@ static WordKeyValue AtOper[] =
 static int IntInOrder(int *list,int a,int b)
 {
   return(list[a]<=list[b]);
+}
+
+static void SelectionInfoInit(SelectionInfoRec *rec)
+{
+  rec->justOneObjectFlag = false;
+  rec->justOneAtomFlag = false;
 }
 
 void SelectorComputeFragPos(ObjectMolecule *obj,int state,int n_frag, char *prefix,float **vla)
@@ -624,11 +642,11 @@ static void SelectorDeleteOffset(int n)
 {
   SelectorType *I=&Selector;
   int index;
-  index = I->ID[n];
+  index = I->Info[n].ID;
   SelectorPurgeMembers(index);
   I->NActive--;
   strcpy(I->Name[n],I->Name[I->NActive]);
-  I->ID[n]=I->ID[I->NActive];
+  I->Info[n] = I->Info[I->NActive];
   I->Name[I->NActive][0]=0;
 }
 static void SelectorDeleteIndex(int index)
@@ -637,7 +655,7 @@ static void SelectorDeleteIndex(int index)
   int n=0;
   int a;
   for(a=1;a<I->NActive;a++) {
-    if(I->ID[a]==index) {
+    if(I->Info[a].ID==index) {
       n=a;
       break;
     }
@@ -1766,12 +1784,13 @@ PyObject *SelectorColorectionGet(char *prefix)
 
     n=I->NActive;
     VLACheck(I->Name,SelectorWordType,n+1);
-    VLACheck(I->ID,int,n+1);
+    VLACheck(I->Info,SelectionInfoRec,n+1);
     sele = I->NSelection++;
     used[a].sele = sele;
     sprintf(I->Name[n],cColorectionFormat,prefix,used[a].color);
     I->Name[n+1][0]=0;
-    I->ID[n] = sele;
+    SelectionInfoInit(I->Info + n);
+    I->Info[n].ID = sele;
     I->NActive++;
   }
 
@@ -1902,7 +1921,7 @@ PyObject *SelectorSecretsAsPyList(void)
        (I->Name[a][1]=='!')) {
       list = PyList_New(2);
       PyList_SetItem(list,0,PyString_FromString(I->Name[a]));
-      PyList_SetItem(list,1,SelectorAsPyList(I->ID[a]));
+      PyList_SetItem(list,1,SelectorAsPyList(I->Info[a].ID));
       PyList_SetItem(result,n_secret,list);
       n_secret++;
     }
@@ -2020,6 +2039,10 @@ int SelectorFromPyList(char *name,PyObject *list)
   int n_obj=0,n_idx=0,idx;
   char *oname;
   ObjectMolecule *obj;
+  int singleAtomFlag = true;
+  int singleObjectFlag = true;
+  ObjectMolecule *singleObject = NULL;
+  int singleAtom = -1;
 
   AtomInfoType *ai;
   if(ok) ok=PyList_Check(list);
@@ -2032,13 +2055,14 @@ int SelectorFromPyList(char *name,PyObject *list)
 
   n=I->NActive;
   VLACheck(I->Name,SelectorWordType,n+1);
-  VLACheck(I->ID,int,n+1);
+  VLACheck(I->Info,SelectionInfoRec,n+1);
   strcpy(I->Name[n],name);
   I->Name[n+1][0]=0;
   sele = I->NSelection++;
-  I->ID[n] = sele;
+  SelectionInfoInit(I->Info + n);
+  I->Info[n].ID = sele;
   I->NActive++;
-  if(ok) 
+  if(ok) {
     for(a=0;a<n_obj;a++) {
       if(ok) obj_list = PyList_GetItem(list,a);
       if(ok) ok = PyList_Check(obj_list);
@@ -2065,10 +2089,44 @@ int SelectorFromPyList(char *name,PyObject *list)
             I->Member[m].priority = 1; /* all restored selections are currently unordered */
             I->Member[m].next = ai->selEntry;
             ai->selEntry = m;
+
+            /* take note of selections which are one atom/one object */
+            if(singleObjectFlag) {
+              if(singleObject) {
+                if( obj!=singleObject) {
+                  singleObjectFlag = false;
+                }
+              } else {
+                singleObject = obj;
+              }
+            }
+            
+            if(singleAtomFlag) {
+              if(singleAtom>=0) {
+                if(idx!=singleAtom) {
+                  singleAtomFlag = false;
+                }
+              } else {
+                singleAtom = idx;
+              }
+            }
           }
         }
       }
     }
+    { /* make note of single atom/object selections */
+      SelectionInfoRec *info = I->Info + (I->NActive-1);
+      if( singleObjectFlag && singleObject ) {
+        info->justOneObjectFlag = true;
+        info->theOneObject = singleObject;
+        if( singleAtomFlag && (singleAtom>=0) ) {
+          info->justOneAtomFlag = true;
+          info->theOneAtom = singleAtom;
+        }
+      }
+    }
+  }
+
   return(ok);
 }
 
@@ -2573,8 +2631,66 @@ int SelectorIsMember(int s,int sele)
   return false;
 }
 /*========================================================================*/
+static int SelectorIndexByID(int id)
+{
+ SelectorType *I=&Selector;
+ int i=0;
+ int result = -1;
+ SelectionInfoRec *info = I->Info;
+ while(i<I->NActive) {
+   if((info++)->ID == id) {
+     result = i;
+     break;
+   }
+   i++;
+ }
+ return result;
+}
+/*========================================================================*/
+ObjectMolecule *SelectorGetFastSingleObjectMolecule(int sele)
+{
+  SelectorType *I=&Selector;
+  ObjectMolecule *result=NULL;
+  SelectionInfoRec *info;
+  sele = SelectorIndexByID(sele);
+  if((sele>=0)&&(sele<I->NActive)) {
+    info = I->Info + sele;
+    if(info->justOneObjectFlag) {
+      if(ExecutiveValidateObjectPtr((CObject*)info->theOneObject,cObjectMolecule))
+        result = info->theOneObject;
+    } else {
+      result = SelectorGetSingleObjectMolecule(sele); /* fallback onto slow approach */
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
+ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(int sele,int *index)
+{
+  SelectorType *I=&Selector;
+  ObjectMolecule *result=NULL;
+  SelectionInfoRec *info;
+  sele = SelectorIndexByID(sele);
+  if((sele>=0)&&(sele<I->NActive)) {
+    info = I->Info + sele;
+    if(info->justOneObjectFlag && info->justOneAtomFlag) {
+      if(ExecutiveValidateObjectPtr((CObject*)info->theOneObject,cObjectMolecule)) {
+        result = info->theOneObject;
+        *index = info->theOneAtom;
+      }
+    } else { /* fallback onto slow approach */
+      if(!SelectorGetSingleAtomObjectIndex(sele,&result,index))
+        result = NULL;
+    }
+  }
+  return(result);
+}
+
+/*========================================================================*/
 ObjectMolecule *SelectorGetSingleObjectMolecule(int sele)
 {
+  /* slow way */
+
   int a;
   ObjectMolecule *result = NULL;
   ObjectMolecule *obj;
@@ -2631,6 +2747,8 @@ ObjectMolecule **SelectorGetObjectMoleculeVLA(int sele)
 /*========================================================================*/
 int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index)
 {
+  /* slow way */
+
   int found_it = false;
   int a;
   CObject *o = NULL;
@@ -2956,24 +3074,33 @@ static void update_min_walk_depth(WalkDepthRec *minWD,
   }
 }
 /*========================================================================*/
-int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
+int SelectorSubdivide(char *pref,int sele1,int sele2,
                             int sele3,int sele4,
                             char *fragPref,char *compName,int *bondMode)
 {
+  SelectorType *I=&Selector;
   int a0,a1,a2;
   int *atom=NULL;
   int *toDo=NULL;
   int *comp=NULL;
   int *pkset=NULL;
   int set_cnt=0;
-  int nAtom;
   int nFrag = 0;
   int *stk=NULL;
   int stkDepth;
   int c,s;
   int cycFlag=false;
   SelectorWordType name,link_sele="";
-  
+  ObjectMolecule *obj1=NULL,*obj2=NULL,*obj3=NULL,*obj4=NULL;
+  int index1,index2,index3,index4;
+
+  /* this is seriously getting out of hand -- need to switch over to arrays soon */
+
+  int *atom1_base,*atom2_base,*atom3_base,*atom4_base;
+  int *toDo1_base,*toDo2_base,*toDo3_base,*toDo4_base;
+  int *comp1_base,*comp2_base,*comp3_base,*comp4_base;
+  int *pkset1_base,*pkset2_base,*pkset3_base,*pkset4_base;
+
   PRINTFD(FB_Selector)
     " SelectorSubdivideObject: entered...\n"
     ENDFD;
@@ -2982,65 +3109,104 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
   ExecutiveDelete(cEditorLink);
   ExecutiveDelete(cEditorSet);
   /* delete any existing matches */
-  if(obj) {
-    ObjectMoleculeUpdateNeighbors(obj);
-    SelectorUpdateTableSingleObject(obj,true,NULL,0);
-    nAtom=obj->NAtom;
-    if(nAtom) {
-      comp = Calloc(int,nAtom);
-      atom = Alloc(int,nAtom);
-      toDo = Alloc(int,nAtom);
-      pkset = Calloc(int,nAtom);
-      stk=VLAlloc(int,100);
+  
+  obj1 = SelectorGetFastSingleAtomObjectIndex(sele1,&index1);
+  obj2 = SelectorGetFastSingleAtomObjectIndex(sele2,&index2);
+  obj3 = SelectorGetFastSingleAtomObjectIndex(sele3,&index3);
+  obj4 = SelectorGetFastSingleAtomObjectIndex(sele4,&index4);
 
-      { 
-        int a;int *p1;
-        p1=toDo;
-        for(a=0;a<nAtom;a++)
-          *(p1++)=true;
-      }
+  if(obj1||obj2||obj3||obj4) {
+    
+    if(obj1) ObjectMoleculeUpdateNeighbors(obj1);
+    if(obj2) ObjectMoleculeUpdateNeighbors(obj2);
+    if(obj3) ObjectMoleculeUpdateNeighbors(obj3);
+    if(obj4) ObjectMoleculeUpdateNeighbors(obj4);
 
-      if(*bondMode) {
-        /* verify bond mode, or clear the flag */
+    SelectorUpdateTable();
+  
+    comp = Calloc(int,I->NAtom);
+    atom = Alloc(int,I->NAtom);
+    toDo = Alloc(int,I->NAtom);
+    pkset = Calloc(int,I->NAtom);
 
-        *bondMode = false;
+    if(obj1) {
+      atom1_base  = atom + obj1->SeleBase;
+      toDo1_base  = toDo + obj1->SeleBase;
+      comp1_base  = comp + obj1->SeleBase;
+      pkset1_base  = pkset+ obj1->SeleBase;
+    }
+
+    if(obj2) {
+      atom2_base  = atom + obj2->SeleBase;
+      toDo2_base  = toDo + obj2->SeleBase;
+      comp2_base  = comp + obj2->SeleBase;
+      pkset2_base  = pkset+ obj2->SeleBase;
+    }
+
+    if(obj3) {
+      atom3_base  = atom + obj3->SeleBase;
+      toDo3_base  = toDo + obj3->SeleBase;
+      comp3_base  = comp + obj3->SeleBase;
+      pkset3_base  = pkset+ obj3->SeleBase;
+    }
+
+    if(obj4) {
+      atom4_base  = atom + obj4->SeleBase;
+      toDo4_base  = toDo + obj4->SeleBase;
+      comp4_base  = comp + obj4->SeleBase;
+      pkset4_base  = pkset+ obj4->SeleBase;
+    }
+
+    stk=VLAlloc(int,100);
+    
+    { 
+      int a;int *p1;
+      p1=toDo;
+      for(a=0;a<I->NAtom;a++)
+        *(p1++)=true;
+    }
+    
+    if(*bondMode) {
+      /* verify bond mode, or clear the flag */
+      
+      *bondMode = false;
+      
+      if((sele1>=0)&&(sele2>=0)&&(sele3<0)&&(sele4<0)&&
+         (obj1==obj2)) { /* two selections only, in same object... */
         
-        if((sele1>=0)&&(sele2>=0)&&(sele3<0)&&(sele4<0)) { /* might be bonded... */
-          
-          a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
-          a1 = ObjectMoleculeGetAtomIndex(obj,sele2);
-          
-          if((a0>=0)&&(a1>=0)) { 
-            
-            s=obj->Neighbor[a0]; /* add neighbors onto the stack */
-            s++; /* skip count */
-            while(1) {
-              a2 = obj->Neighbor[s];
-              if(a2<0)
-                break;
-              if(a2==a1) {
-                *bondMode = true;
-                break;
-              }
-              s+=2;
+        a0 = index1;
+        a1 = index2;
+        
+        if((a0>=0)&&(a1>=0)) { 
+          s=obj1->Neighbor[a0]; /* add neighbors onto the stack */
+          s++; /* skip count */
+          while(1) {
+            a2 = obj1->Neighbor[s];
+            if(a2<0)
+              break;
+            if(a2==a1) {
+              *bondMode = true;
+              break;
             }
+            s+=2;
           }
         }
       }
-      
-      /* ===== BOND MODE ===== (sele0 and sele1 only) */ 
-
-      if(*bondMode) {
-
-        a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
+    }
+    
+    /* ===== BOND MODE ===== (sele0 and sele1 only) */ 
+    
+    if(*bondMode) { 
+      if(obj1==obj2) { /* just to be safe */
+        a0 = index1;
         if(a0>=0) {
           stkDepth=0;
-          s=obj->Neighbor[a0]; /* add neighbors onto the stack */
+          s=obj1->Neighbor[a0]; /* add neighbors onto the stack */
           s++; /* skip count */
           while(1) {
-            a1 = obj->Neighbor[s];
+            a1 = obj1->Neighbor[s];
             if(a1>=0) {
-              if(toDo[a1]) {
+              if(toDo1_base[a1]) {
                 VLACheck(stk,int,stkDepth);
                 stk[stkDepth]=a1;
                 stkDepth++;
@@ -3049,26 +3215,26 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               break;
             s+=2;
           }
-          UtilZeroMem(atom,sizeof(int)*nAtom);
-          atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
-          comp[a0] = 1;
+          UtilZeroMem(atom,sizeof(int)*I->NAtom);
+          atom1_base[a0] = 1; /* create selection for this atom alone as fragment base atom */
+          comp1_base[a0] = 1;
           sprintf(name,"%s%1d",fragPref,nFrag+1);
-          SelectorEmbedSelection(atom,name,NULL,true);
-          c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2,-1,-1) + 1;
+          SelectorEmbedSelection(atom,name,NULL,false);
+          c = SelectorWalkTree(atom1_base,comp1_base,toDo1_base,&stk,stkDepth,obj1,sele1,sele2,-1,-1) + 1;
           sprintf(name,"%s%1d",pref,nFrag+1);
-
+          
           /* check for cyclic situation */
           cycFlag=false;
-          a2 = ObjectMoleculeGetAtomIndex(obj,sele2);
+          a2 = index2;
           if(a2>=0) {
             stkDepth=0;
-            s=obj->Neighbor[a2]; /* add neighbors onto the stack */
+            s=obj1->Neighbor[a2]; /* add neighbors onto the stack */
             s++; /* skip count */
             while(1) {
-              a1 = obj->Neighbor[s];
+              a1 = obj1->Neighbor[s];
               if (a1<0) break;
               if((a1>=0)&&(a1!=a0)) {
-                if(!toDo[a1]) {
+                if(!toDo1_base[a1]) {
                   cycFlag=true; /* we have a cycle...*/
                   break;
                 }
@@ -3077,16 +3243,16 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
             }
           }
           if(cycFlag) { /* cyclic situation is a bit complex...*/
-
-            a0 = ObjectMoleculeGetAtomIndex(obj,sele2);
+            
+            a0 = index2;
             if(a0>=0) {
               stkDepth=0;
-              s=obj->Neighbor[a0]; /* add neighbors onto the stack */
+              s=obj1->Neighbor[a0]; /* add neighbors onto the stack */
               s++; /* skip count */
               while(1) {
-                a1 = obj->Neighbor[s];
+                a1 = obj1->Neighbor[s];
                 if(a1>=0) {
-                  if(toDo[a1]) {
+                  if(toDo1_base[a1]) {
                     VLACheck(stk,int,stkDepth);
                     stk[stkDepth]=a1;
                     stkDepth++;
@@ -3095,25 +3261,25 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
                   break;
                 s+=2;
               }
-              atom[a0] = 1; 
-              comp[a0] = 1;
-              c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2,-1,-1) + 1;
+              atom1_base[a0] = 1; 
+              comp1_base[a0] = 1;
+              c = SelectorWalkTree(atom1_base,comp1_base,toDo1_base,&stk,stkDepth,obj1,sele1,sele2,-1,-1) + 1;
             }
           }
-          SelectorEmbedSelection(atom,name,NULL,true);
+          SelectorEmbedSelection(atom,name,NULL,false);
           nFrag++;
         }
         
         if(!cycFlag) {
-          a0 = ObjectMoleculeGetAtomIndex(obj,sele2);
+          a0 = index2;
           if(a0>=0) {
             stkDepth=0;
-            s=obj->Neighbor[a0]; /* add neighbors onto the stack */
+            s=obj1->Neighbor[a0]; /* add neighbors onto the stack */
             s++; /* skip count */
             while(1) {
-              a1 = obj->Neighbor[s];
+              a1 = obj1->Neighbor[s];
               if(a1>=0) {
-                if(toDo[a1]) {
+                if(toDo1_base[a1]) {
                   VLACheck(stk,int,stkDepth);
                   stk[stkDepth]=a1;
                   stkDepth++;
@@ -3123,208 +3289,205 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               s+=2;
             }
             
-            UtilZeroMem(atom,sizeof(int)*nAtom);
-            atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
-            comp[a0] = 1;
+            UtilZeroMem(atom,sizeof(int)*I->NAtom);
+            atom1_base[a0] = 1; /* create selection for this atom alone as fragment base atom */
+            comp1_base[a0] = 1;
             sprintf(name,"%s%1d",fragPref,nFrag+1);
-            SelectorEmbedSelection(atom,name,NULL,true);
-            c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2,-1,-1) + 1;
+            SelectorEmbedSelection(atom,name,NULL,false);
+            c = SelectorWalkTree(atom1_base,comp1_base,toDo1_base,&stk,stkDepth,obj1,sele1,sele2,-1,-1) + 1;
             sprintf(name,"%s%1d",pref,nFrag+1);
-            SelectorEmbedSelection(atom,name,NULL,true);
+            SelectorEmbedSelection(atom,name,NULL,false);
             nFrag++;
           }
         }
-      } else {
-        /* ===== WALK MODE ===== (any combination of sele0, sele1, sele2, sele3 */
-
-        int *extraStk = VLAlloc(int,50);
-        WalkDepthRec curWalk,minWalk;
-        minWalk.frag = 0;
-
-        if(sele1>=0) {
-          a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
-          if(a0>=0) {
-            pkset[a0]=1;
-            set_cnt++;
-            comp[a0]=1;
-            stkDepth=0;
-            s=obj->Neighbor[a0]; /* add neighbors onto the stack */
-            s++; /* skip count */
-            while(1) {
-              a1 = obj->Neighbor[s];
-              if(a1<0)
-                break;
-              if(toDo[a1]) {
-                stkDepth=1;
-                stk[0] = a1;
-                UtilZeroMem(atom,sizeof(int)*nAtom);
-                atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
-                comp[a1] = 1;
-                sprintf(name,"%s%1d",fragPref,nFrag+1);
-                SelectorEmbedSelection(atom,name,NULL,true);
-                atom[a1] = 0;
-                c = SelectorWalkTreeDepth(atom,comp,toDo,&stk,
-                                          stkDepth,obj,sele1,sele2,sele3,sele4,
-                                          &extraStk, &curWalk );
-                if(c) {
-                  nFrag++;
-                  sprintf(name,"%s%1d",pref,nFrag);
-                  SelectorEmbedSelection(atom,name,NULL,true);
-                  update_min_walk_depth(&minWalk,
-                                        nFrag, &curWalk, 
-                                        sele1, sele2, sele3, sele4);
-                }
+      }
+    } else {
+      /* ===== WALK MODE ===== (any combination of sele0, sele1, sele2, sele3 */
+      
+      int *extraStk = VLAlloc(int,50);
+      WalkDepthRec curWalk,minWalk;
+      minWalk.frag = 0;
+      
+      if(obj1) {
+        a0 = index1;
+        if(a0>=0) {
+          pkset1_base[a0]=1;
+          set_cnt++;
+          comp1_base[a0]=1;
+          stkDepth=0;
+          s=obj1->Neighbor[a0]; /* add neighbors onto the stack */
+          s++; /* skip count */
+          while(1) {
+            a1 = obj1->Neighbor[s];
+            if(a1<0)
+              break;
+            if(toDo1_base[a1]) {
+              stkDepth=1;
+              stk[0] = a1;
+              UtilZeroMem(atom,sizeof(int)*I->NAtom);
+              atom1_base[a1] = 1; /* create selection for this atom alone as fragment base atom */
+              comp1_base[a1] = 1;
+              sprintf(name,"%s%1d",fragPref,nFrag+1);
+              SelectorEmbedSelection(atom,name,NULL,false);
+              atom1_base[a1] = 0;
+              c = SelectorWalkTreeDepth(atom1_base,comp1_base,toDo1_base,&stk,
+                                        stkDepth,obj1,sele1,sele2,sele3,sele4,
+                                        &extraStk, &curWalk );
+              if(c) {
+                nFrag++;
+                sprintf(name,"%s%1d",pref,nFrag);
+                SelectorEmbedSelection(atom,name,NULL,false);
+                update_min_walk_depth(&minWalk,
+                                      nFrag, &curWalk, 
+                                      sele1, sele2, sele3, sele4);
               }
-              s+=2;
             }
+            s+=2;
           }
         }
-        
-        if(sele2>=0) {
-          a0 = ObjectMoleculeGetAtomIndex(obj,sele2);
-          if(a0>=0) {
-            pkset[a0]=1;
-            set_cnt++;
-            comp[a0]=1;
-            stkDepth=0;
-            s=obj->Neighbor[a0]; /* add neighbors onto the stack */
-            s++; /* skip count */
-            while(1) {
-              a1 = obj->Neighbor[s];
-              if(a1<0)
-                break;
-              if(toDo[a1]) {
-                stkDepth=1;
-                stk[0] = a1;
-                UtilZeroMem(atom,sizeof(int)*nAtom);
-                atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
-                comp[a1] = 1;
-                sprintf(name,"%s%1d",fragPref,nFrag+1);
-                SelectorEmbedSelection(atom,name,NULL,true);
-                atom[a1] = 0;
-                c = SelectorWalkTreeDepth(atom,comp,toDo,&stk,
-                                          stkDepth,obj,sele1,sele2,sele3,sele4,
-                                          &extraStk, &curWalk );
-                if(c) {
-                  nFrag++;
-                  sprintf(name,"%s%1d",pref,nFrag);
-                  SelectorEmbedSelection(atom,name,NULL,true);
-                  update_min_walk_depth(&minWalk,
-                                        nFrag, &curWalk, 
-                                        sele1, sele2, sele3, sele4);
-                }
+      }
+      
+      if(obj2) {
+        a0 = index2;
+        if(a0>=0) {
+          pkset2_base[a0]=1;
+          set_cnt++;
+          comp2_base[a0]=1;
+          stkDepth=0;
+          s=obj2->Neighbor[a0]; /* add neighbors onto the stack */
+          s++; /* skip count */
+          while(1) {
+            a1 = obj2->Neighbor[s];
+            if(a1<0)
+              break;
+            if(toDo2_base[a1]) {
+              stkDepth=1;
+              stk[0] = a1;
+              UtilZeroMem(atom,sizeof(int)*I->NAtom);
+              atom2_base[a1] = 1; /* create selection for this atom alone as fragment base atom */
+              comp2_base[a1] = 1;
+              sprintf(name,"%s%1d",fragPref,nFrag+1);
+              SelectorEmbedSelection(atom,name,NULL,false);
+              atom2_base[a1] = 0;
+              c = SelectorWalkTreeDepth(atom2_base,comp2_base,toDo2_base,&stk,
+                                        stkDepth,obj2,sele1,sele2,sele3,sele4,
+                                        &extraStk, &curWalk );
+              if(c) {
+                nFrag++;
+                sprintf(name,"%s%1d",pref,nFrag);
+                SelectorEmbedSelection(atom,name,NULL,false);
+                update_min_walk_depth(&minWalk,
+                                      nFrag, &curWalk, 
+                                      sele1, sele2, sele3, sele4);
               }
-              s+=2;
             }
+            s+=2;
           }
         }
+      }
+      
+      if(obj3) {
+        a0 = index3;
+        if(a0>=0) {
+          pkset3_base[a0]=1;
+          set_cnt++;
+          comp3_base[a0]=1;
+          stkDepth=0;
+          s=obj3->Neighbor[a0]; /* add neighbors onto the stack */
+          s++; /* skip count */
+          while(1) {
+            a1 = obj3->Neighbor[s];
+            if(a1<0)
+              break;
+            if(toDo3_base[a1]) {
+              stkDepth=1;
+              stk[0] = a1;
+              UtilZeroMem(atom,sizeof(int)*I->NAtom);
+              atom3_base[a1] = 1; /* create selection for this atom alone as fragment base atom */
+              comp3_base[a1] = 1;
+              sprintf(name,"%s%1d",fragPref,nFrag+1);
+              SelectorEmbedSelection(atom,name,NULL,false);
+              atom3_base[a1] = 0;
+              c = SelectorWalkTreeDepth(atom3_base,comp3_base,toDo3_base,&stk,
+                                        stkDepth,obj3,sele1,sele2,sele3,sele4,
+                                        &extraStk, &curWalk );
+              if(c) {
+                nFrag++;
+                sprintf(name,"%s%1d",pref,nFrag);
+                SelectorEmbedSelection(atom,name,NULL,false);
+                update_min_walk_depth(&minWalk,
+                                      nFrag, &curWalk, 
+                                      sele1, sele2, sele3, sele4);
                 
-        if(sele3>=0) {
-          a0 = ObjectMoleculeGetAtomIndex(obj,sele3);
-          if(a0>=0) {
-            pkset[a0]=1;
-            set_cnt++;
-            comp[a0]=1;
-            stkDepth=0;
-            s=obj->Neighbor[a0]; /* add neighbors onto the stack */
-            s++; /* skip count */
-            while(1) {
-              a1 = obj->Neighbor[s];
-              if(a1<0)
-                break;
-              if(toDo[a1]) {
-                stkDepth=1;
-                stk[0] = a1;
-                UtilZeroMem(atom,sizeof(int)*nAtom);
-                atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
-                comp[a1] = 1;
-                sprintf(name,"%s%1d",fragPref,nFrag+1);
-                SelectorEmbedSelection(atom,name,NULL,true);
-                atom[a1] = 0;
-                c = SelectorWalkTreeDepth(atom,comp,toDo,&stk,
-                                          stkDepth,obj,sele1,sele2,sele3,sele4,
-                                          &extraStk, &curWalk );
-                if(c) {
-                  nFrag++;
-                  sprintf(name,"%s%1d",pref,nFrag);
-                  SelectorEmbedSelection(atom,name,NULL,true);
-                  update_min_walk_depth(&minWalk,
-                                        nFrag, &curWalk, 
-                                        sele1, sele2, sele3, sele4);
-
-                }
               }
-              s+=2;
             }
+            s+=2;
           }
         }
-        
-        if(sele4>=0) {
-          a0 = ObjectMoleculeGetAtomIndex(obj,sele4);
-          if(a0>=0) {
-            pkset[a0]=1;
-            set_cnt++;
-            comp[a0]=1;
-            stkDepth=0;
-            s=obj->Neighbor[a0]; /* add neighbors onto the stack */
-            s++; /* skip count */
-            while(1) {
-              pkset[a0]=1;
-              set_cnt++;
-
-              a1 = obj->Neighbor[s];
-              if(a1<0)
-                break;
-              if(toDo[a1]) {
-                stkDepth=1;
-                stk[0] = a1;
-                UtilZeroMem(atom,sizeof(int)*nAtom);
-                atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
-                comp[a1] = 1;
-                sprintf(name,"%s%1d",fragPref,nFrag+1);
-                SelectorEmbedSelection(atom,name,NULL,true);
-                atom[a1] = 0;
-                c = SelectorWalkTreeDepth(atom,comp,toDo,&stk,
-                                          stkDepth,obj,sele1,sele2,sele3,sele4,
-                                          &extraStk, &curWalk);
-                if(c) {
-                  nFrag++;
-                  sprintf(name,"%s%1d",pref,nFrag);
-                  SelectorEmbedSelection(atom,name,NULL,true);
-                  update_min_walk_depth(&minWalk,
-                                        nFrag, &curWalk, 
-                                        sele1, sele2, sele3, sele4);
-                }
+      }
+      
+      if(obj4) {
+        a0 = index4;
+        if(a0>=0) {
+          pkset4_base[a0]=1;
+          set_cnt++;
+          comp4_base[a0]=1;
+          stkDepth=0;
+          s=obj4->Neighbor[a0]; /* add neighbors onto the stack */
+          s++; /* skip count */
+          while(1) {
+            a1 = obj4->Neighbor[s];
+            if(a1<0)
+              break;
+            if(toDo4_base[a1]) {
+              stkDepth=1;
+              stk[0] = a1;
+              UtilZeroMem(atom,sizeof(int)*I->NAtom);
+              atom4_base[a1] = 1; /* create selection for this atom alone as fragment base atom */
+              comp4_base[a1] = 1;
+              sprintf(name,"%s%1d",fragPref,nFrag+1);
+              SelectorEmbedSelection(atom,name,NULL,false);
+              atom4_base[a1] = 0;
+              c = SelectorWalkTreeDepth(atom4_base,comp4_base,toDo4_base,&stk,
+                                        stkDepth,obj4,sele1,sele2,sele3,sele4,
+                                        &extraStk, &curWalk);
+              if(c) {
+                nFrag++;
+                sprintf(name,"%s%1d",pref,nFrag);
+                SelectorEmbedSelection(atom,name,NULL,false);
+                update_min_walk_depth(&minWalk,
+                                      nFrag, &curWalk, 
+                                      sele1, sele2, sele3, sele4);
               }
-              s+=2;
             }
+            s+=2;
           }
         }
-
-        if(minWalk.frag) { /* create the linking selection if one exists */
-          sprintf(link_sele,"%s%d|?pk1|?pk2|?pk3|?pk4",pref,minWalk.frag);
-        }
-        VLAFreeP(extraStk);
       }
-
-      if(set_cnt>1) {
-        SelectorEmbedSelection(pkset,cEditorSet,NULL,true);                
-        }
-
-      if(nFrag) {
-        SelectorEmbedSelection(comp,compName,NULL,true);        
+      
+      if(minWalk.frag) { /* create the linking selection if one exists */
+        sprintf(link_sele,"%s%d|?pk1|?pk2|?pk3|?pk4",pref,minWalk.frag);
       }
-
-      if(link_sele[0])
-        SelectorCreate(cEditorLink,link_sele,NULL,true,NULL);
-
-      FreeP(toDo);
-      FreeP(atom);
-      FreeP(comp);
-      FreeP(pkset);
-      VLAFreeP(stk);
-      SelectorClean();
+      VLAFreeP(extraStk);
     }
+    
+    if(set_cnt>1) {
+      SelectorEmbedSelection(pkset,cEditorSet,NULL,false);                
+    }
+    
+    if(nFrag) {
+      SelectorEmbedSelection(comp,compName,NULL,false);
+    }
+    
+    if(link_sele[0])
+      SelectorCreate(cEditorLink,link_sele,NULL,true,NULL);
+    
+    FreeP(toDo);
+    FreeP(atom);
+    FreeP(comp);
+    FreeP(pkset);
+    VLAFreeP(stk);
+    SelectorClean();
   }
   PRINTFD(FB_Selector)
     " SelectorSubdivideObject: leaving...nFrag %d\n",nFrag
@@ -4976,7 +5139,6 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   SceneChanged();
 }
 
-
 /*========================================================================*/
 int SelectorIndexByName(char *sname)
 {
@@ -4996,7 +5158,7 @@ int SelectorIndexByName(char *sname)
      if((best!=sname)&&(strcmp(best,I->Name[i])))
        i=-1;
    }
-   if(i>=0) i = I->ID[i];
+   if(i>=0) i = I->Info[i].ID;
  }
  return(i);
 }
@@ -5138,6 +5300,12 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
   int n,a,m,sele;
   int c=0;
   int start=0;
+  int singleAtomFlag = true;
+  int singleObjectFlag = true;
+  ObjectMolecule *singleObject = NULL,*selObj;
+  int singleAtom = -1;
+  int index;
+
   AtomInfoType *ai;
   n=SelectorWordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
   if(n==0) /* don't allow redefinition of "all" */
@@ -5151,11 +5319,12 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
 
   n=I->NActive;
   VLACheck(I->Name,SelectorWordType,n+1);
-  VLACheck(I->ID,int,n+1);
+  VLACheck(I->Info,SelectionInfoRec,n+1);
   strcpy(I->Name[n],name);
   I->Name[n+1][0]=0;
   sele = I->NSelection++;
-  I->ID[n] = sele;
+  SelectionInfoInit(I->Info + n);
+  I->Info[n].ID = sele;
   I->NActive++;
 
   if(no_dummies) {
@@ -5173,7 +5342,29 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
       }
       if(priority)
         {
-          ai = I->Obj[I->Table[a].model]->AtomInfo+I->Table[a].atom;
+          selObj = I->Obj[I->Table[a].model];
+          index = I->Table[a].atom;
+          ai = selObj->AtomInfo+index;
+
+          if(singleObjectFlag) {
+            if(singleObject) {
+              if(selObj!=singleObject) {
+                singleObjectFlag = false;
+              }
+            } else {
+              singleObject = selObj;
+            }
+          }
+
+          if(singleAtomFlag) {
+            if(singleAtom>=0) {
+              if(index!=singleAtom) {
+                singleAtomFlag = false;
+              }
+            } else {
+              singleAtom = index;
+            }
+          }
 
           c++;
           if(I->FreeMember>0) {
@@ -5192,7 +5383,21 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
           ai->selEntry = m;
         }
     }
-  if(atom) {
+
+  if(c) { /* if selection contains just one atom/object, then take note */
+
+    SelectionInfoRec *info = I->Info + (I->NActive-1);
+    if( singleObjectFlag ) {
+      info->justOneObjectFlag = true;
+      info->theOneObject = singleObject;
+      if( singleAtomFlag ) {
+        info->justOneAtomFlag = true;
+        info->theOneAtom = singleAtom;
+      }
+    }
+  }
+
+  if(atom) { /* only manage selections defined via atom masks */
     if(newFlag)
       ExecutiveManageSelection(name);
     else
@@ -6329,7 +6534,7 @@ int SelectorSelect1(EvalElem *base)
 		sele=SelectorWordIndex(I->Name,base[1].text,1,I->IgnoreCase);
 		if(sele>=0)
 		  {
-          sele=I->ID[sele];
+          sele=I->Info[sele].ID;
 			 for(a=cNDummyAtoms;a<I->NAtom;a++)
 				{
 				  base[0].sele[a]=false;
@@ -6656,6 +6861,29 @@ int SelectorLogic1(EvalElem *base)
             a2 = a1+lastObj->SeleBase;
             if(!base[1].sele[a2])
               base[0].sele[a2] =1;
+            n+=2;
+          }
+        }
+      }
+      FreeP(base[1].sele);
+      break;
+    case SELE_BON1:
+      base[1].sele=base[0].sele;
+      base[0].sele=Calloc(int,I->NAtom);
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        if(base[1].sele[a]) {
+          if(I->Obj[I->Table[a].model]!=lastObj) {
+            lastObj = I->Obj[I->Table[a].model];
+            ObjectMoleculeUpdateNeighbors(lastObj);
+          }
+          a0= I->Table[a].atom;
+          n=lastObj->Neighbor[a0];
+          n++;
+          while(1) {
+            a1=lastObj->Neighbor[n];
+            if(a1<0) break;
+            a2 = a1+lastObj->SeleBase;
+            base[0].sele[a2] =1;
             n+=2;
           }
         }
@@ -7732,7 +7960,7 @@ void SelectorFree(void)
       I->Center->Obj.fFree((CObject*)I->Center);
   VLAFreeP(I->Member);
   VLAFreeP(I->Name);
-  VLAFreeP(I->ID);
+  VLAFreeP(I->Info);
 }
 
 
@@ -7768,18 +7996,20 @@ static void SelectorInit2(void)
 
     n=I->NActive;
     VLACheck(I->Name,SelectorWordType,n+1);
-    VLACheck(I->ID,int,n+1);
+    VLACheck(I->Info,SelectionInfoRec,n+1);
     strcpy(I->Name[n],cKeywordAll); /* "all" selection = 0*/
     I->Name[n+1][0]=0;
-    I->ID[n] = I->NSelection++;
+    SelectionInfoInit(I->Info + n);
+    I->Info[n].ID = I->NSelection++;
     I->NActive++;
 
     n=I->NActive;
     VLACheck(I->Name,SelectorWordType,n+1);
-    VLACheck(I->ID,int,n+1);
+    VLACheck(I->Info,SelectionInfoRec,n+1);
     strcpy(I->Name[n],cKeywordNone); /* "none" selection = 1*/
     I->Name[n+1][0]=0;
-    I->ID[n] = I->NSelection++;
+    SelectionInfoInit(I->Info + n);
+    I->Info[n].ID = I->NSelection++;
     I->NActive++;
   }
 
@@ -7796,7 +8026,7 @@ void SelectorInit(void)
 {
   SelectorType *I = &Selector;
   I->Name = VLAlloc(SelectorWordType,100);
-  I->ID = VLAlloc(int,100);
+  I->Info = VLAlloc(SelectionInfoRec,100);
   
   I->Member = (MemberType*)VLAMalloc(10000,sizeof(MemberType),5,true);
   I->Vertex=NULL;

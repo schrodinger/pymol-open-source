@@ -1274,7 +1274,6 @@ static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdInvert(PyObject *self, PyObject *args)
 {
-  char *str0,*str1;
   int int1;
   int ok=false;
   ok = PyArg_ParseTuple(args,"i",&int1);

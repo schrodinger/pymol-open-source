@@ -89,6 +89,7 @@ function name.
 
 /* layer 0 */
 
+
 #define FB_Isomesh                   1
 #define FB_Map                       2
 #define FB_Matrix                    3
@@ -97,6 +98,7 @@ function name.
 #define FB_Match                     6
 #define FB_Raw                       7
 #define FB_Isosurface                8
+#define FB_OpenGL                    9
 
 /* layer 1 */
 

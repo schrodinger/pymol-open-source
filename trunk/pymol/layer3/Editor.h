@@ -42,7 +42,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state);
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
                 float *pt,float *mov,float *z_dir);
 
-void EditorSetActiveObject(ObjectMolecule *obj,int state,int enable_bond);
+void EditorActivate(int state,int enable_bond);
 ObjectMolecule *EditorDragObject(void);
 void EditorReplace(char *elem,int geom,int valence,char *name);
 void EditorAttach(char *elem,int geom,int valence,char *name);
@@ -51,7 +51,9 @@ void EditorHFill(void);
 void EditorCycleValence(void);
 void EditorInactivate(void);
 void EditorUpdateState(void);
-ObjectMolecule *EditorGetActiveObject(void);
+
+int EditorIsAnActiveObject(ObjectMolecule *obj);
+
 int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int quiet);
 int EditorTorsion(float angle);
 int EditorInvert(int quiet);
@@ -59,10 +61,9 @@ int EditorInvert(int quiet);
 PyObject *EditorAsPyList(void);
 int EditorFromPyList(PyObject *list);
 void EditorGetNextMultiatom(char *name);
-int EditorIsObjectNotCurrent(ObjectMolecule *obj);
 int EditorGetSinglePicked(char *name);
 int EditorIsBondMode(void);
-int EditorDeselectIfSelected(int index,int update);
+int EditorDeselectIfSelected(ObjectMolecule *obj,int index,int update);
 void EditorDefineExtraPks(void);
 int EditorGetNFrag(void);
 

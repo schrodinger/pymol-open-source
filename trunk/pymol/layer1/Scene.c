@@ -1502,44 +1502,44 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                            I->LastWinX,I->LastWinY,"pick_menu",buffer,buf1);
           break;
         case cButModePickAtom1:
-          if(Feedback(FB_ObjectMolecule,FB_Results)) {
-            if(obj->fDescribeElement)
-              obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-            PRINTF " You clicked %s -> (%s)\n",buffer,cEditorSele1 ENDF;
+          if(obj&&obj->type==cObjectMolecule) {
+            if(Feedback(FB_ObjectMolecule,FB_Results)) {
+              if(obj->fDescribeElement)
+                obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+              PRINTF " You clicked %s -> (%s)\n",buffer,cEditorSele1 ENDF;
+            }
+            if(SettingGet(cSetting_logging)) {
+              objMol = (ObjectMolecule*)obj;            
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
+              sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
+              PLog(buf2,cPLog_pym);
+            }
+            OrthoRestorePrompt();
+            sprintf(buffer,"%s`%d",
+                    obj->Name,I->LastPicked.index+1);    
+            EditorInactivate();
+            SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
+            EditorActivate(SettingGetGlobal_i(cSetting_state)-1,false);
+            if(EditorActive()) {
+              EditorDefineExtraPks();
+            }
+            WizardDoPick(0);
           }
-          if(SettingGet(cSetting_logging)) {
-            objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
-            sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
-            PLog(buf2,cPLog_pym);
-          }
-          OrthoRestorePrompt();
-          sprintf(buffer,"%s`%d",
-                  obj->Name,I->LastPicked.index+1);    
-          EditorInactivate();
-          SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
-          ExecutiveDelete(cEditorSele2);
-          EditorSetActiveObject((ObjectMolecule*)obj,
-                                SettingGetGlobal_i(cSetting_state)-1,false);
-          if(EditorActive()) {
-            EditorDefineExtraPks();
-          }
-          WizardDoPick(0);
           break;
         case cButModePickAtom:
-          {
+          if(obj&&obj->type==cObjectMolecule){
             WordType name;
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-            if(EditorIsObjectNotCurrent((ObjectMolecule*)obj))
+            if(EditorIsBondMode()&&!(EditorIsAnActiveObject((ObjectMolecule*)obj)))
               EditorInactivate();
-            if((!EditorIsBondMode())&&EditorDeselectIfSelected(I->LastPicked.index,true)) {
+            if((!EditorIsBondMode())&&EditorDeselectIfSelected((ObjectMolecule*)obj,I->LastPicked.index,true)) {
               
               PRINTF " You unpicked %s.",buffer ENDF;
               if(EditorActive())
                 EditorDefineExtraPks();
             } else {
-              if(EditorIsBondMode()&&EditorDeselectIfSelected(I->LastPicked.index,false)) {
+              if(EditorIsBondMode()&&EditorDeselectIfSelected((ObjectMolecule*)obj,I->LastPicked.index,false)) {
                 EditorInactivate();
               }
               EditorGetNextMultiatom(name);
@@ -1549,8 +1549,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               sprintf(buffer,"%s`%d",obj->Name,I->LastPicked.index+1);    
               ExecutiveDelete(name);
               SelectorCreate(name,buffer,NULL,true,NULL);
-              EditorSetActiveObject((ObjectMolecule*)obj,
-                                    SettingGetGlobal_i(cSetting_state)-1,false);
+              EditorActivate(SettingGetGlobal_i(cSetting_state)-1,false);
               if(EditorActive()) {
                 EditorDefineExtraPks();
               }
@@ -1636,8 +1635,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           sprintf(buffer,"%s`%d",
                   obj->Name,atIndex+1);    
           SelectorCreate(cEditorSele2,buffer,NULL,true,NULL);
-          EditorSetActiveObject(objMol,
-                                SettingGetGlobal_i(cSetting_state)-1,true);
+          EditorActivate(SettingGetGlobal_i(cSetting_state)-1,true);
 
 
           if(mode==cButModePkTorBnd) {
@@ -3201,6 +3199,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   fov=SettingGet(cSetting_field_of_view);
   if(PMGUI) {
 
+    if(Feedback(FB_OpenGL,FB_Debugging))
+      PyMOLCheckOpenGLErr("SceneRender checkpoint 0");
+
     must_render_stereo = (I->StereoMode!=0);
     if(!must_render_stereo) 
       if(double_pump&&StereoCapable) {            /* force stereo rendering */
@@ -3215,6 +3216,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glDrawBuffer(GL_BACK);
       render_buffer = GL_BACK;
     }
+
+    if(Feedback(FB_OpenGL,FB_Debugging))
+      PyMOLCheckOpenGLErr("SceneRender checkpoint 1");
+
   
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
     glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
@@ -3422,7 +3427,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
         break;
       }
-	
+
       glClearColor(0.0,0.0,0.0,0.0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -3565,6 +3570,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         PRINTFD(FB_Scene)
           " SceneRender: left hand stereo...\n"
           ENDFD;
+
+        if(Feedback(FB_OpenGL,FB_Debugging))
+          PyMOLCheckOpenGLErr("before stereo glViewport 1");
         
         /* LEFT HAND STEREO */
 
@@ -3586,6 +3594,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           break;
         }
         
+
         glPushMatrix(); /* 1 */
         ScenePrepareMatrix(stereo_as_mono ? 0 : 1);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
@@ -3619,6 +3628,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           " SceneRender: right hand stereo...\n"
           ENDFD;
 
+        if(Feedback(FB_OpenGL,FB_Debugging))
+          PyMOLCheckOpenGLErr("before stereo glViewport 2");
+
         if(stereo_as_mono) { /* double pumped mono */
           glDrawBuffer(GL_BACK_RIGHT);
         } else switch(I->StereoMode) {
@@ -3636,6 +3648,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
+
         
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix(); /* 1 */
@@ -3682,6 +3695,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
       } else {
 
+        if(Feedback(FB_OpenGL,FB_Debugging))
+          PyMOLCheckOpenGLErr("Before mono rendering");
+
         /* mono rendering */
 
         PRINTFD(FB_Scene)
@@ -3722,6 +3738,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         SceneRenderAll(&context,normal,NULL,-1,false);
         glPopMatrix();
 
+        if(Feedback(FB_OpenGL,FB_Debugging))
+          PyMOLCheckOpenGLErr("during mono rendering");
       }
     }
     
@@ -3738,6 +3756,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     glDisable(GL_NORMALIZE);
     glDisable(GL_DEPTH_TEST);
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
+
+    if(Feedback(FB_OpenGL,FB_Debugging))
+      PyMOLCheckOpenGLErr("SceneRender final checkpoint");
+
   }
 
   PRINTFD(FB_Scene)
