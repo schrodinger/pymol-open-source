@@ -1846,8 +1846,35 @@ PYMOL API
 
 def rename(*arg):
    '''
-   '''
-   force = 1
+DESCRIPTION
+  
+   "rename" creates new atom names which are unique within a selection.
+      
+USAGE
+
+   CURRENT
+      rename object-name [ ,force ]
+      
+      force = 0 or 1 (default: 0)
+      
+   PROPOSED
+      rename object-or-selection,force   
+
+PYMOL API
+
+   CURRENT
+      cmd.rename( string object-name, int force )
+
+   PROPOSED
+      cmd.rename( string object-or-selection, int force )
+
+NOTES
+
+   To regerate only some atom names in a molecule, first clear them
+   with an "alter (sele),name=''" commmand, then use "rename"
+
+'''
+   force = 0
    if len(arg):
       a=arg[0]
    else:

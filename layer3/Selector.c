@@ -2580,7 +2580,7 @@ int *SelectorEvaluate(WordType *word)
 {
   int level = 0;
   int depth = 0;
-  int a,c = 0;
+  int a,b,c = 0;
   int ok=true;
   unsigned int code;
   int valueFlag = 0; /* are we expecting? */
@@ -2641,7 +2641,16 @@ int *SelectorEvaluate(WordType *word)
 				} 
 			 else
 				{
-				  code=WordKey(Keyword,word[c],4,I->IgnoreCase);
+              code=WordKey(Keyword,word[c],4,I->IgnoreCase);
+              if(!code) {
+                b=strlen(word[c])-1;
+                if((b>2)&&(word[c][b]==';')) {
+                  /* kludge to accomodate unnec. ';' usage */
+                  word[c][b]=0;
+                  code=WordKey(Keyword,word[c],4,I->IgnoreCase);
+                }
+                  
+              }
               if(DebugState&DebugSelector)
                 printf("code %x\n",code);
               if(code>0)  

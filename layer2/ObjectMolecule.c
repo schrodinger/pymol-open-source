@@ -97,7 +97,14 @@ int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1)
 /*========================================================================*/
 void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force)
 {
-    AtomInfoUniquefyNames(NULL,0,I->AtomInfo,I->NAtom);  
+  AtomInfoType *ai;
+  int a;
+  if(force) {
+    ai=I->AtomInfo;
+    for(a=0;a<I->NAtom;a++)
+      (ai++)->name[0]=0;
+  }
+  AtomInfoUniquefyNames(NULL,0,I->AtomInfo,I->NAtom);  
 }
 /*========================================================================*/
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
