@@ -550,7 +550,8 @@ SEE ALSO
       finally:
          unlock()
       if go_to_first_scene:
-         cmd.scene("auto","start",animate=0)
+         if int(cmd.get_setting_legacy("presentation_auto_start"))!=0:
+            cmd.scene("auto","start",animate=0)
       return r
 
    def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1):
