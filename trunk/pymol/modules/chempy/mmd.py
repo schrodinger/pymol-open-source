@@ -75,6 +75,19 @@ class MMD(Storage):
       return(model.convert_to_indexed())
 
 #---------------------------------------------------------------------------------
+   def updateFromList(self,model,list): # updates charges and coordinates
+      nAtom = int(list[0][1:6])
+      if nAtom!=model.nAtom:
+         raise RuntimeError(" mmd: atom count mismatch")
+      c = 0
+      for a in list[1:]:
+         mac = model.atom[c]
+         mac.coord = [float(a[53:64]), 
+            float(a[65:76]), float(a[77:88])]
+         mac.partial_charge = float(a[100:109])         
+         c = c + 1
+
+#---------------------------------------------------------------------------------
    def toList(self,model,no_blank_names=1):
 
       conn = copy.deepcopy(model)
