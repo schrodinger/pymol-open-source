@@ -1,4 +1,4 @@
-PARM99 for DNA,RNA,AA, organic molecules, TIP3P wat. Polariz.& LP incl.02/04/99
+PARM99 with a bunch of bogus hacks for ramming small molecules into Amber (WATCHOUT)
 C  12.01         0.616  !            sp2 C carbonyl group 
 CA 12.01         0.360               sp2 C pure aromatic (benzene)
 CB 12.01         0.360               sp2 aromatic C, 5&6 membered ring junction
@@ -191,6 +191,10 @@ CA-OS  450.0    1.364       WLD from CA-OH
 CN-NC  428.0    1.380       WLD from CN-NA
 CA-CC  469.0    1.404       WLD from CA-CB
 CC-NC  410.0    1.394       WLD from CC-NB
+CW-N2  481.0    1.340       WLD from CA-N2
+CV-NC  410.0    1.394       WLD from CV-NB
+CC-N2  481.0    1.340       WLD from CA-N2
+CV-CW  518.0    1.371       WLD from CC-CW
 
 HW-OW-HW    100.      104.52    TIP3P water
 HW-HW-OW      0.      127.74    (found in crystallographic water with 3 bonds)
@@ -521,6 +525,23 @@ CC-NC-CN    70.0      111.00    WLD from CB-NC-CQ
 CA-CA-CC    63.0      120.00    WLD from CA-CA-CB
 CT-CC-NC    70.0      120.00    WLD from CT-CC-NA
 CA-CB-CA    63.0      117.30    WLD from CA-CB-CB
+CC-NC-CV    70.0      111.00    WLD from CB-NC-CQ 
+CW-CV-H4    50.0      120.00    WLD from CC-CV-H4
+CC-CT-H1    50.0      109.50    WLD from C -CT-H1
+NC-CC-N2    70.0      120.00    WLD from CW-CC-NB
+CC-N2-CT    50.0      123.20    WLD from CA-N2-CT
+CV-CW-N2    70.0      120.00    WLD from CC-CW-NA
+CC-N2-CT    50.0      123.20    WLD from CA-N2-CT
+CT-CC-N2    70.0      120.00    WLD from CT-CC-NA
+N2-CW-H4    50.0      120.00    WLD from CC-CW-H4
+CV-CW-H4    50.0      120.00    WLD from CC-CW-H4
+CW-N2-H     50.0      120.00    WLD from CA-N2-H
+CW-CV-NC    70.0      120.00    WLD from CC-CV-NB
+CW-N2-CT    50.0      123.20    WLD from CA-N2-CT
+NC-CV-H4    50.0      120.00    WLD from CC-CV-H4 
+CC-CT-N2    63.0      113.10    WLD from CC-CT-CT
+CC-CT-CY    63.0      110.00    WLD from CT-CT-CY
+N2-CT-CY    63.0      110.00    WLD from CT-CT-CY
 
 X -C -C -X    4   14.50        180.0             2.         Junmei et al, 1999
 X -C -CA-X    4   14.50        180.0             2.         intrpol.bsd.on C6H6
@@ -592,6 +613,11 @@ X -CA-OS-X    2    2.40        180.0             4.         WLD gross est.
 X -CC-CA-X    4   20.60        180.0             2.         WLD from X -CC-CV-X
 X -CC-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
 X -CN-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
+X -CV-CW-X    4   21.50        180.0             2.         WLD From X -CC-CW-X
+X -C -NC-X    2    8.00        180.0             2.         WLD from X -C -NC-X
+X -CV-NC-X    2    4.80        180.0             2.         WLD from X -CV-NB-X
+X -CC-N2-X    2    4.80        180.0             2.         WLD from X -CC-NB-X
+X -CW-N2-X    4    6.00        180.0             2.         WLD from X -CW-NA-X
 N -CT-C -N    1    2.000       180.000           2.
 C -N -CT-C    1    0.850       180.000          -2.
 C -N -CT-C    1    0.800         0.000           1.
