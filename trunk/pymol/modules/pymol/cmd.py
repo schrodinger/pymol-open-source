@@ -117,13 +117,13 @@ KEYBOARD COMMANDS and MODIFIERS
  
  ATOM SELECTIONS (These only work on the "lines" representation!)
   
-   CTRL/left mouse click    Pick atom and store as selection (pk1).
-   CTRL/middle mouse click  Pick atom and store as selection (pk2).
-   CTRL/right mouse click   Pick atom and store as selection (pk3).
+   CTRL/left mouse click    Pick atom and store as selection (lmb).
+   CTRL/middle mouse click  Pick atom and store as selection (mmb).
+   CTRL/right mouse click   Pick atom and store as selection (rmb).
  
-   CTRL-SHIFT/left mouse click    Pick atom and add to selection (pk1).
-   CTRL-SHIFT/middle mouse click  Pick atom and add to selection (pk2).
-   CTRL-SHIFT/right mouse click   Pick atom and add to selection (pk3).
+   CTRL-SHIFT/left mouse click    Pick atom and add to selection (lmb).
+   CTRL-SHIFT/middle mouse click  Pick atom and add to selection (mmb).
+   CTRL-SHIFT/right mouse click   Pick atom and add to selection (rmb).
    '''
    help('keyboard')
 
@@ -146,13 +146,13 @@ MOUSE CONTROLS
  
 ATOM SELECTIONS (These only work on the "lines" representation!)
  
-   CTRL-left mouse click    Pick atom and store as selection (pk1).
-   CTRL-middle mouse click  Pick atom and store as selection (pk2).
-   CTRL-right mouse click   Pick atom and store as selection (pk3).
+   CTRL-left mouse click    Pick atom and store as selection (lb).
+   CTRL-middle mouse click  Pick atom and store as selection (mb).
+   CTRL-right mouse click   Pick atom and store as selection (rb).
  
-   CTRL-SHIFT-left mouse click    Pick atom and add to selection (pk1).
-   CTRL-SHIFT-middle mouse click  Pick atom and add to selection (pk2).
-   CTRL-SHIFT-right mouse click   Pick atom and add to selection (pk3).
+   CTRL-SHIFT-left mouse click    Pick atom and add to selection (lb).
+   CTRL-SHIFT-middle mouse click  Pick atom and add to selection (mb).
+   CTRL-SHIFT-right mouse click   Pick atom and add to selection (rb).
    '''
    help('mouse')
 
@@ -402,7 +402,7 @@ debugging feature, not an official part of the API.
       unlock()
    return r
 
-def edit(*arg):   
+def edit_mode(*arg):   
    try:
       lock()
       r = _cmd.get_setting("button_mode")
@@ -436,12 +436,12 @@ def config_mouse():
          button('l','shft','rotz')
          button('m','shft','move')
          button('r','shft','clip')                  
-         button('l','ctrl','pk1')
-         button('m','ctrl','pk2')
-         button('r','ctrl','pk3')                  
-         button('l','ctsh','+pk1')
+         button('l','ctrl','lb')
+         button('m','ctrl','mb')
+         button('r','ctrl','rb')                  
+         button('l','ctsh','+lb')
          button('m','ctsh','orig')
-         button('r','ctsh','+pk3')
+         button('r','ctsh','+rb')
          print " Mouse: configured for visualization."
       else:
          # editing
@@ -454,9 +454,9 @@ def config_mouse():
          button('l','ctrl','torf')
          button('m','ctrl','pkat')
          button('r','ctrl','pkbd')                  
-         button('l','ctsh','pk1')
+         button('l','ctsh','lb')
          button('m','ctsh','orig')
-         button('r','ctsh','pk3')
+         button('r','ctsh','rb')
          print " Mouse: configured for editing."
    finally:
       unlock()
@@ -488,7 +488,7 @@ PYMOL API
  
 NOTES
  
-   "dist" alone will show distances between selections (pk1) and (pk3)
+   "dist" alone will show distances between selections (lb) and (rb)
    created by left and right button atom picks (hold down CTRL)
 '''
    la = len(arg)
@@ -501,7 +501,7 @@ NOTES
       finally:
          unlock()
       if la==0:
-         argst = "(pk1),(pk3)"
+         argst = "(lb),(rb)"
       else:
          argst = arg[0]
    else:
@@ -550,8 +550,8 @@ NOTES
          sel1 = arg[0]
          sel2 = arg[1]
       else:
-         sel1 = "(pk1)"
-         sel2 = "(pk3)"
+         sel1 = "(lb)"
+         sel2 = "(rb)"
       order = 1
       if(la>2):
          order = int(arg[2])
@@ -560,6 +560,25 @@ NOTES
          r = _cmd.bond(sel1,sel2,order,1)
       finally:
          unlock()
+   return r
+
+def invert(*arg):
+   '''
+'''
+   la = len(arg)
+   if la:
+      sel1=arg[0]
+   else:
+      sel1="(lb)"
+   if la>1:
+      sel2=arg[1]
+   else:
+      sel2="(rb)"
+   try:
+      lock()
+      r = _cmd.invert(sel1,sel2,0)
+   finally:
+      unlock()
    return r
 
 def unbond(*arg):
@@ -584,8 +603,8 @@ NOTES
          sel1 = arg[0]
          sel2 = arg[1]
       else:
-         sel1 = "(pk1)"
-         sel2 = "(pk3)"
+         sel1 = "(lb)"
+         sel2 = "(rb)"
       try:
          lock()
          r = _cmd.bond(sel1,sel2,0,0)
@@ -954,11 +973,11 @@ OBSOLETE - TO BE REMOVED
    '''
    la = len(arg)
    if la==0:
-      a="pk1"
-      b="pk3"
+      a="lb"
+      b="rb"
    elif la==1:
       a=arg[0]
-      b="pk1"
+      b="lb"
    elif la==2:
       a=arg[0]
       b=arg[1]
@@ -1209,7 +1228,7 @@ PYTHON EXAMPLE
       b=int(arg[1])-1
    try:
       lock()
-      r = _cmd.intrafit(arg[0],b,0)
+      r = _cmd.intrafit(str(arg[0]),b,0)
    finally:
       unlock()
    return r
@@ -1344,6 +1363,7 @@ def cycle_valence():
       unlock()
    return r
 
+
 def attach(name,geom,valence):
    r = 1
    try:
@@ -1363,14 +1383,45 @@ def fuse(*arg):
          sel1 = arg[0]
          sel2 = arg[1]
       else:
-         sel1 = "(pk1)"
-         sel2 = "(pk3)"
+         sel1 = "(lb)"
+         sel2 = "(rb)"
       try:
          lock()
          r = _cmd.fuse(sel1,sel2)
       finally:
          unlock()
    return r
+
+def edit(*arg):
+   sel0=''
+   sel1=''
+   sel2=''
+   sel3=''
+   la = len(arg)
+   if la>=1:
+      sel0=arg[0]
+   if la>=2:
+      sel1=arg[1]
+   if la>=3:
+      sel2=arg[2]
+   if la>=4:
+      sel3=arg[3]
+   r = 1
+   try:
+      lock()   
+      r = _cmd.edit(sel0,sel1,sel2,sel3)
+   finally:
+      unlock()
+   return r
+
+def torsion(deg):
+   try:
+      lock()   
+      r = _cmd.torsion(float(deg))
+   finally:
+      unlock()
+   return r
+   
 
 def refill():
    r = 1
@@ -2395,6 +2446,17 @@ def load_model(*arg):
          oname = string.strip(arg[1])
          state = int(arg[2])-1
          r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
+      elif len(arg)==4:
+         oname = string.strip(arg[1])
+         state = int(arg[2])-1
+         finish = int(arg[3])-1
+         r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
+      elif len(arg)==5:
+         oname = string.strip(arg[1])
+         state = int(arg[2])-1
+         finish = int(arg[3])-1
+         discrete = int(arg[4])-1 
+         r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
       else:
          print "Error: invalid arguments."
    finally:
@@ -2578,7 +2640,7 @@ PYMOL API
  
 EXAMPLES 
  
-   select near = (pk1 expand 8)
+   select near = (ll expand 8)
    select bb = (name ca,n,c,o )
    '''
    try:
@@ -2996,6 +3058,27 @@ def check(obj):
    from chempy.tinker import realtime
    realtime.setup("("+obj+")")
    realtime.check()
+
+def fast_minimize(*arg):
+   # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
+   # assumes that the molecular state has already been accurately defined
+   # and that no changes have been made to atom types
+   from chempy.tinker import realtime  
+   grad  = 0.01
+   iter = 500
+   interval = 50
+   la = len(arg)
+   if la:
+      sele  = "("+arg[0]+")"
+      if la>1:
+         iter = int(arg[1])
+      if la>2:
+         grad = float(arg[2])
+      if la>3:
+         interval = int(arg[3])
+      t = threading.Thread(target=realtime.mini,args=(iter,grad,interval,arg[0]))
+      t.setDaemon(1)
+      t.start()
    
 def minimize(*arg):
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
@@ -3013,7 +3096,9 @@ def minimize(*arg):
       if la>3:
          interval = int(arg[3])
       if realtime.setup(sele):
-         realtime.mini(iter,grad,interval,arg[0])
+         t = threading.Thread(target=realtime.mini,args=(iter,grad,interval,arg[0]))
+         t.setDaemon(1)
+         t.start()
       else:
          print " minimize: missing parameters, can't continue"
    
@@ -3097,13 +3182,15 @@ keyword = {
    'dist'          : [dist         , 0 , 2 , '=' , 0 ],
    'distance'      : [distance     , 0 , 2 , '=' , 0 ],
    'dump'          : [dump         , 2 , 2 , ',' , 0 ],
-   'edit'          : [edit         , 0 , 1 , ',' , 0 ],
+   'edit'          : [edit         , 1 , 4 , ',' , 0 ],
+   'edit_mode'     : [edit_mode    , 0 , 1 , ',' , 0 ],
    'enable'        : [enable       , 0 , 1 , ',' , 0 ],
    'ending'        : [ending       , 0 , 0 , ',' , 0 ],
    'export_dots'   : [export_dots  , 2 , 2 , ',' , 0 ],
+   'fast_minimize' : [fast_minimize, 1,  4 , ',' , 0 ],
    'fit'           : [fit          , 2 , 2 , ',' , 0 ],
    'flag'          : [flag         , 2 , 2 , '=' , 0 ],
-   'fork'          : [dummy        , 1 , 1 , ',' , 3 ],
+   'fork'          : [dummy        , 1 , 2 , ',' , 3 ],
    'forward'       : [forward      , 0 , 0 , ',' , 0 ],
    'fragment'      : [fragment     , 1 , 1 , ',' , 0 ],
    'fuse'          : [fuse         , 0 , 2 , ',' , 0 ],
@@ -3114,6 +3201,7 @@ keyword = {
    'intra_fit'     : [intra_fit    , 1 , 2 , ',' , 0 ],
    'intra_rms'     : [intra_rms    , 1 , 2 , ',' , 0 ],
    'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , 0 ],
+   'invert'        : [invert       , 0 , 2 , ',' , 0 ],
    'isodot'        : [isodot       , 2 , 2 , '=' , 0 ],   
    'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],
    'label'         : [label        , 1 , 2 , ',' , 0 ],
@@ -3156,6 +3244,7 @@ keyword = {
    'set_key'       : [set_key      , 2 , 1 , ',' , 0 ], # API only
    'show'          : [show         , 0 , 2 , ',' , 0 ],
    'sort'          : [sort         , 0 , 1 , ',' , 0 ],
+   'spawn'         : [dummy        , 1 , 2 , ',' , 3 ],
    'spheroid'      : [spheroid     , 0 , 1 , ',' , 0 ],
    'splash'        : [splash       , 0 , 0 , ',' , 0 ],
    '_special'      : [_special     , 3 , 3 , ',' , 0 ],
@@ -3163,6 +3252,7 @@ keyword = {
    'symexp'        : [symexp       , 2 , 2 , '=' , 0 ],
    'system'        : [system       , 1 , 1 , ',' , 0 ],
    'test'          : [test         , 0 , 0 , ',' , 0 ],
+   'torsion'       : [torsion      , 1 , 1 , ',' , 0 ],
    'turn'          : [turn         , 2 , 2 , ',' , 0 ],
    'quit'          : [quit         , 0 , 0 , ',' , 0 ],
    '_quit'         : [_quit        , 0 , 0 , ',' , 0 ],
@@ -3220,12 +3310,12 @@ but_act_code = {
    'rotz' :  4 ,
    'clpn' :  5 ,
    'clpf' :  6 ,
-   'pk1'  :  7 ,
-   'pk2'  :  8 ,
-   'pk3'  :  9 ,
-   '+pk1' : 10 ,
-   '+pk2' : 11 ,
-   '+pk3' : 12 ,
+   'lb'   :  7 ,
+   'mb'   :  8 ,
+   'rb'   :  9 ,
+   '+lb'  : 10 ,
+   '+mb'  : 11 ,
+   '+rb'  : 12 ,
    'pkat' : 13 ,
    'pkbd' : 14 ,
    'rotf' : 15 ,

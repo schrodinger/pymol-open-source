@@ -535,6 +535,7 @@ void PUnblock(void)
   /* P_glut_thread_active will not change as long as lock holds */
 
   is_glut = PyObject_CallMethod(P_cmd,"is_glut_thread","");
+  ErrChkPtr(is_glut);
   P_glut_thread_active = PyInt_AsLong(is_glut);
   Py_DECREF(is_glut);
 
