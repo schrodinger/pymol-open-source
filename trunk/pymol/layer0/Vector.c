@@ -41,10 +41,17 @@ Z* -------------------------------------------------------------------
 
 float get_random0to1f()
 {
-  return(rand()/(1.0+RAND_MAX));
+  return(rand()/(1.0F+RAND_MAX));
 }
 
-float sqrt1f(float f) { /* no good as a macro because f is used twice */
+double sqrt1f(float f) { /* no good as a macro because f is used twice */
+  if(f>0.0F)
+	 return(sqrt(f));
+  else
+	 return(0.0);
+}
+
+double sqrt1d(double f) { /* no good as a macro because f is used twice */
   if(f>0.0)
 	 return(sqrt(f));
   else
@@ -75,14 +82,14 @@ void get_divergent3f(float *src,float *dst)
 {
   if(src[0]!=0.0) {
     *(dst++)=-*(src++);
-    *(dst++)= *(src++)+0.1;
+    *(dst++)= *(src++)+0.1F;
     *(dst++)= *(src++);
   } else if(src[1]!=0.0) {
-    *(dst++)= *(src++)+0.1;
+    *(dst++)= *(src++)+0.1F;
     *(dst++)=-*(src++);
     *(dst++)= *(src++);
   } else {
-    *(dst++)= *(src++)+0.1;
+    *(dst++)= *(src++)+0.1F;
     *(dst++)= *(src++);
     *(dst++)=-*(src++);
   }
@@ -97,9 +104,9 @@ int equal3f(float *v1,float *v2)
 
 void get_random3f(float *x) /* this needs to be fixed as in Tinker */
 {
-  x[0]=0.5-(rand()/(1.0+RAND_MAX));
-  x[1]=0.5-(rand()/(1.0+RAND_MAX));
-  x[2]=0.5-(rand()/(1.0+RAND_MAX));
+  x[0]=0.5F-(rand()/(1.0F+RAND_MAX));
+  x[1]=0.5F-(rand()/(1.0F+RAND_MAX));
+  x[2]=0.5F-(rand()/(1.0F+RAND_MAX));
   normalize3f(x);
 }
 
@@ -227,25 +234,25 @@ void cross_product3f ( float *v1, float *v2, float *cross )
   cross[2] = (v1[0]*v2[1]) - (v1[1]*v2[0]);
 }
 
-float lengthsq3f ( float *v1 )
+double lengthsq3f ( float *v1 )
 {
   return((v1[0]*v1[0]) + 
-					 (v1[1]*v1[1]) + 
-					 (v1[2]*v1[2]));
+         (v1[1]*v1[1]) + 
+         (v1[2]*v1[2]));
 } 
 
-float length3f ( float *v1 )
+double length3f ( float *v1 )
 {
-  return(sqrt1f((v1[0]*v1[0]) + 
+  return(sqrt1d((v1[0]*v1[0]) + 
 					 (v1[1]*v1[1]) + 
 					 (v1[2]*v1[2])));
 } 
 
 void average3f ( float *v1, float *v2, float *avg )
 {
-  avg[0] = (v1[0]+v2[0])/2;
-  avg[1] = (v1[1]+v2[1])/2;
-  avg[2] = (v1[2]+v2[2])/2;
+  avg[0] = (v1[0]+v2[0])/2.0F;
+  avg[1] = (v1[1]+v2[1])/2.0F;
+  avg[2] = (v1[2]+v2[2])/2.0F;
 }
 
 #endif
@@ -287,7 +294,7 @@ void identity44f ( float *m1 )
 {
   int a;
   for(a=0;a<16;a++) m1[a]=0;
-  for(a=0;a<16;a=a+5) m1[a]=1.0;
+  for(a=0;a<16;a=a+5) m1[a]=1.0F;
 }
 
 void copy44f ( float *src, float *dst )
@@ -465,11 +472,11 @@ void matrix_multiply33d33d ( Matrix33d m1,Matrix33d m2,Matrix33d m3)
 
 float deg_to_rad(float angle)
 {
-  return((angle* cPI)/180.0);
+  return((float)((angle* cPI)/180.0));
 }
 float rad_to_deg(float angle)
 {
-  return(180.0 * (angle/ cPI));
+  return((float)(180.0 * (angle/ cPI)));
 }
 
 void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat)
@@ -485,10 +492,10 @@ void rotation_matrix3f( float angle, float x, float y, float z,float *m )
    float mag, s, c;
    float xx, yy, zz, xy, yz, zx, xs, ys, zs, one_c;
 
-   s = sin(angle);
-   c = cos(angle);
+   s = (float)sin(angle);
+   c = (float)cos(angle);
 
-   mag = sqrt1f(x*x + y*y + z*z);
+   mag = (float)sqrt1f(x*x + y*y + z*z);
 	if(mag>=R_SMALL) {
 	  x /= mag;
 	  y /= mag;
@@ -522,9 +529,9 @@ void rotation_matrix3f( float angle, float x, float y, float z,float *m )
 	  for(a=0;a<3;a++)
 		 for(b=0;b<3;b++)
 			M(a,b)=0;
-	  M(0,0)=1.0;
-	  M(1,1)=1.0;
-	  M(2,2)=1.0;
+	  M(0,0)=1.0F;
+	  M(1,1)=1.0F;
+	  M(2,2)=1.0F;
 	}
 
 }
@@ -560,7 +567,7 @@ float get_dihedral3f( float *v0, float *v1, float *v2, float *v3 )
 float get_angle3f( float *v1, float *v2 )
 {
   double denom;
-  float result;
+  double result;
 
   denom = sqrt1f(((v1[0]*v1[0]) + 
                   (v1[1]*v1[1]) + 
@@ -580,24 +587,24 @@ float get_angle3f( float *v1, float *v2 )
   else if(result>1.0) 
     result=1.0;
   result = acos(result);
-  return(result);
+  return((float)result);
 } 
 
 void normalize23f( float *v1 , float *v2)
 {
-  float vlen;
+  double vlen;
   vlen = length3f(v1);
   if(vlen>R_SMALL)
 	 {
-		v2[0]=v1[0]/vlen;
-		v2[1]=v1[1]/vlen;
-		v2[2]=v1[2]/vlen;
+		v2[0]=(float)(v1[0]/vlen);
+		v2[1]=(float)(v1[1]/vlen);
+		v2[2]=(float)(v1[2]/vlen);
 	 }
   else
 	 {
-		v2[0]=0.0;
-		v2[1]=0.0;
-		v2[2]=0.0;
+		v2[0]=0.0F;
+		v2[1]=0.0F;
+		v2[2]=0.0F;
 	 }
 }
 
@@ -613,19 +620,19 @@ void clamp3f(float *v1)
 
 void normalize3f( float *v1 )
 {
-  float vlen;
+  double vlen;
   vlen = length3f(v1);
   if(vlen>R_SMALL)
 	 {
-		v1[0]/=vlen;
-		v1[1]/=vlen;
-		v1[2]/=vlen;
+		v1[0]=(float)(v1[0]/vlen);
+		v1[1]=(float)(v1[1]/vlen);
+		v1[2]=(float)(v1[2]/vlen);
 	 }
   else
 	 {
-		v1[0]=0.0;
-		v1[1]=0.0;
-		v1[2]=0.0;
+		v1[0]=0.0F;
+		v1[1]=0.0F;
+		v1[2]=0.0F;
 	 }
 } 
 
@@ -650,7 +657,7 @@ void normalize3d( double *v1 )
 
 double length3d ( double *v1 )
 {
-  return(sqrt1f((v1[0]*v1[0]) + 
+  return(sqrt1d((v1[0]*v1[0]) + 
 					 (v1[1]*v1[1]) + 
 					 (v1[2]*v1[2])));
 } 
@@ -661,7 +668,7 @@ double diff3f ( float *v1, float *v2 )
   dx = (v1[0]-v2[0]);
   dy = (v1[1]-v2[1]);
   dz = (v1[2]-v2[2]);
-  return(sqrt1f(dx*dx + dy*dy + dz*dz));
+  return(sqrt1d(dx*dx + dy*dy + dz*dz));
 }
 
 double diffsq3f ( float *v1, float *v2 )
@@ -712,10 +719,10 @@ void remove_component3f ( float *v1, float *unit, float *result)
 }
 
 
-float distance_line2point3f(float *base,float *normal,float *point,float *alongNormalSq)
+double distance_line2point3f(float *base,float *normal,float *point,float *alongNormalSq)
 {
   float hyp[3],adj[3];
-  float result;
+  double result;
 
   hyp[0] = point[0] - base[0];
   hyp[1] = point[1] - base[1];
@@ -729,14 +736,14 @@ float distance_line2point3f(float *base,float *normal,float *point,float *alongN
   if(result<=0.0) 
 	 return(0.0);
   else 
-	 return(sqrt1f(result));
+	 return(sqrt1d(result));
 
 }
 
-float distance_halfline2point3f(float *base,float *normal,float *point,float *alongNormalSq)
+double distance_halfline2point3f(float *base,float *normal,float *point,float *alongNormalSq)
 {
   float hyp[3],adj[3];
-  float result;
+  double result;
 
   hyp[0] = point[0] - base[0];
   hyp[1] = point[1] - base[1];
@@ -751,7 +758,7 @@ float distance_halfline2point3f(float *base,float *normal,float *point,float *al
 		if(result<=0.0) 
 		  return(0.0);
 		else 
-		  return(sqrt1f(result));
+		  return(sqrt1d(result));
 	 } else {
 		return(MAXFLOAT);
 	 }
@@ -843,19 +850,19 @@ void matrot ( oMatrix5f nm, oMatrix5f om, int axis, float angle )
   switch(axis)
 	 {
 	 case 0:
-		rm[0][0] = 1.0;		rm[0][1] = 0.0;		rm[0][2] = 0.0;
+		rm[0][0] = 1.0F;		rm[0][1] = 0.0;		rm[0][2] = 0.0;
 		rm[1][0] = 0.0;		rm[1][1] =  ca;		rm[1][2] =  sa;
 		rm[2][0] = 0.0;		rm[2][1] = -sa;		rm[2][2] =  ca;
 		break;
 	 case 1:
 		rm[0][0] =  ca;		rm[0][1] = 0.0;		rm[0][2] = -sa;
-		rm[1][0] = 0.0;		rm[1][1] = 1.0;		rm[1][2] = 0.0;
+		rm[1][0] = 0.0;		rm[1][1] = 1.0F;		rm[1][2] = 0.0;
 		rm[2][0] =  sa;		rm[2][1] = 0.0;		rm[2][2] =  ca;
 		break;
 	 case 2:
 		rm[0][0] =  ca;		rm[0][1] =  sa;		rm[0][2] = 0.0;
 		rm[1][0] = -sa;		rm[1][1] =  ca;		rm[1][2] = 0.0;
-		rm[2][0] = 0.0;		rm[2][1] = 0.0;		rm[2][2] = 1.0;
+		rm[2][0] = 0.0;		rm[2][1] = 0.0;		rm[2][2] = 1.0F;
 		break;
 	 }
   for(a=0;a<3;a++)
@@ -911,7 +918,7 @@ void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
 		imat[a][0]=0.0;
 		imat[a][1]=0.0;
 		imat[a][2]=0.0;
-		imat[a][a]=1.0;
+		imat[a][a]=1.0F;
 	 }
 
   if(!linear) 
@@ -953,7 +960,7 @@ void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
   else
 	 {
 		for(a=0;a<3;a++)
-		  pos[a] = (mat[3][a]*(1.0-fxn))+(fxn*mat[4][a]);
+		  pos[a] = (mat[3][a]*(1.0F-fxn))+(fxn*mat[4][a]);
 	 }
 
   for(a=0;a<3;a++)
@@ -1061,7 +1068,7 @@ void find_axis( oMatrix3d a, float *axis)
 
   for(x=0;x<3;x++)
 	 {
-		if((fabs(wr[x]-1.0)<R_MED)&&
+		if((fabs(wr[x]-1.0F)<R_MED)&&
 			(fabs(wi[x])<R_SMALL))
 		  for(y=0;y<3;y++)
 			 axis[y] = v[y][x];

@@ -95,16 +95,16 @@ void RayApplyContextToVertex(CRay *I,float *v)
       
       if(I->AspRatio>1.0F) {
         tw = I->AspRatio;
-        th = 1.0;
+        th = 1.0F;
       } else {
         th = 1.0F/I->AspRatio;
-        tw = 1.0;
+        tw = 1.0F;
       }
-      v[0]+=(tw-1.0)/2;
-      v[1]+=(th-1.0)/2;
+      v[0]+=(tw-1.0F)/2;
+      v[1]+=(th-1.0F)/2;
       v[0]=v[0]*(I->Range[0]/tw)+I->Volume[0];
       v[1]=v[1]*(I->Range[1]/th)+I->Volume[2];
-      v[2]=v[2]*I->Range[2]-(I->Volume[4]+I->Volume[5])/2.0;
+      v[2]=v[2]*I->Range[2]-(I->Volume[4]+I->Volume[5])/2.0F;
       RayApplyMatrixInverse33(1,(float3*)v,I->ModelView,(float3*)v);    
     }
     break;
@@ -230,7 +230,7 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
   
   r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
   r->reflect[1]= - ( 2 * r->dotgle * r->surfnormal[1] );
-  r->reflect[2]= -1.0 - ( 2 * r->dotgle * r->surfnormal[2] );
+  r->reflect[2]= -1.0F - ( 2 * r->dotgle * r->surfnormal[2] );
 }
 /*========================================================================*/
 void RayExpandPrimitives(CRay *I)
@@ -267,8 +267,8 @@ void RayExpandPrimitives(CRay *I)
   VLACheck(basis->Vert2Normal,int,nVert);
   VLACheck(basis->Normal,float,3*nNorm);
   VLACheck(I->Vert2Prim,int,nVert);
-  basis->MaxRadius = 0.0;
-  basis->MinVoxel = 0.0;
+  basis->MaxRadius = 0.0F;
+  basis->MinVoxel = 0.0F;
   basis->NVertex=nVert;
   basis->NNormal=nNorm;
 
@@ -345,7 +345,7 @@ void RayExpandPrimitives(CRay *I)
 		if(basis->MinVoxel<0.001F)
         basis->MinVoxel=0.001F;
 		subtract3f(I->Primitive[a].v2,I->Primitive[a].v1,n0);
-		I->Primitive[a].l1=length3f(n0);
+		I->Primitive[a].l1=(float)length3f(n0);
 		normalize3f(n0);
 		n0+=3;
 		basis->Vert2Normal[nVert]=nNorm;
@@ -409,7 +409,7 @@ void RayTransformFirst(CRay *I)
 										basis1->Vertex+prm->vert*3+6,
 										basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
       v0 = basis1->Normal + (basis1->Vert2Normal[prm->vert]*3 + 3);
-      prm->cull = backface_cull&&((v0[2]<0.0)&&(v0[5]<0.0)&&(v0[8]<0.0));
+      prm->cull = backface_cull&&((v0[2]<0.0F)&&(v0[5]<0.0F)&&(v0[8]<0.0F));
 	 }
   }
 
@@ -484,7 +484,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
   int fogRangeFlag=false;
   float fog;
   float *bkrd;
-  float fog_start=0.0;
+  float fog_start=0.0F;
   float gamma;
   float *d;
   CBasis *base;
@@ -514,17 +514,17 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
   hc=0;
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
-    gamma=1.0/gamma;
+    gamma=1.0F/gamma;
   else
-    gamma=1.0;
+    gamma=1.0F;
 
   fog = SettingGet(cSetting_ray_trace_fog);
-  if(fog!=0.0) {
+  if(fog!=0.0F) {
     fogFlag=true;
     fog_start = SettingGet(cSetting_ray_trace_fog_start);
     if(fog_start>R_SMALL4) {
       fogRangeFlag=true;
-      if(fabs(fog_start-1.0)<R_SMALL4) /* prevent div/0 */
+      if(fabs(fog_start-1.0F)<R_SMALL4) /* prevent div/0 */
         fogFlag=false;
     }
   }
@@ -555,7 +555,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
           SettingGet(cSetting_spec_reflect),
           SettingGet(cSetting_ambient),
           SettingGet(cSetting_reflect)*1.2,
-          SettingGet(cSetting_spec_power)/4.0);
+          SettingGet(cSetting_spec_power)/4.0F);
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
   light = SettingGet_3fv(NULL,NULL,cSetting_light);
@@ -708,14 +708,14 @@ void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,floa
   float p1[3],p2[3],p3[3];
   int c=0;
 
-  if(dot_product3f(light,n0-3)>=0.0) c++;  
-  if(dot_product3f(light,n0)>=0.0) c++;
-  if(dot_product3f(light,n0+3)>=0.0) c++;
-  if(dot_product3f(light,n0+6)>=0.0) c++;
+  if(dot_product3f(light,n0-3)>=0.0F) c++;  
+  if(dot_product3f(light,n0)>=0.0F) c++;
+  if(dot_product3f(light,n0+3)>=0.0F) c++;
+  if(dot_product3f(light,n0+6)>=0.0F) c++;
   
   if(c) {
 
-    w2 = 1.0-(r->tri1+r->tri2);
+    w2 = 1.0F-(r->tri1+r->tri2);
     
     subtract3f(v0,r->impact,d1);
     project3f(d1,n0,p1);
@@ -732,7 +732,7 @@ void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,floa
     add3f(d1,d2,d2);
     add3f(d2,d3,d3);
     scale3f(d3,scale,d3);
-    if(dot_product3f(r->surfnormal,d3)>=0.0)
+    if(dot_product3f(r->surfnormal,d3)>=0.0F)
       add3f(d3,r->impact,r->impact);
   }
 }
@@ -744,7 +744,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int x,y;
   int a,b;
   unsigned int *p;
-  float excess=0.0;
+  float excess=0.0F;
   float dotgle;
   float bright,direct_cmp,reflect_cmp,*v,fc[4];
   float ambient,direct,lreflect,ft,ffact,ffact1m;
@@ -762,8 +762,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int two_sided_lighting;
   float fog;
   float *bkrd;
-  float fog_start=0.0;
-  float gamma,inp,sig=1.0;
+  float fog_start=0.0F;
+  float gamma,inp,sig=1.0F;
   double now;
   float persist,persist_inv;
   float new_front;
@@ -796,17 +796,17 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
-    gamma=1.0/gamma;
+    gamma=1.0F/gamma;
   else
-    gamma=1.0;
+    gamma=1.0F;
 
   fog = SettingGet(cSetting_ray_trace_fog);
-  if(fog!=0.0) {
+  if(fog!=0.0F) {
     fogFlag=true;
     fog_start = SettingGet(cSetting_ray_trace_fog_start);
     if(fog_start>R_SMALL4) {
       fogRangeFlag=true;
-      if(fabs(fog_start-1.0)<R_SMALL4) /* prevent div/0 */
+      if(fabs(fog_start-1.0F)<R_SMALL4) /* prevent div/0 */
         fogFlag=false;
 
     }
@@ -947,7 +947,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
         *p++=back_mask;
     
     /* ray-trace */
-	 r1.base[2]=0.0;
+	 r1.base[2]=0.0F;
     for(x=0;x<width;x++)
       {
         if(!(x&0xF)) OrthoBusyFast(x,width); /* don't slow down rendering too much */
@@ -957,12 +957,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
             pixel = image+((width)*y)+x;
             exclude = -1;
             r1.base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
-            persist = 1.0;
-            first_excess = 0.0;
+            persist = 1.0F;
+            first_excess = 0.0F;
             pass = 0;
-            excl_trans=0.0;
+            excl_trans=0.0F;
             new_front=front;
-            while((persist>0.0001)&&(pass<25)) {
+            while((persist>0.0001F)&&(pass<25)) {
               pixel_flag=false;
               i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,
                          new_front,back,excl_trans,trans_shadows,fudge);
@@ -994,46 +994,46 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 }
                 dotgle=-r1.dotgle;
                               
-                if(dotgle<0.0) {
+                if(dotgle<0.0F) {
                   if(two_sided_lighting) {
                     dotgle=-dotgle;
                     invert3f(r1.surfnormal);
                   } else 
-                    dotgle=0.0;
+                    dotgle=0.0F;
                 }
-                direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
+                direct_cmp=(float)((dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0);
                 
                 if(shadows) {
                   matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
                   r2.base[2]-=shadow_fudge;
                   if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,
-                              true,0.0,0.0,0.0,trans_shadows,fudge)>=0) {
-                    lit=pow(r2.prim->trans,0.5);
+                              true,0.0F,0.0F,0.0F,trans_shadows,fudge)>=0) {
+                    lit=(float)(pow(r2.prim->trans,0.5));
                   } else {
-                    lit=1.0;
+                    lit=1.0F;
                   }
                 } else {
-                  lit=1.0;
+                  lit=1.0F;
                 }
                           
-                if(lit>0.0) {
+                if(lit>0.0F) {
                   dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
-                  if(dotgle<0.0) dotgle=0.0;
-                  reflect_cmp=lit*(dotgle+(pow(dotgle,SettingGet(cSetting_reflect_power))))/2.0;
+                  if(dotgle<0.0F) dotgle=0.0F;
+                  reflect_cmp=(float)(lit*(dotgle+(pow(dotgle,SettingGet(cSetting_reflect_power))))/2.0);
                   dotgle=-dot_product3f(r1.surfnormal,spec_vector);
-                  if(dotgle<0.0) dotgle=0.0;
-                  excess= pow(dotgle,SettingGet(cSetting_spec_power))*
-                    SettingGet(cSetting_spec_reflect)*lit;
+                  if(dotgle<0.0F) dotgle=0.0F;
+                  excess=(float)( pow(dotgle,SettingGet(cSetting_spec_power))*
+                                  SettingGet(cSetting_spec_reflect)*lit);
                 } else {
-                  excess=0.0;
-                  reflect_cmp=0.0;
+                  excess=0.0F;
+                  reflect_cmp=0.0F;
                 }
                 
-                bright=ambient+(1.0-ambient)*(direct*direct_cmp+
-                                              (1.0-direct)*direct_cmp*lreflect*reflect_cmp);
+                bright=ambient+(1.0F-ambient)*(direct*direct_cmp+
+                                              (1.0F-direct)*direct_cmp*lreflect*reflect_cmp);
                 
-                if(bright>1.0) bright=1.0;
-                if(bright<0.0) bright=0.0;
+                if(bright>1.0F) bright=1.0F;
+                if(bright<0.0F) bright=0.0F;
                 
                 fc[0] = (bright*fc[0]+excess);
                 fc[1] = (bright*fc[1]+excess);
@@ -1042,13 +1042,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 if (fogFlag) {
                   ffact = fog*(front-r1.dist)/(front-back);
                   if(fogRangeFlag) {
-                    ffact = (ffact-fog_start)/(1.0-fog_start);
+                    ffact = (ffact-fog_start)/(1.0F-fog_start);
                   }
-                  if(ffact<0.0)
-                    ffact=0.0;
-                  if(ffact>1.0)
-                    ffact=0.0;
-                  ffact1m = 1.0-ffact;
+                  if(ffact<0.0F)
+                    ffact=0.0F;
+                  if(ffact>1.0F)
+                    ffact=0.0F;
+                  ffact1m = 1.0F-ffact;
                   if(opaque_back) {
                     fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
                     fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
@@ -1071,7 +1071,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                     fc[1]+=first_excess;
                     fc[2]+=first_excess;
                   }
-                  fc[3]=1.0;
+                  fc[3]=1.0F;
                 }
 
 
@@ -1081,16 +1081,16 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 fc[0] = first_excess+bkrd[0];
                 fc[1] = first_excess+bkrd[1];
                 fc[2] = first_excess+bkrd[2];
-                fc[3] = 1.0;
+                fc[3] = 1.0F;
                 pixel_flag=true;
               }
               
               if(pixel_flag) {
-                inp=(fc[0]+fc[1]+fc[2])/3.0;
+                inp=(fc[0]+fc[1]+fc[2])/3.0F;
                 if(inp<R_SMALL4) 
-                  sig=1.0;
+                  sig=1.0F;
                 else {
-                  sig = pow(inp,gamma)/inp;
+                  sig = (float)(pow(inp,gamma)/inp);
                 }
                 
                 c[0]=(uint)(sig*fc[0]*255.0F);
@@ -1133,7 +1133,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               
               if(pass) { /* average all four channels */
                 
-                persist_inv = 1.0-persist;
+                persist_inv = 1.0F-persist;
                 fc[0] = (0xFF&((*pixel)>>24))*persist + (0xFF&(last_pixel>>24))*persist_inv;
                 fc[1] = (0xFF&((*pixel)>>16))*persist + (0xFF&(last_pixel>>16))*persist_inv;
                 fc[2] = (0xFF&((*pixel)>>8))*persist + (0xFF&(last_pixel>>8))*persist_inv;
@@ -1632,13 +1632,13 @@ void RayTriangle3fv(CRay *I,
   (*vv++)=n0[2];
 
   /* determine maximum distance from vertex to point */
-  l1=length3f(s1);
-  l2=length3f(s2);
-  l3=length3f(s3);
+  l1=(float)length3f(s1);
+  l2=(float)length3f(s2);
+  l3=(float)length3f(s3);
   if(l2>l1) { if(l3>l2)	l1=l3; else	l1=l2;  }
   /* store cutoff distance */
 
-  p->r1=l1*0.6;
+  p->r1=l1*0.6F;
 
   /*  if(l1>20) {
 		printf("%8.3f\n",l1);
@@ -1722,7 +1722,7 @@ CRay *RayNew(void)
   test = 0xFF000000;
   testPtr = (unsigned char*)&test;
   I->BigEndian = *testPtr&&1;
-  I->Trans=0.0;
+  I->Trans=0.0F;
   I->Texture=0;
   I->TTTFlag=false;
   zero3f(I->TextureParam);
@@ -1748,7 +1748,7 @@ CRay *RayNew(void)
   I->fTransparentf=RayTransparentf;
   if(!RandomFlag) {
     for(a=0;a<256;a++) {
-      Random[a]=(rand()/(1.0+RAND_MAX))-0.5;
+      Random[a]=(float)((rand()/(1.0+RAND_MAX))-0.5);
     }
     RandomFlag=1;
   }

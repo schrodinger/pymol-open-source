@@ -206,7 +206,7 @@ void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)
 			 for(b=1;b<=c;b++)
 				product = product * dim[b];
           q = ((char*)p) + product * sizeof(void*); 
-			 for(a=0;a<product;a++)
+			 for(a=0;a<(signed)product;a++)
 				{
               *p = q;
 				  p++;

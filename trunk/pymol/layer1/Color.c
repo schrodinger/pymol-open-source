@@ -650,15 +650,15 @@ void ColorReset(void)
 
   /* full spectrum ("S..." colors) */
 
-  #define A_DIV 90.9091
+  #define A_DIV 90.9091F
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
     sprintf(I->Color[I->NColor].Name,"s%03d",a);
-    f = 1.0-(a-(set1*A_DIV))/A_DIV;
-    I->Color[I->NColor].Color[0]=f*spectrum[set1][0]+(1.0-f)*spectrum[set1+1][0];
-    I->Color[I->NColor].Color[1]=f*spectrum[set1][1]+(1.0-f)*spectrum[set1+1][1];
-    I->Color[I->NColor].Color[2]=f*spectrum[set1][2]+(1.0-f)*spectrum[set1+1][2];
+    f = 1.0F-(a-(set1*A_DIV))/A_DIV;
+    I->Color[I->NColor].Color[0]=f*spectrum[set1][0]+(1.0F-f)*spectrum[set1+1][0];
+    I->Color[I->NColor].Color[1]=f*spectrum[set1][1]+(1.0F-f)*spectrum[set1+1][1];
+    I->Color[I->NColor].Color[2]=f*spectrum[set1][2]+(1.0F-f)*spectrum[set1+1][2];
 
     I->NColor++;
   }

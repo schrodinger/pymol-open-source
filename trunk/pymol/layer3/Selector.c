@@ -443,7 +443,7 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
   float angle_cutoff=0.0;
 
   if(mode==1) {
-    angle_cutoff = cos(PI*h_angle/180.8);
+    angle_cutoff = (float)cos(PI*h_angle/180.8);
   }
   SelectorUpdateTable();
   if(cutoff<0) cutoff = 1000.0;
@@ -495,9 +495,11 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
             
           if((idx1>=0)&&(idx2>=0)) {
             subtract3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2,dir);
-            dist=length3f(dir);
-            if(dist>R_SMALL4) 
-              scale3f(dir,1.0/dist,dir);
+            dist=(float)length3f(dir);
+            if(dist>R_SMALL4) {
+              float dist_1 = 1.0F/dist;
+              scale3f(dir,dist_1,dir);
+            }
             if(dist<cutoff) {
               if(mode==1) { /* coarse hydrogen bonding assessment */
                 flag=false;
@@ -1295,10 +1297,10 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2,float adju
         idx2=cs2->AtmToIdx[at2];
         
         sumVDW=ai1->vdw+ai2->vdw+adjust;
-        dist=diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
+        dist=(float)diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
         
         if(dist<sumVDW) {
-          result+=((sumVDW-dist)/2.0);
+          result+=((sumVDW-dist)/2.0F);
         }
       }
     }
@@ -1791,18 +1793,18 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
 
                 j=map->EList[i++];
                 while(j>=0) {
-                  d = diff3f(point+3*j,v2);
+                  d = (float)diff3f(point+3*j,v2);
                   if(d<buffer) {
 
                     d=d*d;
                     if(d<R_SMALL8) d=R_SMALL8;
                     sfp=sf[sfidx[j]];
-                    e_val+=
+                    e_val+=(float)(
                       (sfp[0]*exp(-sfp[1]*d))
                       +(sfp[2]*exp(-sfp[3]*d))
                       +(sfp[4]*exp(-sfp[5]*d))
                       +(sfp[6]*exp(-sfp[7]*d))
-                      +sfp[8];
+                      +sfp[8]);
                   }
                   j=map->EList[i++];
                 }
@@ -1815,8 +1817,8 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
           }
         }
       }
-      mean = sum/n2;
-      stdev = sqrt1f((sumsq - (sum*sum/n2))/(n2-1));
+      mean = (float)(sum/n2);
+      stdev = (float)sqrt1d((sumsq - (sum*sum/n2))/(n2-1));
       if((int)SettingGet(cSetting_normalize_ccp4_maps)) {
 
         PRINTFB(FB_ObjectMap,FB_Details)
@@ -1921,7 +1923,7 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff)
                 j=map->EList[i++];
                 while(j>=0) {
                   ai = I->Obj[I->Table[j].model]->AtomInfo+I->Table[j].atom;
-                  distsq = diffsq3f(I->Vertex+3*j,v2);
+                  distsq = (float)diffsq3f(I->Vertex+3*j,v2);
                   if(distsq>R_SMALL8) {
                     F3(oMap->Field->data,a,b,c)+=
                       -ai->partialCharge/distsq;
@@ -4950,7 +4952,7 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
           }
             
           if((idx1>=0)&&(idx2>=0)) {
-            dist=diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
+            dist=(float)diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
             
             if(dist<cutoff) {
               dist_cnt++;

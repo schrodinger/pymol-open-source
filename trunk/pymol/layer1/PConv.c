@@ -209,13 +209,13 @@ int PConvPyObjectToFloat(PyObject *object,float *value)
   if(!object)
     result=false;
   else if(PyFloat_Check(object)) {
-    (*value) = PyFloat_AsDouble(object);
+    (*value) = (float)PyFloat_AsDouble(object);
   } else if(PyInt_Check(object)) {
     (*value) = (float)PyInt_AsLong(object);
   } else {
     tmp = PyNumber_Float(object);
     if(tmp) {
-      (*value) = PyFloat_AsDouble(tmp);
+      (*value) = (float)PyFloat_AsDouble(tmp);
       Py_DECREF(tmp);
     } else 
       result=false;
@@ -399,7 +399,7 @@ int PConvPyListToFloatArray(PyObject *obj,float **f)
     (*f) = Alloc(float,l);
     ff = (*f);
     for(a=0;a<l;a++)
-      *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+      *(ff++) = (float)PyFloat_AsDouble(PyList_GetItem(obj,a));
     
   }
   return(ok);
@@ -425,7 +425,7 @@ int PConvPyListToFloatVLA(PyObject *obj,float **f)
     (*f) = VLAlloc(float,l);
     ff = (*f);
     for(a=0;a<l;a++)
-      *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+      *(ff++) = (float)PyFloat_AsDouble(PyList_GetItem(obj,a));
     VLASize((*f),float,l);
   }
   return(ok);
@@ -457,7 +457,7 @@ int PConvPyList3ToFloatVLA(PyObject *obj,float **f)
       if(ok) ok = (PyList_Size(triple)==3);
       if(ok) {
         for(b=0;b<3;b++)
-          *(ff++) = PyFloat_AsDouble(PyList_GetItem(triple,b));
+          *(ff++) = (float)PyFloat_AsDouble(PyList_GetItem(triple,b));
       } else {
         ok=false;
         break;
@@ -781,25 +781,25 @@ void PConv44PyListTo44f(PyObject *src,float *dest) /* note lost of precision */
   PyObject *row;
 
   row = PyList_GetItem(src,0);
-  dest[ 0]=PyFloat_AsDouble(PyList_GetItem(row,0));
-  dest[ 1]=PyFloat_AsDouble(PyList_GetItem(row,1));
-  dest[ 2]=PyFloat_AsDouble(PyList_GetItem(row,2));
-  dest[ 3]=PyFloat_AsDouble(PyList_GetItem(row,3));
+  dest[ 0]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
+  dest[ 1]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
+  dest[ 2]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
+  dest[ 3]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
   row = PyList_GetItem(src,1);
-  dest[ 4]=PyFloat_AsDouble(PyList_GetItem(row,0));
-  dest[ 5]=PyFloat_AsDouble(PyList_GetItem(row,1));
-  dest[ 6]=PyFloat_AsDouble(PyList_GetItem(row,2));
-  dest[ 7]=PyFloat_AsDouble(PyList_GetItem(row,3));
+  dest[ 4]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
+  dest[ 5]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
+  dest[ 6]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
+  dest[ 7]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
   row = PyList_GetItem(src,2);
-  dest[ 8]=PyFloat_AsDouble(PyList_GetItem(row,0));
-  dest[ 9]=PyFloat_AsDouble(PyList_GetItem(row,1));
-  dest[10]=PyFloat_AsDouble(PyList_GetItem(row,2));
-  dest[11]=PyFloat_AsDouble(PyList_GetItem(row,3));
+  dest[ 8]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
+  dest[ 9]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
+  dest[10]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
+  dest[11]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
   row = PyList_GetItem(src,3);    
-  dest[12]=PyFloat_AsDouble(PyList_GetItem(row,0));
-  dest[13]=PyFloat_AsDouble(PyList_GetItem(row,1));
-  dest[14]=PyFloat_AsDouble(PyList_GetItem(row,2));
-  dest[15]=PyFloat_AsDouble(PyList_GetItem(row,3));
+  dest[12]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
+  dest[13]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
+  dest[14]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
+  dest[15]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
 }
 
 

@@ -2472,7 +2472,6 @@ static char openglutil_module_documentation[] =
    glDistFromLine\n\
    glSelectWithCallback";
 
-
 #ifdef NUMERIC
 DL_EXPORT(void) initopenglutil_num(void)
 #else

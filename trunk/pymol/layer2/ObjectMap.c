@@ -876,7 +876,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   }
 
   n_pts = nc*ns*nr;
-  if(bytes<(n_skip + sizeof(int)*(256+n_pts))) {
+  if((unsigned)bytes<(n_skip + sizeof(int)*(256+n_pts))) {
     PRINTFB(FB_ObjectMap,FB_Errors)
       " ObjectMapCCP4: Map appears to be truncated -- aborting.\n"
       ENDFB;

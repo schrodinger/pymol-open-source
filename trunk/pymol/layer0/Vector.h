@@ -33,7 +33,8 @@ float get_random0to1f(void);
 float deg_to_rad(float angle);
 float rad_to_deg(float angle);
 
-float sqrt1f(float f);
+double sqrt1f(float f);
+double sqrt1d(double d);
 
 void normalize3f( float *v1 );
 void normalize23f( float *v1 , float *v2);
@@ -53,8 +54,8 @@ double dot_product3d ( double *v1, double *v2 );
 float project3f ( float *v1, float *v2, float *proj );
 void remove_component3f ( float *v1, float *unit, float *result);
 
-float distance_line2point3f(float *base,float *normal,float *point,float *alongNormalSq);
-float distance_halfline2point3f(float *base,float *normal,float *point,float *alongNormalSq);
+double distance_line2point3f(float *base,float *normal,float *point,float *alongNormalSq);
+double distance_halfline2point3f(float *base,float *normal,float *point,float *alongNormalSq);
 
 double diffsq3f ( float *v1, float *v2 );
 double diff3f ( float *v1, float *v2 );
@@ -151,8 +152,8 @@ void  copy3f( float *src , float *dst);
 void  copy4f( float *src , float *dst);
 void  add3f ( float *v1, float *v2, float *sum );
 void  subtract3f ( float *v1, float *v2, float *v3 );
-float lengthsq3f ( float *v1 );
-float length3f ( float *v1 );
+double lengthsq3f ( float *v1 );
+double length3f ( float *v1 );
 void  cross_product3f ( float *v1, float *v2, float *cross );
 void  average3f ( float *v1, float *v2, float *avg );
 void  zero3f ( float *v1 )

@@ -419,7 +419,7 @@ void MovieAppendCommand(int frame,char *command)
 	 {
 		len=strlen(command);
       cur_len=strlen(I->Cmd[frame]);
-		if(len>(sizeof(MovieCmdType)+cur_len-1))
+		if((unsigned)len>(sizeof(MovieCmdType)+cur_len-1))
         len=sizeof(MovieCmdType)+cur_len-1;
       for(a=0;a<len;a++)
         I->Cmd[frame][cur_len+a]=command[a];

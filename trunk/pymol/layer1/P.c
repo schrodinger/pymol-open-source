@@ -250,9 +250,9 @@ int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at)
       }
     }
     if(result) {
-      f[0]=PyFloat_AsDouble(x_id2);
-      f[1]=PyFloat_AsDouble(y_id2);
-      f[2]=PyFloat_AsDouble(z_id2);
+      f[0]=(float)PyFloat_AsDouble(x_id2);
+      f[1]=(float)PyFloat_AsDouble(y_id2);
+      f[2]=(float)PyFloat_AsDouble(z_id2);
       if(PyErr_Occurred()) {
         PyErr_Print();
         result=false;

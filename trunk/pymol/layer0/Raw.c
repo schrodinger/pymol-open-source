@@ -350,7 +350,7 @@ int RawReadInto(CRaw *I,int type,unsigned int size,char *buffer)
             PRINTFD(FB_Raw)
               " RawReadPtr-Debug: Type mismatch.\n"
               ENDFD;
-          } else if(I->header[0]!=size) {
+          } else if(I->header[0]!=(signed)size) {
             PRINTFB(FB_Raw,FB_Errors)
               "Error-RawReadInfo: Size mismatch %d!=%d (disk/RAM).\n",I->header[0],size
               ENDFB;

@@ -66,6 +66,7 @@
 #include <glut.h>
 #endif
 
+
 /* #include "GL/glutint.h" */
 
 static PyObject *glut_Error;
@@ -2647,4 +2648,9 @@ init_glut(void)
     d = PyModule_GetDict(m);
 }
 
+#endif
+
+#ifdef WIN32
+/* for distutils compatibility on WIN32 */
+DL_EXPORT(void) init_glutmodule(void) {init_glut();}
 #endif
