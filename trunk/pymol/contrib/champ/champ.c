@@ -2530,7 +2530,7 @@ int ChampMatch2(CChamp *I,int template,int target,
                 
                 if(tmpl_ent->bond) { /* record bond match */
                   I->Bond[targ_ent->bond].tag |= I->Bond[tmpl_ent->bond].tag;
-                  I->Atom[targ_ent->bond].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->bond].not_tag);
+                  I->Bond[targ_ent->bond].tag &= (0xFFFFFFFF^I->Bond[tmpl_ent->bond].not_tag);
                 }
                 
                 tmpl_idx = tmpl_ent->link;
