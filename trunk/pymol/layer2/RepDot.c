@@ -100,7 +100,7 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 
 Rep *RepDotNew(CoordSet *cs)
 {
-  RepDotDoNew(cs,cRepDotNormal);
+  return(RepDotDoNew(cs,cRepDotNormal));
 }
 
 Rep *RepDotDoNew(CoordSet *cs,int mode)

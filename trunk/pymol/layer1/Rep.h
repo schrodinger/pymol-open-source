@@ -47,7 +47,7 @@ struct CoordSet;
 typedef struct Rep {
   void            (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
   struct Rep     *(*fUpdate)(struct Rep *I,struct CoordSet *cs,int rep);
-  void       *(*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
+  void        (*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
   void              (*fFree)(struct Rep* I);
   int MaxInvalid,Active;
   Pickable *P;

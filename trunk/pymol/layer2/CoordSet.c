@@ -205,7 +205,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 {
   int a;
 
-  /*  printf("inv %d %d\n",type,level);*/
+  /*  printf("inv %d %d \n",type,level);fflush(stdout);*/
 
   if(level>=cRepInvColor) 
 	 VLAFreeP(I->Color);
@@ -214,7 +214,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
       a=type;
       if(I->Rep[a]) {
         if(I->Rep[a]->fInvalidate) 
-          I->Rep[a]=I->Rep[a]->fInvalidate(I->Rep[a],I,level);
+          I->Rep[a]->fInvalidate(I->Rep[a],I,level);
         else {
           I->Rep[a]->fFree(I->Rep[a]);
           I->Rep[a] = NULL;
@@ -229,7 +229,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
         I->Active[a]=true;
 		if(I->Rep[a]) {
         if(I->Rep[a]->fInvalidate) 
-          I->Rep[a]=I->Rep[a]->fInvalidate(I->Rep[a],I,level);
+          I->Rep[a]->fInvalidate(I->Rep[a],I,level);
         else {
           I->Rep[a]->fFree(I->Rep[a]);
           I->Rep[a] = NULL;
@@ -261,6 +261,8 @@ void CoordSetUpdate(CoordSet *I)
   int i;
   ObjectMolecule *obj;
   obj=I->Obj;
+
+
   if(!I->Color) /* colors invalidated */
 	 {
 		I->Color=VLAlloc(int,I->NIndex);
@@ -283,6 +285,7 @@ void CoordSetUpdate(CoordSet *I)
 		}
 	 }
   OrthoBusyFast(0,I->NRep);
+
 
   RepUpdateMacro(I, cRepLine,            RepWireBondNew        );
   RepUpdateMacro(I, cRepCyl,             RepCylBondNew         );
