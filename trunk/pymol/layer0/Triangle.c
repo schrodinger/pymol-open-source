@@ -1090,7 +1090,6 @@ static void FollowActives(float *v,float *vn,int n,int mode)
 {
   TriangleSurfaceRec *I=&TriangleSurface;
   int i1,i2;
-  int cnt;
   
   PRINTFD(FB_Triangle)
     " TriangleFollowActives-Debug: entered: n=%6d     mode=%d\n TriangleFollowActives-Debug:       nTri=%6d nActive=%6d\n",

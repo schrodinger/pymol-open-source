@@ -481,10 +481,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_mesh_lighting              337
 #define cSetting_surface_solvent            338 
 #define cSetting_triangle_max_passes        339
+#define cSetting_ray_interior_reflect       340
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        340
+#define cSetting_INIT                        341
 
 #endif
 

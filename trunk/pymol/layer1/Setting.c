@@ -1655,7 +1655,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_color(I,cSetting_label_color, "-1");
 
-  SettingSet_i(I,cSetting_ray_trace_fog, -1);
+  SettingSet_f(I,cSetting_ray_trace_fog, -1.0F);
 
   SettingSet_f(I,cSetting_spheroid_scale, 1.0F);
 
@@ -1695,7 +1695,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_max_triangles, 1000000); /* no longer used */
 
-  SettingSet_f(I,cSetting_depth_cue, 1.0F);
+  SettingSet_b(I,cSetting_depth_cue, 1);
 
   SettingSet_f(I,cSetting_specular, 1.0F);
 
@@ -2209,6 +2209,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_mesh_lighting,0);
   SettingSet_b(I,cSetting_surface_solvent,0);
   SettingSet_i(I,cSetting_triangle_max_passes,5);
+  SettingSet_f(I,cSetting_ray_interior_reflect,0.4F);
+
 }
 
 
