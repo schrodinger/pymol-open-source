@@ -127,7 +127,7 @@ float ExecutiveAlign(char *s1,char *s2)
             PRINTFB(FB_Executive,FB_Actions)
               " ExecutiveAlign: %d atoms aligned.\n",c
               ENDFB;
-              ExecutiveRMS("align1","align2",2,5.0);
+              ExecutiveRMS("align1","align2",2,1.5);
           }
         }
         if(match) 
@@ -1222,10 +1222,11 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine)
   int sele1,sele2;
   float rms = -1.0;
   int a;
-  float inv,*f;
+  float inv,*f,*f1,*f2;
   ObjectMoleculeOpRec op1;
   ObjectMoleculeOpRec op2;
   OrthoLineType buffer;
+  int *flag;
 
   sele1=SelectorIndexByName(s1);
   op1.vv1=NULL;
@@ -1275,15 +1276,31 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine)
   if(op1.vv1&&op2.vv1) {
     if(op1.nvv1==op2.nvv1) {
       if(refine>R_SMALL4) {
-        op1.nvv1 = MatrixCutoff(refine,op1.nvv1,op1.vv1,op2.vv1);
+        flag = MatrixFilter(refine,20,2,op1.nvv1,op1.vv1,op2.vv1);
 
-        if(op2.nvv1!=op1.nvv1) {
-          PRINTFB(FB_Executive,FB_Actions)
-            " ExecutiveRMS: %d atoms thrown out..\n",op2.nvv1-op1.nvv1
-            ENDFB;
+        /* eliminate unflagged vertices -- they're considered outliers */
+
+        if(flag) {
+          f1 = op1.vv1;
+          f2 = op2.vv1;
+          for(a=0;a<op1.nvv1;a++) {
+            if(!flag[a]) {
+              op2.nvv1--;
+            } else {
+              f1+=3;
+              f2+=3;
+            }
+          copy3f(op1.vv1+3*a,f1);
+          copy3f(op2.vv1+3*a,f2);
           }
-
-        op2.nvv1 = op1.nvv1;
+          if(op2.nvv1!=op1.nvv1) {
+            PRINTFB(FB_Executive,FB_Actions)
+              " ExecutiveRMS: %d atoms thrown out..\n",op1.nvv1-op2.nvv1
+              ENDFB;
+          }
+          op1.nvv1 = op2.nvv1;
+          FreeP(flag);
+        }
       }
     }
   }
