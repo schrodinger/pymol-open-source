@@ -249,7 +249,7 @@ static PyObject *PMGetPDB(PyObject *dummy, PyObject *args)
   
   PyArg_ParseTuple(args,"si",&str1,&state);
   SelectorGetTmp(str1,s1);
-  pdb=ExecutiveSeleToPDBStr(s1,state);
+  pdb=ExecutiveSeleToPDBStr(s1,state,true);
   SelectorFreeTmp(s1);
   if(pdb)
     result = Py_BuildValue("s",pdb);

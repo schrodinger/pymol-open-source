@@ -34,7 +34,7 @@ for a in sys.argv:
 		pass
 	elif re.search(r"\.py$",a):
 		pm.do("run %s" % a)
-	elif re.search(r"\.pdb$|\.mol$",a):
+	elif re.search(r"\.pdb$|\.mol$|\.mmod",a):
 		pm.do("load %s" % a)
 	elif re.search(r"\.pml$",a):
 		pm.do("@%s" % a)

@@ -174,23 +174,30 @@ void ExecutiveDistance(char *s1,char *s2)
 	}
 }
 /*========================================================================*/
-char *ExecutiveSeleToPDBStr(char *s1,int state)
+char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
 {
   char *result=NULL;
   ObjectMoleculeOpRec op1;
   int sele1;
 
-  op1.charVLA=VLAlloc(char,10000);
-  op1.i2 = 0;
-  op1.i3 = 0; /* atIndex */
   sele1=SelectorIndexByName(s1);
-  if(sele1>=0) {
-    op1.code = 'PDB1';
-    op1.i1 = state;
-    ExecutiveObjMolSeleOp(sele1,&op1);
+  op1.charVLA=VLAlloc(char,10000);
+
+  if(conectFlag) {
+    if(state<0) state=0;
+    op1.i2=SelectorGetPDB(&op1.charVLA,sele1,state,conectFlag);
+  } else {
+
+    op1.i2 = 0;
+    op1.i3 = 0; /* atIndex */
+    if(sele1>=0) {
+      op1.code = 'PDB1';
+      op1.i1 = state;
+      ExecutiveObjMolSeleOp(sele1,&op1);
+    }
+    op1.charVLA[op1.i2]=0;
+    op1.i2++; /* get trailing null */
   }
-  op1.charVLA[op1.i2]=0;
-  op1.i2++; /* get trailing null */
   result=Alloc(char,op1.i2);
   memcpy(result,op1.charVLA,op1.i2);
   VLAFreeP(op1.charVLA);

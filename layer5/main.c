@@ -100,7 +100,7 @@ void MainTest(void)
 static void MainButton(int button,int state,int x,int y)
 {
   static int glMod;  
-  CMain *I = &Main;
+  /*  CMain *I = &Main;*/
 
   PLock(cLockAPI,&_save);
 
@@ -122,7 +122,7 @@ static void MainButton(int button,int state,int x,int y)
 /*========================================================================*/
 static void MainDrag(int x,int y)
 {
-  CMain *I = &Main;
+  /*  CMain *I = &Main;*/
 
    PLock(cLockAPI,&_save);
 
@@ -182,11 +182,17 @@ static void MainDraw(void)
 							 sprintf(buffer,"load %s",myArgv[a]);
 							 PParse(buffer);
 						  } else {
-							 p=strstr(myArgv[a],".pml");
-							 if(p) {
-								sprintf(buffer,"@%s",myArgv[a]);
-								PParse(buffer);
-							 }
+                      p=strstr(myArgv[a],".mmod");
+                      if(p) {
+                        sprintf(buffer,"load %s",myArgv[a]);
+                        PParse(buffer);
+                      } else {
+                        p=strstr(myArgv[a],".pml");
+                        if(p) {
+                          sprintf(buffer,"@%s",myArgv[a]);
+                          PParse(buffer);
+                        }
+                      }
 						  }
 						}
 					 }
@@ -209,7 +215,7 @@ static void MainDraw(void)
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
 {
-  CMain *I = &Main;
+  /*  CMain *I = &Main;*/
 
   PLock(cLockAPI,&_save);
 
@@ -231,8 +237,7 @@ static void MainKey(unsigned char k, int x, int y)
 /*========================================================================*/
 static void MainSpecial(int k, int x, int y)
 {
-  CMain *I = &Main;
-
+  /*  CMain *I = &Main;*/
   PLock(cLockAPI,&_save);
 
   switch (k)
@@ -400,7 +405,6 @@ void MainBusyIdle(void)
 #ifndef _PYMOL_MODULE
 int main(int argc, char *argv[])
 {
-  int stereo;
   myArgc=argc;
   myArgv=argv;
   

@@ -470,6 +470,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 SceneRender(&I->LastPicked,x,y);
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
+
 		obj->fDescribeElement(obj,I->LastPicked.index);
 		  sprintf(buffer,"model %s and index %i",
 					 obj->Name,I->LastPicked.index+1);
@@ -975,7 +976,6 @@ void SceneRender(Pickable *pick,int x,int y)
     } else {
       curState=I->StateIndex;
     }
-
 
     if(SettingGet(cSetting_ortho)==0.0) {
       gluPerspective(SceneFOV,aspRat,I->FrontSafe,I->Back);

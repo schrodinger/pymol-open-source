@@ -32,6 +32,7 @@ typedef struct ObjectMolecule {
   int CurCSet;
   char Color[3];
   float FractionExposed;
+  int SeleBase;
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {
