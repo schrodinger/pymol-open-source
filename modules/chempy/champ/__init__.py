@@ -43,6 +43,14 @@ class Champ:
       if e: raise RuntimeError
       return r
 
+   def free_pattern(self,index):
+      '''
+      frees a smiles string
+      '''
+      (e,r) = _champ.free_pattern(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+      
    def get_smiles(self,index):
       '''
       retrieves the smiles string for a given pattern index
@@ -128,5 +136,19 @@ class Champ:
       if e: raise RuntimeError
       return r
 
+   def memory_dump(self):
+      '''
+      dump bulk memory information
+      '''
+      (e,r) = _champ.memory_dump(self._champ)
+      if e: raise RuntimeError
+      return r
 
+   def pattern_get_cycle(self,index):
+      '''
+      debugging routine
+      '''
+      (e,r) = _champ.pattern_get_cycle(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
 

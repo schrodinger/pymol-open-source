@@ -58,8 +58,16 @@ static PyObject *_new(PyObject *self,      PyObject *args)
 
 static PyObject *_memory_dump(PyObject *self,      PyObject *args)
 {
-  os_memory_dump();
-  return(RetNone());
+  int ok=true;
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"O",&O);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    ChampMemoryDump(I);    
+  }
+  return(RetStatus(ok));
 }
 
 static PyObject *insert_smiles(PyObject *self,      PyObject *args)
@@ -77,6 +85,64 @@ static PyObject *insert_smiles(PyObject *self,      PyObject *args)
   }
   return(RetInt(ok,result));
 }
+
+
+static PyObject *pattern_free(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1;
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    ChampPatFree(I,int1);
+  }
+  return(RetStatus(ok));
+}
+
+static PyObject *pattern_get_cycle(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1;
+  PyObject *result = NULL;
+  PyObject *O,*l1,*l2;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  ListBond *bd;
+  int a,b;
+  int n_atom,n_bond;
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    printf("index2 %d\n",int1);
+    n_atom = ListLen(I->Atom,pat->atom);
+    at = I->Atom + pat->atom;
+    l1 = PyList_New(n_atom);
+    for(a=0;a<n_atom;a++) {
+      PyList_SetItem(l1,a,PyInt_FromLong(at->cycle));
+      at = I->Atom + at->link;
+    }
+
+    n_bond = ListLen(I->Bond,pat->bond);
+    l2 = PyList_New(n_bond);
+    bd = I->Bond + pat->bond;
+    for(b=0;b<n_bond;b++) {
+      PyList_SetItem(l2,b,PyInt_FromLong(bd->cycle));
+      bd = I->Bond + bd->link;
+    }
+
+    result = PyList_New(2);
+    PyList_SetItem(result,0,l1);
+    PyList_SetItem(result,1,l2);
+  }
+  return(RetObj(ok,result));
+}
+
 
 static PyObject *list_new(PyObject *self,      PyObject *args)
 {
@@ -365,10 +431,13 @@ static PyMethodDef champ_methods[] = {
   {"get_smiles",                get_smiles,             METH_VARARGS },
   {"insert_smiles",             insert_smiles,          METH_VARARGS },
   {"insert_model",              insert_model,           METH_VARARGS },
+  {"pattern_free",              pattern_free,          METH_VARARGS },
+  {"pattern_get_cycle",   pattern_get_cycle,       METH_VARARGS },
+
   {"list_prepend_smiles_list",  list_prepend_smiles_list, METH_VARARGS },
   {"list_get_pattern_list",     list_get_pattern_list,       METH_VARARGS },
   {"list_get_smiles_list",      list_get_smiles_list,       METH_VARARGS },
-  {"list_free",                 list_new,               METH_VARARGS },
+  {"list_free",                 list_free,               METH_VARARGS },
   {"list_new",                  list_new,              METH_VARARGS },
   {"match_1v1_b",                 match_1v1_b,              METH_VARARGS },
   {"match_1v1_map",             match_1v1_map,           METH_VARARGS},
