@@ -162,13 +162,11 @@ static int ExecutiveSetNamedEntries(PyObject *names)
       if(ok) ok = PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(cur,3),
                                                       rec->repOn,cRepCnt);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,4),&extra_int); 
-      printf("reading %s %d\n",rec->name,ok);
       switch(rec->type) {
       case cExecObject:
         switch(extra_int) {
         case cObjectMolecule:
           if(ok) ok = ObjectMoleculeNewFromPyList(PyList_GetItem(cur,5),(ObjectMolecule**)&rec->obj);
-          printf("obj mol ok %d\n",ok);
           break;
         }
         break;
