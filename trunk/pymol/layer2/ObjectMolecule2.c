@@ -1245,7 +1245,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
           p=ncopy(cc,p,5); /* we treat insertion records as part of the residue identifier */
           if(!sscanf(cc,"%s",ai->resi)) ai->resi[0]=0;
-          if(!sscanf(cc,"%d",&ai->resv)) ai->resv=1;
+          ai->resv = AtomResvFromResi(ai->resi);
           
           if(ssFlag) { /* get secondary structure information (if avail) */
 
