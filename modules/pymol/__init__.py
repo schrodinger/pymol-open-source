@@ -114,6 +114,13 @@ def adapt_to_hardware():
          if invocation.options.show_splash:
             print " Adapting to GeForce hardware..."
          cmd.set('line_width','2',quiet=1)
+      elif renderer=='NVIDIA GPU OpenGL Engine':
+         if sys.platform=='darwin':
+            if invocation.options.show_splash:
+               print " Adapting to NVIDIA hardware on Mac..."
+               cmd.set('line_smooth',0,quiet=1)
+               cmd.set('fog',0.9,quiet=1)
+
          
 # NEED SOME CONTRIBUTIONS HERE!
 
@@ -126,6 +133,7 @@ import cmd
 
 if os.environ.has_key('DISPLAY'):
    from xwin import *
+
 
 
 

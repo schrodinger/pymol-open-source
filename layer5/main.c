@@ -189,7 +189,9 @@ static void MainDrawLocked(void)
   if(I->SwapFlag)
     {
       if(!SettingGet(cSetting_suspend_updates))
-        if(PMGUI) p_glutSwapBuffers();
+        if(PMGUI) {
+          p_glutSwapBuffers();
+        }
       I->SwapFlag=false;
     }
 }
@@ -206,6 +208,9 @@ static void MainKey(unsigned char k, int x, int y)
   /*  CMain *I = &Main;*/
   int glMod;
 
+  PRINTFD(FB_Main)
+    " MainKey: %d %d %d\n",k,x,y
+    ENDFD;
   PLockAPIAsGlut();
 
   glMod = p_glutGetModifiers();
@@ -273,6 +278,7 @@ void MainDoReshape(int width, int height) /* called internally */
     if(SettingGet(cSetting_internal_gui))
       width+=SettingGet(cSetting_internal_gui_width);
   }
+
   if(height<0) { 
     BlockGetSize(SceneGetBlock(),&w,&height);
     internal_feedback = SettingGet(cSetting_internal_feedback);
@@ -382,7 +388,9 @@ void MainRefreshNow(void)
   CMain *I = &Main;
   if(I->SwapFlag)
     {
-      if(PMGUI) p_glutSwapBuffers();
+      if(PMGUI) {
+        p_glutSwapBuffers();
+      }
       I->SwapFlag=false;
     }
   if(I->DirtyFlag)
@@ -406,10 +414,10 @@ void MainBusyIdle(void)
   CMain *I = &Main;
   /* flush command and output queues */
   
-  PRINTFD(FB_Main)
+  /*  PRINTFD(FB_Main)
     " MainBusyIdle: entered, IdleMode %d, DirtyFlag %d, SwapFlag %d\n",
     I->IdleMode,I->DirtyFlag,I->SwapFlag
-    ENDFD;
+    ENDFD;*/
   PLockAPIAsGlut();
 
   if(ControlIdling()) {
@@ -426,7 +434,9 @@ void MainBusyIdle(void)
   PFlush();
 
   if(I->SwapFlag) {
-    if(PMGUI) p_glutSwapBuffers();
+    if(PMGUI) {
+      p_glutSwapBuffers();
+    }
     I->SwapFlag=false;
   }
   if(I->DirtyFlag) {
@@ -461,6 +471,10 @@ void MainBusyIdle(void)
       if(FinalInitFlag>=10) {
         FinalInitFlag=0;
         PBlock();
+        /* restore working directory if asked to */
+        PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
+
+        PRunString("launch_gui()");
 #ifndef _PYMOL_WX_GLUT
         PRunString("launch_gui()");
 #endif
@@ -485,10 +499,10 @@ void MainBusyIdle(void)
     }
       
   }
-  PRINTFD(FB_Main)
+  /*  PRINTFD(FB_Main)
     " MainBusyIdle: leaving... IdleMode %d, DirtyFlag %d, SwapFlag %d\n",
     I->IdleMode,I->DirtyFlag,I->SwapFlag
-    ENDFD;
+    ENDFD;*/
 
 }
 
@@ -508,6 +522,9 @@ void launch(void)
   
     p_glutInit(&myArgc, myArgv);
 
+#ifdef _PYMOL_OSX
+    p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
+#else
     p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
     if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
       p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
@@ -515,6 +532,7 @@ void launch(void)
     } else {
       StereoCapable = 1;
     }
+#endif
 
     p_glutInitWindowPosition(0, 175);
     p_glutInitWindowSize(WinX, WinY);

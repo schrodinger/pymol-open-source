@@ -25,9 +25,16 @@
 #ifdef MS_WIN32
 #include <windows.h>
 #endif
+
+#ifndef _PYMOL_OSX
 #include <GL/gl.h>
 /* is there a way to check and see if we have glu? */
 #include <GL/glu.h>
+#else
+#include <gl.h>
+#include <glu.h>
+#endif
+
 #include <math.h>
 #include "Python.h"
 #include <string.h>
@@ -1435,7 +1442,12 @@ static PyObject *gl_indexedGeomDSPL(PyObject * self, PyObject * args,
 }
 
 #ifndef _PYMOL_NO_GLUT
+
+#ifndef _PYMOL_OSX
 #include <GL/glut.h>
+#else
+#include <glut.h>
+#endif
 
 static PyObject *glSphereSetDSPL(PyObject * self, PyObject * args,
 				 PyObject * kw)

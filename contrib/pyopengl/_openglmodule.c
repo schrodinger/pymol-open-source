@@ -57,7 +57,14 @@
 #ifdef MS_WIN32
 #include <windows.h>
 #endif
+
+#ifndef _PYMOL_OSX
 #include <GL/gl.h>
+/* is there a way to check and see if we have glu? */
+#else
+#include <gl.h>
+#endif
+
 #include <math.h>
 
 #ifdef NUMERIC

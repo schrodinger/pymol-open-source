@@ -640,6 +640,7 @@ int SceneLoadPNG(char *fname,int movie_flag,int quiet)
 	 } else {
 		FreeP(I->ImageBuffer);
 	 }
+    I->CopyFlag=false;
   }
   if(MyPNGRead(fname,(unsigned char**)&I->ImageBuffer,(unsigned int*)&I->ImageBufferWidth,(unsigned int*)&I->ImageBufferHeight)) {
     if(!quiet) {
@@ -1418,7 +1419,14 @@ void SceneReshape(Block *block,int width,int height)
 		width=1;
   }
 
+#ifdef _PYMOL_OSX
+  /* workaround for broken pixel handling under OSX 
+     (Who's fault: Me? Apple? NVidia?) */
+  width = 8*(width/8);
+#endif
+
   I->Width = width;
+
   I->Height = height;
 
   I->Block->rect.top = I->Height;
