@@ -392,7 +392,7 @@ void GadgetSetRender(GadgetSet *I,CRay *ray,Pickable **pick,int pass)
           CGORenderGLPickable(I->PickCGO,pick,(void*)I->Obj,
                               I->Obj->Obj.Setting,NULL);
         }
-      } else if(I->G->HaveGUI) {
+      } else {
         if(I->StdCGO) {
           /*CGORenderGL(I->PickCGO,color,I->Obj->Obj.Setting,NULL);*/
           CGORenderGL(I->StdCGO,color,I->Obj->Obj.Setting,NULL);
