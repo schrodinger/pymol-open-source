@@ -1435,7 +1435,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_sphere_transparency:
   case cSetting_stick_transparency:
   case cSetting_ortho:
-  case cSetting_gl_ambient:
+  case cSetting_reflect:
+  case cSetting_direct:
+  case cSetting_ambient:
+  case cSetting_gl_ambient: /* deprecated */
   case cSetting_bg_rgb:
   case cSetting_specular:
   case cSetting_specular_intensity:
@@ -1706,7 +1709,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_cavity_cull, 10);
 
-  SettingSet_f(I,cSetting_gl_ambient,  0.12F);
+  SettingSet_f(I,cSetting_gl_ambient, 0.12F); /* no longer effective */
 
   SettingSet_b(I,cSetting_single_image, 0);
 

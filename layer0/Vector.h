@@ -82,6 +82,7 @@ void max3f ( float *v1, float *v2, float *v3 );
 
 void dump3i( int *v, char *prefix );
 void dump3f( float *v, char *prefix );
+void dump4f( float *v, char *prefix );
 void dump33f( float *m, char *prefix );
 void dump44f( float *m, char *prefix );
 

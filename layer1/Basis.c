@@ -1113,6 +1113,7 @@ int BasisHitPerspective(BasisCallRec *BC)
     const float BasisFudge1 = BC->fudge1;
     int     v2p;
     int     i,ii;
+    int    n_vert = BI->NVertex;
     int except = BC->except;
     int check_interior_flag   = BC->check_interior;
     float   sph[3],vt[3],tri1,tri2; 
@@ -1220,7 +1221,7 @@ int BasisHitPerspective(BasisCallRec *BC)
         ip   = elist + h;
         i   = *(ip++);
       
-        while(i>=0)
+        while((i>=0)&&(i<n_vert)) /* n_vert checking is a bug workaround */
           {
             v2p = vert2prim[i];
             ii = *(ip++);
@@ -1655,7 +1656,8 @@ int BasisHitNoShadow(BasisCallRec *BC)
                      break;
                      
                      case cPrimSausage:
-                        if(ZLineToSphere(r->base,BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,BI->Radius[i],prm->l1,sph,&tri1,
+                        if(ZLineToSphere(r->base,BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,
+                                         BI->Radius[i],prm->l1,sph,&tri1,
                                          BI->Precomp + BI->Vert2Normal[i] * 3))
                         {
                            oppSq = ZLineClipPoint(r->base,sph,&dist,BI->Radius[i]);
@@ -2006,7 +2008,8 @@ int BasisHitShadow(BasisCallRec *BC)
                      break;
                      
                      case cPrimSausage:
-                        if(ZLineToSphere(r->base,BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,BI->Radius[i],prm->l1,sph,&tri1,
+                        if(ZLineToSphere(r->base,BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,
+                                         BI->Radius[i],prm->l1,sph,&tri1,
                                          BI->Precomp + BI->Vert2Normal[i] * 3))
                         {
                            oppSq = ZLineClipPoint(r->base,sph,&dist,BI->Radius[i]);

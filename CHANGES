@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * updated lighting model to increase WYSIWG characteristics
+     between OpenGL and ray-tracing
+
    * fixed major bug with symmetry expansion
 
    * overhaul of the scene subsystem to create some order
