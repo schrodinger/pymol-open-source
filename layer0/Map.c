@@ -558,7 +558,6 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   int a,c;
   int mapSize;
   int h,k,l;
-  int *i;
   int *list;
   float *v,tmp_f;
   int firstFlag;
