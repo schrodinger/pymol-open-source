@@ -516,7 +516,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
 
   int ok=true;
   int isNew = true;
-  double *cobj;
+  float *cobj;
   WordType format;
   float v[3],vr[3],dens,maxd,mind;
   int a,b,c,d,e;
@@ -561,7 +561,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
       ok=ErrMessage("LoadChemPyMap","bad 'last' parameter.");
 
     if(ok) {
-      if (strcmp(format,"CObjectZYXdouble")==0) {
+      if (strcmp(format,"CObjectZYXfloat")==0) {
         ok = PConvAttrToPtr(Map,"c_object",(void**)&cobj);
         if(!ok)
           ErrMessage("LoadChemPyMap","CObject unreadable.");        
@@ -572,7 +572,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
     /* good to go */
 
     if(ok) {
-      if (strcmp(format,"CObjectZYXdouble")==0) {
+      if (strcmp(format,"CObjectZYXfloat")==0) {
 
         I->FDim[0]=I->Max[0]-I->Min[0]+1;
         I->FDim[1]=I->Max[1]-I->Min[1]+1;
@@ -592,8 +592,8 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
                 for(a=0;a<I->FDim[0];a++) {
                   v[0]=(a+I->Min[0])/((float)I->Div[0]);
                   
-                  dens = *(cobj+((I->FDim[0]*I->FDim[1]*a)+(I->FDim[0]*b)+c));
-                    
+                  dens = *(cobj++);
+
                   F3(I->Field->data,a,b,c,I->Field->dimensions) = dens;
                   if(maxd<dens) maxd = dens;
                   if(mind>dens) mind = dens;

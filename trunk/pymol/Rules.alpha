@@ -5,8 +5,8 @@
 #- Choose One Set ----------------------------------------------------
 #--- Build for ALPHA as an importable module
 XLIB_DIR = -L/usr/X11R6/lib
-LIBS = -lpython1.5 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
-DEFS =  -D_PYMOL_MODULE
+LIBS = -lpython2.0 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
+DEFS =  -D_PYMOL_MODULE -D_PYMOL_NUMPY
 BUILD = -shared -o modules/_cmd.so
 #--- Build for LINUX with embedded Python (not recommended)
 #XLIB_DIR = -L/usr/X11R6/lib 
@@ -79,7 +79,7 @@ LIB_DIRS = -L./ext/lib $(XLIB_DIR)
 
 INC_DIRS = -I../layer0 -I../layer1 -I../layer2 \
 	-I../layer3 -I../layer4 -I../layer5 \
-	-I../ext/include -I../ext/include/python1.5
+	-I../ext/include -I../ext/include/python2.0
 
 
 
