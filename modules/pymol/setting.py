@@ -369,7 +369,8 @@ if __name__=='pymol.setting':
       pdb_conect_all            = 329
       button_mode_name      = 330
       surface_type          = 331
-
+      dot_normals           = 332
+      
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

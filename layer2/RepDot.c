@@ -52,7 +52,6 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   float *v=I->V;
   int c=I->N;
   int cc=0;
-
   if(ray) {
     float radius;
 
@@ -87,7 +86,12 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 
+    int normals = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
     int use_dlst;
+
+    if(!normals)
+      SceneResetNormal(true);
+    
     use_dlst = (int)SettingGet(cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
@@ -101,7 +105,6 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
           }
         }
       }
-      
       glPointSize(I->Width);
       glBegin(GL_POINTS);
       while(c--)
@@ -112,7 +115,8 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
               glColor3fv(v);
               v+=3;
             }
-          glNormal3fv(v);
+          if(normals) 
+            glNormal3fv(v);
           v+=3;
           glVertex3fv(v);
           v+=3;
@@ -219,7 +223,9 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDotRender;
   I->R.fFree=(void (*)(struct Rep *))RepDotFree;
-  
+  I->R.obj=(CObject*)obj;
+  I->R.cs = cs;
+
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*sp->nDot*10);
   ErrChkPtr(I->V);
 
