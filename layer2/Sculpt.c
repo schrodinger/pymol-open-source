@@ -35,17 +35,58 @@ Z* -------------------------------------------------------------------
  ((((int)*(v+1))<< 4)&0x00FC0)|\
  ((((int)*(v+2))<<10)&0x3F000))
 
+#define nb_hash_off_i0(v0i,d) \
+  ((((d)+v0i)>> 2)&0x0003F)
+
+#define nb_hash_off_i1(v1i,e) \
+ ((((e)+v1i)<< 4)&0x00FC0)
+
+#define nb_hash_off_i2(v2i,f) \
+ ((((f)+v2i)<<10)&0x3F000)
+
 #define nb_hash_off(v,d,e,f) \
 (((((d)+(int)*(v  ))>> 2)&0x0003F)|\
  ((((e)+(int)*(v+1))<< 4)&0x00FC0)|\
  ((((f)+(int)*(v+2))<<10)&0x3F000))
 
-#define ex_hash(a,b) \
-((((a)    )&0x00FF)|\
- (((b)<< 8)&0xFF00))
+/* below are empirically optimized */
 
-int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff);
-int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,float wt,float *strain);
+#define ex_hash_i0(a) \
+ (((a)^((a)>>5))&0x00FF)
+
+#define ex_hash_i1(b) \
+ ((  ((b)<<5))&0xFF00)
+
+#define ex_hash(a,b) \
+(((((a)^((a)>>5)))&0x00FF)|\
+ (((    ((b)<<5)))&0xFF00))
+
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
+{
+  float d[3],push[3];
+  float len,dev,dev_2,sc,result;
+
+  subtract3f(v0,v1,d);
+  len = (float)length3f(d);
+  dev = target-len;
+  if((result=fabs(dev))>R_SMALL8) {
+    dev_2 = wt*dev/2.0F;
+    if(len>R_SMALL8) { /* nonoverlapping */
+      sc = dev_2/len;
+      scale3f(d,sc,push);
+      add3f(push,d0to1,d0to1);
+      subtract3f(d1to0,push,d1to0);
+    } else { /* overlapping, so just push along X */
+      d0to1[0]-=dev_2;
+      d1to0[0]+=dev_2;
+    }
+  } else
+    result = 0.0;
+  return result;
+}
 
 CSculpt *SculptNew(void)
 {
@@ -608,15 +649,17 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 
 
 }
-
-int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff)
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff)
 {
   register float d2;
   diff[0] = (v1[0]-v2[0]);
-  if(fabs(diff[0])>cutoff) return(false);
   diff[1] = (v1[1]-v2[1]);
-  if(fabs(diff[1])>cutoff) return(false);
+  if(fabs(diff[0])>cutoff) return(false);
   diff[2] = (v1[2]-v2[2]);
+  if(fabs(diff[1])>cutoff) return(false);
   if(fabs(diff[2])>cutoff) return(false);
   d2 = (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
   if(d2<(cutoff*cutoff)) {
@@ -626,7 +669,10 @@ int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff)
   return(false);
 }
 
-int SculptDoBump(float target,float actual,float *d,
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static int SculptDoBump(float target,float actual,float *d,
                  float *d0to1,float *d1to0,float wt,float *strain)
 {
   float push[3];
@@ -714,7 +760,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
 
         cs = obj->CSet[state];
 
-        nb_skip = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_skip);
+        nb_skip = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
         if(nb_skip<1) nb_skip=1;
         vdw = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale);
         vdw14 = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale14);
@@ -774,10 +820,10 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             for(aa=0;aa<n_active;aa++) {
               a = active[aa];
               v=disp+a*3;
-              *(v++)=0.0;
-              *(v++)=0.0;          
-              *(v++)=0.0;
               cnt[a]=0;
+              *(v  )=0.0F;
+              *(v+1)=0.0F;          
+              *(v+2)=0.0F;
             }
           
             /* apply distance constraints */
@@ -789,16 +835,16 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
               
               switch(sdc->type) {
               case cShakerDistBond:
-                wt = bond_wt;
                 eval_flag = cSculptBond & mask;
+                wt = bond_wt;
                 break;
               case cShakerDistAngle:
-                wt = angl_wt;
                 eval_flag = cSculptAngl & mask;
+                wt = angl_wt;
                 break;
               case cShakerDistLimit:
-                wt = 2.0F;
                 eval_flag = true;
+                wt = 2.0F;
                 break;
               default:
                 eval_flag = false;
@@ -937,6 +983,11 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
               nb_skip_count--;
               vdw_magnify+=1.0F;
             } else {
+              int nb_off0,nb_off1;
+              int v0i,v1i,v2i;
+              int x0i;
+              int don_b0;
+              int acc_b0;
               nb_skip_count = nb_skip;
               if((cSculptVDW|cSculptVDW14)&mask) {
                 /* compute non-bonded interations */
@@ -965,53 +1016,60 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                   a0 = atm2idx[b0];
                   ai0=obj->AtomInfo+b0;
                   v0 = cs->Coord+3*a0;
-                  for(h=-4;h<5;h+=4)
-                    for(k=-4;k<5;k+=4)
-                      for(l=-4;l<5;l+=4) 
+                  don_b0 = I->Don[b0];
+                  acc_b0 = I->Acc[b0];
+                  v0i = (int)(*v0);
+                  v1i = (int)(*(v0+1));
+                  v2i = (int)(*(v0+2));
+                  x0i = ex_hash_i0(b0);
+                  for(h=-4;h<5;h+=4) {
+                    nb_off0 = nb_hash_off_i0(v0i,h);
+                    for(k=-4;k<5;k+=4) {
+                      nb_off1 = nb_off0 | nb_hash_off_i1(v1i,k);
+                      for(l=-4;l<5;l+=4) { 
                         {
-                          offset = *(I->NBHash+nb_hash_off(v0,h,k,l));
+                          /*  offset = *(I->NBHash+nb_hash_off(v0,h,k,l));*/
+                          offset = *(I->NBHash + (nb_off1 | nb_hash_off_i2(v2i,l)));
                           while(offset) {
                             i = I->NBList + offset;
                             b1 = *(i+2);
                             if(b1>b0) { 
                               /* determine exclusion (if any) */
-                              xoffset = *(I->EXHash+ex_hash(b0,b1));
+                              xoffset = *(I->EXHash+ (x0i | ex_hash_i1(b1)));
                               ex = 10;
                               while(xoffset) {
-                                j = I->EXList + xoffset;
-                                if((*(j+1)==b0)&&
-                                   (*(j+2)==b1)) {
+                                xoffset = (*(j = I->EXList + xoffset));
+                                if((*(j+1)==b0)&&(*(j+2)==b1)) {
                                   ex1 = *(j+3);
                                   if(ex1<ex) {
                                     ex=ex1;
                                   }
                                 }
-                                xoffset = (*j);
                               }
                               if(ex>3) {
                                 ai1=obj->AtomInfo+b1;
                                 cutoff = ai0->vdw+ai1->vdw;
                                 if(ex==4) { /* 1-4 interation */
+                                  eval_flag = cSculptVDW14 & mask;
                                   cutoff*=vdw14;
                                   wt = vdw_wt14 * vdw_magnify;
-                                  eval_flag = cSculptVDW14 & mask;
                                 } else { /* standard interaction */
-                                  if(I->Don[b0]&&I->Acc[b1]) { /* h-bond */
+                                  if(don_b0&&I->Acc[b1]) { /* h-bond */
                                     if(ai0->protons==cAN_H) {
                                       cutoff-=hb_overlap;
                                     } else {
                                       cutoff-=hb_overlap_base;
                                     }
-                                  } else if(I->Acc[b0]&&I->Don[b1]) { /* h-bond */
+                                  } else if(acc_b0&&I->Don[b1]) { /* h-bond */
                                     if(ai1->protons==cAN_H) {
                                       cutoff-=hb_overlap;
                                     } else {
                                       cutoff-=hb_overlap_base;
                                     } 
                                   }
+                                  eval_flag = cSculptVDW & mask;
                                   cutoff=cutoff*vdw;
                                   wt = vdw_wt * vdw_magnify;
-                                  eval_flag = cSculptVDW & mask;
                                 }
                                 if(eval_flag) {
                                   a1 = atm2idx[b1];
@@ -1029,6 +1087,9 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                             offset=(*i);
                           }
                         }
+                      }
+                    }
+                  }
                 }
                 
                 /* clean up nonbonded hash */

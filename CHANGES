@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * Optimized sculpting engined using CHUD/Shark -- substantially faster.
+
    * Fixed CENT action with multi-state object
 
    * Adjusting Z scaling for mouse
