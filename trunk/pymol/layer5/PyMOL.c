@@ -254,8 +254,7 @@ void PyMOL_Stop(CPyMOL *I)
   WordFree(G);
   FeedbackFree(G);
   MemoryCacheDone(G);
-  OVContext_Del(G->Context);
-   
+  OVContext_Del(G->Context);   
 }
 void PyMOL_Free(CPyMOL *I)
 {
@@ -278,17 +277,30 @@ void PyMOL_Draw(CPyMOL *I)
     PyMOL_PushValidContext(I);
 
     /* get us into a well defined GL state */
-    
-    glDisable(GL_LIGHTING);
-    glDisable(GL_FOG);
-    glDisable(GL_NORMALIZE);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LINE_SMOOTH);
-    glDisable(GL_POLYGON_SMOOTH);
-    glDisable(GL_DITHER);
-    glDisable(GL_BLEND);
 
+    /*glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();*/
+         
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_AUTO_NORMAL);
+    glDisable(GL_BLEND);
+    glDisable(GL_COLOR_LOGIC_OP);
+    glDisable(GL_COLOR_MATERIAL);
+    glDisable(GL_CULL_FACE);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DITHER);
+    glDisable(GL_FOG);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHT0);
+    glDisable(GL_LIGHT1);
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_NORMALIZE);
+    glDisable(GL_POLYGON_SMOOTH);
+
+ 
   } 
 
   I->RedisplayFlag = false;
