@@ -16,6 +16,7 @@ if sys.platform=='win32':
    def_macros=[("_PYMOL_MODULE",None),
                   ("WIN32",None),
                   ("_HAVE_LIBPNG",None)]
+   ext_comp_args=[]
    ext_link_args=['/NODEFAULTLIB:"LIBC"']
 elif sys.platform=='cygwin':
    inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
@@ -26,6 +27,7 @@ elif sys.platform=='cygwin':
 #                  ("_PYMOL_NUMPY",None),
                   ("CYGWIN",None),
                ("_HAVE_LIBPNG",None)]
+   ext_comp_args=[]
    ext_link_args=[]
 else:
    inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
@@ -35,6 +37,7 @@ else:
    def_macros=[("_PYMOL_MODULE",None),
 #                  ("_PYMOL_NUMPY",None),
                   ("_HAVE_LIBPNG",None)]
+   ext_comp_args=[]
    ext_link_args=[]
    
 setup ( # Distribution meta-data
@@ -145,6 +148,7 @@ setup ( # Distribution meta-data
    library_dirs = lib_dirs,
    define_macros = def_macros,
    extra_link_args = ext_link_args,
+   extra_compile_args = ext_comp_args,
              ),
    Extension("pymol.sglite", [
    "contrib/sglite/runtests.c",
