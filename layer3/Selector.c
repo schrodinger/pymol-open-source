@@ -257,8 +257,9 @@ static WordKeyValue AtOper[] =
  { "", 0 }
 };
 
-static int BondInOrder(int *a,int b1,int b2);
-static int BondCompare(int *a,int *b);
+static int BondInOrder(BondType *a,int b1,int b2);
+static int BondCompare(BondType *a,BondType *b);
+
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 
@@ -1034,30 +1035,30 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
   return(nFrag);
 }
 /*========================================================================*/
-static int BondInOrder(int *a,int b1,int b2)
+static int BondInOrder(BondType *a,int b1,int b2)
 {
-  return(BondCompare(a+b1*2,a+b2*2)<=0);
+  return(BondCompare(a+b1,a+b2)<=0);
 }
-
 /*========================================================================*/
-static int BondCompare(int *a,int *b)
+static int BondCompare(BondType *a,BondType *b)
 {
   int result;
-  if(a[0]==b[0]) {
-	if(a[1]==b[1]) {
+  if(a->index[0]==b->index[0]) {
+	if(a->index[1]==b->index[1]) {
 	  result=0;
-	} else if(a[1]>b[1]) {
+	} else if(a->index[1]>b->index[1]) {
 	  result=1;
 	} else {
 	  result=-1;
 	}
-  } else if(a[0]>b[0]) {
+  } else if(a->index[0]>b->index[0]) {
 	result=1;
   } else {
 	result=-1;
   }
   return(result);
 }
+
 /*========================================================================*/
 int SelectorGetSeleNCSet(int sele)
 {
@@ -1247,8 +1248,9 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
 {
   SelectorType *I=&Selector;
 
-  int a,b,b1,b2,c,d,*ii1,s,idx,at,a1,a2;
-  int *bond=NULL;
+  int a,b,b1,b2,c,d,s,idx,at,a1,a2;
+  BondType *ii1;
+  BondType *bond=NULL;
   int nBond=0;
   int cLen =0;
   int newline;
@@ -1296,7 +1298,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   }
   if(conectFlag) {
     nBond = 0;
-    bond = VLAlloc(int,1000);
+    bond = VLAlloc(BondType,1000);
     for(a=0;a<I->NModel;a++) {
       obj=I->Obj[a];
       ii1=obj->Bond;
@@ -1307,8 +1309,8 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
       if(cs) {
         atInfo=obj->AtomInfo;
         for(b=0;b<obj->NBond;b++) {
-          b1=ii1[0];
-          b2=ii1[1];   
+          b1=ii1->index[0];
+          b2=ii1->index[1];   
           if(obj->DiscreteFlag) {
             if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
               a1=obj->DiscreteAtmToIdx[b1];
@@ -1326,45 +1328,45 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
             b1+=obj->SeleBase;
             b2+=obj->SeleBase;
             if(I->Table[b1].index&&I->Table[b2].index) {
-              VLACheck(bond,int,nBond*2+ii1[2]*4+12);
+              VLACheck(bond,BondType,2*(nBond+ii1->order+2)); /* ??? */
               b1=I->Table[b1].index;
               b2=I->Table[b2].index;
-              for(d=0;d<ii1[2];d++) {
-                bond[nBond*2] = b1;
-                bond[nBond*2+1] = b2;
+              for(d=0;d<ii1->order;d++) {
+                bond[nBond].index[0] = b1;
+                bond[nBond].index[1] = b2;
                 nBond++;
-                bond[nBond*2] = b2;
-                bond[nBond*2+1] = b1;
+                bond[nBond].index[0] = b2;
+                bond[nBond].index[1] = b1;
                 nBond++;
               }
             }
           }
-        ii1+=3;
+        ii1++;
         }
       }
     }
-    UtilSortInPlace(bond,nBond,sizeof(int)*2,(UtilOrderFn*)BondInOrder);
+    UtilSortInPlace(bond,nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
     ii1=bond;
     b1=-1;
 	 b2=-1;
     newline = false;
     for(a=0;a<nBond;a++) {
       if(a<(nBond-1)) 
-        if((ii1[0]==ii1[2])&&(ii1[1]==ii1[3])) newline=true;
-      if((b1!=ii1[0])||((b1==ii1[0])&&(b2==ii1[1]))||newline) {
+        if((ii1->index[0]==(ii1+1)->index[0])&&(ii1->index[1]==(ii1+1)->index[1])) newline=true;
+      if((b1!=ii1->index[0])||((b1==ii1->index[0])&&(b2==ii1->index[1]))||newline) {
         VLACheck((*charVLA),char,cLen+255);
         if(a) cLen+=sprintf((*charVLA)+cLen,"\n");
         cLen+=sprintf((*charVLA)+cLen,"CONECT%5d%5d",
-                      ii1[0],ii1[1]);
-        b1=ii1[0];
-		  b2=ii1[1];
+                      ii1->index[0],ii1->index[1]);
+        b1=ii1->index[0];
+		  b2=ii1->index[1];
         newline=false;
         if(a>0)
-          if((ii1[-2]==ii1[0])&&(ii1[-1]==ii1[1])) newline=true;        
+          if(((ii1-1)->index[0]==ii1->index[0])&&((ii1-1)->index[1]==ii1->index[1])) newline=true;        
       } else cLen+=sprintf((*charVLA)+cLen,"%5d",
-                           ii1[1]);
-      b2=ii1[1];
-      ii1+=2;
+                           ii1->index[1]);
+      b2=ii1->index[1];
+      ii1++;
     }
     if(cLen) {
       VLACheck((*charVLA),char,cLen+4);
@@ -1382,8 +1384,9 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
   PyObject *model=NULL,*bnd=NULL;
   PyObject *atom_list=NULL,*bond_list=NULL;
   PyObject *tmp;
-  int a,b,b1,b2,b3,c,*ii1,s,idx,at,a1,a2;
-  int *bond=NULL;
+  int a,b,b1,b2,b3,c,s,idx,at,a1,a2;
+  BondType *ii1;
+  BondType *bond=NULL;
   int nBond=0;
   int ok =true;
   CoordSet *cs;
@@ -1450,7 +1453,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
       Py_XDECREF(atom_list);
 
       nBond = 0;
-      bond = VLAlloc(int,1000);
+      bond = VLAlloc(BondType,1000);
       for(a=0;a<I->NModel;a++) {
         obj=I->Obj[a];
         ii1=obj->Bond;
@@ -1461,9 +1464,9 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
         if(cs) {
           atInfo=obj->AtomInfo;
           for(b=0;b<obj->NBond;b++) {
-            b1=ii1[0];
-            b2=ii1[1];        
-            b3=ii1[2];
+            b1=ii1->index[0];
+            b2=ii1->index[1];        
+            b3=ii1->order;
             if(obj->DiscreteFlag) {
               if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
                 a1=obj->DiscreteAtmToIdx[b1];
@@ -1481,16 +1484,16 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
               b1+=obj->SeleBase;
               b2+=obj->SeleBase;
               if(I->Table[b1].index&&I->Table[b2].index) {
-                VLACheck(bond,int,nBond*3+2);
+                VLACheck(bond,BondType,nBond);
                 b1=I->Table[b1].index - 1; /* counteract 1-based */
                 b2=I->Table[b2].index - 1; /* indexing from above */
-                bond[nBond*3] = b1;
-                bond[nBond*3+1] = b2;
-                bond[nBond*3+2] = b3;
+                bond[nBond].index[0] = b1;
+                bond[nBond].index[1] = b2;
+                bond[nBond].order = b3;
                 nBond++;
               }
             }
-            ii1+=3;
+            ii1++;
           }
         }
         if(cs) {
@@ -1512,11 +1515,11 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
         for(b=0;b<nBond;b++) {
           bnd = PyObject_CallMethod(P_chempy,"Bond","");
           if(bnd) {
-            PConvInt2ToPyObjAttr(bnd,"index",ii1);
-            PConvIntToPyObjAttr(bnd,"order",ii1[2]);
+            PConvInt2ToPyObjAttr(bnd,"index",ii1->index);
+            PConvIntToPyObjAttr(bnd,"order",ii1->order);
             PyList_SetItem(bond_list,b,bnd);
           }
-          ii1+=3;
+          ii1++;
         }
         Py_XDECREF(bond_list);
       }
@@ -1623,8 +1626,8 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
 {
   SelectorType *I=&Selector;
 
-  int a,b,a1,a2,b1,b2,c,d,*ii1,s,at;
-  int *bond=NULL;
+  int a,b,a1,a2,b1,b2,c,d,s,at;
+  BondType *ii1,*bond=NULL;
   int nBond=0;
   int nCSet,nAtom,ts;
   AtomInfoType *atInfo = NULL;
@@ -1643,7 +1646,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   if(!targ) {
     isNew=true;
     targ = ObjectMoleculeNew(false);
-    targ->Bond = VLAlloc(int,1);
+    targ->Bond = VLAlloc(BondType,1);
   } else {
     isNew=false;
   }
@@ -1668,21 +1671,21 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   nAtom=c;
 
   nBond = 0;
-  bond = VLAlloc(int,nAtom*3);
+  bond = VLAlloc(BondType,nAtom*4);
   for(a=0;a<I->NModel;a++) { /* find bonds wholly contained in the selection */
     obj=I->Obj[a];
     ii1=obj->Bond;
     for(b=0;b<obj->NBond;b++) {
-      b1=ii1[0]+obj->SeleBase;
-      b2=ii1[1]+obj->SeleBase;
+      b1=ii1->index[0]+obj->SeleBase;
+      b2=ii1->index[1]+obj->SeleBase;
       if((I->Table[b1].index>=0)&&(I->Table[b2].index>=0)) {
-        VLACheck(bond,int,nBond*3+1);
-        bond[nBond*3]=I->Table[b1].index; /* store what will be the new index */
-        bond[nBond*3+1]=I->Table[b2].index;
-        bond[nBond*3+2]=ii1[2];
+        VLACheck(bond,BondType,nBond);
+        bond[nBond].index[0]=I->Table[b1].index; /* store what will be the new index */
+        bond[nBond].index[1]=I->Table[b2].index;
+        bond[nBond].order=ii1->order;
         nBond++;
       }
-      ii1+=3;
+      ii1++;
     }
   }
   
