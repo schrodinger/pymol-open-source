@@ -134,6 +134,7 @@ class SettingIndex:
    cartoon_refine        =123
    cartoon_refine_tips   =124
    cartoon_discrete_colors  =125
+   normalize_ccp4_maps   =126
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
