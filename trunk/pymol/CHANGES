@@ -15,7 +15,7 @@ Changes Under Consideration
    * draw all solid representations before drawing lines
      in order to improve antialiasing overlap.
 
-   * make commas optional in PyMOL command arguments
+   * consider making commas optional in PyMOL command arguments
 
    * CTRL and CTRL/SHIFT numbers should add aromatic and aliphatic
      ring systems in the builder respectively.
@@ -35,7 +35,7 @@ Ongoing Goals
 
 Changes up to 0.58
 
-   * more work on setting change side effects/object settings
+   * more work on settings change side effects 
 
    * fix bugs with saving pkl files for state > 1
 
