@@ -861,7 +861,7 @@ static PyObject *CmdButton(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdFeedback(PyObject *self, 	PyObject *args)
 {
-  int i1,i2,result = Py_None;
+  int i1,i2,result = 0;
   int ok=false;
   ok = PyArg_ParseTuple(args,"ii",&i1,&i2);
   if (ok) {
