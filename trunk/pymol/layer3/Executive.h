@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
+#define cLoadTypeUnknown -1
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
 #define cLoadTypeSDF 2
@@ -59,6 +60,14 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeMOL2Str 34
 #define cLoadTypeP1M 35
 #define cLoadTypeCCP4Str 36
+#define cLoadTypeSDF2 37
+#define cLoadTypeSDF2Str 38
+
+/* NOTE: if you add a type above, then be sure to add corresponding code in:
+   CmdLoad
+   ExecutiveGetExistingCompatible
+   ExecutiveLoad
+*/
 
 int *ExecutiveGetG3d(PyMOLGlobals *G);
 int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort, int location);
@@ -68,10 +77,20 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char 
                              int frame, int discrete,int finish,OrthoLineType buf,
                              PDBInfoRec *pdb_info,int quiet,int is_string,int multiplex,int zoom);
 
+#if 0
 void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
                        char *oname, int frame, int discrete,int finish,
                        OrthoLineType buf,int multiplex,int quiet,
                        int is_string,int zoom);
+#endif
+
+int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj, 
+                   char *content, int content_length,
+                   int content_format,
+                   char *object_name, 
+                   int state, int zoom, 
+                   int discrete, int finish, 
+                  int multiplex, int quiet);
 
 int ExecutiveDebug(PyMOLGlobals *G,char *name);
 float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,int skip,

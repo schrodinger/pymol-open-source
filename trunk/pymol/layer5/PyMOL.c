@@ -219,14 +219,14 @@ int PyMOL_Reinitialize(CPyMOL *I)
 
 int PyMOL_Load(CPyMOL *I,char *content,  char *content_type, 
                int content_length, char *content_format, 
-               char *object_name, int frame, 
+               char *object_name, int state, 
                int discrete, int finish, 
                int quiet, int multiplex, int zoom)
 {
-  OrthoLineType buf = "";
   OVreturn_word result;
   int type_code;
   int format_code;
+
 
   if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_type))))
     return OVstatus_FAILURE;
@@ -260,21 +260,54 @@ int PyMOL_Load(CPyMOL *I,char *content,  char *content_type,
     else
       discrete=1; /* otherwise, allow discrete to be the default */
   }
-  if(format_code == I->lex_pdb) {
-    ExecutiveProcessPDBFile(I->G,ExecutiveGetExistingCompatible(I->G,object_name,cLoadTypePDB),content,
-                            object_name,frame-1,discrete,finish,
-                            buf,NULL,quiet,
-                            type_code==I->lex_c_string, multiplex,zoom);
-  } else if(format_code == I->lex_mol2) {
-    ExecutiveLoadMOL2(I->G,ExecutiveGetExistingCompatible(I->G,object_name,cLoadTypePDB),content,
-                      object_name,frame-1,discrete,finish,
-                      buf,multiplex,quiet,
-                      type_code==I->lex_c_string, zoom);
-  } else {
-    return OVstatus_FAILURE;
-  }
 
-                          
+  {
+    int pymol_content_type = cLoadTypeUnknown;
+    CObject *existing_object = NULL;
+
+    if(format_code == I->lex_pdb) {
+      if(type_code == I->lex_c_string)
+        pymol_content_type = cLoadTypePDBStr;
+      else if( type_code == I->lex_c_filename)
+        pymol_content_type = cLoadTypePDB;
+    } else if(format_code == I->lex_mol2) {
+      if(type_code == I->lex_c_string)
+        pymol_content_type = cLoadTypeMOL2Str;
+      else if( type_code == I->lex_c_filename)
+        pymol_content_type = cLoadTypeMOL2;
+    }
+
+    if(pymol_content_type != cLoadTypeUnknown) {
+      existing_object = ExecutiveGetExistingCompatible(I->G,
+                                                       object_name,
+                                                       pymol_content_type);
+    }
+
+    switch(pymol_content_type) {
+    case cLoadTypePDB:
+    case cLoadTypePDBStr:
+    case cLoadTypeMOL2:
+    case cLoadTypeMOL2Str:
+    case cLoadTypeSDF2:
+    case cLoadTypeSDF2Str:
+      {
+        int ok = ExecutiveLoad(I->G, existing_object, 
+                               content, 0, 
+                               pymol_content_type,
+                               object_name, 
+                               state-1,  zoom,
+                               discrete, finish,
+                               multiplex, quiet);
+        if(ok)
+          return OVstatus_SUCCESS;
+        else
+          return OVstatus_FAILURE;
+      }
+      break;
+    default:
+      return OVstatus_FAILURE;
+    }
+  }
   return OVstatus_SUCCESS;
 }
 

@@ -4274,7 +4274,6 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                         &oname,&fname,&bytes,&frame,&type,
                         &finish,&discrete,&quiet,
                         &multiplex,&zoom);
-
   buf[0]=0;
   PRINTFD(TempPyMOLGlobals,FB_CCmd)
     "CmdLoad-DEBUG %s %s %d %d %d %d\n",
@@ -4426,6 +4425,8 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                               frame,discrete,finish,buf,NULL,
                               quiet,true,multiplex,zoom);
       break;
+#if 0
+
     case cLoadTypeMOL:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MOL\n" ENDFD;
       obj=(CObject*)ObjectMoleculeLoadMOLFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,discrete);
@@ -4449,7 +4450,8 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypeMOLStr:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: reading MOLStr\n" ENDFD;
-      obj=(CObject*)ObjectMoleculeReadMOLStr(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,discrete,finish);
+      obj=(CObject*)ObjectMoleculeReadMOLStr(TempPyMOLGlobals,
+                                             (ObjectMolecule*)origObj,fname,frame,discrete,finish);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
@@ -4472,14 +4474,30 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                 oname,frame+1);
       }
       break;
+#else
+    case cLoadTypeMOL:
+    case cLoadTypeMOLStr:
+#endif
+    case cLoadTypeSDF2:
+    case cLoadTypeSDF2Str:
     case cLoadTypeMOL2:
-      ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
-                        discrete,finish,buf,multiplex,quiet,false,zoom);
+    case cLoadTypeMOL2Str:
+
+      /*      ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
+              discrete,finish,buf,multiplex,quiet,false,zoom); */
+
+      ExecutiveLoad(TempPyMOLGlobals,origObj, 
+                    fname, 0, type,
+                    oname, frame, zoom, 
+                    discrete, finish, 
+                    multiplex, quiet);
       break;
+      /*
     case cLoadTypeMOL2Str:
       ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
                         discrete,finish,buf,multiplex,quiet,true,zoom);
-      break;
+                        break;*/
+
     case cLoadTypeMMD:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MMD\n" ENDFD;
       obj=(CObject*)ObjectMoleculeLoadMMDFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,NULL,discrete);

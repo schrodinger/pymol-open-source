@@ -5620,7 +5620,9 @@ void ObjectMoleculeExtendIndices(ObjectMolecule *I)
 }
 /*========================================================================*/
 
-static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoType **atInfoPtr)
+static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
+                                               AtomInfoType **atInfoPtr,
+                                               char **restart)
 {
   char *p;
   int nAtom,nBond;
@@ -5636,7 +5638,6 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,Atom
   int auto_show_lines;
   int auto_show_nonbonded;
   WordType nameTmp;
-
   auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
   auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
 
@@ -5647,6 +5648,9 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,Atom
 
   /*  p=ParseWordCopy(nameTmp,p,sizeof(WordType)-1);*/
   p=ParseNCopy(nameTmp,p,sizeof(WordType)-1);
+  PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+    " ObjMolMOLStr2CoordSet: title '%s'\n",nameTmp
+    ENDFB(G)
   p=nextline(p); 
   p=nextline(p);
   p=nextline(p);
@@ -5774,6 +5778,11 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,Atom
   }
   while(*p) { /* read M  CHG records */
     p=ncopy(cc,p,6);
+    if(!strcmp(cc,"M  END")) {
+      /* denotes end of MOL block */
+      p=nextline(p);
+      break;
+    }
     if(!strcmp(cc,"M  CHG")) {
       p=ncopy(cc,p,3);
       if(sscanf(cc,"%d",&cnt)==1) {
@@ -5793,6 +5802,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,Atom
     p=nextline(p);
   }
   if(ok) {
+    (*restart) = p;
 	 cset = CoordSetNew(G);
 	 cset->NIndex=nAtom;
 	 cset->Coord=coord;
@@ -5802,6 +5812,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,Atom
   } else {
 	 VLAFreeP(bond);
 	 VLAFreeP(coord);
+    (*restart) = NULL;
   }
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
@@ -5819,6 +5830,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,
   AtomInfoType *atInfo;
   int isNew;
   int nAtom;
+  char *resume;
 
   if(!I) 
 	 isNew=true;
@@ -5838,7 +5850,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,
       I->Obj.Color = AtomInfoUpdateAutoColor(G);
   }
 
-  cset=ObjectMoleculeMOLStr2CoordSet(G,MOLStr,&atInfo);
+  cset=ObjectMoleculeMOLStr2CoordSet(G,MOLStr,&atInfo,&resume);
   
   if(!cset) 
 	 {
@@ -5894,6 +5906,27 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,
       }
 	 }
   return(I);
+}
+static CoordSet *ObjectMoleculeSDF2Str2CoordSet(PyMOLGlobals *G,char *buffer,
+                                                AtomInfoType **atInfoPtr,char **next_mol)
+{
+  char cc[MAXLINELEN];
+  char *p;
+  CoordSet *result = NULL;
+  result = ObjectMoleculeMOLStr2CoordSet(G,buffer,atInfoPtr,next_mol);
+  p = *next_mol;
+  if(p) {
+    while(*p) { /* we simply need to skip until we've read past the end of the SDF record */
+      p=ncopy(cc,p,4);
+      p=nextline(p);
+      if(!strcmp(cc,"$$$$")) { /* SDF record separator... */
+        break;
+      }
+    }
+    if(!*p) p = NULL;
+  }
+  *next_mol = p;
+  return result;
 }
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete)
@@ -6342,6 +6375,154 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
   return(cset);
+}
+
+ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
+                                      char *st,int content_format, int frame,int discrete,
+                                      int quiet,int multiplex, char *new_name,
+                                      char **next_entry)
+{
+  int ok = true;
+  CoordSet *cset=NULL;
+  AtomInfoType *atInfo;
+  int isNew;
+  int nAtom;
+  char *restart=NULL,*start;
+  int repeatFlag=true;
+  int successCnt = 0;
+  char tmpName[ObjNameMax];
+  int deferred_tasks = false;
+  int skip_out;
+  *next_entry = NULL;
+
+  start=st;
+  while(repeatFlag) {
+    repeatFlag=false;
+    skip_out = false;
+
+    if(!I) 
+      isNew=true;
+    else 
+      isNew=false;
+
+    if(isNew) {
+      I=(ObjectMolecule*)ObjectMoleculeNew(G,discrete);
+      atInfo = I->AtomInfo;
+      isNew = true;
+    } else {
+      atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+      isNew = false;
+    }
+
+    if(isNew) {
+      I->Obj.Color = AtomInfoUpdateAutoColor(G);
+    }
+
+    restart=NULL;
+    switch(content_format) {
+    case cLoadTypeMOL2:
+    case cLoadTypeMOL2Str:
+      cset=ObjectMoleculeMOL2Str2CoordSet(G,start,&atInfo,&restart);
+      break;
+    case cLoadTypeMOL:
+    case cLoadTypeMOLStr:
+      cset=ObjectMoleculeMOLStr2CoordSet(G,start,&atInfo,&restart);
+      restart = NULL;
+      break;
+    case cLoadTypeSDF2:
+    case cLoadTypeSDF2Str:
+      cset=ObjectMoleculeSDF2Str2CoordSet(G,start,&atInfo,&restart);
+      break;
+    }
+  
+    if(!cset) {
+      if(!successCnt) {
+        ObjectMoleculeFree(I);
+        I=NULL;
+        ok=false;
+      } else {
+        skip_out = true;
+      }
+    }
+    
+    if(ok && ! skip_out) {
+      
+      if(frame<0)
+        frame=I->NCSet;
+      if(I->NCSet<=frame)
+        I->NCSet=frame+1;
+      VLACheck(I->CSet,CoordSet*,frame);
+      
+      nAtom=cset->NIndex;
+      
+      if(I->DiscreteFlag&&atInfo) {
+        int a;
+          int fp1 = frame+1;
+          AtomInfoType *ai = atInfo;
+          for(a=0;a<nAtom;a++) {
+            (ai++)->discrete_state = fp1;
+          }
+      }
+      
+      if(multiplex>0) 
+        UtilNCopy(tmpName,cset->Name,ObjNameMax);
+      
+      cset->Obj = I;
+      cset->fEnumIndices(cset);
+      if(cset->fInvalidateRep)
+        cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
+      if(isNew) {		
+        I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+      } else {
+        ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_MOLMask,false); /* NOTE: will release atInfo */
+      }
+      
+      if(isNew) I->NAtom=nAtom;
+      if(frame<0) frame=I->NCSet;
+      VLACheck(I->CSet,CoordSet*,frame);
+      if(I->NCSet<=frame) I->NCSet=frame+1;
+      if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+      I->CSet[frame] = cset;
+      
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+      
+      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeSort(I);
+      
+      deferred_tasks = true;
+      successCnt++;
+      if(!quiet) {
+        if(successCnt>1) {
+          if(successCnt==2) {
+            PRINTFB(G,FB_ObjectMolecule,FB_Actions)
+              " ObjectMoleculeReadStr: read molecule %d\n",1
+              ENDFB(G);
+          }
+          PRINTFB(G,FB_ObjectMolecule,FB_Actions)
+            " ObjectMoleculeReadStr: read molecule %d\n",successCnt
+            ENDFB(G);
+        }
+      }
+      
+      if(multiplex>0) {
+        UtilNCopy(new_name,tmpName,ObjNameMax);
+        if(restart) {
+          *next_entry = restart;
+        }
+      } else if(restart) {
+        repeatFlag=true;
+        start=restart;
+        frame=frame+1;
+      }
+    }
+  }
+  if(deferred_tasks&&I) { /* defer time-consuming tasks until all states have been loaded */
+    SceneCountFrames(G);
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll);
+    ObjectMoleculeUpdateIDNumbers(I);
+    ObjectMoleculeUpdateNonbonded(I);
+  }
+  return(I);
 }
 
 /*========================================================================*/

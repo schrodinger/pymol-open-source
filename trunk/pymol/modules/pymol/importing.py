@@ -72,6 +72,8 @@ if __name__=='pymol.importing':
       mol2str = 34  # MOL2 file string (TRIPOS)
       p1m = 35      # P1M file (combined data & secure commands)
       ccp4str = 36  # CCP4 map string
+      sdf2 = 37     # SDF using C-based SDF parser (instead of Python)
+      sdf2str = 38  # SDF ditto
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -356,10 +358,10 @@ SEE ALSO
       _cmd.finish_object(str(oname))
       if _cmd.get_setting("auto_zoom")==1.0:
          cmd._do("zoom (%s)"%oname)
-      cmd._do("set seq_view_format,4,"+oname)
+      cmd._do("set seq_view_format,4,"+oname+",quiet=1")
    
    def load(filename,object='',state=0,format='',finish=1,
-            discrete=None,quiet=1,multiplex=None,zoom=-1):
+            discrete=-1,quiet=1,multiplex=None,zoom=-1):
       '''
 DESCRIPTION
 
@@ -411,7 +413,7 @@ SEE ALSO
          state = int(state)
          finish = int(finish)
          zoom = int(zoom)
-         if discrete==None:
+         if discrete==-1:
             discrete_default = 1
             discrete=0
          else:
@@ -445,8 +447,8 @@ SEE ALSO
                ftype = loadable.cc1
             elif re.search("\.xyz_[0-9]*$",filename,re.I):
                ftype = loadable.xyz
-            elif re.search("\.sdf$",filename,re.I):
-               ftype = loadable.sdf
+            elif re.search("\.sdf$",filename,re.I): 
+               ftype = loadable.sdf2 # now using the C-based SDF reader by default...
             elif re.search("\.cex$",filename,re.I):
                ftype = loadable.cex
             elif re.search("\.pmo$",filename,re.I):
@@ -502,7 +504,7 @@ SEE ALSO
          else:
             oname = string.strip(object)
 
-   # special handling of sdf files
+   # loadable.sdf is for the old Python-based SDF file reader
          if ftype == loadable.sdf:
             sdf = SDF(fname)
             _processSDF(sdf,oname,state,quiet)
@@ -533,12 +535,12 @@ SEE ALSO
             ftype = -1
             cmd.set_session(io.pkl.fromFile(fname))
 
-   # special handling for mol2 files
+   # special handling for multi-model files (mol2, sdf)
 
-         if ftype == loadable.mol2:
-            if discrete_default==1: # make mol2 files discrete by default
+         if ftype in ( loadable.mol2, loadable.sdf, loadable.sdf2):
+            if discrete_default==1: # make such files discrete by default
                discrete = -1
-               
+
    # standard file handling
          if ftype>=0:
             r = _load(oname,fname,state,ftype,finish,
