@@ -97,14 +97,10 @@ PyMOL>dist tst2 = (lb),(rb)
  Executive: object "tst2" created.
 PyMOL>bond
  AddBond: 1 bonds added to model "pept".
- Selector: selection "pk1" defined with 1 atoms.
- Selector: selection "pk2" defined with 1 atoms.
 PyMOL>unbond
  RemoveBond: 1 bonds removed from model "pept".
 PyMOL>bond (lb),(rb),2
  AddBond: 1 bonds added to model "pept".
- Selector: selection "pk1" defined with 1 atoms.
- Selector: selection "pk2" defined with 1 atoms.
 PyMOL>unbond (lb),(rb)
  RemoveBond: 1 bonds removed from model "pept".
 PyMOL>copy cpy=pept

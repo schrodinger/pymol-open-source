@@ -638,7 +638,7 @@ SEE ALSO
             view_dict[key]=cmd.get_view(0)
             if _feedback(fb_module.scene,fb_mask.actions):
                print " view: view stored as \"%s\"."%key
-         elif action=='delete':
+         elif action=='clear':
             key = view_dict_sc.auto_err(key,'view')
             if view_dict.has_key(key):
                del view_dict[key]
@@ -706,7 +706,7 @@ SEE ALSO
          
          if key=='*':
             action = view_sc.auto_err(action,'action')
-            if action=='clearscene':
+            if action=='clear':
                scene_dict = {}
                scene_dict_sc = Shortcut(scene_dict.keys())                        
             else:
@@ -740,7 +740,7 @@ SEE ALSO
                if _feedback(fb_module.scene,fb_mask.actions):
                   print " scene: scene stored as \"%s\"."%key
                cmd.set("scenes_changed",1,quiet=1);
-            elif action=='delete':
+            elif action=='clear':
                key = scene_dict_sc.auto_err(key,'view')
                if scene_dict.has_key(key):
                   cmd.set("scenes_changed",1,quiet=1);               
