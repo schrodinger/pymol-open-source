@@ -77,6 +77,18 @@ SpecRec *ExecutiveFindSpec(char *name);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
 
 /*========================================================================*/
+void ExecutiveStereo(int flag)
+{
+
+  if(PMGUI) {
+
+#ifdef _PYMOL_STEREO
+      SceneSetStereo(flag);
+#endif
+
+  }
+}
+/*========================================================================*/
 void ExecutiveDistance(char *s1,char *s2)
 {
   int sele1,sele2;
@@ -143,6 +155,37 @@ char *ExecutiveSeleToPDBStr(char *s1,int state)
   memcpy(result,op1.charVLA,op1.i2);
   VLAFreeP(op1.charVLA);
   return(result);
+}
+/*========================================================================*/
+void ExecutiveCopy(char *src,char *dst)
+{
+  Object *os;
+  ObjectMolecule *oSrc,*oDst;
+  SpecRec *rec1 = NULL,*rec2=NULL;
+  int a;
+
+  os=ExecutiveFindObjectByName(src);
+  if(!os)
+    ErrMessage(" Executive","object not found.");
+  else if(os->type!=cObjectMolecule)
+    ErrMessage(" Executive","bad object type.");
+  else 
+    {
+      oSrc =(ObjectMolecule*)os;
+      oDst = ObjectMoleculeCopy(oSrc);
+      if(oDst) {
+        strcpy(oDst->Obj.Name,dst);
+        ExecutiveManageObject((Object*)oDst);
+        rec1=ExecutiveFindSpec(oSrc->Obj.Name);
+        rec2=ExecutiveFindSpec(oDst->Obj.Name);
+        if(rec1&&rec2) {
+          for(a=0;a<cRepCnt;a++)
+            rec2->repOn[a]=rec1->repOn[a];
+        }
+        ErrOk(" Executive","object created.");
+      }
+    }
+  SceneChanged();
 }
 
 /*========================================================================*/
@@ -600,7 +643,7 @@ void ExecutiveDelete(char *name)
 	 {
 		if(rec->type==cExecObject)
 		  {
-			 if(all_flag||WordMatch(rec->obj->Name,name,true))
+			 if(all_flag||(WordMatch(rec->obj->Name,name,true)<0))
 				{
 				  SelectorDelete(rec->name);
 				  rec->obj->fFree(rec->obj);
@@ -612,7 +655,7 @@ void ExecutiveDelete(char *name)
 		else if(rec->type==cExecSelection)
 		  {
 
-			 if(all_flag||WordMatch(rec->name,name,true))
+			 if(all_flag||(WordMatch(rec->name,name,true)<0))
 				{
 				  SelectorDelete(rec->name);
 				  ListDelete(I->Spec,rec,next,SpecList);
@@ -721,6 +764,7 @@ int ExecutiveRelease(Block *block,int x,int y,int mod)
 				  else 
 					 SceneObjectAdd(rec->obj);
 				  rec->visible=!rec->visible;
+              SceneChanged();
 				}
 		  }
 		n--;

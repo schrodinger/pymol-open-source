@@ -51,6 +51,8 @@ typedef struct ObjectMoleculeOpRec {
 
 ObjectMolecule *ObjectMoleculeNew(void);
 
+ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
+
 ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame);
 ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame);
 

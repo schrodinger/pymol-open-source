@@ -41,7 +41,9 @@ typedef struct CoordSet {
 #include"ObjectMolecule.h"
 
 CoordSet *CoordSetNew(void);
-void CoordSetAtomToPDBStrVLA(char **charVLA,unsigned int *c,AtomInfoType *ai,float *v,int cnt);
+void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt);
+CoordSet *CoordSetCopy(CoordSet *cs);
+
 
 #endif
 

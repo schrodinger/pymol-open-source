@@ -48,7 +48,7 @@ void CoordSetAppendIndices(CoordSet *I,int offset);
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
 /*========================================================================*/
-void CoordSetAtomToPDBStrVLA(char **charVLA,unsigned int *c,AtomInfoType *ai,float *v,int cnt)
+void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt)
 {
   char *aType;
   AtomName name;
@@ -69,7 +69,7 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,unsigned int *c,AtomInfoType *ai,flo
 	}
   (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s %3s %1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s\n",
 				aType,cnt+1,name,ai->resn,
-				ai->chain,ai->resi,*v,*(v+1),*(v+2),1.0,ai->b,ai->segi); /* NEED TO HANDLE OCCUPANCY TOO! */
+				ai->chain,ai->resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi);
   
 }
 
@@ -210,6 +210,47 @@ CoordSet *CoordSetNew(void)
   return(I);
 }
 /*========================================================================*/
+CoordSet *CoordSetCopy(CoordSet *cs)
+{
+  int a;
+  int nAtom;
+  float *v0,*v1;
+  int *i0,*i1;
+  OOAlloc(CoordSet);
+
+  (*I)=(*cs);
+  I->Coord = VLAlloc(float,I->NIndex*3);
+  v0=I->Coord;
+  v1=cs->Coord;
+  for(a=0;a<I->NIndex;a++) {
+    *(v0++)=*(v1++);
+    *(v0++)=*(v1++);
+    *(v0++)=*(v1++);
+  }
+
+  nAtom = cs->Obj->NAtom;
+  I->AtmToIdx = Alloc(int,nAtom);
+  i0=I->AtmToIdx;
+  i1=cs->AtmToIdx;
+  for(a=0;a<nAtom;a++)
+    *(i0++)=*(i1++);
+
+  I->IdxToAtm = Alloc(int,I->NIndex);
+  i0=I->IdxToAtm;
+  i1=cs->IdxToAtm;
+  for(a=0;a<I->NIndex;a++)
+    *(i0++)=*(i1++);
+  
+  I->Rep=VLAlloc(Rep*,I->NRep);
+  for(a=0;a<I->NRep;a++)	
+    I->Rep[a] = NULL;
+
+  I->TmpBond=NULL;
+  I->Color=NULL;
+
+  return(I);
+}
+/*========================================================================*/
 void CoordSetExtendIndices(CoordSet *I,int nAtom)
 {
   int a;
@@ -281,8 +322,8 @@ void CoordSetFree(CoordSet *I)
 		I->Rep[a]->fFree(I->Rep[a]);
   if(I) 
 	 {
-	 OOFreeP(I->AtmToIdx);
-	 OOFreeP(I->IdxToAtm);
+	 FreeP(I->AtmToIdx);
+	 FreeP(I->IdxToAtm);
 	 VLAFreeP(I->Color);
 	 VLAFreeP(I->Coord);
 	 VLAFreeP(I->Rep);

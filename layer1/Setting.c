@@ -377,6 +377,26 @@ void SettingInit(void)
 			"surface_proximity");
 
   I->NSetting++;
+  I->Setting[cSetting_stereo_angle].Value[0] = 2.1;
+  strcpy(I->Setting[cSetting_stereo_angle].Name,
+			"stereo_angle");
+
+  I->NSetting++;
+  I->Setting[cSetting_stereo_shift].Value[0] = 2.0;
+  strcpy(I->Setting[cSetting_stereo_shift].Name,
+			"stereo_shift");
+
+  I->NSetting++;
+  I->Setting[cSetting_line_smooth].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_line_smooth].Name,
+			"line_smooth");
+
+  I->NSetting++;
+  I->Setting[cSetting_line_width].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_line_width].Name,
+			"line_width");
+
+  I->NSetting++;
 #ifdef _PYMOL_WINDOWS
   I->Setting[cSetting_normal_workaround].Value[0] = 1;
 #else

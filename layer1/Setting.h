@@ -80,6 +80,10 @@ float SettingGetNamed(char *name);
 #define cSetting_surface_quality      38
 #define cSetting_surface_proximity    39
 #define cSetting_normal_workaround    40 
+#define cSetting_stereo_angle         41 
+#define cSetting_stereo_shift         42
+#define cSetting_line_smooth          43
+#define cSetting_line_width           44
 
 #endif
 

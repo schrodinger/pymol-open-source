@@ -208,7 +208,6 @@ void AtomInfoAssignParameters(AtomInfoType *I)
 		  vdw=0.64; break;
 		default:
 		  vdw=1.35; break;
-		  break;
 		}
 	  break;
 	default:

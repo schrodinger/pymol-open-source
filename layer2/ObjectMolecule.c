@@ -284,11 +284,12 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 				case 'C' : 
 				  switch(atInfo[a].name[1]) {
 				  case 0:
-					color = CColor; break;
+              case 32:
+                color = CColor; break;
 				  case 'l':
 				  case 'L':
 				  default:
-					color = MColor; break;
+                color = MColor; break;
 				  }
 				  break;
 				case 'O' : color = OColor; break;
@@ -669,15 +670,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 					{
 					case 'N' : color = NColor; break;
 					case 'C' : color = CColor; break;
-					  switch(atInfo[a].name[1]) {
-					  case 0:
-						color = CColor; break;
-					  case 'l':
-					  case 'L':
-					  default:
-						color = MColor; break;
-					  }
-					  break;
 					case 'O' : color = OColor; break;
 					case 'I' : color = MColor; break;
 					case 'P' : color = MColor; break;
@@ -1274,6 +1266,43 @@ ObjectMolecule *ObjectMoleculeNew(void)
   I->CurCSet=0;
   return(I);
 }
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
+{
+  int a,b;
+  int *i0,*i1;
+  AtomInfoType *a0,*a1;
+  OOAlloc(ObjectMolecule);
+  (*I)=(*obj);
+  I->CSet=VLAMalloc(I->NCSet,sizeof(CoordSet*),5,true); /* auto-zero */
+  for(a=0;a<I->NCSet;a++) {
+    I->CSet[a]=CoordSetCopy(obj->CSet[a]);
+    I->CSet[a]->Obj=I;
+  }
+  I->Bond=VLAlloc(int,I->NBond*2);
+  i0=I->Bond;
+  i1=obj->Bond;
+  for(a=0;a<I->NBond;a++) {
+    *(i0++)=*(i1++);
+    *(i0++)=*(i1++);
+  }
+  
+  I->AtomInfo=VLAlloc(AtomInfoType,I->NAtom);
+  a0=I->AtomInfo;
+  a1=obj->AtomInfo;
+  for(a=0;a<I->NAtom;a++)
+    *(a0++)=*(a1++);
+
+  for(a=0;a<I->NAtom;a++) {
+    for(b=0;b<I->NAtom;b++) {
+      
+    }
+    I->AtomInfo[a].selEntry=0;
+  }
+  return(I);
+
+}
+
 /*========================================================================*/
 void ObjectMoleculeFree(ObjectMolecule *I)
 {
