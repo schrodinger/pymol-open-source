@@ -160,9 +160,9 @@ PyMOL currently includes a diverse command language, a powerful
 application programmers interface (API), and a variety of mouse and
 keyboard driven functionality for viewing, animation, rendering, and
 molecular editing.  However, this release of PyMOL does NOT include an
-adequate graphical user interface, menu bar, manual, test suite, or a
-complete help system.  Such enhancements are in progress, but proceed
-at a slow pace.
+adequate graphical user interface, menu bar, test suite, or a complete 
+help system.  Such enhancements are in progress, but proceed
+at a slow pace.  A manual is now available on the web site.
 
 Two external GUI development options are supported for PyMOL:
 "Tkinter" and "wxPython".  Developers can take their pick.  I am
@@ -174,7 +174,7 @@ Note that only Tkinter is supported under Windows with the default
 PyMOL and Python distributions, so for maximum ease of installation
 under Windows, stick with Tkinter (Tcl/Tk).
 
-Warren L. DeLano (2/16/2001), warren@delanoscientific.com
+Warren L. DeLano (2/21/2001), warren@delanoscientific.com
 '''
 
 def edit_keys():

@@ -931,7 +931,7 @@ void OrthoSplash(void)
   OrthoAddOutput("    This software is open source and freely available.\n");
   OrthoAddOutput("    Updates can be found at \"http://www.pymol.org\".\n \n");
 
-  OrthoAddOutput("    Enter \"help release\" for release notes.\n");
+  OrthoAddOutput("    Enter \"help release\" for release notes (PLEASE READ!).\n");
   OrthoAddOutput("    Enter \"help commands\" for a list of commands.\n");
   OrthoAddOutput("    Enter \"help <command-name>\" for information on a specific command.\n \n");
 
