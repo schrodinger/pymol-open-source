@@ -273,7 +273,15 @@ def movement(s):
            [ 1, 'protect'   ,'cmd.protect("'+s+'")'          ],
            [ 1, 'deprotect'   ,'cmd.deprotect("'+s+'")'          ],           
            ]
-   
+
+def sequence(s):
+   return [[ 2, 'Sequence:'       ,''                        ],     
+           [ 1, 'include'   ,'cmd.set("seq_view","on","'+s+'")'          ],
+           [ 1, 'exclude'   ,'cmd.set("seq_view","off","'+s+'")'          ],
+           [ 0, ''               ,''                             ],                      
+           [ 1, 'default'   ,'cmd.unset("seq_view","'+s+'")'          ],                      
+           ]
+
 def selection(s):
    return [[ 2, 'Selection:'       ,''                        ],     
            [ 1, 'mask'   ,'cmd.mask("'+s+'")'          ],
@@ -413,7 +421,8 @@ def sele_action(s):
              'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
              ],                      
            [ 0, ''          ,''                                  ],
-           [ 1, 'selection'      , selection(s)         ],           
+           [ 1, 'selection'      , selection(s)         ],
+           [ 1, 'sequence'       , sequence(s)         ],
            [ 1, 'movement'       , movement(s)         ],
            [ 1, 'compute'        , compute(s)         ],           
            ]
@@ -444,7 +453,8 @@ def mol_action(s):
            [ 1, 'remove waters'  ,'cmd.remove("(resn HOH+WAT and ('+s+'))")'     ],
            [ 0, ''          ,''                                              ],
            [ 1, 'state'      , state(s)         ],                      
-           [ 1, 'selection'      , selection(s)         ],           
+           [ 1, 'selection'      , selection(s)         ],
+           [ 1, 'sequence'       , sequence(s)         ],                      
            [ 1, 'movement'       , movement(s)         ],           
            [ 1, 'compute'        , compute(s)         ],
            ]
@@ -473,6 +483,11 @@ def simple_action(s):
            [ 1, 'center'       , 'cmd.center("'+s+'")'    ],           
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 0, ''             , ''                       ],
+           [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+           ]
+
+def ramp_action(s):
+   return [[ 2, 'Actions:'     , ''                       ],
            [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            ]
 

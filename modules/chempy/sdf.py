@@ -135,10 +135,13 @@ class SDF:
          mode = args[2]
       self.mode = mode
       self.at_eof = 0
-      if mode not in ('w','r','wa'):
+      if mode not in ('w','r','wa','pseudofile'):
          print " SDF: bad mode"
          return None
-      self.file = open(fname,mode)
+      if mode=='pf': # pseudofile
+         self.file = fname
+      else:
+         self.file = open(fname,mode)
 
    def write(self,rec):
       lst = rec.toList()
