@@ -109,7 +109,7 @@ typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
 
-void SceneCopy(GLenum buffer);
+void SceneCopy(GLenum buffer,int force);
 
 unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer);
 unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer);
@@ -661,7 +661,7 @@ void SceneMakeMovieImage(void) {
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
       SceneRender(NULL,0,0,NULL);
-      SceneCopy(GL_BACK);
+      SceneCopy(GL_BACK,true);
     }
   }
   if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
@@ -916,14 +916,16 @@ void SceneDraw(Block *block)
             } else {
               glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
             }
-            if(!double_pump) {
-              glDrawBuffer(GL_BACK);
-              glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
-            } else {
-              glDrawBuffer(GL_BACK_LEFT);
-              glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
-              glDrawBuffer(GL_BACK_RIGHT);
-              glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+            if(I->ImageBuffer) {
+              if(!(double_pump||(I->StereoMode==1))) {
+                glDrawBuffer(GL_BACK);
+                glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+              } else {
+                glDrawBuffer(GL_BACK_LEFT);
+                glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+                glDrawBuffer(GL_BACK_RIGHT);
+                glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+              }
             }
           }
           I->RenderTime = -I->LastRender;
@@ -2519,12 +2521,12 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   RayFree(ray);
 }
 /*========================================================================*/
-void SceneCopy(GLenum buffer)
+void SceneCopy(GLenum buffer,int force)
 {
   CScene *I=&Scene;
   unsigned int buffer_size;
 
-  if(!(I->StereoMode||SettingGet(cSetting_stereo_double_pump_mono)))
+  if(force || (!(I->StereoMode||SettingGet(cSetting_stereo_double_pump_mono))))
   { /* no copies while in stereo mode */
     if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
       buffer_size = 4*I->Width*I->Height;
@@ -3286,7 +3288,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       if((start_time>0.10)||(MainSavingUnderWhileIdle()))
         if(!(ControlIdling()))
           if(SettingGet(cSetting_cache_display)) {
-            SceneCopy(render_buffer);
+            SceneCopy(render_buffer,false);
           }
     } else {
       I->CopyNextFlag=true;
