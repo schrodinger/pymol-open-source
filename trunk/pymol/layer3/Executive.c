@@ -727,13 +727,20 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   int a;
 
   op2.i1 = 0;
-
+  op2.v1[0]=-1.0;
+  op2.v1[1]=-1.0;
+  op2.v1[2]=-1.0;
+  op2.v2[0]=1.0;
+  op2.v2[1]=1.0;
+  op2.v2[2]=1.0;
+  
   if(WordMatch("all",name,true)<0) {
     name=all;
     all_flag=true;
     SelectorCreate(all,"(all)",NULL,true);
   }
   sele=SelectorIndexByName(name);
+
   if(sele>=0) {
 	 op.code = OMOP_MNMX;
 	 op.v1[0]=FLT_MAX;
@@ -783,8 +790,8 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
           copy3f(obj->ExtentMin,op.v1);
           copy3f(obj->ExtentMax,op.v2);
           flag = true;
+          break;
         }
-        break;
       }
     }
   }
@@ -803,9 +810,9 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
         op.v2[a] = op2.v1[a] + fmx;
       }
     }
-    copy3f(op.v1,mn);
-    copy3f(op.v2,mx);
   }
+  copy3f(op.v1,mn);
+  copy3f(op.v2,mx);
   return(flag);  
 }
 /*========================================================================*/
@@ -1224,53 +1231,58 @@ void ExecutiveManageObject(Object *obj)
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
   char buffer[255];
+  int exists=false;
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
 		if(rec->obj==obj) {
-        return; /* this object is already managed by the executive */
+        exists = true;
       }
 	 }
-  while(ListIterate(I->Spec,rec,next,SpecList))
-	 {
-		if(rec->type==cExecObject)
-		  {
-			 if(strcmp(rec->obj->Name,obj->Name)==0) 
-				break;
-		  }
-	 }
-  if(rec) /* another object of this type already exists */
-	 { /* purge it */
-		SceneObjectDel(rec->obj);
-		rec->obj->fFree(rec->obj);
-		rec->obj=NULL;
-	 }
-  else 
-    {
-      sprintf(buffer," Executive: object \"%s\" created.\n",obj->Name);
-      OrthoAddOutput(buffer);
+  if(!exists) {
+    while(ListIterate(I->Spec,rec,next,SpecList))
+      {
+        if(rec->type==cExecObject)
+          {
+            if(strcmp(rec->obj->Name,obj->Name)==0) 
+              break;
+          }
+      }
+    if(rec) /* another object of this type already exists */
+      { /* purge it */
+        SceneObjectDel(rec->obj);
+        rec->obj->fFree(rec->obj);
+        rec->obj=NULL;
+      }
+    else 
+      {
+        sprintf(buffer," Executive: object \"%s\" created.\n",obj->Name);
+        OrthoAddOutput(buffer);
+      }
+    if(!rec)
+      ListElemAlloc(rec,SpecRec);
+    strcpy(rec->name,obj->Name);
+    rec->type=cExecObject;
+    rec->next=NULL;
+    rec->obj=obj;
+    if(rec->obj->type==cObjectMap) {
+      rec->visible=0;
+    } else {
+      rec->visible=1;
+      SceneObjectAdd(obj);
     }
-  if(!rec)
-	 ListElemAlloc(rec,SpecRec);
-  strcpy(rec->name,obj->Name);
-  rec->type=cExecObject;
-  rec->next=NULL;
-  rec->obj=obj;
-  if(rec->obj->type==cObjectMap) {
-    rec->visible=0;
-  } else {
-    rec->visible=1;
-    SceneObjectAdd(obj);
+    for(a=0;a<cRepCnt;a++)
+      rec->repOn[a]=false;
+    if(rec->obj->type==cObjectMolecule)
+      rec->repOn[cRepLine]=true;
+    ListAppend(I->Spec,rec,next,SpecList);
   }
-  for(a=0;a<cRepCnt;a++)
-	 rec->repOn[a]=false;
-  if(rec->obj->type==cObjectMolecule)
-    rec->repOn[cRepLine]=true;
-  ListAppend(I->Spec,rec,next,SpecList);
-  if(rec->obj->type==cObjectMolecule)
+  if(obj->type==cObjectMolecule) {
 	 ExecutiveUpdateObjectSelection(obj);
-  if(SettingGet(cSetting_auto_zoom)) {
-    ExecutiveWindowZoom(obj->Name);
   }
+  if(!exists) 
+    if(SettingGet(cSetting_auto_zoom)) {
+      ExecutiveWindowZoom(obj->Name);
+    }
 }
 /*========================================================================*/
 void ExecutiveManageSelection(char *name)

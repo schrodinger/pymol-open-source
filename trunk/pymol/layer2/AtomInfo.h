@@ -35,6 +35,7 @@ typedef char AtomName[cAtomNameLen+1];
 typedef struct AtomInfoType {
   int resv;
   Chain chain;
+  Chain alt;
   ResIdent resi;
   SegIdent segi;
   ResName resn;
@@ -62,6 +63,7 @@ void AtomInfoPrimeColors(void);
 int AtomInfoGetColor(AtomInfoType *at1);
 
 int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);
 
 #endif

@@ -125,9 +125,15 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
           if(!wc) {
             wc=WordCompare(at1->resn,at2->resn,true);
             if(!wc) {
-              if(at1->priority==at2->priority) {
-                result=WordCompare(at1->name,at2->name,true);
-              } else if(at1->priority<at2->priority) {
+              if(at1->alt[0]==at2->alt[0]) {
+                if(at1->priority==at2->priority) {
+                  result=WordCompare(at1->name,at2->name,true);
+                } else if(at1->priority<at2->priority) {
+                  result=-1;
+                } else {
+                  result=1;
+                }
+              } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                 result=-1;
               } else {
                 result=1;
@@ -148,11 +154,11 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
       } else {
         result=1;
       }
-	 } else if((!at2->chain[0])||(at1->chain[0]&&((at1->chain[0]<at2->chain[0])))) {
-		result=-1;
-	 } else {
-		result=1;
-	 }
+    } else if((!at2->chain[0])||(at1->chain[0]&&((at1->chain[0]<at2->chain[0])))) {
+      result=-1;
+    } else {
+      result=1;
+    }
   } else {
 	 result=wc;
   }
@@ -171,7 +177,18 @@ int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2)
 		if(WordMatch(at1->resi,at2->resi,true)<0)
 		  if(WordMatch(at1->resn,at2->resn,true)<0)
 			 if(WordMatch(at1->segi,at2->segi,true)<0)
-				return 1;
+            if((tolower(at1->alt[0]))==(tolower(at2->alt[0])))
+              return 1;
+  return 0;
+}
+
+int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2)
+{
+  if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
+    if(WordMatch(at1->resi,at2->resi,true)<0)
+      if(WordMatch(at1->resn,at2->resn,true)<0)
+        if(WordMatch(at1->segi,at2->segi,true)<0)
+            return 1;
   return 0;
 }
 
