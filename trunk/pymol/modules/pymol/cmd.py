@@ -1197,6 +1197,7 @@ SEE ALSO
 
       #--------------------------------------------------------------------
       from querying import \
+           angle,              \
            count_atoms,        \
            count_frames,       \
            count_states,       \
@@ -1481,6 +1482,7 @@ SEE ALSO
          'align'         : [ align             , 0 , 0 , ''  , parsing.STRICT ],
          'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
          'alter_state'   : [ alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
+         'angle'         : [ angle             , 0 , 0 , ''  , parsing.STRICT ],          
          'as'            : [ as                , 0 , 0 , ''  , parsing.STRICT ],          
          'assert'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
          'attach'        : [ attach            , 0 , 0 , ''  , parsing.STRICT ],
