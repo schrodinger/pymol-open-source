@@ -582,15 +582,15 @@ class DictDBRequestHandler(SocketServer.StreamRequestHandler):
 
           # get method pointer
           meth_obj = getattr(self.server.dictdb,method)
-          #print method,args,kw
+#          print method,args,kw
 
           # call method and return result
           cPickle.dump(apply(meth_obj,args,kw),self.wfile,1) # binary by default
           self.wfile.flush()
-
-def server_test(port = 8000):
+          
+def server_test(port = 8000,prefix='test_dictdb'):
    print 'Testing DictDBServer on port',str(port)
-   fp = DictDBServer('test_dictdb',port=port) # socket servers don't terminate
+   fp = DictDBServer(prefix,port=port) # socket servers don't terminate
 
 def client_test(host,port=8000):
 
