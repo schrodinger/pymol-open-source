@@ -78,6 +78,19 @@ class SDFRec:
       else:
          return None
 
+   def get_single(self,kee): # automatic stripping
+      if self.data.has_key(kee):
+         sdk = self.data[kee]
+         if len(sdk):
+            return string.strip(sdk[0])
+         else:
+            return None
+      else:
+         return None
+         
+   def set_single(self,kee,data,ref_code=None): # adds LF
+      self.set(kee,[data+'\n'],ref_code)
+      
    def get_model(self):
       return io.mol.fromList(self.get('MOL'))
       
