@@ -35,7 +35,7 @@ void ExecutiveBond(char *s1,char *s2,int order,int add);
 int ExecutiveIterate(char *s1,char *expr,int read_only);
 void ExecutiveLabel(char *s1,char *expr,int quiet);
 void ExecutiveIterateState(int i1,char *s1,char *expr,int read_only,int atomic_props);
-int ExecutiveColor(char *name,char *color,int flags);
+int ExecutiveColor(char *name,char *color,int flags,int quiet);
 void ExecutiveInit(void);
 void ExecutiveFree(void);
 void ExecutiveManageObject(struct CObject *obj,int allow_zoom,int quiet);
