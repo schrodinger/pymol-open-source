@@ -669,7 +669,7 @@ def log(text,alt_text=None):
             if alt_text!=None:
                pymol._log_file.write(alt_text)
             else:
-               pymol._log_file.write("cmd.do('''%s''')"%text)
+               pymol._log_file.write("cmd.do('''%s''')\n"%string.strip(text))
          pymol._log_file.flush()
          
 
@@ -5028,16 +5028,12 @@ SEE ALSO
          r = _cmd.showhide("(all)",repres['lines'],1); # show lines by default       
       elif (representation!="") and (selection!=""):
          rep = representation
-         if rephash.has_key(rep):
-            rep = rephash[rep]
-         if repres.has_key(rep):      
-            repn = repres[rep];
-            # preprocess selection 
-            selection = selector.process(selection)
-            #   
-            r = _cmd.showhide(str(selection),int(repn),1);
-         else:
-            print "Error: unrecognized or ambiguous representation"
+         rep = repres_sc.auto_err(rep,'representation')
+         repn = repres[rep];
+         # preprocess selection 
+         selection = selector.process(selection)
+         #   
+         r = _cmd.showhide(str(selection),int(repn),1);
       elif representation=='all':
          r = _cmd.showhide("all",repres['lines'],1); # show lines by default 
       elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
@@ -5047,13 +5043,9 @@ SEE ALSO
          r = _cmd.showhide(str(selection),repres['lines'],1);
       else: # selection==""
          rep = representation
-         if rephash.has_key(rep):
-            rep = rephash[rep]
-         if repres.has_key(rep):      
-            repn = repres[rep];
-            r = _cmd.showhide("all",int(repn),1);
-         else:
-            print "Error: unrecognized or ambiguous representation"
+         rep = repres_sc.auto_err(rep,'representation')
+         repn = repres[rep];
+         r = _cmd.showhide("all",int(repn),1);
    finally:
       unlock()
    return r
@@ -5096,32 +5088,20 @@ SEE ALSO
          r = _cmd.showhide("!",0,0);      
       elif (representation!="") and (selection!=""):
          rep = representation
-         if rephash.has_key(rep):
-            rep = rephash[rep]
-         if repres.has_key(rep):      
-            repn = repres[rep];
-            # preprocess selection
-            selection = selector.process(selection)
-            #
-            r = _cmd.showhide(str(selection),int(repn),0);
-         else:
-            print "Error: unrecognized or ambiguous representation"
+         rep = repres_sc.auto_err(rep,'representation')
+         repn = repres[rep];
+         selection = selector.process(selection)
+         r = _cmd.showhide(str(selection),int(repn),0);
       elif (representation=='all'):
          r = _cmd.showhide("!",0,0);
       elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
-         # preprocess selection
          selection = selector.process(representation)
-         #         
          r = _cmd.showhide(str(selection),-1,0);
       else: # selection == ""
          rep = representation
-         if rephash.has_key(rep):
-            rep = rephash[rep]
-         if repres.has_key(rep):
-            repn = repres[rep];
-            r = _cmd.showhide("all",int(repn),0);
-         else:
-            print "Error: unrecognized or ambiguous representation"
+         rep = repres_sc.auto_err(rep,'representation')
+         repn = repres[rep];
+         r = _cmd.showhide("all",int(repn),0);
    finally:
       unlock()
    return r
@@ -5976,7 +5956,7 @@ repres = {
    'extent'        :15,   
 }
 
-rephash = Shortcut(repres.keys())
+repres_sc = Shortcut(repres.keys())
 
 button_code = {
    'left' : 0,
@@ -6076,8 +6056,8 @@ selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
 auto_arg =[
    {
    'set' : [ setting.setting_sc, 'settings', '=' ],
-   'show' : [ rephash , 'representations',', ' ],
-   'hide' : [ rephash , 'representations',', ' ],
+   'show' : [ repres_sc , 'representations',', ' ],
+   'hide' : [ repres_sc , 'representations',', ' ],
    'stereo' : [ toggle_sc , 'options','' ],
    'full_screen' : [ toggle_sc , 'options','' ],
    'clip' : [ clip_action_sc , 'clipping actions',', ' ],

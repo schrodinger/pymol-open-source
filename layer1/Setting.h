@@ -233,7 +233,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_log_conformations           134
 #define cSetting_valence_default             135
 #define cSetting_surface_miserable           136
-#define cSetting_INIT                        137
+#define cSetting_ray_opaque_background       137
+#define cSetting_INIT                        138
 
 #endif
 

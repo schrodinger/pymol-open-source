@@ -143,7 +143,9 @@ class SettingIndex:
    robust_logs           =132
    log_box_selections    =133
    log_conformations     =134
-   surface_miserable     =135
+   valence_default       =135
+   surface_miserable     =136
+   ray_opaque_background = 137
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
