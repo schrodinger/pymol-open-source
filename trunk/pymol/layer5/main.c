@@ -84,9 +84,9 @@ int ShowSplash=true;
 
 void launch(void);
 
-void MainOnExit(int i);
+void MainOnExit(void);
 
-void MainOnExit(int i)
+void MainOnExit(void)
 { /* 
      here we enter not knowing anything about the current state, so the
      best thing we can hope for is to shield PyMOL from against any
@@ -97,6 +97,7 @@ void MainOnExit(int i)
   if(!PyMOLTerminating) {
     PyMOLTerminating=true;
     PBlockForEmergencyShutdown();
+    printf(" PyMOL: abrupt program termination.\n");
   }
 }
 /*========================================================================*/
@@ -339,6 +340,7 @@ void MainFree(void)
   PFree();
   
   MemoryDebugDump();
+  printf(" PyMOL: normal program termination.\n");
 }
 /*========================================================================*/
 void MainRefreshNow(void) 
