@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Menu.h"
 #include"Map.h"
+#include"Editor.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -81,6 +82,28 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
+/*========================================================================*/
+void ExecutiveUndo(int dir)
+{
+  CExecutive *I = &Executive;
+  ObjectMolecule *obj,*compObj;
+  SpecRec *rec = NULL;
+
+  obj = EditorDragObject();
+
+  /* make sure this is still a real object */
+  while(ListIterate(I->Spec,rec,next,SpecList)) {
+    if(rec->type==cExecObject)
+      if(rec->obj->type==cObjectMolecule) {
+        compObj=(ObjectMolecule*)rec->obj;
+        if(obj==compObj) {
+          ObjectMoleculeUndo(obj,dir);
+          break;
+        }
+      }
+  }
+  
+}
 /*========================================================================*/
 void ExecutiveSort(char *name)
 {

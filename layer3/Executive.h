@@ -70,6 +70,7 @@ void ExecutiveFlag(int flag,char *s1);
 void ExecutiveRemoveAtoms(char *s1);
 void ExecutiveProtect(char *s1,int mode);
 void ExecutiveMask(char *s1,int mode);
+void ExecutiveUndo(int dir);
 
 #endif
 
