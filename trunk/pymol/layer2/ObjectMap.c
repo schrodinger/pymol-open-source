@@ -1143,8 +1143,9 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   if((4*map_dim*map_dim*map_dim)!=map_bytes) /* consistency check */
     map_dim = 65;
 
-  printf(" PHIMapToStr: Map Size %d x %d x %d\n",map_dim,map_dim,map_dim);
-
+  PRINTFB(FB_Details,FB_ObjectMap) 
+      " PHIMapToStr: Map Size %d x %d x %d\n",map_dim,map_dim,map_dim
+      ENDFB;
   p+=4;
 
   ms->FDim[0] = map_dim;
@@ -1693,6 +1694,10 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     copy3f(ms->ExtentMin,ms->Origin);
     subtract3f(ms->ExtentMax,ms->ExtentMin,ms->Range);
     ms->FDim[3] = 3;
+
+    PRINTFB(FB_Details,FB_ObjectMap) 
+      " FLDMapToStr: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+      ENDFB;
       
     for(a=0;a<3;a++) {
       ms->Min[a] = 0;
@@ -1704,13 +1709,6 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
       else
         ms->Grid[a]=0.0F;
     }
-
-
-    dump3f(ms->ExtentMin,"min");
-    dump3f(ms->ExtentMax,"max");
-    subtract3f(ms->ExtentMax,ms->ExtentMin,ms->Range);
-    dump3f(ms->Range,"range");
-    dump3f(ms->Grid,"grid");
 
     ms->Field=IsosurfFieldAlloc(ms->FDim);
     ms->MapSource = cMapSourceFLD;
@@ -1799,8 +1797,10 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
       
   } else {
-      
-    printf(" got_ndim %d\n",got_ndim);
+    PRINTFB(FB_Errors,FB_ObjectMap) 
+      " Error: unable to read FLD file.\n"
+      ENDFB;
+            /*  printf(" got_ndim %d\n",got_ndim);
     printf(" got_dim1 %d\n",got_dim1);
     printf(" got_dim2 %d\n",got_dim2);
     printf(" got_dim3 %d\n",got_dim3);
@@ -1810,7 +1810,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     printf(" got_field %d\n",got_field);
     printf(" got_nspace %d\n",got_nspace);
     printf(" got_data %d\n",got_data);
-      
+            */
   }
     
 
@@ -2004,7 +2004,6 @@ ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state)
         ObjectMapState *ms;
         ms = &I->State[state];
         if(ms->Active) {
-          CrystalDump(ms->Crystal);
           multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
         }
       }
@@ -2059,7 +2058,6 @@ ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state)
         ObjectMapState *ms;
         ms = &I->State[state];
         if(ms->Active) {
-          CrystalDump(ms->Crystal);
           multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
         }
       }
