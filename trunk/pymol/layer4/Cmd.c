@@ -123,6 +123,7 @@ static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
+static PyObject *CmdMask(PyObject *self, PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
 static PyObject *CmdLabel(PyObject *self,   PyObject *args);
 static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
@@ -141,6 +142,7 @@ static PyObject *CmdOrient(PyObject *dummy, PyObject *args);
 static PyObject *CmdOverlap(PyObject *self, 	PyObject *args);
 static PyObject *CmdPaste(PyObject *self, 	PyObject *args);
 static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
+static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdReset(PyObject *self, PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
@@ -208,6 +210,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"load",	        CmdLoad,         METH_VARARGS },
 	{"load_coords",  CmdLoadCoords,   METH_VARARGS },
 	{"load_object",  CmdLoadObject,   METH_VARARGS },
+	{"mask",	        CmdMask,         METH_VARARGS },
 	{"mclear",	     CmdMClear,       METH_VARARGS },
 	{"mdo",	        CmdMDo,          METH_VARARGS },
 	{"mem",	        CmdMem,          METH_VARARGS },
@@ -222,6 +225,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"overlap",      CmdOverlap,      METH_VARARGS },
 	{"paste",	     CmdPaste,        METH_VARARGS },
 	{"png",	        CmdPNG,          METH_VARARGS },
+	{"protect",	     CmdProtect,      METH_VARARGS },
 	{"quit",	        CmdQuit,         METH_VARARGS },
 	{"ready",        CmdReady,        METH_VARARGS },
 	{"refresh",      CmdRefresh,      METH_VARARGS },
@@ -248,6 +252,39 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *CmdMask(PyObject *self, PyObject *args)
+{
+  char *str1;
+  int int1;
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"si",&str1,&int1);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  ExecutiveMask(s1,int1);
+  SelectorFreeTmp(s1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdProtect(PyObject *self, PyObject *args)
+{
+  char *str1;
+  int int1;
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"si",&str1,&int1);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  ExecutiveProtect(s1,int1);
+  SelectorFreeTmp(s1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 
 static PyObject *CmdButton(PyObject *self, 	PyObject *args)
 {

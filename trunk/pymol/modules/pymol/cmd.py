@@ -1287,6 +1287,54 @@ def remove(sele):
       unlock()
    return r
 
+def protect(*arg):
+   if len(arg):
+      a=arg[0]
+   else:
+      a="(all)"
+   try:
+      lock()   
+      r = _cmd.protect(a,1)
+   finally:
+      unlock()
+   return r
+
+def unprotect(*arg):
+   if len(arg):
+      a=arg[0]
+   else:
+      a="(all)"
+   try:
+      lock()   
+      r = _cmd.protect(a,0)
+   finally:
+      unlock()
+   return r
+
+def mask(*arg):
+   if len(arg):
+      a=arg[0]
+   else:
+      a="(all)"
+   try:
+      lock()   
+      r = _cmd.mask(a,1)
+   finally:
+      unlock()
+   return r
+
+def unmask(*arg):
+   if len(arg):
+      a=arg[0]
+   else:
+      a="(all)"
+   try:
+      lock()   
+      r = _cmd.mask(a,0)
+   finally:
+      unlock()
+   return r
+
 def zoom(*arg):
    '''
 DESCRIPTION
@@ -2885,6 +2933,7 @@ keyword = {
    'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],
    'label'         : [label        , 1 , 2 , ',' , 0 ],
    'load'          : [load         , 1 , 6 , ',' , 0 ],
+   'mask'          : [mask         , 0 , 1 , ',' , 0 ],
    'mem'           : [mem          , 0 , 0 , ',' , 0 ],
    'meter_reset'   : [meter_reset  , 0 , 0 , ',' , 0 ],
    'move'          : [move         , 2 , 2 , ',' , 0 ],
@@ -2901,6 +2950,7 @@ keyword = {
    'orient'        : [orient       , 0 , 1 , ',' , 0 ],
    'overlap'       : [overlap      , 2 , 3 , ',' , 0 ],
    'pairfit'       : [pairfit      , 2 ,98 , ',' , 0 ],
+   'protect'       : [protect      , 0 , 1 , ',' , 0 ],
    'ray'           : [ray          , 0 , 0 , ',' , 0 ],
    'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
    'remove'        : [remove       , 1 , 1 , ',' , 0 ],
@@ -2927,9 +2977,11 @@ keyword = {
    'quit'          : [quit         , 0 , 0 , ',' , 0 ],
    '_quit'         : [_quit        , 0 , 0 , ',' , 0 ],
    'png'           : [png          , 1 , 1 , ',' , 0 ],
+   'unbond'        : [unbond       , 0 , 3 , ',' , 0 ],
+   'unmask'        : [unmask       , 0 , 1 , ',' , 0 ],
+   'unprotect'     : [unprotect    , 0 , 1 , ',' , 0 ],
    'viewport'      : [viewport     , 2 , 2 , ',' , 0 ],
    'zoom'          : [zoom         , 0 , 1 , ',' , 0 ],
-   'unbond'        : [unbond       , 0 , 3 , ',' , 0 ],
    }
 
 help_only = {

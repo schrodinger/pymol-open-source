@@ -130,6 +130,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   float *v,*v0,*v1,*v2,h[3];
   int visFlag;
   Pickable *rp;
+  AtomInfoType *ai1,*ai2;
   OOAlloc(RepWireBond);
   obj = cs->Obj;
 
@@ -369,14 +370,17 @@ Rep *RepWireBondNew(CoordSet *cs)
           }
 			 if((a1>=0)&&(a2>=0))
 				{
-				  s1=obj->AtomInfo[b1].visRep[cRepLine];
-				  s2=obj->AtomInfo[b2].visRep[cRepLine];
+              ai1=obj->AtomInfo+b1;
+              ai2=obj->AtomInfo+b2;
+				  s1=ai1->visRep[cRepLine];
+				  s2=ai2->visRep[cRepLine];
 				  
-              if(!(s1&&s2))
+              if(!(s1&&s2)) {
                 if(!half_bonds) {
                   s1 = 0;
                   s2 = 0;
                 }
+              } 
 
 				  if(s1||s2)
 					 {	
@@ -387,7 +391,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						h[1]=(v1[1]+v2[1])/2;
 						h[2]=(v1[2]+v2[2])/2;
 						
-						if(s1)
+						if(s1&(!ai1->masked))
 						  {
 							 I->NP++;
                       rp->ptr = (void*)obj;
@@ -403,7 +407,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 							 *(v++)=h[1];
 							 *(v++)=h[2];
 						  }
-						if(s2)
+						if(s2&(!ai2->masked))
 						  {
 							 I->NP++;
                       rp->ptr = (void*)obj;

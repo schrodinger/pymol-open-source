@@ -603,6 +603,7 @@ void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float
   int a,s;
   int flag=false;
   CoordSet *cs;
+  AtomInfoType *ai;
 
   if(state<0) state=0;
   if(I->NCSet==1) state=0;
@@ -610,25 +611,30 @@ void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float
   cs = I->CSet[state];
   if(cs) {
     if(sele>=0) {
+      ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++) {
-        s=I->AtomInfo[a].selEntry;
-        while(s) 
-          {
-            if(SelectorMatch(s,sele))
-              {
-                CoordSetTransformAtom(cs,a,TTT);
-                flag=true;
-                break;
-              }
-            s=SelectorNext(s);
-          }
+        s=ai->selEntry;
+        if(!ai->protected)
+          while(s) 
+            {
+              if(SelectorMatch(s,sele))
+                {
+                  CoordSetTransformAtom(cs,a,TTT);
+                  flag=true;
+                  break;
+                }
+              s=SelectorNext(s);
+            }
+        ai++;
       }
     } else {
+      ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++) {
-        CoordSetTransformAtom(cs,a,TTT);
+        if(!ai->protected)
+          CoordSetTransformAtom(cs,a,TTT);
+        ai++;
       }
-        flag=true;
-
+      flag=true;
     }
     if(flag) 
       cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
@@ -2076,6 +2082,42 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      break;
+	case OMOP_Protect: /* protect atoms from movement */
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=ai->selEntry;
+         while(s) 
+           {
+             if(SelectorMatch(s,sele))
+               {
+                 ai->protected = op->i1;
+                 op->i2++;
+                 break;
+               }
+             s=SelectorNext(s);
+           }
+         ai++;
+       }
+     break;
+	case OMOP_Mask: /* protect atoms from selection */
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=ai->selEntry;
+         while(s) 
+           {
+             if(SelectorMatch(s,sele))
+               {
+                 ai->masked = op->i1;
+                 op->i2++;
+                 break;
+               }
+             s=SelectorNext(s);
+           }
+         ai++;
+       }
+     break;
 	case OMOP_Remove: /* flag atoms for deletion */
      ai=I->AtomInfo;
      if(I->DiscreteFlag) /* for now, can't remove atoms from discrete objects */
@@ -2345,7 +2387,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 						 }
 					   s=SelectorNext(s);
 					 }
-				   switch(op->code) {
+				   switch(op->code) { /* full coord-set based */
 				   case OMOP_INVA:
                  if(inv_flag) {
                    if(op->i1<0) /* invalidate all representations */
@@ -2430,13 +2472,15 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
 {
   int result = 0;
   CoordSet *cs;
-  if(state<0) state=0;
-  if(I->NCSet==1) state=0;
-  state = state % I->NCSet;
-  cs = I->CSet[state];
-  if(cs) {
-    result = CoordSetMoveAtom(I->CSet[state],index,v,mode);
-    cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+  if(!I->AtomInfo[index].protected) {
+    if(state<0) state=0;
+    if(I->NCSet==1) state=0;
+    state = state % I->NCSet;
+    cs = I->CSet[state];
+    if(cs) {
+      result = CoordSetMoveAtom(I->CSet[state],index,v,mode);
+      cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+    }
   }
   return(result);
 }

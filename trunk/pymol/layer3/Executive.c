@@ -185,6 +185,52 @@ float ExecutiveOverlap(char *s1,int state1,char *s2,int state2)
   return(SelectorSumVDWOverlap(sele1,state1,sele2,state2));
 }
 /*========================================================================*/
+void ExecutiveProtect(char *s1,int mode)
+{
+  int sele1;
+  ObjectMoleculeOpRec op;
+  
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+      op.code = OMOP_Protect;
+      op.i1 = mode;
+      op.i2 = 0;
+      ExecutiveObjMolSeleOp(sele1,&op);    
+      if(op.i2) {
+        if(mode) {
+          PRINTF " Protect: %d atoms protected from movement.\n",op.i2 ENDF;
+        } else {
+          PRINTF " Protect: %d atoms deprotected.\n", op.i2 ENDF;
+        }
+      }
+  }
+}
+/*========================================================================*/
+void ExecutiveMask(char *s1,int mode)
+{
+  int sele1;
+  ObjectMoleculeOpRec op;
+  
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+      op.code = OMOP_Mask;
+      op.i1 = mode;
+      op.i2 = 0;
+      ExecutiveObjMolSeleOp(sele1,&op);    
+      if(op.i2) {
+        if(mode) {
+          PRINTF " Protect: %d atoms masked (can not be picked).\n",op.i2 ENDF;
+        } else {
+          PRINTF " Protect: %d atoms unmasked.\n", op.i2 ENDF;
+        }
+      }
+      op.code = OMOP_INVA; /* need to invalidate all pickable representations */
+      op.i1 = cRepLine;
+      op.i2 = cRepInvPick;
+      ExecutiveObjMolSeleOp(sele1,&op);    
+  }
+}
+/*========================================================================*/
 void ExecutiveStereo(int flag)
 {
 
