@@ -1811,6 +1811,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
+
       SceneClip(G,6,-0.1F,NULL,0);
       SceneDoRoving(G,old_front,old_back,old_origin,true,false);
     }
@@ -1889,7 +1890,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       x = x % (I->Width/2);
 
     if(SceneDoXYPick(G,x,y)) {
-		obj=(CObject*)I->LastPicked.ptr;
+      obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
       I->LastX=x;
@@ -2012,7 +2013,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       x = x % (I->Width/2);
 
     if(SceneDoXYPick(G,x,y)) {
-		obj=(CObject*)I->LastPicked.ptr;
+      obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
       I->LastX=x;
@@ -2034,8 +2035,8 @@ static int SceneClick(Block *block,int button,int x,int y,
           PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF(G);
           OrthoRestorePrompt(G);
         }
-		  sprintf(buffer,"%s`%d",
-					 obj->Name,I->LastPicked.index+1);    
+	sprintf(buffer,"%s`%d",
+		obj->Name,I->LastPicked.index+1);    
         SelectorCreate(G,cEditorSele1,buffer,NULL,true,NULL);
         objMol = (ObjectMolecule*)obj;
         if(I->LastPicked.bond>=0) {
@@ -2136,13 +2137,13 @@ static int SceneClick(Block *block,int button,int x,int y,
       }
       /*
         (int)SettingGet(G,cSetting_sculpting);
-            SettingSet(G,cSetting_sculpting,0);*/
+	SettingSet(G,cSetting_sculpting,0);*/
     }
     break;
  
   case cButModeSeleSet:
   case cButModeSeleToggle:
-      sel_mode_kw = SceneGetSeleModeKeyword(G);
+    sel_mode_kw = SceneGetSeleModeKeyword(G);
          
     /* intentional pass through */
 
@@ -2158,8 +2159,8 @@ static int SceneClick(Block *block,int button,int x,int y,
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
-	 if(SceneDoXYPick(G,x,y)) {
-		obj=(CObject*)I->LastPicked.ptr;
+    if(SceneDoXYPick(G,x,y)) {
+      obj=(CObject*)I->LastPicked.ptr;
 
       switch(obj->type) {
       case cObjectMolecule:
@@ -2252,8 +2253,8 @@ static int SceneClick(Block *block,int button,int x,int y,
         case cButModeMB:
         case cButModeRB:
         case cButModeSeleSet:
-         sprintf(buf2,"(%s(%s))",sel_mode_kw,buffer);
-         SelectorCreate(G,selName,buf2,NULL,false,NULL);
+	  sprintf(buf2,"(%s(%s))",sel_mode_kw,buffer);
+	  SelectorCreate(G,selName,buf2,NULL,false,NULL);
           if(SettingGet(G,cSetting_auto_hide_selections))
             ExecutiveHideSelections(G);
           if(SettingGet(G,cSetting_auto_show_selections))
@@ -2312,28 +2313,45 @@ static int SceneClick(Block *block,int button,int x,int y,
         EditorInactivate(G);
         break;
       }
-	 } else {
-      if(mode==cButModeSeleSet) {
-        OrthoLineType buf2;
-        char name[ObjNameMax];
-        if(ExecutiveGetActiveSeleName(G,name, false)) {
-          SelectorCreate(G,name,"none",NULL,true,NULL);
-          if(SettingGet(G,cSetting_logging)) {
-            sprintf(buf2,"cmd.select('%s','none')\n",name);
-            PLog(buf2,cPLog_no_flush);
-          }
-          SeqDirty(G);
-        }
+    } else {
+      switch(mode) {
+      case cButModeSeleSet:
+	{
+	  OrthoLineType buf2;
+	  char name[ObjNameMax];
+	  if(ExecutiveGetActiveSeleName(G,name, false)) {
+	    SelectorCreate(G,name,"none",NULL,true,NULL);
+	    if(SettingGet(G,cSetting_logging)) {
+	      sprintf(buf2,"cmd.select('%s','none')\n",name);
+	      PLog(buf2,cPLog_no_flush);
+	    }
+	    SeqDirty(G);
+	  }
+	}
+      case cButModeSeleToggle:
+	{
+	  OrthoLineType buf2;
+	  char name[ObjNameMax];
+	  
+	  if(ExecutiveGetActiveSeleName(G,name, false)) {
+	    ExecutiveSetObjVisib(G,name,0);
+	    if(SettingGet(G,cSetting_logging)) {
+	      sprintf(buf2,"cmd.disable('%s')\n",name);
+	      PLog(buf2,cPLog_no_flush);
+	    }
+	  }
+	}
+	break;
       }
       PRINTFB(G,FB_Scene,FB_Warnings) 
-        " SceneClick: no atom found nearby.\n"
-        ENDFB(G);
+	" SceneClick: no atom found nearby.\n"
+	ENDFB(G);
       SceneDirty(G); /* this here to prevent display weirdness after
-                        an unsuccessful picking pass... */
-		OrthoRestorePrompt(G);
-	 }
+			an unsuccessful picking pass... not sure it helps though*/
+      OrthoRestorePrompt(G);
+    }
   }
-
+  
   I->StartX = I->LastX;
   I->StartY = I->LastY;
 
@@ -4530,10 +4548,14 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
           break;
         }
 
+        /* prepare the stereo transformation matrix */
+
+        glPushMatrix(); /* 1 */
+        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 1);
+
         /* render picked atoms */
 
         glPushMatrix(); /* 2 */
-        glNormal3fv(normal);
         EditorRender(G,curState);
         glPopMatrix(); /* 1 */
 
@@ -4546,17 +4568,19 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
         /* render all objects */
 
-        glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 1);
+        glPushMatrix(); /* 2 */
+
         for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
           SceneRenderAll(G,&context,normal,NULL,pass,false);
         }
-        glPopMatrix(); /* 0 */
+        glPopMatrix(); /* 1 */
 
         /* render selections */
-        glPushMatrix(); /* 1 */
+        glPushMatrix(); /* 2 */
         glNormal3fv(normal);
         ExecutiveRenderSelections(G,curState);
+        glPopMatrix(); /* 1 */
+        
         glPopMatrix(); /* 0 */
 
         /* RIGHT HAND STEREO */
@@ -4585,11 +4609,16 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
           glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
-        
+
+        /* prepare the stereo transformation matrix */
+
+        glPushMatrix(); /* 1 */
+        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 2);
+        glClear(GL_DEPTH_BUFFER_BIT) ;
+
         /* render picked atoms */
 
         glPushMatrix(); /* 2 */
-        glNormal3fv(normal);
         EditorRender(G,curState);
         glPopMatrix(); /* 1 */
 
@@ -4602,18 +4631,18 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
         /* render all objects */
 
-        glClear(GL_DEPTH_BUFFER_BIT);        
-        glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 2);
+        glPushMatrix(); /* 2 */
         for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
           SceneRenderAll(G,&context,normal,NULL,pass,false);
         }        
-        glPopMatrix(); /* 0 */
+        glPopMatrix(); /* 1 */
 
         /* render selections */
-        glPushMatrix(); /* 1 */
+        glPushMatrix(); /* 2 */
         glNormal3fv(normal);
         ExecutiveRenderSelections(G,curState);
+        glPopMatrix(); /* 1 */
+
         glPopMatrix(); /* 0 */
 
         /* restore draw buffer */
@@ -4749,7 +4778,6 @@ void ScenePrepareMatrix(PyMOLGlobals *G,int mode)
 
   float stAng,stShift;
   
-
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
   glLoadIdentity();
 
