@@ -102,6 +102,17 @@ for a in lst:
    name_dict[a[0]]=a[1]
 del lst
 
+boolean_dict = {
+   "true" : 1,
+   "false" : 0,
+   "on"   : 1,
+   "off"  : 0,
+   "1"    : 1,
+   "0"    : 0,
+   }
+   
+boolean_sc = Shortcut(boolean_dict.keys())
+  
 def _get_index(name):
    # this may be called from C, so don't raise any exceptions...
    result = setting_sc.interpret(name)
@@ -118,3 +129,4 @@ def _get_name(index):
       return name_dict[index]
    else:
       return ""
+

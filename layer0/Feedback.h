@@ -101,7 +101,7 @@ function name.
 #define FB_Threads                   14  /* part of P.c */
 #define FB_Symmetry                  15
 #define FB_Ray                       16
-#define FB_Settings                  17
+#define FB_Setting                   17
 #define FB_Object                    18
 #define FB_Ortho                     19
 

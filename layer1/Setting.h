@@ -51,12 +51,18 @@ CSetting *SettingNew(void);
 void SettingFreeP(CSetting *I);
 void SettingInit(CSetting *I);
 void SettingPurge(CSetting *I);
+void SettingCheckHandle(CSetting **handle);
 
 void SettingSet_b(CSetting *I,int index, int value);
 void SettingSet_i(CSetting *I,int index, int value);
 void SettingSet_f(CSetting *I,int index, float value);
 void SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3);
 void SettingSet_3fv(CSetting *I,int index, float *value);
+
+void SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer);
+
+
+int SettingSetTuple(CSetting *I,int index,PyObject *tuple);
 
 void SettingClear(CSetting *I,int index); /* don't call this for the global list! */
 
@@ -75,6 +81,8 @@ void  SettingGet_3f (CSetting *set1,CSetting *set2,int index,float *value);
 float *SettingGet_fv (CSetting *set1,CSetting *set2,int index);
 
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
+
+void SettingGenerateSideEffects(int index,char *sele,int state);
 
 /* Legacy API below */
 

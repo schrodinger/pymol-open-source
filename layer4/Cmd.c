@@ -219,6 +219,7 @@ static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args);
 static PyObject *CmdSelect(PyObject *self, PyObject *args);
 static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdSet(PyObject *self, 	PyObject *args);
+static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetFeedbackMask(PyObject *dummy, PyObject *args);
 static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
@@ -340,6 +341,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
 	{"select",                CmdSelect,               METH_VARARGS },
 	{"set",	                 CmdSet,                  METH_VARARGS },
+	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
@@ -1810,12 +1812,38 @@ static PyObject *CmdTurn(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *CmdSet(PyObject *self, 	PyObject *args)
+static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args)
 {
-  char *sname,*value;
+  char *sname, *value;
   PyArg_ParseTuple(args,"ss",&sname,&value);
   APIEntry();
-  ExecutiveSetSetting(sname,value);
+  SettingSetNamed(sname,value);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdSet(PyObject *self, 	PyObject *args)
+{
+  int index;
+  int tmpFlag=false;
+  PyObject *value;
+  char *str3;
+  int state;
+  int suppress;
+
+  OrthoLineType s1 = "";
+  PyArg_ParseTuple(args,"iOsii",&index,&value,&str3,&state,&suppress);
+  APIEntry();
+  if(!strcmp(str3,"all")) {
+    strcpy(s1,str3);
+  } else if(str3[0]!=0) {
+    tmpFlag=true;
+    SelectorGetTmp(str3,s1);
+  }
+  ExecutiveSetSetting(index,value,s1,state,suppress);
+  if(tmpFlag) 
+    SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

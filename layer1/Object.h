@@ -31,12 +31,19 @@ Z* -------------------------------------------------------------------
 #define cObjectCallback     5
 #define cObjectCGO          6
 
+/* 
+   the object base class is in the process of being converted to support
+   states explicitly (an unfortunate early omission), which will allow
+   for simplified implementation of future multi-state objects.
+ */
+
 typedef struct Object {
   void (*fUpdate)(struct Object *I); /* update representations */
   void (*fRender)(struct Object *I,int frame,CRay *ray,Pickable **pick);
   void (*fFree)(struct Object *I);
   int  (*fGetNFrame)(struct Object *I);
   void (*fDescribeElement)(struct Object *I,int index);
+  CSetting **(*fGetSettingHandle)(struct Object *I,int state);
   int type;
   char Name[ObjNameMax];
   int Color;

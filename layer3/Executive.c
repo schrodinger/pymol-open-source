@@ -1382,9 +1382,120 @@ void ExecutiveRay(void)
   SceneRay();
 }
 /*========================================================================*/
-void ExecutiveSetSetting(char *sname,char *v)
+void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
+                         int state,int suppress)
 {
-  SettingSetNamed(sname,v);
+  int unblock;
+  OrthoLineType name,value;
+  CExecutive *I=&Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj = NULL;
+  int sele1;
+  ObjectMoleculeOpRec op;
+  CSetting **handle=NULL;
+  int nObj=0;
+  unblock = PAutoBlock();
+
+  if(sele[0]==0) { /* global setting */
+    SettingSetTuple(NULL,index,tuple);
+    if(Feedback(FB_Setting,FB_Actions)) {
+      SettingGetTextValue(NULL,NULL,index,value);
+      SettingGetName(index,name);
+      PRINTF
+        " Setting: %s set to %s.\n",name,value
+        ENDF;
+      if(!suppress) 
+        SettingGenerateSideEffects(index,sele,state);
+
+    }
+  } else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
+    while(ListIterate(I->Spec,rec,next))
+      {
+        if(rec->type==cExecObject) {
+          if(rec->obj->fGetSettingHandle) {
+            handle = rec->obj->fGetSettingHandle(rec->obj,state);
+            if(handle) {
+              SettingCheckHandle(handle);
+              SettingSetTuple(*handle,index,tuple);
+              if(!suppress) 
+                SettingGenerateSideEffects(index,sele,state);
+              nObj++;
+            }
+          }
+        }
+        if(Feedback(FB_Setting,FB_Actions)) {
+          if(nObj&&handle) {
+            SettingGetTextValue(*handle,NULL,index,value);
+            SettingGetName(index,name);
+            if(!suppress) 
+              SettingGenerateSideEffects(index,sele,state);
+
+            if(state<0) {
+              PRINTF
+                " Setting: %s set to %s in %d objects.\n",name,value,nObj
+                ENDF;
+            } else {
+              PRINTF
+                " Setting: %s set to %s in %d objects, state %d.\n",name,value,nObj,state+1
+                ENDF;
+            }
+          }
+        }
+      }
+  } else { /* based on a selection/object name */
+    sele1=SelectorIndexByName(sele);
+    if(sele1>=0)
+      {
+        while(ListIterate(I->Spec,rec,next))
+          {
+            if(rec->type==cExecObject)
+              {
+                if(rec->obj->type==cObjectMolecule)
+                  {
+                    obj=(ObjectMolecule*)rec->obj;
+                    op.code=OMOP_CountAtoms;
+                    op.i1=0;
+                    ObjectMoleculeSeleOp(obj,sele1,&op);
+                    if(op.i1) {
+                      if(rec->obj->fGetSettingHandle) {
+                        handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                        if(handle) {
+                          SettingCheckHandle(handle);
+                          SettingSetTuple(*handle,index,tuple);
+                          if(state<0) { /* object-specific */
+                            if(Feedback(FB_Setting,FB_Actions)) {
+                              SettingGetTextValue(*handle,NULL,index,value);
+                              SettingGetName(index,name);
+                              PRINTF
+                                " Setting: %s set to %s in object '%s'.\n",
+                                name,value,rec->obj->Name
+                                ENDF;
+                              if(!suppress) 
+                                SettingGenerateSideEffects(index,sele,state);
+
+                            }
+                          } else { /* state-specific */
+                            if(Feedback(FB_Setting,FB_Actions)) {
+                              SettingGetTextValue(*handle,NULL,index,value);
+                              SettingGetName(index,name);
+                              PRINTF
+                                " Setting: %s set to %s in object '%s', state %d.\n",
+                                name,value,rec->obj->Name,state+1
+                                ENDF;
+                              if(!suppress) 
+                                SettingGenerateSideEffects(index,sele,state);
+
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+              }
+          }
+      }
+  } 
+  PAutoUnblock(unblock);
 }
 /*========================================================================*/
 void ExecutiveColor(char *name,char *color,int flags)

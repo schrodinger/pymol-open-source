@@ -32,6 +32,75 @@ CSetting Setting;
 
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
+
+/*========================================================================*/
+void SettingCheckHandle(CSetting **handle)
+{
+  if(!*handle)
+    *handle=SettingNew();
+}
+/*========================================================================*/
+void SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer) 
+/* not range checked */
+{
+  int type;
+  float *ptr;
+  type = SettingGetType(index);
+  switch(type) {
+  case cSetting_boolean:
+    if(SettingGet_b(set1,set2,index))
+      sprintf(buffer,"on.");
+    else
+      sprintf(buffer,"off.");      
+    break;
+  case cSetting_int:
+    sprintf(buffer,"%d",SettingGet_i(set1,set2,index));
+    break;
+  case cSetting_float:
+    sprintf(buffer,"%1.5f",SettingGet_f(set1,set2,index));
+    break;
+  case cSetting_float3:
+    ptr = SettingGet_fv(set1,set2,index);
+    sprintf(buffer,"[ %1.5f, %1.5f, %1.5f ]",
+            ptr[0],ptr[1],ptr[2]);
+    break;
+  }
+}
+
+/*========================================================================*/
+int SettingSetTuple(CSetting *I,int index,PyObject *tuple) 
+     /* must have interpret locked to make this call */
+{
+  PyObject *value;
+  int type;
+  
+  if(!I) I=&Setting; /* fall back on global settings */
+
+  /* this data structure has been pre-checked at the python level... */
+
+  type  = PyInt_AsLong(PyTuple_GetItem(tuple,0));
+  value = PyTuple_GetItem(tuple,1);
+  switch(type) {
+  case cSetting_boolean:
+    SettingSet_b(I,index,PyInt_AsLong(PyTuple_GetItem(value,0)));
+    break;
+  case cSetting_int:
+    SettingSet_i(I,index,PyInt_AsLong(PyTuple_GetItem(value,0)));
+    break;
+  case cSetting_float:
+    SettingSet_f(I,index,PyFloat_AsDouble(PyTuple_GetItem(value,0)));
+    break;
+  case cSetting_float3:
+    SettingSet_3f(I,index,
+                  PyFloat_AsDouble(PyTuple_GetItem(value,0)),
+                  PyFloat_AsDouble(PyTuple_GetItem(value,1)),
+                  PyFloat_AsDouble(PyTuple_GetItem(value,2)));
+    break;
+  }
+  Py_DECREF(tuple);
+  return 1;
+}
+/*========================================================================*/
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
 {
   PyObject *result;
@@ -52,7 +121,7 @@ PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
     break;
   case cSetting_float3:
     ptr =  SettingGet_fv(set1,set2,index);
-    result = Py_BuildValue("(i(fff)",type,
+    result = Py_BuildValue("(i(fff))",type,
                            ptr[0],ptr[1],ptr[2]);
     break;
   default:
@@ -109,6 +178,7 @@ static void *SettingPtr(CSetting *I,int index,unsigned int size)
   }
   return(I->data+sr->offset);
 }
+/*========================================================================*/
 int SettingGetType(int index)
 {
   CSetting *I=&Setting;
@@ -117,37 +187,58 @@ int SettingGetType(int index)
 /*========================================================================*/
 void SettingSet_b(CSetting *I,int index, int value)
 {
-  VLACheck(I->info,SettingRec,index);
-  *((int*)SettingPtr(I,index,sizeof(int))) = value;
-  I->info[index].type = cSetting_boolean;
-
+  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_boolean)) {
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type mismatch (boolean)\n"
+      ENDFB
+  } else {
+    VLACheck(I->info,SettingRec,index);
+    *((int*)SettingPtr(I,index,sizeof(int))) = value;
+    I->info[index].type = cSetting_boolean;
+  }
 }
 /*========================================================================*/
 void SettingSet_i(CSetting *I,int index, int value)
 {
-  VLACheck(I->info,SettingRec,index);
-  *((int*)SettingPtr(I,index,sizeof(int))) = value;
-  I->info[index].type = cSetting_int;
+  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_int)) {
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type mismatch (int)\n"
+      ENDFB
+  } else {
+    VLACheck(I->info,SettingRec,index);
+    *((int*)SettingPtr(I,index,sizeof(int))) = value;
+    I->info[index].type = cSetting_int;
+  }
 }
 /*========================================================================*/
 void SettingSet_f(CSetting *I,int index, float value)
 {
-  char *p;
-  float *ptr;
-  VLACheck(I->info,SettingRec,index);
-  *((float*)SettingPtr(I,index,sizeof(float)))=value;
-  I->info[index].type = cSetting_float;
+  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_float)) {
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type mismatch (float)\n"
+      ENDFB
+  } else {
+    VLACheck(I->info,SettingRec,index);
+    *((float*)SettingPtr(I,index,sizeof(float)))=value;
+    I->info[index].type = cSetting_float;
+  }
 }
 /*========================================================================*/
 void SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
 {
   float *ptr;
-  VLACheck(I->info,SettingRec,index);
-  ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
-  ptr[0]=value1;
-  ptr[1]=value2;
-  ptr[2]=value3;
-  I->info[index].type = cSetting_float3;
+  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_float3)) {
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type mismatch (float3)\n"
+      ENDFB
+  } else {
+    VLACheck(I->info,SettingRec,index);
+    ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
+    ptr[0]=value1;
+    ptr[1]=value2;
+    ptr[2]=value3;
+    I->info[index].type = cSetting_float3;
+  }
 }
 /*========================================================================*/
 void SettingSet_3fv(CSetting *I,int index, float *vector)
@@ -311,6 +402,52 @@ int SettingGetName(int index,SettingName name) /* can be called from any thread 
   return(name[0]!=0);
 }
 
+/*========================================================================*/
+void SettingGenerateSideEffects(int index,char *sele,int state)
+{
+  switch(index) {
+  case cSetting_light:
+	 SceneDirty();
+	 break;
+  case cSetting_valence:
+    ExecutiveInvalidateRep("all",cRepLine,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_dash_length:
+  case cSetting_dash_gap:
+    ExecutiveInvalidateRep("all",cRepDash,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_button_mode:
+    SceneDirty();
+    break;
+  case cSetting_stick_radius:
+  case cSetting_stick_quality:
+  case cSetting_stick_overlap:
+    ExecutiveInvalidateRep("all",cRepCyl,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_label_color:
+    ExecutiveInvalidateRep("all",cRepLabel,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_all_states:
+    SceneChanged();
+    break;
+  case cSetting_dot_density:
+	 break;
+  case cSetting_sel_counter:
+	 break;
+  case cSetting_ortho:
+  case cSetting_ambient:
+	 SceneDirty();
+  case cSetting_overlay:
+  case cSetting_text:
+    OrthoDirty();
+  default:
+	 break;
+  }
+}
 /*========================================================================*/
 void SettingSetfv(int index,float *v)
 {
