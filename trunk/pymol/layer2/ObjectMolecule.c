@@ -4044,33 +4044,37 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index)
   AtomInfoType *ai;
   ai=I->AtomInfo+index;
   if(Feedback(FB_ObjectMolecule,FB_Results)) {
-    PRINTF " Click: ( %s",I->Obj.Name ENDF;
-    if(ai->segi[0]) {
-      PRINTF " & segi %s",ai->segi ENDF;
-    } else {
-      PRINTF " & segi ''" ENDF;
-    }
-    if(ai->chain[0]) {
-      PRINTF " & chain %s",ai->chain ENDF;
-    } else {
-      PRINTF " & chain ''" ENDF;
-    }
-    if(ai->resn[0]) {
-      PRINTF " & resn %s",ai->resn ENDF;
-    } else {
-      PRINTF " & resn ''" ENDF;
-    }
-    if(ai->resi[0]) {
-      PRINTF " & resi %s",ai->resi ENDF;
-    } else {
-      PRINTF " & resi ''" ENDF;
-    }
-    if(ai->name[0]) {
-      PRINTF " & name %s",ai->name ENDF;
-    } else {
-      PRINTF " & name ''" ENDF;
-    }
-    PRINTF " )\n" ENDF;
+    PRINTF " You clicked %s: ( /%s/%s/%s/%s/%s )",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name
+ ENDF;
+      
+    /*    PRINTF " Click: ( %s",I->Obj.Name ENDF;
+          if(ai->segi[0]) {
+          PRINTF " & segi %s",ai->segi ENDF;
+          } else {
+          PRINTF " & segi ''" ENDF;
+          }
+          if(ai->chain[0]) {
+          PRINTF " & chain %s",ai->chain ENDF;
+          } else {
+          PRINTF " & chain ''" ENDF;
+          }
+          if(ai->resn[0]) {
+          PRINTF " & resn %s",ai->resn ENDF;
+          } else {
+          PRINTF " & resn ''" ENDF;
+          }
+          if(ai->resi[0]) {
+          PRINTF " & resi %s",ai->resi ENDF;
+          } else {
+          PRINTF " & resi ''" ENDF;
+          }
+          if(ai->name[0]) {
+          PRINTF " & name %s",ai->name ENDF;
+          } else {
+          PRINTF " & name ''" ENDF;
+          }
+    PRINTF " )\n" ENDF;*/
+
   }
     /*    
 [#%d:%s:%s:%d]

@@ -758,6 +758,7 @@ void EditorInactive(void)
   SelectorDeletePrefixSet(cEditorBasePref);
   ExecutiveDelete(cEditorSele1);      
   ExecutiveDelete(cEditorSele2);    
+  ExecutiveDelete(cEditorRes);
   ExecutiveDelete(cEditorComp);
 }
 /*========================================================================*/
@@ -774,6 +775,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
     if(sele1>=0) {
       sele2 = SelectorIndexByName(cEditorSele2);
       ExecutiveDelete(cEditorComp);      
+      ExecutiveDelete(cEditorRes);
       I->NFrag = SelectorSubdivideObject(cEditorFragPref,obj,
                                          sele1,sele2,
                                          cEditorBasePref,

@@ -480,7 +480,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
       CGOEnd(cgo);
     }
 
-    if(SettingGet(cSetting_cartoon_debug)>1.5) {
+    if(SettingGet(cSetting_cartoon_debug)>=1.5) {
       CGOEnable(cgo,GL_LIGHTING);
     }
     

@@ -117,6 +117,8 @@ class SettingIndex:
    ribbon_width         =106
    dash_width           =107
    dash_radius          =108
+   cgo_ray_width_scale  =109
+   line_radius          =110
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

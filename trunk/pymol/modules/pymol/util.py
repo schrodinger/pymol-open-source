@@ -213,6 +213,45 @@ def phipsi(selection="(pk1)"): # NOT THREAD SAFE
       psi = None
    cmd.feedback("pop")
    return (phi,psi)
+
+def rainbow(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
+
+   cmd.feedback("push")
+   cmd.feedback("disable","executive","actions")
+
+   # your basic rainbow...
+   
+   list = [(255,0,0),(255,128,0),
+           (255,255,0),(0,255,0),
+           (0,255,255),(0,128,255),
+           (0,0,255)]
+   #
+   last = list.pop(0)
+   cmd.set_color("rainbow000",[last[0]/255.0,last[1]/255.0,last[2]/255.0])
+   c = 1
+   for a in list:
+      for b in range(1,21):
+         b0 = b/20.0
+         b1 = 1.0-b0
+         cname = "rainbow%03d"%c
+         r = last[0]*b1+a[0]*b0
+         g = last[1]*b1+a[1]*b0
+         b = last[2]*b1+a[2]*b0
+         cmd.set_color(cname,[r/255.0,g/255.0,b/255.0])
+         c = c + 1
+      last = a
+
+   cas = cmd.index("((byres ("+selection+")) and name ca and not het)")
+   l = len(cas)
+   if not len(cas):
+      return
+   c = 0
+   for a in cas:
+      col = int((120*c)/l)
+      cmd.color("rainbow%03d"%col,"(byres %s`%d)"%a)
+      c = c + 1
+
+   cmd.feedback("pop")
    
 def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
 
@@ -223,61 +262,149 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    sss1 = ss_pref+"1"
    cnt = cmd.select(sss1,"((byres ("+selection+")) and name ca and not het)")
    print " util.ss: initiating secondary structure assignment on %d residues."%cnt
-   pymol._ss = pymol.Scratch_Storage()
    cas = cmd.index(sss1)
    if not len(cas):
       return
 
    cmd.cartoon("auto",sss1)
-   
+
    print " util.ss: extracting residue sequence..."
 
+   # get CA list
+   
    res_list = []
+   pymol._ss = pymol.Scratch_Storage()
    pymol._ss.res_list = res_list
    cmd.iterate(sss1,'_ss.res_list.append((model,index))')
-   del pymol._ss.res_list # DECREF
+
+   # generate atom-to-residue conversion dictionaries
+
+   n_dict = {}
+   o_dict = {}
+   scr_dict = {}
+   pymol._ss.n_dict = n_dict
+   pymol._ss.o_dict = o_dict
+   pymol._ss.scr_dict = scr_dict
+   cmd.iterate(sss1,'_ss.scr_dict[(model,index)]=(segi,chain,resi)')
+   cmd.iterate("((byres "+sss1+") and n;n)",'_ss.n_dict[(segi,chain,resi)] = (model,index)')
+   cmd.iterate("((byres "+sss1+") and n;o)",'_ss.o_dict[(segi,chain,resi)] = (model,index)')
 
    # find gaps
 
-   gap_list = [None]
+   gap_list = [None,None,None,None]  # large enough to distinguish i+4 interations from gaps
    last = None
    for a in res_list:
       if last!=None:
          if(cmd.count_atoms(
             "((neighbor(neighbor(neighbor (%s`%d)))) and (%s`%d))"%
             (last[0],last[1],a[0],a[1]),quiet=1)==0):
-            gap_list.append(None)
+            gap_list.extend([None,None,None,None])
          gap_list.append(a)
       last = a
-   gap_list.append(None)
+   gap_list.extend([None,None,None,None])
 
    print " util.ss: analyzing phi/psi angles..."
+
+   ss = {}
+   ss[None]=None
    
    # intialize all residues to loop
-
-   cmd.alter(sss1,"ss ='L'")
+   
+   for a in cas:
+      ss[a] = 'L'
+      
+   # make decisions based on phi/psi
 
    for a in cas:
       (phi,psi) = phipsi("(%s`%d)"%(a[0],a[1]))
       if (phi!=None) and (psi!=None):
          if ((phi<-45) and (phi>-160) and (psi>90)): # beta?
-            cmd.alter("(%s`%d)"%(a[0],a[1]),"ss='S'")
+            ss[a]='S'
          elif ((phi<-45) and (phi>-160) and
                (psi>-80) and (psi<-30)): # helix?
-            cmd.alter("(%s`%d)"%(a[0],a[1]),"ss='H'")
+            ss[a]='H'
+
+   # find all pairwise hydrogen bonds and make note of them in dict
+
+   hb = cmd.find_pairs("((byres "+sss1+") and n;n)",
+                       "((byres "+sss1+") and n;o)",mode=1,angle=35)
+   hb_dict = {}
+   for a in hb:
+      hb_dict[a] = 1
+      print a
+
+   # check to insure that all helical residues have at least an i +/- 4
+   # hydrogen bond
+
+   for c in xrange(4,len(cas)-4):
+      a = cas[c]
+      if ss[a]=='H':
+         aN = n_dict[scr_dict[a]]
+         aO = o_dict[scr_dict[a]]
+         am4O = o_dict[scr_dict[cas[c-4]]]
+         ap4N = n_dict[scr_dict[cas[c+4]]]
+         if not hb_dict.has_key((aN,am4O)):
+            if not hb_dict.has_key((ap4N,aO)):
+               ss[a]='L'
+
+   # extend helices if hydrogen bonding requirements are met
+
+   repeat = 1
+   while repeat:
+      repeat = 0
+      for c in xrange(4,len(cas)-4):
+         if ss[cas[c+1]]=='H': 
+            a = cas[c]
+            if ss[a]!='H': # N-terminal end
+               aO = o_dict[scr_dict[a]]
+               ap4N = n_dict[scr_dict[cas[c+4]]]
+               if hb_dict.has_key((ap4N,aO)):
+                  ss[a]='H'
+                  repeat = 1
+         if ss[cas[c-1]]=='H':
+            a = cas[c]
+            if ss[a]!='H': # C-terminal end
+               aN = n_dict[scr_dict[a]]
+               am4O = o_dict[scr_dict[cas[c-4]]]
+               if hb_dict.has_key((aN,am4O)):
+                  ss[a]='H'
+                  repeat = 1
+
+   # check to insure that all beta residues have at least a pair
+   # of interacting pairs
+
+   if 0:
+      for c in xrange(4,len(cas)-4):
+         a = cas[c]
+         if ss[a]=='S':
+            print c,cas[c]
+            aN = n_dict[scr1]
+            aO = o_dict[scr1]
+            aS = scr_dict[a]
+            aSp1 = cas[c+1]
+            aSm1 = cas[c-1]
+            found = 0
+            # antiparallel, Na->Ob, Nb+2->Oa-2
+            if not found:
+
+               am1O = o_dict[scr_dict[cas[c-4]]]
+               ap1N = n_dict[scr_dict[cas[c+4]]]
+               if not hb_dict.has_key((aN,am4O)):
+                  if not hb_dict.has_key((ap4N,aO)):
+                     ss[a]='L'
+
+   
+   # assign protein
+   
+   cmd.alter(sss1,"ss ='L'")
+   for a in cas:
+      if ss[a]!='L':
+         cmd.alter("(%s`%d)"%a,"ss='%s'"%ss[a])
 
    cmd.feedback("pop")
-   
-   # find all pairwise hydrogen bonds and make note of them in hash
-#   hb = cmd.find_pairs("((byres "+sss1+") and n;n)",
-#                       "((byres "+sss1+") and n;o)",mode=1)
-#   conn_hash = {}
-#   for a in hb:
-#      cmd.iterate('(%s & index %d)'%(a[0],a[1]),'_ss.r1 = (segi,chain,resi)')
-#      cmd.iterate('(%s & index %d)'%(a[2],a[3]),'_ss.r2 = (segi,chain,resi)')
-#      conn_hash[(pymol._ss.r1,pymol._ss.r2)]=1
-#      conn_hash[(pymol._ss.r2,pymol._ss.r1)]=1
 
+   del pymol._ss # IMPORTANT
+   
    #
 #   print conn_hash.keys()
    print " util.ss: assignment complete."

@@ -1194,6 +1194,8 @@ static PyObject *CmdFindPairs(PyObject *dummy, PyObject *args)
   OrthoLineType s1,s2;
   PyObject *result = Py_None;
   PyObject *tuple = Py_None;
+  PyObject *tuple1 = Py_None;
+  PyObject *tuple2 = Py_None;
   int *iVLA=NULL;
   int l;
   int *i;
@@ -1213,11 +1215,15 @@ static PyObject *CmdFindPairs(PyObject *dummy, PyObject *args)
     i = iVLA;
     o = oVLA;
     for(a=0;a<l;a++) {
-      tuple = PyTuple_New(4);      
-      PyTuple_SetItem(tuple,0,PyString_FromString((*(o++))->Obj.Name));
-      PyTuple_SetItem(tuple,1,PyInt_FromLong(*(i++)+1)); /* +1 for index */
-      PyTuple_SetItem(tuple,2,PyString_FromString((*(o++))->Obj.Name));
-      PyTuple_SetItem(tuple,3,PyInt_FromLong(*(i++)+1)); /* +1 for index */
+      tuple1 = PyTuple_New(2);      
+      PyTuple_SetItem(tuple1,0,PyString_FromString((*(o++))->Obj.Name));
+      PyTuple_SetItem(tuple1,1,PyInt_FromLong(*(i++)+1)); /* +1 for index */
+      tuple2 = PyTuple_New(2);
+      PyTuple_SetItem(tuple2,0,PyString_FromString((*(o++))->Obj.Name));
+      PyTuple_SetItem(tuple2,1,PyInt_FromLong(*(i++)+1)); /* +1 for index */
+      tuple = PyTuple_New(2);
+      PyTuple_SetItem(tuple,0,tuple1);
+      PyTuple_SetItem(tuple,1,tuple2);
       PyList_SetItem(result,a,tuple);
     }
   } else {

@@ -85,6 +85,9 @@ def mol_color(s):
            [ 1, '`777C`777H`229N`922O`950S`905*'  , 'pmu.cbaw("'+s+'")'],
            [ 1, '`559C`777H`229N`922O`950S`905*'  , 'pmu.cbab("'+s+'")'],
            [ 0, ''                                , ''                 ],
+           [ 1, '`900r`950a`990i`090n`099b`059o`009w', 'util.rainbow("'+s+'")'],
+#           [ 1, '`900r`950a`990i`090n`099b`059o`009w`999(*/ca)', 'util.rainbow("('+s+')&*/ca")'],                      
+           [ 0, ''                                , ''                 ],           
            [ 1, '`900red'         , 'cmd.color("red","'+s+'")'     ],
            [ 1, '`090green'       , 'cmd.color("green","'+s+'")'   ],
            [ 1, '`009blue'        , 'cmd.color("blue","'+s+'")'    ],
@@ -99,10 +102,13 @@ def mol_color(s):
            [ 1, '`950orange'      , 'cmd.color("orange","'+s+'")'  ],
            [ 1, '`059marine'      , 'cmd.color("marine","'+s+'")'  ],
            [ 1, '`551olive'       , 'cmd.color("olive","'+s+'")'   ],
-           [ 1, '`515purple'      , 'cmd.color("purple","'+s+'")'  ],
-           [ 1, '`155teal'        , 'cmd.color("teal","'+s+'")'    ],
+           [ 1, '`626purple'      , 'cmd.color("purple","'+s+'")'  ],
+           [ 1, '`266teal'        , 'cmd.color("teal","'+s+'")'    ],
            [ 1, '`151forest'      , 'cmd.color("forest","'+s+'")'  ],
+           [ 1, '`611firebrick'   , 'cmd.color("firebrick","'+s+'")'  ],
+           [ 1, '`631chocolate'   , 'cmd.color("chocolate","'+s+'")'  ],           
            [ 1, '`999white'       , 'cmd.color("white","'+s+'")'   ],
+           [ 1, '`987wheat'       , 'cmd.color("wheat","'+s+'")'   ],
            [ 1, '`555grey'        , 'cmd.color("grey","'+s+'")'    ]
            ]
 
@@ -122,10 +128,13 @@ def general_color(s):
            [ 1, '`950orange'      ,'cmd.color("orange","'+s+'")'  ],
            [ 1, '`059marine'      ,'cmd.color("marine","'+s+'")'  ],
            [ 1, '`551olive'   ,'cmd.color("olive","'+s+'")'  ],
-           [ 1, '`515purple'  ,'cmd.color("purple","'+s+'")'  ],
-           [ 1, '`155teal'  ,'cmd.color("teal","'+s+'")'  ],
+           [ 1, '`626purple'  ,'cmd.color("purple","'+s+'")'  ],
+           [ 1, '`266teal'  ,'cmd.color("teal","'+s+'")'  ],
            [ 1, '`151forest'  ,'cmd.color("forest","'+s+'")'  ],
+           [ 1, '`611firebrick'   , 'cmd.color("firebrick","'+s+'")'  ],
+           [ 1, '`631chocolate'   , 'cmd.color("chocolate","'+s+'")'  ],           
            [ 1, '`999white'       ,'cmd.color("white","'+s+'")'  ],
+           [ 1, '`987wheat'       , 'cmd.color("wheat","'+s+'")'   ],
            [ 1, '`555grey'    ,'cmd.color("grey","'+s+'")'  ]
            ]
 

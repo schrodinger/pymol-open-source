@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #define cEditorSele2 "pk2"
 #define cEditorFragPref "pkfrag"
 #define cEditorBasePref "_pkbase"
+#define cEditorRes    "pkresi"
 #define cEditorComp   "pkchain"
 
 void EditorInit(void);
