@@ -46,10 +46,13 @@ pyc_re = re.compile(r"\.pyc$|\.PYC$")
 
 def get_user_config():
    lst = glob.glob(pattern)
-   if not len(lst):
+   if not len(lst): # unix
       if os.environ.has_key("HOME"):
          lst = glob.glob(os.environ['HOME']+"/"+pattern)
-   if not len(lst):
+   if not len(lst): # win32
+      if os.environ.has_key("HOMEPATH"):
+         lst = glob.glob(os.environ['HOMEPATH']+"/"+pattern)
+   if not len(lst): # all
       if os.environ.has_key("PYMOL_PATH"):
          lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern)
    first = []
