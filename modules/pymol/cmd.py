@@ -1397,6 +1397,7 @@ USAGE
 def overlap(*arg):
    '''
 UNSUPPORTED FEATURE - LIKELY TO CHANGE
+(for maximum efficiency, use smaller molecule as selection 1)
    '''
    state = [ 1,1 ]
    adjust = 0.0
@@ -1750,7 +1751,7 @@ EXAMPLES
    try:
       lock()   
       r = _cmd.fit("(%s in %s)" % (a,b),
-                  "(%s in %s)" % (b,a),0)
+                  "(%s in %s)" % (b,a),1)
    finally:
       unlock()
    return r
@@ -1771,7 +1772,7 @@ USAGE
    try:
       lock()   
       r = _cmd.fit("(%s in %s)" % (a,b),
-                  "(%s in %s)" % (b,a),1)
+                  "(%s in %s)" % (b,a),0)
    finally:
       unlock()
    return r
