@@ -333,6 +333,7 @@ l = [
 'A -D4-T4    30.0      115.43    WLD from A- J4-T4',
 
 'A -DJ-A     50.0      119.10    WLD from A -D3-J3',
+'A -DJ-JA    50.0      120.00    WLD gross estimate',
 'A -DJ-T2    50.0      120.00    WLD gross estimate',
 
 'A -JA-DA    50.0      121.20    WLD from A -J3-D3',
