@@ -258,7 +258,9 @@ void ExecutiveColor(char *name,char *color,int flags)
 		op.i1=cRepAll; 
 		op.i2=cRepInvColor;
 		ExecutiveObjMolSeleOp(sele,&op);
-	 }
+	 } else {
+      ErrMessage("Color","Invalid selection.");
+    }
   }
   /* per object */
   rec=ExecutiveFindSpec(name);

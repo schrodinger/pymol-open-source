@@ -356,6 +356,25 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_test2].Name,
 			"test2");
 
+  I->NSetting++;
+  I->Setting[cSetting_surface_best].Value[0] = 0.2;
+  strcpy(I->Setting[cSetting_surface_best].Name,
+			"surface_best");
+
+  I->NSetting++;
+  I->Setting[cSetting_surface_normal].Value[0] = 0.5;
+  strcpy(I->Setting[cSetting_surface_normal].Name,
+			"surface_normal");
+
+  I->NSetting++;
+  I->Setting[cSetting_surface_quality].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_surface_quality].Name,
+			"surface_quality");
+
+  I->NSetting++;
+  I->Setting[cSetting_surface_proximity].Value[0] = 1.5;
+  strcpy(I->Setting[cSetting_surface_proximity].Name,
+			"surface_proximity");
 
 }
 

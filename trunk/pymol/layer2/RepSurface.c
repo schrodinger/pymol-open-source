@@ -34,11 +34,13 @@ typedef struct RepSurface {
   int N;
   int NT;
   float *V,*VN,*VC;
+  int *Vis;
   int *T,*S; /* S=strips */
   int NDot;
   float *Dot;
   int solidFlag;
   int oneColorFlag;
+  int allVisibleFlag;
   Object *Obj;
 } RepSurface;
 
@@ -53,13 +55,14 @@ void RepSurfaceFree(RepSurface *I)
   FreeP(I->V);
   FreeP(I->VN);
   FreeP(I->VC);
+  FreeP(I->Vis);
   VLAFreeP(I->T);
   VLAFreeP(I->S);
   /*  VLAFreeP(I->N);*/
   OOFreeP(I);
 }
 
-void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,SphereRec *sp);
+void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,SphereRec *sp,float *extent);
 
 void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 {
@@ -69,63 +72,92 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   int *t=I->T;
   int *s=I->S;
   int c=I->N;
-  
+  int *vi=I->Vis;
+
   if(ray) {
 	 c=I->NT;
       while(c--)
         {
-			 ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
-									 vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
-									 vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
-			 t+=3;
+          if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))
+            ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
+                              vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
+                              vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
+          t+=3;
         }
   } else if(pick) {
   } else {
 
-
 	 if(I->S) {
-		if(I->oneColorFlag) {
-		  c=*(s++);
-		  while(c) {
-			 glBegin(GL_TRIANGLE_STRIP);
-			 glNormal3fv(vn+(*s)*3);
-			 glVertex3fv(v+(*s)*3);
-			 s++;
-			 glNormal3fv(vn+(*s)*3);
-			 glVertex3fv(v+(*s)*3);
-			 s++;
-			 while(c--)
-				{
-				  glNormal3fv(vn+(*s)*3);
-				  glVertex3fv(v+(*s)*3);
-				  s++;
-				}
-			 glEnd();
-			 c=*(s++);
-		  }
+      if(I->allVisibleFlag) {
+        if(I->oneColorFlag) {
+          c=*(s++);
+          while(c) {
+            glBegin(GL_TRIANGLE_STRIP);
+            glNormal3fv(vn+(*s)*3);
+            glVertex3fv(v+(*s)*3);
+            s++;
+            glNormal3fv(vn+(*s)*3);
+            glVertex3fv(v+(*s)*3);
+            s++;
+            while(c--)
+              {
+                glNormal3fv(vn+(*s)*3);
+                glVertex3fv(v+(*s)*3);
+                s++;
+              }
+            glEnd();
+            c=*(s++);
+          }
+        } else {
+          c=*(s++);
+          while(c) {
+            glBegin(GL_TRIANGLE_STRIP);
+            glColor3fv(vc+(*s)*3);
+            glNormal3fv(vn+(*s)*3);
+            glVertex3fv(v+(*s)*3);
+            s++;
+            glColor3fv(vc+(*s)*3);
+            glNormal3fv(vn+(*s)*3);
+            glVertex3fv(v+(*s)*3);
+            s++;
+            while(c--)
+              {
+                glColor3fv(vc+(*s)*3);
+                glNormal3fv(vn+(*s)*3);
+                glVertex3fv(v+(*s)*3);
+                s++;
+              }
+            glEnd();
+            c=*(s++);
+          }
+        }
+        
 		} else {
-		  c=*(s++);
-		  while(c) {
-			 glBegin(GL_TRIANGLE_STRIP);
-			 glColor3fv(vc+(*s)*3);
-			 glNormal3fv(vn+(*s)*3);
-			 glVertex3fv(v+(*s)*3);
-			 s++;
-			 glColor3fv(vc+(*s)*3);
-			 glNormal3fv(vn+(*s)*3);
-			 glVertex3fv(v+(*s)*3);
-			 s++;
-			 while(c--)
-				{
-				  glColor3fv(vc+(*s)*3);
-				  glNormal3fv(vn+(*s)*3);
-				  glVertex3fv(v+(*s)*3);
-				  s++;
-				}
-			 glEnd();
-			 c=*(s++);
-		  }
-		}
+        /* subsets: not-optimized */
+        c=I->NT;
+        if(c) {
+          glBegin(GL_TRIANGLES);
+          while(c--) {
+            if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))) {
+              glColor3fv(vc+(*t)*3);
+              glNormal3fv(vn+(*t)*3);
+              glVertex3fv(v+(*t)*3);
+              t++;
+              glColor3fv(vc+(*t)*3);
+              glNormal3fv(vn+(*t)*3);
+              glVertex3fv(v+(*t)*3);
+              t++;
+              glColor3fv(vc+(*t)*3);
+              glNormal3fv(vn+(*t)*3);
+              glVertex3fv(v+(*t)*3);
+              t++;
+            } else
+              t+=3;
+          }
+          glEnd();
+        }
+
+      }
 	 }
 		/*
 
@@ -197,26 +229,29 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 }
 
 #define solv_tole 0.02
-#define minimum_sep 0.5
-#define detect_range 0.7
-#define average_range 1.5
 
 void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 {
   MapType *map;
   int a,a2,i0,i,j,h,k,l,c1;
   float *v0,*vc,*c0;
+  int *vi;
   int first_color;
   ObjectMolecule *obj;
   float probe_radius;
   float dist,minDist;
+  float proximity,cutoff;
   int inclH;
   int cullByFlag;
 
   cullByFlag = SettingGet(cSetting_trim_dots);
   inclH = SettingGet(cSetting_dot_hydrogens);
-
   probe_radius = SettingGet(cSetting_solvent_radius);
+  proximity = SettingGet(cSetting_surface_proximity);
+
+  cutoff = MAX_VDW+probe_radius;
+  if(cutoff<(MAX_VDW+proximity))
+    cutoff=MAX_VDW+proximity;
 
   if(I->N) {
 	 obj=cs->Obj;
@@ -224,8 +259,10 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 	 first_color=-1;
 	 if(!I->VC) I->VC = Alloc(float,3*I->N);
 	 vc=I->VC;
+    if(!I->Vis) I->Vis = Alloc(int,I->N);
+    vi=I->Vis;
 	 /* now, assign colors to each point */
-	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,NULL);
+	 map=MapNew(cutoff,cs->Coord,cs->NIndex,NULL);
 	 if(map)
 		{
 		  MapSetupExpress(map);
@@ -269,6 +306,36 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 				*(vc++) = *(c0++);
 				*(vc++) = *(c0++);
 				*(vc++) = *(c0++);
+
+            if(I->allVisibleFlag)
+              *(vi++)=1;
+            else {
+              i0=-1;
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
+                j=map->EList[i++];
+                while(j>=0) {
+                  a2 = cs->IdxToAtm[j];
+                  if(obj->AtomInfo[cs->IdxToAtm[a2]].visRep[cRepSurface])
+                    if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
+                       ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
+                      /* ignore if the "2" bit is set */
+                      {
+                        dist = diff3f(v0,cs->Coord+j*3);
+                        if(dist<(obj->AtomInfo[cs->IdxToAtm[a2]].vdw+proximity)) {
+                          i0=j;
+                          break;
+                        }
+                      }
+                  j=map->EList[i++];
+                }
+              }
+              if(i0>=0)
+                *(vi++) = 1;
+              else
+                *(vi++) = 0;
+            }
+
 			 }
 		  MapFree(map);
 		}
@@ -280,15 +347,16 @@ Rep *RepSurfaceNew(CoordSet *cs)
   ObjectMolecule *obj;
   int a,b,h,i,j,k,l,c,c1;
   MapType *map,*solv_map;
-  float v1[3],*v0,*v,*vn,*vn0;
+  float v1[3],*v0,*v,*vn,*vn0,*extent=NULL;
   float vdw;
   int SurfaceFlag = false;
   float probe_radius,probe_radius2;
   int inclH = true;
   int cullByFlag = false;
   int flag,*dot_flag,*p;
-  int ds,a1,a2;
+  int a1,a2;
   int cnt;
+  float minimum_sep;
 
   SphereRec *sp = Sphere0;
   OOAlloc(RepSurface);
@@ -297,16 +365,13 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   cnt = SettingGet(cSetting_test2);
 
- /* get current dot sampling */
-  ds = (int)SettingGet(cSetting_dot_density);
-  if(ds<0) ds=0;
-  switch(ds) {
-  case 0: sp=Sphere0; break;
-  case 1: sp=Sphere1; break;
-  case 2: sp=Sphere2; break;
-  default: sp=Sphere3; break;
+  if((int)SettingGet(cSetting_surface_quality)) {
+    minimum_sep = SettingGet(cSetting_surface_best);
+    sp=Sphere2;
+  } else {
+    minimum_sep = SettingGet(cSetting_surface_normal);
+    sp=Sphere1;
   }
-  sp=Sphere1;
 
   cullByFlag = SettingGet(cSetting_trim_dots);
   inclH = SettingGet(cSetting_dot_hydrogens);
@@ -319,6 +384,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->S=NULL;
   I->V=NULL;
   I->VC=NULL;
+  I->Vis=NULL;
   I->VN=NULL;
   I->T=NULL;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSurfaceRender;
@@ -326,6 +392,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
   I->Obj = (Object*)(cs->Obj);
   I->Dot=NULL;
+  I->allVisibleFlag=true;
 
   obj = cs->Obj;
 
@@ -336,6 +403,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
 		  SurfaceFlag=true;
 		  break;
 		}
+    else
+      I->allVisibleFlag=false;
   }
   if(SurfaceFlag) {
 
@@ -346,10 +415,11 @@ Rep *RepSurfaceNew(CoordSet *cs)
 	 I->N=0;
     v=I->V;
     vn=I->VN;
+
 	 OrthoBusyFast(0,1);
-	 RepSurfaceGetSolventDots(I,cs,probe_radius,Sphere2);
-	 solv_map=MapNew(probe_radius,I->Dot,I->NDot,NULL);
-	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,NULL);
+	 RepSurfaceGetSolventDots(I,cs,probe_radius,Sphere2,extent);
+	 solv_map=MapNew(probe_radius,I->Dot,I->NDot,extent);
+	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,extent);
 
 	 if(map&&solv_map)
 		{
@@ -358,71 +428,70 @@ Rep *RepSurfaceNew(CoordSet *cs)
         for(a=0;a<cs->NIndex;a++)
           {
             a1 = cs->IdxToAtm[a];
-            if(obj->AtomInfo[a1].visRep[cRepSurface])
-              if((inclH||(obj->AtomInfo[a1].name[0]!='H'))&&
-                 ((!cullByFlag)||(!(obj->AtomInfo[a1].customFlag&0x2)))) {
-                /* ignore if the "2" bit is set */
-                c1=*(cs->Color+a);
-                v0 = cs->Coord+3*a;
-                vdw = cs->Obj->AtomInfo[a1].vdw;
-
-                for(b=0;b<sp->nDot;b++)
-                  {
-                    v1[0]=v0[0]+vdw*sp->dot[b].v[0];
-                    v1[1]=v0[1]+vdw*sp->dot[b].v[1];
-                    v1[2]=v0[2]+vdw*sp->dot[b].v[2];
-                    
-                    MapLocus(map,v1,&h,&k,&l);
-                    
-                    flag=true;
-                    
-                    i=*(MapEStart(map,h,k,l));
-                    if(i) {
-                      j=map->EList[i++];
-                      while(j>=0) {
-                        a2 = cs->IdxToAtm[j];
-                        if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
+            if((inclH||(obj->AtomInfo[a1].name[0]!='H'))&&
+               ((!cullByFlag)||(!(obj->AtomInfo[a1].customFlag&0x2)))) {
+              /* ignore if the "2" bit is set */
+              c1=*(cs->Color+a);
+              v0 = cs->Coord+3*a;
+              vdw = cs->Obj->AtomInfo[a1].vdw;
+              
+              for(b=0;b<sp->nDot;b++)
+                {
+                  v1[0]=v0[0]+vdw*sp->dot[b].v[0];
+                  v1[1]=v0[1]+vdw*sp->dot[b].v[1];
+                  v1[2]=v0[2]+vdw*sp->dot[b].v[2];
+                  
+                  MapLocus(map,v1,&h,&k,&l);
+                  
+                  flag=true;
+                  
+                  i=*(MapEStart(map,h,k,l));
+                  if(i) {
+                    j=map->EList[i++];
+                    while(j>=0) {
+                      a2 = cs->IdxToAtm[j];
+                      if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
                            ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
-                          /* ignore if the "2" bit is set */
-                          if(j!=a)
-                            if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw))
-                              {
-                                flag=false;
-                                break;
-                              }
-                        j=map->EList[i++];
-                      }
+                        /* ignore if the "2" bit is set */
+                        if(j!=a)
+                          if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw))
+                            {
+                              flag=false;
+                              break;
+                            }
+                      j=map->EList[i++];
                     }
-                    if(flag) /* doesn't intersect any atom */
-                      {
-                        MapLocus(solv_map,v1,&h,&k,&l);
-                        
-                        flag=true;
-                        i=*(MapEStart(solv_map,h,k,l));
-                        if(i) {
-                          j=solv_map->EList[i++];
-                          while(j>=0) {
-                            if(within3f(I->Dot+3*j,v1,probe_radius+solv_tole))
-                              {
-                                flag=false;
-                                break;
-                              }
-                            j=solv_map->EList[i++];
-                          }
-                        }
-                        if(!flag) /* appropriately close to a water center */
-                          {
-                            *(v++)=v1[0];
-                            *(v++)=v1[1];
-                            *(v++)=v1[2];
-                            *(vn++)=sp->dot[b].v[0];
-                            *(vn++)=sp->dot[b].v[1];
-                            *(vn++)=sp->dot[b].v[2];
-                            I->N++;
-                          }
-                      }
                   }
-              }
+                  if(flag) /* doesn't intersect any atom */
+                    {
+                      MapLocus(solv_map,v1,&h,&k,&l);
+                      
+                      flag=true;
+                      i=*(MapEStart(solv_map,h,k,l));
+                      if(i) {
+                        j=solv_map->EList[i++];
+                        while(j>=0) {
+                          if(within3f(I->Dot+3*j,v1,probe_radius+solv_tole))
+                            {
+                              flag=false;
+                              break;
+                            }
+                          j=solv_map->EList[i++];
+                        }
+                      }
+                      if(!flag) /* appropriately close to a water center */
+                        {
+                          *(v++)=v1[0];
+                          *(v++)=v1[1];
+                          *(v++)=v1[2];
+                          *(vn++)=sp->dot[b].v[0];
+                          *(vn++)=sp->dot[b].v[1];
+                          *(vn++)=sp->dot[b].v[2];
+                          I->N++;
+                        }
+                    }
+                }
+            }
           }
 		  OrthoBusyFast(3,10);
 		  if(I->NDot) {
@@ -498,7 +567,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 		{
 		  dot_flag=Alloc(int,I->N);
 		  for(a=0;a<I->N;a++) dot_flag[a]=1;
-		  map=MapNew(minimum_sep,I->V,I->N,NULL);
+		  map=MapNew(minimum_sep,I->V,I->N,extent);
         MapSetupExpress(map);		  
         v=I->V;
         vn=I->VN;
@@ -558,13 +627,11 @@ Rep *RepSurfaceNew(CoordSet *cs)
       I->VN = Realloc(I->VN,float,(vn0-I->VN));
     }
 
-
 	 RepSurfaceColor(I,cs);
 	 OrthoBusyFast(5,10);
 
-
     if(I->N) {
-      I->T=TrianglePointsToSurface(I->V,I->VN,I->N,probe_radius,&I->NT,&I->S);
+      I->T=TrianglePointsToSurface(I->V,I->VN,I->N,probe_radius,&I->NT,&I->S,extent);
 		printf(" RepSurface: %i triangles.\n",I->NT);
     } else {
       I->V = Realloc(I->V,float,1);
@@ -576,7 +643,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   return((void*)(struct Rep*)I);
 }
 
-void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,SphereRec *sp)
+void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,SphereRec *sp,float *extent)
 {
   ObjectMolecule *obj;
   int a,b,c,a1,a2,flag,i,h,k,l,j;
@@ -596,7 +663,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,Sphe
   probe_radius_plus = probe_radius * 1.5;
 
   I->NDot=0;
-  map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,NULL);
+  map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,extent);
   if(map)
 	 {
 		MapSetupExpress(map);
@@ -655,7 +722,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,Sphe
 	 }
 	 dot_flag[maxDot]=1; /* this guarantees that we have a valid dot */
 
-	 map=MapNew(probe_radius_plus,I->Dot,I->NDot,NULL);
+	 map=MapNew(probe_radius_plus,I->Dot,I->NDot,extent);
 	 if(map)
 		{
 		  MapSetupExpress(map);		  

@@ -211,9 +211,7 @@ def mray():
    
 
 def viewport(a,b):
-   lock()   
    _pm.viewport(int(a),int(b))
-   unlock()
    
 
 def mdo(a,b):
