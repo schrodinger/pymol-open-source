@@ -150,7 +150,7 @@ static WordKeyValue Keyword[] =
   {  "not",      SELE_NOT1 },
   {  "!",        SELE_NOT1 },
   {  "neighbor", SELE_NGH1 },
-  {  "ng;",      SELE_NGH1 },
+  {  "nbr;",      SELE_NGH1 },
   {  "byresi",   SELE_BYR1 },
   {  "byres",    SELE_BYR1 },
   {  "b;",       SELE_BYR1 },
