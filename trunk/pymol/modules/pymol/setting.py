@@ -400,6 +400,7 @@ if __name__=='pymol.setting':
       auto_classify_atoms  = 360
       cartoon_nucleic_acid_mode = 361
       seq_view_color       = 362
+      seq_view_label_mode  = 363
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

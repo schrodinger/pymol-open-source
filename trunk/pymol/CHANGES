@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * fixed occasional "snail track" bug with surfaces
+
+   * seq_view_label_mode setting
+
+   * wizard prompt now avoids overlap with sequence browser
+
+   * double-click-to-center now uses current state coordinates only
+
    * tentative PQR file reading support
 
    * fixed major bug in map ranging code

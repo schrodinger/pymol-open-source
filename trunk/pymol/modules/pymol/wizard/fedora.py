@@ -23,7 +23,8 @@ class Fedora(Wizard):
       cmd.unpick()
 
    def do_select(self,name):
-      cmd.deselect()
+#      cmd.deselect()
+      pass
       
    def get_panel(self):
       return [

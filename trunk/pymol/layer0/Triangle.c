@@ -180,7 +180,7 @@ static int *TriangleMakeStripVLA(float *v,float *vn,int n)
 				  tFlag[t0]=true;
 				  c++;
 				  done=false;
-              if(c==1) { /* make sure vertices follow standard convention */
+              if((c==1)||(c==2)) { /* make sure vertices follow standard convention */
                 
                 /* sum normal */
                 tn0 = vn+(*(s-3))*3;
@@ -197,16 +197,26 @@ static int *TriangleMakeStripVLA(float *v,float *vn,int n)
                 subtract3f(v0,v1,vt1);
                 subtract3f(v0,v2,vt2);
                 cross_product3f(vt1,vt2,xtn);
-                
-                /* reorder triangle if necessary */
 
-                if(dot_product3f(xtn,tn)<0.0) {
-                  tmp_int=*(s-3);
-                  *(s-3)=*(s-2);
-                  *(s-2)=tmp_int;
+                if(c&0x1) {
+                  /* reorder triangle if necessary */
+
+                  if(dot_product3f(xtn,tn)<0.0) {
+                    tmp_int=*(s-3);
+                    *(s-3)=*(s-2);
+                    *(s-2)=tmp_int;
+                  }
+                } else {
+                  if(dot_product3f(xtn,tn)>0.0) { /* if we're blowing the right hand rule
+                                                     on the second triangle, then 
+                                                     terminate this strip and try again */
+                    tFlag[t0]=false;
+                    c--;
+                    s--;
+                    break;
+                  }
                 }
               }
-
 				}
 				if(!c)
 				  s=sc;

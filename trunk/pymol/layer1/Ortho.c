@@ -1160,6 +1160,11 @@ static void OrthoDrawWizardPrompt(void)
       }
       
       rect.top = I->Height-cWizardTopMargin;
+
+      if(I->HaveSeqViewer)
+        if(!SettingGetGlobal_b(cSetting_seq_view_location)) {
+          rect.top -= SeqGetHeight();
+        }
       rect.bottom = rect.top-(nLine*cOrthoLineHeight+2*cWizardBorder)-2;
       rect.left = cWizardLeftMargin;
       rect.right = rect.left + cOrthoCharWidth*maxLen + 2*cWizardBorder+1;
@@ -1248,9 +1253,10 @@ void OrthoReshape(int width, int height,int force)
     sceneBottom = 0;
     
   internal_gui_width = (int)SettingGet(cSetting_internal_gui_width);
-  if(!SettingGetGlobal_b(cSetting_internal_gui))
+  if(!SettingGetGlobal_b(cSetting_internal_gui)) {
     internal_gui_width = 0;
-  else {
+    sceneRight = 0;
+  } else {
     switch(SettingGetGlobal_i(cSetting_internal_gui_mode)) {
     case 1:
       sceneRight = 0;
@@ -1261,37 +1267,37 @@ void OrthoReshape(int width, int height,int force)
     }
   }
 
-  if(SettingGet(cSetting_internal_gui)) {
+
+  {
+    int seqHeight;
+    block=SeqGetBlock();
+    block->active=true;
     
-    {
-      int seqHeight;
-      block=SeqGetBlock();
-      block->active=true;
-
-      if(SettingGetGlobal_b(cSetting_seq_view_location)) {
-
-         BlockSetMargin(block,height-sceneBottom-10,0,sceneBottom,sceneRight);
-         if(block->fReshape)
-         block->fReshape(block,width,height);			
-         seqHeight = SeqGetHeight();
-         BlockSetMargin(block,height-sceneBottom-seqHeight,0,sceneBottom,sceneRight);
-         if(!SettingGetGlobal_b(cSetting_seq_view_overlay)) {
-           sceneBottom +=seqHeight;
-         }
-
-      } else {
-        
-        BlockSetMargin(block,0,0,height-10,sceneRight);
-        if(block->fReshape)
-          block->fReshape(block,width,height);			
-        seqHeight = SeqGetHeight();
-        BlockSetMargin(block,0,0,height-seqHeight,sceneRight);
-        if(!SettingGetGlobal_b(cSetting_seq_view_overlay)) {
-          sceneTop = seqHeight;
-        }
+    if(SettingGetGlobal_b(cSetting_seq_view_location)) {
+      
+      BlockSetMargin(block,height-sceneBottom-10,0,sceneBottom,sceneRight);
+      if(block->fReshape)
+        block->fReshape(block,width,height);			
+      seqHeight = SeqGetHeight();
+      BlockSetMargin(block,height-sceneBottom-seqHeight,0,sceneBottom,sceneRight);
+      if(!SettingGetGlobal_b(cSetting_seq_view_overlay)) {
+        sceneBottom +=seqHeight;
       }
-
+      
+    } else {
+      
+      BlockSetMargin(block,0,0,height-10,sceneRight);
+      if(block->fReshape)
+        block->fReshape(block,width,height);			
+      seqHeight = SeqGetHeight();
+      BlockSetMargin(block,0,0,height-seqHeight,sceneRight);
+      if(!SettingGetGlobal_b(cSetting_seq_view_overlay)) {
+        sceneTop = seqHeight;
+      }
     }
+  }
+
+  if(SettingGet(cSetting_internal_gui)) {
 
     block=ExecutiveGetBlock();
     block->active=true;

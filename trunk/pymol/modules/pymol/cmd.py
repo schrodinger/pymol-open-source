@@ -94,6 +94,7 @@ if __name__=='pymol.cmd':
       r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$|",
       r"\.cc1$|\.cc2$|", # ChemDraw 3D
       r"\.CC1$|\.CC2$|",
+      r"\.DX$|\.dx$|", # DX files (APBS)
       r"\.pse$|\.PSE$|", # PyMOL session (pickled dictionary)
       r"\.pmo$|", # Experimental molecular object format
       r"\.PMO$|",

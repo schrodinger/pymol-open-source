@@ -62,6 +62,7 @@ if __name__=='pymol.importing':
       brix = 29     # BRIX/DSN6/O map format
       grd = 30      # Insight II Grid format
       pqr = 31      # PQR file (modified PDB file for APBS)
+      dx = 32       # DX file (APBS)
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -424,6 +425,8 @@ SEE ALSO
                ftype = loadable.pse
             elif re.search("\.phi$",filename,re.I):
                ftype = loadable.phi
+            elif re.search("\.dx$",filename,re.I):
+               ftype = loadable.dx
             elif re.search("\.fld$",filename,re.I):
                ftype = loadable.fld
             elif re.search("\.pqr$",filename,re.I):
