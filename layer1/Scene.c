@@ -1809,7 +1809,11 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
       glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
-      /*glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);*/
+      if(SettingGet(cSetting_two_sided_lighting)) {
+        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
+      } else {
+        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
+      }
 
       f = SettingGet(cSetting_specular);
       if(f>R_SMALL4) {

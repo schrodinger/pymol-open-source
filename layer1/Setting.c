@@ -567,6 +567,11 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
     SceneChanged();
     break;
+  case cSetting_cull_spheres:
+  case cSetting_sphere_scale:
+    ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvRep);
+    SceneChanged();
+    break;
   case cSetting_sphere_quality:
     ExecutiveInvalidateRep(inv_sele,cRepNonbondedSphere,cRepInvRep);
     ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvRep);
@@ -1159,6 +1164,10 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_reflect_power, 1.0F);
 
   SettingSet_f(I,cSetting_preserve_chempy_ids, 0.0F);
+
+  SettingSet_f(I,cSetting_sphere_scale, 1.0F);
+
+  SettingSet_f(I,cSetting_two_sided_lighting, 0.0F);
 
 }
 

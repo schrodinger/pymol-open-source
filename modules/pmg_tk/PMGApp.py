@@ -732,6 +732,12 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('depth_cue'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Two Sided Lighting.',
+                         label=self.pad+'Two Sided Lighting',
+                        variable = self.setting.two_sided_lighting,
+                        command = lambda s=self: s.setting.update('two_sided_lighting'))
+
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Specular Reflections.',
                          label=self.pad+'Specular Reflections',
                         variable = self.setting.specular,
@@ -853,9 +859,14 @@ class PMGApp(AbstractApp):
                                label='Pair Fitting',
                                command = lambda: cmd.do("_ wizard pair_fit"))
 
+      self.menuBar.addmenuitem('Wizards', 'command', 'Label',
+                               label='Label',
+                               command = lambda: cmd.do("_ wizard label"))
+
       self.menuBar.addmenuitem('Wizards', 'command', 'Charge',
                                label='Charge',
                                command = lambda: cmd.do("_ wizard charge"))
+
 
       self.menuBar.addmenu('Demos', 'Demonstrations')
 

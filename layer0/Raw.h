@@ -57,7 +57,7 @@ void RawFree(CRaw *I);
 
 int RawWrite(CRaw *I,int type,unsigned int size,int serial,char *bytes);
 
-int RawGetNext(CRaw *I,int *size);
+int RawGetNext(CRaw *I,int *size,int *version);
 
 char *RawRead(CRaw *I,int *type,unsigned int *size,int *serial);
 char *RawReadPtr(CRaw *I,int type,int *size);

@@ -110,7 +110,7 @@ int TriangleDegenerate(float *v1,float *n1,float *v2,float *n2,float *v3,float *
 static int *TriangleMakeStripVLA(float *v,float *vn,int n) 
 {
   TriangleSurfaceRec *I=&TriangleSurface;
-  int *tFlag;
+  int *tFlag,tmp_int;
   int c,a,cc=0;
   int *s,*sc,*strip;
   int state,s01,i0,i1,i2,tc,t0=0;
@@ -118,6 +118,8 @@ static int *TriangleMakeStripVLA(float *v,float *vn,int n)
   int done;
   int dir,dcnt;
   int flag;
+  float *v0,*v1,*v2,vt1[3],vt2[3],*tn0,*tn1,*tn2,tn[3],xtn[3];
+
   strip=VLAlloc(int,I->nTri*4); /* strip VLA is count,vert,vert,...count,vert,vert...zero */
   tFlag=Alloc(int,I->nTri);  
   for(a=0;a<I->nTri;a++) 
@@ -154,8 +156,8 @@ static int *TriangleMakeStripVLA(float *v,float *vn,int n)
 			 } else {
 				c=0;
 				sc = s++;
-				*(s++)=i0;
-				*(s++)=i1;
+            *(s++)=i0;
+            *(s++)=i1;
 				while(1) {
 				  state = TriangleEdgeStatus(s[-2],s[-1]);
 				  if(!state) break;
@@ -177,6 +179,33 @@ static int *TriangleMakeStripVLA(float *v,float *vn,int n)
 				  tFlag[t0]=true;
 				  c++;
 				  done=false;
+              if(c==1) { /* make sure vertices follow standard convention */
+                
+                /* sum normal */
+                tn0 = vn+(*(s-3))*3;
+                tn1 = vn+(*(s-2))*3;
+                tn2 = vn+(*(s-1))*3;
+                add3f(tn0,tn1,tn);
+                add3f(tn2,tn,tn);
+
+                /* compute right-hand vector */
+
+                v0 = v+(*(s-3))*3;
+                v1 = v+(*(s-2))*3;
+                v2 = v+(*(s-1))*3;
+                subtract3f(v0,v1,vt1);
+                subtract3f(v0,v2,vt2);
+                cross_product3f(vt1,vt2,xtn);
+                
+                /* reorder triangle if necessary */
+
+                if(dot_product3f(xtn,tn)<0.0) {
+                  tmp_int=*(s-3);
+                  *(s-3)=*(s-2);
+                  *(s-2)=tmp_int;
+                }
+              }
+
 				}
 				if(!c)
 				  s=sc;
@@ -195,15 +224,42 @@ static int *TriangleMakeStripVLA(float *v,float *vn,int n)
 
 	 /* fail-safe check in case of bad connectivity...*/
 	 
-	 for(a=0;a<I->nTri;a++) 
+	 for(a=0;a<I->nTri;a++) {
 		if(!tFlag[a]) {
 		  /*		  printf("missed %i %i %i\n",*(I->tri+3*a),*(I->tri+3*a+1), *(I->tri+3*a+2));*/
 		  *(s++) = 1;
 		  *(s++) = *(I->tri+3*a);
 		  *(s++) = *(I->tri+3*a+1);
 		  *(s++) = *(I->tri+3*a+2);
-		}
 
+        /* make sure vertices follow standard convention */
+        
+        /* sum normal */
+        tn0 = vn+(*(s-3))*3;
+        tn1 = vn+(*(s-2))*3;
+        tn2 = vn+(*(s-1))*3;
+        add3f(tn0,tn1,tn);
+        add3f(tn2,tn,tn);
+        
+        /* compute right-hand vector */
+
+        v0 = v+(*(s-3))*3;
+        v1 = v+(*(s-2))*3;
+        v2 = v+(*(s-1))*3;
+        subtract3f(v0,v1,vt1);
+        subtract3f(v0,v2,vt2);
+        cross_product3f(vt1,vt2,xtn);
+        
+        /* reorder triangle if necessary */
+        
+        if(dot_product3f(xtn,tn)<0.0) {
+          tmp_int=*(s-3);
+          *(s-3)=*(s-2);
+          *(s-2)=tmp_int;
+        }
+      }
+    }
+    
 	 *s=0; /* terminate strip list */
   }
   FreeP(tFlag);

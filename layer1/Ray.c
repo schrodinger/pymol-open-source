@@ -690,7 +690,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int fogRangeFlag=false;
   int opaque_back=0;
   int n_hit=0;
-
+  int two_sided_lighting;
   float fog;
   float *bkrd;
   float fog_start=0.0;
@@ -710,6 +710,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   
   backface_cull = (int)SettingGet(cSetting_backface_cull);
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
+  two_sided_lighting = (int)SettingGet(cSetting_two_sided_lighting);
+
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
     gamma=1.0/gamma;
@@ -883,7 +885,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 }
                 dotgle=-r1.dotgle;
                               
-                if(dotgle<0.0) dotgle=0.0;
+                if(dotgle<0.0) {
+                  if(two_sided_lighting) {
+                    dotgle=-dotgle;
+                    invert3f(r1.surfnormal);
+                  } else 
+                    dotgle=0.0;
+                }
                 direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
                 
                 matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
