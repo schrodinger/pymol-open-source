@@ -28,15 +28,16 @@ typedef int Vector3i[3];
 typedef float Matrix33f[3][3]; 
 typedef double Matrix33d[3][3]; 
 
+
 float get_random0to1f(void);
 
 float deg_to_rad(float angle);
 float rad_to_deg(float angle);
 
-double sqrt1f(float f);
-double sqrt1d(double d);
+double slow_sqrt1f(float f);
+double slow_sqrt1d(double d);
 
-void normalize3f( float *v1 );
+void slow_normalize3f( float *v1 );
 void normalize23f( float *v1 , float *v2);
 void normalize3d( double *v1 );
 
@@ -51,16 +52,16 @@ void get_system1f3f(float *x,float *y,float *z); /* make system in direction of 
 void get_system2f3f(float *x,float *y,float *z); /* make system in direction of x, perp to x,y */
 
 double dot_product3d ( double *v1, double *v2 );
-float project3f ( float *v1, float *v2, float *proj );
-void remove_component3f ( float *v1, float *unit, float *result);
+float slow_project3f ( float *v1, float *v2, float *proj );
+void slow_remove_component3f ( float *v1, float *unit, float *result);
 
 double distance_line2point3f(float *base,float *normal,float *point,float *alongNormalSq);
 double distance_halfline2point3f(float *base,float *normal,float *point,float *alongNormalSq);
 
-double diffsq3f ( float *v1, float *v2 );
-double diff3f ( float *v1, float *v2 );
-int within3f(float *v1,float *v2,float dist);
-int within3fsq(float *v1,float *v2,float dist,float dist2);
+double slow_diffsq3f ( float *v1, float *v2 );
+double slow_diff3f ( float *v1, float *v2 );
+int slow_within3f(float *v1,float *v2,float dist);
+int slow_within3fsq(float *v1,float *v2,float dist,float dist2);
 
 int equal3f(float *v1,float *v2);
 
@@ -159,7 +160,9 @@ void  average3f ( float *v1, float *v2, float *avg );
 void  zero3f ( float *v1 )
 void  set3f ( float *v1,float x,float y,float z );
 void  swap1f (float *f, float *g);
+
 #else
+
 #define set3f(v1,x,y,z) { (v1)[0]=(x);(v1)[1]=(y);(v1)[2]=(z); }
 #define zero3f(v1) { (v1)[0]=0.0;(v1)[1]=0.0;(v1)[2]=0.0; }
 #define dot_product3f(v1,v2) ((v1)[0]*(v2)[0] + (v1)[1]*(v2)[1] + (v1)[2]*(v2)[2])
@@ -184,6 +187,136 @@ void  swap1f (float *f, float *g);
 #define swap1f(f,g) { float h;h=*(f);*(f)=*(g);*(g)=h; }
 #endif
 
+
+#ifdef _PYMOL_INLINE
+
+static const float _0f_inline = 0.0F;
+static const double _0d_inline = 0.0;
+static const float _1f_inline = 1.0F;
+static const double _1d_inline = 1.0;
+static const float R_SMALL_inline = 0.000000001F;
+static const double R_SMALLd_inline = 0.000000001;
+
+#define normalize3f inline_normalize3f
+#define sqrt1f inline_sqrt1f
+#define sqrt1d inline_sqrt1d
+#define diff3f inline_diff3f
+#define diffsq3f inline_diffsq3f
+#define within3f inline_within3f
+#define within3fsq inline_within3fsq
+#define remove_component3f inline_remove_component3f
+#define project3f inline_project3f
+
+__inline__ static double inline_sqrt1f(float f) { /* no good as a macro because f is used twice */
+  if(f>_0f_inline)
+	 return(sqrt(f));
+  else
+	 return(_0d_inline);
+}
+
+__inline__ static double inline_sqrt1d(double f) { /* no good as a macro because f is used twice */
+  if(f>_0d_inline)
+	 return(sqrt(f));
+  else
+	 return(_0d_inline);
+}
+
+__inline__ static void inline_normalize3f( float *v1 )
+{
+	double vlen = length3f(v1);
+	if(vlen > R_SMALLd_inline)
+	{
+		float	inV	= (float)(_1d_inline / vlen);
+		v1[0] *= inV;
+		v1[1] *= inV;
+		v1[2] *= inV;
+	}
+	else
+	{
+		v1[0]=v1[1]=v1[2]=_0f_inline;
+	}
+}
+
+__inline__ static double inline_diff3f ( float *v1, float *v2 )
+{
+  register float dx,dy,dz;
+  dx = (v1[0]-v2[0]);
+  dy = (v1[1]-v2[1]);
+  dz = (v1[2]-v2[2]);
+  return(sqrt1d(dx*dx + dy*dy + dz*dz));
+}
+
+__inline__ static double inline_diffsq3f ( float *v1, float *v2 )
+{
+  register double dx,dy,dz;
+  dx = (v1[0]-v2[0]);
+  dy = (v1[1]-v2[1]);
+  dz = (v1[2]-v2[2]);
+
+  return( dx*dx + dy*dy + dz*dz );
+
+}
+
+__inline__ static int inline_within3f(float *v1,float *v2,float dist)
+{
+  register float dx,dy,dz;
+  dx = (v1[0]-v2[0]);
+  if(fabs(dx)>dist) return(0);
+  dy = (v1[1]-v2[1]);
+  if(fabs(dy)>dist) return(0);
+  dz = (v1[2]-v2[2]);
+  if(fabs(dz)>dist) return(0);
+  return((dx*dx + dy*dy + dz*dz)<=(dist*dist));
+}
+
+__inline__ static int inline_within3fsq(float *v1,float *v2,float dist,float dist2)
+{
+  register float dx,dy,dz;
+  dx = (v1[0]-v2[0]);
+  if(fabs(dx)>dist) return(0);
+  dy = (v1[1]-v2[1]);
+  if(fabs(dy)>dist) return(0);
+  dz = (v1[2]-v2[2]);
+  if(fabs(dz)>dist) return(0);
+  return((dx*dx + dy*dy + dz*dz)<=(dist2));
+}
+
+
+__inline__ static void inline_remove_component3f ( float *v1, float *unit, float *result)
+{
+  float dot;
+
+  dot = v1[0]*unit[0] + v1[1]*unit[1] + v1[2]*unit[2];
+  result[0]=v1[0]-unit[0]*dot;
+  result[1]=v1[1]-unit[1]*dot;
+  result[2]=v1[2]-unit[2]*dot;  
+}
+
+__inline__ static float inline_project3f ( float *v1, float *v2, float *proj )
+{
+   float dot;
+
+	dot = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+	proj[0] = v2[0] * dot;
+	proj[1] = v2[1] * dot;
+	proj[2] = v2[2] * dot;
+	
+	return(dot);
+}
+
+#else
+
+#define normalize3f slow_normalize3f
+#define sqrt1f slow_sqrt1f
+#define sqrt1d slow_sqrt1d
+#define diff3f slow_diff3f
+#define diffsq3f slow_diffsq3f
+#define within3f slow_within3f
+#define within3fsq3 slow_within3fsq
+#define project3f slow_project3f
+#define remove_component3f slow_remove_component3f
+
+#endif
 
 #endif
 

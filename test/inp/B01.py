@@ -11,6 +11,8 @@ import math
 from pymol import cmd
 import sys, os, os.path
 
+last1=''
+last2=''
 ent_dir = "pdb"
 
 def adjust(delay):
@@ -33,6 +35,7 @@ cycle_time = 2.0
 cmd.set("line_width","2")
 cmd.set("cartoon_tube_radius","0.2")
 def load():
+   global last1,last2
    list = glob("pdb/*/*") 
    list = map(lambda x:(whrandom.random(),x),list)
    list.sort() 
@@ -45,7 +48,9 @@ def load():
          cmd.set("suspend_updates","1")  
          cmd.delete('pdb')
          cmd.load(file,'pdb')
-         print file
+         print file,last1,last2
+         last2 = last1
+         last1 = file
 #      cmd.refresh()
 #      cmd.hide()
          cmd.show('cartoon')

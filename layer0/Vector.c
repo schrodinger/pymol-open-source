@@ -47,14 +47,14 @@ float get_random0to1f()
   return(rand()/(_1+RAND_MAX));
 }
 
-double sqrt1f(float f) { /* no good as a macro because f is used twice */
+double slow_sqrt1f(float f) { /* no good as a macro because f is used twice */
   if(f>_0)
 	 return(sqrt(f));
   else
 	 return(_0);
 }
 
-double sqrt1d(double f) { /* no good as a macro because f is used twice */
+double slow_sqrt1d(double f) { /* no good as a macro because f is used twice */
   if(f>_0)
 	 return(sqrt(f));
   else
@@ -276,7 +276,7 @@ void max3f ( float *v1, float *v2, float *v3 )
 }
 
 
-float project3f ( float *v1, float *v2, float *proj )
+float slow_project3f ( float *v1, float *v2, float *proj )
 {
    float dot;
 
@@ -621,7 +621,7 @@ void clamp3f(float *v1)
   if(v1[2]>_1) v1[2]= _1;
 }
 
-void normalize3f( float *v1 )
+void slow_normalize3f( float *v1 )
 {
 	double vlen = length3f(v1);
 	if(vlen > R_SMALL)
@@ -663,7 +663,7 @@ double length3d ( double *v1 )
 					 (v1[2]*v1[2])));
 } 
 
-double diff3f ( float *v1, float *v2 )
+double slow_diff3f ( float *v1, float *v2 )
 {
   register float dx,dy,dz;
   dx = (v1[0]-v2[0]);
@@ -672,7 +672,7 @@ double diff3f ( float *v1, float *v2 )
   return(sqrt1d(dx*dx + dy*dy + dz*dz));
 }
 
-double diffsq3f ( float *v1, float *v2 )
+double slow_diffsq3f ( float *v1, float *v2 )
 {
   register double dx,dy,dz;
   dx = (v1[0]-v2[0]);
@@ -684,7 +684,7 @@ double diffsq3f ( float *v1, float *v2 )
 }
 
 
-int within3f(float *v1,float *v2,float dist)
+int slow_within3f(float *v1,float *v2,float dist)
 {
   register float dx,dy,dz;
   dx = (v1[0]-v2[0]);
@@ -696,7 +696,7 @@ int within3f(float *v1,float *v2,float dist)
   return((dx*dx + dy*dy + dz*dz)<=(dist*dist));
 }
 
-int within3fsq(float *v1,float *v2,float dist,float dist2)
+int slow_within3fsq(float *v1,float *v2,float dist,float dist2)
 {
   register float dx,dy,dz;
   dx = (v1[0]-v2[0]);
@@ -709,7 +709,7 @@ int within3fsq(float *v1,float *v2,float dist,float dist2)
 }
 
 
-void remove_component3f ( float *v1, float *unit, float *result)
+void slow_remove_component3f ( float *v1, float *unit, float *result)
 {
   float dot;
 

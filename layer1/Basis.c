@@ -13,6 +13,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#ifndef _PYMOL_INLINE
+
 #include"os_predef.h"
 #include"os_std.h"
 
@@ -43,6 +46,9 @@ static int intersect_triangle(float orig[3], float *pre,float vert0[3],
 										float *u, float *v, float *d);
 
 /*========================================================================*/
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere,float *asum)
 {
@@ -178,7 +184,9 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 
 }
 
-
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 static int ZLineFrontToInteriorSphere(float *front,
                                       float *point,
                                       float *dir,
@@ -209,6 +217,9 @@ static int ZLineFrontToInteriorSphere(float *front,
 
 
 /*========================================================================*/
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere,float *asum,int cap1,int cap2)
 {
@@ -415,6 +426,9 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
 
 
 
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 static int ZLineFrontToInteriorSphereCapped(float *front,
                                             float *point,
                                             float *dir,
@@ -448,6 +462,9 @@ static int ZLineFrontToInteriorSphereCapped(float *front,
 
 
 /*========================================================================*/
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff)
 {
 	float hyp0, hyp1, hyp2;
@@ -571,6 +588,9 @@ void BasisSetFudge(float fudge)
 }
 
 /*========================================================================*/
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 int BasisHit(CBasis *BI,RayInfo *rr,int except,
 				 int *vert2prim,CPrimitive *prim,
 				 int shadow,float front,float back,
@@ -1520,20 +1540,4 @@ static int intersect_triangle(float orig[3], float *pre,float vert0[3],
 }
 
 
-
-
-  /*  {  float *pre;
-  dump3f(r->impact,"impact");
-  pre = I->Precomp+I->Vert2Normal[i]*3;
-  scale3f(pre,r->tri1,d1);
-  scale3f(pre+3,r->tri2,d2);
-  add3f(I->Vertex+3*i,d1,d1);
-  add3f(d1,d2,d2);
-  dump3f(pre,"pre");
-  dump3f(pre+3,"pre+3");
-  dump3f(I->Vertex+3*i,"vertex+3*i");
-  dump3f(d2,"impact2"); 
-  printf("%8.3f %8.3f %d %8.3f %8.3f %p\n",pre[6],pre[7],i,r->tri1,r->tri2,I->Vertex+3*i);
-  if(fabs(d2[1]-r->impact[1])>0.001)
-    printf("###########################################333333\n");
-    }*/
+#endif
