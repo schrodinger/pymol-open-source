@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 
 #define cOrthoScene 1
 #define cOrthoTool 2
+#define cOrthoHidden 3
 
 void OrthoInit(void);
 void OrthoFree(void);

@@ -24,6 +24,10 @@ Z* -------------------------------------------------------------------
 #define false 0
 #endif
 
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
@@ -32,7 +36,7 @@ Z* -------------------------------------------------------------------
 #define uchar unsigned char
 #endif
 
-#define MAX_VDW 2.5
+#define MAX_VDW 2.5  /* this has to go */
 
 #include<limits.h>
 #include<float.h>

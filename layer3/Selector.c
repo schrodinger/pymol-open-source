@@ -1174,10 +1174,11 @@ int SelectorLogic1(EvalElem *base)
                  if(I->Table[a].model==I->Table[b].model)
                    {
                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-                     if(at1->chain[0]==at2->chain[0])
-                       if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                         if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0)
-                           base[0].sele[b]=true;
+                     if(at1->hetatm==at2->hetatm)
+                       if(at1->chain[0]==at2->chain[0])
+                         if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                           if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0)
+                             base[0].sele[b]=true;
                    }
 			   }
 		  }

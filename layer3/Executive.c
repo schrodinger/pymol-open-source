@@ -32,9 +32,11 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Matrix.h"
 #include"PUtils.h"
+#include"Menu.h"
 
 #define cExecObject 0
 #define cExecSelection 1
+#define cExecAll 2
 
 typedef struct SpecRec {
   int type;
@@ -70,7 +72,7 @@ void ExecutiveReshape(Block *block,int width,int height);
 #define ExecToggleWidth 14
 #define ExecToggleSize 13
 
-#define ExecOpCnt 2
+#define ExecOpCnt 4
 #define ExecColorVisible 0.45,0.45,0.45
 #define ExecColorHidden 0.3,0.3,0.3
 
@@ -814,34 +816,29 @@ void ExecutiveSetAllVisib(int state)
 void ExecutiveSetRepVisib(char *name,int rep,int state)
 {
   int sele;
-  int flag = false;
+  int a;
   SpecRec *tRec;
   ObjectMoleculeOpRec op;
   tRec = ExecutiveFindSpec(name);
   if(tRec) {
-	 if(name[0]=='_') {
-		flag=true;
-	 } else {
+	 if(name[0]!='_') {
+      /* remember visibility information for real selections */
 	   if(rep>=0) {
-	     if(state!=tRec->repOn[rep])  /* more intuitive behavior for REAL selections */
-	       {
-		 flag=true;
-		 tRec->repOn[rep]=state;
-	       }
-	   }
+        tRec->repOn[rep]=state;
+      } else {
+        for(a=0;a<cRepCnt;a++)
+          tRec->repOn[a]=state; 
+      }
 	 }
-	 
-	 if(flag) {
-		sele=SelectorIndexByName(name);
-		if(sele>=0) {
-		  op.code='VISI';
-		  op.i1=rep;
-		  op.i2=state;
-		  ExecutiveObjMolSeleOp(sele,&op);
-		  op.code='INVA';
-		  op.i2=cRepInvVisib;
-		  ExecutiveObjMolSeleOp(sele,&op);
-		}
+    sele=SelectorIndexByName(name);
+    if(sele>=0) {
+      op.code='VISI';
+      op.i1=rep;
+      op.i2=state;
+      ExecutiveObjMolSeleOp(sele,&op);
+      op.code='INVA';
+      op.i2=cRepInvVisib;
+      ExecutiveObjMolSeleOp(sele,&op);
 	 }
   }
 }
@@ -1021,9 +1018,61 @@ void ExecutiveManageSelection(char *name)
 /*========================================================================*/
 int ExecutiveClick(Block *block,int button,int x,int y,int mod)
 {
-  /*  Executive.Button = button;
-      I->LastX = x;
-      I->LastY = y;*/
+  CExecutive *I = &Executive;
+  int n,a;
+  SpecRec *rec = NULL;
+  int t;
+  Object *obj;
+
+  n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
+  a=n;
+
+  while(ListIterate(I->Spec,rec,next,SpecList))
+	 {
+		if(!a)
+		  {
+			 t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
+          if(t<ExecOpCnt) {
+            y = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight) - 1;
+            x = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
+            t = (ExecOpCnt-t)-1;
+            switch(t) {
+            case 2:
+              switch(rec->type) {
+              case cExecAll:
+              case cExecSelection:
+                MenuActivate(x,y,"mol_show",rec->name);
+                break;
+              case cExecObject:
+                switch(rec->obj->type) {
+                case cObjectMolecule:
+                  MenuActivate(x,y,"mol_show",rec->obj->Name);
+                  break;
+                }
+                break;
+              }
+              break;
+            case 3:
+              switch(rec->type) {
+              case cExecAll:
+              case cExecSelection:
+                MenuActivate(x,y,"mol_hide",rec->name);
+                break;
+              case cExecObject:
+                switch(rec->obj->type) {
+                case cObjectMolecule:
+                  MenuActivate(x,y,"mol_hide",rec->obj->Name);
+                  break;
+                }
+                break;
+              }
+              break;
+            }
+          }
+        }
+      a--;
+    }
+  MainDirty();
   
   return(1);
 }
@@ -1041,20 +1090,37 @@ int ExecutiveRelease(Block *block,int x,int y,int mod)
 	 {
 		if(!n)
 		  {
-			 t=(cRepCnt-1)-(I->Block->rect.right-(ExecRightMargin+x))/ExecToggleWidth;
-			 if((t>=0)&&(t<cRepCnt))
-				ExecutiveSetRepVisib(rec->name,t,!rec->repOn[t]);
-			 else if((-t)<=ExecOpCnt)
-				{
-				  t=-t;
-				  if(t==1)
-					 ExecutiveCenter(rec->name,true);
-				  else if(t==2) {
-					 ExecutiveWindowZoom(rec->name);
-					 ExecutiveCenter(rec->name,true);
-				  }
-				}
-			 else if(rec->type==cExecObject)
+			 t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
+          if(t<ExecOpCnt) {
+            t = (ExecOpCnt-t)-1;
+            switch(t) {
+            case 0:
+              switch(rec->type) {
+              case cExecAll:
+                SelectorCreate("_all","all",NULL);
+                ExecutiveCenter("_all",1);
+                ExecutiveWindowZoom("_all");
+                ExecutiveDelete("_all"); 
+                break;
+              default:
+                ExecutiveCenter(rec->name,true);
+                ExecutiveWindowZoom(rec->name);
+              }
+              break;
+            case 1:
+              switch(rec->type) {
+              case cExecAll:
+                SelectorCreate("_all","all",NULL);
+                ExecutiveCenter("_all",1);
+                ExecutiveDelete("_all"); 
+                break;
+              default:
+                ExecutiveCenter(rec->name,true);
+                break;
+              }
+              break;
+            }
+          } else if(rec->type==cExecObject)
 				{
 				  if(rec->visible)
 					 SceneObjectDel(rec->obj);				
@@ -1063,7 +1129,7 @@ int ExecutiveRelease(Block *block,int x,int y,int mod)
 				  rec->visible=!rec->visible;
               SceneChanged();
 				}
-		  }
+        }
 		n--;
 	 }
   MainDirty();
@@ -1079,8 +1145,8 @@ void ExecutiveDraw(Block *block)
 {
   int a,x,y,xx,x2,y2;
   char *c=NULL;
-  float toggleColor[3] = { 0.4, 0.4, 1.0 };
-
+  float toggleColor[3] = { 0.5, 0.5, 1.0 };
+  float toggleColor2[3] = { 0.3, 0.3, 0.6 };
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
 
@@ -1090,7 +1156,8 @@ void ExecutiveDraw(Block *block)
     
     x = I->Block->rect.left+ExecLeftMargin;
     y = (I->Block->rect.top-ExecLineHeight)-ExecTopMargin;
-    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+ExecOpCnt);
+    /*    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+ExecOpCnt);*/
+    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(ExecOpCnt);
     
     while(ListIterate(I->Spec,rec,next,SpecList))
       {
@@ -1099,25 +1166,54 @@ void ExecutiveDraw(Block *block)
         glColor3fv(toggleColor);
         for(a=0;a<ExecOpCnt;a++)
           {
-            if(!a) {
+            switch(a) {
+            case 0:
               glBegin(GL_LINE_LOOP);
               glVertex2i(x2,y2+(ExecToggleSize-1)/2);
               glVertex2i(x2+(ExecToggleSize-1)/2,y2);
               glVertex2i(x2+ExecToggleSize-1,y2+(ExecToggleSize-1)/2);
               glVertex2i(x2+(ExecToggleSize-1)/2,y2+ExecToggleSize-1);
               glEnd();
-            } else {
+              break;
+            case 1:
               glBegin(GL_LINES);
               glVertex2i(x2,y2+(ExecToggleSize-1)/2);
               glVertex2i(x2+ExecToggleSize-1,y2+(ExecToggleSize-1)/2);
               glVertex2i(x2+(ExecToggleSize-1)/2,y2);
               glVertex2i(x2+(ExecToggleSize-1)/2,y2+ExecToggleSize-1);
               glEnd();				
+              break;
+            case 2:
+              glBegin(GL_POLYGON);
+              glVertex2i(x2,y2);
+              glVertex2i(x2,y2+ExecToggleSize);
+              glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+              glVertex2i(x2+ExecToggleSize,y2);
+              glEnd();
+              glColor3f(0.0,0.0,0.0);
+              glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
+              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'S');              
+              glColor3fv(toggleColor);
+
+              break;
+            case 3:
+              glColor3fv(toggleColor2);
+              glBegin(GL_POLYGON);
+              glVertex2i(x2,y2);
+              glVertex2i(x2,y2+ExecToggleSize);
+              glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+              glVertex2i(x2+ExecToggleSize,y2);
+              glEnd();
+              glColor3f(0.0,0.0,0.0);
+              glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
+              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'H');              
+              glColor3fv(toggleColor);
+              break;
             }
-	
             x2+=ExecToggleWidth;
           }
-
+        
+#ifdef PYMOL_OLD_CODE 
         for(a=0;a<cRepCnt;a++)
           {
             if(rec->repOn[a]) 
@@ -1139,6 +1235,7 @@ void ExecutiveDraw(Block *block)
             glEnd();
             x2+=ExecToggleWidth;
           }
+#endif
 
         glColor3fv(I->Block->TextColor);
         glRasterPos4d((double)(x),(double)(y),0.0,1.0);
@@ -1161,13 +1258,23 @@ void ExecutiveDraw(Block *block)
           }
         else if(rec->type==cExecSelection)
           {
-            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'%');
+            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'(');
+            c=rec->name;
+          }
+        else if(rec->type==cExecAll)
+          {
             c=rec->name;
           }
 
         if(c)
           while(*c) 
             glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+
+        if(rec->type==cExecSelection)
+          {
+            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,')');
+            c=rec->name;
+          }
 
         y-=ExecLineHeight;
       }
@@ -1209,6 +1316,8 @@ void ExecutiveReshape(Block *block,int width,int height)
 void ExecutiveInit(void)
 {
   CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  int a;
 
   ListInit(I->Spec);
   I->Block = OrthoNewBlock(NULL);  
@@ -1220,6 +1329,15 @@ void ExecutiveInit(void)
   I->Block->active = true;
 
   OrthoAttach(I->Block,cOrthoTool);
+
+  ListElemAlloc(rec,SpecRec);
+  strcpy(rec->name,"(all)");
+  rec->type=cExecAll;
+  rec->next=NULL;
+  for(a=0;a<cRepCnt;a++)
+	 rec->repOn[a]=false;
+  ListAppend(I->Spec,rec,next,SpecList);
+
 }
 /*========================================================================*/
 void ExecutiveFree(void)

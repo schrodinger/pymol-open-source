@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -13,35 +14,32 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_PUtils
-#define _H_PUtils
 
+#include<string.h>
 #include<Python.h>
 
-#include"AtomInfo.h"
+#include "Menu.h"
+#include "PM.h"
+#include "PopUp.h"
+#include "PUtils.h"
+#include "Ortho.h"
 
-void PInit(void);
-void PFree(void);
-void PExit(int code);
-void PParse(char *str);
+extern PyThreadState *_save;
 
-#define cLockAPI 1
-#define cLockInbox 2
-#define cLockOutbox 3
+void MenuActivate(int x,int y,char *name,char *sele)
+{
+  /* assumes a locked API and unblocked python threads (GLUT event) */
 
-int PAlterAtom(AtomInfoType *at,char *expr);
-void PSleep(int usec);
+  OrthoLineType buffer;
+  PyObject *list;
 
-void PLock(int lock,PyThreadState **save);
-void PUnlock(int lock,PyThreadState **save);
+  PBlock(&_save);
 
-void PBlock(PyThreadState **save);
-void PUnblock(PyThreadState **save);
+  sprintf(buffer,"pymol_menu = pmm.%s('%s')",name,sele);
+  PyRun_SimpleString(buffer);
+  list = PyDict_GetItemString(PM_Globals,"pymol_menu");
+  PopUpNew(x,y,list);
 
-void PFlush(PyThreadState **save);
+  PUnblock(&_save);
+}
 
-void PStereoOff(void);
-void PDefineFloat(char *name,float value);
-PyObject *PFloatVLAToPyList(float *f);
-
-#endif

@@ -101,7 +101,7 @@ void SettingSetNamed(char *name,char *value)
 	 case cSetting_light:
 		if(sscanf(value,"%f%f%f",vv,vv+1,vv+2)==3) {
 		  SettingSetfv(index,vv);
-		  sprintf(buffer," Setting: %s set to %8.3f %8.3f %8.3f\n",I->Setting[index].Name,
+		  sprintf(buffer," Setting: %s set to %5.3f %8.3f %8.3f\n",I->Setting[index].Name,
 					 *vv,*(vv+1),*(vv+2));
 		}
 		break;
@@ -117,7 +117,7 @@ void SettingSetNamed(char *name,char *value)
 	 default:
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
-		sprintf(buffer," Setting: %s set to %8.3f\n",I->Setting[index].Name,v);
+		sprintf(buffer," Setting: %s set to %5.3f\n",I->Setting[index].Name,v);
 		break;
 	 }
   } else {
@@ -251,9 +251,9 @@ void SettingInit(void)
 			"single_image");
 
   I->NSetting++;
-  I->Setting[cSetting_min_delay].Value[0] = 30;
-  strcpy(I->Setting[cSetting_min_delay].Name,
-			"min_delay");
+  I->Setting[cSetting_movie_delay].Value[0] = 30;
+  strcpy(I->Setting[cSetting_movie_delay].Name,
+			"movie_delay");
 
   I->NSetting++;
   I->Setting[cSetting_ribbon_power].Value[0] = 5;
@@ -430,6 +430,31 @@ void SettingInit(void)
   I->Setting[cSetting_autoshow_lines].Value[0] = 1.0;
   strcpy(I->Setting[cSetting_autoshow_lines].Name,
 			"autoshow_lines");
+
+  I->NSetting++;
+  I->Setting[cSetting_fast_idle].Value[0] = 20000;
+  strcpy(I->Setting[cSetting_fast_idle].Name,
+			"fast_idle");
+
+  I->NSetting++;
+  I->Setting[cSetting_no_idle].Value[0] = 5000;
+  strcpy(I->Setting[cSetting_no_idle].Name,
+			"no_idle");
+
+  I->NSetting++;
+  I->Setting[cSetting_slow_idle].Value[0] = 100000;
+  strcpy(I->Setting[cSetting_slow_idle].Name,
+			"slow_idle");
+
+  I->NSetting++;
+  I->Setting[cSetting_idle_delay].Value[0] = 1.5;
+  strcpy(I->Setting[cSetting_idle_delay].Name,
+			"idle_delay");
+
+  I->NSetting++;
+  I->Setting[cSetting_rock_delay].Value[0] = 30;
+  strcpy(I->Setting[cSetting_rock_delay].Name,
+			"rock_delay");
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS
