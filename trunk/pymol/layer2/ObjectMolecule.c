@@ -8049,8 +8049,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
         bondFlag=true;
 		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')&&
               (*(p+3)=='R')&&(!*restart)) {
-        /* Metaphorics key '   '*/
-        if((*(p+6)==' ')&&(*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
+        /* Metaphorics key 'USER     '*/
+        if((*(p+4)==' ')&&(*(p+5)==' ')&&(*(p+6)==' ')&&
+           (*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
           p = nskip(p,10);
           p = ntrim(cc,p,6);
           m4x->annotated_flag = true;
@@ -8284,7 +8285,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
         }
 		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')
               &&(*(p+3)=='R')&&(!*restart)) {
-        if((*(p+6)==' ')&&(*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
+        /* Metaphorics key 'USER     ' */
+        if((*(p+4)==' ')&&(*(p+5)==' ')&&(*(p+6)==' ')&&
+           (*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
           
           p = nskip(p,10);
           p = ntrim(cc,p,6);

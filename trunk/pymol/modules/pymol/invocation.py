@@ -216,7 +216,8 @@ if __name__=='pymol.invocation':
                options.internal_feedback = 0
                options.show_splash = 1
          else:
-            if a[-4:] in (".pm5",".PM5"): # mode 5 helper application 
+            if a[-4:] in (".pm5",".PM5",".p5m",".P5M"):
+               # mode 5 helper application 
                av.append("-A5")               
             options.deferred.append(a)
             loaded_something = 1
