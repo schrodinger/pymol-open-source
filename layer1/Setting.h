@@ -341,10 +341,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_ray_triangle_fudge          208
 #define cSetting_debug_pick                  209
 #define cSetting_dot_color                   210
+#define cSetting_mouse_limit                 211
+#define cSetting_mouse_scale                 212
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        211
+#define cSetting_INIT                        213
 
 #endif
 

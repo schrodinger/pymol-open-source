@@ -1865,6 +1865,9 @@ void SettingInitGlobal(void)
 
   SettingSet_color(I,cSetting_dot_color,"-1"); /* use atom colors by default */
 
+  SettingSet_f(I,cSetting_mouse_limit,60.0F);
+
+  SettingSet_f(I,cSetting_mouse_scale,1.5F);
 }
 
 

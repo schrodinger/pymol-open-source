@@ -1372,6 +1372,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   CScene *I=&Scene;
   float scale,vScale;
   float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
+  float dx,dy,dt;
   float axis[3],axis2[3],theta,omega;
   int mode;
   int eff_width;
@@ -1530,7 +1531,16 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 normalize23f(v1,n1);
 	 normalize23f(v2,n2);
 	 cross_product3f(n1,n2,cp);
-	 theta = 2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
+	 theta = SettingGet_f(NULL,NULL,cSetting_mouse_scale)*
+      2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
+
+    dx = (v1[0]-v2[0]);
+    dy = (v1[1]-v2[1]);
+    dt = SettingGet_f(NULL,NULL,cSetting_mouse_limit)*sqrt1f(dx*dx+dy*dy)/scale;
+    
+    if(theta>dt)
+      theta = dt;
+
 	 normalize23f(cp,axis);
 
     v1[2]=0.0;
