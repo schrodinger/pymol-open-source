@@ -77,16 +77,16 @@ if __name__=='pymol.importing':
    def load_object(type,object,name,state=0,finish=1,discrete=0):
          # assume first argument is the object type (numeric)
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "load_object" is a general developer function for loading Python objects
-      into PyMOL.
+   "load_object" is a general developer function for loading Python objects
+   into PyMOL.
 
-   PYMOL API
+PYMOL API
 
-      cmd.load_object(type,object,name,state=0,finish=1,discrete=0)
+   cmd.load_object(type,object,name,state=0,finish=1,discrete=0)
 
-      NOTE type is one one of the numberic cmd.loadable types
+   NOTE type is one one of the numberic cmd.loadable types
       '''
       r = 1
       try:
@@ -116,15 +116,15 @@ if __name__=='pymol.importing':
 
    def load_callback(*arg):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "load_callback" is used to load a generic Python callback object.
-      These objects are called every time the screen is updated and can be used
-      to trigger OpenGL rendering calls (such as with PyOpenGL).
+   "load_callback" is used to load a generic Python callback object.
+   These objects are called every time the screen is updated and can be used
+   to trigger OpenGL rendering calls (such as with PyOpenGL).
 
-   PYMOL API
+PYMOL API
 
-      cmd.load_callback(object,name,state,finish,discrete)
+   cmd.load_callback(object,name,state,finish,discrete)
 
    '''
 
@@ -134,15 +134,15 @@ if __name__=='pymol.importing':
 
    def load_cgo(*arg):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "load_cgo" is used to load a compiled graphics object, which is
-      actually a list of floating point numbers built using the constants
-      in the $PYMOL_PATH/modules/pymol/cgo.py file.
+   "load_cgo" is used to load a compiled graphics object, which is
+   actually a list of floating point numbers built using the constants
+   in the $PYMOL_PATH/modules/pymol/cgo.py file.
 
-   PYMOL API
+PYMOL API
 
-      cmd.load_cgo(object,name,state,finish,discrete)
+   cmd.load_cgo(object,name,state,finish,discrete)
 
    '''
 
@@ -152,13 +152,13 @@ if __name__=='pymol.importing':
 
    def load_model(*arg,**kw):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "load_model" reads a ChemPy model into an object
+   "load_model" reads a ChemPy model into an object
 
-   PYMOL API
+PYMOL API
 
-      cmd.load_model(model, object [,state [,finish [,discrete ]]])
+   cmd.load_model(model, object [,state [,finish [,discrete ]]])
       '''
       lst = [loadable.model]
       lst.extend(list(arg))
@@ -168,39 +168,39 @@ if __name__=='pymol.importing':
                  average=1,start=1,stop=-1,max=-1,selection='all',image=1,
                  shift="[0.0,0.0,0.0]"):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "load_traj" reads trajectory files (currently just AMBER files).
-      The file extension is used to determine the format.
+   "load_traj" reads trajectory files (currently just AMBER files).
+   The file extension is used to determine the format.
 
-      AMBER files must end in ".trj" 
+   AMBER files must end in ".trj" 
 
-   USAGE
+USAGE
 
-      load_traj filename [,object [,state [,format [,interval [,average ]
-                         [,start [,stop [,max [,selection [,image [,shift
-                         ]]]]]]]]]
+   load_traj filename [,object [,state [,format [,interval [,average ]
+                      [,start [,stop [,max [,selection [,image [,shift
+                      ]]]]]]]]]
 
-   PYMOL API
+PYMOL API
 
-      cmd.load_traj(filename,object='',state=0,format='',interval=1,
-                 average=1,start=1,stop=-1,max=-1,selection='all',image=1,
-                 shift="[0.0,0.0,0.0]")
+   cmd.load_traj(filename,object='',state=0,format='',interval=1,
+              average=1,start=1,stop=-1,max=-1,selection='all',image=1,
+              shift="[0.0,0.0,0.0]")
 
-   NOTES
+NOTES
 
-      You must first load a corresponding topology file before attempting
-      to load a trajectory file.
+   You must first load a corresponding topology file before attempting
+   to load a trajectory file.
 
-      PyMOL does not know how to wrap the truncated octahedron used by Amber
-      You will need to use the "ptraj" program first to do this.
+   PyMOL does not know how to wrap the truncated octahedron used by Amber
+   You will need to use the "ptraj" program first to do this.
 
-      The average option is not a running average.  To perform this type of
-      average, use the "smooth" command after loading the trajectory file.
+   The average option is not a running average.  To perform this type of
+   average, use the "smooth" command after loading the trajectory file.
 
-   SEE ALSO
+SEE ALSO
 
-      load
+   load
       '''
       r = 1
       try:
@@ -272,46 +272,46 @@ if __name__=='pymol.importing':
 
    def load(filename,object='',state=0,format='',finish=1,discrete=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "load" reads several file formats.  The file extension is used to
-      determine the format.  PDB files must end in ".pdb", MOL files must
-      end in ".mol", Macromodel files must end in ".mmod", XPLOR
-      maps must end in ".xplor", CCP4 maps must end in ".ccp4",
-      Raster3D input (Molscript output) must end in ".r3d", PyMOL session
-      files must end in ".pse"
+   "load" reads several file formats.  The file extension is used to
+   determine the format.  PDB files must end in ".pdb", MOL files must
+   end in ".mol", Macromodel files must end in ".mmod", XPLOR
+   maps must end in ".xplor", CCP4 maps must end in ".ccp4",
+   Raster3D input (Molscript output) must end in ".r3d", PyMOL session
+   files must end in ".pse"
 
-      Pickled ChemPy models with a ".pkl" can also be directly read.
+   Pickled ChemPy models with a ".pkl" can also be directly read.
 
-      If an object is specified, then the file is loaded into that object.
-      Otherwise, an object is created with the same name as the file
-      prefix.
+   If an object is specified, then the file is loaded into that object.
+   Otherwise, an object is created with the same name as the file
+   prefix.
 
-   USAGE
+USAGE
 
-      load filename [,object [,state [,format [,finish [,discrete ]]]]]
+   load filename [,object [,state [,format [,finish [,discrete ]]]]]
 
-   PYMOL API
+PYMOL API
 
-      cmd.load( filename [,object [,state [,format [,finish [,discrete ]]]]]
+   cmd.load( filename [,object [,state [,format [,finish [,discrete ]]]]]
 
-   NOTES
+NOTES
 
-      You can override the file extension by giving a format string:
+   You can override the file extension by giving a format string:
 
-      'pdb' : PDB,  'mmod' : Macromodel, 'xyz' : Tinker, 'cc1' : ChemDraw3D  
-      'mol' : MDL MOL-file, 'sdf' : MDL SD-file
-      'xplor' : X-PLOR/CNS map, 'ccp4' : CCP4 map,
-      'callback' : PyMOL Callback object (PyOpenGL)
-      'cgo' : compressed graphics object (list of floats)
-      'trj' : AMBER trajectory (use load_traj command for more control)
-      'top' : AMBER topology file 'rst' : AMBER restart file
-      'cex' : Metaphorics CEX format
-      'pse' : PyMOL Session file
-      
-   SEE ALSO
+   'pdb' : PDB,  'mmod' : Macromodel, 'xyz' : Tinker, 'cc1' : ChemDraw3D  
+   'mol' : MDL MOL-file, 'sdf' : MDL SD-file
+   'xplor' : X-PLOR/CNS map, 'ccp4' : CCP4 map,
+   'callback' : PyMOL Callback object (PyOpenGL)
+   'cgo' : compressed graphics object (list of floats)
+   'trj' : AMBER trajectory (use load_traj command for more control)
+   'top' : AMBER topology file 'rst' : AMBER restart file
+   'cex' : Metaphorics CEX format
+   'pse' : PyMOL Session file
 
-      save
+SEE ALSO
+
+   save
       '''
       r = 1
       try:
@@ -430,26 +430,26 @@ if __name__=='pymol.importing':
 
    def read_molstr(molstr,name,state=0,finish=1,discrete=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "read_molstr" reads an MDL MOL format file as a string
+   "read_molstr" reads an MDL MOL format file as a string
 
-   PYMOL API ONLY
+PYMOL API ONLY
 
-      cmd.read_molstr( string molstr, string name, int state=0,
-         int finish=1, int discrete=1 )
+   cmd.read_molstr( string molstr, string name, int state=0,
+      int finish=1, int discrete=1 )
 
-   NOTES
+NOTES
 
-      "state" is a 1-based state index for the object, or 0 to append.
+   "state" is a 1-based state index for the object, or 0 to append.
 
-      "finish" is a flag (0 or 1) which can be set to zero to improve
-      performance when loading large numbers of objects, but you must
-      call "finish_object" when you are done.
+   "finish" is a flag (0 or 1) which can be set to zero to improve
+   performance when loading large numbers of objects, but you must
+   call "finish_object" when you are done.
 
-      "discrete" is a flag (0 or 1) which tells PyMOL that there will be
-      no overlapping atoms in the file being loaded.  "discrete"
-      objects save memory but can not be edited.
+   "discrete" is a flag (0 or 1) which tells PyMOL that there will be
+   no overlapping atoms in the file being loaded.  "discrete"
+   objects save memory but can not be edited.
       '''
       r = 1
       try:
@@ -462,10 +462,10 @@ if __name__=='pymol.importing':
 
    def read_mmodstr(*arg):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "read_mmodstr" reads a macromodel format structure from a Python
-      string.
+   "read_mmodstr" reads a macromodel format structure from a Python
+   string.
 
    '''
       r = 1
@@ -486,28 +486,28 @@ if __name__=='pymol.importing':
 
    def read_pdbstr(pdb,name,state=0,finish=1,discrete=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "read_pdbstr" in an API-only function which reads a pdb file from a
-      Python string.  This feature can be used to load or update
-      structures into PyMOL without involving any temporary files.
+   "read_pdbstr" in an API-only function which reads a pdb file from a
+   Python string.  This feature can be used to load or update
+   structures into PyMOL without involving any temporary files.
 
-   PYMOL API ONLY
+PYMOL API ONLY
 
-      cmd.read_pdbstr( string pdb-content, string object name 
-         [ ,int state [ ,int finish [ ,int discrete ] ] ] )
+   cmd.read_pdbstr( string pdb-content, string object name 
+      [ ,int state [ ,int finish [ ,int discrete ] ] ] )
 
-   NOTES
+NOTES
 
-      "state" is a 1-based state index for the object.
+   "state" is a 1-based state index for the object.
 
-      "finish" is a flag (0 or 1) which can be set to zero to improve
-      performance when loading large numbers of objects, but you must
-      call "finish_object" when you are done.
+   "finish" is a flag (0 or 1) which can be set to zero to improve
+   performance when loading large numbers of objects, but you must
+   call "finish_object" when you are done.
 
-      "discrete" is a flag (0 or 1) which tells PyMOL that there will be
-      no overlapping atoms in the PDB files being loaded.  "discrete"
-      objects save memory but can not be edited.
+   "discrete" is a flag (0 or 1) which tells PyMOL that there will be
+   no overlapping atoms in the PDB files being loaded.  "discrete"
+   objects save memory but can not be edited.
    '''
       r = 1
       try:
@@ -522,18 +522,18 @@ if __name__=='pymol.importing':
 
    def finish_object(name):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "finish_object" is used in cases where many individual states are
-      being loaded and it is advantageos to avoid processing them until
-      all states have been loaded into RAM.  This function should always
-      be called after loading an object with the finish flag set to zero.
+   "finish_object" is used in cases where many individual states are
+   being loaded and it is advantageos to avoid processing them until
+   all states have been loaded into RAM.  This function should always
+   be called after loading an object with the finish flag set to zero.
 
-   PYMOL API
+PYMOL API
 
-      cmd.finish(string name)
+   cmd.finish(string name)
 
-      "name" should be the name of the object
+   "name" should be the name of the object
       '''
       r = 1
       try:
@@ -542,3 +542,6 @@ if __name__=='pymol.importing':
       finally:
          unlock()
       return r
+
+
+

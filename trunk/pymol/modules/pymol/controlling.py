@@ -220,39 +220,39 @@ if __name__=='pymol.controlling':
 
    def set_key(key,fn,arg=(),kw={}):  
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "set_key" binds a specific python function to a key press.
+   "set_key" binds a specific python function to a key press.
 
-   PYMOL API (ONLY)
+PYMOL API (ONLY)
 
-      cmd.set_key( string key, function fn, tuple arg=(), dict kw={})
+   cmd.set_key( string key, function fn, tuple arg=(), dict kw={})
 
-   PYTHON EXAMPLE
+PYTHON EXAMPLE
 
-      from pymol import cmd
+   from pymol import cmd
 
-      def color_blue(object): cmd.color("blue",object)
+   def color_blue(object): cmd.color("blue",object)
 
-      cmd.set_key( 'F1' , make_it_blue, ( "object1" ) )
-      // would turn object1 blue when the F1 key is pressed and
+   cmd.set_key( 'F1' , make_it_blue, ( "object1" ) )
+   // would turn object1 blue when the F1 key is pressed and
 
-      cmd.set_key( 'F2' , make_it_blue, ( "object2" ) )
-      // would turn object2 blue when the F2 key is pressed.
+   cmd.set_key( 'F2' , make_it_blue, ( "object2" ) )
+   // would turn object2 blue when the F2 key is pressed.
 
-      cmd.set_key( 'CTRL-C' , cmd.zoom )   
-      cmd.set_key( 'ALT-A' , cmd.turn, ('x',90) )
+   cmd.set_key( 'CTRL-C' , cmd.zoom )   
+   cmd.set_key( 'ALT-A' , cmd.turn, ('x',90) )
 
-   KEYS WHICH CAN BE REDEFINED
+KEYS WHICH CAN BE REDEFINED
 
-      F1 to F12
-      left, right, pgup, pgdn, home, insert
-      CTRL-A to CTRL-Z 
-      ALT-0 to ALT-9, ALT-A to ALT-Z
+   F1 to F12
+   left, right, pgup, pgdn, home, insert
+   CTRL-A to CTRL-Z 
+   ALT-0 to ALT-9, ALT-A to ALT-Z
 
-   SEE ALSO
+SEE ALSO
 
-      button
+   button
       '''
       r = 0
       if key[0:5]=='CTRL-': 
@@ -290,25 +290,25 @@ if __name__=='pymol.controlling':
 
    def button(button,modifier,action):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "button" can be used to redefine what the mouse buttons do.
+   "button" can be used to redefine what the mouse buttons do.
 
-   USAGE
+USAGE
 
-      button <button>,<modifier>,<action>
+   button <button>,<modifier>,<action>
 
-   PYMOL API
+PYMOL API
 
-      cmd.button( string button, string modifier, string action )
+   cmd.button( string button, string modifier, string action )
 
-   NOTES
+NOTES
 
-      button:      L, M, R
-      modifers:    None, Shft, Ctrl, CtSh
-      actions:     Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
-                   lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
-                   PkAt, PkBd, RotF, TorF, MovF, Orig
+   button:      L, M, R
+   modifers:    None, Shft, Ctrl, CtSh
+   actions:     Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
+                lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
+                PkAt, PkBd, RotF, TorF, MovF, Orig
 
    '''
       r=1
@@ -330,24 +330,24 @@ if __name__=='pymol.controlling':
 
    def mask(selection="(all)"):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mask" makes it impossible to select the indicated atoms using the
-      mouse.  This is useful when you are working with one molecule in
-      front of another and wish to avoid accidentally selecting atoms in
-      the background.
+   "mask" makes it impossible to select the indicated atoms using the
+   mouse.  This is useful when you are working with one molecule in
+   front of another and wish to avoid accidentally selecting atoms in
+   the background.
 
-   USAGE
+USAGE
 
-      mask (selection)
+   mask (selection)
 
-   PYMOL API
+PYMOL API
 
-      cmd.mask( string selection="(all)" )
+   cmd.mask( string selection="(all)" )
 
-   SEE ALSO
+SEE ALSO
 
-      unmask, protect, deprotect, mouse
+   unmask, protect, deprotect, mouse
    '''
       # preprocess selection
       selection = selector.process(selection)
@@ -361,21 +361,21 @@ if __name__=='pymol.controlling':
 
    def unmask(selection="(all)"):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "unmask" reverses the effect of "mask" on the indicated atoms.
+   "unmask" reverses the effect of "mask" on the indicated atoms.
 
-   PYMOL API
+PYMOL API
 
-      cmd.unmask( string selection="(all)" )
+   cmd.unmask( string selection="(all)" )
 
-   USAGE
+USAGE
 
-      unmask (selection)
+   unmask (selection)
 
-   SEE ALSO
+SEE ALSO
 
-      mask, protect, deprotect, mouse
+   mask, protect, deprotect, mouse
    '''
       # preprocess selection
       selection = selector.process(selection)

@@ -59,6 +59,7 @@ PyMOL>show lines
 PyMOL>mmatrix store
 PyMOL>turn x,45
 PyMOL>mmatrix recall
+ Scene: view updated.
 PyMOL>disable
 PyMOL>enable
 PyMOL>mmatrix clear
@@ -228,7 +229,7 @@ object:molecule
 PyMOL>print cmd.identify("(i;7)")
 [52, 53, 54, 55]
 PyMOL>print "%8.4f %8.4f %8.4f %8.4f %8.4f %8.4f"%(ext[0][0],ext[0][1],ext[0][2],ext[1][0],ext[1][1],ext[1][2])
- -5.4709 -21.4214  13.1570   9.9190   0.8630  27.9339
+ -4.1880 -20.3310  13.1570   9.9190   0.8630  27.0580
 PyMOL>sort
 PyMOL>sort pept
 PyMOL>spheroid

@@ -82,7 +82,7 @@ PyMOL>load dat/3al1.pdb
  Crystal:   20.54400   -9.81199   -3.18885
  Crystal:    0.00000   18.40714   -7.41448
  Crystal:    0.00000    0.00000   24.77337
- Crystal: Unit Cell Volume 9368.203
+ Crystal: Unit Cell Volume 9368.204
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -110,8 +110,8 @@ PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
  cmd.get_dihedral: -8.586 degrees.
- -6.471 -21.421  13.157   8.919   0.863  27.934
- -5.165 -18.221  16.620   7.053  -2.295  25.698
+ -5.188 -20.331  13.157   8.919   0.863  27.058
+ -5.063 -17.973  17.858   7.053  -2.295  25.698
 PyMOL>print len(cmd.get_model().atom)
 107
 PyMOL>print len(cmd.get_model("resi 1").bond)

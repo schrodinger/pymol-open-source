@@ -23,23 +23,23 @@ if __name__=='pymol.wizarding':
 
    def wizard(name):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "wizard" launches on of the built-in wizards.  There are special
-      Python scripts which work with PyMOL in order to obtain direct user
-      interaction and easily peform complicated tasks.
+   "wizard" launches on of the built-in wizards.  There are special
+   Python scripts which work with PyMOL in order to obtain direct user
+   interaction and easily peform complicated tasks.
 
-   USAGE
+USAGE
 
-      wizard name
+   wizard name
 
-   PYMOL API
+PYMOL API
 
-      cmd.wizard(string name)
+   cmd.wizard(string name)
 
-   EXAMPLE
+EXAMPLE
 
-      wizard distance  # launches the distance measurement wizard
+   wizard distance  # launches the distance measurement wizard
    '''
       import wizard
       try:

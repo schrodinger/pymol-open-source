@@ -24,36 +24,36 @@ if __name__=='pymol.fitting':
    def align(source,target,cutoff=2.0,cycles=2,gap=-10.0,extend=-0.5,
              skip=0,object=None,matrix="BLOSUM62",quiet=1): 
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "align" performs a sequence alignment followed by a structural
-      alignment, and then carrys out zero or more cycles of refinement
-      in order to reject structural outliers found during the fit.
+   "align" performs a sequence alignment followed by a structural
+   alignment, and then carrys out zero or more cycles of refinement
+   in order to reject structural outliers found during the fit.
 
-   USAGE 
+USAGE 
 
-      align (source), (target) [,cutoff [,cycles [,gap [,extend \\
-            [,skip [,object [,matrix [, quiet ]]]]]]]]
+   align (source), (target) [,cutoff [,cycles [,gap [,extend \\
+         [,skip [,object [,matrix [, quiet ]]]]]]]]
 
-   PYMOL API
+PYMOL API
 
-      cmd.align( string source, string target, float cutoff=2.0,
-                 int cycles=2, float gap=-10.0, float extend=-0.5,
-                 float extend=-0.5,int skip=0, string object=None,
-                 string matrix="BLOSUM62",int quiet=1 )
+   cmd.align( string source, string target, float cutoff=2.0,
+              int cycles=2, float gap=-10.0, float extend=-0.5,
+              float extend=-0.5,int skip=0, string object=None,
+              string matrix="BLOSUM62",int quiet=1 )
 
-   NOTE
+NOTE
 
-      If object is not None, then align will create an object which
-      indicates which atoms were paired between the two structures
+   If object is not None, then align will create an object which
+   indicates which atoms were paired between the two structures
 
-   EXAMPLES
+EXAMPLES
 
-      align  prot1////CA, prot2, object=alignment
+   align  prot1////CA, prot2, object=alignment
 
-   SEE ALSO
+SEE ALSO
 
-      fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
+   fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
       '''
       r = None
       source = selector.process(source)
@@ -71,32 +71,32 @@ if __name__=='pymol.fitting':
 
    def intra_fit(selection,state=1,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "intra_fit" fits all states of an object to an atom selection
-      in the specified state.  It returns the rms values to python
-      as an array.
+   "intra_fit" fits all states of an object to an atom selection
+   in the specified state.  It returns the rms values to python
+   as an array.
 
-   USAGE 
+USAGE 
 
-      intra_fit (selection),state
+   intra_fit (selection),state
 
-   PYMOL API
+PYMOL API
 
-      cmd.intra_fit( string selection, int state )
+   cmd.intra_fit( string selection, int state )
 
-   EXAMPLES
+EXAMPLES
 
-      intra_fit ( name ca )
+   intra_fit ( name ca )
 
-   PYTHON EXAMPLE
+PYTHON EXAMPLE
 
-      from pymol import cmd
-      rms = cmd.intra_fit("(name ca)",1)
+   from pymol import cmd
+   rms = cmd.intra_fit("(name ca)",1)
 
-   SEE ALSO
+SEE ALSO
 
-      fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
+   fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -120,25 +120,25 @@ if __name__=='pymol.fitting':
 
    def intra_rms(selection,state=0,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "intra_rms" calculates rms fit values for all states of an object
-      over an atom selection relative to the indicated state.  
-      Coordinates are left unchanged.  The rms values are returned
-      as a python array.
+   "intra_rms" calculates rms fit values for all states of an object
+   over an atom selection relative to the indicated state.  
+   Coordinates are left unchanged.  The rms values are returned
+   as a python array.
 
-   PYMOL API
+PYMOL API
 
-      cmd.intra_rms( string selection, int state)
+   cmd.intra_rms( string selection, int state)
 
-   PYTHON EXAMPLE
+PYTHON EXAMPLE
 
-      from pymol import cmd
-      rms = cmd.intra_rms("(name ca)",1)
+   from pymol import cmd
+   rms = cmd.intra_rms("(name ca)",1)
 
-   SEE ALSO
+SEE ALSO
 
-      fit, rms, rms_cur, intra_fit, intra_rms_cur, pair_fit
+   fit, rms, rms_cur, intra_fit, intra_rms_cur, pair_fit
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -162,25 +162,25 @@ if __name__=='pymol.fitting':
 
    def intra_rms_cur(selection,state=0,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "intra_rms_cur" calculates rms values for all states of an object
-      over an atom selection relative to the indicated state without
-      performing any fitting.  The rms values are returned
-      as a python array.
+   "intra_rms_cur" calculates rms values for all states of an object
+   over an atom selection relative to the indicated state without
+   performing any fitting.  The rms values are returned
+   as a python array.
 
-   PYMOL API
+PYMOL API
 
-      cmd.intra_rms_cur( string selection, int state)
+   cmd.intra_rms_cur( string selection, int state)
 
-   PYTHON EXAMPLE
+PYTHON EXAMPLE
 
-      from pymol import cmd
-      rms = cmd.intra_rms_cur("(name ca)",1)
+   from pymol import cmd
+   rms = cmd.intra_rms_cur("(name ca)",1)
 
-   SEE ALSO
+SEE ALSO
 
-      fit, rms, rms_cur, intra_fit, intra_rms, pair_fit
+   fit, rms, rms_cur, intra_fit, intra_rms, pair_fit
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -204,23 +204,23 @@ if __name__=='pymol.fitting':
 
    def fit(selection,target,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "fit" superimposes the model in the first selection on to the model
-      in the second selection.  Only matching atoms in both selections
-      will be used for the fit.
+   "fit" superimposes the model in the first selection on to the model
+   in the second selection.  Only matching atoms in both selections
+   will be used for the fit.
 
-   USAGE
+USAGE
 
-      fit (selection), (target-selection)
+   fit (selection), (target-selection)
 
-   EXAMPLES
+EXAMPLES
 
-      fit ( mutant and name ca ), ( wildtype and name ca )
+   fit ( mutant and name ca ), ( wildtype and name ca )
 
-   SEE ALSO
+SEE ALSO
 
-      rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
+   rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
       '''
       a=str(selection)
       b=str(target)
@@ -238,22 +238,22 @@ if __name__=='pymol.fitting':
 
    def rms(selection,target,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "rms" computes a RMS fit between two atom selections, but does not
-      tranform the models after performing the fit.
+   "rms" computes a RMS fit between two atom selections, but does not
+   tranform the models after performing the fit.
 
-   USAGE
+USAGE
 
-      rms (selection), (target-selection)
+   rms (selection), (target-selection)
 
-   EXAMPLES
+EXAMPLES
 
-      fit ( mutant and name ca ), ( wildtype and name ca )
+   fit ( mutant and name ca ), ( wildtype and name ca )
 
-   SEE ALSO
+SEE ALSO
 
-      fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit   
+   fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit   
       '''
       a=str(selection)
       b=str(target)
@@ -271,18 +271,18 @@ if __name__=='pymol.fitting':
 
    def rms_cur(selection,target,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "rms_cur" computes the RMS difference between two atom
-      selections without performing any fitting.
+   "rms_cur" computes the RMS difference between two atom
+   selections without performing any fitting.
 
-   USAGE
+USAGE
 
-      rms_cur (selection), (selection)
+   rms_cur (selection), (selection)
 
-   SEE ALSO
+SEE ALSO
 
-      fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit   
+   fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit   
       '''
       a=str(selection)
       b=str(target)
@@ -300,20 +300,20 @@ if __name__=='pymol.fitting':
 
    def pair_fit(*arg):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "pair_fit" fits a set of atom pairs between two models.  Each atom
-      in each pair must be specified individually, which can be tedious
-      to enter manually.  Script files are recommended when using this
-      command.
+   "pair_fit" fits a set of atom pairs between two models.  Each atom
+   in each pair must be specified individually, which can be tedious
+   to enter manually.  Script files are recommended when using this
+   command.
 
-   USAGE
+USAGE
 
-      pair_fit (selection), (selection), [ (selection), (selection) [ ...] ]
+   pair_fit (selection), (selection), [ (selection), (selection) [ ...] ]
 
-   SEE ALSO
+SEE ALSO
 
-      fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
+   fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
       '''
       new_arg = []
       for a in arg:
@@ -324,6 +324,8 @@ if __name__=='pymol.fitting':
       finally:
          unlock()
       return r
+
+
 
 
 

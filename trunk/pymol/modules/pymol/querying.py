@@ -22,18 +22,18 @@ if __name__=='pymol.querying':
 
    def get_title(object,state,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_title" retrieves a text string to the state of a particular
-      object which will be displayed when the state is active.
+   "get_title" retrieves a text string to the state of a particular
+   object which will be displayed when the state is active.
 
-   USAGE
+USAGE
 
-      set_title object,state
+   set_title object,state
 
-   PYMOL API
+PYMOL API
 
-      cmd.set_title(string object,int state,string text)
+   cmd.set_title(string object,int state,string text)
 
    '''
       r = None
@@ -69,37 +69,37 @@ if __name__=='pymol.querying':
    def distance(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,
                 mode=None,zoom=0,width=None,length=None,gap=None):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "distance" creates a new distance object between two
-      selections.  It will display all distances within the cutoff.
+   "distance" creates a new distance object between two
+   selections.  It will display all distances within the cutoff.
 
-   USAGE
+USAGE
 
-      distance 
-      distance (selection1), (selection2)
-      distance name = (selection1), (selection1) [,cutoff [,mode] ]
+   distance 
+   distance (selection1), (selection2)
+   distance name = (selection1), (selection1) [,cutoff [,mode] ]
 
-      name = name of distance object 
-      selection1,selection2 = atom selections
-      cutoff = maximum distance to display
-      mode = 0 (default)
+   name = name of distance object 
+   selection1,selection2 = atom selections
+   cutoff = maximum distance to display
+   mode = 0 (default)
 
-   PYMOL API
+PYMOL API
 
-      cmd.distance( string name, string selection1, string selection2,
-             string cutoff, string mode )
-      returns the average distance between all atoms/frames
+   cmd.distance( string name, string selection1, string selection2,
+          string cutoff, string mode )
+   returns the average distance between all atoms/frames
 
-   NOTES
+NOTES
 
-      The distance wizard makes measuring distances easier than using
-      the "dist" command for real-time operations.
+   The distance wizard makes measuring distances easier than using
+   the "dist" command for real-time operations.
 
-      "dist" alone will show distances between selections (lb) and (rb)
-      created by left and right button atom picks.  CTRL-SHIFT/left-click
-      on the first atom,  CTRL-SHIFT/right-click on the second, then run
-      "dist".
+   "dist" alone will show distances between selections (lb) and (rb)
+   created by left and right button atom picks.  CTRL-SHIFT/left-click
+   on the first atom,  CTRL-SHIFT/right-click on the second, then run
+   "dist".
 
    '''
       # handle unnamed distance 
@@ -175,14 +175,14 @@ if __name__=='pymol.querying':
 
    def get_povray():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_povray" returns a tuple corresponding to strings for a PovRay
-      input file.
+   "get_povray" returns a tuple corresponding to strings for a PovRay
+   input file.
 
-   PYMOL API
+PYMOL API
 
-      cmd.get_povray()
+   cmd.get_povray()
 
       '''
       r=None
@@ -197,18 +197,18 @@ if __name__=='pymol.querying':
 
    def count_states(selection="(all)",quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "count_states" is an API-only function which returns the number of
-      states in the selection.
+   "count_states" is an API-only function which returns the number of
+   states in the selection.
 
-   PYMOL API
+PYMOL API
 
-      cmd.count_states(string selection="(all)")
+   cmd.count_states(string selection="(all)")
 
-   SEE ALSO
+SEE ALSO
 
-      frame
+   frame
    '''
       # preprocess selection
       selection = selector.process(selection)
@@ -226,18 +226,18 @@ if __name__=='pymol.querying':
 
    def count_frames(quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "count_frames" is an API-only function which returns the number of
-      frames defined for the PyMOL movie.
+   "count_frames" is an API-only function which returns the number of
+   frames defined for the PyMOL movie.
 
-   PYMOL API
+PYMOL API
 
-      cmd.count_frames()
+   cmd.count_frames()
 
-   SEE ALSO
+SEE ALSO
 
-      frame, count_states
+   frame, count_states
    '''
       r = -1
       try:
@@ -341,27 +341,27 @@ if __name__=='pymol.querying':
 
    def get_dihedral(atom1,atom2,atom3,atom4,state=0,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_dihedral" returns the dihedral angle between four atoms.  By
-      default, the coordinates used are from the current state, however
-      an alternate state identifier can be provided.
+   "get_dihedral" returns the dihedral angle between four atoms.  By
+   default, the coordinates used are from the current state, however
+   an alternate state identifier can be provided.
 
-      By convention, positive dihedral angles are right-handed
-      (looking down the atom2-atom3 axis).
+   By convention, positive dihedral angles are right-handed
+   (looking down the atom2-atom3 axis).
 
-   USAGE
+USAGE
 
-      get_dihedral atom1, atom2, atom3, atom4 [,state ]
+   get_dihedral atom1, atom2, atom3, atom4 [,state ]
 
-   EXAMPLES
+EXAMPLES
 
-      get_dihedral 4/n,4/c,4/ca,4/cb
-      get_dihedral 4/n,4/c,4/ca,4/cb,state=4
+   get_dihedral 4/n,4/c,4/ca,4/cb
+   get_dihedral 4/n,4/c,4/ca,4/cb,state=4
 
-   PYMOL API
+PYMOL API
 
-      cmd.get_dihedral(atom1,atom2,atom3,atom4,state=0)
+   cmd.get_dihedral(atom1,atom2,atom3,atom4,state=0)
 
       '''
       # preprocess selections
@@ -384,13 +384,13 @@ if __name__=='pymol.querying':
 
    def get_model(selection="(all)",state=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_model" returns a ChemPy "Indexed" format model from a selection.
+   "get_model" returns a ChemPy "Indexed" format model from a selection.
 
-   PYMOL API
+PYMOL API
 
-      cmd.get_model(string selection [,int state] )
+   cmd.get_model(string selection [,int state] )
 
       '''
       # preprocess selection
@@ -426,21 +426,21 @@ if __name__=='pymol.querying':
 
    def get_names(type='objects'):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_names" returns a list of object and/or selection names.
+   "get_names" returns a list of object and/or selection names.
 
-   PYMOL API
+PYMOL API
 
-      cmd.get_names( [string: "objects"|"selections"|"all"] )
+   cmd.get_names( [string: "objects"|"selections"|"all"] )
 
-   NOTES
+NOTES
 
-      The default behavior is to return only object names.
+   The default behavior is to return only object names.
 
-   SEE ALSO
+SEE ALSO
 
-      get_type, count_atoms, count_states
+   get_type, count_atoms, count_states
       '''
       mode = 1
       if type=='objects':
@@ -460,28 +460,28 @@ if __name__=='pymol.querying':
 
    def get_type(name,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_type" returns a string describing the named object or
-       selection or the string "nonexistent" if the name in unknown.
+   "get_type" returns a string describing the named object or
+    selection or the string "nonexistent" if the name in unknown.
 
-   PYMOL API
+PYMOL API
 
-      cmd.get_type(string object-name)
+   cmd.get_type(string object-name)
 
-   NOTES
+NOTES
 
-      Possible return values are
+   Possible return values are
 
-      "object:molecule"
-      "object:map"
-      "object:mesh"
-      "object:distance"
-      "selection"
+   "object:molecule"
+   "object:map"
+   "object:mesh"
+   "object:distance"
+   "selection"
 
-   SEE ALSO
+SEE ALSO
 
-      get_names
+   get_names
       '''
       r = None
       try:
@@ -499,15 +499,15 @@ if __name__=='pymol.querying':
 
    def id_atom(selection,mode=0,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "id_atom" returns the original source id of a single atom, or
-      raises and exception if the atom does not exist or if the selection
-      corresponds to multiple atoms.
+   "id_atom" returns the original source id of a single atom, or
+   raises and exception if the atom does not exist or if the selection
+   corresponds to multiple atoms.
 
-   PYMOL API
+PYMOL API
 
-      list = cmd.id_atom(string selection)
+   list = cmd.id_atom(string selection)
       '''
       r = -1
       selection = str(selection)
@@ -532,19 +532,19 @@ if __name__=='pymol.querying':
 
    def identify(selection="(all)",mode=0,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "identify" returns a list of atom IDs corresponding to the ID code
-      of atoms in the selection.
+   "identify" returns a list of atom IDs corresponding to the ID code
+   of atoms in the selection.
 
-   PYMOL API
+PYMOL API
 
-      list = cmd.identify(string selection="(all)",int mode=0)
+   list = cmd.identify(string selection="(all)",int mode=0)
 
-   NOTES
+NOTES
 
-      mode 0: only return a list of identifiers (default)
-      mode 1: return a list of tuples of the object name and the identifier
+   mode 0: only return a list of identifiers (default)
+   mode 1: return a list of tuples of the object name and the identifier
 
       '''
       # preprocess selection
@@ -568,20 +568,20 @@ if __name__=='pymol.querying':
 
    def index(selection="(all)",quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "index" returns a list of tuples corresponding to the
-      object name and index of the atoms in the selection.
+   "index" returns a list of tuples corresponding to the
+   object name and index of the atoms in the selection.
 
-   PYMOL API
+PYMOL API
 
-      list = cmd.index(string selection="(all)")
+   list = cmd.index(string selection="(all)")
 
-   NOTE
+NOTE
 
-     Atom indices are fragile and will change as atoms are added
-     or deleted.  Whenever possible, use integral atom identifiers
-     instead of indices.
+  Atom indices are fragile and will change as atoms are added
+  or deleted.  Whenever possible, use integral atom identifiers
+  instead of indices.
 
       '''
       # preprocess selection
@@ -601,9 +601,9 @@ if __name__=='pymol.querying':
 
    def find_pairs(selection1,selection2,state1=1,state2=1,cutoff=3.5,mode=0,angle=45):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "find_pairs" is currently undocumented.
+   "find_pairs" is currently undocumented.
 
       '''
       # preprocess selection
@@ -624,15 +624,15 @@ if __name__=='pymol.querying':
 
    def get_extent(selection="(all)",state=0,quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_extent" returns the minimum and maximum XYZ coordinates of a
-      selection as an array:
-       [ [ min-X , min-Y , min-Z ],[ max-X, max-Y , max-Z ]]
+   "get_extent" returns the minimum and maximum XYZ coordinates of a
+   selection as an array:
+    [ [ min-X , min-Y , min-Z ],[ max-X, max-Y , max-Z ]]
 
-   PYMOL API
+PYMOL API
 
-      cmd.get_extent(string selection="(all)", state=0 )
+   cmd.get_extent(string selection="(all)", state=0 )
 
       '''
       # preprocess selection
@@ -668,17 +668,17 @@ if __name__=='pymol.querying':
 
    def count_atoms(selection="(all)",quiet=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "count_atoms" returns a count of atoms in a selection.
+   "count_atoms" returns a count of atoms in a selection.
 
-   USAGE
+USAGE
 
-      count_atoms (selection)
+   count_atoms (selection)
 
-   PYMOL API
+PYMOL API
 
-      cmd.count(string selection)
+   cmd.count(string selection)
 
       '''
       # preprocess selection
@@ -702,4 +702,8 @@ if __name__=='pymol.querying':
          if a[1]==type:
             lst.append(a[0])
       return lst
+
+
+
+
 

@@ -282,33 +282,33 @@ if __name__=='pymol.setting':
 
    def set(name,value,selection='',state=0,quiet=1,updates=1,log=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "set" changes one of the PyMOL state variables,
+   "set" changes one of the PyMOL state variables,
 
-   USAGE
+USAGE
 
-      set name, value [,object-or-selection [,state ]]
+   set name, value [,object-or-selection [,state ]]
 
-      set name = value      # (DEPRECATED)
+   set name = value      # (DEPRECATED)
 
-   PYMOL API
+PYMOL API
 
-      cmd.set ( string name, string value,
-                string selection='', int state=0,
-                int quiet=0, int updates=1 )
+   cmd.set ( string name, string value,
+             string selection='', int state=0,
+             int quiet=0, int updates=1 )
 
-   NOTES
+NOTES
 
-      The default behavior (with a blank selection) changes the global
-      settings database.  If the selection is 'all', then the settings
-      database in all individual objects will be changed.  Likewise, for
-      a given object, if state is zero, then the object database will be
-      modified.  Otherwise, the settings database for the indicated state
-      within the object will be modified.
+   The default behavior (with a blank selection) changes the global
+   settings database.  If the selection is 'all', then the settings
+   database in all individual objects will be changed.  Likewise, for
+   a given object, if state is zero, then the object database will be
+   modified.  Otherwise, the settings database for the indicated state
+   within the object will be modified.
 
-      If a selection is provided, then all objects in the selection will
-      be affected. 
+   If a selection is provided, then all objects in the selection will
+   be affected. 
 
       '''
       r = None
@@ -373,19 +373,19 @@ if __name__=='pymol.setting':
 
    def unset(name,selection='all',state=0,quiet=1,updates=1,log=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "unset" undefines an object-specific or state-specific setting so
-      that the global setting will be in effect.
+   "unset" undefines an object-specific or state-specific setting so
+   that the global setting will be in effect.
 
-   USAGE
+USAGE
 
-      unset name [,selection [,state ]]
+   unset name [,selection [,state ]]
 
-   PYMOL API
+PYMOL API
 
-      cmd.unset ( string name, string selection='all',
-               int state=0, int quiet=0, int updates=1 )
+   cmd.unset ( string name, string selection='all',
+            int state=0, int quiet=0, int updates=1 )
 
       '''
       r = None

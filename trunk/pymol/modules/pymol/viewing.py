@@ -36,48 +36,48 @@ if __name__=='pymol.viewing':
 
    def zoom(selection="all",buffer=0.0,state=0,complete=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "zoom" scales and translates the window and the origin to cover the
-      atom selection.
+   "zoom" scales and translates the window and the origin to cover the
+   atom selection.
 
 
-   USAGE
+USAGE
 
-      zoom [ selection [,buffer [, state [, complete ]]]]
+   zoom [ selection [,buffer [, state [, complete ]]]]
 
-   EXAMPLES
+EXAMPLES
 
-      zoom
-      zoom complete=1
-      zoom (chain A)
-      zoom 142/
+   zoom
+   zoom complete=1
+   zoom (chain A)
+   zoom 142/
 
-   PYMOL API
+PYMOL API
 
-      cmd.zoom( string selection, float buffer=0.0,
-                int state=0, int complete=0 )
+   cmd.zoom( string selection, float buffer=0.0,
+             int state=0, int complete=0 )
 
-   NOTES
+NOTES
 
-      state = 0 (default) use all coordinate states
-      state = -1 use only coordinates for the current state
-      state > 0  use coordinates for a specific state
+   state = 0 (default) use all coordinate states
+   state = -1 use only coordinates for the current state
+   state > 0  use coordinates for a specific state
 
-      complete = 0 or 1:
-         Normally the zoom command tries to guess an optimal zoom level
-      for visualization, balancing closeness against occasional clipping
-      of atoms out of the field of view.  You can change this behavior by
-      setting the complete option to 1, which will guarantee that the
-      atom positions for the entire selection will fit in the field of an
-      orthoscopic view.  To absolutely prevent clipping, you may also
-      need to add a buffer (typically 2 A) to account for the perpective
-      transformation and for graphical representations which extend
-      beyond the atom coordinates.
+   complete = 0 or 1:
+      Normally the zoom command tries to guess an optimal zoom level
+   for visualization, balancing closeness against occasional clipping
+   of atoms out of the field of view.  You can change this behavior by
+   setting the complete option to 1, which will guarantee that the
+   atom positions for the entire selection will fit in the field of an
+   orthoscopic view.  To absolutely prevent clipping, you may also
+   need to add a buffer (typically 2 A) to account for the perpective
+   transformation and for graphical representations which extend
+   beyond the atom coordinates.
 
-   SEE ALSO
+SEE ALSO
 
-      origin, orient, center
+   origin, orient, center
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -91,35 +91,35 @@ if __name__=='pymol.viewing':
 
    def center(selection="all",state=0,origin=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "center" translates the window, the clipping slab, and the
-      origin to point centered within the atom selection.
+   "center" translates the window, the clipping slab, and the
+   origin to point centered within the atom selection.
 
-   USAGE
+USAGE
 
-      center [ selection [,state [, origin]]]
+   center [ selection [,state [, origin]]]
 
-   EXAMPLES
+EXAMPLES
 
-      center 145/
+   center 145/
 
-   PYMOL API
+PYMOL API
 
-      cmd.center( string selection, int state = 0, int origin = 1 )
+   cmd.center( string selection, int state = 0, int origin = 1 )
 
-   NOTES
+NOTES
 
-      state = 0 (default) use all coordinate states
-      state = -1 use only coordinates for the current state
-      state > 0  use coordinates for a specific state
+   state = 0 (default) use all coordinate states
+   state = -1 use only coordinates for the current state
+   state > 0  use coordinates for a specific state
 
-      origin = 1 (default) move the origin
-      origin = 0 leave the origin unchanged
+   origin = 1 (default) move the origin
+   origin = 0 leave the origin unchanged
 
-   SEE ALSO
+SEE ALSO
 
-      origin, orient, zoom
+   origin, orient, zoom
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -135,32 +135,32 @@ if __name__=='pymol.viewing':
 
    def clip(mode,offset,selection=None,state=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "clip" alters the near and far clipping planes
+   "clip" alters the near and far clipping planes
 
-   USAGE
+USAGE
 
-      clip {near|far|move|slab|atoms}, distance [,selection [,state ]]
+   clip {near|far|move|slab|atoms}, distance [,selection [,state ]]
 
-   EXAMPLES
+EXAMPLES
 
-      clip near, -5           # moves near plane away from you by 5 A
-      clip far, 10            # moves far plane towards you by 10 A
-      clip move, -5           # moves the slab away from you by 5 A
-      clip slab, 20           # sets slab thickness to 20 A
-      clip slab, 10, resi 11  # clip 10 A slab about residue 11
+   clip near, -5           # moves near plane away from you by 5 A
+   clip far, 10            # moves far plane towards you by 10 A
+   clip move, -5           # moves the slab away from you by 5 A
+   clip slab, 20           # sets slab thickness to 20 A
+   clip slab, 10, resi 11  # clip 10 A slab about residue 11
 
-      clip atoms, 5, pept     # clip atoms in "pept" with a 5 A buffer
-                              # about their current camera positions
+   clip atoms, 5, pept     # clip atoms in "pept" with a 5 A buffer
+                           # about their current camera positions
 
-   PYMOL API
+PYMOL API
 
-      cmd.clip( string mode, float distance, string selection = None)
+   cmd.clip( string mode, float distance, string selection = None)
 
-   SEE ALSO
+SEE ALSO
 
-      zoom, reset
+   zoom, reset
       '''
       mode = clip_action_sc.auto_err(str(mode),'mode')
       if selection!=None:
@@ -176,31 +176,31 @@ if __name__=='pymol.viewing':
 
    def origin(selection="(all)",object=None,position=None,state=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "origin" sets the center of rotation about a selection.
-      If an object name is specified, it can be used to set
-      the center of rotation for the object's TTT matrix.
+   "origin" sets the center of rotation about a selection.
+   If an object name is specified, it can be used to set
+   the center of rotation for the object's TTT matrix.
 
-   USAGE
+USAGE
 
-      origin selection [, object [,position, [, state]]]
-      origin (selection)
-      origin position=[1.0,2.0,3.0]
+   origin selection [, object [,position, [, state]]]
+   origin (selection)
+   origin position=[1.0,2.0,3.0]
 
-   PYMOL API
+PYMOL API
 
-      cmd.origin( string object-or-selection )
+   cmd.origin( string object-or-selection )
 
-   NOTES
+NOTES
 
-      state = 0 (default) use all coordinate states
-      state = -1 use only coordinates for the current state
-      state > 0  use coordinates for a specific state
+   state = 0 (default) use all coordinate states
+   state = -1 use only coordinates for the current state
+   state > 0  use coordinates for a specific state
 
-   SEE ALSO
+SEE ALSO
 
-      zoom, orient, reset
+   zoom, orient, reset
       '''
       #'
       # preprocess selection
@@ -225,30 +225,30 @@ if __name__=='pymol.viewing':
 
    def orient(selection="(all)",state=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "orient" aligns the principal components of the atoms in the
-      selection with the XYZ axes.  The function is similar to the
-      orient command in X-PLOR.
+   "orient" aligns the principal components of the atoms in the
+   selection with the XYZ axes.  The function is similar to the
+   orient command in X-PLOR.
 
-   USAGE
+USAGE
 
-      orient object-or-selection [, state]
-      orient (selection)
+   orient object-or-selection [, state]
+   orient (selection)
 
-   PYMOL API
+PYMOL API
 
-      cmd.orient( string object-or-selection [, state = 0] )
+   cmd.orient( string object-or-selection [, state = 0] )
 
-   NOTES
+NOTES
 
-      state = 0 (default) use all coordinate states
-      state = -1 use only coordinates for the current state
-      state > 0  use coordinates for a specific state
+   state = 0 (default) use all coordinate states
+   state = -1 use only coordinates for the current state
+   state > 0  use coordinates for a specific state
 
-   SEE ALSO
+SEE ALSO
 
-      zoom, origin, reset
+   zoom, origin, reset
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -263,26 +263,26 @@ if __name__=='pymol.viewing':
 
    def move(axis,distance):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "move" translates the world about one of the three primary axes.
+   "move" translates the world about one of the three primary axes.
 
-   USAGE
+USAGE
 
-      move axis,distance
+   move axis,distance
 
-   EXAMPLES
+EXAMPLES
 
-      move x,3
-      move y,-1
+   move x,3
+   move y,-1
 
-   PYMOL API
+PYMOL API
 
-      cmd.move( string axis, float distance )
+   cmd.move( string axis, float distance )
 
-   SEE ALSO
+SEE ALSO
 
-      turn
+   turn
       '''
       try:
          lock()   
@@ -293,28 +293,28 @@ if __name__=='pymol.viewing':
 
    def enable(name='all'):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "enable" enable display of an object and all currently visible representations.
+   "enable" enable display of an object and all currently visible representations.
 
-   USAGE
+USAGE
 
-      enable name
-      enable all
+   enable name
+   enable all
 
-      name = object or selection name
+   name = object or selection name
 
-   PYMOL API
+PYMOL API
 
-      cmd.enable( string object-name )
+   cmd.enable( string object-name )
 
-   EXAMPLE
+EXAMPLE
 
-      enable my_object
+   enable my_object
 
-   SEE ALSO
+SEE ALSO
 
-      show, hide, disable
+   show, hide, disable
       '''
       try:
          lock()   
@@ -325,29 +325,29 @@ if __name__=='pymol.viewing':
 
    def disable(name='all'):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "disable" disables display of an object and all currently visible
-      representations.
+   "disable" disables display of an object and all currently visible
+   representations.
 
-   USAGE
+USAGE
 
-      disable name
-      disable all 
+   disable name
+   disable all 
 
-      "name" is the name of an object or a named selection
+   "name" is the name of an object or a named selection
 
-   PYMOL API
+PYMOL API
 
-      cmd.disable( string name ) 
+   cmd.disable( string name ) 
 
-   EXAMPLE
+EXAMPLE
 
-      disable my_object
+   disable my_object
 
-   SEE ALSO
+SEE ALSO
 
-      show, hide, enable   
+   show, hide, enable   
       '''
       try:
          lock()   
@@ -359,40 +359,40 @@ if __name__=='pymol.viewing':
 
    def show(representation="",selection=""):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "show" turns on atom and bond representations.
+   "show" turns on atom and bond representations.
 
-      The available representations are:
+   The available representations are:
 
-         lines     spheres   mesh      ribbon     cartoon
-         sticks    dots      surface   labels
-         nonbonded nb_spheres 
+      lines     spheres   mesh      ribbon     cartoon
+      sticks    dots      surface   labels
+      nonbonded nb_spheres 
 
-   USAGE
+USAGE
 
-      show
-      show reprentation [,object]
-      show reprentation [,(selection)]
-      show (selection)
+   show
+   show reprentation [,object]
+   show reprentation [,(selection)]
+   show (selection)
 
-   PYMOL API
+PYMOL API
 
-      cmd.show( string representation="", string selection="" )
+   cmd.show( string representation="", string selection="" )
 
-   EXAMPLES
+EXAMPLES
 
-      show lines,(name ca or name c or name n)
-      show ribbon
+   show lines,(name ca or name c or name n)
+   show ribbon
 
-   NOTES
+NOTES
 
-      "selection" can be an object name
-      "show" alone will turn on lines for all bonds.
+   "selection" can be an object name
+   "show" alone will turn on lines for all bonds.
 
-   SEE ALSO
+SEE ALSO
 
-      hide, enable, disable
+   hide, enable, disable
       '''
       r=1
       try:
@@ -425,34 +425,34 @@ if __name__=='pymol.viewing':
 
    def hide(representation="",selection=""):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "hide" turns of atom and bond representations.
+   "hide" turns of atom and bond representations.
 
-      The available representations are:
+   The available representations are:
 
-         lines     spheres   mesh      ribbon     cartoon
-         sticks    dots      surface   labels
-         nonbonded nb_spheres
+      lines     spheres   mesh      ribbon     cartoon
+      sticks    dots      surface   labels
+      nonbonded nb_spheres
 
-   USAGE
+USAGE
 
-      hide reprentation [,object]
-      hide reprentation [,(selection)]
-      hide (selection)
+   hide reprentation [,object]
+   hide reprentation [,(selection)]
+   hide (selection)
 
-   PYMOL API
+PYMOL API
 
-      cmd.hide( string representation="", string selection="")
+   cmd.hide( string representation="", string selection="")
 
-   EXAMPLES
+EXAMPLES
 
-      hide lines,all
-      hide ribbon
+   hide lines,all
+   hide ribbon
 
-   SEE ALSO
+SEE ALSO
 
-      show, enable, disable
+   show, enable, disable
       '''
       r = 1
       try:
@@ -482,23 +482,23 @@ if __name__=='pymol.viewing':
 
    def get_view(output=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_view" returns and optionally prints out the current view
-      information in a format which can be embedded into a command
-      script and used in subsequent calls to "set_view"
+   "get_view" returns and optionally prints out the current view
+   information in a format which can be embedded into a command
+   script and used in subsequent calls to "set_view"
 
-   USAGE
+USAGE
 
-      get_view
+   get_view
 
-   PYMOL API
+PYMOL API
 
-      cmd.get_view(output=1)  
+   cmd.get_view(output=1)  
 
-   API USAGE
+API USAGE
 
-      cmd.get_view(0) # zero option suppresses output
+   cmd.get_view(0) # zero option suppresses output
    '''
 
       r = None
@@ -535,19 +535,19 @@ if __name__=='pymol.viewing':
 
    def set_view(view):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "set_view" sets viewing information for the current scene,
-      including the rotation matrix, position, origin of rotation,
-      clipping planes, and the orthoscopic flag.
+   "set_view" sets viewing information for the current scene,
+   including the rotation matrix, position, origin of rotation,
+   clipping planes, and the orthoscopic flag.
 
-   USAGE
+USAGE
 
-      set_view (...)  where ... is 18 floating point numbers
+   set_view (...)  where ... is 18 floating point numbers
 
-   PYMOL API
+PYMOL API
 
-      cmd.set_view(string-or-sequence view)  
+   cmd.set_view(string-or-sequence view)  
 
    '''
 
@@ -578,31 +578,31 @@ if __name__=='pymol.viewing':
 
    def view(key,action='recall'):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "view" makes it possible to save and restore viewpoints on a given
-      scene within a single session.
+   "view" makes it possible to save and restore viewpoints on a given
+   scene within a single session.
 
-   USAGE
+USAGE
 
-      view key[,action]
-      view *
+   view key[,action]
+   view *
 
-      key can be any string
-      action should be 'store' or 'recall' (default: 'recall')
+   key can be any string
+   action should be 'store' or 'recall' (default: 'recall')
 
-   PYMOL API
+PYMOL API
 
-      cmd.view(string key,string action)
+   cmd.view(string key,string action)
 
-   EXAMPLES
+EXAMPLES
 
-      view 0,store
-      view 0
+   view 0,store
+   view 0
 
-   SEE ALSO
+SEE ALSO
 
-      set_view, get_view
+   set_view, get_view
       '''
       if key=='*':
          print " view: stored views:"
@@ -642,26 +642,26 @@ if __name__=='pymol.viewing':
 
    def stereo(state='on'):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "stereo" activates or deactives stereo mode.
+   "stereo" activates or deactives stereo mode.
 
-   USAGE
+USAGE
 
-      stereo on
-      stereo off
-      stereo swap
-      stereo crosseye 
-      stereo quadbuffer
+   stereo on
+   stereo off
+   stereo swap
+   stereo crosseye 
+   stereo quadbuffer
 
-   NOTES
+NOTES
 
-      quadbuffer is the default stereo mode if hardware stereo is available
-      otherwise, crosseye is the default
+   quadbuffer is the default stereo mode if hardware stereo is available
+   otherwise, crosseye is the default
 
-   PYMOL API
+PYMOL API
 
-      cmd.stereo(string state="on")
+   cmd.stereo(string state="on")
       '''
       state = stereo_dict[stereo_sc.auto_err(str(state),'state')]
       r = None
@@ -683,26 +683,26 @@ if __name__=='pymol.viewing':
 
    def turn(axis,angle):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "turn" rotates the world about one of the three primary axes
+   "turn" rotates the world about one of the three primary axes
 
-   USAGE
+USAGE
 
-      turn axis, angle
+   turn axis, angle
 
-   EXAMPLES
+EXAMPLES
 
-      turn x,90
-      turn y,45
+   turn x,90
+   turn y,45
 
-   PYMOL API
+PYMOL API
 
-      cmd.turn( string axis, float angle )
+   cmd.turn( string axis, float angle )
 
-   SEE ALSO
+SEE ALSO
 
-      move
+   move
       '''
       try:
          lock()
@@ -714,15 +714,15 @@ if __name__=='pymol.viewing':
 
    def full_screen(toggle=1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "full_screen" enables or disables PyMOL's full_screen mode.  This
-      is only functions well on PC's.
+   "full_screen" enables or disables PyMOL's full_screen mode.  This
+   is only functions well on PC's.
 
-   USAGE
+USAGE
 
-      full_screen on
-      full_screen off
+   full_screen on
+   full_screen off
 
    '''
       toggle = toggle_dict[toggle_sc.auto_err(str(toggle),'toggle')]
@@ -743,17 +743,17 @@ if __name__=='pymol.viewing':
 
    def rock(mode=-1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "rock" toggles Y axis rocking.
+   "rock" toggles Y axis rocking.
 
-   USAGE
+USAGE
 
-      rock
+   rock
 
-   PYMOL API
+PYMOL API
 
-      cmd.rock()
+   cmd.rock()
       '''
       try:
          lock()   
@@ -764,30 +764,30 @@ if __name__=='pymol.viewing':
 
    def label(selection="(all)",expression=""):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "label" labels one or more atoms properties over a selection using
-      the python evaluator with a separate name space for each atom.  The
-      symbols defined in the name space are:
+   "label" labels one or more atoms properties over a selection using
+   the python evaluator with a separate name space for each atom.  The
+   symbols defined in the name space are:
 
-         name, resn, resi, chain, q, b, segi, type (ATOM,HETATM) 
-         formal_charge, partial_charge, numeric_type, text_type
+      name, resn, resi, chain, q, b, segi, type (ATOM,HETATM) 
+      formal_charge, partial_charge, numeric_type, text_type
 
-      All strings in the expression must be explicitly quoted.  This
-      operation typically takes several seconds per thousand atoms
-      altered.
+   All strings in the expression must be explicitly quoted.  This
+   operation typically takes several seconds per thousand atoms
+   altered.
 
-      To clear labels, simply omit the expression or set it to ''.
+   To clear labels, simply omit the expression or set it to ''.
 
-   USAGE
+USAGE
 
-      label (selection),expression
+   label (selection),expression
 
-   EXAMPLES
+EXAMPLES
 
-      label (chain A),chain
-      label (n;ca),"%s-%s" % (resn,resi)
-      label (resi 200),"%1.3f" % partial_charge
+   label (chain A),chain
+   label (n;ca),"%s-%s" % (resn,resi)
+   label (resi 200),"%1.3f" % partial_charge
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -806,18 +806,18 @@ if __name__=='pymol.viewing':
 
    def viewport(width=-1,height=-1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "viewport" changes the size of the viewing port (and thus the size
-      of all png files subsequently output)
+   "viewport" changes the size of the viewing port (and thus the size
+   of all png files subsequently output)
 
-   USAGE
+USAGE
 
-      viewport width, height
+   viewport width, height
 
-   PYMOL API
+PYMOL API
 
-      cmd.viewport(int width, int height)
+   cmd.viewport(int width, int height)
       '''
       r = None
       if not cmd.is_glut_thread():
@@ -833,17 +833,17 @@ if __name__=='pymol.viewing':
 
    def bg_color(color="black"):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "bg_color" sets the background color
+   "bg_color" sets the background color
 
-   USAGE
+USAGE
 
-      bg_color [color]
+   bg_color [color]
 
-   PYMOL API
+PYMOL API
 
-      cmd.color(string color="black")
+   cmd.color(string color="black")
 
       '''
       r = None
@@ -872,29 +872,29 @@ if __name__=='pymol.viewing':
 
    def cartoon(type,selection="(all)"):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "cartoon" changes the default cartoon for a set of atoms.
+   "cartoon" changes the default cartoon for a set of atoms.
 
-   USAGE
+USAGE
 
-      cartoon type, (selection)
+   cartoon type, (selection)
 
-      type = skip | automatic | loop | rectangle | oval | tube | arrow | dumbbell
+   type = skip | automatic | loop | rectangle | oval | tube | arrow | dumbbell
 
-   PYMOL API
+PYMOL API
 
-      cmd.cartoon(string type, string selection )
+   cmd.cartoon(string type, string selection )
 
-   EXAMPLES
+EXAMPLES
 
-      cartoon rectangle,(chain A)
-      cartoon skip,(resi 145:156)
+   cartoon rectangle,(chain A)
+   cartoon skip,(resi 145:156)
 
-   NOTES
+NOTES
 
-      the "automatic" mode utilizes ribbons according to the
-      information in the PDB HELIX and SHEET records.
+   the "automatic" mode utilizes ribbons according to the
+   information in the PDB HELIX and SHEET records.
 
    '''
       # preprocess selection
@@ -911,39 +911,39 @@ if __name__=='pymol.viewing':
 
    def ray(width=0,height=0,renderer=-1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "ray" creates a ray-traced image of the current frame. This
-      can take some time (up to several minutes, depending on image
-      complexity).
+   "ray" creates a ray-traced image of the current frame. This
+   can take some time (up to several minutes, depending on image
+   complexity).
 
-   USAGE
+USAGE
 
-      ray [width,height [,renderer ]]
+   ray [width,height [,renderer ]]
 
-   EXAMPLES
+EXAMPLES
 
-      ray
-      ray 1024,768
-      ray renderer=0
+   ray
+   ray 1024,768
+   ray renderer=0
 
-   PYMOL API
+PYMOL API
 
-      cmd.ray(int width,int height,int renderer=-1,string prefix)
+   cmd.ray(int width,int height,int renderer=-1,string prefix)
 
-   NOTES
+NOTES
 
-      renderer = -1 is default (use value in ray_default_renderer)
-      renderer =  0 uses PyMOL's internal renderer
-      renderer =  1 uses PovRay's renderer.  This is Unix-only
-         and you must have "x-povray" in your path.  It utilizes two
-         two temporary files: "tmp_pymol.pov" and "tmp_pymol.png".
+   renderer = -1 is default (use value in ray_default_renderer)
+   renderer =  0 uses PyMOL's internal renderer
+   renderer =  1 uses PovRay's renderer.  This is Unix-only
+      and you must have "x-povray" in your path.  It utilizes two
+      two temporary files: "tmp_pymol.pov" and "tmp_pymol.png".
 
-   SEE ALSO
+SEE ALSO
 
-      "help faster" for optimization tips with the builtin renderer.
-      "help povray" for how to use PovRay instead of PyMOL's built-in
-         ray-tracing engine.
+   "help faster" for optimization tips with the builtin renderer.
+   "help povray" for how to use PovRay instead of PyMOL\'s built-in
+   ray-tracing engine.
 
       '''
       try:
@@ -955,22 +955,22 @@ if __name__=='pymol.viewing':
 
    def refresh():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "refresh" causes the scene to be refresh as soon as it is safe to
-      do so.
+   "refresh" causes the scene to be refresh as soon as it is safe to
+   do so.
 
-   USAGE
+USAGE
 
-      refresh
+   refresh
 
-   PYMOL API
+PYMOL API
 
-      cmd.refresh()
+   cmd.refresh()
 
-   SEE ALSO
+SEE ALSO
 
-      rebuild
+   rebuild
       '''
       if thread.get_ident() == pymol.glutThread:
          r = _cmd.refresh_now()
@@ -984,19 +984,19 @@ if __name__=='pymol.viewing':
 
    def reset(object=''):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "reset" restores the rotation matrix to identity, sets the origin
-      to the center of mass (approx.) and zooms the window and clipping
-      planes to cover all objects.
+   "reset" restores the rotation matrix to identity, sets the origin
+   to the center of mass (approx.) and zooms the window and clipping
+   planes to cover all objects.
 
-   USAGE
+USAGE
 
-      reset 
+   reset 
 
-   PYMOL API
+PYMOL API
 
-      cmd.reset ( )
+   cmd.reset ( )
       '''
       try:
          lock()   
@@ -1016,13 +1016,13 @@ if __name__=='pymol.viewing':
 
    def meter_reset():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "meter_reset" resets the frames per secound counter
+   "meter_reset" resets the frames per secound counter
 
-   USAGE
+USAGE
 
-      meter_reset
+   meter_reset
       '''
       try:
          lock()   
@@ -1043,22 +1043,22 @@ if __name__=='pymol.viewing':
 
    def rebuild(selection='all',representation='everything'):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "rebuild" forces PyMOL to recreate geometric objects in
-      case any of them have gone out of sync.
+   "rebuild" forces PyMOL to recreate geometric objects in
+   case any of them have gone out of sync.
 
-   USAGE
+USAGE
 
-      rebuild [selection [, representation ]]
+   rebuild [selection [, representation ]]
 
-   PYMOL API
+PYMOL API
 
-      cmd.rebuild(string selection = 'all', string representation = 'everything')
+   cmd.rebuild(string selection = 'all', string representation = 'everything')
 
-   SEE ALSO
+SEE ALSO
 
-      refresh
+   refresh
    '''
       r = 1
       selection = selector.process(selection)
@@ -1072,22 +1072,22 @@ if __name__=='pymol.viewing':
 
    def recolor(selection='all',representation='everything'):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "rebuild" forces PyMOL to reapply colors to geometric objects in
-      case any of them have gone out of sync.
+   "rebuild" forces PyMOL to reapply colors to geometric objects in
+   case any of them have gone out of sync.
 
-   USAGE
+USAGE
 
-      recolor [selection [, representation ]]
+   recolor [selection [, representation ]]
 
-   PYMOL API
+PYMOL API
 
-      cmd.recolor(string selection = 'all', string representation = 'everything')
+   cmd.recolor(string selection = 'all', string representation = 'everything')
 
-   SEE ALSO
+SEE ALSO
 
-      recolor
+   recolor
    '''
       r = 1
       selection = selector.process(selection)
@@ -1101,23 +1101,23 @@ if __name__=='pymol.viewing':
 
    def color(color,selection="(all)"):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "color" changes the color of an object or an atom selection.
+   "color" changes the color of an object or an atom selection.
 
-   USAGE
+USAGE
 
-      color color-name
-      color color-name, object-name
-      color color-name, (selection)
+   color color-name
+   color color-name, object-name
+   color color-name, (selection)
 
-   PYMOL API
+PYMOL API
 
-      cmd.color( string color, string color-name )
+   cmd.color( string color, string color-name )
 
-   EXAMPLES 
+EXAMPLES 
 
-      color yellow, (name C*)
+   color yellow, (name C*)
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -1135,24 +1135,24 @@ if __name__=='pymol.viewing':
 
    def set_color(name,rgb):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "set_color" defines a new color with color indices (0.0-1.0)
+   "set_color" defines a new color with color indices (0.0-1.0)
 
-   USAGE
+USAGE
 
-      set_color name, [ red-float, green-float, blue-float ]
+   set_color name, [ red-float, green-float, blue-float ]
 
-      set_color name = [ red-float, green-float, blue-float ]
-        # (DEPRECATED)
+   set_color name = [ red-float, green-float, blue-float ]
+     # (DEPRECATED)
 
-   PYMOL API
+PYMOL API
 
-      cmd.set_color( string name, float-list rgb )
+   cmd.set_color( string name, float-list rgb )
 
-   EXAMPLES 
+EXAMPLES 
 
-      set_color red = [ 1.0, 0.0, 0.0 ]
+   set_color red = [ 1.0, 0.0, 0.0 ]
       '''
       r = 1
       if cmd.is_string(rgb):
@@ -1173,3 +1173,8 @@ if __name__=='pymol.viewing':
          finally:
             unlock()
       return r
+
+
+
+
+
