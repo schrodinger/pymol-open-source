@@ -32,13 +32,15 @@ The PyMOL Team:
 
    Other Contributors: These are the people who have gone out of
       their way to help the project with their ideas, actions, 
-      advice, information, sponsorship, peer support, or code snippets.
+      advice, hardware donations, testing, information, sponsorship,
+      peer support, or code snippets.
       
       Daan van Aalten
       Paul Adams 
       Stephen Adler
       Jun Aishima 
       Dennis Allison
+      Ricardo Aparicio
       Daniel Appelman   
       Diosdado "Rey" Banatao
       Michael Banck
@@ -47,18 +49,21 @@ The PyMOL Team:
       Balaji Bhyravbhatla
       Jeff Bizzaro
       Jeff Blaney 
+      Juergen Bosch 
       Michael Bower
       Sarina Bromberg
       Axel Brunger
       Robert Campbell
+      Bronwyn Carlisle 
       Duilio Cascio
+      Julien Chiron 
       Shawn Christensen
       Scott Classen
       David Cooper
       Jacob Corn
       Ben Cornett
       Andrew Dalke 
-      Huub van Dam
+      Koen van der Drift 
       Harry Dailey
       Byron DeLaBarre
       Bill DeGrado
@@ -69,14 +74,18 @@ The PyMOL Team:
       Tim Fenn
       Thierry Fischmann
       Michael Ford
+      Esben Peter Friis
       Kevin Gardner
       R. Michael Garavito
       John Gerig
       Jonathan Greene
+      Michael Goodman  
       Joel Harp
+      Reece Hart
       Richard Hart
       Peter Haebel
       Douglas Henry 
+      Possu Huang 
       Uwe Hoffmann
       Jenny Hinshaw
       Carly Huitema
@@ -86,12 +95,15 @@ The PyMOL Team:
       Tom Lee
       Eugen Leitl
       Ken Lind
+      Jules Jacobsen
       Luca Jovine
       Andrey Khavryuchenko
       David Konerding
       Greg Landrum
       Michael Love 
       Tadashi Matsushita
+      Genevieve Matthews 
+      Gerry McDermott 
       Robert McDowell
       Gustavo Mercier      
       Naveen Michaud-Agrawal
@@ -102,6 +114,8 @@ The PyMOL Team:
       Hideaki Moriyama
       Nigel Moriarty 
       Geoffrey Mueller
+      Florian Nachon 
+      Hanspeter Niederstrasser 
       Michael Nilges
       Hoa Nguyen
       Shoichiro Ono
@@ -113,7 +127,9 @@ The PyMOL Team:
       Hans Purkey
       Rama Ranganathan
       Michael Randal
+      Daniel Ricklin 
       Ian Robinson
+      Eric Ross
       Kristian Rother
       Marc Saric
       Bill Scott
@@ -123,10 +139,12 @@ The PyMOL Team:
       Ward Smith
       Paul Sprengeler
       Matt Stephenson 
+      Peter Stogios
       John Stone
       Charlie Strauss
       Michael Summers
       Brian Sutton
+      Rod Tweten
       Andras Varadi
       Scott Walsh
       Pat Walters
@@ -136,28 +154,6 @@ The PyMOL Team:
       Chris Wiesmann
       Charles Wolfus
       Richard Xie
-   
-   PyMOL Testers: Others users who answered my calls for testing
-      and feedback on diverse hardware.
-
-      Ricardo Aparicio
-      Juergen Bosch 
-      Bronwyn Carlisle 
-      Julien Chiron 
-      Koen van der Drift 
-      Michael Goodman  
-      Reece Hart
-      Possu Huang 
-      Jules Jacobsen
-      Genevieve Matthews 
-      Gerry McDermott 
-      Florian Nachon 
-      Hanspeter Niederstrasser 
-      Daniel Ricklin 
-      Ian Robinson
-      Eric Ross
-      Peter Stogios
-      Rod Tweten
    
    Miscellaneous Code Snippets Lifted From:
 
@@ -180,12 +176,15 @@ The PyMOL Team:
 
    Graphics Technology "Enablers" (essential!)
 
-      3dfx 
+      3dfx (RIP)
       nVidia 
       ATI
       
 ----------------------------------------------------------------------
 Specific Acknowledgments:
+
+* Thanks to Apple Computer for continued encouragement, assistance, 
+  and HLAs in support of Mac development.
 
 * Thanks to Aaron Miller (GlaxoSmithKline) for a continuous stream of
   thoughtful opinions and suggestions.
@@ -193,9 +192,10 @@ Specific Acknowledgments:
 * Thanks to Dave Weininger for suggesting the "roving" feature and for
   being an ordinary friend at just the right time.
 
-* Thanks to Mick Savage for experienced practical advice.
+* Thanks to Mick Savage for providing experienced practical advice on
+  the marketing of scientific software.
 
-* Thanks to Ian Matthew for outside experience and information.
+* Thanks to Ian Matthew for outside experience and perspective.
 
 * Thanks for Jeff Blaney for numerous insightful discussions.
 

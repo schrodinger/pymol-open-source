@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * support for BRIX map format
+
    * fixed endianness problems with map files
 
    * pdb_use_ter_records: setting disables TER records in PDB output
