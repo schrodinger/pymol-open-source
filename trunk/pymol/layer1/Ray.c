@@ -1392,7 +1392,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int shadows;
   float spec_vector[3];
   int n_thread;
-  int image_cached = 1;
 
   n_thread  = (int)SettingGet(cSetting_max_threads);
   if(n_thread<1)
