@@ -28,7 +28,6 @@ extern int PyMOLTerminating; /* flag to help prevent crashes on shutdown with Wi
 extern int PMGUI;
 extern int StereoCapable;
 extern int InternalGUI;
-extern int TkinterWorkaround;
 
 #ifdef _PYMOL_MODULE
 int was_main(void);

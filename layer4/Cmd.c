@@ -2406,7 +2406,6 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
 {
   int int1;
   PyArg_ParseTuple(args,"i",&int1);
-  TkinterWorkaround=int1;
   Py_INCREF(Py_None);
   return Py_None;
 }
