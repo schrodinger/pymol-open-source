@@ -231,7 +231,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
       ENDFB;
     c = bytes;
     u = (unsigned int*)p;
-    uc = uc = (unsigned char *)u;
+    uc = (unsigned char *)u;
     while(c>3) {
       c0 = *(uc++);
       c1 = *(uc++);
