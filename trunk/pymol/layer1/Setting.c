@@ -1292,13 +1292,15 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_fit_tolerance, 0.00001F);
 
+  SettingSet_s(I,cSetting_batch_prefix,"tmp_pymol");
+
   if(StereoCapable) {
     SettingSet_f(I,cSetting_stereo_mode, 1.0F); 
   } else {
     SettingSet_f(I,cSetting_stereo_mode, 2.0F);
   }
 
-  SettingSet_s(I,cSetting_batch_prefix,"tmp_pymol");
+  SettingSet_f(I,cSetting_cgo_sphere_quality, 1.0F);
 
 }
 
