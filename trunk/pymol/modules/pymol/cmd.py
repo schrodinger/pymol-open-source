@@ -1870,7 +1870,7 @@ SEE ALSO
    selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
    object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))
    map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
-
+   
    # Table for argument autocompletion
 
    auto_arg =[
@@ -1910,7 +1910,8 @@ SEE ALSO
       'help'           : [ help_sc                , 'selection'       , ''   ],
       'unset'          : [ setting.setting_sc     , 'setting'         , ','  ],
       'view'           : [ viewing.view_dict_sc   , 'view'            , ''   ],                              
-      'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],                        
+      'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],
+      'ramp_new'       : [ object_sc              , 'ramp'            , ''   ],
       },
 # 2nd
       {
@@ -1934,7 +1935,8 @@ SEE ALSO
       'isosurface'     : [ map_sc                 , 'map object'      , ', ' ],
       'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
       'scene'          : [ viewing.view_sc        , 'scene action'    , ','   ],                  
-      'unset'          : [ selection_sc           , 'selection'        , ','  ],   
+      'unset'          : [ selection_sc           , 'selection'        , ','  ],
+      'ramp_new'       : [ map_sc                 , 'map object'       , ''   ],      
       },
 #3rd
       {

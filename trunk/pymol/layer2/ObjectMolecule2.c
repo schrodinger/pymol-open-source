@@ -86,7 +86,7 @@ int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele)
   }
   return result;
 }
-void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2) 
+void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int invalidate) 
 {
   int b;
   int flag = false;
@@ -346,6 +346,10 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2)
         ai1->chemFlag=false;
         ai2->chemFlag=false;
         flag = true;
+      } else if(invalidate) {
+        ai1->chemFlag=false;
+        ai2->chemFlag=false;
+        flag=true;
       }
     }
     bond++;

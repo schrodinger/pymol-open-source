@@ -61,17 +61,19 @@ def protein_vacuum_esp(selection, absolute=1,border=10.0,quiet = 1):
 
    # apply a few kludges
 
-   # remove alternate conformers
-
-   cmd.remove(obj_name+" and not alt ''+A")
-
    # convent Seleno-methionine to methionine
 
    cmd.alter(obj_name+"///MSE/SE","elem='S';name='SD'",quiet=1)
    cmd.alter(obj_name+"///MSE/","resn='MET'",quiet=1)
    cmd.flag("ignore",obj_name,"clear")
-   cmd.fix_chemistry(obj_name)
 
+   # remove alternate conformers
+
+   cmd.remove(obj_name+" and not alt ''+A")
+   cmd.alter(obj_name,"alt=''")
+   cmd.sort(obj_name)
+   cmd.fix_chemistry(obj_name,obj_name,1)
+   
    # make sure all atoms are included...
    cmd.alter(obj_name,"q=1.0",quiet=1)
    

@@ -205,12 +205,13 @@ static PyObject *CmdFixChemistry(PyObject *self, PyObject *args)
   OrthoLineType s2="",s3="";
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"ssi",&str2,&str3,&quiet);
+  int invalidate;
+  ok = PyArg_ParseTuple(args,"ssii",&str2,&str3,&invalidate,&quiet);
   if(ok) {
     APIEntry();
     SelectorGetTmp(str2,s2);
     SelectorGetTmp(str3,s3);
-    ok = ExecutiveFixChemistry(s2,s3,quiet);
+    ok = ExecutiveFixChemistry(s2,s3,invalidate, quiet);
     SelectorFreeTmp(s2);
     SelectorFreeTmp(s3);
     APIExit();

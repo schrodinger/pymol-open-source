@@ -280,12 +280,13 @@ def compute(s):
 
 def vacuum(s):
    return [[ 2, 'Vacuum Electrostatics:'       ,''                        ],
-           [ 2, '\\955WARNING:\\595 unvalidated and experimental!', '' ],
+           [ 2, '\\955WARNING:\\595 Unvalidated and experimental code!', '' ],
            [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+s+'",quiet=0)'          ],
            [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+s+'",absolute=0,quiet=0)'          ],
-           [ 2, '\\955NOTE:\\559 vacuum electrostatic potentials for', '' ],
-           [ 2, '\\559macromolecules are not really appropriate', '' ],
-           [ 2, '\\559or meaningful, so view with extreme caution!', '' ],
+           [ 2, '\\955NOTE:\\559 Due to absense of solvent dielectric', ''],
+           [ 2, '\\559"screening", vacuum electrostatic potentials', ''],
+           [ 2, '\\559for macromolecules are only qualitatively', ''],
+           [ 2, '\\559meaningful.  Please view with skepticism!', '' ],
            ]
    
 def mol_assign(s):

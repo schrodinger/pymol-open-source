@@ -4817,6 +4817,7 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,int
         MapSetupExpress(map);
         elist = map->EList;      
         for(a=min[0];a<=max[0];a++) {      
+          OrthoBusyFast(a-min[0],max[0]-min[0]+1);
           for(b=min[1];b<=max[1];b++) {      
             for(c=min[2];c<=max[2];c++) {      
               F3(data,a,b,c)=0.0F;            
@@ -4869,6 +4870,7 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,int
         ENDFB;
 
       for(a=min[0];a<=max[0];a++) {      
+        OrthoBusyFast(a-min[0],max[0]-min[0]+1);
         for(b=min[1];b<=max[1];b++) {      
           for(c=min[2];c<=max[2];c++) {  
             F3(data,a,b,c)=0.0F;            

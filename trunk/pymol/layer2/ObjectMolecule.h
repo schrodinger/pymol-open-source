@@ -229,7 +229,7 @@ void ObjectMoleculeFree(ObjectMolecule *I); /* only for friends of ObjectMolecul
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
-void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2);
+void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int invalidate);
 
 ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x,PDBInfoRec *pdb_info);
