@@ -434,8 +434,6 @@ EXAMPLE ATOM SELECTIONS
       '''
 PyMOL COMMAND LINE OPTIONS 
 
-   pymol.com [-ciqstwx] [ <file.pdb> ] [ <file.pml> ] [ <file.py> ] ...
-
    -c   Command line mode, no GUI.  For batch opeations.
    -i   Disable the internal OpenGL GUI (object list, menus, etc.)
    -x   Disable the external GUI module.
@@ -444,9 +442,13 @@ PyMOL COMMAND LINE OPTIONS
    -p   Listen for commands on standard input.
    -e   Start in full-screen mode.
    -2   Start in two-button mouse mode.
-   -o   Disable security.
-   -R   Launch Greg Landrum's XMLRPC listener
-      
+   -o   Disable security protections for session files.
+   -R   Launch Greg Landrum's XMLRPC listener.
+   -B   Enable blue-line stereo signal (for Mac stereo)
+   -G   Start in Game mode.
+   -S   Force and launch in stereo, if possible.
+   -M   Force mono even when hardware stereo is present.
+
    -X <int> -Y <int> -W <int> -H <int> -V <int> Adjust window geometry.
 
    -f <# line> Controls display of commands and feedback in OpenGL (0=off).
@@ -455,7 +457,8 @@ PyMOL COMMAND LINE OPTIONS
    -d <string> Run pymol command string upon startup.
    -u <script> Load and append to this PyMOL script or program file.
    -s <script> Save commands to this PyMOL script or program file.
-
+   -g <file.png> Write a PNG file (after evaluating previous arguments)
+   
    <file> can have one of the following extensions, and all 
    files provided will be loaded or run after PyMOL starts.
 
@@ -464,11 +467,19 @@ PyMOL COMMAND LINE OPTIONS
     .pdb            Protein Data Bank format file to be loaded on startup
     .mmod           Macromodel format to be loaded on startup
     .mol            MDL MOL file to be loaded on startup
+    .sdf            MDL SD file to be parsed and loaded on startup
     .xplor          X-PLOR Map file (ASCII) to be loaded on startup
     .ccp4           CCP4 map file (BINARY) to be loaded on startup
-    .pkl            Pickled ChemPy Model (class "chempy.model.Indexed")
-    .r3d            Raster3D Object
     .cc1, .cc2      ChemDraw 3D cartesian coordinate file
+    .pkl            Pickled ChemPy Model (class "chempy.model.Indexed")
+    .r3d            Raster3D file
+    .cex            CEX file (Metaphorics)
+    .top            AMBER topology file
+    .crd            AMBER coordinate file
+    .rst            AMBER restart file
+    .trj            AMBER trajectory
+    .pse            PyMOL session file
+    .phi            Delphi/Grasp Electrostatic Potential Map
       '''
       cmd.help('launching')
 
