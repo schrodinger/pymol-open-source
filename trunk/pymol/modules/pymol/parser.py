@@ -27,6 +27,7 @@ import types
 import glob
 import sys
 import os
+import setting
 QuietException = parsing.QuietException
       
 pymol_names = pymol.__dict__
@@ -229,70 +230,110 @@ def _same_(a,b):
       return a
    else:
       return None
-   
-def complete(st):
+
+def complete_sc(st,sc,type_name,postfix):
    result = None
-   if string.find(st,' ')<0:
-      amb = cmd.kwhash.interpret(st)
-      if amb==None:
-         print " parser: no matching commands."
-      elif type(amb)==types.StringType:
-         result = amb+' '
-      else:
-         amb.sort()
-         print " parser: possibilities:"
-         flist = filter(lambda x:x[0]!='_',amb)
-         lst = parsing.list_to_str_list(flist)
-         for a in lst:
-            print a
-         # now append up to point of ambiguity
-         css = map(None,flist[0]) # common sub-string (css)
-         for a in flist:
-            ac = map(None,a)
-            css = map(_same_,css,ac)
-         css = filter(None,css)
-         css = string.join(css,'')
-         if len(css)>len(st):
-            result = css
-            
-   else: # filename completion
-      lst = map(None,st)
-      lst.reverse()
-      st2 = string.join(lst,'')
-      mo = re.search("^[^,\[\( ]+",st2,1)
-      if mo!=None:
-         pat = mo.group(0)
-         lst = map(None,pat)
-         lst.reverse()
-         st3 = string.join(lst,'')
-         loc = string.find(st,st3)
-      else:
-         st3 = ''
-         loc = len(st)
-      flist = glob.glob(os.path.expanduser(os.path.expandvars(st3))+"*")
-      lf = len(flist)
-      if lf == 0:
-         print " parser: no matching files."
-      elif lf==1:
-         result = st[0:loc]+flist[0]
-      else:
-         flist.sort()
-         print " parser: matching files:"
-         lst = parsing.list_to_str_list(flist)
-         for a in lst:
-            print a
-         # now append as much up to point of ambiguity
-         css = map(None,flist[0]) # common sub-string (css)
-         for a in flist:
-            ac = map(None,a)
-            css = map(_same_,css,ac)
+   amb = sc.interpret(st)
+   if amb==None:
+      print " parser: no matching %s."%type_name
+   elif type(amb)==types.StringType:
+      result = amb+postfix
+   else:
+      amb.sort()
+      print " parser: matching %s:"%type_name
+      flist = filter(lambda x:x[0]!='_',amb)
+      lst = parsing.list_to_str_list(flist)
+      for a in lst:
+         print a
+      # now append up to point of ambiguity
+      css = map(None,flist[0]) # common sub-string (css)
+      for a in flist:
+         ac = map(None,a)
          tmp = css
          css = []
-         for a in tmp:
-            if a==None:
+         for c in range(len(tmp)):
+            if tmp[c]!=ac[c]:
                break
-            css.append(a)
-         css = string.join(css,'')
-         if len(css)>len(st3):
-            result = st[0:loc]+css
+            css.append(tmp[c])
+      css = filter(None,css)
+      css = string.join(css,'')
+      if len(css)>len(st):
+         result = css
+   return result
+
+def complete(st):
+   result = None
+   pre = ''
+   if (string.find(st,' ')<0) and (string.find(st,'@'))<0:
+      try:
+         result = complete_sc(st,cmd.kwhash,'commands',' ')
+      except:
+         traceback.print_exc()
+   else:
+      full = cmd.kwhash.interpret(re.sub(r" .*","",st))
+      count = string.count(st,',') # which argument are we on
+      if count<len(cmd.auto_arg):      
+         if cmd.auto_arg[count].has_key(full): # autocomplete arguments
+            try:
+               pre = re.sub("^[^ ]* ",' ',st,count=1) # trim command
+               print "pre1 '%s'"%pre
+               pre = re.sub("[\, ][^\, ]*$","",pre,count=1) # trim 1 arg
+               pre = re.sub("^ *",'',pre)
+               if len(pre): pre = pre + ' ' # courtesy space
+               pre = full+' '+pre
+               pat = re.sub(r".*[\, ]",'',st)
+               result = apply(complete_sc,tuple([pat]+cmd.auto_arg[count][full]),{})
+               print "count %d,pre '%s' pat '%s'"%(count,pre,pat)
+            except:
+               traceback.print_exc()
+      else: # otherwise fallback onto filename completion
+         if(st[:1]=='@'):
+            st=st[1:]
+            pre = '@'
+         lst = map(None,st)
+         lst.reverse()
+         st2 = string.join(lst,'')
+         mo = re.search("^[^,\[\( ]+",st2,1)
+         if mo!=None:
+            pat = mo.group(0)
+            lst = map(None,pat)
+            lst.reverse()
+            st3 = string.join(lst,'')
+            loc = string.find(st,st3)
+         else:
+            st3 = ''
+            loc = len(st)
+         flist = glob.glob(os.path.expanduser(os.path.expandvars(st3))+"*")
+         lf = len(flist)
+         if lf == 0:
+            print " parser: no matching files."
+         elif lf==1:
+            result = st[0:loc]+flist[0]
+         else:
+            flist.sort()
+            print " parser: matching files:"
+            lst = parsing.list_to_str_list(flist)
+            for a in lst:
+               print a
+            # now append as much up to point of ambiguity
+            css = map(None,flist[0]) # common sub-string (css)
+            for a in flist:
+               ac = map(None,a)
+               tmp = css
+               css = []
+               for c in range(len(tmp)):
+                  if tmp[c]!=ac[c]:
+                     break
+                  css.append(tmp[c])
+            tmp = css
+            css = []
+            for a in tmp:
+               if a==None:
+                  break
+               css.append(a)
+            css = string.join(css,'')
+            if len(css)>len(st3):
+               result = st[0:loc]+css
+   if result!=None:
+      result = pre+result
    return result

@@ -77,6 +77,9 @@ QuietException = parsing.QuietException
 lock_api = pymol.lock_api
 lock_api_c = pymol.lock_api_c
 
+toggle_dict = {'on':1,'off':0,'1':1,'0':0}
+toggle_sc = Shortcut(toggle_dict.keys())
+
 def is_string(obj):
    return isinstance(obj,types.StringType)
 
@@ -1787,6 +1790,7 @@ SEE ALSO
    return r
 
 def _stereo(flag): # SGI-SPECIFIC - bad bad bad
+   
    if flag:
       os.system("/usr/gfx/setmon -n 1024x768_96s")
    else:
@@ -1809,8 +1813,9 @@ PYMOL API
 
    cmd.stereo(string state="on")
    '''
+   state = toggle_dict[toggle_sc.auto_err(str(state),'toggle')]
    r = None
-   if state=="on":
+   if state:
       try:
          lock()
          if _cmd.stereo(1):
@@ -1824,6 +1829,8 @@ PYMOL API
          lock()
          if _cmd.stereo(0):
             r = _stereo(0)
+         else:
+            print "Error: stereo not available"
       finally:
          unlock();
    return r
@@ -3343,10 +3350,7 @@ USAGE
    full_screen off
    
 '''
-   if str(toggle)=='on':
-      toggle = 1
-   if str(toggle)=='off':
-      toggle = 0
+   toggle = toggle_dict[toggle_sc.auto_err(str(toggle),'toggle')]
    if thread.get_ident() == pymol.glutThread:
       try: 
          lock()
@@ -5917,6 +5921,24 @@ ctrl = {
    'Z' : [ undo                   , () , {} ],   
    }
 
+auto_arg =[
+   {
+   'set' : [ setting.setting_sc, 'settings', '=' ],
+   'show' : [ rephash , 'representations',', ' ],
+   'hide' : [ rephash , 'representations',', ' ],
+   'stereo' : [ toggle_sc , 'options','' ],
+   'full_screen' : [ toggle_sc , 'options','' ],
+   'clip' : [ clip_action_sc , 'clipping actions',', ' ],
+   'feedback' : [ fb_action_sc , 'actions',', ' ],
+   },
+   {
+   'feedback' : [ fb_module_sc , 'modules',', ' ],   
+   },
+   {
+   'feedback' : [ fb_mask_sc , 'mask','' ],   
+   }
+   ]
+   
 class loadable:
    pdb = 0
    mol = 1
