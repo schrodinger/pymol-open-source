@@ -4,10 +4,10 @@ CHANGE LOG
 
 Changes up to 0.96
 
-   * various changes to surfacing algorithm greatly increased robustness
-     when handling troublesome crevaces -- can now handle small probes.
+   * various changes to surfacing algorithm greatly increase robustness
+     when surfacing crevaces -- can now handle small(er) solvent probes.
      
-   * surface_solvent, triangle_max_passes setting
+   * surface_solvent, triangle_max_passes settings
 
    * mesh_type, mesh_lighting, dot_lighting settings
 
