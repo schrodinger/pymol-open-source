@@ -23,6 +23,8 @@ def load():
    for file in list:
       cmd.delete('pdb')
       cmd.load(file,'pdb')
+      cmd.set_title('pdb',1,os.path.split(file)[-1])
+      cmd.rewind()
       cmd.orient('pdb')
       cmd.refresh()
       cmd.hide()
