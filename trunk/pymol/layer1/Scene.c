@@ -1429,6 +1429,7 @@ static void do_update(void)
 {
   char buffer[1024];
   float sticks,lines,spheres,labels,ribbon,cartoon;
+  float polar_contacts,polar_cutoff;
   char byres[10] = "byres";
   char not[4] = "not";
   char empty[1] = "";
@@ -1446,6 +1447,8 @@ static void do_update(void)
     spheres = SettingGet(cSetting_roving_spheres);
     ribbon = SettingGet(cSetting_roving_ribbon);
     cartoon = SettingGet(cSetting_roving_cartoon);
+    polar_contacts = SettingGet(cSetting_roving_polar_contacts);
+    polar_cutoff = SettingGet(cSetting_roving_polar_cutoff);
 
     if(SettingGet(cSetting_roving_byres))
       p2 = byres;

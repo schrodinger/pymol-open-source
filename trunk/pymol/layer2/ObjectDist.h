@@ -28,7 +28,8 @@ typedef struct ObjectDist {
   int CurDSet;
 } ObjectDist;
 
-ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,float *result);
+ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,
+                                  int labels,float *result);
 ObjectDist *ObjectDistNew(void);
 void ObjectDistInvalidateRep(ObjectDist *I,int rep);
 PyObject *ObjectDistAsPyList(ObjectDist *I);

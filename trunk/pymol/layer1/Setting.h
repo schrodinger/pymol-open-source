@@ -359,10 +359,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_roving_byres                226
 #define cSetting_roving_ribbon               227
 #define cSetting_roving_cartoon              228
+#define cSetting_roving_polar_contacts       229
+#define cSetting_roving_polar_cutoff         230
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        229
+#define cSetting_INIT                        231
 
 #endif
 

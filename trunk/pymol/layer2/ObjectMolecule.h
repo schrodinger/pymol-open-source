@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Raw.h"
 
 #define cKeywordAll "all"
+#define cKeywordSame "same"
 
 #define cUndoMask 0x7
 

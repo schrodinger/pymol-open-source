@@ -30,7 +30,7 @@ float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int
                      float cutoff,int cycles,int quiet,char *oname);
 
 float ExecutiveDistance(char *sele1,char *sele2);
-float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
+float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels);
 void ExecutiveBond(char *s1,char *s2,int order,int add);
 int ExecutiveIterate(char *s1,char *expr,int read_only);
 void ExecutiveLabel(char *s1,char *expr);
