@@ -18,29 +18,26 @@ Z* -------------------------------------------------------------------
 
 #include"ObjectMap.h"
 
-typedef struct ObjectMesh {
-  Object Obj;
+typedef struct {
   ObjectMap *Map;
   int *N;
   float *V;
   int Range[6];
+  float ExtentMin[3],ExtentMax[3];
+  int ExtentFlag;
   float Level,Radius;
   int ResurfaceFlag;
   int DotFlag;
+} ObjectMeshState;
+
+typedef struct ObjectMesh {
+  Object Obj;
+  ObjectMeshState *State;
+  int NState;
 } ObjectMesh;
 
-ObjectMesh *ObjectMeshFromBox(ObjectMap *map,float *mn,float *mx,float level,int dotFlag);
-void ObjectMeshDump(ObjectMesh *I,char *fname);
+ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,int state,float *mn,float *mx,float level,int dotFlag);
+void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
 
 #endif
-
-
-
-
-
-
-
-
-
-
 

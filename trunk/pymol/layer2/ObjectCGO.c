@@ -204,5 +204,6 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
     ObjectCGORecomputeExtent(I);
   }
   SceneChanged();
+  SceneCountFrames();
   return(I);
 }

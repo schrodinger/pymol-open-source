@@ -10,7 +10,7 @@ Potential Changes
 
 Impending Changes
 
-   * Reimplmentation of the Settings subsystem to support object-
+   * Reimplementation of the Settings subsystem to support object-
    specific settings, direct access to setting from Python, and
    complete browsing and access to internal settings from a GUI.
 
@@ -20,18 +20,18 @@ Impending Changes
    
 Changes up to 0.50
 
-   * modified raytrace antialiasing transfer function improve contrast
+   * Mesh objects now have states, and new meshes are appended onto the object.
 
-   * alias and extend commands
+   * Modified raytrace antialiasing transfer function improve contrast.
+
+   * Created alias and extend commands for the parser.
 
    * Additional test cases.
 
    * Parser improved with a new argument parsing subsystem which has a
    better mapping to standard Python arguments.  This has significant
    potential to break existing code if there are any bugs, but I am
-   targeting 100% backward compatibility.  It will now be possible to
-   extend the parser to call arbitrary python functions (provided that
-   they  can handle/convert from string arguments).
+   the goal is 100% backwards compatibility. 
 
 Changes up to 0.49
 

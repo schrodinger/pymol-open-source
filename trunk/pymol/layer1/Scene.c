@@ -219,7 +219,6 @@ void SceneCountFrames()
   CScene *I=&Scene;
   ObjRec *rec = NULL;
   int n;
-  int frame;
 
   I->NFrame=0;
   while(ListIterate(I->Obj,rec,next))
@@ -233,11 +232,11 @@ void SceneCountFrames()
 	 }
   if(I->NFrame<MovieGetLength())
 	 I->NFrame=MovieGetLength();
-  if(I->Frame>=I->NFrame) {
-	 frame=I->NFrame-1;
-	 if(frame<0) frame=0;
-	 SceneSetFrame(0,frame);
-  }
+  /*  if(I->Frame>=I->NFrame) {
+      frame=I->NFrame-1;
+      if(frame<0) frame=0;
+      SceneSetFrame(0,frame);
+      } */
 }
 /*========================================================================*/
 void SceneSetFrame(int mode,int frame)
@@ -263,6 +262,7 @@ void SceneSetFrame(int mode,int frame)
 	 I->Frame+=frame;
 	 break;
   }
+  SceneCountFrames();
   if(I->Frame>=I->NFrame) I->Frame=I->NFrame-1;
   if(I->Frame<0) I->Frame=0;
   I->StateIndex = MovieFrameToIndex(I->Frame);
@@ -273,6 +273,7 @@ void SceneSetFrame(int mode,int frame)
   if(SettingGet(cSetting_cache_frames))
 	 I->MovieFrameFlag=true;
   SceneDirty();
+
 }
 /*========================================================================*/
 void ScenePurgeCopy(void)

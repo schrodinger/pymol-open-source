@@ -1963,7 +1963,7 @@ void ExecutiveDump(char *fname,char *obj)
   if(rec)
 	 { 
       if(rec->obj->type==cObjectMesh) {
-        ObjectMeshDump((ObjectMesh*)rec->obj,fname);
+        ObjectMeshDump((ObjectMesh*)rec->obj,fname,0);
       } else {
         ErrMessage("ExecutiveDump","Invalid object type for this operation.");
       }

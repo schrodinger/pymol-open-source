@@ -624,13 +624,13 @@ static PyObject *CmdDump(PyObject *dummy, PyObject *args)
 }
 
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
-  char *str1,*str2,*str3,*str4;
+  char *str1,*str2,*str3;
   float lvl,fbuf;
   int dotFlag;
-  int c;
+  int c,state=-1;
   OrthoLineType s1;
   int oper,frame;
-  Object *obj,*mObj;
+  Object *obj,*mObj,*origObj;
   ObjectMap *mapObj;
   float mn[3] = { 0,0,0};
   float mx[3] = { 15,15,15};
@@ -638,8 +638,17 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
 
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  PyArg_ParseTuple(args,"sisissfi",&str1,&frame,&str2,&oper,&str3,&str4,&lvl,&dotFlag);
+  PyArg_ParseTuple(args,"sisisffii",&str1,&frame,&str2,&oper,&str3,&fbuf,&lvl,&dotFlag,&state);
   APIEntry();
+
+  origObj=ExecutiveFindObjectByName(str1);  
+  if(origObj) {
+    if(origObj->type!=cObjectMesh) {
+      ExecutiveDelete(str1);
+      origObj=NULL;
+    }
+  }
+
   mObj=ExecutiveFindObjectByName(str2);  
   if(mObj) {
     if(mObj->type!=cObjectMap)
@@ -658,26 +667,20 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
       SelectorGetTmp(str3,s1);
       ExecutiveGetExtent(s1,mn,mx);
       SelectorFreeTmp(s1);
-      if(sscanf(str4,"%f",&fbuf)==1) {
-        for(c=0;c<3;c++) {
-          mn[c]-=fbuf;
-          mx[c]+=fbuf;
-        }
+      for(c=0;c<3;c++) {
+        mn[c]-=fbuf;
+        mx[c]+=fbuf;
       }
       break;
     }
-    obj=ExecutiveFindObjectByName(str1);  
-    if(obj) {
-      ExecutiveDelete(obj->Name);
-      obj=NULL;
-    }
-    obj=(Object*)ObjectMeshFromBox(mapObj,mn,mx,lvl,dotFlag);
-    if(obj) {
+
+    obj=(Object*)ObjectMeshFromBox((ObjectMesh*)origObj,mapObj,state,mn,mx,lvl,dotFlag);
+    if(!origObj) {
       ObjectSetName(obj,str1);
       ExecutiveManageObject((Object*)obj);
-      sprintf(buf," Mesh: created \"%s\", setting level to %5.3f\n",str1,lvl);
-      OrthoAddOutput(buf);
     }
+    sprintf(buf," Mesh: created \"%s\", setting level to %5.3f\n",str1,lvl);
+    OrthoAddOutput(buf);
   } else {
     sprintf(buf,"Map or brick object '%s' not found.",str2);
     ErrMessage("Mesh",buf);
