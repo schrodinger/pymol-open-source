@@ -508,17 +508,21 @@ static void RayComputeBox(CRay *I)
   xm = v[0] - r;\
   yp = v[1] + r;\
   ym = v[1] - r;\
+  zp = v[2] + r;\
+  zm = v[2] - r;\
   if(xmin>xm) xmin = xm;\
   if(xmax<xp) xmax = xp;\
   if(ymin>ym) ymin = ym;\
   if(ymax<yp) ymax = yp;\
+  if(zmin>zm) zmin = zm;\
+  if(zmax<zp) zmax = zp;\
 }
 
   CPrimitive *prm;
   CBasis *basis1;
 
-  float xmin=0.0F,ymin=0.0F,xmax=0.0F,ymax=0.0F;
-  float xp,xm,yp,ym;
+  float xmin=0.0F,ymin=0.0F,xmax=0.0F,ymax=0.0F,zmin=0.0F,zmax=0.0F;
+  float xp,xm,yp,ym,zp,zm;
 
   float *v,r;
   float vt[3];
@@ -529,7 +533,8 @@ static void RayComputeBox(CRay *I)
   if(basis1->NVertex) {
     xmin = xmax = basis1->Vertex[0];
     ymin = ymax = basis1->Vertex[1];
-    
+    zmin = zmax = basis1->Vertex[2];
+
     for(a=0;a<I->NPrimitive;a++) {
       prm=I->Primitive+a;
       
@@ -567,8 +572,10 @@ static void RayComputeBox(CRay *I)
   }
   I->min_box[0] = xmin;
   I->min_box[1] = ymin;
+  I->min_box[2] = zmin;
   I->max_box[0] = xmax;
   I->max_box[1] = ymax;
+  I->max_box[2] = zmax;
 }
 
 static void RayTransformFirst(CRay *I,int perspective)
@@ -2667,14 +2674,61 @@ int opaque_back=0;
     {
 		/* now spawn threads as needed */
 		CRayThreadInfo rt[MAX_RAY_THREADS];
-      int x_start,y_start;
-      int x_stop,y_stop;
+      
+      int x_start=0,y_start=0;
+      int x_stop=0,y_stop=0;
+      float x_test=_0, y_test=_0;
+      int x_pixel, y_pixel;
 
       if(perspective) {
-        x_start = 0;
-        y_start = 0;
-        x_stop = width;
-        y_stop = height;
+        int c;
+        if(I->min_box[2]<front)
+          I->min_box[2] = front;
+        if(I->max_box[2]<front)
+          I->max_box[2] = front;
+
+        for(c=0;c<3;c++) {
+          switch(c) {
+          case 0:
+            x_test = (I->min_box[0])/I->min_box[2];
+            y_test = (I->min_box[1])/I->min_box[2];
+            break;
+          case 1:
+            x_test = (I->min_box[0])/I->max_box[2];
+            y_test = (I->min_box[1])/I->max_box[2];
+            break;
+          case 2:
+            x_test = (I->max_box[0])/I->min_box[2];
+            y_test = (I->max_box[1])/I->min_box[2];
+            break;
+          case 3:
+            x_test = (I->max_box[0])/I->max_box[2];
+            y_test = (I->max_box[1])/I->max_box[2];
+            break;
+          }
+
+          /* project onto back to get the effective range */
+
+          x_pixel = (int)(width * (((x_test*I->Volume[5])-I->Volume[0])/I->Range[0])); 
+          y_pixel = (int)(height * (((y_test*I->Volume[5])-I->Volume[2])/I->Range[1]));
+
+          if(!c) {
+            x_start = x_pixel;
+            x_stop = x_pixel;
+            y_start = y_pixel;
+            y_stop = y_pixel;
+          } else {
+            if(x_start>x_pixel) x_start = x_pixel;
+            if(x_stop<x_pixel) x_stop = x_pixel;
+            if(y_start>y_pixel) y_start = y_pixel;
+            if(y_stop<y_pixel) y_stop = y_pixel;
+          }
+        }
+        x_start -=2;
+        x_stop +=2;
+        y_start -=2;
+        y_stop +=2;
+
       } else {
         x_start = (int)((width * (I->min_box[0] - I->Volume[0]))/I->Range[0]) - 2;
         x_stop  = (int)((width * (I->max_box[0] - I->Volume[0]))/I->Range[0]) + 2;
@@ -2682,13 +2736,13 @@ int opaque_back=0;
         y_stop = (int)((height * (I->max_box[1] - I->Volume[2]))/I->Range[1]) + 2;
         y_start  = (int)((height * (I->min_box[1] - I->Volume[2]))/I->Range[1]) - 2;
         
-        if(x_start<0) x_start = 0;
-        if(y_start<0) y_start = 0;
-        if(x_stop>width) x_stop = width;
-        if(y_stop>height) y_stop = height;
       }
-
-oversample_cutoff = SettingGetGlobal_i(I->G,cSetting_ray_oversample_cutoff);
+      if(x_start<0) x_start = 0;
+      if(y_start<0) y_start = 0;
+      if(x_stop>width) x_stop = width;
+      if(y_stop>height) y_stop = height;
+      
+      oversample_cutoff = SettingGetGlobal_i(I->G,cSetting_ray_oversample_cutoff);
 
       if(!antialias)
         oversample_cutoff = 0;

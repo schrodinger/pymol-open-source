@@ -85,8 +85,8 @@ struct _CRay {
   int Context;
   float AspRatio;
   float PixelRadius;
-  float min_box[2];
-  float max_box[2];
+  float min_box[3];
+  float max_box[3];
 };
 
 
