@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"AtomInfo.h"
 #include"Vector.h"
 #include"Color.h"
+#include"Symmetry.h"
 
 typedef struct ObjectMolecule {
   Object Obj;
@@ -33,6 +34,7 @@ typedef struct ObjectMolecule {
   char Color[3];
   float FractionExposed;
   int SeleBase;
+  CSymmetry *Symmetry;
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {

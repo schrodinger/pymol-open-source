@@ -64,18 +64,6 @@ void my_interrupt(int a)
   exit(EXIT_FAILURE);
 }
 
-PyObject *PFloatVLAToPyList(float *f)
-{
-  int a,l;
-  PyObject *result = Py_None;
-  l=VLAGetSize(f);
-  result=PyList_New(l);
-  for(a=0;a<l;a++) {
-    PyList_SetItem(result,a,PyFloat_FromDouble((double)f[a]));
-  }
-  return(result);
-}
-
 
 int PAlterAtom(AtomInfoType *at,char *expr)
 {

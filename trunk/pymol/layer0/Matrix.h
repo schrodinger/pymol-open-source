@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Matrix
 #define _H_Matrix
 
+void MatrixDump44f(float *m,char *prefix);
 void MatrixInvTransform3f(float *vector,float *matrix,float *result);
 void MatrixTransform3f(float *vector,float *matrix,float *result);
 void MatrixTransform44fn( unsigned int n, float *q, const float m[16], float *p);

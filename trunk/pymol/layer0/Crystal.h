@@ -29,6 +29,7 @@ typedef struct {
 } CCrystal;
 
 void CrystalFree(CCrystal *I);
+void CrystalInit(CCrystal *I);
 CCrystal *CrystalNew(void);
 void CrystalUpdate(CCrystal *I);
 void CrystalDump(CCrystal *I);

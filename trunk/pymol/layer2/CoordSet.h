@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_CoordSet
 
 #include"Rep.h"
+#include"Symmetry.h"
 
 typedef struct CoordSet {
   void (*fUpdate)(struct CoordSet *I);
@@ -36,6 +37,7 @@ typedef struct CoordSet {
   int NRep;
   int NTmpBond; /* optional + temporary (for coord set transfers) */
   int *TmpBond; /* actual bond info is stored in ObjectMolecule */
+  CSymmetry *TmpSymmetry;
 } CoordSet;
 
 #include"ObjectMolecule.h"
@@ -44,6 +46,9 @@ CoordSet *CoordSetNew(void);
 void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt);
 CoordSet *CoordSetCopy(CoordSet *cs);
 
+void CoordSetTransform44f(CoordSet *I,float *mat);
+void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst);
+void CoordSetFracToReal(CoordSet *I,CCrystal *cryst);
 
 #endif
 

@@ -19,6 +19,7 @@ BUILD = -o pymol.exe
 #DEFS = -D_PYMOL_MODULE 
 #BUILD = -shared -o modules/_pm.so
 #--- Build for Windows as an importable module
+#  - NOTE: windows port doesn't yet include contrib
 #XLIB_DIR = 
 #LIBS = -lpython15 -lopengl32 -lglu32 -lglut32 -lpng -lz
 #DEFS = -D_PYMOL_MODULE

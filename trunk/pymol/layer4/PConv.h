@@ -18,7 +18,29 @@ Z* -------------------------------------------------------------------
 
 #include<Python.h>
 
-void PConv44To44f(PyObject *src,float *dest);
+
+/* Convenient conversion routines for C<->Python data interchange
+   
+   Note that all of these routines assume that we have the global
+   interpreter lock - blocking all other threads.
+   
+   There are three ways to get it:
+   
+   - call PBlock() [followe by PUnblock() when done]
+   
+   - call PBlockAndUnlockAPI - [followed by PLockAPIAndUnblock() when
+   done]
+   
+   - or in response to a call to the PM API, you will have the main
+   Python thread by default.  [Note that within an
+   APIEntry(),APIExit() block the lock is released, so these
+   functions should be called outside of that block].
+
+*/
+
+PyObject *PConvFloatVLAToPyList(float *f);
+
+void PConvPy44fTo44f(PyObject *src,float *dest); /* note lost of precision */
 
 #endif
 
