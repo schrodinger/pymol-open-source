@@ -130,8 +130,8 @@ static int set_list(CSetting *I,PyObject *list)
         /* don't restore the folllowing settings,
            which are inherently system-dependent */
       case cSetting_stereo_double_pump_mono: 
-        break;
       case cSetting_max_threads:
+      case cSetting_migrate_sessions:
         break;
       default:
         if(ok) switch(setting_type) {
@@ -2194,8 +2194,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_pdb_conect_all,0);
   SettingSet_s(I,cSetting_button_mode_name,"");
   SettingSet_i(I,cSetting_surface_type,0);
-  SettingSet_i(I,cSetting_dot_normals,1);
-
+  SettingSet_b(I,cSetting_dot_normals,1);
+  SettingSet_b(I,cSetting_migrate_sessions,1);
 }
 
 

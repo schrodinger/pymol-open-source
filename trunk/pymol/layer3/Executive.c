@@ -1126,12 +1126,51 @@ int ExecutiveGetSession(PyObject *dict)
   return(ok);
 }
 
+static void ExecutiveMigrateSession(int session_version)
+{
+  if(session_version<95) {
+
+    { /* adjust fog to reflect current importance of seeing to the Z-slab center w/o fog */
+      
+      float fog_start = SettingGetGlobal_f(cSetting_fog_start);
+      float ray_trace_fog_start = SettingGetGlobal_f(cSetting_ray_trace_fog_start);
+      if((fog_start==0.40F)||(fog_start==0.35F)||(fog_start==0.30F)) {
+        SettingSetGlobal_f(cSetting_fog_start,0.45F);
+      }
+      if((ray_trace_fog_start==0.45F)||(ray_trace_fog_start==0.40F)||(ray_trace_fog_start==0.35F)) {
+        SettingSetGlobal_f(cSetting_ray_trace_fog_start,0.50F);
+      }
+
+    }
+
+    { /* adjust GUI width */
+
+      int gui_width = SettingGetGlobal_i(cSetting_internal_gui_width);
+
+      if(gui_width==160) {
+        SettingSetGlobal_i(cSetting_internal_gui_width,220);
+      }
+    }
+
+    { /* enable antialiasing */
+
+      int antialias = SettingGetGlobal_i(cSetting_antialias);
+
+      if(antialias==0) {
+        SettingSetGlobal_i(cSetting_antialias,1);
+      }
+      
+    }
+  }
+}
+
 int ExecutiveSetSession(PyObject *session)
 {
   int ok=true;
   PyObject *tmp;
   SceneViewType sv;
   int version=-1;
+  int migrate_sessions = SettingGetGlobal_b(cSetting_migrate_sessions);
 
   ExecutiveDelete("all");
   ColorReset();
@@ -1312,6 +1351,15 @@ int ExecutiveSetSession(PyObject *session)
       PRINTFB(FB_Executive,FB_Errors)
         "ExectiveSetSession-Error: after main.\n"
         ENDFB;
+    }
+  }
+  if(ok&&migrate_sessions) { /* migrate sessions */
+    tmp = PyDict_GetItemString(session,"version");
+    if(tmp) {
+      ok = PConvPyIntToInt(tmp,&version);
+      if(ok) {
+        ExecutiveMigrateSession(version);
+      }
     }
   }
   if(!ok) {
