@@ -1439,6 +1439,56 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   AtomInfoType *atInfo,*ai,*last = NULL;
   SelectorUpdateTable();
   c=0;
+
+    /*  if(SettingGet(cSetting_save_pdb_ss)) {
+  SSEntry *ss = NULL;
+  int n_ss = 0;
+  int ss_active = false;
+
+      ss = VLAlloc(SSEntry,100);
+      
+      for(a=0;a<I->NAtom;a++) {
+      at=I->Table[a].atom;
+      I->Table[a].index=0;
+      obj=I->Obj[I->Table[a].model];
+      s = obj->AtomInfo[at].selEntry;
+      if(SelectorIsMember(s,sele)) 
+        {
+          if(state<obj->NCSet) 
+            cs=obj->CSet[state];
+          else
+            cs=NULL;
+          if(cs) {
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[at])
+                idx=obj->DiscreteAtmToIdx[at];
+              else
+                idx=-1;
+            } else 
+              idx=cs->AtmToIdx[at];
+            if(idx>=0) {
+              ai = obj->AtomInfo+at;
+
+              if(ss_active) {
+                
+              } else {
+                if((at->ss=='H')||(at->ss=='S')) {
+                  VLACheck(ss,SSEntry,n_ss);
+                  
+                }
+              }
+              
+              CoordSetAtomToPDBStrVLA(charVLA,&cLen,ai,
+                                      obj->CSet[state]->Coord+(3*idx),c);
+              last = ai;
+              c++;
+            }
+          }
+        }
+    }
+  }
+    */
+
   for(a=0;a<I->NAtom;a++) {
     at=I->Table[a].atom;
     I->Table[a].index=0;
@@ -1555,6 +1605,9 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
     }
     VLAFree(bond);
   }
+  /*
+    VLAFreeP(ss); */
+
   return(cLen);
 }
 /*========================================================================*/

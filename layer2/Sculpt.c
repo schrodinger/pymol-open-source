@@ -64,10 +64,11 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 {
   int a,a0,a1,a2,a3,b0,b1,b2,b3;
   BondType *b;
-  float *v0,*v1,*v2,*v3,d;
+  float *v0,*v1,*v2,*v3,d,dummy;
   CoordSet *cs;
   int n0,n1,n2;
   int *planer = NULL;
+  int *linear = NULL;
   int nex = 1;
   int *j,*k,xhash;
   int ex_type;
@@ -109,12 +110,14 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
         if(obj->NBond) {
 
           planer=Alloc(int,obj->NAtom);
+          linear=Alloc(int,obj->NAtom);
           ai = obj->AtomInfo;
           for(a=0;a<obj->NAtom;a++) {
-            planer[a]=(ai->geom==3);
+            planer[a]=(ai->geom==cAtomInfoPlaner);
+            linear[a]=(ai->geom==cAtomInfoLinear);
             ai++;
           }
-          
+
           b=obj->Bond;
           for(a=0;a<obj->NBond;a++)
             {
@@ -240,7 +243,8 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
           
           /* now pick up those 1-3 interations */
           
-          
+          /* b1-b0-b2 */
+
           for(b0=0;b0<obj->NAtom;b0++) {
             n0 = obj->Neighbor[b0]+1;
             while(obj->Neighbor[n0]>=0) {
@@ -280,6 +284,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   a1=cs->AtmToIdx[b1];
                   a2=cs->AtmToIdx[b2];
                 }
+
                 if((a0>=0)&&(a1>=0)&&(a2>=0)) {
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
@@ -295,6 +300,22 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                                        oai[b2].sculpt_id,0,d);
                   }
                   ShakerAddDistCon(I->Shaker,b1,b2,d,0); 
+
+
+                  if(linear[b0]&&(linear[b1]||linear[b2])) {
+                    
+                    if(use_cache) {
+                      if(!SculptCacheQuery(cSculptLine,
+                                           oai[b1].sculpt_id,
+                                           oai[b0].sculpt_id,
+                                           oai[b2].sculpt_id,0,&dummy))
+                        SculptCacheStore(cSculptLine,
+                                         oai[b1].sculpt_id,
+                                         oai[b0].sculpt_id,
+                                         oai[b2].sculpt_id,0,0.0);
+                    }
+                    ShakerAddLineCon(I->Shaker,b1,b0,b2); 
+                  }
                 }
                 n1+=2;
               }
@@ -488,6 +509,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
             }
           }
           FreeP(planer);
+          FreeP(linear);
         }
       }
   
@@ -556,6 +578,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   ShakerDistCon *sdc;
   ShakerPyraCon *spc;
   ShakerPlanCon *snc;
+  ShakerLineCon *slc;
 
   float *disp = NULL;
   float *v,*v0,*v1,*v2,*v3;
@@ -581,6 +604,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   float angl_wt;
   float pyra_wt;
   float plan_wt;
+  float line_wt;
   int active_flag=false;
   float hb_overlap,hb_overlap_base;
   int *active,n_active;
@@ -613,6 +637,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         angl_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_angl_weight);
         pyra_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
         plan_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
+        line_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
         mask = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
         hb_overlap = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
         hb_overlap_base = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
@@ -689,6 +714,34 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                   }
               }
               sdc++;
+            }
+
+            /* apply line constraints */
+            
+            if(cSculptLine & mask) {
+              slc=shk->LineCon;
+              
+              for(a=0;a<shk->NLineCon;a++) {
+                b0 = slc->at0;
+                b1 = slc->at1;
+                b2 = slc->at2;
+                a0 = atm2idx[b0]; /* coordinate set indices */
+                a1 = atm2idx[b1];
+                a2 = atm2idx[b2];
+                
+                cnt[b0]++;
+                cnt[b1]++;
+                cnt[b2]++;
+                
+                if((a0>=0)&&(a1>=0)&&(a2>=0))
+                  {
+                    v0 = cs->Coord+3*a0;
+                    v1 = cs->Coord+3*a1;
+                    v2 = cs->Coord+3*a2;
+                    ShakerDoLine(v0,v1,v2,disp+b0*3,disp+b1*3,disp+b2*3,line_wt);
+                  }
+                slc++;
+              }
             }
 
             /* apply pyramid constraints */

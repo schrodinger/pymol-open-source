@@ -218,6 +218,8 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
   int a=0;
   ObjectMeshState *ms = NULL;
 
+  ObjectPrepareContext(&I->Obj,ray);
+
   if(state<I->NState) {
     if(I->State[state].Active)
       if(I->State[state].V&&I->State[state].N)

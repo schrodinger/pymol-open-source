@@ -101,6 +101,9 @@ static void ObjectMapUpdate(ObjectMap *I) {
 static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick,int pass)
 {
   if(!pass) {
+
+    ObjectPrepareContext(&I->Obj,ray);
+
     if(I->Obj.RepVis[cRepExtent]) {
       if(ray) {
         float *vc;

@@ -89,6 +89,8 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
   int a;
   float *color;
 
+  ObjectPrepareContext(&I->Obj,ray);
+
   color = ColorGet(I->Obj.Color);
 
   if(!pass) {

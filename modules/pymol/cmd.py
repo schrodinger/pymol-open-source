@@ -1285,6 +1285,8 @@ alt = {
    'g' : [ editor.attach_amino_acid, ("pk1","gly"), {}],
    'h' : [ editor.attach_amino_acid, ("pk1","his"), {}],
    'i' : [ editor.attach_amino_acid, ("pk1","ile"), {}],
+
+   'j' : [ editor.attach_fragment,   ("pk1","acetylene",2,0), {}],
    'k' : [ editor.attach_amino_acid, ("pk1","lys"), {}],
    'l' : [ editor.attach_amino_acid, ("pk1","leu"), {}],
    

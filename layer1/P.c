@@ -465,9 +465,10 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
       if(ss_id1!=ss_id2) {
         if(!PConvPyObjectToStrMaxLen(ss_id2,ssType,sizeof(SSType)-1))
           result=false;
-        else
+        else {
           strcpy(at->ssType,ssType);
-
+          at->ssType[0] = toupper(at->ssType[0]);
+        }
       }
       if(b_id1!=b_id2) {
         if(!PConvPyObjectToFloat(b_id2,&b))

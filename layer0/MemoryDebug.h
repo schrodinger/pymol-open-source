@@ -34,8 +34,6 @@ Z* -------------------------------------------------------------------
   *use mregister to remember some address or pointer
   *use mforget to forget some address or pointer
 
-  *note calloc isn't supported because I don't use it
-
   Notice that because of these requirements, it isn't easy
   to use this memory debuggin system with existing code...
 
@@ -70,6 +68,7 @@ typedef struct VLARec {
 #define VLACopy(ptr,type) (type*)VLANewCopy(ptr);
 
 #define Alloc(type,size) (type*)mmalloc(sizeof(type)*(size))
+#define Calloc(type,size) (type*)mcalloc(sizeof(type),size)
 #define Realloc(ptr,type,size) (type*)mrealloc(ptr,sizeof(type)*(size))
 
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
@@ -91,6 +90,7 @@ void *VLANewCopy(void *ptr);
 #ifndef _MemoryDebug_ON
 /* _MemoryDebug_ON not defined */
 
+#define mcalloc calloc
 #define mmalloc malloc
 #define mrealloc realloc
 #define mfree free
@@ -115,6 +115,7 @@ extern "C" {
 #define _MDMarker 3
 
 #define mmalloc(x) MemoryDebugMalloc(x,__FILE__,__LINE__,_MDPointer)
+#define mcalloc(x,y) MemoryDebugCalloc(x,y,__FILE__,__LINE__,_MDPointer)
 #define mrealloc(x,y) MemoryDebugRealloc(x,y,__FILE__,__LINE__,_MDPointer)
 #define mfree(x) MemoryDebugFree(x,__FILE__,__LINE__,_MDPointer)
 #define mregister(x,y) MemoryDebugRegister((void*)x,y,__FILE__,__LINE__)
@@ -125,6 +126,7 @@ void MemoryDebugRegister(void *addr,const char *note,
 void MemoryDebugForget(void *addr,const char *file,int line);
 
 void *MemoryDebugMalloc(size_t size,const char *file,int line,int type);
+void *MemoryDebugCalloc(size_t nmemb,size_t size,const char *file,int line,int type);
 void *MemoryDebugRealloc(void *ptr,size_t size,
 			 const char *file,int line,int type);
 void MemoryDebugFree(void *ptr,const char *file,int line,int type);

@@ -1231,6 +1231,10 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_connect_cutoff, 0.35F);
 
+  SettingSet_f(I,cSetting_save_pdb_ss, 0.0F);
+
+  SettingSet_f(I,cSetting_sculpt_line_weight, 1.0F);
+
 }
 
 

@@ -1268,15 +1268,15 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Sculpting', 'command', 'All Except VDW',
                                label='All Except VDW',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=15"))
+                               command = lambda: cmd.do("_ set sculpt_field_mask=31"))
 
       self.menuBar.addmenuitem('Sculpting', 'command', 'All Except 1-4 VDW',
                                label='All Except 1-4 VDW',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=31"))
+                               command = lambda: cmd.do("_ set sculpt_field_mask=63"))
 
       self.menuBar.addmenuitem('Sculpting', 'command', 'All Terms',
                                label='All Terms',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=63"))
+                               command = lambda: cmd.do("_ set sculpt_field_mask=127"))
 
       self.menuBar.addmenu('Demo', 'Demonstrations')
 

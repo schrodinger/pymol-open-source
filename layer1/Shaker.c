@@ -30,9 +30,11 @@ CShaker *ShakerNew(void)
   I->DistCon = VLAlloc(ShakerDistCon,1000);
   I->PyraCon = VLAlloc(ShakerPyraCon,1000);
   I->PlanCon = VLAlloc(ShakerPlanCon,1000);
+  I->LineCon = VLAlloc(ShakerLineCon,100);
   I->NDistCon = 0;
   I->NPyraCon = 0;
   I->NPlanCon = 0;
+  I->NLineCon = 0;
   return(I);
 }
 
@@ -120,6 +122,52 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
 
 }
 
+
+float ShakerDoLine(float *v0,float *v1,float *v2,
+                   float *p0,float *p1,float *p2,float wt)
+{
+  /* v0-v1-v2 */
+
+  float d0[3],d1[3],cp[3],d2[3],d3[3],d4[3],push[3];
+  float dev,sc,lcp;
+
+  subtract3f(v2,v1,d2);
+  normalize3f(d2);
+  subtract3f(v0,v1,d1);
+  normalize23f(d1,d0);
+
+  cross_product3f(d2,d0,cp); 
+  lcp = length3f(cp);
+  if(lcp>R_SMALL4) {
+    lcp = 1.0F/lcp;
+    scale3f(cp,lcp,cp); /* axis 0 */
+
+    subtract3f(v2,v0,d3);
+    normalize3f(d3);  /* axis 1 */
+    
+    cross_product3f(cp,d3,d4); 
+    normalize3f(d4); /* displacement direction */
+
+    dev = dot_product3f(d1,d4); /* current deviation */
+
+    if(fabs(dev)>R_SMALL8) {
+      sc = wt*dev;
+      scale3f(d4,sc,push);
+      add3f(push,p1,p1);
+      scale3f(push,0.5,push);
+      subtract3f(p0,push,p0);
+      subtract3f(p2,push,p2);
+    } else {
+      dev = 0.0;
+    }
+  } else
+    dev = 0.0;
+  return dev;
+
+}
+
+
+
 float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3,float wt)
 {
@@ -199,7 +247,18 @@ void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3)
   spc->at2=atom2;
   spc->at3=atom3;
   I->NPlanCon++;
+}
 
+void ShakerAddLineCon(CShaker *I,int atom0,int atom1,int atom2)
+{
+  ShakerPlanCon *slc;
+  
+  VLACheck(I->LineCon,ShakerLineCon,I->NLineCon);
+  slc = I->LineCon+I->NLineCon;
+  slc->at0=atom0;
+  slc->at1=atom1;
+  slc->at2=atom2;
+  I->NLineCon++;
 }
 
 void ShakerFree(CShaker *I)
@@ -207,6 +266,7 @@ void ShakerFree(CShaker *I)
   VLAFreeP(I->PlanCon);
   VLAFreeP(I->PyraCon);
   VLAFreeP(I->DistCon);
+  VLAFreeP(I->LineCon);
   OOFreeP(I);
 }
 
