@@ -279,6 +279,7 @@ Rep *RepSphereNew(CoordSet *cs)
   float *sphLen,sphTmp,*sphNorm,*sphTmpN;
   float sphere_scale,sphere_add=0.0;
   int one_color;
+  int *map_flag=NULL,*mf;
 
 #ifdef _this_code_is_not_used
   float vv0[3],vv1[3],vv2[3];
@@ -287,6 +288,7 @@ Rep *RepSphereNew(CoordSet *cs)
 
   OOAlloc(RepSphere);
 
+  
   obj = cs->Obj;
   vFlag=false;
   for(a=0;a<cs->NIndex;a++) {
@@ -336,10 +338,12 @@ Rep *RepSphereNew(CoordSet *cs)
   I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
   ErrChkPtr(I->VC);
   I->NC=0;
-  
+  map_flag = Calloc(int,cs->NIndex);
+
   I->NT=NULL;
   
   v=I->VC; 
+  mf=map_flag;
 
   if(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
     sphere_add = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
@@ -351,6 +355,7 @@ Rep *RepSphereNew(CoordSet *cs)
       a1 = cs->IdxToAtm[a];
       if(obj->AtomInfo[a1].visRep[cRepSphere])
         {
+          *mf=true;
           I->NC++;
           if(one_color==-1)
             c1=*(cs->Color+a);
@@ -371,12 +376,14 @@ Rep *RepSphereNew(CoordSet *cs)
           *(v++)=*(v0++);
           *(v++)=obj->AtomInfo[a1].vdw*sphere_scale+sphere_add;
         }
+      mf++;
     }
 
   if(I->NC) 
 	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(v-I->VC));
   else
 	 I->VC=(float*)mrealloc(I->VC,1);
+
 
   I->cullFlag = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
   if(spheroidFlag) I->cullFlag=false;
@@ -388,7 +395,7 @@ Rep *RepSphereNew(CoordSet *cs)
      (SettingGet(cSetting_roving_spheres)!=0.0F))
     I->cullFlag=false;
   if(I->cullFlag) {
-	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(sp->NVertTot*19));
+	 I->V=(float*)mmalloc(sizeof(float)*I->NC*(sp->NVertTot*30)); /* double check 30 */
 	 ErrChkPtr(I->V);
 
 	 I->NT=Alloc(int,cs->NIndex);
@@ -397,10 +404,10 @@ Rep *RepSphereNew(CoordSet *cs)
 	 visFlag = Alloc(int,sp->nDot);
 	 ErrChkPtr(visFlag);
 
-    map=MapNew(MAX_VDW*sphere_scale+sphere_add,cs->Coord,cs->NIndex,NULL);
+    map=MapNewFlagged(MAX_VDW*sphere_scale+sphere_add,cs->Coord,cs->NIndex,NULL,map_flag);
     if(map) MapSetupExpress(map);
   } else {
-	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(3+sp->NVertTot*6));
+	 I->V=(float*)mmalloc(sizeof(float)*I->NC*(3+sp->NVertTot*6));
 	 ErrChkPtr(I->V);
   }
 
@@ -449,7 +456,9 @@ Rep *RepSphereNew(CoordSet *cs)
 						  a2 = cs->IdxToAtm[j];
 						  if(obj->AtomInfo[a2].visRep[cRepSphere]) {
 							 if(j!=a)
-								if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale + sphere_add))
+								if(within3f(cs->Coord+3*j,v1,
+                                    cs->Obj->AtomInfo[a2].vdw*
+                                    sphere_scale + sphere_add))
 								  {
 									 visFlag[b]=0;
 									 break;
@@ -653,6 +662,7 @@ Rep *RepSphereNew(CoordSet *cs)
 		if(I->NT) I->NT=Realloc(I->NT,int,1);
 	 }
   FreeP(visFlag);
+  FreeP(map_flag);
   if(map)  MapFree(map);
   return((void*)(struct Rep*)I);
 }
