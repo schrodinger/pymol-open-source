@@ -238,7 +238,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_ray_texture                 139
 #define cSetting_ray_texture_settings        140
 #define cSetting_suspend_updates             141
-#define cSetting_INIT                        142
+#define cSetting_full_screen                 142
+#define cSetting_INIT                        143
 
 #endif
 

@@ -2344,11 +2344,12 @@ void ExecutiveSetObjVisib(char *name,int state)
 void ExecutiveFullScreen(int flag)
 {
   if(PMGUI) {
+    SettingSet(cSetting_full_screen,(float)flag);
     if(flag) {
       p_glutFullScreen();
     } else {
       p_glutReshapeWindow(640+SettingGet(cSetting_internal_gui_width),
-                        480+cOrthoBottomSceneMargin);
+                          480+cOrthoBottomSceneMargin);
     }
   }
 }

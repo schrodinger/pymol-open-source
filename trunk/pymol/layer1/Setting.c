@@ -1066,5 +1066,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_suspend_updates, 0.0F);
 
+  SettingSet_f(I,cSetting_full_screen, 0.0F);
+
 }
 
