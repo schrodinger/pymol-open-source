@@ -461,6 +461,14 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
 	 break;
   case cSetting_sel_counter:
 	 break;
+  case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
+    SettingSet(cSetting_line_smooth,0);
+    SceneChanged();
+    break;
+  case cSetting_line_smooth:
+  case cSetting_dot_width:
+    SceneDirty();
+    break;
   case cSetting_ortho:
   case cSetting_ambient:
   case cSetting_bg_rgb:
@@ -603,6 +611,7 @@ void SettingSetNamed(char *name,char *value)
         SettingSet(cSetting_line_smooth,0);
 		SettingSetfv(index,&v);
 		sprintf(buffer," Setting: %s set to %5.3f\n",realName,v);
+      SceneDirty();
       break;
 	 default:
 		sscanf(value,"%f",&v);

@@ -241,38 +241,88 @@ class PMGApp(AbstractApp):
       if len(sfile):
          cmd.mpng(sfile)
 
+   def demo1(self):
+      cmd.disable()
+      cmd.do("cd $PYMOL_PATH")
+      cmd.delete("pept")
+      cmd.select("pept_dist")
+      cmd.load("test/dat/pept.pdb")
+      cmd.show("sticks","(pept and not i;5:7)")
+      cmd.show("surface","(pept and i;5,6)")
+      cmd.show("mesh","(pept and i;1,11,12,13)")
+      cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
+      cmd.show("dots","(i;8)")
+      cmd.dist("pept_dist","(i;1&n;OD2)","(i;13&n;OG1)")
+      cmd.set("dot_width","2");
+
+   def demo2(self):
+      cmd.disable()
+      cmd.do("cd $PYMOL_PATH")
+      cmd.delete("cgo1")
+      cmd.delete("cgo2")
+      cmd.do("cd $PYMOL_PATH")
+      cmd.load("test/dat/pept.r3d","cgo1")
+      cmd.load("test/dat/3al1.r3d","cgo2")
+      cmd.zoom()
+
+   def demo3(self):
+      cmd.disable()
+      cmd.do("cd $PYMOL_PATH")
+      cmd.do("run examples/devel/cgo03.py")
+
+   def demo4(self):
+      cmd.disable()
+      cmd.delete("arg")
+      cmd.fragment("arg")
+      cmd.zoom("arg",2)
+      cmd.show("sticks","arg")
+      cmd.feedback('dis','sel','res')
+      for a in xrange(1,181):
+         cmd.edit("(arg and n;cd)","(arg and n;cg)")
+         cmd.torsion("6")
+         cmd.unpick()
+         cmd.edit("(arg and n;cb)","(arg and n;ca)")
+         cmd.torsion("2")
+         cmd.unpick()
+         cmd.refresh()
+      cmd.feedback('ena','sel','res')
+      
    def createMenuBar(self):
       self.menuBar.addmenuitem('Help', 'command',
                                'Get information on application', 
                                label='About', command = cmd.splash)
 
+      self.menuBar.addmenuitem('Help', 'command', 'Release Notes',
+                               label='Release Notes',
+                               command = lambda: cmd.show_help("release"))      
+
       self.menuBar.addmenuitem('Help', 'separator', '')
       
-      self.menuBar.addmenuitem('Help', 'command', 'Help on the API',
-                               label='API',
-                               command = lambda: cmd.show_help("api"))      
-
-      self.menuBar.addmenuitem('Help', 'command', 'Help on Launching',
-                               label='Launching',
-                               command = lambda: cmd.show_help("launching"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Commands',
                                label='Commands',
                                command = lambda: cmd.show_help("commands"))      
 
+      self.menuBar.addmenuitem('Help', 'command', 'Help on Launching',
+                               label='Launching',
+                               command = lambda: cmd.show_help("launching"))      
+
       self.menuBar.addmenuitem('Help', 'separator', '')
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on the API',
-                               label='API',
-                               command = lambda: cmd.show_help("api"))      
+      self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
+                               label='Select Command',
+                               command = lambda: cmd.show_help("select"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
-                               label='Selections',
+                               label='Selection Syntax',
                                command = lambda: cmd.show_help("selections"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Example Selections',
-                               label='Example Selections',
+                               label='Selection Examples',
                                command = lambda: cmd.show_help("examples"))      
+
+      self.menuBar.addmenuitem('Help', 'separator', '')
+      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on the Mouse',
                                label='Mouse',
@@ -282,10 +332,29 @@ class PMGApp(AbstractApp):
                                label='Keyboard',
                                command = lambda: cmd.show_help("keyboard"))      
 
+      self.menuBar.addmenuitem('Help', 'command', 'Help on the Keyboard',
+                               label='Keyboard',
+                               command = lambda: cmd.show_help("keyboard"))      
+
+      self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
+                               label='Molecular Editing',
+                               command = lambda: cmd.show_help("editing"))      
+
+
+      self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
+                               label='Molecular Editing Keys',
+                               command = lambda: cmd.show_help("edit_keys"))      
+
       self.menuBar.addmenuitem('Help', 'command', 'Help on Stereo',
                                label='Stereo',
                                command = lambda: cmd.show_help("stereo"))      
 
+      self.menuBar.addmenuitem('Help', 'separator', '')
+      
+
+      self.menuBar.addmenuitem('Help', 'command', 'Help on the API',
+                               label='API',
+                               command = lambda: cmd.show_help("api"))      
 
       self.toggleBalloonVar = IntVar()
       self.toggleBalloonVar.set(1)
@@ -426,8 +495,6 @@ class PMGApp(AbstractApp):
                          label='Edit All...',
                                command = lambda s=self: SetEditor(s))
 
-
-
       self.menuBar.addmenuitem('Settings', 'separator', '')
       
       self.menuBar.addmenuitem('Settings', 'checkbutton',
@@ -451,8 +518,8 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Smooth Lines.',
                          label='Smooth Lines',
-                        variable = self.setting.antialias,
-                        command = lambda s=self: s.setting.update('antialias'))
+                        variable = self.setting.line_smooth,
+                        command = lambda s=self: s.setting.update('line_smooth'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Auto Zoom.',
@@ -497,5 +564,20 @@ class PMGApp(AbstractApp):
                                label='Charge',
                                command = lambda: cmd.wizard("charge"))
 
+      self.menuBar.addmenu('Demos', 'Demonstrations')
 
+      self.menuBar.addmenuitem('Demos', 'command', 'Representations',
+                               label='Representations',
+                               command = self.demo1)
 
+      self.menuBar.addmenuitem('Demos', 'command', 'Scripted Animation',
+                               label='Scripted Animation',
+                               command = self.demo4)
+
+      self.menuBar.addmenuitem('Demos', 'command', 'Molscript/Raster3D Input',
+                               label='Molscript/Raster3D Input',
+                               command = self.demo2)
+
+      self.menuBar.addmenuitem('Demos', 'command', 'Compiled Graphics Objects',
+                               label='Compiled Graphics Objects',
+                               command = self.demo3)

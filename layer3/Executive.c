@@ -1401,7 +1401,7 @@ void ExecutiveRay(void)
 }
 /*========================================================================*/
 void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
-                         int state,int suppress)
+                         int state,int quiet,int updates)
 {
   int unblock;
   OrthoLineType name,value;
@@ -1416,46 +1416,50 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
 
   if(sele[0]==0) { /* global setting */
     SettingSetTuple(NULL,index,tuple);
-    if(Feedback(FB_Setting,FB_Actions)) {
-      SettingGetTextValue(NULL,NULL,index,value);
-      SettingGetName(index,name);
-      PRINTF
-        " Setting: %s set to %s.\n",name,value
-        ENDF;
-      if(!suppress) 
-        SettingGenerateSideEffects(index,sele,state);
-
+    if(!quiet) {
+      if(Feedback(FB_Setting,FB_Actions)) {
+        SettingGetTextValue(NULL,NULL,index,value);
+        SettingGetName(index,name);
+        PRINTF
+          " Setting: %s set to %s.\n",name,value
+          ENDF;
+      }
     }
+    if(updates) 
+      SettingGenerateSideEffects(index,sele,state);
+    
   } else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
     while(ListIterate(I->Spec,rec,next))
       {
         if(rec->type==cExecObject) {
           if(rec->obj->fGetSettingHandle) {
             handle = rec->obj->fGetSettingHandle(rec->obj,state);
-            if(handle) {
-              SettingCheckHandle(handle);
-              SettingSetTuple(*handle,index,tuple);
-              if(!suppress) 
-                SettingGenerateSideEffects(index,sele,state);
-              nObj++;
-            }
+          if(handle) {
+            SettingCheckHandle(handle);
+            SettingSetTuple(*handle,index,tuple);
+            if(updates) 
+              SettingGenerateSideEffects(index,sele,state);
+            nObj++;
+          }
           }
         }
         if(Feedback(FB_Setting,FB_Actions)) {
           if(nObj&&handle) {
             SettingGetTextValue(*handle,NULL,index,value);
             SettingGetName(index,name);
-            if(!suppress) 
+            if(updates)
               SettingGenerateSideEffects(index,sele,state);
-
-            if(state<0) {
-              PRINTF
-                " Setting: %s set to %s in %d objects.\n",name,value,nObj
-                ENDF;
-            } else {
-              PRINTF
-                " Setting: %s set to %s in %d objects, state %d.\n",name,value,nObj,state+1
-                ENDF;
+            if(!quiet) {
+              if(state<0) {
+                PRINTF
+                  " Setting: %s set to %s in %d objects.\n",name,value,nObj
+                  ENDF;
+              } else {
+                PRINTF
+                  " Setting: %s set to %s in %d objects, state %d.\n",
+                  name,value,nObj,state+1
+                  ENDF;
+              }
             }
           }
         }
@@ -1480,29 +1484,31 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                         if(handle) {
                           SettingCheckHandle(handle);
                           SettingSetTuple(*handle,index,tuple);
-                          if(state<0) { /* object-specific */
-                            if(Feedback(FB_Setting,FB_Actions)) {
-                              SettingGetTextValue(*handle,NULL,index,value);
-                              SettingGetName(index,name);
-                              PRINTF
-                                " Setting: %s set to %s in object '%s'.\n",
-                                name,value,rec->obj->Name
-                                ENDF;
-                              if(!suppress) 
-                                SettingGenerateSideEffects(index,sele,state);
-
-                            }
-                          } else { /* state-specific */
-                            if(Feedback(FB_Setting,FB_Actions)) {
-                              SettingGetTextValue(*handle,NULL,index,value);
-                              SettingGetName(index,name);
-                              PRINTF
-                                " Setting: %s set to %s in object '%s', state %d.\n",
-                                name,value,rec->obj->Name,state+1
-                                ENDF;
-                              if(!suppress) 
-                                SettingGenerateSideEffects(index,sele,state);
-
+                          if(!quiet) {
+                            if(state<0) { /* object-specific */
+                              if(Feedback(FB_Setting,FB_Actions)) {
+                                SettingGetTextValue(*handle,NULL,index,value);
+                                SettingGetName(index,name);
+                                PRINTF
+                                  " Setting: %s set to %s in object '%s'.\n",
+                                  name,value,rec->obj->Name
+                                  ENDF;
+                                if(updates)
+                                  SettingGenerateSideEffects(index,sele,state);
+                                
+                              }
+                            } else { /* state-specific */
+                              if(Feedback(FB_Setting,FB_Actions)) {
+                                SettingGetTextValue(*handle,NULL,index,value);
+                                SettingGetName(index,name);
+                                PRINTF
+                                  " Setting: %s set to %s in object '%s', state %d.\n",
+                                  name,value,rec->obj->Name,state+1
+                                  ENDF;
+                                if(updates) 
+                                  SettingGenerateSideEffects(index,sele,state);
+                                
+                              }
                             }
                           }
                         }

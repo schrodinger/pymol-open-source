@@ -62,7 +62,6 @@ file_ext_re= re.compile(string.join([
    r"\.r3d$|\.xyz$|\.xyz_[0-9]*$",
    r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$"],''))
 
-
 QuietException = parsing.QuietException
 
 # the following lock is used by both C and Python to insure that no more than
@@ -142,28 +141,31 @@ def editing():
    '''
 SUMMARY
 
-PyMOL has a minimal but functional molecular structure editing
-capability.  However, you will need to set up Tinker if you want to to
-"clean-up" your structures after editing.  Furthermore, if you are
-going to modify molecules other than proteins, then you will also need
-a way of assigning atom types (Amber) on the fly.  Unfortunately, my
-solution to that problem hasn't been published yet.
+PyMOL has a rudimentary, but quite functional molecular structure
+editing capability.  However, you will need to set up Tinker if you
+want to to "clean-up" your structures after editing.  Furthermore, if
+you are going to modify molecules other than proteins, then you will
+also need a way of assigning atom types (Amber) on the fly.
+Unfortunately, my solution to that problem hasn't been published yet.
 
 To edit a conformation or structure, you first need to enter editing
 mode (see Mouse Menu).  Then you can pick an atom (CTRL-Middle click)
 or a bond (CTRL-Right click).  Next, you can use the other
 CTRL-key/click combinations listed on the right hand side of the
 screen to adjust the attached fragments.  For example, CTRL-left click
-will torsion fragments.
+will move fragments about the selected torsion.
 
 Editing structures is done through a series of CTRL key actions
 applied to the currently selected atom or bonds. See "help edit_keys"
 for the exact combinations.  To build structure, you usually just
-replace hydrogens with methyl groups, etc., and then repeat.
+replace hydrogens with methyl groups, etc., and then repeat.  They
+are no short-cuts currently available for building common groups --
+that will happend in a later version.
 
 NOTE
   
-Only "lines" representations can be picked.
+Only "lines" representations can be picked using the mouse, however
+other representations will not interfere with picking.
    
 '''
 
@@ -172,16 +174,16 @@ def release():
 RELEASE NOTES
 
 PyMOL is a free, open, and expandable molecular graphics system
-written by a computational scientist to enable molecular modeling and
-visualization from directly within Python.  It will be of most benefit
-to hybrid scientist/developers in the fields of structural biology,
-molecular modeling, computational chemistry, and informatics who want
-a completely unrestricted visualization tool capable of working
-directly with their own programs via Python.  It will also be of benefit
-to advanced non-developers familiar with similar programs such as
-Midas, O, Grasp, X-PLOR and CNS.
+written by a computational scientist to enable molecular modeling from
+directly within Python.  It will be of most benefit to hybrid
+scientist/developers in the fields of structural biology,
+computational chemistry, and informatics who seek an open and
+unrestricted visualization tool for interfacing with their own
+programs.  PyMOL will also be of benefit to advanced non-developers
+familiar with similar programs such as Midas, O, Grasp, X-PLOR and
+CNS.
 
-Due to PyMOL's current "user-unfriendliness", this release is ONLY
+Due to PyMOL's current "user-unfriendliness", this release is most
 appropriate for those who prefer to use text commands and scripts, and
 for developers who want to integrate PyMOL's visualization and
 molecular editing capabilities with their own work.
@@ -189,22 +191,20 @@ molecular editing capabilities with their own work.
 PyMOL currently includes a diverse command language, a powerful
 application programmers interface (API), and a variety of mouse and
 keyboard driven functionality for viewing, animation, rendering, and
-molecular editing.  However, this release of PyMOL does NOT include an
-adequate graphical user interface, menu bar, test suite, or a complete 
-help system.  Such enhancements are in progress, but proceed
-at a slow pace.  A manual is now available on the web site.
+molecular editing.  A partial manual is now available on the web.
 
 Two external GUI development options are supported for PyMOL:
 "Tkinter" and "wxPython".  Developers can take their pick.  I am
 committed to insuring that PyMOL will work with both of them, but it
 is unlikely that I will have time to develop a complete external GUI
-myself any time soon using either toolkit. 
+myself any time soon using either toolkit.
 
 Note that only Tkinter is supported under Windows with the default
 PyMOL and Python distributions, so for maximum ease of installation
-under Windows, stick with Tkinter (Tcl/Tk).
+under Windows, stick with Tkinter (Tcl/Tk).  For this reason, the
+Tkinter-based GUI is going to be the default GUI for standard PyMOL.
 
-Warren L. DeLano (2/21/2001), warren@delanoscientific.com
+Warren L. DeLano (5/1/2001), warren@delanoscientific.com
 '''
 
 def edit_keys():
@@ -213,7 +213,8 @@ EDITING KEYS
 
    These are defaults, which can be redefined.  Note that while
 entering text on the command line, some of these control keys take on
-text editing functions instead (CTRL - A, E, and K)
+text editing functions instead (CTRL - A, E, and K, and DELETE), so
+you shouold clear the command line before trying to edit atoms.
 
 ATOM REPLACEMENT
  
@@ -233,14 +234,15 @@ ATOM MODIFICATION
    CTRL-K    Set charge on picked atom to +1
    CTRL-D    Remove atom or bond (DELETE works too).
    CTRL-Y    Add a hydrogen to the current atom
-   CTRL-R    Adjust hydrogens to match valence.
-
-BONDS
+   CTRL-R    Adjust hydrogens on atom/bond to match valence.
+   CTRL-E    Inverts the picked stereo center, but you must first
+             indicate the constant portions with the (lb) and (rb)
+             selections.
 
    CTRL-T    Connect atoms in the (lb) and (rb) selections.
    CTRL-W    Cycle the bond valence on the picked bond.
 
-MISC
+UNDO and REDO of conformational changes (not atom changes!)
 
    CTRL-Z    undo the previous conformational change.
              (you can not currently undo atom modifications).
@@ -254,16 +256,16 @@ def at_sign():
    '''
 DESCRIPTION
  
-"@" sources a PyMOL command script as if all of the commands in the
-file were typed into the PyMOL command line.
+   "@" sources a PyMOL command script as if all of the commands in the
+   file were typed into the PyMOL command line.
 
 USAGE
   
- @ <script-file>
+   @ <script-file>
 
 PYMOL API
 
-Not directly available. Instead, use cmd.do("@...").
+   Not directly available. Instead, use cmd.do("@...").
  
 '''
    help(at_sign)
@@ -273,8 +275,8 @@ def run():
    '''
 DESCRIPTION
  
-"run" executes an external Python script in a local name space,
-the global namespace, or in its own namespace (as a module).
+   "run" executes an external Python script in a local name space, the
+   global namespace, or in its own namespace (as a module).
 
 USAGE
   
@@ -282,16 +284,16 @@ USAGE
 
 PYMOL API
 
-Not directly available.  Instead, use cmd.do("run ...").
+   Not directly available.  Instead, use cmd.do("run ...").
 
 NOTES
 
-The default mode for run is "global".
+   The default mode for run is "global".
  
-Due to an idiosyncracy in Pickle, you can not pickle objects
-directly created at the main level in a script run as "module",
-(because the pickled object becomes dependent on that module).
-Workaround: delegate construction to an imported module.
+   Due to an idiosyncracy in Pickle, you can not pickle objects
+   directly created at the main level in a script run as "module",
+   (because the pickled object becomes dependent on that module).
+   Workaround: delegate construction to an imported module.
 
 '''
    help(run)
@@ -300,28 +302,30 @@ def spawn():
    '''
 DESCRIPTION
  
-"spawn" launches a Python script in a new thread which will run
-concurrently with the PyMOL interpreter. It can be run in its own
-namespace (like a Python module, default), a local name space, or in
-the global namespace.
+   "spawn" launches a Python script in a new thread which will run
+   concurrently with the PyMOL interpreter. It can be run in its own
+   namespace (like a Python module, default), a local name space, or
+   in the global namespace.
  
 USAGE
   
- run python-script [, (local | global | module )]
+   run python-script [, (local | global | module )]
 
 PYMOL API
 
- Not directly available.  Instead, use cmd.do("spawn ...").
+   Not directly available.  Instead, use cmd.do("spawn ...").
 
 NOTES
 
- The default mode for spawn is "module".
+   The default mode for spawn is "module".
  
- Due to an idiosyncracy in Pickle, you can not pickle objects
- directly created at the main level in a script run as "module",
- (because the pickled object becomes dependent on that module).
- Workaround: delegate construction to an imported module.
+   Due to an idiosyncracy in Pickle, you can not pickle objects
+   directly created at the main level in a script run as "module",
+   (because the pickled object becomes dependent on that module).
+   Workaround: delegate construction to an imported module.
 
+   The best way to spawn processes at startup is to use the -l option
+   (see "help launching").
 '''
    help(spawn)
 
@@ -329,9 +333,9 @@ def api():
    '''
 DESCRIPTION
  
-The PyMOL Python Application Programming Interface (API) should be
-accessed exclusively through the "cmd" module.  Nearly all
-command-line functions have a corresponding API method.
+   The PyMOL Python Application Programming Interface (API) should be
+   accessed exclusively through the "cmd" module (never _cmd!).  Nearly
+   all command-line functions have a corresponding API method.
  
 USAGE
  
@@ -345,34 +349,38 @@ API-ONLY METHODS
  
 NOTES
  
-Although the PyMOL core is not multi-threaded, the API is threads-safe
-and can be called asynchronously by external python programs.  PyMOL
-handles the necessary locking to insure that internal states do not
-get corrupted.
-   '''
+   Although the PyMOL core is not multi-threaded, the API is
+   thread-safe and can be called asynchronously by external python
+   programs.  PyMOL handles the necessary locking to insure that
+   internal states do not get corrupted.
+
+'''
    help('api')
 
 def keyboard():
    '''
- KEYBOARD COMMANDS and MODIFIERS
+KEYBOARD COMMANDS and MODIFIERS
  
    ESC          Toggle onscreen text.
    INSERT       Toggle rocking.
- 
-   LEFT ARROW, RIGHT ARROW  Go backward or forward one frame.
-   HOME,       END          Go to the beginning or end of a movie.
- 
- ATOM SELECTIONS (Only work on "lines and nonbonded" representations!)
-  
-   CTRL/left mouse click    Pick atom and store as selection (lb).
-   CTRL/middle mouse click  Pick atom and store as selection (mb).
-   CTRL/right mouse click   Pick atom and store as selection (rb).
- 
-   CTRL-SHIFT/left mouse click    Pick atom and add to selection (lb).
-   CTRL-SHIFT/middle mouse click  Pick atom and add to selection (mb).
-   CTRL-SHIFT/right mouse click   Pick atom and add to selection (rb).
 
- EDITING 
+   LEFT ARROW, RIGHT ARROW    Go backward or forward one frame, or when
+                              editing, go forward or back one character.
+   HOME, END    Go to the beginning or end of a movie.
+
+   Command Entry Field in the Interal GUI (black window)
+   
+   TAB          Complete commmand or filename (like in tcsh or bash).
+   CTRL-A       Go to the beginning of the line.
+   CTRL-E       Go to the end of the line.
+   CTRL-K       Delete through to the end of the line.
+
+   Command Entry Field on the External GUI (gray window).
+   
+   CTRL-C       These operating system-provided cut and paste functions
+   CTRL-V       will only work in the external GUI command line.
+   
+EDITING 
 
    type "help edit_keys" for keyboard shortcuts used in editing.
    
@@ -384,33 +392,72 @@ def mouse():
    '''
 MOUSE CONTROLS
  
-   The configuration can be changed by setting the "button_mode"
-   variable.  The current configuration is described on screen with
-   the following abbreviations:
- 
-      R-XYZ    = Rotates about X, Y, and Z axes
-      R-Z      = Rotates about the Z axis
-      Trans-XY = Translates along the X and Y axes
-      Trans-Z  = Translates along Z axis
-      Clip-NF  = Y motion moves the near clipping plane while
-                 X motion moves the far one
-      Clip-N   = Motion affects only the near clipping plane
-      Clip-F   = Motion affects only the far clipping plane
-      Orig     = Move origin to selected atom
+  The configuration can be changed using the "Mouse" menu.  The
+  current configuration is described on screen with a small matrix on
+  the lower right hand corner, using the following abbreviations:
+
+   Buttons (Horizontal Axis)
+   
+      L        = left mouse click
+      M        = middle mouse click
+      R        = right mouse click
+
+   Modifiers (Veritical axis on the matrix) 
+
+      None     = no keys held down while clicking
+      Shft     = hold SHIFT down while clicking
+      Ctrl     = hold CTRL down while clicking
+      CtSh     = hold both SHIFT and CTRL down while clicking
       
-ATOM SELECTIONS (These only work on the "lines" representation!)
- 
-   CTRL-SHIFT-left mouse click    Pick atom and store as selection (lb).
-   CTRL-SHIFT-right mouse click   Pick atom and store as selection (rb).
+   Visualization Functions
+   
+      Rota     = Rotates camera about X, Y, and Z axes
+      RotZ     = Rotates camera about the Z axis
+      Move     = Translates along the X and Y axes
+      MovZ     = Translates along Z axis
+      Clip     = Y motion moves the near clipping plane while
+      PkAt     = Pick an atom
+      PkBd     = Pick a bond
+      Orig     = Move origin to selected atom
+      +lb      = Add an atom into the (lb) selection
+      lb       = Define the (lb) selection with the indicated atom.
+      rb       = Define the (rb) selection with the indicated atom.
 
-   (normal mode - when not editing)
- 
-   CTRL-left mouse click    Pick atom and add to selection (lb).
-   CTRL-middle mouse click  Pick atom and add to selection (mb).
-   CTRL-right mouse click   Pick atom and add to selection (rb).
-
+   Editing Functions
+   
+      RotF     = Rotate fragment
+      MovF     = Move fragment
+      TorF     = Torsion fragment
 '''
    help('mouse')
+
+def mouse2():
+   '''
+STANDARD MAPPINGS (These only work on the "lines" representation!)
+ 
+   PkAt: CTRL/middle click        Pick an atom (will display globe).
+   PkBd: CTRL/right mouse click   Pick a bond (will display ring).
+
+   (normal mode - visualization onle)
+ 
+   +lb : CTRL-left mouse click          Adds an atom to (lb).
+   lb  : CTRL-SHIFT/left mouse click    Sets the (lb) selection.
+   Orig: CTRL-SHIFT/middle click        
+   CTRL-right mouse click   Pick atom and add to selection (rb).
+
+   (editing mode 
+ATOM SELECTIONS (Only work on "lines and nonbonded" representations!)
+
+
+
+   CTRL-SHIFT/middle mouse click  Set the origin of rotation.
+   CTRL-SHIFT/right mouse click   Pick atom and add to selection (rb).
+
+   VISUALIZATION MODE
+   
+   CTRL/left mouse click    Add an atom to selection (lb).
+'''
+   pass
 
 def examples():
    '''
@@ -510,55 +557,57 @@ def selections():
    '''
 DESCRIPTION
  
-   Selections are surrounded by parenthesis and contain an
-   expression consisting of predicates, logical operations, objects,
-   named selections and additional parenthesis:
-       ( [... [(...) ... ]] )
+   Selections are enclosed in parentheses and contain predicates,
+   logical operations, object names, selection names and nested
+   parenthesis: ( [... [(...) ... ]] )
  
-   Properties  
-      name <atom names>           n;<atom names>          
-      resn <residue names>        r;<residue names>
-      resi <residue identifiers>  i;<residue identifiers>
-      chain <chain ID>            c;<chain identifiers>
-      segi <segment identifiers>  s;<segment identifiers>
-      elem <element symbol>       e;<element symbols>
-      flag <number>               f;<number>
-      alt <code>                  -
-      numeric_type <numeric type> nt;<numeric type>
-      text_type <text type>       tt;<text type>
-      b <operator> <value>        -
-      q <operator> <value>        -
-      formal_charge <op> <value>  fc;<operator> <value>
-      partial_charge <op> <value> pc;<operator> <value>
-      id <original-index>         -
-   Generic 
-      hydrogen                    h;
-      all                         *
-      visible                     v;
-      hetatm                      -
-   Logical
-      and                         &
-      or                          |
-      not                         !
-   Modifiers                        
-      byres <selection>           br;<selection>
-      byobj <selection>           bo;<selection>
-      around <distance>           a;<distance>
-      expand <distance>           e;<distance>
-      gap <distance>              -
-      in <selection>              -
-      like <selection>            l;
- 
-   Objects and selections can be referred to by name from within
-   subsequent selections.
- 
-   "help examples" for some example selections
+      name <atom names>            n;<atom names>          
+      resn <residue names>         r;<residue names>
+      resi <residue identifiers>   i;<residue identifiers>
+      chain <chain ID>             c;<chain identifiers>
+      segi <segment identifiers>   s;<segment identifiers>
+      elem <element symbol>        e;<element symbols>
+      flag <number>                f;<number>
+      alt <code>                   
+      numeric_type <numeric type>  nt;<numeric type>
+      text_type <text type>        tt;<text type>
+      b <operator> <value>         
+      q <operator> <value>         
+      formal_charge <op> <value>   fc;<operator> <value>
+      partial_charge <op> <value>  pc;<operator> <value>
+      id <original-index>          
+      hydrogen                     h;
+      all                          *
+      visible                      v;
+      hetatm                       
+      <selection> and <selection>  <selection>&<selection>
+      <selection> or <selection>   <selection>|<selection>
+      not <selection>              !<selection>
+      byres <selection>            br;<selection>
+      byobj <selection>            bo;<selection>
+      around <distance>            a;<distance>
+      expand <distance>            e;<distance>
+      gap <distance>               
+      in <selection>               
+      like <selection>             l;<selection>
    '''
    help('selections')
 
 def sort(object=""):
    '''
-TO DOCUMENT
+DESCRIPTION
+ 
+   "sort" reorders atoms in the structure.  It usually only necessary
+   to run this routine after an "alter" command which has modified the
+   names of atom properties.
+
+USAGE
+ 
+   sort object-name
+
+PYMOL API
+
+   cmd.sort(string object-name)
 '''
    try:
       lock()
@@ -608,10 +657,7 @@ def get_setting_text(name,object='',state=0):
       unlock()
    return r
 
-def focus():
-   '''
-TO DOCUMENT
-'''
+def focus():  # BROKEN
    try:
       lock()
       r = _cmd.focus()
@@ -619,10 +665,7 @@ TO DOCUMENT
       unlock()
    return r
 
-def spheroid(object=""):
-   '''
-TO DOCUMENT, EXPERIMENTAL
-'''
+def spheroid(object=""):  # EXPERIMENTAL
    try:
       print "Warning: 'spheroid' is experimental, incomplete, and unstable."
       lock()
@@ -633,7 +676,13 @@ TO DOCUMENT, EXPERIMENTAL
 
 def cls():
    '''
-TO DOCUMENT
+DESCRIPTION
+ 
+   "cls" clears the output buffer.
+
+USAGE
+ 
+   cls
 '''
    r = None
    try:
@@ -645,7 +694,15 @@ TO DOCUMENT
 
 def fragment(name):
    '''
-TO DOCUMENT
+DESCRIPTION
+ 
+   "fragment" retrieves a 3D structure from the fragment library, which is currently
+   pretty meager (just amino acids).
+   
+USAGE
+ 
+   fragment name
+
 '''
    try:
       load_model(fragments.get(name),name)
@@ -654,8 +711,24 @@ TO DOCUMENT
 
 def wizard(name):
    '''
-   TO DOCUMENT
-   '''
+DESCRIPTION
+ 
+   "wizard" launches on of the built-in wizards.  There are special
+   Python scripts which work with PyMOL in order to obtain direct user
+   interaction and easily peform complicated tasks.
+   
+USAGE
+ 
+   wizard name
+
+PYMOL API
+
+   cmd.wizard(string name)
+
+EXAMPLE
+
+   wizard distance  # launches the distance measurement wizard
+'''
    import wizard
    try:
       mod_tup = imp.find_module(name,wizard.__path__)
@@ -671,9 +744,6 @@ def wizard(name):
       print "Error: Sorry, couldn't find the '"+name+"' Wizard."
       
 def get_dihedral(atom1,atom2,atom3,atom4):
-   '''
-TO DOCUMENT
-'''
    r = None
    try:
       lock()
@@ -682,10 +752,7 @@ TO DOCUMENT
       unlock()
    return r
 
-def set_dihedral(atom1,atom2,atom3,atom4,angle):
-   '''
-NOT FINISHED YET
-'''
+def set_dihedral(atom1,atom2,atom3,atom4,angle):  # unfinished
    try:
       lock()
       r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),float(angle),0)
@@ -710,9 +777,6 @@ debugging feature, not an official part of the API.
    return r
 
 def edit_mode(mode=None):
-   '''
-TO DOCUMENT, REVISION IMPENDING
-'''
    try:
       lock()
       r = _cmd.get_setting("button_mode")
@@ -732,7 +796,7 @@ TO DOCUMENT, REVISION IMPENDING
       unlock()
    pass
 
-def get_setting_legacy(name):
+def get_setting_legacy(name): # INTERNAL, DEPRECATED
    r = None
    try:
       lock()
@@ -741,10 +805,7 @@ def get_setting_legacy(name):
       unlock()
    return r
    
-def config_mouse(quiet=0):
-   '''
-TO DOCUMENT
-'''
+def config_mouse(quiet=0): # INTERNAL
    # NOTE: PyMOL automatically runs this routine upon start-up
    try:
       lock()
@@ -785,7 +846,6 @@ TO DOCUMENT
    finally:
       unlock()
 
-
 def dist(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,mode=None):
    '''
 DESCRIPTION
@@ -811,9 +871,15 @@ PYMOL API
    returns the average distance between all atoms/frames
  
 NOTES
- 
+
+   The distance wizard makes measuring distances easier than using
+   the "dist" command for real-time operations.
+
    "dist" alone will show distances between selections (lb) and (rb)
-   created by left and right button atom picks (hold down CTRL)
+   created by left and right button atom picks.  CTRL-SHIFT/left-click
+   on the first atom,  CTRL-SHIFT/right-click on the second, then run
+   "dist".
+
 '''
    # handle unnamed distance 
 
@@ -947,11 +1013,20 @@ DESCRIPTION
 which should contain one atom.
  
 USAGE
- 
+
+   bond [atom1,atom2 [,order]]
+   
 PYMOL API
- 
+
+   cmd.bond(string atom1, string atom2)
+   
 NOTES
- 
+
+   The atoms must both be within the same object.
+   
+   The default behavior is to create a bond between the (lb) and (rb)
+   selections.
+   
 '''
    try:
       lock()
@@ -962,7 +1037,7 @@ NOTES
 
 def invert(selection1="(lb)",selection2="(rb)"):
    '''
-TO DOCUMENT
+
 '''
    try:
       lock()
@@ -978,9 +1053,13 @@ DESCRIPTION
 "unbond" removes all bonds between two selections.
 
 USAGE
-  
+
+   unbond atom1,atom2
+   
 PYMOL API
- 
+
+   cmd.unbond(selection atom1="(lb)",selection atom2="(rb)")
+   
 NOTES
  
 '''
@@ -991,15 +1070,12 @@ NOTES
       unlock()
    return r
 
-def show_help(cmd):
-   print "PyMOL>help %s\n" % cmd
+def show_help(cmd): # INTERNAL
+   print "PyMOL>help %s" % cmd
    help(cmd)
    print "(Hit ESC to hide)"
 
-def set_wizard(*arg):
-   '''
-   TO DOCUMENT
-   '''
+def set_wizard(*arg): # INTERNAL
    r = None
    wiz = None
    if len(arg):
@@ -1011,10 +1087,7 @@ def set_wizard(*arg):
       unlock()
    return r
 
-def refresh_wizard(*arg):
-   '''
-   TO DOCUMENT
-   '''
+def refresh_wizard(*arg): # INTERNAL
    r = None
    wiz = None
    if len(arg):
@@ -1026,7 +1099,7 @@ def refresh_wizard(*arg):
       unlock()
    return r
 
-def get_wizard(*arg):
+def get_wizard(*arg): # INTERNAL
    '''
    TO DOCUMENT
    '''
@@ -1078,7 +1151,7 @@ USAGE
  
    help <command>
    '''
-   set("text","1")
+   set("text","1",quiet=1)
    if len(arg):
       cmd = arg[0]
    else:
@@ -1090,13 +1163,13 @@ USAGE
    if keyword.has_key(cmd):
       doc = keyword[cmd][0].__doc__
       if doc:
-         print " \n",string.strip(doc),"\n"
+         print "\n",string.strip(doc),"\n"
       else:
          print "Error: sorry no help available on that command."
    elif help_only.has_key(cmd):
       doc = help_only[cmd][0].__doc__
       if doc:
-         print " \n",string.strip(doc),"\n"
+         print "\n",string.strip(doc),"\n"
       else:
          print "Error: sorry no help available on that command."      
    else:
@@ -1106,10 +1179,10 @@ def symexp(prefix,object,selection,cutoff):
    '''
 DESCRIPTION
  
-"symexp" creates all symmetry related objects for the specified object
-that occurs within a cutoff about an atom selection.  The new objects
-are labeled using the prefix provided along with their crystallographic
-symmetry operation and translation.
+   "symexp" creates all symmetry related objects for the specified object
+   that occurs within a cutoff about an atom selection.  The new objects
+   are labeled using the prefix provided along with their crystallographic
+   symmetry operation and translation.
  
 USAGE
  
@@ -1185,7 +1258,8 @@ DESCRIPTION
  
 "splash" shows the splash screen information.
    '''
-   set("text","1")
+   set("text","1",quiet=1)
+   print
    try:
       lock()
       r = _cmd.splash()
@@ -1432,22 +1506,24 @@ def _stereo(flag):
    else:
       os.system("/usr/gfx/setmon -n 72hz")
 
-def stereo(a):
+def stereo(state='on'):
    '''
 DESCRIPTION
  
 "stereo" activates or deactives stereo mode.  Currently only high-end
-stereo graphics are supported on the SGI (stereo in a window), and it
-is necessary to launching the program with a "-s" option to activate
-this feature.
+stereo graphics are supported on the SGI (stereo in a window).
  
 USAGE
  
    stereo on
    stereo off
+
+PYMOL API
+
+   cmd.stereo(string state="on")
    '''
    r = None
-   if a=="on":
+   if state=="on":
       try:
          lock()
          if _cmd.stereo(1):
@@ -1486,10 +1562,7 @@ UNSUPPORTED FEATURE - LIKELY TO CHANGE
       unlock()
    return r
 
-def distance(*arg):
-   '''
-OBSOLETE - TO BE REMOVED
-   '''
+def distance(*arg): # OBSOLETE
    la = len(arg)
    if la==0:
       a="lb"
@@ -1509,45 +1582,26 @@ OBSOLETE - TO BE REMOVED
       unlock()
    return r
 
-def setup_global_locks():
-   '''
-INTERNAL
-   '''
+def setup_global_locks(): # INTERNAL, OBSOLETE?
    pass
-#   pymol.lock_api = _cmd.get_globals()['lock_api']
 
-def lock_c():
-   '''
-INTERNAL
-'''
+def lock_c(): # INTERNAL
    lock_api_c.acquire(1)
 
-def unlock_c():
-   '''
-INTERNAL
-'''
+def unlock_c(): # INTERNAL
    lock_api_c.release()
 
-def lock():
-   '''
-INTERNAL
-   '''
+def lock(): # INTERNAL
    lock_api.acquire(1)
       
-def lock_attempt():
-   '''
-INTERNAL
-   '''
+def lock_attempt(): # INTERNAL
    res = lock_api.acquire(blocking=0)
    if res:
       pymol.lock_state = 1;
    else:
       pymol.lock_state = None;
 
-def unlock():
-   '''
-INTERNAL
-   '''
+def unlock(): # INTERNAL
    thred = thread.get_ident()
    if (thred == pymol.glutThread):
       _cmd.flush_now()
@@ -1559,7 +1613,7 @@ INTERNAL
          e.wait(0.05)
          del e
 
-def export_dots(a,b):
+def export_dots(a,b):  
    '''
 UNSUPPORTED - WILL BE REMOVED
    '''
@@ -2489,7 +2543,7 @@ INTERNAL
    return r
 
 
-def set(name,value,selection='',state=0,suppress=0):
+def set(name,value,selection='',state=0,quiet=0,updates=1):
    '''
 DESCRIPTION
   
@@ -2503,7 +2557,9 @@ USAGE
  
 PYMOL API
  
-   cmd.set ( string name, string value, string selection='', int state=0)
+   cmd.set ( string name, string value,
+             string selection='', int state=0,
+             int quiet=0, int updates=1 )
 
 NOTES
 
@@ -2552,7 +2608,8 @@ NOTES
             v = (type,v)
             r = _cmd.set(index,v,
                          string.strip(str(selection)),
-                         int(state)-1,int(suppress))
+                         int(state)-1,int(quiet),
+                         int(updates))
          except:
             if(_feedback(fb_module.cmd,fb_mask.debugging)):
                traceback.print_exc()
@@ -5041,7 +5098,8 @@ ctrl = {
    'A' : [ redo                   , 0 , None ],
    'B' : [ replace                , 1 , ('Br',1,1) ],
    'C' : [ replace                , 1 , ('C',4,4) ],
-   'D' : [ remove_picked          , 0 , None ],   
+   'D' : [ remove_picked          , 0 , None ],
+   'E' : [ invert                 , 0 , None ],   
    'F' : [ replace                , 1 , ('F',1,1) ],   
    'G' : [ replace                , 1 , ('H',1,1) ],
    'I' : [ replace                , 1 , ('I',1,1) ],
