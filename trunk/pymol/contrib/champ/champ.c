@@ -1561,6 +1561,8 @@ int ChampModelToPat(CChamp *I,PyObject *model)
             atom2 = atom_index[atom2];
             bd->atom[0]=atom1;
             bd->atom[1]=atom2;
+            bd->pri[0]=0;
+            bd->pri[1]=0;
             ChampAddBondToAtom(I,atom1,cur_bond);
             ChampAddBondToAtom(I,atom2,cur_bond);
           }
@@ -2042,6 +2044,7 @@ int ChampMatch2(CChamp *I,int template,int target,
      through all atoms and bonds starting from the 
      two nucleating atoms, which are assumed to be equivalent */
   int n_match = 0;
+  int stereo_template = false;
 
 #ifdef MATCHDEBUG
   printf("\n\n ChampMatch2: %d %d\n",start_tmpl,start_targ);
@@ -2059,6 +2062,7 @@ int ChampMatch2(CChamp *I,int template,int target,
     while(cur_atom) {
       at = I->Atom+cur_atom;
       at->mark_tmpl=0;
+      if(at->stereo) stereo_template = true;
       cur_atom = at->link;
     }
     cur_bond = I->Pat[template].bond;
@@ -2097,7 +2101,8 @@ int ChampMatch2(CChamp *I,int template,int target,
     int match_flag;
     int bond_start;
     int atom_start;
-    
+    int stereo_match;
+
     ListTmpl *tmpl_ent,*parent_ent;
     ListTarg *targ_ent;
     ListAtom *tmpl_at,*targ_at,*base_at;
@@ -2117,7 +2122,6 @@ int ChampMatch2(CChamp *I,int template,int target,
     targ_ent = I->Targ + targ_stack;
     targ_ent->atom = start_targ;
     targ_ent->bond = 0; /* to get here */
-
 
     /* initalize template stack */
 
@@ -2174,12 +2178,6 @@ int ChampMatch2(CChamp *I,int template,int target,
         while(tmpl_par) {
           tmpl_ent = I->Tmpl + tmpl_par;
           tmpl_at = I->Atom + tmpl_ent->atom; /* get atom record */
-          /*
-            if(tmpl_at->mark_tmpl>1) { 
-            bond_idx = 0; 
-            } else 
-            {
-          */
           
           bond_off = 0;  
           bond_idx = tmpl_at->bond[bond_off];
@@ -2190,8 +2188,7 @@ int ChampMatch2(CChamp *I,int template,int target,
             } else
               break; /* found an open bond */
           }
-          /*  }*/
-          
+
           if(bond_idx) { /* there is an open bond */
 
 #ifdef MATCHDEBUG
@@ -2240,7 +2237,7 @@ int ChampMatch2(CChamp *I,int template,int target,
           }
         }
         if(!tmpl_par) { /* no open bonds-> complete match */
-          
+
 #ifdef MATCHDEBUG2
           printf(" tmpl: EXACT MATCH DETECTED\n");
           printf(" %d %d %d %d\n",template,target,start_tmpl,start_targ);
@@ -2267,24 +2264,22 @@ int ChampMatch2(CChamp *I,int template,int target,
           }
           printf("\n");
 #endif
-          n_match++;
+          stereo_match = true;
+          if(0&&stereo_template) { /* must check stereochemistry */
 
-          if(n_wanted>0) 
-            if(n_match>=n_wanted) done_flag=true;
-          
-          if(match_start) {
-            (*match_start) = ListElemPush(&I->Match,*match_start);
-            match_ent = I->Match + (*match_start);
-            
-            atom_start=0;
-            bond_start=0;
+            int tmpl_idx2;
+            int targ_idx2;
+            int n_pri = 0;
+            int tmpl_pri[4];
+            int targ_pri[4];
 
-            tmpl_idx = tmpl_stack; /* prepare to read... */
+            tmpl_idx = tmpl_stack; /* prepare to traverse... */
             while(tmpl_idx) {
               tmpl_ent = I->Tmpl + tmpl_idx;
               I->Atom[tmpl_ent->atom].mark_read = false;
               tmpl_idx = tmpl_ent->link;
             }
+            
             tmpl_idx = tmpl_stack;
             targ_idx = targ_stack;
             while(tmpl_idx&&targ_idx) {
@@ -2292,61 +2287,100 @@ int ChampMatch2(CChamp *I,int template,int target,
               targ_ent = I->Targ + targ_idx;
               if(!I->Atom[tmpl_ent->atom].mark_read) { /* save non-virtual atom match */
                 I->Atom[tmpl_ent->atom].mark_read = true;
-                atom_start = ListElemPush(&I->Int2,atom_start);
-                int2 = I->Int2 + atom_start;
-                int2->value[0] = tmpl_ent->atom;
-                int2->value[1] = targ_ent->atom;
-              }
-              
-              if(tmpl_ent->bond) { /* record bond match */
-                bond_start = ListElemPush(&I->Int2,bond_start);
-                int2 = I->Int2 + bond_start;
-                int2->value[0] = tmpl_ent->bond;
-                int2->value[1] = targ_ent->bond;
-              }
+                if(I->Atom[tmpl_ent->atom].stereo) {
+                  /* this is a stereo-center -- so locate the associated bond priorities  */
+                  
 
+                  
+
+
+                }
+              }
               tmpl_idx = tmpl_ent->link;
               targ_idx = targ_ent->link;
             }
-            match_ent->atom = atom_start;
-            match_ent->bond = bond_start;
-
+          }
+          if(stereo_match) {
+            n_match++;
+            
+            if(n_wanted>0) 
+              if(n_match>=n_wanted) done_flag=true;
+            
+            if(match_start) {
+              (*match_start) = ListElemPush(&I->Match,*match_start);
+              match_ent = I->Match + (*match_start);
+              
+              atom_start=0;
+              bond_start=0;
+              
+              tmpl_idx = tmpl_stack; /* prepare to traverse... */
+              while(tmpl_idx) {
+                tmpl_ent = I->Tmpl + tmpl_idx;
+                I->Atom[tmpl_ent->atom].mark_read = false;
+                tmpl_idx = tmpl_ent->link;
+              }
+              tmpl_idx = tmpl_stack;
+              targ_idx = targ_stack;
+              while(tmpl_idx&&targ_idx) {
+                tmpl_ent = I->Tmpl + tmpl_idx;
+                targ_ent = I->Targ + targ_idx;
+                if(!I->Atom[tmpl_ent->atom].mark_read) { /* save non-virtual atom match */
+                  I->Atom[tmpl_ent->atom].mark_read = true;
+                  atom_start = ListElemPush(&I->Int2,atom_start);
+                  int2 = I->Int2 + atom_start;
+                  int2->value[0] = tmpl_ent->atom;
+                  int2->value[1] = targ_ent->atom;
+                }
+                
+                if(tmpl_ent->bond) { /* record bond match */
+                  bond_start = ListElemPush(&I->Int2,bond_start);
+                  int2 = I->Int2 + bond_start;
+                  int2->value[0] = tmpl_ent->bond;
+                  int2->value[1] = targ_ent->bond;
+                }
+                
+                tmpl_idx = tmpl_ent->link;
+                targ_idx = targ_ent->link;
+              }
+              match_ent->atom = atom_start;
+              match_ent->bond = bond_start;
+              
 #ifdef MATCHDEBUG2
-            /*            ChampPatDump(I,template);
-                          ChampPatDump(I,target);*/
-            ChampMatchDump(I,*match_start);
+              /*            ChampPatDump(I,template);
+                            ChampPatDump(I,target);*/
+              ChampMatchDump(I,*match_start);
 #endif
-          }
-
-          if(tag_flag) { /* are we using tags to mark atoms and bonds? */
+            }
             
-            tmpl_idx = tmpl_stack; /* prepare to read... */
-            while(tmpl_idx) {
-              tmpl_ent = I->Tmpl + tmpl_idx;
-              I->Atom[tmpl_ent->atom].mark_read = false;
-              tmpl_idx = tmpl_ent->link;
-            }
-            tmpl_idx = tmpl_stack;
-            targ_idx = targ_stack;
-            while(tmpl_idx&&targ_idx) {
-              tmpl_ent = I->Tmpl + tmpl_idx;
-              targ_ent = I->Targ + targ_idx;
-              if(!I->Atom[tmpl_ent->atom].mark_read) { /* save non-virtual atom match */
-                I->Atom[tmpl_ent->atom].mark_read = true;
-                I->Atom[targ_ent->atom].tag |= I->Atom[tmpl_ent->atom].tag;
-                I->Atom[targ_ent->atom].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->atom].not_tag);
-              }
+            if(tag_flag) { /* are we using tags to mark atoms and bonds? */
               
-              if(tmpl_ent->bond) { /* record bond match */
-                I->Bond[targ_ent->bond].tag |= I->Bond[tmpl_ent->bond].tag;
-                I->Atom[targ_ent->bond].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->bond].not_tag);
+              tmpl_idx = tmpl_stack; /* prepare to read... */
+              while(tmpl_idx) {
+                tmpl_ent = I->Tmpl + tmpl_idx;
+                I->Atom[tmpl_ent->atom].mark_read = false;
+                tmpl_idx = tmpl_ent->link;
               }
-              
-              tmpl_idx = tmpl_ent->link;
-              targ_idx = targ_ent->link;
+              tmpl_idx = tmpl_stack;
+              targ_idx = targ_stack;
+              while(tmpl_idx&&targ_idx) {
+                tmpl_ent = I->Tmpl + tmpl_idx;
+                targ_ent = I->Targ + targ_idx;
+                if(!I->Atom[tmpl_ent->atom].mark_read) { /* save non-virtual atom match */
+                  I->Atom[tmpl_ent->atom].mark_read = true;
+                  I->Atom[targ_ent->atom].tag |= I->Atom[tmpl_ent->atom].tag;
+                  I->Atom[targ_ent->atom].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->atom].not_tag);
+                }
+                
+                if(tmpl_ent->bond) { /* record bond match */
+                  I->Bond[targ_ent->bond].tag |= I->Bond[tmpl_ent->bond].tag;
+                  I->Atom[targ_ent->bond].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->bond].not_tag);
+                }
+                
+                tmpl_idx = tmpl_ent->link;
+                targ_idx = targ_ent->link;
+              }
             }
           }
-
           /* back-out the last target match... */
           
           targ_ent = I->Targ + targ_stack;
@@ -2600,6 +2634,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
   int not_flag = false;
   int num;
   int done=false;
+  int atom_seen = false;
 
   /*  int done;*/
 
@@ -2621,19 +2656,45 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
     case '!':
       c++;
       not_flag=true;
+      atom_seen = false;
       break;
     case ',':
       c++;
+      atom_seen = false;
       break;
     case ';':
       not_flag=false;
       c++;
+      atom_seen = false;
       break;
     case '*': /* nonstandard */
       c = ChampParseBlockAtom(I,c,cur_atom,cH_Any,1,not_flag);
+      atom_seen = true;
       break;
     case '?': /* nonstandard */
       c = ChampParseBlockAtom(I,c,cur_atom,cH_NotH,1,not_flag);
+      atom_seen = true;
+      break;
+    case '@':
+      num = ChampParseNumeral(c+1);
+      if(num>=0) {
+        c+=2;
+      } else {
+        num = 1;
+        c++;
+        while(*c) {
+          if(*c!='@')
+            break;
+          else {
+            num++;
+            c++;
+          }
+        }
+      }
+      if(num&0x1) /* odd */
+        I->Atom[cur_atom].stereo = cH_Anticlock;
+      else
+        I->Atom[cur_atom].stereo = cH_Clockwise;
       break;
     case 'A': /* note there is no way to address the 'A' symbol ...*/
       if(not_flag) {
@@ -2659,9 +2720,11 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       switch(*(c+1)) {
       case 'r':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Br,2,not_flag);
+        atom_seen = true;
         break;
       default:
         c = ChampParseBlockAtom(I,c,cur_atom,cH_B,1,not_flag);
+        atom_seen = true;
         break;
       }
       break;
@@ -2669,15 +2732,19 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       switch(*(c+1)) {
       case 'a':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Ca,2,not_flag);
+        atom_seen = true;
         break;
       case 'u':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Cu,2,not_flag);
+        atom_seen = true;
         break;
       case 'l':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Cl,2,not_flag);
+        atom_seen = true;
         break;
       default:
         c = ChampParseBlockAtom(I,c,cur_atom,cH_C,1,not_flag);
+        atom_seen = true;
         break;
       }
       break;
@@ -2697,42 +2764,64 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       break;
     case 'E':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_E,1,not_flag);
+      atom_seen = true;
       break;
     case 'F':
       switch(*(c+1)) {
       case 'e':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Fe,2,not_flag);
+        atom_seen = true;
         break;
       default:
         c = ChampParseBlockAtom(I,c,cur_atom,cH_F,1,not_flag);
+        atom_seen = true;
         break;
       }
       break;      
     case 'G':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_G,1,not_flag);
+        atom_seen = true;
       break;
     case 'H': 
-      c = ChampParseBlockAtom(I,c,cur_atom,cH_H,1,not_flag);
+      if(!atom_seen) {
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_H,1,not_flag);
+        atom_seen = true;
+      } else {
+        num = ChampParseNumeral(c+1);
+        if(num>=0) {
+          I->Atom[cur_atom].imp_hydro = num;
+          c+=2;
+        } else {
+          I->Atom[cur_atom].imp_hydro = 1;
+          c++;
+        }
+      }
       break;
     case 'I':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_I,1,not_flag);
+        atom_seen = true;
       break;      
     case 'J':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_J,1,not_flag);
+        atom_seen = true;
       break;
     case 'K':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_K,1,not_flag);
+        atom_seen = true;
       break;      
     case 'L':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_L,1,not_flag);
+        atom_seen = true;
       break;      
     case 'M':
       switch(*(c+1)) {
       case 'g':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Mg,2,not_flag);
+        atom_seen = true;
         break;
       default:
         c = ChampParseBlockAtom(I,c,cur_atom,cH_M,1,not_flag);
+        atom_seen = true;
         break;
       }
       break;
@@ -2740,16 +2829,21 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       switch(*(c+1)) {
       case 'a':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Na,2,not_flag);      
+        atom_seen = true;
         break;
       default:
         c = ChampParseBlockAtom(I,c,cur_atom,cH_N,1,not_flag);
+        atom_seen = true;
+        break;
       }
       break;      
     case 'O':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_O,1,not_flag);
+      atom_seen = true;
       break;      
     case 'P':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_P,1,not_flag);
+        atom_seen = true;
       break;      
     case 'p': /* Pi system */
       if(not_flag) {
@@ -2785,19 +2879,23 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       break;
     case 'Q':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_Q,1,not_flag);
+        atom_seen = true;
       break;      
     case 'S':
       switch(*(c+1)) {
       case 'e':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Se,2,not_flag);
+        atom_seen = true;
         break;
       default:
         c = ChampParseBlockAtom(I,c,cur_atom,cH_S,1,not_flag);
+        atom_seen = true;
         break;
       }
       break;      
     case 'T':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_T,1,not_flag);
+        atom_seen = true;
       break;    
     case 'v':
       num = ChampParseNumeral(c+1);
@@ -2817,9 +2915,11 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       switch(*(c+1)) {
       case 'n':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Zn,2,not_flag);
+        atom_seen = true;
         break;
       default:
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Z,1,not_flag);
+        atom_seen = true;
         break;
       }
       break;
@@ -3281,8 +3381,9 @@ void ChampPatDump(CChamp *I,int index)
     ChampAtomToString(I,cur_atom,buf);
     printf(" atom %d %s 0x%08x",cur_atom,buf,at->atom);
     printf(" cy: %x",at->cycle);
-    printf(" class: %x val: %x deg: %x chg: %d bonds: ",
-           at->class,at->valence,at->degree,at->charge);
+    printf(" class: %x val: %x deg: %x chg: %d st: %d bonds: ",
+           at->class,at->valence,at->degree,at->charge,
+           at->stereo);
     for(a=0;a<MAX_BOND;a++) {
       if(!at->bond[a]) break;
       else printf("%d ",at->bond[a]);
@@ -3293,8 +3394,9 @@ void ChampPatDump(CChamp *I,int index)
   cur_bond = I->Pat[index].bond;
   while(cur_bond) {
     bd = I->Bond+cur_bond;
-    printf(" bond %d 0x%01x atoms %d %d order 0x%01x cycle %x class %x\n",
-           cur_bond,bd->order,bd->atom[0],bd->atom[1],bd->order,bd->cycle,bd->class);
+    printf(" bond %d 0x%01x atoms %d %d order 0x%01x cycle %x dir %d class %x\n",
+           cur_bond,bd->order,bd->atom[0],bd->atom[1],bd->order,bd->cycle,
+           bd->direction,bd->class);
     cur_bond = I->Bond[cur_bond].link;
   }
   fflush(stdout);
@@ -3419,6 +3521,7 @@ int ChampAddBondToAtom(CChamp *I,int atom_index,int bond_index)
 int ChampSmiToPat(CChamp *I,char *c) 
 { /* returns root atom of list */
   int mark[MAX_RING]; /* ring marks 0-9 */
+  int mark_pri[MAX_RING]; /* lexical priority of mark */
   int stack = 0; /* parenthetical scopes */
   int base_atom = 0;
   int last_atom = 0;
@@ -3436,6 +3539,7 @@ int ChampSmiToPat(CChamp *I,char *c)
   int bond_not_tags = 0;
   int a;
   int not_bond = false;
+  int lex_pri = 0;
   char *orig_c=c;
 
 #define save_bond() { if(last_bond) {I->Bond[last_bond].link=cur_bond;}\
@@ -3457,7 +3561,9 @@ int ChampSmiToPat(CChamp *I,char *c)
   cur_atom = ListElemNewZero(&I->Atom);
   cur_bond = ListElemNewZero(&I->Bond);
   
+  lex_pri = 0;
   while((*c)&&ok) {
+    lex_pri++;
     PRINTFD(FB_smiles_parsing) 
       " parsing: '%c' at %p\n",*c,c
       ENDFD;
@@ -3584,6 +3690,24 @@ int ChampSmiToPat(CChamp *I,char *c)
           I->Bond[cur_bond].order |= cH_Single;
         sym = cSym_Bond;
         break;
+      case '/':
+        c++;
+        if(not_bond) 
+          I->Bond[cur_bond].not_order |= cH_Single;
+        else 
+          I->Bond[cur_bond].order |= cH_Single;
+        sym = cSym_Bond;
+        I->Bond[cur_bond].direction = cH_Up;
+        break;
+      case '\\':
+        c++;
+        if(not_bond) 
+          I->Bond[cur_bond].not_order |= cH_Single;
+        else 
+          I->Bond[cur_bond].order |= cH_Single;
+        sym = cSym_Bond;
+        I->Bond[cur_bond].direction = cH_Down;
+        break;
       case '=':
         c++;
         if(not_bond)
@@ -3682,6 +3806,8 @@ int ChampSmiToPat(CChamp *I,char *c)
           /* backward link */
           I->Bond[cur_bond].atom[0] = base_atom;
           I->Bond[cur_bond].atom[1] = cur_atom;
+          I->Bond[cur_bond].pri[0] = lex_pri;
+          I->Bond[cur_bond].pri[1] = lex_pri;
           if(!bond_flag) {
             if((I->Atom[cur_atom].class&cH_Aromatic)&&
                (I->Atom[base_atom].class&cH_Aromatic))
@@ -3726,10 +3852,13 @@ int ChampSmiToPat(CChamp *I,char *c)
       case cSym_Mark:
         if(base_atom) {
           if(!mark[mark_code]) { /* opening cycle */
-            mark[mark_code]=base_atom;
+            mark[mark_code] = base_atom;
+            mark_pri[mark_code] = lex_pri;
           } else { /* closing cycle */
             I->Bond[cur_bond].atom[0] = base_atom;
             I->Bond[cur_bond].atom[1] = mark[mark_code];
+            I->Bond[cur_bond].pri[0] = lex_pri;
+            I->Bond[cur_bond].pri[1] = mark_pri[mark_code];
             if(!bond_flag) {
               I->Bond[cur_bond].order = cH_Single;
             }

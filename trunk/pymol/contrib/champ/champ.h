@@ -143,6 +143,7 @@ typedef struct {
   int not_degree;
   int not_valence;
   int imp_hydro_flag;
+  int stereo; /* 0 = unspecified, 1 = anti-clockwise, -1 = clockwise */
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
   int first_base; 
@@ -158,16 +159,28 @@ typedef struct {
 #define cH_AnyOrder    0x00000007
 #define cH_NoOrder     0x00000000
 
+/* double-bond stereochem */
+
+#define cH_Up           1
+#define cH_Down        -1
+
+/* tetrahedral stereochem */
+
+#define cH_Anticlock    1
+#define cH_Clockwise   -1
+
 typedef struct {
   int link;     /* memory management */
   int index;
   int atom[2];  /* connected atoms  -- directionality must reflect tree */
+  int pri[2]; /* forward and backward lexical priorities */
   int order;
   int class;
   int cycle; 
   int not_order;
   int not_class;
   int not_cycle;
+  int direction; /* 0 = specified, 1 = up, -1 = down */
   int mark_tmpl,mark_targ; /* traversal */
   unsigned int tag,not_tag;
   PyObject *chempy_bond;
@@ -204,12 +217,14 @@ typedef struct {
   int parent;
   int match;
   int targ_start;
+  int bond_pri;
 } ListTmpl;
 
 typedef struct {
   int link;
   int atom; /* root of atom list (Pat) */ 
   int bond; /* root of bond list (Bond) */
+  int bond_pri;
 } ListTarg;
 
 typedef struct {
