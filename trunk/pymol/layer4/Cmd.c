@@ -956,7 +956,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
       break;
     }
     PRINTFB(FB_CCmd,FB_Blather)
-      " CmdIsoMesh: buffer %8.3f carve %8.3f \n",fbuf,carve
+      " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
       ENDFB;
     obj=(Object*)ObjectMeshFromBox((ObjectMesh*)origObj,mapObj,state,mn,mx,lvl,dotFlag,
                                    carve,vert_vla);
@@ -967,11 +967,11 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
     if(SettingGet(cSetting_isomesh_auto_state))
       if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
     PRINTFB(FB_ObjectMesh,FB_Actions)
-      " Mesh: created \"%s\", setting level to %5.3f\n",str1,lvl
+      " Isomesh: created \"%s\", setting level to %5.3f\n",str1,lvl
       ENDFB;
   } else {
     PRINTFB(FB_ObjectMesh,FB_Errors)
-      "Map or brick object '%s' not found.",str2
+      " Isomesh: Map or brick object '%s' not found.\n",str2
       ENDFB;
   }
   APIExit();

@@ -77,11 +77,13 @@ Bugs to Fix
 
 Changes up to 0.64
 
+   * mesh_radius cut in half, for better default density figures
+
    * carve command on isomesh
 
    * .pymolrc and .pymolrc.py(m) support
  
-   * isosurface speed boosted by about 33% using C-oriented Field object.
+   * isosurface speed boosted by about 33% using C-oriented field object.
 
    * fixed bugs with internal_gui options
  

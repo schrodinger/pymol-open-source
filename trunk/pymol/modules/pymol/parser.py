@@ -26,7 +26,7 @@ import parsing
 import types
 import glob
 import sys
-
+import os
 QuietException = parsing.QuietException
       
 pymol_names = pymol.__dict__
@@ -269,7 +269,7 @@ def complete(st):
       else:
          st3 = ''
          loc = len(st)
-      flist = glob.glob(st3+"*")
+      flist = glob.glob(os.path.expanduser(os.path.expandvars(st3))+"*")
       lf = len(flist)
       if lf == 0:
          print " parser: no matching files."

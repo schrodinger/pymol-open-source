@@ -67,6 +67,8 @@ file_ext_re= re.compile(string.join([
    r"\.ccp4$|\.CCP4$" # CCP4   
    ],''))
 
+safe_oname_re = re.compile(r"\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
+   
 QuietException = parsing.QuietException
 
 # the following lock is used by both C and Python to insure that no more than
@@ -4373,6 +4375,7 @@ SEE ALSO
       if len(str(object))==0:
          oname = re.sub(r".*\/|.*\\","",filename) # strip path
          oname = file_ext_re.sub("",oname) # strip extension
+         oname = safe_oname_re.sub("_",oname)
          if not len(oname): # safety
             oname = 'obj01'
       else:

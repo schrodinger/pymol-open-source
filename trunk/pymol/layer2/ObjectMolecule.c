@@ -4417,6 +4417,10 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick)
 {
   int a;
 
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMolecule: rendering %s...\n",I->Obj.Name
+    ENDFD;
+
   if(I->UnitCellCGO&&(I->Obj.RepVis[cRepCell])) {
     if(ray) {
       
