@@ -263,6 +263,12 @@ class PMGApp(AbstractApp):
 								variable = self.setting.overlay,
 								command = lambda s=self: s.setting.update('overlay'))
 
+		self.menuBar.addmenuitem('Options', 'checkbutton',
+							 	'Normals Bug Workaround',
+							 	label='Normals Bug Workaround',
+								variable = self.setting.normal_workaround,
+								command = lambda s=self: s.setting.update('normal_workaround'))
+
 		self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
 		self.menuBar.addmenuitem('Mouse', 'command', 'Left Mode 1',
