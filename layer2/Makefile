@@ -1,7 +1,10 @@
 
+include ../Rules.make
+
+CFLAGS = $(PYMOL_INC_DIRS) $(C_FLAGS)
+
 all: layer
 
-include ../Rules.make
 include .includes
 
 .c.p:
