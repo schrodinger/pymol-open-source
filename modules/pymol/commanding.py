@@ -50,7 +50,7 @@ if __name__=='pymol.commanding':
                print " Cmd: appending to '%s'."%fname            
          if mode=='a':
             pymol._log_file.write("\n") # always start on a new line
-         if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",fname)):
+         if(re.search(r"\.py$|\.PY$|\.pym$|\.PYM$",fname)):
             cmd.set("logging",2,quiet=1)
          else:
             cmd.set("logging",1,quiet=1)

@@ -170,6 +170,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int only_read_one_model = false;
   int ignore_conect = false;
   int have_bond_order = false;
+  int seen_model;
 
   ignore_pdb_segi = (int)SettingGet(cSetting_ignore_pdb_segi);
 
@@ -189,25 +190,25 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   *restart_model = NULL;
   while(*p)
 	 {
-		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M')
+		if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M')
          &&(!*restart_model))
 		  nAtom++;
-		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='L')&&(*(p+3)=='I')&&(*(p+4)=='X'))
+		else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='L')&&(p[3]=='I')&&(p[4]=='X'))
         ssFlag=true;
-		else if((*p == 'S')&&(*(p+1)=='H')&&(*(p+2)=='E')&&(*(p+3)=='E')&&(*(p+4)=='T'))
+		else if((p[0]== 'S')&&(p[1]=='H')&&(p[2]=='E')&&(p[3]=='E')&&(p[4]=='T'))
         ssFlag=true;
-		else if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M')
+		else if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M')
          &&(!*restart_model))
 		  nAtom++;
-		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
-         (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M')&&(!*restart_model))
+		else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='T')&&
+         (p[3]=='A')&&(p[4]=='T')&&(p[5]=='M')&&(!*restart_model))
         nAtom++;
-		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
-              (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart_model)) {
+		else if((p[0]== 'E')&&(p[1]=='N')&&(p[2]=='D')&&
+              (p[3]=='M')&&(p[4]=='D')&&(p[5]=='L')&&(!*restart_model)) {
         *restart_model=nextline(p);
         if(only_read_one_model) 
           break;
-      } else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')) { /* stop parsing after END */
+      } else if((p[0]== 'E')&&(p[1]=='N')&&(p[2]=='D')) { /* stop parsing after END */
         ntrim(cc,p,6);
         if(strcmp("END",cc)==0) {
           if(next_pdb) {
@@ -219,15 +220,15 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           }
           break;
         }
-      } else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
-         (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
+      } else if((p[0]== 'C')&&(p[1]=='O')&&(p[2]=='N')&&
+         (p[3]=='E')&&(p[4]=='C')&&(p[5]=='T'))
         bondFlag=true;
-		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')&&
-              (*(p+3)=='R')&&(!*restart_model)) {
+		else if((p[0]== 'U')&&(p[1]=='S')&&(p[2]=='E')&&
+              (p[3]=='R')&&(!*restart_model)) {
 
         /* Metaphorics key 'USER     '*/
-        if((*(p+4)==' ')&&(*(p+5)==' ')&&(*(p+6)==' ')&&
-           (*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
+        if((p[4]==' ')&&(p[5]==' ')&&(p[6]==' ')&&
+           (p[7]==' ')&&(p[8]==' ')&&m4x) {
           p = nskip(p,10);
           p = ntrim(cc,p,6);
           m4x->annotated_flag = true;
@@ -352,34 +353,52 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   atomCount=0;
 
   /* PASS 2 */
+  seen_model = false;
 
   while(*p)
 	 {
 		AFlag=false;
       SSCode=0;
-		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M'))
+		if((p[0]=='A')&&
+         (p[1]=='T')&&
+         (p[2]=='O')&&
+         (p[3]=='M'))
 		  AFlag = 1;
-		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
-         (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M'))
+		else if((p[0]=='H')&&
+              (p[1]=='E')&&
+              (p[2]=='T')&&
+              (p[3]=='A')&&
+              (p[4]=='T')&&
+              (p[5]=='M'))
         AFlag = 2;
-		else if((*p == 'R')&&(*(p+1)=='E')&&(*(p+2)=='M')&&
-         (*(p+3)=='A')&&(*(p+4)=='R')&&(*(p+5)=='K')&&
-         (*(p+6)==' ')&&(*(p+7)=='2')&&(*(p+8)=='9')&&
-         (*(p+9)=='0'))
-        {
-        }
-		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='A')&&
-              (*(p+3)=='D')&&(*(p+4)=='E')&&(*(p+5)=='R'))
+		else if((p[0]=='H')&&
+              (p[1]=='E')&&
+              (p[2]=='A')&&
+              (p[3]=='D')&&
+              (p[4]=='E')&&
+              (p[5]=='R'))
         {
           if(pdb_name) {
             p=nskip(p,62);
             p=ntrim(pdb_name,p,4);
           }
         }
-		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='L')&&(*(p+3)=='I')&&(*(p+4)=='X'))
+		else if((p[0]=='M')&&
+              (p[1]=='O')&&
+              (p[2]=='D')&&
+              (p[3]=='E')&&
+              (p[4]=='L'))
+        {
+          seen_model = true;
+        }
+		else if((p[0]=='H')&&
+              (p[1]=='E')&&
+              (p[2]=='L')&&
+              (p[3]=='I')&&
+              (p[4]=='X'))
         {
           ss_valid=true;
-
+          
           p=nskip(p,19);
           ss_chain1 = (*p);
           p=nskip(p,2);
@@ -407,7 +426,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(ss_chain2==' ') ss_chain2=0;          
 
         }
-		else if((*p == 'S')&&(*(p+1)=='H')&&(*(p+2)=='E')&&(*(p+3)=='E')&&(*(p+4)=='T'))
+		else if((p[0]=='S')&&
+              (p[1]=='H')&&
+              (p[2]=='E')&&
+              (p[3]=='E')&&
+              (p[4]=='T'))
         {
           ss_valid=true;
           p=nskip(p,21);
@@ -435,51 +458,77 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(ss_chain2==' ') ss_chain2=0;   
 
         }
-		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
-              (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart_model)) {
+		else if((p[0]=='E')&&
+              (p[1]=='N')&&
+              (p[2]=='D')&&
+              (p[3]=='M')&&
+              (p[4]=='D')&&
+              (p[5]=='L')&&
+              (!*restart_model)) {
         *restart_model=nextline(p);
         if(only_read_one_model) 
           break;
-      } else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')) { /* stop parsing after END */
+      } else if((p[0]=='E')&&
+                (p[1]=='N')&&
+                (p[2]=='D')) { 
         ntrim(cc,p,6);
-        if(strcmp("END",cc)==0)
-          break;
-		} else if((*p == 'C')&&(*(p+1)=='R')&&(*(p+2)=='Y')&&
-              (*(p+3)=='S')&&(*(p+4)=='T')&&(*(p+5)=='1')&&(!*restart_model))
-        {
-          if(!symmetry) symmetry=SymmetryNew();          
-          if(symmetry) {
-            PRINTFB(FB_ObjectMolecule,FB_Blather)
-              " PDBStrToCoordSet: Attempting to read symmetry information\n"
-              ENDFB;
-            p=nskip(p,6);
-            symFlag=true;
-            p=ncopy(cc,p,9);
-            if(sscanf(cc,"%f",&symmetry->Crystal->Dim[0])!=1) symFlag=false;
-            p=ncopy(cc,p,9);
-            if(sscanf(cc,"%f",&symmetry->Crystal->Dim[1])!=1) symFlag=false;
-            p=ncopy(cc,p,9);
-            if(sscanf(cc,"%f",&symmetry->Crystal->Dim[2])!=1) symFlag=false;
-            p=ncopy(cc,p,7);
-            if(sscanf(cc,"%f",&symmetry->Crystal->Angle[0])!=1) symFlag=false;
-            p=ncopy(cc,p,7);
-            if(sscanf(cc,"%f",&symmetry->Crystal->Angle[1])!=1) symFlag=false;
-            p=ncopy(cc,p,7);
-            if(sscanf(cc,"%f",&symmetry->Crystal->Angle[2])!=1) symFlag=false;
-            p=nskip(p,1);
-            p=ncopy(symmetry->SpaceGroup,p,10);
-            UtilCleanStr(symmetry->SpaceGroup);
-            p=ncopy(cc,p,4);
-            if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
-            if(!symFlag) {
+        if(strcmp("END",cc)==0) { /* stop parsing here...*/
+          char *pp;
+          pp = nextline(p); /* ...unless we're in MODEL or next line is itself ENDMDL */
+          if(!(seen_model ||
+               (((pp[0] =='E')&&
+                 (pp[1] =='N')&&
+                 (pp[2] =='D')&&
+                 (pp[3] =='M')&&
+                 (pp[4] =='D')&&
+                 (pp[5] =='L')))))
+            break; 
+        }
+      } else if((p[0]=='C')&&
+                (p[1]=='R')&&
+                (p[2]=='Y')&&
+                (p[3]=='S')&&
+                (p[4]=='T')&&
+                (p[5]=='1')&& (!*restart_model))
+          {
+            if(!symmetry) symmetry=SymmetryNew();          
+            if(symmetry) {
+              PRINTFB(FB_ObjectMolecule,FB_Blather)
+                " PDBStrToCoordSet: Attempting to read symmetry information\n"
+                ENDFB;
+              p=nskip(p,6);
+              symFlag=true;
+              p=ncopy(cc,p,9);
+              if(sscanf(cc,"%f",&symmetry->Crystal->Dim[0])!=1) symFlag=false;
+              p=ncopy(cc,p,9);
+              if(sscanf(cc,"%f",&symmetry->Crystal->Dim[1])!=1) symFlag=false;
+              p=ncopy(cc,p,9);
+              if(sscanf(cc,"%f",&symmetry->Crystal->Dim[2])!=1) symFlag=false;
+              p=ncopy(cc,p,7);
+              if(sscanf(cc,"%f",&symmetry->Crystal->Angle[0])!=1) symFlag=false;
+              p=ncopy(cc,p,7);
+              if(sscanf(cc,"%f",&symmetry->Crystal->Angle[1])!=1) symFlag=false;
+              p=ncopy(cc,p,7);
+              if(sscanf(cc,"%f",&symmetry->Crystal->Angle[2])!=1) symFlag=false;
+              p=nskip(p,1);
+              p=ncopy(symmetry->SpaceGroup,p,10);
+              UtilCleanStr(symmetry->SpaceGroup);
+              p=ncopy(cc,p,4);
+              if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
+              if(!symFlag) {
               ErrMessage("PDBStrToCoordSet","Error reading CRYST1 record\n");
               SymmetryFree(symmetry);
               symmetry=NULL;
             }
           }
         }
-		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
-              (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T')&&bondFlag&&(!ignore_conect))
+		else if((p[0]=='C')&&
+              (p[1]=='O')&&
+              (p[2]=='N')&&
+              (p[3]=='E')&&
+              (p[4]=='C')&&
+              (p[5]=='T')&&
+              bondFlag&&(!ignore_conect))
         {
           p=nskip(p,6);
           p=ncopy(cc,p,5);
@@ -508,11 +557,19 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               }
             }
         }
-		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')
-              &&(*(p+3)=='R')&&(!*restart_model)) {
+		else if((p[0]=='U')&&
+              (p[1]=='S')&&
+              (p[2]=='E')&&
+              (p[3]=='R')&&
+              (!*restart_model)) {
         /* Metaphorics key 'USER     ' */
-        if((*(p+4)==' ')&&(*(p+5)==' ')&&(*(p+6)==' ')&&
-           (*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
+        if((p[4]==' ')&&
+              (p[5]==' ')&&
+              (p[6]==' ')&&
+              
+           (p[7]==' ')&&
+              (p[8]==' ')&&
+              m4x) {
           
           int parsed_flag = false;
 
@@ -1064,13 +1121,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
     newModelFlag=false;
     while(*p) {
         
-        if((*p == 'M')&&(*(p+1)=='O')&&(*(p+2)=='D')&&
-           (*(p+3)=='E')&&(*(p+4)=='L')&&(*(p+5)==' ')) {
+        if((p[0]== 'M')&&(p[1]=='O')&&(p[2]=='D')&&
+           (p[3]=='E')&&(p[4]=='L')&&(p[5]==' ')) {
           newModelFlag=true;
           break;
         }
-        if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
-           (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')) {
+        if((p[0]== 'E')&&(p[1]=='N')&&(p[2]=='D')&&
+           (p[3]=='M')&&(p[4]=='D')&&(p[5]=='L')) {
           newModelFlag=true;
           break;
         }
@@ -1144,7 +1201,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
           ExecutiveManageObject((CObject*)distObj,false,true);
       }
 
-      if(cont->nbond) {
+      if(cont->nbond&&0) {
         /*        ObjectDist *distObj;*/
         UtilNCopy(name,I->Obj.Name,sizeof(WordType));
         UtilNConcat(name,"_",sizeof(WordType));
