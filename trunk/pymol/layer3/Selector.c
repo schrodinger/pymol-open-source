@@ -6220,8 +6220,7 @@ int SelectorSelect1(EvalElem *base)
                     c++;
                   }
                 }
-              } else {
-              } if(cs->AtmToIdx[at_idx]>=0) {
+              } else if(cs->AtmToIdx[at_idx]>=0) {
                 base[0].sele[a]=true;
                 c++;
               }
