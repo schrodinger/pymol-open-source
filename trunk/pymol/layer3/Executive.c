@@ -848,7 +848,7 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
     }
     /* X < Y < Z  - do nothing - that's what we want */
 
-    ExecutiveWindowZoom(sele);
+    ExecutiveWindowZoom(sele,0.0);
 
   }
 }
@@ -1154,7 +1154,7 @@ void ExecutiveUpdateObjectSelection(struct Object *obj)
 void ExecutiveReset(int cmd)
 {
   SceneResetMatrix();
-  ExecutiveWindowZoom("all");
+  ExecutiveWindowZoom("all",0.0);
 }
 /*========================================================================*/
 void ExecutiveDrawNow(void) 
@@ -1369,12 +1369,21 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   return(flag);  
 }
 /*========================================================================*/
-void ExecutiveWindowZoom(char *name)
+void ExecutiveWindowZoom(char *name,float buffer)
 {
   float center[3],radius;
   float mn[3],mx[3];
 
   if(ExecutiveGetExtent(name,mn,mx)) {
+    if(buffer!=0.0) {
+      buffer = buffer;
+      mx[0]+=buffer;
+      mx[1]+=buffer;
+      mx[2]+=buffer;
+      mn[0]-=buffer;
+      mn[1]-=buffer;
+      mn[2]-=buffer;
+    }
     radius = diff3f(mn,mx)/3.0;
     average3f(mn,mx,center);
     if(radius<MAX_VDW)
@@ -1847,7 +1856,7 @@ void ExecutiveManageObject(Object *obj)
   }
   if(!exists) 
     if(SettingGet(cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(obj->Name);
+      ExecutiveWindowZoom(obj->Name,0.0);
     }
 }
 /*========================================================================*/

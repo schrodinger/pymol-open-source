@@ -16,7 +16,7 @@ import cmd
 import math
 import string
 import glob
-
+import pymol
 
 def cbag(s):
    cmd.color("magenta","("+s+")")
@@ -116,3 +116,15 @@ def mload(*args):
       for a in fils:
          cmd.load(a,nam)
    
+def color_chains():
+   '''
+   Color all chains a different color
+   '''
+   pymol.stored.chain = {}
+   cmd.iterate("(all)","stored.chain[chain]=1")
+   c = 7
+   for a in pymol.stored.chain.keys():
+      print ("%d,(chain %s)"%(c,a))
+      cmd.color("%d"%c,"(chain %s)"%a)
+      c = c + 1
+
