@@ -64,7 +64,6 @@ struct _COrtho {
   Block *Blocks;
   Block *GrabbedBy,*ClickedIn;
   Block LoopBlock;
-  GLint ViewPort[4];
   int X,Y,Height,Width;
   int LastX,LastY,LastModifiers;
   int ActiveButton;
@@ -94,7 +93,6 @@ struct _COrtho {
   CQueue *cmds;
   CQueue *feedback;
   int Pushed;
-  int HaveViewPort;
 };
 
 void OrthoParseCurrentLine(PyMOLGlobals *G);
@@ -904,11 +902,6 @@ void OrthoDoDraw(PyMOLGlobals *G)
   int skip_prompt = 0;
   int render = false;
 
-  if(G->HaveGUI) { /* update our viewport information */
-    if(!I->HaveViewPort)
-      glGetIntegerv(GL_VIEWPORT,I->ViewPort);
-  }
-
   if(SettingGetGlobal_b(G,cSetting_seq_view)) {
     SeqUpdate(G); 
     I->HaveSeqViewer = true;
@@ -1364,9 +1357,6 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
   BlockSetMargin(block,sceneTop,0,sceneBottom,sceneRight);
   BlockSetMargin(&I->LoopBlock,sceneTop,0,sceneBottom,sceneRight);
 
-  I->HaveViewPort = false;
-
-
   block=NULL;
   while(ListIterate(I->Blocks,block,next))
 	 if(block->fReshape) {
@@ -1576,7 +1566,6 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   ListInit(I->Blocks);
 
   I->Pushed = false;
-  I->HaveViewPort = false;
   I->cmds = QueueNew(G,0xFFFF);
   I->feedback = QueueNew(G,0xFFFF);
 
@@ -1657,13 +1646,14 @@ void OrthoFree(PyMOLGlobals *G)
 void OrthoPushMatrix(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
+  GLint ViewPort[4];
 
   if(G->HaveGUI) {
-    glGetIntegerv(GL_VIEWPORT,I->ViewPort);
+    glGetIntegerv(GL_VIEWPORT,ViewPort);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0,I->ViewPort[2],0,I->ViewPort[3],-100,100);
+    glOrtho(0,ViewPort[2],0,ViewPort[3],-100,100);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
