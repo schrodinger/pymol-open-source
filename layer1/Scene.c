@@ -100,7 +100,7 @@ typedef struct {
   int SculptingFlag,SculptingSave;
   int RovingDirtyFlag;
   int RovingCleanupFlag;
-  int RovingLastUpdate;
+  double RovingLastUpdate;
 } CScene;
 
 CScene Scene;
@@ -594,8 +594,9 @@ void SceneRovingPostpone(void)
   float delay;
   if(SettingGet(cSetting_roving_detail)) {
     delay = SettingGet(cSetting_roving_delay);
-    if(delay<0.0F)
+    if(delay<0.0F) {
       I->RovingLastUpdate = UtilGetSeconds(); /* put off delay */
+    }
   }
 }
 
@@ -1482,6 +1483,9 @@ static void SceneRovingCleanup(void)
   PParse(buffer);
   PFlush();
   sprintf(buffer,"cmd.hide('cartoon','''%s''')",s);
+  PParse(buffer);
+  PFlush();
+  sprintf(buffer,"cmd.hide('labels','''%s''')",s);
   PParse(buffer);
   PFlush();
   sprintf(buffer,"cmd.hide('nonbonded','''%s''')",s);

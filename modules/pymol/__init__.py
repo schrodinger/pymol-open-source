@@ -212,6 +212,7 @@ if pymol_launch != 3: # if this isn't a dry run
    def adapt_to_hardware():
       (vendor,renderer,version) = cmd.get_renderer()
       if vendor[0:6]=='NVIDIA':
+         cmd.set('ribbon_smooth',0,quiet=1)
          if renderer[0:7]=='GeForce':
             if invocation.options.show_splash:
                print " Adapting to GeForce hardware..."
@@ -226,8 +227,13 @@ if pymol_launch != 3: # if this isn't a dry run
             print " Adapting to Quadro hardware..."
             cmd.set("stereo_double_pump_mono","1",quiet=1)
             cmd.set("line_width",1.4,quiet=1)
+
+      if vendor[0:4]=='Mesa':
+         if renderer[0:18]=='Mesa GLX Indirect':
+            cmd.set('ribbon_smooth',0,quiet=1)
          
       if vendor[0:3]=='ATI':
+         cmd.set('ribbon_smooth',0,quiet=1)
          if renderer[0:17]=='FireGL2 / FireGL3':
             if invocation.options.show_splash:
                print " Adapting to FireGL hardware..."
