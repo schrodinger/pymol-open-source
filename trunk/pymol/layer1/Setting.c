@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"ButMode.h"
 #include"Executive.h"
+#include"Editor.h"
 
 CSetting Setting;
 

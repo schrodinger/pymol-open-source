@@ -1069,6 +1069,7 @@ def overlap(*arg):
    '''
 UNSUPPORTED FEATURE - LIKELY TO CHANGE
    '''
+   state = [ 1,1 ]
    if len(arg)==3:
       state[0]=int(arg[2][0])
       if state[0]<1: state[0]=1;
@@ -1347,6 +1348,36 @@ PYTHON EXAMPLE
       unlock()
    return r
 
+def update(a,b):
+   '''
+DESCRIPTION
+  
+   "update" transfers coordinates from one selection to another.
+USAGE
+ 
+   update (selection),(selection)
+ 
+EXAMPLES
+ 
+   update target,(variant)
+
+NOTES
+
+   Currently, this applies across all pairs of states.  Fine
+   control will be added later.
+   
+'''
+   if a[0]!='(': a="(%"+a+")"
+   if b[0]!='(': b="(%"+b+")"
+   try:
+      lock()   
+      r = _cmd.update(a,b,-1,-1)
+   finally:
+      unlock()
+   return r
+   
+
+   
 def fit(a,b):
    '''
 DESCRIPTION
@@ -1816,13 +1847,16 @@ PYMOL API
 def rename(*arg):
    '''
    '''
+   force = 1
    if len(arg):
       a=arg[0]
    else:
       a="(all)"
+   if len(arg)==2:
+      force=int(arg[1])
    try:
       lock()   
-      r = _cmd.rename(a)
+      r = _cmd.rename(a,force)
    finally:
       unlock()
    return r
@@ -2968,6 +3002,7 @@ EXAMPLES
    select bb = (name ca,n,c,o )
    '''
    try:
+      quiet=0
       lock()   
       if len(arg)==1:
          sel_cnt = _cmd.get("sel_counter") + 1.0
@@ -2977,7 +3012,9 @@ EXAMPLES
       else:
          sel_name = arg[0]
          sel = arg[1]
-      r = _cmd.select(sel_name,sel)
+      if len(arg)==3:
+         quiet=int(arg[2])
+      r = _cmd.select(sel_name,sel,quiet)
    finally:
       unlock()
    return r
@@ -3302,7 +3339,7 @@ NOTES
                 PkAt, PkBd, RotF, TorF, MovF, Orig
 
    Switching from visualization to editing mode will redefine the
-   buttons, so don't use the built-in switch if you want to preserve
+   buttons, so do not use the built-in switch if you want to preserve
    your custom configuration.
 
 '''
@@ -3421,8 +3458,8 @@ EXAMPLE
 def check(obj):
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
    from chempy.tinker import realtime
+   realtime.assign("("+obj+")")
    realtime.setup("("+obj+")")
-   realtime.check()
 
 def fast_minimize(*arg):
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
@@ -3597,7 +3634,7 @@ keyword = {
    'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
    'remove'        : [remove       , 1 , 1 , ',' , 0 ],
    'remove_picked' : [remove_picked, 1 , 1 , ',' , 0 ],
-   'rename'        : [rename       , 1 , 1 , ',' , 0 ],
+   'rename'        : [rename       , 1 , 2 , ',' , 0 ],
    'replace'       : [replace      , 3 , 3 , ',' , 0 ],
    'reset'         : [reset        , 0 , 0 , ',' , 0 ],
    'rewind'        : [rewind       , 0 , 0 , ',' , 0 ],
@@ -3629,6 +3666,7 @@ keyword = {
    'undo'          : [undo         , 0 , 0 , ',' , 0 ],
    'unmask'        : [unmask       , 0 , 1 , ',' , 0 ],
    'unprotect'     : [unprotect    , 0 , 1 , ',' , 0 ],
+   'update'        : [update       , 2 , 2 , ',' , 0 ],
    'viewport'      : [viewport     , 2 , 2 , ',' , 0 ],
    'zoom'          : [zoom         , 0 , 1 , ',' , 0 ],
    }

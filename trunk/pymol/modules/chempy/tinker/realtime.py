@@ -49,6 +49,10 @@ def assign(sele,preserve=0):
          if a=='':
             print " warning: unable to assign atom type to atom %d"%c
          else:
+            cmd.alter("((%s) and (index %s))" % (sele,at.index),
+                      "text_type ='%s'" % a)
+            if feedback['tinker']:
+               print " "+str(__name__)+': %s is a %s' % (at.name,a)
             at.text_type = a
       c = c + 1
 
@@ -62,23 +66,6 @@ def assign(sele,preserve=0):
 #   param = Parameters(tinker.params_path+"parm99_wld.dat")
 #   param = Parameters(tinker.params_path+"simple_parm.dat")
 #   param = Parameters("simple_parm.dat")
-   param = Parameters(tinker.params_path+"parm99_simple.dat")
-   topo = Topology(model)
-
-   subset = Subset(param,topo)
-
-   if(subset.complete()):
-      subset.write_tinker_prm("realtime.prm")
-
-      state.params = "realtime.prm"
-
-      state.load_model(model)
-      return 1
-   else:
-      subset.dump_missing()
-      model = model
-      state = None
-      return 0
 
 def setup(sele,preserve=0):
    
@@ -96,7 +83,8 @@ def setup(sele,preserve=0):
 
    print " lig: net charge on ligand  is %8.4f\n" % sm
 
-   param = Parameters(tinker.params_path+"parm99_wld.dat")
+#   param = Parameters(tinker.params_path+"parm99_wld.dat")
+   param = Parameters(tinker.params_path+"parm99_simple.dat")
    topo = Topology(model)
 
    subset = Subset(param,topo)

@@ -96,6 +96,7 @@ int SelectorUpdateTableSingleObject(ObjectMolecule *obj);
 int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj);
 void SelectorClean(void);
 void SelectorDeletePrefixSet(char *s);
+int *SelectorGetIndexVLA(int sele);
 
 #define STYP_VALU 0
 #define STYP_OPR1 1
@@ -180,6 +181,7 @@ static WordKeyValue Keyword[] =
   {  "elem",     SELE_ELEs },
   {  "e;",       SELE_ELEs },
   {  "resi",     SELE_RSIs },
+  {  "resid",    SELE_RSIs },
   {  "i;",       SELE_RSIs },
   {  "alt",      SELE_ALTs },
   {  "flag",     SELE_FLGs },
@@ -189,7 +191,6 @@ static WordKeyValue Keyword[] =
   {  "pc;",      SELE_PCHx },
   {  "formal_charge", SELE_FCHx },
   {  "fc;",      SELE_FCHx },
-  {  "nt;",      SELE_NTYs },
   {  "numeric_type",SELE_NTYs },
   {  "nt;",      SELE_NTYs },
   {  "text_type",SELE_TTYs },
@@ -229,6 +230,27 @@ static int BondCompare(int *a,int *b);
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 
+/*========================================================================*/
+int *SelectorGetIndexVLA(int sele) /* assumes updated tables */
+{
+  SelectorType *I=&Selector;
+  int a,c=0;
+  int *result = NULL;
+  ObjectMolecule *obj;
+  int at1;
+
+  result = VLAlloc(int,(I->NAtom/10)+1);
+  for(a=0;a<I->NAtom;a++) {
+    obj=I->Obj[I->Table[a].model];
+    at1=I->Table[a].atom;
+    if(SelectorIsMember(obj->AtomInfo[at1].selEntry,sele)) {
+      VLACheck(result,int,c);
+      result[c++]=a;
+    }
+  }
+  VLASize(result,int,c);
+  return(result);
+}
 /*========================================================================*/
 void SelectorUpdateObjectSele(ObjectMolecule *obj)
 {
@@ -765,7 +787,6 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
           } else 
             idx=cs->AtmToIdx[at];
           if(idx>=0) {
-            I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
             ai = obj->AtomInfo+at;
             if(last)
               if(!last->hetatm)
@@ -774,6 +795,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
                     CoordSetAtomToTERStrVLA(charVLA,&cLen,last,c);
                     c++;
                   }
+            I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
             CoordSetAtomToPDBStrVLA(charVLA,&cLen,ai,
                                     obj->CSet[state]->Coord+(3*idx),c);
             last = ai;
@@ -839,13 +861,15 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
     for(a=0;a<nBond;a++) {
       if(a<(nBond-1)) 
         if((ii1[0]==ii1[2])&&(ii1[1]==ii1[3])) newline=true;
-      if(b1!=ii1[0]||((b1==ii1[0])&&(b2==ii1[1]))||newline) {
+      if((b1!=ii1[0])||((b1==ii1[0])&&(b2==ii1[1]))||newline) {
         if(a) cLen+=sprintf((*charVLA)+cLen,"\n");
         cLen+=sprintf((*charVLA)+cLen,"CONECT%5d%5d",
                       ii1[0],ii1[1]);
         b1=ii1[0];
 		  b2=ii1[1];
         newline=false;
+        if(a>0)
+          if((ii1[-2]==ii1[0])&&(ii1[-1]==ii1[1])) newline=true;        
       } else cLen+=sprintf((*charVLA)+cLen,"%5d",
                            ii1[1]);
       b2=ii1[1];
@@ -924,7 +948,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
             ai = obj->AtomInfo+at;
             PyList_SetItem(atom_list,c,
                   CoordSetAtomToChemPyAtom(
-                      ai,obj->CSet[state]->Coord+(3*idx)));
+                      ai,obj->CSet[state]->Coord+(3*idx),at));
             c = c + 1;
           }
         }
@@ -1007,6 +1031,97 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
   return(model);
 }
 /*========================================================================*/
+void SelectorUpdateCmd(int sele0,int sele1,int sta0, int sta1)
+{
+  SelectorType *I=&Selector;
+  int a,b;
+  int at0,at1;
+  int *vla0=NULL;
+  int *vla1=NULL;
+  int c0,c1;
+  int i0,i1;
+  int cc1;
+  ObjectMolecule *obj0,*obj1;
+  CoordSet *cs0,*cs1;
+  int matched_flag;
+  int b_start;
+  int ci0,ci1;
+  int ccc = 0;
+
+  SelectorUpdateTable();
+
+  vla0 = SelectorGetIndexVLA(sele0);
+  vla1 = SelectorGetIndexVLA(sele1);
+
+  if(!(vla0&&vla1))
+    ErrMessage("Update","no coordinates updated.");
+  else {
+    c0 = VLAGetSize(vla0);
+    c1 = VLAGetSize(vla1);
+
+    b = 0;
+    for(a=0;a<c1;a++) { /* iterate over source atoms */
+      i1 = vla1[a];
+      at1=I->Table[i1].atom;
+      obj1=I->Obj[I->Table[i1].model];
+      
+      b_start = b;
+      matched_flag=false;
+      while(1) {
+        i0 = vla0[b];
+        at0=I->Table[i0].atom;
+        obj0=I->Obj[I->Table[i0].model];
+        if(obj0!=obj1)
+          if(AtomInfoMatch(obj1->AtomInfo + at1,
+                           obj0->AtomInfo + at0)) {
+            matched_flag=true;
+            break;
+          }
+        b++;
+        if(b>=c0)
+          b = 0;
+        if(b==b_start) 
+          break;
+      }
+      if(matched_flag) { /* atom matched, so copy coordinates */
+        ccc++;
+        for(cc1=0;cc1<obj1->NCSet;cc1++) { /* iterate over all source states */
+          if((cc1==sta1)||(sta1<0)) {
+            cs1 = obj1->CSet[cc1];
+            if(cs1&&(cc1<obj0->NCSet)&&
+               ((sta0<0)||(cc1==sta0)|| /* multiple or single state */
+                ((sta0>=0)&&(sta1>=0)))) { /* explicit state */
+              if((sta0<0)||(sta0>=obj0->NCSet))
+                cs0 = obj0->CSet[cc1];
+              else
+                cs0 = obj0->CSet[sta0];
+              if(cs0) {
+                ci0 = cs0->AtmToIdx[at0];
+                ci1 = cs1->AtmToIdx[at1];
+                if((ci0>=0)&&(ci1>=0))
+                  copy3f(cs1->Coord + 3*ci1,
+                         cs0->Coord + 3*ci0);
+              }
+            }
+          }
+        }
+      }
+    }
+    obj0=NULL;
+    for(b=0;b<c1;b++) {
+      obj1=I->Obj[I->Table[i0].model];
+      if(obj0!=obj1) {
+        obj0=obj1;
+        ObjectMoleculeInvalidate(obj0,cRepAll,cRepInvCoord);
+      }
+    }
+    PRINTF " Update: coordinates updated for %d atoms.\n",ccc ENDF
+  }
+  VLAFreeP(vla0);
+  VLAFreeP(vla1);
+}
+/*========================================================================*/
+
 void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
 {
   SelectorType *I=&Selector;
@@ -1383,7 +1498,7 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
   return(c);
 }
 /*========================================================================*/
-void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet) 
+int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet) 
 {
   SelectorType *I=&Selector;
   int *atom=NULL;
@@ -1429,6 +1544,7 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet)
       OrthoAddOutput(buffer);
     }
   }
+  return(c);
 }
 /*========================================================================*/
 void SelectorClean(void)
@@ -2528,6 +2644,9 @@ int *SelectorEvaluate(WordType *word)
 				  code=WordKey(Keyword,word[c],4,I->IgnoreCase);
               if(DebugState&DebugSelector)
                 printf("code %x\n",code);
+              if(code>0)  
+                if(SelectorIndexByName(word[c])>=0)
+                  code=0; /* favor selections over partial keyword matches */
 				  if(code) 
 					 { /* this is a known operation */
 						depth++;

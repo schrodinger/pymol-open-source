@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 
 void SelectorInit(void);
 int *SelectorSelect(char *sele);
-void SelectorCreate(char *name,char *sele,ObjectMolecule *obj,int quiet);
+int SelectorCreate(char *name,char *sele,ObjectMolecule *obj,int quiet);
 void SelectorToggle(int rep,char *name);
 void SelectorCylinder(char *sele,char *onoff);
 int SelectorUpdateTable(void);
@@ -44,5 +44,6 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
 ObjectMolecule *SelectorGetSingleObjectMolecule(int sele);
 void SelectorUpdateObjectSele(ObjectMolecule *obj);
 void SelectorDeletePrefixSet(char *pref);
+void SelectorUpdateCmd(int sele0,int sele1,int sta0,int sta1);
 
 #endif

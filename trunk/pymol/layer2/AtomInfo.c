@@ -442,12 +442,14 @@ void AtomInfoAssignParameters(AtomInfoType *I)
     e=I->elem;
     switch ( *e ) {
     case 'C':
-      if(!((*(e+1)=='l')||(*(e+1)=='L')))
+      if(!((*(e+1)=='l')||(*(e+1)=='L')||
+           (*(e+1)=='u')||(*(e+1)=='U')
+           ))
         if(!(((*(e+1))=='A')&&(I->hetatm)))
           *(e+1)=0;
       break;
     case 'B':
-      if(!((*(e+1)=='r')))
+      if(!((*(e+1)=='r')||(*(e+1)=='R')))
         *(e+1)=0;
       break;
     default:

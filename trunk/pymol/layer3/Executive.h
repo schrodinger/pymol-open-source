@@ -44,6 +44,7 @@ void ExecutiveSort(char *name);
 void ExecutiveSetSetting(char *sname,char *value);
 void ExecutiveRay(void);
 float ExecutiveRMS(char *sele1,char *sele2,int mode);
+float ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
 float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(char *s1,int target,int mode);
 int *ExecutiveIdentify(char *s1,int mode);
