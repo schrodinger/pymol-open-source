@@ -42,7 +42,7 @@ typedef float float4[4];
 
 
 static int RandomFlag=0;
-static float Random[255];
+static float Random[256];
 
 void RayRelease(CRay *I);
 void RayTexture(CRay *I,int mode,float *v);

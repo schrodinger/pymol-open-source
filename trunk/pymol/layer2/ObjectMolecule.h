@@ -73,7 +73,7 @@ typedef struct ObjectMoleculeOpRec {
   Vector3f v1,v2;
   int cs1,cs2;
   int i1,i2,i3,i4,*vc1,*i1VLA,*ii1;
-  float f1,*f1VLA,*f2VLA;
+  float f1,f2,*f1VLA,*f2VLA,*ff1;
   double d[3][3];
   float *vv1,*vv2;
   char *charVLA;
@@ -133,6 +133,8 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_MaxDistToPt 43
 #define OMOP_CameraMinMax 44
 #define OMOP_CSetCameraMinMax 45
+#define OMOP_GetChains 46
+#define OMOP_Spectrum 47
 
 #include"CoordSet.h"
 

@@ -242,6 +242,7 @@ if __name__=='pymol.setting':
       dot_color             = 210
       mouse_limit           = 211
       mouse_scale           = 212
+      transparency_mode     = 213
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

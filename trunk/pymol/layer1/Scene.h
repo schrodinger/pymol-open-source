@@ -97,7 +97,7 @@ void SceneGetCardInfo(char **vendor,char **renderer,char **version);
 int SceneLoadPNG(char *fname,int movie_flag,int quiet);
 
 void SceneSetDefaultView(void);
-
+void SceneApplyRotMatrix(float *src,float *dst);
 #endif
 
 

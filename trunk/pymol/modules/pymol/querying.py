@@ -424,6 +424,27 @@ PYMOL API
       elif not quiet: print " cmd.get_area: %5.3f Angstroms^2."%r
       return r
 
+   def get_chains(selection="(all)",state=0,quiet=1):
+      '''
+      PRE-RELEASE functionality - API will change
+
+      state is currently ignored
+      '''
+      # preprocess selection
+      selection = selector.process(selection)
+      #
+      r = None
+      try:
+         lock()
+         r = _cmd.get_chains("("+str(selection)+")",int(state)-1)
+      finally:
+         unlock()
+      if r==None:
+         if cmd._raising(): raise QuietException
+      elif not quiet: print " cmd.get_chains: ",str(r)
+      return r
+
+
    def get_names(type='objects'):
       '''
 DESCRIPTION

@@ -98,6 +98,10 @@ Current Bugs to Fix
 
 Changes up to 0.88
 
+   * added z-ordered transparency (night-and-day!)
+
+   * finished session save support for ramps and gadgets
+
    * debugged and tested Quadro hardware support
 
    * Added mouse_scale and mouse_limit settings.  Reduced "jumping" of virtual trackball.

@@ -94,6 +94,7 @@ int ExecutiveDrag(Block *block,int x,int y,int mod);
 void ExecutiveDraw(Block *block);
 void ExecutiveReshape(Block *block,int width,int height);
 int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int state);
+void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
 #define ExecLineHeight 14
 #define ExecTopMargin 0
@@ -106,6 +107,128 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
 #define ExecOpCnt 5
 #define ExecGreyVisible 0.45
 #define ExecGreyHidden 0.3
+
+int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last,
+                      char *prefix,int digits,int byres)
+{
+  int ok=true;
+  int sele1;
+  int n_color,n_atom;
+  ObjectMoleculeOpRec op;
+  WordType buffer;
+  int *color_index = NULL;
+  float *value = NULL;
+  int a,b;
+  char pat[] = "%0Xd";
+  int pref_len;
+  char *at;
+  float range;
+
+  sele1 = SelectorIndexByName(s1);
+  if(sele1>=0) {
+
+    if(digits>9) digits = 9;
+    pat[2]=('0'+digits);
+    UtilNCopy(buffer,prefix,sizeof(WordType)-digits);
+    
+    pref_len = strlen(prefix);
+    at = buffer+pref_len;
+
+    n_color = abs(first-last)+1;
+    if(n_color) {
+      color_index = Alloc(int,n_color);
+      for(a=0;a<n_color;a++) {
+        b = first + ((last-first)*a)/(n_color-1);
+        sprintf(at,pat,b);
+        color_index[a] = ColorGetIndex(buffer);
+      }
+      op.code = OMOP_CountAtoms;
+      op.i1=0;
+      ExecutiveObjMolSeleOp(sele1,&op);
+      n_atom=op.i1;
+      
+      if(n_atom) {
+        value = Alloc(float,n_atom);
+        
+        for(a=0;a<n_atom;a++) {
+          value[a]=(float)a;
+        }
+        if(max<min) {
+          max = value[0];
+          min = value[0];
+          for(a=1;a<n_atom;a++) {
+            if(value[a]<min) min=value[a];
+            if(value[a]>max) max=value[a];
+          }
+        }
+        range = max-min;
+        
+        if(range==0.0F)
+          range = 1.0F;
+        
+        op.code = OMOP_Spectrum;
+        op.i1 = n_color-1;
+        op.i2 = n_atom;
+        op.i3 = 0;
+        op.ii1 = color_index;
+        op.ff1 = value;
+        op.f1 = min;
+        op.f2 = range;
+        
+        ExecutiveObjMolSeleOp(sele1,&op);
+
+        op.code=OMOP_INVA;
+        op.i1=cRepAll; 
+        op.i2=cRepInvColor;
+        ExecutiveObjMolSeleOp(sele1,&op);
+
+      }
+    }
+
+    FreeP(color_index);
+    FreeP(value);
+  }
+  return(ok);
+}
+
+char *ExecutiveGetChains(char *sele,int state,int *null_chain)
+{
+  int sele1;
+  char *result = NULL;
+  int chains[256];
+  int a,c;
+  ObjectMoleculeOpRec op;
+
+  sele1 = SelectorIndexByName(sele);
+  if(sele1>=0) {
+    for(a=0;a<256;a++) {
+      chains[a]=0;
+    }
+    op.code=OMOP_GetChains;
+    op.ii1 = chains;
+    op.i1=0;
+    ExecutiveObjMolSeleOp(sele1,&op);
+    c=0;
+    for(a=1;a<256;a++) {
+      if(chains[a]) c++;
+    }
+    result = Calloc(char,c+1);
+    if(result) {
+      c=0;
+      *null_chain = chains[0];
+      for(a=1;a<256;a++) {
+        if(chains[a]) {
+          result[c]=(char)a;
+          c++;
+        }
+      }
+    }
+
+  } else {
+    ErrMessage("ExecutiveGetChains","Bad selection.");
+  }
+  return(result);
+}
 
 int ExecutiveValidateObjectPtr(CObject *ptr,int object_type)
 {

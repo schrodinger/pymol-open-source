@@ -354,21 +354,40 @@ void ColorReset(void)
   int a;
   int set1;
   float f;
-  float spectrum[13][3] = { 
-    { 1.0, 0.0, 1.0 },
+  float spectrumS[13][3] = { 
+    { 1.0, 0.0, 1.0 }, /* violet */
     { 0.5, 0.0, 1.0 },
-    { 0.0, 0.0, 1.0 },
+    { 0.0, 0.0, 1.0 }, /* blue - 181.81  */
     { 0.0, 0.5, 1.0 },
-    { 0.0, 1.0, 1.0 },
+    { 0.0, 1.0, 1.0 }, /* cyan - 363.63 */
     { 0.0, 1.0, 0.5 },
-    { 0.0, 1.0, 0.0 },
+    { 0.0, 1.0, 0.0 }, /* green - 545.45 */
     { 0.5, 1.0, 0.0 },
-    { 1.0, 1.0, 0.0 },
+    { 1.0, 1.0, 0.0 }, /* yellow - 727.27 */
     { 1.0, 0.5, 0.0 },
-    { 1.0, 0.0, 0.0 },
+    { 1.0, 0.0, 0.0 }, /* red - 909.09 */
     { 1.0, 0.0, 0.5 },
-    { 1.0, 0.0, 0.5 }
+    { 1.0, 0.0, 1.0 }, /* violet */
   };
+
+  float spectrumR[13][3] = { 
+    { 1.0, 1.0, 0.0 }, /* yellow - 0 */
+    { 0.5, 1.0, 0.0 },
+    { 0.0, 1.0, 0.0 }, /* green - 181.81 */
+    { 0.0, 1.0, 0.5 },
+    { 0.0, 1.0, 1.0 }, /* cyan - 363.63 */
+    { 0.0, 0.5, 1.0 },
+    { 0.0, 0.0, 1.0 }, /* blue - 545.45 */
+    { 0.5, 0.0, 1.0 },
+    { 1.0, 0.0, 1.0 }, /* violet - 727.27 */
+    { 1.0, 0.0, 0.5 },
+    { 1.0, 0.0, 0.0 }, /* red - 909.09 */
+    { 1.0, 0.5, 0.0 },
+    { 1.0, 1.0, 0.0 }, /* yellow */
+  };
+
+  /* BLUE->VIOLET->RED r546 to r909 */
+  /* BLUE->CYAN->GREEN->YELLOW->RED s182 to s909 */
 
   I->NColor=0;
 
@@ -706,21 +725,34 @@ void ColorReset(void)
     I->NColor++;
   }
 
-  /* full spectrum ("S..." colors) */
-
   #define A_DIV 90.9091F
+
+  /* full spectrum ("S..." colors) */
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
     sprintf(I->Color[I->NColor].Name,"s%03d",a);
     f = 1.0F-(a-(set1*A_DIV))/A_DIV;
-    I->Color[I->NColor].Color[0]=f*spectrum[set1][0]+(1.0F-f)*spectrum[set1+1][0];
-    I->Color[I->NColor].Color[1]=f*spectrum[set1][1]+(1.0F-f)*spectrum[set1+1][1];
-    I->Color[I->NColor].Color[2]=f*spectrum[set1][2]+(1.0F-f)*spectrum[set1+1][2];
-
+    I->Color[I->NColor].Color[0]=f*spectrumS[set1][0]+(1.0F-f)*spectrumS[set1+1][0];
+    I->Color[I->NColor].Color[1]=f*spectrumS[set1][1]+(1.0F-f)*spectrumS[set1+1][1];
+    I->Color[I->NColor].Color[2]=f*spectrumS[set1][2]+(1.0F-f)*spectrumS[set1+1][2];
     I->NColor++;
   }
-  for(a=0;a<I->NColor;a++) {
+
+  /* full spectrum ("R..." colors) */
+
+  for(a=0;a<1000;a=a+1) {
+    set1=(int)(a/A_DIV);
+    sprintf(I->Color[I->NColor].Name,"r%03d",a);
+    f = 1.0F-(a-(set1*A_DIV))/A_DIV;
+    I->Color[I->NColor].Color[0]=f*spectrumR[set1][0]+(1.0F-f)*spectrumR[set1+1][0];
+    I->Color[I->NColor].Color[1]=f*spectrumR[set1][1]+(1.0F-f)*spectrumR[set1+1][1];
+    I->Color[I->NColor].Color[2]=f*spectrumR[set1][2]+(1.0F-f)*spectrumR[set1+1][2];
+    I->NColor++;
+  }
+
+  for(a=0;a<I->NColor;a++) { 
+    /* mark all current colors non-custom so that they don't get saved in session files */
     I->Color[a].Custom=false;
   }
 

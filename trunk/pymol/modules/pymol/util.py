@@ -107,6 +107,7 @@ def performance(mode):
       cmd.set('sphere_quality',2)
       cmd.set('cartoon_sampling',14)
       cmd.set('ribbon_sampling',10)
+      cmd.set('transparency_mode',1)
       cmd.do("rebuild")
    elif mode==33:
       cmd.set('line_smooth',1)         
@@ -116,6 +117,7 @@ def performance(mode):
       cmd.set('stick_quality',8)
       cmd.set('sphere_quality',1)
       cmd.set('cartoon_sampling',7)
+      cmd.set('transparency_mode',1)
       cmd.do("rebuild")
    elif mode==66: # good perfomance
       cmd.set('line_smooth',0)
@@ -125,6 +127,7 @@ def performance(mode):
       cmd.set('stick_quality',8)
       cmd.set('sphere_quality',1)
       cmd.set('cartoon_sampling',6)
+      cmd.set('transparency_mode',2)
       cmd.do("rebuild")         
    else: # maximum performance
       cmd.set('line_smooth',0)
@@ -134,6 +137,7 @@ def performance(mode):
       cmd.set('stick_quality',5)
       cmd.set('sphere_quality',0)
       cmd.set('cartoon_sampling',3)
+      cmd.set('transparency_mode',0)
       cmd.do("rebuild")         
 
 def hide_sele():
@@ -152,9 +156,10 @@ def cbc(selection='(all)',first_color=7): # NOT THREAD SAFE
    Color all chains a different color
    '''
    pymol.stored.chain = {}
-   cmd.iterate("(%s)"%selection,"stored.chain[chain]=1")
+#   cmd.iterate("(%s)"%selection,"stored.chain[chain]=1")
    c = first_color
-   for a in pymol.stored.chain.keys():
+#   for a in pymol.stored.chain.keys():
+   for a in cmd.get_chains(selection):
       if len(a):
          print ("%d,(chain %s)"%(c,a))
          cmd.color("%d"%c,"(chain %s)"%a)
