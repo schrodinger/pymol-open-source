@@ -189,7 +189,13 @@ def mouse(action=None,quiet=1):# INTERNAL
       unlock()
 
 def edit_mode(mode=None):
-   pass
+   # legacy function
+   if len(mouse_ring):
+      mouse_mode = mouse_ring[0]
+      if mouse_mode[0:10]=='two_button':
+         mouse(action='two_button_editing',quiet=0)
+      elif mouse_mode[0:12] == 'three_button':
+         mouse(action='three_button_editing',quiet=0)
 
 #   try:
 #      lock()

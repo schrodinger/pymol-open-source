@@ -155,6 +155,7 @@ void  cross_product3f ( float *v1, float *v2, float *cross );
 void  average3f ( float *v1, float *v2, float *avg );
 void  zero3f ( float *v1 )
 void  set3f ( float *v1,float x,float y,float z );
+void  swap1f (float *f, float *g);
 #else
 #define set3f(v1,x,y,z) { (v1)[0]=(x);(v1)[1]=(y);(v1)[2]=(z); }
 #define zero3f(v1) { (v1)[0]=0.0;(v1)[1]=0.0;(v1)[2]=0.0; }
@@ -177,7 +178,7 @@ void  set3f ( float *v1,float x,float y,float z );
   (cross)[1] = ((v1)[2]*(v2)[0]) - ((v1)[0]*(v2)[2]); \
   (cross)[2] = ((v1)[0]*(v2)[1]) - ((v1)[1]*(v2)[0]); \
 }
-
+#define swap1f(f,g) { float h;h=*(f);*(f)=*(g);*(g)=h; }
 #endif
 
 

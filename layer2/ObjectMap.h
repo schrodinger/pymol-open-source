@@ -35,6 +35,16 @@ typedef struct ObjectMap {
   float *Grid;
 } ObjectMap;
 
+typedef struct ObjectMapDesc { /* information for creating a new map */
+  int mode; /* 0 = Orthorhombic Min, Max, Spacing */
+  float Spacing[3];
+  int Dim[3];
+  float Min[3],Max[3];  
+  int init_mode; /* -1 = nothing
+                     0 = zeros
+                     1 = ones */
+} ObjectMapDesc;
+
 ObjectMap *ObjectMapNew(void);
 ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame);
 ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame);

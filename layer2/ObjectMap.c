@@ -164,7 +164,6 @@ static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick,int
     }
   }
 }
-
 /*========================================================================*/
 ObjectMap *ObjectMapNew(void)
 {
@@ -187,6 +186,69 @@ OOAlloc(ObjectMap);
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMapGetNFrames;
 #endif
 
+  return(I);
+}
+/*========================================================================*/
+ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md);
+ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
+{
+  ObjectMap *I;
+  int ok=true;
+  float v[3];
+  int a,b,c;
+  float *fp;
+
+  I = (ObjectMap*)ObjectMapNew();
+  
+  switch(md->mode) {
+  case 0: /* Orthorhombic: min, max, spacing, centered over range  */
+
+    subtract3f(md->Max,md->Min,v);
+    for(a=0;a<3;a++) { if(v[a]<0.0) swap1f(md->Max+a,md->Min+a); };
+    subtract3f(md->Max,md->Min,v);
+    for(a=0;a<3;a++) {
+      md->Dim[a] = v[a]/md->Spacing[a];
+      if(md->Dim[a]<1) md->Dim[a]=1;
+      if((md->Dim[a]*md->Spacing[a])<v[a]) md->Dim[a]++;
+    }
+    average3f(md->Max,md->Min,v);
+    for(a=0;a<3;a++) { md->Min[a] = v[a]-0.5*md->Dim[a]*md->Spacing[a]; }
+
+    /* now populate the map data structure */
+
+    copy3f(md->Min,I->Origin);
+    for(a=0;a<3;a++) I->Min[a]=0; 
+    copy3f(md->Dim,I->Max);
+    for(a=0;a<3;a++) I->FDim[a] = I->Max[a];
+    I->FDim[3] = 3; 
+
+    I->Field=IsosurfFieldAlloc(I->FDim);
+    if(!I->Field) 
+      ok=false;
+    else {
+      for(a=0;a<md->Dim[0];a++) {
+        v[0] = md->Min[0] + a * md->Spacing[0];
+        for(b=0;b<md->Dim[1];b++) {
+          v[1] = md->Min[1] + a * md->Spacing[1];
+          for(c=0;c<md->Dim[2];c++) {
+            v[2] = md->Min[2] + a * md->Spacing[2];
+            fp = F4Ptr(I->Field->points,a,b,c,0);
+            copy3f(v,fp);
+          }
+        }
+      }
+    }
+    break;
+  }
+  
+  if(!ok) {
+    ErrMessage("ObjectMap","Unable to create map");
+    ObjectMapFree(I);
+    I=NULL;
+  } else {
+    printf(" ObjectMap: Map created.");
+  }
+  
   return(I);
 }
 /*========================================================================*/

@@ -162,6 +162,14 @@ void  set3f ( float *v1,float x,float y,float z )
   v1[2]=z;
 }
 
+void swap1f(float *f,float *g)
+{
+  float h;
+  h=*f;
+  *f=*g;
+  *g=h;
+}
+
 void zero3f(float *v1)
 {
 	v1[0]=0.0;

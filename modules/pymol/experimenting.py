@@ -14,6 +14,8 @@
 
 import selector
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
+import cmd
+import threading
 
 def expfit(a,b): # Huh?
    try:
