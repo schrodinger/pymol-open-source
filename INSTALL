@@ -7,12 +7,11 @@ INSTALLATION
 WARNING: You'll need some basic knowledge of Makefiles, compilation
 flags, libraries, python, environment variables, and paths in order to
 compile PyMOL.  If you don't have this experience, save yourself
-frustration and wait until binaries are available for download.
+frustration and wait until binaries are available for download.  
 
-KEY FACTS:
-
-1. The pymol-ext CVS source tree is required, but only needs to 
-be downloaded once.  
+1. The "pymol-ext" CVS source tree is required, but only needs to 
+be downloaded once.  You must compile all external dependendencies
+before trying to compile pymol
 
 Hopefully we can soon replace the pymol-ext source code with a set of
 precompiled binary libraries for various platforms.  
@@ -21,11 +20,11 @@ precompiled binary libraries for various platforms.
 directory to the "ext" directory in pymol.  "pymol-ext" should not be
 installed within the pymol directory tree if you plan up performing CVS
 updates of pymol in the future (which I hope you do).
-
 	ln -s $HOME/pymol-ext $HOME/pymol/ext
+   (to make all the external expendencies: cd $HOME/pymol-ext; make )
 
-3. After you've compiled all of the needed external dependencies, you
-need to edit Rules.make and choose options appropriate for your
+3. After you've compiled all of the needed external dependencies, copy
+Rules.<platform> to Rules.make and choose options appropriate for your
 configuration (here is where experience counts)
 	cd $HOME/pymol
 	vi ./Rules.make
@@ -34,9 +33,23 @@ configuration (here is where experience counts)
 	cd $HOME/pymol
 	make
 
-5. VERSION 1:
+5. APPROACH 1: (recommended)
+  
+ If you are making pymol as a Python module, edit pymol.com to
+ point to appropriate locations on your system...
+	cd $HOME/pymol
+	vi ./pymol.com
+	
+ You should be all set to run pymol.
+	pymol.com
 
- If you opted to make pymol as a standalone application...
+NOTE: If you ever want to clean up the tree
+	"make clean" gets rid of all intermediate objects, etc.
+	"make distclean" restores the tree to "distribution" quality
+
+5. APPROACH 2: (not recommended)
+
+ If you opted to make pymol as a standalone application...(LINUX ONLY)
 
  Edit "pymol.csh" to point to appropriate locations on your system
 	cd $HOME/pymol
@@ -51,23 +64,6 @@ configuration (here is where experience counts)
  You should be all set to run pymol.
 	pymol.exe
 
-5. VERSION 2:
-  
- If you are making pymol as a Python module, edit pymol.com to
- point to appropriate locations on your system...
-	cd $HOME/pymol
-	vi ./pymol.com
-	
- You should be all set to run pymol.
-	pymol.com
-
-
-NOTE: If you ever want to clean up the tree
-	"make clean" gets rid of all intermediate objects, etc.
-	"make distclean" restores the tree to "distribution" quality
-
-NOTE: To change from module to standalone, you need to do a
-	"make distclean"
 
 
 
