@@ -36,8 +36,12 @@ CExtrude *ExtrudeNew(void);
 void ExtrudeAllocPointsNormalsColors(CExtrude *I,int n);
 void ExtrudeTruncate(CExtrude *I,int n);
 void ExtrudeFree(CExtrude *I);
+
 void ExtrudeCircle(CExtrude *I, int n, float size);
-void ExtrudeRectangle(CExtrude *I,float thick,float width);
+void ExtrudeRectangle(CExtrude *I,float width,float length);
+void ExtrudeOval(CExtrude *I,int n,float width,float length);
+
+
 void ExtrudeBuildNormals1f(CExtrude *I);
 void ExtrudeBuildNormals2f(CExtrude *I);
 void ExtrudeComputeTangents(CExtrude *I);

@@ -75,7 +75,7 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
 Rep *RepCartoonNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4;
+  int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4,*car,*cc;
   float *v,*v0,*v1,*v2,*v3,*v4,*vo,*vn,*va;
   float *pv=NULL;
   float *pvo=NULL,*pva=NULL;
@@ -91,15 +91,19 @@ Rep *RepCartoonNew(CoordSet *cs)
   float  power_a = 5;
   float power_b = 5;
   float loop_radius,angle,ratio,dot;
+  float tube_radius,tube_quality;
   int visFlag;
   CExtrude *ex;
   int n_p;
   int loop_quality;
+  float oval_quality,oval_width,oval_length;
   int st,nd;
   float *v_c,*v_n,*v_o,*v_ca;
   float t0[3],t1[3],o0[12],o1[12];
   float max_dot;
-  float width,thick;
+  float length,width;
+  int cur_car;
+  int contFlag,extrudeFlag;
 
   OOAlloc(RepCartoon);
 
@@ -121,8 +125,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_power);
   power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_power_b);
 
+  length=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_length);
   width=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
-  thick=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_thickness);
 
   sampling = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_sampling);
   if(sampling<1) sampling=1;
@@ -130,6 +134,19 @@ Rep *RepCartoonNew(CoordSet *cs)
   if(loop_radius<0.01) loop_radius=0.01;
   loop_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_quality);
   if(loop_quality<3) loop_quality=3;
+
+
+  tube_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_radius);
+  if(tube_radius<0.01) tube_radius=0.01;
+  tube_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_quality);
+  if(tube_quality<3) tube_quality=3;
+
+  oval_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_length);
+  if(tube_radius<0.01) tube_radius=0.01;
+  oval_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_width);
+  if(tube_radius<0.01) tube_radius=0.01;
+  oval_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_quality);
+  if(tube_quality<3) tube_quality=3;
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -140,17 +157,18 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   /* find all of the CA points */
 
-  at = Alloc(int,cs->NIndex);
-  pv = Alloc(float,cs->NIndex*3);
-  pvo = Alloc(float,cs->NIndex*3); /* orientation vector */
-  pva = Alloc(float,2*cs->NIndex*3); /* alternative orientation vectors */
-  seg = Alloc(int,cs->NIndex);
-  
+  at = Alloc(int,cs->NAtIndex);
+  pv = Alloc(float,cs->NAtIndex*3);
+  pvo = Alloc(float,cs->NAtIndex*3); /* orientation vector */
+  pva = Alloc(float,cs->NAtIndex*6); /* alternative orientation vectors */
+  seg = Alloc(int,cs->NAtIndex);
+  car = Alloc(int,cs->NAtIndex);
+
   i=at;
   v=pv;
   vo=pvo;
   s=seg;
-
+  cc=car;
   nAt = 0;
   nSeg = 0;
   a2=-1;
@@ -166,78 +184,89 @@ Rep *RepCartoonNew(CoordSet *cs)
 		if(a>=0)
 		  if(obj->AtomInfo[a1].visRep[cRepCartoon])
 			 if(!obj->AtomInfo[a1].hetatm)
-				if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
-				  {
-					 if(a2>=0) {
-						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-							(obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-							(!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))
-						  {
+            if((!obj->AtomInfo[a1].alt[0])||
+               (obj->AtomInfo[a1].alt[0]=='A'))
+              if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
+                {
+                  if(a2>=0) {
+                    if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
+                       (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+                       (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))
+                      {
 							 a2=-1;
-						  }
-					 }
-					 if(a2<=0)
-						nSeg++;
-					 *(s++) = nSeg;
-					 nAt++;
-					 *(i++)=a;
-					 v1 = cs->Coord+3*a;		
-                v_ca = v1;
-					 *(v++)=*(v1++);
-					 *(v++)=*(v1++);
-					 *(v++)=*(v1++);
-					 a2=a1;
-
-                v_c = NULL;
-                v_n = NULL;
-                v_o = NULL;
-
-                AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
-
-                for(a3=st;a3<=nd;a3++) {
-                  
-                  if(obj->DiscreteFlag) {
-                    if(cs==obj->DiscreteCSet[a4]) 
-                      a4=obj->DiscreteAtmToIdx[a4];
-                    else 
-                      a4=-1;
-                  } else 
-                    a4=cs->AtmToIdx[a3];
-                  if(a4>=0) {
-                    if(WordMatch("C",obj->AtomInfo[a3].name,1)<0) {
-                      v_c = cs->Coord+3*a4;		
-                    } else if(WordMatch("N",obj->AtomInfo[a3].name,1)<0) {
-                      v_n = cs->Coord+3*a4;
-                    } else if(WordMatch("O",obj->AtomInfo[a3].name,1)<0) {
-                      v_o = cs->Coord+3*a4;
+                      }
+                  }
+                  if(a2<=0)
+                    nSeg++;
+                  *(s++) = nSeg;
+                  nAt++;
+                  *(i++)=a;
+                  cur_car = obj->AtomInfo[a1].cartoon;
+                  if (cur_car==cCartoon_auto) {
+                    switch (obj->AtomInfo[a1].ssType[0]) {
+                    case 'H':
+                    case 'h':
+                      cur_car = cCartoon_oval;
+                      break;
+                    case 'S':
+                    case 's':
+                      cur_car = cCartoon_rect;
+                      break;
+                    default: /* 'L', 'T', 0, etc. */
+                      cur_car = cCartoon_loop;
+                      break;
                     }
                   }
+                  *(cc++)=cur_car;
+                  v1 = cs->Coord+3*a;
+                  v_ca = v1;
+                  *(v++)=*(v1++);
+                  *(v++)=*(v1++);
+                  *(v++)=*(v1++);
+                  a2=a1;
+                  
+                  v_c = NULL;
+                  v_n = NULL;
+                  v_o = NULL;
+                  
+                  AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+                  
+                  for(a3=st;a3<=nd;a3++) {
+                    
+                    if(obj->DiscreteFlag) {
+                      if(cs==obj->DiscreteCSet[a4]) 
+                        a4=obj->DiscreteAtmToIdx[a4];
+                      else 
+                        a4=-1;
+                    } else 
+                      a4=cs->AtmToIdx[a3];
+                    if(a4>=0) {
+                      if(WordMatch("C",obj->AtomInfo[a3].name,1)<0) {
+                        v_c = cs->Coord+3*a4;		
+                      } else if(WordMatch("N",obj->AtomInfo[a3].name,1)<0) {
+                        v_n = cs->Coord+3*a4;
+                      } else if(WordMatch("O",obj->AtomInfo[a3].name,1)<0) {
+                        v_o = cs->Coord+3*a4;
+                      }
+                    }
+                  }
+                  if(!(v_c&&v_n&&v_o)) {
+                    vo[0]=0.0;
+                    vo[1]=0.0;
+                    vo[2]=0.0;
+                    vo+=3;
+                  } else {
+                    
+                    subtract3f(v_n,v_c,t0);
+                    normalize3f(t0);
+                    subtract3f(v_n,v_o,t1);
+                    normalize3f(t1);
+                    cross_product3f(t0,t1,vo);
+                    normalize3f(vo);
+                    
+                    vo+=3;
+                  }
                 }
-                if(!(v_c&&v_n&&v_o)) {
-                  vo[0]=0.0;
-                  vo[1]=0.0;
-                  vo[2]=0.0;
-                  vo+=3;
-                  pva+=6;
-                } else {
-                  /*
-                  subtract3f(v_ca,v_c,t0);
-                  normalize3f(t0);
-                  subtract3f(v_o,v_c,t1);
-                  normalize3f(t1);
-                  cross_product3f(t0,t1,vo);
-                  normalize3f(vo);*/
-
-                  subtract3f(v_n,v_c,t0);
-                  normalize3f(t0);
-                  subtract3f(v_n,v_o,t1);
-                  normalize3f(t1);
-                  cross_product3f(t0,t1,vo);
-                  normalize3f(vo);
-
-                  vo+=3;
-                }
-				  }
 	 }
 
 
@@ -392,13 +421,14 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   I->std = CGONew();
 
-  n_p = 0;
   if(nAt) {
     ex = ExtrudeNew();
-    /*ExtrudeCircle(ex,loop_quality,loop_radius);*/
-    ExtrudeRectangle(ex,thick,width);
-    
     ExtrudeAllocPointsNormalsColors(ex,cs->NIndex*(3*sampling+3));
+    n_p = 0;
+    v = ex->p;
+    vc = ex->c;
+    vn = ex->n;
+    
 	 v1=pv; /* points */
 	 v2=tv; /* tangents */
 	 v3=dv; /* direction vector */
@@ -406,30 +436,45 @@ Rep *RepCartoonNew(CoordSet *cs)
     vo=pvo;
     d = dl;
 	 s=seg;
+    cc=car;
 	 atp=at;
-	 for(a=0;a<(nAt-1);a++)
-		{
-        if((!a)||((*s)!=*(s+1))) { /* new segment */
-          if(n_p) {
-            ExtrudeTruncate(ex,n_p);
-            ExtrudeComputeTangents(ex);
-            /*ExtrudeBuildNormals1f(ex);
-              ExtrudeCGOSurfaceTube(ex,I->std,1);*/
-            ExtrudeBuildNormals2f(ex);
-            ExtrudeCGOSurfacePolygon(ex,I->std,1);
-          }
+    a=0;
+    contFlag=true;
+    cur_car = cCartoon_skip;
+    extrudeFlag=false;
 
+    while(contFlag) {
+      if ((*cc)!=cur_car) { /* new cartoon type */
+        if(n_p) { /* any cartoon points? */
+          extrudeFlag=true;
+        } else {
+          cur_car = *(cc); /* no: go ahead and switch cartoons */
           ExtrudeTruncate(ex,0);
+          n_p = 0;
           v = ex->p;
           vc = ex->c;
           vn = ex->n;
-          n_p = 0;
         }
-		  if(ex&&(*s==*(s+1))) /* working in the same segment... */
+      }
+      if(!extrudeFlag) {
+        if((*s)!=*(s+1)) { /* new segment */
+          if(n_p) { /* any cartoon points? */
+            extrudeFlag=true;
+          } else {
+            ExtrudeTruncate(ex,0);
+            n_p = 0;
+            v = ex->p;
+            vc = ex->c;
+            vn = ex->n;
+          }
+        }
+      }
+      if(!extrudeFlag) {
+		  if(*s==*(s+1)) /* working in the same segment... */
 			 {
 				c1=*(cs->Color+*atp);
 				c2=*(cs->Color+*(atp+1));
-
+            
             dot =  dot_product3f(v2,v2+3);
             angle = acos(dot);
             
@@ -441,11 +486,11 @@ Rep *RepCartoonNew(CoordSet *cs)
             len_seg = ratio*(*d)/2.0;
 				for(b=0;b<sampling;b++) /* needs optimization */
 				  {
-
+                
                 if(n_p==0) {
-
+                  
                   /* provide starting point on first point in segment only... */
-
+                  
                   f0=((float)b)/sampling; /* fraction of completion */
 
                   if(f0<0.5) /* bias sampling towards the center of the curve */
@@ -491,7 +536,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                     f0*(vo[5]*f3);     
                   vn+=3;
                   
-                  copy3f(v0,vn-6); /* starter... */
+                  copy3f(vo,vn-6); /* starter... */
                   n_p++;
 
                 }
@@ -540,11 +585,11 @@ Rep *RepCartoonNew(CoordSet *cs)
                 *(vn++)=f1*(vo[2]*f2)+
                   f0*(vo[5]*f3);                 
                 vn+=3;
-
+                
                 if(b==sampling-1)
                   copy3f(vo+3,vn-6); /* starter... */                  
 					 n_p++;
-
+                
 				  }
 			 }
 		  v1+=3;
@@ -555,51 +600,89 @@ Rep *RepCartoonNew(CoordSet *cs)
         d++;
 		  atp+=1;
 		  s++;
+        cc++;
       }
 
-    if(n_p) {
-      ExtrudeTruncate(ex,n_p);
-      ExtrudeComputeTangents(ex);
-
-      /*      ExtrudeBuildNormals1f(ex);
-              ExtrudeCGOSurfaceTube(ex,I->std,1);*/
-      ExtrudeBuildNormals2f(ex);
-      ExtrudeCGOSurfacePolygon(ex,I->std,1);
+      a++;
+      if(a==(nAt-1)) {
+        contFlag=false;
+        if(n_p) 
+          extrudeFlag=true;
+      }
+      if(extrudeFlag) {
+        if(cur_car!=cCartoon_skip) {
+          ExtrudeTruncate(ex,n_p);
+          ExtrudeComputeTangents(ex);
+          
+          /* set up shape */
+          switch(cur_car) {
+          case cCartoon_tube:
+            ExtrudeCircle(ex,tube_quality,tube_radius);
+            ExtrudeBuildNormals1f(ex);
+            ExtrudeCGOSurfaceTube(ex,I->std,1);
+            break;
+          case cCartoon_loop:
+            ExtrudeCircle(ex,loop_quality,loop_radius);
+            ExtrudeBuildNormals1f(ex);
+            ExtrudeCGOSurfaceTube(ex,I->std,1);
+            break;
+          case cCartoon_rect:
+            ExtrudeRectangle(ex,width,length);
+            ExtrudeBuildNormals2f(ex);
+            ExtrudeCGOSurfacePolygon(ex,I->std,1);
+            break;
+          case cCartoon_oval:
+            ExtrudeOval(ex,oval_quality,oval_width,oval_length);
+            ExtrudeBuildNormals2f(ex);
+            ExtrudeCGOSurfaceTube(ex,I->std,1);
+            break;
+          }
+        }
+        a--; /* undo above... */
+        extrudeFlag=false;
+        ExtrudeTruncate(ex,0);
+        n_p = 0;
+        v = ex->p;
+        vc = ex->c;
+        vn = ex->n;
+      }
     }
-    ExtrudeFree(ex);
-	 FreeP(dv);
-	 FreeP(dl);
-	 FreeP(tv);
-	 FreeP(nv);
-
-    /*
-      CGOColor(I->std,1.0,1.0,1.0);
-      CGOEnable(I->std,GL_LIGHTING);
-      CGOBegin(I->std,GL_LINES);
-      v1=pv;
-      v2=pvo;
-      for(a=0;a<nAt;a++) 
+    ExtrudeFree(ex); 
+  }
+  
+  if(SettingGet(cSetting_cartoon_debug)>0.5) {
+    CGOColor(I->std,1.0,1.0,1.0);
+    CGODisable(I->std,GL_LIGHTING);
+    CGOBegin(I->std,GL_LINES);
+    v1=pv;
+    v2=pvo;
+    for(a=0;a<nAt;a++) 
       {
-      CGOVertexv(I->std,v1);
-      add3f(v1,v2,t0);
-      add3f(v2,t0,t0);
-      CGOVertexv(I->std,t0);
-      v1+=3;
-      v2+=3;
+        CGOVertexv(I->std,v1);
+        add3f(v1,v2,t0);
+        add3f(v2,t0,t0);
+        CGOVertexv(I->std,t0);
+        v1+=3;
+        v2+=3;
       }
-      CGOEnd(I->std);
-      CGODisable(I->std,GL_LIGHTING);
-      CGOStop(I->std);
-    */    
+    CGOEnd(I->std);
+    CGOEnable(I->std,GL_LIGHTING);
   }
 
+  CGOStop(I->std);
+    
+  FreeP(dv);
+  FreeP(dl);
+  FreeP(tv);
+  FreeP(nv);
   FreeP(at);
   FreeP(seg);
   FreeP(pv);
   FreeP(pvo);
   FreeP(pva);
-
+  FreeP(car);
   return((void*)(struct Rep*)I);
 }
 
 
+  

@@ -739,7 +739,7 @@ EXAMPLE
    except ImportError:
       print "Error: Sorry, couldn't find the '"+name+"' wizard."
       
-def get_dihedral(atom1,atom2,atom3,atom4,state=0):
+def get_dihedral(atom1,atom2,atom3,atom4,state=1):
    # preprocess selections
    atom1 = selector.process(atom1)
    atom2 = selector.process(atom2)
@@ -754,7 +754,7 @@ def get_dihedral(atom1,atom2,atom3,atom4,state=0):
       unlock()
    return r
 
-def set_dihedral(atom1,atom2,atom3,atom4,angle,state=0):
+def set_dihedral(atom1,atom2,atom3,atom4,angle,state=1):
    # preprocess selections
    atom1 = selector.process(atom1)
    atom2 = selector.process(atom2)
@@ -2184,6 +2184,56 @@ def expfit(a,b): # Huh?
    return r
 
 
+cartoon_dict = {
+   'skip'        : -1,
+   'auto'        : 0,
+   'loop'        : 1,
+   'rectangle'   : 2,
+   'oval'        : 3,
+   'tube'        : 4,
+}
+
+cartoon_sc = Shortcut(cartoon_dict.keys())
+
+def cartoon(type,selection="(all)"):
+   '''
+DESCRIPTION
+  
+   "cartoon" changes the default cartoon for a set of atoms.
+      
+USAGE
+ 
+   cartoon type,(selection)
+
+   type = skip | automatic | loop | rectangle | oval | tube
+
+PYMOL API
+  
+   cmd.cartoon(string type, string selection )
+
+EXAMPLES
+
+   cartoon rectangle,(chain A)
+   cartoon skip,(resi 145:156)
+   
+NOTES
+
+   the "automatic" mode utilizes ribbons according to the
+   information in the PDB HELIX and SHEET records.
+
+'''
+   # preprocess selection
+   selection = selector.process(selection)
+   #
+   type = cartoon_dict[cartoon_sc.auto_err(str(type),'type')];
+   r = 1
+   try:
+      lock()   
+      r = _cmd.cartoon(str(selection),int(type))
+   finally:
+      unlock()
+   return r
+
 def remove(selection):
    '''
 DESCRIPTION
@@ -2216,6 +2266,7 @@ SEE ALSO
    finally:
       unlock()
    return r
+
 
 def remove_picked(hydrogens=1):
    '''
@@ -3340,7 +3391,7 @@ def mray(): # deprecated
       unlock()
    return r
 
-def viewport(width,height):
+def viewport(width=-1,height=-1):
    '''
 DESCRIPTION
   
@@ -3828,6 +3879,56 @@ PYMOL API
       unlock()
    return r
 
+def index(selection="(all)"):
+   '''
+DESCRIPTION
+  
+   "index" returns a list of tuples corresponding to the
+   object name and index of the atoms in the selection.
+ 
+PYMOL API
+ 
+   list = cmd.index(string selection="(all)")
+
+NOTE
+
+  Atom indices are fragile and will change as atoms are added
+  or deleted.  Whenever possible, use integral atom identifiers
+  instead of indices.
+  
+   '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #      
+   r = []
+   try:
+      lock()
+      r = _cmd.index(str(selection),0) # 0 = default mode
+   finally:
+      unlock()
+   return r
+
+def find_pairs(selection1,selection2,state1=1,state2=1,cutoff=3.5,mode=0,angle=45):
+   '''
+DESCRIPTION
+  
+   "find_pairs" is currently undocumented.
+ 
+   '''
+   # preprocess selection
+   selection1 = selector.process(selection1)
+   selection2 = selector.process(selection2)
+   #      
+   r = []
+   try:
+      lock()
+      r = _cmd.find_pairs(str(selection1),str(selection2),
+                          int(state1)-1,int(state2)-1,int(mode),float(cutoff),float(angle))
+      # 0 = default mode
+   finally:
+      unlock()
+   return r
+
 def get_extent(selection="(all)",state=0):
    '''
 DESCRIPTION
@@ -4147,6 +4248,8 @@ SEE ALSO
             ftype = loadable.xyz
          elif re.search("\.sdf$",filename,re.I):
             ftype = loadable.sdf
+         else:
+            ftype = loadable.pdb # default is PDB
       elif is_string(type):
          try:
             ftype = int(type)
@@ -4557,9 +4660,9 @@ DESCRIPTION
  
    The available representations are:
     
-      lines     spheres   mesh      ribbon
+      lines     spheres   mesh      ribbon     cartoon
       sticks    dots      surface   labels
-      nonbonded nb_spheres
+      nonbonded nb_spheres 
    
 USAGE
  
@@ -4631,7 +4734,7 @@ DESCRIPTION
  
    The available representations are:
     
-      lines     spheres   mesh      ribbon
+      lines     spheres   mesh      ribbon     cartoon
       sticks    dots      surface   labels
       nonbonded nb_spheres
    
@@ -5088,7 +5191,9 @@ class fb_action:
    set = 0
    enable = 1
    disable = 2
-
+   push = 3
+   pop = 4
+   
 fb_action_sc = Shortcut(fb_action.__dict__.keys())
 
 class fb_module:
@@ -5222,9 +5327,24 @@ EXAMPLES
    feedback enable, main, blather
 '''
    r = None
-   if "?" in [action,module,mask]:
-      if action=="?":
-         print " feedback: available actions: set, enable, disable"
+
+   # validate action
+
+   if action=="?":
+      print " feedback: available actions: set, enable, disable"
+      act_kee = 0
+   else:
+      act_kee = fb_action_sc.interpret(action)
+      if act_kee == None:
+         print "Error: invalid feedback action '%s'."%action
+         raise QuietException
+      elif not is_string(act_kee):
+         print "Error: ambiguous feedback action '%s'."%action
+         print action_amb
+         raise QuietException
+      act_int = int(getattr(fb_action,act_kee))
+
+   if (act_int<3) and ("?" in [action,module,mask]):
       if module=="?":
          print " feedback: available modules:"
          for a in fb_module.__dict__.keys():
@@ -5236,18 +5356,10 @@ EXAMPLES
             if a[0]!='_':
                print "   ",a
    else:
-
-      # validate action
-      
-      act_kee = fb_action_sc.interpret(action)
-      if act_kee == None:
-         print "Error: invalid feedback action '%s'."%action
-         raise QuietException
-      elif not is_string(act_kee):
-         print "Error: ambiguous feedback action '%s'."%action
-         print action_amb
-         raise QuietException
-
+      if (act_int>=3):
+         module='all'
+         mask='everything'
+            
       # validate and combine masks
       
       mask_int = 0
@@ -5273,7 +5385,6 @@ EXAMPLES
          elif not is_string(mod_kee):
             print "Error: ambiguous feedback module '%s'."%module
             raise QuietException         
-         act_int = int(getattr(fb_action,act_kee))
          mod_int = int(getattr(fb_module,mod_kee))
          if mod_int>=0:
             try:
@@ -5349,6 +5460,7 @@ keyword = {
    'backward'      : [backward     , 0 , 0 , ''  , parsing.STRICT ],
    'bond'          : [bond         , 0 , 0 , ''  , parsing.STRICT ],
    'button'        : [button       , 0 , 0 , ''  , parsing.STRICT ],
+   'cartoon'       : [cartoon      , 0 , 0 , ''  , parsing.STRICT ],
    'cd'            : [cd           , 0 , 0 , ''  , parsing.STRICT ],  
    'check'         : [check        , 0 , 0 , ''  , parsing.STRICT ],
    'clip'          : [clip         , 0 , 0 , ''  , parsing.STRICT ],

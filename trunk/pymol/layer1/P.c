@@ -204,10 +204,12 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   Chain chain,alt;
   SegIdent segi;
   TextType textType;
+  SSType ssType;
   char atype[7];
   float b,q,partialCharge,vdw;
   int formalCharge,numericType;
   int id;
+  int cartoon;
 
   PyObject *dict;
   int result=false;
@@ -230,6 +232,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   PConvStringToPyDictItem(dict,"alt",at->alt);
   PConvStringToPyDictItem(dict,"segi",at->segi);
   PConvStringToPyDictItem(dict,"elem",at->elem);
+  PConvStringToPyDictItem(dict,"ss",at->ssType);
   PConvStringToPyDictItem(dict,"text_type",at->textType);
   if(at->customType!=cAtomInfoNoType)
     PConvIntToPyDictItem(dict,"numeric_type",at->customType);
@@ -239,7 +242,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
   PConvIntToPyDictItem(dict,"ID",at->id);
-  
+  PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
+
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
     PyErr_Print();
@@ -266,6 +270,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
       result=false;
     else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"text_type"),textType,sizeof(TextType)-1))
       result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"ss"),ssType,sizeof(SSType)-1))
+      result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"b"),&b))
       result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"q"),&q))
@@ -276,6 +282,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"partial_charge"),&partialCharge))
       result=false;
     else if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"formal_charge"),&formalCharge))
+      result=false;
+    else if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"cartoon"),&cartoon))
       result=false;
     if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"numeric_type"),&numericType))
       numericType = cAtomInfoNoType;
@@ -297,6 +305,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
       strcpy(at->resi,resi);
       strcpy(at->segi,segi);
       strcpy(at->chain,chain);
+      strcpy(at->ssType,ssType);
       strcpy(at->textType,textType);
       strcpy(at->alt,alt);
       if(numericType!=cAtomInfoNoType)
@@ -307,6 +316,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
       at->partialCharge=partialCharge;
       at->formalCharge=formalCharge;
       at->id=id;
+      at->cartoon=cartoon;
     } else {
       ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
     }
@@ -339,6 +349,7 @@ int PLabelAtom(AtomInfoType *at,char *expr)
   PConvStringToPyDictItem(dict,"chain",at->chain);
   PConvStringToPyDictItem(dict,"alt",at->alt);
   PConvStringToPyDictItem(dict,"segi",at->segi);
+  PConvStringToPyDictItem(dict,"ss",at->ssType);
   PConvFloatToPyDictItem(dict,"vdw",at->vdw);
   PConvStringToPyDictItem(dict,"text_type",at->textType);
   PConvStringToPyDictItem(dict,"elem",at->elem);

@@ -190,9 +190,9 @@ Rep *RepRibbonNew(CoordSet *cs)
 
   /* find all of the CA points */
 
-  at = Alloc(int,cs->NIndex);
-  pv = Alloc(float,cs->NIndex*3);
-  seg = Alloc(int,cs->NIndex);
+  at = Alloc(int,cs->NAtIndex);
+  pv = Alloc(float,cs->NAtIndex*3);
+  seg = Alloc(int,cs->NAtIndex);
   
   i=at;
   v=pv;

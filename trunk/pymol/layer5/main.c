@@ -59,7 +59,7 @@ static void MainDrawLocked(void);
 
 GLuint obj;
 
-static GLint WinX = 640+cOrthoRightSceneMargin;
+static GLint WinX = 640+180;
 static GLint WinY = 480+cOrthoBottomSceneMargin;
 static GLint Modifiers = 0;
 
@@ -76,6 +76,7 @@ typedef struct {
   int SwapFlag;
   float IdleTime;
   int IdleCount;
+  int ReshapeFlag;
 } CMain;
 
 static CMain Main;
@@ -257,6 +258,8 @@ void MainReshape(int width, int height) /* called by Glut */
 void MainDoReshape(int width, int height) /* called internally */
 {
 
+  if(width<0) width=WinX;
+  if(height<0) height=WinY;
   if(PMGUI) {
     glutReshapeWindow(width,height);
     glViewport(0, 0, (GLint) width, (GLint) height);
@@ -265,7 +268,7 @@ void MainDoReshape(int width, int height) /* called internally */
   OrthoReshape(width,height);
 }
 /*========================================================================*/
-static void MainInit(void)
+static void MainInit(void) 
 {
   /*  GLfloat one[4] = { 1,1,1,1 }; 
       GLfloat low[4] = { 0.20,0.20,0.20,1 };*/
@@ -276,6 +279,7 @@ static void MainInit(void)
   I->IdleMode=2;
   I->IdleTime=UtilGetSeconds();
   I->IdleCount = 0;
+  I->ReshapeFlag=false;
   if(PMGUI) {
 
     /* get us into a well defined GL state */
@@ -306,6 +310,7 @@ static void MainInit(void)
   FeedbackInit();
   UtilInit();
   SettingInitGlobal();  
+  SettingSet(cSetting_internal_gui,InternalGUI);
   SphereInit();
   ColorInit();
   OrthoInit(ShowSplash);
@@ -429,6 +434,10 @@ void MainBusyIdle(void)
         PUnblock();
       }
     }
+  if(I->ReshapeFlag) {
+    MainDoReshape(WinX,WinY);
+    I->ReshapeFlag=false;
+  }
   if(!PMGUI) {
     if(!OrthoCommandWaiting()) {
       I->IdleCount++;
@@ -540,7 +549,6 @@ int was_main(void)
 #endif  
 
   PGetOptions(&PMGUI,&InternalGUI,&ShowSplash);
-
   launch();
 
   return 0;

@@ -48,6 +48,8 @@ typedef struct {
   int c;
 } CGO;
 
+extern CGO *DebugCGO; /* for programming... initialized in Scene.c */
+
 /* instructions and data segment sizes */
 
 #define CGO_STOP                 0x00
@@ -103,6 +105,7 @@ void CGOColor(CGO *I,float v1,float v2,float v3);
 void CGOColorv(CGO *I,float *v);
 void CGONormal(CGO *I,float v1,float v2,float v3);
 void CGONormalv(CGO *I,float *v);
+void CGOLinewidth(CGO *I,float v);
 
 void CGOEnable(CGO *I,int mode);
 void CGODisable(CGO *I,int mode);
@@ -111,5 +114,6 @@ void CGOStop(CGO *I);
 
 void CGORenderGL(CGO *I);
 void CGORenderRay(CGO *I,CRay *ray);
+void CGOReset(CGO *I);
 
 #endif

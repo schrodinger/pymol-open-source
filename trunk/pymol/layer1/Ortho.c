@@ -53,7 +53,6 @@ ListVarDeclare(BlockList,Block);
 #define cOrthoLeftMargin 8
 #define cOrthoBottomMargin 10
 
-#define ExecutiveMargin 189
 #define WizardMargin 119
 
 #define ButModeMargin 29
@@ -95,13 +94,13 @@ static void OrthoDrawWizardPrompt(void);
 Block *OrthoFindBlock(int x,int y);
 void OrthoKeyControl(unsigned char k);
 
-#define cBusyWidth 180
+#define cBusyWidth 240
 #define cBusyHeight 60
 #define cBusyMargin 10
 #define cBusyBar 10
 #define cBusySpacing 15
 
-#define cBusyUpdate 0.3
+#define cBusyUpdate 0.2
 
 #define cWizardTopMargin 15
 #define cWizardLeftMargin 15
@@ -769,10 +768,11 @@ void OrthoDoDraw()
   float *v;
   int showLines;
   int overlay,text;
-
+  int rightSceneMargin;
   
   if(PMGUI) {
 
+    rightSceneMargin=SettingGet(cSetting_internal_gui_width);
     v=SettingGetfv(cSetting_bg_rgb);
     overlay = SettingGet(cSetting_overlay);
     text = SettingGet(cSetting_text);
@@ -797,8 +797,8 @@ void OrthoDoDraw()
     if(I->DrawText) { /* moved to avoid conflict with menus */
       glColor3f(0.0,0.0,0.0);
       glBegin(GL_POLYGON);
-      glVertex2i(I->Width-cOrthoRightSceneMargin,cOrthoBottomSceneMargin-1);
-      glVertex2i(I->Width-cOrthoRightSceneMargin,0);
+      glVertex2i(I->Width-rightSceneMargin,cOrthoBottomSceneMargin-1);
+      glVertex2i(I->Width-rightSceneMargin,0);
       glVertex2i(0,0);
       glVertex2i(0,cOrthoBottomSceneMargin-1);
       glEnd();
@@ -938,6 +938,10 @@ void OrthoReshape(int width, int height)
 
   Block *block = NULL;
   int sceneBottom,sceneRight;
+  int internal_gui_width;
+
+  if(width<0) width=I->Width;
+  if(height<0) height=I->Height;
 
   I->Height=height;
   I->Width=width;
@@ -945,25 +949,29 @@ void OrthoReshape(int width, int height)
 
   sceneBottom = cOrthoBottomSceneMargin;
     
-  if(!InternalGUI) {
-    sceneRight = 0;
+  internal_gui_width = SettingGet(cSetting_internal_gui_width);
+  if(SettingGet(cSetting_internal_gui)>0.0) {
+    sceneRight = internal_gui_width;
   } else {
-    sceneRight = cOrthoRightSceneMargin;
+    sceneRight = 0;
   }
 
   block=SceneGetBlock();
   BlockSetMargin(block,0,0,sceneBottom,sceneRight);
 
-  if(InternalGUI) {
+  if(SettingGet(cSetting_internal_gui)) {
     block=ExecutiveGetBlock();
-    BlockSetMargin(block,0,width-cOrthoRightSceneMargin,WizardMargin,0);
+    block->active=true;
+    BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
     block=WizardGetBlock();
-    BlockSetMargin(block,height-WizardMargin,width-cOrthoRightSceneMargin,WizardMargin,0);
+    BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,WizardMargin,0);
     block->active=false;
     block=ButModeGetBlock();
-    BlockSetMargin(block,height-WizardMargin,width-cOrthoRightSceneMargin,ButModeMargin,0);
+    BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,ButModeMargin,0);
+    block->active=true;
     block=ControlGetBlock();
-    BlockSetMargin(block,height-ButModeMargin,width-cOrthoRightSceneMargin,ControlMargin,0);
+    BlockSetMargin(block,height-ButModeMargin,width-internal_gui_width,ControlMargin,0);
+    block->active=true;
   } else {
     block=ExecutiveGetBlock();
     block->active=false;
@@ -990,26 +998,28 @@ void OrthoReshapeWizard(int wizHeight)
   Block *block;
   OrthoObject *I=&Ortho;
   int height,width;
+  int internal_gui_width;
 
   height=I->Height;
   width=I->Width;
 
-  if(InternalGUI) {
+  if(SettingGet(cSetting_internal_gui)>0.0) {
+    internal_gui_width = SettingGet(cSetting_internal_gui_width);
     block=ExecutiveGetBlock();
     if(height) {
-      BlockSetMargin(block,0,width-cOrthoRightSceneMargin,WizardMargin+wizHeight,0);
+      BlockSetMargin(block,0,width-internal_gui_width,WizardMargin+wizHeight,0);
     } else {
-      BlockSetMargin(block,0,width-cOrthoRightSceneMargin,WizardMargin,0);
+      BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
     }
     block->fReshape(block,width,height);
 
     block=WizardGetBlock();
 
     if(wizHeight) {
-      BlockSetMargin(block,height-(WizardMargin+wizHeight),width-cOrthoRightSceneMargin,WizardMargin,0);
+      BlockSetMargin(block,height-(WizardMargin+wizHeight),width-internal_gui_width,WizardMargin,0);
       block->active=true;
     } else {
-      BlockSetMargin(block,height-WizardMargin,width-cOrthoRightSceneMargin,WizardMargin,0);
+      BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,WizardMargin,0);
       block->active=false;
     }
     block->fReshape(block,width,height);

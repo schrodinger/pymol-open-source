@@ -133,6 +133,7 @@ static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
 static PyObject *CmdAttach(PyObject *self, 	PyObject *args);
 static PyObject *CmdBond(PyObject *dummy, PyObject *args);
 static PyObject *CmdButton(PyObject *dummy, PyObject *args);
+static PyObject *CmdCartoon(PyObject *self, 	PyObject *args);
 static PyObject *CmdClip(PyObject *self, 	PyObject *args);
 static PyObject *CmdCls(PyObject *self, 	PyObject *args);
 static PyObject *CmdColor(PyObject *self, PyObject *args);
@@ -151,6 +152,7 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args);
 static PyObject *CmdTorsion(PyObject *self, PyObject *args);
 static PyObject *CmdExportDots(PyObject *self, PyObject *args);
 static PyObject *CmdFeedback(PyObject *dummy, PyObject *args);
+static PyObject *CmdFindPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
@@ -160,6 +162,7 @@ static PyObject *CmdFullScreen(PyObject *self,PyObject *args);
 static PyObject *CmdFuse(PyObject *self, 	PyObject *args);
 static PyObject *CmdHAdd(PyObject *self, PyObject *args);
 static PyObject *CmdIdentify(PyObject *dummy, PyObject *args);
+static PyObject *CmdIndex(PyObject *dummy, PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdInvert(PyObject *self, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
@@ -256,6 +259,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"attach",                CmdAttach,               METH_VARARGS },
 	{"bond",                  CmdBond,                 METH_VARARGS },
    {"button",                CmdButton,               METH_VARARGS },
+   {"cartoon",               CmdCartoon,              METH_VARARGS },
 	{"clip",	                 CmdClip,                 METH_VARARGS },
 	{"cls",	                 CmdCls,                  METH_VARARGS },
 	{"color",	              CmdColor,                METH_VARARGS },
@@ -275,6 +279,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"export_dots",           CmdExportDots,           METH_VARARGS },
 	{"export_coords",         CmdExportCoords,         METH_VARARGS },
 	{"feedback",              CmdFeedback,             METH_VARARGS },
+	{"find_pairs",            CmdFindPairs,            METH_VARARGS },
 	{"finish_object",         CmdFinishObject,         METH_VARARGS },
 	{"fit",                   CmdFit,                  METH_VARARGS },
 	{"fit_pairs",             CmdFitPairs,             METH_VARARGS },
@@ -307,6 +312,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"h_fill",                CmdHFill,                METH_VARARGS },
    {"identify",              CmdIdentify,             METH_VARARGS },
 	{"import_coords",         CmdImportCoords,         METH_VARARGS },
+   {"index",                 CmdIndex,                METH_VARARGS },
 	{"intrafit",              CmdIntraFit,             METH_VARARGS },
    {"invert",                CmdInvert,               METH_VARARGS },
 	{"isomesh",	              CmdIsomesh,              METH_VARARGS },
@@ -684,6 +690,12 @@ static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
     break;
   case 2:
     FeedbackDisable(i2,i3);
+    break;
+  case 3:
+    FeedbackPush();
+    break;
+  case 4:
+    FeedbackPop();
     break;
   }
   APIExit();
@@ -1129,6 +1141,90 @@ static PyObject *CmdIdentify(PyObject *dummy, PyObject *args)
   } else {
     result = PyList_New(0);
   }
+  if(result==Py_None) Py_INCREF(result);
+  return(result);
+}
+
+static PyObject *CmdIndex(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+  int mode;
+  PyObject *result = Py_None;
+  PyObject *tuple = Py_None;
+  int *iVLA=NULL;
+  int l;
+  int *i;
+  ObjectMolecule **o,**oVLA=NULL;
+  int a;
+
+  PyArg_ParseTuple(args,"si",&str1,&mode);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  l = ExecutiveIndex(s1,mode,&iVLA,&oVLA);
+  SelectorFreeTmp(s1);
+  APIExit();
+  if(iVLA) {
+    result=PyList_New(l);
+    i = iVLA;
+    o = oVLA;
+    for(a=0;a<l;a++) {
+      tuple = PyTuple_New(2);      
+      PyTuple_SetItem(tuple,1,PyInt_FromLong(*(i++)+1)); /* +1 for index */
+      PyTuple_SetItem(tuple,0,PyString_FromString((*(o++))->Obj.Name));
+      PyList_SetItem(result,a,tuple);
+    }
+  } else {
+    result = PyList_New(0);
+  }
+  VLAFreeP(iVLA);
+  VLAFreeP(oVLA);
+  if(result==Py_None) Py_INCREF(result);
+  return(result);
+}
+
+
+static PyObject *CmdFindPairs(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  int state1,state2;
+  float cutoff;
+  float angle;
+  int mode;
+  OrthoLineType s1,s2;
+  PyObject *result = Py_None;
+  PyObject *tuple = Py_None;
+  int *iVLA=NULL;
+  int l;
+  int *i;
+  ObjectMolecule **o,**oVLA=NULL;
+  int a;
+  
+  PyArg_ParseTuple(args,"ssiiiff",&str1,&str2,&state1,&state2,&mode,&cutoff,&angle);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
+  l = ExecutivePairIndices(s1,s2,state1,state2,mode,cutoff,angle,&iVLA,&oVLA);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
+  APIExit();
+  if(iVLA&&oVLA) {
+    result=PyList_New(l);
+    i = iVLA;
+    o = oVLA;
+    for(a=0;a<l;a++) {
+      tuple = PyTuple_New(4);      
+      PyTuple_SetItem(tuple,0,PyString_FromString((*(o++))->Obj.Name));
+      PyTuple_SetItem(tuple,1,PyInt_FromLong(*(i++)+1)); /* +1 for index */
+      PyTuple_SetItem(tuple,2,PyString_FromString((*(o++))->Obj.Name));
+      PyTuple_SetItem(tuple,3,PyInt_FromLong(*(i++)+1)); /* +1 for index */
+      PyList_SetItem(result,a,tuple);
+    }
+  } else {
+    result = PyList_New(0);
+  }
+  VLAFreeP(iVLA);
+  VLAFreeP(oVLA);
   if(result==Py_None) Py_INCREF(result);
   return(result);
 }
@@ -1745,11 +1841,17 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
 {
   int w,h;
   PyArg_ParseTuple(args,"ii",&w,&h);
-  if(w<10) w=10;
-  if(h<10) h=10;
+  if((w>0)&&(h>0)) {
+    if(w<10) w=10;
+    if(h<10) h=10;
+    if(SettingGet(cSetting_internal_gui)) 
+      w+=SettingGet(cSetting_internal_gui_width);
+    h+=cOrthoBottomSceneMargin;
+  } else {
+    w=-1;
+    h=-1;
+  }
 
-  w+=cOrthoRightSceneMargin;
-  h+=cOrthoBottomSceneMargin;
   APIEntry();
   MainDoReshape(w,h); /* should be moved into Executive */
   APIExit();
@@ -1939,6 +2041,21 @@ static PyObject *CmdDelete(PyObject *self, 	PyObject *args)
   PyArg_ParseTuple(args,"s",&sname);
   APIEntry();
   ExecutiveDelete(sname);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdCartoon(PyObject *self, 	PyObject *args)
+{
+  char *sname;
+  int type;
+  OrthoLineType s1;
+  PyArg_ParseTuple(args,"si",&sname,&type);
+  APIEntry();
+  SelectorGetTmp(sname,s1);
+   ExecutiveCartoon(type,s1);
+  SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

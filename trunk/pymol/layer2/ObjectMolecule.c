@@ -39,7 +39,9 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Sphere.h"
 #include"main.h"
+#include"CGO.h"
 
+#define cMaxNegResi 100
 
 #define wcopy ParseWordCopy
 #define nextline ParseNextLine
@@ -49,7 +51,7 @@ Z* -------------------------------------------------------------------
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
-CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
+CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,char **restart);
 CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *cset);
 
@@ -521,6 +523,8 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
     }
   }
 }
+
+
 /*========================================================================*/
 void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode)
 {
@@ -3296,53 +3300,66 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
   int ok=true;
   int isNew = true;
   unsigned int nAtom = 0;
+  char *start,*restart=NULL;
+  int repeatFlag = true;
 
-  if(!I) 
-	 isNew=true;
-  else 
-	 isNew=false;
-
-  if(ok) {
-
-	 if(isNew) {
-		I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
-		atInfo = I->AtomInfo;
-		isNew = true;
-	 } else {
-		atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
-		isNew = false;
-	 }
-	 cset=ObjectMoleculePDBStr2CoordSet(PDBStr,&atInfo);	 
-	 nAtom=cset->NIndex;
-  }
-
-  /* include coordinate set */
-  if(ok) {
-    cset->Obj = I;
-    cset->fEnumIndices(cset);
-    if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
-    if(isNew) {		
-      I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
-    } else {
-      ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+  start=PDBStr;
+  while(repeatFlag) {
+    repeatFlag = false;
+  
+    if(!I) 
+      isNew=true;
+    else 
+      isNew=false;
+    
+    if(ok) {
+      
+      if(isNew) {
+        I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
+        atInfo = I->AtomInfo;
+        isNew = true;
+      } else {
+        atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+        isNew = false;
+      }
+      cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart);	 
+      nAtom=cset->NIndex;
     }
-    if(isNew) I->NAtom=nAtom;
-    if(frame<0) frame=I->NCSet;
-    VLACheck(I->CSet,CoordSet*,frame);
-    if(I->NCSet<=frame) I->NCSet=frame+1;
-    if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
-    I->CSet[frame] = cset;
-    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,true);
-    if(cset->TmpSymmetry&&(!I->Symmetry)) {
-      I->Symmetry=cset->TmpSymmetry;
-      cset->TmpSymmetry=NULL;
-      SymmetryAttemptGeneration(I->Symmetry);
+    
+    /* include coordinate set */
+    if(ok) {
+      cset->Obj = I;
+      cset->fEnumIndices(cset);
+      if(cset->fInvalidateRep)
+        cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
+      if(isNew) {		
+        I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+      } else {
+        ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+      }
+      if(isNew) I->NAtom=nAtom;
+      if(frame<0) frame=I->NCSet;
+      VLACheck(I->CSet,CoordSet*,frame);
+      if(I->NCSet<=frame) I->NCSet=frame+1;
+      if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+      I->CSet[frame] = cset;
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,true);
+      if(cset->TmpSymmetry&&(!I->Symmetry)) {
+        I->Symmetry=cset->TmpSymmetry;
+        cset->TmpSymmetry=NULL;
+        SymmetryAttemptGeneration(I->Symmetry);
+      }
+      SceneCountFrames();
+      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeSort(I);
+      ObjectMoleculeUpdateNonbonded(I);
     }
-    SceneCountFrames();
-    ObjectMoleculeExtendIndices(I);
-    ObjectMoleculeSort(I);
-    ObjectMoleculeUpdateNonbonded(I);
+    if(restart) {
+      repeatFlag=true;
+      start=restart;
+      frame=frame+1;
+      restart=NULL;
+    }
   }
   return(I);
 }
@@ -3628,6 +3645,20 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      break;
+	case OMOP_Index: /* identify atoms */
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             VLACheck(op->i1VLA,int,op->i1);
+             op->i1VLA[op->i1]=a; /* NOTE: need to incr by 1 before python */
+             VLACheck(op->obj1VLA,ObjectMolecule*,op->i1);
+             op->obj1VLA[op->i1]=I;
+             op->i1++;
+           }
+       }
+     break;
 	case OMOP_CountAtoms: /* count atoms in object, in selection */
      ai=I->AtomInfo;
      for(a=0;a<I->NAtom;a++)
@@ -3636,6 +3667,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          if(SelectorIsMember(s,sele))
            op->i1++;
          ai++;
+       }
+     break;
+	case OMOP_Cartoon: /* adjust cartoon type */
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele)) {
+           ai->cartoon = op->i1;
+           op->i2++;
+         }
+         ai++; 
        }
      break;
 	case OMOP_Protect: /* protect atoms from movement */
@@ -4075,6 +4118,52 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
   return(result);
 }
 /*========================================================================*/
+float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float *v)
+     /* computes average hydrogen bonding vector for an atom */
+{
+  float result = 0.0;
+  int a1,a2,n;
+  int vec_cnt = 0;
+  float v_atom[3],v_neigh[3],v_diff[3],v_acc[3] = {0.0,0.0,0.0};
+  CoordSet *cs;
+
+  
+  ObjectMoleculeUpdateNeighbors(I);
+
+  a1 = atom;
+  if(state<0) state=0;
+  if(I->NCSet==1) state=0;
+  state = state % I->NCSet;
+  cs = I->CSet[state];
+  if(cs) {
+    if(CoordSetGetAtomVertex(cs,a1,v_atom)) { /* atom exists in this C-set */
+      n=I->Neighbor[atom];
+      n++;
+      while(1) {
+        a2=I->Neighbor[n];
+        if(a2<0) break;
+        n+=2;
+        
+        if(I->AtomInfo[a2].elem[0]!='H') { /* ignore hydrogens */
+          if(CoordSetGetAtomVertex(cs,a2,v_neigh)) { 
+            subtract3f(v_atom,v_neigh,v_diff);
+            normalize3f(v_diff);
+            add3f(v_diff,v_acc,v_acc);
+            vec_cnt++;
+          }
+        }
+      }
+      if(vec_cnt) {
+        result = length3f(v_acc);
+        result = result/vec_cnt;
+        normalize23f(v_acc,v);
+      }
+      copy3f(v_acc,v);
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
 int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
 {
   int result = 0;
@@ -4482,15 +4571,15 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 }
 
 /*========================================================================*/
-CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
+CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,char **restart)
 {
+
   char *p;
   int nAtom;
-  int a,c;
+  int a,b,c;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL,*ai;
-  char cc[MAXLINELEN];
   int AFlag;
   int atomCount;
   int conectFlag = false;
@@ -4501,6 +4590,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int symFlag;
   int autoshow_lines = SettingGet(cSetting_autoshow_lines);
   int autoshow_nonbonded = SettingGet(cSetting_autoshow_nonbonded);
+  int newModelFlag = false;
+  int ssFlag = false;
+  int ss_resi1,ss_resi2;
+  unsigned char ss_chain1,ss_chain2;
+  char *(ss[256]);
+  char cc[MAXLINELEN];
+  int index;
 
   AtomInfoPrimeColors();
 
@@ -4512,19 +4608,32 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   if(!atInfo)
     ErrFatal("PDBStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
 
+  *restart = NULL;
   while(*p)
 	 {
-		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M'))
+		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M')
+         &&(!*restart))
 		  nAtom++;
-		if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
-         (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M'))
+		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='L')&&(*(p+3)=='I')&&(*(p+4)=='X'))
+        ssFlag=true;
+		else if((*p == 'S')&&(*(p+1)=='H')&&(*(p+2)=='E')&&(*(p+3)=='E')&&(*(p+4)=='T'))
+        ssFlag=true;
+		else if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M')
+         &&(!*restart))
+		  nAtom++;
+		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
+         (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M')&&(!*restart))
         nAtom++;
-		if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
+		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
+         (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart))
+        *restart=nextline(p);
+		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
          (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
         conectFlag=true;
       p=nextline(p);
 	 }
-  
+
+  *restart=NULL;
   coord=VLAlloc(float,3*nAtom);
 
   if(atInfo)
@@ -4538,30 +4647,123 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   PRINTFB(FB_ObjectMolecule,FB_Blather)
 	 " ObjectMoleculeReadPDB: Found %i atoms...\n",nAtom
     ENDFB;
-  a=0;
+
+  if(ssFlag) {
+    for(a=0;a<=255;a++) {
+      ss[a]=NULL;
+    }
+  }
+
+  a=0; /* WATCHOUT */
   atomCount=0;
-  
+
   while(*p)
 	 {
 		AFlag=false;
 		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M'))
 		  AFlag = 1;
-		if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
+		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
          (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M'))
         AFlag = 2;
-		if((*p == 'R')&&(*(p+1)=='E')&&(*(p+2)=='M')&&
+		else if((*p == 'R')&&(*(p+1)=='E')&&(*(p+2)=='M')&&
          (*(p+3)=='A')&&(*(p+4)=='R')&&(*(p+5)=='K')&&
          (*(p+6)==' ')&&(*(p+7)=='2')&&(*(p+8)=='9')&&
          (*(p+9)=='0'))
         {
         }
-		if((*p == 'C')&&(*(p+1)=='R')&&(*(p+2)=='Y')&&
+		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='L')&&(*(p+3)=='I')&&(*(p+4)=='X'))
+        {
+          p=nskip(p,19);
+          ss_chain1 = (*p);
+          p=nskip(p,2);
+          p=ncopy(cc,p,4);
+          if(sscanf(cc,"%d",&ss_resi1)!=1) ss_resi1=1;
+          p=nskip(p,6);
+          ss_chain2 = (*p);
+          p=nskip(p,2);
+          p=ncopy(cc,p,4);
+          if(sscanf(cc,"%d",&ss_resi2)!=1) ss_resi2=1;
+
+          PRINTFB(FB_ObjectMolecule,FB_Details)
+          " ObjectMolecule: read HELIX %c %d %c %d\n",
+            ss_chain1,ss_resi1,ss_chain2,ss_resi2
+          ENDFB;
+
+          if(ss_chain1==' ') ss_chain1=0;
+          if(ss_chain2==' ') ss_chain2=0;          
+          if(ss_resi1<-cMaxNegResi) ss_resi1=-cMaxNegResi;
+          if(ss_resi2<-cMaxNegResi) ss_resi2=-cMaxNegResi;
+    
+          if(!ss[ss_chain1])
+            ss[ss_chain1]=(char*)VLAMalloc(300,sizeof(char),5,1);
+          for(b=ss_resi1;b<=ss_resi2;b++) {
+            index = b+cMaxNegResi;
+            VLACheck(ss[ss_chain1],char,index);
+            ss[ss_chain1][index]='H';
+          }
+          if(!ss[ss_chain2])
+            ss[ss_chain2]=(char*)VLAMalloc(300,sizeof(char),5,1);
+          if(ss_chain2!=ss_chain1) {
+            for(b=ss_resi1;b<=ss_resi2;b++) {
+              index = b+cMaxNegResi;
+              VLACheck(ss[ss_chain2],char,index);
+              ss[ss_chain2][index]='H';
+            }
+          }
+        }
+		else if((*p == 'S')&&(*(p+1)=='H')&&(*(p+2)=='E')&&(*(p+3)=='E')&&(*(p+4)=='T'))
+        {
+
+          p=nskip(p,21);
+          ss_chain1 = (*p);
+          p=nskip(p,1);
+          p=ncopy(cc,p,4);
+          if(sscanf(cc,"%d",&ss_resi1)!=1) ss_resi1=1;
+          p=nskip(p,6);
+          ss_chain2 = (*p);
+          p=nskip(p,1);
+          p=ncopy(cc,p,4);
+          if(sscanf(cc,"%d",&ss_resi2)!=1) ss_resi2=1;
+
+
+          PRINTFB(FB_ObjectMolecule,FB_Details)
+          " ObjectMolecule: read SHEET %c %d %c %d\n",
+            ss_chain1,ss_resi1,ss_chain2,ss_resi2
+          ENDFB;
+
+          if(ss_chain1==' ') ss_chain1=0;
+          if(ss_chain2==' ') ss_chain2=0;          
+          if(ss_resi1<-cMaxNegResi) ss_resi1=-cMaxNegResi;
+          if(ss_resi2<-cMaxNegResi) ss_resi2=-cMaxNegResi;
+    
+          if(!ss[ss_chain1])
+            ss[ss_chain1]=(char*)VLAMalloc(300,sizeof(char),5,1);
+          for(b=ss_resi1;b<=ss_resi2;b++) {
+            index = b+cMaxNegResi;
+            VLACheck(ss[ss_chain1],char,index);
+            ss[ss_chain1][index]='S';
+          }
+          if(!ss[ss_chain2])
+            ss[ss_chain2]=(char*)VLAMalloc(300,sizeof(char),5,1);
+          if(ss_chain2!=ss_chain1) {
+            for(b=ss_resi1;b<=ss_resi2;b++) {
+              index = b+cMaxNegResi;
+              VLACheck(ss[ss_chain2],char,index);
+              ss[ss_chain2][index]='S';
+            }
+          }
+
+        }
+		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
+         (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart))
+        *restart=nextline(p);
+		else if((*p == 'C')&&(*(p+1)=='R')&&(*(p+2)=='Y')&&
          (*(p+3)=='S')&&(*(p+4)=='T')&&(*(p+5)=='1'))
         {
           if(!symmetry) symmetry=SymmetryNew();          
           if(symmetry) {
             PRINTFB(FB_ObjectMolecule,FB_Details)
-              " PDBStrToCoordSet: Attempting to read symmetry information"
+              " PDBStrToCoordSet: Attempting to read symmetry information\n"
               ENDFB;
             p=nskip(p,6);
             symFlag=true;
@@ -4589,7 +4791,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
             } 
           }
         }
-		if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
+		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
          (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
         {
           p=nskip(p,6);
@@ -4616,7 +4818,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
               }
             }
         }
-		if(AFlag)
+		if(AFlag&&(!*restart))
 		  {
           ai=atInfo+atomCount;
 
@@ -4652,6 +4854,17 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           if(!sscanf(cc,"%s",ai->resi)) ai->resi[0]=0;
           if(!sscanf(cc,"%d",&ai->resv)) ai->resv=1;
           
+          if(ssFlag) { /* get secondary structure information (if avail) */
+            ss_chain1=ai->chain[0];
+            if(ss[ss_chain1]) {
+              index = ai->resv+cMaxNegResi;
+              if(index<0) index=0;
+              VLACheck(ss[ss_chain1],char,index);
+              ai->ssType[0]=ss[ss_chain1][index];
+            }
+          } else {
+            ai->cartoon = cCartoon_tube;
+          }
           p=nskip(p,3);
           p=ncopy(cc,p,8);
           sscanf(cc,"%f",coord+a);
@@ -4705,6 +4918,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 		  }
       p=nextline(p);
 	 }
+  
   if(conectFlag) {
     UtilSortInPlace(bond,nBond,sizeof(int)*3,(UtilOrderFn*)BondInOrder);              
     if(nBond) {
@@ -4777,6 +4991,36 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   if(symmetry) cset->TmpSymmetry=symmetry;
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
+
+  if(*restart) { /* if plan on need to reading another object, 
+                    make sure there is another model to read...*/
+    p=*restart;
+    newModelFlag=false;
+    while(*p) {
+        
+        if((*p == 'M')&&(*(p+1)=='O')&&(*(p+2)=='D')&&
+           (*(p+3)=='E')&&(*(p+4)=='L')&&(*(p+5)==' ')) {
+          newModelFlag=true;
+          break;
+        }
+        if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
+           (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')) {
+          newModelFlag=true;
+          break;
+        }
+        p=nextline(p);
+    }
+    if(!newModelFlag) {
+      *restart=NULL;
+    }
+  }
+
+  if(ssFlag) {
+    for(a=0;a<=255;a++) {
+      VLAFreeP(ss[a]);
+    }
+  }
+
   return(cset);
 }
 

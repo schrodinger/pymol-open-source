@@ -46,6 +46,11 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
 
   if(n>20) n=20;
   
+  FreeP(I->sv);
+  FreeP(I->sn);
+  FreeP(I->tv);
+  FreeP(I->tn);
+  
   I->sv = Alloc(float,3*(n+1));
   I->sn = Alloc(float,3*(n+1));
   I->tv = Alloc(float,3*(n+1));
@@ -66,11 +71,48 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
 	 }
 }
 
-void ExtrudeRectangle(CExtrude *I,float thick,float width)
+void ExtrudeOval(CExtrude *I, int n,float width,float length)
+{
+  int a;
+  float *v,*vn;
+
+  if(n>20) n=20;
+  
+  FreeP(I->sv);
+  FreeP(I->sn);
+  FreeP(I->tv);
+  FreeP(I->tn);
+  
+  I->sv = Alloc(float,3*(n+1));
+  I->sn = Alloc(float,3*(n+1));
+  I->tv = Alloc(float,3*(n+1));
+  I->tn = Alloc(float,3*(n+1));
+  I->Ns = n;
+  
+  v = I->sv;
+  vn = I->sn;
+
+  for(a=0;a<=n;a++)
+	 {
+      *(vn++) = 0.0;
+      *(vn++) = cos(a*2*PI/n)*length;
+      *(vn++) = sin(a*2*PI/n)*width;
+      *(v++) = 0.0;
+      *(v++) = cos(a*2*PI/n)*width;
+      *(v++) = sin(a*2*PI/n)*length;
+	 }
+}
+
+void ExtrudeRectangle(CExtrude *I,float width,float length)
 {
   float *v,*vn;
 
   I->Ns = 8;
+
+  FreeP(I->sv);
+  FreeP(I->sn);
+  FreeP(I->tv);
+  FreeP(I->tn);
   
   I->sv = Alloc(float,3*(I->Ns+1));
   I->sn = Alloc(float,3*(I->Ns+1));
@@ -87,11 +129,11 @@ void ExtrudeRectangle(CExtrude *I,float thick,float width)
   *(vn++) = 1.0;
   *(vn++) = 0.0;
   *(v++) = 0.0;
-  *(v++) = cos(PI/4)*thick;
-  *(v++) = -sin(PI/4)*width;
+  *(v++) = cos(PI/4)*width;
+  *(v++) = -sin(PI/4)*length;
   *(v++) = 0.0;
-  *(v++) = cos(PI/4)*thick;
-  *(v++) = sin(PI/4)*width;
+  *(v++) = cos(PI/4)*width;
+  *(v++) = sin(PI/4)*length;
 
   *(vn++) = 0.0;
   *(vn++) = 0.0;
@@ -100,37 +142,37 @@ void ExtrudeRectangle(CExtrude *I,float thick,float width)
   *(vn++) = 0.0;
   *(vn++) = 1.0;
   *(v++) = 0.0;
-  *(v++) = cos(PI/4)*thick;
-  *(v++) = sin(PI/4)*width;
+  *(v++) = cos(PI/4)*width;
+  *(v++) = sin(PI/4)*length;
   *(v++) = 0.0;
-  *(v++) = -cos(PI/4)*thick;
-  *(v++) = sin(PI/4)*width;
+  *(v++) = -cos(PI/4)*width;
+  *(v++) = sin(PI/4)*length;
+
+   *(vn++) = 0.0;
+  *(vn++) = -1.0;
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = -1.0;
+  *(vn++) = 0.0;
+  *(v++) = 0.0;
+  *(v++) = -cos(PI/4)*width;
+  *(v++) = sin(PI/4)*length;
+  *(v++) = 0.0;
+  *(v++) = -cos(PI/4)*width;
+  *(v++) = -sin(PI/4)*length;
 
   *(vn++) = 0.0;
-  *(vn++) = -1.0;
-  *(vn++) = 0.0;
-  *(vn++) = 0.0;
-  *(vn++) = -1.0;
-  *(vn++) = 0.0;
-  *(v++) = 0.0;
-  *(v++) = -cos(PI/4)*thick;
-  *(v++) = sin(PI/4)*width;
-  *(v++) = 0.0;
-  *(v++) = -cos(PI/4)*thick;
-  *(v++) = -sin(PI/4)*width;
-
-  *(vn++) = 0.0;
   *(vn++) = 0.0;
   *(vn++) = -1.0;
   *(vn++) = 0.0;
   *(vn++) = 0.0;
   *(vn++) = -1.0;
   *(v++) = 0.0;
-  *(v++) = -cos(PI/4)*thick;
-  *(v++) = -sin(PI/4)*width;
+  *(v++) = -cos(PI/4)*width;
+  *(v++) = -sin(PI/4)*length;
   *(v++) = 0.0;
-  *(v++) = cos(PI/4)*thick;
-  *(v++) = -sin(PI/4)*width;
+  *(v++) = cos(PI/4)*width;
+  *(v++) = -sin(PI/4)*length;
 
 
 }
@@ -359,7 +401,12 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
     tn1 = TN+3*I->N;
 
     for(b=0;b<I->Ns;b++) {
-      CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      if(SettingGet(cSetting_cartoon_debug)<1.5)
+        CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      else {
+        CGOBegin(cgo,GL_LINE_STRIP);        
+        CGODisable(cgo,GL_LIGHTING);
+      }
       c = I->c;
       for(a=0;a<I->N;a++) {
         CGOColorv(cgo,c);
@@ -375,6 +422,10 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
       }
       CGOEnd(cgo);
     }
+
+    if(SettingGet(cSetting_cartoon_debug)>1.5) {
+      CGOEnable(cgo,GL_LIGHTING);
+    }
     
     if(cap) {
 
@@ -389,6 +440,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
         sv+=3;
         tv+=3;
       }
+
 
       CGOBegin(cgo,GL_TRIANGLE_FAN);
       copy3f(I->n,v0);
@@ -489,7 +541,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
     tn1 = TN+3*I->N;
 
     for(b=0;b<I->Ns;b+=2) {
-      if(SettingGet(cSetting_test1)<0.5)
+      if(SettingGet(cSetting_cartoon_debug)<1.5)
         CGOBegin(cgo,GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo,GL_LINE_STRIP);        
@@ -514,7 +566,11 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
       tn1+=3*I->N;
       CGOEnd(cgo);
     }
-    
+
+    if(SettingGet(cSetting_cartoon_debug)>1.5) {
+      CGOEnable(cgo,GL_LIGHTING);
+    }
+
     if(cap) {
 
       n = I->n;

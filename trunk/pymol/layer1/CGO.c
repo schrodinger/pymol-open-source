@@ -28,6 +28,8 @@ Z* -------------------------------------------------------------------
 #define CGO_write_int(p,i) ((*((int*)(p++)))=(i))
 
 
+CGO *DebugCGO = NULL; /* initialized in Scene.c */
+
 int CGO_sz[] = {
   CGO_NULL_SZ,
   CGO_NULL_SZ,
@@ -74,6 +76,11 @@ CGO *CGONewSized(int size)
   I->op=VLAlloc(float,size+32);
   I->c=0;
   return(I);
+}
+
+void CGOReset(CGO *I) 
+{
+  I->c=0;
 }
 
 void CGOFree(CGO *I)
@@ -178,6 +185,13 @@ void CGODisable(CGO *I,int mode)
   float *pc = CGO_add(I,2);
   CGO_write_int(pc,CGO_DISABLE);
   CGO_write_int(pc,mode);
+}
+
+void CGOLinewidth(CGO *I,float v)
+{
+  float *pc = CGO_add(I,2);
+  CGO_write_int(pc,CGO_LINEWIDTH);
+  *(pc++)=v;
 }
 
 void CGOVertex(CGO *I,float v1,float v2,float v3)
@@ -574,32 +588,30 @@ static void CGO_gl_color(float *v) {
 /* dispatch table for OpenGL */
 
 CGO_op_fn CGO_gl[] = {
-  CGO_gl_null,
-  CGO_gl_null,
-  CGO_gl_begin,
-  CGO_gl_end,
+  CGO_gl_null,             /* 0x00 */
+  CGO_gl_null,             /* 0x01 */
+  CGO_gl_begin,            /* 0x02 */
+  CGO_gl_end,              /* 0x03 */
 #ifdef WIN32
-  CGO_gl_vertex,
-  CGO_gl_normal,
-  CGO_gl_color,
+  CGO_gl_vertex,           /* 0x04 */
+  CGO_gl_normal,           /* 0x05 */
+  CGO_gl_color,            /* 0x06 */
 #else
-  (CGO_op_fn)glVertex3fv,
-  (CGO_op_fn)glNormal3fv,
-  (CGO_op_fn)glColor3fv,
+  (CGO_op_fn)glVertex3fv,  /* 0x04 */
+  (CGO_op_fn)glNormal3fv,  /* 0x05 */
+  (CGO_op_fn)glColor3fv,   /* 0x06 */
 #endif
-  CGO_gl_null,
-  CGO_gl_null,
-  CGO_gl_null,
+  CGO_gl_null,             /* 0x07 */
+  CGO_gl_null,             /* 0x08 */
+  CGO_gl_null,             /* 0x09 */
   
-  CGO_gl_linewidth,
-  CGO_gl_enable,
-  CGO_gl_disable,
-  CGO_gl_null,
-  CGO_gl_null,
-  CGO_gl_null,
-  CGO_gl_null,
-  
-  CGO_gl_null,
+  CGO_gl_linewidth,        /* 0x0A */
+  CGO_gl_null,             /* 0x0B */
+  CGO_gl_enable,           /* 0x0C */
+  CGO_gl_disable,          /* 0x0D */
+  CGO_gl_null,             /* 0x0E */
+  CGO_gl_null,             /* 0x0F */
+  CGO_gl_null,             /* 0X10 */
 };
 
 void CGORenderGL(CGO *I) /* this should be as fast as you can make it...

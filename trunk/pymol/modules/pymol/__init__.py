@@ -75,6 +75,8 @@ def exec_deferred():
          cmd.load(a)
       elif re.search(r"\.pml$",a,re.I):
          cmd.do("@%s" % a)
+      else:
+         cmd.load(a)
    if invocation.options.read_stdin:
       t = threading.Thread(target=stdin_reader)
       t.setDaemon(1)
