@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * fixed rare system crash on certain ATI Radeon hardware when
+     picking or selecting atoms.
+
    * huge performance boost for large systems/heavily loaded PyMOL
 
    * ray_direct_shade setting 

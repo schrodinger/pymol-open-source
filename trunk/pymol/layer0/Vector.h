@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Vector
 #define _H_Vector
 
+#include"os_predef.h"
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
 /* NOTE: All matrices are assumed to be column-major in this module */
@@ -206,9 +207,7 @@ void  swap1f (float *f, float *g);
 
 #ifdef _PYMOL_INLINE
 
-#ifdef _PYMOL_WIN32
-#define __inline__ __inline
-#endif
+
 
 static const float _0f_inline = 0.0F;
 static const double _0d_inline = 0.0;
