@@ -522,7 +522,7 @@ if(crystal)
   return(ok);
 }
 
-int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends)
+int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int ends)
 {
   int sele = -1;
   ObjectMoleculeOpRec op;
@@ -537,15 +537,18 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
   int backward;
   int forward;
   int range,offset;
+  int end_skip=0;
   float *v0,*v1;
   float sum[3];
   /*  WordType all = "_all";*/
 
   PRINTFD(FB_Executive)
-    " ExecutiveSmooth: entered %s\n",name
+    " ExecutiveSmooth: entered %s,%d,%d,%d,%d,%d\n",name,cycles,first,last,window,ends
     ENDFD;
 
   sele=SelectorIndexByName(name);
+
+
 
   if(sele>=0) {
     if(last<0) 
@@ -553,7 +556,9 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
     if(first<0)
       first = 0;
     if(last<first) {
-      state=last;last=first;first=state;
+      state=last;
+      last=first;
+      first=state;
     }
     n_state=last-first+1;
 
@@ -562,13 +567,28 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
 
     if((forward-backward)==(window+1))
       forward--; /* even sizes window */
+    
+    switch(ends) {
+    case 0:
+      end_skip = 1;
+      break;
+    case 1:
+      end_skip = 0;
+      break;
+    case 2:
+      end_skip = backward;
+      break;
+    default:
+      end_skip = 0;
+      break;
+    }
 
     if(ends) {
       range = (last-first)+1;
       offset = 0;
     } else {
-      range = (last-forward)-(first+backward)+1;
-      offset = backward;
+      range = (last-end_skip)-(first+end_skip)+1;
+      offset = end_skip;
     }
     
     PRINTFD(FB_Executive)
@@ -627,18 +647,25 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
               cnt = 0;
               for(d=-backward;d<=forward;d++) {
                 st = b + offset + d;
-                if((st>=0)&&(st<n_state)) {
-                  cnt+=flag0[(n_atom*st)+c];
-                  v0 = coord0 + 3*(n_atom*st+c);
-                  add3f(sum,v0,sum);
+                if(st<0) {
+                  st=0;
+                } else if(st>=n_state) {
+                  st=n_state-1;
                 }
+                /*if(c==0) printf("averaging from slot %d\n",st);*/
+                cnt+=flag0[(n_atom*st)+c];
+                v0 = coord0 + 3*(n_atom*st+c);
+                add3f(sum,v0,sum);
               }
               if(cnt) {
                 st = b + offset;
-                flag1[(n_atom*st)+c] = 1;
-                i_cnt = 1.0/cnt;
-                v1 = coord1 + 3*((n_atom*st)+c);
-                scale3f(sum,i_cnt,v1);
+                if((st>=end_skip)&&(st<(n_state-end_skip))) {
+                  /* if(c==0) printf("dumping into slot %d\n",st);*/
+                  flag1[(n_atom*st)+c] = 1;
+                  i_cnt = 1.0/cnt;
+                  v1 = coord1 + 3*((n_atom*st)+c);
+                  scale3f(sum,i_cnt,v1);
+                }
               }
             }
           }
@@ -669,10 +696,10 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
           op.vv1 = coord1;
           op.ii1 = flag1;
         } else {
-          op.cs1 = first+backward;
-          op.cs2 = last-forward;
-          op.vv1 = coord1+(backward*3*n_atom);
-          op.ii1 = flag1+(backward*n_atom);
+          op.cs1 = first+end_skip;
+          op.cs2 = last-end_skip;
+          op.vv1 = coord1+(end_skip*3*n_atom);
+          op.ii1 = flag1+(end_skip*n_atom);
         }
         op.nvv1 = 0;
         
@@ -688,6 +715,10 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
         FreeP(flag1);
       }
     }
+  } else {
+    PRINTFB(FB_Executive,FB_Errors)  
+      " ExecutiveSmooth: selection not found\n"
+      ENDFB;
   }
   return(ok);
 }
