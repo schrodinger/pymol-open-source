@@ -119,7 +119,7 @@ BONDS
 MISC
 
    CTRL-Z    undo the previous conformational change.
-             (you can't currently undo modifications).
+             (you can not currently undo modifications).
    CTRL-A    redo the previous conformational change.
 
 '''

@@ -819,8 +819,9 @@ void OrthoReshape(int width, int height)
     block=ControlGetBlock();
     block->active=false;
   }
-  
-  glGetIntegerv(GL_VIEWPORT,I->ViewPort);
+
+  if(PMGUI) 
+    glGetIntegerv(GL_VIEWPORT,I->ViewPort);
 
   OrthoPushMatrix();
   block=NULL;
@@ -1015,23 +1016,25 @@ void OrthoPushMatrix(void)
 {
   OrthoObject *I=&Ortho;
 
-  glGetIntegerv(GL_VIEWPORT,I->ViewPort);
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glOrtho(0,I->ViewPort[2],0,I->ViewPort[3],-100,100);
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
-  
-  glDisable(GL_LIGHTING);
-  glDisable(GL_FOG);
-  glDisable(GL_NORMALIZE);
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_COLOR_MATERIAL);
-  glDisable(GL_LINE_SMOOTH);
-  glDisable(GL_DITHER);
-  glDisable(GL_BLEND);
+  if(PMGUI) {
+    glGetIntegerv(GL_VIEWPORT,I->ViewPort);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0,I->ViewPort[2],0,I->ViewPort[3],-100,100);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    glDisable(GL_LIGHTING);
+    glDisable(GL_FOG);
+    glDisable(GL_NORMALIZE);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_COLOR_MATERIAL);
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_DITHER);
+    glDisable(GL_BLEND);
+  }
   /*  glDisable(GL_ALPHA_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_POINT_SMOOTH);*/
@@ -1041,10 +1044,12 @@ void OrthoPushMatrix(void)
 void OrthoPopMatrix(void)
 {
 
-  glPopMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
+  if(PMGUI) {
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+  }
 }
 
 /*========================================================================*/

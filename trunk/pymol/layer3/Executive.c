@@ -1002,9 +1002,10 @@ void ExecutiveReset(int cmd)
 /*========================================================================*/
 void ExecutiveDrawNow(void) 
 {
-  glMatrixMode(GL_MODELVIEW);
-
+  if(PMGUI) {
+    glMatrixMode(GL_MODELVIEW);
   /*  glClear( GL_DEPTH_BUFFER_BIT);*/
+  }
 
   SceneUpdate();
 
