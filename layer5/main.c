@@ -450,7 +450,6 @@ static void MainDrawLocked(void)
 /*========================================================================*/
 static void MainDraw(void)
 {
-  CMain *I = &Main;
   PRINTFD(FB_Main)
     " MainDraw: called.\n"
     ENDFD;

@@ -89,30 +89,31 @@ int EditorDeselectIfSelected(int index,int update)
   if(I->Obj) {
     if((index>=0)&&(index<I->Obj->NAtom)) {
       s=I->Obj->AtomInfo[index].selEntry;                  
+      sele = SelectorIndexByName(cEditorSele1);
+      if(SelectorIsMember(s,sele)) {
+        ExecutiveDelete(cEditorSele1);
+        result = true;
+      }
+      sele = SelectorIndexByName(cEditorSele2);
+      if(SelectorIsMember(s,sele)) {
+        ExecutiveDelete(cEditorSele2);
+        result = true;
+      }
+      sele = SelectorIndexByName(cEditorSele3);
+      if(SelectorIsMember(s,sele)) {
+        ExecutiveDelete(cEditorSele3);
+        result = true;
+      }
+      sele = SelectorIndexByName(cEditorSele4);
+      if(SelectorIsMember(s,sele)) {
+        ExecutiveDelete(cEditorSele4);
+        result = true;
+      }
+      if(result&&update)
+        EditorSetActiveObject(I->Obj,I->ActiveState);
     }
   }
-  sele = SelectorIndexByName(cEditorSele1);
-  if(SelectorIsMember(s,sele)) {
-    ExecutiveDelete(cEditorSele1);
-    result = true;
-  }
-  sele = SelectorIndexByName(cEditorSele2);
-  if(SelectorIsMember(s,sele)) {
-    ExecutiveDelete(cEditorSele2);
-    result = true;
-  }
-  sele = SelectorIndexByName(cEditorSele3);
-  if(SelectorIsMember(s,sele)) {
-    ExecutiveDelete(cEditorSele3);
-    result = true;
-  }
-  sele = SelectorIndexByName(cEditorSele4);
-  if(SelectorIsMember(s,sele)) {
-    ExecutiveDelete(cEditorSele4);
-    result = true;
-  }
-  if(result&&update)
-    EditorSetActiveObject(I->Obj,I->ActiveState);
+  
   return result;
 }
 

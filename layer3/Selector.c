@@ -3255,10 +3255,10 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
         }
         
         if(sele4>=0) {
-          pkset[a0]=1;
-          set_cnt++;
           a0 = ObjectMoleculeGetAtomIndex(obj,sele4);
           if(a0>=0) {
+            pkset[a0]=1;
+            set_cnt++;
             comp[a0]=1;
             stkDepth=0;
             s=obj->Neighbor[a0]; /* add neighbors onto the stack */
@@ -5651,7 +5651,6 @@ int SelectorModulate1(EvalElem *base)
 		  {
           ObjectMolecule *lastObj = NULL;
           int a,n,a0,a1,a2;
-          base[0].sele= Alloc(int,I->NAtom);
           UtilCopyMem(base[0].sele,base[1].sele,sizeof(int)*I->NAtom);
           while((nbond--)>0) {
             int *tmp = base[1].sele;

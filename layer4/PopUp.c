@@ -276,6 +276,7 @@ static void PopUpFree(Block *block)
   }
   OrthoDetach(I->Block);
   OrthoFreeBlock(I->Block);
+  FreeP(I->Sub);
   FreeP(I->Code);
   FreeP(I->Command);
   FreeP(I->Text);

@@ -16,7 +16,7 @@ import cmd
 import util
 import traceback
 
-polar_contacts = "polar_contacts"
+polar_contacts = "preset_pc"
 
 def simple(selection="(all)"):
    s = str(selection)
@@ -25,7 +25,8 @@ def simple(selection="(all)"):
    cmd.show("ribbon",s)
    cmd.show("sticks","(hetatm and ("+s+"))")
    cmd.show("nonbonded","(hetatm and ("+s+"))")
-   cmd.disable(polar_contacts)
+   if polar_contacts in cmd.get_names():
+      cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
       cmd.center(s)
 
@@ -49,11 +50,15 @@ def ligands(selection="(all)"):
       cmd.show("ribbon",host)
       cmd.show("lines","(byres ("+host+" within 5 of "+lig+"))")
       cmd.show("sticks",lig)
-      
-      cmd.dist("polar_contacts",host+"|"+near_water,lig,mode=2,labels=0) # hbonds
-      cmd.hide("labels","polar_contacts")
+
+      if cmd.count_atoms(lig):
+         cmd.dist(polar_contacts,host+"|"+near_water,lig,mode=2,quiet=1,labels=0) # hbonds
+         if polar_contacts in cmd.get_names():
+            cmd.enable(polar_contacts)
+            cmd.hide("labels",polar_contacts)
+      elif polar_contacts in cmd.get_names():
+         cmd.delete(polar_contacts)
       cmd.show("nonbonded",lig+"|"+host+"|"+near_water)
-      cmd.enable(polar_contacts)
       if cmd.count_atoms(lig):
          cmd.center(lig)
       cmd.delete(host)
@@ -72,11 +77,12 @@ def technical(selection="(all)"):
    cmd.show("lines","((("+s+") and not hetatm) extend 1)")
    cmd.show("sticks","(hetatm and ("+s+"))")
    cmd.show("ribbon",s)
-   cmd.dist("polar_contacts",s,s,mode=2,labels=0) # hbonds
-   cmd.set("dash_width",1.5,"polar_contacts")
-   cmd.hide("labels","polar_contacts")
+   cmd.dist(polar_contacts,s,s,mode=2,labels=0) # hbonds
+   if polar_contacts in cmd.get_names():
+      cmd.enable(polar_contacts)
+      cmd.set("dash_width",1.5,polar_contacts)
+      cmd.hide("labels",polar_contacts)
    cmd.show("nonbonded","(hetatm and ("+s+"))")
-   cmd.enable(polar_contacts)
 
 def beautiful(selection="(all)"):
    s = str(selection)
@@ -91,7 +97,8 @@ def beautiful(selection="(all)"):
    cmd.set("cartoon_highlight_color",-1)
    cmd.set("cartoon_fancy_helices",0)
    cmd.set("cartoon_smooth_loops",0)
-   cmd.disable(polar_contacts)
+   if polar_contacts in cmd.get_names():
+      cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
       cmd.center(s)
    
@@ -101,6 +108,7 @@ def publishable(selection="(all)"):
    cmd.set("cartoon_smooth_loops",1)
    cmd.set("cartoon_highlight_color","grey50")
    cmd.set("cartoon_fancy_helices",1)
-   cmd.disable(polar_contacts)
+   if polar_contacts in cmd.get_names():
+      cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
       cmd.center(s)
