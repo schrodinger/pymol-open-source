@@ -161,7 +161,7 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
   CControl *I=&Control;
   int sel = 0;
   int flag = false;
-  int c;
+  int c=0;
 
   I->LastPos =x;
   x -= I->Block->rect.left+cControlLeftMargin;
@@ -258,7 +258,7 @@ void ControlDraw(Block *block)
 {
   CControl *I=&Control;
   int x,y;
-  int c=0;
+  int c=1;
 
   if(PMGUI) {
 
