@@ -180,7 +180,45 @@ class Indexed(Base):
          model.bond[b.index[1]].append(b) # note two refs to same object 
       self.reset()
       return model
-   
+#------------------------------------------------------------------------------
+   def from_molobj(self,molobj): 
+      self.reset()
+      for a in molobj.atom:
+         at.symbol = a.symbol
+         at.name = a.name
+         if a.resn != Atom.defaults['resn']:
+            at.resn = a.resn
+         if a.resn_code != Atom.defaults['resn_code']:
+            at.resn_code = a.resn_code
+         at.resi = a.resi
+         at.resi_number = a.resi_number
+         at.b = a.b
+         at.q = a.q
+         at.alt = a.alt
+         at.hetatm = a.hetatm
+         if a.segi != Atom.defaults['segi']:
+            at.segi = a.segi
+         if a.chain != Atom.defaults['chain']:
+            at.chain = a.chain
+         at.color_code = a.color_code
+         at.coord = a.coord
+         at.formal_charge = a.formal_charge
+         at.partial_charge = a.partial_charge
+         if a.numeric_type != -99:
+            at.numeric_type = a.numeric_type
+         if a.text_type != 'UNKNOWN':
+            at.text_type = a.text_type
+         at.stereo = a.stereo
+         if hasattr(a,flags): # just in case
+            at.flags = a.flags
+         self.atom.append(at)
+      for b in molobj.bond:
+         bnd = Bond()
+         bnd.index = [b.atom[0],b.atom[1]]
+         bnd.order = b.order
+         bnd.stereo = b.stereo
+         self.bond.append(bnd)
+         
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------

@@ -24,7 +24,7 @@ class Atom:
       'flags'               : 0,
 # Force-fields
       'numeric_type'        : -9999,
-      'text_type'           : 'UNK',
+      'text_type'           : '??',
 # MDL Mol-files
       'stereo'              : 0,
 # Macromodel files
