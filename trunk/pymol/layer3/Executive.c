@@ -3644,11 +3644,8 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
   int *flag;
   int ok=true;
   int repeat;
-  int auto_save;
-  CGO *cgo = NULL;
-  ObjectCGO *ocgo;
   float v1[3],*v2;
-
+            
   sele1=SelectorIndexByName(s1);
 
   ObjectMoleculeOpRecInit(&op1);
@@ -3871,6 +3868,10 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
         }
         if(oname) 
           if(oname[0]) {
+            CGO *cgo = NULL;
+            ObjectCGO *ocgo;
+            int auto_save;
+
             cgo=CGONew();
             /*             CGOColor(cgo,1.0,1.0,0.0); 
                            CGOLinewidth(cgo,3.0);*/
