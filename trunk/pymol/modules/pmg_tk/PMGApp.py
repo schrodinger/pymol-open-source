@@ -928,11 +928,11 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ h_fill"))
 
       self.menuBar.addmenuitem('Build', 'command', 'Invert',
-                               label='Invert (lb)-(pk1)-(rb) [Ctrl-E]',
+                               label='Invert (pk2)-(pk1)-(pk3) [Ctrl-X]',
                                command = lambda: cmd.do("_ invert"))
 
       self.menuBar.addmenuitem('Build', 'command', 'Form Bond',
-                               label='Create Bond (lb)-(rb) [Ctrl-T]',
+                               label='Create Bond (pk1)-(pk2) [Ctrl-T]',
                                command = lambda: cmd.do("_ bond"))
 
 
@@ -942,14 +942,6 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Build', 'command', 'Remove (pk1)',
                                label='Remove (pk1) [Ctrl-D]',
                                command = lambda: cmd.do("_ remove pk1"))
-
-      self.menuBar.addmenuitem('Build', 'command', 'Remove (pkfrag1)',
-                               label='Remove (pkfrag1) [Ctrl-X]',
-                               command = lambda: cmd.do("_ remove pkfrag1"))
-
-      self.menuBar.addmenuitem('Build', 'command', 'Remove (pkchain)',
-                               label='Remove (pkchain)',
-                               command = lambda: cmd.do("_ remove pkchain"))
 
       self.menuBar.addmenuitem('Build', 'separator', '')
       

@@ -303,8 +303,6 @@ SEE ALSO
       try:
          lock()
          r = _cmd.bond(atom1,atom2,int(order),1)
-         if r and edit:
-            _cmd.edit(str(atom1),str(atom2),'','',0,0,1)
       finally:
          unlock()
       return r
@@ -339,7 +337,7 @@ NOTE
          unlock()
       return r
 
-   def unbond(atom1="(lb)",atom2="(rb)"):
+   def unbond(atom1="(pk1)",atom2="(pk2)"):
       '''
 DESCRIPTION
 
@@ -351,7 +349,7 @@ USAGE
 
 PYMOL API
 
-   cmd.unbond(selection atom1="(lb)",selection atom2="(rb)")
+   cmd.unbond(selection atom1="(pk1)",selection atom2="(pk2)")
 
 SEE ALSO
 
@@ -507,7 +505,7 @@ NOTES
       return r
 
 
-   def fuse(selection1="(lb)",selection2="(rb)",mode=0):
+   def fuse(selection1="(pk1)",selection2="(pk2)",mode=0):
       '''
 DESCRIPTION
 
@@ -522,7 +520,7 @@ USAGE
 
 PYMOL API
 
-   cmd.fuse( string selection1="(lb)", string selection2="(lb)" )
+   cmd.fuse( string selection1="(pk1)", string selection2="(pk2)" )
 
 NOTES
 
