@@ -146,7 +146,6 @@ int SelectorOperator22(PyMOLGlobals *G,EvalElem *base);
 int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word);
 SelectorWordType *SelectorParse(PyMOLGlobals *G,char *s);
 void SelectorPurgeMembers(PyMOLGlobals *G,int sele);
-int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_dummies,int *idx,int n_idx);
 int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecule *obj,int no_dummies);
 void SelectorClean(PyMOLGlobals *G);
 void SelectorDeletePrefixSet(PyMOLGlobals *G,char *s);

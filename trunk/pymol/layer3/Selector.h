@@ -36,6 +36,8 @@ int SelectorCreateEmpty(PyMOLGlobals *G,char *name);
 void SelectorToggle(PyMOLGlobals *G,int rep,char *name);
 void SelectorCylinder(PyMOLGlobals *G,char *sele,char *onoff);
 int SelectorUpdateTable(PyMOLGlobals *G);
+int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_dummies,int *idx,int n_idx);
+
 int SelectorIndexByName(PyMOLGlobals *G,char *sele);
 void SelectorFree(PyMOLGlobals *G);
 void SelectorDelete(PyMOLGlobals *G,char *sele);
