@@ -296,14 +296,14 @@ static PyMethodDef Cmd_methods[] = {
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
 {
   char *str1;
-  int int1;
+  int int1,int2;
   OrthoLineType s1="";
   float result;
 
-  PyArg_ParseTuple(args,"si",&str1,&int1);
+  PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
   APIEntry();
   if(str1[0]) SelectorGetTmp(str1,s1);
-  result = ExecutiveGetArea(s1,int1);
+  result = ExecutiveGetArea(s1,int1,int2);
   if(s1[0]) SelectorFreeTmp(s1);
   APIExit();
   return(Py_BuildValue("f",result));
@@ -1572,8 +1572,6 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   OrthoLineType buf;
   int frame,type;
   int finish,discrete;
-  int listFlag=false;
-  PyObject *list;
   buf[0]=0;
 
   PyArg_ParseTuple(args,"sOiiii",&oname,&model,&frame,&type,&finish,&discrete);

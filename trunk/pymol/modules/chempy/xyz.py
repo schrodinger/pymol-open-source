@@ -66,11 +66,14 @@ class XYZ(Storage):
          c = 0
          for a in conn.atom:
             if mapping:
-               n_type = str(mapping[a.text_type])
+               n_type = mapping[a.text_type]
             else:
-               n_type = str(a.numeric_type)
-            st = "%6d  %-3s%12.6f%12.6f%12.6f%6s" % (
-               c+1,a.text_type,a.coord[0],a.coord[1],a.coord[2],n_type)
+               n_type = a.numeric_type
+            if n_type<0:
+               print str(self.__class__)+\
+                     '-WARNING: negative numeric type (%d) for atom %d'% (n_type,c)
+            st = "%6d  %-3s%12.6f%12.6f%12.6f%6d" % (
+               c+1,a.text_type,a.coord[0],a.coord[1],a.coord[2],int(n_type))
             for b in conn.bond[c]:
                idx = b.index[0]
                if idx == c:

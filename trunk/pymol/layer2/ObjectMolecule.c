@@ -3251,8 +3251,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                rms = MatrixFitRMS(op->nvv1,op->vv1,op->vv2,NULL,op->ttt);
              else 
                rms = MatrixGetRMS(op->nvv1,op->vv1,op->vv2,NULL);
-             PRINTF " Executive: RMS = %8.3f (%d atoms)\n",
-                    rms,op->nvv1 ENDF
              if(op->i1==2) 
                ObjectMoleculeTransformTTTf(I,op->ttt,b);
            } else {
@@ -3296,6 +3294,19 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          if(SelectorIsMember(s,sele))
            {
              ai->masked = op->i1;
+             op->i2++;
+           }
+         ai++;
+       }
+     break;
+	case OMOP_SetB: /* set B-value */
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             ai->b = op->f1;
              op->i2++;
            }
          ai++;

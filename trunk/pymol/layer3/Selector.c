@@ -619,6 +619,9 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2,float adju
   int idx1,idx2;
   int a;
 
+  if(state1<0) state1=0;
+  if(state2<0) state2=0;
+
   SelectorUpdateTable();
   c=SelectorGetInterstateVLA(sele1,state1,sele2,state2,2*MAX_VDW+adjust,&vla);
   for(a=0;a<c;a++) {

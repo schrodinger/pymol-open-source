@@ -84,7 +84,7 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
 /*========================================================================*/
-float ExecutiveGetArea(char *s0,int sta0)
+float ExecutiveGetArea(char *s0,int sta0,int load_b)
 {
   ObjectMolecule *obj0;
   RepDot *rep;
@@ -96,7 +96,7 @@ float ExecutiveGetArea(char *s0,int sta0)
   int *ati;
   float *area;
   AtomInfoType *ai;
-
+  ObjectMoleculeOpRec op;
   sele0 = SelectorIndexByName(s0);
   if(sele0<0) {
     ErrMessage("Area","Invalid selection.");
@@ -113,6 +113,15 @@ float ExecutiveGetArea(char *s0,int sta0)
         if(!rep) 
           ErrMessage("Area","Can't get dot representation.");
         else {
+
+          if(load_b) {
+            /* zero out B-values within selection */
+            op.code=OMOP_SetB;
+            op.f1=0.0;
+            op.i1=0;
+            ExecutiveObjMolSeleOp(sele0,&op);
+          }
+
           result=0.0;
           
           area=rep->A;
@@ -126,7 +135,11 @@ float ExecutiveGetArea(char *s0,int sta0)
               is_member = SelectorIsMember(ai->selEntry,sele0);
             }
             
-            if(is_member) result+=(*area);
+            if(is_member) {
+              result+=(*area);
+              if(load_b)
+                ai->b+=(*area);
+            }
             area++;
             ati++;
           }
@@ -472,11 +485,18 @@ void ExecutiveFlag(int flag,char *s1)
 float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust)
 {
   int sele1,sele2;
-  
+  float result=0.0;
+
+  if(state1<0) state1=0;
+  if(state2<0) state2=0;
+                 
   sele1=SelectorIndexByName(s1);
   sele2=SelectorIndexByName(s2);
-  
-  return(SelectorSumVDWOverlap(sele1,state1,sele2,state2,adjust));
+
+  if((sele1>=0)&&(sele2>=0))
+    result = SelectorSumVDWOverlap(sele1,state1,sele2,state2,adjust);
+
+  return(result);
 }
 /*========================================================================*/
 void ExecutiveProtect(char *s1,int mode)

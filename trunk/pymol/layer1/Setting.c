@@ -596,6 +596,7 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_normal_workaround].Name,
 			"normal_workaround");
 
+
 }
 
 

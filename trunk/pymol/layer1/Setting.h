@@ -55,7 +55,7 @@ float SettingGetNamed(char *name);
 #define cSetting_cavity_cull          13
 #define cSetting_ambient_scale        14
 #define cSetting_single_image         15
-#define cSetting_movie_delay            16
+#define cSetting_movie_delay          16
 #define cSetting_ribbon_power         17
 #define cSetting_ribbon_power_b       18
 #define cSetting_ribbon_sampling      19
