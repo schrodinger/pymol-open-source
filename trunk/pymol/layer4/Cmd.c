@@ -102,11 +102,13 @@ static PyObject *CmdDump(PyObject *self, 	PyObject *args);
 static PyObject *CmdExportDots(PyObject *self, PyObject *args);
 static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
+static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
+static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
@@ -168,10 +170,12 @@ static PyMethodDef Cmd_methods[] = {
 	{"export_dots",  CmdExportDots,   METH_VARARGS },
 	{"fit",          CmdFit,          METH_VARARGS },
 	{"fit_pairs",    CmdFitPairs,     METH_VARARGS },
+	{"flag",         CmdFlag,         METH_VARARGS },
 	{"frame",	     CmdFrame,        METH_VARARGS },
 	{"get",	        CmdGet,          METH_VARARGS },
 	{"get_feedback", CmdGetFeedback,  METH_VARARGS },
 	{"get_matrix",	  CmdGetMatrix,    METH_VARARGS },
+	{"get_model",	  CmdGetModel,     METH_VARARGS },
 	{"get_moment",	  CmdGetMoment,    METH_VARARGS },
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
@@ -543,6 +547,29 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
   }
   FreeP(pdb);
   return(result);
+}
+
+static PyObject *CmdGetModel(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  int state;
+  OrthoLineType s1;
+  PyObject *model;
+  PyObject *result = NULL;
+  
+  PyArg_ParseTuple(args,"si",&str1,&state);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  model=ExecutiveSeleToChempyModel(s1,state);
+  SelectorFreeTmp(s1);
+  APIExit();
+  if(model)
+    result = Py_BuildValue("O",model);
+  if(!result) {
+    result=Py_None;
+    Py_INCREF(result);
+  }
+  return(model);
 }
 
 static PyObject *CmdCreate(PyObject *dummy, PyObject *args)
@@ -930,6 +957,21 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
   h+=cOrthoBottomSceneMargin;
   APIEntry();
   MainDoReshape(w,h); /* should be moved into Executive */
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdFlag(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  int flag;
+  OrthoLineType s1;
+  PyArg_ParseTuple(args,"is",&flag,&str1);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  ExecutiveFlag(flag,s1);
+  SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

@@ -252,6 +252,8 @@ DESCRIPTION
       segi <segment identifiers>  s;<segment identifiers>
       elem <element symbol>       e;<element symbols>
       b <operator> <value>        -
+      flag <number>               f;
+      alt <code>                  - 
    Generic 
       hydro                       h;
       all                         *
@@ -1810,6 +1812,32 @@ PYMOL API
    return r
 
 
+def get_model(*arg):
+   '''
+DESCRIPTION
+  
+   "get_model" returns a Chempy "Indexed" format model from a selection.
+ 
+PYMOL API
+ 
+   cmd.get_model( selection [,state] )
+ 
+   '''
+   r = 1
+   try:
+      lock()
+      sele = "(all)"
+      state = -1
+      if len(arg)==1:
+         sele = arg[0]
+      elif len(arg)==2:
+         sele = arg[0]
+         state = arg[1]
+      r = _cmd.get_model(sele,int(state)-1)
+   finally:
+      unlock()
+   return r
+
 def create(*arg):
    '''
 DESCRIPTION
@@ -2035,6 +2063,37 @@ EXAMPLES
          r = _cmd.color(arg[0],arg[1],0)
       else:
          r = _cmd.color(arg[0],"(all)",0)   
+   finally:
+      unlock()
+   return r
+
+def flag(*arg):
+   '''
+DESCRIPTION
+  
+   "flag" sets the indicated flag for atoms in the selection and
+    clears the indicated flag for atoms not in the selection.  This
+    is primarily useful for passing selection information into
+    Chempy models.
+   
+USAGE
+
+   flag flag_number = selection 
+    
+PYMOL API
+  
+   cmd.flag( int flag, string selection )
+ 
+EXAMPLES  
+ 
+   flag 0 = (name ca)
+   flag 1 = (resi 45 x; 6)
+ 
+   '''
+   try:
+      lock()   
+      if len(arg)==2:
+         r = _cmd.flag(int(arg[0]),arg[1])
    finally:
       unlock()
    return r
@@ -2406,6 +2465,7 @@ keyword = {
    'ending'        : [ending       , 0 , 0 , ',' , 0 ],
    'export_dots'   : [export_dots  , 2 , 2 , ',' , 0 ],
    'fit'           : [fit          , 2 , 2 , ',' , 0 ],
+   'flag'          : [flag         , 2 , 2 , '=' , 0 ],
    'fork'          : [dummy        , 1 , 1 , ',' , 3 ],
    'forward'       : [forward      , 0 , 0 , ',' , 0 ],
    'frame'         : [frame        , 1 , 1 , ',' , 0 ],
