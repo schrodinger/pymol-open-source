@@ -456,6 +456,9 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                           I->Obj.Setting,NULL);
 
             SceneResetNormal(false);
+            col = ColorGet(I->Obj.Color);
+            glColor4f(col[0],col[1],col[2],alpha);
+
             use_dlst = (int)SettingGet(cSetting_use_display_lists);
             if(use_dlst&&ms->displayList) {
               glCallList(ms->displayList);
@@ -472,8 +475,6 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
 
             
             if(n&&v&&I->Obj.RepVis[cRepSurface]) {
-              col = ColorGet(I->Obj.Color);
-              glColor4f(col[0],col[1],col[2],alpha);
 
               glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
               while(*n)
