@@ -329,6 +329,7 @@ class Normal(PMGSkin):
       if frame==self.cmdFrame:
          self.cmd.edit_mode(0)
       elif frame==self.buildFrame:
+         frame.deferred_activate()
          self.cmd.edit_mode(1)
          self.cmd.set("valence","1")
          
