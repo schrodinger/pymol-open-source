@@ -80,7 +80,7 @@ class MMD(Storage):
       try:
          model.molecule.energy = float(list[0][58:68])/4.184 # convert to kcal
       except:
-         if hasattr(model.molecule.energy,'energy'):
+         if hasattr(model.molecule,'energy'):
             del model.molecule.energy
       if nAtom!=model.nAtom:
          raise RuntimeError(" mmd: atom count mismatch")
