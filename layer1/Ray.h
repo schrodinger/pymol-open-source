@@ -53,6 +53,8 @@ typedef struct CRay {
   int Context;
   float AspRatio;
   float PixelRadius;
+  float min_box[2];
+  float max_box[2];
 } CRay;
 
 typedef struct {
@@ -74,8 +76,20 @@ typedef struct {
   int *vert2prim;
   CPrimitive *prim;
   float *clipBox;
+  unsigned int *image;
+  unsigned int background;
+  unsigned int bytes;
+  int phase;
+  CRay *ray;
 } CRayHashThreadInfo;
 
+typedef struct {
+  unsigned int *image;
+  unsigned int *image_copy;
+  unsigned int width,height;
+  int phase,n_thread;
+  CRay *ray;
+} CRayAntiThreadInfo;
 
 CRay *RayNew(void);
 void RayFree(CRay *I);
@@ -96,6 +110,7 @@ int RayTraceThread(CRayThreadInfo *T);
 int RayGetNPrimitives(CRay *I);
 
 int RayHashThread(CRayHashThreadInfo *T);
+int RayAntiThread(CRayAntiThreadInfo *T);
 
 #endif
 

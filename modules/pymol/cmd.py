@@ -564,6 +564,20 @@ DEVELOPMENT TO DO
    #--------------------------------------------------------------------
    # internal API routines
 
+   def _ray_anti_spawn(thread_info):
+      # WARNING: internal routine, subject to change      
+      # internal routine to support multithreaded raytracing
+      thread_list = []
+      for a in thread_info[1:]:
+         t = threading.Thread(target=_cmd.ray_anti_thread,
+                              args=(a,))
+         t.setDaemon(1)
+         thread_list.append(t)
+      for t in thread_list:
+         t.start()
+      _cmd.ray_anti_thread(thread_info[0])
+      for t in thread_list:
+         t.join()
    
    def _ray_hash_spawn(thread_info):
       # WARNING: internal routine, subject to change      
