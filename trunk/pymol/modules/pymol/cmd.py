@@ -2493,12 +2493,16 @@ def read_molstr(*arg):
    try:
       lock()
       ftype = 3
-      if len(arg)==2:
+      if len(arg)>1:
          oname = string.strip(arg[1])
+      if len(arg)==2:
          r = _cmd.load(oname,arg[0],-1,ftype,1,1)
       elif len(arg)==3:
-         oname = string.strip(arg[1])
          r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype,1,1)
+      elif len(arg)==4:
+         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype,int(arg[3]),discrete)         
+      elif len(arg)==5:
+         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype,int(arg[3]),int(arg[4]))
       else:
          print "argument error."
    finally:

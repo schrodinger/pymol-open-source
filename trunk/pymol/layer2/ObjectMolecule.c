@@ -384,9 +384,9 @@ int ObjectMoleculeVerifyChemistry(ObjectMolecule *I)
   }
   if(!flag) {
     if(I->CSet[0]) { /* right now this stuff is locked to state 0 */
-      ObjectMoleculeInferChemFromNeighGeom(I,0);
-      ObjectMoleculeInferChemForProtein(I,0);
       ObjectMoleculeInferChemFromBonds(I,0);
+      ObjectMoleculeInferChemFromNeighGeom(I,0);
+      /*      ObjectMoleculeInferChemForProtein(I,0);*/
     }
     flag=true;
     ai=I->AtomInfo;
@@ -1365,10 +1365,12 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
         }
         else if(ai->protons==cAN_N)
           {
-            if(ai->formalCharge==0.0) {
-              ai->chemFlag=true; 
-              ai->geom=cAtomInfoPlaner;
-              ai->valence=3;
+            if((!ai->chemFlag)||ai->geom!=cAtomInfoLinear) {
+              if(ai->formalCharge==0.0) {
+                ai->chemFlag=true; 
+                ai->geom=cAtomInfoPlaner;
+                ai->valence=3;
+              }
             }
           }
       }
@@ -1528,7 +1530,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
     a1 = *(b0++);
     ai0=I->AtomInfo + a0;
     ai1=I->AtomInfo + a1;
-    order = *(b0++);    if(!ai0->chemFlag) {
+    order = *(b0++);
+    if(!ai0->chemFlag) {
       if(order>ai0->geom)
         ai0->geom=order;
       ai0->valence+=order;
@@ -1538,6 +1541,29 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
         ai1->geom=order;
       ai1->valence+=order;
     }
+    if(order==3) { 
+      /* override existing chemistry * this is a temp fix to a pressing problem...
+         we need to rethink the chemisty assignment ordering (should bond
+         information come first? */
+      ai0->geom = cAtomInfoLinear;
+      ai1->geom = cAtomInfoLinear;
+      switch(ai0->protons) {
+      case cAN_C:
+        ai0->valence=2;
+        break;
+      default:
+        ai0->valence=1;
+      }
+      switch(ai1->protons) {
+      case cAN_C:
+        ai1->valence=2;
+        break;
+      default:
+        ai1->valence=1;
+      }
+      ai0->chemFlag=true;
+      ai1->chemFlag=true;
+    }
   }
 
   /* now set up valences and geometries */
@@ -1546,10 +1572,21 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
   for(a=0;a<I->NAtom;a++) {
     if(!ai->chemFlag) {
       expect = AtomInfoGetExpectedValence(ai);
-      if(expect<0) 
-        expect = -expect; /* for now, just ignore this issue */
       n = I->Neighbor[a];
       nn = I->Neighbor[n++];
+      if(ai->geom==3) {
+        ai->geom = cAtomInfoLinear;
+        switch(ai->protons) {
+        case cAN_C:
+          ai->valence=2;
+          break;
+        default:
+          ai->valence=1;
+        }
+        ai->chemFlag=true;
+      } else {
+      if(expect<0) 
+        expect = -expect; /* for now, just ignore this issue */
       /*      printf("%d %d %d %d\n",ai->geom,ai->valence,nn,expect);*/
       if(ai->valence==expect) { /* sum of bond orders equals valence */
         ai->chemFlag=true;
@@ -1593,6 +1630,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
         }
         if(nn>3)
           ai->geom = cAtomInfoTetrahedral;
+      }
       }
     }
     ai++;

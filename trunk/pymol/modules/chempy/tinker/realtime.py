@@ -31,7 +31,7 @@ def setup(sele,preserve=0):
 
    ruleSet = Rules()
 
-   ruleSet.fromList(rules.amber_types)
+#   ruleSet.fromList(rules.amber_types)
    ruleSet.fromList(rules.simple_types)
 
    mobj = MolObj()
@@ -158,6 +158,7 @@ def mini(total_step=100,gradient=0.001,interval=100,obj='rt'):
       iter = total_step/interval
       for x in range(0,iter):
          state.minimize(gradient=gradient,max_iter=interval,kw=xtra_kw)
+         cmd.delete(obj)
          cmd.load_model(model,obj,1)
          cmd.refresh()
          if not len(state.summary):
