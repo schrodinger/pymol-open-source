@@ -1176,6 +1176,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
         
       } else if(sele1>=0) { /* atom mode */
         a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
+	if(a0>=0) { /* WLD 030227 */
         comp[a0]=1;
         n=obj->Neighbor[a0];
         n++; /* skip count */
@@ -1202,7 +1203,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
           }
           n+=2;
         }
-      }
+      }}
       if(nFrag) {
         SelectorEmbedSelection(comp,compName,NULL);        
       }

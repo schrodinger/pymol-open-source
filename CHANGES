@@ -95,6 +95,11 @@ Current Bugs to Fix
 
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
+Changes up to 0.88
+
+   * fixed session restore bug with editing mode
+
+   * worked around Solaris compiler limitations.
 
 Changes up to 0.87
 
