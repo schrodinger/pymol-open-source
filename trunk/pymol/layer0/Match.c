@@ -149,7 +149,7 @@ int MatchMatrixFromFile(CMatch *I,char *fname)
   int n_entry;
   unsigned int size;
   
-  f=fopen(fname,"r");
+  f=fopen(fname,"rb");
   if(!f) {
     PRINTFB(FB_Match,FB_Errors) 
       " Match-Error: unable to open matrix file '%s'.\n",fname

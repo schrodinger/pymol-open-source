@@ -65,7 +65,7 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
   int *n;
   int c;
   FILE *f;
-  f=fopen(fname,"w");
+  f=fopen(fname,"wb");
   if(!f) 
     ErrMessage("ObjectMeshDump","can't open file for writing");
   else {

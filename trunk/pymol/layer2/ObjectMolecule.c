@@ -995,7 +995,7 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int fr
   long size;
   char *buffer,*p;
 
-  f=fopen(fname,"r");
+  f=fopen(fname,"rb");
   if(!f)
 	 ok=ErrMessage("ObjectMoleculeLoadXYZFile","Unable to open file!");
   else
@@ -3902,7 +3902,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
   long size;
   char *buffer,*p;
 
-  f=fopen(fname,"r");
+  f=fopen(fname,"rb");
   if(!f)
 	 ok=ErrMessage("ObjectMoleculeLoadMOLFile","Unable to open file!");
   else
@@ -4220,7 +4220,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
   long size;
   char *buffer,*p;
 
-  f=fopen(fname,"r");
+  f=fopen(fname,"rb");
   if(!f)
 	 ok=ErrMessage("ObjectMoleculeLoadPDBFile","Unable to open file!");
   else
@@ -6017,7 +6017,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
   char *buffer,*p;
   char cc[MAXLINELEN],oName[ObjNameMax];
   int nLines;
-  f=fopen(fname,"r");
+  f=fopen(fname,"rb");
   if(!f)
 	 ok=ErrMessage("ObjectMoleculeLoadMMDFile","Unable to open file!");
   else
