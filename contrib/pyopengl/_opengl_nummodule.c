@@ -12,6 +12,6 @@
 #include<Python.h>
 
 DL_EXPORT(void)
-init_opengl_num(void) {};
+init_opengl_num(void) {}
 
 #endif

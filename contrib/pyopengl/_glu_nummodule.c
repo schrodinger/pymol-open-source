@@ -9,6 +9,6 @@
 #endif
 #include<Python.h>
 DL_EXPORT(void)
-init_glu_num(void) {};
+init_glu_num(void) {}
 #endif
  
