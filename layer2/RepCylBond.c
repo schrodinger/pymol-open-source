@@ -1066,7 +1066,7 @@ Rep *RepCylBondNew(CoordSet *cs)
                     ColorGetRamped(c1,vv1,rgb2_buf);
                     rgb1 = rgb1_buf;
                   } else {
-                    rgb1 = ColorGet(c2);
+                    rgb1 = ColorGet(c1);
                   }
                 }
                 copy3f(rgb1,vsp);
@@ -1418,6 +1418,7 @@ Rep *RepCylBondNew(CoordSet *cs)
         ENDFD;
 	 }
   }
+  FreeP(other);
 
   return((void*)(struct Rep*)I);
 }
