@@ -105,7 +105,7 @@ if __name__=='pymol.cmd':
       r"\.cex$|\.CEX$|", # CEX format (used by metaphorics)
       r"\.phi$|\.PHI$|", # PHI format (delphi)
       r"\.fld$|\.FLD$|", # FLD format (AVS)
-      r"\.o$|\.O$|\.omap$|\.OMAP$|\.brix$|\.BRIX$", # BRIX/O format
+      r"\.o$|\.O$|\.omap$|\.OMAP$|\.dsn6$|\.DSN6$|\.brix$|\.BRIX$", # BRIX/O format
       r"|\.grd$|\.GRD$", # InsightII Grid format
       ],''))
 

@@ -2146,5 +2146,6 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_f(I,cSetting_cgo_dot_width, 2.0F);
   SettingSet_f(I,cSetting_cgo_dot_radius, -1.0F);
   SettingSet_b(I,cSetting_defer_updates,0);
+  SettingSet_b(I,cSetting_normalize_o_maps,1);
 
 }

@@ -424,7 +424,7 @@ SEE ALSO
                ftype = loadable.phi
             elif re.search("\.fld$",filename,re.I):
                ftype = loadable.fld
-            elif re.search("\.o$|\.brix$|\.omap$",filename,re.I):
+            elif re.search("\.o$|\.dsn6$|\.brix$|\.omap$",filename,re.I):
                ftype = loadable.brix
             elif re.search("\.grd$",filename,re.I):
                ftype = loadable.grd

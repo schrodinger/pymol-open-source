@@ -446,10 +446,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_cgo_dot_width              302
 #define cSetting_cgo_dot_radius             303
 #define cSetting_defer_updates              304
+#define cSetting_normalize_o_maps           305
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        305
+#define cSetting_INIT                        306
 
 #endif
 
