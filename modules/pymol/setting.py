@@ -415,7 +415,7 @@ if __name__=='pymol.setting':
       cartoon_putty_scale_power = (381, '', '')
       cartoon_putty_range = (382, '', '')
       cartoon_side_chain_helper = (383, '')            
-
+      surface_optimize_subsets = (384, '')
    
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

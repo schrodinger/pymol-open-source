@@ -1281,6 +1281,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int pres_flag;
   int surface_type;
   int surface_solvent;
+  int optimize;
   int MaxN;
   SphereRec *sp = G->Sphere->Sphere[0];
   SphereRec *ssp = G->Sphere->Sphere[0];
@@ -1308,6 +1309,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
   surface_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_type);
+  optimize = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_optimize_subsets);
   surface_solvent = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
   I->Type = surface_type;
 
@@ -1488,32 +1490,38 @@ Rep *RepSurfaceNew(CoordSet *cs)
       map=MapNewFlagged(G,2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
       MapSetupExpress(map);
       
-      for(a=0;a<cs->NIndex;a++)
-        if(!present[a])
-          {
-            ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-            if((!cullByFlag)||!(ai1->flags&cAtomFlag_ignore)) {
-              v0 = cs->Coord+3*a;
-              i=*(MapLocusEStart(map,v0));
-              if(i) {
-                j=map->EList[i++];
-                while(j>=0) {
-                  if(present[j]>1) {
-                    ai2 = obj->AtomInfo+cs->IdxToAtm[j];                  
-                    if(within3f(cs->Coord+3*j,v0,ai1->vdw+ai2->vdw+probe_radius))
-                      {
-                        present[a]=1;
-                        break;
+      {
+        float probe_radiusX2 = probe_radius*2;
+        for(a=0;a<cs->NIndex;a++)
+          if(!present[a])
+            {
+              ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+              if((!cullByFlag)||!(ai1->flags&cAtomFlag_ignore)) {
+                v0 = cs->Coord+3*a;
+                i=*(MapLocusEStart(map,v0));
+                if(optimize) {
+                  if(i) {
+                    j=map->EList[i++];
+                    while(j>=0) {
+                      if(present[j]>1) {
+                        ai2 = obj->AtomInfo+cs->IdxToAtm[j];                  
+                        if(within3f(cs->Coord+3*j,v0,ai1->vdw+ai2->vdw+probe_radiusX2))
+                          {
+                            present[a]=1;
+                            break;
+                          }
                       }
+                      
+                      j=map->EList[i++];
+                    }
                   }
-                  
-                  j=map->EList[i++];
-                }
+                } else 
+                  present[a]=1;
               }
             }
-          }
+      }
 
-      if(carve_flag) {
+      if(carve_flag&&(!optimize)) {
         for(a=0;a<cs->NIndex;a++) {
           int include_flag = false;
           if(carve_map) {
