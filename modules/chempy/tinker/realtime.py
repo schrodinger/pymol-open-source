@@ -32,7 +32,7 @@ def setup(sele,preserve=0):
    ruleSet = Rules()
 
    ruleSet.fromList(rules.amber_types)
-   ruleSet.fromList(rules.sweet_16)
+   ruleSet.fromList(rules.simple_types)
 
    mobj = MolObj()
    mobj.fromChemPyModel(model)
@@ -60,8 +60,8 @@ def setup(sele,preserve=0):
    print " lig: net charge on ligand  is %8.4f\n" % sm
 
 #   param = Parameters(tinker.params_path+"parm99_wld.dat")
-   param = Parameters(tinker.params_path+"sweet_16.dat")
-
+#   param = Parameters(tinker.params_path+"simple_parm.dat")
+   param = Parameters("simple_parm.dat")
    topo = Topology(model)
 
    subset = Subset(param,topo)
