@@ -42,6 +42,13 @@ class Base:
       return lst
 
 #------------------------------------------------------------------------------
+   def get_mass(self):
+      sm = 0.0
+      for a in self.atom:
+         sm = sm + a.get_mass()
+      return sm
+
+#------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 
 class Indexed(Base):
@@ -255,6 +262,8 @@ class Indexed(Base):
          print " "+str(self.__class__)+": removing bond %d." % index
       nBond=len(self.Bond)
       del self.bond[index]
+      
+   
 #------------------------------------------------------------------------------
    def convert_to_connected(self):
       if chempy.feedback['verbose']:
