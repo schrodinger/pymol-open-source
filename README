@@ -84,6 +84,7 @@ The PyMOL Team:
       Jeff Bizzaro
       Jeff Blaney 
       Axel Brunger
+      Robert Campbell
       Jacob Corn
       Andrew Dalke 
       Huub van Dam
@@ -97,6 +98,7 @@ The PyMOL Team:
       Peter Haebel 
       Uwe Hoffmann
       Carly Huitema
+      Robert Lawrence Kehrer 
       Andrey Khavryuchenko
       David Konerding
       Greg Landrum
@@ -111,15 +113,32 @@ The PyMOL Team:
       Marc Saric
       Paul Sherwood
       Paul Sprengeler
+      Matt Stephenson 
       John Stone
       Scott Walsh
       Dave Weininger
       Chris Wiesmann
       Richard Xie
    
-   OSX Testing
+   PyMOL Testers: Others users who answered my calls for testing
+      and feedback on diverse hardware.
 
-      
+      Ricardo Aparicio
+      Juergen Bosch 
+      Bronwyn Carlisle 
+      Julien Chiron 
+      Koen van der Drift 
+      Michael Goodman  
+      Reece Hart
+      Possu Huang 
+      Genevieve Matthews 
+      Gerry McDermott 
+      Florian Nachon 
+      Hanspeter Niederstrasser 
+      Daniel Ricklin 
+      Ian Robinson
+      Rod Tweten
+   
    Miscellaneous Code Snippets Lifted From:
 
       Thomas Malik (fast matrix-multiply code)
