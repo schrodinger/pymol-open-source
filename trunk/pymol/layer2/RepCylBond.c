@@ -1464,20 +1464,19 @@ float *RepCylinderBox(float *v,float *vv1,float *vv2,
   d[1] = (v2[1] - v1[1]);
   d[2] = (v2[2] - v1[2]);
   
-  t[0] = d[0];
-  t[1] = d[1];
-  t[2] = d[2];
+  /*  t[0] = d[1];
+  t[1] = d[2];
+  t[2] = -d[0];
+  */
+  get_divergent3f(d,t);
 
-  get_system1f3f(t,p1,p2);
-
-  /*
   cross_product3f(d,t,p1);
   
   normalize3f(p1);
   
   cross_product3f(d,p1,p2);
   
-  normalize3f(p2);*/
+  normalize3f(p2);
   
   /* now we have a coordinate system*/
 
@@ -1561,6 +1560,8 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
   p0[1] = (v2[1] - v1[1]);
   p0[2] = (v2[2] - v1[2]);
   
+  normalize3f(p0);
+  
   v1[0]-=p0[0]*overlap;
   v1[1]-=p0[1]*overlap;
   v1[2]-=p0[2]*overlap;
@@ -1575,22 +1576,19 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
   d[1] = (v2[1] - v1[1]);
   d[2] = (v2[2] - v1[2]);
   
+  /*  t[0] = d[1];
+  t[1] = d[2];
+  t[2] = -d[0];*/
   
-  t[0] = d[0];
-  t[1] = d[1];
-  t[2] = d[2];
+  get_divergent3f(d,t);
 
-  get_system1f3f(t,p1,p2);
-
-  /* 
   cross_product3f(d,t,p1);
   
   normalize3f(p1);
   
   cross_product3f(d,p1,p2);
   
-  normalize3f(p2);*/
-
+  normalize3f(p2);
   
   /* now we have a coordinate system*/
   
