@@ -1248,8 +1248,8 @@ int RayTraceThread(CRayThreadInfo *T)
    int perspective = T->perspective;
    float eye[3];
    float half_height, front_ratio;
-   float start[3];
-
+   float start[3],nudge[3];
+   
 	I = T->ray;
 
    {
@@ -1556,7 +1556,6 @@ int RayTraceThread(CRayThreadInfo *T)
                   start[2] = r1.base[2];
                 }
                 normalize3f(r1.dir);
-
                 {
                   register float scale = I->max_box[2]/r1.base[2];
                   
@@ -1578,9 +1577,11 @@ int RayTraceThread(CRayThreadInfo *T)
 
                   if(perspective) {
                     SceneCall.pass = pass;
+                    if(pass) {
+                      add3f(nudge,r1.base,r1.base);
+                      copy3f(r1.base,r1.skip);
+                    }
                     SceneCall.back_dist = -(T->back+r1.base[2])/r1.dir[2];
-                    if(pass)
-                      copy3f(r1.impact, r1.base);
                     i = BasisHitPerspective( &SceneCall );
                   } else {
                     i = BasisHitNoShadow( &SceneCall );
@@ -1648,7 +1649,7 @@ int RayTraceThread(CRayThreadInfo *T)
                             RayReflectAndTexture(I,&r1,perspective);
                             BasisGetTriangleFlatDotgle(bp1,&r1,i);
                             
-                          } else {
+                          } else { /* must be a sphere */
                             
                             if(perspective) {
                               RayGetSphereNormalPerspective(I,&r1);
@@ -1715,7 +1716,7 @@ int RayTraceThread(CRayThreadInfo *T)
                                 dotgle	= _0;
                             }
                         }
-                      
+                    
                       direct_cmp = (float) ( (dotgle + (pow(dotgle, settingPower))) * _p5 );
                       
                       lit = _1;
@@ -1960,7 +1961,8 @@ int RayTraceThread(CRayThreadInfo *T)
                         persist	= persist * r1.trans;
                       else 
                         {
-                          if((persist < 0.9999) && (r1.trans))	/* don't combine transparent surfaces */ {
+                          if((persist < 0.9999) && (r1.trans))	{
+                            /* don't combine transparent surfaces */ 
                             *pixel	= last_pixel;
                           } else {
                             persist	= persist * r1.trans;
@@ -1975,7 +1977,9 @@ int RayTraceThread(CRayThreadInfo *T)
                     }
                   else 
                     {
-
+                      if(perspective) {
+                        scale3f(r1.dir, r1.dist + RAY_SMALL, nudge);
+                      }
                       last_pixel	= *pixel;
                       exclude		= i;
                       pass++;
@@ -2046,7 +2050,6 @@ int RayTraceThread(CRayThreadInfo *T)
               
             } /* end of edging while */
             pixel++;
-            
          }	/* end of for */
          
 		}	/* end of if */
