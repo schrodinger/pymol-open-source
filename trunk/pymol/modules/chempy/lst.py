@@ -7,7 +7,7 @@
 #G* Please see the accompanying LICENSE file for further information. 
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* Scott Dixon, Metaphorics, LLC
+#-* 
 #-* 
 #-*
 #Z* -------------------------------------------------------------------
