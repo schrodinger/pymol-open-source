@@ -5364,7 +5364,8 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
 #endif
 }
 /*========================================================================*/
-void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1)
+void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
+                       int matchmaker,int quiet)
 {
   register CSelector *I=G->Selector;
   int a,b;
@@ -5403,24 +5404,37 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1)
       at1=I->Table[i1].atom;
       obj1=I->Obj[I->Table[i1].model];
       
-      b_start = b;
-      matched_flag=false;
-      while(1) {
-        i0 = vla0[b];
-        at0=I->Table[i0].atom;
-        obj0=I->Obj[I->Table[i0].model];
-        if(obj0!=obj1)
-          if(AtomInfoMatch(G,obj1->AtomInfo + at1,
-                           obj0->AtomInfo + at0)) {
-            matched_flag=true;
+      switch(matchmaker) {
+      case 0: /* match atom info */
+        b_start = b;
+        matched_flag=false;
+        while(1) {
+          i0 = vla0[b];
+          at0=I->Table[i0].atom;
+          obj0=I->Obj[I->Table[i0].model];
+          if(obj0!=obj1)
+            if(AtomInfoMatch(G,obj1->AtomInfo + at1,
+                             obj0->AtomInfo + at0)) {
+              matched_flag=true;
+              break;
+            }
+          b++;
+          if(b>=c0)
+            b = 0;
+          if(b==b_start) 
             break;
-          }
-        b++;
-        if(b>=c0)
-          b = 0;
-        if(b==b_start) 
-          break;
+        }
+      case 1: /* assume that atoms are stored in PyMOL in the identical order */
+        if(b<c0) {
+          i0 = vla0[b];
+          at0=I->Table[i0].atom;
+          obj0=I->Obj[I->Table[i0].model];
+          b++;
+          matched_flag=true;
+        }
+        break;
       }
+      
       if(matched_flag) { /* atom matched, so copy coordinates */
         ccc++;
         for(cc1=0;cc1<obj1->NCSet;cc1++) { /* iterate over all source states */
@@ -5453,9 +5467,12 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1)
         ObjectMoleculeInvalidate(obj0,cRepAll,cRepInvCoord);
       }
     }
-    PRINTFB(G,FB_Selector,FB_Actions)
-      " Update: coordinates updated for %d atoms.\n",ccc 
-      ENDFB(G);
+    if(!quiet) {
+      PRINTFB(G,FB_Selector,FB_Actions)
+        " Update: coordinates updated for %d atoms.\n",ccc 
+        ENDFB(G);
+
+    }
   }
   VLAFreeP(vla0);
   VLAFreeP(vla1);

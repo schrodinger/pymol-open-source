@@ -2928,12 +2928,16 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
   float tmp_result = -1.0;
   int state1,state2;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssiiii",&str1,&str2,&mode,&state1,&state2,&quiet);
+  int matchmaker;
+  ok = PyArg_ParseTuple(args,"ssiiiii",&str1,&str2,&mode,
+                        &state1,&state2,&quiet,&matchmaker);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    tmp_result=ExecutiveRMS(TempPyMOLGlobals,s1,s2,mode,0.0,0,quiet,NULL,state1,state2,false);
+    tmp_result=ExecutiveRMS(TempPyMOLGlobals,s1,s2,mode,
+                            0.0,0,quiet,NULL,state1,state2,false,
+                            matchmaker);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
@@ -2948,12 +2952,13 @@ static PyObject *CmdUpdate(PyObject *dummy, PyObject *args)
   int int1,int2;
   OrthoLineType s1,s2;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&int1,&int2);
+  int matchmaker,quiet;
+  ok = PyArg_ParseTuple(args,"ssiiii",&str1,&str2,&int1,&int2,&matchmaker,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    ExecutiveUpdateCmd(TempPyMOLGlobals,s1,s2,int1,int2); /* TODO STATUS */
+    ExecutiveUpdateCmd(TempPyMOLGlobals,s1,s2,int1,int2,matchmaker,quiet); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();

@@ -946,7 +946,7 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                           pairwise.trg_obj->Obj.Name,
                           pairwise.mbl_obj->Obj.Name);
 
-                  ExecutiveRMS(G,mbl_sele, trg_sele, 2, 0.0F, 0, 0, align_name, 0, 0, true);
+                  ExecutiveRMS(G,mbl_sele, trg_sele, 2, 0.0F, 0, 0, align_name, 0, 0, true, 0);
                   ExecutiveColor(G,align_name,"white",0,true);
                   if(target_rec->m4x.invisible) 
                     sprintf(tmp_sele, "(%s) | (%s)",aligned_name,mbl_sele);
@@ -3046,7 +3046,7 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
                 ENDFB(G);
             }
             result =ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,quiet,oname,
-                                 state1,state2,false);
+                                 state1,state2,false,0);
             
           }
         }
@@ -3663,7 +3663,8 @@ int ExecutiveGetType(PyMOLGlobals *G,char *name,WordType type)
 }
 
 /*========================================================================*/
-void ExecutiveUpdateCmd(PyMOLGlobals *G,char *s0,char *s1,int sta0,int sta1)
+void ExecutiveUpdateCmd(PyMOLGlobals *G,char *s0,char *s1,int sta0,int sta1,
+                        int method, int quiet)
 {
   int sele0,sele1;
 
@@ -3672,7 +3673,7 @@ void ExecutiveUpdateCmd(PyMOLGlobals *G,char *s0,char *s1,int sta0,int sta1)
   if(!(sele0&&sele1)) {
     ErrMessage(G,"Update","One or more invalid input selections.");
   } else {
-    SelectorUpdateCmd(G,sele0,sele1,sta0,sta1);
+    SelectorUpdateCmd(G,sele0,sele1,sta0,sta1,method,quiet);
   }
 }
 /*========================================================================*/
@@ -4774,17 +4775,22 @@ void ExecutiveIterateState(PyMOLGlobals *G,int state,char *s1,char *expr,int rea
 typedef struct {
   int priority;
   float vertex[3];
+  AtomInfoType *ai;
 } FitVertexRec;
 
 static int fVertexOrdered(FitVertexRec *array,int l, int r)
 {
-  return(array[l].priority<=array[r].priority);
+  return( array[l].priority <= array[r].priority );
 }
 
+static int fAtomIDOrdered(AtomInfoType **array,int l,int r)
+{
+  return( array[l]->id <= array[r]->id );
+}
 /*========================================================================*/
 float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max_cyc,
                    int quiet,char *oname,int state1,int state2,
-                   int ordered_selections)
+                   int ordered_selections, int matchmaker)
 {
   int sele1,sele2;
   float rms = -1.0;
@@ -4797,7 +4803,6 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
   int ok=true;
   int repeat;
   float v1[3],*v2;
-            
   sele1=SelectorIndexByName(G,s1);
 
   ObjectMoleculeOpRecInit(&op1);
@@ -4818,6 +4823,8 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
     op1.nvv1=0;
     op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
+    if(matchmaker) 
+      op1.ai1VLA=(AtomInfoType**)VLAMalloc(1000,sizeof(AtomInfoType*),5,1);
     if(ordered_selections)
       op1.vp1=VLAlloc(int,1000);
     ExecutiveObjMolSeleOp(G,sele1,&op1);
@@ -4847,6 +4854,8 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
     op2.nvv1=0;
     op2.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
+    if(matchmaker) 
+      op2.ai1VLA=(AtomInfoType**)VLAMalloc(1000,sizeof(AtomInfoType*),5,1);
     if(ordered_selections)
       op2.vp1=VLAlloc(int,1000);
     ExecutiveObjMolSeleOp(G,sele2,&op2);
@@ -4870,6 +4879,9 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
               op1.nvv1,op2.nvv1);
       ErrMessage(G,"ExecutiveRMS",buffer);
     } else if(op1.nvv1) {
+
+      int n_pair = op1.nvv1;
+      
       if(!SelectorGetSingleObjectMolecule(G,sele1)) {
         if(mode!=2) {
           PRINTFB(G,FB_Executive,FB_Warnings)
@@ -4882,7 +4894,104 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
           ok=false;
         }
       }
+      
+      if(ok && op1.nvv1 && op1.nvv2 && 
+         (matchmaker>1)) { /* matchmaker 0 & 1 are the defaults */
+        int *idx1 = Alloc(int,n_pair);
+        int *idx2 = Alloc(int,n_pair);
+        int sort_flag = false;
+        if(!(idx1&&idx2)) ok=false; else {
+          switch(matchmaker) {
+          case 2: /* by matching atom identifiers */
+            {
+              UtilSortIndex(n_pair,op1.ai1VLA,idx1,(UtilOrderFn*)fAtomIDOrdered);
+              UtilSortIndex(n_pair,op2.ai1VLA,idx2,(UtilOrderFn*)fAtomIDOrdered);
+              sort_flag = true;
+            }
+            break;
+          }
+          if(sort_flag) {  
+            /* GOD this is SO ugly! */
+            
+            if(op1.vv1) {
+              float *tmp = VLAlloc(float,n_pair*3);
+              if(!tmp) ok=false; else {
+                UtilApplySortedIndices(n_pair,idx1,3*sizeof(float),op1.vv1,tmp);
+                VLAFreeP(op1.vv1);
+                op1.vv1 = tmp;
+              }
+            }
+            if(op1.vc1) {
+              int *tmp = VLAlloc(int, n_pair);
+              if(!tmp) ok=false; else {
+                UtilApplySortedIndices(n_pair,idx1,sizeof(int),op1.vc1,tmp);
+                VLAFreeP(op1.vc1);
+                op1.vc1 = tmp;
+              }
+            }
+            if(op1.vp1) {
+              int *tmp = VLAlloc(int, n_pair);
+              if(!tmp) ok=false; else {
+                UtilApplySortedIndices(n_pair,idx1,sizeof(int),op1.vp1,tmp);
+                VLAFreeP(op1.vp1);
+                op1.vp1 = tmp;
+              }
+            }
+            if(op1.ai1VLA) {
+              AtomInfoType **tmp = VLAlloc(AtomInfoType*, n_pair);
+              if(!tmp) ok=false; else {
+                UtilApplySortedIndices(n_pair,idx1,sizeof(AtomInfoType*),op1.ai1VLA,tmp);
+                VLAFreeP(op1.ai1VLA);
+                op1.ai1VLA = tmp;
+              }
+            }
 
+            if(op2.vv1) {
+              float *tmp = VLAlloc(float,n_pair*3);
+              if(!tmp) ok=false; else {
+                UtilApplySortedIndices(n_pair,idx2,3*sizeof(float),op2.vv1,tmp);
+                VLAFreeP(op2.vv1);
+                op2.vv1 = tmp;
+              }
+            }
+            if(op2.vc1) {
+              int *tmp = VLAlloc(int, n_pair);
+              if(!tmp) ok=false; else {
+                UtilApplySortedIndices(n_pair,idx2,sizeof(int),op2.vc1,tmp);
+                VLAFreeP(op2.vc1);
+                op2.vc1 = tmp;
+              }
+            }
+            if(op2.vp1) {
+              int *tmp = VLAlloc(int, n_pair);
+              if(!tmp) ok=false; else {
+                UtilApplySortedIndices(n_pair,idx2,sizeof(int),op2.vp1,tmp);
+                VLAFreeP(op2.vp1);
+                op2.vp1 = tmp;
+              }
+            }
+            if(op2.ai1VLA) {
+              AtomInfoType **tmp = VLAlloc(AtomInfoType*, n_pair);
+              if(!tmp) ok=false; else {
+                UtilApplySortedIndices(n_pair,idx2,sizeof(AtomInfoType*),op2.ai1VLA,tmp);
+                VLAFreeP(op2.ai1VLA);
+                op2.ai1VLA = tmp;
+              }
+            }
+
+          }
+        }
+        FreeP(idx1);
+        FreeP(idx2);
+      }
+      if(matchmaker!=0) {
+        switch(matchmaker) {
+        case 1: /* insure that AtomInfoType matches */
+          break;
+        case 2: /* insure that ID matches */
+          break;
+        }
+      }
       if(ordered_selections&&op1.vp1&&op2.vp1) {
         /* if we expected ordered selections and have priorities, 
            then we may need to sort vertices */
@@ -5062,6 +5171,8 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
   VLAFreeP(op2.vc1);
   VLAFreeP(op1.vp1);
   VLAFreeP(op2.vp1);
+  VLAFreeP(op1.ai);
+  VLAFreeP(op2.ai);
   return(rms);
 }
 /*========================================================================*/

@@ -176,7 +176,6 @@ int AtomInfoGetExpectedValence(PyMOLGlobals *G,AtomInfoType *I);
 PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *at);
 int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *at,PyObject *list);
 int AtomInfoMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoAltMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2);

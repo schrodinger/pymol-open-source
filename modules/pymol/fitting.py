@@ -208,7 +208,7 @@ SEE ALSO
             st = st + 1
       return r
 
-   def fit(selection,target,source_state=0,target_state=0,quiet=1):
+   def fit(selection,target,source_state=0,target_state=0,quiet=1,matchmaker=0):
       '''
 DESCRIPTION
 
@@ -234,17 +234,22 @@ SEE ALSO
       a = selector.process(a)
       b = selector.process(b)
       #
+      if matchmaker==0:
+         sele1 = "((%s) in (%s))" % (str(a),str(b))
+         sele2 = "((%s) in (%s))" % (str(b),str(a))
+      else:
+         sele1 = str(a)
+         sele2 = str(b)
       try:
-         lock()   
-         r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                     "((%s) in (%s))" % (str(b),str(a)),2,
+         lock()
+         r = _cmd.fit(sele1,sele2,2,
                       int(source_state)-1,int(target_state)-1,
-                      int(quiet))
+                      int(quiet),int(matchmaker))
       finally:
          unlock()
       return r
 
-   def rms(selection,target,source_state=0,target_state=0,quiet=1):
+   def rms(selection,target,source_state=0,target_state=0,quiet=1,matchmaker=0):
       '''
 DESCRIPTION
 
@@ -269,17 +274,22 @@ SEE ALSO
       a = selector.process(a)
       b = selector.process(b)
       #
+      if matchmaker==0:
+         sele1 = "((%s) in (%s))" % (str(a),str(b))
+         sele2 = "((%s) in (%s))" % (str(b),str(a))
+      else:
+         sele1 = str(a)
+         sele2 = str(b)
       try:
          lock()   
-         r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                     "((%s) in (%s))" % (str(b),str(a)),1,
+         r = _cmd.fit(sele1,sele2,1,
                       int(source_state)-1,int(target_state)-1,
-                      int(quiet))
+                      int(quiet),int(matchmaker))
       finally:
          unlock()
       return r
 
-   def rms_cur(selection,target,source_state=0,target_state=0,quiet=1):
+   def rms_cur(selection,target,source_state=0,target_state=0,quiet=1,matchmaker=0):
       '''
 DESCRIPTION
 
@@ -300,12 +310,17 @@ SEE ALSO
       a = selector.process(a)
       b = selector.process(b)
       #   
+      if matchmaker==0:
+         sele1 = "((%s) in (%s))" % (str(a),str(b))
+         sele2 = "((%s) in (%s))" % (str(b),str(a))
+      else:
+         sele1 = str(a)
+         sele2 = str(b)
       try:
-         lock()   
-         r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                     "((%s) in (%s))" % (str(b),str(a)),0,
+         lock()
+         r = _cmd.fit(sele1,sele2,0,
                       int(source_state)-1,int(target_state)-1,
-                      int(quiet))
+                      int(quiet),int(matchmaker))
       finally:
          unlock()
       return r
