@@ -38,7 +38,7 @@ typedef struct {
 } ObjectMeshState;
 
 typedef struct ObjectMesh {
-  Object Obj;
+  CObject Obj;
   ObjectMeshState *State;
   int NState;
 } ObjectMesh;

@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 
 typedef struct ObjectDist {
-  Object Obj;
+  CObject Obj;
   struct DistSet **DSet;
   int NDSet;
   AtomInfoType *AtomInfo;

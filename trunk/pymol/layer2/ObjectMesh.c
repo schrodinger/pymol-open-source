@@ -320,18 +320,18 @@ ObjectMesh *ObjectMeshNew(void)
 {
   OOAlloc(ObjectMesh);
   
-  ObjectInit((Object*)I);
+  ObjectInit((CObject*)I);
   
   I->NState = 0;
   I->State=VLAMalloc(10,sizeof(ObjectMeshState),5,true); /* autozero important */
 
   I->Obj.type = cObjectMesh;
   
-  I->Obj.fFree = (void (*)(struct Object *))ObjectMeshFree;
-  I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMeshUpdate;
-  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **,int ))ObjectMeshRender;
-  I->Obj.fInvalidate =(void (*)(struct Object *,int,int,int))ObjectMeshInvalidate;
-  I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMeshGetNStates;
+  I->Obj.fFree = (void (*)(struct CObject *))ObjectMeshFree;
+  I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMeshUpdate;
+  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int ))ObjectMeshRender;
+  I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectMeshInvalidate;
+  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMeshGetNStates;
   return(I);
 }
 

@@ -54,7 +54,7 @@ Z* -------------------------------------------------------------------
 #define SceneLeftMargin 3
 
 typedef struct ObjRec {
-  struct Object *obj;  
+  struct CObject *obj;  
   struct ObjRec *next;
 } ObjRec;
 
@@ -600,7 +600,7 @@ void SceneOriginSet(float *origin,int preserve)
   SceneDirty();
 }
 /*========================================================================*/
-void SceneObjectAdd(Object *obj)
+void SceneObjectAdd(CObject *obj)
 {
   CScene *I=&Scene;
   ObjRec *rec = NULL;
@@ -612,7 +612,7 @@ void SceneObjectAdd(Object *obj)
   SceneChanged();
 }
 /*========================================================================*/
-void SceneObjectDel(Object *obj)
+void SceneObjectDel(CObject *obj)
 {
   CScene *I=&Scene;
   ObjRec *rec = NULL;
@@ -811,7 +811,7 @@ int SceneRelease(Block *block,int button,int x,int y,int mod)
 int SceneClick(Block *block,int button,int x,int y,int mod)
 {
   CScene *I=&Scene;
-  Object *obj;
+  CObject *obj;
   ObjectMolecule *objMol;
   OrthoLineType buffer,buf1,buf2;
   WordType selName = "";
@@ -850,7 +850,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     I->LastPicked.ptr = NULL;
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
-		obj=(Object*)I->LastPicked.ptr;
+		obj=(CObject*)I->LastPicked.ptr;
       if(obj->type==cObjectMolecule) {
         if(Feedback(FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement)
@@ -891,7 +891,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     I->LastPicked.ptr = NULL;
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
-		obj=(Object*)I->LastPicked.ptr;
+		obj=(CObject*)I->LastPicked.ptr;
       if(obj->type==cObjectMolecule) {
         if(Feedback(FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement)
@@ -944,7 +944,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     SceneDontCopyNext();
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
-      obj=(Object*)I->LastPicked.ptr;
+      obj=(CObject*)I->LastPicked.ptr;
       if(Feedback(FB_ObjectMolecule,FB_Results)) {
         if(obj->fDescribeElement) 
           obj->fDescribeElement(obj,I->LastPicked.index,buffer);
@@ -979,7 +979,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
-		obj=(Object*)I->LastPicked.ptr;
+		obj=(CObject*)I->LastPicked.ptr;
       if(Feedback(FB_ObjectMolecule,FB_Results)) {
         if(obj->fDescribeElement) 
           obj->fDescribeElement(obj,I->LastPicked.index,buffer);
@@ -1117,7 +1117,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
   float axis[3],axis2[3],theta,omega;
   int mode;
-  Object *obj;
+  CObject *obj;
 
   mode = ButModeTranslate(I->Button,mod);
   
@@ -1132,7 +1132,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   case cButModeMovFrag:
   case cButModeTorFrag:
   case cButModeRotFrag:
-    obj=(Object*)I->LastPicked.ptr;
+    obj=(CObject*)I->LastPicked.ptr;
     if(obj)
       if(obj->type==cObjectMolecule) {
         if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,I->StateIndex,

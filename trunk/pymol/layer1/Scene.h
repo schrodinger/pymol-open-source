@@ -71,8 +71,8 @@ void SceneClip(int plane,float movement);
 void SceneScale(float scale);
 void SceneResetNormal(int lines);
 
-void SceneObjectAdd(Object *obj);
-void SceneObjectDel(Object *obj);
+void SceneObjectAdd(CObject *obj);
+void SceneObjectDel(CObject *obj);
 void SceneOriginSet(float *origin,int preserve);
 void SceneOriginGet(float *origin);
 void SceneWindowSphere(float *location,float radius);

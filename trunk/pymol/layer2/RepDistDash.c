@@ -31,7 +31,7 @@ typedef struct RepDistDash {
   Rep R;
   float *V;
   int N;
-  Object *Obj;
+  CObject *Obj;
   float linewidth,radius;
 } RepDistDash;
 
@@ -123,7 +123,7 @@ Rep *RepDistDashNew(DistSet *ds)
   I->N=0;
   I->V=NULL;
   I->R.P=NULL;
-  I->Obj = (Object*)ds->Obj;
+  I->Obj = (CObject*)ds->Obj;
   
   n=0;
   if(ds->NIndex) {

@@ -169,21 +169,21 @@ ObjectMap *ObjectMapNew(void)
 {
 OOAlloc(ObjectMap);
 
- ObjectInit((Object*)I);
+ ObjectInit((CObject*)I);
 
  I->Obj.RepVis[cRepExtent]=true; 
  I->Crystal = CrystalNew();
  I->Field = NULL;
  I->Obj.type = cObjectMap;
- I->Obj.fFree = (void (*)(struct Object *))ObjectMapFree;
- I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMapUpdate;
- I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **,int))ObjectMapRender;
+ I->Obj.fFree = (void (*)(struct CObject *))ObjectMapFree;
+ I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMapUpdate;
+ I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectMapRender;
  I->Origin = NULL;
  I->Dim = NULL;
  I->Range = NULL;
  I->Grid = NULL;
 #ifdef _NOT_YET_NEEDED
-  I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMapGetNFrames;
+  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMapGetNFrames;
 #endif
 
   return(I);

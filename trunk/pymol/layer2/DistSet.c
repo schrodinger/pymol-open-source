@@ -107,7 +107,7 @@ void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass)
         if(I->Obj->Obj.RepVis[a])
           {
             if(!ray) {
-              ObjectUseColor((Object*)I->Obj);
+              ObjectUseColor((CObject*)I->Obj);
             } else {
               ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
             }			 

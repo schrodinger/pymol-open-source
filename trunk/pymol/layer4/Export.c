@@ -151,7 +151,7 @@ void ExportCoordsFree(ExportCoords *io)
 
 ExportDotsObj *ExportDots(char *name,int csIndex)
 {
-  Object *obj;
+  CObject *obj;
   ObjectMolecule *objMol;
   RepDot *rep;
   CoordSet *cs=NULL;

@@ -25,13 +25,13 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Ray.h"
 
-int ObjectGetNFrames(Object *I);
+int ObjectGetNFrames(CObject *I);
 
-void ObjectDescribeElement(struct Object *I,int index,char *buffer);
-CSetting **ObjectGetSettingHandle(struct Object *I,int state);
+void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
+CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
 
 /*========================================================================*/
-void ObjectCombineTTT(Object *I,float *ttt)
+void ObjectCombineTTT(CObject *I,float *ttt)
 {
   float cpy[16];
   if(!I->TTTFlag) {
@@ -43,13 +43,13 @@ void ObjectCombineTTT(Object *I,float *ttt)
   combineTTT44f44f(ttt,cpy,I->TTT);
 }
 /*========================================================================*/
-void ObjectResetTTT(Object *I)
+void ObjectResetTTT(CObject *I)
 {
   I->TTTFlag=false;
   SceneDirty();
 }
 /*========================================================================*/
-void ObjectPrepareContext(Object *I,CRay *ray)
+void ObjectPrepareContext(CObject *I,CRay *ray)
 {
   float gl[16],*ttt;
   if(PMGUI) {
@@ -86,7 +86,7 @@ void ObjectPrepareContext(Object *I,CRay *ray)
 }
 
 /*========================================================================*/
-void ObjectSetTTTOrigin(Object *I,float *origin)
+void ObjectSetTTTOrigin(CObject *I,float *origin)
 {
   if(!I->TTTFlag) {
     I->TTTFlag=true;
@@ -107,64 +107,64 @@ void ObjectSetTTTOrigin(Object *I,float *origin)
 
 }
 /*========================================================================*/
-CSetting **ObjectGetSettingHandle(struct Object *I,int state)
+CSetting **ObjectGetSettingHandle(struct CObject *I,int state)
 {
   return(&I->Setting);
 }
 /*========================================================================*/
-void ObjectDescribeElement(struct Object *I,int index,char *buffer)
+void ObjectDescribeElement(struct CObject *I,int index,char *buffer)
 {
   buffer[0]=0;
 }
 /*========================================================================*/
-void ObjectSetRepVis(Object *I,int rep,int state)
+void ObjectSetRepVis(CObject *I,int rep,int state)
 {
   if((rep>=0)&&(rep<cRepCnt))
     I->RepVis[rep]=state;
 }
 /*========================================================================*/
-void ObjectSetName(Object *I,char *name)
+void ObjectSetName(CObject *I,char *name)
 {
   strcpy(I->Name,name);
 }
 /*========================================================================*/
-void ObjectRenderUnitBox(struct Object *this,int frame,CRay *ray,Pickable **pick,int pass);
-void ObjectUpdate(struct Object *I);
+void ObjectRenderUnitBox(struct CObject *this,int frame,CRay *ray,Pickable **pick,int pass);
+void ObjectUpdate(struct CObject *I);
 
 /*========================================================================*/
-void ObjectUpdate(struct Object *I)
+void ObjectUpdate(struct CObject *I)
 {
   
 }
 /*========================================================================*/
-void ObjectPurge(Object *I)
+void ObjectPurge(CObject *I)
 {
   if(I) 
     SettingFreeP(I->Setting);
 }
 /*========================================================================*/
-void ObjectFree(Object *I)
+void ObjectFree(CObject *I)
 {
   if(I)
     ObjectPurge(I);
 }
 /*========================================================================*/
-int ObjectGetNFrames(Object *I)
+int ObjectGetNFrames(CObject *I)
 {
   return 1;
 }
 /*========================================================================*/
-void ObjectUseColor(Object *I)
+void ObjectUseColor(CObject *I)
 {
   if(PMGUI) glColor3fv(ColorGet(I->Color));
 }
 /*========================================================================*/
-static void ObjectInvalidate(Object *this,int rep,int level,int state)
+static void ObjectInvalidate(CObject *this,int rep,int level,int state)
 {
   
 }
 /*========================================================================*/
-void ObjectInit(Object *I)
+void ObjectInit(CObject *I)
 {
   int a;
   I->fFree = ObjectFree;
@@ -185,7 +185,7 @@ void ObjectInit(Object *I)
   I->RepVis[cRepExtent]=false;
 }
 /*========================================================================*/
-void ObjectRenderUnitBox(Object *this,int frame,
+void ObjectRenderUnitBox(CObject *this,int frame,
                          CRay *ray,Pickable **pick,int pass)
 {
   if(PMGUI) {

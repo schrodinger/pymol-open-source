@@ -325,7 +325,7 @@ Rep *RepSphereNew(CoordSet *cs)
   I->R.fRecolor=NULL;
   I->LastVisib=NULL;
   I->LastColor=NULL;
-  I->R.obj=(Object*)obj;
+  I->R.obj=(CObject*)obj;
   I->R.cs = cs;
   /* raytracing primitives */
   

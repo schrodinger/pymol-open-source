@@ -1317,7 +1317,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   OrthoLineType s1;
   int oper,frame;
   float carve;
-  Object *obj,*mObj,*origObj;
+  CObject *obj,*mObj,*origObj;
   ObjectMap *mapObj;
   float mn[3] = { 0,0,0};
   float mx[3] = { 15,15,15};
@@ -1371,11 +1371,11 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
       PRINTFB(FB_CCmd,FB_Blather)
         " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
         ENDFB;
-      obj=(Object*)ObjectMeshFromBox((ObjectMesh*)origObj,mapObj,state,mn,mx,lvl,dotFlag,
+      obj=(CObject*)ObjectMeshFromBox((ObjectMesh*)origObj,mapObj,state,mn,mx,lvl,dotFlag,
                                      carve,vert_vla);
       if(!origObj) {
         ObjectSetName(obj,str1);
-        ExecutiveManageObject((Object*)obj);
+        ExecutiveManageObject((CObject*)obj);
       }
       if(SettingGet(cSetting_isomesh_auto_state))
         if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
@@ -1397,7 +1397,7 @@ static PyObject *CmdSymExp(PyObject *self, 	PyObject *args) {
   char *str1,*str2,*str3;
   OrthoLineType s1;
   float cutoff;
-  Object *mObj;
+  CObject *mObj;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
   int ok=false;
@@ -2835,7 +2835,7 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
 {
   char *oname;
-  Object *origObj = NULL;
+  CObject *origObj = NULL;
 
   int ok=false;
   ok = PyArg_ParseTuple(args,"s",&oname);
@@ -2856,7 +2856,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 {
   char *oname;
   PyObject *model;
-  Object *origObj = NULL,*obj;
+  CObject *origObj = NULL,*obj;
   OrthoLineType buf;
   int frame,type;
   int finish,discrete;
@@ -2877,7 +2877,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
           origObj=NULL;
         }
       PBlock(); /*PBlockAndUnlockAPI();*/
-      obj=(Object*)ObjectMoleculeLoadChemPyModel((ObjectMolecule*)
+      obj=(CObject*)ObjectMoleculeLoadChemPyModel((ObjectMolecule*)
                                                  origObj,model,frame,discrete);
       PUnblock(); /*PLockAPIAndUnblock();*/
       if(!origObj) {
@@ -2905,7 +2905,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
           origObj=NULL;
         }
       PBlock(); /*PBlockAndUnlockAPI();*/
-      obj=(Object*)ObjectMapLoadChemPyBrick((ObjectMap*)origObj,model,frame,discrete);
+      obj=(CObject*)ObjectMapLoadChemPyBrick((ObjectMap*)origObj,model,frame,discrete);
       PUnblock(); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
@@ -2926,7 +2926,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
           origObj=NULL;
         }
       PBlock(); /*PBlockAndUnlockAPI();*/
-      obj=(Object*)ObjectMapLoadChemPyMap((ObjectMap*)origObj,model,frame,discrete);
+      obj=(CObject*)ObjectMapLoadChemPyMap((ObjectMap*)origObj,model,frame,discrete);
       PUnblock(); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
@@ -2947,7 +2947,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
           origObj=NULL;
         }
       PBlock(); /*PBlockAndUnlockAPI();*/
-      obj=(Object*)ObjectCallbackDefine((ObjectCallback*)origObj,model,frame);
+      obj=(CObject*)ObjectCallbackDefine((ObjectCallback*)origObj,model,frame);
       PUnblock(); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
@@ -2968,7 +2968,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
           origObj=NULL;
         }
       PBlock(); /*PBlockAndUnlockAPI();*/
-      obj=(Object*)ObjectCGODefine((ObjectCGO*)origObj,model,frame);
+      obj=(CObject*)ObjectCGODefine((ObjectCGO*)origObj,model,frame);
       PUnblock(); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
@@ -2999,7 +2999,7 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
 {
   char *oname;
   PyObject *model;
-  Object *origObj = NULL,*obj;
+  CObject *origObj = NULL,*obj;
   OrthoLineType buf;
   int frame,type;
   int ok=false;
@@ -3021,7 +3021,7 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
         switch(type) {
         case cLoadTypeChemPyModel:
           PBlock(); /*PBlockAndUnlockAPI();*/
-          obj=(Object*)ObjectMoleculeLoadCoords((ObjectMolecule*)origObj,model,frame);
+          obj=(CObject*)ObjectMoleculeLoadCoords((ObjectMolecule*)origObj,model,frame);
           PUnblock(); /*PLockAPIAndUnblock();*/
           if(frame<0)
             frame=((ObjectMolecule*)obj)->NCSet-1;
@@ -3044,7 +3044,7 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
 static PyObject *CmdLoad(PyObject *self, PyObject *args)
 {
   char *fname,*oname;
-  Object *origObj = NULL,*obj;
+  CObject *origObj = NULL,*obj;
   OrthoLineType buf;
   int frame,type;
   int finish,discrete;
@@ -3100,7 +3100,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypePDB:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDB\n" ENDFD;
       if(!origObj) {
-        obj=(Object*)ObjectMoleculeLoadPDBFile(NULL,fname,frame,discrete);
+        obj=(CObject*)ObjectMoleculeLoadPDBFile(NULL,fname,frame,discrete);
         if(obj) {
           ObjectSetName(obj,oname);
           ExecutiveManageObject(obj);
@@ -3122,7 +3122,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypePMO:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PMO\n" ENDFD;
       if(!origObj) {
-        obj=(Object*)ObjectMoleculeLoadPMOFile(NULL,fname,frame,discrete);
+        obj=(CObject*)ObjectMoleculeLoadPMOFile(NULL,fname,frame,discrete);
         if(obj) {
           ObjectSetName(obj,oname);
           ExecutiveManageObject(obj);
@@ -3144,7 +3144,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeXYZ:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XYZStr\n" ENDFD;
       if(!origObj) {
-        obj=(Object*)ObjectMoleculeLoadXYZFile(NULL,fname,frame,discrete);
+        obj=(CObject*)ObjectMoleculeLoadXYZFile(NULL,fname,frame,discrete);
         if(obj) {
           ObjectSetName(obj,oname);
           ExecutiveManageObject(obj);
@@ -3165,7 +3165,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypePDBStr:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDBStr\n" ENDFD;
-      obj=(Object*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete);
+      obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
@@ -3186,7 +3186,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypeMOL:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading MOL\n" ENDFD;
-      obj=(Object*)ObjectMoleculeLoadMOLFile((ObjectMolecule*)origObj,fname,frame,discrete);
+      obj=(CObject*)ObjectMoleculeLoadMOLFile((ObjectMolecule*)origObj,fname,frame,discrete);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
@@ -3207,7 +3207,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypeMOLStr:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: reading MOLStr\n" ENDFD;
-      obj=(Object*)ObjectMoleculeReadMOLStr((ObjectMolecule*)origObj,fname,frame,discrete);
+      obj=(CObject*)ObjectMoleculeReadMOLStr((ObjectMolecule*)origObj,fname,frame,discrete);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
@@ -3228,7 +3228,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypeMMD:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading MMD\n" ENDFD;
-      obj=(Object*)ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,NULL,discrete);
+      obj=(CObject*)ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,NULL,discrete);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
@@ -3252,7 +3252,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypeMMDStr:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading MMDStr\n" ENDFD;
-      obj=(Object*)ObjectMoleculeReadMMDStr((ObjectMolecule*)origObj,fname,frame,discrete);
+      obj=(CObject*)ObjectMoleculeReadMMDStr((ObjectMolecule*)origObj,fname,frame,discrete);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
@@ -3274,10 +3274,10 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeXPLORMap:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XPLORMap\n" ENDFD;
       if(!origObj) {
-        obj=(Object*)ObjectMapLoadXPLORFile(NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadXPLORFile(NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject((Object*)obj);
+          ExecutiveManageObject((CObject*)obj);
           sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
         }
       } else {
@@ -3289,10 +3289,10 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeCCP4Map:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading CCP4Map\n" ENDFD;
       if(!origObj) {
-        obj=(Object*)ObjectMapLoadCCP4File(NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadCCP4File(NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject((Object*)obj);
+          ExecutiveManageObject((CObject*)obj);
           sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
         }
       } else {

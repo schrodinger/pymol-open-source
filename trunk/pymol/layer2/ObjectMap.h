@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 typedef struct ObjectMap {
-  Object Obj;
+  CObject Obj;
   CCrystal *Crystal;
   int Div[3],Min[3],Max[3],FDim[4];
   Isofield *Field;

@@ -47,8 +47,8 @@ int TestPyMOL_00_00(CTestPyMOL *I)
   
   obj = ObjectMapNewFromDesc(md);
   if(obj) {
-    ObjectSetName((Object*)obj,"00_00");
-    ExecutiveManageObject((Object*)obj);
+    ObjectSetName((CObject*)obj,"00_00");
+    ExecutiveManageObject((CObject*)obj);
   }
   return (obj!=NULL);
 

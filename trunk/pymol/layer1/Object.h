@@ -37,14 +37,14 @@ Z* -------------------------------------------------------------------
    for simplified implementation of future multi-state objects.
  */
 
-typedef struct Object {
-  void (*fUpdate)(struct Object *I); /* update representations */
-  void (*fRender)(struct Object *I,int frame,CRay *ray,Pickable **pick,int pass);
-  void (*fFree)(struct Object *I);
-  int  (*fGetNFrame)(struct Object *I);
-  void (*fDescribeElement)(struct Object *I,int index,char *buffer);
-  void (*fInvalidate)(struct Object *I,int rep,int level,int state);
-  CSetting **(*fGetSettingHandle)(struct Object *I,int state);
+typedef struct CObject {
+  void (*fUpdate)(struct CObject *I); /* update representations */
+  void (*fRender)(struct CObject *I,int frame,CRay *ray,Pickable **pick,int pass);
+  void (*fFree)(struct CObject *I);
+  int  (*fGetNFrame)(struct CObject *I);
+  void (*fDescribeElement)(struct CObject *I,int index,char *buffer);
+  void (*fInvalidate)(struct CObject *I,int rep,int level,int state);
+  CSetting **(*fGetSettingHandle)(struct CObject *I,int state);
   int type;
   char Name[ObjNameMax];
   int Color;
@@ -53,18 +53,18 @@ typedef struct Object {
   int ExtentFlag,TTTFlag;
   float TTT[16]; /* translate, transform, translate matrix */
   CSetting *Setting;
-} Object;
+} CObject;
 
-void ObjectInit(Object *I);
-void ObjectPurge(Object *I);
-void ObjectSetName(Object *I,char *name);
-void ObjectFree(Object *I);
-void ObjectUseColor(Object *I);
-void ObjectSetRepVis(Object *I,int rep,int state);
-void ObjectPrepareContext(Object *I,CRay *ray);
-void ObjectCombineTTT(Object *I,float *ttt);
-void ObjectSetTTTOrigin(Object *I,float *origin);
-void ObjectResetTTT(Object *I);
+void ObjectInit(CObject *I);
+void ObjectPurge(CObject *I);
+void ObjectSetName(CObject *I,char *name);
+void ObjectFree(CObject *I);
+void ObjectUseColor(CObject *I);
+void ObjectSetRepVis(CObject *I,int rep,int state);
+void ObjectPrepareContext(CObject *I,CRay *ray);
+void ObjectCombineTTT(CObject *I,float *ttt);
+void ObjectSetTTTOrigin(CObject *I,float *origin);
+void ObjectResetTTT(CObject *I);
 
 #endif
 
