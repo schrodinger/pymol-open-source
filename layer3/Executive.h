@@ -76,6 +76,8 @@ void ExecutiveSpheroid(char *name);
 void ExecutiveAddHydrogens(char *s1);
 void ExecutiveFuse(char *s0,char *s1);
 void ExecutiveRenameObjectAtoms(char *name,int force);
+void ExecutiveInvert(char *s0,char *s1,int mode);
+
 #endif
 
 

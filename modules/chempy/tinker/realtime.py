@@ -19,7 +19,7 @@ import os
 state = None
 model = None
 
-def setup(sele,preserve=0):
+def assign(sele,preserve=0):
    
    global state
    global model
@@ -79,7 +79,41 @@ def setup(sele,preserve=0):
       model = model
       state = None
       return 0
-      
+
+def setup(sele,preserve=0):
+   
+   global state
+   global model
+   
+   state = State()
+
+   model = cmd.get_model(sele)
+
+   sm = 0
+   for a in model.atom:
+      a.resi = str(a.resi_number)
+      sm = sm + a.partial_charge
+
+   print " lig: net charge on ligand  is %8.4f\n" % sm
+
+   param = Parameters(tinker.params_path+"parm99_wld.dat")
+   topo = Topology(model)
+
+   subset = Subset(param,topo)
+
+   if(subset.complete()):
+      subset.write_tinker_prm("realtime.prm")
+
+      state.params = "realtime.prm"
+
+      state.load_model(model)
+      return 1
+   else:
+      subset.dump_missing()
+      model = model
+      state = None
+      return 0
+
 def dyna(steps,iter=1):
 
    global state

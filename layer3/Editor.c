@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_std.h"
 #include"os_gl.h"
+#include"Err.h"
 
 #include"MemoryDebug.h"
 #include"Vector.h"
@@ -60,6 +61,298 @@ ObjectMolecule *EditorDragObject(void)
 static void subdivide( int n, float *x, float *y);
 
 
+/*========================================================================*/
+void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
+{
+  CEditor *I = &Editor;
+  int sele0,sele1,sele2,sele3;
+  int i0,frg;
+  int a,s,n,a1;
+  int if0=-1;
+  int if1=-1;
+  int ia0=-1;
+  int ia1=-1;
+  float v[3],v0[3],v1[3];
+  float n0[3],n1[3];
+  float m[16];
+  int state;
+  int vf,vf0,vf1;
+  WordType name,bname;
+
+  if((!I->Obj)||(I->Obj!=obj)) { 
+    ErrMessage("Editor","Must pick an atom to invert.");
+  } else {
+    sele0 = SelectorIndexByName(cEditorSele1);
+    if(sele0>=0) {
+      sele1 = SelectorIndexByName(cEditorSele2);
+      if(sele1>=0) {
+        ErrMessage("Editor","Must edit an atom, not a bond.");        
+      } else if(!(sele0>=0)) {
+        ErrMessage("Editor","Must pick an atom to invert.");        
+      } else {
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0);
+        
+        if(i0>=0) {
+          for(frg=1;frg<=I->NFrag;frg++) {
+            sprintf(name,"%s%1d",cEditorFragPref,frg);
+            sele2=SelectorIndexByName(name);
+            if(sele2>=0) {
+              /* now find out which bonded atoms are immobilized */
+              for(a=0;a<obj->NAtom;a++) {
+                s=obj->AtomInfo[a].selEntry;                  
+                if(SelectorIsMember(s,sele2)) { /* atom in fragment */
+                  if(if0<0) {
+                    if(SelectorIsMember(s,isele0)) { /* atom in (lb) */
+                      if0=frg;
+                      sprintf(bname,"%s%1d",cEditorBasePref,frg); 
+                      sele3 = SelectorIndexByName(bname);
+                      ia0 = ObjectMoleculeGetAtomIndex(obj,sele3);
+                      /* this is the atom we want */
+                    }
+                  }
+                  if(if1<0) {
+                    if(SelectorIsMember(s,isele1)) { /* atom in (rb) */
+                      if1=frg;
+                      sprintf(bname,"%s%1d",cEditorBasePref,frg); 
+                      sele3 = SelectorIndexByName(bname);
+                      ia1 = ObjectMoleculeGetAtomIndex(obj,sele3);
+                      /* this is the atom we want */
+                    }
+                  }
+                  if((if0>=0)&&(if1>=0)) /* we got 'em */
+                    break;
+                }
+              }
+            }
+          }
+          /* make sure the anchor atoms are unique (for instance,
+               * in the case of a cycle they won't be )*/
+
+          if((ia0>=0)&&(ia1>=0)&&(i0>=0)&&(ia0==ia1)) {
+            ObjectMoleculeUpdateNeighbors(obj);
+            ia1=-1;
+            sprintf(name,"%s%1d",cEditorFragPref,if0); 
+            sele3 = SelectorIndexByName(name);
+            n = obj->Neighbor[i0];
+            n++; /* skip count */
+            while(1) { /* look for another attached atom as a second base */
+              a1 = obj->Neighbor[n];
+              n+=2; 
+              if(a1<0) break;
+              if(a1!=ia0) {
+                s=obj->AtomInfo[a1].selEntry;
+                if(SelectorIsMember(s,sele3)) {
+                  ia1 = a1;
+                  break;
+                }
+              }
+            }
+          }
+
+          if((ia0<0)||(ia1<0)||(i0<0))
+            ErrMessage("Invert","couldn't find basis for inversion");
+          else {
+
+            state = SceneGetState();                
+            ObjectMoleculeSaveUndo(obj,state);
+
+            vf  = ObjectMoleculeGetAtomVertex(obj,state,i0,v);
+            vf0 = ObjectMoleculeGetAtomVertex(obj,state,ia0,v0);
+            vf1 = ObjectMoleculeGetAtomVertex(obj,state,ia1,v1);
+                
+            if(vf&vf0&vf1) {
+              subtract3f(v,v0,n0);
+              subtract3f(v,v1,n1);
+              normalize3f(n0);
+              normalize3f(n1);
+                
+              add3f(n0,n1,n0);
+              normalize3f(n0);
+
+              MatrixRotation44f(m,cPI,n0[0],n0[1],n0[2]);
+              m[3 ] = -v[0];
+              m[7 ] = -v[1];
+              m[11] = -v[2];
+              m[12] =  v[0];
+              m[13] =  v[1];
+              m[14] =  v[2];
+
+              for(frg=1;frg<=I->NFrag;frg++)
+                switch(mode) {
+                case 0 :
+                  if((frg!=if0)&(frg!=if1)) {
+                    sprintf(name,"%s%1d",cEditorFragPref,frg);
+                    sele2=SelectorIndexByName(name);
+                    ObjectMoleculeTransformSelection(obj,state,sele2,m);
+                  }
+                  break;
+                case 1:
+                  if((frg!=if0)&(frg!=if1)) {
+                    sprintf(name,"%s%1d",cEditorFragPref,frg);
+                    sele2=SelectorIndexByName(name);
+                    ObjectMoleculeTransformSelection(obj,state,sele2,m);
+                  }
+                  break;
+                }
+              SceneDirty();
+              I->DragIndex=-1;
+              I->DragSelection=-1;
+              I->DragObject=NULL;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+/*========================================================================*/
+void EditorTorsion(float angle)
+{
+  CEditor *I = &Editor;
+  int sele0,sele1,sele2;
+  int i0,i1;
+  float v0[3],v1[3];
+  float d1[3],n0[3];
+  float theta;
+  float m[16];
+  int state;
+  int vf1,vf2;
+  WordType sele;
+
+  if(!I->Obj) { 
+    ErrMessage("Editor","Must specify a bond first.");
+  } else {
+    sele0 = SelectorIndexByName(cEditorSele1);
+    if(sele0>=0) {
+      sele1 = SelectorIndexByName(cEditorSele2);
+      strcpy(sele,cEditorFragPref);
+      strcat(sele,"1");
+      sele2 = SelectorIndexByName(sele);
+
+      if(!(sele0>=0)&&(sele1>=0)&&(sele2>=0)) {
+        ErrMessage("Editor","Must specify a bond first.");
+      } else {
+        
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0);
+        i1 = ObjectMoleculeGetAtomIndex(I->Obj,sele1);
+        if((i0>=0)&&(i1>=0)) {
+          state = SceneGetState();
+          
+          vf1 = ObjectMoleculeGetAtomVertex(I->Obj,state,i0,I->V0);
+          vf2 = ObjectMoleculeGetAtomVertex(I->Obj,state,i1,I->V1);
+          
+          if(vf1&&vf2) {
+            ObjectMoleculeSaveUndo(I->Obj,SceneGetState());
+            
+            
+            subtract3f(I->V1,I->V0,I->Axis);
+            average3f(I->V1,I->V0,I->Center);
+            normalize3f(I->Axis);
+            
+            copy3f(I->V0,v1);
+            copy3f(I->V1,v0);
+            
+            subtract3f(v1,v0,d1);
+            copy3f(d1,n0);
+            normalize3f(n0);
+            
+            theta=cPI*angle/180.0;
+            MatrixRotation44f(m,theta,n0[0],n0[1],n0[2]);
+            m[3 ] = -v1[0];
+            m[7 ] = -v1[1];
+            m[11] = -v1[2];
+            m[12] =  v1[0];
+            m[13] =  v1[1];
+            m[14] =  v1[2];
+            ObjectMoleculeTransformSelection(I->Obj,state,sele2,m);
+            
+            SceneDirty();
+            
+            I->DragIndex=-1;
+            I->DragSelection=-1;
+            I->DragObject=NULL;
+          }
+        }
+      }
+    }
+  }
+}
+
+/*========================================================================*/
+int EditorSelect(char *s0,char *s1,char *s2,char *s3)
+{
+  int i0=-1;
+  int i1=-1;
+  int sele0,sele1;
+  int result=false;
+  ObjectMolecule *obj0,*obj1;
+
+  if(s0)
+    if(!*s0)
+      s0=NULL;
+  if(s1)
+    if(!*s1)
+      s1=NULL;
+  if(s2)
+    if(!*s2)
+      s2=NULL;
+  if(s3)
+    if(!*s3)
+      s3=NULL;
+
+  if(s0) {
+    sele0 = SelectorIndexByName(s0);
+    obj0 = SelectorGetSingleObjectMolecule(sele0);
+    if(obj0)
+      i0 = ObjectMoleculeGetAtomIndex(obj0,sele0);
+  }
+ 
+  if(s1) {
+    sele1 = SelectorIndexByName(s1);
+    if(sele1>=0) {
+      EditorSetActiveObject(NULL,0);
+      obj1 = SelectorGetSingleObjectMolecule(sele1);
+      if(obj1)
+        i1 = ObjectMoleculeGetAtomIndex(obj1,sele1);
+    }
+  }
+  
+  if(s0&&(!s1)) { /* single atom mode */
+    if(i0>=0) {
+      ObjectMoleculeVerifyChemistry(obj0);
+      SelectorCreate(cEditorSele1,s0,NULL,false); /* wasteful but who cares */
+      ExecutiveDelete(cEditorSele2);
+      EditorSetActiveObject(obj0,SceneGetState());
+      SceneDirty();
+      result=true;
+    } else {
+      EditorSetActiveObject(NULL,0);
+      ErrMessage("Editor","Invalid selection. Requires a single atom selection.");
+    }
+  } else if (s0&&s1) {
+    if((i0>=0)&&(i1>=0)) {
+      if(obj0!=obj1) {
+        i0=-1;
+      } else if(!ObjectMoleculeAreAtomsBonded(obj0,i0,i1)) {
+          i0=-1;
+      }
+    }
+    if((i0>=0)&&(i1>=0)) {
+      SelectorCreate(cEditorSele1,s0,NULL,false);
+      SelectorCreate(cEditorSele2,s1,NULL,false);
+      EditorSetActiveObject(obj0,SceneGetState());
+      SceneDirty();
+      result=true;
+    } else {
+      EditorSetActiveObject(NULL,0);
+      ErrMessage("Editor","Invalid selections. Requires two bonded atoms in the same moilecule");
+    }
+  } else {
+    EditorSetActiveObject(NULL,0);
+    ErrMessage("Editor","Invalid input.");    
+  }
+  return(result);
+}
 /*========================================================================*/
 static void subdivide( int n, float *x, float *y)
 {

@@ -637,15 +637,15 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 		switch(mode) {
       case cButModePk1:
       case cButModeAddToPk1:
-        strcpy(selName,"%pk1");
+        strcpy(selName,"%lb");
 		  break;
       case cButModePk2:
       case cButModeAddToPk2:
-        strcpy(selName,"%pk2");
+        strcpy(selName,"%mb");
 		  break;
       case cButModePk3:
       case cButModeAddToPk3:
-        strcpy(selName,"%pk3");
+        strcpy(selName,"%rb");
 		  break;
       case cButModeOrigAt:
         sprintf(buf2,"origin (%s)",buffer);        

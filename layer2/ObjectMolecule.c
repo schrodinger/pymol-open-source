@@ -72,6 +72,29 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
 /*========================================================================*/
+int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1)
+{
+  int result=false;
+  int a,*b;
+  b=I->Bond;
+  for (a=0;a<I->NBond;a++) {
+    if(i0==*b) {
+      if(i1==(*(b+1))) {
+        result=true;
+        break;
+      }
+    }
+    if(i1==*b) {
+      if(i0==*(b+1)) {
+        result=true;
+        break;
+      }
+    }
+    b+=3;
+  }
+  return(result);
+}
+/*========================================================================*/
 void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force)
 {
     AtomInfoUniquefyNames(NULL,0,I->AtomInfo,I->NAtom);  

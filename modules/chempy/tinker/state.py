@@ -36,7 +36,7 @@ class State:
       f.writelines(list)
       f.close()
 
-   def energy(self,kw=None,summary=1):
+   def analyze(self,kw=None,summary=1):
       if feedback['actions']:
          print ' '+str(self.__class__)+': starting energy run...'
       io.xyz.toFile(self.model,self.prefix+"_inp.xyz",
@@ -119,7 +119,8 @@ class State:
             lin = f.readline()
             if not lin: break
             if not flag:
-               if lin[0:9]==' CG Iter ':
+               if (lin[0:9]==' CG Iter ' or
+                   lin[0:9]==' QN Iter '):
                   f.readline() # skip blank
                   flag = 1
             else:
