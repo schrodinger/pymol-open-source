@@ -166,6 +166,36 @@ pmw:
 compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
 
+OSXPROD=products/PyMOL.app
+OSXPYMOL=$(OSXPROD)/pymol
+OSXEXE=$(OSXPROD)/Contents/MacOS/PyMOL
+
+osx-wrap:
+	/bin/rm -rf $(OSXPYMOL) $(OSXEXE)
+	/usr/local/bin/tar -czvf layerOSX/bundle/app.hfstar $(OSXPROD)
+
+osx-unwrap:
+	/bin/rm -rf $(OSXPROD)
+	/usr/local/bin/tar -xzvf layerOSX/bundle/app.hfstar
+
+osx-python:
+	cc layerOSX/bundle/python.c -o $(OSXEXE) \
+-I/Library/Frameworks/Python.framework/Versions/2.3/include/python2.3/ \
+-framework CoreFoundation -framework Python -lc -Wno-long-double
+
 osx: 
 	cd layerOSX; $(MAKE)
 	$(MAKE) 
+
+
+osx-product: osx osx-unwrap osx-python
+	$(PYTHON_EXE) modules/compile_pymol.py
+	/bin/rm -rf $(OSXPYMOL)
+	install -d $(OSXPYMOL)
+	cp -R modules $(OSXPYMOL)/
+	cp -R test $(OSXPYMOL)/
+	cp -R data $(OSXPYMOL)/	
+	cp -R examples $(OSXPYMOL)/
+	cp LICENSE $(OSXPYMOL)/
+	cp README $(OSXPYMOL)/
+

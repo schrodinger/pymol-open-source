@@ -1677,12 +1677,12 @@ int RayTraceThread(CRayThreadInfo *T)
   var += ((src)[2 ] & mask)   ; \
   var += ((src)[3 ] & mask)   ; \
   var += ((src)[4 ] & mask)   ; \
-  var +=(((src)[5 ] & mask)*13); \
-  var +=(((src)[6 ] & mask)*13); \
+  var +=(((src)[5 ] & mask)*13) ; \
+  var +=(((src)[6 ] & mask)*13) ; \
   var += ((src)[7 ] & mask)   ; \
-  var += ((src)[8 ] & mask)   ; \
-  var +=(((src)[9 ] & mask)*13); \
-  var +=(((src)[10] & mask)*13); \
+  var += ((src)[8 ] & mask)    ; \
+  var +=(((src)[9 ] & mask)*13) ; \
+  var +=(((src)[10] & mask)*13) ; \
   var += ((src)[11] & mask)   ; \
   var += ((src)[12] & mask)   ; \
   var += ((src)[13] & mask)   ; \
@@ -1690,7 +1690,6 @@ int RayTraceThread(CRayThreadInfo *T)
   var += ((src)[15] & mask)   ; \
   var = (var >> 6) & mask; \
 }
-
 
 #define combine5by5(var,src,mask) { \
   var =  ((src)[0 ] & mask)   ; \
@@ -1769,13 +1768,13 @@ int RayAntiThread(CRayAntiThreadInfo *T)
 {
 	int a;
 	int		src_row_pixels;
-	register unsigned int part;
+	unsigned int part;
 	unsigned int acc;
-	unsigned int z[36],zm[36];
+   unsigned int z[36],zm[36];
 	
 	unsigned int *pSrc;
 	unsigned int *pDst;
-	/*const unsigned int m00FF=0x00FF,mFF00=0xFF00,mFFFF=0xFFFF;*/
+   //   unsigned int m00FF=0x00FF,mFF00=0xFF00,mFFFF=0xFFFF;
 	int width;
 	int height;
 	int x,y,yy;
@@ -1805,31 +1804,31 @@ int RayAntiThread(CRayAntiThreadInfo *T)
               {
                 p	= pSrc + (x * T->mag);
                 
-                z[0 ]	= (*(p  ));
-                z[1 ]	= (*(p+1));
-                z[2 ]	= (*(p+2));
-                z[3 ]	= (*(p+3));
+                z[0 ]	= p[0];
+                z[1 ]	= p[1];
+                z[2 ]	= p[2];
+                z[3 ]	= p[3];
                 
                 p	+= src_row_pixels;
                 
-                z[4 ]	= (*(p  ));
-                z[5 ]	= (*(p+1));
-                z[6 ]	= (*(p+2));
-                z[7 ]	= (*(p+3));
+                z[4 ]	= p[0];
+                z[5 ]	= p[1];
+                z[6 ]	= p[2];
+                z[7 ]	= p[3];
                 
                 p	+= src_row_pixels;
                 
-                z[8 ]	= (*(p  ));
-                z[9 ]	= (*(p+1));
-                z[10]	= (*(p+2));
-                z[11]	= (*(p+3));
+                z[8 ]	= p[0];
+                z[9 ]	= p[1];
+                z[10]	= p[2];
+                z[11]	= p[3];
                 
                 p	+= src_row_pixels;
                 
-                z[12]	= (*(p  ));
-                z[13]	= (*(p+1));
-                z[14]	= (*(p+2));
-                z[15]	= (*(p+3));
+                z[12]	= p[0];
+                z[13]	= p[1];
+                z[14]	= p[2];
+                z[15]	= p[3];
                 
                 for( a = 0; a < 16; a += 4 ) 
                   {
@@ -1838,21 +1837,26 @@ int RayAntiThread(CRayAntiThreadInfo *T)
                     zm[a+2 ] = z[a+2] & mFFFF;
                     zm[a+3 ] = z[a+3] & mFFFF;
                     
-                    z[a   ]	>>= 16; /* keep rest in z */
-                    z[a+1 ]	>>= 16;
-                    z[a+2 ]	>>= 16;
-                    z[a+3 ]	>>= 16;
+                    z[a+0 ] = (z[a+0 ] >> 16) & mFFFF; /* keep rest in z */
+                    z[a+1 ] = (z[a+1 ] >> 16) & mFFFF;
+                    z[a+2 ] = (z[a+2 ] >> 16) & mFFFF;
+                    z[a+3 ] = (z[a+3 ] >> 16) & mFFFF;
                   }
                 
                 combine4by4(part,z,m00FF);
                 acc	= (part<<16);
                 combine4by4(part,z,mFF00);
-                acc	+= (part<<16);
+                acc |= (part<<16);
                 combine4by4(part,zm,m00FF);
-                acc	+= part;
+                acc |= part;
                 combine4by4(part,zm,mFF00);
-                
-                *(pDst++) = (acc + part);
+                acc |= (acc | part);
+
+                #ifdef _PYMOL_OSX
+                acc = optimizer_workaround1u(acc);
+                #endif
+
+                *(pDst++) = acc;
               }
             break;
           case 3:
@@ -1916,11 +1920,16 @@ int RayAntiThread(CRayAntiThreadInfo *T)
                 combine5by5(part,z,m00FF);
                 acc	= (part<<16);
                 combine5by5(part,z,mFF00);
-                acc	+= (part<<16);
+                acc	|= (part<<16);
                 combine5by5(part,zm,m00FF);
-                acc	+= part;
+                acc |= part;
                 combine5by5(part,zm,mFF00);
-                *(pDst++) = (acc + part);
+                acc |= part;
+
+                #ifdef _PYMOL_OSX
+                acc=optimizer_workaround1u(acc);
+                #endif
+                *(pDst++) = acc;
               }
             break;
           case 4:
@@ -2004,7 +2013,13 @@ int RayAntiThread(CRayAntiThreadInfo *T)
                 combine6by6(part,zm,m00FF);
                 acc	+= part;
                 combine6by6(part,zm,mFF00);
-                *(pDst++) = (acc + part);
+                acc |= part;
+
+                #ifdef _PYMOL_OSX
+                acc = optimizer_workaround1u(acc);
+                #endif
+
+                *(pDst++) = acc;
               }
             break;
           }

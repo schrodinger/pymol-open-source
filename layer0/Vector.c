@@ -42,6 +42,10 @@ static const float _0		= 0.0F;
 static const float _1		= 1.0F;
 static const double _d0		= 0.0;
 
+unsigned int optimizer_workaround1u(unsigned int value)
+{
+  return value;
+}
 
 float get_random0to1f()
 {

@@ -10,6 +10,7 @@ static:
 make-modules:
 	cd modules;echo installdir=$(PYMOL_PATH)/modules > Makefile.pre.in 
 	cd modules;echo PYTHON=$(PYTHON_EXE) >> Makefile.pre.in 
+	cd modules;echo PYTHONFRAMEWORK=Python >> Makefile.pre.in
 	cd modules;cat Makefile.pre.in.src >> Makefile.pre.in 
 	cd modules;$(MAKE) -f Makefile.pre.in boot
 	cd modules;$(MAKE)
