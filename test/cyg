@@ -21,7 +21,7 @@ standard_prefixes = ['C', 'G' ]
 #   ppath = os.environ['PYTHONPATH'] + ":"
 #ppath = ppath + os.getcwd() + "/../modules"
 
-os.environ['PYMOL_PATH'] = "c:\\pymol"
+os.environ['PYMOL_PATH'] = "c:\\pymolws"
 
 #print ppath
 
