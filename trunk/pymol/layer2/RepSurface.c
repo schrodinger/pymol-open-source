@@ -1481,7 +1481,6 @@ Rep *RepSurfaceNew(CoordSet *cs)
       carve_flag = true;
       I->allVisibleFlag=false;
     }
-
     if(!I->allVisibleFlag) {
       /* optimize the space over which we calculate a surface */
       
@@ -1987,6 +1986,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
             pres_flag = (inclH||(!ai1->hydrogen))&&
              ((!cullByFlag)||
               (!(ai1->flags&(cAtomFlag_ignore))));
+
           if(pres_flag) {
             
             dotCnt=0;
@@ -2017,7 +2017,6 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                 j=map->EList[i++];
               }
             }
-            
             if(!skip_flag) {
               for(b=0;b<sp->nDot;b++)
                 {
@@ -2225,7 +2224,6 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
       MapFree(map);
     }
 
-
   if((cavity_cull>0)&&(probe_radius>0.75F)&&(!surface_solvent)) {
 	 dot_flag=Alloc(int,I->NDot);
 	 ErrChkPtr(dot_flag);
@@ -2301,7 +2299,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 		}
 	 FreeP(dot_flag);
   }
-  
+
   PRINTFD(FB_RepSurface)
     " GetSolventDots-DEBUG: %d->%d\n",c,I->NDot
     ENDFD;

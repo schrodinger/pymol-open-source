@@ -886,7 +886,7 @@ static void draw_bond(float *v0,float *v1)
   glEnd();
 
 }
-
+#if 0
 static void draw_dist(float *v0,float *v1)
 {
   SceneResetNormal(true);
@@ -949,6 +949,7 @@ static void draw_torsion(float *v0,float *v1,float *v2,float *v3)
   glEnd();
 
 }
+#endif
 
 static void draw_globe(float *v2,int number)
 {
@@ -1116,7 +1117,7 @@ void EditorRender(int state)
   int sele1,sele2,sele3,sele4;
   float v0[3],v1[3];
   float vp[12],*vv;
-  int v_cnt;
+  /*  int v_cnt;*/
   ObjectMolecule *obj1=NULL,*obj2=NULL,*obj3=NULL,*obj4=NULL;
   int index1,index2,index3,index4;
   
