@@ -1422,9 +1422,13 @@ int BasisHitPerspective(BasisCallRec *BC)
           
           } /* end of while */
       
-        if(local_iflag)
+        if(local_iflag) {
+          r->prim = r_prim;
+          r->dist = r_dist;
+          
           break;
-      
+        }
+
         if( new_min_index > -1 ) {
         
           minIndex = new_min_index;
