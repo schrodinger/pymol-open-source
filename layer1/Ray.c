@@ -879,7 +879,11 @@ int RayTraceThread(CRayThreadInfo *T)
 	int texture_save;
 	MapCache cache,shadow_cache;
 	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect, _0, _1, _p5, _255, _persistLimit, _inv3;
-	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth;
+	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth,invHgtRange;
+	register float       invWdthRange,vol0;
+	float       vol2;
+	CBasis      *bp1,*bp2;
+	
 	int offset=0;
 	
 	_0		= 0.0F;
@@ -956,7 +960,13 @@ int RayTraceThread(CRayThreadInfo *T)
 	invHgt				= _1 / (float) T->height;
 	invFrontMinusBack	= _1 / (T->front - T->back);
 	invWdth             = _1 / (float) T->width;
-
+	invWdthRange        = invWdth * I->Range[0];
+	invHgtRange         = invHgt * I->Range[1];
+	vol0 = I->Volume[0];
+	vol2 = I->Volume[2];
+	bp1  = I->Basis + 1;
+	bp2  = I->Basis + 2;
+	
    if(T->height) {
      offset = (T->phase * T->height/T->n_thread);
      offset = offset - (offset % T->n_thread) + T->phase;
@@ -976,13 +986,13 @@ int RayTraceThread(CRayThreadInfo *T)
 	
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
 		{	
-			r1.base[1]	= ((float)y * invHgt) * I->Range[1] + I->Volume[2];
+			r1.base[1]	= (y * invHgtRange) + vol2;
 			
 			for(x = 0; (x < T->width); x++)
 			{
 				exclude		= -1;
 				
-				r1.base[0]	= (((float)x) * invWdth) * I->Range[0] + I->Volume[0];
+				r1.base[0]	= (x * invWdthRange)  + vol0;
 				
 				persist			= _1;
 				first_excess	= _0;
@@ -996,7 +1006,7 @@ int RayTraceThread(CRayThreadInfo *T)
 					
 					interior_flag	= (interior_color >= 0);
 					
-					i	= BasisHit( I->Basis+1, &r1, exclude, I->Vert2Prim, I->Primitive,
+					i	= BasisHit( bp1, &r1, exclude, I->Vert2Prim, I->Primitive,
 									false, new_front, T->back, excl_trans,
 									trans_shadows, &interior_flag, &cache);
 							   
@@ -1007,10 +1017,10 @@ int RayTraceThread(CRayThreadInfo *T)
 						
 						if(interior_flag)
 						{
+							copy3f(r1.base,r1.impact);
 							r1.surfnormal[0]	= _0;
 							r1.surfnormal[1]	= _0;
 							r1.surfnormal[2]	= _1;
-							copy3f(r1.base,r1.impact);
 							r1.impact[2]	-= T->front;
 							
 							if(interior_texture >= 0) 
@@ -1033,15 +1043,15 @@ int RayTraceThread(CRayThreadInfo *T)
 							new_front	= r1.dist;
 							if(r1.prim->type==cPrimTriangle) 
 							{
-								BasisGetTriangleNormal(I->Basis+1,&r1,i,fc);
+								BasisGetTriangleNormal(bp1,&r1,i,fc);
 								
-								RayProjectTriangle(I, &r1, I->Basis[2].LightNormal,
-													I->Basis[1].Vertex+i*3,
-													I->Basis[1].Normal+I->Basis[1].Vert2Normal[i]*3+3,
+								RayProjectTriangle(I, &r1, bp2->LightNormal,
+													bp1->Vertex+i*3,
+													bp1->Normal+bp1->Vert2Normal[i]*3+3,
 													project_triangle);
 													
 								RayReflectAndTexture(I,&r1);
-								BasisGetTriangleFlatDotgle(I->Basis+1,&r1,i);
+								BasisGetTriangleFlatDotgle(bp1,&r1,i);
 							}
 							else 
 							{
@@ -1109,9 +1119,9 @@ int RayTraceThread(CRayThreadInfo *T)
 						
 						if(shadows&&((!interior_flag)||(interior_shadows))) 
 						{
-							matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
+							matrix_transform33f3f(bp2->Matrix,r1.impact,r2.base);
 							r2.base[2]-=shadow_fudge;
-							if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive, true,_0,_0,_0,trans_shadows,&dummy, &shadow_cache) >= 0) 
+							if(BasisHit(bp2,&r2,i,I->Vert2Prim,I->Primitive, true,_0,_0,_0,trans_shadows,&dummy, &shadow_cache) >= 0) 
 							{
 								lit	= (float) pow(r2.prim->trans, _p5);
 							} 
@@ -1119,7 +1129,7 @@ int RayTraceThread(CRayThreadInfo *T)
 					  
 						if(lit>_0)
 						{
-							dotgle	= -dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
+							dotgle	= -dot_product3f(r1.surfnormal,bp2->LightNormal);
 							if(dotgle < _0) dotgle = _0;
 							
 							reflect_cmp	=(float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );
@@ -1856,34 +1866,105 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 			for(x = 1; x < wid_1; x++)
 			{
 				aa	= 0;
-				p	= pSrc + (x * 2) - 1;	/* subtract 1 so we always have positive offsets - no speedier, just easier to read! */
-
-				z[12]	= *p;
-				z[4]	= *(p+1);
-				z[5]	= *(p+2);
-				z[13]	= *(p+3);
-
-				p	+= w2;
-				
-				z[6]	= *(p);
-				z[0]	= *(p+1);
-				z[1]	= *(p+2);
-				z[7]	= *(p+3);
-
-				p	+= w2;
-				
-				z[8]	= *(p);
-				z[2]	= *(p+1);
-				z[3]	= *(p+2);
-				z[9]	= *(p+3);
-
-				p	+= w2;
-				
-				z[14]	= *(p);
-				z[10]	= *(p+1);
-				z[11]	= *(p+2);
-				z[15]	= *(p+3);
 		
+				p	= pSrc + (x * 2);
+				
+			    z[12]	= (*(p-1));
+				z[4]	= (*(p));
+				z[5]	= (*(p+1));
+				z[13]	= (*(p+2));
+				
+				p	+= w2;
+				
+				z[6]	= (*(p-1));
+				z[0]	= (*(p));
+				z[1]	= (*(p+1));
+				z[7]	= (*(p+2));
+				
+				p	+= w2;
+				
+				z[8]	= (*(p-1));
+				z[2]	= (*(p));
+				z[3]	= (*(p+1));
+				z[9]	= (*(p+2));
+				
+				p	+= w2;
+				
+				z[14]	= (*(p-1));
+				z[10]	= (*(p));
+				z[11]	= (*(p+1));
+				z[15]	= (*(p+2));
+
+
+#if 0
+				if(isBigEndian) 
+				{ 
+					for( a = 0; a < 16; a += 4 ) 
+					{
+                 /* unroll a bit */
+						zm[a+0]	&= 0xFF;
+						zm[a+1]	&= 0xFF;
+						zm[a+2] &= 0xFF;
+						zm[a+3] &= 0xFF;
+
+						z[a+0]	>>= 8;
+						z[a+1]	>>= 8;
+						z[a+2]	>>= 8;
+						z[a+3]	>>= 8;
+					}
+				}
+				else
+				{
+					for(a=0;a<16;a++) 
+						zm[a] = z[a] >> 24; /* copy alpha channel */
+				}
+
+				tot	= 0;
+				for(a = 0; a < 16; a += 4) /* average alpha channel */
+				{
+					tot += (zm[a+0] & 0xFF) + (zm[a+1] & 0xFF) + (zm[a+2] & 0xFF) + (zm[a+3] & 0xFF);
+				}
+					
+				tot += ((zm[0] & 0xFF) << 2) + ((zm[1] & 0xFF) << 2) + ((zm[2] & 0xFF) << 2) +  ((zm[3] & 0xFF) << 2);
+
+				za = (0xFF & (tot>>5));
+		
+				tot = 0;
+				for(a = 0; a < 16; a += 4)
+				{
+					tot += (z[a+0] & 0xFF) + (z[a+1] & 0xFF) + (z[a+2] & 0xFF) + (z[a+3] & 0xFF);
+				}
+					
+				tot += ((z[0] & 0xFF)<<2) + ((z[1] & 0xFF)<<2) + ((z[2] & 0xFF)<<2) +  ((z[3] & 0xFF)<<2);
+					
+				aa	= aa | (0xFF & (tot>>5));
+		
+				tot = 0;
+				for(a = 0; a < 16; a += 4)
+				{
+					tot += (z[a+0] & 0xFF00) +  (z[a+1] & 0xFF00) + (z[a+2] & 0xFF00) + (z[a+3] & 0xFF00);
+				}
+					
+				tot += ((z[0] & 0xFF00)<<2) + ((z[1] & 0xFF00)<<2) + ((z[2] & 0xFF00)<<2) + ((z[3] & 0xFF00)<<2);
+					
+				aa	= aa | (0xFF00 & (tot>>5));
+		
+				tot	= 0;
+				for(a = 0; a < 16; a += 4)
+				{
+					tot	+= (z[a+0] & 0xFF0000) + (z[a+1] & 0xFF0000) + (z[a+2] & 0xFF0000) + (z[a+3] & 0xFF0000); 
+				}
+				tot	+= ((z[0] & 0xFF0000)<<2) + ((z[1] & 0xFF0000)<<2) + ((z[2] & 0xFF0000)<<2) +  ((z[3] & 0xFF0000)<<2);
+					
+				aa = aa | (0xFF0000&(tot>>5));			 
+		
+				if(isBigEndian) 
+					aa = (aa<<8) | za;
+				else 
+					aa = aa | (za<<24);
+		
+				*(pDst++) = aa;			 
+#else
 				if(isBigEndian) 
 				{ 
 					for( a = 0; a < 16; a += 4 ) 
@@ -1974,7 +2055,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 				else 
 					aa = aa | (za<<24);
 		
-				*(pDst++) = aa;			 
+				*(pDst++) = aa;		
+#endif
+
 			}
 		}
 		

@@ -582,7 +582,7 @@ int BasisHit(CBasis *BI,RayInfo *rr,int except,
 	int		excl_trans_flag;
 	int		tmp_flag;
 	int		check_interior_flag;
-	CPrimitive *prm;
+	CPrimitive *prm; 
 	register RayInfo  *r=rr;
 	    
 	int		*elist, local_iflag = false;
@@ -596,6 +596,8 @@ int BasisHit(CBasis *BI,RayInfo *rr,int except,
 		register int		minIndex=-1;
 		int     v2p;
 	    int     i,ii;
+	    int     c_m1;
+	    int     do_break;
 	    
 		check_interior_flag	= (*interior_flag);
 		
@@ -610,16 +612,19 @@ int BasisHit(CBasis *BI,RayInfo *rr,int except,
 		
 		r->dist = MAXFLOAT;
 
-		MapCacheReset(cache);
-
 		xxtmp	= BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]);
 
-		elist	= BI->Map->EList;
+		MapCacheReset(cache);
+
+		h	= *(xxtmp + c);
 		
+		elist	= BI->Map->EList;
+	
+		do_break = (c <= MapBorder);		
 		while(1) 
 		{
-			h	= *(xxtmp + c);
 			/*h	= *MapEStart(BI->Map,a,b,c);*/
+			c_m1 = c - 1;
 			
 			if(h)
 			{
@@ -884,15 +889,21 @@ int BasisHit(CBasis *BI,RayInfo *rr,int except,
 				} /* end of while */
 			}
 
-			
+			h	= *(xxtmp + c_m1);	/* optimization safe given that MapBorder is always > 0 */
 			
 			/* and of course stop when we hit the edge of the map */
 			
-			if((c <= MapBorder) || local_iflag)
+			
+			if(do_break)
+			{
+				break;
+			}
+			if(local_iflag)
 			{
 				break;
 			}
 
+			
 			/* we've processed all primitives associated with this voxel, 
 			so if an intersection has been found which occurs in front of
 			the next voxel, then we can stop */
@@ -907,9 +918,9 @@ int BasisHit(CBasis *BI,RayInfo *rr,int except,
 				}
 			}
 			
+			c--;
+			do_break = (c <= MapBorder);
 			
-			c--;  
-
 			
 		} /* end of while */
 		if( minIndex > -1 ) 
