@@ -2011,7 +2011,6 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       pp=ParseWordCopy(cc,p,6);
       if(WordMatch("origin",cc,true)<0) {
         p = ParseWordCopy(cc,pp,50);
-        printf("->%s\n",cc);
         if(sscanf(cc,"%d",&ms->Min[0])==1) {
           p = ParseWordCopy(cc,p,50);
           if(sscanf(cc,"%d",&ms->Min[1])==1) {
@@ -2043,15 +2042,16 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       }
     }
 
+
     if(!got_grid) {
       pp=ParseWordCopy(cc,p,4);
       if(WordMatch("grid",cc,true)<0) {
         p = ParseWordCopy(cc,pp,50);
-        if(sscanf(cc,"%d",&ms->FDim[0])==1) {
+        if(sscanf(cc,"%d",&ms->Div[0])==1) {
           p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%d",&ms->FDim[1])==1) {
+          if(sscanf(cc,"%d",&ms->Div[1])==1) {
             p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%d",&ms->FDim[2])==1) {
+            if(sscanf(cc,"%d",&ms->Div[2])==1) {
               got_grid=true;
             }
           }
@@ -2150,21 +2150,21 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
           for(bb=0;bb<yblocks;bb++) {
             for(aa=0;aa<xblocks;aa++) {
               
-                  for(c=0;c<block_size;c++) {
-                    xc = c + cc*block_size;
-                    ic = xc + ms->Min[2];
-                    v[2]=ic/((float)ms->Div[2]);
+              for(c=0;c<block_size;c++) {
+                xc = c + cc*block_size;
+                ic = xc + ms->Min[2];
+                v[2]=ic/((float)ms->Div[2]);
                 
-              for(b=0;b<block_size;b++) {
-                xb = b + bb*block_size;
-                ib = xb + ms->Min[1];
-                v[1]=ib/((float)ms->Div[1]);
-
-                for(a=0;a<block_size;a++) {
-                  xa = a + aa*block_size;
-                  ia = xa + ms->Min[0];
-                  v[0]=ia/((float)ms->Div[0]);
+                for(b=0;b<block_size;b++) {
+                  xb = b + bb*block_size;
+                  ib = xb + ms->Min[1];
+                  v[1]=ib/((float)ms->Div[1]);
                   
+                  for(a=0;a<block_size;a++) {
+                    xa = a + aa*block_size;
+                    ia = xa + ms->Min[0];
+                    v[0]=ia/((float)ms->Div[0]);
+                    
                     
                     dens = (((float)(*((unsigned char*)(p++)))) - plus) / prod;
                     if((ia<=ms->Max[0])&&(ib<=ms->Max[1])&&(ic<=ms->Max[2])) {
@@ -2175,7 +2175,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
                       for(e=0;e<3;e++) {
                         F4(ms->Field->points,xa,xb,xc,e) = vr[e];
                       }
-
+                      
                     }
                   }
                 }
