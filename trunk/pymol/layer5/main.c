@@ -609,6 +609,7 @@ void MainReshape(int width, int height) /* called by Glut */
   if(PMGUI) glViewport(0, 0, (GLint) width, (GLint) height);
   
   OrthoReshape(width,height,false);
+
 }
 /*========================================================================*/
 
@@ -817,6 +818,10 @@ void MainRefreshNow(void)
 }
 /*========================================================================*/
 
+#ifdef _PYMOL_SHARP3D
+static int Sharp3DLastWindowX = -1000;
+#endif
+
 void MainBusyIdle(void) 
 {
   /* This is one of the few places in the program where we can be sure 
@@ -826,9 +831,26 @@ void MainBusyIdle(void)
 
   CMain *I = &Main;
 
+
   PRINTFD(FB_Main)
     " MainBusyIdle: called.\n"
     ENDFD;
+
+#ifdef _PYMOL_SHARP3D
+// keep the window on even coordinates to preserve L/R stereo...
+ {
+   int x,y;
+   x = glutGet(GLUT_WINDOW_X);
+   if(x!=Sharp3DLastWindowX) {
+     Sharp3DLastWindowX=x;
+     if(x&0x1) {
+       y = glutGet(GLUT_WINDOW_Y);
+       glutPositionWindow(x-1,y);
+     }
+   }
+ }
+#endif
+
 
   /* flush command and output queues */
   
@@ -927,7 +949,9 @@ void MainBusyIdle(void)
 
         PRunString("exec_deferred()");
 #ifdef _PYMOL_SHARP3D
-PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");
+        //PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");
+        PParse("stereo on");
+        PParse("wizard demo,cartoon");
 #endif
         PUnblock();
       }
@@ -1023,12 +1047,12 @@ SetConsoleCtrlHandler(
 
     case 0: /* default/autodetect (stereo on win/unix; mono on macs) */
 #ifdef _PYMOL_SHARP3D
-      WinX = 1024;
-      WinY = 768;
-      WinPX = 0;
-      WinPY = 0;
+      WinX = 794;
+      WinY = 547;
+      // WinPX = 0;
+      //WinPY = 0;
 
-      glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_MULTISAMPLE| P_GLUT_DOUBLE| P_GLUT_STENCIL );
+      glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_DOUBLE| P_GLUT_STENCIL );
       StereoCapable = 1;
 #else
 #ifndef _PYMOL_OSX
@@ -1079,15 +1103,19 @@ SetConsoleCtrlHandler(
     }
   } 
 
-  #ifdef _PYMOL_SHARP3D
+#ifdef _PYMOL_SHARP3D
   	// Setup OpenGL
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-
-  #endif
+#endif
 
   MainInit();
   PInit();
+
+#ifdef _PYMOL_SHARP3D
+  SettingSetGlobal_b(cSetting_overlay,1);
+  SettingSetGlobal_b(cSetting_overlay_lines,1);
+#endif
 
   if(PMGUI) {
     p_glutDisplayFunc(         MainDraw );
@@ -1190,7 +1218,7 @@ int was_main(void)
   PyMOLMultisample = PyMOLOption->multisample; /* currently only used by MacOSX */
 
 #ifdef _PYMOL_SHARP3D
-  InternalGUI = 0;
+  //  InternalGUI = 0;
   InternalFeedback = 0;
   ShowSplash = 0;
 #endif

@@ -1054,7 +1054,9 @@ void OrthoDoDraw()
         x = cOrthoLeftMargin;
         y = cOrthoBottomMargin;
         
-        
+#ifdef _PYMOL_SHARP3D
+        y+=(7*cOrthoLineHeight)/10;
+#endif
         if((int)SettingGet(cSetting_text)||I->SplashFlag)
           showLines=I->ShowLines;
         else {

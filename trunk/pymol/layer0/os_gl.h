@@ -108,6 +108,7 @@ void PyMOLCheckOpenGLErr(char *pos);
 #define P_GLUT_STEREO                   GLUT_STEREO                     
 #define P_GLUT_UP                       GLUT_UP                           
 #define P_GLUT_MULTISAMPLE              GLUT_MULTISAMPLE
+#define P_GLUT_STENCIL                  GLUT_STENCIL
 
 #define p_glutGameModeString       glutGameModeString
 #define p_glutEnterGameMode        glutEnterGameMode
