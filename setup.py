@@ -10,12 +10,13 @@ import sys
 
 if sys.platform=='win32':
    inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5","win32/include"]
-   libs=["opengl3","glu32","glut32","libpng","zlib"]
+   libs=["opengl32","glu32","glut32","libpng","zlib"]
    pyogl_libs = ["opengl32","glu32","glut32"]
    lib_dirs=["win32/lib"]
    def_macros=[("_PYMOL_MODULE",None),
                   ("WIN32",None),
                   ("_HAVE_LIBPNG",None)]
+   ext_link_args=['/NODEFAULTLIB:"LIBC"']
 else:
    inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
    libs=["GL","GLU","glut","png"]
@@ -24,6 +25,7 @@ else:
    def_macros=[("_PYMOL_MODULE",None),
 #                  ("_PYMOL_NUMPY",None),
                   ("_HAVE_LIBPNG",None)]
+   ext_link_args=[]
    
 setup ( # Distribution meta-data
    name = "pymol",
@@ -131,7 +133,8 @@ setup ( # Distribution meta-data
    include_dirs = inc_dirs,
    libraries = libs,
    library_dirs = lib_dirs,
-   define_macros = def_macros
+   define_macros = def_macros,
+   extra_link_args = ext_link_args,
              ),
    Extension("pymol.sglite", [
    "contrib/sglite/runtests.c",
@@ -163,7 +166,7 @@ setup ( # Distribution meta-data
              include_dirs = inc_dirs,
              libraries = pyogl_libs,
              library_dirs = lib_dirs,
-             define_macros = def_macros
+             define_macros = def_macros,
              ),
    Extension("pymol.opengl.glu._glu", ["contrib/pyopengl/_glumodule.c"],
              include_dirs = inc_dirs,
