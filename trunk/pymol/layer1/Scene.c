@@ -3234,7 +3234,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
     glPointSize(SettingGet(cSetting_dot_width));
 
-    glEnable(GL_NORMALIZE);
+    glEnable(GL_NORMALIZE); /* get rid of this to boost performance */
+
     glEnable(GL_DEPTH_TEST);
 
     /* get matrixes for unit objects */
