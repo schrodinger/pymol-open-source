@@ -38,8 +38,13 @@ if __name__=='pymol.viewing':
                 "nonbonded", "nb_spheres",
                 "cartoon","ribbon","labels","slice"]
 
-   view_sc = Shortcut(['store','recall','clear','insert_before',
-                       'insert_after','next','previous','update','rename'])
+   scene_action_sc = Shortcut(['store','recall','clear','insert_before',
+                       'insert_after','next','previous',
+                       'start', 'update','rename'])
+   scene_action_dict = {}
+   scene_action_dict_sc = Shortcut([])
+
+   view_sc = Shortcut(['store','recall','clear'])
    view_dict = {}
    view_dict_sc = Shortcut([])
 
@@ -941,7 +946,7 @@ SEE ALSO
       scene_order = new_list
       return scene_order
 
-   def scene(key,action='recall',message=None,
+   def scene(key='auto',action='recall',message=None,
              view=1,color=1,active=1,rep=1,frame=1,animate=-1,
              new_key=None, quiet=1):
       '''
@@ -1023,8 +1028,18 @@ DEVELOPMENT TO DO
             if int(cmd.get_setting_legacy("scene_animation"))!=0:
                animate = cmd.get_setting_legacy("scene_animation_duration")
          lock() # manipulating global data, so need lock
+         if key=='auto':
+            action = scene_action_sc.auto_err(action,'action')
+            if action=='recall':
+               action='next'
+            if action=='start':
+               lst = _scene_validate_list()
+               if len(lst):
+                  key = lst[0]
+                  action='recall'
+                  
          if key=='*':
-            action = view_sc.auto_err(action,'action')
+            action = scene_action_sc.auto_err(action,'action')
             if action=='clear':
                for key in scene_dict.keys():
                   # free selections
@@ -1043,7 +1058,7 @@ DEVELOPMENT TO DO
                lst = _scene_validate_list()
                parsing.dump_str_list(lst)
          else:
-            action = view_sc.auto_err(action,'action')
+            action = scene_action_sc.auto_err(action,'action')
             
             if action=='insert_before':
                key = _scene_get_unique_key()

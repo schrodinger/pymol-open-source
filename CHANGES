@@ -5,6 +5,10 @@ CHANGE LOG
 Changes up to 0.98
 
    beta32
+   
+   * psw files now start from first scene by default
+
+   * scene animation duration default = 2.25
 
    * async option to ray, now default for gui "ray" button
 
