@@ -179,6 +179,10 @@ CHANGE LOG
 
 Changes up to 0.92
 
+   * Deuterium atom support
+
+   * split_states command
+
    * much faster loading of multi-model PDB trajectories
 
    * get_symmetry & set_symmetry commands for molecule objects
