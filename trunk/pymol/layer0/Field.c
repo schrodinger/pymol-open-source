@@ -19,15 +19,15 @@ Z* -------------------------------------------------------------------
 
 #include"Field.h"
 
-CField *FieldNew(unsigned int *dim,int n_dim,unsigned int base_size)
+CField *FieldNew(int *dim,int n_dim,unsigned int base_size)
 {
   unsigned int stride;
   int a;
 
   OOAlloc(CField);
   
-  I->stride=Alloc(int,n_dim);
-  I->dim=Alloc(int,n_dim);
+  I->stride=(unsigned int*)Alloc(int,n_dim);
+  I->dim=(unsigned int*)Alloc(int,n_dim);
   
   stride = base_size;
   for(a=n_dim-1;a>=0;a--) {
