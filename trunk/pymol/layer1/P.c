@@ -1005,6 +1005,7 @@ void PGetOptions(PyMOLOptionRec *rec)
   rec->siginthand = PyInt_AsLong(PyObject_GetAttrString(options,"sigint_handler"));
   rec->reuse_helper = PyInt_AsLong(PyObject_GetAttrString(options,"reuse_helper"));
   rec->auto_reinitialize = PyInt_AsLong(PyObject_GetAttrString(options,"auto_reinitialize"));
+  rec->keep_thread_alive = PyInt_AsLong(PyObject_GetAttrString(options,"keep_thread_alive"));
   
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
   if(load_str) {

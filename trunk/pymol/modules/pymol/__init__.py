@@ -1,16 +1,3 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-* 
-#-* 
-#-*
-#Z* -------------------------------------------------------------------
 
 
 # How do I launch PyMOL?  There are two supported ways:
@@ -324,10 +311,12 @@ if pymol_launch != 3: # if this isn't a dry run
    elif pymol_launch==2: # threaded launch (create new thread)
 
       global glutThreadObject
+      cmd.reaper = threading.currentThread()
       glutThreadObject = threading.Thread(target=thread_launch,
-        args=(pymol_argv,))
+        args=(pymol_argv+["-K"],)) # keep PyMOL thread alive
+                                   # even w/o GUI
       glutThreadObject.start()
-
+      
    elif pymol_launch==4: # monolithic (embedded) launch
       invocation.parse_args(pymol_argv)
       prime_pymol()

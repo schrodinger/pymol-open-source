@@ -109,6 +109,7 @@ if __name__=='pymol.cmd':
       r"|\.grd$|\.GRD$", # InsightII Grid format
       ],''))
 
+   reaper = None
    safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
 
    QuietException = parsing.QuietException
@@ -296,6 +297,13 @@ if __name__=='pymol.cmd':
          lock_api.release()
 #         print "lock: released by 0x%x (glut)"%thread.get_ident()
          _cmd.flush_now()
+         if reaper:
+            if not reaper.isAlive():
+               if pymol.invocation.options.no_gui:
+                  _cmd.quit()
+               else:
+                  global reaper
+                  reaper = None
       else:
 #         print "lock: released by 0x%x (not glut), waiting queue"%thread.get_ident()
          lock_api.release()
