@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * fixed raytrace border bug
+
    * fixed isosurface session save bug
 
    * added high-quality transparency support to "isosurface"s
