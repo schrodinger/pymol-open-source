@@ -155,6 +155,7 @@ int *SelectorApplyMultipick(Multipick *mp);
 #define SELE_BYO1 ( 0x2300 | STYP_OPR1 | 0x10 )
 #define SELE_SSTs ( 0x2400 | STYP_SEL1 | 0x70 )
 #define SELE_STAs ( 0x2500 | STYP_SEL1 | 0x70 )
+#define SELE_PREz ( 0x2500 | STYP_SEL0 | 0x70 )
 #define SELE_WIT_ ( 0x2600 | STYP_OP22 | 0x20 ) 
 
 #define SEL_PREMAX 0x8
@@ -245,6 +246,7 @@ static WordKeyValue Keyword[] =
   {  "id",       SELE_ID_s },
   {  "resn",     SELE_RSNs },
   {  "within",   SELE_WIT_ },
+  {  "present",  SELE_PREz },
   {  "w.",       SELE_WIT_ },
   {  "r;",       SELE_RSNs },/* deprecated */
   {  "r.",       SELE_RSNs },
@@ -2715,10 +2717,15 @@ int SelectorSelect0(EvalElem *base)
   int a,b,flag;
   int c=0;
   short int *vis;
-
+  int state;
+  int static_singletons;
+  ObjectMolecule *obj,*cur_obj=NULL;
+  CoordSet *cs;
+  int at_idx;
   base->type=STYP_LIST;
   base->sele=Alloc(int,I->NAtom);
   ErrChkPtr(base->sele);
+
   switch(base->code)
 	 {
 	 case SELE_NONz:
@@ -2737,6 +2744,48 @@ int SelectorSelect0(EvalElem *base)
 		for(a=0;a<I->NAtom;a++)
         base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hydrogen;
 		break;
+    case SELE_PREz:
+      state = SceneGetState();
+      static_singletons = SettingGet(cSetting_static_singletons);
+
+      for(a=0;a<I->NAtom;a++)
+        {
+          base[0].sele[a]=false;
+          obj = I->Obj[I->Table[a].model];
+          if(obj!=cur_obj) { /* different object */
+            if(state>=obj->NCSet)
+              flag=false;
+            else if(!obj->CSet[state]) 
+              flag=false;
+            else {
+              cs = obj->CSet[state];
+              flag=true; /* valid state */
+            }
+            if(!flag)
+              if(I->NCSet==1)
+                if(static_singletons) {
+                  cs = obj->CSet[0];
+                  flag=true;
+                }
+            cur_obj = obj;
+          }
+          if(flag&&cs) {
+            at_idx = I->Table[a].atom;
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[at_idx]) {
+                if(obj->DiscreteAtmToIdx[at_idx]>=0) {
+                  base[0].sele[a]=true;
+                  c++;
+                }
+              }
+            } else {
+            } if(cs->AtmToIdx[at_idx]>=0) {
+              base[0].sele[a]=true;
+              c++;
+            }
+          }
+        }
+      break;
 	 case SELE_ALLz:
 		for(a=0;a<I->NAtom;a++)
 		  {
@@ -2927,7 +2976,7 @@ int SelectorSelect1(EvalElem *base)
             if(obj!=cur_obj) { /* different object */
               if(state>=obj->NCSet)
                 flag=false;
-              if(!obj->CSet[state]) 
+              else if(!obj->CSet[state]) 
                 flag=false;
               else {
                 cs = obj->CSet[state];
@@ -2935,7 +2984,7 @@ int SelectorSelect1(EvalElem *base)
               }
               cur_obj = obj;
             }
-            if(flag) {
+            if(flag&&cs) {
               at_idx = I->Table[a].atom;
               if(obj->DiscreteFlag) {
                 if(cs==obj->DiscreteCSet[at_idx]) {

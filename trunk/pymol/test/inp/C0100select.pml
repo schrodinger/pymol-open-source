@@ -64,5 +64,20 @@ select tst, pept w. 1 of pept
 
 print cmd.select("(none)")
 
+del all
+load dat/pept.pdb,mult
+load dat/il2.pdb,mult
+
+frame 1
+select tst,mult and present
+frame 2
+select tst,mult and present
+select tst,state 1
+select tst,state 2
+hide
+show sph,name c
+select tst,present and vis
+frame 1
+select tst,present and vis
 
 /print "END-LOG"

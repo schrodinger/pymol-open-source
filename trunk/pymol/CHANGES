@@ -122,6 +122,8 @@ Changes up to 0.82
 
    * important bug-fix on rotate and translate commands
 
+   * "present" operator in selection language and tests for "state" operator
+
 Changes up to 0.81
 
    * fixed bug in bg_color API function

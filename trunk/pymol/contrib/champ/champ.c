@@ -30,10 +30,10 @@ Z* -------------------------------------------------------------------
 #define _MATCHDEBUG2
 #define _RINGDEBUG
 
-char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len);
-char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len);
+char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd);
+char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd);
 char *ChampParseStringAtom(CChamp *I,char *c,int atom,int len);
-char *ChampParseBlock(CChamp *I,char *c,int atom);
+int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom);
 
 void ChampPatDump(CChamp *I,int index);
 void ChampAtomDump(CChamp *I,int index);
@@ -989,7 +989,6 @@ int ChampModelToPat(CChamp *I,PyObject *model)
           } else {
             charge = 0;
           }
-          
           switch(charge) {
           case 0: at->charge = cH_Neutral; break;
           case 1: at->charge = cH_Cation; break;
@@ -1020,58 +1019,58 @@ int ChampModelToPat(CChamp *I,PyObject *model)
           case 'C':
             switch(*(c+1)) {
             case 'l':
-              ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2);
+              ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2,false);
               std_flag = true;
               break;
             default:
-              ChampParseAliphaticAtom(I,c,cur_atom,cH_C,1);
+              ChampParseAliphaticAtom(I,c,cur_atom,cH_C,1,true);
               std_flag = true;
               break;
             }
             break;
           case 'H': /* nonstandard */
-            ChampParseAliphaticAtom(I,c,cur_atom,cH_H,1);
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_H,1,false);
             std_flag = true;
             break;
           case 'N':
-            ChampParseAliphaticAtom(I,c,cur_atom,cH_N,1);
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_N,1,true);
             std_flag = true;
             break;      
           case 'O':
-            ChampParseAliphaticAtom(I,c,cur_atom,cH_O,1);
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_O,1,true);
             std_flag = true;
             break;      
           case 'B':
             switch(*(c+1)) {
             case 'r':
-              ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2);
+              ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2,false);
               std_flag = true;
               break;
             default:
-              ChampParseAliphaticAtom(I,c,cur_atom,cH_B,1);
+              ChampParseAliphaticAtom(I,c,cur_atom,cH_B,1,true);
               std_flag = true;
               break;
             }
             break;
           case 'P':
-            ChampParseAliphaticAtom(I,c,cur_atom,cH_P,1);
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_P,1,true);
             std_flag = true;
             break;      
           case 'S':
-            ChampParseAliphaticAtom(I,c,cur_atom,cH_S,1);
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_S,1,true);
             std_flag = true;
             break;      
           case 'F':
-            ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1);
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1,false);
             std_flag = true;
             break;      
           case 'I':
-            ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1);
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1,false);
             std_flag = true;
             break;      
           }
           if(!std_flag) {
-            ChampParseAliphaticAtom(I,c,cur_atom,cH_Sym,strlen(c));
+            ChampParseStringAtom(I,c,cur_atom,strlen(c));
           }
           Py_XDECREF(tmp);
         }
@@ -1964,27 +1963,28 @@ int ChampMatch2(CChamp *I,int template,int target,
 /* =============================================================== 
  * Smiles
  * =============================================================== */
-char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len) 
+char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd) 
 {
   ListAtom *at;
   at=I->Atom+atom;
   at->atom |= mask;
   at->pos_flag = true;
+  at->implicit_hydrogens = imp_hyd;
   PRINTFD(FB_smiles_parsing) 
     " ChampParseAliphaticAtom: called.\n"
     ENDFD;
-
+  /* need to include code for loading symbol */
   return c+len;
 }
 
-char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len) 
+char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd) 
 {
   ListAtom *at;
   at=I->Atom+atom;
   at->atom |= mask;
   at->class |= cH_Aromatic;
   at->pos_flag = true;
-
+  at->implicit_hydrogens = imp_hyd;
   PRINTFD(FB_smiles_parsing) 
     " ChampParseAromaticAtom: called.\n"
     ENDFD;
@@ -1995,20 +1995,114 @@ char *ChampParseStringAtom(CChamp *I,char *c,int atom,int len)
 {
   ListAtom *at;
   at=I->Atom+atom;
-  at->atom |= cH_Sym;
+  at->atom |= cH_Any;
   at->symbol[0]=c[0];
   at->symbol[1]=c[1];
   at->pos_flag = true;
-
   PRINTFD(FB_smiles_parsing) 
     " ChampParseStringAtom: called.\n"
     ENDFD;
   return c+len;
 }
 
-char *ChampParseBlock(CChamp *I,char *c,int atom) 
+int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom) 
 {
-  return c;
+  int ok = true;
+  ListAtom *at;
+  char *c;
+
+  c=*c_ptr;
+
+  at=I->Atom+cur_atom;
+
+  at->implicit_hydrogens = true;
+
+  /* part 1 - symbols */
+  switch(*c) {
+  case '*': /* nonstandard */
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Any,1,false);
+    break;
+  case '?': /* nonstandard */
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_NotH,1,false);
+    break;
+  case 'C':
+    switch(*(c+1)) {
+    case 'l':
+      c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2,false);
+      break;
+    default:
+      c = ChampParseAliphaticAtom(I,c,cur_atom,cH_C,1,false);
+      break;
+    }
+    break;
+  case 'H':
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_H,1,false);
+    break;
+  case 'N':
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_N,1,false);
+    break;      
+  case 'O':
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_O,1,false);
+    break;      
+  case 'B':
+    switch(*(c+1)) {
+    case 'r':
+      c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2,false);
+      break;
+    default:
+      c = ChampParseAliphaticAtom(I,c,cur_atom,cH_B,1,false);
+      break;
+    }
+    break;
+  case 'P':
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_P,1,false);
+    break;      
+  case 'S':
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_S,1,false);
+    break;      
+  case 'F':
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1,false);
+    break;      
+  case 'I':
+    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1,false);
+    break;      
+    /* standard implicit aromatic atoms */
+  case 'c':
+    c = ChampParseAromaticAtom(I,c,cur_atom,cH_C,1,false);
+    break;
+  case 'n':
+    c = ChampParseAromaticAtom(I,c,cur_atom,cH_N,1,false);
+    break;
+  case 'o':
+    c = ChampParseAromaticAtom(I,c,cur_atom,cH_O,1,false);
+    break;
+  case 's':
+    c = ChampParseAromaticAtom(I,c,cur_atom,cH_S,1,false);
+    break;
+  default:
+    if(((*c)>='A')&&((*c)<='Z')) {
+      if(((*c)>='a')&&((*c)<'z')) {
+        c = ChampParseStringAtom(I,c,cur_atom,2);        
+      } else {
+        c = ChampParseStringAtom(I,c,cur_atom,1);        
+      }
+    }
+  }
+  /* stage 3 explicit hydrogen count */
+
+  /* stage 4 explicit hydrogen count */
+
+  /* okay, we've parsed the atom... */
+  while((*c)&&ok&&!done) {
+    if(*c=='[') {
+      done = true;
+      c++;
+      break;
+    }
+    c++;
+  }
+  *c_ptr = c;
+  return ok;
 }
 
 
@@ -2288,8 +2382,8 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
     trivial = trivial && !(at->class&cH_Aliphatic);
     trivial = trivial && !((at->atom!=cH_Any) &&
                            at->atom&( cH_Na | cH_K  | cH_Ca | cH_Mg | cH_Zn | cH_Fe | cH_Cu | cH_Se |
-                                       cH_X | cH_Y | cH_R0 | cH_R1 | cH_R2 | cH_R3 | cH_R4 |
-                                      cH_R5 | cH_R6 | cH_R7 | cH_R8 | cH_R9 | cH_Sym));
+                                       cH_B | cH_A | cH_E | cH_G | cH_J | cH_L | cH_M |
+                                      cH_Q | cH_R | cH_T | cH_X | cH_M ));
 
 
     if(trivial&&(at->atom!=cH_Any)) {
@@ -2323,6 +2417,7 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
       } else {
         switch(at->atom) {
         case cH_Any: buf[0]='*'; buf[1]=0; break;
+        case cH_Any: buf[0]='?'; buf[1]=0; break;
         case cH_B: buf[0]='B'; buf[1]=0; break;
         case cH_C: buf[0]='C'; buf[1]=0; break;
         case cH_N: buf[0]='N'; buf[1]=0; break;
@@ -2417,16 +2512,16 @@ int ChampSmiToPat(CChamp *I,char *c)
       c++;
     } else {
       switch(*c) {
-      /* standard, implicit atoms
+      /* standard, implicit atoms, with lowest normal valences
        * B(3), C(4), N(3,5), O(2), P(3,5), S(2,4,6), F(1), Cl(1), Br(1), I(1) */
       case 'C':
         switch(*(c+1)) {
         case 'l':
-          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2);
+          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2,false);
           sym = cSym_Atom;
           break;
         default:
-          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_C,1);
+          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_C,1,true);
           sym = cSym_Atom;
           PRINTFD(FB_smiles_parsing) 
             " parsed: %p\n",c
@@ -2434,61 +2529,69 @@ int ChampSmiToPat(CChamp *I,char *c)
           break;
         }
         break;
+      case '*': /* nonstandard */
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Any,1,false);
+        sym = cSym_Atom;
+        break;
+      case '?': /* nonstandard */
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_NotH,1,false);
+        sym = cSym_Atom;
+        break;
       case 'H': /* nonstandard */
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_H,1);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_H,1,false);
         sym = cSym_Atom;
         break;
       case 'N':
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_N,1);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_N,1,true);
         sym = cSym_Atom;
         break;      
       case 'O':
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_O,1);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_O,1,true);
         sym = cSym_Atom;
         break;      
       case 'B':
         switch(*(c+1)) {
         case 'r':
-          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2);
+          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2,false);
           sym = cSym_Atom;
           break;
         default:
-          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_B,1);
+          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_B,1,true);
           sym = cSym_Atom;
           break;
         }
         break;
       case 'P':
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_P,1);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_P,1,true);
         sym = cSym_Atom;
         break;      
       case 'S':
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_S,1);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_S,1,true);
         sym = cSym_Atom;
         break;      
       case 'F':
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1,false);
         sym = cSym_Atom;
         break;      
       case 'I':
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1,false);
         sym = cSym_Atom;
         break;      
         /* standard implicit aromatic atoms */
       case 'c':
-        c = ChampParseAromaticAtom(I,c,cur_atom,cH_C,1);
+        c = ChampParseAromaticAtom(I,c,cur_atom,cH_C,1,true);
         sym = cSym_Atom;
         break;
       case 'n':
-        c = ChampParseAromaticAtom(I,c,cur_atom,cH_N,1);
+        c = ChampParseAromaticAtom(I,c,cur_atom,cH_N,1,true);
         sym = cSym_Atom;
         break;
       case 'o':
-        c = ChampParseAromaticAtom(I,c,cur_atom,cH_O,1);
+        c = ChampParseAromaticAtom(I,c,cur_atom,cH_O,1,true);
         sym = cSym_Atom;
         break;
       case 's':
-        c = ChampParseAromaticAtom(I,c,cur_atom,cH_S,1);
+        c = ChampParseAromaticAtom(I,c,cur_atom,cH_S,1,true);
         sym = cSym_Atom;
         break;
       case '-':
@@ -2515,14 +2618,13 @@ int ChampSmiToPat(CChamp *I,char *c)
         if(c) { 
           mark_code = 10*((*c)-'0');
           c++;
-        }
+        } /* else error */
         if(c) {
           sym = cSym_Mark;
           mark_code += (*c)-'0';
           c++;
-        }
+        } /* else error */
         break;
-        
       case '(':
         c++;
         sym = cSym_OpenScope;
@@ -2551,6 +2653,7 @@ int ChampSmiToPat(CChamp *I,char *c)
       /* =========== actions based on root level parsing ========== */
       switch(sym) {
       case cSym_Atom:
+      case cSym_OpenBlock:
         /* was there a preceeding atom? if so, then form bond and save atom */
         if(base_atom) {
           PRINTFD(FB_smiles_parsing) 
@@ -2571,6 +2674,10 @@ int ChampSmiToPat(CChamp *I,char *c)
         } 
         base_atom = cur_atom;
         save_atom();
+        if(sym==cSym_OpenBlock) /* if this a block, parse as such */
+          ok = ChampParseAtomBlock(I,&c,cur_atom);
+        break;
+      case cSym_CloseBlock: /* should never be reached */
         break;
       case cSym_OpenScope: /* push base_atom onto stack */
         stack = ListElemPushInt(&I->Int,stack,base_atom);
@@ -2690,6 +2797,9 @@ int ChampAtomMatch(ListAtom *p,ListAtom *a)
           return 0;
       if(p->residue[0])
         if(strcmp(p->residue,a->residue))
+          return 0;
+      if(p->symbol[0])
+        if(strcmp(p->symbol,a->symbol))
           return 0;
       return 1;
     }

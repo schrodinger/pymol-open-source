@@ -87,8 +87,6 @@ PyMOL>select tst,pept within 50 of tiny
  Selector: selection "tst" defined with 67 atoms.
 PyMOL>select tst, pept w. 1 of pept
  Selector: selection "tst" defined with 107 atoms.
-PyMOL>select tst, pept w. 1 of pept
- Selector: selection "tst" defined with 107 atoms.
 PyMOL>print cmd.select("(none)")
  Selector: no atoms selected.
 0
