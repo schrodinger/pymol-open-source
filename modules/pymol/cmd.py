@@ -432,6 +432,7 @@ PyMOL COMMAND LINE OPTIONS
       .mol    MDL MOL file to be loaded on startup
       .xplor  X-PLOR Map file to be loaded on startup
       .pkl    Pickled ChemPy Model (class "chempy.model.Indexed")
+      .r3d    Raster3D Object
    '''
    help('launching')
 
@@ -3278,8 +3279,9 @@ DESCRIPTION
   
    "load" reads several file formats.  The file extension is used to
    determine the format.  PDB files must end in ".pdb", MOL files must
-   end in ".mol", Macromodel files must end in ".mmod".  and XPLOR
-   maps must end in ".xplor".
+   end in ".mol", Macromodel files must end in ".mmod", XPLOR
+   maps must end in ".xplor", Raster3D input (Molscript output) must
+   end in ".r3d".
 
    Pickled ChemPy models with a ".pkl" can also be directly read.
  
