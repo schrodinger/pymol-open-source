@@ -27,11 +27,14 @@ typedef struct {
   Vector3i iMin,iMax;
   int *Head,*Link;
   int *EHead,*EList;
-  int *Cache,*CacheLink,CacheStart;
   int NVert;
   int NEElem;
   Vector3f Max,Min;
 } MapType;
+
+typedef struct {
+  int *Cache,*CacheLink,CacheStart;
+} MapCache;
 
 #define MapBorder 2
 
@@ -44,7 +47,7 @@ void MapFree(MapType *I);
 
 #define MapEStart(m,a,b,c) (m->EHead + ((a) * m->D1D2) + ((b)*m->Dim[2]) + (c))
 
-#define MapNext(m,a) (*(m->Link+a))
+#define MapNext(m,a) (*(m->Link+(a)))
 void MapLocus(MapType *map,float *v,int *a,int *b,int *c);
 int *MapLocusEStart(MapType *map,float *v);
 int MapExclLocus(MapType *map,float *v,int *a,int *b,int *c);
@@ -52,8 +55,9 @@ int MapExclLocus(MapType *map,float *v,int *a,int *b,int *c);
 #define MapCache(m,a) {m->Cache[a]=1;m->CacheLink[a]=m->CacheStart;m->CacheStart=a;}
 #define MapCached(m,a) (m->Cache[a])
 
-void MapCacheInit(MapType *I);
-void MapCacheReset(MapType *I);
+void MapCacheInit(MapCache *M,MapType *I);
+void MapCacheReset(MapCache *M);
+void MapCacheFree(MapCache *M);
 
 float MapGetSeparation(float range,float *mx,float *mn,float *diagonal);
 
@@ -61,6 +65,8 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal);
 
 int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c); 
 void MapSetupExpressXY(MapType *I);
+
+void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert);
 
 #endif
 

@@ -75,9 +75,10 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 				 int *vert2prim,CPrimitive *prim,
 				 int shadow,float front,float back,
              float excl_trans,int trans_shadows,
-             float fudge,int *interior_flag);
+             int *interior_flag,MapCache *cache);
 
 void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i);
+void BasisSetFudge(float fudge);
 
 #endif
 

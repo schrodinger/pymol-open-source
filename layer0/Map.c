@@ -42,33 +42,38 @@ void MapFree(MapType *I)
 		FreeP(I->Head);
 		FreeP(I->Link);
 		FreeP(I->EHead);
-		FreeP(I->Cache);
-		FreeP(I->CacheLink);
 		VLAFreeP(I->EList);
 	 }
   OOFreeP(I);
 }
 
-void MapCacheInit(MapType *I) 
+void MapCacheInit(MapCache *M,MapType *I) 
 {
   int a,*p;
-  I->Cache = Alloc(int,I->NVert);
-  I->CacheLink = Alloc(int,I->NVert);
-  I->CacheStart = -1;
-  p=I->Cache;
+
+  M->Cache = Alloc(int,I->NVert);
+  M->CacheLink = Alloc(int,I->NVert);
+  M->CacheStart = -1;
+  p=M->Cache;
   for(a=0;a<I->NVert;a++)
 	 *(p++) = 0;
 }
 
-void MapCacheReset(MapType *I) 
+void MapCacheReset(MapCache *M)
 {
   int i;
-  i=I->CacheStart;
+  i=M->CacheStart;
   while(i>=0) {
-	 I->Cache[i]=0;
-	 i=I->CacheLink[i];
+	 M->Cache[i]=0;
+	 i=M->CacheLink[i];
   }
-  I->CacheStart=-1;
+  M->CacheStart=-1;
+}
+
+void MapCacheFree(MapCache *M)
+{
+  FreeP(M->Cache);
+  FreeP(M->CacheLink);
 }
 
 #define MapSafety 0.01F
@@ -109,17 +114,18 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 void MapSetupExpressXY(MapType *I) /* setup a list of XY neighbors for each square */
 {
   int n=0;
-  int a,b,c,d,e,i;
+  int a,b,c,flag;
+  register int d,e,i;
   unsigned int mapSize;
-  int st,flag;
+  int st;
 
   PRINTFD(FB_Map)
     " MapSetupExpressXY-Debug: entered.\n"
     ENDFD;
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->EHead=Alloc(int,mapSize);
+  I->EHead=Calloc(int,mapSize);
   ErrChkPtr(I->EHead);
-  I->EList=VLAMalloc(10000,sizeof(int),5,0);
+  I->EList=VLAMalloc(256000,sizeof(int),5,0); 
 
   n=1;
   for(a=I->iMin[0];a<=I->iMax[0];a++)
@@ -147,17 +153,79 @@ void MapSetupExpressXY(MapType *I) /* setup a list of XY neighbors for each squa
 				VLACheck(I->EList,int,n);
 				I->EList[n]=-1;
 				n++;
-			 } else {
-				*(MapEStart(I,a,b,c))=0;
-			 }
+          } /*else {
+            *(MapEStart(I,a,b,c))=0;
+            }*/
 		  }
   I->NEElem=n;
-
+  VLASize(I->EList,int,I->NEElem);
   PRINTFD(FB_Map)
     " MapSetupExpressXY-Debug: leaving...\n"
     ENDFD;
 
 }
+
+
+void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
+{
+  int n=0;
+  int a,b,c,flag;
+  register int d,e,i;
+  unsigned int mapSize;
+  int st;
+  float *v;
+  int h;
+  int j,k;
+
+  PRINTFD(FB_Map)
+    " MapSetupExpressXY-Debug: entered.\n"
+    ENDFD;
+  mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
+  I->EHead=Calloc(int,mapSize);
+  ErrChkPtr(I->EHead);
+  I->EList=VLAMalloc(256000,sizeof(int),5,0); /* autozero */
+
+  
+  n=1;
+  v = vert;
+  for(h=0;h<n_vert;h++) { 
+    MapLocus(I,v,&j,&k,&c);
+    for(a=j-1;a<=j+1;a++)
+      for(b=k-1;b<=k+1;b++) {
+        if(!*(MapEStart(I,a,b,c))) {
+          st=n;
+          flag=false;
+          for(d=a-1;d<=a+1;d++)
+            for(e=b-1;e<=b+1;e++)
+              {
+                i=*MapFirst(I,d,e,c);
+                if(i>=0) {
+                  flag=true;
+                  while(i>=0) {
+                    VLACheck(I->EList,int,n);
+                    I->EList[n]=i;
+                    n++;
+                    i=MapNext(I,i);
+                  }
+                }
+              }
+          if(flag) {
+            *(MapEStart(I,a,b,c))=st;
+            VLACheck(I->EList,int,n);
+            I->EList[n]=-1;
+            n++;
+          }
+        }
+      }
+    v+=3;
+  }
+  I->NEElem=n;
+  PRINTFD(FB_Map)
+    " MapSetupExpressXY-Debug: leaving...\n"
+    ENDFD;
+  
+}
+
 
 void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 {
@@ -206,6 +274,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 				*(MapEStart(I,a,b,c))=0;
 			 }
 		  }
+
 
   PRINTFD(FB_Map)
     " MapSetupExpress-Debug: leaving...\n"
@@ -324,9 +393,6 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 
   I->Head = NULL;
   I->Link = NULL;
-  I->Cache = NULL;
-  I->CacheLink = NULL;
-  I->CacheStart = -1;
   I->EHead = NULL;
   I->EList = NULL;
   I->NEElem=0;
@@ -470,10 +536,11 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 	 for(b=0;b<I->Dim[1];b++)
 		for(c=0;c<I->Dim[2];c++)
 		*(MapFirst(I,a,b,c))=-1;*/
+
   a=mapSize;
   i=I->Head;
   while(a--)
-	 *(i++)=-1;
+    *(i++)=-1;
 
   I->NVert = nVert;
 
@@ -510,6 +577,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   PRINTFD(FB_Map)
     " MapNew-Debug: leaving...\n"
     ENDFD;
+
 
   return(I);
 }
