@@ -434,8 +434,10 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   int literal = (int)SettingGet(G,cSetting_pdb_literal_names);
   int reformat = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
 
-  strcpy(resn,ai->resn); /* enforce 3-letter residue name in PDB files */
-  resn[3]=0;
+  strcpy(resn,ai->resn); 
+  if(SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name)) {
+    resn[3]=0; /* enforce 3-letter residue name in PDB files */
+  }
 
   if(ai->hetatm)
 	aType=sHETATM;
@@ -578,7 +580,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
 
   if((!pdb_info)||(!pdb_info->is_pqr_file)) { /* relying upon short-circuit */
 
-    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
+    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
                   aType,cnt+1,name,ai->alt,resn,
                   ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);
   } else {
@@ -589,7 +591,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
       chain[1] = 0;
     }
       
-    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f %7.3f %7.3f\n",
+    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %8.3f%8.3f%8.3f %7.3f %7.3f\n",
                   aType,cnt+1,name,ai->alt,resn,
                   chain,resi,*v,*(v+1),*(v+2),ai->partialCharge,ai->bohr_radius);
   }

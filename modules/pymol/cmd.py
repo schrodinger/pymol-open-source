@@ -1712,7 +1712,8 @@ SEE ALSO
          'movie.load'    : [ movie.load        , 0 , 0 , ''  , parsing.STRICT ],
          'movie.zoom'    : [ movie.zoom        , 0 , 0 , ''  , parsing.STRICT ],
          'movie.screw'   : [ movie.screw       , 0 , 0 , ''  , parsing.STRICT ],
-         'movie.sweep'   : [ movie.sweep       , 0 , 0 , ''  , parsing.STRICT ],      
+         'movie.sweep'   : [ movie.sweep       , 0 , 0 , ''  , parsing.STRICT ],
+         'movie.pause'   : [ movie.pause       , 0 , 0 , ''  , parsing.STRICT ],               
          'movie.nutate'  : [ movie.nutate      , 0 , 0 , ''  , parsing.STRICT ],
          'movie.tdroll'  : [ movie.tdroll      , 0 , 0 , ''  , parsing.STRICT ],
       # activate metaphorics extensions

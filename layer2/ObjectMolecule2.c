@@ -766,6 +766,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
   int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
   int reformat_names = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
+  int truncate_resn = SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name);
   int newModelFlag = false;
   int ssFlag = false;
   int ss_resv1=0,ss_resv2=0;
@@ -1579,9 +1580,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             ai->alt[1]=0;
           }
           
-          p=ncopy(cc,p,3); 
-          if(!sscanf(cc,"%s",ai->resn)) ai->resn[0]=0;
-          
+          p=ncopy(cc,p,4);  /* now allowing for 4-letter residues */
+          if(!sscanf(cc,"%s",ai->resn)) 
+            ai->resn[0]=0;
+          else if(truncate_resn) /* unless specifically disabled */
+            ai->resn[3]=0;
+
           if(ai->name[0]) {
             int name_len = strlen(ai->name);
             char name[4];
@@ -1661,7 +1665,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             }
           }
 
-          p=nskip(p,1);
           p=ncopy(cc,p,1);
           if(*cc==' ')
             ai->chain[0]=0;
@@ -2780,7 +2783,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                         }
                                         break;
                                       }
-                                    } else if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard disconnected PDB residue */
+                                    } else if((!ai1->hetatm)) { /* Standard disconnected PDB residue */
                                       if(AtomInfoSameResidue(G,ai1,ai2)) {
                                         /* nasty high-speed hack to get bond valences and formal charges 
                                            for standard residues */
@@ -2909,8 +2912,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                   ai1->formalCharge=1;
                                                 else if(!strcmp(ai2->name,"ND1")) 
                                                   ai2->formalCharge=1;
-                                              case 'S':
-                                              case 'E':
                                                 if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
                                                    ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
                                                   order=2;
@@ -2918,6 +2919,46 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                         ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
                                                   order=2;
                                                 break;
+                                              case 'S':
+                                                switch(ai1->resn[3]) {
+                                                case 'A': /* HISA  */
+                                                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
+                                                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                    order=2;
+                                                  else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"NE2")))||
+                                                          ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"NE2")))) 
+                                                    order=2;
+                                                  break;
+                                                case 0: /* plain HIS */
+                                                case 'B': /* HISB Gromacs */
+                                                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
+                                                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                    order=2;
+                                                  else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
+                                                          ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
+                                                    order=2;
+                                                  break;
+                                                case 'H': /* HISH */
+                                                  if(!strcmp(ai1->name,"ND1")) 
+                                                    ai1->formalCharge=1;
+                                                  else if(!strcmp(ai2->name,"ND1")) 
+                                                    ai2->formalCharge=1;
+                                                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
+                                                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                    order=2;
+                                                  else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
+                                                          ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
+                                                    order=2;
+                                                  break;
+                                                }
+                                                break;
+                                              case 'E':
+                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
+                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
+                                                        ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
+                                                  order=2;
                                                 break;
                                               case 'D':
                                                 if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
