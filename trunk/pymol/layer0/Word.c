@@ -169,7 +169,7 @@ int WordCompare(char *p,char *q,int ignCase)
 int WordIndex(WordType *list,char *word,int minMatch,int ignCase)
 {
   int c,i,mi,mc;
-  unsigned int result = -1;
+  int result = -1;
   c=0;
   mc=-1;
   mi=-1;
@@ -200,40 +200,40 @@ int WordIndex(WordType *list,char *word,int minMatch,int ignCase)
 
 }
 
-unsigned int WordChoose(WordType *list, char *word,int minMatch,int ignCase)
+int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase)
 {
   int c,i,mi,mc;
-  unsigned int result = 0;
+  int result = 0;
   c=0;
   mc=-1;
   mi=-1;
-  while(list[c][0])
+  while(list[c].word[0])
 	 {
-		i=WordMatch(word,list[c],ignCase);
+		i=WordMatch(word,list[c].word,ignCase);
 		if(i>0)
 		  {
 			 if(mi<i)
 				{
 				  mi=i;
-				  mc=c;
+				  mc=list[c].value;
 				}
 		  }
 		else if(i<0)
 		  {
-			 mi=minMatch+1; /*exact match always matches */
-			 mc=c;
+			 if((-i)<=minMatch)
+				mi=minMatch+1; /*exact match always matches */
+			 else
+				mi=(-i);
+			 mc=list[c].value;
 		  }
-		c+=2;
+		c++;
 	 }
-  if((mi>minMatch))
-	 {
-		result = (list[mc+1][0]<<24) + 
-		  (list[mc+1][1]<<16) + 
-		  (list[mc+1][2]<<8) + 
-		  (list[mc+1][3]);
-	 }
+  if((mi>=minMatch))
+	 result=mc;
   return(result);  
 }
+
+
 
 
 

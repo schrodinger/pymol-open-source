@@ -35,6 +35,7 @@ void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick);
 void ObjectDistFree(ObjectDist *I);
 void ObjectDistUpdate(ObjectDist *I);
 int ObjectDistGetNFrames(ObjectDist *I);
+void ObjectDistSetRepVis(ObjectDist *I,int rep);
 
 /*========================================================================*/
 int ObjectDistGetNFrames(ObjectDist *I)

@@ -815,7 +815,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   if(sele>=0) {
 	SelectorUpdateTable();
 	switch(op->code) {
-	case 'PDB1':
+	case OMOP_PDB1:
 	  for(b=0;b<I->NCSet;b++)
        if(I->CSet[b])
 		  {
@@ -838,7 +838,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				}
 		  }
 	  break;
-	case 'AVRT': /* average vertex coordinate */
+	case OMOP_AVRT: /* average vertex coordinate */
      cnt=op->nvv1;
      maxCnt=cnt;
 	  for(b=0;b<I->NCSet;b++) {
@@ -875,7 +875,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      }
      op->nvv1=maxCnt;
      break;
-	case 'SFIT': /* state fitting within a single object */
+	case OMOP_SFIT: /* state fitting within a single object */
 	  for(b=0;b<I->NCSet;b++) {
        rms = -1.0;
        if(I->CSet[b]&&(b!=op->i1))
@@ -930,30 +930,30 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	   for(a=0;a<I->NAtom;a++)
 		 {
 		   switch(op->code) { 
-		   case 'COLR': /* atom based loops */
-		   case 'VISI':
-		   case 'TTTF':
-         case 'ALTR':
+		   case OMOP_COLR: /* atom based loops */
+		   case OMOP_VISI:
+		   case OMOP_TTTF:
+         case OMOP_ALTR:
 			 s=I->AtomInfo[a].selEntry;
 			 while(s)
 			   {
 				 if(SelectorMatch(s,sele))
 				   {
 					 switch(op->code) {
-					 case 'VISI':
+					 case OMOP_VISI:
                   if(op->i1<0)
                     for(d=0;d<cRepCnt;d++) 
                       I->AtomInfo[a].visRep[d]=op->i2;                      
                   else
                     I->AtomInfo[a].visRep[op->i1]=op->i2;
 					   break;
-					 case 'COLR':
+					 case OMOP_COLR:
 					   I->AtomInfo[a].color=op->i1;
 					   break;
-					 case 'TTTF':
+					 case OMOP_TTTF:
 					   hit_flag=true;
 					   break;
-                case 'ALTR':
+                case OMOP_ALTR:
                   if (ok) {
                     if(!PAlterAtom(&I->AtomInfo[a],op->s1))
                       op->i1++;
@@ -968,7 +968,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 			   }
 			 break;
 #ifdef PYMOL_FUTURE_CODE
-         case 'CSOC': /* specific coordinate set based operations */
+         case OMOP_CSOC: /* specific coordinate set based operations */
            if(I->NCSet<op->cs1) 
              if(I->CSet[op->cs1]) {
                
@@ -978,7 +978,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                    if(SelectorMatch(s,sele))
                      {
                        switch(op->code) {
-                       case 'CSOC': /* object and coordinate index */
+                       case OMOP_CSOC: /* object and coordinate index */
                          break;
                        }
                        break;
@@ -999,7 +999,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 					   if(SelectorMatch(s,sele))
 						 {
 						   switch(op->code) {
-						   case 'SUMC':
+						   case OMOP_SUMC:
 							 a1=I->CSet[b]->AtmToIdx[a];
 							 if(a1>=0)
 							   {
@@ -1007,7 +1007,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 								 op->i1++;
 							   }
 							 break;
-						   case 'MNMX': 
+						   case OMOP_MNMX: 
 							 a1=I->CSet[b]->AtmToIdx[a];
 							 if(a1>=0)
 							   {
@@ -1027,7 +1027,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                           }
 							   }
 							 break;
-						   case 'MDST': 
+						   case OMOP_MDST: 
 							 a1=I->CSet[b]->AtmToIdx[a];
 							 if(a1>=0)
 							   {
@@ -1036,11 +1036,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 								   op->f1=r;
 							   }
 							 break;
-						   case 'INVA': 
+						   case OMOP_INVA: 
 							 if(I->CSet[b]->AtmToIdx[a]>=0)
 							   inv_flag=true;
 							 break;
-						   case 'VERT': 
+						   case OMOP_VERT: 
                        a1=I->CSet[b]->AtmToIdx[a];
                        if(a1>=0) {
                          VLACheck(op->vv1,float,(op->nvv1*3)+2);
@@ -1052,7 +1052,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                          op->nvv1++;
                        }
 							 break;	
-						   case 'SVRT':  /* gives us only vertices for a specific coordinate set */
+						   case OMOP_SVRT:  /* gives us only vertices for a specific coordinate set */
                        if(b==op->i1) {
                          a1=I->CSet[b]->AtmToIdx[a];
                          if(a1>=0) {
@@ -1067,7 +1067,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                        }
 							 break;	
  /* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
-						   case 'MOME': 
+						   case OMOP_MOME: 
 							 a1=I->CSet[b]->AtmToIdx[a];
 							 if(a1>=0) {
 							   subtract3f(I->CSet[b]->Coord+(3*a1),op->v1,v1);
@@ -1088,7 +1088,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 					   s=SelectorNext(s);
 					 }
 				   switch(op->code) {
-				   case 'INVA':
+				   case OMOP_INVA:
                  if(inv_flag) {
                   if(op->i1<0)
                     for(d=0;d<cRepCnt;d++) {
@@ -1108,7 +1108,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	}
 	if(hit_flag) {
 	  switch(op->code) {
-	  case 'TTTF':
+	  case OMOP_TTTF:
 		ObjectMoleculeTransformTTTf(I,op->ttt,-1);
 		break;
 	  }
@@ -1199,7 +1199,7 @@ ObjectMolecule *ObjectMoleculeNew(void)
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
 {
-  int a,b;
+  int a;
   int *i0,*i1;
   AtomInfoType *a0,*a1;
   OOAlloc(ObjectMolecule);

@@ -51,6 +51,26 @@ typedef struct ObjectMoleculeOpRec {
   int nvv1,nvv2;
 } ObjectMoleculeOpRec;
 
+/* these four letter code are left over from an 
+   earlier multicharacter constant implementation
+   and should be replaced with something more verbose */
+
+#define OMOP_PDB1 1
+#define OMOP_AVRT 2
+#define OMOP_SFIT 3
+#define OMOP_COLR 4
+#define OMOP_VISI 5
+#define OMOP_TTTF 6
+#define OMOP_ALTR 7
+#define OMOP_CSOC 8
+#define OMOP_SUMC 9
+#define OMOP_VERT 10
+#define OMOP_SVRT 11
+#define OMOP_MOME 12
+#define OMOP_INVA 13
+#define OMOP_MDST 14
+#define OMOP_MNMX 15
+
 #include"CoordSet.h"
 
 ObjectMolecule *ObjectMoleculeNew(void);
