@@ -209,8 +209,8 @@ torsion 180
 # API only
 
 print cmd.get_model().__class__
-print "%8.4f"%cmd.get_area()
-print  "%8.4f"%cmd.get_area("(name ca)")
+print "%8.3f"%cmd.get_area()
+print "%8.3f"%cmd.get_area("(name ca)")
 print cmd.get_names()
 print cmd.get_type('pept')
 print cmd.identify("(i;7)")

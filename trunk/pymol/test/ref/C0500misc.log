@@ -215,10 +215,10 @@ PyMOL>torsion 180
 PyMOL>torsion 180
 PyMOL>print cmd.get_model().__class__
 chempy.models.Indexed
-PyMOL>print "%8.4f"%cmd.get_area()
-1388.0356
-PyMOL>print  "%8.4f"%cmd.get_area("(name ca)")
-100.4625
+PyMOL>print "%8.3f"%cmd.get_area()
+1388.036
+PyMOL>print "%8.3f"%cmd.get_area("(name ca)")
+ 100.463
 PyMOL>print cmd.get_names()
 ['pept', 'dist01', 'dist02', 'tst', 'tst2']
 PyMOL>print cmd.get_type('pept')
