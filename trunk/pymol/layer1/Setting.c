@@ -346,6 +346,16 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_cull_spheres].Name,
 			"cull_spheres");
 
+  I->NSetting++;
+  I->Setting[cSetting_test1].Value[0] = 1000000.0;
+  strcpy(I->Setting[cSetting_test1].Name,
+			"test1");
+
+  I->NSetting++;
+  I->Setting[cSetting_test2].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_test2].Name,
+			"test2");
+
 
 }
 

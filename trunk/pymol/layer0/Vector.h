@@ -35,12 +35,9 @@ void copy3f( float *v1 , float *v2);
 void add3f ( float *v1, float *v2, float *v3 );
 void subtract3f ( float *v1, float *v2, float *v3 );
 
-#define average3f(a,b,c) average(a,b,c)
-
 void average3f ( float *v1, float *v2, float *avg );
 void scale3f ( float *v1, float v0, float *v2);
 float length3f ( float *v1 );
-
 
 double length3d ( double *v1 );
 float lengthsq3f ( float *v1 );
