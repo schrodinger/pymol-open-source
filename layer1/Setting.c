@@ -933,9 +933,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_loop_quality, 6);
 
-  SettingSet_f(I,cSetting_cartoon_power, 1.8);
+  SettingSet_f(I,cSetting_cartoon_power, 1.5);
 
-  SettingSet_f(I,cSetting_cartoon_power_b, 0.45);
+  SettingSet_f(I,cSetting_cartoon_power_b, 0.55);
 
   SettingSet_f(I,cSetting_cartoon_rect_length, 1.40);
 
@@ -975,13 +975,11 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_smooth_loops, 1.0);
 
-  SettingSet_f(I,cSetting_cartoon_dumbbell_length, 1.50);
+  SettingSet_f(I,cSetting_cartoon_dumbbell_length, 1.60);
 
-  SettingSet_f(I,cSetting_cartoon_dumbbell_width, 0.15);
+  SettingSet_f(I,cSetting_cartoon_dumbbell_width, 0.17);
 
-  SettingSet_f(I,cSetting_cartoon_dumbbell_radius, 0.15);
-
-  SettingSet_f(I,cSetting_cartoon_dumbbell_radius, 0.15);  
+  SettingSet_f(I,cSetting_cartoon_dumbbell_radius, 0.16);
 
   SettingSet_f(I,cSetting_cartoon_fancy_helices, 0.0);  
 

@@ -241,17 +241,22 @@ def phipsi(selection="(pk1)"): # NOT THREAD SAFE
    cmd.delete("_pp_np")
    return (phi,psi)
 
-def rainbow(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
+def rainbow(selection="(name ca and alt '',A)",reverse=0): # NOT THREAD SAFE
 
    cmd.feedback("push")
    cmd.feedback("disable","executive","actions")
 
    # your basic rainbow...
    
-   list = [(255,0,0),(255,128,0),
-           (255,255,0),(0,255,0),
-           (0,255,255),(0,128,255),
-           (0,0,255)]
+   list = [(0,0,255),
+           (0,128,255),
+           (0,255,255),
+           (0,255,0),
+           (255,255,0),
+           (255,128,0),
+           (255,0,0)]
+   if reverse:
+      list.reverse()
    #
    last = list.pop(0)
    cmd.set_color("rainbow000",[last[0]/255.0,last[1]/255.0,last[2]/255.0])
