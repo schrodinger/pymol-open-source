@@ -1924,6 +1924,10 @@ void SelectorGetTmp(char *input,char *store)
   SelectorType *I=&Selector;
   WordType name;
   OrthoLineType buffer;
+  PRINTFD(FB_Selector)
+    " SelectorGetTmp-Debug: entered with '%s'.\n",input
+    ENDFD;
+
   if(input[0]=='(') {
     sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
 	 SelectorCreate(name,input,NULL,false,NULL);
@@ -1940,6 +1944,9 @@ void SelectorGetTmp(char *input,char *store)
       strcpy(store,name);
     }
   }
+  PRINTFD(FB_Selector)
+    " SelectorGetTmp-Debug: leaving with '%s'.\n",store
+    ENDFD;
 }
 /*========================================================================*/
 void SelectorFreeTmp(char *name)

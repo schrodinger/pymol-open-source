@@ -1297,11 +1297,27 @@ static PyObject *CmdCopy(PyObject *self,   PyObject *args)
 
 static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
 {
+  char *str1;
+  OrthoLineType s1;
   int ok=true;
+  int rep=-1;
+  ok = PyArg_ParseTuple(args,"si",&str1,&rep);
+  PRINTFD(FB_CCmd)
+    " CmdRebuild: called with %s.\n",str1
+    ENDFD;
+
   if (ok) {
     APIEntry();
-    ExecutiveRebuildAll();  /* TODO STATUS */
+    if(WordMatch(str1,"all",true)<0)
+      ExecutiveRebuildAll();
+    else {
+      SelectorGetTmp(str1,s1);
+      ExecutiveInvalidateRep(s1,rep,cRepInvAll);
+      SelectorFreeTmp(s1); 
+    }
     APIExit();
+  } else {
+    ok = -1; /* special error convention */
   }
   return(APIStatus(ok));
 }
