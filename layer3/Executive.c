@@ -5545,62 +5545,97 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
   unblock = PAutoBlock();
   if(sele[0]==0) { 
     /* do nothing */
-  } 
-  else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
-    while(ListIterate(I->Spec,rec,next))
-      {
-        if(rec->type==cExecObject) {
-          if(rec->obj->fGetSettingHandle) {
-            handle = rec->obj->fGetSettingHandle(rec->obj,state);
-            if(handle) {
-              SettingCheckHandle(G,handle);
-              ok = SettingUnset(*handle,index);
-              nObj++;
+  } else {
+    int side_effects = false;
+
+    if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
+      
+      while(ListIterate(I->Spec,rec,next))
+        {
+          if(rec->type==cExecObject) {
+            if(rec->obj->fGetSettingHandle) {
+              handle = rec->obj->fGetSettingHandle(rec->obj,state);
+              if(handle) {
+                SettingCheckHandle(G,handle);
+                ok = SettingUnset(*handle,index);
+                nObj++;
+              }
             }
           }
-        }
-        if(nObj) {
-          if(updates) 
-            SettingGenerateSideEffects(G,index,sele,state);
-        }
-        if(Feedback(G,FB_Setting,FB_Actions)) {
-          if(nObj&&handle) {
-            SettingGetName(G,index,name);
-            if(!quiet) {
-              if(state<0) {
-                PRINTF
-                  " Setting: %s unset in %d objects.\n",name,nObj
-                  ENDF(G);
-              } else {
-                PRINTF
-                  " Setting: %s unset in %d objects, state %d.\n",
-                  name,nObj,state+1
-                  ENDF(G);
+          if(nObj) {
+            if(updates) 
+              side_effects = true;
+          }
+          if(Feedback(G,FB_Setting,FB_Actions)) {
+            if(nObj&&handle) {
+              SettingGetName(G,index,name);
+              if(!quiet) {
+                if(state<0) {
+                  PRINTF
+                    " Setting: %s unset in %d objects.\n",name,nObj
+                    ENDF(G);
+                } else {
+                  PRINTF
+                    " Setting: %s unset in %d objects, state %d.\n",
+                    name,nObj,state+1
+                    ENDF(G);
+                }
               }
             }
           }
         }
-      }
-  } else { /* based on a selection/object name */
-    sele1=SelectorIndexByName(G,sele);
-    while((ListIterate(I->Spec,rec,next)))
-      if(rec->type==cExecObject) {
-        if(rec->obj->type==cObjectMolecule)
-          {
-            if(sele1>=0) {
-              obj=(ObjectMolecule*)rec->obj;
-              ObjectMoleculeOpRecInit(&op);
-              op.code=OMOP_CountAtoms;
-              op.i1=0;
-              ObjectMoleculeSeleOp(obj,sele1,&op);
-              if(op.i1&&rec->obj->fGetSettingHandle) {
+    } else { /* based on a selection/object name */
+      sele1=SelectorIndexByName(G,sele);
+      while((ListIterate(I->Spec,rec,next)))
+        if(rec->type==cExecObject) {
+          if(rec->obj->type==cObjectMolecule)
+            {
+              if(sele1>=0) {
+                obj=(ObjectMolecule*)rec->obj;
+                ObjectMoleculeOpRecInit(&op);
+                op.code=OMOP_CountAtoms;
+                op.i1=0;
+                ObjectMoleculeSeleOp(obj,sele1,&op);
+                if(op.i1&&rec->obj->fGetSettingHandle) {
+                  handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                  if(handle) {
+                    SettingCheckHandle(G,handle);
+                    ok = SettingUnset(*handle,index);
+                    if(ok) {
+                      if(updates) 
+                        side_effects = true;
+                      if(!quiet) {
+                        if(state<0) { /* object-specific */
+                          if(Feedback(G,FB_Setting,FB_Actions)) {
+                            SettingGetName(G,index,name);
+                            PRINTF
+                              " Setting: %s unset in object \"%s\".\n",
+                              name,rec->obj->Name
+                              ENDF(G);
+                          }
+                        } else { /* state-specific */
+                          if(Feedback(G,FB_Setting,FB_Actions)) {
+                            SettingGetName(G,index,name);
+                            PRINTF
+                              " Setting: %s unset in object \"%s\", state %d.\n",
+                              name,rec->obj->Name,state+1
+                              ENDF(G);
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } else if(strcmp(rec->obj->Name,sele)==0) {
+              if(rec->obj->fGetSettingHandle) {
                 handle = rec->obj->fGetSettingHandle(rec->obj,state);
                 if(handle) {
                   SettingCheckHandle(G,handle);
                   ok = SettingUnset(*handle,index);
                   if(ok) {
-                    if(updates) 
-                      SettingGenerateSideEffects(G,index,sele,state);
+                    if(updates)
+                      side_effects=true;
                     if(!quiet) {
                       if(state<0) { /* object-specific */
                         if(Feedback(G,FB_Setting,FB_Actions)) {
@@ -5624,39 +5659,10 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
                 }
               }
             }
-          } else if(strcmp(rec->obj->Name,sele)==0) {
-            if(rec->obj->fGetSettingHandle) {
-              handle = rec->obj->fGetSettingHandle(rec->obj,state);
-              if(handle) {
-                SettingCheckHandle(G,handle);
-                ok = SettingUnset(*handle,index);
-                if(ok) {
-                  if(updates)
-                    SettingGenerateSideEffects(G,index,sele,state);
-                  if(!quiet) {
-                    if(state<0) { /* object-specific */
-                      if(Feedback(G,FB_Setting,FB_Actions)) {
-                        SettingGetName(G,index,name);
-                        PRINTF
-                          " Setting: %s unset in object \"%s\".\n",
-                          name,rec->obj->Name
-                          ENDF(G);
-                      }
-                    } else { /* state-specific */
-                      if(Feedback(G,FB_Setting,FB_Actions)) {
-                        SettingGetName(G,index,name);
-                        PRINTF
-                          " Setting: %s unset in object \"%s\", state %d.\n",
-                          name,rec->obj->Name,state+1
-                          ENDF(G);
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-      }
+        }
+    }
+    if(side_effects)
+      SettingGenerateSideEffects(G,index,sele,state);
   }
   PAutoUnblock(unblock);
   return(ok);
@@ -7433,7 +7439,6 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 rec->hilight=true;
                 switch(button) {
                 case P_GLUT_LEFT_BUTTON:
-                  
                   I->Pressed = n;
                   I->OldVisibility = rec->visible;
                   I->Over = n;
@@ -7462,12 +7467,27 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   } 
                   break;
                 case P_GLUT_MIDDLE_BUTTON:
-                  I->DragMode = 2; /* TODO center/zoom */
+                  I->Pressed = n;
+                  I->OldVisibility = rec->visible;
+                  I->Over = n;
+                  I->DragMode = 2;
+                  I->ToggleMode = 0;
+                  I->LastChanged=rec;
                   I->LastZoomed=NULL;
                   if(mod&cOrthoCTRL) {
-                    ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,SettingGetGlobal_b(G,cSetting_animation));
+                    I->ToggleMode = 5;
+                    ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
+                                        SettingGetGlobal_b(G,cSetting_animation));
+                    if(mod&cOrthoSHIFT) {
+                      I->ToggleMode = 6;
+                      ExecutiveSetObjVisib(G,cKeywordAll, false); /* need to log this */
+                      if(!rec->visible)
+                        ExecutiveSpecSetVisibility(G,rec,true,0);
+                    }
                   } else {
-                    ExecutiveCenter(G,rec->name,-1,true,SettingGetGlobal_b(G,cSetting_animation),NULL);
+                    I->ToggleMode = 4;
+                    ExecutiveCenter(G,rec->name,-1,true,
+                                    SettingGetGlobal_b(G,cSetting_animation),NULL);
                   }
                   if(!rec->visible) {
                     ExecutiveSpecSetVisibility(G,rec,!rec->visible,mod);
@@ -7783,33 +7803,60 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
           }
         }
         break;
-        /*
-          case 2:
-          while(ListIterate(I->Spec,rec,next)) {
+      case 2: /* middle button */
+        while(ListIterate(I->Spec,rec,next)) {
           if(rec->name[0]!='_')
-          {
-          if(skip) {
-          skip--;
-          } else {
-          if( ((row>=I->Over)&&(row<=I->Pressed))||
-          ((row>=I->Pressed)&&(row<=I->Over))) {
-          rec->hilight=true;
-          I->Over = row;
-          if(I->LastZoomed!=rec) {
-          if(mod&cOrthoCTRL) {
-          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,SettingGetGlobal_b(G,cSetting_animation));
-          } else {
-          ExecutiveCenter(G,rec->name,-1,true,SettingGetGlobal_b(G,cSetting_animation));
-          }
-          I->LastZoomed = rec;
+            {
+              if(skip) {
+                skip--;
+              } else {
+                rec->hilight=false;
+                if( ((row>=I->Over)&&(row<=I->Pressed))||
+                    ((row>=I->Pressed)&&(row<=I->Over))) {
+                  switch(I->ToggleMode) {
+                  case 4: /* center and activate, while deactivating previous */
+                    if((row==I->Over)&&row) {
+                      if(I->LastChanged!=rec) {
+                        ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
+                        ExecutiveCenter(G,rec->name,-1,true,
+                                        SettingGetGlobal_b(G,cSetting_animation),NULL);
+                        if(!rec->visible) 
+                          ExecutiveSpecSetVisibility(G,rec,true,mod);
+                        I->LastChanged = rec;
+                      }
+                      rec->hilight=true;
+                    }
+                    break;
+                  case 5: /* zoom and activate, while deactivating previous */
+                    if((row==I->Over)&&row) {
+                      if(I->LastChanged!=rec) {
+                        ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
+                        ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
+                                            SettingGetGlobal_b(G,cSetting_animation));
+                        if(!rec->visible) 
+                          ExecutiveSpecSetVisibility(G,rec,true,mod);
+                        I->LastChanged = rec;
+                      }
+                      rec->hilight=true;
+                    }
+                    break;
+                  case 6: /* zoom and make only object enabled */
+                    if((row==I->Over)&&row) {
+                      if(rec!=I->LastZoomed) { 
+                        ExecutiveSetObjVisib(G,cKeywordAll, false); /* need to log this */
+                        ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
+                                            SettingGetGlobal_b(G,cSetting_animation));
+                        I->LastZoomed=rec;
+                        ExecutiveSpecSetVisibility(G,rec,true,0);
+                      }
+                    }
                   }
-                  break;
-                  }
-                  row++;
-                  }
-                  }
-                  }
-                  break;*/
+                }
+                row++;
+              }
+            }
+        }
+        break;
         
       }
     } else if(I->LastChanged)
@@ -8122,7 +8169,7 @@ int ExecutiveIterateObject(PyMOLGlobals *G,CObject **obj,void **hidden)
   SpecRec **rec=(SpecRec**)hidden;
   while(!flag)
 	 {
-		result = (int)ListIterate(I->Spec,(*rec),next);
+		result = (ListIterate(I->Spec,(*rec),next))!=NULL;
 		if(!(*rec))
 		  flag=true;
 		else if((*rec)->type==cExecObject)
@@ -8143,7 +8190,7 @@ int ExecutiveIterateObjectMolecule(PyMOLGlobals *G,ObjectMolecule **obj,void **h
   SpecRec **rec=(SpecRec**)hidden;
   while(!flag)
 	 {
-		result = (int)ListIterate(I->Spec,(*rec),next);
+		result = (ListIterate(I->Spec,(*rec),next))!=NULL;
 		if(!(*rec))
 		  flag=true;
 		else if((*rec)->type==cExecObject)
