@@ -2044,16 +2044,17 @@ static PyObject *CmdSystem(PyObject *dummy, PyObject *args)
 {
   char *str1;
   int ok=false;
-  int sync;
-  ok = PyArg_ParseTuple(args,"si",&str1,&sync);
+  int async;
+  ok = PyArg_ParseTuple(args,"si",&str1,&async);
   if (ok) {
-    if(!sync) {
+    printf("async %d\n",async);
+    if(async) {
       PUnblock(); /* free up PyMOL and the API */
     } else {
       APIEntry(); /* keep PyMOL locked */
     }
     ok = system(str1);
-    if(!sync) {
+    if(async) {
       PBlock();
     } else {
       APIExit();

@@ -16,7 +16,7 @@ import os
 import pymol
 import string
 import parsing
-import thread
+import threading
 
 from glob import glob
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
@@ -98,7 +98,7 @@ SEE ALSO
       print " ls: Nothing found.  Is that a valid path?"
    return 1
 
-def system(command,sync=1):
+def system(command,async=0):
    '''
 DESCRIPTION
 
@@ -114,22 +114,22 @@ PYMOL API
 
 NOTES
 
-   sync can only be specified from the Python level (not the command language)
+   async can only be specified from the Python level (not the command language)
    
-   if sync is 0, then the command is run in a separate thread (default 1)
-   whose identifier is returned in r
+   if async is 0 (default), then the result code from "system" is returned in r
 
-   if sync is 1, then the result code from "system" is returned in r
+   if async is 1, then the command is run in a separate thread whose object is
+   returned
    
 SEE ALSO
 
    ls, cd, pwd
    '''
-   if sync:
-      r = _cmd.system(str(command),int(sync))
+   if async:
+      r = threading.Thread(target=_cmd.system,args=(str(command),1))
+      r.start()
    else:
-      r = thread.start_new(_cmd.system,(command,0))
-      
+      r = _cmd.system(str(command),0)
    return r # special meaning
 
 def paste(): # INTERNAL
