@@ -4,9 +4,14 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * fixed control-panel click bug
+
+   * reorganized the Tcl/Tk modules to better enable customized
+     user interfaces
+
    * fixed long-standing transparency shadow bug
 
-   * 64-bit cleanliness
+   * improved 64-bit cleanliness
 
    * fixed stereo rendering for selections and edit indicators
 
