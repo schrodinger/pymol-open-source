@@ -726,8 +726,6 @@ void OrthoSplash(void)
   OrthoAddOutput("Updates can be found at \"http://www.pymol.org\".\n \n");
   OrthoAddOutput("Enter \"help commands\" for a list of commands.\n");
   OrthoAddOutput("Enter \"help <command-name>\" for information on a specific command.\n \n");
-  OrthoAddOutput("Other help topics include:\n");
-  OrthoAddOutput("    \"keyboard\", \"mouse\", \"selections\", \"examples\", \"launching\", and \"api\".\n \n");
   OrthoAddOutput("Hit TAB to toggle text or type \"cls\" to clear.\n \n");
 }
 /*========================================================================*/

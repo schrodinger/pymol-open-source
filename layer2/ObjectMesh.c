@@ -175,7 +175,9 @@ ObjectMesh *ObjectMeshFromBox(ObjectMap *map,float *mn,float *mx,float level,int
   I->Level = level;
   I->DotFlag = dotFlag;
   IsosurfGetRange(I->Map->Field,I->Map->Crystal,mn,mx,I->Range);
-
+  copy3f(mn,I->Obj.ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
+  copy3f(mx,I->Obj.ExtentMax);
+  I->Obj.ExtentFlag=true;
   /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]);*/
   SceneChanged();
   return(I);

@@ -368,9 +368,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     RayExpandPrimitives(I);
     RayTransformFirst(I);
     
-	 printf(" Ray: %i primitives\n",I->NPrimitive);
+	 PRINTF " Ray: %i primitives\n",I->NPrimitive ENDF;
     BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
-
+    
     I->NBasis=3; /* light source */
     BasisInit(I->Basis+2);
     
@@ -385,8 +385,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     RayTransformBasis(I,I->Basis+2);
     BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
 
-    printf(" Ray: hash spacing: %4.2f/%4.2f\n",
-			  I->Basis[1].Map->Div,I->Basis[2].Map->Div);
+    PRINTF " Ray: hash spacing: %4.2f/%4.2f\n",
+      I->Basis[1].Map->Div,I->Basis[2].Map->Div ENDF;
     
     /* IMAGING */
     
@@ -639,10 +639,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 	 FreeP(image);
 	 image=image_copy;
   }
-
+  
   timing = UtilGetSeconds()-timing;
-  printf(" Ray: rendering time %4.2f sec. (%3.1f fph).\n",
-			timing,3600/timing);
+  PRINTF  " Ray: rendering time %4.2f sec. (%3.1f fph).\n", 
+    timing,3600/timing ENDF;
 
 }
 /*========================================================================*/

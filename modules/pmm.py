@@ -55,6 +55,14 @@ def dist_hide(s):
            [ 1, 'dashes'    ,'pm.hide("dashes"    ,"'+s+'")'],
            [ 1, 'labels'    ,'pm.hide("labels"    ,"'+s+'")']]
 
+def simple_show(s):
+   return [[ 2, 'Show:'     ,''                             ],
+           [ 1, 'everything'    ,'pm.enable("'+s+'")']]
+
+def simple_hide(s):
+   return [[ 2, 'Hide:'     ,''                             ],
+           [ 1, 'everything'    ,'pm.disable("'+s+'")']]
+
 def mol_color(s):
    return [[ 2, 'Color:'     ,''                        ],
            [ 1, '`292C`777H`229N`922O`950S`905*'     ,'pmu.cbag("'+s+'")'],
@@ -83,12 +91,26 @@ def mol_color(s):
            [ 1, '`555grey'    ,'pm.color("grey","'+s+'")'  ]
            ]
 
-def dist_color(s):
-   return [[ 2, 'Color:'      ,''                            ],      
-           [ 1, 'yellow'      ,'pm.color("yellow","'+s+'")'  ],
-           [ 1, 'green'       ,'pm.color("green","'+s+'")'   ],
-           [ 1, 'orange'      ,'pm.color("orange","'+s+'")'  ],
-           [ 1, 'magenta'     ,'pm.color("magenta","'+s+'")' ]
+def general_color(s):
+   return [[ 2, 'Color:'     ,''                        ],
+           [ 1, '`900red'         ,'pm.color("red","'+s+'")'  ],
+           [ 1, '`090green'       ,'pm.color("green","'+s+'")'  ],
+           [ 1, '`009blue'        ,'pm.color("blue","'+s+'")'  ],
+           [ 1, '`990yellow'      ,'pm.color("yellow","'+s+'")'  ],
+           [ 1, '`909violet'  ,'pm.color("violet","'+s+'")'  ],
+           [ 1, '`099cyan'  ,'pm.color("cyan","'+s+'")'  ],           
+           [ 1, '`955salmon'      ,'pm.color("salmon","'+s+'")'  ],
+           [ 1, '`595lime' ,'pm.color("lime","'+s+'")'  ],
+           [ 1, '`559slate'  ,'pm.color("slate","'+s+'")'  ],
+           [ 1, '`905magenta' ,'pm.color("magenta","'+s+'")'  ],
+           [ 1, '`950orange'      ,'pm.color("orange","'+s+'")'  ],
+           [ 1, '`059marine'      ,'pm.color("marine","'+s+'")'  ],
+           [ 1, '`551olive'   ,'pm.color("olive","'+s+'")'  ],
+           [ 1, '`515purple'  ,'pm.color("purple","'+s+'")'  ],
+           [ 1, '`155teal'  ,'pm.color("teal","'+s+'")'  ],
+           [ 1, '`151forest'  ,'pm.color("forest","'+s+'")'  ],
+           [ 1, '`999white'       ,'pm.color("white","'+s+'")'  ],
+           [ 1, '`555grey'    ,'pm.color("grey","'+s+'")'  ]
            ]
 
 def sele_action(s):
@@ -121,6 +143,15 @@ def mol_action(s):
            [ 0, ''          ,''                         ],
            [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ],
            ]
+
+def simple_action(s):
+   return [[ 2, 'Actions:'     ,''                      ],
+           [ 1, 'Origin'   ,'pm.origin("'+s+'")'    ],
+           [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ],
+           ]
+
 
 def all_action(s):
    return [[ 2, 'Actions:'     ,''                      ],     

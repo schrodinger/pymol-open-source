@@ -65,7 +65,6 @@ int ExecutiveRelease(Block *block,int x,int y,int mod);
 int ExecutiveDrag(Block *block,int x,int y,int mod);
 void ExecutiveDraw(Block *block);
 void ExecutiveReshape(Block *block,int width,int height);
-int ExecutiveGetExtent(char *name,float *mx,float *mn);
 
 
 #define ExecLineHeight 14
@@ -573,7 +572,7 @@ void ExecutiveUpdateObjectSelection(struct Object *obj)
 {
   if(obj->type==cObjectMolecule) {
     SelectorDelete(obj->Name);  
-    SelectorCreate(obj->Name,NULL,(ObjectMolecule*)obj); /* create a selection with same name */ 
+    SelectorCreate(obj->Name,NULL,(ObjectMolecule*)obj,true); /* create a selection with same name */ 
   }
 }
 /*========================================================================*/
@@ -608,8 +607,6 @@ int ExecutiveCountStates(char *s1)
   }
   return(result);
 }
-
-
 /*========================================================================*/
 void ExecutiveRay(void)
 {
@@ -638,8 +635,6 @@ void ExecutiveColor(char *name,char *color,int flags)
 		op.i1=cRepAll; 
 		op.i2=cRepInvColor;
 		ExecutiveObjMolSeleOp(sele,&op);
-	 } else {
-      ErrMessage("Color","Invalid selection.");
     }
   }
   /* per object */
@@ -686,7 +681,7 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op)
 }
 
 /*========================================================================*/
-int ExecutiveGetExtent(char *name,float *mx,float *mn)
+int ExecutiveGetExtent(char *name,float *mn,float *mx)
 {
   int sele;
   ObjectMoleculeOpRec op;
@@ -700,7 +695,7 @@ int ExecutiveGetExtent(char *name,float *mx,float *mn)
   if(WordMatch("all",name,true)<0) {
     name=all;
     all_flag=true;
-    SelectorCreate(all,"(all)",NULL);
+    SelectorCreate(all,"(all)",NULL,true);
   }
   sele=SelectorIndexByName(name);
   if(sele>=0) {
@@ -761,11 +756,10 @@ void ExecutiveWindowZoom(char *name)
   float mn[3],mx[3];
 
   if(ExecutiveGetExtent(name,mn,mx)) {
-    radius = diff3f(mn,mx)/2.0;
+    radius = diff3f(mn,mx)/3.0;
     average3f(mn,mx,center);
     if(radius<MAX_VDW)
       radius=MAX_VDW;
-    radius+=MAX_VDW;
     SceneOriginSet(center,false);
     SceneWindowSphere(center,radius);
     SceneDirty();
@@ -781,34 +775,6 @@ void ExecutiveCenter(char *name,int preserve)
     average3f(mn,mx,center);
     SceneOriginSet(center,preserve);
     SceneDirty();
-  }
-}
-/*========================================================================*/
-void ExecutiveGetBBox(char *name,float *mn,float *mx)
-{
-  int sele;
-  int c;
-  ObjectMoleculeOpRec op;
-
-  op.i1=0;
-
-  sele=SelectorIndexByName(name);
-  if(sele>=0) {
-	 op.code = 'MNMX';
-	 
-	 ExecutiveObjMolSeleOp(sele,&op);
-	 
-  }
-  if(!op.i1) {
-    for(c=0;c<3;c++) {
-      mn[c]=-1.0;
-      mx[c+3]=1.0;
-    }
-  } else {
-    for(c=0;c<3;c++) {
-      mn[c]=op.v1[c];
-      mx[c]=op.v2[c];
-    }
   }
 }
 /*========================================================================*/
@@ -1142,6 +1108,8 @@ void ExecutiveDelete(char *name)
 		  {
 			 if(all_flag||(WordMatch(name,rec->obj->Name,true)<0))
 				{
+              if(rec->visible) 
+                SceneObjectDel(rec->obj);
 				  SelectorDelete(rec->name);
 				  rec->obj->fFree(rec->obj);
 				  rec->obj=NULL;
@@ -1288,6 +1256,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   MenuActivate(x,y,"mol_action",rec->obj->Name);
                   break;
                 case cObjectDist:
+                case cObjectMap:
+                case cObjectMesh:
+                  MenuActivate(x,y,"simple_action",rec->obj->Name);
                   break;
                 }
                 break;
@@ -1307,6 +1278,10 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectDist:
                   MenuActivate(x,y,"dist_show",rec->obj->Name);
                   break;
+                case cObjectMap:
+                case cObjectMesh:
+                  MenuActivate(x,y,"simple_show",rec->obj->Name);
+                  break;
                 }
                 break;
               }
@@ -1325,6 +1300,10 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectDist:
                   MenuActivate(x,y,"dist_hide",rec->obj->Name);
                   break;
+                case cObjectMap:
+                case cObjectMesh:
+                  MenuActivate(x,y,"simple_hide",rec->obj->Name);
+                  break;
                 }
                 break;
               }
@@ -1341,7 +1320,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   MenuActivate(x,y,"mol_color",rec->obj->Name);
                   break;
                 case cObjectDist:
-                  MenuActivate(x,y,"dist_color",rec->obj->Name);
+                case cObjectMap:
+                case cObjectMesh:
+                  MenuActivate(x,y,"general_color",rec->obj->Name);
                   break;
                 }
                 break;
