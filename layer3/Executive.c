@@ -104,12 +104,15 @@ int ExecutiveSculptIterateAll(void)
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
 
+  int state = SceneGetState();
+  int cycles = (int)SettingGet(cSetting_sculpting_cycles);
+
   if(SettingGet(cSetting_sculpting)) {
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          ObjectMoleculeSculptIterate(objMol,0,5);
+          ObjectMoleculeSculptIterate(objMol,state,cycles);
           active = true;
         }
       }
@@ -118,13 +121,25 @@ int ExecutiveSculptIterateAll(void)
   return(active);
 }
 /*========================================================================*/
-int ExecutiveObjectSculptIterate(char *name,int state,int n_cycle)
+int ExecutiveSculptIterate(char *name,int state,int n_cycle)
 {
   Object *obj = ExecutiveFindObjectByName(name);
-
+  CExecutive *I = &Executive;
   int ok=true;
 
-  if(!obj) {
+  SpecRec *rec = NULL;
+  ObjectMolecule *objMol;
+
+  if(!WordMatch(name,cKeywordAll,true)) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==cObjectMolecule) {
+          objMol =(ObjectMolecule*)rec->obj;
+          ObjectMoleculeSculptIterate(objMol,state,n_cycle);
+        }
+      }
+    }
+  } else if(!obj) {
     PRINTFB(FB_Executive,FB_Errors)
       "Executive-Error: object %s not found.\n",name 
       ENDFB;
@@ -140,13 +155,24 @@ int ExecutiveObjectSculptIterate(char *name,int state,int n_cycle)
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveObjectSculptUpdate(char *name,int state)
+int ExecutiveSculptImprint(char *name,int state)
 {
   Object *obj = ExecutiveFindObjectByName(name);
-
+  SpecRec *rec = NULL;
+  ObjectMolecule *objMol;
+  CExecutive *I = &Executive;
   int ok=true;
 
-  if(!obj) {
+  if(!WordMatch(name,cKeywordAll,true)) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==cObjectMolecule) {
+          objMol =(ObjectMolecule*)rec->obj;
+          ObjectMoleculeSculptImprint(objMol,state);
+        }
+      }
+    }
+  } else if(!obj) {
     PRINTFB(FB_Executive,FB_Errors)
       "Executive-Error: object %s not found.\n",name 
       ENDFB;
@@ -157,7 +183,41 @@ int ExecutiveObjectSculptUpdate(char *name,int state)
       ENDFB;
     ok=false;
   } else {
-    ObjectMoleculeSculptUpdate((ObjectMolecule*)obj,state);
+    ObjectMoleculeSculptImprint((ObjectMolecule*)obj,state);
+  }
+  return(ok);
+}
+/*========================================================================*/
+int ExecutiveSculptClear(char *name)
+{
+  Object *obj = ExecutiveFindObjectByName(name);
+  SpecRec *rec = NULL;
+  ObjectMolecule *objMol;
+  CExecutive *I = &Executive;
+
+  int ok=true;
+
+  if(!WordMatch(name,cKeywordAll,true)) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==cObjectMolecule) {
+          objMol =(ObjectMolecule*)rec->obj;
+          ObjectMoleculeSculptClear(objMol);
+        }
+      }
+    }
+  } else if(!obj) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "Executive-Error: object %s not found.\n",name 
+      ENDFB;
+    ok=false;
+  } else if(obj->type != cObjectMolecule) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "Executive-Error: object %s is not a molecular object.\n",name 
+      ENDFB;
+    ok=false;
+  } else {
+    ObjectMoleculeSculptClear((ObjectMolecule*)obj);
   }
   return(ok);
 }

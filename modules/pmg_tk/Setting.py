@@ -106,6 +106,12 @@ class Setting:
       self.auto_remove_hydrogens = IntVar()
       self.auto_remove_hydrogens.set(int(cmd.get_setting_legacy('auto_remove_hydrogens')))
 
+      self.auto_sculpt = IntVar()
+      self.auto_sculpt.set(int(cmd.get_setting_legacy('auto_sculpt')))
+
+      self.sculpting = IntVar()
+      self.sculpting.set(int(cmd.get_setting_legacy('sculpting')))
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
@@ -165,6 +171,10 @@ class Setting:
 
          'auto_remove_hydrogens'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.auto_remove_hydrogens.get())),log=1))),
+         'auto_sculpt'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.auto_sculpt.get())),log=1))),
+         'sculpting'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.sculpting.get())),log=1))),
          }
 
       self.update_code = {
@@ -218,6 +228,10 @@ class Setting:
          (lambda s,t: (s.two_sided_lighting.set(t[1][0]!=0))),
          'auto_remove_hydrogens':
          (lambda s,t: (s.auto_remove_hydrogens.set(t[1][0]!=0))),
+         'auto_sculpt':
+         (lambda s,t: (s.auto_sculpt.set(t[1][0]!=0))),
+         'sculpting':
+         (lambda s,t: (s.sculpting.set(t[1][0]!=0))),
 
         }
       self.active_list = [
@@ -246,7 +260,9 @@ class Setting:
          pymol.setting._get_index("log_box_selections"),
          pymol.setting._get_index("log_conformations"),
          pymol.setting._get_index("two_sided_lighting"),
-         pymol.setting._get_index("auto_remove_hydrogens"),                  
+         pymol.setting._get_index("auto_remove_hydrogens"),
+         pymol.setting._get_index("auto_sculpt"),
+         pymol.setting._get_index("sculpting"),                  
          ]
 
       self.active_dict = {}

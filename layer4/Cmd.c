@@ -269,6 +269,9 @@ static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args);
 static PyObject *CmdReady(PyObject *dummy, PyObject *args);
 static PyObject *CmdRock(PyObject *self, PyObject *args);
 static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args);
+static PyObject *CmdSculptClear(PyObject *self, PyObject *args);
+static PyObject *CmdSculptImprint(PyObject *self, PyObject *args);
+static PyObject *CmdSculptIterate(PyObject *self, PyObject *args);
 static PyObject *CmdSelect(PyObject *self, PyObject *args);
 static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdSet(PyObject *self, 	PyObject *args);
@@ -416,6 +419,13 @@ static PyMethodDef Cmd_methods[] = {
 	{"select",                CmdSelect,               METH_VARARGS },
 	{"set",	                 CmdSet,                  METH_VARARGS },
 	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
+
+	{"sculpt_clear",          CmdSculptClear,          METH_VARARGS },
+	{"sculpt_imprint",        CmdSculptImprint,        METH_VARARGS },
+	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },
+	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
+	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
+
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
    {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
@@ -442,6 +452,48 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+
+static PyObject *CmdSculptClear(PyObject *self, PyObject *args)
+{
+  int ok=true;
+  char *str1;
+  ok = PyArg_ParseTuple(args,"s",&str1);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveSculptClear(str1);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdSculptImprint(PyObject *self, PyObject *args)
+{
+  int ok=true;
+  int int1;
+  char *str1;
+  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveSculptImprint(str1,int1);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdSculptIterate(PyObject *self, PyObject *args)
+{
+  int ok=true;
+  int int1,int2;
+  char *str1;
+  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveSculptIterate(str1,int1,int2);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
 {
@@ -3221,20 +3273,6 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
       " Cmd: test called with %s %d\n",str1,int1
       ENDFB;
     APIEntry();
-    switch(int1) {
-    case 0:
-      PRINTFB(FB_CCmd,FB_Details)
-        " Cmd: updating sculpt...\n"
-      ENDFB;
-      ExecutiveObjectSculptUpdate(str1,0);
-      break;
-    default:
-      PRINTFB(FB_CCmd,FB_Details)
-        " Cmd: iterating sculpt...\n"
-      ENDFB;
-      ExecutiveObjectSculptIterate(str1,0,int1);
-      break;
-    }
     APIExit();
   }
   return(APIStatus(ok));

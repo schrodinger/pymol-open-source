@@ -953,7 +953,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     if(SettingGet(cSetting_auto_sculpt)) {
       SettingSet(cSetting_sculpting,1);
       if(!I->DragObject->Sculpt)
-        ObjectMoleculeSculptUpdate(I->DragObject,state);
+        ObjectMoleculeSculptImprint(I->DragObject,state);
     }
   }
   if(log_trans) PLogFlush();

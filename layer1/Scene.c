@@ -571,9 +571,9 @@ void SceneWindowSphere(float *location,float radius)
   dist = radius/tan((SettingGet(cSetting_field_of_view)/2.0)*cPI/180.0);
 
   I->Pos[2]-=dist;
-  I->Front=(-I->Pos[2]-radius*1.5);
+  I->Front=(-I->Pos[2]-radius*1.4);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+radius*1.5);
+  I->Back=(-I->Pos[2]+radius*1.7);
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 }
 /*========================================================================*/

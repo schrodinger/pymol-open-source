@@ -177,6 +177,9 @@ class SettingIndex:
    stop_on_exceptions    =160
    sculpting             =161
    auto_sculpt           =162
+   sculpt_vdw            =163
+   sculpt_vdw14          =164
+   sculpting_cycles      =165
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
