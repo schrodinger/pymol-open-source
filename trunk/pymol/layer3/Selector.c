@@ -776,18 +776,19 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
                 idx=cs->AtmToIdx[at];
               if(idx>=0) {
                 v2 = cs->Coord+(3*idx);
-                MapLocus(map,v2,&h,&k,&l);
-                i=*(MapEStart(map,h,k,l));
-                if(i) {
-                  j=map->EList[i++];
-                  while(j>=0) {
-                    if(within3f(I->Vertex+3*j,v2,cutoff)) {
-                      VLACheck((*vla),int,c*2+1);
-                      *((*vla)+c*2)=j;
-                      *((*vla)+c*2+1)=a;
-                      c++;
-                    }
+                if(MapExclLocus(map,v2,&h,&k,&l)) {
+                  i=*(MapEStart(map,h,k,l));
+                  if(i) {
                     j=map->EList[i++];
+                    while(j>=0) {
+                      if(within3f(I->Vertex+3*j,v2,cutoff)) {
+                        VLACheck((*vla),int,c*2+1);
+                        *((*vla)+c*2)=j;
+                        *((*vla)+c*2+1)=a;
+                        c++;
+                      }
+                      j=map->EList[i++];
+                    }
                   }
                 }
                 n2++;
