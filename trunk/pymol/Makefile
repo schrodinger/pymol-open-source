@@ -93,9 +93,9 @@ unix-mindep-build: semistatic
 unix-mindep: unix-mindep-build
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
-unix-fedora: unix-mindep-build
+unix-helper: unix-mindep-build
 	cp setup/setup.sh.unix-fedora $(MDP)/setup.sh
-	cd $(MINDEP);tar -cvf - pymol | gzip > ../fedorapymol-0_xx-bin-xxxxx-mindep.tgz
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../helperpymol-0_xx-bin-xxxxx-mindep.tgz
 
 irix-mindep: semistatic
 	$(PYTHON_EXE) modules/compile_pymol.py
@@ -180,7 +180,7 @@ compileall:
 
 OSXPROD=products/MacPyMOL.app
 OSXFREE=products/PyMOL.app
-OSXFEDORA=products/FedoraPyMOL.app
+OSXHELPER=products/HelperPyMOL.app
 OSXFRWK=products/FrameworkPyMOL.app
 OSXDEMO=products/PyMOL\ Demos
 OSXPYMOL=$(OSXPROD)/pymol
@@ -257,14 +257,14 @@ mac-framework: osx-unwrap osx-python-framework osx-product
 mac: osx-standalone
 	/bin/cp layerOSX/bundle/splash.png $(OSXPYMOL)/data/pymol/
 
-mac-fedora: mac
-	/bin/rm -rf $(OSXFEDORA)
-	/bin/cp -R $(OSXPROD) $(OSXFEDORA)
-	sed 's/MacPyMOL/FedoraPyMOL/' $(OSXFEDORA)/Contents/Info.plist > $(OSXFEDORA)/Contents/Info.plist.tmp
-	mv $(OSXFEDORA)/Contents/Info.plist.tmp $(OSXFEDORA)/Contents/Info.plist
-	/bin/cp data/pymol/splash.png $(OSXFEDORA)/pymol/data/pymol/
-	/bin/rm -r $(OSXFEDORA)/Contents/Resources/English.lproj/MainMenu.nib
-	/bin/rm -r $(OSXFEDORA)/Contents/Resources/English.lproj/MainMenu~.nib
+mac-helper: mac
+	/bin/rm -rf $(OSXHELPER)
+	/bin/cp -R $(OSXPROD) $(OSXHELPER)
+	sed 's/MacPyMOL/HelperPyMOL/' $(OSXHELPER)/Contents/Info.plist > $(OSXHELPER)/Contents/Info.plist.tmp
+	mv $(OSXHELPER)/Contents/Info.plist.tmp $(OSXHELPER)/Contents/Info.plist
+	/bin/cp data/pymol/splash.png $(OSXHELPER)/pymol/data/pymol/
+	/bin/rm -r $(OSXHELPER)/Contents/Resources/English.lproj/MainMenu.nib
+	/bin/rm -r $(OSXHELPER)/Contents/Resources/English.lproj/MainMenu~.nib
 
 mac-free: mac
 	/bin/rm -rf $(OSXFREE)
