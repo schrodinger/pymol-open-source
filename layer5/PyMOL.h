@@ -68,6 +68,11 @@ Z* -------------------------------------------------------------------
 #define PYMOL_MODIFIER_CTRL    2
 #define PYMOL_MODIFIER_ALT     4
 
+#define PYMOL_FALSE    0
+#define PYMOL_TRUE     1 
+
+#define PYMOL_DEFAULT  -1
+
 /* configuration */
 
 #ifndef CPyMOLOptions_DEFINED
@@ -147,9 +152,10 @@ int PyMOL_DelG3DStream(CPyMOL *I,int *array_ptr);
 int PyMOL_Reinitialize(CPyMOL *I);
 
 int PyMOL_Load(CPyMOL *I,char *content, char *content_type, 
-                    char *content_format, char *object_name, 
-                    int frame, int discrete, int finish, 
-                    int quiet, int multiplex);
+               int content_length, char *content_format, 
+               char *object_name, 
+               int frame, int discrete, int finish, 
+               int quiet, int multiplex, int zoom);
 
 int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
                int state, int complete, int animate);
