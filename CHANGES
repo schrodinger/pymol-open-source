@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * major bug in map ranging code
+
    -- beta 11
 
    * updated color handling for sequence viewer
