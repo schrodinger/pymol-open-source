@@ -205,7 +205,7 @@ void ObjectSetRepVis(CObject *I,int rep,int state)
 /*========================================================================*/
 void ObjectSetName(CObject *I,char *name)
 {
-  strcpy(I->Name,name);
+  UtilNCopy(I->Name,name,ObjNameMax);
 }
 /*========================================================================*/
 void ObjectRenderUnitBox(struct CObject *this,int frame,CRay *ray,Pickable **pick,int pass);

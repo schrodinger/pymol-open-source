@@ -166,6 +166,30 @@ NOTES
          unlock()
       return r
 
+   def set_name(new_name, old_name):
+      '''
+DESCRIPTION
+
+   "set_name" can be used to change the name of an object or selection
+   
+USAGE
+
+   set_name new_name, old_name
+   
+PYMOL API
+
+   cmd.set_name(string new_name, string old_name)
+
+      '''
+      r = 0
+      try:
+         lock()
+         r = _cmd.set_name(str(new_name),
+                           str(old_name))
+      finally:
+         unlock()
+      return r
+
 
    def set_geometry(selection,geometry,valence):
       '''

@@ -154,6 +154,42 @@ int ExecutiveGetAtomVertex(char *s1,int state,int index,float *v)
   return ok;
 }
 
+int ExecutiveSetName(char *new_name, char *old_name)
+{
+  int ok=true;
+  SpecRec *rec = NULL;
+  CExecutive *I = &Executive;
+  int found = false;
+  if(!new_name[0]) 
+    ok=false;
+  else
+    
+    while(ListIterate(I->Spec,rec,next)) {
+      if(found)
+        break;
+      switch(rec->type) {
+      case cExecObject:
+        if(WordMatchExact(rec->obj->Name,old_name,true)) {
+          UtilNCopy(rec->obj->Name,new_name,ObjNameMax);
+          OrthoDirty();
+          found = true;
+        }
+        break;
+      case cExecSelection:
+        if(WordMatchExact(rec->name,old_name,true)) {
+          if(SelectorSetName(new_name, old_name)) {
+            UtilNCopy(rec->name,new_name,ObjNameMax);
+            found = true;
+          }
+        }
+        break;
+      }
+    }
+  if(!found)
+    ok=false;
+  return ok; 
+}
+
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname, 
                              int frame, int discrete,int finish,OrthoLineType buf)
 {
