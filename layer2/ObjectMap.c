@@ -97,7 +97,7 @@ static void ObjectMapUpdate(ObjectMap *I) {
   SceneDirty();
 }
 
-static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick)
+static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick,int pass)
 {
   if(I->Obj.RepVis[cRepExtent]) {
     if(ray) {
@@ -176,7 +176,7 @@ OOAlloc(ObjectMap);
  I->Obj.type = cObjectMap;
  I->Obj.fFree = (void (*)(struct Object *))ObjectMapFree;
  I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMapUpdate;
- I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMapRender;
+ I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **,int))ObjectMapRender;
  I->Origin = NULL;
  I->Dim = NULL;
  I->Range = NULL;

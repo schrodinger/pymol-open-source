@@ -53,7 +53,7 @@ static void ObjectCallbackUpdate(ObjectCallback *I) {
 
 /*========================================================================*/
 
-static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable **pick)
+static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable **pick,int pass)
 {
   ObjectCallbackState *sobj = NULL;
   int a;
@@ -123,7 +123,8 @@ ObjectCallback *ObjectCallbackNew(void)
   I->Obj.type = cObjectCallback;
   I->Obj.fFree = (void (*)(struct Object *))ObjectCallbackFree;
   I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectCallbackUpdate;
-  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectCallbackRender;
+  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **,int pass))
+    ObjectCallbackRender;
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectCallbackGetNStates;
 
   return(I);

@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 
 void DistSetUpdate(DistSet *I);
 void DistSetFree(DistSet *I);
-void DistSetRender(DistSet *I,CRay *ray,Pickable **pick);
+void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass);
 void DistSetStrip(DistSet *I);
 void DistSetInvalidateRep(DistSet *I,int type,int level);
 /*========================================================================*/
@@ -81,20 +81,22 @@ void DistSetUpdate(DistSet *I)
   OrthoBusyFast(1,1);
 }
 /*========================================================================*/
-void DistSetRender(DistSet *I,CRay *ray,Pickable **pick)
+void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass)
 {
   int a;
-  for(a=0;a<I->NRep;a++)
-	 if(I->Rep[a]) 
-      if(I->Obj->Obj.RepVis[a])
-        {
-          if(!ray) {
-            ObjectUseColor((Object*)I->Obj);
-          } else {
-            ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
-          }			 
-          I->Rep[a]->fRender(I->Rep[a],ray,pick);
+  if(!pass) { /* only render on zero/default pass */
+    for(a=0;a<I->NRep;a++)
+      if(I->Rep[a]) 
+        if(I->Obj->Obj.RepVis[a])
+          {
+            if(!ray) {
+              ObjectUseColor((Object*)I->Obj);
+            } else {
+              ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
+            }			 
+            I->Rep[a]->fRender(I->Rep[a],ray,pick);
         }
+  }
 }
 /*========================================================================*/
 DistSet *DistSetNew(void)

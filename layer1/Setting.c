@@ -571,6 +571,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SceneChanged();
     break;
   case cSetting_line_smooth:
+  case cSetting_transparency:
   case cSetting_ortho:
   case cSetting_gl_ambient:
   case cSetting_bg_rgb:
