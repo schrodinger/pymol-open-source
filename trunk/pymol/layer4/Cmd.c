@@ -1859,10 +1859,11 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
   PyObject *value;
   char *str3;
   int state;
-  int suppress;
+  int quiet;
+  int updates;
 
   OrthoLineType s1 = "";
-  PyArg_ParseTuple(args,"iOsii",&index,&value,&str3,&state,&suppress);
+  PyArg_ParseTuple(args,"iOsiii",&index,&value,&str3,&state,&quiet,&updates);
   APIEntry();
   if(!strcmp(str3,"all")) {
     strcpy(s1,str3);
@@ -1870,7 +1871,7 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
     tmpFlag=true;
     SelectorGetTmp(str3,s1);
   }
-  ExecutiveSetSetting(index,value,s1,state,suppress);
+  ExecutiveSetSetting(index,value,s1,state,quiet,updates);
   if(tmpFlag) 
     SelectorFreeTmp(s1);
   APIExit();

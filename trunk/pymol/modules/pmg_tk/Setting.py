@@ -54,7 +54,6 @@ class Setting:
       self.auto_zoom = IntVar()
       self.auto_zoom.set(cmd.get_setting_legacy('auto_zoom'))
 
-
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get())),
@@ -70,6 +69,8 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.2f" % (float(s.valence.get())/20.0))))),
          'all_states'    :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.all_states.get())))),
+         'line_smooth'    :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.line_smooth.get())))),
          'overlay'       :
          (lambda s,a: (cmd.set(a,("%1.0f" %( s.overlay.get()*5))))),
          'auto_zoom'       :
@@ -87,6 +88,8 @@ class Setting:
          (lambda s,t: (s.ortho.set(int(t[1][0])))),
          'all_states':
          (lambda s,t: (s.all_states.set(int(t[1][0])))),
+         'line_smooth':
+         (lambda s,t: (s.line_smooth.set(int(t[1][0])))),
          'overlay':
          (lambda s,t: (s.overlay.set(t[1][0]!=0))),
          'valence':
@@ -101,7 +104,7 @@ class Setting:
          pymol.setting._get_index("antialias"),
          pymol.setting._get_index("all_states"),
          pymol.setting._get_index("overlay"),
-         pymol.setting._get_index("normal_workaround"),
+         pymol.setting._get_index("line_smooth"),
          pymol.setting._get_index("valence"),
          pymol.setting._get_index("auto_zoom"),
          ]

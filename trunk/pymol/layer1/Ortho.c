@@ -501,8 +501,10 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 		  }
 		break;
     case 5: /* CTRL E -- ending */
-      if(OrthoArrowsGrabbed())
+      if(OrthoArrowsGrabbed()) {
         I->CursorChar=-1;
+      } else 
+        OrthoKeyControl(k);
       break;
     case 1: /* CTRL A -- beginning */
       if(OrthoArrowsGrabbed()) {

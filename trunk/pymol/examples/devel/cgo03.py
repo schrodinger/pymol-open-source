@@ -66,11 +66,12 @@ for a in range(1,63):
 
 # this zooms out a bit more than usual
 
-cmd.zoom('all',3.0)
+cmd.reset()
+cmd.zoom('cgo03',3.0)
 
 # this moves the rear clipping plane back a bit
 
-cmd.zoom('far',-12.0)
+cmd.clip('far',-12.0)
 
 # give us a nice view
 
