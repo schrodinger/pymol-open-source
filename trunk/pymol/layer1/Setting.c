@@ -2057,6 +2057,8 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_show_progress, 1);
 
+  SettingSet_i(I,cSetting_use_display_lists, 1);
+
 }
 
 

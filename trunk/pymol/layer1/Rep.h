@@ -98,6 +98,7 @@ typedef struct Rep {
   int         (*fSameVis)(struct Rep *I,struct CoordSet *cs);
   struct Rep *(*fRebuild)(struct Rep *I,struct CoordSet *cs,int rep);
   struct Rep *(*fNew)(struct CoordSet *cs);
+  int displayList;
 } Rep;
 
 void RepInit(Rep *I);
