@@ -244,7 +244,7 @@ if __name__=='pymol.invocation':
                   options.deferred.append("_do_ cmd.get_wizard().ray_trace2()")
                   
          else: 
-            if a[-4:] in (".pm5",".PM5",".p5m",".P5M"):
+            if a[-4:] in (".p5m",".P5M"):
                # mode 5 helper application 
                av.append("-A5")               
             options.deferred.append(a)

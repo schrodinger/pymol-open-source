@@ -384,7 +384,7 @@ SEE ALSO
 
          if not len(str(type)):
             # determine file type if possible
-            if re.search("\.pdb$|\.ent$|\.pm5",filename,re.I):
+            if re.search("\.pdb$|\.ent$|\.p5m",filename,re.I):
                ftype = loadable.pdb
             elif re.search("\.mol$",filename,re.I):
                ftype = loadable.mol

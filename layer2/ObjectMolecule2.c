@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectDist.h"
 #include"Executive.h"
 #include"P.h"
+#include"ObjectCGO.h"
 
 #define ntrim ParseNTrim
 #define nextline ParseNextLine
@@ -1127,14 +1128,17 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
                                             I,
                                             cont->hbond,
                                             cont->n_hbond);
-        distObj->Obj.Color = I->Obj.Color;
+        if(match_colors)
+          distObj->Obj.Color = I->Obj.Color;
+        else
+          distObj->Obj.Color = ColorGetIndex("yellow");
         ObjectSetName((CObject*)distObj,name);
         if(distObj)
           ExecutiveManageObject((CObject*)distObj,false,true);
       }
 
       if(cont->nbond) {
-        /*        ObjectDist *distObj;*/
+        ObjectDist *distObj;
         UtilNCopy(name,I->Obj.Name,sizeof(WordType));
         UtilNConcat(name,"_",sizeof(WordType));
         UtilNConcat(name,cont->name,sizeof(WordType));
@@ -1144,9 +1148,37 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
                                             I,
                                              cont->nbond,
                                              cont->n_nbond);
-         ObjectSetName((CObject*)distObj,name);
          if(distObj)
         ExecutiveManageObject((CObject*)distObj,false,true); */
+
+        {
+          CGO *cgo = NULL;
+          ObjectCGO *ocgo;
+          int auto_save;
+          
+          cgo=CGONew();
+          /*
+            CGOBegin(cgo,GL_LINES);
+            for(a=0;a<op1.nvv1;a++) {
+            CGOVertexv(cgo,op2.vv1+(a*3));
+            MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
+            CGOVertexv(cgo,v1);
+          */
+          CGOEnd(cgo);
+          CGOStop(cgo);
+          ocgo = ObjectCGOFromCGO(NULL,cgo,0);
+          if(match_colors)
+            ocgo->Obj.Color = I->Obj.Color;
+          else
+            ocgo->Obj.Color = ColorGetIndex("yellow");
+          ObjectSetName((CObject*)ocgo,name);
+          ExecutiveDelete(name);
+
+          ExecutiveManageObject((CObject*)ocgo,false,true);
+
+          SceneDirty();
+        }
+
       }
 
     }

@@ -250,7 +250,7 @@ def toggle_zooms(mode=-1):
     else:
         zooms = mode
     if zooms:
-        cmd.zoom(m4x_ligands)
+        cmd.zoom(m4x_ligands,2)
         cmd.clip("slab",10)
     else:
         cmd.zoom("m4x_aligned")
