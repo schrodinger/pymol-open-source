@@ -156,7 +156,7 @@ int ExecutiveSculptIterate(char *name,int state,int n_cycle)
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveSculptImprint(char *name,int state)
+int ExecutiveSculptActivate(char *name,int state)
 {
   Object *obj = ExecutiveFindObjectByName(name);
   SpecRec *rec = NULL;
@@ -190,7 +190,7 @@ int ExecutiveSculptImprint(char *name,int state)
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveSculptClear(char *name)
+int ExecutiveSculptDeactivate(char *name)
 {
   Object *obj = ExecutiveFindObjectByName(name);
   SpecRec *rec = NULL;

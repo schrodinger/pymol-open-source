@@ -20,26 +20,38 @@ import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 from chempy import cpv
 
-def sculpt_clear(object):
+def sculpt_purge(object):
    '''
    undocumented
 '''
    r = 0
    try:
       lock()
-      r = _cmd.sculpt_clear(str(object))
+      r = _cmd.sculpt_purge()
+   finally:
+      unlock()
+   return r
+
+def sculpt_deactivate(object):
+   '''
+   undocumented
+'''
+   r = 0
+   try:
+      lock()
+      r = _cmd.sculpt_deactivate(str(object))
    finally:
       unlock()
    return r
    
-def sculpt_imprint(object,state=0):
+def sculpt_activate(object,state=0):
    '''
 undocumented.
 '''
    r = 0
    try:
       lock()
-      r = _cmd.sculpt_imprint(str(object),int(state)-1)
+      r = _cmd.sculpt_activate(str(object),int(state)-1)
    finally:
       unlock()
    return r

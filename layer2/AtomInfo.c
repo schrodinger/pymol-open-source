@@ -40,6 +40,7 @@ void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src)
   dst->q = src->q;
   dst->id = src->id;
   dst->temp1 = src->temp1;
+  dst->sculpt_id = src->sculpt_id;
   /* keep all existing names, identifiers, etc. */
   /* also keep all existing selections,
      colors, masks, and visible representations*/

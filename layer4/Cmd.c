@@ -67,6 +67,7 @@ Z* -------------------------------------------------------------------
 #include"Control.h"
 #include"Editor.h"
 #include"Wizard.h"
+#include"SculptCache.h"
 
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
@@ -269,8 +270,9 @@ static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args);
 static PyObject *CmdReady(PyObject *dummy, PyObject *args);
 static PyObject *CmdRock(PyObject *self, PyObject *args);
 static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args);
-static PyObject *CmdSculptClear(PyObject *self, PyObject *args);
-static PyObject *CmdSculptImprint(PyObject *self, PyObject *args);
+static PyObject *CmdSculptPurge(PyObject *self, PyObject *args);
+static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args);
+static PyObject *CmdSculptActivate(PyObject *self, PyObject *args);
 static PyObject *CmdSculptIterate(PyObject *self, PyObject *args);
 static PyObject *CmdSelect(PyObject *self, PyObject *args);
 static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
@@ -420,9 +422,10 @@ static PyMethodDef Cmd_methods[] = {
 	{"set",	                 CmdSet,                  METH_VARARGS },
 	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
 
-	{"sculpt_clear",          CmdSculptClear,          METH_VARARGS },
-	{"sculpt_imprint",        CmdSculptImprint,        METH_VARARGS },
+	{"sculpt_deactivate",     CmdSculptDeactivate,     METH_VARARGS },
+	{"sculpt_activate",       CmdSculptActivate,       METH_VARARGS },
 	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },
+	{"sculpt_purge",          CmdSculptPurge,          METH_VARARGS },
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 
@@ -454,20 +457,31 @@ static PyMethodDef Cmd_methods[] = {
 };
 
 
-static PyObject *CmdSculptClear(PyObject *self, PyObject *args)
+static PyObject *CmdSculptPurge(PyObject *self, PyObject *args)
+{
+  int ok=true;
+  if(ok) {
+    APIEntry();
+    SculptCachePurge();
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
 {
   int ok=true;
   char *str1;
   ok = PyArg_ParseTuple(args,"s",&str1);
   if(ok) {
     APIEntry();
-    ok = ExecutiveSculptClear(str1);
+    ok = ExecutiveSculptDeactivate(str1);
     APIExit();
   }
   return(APIStatus(ok));
 }
 
-static PyObject *CmdSculptImprint(PyObject *self, PyObject *args)
+static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
 {
   int ok=true;
   int int1;
@@ -475,7 +489,7 @@ static PyObject *CmdSculptImprint(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&int1);
   if(ok) {
     APIEntry();
-    ok = ExecutiveSculptImprint(str1,int1);
+    ok = ExecutiveSculptActivate(str1,int1);
     APIExit();
   }
   return(APIStatus(ok));

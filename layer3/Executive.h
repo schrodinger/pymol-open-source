@@ -116,8 +116,8 @@ int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***
 int ExecutiveCombineObjectTTT(char *name,float *ttt);
 int ExecutiveSetGeometry(char *s1,int geom,int valence);
 int ExecutiveSculptIterateAll(void);
-int ExecutiveSculptClear(char *name);
-int ExecutiveSculptImprint(char *name,int state);
+int ExecutiveSculptDeactivate(char *name);
+int ExecutiveSculptActivate(char *name,int state);
 int ExecutiveSculptIterate(char *name,int state,int n_cycle);
 
 #endif

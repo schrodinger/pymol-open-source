@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"Util.h"
 #include"Sculpt.h"
+#include"SculptCache.h"
 
 #ifndef R_SMALL8
 #define R_SMALL8 0.00000001
@@ -34,13 +35,16 @@ Z* -------------------------------------------------------------------
  ((((int)*(v+2))<<10)&0x3F000))
 
 #define nb_hash_off(v,d,e,f) \
-((((d+(int)*(v  ))>> 2)&0x0003F)|\
- (((e+(int)*(v+1))<< 4)&0x00FC0)|\
- (((f+(int)*(v+2))<<10)&0x3F000))
+(((((d)+(int)*(v  ))>> 2)&0x0003F)|\
+ ((((e)+(int)*(v+1))<< 4)&0x00FC0)|\
+ ((((f)+(int)*(v+2))<<10)&0x3F000))
 
 #define ex_hash(a,b) \
 ((((a)    )&0x00FF)|\
  (((b)<< 8)&0xFF00))
+
+int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff);
+int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,float wt);
 
 CSculpt *SculptNew(void)
 {
@@ -52,7 +56,6 @@ CSculpt *SculptNew(void)
   I->EXHash = Alloc(int,EX_HASH_SIZE);
   I->Don = VLAlloc(int,1000);
   I->Acc = VLAlloc(int,1000);
- 
   return(I);
 }
 
@@ -67,9 +70,9 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   int nex = 1;
   int *j,*k,xhash;
   int ex_type;
-  AtomInfoType *ai,*ai1,*ai2;
+  AtomInfoType *ai,*ai1,*ai2,*oai;
   int xoffset;
-
+  int use_cache = 1;
 
   PRINTFD(FB_Sculpt)
     " SculptMeasureObject-Debug: entered.\n"
@@ -83,11 +86,17 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   if(state<obj->NCSet)
     if(obj->CSet[state])
       {
+        oai = obj->AtomInfo;
+
         VLACheck(I->Don,int,obj->NAtom);
         VLACheck(I->Acc,int,obj->NAtom);
+        ai = obj->AtomInfo;
         for(a=0;a<obj->NAtom;a++) {
           I->Don[a]=false;
           I->Acc[a]=false;
+          if(!ai->sculpt_id) /* insure all atoms have unique sculpt IDs */
+            ai->sculpt_id=SculptCacheNewID();
+          ai++;
         }
         
         ObjectMoleculeVerifyChemistry(obj);
@@ -95,6 +104,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 
         cs = obj->CSet[state];
 
+        use_cache = (int) SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_memory);
         if(obj->NBond) {
 
           planer=Alloc(int,obj->NAtom);
@@ -214,9 +224,14 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
                   d = diff3f(v1,v2);
-                  /*
-                  d = AtomInfoGetBondLength(obj->AtomInfo+b1,obj->AtomInfo+b2);
-                  */
+                  if(use_cache) {
+                    if(!SculptCacheQuery(cSculptBond,
+                                         oai[b1].sculpt_id,
+                                         oai[b2].sculpt_id,0,0,&d))
+                      SculptCacheStore(cSculptBond,
+                                       oai[b1].sculpt_id,
+                                       oai[b2].sculpt_id,0,0,d);
+                  }
                   ShakerAddDistCon(I->Shaker,b1,b2,d,1); 
                   /* NOTE: storing atom indices, not coord. ind.! */
                 }
@@ -268,6 +283,16 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
                   d = diff3f(v1,v2);
+                  if(use_cache) {
+                    if(!SculptCacheQuery(cSculptAngl,
+                                         oai[b0].sculpt_id,
+                                         oai[b1].sculpt_id,
+                                         oai[b2].sculpt_id,0,&d))
+                      SculptCacheStore(cSculptAngl,
+                                       oai[b0].sculpt_id,
+                                       oai[b1].sculpt_id,
+                                       oai[b2].sculpt_id,0,d);
+                  }
                   ShakerAddDistCon(I->Shaker,b1,b2,d,0); 
                 }
                 n1+=2;
@@ -321,9 +346,22 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                     }
                     if(planer[b0])
                       d=0.0;
+                    if(use_cache) {
+                      if(!SculptCacheQuery(cSculptPyra,
+                                           oai[b1].sculpt_id,
+                                           oai[b0].sculpt_id,
+                                           oai[b2].sculpt_id,
+                                           oai[b3].sculpt_id,
+                                           &d))
+                        SculptCacheStore(cSculptPyra,
+                                         oai[b1].sculpt_id,
+                                         oai[b0].sculpt_id,
+                                         oai[b2].sculpt_id,
+                                         oai[b3].sculpt_id,
+                                         d);
+                    }
                     ShakerAddPyraCon(I->Shaker,b0,b1,b2,b3,d); 
-                  }
-                
+                  }                
                   n2+=2;
                 }
                 n1+=2;
@@ -415,10 +453,29 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                         v2 = cs->Coord+3*a2;
                         v3 = cs->Coord+3*a3;
                         
+                        d = 0.0;
                         if(fabs(get_dihedral3f(v1,v0,v2,v3))<deg_to_rad(10.0))
                           if(planer[b0]&&planer[b2]) {
-                            ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3); 
+                            d = 1.0; 
                           }
+                        if(use_cache) {
+                          if(!SculptCacheQuery(cSculptPlan,
+                                               oai[b1].sculpt_id,
+                                               oai[b0].sculpt_id,
+                                               oai[b2].sculpt_id,
+                                               oai[b3].sculpt_id,
+                                               &d))
+                            SculptCacheStore(cSculptPlan,
+                                             oai[b1].sculpt_id,
+                                             oai[b0].sculpt_id,
+                                             oai[b2].sculpt_id,
+                                             oai[b3].sculpt_id,
+                                             d);
+                        }
+                        if(d>0.0) {
+                          ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3); 
+                        }
+
                       }
                     }
                     n2+=2;
@@ -451,8 +508,6 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 
 
 }
-int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff);
-int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,float wt);
 
 int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff)
 {
@@ -848,6 +903,7 @@ void SculptFree(CSculpt *I)
   VLAFreeP(I->Acc);
   VLAFreeP(I->NBList);
   VLAFreeP(I->EXList);
+
   FreeP(I->NBHash);
   FreeP(I->EXHash);
   ShakerFree(I->Shaker);
