@@ -37,7 +37,7 @@ Z* -------------------------------------------------------------------
 #define cPopUpCharLift 2
 
 #define cChildDelay 0.25
-#define cPassiveDelay 0.50
+#define cPassiveDelay 0.35
 #define cDirtyDelay 0.05
 
 typedef struct CPopUp {

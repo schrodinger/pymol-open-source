@@ -16,9 +16,9 @@ class Appearance(Wizard):
       0 : ['Color', '_ cmd.color' ],
       1 : ['Color (elem c)', '_ util.color_carbon' ],
       2 : ['Toggle','_ cmd.toggle'],
-      3 : ['Show', '- cmd.show'],
+      3 : ['Show', '_ cmd.show'],
       4 : ['Hide', '_ cmd.hide'],
-      5 : ['Select', 'cmd.select'],
+      5 : ['Select', '_ cmd.select'],
       }
 
    what_dict = {
@@ -198,6 +198,7 @@ class Appearance(Wizard):
          pass
       cmd.unpick()
       cmd.refresh_wizard()
+      return 1
 
    def do_select(self,selection):
       if self.current_mode in [0,1]: # color
@@ -216,6 +217,7 @@ class Appearance(Wizard):
       cmd.deselect()
       cmd.unpick()
       cmd.refresh_wizard()
+      return 1
 
    def cleanup(self):
       global saved_scope

@@ -80,6 +80,7 @@ void PDumpException(void);
 int PComplete(char *str,int buf_size);
 
 int PTruthCallStr(PyObject *object,char *method,char *argument);
+int PTruthCallStr1i(PyObject *object,char *method,int argument);
 int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias);
 int PIsGlutThread(void);
 

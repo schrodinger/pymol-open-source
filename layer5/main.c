@@ -59,6 +59,7 @@
 #include"Wizard.h"
 #include"Text.h"
 #include"Character.h"
+#include"Seq.h"
 
 void MainFree(void);
 void MainTest(void);

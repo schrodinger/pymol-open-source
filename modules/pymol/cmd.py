@@ -1858,6 +1858,7 @@ SEE ALSO
    # Table for argument autocompletion
 
    auto_arg =[
+# 1st
       {
       'bg'             : [ _get_color_sc          , 'color'           , ''   ],      
       'color'          : [ _get_color_sc          , 'color'           , ', ' ],
@@ -1879,6 +1880,7 @@ SEE ALSO
       'zoom'           : [ selection_sc           , 'selection'       , ''   ],
       'origin'         : [ selection_sc           , 'selection'       , ''   ],
       'center'         : [ selection_sc           , 'selection'       , ''   ],   
+      'indicate'       : [ selection_sc           , 'selection'       , ''   ],   
       'protect'        : [ selection_sc           , 'selection'       , ''   ],
       'deprotect'      : [ selection_sc           , 'selection'       , ''   ],   
       'mask'           : [ selection_sc           , 'selection'       , ''   ],
@@ -1893,6 +1895,7 @@ SEE ALSO
       'view'           : [ viewing.view_dict_sc   , 'view'            , ''   ],                              
       'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],                        
       },
+# 2nd
       {
       'align'          : [ selection_sc           , 'selection'       , ''   ],
       'feedback'       : [ fb_module_sc           , 'module'          , ', ' ],
@@ -1916,6 +1919,7 @@ SEE ALSO
       'scene'          : [ viewing.view_sc        , 'scene action'    , ','   ],                  
       'unset'          : [ selection_sc           , 'selection'        , ','  ],   
       },
+#3rd
       {
       'spectrum'       : [ selection_sc           , 'selection'       , ''   ],
       'feedback'       : [ fb_mask_sc             , 'mask'            , ''   ],
@@ -1923,6 +1927,7 @@ SEE ALSO
       'flag'           : [ editing.flag_action_sc , 'flag action'     , ''   ],
       'set'            : [ selection_sc            , 'selection'         , ','  ],
       },
+#4th
       {
       'map_new'        : [ selection_sc           , 'selection'       , ', ' ],
       'isosurface'     : [ selection_sc           , 'selection'       , ', ' ],

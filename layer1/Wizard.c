@@ -70,10 +70,11 @@ void WizardPurgeStack(void)
   PAutoUnblock(blocked);
 
 }
-void WizardDoSelect(char *name)
+int WizardDoSelect(char *name)
 {
   OrthoLineType buf;
   CWizard *I=&Wizard;
+  int result = false;
 
   if(I->Stack>=0)
     if(I->Wiz[I->Stack]) {
@@ -81,11 +82,13 @@ void WizardDoSelect(char *name)
       PLog(buf,cPLog_pym);
       PBlock(); 
       if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_select")) {
-        PXDecRef(PyObject_CallMethod(I->Wiz[I->Stack],"do_select","s",name));
+        result = PTruthCallStr(I->Wiz[I->Stack],"do_select",name);
         if(PyErr_Occurred()) PyErr_Print();
       }
     PUnblock();
   }
+  printf("%d\n",result);
+  return result;
 }
 /*========================================================================*/
 void WizardRefresh(void)
@@ -210,9 +213,10 @@ Block *WizardGetBlock(void)
   {return(I->Block);}
 }
 /*========================================================================*/
-void WizardDoPick(int bondFlag)
+int WizardDoPick(int bondFlag)
 {
   CWizard *I=&Wizard;
+  int result=false;
   if(I->Stack>=0) 
     if(I->Wiz[I->Stack]) {
       if(bondFlag)
@@ -224,12 +228,13 @@ void WizardDoPick(int bondFlag)
       if(I->Stack>=0)
         if(I->Wiz[I->Stack]) {
           if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_pick")) {
-            PXDecRef(PyObject_CallMethod(I->Wiz[I->Stack],"do_pick","i",bondFlag));
+            result = PTruthCallStr1i(I->Wiz[I->Stack],"do_pick",bondFlag);
             if(PyErr_Occurred()) PyErr_Print();
           }
         }
       PUnblock();
     }
+  return result;
 }
 /*========================================================================*/
 static int WizardClick(Block *block,int button,int x,int y,int mod)

@@ -83,7 +83,6 @@ static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,int col_num,int in
   char selName[ObjNameMax];
   OrthoLineType buf1,buf2;
 
-  ExecutiveGetActiveSeleName(selName,true);
   
   {
     CSeqRow *row;
@@ -105,32 +104,35 @@ static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,int col_num,int in
       BuildSeleFromAtomList(row->name,atom_list,cTempSeekerSele,true);
       if(logging) SelectorLogSele(cTempSeekerSele);
       
-      WizardDoSelect(cTempSeekerSele);
-
-      /* selection or deselecting? */
-
-      if(inc_or_excl) {
-        if(!col->spacer) {
-          col->inverse = true;
-          sprintf(buf1,"((%s) or (?%s))",
-                  selName,cTempSeekerSele);
+      if(!WizardDoSelect(cTempSeekerSele)) {
+        
+        ExecutiveGetActiveSeleName(selName,true);
+        
+        /* selection or deselecting? */
+        
+        if(inc_or_excl) {
+          if(!col->spacer) {
+            col->inverse = true;
+            sprintf(buf1,"((%s) or (?%s))",
+                    selName,cTempSeekerSele);
+          }
+        } else {
+          if(!col->spacer) {
+            col->inverse = false;
+            sprintf(buf1,"((%s) and not (?%s))",
+                    selName,cTempSeekerSele);
+          }
         }
-      } else {
-        if(!col->spacer) {
-          col->inverse = false;
-          sprintf(buf1,"((%s) and not (?%s))",
-                  selName,cTempSeekerSele);
+        
+        /* create the new active selection */
+        
+        SelectorCreate(selName,buf1,NULL,true,NULL);
+        {
+          sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buf1);
+          PLog(buf2,cPLog_no_flush);
         }
       }
       
-      /* create the new active selection */
-
-      SelectorCreate(selName,buf1,NULL,true,NULL);
-      {
-        sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buf1);
-        PLog(buf2,cPLog_no_flush);
-      }
-
       ExecutiveDelete(cTempSeekerSele);
       if(logging) {
         sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempSeekerSele);
@@ -171,7 +173,7 @@ static void SeekerSelectionCenter(CSeqRow* rowVLA,int row_num,int col_num,int st
   }
 }
 
-static void SeekerSelectionCenterGo(void)
+static void SeekerSelectionCenterGo(int action)
 {
   OrthoLineType buf2;
     char prefix[3]="";
@@ -179,12 +181,24 @@ static void SeekerSelectionCenterGo(void)
     if(logging==cPLog_pml)
       strcpy(prefix,"_ ");
 
-  ExecutiveCenter(cTempCenterSele,-1,true);
-  if(logging) {
-    sprintf(buf2,"%scmd.center(\"%s\")\n",prefix,cTempCenterSele);
-    PLog(buf2,cPLog_no_flush);
-    PLogFlush();
-  }
+    switch(action) {
+    case 0: /* center cumulative*/
+      ExecutiveCenter(cTempCenterSele,-1,true);
+      if(logging) {
+        sprintf(buf2,"%scmd.center(\"%s\")\n",prefix,cTempCenterSele);
+        PLog(buf2,cPLog_no_flush);
+        PLogFlush();
+      }
+      break;
+    case 1: /* zoom */
+      ExecutiveWindowZoom(cTempCenterSele,0.0,-1,false);
+      if(logging) {
+        sprintf(buf2,"%scmd.zoom(\"%s\")\n",prefix,cTempCenterSele);
+        PLog(buf2,cPLog_no_flush);
+        PLogFlush();
+      }
+      break;
+    }
 }
 
 static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,int mod,int x,int y)
@@ -198,11 +212,17 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
   col = row->col + col_num;
   I->dragging = false;
   I->drag_button = button;
+  I->handler.box_active = true;
+  I->handler.box_row = row_num;
+  I->handler.box_start_col = col_num;
+  I->handler.box_stop_col = col_num;
+
   switch(button) {
   case P_GLUT_RIGHT_BUTTON:
     {
       char name[ObjNameMax];
       ObjectMolecule *obj;
+      I->handler.box_active = false;
       if(ExecutiveGetActiveSeleName(name, false) && col->inverse) {
         MenuActivate2Arg(x,y+16,x,y,"pick_option",name,name);
       } else if( (obj = ExecutiveFindObjectMoleculeByName(row->name) )) {
@@ -241,7 +261,10 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
     I->drag_row = row_num;
     I->dragging = true;
     SeekerSelectionCenter(rowVLA,row_num,col_num,true);
-    SeekerSelectionCenterGo();
+    if(mod & cOrthoCTRL) 
+      SeekerSelectionCenterGo(1);
+    else
+      SeekerSelectionCenterGo(0);
     break;
   case P_GLUT_LEFT_BUTTON:
     if(!col->spacer) {
@@ -329,10 +352,24 @@ static CSeqRow* SeekerDrag(CSeqRow* rowVLA,int row,int col,int mod)
   int a;
 
   if(I->dragging) {
+    I->handler.box_stop_col = col;
+    
     switch(I->drag_button) {
     case P_GLUT_LEFT_BUTTON:
       if(col != I->drag_last_col) {
-        
+
+        if((I->drag_last_col<I->drag_start_col) && (col>I->drag_start_col))
+          {
+            for(a=I->drag_last_col;a<I->drag_start_col;a++)
+              SeekerSelectionToggle(rowVLA,I->drag_row,a,!I->drag_setting);                        
+            I->drag_last_col = I->drag_start_col;
+          }
+        if((I->drag_last_col>I->drag_start_col) && (col<I->drag_start_col))
+          {
+            for(a=I->drag_last_col;a>I->drag_start_col;a--)
+              SeekerSelectionToggle(rowVLA,I->drag_row,a,!I->drag_setting);                        
+            I->drag_last_col = I->drag_start_col;
+          }
         if(I->drag_start_col == I->drag_last_col) {
           if(col>I->drag_start_col) {
             I->drag_last_col = I->drag_start_col+1;
@@ -370,35 +407,46 @@ static CSeqRow* SeekerDrag(CSeqRow* rowVLA,int row,int col,int mod)
       }
       break;
     case P_GLUT_MIDDLE_BUTTON:
-
-        if(I->drag_start_col == I->drag_last_col) {
-          if(col>I->drag_start_col) {
-            I->drag_last_col = I->drag_start_col+1;
-            SeekerSelectionCenter(rowVLA,I->drag_row,I->drag_last_col,false);          
-          } else if(col<I->drag_start_col) {
-            I->drag_last_col = I->drag_start_col-1;          
-            SeekerSelectionCenter(rowVLA,I->drag_row,I->drag_last_col,false);          
-          }
+      {
+        int action=0;
+        int start_over = false;
+        if(mod & cOrthoCTRL) {
+          action = 1;
         }
-        if(I->drag_start_col < I->drag_last_col) {
-          
-          if( col > I->drag_last_col ) {
-            for( a=I->drag_last_col+1; a<=col; a++) {
-              SeekerSelectionCenter(rowVLA,I->drag_row,a,false);          
+        if(!(mod & cOrthoSHIFT)) {
+          start_over = true;
+          I->handler.box_start_col = col;
+          SeekerSelectionCenter(rowVLA,I->drag_row,col,start_over);          
+        } else {
+          if(I->drag_start_col == I->drag_last_col) {
+            if(col>I->drag_start_col) {
+              I->drag_last_col = I->drag_start_col+1;
+              SeekerSelectionCenter(rowVLA,I->drag_row,I->drag_last_col,start_over);          
+            } else if(col<I->drag_start_col) {
+              I->drag_last_col = I->drag_start_col-1;          
+              SeekerSelectionCenter(rowVLA,I->drag_row,I->drag_last_col,start_over);          
             }
           }
-        } else {
-          
-          if( col < I->drag_last_col) {
-            for(a=I->drag_last_col-1;a>=col;a--) {
-              SeekerSelectionCenter(rowVLA,I->drag_row,a,false);          
+          if(I->drag_start_col < I->drag_last_col) {
+            
+            if( col > I->drag_last_col ) {
+              for( a=I->drag_last_col+1; a<=col; a++) {
+                SeekerSelectionCenter(rowVLA,I->drag_row,a,start_over);          
+              }
+            }
+          } else {
+            
+            if( col < I->drag_last_col) {
+              for(a=I->drag_last_col-1;a>=col;a--) {
+                SeekerSelectionCenter(rowVLA,I->drag_row,a,start_over);          
+              }
             }
           }
         }
         I->drag_last_col = col;              
         
-        SeekerSelectionCenterGo();
-
+        SeekerSelectionCenterGo(action);
+      }
       break;
     }
   }
@@ -410,6 +458,8 @@ static CSeqRow* SeekerRelease(CSeqRow* rowVLA,int button,
 {
   CSeeker *I = &Seeker;    
   I->dragging = false;
+
+  I->handler.box_active=false;
   return NULL;
 }
 
@@ -1067,8 +1117,7 @@ void SeekerUpdate(void)
 void SeekerInit(void)
 {
   CSeeker *I = &Seeker;  
-  I->dragging = false;
-  
+  UtilZeroMem(I,sizeof(CSeeker));
 }
 
 void SeekerFree(void)

@@ -157,6 +157,19 @@ int PTruthCallStr(PyObject *object,char *method,char *argument)
   }
   return(result);
 }
+
+int PTruthCallStr1i(PyObject *object,char *method,int argument)
+{
+  int result = false;
+  PyObject *tmp;
+  tmp = PyObject_CallMethod(object,method,"i",argument);
+  if(tmp) {
+    if(PyObject_IsTrue(tmp))
+      result = 1;
+    Py_DECREF(tmp);
+  }
+  return(result);
+}
                                        
 void PXDecRef(PyObject *obj)
 {

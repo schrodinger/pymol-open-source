@@ -85,8 +85,11 @@ static int FindRowCol(int x,int y,int *row_num_ptr,int *col_num_ptr,int fixed_ro
           col_num--;
           if(col_num<row->nCol) {
             result = true;
-          } else if((fixed_row>=0)&&(col_num>0)) {
-            col_num = row->nCol - 1;
+          } else if(fixed_row>=0) {
+            if(col_num>0) 
+              col_num = row->nCol - 1;
+            if(col_num<0)
+              col_num = 0;
             result = true;
           }
         }
@@ -185,27 +188,27 @@ static int SeqRelease(Block *block,int button,int x,int y,int mod)
 {
   CSeq *I=&Seq;  
   int pass=0;
-  if(I->ScrollBarActive) {
-    if((y-I->Block->rect.bottom)<I->ScrollBarWidth) {
-      pass = 1;
-      ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
-      OrthoUngrab();
-    }
-  } 
+  /*
+    if(I->ScrollBarActive) {
+      if((y-I->Block->rect.bottom)<I->ScrollBarWidth) {
+        pass = 1;
+        ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
+     OrthoUngrab();
+      }
+    } 
+  */
   if(!pass) {
     int row_num;
     int col_num;
-    if(!pass) {
-      if(FindRowCol(x,y,&row_num,&col_num,I->LastRow)) {
-        CSeqRow *row;
-        CSeqCol *col;
-        row = I->Row+row_num;
-        col = row->col+col_num;
-        if(I->Handler)
-          if(I->Handler->fRelease)
-            I->Handler->fRelease(I->Row,button,row_num,col_num,mod);
-        OrthoDirty();
-      }
+    if(FindRowCol(x,y,&row_num,&col_num,I->LastRow)) {
+      CSeqRow *row;
+      CSeqCol *col;
+      row = I->Row+row_num;
+      col = row->col+col_num;
+      if(I->Handler)
+        if(I->Handler->fRelease)
+          I->Handler->fRelease(I->Row,button,row_num,col_num,mod);
+      OrthoDirty();
     }
   }
   I->DragFlag=false;
@@ -288,8 +291,7 @@ static void SeqDraw(Block *block)
     } else {
       I->NSkip = 0;
     }
-
-    { /* get current sequence sizes */
+    if(I->NRow) { /* get current sequence sizes */
       int a,b;
       float white[3] = {1,1,1};
       float black[3] = {0,0,0};
@@ -298,6 +300,7 @@ static void SeqDraw(Block *block)
       CSeqRow *row;
       CSeqCol *col;
       int xx,yy,ch_wid,pix_wid,tot_len;
+      int y1=y;
       int max_len = 0;
       int n_real = 0;
       for(a=I->NRow-1;a>=0;a--) {
@@ -307,7 +310,7 @@ static void SeqDraw(Block *block)
         else
           cur_color = blue;
         glColor3fv(cur_color);
-        yy=y-2;
+        yy=y1-2;
         if(max_len<row->ext_len)
           max_len = row->ext_len;
         if(!row->label_flag)
@@ -329,69 +332,105 @@ static void SeqDraw(Block *block)
                 glVertex2i(xx+pix_wid,yy);
                 glEnd();
                 glColor3fv(black);
-                GrapDrawSubStrFast(row->txt,xx,y,
+                GrapDrawSubStrFast(row->txt,xx,y1,
                                    col->start,ch_wid);
                 glColor3fv(cur_color);
               } else {
-                GrapDrawSubStrFast(row->txt,xx,y,
+                GrapDrawSubStrFast(row->txt,xx,y1,
                                    col->start,ch_wid);
               }
             }
           }
         }
-        y+=13;
+        y1+=I->LineHeight;
       }
-      {
-        int real_count = n_real;
-        int mode = 0;
-        float width = I->Block->rect.right - I->Block->rect.left;
-        float start,stop;
-        float bot,top;
-        float height = (I->ScrollBarWidth - I->ScrollBarMargin);
-        cur_color = blue;
-        for(a=0;a<I->NRow;a++) {
-          row = I->Row+a;
-          if(!row->label_flag) {
-            top =  I->Block->rect.bottom + I->ScrollBarMargin + (height*real_count)/n_real; 
-            real_count--;
-            bot = I->Block->rect.bottom + I->ScrollBarMargin + (height*real_count)/n_real;
-            mode = 0;
-            for(b=0;b<row->nCol;b++) {
-              col = row->col+b;
-              if(col->inverse&&(!mode)) {
-                start = (width*col->offset)/max_len;
-                mode=1;
-              } else if((!col->inverse)&&(mode)) {
-                stop = (width*col->offset)/max_len;
-                
-                glColor3fv(cur_color);
-                glBegin(GL_POLYGON);
-                glVertex2f(start,bot);
-                glVertex2f(start,top);
-                glVertex2f(stop,top);
-                glVertex2f(stop,bot);
-                glEnd();
-                mode = 0;
-              }
-            }
-
-            if(mode) {
-              stop = width;
-                glColor3fv(cur_color);
-                glBegin(GL_POLYGON);
-                glVertex2f(start,bot);
-                glVertex2f(start,top);
-                glVertex2f(stop,top);
-                glVertex2f(stop,bot);
-                glEnd();
-            }
-              
+      if(I->Handler->box_active) {
+        int box_row = I->Handler->box_row;
+        if((box_row>=0)&&(box_row<I->NRow)) {
+          int start_col = I->Handler->box_start_col;
+          int stop_col = I->Handler->box_stop_col;
+          if(start_col>stop_col) {
+            register int tmp = stop_col;
+            stop_col=start_col;
+            start_col=tmp;
+          }
+          row = I->Row + box_row;
+          if((start_col>=0)&&(start_col<row->nCol)&&
+             (stop_col>=0)&&(stop_col<row->nCol)) {
+            int start;
+            int stop;
+            int xx2;
+            CSeqCol *col2;
+            col = row->col + start_col;
+            col2 = row->col + stop_col;
+            
+            yy=y+((I->NRow-1)-box_row)*I->LineHeight-2;
+            xx=x+I->CharMargin+I->CharWidth*(col->offset-I->NSkip);
+            xx2=x+I->CharMargin+I->CharWidth*(col2->offset+(col2->stop-col2->start)-I->NSkip);
+            
+            glBegin(GL_LINE_LOOP);
+            glVertex2i(xx,yy);
+            glVertex2i(xx,yy+I->LineHeight-2);
+            glVertex2i(xx2,yy+I->LineHeight-2);
+            glVertex2i(xx2,yy);
+            glEnd();
+            
           }
         }
-        if(I->ScrollBarActive)
-          ScrollBarDrawHandle(I->ScrollBar,0.35F);
       }
-
+      if(I->ScrollBarActive)
+        {
+          int real_count = n_real;
+          int mode = 0;
+          float width = I->Block->rect.right - I->Block->rect.left;
+          float start,stop;
+          float bot,top;
+          float height = (I->ScrollBarWidth - I->ScrollBarMargin);
+          cur_color = blue;
+          for(a=0;a<I->NRow;a++) {
+            row = I->Row+a;
+            if(!row->label_flag) {
+              top =  I->Block->rect.bottom + I->ScrollBarMargin + (height*real_count)/n_real; 
+              real_count--;
+              bot = I->Block->rect.bottom + I->ScrollBarMargin + (height*real_count)/n_real;
+              mode = 0;
+              for(b=0;b<row->nCol;b++) {
+                col = row->col+b;
+                if(col->inverse&&(!mode)) {
+                  start = (width*col->offset)/max_len;
+                  mode=1;
+                } else if((!col->inverse)&&(mode)) {
+                  stop = (width*col->offset)/max_len;
+                  
+                  glColor3fv(cur_color);
+                  glBegin(GL_POLYGON);
+                  glVertex2f(start,bot);
+                  glVertex2f(start,top);
+                  glVertex2f(stop,top);
+                  glVertex2f(stop,bot);
+                  glEnd();
+                  mode = 0;
+                }
+              }
+              
+              if(mode) {
+                col = row->col+row->nCol-1;
+                stop = width*(col->offset+(col->stop-col->start)*I->CharWidth);
+                glColor3fv(cur_color);
+                glBegin(GL_POLYGON);
+                glVertex2f(start,bot);
+                glVertex2f(start,top);
+                glVertex2f(stop,top);
+                glVertex2f(stop,bot);
+                glEnd();
+              }
+              
+            }
+          }
+          
+          ScrollBarDrawHandle(I->ScrollBar,0.35F);
+        }
+      
     }
     
   }
