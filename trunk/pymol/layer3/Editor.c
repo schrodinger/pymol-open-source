@@ -428,31 +428,49 @@ void EditorAttach(char *elem,int geom,int valence)
   }
 }
 /*========================================================================*/
-void EditorRemove(void)
+void EditorRemove(int hydrogen)
 {
   CEditor *I = &Editor;
   int sele0,sele1;
   int i0;
-  
+  int h_flag = false;
+  OrthoLineType buf;
+
+#define cEditorRemoveSele "_EditorRemove"
+
   if(I->Obj) {
     ObjectMoleculeVerifyChemistry(I->Obj); /* remember chemistry for later */
     sele0 = SelectorIndexByName(cEditorSele1);
     if(sele0>=0) {
       sele1 = SelectorIndexByName(cEditorSele2);
+
       if(sele1>=0) {
         /* bond mode */
         ObjectMoleculeRemoveBonds(I->Obj,sele0,sele1);
         EditorSetActiveObject(NULL,0);        
       } else {
+
+        if(hydrogen) {
+          sprintf(buf,"((neighbor %s) and hydro)",cEditorSele1);          
+          h_flag = SelectorCreate(cEditorRemoveSele,buf,NULL,false);
+        }
+
         /* atom mode */
         i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
         if(i0>=0) {
           ExecutiveRemoveAtoms(cEditorSele1);
           EditorSetActiveObject(NULL,0);
         }
+
+        if(h_flag) {
+          ExecutiveRemoveAtoms(cEditorRemoveSele);
+          SelectorDelete(cEditorRemoveSele);
+        }
+
       }
     }
   }
+#undef cEditorRemoveSele
 }
 /*========================================================================*/
 void EditorHFill(void)

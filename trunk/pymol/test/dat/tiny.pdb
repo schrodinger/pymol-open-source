@@ -1,0 +1,59 @@
+ATOM      1  C   THR C   7      22.336  25.300  48.803  1.00 63.21           C
+ATOM      2  O   THR C   7      22.578  25.378  50.020  1.00 66.17           O
+ATOM      3  N   PRO C   8      23.300  25.431  47.882  1.00 50.78           N
+ATOM      4  CA  PRO C   8      24.707  25.677  48.218  1.00 48.16           C
+ATOM      5  CB  PRO C   8      25.419  25.374  46.911  1.00 38.57           C
+ATOM      6  CG  PRO C   8      24.445  25.914  45.921  1.00 54.58           C
+ATOM      7  CD  PRO C   8      23.100  25.432  46.425  1.00 46.59           C
+ATOM      8  C   PRO C   8      24.880  27.133  48.611  1.00 43.98           C
+ATOM      9  O   PRO C   8      23.948  27.896  48.474  1.00 44.49           O
+ATOM     10 2HB  PRO C   8      26.379  25.887  46.849  1.00  0.00           H
+ATOM     11 2HD  PRO C   8      22.300  26.114  46.135  1.00  0.00           H
+ATOM     12 2HG  PRO C   8      24.482  27.003  45.895  1.00  0.00           H
+ATOM     13 3HB  PRO C   8      25.573  24.303  46.778  1.00  0.00           H
+ATOM     14 3HD  PRO C   8      22.873  24.432  46.055  1.00  0.00           H
+ATOM     15 3HG  PRO C   8      24.648  25.523  44.924  1.00  0.00           H
+ATOM     16  HA  PRO C   8      25.084  25.083  49.051  1.00  0.00           H
+ATOM     17  N   SER C   9      26.077  27.507  49.057  1.00 48.79           N
+ATOM     18  CA  SER C   9      26.399  28.870  49.505  1.00 52.15           C
+ATOM     19  CB  SER C   9      26.515  29.861  48.341  1.00 60.82           C
+ATOM     20  OG  SER C   9      27.874  30.269  48.160  1.00 62.34           O
+ATOM     21  C   SER C   9      25.452  29.408  50.549  1.00 45.41           C
+ATOM     22  O   SER C   9      24.266  29.598  50.302  1.00 41.25           O
+ATOM     23 2HB  SER C   9      26.159  29.385  47.428  1.00  0.00           H
+ATOM     24 3HB  SER C   9      25.903  30.737  48.553  1.00  0.00           H
+ATOM     25  H   SER C   9      26.809  26.812  49.090  1.00  0.00           H
+ATOM     26  HA  SER C   9      27.377  28.774  49.977  1.00  0.00           H
+ATOM     27  HG  SER C   9      27.947  30.890  47.431  1.00  0.00           H
+TER      28      SER C   9 
+HETATM   29  O   HOH   260      21.179  27.898  50.032  1.00 26.69           O
+HETATM   30  O01 UNK E   1      24.324  25.447  52.462  0.00  0.00      E    O
+HETATM   31  C02 UNK E   1      23.482  23.863  53.847  0.00  0.00      E    C
+HETATM   32  C03 UNK E   1      23.286  24.563  52.677  0.00  0.00      E    C
+HETATM   33  C04 UNK E   1      24.661  24.303  54.390  0.00  0.00      E    C
+HETATM   34  C05 UNK E   1      25.200  25.302  53.575  0.00  0.00      E    C
+HETATM   35  H01 UNK E   1      22.829  23.109  54.259  0.00  0.00      E    H
+HETATM   36  H04 UNK E   1      25.110  23.961  55.309  0.00  0.00      E    H
+HETATM   37  H05 UNK E   1      22.450  24.457  52.003  0.00  0.00      E    H
+HETATM   38  H06 UNK E   1      26.083  25.815  53.676  0.00  0.00      E    H
+CONECT   30   32   34
+CONECT   31   32
+CONECT   31   32
+CONECT   31   33   35
+CONECT   32   30
+CONECT   32   31
+CONECT   32   31
+CONECT   32   37
+CONECT   33   31
+CONECT   33   34
+CONECT   33   34
+CONECT   33   36
+CONECT   34   30
+CONECT   34   33
+CONECT   34   33
+CONECT   34   38
+CONECT   35   31
+CONECT   36   33
+CONECT   37   32
+CONECT   38   34
+END

@@ -144,11 +144,11 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeRotFrag], "RotF ");
   strcpy(I->Code[cButModeMovFrag], "MovF ");
   strcpy(I->Code[cButModePk1],     " lb  ");
-  strcpy(I->Code[cButModePk2],     " mb ");
-  strcpy(I->Code[cButModePk3],     " rb ");
-  strcpy(I->Code[cButModeAddToPk1],"+lb ");
-  strcpy(I->Code[cButModeAddToPk2],"+mb ");
-  strcpy(I->Code[cButModeAddToPk3],"+rb ");
+  strcpy(I->Code[cButModePk2],     " mb  ");
+  strcpy(I->Code[cButModePk3],     " rb  ");
+  strcpy(I->Code[cButModeAddToPk1],"+lb  ");
+  strcpy(I->Code[cButModeAddToPk2],"+mb  ");
+  strcpy(I->Code[cButModeAddToPk3],"+rb  ");
   strcpy(I->Code[cButModeOrigAt],  "Orig ");
 
   I->Block = OrthoNewBlock(NULL);

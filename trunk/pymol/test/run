@@ -8,7 +8,11 @@ import string
 
 # list of tests to run ...
 
-standard_tests = ['cmd', 'chempy', 'pc' ]
+# prefixes
+# C = command line scripts
+# G = graphics and internal GUI
+
+standard_prefixes = ['C', 'G' ]
 
 # set module path for generic python stuff
 
@@ -30,6 +34,7 @@ if len(argv):
 # ---
 
 pymol = "pymol"
+cmd = "../pymol.com "
 cmp = "cmp"
 ref = "ref"
 inp = "inp"
@@ -39,20 +44,32 @@ if not os.path.exists(cmp):
 if len(argv)>1:
    tests = argv
 else:
-   tests = standard_tests
+   tests = standard_prefixes
 
 for test in tests:
-   for ifil in glob.glob( inp+"/"+test+"*" ):
-      f = open(ifil) # get command for running test
-      cmd = f.readline()
+   flist = glob.glob( inp+"/"+test+"*" )
+   cvs = inp+"/CVS"
+   if cvs in flist:
+      flist.remove(cvs)
+   flist.sort()
+   for ifil in flist:
+      # get options
+      f = open(ifil)
+      opt = string.strip(f.readline())
+      opt = re.sub("^\s*\#","",opt)
       f.close()
-      cmd = string.strip(re.sub(r"^#*","",cmd))
-      tst = re.sub(r".*/","",ifil) # get exact test name
+      
+      tst = re.sub(r".*/","",ifil) # get exact test name without suffix
       tst = re.sub(r"\..*","",tst)
+      
       print " run_tests: "+tst+"..."
-#      print "    "+cmd+" "+ifil+" >& "+cmp+"/"+tst+".log"
-      os.system(cmd+" "+ifil+" > "+cmp+"/"+tst+".log")
-#      os.system(cmd+" "+ifil)
+
+      syscmd = cmd+" "+opt+" "+ifil+" | python trim.py > "+cmp+"/"+tst+".log 2>&1"
+      
+      os.system(syscmd)
+
+      # check log file and any other output files
+      
       for ref_fil in ( glob.glob(ref+"/"+tst+".*")):
          postfx = re.sub(r".*/","",ref_fil)
          cmp_fil = cmp+"/"+postfx
@@ -66,11 +83,14 @@ for test in tests:
                   postfx+" DIFFERS over about %d lines." % int(len(diffs)/2)
          else:
             print " run_tests: "+postfx+" is missing."
+            
+      # check for extraneous, unverifiable files
+      
       for cmp_fil in ( glob.glob(cmp+"/"+tst+".*")):
          postfx = re.sub(r".*/","",cmp_fil)
          ref_fil = ref+"/"+postfx
          if not os.path.exists(ref_fil):
-            print " run_tests: no reference version for "+postfx+"."
+            print " run_tests: no reference version for "+cmp+"/"+postfx+"."
 
 
 

@@ -2088,8 +2088,10 @@ static PyObject *CmdRemove(PyObject *self, PyObject *args)
 
 static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
 {
+  int i1;
+  PyArg_ParseTuple(args,"i",&i1);
   APIEntry();
-  EditorRemove();
+  EditorRemove(i1);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

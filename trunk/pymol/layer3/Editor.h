@@ -20,11 +20,11 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"ObjectMolecule.h"
 
-#define cEditorSele1 "ed1"
-#define cEditorSele2 "ed2"
-#define cEditorFragPref "fg"
-#define cEditorBasePref "_fbase"
-#define cEditorComp   "ed"
+#define cEditorSele1 "pk_a1"
+#define cEditorSele2 "pk_a2"
+#define cEditorFragPref "pk_f"
+#define cEditorBasePref "_pkbase"
+#define cEditorComp   "pk_ch"
 
 void EditorInit(void);
 int EditorActive(void);
@@ -38,7 +38,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state);
 ObjectMolecule *EditorDragObject(void);
 void EditorReplace(char *elem,int geom,int valence);
 void EditorAttach(char *elem,int geom,int valence);
-void EditorRemove(void);
+void EditorRemove(int hydrogen);
 void EditorHFill(void);
 void EditorCycleValence(void);
 void EditorInactive(void);
