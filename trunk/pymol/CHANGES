@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * fixed minor bug in fitting code (faster convergence?)
+
    * added surface_trim_factor and surface_trim_factor settings
      in order to hard-to-tesselate peaks on the surface
 
