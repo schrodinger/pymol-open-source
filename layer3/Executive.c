@@ -139,7 +139,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   int n_processed = 0;
   int m4x_mode = 0; /* 0 = annotate, 1 = alignment */
   ProcPDBRec *target_rec = NULL;
-
+  char nbrhood_sele[] = "m4x_nearby";
 
   f=fopen(fname,"rb");
   if(!f) {
@@ -362,12 +362,16 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
         }
         sprintf(tmp_sele, "bychain %s", aligned_name);
         SelectorCreateSimple(aligned_name, tmp_sele);
+        sprintf(tmp_sele, "byres (%s expand 3.5)", aligned_name);
+        SelectorCreateSimple(nbrhood_sele, tmp_sele);
       }
     }
   }
   
   if(ok&&n_processed) { /* next, perform any and all Metaphorics annotations */
       int a;
+      int nbr_sele = SelectorIndexByName(nbrhood_sele);
+      
       for(a=0; a<n_processed; a++) {
         ProcPDBRec *current = processed + a;
         if(current->m4x.annotated_flag) {
@@ -385,8 +389,10 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
               break;
             }
           }
+
           if((current!=target_rec)||(!current->m4x.invisible)) /* suppress annotations if target invisible */
-              ObjectMoleculeM4XAnnotate(current->obj,&current->m4x,script_file,(m4x_mode==1));
+            ObjectMoleculeM4XAnnotate(current->obj,&current->m4x,script_file,(m4x_mode==1),
+                                      nbr_sele);
           M4XAnnoPurge(&current->m4x);
         }
       }
@@ -5330,6 +5336,72 @@ void ExecutiveSetAllVisib(int state)
 
 }
 /*========================================================================*/
+int ExecutiveToggleRepVisib(char *name,int rep)
+{
+  int ok =true;
+  int sele;
+  int a;
+  int handled = false;
+  SpecRec *tRec;
+  ObjectMoleculeOpRec op;
+
+  PRINTFD(FB_Executive)
+    " ExecutiveToggleRepVisib: entered.\n"
+    ENDFD;
+
+  tRec = ExecutiveFindSpec(name);
+  if((!tRec)&&(!strcmp(name,cKeywordAll))) {
+    ExecutiveToggleAllRepVisib(name,rep);
+  }
+  if(tRec) {
+    if(tRec->type==cExecObject) 
+      switch(tRec->obj->type) {
+      case cObjectMolecule: /* do nothing -- yet */
+        break;
+      default: /* otherwise, toggle the representation on/off */
+        if(rep>=0) {
+          ObjectToggleRepVis(tRec->obj,rep);
+          if(tRec->obj->fInvalidate)
+            tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,0);
+        } 
+        handled = true;
+        SceneChanged();
+        break;
+      }
+    if(!handled)
+      switch(tRec->type) {
+      case cExecSelection:
+      case cExecObject:
+        sele=SelectorIndexByName(name);
+        if(sele>=0) {
+          ObjectMoleculeOpRecInit(&op);
+
+          op.code=OMOP_CheckVis;
+          op.i1=rep;
+          op.i2=false;
+          ExecutiveObjMolSeleOp(sele,&op);
+          op.i2 = !op.i2;
+
+          if(tRec->type==cExecObject)
+            ObjectSetRepVis(tRec->obj,rep,op.i2);
+
+          op.code=OMOP_VISI;
+          op.i1=rep;
+          ExecutiveObjMolSeleOp(sele,&op);
+          op.code=OMOP_INVA;
+          op.i2=cRepInvVisib;
+          ExecutiveObjMolSeleOp(sele,&op);
+        }
+        break;
+      }
+  }
+  PRINTFD(FB_Executive)
+    " ExecutiveToggleRepVisib: leaving...\n"
+    ENDFD;
+  return (ok);
+}
+
+/*========================================================================*/
 void ExecutiveSetRepVisib(char *name,int rep,int state)
 {
   int sele;
@@ -5362,13 +5434,13 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
         if(rep>=0) {
           ObjectSetRepVis(tRec->obj,rep,state);
           if(tRec->obj->fInvalidate)
-            tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
+            tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,0);
         } else {
           for(a=0;a<cRepCnt;a++) {
             tRec->repOn[a]=state; 
             ObjectSetRepVis(tRec->obj,a,state);
             if(tRec->obj->fInvalidate)
-              tRec->obj->fInvalidate(tRec->obj,a,cRepInvVisib,state);
+              tRec->obj->fInvalidate(tRec->obj,a,cRepInvVisib,0);
           }
         }
         SceneChanged();
@@ -5405,6 +5477,8 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
   ObjectMolecule *obj;
   int sele;
   int a;
+  int is_on = false;
+
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
   PRINTFD(FB_Executive)
@@ -5465,6 +5539,34 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
     " ExecutiveSetAllRepVisib: leaving...\n"
     ENDFD;
 
+}
+/*========================================================================*/
+void ExecutiveToggleAllRepVisib(char *name,int rep)
+{
+  ObjectMoleculeOpRec op;
+  int toggle_state;
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+
+  op.code=OMOP_CheckVis;
+  op.i1=rep;
+  op.i2=false;
+  ExecutiveObjMolSeleOp(cSelectionAll,&op);
+  toggle_state = op.i2;
+  while(ListIterate(I->Spec,rec,next)) {
+	 if(rec->type==cExecObject) {
+      switch(rec->obj->type) {
+        case cObjectMolecule:
+        break;
+        default:
+        if(rec->repOn[rep])
+          toggle_state = true;
+        break;
+      }
+    }
+  }
+
+  ExecutiveSetAllRepVisib(name,rep,!toggle_state);
 }
 /*========================================================================*/
 void ExecutiveInvalidateRep(char *name,int rep,int level)

@@ -3310,6 +3310,27 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
+{
+  char *sname;
+  int rep;
+  OrthoLineType s1;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"si",&sname,&rep);
+  if (ok) {
+    APIEntry();
+    if(sname[0]=='@') {
+      /* TODO */
+    } else {
+      SelectorGetTmp(sname,s1);
+      ok = ExecutiveToggleRepVisib(s1,rep);
+      SelectorFreeTmp(s1);
+    }
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 {
   APIEntry();
@@ -4553,6 +4574,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"system",	              CmdSystem,               METH_VARARGS },
 	{"symexp",	              CmdSymExp,               METH_VARARGS },
 	{"test",	                 CmdTest,                 METH_VARARGS },
+	{"toggle",                CmdToggle,               METH_VARARGS },
 	{"transform_object",      CmdTransformObject,      METH_VARARGS },
 	{"transform_selection",   CmdTransformSelection,   METH_VARARGS },
 	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },

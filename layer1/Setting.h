@@ -465,11 +465,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_editor_label_fragments     321
 #define cSetting_internal_gui_control_size  322
 #define cSetting_auto_dss                   323
-#define cSetting_transparent_picking_mode   324
+#define cSetting_transparency_picking_mode   324
+#define cSetting_virtual_trackball           325
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        325
+#define cSetting_INIT                        326
 
 #endif
 

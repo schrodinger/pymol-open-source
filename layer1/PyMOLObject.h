@@ -66,6 +66,7 @@ void ObjectSetName(CObject *I,char *name);
 void ObjectFree(CObject *I);
 void ObjectUseColor(CObject *I);
 void ObjectSetRepVis(CObject *I,int rep,int state);
+void ObjectToggleRepVis(CObject *I,int rep);
 void ObjectPrepareContext(CObject *I,CRay *ray);
 void ObjectCombineTTT(CObject *I,float *ttt);
 void ObjectSetTTTOrigin(CObject *I,float *origin);

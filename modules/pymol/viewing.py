@@ -366,6 +366,51 @@ SEE ALSO
          unlock()
       return r
 
+   def toggle(representation="",selection=""):
+      '''
+DESCRIPTION
+
+   "toggle" toggles representations.
+
+
+USAGE
+
+PYMOL API
+
+EXAMPLES
+
+NOTES
+
+SEE ALSO
+      '''
+      r=1
+      try:
+         lock()
+         if (representation=="") and (selection==""):
+            r = _cmd.toggle("(all)",repres['lines']); # show lines by default       
+         elif (representation!="") and (selection!=""):
+            rep = representation
+            rep = repres_sc.auto_err(rep,'representation')
+            repn = repres[rep];
+            # preprocess selection 
+            selection = selector.process(selection)
+            #   
+            r = _cmd.toggle(str(selection),int(repn));
+         elif representation=='all':
+            r = _cmd.toggle("all",repres['lines']); # toggle lines by default 
+         elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
+            # preprocess selection
+            selection = selector.process(representation)
+            #                  
+            r = _cmd.toggle(str(selection),repres['lines']);
+         else: # selection==""
+            rep = representation
+            rep = repres_sc.auto_err(rep,'representation')
+            repn = repres[rep];
+            r = _cmd.toggle("all",int(repn));
+      finally:
+         unlock()
+      return r
 
    def show(representation="",selection=""):
       '''

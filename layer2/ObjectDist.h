@@ -40,7 +40,8 @@ struct ObjectMolecule;
 
 ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,                                      
                                       struct ObjectMolecule *objMol,
-                                      struct M4XBondType *hbond,int n_hbond);
+                                     struct M4XBondType *hbond,int n_hbond,
+                                     int nbr_sele);
 
 #endif
 

@@ -1091,7 +1091,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 }
 /*========================================================================*/
 
-void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_file,int match_colors)
+void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_file,
+                               int match_colors,int nbr_sele)
 {
   int a;
   WordType name;
@@ -1132,7 +1133,8 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
         distObj = ObjectDistNewFromM4XBond(NULL,
                                             I,
                                             cont->hbond,
-                                            cont->n_hbond);
+                                           cont->n_hbond,
+                                           nbr_sele);
         if(match_colors)
           distObj->Obj.Color = I->Obj.Color;
         else
