@@ -2,7 +2,7 @@
 # filter wizard
 # no-frills tool for quickly filtering docked compounds, etc.
 
-import os
+import os,sys
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -294,20 +294,20 @@ class Filter(Wizard):
          except:
             print " Filter-Warning: '"+fname+"' in current directory is not writable."
             print " Filter-Warning: attempting to write as '$HOME/%s'"%(fname)
-            fname = "$HOME/"+fname
+            fname = "~/"+fname
             fname = os.path.expanduser(fname)
             fname = os.path.expandvars(fname)
          try:
             f=open(fname,'w')
             sd = self.state_dict
             sdo = self.dict[self.object]
-            f.write('Object\t"%s"%s'%(self.object,os.linesep))
-            f.write('Total\t%d%sAccepted\t%d%sRejected\t%d%sDeferred\t%d%sRemaining\t%d%s%s'%(
-               self.tota,os.linesep,
-               self.acce,os.linesep,
-               self.reje,os.linesep,
-               self.defe,os.linesep,
-               self.togo,os.linesep,os.linesep))
+            f.write('Object\t"%s"\n'%(self.object))
+            f.write('Total\t%d\nAccepted\t%d\nRejected\t%d\nDeferred\t%d\nRemaining\t%d\n\n'%(
+               self.tota,
+               self.acce,
+               self.reje,
+               self.defe,
+               self.togo))
             # sort output in order of states            
             lst = []
             for a in sd.keys():
@@ -316,9 +316,9 @@ class Filter(Wizard):
             # write list with decisions
             for a in lst:
                if sdo.has_key(a[1]):
-                  f.write('%d\t"%s"\t"%s"%s'%(a[0],a[1],sdo[a[1]],os.linesep))
+                  f.write('%d\t"%s"\t"%s"\n'%(a[0],a[1],sdo[a[1]]))
                else:
-                  f.write('%d\t"%s"\t"?"%s'%(a[0],a[1],os.linesep))
+                  f.write('%d\t"%s"\t"?"\n'%(a[0],a[1]))
             f.close()
             print " Filter: Wrote '%s'."%fname
          except:
