@@ -246,6 +246,9 @@ if __name__=='pymol.cmd':
    def is_list(obj):
       return isinstance(obj,types.ListType)
 
+   def is_tuple(obj):
+      return isinstance(obj,types.TupleType)
+
    #--------------------------------------------------------------------
    # locks and threading
 
