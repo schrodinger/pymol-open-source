@@ -792,7 +792,7 @@ void MainFree(void)
 #ifdef WIN32
    int haveGUI = G->HaveGUI;
 #endif
-#ifdef _PyMOL_OSX
+#ifdef _PYMOL_OSX
    int haveGUI = G->HaveGUI;
 #endif
 
