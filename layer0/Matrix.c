@@ -529,8 +529,6 @@ float MatrixGetRMS(int n,float *v1,float *v2,float *wt)
     for(c=0;c<n;c++)
       if (wt[c]!=0.0F) {
         sumwt = sumwt + wt[c];
-      } else {
-        sumwt = sumwt + 1.0F; /* WHAT IS THIS? */
       }
   } else {
     for(c=0;c<n;c++)
