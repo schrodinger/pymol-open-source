@@ -30,6 +30,7 @@ mkdir -p ${RPM_BUILD_ROOT}/usr/lib/python1.5
 mkdir -p ${RPM_BUILD_ROOT}/usr/lib/python1.5/site-packages/pymol
 cp -dprv modules ${RPM_BUILD_ROOT}/usr/lib/python1.5/site-packages/pymol/
 cp -dprv test ${RPM_BUILD_ROOT}/usr/lib/python1.5/site-packages/pymol/
+cp -dprv examples ${RPM_BUILD_ROOT}/usr/lib/python1.5/site-packages/pymol/
 install -m 755 pymol.com ${RPM_BUILD_ROOT}/usr/bin/pymol
 
 mkdir -p ${RPM_BUILD_ROOT}/usr/doc
@@ -38,19 +39,16 @@ install -m 644 LICENSE ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
 install -m 644 DEVELOPERS ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
 install -m 644 CHANGES ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
 install -m 644 sample.pymolrc ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
-cp -dprv examples ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
 
 %files
-/usr/lib/python1.5/site-packages/pymol/modules/
-/usr/lib/python1.5/site-packages/pymol/test/
+/usr/lib/python1.5/site-packages/pymol/
 /usr/doc/%{name}-%{version}-%{release}/LICENSE
 /usr/doc/%{name}-%{version}-%{release}/DEVELOPERS
 /usr/doc/%{name}-%{version}-%{release}/CHANGES
 /usr/doc/%{name}-%{version}-%{release}/sample.pymolrc
-/usr/doc/%{name}-%{version}-%{release}/examples/
 /usr/bin/pymol
 
 
