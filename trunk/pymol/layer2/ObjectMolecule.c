@@ -605,6 +605,41 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *I,char *fname,int fram
   
   return(I);
 }
+static char *findflag(char *p,char *flag,char *format)
+{
+  char cc[MAXLINELEN];
+  char pat[MAXLINELEN] = "%FLAG ";
+  int l;
+  strcat(pat,flag);
+  l=strlen(pat);
+  while(*p) {
+    p=ncopy(cc,p,l);
+    if(WordMatch(cc,pat,true)) {
+      printf("flag? %s\n",cc);
+      p=nextline(p);
+      break;
+    }
+    p=nextline(p);
+  }
+
+  strcpy(pat,"%FORMAT(");
+  strcat(pat,format);
+  strcat(pat,")");
+  l=strlen(pat);
+  while(*p) {
+    p=ncopy(cc,p,l);
+    printf("format? %s\n",cc);
+    if(WordMatch(cc,pat,true)) {
+      p=nextline(p);
+      break; 
+    }
+    p=nextline(p);
+  }
+  return(p);
+}
+
+#define nextline_top nextline
+
 /*========================================================================*/
 CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
                                         AtomInfoType **atInfoPtr)
@@ -620,6 +655,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   int nBond=0;
   int auto_show_lines = SettingGet(cSetting_auto_show_lines);
   int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  int amber7 = false;
 
   WordType title;
   ResName *resn;
@@ -637,6 +673,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   int MBPER,MGPER,MDPER,IFBOX,NMXRS,IFCAP;
   int NEXTRA,IPOL=0;
 
+  
   AtomInfoPrimeColors();
 
   p=buffer;
@@ -645,57 +682,122 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
 	 atInfo = *atInfoPtr;
   if(!atInfo)
     ErrFatal("TOPStr2CoordSet","need atom information record!");
- /* failsafe for old version..*/
+  /* failsafe for old version..*/
 
+  ncopy(cc,p,8);
+  if(strcmp(cc,"%VERSION")==0) {
+    amber7=true;
+    PRINTFB(FB_ObjectMolecule,FB_Details)
+      " ObjectMolecule: Attempting to read Amber7 topology file.\n"
+      ENDFB;
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Details)
+      " ObjectMolecule: Assuming this is an Amber6 topology file.\n"
+      ENDFB;
+  }
+  
   /* read title */
+  if(amber7) {
+    p = findflag(p,"TITLE","20a4");
+  }
 
   p=ncopy(cc,p,20);
   title[0]=0;
   sscanf(cc,"%s",title);
-  p=nextline(p);
+  p=nextline_top(p);
 
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&nAtom);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NTYPES);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NBONH);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MBONA);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NTHETH);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MTHETA);
+  if(amber7) {
 
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPHIH);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MPHIA);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NHPARM);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPARM);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NNB);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NRES);
+    p = findflag(p,"POINTERS","10I8");
 
-  p=nextline(p);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&nAtom)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NTYPES)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NBONH)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&MBONA)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NTHETH)==1);
 
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NBONA);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NTHETA);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPHIA);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NUMBND);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NUMANG);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPTRA);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&MTHETA)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NPHIH)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&MPHIA)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NHPARM)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NPARM)==1);
 
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NATYP);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPHB);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&IFPERT);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NBPER);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NGPER);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NDPER);
-  
-  p=nextline(p);
+    p=nextline_top(p);
 
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MBPER);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MGPER);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MDPER);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&IFBOX);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NMXRS);
-  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&IFCAP);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NNB)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NRES)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NBONA)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NTHETA)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NPHIA)==1);
 
-  p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NEXTRA);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NUMBND)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NUMANG)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NPTRA)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NATYP)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NPHB)==1);
 
-  p=nextline(p);
+    p=nextline_top(p);
+
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&IFPERT)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NBPER)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NGPER)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NDPER)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&MBPER)==1);
+
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&MGPER)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&MDPER)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&IFBOX)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NMXRS)==1);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&IFCAP)==1);
+    
+    p=nextline_top(p);
+    p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NEXTRA)==1);
+
+  } else {
+    
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&nAtom)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NTYPES)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NBONH)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&MBONA)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NTHETH)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&MTHETA)==1);
+    
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NPHIH)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&MPHIA)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NHPARM)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NPARM)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NNB)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NRES)==1);
+    
+    p=nextline_top(p);
+    
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NBONA)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NTHETA)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NPHIA)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NUMBND)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NUMANG)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NPTRA)==1);
+    
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NATYP)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NPHB)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&IFPERT)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NBPER)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NGPER)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NDPER)==1);
+    
+    p=nextline_top(p);
+    
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&MBPER)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&MGPER)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&MDPER)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&IFBOX)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NMXRS)==1);
+    p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&IFCAP)==1);
+    
+    p=ncopy(cc,p,6); if(sscanf(cc,"%d",&NEXTRA)!=1) NEXTRA=0;
+
+  }
+  p=nextline_top(p);
 
   if(!ok) {
     ErrMessage("TOPStrToCoordSet","Error reading counts lines");
@@ -705,468 +807,471 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
       nAtom,NBONA,NBONH
       ENDFB;
   }
-  
-  VLACheck(atInfo,AtomInfoType,nAtom);
+
+  if(ok) {  
+    VLACheck(atInfo,AtomInfoType,nAtom);
 
   /* read atoms */
 
-  b=0;
-  for(a=0;a<nAtom;a++) {
-    p=ncopy(cc,p,4);
-    ai=atInfo+a;
-    if(!sscanf(cc,"%s",ai->name))
-      ai->name[0]=0;
-    if((++b)==20) {
-      b=0;
-      p=nextline(p);
+    b=0;
+    for(a=0;a<nAtom;a++) {
+      p=ncopy(cc,p,4);
+      ai=atInfo+a;
+      if(!sscanf(cc,"%s",ai->name))
+        ai->name[0]=0;
+      if((++b)==20) {
+        b=0;
+        p=nextline_top(p);
+      }
     }
-  }
   
-  if(b) p=nextline(p);
+    if(b) p=nextline_top(p);
 
-  if(!ok) {
-    ErrMessage("TOPStrToCoordSet","Error reading atom names");
-  } else {
-    PRINTFB(FB_ObjectMolecule,FB_Blather)
-      " TOPStr2CoordSet: read atom names.\n"
-      ENDFB;
-  }
-
-  /* read charges */
-
-  b=0;
-  for(a=0;a<nAtom;a++) {
-    p=ncopy(cc,p,16);
-    ai=atInfo+a;
-    if(!sscanf(cc,"%f",&ai->partialCharge))
-      ok=false;
-    else {
-      ai->partialCharge/=18.2223; /* convert to electron charge */
+    if(!ok) {
+      ErrMessage("TOPStrToCoordSet","Error reading atom names");
+    } else {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " TOPStr2CoordSet: read atom names.\n"
+        ENDFB;
     }
-    if((++b)==5) {
-      b=0;
-      p=nextline(p);
-    }
-  }
 
-  if(!ok) {
-    ErrMessage("TOPStrToCoordSet","Error reading charges");
-  } else {
-    PRINTFB(FB_ObjectMolecule,FB_Blather)
-      " TOPStr2CoordSet: read charges.\n"
-      ENDFB;
-  }
-  if(b) p=nextline(p);
+    /* read charges */
+
+    b=0;
+    for(a=0;a<nAtom;a++) {
+      p=ncopy(cc,p,16);
+      ai=atInfo+a;
+      if(!sscanf(cc,"%f",&ai->partialCharge))
+        ok=false;
+      else {
+        ai->partialCharge/=18.2223; /* convert to electron charge */
+      }
+      if((++b)==5) {
+        b=0;
+        p=nextline_top(p);
+      }
+    }
+
+    if(!ok) {
+      ErrMessage("TOPStrToCoordSet","Error reading charges");
+    } else {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " TOPStr2CoordSet: read charges.\n"
+        ENDFB;
+    }
+    if(b) p=nextline_top(p);
   
   /* skip masses */
 
-  p=skip_fortran(nAtom,5,p);
+    p=skip_fortran(nAtom,5,p);
 
-  /* read LJ atom types */
+    /* read LJ atom types */
 
-  b=0;
-  for(a=0;a<nAtom;a++) {
-    p=ncopy(cc,p,6);
-    ai=atInfo+a;
-    if(!sscanf(cc,"%d",&ai->customType))
-      ok=false;
-    if((++b)==12) {
-      b=0;
-      p=nextline(p);
-    }
-  }
-  if(b) p=nextline(p);
-
-  if(!ok) {
-    ErrMessage("TOPStrToCoordSet","Error LJ atom types");
-  } else {
-    PRINTFB(FB_ObjectMolecule,FB_Blather)
-      " TOPStr2CoordSet: read LJ atom types.\n"
-      ENDFB;
-  }
-
-  /* skip excluded atom counts */
-
-  p=skip_fortran(nAtom,12,p);
-
-  /* skip NB param arrays */
-
-  p=skip_fortran(NTYPES*NTYPES,12,p);
-
-  /* read residue labels */
-
-  resn = Alloc(ResName,NRES);
-
-  b=0;
-  for(a=0;a<NRES;a++) {
-    p=ncopy(cc,p,4);
-    if(!sscanf(cc,"%s",resn[a]))
-      resn[a][0]=0;
-    if((++b)==20) {
-      b=0;
-      p=nextline(p);
-    }
-  }
-  if(b) p=nextline(p);
-
-  if(!ok) {
-    ErrMessage("TOPStrToCoordSet","Error reading residue labels");
-  } else {
-    PRINTFB(FB_ObjectMolecule,FB_Blather)
-      " TOPStr2CoordSet: read residue labels.\n"
-      ENDFB;
-  }
-
-  /* read residue assignments */
-
-  b=0;
-  last_i=0;
-  rc=0;
-  for(a=0;a<NRES;a++) {
-    p=ncopy(cc,p,6);
-    if(sscanf(cc,"%d",&at_i))
-      {
-        if(last_i)
-          for(aa=(last_i-1);aa<(at_i-1);aa++) {
-            ai = atInfo+aa;
-            strcpy(ai->resn,resn[a-1]);
-            ai->resv=rc;
-            sprintf(ai->resi,"%d",rc);
-          }
-        rc++;
-        last_i=at_i;
+    b=0;
+    for(a=0;a<nAtom;a++) {
+      p=ncopy(cc,p,6);
+      ai=atInfo+a;
+      if(!sscanf(cc,"%d",&ai->customType))
+        ok=false;
+      if((++b)==12) {
+        b=0;
+        p=nextline_top(p);
       }
-    if((++b)==12) {
-      b=0;
-      p=nextline(p);
     }
-  }
-  if(b) p=nextline(p);
-  if(last_i)
-    for(aa=(last_i-1);aa<nAtom;aa++) {
-      ai = atInfo+aa;
-      strcpy(ai->resn,resn[NRES-1]);
-      ai->resv=rc;
-      sprintf(ai->resi,"%d",rc);
+    if(b) p=nextline_top(p);
+
+    if(!ok) {
+      ErrMessage("TOPStrToCoordSet","Error LJ atom types");
+    } else {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " TOPStr2CoordSet: read LJ atom types.\n"
+        ENDFB;
     }
-  rc++;
 
-  if(!ok) {
-    ErrMessage("TOPStrToCoordSet","Error reading residues");
-  } else {
-    PRINTFB(FB_ObjectMolecule,FB_Blather)
-      " TOPStr2CoordSet: read residues.\n"
-      ENDFB;
-  }
+    /* skip excluded atom counts */
 
-  FreeP(resn);
+    p=skip_fortran(nAtom,12,p);
+
+    /* skip NB param arrays */
+
+    p=skip_fortran(NTYPES*NTYPES,12,p);
+
+    /* read residue labels */
+
+    resn = Alloc(ResName,NRES);
+
+    b=0;
+    for(a=0;a<NRES;a++) {
+      p=ncopy(cc,p,4);
+      if(!sscanf(cc,"%s",resn[a]))
+        resn[a][0]=0;
+      if((++b)==20) {
+        b=0;
+        p=nextline_top(p);
+      }
+    }
+    if(b) p=nextline_top(p);
+
+    if(!ok) {
+      ErrMessage("TOPStrToCoordSet","Error reading residue labels");
+    } else {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " TOPStr2CoordSet: read residue labels.\n"
+        ENDFB;
+    }
+
+    /* read residue assignments */
+
+    b=0;
+    last_i=0;
+    rc=0;
+    for(a=0;a<NRES;a++) {
+      p=ncopy(cc,p,6);
+      if(sscanf(cc,"%d",&at_i))
+        {
+          if(last_i)
+            for(aa=(last_i-1);aa<(at_i-1);aa++) {
+              ai = atInfo+aa;
+              strcpy(ai->resn,resn[a-1]);
+              ai->resv=rc;
+              sprintf(ai->resi,"%d",rc);
+            }
+          rc++;
+          last_i=at_i;
+        }
+      if((++b)==12) {
+        b=0;
+        p=nextline_top(p);
+      }
+    }
+    if(b) p=nextline_top(p);
+    if(last_i)
+      for(aa=(last_i-1);aa<nAtom;aa++) {
+        ai = atInfo+aa;
+        strcpy(ai->resn,resn[NRES-1]);
+        ai->resv=rc;
+        sprintf(ai->resi,"%d",rc);
+      }
+    rc++;
+
+    if(!ok) {
+      ErrMessage("TOPStrToCoordSet","Error reading residues");
+    } else {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " TOPStr2CoordSet: read residues.\n"
+        ENDFB;
+    }
+
+    FreeP(resn);
   
   /* skip bond force constants */
 
 
-  p=skip_fortran(NUMBND,5,p);
+    p=skip_fortran(NUMBND,5,p);
 
-  /* skip bond lengths */
+    /* skip bond lengths */
 
 
-  p=skip_fortran(NUMBND,5,p);
+    p=skip_fortran(NUMBND,5,p);
   
-  /* skip angle force constant */
+    /* skip angle force constant */
 
-  p=skip_fortran(NUMANG,5,p);
+    p=skip_fortran(NUMANG,5,p);
 
-  /* skip angle eq */
+    /* skip angle eq */
 
-  p=skip_fortran(NUMANG,5,p);
+    p=skip_fortran(NUMANG,5,p);
 
-  /* skip dihedral force constant */
+    /* skip dihedral force constant */
 
-  p=skip_fortran(NPTRA,5,p);
+    p=skip_fortran(NPTRA,5,p);
 
-  /* skip dihedral periodicity */
+    /* skip dihedral periodicity */
 
-  p=skip_fortran(NPTRA,5,p);
+    p=skip_fortran(NPTRA,5,p);
 
-  /* skip dihedral phases */
+    /* skip dihedral phases */
 
-  p=skip_fortran(NPTRA,5,p);
+    p=skip_fortran(NPTRA,5,p);
 
-  /* skip SOLTYs */
+    /* skip SOLTYs */
 
-  p=skip_fortran(NATYP,5,p);
+    p=skip_fortran(NATYP,5,p);
 
-  /* skip LJ terms r12 */
+    /* skip LJ terms r12 */
 
-  p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
+    p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
 
-  /* skip LJ terms r6 */
+    /* skip LJ terms r6 */
 
-  p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
+    p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
 
-  /* read bonds */
+    /* read bonds */
     
-  nBond = NBONH + NBONA;
+    nBond = NBONH + NBONA;
 
-  bond=VLAlloc(BondType,nBond);
+    bond=VLAlloc(BondType,nBond);
   
-  bi = 0;
+    bi = 0;
   
 
-  b=0;
-  c=0;
-  i0=0;
-  i1=0;
-  for(a=0;a<3*NBONH;a++) {
-    p=ncopy(cc,p,6);
-    i2=i1;
-    i1=i0;
-    if(!sscanf(cc,"%d",&i0))
-      ok=false;
-    if((++c)==3) {
-      c=0;
-      bd=bond+bi;
-      bd->index[0]=(abs(i2)/3);
-      bd->index[1]=(abs(i1)/3);
-      bd->order=1;
-      bd->stereo=0;
-      bd->id = bi+1;
-      bi++;
+    b=0;
+    c=0;
+    i0=0;
+    i1=0;
+    for(a=0;a<3*NBONH;a++) {
+      p=ncopy(cc,p,6);
+      i2=i1;
+      i1=i0;
+      if(!sscanf(cc,"%d",&i0))
+        ok=false;
+      if((++c)==3) {
+        c=0;
+        bd=bond+bi;
+        bd->index[0]=(abs(i2)/3);
+        bd->index[1]=(abs(i1)/3);
+        bd->order=1;
+        bd->stereo=0;
+        bd->id = bi+1;
+        bi++;
+      }
+      if((++b)==12) {
+        b=0;
+        p=nextline_top(p);
+      }
     }
-    if((++b)==12) {
-      b=0;
-      p=nextline(p);
+    if(b) p=nextline_top(p);
+
+    if(!ok) {
+      ErrMessage("TOPStrToCoordSet","Error hydrogen containing bonds");
+    } else {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " TOPStr2CoordSet: read %d hydrogen containing bonds.\n",NBONH
+        ENDFB;
     }
-  }
-  if(b) p=nextline(p);
 
-  if(!ok) {
-    ErrMessage("TOPStrToCoordSet","Error hydrogen containing bonds");
-  } else {
-    PRINTFB(FB_ObjectMolecule,FB_Blather)
-      " TOPStr2CoordSet: read %d hydrogen containing bonds.\n",NBONH
-      ENDFB;
-  }
-
-  b=0;
-  c=0;
-  for(a=0;a<3*NBONA;a++) {
-    p=ncopy(cc,p,6);
-    i2=i1;
-    i1=i0;
-    if(!sscanf(cc,"%d",&i0))
-      ok=false;
-    if((++c)==3) {
-      c=0;
-      bd=bond+bi;
-      bd->index[0]=(abs(i2)/3);
-      bd->index[1]=(abs(i1)/3);
-      bd->order=0;
-      bd->stereo=0;
-      bd->id = bi+1;
-      bi++;
+    b=0;
+    c=0;
+    for(a=0;a<3*NBONA;a++) {
+      p=ncopy(cc,p,6);
+      i2=i1;
+      i1=i0;
+      if(!sscanf(cc,"%d",&i0))
+        ok=false;
+      if((++c)==3) {
+        c=0;
+        bd=bond+bi;
+        bd->index[0]=(abs(i2)/3);
+        bd->index[1]=(abs(i1)/3);
+        bd->order=0;
+        bd->stereo=0;
+        bd->id = bi+1;
+        bi++;
+      }
+      if((++b)==12) {
+        b=0;
+        p=nextline_top(p);
+      }
     }
-    if((++b)==12) {
-      b=0;
-      p=nextline(p);
+    if(b) p=nextline_top(p);
+
+    if(!ok) {
+      ErrMessage("TOPStrToCoordSet","Error hydrogen free bonds");
+    } else {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " TOPStr2CoordSet: read %d hydrogen free bonds.\n",NBONA
+        ENDFB;
     }
-  }
-  if(b) p=nextline(p);
 
-  if(!ok) {
-    ErrMessage("TOPStrToCoordSet","Error hydrogen free bonds");
-  } else {
-    PRINTFB(FB_ObjectMolecule,FB_Blather)
-      " TOPStr2CoordSet: read %d hydrogen free bonds.\n",NBONA
-      ENDFB;
-  }
+    /* skip hydrogen angles */
 
-  /* skip hydrogen angles */
+    p=skip_fortran(4*NTHETH,12,p);
 
-  p=skip_fortran(4*NTHETH,12,p);
+    /* skip non-hydrogen angles */
 
-  /* skip non-hydrogen angles */
+    p=skip_fortran(4*NTHETA,12,p);
 
-  p=skip_fortran(4*NTHETA,12,p);
+    /* skip hydrogen dihedrals */
 
-  /* skip hydrogen dihedrals */
+    p=skip_fortran(5*NPHIH,12,p);
 
-  p=skip_fortran(5*NPHIH,12,p);
+    /* skip non hydrogen dihedrals */
 
-  /* skip non hydrogen dihedrals */
+    p=skip_fortran(5*NPHIA,12,p);
 
-  p=skip_fortran(5*NPHIA,12,p);
+    /* skip nonbonded exclusions */
 
-  /* skip nonbonded exclusions */
+    p=skip_fortran(NNB,12,p);
 
-  p=skip_fortran(NNB,12,p);
+    /* skip hydrogen bonds ASOL */
 
-  /* skip hydrogen bonds ASOL */
+    p=skip_fortran(NPHB,5,p);
 
-  p=skip_fortran(NPHB,5,p);
+    /* skip hydrogen bonds BSOL */
 
-  /* skip hydrogen bonds BSOL */
+    p=skip_fortran(NPHB,5,p);
 
-  p=skip_fortran(NPHB,5,p);
+    /* skip HBCUT */
 
-  /* skip HBCUT */
+    p=skip_fortran(NPHB,5,p);
 
-  p=skip_fortran(NPHB,5,p);
-
-  /* read AMBER atom types */
-  b=0;
-  for(a=0;a<nAtom;a++) {
-    p=ncopy(cc,p,4);
-    ai=atInfo+a;
-    if(!sscanf(cc,"%s",ai->textType))
-      ok=false;
-    if((++b)==20) {
-      b=0;
-      p=nextline(p);
+    /* read AMBER atom types */
+    b=0;
+    for(a=0;a<nAtom;a++) {
+      p=ncopy(cc,p,4);
+      ai=atInfo+a;
+      if(!sscanf(cc,"%s",ai->textType))
+        ok=false;
+      if((++b)==20) {
+        b=0;
+        p=nextline_top(p);
+      }
     }
-  }
-  if(b) p=nextline(p);
+    if(b) p=nextline_top(p);
 
-  if(!ok) {
-    ErrMessage("TOPStrToCoordSet","Error reading atom types");
-  } else {
-    PRINTFB(FB_ObjectMolecule,FB_Blather)
-      " TOPStr2CoordSet: read atom types.\n"
-      ENDFB;
-  }
+    if(!ok) {
+      ErrMessage("TOPStrToCoordSet","Error reading atom types");
+    } else {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " TOPStr2CoordSet: read atom types.\n"
+        ENDFB;
+    }
 
-  /* skip TREE classification */
+    /* skip TREE classification */
 
-  p=skip_fortran(nAtom,20,p);
+    p=skip_fortran(nAtom,20,p);
 
-  /* skip tree joining information */
+    /* skip tree joining information */
 
-  p=skip_fortran(nAtom,12,p);
+    p=skip_fortran(nAtom,12,p);
 
-  /* skip last atom rotated blah blah blah */
+    /* skip last atom rotated blah blah blah */
 
-  p=skip_fortran(nAtom,12,p);
+    p=skip_fortran(nAtom,12,p);
 
-  if(IFBOX>0) {
+    if(IFBOX>0) {
 
-    int IPTRES,NSPM,NSPSOL;
+      int IPTRES,NSPM,NSPSOL;
 
-    p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&IPTRES);
-    p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPM);
-    p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPSOL);
+      p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&IPTRES);
+      p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPM);
+      p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPSOL);
     
-    p=nextline(p);
+      p=nextline_top(p);
 
-    /* skip pressuem scaling */
+      /* skip pressuem scaling */
 
-    p=skip_fortran(NSPM,12,p);
+      p=skip_fortran(NSPM,12,p);
   
-    /* skip periodic box */
+      /* skip periodic box */
 
-    p=nextline(p);
+      p=nextline_top(p);
 
-  }
-
-  if(IFCAP>0) {
-    p=nextline(p);
-    p=nextline(p);
-    p=nextline(p);
-  }
-
-  if(IFPERT>0) {
-
-    /* skip perturbed bond atoms */
-
-    p=skip_fortran(2*NBPER,12,p);    
-
-    /* skip perturbed bond atom pointers */
-
-    p=skip_fortran(2*NBPER,12,p);    
-
-    /* skip perturbed angles */
-
-    p=skip_fortran(3*NGPER,12,p);    
-
-    /* skip perturbed angle pointers */
-
-    p=skip_fortran(2*NGPER,12,p);    
-
-    /* skip perturbed dihedrals */
-
-    p=skip_fortran(4*NDPER,12,p);    
-
-    /* skip perturbed dihedral pointers */
-
-    p=skip_fortran(2*NDPER,12,p);    
-
-    /* skip residue names */
-
-    p=skip_fortran(NRES,20,p);    
-
-    /* skip atom names */
-
-    p=skip_fortran(nAtom,20,p);    
-
-    /* skip atom symbols */
-
-    p=skip_fortran(nAtom,20,p);    
-
-    /* skip unused field */
-
-    p=skip_fortran(nAtom,5,p);    
-
-    /* skip perturbed flags */
-
-    p=skip_fortran(nAtom,12,p);    
-
-    /* skip LJ atom flags */
-
-    p=skip_fortran(nAtom,12,p);    
-
-    /* skip perturbed charges */
-
-    p=skip_fortran(nAtom,5,p);    
-
-  }
-
-  if(IPOL>0) {
-
-    /* skip atomic polarizabilities */
-
-    p=skip_fortran(nAtom,5,p);    
-
-  }
-
-  if((IPOL>0) && (IFPERT>0)) {
-
-    /* skip atomic polarizabilities */
-
-    p=skip_fortran(nAtom,5,p);    
-    
-  }
-
-  coord=VLAlloc(float,3*nAtom);
-
-  f=coord;
-  for(a=0;a<nAtom;a++) {
-    *(f++)=0.0;
-    *(f++)=0.0;
-    *(f++)=0.0;
-    ai = atInfo + a;
-    ai->id = a+1; /* assign 1-based identifiers */
-    AtomInfoAssignParameters(ai);
-    ai->color=AtomInfoGetColor(ai);
-    for(c=0;c<cRepCnt;c++) {
-      ai->visRep[c] = false;
     }
-    ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
-    ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
-  }
 
+    if(IFCAP>0) {
+      p=nextline_top(p);
+      p=nextline_top(p);
+      p=nextline_top(p);
+    }
+
+    if(IFPERT>0) {
+
+      /* skip perturbed bond atoms */
+
+      p=skip_fortran(2*NBPER,12,p);    
+
+      /* skip perturbed bond atom pointers */
+
+      p=skip_fortran(2*NBPER,12,p);    
+
+      /* skip perturbed angles */
+
+      p=skip_fortran(3*NGPER,12,p);    
+
+      /* skip perturbed angle pointers */
+
+      p=skip_fortran(2*NGPER,12,p);    
+
+      /* skip perturbed dihedrals */
+
+      p=skip_fortran(4*NDPER,12,p);    
+
+      /* skip perturbed dihedral pointers */
+
+      p=skip_fortran(2*NDPER,12,p);    
+
+      /* skip residue names */
+
+      p=skip_fortran(NRES,20,p);    
+
+      /* skip atom names */
+
+      p=skip_fortran(nAtom,20,p);    
+
+      /* skip atom symbols */
+
+      p=skip_fortran(nAtom,20,p);    
+
+      /* skip unused field */
+
+      p=skip_fortran(nAtom,5,p);    
+
+      /* skip perturbed flags */
+
+      p=skip_fortran(nAtom,12,p);    
+
+      /* skip LJ atom flags */
+
+      p=skip_fortran(nAtom,12,p);    
+
+      /* skip perturbed charges */
+
+      p=skip_fortran(nAtom,5,p);    
+
+    }
+
+    if(IPOL>0) {
+
+      /* skip atomic polarizabilities */
+
+      p=skip_fortran(nAtom,5,p);    
+
+    }
+
+    if((IPOL>0) && (IFPERT>0)) {
+
+      /* skip atomic polarizabilities */
+
+      p=skip_fortran(nAtom,5,p);    
+    
+    }
+
+    coord=VLAlloc(float,3*nAtom);
+
+    f=coord;
+    for(a=0;a<nAtom;a++) {
+      *(f++)=0.0;
+      *(f++)=0.0;
+      *(f++)=0.0;
+      ai = atInfo + a;
+      ai->id = a+1; /* assign 1-based identifiers */
+      AtomInfoAssignParameters(ai);
+      ai->color=AtomInfoGetColor(ai);
+      for(c=0;c<cRepCnt;c++) {
+        ai->visRep[c] = false;
+      }
+      ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
+      ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+    }
+  }
   cset = CoordSetNew();  /* needed to preserve original ordering... */
-  cset->NIndex=nAtom;
-  cset->Coord=coord;
-  cset->TmpBond=bond;
-  cset->NTmpBond=nBond;
+  if(ok) {
+    cset->NIndex=nAtom;
+    cset->Coord=coord;
+    cset->TmpBond=bond;
+    cset->NTmpBond=nBond;
+  }
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
   
@@ -2053,7 +2158,7 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   if(!sscanf(cc,"%d",&nAtom)) nAtom=0;
   p=nskip(p,2);
   p=ncopy(tmp_name,p,sizeof(WordType)-1);
-  p=nextline(p);
+  p=nextline_top(p);
       
   coord=VLAlloc(float,3*nAtom);
 
@@ -2146,7 +2251,7 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       atomCount++;
       if(atomCount>=nAtom)
         break;
-      p=nextline(p);
+      p=nextline_top(p);
     }
 
   PRINTFB(FB_ObjectMolecule,FB_Blather) 
