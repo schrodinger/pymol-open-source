@@ -73,7 +73,7 @@
 # === Bootstrap variables (edited through "make boot") ===
 
 # The prefix used by "make inclinstall libainstall" of core python
-installdir=	$(PWD)/../../modules
+installdir=	../../modules
 
 # The exec_prefix used by the same
 exec_installdir=$(installdir)
@@ -91,7 +91,7 @@ VPATH=		.
 TARGET=		python
 
 # Installed python binary (used only by boot target)
-PYTHON=		$(PWD)/../../ext/bin/python
+PYTHON=		../../ext/bin/python
 
 # Add more -I and -D options here
 CFLAGS=		$(OPT) -I$(INCLUDEPY) -I$(EXECINCLUDEPY) $(DEFS)

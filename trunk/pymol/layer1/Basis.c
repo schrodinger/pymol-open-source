@@ -51,7 +51,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   float radialsq,tan_acos_dangle;
   float intra[3],vradial[3],ln;
 
-  ln = sqrt(dir[1]*dir[1]+dir[0]*dir[0]);
+  ln = sqrt1f(dir[1]*dir[1]+dir[0]*dir[0]);
 
   perpAxis[0] = dir[1]/ln; /* was cross_product(MinusZ,dir,perpAxis),normalize */
   perpAxis[1] = -dir[0]/ln;
@@ -91,7 +91,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 	 }
 
   /*tan_acos_dangle = tan(acos(dangle));*/
-  tan_acos_dangle = sqrt(1-dangle*dangle)/dangle;
+  tan_acos_dangle = sqrt1f(1-dangle*dangle)/dangle;
 
   /*
   printf("perpDist %8.3f\n",perpDist);
@@ -118,13 +118,13 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   if(ab_dangle<R_SMALL4)
 	 axial_perp=0;
   else
-	 axial_perp = sqrt(radialsq)/tan_acos_dangle;
+	 axial_perp = sqrt1f(radialsq)/tan_acos_dangle;
   
   axial = lengthsq3f(intra_p)-radialsq;
   if(axial<0.0) 
 	 axial=0.0;
   else
-	 axial = sqrt(axial);
+	 axial = sqrt1f(axial);
 
   /*
   printf("radial %8.3f\n",radial);
@@ -154,7 +154,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   if(radial<0.0)
 	 radial=0.0;
   else
-	 radial = sqrt(radial);
+	 radial = sqrt1f(radial);
 
   /* now the trick is figuring out how to adjust the axial distance to get the actual
 	  position along the cyl line which will give us a representative sphere */
@@ -341,7 +341,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 						oppSq = ZLineClipPoint(r->base,I->Vertex+i*3,&dist,I->Radius[i]);
 						if(oppSq<=I->Radius2[i])
 						  {
-							 dist=sqrt(dist)-sqrt((I->Radius2[i]-oppSq));
+							 dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
 							 if(shadow) {
 								if((dist>(-R_SMALL4))&&(dist<r->dist))
 								  return(1);
@@ -362,7 +362,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 							 oppSq = ZLineClipPoint(r->base,sph,&dist,I->Radius[i]);
 							 if(oppSq<=I->Radius2[i])
 								{
-								  dist=sqrt(dist)-sqrt((I->Radius2[i]-oppSq));
+								  dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
 								  if(shadow) {
 									 if((dist>(-R_SMALL4))&&(dist<r->dist))
 										return(1);

@@ -220,7 +220,7 @@ float MatrixGetRMS(int n,float *v1,float *v2,float *wt)
     vv2+=3;
   }
   err=err/sumwt;
-  err=sqrt(err);
+  err=sqrt1f(err);
 
   if(fabs(err)<R_SMALL4)
     err=0.0;
@@ -352,7 +352,7 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 	/* Determine size of off-diagonal element.  If off-diagonals exceed the
 	  diagonal elements * tolerance, perform Jacobi rotation. */
 	tmp = sig*sig + gam*gam;
-	sg = sqrt(tmp);
+	sg = sqrt1f(tmp);
 	if((sg!=0.0) &&(fabs(sig)>(tol*fabs(gam)))) {
 	  sg = 1.0 / sg;
 	  for(a=0;a<3;a++)
@@ -399,7 +399,7 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   }
 
   err=err/sumwt;
-  err=sqrt(err);
+  err=sqrt1f(err);
 
   ttt[0]=m[0][0];
   ttt[1]=m[0][1];
@@ -1671,7 +1671,7 @@ L160:
 	q /= x;
 	r__ /= x;
 L170:
-	d__1 = sqrt(p * p + q * q + r__ * r__);
+	d__1 = sqrt1f(p * p + q * q + r__ * r__);
 	s = d_sign(&d__1, &p);
 	if (k == m) {
 	    goto L180;
@@ -1755,7 +1755,7 @@ L270:
 L280:
     p = (y - x) / 2.;
     q = p * p + w;
-    zz = sqrt((abs(q)));
+    zz = sqrt1f((abs(q)));
     x += t;
     if (q < 0.) {
 	goto L320;
@@ -2046,7 +2046,7 @@ L160:
 	q /= x;
 	r__ /= x;
 L170:
-	d__1 = sqrt(p * p + q * q + r__ * r__);
+	d__1 = sqrt1f(p * p + q * q + r__ * r__);
 	s = d_sign(&d__1, &p);
 	if (k == m) {
 	    goto L180;
@@ -2149,7 +2149,7 @@ L270:
 L280:
     p = (y - x) / 2.;
     q = p * p + w;
-    zz = sqrt((abs(q)));
+    zz = sqrt1f((abs(q)));
     h__[en + en * h_dim1] = x + t;
     x = h__[en + en * h_dim1];
     h__[na + na * h_dim1] = y + t;
@@ -2169,7 +2169,7 @@ L280:
     s = abs(x) + abs(zz);
     p = x / s;
     q = zz / s;
-    r__ = sqrt(p * p + q * q);
+    r__ = sqrt1f(p * p + q * q);
     p /= r__;
     q /= r__;
 /*     .......... row modification .......... */

@@ -38,6 +38,14 @@ Z* -------------------------------------------------------------------
 
 #define cPI            3.14159265358979323846  /* pi */
 
+float sqrt1f(float f) {
+  if(f>0.0)
+	 return(sqrt(f));
+  else
+	 return(0.0);
+}
+
+
 #ifndef USE_VECTOR_MACROS
 float dot_product3f ( float *v1, float *v2 )
 {
@@ -95,7 +103,7 @@ float lengthsq3f ( float *v1 )
 
 float length3f ( float *v1 )
 {
-  return(sqrt((v1[0]*v1[0]) + 
+  return(sqrt1f((v1[0]*v1[0]) + 
 					 (v1[1]*v1[1]) + 
 					 (v1[2]*v1[2])));
 } 
@@ -264,6 +272,8 @@ void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat)
 
 void rotation_matrix3f( float angle, float x, float y, float z,float *m )
 {
+  int a,b;
+
    /* This function contributed by Erich Boleyn (erich@uruk.org) */
    float mag, s, c;
    float xx, yy, zz, xy, yz, zx, xs, ys, zs, one_c;
@@ -271,36 +281,44 @@ void rotation_matrix3f( float angle, float x, float y, float z,float *m )
    s = sin(angle);
    c = cos(angle);
 
-   mag = sqrt( x*x + y*y + z*z );
-
-   x /= mag;
-   y /= mag;
-   z /= mag;
-
+   mag = sqrt1f(x*x + y*y + z*z);
+	if(mag>=R_SMALL) {
+	  x /= mag;
+	  y /= mag;
+	  z /= mag;
+	  
 #define M(row,col)  m[row*3+col]
-
-   xx = x * x;
-   yy = y * y;
-   zz = z * z;
-   xy = x * y;
-   yz = y * z;
-   zx = z * x;
-   xs = x * s;
-   ys = y * s;
-   zs = z * s;
-   one_c = 1.0F - c;
-
-   M(0,0) = (one_c * xx) + c;
-   M(0,1) = (one_c * xy) - zs;
-   M(0,2) = (one_c * zx) + ys;
-
-   M(1,0) = (one_c * xy) + zs;
-   M(1,1) = (one_c * yy) + c;
-   M(1,2) = (one_c * yz) - xs;
-
-   M(2,0) = (one_c * zx) - ys;
-   M(2,1) = (one_c * yz) + xs;
-   M(2,2) = (one_c * zz) + c;
+	  
+	  xx = x * x;
+	  yy = y * y;
+	  zz = z * z;
+	  xy = x * y;
+	  yz = y * z;
+	  zx = z * x;
+	  xs = x * s;
+	  ys = y * s;
+	  zs = z * s;
+	  one_c = 1.0F - c;
+	  
+	  M(0,0) = (one_c * xx) + c;
+	  M(0,1) = (one_c * xy) - zs;
+	  M(0,2) = (one_c * zx) + ys;
+	  
+	  M(1,0) = (one_c * xy) + zs;
+	  M(1,1) = (one_c * yy) + c;
+	  M(1,2) = (one_c * yz) - xs;
+	  
+	  M(2,0) = (one_c * zx) - ys;
+	  M(2,1) = (one_c * yz) + xs;
+	  M(2,2) = (one_c * zz) + c;
+	}	else {
+	  for(a=0;a<3;a++)
+		 for(b=0;b<3;b++)
+			M(a,b)=0;
+	  M(0,0)=1.0;
+	  M(1,1)=1.0;
+	  M(2,2)=1.0;
+	}
 
 }
 
@@ -312,10 +330,10 @@ float get_angle3f( float *v1, float *v2 )
   double denom;
   float result;
 
-  denom = sqrt(((v1[0]*v1[0]) + 
+  denom = sqrt1f(((v1[0]*v1[0]) + 
 					 (v1[1]*v1[1]) + 
 					 (v1[2]*v1[2]))) *
-          sqrt(((v2[0]*v2[0]) + 
+          sqrt1f(((v2[0]*v2[0]) + 
 					 (v2[1]*v2[1]) + 
 					 (v2[2]*v2[2])));
 
@@ -330,6 +348,24 @@ float get_angle3f( float *v1, float *v2 )
   
   return(result);
 } 
+
+void normalize23f( float *v1 , float *v2)
+{
+  float vlen;
+  vlen = length3f(v1);
+  if(vlen>R_SMALL)
+	 {
+		v2[0]=v1[0]/vlen;
+		v2[1]=v1[1]/vlen;
+		v2[2]=v1[2]/vlen;
+	 }
+  else
+	 {
+		v2[0]=0.0;
+		v2[1]=0.0;
+		v2[2]=0.0;
+	 }
+}
 
 void normalize3f( float *v1 )
 {
@@ -370,7 +406,7 @@ void normalize3d( double *v1 )
 
 double length3d ( double *v1 )
 {
-  return(sqrt((v1[0]*v1[0]) + 
+  return(sqrt1f((v1[0]*v1[0]) + 
 					 (v1[1]*v1[1]) + 
 					 (v1[2]*v1[2])));
 } 
@@ -381,7 +417,7 @@ double diff3f ( float *v1, float *v2 )
   dx = (v1[0]-v2[0]);
   dy = (v1[1]-v2[1]);
   dz = (v1[2]-v2[2]);
-  return(sqrt(dx*dx + dy*dy + dz*dz));
+  return(sqrt1f(dx*dx + dy*dy + dz*dz));
 }
 
 double diffsq3f ( float *v1, float *v2 )
@@ -437,7 +473,7 @@ float distance_line2point3f(float *base,float *normal,float *point,float *alongN
   if(result<=0.0) 
 	 return(0.0);
   else 
-	 return(sqrt(result));
+	 return(sqrt1f(result));
 
 }
 
@@ -459,7 +495,7 @@ float distance_halfline2point3f(float *base,float *normal,float *point,float *al
 		if(result<=0.0) 
 		  return(0.0);
 		else 
-		  return(sqrt(result));
+		  return(sqrt1f(result));
 	 } else {
 		return(MAXFLOAT);
 	 }

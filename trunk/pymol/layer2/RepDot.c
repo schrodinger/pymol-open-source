@@ -14,7 +14,6 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-
 #include<GL/gl.h>
 #include"Base.h"
 #include"OOMac.h"
