@@ -1024,5 +1024,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_valence_default, 0.05F);
 
+  SettingSet_f(I,cSetting_surface_miserable, 0.8F);
+
 }
 

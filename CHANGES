@@ -77,6 +77,12 @@ Bugs to Fix
 
 Changes up to 0.64
 
+   * more surface_qualities: -3 to 2, surface_quality=1 is now even better
+
+   * click-and-drag a box to select atoms
+
+   * PyMOL now builds w/o warning in VC++6
+
    * LOG FILE CAPABILITIES:  logging of both PyMOL scripts (.pml) and
      PyMOL program files (.pym). The "resume" command allows propagation
      of session-like behavior.  This makes a huge difference in PyMOL

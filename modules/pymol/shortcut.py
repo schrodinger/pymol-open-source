@@ -87,6 +87,8 @@ class Shortcut:
          for a in self.abbr_dict.keys():
             if a[0:lcm] == kee:
                lst.append(self.abbr_dict[a])
+         if(len(lst)==1):
+            return lst[0]
          return lst
       else:
          return self.shortcut[kee] # otherwise return string
