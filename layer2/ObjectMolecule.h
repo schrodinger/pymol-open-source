@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Color.h"
 #include"Symmetry.h"
+#include"Raw.h"
 
 #define cUndoMask 0x7
 
@@ -102,6 +103,7 @@ typedef struct ObjectMoleculeOpRec {
 
 #include"CoordSet.h"
 
+
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
@@ -109,6 +111,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
 
 ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadPMOFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
                                           int frame,char *sepPrefix,int discrete);
@@ -116,6 +119,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int frame);
 
+ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
 
 ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
@@ -170,6 +174,7 @@ int ObjectMoleculeGetPhiPsi(ObjectMolecule *I,int ca,float *phi,float *psi,int s
 void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer);
 void ObjectMoleculeGetAtomSeleFast(ObjectMolecule *I,int index, char *buffer);
 void ObjectMoleculeGetAtomSeleLog(ObjectMolecule *I,int index, char *buffer);
+int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append);
 
 #endif
 

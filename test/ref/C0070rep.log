@@ -11,7 +11,7 @@ PyMOL>refresh
 PyMOL>show surface
 PyMOL>refresh
  RepSurface: 759 surface points.
- RepSurface: 860 triangles.
+ RepSurface: 858 triangles.
 PyMOL>show mesh
 PyMOL>refresh
  IsosurfVolume: Surface generated using 2515 lines.

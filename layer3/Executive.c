@@ -94,6 +94,26 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveMultiSave(char *fname,char *name,int state,int append)
+{
+  int result=false;
+  SpecRec *tRec;
+  ObjectMolecule *objMol;
+  
+  PRINTFD(FB_Executive)
+    " ExecutiveMultiSave-Debug: entered %s %s.\n",fname,name
+    ENDFD;
+  tRec = ExecutiveFindSpec(name);
+  if(tRec) {
+    if(tRec->type==cExecObject)
+      if(tRec->obj->type==cObjectMolecule) {
+        objMol =(ObjectMolecule*)tRec->obj;
+        result = ObjectMoleculeMultiSave(objMol,fname,state,append);
+      }
+  }
+  return(result);
+  
+}
 int ExecutiveMapSetBorder(char *name,float level)
 {
   int result=false;
@@ -876,6 +896,7 @@ void ExecutiveSpheroid(char *name)  /* EXPERIMENTAL */
           if((!os)||(rec->obj==os)) {
             obj =(ObjectMolecule*)rec->obj;
             ObjectMoleculeCreateSpheroid(obj);  
+            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvRep);
           }
     }
     SceneChanged();

@@ -111,6 +111,9 @@ int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,floa
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
 void ExecutiveSelectRect(BlockRect *rect,int mode);
 int ExecutiveMapSetBorder(char *name,float level);
+int ExecutiveMultiSave(char *fname,char *name,int state,int append);
+
+
 #endif
 
 

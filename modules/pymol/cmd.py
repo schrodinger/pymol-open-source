@@ -81,6 +81,8 @@ file_ext_re= re.compile(string.join([
    r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$|",
    r"\.cc1$|\.cc2$|", # ChemDraw 3D
    r"\.CC1$|\.CC2$|",
+   r"\.pmo$|", # Experimental molecular object format
+   r"\.PMO$|",
    r"\.ccp4$|\.CCP4$" # CCP4   
    ],''))
 
@@ -3905,6 +3907,15 @@ def dump(fnam,obj):
       unlock()
    return r
 
+def multisave(filename,object,state=0):
+   r = 1
+   try:
+      lock()
+      _cmd.multisave(str(filename),str(object),int(state)-1,0)
+   finally:
+      unlock()
+   return r
+
 def save(filename,selection='(all)',state=0,format=''):
    '''
 DESCRIPTION
@@ -3942,6 +3953,8 @@ SEE ALSO
          format = 'mmod'
       elif re.search("\.mmod$",filename):
          format = 'mmod'
+      elif re.search("\.pmo$",filename):
+         format = 'pmo'
    else:
       format = str(format)
    filename = os.path.expanduser(filename)
@@ -3958,7 +3971,7 @@ SEE ALSO
             f.close()
          r = None
          print " Save: wrote \""+filename+"\"."
-   elif format=='pkl': # default binary
+   elif format=='pkl': # python binary
       io.pkl.toFile(get_model(selection,state),filename)
       print " Save: wrote \""+filename+"\"."
    elif format=='pkla': # ascii override
@@ -4564,6 +4577,8 @@ SEE ALSO
             ftype = loadable.xyz
          elif re.search("\.sdf$",filename,re.I):
             ftype = loadable.sdf
+         elif re.search("\.pmo$",filename,re.I):
+            ftype = loadable.pmo
          else:
             ftype = loadable.pdb # default is PDB
       elif is_string(type):
@@ -5517,6 +5532,7 @@ class fb_module:
    mypng                     =4
    triangle                  =5
    match                     =6
+   raw                       =7
    
    feedback                  =12
    scene                     =13
@@ -5843,6 +5859,7 @@ keyword = {
    'middle'        : [middle       , 0 , 0 , ''  , parsing.STRICT ],
    'minimize'      : [minimize     , 0 , 4 , ',' , parsing.SIMPLE ], # TO REMOVE
    'mmatrix'       : [mmatrix      , 0 , 0 , ''  , parsing.STRICT ],
+   'multisave'     : [multisave    , 0 , 0 , ''  , parsing.STRICT ],   
    'origin'        : [origin       , 0 , 0 , ''  , parsing.STRICT ],
    'orient'        : [orient       , 0 , 0 , ''  , parsing.STRICT ],
    'overlap'       : [overlap      , 0 , 0 , ''  , parsing.STRICT ],
@@ -6129,6 +6146,7 @@ class loadable:
    sdf = 16      # sdf, only used within cmd.py
    cc1 = 17      # cc1 and cc2, only used within cmd.py
    ccp4 = 18     # CCP4 map, under development
+   pmo = 19      # pmo, experimental molecular object format
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 

@@ -40,6 +40,7 @@ Z* -------------------------------------------------------------------
 #include"Sphere.h"
 #include"main.h"
 #include"CGO.h"
+#include"Raw.h"
 
 #define cMaxNegResi 100
 
@@ -51,10 +52,14 @@ Z* -------------------------------------------------------------------
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
+
 CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,
                                         char **restart,char *segi_override);
-CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
+
+CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *restart);
+
 void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *cset);
+CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 
 void ObjectMoleculeFree(ObjectMolecule *I);
 void ObjectMoleculeUpdate(ObjectMolecule *I);
@@ -81,6 +86,354 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
 
 #define MAX_BOND_DIST 50
+
+
+CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *restart)
+{
+  int nAtom,nBond;
+  int a;
+  float *coord = NULL;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL,*ai;
+  int *bond=NULL;
+  int ok=true;
+  int auto_show_lines;
+  int auto_show_nonbonded;
+  int type,size;
+  float *spheroid=NULL;
+  float *spheroid_normal=NULL;
+  int sph_info[2];
+  auto_show_lines = SettingGet(cSetting_auto_show_lines);
+  auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  AtomInfoPrimeColors();
+
+  *restart=false;
+  nAtom=0;
+  nBond=0;
+  if(atInfoPtr)
+	 atInfo = *atInfoPtr;
+  
+  type = RawGetNext(pmo,&size);
+  if(type!=cRaw_AtomInfo1) {
+    ok=false;
+  } else { /* read atoms */
+    PRINTFD(FB_ObjectMolecule)
+      " ObjectMolPMO2CoordSet: loading atom info %d bytes = %8.3f\n",size,((float)size)/sizeof(AtomInfoType)
+      ENDFD;
+    nAtom = size/sizeof(AtomInfoType);
+    VLACheck(atInfo,AtomInfoType,nAtom);
+    ok = RawReadInto(pmo,cRaw_AtomInfo1,size,(char*)atInfo);
+  }
+  if(ok) {
+    PRINTFD(FB_ObjectMolecule)
+      " ObjectMolPMO2CoordSet: loading coordinates\n"
+      ENDFD;
+    coord = (float*)RawReadVLA(pmo,cRaw_Coords1,sizeof(float),5,false);
+    if(!coord)
+      ok=false;
+  }
+  type = RawGetNext(pmo,&size);
+  if(type==cRaw_SpheroidInfo1) {
+
+    PRINTFD(FB_ObjectMolecule)
+      " ObjectMolPMO2CoordSet: loading spheroid\n"
+      ENDFD;
+
+    ok = RawReadInto(pmo,cRaw_SpheroidInfo1,sizeof(int)*2,(char*)sph_info);
+    if(ok) {
+
+    PRINTFD(FB_ObjectMolecule)
+      " ObjectMolPMO2CoordSet: loading spheroid size %d nsph %d\n",sph_info[0],sph_info[1]
+      ENDFD;
+
+      spheroid = (float*)RawReadPtr(pmo,cRaw_Spheroid1,&size);
+      if(!spheroid)
+        ok=false;
+
+      PRINTFD(FB_ObjectMolecule)
+        " ObjectMolPMO2CoordSet: loaded spheroid %p size %d \n",spheroid,size
+        ENDFD;
+
+    }
+    if(ok) {
+      spheroid_normal = (float*)RawReadPtr(pmo,cRaw_SpheroidNormals1,&size);
+      if(!spheroid_normal)
+        ok=false;
+      }
+      PRINTFD(FB_ObjectMolecule)
+        " ObjectMolPMO2CoordSet: loaded spheroid %p size %d \n",spheroid_normal,size
+        ENDFD;
+
+    } 
+  if(ok) 
+      type = RawGetNext(pmo,&size);    
+  if(ok) {
+    
+    PRINTFD(FB_ObjectMolecule)
+      " ObjectMolPMO2CoordSet: loading bonds\n"
+      ENDFD;
+
+    if(type!=cRaw_Bonds1) {
+      ok=false;
+    } else {
+      if(ok) {
+        bond=(int*)RawReadVLA(pmo,cRaw_Bonds1,sizeof(float),5,false);
+        nBond = VLAGetSize(bond)/3;
+      }
+    }
+  }
+
+  if(ok) {
+    ai=atInfo;
+    for(a=0;a<nAtom;a++) {
+      ai->selEntry=0;
+      ai++;
+    }
+	 cset = CoordSetNew();
+	 cset->NIndex=nAtom;
+	 cset->Coord=coord;
+	 cset->NTmpBond=nBond;
+	 cset->TmpBond=bond;
+    if(spheroid) {
+      cset->Spheroid=spheroid;
+      cset->SpheroidNormal=spheroid_normal;
+      cset->SpheroidSphereSize=sph_info[0];
+      cset->NSpheroid = sph_info[1];
+
+    }
+  } else {
+	 VLAFreeP(bond);
+	 VLAFreeP(coord);
+    FreeP(spheroid);
+    FreeP(spheroid_normal);
+  }
+  if(atInfoPtr)
+	 *atInfoPtr = atInfo;
+  if(ok) {
+    type = RawGetNext(pmo,&size);
+    if(type==cRaw_AtomInfo1)
+      *restart=true;
+  }
+  return(cset);
+}
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *I,CRaw *pmo,int frame,int discrete)
+{
+
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo;
+  int ok=true;
+  int isNew = true;
+  unsigned int nAtom = 0;
+  int restart =false;
+  int repeatFlag = true;
+  int successCnt = 0;
+
+  while(repeatFlag) {
+    repeatFlag = false;
+  
+    if(!I) 
+      isNew=true;
+    else 
+      isNew=false;
+    
+    if(ok) {
+      
+      if(isNew) {
+        I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
+        atInfo = I->AtomInfo;
+        isNew = true;
+      } else {
+        atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+        isNew = false;
+      }
+
+      cset = ObjectMoleculePMO2CoordSet(pmo,&atInfo,&restart);
+
+      if(isNew) {		
+        I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+      }
+      if(cset) 
+        nAtom=cset->NIndex;
+      else
+        ok=false;
+    }
+    
+    /* include coordinate set */
+    if(ok) {
+      cset->Obj = I;
+      cset->fEnumIndices(cset);
+      if(cset->fInvalidateRep)
+        cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
+      if(!isNew) {		
+        ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+      }
+      if(isNew) I->NAtom=nAtom;
+      if(frame<0) frame=I->NCSet;
+      VLACheck(I->CSet,CoordSet*,frame);
+      if(I->NCSet<=frame) I->NCSet=frame+1;
+      if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+      I->CSet[frame] = cset;
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,false);
+      if(cset->TmpSymmetry&&(!I->Symmetry)) {
+        I->Symmetry=cset->TmpSymmetry;
+        cset->TmpSymmetry=NULL;
+        SymmetryAttemptGeneration(I->Symmetry);
+      }
+      SceneCountFrames();
+      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeSort(I);
+      ObjectMoleculeUpdateNonbonded(I);
+      successCnt++;
+      if(successCnt>1) {
+        if(successCnt==2){
+          PRINTFB(FB_ObjectMolecule,FB_Actions)
+            " ObjectMolReadPMO: read model %d\n",1
+            ENDFB;
+            }
+        PRINTFB(FB_ObjectMolecule,FB_Actions)
+          " ObjectMolReadPMO: read model %d\n",successCnt
+          ENDFB;
+      }
+    }
+    if(restart) {
+      repeatFlag=true;
+      frame=frame+1;
+      restart=false;
+    }
+  }
+  return(I);
+  
+  }
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeLoadPMOFile(ObjectMolecule *obj,char *fname,int frame,int discrete)
+{
+  ObjectMolecule *I=NULL;
+  int ok=true;
+  CRaw *raw;
+    
+  raw = RawOpenRead(fname);
+  if(!raw)
+	 ok=ErrMessage("ObjectMoleculeLoadPMOFile","Unable to open file!");
+  else
+	 {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " ObjectMoleculeLoadPMOFile: Loading from %s.\n",fname
+        ENDFB;
+		
+		I=ObjectMoleculeReadPMO(obj,raw,frame,discrete);
+      RawFree(raw);
+	 }
+  
+  return(I);
+}
+
+
+/*========================================================================*/
+int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
+{
+  /* version 1 writes atominfo, coords, spheroid, bonds */
+  CRaw *raw = NULL;
+  int ok=true;
+  int a,*b,c,a1,a2,b1,b2,b3;
+  CoordSet *cs;
+  int *bondVLA = NULL;
+  AtomInfoType *aiVLA = NULL;
+  int start,stop;
+  int nBond;
+  int sph_info[2];
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMoleculeMultiSave-Debug: entered '%s' state=%d\n",fname,state
+    ENDFD;
+    
+  if(append) {
+    raw = RawOpenWrite(fname);
+  } else {
+    raw = RawOpenAppend(fname);
+  }
+  if(raw) {
+    aiVLA = VLAMalloc(1000,sizeof(AtomInfoType),5,true);
+    bondVLA = VLAlloc(int,3000);
+    if(state<0) {
+      start=0;
+      stop=I->NCSet;
+    } else {
+      start=state;
+      if(start<0)
+        start=0;
+      stop=state+1;
+      if(stop>I->NCSet)
+        stop=I->NCSet;
+    }
+    for(a=start;a<stop;a++) {
+
+      PRINTFD(FB_ObjectMolecule)
+        " ObjectMMSave-Debug: state %d\n",a
+        ENDFD;
+
+      cs=I->CSet[a];
+      if(cs) {
+        VLACheck(aiVLA,AtomInfoType,cs->NIndex);
+        nBond=0;
+
+        /* write atoms */
+        for(c=0;c<cs->NIndex;c++) {
+          a1 = cs->IdxToAtm[c]; /* always valid */
+          aiVLA[c]=I->AtomInfo[a1];
+        }
+        if(ok) ok = RawWrite(raw,cRaw_AtomInfo1,sizeof(AtomInfoType)*cs->NIndex,0,(char*)aiVLA);
+        
+        /* write coords */
+        if(ok) ok = RawWrite(raw,cRaw_Coords1,sizeof(float)*3*cs->NIndex,0,(char*)cs->Coord);
+
+        /* write spheroid (if one exists) */
+        if(cs->Spheroid&&cs->SpheroidNormal) {
+          sph_info[0]=cs->SpheroidSphereSize;
+          sph_info[1]=cs->NSpheroid;
+          if(ok) ok = RawWrite(raw,cRaw_SpheroidInfo1,sizeof(int)*2,0,(char*)sph_info);          
+          if(ok) ok = RawWrite(raw,cRaw_Spheroid1,sizeof(float)*cs->NSpheroid,0,(char*)cs->Spheroid);          
+          if(ok) ok = RawWrite(raw,cRaw_SpheroidNormals1,sizeof(float)*3*cs->NSpheroid,0,(char*)cs->SpheroidNormal); 
+          PRINTFD(FB_ObjectMolecule)
+            " ObjectMolPMO2CoordSet: saved spheroid size %d %d\n",cs->SpheroidSphereSize,cs->NSpheroid
+            ENDFD;
+         
+        }
+        
+        /* write bonds */
+        b=I->Bond;
+        for(c=0;c<I->NBond;c++) {
+          b1 = *(b++);
+          b2 = *(b++);
+          b3 = *(b++);
+          if(I->DiscreteFlag) {
+            if((cs==I->DiscreteCSet[b1])&&(cs==I->DiscreteCSet[b2])) {
+              a1=I->DiscreteAtmToIdx[b1];
+              a2=I->DiscreteAtmToIdx[b2];
+            } else {
+              a1=-1;
+              a2=-1;
+            }
+          } else {
+            a1=cs->AtmToIdx[b1];
+            a2=cs->AtmToIdx[b2];
+          }
+          if((a1>=0)&&(a2>=0)) { 
+            nBond++;
+            VLACheck(bondVLA,int,nBond*3);
+            bondVLA[nBond*3-3] = a1;
+            bondVLA[nBond*3-2] = a2;
+            bondVLA[nBond*3-1] = b3;
+          }
+        }
+        if(ok) ok = RawWrite(raw,cRaw_Bonds1,sizeof(int)*3*nBond,0,(char*)bondVLA);
+      }
+    }
+  }
+  if(raw) RawFree(raw);
+  VLAFreeP(aiVLA);
+  VLAFreeP(bondVLA);
+  return(ok);
+}
 /*========================================================================*/
 int ObjectMoleculeGetPhiPsi(ObjectMolecule *I,int ca,float *phi,float *psi,int state)
 {
@@ -1307,6 +1660,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
       if(cs->fFree)
         cs->fFree(cs);
     }
+    I->CSet[b]=NULL;
   }
   I->NCSet=1;
 
@@ -3023,6 +3377,7 @@ void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
   }
 }
 /*========================================================================*/
+
 CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 {
   char *p;
