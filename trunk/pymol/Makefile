@@ -96,4 +96,7 @@ distclean: clean
 dist: distclean
 	cd ..;tar -cvf - pymol | gzip > pymol.tgz
 
+pmw: 
+	cd modules; gunzip < ./pmg_tk/pmw.tgz | tar xvf -
+
 
