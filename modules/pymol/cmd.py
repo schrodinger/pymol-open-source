@@ -670,7 +670,7 @@ def log(text,alt_text=None):
                pymol._log_file.write(alt_text)
             else:
                pymol._log_file.write("cmd.do('''%s''')"%text)
-      pymol._log_file.flush()
+         pymol._log_file.flush()
          
 
 _log = log # alias for set command which has local argument "log"
