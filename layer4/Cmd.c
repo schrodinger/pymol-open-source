@@ -3725,10 +3725,8 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   return(APIStatus(ok));  
 }
 
-
 void init_cmd(void)
 {
-  PyImport_AddModule("_cmd");
   Py_InitModule("_cmd", Cmd_methods);
 }
 
