@@ -755,195 +755,9 @@ ENDFD;
           }
         }
       }
-
-      /* special handling for flat sheets to avoid messing up loops */
-
-      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
-
-        /* recompute differences and normals */
-        
-        s=seg;
-        v=pv;
-        v1=dv;
-        v2=nv;
-        d=dl;
-        for(a=0;a<(nAt-1);a++)
-          {
-            if(*s==*(s+1))
-              {
-                subtract3f(v+3,v,v1);
-                *d = length3f(v1);
-                if(*d>R_SMALL4) {
-                  scale3f(v1,1.0/(*d),v2);
-                } else if(a)  {
-                  copy3f(v2-3,v2); 
-                } else {
-                  zero3f(v2);
-                }
-              }
-            else {
-              zero3f(v2);	
-            }
-            d++;
-            v+=3;
-            v1+=3;
-            v2+=3;
-            s++;
-          }
-        
-        /* now do something sneaky to straighten the ends of strands... */
-
-        s=seg+1;
-        ss = sstype+1;
-        v2=nv+3; /* normal */
-        v1=dv+3; /* direction vector, for alternate tangents */
-        for(a=1;a<(nAt-1);a++)
-          {
-            if((*ss==2)&&(*s==*(s+1))&&(*s==*(s-1))) { /* sheet in same segment */
-              if((*ss==*(ss+1))&&(*ss!=*(ss-1))) { /* start, bias forwards */
-                scale3f(v2,refine_tips,t0);
-                add3f(t0,v2-3,v2-3);
-                normalize3f(v2-3);
-              } 
-            }
-            v2+=3;
-            s++;
-            ss++;
-          }
-
-        /* compute leading tangents */
-        
-        s=seg;
-        v=nv;
-        
-        v1=tv;
-        
-        *(v1++)=*(v++); /* first segment */
-        *(v1++)=*(v++);
-        *(v1++)=*(v++);
-        s++;
-        
-        for(a=1;a<(nAt-1);a++)
-          {
-            if((*s==*(s-1))&&(*s==*(s+1)))
-              {
-                add3f(v,(v-3),v1);
-                normalize3f(v1);			 
-              }
-            else if(*s==*(s-1))
-              {
-                *(v1)=*(v-3);  /* end a segment */
-                *(v1+1)=*(v-2); 
-                *(v1+2)=*(v-1); 
-              }
-            else if(*s==*(s+1))
-              {
-                *(v1)=*(v);   /* new segment */
-                *(v1+1)=*(v+1); 
-                *(v1+2)=*(v+2); 
-              }
-            v+=3;
-            v1+=3;
-            s++;
-          }
-        
-        *(v1++)=*(v-3); /* last segment */
-        *(v1++)=*(v-2);
-        *(v1++)=*(v-1);
-
-        /* recompute differences and normals */
-        
-        s=seg;
-        v=pv;
-        v1=dv;
-        v2=nv;
-        d=dl;
-        for(a=0;a<(nAt-1);a++)
-          {
-            if(*s==*(s+1))
-              {
-                subtract3f(v+3,v,v1);
-                *d = length3f(v1);
-                if(*d>R_SMALL4) {
-                  scale3f(v1,1.0/(*d),v2);
-                } else if(a)  {
-                  copy3f(v2-3,v2); 
-                } else {
-                  zero3f(v2);
-                }
-              }
-            else {
-              zero3f(v2);	
-            }
-            d++;
-            v+=3;
-            v1+=3;
-            v2+=3;
-            s++;
-          }
-        
-        /* now do something sneaky to straighten the ends of strands... */
-
-        s=seg+1;
-        ss = sstype+1;
-        v2=nv+3; /* normal */
-        v1=dv+3; /* direction vector, for alternate tangents */
-        
-        for(a=1;a<(nAt-1);a++)
-          {
-            if((*ss==2)&&(*s==*(s+1))&&(*s==*(s-1))) { /* sheet in same segment */
-              if((*ss!=*(ss+1))&&(*ss==*(ss-1))) { /* end, bias backwards */
-                scale3f(v2-3,refine_tips,t0);
-                add3f(t0,v2,v2);
-                normalize3f(v2);
-              }
-            }
-            v2+=3;
-            s++;
-            ss++;
-          }
-
-        /* compute trailing tangents */
-        
-        s=seg;
-        v=nv;
-        
-        v1=dv;
-        
-        *(v1++)=*(v++); /* first segment */
-        *(v1++)=*(v++);
-        *(v1++)=*(v++);
-        s++;
-        
-        for(a=1;a<(nAt-1);a++)
-          {
-            if((*s==*(s-1))&&(*s==*(s+1)))
-              {
-                add3f(v,(v-3),v1);
-                normalize3f(v1);			 
-              }
-            else if(*s==*(s-1))
-              {
-                *(v1)=*(v-3);  /* end a segment */
-                *(v1+1)=*(v-2); 
-                *(v1+2)=*(v-1); 
-              }
-            else if(*s==*(s+1))
-              {
-                *(v1)=*(v);   /* new segment */
-                *(v1+1)=*(v+1); 
-                *(v1+2)=*(v+2); 
-              }
-            v+=3;
-            v1+=3;
-            s++;
-          }
-        
-        *(v1++)=*(v-3); /* last segment */
-        *(v1++)=*(v-2);
-        *(v1++)=*(v-1);
-
-      } else if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)) {
+      
+      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)||
+         SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
         
         /* recompute differences and normals */
         
@@ -975,7 +789,8 @@ ENDFD;
             v2+=3;
             s++;
           }
-        
+      
+      
         /* recompute tangents */
         
         s=seg;
@@ -1015,30 +830,35 @@ ENDFD;
         *(v1++)=*(v-3); /* last segment */
         *(v1++)=*(v-2);
         *(v1++)=*(v-1);
+
         
-        v1 = tv;
-        v2 = dv;
-        for(a=0;a<nAt;a++) { /* copy tangents to dv
-                              * tv will be leading tangents
-                              * dv will be trailing tangents
-                              */
-          *(v2++)=*(v1++);
-          *(v2++)=*(v1++);
-          *(v2++)=*(v1++);
+        if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
+          s=seg+1;
+          ss = sstype+1;
+          v2=tv+3; /* normal */
+          for(a=1;a<(nAt-1);a++)
+            {
+              if((*ss==2)&&(*s==*(s+1))&&(*s==*(s-1))) { /* sheet in same segment */
+                if((*ss==*(ss+1))&&(*ss!=*(ss-1))) { /* start, bias forwards */
+                  scale3f(v2+3,refine_tips,t0);
+                  add3f(t0,v2,v2);
+                  normalize3f(v2);
+                } else if((*ss!=*(ss+1))&&(*ss==*(ss-1)))  { /* end, bias backwards */
+                  scale3f(v2-3,refine_tips,t0);
+                  add3f(t0,v2,v2);
+                  normalize3f(v2);
+                }
+              }
+              
+              v2+=3;
+              s++;
+              ss++;
+            }
         }
-      } else {
-        v1 = tv;
-        v2 = dv;
-        for(a=0;a<nAt;a++) { /* copy tangents to dv
-                              * tv will be leading tangents
-                              * dv will be trailing tangents
-                              */
-          *(v2++)=*(v1++);
-          *(v2++)=*(v1++);
-          *(v2++)=*(v1++);
-        }
+
       }
     }
+
   
   I->std = CGONew();
 
@@ -1074,7 +894,7 @@ ENDFD;
         CGOEnd(I->std);
       }
     }
- }
+  }
 
 PRINTFD(FB_RepCartoon)
 " RepCartoon-Debug: creating 3D scaffold...\n"
@@ -1092,8 +912,7 @@ ENDFD;
     vn = ex->n;
     
 	 v1=pv; /* points */
-	 v2=tv; /* leading tangents */
-	 v3=dv; /* trailing tangents */
+	 v2=tv; /* tangents */
     vo=pvo;
     d = dl;
 	 s=seg;
@@ -1181,13 +1000,13 @@ ENDFD;
                   f4 = dev*f2*f3; /* displacement magnitude */
 
                   *(v++)=f1*v1[0]+f0*v1[3]+
-                    f4*( f3*v2[0]-f2*v3[3] );
+                    f4*( f3*v2[0]-f2*v2[3] );
 
                   *(v++)=f1*v1[1]+f0*v1[4]+
-                    f4*( f3*v2[1]-f2*v3[4] );
+                    f4*( f3*v2[1]-f2*v2[4] );
 
                   *(v++)=f1*v1[2]+f0*v1[5]+
-                    f4*( f3*v2[2]-f2*v3[5] );
+                    f4*( f3*v2[2]-f2*v2[5] );
 
                   /* compute orientation vector at point, and store
                    in second position of axes */
@@ -1226,13 +1045,13 @@ ENDFD;
                 f4 = dev*f2*f3; /* displacement magnitude */
                 
                 *(v++)=f1*v1[0]+f0*v1[3]+
-                  f4*( f3*v2[0]-f2*v3[3] );
+                  f4*( f3*v2[0]-f2*v2[3] );
                 
                 *(v++)=f1*v1[1]+f0*v1[4]+
-                  f4*( f3*v2[1]-f2*v3[4] );
+                  f4*( f3*v2[1]-f2*v2[4] );
                 
                 *(v++)=f1*v1[2]+f0*v1[5]+
-                  f4*( f3*v2[2]-f2*v3[5] );
+                  f4*( f3*v2[2]-f2*v2[5] );
                 
                 /*                remove_component3f(vo,v2,o0);
                                   remove_component3f(vo+3,v2,o0+3);*/
@@ -1371,14 +1190,20 @@ ENDFD;
       CGOBegin(I->std,GL_LINES);
       v1=pv;
       v2=pvo;
+      v3=tv;
       for(a=0;a<nAt;a++) 
         {
           CGOVertexv(I->std,v1);
           add3f(v1,v2,t0);
           add3f(v2,t0,t0);
           CGOVertexv(I->std,t0);
+          subtract3f(v1,v3,t0);
+          CGOVertexv(I->std,t0);
+          add3f(v1,v3,t0);
+          CGOVertexv(I->std,t0);
           v1+=3;
           v2+=3;
+          v3+=3;
         }
       CGOEnd(I->std);
       CGOEnable(I->std,GL_LIGHTING);
