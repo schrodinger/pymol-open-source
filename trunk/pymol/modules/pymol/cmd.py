@@ -775,8 +775,8 @@ def mem():
    '''
 DESCRIPTION
 
-"mem" Dumps current memory state to standard output. This is a
-debugging feature, not an official part of the API.
+   "mem" Dumps current memory state to standard output. This is a
+   debugging feature, not an official part of the API.
 
 '''
    try:
@@ -860,8 +860,8 @@ def distance(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,mode=None
    '''
 DESCRIPTION
  
-"distance" creates a new distance object between two
-selections.  It will display all distances within a cutoff.
+   "distance" creates a new distance object between two
+   selections.  It will display all distances within a cutoff.
  
 USAGE
  
@@ -1024,8 +1024,8 @@ def bond(atom1="(lb)",atom2="(rb)",order=1):
    '''
 DESCRIPTION
  
-"bond" creates a new bond between two selections, each of
-which should contain one atom.
+   "bond" creates a new bond between two selections, each of
+   which should contain one atom.
  
 USAGE
 
@@ -1065,7 +1065,7 @@ def unbond(atom1="(lb)",atom2="(rb)"):
    '''
 DESCRIPTION
  
-"unbond" removes all bonds between two selections.
+   "unbond" removes all bonds between two selections.
 
 USAGE
 
@@ -1115,9 +1115,6 @@ def refresh_wizard(*arg): # INTERNAL
    return r
 
 def get_wizard(*arg): # INTERNAL
-   '''
-   TO DOCUMENT
-   '''
    r = None
    try:
       lock()
@@ -1128,7 +1125,14 @@ def get_wizard(*arg): # INTERNAL
 
 def undo():
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "undo" restores the previous conformation of the object currently
+   being edited.
+   
+USAGE
+ 
+   undo
 '''
    r = None
    try:
@@ -1140,7 +1144,14 @@ TO DOCUMENT
 
 def push_undo(selection,state=0):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "push_undo" stores the currently conformations of objects in the
+   selection onto their individual kill rings.
+   
+USAGE
+ 
+   push_undo (all)
 '''
    r = None
    try:
@@ -1152,7 +1163,14 @@ TO DOCUMENT
 
 def redo():
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "redo" reapplies the conformational change of the object currently
+   being edited.
+   
+USAGE
+ 
+   redo
 '''
    try:
       lock()
@@ -1216,11 +1234,24 @@ def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=0):
    '''
 DESCRIPTION
  
-"isomesh" creates a mesh isosurface object from a map object.
+   "isomesh" creates a mesh isosurface object from a map object.
  
 USAGE
  
-   isomesh name = map-object, level [,(selection) [,buffer [,state] ] ] 
+   isomesh name = map, level [,(selection) [,buffer [,state] ] ]
+
+   "map" is the name of the map object to use.
+   
+   "level" is the contour level.
+   
+   "selection" is an atom selection about which to display the mesh with
+      an additional "buffer" (if provided).
+
+NOTES
+
+   If the mesh object already exists, then the new mesh will be
+   appended onto the object as a new state.
+   
    '''
    if selection!='':
       mopt = 1 # about a selection
@@ -1243,7 +1274,20 @@ DESCRIPTION
  
 USAGE
  
-   isodot name = map-object, level [,(selection) [,buffer [, state ] ] ] 
+   isodot name = map, level [,(selection) [,buffer [, state ] ] ] 
+
+   "map" is the name of the map object to use.
+   
+   "level" is the contour level.
+   
+   "selection" is an atom selection about which to display the mesh with
+      an additional "buffer" (if provided).
+
+NOTES
+
+   If the dot isosurface object already exists, then the new dots will
+   be appended onto the object as a new state.
+
    '''
    if selection!='':
       mopt = 1 # about a selection
@@ -1259,16 +1303,13 @@ USAGE
    return r
 
 def ready():
-   '''
-INTERNAL USAGE
-   '''
    return _cmd.ready()
 
 def splash():
    '''
 DESCRIPTION
  
-"splash" shows the splash screen information.
+   "splash" shows the splash screen information.
    '''
    set("text","1",quiet=1)
    print
@@ -1283,8 +1324,8 @@ def copy(target,source):
    '''
 DESCRIPTION
  
-"copy" creates a new object that is an identical copy of an
-existing object
+   "copy" creates a new object that is an identical copy of an
+   existing object
  
 USAGE
 
@@ -1294,7 +1335,7 @@ USAGE
  
 PYMOL API
  
-   cmd.copy(string new-object-name,string source-object-name)
+   cmd.copy(string target,string source)
    '''
    try:
       lock()
@@ -1307,15 +1348,16 @@ def label(selection="(all)",expression=""):
    '''
 DESCRIPTION
  
-"label" labels one or more atoms properties over a selection using
-the python evaluator with a separate name space for each atom.  The
-symbols defined in the name space are:
+   "label" labels one or more atoms properties over a selection using
+   the python evaluator with a separate name space for each atom.  The
+   symbols defined in the name space are:
  
-   name, resn, resi, chain, q, b, segi, type (ATOM,HETATM) 
-   formal_charge, partial_charge, numeric_type, text_type
+      name, resn, resi, chain, q, b, segi, type (ATOM,HETATM) 
+      formal_charge, partial_charge, numeric_type, text_type
    
-All strings in the expression must be explicitly quoted.  This
-operation typically takes several seconds per thousand atoms altered.
+   All strings in the expression must be explicitly quoted.  This
+   operation typically takes several seconds per thousand atoms
+   altered.
  
 USAGE
 
@@ -1342,17 +1384,18 @@ def alter(selection,expression):
    '''
 DESCRIPTION
  
-"alter" changes one or more atomic properties over a selection using
-the python evaluator with a separate name space for each atom.  The
-symbols defined in the name space are:
+   "alter" changes one or more atomic properties over a selection
+   using the python evaluator with a separate name space for each
+   atom.  The symbols defined in the name space are:
  
-   name, resn, resi, chain, alt,
-   q, b, segi, and type (ATOM,HETATM),
-   partial_charge, formal_charge,
-   text_type, numeric_type
+      name, resn, resi, chain, alt,
+      q, b, segi, and type (ATOM,HETATM),
+      partial_charge, formal_charge,
+      text_type, numeric_type
    
-All strings in the expression must be explicitly quoted.  This
-operation typically takes several seconds per thousand atoms altered.
+   All strings in the expression must be explicitly quoted.  This
+   operation typically takes several seconds per thousand atoms
+   altered.
  
 USAGE
  
@@ -1375,23 +1418,24 @@ def iterate(selection,expression):
    '''
 DESCRIPTION
  
-"iterate" iterates over an expression with a separate name space
-for each atom.  However, unlike the "alter" command, atomic properties
-can not be altered.  Thus, "iterate" is more efficient than "alter".
+   "iterate" iterates over an expression with a separate name space
+   for each atom.  However, unlike the "alter" command, atomic
+   properties can not be altered.  Thus, "iterate" is more efficient
+   than "alter".
 
-It can be used to perform operations and aggregations using
-atomic selections, and store the results in any global object,
-such as the predefined "stored" object.
+   It can be used to perform operations and aggregations using atomic
+   selections, and store the results in any global object, such as the
+   predefined "stored" object.
 
-The local namespace for "iterate" contains the following names
+   The local namespace for "iterate" contains the following names
 
-   name, resn, resi, chain, alt,
-   q, b, segi, and type (ATOM,HETATM),
-   partial_charge, formal_charge,
-   text_type, numeric_type
+      name, resn, resi, chain, alt,
+      q, b, segi, and type (ATOM,HETATM),
+      partial_charge, formal_charge,
+      text_type, numeric_type
  
-All strings in the expression must be explicitly quoted.  This
-operation typically takes a second per thousand atoms.
+   All strings in the expression must be explicitly quoted.  This
+   operation typically takes a second per thousand atoms.
  
 USAGE
  
@@ -1417,11 +1461,11 @@ def alter_state(state,selection,expression):
    '''
 DESCRIPTION
  
-"alter_state" changes the atomic coordinates of a particular state
-using the python evaluator with a separate name space for each atom.
-The symbols defined in the name space are:
+   "alter_state" changes the atomic coordinates of a particular state
+   using the python evaluator with a separate name space for each
+   atom.  The symbols defined in the name space are:
  
-   x,y,z
+      x,y,z
  
 USAGE
  
@@ -1447,8 +1491,8 @@ def view(key,action='recall'):
    '''
 DESCRIPTION
  
-"view" makes it possible to save and restore viewpoints on a given
-scene within a single session.
+   "view" makes it possible to save and restore viewpoints on a given
+   scene within a single session.
  
 USAGE
  
@@ -1488,7 +1532,7 @@ def iterate_state(state,selection,expression):
    '''
 DESCRIPTION
  
-"iterate_state" is to "alter_state" as "iterate" is to "alter"
+   "iterate_state" is to "alter_state" as "iterate" is to "alter"
  
 USAGE
  
@@ -1516,8 +1560,9 @@ def stereo(state='on'):
    '''
 DESCRIPTION
  
-"stereo" activates or deactives stereo mode.  Currently only high-end
-stereo graphics are supported on the SGI (stereo in a window).
+   "stereo" activates or deactives stereo mode.  Currently only
+   high-end stereo graphics are supported on the SGI (stereo in a
+   window).
  
 USAGE
  
@@ -1549,8 +1594,8 @@ PYMOL API
    
 def overlap(selection1,selection2,state1=1,state2=1,adjust=0.0):
    '''
-UNSUPPORTED FEATURE - LIKELY TO CHANGE
-(for maximum efficiency, use smaller molecule as selection 1)
+   UNSUPPORTED FEATURE - LIKELY TO CHANGE
+   (for maximum efficiency, use smaller molecule as selection 1)
    '''
    r = 1
    try:
@@ -1599,9 +1644,6 @@ def unlock(): # INTERNAL
             break # avoid permanent deadlock
 
 def export_dots(object,state):  
-   '''
-UNSUPPORTED - WILL BE REMOVED
-   '''
    try:
       lock()
       r = _cmd.export_dots(object,int(state)-1)
@@ -1610,9 +1652,6 @@ UNSUPPORTED - WILL BE REMOVED
    return r
 
 def count_states(selection="(all)"):
-   '''
-UNDOCUMENTED
-   '''
    try:
       lock()
       r = _cmd.count_states(selection)
@@ -1916,10 +1955,7 @@ USAGE
       unlock()
    return r
 
-def expfit(a,b):
-   '''
-   ??? OBSOLETE
-   '''
+def expfit(a,b): # Huh?
    try:
       lock()   
       r = _cmd.fit(a,b,2)
@@ -1977,8 +2013,6 @@ NOTES
    
    By default, attached hydrogens will also be deleted unless
    hydrogen-flag is zero.
-   
-    
 '''
    r = 1
    try:
@@ -2087,7 +2121,18 @@ NOTES
 
 def unpick(*arg):
    '''
-   INTERNAL
+DESCRIPTION
+
+   "unpick" deletes the special "pk" atom selections (pk1, pk2, etc.)
+   used in atom picking and molecular editing.
+
+USAGE
+
+   unpick
+
+PYMOL API
+
+   cmd.unpick()
    '''
    try:
       lock()   
@@ -2228,7 +2273,16 @@ TO DOCUMENT
 
 def mask(selection="(all)"):
    '''
-TO DOCUMENT
+DESCRIPTION
+  
+   "mask" makes it impossible to select the indicated atoms using the
+   mouse.  This is useful when you are working with one molecule in
+   front of another and wish to avoid accidentally selecting atoms in
+   the background.
+
+USAGE
+
+   mask (selection)
 '''
    try:
       lock()   
@@ -2239,7 +2293,13 @@ TO DOCUMENT
 
 def unmask(selection="(all)"):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "unmask" reverses the effect of "mask" on the indicated atoms.
+   
+USAGE
+
+   unmask (selection)
 '''
    try:
       lock()   
@@ -2456,7 +2516,8 @@ def refresh():
    '''
 DESCRIPTION
   
-   "refresh" causes the scene to be refresh as soon as possible.
+   "refresh" causes the scene to be refresh as soon as it is safe to
+   do so.
 
 USAGE
 
@@ -2476,10 +2537,7 @@ PYMOL API
          unlock()
    return r
 
-def _refresh(swap_buffers=1):
-   '''
-   INTERNAL - can only be safely called by GLUT thread 
-   '''
+def _refresh(swap_buffers=1):  # Only call with GLUT thread!
    try:
       lock()
       if thread.get_ident() == pymol.glutThread:
@@ -2493,10 +2551,7 @@ def _refresh(swap_buffers=1):
       unlock()
    return r
 
-def dirty():
-   '''
-INTERNAL
-   '''
+def dirty(): # forces refresh of 2D layer
    try:
       lock()
       r = _cmd.dirty()
@@ -2609,7 +2664,13 @@ PYMOL API
 
 def meter_reset():
    '''
-UNDOCUMENTED
+DESCRIPTION
+  
+   "meter_reset" resets the frames per secound counter
+   
+USAGE
+
+   meter_reset
    '''
    try:
       lock()   
@@ -2685,7 +2746,15 @@ PYMOL API
 
 def full_screen(toggle=1):
    '''
-UNSUPPORTED
+DESCRIPTION
+
+   "full_screen" enables or disables PyMOL's full_screen mode.  This
+   is only functions well on PC's.
+
+USAGE
+   full_screen on
+   full_screen off
+   
 '''
    if str(toggle)=='on':
       toggle = 1
@@ -2725,10 +2794,7 @@ PYMOL API
       r = _cmd.do("cmd._png('"+str(filename)+"')")
    return r
 
-def _png(a):
-   '''
-   INTERNAL - can only be safely called by GLUT thread 
-   '''
+def _png(a): # INTERNAL - can only be safely called by GLUT thread 
    try:
       lock()   
       fname = a
@@ -2786,10 +2852,7 @@ PYMOL API
       unlock()
    return r
 
-def _special(k,x,y):
-   '''
-   INTERNAL
-   '''
+def _special(k,x,y): # INTERNAL (invoked when special key is pressed)
    k=int(k)
    if special.has_key(k):
       if special[k][1]:
@@ -2803,7 +2866,7 @@ def _ctrl(k):
    return None
 
 
-def set_key(key,function,arg=(),kw={}):  
+def set_key(key,fn,arg=(),kw={}):  
    '''
 DESCRIPTION
   
@@ -2811,7 +2874,7 @@ DESCRIPTION
    
 PYMOL API
  
-   cmd.set_key( string key, function fn, tuple arguments)
+   cmd.set_key( string key, function fn, tuple arg=(), dict kw={})
  
 PYTHON EXAMPLE
  
@@ -2829,7 +2892,7 @@ PYTHON EXAMPLE
    r = 0
    for a in special.keys():
       if special[a][0]==key:
-         special[a][1]=function
+         special[a][1]=fn
          special[a][2]=arg
          special[a][3]=kw
          r = 1
@@ -2879,10 +2942,7 @@ PYMOL API
       unlock()
    return r
 
-def mray():
-   '''
-DEPRECATED
-   '''
+def mray(): # deprecated
    try:
       lock()   
       r = _cmd.mplay(2)
@@ -3088,9 +3148,6 @@ PYMOL API
    return r
 
 def test(winid): # generic test routine for development
-   '''
-DEBUGGING
-   '''
    try:
       lock()   
       r=_cmd.test(winid)
@@ -3099,9 +3156,6 @@ DEBUGGING
    return r
 
 def dump(fnam,obj):
-   '''
-DEBUGGING
-   '''
    try:
       lock()
       r = _cmd.dump(str(fnam),obj)
@@ -3294,7 +3348,7 @@ NOTES
    relationship between states and frames.
    
    '''
-   # NO LOCKS...this may be called from cmd.refresh()
+   # NOTE: NO LOCKS...this is/can be called from cmd.refresh()
    r = _cmd.get_state()
    return r
 
@@ -3312,7 +3366,7 @@ PYMOL API
    arbitrary relationship, specific using the "mset" command.
  
    '''
-   # NO LOCKS...this may be called from cmd.refresh()
+   # NOTE: NO LOCKS...this is/can be be called from cmd.refresh()
    r = _cmd.get_frame()
    return r
 
@@ -3422,10 +3476,7 @@ NOTES
       unlock()
    return None
 
-def get_feedback():
-   '''
-INTERNAL
-   '''
+def get_feedback(): # INTERNAL
    l = []
    try:
       lock()
@@ -3437,10 +3488,7 @@ INTERNAL
       unlock()
    return l
 
-def load_coords(*arg):
-   '''
-TO DOCUMENT
-   '''
+def load_coords(*arg): # UNSUPPORTED
    r = 1
    try:
       lock()
