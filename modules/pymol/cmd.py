@@ -160,6 +160,16 @@ if __name__=='pymol.cmd':
    }
    repres_sc = Shortcut(repres.keys())
 
+   boolean_dict = {
+      'yes'           : 1,
+      'no'            : 0,
+      '1'             : 1,
+      '0'             : 0,
+      'on'            : 1,
+      'off'           : 0
+      }
+
+   boolean_sc = Shortcut(boolean_dict.keys())
 
    palette_dict = {
       'rainbow_cycle'           : ('o',3,0  ,999), # perceptive rainbow
@@ -1163,6 +1173,7 @@ SEE ALSO
         config_mouse,       \
         mouse,              \
         mask,               \
+        order,              \
         set_key,            \
         unmask,             \
         edit_mode
@@ -1599,6 +1610,7 @@ SEE ALSO
       'remove'        : [ remove            , 0 , 0 , ''  , parsing.STRICT ],
       'remove_picked' : [ remove_picked     , 0 , 0 , ''  , parsing.STRICT ],
       'rename'        : [ rename            , 0 , 0 , ''  , parsing.STRICT ],
+      'order'         : [ order             , 0 , 0 , ''  , parsing.STRICT ],
       'replace'       : [ replace           , 0 , 0 , ''  , parsing.STRICT ],
       'replace_wizard': [ replace_wizard    , 0 , 0 , ''  , parsing.STRICT ],
       'reset'         : [ reset             , 0 , 0 , ''  , parsing.STRICT ],
@@ -1928,7 +1940,8 @@ SEE ALSO
       'indicate'       : [ selection_sc           , 'selection'       , ''   ],   
       'mask'           : [ selection_sc           , 'selection'       , ''   ],
       'mview'          : [ moving.mview_action_sc , 'action'          , ''   ],
-      'map_double'     : [ map_sc                 , 'map object'      , ', ' ],            
+      'map_double'     : [ map_sc                 , 'map object'      , ', ' ],
+      'order'          : [ selection_sc           , 'name'            , ''   ],
       'origin'         : [ selection_sc           , 'selection'       , ''   ],
       'protect'        : [ selection_sc           , 'selection'       , ''   ],
       'ramp_new'       : [ object_sc              , 'ramp'            , ''   ],
@@ -1961,7 +1974,7 @@ SEE ALSO
       'create'         : [ selection_sc           , 'selection'       , ', ' ],
       'map_new'        : [ creating.map_type_sc   , 'map type'        , ', ' ],
       'spectrum'       : [ palette_sc             , 'palette'         , ''   ],      
-
+      'order'          : [ boolean_sc             , 'sort'            , ','  ],
       'symexp'         : [ object_sc              , 'object'          , ', ' ],   
       'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
       'isosurface'     : [ map_sc                 , 'map object'      , ', ' ],
@@ -1975,6 +1988,7 @@ SEE ALSO
       {
       'spectrum'       : [ selection_sc           , 'selection'       , ''   ],
       'feedback'       : [ fb_mask_sc             , 'mask'            , ''   ],
+      'order'          : [ controlling.location_sc, 'location'        , ','  ],
       'button'         : [ controlling.but_act_sc , 'button action'   , ''   ],
       'flag'           : [ editing.flag_action_sc , 'flag action'     , ''   ],
       'set'            : [ selection_sc            , 'selection'         , ','  ],

@@ -5011,6 +5011,21 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   return(APIStatus(ok));  
 }
 
+static PyObject *CmdOrder(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  int int1,int2;
+
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  if (ok) {
+    APIEntry();
+    ok = ExecutiveOrder(TempPyMOLGlobals,str1,int1,int2);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
 {
   int int1;
@@ -5186,6 +5201,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"remove_picked",         CmdRemovePicked,         METH_VARARGS },
 	{"render",	              CmdRay,                  METH_VARARGS },
    {"rename",                CmdRename,               METH_VARARGS },
+   {"order",                 CmdOrder,                METH_VARARGS },
    {"replace",               CmdReplace,              METH_VARARGS },
    {"reinitialize",          CmdReinitialize,         METH_VARARGS },
 	{"reset",                 CmdReset,                METH_VARARGS },

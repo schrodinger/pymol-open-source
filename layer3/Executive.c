@@ -83,6 +83,8 @@ struct _CExecutive {
   int DragMode;
   int Pressed,Over,OldVisibility,ToggleMode;
   SpecRec *LastChanged;
+  int ReorderFlag;
+  OrthoLineType ReorderLog;
 };
 
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
@@ -90,7 +92,166 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
-     
+
+static int ExecutiveCountNames(PyMOLGlobals *G)
+{
+  int count=0;
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec,rec,next))
+	 count++;
+  
+  return(count);
+}
+
+static int ReorderOrderFn(PyMOLGlobals *G,SpecRec **rec,int l,int r)
+{
+  return (WordCompare(G,rec[l]->name,rec[r]->name,true)<=0);
+}
+
+int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
+{
+  register CExecutive *I = G->Executive;
+  int ok=true;
+  CWordList *word_list = WordListNew(G,s1);
+  int n_names = ExecutiveCountNames(G);
+  if(n_names) {
+    SpecRec **list,**subset,**sorted;
+    int *index = NULL;
+    int n_sel;
+    int source_row = -1;
+    list = Alloc(SpecRec*,n_names);
+    subset = Calloc(SpecRec*,n_names);
+    sorted = Calloc(SpecRec*,n_names);
+    index = Alloc(int,n_names);
+    if(list&&subset) {
+      /* create an array of current names */
+      {
+        SpecRec *rec = NULL;
+        int a = 0;
+        /* copy all names into array */
+        while(ListIterate(I->Spec,rec,next)) {
+          list[a] = rec;
+          a++;
+        }
+        for(a=0;a<n_names;a++) {
+          list[a]->next = NULL;
+        }
+      } 
+      /* transfer matching names to the subset array */
+      {
+        int a;
+        int entry;
+        int min_entry = word_list->n_word;
+        for(a=n_names-1;a>0;a--) { /* skipping zeroth */
+          entry = WordListMatch(G,word_list, list[a]->name, true);
+          if(entry>=0) { /* append onto the new list */
+            list[a]->next = subset[entry];
+            subset[entry] = list[a];
+            list[a] = NULL;
+            if(entry<=min_entry) {
+              source_row = a; /* takes the earliest first match */
+              min_entry = entry;
+            }
+          }
+        }
+        if(word_list->n_word && WordMatchExact(G,word_list->start[0],cKeywordAll,true))
+          location=-1; /* set to top if "all" is first in list */
+      }
+      /* expand the selected entries */
+      {
+        SpecRec *rec,*last;
+        int b;
+        n_sel = 0;
+        for(b=0;b<word_list->n_word;b++) {
+          rec=subset[b];
+          while(rec) {
+            sorted[n_sel++] = rec;
+            last = rec;
+            rec = rec->next;
+            last->next = NULL;
+          }
+        }
+      }
+      /* sort the selected entries, if requested */
+      if(sort) {
+        UtilCopyMem(subset,sorted,sizeof(SpecRec*)*n_sel);
+        {
+          int a;
+          UtilSortIndexGlobals(G,n_sel,subset,index,
+                               (UtilOrderFnGlobals*)ReorderOrderFn);
+          for(a=0;a<n_sel;a++) {
+            sorted[a] = subset[index[a]];
+          }
+        }
+      }
+      /* reassemble the list using the new order */
+      {
+        SpecRec *spec= NULL;
+        SpecRec *last= NULL;
+        int a,b;
+        int flag;
+        for(a=0;a<n_names;a++) {
+          flag=false;
+          if(sorted) { /* not yet added */
+            switch(location) {
+            case -1: /* top */
+              if(a==1) flag=true;
+              break;
+            case 0: 
+              if(source_row>=0) {
+                if(a==source_row)
+                  flag=true;
+              } else if(!list[a]) 
+                flag=true;
+              break;
+            }
+          }
+          if(flag) {
+            for(b=0;b<n_sel;b++) {
+              if(sorted[b]) {
+                if(last)
+                  last->next = sorted[b];
+                last = sorted[b];
+                if(!spec)
+                  spec = last;
+              }
+            }
+            FreeP(sorted);
+          }
+          if(list[a]) {
+            if(last) 
+              last->next = list[a];
+            last = list[a];
+            if(!spec)
+              spec=last;
+          }
+        }
+        if(sorted) { /* still not yet readded? */
+          for(b=0;b<n_sel;b++) {
+            if(sorted[b]) {
+              if(last)
+                last->next = sorted[b];
+              last = sorted[b];
+              if(!spec)
+                spec = last;
+            }
+          }
+        }
+        I->Spec=spec;
+        OrthoDirty(G);
+      }
+      
+      FreeP(index);
+      FreeP(sorted);
+      FreeP(list);
+      FreeP(subset);
+    }
+  }
+  WordListFreeP(word_list);
+  return(ok);
+}
+
 ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals *G,char *sele)
 {
 #ifdef _PYMOL_NOPY
@@ -264,7 +425,8 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
       switch(rec->type) {
       case cExecObject:
         if(WordMatchExact(G,rec->obj->Name,old_name,true)) {
-          UtilNCopy(rec->obj->Name,new_name,ObjNameMax);
+          ObjectSetName(rec->obj,new_name);
+          UtilNCopy(rec->name,rec->obj->Name,ObjNameMax);
           if(rec->obj->type == cObjectMolecule) {
             /*
               SelectorDelete(G,old_name);
@@ -1174,18 +1336,6 @@ int ExecutiveRampMapNew(PyMOLGlobals *G,char *name,char *map_name,PyObject *rang
   return(ok);
 }
 
-#ifndef _PYMOL_NOPY
-static int ExecutiveCountNames(PyMOLGlobals *G)
-{
-  int count=0;
-  register CExecutive *I = G->Executive;
-  SpecRec *rec = NULL;
-  while(ListIterate(I->Spec,rec,next))
-	 count++;
-  
-  return(count);
-}
-#endif
 
 #ifndef _PYMOL_NOPY
 static PyObject *ExecutiveGetExecObject(PyMOLGlobals *G,SpecRec *rec)
@@ -7169,6 +7319,10 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
         }
         break;
       case 1:
+        if(I->ReorderFlag) {
+          I->ReorderFlag=false;
+          PLog(I->ReorderLog,cPLog_no_flush);
+        }
         break;
       }
     }
@@ -7208,7 +7362,8 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
   {
     int row_offset;
     if((xx>=0)&&(t>=ExecOpCnt)) {
-      row_offset = ((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
+      row_offset = ((I->Block->rect.top-y)-
+                    (ExecTopMargin+ExecClickMargin))/ExecLineHeight;
       I->Over = row_offset;
     } else {
       I->Over = -1;
@@ -7264,12 +7419,19 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
         break;
       case 1:
         {
-          if(I->Over!=I->Pressed) {
-            SpecRec *last=NULL,*new_parent=NULL,*old_parent=NULL;
-            
-            while(ListIterate(I->Spec,rec,next)) {
-              if(rec->name[0]!='_')
-                {
+          int loop_flag = (I->Over!=I->Pressed);
+          while(loop_flag) {
+            loop_flag=false;
+            if(I->Over>I->Pressed)
+              I->Over = I->Pressed+1;
+            else if(I->Over<I->Pressed)
+              I->Over = I->Pressed-1;
+            if(I->Over!=I->Pressed) {
+              SpecRec *last=NULL,*new_parent=NULL,*old_parent=NULL;
+              
+              while(ListIterate(I->Spec,rec,next)) {
+                if(rec->name[0]!='_')
+                  {
                   if(skip) {
                     skip--;
                   } else {
@@ -7288,11 +7450,29 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
               if(moving!=new_parent) {
                 moving->next = new_parent->next;
                 new_parent->next = moving;
+                if(new_parent==I->Spec) {
+                  sprintf(I->ReorderLog,"cmd.order(\"%s\",location='top')\n",
+                         moving->name);
+                  I->ReorderFlag=true;
+                } else if(new_parent&&moving) {
+                  sprintf(I->ReorderLog,"cmd.order(\"%s %s\")\n",
+                          new_parent->name,moving->name);
+                  I->ReorderFlag=true;
+                }
               } else {
-                moving->next = moving->next->next;
+                old_parent->next = moving->next;
+                moving->next = old_parent->next->next;
                 old_parent->next->next = moving;
+                if(old_parent->next&&moving) {
+                  sprintf(I->ReorderLog,"cmd.order(\"%s %s\")\n",
+                          old_parent->next->name,moving->name);
+                  I->ReorderFlag=true;
+                }
               }
+              if(I->Pressed!=I->Over)
+                loop_flag=true;
               I->Pressed=I->Over;
+            }
             }
           }
         }
@@ -7696,6 +7876,7 @@ int ExecutiveInit(PyMOLGlobals *G)
   I->Pressed = -1;
   I->Over = -1;
   I->LastEdited=NULL;
+  I->ReorderFlag=false;
   I->NSkip=0;
   I->HowFarDown=0;
   ListElemCalloc(G,rec,SpecRec);

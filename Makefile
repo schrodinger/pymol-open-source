@@ -193,11 +193,11 @@ OSXPY=$(OSXPROD)/py23
 
 osx-wrap:
 	/bin/rm -rf $(OSXPYMOL) $(OSXEXE) $(OSXPY)
-	/usr/local/bin/tar -czvf layerOSX/bundle/app.hfstar $(OSXPROD)
+	$(PYMOL_PATH)/layerOSX/tar -czvf layerOSX/bundle/app.hfstar $(OSXPROD)
 
 osx-unwrap:
 	/bin/rm -rf $(OSXPROD)
-	/usr/local/bin/tar -xzvf layerOSX/bundle/app.hfstar
+	$(PYMOL_PATH)/layerOSX/tar -xzvf layerOSX/bundle/app.hfstar
 
 osx-python-framework:
 	cc layerOSX/bundle/python.c -o $(OSXEXE) $(DEFS)\
