@@ -25,6 +25,7 @@ class Pair_fit(Wizard):
          [ 1, 'Pair Fitting',''],
          [ 2, 'Fit %d Pairs'%self.n_pair,'cmd.get_wizard().fit()'],
          [ 2, 'Delete Last Pair','cmd.get_wizard().remove_last()'],
+         [ 2, 'Redraw','cmd.get_wizard().update_dashes()'],         
          [ 2, 'Clear','cmd.get_wizard().clear()'],
          [ 2, 'Done','cmd.set_wizard()'],
          ]

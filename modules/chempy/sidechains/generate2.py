@@ -8,6 +8,8 @@ sys.path.append(".")
 
 sc_raw = io.pkl.fromFile("sc_raw.pkl")
 
+cutoff_angle = 35.0
+
 sc_clus = {}
 
 # this loop clusters and averages sidechain conformations
@@ -15,14 +17,13 @@ sc_clus = {}
 for resn in sc_raw.keys():
    resn_list = sc_raw[resn]
    resn_key_dict = {}
-   for a in resn_list:
-      resn_key_list = resn_list[0].keys()
-      for kee in resn_key_list:
-         resn_key_dict[kee] = None
+   resn_key_list = resn_list[1].keys() # HACK - need to work this out...
+   for kee in resn_key_list:
+      resn_key_dict[kee] = None
    resn_key = resn_key_dict.keys()
    resn_key.sort()
    n_dihe = len(resn_key)
-   print resn,len(sc_raw[resn])
+   print resn,len(sc_raw[resn])#,resn_key
    if n_dihe: # not glycine or alanine
       # list of dictionaries
       # [ {(...)=avg1, (...)=avg2, ... }, {(..)=avg1, ... }, ... ]
@@ -36,6 +37,7 @@ for resn in sc_raw.keys():
          # yes, lets consider the conformation "cur"
          cur = resn_list.pop()
          if len(cur)!=n_dihe:
+#            print "skipping...",cur
             continue
          recomp_avg = None
          closest = None
@@ -52,7 +54,7 @@ for resn in sc_raw.keys():
                if dev>max_dev:
                   max_dev = dev
             avg_dev = avg_dev / n_dihe
-            if max_dev<40.0: # if this is acceptable...
+            if max_dev<cutoff_angle: # if this is acceptable...
                if min_dev>avg_dev: # and it is the closest, then remember
                   closest = cnt
                   min_dev = dev

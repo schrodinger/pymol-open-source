@@ -718,8 +718,11 @@ EXAMPLE
 '''
    import wizard
    try:
-      mod_tup = imp.find_module(name,wizard.__path__)
-      mod_obj = imp.load_module(name,mod_tup[0],mod_tup[1],mod_tup[2])
+      if not sys.modules.has_key(name):
+         mod_tup = imp.find_module(name,wizard.__path__)
+         mod_obj = imp.load_module(name,mod_tup[0],mod_tup[1],mod_tup[2])
+      else:
+         mod_obj = sys.modules[name]
       if mod_obj:
          oname = string.capitalize(name)
          if hasattr(mod_obj,oname):
@@ -728,7 +731,7 @@ EXAMPLE
                set_wizard(wiz)
                do("refresh")
    except ImportError:
-      print "Error: Sorry, couldn't find the '"+name+"' Wizard."
+      print "Error: Sorry, couldn't find the '"+name+"' wizard."
       
 def get_dihedral(atom1,atom2,atom3,atom4,state=0):
    r = None
@@ -3625,7 +3628,7 @@ SEE ALSO
    get_frame
    '''
    # NOTE: NO LOCKS...this is/can be called from cmd.refresh()
-   r = _cmd.get_state()
+   r = _cmd.get_state()+1
    return r
 
 def get_frame():

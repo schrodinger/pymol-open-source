@@ -637,6 +637,9 @@ void ExecutiveUndo(int dir)
   SpecRec *rec = NULL;
 
   o = ExecutiveGetLastObjectEdited();
+  PRINTFB(FB_Executive,FB_Debugging)
+    " ExecutiveUndo: last object %p\n",o
+    ENDFB;
   if(o)
     if(o->type==cObjectMolecule)
       obj = (ObjectMolecule*)o;

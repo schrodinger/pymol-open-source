@@ -8,9 +8,12 @@ sele_prefix_len = len(sele_prefix)
 
 dist_prefix = "wdist"
 
+default_mode = 'pairs'
+default_object_mode  = 'overwr'
+dist_count = 0
+
 class Distance(Wizard):
 
-   count = 0
    cutoff = 3.5
    
    def __init__(self):
@@ -23,7 +26,7 @@ class Distance(Wizard):
 
       # mode selection subsystem
       
-      self.mode = 'pairs'
+      self.mode = default_mode
       self.modes = [
          'polar',
          'heavy',
@@ -45,7 +48,7 @@ class Distance(Wizard):
 
       # overwrite mode selection subsystem
       
-      self.object_mode='overwr'
+      self.object_mode=default_object_mode
       self.object_modes = [
          'overwr',
          'append',
@@ -87,6 +90,9 @@ class Distance(Wizard):
          ]
 
    def cleanup(self):
+      global default_mode, default_object_mode
+      default_mode = self.mode
+      default_object_mode = self.object_mode
       self.clear()
       
    def clear(self):
@@ -106,16 +112,18 @@ class Distance(Wizard):
       return self.prompt
    
    def delete_last(self):
+      global dist_count
       if self.status==0:
-         if self.__class__.count>0:
-            cmd.delete(dist_prefix+"%02d"%self.__class__.count)
-            self.__class__.count = self.__class__.count - 1
+         if dist_count>0:
+            cmd.delete(dist_prefix+"%02d"%dist_count)
+            dist_count = dist_count - 1
       self.status=0
       self.error = None
       self.clear()
       cmd.refresh_wizard()
       
    def do_pick(self,bondFlag):
+      global dist_count
       if bondFlag:
          self.error = "Error: please select an atom, not a bond."
          print self.error
@@ -129,22 +137,22 @@ class Distance(Wizard):
                self.status = 1
                self.error = None
             elif self.status==1:
-               if ((self.object_mode=='append') or (not self.__class__.count)):
-                  self.__class__.count = self.__class__.count + 1
+               if ((self.object_mode=='append') or (not dist_count)):
+                  dist_count = dist_count + 1
                else:
-                  cmd.delete(dist_prefix+"%2d"%self.__class__.count)
-               name = dist_prefix + "%02d"%self.__class__.count
+                  cmd.delete(dist_prefix+"%2d"%dist_count)
+               name = dist_prefix + "%02d"%dist_count
                cmd.dist(name,sele_prefix,"(pk1)")
                cmd.delete(sele_prefix)
                cmd.unpick()
                cmd.enable(name)
                self.status = 0
          elif self.mode in ['neigh','polar','heavy']:
-            if ((self.object_mode=='append') or (not self.__class__.count)):
-               self.__class__.count = self.__class__.count + 1
+            if ((self.object_mode=='append') or (not dist_count)):
+               dist_count = dist_count + 1
             else:
-               cmd.delete(dist_prefix+"%2d"%self.__class__.count)
-            name = dist_prefix + "%02d"%self.__class__.count
+               cmd.delete(dist_prefix+"%2d"%dist_count)
+            name = dist_prefix + "%02d"%dist_count
             if self.mode == 'neigh':
                cmd.dist(name,"(pk1)","((pk1 a; %f) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)
             elif self.mode == 'polar':

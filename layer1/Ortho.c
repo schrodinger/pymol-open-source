@@ -793,6 +793,16 @@ void OrthoDoDraw()
     
     x = I->X;
     y = I->Y;
+
+    if(I->DrawText) { /* moved to avoid conflict with menus */
+      glColor3f(0.0,0.0,0.0);
+      glBegin(GL_POLYGON);
+      glVertex2i(I->Width-cOrthoRightSceneMargin,cOrthoBottomSceneMargin-1);
+      glVertex2i(I->Width-cOrthoRightSceneMargin,0);
+      glVertex2i(0,0);
+      glVertex2i(0,cOrthoBottomSceneMargin-1);
+      glEnd();
+    }
     
     BlockRecursiveDraw(I->Blocks);
     
@@ -806,13 +816,6 @@ void OrthoDoDraw()
       x = cOrthoLeftMargin;
       y = cOrthoBottomMargin;
 
-      glColor3f(0.0,0.0,0.0);
-      glBegin(GL_POLYGON);
-      glVertex2i(I->Width-cOrthoRightSceneMargin,cOrthoBottomSceneMargin-1);
-      glVertex2i(I->Width-cOrthoRightSceneMargin,0);
-      glVertex2i(0,0);
-      glVertex2i(0,cOrthoBottomSceneMargin-1);
-      glEnd();
 
       if((int)SettingGet(cSetting_text)||I->SplashFlag)
         showLines=I->ShowLines;

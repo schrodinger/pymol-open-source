@@ -27,17 +27,27 @@ Ongoing Goals
 
    * feedback conditionals placed around all error output
 
-In Progress
+   * draw all solid representations before drawing lines
+     in order to improve antialiasing.
 
-   * Mutagenesis wizard
 
 Changes up to 0.57
+
+   * mutagenesis module
 
    * finished the set_dihedral command
 
 Changes up to 0.56
 
    * fixed a serious parser bug with the mdo command
+
+Changes up to 0.55
+
+   * fixed and enhanced util.mroll, util.mrock
+ 
+Changes up to 0.54
+   
+   * ID and elem fields in alter, iterate
 
 Changes up to 0.53
 
