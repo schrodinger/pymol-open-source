@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 #include"Python.h"
 #include"PUtils.h"
 
+
 #define cFrontMin 0.1
 #define cSliceMin 0.1
 
@@ -67,8 +68,8 @@ typedef struct {
   int Width,Height;
   int Button;
   int LastX,LastY;
-  GLfloat ViewNormal[3],LinesNormal[3];
-  GLfloat Pos[3],Origin[3];
+  float ViewNormal[3],LinesNormal[3];
+  float Pos[3],Origin[3];
   float H;
   float Front,Back,FrontSafe;
   float TextColor[3];
@@ -445,24 +446,6 @@ void SceneDraw(Block *block)
   }
 }
 /*========================================================================*/
-static void cross_product ( GLfloat *v1, GLfloat *v2, GLfloat *cp)
-{
-  cp[0] = v1[1] * v2[2] - v1[2] * v2[1];
-  cp[1] = v1[2] * v2[0] - v1[0] * v2[2];
-  cp[2] = v1[0] * v2[1] - v1[1] * v2[0];
-}
-/*========================================================================*/
-static void normalize ( GLfloat *v, GLfloat *n )
-{
-  GLfloat len;
-
-  len = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
-  n[0] = v[0]/len;
-  n[1] = v[1]/len;
-  n[2] = v[2]/len;
-
-}
-/*========================================================================*/
 
 typedef unsigned char pix[4];
 #define cRange 10
@@ -569,9 +552,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 int SceneDrag(Block *block,int x,int y,int mod)
 {
   CScene *I=&Scene;
-  GLfloat scale;
-  GLfloat v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
-  GLfloat axis[3],axis2[3],theta,omega;
+  float scale;
+  float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
+  float axis[3],axis2[3],theta,omega;
   int but;
   y=y-I->Block->margin.bottom;
   scale = I->Height;
@@ -587,32 +570,34 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 v2[0] = (I->Width/2) - I->LastX;
 	 v2[1] = (I->Height/2) - I->LastY;
 	 
-	 r1 = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
-	 r2 = sqrt(v2[0]*v2[0] + v2[1]*v2[1]);
+	 r1 = sqrt1f(v1[0]*v1[0] + v1[1]*v1[1]);
+	 r2 = sqrt1f(v2[0]*v2[0] + v2[1]*v2[1]);
 	 
-	 if(r1<scale)
-		v1[2] = sqrt(scale*scale - r1*r1);
-	 else
+	 if(r1<scale) {
+		v1[2] = sqrt1f(scale*scale - r1*r1);
+	 }
+	 else {
 		v1[2] = 0.0;
-	 
-	 if(r2<scale)
-		v2[2] = sqrt(scale*scale - r2*r2);
-	 else
+	 }
+
+	 if(r2<scale) {
+		v2[2] = sqrt1f(scale*scale - r2*r2);
+	 } else {
 		v2[2] = 0.0;
-	 
-	 normalize(v1,n1);
-	 normalize(v2,n2);
-	 cross_product(n1,n2,cp);
-	 theta = 2*180*asin(sqrt(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
-	 normalize(cp,axis);
+	 }
+	 normalize23f(v1,n1);
+	 normalize23f(v2,n2);
+	 cross_product3f(n1,n2,cp);
+	 theta = 2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
+	 normalize23f(cp,axis);
 
     v1[2]=0.0;
     v2[2]=0.0;
-	 normalize(v1,n1);
-	 normalize(v2,n2);
-	 cross_product(n1,n2,cp);
-    omega = 2*180*asin(sqrt(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
-	 normalize(cp,axis2);	 
+	 normalize23f(v1,n1);
+	 normalize23f(v2,n2);
+	 cross_product3f(n1,n2,cp);
+    omega = 2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
+	 normalize23f(cp,axis2);	 
 
 	 switch(I->Button) {
 	 case GLUT_LEFT_BUTTON:
@@ -1060,15 +1045,15 @@ void SceneRender(Pickable *pick,int x,int y)
   /* think in terms of the camera's world */
   CScene *I=&Scene;
   ObjRec *rec=NULL;
-  GLfloat fog[4];
+  float fog[4];
   float *v,vv[4],f;
   unsigned int lowBits,highBits;
-  static GLfloat white[4] =
+  static float white[4] =
   {1.0, 1.0, 1.0, 1.0};
-  GLfloat zAxis[4] = { 0.0, 0.0, 1.0, 0.0 };
-  GLfloat normal[4] = { 0.0, 0.0, 1.0, 0.0 };
-  GLfloat aspRat = ((GLfloat) I->Width) / ((GLfloat) I->Height);
-  GLfloat height,width;
+  float zAxis[4] = { 0.0, 0.0, 1.0, 0.0 };
+  float normal[4] = { 0.0, 0.0, 1.0, 0.0 };
+  float aspRat = ((float) I->Width) / ((float) I->Height);
+  float height,width;
   float start_time;
   int view_save[4];
   Pickable *pickVLA;

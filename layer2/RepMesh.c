@@ -354,7 +354,7 @@ Rep *RepMeshNew(CoordSet *cs)
 						  }						
 						  if(aNear>=0)
 							 {
-								pVal = sqrt(aLen); /* pVal is the distance from atom center */
+								pVal = sqrt1f(aLen); /* pVal is the distance from atom center */
 								vdw = cs->Obj->AtomInfo[cs->IdxToAtm[aNear]].vdw;
 								if((pVal>=vdw)&&(pVal<(vdw+(probe_radius*1.6)))) {
 								  escFlag=true;
@@ -379,7 +379,7 @@ Rep *RepMeshNew(CoordSet *cs)
 								  }
 								  if(escFlag) {
 									 if(pVal<(vdw+probe_radius)) 
-										pVal=probe_radius/sqrt(aLen); /* yes it is - aLen is the distance*/
+										pVal=probe_radius/sqrt1f(aLen); /* yes it is - aLen is the distance*/
 									 else
 										pVal=0.0; /* out in bulk solvent */
 								  } else {

@@ -16,6 +16,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Base
 #define _H_Base
 
+#include<limits.h>
+#include<float.h>
+#include<sys/types.h>
+
 #ifndef true
 #define true 1
 #endif
@@ -32,14 +36,13 @@ Z* -------------------------------------------------------------------
 #define PI 3.14159265358979323846
 #endif
 
+
 #ifndef uchar
 #define uchar unsigned char
 #endif
 
 #define MAX_VDW 2.5  /* this has to go */
 
-#include<limits.h>
-#include<float.h>
 
 #ifndef MAXFLOAT
 #define MAXFLOAT FLT_MAX

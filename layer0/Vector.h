@@ -32,7 +32,10 @@ typedef double Matrix33d[3][3];
 float deg_to_rad(float angle);
 float rad_to_deg(float angle);
 
+float sqrt1f(float f);
+
 void normalize3f( float *v1 );
+void normalize23f( float *v1 , float *v2);
 void normalize3d( double *v1 );
 
 double dot_product3d ( double *v1, double *v2 );
@@ -137,7 +140,7 @@ void  average3f ( float *v1, float *v2, float *avg );
 #define add3f(v1,v2,v3) {(v3)[0]=(v1)[0]+(v2)[0]; (v3)[1]=(v1)[1]+(v2)[1]; (v3)[2]=(v1)[2]+(v2)[2];}
 #define subtract3f(v1,v2,v3) {(v3)[0]=(v1)[0]-(v2)[0]; (v3)[1]=(v1)[1]-(v2)[1]; (v3)[2]=(v1)[2]-(v2)[2];}
 #define lengthsq3f(v1) (((v1)[0]*(v1)[0]) + ((v1)[1]*(v1)[1]) + ((v1)[2]*(v1)[2]))
-#define length3f(v1) (sqrt(((v1)[0]*(v1)[0]) + ((v1)[1]*(v1)[1]) + ((v1)[2]*(v1)[2])))
+#define length3f(v1) (sqrt1f(((v1)[0]*(v1)[0]) + ((v1)[1]*(v1)[1]) + ((v1)[2]*(v1)[2])))
 #define average3f(v1,v2,avg) { \
   (avg)[0] = ((v1)[0]+(v2)[0])/2; \
   (avg)[1] = ((v1)[1]+(v2)[1])/2; \
