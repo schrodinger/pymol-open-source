@@ -547,9 +547,12 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_presentation               397
 #define cSetting_presentation_mode          398
 #define cSetting_pdb_truncate_residue_name  399
+#define cSetting_scene_loop                 400
+#define cSetting_sweep_mode                 401
+#define cSetting_sweep_phase                402
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       400
+#define cSetting_INIT                       403
 
 #endif
 

@@ -431,6 +431,9 @@ if __name__=='pymol.setting':
       presentation              = (397, '')
       presentation_mode         = (398, '')
       pdb_truncate_residue_name = (399, '')
+      scene_loop                = (400, '')
+      sweep_mode                = (401, '')
+      sweep_phase               = (402, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
