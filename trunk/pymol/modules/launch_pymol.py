@@ -4,7 +4,9 @@
 #
 # Future installations should launch pymol by running:
 #   "python $PYMOL_PATH/modules/pymol/__init__.py" instead.
-# or by importing "pymol" from within a standalone Python script
+# or
+#   by importing "pymol" from within a standalone Python script
+#   followed immediately by a call to pymol.finish_launching()
 
 import thread 
 import threading 
