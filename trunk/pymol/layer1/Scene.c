@@ -4106,7 +4106,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
         if(reflect>1.0F) reflect=1.0F;
 
-
         /* lighting */
         
         glEnable(GL_LIGHTING);
@@ -4122,7 +4121,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         
         /* ambient component */
         
-        f=SettingGet(G,cSetting_ambient);        
+        f=SettingGet(G,cSetting_ambient);
 
         vv[0]=f;
         vv[1]=f;
@@ -4131,7 +4130,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
         
         /* LIGHT0 is or direct light (eminating from the camera) */
-        
         
         if(direct>R_SMALL4) {          
           glEnable(GL_LIGHT0);
@@ -4142,17 +4140,14 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
           vv[3]=1.0F;
           glLightfv(GL_LIGHT0,GL_DIFFUSE,vv);
           
-          vv[0] = 0.0F;
-          vv[1] = 0.0F;
-          vv[2] = 0.0F;
+          f=SettingGet(G,cSetting_ambient);
+          vv[0] = f;
+          vv[1] = f;
+          vv[2] = f;
           vv[3] = 1.0F;
           glLightfv(GL_LIGHT0,GL_AMBIENT,vv);
           
-          vv[0] = 0.0F;
-          vv[1] = 0.0F;
-          vv[2] = 0.0F;
-          vv[3] = 0.0F;
-          glLightfv(GL_LIGHT0,GL_SPECULAR,vv);
+          glLightfv(GL_LIGHT0,GL_SPECULAR,zero);
           
         } else {
           glDisable(GL_LIGHT0);
@@ -4165,7 +4160,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         glEnable(GL_LIGHT1);
         
         /* load up the default ambient and diffuse lighting values */
-        
         
         vv[0]=reflect;
         vv[1]=reflect;
