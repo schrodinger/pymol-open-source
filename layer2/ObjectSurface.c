@@ -355,7 +355,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                 MapSetupExpress(voxelmap);  
             }
 
-            ms->NT=TetsurfVolume(oms->Field,
+            ms->nT=TetsurfVolume(oms->Field,
                           ms->Level,
                           &ms->N,&ms->V,
                           ms->Range,
@@ -523,10 +523,10 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                     int parity;
                     glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
                   
-                    t_buf = Alloc(float*,ms->NT*9);
+                    t_buf = Alloc(float*,ms->nT*9);
                   
-                    z_value = Alloc(float,ms->NT);
-                    ix = Alloc(int,ms->NT);
+                    z_value = Alloc(float,ms->nT);
+                    ix = Alloc(int,ms->nT);
                   
                     zv = z_value;
                     tb = t_buf;
@@ -711,7 +711,7 @@ void ObjectSurfaceStateInit(ObjectSurfaceState *ms)
   }
 
   ms->N[0]=0;
-  ms->NT=0;
+  ms->nT=0;
   ms->Active=true;
   ms->ResurfaceFlag=true;
   ms->ExtentFlag=false;

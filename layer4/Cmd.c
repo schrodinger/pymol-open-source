@@ -2091,10 +2091,12 @@ static PyObject *CmdRunWXPyMOL(PyObject *dummy, PyObject *args)
 {
 #ifdef _PYMOL_WX_GLUT
 #ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
   if(run_only_once) {
     run_only_once=false;
     was_main();
   }
+#endif
 #endif
 #endif
 

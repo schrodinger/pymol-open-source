@@ -4440,7 +4440,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
           ai=I->AtomInfo;
           for(a=0;a<I->NAtom;a++) {
             s=ai->selEntry;
-            if(!(ai->protected==1))
+            if(!(ai->protekted==1))
               if(SelectorIsMember(s,sele))
                 {
                   CoordSetTransformAtom(cs,a,TTT);
@@ -4451,7 +4451,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
         } else {
           ai=I->AtomInfo;
           for(a=0;a<I->NAtom;a++) {
-            if(!(ai->protected==1))
+            if(!(ai->protekted==1))
               CoordSetTransformAtom(cs,a,TTT);
             ai++;
           }
@@ -6364,7 +6364,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          s=ai->selEntry;
          if(SelectorIsMember(s,sele))
            {
-             ai->protected = op->i1;
+             ai->protekted = op->i1;
              op->i2++;
            }
          ai++;
@@ -7250,7 +7250,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
 {
   int result = 0;
   CoordSet *cs;
-  if(!(I->AtomInfo[index].protected==1)) {
+  if(!(I->AtomInfo[index].protekted==1)) {
     if(state<0) state=0;
     if(I->NCSet==1) state=0;
     state = state % I->NCSet;

@@ -41,6 +41,10 @@ Z* -------------------------------------------------------------------
 #define _PYMOL_WX_GLUT
 #endif
 
+#ifdef _EPYMOL
+#define _PYMOL_WX_GLUT
+#endif
+
 #ifdef _PYMOL_MIN_GLUT
 #define _PYMOL_PRETEND_GLUT
 #endif

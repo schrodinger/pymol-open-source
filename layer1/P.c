@@ -66,6 +66,7 @@ PyObject *P_time = NULL;
 PyObject *P_sleep = NULL;
 PyObject *P_main = NULL;
 PyObject *P_vfont = NULL;
+PyObject *P_embed = NULL;
 
 #define P_log_file_str "_log_file"
 
@@ -707,6 +708,8 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
+#ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
 void	initExtensionClass(void);
 void	initsglite(void);
 void    init_opengl(void);
@@ -716,9 +719,12 @@ void    init_glu_num(void);
 void    init_glut(void);
 void    initopenglutil(void);
 void    initopenglutil_num(void);
+#endif
+#endif
 
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
 #ifdef WIN32
 void	init_numpy();
 void	initmultiarray();
@@ -729,9 +735,11 @@ void	initranlib();
 #endif
 #endif
 #endif
+#endif
 
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
 void	initExtensionClass(void);
 void	initsglite(void);
 void    init_opengl(void);
@@ -741,6 +749,7 @@ void    init_glu_num(void);
 void    init_glut(void);
 void    initopenglutil(void);
 void    initopenglutil_num(void);
+#endif
 #endif
 #endif
 
@@ -858,14 +867,17 @@ putenv(line3);
 
 
 
-#ifndef PYMOL_ACTIVEX
+#ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
   Py_Initialize();
   PyEval_InitThreads();
+#endif
 #endif
 
   init_cmd();
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
 	initExtensionClass();
 	initsglite();
 #ifdef WIN32
@@ -884,6 +896,7 @@ putenv(line3);
     init_glut();
     initopenglutil();
 	 initopenglutil_num();
+#endif
 #endif
 #endif
   PyRun_SimpleString("import os\n");
@@ -1012,6 +1025,8 @@ void PInit(void)
 
 #ifdef WIN32
 #ifdef _PYMOL_MONOLITHIC
+#ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
 	/* Win32 module build: includes pyopengl, numpy, and sglite */
 	/* sglite */
 	initExtensionClass();
@@ -1031,6 +1046,8 @@ void PInit(void)
     init_glut();
     initopenglutil();
 	initopenglutil_num();
+#endif
+#endif
 #endif
 #endif
 
@@ -1343,6 +1360,7 @@ void PBlock(void)
 int PAutoBlock(void)
 {
 #ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
   int a,id;
   /* synchronize python */
 
@@ -1413,6 +1431,9 @@ int PAutoBlock(void)
 #else
   return 1;
 #endif
+#else
+  return 1;
+#endif
 }
 
 int PIsGlutThread(void)
@@ -1423,6 +1444,7 @@ int PIsGlutThread(void)
 void PUnblock(void)
 {
 #ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
   int a;
   /* NOTE: ASSUMES a locked API */
 
@@ -1455,6 +1477,8 @@ void PUnblock(void)
 #endif
   
 #endif
+#endif
+
 }
 
 

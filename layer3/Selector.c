@@ -1388,7 +1388,7 @@ int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
     if(!seleFlag)
       seleFlag = SelectorIsMember(s,sele2);      
     if(!seleFlag) {
-      if(!(ai->protected==1)) { /* if not explicitly protected...*/
+      if(!(ai->protekted==1)) { /* if not explicitly protected...*/
         atom[a]=1; /* mark this atom into the selection */
         comp[a]=1;
       }

@@ -1122,7 +1122,7 @@ int SceneRelease(Block *block,int button,int x,int y,int mod)
   if(I->SculptingFlag) {
     /* SettingSet(cSetting_sculpting,1); */
     obj=(ObjectMolecule*)I->LastPicked.ptr;
-    obj->AtomInfo[I->LastPicked.index].protected=I->SculptingSave;
+    obj->AtomInfo[I->LastPicked.index].protekted=I->SculptingSave;
     I->SculptingFlag=0;
   }
   return(1);
@@ -1286,8 +1286,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               EditorPrepareDrag(objMol,I->LastPicked.index,
                                 SettingGetGlobal_i(cSetting_state)-1);
               I->SculptingFlag = 1;
-              I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protected;
-              objMol->AtomInfo[I->LastPicked.index].protected=2;
+              I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
+              objMol->AtomInfo[I->LastPicked.index].protekted=2;
               break;
             }
           }
@@ -1333,8 +1333,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         EditorPrepareDrag(objMol,I->LastPicked.index,
                           SettingGetGlobal_i(cSetting_state)-1);
         I->SculptingFlag = 1;
-        I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protected;
-        objMol->AtomInfo[I->LastPicked.index].protected=2;
+        I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
+        objMol->AtomInfo[I->LastPicked.index].protekted=2;
         break;
       case cObjectGadget:
         break;
