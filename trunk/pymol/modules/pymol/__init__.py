@@ -23,6 +23,7 @@ import invocation
 import traceback
 import _cmd
 import math
+import threading
 
 # PyMOL __init__.py
 
@@ -46,14 +47,20 @@ def start_pymol():
 	global glutThread
 	glutThread = thread.get_ident()
 	_cmd.runpymol()
-	
+
 def exec_str(s):
    try:
       exec s in globals(),globals()
    except StandardError:
       traceback.print_exc()
    return None
-   
+
+def stdin_reader(): # dedicated thread for reading standard input
+	import sys
+	from pymol import cmd
+	while 1:
+		cmd.do(sys.stdin.readline())
+			   
 def exec_deferred():
    cmd.config_mouse(quiet=1)
    for a in invocation.options.deferred:
@@ -68,6 +75,10 @@ r"\.pdb$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.sdf$|\.r3d$|\.xyz$|\.xyz_[0-9]*
          cmd.load(a)
       elif re.search(r"\.pml$",a):
          cmd.do("@%s" % a)
+   if invocation.options.read_stdin:
+      t = threading.Thread(target=stdin_reader)
+      t.setDaemon(1)
+      t.start()
 
 def launch_gui():
    if invocation.options.external_gui:
@@ -78,3 +89,8 @@ import cmd
 if os.environ.has_key('DISPLAY'):
    from xwin import *
    
+
+
+
+
+
