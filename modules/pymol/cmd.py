@@ -118,32 +118,38 @@ def release():
    '''
 RELEASE NOTES
 
-PyMOL is an free, open, and expandable molecular graphics program writen
-by a computational scientist for the benefit of other scientists and
-developers in the fields of structural biology, molecular graphics,
-computational chemistry, modeling, and informatics.  
+PyMOL is a free, open, and expandable molecular graphics system
+written by a computational scientist to enable molecular modeling and
+visualization from directly within Python.  It will be of most benefit
+to hybrid scientist/developers in the fields of structural biology,
+molecular modeling, computational chemistry, and informatics who want
+a completely unrestricted visualization tool capable of working
+directly to their own programs via Python.  It will also be of benefit
+to advanced non-developers familiar with similar programs such as
+Midas, O, Grasp, X-PLOR and CNS.
 
-This release of PyMOL is ONLY appropriate for those who prefer to use
-text commands and scripts, and for developers who want to integrate PyMOL's
-visualization and molecular editing capabilities into their own Python
-programs.
+Due to PyMOL's current "user-unfriendliness", this release is ONLY
+appropriate for those who prefer to use text commands and scripts, and
+for developers who want to integrate PyMOL's visualization and
+molecular editing capabilities with their own work.
 
-PyMOL currently includes a diverse command language, a powerful application
-programmers interface (API), and a variety of mouse and keyboard driven
-functionality for viewing, animation, rendering, and molecular editing.
-
-However, this release of PyMOL does NOT include an adequate graphical
-user interface, menu bar, manual, test suite, or a complete help system.
-Such enhancements are in progress, but proceed at a slow pace.
+PyMOL currently includes a diverse command language, a powerful
+application programmers interface (API), and a variety of mouse and
+keyboard driven functionality for viewing, animation, rendering, and
+molecular editing.  However, this release of PyMOL does NOT include an
+adequate graphical user interface, menu bar, manual, test suite, or a
+complete help system.  Such enhancements are in progress, but proceed
+at a slow pace.
 
 Two external GUI development options are supported for PyMOL:
-"Tkinter" and "wxPython".  Developers can take their pick.  I am committed 
-to insuring that PyMOL will work with both of them, but it is unlikely that
-I will have time to develop a complete external GUI myself any time soon.
+"Tkinter" and "wxPython".  Developers can take their pick.  I am
+committed to insuring that PyMOL will work with both of them, but it
+is unlikely that I will have time to develop a complete external GUI
+myself any time soon using either toolkit. 
 
-Note that only Tkinter is supported under Windows with the default PyMOL
-and Python distributions, so for maximum ease under windows, use Tkinter
-for the time being.
+Note that only Tkinter is supported under Windows with the default
+PyMOL and Python distributions, so for maximum ease of installation
+under Windows, stick with Tkinter (Tcl/Tk).
 
 Warren L. DeLano (2/16/2001), warren@delanoscientific.com
 '''
