@@ -36,7 +36,7 @@ void ExecutiveIterateState(int i1,char *s1,char *expr,int read_only,int atomic_p
 int ExecutiveColor(char *name,char *color,int flags);
 void ExecutiveInit(void);
 void ExecutiveFree(void);
-void ExecutiveManageObject(struct CObject *obj);
+void ExecutiveManageObject(struct CObject *obj,int allow_zoom);
 void ExecutiveUpdateObjectSelection(struct CObject *obj);
 void ExecutiveManageSelection(char *name);
 Block *ExecutiveGetBlock(void);

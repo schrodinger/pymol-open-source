@@ -138,7 +138,7 @@ static char *skip_fortran(int num,int per_line,char *p)
 
 ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int frame,
                                           int interval,int average,int start,
-                                          int stop,int max)
+                                          int stop,int max,char *sele)
 {
   int ok=true;
   FILE *f;
@@ -150,13 +150,15 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   int periodic=false;
   float f0,f1,f2,f3,*fp;
   int a,b,c,i;
+  int *to;
   int zoom_flag=false;
   int cnt=0;
   int n_avg=0;
   int icnt;
   int ncnt=0;
+  int sele0 = SelectorIndexByName(sele);
+  int *xref = NULL;
   CoordSet *cs = NULL;
-
   if(interval<1)
     interval=1;
 
@@ -169,14 +171,45 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
 	 ok=ErrMessage("ObjectMoleculeLoadTOPFile","Unable to open file!");
   else
 	 {
-      cs=CoordSetCopy(I->CSet[0]);
-      if(!cs) {
+      if(!I->CSTmpl) {
         PRINTFB(FB_Errors,FB_ObjectMolecule)
           " ObjMolLoadTRJFile: Missing topology"
           ENDFB;
         return(I);
       }
-      cs->IsPlaceHolder=false;
+      cs=CoordSetCopy(I->CSTmpl);
+
+      if(sele0>=0) { /* build array of cross-references */
+        xref = Alloc(int,I->NAtom);
+        c=0;
+        for(a=0;a<I->NAtom;a++) {
+          if(SelectorIsMember(I->AtomInfo[a].selEntry,sele0)) {
+            xref[a]=c++;
+          } else {
+            xref[a]=-1;
+          }
+        }
+
+        for(a=0;a<I->NAtom;a++) { /* now terminate the excluded references */
+          if(xref[cs->AtmToIdx[a]]<0)
+            cs->AtmToIdx[a]=-1;
+        }
+
+        to=cs->IdxToAtm;
+        c=0;
+        for(a=0;a<cs->NIndex;a++) { /* now fix IdxToAtm and remap xref to coordinate space */
+          if(cs->AtmToIdx[cs->IdxToAtm[a]]>=0) {
+            *(to++)=cs->IdxToAtm[a];
+            xref[a]=c;
+            c++;
+          } else {
+            xref[a]=-1;
+          }
+        }
+        cs->NIndex=c;
+        cs->IdxToAtm = Realloc(cs->IdxToAtm,int,cs->NIndex+1);
+        VLASize(cs->Coord,float,cs->NIndex*3);
+      }
       PRINTFB(FB_ObjectMolecule,FB_Blather) 
         " ObjMolLoadTRJFile: Loading from '%s'.\n",fname
         ENDFB;
@@ -230,15 +263,24 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
               if(!periodic) {
                 if((cnt+1)>=start) {
                   if(icnt<=1) {
-                    fp=cs->Coord+3*a;
-                    if(n_avg) {
-                      *(fp++)+=f0;
-                      *(fp++)+=f1;
-                      *(fp++)+=f2;
+                    if(xref) { 
+                      if(xref[a]>=0)
+                        fp=cs->Coord+3*xref[a];
+                      else 
+                        fp=NULL;
                     } else {
-                      *(fp++)=f0;
-                      *(fp++)=f1;
-                      *(fp++)=f2;
+                      fp=cs->Coord+3*a;
+                    }
+                    if(fp) {
+                      if(n_avg) {
+                        *(fp++)+=f0;
+                        *(fp++)+=f1;
+                        *(fp++)+=f2;
+                      } else {
+                        *(fp++)=f0;
+                        *(fp++)=f1;
+                        *(fp++)=f2;
+                      }
                     }
                   }
                 }
@@ -272,7 +314,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                         
                         if(n_avg>1) {
                           fp=cs->Coord;
-                          for(i=0;i<I->NAtom;i++) {
+                          for(i=0;i<cs->NIndex;i++) {
                             *(fp++)/=n_avg;
                             *(fp++)/=n_avg;
                             *(fp++)/=n_avg;
@@ -283,13 +325,8 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                         if(cs->fInvalidateRep)
                           cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
                         if(frame<0) frame=I->NCSet;
-                        if(frame) {
-                          if(I->CSet[frame-1])
-                            if(I->CSet[frame-1]->IsPlaceHolder) {
-                              /* replace PlaceHolder Coordinate Sets */
-                              frame--;
-                              zoom_flag=true;
-                            }
+                        if(!I->NCSet) {
+                          zoom_flag=true;
                         }
                         
                         VLACheck(I->CSet,CoordSet*,frame);
@@ -334,12 +371,11 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
             break;
           }
         }
+      FreeP(xref);
 		mfree(buffer);
 	 }
   if(cs)
-    if(!cs->IsPlaceHolder) 
-      cs->fFree(cs);
-
+    cs->fFree(cs);
   SceneChanged();
   SceneCountFrames();
   if(zoom_flag) 
@@ -367,17 +403,16 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *I,char *fname,int fram
 
   f=fopen(fname,"rb");
   if(!f)
-	 ok=ErrMessage("ObjectMoleculeLoadTOPFile","Unable to open file!");
+	 ok=ErrMessage("ObjectMoleculeLoadRSTFile","Unable to open file!");
   else
 	 {
-      cs=CoordSetCopy(I->CSet[0]);
-      if(!cs) {
+      if(!I->CSTmpl) {
         PRINTFB(FB_Errors,FB_ObjectMolecule)
           " ObjMolLoadTRJFile: Missing topology"
           ENDFB;
         return(I);
       }
-      cs->IsPlaceHolder=false;
+      cs=CoordSetCopy(I->CSTmpl);
       PRINTFB(FB_ObjectMolecule,FB_Blather) 
         " ObjMolLoadTRJFile: Loading from '%s'.\n",fname
         ENDFB;
@@ -428,13 +463,8 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *I,char *fname,int fram
                 if(cs->fInvalidateRep)
                   cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
                 if(frame<0) frame=I->NCSet;
-                if(frame) {
-                  if(I->CSet[frame-1])
-                    if(I->CSet[frame-1]->IsPlaceHolder) {
-                      /* replace PlaceHolder Coordinate Sets */
-                      frame--;
-                      zoom_flag=true;
-                    }
+                if(!I->NCSet) {
+                  zoom_flag=true;
                 }
                 
                 VLACheck(I->CSet,CoordSet*,frame);
@@ -460,8 +490,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *I,char *fname,int fram
 		mfree(buffer);
 	 }
   if(cs)
-    if(!cs->IsPlaceHolder) 
-      cs->fFree(cs);
+    cs->fFree(cs);
   
   SceneChanged();
   SceneCountFrames();
@@ -794,6 +823,9 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
       bd=bond+bi;
       bd->index[0]=(abs(i2)/3);
       bd->index[1]=(abs(i1)/3);
+      bd->order=1;
+      bd->stereo=0;
+      bd->id = bi+1;
       bi++;
     }
     if((++b)==12) {
@@ -824,6 +856,9 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
       bd=bond+bi;
       bd->index[0]=(abs(i2)/3);
       bd->index[1]=(abs(i1)/3);
+      bd->order=0;
+      bd->stereo=0;
+      bd->id = bi+1;
       bi++;
     }
     if((++b)==12) {
@@ -1013,6 +1048,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     *(f++)=0.0;
     *(f++)=0.0;
     ai = atInfo + a;
+    ai->id = a+1; /* assign 1-based identifiers */
     AtomInfoAssignParameters(ai);
     ai->color=AtomInfoGetColor(ai);
     for(c=0;c<cRepCnt;c++) {
@@ -1065,7 +1101,6 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int fram
   if(ok) {
     cset->Obj = I;
     cset->fEnumIndices(cset);
-    cset->IsPlaceHolder=true;
     if(cset->fInvalidateRep)
       cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
     if(isNew) {		
@@ -1074,16 +1109,25 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int fram
       ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_AllMask); /* NOTE: will release atInfo */
     }
     if(isNew) I->NAtom=nAtom;
-    if(frame<0) frame=I->NCSet;
-    VLACheck(I->CSet,CoordSet*,frame);
-    if(I->NCSet<=frame) I->NCSet=frame+1;
-    if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
-    I->CSet[frame] = cset;
+    /* 
+       if(frame<0) frame=I->NCSet;
+       VLACheck(I->CSet,CoordSet*,frame);
+       if(I->NCSet<=frame) I->NCSet=frame+1;
+       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+       I->CSet[frame] = cset;
+    */
+
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry);
     }
+
+    if(I->CSTmpl)
+      if(I->CSTmpl->fFree)
+        I->CSTmpl->fFree(I->CSTmpl);
+    I->CSTmpl = cset; /* save template coordinate set */
+
     SceneCountFrames();
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeSort(I);
@@ -3321,7 +3365,9 @@ void ObjectMoleculePurge(ObjectMolecule *I)
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) 
       CoordSetPurge(I->CSet[a]);
-
+  if(I->CSTmpl) {
+    CoordSetPurge(I->CSTmpl);
+  }
   PRINTFD(FB_ObjectMolecule)
     " ObjMolPurge-Debug: step 3, old-to-new mapping\n"
     ENDFD;
@@ -4702,10 +4748,17 @@ void ObjectMoleculeBlindSymMovie(ObjectMolecule *I)
 void ObjectMoleculeExtendIndices(ObjectMolecule *I)
 {
   int a;
-  for(a=0;a<I->NCSet;a++)
-	 if(I->CSet[a])
-      if(I->CSet[a]->fExtendIndices)
-        I->CSet[a]->fExtendIndices(I->CSet[a],I->NAtom);
+  CoordSet *cs;
+
+  for(a=-1;a<I->NCSet;a++) {
+    if(a<0) 
+      cs=I->CSTmpl;
+    else
+      cs=I->CSet[a];
+	 if(cs)
+      if(cs->fExtendIndices)
+        cs->fExtendIndices(cs,I->NAtom);
+  }
 }
 /*========================================================================*/
 void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
@@ -4724,8 +4777,13 @@ void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
       I->Bond[a].index[1]=outdex[I->Bond[a].index[1]];
     }
     
-    for(a=0;a<I->NCSet;a++) { /* coordinate set mapping */
-      cs=I->CSet[a];
+    for(a=-1;a<I->NCSet;a++) { /* coordinate set mapping */
+      if(a<0) {
+        cs=I->CSTmpl;
+      } else {
+        cs=I->CSet[a];
+      }
+      
       if(cs) {
         for(b=0;b<cs->NIndex;b++)
           cs->IdxToAtm[b]=outdex[cs->IdxToAtm[b]];
@@ -5308,14 +5366,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
         ObjectMoleculeMerge(I,atInfo,cset,true,cAIC_PDBMask); /* NOTE: will release atInfo */
       }
       if(isNew) I->NAtom=nAtom;
-      if(frame<0) {
-        frame=I->NCSet;
-        if(frame) {
-          if(I->CSet[frame-1])
-            if(I->CSet[frame-1]->IsPlaceHolder) /* replace PlaceHolder Coordinate Sets */
-              frame--;
-            }
-      }
+      if(frame<0) frame=I->NCSet;
       VLACheck(I->CSet,CoordSet*,frame);
       if(I->NCSet<=frame) I->NCSet=frame+1;
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
@@ -6790,6 +6841,7 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->DiscreteFlag=discreteFlag;
   I->UnitCellCGO=NULL;
   I->Sculpt=NULL;
+  I->CSTmpl=NULL;
   if(I->DiscreteFlag) { /* discrete objects don't share atoms between states */
     I->DiscreteAtmToIdx = VLAMalloc(10,sizeof(int),6,false);
     I->DiscreteCSet = VLAMalloc(10,sizeof(CoordSet*),5,false);
@@ -6835,6 +6887,10 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
     I->CSet[a]=CoordSetCopy(obj->CSet[a]);
     I->CSet[a]->Obj=I;
   }
+  if(obj->CSTmpl)
+    I->CSTmpl = CoordSetCopy(obj->CSTmpl);
+  else
+    I->CSTmpl=NULL;
   I->Bond=VLAlloc(BondType,I->NBond);
   i0=I->Bond;
   i1=obj->Bond;
@@ -6881,6 +6937,9 @@ void ObjectMoleculeFree(ObjectMolecule *I)
     FreeP(I->UndoCoord[a]);
   if(I->Sculpt)
     SculptFree(I->Sculpt);
+  if(I->CSTmpl)
+    if(I->CSTmpl->fFree)
+      I->CSTmpl->fFree(I->CSTmpl);
   ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
@@ -7374,7 +7433,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
             oCnt++;
             sprintf(oName,"%s-%02d",sepPrefix,oCnt);
             ObjectSetName((CObject*)I,oName);
-            ExecutiveManageObject((CObject*)I);
+            ExecutiveManageObject((CObject*)I,true);
           } else {
             I=ObjectMoleculeReadMMDStr(obj,p,frame,discrete);
             obj=I;

@@ -2113,7 +2113,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     ObjectMoleculeSort(targ);
   if(isNew) {
     ObjectSetName((CObject*)targ,name);
-    ExecutiveManageObject((CObject*)targ);
+    ExecutiveManageObject((CObject*)targ,true);
   } else {
     ExecutiveUpdateObjectSelection((CObject*)targ);
   }
@@ -2127,12 +2127,14 @@ int SelectorIndexByName(char *sname)
  OrthoLineType name;
  SelectorType *I=&Selector;
  int i=-1;
- if(sname[0]=='%')
-	strcpy(name,&sname[1]);
- else
-	strcpy(name,sname);		  
- i = WordIndex(I->Name,name,1,I->IgnoreCase);
- if(i>=0) i = I->ID[i];
+ if(sname) {
+   if(sname[0]=='%')
+     strcpy(name,&sname[1]);
+   else
+     strcpy(name,sname);		  
+   i = WordIndex(I->Name,name,1,I->IgnoreCase);
+   if(i>=0) i = I->ID[i];
+ }
  return(i);
 }
 /*========================================================================*/

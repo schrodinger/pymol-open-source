@@ -628,7 +628,6 @@ CoordSet *CoordSetNew(void)
   I->TmpBond = NULL;
   I->TmpLinkBond = NULL;
   I->NTmpLinkBond = 0;
-  I->IsPlaceHolder = false;
   /*  I->Rep=VLAlloc(Rep*,cRepCnt);*/
   I->NRep=cRepCnt;
   I->Symmetry = NULL;
