@@ -41,7 +41,8 @@ in the pymol directory.
    cd $HOME/pymol
    ln -s <relative-path-to-ext> ext
 
-STEP (3) After you have set up the external dependencies, copy
+STEP(3) IF THIS IS A BINARY RELEASE, SKIP TO STEP (5).  Otherwise,
+after you have set up the external dependencies, copy
 Rules.<platform> to Rules.make and choose options appropriate for your
 configuration (here is where experience counts).  Unless you're
 planning on doing heavy PyMOL development under Linux, you should
