@@ -91,12 +91,10 @@ def exec_deferred():
 def adapt_to_hardware():
    (vendor,renderer,version) = cmd.get_renderer()
    if vendor[0:6]=='NVIDIA':
-      if renderer[0:8]=='GeForce2':
-         print " Optimizing for GeForce2 hardware..."
+      if renderer[0:7]=='GeForce':
+         print " Optimizing for GeForce hardware..."
          cmd.set('line_width','2',quiet=1)
-      elif renderer[0:8]=='GeForce3':
-         print " Optimizing for GeForce3 hardware..."
-         cmd.set('line_width','2',quiet=1)
+# NEED SOME CONTRIBUTIONS HERE!
 
 def launch_gui():
    if invocation.options.external_gui:
