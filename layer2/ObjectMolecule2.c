@@ -771,19 +771,22 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                       flag=false; /* don't connect non-NULL, alt conformations in 
                                                      different residues */
                                   if(ai1->alt[0]||ai2->alt[0]) 
-                                  if(water_flag) /* hack to clean up water bonds */
-                                    if(!AtomInfoSameResidue(ai1,ai2))
-                                      flag=false;
-                                      
+                                    if(water_flag) /* hack to clean up water bonds */
+                                      if(!AtomInfoSameResidue(ai1,ai2))
+                                        flag=false;
+                                  
+                                  if(ai1->bonded&&ai2->bonded) /* don't connect two atoms
+                                                                  which have bonds predefined 
+                                                                  for them */
+                                    flag = false;
+
                                   if(flag) {
-                                    ai1->bonded=true;
-                                    ai2->bonded=true;
                                     VLACheck((*bond),BondType,nBond);
                                     (*bond)[nBond].index[0] = a1;
                                     (*bond)[nBond].index[1] = a2;
                                     (*bond)[nBond].stereo = 0;
                                     order = 1;
-                                    if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard PDB residue */
+                                    if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard disconnected PDB residue */
                                       if(AtomInfoSameResidue(ai1,ai2)) {
                                         /* nasty high-speed hack to get bond valences and formal charges 
                                            for standard residues */

@@ -8312,7 +8312,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 if(sscanf(cc,"%d",&b2)==1) {
                   p = nskip(p,1);
                   p = ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&order)==1) {                  
+                  if(sscanf(cc,"%d",&order)==1) {      
                     if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
                       VLACheck(bond,BondType,nBond);
                       if(b1<=b2) {
@@ -8693,6 +8693,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if((idx[ii1->index[0]]>=0)&&(idx[ii1->index[1]]>=0)) { /* in case PDB file has bad bonds */
             ii2->index[0]=idx[ii1->index[0]];
             ii2->index[1]=idx[ii1->index[1]];
+            ii2->order=ii1->order;
             if((ii2->index[0]>=0)&&(ii2->index[1]>=0)) {
 
               if(!have_bond_order) { /* handle PDB bond order kludge */
@@ -8700,6 +8701,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 else if(ii1->order<=4) ii2->order=2;
                 else ii2->order=3;
               }
+
+              atInfo[ii2->index[0]].bonded=true;
+              atInfo[ii2->index[1]].bonded=true;
               nReal++;
               ii2++;
             }
