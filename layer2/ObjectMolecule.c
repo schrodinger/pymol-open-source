@@ -64,7 +64,6 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
 void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *cset);
 CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 
-void ObjectMoleculeFree(ObjectMolecule *I);
 void ObjectMoleculeUpdate(ObjectMolecule *I);
 int ObjectMoleculeGetNFrames(ObjectMolecule *I);
 
@@ -6325,7 +6324,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      }
      FreeP(vt);
      break;
-	case OMOP_SetGeometry: /* save undo */
+	case OMOP_SetGeometry: 
      for(a=0;a<I->NAtom;a++)
        {
          s=I->AtomInfo[a].selEntry;
@@ -6335,6 +6334,17 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              ai->geom=op->i1;
              ai->valence=op->i2;
              op->i3++;
+             hit_flag=true;
+             break;
+           }
+       }
+     break;
+	case OMOP_OnOff:
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
              hit_flag=true;
              break;
            }
@@ -7217,6 +7227,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      case OMOP_SaveUndo:
        op->i2=true;
        ObjectMoleculeSaveUndo(I,op->i1,false);
+       break;
+     case OMOP_OnOff:
+       ExecutiveSetObjVisib(I->Obj.Name,op->i1);
        break;
 	  }
 	}

@@ -326,11 +326,19 @@ SEE ALSO
 
    show, hide, disable
       '''
-      try:
-         lock()   
-         r = _cmd.onoff(str(name),1);
-      finally:
-         unlock()
+      if name[0]=='(':
+         selection = selector.process(str(name))
+         try:
+            lock()
+            r = _cmd.onoff_by_sele(selection,1)
+         finally:
+            unlock()
+      else:
+         try:
+            lock()   
+            r = _cmd.onoff(str(name),1);
+         finally:
+            unlock()
       return r
 
    def disable(name='all'):
@@ -359,11 +367,19 @@ SEE ALSO
 
    show, hide, enable   
       '''
-      try:
-         lock()   
-         r = _cmd.onoff(str(name),0);
-      finally:
-         unlock()
+      if name[0]=='(':
+         selection = selector.process(str(name))
+         try:
+            lock()
+            r = _cmd.onoff_by_sele(selection,0)
+         finally:
+            unlock()
+      else:
+         try:
+            lock()   
+            r = _cmd.onoff(str(name),0);
+         finally:
+            unlock()
       return r
 
    def toggle(representation="",selection=""):

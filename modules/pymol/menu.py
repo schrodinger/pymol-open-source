@@ -16,6 +16,7 @@
 # This section contains the menu contents and the associated commands
 #
 
+import cmd
 
 def mol_show(s):
    return [[ 2, 'Show:'      , ''                               ],
@@ -388,15 +389,6 @@ def mol_view(s):
 def all_option(s):
    return [
       [ 2, '(all)'      , '' ],
-      [ 1, 'show'      , mol_color(s) ],
-      [ 1, 'hide'      , mol_color(s) ],
-      [ 1, 'color'      , mol_color(s) ],
-      [ 1, 'action'      , all_action(s) ],
-      ]
-
-def all_option(s):
-   return [
-      [ 2, '(all)'      , '' ],
       [ 1, 'show'      , mol_show(s) ],
       [ 1, 'hide'      , mol_hide(s) ],
       [ 1, 'color'      , mol_color(s) ],
@@ -409,27 +401,42 @@ def all_option(s):
       [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
       [ 0, ''             , ''                      ],
       [ 1, 'label'      , mol_labels(s) ],
+      [ 0, '', '' ],
+      [ 1, 'enable'         ,'cmd.enable("'+s+'")'            ],
+      [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ],
       ]
 
+def enable_disable(enable):
+   if enable:
+      result = [[ 2, 'Enable', '' ]]
+      cmmd = 'cmd.enable("'
+   else:
+      result = [[ 2, 'Disable', '']]
+      cmmd = 'cmd.disable("'
+   return result + map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+cmd.get_names('objects'))
+   
 def main_menu(s):
    return [
-      [ 2, 'Main Pop-Up'  , 'cmd.show("lines"     ,"'+s+'")' ],
+      [ 2, 'Main Pop-Up'  , '' ],
       [ 1, 'zoom (vis)'           ,'cmd.zoom("visible")'            ],
       [ 1, 'center (vis)'           ,'cmd.center("visible")'            ],      
       [ 1, 'orient (vis)'           ,'cmd.orient("visible")'            ],
       [ 1, 'reset'           ,'cmd.reset()'            ],
       [ 0, ''             , ''                      ],           
       [ 1, '(all)'      , all_option("all") ],
-      [ 1, '(visible)'      , all_option("visible") ],      
+      [ 1, '(visible)'      , all_option("visible") ],
+      [ 1, 'enable', enable_disable(1) ],
+      [ 1, 'disable', enable_disable(0) ],   
       [ 0, ''             , ''                      ],
       [ 1, 'ray'           ,'cmd.ray()' ],
       [ 0, ''             , ''                      ],
       [ 1, 'delete all'           ,'cmd.delete("all")' ],
       [ 1, 'reinitialize'           ,'cmd.reinitialize()' ],
+      [ 1, 'quit'           ,'cmd.quit()' ],
       ]
 
-def pick_option(title,s):
-   return [
+def pick_option(title,s,object=0):
+   result = [
       [ 2, title, '' ],
       [ 1, 'color'      , mol_color(s) ],
       [ 1, 'show'      , mol_show(s) ],
@@ -444,6 +451,12 @@ def pick_option(title,s):
       [ 0, ''             , ''                      ],
       [ 1, 'labels'      , mol_labels(s) ],      
       ]
+   if object:
+      result.extend([
+         [ 0, ''             , ''                      ],         
+         [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ]
+         ])
+   return result
 
 def pick_menu(s):
    if s[-1]=='`':
@@ -455,7 +468,7 @@ def pick_menu(s):
            [ 1, 'residue' , pick_option("Residue","(byres ("+s+"))") ],
            [ 1, 'chain'   , pick_option("Chain","(bychain ("+s+"))") ],
            [ 1, 'segment' , pick_option("Segment","(byseg ("+s+"))") ],
-           [ 1, 'object'  , pick_option("Object","(byobject ("+s+"))") ],
+           [ 1, 'object'  , pick_option("Object","(byobject ("+s+"))",1) ],
            [ 0, ''             , ''                      ],
            [ 1, 'molecule', pick_option("Molecule","(bymol ("+s+"))") ],
            [ 0, ''             , ''                      ],
