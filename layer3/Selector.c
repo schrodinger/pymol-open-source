@@ -4282,6 +4282,8 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   int cLen =0;
   int newline;
   int use_ter = (int)SettingGet(cSetting_pdb_use_ter_records);
+  int retain_ids = (int)SettingGet(cSetting_pdb_retain_ids);
+
   CoordSet *cs;
   ObjectMolecule *obj;
   AtomInfoType *atInfo,*ai,*last = NULL;
@@ -4367,7 +4369,11 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
                       c++;
                     }
                   }
-            I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
+            if(retain_ids) {
+              I->Table[a].index = ai->id;
+            } else {
+              I->Table[a].index = c+1; /* NOTE marking with "1" based indexes here */
+            }
             CoordSetAtomToPDBStrVLA(charVLA,&cLen,ai,
                                     obj->CSet[state]->Coord+(3*idx),c);
             last = ai;
@@ -4443,8 +4449,10 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
         newline=false;
         if(a>0)
           if(((ii1-1)->index[0]==ii1->index[0])&&((ii1-1)->index[1]==ii1->index[1])) newline=true;        
-      } else cLen+=sprintf((*charVLA)+cLen,"%5d",
-                           ii1->index[1]);
+      } else {
+        cLen+=sprintf((*charVLA)+cLen,"%5d",
+                      ii1->index[1]);
+      }
       b2=ii1->index[1];
       ii1++;
     }

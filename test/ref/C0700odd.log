@@ -1,16 +1,39 @@
 PyMOL>load dat/odd01.pdb
  Executive: object "odd01" created.
 PyMOL>iterate all, print name
+CZ
+NH1
+NH2
+HE
+HH11
+HH12
+HH21
+HH22
 OA22
 OA23
 ABCD
 LMN
 XYZ
- Iterate: iterated over 5 atoms.
+ Iterate: iterated over 13 atoms.
 PyMOL>save cmp/C0700odd.1.pdb
  Save: wrote "cmp/C0700odd.1.pdb".
 PyMOL>set retain_order
  Setting: retain_order set to 1.
+PyMOL>iterate all, print name
+HE
+CZ
+NH1
+HH11
+HH12
+NH2
+HH21
+HH22
+OA22
+OA23
+ABCD
+XYZ
+LMN
+ Iterate: iterated over 13 atoms.
 PyMOL>save cmp/C0700odd.2.pdb
  Save: wrote "cmp/C0700odd.2.pdb".
 PyMOL>set pdb_no_end_record
@@ -21,43 +44,138 @@ PyMOL>set pdb_retain_ids
  Setting: pdb_retain_ids set to on.
 PyMOL>save cmp/C0700odd.4.pdb
  Save: wrote "cmp/C0700odd.4.pdb".
-PyMOL>iterate all,print name
-OA22
-OA23
-ABCD
-XYZ
-LMN
- Iterate: iterated over 5 atoms.
 PyMOL>reinit
-PyMOL>set pdb_literal_names
- Setting: pdb_literal_names set to on.
 PyMOL>set retain_order
  Setting: retain_order set to 1.
 PyMOL>load dat/odd01.pdb
  Executive: object "odd01" created.
 PyMOL>iterate all,print name
+HE
+CZ
+NH1
+HH11
+HH12
+NH2
+HH21
+HH22
 OA22
 OA23
 ABCD
 XYZ
 LMN
- Iterate: iterated over 5 atoms.
+ Iterate: iterated over 13 atoms.
+PyMOL>set pdb_reformat_names_mode, 1
+ Setting: pdb_reformat_names_mode set to 1.
 PyMOL>save cmp/C0700odd.5.pdb
  Save: wrote "cmp/C0700odd.5.pdb".
 PyMOL>dele all
-PyMOL>load cmp/C0700odd.5.pdb
- Executive: object "C0700odd.5" created.
+PyMOL>load cmp/C0700odd.3.pdb
+ Executive: object "C0700odd.3" created.
 PyMOL>save cmp/C0700odd.6.pdb
  Save: wrote "cmp/C0700odd.6.pdb".
+PyMOL>iterate all,print name
+HE
+CZ
+NH1
+1HH1
+2HH1
+NH2
+1HH2
+2HH2
+2OA2
+3OA2
+ABCD
+XYZ
+LMN
+ Iterate: iterated over 13 atoms.
 PyMOL>reinit
+PyMOL>set pdb_reformat_names_mode, 1
+ Setting: pdb_reformat_names_mode set to 1.
 PyMOL>load cmp/C0700odd.5.pdb
  Executive: object "C0700odd.5" created.
 PyMOL>iterate all,print name
+CZ
+NH1
+NH2
+HE
+1HH1
+2HH1
+1HH2
+2HH2
 2OA2
 3OA2
 ABCD
 LMN
 XYZ
- Iterate: iterated over 5 atoms.
+ Iterate: iterated over 13 atoms.
 PyMOL>save cmp/C0700odd.7.pdb
  Save: wrote "cmp/C0700odd.7.pdb".
+PyMOL>set pdb_reformat_names_mode,2
+ Setting: pdb_reformat_names_mode set to 2.
+PyMOL>save cmp/C0700odd.8.pdb
+ Save: wrote "cmp/C0700odd.8.pdb".
+PyMOL>dele all
+PyMOL>load cmp/C0700odd.5.pdb
+ Executive: object "C0700odd.5" created.
+PyMOL>iterate all,print name
+CZ
+NH1
+NH2
+HE
+HH11
+HH12
+HH21
+HH22
+OA22
+OA23
+ABCD
+LMN
+XYZ
+ Iterate: iterated over 13 atoms.
+PyMOL>set pdb_reformat_names,mode,0
+PyMOL>save cmp/C0700odd.9.pdb
+ Save: wrote "cmp/C0700odd.9.pdb".
+PyMOL>set pdb_reformat_names_mode,1
+ Setting: pdb_reformat_names_mode set to 1.
+PyMOL>save cmp/C0700odd.A.pdb
+ Save: wrote "cmp/C0700odd.A.pdb".
+PyMOL>set pdb_literal_names, 1
+ Setting: pdb_literal_names set to on.
+PyMOL>save cmp/C0700odd.B.pdb
+ Save: wrote "cmp/C0700odd.B.pdb".
+PyMOL>dele all
+PyMOL>load cmp/C0700odd.3.pdb
+ Executive: object "C0700odd.3" created.
+PyMOL>iterate all,print name
+CZ
+NH1
+NH2
+HE
+HH11
+HH12
+HH21
+HH22
+OA22
+OA23
+ABCD
+LMN
+XYZ
+ Iterate: iterated over 13 atoms.
+PyMOL>dele all
+PyMOL>load cmp/C0700odd.5.pdb
+ Executive: object "C0700odd.5" created.
+PyMOL>iterate all,print name
+CZ
+NH1
+NH2
+HE
+1HH1
+2HH1
+1HH2
+2HH2
+2OA2
+3OA2
+ABCD
+LMN
+XYZ
+ Iterate: iterated over 13 atoms.

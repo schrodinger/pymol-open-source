@@ -2178,6 +2178,12 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_auto_dss,1);
   SettingSet_i(I,cSetting_transparency_picking_mode,2); /* auto */
   SettingSet_b(I,cSetting_virtual_trackball,1);
+  SettingSet_i(I,cSetting_transparency_picking_mode,2); /* auto */
+  SettingSet_i(I,cSetting_pdb_reformat_names_mode,0); /*
+                                                        0 = no reformatting, 
+                                                        1 = pdb compliant,
+                                                        2 = amber compliant 
+                                                      */
 
 }
 

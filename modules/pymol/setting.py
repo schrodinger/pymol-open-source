@@ -363,6 +363,7 @@ if __name__=='pymol.setting':
       auto_dss              = 323
       transparency_picking_mode = 324
       virtual_trackball     = 325
+      pdb_reformat_names_mode = 326
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

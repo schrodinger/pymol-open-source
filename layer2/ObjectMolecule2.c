@@ -150,7 +150,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int symFlag;
   int auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
   int auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
-  int literal_names = (int)SettingGet(cSetting_pdb_literal_names);
+  int reformat_names = (int)SettingGet(cSetting_pdb_reformat_names_mode);
   int newModelFlag = false;
   int ssFlag = false;
   int ss_resv1=0,ss_resv2=0;
@@ -171,6 +171,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int ignore_conect = false;
   int have_bond_order = false;
   int seen_model;
+
+  if((int)SettingGet(cSetting_pdb_literal_names)) 
+    reformat_names = 0;
 
   ignore_pdb_segi = (int)SettingGet(cSetting_ignore_pdb_segi);
 
@@ -861,7 +864,22 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(!sscanf(cc,"%s",ai->name)) 
             ai->name[0]=0;
           else {
-            if(literal_names) { /* convert over to literal style? HZ2, HD22 instead of 2HZ, 2HD2 */
+            switch(reformat_names) {
+            case 1: /* pdb compliant: HH12 becomes 2HH1 */
+              if(strlen(ai->name)>3) {
+                if((ai->name[0]>='A')&&((ai->name[0]<='Z'))&&
+                   (ai->name[3]>='0')&&(ai->name[3]<='9')) {
+                  if(!((ai->name[1]>='a')&&(ai->name[1]<='z'))) {
+                    ctmp = ai->name[3];
+                    ai->name[3]= ai->name[2];
+                    ai->name[2]= ai->name[1];
+                    ai->name[1]= ai->name[0];
+                    ai->name[0]= ctmp;
+                  }
+                }
+              }
+              break;
+            case 2: /* amber compliant: 2HH1 becomes HH12 */
               if(ai->name[0]) {
                 if((ai->name[0]>='0')&&(ai->name[0]<='9')&&
                    (!((ai->name[1]>='0')&&(ai->name[1]<='9')))&&
@@ -888,6 +906,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                     ai->name[3]= ctmp;
                     break;
                   }
+                  break;
+                default: /* AS IS */
+                  break;
                 }
               }
             }
