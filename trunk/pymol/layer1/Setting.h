@@ -515,10 +515,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_slice_height_scale         369 
 #define cSetting_slice_height_map           370
 #define cSetting_slice_grid                 371
+#define cSetting_slice_dynamic_grid         372
+#define cSetting_slice_dynamic_grid_resolution 373
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       372
+#define cSetting_INIT                       374
 
 #endif
 

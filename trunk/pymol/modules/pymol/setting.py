@@ -409,6 +409,8 @@ if __name__=='pymol.setting':
       slice_height_scale   = 369
       slice_height_map     = 370
       slice_grid           = 371
+      slice_dynamic_grid   = 372
+      slice_dynamic_grid_resolution = 373
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -283,6 +283,7 @@ int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *mod
     PConvStringToPyDictItem(dict,"label",at->label);
     PConvIntToPyDictItem(dict,"color",at->color);
     PConvIntToPyDictItem(dict,"ID",at->id);
+    PConvIntToPyDictItem(dict,"rank",at->rank);
   }
   x_id1 = PConvFloatToPyDictItem(dict,"x",v[0]);
   y_id1 = PConvFloatToPyDictItem(dict,"y",v[1]);
@@ -370,6 +371,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   LabelType label;
   int id;
   PyObject *ID_id1,*ID_id2=NULL;
+  int rank;
+  PyObject *rank_id1,*rank_id2=NULL;
   PyObject *state_id1,*state_id2=NULL;
   int state;
   PyObject *dict;
@@ -415,7 +418,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   color_id1 = PConvIntToPyDictItem(dict,"color",at->color);
   ID_id1 = PConvIntToPyDictItem(dict,"ID",at->id);
   state_id1 = PConvIntToPyDictItem(dict,"state",at->discrete_state);
-
+  rank_id1 = PConvIntToPyDictItem(dict,"rank",at->rank);
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
     ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
@@ -478,6 +481,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
       if(!(ID_id2 = PyDict_GetItemString(dict,"ID")))
         result=false;
       if(!(state_id2 = PyDict_GetItemString(dict,"state")))
+        result=false;
+      if(!(rank_id2 = PyDict_GetItemString(dict,"rank")))
         result=false;
 
       if(PyErr_Occurred()) {
@@ -648,6 +653,12 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
         else
           at->id=id;
       }
+      if(rank_id1!=rank_id2) {
+        if(!PConvPyObjectToInt(rank_id2,&rank))
+          result=false;
+        else
+          at->rank=rank;
+      }
 
       if(PyErr_Occurred()) {
         PyErr_Print();
@@ -694,6 +705,7 @@ int PLabelAtom(AtomInfoType *at,char *expr,int index)
   PConvStringToPyDictItem(dict,"elem",at->elem);
   PConvIntToPyDictItem(dict,"geom",at->geom);
   PConvIntToPyDictItem(dict,"valence",at->valence);
+  PConvIntToPyDictItem(dict,"rank",at->rank);
   if(at->flags) {
     sprintf(buffer,"%X",at->flags);
     PConvStringToPyDictItem(dict,"flags",buffer);
@@ -710,7 +722,7 @@ int PLabelAtom(AtomInfoType *at,char *expr,int index)
   PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
   PConvIntToPyDictItem(dict,"color",at->color);
   PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
-  PConvIntToPyDictItem(dict,"id",at->id);
+  PConvIntToPyDictItem(dict,"ID",at->id);
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
     PyErr_Print();

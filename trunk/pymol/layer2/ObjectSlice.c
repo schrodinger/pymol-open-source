@@ -277,6 +277,15 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
   float grid = SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_grid);  
   int min_expand = 1;
 
+  if(SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_dynamic_grid)) {
+    float resol =  SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_dynamic_grid_resolution);
+    float scale = SceneGetScreenVertexScale(oss->origin);
+
+    oss->last_scale = scale;
+    grid = resol * scale;
+    
+  }
+
   if(grid<0.01F)
     grid=0.01F;
   
@@ -832,12 +841,13 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
 
   int cur_state = 0;
   float alpha;
-  
+  int track_camera = SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_track_camera);
+  int dynamic_grid = SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_dynamic_grid);
   ObjectSliceState *oss = NULL;
 
-  if(SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_track_camera)) {
+  if(track_camera||dynamic_grid) {
     int update_flag = false;
-
+    
     if(state>=0) 
       if(state<I->NState) 
         if(I->State[state].Active)
@@ -848,26 +858,36 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
         oss = I->State + cur_state;
       } else {
         if(oss) {
+          
+           SceneViewType view;
+           float pos[3];
 
-          SceneViewType view;
-          float pos[3];
-          
-          SceneGetPos(pos);
-          SceneGetView(view);
-          
-          if((diffsq3f(pos,oss->origin)>R_SMALL8) ||
-             (diffsq3f(view,oss->system)>R_SMALL8) ||
-             (diffsq3f(view+4,oss->system+3)>R_SMALL8) ||
-             (diffsq3f(view+8,oss->system+6)>R_SMALL8))
-            {
-              copy3f(pos,oss->origin);
-              
-              copy3f(view,oss->system);
-              copy3f(view+4,oss->system+3);
-              copy3f(view+8,oss->system+6);
-              oss->RefreshFlag=true;
-              update_flag=true;
-            }
+           SceneGetPos(pos);
+           SceneGetView(view);
+           
+           if(track_camera) {
+             if((diffsq3f(pos,oss->origin)>R_SMALL8) ||
+                (diffsq3f(view,oss->system)>R_SMALL8) ||
+                (diffsq3f(view+4,oss->system+3)>R_SMALL8) ||
+                (diffsq3f(view+8,oss->system+6)>R_SMALL8))
+               {
+                 copy3f(pos,oss->origin);
+                 
+                 copy3f(view,oss->system);
+                 copy3f(view+4,oss->system+3);
+                 copy3f(view+8,oss->system+6);
+                 oss->RefreshFlag=true;
+                 update_flag=true;
+               }
+           }
+           if(dynamic_grid&&(!update_flag)) {
+             float scale = SceneGetScreenVertexScale(oss->origin);
+             
+             if(fabs(scale-oss->last_scale)>R_SMALL4) {
+               update_flag = true;
+               oss->RefreshFlag=true;
+             }
+           }
         }
         if(state>=0) break;
         cur_state = cur_state + 1;
@@ -1201,6 +1221,7 @@ void ObjectSliceStateInit(ObjectSliceState *oss)
 
   oss->n_points = 0;
   oss->n_strips = 0;
+  oss->last_scale = 0.0F;
 
   UtilZeroMem(&oss->system,sizeof(float)*9); /* simple orthogonal coordinate system */
   oss->system[0] = 1.0F;

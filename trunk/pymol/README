@@ -32,6 +32,7 @@ The PyMOL Team:
    Minor Authors (500+ lines of code):
 
       Scott Dixon (Metaphorics CEX support)
+      Filipe Maia (Slice Objects)
 
    Other Contributors: These are the people who have gone out of
       their way to help the project with their ideas, actions, 
@@ -73,6 +74,7 @@ The PyMOL Team:
       Bill DeGrado
       Thomas Earnest
       Nathaniel Echols
+      John Eksterowicz
       Erik Evensen
       David Fahrney
       Tim Fenn
@@ -138,10 +140,13 @@ The PyMOL Team:
       Kristian Rother
       Marc Saric
       Bill Scott
+      Keana Scott
       Denis Shcherbakov
       Goede Schueler
       Paul Sherwood
       Ward Smith
+      John Somoza
+      David van der Spoel
       Paul Sprengeler
       Matt Stephenson 
       Peter Stogios
@@ -149,6 +154,7 @@ The PyMOL Team:
       Charlie Strauss
       Michael Summers
       Brian Sutton
+      Hanna and Abraham Szoke
       Rod Tweten
       Andras Varadi
       Scott Walsh
@@ -170,8 +176,8 @@ The PyMOL Team:
 
       Brian Paul (Mesa)
       Mark Kilgard (GLUT)
-      Guido van Rossom (Python)
-      Linux Torvalds (Linux Kernel)
+      Guido van Rossum (Python)
+      Linus Torvalds (Linux Kernel)
 
       Precision Insight (DRI)
       The XFree86 Project (Free Windowing System)

@@ -51,6 +51,7 @@ void SceneSetMatrix(float *);
 float *SceneGetMatrix(void);
 
 void SceneReshape(Block *block,int width,int height);
+float SceneGetScreenVertexScale(float *v1);
 
 void SceneTest(void);
 void SceneIdle(void);

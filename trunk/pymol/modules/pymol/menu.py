@@ -461,6 +461,9 @@ def slice_action(s):
            [ 1, 'height map on' , 'cmd.set("slice_height_map",1,"'+s+'")'    ],
            [ 1, 'height map off', 'cmd.set("slice_height_map",0,"'+s+'")'    ],                    
            [ 0, ''             , ''                       ],
+           [ 1, 'dynamic grid on' , 'cmd.set("slice_dynamic_grid",1,"'+s+'")'    ],
+           [ 1, 'dynamic grid off', 'cmd.set("slice_dynamic_grid",0,"'+s+'")'    ],                    
+           [ 0, ''             , ''                       ],
            [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            ]
 
@@ -506,7 +509,30 @@ def all_action(s):
            [ 1, 'compute'        , compute(s)         ],                      
            ]
 
+def label_props(s):
+   return [[ 2, 'Other Properties:'       ,''                        ],     
+                      
+           [ 1, 'formal charge' , 
+  'cmd.label("'+s+'","\'%d\'%formal_charge")'                      ],
+           [ 0, ''               , ''                                  ],
+           [ 1, 'partial charge (0.00)' ,            
+  'cmd.label("'+s+'","\'%.2f\'%partial_charge")'                      ],
+           [ 1, 'partial charge (0.0000)' , 
+  'cmd.label("'+s+'","\'%.4f\'%partial_charge")'                      ],
+           [ 0, ''               , ''                                  ],
+           [ 1, 'bohr radius'       , 'cmd.label("'+s+'","\'%1.2f\'%bohr")'  ],                                 
+           [ 0, ''               , ''                                  ],
+           [ 1, 'text type'      , 'cmd.label("'+s+'","text_type")'    ],
+           [ 1, 'numeric type'   , 'cmd.label("'+s+'","numeric_type")' ],
+           ]
 
+def label_ids(s):
+   return [[ 2, 'Atom Identifiers:'       ,''                        ],     
+           [ 1, 'rank'           , 'cmd.label("'+s+'","rank")' ],
+           [ 1, 'ID'             , 'cmd.label("'+s+'","ID")' ],
+           [ 1, 'index'          , 'cmd.label("'+s+'","index")' ],           
+           ]
+           
 def mol_labels(s):
    return [[ 2, 'Labels:'        , ''                                  ],
            [ 1, 'clear'          , 'cmd.label("'+s+'","\'\'")'         ],
@@ -527,19 +553,9 @@ def mol_labels(s):
            [ 1, 'occupancy'       , 'cmd.label("'+s+'","\'%1.2f\'%q")'  ],
            [ 1, 'vdw radius'       , 'cmd.label("'+s+'","\'%1.2f\'%vdw")'  ],
            [ 0, ''               , ''                                  ],
-           [ 1, 'partial charge(.2f)' ,            
-  'cmd.label("'+s+'","\'%.2f\'%partial_charge")'                      ],
-           [ 1, 'partial charge(.4f)' , 
-  'cmd.label("'+s+'","\'%.4f\'%partial_charge")'                      ],
-           [ 1, 'formal charge' , 
-  'cmd.label("'+s+'","\'%d\'%formal_charge")'                      ],
-           [ 1, 'bohr radius'       , 'cmd.label("'+s+'","\'%1.2f\'%bohr")'  ],                                 
+           [ 1, 'other properties' , label_props(s) ],
            [ 0, ''               , ''                                  ],
-           [ 1, 'text type'      , 'cmd.label("'+s+'","text_type")'    ],
-           [ 1, 'numeric type'   , 'cmd.label("'+s+'","numeric_type")' ],
-           [ 0, ''               , ''                                  ],      
-           [ 1, 'atom i.d.'             , 'cmd.label("'+s+'","id")' ],
-           [ 1, 'atom i.d.(+1)'           , 'cmd.label("'+s+'","id+1")' ],
+           [ 1, 'atom identifiers' , label_ids(s) ],
            ]
 
 

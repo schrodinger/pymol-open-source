@@ -1517,6 +1517,7 @@ was at the end of the file. Maybe that's good enough.
       *(f++)=0.0;
       ai = atInfo + a;
       ai->id = a+1; /* assign 1-based identifiers */
+      ai->rank = a; 
       AtomInfoAssignParameters(ai);
       ai->color=AtomInfoGetColor(ai);
       for(c=0;c<cRepCnt;c++) {
@@ -2474,7 +2475,8 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       
       p=ncopy(cc,p,6);
       if(!sscanf(cc,"%d",&ai->id)) break;
-      
+      ai->rank = atomCount;
+
       p=nskip(p,2);/* to 12 */
       p=ncopy(cc,p,3); 
       if(!sscanf(cc,"%s",ai->name)) ai->name[0]=0;
@@ -3721,6 +3723,7 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
     for(a=0;a<cRepCnt;a++)
       ai->visRep[a]=ai0->visRep[a];
     ai->id=-1;
+    ai->rank=-1;
     AtomInfoUniquefyNames(I->AtomInfo,I->NAtom,ai,1);
     AtomInfoAssignParameters(ai);
   }
@@ -4989,7 +4992,6 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   int auto_show_nonbonded;
   int hetatm;
   int ignore_ids;
-
   PyObject *atomList = NULL;
   PyObject *bondList = NULL;
   PyObject *atom = NULL;
@@ -5060,6 +5062,7 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
             }
           }
         }
+        ai->rank = a; /* ranks are always zero-based */
 
         if(ok) {
           tmp = PyObject_GetAttrString(atom,"name");
@@ -5697,7 +5700,8 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInf
             atInfo[a].stereo=0;
         }
 		  if(ok&&atInfo) {
-          atInfo[a].id = a+1;
+          atInfo[a].id = a+1; 
+          atInfo[a].rank = a;
 			 strcpy(atInfo[a].resn,resn);
 			 atInfo[a].hetatm=true;
 			 AtomInfoAssignParameters(atInfo+a);
@@ -6040,6 +6044,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(char *buffer,AtomInfoType **atIn
           atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
 
           atInfo[a].id = a+1;
+          atInfo[a].rank = a;
           strcpy(atInfo[a].resn,resn);
           atInfo[a].hetatm=true;
           AtomInfoAssignParameters(atInfo+a);
@@ -6686,6 +6691,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              for(b=0;b<cRepCnt;b++)
                ai->visRep[b]=ai0->visRep[b];
              ai->id=-1;
+             ai->rank=-1;
              op->i2++;
            }
        }
@@ -8699,7 +8705,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   }
 
   if(!atInfo)
-    ErrFatal("PDBStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
+    ErrFatal("MMDStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
 
   nBond=0;
   if(ok) {
@@ -8717,6 +8723,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         ai=atInfo+a;
 
         ai->id=a+1;
+        ai->rank=a;
         if(ok) {
           p=ncopy(cc,p,4);
           if(sscanf(cc,"%d",&ai->customType)!=1) 

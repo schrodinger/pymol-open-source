@@ -404,6 +404,7 @@ if __name__=='pymol.cmd':
       objectcallback            =35
       objectsurface             =36
       objectgadget              =37
+      objectslice               =38
       
       repwirebond               =45
       repcylbond                =46
