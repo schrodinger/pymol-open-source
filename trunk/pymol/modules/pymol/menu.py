@@ -133,7 +133,7 @@ def sele_action(s):
            [ 1, 'Zoom'         ,'cmd.zoom("'+s+'")'       ],
            [ 1, 'Orient'       ,'cmd.orient("'+s+'")'     ],
            [ 0, ''          ,''                           ],
-           [ 1, 'Delete'       ,'cmd.delete("'+s+'")'     ],
+           [ 1, 'Delete Selection'       ,'cmd.delete("'+s+'")'     ],
            [ 0, ''          ,''                           ],
            [ 1, 'Complete Residues' ,'cmd.select("'+s+'","(byres '+s+')")'                   ],
            [ 0, ''          ,''                                              ],
@@ -143,6 +143,12 @@ def sele_action(s):
            [ 1, 'Invert'  ,'cmd.select("'+s+'","(not '+s+')")'               ],
            [ 0, ''          ,''                                              ],
            [ 1, 'Remove Atoms'  ,'cmd.remove("'+s+'")'        ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'Mask'  ,'cmd.mask("'+s+'")'        ],
+           [ 1, 'Unmask'  ,'cmd.unmask("'+s+'")'        ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'Protect'  ,'cmd.protect("'+s+'")'        ],
+           [ 1, 'Deprotect'  ,'cmd.deprotect("'+s+'")'        ],           
            ]
 
 def mol_action(s):
@@ -152,6 +158,12 @@ def mol_action(s):
            [ 1, 'Orient'       , 'cmd.orient("'+s+'")'    ],
            [ 0, ''             , ''                       ],
            [ 1, 'Delete'       , 'cmd.delete("'+s+'")'    ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'Mask'  ,'cmd.mask("'+s+'")'        ],
+           [ 1, 'Unmask'  ,'cmd.unmask("'+s+'")'        ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'Protect'  ,'cmd.protect("'+s+'")'        ],
+           [ 1, 'Deprotect'  ,'cmd.deprotect("'+s+'")'        ],           
            ]
 
 
