@@ -98,12 +98,15 @@ def parse(s):
                   if cmd.keyword.has_key(com):
 # here is the command and argument handling section
                      kw[nest] = cmd.keyword[com]
-                     if kw[nest][4]>=parsing.NO_CHECK: 
+                     if kw[nest][4]>=parsing.NO_CHECK:
 # stricter, Python-based argument parsing
+                        if kw[nest][4]>=parsing.LITERAL: # treat literally
+                           next[nest] = ()
+                           com2[nest]=com1[nest]
                         (args[nest],kw_args[nest]) = \
                            parsing.prepare_call(
                               kw[nest][0],
-                              parsing.parse_arg(com1[nest]),
+                              parsing.parse_arg(com2[nest],mode=kw[nest][4]),
                               kw[nest][4]) # will raise exception on failure
                         result=apply(kw[nest][0],args[nest],kw_args[nest])
                      else:
@@ -196,6 +199,7 @@ def parse(s):
             if len(next[nest])>1:
                nest=nest+1
                com0[nest] = next[nest-1][1]
+               next[nest-1]=()
                cont[nest]=''
                parse(com0[nest]) # RECURSION
                nest=nest-1
