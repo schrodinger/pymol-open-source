@@ -11,6 +11,7 @@ Changes up to 0.96
      there weren't any commands defined
 
    * surface_carve_cutoff, surface_carve_selection, surface_carve_state
+     surface_clear_cutoff, surface_clear_selection, surface_clear_state
      settings, to enable sub-atomic culling of surfaces...
 
    * stick_transparency opengl rendering fixed

@@ -623,7 +623,7 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
                     minDist = dif;
                     maxDot = dot;
                     i0=j; 
-                  } else if( (dif/minDist) < (dot/maxDot)) {
+                  } else if( 0.5*(dif/minDist) < (dot/maxDot)) {
                     minDist = dif;
                     maxDot = dot;
                     i0=j; 
@@ -1390,6 +1390,7 @@ static void TriangleFill(float *v,float *vn,int n)
         } else break;
       }
 
+
     PRINTFD(FB_Triangle)
       " TriangleFill-Debug: Follow actives 1 nTri=%d\n",I->nTri
       ENDFD;
@@ -1424,7 +1425,6 @@ static void TriangleFill(float *v,float *vn,int n)
             }
           }
     }
-
 
     PRINTFD(FB_Triangle)
       " TriangleFill-Debug: Follow actives 1 nTri=%d\n",I->nTri

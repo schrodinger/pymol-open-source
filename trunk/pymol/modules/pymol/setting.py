@@ -382,6 +382,9 @@ if __name__=='pymol.setting':
       surface_carve_selection = 342
       surface_carve_state   = 343
       surface_carve_cutoff  = 344
+      surface_clear_selection = 345
+      surface_clear_state   = 346
+      surface_clear_cutoff  = 347
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

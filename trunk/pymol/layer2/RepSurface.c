@@ -995,12 +995,20 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int surface_mode;
   int surface_color;
   int *present=NULL,*ap;
+
   int carve_state = 0;
   int carve_flag = false;
   float carve_cutoff;
   char *carve_selection = NULL;
   float *carve_vla = NULL;
   MapType *carve_map = NULL;
+
+  int clear_state = 0;
+  int clear_flag = false;
+  float clear_cutoff;
+  char *clear_selection = NULL;
+  float *clear_vla = NULL;
+  MapType *clear_map = NULL;
 
   AtomInfoType *ai2,*ai1;
 
@@ -1012,6 +1020,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   I->proximity = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
   carve_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
+  clear_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_clear_cutoff);
   cutoff = I->max_vdw+2*probe_radius;
 
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
@@ -1038,6 +1047,18 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       if(carve_map) 
         MapSetupExpress(carve_map);
       carve_flag = true;
+    }
+
+    if(clear_cutoff>0.0F) {
+      clear_state = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_clear_state) - 1;
+      clear_selection = SettingGet_s(cs->Setting,obj->Obj.Setting,cSetting_surface_clear_selection);
+      if(clear_selection) 
+        clear_map = SelectorGetSpacialMapFromSeleCoord(SelectorIndexByName(clear_selection),
+                                                       clear_state,
+                                                       clear_cutoff,&clear_vla);
+      if(clear_map) 
+        MapSetupExpress(clear_map);
+      clear_flag = true;
     }
 
     if(!I->VC) I->VC = Alloc(float,3*I->N);
@@ -1170,7 +1191,23 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                   }
                 }
               }
-
+            }
+            if(clear_flag && (*vi)) { /* is point visible, and are we clearing? */
+              if(clear_map) {
+                
+                minDist=MAXFLOAT;                
+                i=*(MapLocusEStart(clear_map,v0));
+                if(i) {
+                  j=clear_map->EList[i++];
+                  while(j>=0) {
+                    if(within3f(clear_vla+3*j,v0,clear_cutoff)) {
+                      *vi=0;
+                      break;
+                    }
+                    j=clear_map->EList[i++];
+                  }
+                }
+              }
             }
             if(ColorCheckRamped(surface_color)) {
               c1 = surface_color;
@@ -1215,6 +1252,9 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   if(carve_map)
     MapFree(carve_map);
   VLAFreeP(carve_vla);
+  if(clear_map)
+    MapFree(clear_map);
+  VLAFreeP(clear_vla);
   FreeP(present);
 }
 
@@ -1732,6 +1772,95 @@ Rep *RepSurfaceNew(CoordSet *cs)
         }
       }
   
+    /* now eliminate troublesome vertices in regions of extremely high curvature */
+
+    if(I->N)
+      {
+        int repeat_flag=true;
+        float neighborhood = 2*minimum_sep;
+        float *v0,dot_sum;
+        int n_nbr;
+        dot_flag=Alloc(int,I->N);
+
+        while(repeat_flag) {
+          repeat_flag=false;
+          
+          for(a=0;a<I->N;a++) dot_flag[a]=1;
+          map=MapNew(minimum_sep,I->V,I->N,extent);
+          MapSetupExpress(map);		  
+          v=I->V;
+          vn=I->VN;
+          for(a=0;a<I->N;a++) {
+            if(dot_flag[a]) {
+              i=*(MapLocusEStart(map,v));
+              if(i) {
+                n_nbr = 0;
+                dot_sum = 0.0F;
+                j=map->EList[i++];
+                while(j>=0) {
+                  if(j!=a) 
+                    {
+                      if(dot_flag[j]) {
+                        v0 = I->V+3*j;
+                        if(within3f(v0,v,neighborhood)) {
+
+                          n0 = I->VN + 3*j;
+                          dot_sum += dot_product3f(n0,vn);
+                          n_nbr++;
+                          
+                        } 
+                      }
+                    }
+                  j=map->EList[i++];
+                }
+
+                if(n_nbr) {
+                  dot_sum/=n_nbr;
+                  if(dot_sum<0.2F) {
+                    dot_flag[a]=false;
+                    repeat_flag = true;
+                  }
+                }
+              }
+            }
+            v+=3;
+            vn+=3;
+          }
+          MapFree(map);
+          
+          v0=I->V;
+          v=I->V;
+          vn0=I->VN;
+          vn=I->VN;
+          p=dot_flag;
+          c=I->N;
+          I->N=0;
+          for(a=0;a<c;a++)
+            {
+              if(*(p++)) {
+                *(v0++)=*(v++);
+                *(v0++)=*(v++);
+                *(v0++)=*(v++);
+                normalize3f(vn);
+                *(vn0++)=*(vn++);
+                *(vn0++)=*(vn++);
+                *(vn0++)=*(vn++);
+                I->N++;
+              } else {
+                v+=3;
+                vn+=3;
+              }
+            }
+        }
+        FreeP(dot_flag);
+        
+        if(I->N) {	
+          I->V = ReallocForSure(I->V,float,(v0-I->V));
+          I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
+        }
+      }
+  
+
 
     PRINTFD(FB_RepSurface)
       " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
