@@ -608,7 +608,7 @@ def all_option(s):
       [ 1, 'enable'         ,'cmd.enable("'+s+'")'            ],
       [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ],
       ]
-
+   
 def enable_disable(enable):
    if enable:
       result = [[ 2, 'Enable', '' ]]

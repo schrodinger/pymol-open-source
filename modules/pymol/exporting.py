@@ -94,7 +94,7 @@ PYMOL API
       if thread.get_ident() ==pymol.glutThread:
          r = cmd._png(str(filename),int(quiet))
       else:
-         r = _cmd.do("cmd._png('"+str(filename)+"')",0)
+         r = cmd._do("cmd._png('"+str(filename)+"')")
       return r
 
    def export_coords(obj,state): # experimental

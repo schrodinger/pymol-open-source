@@ -3134,20 +3134,24 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
   char *str1;
   int log;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&log);
+  int echo;
+  ok = PyArg_ParseTuple(args,"sii",&str1,&log,&echo);
   if (ok) {
     APIEntry();
     if(str1[0]!='_') { /* suppress internal call-backs */
       if(strncmp(str1,"cmd._",5)&&(strncmp(str1,"_cmd.",5))) {
-        OrthoAddOutput(TempPyMOLGlobals,"PyMOL>");
-        OrthoAddOutput(TempPyMOLGlobals,str1);
-        OrthoNewLine(TempPyMOLGlobals,NULL,true);
+        if(echo) {
+          OrthoAddOutput(TempPyMOLGlobals,"PyMOL>");
+          OrthoAddOutput(TempPyMOLGlobals,str1);
+          OrthoNewLine(TempPyMOLGlobals,NULL,true);
+        }
         if(log) 
           if(WordMatch(TempPyMOLGlobals,str1,"quit",true)==0) /* don't log quit */
             PLog(str1,cPLog_pml);
       }
       PParse(str1);
-    } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
+    } else if(str1[1]==' ') { 
+      /* "_ command" suppresses echoing of command, but it is still logged */
       if(log)
         if(WordMatch(TempPyMOLGlobals,str1+2,"quit",true)==0) /* don't log quit */
           PLog(str1+2,cPLog_pml);

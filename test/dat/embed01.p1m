@@ -110,7 +110,7 @@ END
 embed end
 
 load_embedded peptide
-
+count_atoms
 hide everything, peptide
 
 show sticks, peptide

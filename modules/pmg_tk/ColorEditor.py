@@ -87,6 +87,7 @@ class ColorEditor:
       self.list = []
 
       lst = cmd.get_color_indices()
+      lst.sort()
       for a in lst:
          self.list.append("%-30s"%(a[0]))
 

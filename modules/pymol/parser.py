@@ -96,7 +96,7 @@ if __name__=='pymol.parser':
             print " Embed: read %d lines."%(len(embed_list[nest]))
             embed_sentinel[nest]=None
          else:
-            embed_list[nest].append(s)
+            embed_list[nest].append(string.rstrip(s)+"\n")
          return 1
       p_result = 1
       com0[nest] = s
@@ -264,7 +264,7 @@ if __name__=='pymol.parser':
                                     return None                                    
                               elif (kw[nest][4]==parsing.EMBED):
                                  next[nest] = ()
-                                 if secure:
+                                 if secure or nest==0: # only legal on top level and p1m files
                                     l = len(args[nest])
                                     if l>0:
                                        key = args[nest][0]
