@@ -265,9 +265,9 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           FreeP(z_value);
           FreeP(t_buf);
         } else { /* fast and ugly */
-          glCullFace(GL_BACK);
+          /*          glCullFace(GL_BACK);
           glEnable(GL_CULL_FACE);
-          glDepthMask(GL_FALSE);
+          glDepthMask(GL_FALSE);*/
           if(I->allVisibleFlag) {
             if(I->oneColorFlag) {
               col = ColorGet(I->oneColor);
@@ -372,8 +372,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               glEnd();
             }
           }
-          glDisable(GL_CULL_FACE);
-          glDepthMask(GL_TRUE);
+          /*          glDisable(GL_CULL_FACE);
+                      glDepthMask(GL_TRUE);*/
         }
       } else { /* opaque */
         if(I->allVisibleFlag) {
