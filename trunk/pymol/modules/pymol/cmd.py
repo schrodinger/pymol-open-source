@@ -1153,7 +1153,7 @@ keyword = {
    '_special'      : [ _special          , 0 , 0 , ''  , parsing.STRICT ],
    'stereo'        : [ stereo            , 0 , 0 , ''  , parsing.STRICT ],
    'symexp'        : [ symexp            , 0 , 0 , ''  , parsing.LEGACY ],
-   'system'        : [ system            , 0 , 0 , ''  , parsing.LITERAL1 ],
+   'system'        : [ system            , 0 , 0 , ''  , parsing.LITERAL ],
    'test'          : [ test              , 0 , 0 , ''  , parsing.STRICT ],
    'torsion'       : [ torsion           , 0 , 0 , ''  , parsing.STRICT ],
    'translate'     : [ translate         , 0 , 0 , ''  , parsing.STRICT ],
