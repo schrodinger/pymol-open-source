@@ -3152,14 +3152,70 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
   ObjectMoleculeUpdateIDNumbers(I);
   return(result);
 }
+
+  #define MaxOcc 100
+
+/*========================================================================*/
+static int get_planer_normal(ObjectMolecule *I,int state,int index,float *normal)
+{   /* NOTE assumes neighbors are defined */
+  int found = false;
+  int nOcc = 0;
+  float occ[MaxOcc*3];
+  AtomInfoType *ai = I->AtomInfo + index;
+  int n,a1;
+  float v0[3],v1[3],v2[3],n0[3];
+
+  if(ObjectMoleculeGetAtomVertex(I,state,index,v0)) {        
+    n = I->Neighbor[index];
+    n++; /* skip count */
+    while(1) { /* look for an attached non-hydrogen as a base */
+      a1 = I->Neighbor[n];
+      n+=2; 
+      if(a1<0) break;
+      if(ObjectMoleculeGetAtomVertex(I,state,a1,v1)) {        
+        subtract3f(v1,v0,n0);
+        normalize3f(n0); /* n0's point away from center atom */
+        copy3f(n0,occ+3*nOcc);
+        nOcc++; 
+        if(nOcc==MaxOcc) /* safety valve */
+          break;
+      }
+    }
+    switch(ai->geom) {
+    case cAtomInfoPlaner:
+      if(nOcc>1) {
+        cross_product3f(occ,occ+3,normal);
+        if(nOcc>2) {
+          cross_product3f(occ,occ+6,v2);
+          if(dot_product3f(normal,v2)<0) {
+            subtract3f(normal,v2,normal);
+          } else {
+            add3f(normal,v2,normal);
+          }
+          cross_product3f(occ+3,occ+6,v2);
+          if(dot_product3f(normal,v2)<0) {
+            subtract3f(normal,v2,normal);
+          } else {
+            add3f(normal,v2,normal);
+          }
+        }
+        normalize3f(normal);
+        found=true;
+      }
+      break;
+    }
+  }
+  return found;
+}
+
 /*========================================================================*/
 int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
                                         int index,float *v,float *seek)
 {
-  #define MaxOcc 100
   CoordSet *cs;
   int nOcc = 0;
   float occ[MaxOcc*3];
+  int last_occ = -1;
   int n;
   int a1;
   float v0[3],v1[3],n0[3],t[3];
@@ -3189,6 +3245,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
           if(a1<0) break;
           ai1=I->AtomInfo+a1;
           if(ObjectMoleculeGetAtomVertex(I,state,a1,v1)) {        
+            last_occ = a1;
             subtract3f(v1,v0,n0);
             normalize3f(n0); /* n0's point away from center atom */
             copy3f(n0,occ+3*nOcc);
@@ -3223,19 +3280,26 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
               result = true;
               break;
             case cAtomInfoPlaner:
-              if(!seek) {
-                get_system1f3f(occ,y,z);
-                scale3f(occ,-0.500F,v);
-                scale3f(z,      0.866F,t);
-                add3f(t,v,v);
-              } else {
-                copy3f(seek,z);
-                get_system2f3f(occ,z,y);
-                scale3f(occ,-0.500F,v);
-                scale3f(z,      0.866F,t);
-                add3f(t,v,v);
+              {
+                if(!seek) {
+                  if((last_occ>=0)&&get_planer_normal(I,state,last_occ,n0)) {
+                    copy3f(n0,y);
+                    get_system2f3f(occ,y,z);
+                  } else {
+                    get_system1f3f(occ,y,z);
+                  }
+                  scale3f(occ,-0.500F,v);
+                  scale3f(z,      0.866F,t);
+                  add3f(t,v,v);
+                } else {
+                  copy3f(seek,z);
+                  get_system2f3f(occ,z,y);
+                  scale3f(occ,-0.500F,v);
+                  scale3f(z,      0.866F,t);
+                  add3f(t,v,v);
+                }
+                result = true;
               }
-              result = true;
               break;
             case cAtomInfoLinear:
               scale3f(occ,-1.0F,v);
@@ -3314,7 +3378,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
   normalize3f(v);
   return(result); 
 #undef MaxOcc
-
+  
 }
 /*========================================================================*/
 void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
