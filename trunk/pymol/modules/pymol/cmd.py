@@ -6056,7 +6056,22 @@ ctrl = {
    'Z' : [ undo                   , () , {} ],   
    }
 
+def get_names_of_type(type):
+   obj = get_names('objects')
+   types = map(get_type,obj)
+   mix = map(None,obj,types)
+   lst = []
+   for a in mix:
+      if a[1]==type:
+         lst.append(a[0])
+   return lst
+
 selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
+object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))
+map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
+
+# Table for argument autocompletion
+
 auto_arg =[
    {
    'set' : [ setting.setting_sc, 'settings', '=' ],
@@ -6083,7 +6098,9 @@ auto_arg =[
    'color' : [ selection_sc , 'selections','' ],
    'select' : [ selection_sc , 'selections','' ],
    'save' : [ selection_sc , 'selections',', ' ],
-   'load' : [ selection_sc , 'selections',', ' ],      
+   'load' : [ selection_sc , 'selections',', ' ],
+   'create' : [ selection_sc , 'selections',', ' ],
+   'isomesh' : [ map_sc , 'objects',', ' ],            
    },
    {
    'feedback' : [ fb_mask_sc , 'mask','' ],
