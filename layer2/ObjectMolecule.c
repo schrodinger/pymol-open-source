@@ -2928,7 +2928,7 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
                 ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read atom identifier");
               Py_XDECREF(tmp);
             } else {
-              ii->id=-1;
+              ai->id=-1;
             }
           }
         }
