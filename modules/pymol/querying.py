@@ -337,7 +337,31 @@ def get_position(quiet=1):
       print " cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2])
    return r
 
-def get_dihedral(atom1,atom2,atom3,atom4,state=1,quiet=1):
+def get_dihedral(atom1,atom2,atom3,atom4,state=0,quiet=1):
+   '''
+DESCRIPTION
+  
+   "get_dihedral" returns the dihedral angle between four atoms.  By
+   default, the coordinates used are from the current state, however
+   an alternate state identifier can be provided.
+
+   By convention, positive dihedral angles are right-handed
+   (looking down the atom2-atom3 axis).
+   
+USAGE
+
+   get_dihedral atom1, atom2, atom3, atom4 [,state ]
+   
+EXAMPLES
+
+   get_dihedral 4/n,4/c,4/ca,4/cb
+   get_dihedral 4/n,4/c,4/ca,4/cb,state=4
+       
+PYMOL API
+ 
+   cmd.get_dihedral(atom1,atom2,atom3,atom4,state=0)
+ 
+   '''
    # preprocess selections
    atom1 = selector.process(atom1)
    atom2 = selector.process(atom2)

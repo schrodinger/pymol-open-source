@@ -7264,7 +7264,7 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
 int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
 {
   int result = 0;
-  if(state<0) state=0;
+  if(state<0) state=SceneGetState();
   if(I->NCSet==1) state=0;
   state = state % I->NCSet;
   if(I->CSet[state]) 
