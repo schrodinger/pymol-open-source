@@ -1895,7 +1895,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
       " ObjectMolecule: Read secondary structure assignments.\n"
       ENDFB(G);
   }
-  if(symmetry&&!quiet) {
+  if(symmetry&&!quiet&&(!only_read_one_model)) {
     PRINTFB(G,FB_ObjectMolecule,FB_Details)
       " ObjectMolecule: Read crystal symmetry information.\n"
       ENDFB(G);
