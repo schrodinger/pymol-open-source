@@ -23,6 +23,12 @@ typedef struct {
 } ShakerDistCon;
 
 typedef struct {
+  int at0,at1;
+  int type;
+  float targ;
+} ShakerTorsCon;
+
+typedef struct {
   int at0,at1,at2,at3;
   float targ;
 } ShakerPyraCon;

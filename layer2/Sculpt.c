@@ -63,10 +63,10 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   int n0,n1,n2;
   int *planer = NULL;
   int nex = 1;
-  int *j,xhash;
-
+  int *j,*k,xhash;
+  int ex_type;
   AtomInfoType *ai;
-
+  int xoffset;
 
   PRINTFD(FB_Sculpt)
     " SculptMeasureObject-Debug: entered.\n"
@@ -258,66 +258,91 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
             n0 = obj->Neighbor[b0]+1;
             while(obj->Neighbor[n0]>=0) {
               b1 = obj->Neighbor[n0];
-              n1 = n0+2;
+
+              n1 = obj->Neighbor[b0]+1;
               while(obj->Neighbor[n1]>=0) {
                 b2 = obj->Neighbor[n1];
 
-                n2 =  obj->Neighbor[b2]+1;
-                while(obj->Neighbor[n2]>=0) {
-                  b3 = obj->Neighbor[n2];
-                  if(b3!=b0) {
-                    
-                    xhash = ( (b3>b1) ? ex_hash(b1,b3) : ex_hash(b3,b1));
-                    VLACheck(I->EXList,int,nex+3);
-                    j = I->EXList+nex;
-                    *(j++)=*(I->EXHash+xhash);
-                    if(b2>b1) {
-                      *(j++)=b1;
-                      *(j++)=b3;
-                    } else {
-                      *(j++)=b3;
-                      *(j++)=b1;
-                    }
-                    *(j++)=4; /* 1-4 exclusion */
-                    *(I->EXHash+xhash)=nex;
-                    nex+=4;
-
-
-                  
-                    if(obj->DiscreteFlag) {
-                      if((cs==obj->DiscreteCSet[b0])&&
-                         (cs==obj->DiscreteCSet[b1])&&
-                         (cs==obj->DiscreteCSet[b2])) {
-                        a0=obj->DiscreteAtmToIdx[b0];
-                        a1=obj->DiscreteAtmToIdx[b1];
-                        a2=obj->DiscreteAtmToIdx[b2];
-                        a3=obj->DiscreteAtmToIdx[b3];
-                      } else {
-                        a0=-1;
-                        a1=-1;
-                        a2=-1;
-                        a3=-1;
-                      }
-                    } else {
-                      a0=cs->AtmToIdx[b0];
-                      a1=cs->AtmToIdx[b1];
-                      a2=cs->AtmToIdx[b2];
-                      a3=cs->AtmToIdx[b3];
-                    }
-                    if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
-                      v0 = cs->Coord+3*a0;
-                      v1 = cs->Coord+3*a1;
-                      v2 = cs->Coord+3*a2;
-                      v3 = cs->Coord+3*a3;
-                    
-                      if(fabs(get_dihedral3f(v1,v0,v2,v3))<deg_to_rad(10.0))
-                        if(planer[b0]&&planer[b2]) {
-                          ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3); 
-
+                if(b1!=b2) {
+                  n2 =  obj->Neighbor[b2]+1;
+                  while(obj->Neighbor[n2]>=0) {
+                    b3 = obj->Neighbor[n2];
+                    if((b3!=b0)&&(b3>b1)) {
+                      
+                      /* check 1-4 exclusion */
+                      xhash = ex_hash(b1,b3);
+                      
+                      ex_type = 4; 
+                      
+                      xoffset = *(I->EXHash+xhash);
+                      while(xoffset) {
+                        k = I->EXList + xoffset;
+                        if((abs(*(k+3))==4)&&
+                           (*(k+1)==b1)&&
+                           (*(k+2)==b3)) {
+                          if((b0!=*(k+4))&&
+                             (b2!=*(k+5))) {
+                            if(planer[b0]&&planer[b2]&&
+                               planer[*(k+4)]&&planer[*(k+5)]) {
+                              /* aromatic */ 
+                              *(k+3)=-4;
+                            }
+                          }
+                          ex_type = 0; /* duplicate, skip */
+                          break;
                         }
+                        xoffset = *k;
+                      }
+                      if(ex_type) {
+                        VLACheck(I->EXList,int,nex+5);
+                        j = I->EXList+nex;
+                        *(j++)=*(I->EXHash+xhash);
+                        *(j++)=b1;
+                        *(j++)=b3;
+                        *(j++)=ex_type;
+                        *(j++)=b0;
+                        *(j++)=b2;
+                        *(I->EXHash+xhash)=nex;
+                        nex+=6;
+                      }
+                      
+                      /* planarity */
+                      
+                      if(obj->DiscreteFlag) {
+                        if((cs==obj->DiscreteCSet[b0])&&
+                           (cs==obj->DiscreteCSet[b1])&&
+                           (cs==obj->DiscreteCSet[b2])&&
+                           (cs==obj->DiscreteCSet[b3])) {
+                          a0=obj->DiscreteAtmToIdx[b0];
+                          a1=obj->DiscreteAtmToIdx[b1];
+                          a2=obj->DiscreteAtmToIdx[b2];
+                          a3=obj->DiscreteAtmToIdx[b3];
+                        } else {
+                          a0=-1;
+                          a1=-1;
+                          a2=-1;
+                          a3=-1;
+                        }
+                      } else {
+                        a0=cs->AtmToIdx[b0];
+                        a1=cs->AtmToIdx[b1];
+                        a2=cs->AtmToIdx[b2];
+                        a3=cs->AtmToIdx[b3];
+                      }
+                      if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+                        v0 = cs->Coord+3*a0;
+                        v1 = cs->Coord+3*a1;
+                        v2 = cs->Coord+3*a2;
+                        v3 = cs->Coord+3*a3;
+                        
+                        if(fabs(get_dihedral3f(v1,v0,v2,v3))<deg_to_rad(10.0))
+                          if(planer[b0]&&planer[b2]) {
+                            ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3); 
+                          }
+                      }
                     }
+                    n2+=2;
                   }
-                  n2+=2;
                 }
                 n1+=2;
               }
