@@ -106,7 +106,13 @@ In Progress
 
 Changes up to 0.86
 
-   * ray_shadows setting
+   * added xmlrpc01.py demonstration program to examples/devel
+
+   * ribbon_trace can be used to view CA-only models
+
+   * ray_shadows setting enables disabling of shadows in raytracer (slight performance inc.)
+
+   * added secondary structure to chemical python model data structure
 
 Changes up to 0.85
 

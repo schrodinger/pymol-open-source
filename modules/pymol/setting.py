@@ -210,6 +210,7 @@ class SettingIndex:
    state                 =193
    frame                 =194
    ray_shadows           =195
+   ribbon_trace          =196
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

@@ -181,6 +181,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   float radius,throw;
   int visFlag;
   float dev;
+  int trace;
 
   Pickable *rp=NULL;
   OOAlloc(RepRibbon);
@@ -203,6 +204,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power);
   power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
   throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
+  trace=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace);
 
   sampling=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
   if(sampling<1) sampling=1;
@@ -217,9 +219,9 @@ Rep *RepRibbonNew(CoordSet *cs)
 
   /* find all of the CA points */
 
-  at = Alloc(int,cs->NAtIndex);
-  pv = Alloc(float,cs->NAtIndex*3);
-  seg = Alloc(int,cs->NAtIndex);
+  at = Alloc(int,cs->NAtIndex*2);
+  pv = Alloc(float,cs->NAtIndex*6);
+  seg = Alloc(int,cs->NAtIndex*2);
   
   i=at;
   v=pv;
@@ -240,21 +242,26 @@ Rep *RepRibbonNew(CoordSet *cs)
 		if(a>=0)
 		  if(obj->AtomInfo[a1].visRep[cRepRibbon])
 			 if(!obj->AtomInfo[a1].hetatm)
-				if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
+				if(trace||(WordMatch("CA",obj->AtomInfo[a1].name,1)<0))
 				  {
                 PRINTFD(FB_RepRibbon)
-                  " RepRibbon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
                   ENDFD;
 
 					 if(a2>=0) {
                   /*						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
                                     (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
                                     (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
-                  if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
-                    a2=-1;
+                  if(trace) {
+                    if(!AtomInfoSequential(obj->AtomInfo+a2,obj->AtomInfo+a1))
+                      a2=-1;
+                  } else {
+                    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+                      a2=-1;
+                  }
 					 }
                 PRINTFD(FB_RepRibbon)
-                  " RepRibbon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
                   ENDFD;
 
 					 if(a2<0) nSeg++;
@@ -280,9 +287,9 @@ Rep *RepRibbonNew(CoordSet *cs)
 		s=seg;
 		v=pv;
 		
-		dv = Alloc(float,nAt*3);
-		nv = Alloc(float,nAt*3);
-		dl = Alloc(float,nAt);
+		dv = Alloc(float,nAt*6);
+		nv = Alloc(float,nAt*6);
+		dl = Alloc(float,nAt*2);
 		v1=dv;
 		v2=nv;
 		d=dl;
@@ -307,7 +314,7 @@ Rep *RepRibbonNew(CoordSet *cs)
 		s=seg;
 		v=nv;
 		
-		tv = Alloc(float,nAt*3+6);
+		tv = Alloc(float,nAt*6+6);
 		v1=tv;
 		
 		*(v1++)=*(v++); /* first segment */
@@ -349,17 +356,17 @@ Rep *RepRibbonNew(CoordSet *cs)
   /* okay, we now have enough info to generate smooth interpolations */
 
   if(nAt) {
-    I->R.P=Alloc(Pickable,nAt+2);
+    I->R.P=Alloc(Pickable,2*nAt+2);
     ErrChkPtr(I->R.P);
     I->R.P[0].index=nAt;
     rp = I->R.P + 1; /* skip first record! */
   }
 
-  I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*10*sampling);
+  I->VC=(float*)mmalloc(sizeof(float)*2*cs->NIndex*10*sampling);
   ErrChkPtr(I->VC);
   I->NC=0;
 
-  I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*9*sampling);
+  I->V=(float*)mmalloc(sizeof(float)*2*cs->NIndex*9*sampling);
   ErrChkPtr(I->V);
 
   I->N=0;

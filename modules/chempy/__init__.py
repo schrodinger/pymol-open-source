@@ -35,6 +35,8 @@ class Atom:
       'stereo'              : 0,
 # Macromodel files
       'color_code'          : 2,
+# Secondary structure
+      'ss'                  : '',
       }
    
    def __getattr__(self,attr):
