@@ -148,7 +148,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 	 if(I->S) {
       if(alpha!=1.0) {
 
-        t_mode  = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency_mode);
+        t_mode  = SettingGet_i(I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency_mode);
 
         if(t_mode) {
 
@@ -603,7 +603,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           }
         glEnd();
       }
-      glColor3f(0.3,0.3,1.0);
+      glColor3f(0.3F,0.3F,1.0F);
       v=TestLine;
       c=NTestLine;
       glBegin(GL_LINES);
@@ -1327,7 +1327,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 
   obj = cs->Obj;
 
-  surface_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+  surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
 

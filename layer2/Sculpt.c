@@ -638,7 +638,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         pyra_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
         plan_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
         line_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
-        mask = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
+        mask = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
         hb_overlap = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
         hb_overlap_base = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
 

@@ -220,7 +220,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
   I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_radius);
 
-  half_bonds = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
+  half_bonds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
   valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
 
   if(valence!=0.0) /* build list of up to 2 connected atoms for each atom */

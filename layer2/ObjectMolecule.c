@@ -699,8 +699,8 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   AtomInfoType *atInfo = NULL,*ai;
   BondType *bond=NULL,*bd;
   int nBond=0;
-  int auto_show_lines = SettingGet(cSetting_auto_show_lines);
-  int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  int auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
+  int auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
   int amber7 = false;
 
   WordType title;
@@ -916,7 +916,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
       if(!sscanf(cc,"%f",&ai->partialCharge))
         ok=false;
       else {
-        ai->partialCharge/=18.2223; /* convert to electron charge */
+        ai->partialCharge/=18.2223F; /* convert to electron charge */
       }
       if((++b)==5) {
         b=0;
@@ -1689,8 +1689,8 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
   float *spheroid_normal=NULL;
   int sph_info[2];
   int version;
-  auto_show_lines = SettingGet(cSetting_auto_show_lines);
-  auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
+  auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
 
   *restart=false;
   nAtom=0;
@@ -2354,8 +2354,8 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int nBond=0;
   int b1,b2;
   WordType tmp_name;
-  int auto_show_lines = SettingGet(cSetting_auto_show_lines);
-  int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  int auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
+  int auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
   BondType *ii;
 
 
@@ -3231,8 +3231,8 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
   float *norm = NULL;
   float spheroid_smooth;
   float spheroid_fill;
-  float spheroid_ratio=0.1; /* minimum ratio of width over length */
-  float spheroid_minimum = 0.02; /* minimum size - to insure valid normals */
+  float spheroid_ratio=0.1F; /* minimum ratio of width over length */
+  float spheroid_minimum = 0.02F; /* minimum size - to insure valid normals */
   int row,*count=NULL,base;
   int nRow;
   int first=0;
@@ -4469,7 +4469,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
   if(log) {
     OrthoLineType line;
     WordType sele_str = ",'";
-    logging = SettingGet(cSetting_logging);
+    logging = (int)SettingGet(cSetting_logging);
     if(sele>=0) {
       strcat(sele_str,sname);
       strcat(sele_str,"'");
@@ -4648,8 +4648,8 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   PyObject *index = NULL;
   PyObject *crd = NULL;
   PyObject *tmp = NULL;
-  auto_show_lines = SettingGet(cSetting_auto_show_lines);
-  auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
+  auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
 
   ignore_ids=!(int)SettingGet(cSetting_preserve_chempy_ids);
 
@@ -5195,9 +5195,9 @@ void ObjectMoleculeBlindSymMovie(ObjectMolecule *I)
               I->CSet[c] = CoordSetCopy(frac);
               CoordSetTransform44f(I->CSet[c],I->Symmetry->SymMatVLA+(a*16));
               identity44f(m);
-              m[3] = x;
-              m[7] = y;
-              m[11] = z;
+              m[3] = (float)x;
+              m[7] = (float)y;
+              m[11] = (float)z;
               CoordSetTransform44f(I->CSet[c],m);
               CoordSetFracToReal(I->CSet[c],I->Symmetry->Crystal);
               I->NCSet++;
@@ -5243,8 +5243,8 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int auto_show_nonbonded;
   WordType nameTmp;
 
-  auto_show_lines = SettingGet(cSetting_auto_show_lines);
-  auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
+  auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
 
   p=buffer;
   nAtom=0;
@@ -7815,9 +7815,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int b1,b2,nReal,maxAt;
   CSymmetry *symmetry = NULL;
   int symFlag;
-  int auto_show_lines = SettingGet(cSetting_auto_show_lines);
-  int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
-  int literal_names = SettingGet(cSetting_pdb_literal_names);
+  int auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
+  int auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
+  int literal_names = (int)SettingGet(cSetting_pdb_literal_names);
   int newModelFlag = false;
   int ssFlag = false;
   int ss_resv1=0,ss_resv2=0;
@@ -7835,7 +7835,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   SSEntry *sst;
   int ssi = 0;
 
-  ignore_pdb_segi = SettingGet(cSetting_ignore_pdb_segi);
+  ignore_pdb_segi = (int)SettingGet(cSetting_ignore_pdb_segi);
 
   p=buffer;
   nAtom=0;
@@ -8375,8 +8375,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   float *f;
   BondType *ii,*bond=NULL;
   int ok=true;
-  int auto_show_lines = SettingGet(cSetting_auto_show_lines);
-  int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  int auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
+  int auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
 
   p=buffer;
   nAtom=0;

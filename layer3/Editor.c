@@ -223,7 +223,7 @@ int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
               add3f(n0,n1,n0);
               normalize3f(n0);
 
-              MatrixRotation44f(m,cPI,n0[0],n0[1],n0[2]);
+              MatrixRotation44f(m,(float)cPI,n0[0],n0[1],n0[2]);
               m[3 ] = -v[0];
               m[7 ] = -v[1];
               m[11] = -v[2];
@@ -633,9 +633,9 @@ void EditorRender(int state)
   int sele0,sele1;
   int nEdge;
   int c,a;
-  float tube_size1=0.5;
-  float tube_size2=0.07;
-  float tube_size3=0.45;
+  float tube_size1=0.5F;
+  float tube_size2=0.07F;
+  float tube_size3=0.45F;
 
 
   if(I->Obj&&(state!=I->ActiveState))
@@ -651,7 +651,7 @@ void EditorRender(int state)
 
     if(PMGUI) {
 
-      nEdge = SettingGet(cSetting_stick_quality)*2;
+      nEdge = (int)SettingGet(cSetting_stick_quality)*2;
       if(nEdge>50)
         nEdge=50;
 
@@ -890,7 +890,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   int seleFlag= false;
   int i0,i1;
   CEditor *I = &Editor;
-  int log_trans = SettingGet(cSetting_log_conformations);
+  int log_trans = (int)SettingGet(cSetting_log_conformations);
 
   PRINTFD(FB_Editor)
     " EditorPrepareDrag-Debug: entered. obj %p index %d",obj,index
@@ -1035,7 +1035,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
   float d0[3],d1[3],d2[3],n0[3],n1[3],n2[3];
   float opp,adj,theta;
   float m[16];
-  int log_trans = SettingGet(cSetting_log_conformations);
+  int log_trans = (int)SettingGet(cSetting_log_conformations);
 
   PRINTFD(FB_Editor)
     " EditorDrag-Debug: entered. obj %p state %d index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", obj,state,index,mode,

@@ -336,10 +336,10 @@ static void WizardDraw(Block *block)
   int a;
 
   float buttonTextColor[3] = { 1.0,1.0,1.0 };
-  float buttonActiveColor[3] = { 0.8,0.8,0.8 };
+  float buttonActiveColor[3] = { 0.8F,0.8F,0.8F };
   
-  float dimColor[3] = {0.3, 0.3,0.3};
-  float menuBGColor[3] = {0.5, 0.5,1.0};
+  float dimColor[3] = {0.3F, 0.3F,0.3F};
+  float menuBGColor[3] = {0.5F, 0.5F,1.0};
   float menuColor[3] = { 0.0,0.0,0.0};
 
   if(PMGUI) {
@@ -462,9 +462,9 @@ void WizardInit(void)
   I->Block->fRelease = WizardRelease;
   I->Block->active = true;
 
-  I->Block->TextColor[0]=0.2;
-  I->Block->TextColor[1]=1.0;
-  I->Block->TextColor[2]=0.2;
+  I->Block->TextColor[0]=0.2F;
+  I->Block->TextColor[1]=1.0F;
+  I->Block->TextColor[2]=0.2F;
 
   OrthoAttach(I->Block,cOrthoTool);
 

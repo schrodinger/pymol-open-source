@@ -134,12 +134,12 @@ Rep *RepCartoonNew(CoordSet *cs)
   float  power_a = 5;
   float power_b = 5;
   float loop_radius;
-  float tube_radius,tube_quality;
+  float tube_radius;
   int visFlag;
   CExtrude *ex=NULL,*ex1;
   int n_p,n_pm1,n_pm2;
-  int loop_quality;
-  float oval_quality,oval_width,oval_length;
+  int loop_quality,oval_quality,tube_quality;
+  float oval_width,oval_length;
   float dumbbell_radius,dumbbell_width,dumbbell_length;
   float throw;
   int st,nd;
@@ -196,22 +196,22 @@ ENDFD;
   power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_power);
   power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_power_b);
 
-  cartoon_debug=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_debug);
+  cartoon_debug=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_debug);
   length=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_length);
   width=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
 
   throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_throw);
 
-  sampling = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_sampling);
+  sampling = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_sampling);
   if(sampling<1) sampling=1;
   loop_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_radius);
-  if(loop_radius<0.01) loop_radius=0.01;
-  loop_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_quality);
+  if(loop_radius<0.01F) loop_radius=0.01F;
+  loop_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_quality);
   if(loop_quality<3) loop_quality=3;
 
   tube_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_radius);
-  if(tube_radius<0.01) tube_radius=0.01;
-  tube_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_quality);
+  if(tube_radius<0.01F) tube_radius=0.01F;
+  tube_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_quality);
   if(tube_quality<3) tube_quality=3;
 
   cartoon_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
@@ -220,29 +220,29 @@ ENDFD;
 
   oval_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_length);
   oval_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_width);
-  oval_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_quality);
+  oval_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_quality);
   if(oval_quality<3) tube_quality=3;
 
   dumbbell_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_length);
   dumbbell_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_width);
   dumbbell_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_radius);
-  if(dumbbell_radius<0.01) dumbbell_radius=0.01;
+  if(dumbbell_radius<0.01F) dumbbell_radius=0.01F;
 
-  fancy_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_helices);
-  fancy_sheets = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_sheets);
-  cylindrical_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_cylindrical_helices);
-  refine = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine);
+  fancy_helices = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_helices);
+  fancy_sheets = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_sheets);
+  cylindrical_helices = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_cylindrical_helices);
+  refine = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine);
   refine_tips = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_tips);
 
-  discrete_colors = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_discrete_colors);
-  round_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices);
-  smooth_loops = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops);
+  discrete_colors = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_discrete_colors);
+  round_helices = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices);
+  smooth_loops = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops);
   helix_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_helix_radius);
 
-  smooth_first = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_first);
-  smooth_last = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_last);
-  smooth_cycles = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_cycles);
-  flat_cycles = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_cycles);
+  smooth_first = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_first);
+  smooth_last = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_last);
+  smooth_cycles = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_cycles);
+  flat_cycles = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_cycles);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;

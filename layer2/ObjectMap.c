@@ -82,9 +82,9 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
       z = (inp[2] - ms->Origin[2])/ms->Grid[2];
       inp+=3;
       
-      a=floor(x);
-      b=floor(y);
-      c=floor(z);
+      a=(int)floor(x);
+      b=(int)floor(y);
+      c=(int)floor(z);
       x-=a;
       y-=b;
       z-=c;
@@ -505,18 +505,18 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
           float *vc;
           vc = ColorGet(I->Obj.Color);
           ray->fColor3fv(ray,vc);
-          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[1],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[2],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[2],ms->Corner[3],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[1],ms->Corner[3],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[4],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[1],ms->Corner[5],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[2],ms->Corner[6],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[3],ms->Corner[7],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[5],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[6],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[6],ms->Corner[7],0.20,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[5],ms->Corner[7],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[1],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[2],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[2],ms->Corner[3],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[1],ms->Corner[3],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[4],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[1],ms->Corner[5],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[2],ms->Corner[6],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[3],ms->Corner[7],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[5],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[6],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[6],ms->Corner[7],0.20F,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[5],ms->Corner[7],0.20F,vc,vc);
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
           ObjectUseColor(&I->Obj);
@@ -626,7 +626,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
     for(a=0;a<3;a++) { if(v[a]<0.0) swap1f(md->MaxCorner+a,md->MinCorner+a); };
     subtract3f(md->MaxCorner,md->MinCorner,v);
     for(a=0;a<3;a++) {
-      md->Dim[a] = v[a]/md->Grid[a];
+      md->Dim[a] = (int)(v[a]/md->Grid[a]);
       if(md->Dim[a]<1) md->Dim[a]=1;
       if((md->Dim[a]*md->Grid[a])<v[a]) md->Dim[a]++;
     }
@@ -719,7 +719,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
       for(a=0;a<md->Dim[0];a++) {      
         for(b=0;b<md->Dim[1];b++) {
           for(c=0;c<md->Dim[2];c++) {
-            F3(ms->Field->data,a,b,c)=sqrt1f(a*a+b*b+c*c);
+            F3(ms->Field->data,a,b,c)=sqrt1f((float)a*a+b*b+c*c);
           }
         }
       }

@@ -154,17 +154,17 @@ void ButModeInit(void)
   I->Block->TextColor[1]=1.0F;
   I->Block->TextColor[2]=0.2F;
 
-  I->TextColor1[0]=0.5;
-  I->TextColor1[1]=0.5;
-  I->TextColor1[2]=1.0;
+  I->TextColor1[0]=0.5F;
+  I->TextColor1[1]=0.5F;
+  I->TextColor1[2]=1.0F;
 
-  I->TextColor2[0]=0.8;
-  I->TextColor2[1]=0.8;
-  I->TextColor2[2]=0.8;
+  I->TextColor2[0]=0.8F;
+  I->TextColor2[1]=0.8F;
+  I->TextColor2[2]=0.8F;
 
-  I->TextColor3[0]=1.0;
-  I->TextColor3[1]=0.5;
-  I->TextColor3[2]=0.5;
+  I->TextColor3[0]=1.0F;
+  I->TextColor3[1]=0.5F;
+  I->TextColor3[2]=0.5F;
 
   OrthoAttach(I->Block,cOrthoTool);
 
