@@ -1748,4 +1748,5 @@ class PMGApp(AbstractApp):
       
       self.menuBar.addmenuitem('Demo', 'command', 'End Demonstration',
                                label='End Demonstration',
-                               command = lambda s=self:s.demo('finish'))
+                               command = lambda s=self:s.demo(
+         '_ replace_wizard demo,finish'))
