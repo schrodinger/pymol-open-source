@@ -34,8 +34,6 @@ evolve.
 
    * support direct reading of DCD, and/or Gromacs trajectory files
 
-   * support output of Amber input files so that we can bypass xleap altogether
-
    * support MOL2 and multi-MOL2 file formats
 
    * fold MMTK into the main PyMOL distribution, and merge the two programs in a way
