@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * .pov file via save command
+
    * fixed bug with gadgetramp events
 
    * updated presets

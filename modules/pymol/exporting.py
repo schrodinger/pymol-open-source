@@ -168,6 +168,8 @@ SEE ALSO
             format = 'mmod'
          elif re.search("\.pmo$",lc_filename):
             format = 'pmo'
+         elif re.search("\.pov$",lc_filename):
+            format = 'pov'
          elif re.search("\.png$",lc_filename):
             format = 'png'
          elif re.search("\.pse$",lc_filename):
@@ -224,5 +226,11 @@ SEE ALSO
             print " Save: wrote \""+filename+"\"."
       elif format=='png':
          cmd.png(filename,quiet=quiet)
+      elif format=='pov':
+         tup = cmd.get_povray()
+         f=open(filename,"w")
+         f.write(tup[0])
+         f.write(tup[1])
+         f.close()
       return r
 
