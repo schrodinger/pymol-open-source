@@ -16,6 +16,8 @@ module: $(DEPS) $(OBJS)
 	$(CC) $(CCOPT1) $(BUILD) *.o -o _champ.so $(GLLIBS)
 	mv _champ.so ../../modules/chempy/champ/
 
+static: $(DEPS) $(OBJS)
+
 depends: $(DEPS)
 	cat *.p > .depends;cat .files .depends > .includes;
 
