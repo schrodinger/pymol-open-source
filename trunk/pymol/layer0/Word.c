@@ -88,7 +88,6 @@ int WordMatchComma(char *p,char *q,int ignCase)
   }
   q_copy=q;
   p=p_copy;
-  printf("%s\n",p);
   while(((*p)||(blank))&&(best_i>=0)) {
     blank=0;
     i=1;
