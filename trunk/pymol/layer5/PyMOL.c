@@ -463,10 +463,11 @@ void PyMOL_RunTest(CPyMOL *I, int group, int test)
 
 void PyMOL_PushValidContext(CPyMOL *I)
 {
-  I->G->ValidContext++;
+  if(I && I->G)
+    I->G->ValidContext++;
 }
 void PyMOL_PopValidContext(CPyMOL *I)
 {
-  if(I->G->ValidContext>0)
+  if(I && I->G && (I->G->ValidContext>0))
     I->G->ValidContext--;
 }

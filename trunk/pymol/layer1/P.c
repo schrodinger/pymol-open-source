@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Executive.h"
 #include"PyMOLOptions.h"
+#include"PyMOL.h"
 
 PyObject *P_globals = NULL;
 
@@ -754,6 +755,7 @@ void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
     ENDFD;
   PBlock();
   PXDecRef(PyObject_CallFunction(P_unlock,NULL));
+  PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
   PUnblock();
 }
 
@@ -764,6 +766,8 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
     ENDFD;
 
   PBlock();
+  PyMOL_PushValidContext(TempPyMOLGlobals->PyMOL);
+
   PRINTFD(TempPyMOLGlobals,FB_Threads)
     "#PLockAPIAsGlut-DEBUG: acquiring lock as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
