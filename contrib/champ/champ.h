@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 
 /* max bonds an atom can have */
 
-#define MAX_BOND 8
+#define MAX_BOND 12
 #define MAX_RING 50
 
 /* atoms */
@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #define cH_C    0x00000002 
 #define cH_N    0x00000004 
 #define cH_O    0x00000008
-#define cH_X4   0x00000010
+#define cH_Sym  0x00000010
 #define cH_S    0x00000020
 #define cH_P    0x00000040
 #define cH_F    0x00000080
@@ -63,15 +63,17 @@ Z* -------------------------------------------------------------------
 
 /* charge */
 
-#define cH_Neutral    0x00000001
-#define cH_Cation     0x00000002
-#define cH_Dication   0x00000004
-#define cH_Anion      0x00000008
-#define cH_Dianion    0x00000010
-#define cH_Trication  0x00000020
-#define cH_Trianion   0x00000040
-#define cH_Tetcation  0x00000080
-#define cH_Tetanion   0x00000100
+#define cH_Neutral     0x00000001
+#define cH_Cation      0x00000002
+#define cH_Dication    0x00000004
+#define cH_Anion       0x00000008
+#define cH_Dianion     0x00000010
+#define cH_Trication   0x00000020
+#define cH_Trianion    0x00000040
+#define cH_Tetcation   0x00000080
+#define cH_Tetanion    0x00000100
+#define cH_Pentcation  0x00000200
+#define cH_Pentanion   0x00000400
 
 /* cycles */
 
