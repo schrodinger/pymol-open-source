@@ -40,7 +40,8 @@ static void DieOutOfMemory(void)
 void MemoryZero(char *p,char *q)
 {
 #if 1
-  memset(p,0,p-q);
+  if(q-p)
+    memset(p,0,q-p);
 #else
   register unsigned long count;
   register long *a;
