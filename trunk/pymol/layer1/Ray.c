@@ -469,8 +469,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   }
 
   PRINTFB(FB_Ray,FB_Blather) 
-    " RayNew: Background = %x %d %d %d\n",background,bkrd[0]*255,
-    bkrd[1]*255,bkrd[2]*255
+    " RayNew: Background = %x %d %d %d\n",background,(int)(bkrd[0]*255),
+    (int)(bkrd[1]*255),(int)(bkrd[2]*255)
     ENDFB;
 
   if(!I->NPrimitive) {
