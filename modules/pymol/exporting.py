@@ -25,6 +25,33 @@ if __name__=='pymol.exporting':
    from chempy import io
    from cmd import _feedback,fb_module,fb_mask
    import traceback
+
+   def get_pdbstr(selection="all", state=0):
+      '''
+DESCRIPTION
+
+   "get_pdbstr" in an API-only function which returns a pdb
+   corresponding to the atoms in the selection provided and that are
+   present in the indicated state
+
+PYMOL API ONLY
+
+   cmd.get_pdbstr( string selection="all", int state=0 )
+
+NOTES
+
+   "state" is a 1-based state index for the object.
+
+   if state is zero, then current state is used.
+   
+   '''
+      r = None
+      try:
+         lock()   
+         r = _cmd.get_pdb(str(selection),int(state)-1)
+      finally:
+         unlock()
+      return r
    
    def get_session():
       session = {}

@@ -542,6 +542,9 @@ void SceneSetFrame(int mode,int frame)
     " SceneSetFrame: entered.\n"
     ENDFD;
   switch(mode) {
+  case -1: /* movie/frame override - go to this state absolutely! */
+    newState=frame;
+    break;
   case 0: /* absolute */
     newFrame=frame; 
 	 break;
@@ -551,28 +554,40 @@ void SceneSetFrame(int mode,int frame)
   case 2: /* end */
     newFrame=I->NFrame-1; 
 	 break;
-  case 3: /* middle with movie command */
+  case 3: /* middle with automatic movie command */
 	 newFrame=I->NFrame/2;
     movieCommand = true;
 	 break;
-  case 4: /* absolute with movie command */
+  case 4: /* absolute with automatic movie command */
 	 newFrame=frame;
     movieCommand = true;
 	 break;
-  case 5: /* relative with movie command */
+  case 5: /* relative with automatic movie command */
 	 newFrame+=frame;
     movieCommand = true;
 	 break;
-  case 6: /* end with frame command */
+  case 6: /* end with automatic movie command */
     newFrame=I->NFrame-1; 
     movieCommand = true;
     break;
-  case 7: /* movie/frame override - go to this state absolutely! */
-    newState = frame;
+  case 7: /* absolute with forced movie command */
+    newFrame=frame;
+    oldFrame = newFrame-1;
+    movieCommand = true;
+    break;
+  case 8: /* relative with forced movie command */
+	 newFrame+=frame;
+    oldFrame = newFrame-1;
+    movieCommand = true;
+	 break;
+  case 9: /* end with forced movie command */
+    newFrame=I->NFrame-1; 
+    oldFrame = newFrame-1;
+    movieCommand = true;
     break;
   }
   SceneCountFrames();
-  if (mode<7) { 
+  if (mode>=0) { 
     if(newFrame>=I->NFrame) newFrame=I->NFrame-1;
     if(newFrame<0) newFrame=0;
     newState = MovieFrameToIndex(newFrame);
@@ -727,9 +742,9 @@ void SceneIdle(void)
 	 {
       I->LastFrameTime = UtilGetSeconds();
       if((SettingGetGlobal_i(cSetting_frame)-1)==(I->NFrame-1)) {
-        if((int)SettingGet(cSetting_movie_loop))
-          SceneSetFrame(4,0);
-        else
+        if((int)SettingGet(cSetting_movie_loop)) {
+          SceneSetFrame(7,0);
+        } else
           MoviePlay(cMovieStop);
       } else 
         SceneSetFrame(5,1);

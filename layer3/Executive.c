@@ -2258,13 +2258,13 @@ int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
     current=rad_to_deg(get_dihedral3f(v0,v1,v2,v3));
     change=value-current;
     save_state = SceneGetState();                
-    SceneSetFrame(7,state); /* KLUDGE ALERT!
+    SceneSetFrame(-1,state); /* KLUDGE ALERT!
                              * necessary because the editor 
                              * can only work on the current state...this
                              * needs to be changed.*/
     EditorSelect(s2,s1,NULL,NULL,false,true);
     EditorTorsion(change);
-    SceneSetFrame(7,save_state);
+    SceneSetFrame(-1,save_state);
     PRINTFB(FB_Editor,FB_Actions)
       " SetDihedral: adjusted to %5.3f\n",value
       ENDFB;
@@ -3026,8 +3026,8 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
 
   sele1=SelectorIndexByName(s1);
   op1.charVLA=VLAlloc(char,10000);
+  if(state<0) state=SceneGetState();
   if(conectFlag) {
-    if(state<0) state=0;
     op1.i2=SelectorGetPDB(&op1.charVLA,sele1,state,conectFlag);
   } else {
 

@@ -186,9 +186,10 @@ void MoviePlay(int cmd)
 	 break;
   case cMoviePlay:
     if(!(int)SettingGet(cSetting_movie_loop)) { 
-      /* if not looping, and at end of movie, then automatically rewind */
+      /* if not looping, and at end of movie, then automatically rewind
+       and force execution of the first movie command */
       if((SettingGetGlobal_i(cSetting_frame))==(SceneGetNFrame())) {
-        SceneSetFrame(4,0);
+        SceneSetFrame(7,0);
       }
     }
 	 I->Playing=true;
