@@ -59,6 +59,12 @@ Z* -------------------------------------------------------------------
 #define PYMOL_BUTTON_LEFT    0
 #define PYMOL_BUTTON_MIDDLE  1
 #define PYMOL_BUTTON_RIGHT   2
+#define PYMOL_BUTTON_SCROLL_FORWARD 3
+#define PYMOL_BUTTON_SCROLL_REVERSE 4
+
+#define PYMOL_MODIFIER_SHIFT   1
+#define PYMOL_MODIFIER_CTRL    2
+#define PYMOL_MODIFIER_ALT     4
 
 /* configuration */
 
