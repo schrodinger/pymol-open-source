@@ -78,12 +78,64 @@ void my_interrupt(int a)
   exit(EXIT_FAILURE);
 }
 
+void PDumpTraceback(PyObject *err)
+{
+  PyObject *traceback;
+  traceback = PyObject_GetAttrString(P_globals,"traceback");
+  if(!traceback) 
+    ErrFatal("PyMOL","can't find module 'traceback'");
+  else {
+    PyObject_CallMethod(traceback,"print_tb","o",err);
+  }
+}
+
+
+int PAlterAtomState(float *v,char *expr)
+{
+  PyObject *dict; /* TODO: this function badly need error checking code */
+  int result;
+  float f[3];
+  PBlockAndUnlockAPI();
+
+  dict = PyDict_New();
+
+  PConvFloatToPyDictItem(dict,"x",v[0]);
+  PConvFloatToPyDictItem(dict,"y",v[1]);
+  PConvFloatToPyDictItem(dict,"z",v[2]);
+  PyRun_String(expr,Py_single_input,P_globals,dict);
+  if(PyErr_Occurred()) {
+    PyErr_Print();
+    result=false;
+  } else {
+    f[0]=PyFloat_AsDouble(PyDict_GetItemString(dict,"x"));
+    f[1]=PyFloat_AsDouble(PyDict_GetItemString(dict,"y"));
+    f[2]=PyFloat_AsDouble(PyDict_GetItemString(dict,"z"));
+    if(PyErr_Occurred()) {
+      PyErr_Print();
+      result=false;
+      ErrMessage("AlterState","Aborting on error. Assignment may be incomplete.");
+    } else {
+      v[0]=f[0];
+      v[1]=f[1];
+      v[2]=f[2];
+      result=true;
+    }
+  } 
+  Py_DECREF(dict);
+  PLockAPIAndUnblock();
+  return result;
+}
 
 int PAlterAtom(AtomInfoType *at,char *expr)
 {
-  char atype[255],name[255],resi[255],chain[255],resn[255],segi[255];
+  AtomName name;
+  ResName resn;
+  ResIdent resi;
+  Chain chain;
+  SegIdent segi;
+  char atype[7];
   float b,q;
-  PyObject *output;
+  PyObject *dict;
   int result;
 
   if(at->hetatm)
@@ -91,43 +143,61 @@ int PAlterAtom(AtomInfoType *at,char *expr)
   else
     strcpy(atype,"ATOM");
   PBlockAndUnlockAPI();
-  output = PyObject_CallMethod(P_cmd,"_alter_do","[ssssssfffffs]",
-                               expr,
-                               atype,
-                               at->name,
-                               at->resn,
-                               at->chain,
-                               at->resi,
-                               0.0,0.0,0.0,
-                               at->q,
-                               at->b,
-                               at->segi);
-    if(output) {
-      result = 0;
-      strcpy(atype,PyString_AsString(PyList_GetItem(output,0)));
-      strcpy(name,PyString_AsString(PyList_GetItem(output,1)));
-      strcpy(resn,PyString_AsString(PyList_GetItem(output,2)));
-      strcpy(chain,PyString_AsString(PyList_GetItem(output,3)));
-      strcpy(resi,PyString_AsString(PyList_GetItem(output,4)));
-      q=PyFloat_AsDouble(PyList_GetItem(output,8));
-      b=PyFloat_AsDouble(PyList_GetItem(output,9));
-      strcpy(segi,PyString_AsString(PyList_GetItem(output,10)));
+
+  dict = PyDict_New();
+
+  PConvStringToPyDictItem(dict,"type",atype);
+  PConvStringToPyDictItem(dict,"name",at->name);
+  PConvStringToPyDictItem(dict,"resn",at->resn);
+  PConvStringToPyDictItem(dict,"resi",at->resi);
+  PConvStringToPyDictItem(dict,"chain",at->chain);
+  PConvStringToPyDictItem(dict,"segi",at->segi);
+  PConvFloatToPyDictItem(dict,"q",at->q);
+  PConvFloatToPyDictItem(dict,"b",at->b);
+
+  PyRun_String(expr,Py_single_input,P_globals,dict);
+  if(PyErr_Occurred()) {
+    PyErr_Print();
+    result=false;
+  } else {
+    result=true;
+    if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"type"),atype,6)) 
+      result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"name"),name,sizeof(AtomName)-1))
+      result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"resn"),resn,sizeof(ResName)-1))
+      result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"resi"),resi,sizeof(ResIdent)-1))
+      result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"segi"),segi,sizeof(SegIdent)-1))
+      result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"chain"),chain,sizeof(Chain)-1))
+      result=false;
+    else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"b"),&b))
+      result=false;
+    else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"q"),&q))
+      result=false;
+    if(PyErr_Occurred()) {
+      PyErr_Print();
+      result=false;
+    }
+    if(result) { 
+      at->hetatm=((atype[0]=='h')||(atype[0]=='H'));
       strcpy(at->name,name);
-      strcpy(at->resi,resi);
       strcpy(at->chain,chain);
       strcpy(at->resn,resn);
-      at->b = b;
-      at->q = q;
+      strcpy(at->resi,resi);
       strcpy(at->segi,segi);
-      at->hetatm = (strcmp(atype,"HETATM")==0);
-      /*    printf("%s %s %s %s %s %8.3f %8.3f %s\n",
-            atype,name,resi,chain,resn,q,b,segi);*/
-      Py_DECREF(output);
+      strcpy(at->chain,chain);
+      at->b=b;
+      at->q=q;
     } else {
-      result = -1;
+      ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
     }
-    PLockAPIAndUnblock();
-    return(result);
+  } 
+  Py_DECREF(dict);
+  PLockAPIAndUnblock();
+  return(result);
 }
 
 void PUnlockAPIAsGlut(void)
@@ -256,6 +326,7 @@ void PInit(void)
   PRunString("import util\n");  
   PRunString("import sglite\n"); 
   PRunString("import string\n"); 
+  PRunString("import traceback\n"); 
 
   /* backwards compatibility */
 

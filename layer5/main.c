@@ -438,7 +438,6 @@ void launch(void)
 #ifndef _PYMOL_MODULE
 int main(int argc, char *argv[])
 {
-  int flags=-1;
   myArgc=argc;
   myArgv=argv;
 

@@ -33,6 +33,8 @@ void PParse(char *str);
 #define cLockOutbox 3
 
 int PAlterAtom(AtomInfoType *at,char *expr);
+int PAlterAtomState(float *v,char *expr);
+
 void PSleep(int usec);
 
 void PLockAPIAsGlut(void);
@@ -51,6 +53,7 @@ void PStereoOff(void);
 void PDefineFloat(char *name,float value);
 
 void PRunString(char *str);
+void PDumpTraceback(PyObject *err);
 
 extern PyObject *P_globals;
 

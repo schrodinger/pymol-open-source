@@ -179,7 +179,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 		  a1=cs->AtmToIdx[b1];
 		  a2=cs->AtmToIdx[b2];
 		  
-		  if((a1>=0)&&(a2>=00))
+		  if((a1>=0)&&(a2>=0))
 			 {
 				s1=obj->AtomInfo[b1].visRep[cRepLine];
 				s2=obj->AtomInfo[b2].visRep[cRepLine];

@@ -625,8 +625,8 @@ DESCRIPTION
 the python evaluator with a separate name space for each atom.  The
 symbols defined in the name space are:
  
-   name, resn, resi, chain, x, y, z,
-   q, b, segi, and type (0=ATOM,1=HETATM) 
+   name, resn, resi, chain,
+   q, b, segi, and type (ATOM,HETATM) 
  
 All strings in the expression must be explicitly quoted.  This
 operation typically takes several seconds per thousand atoms altered.
@@ -643,6 +643,31 @@ EXAMPLES
    try:
       lock()
       r = _cmd.alter(sele,expr)
+   finally:
+      unlock()   
+   return r
+
+def alter_state(state,sele,expr):
+   '''
+DESCRIPTION
+ 
+"alter_state" changes the atomic coordinates of a particular state
+using the python evaluator with a separate name space for each atom.
+The symbols defined in the name space are:
+ 
+   x,y,z
+ 
+USAGE
+ 
+   alter_state state,(selection),expression
+ 
+EXAMPLES
+ 
+   alter 1,(all),x=x+5
+   '''
+   try:
+      lock()
+      r = _cmd.alter_state(int(state)-1,sele,expr)
    finally:
       unlock()   
    return r
@@ -724,41 +749,6 @@ OBSOLETE - TO BE REMOVED
    finally:
       unlock()
    return r
-
-def _alter_do(at):
-   '''
-INTERNAL
-   '''
-   ns = {'type': at[1],
-         'name': at[2],
-         'resn': at[3],
-         'chain': at[4],
-         'resi': at[5],
-         'x': at[6],
-         'y': at[7],
-         'z': at[8],
-         'q': at[9],
-         'b': at[10],
-         'segi': at[11]}
-   exec at[0] in pymol.__dict__,ns
-   type = string.upper(string.strip(ns['type']))
-   type = type[:6]
-   name = string.upper(string.strip(ns['name']))
-   name = name[:4]
-   resn = string.upper(string.strip(ns['resn']))
-   resn = resn[:3]
-   chain = string.upper(string.strip(ns['chain']))
-   chain = chain[:1]
-   resi = string.upper(string.strip(str(ns['resi'])))
-   resi = resi[:4]
-   x = float(ns['x'])
-   y = float(ns['y'])
-   z = float(ns['z'])
-   b = float(ns['b'])
-   q = float(ns['q'])
-   segi = string.strip(ns['segi'])
-   segi = segi[:4]
-   return [type,name,resn,chain,resi,x,y,z,q,b,segi]
 
 def setup_global_locks():
    '''
@@ -1819,6 +1809,41 @@ PYMOL API
       unlock()
    return r
 
+
+def create(*arg):
+   '''
+DESCRIPTION
+  
+   "create" creates a new object from a selection
+ 
+   NOTE: not yet debugged!!!!!!!
+ 
+USAGE
+ 
+   create name = (selection) [,source_state [,target_state] ]
+ 
+PYMOL API
+  
+   cmd.create(string name,string selection,int state,int target_state)
+   '''
+   name = arg[0]
+   argst = string.join(arg[1:],',')
+   arg = _split(argst,',')
+   source = -1
+   target = -1
+   la = len(arg)
+   sele = arg[0]
+   if la>1:
+      source = int(arg[1])
+   if la>2:
+      target = int(arg[2])
+   try:
+      lock()
+      _cmd.create(name,sele,source,target)
+   finally:
+      unlock()
+   return None
+
 def get_feedback():
    l = []
    try:
@@ -2340,6 +2365,7 @@ def null():
 
 keyword = { 
    'alter'         : [alter        , 2 , 2 , ',' , 0 ],
+   'alter_state'   : [alter_state  , 3 , 3 , ',' , 0 ],
    'api'           : [api          , 0 , 0 , ',' , 0 ],
    'backward'      : [backward     , 0 , 0 , ',' , 0 ],
    'clip'          : [clip         , 2 , 2 , ',' , 0 ],
@@ -2347,7 +2373,8 @@ keyword = {
    'color'         : [color        , 1 , 2 , ',' , 0 ],
    'commands'      : [commands     , 0 , 0 , ',' , 0 ],
    'copy'          : [copy         , 2 , 2 , '=' , 0 ],
-   'count_states'  : [count_states , 0 , 1 , ',' , 0 ],   
+   'count_states'  : [count_states , 0 , 1 , ',' , 0 ],
+   'create'        : [create       , 2 , 2 , '=' , 0 ],   
    'delete'        : [delete       , 1 , 1 , ',' , 0 ],
    'disable'       : [disable      , 0 , 1 , ',' , 0 ],
    'dist'          : [dist         , 0 , 2 , '=' , 0 ],

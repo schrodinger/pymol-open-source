@@ -36,6 +36,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag);
 float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2);
 DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,float cutoff);
 int SelectorGetSeleNCSet(int sele);
+void SelectorCreateObjectMolecule(int sele,char *name,int target_state,int state);
 
 
 #endif

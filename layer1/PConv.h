@@ -39,9 +39,20 @@ Z* -------------------------------------------------------------------
 */
 
 PyObject *PConvFloatVLAToPyList(float *f);
+
+void PConvFloatToPyDictItem(PyObject *dict,char *key,float f);
+void PConvStringToPyDictItem(PyObject *dict,char *key,char *f);
+void PConvIntToPyDictItem(PyObject *dict,char *key,int i);
+
+int PConvPyObjectToFloat(PyObject *object,float *value);
+int PConvPyObjectToInt(PyObject *object,int *value);
+int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln);
+
 PyObject *PConvStringListToPyList(int l,char **str);
 
+
 void PConv44PyListTo44f(PyObject *src,float *dest); /* note loss of precision */
+
 
 #endif
 

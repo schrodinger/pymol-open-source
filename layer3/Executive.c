@@ -245,6 +245,17 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
   return(result);
 }
 /*========================================================================*/
+void ExecutiveSeleToObject(char *name,char *s1,int source,int target)
+{
+  int sele1;
+
+  sele1=SelectorIndexByName(s1);
+
+  if(sele1>=0) {
+    SelectorCreateObjectMolecule(sele1,name,target,source);
+  }
+}
+/*========================================================================*/
 void ExecutiveCopy(char *src,char *dst)
 {
   Object *os;
@@ -367,6 +378,26 @@ void ExecutiveAlter(char *s1,char *expr)
     ErrOk(" Alter",buffer);
   } else {
     ErrMessage("ExecutiveAlter","No atoms selected.");
+  }
+}
+/*========================================================================*/
+void ExecutiveAlterState(int state,char *s1,char *expr)
+{
+  int sele1;
+  char buffer[255];
+  ObjectMoleculeOpRec op1;
+  
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op1.code = OMOP_AlterState;
+    op1.s1 = expr;
+    op1.i1 = 0;
+    op1.i2 = state;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+    sprintf(buffer,"modified %i atoms.",op1.i1);
+    ErrOk(" Alter",buffer);
+  } else {
+    ErrMessage("ExecutiveAlterState","No atoms selected.");
   }
 }
 /*========================================================================*/
@@ -731,7 +762,11 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
         }
       }
     }
+    op2.i1=0;
 	 op2.code = OMOP_SUMC;
+	 op2.v1[0]=0.0;
+	 op2.v1[1]=0.0;
+	 op2.v1[2]=0.0;
     ExecutiveObjMolSeleOp(sele,&op2);
     if(op2.i1) {
       op2.v1[0]/=op2.i1;
@@ -1189,6 +1224,12 @@ void ExecutiveManageObject(Object *obj)
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
   char buffer[255];
+  while(ListIterate(I->Spec,rec,next,SpecList))
+	 {
+		if(rec->obj==obj) {
+        return; /* this object is already managed by the executive */
+      }
+	 }
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
 		if(rec->type==cExecObject)

@@ -55,6 +55,9 @@ double length3d ( double *v1 );
 void min3f ( float *v1, float *v2, float *v3 );
 void max3f ( float *v1, float *v2, float *v3 );
 
+void dump3f( float *v, char *prefix );
+void dump33f( float *m, char *prefix );
+
 /* REVISED Matrix Routines using  float pointers */
 
 void identity44f ( float *m1 );
