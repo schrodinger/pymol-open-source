@@ -224,8 +224,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_cartoon_discrete_colors     125
 #define cSetting_normalize_ccp4_maps         126
 #define cSetting_surface_poor                127
+#define cSetting_internal_feedback           128
 
-#define cSetting_INIT                        128
+#define cSetting_INIT                        129
 
 #endif
 

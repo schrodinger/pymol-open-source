@@ -669,7 +669,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 
 }
 
-void PGetOptions(int *pmgui,int *internal_gui,int *show_splash)
+void PGetOptions(int *pmgui,int *internal_gui,int *show_splash,int *internal_feedback)
 {
   PyObject *pymol,*invocation,*options;
 
@@ -684,8 +684,12 @@ void PGetOptions(int *pmgui,int *internal_gui,int *show_splash)
 
   (*pmgui) = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
   (*internal_gui) = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
+  (*internal_feedback) = PyInt_AsLong(PyObject_GetAttrString(options,"internal_feedback"));
   (*show_splash) = PyInt_AsLong(PyObject_GetAttrString(options,"show_splash"));
   
+  if(PyErr_Occurred()) {
+    PyErr_Print();
+  }
 }
 
 void PRunString(char *str) /* runs a string in the global PyMOL module namespace */

@@ -59,8 +59,8 @@ static void MainDrawLocked(void);
 
 GLuint obj;
 
-static GLint WinX = 640+160;
-static GLint WinY = 480+cOrthoBottomSceneMargin;
+static GLint WinX = 640;
+static GLint WinY = 480;
 static GLint Modifiers = 0;
 
 static char **myArgv,*myArgvv[2],myArgvvv[1024];
@@ -84,7 +84,8 @@ int PyMOLReady = false;
 int PyMOLTerminating = false;
 int PMGUI = true;
 int StereoCapable=false;
-int InternalGUI=true;
+static int InternalGUI = true;
+static int InternalFeedback = true;
 int ShowSplash=true;
 
 void launch(void);
@@ -257,9 +258,19 @@ void MainReshape(int width, int height) /* called by Glut */
 /*========================================================================*/
 void MainDoReshape(int width, int height) /* called internally */
 {
-
-  if(width<0) width=WinX;
-  if(height<0) height=WinY;
+  int h,w;
+  int internal_feedback;
+  if(width<0) {
+    BlockGetSize(SceneGetBlock(),&width,&h);
+    if(SettingGet(cSetting_internal_gui))
+      width+=SettingGet(cSetting_internal_gui_width);
+  }
+  if(height<0) { 
+    BlockGetSize(SceneGetBlock(),&w,&height);
+    internal_feedback = SettingGet(cSetting_internal_feedback);
+    if(internal_feedback)
+      height+=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
+  }
   if(PMGUI) {
     p_glutReshapeWindow(width,height);
     glViewport(0, 0, (GLint) width, (GLint) height);
@@ -311,6 +322,7 @@ static void MainInit(void)
   UtilInit();
   SettingInitGlobal();  
   SettingSet(cSetting_internal_gui,InternalGUI);
+  SettingSet(cSetting_internal_feedback,InternalFeedback);
   SphereInit();
   ColorInit();
   OrthoInit(ShowSplash);
@@ -471,6 +483,11 @@ void launch(void)
     } else {
       StereoCapable = 1;
     }
+    
+    if(InternalGUI)
+      WinX+=cOrthoRightSceneMargin;
+    if(InternalFeedback)
+      WinY+=cOrthoBottomSceneMargin;
 
     p_glutInitWindowPosition(0, 175);
     p_glutInitWindowSize(WinX, WinY);
@@ -548,7 +565,7 @@ int was_main(void)
 
 #endif  
 
-  PGetOptions(&PMGUI,&InternalGUI,&ShowSplash);
+  PGetOptions(&PMGUI,&InternalGUI,&ShowSplash,&InternalFeedback);
   launch();
 
   return 0;

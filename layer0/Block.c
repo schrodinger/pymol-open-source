@@ -18,6 +18,12 @@ Z* -------------------------------------------------------------------
 #include"Block.h"
 #include"main.h"
 
+void BlockGetSize(Block *I,int *width,int *height)
+{
+  *width=I->rect.right-I->rect.left;
+  *height=I->rect.top-I->rect.bottom;
+}
+/*========================================================================*/
 void BlockInit(Block *I)
 {
   I->BackColor[0]=0.2;

@@ -43,6 +43,8 @@ Block *BlockRecursiveFind(Block *block,int x,int y);
 void BlockSetMargin(Block *block,int t,int l,int b,int r);
 void BlockReshape(Block *block,int width, int height);
 void BlockFill(Block *I);
+void BlockGetSize(Block *I,int *width,int *height);
 void BlockOutline(Block *I);
 void BlockInit(Block *I);
+
 #endif

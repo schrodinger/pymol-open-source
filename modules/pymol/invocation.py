@@ -29,6 +29,7 @@ options.stereo_capable = 0
 options.deferred = []
 options.no_gui = 0
 options.internal_gui = 1
+options.internal_feedback = 1
 options.external_gui = 1
 options.gui = 'pmg_tk'
 options.show_splash = 1
@@ -55,6 +56,8 @@ def parse_args(argv):
             options.show_splash = 0
          if "i" in a:
             options.internal_gui = 0
+         if "j" in a:
+            options.internal_feedback = int(av.pop())
          if "x" in a:
             options.external_gui = 0
          if "t" in a:

@@ -560,6 +560,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     OrthoDirty();
   case cSetting_internal_gui_width:
   case cSetting_internal_gui:
+  case cSetting_internal_feedback:
     sprintf(command,"viewport");
     OrthoCommandIn(command);
   default:
@@ -946,7 +947,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_rect_width, 0.4);
 
-  SettingSet_f(I,cSetting_internal_gui_width, 160);
+  SettingSet_f(I,cSetting_internal_gui_width, cOrthoRightSceneMargin);
 
   SettingSet_f(I,cSetting_internal_gui, 1.0);
 
@@ -1005,6 +1006,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_normalize_ccp4_maps, 1.0);  
 
   SettingSet_f(I,cSetting_surface_poor, 0.89);  
+
+  SettingSet_f(I,cSetting_internal_feedback, 1.00);  /* this has no effect - set by invocation.py */
 
 }
 
