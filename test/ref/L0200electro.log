@@ -23,6 +23,9 @@ PyMOL>hide
 PyMOL>show surf,molb
 PyMOL>ramp_new e_pot,e_map,[-10,0,10]
  Executive: object "e_pot" created.
+PyMOL>refresh
+ RepSurface: 13016 surface points.
+ RepSurface: 16602 triangles.
 PyMOL>isomesh pos,e_map,0.4
  Executive: object "pos" created.
  Isomesh: created "pos", setting level to 0.400
@@ -31,7 +34,14 @@ PyMOL>color blue,pos
 PyMOL>isomesh neg,e_map,-0.4
  Executive: object "neg" created.
  Isomesh: created "neg", setting level to -0.400
+PyMOL>refresh
+ ObjectMesh: updating "pos".
+ IsosurfVolume: Surface generated using 14784 lines.
+ ObjectMesh: updating "neg".
+ IsosurfVolume: Surface generated using 27896 lines.
 PyMOL>color red,neg
  Executive: Colored 1 object.
 PyMOL>color e_pot,molb
  Executive: Colored 962 atoms and 1 object.
+PyMOL>ray renderer=2
+ RayRenderTest: obtained 58101 graphics primitives.
