@@ -276,7 +276,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_sculpt_hb_overlap           175
 #define cSetting_sculpt_hb_overlap_base      176
 #define cSetting_legacy_vdw_radii            177
-#define cSetting_INIT                        178
+#define cSetting_sculpt_memory               178
+#define cSetting_INIT                        179
 
 #endif
 

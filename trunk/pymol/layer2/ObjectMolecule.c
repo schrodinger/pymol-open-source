@@ -172,6 +172,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL,*ai;
   AtomInfoType068 *atInfo068 = NULL;
+  AtomInfoType076 *atInfo076 = NULL;
   BondType *bond=NULL;
   BondType068 *bond068=NULL;
 
@@ -200,7 +201,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
     PRINTFD(FB_ObjectMolecule)
       " ObjectMolPMO2CoordSet: loading atom info %d bytes = %8.3f\n",size,((float)size)/sizeof(AtomInfoType)
       ENDFD;
-    if(version<67) {
+    if(version<66) {
       PRINTFB(FB_ObjectMolecule,FB_Errors)
         " ObjectMolecule: unsupported binary file (version %d). aborting.\n",
         version
@@ -213,6 +214,14 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
       VLACheck(atInfo,AtomInfoType,nAtom);
       UtilExpandArrayElements(atInfo068,atInfo,nAtom,sizeof(AtomInfoType068),sizeof(AtomInfoType));
       FreeP(atInfo068);
+    } else if(version<77) { /* legacy atom format */
+      nAtom = size/sizeof(AtomInfoType076);
+      atInfo076 = Alloc(AtomInfoType076,nAtom);
+      ok = RawReadInto(pmo,cRaw_AtomInfo1,size,(char*)atInfo076);
+      VLACheck(atInfo,AtomInfoType,nAtom);
+      UtilExpandArrayElements(atInfo076,atInfo,nAtom,sizeof(AtomInfoType076),sizeof(AtomInfoType));
+      FreeP(atInfo076);
+      
     } else {
       nAtom = size/sizeof(AtomInfoType);
       VLACheck(atInfo,AtomInfoType,nAtom);
@@ -274,7 +283,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
       if(ok) {
 
         /* legacy bond format */
-        if(version<67) {
+        if(version<66) {
           PRINTFB(FB_ObjectMolecule,FB_Errors)
             " ObjectMolecule: unsupported binary file (version %d). aborting.\n",
             version
@@ -285,7 +294,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
           bond068 = Alloc(BondType068,nBond);
           ok = RawReadInto(pmo,cRaw_Bonds1,nBond*sizeof(BondType068),(char*)bond068);
           bond=VLAlloc(BondType,nBond);
-          UtilExpandArrayElements(bond068,bond,nAtom,
+          UtilExpandArrayElements(bond068,bond,nBond,
                                   sizeof(BondType068),sizeof(BondType));
           FreeP(bond068);
           for(a=0;a<nBond;a++) bond[a].id=-1; /* initialize identifiers */

@@ -508,7 +508,7 @@ class PMGApp(AbstractApp):
       cmd.set("sphere_scale","0.5","sculpt")
       cmd.set("sphere_transparency","0.5","sculpt")
       cmd.set("sphere_color","grey","sculpt")
-      cmd.sculpt_imprint("sculpt")
+      cmd.sculpt_activate("sculpt")
       cmd.set("sculpting","1")
       cmd.do("edit_mode")
       cmd.set("valence","0.05")
@@ -1278,11 +1278,15 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Sculpt', 'command', 'Imprint Geometry',
                                label='Imprint Geometry',
-                               command = lambda: cmd.do("_ sculpt_imprint all"))
+                               command = lambda: cmd.do("_ sculpt_activate all"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'Deactivate',
+                               label='Deactivate',
+                               command = lambda: cmd.do("_ sculpt_deactivate all"))
 
       self.menuBar.addmenuitem('Sculpt', 'command', 'Clear Memory',
                                label='Clear Memory',
-                               command = lambda: cmd.do("_ sculpt_clear all"))
+                               command = lambda: cmd.do("_ sculpt_purge"))
 
       self.menuBar.addmenuitem('Sculpt', 'separator', '')
 

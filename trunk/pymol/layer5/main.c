@@ -49,6 +49,7 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include"main.h"
 #include"Editor.h"
+#include"SculptCache.h"
 
 void MainFree(void);
 void MainTest(void);
@@ -336,6 +337,7 @@ static void MainInit(void)
   SelectorInit();
   MovieInit();
   SceneInit();
+  SculptCacheInit();
   ExecutiveInit();
   RepMeshInit();
   EditorInit();  
@@ -349,6 +351,7 @@ void MainFree(void)
 
   EditorFree();
   ExecutiveFree();
+  SculptCacheFree();
   SceneFree();
   MovieFree();
   SelectorFree();

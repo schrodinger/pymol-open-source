@@ -847,8 +847,9 @@ from editing import \
      rename,             \
      replace,            \
      rotate,             \
-     sculpt_clear,       \
-     sculpt_imprint,     \
+     sculpt_purge,       \
+     sculpt_deactivate,  \
+     sculpt_activate,    \
      sculpt_iterate,     \
      set_dihedral,       \
      set_geometry,       \
@@ -1111,8 +1112,9 @@ keyword = {
    'rms'           : [ rms               , 0 , 0 , ''  , parsing.STRICT ],
    'rms_cur'       : [ rms_cur           , 0 , 0 , ''  , parsing.STRICT ],
    'save'          : [ save              , 0 , 0 , ''  , parsing.STRICT ],
-   'sculpt_clear'  : [ sculpt_clear      , 0 , 0 , ''  , parsing.STRICT ],
-   'sculpt_imprint': [ sculpt_imprint    , 0 , 0 , ''  , parsing.STRICT ],
+   'sculpt_purge'  : [ sculpt_purge      , 0 , 0 , ''  , parsing.STRICT ],   
+   'sculpt_deactivate': [ sculpt_deactivate , 0 , 0 , ''  , parsing.STRICT ],
+   'sculpt_activate': [ sculpt_activate  , 0 , 0 , ''  , parsing.STRICT ],
    'sculpt_iterate': [ sculpt_iterate    , 0 , 0 , ''  , parsing.STRICT ],
    'select'        : [ select            , 0 , 0 , ''  , parsing.LEGACY ],
    'set'           : [ set               , 0 , 0 , ''  , parsing.LEGACY ],
