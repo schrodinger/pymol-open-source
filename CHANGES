@@ -237,7 +237,7 @@ Changes up to 0.91
      non-canonical PDB residues
    
    * retain_order: enable and sort to preserve input atom ordering.
-      NOTE: may break some residue-based operations from working
+      NOTE: may prevent some residue-based operations from working
    
    * Fixed processor mis-detection bug on Linux with certain P4s
 
