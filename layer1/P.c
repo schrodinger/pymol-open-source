@@ -758,7 +758,6 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   PyObject_SetAttrString(sys,"argv",args);
 
   PXDecRef(PyObject_CallMethod(invocation,"parse_args","O",args)); /* parse the arguments */
-  PyRun_SimpleString("f=open('/xxx.txt','w'); f.close()");
 
 }
 
