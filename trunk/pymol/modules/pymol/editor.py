@@ -130,6 +130,7 @@ def attach_amino_acid(selection,amino_acid):
          cmd.delete(tmp_ed_save)
       elif cmd.count_atoms("((%s) and elem h)"%selection,quiet=1):
          print " Error: please pick a nitrogen or carbonyl carbon to grow from."
+         cmd.delete(tmp_editor)
          raise QuietException
      
    cmd.delete(tmp_editor)

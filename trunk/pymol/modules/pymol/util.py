@@ -213,7 +213,7 @@ def ray_shadows(mode):
       cmd.set('reflect_power',1.0)
       cmd.set('spec_reflect',0.60) # was 0.53
       cmd.set('spec_power',90) # was 60
-      cmd.set('ambient',0.08)
+      cmd.set('ambient',0.03) # was 0.08
       cmd.set('reflect',0.75) # was 0.70
       cmd.set('direct',0.06)
       cmd.set('power',0.3)
