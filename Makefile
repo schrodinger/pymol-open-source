@@ -82,7 +82,7 @@ partial:
 
 clean: 
 	touch .no_fail
-	/bin/rm -f layer*/*.o layer*/*.p modules/*/*.pyc \
+	/bin/rm -f layer*/*.o layer*/*.p modules/*/*.pyc modules/*/*/*.pyc \
 	layer*/.files layer*/.depends layer*/.includes \
 	*.log core */core game.* log.* _cmd.def .update .contrib .no_fail*
 	cd contrib;$(MAKE) clean
