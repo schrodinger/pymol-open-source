@@ -2806,6 +2806,56 @@ void ExecutiveRenderSelections(int curState)
   }
 }
 /*========================================================================*/
+int ExecutiveGetDistance(char *s0,char *s1,float *value,int state)
+{
+  Vector3f v0,v1;
+  int sele0=-1,sele1=-1;
+  int ok=true;
+
+  if((sele0 = SelectorIndexByName(s0))<0)
+    ok = ErrMessage("GetDistance","Selection 1 invalid.");    
+  else if((sele1 = SelectorIndexByName(s1))<0)
+    ok = ErrMessage("GetDistance","Selection 2 invalid.");    
+  if(ok) {
+    if (!SelectorGetSingleAtomVertex(sele0,state,v0))
+      ok = ErrMessage("GetDistance","Selection 1 doesn't contain a single atom/vertex.");
+    if (!SelectorGetSingleAtomVertex(sele1,state,v1))
+      ok = ErrMessage("GetDistance","Selection 2 doesn't contain a single atom/vertex.");
+  }
+  if(ok) {
+    (*value)=diff3f(v0,v1);
+  }
+  return ok;
+}
+/*========================================================================*/
+int ExecutiveGetAngle(char *s0,char *s1,char *s2,float *value,int state)
+{
+  Vector3f v0,v1,v2;
+  int sele0=-1,sele1=-1,sele2=-1;
+  int ok=true;
+  float d1[3],d2[3];
+  if((sele0 = SelectorIndexByName(s0))<0)
+    ok = ErrMessage("GetAngle","Selection 1 invalid.");    
+  else if((sele1 = SelectorIndexByName(s1))<0)
+    ok = ErrMessage("GetAngle","Selection 2 invalid.");    
+  else if((sele2 = SelectorIndexByName(s2))<0)
+    ok = ErrMessage("GetAngle","Selection 3 invalid.");
+  if(ok) {
+    if (!SelectorGetSingleAtomVertex(sele0,state,v0))
+      ok = ErrMessage("GetAngle","Selection 1 doesn't contain a single atom/vertex.");          
+    if (!SelectorGetSingleAtomVertex(sele1,state,v1))
+      ok = ErrMessage("GetAngle","Selection 2 doesn't contain a single atom/vertex.");          
+    if (!SelectorGetSingleAtomVertex(sele2,state,v2))
+      ok = ErrMessage("GetAngle","Selection 3 doesn't contain a single atom/vertex.");          
+  }
+  if(ok) {
+    subtract3f(v0,v1,d1);
+    subtract3f(v2,v1,d2);
+    (*value)=rad_to_deg(get_angle3f(d1,d2));
+  }
+  return ok;
+}
+/*========================================================================*/
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state)
 {
   Vector3f v0,v1,v2,v3;

@@ -2664,6 +2664,61 @@ static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
   return(APISuccess());
 }
 
+static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
+{
+  char *str1,*str2,*str3;
+  float result;
+  int int1;
+  OrthoLineType s1,s2,s3;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&str3,&int1);
+  
+  if (ok) {
+    APIEntry();
+    SelectorGetTmp(str1,s1);
+    SelectorGetTmp(str2,s2);
+    ok = ExecutiveGetDistance(s1,s2,&result,int1);
+    SelectorFreeTmp(s1);
+    SelectorFreeTmp(s2);
+    APIExit();
+  }
+  
+  if(ok) {
+    return(Py_BuildValue("f",result));
+  } else {
+    return APIFailure();
+  }
+}
+
+
+static PyObject *CmdGetAngle(PyObject *self, 	PyObject *args)
+{
+  char *str1,*str2,*str3;
+  float result;
+  int int1;
+  OrthoLineType s1,s2,s3;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"sssi",&str1,&str2,&str3,&int1);
+  
+  if (ok) {
+    APIEntry();
+    SelectorGetTmp(str1,s1);
+    SelectorGetTmp(str2,s2);
+    SelectorGetTmp(str3,s3);
+    ok = ExecutiveGetAngle(s1,s2,s3,&result,int1);
+    SelectorFreeTmp(s1);
+    SelectorFreeTmp(s2);
+    SelectorFreeTmp(s3);
+    APIExit();
+  }
+  
+  if(ok) {
+    return(Py_BuildValue("f",result));
+  } else {
+    return APIFailure();
+  }
+}
+
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
 {
   char *str1,*str2,*str3,*str4;
@@ -4635,12 +4690,14 @@ static PyMethodDef Cmd_methods[] = {
    {"full_screen",           CmdFullScreen,           METH_VARARGS },
    {"fuse",                  CmdFuse,                 METH_VARARGS },
 	{"get",	                 CmdGet,                  METH_VARARGS },
+	{"get_angle",             CmdGetAngle,             METH_VARARGS },
 	{"get_area",              CmdGetArea,              METH_VARARGS },
    {"get_atom_coords",       CmdGetAtomCoords,        METH_VARARGS },
    {"get_bond_print",        CmdGetBondPrint,         METH_VARARGS },
 	{"get_chains",            CmdGetChains,            METH_VARARGS },
 	{"get_color",             CmdGetColor,             METH_VARARGS },
    {"get_colorection",       CmdGetColorection,       METH_VARARGS },   
+	{"get_distance",          CmdGetDistance,          METH_VARARGS },
 	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
 	{"get_frame",             CmdGetFrame,             METH_VARARGS },
 	{"get_feedback",          CmdGetFeedback,          METH_VARARGS },

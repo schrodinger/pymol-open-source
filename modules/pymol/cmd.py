@@ -1159,6 +1159,7 @@ SEE ALSO
         distance,           \
         export_dots,        \
         find_pairs,         \
+        get_angle,          \
         get_area,           \
         get_chains,         \
         get_color_indices,  \
@@ -1166,6 +1167,7 @@ SEE ALSO
         get_color_tuple,    \
         get_atom_coords,    \
         get_dihedral,       \
+        get_distance,       \
         get_extent,         \
         get_model,          \
         get_movie_locked,   \
@@ -1481,10 +1483,12 @@ SEE ALSO
       'full_screen'   : [ full_screen       , 0 , 0 , ''  , parsing.STRICT ],
       'fuse'          : [ fuse              , 0 , 0 , ''  , parsing.STRICT ],
       'frame'         : [ frame             , 0 , 0 , ''  , parsing.STRICT ],
-      'get'           : [ get               , 0 , 0 , ''  , parsing.STRICT ],      
+      'get'           : [ get               , 0 , 0 , ''  , parsing.STRICT ],
+      'get_angle'     : [ get_angle         , 0 , 0 , ''  , parsing.STRICT ],      
       'get_area'      : [ get_area          , 0 , 0 , ''  , parsing.STRICT ],
       'get_chains'    : [ get_chains        , 0 , 0 , ''  , parsing.STRICT ],
       'get_dihedral'  : [ get_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
+      'get_distance'  : [ get_distance      , 0 , 0 , ''  , parsing.STRICT ],
       'get_extent'    : [ get_extent        , 0 , 0 , ''  , parsing.STRICT ],
       'get_position'  : [ get_position      , 0 , 0 , ''  , parsing.STRICT ],
       'get_symmetry'  : [ get_symmetry      , 0 , 0 , ''  , parsing.STRICT ],
