@@ -16,6 +16,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_python
 #define _H_os_python
 
+#ifdef PYMOL_ICC_LINUX
+#include"/usr/include/bits/types.h" 
+#endif
+
 #include"Python.h"
 
 #endif

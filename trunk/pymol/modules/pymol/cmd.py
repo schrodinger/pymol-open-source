@@ -76,10 +76,11 @@ file_ext_re= re.compile(string.join([
    r"\.CC1$|\.CC2$|",
    r"\.pmo$|", # Experimental molecular object format
    r"\.PMO$|",
-   r"\.ccp4$|\.CCP4$" # CCP4   
+   r"\.ccp4$|\.CCP4$|", # CCP4
+   r"\.cex$|\.CEX$", # CEX format (used by metaphorics)
    ],''))
 
-safe_oname_re = re.compile(r"\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
+safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
    
 QuietException = parsing.QuietException
 
