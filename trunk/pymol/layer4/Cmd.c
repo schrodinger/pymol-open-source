@@ -176,6 +176,7 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdMask(PyObject *self, PyObject *args);
@@ -288,6 +289,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_names",             CmdGetNames,             METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
+	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
 	{"get_state",             CmdGetState,             METH_VARARGS },
 	{"get_type",              CmdGetType,              METH_VARARGS },
    {"get_view",              CmdGetView,              METH_VARARGS },
@@ -1427,6 +1429,18 @@ static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
   value=SettingGetNamed(str1);
   APIExit();
   result = Py_BuildValue("f", SettingGetNamed(str1));
+  return result;
+}
+
+static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
+{
+  PyObject *result;
+  int int1,int2;
+  char *str1;
+  PyArg_ParseTuple(args,"isi",&int1,&str1,&int2); /* setting, object, state */
+  APIEntry();
+  result =  ExecutiveGetSettingTuple(int1,str1,int2);
+  APIExit();
   return result;
 }
 

@@ -2,6 +2,11 @@
 import types
 from shortcut import Shortcut
 
+boolean_type = 1
+int_type     = 2
+float_type   = 3
+float3_type  = 4
+
 class SettingIndex:
    bonding_vdw_cutoff    =0
    min_mesh_spacing      =1
@@ -89,6 +94,14 @@ class SettingIndex:
 
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
+name_dict = {}
+lst = SettingIndex.__dict__.keys()
+lst = filter(lambda x:x[0]!='_',lst)
+lst = map(lambda x:(getattr(SettingIndex,x),x),lst)
+for a in lst:
+   name_dict[a[0]]=a[1]
+del lst
+
 def _get_index(name):
    # this may be called from C, so don't raise any exceptions...
    result = setting_sc.interpret(name)
@@ -100,4 +113,8 @@ def _get_index(name):
    else:
       return -1
 
-   
+def _get_name(index):
+   if name_dict.has_key(index):
+      return name_dict[index]
+   else:
+      return ""

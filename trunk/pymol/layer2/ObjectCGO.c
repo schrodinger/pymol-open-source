@@ -41,6 +41,7 @@ static void ObjectCGOFree(ObjectCGO *I) {
       CGOFree(I->State[a].ray);
   }
   VLAFreeP(I->State);
+  ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
 

@@ -311,7 +311,7 @@ static void MainInit(void)
 
   FeedbackInit();
   UtilInit();
-  SettingInit();  
+  SettingInitGlobal();  
   SphereInit();
   ColorInit();
   OrthoInit(ShowSplash);
@@ -335,7 +335,7 @@ void MainFree(void)
   MovieFree();
   SelectorFree();
   OrthoFree();
-  SettingFree();
+  SettingFreeGlobal();
   ColorFree();
   SphereDone();
   PFree();

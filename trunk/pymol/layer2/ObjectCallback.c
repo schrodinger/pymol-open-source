@@ -41,6 +41,7 @@ static void ObjectCallbackFree(ObjectCallback *I) {
     }
   }
   VLAFreeP(I->State);
+  ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
 

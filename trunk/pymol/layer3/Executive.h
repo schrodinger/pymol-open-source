@@ -94,6 +94,7 @@ void ExecutiveSetLastObjectEdited(Object *o);
 Object *ExecutiveGetLastObjectEdited(void);
 void ExecutiveFullScreen(int flag);
 void ExecutiveFocus(void);
+PyObject *ExecutiveGetSettingTuple(int index,char *object,int state);
 
 #endif
 

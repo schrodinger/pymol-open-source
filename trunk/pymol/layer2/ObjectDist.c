@@ -148,6 +148,7 @@ void ObjectDistFree(ObjectDist *I)
 		I->DSet[a]=NULL;
 	 }
   VLAFreeP(I->DSet);
+  ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
 

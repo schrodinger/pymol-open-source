@@ -4106,6 +4106,7 @@ void ObjectMoleculeFree(ObjectMolecule *I)
   VLAFreeP(I->Bond);
   for(a=0;a<=cUndoMask;a++)
     FreeP(I->UndoCoord[a]);
+  ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
 
