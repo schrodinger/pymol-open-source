@@ -109,14 +109,12 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 #define ExecGreyVisible 0.45F
 #define ExecGreyHidden 0.3F
 
-int  ExecutiveAssignSS(char *target,int state,char *context,int quiet)
+int  ExecutiveAssignSS(char *target,int state,char *context,int preserve,int quiet)
 {
   int sele0=-1;
   int sele1=-1;
   int ok = false;
   sele0 = SelectorIndexByName(target);
-  if(state<0)
-    state=0;
   if(sele0>=0) {
     if(!context[0]) {
       sele1=sele0;
@@ -125,7 +123,7 @@ int  ExecutiveAssignSS(char *target,int state,char *context,int quiet)
     }
 
     if(sele1>=0) {
-      ok =  SelectorAssignSS(sele0,sele1,state,quiet);
+      ok =  SelectorAssignSS(sele0,sele1,state,preserve,quiet);
     }
   }
   return(ok);
@@ -5221,6 +5219,8 @@ void ExecutiveDelete(char *name)
 				}
 		  }
 	 }
+  if(all_flag)
+    SelectorDefragment();
 }
 /*========================================================================*/
 void ExecutiveDump(char *fname,char *obj)

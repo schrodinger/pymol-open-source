@@ -4030,17 +4030,17 @@ static PyObject *CmdSort(PyObject *self, PyObject *args)
 static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
 /* EXPERIMENTAL */
 {
-  char *name;
   int ok=false;
   int state,quiet;
   char *str1,*str2;
+  int preserve;
   OrthoLineType s1,s2;
-  ok = PyArg_ParseTuple(args,"sisi",&str1,&state,&str2,&quiet);
+  ok = PyArg_ParseTuple(args,"sisii",&str1,&state,&str2,&preserve,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
     SelectorGetTmp(str2,s2);
-    ok = ExecutiveAssignSS(s1,state,s2,quiet);
+    ok = ExecutiveAssignSS(s1,state,s2,preserve,quiet);
     APIExit();
   }
   return(APIStatus(ok));
@@ -4376,6 +4376,7 @@ static PyMethodDef Cmd_methods[] = {
    {"flush_now",             CmdFlushNow,             METH_VARARGS },
    {"focus",                 CmdFocus,                METH_VARARGS },
    {"delete_colorection",    CmdDelColorection,       METH_VARARGS },   
+	{"dss",   	              CmdAssignSS,             METH_VARARGS },
    {"full_screen",           CmdFullScreen,           METH_VARARGS },
    {"fuse",                  CmdFuse,                 METH_VARARGS },
 	{"get",	                 CmdGet,                  METH_VARARGS },
@@ -4504,7 +4505,6 @@ static PyMethodDef Cmd_methods[] = {
    {"spectrum",              CmdSpectrum,             METH_VARARGS },
    {"spheroid",              CmdSpheroid,             METH_VARARGS },
 	{"splash",                CmdSplash,               METH_VARARGS },
-	{"ss",   	              CmdAssignSS,             METH_VARARGS },
 	{"stereo",	              CmdStereo,               METH_VARARGS },
 	{"system",	              CmdSystem,               METH_VARARGS },
 	{"symexp",	              CmdSymExp,               METH_VARARGS },

@@ -75,6 +75,9 @@ void SelectorReinit(void);
 PyObject *SelectorSecretsAsPyList(void);
 int SelectorSecretsFromPyList(PyObject *list);
 void SelectorMemoryDump(void);
-int SelectorAssignSS(int target,int present,int state,int quiet);
+int SelectorAssignSS(int target,int present,int state_value,int preserve,int quiet);
+
+int SelectorPurgeObjectMembers(ObjectMolecule *obj);
+void SelectorDefragment(void);
 
 #endif
