@@ -1349,7 +1349,7 @@ int SelectorMapCoulomb(int sele1,ObjectMap *oMap,float cutoff)
   int state1;
   int constant;
 
-  constant = 1.0;
+  constant = 1.0F;
 
   state1 = SceneGetState();
   c=0;

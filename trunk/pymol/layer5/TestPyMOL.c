@@ -41,7 +41,7 @@ int TestPyMOL_00_00(CTestPyMOL *I)
   for(a=0;a<3;a++) {
     md->Grid[a] = 0.1F;
     md->MinCorner[a] = 0.0F;
-    md->MaxCorner[a] = a+1;
+    md->MaxCorner[a] = a+1.0F;
   }
   md->init_mode = -2;
   
@@ -62,4 +62,5 @@ int TestPyMOLRun(CTestPyMOL *I,int group,int test)
     case 0: TestPyMOL_00_00(I); break;
     }
   }
+  return 1;
 }
