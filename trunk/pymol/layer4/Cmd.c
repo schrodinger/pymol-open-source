@@ -288,6 +288,20 @@ static PyObject *CmdDelColorection(PyObject *dummy, PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdSetColorectionName(PyObject *dummy, PyObject *args)
+{
+  int ok=true;
+  PyObject *list;
+  char *prefix,*new_prefix;
+  ok = PyArg_ParseTuple(args,"Oss",&list,&prefix,&new_prefix);
+  if (ok) {
+    APIEnterBlocked();
+    ok = SelectorColorectionSetName(TempPyMOLGlobals,list,prefix,new_prefix);
+    APIExitBlocked();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdSetColorection(PyObject *dummy, PyObject *args)
 {
   int ok=true;
@@ -5338,6 +5352,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },
 	{"sculpt_purge",          CmdSculptPurge,          METH_VARARGS },
    {"set_colorection",       CmdSetColorection,       METH_VARARGS },   
+   {"set_colorection_name",  CmdSetColorectionName,   METH_VARARGS },   
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 

@@ -143,7 +143,7 @@ PyMOL>fuse m1 and id 31,m2 and id 31
 PyMOL>dele m1
 PyMOL>zoom
 PyMOL>ray
- RayRenderTest: obtained 122 graphics primitives.
+ RayRenderTest: obtained 150 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol,m1
  ExecutiveLoad: "dat/small01.mol" loaded as "m1", through state 1.
@@ -156,7 +156,7 @@ PyMOL>fuse m1 and id 12,m2 and id 12
 PyMOL>dele m1
 PyMOL>zoom
 PyMOL>ray
- RayRenderTest: obtained 122 graphics primitives.
+ RayRenderTest: obtained 150 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
  ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.

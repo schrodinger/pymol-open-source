@@ -1419,6 +1419,7 @@ SEE ALSO
            set_color,          \
            set_colour,         \
            set_colorection,    \
+           set_colorection_name,\
            set_vis,            \
            set_view,           \
            show,               \

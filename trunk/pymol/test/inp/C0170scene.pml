@@ -70,6 +70,85 @@ scene *
 
 scene 1
 
+hide
+show lines
+color red
+scene 1, store
+count_atoms color red
+count_atoms color blue
+ray
+
+hide
+show sticks
+color blue
+scene 2, store
+
+count_atoms color red
+count_atoms color blue
+ray
+
+scene 1
+count_atoms color red
+count_atoms color blue
+ray
+
+scene 2
+count_atoms color red
+count_atoms color blue
+ray
+
+scene 2,rename,new_key=3
+
+scene 1
+count_atoms rep lines
+count_atoms color red
+count_atoms rep sticks
+count_atoms color blue
+ray
+
+scene 3
+count_atoms rep lines
+count_atoms color red
+count_atoms rep sticks
+count_atoms color blue
+ray
+
+scene 2
+count_atoms rep lines
+count_atoms color red
+count_atoms rep sticks
+count_atoms color blue
+ray
+
+scene 3
+hide
+color green
+show spheres
+scene auto, update
+count_atoms rep spheres
+count_atoms color green
+count_atoms rep lines
+count_atoms color red
+count_atoms rep sticks
+count_atoms color blue
+
+scene 1
+count_atoms rep spheres
+count_atoms color green
+count_atoms rep lines
+count_atoms color red
+count_atoms rep sticks
+count_atoms color blue
+
+scene 3
+count_atoms rep spheres
+count_atoms color green
+count_atoms rep lines
+count_atoms color red
+count_atoms rep sticks
+count_atoms color blue
+
+
 /print "END-LOG"
 
 

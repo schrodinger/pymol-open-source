@@ -100,6 +100,7 @@ ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals *G,int sele);
 
 PyObject *SelectorColorectionGet(PyMOLGlobals *G,char *prefix);
 int SelectorColorectionApply(PyMOLGlobals *G,PyObject *list,char *prefix);
+int SelectorColorectionSetName(PyMOLGlobals *G,PyObject *list,char *prefix,char *new_prefix);
 int SelectorColorectionFree(PyMOLGlobals *G,PyObject *list,char *prefix);
 void SelectorReinit(PyMOLGlobals *G);
 PyObject *SelectorSecretsAsPyList(PyMOLGlobals *G);
