@@ -114,6 +114,40 @@ Only "lines" representations can be picked.
    
 '''
 
+def release():
+   '''
+RELEASE NOTES
+
+PyMOL is an free, open, and expandable molecular graphics program writen
+by a computational scientist for the benefit of other scientists and
+developers in the fields of structural biology, molecular graphics,
+computational chemistry, modeling, and informatics.  
+
+This release of PyMOL is ONLY appropriate for those who prefer to use
+text commands and scripts, and for developers who want to integrate PyMOL's
+visualization and molecular editing capabilities into their own Python
+programs.
+
+PyMOL currently includes a diverse command language, a powerful application
+programmers interface (API), and a variety of mouse and keyboard driven
+functionality for viewing, animation, rendering, and molecular editing.
+
+However, this release of PyMOL does NOT include an adequate graphical
+user interface, menu bar, manual, test suite, or a complete help system.
+Such enhancements are in progress, but proceed at a slow pace.
+
+Two external GUI development options are supported for PyMOL:
+"Tkinter" and "wxPython".  Developers can take their pick.  I am committed 
+to insuring that PyMOL will work with both of them, but it is unlikely that
+I will have time to develop a complete external GUI myself any time soon.
+
+Note that only Tkinter is supported under Windows with the default PyMOL
+and Python distributions, so for maximum ease under windows, use Tkinter
+for the time being.
+
+Warren L. DeLano (2/16/2001), warren@delanoscientific.com
+'''
+
 def edit_keys():
    '''
 EDITING KEYS 
@@ -343,20 +377,20 @@ def launching():
    '''
 PyMOL COMMAND LINE OPTIONS 
  
-   pymol.com [-cistwx] <file.xxx> [-p <file.py> ] ...
+   pymol.com [-ciqstwx] <file.xxx> [-p <file.py> ] ...
  
-   -c   Command line mode, no GUI - great for batch opeations.
+   -c   Command line mode, no GUI.  For batch opeations.
 
    -s   Enable stereo mode (not currently autodetected).
 
    -r <file.py>[,global|local|module] Run a python program in on startup.
-   -l <file.py>[,global|local|module] Spawn a Python program in a thread.
+   -l <file.py>[,global|local|module] Spawn a python program in new thread.
    
    -i   Disable the internal OpenGL GUI (object list, menus, etc.)
-   
    -x   Disable the external GUI module.
    -t   Use Tcl/Tk based external GUI module (pmg_tk).
    -w   Use wxPython based external GUI module (pmg_wx).
+	-q   Quiet launch.  Suppress splash screen.
 
    <file> can have one of the following extensions, and all 
    files provided will be loaded or run after PyMOL starts.
@@ -604,7 +638,7 @@ def edit_mode(*arg):
       unlock()
    pass
 
-def config_mouse():
+def config_mouse(quiet=0):
    # NOTE: PyMOL automatically runs this routine upon start-up
    try:
       lock()
@@ -624,7 +658,8 @@ def config_mouse():
          button('l','ctsh','+lb')
          button('m','ctsh','orig')
          button('r','ctsh','+rb')
-         print " Mouse: configured for visualization."
+         if not quiet:
+            print " Mouse: configured for visualization."
       else:
          # editing
          button('l','','rota')
@@ -639,7 +674,8 @@ def config_mouse():
          button('l','ctsh','lb')
          button('m','ctsh','orig')
          button('r','ctsh','rb')
-         print " Mouse: configured for editing."
+         if not quiet:
+            print " Mouse: configured for editing."
    finally:
       unlock()
 
@@ -4103,7 +4139,7 @@ help_only = {  # for API-only features
    'mouse'         : [mouse        , 0 , 0 , ',' , 0 ],
    'examples'      : [examples     , 0 , 0 , ',' , 0 ],
    'read_molstr'   : [read_molstr  , 0 , 0 , ',' , 0 ],
-   
+   'release'       : [release      , 0 , 0 , ',' , 0 ],   
    'launching'     : [launching    , 0 , 0 , ',' , 0 ],
    'load_model'    : [load_model   , 0 , 0 , ',' , 0 ],
    'movies'        : [movies       , 0 , 0 , ',' , 0 ],
