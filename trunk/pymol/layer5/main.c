@@ -365,8 +365,10 @@ void MainFree(void)
   PFree();
   FeedbackFree();
 
-  MemoryDebugDump();
-  printf(" PyMOL: normal program termination.\n");
+  if(ShowSplash) {
+    MemoryDebugDump();
+    printf(" PyMOL: normal program termination.\n");
+  }
   
 #ifdef WIN32
   ExitProcess(0); /* Py_Exit hangs on WIN32 for some reason */
@@ -546,20 +548,23 @@ void launch(void)
     SceneSetCardInfo((char*)glGetString(GL_VENDOR),
                      (char*)glGetString(GL_RENDERER),
                      (char*)glGetString(GL_VERSION));
-    
-    printf(" OpenGL based graphics front end:\n");
-    printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
-    printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
-    printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
-    /*        printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));*/
-    if(StereoCapable) {
-      printf(" Hardware stereo capability detected.\n");
+    if(ShowSplash) {
+      
+      printf(" OpenGL based graphics front end:\n");
+      printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
+      printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
+      printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
+      /*        printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));*/
+      if(StereoCapable) {
+        printf(" Hardware stereo capability detected.\n");
+      }
     } 
     p_glutMainLoop();
     PBlock(); /* if we've gotten here, then we're heading back to Python... */
   } else {
     SceneSetCardInfo("none","ray trace only","none");
-    printf(" Command mode. No graphics front end.\n");
+    if(ShowSplash) 
+      printf(" Command mode. No graphics front end.\n");
     MainReshape(WinX,WinY);
     MainDraw(); /* for command line processing */
     while(1) {

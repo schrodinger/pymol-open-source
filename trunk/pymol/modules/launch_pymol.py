@@ -3,6 +3,13 @@ import threading
 import os
 import sys
 import time
+import __main__
+
+
+if hasattr(__main__,"pymol_argv"):
+   pymol_argv = __main__.pymol_argv
+else:
+   pymol_argv = sys.argv
 
 modules_path = os.environ['PYMOL_PATH']+'/modules'
 
@@ -11,7 +18,7 @@ if modules_path not in sys.path:
 
 import pymol
 
-pymol.invocation.parse_args(sys.argv)
+pymol.invocation.parse_args(pymol_argv)
 
 pymol.start_pymol()
 

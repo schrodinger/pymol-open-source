@@ -28,6 +28,7 @@ import glob
 import sys
 import os
 import setting
+import __main__
 
 from cmd import _feedback,fb_module,fb_mask
 
@@ -72,7 +73,6 @@ def parse(s):
       traceback.print_exc()
 #
    p_result = 1
-   local_names = {}
    com0[nest] = s
    try:
       com1[nest] = string.rstrip(com0[nest]) # strips trailing whitespace
@@ -164,9 +164,17 @@ def parse(s):
                               # spawn command
                               if len(args[nest])==1: # default: module
                                  parsing.run_as_module(args[nest][0],spawn=1)
+                              elif args[nest][1]=='main':
+                                 parsing.run_as_thread(args[nest][0],
+                                                       __main__.__dict__,
+                                                       __main__.__dict__)
+                              elif args[nest][1]=='private':
+                                 parsing.run_as_thread(args[nest][0],
+                                                       __main__.__dict__,
+                                                       {})
                               elif args[nest][1]=='local':
                                  parsing.run_as_thread(args[nest][0],
-                                                       pymol_names,local_names)
+                                                       pymol_names,{})
                               elif args[nest][1]=='global':
                                  parsing.run_as_thread(args[nest][0],
                                                        pymol_names,pymol_names)
@@ -176,8 +184,12 @@ def parse(s):
                               # run command
                               if len(args[nest])==1: # default: global
                                  execfile(args[nest][0],pymol_names,pymol_names)
+                              elif args[nest][1]=='main':
+                                 execfile(args[nest][0],__main__.__dict__,__main__.__dict__)
+                              elif args[nest][1]=='private':
+                                 execfile(args[nest][0],__main__.__dict__,{})
                               elif args[nest][1]=='local':
-                                 execfile(args[nest][0],pymol_names,local_names)
+                                 execfile(args[nest][0],pymol_names,{})
                               elif args[nest][1]=='global':
                                  execfile(args[nest][0],pymol_names,pymol_names)
                               elif args[nest][1]=='module':

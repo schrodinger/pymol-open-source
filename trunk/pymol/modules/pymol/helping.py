@@ -238,7 +238,7 @@ DESCRIPTION
 
 USAGE
   
-   run python-script [, (local | global | module) ]
+   run python-script [, (local | global | module | main | private ) ]
 
 PYMOL API
 
@@ -267,7 +267,7 @@ DESCRIPTION
  
 USAGE
   
-   run python-script [, (local | global | module )]
+   run python-script [, ( local | global | module | main | private )]
 
 PYMOL API
 
@@ -432,7 +432,7 @@ def launching():
    '''
 PyMOL COMMAND LINE OPTIONS 
  
-   pymol.com [-ciqstwx] <file.xxx> [-p <file.py> ] ...
+   pymol.com [-ciqstwx] [ <file.pdb> ] [ <file.pml> ] [ <file.py> ] ...
  
    -c   Command line mode, no GUI.  For batch opeations.
    -i   Disable the internal OpenGL GUI (object list, menus, etc.)
@@ -445,8 +445,8 @@ PyMOL COMMAND LINE OPTIONS
    -2   Start in two-button mouse mode
    
    -f <# line> Controls display of commands and feedback in OpenGL (0=off).
-   -r <file.py>[,global|local|module] Run a python program on startup.
-   -l <file.py>[,global|local|module] Spawn a python program in new thread.
+   -r <file.py> Run a Python program (in __main__) on startup.
+   -l <file.py> Spawn a python program in new thread.
    -d <string> Run pymol command string upon startup.
    -u <script> Load and append to this PyMOL script or program file.
    -s <script> Save commands to this PyMOL script or program file.

@@ -783,7 +783,7 @@ void OrthoNewLine(char *prompt)
       /*	 }*/
 
       /*  if(I->Line[I->CurLine&OrthoSaveLines][0])*/
-	 I->CurLine++;
+  I->CurLine++;
   curLine = I->CurLine&OrthoSaveLines;
 
   if(prompt)
@@ -1291,7 +1291,7 @@ void OrthoSplash(void)
     "    Enter \"help <command-name>\" for information on a specific command.\n\n"
     ENDF;
   
-  PRINTF " Hit ESC anytime to toggle between text and graphics.\n" ENDF;
+  PRINTF " Hit ESC anytime to toggle between text and graphics.\n\n" ENDF;
 }
 /*========================================================================*/
 void OrthoInit(int showSplash)
@@ -1321,6 +1321,7 @@ void OrthoInit(int showSplash)
   I->CurLine=1000;
   I->PromptChar=0;
   I->CurChar=0;
+  I->CurLine=0;
   I->CursorChar=-1;
   I->HistoryLine=0;
   I->HistoryView=0;
@@ -1332,7 +1333,6 @@ void OrthoInit(int showSplash)
   I->ShowLines = 1;
   I->Saved[0]=0;
   I->DirtyFlag = true;
-
   BlockInit(&I->LoopBlock);
   I->LoopBlock.fDrag = OrthoLoopBlockDrag;
   I->LoopBlock.fRelease = OrthoLoopBlockRelease;
@@ -1341,8 +1341,15 @@ void OrthoInit(int showSplash)
 	 OrthoSplash();
     I->SplashFlag=true;
   }
+  OrthoFeedbackIn(" ");
+  I->CurLine++;
   strcpy(I->Prompt,"PyMOL>");
-  OrthoNewLine(I->Prompt);
+  strcpy(I->Line[I->CurLine],I->Prompt);
+  I->CurChar = (I->PromptChar = strlen(I->Prompt));
+  I->InputFlag=1;
+
+  /*printf("orthoNewLine: CC: %d CL:%d PC: %d IF:L %d\n",I->CurChar,I->CurLine,
+	 I->PromptChar,I->InputFlag);*/
   
   ButModeInit();
   ControlInit();
