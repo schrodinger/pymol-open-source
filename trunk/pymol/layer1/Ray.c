@@ -1560,6 +1560,8 @@ int RayTraceThread(CRayThreadInfo *T)
                   SceneCall.interior_flag = false;
 
                   if(perspective) {
+                    if(pass)
+                      copy3f(r1.impact, r1.base);
                     i = BasisHitPerspective( &SceneCall );
                   } else {
                     i = BasisHitNoShadow( &SceneCall );
@@ -1600,7 +1602,8 @@ int RayTraceThread(CRayThreadInfo *T)
                         }
                       else
                         {
-                          new_front	= r1.dist;
+                          if(!perspective) 
+                            new_front	= r1.dist;
                           
                           if(r1.prim->type==cPrimTriangle)
                             {
