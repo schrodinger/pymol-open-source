@@ -42,7 +42,7 @@ void PixmapInitFromBitmap(CPixmap *I,int width, int height,
   if(I) {
  
     int x,y,bit_cnt;
-    unsigned char cur;
+    unsigned char cur=0;
     unsigned char *src;
     unsigned char *dst;
     register unsigned char red,blue,green,alpha;

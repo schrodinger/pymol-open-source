@@ -86,7 +86,7 @@ void RepSurfaceFree(RepSurface *I)
 
 void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                               float probe_radius,SphereRec *sp,
-                              float *extent,int *present);
+                              float *extent,int *present,int circumscribe);
 
 static int ZOrderFn(float *array,int l,int r)
 {
@@ -935,6 +935,20 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       }
       glEnd();
     }
+
+    glColor4f(1,1,1,1);
+    SceneResetNormal(0);
+    v=TestLine;
+    c=NTestLine;
+    glBegin(GL_LINES);
+    while(c--) {
+      glVertex3fv(v);
+      v+=3;
+      glVertex3fv(v);
+      v+=3;
+    }
+    glEnd();
+
   }
 }
 
@@ -1237,6 +1251,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   char *carve_selection = NULL;
   float *carve_vla = NULL;
   MapType *carve_map = NULL;
+  int circumscribe = 0;
 
   #if 0
   int c1;
@@ -1281,14 +1296,17 @@ Rep *RepSurfaceNew(CoordSet *cs)
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
     sp=Sphere4;
     ssp=Sphere4;
+    circumscribe = 240;
   } else if(surface_quality>=3) { /* nearly impractical */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
     sp=Sphere4;
     ssp=Sphere3;
+    circumscribe = 120;
   } else if(surface_quality>=2) { /* nearly perfect */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
     sp=Sphere3;
     ssp=Sphere3;
+    circumscribe = 60;
   } else if(surface_quality>=1) { /* good */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best);
     sp=Sphere2;
@@ -1332,7 +1350,12 @@ Rep *RepSurfaceNew(CoordSet *cs)
   if(surface_type!=0) { /* not a solid surface */
     probe_rad_less = probe_radius*(1.0F-solv_tole);
   } else { /* solid surface */
-    probe_rad_less = probe_radius;
+    if(surface_quality>1) {
+      probe_rad_less = probe_radius*(1.0F-solv_tole);
+    } else {
+      probe_rad_less = probe_radius;
+    }
+    
   }
   probe_rad_less2 = probe_rad_less * probe_rad_less;
 
@@ -1482,7 +1505,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
     v=I->V;
     vn=I->VN;
 
-    RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present);
+    RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present,circumscribe);
 
     if(!surface_solvent) {
       map=MapNewFlagged(I->max_vdw+probe_rad_more,cs->Coord,cs->NIndex,extent,present);
@@ -1708,7 +1731,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
           I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
         }
       }
-    
+  
+
     PRINTFD(FB_RepSurface)
       " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
       ENDFD;
@@ -1749,24 +1773,26 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
 void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                               float probe_radius,SphereRec *sp,
-                              float *extent,int *present)
+                              float *extent,int *present,
+                              int circumscribe)
 {
   ObjectMolecule *obj;
-  int a,b,c=0,flag,i,j;
-  float *v,*v0,vdw,*v1;
+  int a,b,c=0,flag,i,j,ii,jj;
+  float *v,*v0,vdw,*v1,*v2;
   float *n,*n0;
-  MapType *map;
+  MapType *map=NULL,*map2=NULL;
   int *p,*dot_flag;
   int cavity_cull,skip_flag;
   float probe_radius_plus;
-  int dotCnt,maxCnt,maxDot=0;
+  int dotCnt=0,maxCnt,maxDot=0;
   int cnt;
   int surface_mode;
   int surface_solvent;
   int cullByFlag;
   int inclH;
   int pres_flag;
-  AtomInfoType *ai1,*ai2;
+  int stopDot;
+  AtomInfoType *ai1,*ai2,*ai3;
   
   obj = cs->Obj;
 
@@ -1777,8 +1803,9 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 
   cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 
-  I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot); 
-  I->DotNormal=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot); 
+  stopDot = cs->NIndex*sp->nDot+2*circumscribe;
+  I->Dot=(float*)mmalloc(sizeof(float)*(stopDot+1)*3);
+  I->DotNormal=(float*)mmalloc(sizeof(float)*(stopDot+1)*3);
   ErrChkPtr(I->Dot);
   ErrChkPtr(I->DotNormal);
 
@@ -1869,7 +1896,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                       j=map->EList[i++];
                     }
                   }
-                  if(flag)
+                  if(flag&&(dotCnt<stopDot))
                     {
                       dotCnt++;
                       v+=3;
@@ -1885,8 +1912,162 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
               }
           }
         }
+
+      /* for each pair of proximal atoms, circumscribe a circle for their intersection */
+      
+      if(circumscribe)
+        map2=MapNewFlagged(2*(I->max_vdw+probe_radius),cs->Coord,cs->NIndex,extent,present);
+      if(map2)
+        {
+          MapSetupExpress(map2);
+          
+          for(a=0;a<cs->NIndex;a++)
+            {
+              ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+              if(present)
+                pres_flag=present[a];
+              else
+                pres_flag = (inclH||(!ai1->hydrogen))&&
+                  ((!cullByFlag)||
+                   (!(ai1->flags&(cAtomFlag_ignore))));
+              if(pres_flag) {
+                
+                float vdw2;
+                
+                v0 = cs->Coord+3*a;
+                vdw = ai1->vdw+probe_radius;
+                vdw2 = vdw*vdw;
+                
+                skip_flag=false;
+                
+                i=*(MapLocusEStart(map2,v0));
+                if(i) {
+                  j=map2->EList[i++];
+                  while(j>=0) {
+                    
+                    ai3 = obj->AtomInfo + cs->IdxToAtm[j];
+                    if(j>a) /* only check if this is atom trails */
+                      if((inclH||(!ai3->hydrogen))&&
+                         ((!cullByFlag)||
+                          (!(ai3->flags&cAtomFlag_ignore))))
+                        {
+                          if((ai3->vdw == ai1->vdw)) { /* handle singularities */
+                            v2 = cs->Coord+3*j;
+                            if((v0[0]==v2[0]) &&
+                               (v0[1]==v2[1]) &&
+                               (v0[2]==v2[2]))
+                              skip_flag=true;
+                          }
+                        }
+                    j=map2->EList[i++];
+                  }
+                }
+                
+                if(!skip_flag) {
+                  ii=*(MapLocusEStart(map2,v0));
+                  if(ii) {
+                    jj=map2->EList[ii++];
+                    while(jj>=0) {
+                      float dist;
+                      ai3 = obj->AtomInfo + cs->IdxToAtm[jj];
+                      if(jj>a) /* only check if this is atom trails */
+                        if((inclH||(!ai3->hydrogen))&&
+                           ((!cullByFlag)||
+                            (!(ai3->flags&cAtomFlag_ignore))))
+                          {
+                            v2 = cs->Coord+3*jj;
+                            dist = diff3f(v0,v2);
+                            
+                            if(dist>R_SMALL4) {
+                              float vz[3],vx[3],vy[3], vp[3];
+                              float tri_a=vdw, tri_b=ai3->vdw+probe_radius, tri_c = dist;
+                              float tri_s = (tri_a+tri_b+tri_c)*0.5F;
+                              float area = sqrt1f(tri_s*(tri_s-tri_a)*
+                                                  (tri_s-tri_b)*(tri_s-tri_c));
+                              float radius = (2*area)/dist;
+                              float adj = sqrt1f(vdw2 - radius*radius);
+                              
+                              subtract3f(v2,v0,vz);
+                              get_system1f3f(vz,vx,vy);
+                              
+                              copy3f(vz,vp);
+                              scale3f(vp,adj,vp);
+                              add3f(v0,vp,vp);
+                              
+#define STEPS 90
+                              for(b=0;b<=STEPS;b++) {
+                                float xcos = cos((b*2*cPI)/STEPS);
+                                float ysin = sin((b*2*cPI)/STEPS);
+                                float xcosr = xcos * radius;
+                                float ysinr = ysin * radius;
+                                v[0] = vp[0] + vx[0] * xcosr + vy[0] * ysinr;
+                                v[1] = vp[1] + vx[1] * xcosr + vy[1] * ysinr;
+                                v[2] = vp[2] + vx[2] * xcosr + vy[2] * ysinr;
+
+
+                                
+                                flag=true;
+                                i=*(MapLocusEStart(map,v));
+                                if(i) {
+                                  j=map->EList[i++];
+                                  while(j>=0) {
+                                    
+                                    ai2 = obj->AtomInfo + cs->IdxToAtm[j];
+                                    if((inclH||(!ai2->hydrogen))&&
+                                       ((!cullByFlag)||
+                                        (!(ai2->flags&cAtomFlag_ignore))))
+                                      if((j!=a)&&(j!=jj))
+                                        { 
+                                          skip_flag=false;
+                                          if(ai1->vdw==ai2->vdw) { /* handle singularities */
+                                            v1 = cs->Coord+3*j;                              
+                                            if((v0[0]==v1[0]) &&
+                                               (v0[1]==v1[1]) &&
+                                               (v0[2]==v1[2]))
+                                              skip_flag=true;
+                                          }
+                                          if(ai3->vdw==ai2->vdw) { /* handle singularities */
+                                            v1 = cs->Coord+3*j;                              
+                                            if((v2[0]==v1[0]) &&
+                                               (v2[1]==v1[1]) &&
+                                               (v2[2]==v1[2]))
+                                              skip_flag=true;
+                                          }
+                                          if(!skip_flag)
+                                            if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_radius)) {
+                                              flag=false;
+                                              break;
+                                            }
+                                        }
+                                    j=map->EList[i++];
+                                  }
+                                }
+                                if(flag&&(dotCnt<stopDot))
+                                  {
+
+                                    n[0] = vx[0] * xcos + vy[0] * ysin;
+                                    n[1] = vx[1] * xcos + vy[1] * ysin;
+                                    n[2] = vx[2] * xcos * vy[2] * ysin;
+
+                                    dotCnt++;
+                                    v+=3;
+                                    n+=3;
+                                    I->NDot++;
+                                  }
+                              }
+                            }
+                          }
+                      jj=map2->EList[ii++];
+                    }
+                  }
+                }
+              }
+            }
+          MapFree(map2);
+        }
       MapFree(map);
-	 }
+    }
+
 
   if((cavity_cull>0)&&(probe_radius>0.75F)&&(!surface_solvent)) {
 	 dot_flag=Alloc(int,I->NDot);

@@ -275,19 +275,21 @@ static void TriangleAdjustNormals(float *v,float *vn,int n)
 {
   TriangleSurfaceRec *I=&TriangleSurface;
   /* points all normals to the average of the intersecting triangles in order to maximum surface smoothness */
-  float *tNorm = NULL;
+  float *tNorm = NULL,*tWght;
   int *vFlag=NULL;
-  float *v0,*v1,*v2,*tn,vt1[3],vt2[3],*vn0,*tn0,*tn1,*tn2;
+  float *v0,*v1,*v2,*tn,vt1[3],vt2[3],*vn0,*tn0,*tn1,*tn2,*tw;
   int a,*t,i0,i1,i2;
-
+  float tmp[3];
   tNorm=Alloc(float,3*I->nTri);
+  tWght=Alloc(float,I->nTri);
   vFlag=Alloc(int,n);
   for(a=0;a<n;a++) {
 	 vFlag[a]=0;
   }
-  /* first, calculate and store all triangle normals */
+  /* first, calculate and store all triangle normals & weights */
   t=I->tri;
   tn=tNorm;
+  tw=tWght;
   for(a=0;a<I->nTri;a++) {
 	 vFlag[t[0]]=1;
 	 vFlag[t[1]]=1;
@@ -298,6 +300,7 @@ static void TriangleAdjustNormals(float *v,float *vn,int n)
 	 subtract3f(v1,v0,vt1);
 	 subtract3f(v2,v0,vt2);
 	 cross_product3f(vt1,vt2,tn);
+    *(tw++) = length3f(tn); /* store weight */
 	 normalize3f(tn);
 	 tn+=3;
   }
@@ -313,18 +316,21 @@ static void TriangleAdjustNormals(float *v,float *vn,int n)
   
   /* sum */
   tn=tNorm;
+  tw=tWght;
   t=I->tri;
   for(a=0;a<I->nTri;a++) {
 	 i0 = *(t++);
 	 i1 = *(t++);
 	 i2 = *(t++);
+    scale3f(tn,*tw,tmp);
 	 tn0 = vn+i0*3;
 	 tn1 = vn+i1*3;
 	 tn2 = vn+i2*3;
-	 add3f(tn,tn0,tn0);
-	 add3f(tn,tn1,tn1);
-	 add3f(tn,tn2,tn2);
+	 add3f(tmp,tn0,tn0);
+	 add3f(tmp,tn1,tn1);
+	 add3f(tmp,tn2,tn2);
 	 tn+=3;
+    tw++;
   }
   /* normalize */
   vn0=vn;
@@ -334,6 +340,7 @@ static void TriangleAdjustNormals(float *v,float *vn,int n)
 	 vn0+=3;
   }
   FreeP(vFlag);
+  FreeP(tWght);
   FreeP(tNorm);
 }
 
@@ -744,7 +751,155 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
   }
 }
 
-static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n,float cutoff)
+static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
+{
+
+  /* in this version, the closest active point is tried.  Closed points
+	  are skipped. */
+
+  TriangleSurfaceRec *I=&TriangleSurface;
+  MapType *map;
+  float *v1,*v2,*v0,*v4,vt[3],vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
+  int i0,s01=0,s02=0,s12,i,j,h,k,l,i4;
+  float dif,minDist,d1,d2,dp;
+  int flag;
+  int used = -1;
+  float dot,dot1,dot2,maxDot;
+  const float _plus = R_SMALL4, _0=0.0F;
+  const float _5 = 0.5F;
+
+  map=I->map;
+  s12 = TriangleEdgeStatus(i1,i2);
+  if(s12>0) used = I->edge[s12].vert3;
+  if(s12>=0) {
+    minDist = MAXFLOAT;
+    maxDot = _plus;
+    i0=-1;
+    v1=v+i1*3; v2=v+i2*3;
+    n1 = vn+3*i1; n2 = vn+3*i2;							 
+    MapLocus(map,v1,&h,&k,&l);
+	 i=*(MapEStart(map,h,k,l));
+    if(i) {
+      j=map->EList[i++];
+      while(j>=0) {
+        if((j!=i1)&&(j!=i2)&&(j!=used)&&(I->vertActive[j])) 
+			 /* eliminate closed vertices from consideration - where vertactive is 0 */
+          {
+            v0 = v+3*j;
+            n0 = vn+3*j;
+            d1 = (float)diff3f(v0,v1);
+            d2 = (float)diff3f(v0,v2);
+            dif= ( d2 > d1 ? d2 : d1 );
+				if(dif<minDist)
+				  {
+                dot1 = dot_product3f(n0,n1);
+                dot2 = dot_product3f(n0,n2);
+                dot = dot1 + dot2;
+                if((dif/minDist)<_5) {
+                  minDist = dif;
+                  maxDot = dot;
+                  i0=j; 
+                } else if((dot>_0)&&(dot1>_0)&&(dot2>_0)) {
+                  if((i0<0)||(dot>maxDot)) {
+                    minDist = dif;
+                    maxDot = dot;
+                    i0=j; 
+                  } else if( (dif/minDist) < (dot/maxDot)) {
+                    maxDot = dot;
+                    minDist = dif;
+                    i0=j; 
+                  }
+                }
+				  }
+			 }
+		  j=map->EList[i++];
+		}
+		if(i0>=0) {
+		  s01 = TriangleEdgeStatus(i0,i1); s02 = TriangleEdgeStatus(i0,i2);
+		  if(I->vertActive[i0]>0) {
+			 if(!((s01>0)||(s02>0)))
+				i0=-1; /* don't allow non-adjacent joins to active vertices */
+		  }
+		}
+		if(i0>=0) {
+		  v0 = v+3*i0;
+		  flag=false;
+		  if(I->vertActive[i0]) {
+			 if((s01>=0)&&(s02>=0)) flag=true;
+			 if(flag) { /* are all normals pointing in generally the same direction? */
+				n0 = vn+3*i0; n1 = vn+3*i1; n2 = vn+3*i2;							 
+				add3f(n0,n1,vt1);
+				add3f(n2,vt1,vt2);
+				normalize3f(vt2);
+				if(((dot_product3f(n0,vt2))<0.1)||
+               ((dot_product3f(n1,vt2))<0.1)||
+               ((dot_product3f(n2,vt2))<0.1)) flag=false;
+            /* modified 010916 to effect workaround of apparent bug in GCC's optimizer */
+			 } /*printf("pass normal sums %i\n",flag);*/
+			 if(flag) { /* does the sum of the normals point in the same direction as the triangle? */
+				subtract3f(v1,v0,vt3);
+				subtract3f(v2,v0,vt4);
+				cross_product3f(vt3,vt4,tNorm); 
+				normalize3f(tNorm); 							 
+				dp = dot_product3f(vt2,tNorm);
+				if(dp<0) scale3f(tNorm,-1.0F,tNorm);
+				if(fabs(dp)<0.1) flag = false;
+			 } /*printf("pass tNorm  %i\n",flag);*/
+
+			 if(flag) {
+				if(s12>0) if(dot_product3f(I->vNormal+s12*3,tNorm)<0.1) flag=false; 
+				if(s01>0) if(dot_product3f(I->vNormal+s01*3,tNorm)<0.1) flag=false; 
+				if(s02>0) if(dot_product3f(I->vNormal+s02*3,tNorm)<0.1) flag=false; 
+			 } /*printf("pass compare tNorm %i\n",flag);*/
+			 if(flag) { /* are all the Blocking vectors pointing outward, and are the triangle normals consistent? */
+				if(s12>0) {
+				  i4 = I->edge[s12].vert3;
+				  v4=v+i4*3;
+				  subtract3f(v0,v1,vt1);
+				  subtract3f(v4,v1,vt2);
+				  subtract3f(v1,v2,vt);
+				  normalize3f(vt);
+				  remove_component3f(vt1,vt,vt3);
+				  remove_component3f(vt2,vt,vt4);
+				  normalize3f(vt3);
+				  normalize3f(vt4);
+				  if(dot_product3f(vt3,vt4)>0.0) flag=false;
+				}			 
+				if(s01>0) {
+				  i4 = I->edge[s01].vert3;
+				  v4=v+i4*3;
+				  subtract3f(v2,v0,vt1);
+				  subtract3f(v4,v0,vt2);
+				  subtract3f(v0,v1,vt);
+				  normalize3f(vt);
+				  remove_component3f(vt1,vt,vt3);
+				  remove_component3f(vt2,vt,vt4);
+				  normalize3f(vt3);
+				  normalize3f(vt4);
+				  if(dot_product3f(vt3,vt4)>0.0) flag=false;
+				}
+				if(s02>0) {
+				  i4 = I->edge[s02].vert3;
+				  v4=v+i4*3;
+				  subtract3f(v1,v0,vt1);
+				  subtract3f(v4,v0,vt2);
+				  subtract3f(v0,v2,vt);
+				  normalize3f(vt);
+				  remove_component3f(vt1,vt,vt3);
+				  remove_component3f(vt2,vt,vt4);
+				  normalize3f(vt3);
+				  normalize3f(vt4);
+				  if(dot_product3f(vt3,vt4)>0.0) flag=false;
+				}
+			 } /*printf("pass blocking %i\n",flag);*/
+		  }
+		  if(flag) TriangleAdd(i0,i1,i2,tNorm,v,vn);
+		}
+	 }
+  }
+}
+
+static void TriangleBuildSecondSecondPass(int i1,int i2,float *v,float *vn,int n,float cutoff)
 {
 
   /* in this version, the closest active point is tried.  Closed points
@@ -758,7 +913,7 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n,float
   int flag;
   int used = -1;
   float dot;
-  const float _33 = 0.33;
+  const float _5 = 0.5;
 
   map=I->map;
   s12 = TriangleEdgeStatus(i1,i2);
@@ -784,7 +939,7 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n,float
 				if(dif<minDist)
 				  {
                 dot = dot_product3f(n0,n1) + dot_product3f(n0,n2);
-                if((dot>cutoff)||((dif/minDist)<_33)) {
+                if((dot>cutoff)||((dif/minDist)<_5)) {
                   minDist = dif;
                   i0=j; 
                 }
@@ -875,6 +1030,8 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n,float
 	 }
   }
 }
+
+
 
 static void TriangleBuildSingle(int i1,int i2,float *v,float *vn,int n)
 {
@@ -1134,7 +1291,10 @@ static void FollowActives(float *v,float *vn,int n,int mode)
 		TriangleBuildObvious(i1,i2,v,vn,n);
 		break;
 	 case 1:
-		TriangleBuildSecondPass(i1,i2,v,vn,n,0.0F);
+		TriangleBuildSecondPass(i1,i2,v,vn,n);
+		break;
+	 case 2:
+		TriangleBuildSecondSecondPass(i1,i2,v,vn,n,0.0F);
 		break;
 	 case 4:
 		TriangleBuildThirdPass(i1,i2,v,vn,n);
@@ -1157,7 +1317,7 @@ static void TriangleFill(float *v,float *vn,int n)
   TriangleSurfaceRec *I=&TriangleSurface;
   int lastTri,lastTri2,lastTri3;
   int a,i,j,h,k,l;
-  float dif,minDist,*v0;
+  float dif,minDist,*v0,*n0,*n1;
   int i1,i2=0;
   int n_pass =0;
   MapType *map;
@@ -1185,6 +1345,8 @@ static void TriangleFill(float *v,float *vn,int n)
           if(!I->edgeStatus[a])
             {
               v0=v+a*3;
+              n0 = vn+3*a;
+
               MapLocus(map,v0,&h,&k,&l);
               i=*(MapEStart(map,h,k,l));
               if(i) {
@@ -1197,9 +1359,12 @@ static void TriangleFill(float *v,float *vn,int n)
                         if(I->vertActive[a]==-1)
                           if(TriangleEdgeStatus(a,j)>=0) /* can we put a triangle here? */
                             {
-                              minDist = dif;
-                              i1=a;
-                              i2=j;
+                              n1 = vn + 3*j;
+                              if(dot_product3f(n0,n1)>0.5) { /* start with vertices pointing the same way */
+                                minDist = dif;
+                                i1=a;
+                                i2=j;
+                              }
                             }
                     }
                   j=map->EList[i++];
@@ -1224,6 +1389,7 @@ static void TriangleFill(float *v,float *vn,int n)
           }
         } else break;
       }
+
     PRINTFD(FB_Triangle)
       " TriangleFill-Debug: Follow actives 1 nTri=%d\n",I->nTri
       ENDFD;
@@ -1235,7 +1401,7 @@ static void TriangleFill(float *v,float *vn,int n)
 			 TriangleActivateEdges(a);
 		FollowActives(v,vn,n,1);
 	 }	 
-    
+
     lastTri2=I->nTri-1;
     while(lastTri2!=I->nTri) {
       lastTri2=I->nTri;
@@ -1255,6 +1421,42 @@ static void TriangleFill(float *v,float *vn,int n)
                 " TriangleFill-Debug: follow actives 1: nTri=%d nActive=%d\n",I->nTri,I->nActive
                 ENDFD;
               FollowActives(v,vn,n,1);
+            }
+          }
+    }
+
+
+    PRINTFD(FB_Triangle)
+      " TriangleFill-Debug: Follow actives 1 nTri=%d\n",I->nTri
+      ENDFD;
+	 lastTri=I->nTri-1;
+	 while(lastTri!=I->nTri) {
+		lastTri=I->nTri;
+		for(a=0;a<n;a++) 
+		  if(I->vertActive[a])
+			 TriangleActivateEdges(a);
+		FollowActives(v,vn,n,2);
+	 }	 
+
+    lastTri2=I->nTri-1;
+    while(lastTri2!=I->nTri) {
+      lastTri2=I->nTri;
+      for(a=0;a<n;a++) 
+        if(I->vertActive[a])
+          {
+            TriangleActivateEdges(a);
+            if(I->nActive) {
+              PRINTFD(FB_Triangle)
+                " TriangleFill-Debug: build single:     nTri=%d nActive=%d\n",I->nTri,I->nActive
+                ENDFD;
+              I->nActive--;
+              i1 = I->activeEdge[I->nActive*2];
+              i2 = I->activeEdge[I->nActive*2+1];
+              TriangleBuildSingle(i1,i2,v,vn,n);
+              PRINTFD(FB_Triangle)
+                " TriangleFill-Debug: follow actives 2: nTri=%d nActive=%d\n",I->nTri,I->nActive
+                ENDFD;
+              FollowActives(v,vn,n,2);
             }
           }
     }

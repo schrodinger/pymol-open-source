@@ -933,7 +933,8 @@ void OrthoDoDraw()
       case 0:
         rightSceneMargin=(int)SettingGet(cSetting_internal_gui_width);
         break;
-      case 1:
+      default:
+        rightSceneMargin = 0;
         break;
       }
     } else {
@@ -1216,7 +1217,7 @@ void OrthoReshape(int width, int height)
   OrthoObject *I=&Ortho;
 
   Block *block = NULL;
-  int sceneBottom,sceneRight;
+  int sceneBottom,sceneRight = 0;
   int internal_gui_width;
   int internal_feedback;
 
@@ -1247,7 +1248,6 @@ void OrthoReshape(int width, int height)
       sceneRight = 0;
       break;
     default:
-    case 0:
       sceneRight = internal_gui_width;
       break;
     }
