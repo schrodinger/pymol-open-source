@@ -33,6 +33,7 @@ typedef struct {
   int id;
 } BondType;
 
+
 typedef struct ObjectMolecule {
   Object Obj;
   struct CoordSet **CSet;
@@ -188,6 +189,13 @@ void ObjectMoleculeGetAtomSeleFast(ObjectMolecule *I,int index, char *buffer);
 void ObjectMoleculeGetAtomSeleLog(ObjectMolecule *I,int index, char *buffer);
 int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append);
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I);
+
+/* legacy binary file suppoort */
+
+typedef struct {
+  int index[2];
+  int order;
+} BondType068;
 
 #endif
 

@@ -843,6 +843,7 @@ void PInit(void)
   if(!P_models) ErrFatal("PyMOL","can't find 'chempy.models'");
 
   PRunString("import util\n");  
+  PRunString("import contrib\n");
 #ifdef _PYMOL_XRAY
   PRunString("import sglite\n"); 
 #endif

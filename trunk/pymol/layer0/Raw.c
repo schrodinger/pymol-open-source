@@ -142,7 +142,7 @@ void RawFree(CRaw *I)
   OOFreeP(I);
 }
 
-int RawGetNext(CRaw *I,int *size) {
+int RawGetNext(CRaw *I,int *size,int *version) {
   int result=cRaw_EOF;
   switch(I->mode) {
   case cRaw_file_stream:
@@ -162,6 +162,7 @@ int RawGetNext(CRaw *I,int *size) {
           fseek(I->f,-cRaw_header_size,SEEK_CUR);
           *size=I->header[0];
           result=I->header[1];
+          *version=I->header[2];
         }
       }
     }
@@ -350,7 +351,7 @@ int RawReadInto(CRaw *I,int type,unsigned int size,char *buffer)
               ENDFD;
           } else if(I->header[0]!=size) {
             PRINTFB(FB_Raw,FB_Errors)
-              "Error-RawReadInfo: Size mismatch.\n"
+              "Error-RawReadInfo: Size mismatch %d!=%d (disk/RAM).\n",I->header[0],size
               ENDFB;
           } else {
             if(fread(buffer,size,1,I->f)!=1) {

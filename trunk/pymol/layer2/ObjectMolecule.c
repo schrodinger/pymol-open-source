@@ -137,7 +137,10 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL,*ai;
+  AtomInfoType068 *atInfo068 = NULL;
   BondType *bond=NULL;
+  BondType068 *bond068=NULL;
+
   int ok=true;
   int auto_show_lines;
   int auto_show_nonbonded;
@@ -145,6 +148,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
   float *spheroid=NULL;
   float *spheroid_normal=NULL;
   int sph_info[2];
+  int version;
   auto_show_lines = SettingGet(cSetting_auto_show_lines);
   auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
   AtomInfoPrimeColors();
@@ -155,16 +159,31 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
   if(atInfoPtr)
 	 atInfo = *atInfoPtr;
   
-  type = RawGetNext(pmo,&size);
+  type = RawGetNext(pmo,&size,&version);
   if(type!=cRaw_AtomInfo1) {
     ok=false;
   } else { /* read atoms */
     PRINTFD(FB_ObjectMolecule)
       " ObjectMolPMO2CoordSet: loading atom info %d bytes = %8.3f\n",size,((float)size)/sizeof(AtomInfoType)
       ENDFD;
-    nAtom = size/sizeof(AtomInfoType);
-    VLACheck(atInfo,AtomInfoType,nAtom);
-    ok = RawReadInto(pmo,cRaw_AtomInfo1,size,(char*)atInfo);
+    if(version<67) {
+      PRINTFB(FB_ObjectMolecule,FB_Errors)
+        " ObjectMolecule: unsupported binary file (version %d). aborting.\n",
+        version
+        ENDFB;
+      ok=false;
+    } else if(version<69) { /* legacy atom format */
+      nAtom = size/sizeof(AtomInfoType068);
+      atInfo068 = Alloc(AtomInfoType068,nAtom);
+      ok = RawReadInto(pmo,cRaw_AtomInfo1,size,(char*)atInfo068);
+      VLACheck(atInfo,AtomInfoType,nAtom);
+      UtilExpandArrayElements(atInfo068,atInfo,nAtom,sizeof(AtomInfoType068),sizeof(AtomInfoType));
+      FreeP(atInfo068);
+    } else {
+      nAtom = size/sizeof(AtomInfoType);
+      VLACheck(atInfo,AtomInfoType,nAtom);
+      ok = RawReadInto(pmo,cRaw_AtomInfo1,size,(char*)atInfo);
+    }
   }
   if(ok) {
     PRINTFD(FB_ObjectMolecule)
@@ -174,7 +193,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
     if(!coord)
       ok=false;
   }
-  type = RawGetNext(pmo,&size);
+  type = RawGetNext(pmo,&size,&version);
   if(type==cRaw_SpheroidInfo1) {
 
     PRINTFD(FB_ObjectMolecule)
@@ -208,7 +227,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
 
     } 
   if(ok) 
-      type = RawGetNext(pmo,&size);    
+      type = RawGetNext(pmo,&size,&version);    
   if(ok) {
     
     PRINTFD(FB_ObjectMolecule)
@@ -219,9 +238,29 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
       ok=false;
     } else {
       if(ok) {
-        bond=(BondType*)RawReadVLA(pmo,cRaw_Bonds1,sizeof(BondType),5,false);
-        nBond = VLAGetSize(bond);
 
+        /* legacy bond format */
+        if(version<67) {
+          PRINTFB(FB_ObjectMolecule,FB_Errors)
+            " ObjectMolecule: unsupported binary file (version %d). aborting.\n",
+            version
+            ENDFB;
+          ok=false;
+        } else if(version<69) { /* legacy atom format */
+          nBond = size/sizeof(BondType068);
+          bond068 = Alloc(BondType068,nBond);
+          ok = RawReadInto(pmo,cRaw_Bonds1,nBond*sizeof(BondType068),(char*)bond068);
+          bond=VLAlloc(BondType,nBond);
+          UtilExpandArrayElements(bond068,bond,nAtom,
+                                  sizeof(BondType068),sizeof(BondType));
+          FreeP(bond068);
+          for(a=0;a<nBond;a++) bond[a].id=-1; /* initialize identifiers */
+        } else {
+          
+          bond=(BondType*)RawReadVLA(pmo,cRaw_Bonds1,sizeof(BondType),5,false);
+          nBond = VLAGetSize(bond);
+        }
+        
         PRINTFD(FB_ObjectMolecule)
           " ObjectMolPMO2CoordSet: found %d bonds\n",nBond
           ENDFD;
@@ -263,7 +302,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
   if(ok) {
-    type = RawGetNext(pmo,&size);
+    type = RawGetNext(pmo,&size,&version);
     if(type==cRaw_AtomInfo1)
       *restart=true;
   }
@@ -448,7 +487,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
           if(ok) ok = RawWrite(raw,cRaw_Spheroid1,sizeof(float)*cs->NSpheroid,0,(char*)cs->Spheroid);          
           if(ok) ok = RawWrite(raw,cRaw_SpheroidNormals1,sizeof(float)*3*cs->NSpheroid,0,(char*)cs->SpheroidNormal); 
           PRINTFD(FB_ObjectMolecule)
-            " ObjectMolPMO2CoordSet: saved spheroid size %d %d\n",cs->SpheroidSphereSize,cs->NSpheroid
+            " ObjectMolPMO2CoorSet: saved spheroid size %d %d\n",cs->SpheroidSphereSize,cs->NSpheroid
             ENDFD;
          
         }

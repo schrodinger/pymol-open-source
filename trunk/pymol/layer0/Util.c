@@ -126,12 +126,13 @@ void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 		  }
 	 }
 }
-void UtilZeroMem(void *ptr,unsigned int howMuch ) /* optimize! */
+
+void UtilZeroMem(void *ptr,unsigned int howMuch)
 {
-  char *c;
-  c=(char*)ptr;
-  while(howMuch--)
-	 *(c++)=0;
+  char *p,*q;
+  p=(char*)ptr;
+  q=p+howMuch;
+  MemoryZero(p,q);
 }
 
 void UtilCopyMem(void *dst,void *src,unsigned int howMuch) /* optimize! */
@@ -142,6 +143,25 @@ void UtilCopyMem(void *dst,void *src,unsigned int howMuch) /* optimize! */
   d=(char*)src;
   while(howMuch--)
 	 *(c++)=*(d++);
+}
+
+void UtilExpandArrayElements(void *src,void *dst,int n_entries,int old_rec_size,int new_rec_size)
+{
+  /* simple but ineffient byte-based copy */
+  register char *p,*q,*p_stop,*q_stop;
+  int a;
+  for(a=0;a<n_entries;a++) {
+    p=((char*)src)+(old_rec_size*a); 
+    p_stop=p+old_rec_size; 
+    q=((char*)dst)+(new_rec_size*a); 
+    q_stop=q+new_rec_size; 
+    while(p!=p_stop) {
+      *(q++)=*(p++);
+    }
+    while(q!=q_stop) {
+      *(q++)=0;
+    }
+  }
 }
 
 void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)

@@ -2318,7 +2318,7 @@ int ExecutiveCenter(char *name,int preserve,char *oname)
   float center[3];
   float mn[3],mx[3];
   int ok=true;
-  Object *obj;
+  Object *obj = NULL;
   if(oname[0]) {
     obj = ExecutiveFindObjectByName(oname);
     if(!obj)

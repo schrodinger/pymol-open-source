@@ -67,8 +67,9 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
   int c=I->N;
   int cc=0,*nt=NULL;
   int a;
+  int flag;
   SphereRec *sp;
-  float cont;
+  float restart;
 
   if(ray) {
     if(I->spheroidFlag) {
@@ -99,31 +100,39 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 	 if(I->cullFlag) {
-		nt=I->NT;
-		while(c--)
+		nt=I->NT; /* number of passes for each sphere */
+		while(c--) /* iterate through all atoms */
 		  {
 			 glColor3fv(v);
 			 v+=3;
 			 cc=*(nt++);
+          flag=0;
 			 glBegin(GL_TRIANGLE_STRIP);
-			 while(cc--) {
-				cont=*(v++);
-				if(!cont) {
-				  glEnd();
-				  glBegin(GL_TRIANGLE_STRIP);
-				  glNormal3fv(v);
-				  v+=3;
-				  glVertex3fv(v);
-				  v+=3;
-				  glNormal3fv(v);
-				  v+=3;
-				  glVertex3fv(v);
-				  v+=3;
-				}
+			 while(cc--) { /* execute loop this many times */
+				restart=*(v++);
+				if(restart) {
+              if(flag) {
+                glEnd();
+                glBegin(GL_TRIANGLE_STRIP);
+              }
+              if(restart==2.0) { /* swap triangle polarity */
+                glNormal3fv(v);
+                glVertex3fv(v+3);
+              }
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+            }
 				glNormal3fv(v);
 				v+=3;
 				glVertex3fv(v);
 				v+=3;
+            flag=1;
 			 }
 			 glEnd();
 		  }
@@ -146,7 +155,7 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
           }
         }
     }
-  }
+}
 }
 
 int RepSphereSameVis(RepSphere *I,CoordSet *cs)
@@ -181,8 +190,8 @@ Rep *RepSphereNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
   int a,b,c,a1,c1,a2,i,j,k,h,l;
-  float *v,*v0,*vc,vdw,v1[3];
-  float cont;
+  float *v,*v0,*vc,vdw,v1[3],vv0[3],vv1[3],vv2[3];
+  float restart;
   int *q, *s,q0,q1,q2;
   int *lv,*lc,*cc;
   SphereRec *sp = Sphere0; 
@@ -194,6 +203,8 @@ Rep *RepSphereNew(CoordSet *cs)
   int spheroidFlag = false;
   float spheroid_scale;
   float *sphLen,sphTmp,*sphNorm,*sphTmpN;
+  float sphere_scale;
+  float tn[3],vt1[3],vt2[3],xtn[3],*tn0,*tn1,*tn2;
 
   OOAlloc(RepSphere);
 
@@ -227,6 +238,7 @@ Rep *RepSphereNew(CoordSet *cs)
   else
     spheroidFlag=0;
 
+  sphere_scale=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sphere_scale);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
@@ -262,7 +274,7 @@ Rep *RepSphereNew(CoordSet *cs)
           *(v++)=*(v0++);
           *(v++)=*(v0++);
           *(v++)=*(v0++);
-          *(v++)=obj->AtomInfo[a1].vdw;
+          *(v++)=obj->AtomInfo[a1].vdw*sphere_scale;
         }
     }
 
@@ -284,7 +296,7 @@ Rep *RepSphereNew(CoordSet *cs)
 	 ErrChkPtr(visFlag);
 
 	 if(I->cullFlag) {
-		map=MapNew(MAX_VDW,cs->Coord,cs->NIndex,NULL);
+		map=MapNew(MAX_VDW*sphere_scale,cs->Coord,cs->NIndex,NULL);
 		if(map) MapSetupExpress(map);
 	 }
   } else {
@@ -308,7 +320,7 @@ Rep *RepSphereNew(CoordSet *cs)
 		  {
 			 c1=*(cs->Color+a);
 			 v0 = cs->Coord+3*a;
-			 vdw = cs->Obj->AtomInfo[a1].vdw;
+			 vdw = cs->Obj->AtomInfo[a1].vdw*sphere_scale;
 			 vc = ColorGet(c1);
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
@@ -331,7 +343,7 @@ Rep *RepSphereNew(CoordSet *cs)
 						  a2 = cs->IdxToAtm[j];
 						  if(obj->AtomInfo[a2].visRep[cRepSphere]) {
 							 if(j!=a)
-								if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw))
+								if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale))
 								  {
 									 visFlag[b]=0;
 									 break;
@@ -349,7 +361,6 @@ Rep *RepSphereNew(CoordSet *cs)
 					* IMHO - the increase in framerates is worth missing a triangle
 					* here or there, and the user can always turn off sphere culling */
 				  {
-					 cont=0.0;
 					 q+=2;
 					 for(c=2;c<(*s);c++) {
 						  q0=*q;
@@ -382,7 +393,7 @@ Rep *RepSphereNew(CoordSet *cs)
 								a2 = cs->IdxToAtm[j];
 								if(obj->AtomInfo[a2].visRep[cRepSphere]) {
 								  if(j!=a)
-									 if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw))
+									 if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale))
 										{
 										  flag=false;
 										  break;
@@ -402,51 +413,62 @@ Rep *RepSphereNew(CoordSet *cs)
 					 s++;
 				  }
 				
-				*(nt)=0;
+				*(nt)=0; /* how many passes through the triangle renderer? */
 				q=sp->Sequence;
 				s=sp->StripLen;
 
 				for(b=0;b<sp->NStrip;b++)
 				  {
-					 cont=0.0;
-					 q+=2;
-					 for(c=2;c<(*s);c++)
+					 restart=1.0; /* startin a new strip */
+					 for(c=0;c<(*s);c++)
 						{
-						  q0=*q;
-						  q1=*(q-1);
-						  q2=*(q-2);
-						  if(visFlag[q0]||(visFlag[q1])||(visFlag[q2]))
-							 {
-								*(v++) = cont;
-								if(!cont) {
-								  *(v++)=sp->dot[q2].v[0]; /* normal */
-								  *(v++)=sp->dot[q2].v[1];
-								  *(v++)=sp->dot[q2].v[2];
-								  *(v++)=v0[0]+vdw*sp->dot[q2].v[0]; /* point */
-								  *(v++)=v0[1]+vdw*sp->dot[q2].v[1];
-								  *(v++)=v0[2]+vdw*sp->dot[q2].v[2];
-								  *(v++)=sp->dot[q1].v[0]; /* normal */
-								  *(v++)=sp->dot[q1].v[1];
-								  *(v++)=sp->dot[q1].v[2];
-								  *(v++)=v0[0]+vdw*sp->dot[q1].v[0]; /* point */
-								  *(v++)=v0[1]+vdw*sp->dot[q1].v[1];
-								  *(v++)=v0[2]+vdw*sp->dot[q1].v[2];
-								}
-								*(v++)=sp->dot[q0].v[0]; /* normal */
-								*(v++)=sp->dot[q0].v[1];
-								*(v++)=sp->dot[q0].v[2];
-								*(v++)=v0[0]+vdw*sp->dot[q0].v[0]; /* point */
-								*(v++)=v0[1]+vdw*sp->dot[q0].v[1];
-								*(v++)=v0[2]+vdw*sp->dot[q0].v[2];
-								cont=1.0;
-								(*nt)++;
-							 } else {
-								cont = 0.0; /* next triangle is a new strip */
-							 }
-						  q++;
-						}
-					 s++;
-				  }
+                    if(c>1) { /* on third vertex or better */
+                      q0=*q; /* get the indices of the triangle in this strip */
+                      q1=*(q-1);
+                      q2=*(q-2);
+                      if(visFlag[q0]||(visFlag[q1])||(visFlag[q2])) /* visible? */
+                        {
+                          *(v++) = restart; /* store continuing string flag */
+                          
+                          if(restart) { /* not continuing...this is a new strip */
+                            if(c&0x1) /* make sure strip starts off "right" */
+                              *(v-1)=2.0;
+                            *(v++)=sp->dot[q2].v[0]; /* normal */
+                            *(v++)=sp->dot[q2].v[1];
+                            *(v++)=sp->dot[q2].v[2];
+                            *(v++)=v0[0]+vdw*sp->dot[q2].v[0]; /* point */
+                            *(v++)=v0[1]+vdw*sp->dot[q2].v[1];
+                            *(v++)=v0[2]+vdw*sp->dot[q2].v[2];
+                            *(v++)=sp->dot[q1].v[0]; /* normal */
+                            *(v++)=sp->dot[q1].v[1];
+                            *(v++)=sp->dot[q1].v[2];
+                            *(v++)=v0[0]+vdw*sp->dot[q1].v[0]; /* point */
+                            *(v++)=v0[1]+vdw*sp->dot[q1].v[1];
+                            *(v++)=v0[2]+vdw*sp->dot[q1].v[2];
+                            *(v++)=sp->dot[q0].v[0]; /* normal */
+                            *(v++)=sp->dot[q0].v[1];
+                            *(v++)=sp->dot[q0].v[2];
+                            *(v++)=v0[0]+vdw*sp->dot[q0].v[0]; /* point */
+                            *(v++)=v0[1]+vdw*sp->dot[q0].v[1];
+                            *(v++)=v0[2]+vdw*sp->dot[q0].v[2];
+                          } else { /* continue strip */
+                            *(v++)=sp->dot[q0].v[0]; /* normal */
+                            *(v++)=sp->dot[q0].v[1];
+                            *(v++)=sp->dot[q0].v[2];
+                            *(v++)=v0[0]+vdw*sp->dot[q0].v[0]; /* point */
+                            *(v++)=v0[1]+vdw*sp->dot[q0].v[1];
+                            *(v++)=v0[2]+vdw*sp->dot[q0].v[2];
+                          }
+                          restart=0.0;
+                          (*nt)++;
+                        } else {
+                          restart = 1.0;/* next triangle is a new strip */
+                        }
+                    }
+                    q++;
+                  }
+                s++;
+              }
 			 } else {
 				q=sp->Sequence;
 				s=sp->StripLen;
@@ -467,6 +489,7 @@ Rep *RepSphereNew(CoordSet *cs)
                       *(v++)=v0[2]+sphTmp*sp->dot[*q].v[2];
                       q++;
                     }
+
                   s++;
                 }
             } else {
@@ -522,3 +545,63 @@ Rep *RepSphereNew(CoordSet *cs)
 }
 
 
+#ifdef _this_code_is_not_used
+                          /* sum normal */
+                          tn0=sp->dot[q2].v; /* normal */
+                          tn1=sp->dot[q1].v; /* normal */
+                          tn2=sp->dot[q0].v;
+
+                          /* sum normal */
+                          add3f(tn0,tn1,tn);
+                          add3f(tn2,tn,tn);
+
+                          /* compute point */
+
+                          vv0[0]=v0[0]+vdw*sp->dot[q2].v[0];
+                          vv0[1]=v0[1]+vdw*sp->dot[q2].v[1];
+                          vv0[2]=v0[2]+vdw*sp->dot[q2].v[2];
+
+                          vv1[0]=v0[0]+vdw*sp->dot[q1].v[0];
+                          vv1[1]=v0[1]+vdw*sp->dot[q1].v[1];
+                          vv1[2]=v0[2]+vdw*sp->dot[q1].v[2];
+
+                          vv2[0]=v0[0]+vdw*sp->dot[q0].v[0];
+                          vv2[1]=v0[1]+vdw*sp->dot[q0].v[1];
+                          vv2[2]=v0[2]+vdw*sp->dot[q0].v[2];
+
+                          /* compute right-hand vector */
+
+                          subtract3f(vv1,vv0,vt1);
+                          subtract3f(vv2,vv1,vt2);
+                          cross_product3f(vt1,vt2,xtn);
+                          
+                          /* reorder triangle if necessary */
+                          
+                          if(dot_product3f(xtn,tn)<0.0) {
+                            copy3f(tn1,v);
+                            v+=3;
+                            copy3f(vv1,v);
+                            v+=3;
+                            copy3f(tn0,v);
+                            v+=3;
+                            copy3f(vv0,v);
+                            v+=3;
+                            copy3f(tn2,v);
+                            v+=3;
+                            copy3f(vv2,v);
+                            v+=3;
+                          } else {
+                            copy3f(tn0,v);
+                            v+=3;
+                            copy3f(vv0,v);
+                            v+=3;
+                            copy3f(tn1,v);
+                            v+=3;
+                            copy3f(vv1,v);
+                            v+=3;
+                            copy3f(tn2,v);
+                            v+=3;
+                            copy3f(vv2,v);
+                            v+=3;
+                          }
+#endif

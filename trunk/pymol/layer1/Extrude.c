@@ -664,12 +664,10 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
       CGONormalv(cgo,v0);
       CGOVertexv(cgo,v);
       /* trace shape */
-      tv = I->tv;
-      for(b=0;b<I->Ns;b++) {
-        CGOVertexv(cgo,tv);
-        tv+=3;
-      }
       CGOVertexv(cgo,I->tv);
+      for(b=I->Ns-1;b>=0;b--) {
+        CGOVertexv(cgo,I->tv+b*3);
+      }
       CGOEnd(cgo);
 
       n = I->n+9*(I->N-1);
@@ -689,10 +687,8 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
       CGONormalv(cgo,n);
       CGOVertexv(cgo,v);
       /* trace shape */
-      tv = I->tv;
       for(b=0;b<I->Ns;b++) {
-        CGOVertexv(cgo,tv);
-        tv+=3;
+        CGOVertexv(cgo,I->tv+b*3);
       }
       CGOVertexv(cgo,I->tv);
       CGOEnd(cgo);
@@ -815,12 +811,10 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
       CGONormalv(cgo,v0);
       CGOVertexv(cgo,v);
       /* trace shape */
-      tv = I->tv;
-      for(b=0;b<I->Ns;b++) {
-        CGOVertexv(cgo,tv);
-        tv+=3;
-      }
       CGOVertexv(cgo,I->tv);
+      for(b=I->Ns-1;b>=0;b--) {
+        CGOVertexv(cgo,I->tv+b*3);
+      }
       CGOEnd(cgo);
 
       n = I->n+9*(I->N-1);
@@ -839,10 +833,8 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
       CGONormalv(cgo,n);
       CGOVertexv(cgo,v);
       /* trace shape */
-      tv = I->tv;
       for(b=0;b<I->Ns;b++) {
-        CGOVertexv(cgo,tv);
-        tv+=3;
+        CGOVertexv(cgo,I->tv+b*3);
       }
       CGOVertexv(cgo,I->tv);
       CGOEnd(cgo);
@@ -1103,12 +1095,10 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling)
       CGONormalv(cgo,v0);
       CGOVertexv(cgo,v);
       /* trace shape */
-      tv = I->tv;
-      for(b=0;b<I->Ns;b+=2) {
-        CGOVertexv(cgo,tv);
-        tv+=6;
-      }
       CGOVertexv(cgo,I->tv);
+      for(b=I->Ns-2;b>=0;b-=2) {
+        CGOVertexv(cgo,I->tv+b*3);
+      }
       CGOEnd(cgo);
 
     }
@@ -1210,8 +1200,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling)
     /* trace shape */
     tv = I->tv;
     for(b=0;b<I->Ns;b+=2) {
-      CGOVertexv(cgo,tv);
-      tv+=6;
+      CGOVertexv(cgo,I->tv+b*3);
     }
     CGOVertexv(cgo,I->tv);
     CGOEnd(cgo);

@@ -163,6 +163,8 @@ class SettingIndex:
    field_of_view         =152
    reflect_power         =153
    preserve_chempy_ids   =154
+   sphere_scale          =155
+   two_sided_lighting    =156
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

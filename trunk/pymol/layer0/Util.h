@@ -32,5 +32,6 @@ typedef int UtilOrderFn(void *array,int l,int r);
 
 void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered);
 void UtilSortInPlace(void *array,int nItem,unsigned int itemSize,UtilOrderFn *fOrdered);
+void UtilExpandArrayElements(void *src,void *dst,int n_entries,int old_rec_size,int new_rec_size);
 
 #endif

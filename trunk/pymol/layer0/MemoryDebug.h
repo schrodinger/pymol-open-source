@@ -132,6 +132,7 @@ void MemoryDebugQuietFree(void *ptr,int type);
 
 void MemoryDebugDump(void);
 int MemoryDebugUsage(void);
+void MemoryZero(char *p,char *q);
 
 #ifdef __cplusplus
 }

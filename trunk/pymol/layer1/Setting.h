@@ -253,8 +253,10 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_field_of_view               152
 #define cSetting_reflect_power               153
 #define cSetting_preserve_chempy_ids         154
+#define cSetting_sphere_scale                155
+#define cSetting_two_sided_lighting          156
 
-#define cSetting_INIT                        155
+#define cSetting_INIT                        158
 
 #endif
 

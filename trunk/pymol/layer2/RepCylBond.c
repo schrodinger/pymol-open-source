@@ -731,7 +731,7 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,
   
   /* now we have a coordinate system*/
   
-  for(c=0;c<=nEdge;c++)
+  for(c=nEdge;c>=0;c--)
 	 {
 		v[0] = p1[0]*tube_size*x[c] + p2[0]*tube_size*y[c];
 		v[1] = p1[1]*tube_size*x[c] + p2[1]*tube_size*y[c];
@@ -759,7 +759,7 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,
   
   v+=6;
   
-  for(c=0;c<=nEdge;c++)
+  for(c=nEdge;c>=0;c--)
 	 {
 		
 		v[0] = p1[0]*tube_size*x[c] + p2[0]*tube_size*y[c];
@@ -786,7 +786,7 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,
 		
 		v+=6;
 		
-		for(c=0;c<=nEdge;c++)
+      for(c=0;c<=nEdge;c++)
 		  {
 			 
 			 v[0] = p1[0]*tube_size*x[c] + p2[0]*tube_size*y[c];

@@ -124,6 +124,8 @@ typedef struct AtomInfoType {
   int tmp_index; /* kludge field - to remove */
 } AtomInfoType;
 
+
+
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
 void AtomInfoAssignParameters(AtomInfoType *I);
 void AtomInfoFreeSortedIndexes(int *index,int *outdex);
@@ -143,5 +145,45 @@ void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd
 void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
 void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src);
 int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2);
+
+
+/* legacy binary file support */
+
+typedef struct AtomInfoType068 {
+  int resv;
+  Chain chain;
+  Chain alt;
+  ResIdent resi;
+  SegIdent segi;
+  ResName resn;
+  AtomName name;
+  AtomName elem;
+  TextType textType;
+  LabelType label;
+  SSType ssType; /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
+  int hydrogen;
+  int customType;
+  int priority;
+  float b,q,vdw,partialCharge;
+  int formalCharge;
+  signed char hetatm;
+  short int model; 
+  int atom;
+  int selEntry;
+  short int visRep[cRepCnt];
+  int color;
+  int id; 
+  int cartoon; /* 0 = default which is auto (use ssType) */
+  unsigned int flags;
+  signed char bonded; /* be careful not to write at these as (int*) */
+  signed char chemFlag;
+  signed char geom;
+  signed char valence;
+  signed char deleteFlag;
+  signed char masked;
+  signed char protected;
+  signed char protons;
+} AtomInfoType068;
+
 
 #endif

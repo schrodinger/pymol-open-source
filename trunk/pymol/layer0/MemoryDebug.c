@@ -23,14 +23,12 @@ Z* -------------------------------------------------------------------
 
 #define GDB_ENTRY
 
-void ZeroMem(char *p,char *q);
-
-void ZeroMem(char *p,char *q)
+void MemoryZero(char *p,char *q)
 {
   register unsigned long count;
   register long *a;
   int mask;
-  /*  fprintf(stderr,"ZeroMem: start %p stop %p\n",p,q);
+  /*  fprintf(stderr,"MemoryZero: start %p stop %p\n",p,q);
       fflush(stderr);
   */
 
@@ -72,7 +70,7 @@ void ZeroMem(char *p,char *q)
 		*p++=0;
 		count--;
 	 }
-  /*  if(p!=q) ErrFatal("ZeroMem","is broken.");*/
+  /*  if(p!=q) ErrFatal("MemoryZero","is broken.");*/
 }
 
 void *VLAExpand(void *ptr,unsigned int rec)
@@ -96,7 +94,7 @@ void *VLAExpand(void *ptr,unsigned int rec)
 		  {
 			 start = ((char*)vla) + soffset;
 			 stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
-			 ZeroMem(start,stop);
+			 MemoryZero(start,stop);
 		  }
 	 }
   return((void*)&(vla[1]));
@@ -129,7 +127,7 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int re
 	 {
 		start = ((char*)vla)+sizeof(VLARec);
 		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
-		ZeroMem(start,stop);
+		MemoryZero(start,stop);
 	 }
   return((void*)&(vla[1]));
 }
@@ -194,7 +192,7 @@ void *VLASetSize(void *ptr,unsigned int newSize)
       start = ((char*)vla)+soffset;
 		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
 		if(start<stop)
-		  ZeroMem(start,stop);
+		  MemoryZero(start,stop);
 	 }
   return((void*)&(vla[1]));
 }

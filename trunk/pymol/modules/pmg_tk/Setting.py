@@ -1,16 +1,17 @@
-#A* -------------------------------------------------------------------
-#B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
-#D* -------------------------------------------------------------------
-#E* It is unlawful to modify or remove this copyright notice.
-#F* -------------------------------------------------------------------
-#G* Please see the accompanying LICENSE file for further information. 
-#H* -------------------------------------------------------------------
-#I* Additional authors of this source file include:
-#-*
-#-* NOTE: Based on code by John E. Grayson which was in turn 
-#-* based on code written by Doug Hellmann. 
-#Z* -------------------------------------------------------------------
+#A*
+#-------------------------------------------------------------------
+#B* This file contains source code for the PyMOL computer program C*
+#copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific.  D*
+#-------------------------------------------------------------------
+#E* It is unlawful to modify or remove this copyright notice.  F*
+#-------------------------------------------------------------------
+#G* Please see the accompanying LICENSE file for further information.
+#H*
+#-------------------------------------------------------------------
+#I* Additional authors of this source file include: -* -* NOTE: Based
+#on code by John E. Grayson which was in turn -* based on code written
+#by Doug Hellmann.  Z*
+#-------------------------------------------------------------------
 
 # this section is devoted to making sure that Tkinter variables which
 # correspond to Menu-displayed settings are kept synchronized with
@@ -99,6 +100,9 @@ class Setting:
       self.log_conformations = IntVar()
       self.log_conformations.set(int(cmd.get_setting_legacy('log_conformations')))
 
+      self.two_sided_lighting = IntVar()
+      self.two_sided_lighting.set(int(cmd.get_setting_legacy('two_sided_lighting')))
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
@@ -152,6 +156,9 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.log_box_selections.get())),log=1))),
          'log_conformations'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.log_conformations.get())),log=1))),
+
+         'two_sided_lighting'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.two_sided_lighting.get())),log=1))),
          }
 
       self.update_code = {
@@ -201,6 +208,8 @@ class Setting:
          (lambda s,t: (s.log_box_selections.set(t[1][0]!=0))),
          'log_conformations':
          (lambda s,t: (s.log_conformations.set(t[1][0]!=0))),
+         'two_sided_lighting':
+         (lambda s,t: (s.two_sided_lighting.set(t[1][0]!=0))),
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -227,6 +236,7 @@ class Setting:
          pymol.setting._get_index("ignore_pdb_segi"),         
          pymol.setting._get_index("log_box_selections"),
          pymol.setting._get_index("log_conformations"),
+         pymol.setting._get_index("two_sided_lighting"),         
          ]
 
       self.active_dict = {}
