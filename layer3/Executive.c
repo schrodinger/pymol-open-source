@@ -804,7 +804,7 @@ void ExecutiveSetObjVisib(char *name,int state)
     tRec=NULL;
     while(ListIterate(I->Spec,tRec,next,SpecList)) {
       if(state!=tRec->visible) {
-        if((tRec->type==cExecObject)||(tRec->type==cExecSelection)) {
+        if(tRec->type==cExecObject) {
           if(tRec->visible)
             SceneObjectDel(tRec->obj);				
           else 

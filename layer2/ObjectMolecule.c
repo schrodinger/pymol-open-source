@@ -1295,7 +1295,7 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
 										
 										if( (dst <= cutoff)&&
                                   (!(ai[a1].hydrogen&&ai[a2].hydrogen))&&
-                                  ((!cs->TmpBond)||(!(ai[a1].hetatm||ai[a2].hetatm))))
+                                  ((!cs->TmpBond)||(!(ai[a1].hetatm&&ai[a2].hetatm))))
 										  {
 											 VLACheck((*bond),int,nBond*3+2);
 											 (*bond)[nBond*3  ] = a1;
