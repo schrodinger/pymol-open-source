@@ -140,7 +140,10 @@ class Setting:
       
       self.texture_fonts = IntVar()
       self.texture_fonts.set(int(cmd.get_setting_legacy('texture_fonts')))
-      
+
+      self.animation = IntVar()
+      self.animation.set(int(cmd.get_setting_legacy('animation')))
+
       self.F=[ None,
                IntVar(),
                IntVar(),
@@ -242,7 +245,10 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%d" % s.seq_view.get()),log=1))),
          'texture_fonts'         :
          (lambda s,a: (cmd.set(a,("%d" % s.texture_fonts.get()),log=1))),
-         
+
+         'animation'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.animation.get())),log=1))),
+
          }
 
       self.update_code = {
@@ -321,7 +327,9 @@ class Setting:
          'texture_fonts':
          (lambda s,t: (s.texture_fonts.set(t[1][0]!=0))),
          'stereo':
-         (lambda s,t: (s.stereo.set(t[1][0]!=0))),         
+         (lambda s,t: (s.stereo.set(t[1][0]!=0))),
+         'animation':
+         (lambda s,t: (s.animation.set(t[1][0]!=0))),         
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -363,6 +371,7 @@ class Setting:
          pymol.setting._get_index("seq_view"),
          pymol.setting._get_index("texture_fonts"),
          pymol.setting._get_index("stereo"),
+         pymol.setting._get_index("animation"),
          ]
 
       self.active_dict = {}

@@ -2403,6 +2403,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_multiplex, -1);
   SettingSet_b(I,cSetting_texture_fonts, 0);
   SettingSet_b(I,cSetting_pqr_no_chain_id, 0);
+  SettingSet_b(I,cSetting_animation, 1);
+  SettingSet_f(I,cSetting_animation_duration, 0.75F);
 
 }
 

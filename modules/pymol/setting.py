@@ -419,7 +419,9 @@ if __name__=='pymol.setting':
       multiplex            = (385, '')
       texture_fonts             = (386, '')
       pqr_no_chain_id           = (387, '')
-
+      animation                 = (388, '')
+      animation_duration        = (389, '')
+      
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

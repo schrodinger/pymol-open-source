@@ -2835,12 +2835,13 @@ static PyObject *CmdOrient(PyObject *dummy, PyObject *args)
   OrthoLineType s1;
   int state;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&state);
+  int animate;
+  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&animate);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     if(ExecutiveGetMoment(TempPyMOLGlobals,s1,m,state))
-      ExecutiveOrient(TempPyMOLGlobals,s1,m,state); /* TODO STATUS */
+      ExecutiveOrient(TempPyMOLGlobals,s1,m,state,animate); /* TODO STATUS */
     else
       ok=false;
     SelectorFreeTmp(TempPyMOLGlobals,s1); 
@@ -4759,11 +4760,12 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
   int state;
   int origin;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&origin);
+  int animate;
+  ok = PyArg_ParseTuple(args,"siii",&str1,&state,&origin,&animate);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    ok = ExecutiveCenter(TempPyMOLGlobals,s1,state,origin);
+    ok = ExecutiveCenter(TempPyMOLGlobals,s1,state,origin,animate);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -4778,11 +4780,13 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   int state;
   int inclusive;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sfii",&str1,&buffer,&state,&inclusive);
+  int animate;
+  ok = PyArg_ParseTuple(args,"sfiii",&str1,&buffer,&state,&inclusive,&animate);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    ok = ExecutiveWindowZoom(TempPyMOLGlobals,s1,buffer,state,inclusive); 
+    ok = ExecutiveWindowZoom(TempPyMOLGlobals,s1,buffer,state,
+                             inclusive,animate); 
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }

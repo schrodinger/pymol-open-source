@@ -144,29 +144,32 @@ int SceneLoopClick(Block *block,int button, int x,int y,int mod);
 
 void ScenePrimeAnimation(PyMOLGlobals *G)
 {
-  CScene *I=G->Scene;
-  SceneToViewElem(G,I->ani_elem);
-  I->ani_elem[0].specification_level = 2;
-  I->n_ani_elem = 0;
+  if(G->HaveGUI) {
+    CScene *I=G->Scene;
+    SceneToViewElem(G,I->ani_elem);
+    I->ani_elem[0].specification_level = 2;
+    I->n_ani_elem = 0;
+  }
 }
 
 void SceneLoadAnimation(PyMOLGlobals *G, double duration)
 {
-  double now;
-  int target = MAX_ANI_ELEM;
-
-  CScene *I=G->Scene;
-  SceneToViewElem(G,I->ani_elem + target);
-  I->ani_elem[MAX_ANI_ELEM].specification_level = 2;
-  now = UtilGetSeconds(G);
-  I->ani_elem[0].timing_flag = true;
-  I->ani_elem[0].timing = now + 0.01;
-  I->ani_elem[target].timing_flag = true;
-  I->ani_elem[target].timing = now + duration;
-  ViewElemInterpolate(I->ani_elem, I->ani_elem + target, 2.0F, 1.0F);
-  SceneFromViewElem(G,I->ani_elem);
-  I->cur_ani_elem = 0;
-  I->n_ani_elem = target;
+  if(G->HaveGUI) {
+    double now;
+    int target = MAX_ANI_ELEM;
+    CScene *I=G->Scene;
+    SceneToViewElem(G,I->ani_elem + target);
+    I->ani_elem[MAX_ANI_ELEM].specification_level = 2;
+    now = UtilGetSeconds(G);
+    I->ani_elem[0].timing_flag = true;
+    I->ani_elem[0].timing = now + 0.01;
+    I->ani_elem[target].timing_flag = true;
+    I->ani_elem[target].timing = now + duration;
+    ViewElemInterpolate(I->ani_elem, I->ani_elem + target, 2.0F, 1.0F);
+    SceneFromViewElem(G,I->ani_elem);
+    I->cur_ani_elem = 0;
+    I->n_ani_elem = target;
+  }
 }
 
 int SceneLoopClick(Block *block,int button, int x,int y,int mod)
@@ -1079,7 +1082,7 @@ void SceneIdle(PyMOLGlobals *G)
 
   if(I->PossibleSingleClick==2) {
     double now = UtilGetSeconds(G);
-    double single_click_delay = 0.20;
+    double single_click_delay = 0.15;
     double diff = now-I->LastReleaseTime;
     if(diff>single_click_delay) {
       /* post a single click processing event */
@@ -2122,19 +2125,19 @@ static int SceneClick(Block *block,int button,int x,int y,
             ENDFB(G);
           break;
         case cButModeCent:
-          sprintf(buf2,"center (%s),state=-1",buffer);        
+          sprintf(buf2,"center (%s),state=-1,animate=-1",buffer);        
           OrthoCommandIn(G,buf2);
-          if(obj->type==cObjectMolecule) {
-            if(SettingGet(G,cSetting_logging)) {
-              objMol = (ObjectMolecule*)obj;            
-              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
-              sprintf(buffer,"cmd.center(\"%s\",state=-1)",buf1);
-              PLog(buffer,cPLog_pym);
-            }
+          if(SettingGet(G,cSetting_logging)) {
+            objMol = (ObjectMolecule*)obj;            
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
+            sprintf(buffer,"cmd.center(\"%s\",state=-1)",buf1);
+            PLog(buffer,cPLog_pym);
           }
-          PRINTFB(G,FB_Scene,FB_Actions) 
-            " Scene: Centered.\n"
-            ENDFB(G);
+          /* 
+             PRINTFB(G,FB_Scene,FB_Actions) 
+             " Scene: Centered.\n"
+             ENDFB(G);
+          */
           break;
         }
         switch(mode) {
@@ -2650,7 +2653,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     double slowest_single_click_drag = 0.15;
     if((when-I->LastClickTime)>slowest_single_click_drag) {
       I->PossibleSingleClick = 0;
-      printf("too slow\n");
     }
   }
 

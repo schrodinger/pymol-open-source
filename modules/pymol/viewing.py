@@ -44,7 +44,7 @@ if __name__=='pymol.viewing':
    scene_dict = {}
    scene_dict_sc = Shortcut([])
 
-   def zoom(selection="all",buffer=0.0,state=0,complete=0):
+   def zoom(selection="all",buffer=0.0,state=0,complete=0,animate=0):
       '''
 DESCRIPTION
 
@@ -94,12 +94,13 @@ SEE ALSO
       #   
       try:
          lock()   
-         r = _cmd.zoom(str(selection),float(buffer),int(state)-1,int(complete))
+         r = _cmd.zoom(str(selection),float(buffer),
+                       int(state)-1,int(complete),int(animate))
       finally:
          unlock()
       return r
 
-   def center(selection="all",state=0,origin=1):
+   def center(selection="all",state=0,origin=1,animate=0):
       '''
 DESCRIPTION
 
@@ -136,7 +137,7 @@ SEE ALSO
       #   
       try:
          lock()   
-         r = _cmd.center(str(selection),int(state)-1,int(origin))
+         r = _cmd.center(str(selection),int(state)-1,int(origin),int(animate))
       finally:
          unlock()
       return r
@@ -233,7 +234,7 @@ SEE ALSO
          unlock()
       return r
 
-   def orient(selection="(all)",state=0):
+   def orient(selection="(all)",state=0,animate=0):
       '''
 DESCRIPTION
 
@@ -265,7 +266,7 @@ SEE ALSO
       #   
       try:
          lock()
-         r = _cmd.orient(selection,int(state)-1)
+         r = _cmd.orient(selection,int(state)-1,int(animate))
       finally:
          unlock()
       return r
