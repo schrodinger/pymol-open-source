@@ -95,7 +95,15 @@ Current Bugs to Fix
 
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
+
 Changes up to 0.88
+
+   * INCOMPABILITY WARNING: "-X" option for launching rpcserver changed to "-R"
+	in order to make room for "-X" and "-Y" options for positioning GLUT window.
+
+   * command line options: "-X value" and "-Y value" along with 
+	"-W value" and "-H value" can now be used to determine the position and size
+	of the GLUT OpenGL window.
 
    * fixed session restore bug with editing mode
 
