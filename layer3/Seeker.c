@@ -26,25 +26,62 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Selector.h"
 #include"Wizard.h"
+#include"Scene.h"
+#include"Menu.h"
 
 #define cTempSeekerSele "_seeker"
+#define cTempCenterSele "_seeker_center"
 
 typedef struct {
-  int a;
+  CSeqHandler handler; /* must be first */
+  int drag_start_col, drag_last_col;
+  int drag_row;
+  int dragging, drag_setting;
+  int drag_button;
 } CSeeker;
 
 CSeeker Seeker;
 
-CSeqHandler SeekerHandler;
+
+static void BuildSeleFromAtomList(char *obj_name,int *atom_list,char *sele_name,int start_fresh)
+{
+  char *buf_vla = NULL;
+  int buf_size = 0;
+  OrthoLineType buf1;
+  buf_vla = VLAlloc(char,4000);
+
+  while((*atom_list)>=0) {
+    if(start_fresh) {
+      UtilConcatVLA(&buf_vla,&buf_size,"none");
+    } else {
+      UtilConcatVLA(&buf_vla,&buf_size,"?");
+      UtilConcatVLA(&buf_vla,&buf_size,sele_name);
+    }
+    
+    while((*atom_list)>=0) {
+      sprintf(buf1,"|%s`%d",obj_name,*atom_list+1);
+      UtilConcatVLA(&buf_vla,&buf_size,buf1);
+      atom_list++;
+      if((buf_size>(sizeof(OrthoLineType)+ObjNameMax+50))) {
+        SelectorCreate(sele_name,buf_vla,NULL,true,NULL);      
+        buf_size = 0;
+        start_fresh=false;
+        break;
+      }
+    }
+    
+    if(buf_size) {
+      SelectorCreate(sele_name,buf_vla,NULL,true,NULL);            
+    }
+  }
+  VLAFreeP(buf_vla);
+}
 
 
 static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,int col_num,int inc_or_excl)
 {
   char selName[ObjNameMax];
   OrthoLineType buf1,buf2;
-  char *buf_vla = NULL;
-  int buf_size = 0;
-  buf_vla = VLAlloc(char,1000);
 
   ExecutiveGetActiveSeleName(selName,true);
   
@@ -65,30 +102,30 @@ static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,int col_num,int in
 
       /* build up a selection consisting of residue atoms */
 
-      UtilConcatVLA(&buf_vla,&buf_size,"none");
-      while((*atom_list)>=0) {
-        sprintf(buf1,"|%s`%d",
-                row->name,*atom_list+1);
-        UtilConcatVLA(&buf_vla,&buf_size,buf1);
-        atom_list++;
-      }
-      
-      SelectorCreate(cTempSeekerSele,buf_vla,NULL,true,NULL);      
+      BuildSeleFromAtomList(row->name,atom_list,cTempSeekerSele,true);
       if(logging) SelectorLogSele(cTempSeekerSele);
       
+      WizardDoSelect(cTempSeekerSele);
+
       /* selection or deselecting? */
 
-      if(col->inverse) {
-        sprintf(buf1,"((%s) or (%s))",
-                selName,cTempSeekerSele);
+      if(inc_or_excl) {
+        if(!col->spacer) {
+          col->inverse = true;
+          sprintf(buf1,"((%s) or (?%s))",
+                  selName,cTempSeekerSele);
+        }
       } else {
-        sprintf(buf1,"((%s) and not (%s))",
-                selName,cTempSeekerSele);
+        if(!col->spacer) {
+          col->inverse = false;
+          sprintf(buf1,"((%s) and not (?%s))",
+                  selName,cTempSeekerSele);
+        }
       }
       
       /* create the new active selection */
 
-      SelectorCreate(selName,buf1,NULL,false,NULL);
+      SelectorCreate(selName,buf1,NULL,true,NULL);
       {
         sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buf1);
         PLog(buf2,cPLog_no_flush);
@@ -103,47 +140,279 @@ static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,int col_num,int in
       
       if(SettingGet(cSetting_auto_show_selections))
         ExecutiveSetObjVisib(selName,1);
-      WizardDoSelect(selName);
+      SceneDirty();
     }
   }
-  VLAFreeP(buf_vla);
 }
 
-static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,int mod)
+
+static void SeekerSelectionCenter(CSeqRow* rowVLA,int row_num,int col_num,int start_over)
+{
+  
+  {
+    CSeqRow *row;
+    CSeqCol *col;
+    int *atom_list;
+    char prefix[3]="";
+    int logging = SettingGet(cSetting_logging);
+
+    if(logging==cPLog_pml)
+      strcpy(prefix,"_ ");
+    row = rowVLA + row_num;
+    col = row->col + col_num;
+    
+    if( ExecutiveFindObjectByName(row->name)) {
+      atom_list = row->atom_lists + col->atom_at;
+      
+      BuildSeleFromAtomList(row->name,atom_list,cTempCenterSele,start_over);
+      if(logging) SelectorLogSele(cTempCenterSele);
+      
+    }
+  }
+}
+
+static void SeekerSelectionCenterGo(void)
+{
+  OrthoLineType buf2;
+    char prefix[3]="";
+  int logging = SettingGet(cSetting_logging);
+    if(logging==cPLog_pml)
+      strcpy(prefix,"_ ");
+
+  ExecutiveCenter(cTempCenterSele,-1,true);
+  if(logging) {
+    sprintf(buf2,"%scmd.center(\"%s\")\n",prefix,cTempCenterSele);
+    PLog(buf2,cPLog_no_flush);
+    PLogFlush();
+  }
+}
+
+static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,int mod,int x,int y)
 {
   CSeqRow *row;
   CSeqCol *col;
-  
+  /*  char selName[ObjNameMax]; */
+  CSeeker *I = &Seeker;    
+
   row = rowVLA + row_num;
   col = row->col + col_num;
-  
-  if(col->inverse) {
-    SeekerSelectionToggle(rowVLA,row_num,col_num,true);
-  } else {
-    SeekerSelectionToggle(rowVLA,row_num,col_num,false);
+  I->dragging = false;
+  I->drag_button = button;
+  switch(button) {
+  case P_GLUT_RIGHT_BUTTON:
+    {
+      char name[ObjNameMax];
+      ObjectMolecule *obj;
+      if(ExecutiveGetActiveSeleName(name, false) && col->inverse) {
+        MenuActivate2Arg(x,y+16,x,y,"pick_option",name,name);
+      } else if( (obj = ExecutiveFindObjectMoleculeByName(row->name) )) {
+        OrthoLineType buffer;
+        {
+          int *atom_list;
+          char prefix[3]="";
+          int logging = SettingGet(cSetting_logging);
+          
+          if(logging==cPLog_pml)
+            strcpy(prefix,"_ ");
+          
+          if( ExecutiveFindObjectByName(row->name)) {
+            atom_list = row->atom_lists + col->atom_at;
+            
+            /* build up a selection consisting of residue atoms */
+            
+            if((*atom_list)>=0) {
+              
+              ObjectMoleculeGetAtomSele(obj,*atom_list,buffer);
+              
+              BuildSeleFromAtomList(row->name,atom_list,cTempSeekerSele,true);
+              if(logging) SelectorLogSele(cTempSeekerSele);
+              
+              MenuActivate2Arg(x,y+16,x,y,"seq_option",buffer,cTempSeekerSele); 
+              
+            }
+          }
+        }
+      }
+    }
+    break;
+  case P_GLUT_MIDDLE_BUTTON:
+    I->drag_start_col = col_num;
+    I->drag_last_col = col_num;
+    I->drag_row = row_num;
+    I->dragging = true;
+    SeekerSelectionCenter(rowVLA,row_num,col_num,true);
+    SeekerSelectionCenterGo();
+    break;
+  case P_GLUT_LEFT_BUTTON:
+    if(!col->spacer) {
+      I->drag_start_col = col_num;
+      I->drag_last_col = col_num;
+      I->drag_row = row_num;
+      I->dragging = true;
+      I->drag_setting = true;
+      if(col->inverse) {
+        SeekerSelectionToggle(rowVLA,row_num,col_num,false);
+        I->drag_setting = false;
+      } else {
+        SeekerSelectionToggle(rowVLA,row_num,col_num,true);
+      }
+    }
+    break;
   }
 
+  /*  ExecutiveGetActiveSeleName(selName,true);
+      WizardDoSelect(selName); */
+
   return NULL;
+}
+
+static void SeekerRefresh(CSeqRow *rowVLA)
+{
+  if(rowVLA) {
+    CSeqRow *row;
+    CSeqCol *col;
+    int *atom_list;
+    int nRow = VLAGetSize(rowVLA);
+    int sele = ExecutiveGetActiveSele();
+    int b;
+    ObjectMolecule *obj;
+
+    for(b=0;b<nRow;b++) {
+      row = rowVLA + b;
+      
+      if( (obj = ExecutiveFindObjectMoleculeByName(row->name)) ) {
+        register int a;
+        register AtomInfoType *atInfo = obj->AtomInfo;
+        register int at;
+        register int selected;
+        register int not_selected;
+        
+        if(sele<0) {
+          for(a=0;a<row->nCol;a++) {
+            col = row->col + a;
+            col->inverse = false;
+          }
+        } else {
+          for(a=0;a<row->nCol;a++) {
+            
+            col = row->col + a;
+            if(!col->spacer) {
+              selected = false;
+              atom_list = row->atom_lists + col->atom_at;
+              not_selected = true;
+              
+              while( (at=(*atom_list)) >=0) {
+                atom_list++;
+                if(SelectorIsMember(atInfo[at].selEntry,sele)) {
+                  selected = true; 
+                } else {
+                  not_selected = true;
+                }
+              }
+              
+              if(selected)
+                col->inverse = true;
+              else
+                col->inverse = false;
+            } else 
+              col->inverse = false;
+          }
+        }
+      }
+    }
+  }
 }
 
 static CSeqRow* SeekerDrag(CSeqRow* rowVLA,int row,int col,int mod)
 {
+  CSeeker *I = &Seeker;    
+  int a;
+
+  if(I->dragging) {
+    switch(I->drag_button) {
+    case P_GLUT_LEFT_BUTTON:
+      if(col != I->drag_last_col) {
+        
+        if(I->drag_start_col == I->drag_last_col) {
+          if(col>I->drag_start_col) {
+            I->drag_last_col = I->drag_start_col+1;
+            SeekerSelectionToggle(rowVLA,I->drag_row,I->drag_last_col,I->drag_setting);          
+          } else if(col<I->drag_start_col){
+            I->drag_last_col = I->drag_start_col-1;          
+            SeekerSelectionToggle(rowVLA,I->drag_row,I->drag_last_col,I->drag_setting);          
+          }
+        }
+        if(I->drag_start_col < I->drag_last_col) {
+          
+          if( col > I->drag_last_col ) {
+            for( a=I->drag_last_col+1; a<=col; a++) {
+              SeekerSelectionToggle(rowVLA,I->drag_row,a,I->drag_setting);          
+            }
+          } else {
+            for(a=I->drag_last_col; a>col ;a--) {
+              SeekerSelectionToggle(rowVLA,I->drag_row,a,!I->drag_setting);          
+            }
+          }
+        } else {
+          
+          if( col < I->drag_last_col) {
+            for(a=I->drag_last_col-1;a>=col;a--) {
+              SeekerSelectionToggle(rowVLA,I->drag_row,a,I->drag_setting);          
+            }
+          } else {
+            for(a=I->drag_last_col; a<col ;a++) {
+              SeekerSelectionToggle(rowVLA,I->drag_row,a,!I->drag_setting);          
+            }
+          }
+        }
+        I->drag_last_col = col;              
+        
+      }
+      break;
+    case P_GLUT_MIDDLE_BUTTON:
+
+        if(I->drag_start_col == I->drag_last_col) {
+          if(col>I->drag_start_col) {
+            I->drag_last_col = I->drag_start_col+1;
+            SeekerSelectionCenter(rowVLA,I->drag_row,I->drag_last_col,false);          
+          } else if(col<I->drag_start_col) {
+            I->drag_last_col = I->drag_start_col-1;          
+            SeekerSelectionCenter(rowVLA,I->drag_row,I->drag_last_col,false);          
+          }
+        }
+        if(I->drag_start_col < I->drag_last_col) {
+          
+          if( col > I->drag_last_col ) {
+            for( a=I->drag_last_col+1; a<=col; a++) {
+              SeekerSelectionCenter(rowVLA,I->drag_row,a,false);          
+            }
+          }
+        } else {
+          
+          if( col < I->drag_last_col) {
+            for(a=I->drag_last_col-1;a>=col;a--) {
+              SeekerSelectionCenter(rowVLA,I->drag_row,a,false);          
+            }
+          }
+        }
+        I->drag_last_col = col;              
+        
+        SeekerSelectionCenterGo();
+
+      break;
+    }
+  }
   return NULL;
 }
-
+  
 static CSeqRow* SeekerRelease(CSeqRow* rowVLA,int button,
                               int row,int col,int mod)
 {
+  CSeeker *I = &Seeker;    
+  I->dragging = false;
   return NULL;
 }
 
-static void SeekerReset(void)
-{
-}
-
-static void SeekerUpdateSimple(void)
-{
-}
 
 static char SeekerGetAbbr(char *abbr)
 {
@@ -326,6 +595,7 @@ static char SeekerGetAbbr(char *abbr)
   return 0;
 }
 
+
 void SeekerUpdate(void)
 {
   /*  CObject *o = NULL;
@@ -336,13 +606,15 @@ void SeekerUpdate(void)
   ObjectMolecule *obj;
   int nRow = 0;
   int label_flag = true;
+  int codes;
+
   CSeqRow *row_vla,*row,*lab=NULL;
   row_vla = VLACalloc(CSeqRow,10);
-
   /* FIRST PASS: get all the residues represented properly */
 
   while(ExecutiveIterateObjectMolecule(&obj,&hidden)) {
-    if(obj->Obj.Enabled) {
+    if(obj->Obj.Enabled&&(SettingGet_b(obj->Obj.Setting,NULL,cSetting_seq_view))&&
+       (obj->Obj.Name[0]!='_')) {
       int a;
       AtomInfoType *last = NULL,*last_segi=NULL,*last_chain = NULL;
       int last_abbr = false;
@@ -354,6 +626,7 @@ void SeekerUpdate(void)
       int min_pad = -1;
       CSeqCol *r1 = NULL,*l1=NULL;/* *col */
 
+      codes = SettingGet_i(obj->Obj.Setting,NULL,cSetting_seq_view_codes);
       /* allocate a row for labels, if present
          the text for the labels and the residues will line up exactly 
       */
@@ -374,7 +647,8 @@ void SeekerUpdate(void)
       row = row_vla+nRow;
       row->txt = VLAlloc(char,est_char);
       row->col = VLACalloc(CSeqCol,est_col);
-      row->atom_lists = VLACalloc(int,obj->NAtom+est_col);
+      row->atom_lists = VLACalloc(int,obj->NAtom+est_col+1);
+      row->atom_lists[0] = -1; /* terminate the blank listQ (IMPORTANT!) */
       row->char2col = VLACalloc(int,est_char);
       row->obj = obj;
       strcpy(row->name,obj->Obj.Name);
@@ -403,14 +677,14 @@ void SeekerUpdate(void)
 
         last_segi = ai;
         last_chain = ai;
-        /* blank equivalent text for sequence row */
-          VLACheck(row->col,CSeqCol,nCol);
-          r1 = row->col + nCol;
-          r1->start = row->len;
-          row->len += st_len;
-          r1->stop = row->len;
-          memset(row->txt+r1->start,32,st_len);
-
+        /* blank equivalent text for sequence row below the fixed label */
+        VLACheck(row->col,CSeqCol,nCol);
+        r1 = row->col + nCol;
+        r1->start = row->len;
+        row->len += st_len;
+        r1->stop = row->len;
+        memset(row->txt+r1->start,32,st_len);
+        r1->spacer = true;
         nCol++;
       }
 
@@ -444,11 +718,11 @@ void SeekerUpdate(void)
           row->len += st_len;
           r1->stop = row->len;
           memset(row->txt+r1->start,32,st_len);
-          
+          r1->spacer = true;
           nCol++;
           
           last_abbr = false;
-
+          
           last_segi = ai;
           last_chain = ai;
 
@@ -478,9 +752,9 @@ void SeekerUpdate(void)
           row->len += st_len;
           r1->stop = row->len;
           memset(row->txt+r1->start,32,st_len);
-          
+          r1->spacer = true;
           nCol++;
-                    
+          
           last_abbr = false;
           last_chain = ai;
         }
@@ -488,8 +762,8 @@ void SeekerUpdate(void)
         if(min_pad<0)
           min_pad = strlen(ai->resi) + row->len + 1;
         
-        switch(0) {
-        case 0:
+        switch(codes) {
+        case 0: /* one letter residue codes */
           if(!AtomInfoSameResidueP(last,ai)) {
             char abbr[2] = "1";
             last = ai;            
@@ -521,7 +795,7 @@ void SeekerUpdate(void)
           }
           
           break;
-        case 1:
+        case 1: /* explicit residue codes */
           if(!AtomInfoSameResidueP(last,ai)) {
             last = ai;
 
@@ -536,9 +810,30 @@ void SeekerUpdate(void)
             nCol++;
           }
           break;
-        case 2:
+        case 2: /* atom names */
+          VLACheck(row->col,CSeqCol,nCol);
+          r1 = row->col+nCol;
+          r1->start = row->len;
+          first_atom_in_label = true;
           UtilConcatVLA(&row->txt,&row->len,ai->name);
+          r1->stop = row->len;
           UtilConcatVLA(&row->txt,&row->len," ");
+          nCol++;
+          break;
+        case 3:
+          if(!AtomInfoSameChainP(last,ai)) {
+            last = ai;
+
+            VLACheck(row->col,CSeqCol,nCol);
+            r1 = row->col+nCol;
+            r1->start = row->len;
+            first_atom_in_label = true;
+
+            UtilConcatVLA(&row->txt,&row->len,ai->chain);
+            r1->stop = row->len;
+            UtilConcatVLA(&row->txt,&row->len," ");
+            nCol++;
+          }
           break;
         }
 
@@ -550,12 +845,6 @@ void SeekerUpdate(void)
           }
           if(r1) {
             r1->atom_at = nListEntries;
-            {
-              int c;
-              VLACheck(row->char2col,int,row->len);
-              for(c=r1->start;c<r1->stop;c++) 
-                row->char2col[c]=nCol; /* implicitly offset by 1 for convenience! */
-            }
           }
         }
         
@@ -587,9 +876,63 @@ void SeekerUpdate(void)
   }
 
   /* SECOND PASS: align columns to reflect current alignment and fixed labels */
-  {
+  if(nRow)
+    {
     int a,b;
     int nCol;
+    int maxCol = 0;
+    int done_flag = false;
+    /* find out the maximum number of columns */
+
+    for(a=0;a<nRow;a++) {
+      row = row_vla + a;
+      nCol = row->nCol;
+      row->accum = 0; /* initialize the accumulators */
+      row->current = 0;
+      if(maxCol<nCol)
+        maxCol = nCol;
+    }
+
+    /* in the simplest mode, just start each sequence in the same column */
+
+    switch(0) {
+    case 0:
+      b = 0;
+      while(!done_flag) {
+        int max_offset = 0;
+        done_flag = true;
+        for(a=0;a<nRow;a++) {
+          row = row_vla + a;
+          if(!row->label_flag) {
+            if(b< row->nCol) {
+              CSeqCol *r1 = row->col + b;
+              done_flag = false;
+              
+              r1->offset = r1->start + row->accum;
+              if(max_offset<r1->offset)
+                max_offset = r1->offset;
+            }
+          }
+        }
+        for(a=0;a<nRow;a++) { 
+          row = row_vla + a;
+          if(!row->label_flag) {
+            if(b<row->nCol) {
+              CSeqCol *r1 = row->col + b;
+              if(b<2) {
+                if(r1->offset<max_offset) {
+                  row->accum += max_offset - r1->offset;
+                }
+              }
+              r1->offset = r1->start + row->accum;
+            }
+          }
+        }
+        b++;
+      }
+      break;
+    }
+    
 
     for(a=0;a<nRow;a++) {
       row = row_vla + a;
@@ -599,9 +942,8 @@ void SeekerUpdate(void)
       else {
         for(b=0;b<nCol;b++) {
           CSeqCol *r1 = row->col + b,*l1=NULL;
-          r1->offset = r1->start;
-          if(lab) {
-            l1 = lab->col + b;
+          if(lab) { 
+            l1 = lab->col + b; /* if a fixed label is present, get the final offset from the residue line */
             if(l1->stop) 
               l1->offset = r1->offset;
           }
@@ -609,26 +951,30 @@ void SeekerUpdate(void)
         lab = NULL;
       }
     }
+    
   }
 
   /* THIRD PASS: fill in labels, based on actual residue spacing */
 
-  {
+  if(nRow) {
     int a,b,c;
     int nCol;
-
     for(a=0;a<nRow;a++) {
       lab = row_vla + a;
       if(lab->label_flag) {
         int next_open = 0;
         int *atom_list;
         int st_len;
+        int div,sub;
+        int draw_it;
         ObjectMolecule *obj;
         AtomInfoType *ai;
         row = lab+1;
         nCol = row->nCol;
         obj = row->obj;
 
+        div = SettingGet_i(obj->Obj.Setting,NULL,cSetting_seq_view_label_spacing);
+        sub = SettingGet_i(obj->Obj.Setting,NULL,cSetting_seq_view_label_start);
         for(b=0;b<nCol;b++) {
           CSeqCol *r1 = row->col + b;
           CSeqCol *l1 = lab->col + b;
@@ -637,49 +983,92 @@ void SeekerUpdate(void)
           if(l1->stop) {/* if label is already present, just line it up */
             l1->offset = r1->offset;
           } else if((r1->offset >= next_open) && (r1->atom_at)) {
+
             atom_list = row->atom_lists + r1->atom_at;
-            
             ai = obj->AtomInfo + (*atom_list); /* get first atom in list */
-            st_len = strlen(ai->resi);
-            VLACheck(lab->txt,char,lab->len+st_len+1);
-            strcpy(lab->txt+lab->len, ai->resi); /* copy the residue identifier */
-            l1->start = lab->len;
-            lab->len += st_len;
-            l1->stop = lab->len;
-            l1->offset = r1->offset;
-            next_open = r1->offset + st_len + 1;
-
-            /* make sure this label doesn't conflict with a fixed label */
-
-            for(c=b+1;c<nCol;c++) { 
-              CSeqCol *l2 = lab->col + c;   
-              if(l2->offset&&(l2->offset<next_open)) {
-                l1->start=0;
-                l1->stop=0;
-                break;
+              
+            if(div>1) {
+              if(! ((ai->resv-sub) % div))
+                draw_it = true;
+              else
+                draw_it = false;
+            } else {
+              draw_it = true;
+            }
+            if(draw_it) {
+              st_len = strlen(ai->resi);
+              VLACheck(lab->txt,char,lab->len+st_len+1);
+              strcpy(lab->txt+lab->len, ai->resi); /* copy the residue identifier */
+              l1->start = lab->len;
+              lab->len += st_len;
+              l1->stop = lab->len;
+              l1->offset = r1->offset;
+              next_open = r1->offset + st_len + 1;
+              
+              /* make sure this label doesn't conflict with a fixed label */
+              
+              for(c=b+1;c<nCol;c++) { 
+                CSeqCol *l2 = lab->col + c;   
+                if(l2->offset&&(l2->offset<next_open)) {
+                  l1->start=0;
+                  l1->stop=0;
+                  break;
+                }
+                if((c-b)>st_len) /* only search as many columns as characters */
+                  break;
               }
-              if((c-b)>st_len) /* only search as many columns as characters */
-                break;
             }
           }
         }
       }
     }
   }
-  SeqSetRowVLA(row_vla,nRow);
-  SeekerHandler.fClick = SeekerClick;
-  SeekerHandler.fRelease = SeekerRelease;
-  SeekerHandler.fDrag = SeekerDrag;
-  SeqSetHandler(&SeekerHandler);
-}
 
-static void SeekerInvalidate(void)
-{
+  /* FOURTH PASS: simply fill in character offsets */
+  if(nRow) {
+    int a,b;
+    int nCol;
+    int start,stop;
+    for(a=0;a<nRow;a++) {
+      row = row_vla + a;
+      row->ext_len = 0;
+
+      if(!row->label_flag) {
+        nCol = row->nCol;
+
+        for(b=0;b<nCol;b++) {
+          CSeqCol *r1 = row->col + b;
+          stop = r1->offset + (r1->stop-r1->start);
+          if(row->ext_len<stop)
+            row->ext_len = stop;
+        }
+        VLACheck(row->char2col,int,row->ext_len);
+        UtilZeroMem(row->char2col,row->ext_len);
+        for(b=0;b<nCol;b++) {
+          CSeqCol *r1 = row->col + b;
+          int c;
+          start = r1->offset;
+          stop = r1->offset + (r1->stop-r1->start);
+          for(c=start;c<stop;c++) 
+            row->char2col[c]=b+1;
+        }
+      }
+    }
+  }
+
+  SeqSetRowVLA(row_vla,nRow);
+  Seeker.handler.fClick = SeekerClick;
+  Seeker.handler.fRelease = SeekerRelease;
+  Seeker.handler.fDrag = SeekerDrag;
+  Seeker.handler.fRefresh = SeekerRefresh;
+  SeqSetHandler(&Seeker.handler);
 }
 
 void SeekerInit(void)
 {
-  /*  CSeeker *I = &Seeker;  */
+  CSeeker *I = &Seeker;  
+  I->dragging = false;
+  
 }
 
 void SeekerFree(void)

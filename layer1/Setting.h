@@ -494,10 +494,16 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_ray_max_passes             350
 #define cSetting_active_selections          351
 #define cSetting_ray_transparency_contrast  352
+#define cSetting_seq_view                   353
+#define cSetting_mouse_selection_mode       354
+#define cSetting_seq_view_label_spacing     355
+#define cSetting_seq_view_label_start       356
+#define cSetting_seq_view_codes             357
+
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        353
+#define cSetting_INIT                        358
 
 #endif
 

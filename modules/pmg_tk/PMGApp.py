@@ -518,81 +518,125 @@ class PMGApp(AbstractApp):
          self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
          cmd.log("mpng %s\n"%sfile,"cmd.mpng('%s')\n"%sfile)         
          cmd.mpng(sfile)
-   
+
+   def about_plugins(self):
+      about = Pmw.MessageDialog((self._hull),
+                                title = 'About Plugins',
+                                message_text =
+    'Plugins are external modules which extend PyMOL\'s capabilities.\n\n Available plugins (if any) are shown in the Plugin menu.\n\nIf no plugins are listed, then either none have been installed, \nor those that are installed are not yet functional.')
+      about.activate(geometry='centerscreenfirst')      
+
+   def transparency_menu(self,name,label,setting_name):
+      
+      self.menuBar.addcascademenu('Transparency', name, label, label=label)
+      
+      self.menuBar.addmenuitem(name,  'command', 'Off',
+                               label='Off',
+                               command = lambda : cmd.do("_ cmd.set('%s',0.0)"%setting_name))
+
+      self.menuBar.addmenuitem(name,  'command', '20%',
+                               label='20%',
+                               command = lambda : cmd.do("_ cmd.set('%s',0.2)"%setting_name))
+
+      self.menuBar.addmenuitem(name,  'command', '40%',
+                               label='40%',
+                               command = lambda : cmd.do("_ cmd.set('%s',0.4)"%setting_name))
+
+      self.menuBar.addmenuitem(name,  'command', '50%',
+                               label='50%',
+                               command = lambda : cmd.do("_ cmd.set('%s',0.5)"%setting_name))
+
+      self.menuBar.addmenuitem(name,  'command', '60%',
+                               label='60%',
+                               command = lambda : cmd.do("_ cmd.set('%s',0.6)"%setting_name))
+
+      self.menuBar.addmenuitem(name,  'command', '80%',
+                               label='80%',
+                               command = lambda : cmd.do("_ cmd.set('%s',0.8)"%setting_name))
+
+      
+
    def createMenuBar(self):
       self.menuBar.addmenuitem('Help', 'command',
                                'Get information on application', 
                                label='About', command = lambda : cmd.do("_ splash"))
 
-      self.menuBar.addmenuitem('Help', 'command', 'Release Notes',
-                               label='Release Notes',
-                               command = lambda: cmd.do("_ cmd.show_help('release')"))
-
       self.menuBar.addmenuitem('Help', 'separator', '')
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on Commands',
-                               label='Commands',
-                               command = lambda: cmd.do("_ cmd.show_help('commands')"))
+      self.menuBar.addmenuitem('Help', 'command', 'Demo',
+                               label='Demo',
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,cartoon"))
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on Launching',
-                               label='Launching',
-                               command = lambda: cmd.do("_ cmd.show_help('launching')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Release Notes',
+#                               label='Release Notes',
+#                               command = lambda: cmd.do("_ cmd.show_help('release')"))
 
-      self.menuBar.addmenuitem('Help', 'separator', '')
+#      self.menuBar.addmenuitem('Help', 'separator', '')
+      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on Commands',
+#                               label='Commands',
+#                               command = lambda: cmd.do("_ cmd.show_help('commands')"))
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
-                               label='Select Command',
-                               command = lambda: cmd.do("_ cmd.show_help('select')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on Launching',
+#                               label='Launching',
+#                               command = lambda: cmd.do("_ cmd.show_help('launching')"))      
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
-                               label='Selection Syntax',
-                               command = lambda: cmd.do("_ cmd.show_help('selections')"))      
+#      self.menuBar.addmenuitem('Help', 'separator', '')
 
-      self.menuBar.addmenuitem('Help', 'command', 'Example Selections',
-                               label='Selection Examples',
-                               command = lambda: cmd.do("_ cmd.show_help('examples')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
+#                               label='Select Command',
+#                               command = lambda: cmd.do("_ cmd.show_help('select')"))      
 
-      self.menuBar.addmenuitem('Help', 'separator', '')
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
+#                               label='Selection Syntax',
+#                               command = lambda: cmd.do("_ cmd.show_help('selections')"))      
+
+#      self.menuBar.addmenuitem('Help', 'command', 'Example Selections',
+#                               label='Selection Examples',
+#                               command = lambda: cmd.do("_ cmd.show_help('examples')"))      
+
+#      self.menuBar.addmenuitem('Help', 'separator', '')
       
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on the Mouse',
-                               label='Mouse',
-                               command = lambda: cmd.do("_ cmd.show_help('mouse')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on the Mouse',
+#                               label='Mouse',
+#                               command = lambda: cmd.do("_ cmd.show_help('mouse')"))      
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on the Keyboard',
-                               label='Keyboard',
-                               command = lambda: cmd.do("_ cmd.show_help('keyboard')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on the Keyboard',
+#                               label='Keyboard',
+#                               command = lambda: cmd.do("_ cmd.show_help('keyboard')"))      
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
-                               label='Molecular Editing',
-                               command = lambda: cmd.do("_ cmd.show_help('editing')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
+#                               label='Molecular Editing',
+#                               command = lambda: cmd.do("_ cmd.show_help('editing')"))      
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
-                               label='Molecular Editing Keys',
-                               command = lambda: cmd.do("_ cmd.show_help('edit_keys')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
+#                               label='Molecular Editing Keys',
+#                               command = lambda: cmd.do("_ cmd.show_help('edit_keys')"))      
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on Stereo',
-                               label='Stereo',
-                               command = lambda: cmd.do("_ cmd.show_help('stereo')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on Stereo',
+#                               label='Stereo',
+#                               command = lambda: cmd.do("_ cmd.show_help('stereo')"))      
 
-      self.menuBar.addmenuitem('Help', 'separator', '')
+#      self.menuBar.addmenuitem('Help', 'separator', '')
       
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on the API',
-                               label='API',
-                               command = lambda: cmd.do("_ cmd.show_help('api')"))      
+#      self.menuBar.addmenuitem('Help', 'command', 'Help on the API',
+#                               label='API',
+#                               command = lambda: cmd.do("_ cmd.show_help('api')"))      
 
       self.toggleBalloonVar = IntVar()
-      self.toggleBalloonVar.set(1)
+      self.toggleBalloonVar.set(0)
       self.setting = Setting()
 
-      self.menuBar.addmenuitem('Help', 'separator', '')
+#      self.menuBar.addmenuitem('Help', 'separator', '')
       
-      self.menuBar.addmenuitem('Help', 'checkbutton',
-                         'Toggle balloon help',
-                         label='Balloon help',
-                        variable = self.toggleBalloonVar,
-                        command=self.toggleBalloon)
+#      self.menuBar.addmenuitem('Help', 'checkbutton',
+#                         'Toggle balloon help',
+#                         label='Balloon help',
+#                        variable = self.toggleBalloonVar,
+#                        command=self.toggleBalloon)
 
       self.menuBar.addmenuitem('File', 'command', 'Open structure file.',
                         label=self.pad+'Open...',
@@ -925,6 +969,109 @@ class PMGApp(AbstractApp):
                                label='Parallel Beta Sheet',
                                command = lambda: cmd.do("_ set secondary_structure,3"))
 
+      self.menuBar.addmenuitem('Build', 'separator', '')
+
+      self.menuBar.addcascademenu('Build', 'Sculpting', 'Sculpting',
+                                  label='Sculpting',tearoff=TRUE)
+
+      self.menuBar.addmenuitem('Sculpting', 'checkbutton',
+                         'Auto-Sculpt.',
+                         label=self.pad+'Auto-Sculpting',
+                        variable = self.setting.auto_sculpt,
+                        command = lambda s=self: s.setting.update('auto_sculpt'))
+
+      self.menuBar.addmenuitem('Sculpting', 'checkbutton',
+                         'Sculpting.',
+                         label=self.pad+'Sculpting',
+                        variable = self.setting.sculpting,
+                        command = lambda s=self: s.setting.update('sculpting'))
+
+      self.menuBar.addmenuitem('Sculpting', 'separator', '')
+      
+
+      self.menuBar.addmenuitem('Sculpting', 'command', 'Activate',
+                               label='Activate',
+                               command = lambda: cmd.do("_ sculpt_activate all"))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', 'Deactivate',
+                               label='Deactivate',
+                               command = lambda: cmd.do("_ sculpt_deactivate all"))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', 'Clear Memory',
+                               label='Clear Memory',
+                               command = lambda: cmd.do("_ sculpt_purge"))
+
+      self.menuBar.addmenuitem('Sculpting', 'separator', '')
+
+      self.menuBar.addmenuitem('Sculpting', 'command', '1 Cycle/Update',
+                               label='1 Cycle per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=1"))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', '3 Cycles/Update',
+                               label='3 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=3"))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', '10 Cycles/Update',
+                               label='10 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=10"))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', '33 Cycles/Update',
+                               label='33 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=33"))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', '100 Cycles/Update',
+                               label='100 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=100"))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', '333 Cycles/Update',
+                               label='333 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=333"))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', '1000 Cycles/Update',
+                               label='1000 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=1000"))
+
+      self.menuBar.addmenuitem('Sculpting', 'separator', '')
+
+#define cSculptBond  0x01
+#define cSculptAngl  0x02
+#define cSculptPyra  0x04
+#define cSculptPlan  0x08
+#define cSculptLine  0x10
+#define cSculptVDW   0x20
+#define cSculptVDW14 0x40
+#define cSculptTors  0x80
+
+      self.menuBar.addmenuitem('Sculpting', 'command', 'Bonds Only',
+                               label='Bonds Only',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01)))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', 'Bonds & Angles Only',
+                               label='Bonds & Angles Only',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01+0x02)))
+      
+      self.menuBar.addmenuitem('Sculpting', 'command', 'Local Geometry Only',
+                               label='Local Geometry Only',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01+0x02+0x04+0x08+0x10)))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', 'All Except VDW',
+                               label='All Except VDW',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01+0x02+0x04+0x08+0x10+0x80)))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', 'All Except 1-4 VDW & Torsions',
+                               label='All Except 1-4 VDW & Torsions',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01+0x02+0x04+0x08+0x10+0x20)))
+
+      self.menuBar.addmenuitem('Sculpting', 'command', 'All Terms',
+                               label='All Terms',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0xFF)))
+
 
       self.menuBar.addmenuitem('Build', 'separator', '')
       
@@ -1064,6 +1211,10 @@ class PMGApp(AbstractApp):
                                label='Swap Sides',
                                command = lambda: cmd.do("_ stereo swap"))
 
+      self.menuBar.addmenuitem('Stereo', 'command', 'Swap Sides',
+                               label='Swap Sides',
+                               command = lambda: cmd.do("_ stereo swap"))
+
       self.menuBar.addmenuitem('Display', 'separator', '')
 
 
@@ -1160,8 +1311,8 @@ class PMGApp(AbstractApp):
                                label='RGB (default)',
                                command = lambda : cmd.do("_ cmd.space('rgb')"))
 
-      self.menuBar.addcascademenu('Display', 'Performance', 'Performance',
-                                  label='Performance')
+      self.menuBar.addcascademenu('Display', 'Performance', 'Performance & Quality',
+                                  label='Performance & Quality')
 
       self.menuBar.addmenuitem('Performance', 'command', 'Maximum Performance',
                                label='Maximum Performance',
@@ -1179,9 +1330,127 @@ class PMGApp(AbstractApp):
                                label='Maximum Quality',
                                command = lambda : cmd.do("_ util.performance(0)"))
 
-      self.menuBar.addcascademenu('Display', 'Transparency', 'Transparency',
-                                  label='Transparency')
+      
+      self.menuBar.addmenuitem('Display', 'separator', '')
+      
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Disable perspective.',
+                         label=self.pad+'Orthoscopic View',
+                        variable = self.setting.ortho,
+                        command = lambda s=self: s.setting.update('ortho'))
 
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Use Display Lists.',
+                         label=self.pad+'Use Display Lists',
+                        variable = self.setting.use_display_lists,
+                        command = lambda s=self: s.setting.update('use_display_lists'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Show Valences.',
+                         label=self.pad+'Show Valences',
+                        variable = self.setting.valence,
+                        command = lambda s=self: s.setting.update('valence'))
+
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Smooth Lines.',
+                         label=self.pad+'Smooth Lines',
+                        variable = self.setting.line_smooth,
+                        command = lambda s=self: s.setting.update('line_smooth'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Depth Cue (Fogging).',
+                         label=self.pad+'Depth Cue',
+                        variable = self.setting.depth_cue,
+                        command = lambda s=self: s.setting.update('depth_cue'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Two Sided Lighting.',
+                         label=self.pad+'Two Sided Lighting',
+                        variable = self.setting.two_sided_lighting,
+                        command = lambda s=self: s.setting.update('two_sided_lighting'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Specular Reflections.',
+                         label=self.pad+'Specular Reflections',
+                        variable = self.setting.specular,
+                        command = lambda s=self: s.setting.update('specular'))
+
+      self.menuBar.addmenu('Setting', 'Configuration Control',tearoff=TRUE)
+
+      self.menuBar.addmenuitem('Setting', 'command',
+                         'Edit PyMOL Settings',
+                         label=self.pad+'Edit All...',
+                               command = lambda s=self: SetEditor(s))
+
+      self.menuBar.addmenuitem('Setting', 'command',
+                         'Edit PyMOL Colors',
+                         label=self.pad+'Colors...',
+                               command = lambda s=self: ColorEditor(s))
+
+      self.menuBar.addcascademenu('Setting', 'Cartoon', 'Cartoon',
+                                  label=self.pad+'Cartoon')
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Round Helices',
+                         label=self.pad+'Round Helices',
+                        variable = self.setting.cartoon_round_helices,
+                        command = lambda s=self: s.setting.update('cartoon_round_helices'))
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Fancy Helices',
+                         label=self.pad+'Fancy Helices',
+                        variable = self.setting.cartoon_fancy_helices,
+                        command = lambda s=self: s.setting.update('cartoon_fancy_helices'))
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Cylindrical Helices',
+                         label=self.pad+'Cylindrical Helices',
+                        variable = self.setting.cartoon_cylindrical_helices,
+                        command = lambda s=self: s.setting.update('cartoon_cylindrical_helices'))
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Flat Sheets',
+                         label=self.pad+'Flat Sheets',
+                        variable = self.setting.cartoon_flat_sheets,
+                        command = lambda s=self: s.setting.update('cartoon_flat_sheets'))
+
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Fancy Sheets',
+                         label=self.pad+'Fancy Sheets',
+                        variable = self.setting.cartoon_fancy_sheets,
+                        command = lambda s=self: s.setting.update('cartoon_fancy_sheets'))
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Smooth Loops',
+                         label=self.pad+'Smooth Loops',
+                        variable = self.setting.cartoon_smooth_loops,
+                        command = lambda s=self: s.setting.update('cartoon_smooth_loops'))
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Discrete Colors',
+                         label=self.pad+'Discrete Colors',
+                        variable = self.setting.cartoon_discrete_colors,
+                        command = lambda s=self: s.setting.update('cartoon_discrete_colors'))
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Highlight Color',
+                         label=self.pad+'Highlight Color',
+                        variable = self.setting.cartoon_highlight_color,
+                        command = lambda s=self: s.setting.update('cartoon_highlight_color'))
+
+
+      self.menuBar.addcascademenu('Setting', 'Transparency', 'Transparency',
+                                  label=self.pad+'Transparency')
+
+      self.transparency_menu('CartoonTransparency','Cartoon','cartoon_transparency')
+      self.transparency_menu('SurfaceTransparency','Surface','transparency')
+      self.transparency_menu('StickTransparency','Stick','stick_transparency')
+      self.transparency_menu('SphereTransparency','Sphere','sphere_transparency')      
+
+      self.menuBar.addmenuitem('Transparency', 'separator', '')
+      
 
       self.menuBar.addmenuitem('Transparency', 'command', 'Uni-Layer',
                                label='Uni-Layer',
@@ -1197,11 +1466,10 @@ class PMGApp(AbstractApp):
                                label='Fast and Ugly',
                                command = lambda : cmd.do(
          "_ cmd.set('transparency_mode',0);cmd.set('backface_cull',1);cmd.set('two_sided_lighting',0)"))
-      
-      self.menuBar.addcascademenu('Display', 'Rendering', 'Rendering',
-                                  label='Rendering')
 
-#     self.menuBar.addmenu('Rendering', 'Rendering Control')
+            
+      self.menuBar.addcascademenu('Setting', 'Rendering', 'Rendering',
+                                  label=self.pad+'Rendering')
 
       self.menuBar.addmenuitem('Rendering', 'checkbutton',
                          'Smooth raytracing.',
@@ -1331,64 +1599,7 @@ class PMGApp(AbstractApp):
                         variable = self.setting.ray_interior_color,
                         command = lambda s=self: s.setting.update('ray_interior_color'))
 
-      
-      self.menuBar.addmenuitem('Display', 'separator', '')
-      
-      self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Disable perspective.',
-                         label=self.pad+'Orthoscopic View',
-                        variable = self.setting.ortho,
-                        command = lambda s=self: s.setting.update('ortho'))
-
-      self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Use Display Lists.',
-                         label=self.pad+'Use Display Lists',
-                        variable = self.setting.ortho,
-                        command = lambda s=self: s.setting.update('use_display_lists'))
-
-      self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Show Valences.',
-                         label=self.pad+'Show Valences',
-                        variable = self.setting.valence,
-                        command = lambda s=self: s.setting.update('valence'))
-
-
-      self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Smooth Lines.',
-                         label=self.pad+'Smooth Lines',
-                        variable = self.setting.line_smooth,
-                        command = lambda s=self: s.setting.update('line_smooth'))
-
-      self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Depth Cue Fog.',
-                         label=self.pad+'Depth Cue & Fog',
-                        variable = self.setting.depth_cue,
-                        command = lambda s=self: s.setting.update('depth_cue'))
-
-      self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Two Sided Lighting.',
-                         label=self.pad+'Two Sided Lighting',
-                        variable = self.setting.two_sided_lighting,
-                        command = lambda s=self: s.setting.update('two_sided_lighting'))
-
-      self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Specular Reflections.',
-                         label=self.pad+'Specular Reflections',
-                        variable = self.setting.specular,
-                        command = lambda s=self: s.setting.update('specular'))
-
-      self.menuBar.addmenu('Setting', 'Configuration Control',tearoff=TRUE)
-
-      self.menuBar.addmenuitem('Setting', 'command',
-                         'Edit PyMOL Settings',
-                         label=self.pad+'Edit All...',
-                               command = lambda s=self: SetEditor(s))
-
-      self.menuBar.addmenuitem('Setting', 'command',
-                         'Edit PyMOL Colors',
-                         label=self.pad+'Colors...',
-                               command = lambda s=self: ColorEditor(s))
-
+      self.menuBar.addmenuitem('Setting', 'separator', '')
 
       self.menuBar.addcascademenu('Setting', 'Output', 'Output Size',
                                   label=self.pad+'Output Size')
@@ -1459,7 +1670,7 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Setting', 'separator', '')
       
-
+      
       self.menuBar.addmenuitem('Setting', 'checkbutton',
                                'Ignore PDB segi.',
                                label=self.pad+'Ignore PDB Segment Identifier',
@@ -1591,57 +1802,6 @@ class PMGApp(AbstractApp):
                                label='2 Button Editing Mode',
                                command = lambda: cmd.mouse('two_button_editing'))
 
-      self.menuBar.addmenu('Cartoon', 'Cartoon Properties',tearoff=TRUE)
-
-      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                         'Round Helices',
-                         label=self.pad+'Round Helices',
-                        variable = self.setting.cartoon_round_helices,
-                        command = lambda s=self: s.setting.update('cartoon_round_helices'))
-
-      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                         'Fancy Helices',
-                         label=self.pad+'Fancy Helices',
-                        variable = self.setting.cartoon_fancy_helices,
-                        command = lambda s=self: s.setting.update('cartoon_fancy_helices'))
-
-      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                         'Cylindrical Helices',
-                         label=self.pad+'Cylindrical Helices',
-                        variable = self.setting.cartoon_cylindrical_helices,
-                        command = lambda s=self: s.setting.update('cartoon_cylindrical_helices'))
-
-      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                         'Flat Sheets',
-                         label=self.pad+'Flat Sheets',
-                        variable = self.setting.cartoon_flat_sheets,
-                        command = lambda s=self: s.setting.update('cartoon_flat_sheets'))
-
-
-      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                         'Fancy Sheets',
-                         label=self.pad+'Fancy Sheets',
-                        variable = self.setting.cartoon_fancy_sheets,
-                        command = lambda s=self: s.setting.update('cartoon_fancy_sheets'))
-
-      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                         'Smooth Loops',
-                         label=self.pad+'Smooth Loops',
-                        variable = self.setting.cartoon_smooth_loops,
-                        command = lambda s=self: s.setting.update('cartoon_smooth_loops'))
-
-      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                         'Discrete Colors',
-                         label=self.pad+'Discrete Colors',
-                        variable = self.setting.cartoon_discrete_colors,
-                        command = lambda s=self: s.setting.update('cartoon_discrete_colors'))
-
-      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
-                         'Highlight Color',
-                         label=self.pad+'Highlight Color',
-                        variable = self.setting.cartoon_highlight_color,
-                        command = lambda s=self: s.setting.update('cartoon_highlight_color'))
-
 
       self.menuBar.addmenu('Wizard', 'Task Wizards',tearoff=TRUE)
 
@@ -1683,110 +1843,11 @@ class PMGApp(AbstractApp):
                                label='Charge',
                                command = lambda: cmd.do("_ wizard charge"))
 
-
-      self.menuBar.addmenu('Sculpting', 'Sculpting',tearoff=TRUE)
-
-      self.menuBar.addmenuitem('Sculpting', 'checkbutton',
-                         'Auto-Sculpt.',
-                         label=self.pad+'Auto-Sculpting',
-                        variable = self.setting.auto_sculpt,
-                        command = lambda s=self: s.setting.update('auto_sculpt'))
-
-      self.menuBar.addmenuitem('Sculpting', 'checkbutton',
-                         'Sculpting.',
-                         label=self.pad+'Sculpting',
-                        variable = self.setting.sculpting,
-                        command = lambda s=self: s.setting.update('sculpting'))
-
-      self.menuBar.addmenuitem('Sculpting', 'separator', '')
+      self.menuBar.addmenuitem('Wizard', 'separator', '')
       
+      self.menuBar.addcascademenu('Wizard', 'Demo', 'Demo',
+                                  label='Demo',tearoff=TRUE)
 
-      self.menuBar.addmenuitem('Sculpting', 'command', 'Activate',
-                               label='Activate',
-                               command = lambda: cmd.do("_ sculpt_activate all"))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', 'Deactivate',
-                               label='Deactivate',
-                               command = lambda: cmd.do("_ sculpt_deactivate all"))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', 'Clear Memory',
-                               label='Clear Memory',
-                               command = lambda: cmd.do("_ sculpt_purge"))
-
-      self.menuBar.addmenuitem('Sculpting', 'separator', '')
-
-      self.menuBar.addmenuitem('Sculpting', 'command', '1 Cycle/Update',
-                               label='1 Cycle per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=1"))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', '3 Cycles/Update',
-                               label='3 Cycles per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=3"))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', '10 Cycles/Update',
-                               label='10 Cycles per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=10"))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', '33 Cycles/Update',
-                               label='33 Cycles per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=33"))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', '100 Cycles/Update',
-                               label='100 Cycles per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=100"))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', '333 Cycles/Update',
-                               label='333 Cycles per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=333"))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', '1000 Cycles/Update',
-                               label='1000 Cycles per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=1000"))
-
-      self.menuBar.addmenuitem('Sculpting', 'separator', '')
-
-#define cSculptBond  0x01
-#define cSculptAngl  0x02
-#define cSculptPyra  0x04
-#define cSculptPlan  0x08
-#define cSculptLine  0x10
-#define cSculptVDW   0x20
-#define cSculptVDW14 0x40
-#define cSculptTors  0x80
-
-      self.menuBar.addmenuitem('Sculpting', 'command', 'Bonds Only',
-                               label='Bonds Only',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
-         0x01)))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', 'Bonds & Angles Only',
-                               label='Bonds & Angles Only',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
-         0x01+0x02)))
-      
-      self.menuBar.addmenuitem('Sculpting', 'command', 'Local Geometry Only',
-                               label='Local Geometry Only',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
-         0x01+0x02+0x04+0x08+0x10)))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', 'All Except VDW',
-                               label='All Except VDW',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
-         0x01+0x02+0x04+0x08+0x10+0x80)))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', 'All Except 1-4 VDW & Torsions',
-                               label='All Except 1-4 VDW & Torsions',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
-         0x01+0x02+0x04+0x08+0x10+0x20)))
-
-      self.menuBar.addmenuitem('Sculpting', 'command', 'All Terms',
-                               label='All Terms',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
-         0xFF)))
-      
-      self.menuBar.addmenu('Demo', 'Demonstrations',tearoff=TRUE)
-
-      
       self.menuBar.addmenuitem('Demo', 'command', 'Representations',
                                label='Representations',
                                command = lambda: cmd.do(
@@ -1850,3 +1911,12 @@ class PMGApp(AbstractApp):
                                label='End Demonstration',
                                command = lambda s=self:cmd.do(
          '_ replace_wizard demo,finish'))
+
+      self.menuBar.addmenu('Plugin', 'Plugin',tearoff=TRUE)      
+
+      self.menuBar.addmenuitem('Plugin', 'command', 'About',
+                               label='About Plugins',
+                               command = lambda s=self: s.about_plugins())
+      
+      self.menuBar.addmenuitem('Plugin', 'separator', '')
+

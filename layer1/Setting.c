@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"PConv.h"
 #include"Wizard.h"
+#include"Seq.h"
 
 CSetting Setting;
 
@@ -1046,6 +1047,12 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     inv_sele = sele;
   }
   switch(index) {
+  case cSetting_seq_view:
+  case cSetting_seq_view_label_spacing:
+  case cSetting_seq_view_label_start:
+  case cSetting_seq_view_codes:
+    SeqChanged();
+    break;
   case cSetting_stereo_mode:
     SceneUpdateStereoMode();
     break;
@@ -2231,7 +2238,12 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_f(I,cSetting_surface_trim_factor,2.0F);
   SettingSet_i(I,cSetting_ray_max_passes,25);
   SettingSet_b(I,cSetting_active_selections,true);
-  SettingSet_f(I,cSetting_ray_transparency_contrast,2.0F);
+  SettingSet_f(I,cSetting_ray_transparency_contrast,1.0F);
+  SettingSet_b(I,cSetting_seq_view,0);
+  SettingSet_i(I,cSetting_mouse_selection_mode,1);
+  SettingSet_i(I,cSetting_seq_view_label_spacing,5);
+  SettingSet_i(I,cSetting_seq_view_label_start,1);
+  SettingSet_i(I,cSetting_seq_view_codes,0);
 
 }
 

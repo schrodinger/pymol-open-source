@@ -49,6 +49,7 @@ Z* -------------------------------------------------------------------
 #include"Map.h"
 #include"Editor.h"
 #include"RepDot.h"
+#include"Seq.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -113,8 +114,21 @@ typedef struct {
   ObjectMolecule *obj;
 } ProcPDBRec;
 
+int ExecutiveGetActiveSele(void)
+{
+
+  char name[ObjNameMax];
+  if(ExecutiveGetActiveSeleName(name,false))
+    return SelectorIndexByName(name);
+  else
+    return -1;
+
+}
+
 int ExecutiveGetActiveSeleName(char *name, int create_new)
 {
+  /* TODO: cache/optimize to avoid table scan */
+
   int result=false;
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
@@ -2179,6 +2193,9 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
   char prefix[3]="";
   int log_box = 0;
   int logging;
+  char empty_string[1] = "";
+  char *sel_mode_kw = empty_string;
+
   logging = (int)SettingGet(cSetting_logging);
   if(logging)
     log_box= (int)SettingGet(cSetting_log_box_selections);
@@ -2206,19 +2223,20 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
     case cButModeSeleAdd:
     case cButModeSeleSub:
         ExecutiveGetActiveSeleName(selName,true);
+        sel_mode_kw = SceneGetSeleModeKeyword();        
         /* intentional omission of break! */
     case cButModeRectAdd:
     case cButModeRectSub:
       if(SelectorIndexByName(selName)>=0) {
         if((mode==cButModeRectAdd)||(mode==cButModeSeleAdd)) {
-          sprintf(buffer,"(?%s or %s)",selName,cTempRectSele);
+          sprintf(buffer,"(?%s or %s(%s))",selName,sel_mode_kw,cTempRectSele);
           SelectorCreate(selName,buffer,NULL,0,NULL);
           if(log_box) {
-            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
+            sprintf(buf2,"%scmd.select(\"%s\",\"(%s)\")\n",prefix,selName,buffer);
             PLog(buf2,cPLog_no_flush);
           }
         } else {
-          sprintf(buffer,"(?%s and not %s)",selName,cTempRectSele);
+          sprintf(buffer,"(%s(?%s) and not %s(%s))",sel_mode_kw,selName,sel_mode_kw,cTempRectSele);
           SelectorCreate(selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
@@ -2227,9 +2245,10 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
         }
       } else {
         if((mode==cButModeRectAdd)||(mode=cButModeSeleAdd)) {
-          SelectorCreate(selName,cTempRectSele,NULL,0,NULL);
+          sprintf(buffer,"%s(?%s)",sel_mode_kw,cTempRectSele);
+          SelectorCreate(selName,buffer,NULL,0,NULL);
           if(log_box) {
-            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,cTempRectSele);
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
             PLog(buf2,cPLog_no_flush);
           }
         } else {
@@ -2687,6 +2706,7 @@ void ExecutiveHideSelections(void)
       if(rec->visible) {
         rec->visible=false;
         SceneDirty();
+        SeqDirty();
       }
     }
   }
@@ -3099,6 +3119,7 @@ void ExecutiveRebuildAll(void)
       }
     }
   }
+  SeqChanged();
   SceneDirty();
 }
 /*========================================================================*/
@@ -3378,7 +3399,8 @@ int ExecutiveStereo(int flag)
   switch(flag) {
   case -1:
     SettingSet(cSetting_stereo_shift,-SettingGet(cSetting_stereo_shift));
-    SettingSet(cSetting_stereo_angle,-SettingGet(cSetting_stereo_angle));
+    /* shouldn't have to swap angle -- that's implicit
+       SettingSet(cSetting_stereo_angle,-SettingGet(cSetting_stereo_angle));*/
     break;
   default:
     
@@ -5440,7 +5462,8 @@ void ExecutiveSetObjVisib(char *name,int state)
               ExecutiveHideSelections();
               tRec->visible=true;
             }
-          SceneChanged();
+          SceneDirty();
+          SeqDirty();
         }
       }
     }
@@ -5813,6 +5836,9 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
 /*========================================================================*/
 CObject *ExecutiveFindObjectByName(char *name)
 {
+  /* TODO: switch over to using a Python Dictionary to store objects 
+     instead of this stupid list */
+
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
   CObject *obj=NULL;
@@ -6025,6 +6051,7 @@ void ExecutiveDelete(char *name)
               if(rec->obj->type == cObjectMolecule)
                 if(EditorIsAnActiveObject((ObjectMolecule*)rec->obj))
                   EditorInactivate();
+              SeqChanged();
               if(rec->visible) 
                 SceneObjectDel(rec->obj);
 				  SelectorDelete(rec->name);
@@ -6040,7 +6067,8 @@ void ExecutiveDelete(char *name)
 			 if(all_flag||(WordMatch(name_copy,rec->name,true)<0))
 				{
               if(all_flag||rec->visible)
-                SceneChanged();
+                SceneDirty();
+              SeqDirty();
 				  SelectorDelete(rec->name);
 				  ListDelete(I->Spec,rec,next,SpecList);
 				  rec=NULL;
@@ -6170,7 +6198,7 @@ void ExecutiveManageObject(CObject *obj,int allow_zoom,int quiet)
         break;
       }
     }
-
+  SeqChanged();
 }
 /*========================================================================*/
 void ExecutiveManageSelection(char *name)
@@ -6217,6 +6245,7 @@ void ExecutiveManageSelection(char *name)
     }
     if(rec->visible) SceneDirty();
   }
+  SeqDirty();
 }
 /*========================================================================*/
 int ExecutiveClick(Block *block,int button,int x,int y,int mod)
@@ -6919,6 +6948,7 @@ int ExecutiveReinitialize(void)
   SculptCachePurge();
   SceneReinitialize();
   SelectorReinit();
+  SeqChanged();
 
   return(ok);
 }

@@ -83,7 +83,6 @@ class Mutagenesis(Wizard):
          self.error = None
          self.do_library()
          cmd.refresh_wizard()
-      
 
    def set_mode(self,mode):
       if mode in self.modes:
@@ -221,7 +220,6 @@ class Mutagenesis(Wizard):
          cmd.alter("(%s)"%tmp_name,"segi=stored.segi")
          cmd.iterate("(%s and n;ca)"%sele_name,"stored.ss=ss")
          cmd.alter("(%s)"%tmp_name,"ss=stored.ss")
-         cartoon = (cmd.count_atoms("(%s and n;ca and rep cartoon)"%sele_name)>0)
          # move the fragment
          if ((cmd.count_atoms("(%s and n;cb)"%tmp_name)>0) and
              (cmd.count_atoms("(%s and n;cb)"%sele_name)>0)):
@@ -243,6 +241,9 @@ class Mutagenesis(Wizard):
          # fix the carbonyl position...
          cmd.iterate_state(1,"(%s and n;o)"%sele_name,"stored.list=[x,y,z]")
          cmd.alter_state(1,"(%s and n;o)"%tmp_name,"(x,y,z)=stored.list")
+
+      cartoon = (cmd.count_atoms("(%s and n;ca and rep cartoon)"%sele_name)>0)
+      sticks = (cmd.count_atoms("(%s and n;ca and rep sticks)"%sele_name)>0)
          
       cmd.delete(obj_name)
       if self.library.has_key(res_type):
@@ -261,6 +262,8 @@ class Mutagenesis(Wizard):
                   cmd.set_title(obj_name,state,"%1.1f%%"%(a[b]*100))
             state = state + 1
          cmd.delete(tmp_name)
+         cmd.set("sequence_viewer",0,obj_name,quiet=1)
+
          print " Mutagenesis: %d conformations loaded."%len(self.library[res_type])
       else:
          cmd.create(obj_name,tmp_name,1,1)
@@ -271,11 +274,24 @@ class Mutagenesis(Wizard):
       cmd.show('lines',obj_name) # always show lines
       if cartoon:
          cmd.show("cartoon",obj_name)
+      if sticks:
+         cmd.show("sticks",obj_name)
       cmd.set('auto_zoom',auto_zoom,quiet=1)
       cmd.delete(tmp_name)
       cmd.frame(0)
       cmd.unpick()
       cmd.feedback("pop")
+
+   def do_select(self,selection):
+      if self.status!=0:
+         cmd.delete(obj_name)
+      cmd.select(sele_name,"(byres first (%s))"%selection)
+      cmd.unpick()
+      cmd.enable(sele_name)
+      self.status = 1
+      self.error = None
+      self.do_library()
+      cmd.refresh_wizard()
       
    def do_pick(self,bondFlag):
       if bondFlag:

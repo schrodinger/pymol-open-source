@@ -115,6 +115,7 @@ void SceneSuppressMovieFrame(void);
 int SceneClick(Block *block,int button,int x,int y,int mod);
 int SceneRelease(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
+char *SceneGetSeleModeKeyword(void);
 
 #endif
 

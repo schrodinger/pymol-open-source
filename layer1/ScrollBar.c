@@ -141,6 +141,67 @@ static  void ScrollBarDraw(Block *block)
 
 }
 
+void ScrollBarDrawHandle(struct CScrollBar *I,float alpha)
+{
+  float value;
+  int top,left,bottom,right;
+  Block *block = I->Block;
+
+  value = I->Value;
+  if(value>I->ValueMax)
+    value=I->ValueMax;
+
+  if(I->HorV) {
+    top = block->rect.top-1;
+    bottom = block->rect.bottom+1;
+    left = (int)(block->rect.left+(I->BarRange*value)/I->ValueMax);
+    right = left+I->BarSize;
+  } else {
+    top = (int)(block->rect.top-(I->BarRange*value)/I->ValueMax);
+    bottom = top-I->BarSize;
+    left = block->rect.left+1;
+    right = block->rect.right-1;
+  }
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+      
+  glColor4f(0.8F,0.8F,0.8F,alpha);
+  glBegin(GL_POLYGON);
+  glVertex2i(right,top);
+  glVertex2i(right,bottom+1);
+  glVertex2i(left,bottom+1);
+  glVertex2i(left,top);
+  glEnd();
+
+  glColor4f(0.3F,0.3F,0.3F,alpha);
+  glBegin(GL_POLYGON);
+  glVertex2i(right,top-1);
+  glVertex2i(right,bottom);
+  glVertex2i(left+1,bottom);
+  glVertex2i(left+1,top-1);
+  glEnd();
+
+  glColor4f(0.3F,0.3F,0.3F,alpha);
+  glBegin(GL_POLYGON);
+  glVertex2i(right,bottom+1);
+  glVertex2i(right,bottom);
+  glVertex2i(left,bottom);
+  glVertex2i(left,bottom+1);
+  glEnd();
+
+  glColor4f(I->BarColor[0],I->BarColor[1],I->BarColor[2],alpha);
+  glBegin(GL_POLYGON);
+  glVertex2i(right-1,top-1);
+  glVertex2i(right-1,bottom+1);
+  glVertex2i(left+1,bottom+1);
+  glVertex2i(left+1,top-1);
+  glEnd();
+
+  glDisable(GL_BLEND);
+}
+
+
 void ScrollBarSetValue(struct CScrollBar *I,float value)
 {
   I->Value=value;
@@ -163,14 +224,17 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       I->Value+=I->DisplaySize;
       if(I->Value > I->ValueMax)
         I->Value = I->ValueMax;
+      OrthoDirty();
     } else if(x<I->BarMin){
       I->Value-=I->DisplaySize;
       if(I->Value<0.0)
         I->Value=0.0F;
+      OrthoDirty();
     } else {
       OrthoGrab(I->Block);
       I->StartPos = x;
       I->StartValue=I->Value;
+      OrthoDirty();
     } 
   } else {
     if(y>I->BarMin) {
@@ -187,6 +251,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       OrthoGrab(I->Block);
       I->StartPos = y;
       I->StartValue=I->Value;
+      OrthoDirty();
     }
   }
   return 0;

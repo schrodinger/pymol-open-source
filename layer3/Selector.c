@@ -222,6 +222,8 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_BYF1 ( 0x3700 | STYP_OPR1 | 0x10 )
 #define SELE_EXT_ ( 0x3800 | STYP_PRP1 | 0x20 )
 #define SELE_BON1 ( 0x3900 | STYP_OPR1 | 0x40 )
+#define SELE_FST1 ( 0x4000 | STYP_OPR1 | 0x20 )
+#define SELE_CAS1 ( 0x4100 | STYP_OPR1 | 0x20 )
 
 #define SEL_PREMAX 0x8
 
@@ -264,6 +266,11 @@ static WordKeyValue Keyword[] =
   {  "byseg",    SELE_BYS1 }, 
   {  "bysegi",   SELE_BYS1 }, /* unofficial */
   {  "bs.",      SELE_BYS1 },
+
+  {  "bycalpha", SELE_CAS1 },
+  {  "bca.",     SELE_CAS1 },
+
+  {  "first",    SELE_FST1 },
 
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
@@ -331,7 +338,7 @@ static WordKeyValue Keyword[] =
   {  "flag",     SELE_FLGs },
   {  "f;",       SELE_FLGs },/* deprecated */
   {  "f.",       SELE_FLGs },
-
+  
   {  "gap",      SELE_GAP_ },
 
   {  "partial_charge",SELE_PCHx },
@@ -2629,7 +2636,7 @@ void SelectorLogSele(char *name)
               if(first) {
                 switch(logging) {
                 case cPLog_pml:
-                  sprintf(line,"_ select %s,(",name);
+                  sprintf(line,"_ cmd.select(\"%s\",\"(",name);
                   break;
                 case cPLog_pym:
                   sprintf(line,"cmd.select(\"%s\",\"(",name);
@@ -2641,7 +2648,7 @@ void SelectorLogSele(char *name)
               } else {
                 switch(logging) {
                 case cPLog_pml:
-                  sprintf(line,"_ select %s,(%s",name,name);
+                  sprintf(line,"_ cmd.select(\"%s\",\"(%s",name,name);
                   break;
                 case cPLog_pym:
                   sprintf(line,"cmd.select(\"%s\",\"(%s",name,name);
@@ -2661,28 +2668,14 @@ void SelectorLogSele(char *name)
             append=1;
             cnt++;
             if(strlen(line)>(sizeof(OrthoLineType)/2)) {
-              switch(logging) {
-              case cPLog_pml:
-                strcat(line,")\n");
-                break;
-              case cPLog_pym:
-                strcat(line,")\")\n");
-                break;
-              }
+              strcat(line,")\")\n");
               PLog(line,cPLog_no_flush);
               cnt=-1;
             }
           }
         }
       if(cnt>0) {
-        switch(logging) {
-        case cPLog_pml:
-          strcat(line,")\n");
-          break;
-        case cPLog_pym:
-          strcat(line,")\")\n");
-          break;
-        }
+        strcat(line,")\")\n");
         PLog(line,cPLog_no_flush);
         PLogFlush();
       }
@@ -2731,9 +2724,9 @@ ObjectMolecule *SelectorGetFastSingleObjectMolecule(int sele)
   SelectorType *I=&Selector;
   ObjectMolecule *result=NULL;
   SelectionInfoRec *info;
-  sele = SelectorIndexByID(sele);
-  if((sele>=0)&&(sele<I->NActive)) {
-    info = I->Info + sele;
+  int sele_idx = SelectorIndexByID(sele);
+  if((sele_idx>=0)&&(sele_idx<I->NActive)) {
+    info = I->Info + sele_idx;
     if(info->justOneObjectFlag) {
       if(ExecutiveValidateObjectPtr((CObject*)info->theOneObject,cObjectMolecule))
         result = info->theOneObject;
@@ -2749,15 +2742,23 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(int sele,int *index)
   SelectorType *I=&Selector;
   ObjectMolecule *result=NULL;
   SelectionInfoRec *info;
-  sele = SelectorIndexByID(sele);
-  if((sele>=0)&&(sele<I->NActive)) {
-    info = I->Info + sele;
+  int got_it = false;
+  int sele_idx = SelectorIndexByID(sele);
+
+  if((sele_idx>=0)&&(sele_idx<I->NActive)) {
+    info = I->Info + sele_idx;
     if(info->justOneObjectFlag && info->justOneAtomFlag) {
-      if(ExecutiveValidateObjectPtr((CObject*)info->theOneObject,cObjectMolecule)) {
-        result = info->theOneObject;
-        *index = info->theOneAtom;
+      ObjectMolecule *obj = info->theOneObject;
+      int at = info->theOneAtom;
+      if(ExecutiveValidateObjectPtr((CObject*)obj,cObjectMolecule)) {
+        if((at<obj->NAtom)&&SelectorIsMember(obj->AtomInfo[at].selEntry,sele)) {
+          result = obj;
+          *index = at;
+          got_it=true;
+        }
       }
-    } else { /* fallback onto slow approach */
+    }
+    if(!got_it) { /* fallback onto slow approach */
       if(!SelectorGetSingleAtomObjectIndex(sele,&result,index))
         result = NULL;
     }
@@ -5606,21 +5607,15 @@ static int _SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,
   I->NAtom=0;
   if(!quiet) {
     if(name[0]!='_') {
-      if(c) {
-        PRINTFB(FB_Selector,FB_Actions)
-          " Selector: selection \"%s\" defined with %d atoms.\n",name,c
-          ENDFB;
-      } else {
-        PRINTFB(FB_Selector,FB_Actions)
-          " Selector: no atoms selected.\n"
-          ENDFB;
-      }
+      PRINTFB(FB_Selector,FB_Actions)
+        " Selector: selection \"%s\" defined with %d atoms.\n",name,c
+        ENDFB;
     } 
   }
   PRINTFD(FB_Selector)
     " SelectorCreate: \"%s\" created with %d atoms.\n",name,c    
-    ENDFD
-    return(c);
+    ENDFD;
+  return(c);
 }
 int SelectorCreateEmpty(char *name)
 {
@@ -7009,6 +7004,7 @@ int SelectorLogic1(EvalElem *base)
       FreeP(base[1].sele);
       break;      
 	 case SELE_BYR1: /* ASSUMES atoms are sorted by residue */
+	 case SELE_CAS1: 
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(base[0].sele[a]) 
@@ -7060,29 +7056,24 @@ int SelectorLogic1(EvalElem *base)
               }
 			   }
 		  }
-#ifdef _OLD_CODE
-		for(a=0;a<I->NAtom;a++)
-		  {
-			 if(base[0].sele[a]) 
-			   {
-				 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
-				 for(b=0;b<I->NAtom;b++)
-				   if(!base[0].sele[b]) 
-                 if(I->Table[a].model==I->Table[b].model)
-                   {
-                     at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-                       if(at1->chain[0]==at2->chain[0])
-                         if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                           if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
-                             base[0].sele[b]=true;
-                             c++;
-                           }
-                   }
-			   }
-		  }
-#endif
+      if(base->code==SELE_CAS1) {
+        c=0;
+        for(a=cNDummyAtoms;a<I->NAtom;a++)
+          if(base[0].sele[a])
+            {
+              base[0].sele[a]=false;
+              
+              if(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].protons == cAN_C)
+                if(WordMatchCommaExact("CA",
+                                     I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].name,
+                                       I->IgnoreCase)<0)
+                  {
+                    base[0].sele[a]=true;
+                    c++;
+                  }
+            }
+      }
 		break;
-
 	 case SELE_BYC1: /* ASSUMES atoms are sorted by chain */
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
@@ -7283,6 +7274,18 @@ int SelectorLogic1(EvalElem *base)
         VLAFreeP(stk);
       }
       break;
+    case SELE_FST1: 
+      base[1].sele=base[0].sele;
+      base[0].sele=Calloc(int,I->NAtom);
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        if(base[1].sele[a]) {
+          base[0].sele[a] = true;
+          break;
+        }
+      }
+      FreeP(base[1].sele);
+      break;      
+
 	 }
   PRINTFD(FB_Selector)
 	 " SelectorLogic1: %d atoms selected.\n",c

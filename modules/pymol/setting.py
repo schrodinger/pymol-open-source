@@ -390,6 +390,11 @@ if __name__=='pymol.setting':
       ray_max_passes        = 350
       active_selections     = 351
       ray_transparency_contrast = 352
+      sequence_viewer       = 353
+      mouse_selection_mode  = 354
+      seq_view_label_spacing = 355
+      seq_view_label_start = 356
+      seq_view_codes       = 357
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -71,6 +71,7 @@ Z* -------------------------------------------------------------------
 #include"SculptCache.h"
 #include"TestPyMOL.h"
 #include"Color.h"
+#include"Seq.h"
 
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
@@ -3432,6 +3433,7 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
     APIEntry();
     ok = SelectorCreate(sname,sele,NULL,quiet,NULL);
     SceneDirty();
+    SeqDirty();
     APIExit();
   } else {
     ok=-1;

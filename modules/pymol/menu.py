@@ -306,7 +306,7 @@ def sele_action(s):
            [ 0, ''               ,''                             ],
            [ 1, 'preset'         ,presets(s)         ],
            [ 0, ''               ,''                             ],
-           [ 1, 'remove atoms'   ,'cmd.remove("'+s+'")'          ],
+           [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
            [ 0, ''               ,''                             ],
            [ 1, 'find polar contacts'  ,
              'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
@@ -530,6 +530,11 @@ def pick_option(title,s,object=0):
                     ])
    return result
 
+def pick_option_rev(title,s,object=0):
+   result = pick_option(title,s,object)[1:]
+   result.reverse()
+   return result
+
 def pick_menu(s1,s2):
    if s1[-1]=='`':
       title = s1[0:-1]
@@ -548,5 +553,55 @@ def pick_menu(s1,s2):
            [ 1, 'fragment+joint(s)', pick_option("Fragment","((byfrag ("+s2+")) extend 1)") ],
            ]
       
+def seq_menu(s2,s3):
+   
+   return [[ 2, 'Sequence'    , '' ],
+           [ 1, 'selection', pick_option('('+s3+')',s3) ],
+           [ 0, ''             , ''                      ],
+           [ 1, 'residue' , pick_option("Residue","(byres ("+s2+"))") ],
+           [ 1, 'chain'   , pick_option("Chain","(bychain ("+s2+"))") ],
+           [ 1, 'segment' , pick_option("Segment","(byseg ("+s2+"))") ],
+           [ 1, 'object'  , pick_option("Object","(byobject ("+s2+"))",1) ],
+           [ 0, ''             , ''                      ],
+           [ 1, 'molecule', pick_option("Molecule","(bymol ("+s2+"))") ],
+           [ 0, ''             , ''                      ],
+           [ 1, 'C-alpha'    , pick_option("C-alpha",s2) ],
+           ]
+      
 
+def seq_option(title,s,object=0):
+   c=len(title)-1
+   while title[c]!='/':
+      c = c-1
+   title = title[0:c+1]
+   
+   result = [
+      [ 2, title, '' ],
+      [ 1, 'color'      , mol_color(s) ],
+      [ 1, 'show'      , mol_show(s) ],
+      [ 1, 'hide'      , mol_hide(s) ],
+      [ 1, 'preset'  , presets(s)       ],      
+      [ 0, ''             , ''                      ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'labels'      , mol_labels(s) ],      
+      ]
+   
+   if object:
+      result.extend([
+         [ 0, ''             , ''                      ],         
+         [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ],
+         [ 0, ''             , ''                      ],
+         [ 1, 'delete'        ,'cmd.delete("'+s+'")'            ]         
+         ])
+   else:
+      result.extend([
+      [ 0, ''             , ''                      ],
+      [ 1, 'remove'      , 'cmd.remove("'+s+'")' ],     
+                    ])
+   return result
    
