@@ -65,7 +65,7 @@ def sub(v1,v2):
 
 #------------------------------------------------------------------------------
 def dot_product(v1,v2):
-  return [v1[0]*v2[0],v1[1]*v2[1],v1[2]*v2[2]]
+  return v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2]
 
 #------------------------------------------------------------------------------
 def cross_product(v1,v2):
@@ -84,15 +84,32 @@ def transform_about_point(m,v,p):
    return add(transform(m,sub(v,p)),p)
 
 #------------------------------------------------------------------------------
-def get_angle(v1,v2):
+def get_angle(v1,v2): # v1,v2 must be unit vectors
    denom = (math.sqrt(((v1[0]*v1[0]) + (v1[1]*v1[1]) + (v1[2]*v1[2]))) *
             math.sqrt(((v2[0]*v2[0]) + (v2[1]*v2[1]) + (v2[2]*v2[2]))))
-   if denom>RSMALL4:
+   if denom>1e-10:
       result = ( (v1[0]*v2[0]) + (v1[1]*v2[1]) + (v1[2]*v2[2]) ) / denom
    else:
       result = 0.0
-   result = math.acos(0.0)
+   result = math.acos(result)
    return result
+
+#------------------------------------------------------------------------------
+def get_angle_formed_by(p1,p2,p3): # angle formed by three positions in space
+
+   # based on code submitted by Paul Sherwood
+   r1 = distance(p1,p2)
+   r2 = distance(p2,p3)
+   r3 = distance(p1,p3)
+   
+   small = 1.0e-10
+   
+   if (r1 + r2 - r3) < small:
+      # This seems to happen occasionally for 180 angles 
+      theta = math.pi
+   else:
+      theta = math.acos( (r1*r1 + r2*r2  - r3*r3) / (2.0 * r1*r2) )
+   return theta;
 
 #------------------------------------------------------------------------------
 def normalize(v):

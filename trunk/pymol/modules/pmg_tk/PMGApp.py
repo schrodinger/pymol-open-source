@@ -56,7 +56,6 @@ class PMGApp(AbstractApp):
       newBtn.pack(side=LEFT,fill=BOTH,expand=YES)
       
    def createButtons(self):
-
       
       row2 = self.createcomponent('row2', (), None,
          Frame,self.get_commandFrame(),bd=0)
