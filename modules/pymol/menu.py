@@ -151,7 +151,8 @@ def spectrum(s):
            [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
              'cmd.spectrum("count",selection="'+s+'",byres=1)'],
            [ 0, ''                                , ''                 ],
-           [ 1, 'b-factors'   , 'cmd.spectrum("b",selection=("'+s+'"))'         ],           
+           [ 1, 'b-factors'   , 'cmd.spectrum("b",selection=("'+s+'"))'         ],
+           [ 1, 'b-factors(*/ca)'   , 'cmd.spectrum("b",selection="(('+s+')&*/ca)")'         ],                       
            ]
 
 def by_chain(s):
