@@ -88,18 +88,21 @@ command_re = re.compile(r"[^\s]+")
 whitesp_re = re.compile(r"\s+")
 comma_re = re.compile(r"\s*,\s*")
 arg_name_re = re.compile(r"[A-Za-z0-9_]+\s*\=")
-arg_sele_re = re.compile(r"\(.*\)")
+arg_easy_nester_re = re.compile(r"\([^,]*\)|\[[^,]*\]")
+arg_hard_nester_re = re.compile(r"\(.*\)|\[.*\]")
 # NOTE '''sdf'sdfs''' doesn't work in below.
 arg_value_re = re.compile(r"'''[^']*'''|'[^']*'|"+r'"[^"]*"|[^,;]+')
 
-def trim_sele(st): # utility routine, returns selection string
+def trim_nester(st):
+   # utility routine, returns single instance of a nested string
+   # should be modified to handle quotes too                  
    pc = 1
    l = len(st)
    c = 1
    while c<l:
-      if st[c]=='(':
+      if st[c] in ('(','['):
          pc = pc + 1
-      if st[c]==')':
+      if st[c] in (')',']'):
          pc = pc - 1
       c = c + 1
       if not pc:
@@ -144,26 +147,31 @@ returns list of tuples of strings: [(None,value),(name,value)...]
          mo = whitesp_re.match(st[cc:])
          if mo:
             cc=cc+mo.end(0)
-         # special handling for un-quoted atom selections
-         mo = arg_sele_re.match(st[cc:])
+         # special handling for nesters (selections, lists, tuples, etc.)
+         mo = arg_easy_nester_re.match(st[cc:]) # no internal commas
          if mo:
-            se = trim_sele(mo.group(0))
-            if se==None:
-               print "Error: "+st
-               print "Error: "+" "*cc+"^ syntax error."
-               raise QuietException
-            else:
-               result.append((nam,se))
-               cc = cc + len(se)
-         else:
-            # read normal argument value
-            mo = arg_value_re.match(st[cc:])
-            if not mo:
-               print "Error: "+st
-               print "Error: "+" "*cc+"^ syntax error."
-               raise QuietException
             result.append((nam,string.strip(mo.group(0))))
             cc=cc+mo.end(0)
+         else:
+            mo = arg_hard_nester_re.match(st[cc:])
+            if mo:
+               se = trim_nester(mo.group(0))
+               if se==None:
+                  print "Error: "+st
+                  print "Error: "+" "*cc+"^ syntax error."
+                  raise QuietException
+               else:
+                  result.append((nam,se))
+                  cc = cc + len(se)
+            else:
+               # read normal argument value
+               mo = arg_value_re.match(st[cc:])
+               if not mo:
+                  print "Error: "+st
+                  print "Error: "+" "*cc+"^ syntax error."
+                  raise QuietException
+               result.append((nam,string.strip(mo.group(0))))
+               cc=cc+mo.end(0)
          # clean whitespace
          mo = whitesp_re.match(st[cc:])
          if mo:

@@ -40,6 +40,7 @@ Z* -------------------------------------------------------------------
 #include"Sphere.h"
 #include"main.h"
 
+
 #define wcopy ParseWordCopy
 #define nextline ParseNextLine
 #define ncopy ParseNCopy
@@ -76,6 +77,17 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
 
+/*========================================================================*/
+void ObjectGotoState(ObjectMolecule *I,int state)
+{
+  if((I->NCSet>1)||(!SettingGet(cSetting_static_singletons))) {
+    if(state>I->NCSet)
+      state = I->NCSet-1;
+    if(state<0)
+      state = I->NCSet-1;
+    SceneSetFrame(0,state);
+  }
+}
 /*========================================================================*/
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state)
 {
@@ -3964,15 +3976,40 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index) 
 {
   AtomInfoType *ai;
-
   ai=I->AtomInfo+index;
-  PRINTFB(FB_ObjectMolecule,FB_Results)
-    " Atom: [#%d:%s:%s:%d] %s:%s:%s:%s:%s:%s ",
-    ai->id,ai->elem,
-    ai->textType,ai->customType,
-    I->Obj.Name,ai->segi,ai->chain,
-    ai->resi,ai->resn,ai->name
-    ENDFB;
+  if(Feedback(FB_ObjectMolecule,FB_Results)) {
+    PRINTF " Click: ( %s",I->Obj.Name ENDF;
+    if(ai->segi[0]) {
+      PRINTF " & segi %s",ai->segi ENDF;
+    } else {
+      PRINTF " & segi ''" ENDF;
+    }
+    if(ai->chain[0]) {
+      PRINTF " & chain %s",ai->chain ENDF;
+    } else {
+      PRINTF " & chain ''" ENDF;
+    }
+    if(ai->resn[0]) {
+      PRINTF " & resn %s",ai->resn ENDF;
+    } else {
+      PRINTF " & resn ''" ENDF;
+    }
+    if(ai->resi[0]) {
+      PRINTF " & resi %s",ai->resi ENDF;
+    } else {
+      PRINTF " & resi ''" ENDF;
+    }
+    if(ai->name[0]) {
+      PRINTF " & name %s",ai->name ENDF;
+    } else {
+      PRINTF " & name ''" ENDF;
+    }
+    PRINTF " )\n" ENDF;
+  }
+    /*    
+[#%d:%s:%s:%d]
+ai->id,ai->elem,
+          ai->textType,ai->customType,*/
   OrthoRestorePrompt();
 }
 /*========================================================================*/

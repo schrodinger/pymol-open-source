@@ -839,6 +839,8 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_fog, 0.75);
 
+  SettingSet_f(I,cSetting_isomesh_auto_state, 1.0);
+
 }
 
 

@@ -2,11 +2,7 @@ Changes Under Consideration
 
    * Transparency support. 
 
-   * Specular lighting option under GL
-
    * Generic volume data object (to supplement bricks and maps)
-
-   * "Pickable" stick representation
 
    * Log file generation capability
 
@@ -16,26 +12,32 @@ Changes Under Consideration
 
    * "Tinker" wizard 
 
-   * Save dialog for objects/selections
+   * Real Edit Menu in Tk
 
-Goals for 0.52 release:
+Goals for 0.53 release
 
    * fill-out object/coord set specific settings
 
    * clean-up return conventions in cmd.py
 
-   * Edit Menu in Tk
-
    * complete first-round test-cases
-   
-   * finish retrofit of the parser
 
    * feedback conditionals placed around all error output
+   
+Goals for 0.52 release:
 
    * provide accurate documentation
 
 Changes up to 0.52
 
+   * prevented deadlock condition with re-entrant API locks
+
+   * fixed couple of logic-bugs in threading 
+
+   * changed output format from mouse click to a valid selection
+
+   * finished retrofit of the parser.
+   
    * formal charge now read from MOL files -- need to consider full
      implementation of MOL file reading capability (incl stereo)
 
