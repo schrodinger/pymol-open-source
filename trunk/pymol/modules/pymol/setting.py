@@ -240,6 +240,8 @@ if __name__=='pymol.setting':
       ray_triangle_fudge    = 208
       debug_pick            = 209
       dot_color             = 210
+      mouse_limit           = 211
+      mouse_scale           = 212
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
