@@ -554,7 +554,7 @@ class Indexed(Base):
                # bond
                for b in cmodel.bond[fst]:
                   nbr = b.index[0]
-                  if nbr == fst:
+                  if nbr in [fst,nxt,trd]:
                      nbr = b.index[1]
                   if not done.has_key(nbr):
                      z_set.append((nbr,trd,fst,nxt))
