@@ -233,7 +233,7 @@ class RenderReader:
          self.sphere,
          self.cyl,
          None,
-         None,
+         self.cyl,
          None,
          self.tri_normal,
          ]

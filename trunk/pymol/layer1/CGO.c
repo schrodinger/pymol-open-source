@@ -336,18 +336,67 @@ CGO *CGOSimplify(CGO *I,int est)
 
 /* ======== Raytrace Renderer ======== */
 
+
+int CGOGetExtent(CGO *I,float *mn,float *mx)
+{
+  register float *pc = I->op;
+  register int op;
+  int result = false;
+
+  #define check_extent(v,r) {\
+    if(!result) {\
+      mn[0]=((*(v  ))-r); \
+      mx[0]=((*(v  ))+r);  \
+      mn[1]=((*(v+1))-r); \
+      mx[1]=((*(v+1))+r); \
+      mn[2]=((*(v+2))-r); \
+      mx[2]=((*(v+2))+r); \
+      result=true; \
+  } else {\
+       if(mn[0]>((*(v    ))-r)) mn[0]=((*(v    ))-r); \
+       if(mx[0]<((*(v    ))+r)) mx[0]=((*(v    ))+r); \
+       if(mn[1]>((*((v)+1))-r)) mn[1]=((*((v)+1))-r); \
+       if(mx[1]<((*((v)+1))+r)) mx[1]=((*((v)+1))+r); \
+       if(mn[2]>((*((v)+2))-r)) mn[2]=((*((v)+2))-r); \
+       if(mx[2]<((*((v)+2))+r)) mx[2]=((*((v)+2))+r); }}
+
+  while((op=(CGO_MASK&CGO_read_int(pc)))) {
+    switch(op) {
+    case CGO_VERTEX:
+      check_extent(pc,0);
+      break;
+    case CGO_SPHERE:
+      check_extent(pc,*(pc+3));
+      break;
+    case CGO_CYLINDER:
+      check_extent(pc  ,*(pc+6));
+      check_extent(pc+3,*(pc+6));
+      break;
+    case CGO_TRIANGLE:
+      check_extent(pc  ,0);
+      check_extent(pc+3,0);
+      check_extent(pc+6,0);
+      break;
+    }
+    pc+=CGO_sz[op];
+  }
+  return(result);
+}
+
+/* ======== Raytrace Renderer ======== */
+
 void CGORenderRay(CGO *I,CRay *ray) 
 {
   register float *pc = I->op;
   register int op;
-  int vc;
+  int vc=0;
   float linewidth=1.0;
   float widthscale=0.15;
   float primwidth=0.15;
   float white[] = {1.0,1.0,1.0};
   float zee[] = {0.0,0.0,1.0};
 
-  float *n0,*n1,*n2,*v0,*v1,*v2,*c0,*c1,*c2;
+  float *n0=NULL,*n1=NULL,*n2=NULL,*v0=NULL,*v1=NULL,*v2=NULL,*c0=NULL,*c1=NULL,*c2=NULL;
   int mode = -1;
   c0=white;
 

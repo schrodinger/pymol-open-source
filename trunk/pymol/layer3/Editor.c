@@ -285,7 +285,7 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3)
   int i1=-1;
   int sele0,sele1;
   int result=false;
-  ObjectMolecule *obj0,*obj1;
+  ObjectMolecule *obj0=NULL,*obj1=NULL;
 
   if(s0)
     if(!*s0)
@@ -317,7 +317,7 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3)
     }
   }
   
-  if(s0&&(!s1)) { /* single atom mode */
+  if(obj0&&s0&&(!s1)) { /* single atom mode */
     if(i0>=0) {
       ObjectMoleculeVerifyChemistry(obj0);
       SelectorCreate(cEditorSele1,s0,NULL,false); /* wasteful but who cares */
@@ -329,7 +329,7 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3)
       EditorSetActiveObject(NULL,0);
       ErrMessage("Editor","Invalid selection. Requires a single atom selection.");
     }
-  } else if (s0&&s1) {
+  } else if (obj0&&s0&&s1) {
     if((i0>=0)&&(i1>=0)) {
       if(obj0!=obj1) {
         i0=-1;
@@ -676,7 +676,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
 void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
 {
   int frg;
-  int sele0,sele1;
+  int sele0=-1,sele1=-1;
   int s;
   WordType name;
   int seleFlag= false;

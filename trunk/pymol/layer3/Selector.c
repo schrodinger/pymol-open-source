@@ -1091,7 +1091,7 @@ void SelectorUpdateCmd(int sele0,int sele1,int sta0, int sta1)
   int *vla0=NULL;
   int *vla1=NULL;
   int c0,c1;
-  int i0,i1;
+  int i0=0,i1;
   int cc1;
   ObjectMolecule *obj0,*obj1;
   CoordSet *cs0,*cs1;

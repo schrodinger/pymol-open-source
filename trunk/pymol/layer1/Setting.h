@@ -115,6 +115,7 @@ float SettingGetNamed(char *name);
 #define cSetting_cache_display        73
 #define cSetting_mesh_radius          74
 #define cSetting_backface_cull        75
+#define cSetting_gamma                76
 
 #endif
 

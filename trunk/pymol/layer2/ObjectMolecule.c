@@ -194,7 +194,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
             tcs = I->CSet[b];
             if(tcs) {
               for(a=0;a<nH;a++) {
-                ObjectMoleculeGetAtomVertex(I,n,index[a],v0);
+                ObjectMoleculeGetAtomVertex(I,b,index[a],v0);
                 ObjectMoleculeFindOpenValenceVector(I,b,index[a],v);
                 d = AtomInfoGetBondLength(I->AtomInfo+index[a],&fakeH);
                 scale3f(v,d,v);
@@ -233,7 +233,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
   float x1[3],y1[3],z1[3];
   float x[3],y[3],z[3];
   float t[3],t2[3];
-  CoordSet *cs,*scs=NULL;
+  CoordSet *cs=NULL,*scs=NULL;
   int state1 = 0;
   CoordSet *tcs;
 
@@ -366,7 +366,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
         case 1:
           ca0 = tcs->AtmToIdx[at0]; /* anchor */
 
-          if((ca0>=0)&&(ch0>=0)) {
+          if(ca0>=0) {
             ObjectMoleculeFindOpenValenceVector(I,a,at0,x0);
             copy3f(tcs->Coord+3*ca0,va0);
             get_system1f3f(x0,y0,z0);
@@ -400,8 +400,9 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     }
     ObjectMoleculeSort(I);
   }
-  if(cs->fFree)
-    cs->fFree(cs);
+  if(cs)
+    if(cs->fFree)
+      cs->fFree(cs);
   FreeP(backup);
 }
 /*========================================================================*/
@@ -1297,7 +1298,7 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
   int a,n,a0,a1,nn;
   int changedFlag = true;
   
-  AtomInfoType *ai,*ai0,*ai1;
+  AtomInfoType *ai,*ai0,*ai1=NULL;
   
   ObjectMoleculeUpdateNeighbors(I);
 
@@ -1541,7 +1542,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
 {
 
   int a,b,*b0;
-  AtomInfoType *ai,*ai0,*ai1;
+  AtomInfoType *ai,*ai0,*ai1=NULL;
   int a0,a1;
   int expect,order;
   int n,nn;
@@ -2751,7 +2752,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag)
 {
   int *index,*outdex,*a2i,*i2a,*bond=NULL;
-  int a,b,c,lb,nb,ac,a1,a2;
+  int a,b,c,lb=0,nb,ac,a1,a2;
   int found;
   int nAt,nBd,nBond;
   int expansionFlag = false;

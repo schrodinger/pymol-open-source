@@ -45,7 +45,29 @@ static void ObjectCGOFree(ObjectCGO *I) {
 
 /*========================================================================*/
 
+void ObjectCGORecomputeExtent(ObjectCGO *I)
+{
+  float mx[3],mn[3];
+  int extent_flag = false;
+  int a;
+  for(a=0;a<I->NState;a++) 
+    if(I->State[a].std) {
+      if(CGOGetExtent(I->State[a].std,mn,mx)) {
+        if(!extent_flag) {
+          extent_flag=true;
+          copy3f(mx,I->Obj.ExtentMax);
+          copy3f(mn,I->Obj.ExtentMin);
+        } else {
+          max3f(mx,I->Obj.ExtentMax,I->Obj.ExtentMax);
+          min3f(mx,I->Obj.ExtentMax,I->Obj.ExtentMax);
+        }
+      }
+    }
+  I->Obj.ExtentFlag=extent_flag;
+}
+/*========================================================================*/
 static void ObjectCGOUpdate(ObjectCGO *I) {
+
   SceneDirty();
 }
 
@@ -128,7 +150,6 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
 
   CGO *cgo;
   int est;
-  int isNew;
 
   if(obj) {
     if(obj->Obj.type!=cObjectCGO) /* TODO: handle this */
@@ -162,6 +183,9 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
         }
       }
     }
+  }
+  if(I) {
+    ObjectCGORecomputeExtent(I);
   }
   SceneChanged();
   return(I);

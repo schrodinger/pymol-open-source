@@ -79,6 +79,7 @@ typedef struct {
                
 CGO *CGONew(void);
 CGO *CGONewSized(int size);
+int CGOGetExtent(CGO *I,float *mn,float *mx);
 
 void CGOFree(CGO *I);
 CGO *CGOSimplify(CGO *I,int est);

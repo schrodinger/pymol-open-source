@@ -103,6 +103,8 @@ void MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int
    png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, PNG_COLOR_TYPE_RGB_ALPHA,
       PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
+   png_set_gamma(png_ptr, 2.4, 1.0);
+
    /* Write the file header information.  REQUIRED */
    png_write_info(png_ptr, info_ptr);
 
