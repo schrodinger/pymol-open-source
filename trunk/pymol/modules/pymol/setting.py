@@ -225,7 +225,8 @@ if __name__=='pymol.setting':
       fog_start             =192
       state                 =193
       frame                 =194
-      ray_shadows           =195
+      ray_shadows           =195 # legacy
+      ray_shadow            =195 # improved ease of use..(for ray_sh <Tab> )
       ribbon_trace          =196
       security              =197
       stick_transparency    =198

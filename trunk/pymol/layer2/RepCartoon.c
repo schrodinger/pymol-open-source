@@ -32,8 +32,6 @@ Z* -------------------------------------------------------------------
 
 typedef struct RepCartoon {
   Rep R; /* must be first! */
-  ObjectMolecule *obj;
-  CoordSet *cs;
   CGO *ray,*std;
 } RepCartoon;
 
@@ -60,12 +58,12 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
       ENDFD;
     
     if(I->ray)  
-      CGORenderRay(I->ray,ray,NULL,I->cs->Setting,
-                   I->obj->Obj.Setting
+      CGORenderRay(I->ray,ray,NULL,I->R.cs->Setting,
+                   I->R.obj->Setting
                    );
     else if(I->std)
-      CGORenderRay(I->std,ray,NULL,I->cs->Setting,
-                   I->obj->Obj.Setting);    
+      CGORenderRay(I->std,ray,NULL,I->R.cs->Setting,
+                   I->R.obj->Setting);    
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
     
@@ -89,8 +87,8 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
       ENDFD;
 
     if(I->std) 
-      CGORenderGL(I->std,NULL,I->cs->Setting,
-                   I->obj->Obj.Setting);
+      CGORenderGL(I->std,NULL,I->R.cs->Setting,
+                   I->R.obj->Setting);
 
       if(use_dlst&&I->R.displayList) {
         glEndList();
@@ -252,8 +250,8 @@ ENDFD;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
   I->R.fRecolor=NULL;
-  I->obj=obj;
-  I->cs=cs;
+  I->R.obj=&obj->Obj;
+  I->R.cs=cs;
   I->ray=NULL;
   I->std=NULL;
 
