@@ -103,6 +103,8 @@ void SceneRovingDirty(void);
 int SceneRovingCheckDirty(void);
 void SceneRovingUpdate(void);
 void SceneRovingChanged(void);
+void SceneRovingPostpone(void);
+
 #endif
 
 

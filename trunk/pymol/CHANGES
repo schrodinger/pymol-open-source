@@ -98,7 +98,9 @@ Current Bugs to Fix
 
 Changes up to 0.88
 
-   * roving feature
+   * roving feature, many new settings, etc.
+
+   * ribbon_color, cartoon_color
 
    * overhauled color menu, improved performance of rainbow and color by chain
 
