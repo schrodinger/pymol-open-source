@@ -1040,9 +1040,9 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
           }
         I->NBond=nBd;
       }
-      VLAFreeP(bond);
       FreeP(index);
     }
+    VLAFreeP(bond);
   }
 }
 /*========================================================================*/
