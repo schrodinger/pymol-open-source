@@ -32,6 +32,8 @@ def load():
       n = cmd.count_states()
       cmd.refresh()
       if n>1:
+         cmd.rewind()
+                     
          sys.__stderr__.write(file+"\n")
          sys.__stderr__.flush()
          for a in range(1,n+1):
