@@ -1443,12 +1443,16 @@ static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
 {
   /* called by non-GLUT thread with unlocked API, blocked interpreter */
-  PyObject *result;
-  if(OrthoCommandWaiting()||(flush_count>1)) 
-    result = PyInt_FromLong(1);
-  else
-    result = PyInt_FromLong(0);
-  return result;
+  PyObject *result = NULL;
+  if(!PyMOLTerminating) {
+    APIEnterBlocked();
+    if(OrthoCommandWaiting()||(flush_count>1)) 
+      result = PyInt_FromLong(1);
+    else
+      result = PyInt_FromLong(0);
+    APIExitBlocked();
+  }
+  return APIAutoNone(result);
 }
 
 static PyObject *CmdPaste(PyObject *dummy, PyObject *args)
@@ -3401,6 +3405,7 @@ static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 {
   APIEntry();
+  PyMOLTerminating=true;
   PExit(EXIT_SUCCESS);
   APIExit();
   return(APISuccess());

@@ -62,6 +62,8 @@ PyObject *P_unlock = NULL;
 PyObject *P_lock_c = NULL; /* C locks */
 PyObject *P_unlock_c = NULL;
 
+PyObject *P_do = NULL;
+
 PyObject *P_time = NULL;
 PyObject *P_sleep = NULL;
 PyObject *P_main = NULL;
@@ -142,6 +144,7 @@ int PComplete(char *str,int buf_size)
   PLockAPIAndUnblock();
   return(ret);
 }
+
 
 int PTruthCallStr(PyObject *object,char *method,char *argument)
 {
@@ -674,7 +677,7 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
   while(P_glut_thread_keep_out) {
     /* IMPORTANT: keeps the glut thread out of an API operation... */
-    /* NOTE: the keep_out variable can only be changed by the thread
+    /* NOTE: the keep_out variable can only be changed or read by the thread
        holding the API lock, therefore it is safe even through increment
        isn't atomic. */
     PRINTFD(FB_Threads)
@@ -1094,16 +1097,19 @@ void PInit(void)
   if(!P_cmd) ErrFatal("PyMOL","can't find 'cmd'");
 
   P_lock = PyObject_GetAttrString(P_cmd,"lock");
-  if(!P_lock) ErrFatal("PyMOL","can't find 'pm.lock()'");
+  if(!P_lock) ErrFatal("PyMOL","can't find 'cmd.lock()'");
 
   P_unlock = PyObject_GetAttrString(P_cmd,"unlock");
-  if(!P_unlock) ErrFatal("PyMOL","can't find 'pm.unlock()'");
+  if(!P_unlock) ErrFatal("PyMOL","can't find 'cmd.unlock()'");
 
   P_lock_c = PyObject_GetAttrString(P_cmd,"lock_c");
-  if(!P_lock_c) ErrFatal("PyMOL","can't find 'pm.lock_c()'");
+  if(!P_lock_c) ErrFatal("PyMOL","can't find 'cmd.lock_c()'");
 
   P_unlock_c = PyObject_GetAttrString(P_cmd,"unlock_c");
-  if(!P_unlock_c) ErrFatal("PyMOL","can't find 'pm.unlock_c()'");
+  if(!P_unlock_c) ErrFatal("PyMOL","can't find 'cmd.unlock_c()'");
+
+  P_do = PyObject_GetAttrString(P_cmd,"do");
+  if(!P_do) ErrFatal("PyMOL","can't find 'cmd.do()'");
 
   PRunString("import menu\n");  
   P_menu = PyDict_GetItemString(P_globals,"menu");
@@ -1229,6 +1235,14 @@ void PParse(char *str)
   OrthoCommandIn(str);
 }
 
+void PDo(char *str) /* assumes we already hold the re-entrant API lock */
+{
+  int blocked;
+  blocked = PAutoBlock();
+  Py_XDECREF(PyObject_CallFunction(P_do,"s",str));
+  PAutoUnblock(blocked);
+}
+
 void PLog(char *str,int format) 
      /* general log routine can write PML 
         or PYM commands to appropriate log file */
@@ -1305,37 +1319,12 @@ void PLogFlush(void)
     }
 }
 
-static void PDeleteAll(void *p)
-{ /* assumes blocked and unlocked API */
-  if(!PyMOLTerminating)
-    PyObject_CallMethod(P_cmd,"delete","s","all");
-}
-
-static void PMaintainObjectAll(void) 
-/* legacy exception for "del all", which is broken by version 0.86
-   "del all" now means what it should in Python: delete an object
-   referenced by "all".  In order to support old scripts, we create an
-   "all" object and then catch its destruction event...(yes, I know
-   this is weak, but its is the most compatible solution...).  */
-{
-  PyObject *all;
-
-  all = PyDict_GetItemString(P_globals,"all");
-  if(all==NULL) {
-    all = PyCObject_FromVoidPtr(NULL,PDeleteAll);
-    PyDict_SetItemString(P_globals,"all",all);
-    Py_DECREF(all);
-  }
-}
-
-
 void PFlush(void) {  
   /* NOTE: ASSUMES unblocked Python threads and a locked API */
   PyObject *err;
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(buffer)) {
     PBlockAndUnlockAPI();
-    PMaintainObjectAll();
     PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
     err = PyErr_Occurred();
     if(err) {
@@ -1353,7 +1342,6 @@ void PFlushFast(void) {
   PyObject *err;
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(buffer)) {
-    PMaintainObjectAll();
     PRINTFD(FB_Threads)
       " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n",buffer,
       PyThread_get_thread_ident()
@@ -1528,6 +1516,7 @@ void PDefineFloat(char *name,float value) {
   PRunString(buffer);
   PUnblock();
 }
+
 
 /* This function is called by the interpreter to get its own name */
 char *getprogramname(void)

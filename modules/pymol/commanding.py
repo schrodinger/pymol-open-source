@@ -199,7 +199,7 @@ USAGE (PYTHON)
       else:
          cmmd_list = [ commands ]
       for cmmd in cmmd_list:
-         lst = string.split(cmmd,"\n")
+         lst = string.split(string.replace(cmmd,chr(13),chr(10)),chr(10))
          if len(lst)<2:
             for a in lst:
                if(len(a)):

@@ -37,6 +37,7 @@ void MainRepositionWindowDefault(void);
 
 void MainRunString(char *str);
 PyObject *MainGetStringResult(char *str);
+void MainDoCommand(char *str1);
 void MainRunCommand(char *str1);
 void MainMoviePrepareCopy(int *width,int *height,int *length);
 int MainMovieCopy(int frame,int width,int height,int rowbytes,void *ptr);

@@ -275,6 +275,24 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
   return result;
 }
 /*========================================================================*/
+void MainDoCommand(char *str1)
+{
+  PLockAPIAsGlut();
+  if(str1[0]!='_') { /* suppress internal call-backs */
+    if(strncmp(str1,"cmd._",5)) {
+      OrthoAddOutput("PyMOL>");
+      OrthoAddOutput(str1);
+      OrthoNewLine(NULL,true);
+    }
+    PDo(str1);
+  } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
+    PDo(str1+2);    
+  } else { 
+    PDo(str1);
+  }
+  PUnlockAPIAsGlut();
+}
+/*========================================================================*/
 void MainRunCommand(char *str1)
 {
   PLockAPIAsGlut();
@@ -288,10 +306,10 @@ void MainRunCommand(char *str1)
     }
     PParse(str1);
   } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
-    if(WordMatch(str1+2,"quit",true)==0) /* don't log quit */
+    if(WordMatch(str1+2,"quit",true)>=0) /* don't log quit */
       PLog(str1+2,cPLog_pml);
     PParse(str1+2);    
-  } else {
+  } else { 
     PParse(str1);
   }
   PUnlockAPIAsGlut();
