@@ -46,6 +46,7 @@ if __name__=='pymol.parser':
    com2 = {}    # non-compound command
    cont = {}    # continued characters from previous lines (i.e., before \ )
    script = {}  # file handles
+   sc_path = {}   # file paths
    kw = {}      # row in the cmd.keyword table for the current command
    input = {}   # list of length two - command and unparsed arguments string
    next = {}    # characters for next command (i.e., after ; )
@@ -67,6 +68,7 @@ if __name__=='pymol.parser':
    nest=0
    com0[nest]=""
    cont[nest]=""
+   sc_path[nest]="default"
    embed_sentinel[nest]=None
 
    def get_embedded(key):
@@ -79,8 +81,7 @@ if __name__=='pymol.parser':
    # main parser routine
 
    def parse(s,secure=0):
-      global com0,com1,com2,cont,script,kw,input
-      global next,nest,args,kw_args,cmd,cont,result
+      global nest,cmd,result
    # report any uncaught errors...
       if sys.exc_info()!=(None,None,None):
          traceback.print_exc()
@@ -262,7 +263,7 @@ if __name__=='pymol.parser':
                                     if l>0:
                                        key = args[nest][0]
                                     else:
-                                       key = "embedded"
+                                       key = os.path.splitext(os.path.basename(sc_path[nest]))[0]
                                     if l>1:
                                        format = args[nest][1]
                                     else:
@@ -298,6 +299,7 @@ if __name__=='pymol.parser':
                            script[nest] = open(path,'r')
                            nest=nest+1
                            cont[nest]=''
+                           sc_path[nest]=path
                            embed_sentinel[nest]=None
                            while 1:
                               com0[nest]  = script[nest-1].readline()
