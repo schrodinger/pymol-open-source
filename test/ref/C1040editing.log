@@ -14,7 +14,7 @@ PyMOL>ray
  RayRenderTest: obtained 166 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>remove hydro
  Remove: eliminated 20 atoms in model "small01".
 PyMOL>h_add
@@ -22,10 +22,10 @@ PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>remove id 17
  Remove: eliminated 1 atoms in model "small01".
 PyMOL>count_atoms
@@ -49,7 +49,7 @@ PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>unbond id 1,id 2
  RemoveBond: 1 bonds removed from model "small01".
 PyMOL>h_add
@@ -64,7 +64,7 @@ PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>edit id 6,id 10
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
@@ -136,9 +136,9 @@ PyMOL>ray
  RayRenderTest: obtained 1529 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol,m1
- CmdLoad: "dat/small01.mol" loaded as "m1".
+ ExecutiveLoad: "dat/small01.mol" loaded as "m1", through state 1.
 PyMOL>load dat/small01.mol,m2
- CmdLoad: "dat/small01.mol" loaded as "m2".
+ ExecutiveLoad: "dat/small01.mol" loaded as "m2", through state 1.
 PyMOL>fuse m1 and id 31,m2 and id 31
 PyMOL>dele m1
 PyMOL>zoom
@@ -146,9 +146,9 @@ PyMOL>ray
  RayRenderTest: obtained 122 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol,m1
- CmdLoad: "dat/small01.mol" loaded as "m1".
+ ExecutiveLoad: "dat/small01.mol" loaded as "m1", through state 1.
 PyMOL>load dat/small01.mol,m2
- CmdLoad: "dat/small01.mol" loaded as "m2".
+ ExecutiveLoad: "dat/small01.mol" loaded as "m2", through state 1.
 PyMOL>remove id 30
  Remove: eliminated 1 atoms in model "m1".
  Remove: eliminated 1 atoms in model "m2".
@@ -159,7 +159,7 @@ PyMOL>ray
  RayRenderTest: obtained 122 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>edit id 2,id 6, id 5
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
@@ -232,7 +232,7 @@ PyMOL>ray
  RayRenderTest: obtained 111433 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>iterate (all),print name
 C
 C
@@ -312,7 +312,7 @@ H
  Iterate: iterated over 36 atoms.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>edit id 3
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>replace N,3,3
@@ -353,7 +353,7 @@ PyMOL>get_extent
  cmd.extent: max: [  10.270,  -4.939,  29.070]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>remove not id 3
  Remove: eliminated 35 atoms in model "small01".
 PyMOL>zoom
@@ -406,7 +406,7 @@ PyMOL>get_extent
  cmd.extent: max: [   8.919, -12.759,  27.469]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>cmd.edit("(small01`3)",pkresi=1)
 PyMOL>cmd.edit_mode()
 PyMOL>cmd.push_undo("small01",1)
@@ -419,7 +419,7 @@ PyMOL>get_extent
  cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>get_extent
  cmd.extent: min: [  -8.369,  -2.595,  -4.337]
  cmd.extent: max: [   2.256,   2.247,   2.517]

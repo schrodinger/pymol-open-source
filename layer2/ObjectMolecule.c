@@ -6495,7 +6495,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
         if(successCnt>1) {
           if(successCnt==2) {
             PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-              " ObjectMoleculeReadStr: read molecule %d.\n",1
+              " ObjectMoleculeReadStr: read through molecule %d.\n",1
               ENDFB(G);
           }
           if(UtilShouldWePrintQuantity(successCnt)) {
@@ -8400,6 +8400,10 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
     int stop = I->NCSet;
        
     ObjectAdjustStateRebuildRange(&I->Obj,&start,&stop);
+    if((I->NCSet==1)&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons))) {
+      start=0;
+      stop=1;
+    }
 
     for(a=start;a<stop;a++)
       if(I->CSet[a]) {	

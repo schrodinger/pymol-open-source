@@ -1,5 +1,5 @@
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>save tmp/small01.mol
  chempy: writing "tmp/small01.mol".
  Save: wrote "tmp/small01.mol".
@@ -46,7 +46,7 @@ PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load tmp/small01.mol
- CmdLoad: "tmp/small01.mol" loaded as "small01".
+ ExecutiveLoad: "tmp/small01.mol" loaded as "small01", through state 1.
 PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>feedback disable,ray,details

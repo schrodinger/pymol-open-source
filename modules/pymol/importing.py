@@ -51,7 +51,7 @@ if __name__=='pymol.importing':
       cgo = 13      # compiled graphic object
       r3d = 14      # r3d, only used within cmd.py
       xyz = 15      # xyz, tinker format
-      sdf = 16      # sdf, only used within cmd.py
+      sdf1 = 16     # sdf, only used within cmd.py
       cc1 = 17      # cc1 and cc2, only used within cmd.py
       ccp4 = 18     # CCP4 map, under development
       pmo = 19      # pmo, experimental molecular object format
@@ -72,9 +72,10 @@ if __name__=='pymol.importing':
       mol2str = 34  # MOL2 file string (TRIPOS)
       p1m = 35      # P1M file (combined data & secure commands)
       ccp4str = 36  # CCP4 map string
+      sdf = 37      # new default...
       sdf2 = 37     # SDF using C-based SDF parser (instead of Python)
       sdf2str = 38  # SDF ditto
-      
+
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
    def set_session(session):
@@ -358,7 +359,6 @@ SEE ALSO
       _cmd.finish_object(str(oname))
       if _cmd.get_setting("auto_zoom")==1.0:
          cmd._do("zoom (%s)"%oname)
-      cmd._do("set seq_view_format,4,"+oname+",quiet=1")
    
    def load(filename,object='',state=0,format='',finish=1,
             discrete=-1,quiet=1,multiplex=None,zoom=-1):
@@ -504,8 +504,8 @@ SEE ALSO
          else:
             oname = string.strip(object)
 
-   # loadable.sdf is for the old Python-based SDF file reader
-         if ftype == loadable.sdf:
+   # loadable.sdf1 is for the old Python-based SDF file reader
+         if ftype == loadable.sdf1:
             sdf = SDF(fname)
             _processSDF(sdf,oname,state,quiet)
             ftype = -1
@@ -537,7 +537,7 @@ SEE ALSO
 
    # special handling for multi-model files (mol2, sdf)
 
-         if ftype in ( loadable.mol2, loadable.sdf, loadable.sdf2):
+         if ftype in ( loadable.mol2, loadable.sdf1, loadable.sdf2):
             if discrete_default==1: # make such files discrete by default
                discrete = -1
 
@@ -580,11 +580,47 @@ SEE ALSO
             read_mol2str(string.join(data,''),name,state,finish,discrete,quiet)
          elif ftype==loadable.xplor:
             read_xplorstr(string.join(data,''),name,state,finish,discrete,quiet)
-         elif ftype==loadable.sdf:
+         elif ftype==loadable.sdf1: # Python-based SDF reader
             sdf = SDF(PseudoFile(data),'pf')
             _processSDF(sdf,name,state,quiet)
+         elif ftype==loadable.sdf2: # C-based SDF reader (much faster)
+            read_sdfstr(string.join(data,''),name,state,finish,discrete,quiet)
       return r
    
+   def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
+                   zoom=-1):
+      '''
+DESCRIPTION
+
+   "read_sdfstr" reads an MDL MOL format file as a string
+
+PYMOL API ONLY
+
+   cmd.read_sdfstr( string molstr, string name, int state=0,
+      int finish=1, int discrete=1 )
+
+NOTES
+
+   "state" is a 1-based state index for the object, or 0 to append.
+
+   "finish" is a flag (0 or 1) which can be set to zero to improve
+   performance when loading large numbers of objects, but you must
+   call "finish_object" when you are done.
+
+   "discrete" is a flag (0 or 1) which tells PyMOL that there will be
+   no overlapping atoms in the file being loaded.  "discrete"
+   objects save memory but can not be edited.
+      '''
+      r = 1
+      try:
+         lock()
+         r = _cmd.load(str(name),str(sdfstr),int(state)-1,
+                       loadable.sdf2str,int(finish),int(discrete),
+                       int(quiet),0,int(zoom))
+      finally:
+         unlock()
+      return r
+
    def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1,
                    zoom=-1):
       '''

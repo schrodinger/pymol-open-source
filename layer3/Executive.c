@@ -637,7 +637,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
     is_string = false;
     break;
   case cLoadTypePSE:
-  case cLoadTypeSDF:
+  case cLoadTypeSDF1:
   case cLoadTypeChemPyModel:
   case cLoadTypeChemPyBrick:
   case cLoadTypeChemPyMap:
