@@ -76,7 +76,9 @@ typedef struct {
   int mode_override;
 } DeferredMouse;
 
-#define MAX_ANI_ELEM 45
+/* allow up to 10 seconds at 30 FPS */
+
+#define MAX_ANI_ELEM 300
 
 struct _CScene {
   Block *Block;
@@ -146,6 +148,7 @@ void ScenePrimeAnimation(PyMOLGlobals *G)
 {
   if(G->HaveGUI) {
     CScene *I=G->Scene;
+    UtilZeroMem(I->ani_elem,sizeof(CViewElem));
     SceneToViewElem(G,I->ani_elem);
     I->ani_elem[0].specification_level = 2;
     I->n_ani_elem = 0;
@@ -156,10 +159,15 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration)
 {
   if(G->HaveGUI) {
     double now;
-    int target = MAX_ANI_ELEM;
+    int target = duration * 30;
     CScene *I=G->Scene;
+    if(target<1)
+      target = 1;
+    if(target>MAX_ANI_ELEM)
+      target = MAX_ANI_ELEM;
+    UtilZeroMem(I->ani_elem+1,sizeof(CViewElem)*target);
     SceneToViewElem(G,I->ani_elem + target);
-    I->ani_elem[MAX_ANI_ELEM].specification_level = 2;
+    I->ani_elem[target].specification_level = 2;
     now = UtilGetSeconds(G);
     I->ani_elem[0].timing_flag = true;
     I->ani_elem[0].timing = now + 0.01;
@@ -3923,14 +3931,12 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     while(I->ani_elem[cur].timing<now) {
       cur++;
       if(cur >= I->n_ani_elem) {
-        cur = I->n_ani_elem-1;
+        cur = I->n_ani_elem;
         break;
       }
     }
-
+    I->cur_ani_elem = cur;
     SceneFromViewElem(G,I->ani_elem+cur);
-
-    I->cur_ani_elem = cur+1;
   }
 
   double_pump=SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono);
