@@ -232,7 +232,7 @@ ENDFD;
 		  if(obj->AtomInfo[a1].visRep[cRepCartoon])
 			 if(!obj->AtomInfo[a1].hetatm)
             if((!obj->AtomInfo[a1].alt[0])||
-               (obj->AtomInfo[a1].alt[0]=='A'))
+               (obj->AtomInfo[a1].alt[0]=='A')) {
               if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
                 {
                   if(a2>=0) {
@@ -330,7 +330,76 @@ ENDFD;
                     
                     vo+=3;
                   }
+                } else if(WordMatch("P",obj->AtomInfo[a1].name,1)<0)
+                {
+                  if(a2>=0) {
+                    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
+                        a2=-1;
+                  }
+                  if(a2<=0)
+                    nSeg++;
+                  *(s++) = nSeg;
+                  nAt++;
+                  *(i++)=a;
+                  cur_car = obj->AtomInfo[a1].cartoon;
+                  if(cur_car == cCartoon_auto)
+                    cur_car = cCartoon_tube;
+                  *ss=0;
+
+                  *(cc++)=cur_car;
+                  v1 = cs->Coord+3*a;
+                  v_ca = v1;
+                  *(v++)=*(v1++);
+                  *(v++)=*(v1++);
+                  *(v++)=*(v1++);
+                  a2=a1;
+                  
+                  ss++;
+
+                  v_c = NULL;
+                  v_n = NULL;
+                  v_o = NULL;
+                  
+                  AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+                  
+                  for(a3=st;a3<=nd;a3++) {
+                    
+                    if(obj->DiscreteFlag) {
+                      if(cs==obj->DiscreteCSet[a3]) 
+                        a4=obj->DiscreteAtmToIdx[a3];
+                      else 
+                        a4=-1;
+                    } else 
+                      a4=cs->AtmToIdx[a3];
+                    if(a4>=0) {
+
+                      /* need to figure out how to generate a how to do right for DNA...
+                       then we can use oval or rectangle */
+
+                      if(WordMatch("P",obj->AtomInfo[a3].name,1)<0) {
+                        v_c = cs->Coord+3*a4;		
+                      } else if(WordMatch("C2",obj->AtomInfo[a3].name,1)<0) {
+                        v_o = cs->Coord+3*a4;
+                      }
+                    }
+                  }
+                  if(!(v_c&&v_o)) {
+                    vo[0]=0.0;
+                    vo[1]=0.0;
+                    vo[2]=0.0;
+                    vo+=3;
+                  } else {
+                    /* generate orientation vectors...*/
+
+                    cross_product3f(v_c,v_o,vo);
+                    normalize3f(vo);
+                    
+                    vo+=3;
+                  }
                 }
+             
+            }
+
 	 }
 
 PRINTFD(FB_RepCartoon)
