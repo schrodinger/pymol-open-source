@@ -20,17 +20,21 @@ Z* -------------------------------------------------------------------
 
 typedef struct {
   ObjectMap *Map;
+  CCrystal Crystal;
+  int Active;
   int *N;
   float *V;
   int Range[6];
   float ExtentMin[3],ExtentMax[3];
   int ExtentFlag;
   float Level,Radius;
+  int RefreshFlag;
   int ResurfaceFlag;
   float *AtomVertex;
   int CarveFlag;
   float CarveBuffer;
   int DotFlag;
+  CGO *UnitCellCGO;
 } ObjectMeshState;
 
 typedef struct ObjectMesh {

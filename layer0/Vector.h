@@ -145,9 +145,10 @@ float length3f ( float *v1 );
 void  cross_product3f ( float *v1, float *v2, float *cross );
 void  average3f ( float *v1, float *v2, float *avg );
 void  zero3f ( float *v1 )
+void  set3f ( float *v1,float x,float y,float z );
 #else
-
-#define zero3f(v1) { v1[0]=0.0;v1[1]=0.0;v1[2]=0.0; }
+#define set3f(v1,x,y,z) { (v1)[0]=(x);(v1)[1]=(y);(v1)[2]=(z); }
+#define zero3f(v1) { (v1)[0]=0.0;(v1)[1]=0.0;(v1)[2]=0.0; }
 #define dot_product3f(v1,v2) ((v1)[0]*(v2)[0] + (v1)[1]*(v2)[1] + (v1)[2]*(v2)[2])
 #define invert3f(v) {(v)[0]=-(v)[0]; (v)[1]=-(v)[1]; (v)[2]=-(v)[2];}
 #define scale3f(v1,v0,v2) {(v2)[0]=(v1)[0]*(v0); (v2)[1]=(v1)[1]*(v0); (v2)[2]=(v1)[2]*(v0);}

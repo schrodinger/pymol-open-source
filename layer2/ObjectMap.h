@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Object.h"
 #include"Crystal.h"
 #include"Isosurf.h"
+#include"CGO.h"
 
 typedef struct ObjectMap {
   Object Obj;

@@ -2205,11 +2205,15 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
       }
 	 }
     if(tRec->type==cExecObject) 
-      if(tRec->obj->type==cObjectDist)
-        {
-          ObjectSetRepVis(tRec->obj,rep,state);
-          SceneDirty();
-        }
+      switch(tRec->obj->type) {
+      case cObjectDist:
+      case cObjectMesh:
+        ObjectSetRepVis(tRec->obj,rep,state);
+        if(tRec->obj->fInvalidate)
+          tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
+        SceneDirty();
+        break;
+      }
     if(!handled)
       switch(tRec->type) {
       case cExecSelection:
@@ -2250,22 +2254,26 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
           }
         }   
         if(rec->type==cExecObject) {
-          if(rec->obj->type==cObjectMolecule)
-            {
-              obj=(ObjectMolecule*)rec->obj;
-              sele = SelectorIndexByName(obj->Obj.Name);
-              rec->repOn[rep]=state;
-              op.code=OMOP_VISI;
-              op.i1=rep;
-              op.i2=state;
-              ObjectMoleculeSeleOp(obj,sele,&op);
-              op.code=OMOP_INVA;
-              op.i2=cRepInvVisib;
-              ObjectMoleculeSeleOp(obj,sele,&op);				
-            }
-          else if(rec->obj->type==cObjectDist) {
+          switch(rec->obj->type) {
+          case cObjectMolecule:
+            obj=(ObjectMolecule*)rec->obj;
+            sele = SelectorIndexByName(obj->Obj.Name);
+            rec->repOn[rep]=state;
+            op.code=OMOP_VISI;
+            op.i1=rep;
+            op.i2=state;
+            ObjectMoleculeSeleOp(obj,sele,&op);
+            op.code=OMOP_INVA;
+            op.i2=cRepInvVisib;
+            ObjectMoleculeSeleOp(obj,sele,&op);				
+            break;
+          case cObjectDist:
+          case cObjectMesh:
             ObjectSetRepVis(rec->obj,rep,state);
+            if(rec->obj->fInvalidate)
+              rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,state);
             SceneDirty();
+            break;
           }
         }
 		}
