@@ -62,10 +62,13 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
   int c;
   int i,j;
   Pickable *p;
-
-
+  float alpha;
+  alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_stick_transparency);
+  alpha=1.0-alpha;
+  if(fabs(alpha-1.0)<R_SMALL4)
+    alpha=1.0;
   if(ray) {
-    
+    ray->fTransparentf(ray,1.0-alpha);    
     PRINTFD(FB_RepCylBond)
       " RepCylBondRender: rendering raytracable...\n"
       ENDFD;
@@ -76,6 +79,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 		ray->fSausage3fv(ray,v+4,v+7,*(v+3),v,v);
 		v+=10;
 	 }
+    ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
 
   PRINTFD(FB_RepCylBond)
@@ -166,7 +170,11 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
       while(c--)
         {
           
-          glColor3fv(v);
+          if(alpha==1.0) {
+            glColor3fv(v);
+          } else {
+            glColor4f(v[0],v[1],v[2],alpha);
+          }
           v+=3;
           
           glBegin(GL_TRIANGLE_STRIP);
@@ -296,6 +304,8 @@ Rep *RepCylBondNew(CoordSet *cs)
   RepInit(&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepCylBondFree;
+  I->R.obj=(CObject*)obj;
+  I->R.cs = cs;
 
   I->V = NULL;
   I->VR = NULL;

@@ -1706,6 +1706,8 @@ void SettingInitGlobal(void)
 
   SettingSet_i(I,cSetting_security,1);
 
+  SettingSet_f(I,cSetting_stick_transparency,0.0F);
+
 }
 
 
