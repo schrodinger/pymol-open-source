@@ -1135,6 +1135,10 @@ void PInit(void)
 
   P_glut_thread_id = PyThread_get_thread_ident();
 
+  #ifndef WIN32
+  signal(SIGINT,my_interrupt);
+  #endif
+
   PyRun_SimpleString(
 "if os.environ.has_key('PYMOL_PATH'): os.environ['TUT']=os.environ['PYMOL_PATH']+'/data/tut'");
 

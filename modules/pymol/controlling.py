@@ -59,9 +59,9 @@ if __name__=='pymol.controlling':
       'lbbx' : 21 ,
       'none' : 22 ,
       'cent' : 23 ,
+      'pktb' : 24 ,
       }
    but_act_sc = Shortcut(but_act_code.keys())
-
 
    ring_dict = {
       'three_button' : [   'three_button_viewing',
@@ -111,7 +111,7 @@ if __name__=='pymol.controlling':
                                 ('r','shft','clip') ,                 
                                 ('l','ctrl','torf'),
                                 ('m','ctrl','pkat'),
-                                ('r','ctrl','pkbd'),                  
+                                ('r','ctrl','pktb'),                  
                                 ('l','ctsh','lb'),
                                 ('m','ctsh','cent'),
                                 ('r','ctsh','rb'),
@@ -151,7 +151,7 @@ if __name__=='pymol.controlling':
                                ('r','shft','clip'),                 
                                ('l','ctrl','torf'),
                                ('m','ctrl','none'),
-                               ('r','ctrl','pkbd'),                 
+                               ('r','ctrl','pktb'),                 
                                ('l','ctsh','rotf'),
                                ('m','ctsh','none'),
                                ('r','ctsh','movf')

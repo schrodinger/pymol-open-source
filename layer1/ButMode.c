@@ -142,6 +142,7 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeRect],    "lbBx ");
   strcpy(I->Code[cButModeNone],    "  -  ");
   strcpy(I->Code[cButModeCent],    "Cent ");
+  strcpy(I->Code[cButModePkTorBnd], "PkTB");
 
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ButModeClick;

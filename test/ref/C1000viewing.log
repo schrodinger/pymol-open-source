@@ -370,7 +370,6 @@ PyMOL>load dat/pept.pdb
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  80.461   0.000
- Scene: view updated.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
@@ -403,26 +402,55 @@ PyMOL>reset
 PyMOL>view
 Parsing-Error: missing required argument: key
 PyMOL>view 1,store
- view: view stored as '1'.
+ view: view stored as "1".
 PyMOL>view 2,store
- view: view stored as '2'.
+ view: view stored as "2".
 PyMOL>move x,10
 PyMOL>view 2,st
- view: view stored as '2'.
+ view: view stored as "2".
 PyMOL>reset
 PyMOL>move y,-10
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000 -10.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
 PyMOL>view 1,recall
- Scene: view updated.
+ view: "1" recalled.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
 PyMOL>view 2,rec
- Scene: view updated.
+ view: "2" recalled.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+ 10.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>turn x,10
+PyMOL>view test,store
+ view: view stored as "test".
+PyMOL>turn x,20
+PyMOL>view rest,store
+ view: view stored as "rest".
+PyMOL>view test
+ view: "test" recalled.
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
+ 10.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>view rest
+ view: "rest" recalled.
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   0.866   0.500   0.000  -0.500   0.866
+ 10.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>view rest,delete
+ view: 'rest' deleted.
+PyMOL>view rest
+Error: unknown view: 'rest'. Choices:
+  1     2     test
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   0.866   0.500   0.000  -0.500   0.866
+ 10.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>view test
+ view: "test" recalled.
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
  10.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
 PyMOL>viewport
 PyMOL>viewport 300
@@ -433,13 +461,13 @@ PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  80.461   0.000
 PyMOL>zoom
 PyMOL>zoom resi 10
 PyMOL>zoom resi 5,5
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -44.770   0.247  -2.740  20.030  35.297  57.006   0.000
 PyMOL>dele all
 PyMOL>load dat/1tii.pdb,m1
@@ -549,52 +577,52 @@ PyMOL>load dat/pept.pdb,m1
  CmdLoad: "dat/pept.pdb" appended into object "m1", state 3.
 PyMOL>zoom m1
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -269.487  39.950   5.709  13.189 212.466 343.140   0.000
 PyMOL>zoom m1,state=0
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -269.487  39.950   5.709  13.189 212.466 343.140   0.000
 PyMOL>zoom m1,state=1
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -227.278  51.665  11.519  10.196 179.188 289.395   0.000
 PyMOL>zoom m1,state=2
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -149.541   9.985  -9.318  20.976 117.899 190.411   0.000
 PyMOL>zoom m1,state=3
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  80.461   0.000
 PyMOL>zoom m1,state=4
 ExecutiveWindowZoom-Error: selection doesn't specify any coordinates.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  80.461   0.000
 PyMOL>origin m1
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
- 38.726  15.988 -70.547  39.950   5.709  13.189  49.820  80.461   0.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
+ 38.726  17.022 -67.659  39.950   5.709  13.189  49.820  80.461   0.000
 PyMOL>origin m1,state=0
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
- 38.726  15.988 -70.547  39.950   5.709  13.189  49.820  80.461   0.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
+ 38.726  17.022 -67.659  39.950   5.709  13.189  49.820  80.461   0.000
 PyMOL>origin m1,state=1
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
- 50.441  21.798 -73.540  51.665  11.519  10.196  49.820  80.461   0.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
+ 50.441  23.264 -69.598  51.665  11.519  10.196  49.820  80.461   0.000
 PyMOL>origin m1,state=2
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
-  8.761   0.961 -62.760   9.985  -9.318  20.976  49.820  80.461   0.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
+  8.761   0.872 -62.600   9.985  -9.318  20.976  49.820  80.461   0.000
 PyMOL>origin m1,state=3
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  80.461   0.000
 PyMOL>origin m1,state=4
 PyMOL>cmd._dump_floats(cmd.get_view(0))
-  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  80.461   0.000
 PyMOL>orient m1
 PyMOL>cmd._dump_floats(cmd.get_view(0))

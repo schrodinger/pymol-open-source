@@ -55,7 +55,9 @@ void SceneReshape(Block *block,int width,int height);
 void SceneTest(void);
 void SceneIdle(void);
 void SceneFree(void);
-void SceneRay(int width,int height,int mode,char **headerVLA,char **charVLA);
+void SceneRay(int width,int height,int mode,
+              char **headerVLA,char **charVLA,
+              float angle,float shift);
 void SceneMakeMovieImage(void);
 
 void ScenePNG(char *png);
@@ -106,6 +108,7 @@ void SceneRovingChanged(void);
 void SceneRovingPostpone(void);
 void SceneCleanupStereo(void);
 int SceneReinitialize(void);
+void SceneUpdateStereoMode(void);
 
 #endif
 

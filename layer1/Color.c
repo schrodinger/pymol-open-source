@@ -94,12 +94,12 @@ static int ColorFindExtByName(char *name,int null_okay)
     {
       wm = WordMatch(name,I->Ext[a].Name,true);
       if(wm<0) {
-        if(null_okay||(!I->Ext[a].Ptr)) {
+        if(null_okay||(I->Ext[a].Ptr)) {
           result=a;
           break;
         }
       } else if ((wm>0)&&(best<wm)) {
-        if(null_okay||(!I->Ext[a].Ptr)) {
+        if(null_okay||(I->Ext[a].Ptr)) {
           result=a;
           best=wm;
         }
@@ -112,6 +112,7 @@ void ColorRegisterExt(char *name,void *ptr,int type)
 {
   CColor *I=&Color;
   int a;
+
   a=ColorFindExtByName(name,true);
   if(a<0) {
     VLACheck(I->Ext,ExtRec,I->NExt);
@@ -131,10 +132,7 @@ void ColorForgetExt(char *name)
   int a;
   a=ColorFindExtByName(name,true);
 
-  /* this won't work! */
-
   if(a>=0) { /* currently leaks memory TODO fix */
-    I->Ext[a].Name[0]=0;
     I->Ext[a].Ptr=NULL;
   }
 }

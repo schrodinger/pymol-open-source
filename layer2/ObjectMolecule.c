@@ -223,7 +223,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
         VLASize(cs->Coord,float,cs->NIndex*3);
       }
       PRINTFB(FB_ObjectMolecule,FB_Blather) 
-        " ObjMolLoadTRJFile: Loading from '%s'.\n",fname
+        " ObjMolLoadTRJFile: Loading from \"%s\".\n",fname
         ENDFB;
       buffer = (char*)mmalloc(BUFSIZE+1); /* 1 MB read buffer */
       p = buffer;
@@ -549,7 +549,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *I,char *fname,int fram
       }
       cs=CoordSetCopy(I->CSTmpl);
       PRINTFB(FB_ObjectMolecule,FB_Blather) 
-        " ObjMolLoadTRJFile: Loading from '%s'.\n",fname
+        " ObjMolLoadTRJFile: Loading from \"%s\".\n",fname
         ENDFB;
 
 
@@ -658,7 +658,7 @@ static char *findflag(char *p,char *flag,char *format)
     p=nextline(p);
     if(!*p) {
       PRINTFB(FB_ObjectMolecule,FB_Errors)
-        " ObjectMolecule-Error: Unrecognized file format (can't find '%s').\n",pat
+        " ObjectMolecule-Error: Unrecognized file format (can't find \"%s\").\n",pat
         ENDFB;
     }
   }
@@ -676,7 +676,7 @@ static char *findflag(char *p,char *flag,char *format)
     p=nextline(p);
     if(!*p) {
       PRINTFB(FB_ObjectMolecule,FB_Errors)
-        " ObjectMolecule-Error: Unrecognized file format (can't find '%s').\n",pat
+        " ObjectMolecule-Error: Unrecognized file format (can't find \"%s\").\n",pat
         ENDFB;
     }
       
@@ -2003,7 +2003,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
   int nBond;
   int sph_info[2];
   PRINTFD(FB_ObjectMolecule)
-    " ObjectMoleculeMultiSave-Debug: entered '%s' state=%d\n",fname,state
+    " ObjectMoleculeMultiSave-Debug: entered \"%s\" state=%d\n",fname,state
     ENDFD;
     
   if(append) {

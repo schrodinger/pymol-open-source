@@ -923,6 +923,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       PRINTFB(FB_Editor,FB_Actions)
         " Editor: grabbing (%s).",name
         ENDFB;
+
       I->DragIndex = index;
       I->DragSelection = sele0;
       I->DragObject = obj;
@@ -1026,7 +1027,8 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     ENDFD;
 }
 /*========================================================================*/
-void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float *mov)
+void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
+                float *pt,float *mov,float *z_dir)
 {
   CEditor *I = &Editor;
   float v0[3],v1[3],v2[3],v3[3],v4[4],cp[3];
@@ -1115,6 +1117,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
         SceneDirty();
         break;
       case cButModeTorFrag:
+      case cButModePkTorBnd:
         if(I->DragHaveAxis) {
           subtract3f(pt,I->Center,d0);
           if(dot_product3f(d0,I->Axis)<0.0) {
@@ -1147,6 +1150,20 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
             m[13] =  v1[1];
             m[14] =  v1[2];
             ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
+          } else {
+
+            cross_product3f(I->Axis,z_dir,d0);
+            theta = -dot_product3f(d0,mov);
+
+            MatrixRotation44f(m,theta,n0[0],n0[1],n0[2]);
+            m[3 ] = -v1[0];
+            m[7 ] = -v1[1];
+            m[11] = -v1[2];
+            m[12] =  v1[0];
+            m[13] =  v1[1];
+            m[14] =  v1[2];
+            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
+            
           }
         }
         SceneDirty();

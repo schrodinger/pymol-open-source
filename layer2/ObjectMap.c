@@ -568,9 +568,7 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
 
 void ObjectMapStateInit(ObjectMapState *I) 
 {
-  if(I->Crystal) {
-    OOFreeP(I->Crystal);
-  }
+  ObjectMapStatePurge(I);
   I->Crystal = CrystalNew();
   I->Field = NULL;
   I->Origin = NULL;

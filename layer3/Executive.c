@@ -109,6 +109,31 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 #define ExecGreyVisible 0.45
 #define ExecGreyHidden 0.3
 
+int ExecutiveIsolevel(char *name,float level,int state)
+{
+  int ok =true;
+  CObject *obj;
+  obj = ExecutiveFindObjectByName(name);
+  if(obj) {
+    switch(obj->type) {
+    case cObjectMesh:
+      ObjectMeshSetLevel((ObjectMesh*)obj,level,state);
+        SceneChanged();
+      break;
+    case cObjectSurface:
+      break;
+    default:
+      ok=false;
+      PRINTFB(FB_Executive,FB_Errors)
+        " Isolevel-Error: object \"%s\" is of wrong type.",name
+        ENDFB;
+      break;
+    }
+  }
+  return(ok);
+
+}
+
 int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last,
                       char *prefix,int digits,int byres,int quiet,
                       float *min_ret,float *max_ret)
@@ -403,7 +428,7 @@ static int ExecutiveSetNamedEntries(PyObject *names)
           break;
         default:
           PRINTFB(FB_Executive,FB_Errors)
-            " Executive:  unrecognized object '%s' of type %d.\n",
+            " Executive:  unrecognized object \"%s\" of type %d.\n",
             rec->name,rec->type
             ENDFB;
           skip=true;
@@ -417,7 +442,7 @@ static int ExecutiveSetNamedEntries(PyObject *names)
 
       if(PyErr_Occurred()) {
         PRINTFB(FB_Executive,FB_Errors)
-          "ExectiveSetNamedEntries-ERROR: after object '%s'.\n",rec->name
+          "ExectiveSetNamedEntries-ERROR: after object \"%s\".\n",rec->name
           ENDFB;
         PyErr_Print();  
       }
@@ -1061,9 +1086,10 @@ int ***ExecutiveGetBondPrint(char *name,int max_bond,int max_type,int *dim)
 /*========================================================================*/
 int ExecutiveMapNew(char *name,int type,float *grid,
                     char *sele,float buffer,
-                    float *minCorner,float *maxCorner)
+                    float *minCorner,
+                    float *maxCorner,int state)
 {
-  CObject *origObj;
+  CObject *origObj=NULL;
   ObjectMap *objMap;
   ObjectMapState *ms = NULL;
   int a;
@@ -1071,68 +1097,107 @@ int ExecutiveMapNew(char *name,int type,float *grid,
   ObjectMapDesc _md,*md;
   int ok = true;
   int sele0 = SelectorIndexByName(sele);
-  int state=0;
-
+  int isNew=true;
+  int n_state;
+  int valid_extent=false;
   md=&_md;
+  int st;
+  int st_once_flag=true;
+  int n_st;
+
+  if(state==-2) state=SceneGetState();
+
   /* remove object if it already exists */
 
   origObj=ExecutiveFindObjectByName(name);
 
   if(origObj) {
-    ExecutiveDelete(origObj->Name);
-  }
-  
-  if(strlen(sele)) {
-    ok = ExecutiveGetExtent(sele,md->MinCorner,md->MaxCorner,true,-1,false); /* TODO restrict to state */
-  } else {
-    copy3f(minCorner,md->MinCorner);
-    copy3f(maxCorner,md->MaxCorner);
-  }
-  copy3f(grid,md->Grid);
-
-  subtract3f(md->MaxCorner,md->MinCorner,v);
-  for(a=0;a<3;a++) { if(v[a]<0.0) swap1f(md->MaxCorner+a,md->MinCorner+a); };
-  subtract3f(md->MaxCorner,md->MinCorner,v);
-
-  if(buffer!=0.0F) {
-    for(a=0;a<3;a++) {
-      md->MinCorner[a]-=buffer;
-      md->MaxCorner[a]+=buffer;
+    if(origObj->type!=cObjectMap) {
+      ExecutiveDelete(origObj->Name);
+    } else {
+      isNew=false;
     }
   }
-  md->mode = cObjectMap_OrthoMinMaxGrid;
-  md->init_mode=-1; /* no initialization */
 
-  /* validate grid */
-  for(a=0;a<3;a++) 
-    if(md->Grid[a]<=R_SMALL8) md->Grid[a]=R_SMALL8;
+  n_st = ExecutiveCountStates(NULL);
 
-  if(ok) {
-    objMap = ObjectMapNew();
-    if(objMap) 
-      ms = ObjectMapNewStateFromDesc(objMap,md,state);
-    if(!ms)
-      ok=false;
+  for(st=0;st<n_st;st++) {
+    if(state==-1) st_once_flag=false; /* each state, separate map, separate extent */
+    if(!st_once_flag) state=st;
+    
+    if(strlen(sele)) {
+      valid_extent = ExecutiveGetExtent(sele,md->MinCorner,
+                                        md->MaxCorner,true,state,false); /* TODO restrict to state */
+    } else {
+      copy3f(minCorner,md->MinCorner);
+      copy3f(maxCorner,md->MaxCorner);
+    }
+    copy3f(grid,md->Grid);
 
-    if(ok&&ms) {
+    subtract3f(md->MaxCorner,md->MinCorner,v);
+    for(a=0;a<3;a++) { if(v[a]<0.0) swap1f(md->MaxCorner+a,md->MinCorner+a); };
+    subtract3f(md->MaxCorner,md->MinCorner,v);
 
-      switch(type) {
-      case 0: /* vdw */
-        SelectorMapMaskVDW(sele0,ms,0.0F);
-        break;
-      case 1: /* coulomb */
-        SelectorMapCoulomb(sele0,ms,20.0F);
-        break;
-      case 2: /* gaussian */
-        SelectorMapGaussian(sele0,ms,0.0F);
-        break;
+    if(buffer!=0.0F) {
+      for(a=0;a<3;a++) {
+        md->MinCorner[a]-=buffer;
+        md->MaxCorner[a]+=buffer;
       }
+    }
+    md->mode = cObjectMap_OrthoMinMaxGrid;
+    md->init_mode=-1; /* no initialization */
 
-      ObjectSetName((CObject*)objMap,name);
-      ObjectMapUpdateExtents(objMap);
-      ExecutiveManageObject((CObject*)objMap,true,false);
+    /* validate grid */
+    for(a=0;a<3;a++) 
+      if(md->Grid[a]<=R_SMALL8) md->Grid[a]=R_SMALL8;
+
+    if(ok) {
+      if(isNew)
+        objMap = ObjectMapNew();
+      else
+        objMap = (ObjectMap*)origObj;
+      if(objMap) {
+        int once_flag=true;
+        n_state = SelectorCountStates(sele0);
+        if(valid_extent)
+          for(a=0;a<n_state;a++) {
+            if(state==-3) once_flag=false; /* -2 = each state, separate map, shared extent */
+            if(state==-4) state=-1; /* all states, one map */
+            if(!once_flag) state=a;
+            ms = ObjectMapNewStateFromDesc(objMap,md,state);
+            if(!ms)
+              ok=false;
+          
+            if(ok&&ms) {
+            
+              switch(type) {
+              case 0: /* vdw */
+                SelectorMapMaskVDW(sele0,ms,0.0F,state);
+                break;
+              case 1: /* coulomb */
+                SelectorMapCoulomb(sele0,ms,50.0F,state);
+                break;
+              case 2: /* gaussian */
+                SelectorMapGaussian(sele0,ms,0.0F,state);
+                break;
+              }
+              if(!ms->Active)
+                ObjectMapStatePurge(ms);
+            }
+            if(once_flag) break;
+          }
+
+        ObjectSetName((CObject*)objMap,name);
+        ObjectMapUpdateExtents(objMap);
+        if(isNew)
+          ExecutiveManageObject((CObject*)objMap,true,false);
+        isNew=false;
+        origObj = (CObject*)objMap;
+      }
       SceneDirty();
     }
+    if(st_once_flag)
+      break;
   }
   return(ok);
 }
@@ -1512,7 +1577,8 @@ int ExecutiveValidName(char *name)
   return result;
 }
 
-int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,float **psiVLA,int state) 
+int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,
+                    float **phiVLA,float **psiVLA,int state) 
 {
   int sele1=SelectorIndexByName(s1);
   int result = false;
@@ -1672,18 +1738,44 @@ float *ExecutiveGetVertexVLA(char *s1,int state)
 /*========================================================================*/
 PyObject *ExecutiveGetSettingText(int index,char *object,int state)
 { /* Assumes blocked Python interpreter */
-  PyObject *result;
-  OrthoLineType buffer;
+  PyObject *result = NULL;
+  OrthoLineType buffer = "";
+  CObject *obj = NULL;
+  CSetting **handle=NULL,*set_ptr1=NULL,*set_ptr2=NULL;
+  int ok=true;
 
-  if(object[0]==0) /* global */ {
-    buffer[0]=0;
-    SettingGetTextValue(NULL,NULL,index,buffer);
-    result=Py_BuildValue("s",buffer);
-  } else {
-    /* TODO */
-    Py_INCREF(Py_None);
-    result = Py_None;
+  if(object)
+    if(object[0]) {
+      obj=ExecutiveFindObjectByName(object);
+      if(!obj) 
+        ok=false;
+    } 
+  if(!ok) {
+    PRINTFB(FB_Executive,FB_Errors)
+      " SettingGet-Error: object \"%s\" not found.\n",object
+      ENDFB;
+    ok=false;
+  } else if(obj) {
+    handle = obj->fGetSettingHandle(obj,-1);
+    if(handle) set_ptr1 = *handle;
+    if(state>=0) {
+      handle = obj->fGetSettingHandle(obj,state);
+      if(handle) 
+        set_ptr2 = *handle;
+      else {
+        PRINTFB(FB_Executive,FB_Errors)
+          " SettingGet-Error: object \"%s\" lacks state %d.\n",object,state+1
+          ENDFB;
+        ok=false;
+      }
+    }
   }
+  if(ok) {
+    buffer[0]=0;
+  SettingGetTextValue(set_ptr2,set_ptr1,index,buffer);
+  result=Py_BuildValue("s",buffer);
+  } 
+  
   return(result);
 }
 /*========================================================================*/
@@ -2332,7 +2424,7 @@ void ExecutiveRemoveAtoms(char *s1)
                       ENDFD;
                     ObjectMoleculePurge(obj);
                     PRINTFB(FB_Editor,FB_Actions)
-                      " Remove: eliminated %d atoms in model '%s'.\n",
+                      " Remove: eliminated %d atoms in model \"%s\".\n",
                       op.i1,obj->Obj.Name 
                       ENDFB;
                     flag=true;
@@ -2500,8 +2592,10 @@ int ExecutiveStereo(int flag)
         }
         break;
       case 2: /* cross-eye stereo*/
+      case 3:
         SceneSetStereo(flag);
         break;
+      
       }
     }
   }
@@ -2531,7 +2625,7 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
                     cnt = ObjectMoleculeAddBond((ObjectMolecule*)rec->obj,sele1,sele2,order);
                     if(cnt) {
                       PRINTFB(FB_Editor,FB_Actions)
-                        " AddBond: %d bonds added to model '%s'.\n",cnt,rec->obj->Name 
+                        " AddBond: %d bonds added to model \"%s\".\n",cnt,rec->obj->Name 
                         ENDFB;
                       flag=true;
                     }
@@ -2542,7 +2636,7 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
                     cnt = ObjectMoleculeRemoveBonds((ObjectMolecule*)rec->obj,sele1,sele2);
                     if(cnt) {
                       PRINTFB(FB_Editor,FB_Actions)
-                        " RemoveBond: %d bonds removed from model '%s'.\n",
+                        " RemoveBond: %d bonds removed from model \"%s\".\n",
                         cnt,rec->obj->Name 
                         ENDFB;
                       flag=true;
@@ -3353,19 +3447,38 @@ void ExecutiveDrawNow(void)
 /*========================================================================*/
 int ExecutiveCountStates(char *s1)
 {
+  CExecutive *I = &Executive;
   int sele1;
   int result=0;
+  int n_frame;
+  SpecRec *rec = NULL;
+  
+  if(s1)
+    if(WordMatch(cKeywordAll,s1,true))
+      s1 = NULL;
+  if(!s1) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject) {
+        if(rec->obj->fGetNFrame) {
+          n_frame = rec->obj->fGetNFrame(rec->obj);
+          if(result<n_frame)
+            result=n_frame;
+        }
+      }
+    } 
+  } else {
   sele1=SelectorIndexByName(s1);
-  if(sele1>=0) {
-    SelectorUpdateTable();
-    result = SelectorGetSeleNCSet(sele1);
+    if(sele1>=0) {
+      SelectorUpdateTable();
+      result = SelectorGetSeleNCSet(sele1);
+    }
   }
   return(result);
 }
 /*========================================================================*/
-void ExecutiveRay(int width,int height,int mode)
+void ExecutiveRay(int width,int height,int mode,float angle,float shift)
 {
-  SceneRay(width,height,mode,NULL,NULL);
+  SceneRay(width,height,mode,NULL,NULL,angle,shift);
 }
 /*========================================================================*/
 int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
@@ -3384,7 +3497,7 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
   int ok =true;
 
   PRINTFD(FB_Executive)
-    " ExecutiveSetSetting: entered. sele '%s'\n",sele
+    " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
     ENDFD;
   unblock = PAutoBlock();
   if(sele[0]==0) { 
@@ -3464,7 +3577,7 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                           SettingGetTextValue(*handle,NULL,index,value);
                           SettingGetName(index,name);
                           PRINTF
-                            " Setting: %s set to %s in object '%s'.\n",
+                            " Setting: %s set to %s in object \"%s\".\n",
                             name,value,rec->obj->Name
                             ENDF;
                         }
@@ -3473,7 +3586,7 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                           SettingGetTextValue(*handle,NULL,index,value);
                           SettingGetName(index,name);
                           PRINTF
-                            " Setting: %s set to %s in object '%s', state %d.\n",
+                            " Setting: %s set to %s in object \"%s\", state %d.\n",
                             name,value,rec->obj->Name,state+1
                             ENDF;
                         }
@@ -3498,7 +3611,7 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                         SettingGetTextValue(*handle,NULL,index,value);
                         SettingGetName(index,name);
                         PRINTF
-                          " Setting: %s set to %s in object '%s'.\n",
+                          " Setting: %s set to %s in object \"%s\".\n",
                           name,value,rec->obj->Name
                           ENDF;
                       }
@@ -3507,7 +3620,7 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                         SettingGetTextValue(*handle,NULL,index,value);
                         SettingGetName(index,name);
                         PRINTF
-                          " Setting: %s set to %s in object '%s', state %d.\n",
+                          " Setting: %s set to %s in object \"%s\", state %d.\n",
                           name,value,rec->obj->Name,state+1
                           ENDF;
                       }
@@ -3538,7 +3651,7 @@ int  ExecutiveUnsetSetting(int index,char *sele,
   int ok =true;
 
   PRINTFD(FB_Executive)
-    " ExecutiveSetSetting: entered. sele '%s'\n",sele
+    " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
     ENDFD;
   unblock = PAutoBlock();
   if(sele[0]==0) { 
@@ -3603,7 +3716,7 @@ int  ExecutiveUnsetSetting(int index,char *sele,
                         if(Feedback(FB_Setting,FB_Actions)) {
                           SettingGetName(index,name);
                           PRINTF
-                            " Setting: %s unset in object '%s'.\n",
+                            " Setting: %s unset in object \"%s\".\n",
                             name,rec->obj->Name
                             ENDF;
                         }
@@ -3611,7 +3724,7 @@ int  ExecutiveUnsetSetting(int index,char *sele,
                         if(Feedback(FB_Setting,FB_Actions)) {
                           SettingGetName(index,name);
                           PRINTF
-                            " Setting: %s unset in object '%s', state %d.\n",
+                            " Setting: %s unset in object \"%s\", state %d.\n",
                             name,rec->obj->Name,state+1
                             ENDF;
                         }
@@ -3635,7 +3748,7 @@ int  ExecutiveUnsetSetting(int index,char *sele,
                       if(Feedback(FB_Setting,FB_Actions)) {
                         SettingGetName(index,name);
                         PRINTF
-                          " Setting: %s unset in object '%s'.\n",
+                          " Setting: %s unset in object \"%s\".\n",
                           name,rec->obj->Name
                           ENDF;
                       }
@@ -3643,7 +3756,7 @@ int  ExecutiveUnsetSetting(int index,char *sele,
                       if(Feedback(FB_Setting,FB_Actions)) {
                         SettingGetName(index,name);
                         PRINTF
-                          " Setting: %s unset in object '%s', state %d.\n",
+                          " Setting: %s unset in object \"%s\", state %d.\n",
                           name,rec->obj->Name,state+1
                           ENDF;
                       }
@@ -3671,10 +3784,12 @@ int ExecutiveColor(char *name,char *color,int flags,int quiet)
   int n_obj=0;
   char atms[]="s";
   char objs[]="s";
+  char *best_match;
   col_ind = ColorGetIndex(color);
   if(col_ind==-1) {
     ErrMessage("Color","Unknown color.");
   } else {
+    best_match = ExecutiveFindBestNameMatch(name);
     /* per atom */
     if(!(flags&0x1)) {
       sele=SelectorIndexByName(name);
@@ -3734,6 +3849,31 @@ int ExecutiveColor(char *name,char *color,int flags,int quiet)
     }
   }
   return(ok);
+}
+/*========================================================================*/
+char *ExecutiveFindBestNameMatch(char *name)
+{
+  char *result;
+  result = name;
+  CExecutive *I = &Executive;
+  SpecRec *rec=NULL,*best_rec = NULL;
+  int best;
+  int wm;
+  best = 0;
+
+  while(ListIterate(I->Spec,rec,next)) {
+    wm = WordMatch(name,rec->name,true);
+    if(wm<0) {
+      best_rec = rec;
+      break;
+    } else if ((wm>0)&&(best<wm)) {
+      best_rec=rec;
+      best = wm;
+    }
+  }
+  if(best_rec)
+    result=best_rec->name;
+  return(result);
 }
 /*========================================================================*/
 SpecRec *ExecutiveFindSpec(char *name)
@@ -4866,7 +5006,7 @@ void ExecutiveManageObject(CObject *obj,int allow_zoom,int quiet)
 
     if(WordMatch(cKeywordAll,obj->Name,true)<0) {
       PRINTFB(FB_Executive,FB_Warnings) 
-        " Executive: object name '%s' is illegal -- renamed to 'all_'.",obj->Name
+        " Executive: object name \"%s\" is illegal -- renamed to 'all_'.",obj->Name
         ENDFB;
       strcat(obj->Name,"_"); /* don't allow object named "all" */
     }

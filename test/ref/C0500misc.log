@@ -59,7 +59,6 @@ PyMOL>show lines
 PyMOL>mmatrix store
 PyMOL>turn x,45
 PyMOL>mmatrix recall
- Scene: view updated.
 PyMOL>disable
 PyMOL>enable
 PyMOL>mmatrix clear
@@ -97,17 +96,17 @@ PyMOL>dist tst
 PyMOL>dist tst2 = (lb),(rb)
  Executive: object "tst2" created.
 PyMOL>bond
- AddBond: 1 bonds added to model 'pept'.
+ AddBond: 1 bonds added to model "pept".
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
 PyMOL>unbond
- RemoveBond: 1 bonds removed from model 'pept'.
+ RemoveBond: 1 bonds removed from model "pept".
 PyMOL>bond (lb),(rb),2
- AddBond: 1 bonds added to model 'pept'.
+ AddBond: 1 bonds added to model "pept".
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
 PyMOL>unbond (lb),(rb)
- RemoveBond: 1 bonds removed from model 'pept'.
+ RemoveBond: 1 bonds removed from model "pept".
 PyMOL>copy cpy=pept
  Executive: object "cpy" created.
  Executive: object cpy created.
@@ -141,11 +140,11 @@ PyMOL>(cpy&i;8&n;ca),(pept&i;8&n;ca)
 PyMOL>update (cpy),(pept)
  Update: coordinates updated for 107 atoms.
 PyMOL>remove (cpy and name c)
- Remove: eliminated 13 atoms in model 'cpy'.
+ Remove: eliminated 13 atoms in model "cpy".
 PyMOL>edit (cpy and i;11 & n;ca)
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>remove_picked
- Remove: eliminated 1 atoms in model 'cpy'.
+ Remove: eliminated 1 atoms in model "cpy".
 PyMOL>edit (cpy and i;5 & n;ca),(cpy and i;5 and n;cb)
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
@@ -155,8 +154,8 @@ PyMOL>rename cpy
 PyMOL>rename cpy,1
 PyMOL>cycle_valence
 PyMOL>cycle_valence
- Remove: eliminated 1 atoms in model 'cpy'.
- Remove: eliminated 1 atoms in model 'cpy'.
+ Remove: eliminated 1 atoms in model "cpy".
+ Remove: eliminated 1 atoms in model "cpy".
 PyMOL>cycle_valence
 PyMOL>remove_picked
 PyMOL>edit (cpy and i;11 &n;n)

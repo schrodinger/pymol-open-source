@@ -56,11 +56,14 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
                            int mode,float cutoff,float h_angle,
                            int **indexVLA, ObjectMolecule ***objVLA);
 
-void SelectorLogSele(char *name);
-int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer);
+int SelectorCountAtoms(int sele);
+int SelectorCountStates(int sele);
 
-int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff);
-int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer);
+void SelectorLogSele(char *name);
+int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer,int state);
+
+int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state);
+int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state);
 PyObject *SelectorAsPyList(int sele1);
 int SelectorFromPyList(char *name,PyObject *list);
 ObjectMolecule **SelectorGetObjectMoleculeVLA(int sele);

@@ -16,7 +16,7 @@ PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>remove hydro
- Remove: eliminated 20 atoms in model 'small01'.
+ Remove: eliminated 20 atoms in model "small01".
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 36 atoms
@@ -27,7 +27,7 @@ PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>remove id 17
- Remove: eliminated 1 atoms in model 'small01'.
+ Remove: eliminated 1 atoms in model "small01".
 PyMOL>count_atoms
  count_atoms: 35 atoms
 PyMOL>edit id 3
@@ -38,7 +38,7 @@ PyMOL>count_atoms
 PyMOL>edit elem X
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>remove_picked
- Remove: eliminated 1 atoms in model 'small01'.
+ Remove: eliminated 1 atoms in model "small01".
 PyMOL>unpick
 PyMOL>print cmd.get_names()
 ['small01']
@@ -51,14 +51,14 @@ PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>unbond id 1,id 2
- RemoveBond: 1 bonds removed from model 'small01'.
+ RemoveBond: 1 bonds removed from model "small01".
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 38 atoms
 PyMOL>remove hydro
- Remove: eliminated 22 atoms in model 'small01'.
+ Remove: eliminated 22 atoms in model "small01".
 PyMOL>bond id 1,id 2
- AddBond: 1 bonds added to model 'small01'.
+ AddBond: 1 bonds added to model "small01".
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
 PyMOL>h_add
@@ -71,18 +71,18 @@ PyMOL>edit id 6,id 10
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
 PyMOL>cycle_valence
- Remove: eliminated 2 atoms in model 'small01'.
- Remove: eliminated 2 atoms in model 'small01'.
+ Remove: eliminated 2 atoms in model "small01".
+ Remove: eliminated 2 atoms in model "small01".
 PyMOL>count_atoms
  count_atoms: 34 atoms
 PyMOL>cycle_valence
- Remove: eliminated 1 atoms in model 'small01'.
- Remove: eliminated 1 atoms in model 'small01'.
+ Remove: eliminated 1 atoms in model "small01".
+ Remove: eliminated 1 atoms in model "small01".
 PyMOL>count_atoms
  count_atoms: 32 atoms
 PyMOL>remove_picked
 PyMOL>bond id 6,id 10,2
- AddBond: 1 bonds added to model 'small01'.
+ AddBond: 1 bonds added to model "small01".
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
 PyMOL>h_add
@@ -155,8 +155,8 @@ PyMOL>load dat/small01.mol,m1
 PyMOL>load dat/small01.mol,m2
  Executive: object "m2" created.
 PyMOL>remove id 30
- Remove: eliminated 1 atoms in model 'm1'.
- Remove: eliminated 1 atoms in model 'm2'.
+ Remove: eliminated 1 atoms in model "m1".
+ Remove: eliminated 1 atoms in model "m2".
 PyMOL>fuse m1 and id 12,m2 and id 12
 Editor-Error: Invalid selections. Requires two bonded atoms in the same moilecule
 PyMOL>dele m1
@@ -319,7 +319,7 @@ PyMOL>load dat/small01.mol
 PyMOL>edit id 3
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>replace N,3,3
- Remove: eliminated 1 atoms in model 'small01'.
+ Remove: eliminated 1 atoms in model "small01".
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
@@ -360,7 +360,7 @@ PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>remove not id 3
- Remove: eliminated 35 atoms in model 'small01'.
+ Remove: eliminated 35 atoms in model "small01".
 PyMOL>zoom
 PyMOL>count_atoms
  count_atoms: 1 atoms
@@ -369,19 +369,19 @@ PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 5 atoms
 PyMOL>remove hydro
- Remove: eliminated 4 atoms in model 'small01'.
+ Remove: eliminated 4 atoms in model "small01".
 PyMOL>set_geometry (id 3),3,3
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 4 atoms
 PyMOL>remove hydro
- Remove: eliminated 3 atoms in model 'small01'.
+ Remove: eliminated 3 atoms in model "small01".
 PyMOL>set_geometry (id 3),2,2
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 3 atoms
 PyMOL>remove hydro
- Remove: eliminated 2 atoms in model 'small01'.
+ Remove: eliminated 2 atoms in model "small01".
 PyMOL>set_geometry (id 3),4,2
 PyMOL>h_add
 PyMOL>count_atoms

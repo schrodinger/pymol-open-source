@@ -51,7 +51,7 @@ void ExecutiveSetControlsOff(char *name);
 void ExecutiveSort(char *name);
 int ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,
                          int quiet,int updates);
-void ExecutiveRay(int width,int height,int mode);
+void ExecutiveRay(int width,int height,int mode,float angle,float shift);
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
 int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state);
 float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine,int max_cyc,
@@ -120,7 +120,7 @@ int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,
                     float **phiVLA,float **psiVLA,int state) ;
 float *ExecutiveGetVertexVLA(char *s1,int state);
 int ExecutiveValidName(char *name);
-
+int ExecutiveIsolevel(char *name,float level,int state);
 int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt);
 int ExecutiveTransformSelection(int state,char *s1,int log,float *ttt);
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
@@ -136,7 +136,8 @@ int ExecutiveSculptDeactivate(char *name);
 int ExecutiveSculptActivate(char *name,int state);
 int ExecutiveSculptIterate(char *name,int state,int n_cycle);
 int ExecutiveMapNew(char *name,int type,float *grid,char *sele,
-                    float buffer,float *minCorner,float *maxCorner);
+                    float buffer,float *minCorner,float *maxCorner,
+                    int state);
 
 int ***ExecutiveGetBondPrint(char *name,int max_bond,int max_type,int *dim);
 int ExecutiveSetCrystal(char *sele,float a,float b,float c,
@@ -157,6 +158,8 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
                       char *prefix,int digits,int byres,int quiet,float *min_ret,float *max_ret);
 
 int ExecutiveReinitialize(void);
+char *ExecutiveFindBestNameMatch(char *name);
+
 #endif
 
 

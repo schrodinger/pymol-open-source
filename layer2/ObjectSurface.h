@@ -55,6 +55,7 @@ void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state);
 
 int ObjectSurfaceNewFromPyList(PyObject *list,ObjectSurface **result);
 PyObject *ObjectSurfaceAsPyList(ObjectSurface *I);
+int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state);
 
 #endif
 

@@ -203,7 +203,6 @@ void     p_glutSpecialFunc(void (*func)(int key, int x, int y));
 void     p_glutIdleFunc(void (*func)(void));
 
 void     p_glutMainLoop(void);
-
 #endif
 
 #endif

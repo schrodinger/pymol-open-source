@@ -53,6 +53,7 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
 
 PyObject *ObjectMeshAsPyList(ObjectMesh *I);
 int ObjectMeshNewFromPyList(PyObject *list,ObjectMesh **result);
+int ObjectMeshSetLevel(ObjectMesh *I,float level,int state);
 
 #endif
 
