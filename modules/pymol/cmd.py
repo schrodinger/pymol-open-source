@@ -3436,27 +3436,27 @@ PYMOL API
       fname = arg[0];
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)
-      if re.search("\.pdb$|\.ent$",arg[0]):
+      if re.search("\.pdb$|\.ent$",arg[0],re.I):
          ftype = loadable.pdb
-      elif re.search("\.mol$",arg[0]):
+      elif re.search("\.mol$",arg[0],re.I):
          ftype = loadable.mol
-      elif re.search("\.mmod$",arg[0]):
+      elif re.search("\.mmod$",arg[0],re.I):
          ftype = loadable.mmod
-      elif re.search("\.mmd$",arg[0]):
+      elif re.search("\.mmd$",arg[0],re.I):
          ftype = loadable.mmod
-      elif re.search("\.xplor$",arg[0]):
+      elif re.search("\.xplor$",arg[0],re.I):
          ftype = loadable.xplor
-      elif re.search("\.pkl$",arg[0]):
+      elif re.search("\.pkl$",arg[0],re.I):
          ftype = loadable.model
-      elif re.search("\.r3d$",arg[0]):
+      elif re.search("\.r3d$",arg[0],re.I):
          ftype = loadable.r3d
-      elif re.search("\.xyz$",arg[0]):
+      elif re.search("\.xyz$",arg[0],re.I):
          ftype = loadable.xyz
-      elif re.search("\.xyz_[0-9]*$",arg[0]):
+      elif re.search("\.xyz_[0-9]*$",arg[0],re.I):
          ftype = loadable.xyz
-      elif re.search("\.sdf$",arg[0]):
+      elif re.search("\.sdf$",arg[0],re.I):
          oname = re.sub("[^/]*\/","",arg[0])
-         oname = re.sub("\.sdf$","",oname)
+         oname = re.sub("\.[sS][dD][fF]$","",oname)
          ftype = loadable.molstr
          sdf = SDF(arg[0])
          while 1:
@@ -3474,7 +3474,8 @@ PYMOL API
          if len(arg)==1:
             oname = re.sub("[^/]*\/","",arg[0])
             oname = re.sub(
-"\.pdb$|\.ent$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.r3d$|\.xyz$|\.xyz_[0-9]*$",
+"\.pdb$|\.ent$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.r3d$|\.xyz$|\.xyz_[0-9]*$|"+
+"\.PDB$|\.ENT$|\.MOL$|\.MMOD$|\.MMD$|\.XPLOR$|\.PKL$|\.R3D$|\.XYZ$|\.XYZ_[0-9]*$",
                            "",oname)
          else:
             oname = string.strip(arg[1])

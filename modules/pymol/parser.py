@@ -154,7 +154,7 @@ def parse(s):
                         print 'Error: invalid arguments for %s command.' % com
                   elif len(input[nest][0]):
                      if input[nest][0][0]=='@':
-                        script[nest] = open(input[nest][0][1:],'r')
+                        script[nest] = open(string.strip(com2[nest][1:]),'r')
                         nest=nest+1
                         cont[nest]=''
                         while 1:
