@@ -397,7 +397,6 @@ void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id)
   FreeP(atom);
   FreeP(lookup);
   SelectorClean();
-
 }
 
 void SelectorDefragment(void) 

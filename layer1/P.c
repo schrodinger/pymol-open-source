@@ -1172,8 +1172,15 @@ void PInit(void)
   }
   #endif
 
+  /* required environment variables */
+
   PyRun_SimpleString(
-"if os.environ.has_key('PYMOL_PATH'): os.environ['TUT']=os.environ['PYMOL_PATH']+'/data/tut'");
+"if not os.environ.has_key('PYMOL_DATA'): os.environ['PYMOL_DATA']=os.environ['PYMOL_PATH']+'/data'");
+  PyRun_SimpleString(
+"os.environ['TUT']=os.environ['PYMOL_DATA']+'/tut'");
+
+  PyRun_SimpleString(
+"if not os.environ.has_key('PYMOL_SCRIPTS'): os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
 
 }
 

@@ -35,6 +35,13 @@ void ObjectDistInvalidateRep(ObjectDist *I,int rep);
 PyObject *ObjectDistAsPyList(ObjectDist *I);
 int ObjectDistNewFromPyList(PyObject *list,ObjectDist **result);
 
+struct M4XHBondType;
+struct ObjectMolecule;
+
+ObjectDist *ObjectDistNewFromM4XHBond(ObjectDist *oldObj,                                      
+                                      struct ObjectMolecule *objMol,
+                                      struct M4XHBondType *hbond,int n_hbond);
+
 #endif
 
 

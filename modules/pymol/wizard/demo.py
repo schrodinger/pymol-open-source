@@ -80,10 +80,9 @@ class DemoInfo:
          try:
             cmd.set("suspend_updates",1,quiet=1)
             cmd.disable()
-            cmd.do("cd $PYMOL_PATH")
             cmd.delete("pept")
             cmd.delete("pept_dist")
-            cmd.load("test/dat/pept.pdb")
+            cmd.load("$PYMOL_DATA/demo/pept.pdb")
             cmd.show("sticks","(pept and not i;5:7)")
             cmd.show("surface","(pept and i;5,6)")
             cmd.show("mesh","(pept and i;1,11,12,13)")
@@ -103,7 +102,7 @@ class DemoInfo:
          if not cleanup:
             cmd.disable()
             cmd.set("suspend_updates",1,quiet=1)
-            cmd.load("$PYMOL_PATH/test/dat/pept.pdb","rep1")
+            cmd.load("$PYMOL_DATA/demo/pept.pdb","rep1")
             cmd.alter("rep1///1-5+8-13/","ss='S'")
             cmd.cartoon("auto")
             cmd.hide("everything","rep1")
@@ -181,16 +180,10 @@ class DemoInfo:
     -0.000086844,    0.000019042, -133.217041016,\
     11.377667427,   21.768899918,    9.270449638,\
    105.029335022,  169.626159668,    0.000000000 ))
-         cmd.load("$TUT/1hpv.r3d","cgo1")
-#         cmd.delete("cgo1")
-#         cmd.delete("cgo2")
-#         cmd.load("test/dat/pept.r3d","cgo")
-#         cmd.load("test/dat/3al1.r3d","cgo")
-
-         cmd.zoom()
+         cmd.load("$PYMOL_DATA/demo/1hpv.r3d","cgo1")
+         cmd.zoom("cgo1")
       else:
          cmd.delete("cgo1")
-#         cmd.delete("cgo")
 
    def cgo(self,cleanup=0):
       if not cleanup:
@@ -282,7 +275,7 @@ class DemoInfo:
 
    def roving(self,cleanup=0):
       if not cleanup:
-         cmd.load("$PYMOL_PATH/test/dat/il2.pdb")
+         cmd.load("$PYMOL_DATA/demo/il2.pdb")
          cmd.remove("hydro")
          cmd.disable()
          cmd.enable("il2")
@@ -308,7 +301,7 @@ class DemoInfo:
    def roving_density(self,cleanup=0):
       if not cleanup:
          try:
-            cmd.load("$PYMOL_PATH/test/dat/il2.pdb")
+            cmd.load("$PYMOL_DATA/demo/il2.pdb")
             cmd.set("suspend_updates",1,quiet=1)
             cmd.remove("hydro")
             cmd.disable()
@@ -354,7 +347,7 @@ class DemoInfo:
             cmd.set("suspend_updates",1,quiet=1)
             cmd.disable()
             cmd.delete("1tii")      
-            cmd.load("$PYMOL_PATH/test/dat/1tii.pdb")
+            cmd.load("$PYMOL_DATA/demo/1tii.pdb")
             cmd.hide("(1tii)")
             cmd.show("cartoon","1tii")
             cmd.zoom("1tii")
@@ -373,7 +366,7 @@ class DemoInfo:
          cmd.delete("pept")
          cmd.delete("e_pot")
          cmd.delete("e_lvl")
-         cmd.load("$PYMOL_PATH/test/dat/pept.pkl")
+         cmd.load("$PYMOL_DATA/demo/pept.pkl")
          cmd.hide("(pept)")
          cmd.show("surface","pept")
          cmd.set("coulomb_dielectric",80.0)
@@ -392,7 +385,7 @@ class DemoInfo:
             cmd.set("suspend_updates",1,quiet=1)
             cmd.disable()
             cmd.delete("trans")
-            cmd.load("$PYMOL_PATH/test/dat/pept.pdb","trans")
+            cmd.load("$PYMOL_DATA/demo/pept.pdb","trans")
             cmd.hide("(trans)")
             cmd.show("surface","trans")
             cmd.show("sticks","trans")
@@ -410,7 +403,7 @@ class DemoInfo:
          cmd.set("suspend_updates",1,quiet=1)
          cmd.disable()
          cmd.delete("ray")
-         cmd.load("$PYMOL_PATH/test/dat/il2.pdb","ray")
+         cmd.load("$PYMOL_DATA/demo/il2.pdb","ray")
          cmd.remove("(ray and hydro)")
          cmd.hide("lines","ray")
          cmd.show("spheres","ray")
@@ -433,7 +426,7 @@ class DemoInfo:
          cmd.set("suspend_updates",1,quiet=1)
          cmd.disable()
          cmd.delete("sculpt")
-         cmd.load("$PYMOL_PATH/test/dat/pept.pdb","sculpt")
+         cmd.load("$PYMOL_DATA/demo/pept.pdb","sculpt")
          cmd.hide("lines","sculpt")
          cmd.show("sticks","sculpt")
          cmd.show("spheres","sculpt")

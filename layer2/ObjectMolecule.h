@@ -156,7 +156,7 @@ typedef struct {
 
 /* Metaphorics Annotated PDB stuff */
 
-typedef struct {
+typedef struct M4XHBondType {
   int atom1;
   int atom2;
   int strength;
