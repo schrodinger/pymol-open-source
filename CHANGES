@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * single-click actions
+
    * continued elimination of global state information
 
    * texture_fonts for better performance on low-end ATI hardware
