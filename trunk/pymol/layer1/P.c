@@ -461,7 +461,9 @@ void PInit(void)
 
 void PStereoOff(void) 
 {
+  PBlock();
   PRunString("pm._stereo(0)");
+  PUnblock();
 }
 
 void PFree(void)
@@ -470,8 +472,9 @@ void PFree(void)
 
 void PExit(int code)
 {
-  Py_Finalize();
   MainFree();
+  PBlock();
+  Py_Finalize();
   Py_Exit(code);
 }
 

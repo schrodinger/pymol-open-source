@@ -1333,7 +1333,9 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 {
+  APIEntry();
   PExit(EXIT_SUCCESS);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
