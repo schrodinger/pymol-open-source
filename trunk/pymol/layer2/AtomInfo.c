@@ -809,7 +809,8 @@ void AtomInfoAssignParameters(AtomInfoType *I)
           vdw=1.47F; break;
         case 'E': 
         case 'e': 
-          vdw=0.64F; break;
+          /*          vdw=0.64F; break;*/
+          vdw=1.80F; break; /* default */
         default:
           vdw=1.35F; break;
         }
@@ -854,12 +855,20 @@ void AtomInfoAssignParameters(AtomInfoType *I)
       case 'l': I->protons=cAN_Cl; break;
       case 'A':
       case 'a': I->protons=cAN_Ca; break;
+      case 'U':
+      case 'u': I->protons=cAN_Cu; break;
       }
       break;
     case 'B':
       switch(e[1]) {
       case 'R':
       case 'r': I->protons=cAN_Br; break;
+      }
+      break;
+    case 'F':
+      switch(e[1]) {
+      case 'E':
+      case 'e': I->protons=cAN_Fe; break;
       }
       break;
     case 'M':
@@ -872,6 +881,12 @@ void AtomInfoAssignParameters(AtomInfoType *I)
       switch(e[1]) {
       case 'N':
       case 'n': I->protons=cAN_Zn; break;
+      }
+      break;
+    case 'S':
+      switch(e[1]) {
+      case 'I':
+      case 'i': I->protons=cAN_Si; break;
       }
       break;
     }
