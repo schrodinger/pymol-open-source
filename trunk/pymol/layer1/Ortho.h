@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoALT 4
 
 #define cOrthoRightSceneMargin 220
-#define cOrthoBottomSceneMargin 20
+#define cOrthoBottomSceneMargin 16
 #define cOrthoLineHeight 12
 
 #include"Block.h"
