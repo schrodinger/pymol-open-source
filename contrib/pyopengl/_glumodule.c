@@ -1,7 +1,9 @@
 /**
  *
- * GLU Module for Python (incomplete)
+ * GLU Module for Python (incomplete) 
  * 
+ * Modified for incorporation into PyMOL
+ *
  * Date: May 99
  *
  * Authors: Thomas Schwaller  <tom.schwaller@linux-magazin.de>

@@ -5,6 +5,8 @@
  *  not straightforward interfaces to the OpenGL 1.0 or 1.1 library
  *  spec, but "home-grown" functions.
  *
+ * WARNING: Modified for usage within PyMOL
+ *
 **/
 #ifdef __MWERKS__
 #define NO_IMPORT_ARRAY

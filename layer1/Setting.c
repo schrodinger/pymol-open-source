@@ -596,6 +596,10 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_normal_workaround].Name,
 			"normal_workaround");
 
+  I->NSetting++;
+  I->Setting[cSetting_backface_cull].Value[0] = 1;
+  strcpy(I->Setting[cSetting_backface_cull].Name,
+			"backface_cull");
 
 }
 

@@ -3,7 +3,7 @@
  *
  * GLUT Module for Python
  * 
- * Version: 0.7
+ * Version: 0.7.PyMOL (Modified for Usage with PyMOL)
  *
  * Date: 96/09/12 (September)
  *

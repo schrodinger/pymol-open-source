@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 #define cPrimTriangle 3
 
 typedef struct {
-  int type,vert;
+  int type,vert,cull;
   float v1[3],v2[3],v3[3];
   float n0[3],n1[3],n2[3],n3[3];
   float c1[3],c2[3],c3[3];

@@ -314,7 +314,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 					 prm = prim+vert2prim[i];
 					 switch(prm->type) {
 					 case cPrimTriangle:
-
+                  if(shadow||(!prm->cull))
 						if(intersect_triangle(r->base,I->Precomp+I->Vert2Normal[i]*3,
 													 I->Vertex+prm->vert*3,I->Vertex+prm->vert*3+6,
 													 &tri1,&tri2,&dist)) 
@@ -323,6 +323,8 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 								if((dist>(-R_SMALL4))&&(dist<r->dist))
 								  return(1);
 							 } else {
+
+
 								if(dist<r->dist)
 								  if((dist>=front)&&(dist<=back)) {
 									 minIndex=i;
@@ -365,7 +367,8 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 								  } else {
 									 if(dist<r->dist)
 										if((dist>=front)&&(dist<=back)) {
-										  r->tri1=tri1;
+                                if(prm->l1>R_SMALL4)
+                                  r->tri1=tri1/prm->l1;
 										  r->sphere[0]=sph[0];
 										  r->sphere[1]=sph[1];										
 										  r->sphere[2]=sph[2];
@@ -525,7 +528,9 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 		  prm=prim+vert2prim[a];
 		  switch(prm->type) {
 		  case cPrimTriangle:
-			 if(a==prm->vert) { /* only do this calculation for one of the three vertices */
+			 if(a==prm->vert) {
+            {
+/* only do this calculation for one of the three vertices */
 				d1=I->Precomp+I->Vert2Normal[a]*3;
 				d2=I->Precomp+I->Vert2Normal[a]*3+3;
 				vv=I->Vertex+a*3;
@@ -564,6 +569,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 						  n++;
 						}
 					 }
+            }
 			 }
 			 break;
 		  case cPrimCylinder:
@@ -756,6 +762,7 @@ void BasisTrianglePrecompute(float *v0,float *v1,float *v2,float *pre)
 	 *(pre+7)=1.0/det;
   }
 }
+
 
 #define CROSS(dest,v1,v2) {\
           dest[0]=v1[1]*v2[2]-v1[2]*v2[1]; \

@@ -215,6 +215,10 @@ void RayTransformFirst(CRay *I)
   CBasis *basis0,*basis1;
   CPrimitive *prm;
   int a;
+  float *v0;
+  int backface_cull;
+
+  backface_cull = (int)SettingGet(cSetting_backface_cull);
 
   basis0 = I->Basis;
   basis1 = I->Basis+1;
@@ -252,6 +256,8 @@ void RayTransformFirst(CRay *I)
 										basis1->Vertex+prm->vert*3+3,
 										basis1->Vertex+prm->vert*3+6,
 										basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
+      v0 = basis1->Normal + (basis1->Vert2Normal[prm->vert]*3 + 3);
+      prm->cull = backface_cull&&((v0[2]<0.0)&&(v0[5]<0.0)&&(v0[8]<0.0));
 	 }
   }
 
@@ -304,6 +310,7 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
 										basis1->Vertex+prm->vert*3+3,
 										basis1->Vertex+prm->vert*3+6,
 										basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
+
 	 }
   }
 

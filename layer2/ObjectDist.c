@@ -94,7 +94,7 @@ void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick)
 /*========================================================================*/
 ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *result)
 {
-  int a,mn,n;
+  int a,mn;
   float dist_sum=0.0,dist;
   int dist_cnt = 0;
   int n_state1,n_state2,state1,state2;
