@@ -1426,15 +1426,15 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
-  int i1,i2;
+  int i1,i2,i3;
   OrthoLineType s1;
 
   int ok=false;
-  ok = PyArg_ParseTuple(args,"issi",&i1,&str1,&str2,&i2);
+  ok = PyArg_ParseTuple(args,"issii",&i1,&str1,&str2,&i2,&i3);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveIterateState(i1,s1,str2,i2); /* TODO STATUS */
+    ExecutiveIterateState(i1,s1,str2,i2,i3); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }
