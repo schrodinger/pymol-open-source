@@ -246,9 +246,12 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   PyObject *numeric_type_id1,*numeric_type_id2=NULL;
   int cartoon;
   PyObject *cartoon_id1,*cartoon_id2=NULL;
+  int color;
+  PyObject *color_id1,*color_id2=NULL;
+  PyObject *label_id1,*label_id2=NULL;
+  LabelType label;
   int id;
   PyObject *ID_id1,*ID_id2=NULL;
-
   PyObject *dict;
   int result=true;
   
@@ -286,6 +289,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   partial_charge_id1 = PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   formal_charge_id1 = PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
   cartoon_id1 = PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
+  label_id1 = PConvStringToPyDictItem(dict,"label",at->label);
+  color_id1 = PConvIntToPyDictItem(dict,"color",at->color);
   ID_id1 = PConvIntToPyDictItem(dict,"ID",at->id);
 
   PyRun_String(expr,Py_single_input,P_globals,dict);
@@ -336,6 +341,10 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
       else if(!(formal_charge_id2 = PyDict_GetItemString(dict,"formal_charge")))
         result=false;
       else if(!(cartoon_id2 = PyDict_GetItemString(dict,"cartoon")))
+        result=false;
+      else if(!(color_id2=PyDict_GetItemString(dict,"color")))
+        result=false;
+      else if(!(label_id2=PyDict_GetItemString(dict,"label")))
         result=false;
       if(!(numeric_type_id2 = PyDict_GetItemString(dict,"numeric_type")))
         result=false;
@@ -462,6 +471,19 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
         else
           at->cartoon=cartoon;
       }
+      if(color_id1!=color_id2) {
+        if(!PConvPyObjectToInt(color_id2,&color))
+          result=false;
+        else
+          at->color=color;
+      }
+      if(label_id1!=label_id2) {
+        if(!PConvPyObjectToStrMaxLen(label_id2,label,sizeof(LabelType)-1))
+          result=false;
+        else {
+          strcpy(at->label,label);
+        }
+      }
       if(numeric_type_id1!=numeric_type_id2) {
         if(!PConvPyObjectToInt(numeric_type_id2,&numericType))
           result=false;
@@ -529,6 +551,8 @@ int PLabelAtom(AtomInfoType *at,char *expr)
     PConvIntToPyDictItem(dict,"numeric_type",at->customType);
   PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
+  PConvIntToPyDictItem(dict,"color",at->color);
+  PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
   PConvIntToPyDictItem(dict,"id",at->id);
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
