@@ -160,3 +160,11 @@ feedback = { 'warnings': 1,
              'verbose' : 0,
              }
 
+import os
+
+if os.environ.has_key('CHEMPY_PATH'):
+   path = os.environ['CHEMPY_PATH'] + '/'
+elif os.environ.has_key('PYMOL_PATH'):
+   path = os.environ['PYMOL_PATH'] + '/modules/chempy/'
+else:
+   path = ''

@@ -1795,6 +1795,7 @@ int SelectorLogic1(EvalElem *base)
 {
   int a,b;
   int c=0;
+  int flag;
   AtomInfoType *at1,*at2;
   SelectorType *I=&Selector;
   base[0].sele=base[1].sele;
@@ -1810,7 +1811,57 @@ int SelectorLogic1(EvalElem *base)
 				c++;
 		  }
 		break;
-	 case SELE_BYR1: /* grossly inefficient */
+	 case SELE_BYR1: /* ASSUMES atoms are sorted by residue */
+		for(a=0;a<I->NAtom;a++)
+		  {
+			 if(base[0].sele[a]) 
+			   {
+              at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+              b = a-1;
+              while(b>=0) {
+                if(!base[0].sele[b]) {
+                  flag = false;
+                  if(I->Table[a].model==I->Table[b].model)
+                    {
+                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      if(at1->hetatm==at2->hetatm)
+                        if(at1->chain[0]==at2->chain[0])
+                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                            if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                              base[0].sele[b]=true;
+                              c++;
+                              flag=1;
+                            }
+                    }
+                  if(!flag)
+                    break;
+                }
+                b--;
+              }
+              b = a + 1;
+              while(b<I->NAtom) {
+                if(!base[0].sele[b]) {
+                  flag=false;
+                  if(I->Table[a].model==I->Table[b].model)
+                    {
+                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      if(at1->hetatm==at2->hetatm)
+                        if(at1->chain[0]==at2->chain[0])
+                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                            if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                              base[0].sele[b]=true;
+                              c++;
+                              flag=1;
+                            }
+                    }
+                if(!flag)
+                  break;
+                }
+                b++;
+              }
+			   }
+		  }
+#ifdef _OLD_CODE
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(base[0].sele[a]) 
@@ -1831,6 +1882,7 @@ int SelectorLogic1(EvalElem *base)
                    }
 			   }
 		  }
+#endif
 		break;
 	 }
   if(DebugSelector&DebugState)

@@ -5,7 +5,7 @@ import string
 import copy
 
 default_extra = { # atomic number, and normal valency (for tinker)
-   # NOTE: THIS SET IS ONLY USED IF THERE ARE NO CHEMPY RECORDS
+   # NOTE: THIS SET IS ONLY USED IF THERE ARE NO TINKER RECORDS
    # IN THE PARAMETER FILE
    # bromine 
    'BR' : [                 35 ,               1 ],
@@ -45,7 +45,7 @@ default_extra = { # atomic number, and normal valency (for tinker)
    'HO' : [                  1 ,               1 ],
    'HP' : [                  1 ,               1 ],
    'HS' : [                  1 ,               1 ],
-   'HW' : [                  1 ,               1 ],
+   'HW' : [                  1 ,               2 ],
    # iodine
    'I'  : [                 53 ,               1 ],
    # chloride anion
@@ -193,12 +193,12 @@ class Parameters:
       # read extra tinker information if present
       self.extra = {}
       while 1:
-         l = string.strip(f.readline())
+         l = f.readline()
          if not l: break
          if l[0:6] == 'TINKER':
             self.extra[string.strip(l[6:12])]  = [
-               string.strip(l[12:18]),
-               string.strip(l[18:22])]
+               int(l[12:18]),
+               int(l[18:24])]
       if not len(self.extra.keys()):
             self.extra = default_extra
       # now generate redundant equivalents
