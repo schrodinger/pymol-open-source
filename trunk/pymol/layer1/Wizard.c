@@ -165,7 +165,6 @@ void WizardSet(PyObject *wiz,int replace)
   CWizard *I = &Wizard;
   int blocked;
   blocked = PAutoBlock();
-
   if(I->Wiz) {
     if((!wiz)||(wiz==Py_None)||((I->Stack>=0)&&replace)) { 
       if(I->Stack>=0) {  /* pop */

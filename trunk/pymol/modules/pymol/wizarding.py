@@ -137,9 +137,9 @@ EXAMPLE
          sys.modules['message'] = message
          try:
             wizards = cPickle.loads(session['wizard'])
+            cmd.set_wizard_stack(wizards)
          except:
             print "Session-Warning: unable to restore wizard."
-         cmd.set_wizard_stack(wizards)
       return 1
 
    if session_restore_wizard not in pymol._session_restore_tasks:
