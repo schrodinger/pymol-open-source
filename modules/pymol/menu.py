@@ -113,17 +113,13 @@ def mesh_hide(s):
 
 def slice_show(s):
    return [[ 2, 'Show:'       , ''                             ],
-           [ 1, 'slice'       , 'cmd.show("slice","'+s+'")'     ],           
-           [ 1, 'cell'        , 'cmd.show("cell","'+s+'")'     ],
-           [ 1, 'scale'        , 'cmd.show("labels","'+s+'")'     ],
-           [ 1, 'everything'    ,'cmd.show("everything","'+s+'")'        ]]
+           [ 1, 'slice'       , 'cmd.show("slice","'+s+'")'     ],
+           ]
 
 def slice_hide(s):
    return [[ 2, 'Hide:'       , ''                             ],
-           [ 1, 'slice'        , 'cmd.hide("slice","'+s+'")'     ],                      
-           [ 1, 'cell'        , 'cmd.hide("cell","'+s+'")'      ],
-           [ 1, 'scale'        , 'cmd.hide("labels","'+s+'")'     ],
-           [ 1, 'everything'    ,'cmd.hide("everything","'+s+'")'        ]]
+           [ 1, 'slice'        , 'cmd.hide("slice","'+s+'")'     ],
+           ]
 
 def by_elem(s):
    return [
@@ -203,18 +199,6 @@ def mol_color(s):
            [ 1, '\\555grey'        , 'cmd.color("grey","'+s+'")'    ],
            [ 1, '\\222black'    ,'cmd.color("grey","'+s+'")'  ]
            ]
-def slice_color(s):
-   return [[ 2, 'Color:'     ,''                        ],
-           [ 1, '\\999traditional'         ,'cmd.rgbfunction("'+s+'","traditional")'  ],
-           [ 1, '\\999sludge'       ,'cmd.rgbfunction("'+s+'","sludge")'  ],
-           [ 1, '\\999ocean'        ,'cmd.rgbfunction("'+s+'","ocean")'  ],
-           [ 1, '\\999hot'      ,'cmd.rgbfunction("'+s+'","hot")'  ],
-           [ 1, '\\999grayable'      ,'cmd.rgbfunction("'+s+'","grayable")'  ],
-           [ 1, '\\999rainbow'      ,'cmd.rgbfunction("'+s+'","rainbow")'  ],
-           [ 1, '\\999afmhot'      ,'cmd.rgbfunction("'+s+'","afmhot")'  ],
-           [ 1, '\\999grayscale'      ,'cmd.rgbfunction("'+s+'","grayscale")'  ],
-           ]
-
 
 def general_color(s):
    return [[ 2, 'Color:'     ,''                        ],
@@ -469,9 +453,11 @@ def slice_action(s):
            [ 1, 'center'       , 'cmd.center("'+s+'")'    ],           
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],         
            [ 0, ''             , ''                       ],
-           [ 1, 'lock'         , 'cmd.slice_lock("'+s+'")'      ],
-           [ 1, 'unlock'       , 'cmd.slice_unlock("'+s+'")'    ],
-           [ 1, 'heightmap'    , 'cmd.slice_heightmap("'+s+'")'    ],         
+           [ 1, 'tracking on' , 'cmd.set("slice_track_camera",1,"'+s+'")'      ],
+           [ 1, 'tracking off' , 'cmd.set("slice_track_camera",0,"'+s+'")'      ],           
+           [ 0, ''             , ''                       ],
+           [ 1, 'height map on' , 'cmd.set("slice_height_map",1,"'+s+'")'    ],
+           [ 1, 'height map off', 'cmd.set("slice_height_map",0,"'+s+'")'    ],                    
            [ 0, ''             , ''                       ],
            [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            ]
