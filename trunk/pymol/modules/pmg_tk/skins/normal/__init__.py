@@ -310,7 +310,7 @@ class Normal(PMGSkin):
             self.lineCount=5000
          self.entry.focus_set()
       self.updating = 1
-#      self.output.after(100,self.update_feedback) # 10X a second
+      self.output.after(100,self.update_feedback) # 10X a second
 
    def toggleFrame(self, frame):
       if frame not in self.dataArea.slaves():
