@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 #include"MemoryDebug.h"
+#include"CGO.h"
 #include"Err.h"
 #include"Base.h"
 #include"OOMac.h"
