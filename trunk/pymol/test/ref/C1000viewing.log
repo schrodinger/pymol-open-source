@@ -91,8 +91,8 @@ PyMOL>load dat/1tii.pdb
  Crystal: Unit Cell          105.700  105.700  171.600
  Crystal: Alpha Beta Gamma    90.000   90.000  120.000
  Crystal: RealToFrac Matrix
- Crystal:    0.0095    0.0055   -0.0000
- Crystal:    0.0000    0.0109   -0.0000
+ Crystal:    0.0095    0.0055    0.0000
+ Crystal:    0.0000    0.0109    0.0000
  Crystal:    0.0000    0.0000    0.0058
  Crystal: FracToReal Matrix
  Crystal:  105.7000  -52.8500    0.0000
@@ -538,8 +538,8 @@ PyMOL>load dat/1tii.pdb,m1
  Crystal: Unit Cell          105.700  105.700  171.600
  Crystal: Alpha Beta Gamma    90.000   90.000  120.000
  Crystal: RealToFrac Matrix
- Crystal:    0.0095    0.0055   -0.0000
- Crystal:    0.0000    0.0109   -0.0000
+ Crystal:    0.0095    0.0055    0.0000
+ Crystal:    0.0000    0.0109    0.0000
  Crystal:    0.0000    0.0000    0.0058
  Crystal: FracToReal Matrix
  Crystal:  105.7000  -52.8500    0.0000
