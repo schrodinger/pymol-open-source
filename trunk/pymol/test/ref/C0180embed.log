@@ -17,7 +17,7 @@ PyMOL>load dat/embed02.p1m
 PyMOL>embed sm, mol
  Embed: read 78 lines.
 PyMOL>load_embedded sm
- CmdLoad: MOL-string loaded as "sm".
+ ExecutiveLoad: content loaded into object "sm", through state 1.
 PyMOL>hide everything, sm
 PyMOL>show sticks, sm
 PyMOL>set valence
@@ -28,20 +28,19 @@ PyMOL>load dat/embed03.p1m
 PyMOL>embed ligands,sdf
  Embed: read 923 lines.
 PyMOL>load_embedded ligands
- CmdLoad: MOL-string loaded as "ligands".
- CmdLoad: MOL-string appended into object "ligands", state 2.
- CmdLoad: MOL-string appended into object "ligands", state 3.
- CmdLoad: MOL-string appended into object "ligands", state 4.
- CmdLoad: MOL-string appended into object "ligands", state 5.
- CmdLoad: MOL-string appended into object "ligands", state 6.
- CmdLoad: MOL-string appended into object "ligands", state 7.
- CmdLoad: MOL-string appended into object "ligands", state 8.
- CmdLoad: MOL-string appended into object "ligands", state 9.
- CmdLoad: MOL-string appended into object "ligands", state 10.
+ ExecutiveLoad: content loaded into object "ligands", through state 1.
+ ExecutiveLoad: content loaded into object "ligands", through state 2.
+ ExecutiveLoad: content loaded into object "ligands", through state 3.
+ ExecutiveLoad: content loaded into object "ligands", through state 4.
+ ExecutiveLoad: content loaded into object "ligands", through state 5.
+ ExecutiveLoad: content loaded into object "ligands", through state 6.
+ ExecutiveLoad: content loaded into object "ligands", through state 7.
+ ExecutiveLoad: content loaded into object "ligands", through state 8.
+ ExecutiveLoad: content loaded into object "ligands", through state 9.
+ ExecutiveLoad: content loaded into object "ligands", through state 10.
 PyMOL>zoom (ligands)
-PyMOL>set seq_view_format,4,ligands
+PyMOL>set seq_view_format,4,ligands,quiet=1
 PyMOL>hide everything, ligands
- Setting: seq_view_format set to 4 in object "ligands".
 PyMOL>show sticks, ligands
 PyMOL>set valence
  Setting: valence set to on.
@@ -52,23 +51,17 @@ PyMOL>load dat/embed04.p1m
 PyMOL>embed m2, mol2
  Embed: read 963 lines.
 PyMOL>load_embedded m2
- ObjectMolReadMOL2Str: read molecule 1
- ObjectMolReadMOL2Str: read molecule 2
- ObjectMolReadMOL2Str: read molecule 3
- ObjectMolReadMOL2Str: read molecule 4
- ObjectMolReadMOL2Str: read molecule 5
- ObjectMolReadMOL2Str: read molecule 6
- ObjectMolReadMOL2Str: read molecule 7
- ObjectMolReadMOL2Str: read molecule 8
- ObjectMolReadMOL2Str: read molecule 9
- ObjectMolReadMOL2Str: read molecule 10
- ObjectMolReadMOL2Str: read molecule 11
- ObjectMolReadMOL2Str: read molecule 12
- ObjectMolReadMOL2Str: read molecule 13
- ObjectMolReadMOL2Str: read molecule 14
- ObjectMolReadMOL2Str: read molecule 15
- ObjectMolReadMOL2Str: read molecule 16
- CmdLoad: MOL2-string loaded into object "m2", state 16.
+ ObjectMoleculeReadStr: read through molecule 1.
+ ObjectMoleculeReadStr: read through molecule 2.
+ ObjectMoleculeReadStr: read through molecule 3.
+ ObjectMoleculeReadStr: read through molecule 4.
+ ObjectMoleculeReadStr: read through molecule 5.
+ ObjectMoleculeReadStr: read through molecule 6.
+ ObjectMoleculeReadStr: read through molecule 7.
+ ObjectMoleculeReadStr: read through molecule 8.
+ ObjectMoleculeReadStr: read through molecule 9.
+ ObjectMoleculeReadStr: read through molecule 10.
+ ExecutiveLoad: content loaded into object "m2", through state 16.
 PyMOL>hide everything, m2
 PyMOL>show sticks, m2
 PyMOL>set valence
@@ -81,7 +74,7 @@ PyMOL>embed ligand, mol
 PyMOL>embed protein
  Embed: read 227 lines.
 PyMOL>load_embedded ligand
- CmdLoad: MOL-string loaded as "ligand".
+ ExecutiveLoad: content loaded into object "ligand", through state 1.
 PyMOL>load_embedded protein
  CmdLoad: PDB-string loaded into object "protein", state 1.
 PyMOL>hide lines, ligand

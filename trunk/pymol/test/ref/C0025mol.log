@@ -1,5 +1,5 @@
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>print cmd.get_names()
 ['small01']
 PyMOL>print cmd.select("(all)")

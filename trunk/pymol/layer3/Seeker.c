@@ -979,6 +979,11 @@ void SeekerUpdate(PyMOLGlobals *G)
         break;
 
       codes = SettingGet_i(G,obj->Obj.Setting,NULL,cSetting_seq_view_format);
+      if(obj->DiscreteFlag && SettingGet_b(G,
+                                           obj->Obj.Setting,
+                                           NULL,
+                                           cSetting_seq_view_discrete_by_state))
+        codes = 4;
       default_color = SettingGet_i(G,obj->Obj.Setting,NULL,cSetting_seq_view_color);
 
       /* allocate a row for labels, if present

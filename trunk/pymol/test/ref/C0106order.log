@@ -50,7 +50,7 @@ PyMOL>order il2 pept
 PyMOL>print cmd.get_names()
 ['il2', 'pept']
 PyMOL>load dat/small01.mol
- CmdLoad: "dat/small01.mol" loaded as "small01".
+ ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>print cmd.get_names()
 ['il2', 'pept', 'small01']
 PyMOL>order small01 pept

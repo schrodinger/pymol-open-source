@@ -1,21 +1,15 @@
 PyMOL>load dat/small03.mol2
- ObjectMolReadMOL2Str: read molecule 1
- ObjectMolReadMOL2Str: read molecule 2
- ObjectMolReadMOL2Str: read molecule 3
- ObjectMolReadMOL2Str: read molecule 4
- ObjectMolReadMOL2Str: read molecule 5
- ObjectMolReadMOL2Str: read molecule 6
- ObjectMolReadMOL2Str: read molecule 7
- ObjectMolReadMOL2Str: read molecule 8
- ObjectMolReadMOL2Str: read molecule 9
- ObjectMolReadMOL2Str: read molecule 10
- ObjectMolReadMOL2Str: read molecule 11
- ObjectMolReadMOL2Str: read molecule 12
- ObjectMolReadMOL2Str: read molecule 13
- ObjectMolReadMOL2Str: read molecule 14
- ObjectMolReadMOL2Str: read molecule 15
- ObjectMolReadMOL2Str: read molecule 16
- CmdLoad: "dat/small03.mol2" loaded as "small03".
+ ObjectMoleculeReadStr: read through molecule 1.
+ ObjectMoleculeReadStr: read through molecule 2.
+ ObjectMoleculeReadStr: read through molecule 3.
+ ObjectMoleculeReadStr: read through molecule 4.
+ ObjectMoleculeReadStr: read through molecule 5.
+ ObjectMoleculeReadStr: read through molecule 6.
+ ObjectMoleculeReadStr: read through molecule 7.
+ ObjectMoleculeReadStr: read through molecule 8.
+ ObjectMoleculeReadStr: read through molecule 9.
+ ObjectMoleculeReadStr: read through molecule 10.
+ ExecutiveLoad: "dat/small03.mol2" loaded as "small03", through state 16.
 PyMOL>print cmd.get_names()
 ['small03']
 PyMOL>print cmd.count_states()
@@ -42,28 +36,22 @@ PyMOL>ray
  RayRenderTest: obtained 37 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small03.mol2, discrete=0
- ObjectMolReadMOL2Str: read molecule 1
- ObjectMolReadMOL2Str: read molecule 2
- ObjectMolReadMOL2Str: read molecule 3
- ObjectMolReadMOL2Str: read molecule 4
- ObjectMolReadMOL2Str: read molecule 5
- ObjectMolReadMOL2Str: read molecule 6
- ObjectMolReadMOL2Str: read molecule 7
- ObjectMolReadMOL2Str: read molecule 8
- ObjectMolReadMOL2Str: read molecule 9
- ObjectMolReadMOL2Str: read molecule 10
- ObjectMolReadMOL2Str: read molecule 11
- ObjectMolReadMOL2Str: read molecule 12
- ObjectMolReadMOL2Str: read molecule 13
- ObjectMolReadMOL2Str: read molecule 14
- ObjectMolReadMOL2Str: read molecule 15
- ObjectMolReadMOL2Str: read molecule 16
- CmdLoad: "dat/small03.mol2" loaded as "small03".
+ ObjectMoleculeReadStr: read through molecule 1.
+ ObjectMoleculeReadStr: read through molecule 2.
+ ObjectMoleculeReadStr: read through molecule 3.
+ ObjectMoleculeReadStr: read through molecule 4.
+ ObjectMoleculeReadStr: read through molecule 5.
+ ObjectMoleculeReadStr: read through molecule 6.
+ ObjectMoleculeReadStr: read through molecule 7.
+ ObjectMoleculeReadStr: read through molecule 8.
+ ObjectMoleculeReadStr: read through molecule 9.
+ ObjectMoleculeReadStr: read through molecule 10.
+ ExecutiveLoad: "dat/small03.mol2" loaded as "small03", through state 16.
 PyMOL>count_atoms
  count_atoms: 387 atoms
 PyMOL>dele all
 PyMOL>load dat/small03.mol2, multiplex=1
- CmdLoad: loaded 16 objects from "dat/small03.mol2".
+ ExecutiveLoad: loaded 16 objects from "dat/small03.mol2".
 PyMOL>print cmd.get_names()
 ['AGLYSL01', 'AMHTAR01', 'AMPTRB10', 'ARGIND11', 'BAOXLM01', 'BBSPRT10', 'BEVJER10', 'BEWCUB', 'BEWKUJ04', 'BIHKEI01', 'BIPDEJ02', 'BIPJUF10', 'BIPYCL01', 'BITNAT10', 'BIYBIU10', 'BODKOU']
 PyMOL>print cmd.count_states()
@@ -74,7 +62,7 @@ PyMOL>dele all
 PyMOL>set multiplex, 1
  Setting: multiplex set to 1.
 PyMOL>load dat/small03.mol2
- CmdLoad: loaded 16 objects from "dat/small03.mol2".
+ ExecutiveLoad: loaded 16 objects from "dat/small03.mol2".
 PyMOL>print cmd.get_names()
 ['AGLYSL01', 'AMHTAR01', 'AMPTRB10', 'ARGIND11', 'BAOXLM01', 'BBSPRT10', 'BEVJER10', 'BEWCUB', 'BEWKUJ04', 'BIHKEI01', 'BIPDEJ02', 'BIPJUF10', 'BIPYCL01', 'BITNAT10', 'BIYBIU10', 'BODKOU']
 PyMOL>print cmd.count_states()

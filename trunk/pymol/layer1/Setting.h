@@ -557,10 +557,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_dihedral_size              407
 #define cSetting_dihedral_label_position    408
 #define cSetting_defer_builds_mode          409
+#define cSetting_seq_view_discrete_by_state 410
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       410
+#define cSetting_INIT                       411
 
 #endif
 

@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeUnknown -1
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
-#define cLoadTypeSDF 2
+#define cLoadTypeSDF1 2 /* SDF1 - python-based loader */
 #define cLoadTypeMOLStr 3
 #define cLoadTypeMMD 4
 #define cLoadTypeMMDSeparate 5

@@ -39,10 +39,10 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
   switch(SettingGet_i(I->G,NULL,I->Setting,cSetting_defer_builds_mode)) {
   case 1: /* defer geometry builds until needed */
   case 2: /* defer and destroy continuously for maximum memory conservation */
-
     {
       int min = *start;
       int max = *stop;
+
       *start = ObjectGetCurrentState(I,false);
       *stop = *start + 1;
       if(*start<min) *start = min;
