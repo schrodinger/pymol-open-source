@@ -1846,7 +1846,7 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
           UtilExpandArrayElements(bond083,bond,nBond,
                                   sizeof(BondType083),sizeof(BondType));
           FreeP(bond083);
-          
+        } else {
           bond=(BondType*)RawReadVLA(pmo,cRaw_Bonds1,sizeof(BondType),5,false);
           nBond = VLAGetSize(bond);
         }
