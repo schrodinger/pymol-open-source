@@ -2358,6 +2358,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
             /* transform into model coodinate space */
             MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
             MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
+
             if(mode!=cButModeMoveAtom) {
               EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
                          SettingGetGlobal_i(cSetting_state)-1,v1,v2,v3);
