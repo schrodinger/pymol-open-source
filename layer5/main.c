@@ -1047,7 +1047,7 @@ SetConsoleCtrlHandler(
 
     case 0: /* default/autodetect (stereo on win/unix; mono on macs) */
 #ifdef _PYMOL_SHARP3D
-      WinX = 794;
+      WinX = 794+220;
       WinY = 547;
       // WinPX = 0;
       //WinPY = 0;
