@@ -165,6 +165,8 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * fixed truncation error in view matrix composition
+
    * Roving details. Many new settings.
 
    * Roving origin.

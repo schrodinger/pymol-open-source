@@ -2250,7 +2250,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   }
   /* define the viewing volume */
 
-  height  = abs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
+  height  = fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
   width = height*aspRat;
 
   RayPrepare(ray,-width,width,-height,height,I->FrontSafe,I->Back,rayView,aspRat);
@@ -2634,7 +2634,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     if(SettingGet(cSetting_ortho)==0.0) {
       gluPerspective(fov,aspRat,I->FrontSafe,I->Back);
     } else {
-      height  = abs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
+      height  = fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
       width = height*aspRat;
 	
       glOrtho(-width,width,-height,height,
@@ -3122,7 +3122,7 @@ void ScenePrepareMatrix(int mode)
     /* mono */
 
     /* move the camera to the location we are looking at */
-    glTranslatef(I->Pos[0],I->Pos[1],I->Pos[2]);
+    glTranslated(I->Pos[0],I->Pos[1],I->Pos[2]);
   
     /* rotate about the origin (the the center of rotation) */
     glMultMatrixf(I->RotMatrix);			
