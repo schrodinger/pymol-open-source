@@ -66,6 +66,7 @@ void MainBusyIdle(void);
 static void MainInit(void);
 void MainReshape(int width, int height);
 static void MainDrawLocked(void);
+static void MainDrag(int x,int y);
 
 GLuint obj;
 
@@ -96,6 +97,7 @@ typedef struct {
   int IdleCount;
   int ReshapeFlag;
   int DragDirtyFlag;
+  int DragPassive;
 } CMain;
 
 static CMain Main;
@@ -390,6 +392,12 @@ void MainSwapBuffers(void)
   I->SwapFlag=true;
 }
 /*========================================================================*/
+void MainSetPassiveDrag(int onOrOff)
+{
+  CMain *I = &Main;
+  I->DragPassive = onOrOff;
+}
+/*========================================================================*/
 void MainTest(void)
 {
 }
@@ -397,29 +405,34 @@ void MainTest(void)
 static void MainButton(int button,int state,int x,int y)
 {
   static int glMod;  
-  /*  CMain *I = &Main;*/
+  CMain *I = &Main;
 
   glMod = p_glutGetModifiers();
 
   PLockAPIAsGlut();
 
-  /* stay blocked here because Clicks->SexFrame->PParse */
-
-  y=WinY-y;
-
-  Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
-	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
-	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
-  
-  switch(button) {
-  case P_GLUT_BUTTON_SCROLL_FORWARD:
-  case P_GLUT_BUTTON_SCROLL_BACKWARD:
-    x=1;y=WinY-1; /* force into scene */
-    break;
-  }
-  if(!OrthoButton(button,state,x,y,Modifiers))
-    {
+  if(I->DragPassive) {
+    I->DragPassive = false;
+    MainDrag(x,y);
+  } else {
+    /* stay blocked here because Clicks->SexFrame->PParse */
+    
+    y=WinY-y;
+    
+    Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
+      ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
+      ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
+    
+    switch(button) {
+    case P_GLUT_BUTTON_SCROLL_FORWARD:
+    case P_GLUT_BUTTON_SCROLL_BACKWARD:
+      x=WinX/2;y=WinY/2; /* force into scene */
+      break;
     }
+    if(!OrthoButton(button,state,x,y,Modifiers))
+      {
+      }
+  }
 
   PUnlockAPIAsGlut();
 
@@ -434,7 +447,7 @@ static void MainDrag(int x,int y)
   y=WinY-y;
   if(!OrthoDrag(x,y,Modifiers))
     {
-	 }
+    }
   
   if(I->DirtyFlag)
     if(PMGUI) {
@@ -445,6 +458,32 @@ static void MainDrag(int x,int y)
   PUnlockAPIAsGlut();
 
 }
+/*========================================================================*/
+static void MainPassive(int x,int y)
+{
+  CMain *I = &Main;
+
+  if(I->DragPassive) { /* a harmless race condition -- we don't want
+                          to slow Python down buy locking */
+
+    PLockAPIAsGlut();
+    
+    y=WinY-y;
+    if(!OrthoDrag(x,y,Modifiers))
+      {
+      }
+    
+    if(I->DirtyFlag)
+      if(PMGUI) {
+        p_glutPostRedisplay();
+        I->DirtyFlag=false;
+      }
+    
+    PUnlockAPIAsGlut();
+  }
+  
+}
+
 /*========================================================================*/
 static void MainDrawLocked(void)
 {
@@ -572,6 +611,8 @@ PyObject *MainAsPyList(void)
   int width,height;
   result = PyList_New(2);
   BlockGetSize(SceneGetBlock(),&width,&height);
+  if(SettingGet(cSetting_seq_view))
+    height+=SeqGetHeight();
   PyList_SetItem(result,0,PyInt_FromLong(width));
   PyList_SetItem(result,1,PyInt_FromLong(height));
   return(PConvAutoNone(result));
@@ -635,8 +676,10 @@ static void MainInit(void)
   I->IdleMode=2;
   I->IdleTime=(float)UtilGetSeconds();
   I->IdleCount = 0;
-  I->ReshapeFlag=false;
+  I->ReshapeFlag = false;
   I->DragDirtyFlag=0;
+  I->DragPassive = false;
+
   if(PMGUI) {
 
     /* get us into a well defined GL state */
@@ -1018,7 +1061,7 @@ SetConsoleCtrlHandler(
     p_glutKeyboardFunc(        MainKey );
     p_glutMouseFunc(           MainButton );
     p_glutMotionFunc(          MainDrag );
-    /*  p_glutPassiveMotionFunc(   MainMove );*/
+    p_glutPassiveMotionFunc(   MainPassive );
     p_glutSpecialFunc(         MainSpecial );
     p_glutIdleFunc(            MainBusyIdle );
 

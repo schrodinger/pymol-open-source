@@ -138,6 +138,7 @@ void PyMOLCheckOpenGLErr(char *pos);
 #define p_glutKeyboardFunc         glutKeyboardFunc
 #define p_glutMouseFunc            glutMouseFunc
 #define p_glutMotionFunc           glutMotionFunc
+#define p_glutPassiveMotionFunc    glutPassiveMotionFunc
 #define p_glutSpecialFunc          glutSpecialFunc
 #define p_glutIdleFunc             glutIdleFunc
 
@@ -155,6 +156,7 @@ void PyMOLCheckOpenGLErr(char *pos);
 #define P_GLUT_MOTION_EVENT          4
 #define P_GLUT_CHAR_EVENT            5
 #define P_GLUT_SPECIAL_EVENT         6
+#define P_GLUT_PASSIVE_MOTION_EVENT  7
 
 typedef struct {
   int event_code;

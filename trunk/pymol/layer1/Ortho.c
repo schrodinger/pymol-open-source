@@ -88,6 +88,7 @@ typedef struct {
   int SplashFlag;
   int LoopFlag;
   int LoopMod;
+  int HaveSeqViewer;
   BlockRect LoopRect;
   CQueue *cmds;
   CQueue *feedback;
@@ -904,8 +905,14 @@ void OrthoDoDraw()
   int skip_prompt = 0;
   int render = false;
 
-  if(!SettingGet(cSetting_test1))
+  if(SettingGetGlobal_b(cSetting_seq_view)) {
     SeqUpdate(); 
+    I->HaveSeqViewer = true;
+  } else if(I->HaveSeqViewer) {
+    SeqUpdate();
+    I->HaveSeqViewer = false;
+  }
+
   if(SettingGet_i(NULL,NULL,cSetting_internal_prompt))
     skip_prompt = 0;
   else
@@ -1220,6 +1227,7 @@ void OrthoReshape(int width, int height)
   int sceneBottom,sceneRight = 0;
   int internal_gui_width;
   int internal_feedback;
+  int sceneTop = 0;
 
   PRINTFD(FB_Ortho)
     " OrthoReshape-Debug: %d %d\n",width,height
@@ -1259,12 +1267,22 @@ void OrthoReshape(int width, int height)
       int seqHeight;
       block=SeqGetBlock();
       block->active=true;
-      BlockSetMargin(block,height-sceneBottom-10,0,sceneBottom,sceneRight);
+
+      BlockSetMargin(block,0,0,height-10,sceneRight);
       if(block->fReshape)
         block->fReshape(block,width,height);			
       seqHeight = SeqGetHeight();
-      BlockSetMargin(block,height-sceneBottom-seqHeight,0,sceneBottom,sceneRight);
-      sceneBottom +=seqHeight;
+      BlockSetMargin(block,0,0,height-seqHeight,sceneRight);
+      sceneTop = seqHeight;
+
+      /* 
+         BlockSetMargin(block,height-sceneBottom-10,0,sceneBottom,sceneRight);
+         if(block->fReshape)
+         block->fReshape(block,width,height);			
+         seqHeight = SeqGetHeight();
+         BlockSetMargin(block,height-sceneBottom-seqHeight,0,sceneBottom,sceneRight);
+         sceneBottom +=seqHeight;
+      */
     }
 
     block=ExecutiveGetBlock();
@@ -1295,8 +1313,9 @@ void OrthoReshape(int width, int height)
   }
 
   block=SceneGetBlock();
-  BlockSetMargin(block,0,0,sceneBottom,sceneRight);
-  BlockSetMargin(&I->LoopBlock,0,0,sceneBottom,sceneRight);
+
+  BlockSetMargin(block,sceneTop,0,sceneBottom,sceneRight);
+  BlockSetMargin(&I->LoopBlock,sceneTop,0,sceneBottom,sceneRight);
 
   if(PMGUI) 
     glGetIntegerv(GL_VIEWPORT,I->ViewPort);
@@ -1304,8 +1323,9 @@ void OrthoReshape(int width, int height)
   OrthoPushMatrix();
   block=NULL;
   while(ListIterate(I->Blocks,block,next))
-	 if(block->fReshape)
+	 if(block->fReshape) {
 		block->fReshape(block,width,height);			
+    }
   OrthoPopMatrix();
 
   WizardRefresh(); /* safe to call even if no wizard exists */
@@ -1519,6 +1539,7 @@ void OrthoInit(int showSplash)
   I->GrabbedBy = NULL;
   I->ClickedIn = NULL;
   I->DrawText=1;
+  I->HaveSeqViewer = false;
   I->TextColor[0]=0.7F;
   I->TextColor[1]=0.7F;
   I->TextColor[2]=1.0;

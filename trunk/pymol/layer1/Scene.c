@@ -51,7 +51,7 @@ Z* -------------------------------------------------------------------
 
 #define cSliceMin 0.1F
 
-#define SceneLineHeight 12
+#define SceneLineHeight 127
 #define SceneTopMargin 0
 #define SceneBottomMargin 3
 #define SceneLeftMargin 3
@@ -111,6 +111,7 @@ typedef struct {
 
 CScene Scene;
 
+
 typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
@@ -122,6 +123,26 @@ static float GetFrontSafe(float front,float back)
   if(back/front>100.0F)
     front = back/100.0F;
   return front;
+}
+
+#define SELE_MODE_MAX 7
+
+static const char SelModeKW[][20]  = {
+  "",
+  "byresi",
+  "bychain",
+  "bysegi",
+  "byobject",
+  "bymol",
+  "bca.",
+};
+
+char *SceneGetSeleModeKeyword(void)
+{
+  int sel_mode = SettingGet(cSetting_mouse_selection_mode);
+  if((sel_mode>=0)&&(sel_mode<SELE_MODE_MAX))
+    return (char*)SelModeKW[sel_mode];
+  return (char*)SelModeKW[0];
 }
 
 void SceneCopy(GLenum buffer,int force);
@@ -753,7 +774,7 @@ void SceneChanged(void)
   CScene *I=&Scene;
   I->ChangedFlag=true;
   SceneDirty();
-  SeqDirty();
+  SeqChanged();
 }
 /*========================================================================*/
 Block *SceneGetBlock(void)
@@ -1392,7 +1413,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   int mode;
   int atIndex;
   int double_click = false;
-  
+  char empty_string[1] = "";
+  char *sel_mode_kw = empty_string;
+
   if((UtilGetSeconds()-I->LastClickTime)<cDoubleTime)
     {
       int dx,dy;
@@ -1537,7 +1560,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             WordType name;
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-            if(EditorIsBondMode()&&!(EditorIsAnActiveObject((ObjectMolecule*)obj))) {
+            if(EditorIsBondMode()
+               /* &&!(EditorIsAnActiveObject((ObjectMolecule*)obj))*/ ) {
               EditorInactivate();
               EditorLogState(false);
             }
@@ -1724,14 +1748,17 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     }
     break;
  
+  case cButModeSeleSet:
+  case cButModeSeleToggle:
+      sel_mode_kw = SceneGetSeleModeKeyword();
+    /* intentional pass through */
+
   case cButModeLB:
   case cButModeMB:
   case cButModeRB:
   case cButModeAddToLB:
   case cButModeAddToMB:
   case cButModeAddToRB:
-  case cButModeSeleSet:
-  case cButModeSeleToggle:
 
   case cButModeOrigAt:
   case cButModeCent:
@@ -1826,7 +1853,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
-              sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf1);
+              sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
               PLog(buffer,cPLog_pym);
             }
           }
@@ -1838,26 +1865,27 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case cButModeSeleToggle:
 
           if(SelectorIndexByName(selName)>=0) {
-            sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
-                    selName,buffer,buffer,selName);
+            sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) in %s(%s)))",
+                    selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
             SelectorCreate(selName,buf2,NULL,false,NULL);
             if(obj->type==cObjectMolecule) {
               if(SettingGet(cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer,false);
-                sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
-                        selName,buffer,buffer,selName);
-                sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf2);
+                sprintf(buf2,"(((%s) or %s(%s)) and ((%s(%s)) in %s(%s)))",
+                        selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
+                sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf2);
                 PLog(buffer,cPLog_pym);
               }
             }
           } else {
-            SelectorCreate(selName,buffer,NULL,false,NULL);
+            sprintf(buf2,"%s(%s)",sel_mode_kw,buffer);
+            SelectorCreate(selName,buf2,NULL,false,NULL);
             if(obj->type==cObjectMolecule) {
               if(SettingGet(cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
-                sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf1);
+                sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
                 PLog(buffer,cPLog_pym);
               }
             }
@@ -2724,11 +2752,17 @@ void SceneInit(void)
 void SceneReshape(Block *block,int width,int height)
 {
   CScene *I=&Scene;
-  
+  int y = height;
+
   if(I->Block->margin.right) {
 	 width -= I->Block->margin.right;
 	 if(width<1)
 		width=1;
+  }
+  
+  if(I->Block->margin.top) {
+    height -= I->Block->margin.top;
+    y = height;
   }
 
 #ifdef _PYMOL_OSX

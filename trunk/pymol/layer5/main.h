@@ -32,6 +32,7 @@ PyObject *MainAsPyList(void);
 int MainCheckRedundantOpen(char *file);
 void MainDragDirty(void); 
 void MainRepositionWindowDefault(void);
+void MainSetPassiveDrag(int onOrOff);
 
 #ifdef _PYMOL_OSX
 

@@ -32,6 +32,7 @@ float ScrollBarGetValue(struct CScrollBar *I);
 void ScrollBarMaxOut(struct CScrollBar *I);
 void ScrollBarUpdate(struct CScrollBar *I);
 int ScrollBarIsMaxed(struct CScrollBar *I);
+void ScrollBarDrawHandle(struct CScrollBar *I,float alpha);
 
 #endif
 

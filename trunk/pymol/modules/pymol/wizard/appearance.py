@@ -13,11 +13,11 @@ class Appearance(Wizard):
 
 
    mode_dict = {
-      0 : ['Color', 'cmd.color' ],
-      1 : ['Color (elem c)', 'util.color_carbon' ],
-      2 : ['Toggle','cmd.toggle'],
-      3 : ['Show', 'cmd.show'],
-      4 : ['Hide', 'cmd.hide'],
+      0 : ['Color', '_ cmd.color' ],
+      1 : ['Color (elem c)', '_ util.color_carbon' ],
+      2 : ['Toggle','_ cmd.toggle'],
+      3 : ['Show', '- cmd.show'],
+      4 : ['Hide', '_ cmd.hide'],
       5 : ['Select', 'cmd.select'],
       }
 

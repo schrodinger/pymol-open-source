@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #define cPopUpCharLift 2
 
 #define cChildDelay 0.25
+#define cPassiveDelay 0.50
 #define cDirtyDelay 0.05
 
 typedef struct CPopUp {
@@ -45,6 +46,7 @@ typedef struct CPopUp {
   Block *Child;
   int ChildLine;
   int LastX,LastY;
+  int StartX,StartY;
   int Selected;
   int Width,Height;
   int NLine;
@@ -54,6 +56,7 @@ typedef struct CPopUp {
   int *Code;
   double ChildDelay;
   double DirtyDelay;
+  double PassiveDelay;
   int DirtyDelayFlag;
   int NeverDragged;
 }  CPopUp;
@@ -63,6 +66,19 @@ void PopUpDraw(Block *block);
 int PopUpDrag(Block *block,int x,int y,int mod);
 int PopUpConvertY(CPopUp *I,int value,int mode);
 
+/*========================================================================*/
+static Block *PopUpRecursiveFind(Block *block,int x, int y)
+{
+  CPopUp *I = (CPopUp*)block->reference;
+  if(BlockRecursiveFind(block,x,y) == block) {
+    OrthoGrab(block);
+    return block;
+  } else if(I->Child) {
+    if(PopUpRecursiveFind(I->Child,x,y)==I->Child)
+      return block;
+  }
+  return NULL;
+}
 /*========================================================================*/
 Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
 {
@@ -96,9 +112,10 @@ Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
   I->Command = NULL;
   I->Code = NULL;
   I->Selected = -1;
-  I->LastX = last_x;
-  I->LastY = last_y;
+  I->StartX = (I->LastX = last_x);
+  I->StartY = (I->LastY = last_y);
   I->ChildDelay = UtilGetSeconds() + cChildDelay*2.5;
+  I->PassiveDelay = UtilGetSeconds() + cPassiveDelay;
   I->DirtyDelay = false;
   I->DirtyDelayFlag = false;
   I->NeverDragged = true;
@@ -320,35 +337,43 @@ static void PopUpFreeRecursiveChild(Block *block)
 int PopUpRelease(Block *block,int button,int x,int y,int mod)
 {
   CPopUp *I = (CPopUp*)block->reference;
-  if(!I->NeverDragged)
-    PopUpDrag(block,x,y,mod);
-  OrthoUngrab();
-  PopUpRecursiveDetach(block);
-  if(!I->NeverDragged) 
-    if((I->Selected>=0)&&(!I->Sub[I->Selected])) {
-      PLog(I->Command[I->Selected],cPLog_pym);
-      PParse(I->Command[I->Selected]);
-      PFlush();
-    }
+  int gone_passive = false;
 
-  PopUpRecursiveFree(block);
+  if(I->NeverDragged) {
+    if(I->PassiveDelay>UtilGetSeconds()) {    
+      gone_passive = true;
+      I->PassiveDelay = UtilGetSeconds(); /* kill any further delay */
+    }
+  } 
+  if(!gone_passive) {
+    if(!I->NeverDragged)
+      PopUpDrag(block,x,y,mod);
+
+    /* go passive if we click and release on a sub-menu */
+
+    if((I->Selected>=0)&&(I->Sub[I->Selected])) {
+      if((x>=I->Block->rect.left)&&(x<=I->Block->rect.right)) {
+        gone_passive = true;
+      }
+    }
+  }  
+  if(gone_passive) {
+    MainSetPassiveDrag(true);
+  } else {
+    OrthoUngrab();
+    PopUpRecursiveDetach(block);
+    if(!I->NeverDragged) 
+      if((I->Selected>=0)&&(!I->Sub[I->Selected])) {
+        PLog(I->Command[I->Selected],cPLog_pym);
+        PParse(I->Command[I->Selected]);
+        PFlush();
+      }
+    PopUpRecursiveFree(block);
+  }
   OrthoDirty();
   return(1);
 }
 
-/*========================================================================*/
-static Block *PopUpRecursiveFind(Block *block,int x, int y)
-{
-  CPopUp *I = (CPopUp*)block->reference;
-  if(BlockRecursiveFind(block,x,y) == block) {
-    OrthoGrab(block);
-    return block;
-  } else if(I->Child) {
-    if(PopUpRecursiveFind(I->Child,x,y)==I->Child)
-      return block;
-  }
-  return NULL;
-}
 
 /*========================================================================*/
 int PopUpDrag(Block *block,int x,int y,int mod)
@@ -358,7 +383,12 @@ int PopUpDrag(Block *block,int x,int y,int mod)
   
   int a;
   int was = I->Selected;
-  I->NeverDragged=false;
+  
+  if((!I->NeverDragged)&&
+     ( ((I->StartX-x)>4) ||
+       ((I->StartY-y)>4)))
+    I->NeverDragged=false;
+
   I->LastX=x;
   I->LastY=y;
 
@@ -444,6 +474,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
 
   if(was!=I->Selected) {
 
+    I->NeverDragged = false;
     if(!I->Child) {
       /* we moved, so renew the child delay */
       I->ChildDelay = UtilGetSeconds() + cChildDelay;

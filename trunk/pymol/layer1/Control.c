@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 #include "Setting.h"
 #include "P.h"
 #include "Grap.h"
-
+#include "Seq.h"
 #include"Movie.h"
 
 #define cControlBoxSize 17
@@ -153,12 +153,14 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
     }
     break;
   case 6:
-    if(SettingGet(cSetting_sculpting)) {
-      SettingSet(cSetting_sculpting,0.0);
-      PLog("cmd.set('sculpting',0)",cPLog_pym);
+    if(SettingGetGlobal_b(cSetting_seq_view)) {
+      SettingSetGlobal_b(cSetting_seq_view,0);
+      SeqChanged();
+      PLog("cmd.set('seq_view',0)",cPLog_pym);
     } else {
-      SettingSet(cSetting_sculpting,1.0);
-      PLog("cmd.set('sculpting',1)",cPLog_pym);        
+      SettingSetGlobal_b(cSetting_seq_view,1);
+      SeqChanged();
+      PLog("cmd.set('seq_view',1)",cPLog_pym);        
     }
     OrthoDirty();
     break;
@@ -344,7 +346,7 @@ static void ControlDraw(Block *block)
       if( ( but_num==I->Active ) ) {
         draw_button(but_left,but_bottom,
                     but_width, but_height, lightEdge,darkEdge,active);
-      } else if(((but_num==6)&&((int)SettingGet(cSetting_sculpting))) ||
+      } else if(((but_num==6)&&((int)SettingGet(cSetting_seq_view))) ||
                 ((but_num==3)&&(MoviePlaying())) ||
                 ((but_num==7)&&(I->Rocking))) {
         draw_button(but_left,but_bottom,

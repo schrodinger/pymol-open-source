@@ -26,10 +26,11 @@ typedef struct {
   int offset; 
   int atom_at; /* starting offset in list */
   int inverse;
+  int spacer;
 } CSeqCol;
   
 typedef struct {
-  int len;
+  int len,ext_len;
   int label_flag;
   int color;
   char *txt;
@@ -39,12 +40,15 @@ typedef struct {
   int *atom_lists;
   char name[ObjNameMax]; /* associated object */
   struct ObjectMolecule *obj; /* this pointer only valid during update */
+  int accum,current; /* temporary stores for aligning */
+
 } CSeqRow;
 
 typedef struct {
-  CSeqRow* (*fClick)   (CSeqRow* rowVLA,int button,int row,int col,int mod);
+  CSeqRow* (*fClick)   (CSeqRow* rowVLA,int button,int row,int col,int mod,int x,int y);
   CSeqRow* (*fDrag)    (CSeqRow* rowVLA,int row,int col,int mod);
   CSeqRow* (*fRelease) (CSeqRow* rowVLA,int button,int row,int col,int mod);
+  void (*fRefresh) (CSeqRow* rowVLA);
 } CSeqHandler;
 
 void SeqInit(void);
@@ -60,7 +64,8 @@ int SeqGetHeight(void);
 void SeqSetHandler(CSeqHandler *handler);
 void SeqSetRowVLA(CSeqRow *row,int nRow);
 CSeqRow *SeqGetRowVLA(void);
-void SeqDirty(void); /* sequence dirty -- need to rebuild */
+void SeqDirty(void); /* sequence dirty -- need to update selections */
+void SeqChanged(void); /* sequence changed -- need to rebuild */
 void SeqUpdate(void);
 
 #endif

@@ -4,6 +4,32 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * seq_view settings
+
+   * sequence viewer is now "in"
+
+   * mouse_selection_mode setting
+
+   * got real busy on the sequence viewer
+
+   * created plugin menu
+
+   * further menu consolidation to make room for plugin menus
+
+   * fixed "use display lists" menu option
+
+   * fixed "stereo swap" and Display->Stereo->Swap Sides menu item.
+
+   * ray_transparency contrast back to default of 1.0 default (WYSIWYG).
+
+   * fixed a few minor bugs with picked atom selection indices
+
+   * menus now stay without mouse being held down (what an improvement!)
+
+   * fixed a couple of scroll-bar glitches
+
+   -- beta 5
+
    * movie.sweep convenience function for simple back & forth movies
 
    * PyMOL can now write multi-model PDB files (save with state=-2)
@@ -13,8 +39,6 @@ Changes up to 0.96
 
    * ray_transparency_contrast setting, default=2.0, improves contrast
      of the transparent surface relative to objects inside.  
-     COMPATIBILITY NOTICE: set ray_transparency_contrast=1.0 to 
-     recover pre-0.96 behavior.
 
    * fixed save_session behavior to avoid accidental overwrites after
      opening a new session (mac & tcl GUIs)
