@@ -77,15 +77,15 @@ PyMOL>print stored.cnt
 PyMOL>stored.x = 0
 PyMOL>iterate_state 1,(all),stored.x=stored.x+x
  IterateState: iterated over 107 atom states.
-PyMOL>print stored.x
-130.971997736
+PyMOL>print "%8.4f"%stored.x
+130.9720
 PyMOL>alter (all),segi='PEPT'
  Alter: modified 107 atoms.
 PyMOL>alter_state 1,(all),x = x + 1.0
  AlterState: modified 107 atom states.
-PyMOL>print cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)","(i;11&n
-;cg)")
--160.790878296
+PyMOL>print "%8.4f"%cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)",
+"(i;11&n;cg)")
+-160.7909
 PyMOL>dist
  Executive: object "dist01" created.
 PyMOL>dist (lb),(rb)
@@ -215,21 +215,19 @@ PyMOL>torsion 180
 PyMOL>torsion 180
 PyMOL>print cmd.get_model().__class__
 chempy.models.Indexed
-PyMOL>print cmd.get_area()
-1388.0357666
-PyMOL>print cmd.get_area()
-1388.0357666
-PyMOL>print cmd.get_area("(name ca)")
-100.462539673
+PyMOL>print "%8.4f"%cmd.get_area()
+1388.0356
+PyMOL>print  "%8.4f"%cmd.get_area("(name ca)")
+100.4625
 PyMOL>print cmd.get_names()
 ['pept', 'dist01', 'dist02', 'tst', 'tst2']
 PyMOL>print cmd.get_type('pept')
 object:molecule
 PyMOL>print cmd.identify("(i;7)")
 [52, 53, 54, 55]
-PyMOL>print cmd.get_extent()
-[[-5.47092437744, -21.4213943481, 13.156999588], [9.91899967194, 0.86299991607
-7, 27.9338817596]]
+PyMOL>print "%8.4f %8.4f %8.4f %8.4f %8.4f %8.4f"%(ext[0][0],ext[0][1],ext[0][
+2],ext[1][0],ext[1][1],ext[1][2])
+ -5.4709 -21.4214  13.1570   9.9190   0.8630  27.9339
 PyMOL>sort
 PyMOL>sort pept
 PyMOL>spheroid
