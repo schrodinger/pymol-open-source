@@ -114,6 +114,36 @@ void ExecutiveRenameObjectAtoms(char *name,int force)
 } 
 
 /*========================================================================*/
+void ExecutiveInvert(char *s0,char *s1,int mode)
+{
+  int i0=-1;
+  int i1=-1;
+  int sele0,sele1;
+  ObjectMolecule *obj0,*obj1;
+
+  sele0 = SelectorIndexByName(s0);
+  if(sele0<0) {
+    ErrMessage("Invert","Please indicate immobile fragments with (lb) and (rb).");
+  } else {
+    obj0 = SelectorGetSingleObjectMolecule(sele0);
+    sele1 = SelectorIndexByName(s1);
+    if(sele1>=0) {
+      obj1 = SelectorGetSingleObjectMolecule(sele1);
+    } else {
+      sele1=sele0;
+      obj1=obj0;
+    }
+    i0 = ObjectMoleculeGetAtomIndex(obj0,sele0);
+    if(obj1)
+      i1 = ObjectMoleculeGetAtomIndex(obj1,sele1);
+    if(!(obj0&&(obj0==obj1)&&(i0>=0)&&(i1>=0)))
+      ErrMessage("Invert","Invalid immobile atoms in (lb) and (rb).");
+    else {
+      EditorInvert(obj0,sele0,sele1,mode);
+    }
+  }
+}
+/*========================================================================*/
 void ExecutiveFuse(char *s0,char *s1)
 {
   int i0=-1;
@@ -1656,16 +1686,27 @@ void ExecutiveManageObject(Object *obj)
 /*========================================================================*/
 void ExecutiveManageSelection(char *name)
 {
+
   int a;
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
-  ListElemAlloc(rec,SpecRec);
-  strcpy(rec->name,name);
-  rec->type=cExecSelection;
-  rec->next=NULL;
+  
+  while(ListIterate(I->Spec,rec,next,SpecList))
+    {
+      if(rec->type==cExecSelection)
+        if(strcmp(rec->name,name)==0) 
+          break;
+    }
+  if(!rec) {
+    ListElemAlloc(rec,SpecRec);
+    strcpy(rec->name,name);
+    rec->type=cExecSelection;
+    rec->next=NULL;
+    ListAppend(I->Spec,rec,next,SpecList);
+  }
   for(a=0;a<cRepCnt;a++)
-	 rec->repOn[a]=false;
-  ListAppend(I->Spec,rec,next,SpecList);
+    rec->repOn[a]=false;
+
 }
 /*========================================================================*/
 int ExecutiveClick(Block *block,int button,int x,int y,int mod)

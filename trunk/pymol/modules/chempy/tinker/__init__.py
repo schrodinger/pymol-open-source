@@ -5,6 +5,8 @@ import glob
 import re
 import string
 import sys
+import time
+
 from chempy import feedback
 
 # "do" is the preferred command for running tinker
@@ -39,17 +41,28 @@ def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
    for a in tokens:
       pipe.write(a+"\n")
    pipe.close()
+# NFS workaround (flushes the directory cache so that glob will work)
+   try: os.unlink(".sync")
+   except: pass
+   f = open(".sync",'w')
+   f.close()
+#
    for src in glob.glob(run_prefix+".*_2"):
       dst = string.replace(src,'_2','')
       if os.path.exists(dst):
          os.unlink(dst)
-      os.rename(src,dst)      
+#      os.rename(src,dst)    rename can fail over NFS (remote action)
+      shutil.copyfile(src,dst)
+# sloppy workaround for buggy NFS on linux
+      os.unlink(src)
    for src in glob.glob(run_prefix+".*"):
       dst = string.split(src,'.')
       dst = out_prefix+'.'+dst[len(dst)-1]
       if os.path.exists(dst):
          os.unlink(dst)
-      os.rename(src,dst)
+#      os.rename(src,dst)    rename can fail over NFS (remote action)  
+      shutil.copy(src,dst)
+      os.unlink(src)
    for a in glob.glob(in_prefix+".*"):
       os.unlink(a)
    if feedback['tinker']:
@@ -92,13 +105,16 @@ def run(command,in_prefix,out_prefix,tokens,capture=None):
       dst = string.replace(src,'_2','')
       if os.path.exists(dst):
          os.unlink(dst)
-      os.rename(src,dst)      
+#      os.rename(src,dst)    rename can fail over NFS (remote action)  
+      shutil.copy(src,dst)
+      os.unlink(src)
    for src in glob.glob(prefix+".*"):
       dst = string.split(src,'.')
       dst = out_prefix+'.'+dst[len(dst)-1]
       if os.path.exists(dst):
          os.unlink(dst)
-      os.rename(src,dst)
+#      os.rename(src,dst)    rename can fail over NFS (remote action)  
+      shutil.copy(src,dst)
    if feedback['tinker']:
       print " "+str(__name__)+': %s job complete. ' % command
       print " "+str(__name__)+': creating output files "%s.*"' % (out_prefix)

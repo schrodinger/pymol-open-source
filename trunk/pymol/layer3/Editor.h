@@ -43,5 +43,8 @@ void EditorRefill(void);
 void EditorCycleValence(void);
 void EditorInactive(void);
 ObjectMolecule *EditorGetActiveObject(void);
+int EditorSelect(char *s0,char *s1,char *s2,char *s3);
+void EditorTorsion(float angle);
+void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode);
 
 #endif

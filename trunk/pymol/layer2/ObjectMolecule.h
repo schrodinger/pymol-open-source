@@ -144,7 +144,7 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int
 void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai);
 void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode);
 void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force);
-
+int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1);
 #endif
 
 

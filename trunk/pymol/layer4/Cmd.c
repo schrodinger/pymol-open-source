@@ -110,6 +110,8 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args);
 static PyObject *CmdDistance(PyObject *dummy, PyObject *args);
 static PyObject *CmdDo(PyObject *self, 	PyObject *args);
 static PyObject *CmdDump(PyObject *self, 	PyObject *args);
+static PyObject *CmdEdit(PyObject *self, 	PyObject *args);
+static PyObject *CmdTorsion(PyObject *self, PyObject *args);
 static PyObject *CmdExportDots(PyObject *self, PyObject *args);
 static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
@@ -119,6 +121,7 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args);
 static PyObject *CmdHAdd(PyObject *self, PyObject *args);
 static PyObject *CmdIdentify(PyObject *dummy, PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
+static PyObject *CmdInvert(PyObject *self, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
@@ -203,6 +206,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"dist",    	  CmdDist,         METH_VARARGS },
 	{"do",	        CmdDo,           METH_VARARGS },
 	{"dump",	        CmdDump,         METH_VARARGS },
+   {"edit",         CmdEdit,         METH_VARARGS },
+   {"torsion",      CmdTorsion,      METH_VARARGS },
 	{"export_dots",  CmdExportDots,   METH_VARARGS },
 	{"finish_object",CmdFinishObject, METH_VARARGS },
 	{"fit",          CmdFit,          METH_VARARGS },
@@ -222,6 +227,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"h_add",        CmdHAdd,         METH_VARARGS },
    {"identify",     CmdIdentify,     METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
+   {"invert",       CmdInvert,       METH_VARARGS },
 	{"isomesh",	     CmdIsomesh,      METH_VARARGS },
    {"wait_queue",   CmdWaitQueue,    METH_VARARGS },
    {"label",        CmdLabel,        METH_VARARGS },
@@ -278,6 +284,34 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		     NULL}		/* sentinel */
 };
 
+
+static PyObject *CmdInvert(PyObject *self, PyObject *args)
+{
+  char *str0,*str1;
+  int int1;
+  OrthoLineType s0="",s1="";
+  PyArg_ParseTuple(args,"ssi",&str0,&str1,&int1);
+  APIEntry();
+  if(str0[0]) SelectorGetTmp(str0,s0);
+  if(str1[0]) SelectorGetTmp(str1,s1);
+  ExecutiveInvert(s0,s1,int1);
+  if(s0[0]) SelectorFreeTmp(s0);
+  if(s1[0]) SelectorFreeTmp(s1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdTorsion(PyObject *self, PyObject *args)
+{
+  float float1;
+  PyArg_ParseTuple(args,"f",&float1);
+  APIEntry();
+  EditorTorsion(float1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 static PyObject *CmdUndo(PyObject *self, PyObject *args)
 {
@@ -1879,6 +1913,30 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;  
+}
+
+static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
+{
+  char *str0,*str1,*str2,*str3;
+  OrthoLineType s0 = "";
+  OrthoLineType s1 = "";
+  OrthoLineType s2 = "";
+  OrthoLineType s3 = "";
+  int result;
+  PyArg_ParseTuple(args,"ssss",&str0,&str1,&str2,&str3);
+  APIEntry();
+  if(str0[0]) SelectorGetTmp(str0,s0);
+  if(str1[0]) SelectorGetTmp(str1,s1);
+  if(str2[0]) SelectorGetTmp(str2,s2);
+  if(str3[0]) SelectorGetTmp(str3,s3);
+  result = EditorSelect(s0,s1,s2,s3);
+  if(s0[0]) SelectorFreeTmp(s0);
+  if(s1[0]) SelectorFreeTmp(s1);
+  if(s2[0]) SelectorFreeTmp(s2);
+  if(s3[0]) SelectorFreeTmp(s3);
+
+  APIExit();
+  return PyInt_FromLong(result);
 }
 
 static PyObject *CmdRename(PyObject *self, 	PyObject *args)

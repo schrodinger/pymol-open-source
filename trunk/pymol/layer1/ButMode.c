@@ -142,12 +142,12 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeTorFrag], "TorF ");
   strcpy(I->Code[cButModeRotFrag], "RotF ");
   strcpy(I->Code[cButModeMovFrag], "MovF ");
-  strcpy(I->Code[cButModePk1],     " Pk1 ");
-  strcpy(I->Code[cButModePk2],     " Pk2 ");
-  strcpy(I->Code[cButModePk3],     " Pk3 ");
-  strcpy(I->Code[cButModeAddToPk1],"+Pk1 ");
-  strcpy(I->Code[cButModeAddToPk2],"+Pk2 ");
-  strcpy(I->Code[cButModeAddToPk3],"+Pk3 ");
+  strcpy(I->Code[cButModePk1],     " lb  ");
+  strcpy(I->Code[cButModePk2],     " mb ");
+  strcpy(I->Code[cButModePk3],     " rb ");
+  strcpy(I->Code[cButModeAddToPk1],"+lb ");
+  strcpy(I->Code[cButModeAddToPk2],"+mb ");
+  strcpy(I->Code[cButModeAddToPk3],"+rb ");
   strcpy(I->Code[cButModeOrigAt],  "Orig ");
 
   I->Block = OrthoNewBlock(NULL);
@@ -206,7 +206,7 @@ int ButModeTranslate(int button, int mod)
 int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
   SettingSetNamed("valence","0.05");
-  OrthoCommandIn("edit");
+  OrthoCommandIn("edit_mode");
   return(1);
 }
 /*========================================================================*/

@@ -656,7 +656,7 @@ class Subset:
       else:
          return 0
       
-   def write_tinker_prm(self,fname,proofread=None):
+   def write_tinker_prm(self,fname,proofread=None,smooth=None):
       c = 0
       self.mapping = {}
       map = self.mapping
@@ -680,9 +680,18 @@ class Subset:
       for a in self.model.atom:
          a.numeric_type = map[a.text_type]
       f = open(fname,'w')
-      f.write('''
+      if smooth:
+         f.write('''
+forcefield              SMOOTH AMBER
+vdwtype                 GAUSSIAN
+gausstype               LJ-2
+''')
+      else:
+         f.write('''
 forcefield              AMBER95
 vdwtype                 LENNARD-JONES
+''')
+      f.write('''
 radiusrule              ARITHMETIC
 radiustype              R-MIN
 radiussize              RADIUS
@@ -732,21 +741,37 @@ dielectric              1.0
          f.write("angle    %5s%5s%5s%9.2f    %8.2f\n" % (
             a[0],a[1],a[2],self.angle[kee][0],self.angle[kee][1]))
       # impropers
-      improper = {}
-      for a in self.improper.keys():
-         kee = (map[string.strip(a[0:2])],
-                map[string.strip(a[3:5])],
-                map[string.strip(a[6:8])],
-                map[string.strip(a[9:11])],                                
-                )
-         improper[kee] = a
-      kees = improper.keys()
-      kees.sort()
-      for a in kees:
-         kee = improper[a]
-         f.write("imptors  %5s%5s%5s%5s     %10.3f%7.1f%3d\n" % (
-            a[0],a[1],a[2],a[3],self.improper[kee][0],
-            self.improper[kee][1],self.improper[kee][2]))
+      if not smooth:
+         improper = {}
+         for a in self.improper.keys():
+            kee = (map[string.strip(a[0:2])],
+                   map[string.strip(a[3:5])],
+                   map[string.strip(a[6:8])],
+                   map[string.strip(a[9:11])],                                
+                   )
+            improper[kee] = a
+         kees = improper.keys()
+         kees.sort()
+         for a in kees:
+            kee = improper[a]
+            f.write("imptors  %5s%5s%5s%5s     %10.3f%7.1f%3d\n" % (
+               a[0],a[1],a[2],a[3],self.improper[kee][0],
+               self.improper[kee][1],self.improper[kee][2]))
+      else:
+         improper = {}
+         for a in self.improper.keys():
+            kee = (map[string.strip(a[0:2])],
+                   map[string.strip(a[3:5])],
+                   map[string.strip(a[6:8])],
+                   map[string.strip(a[9:11])],                                
+                   )
+            improper[kee] = a
+         kees = improper.keys()
+         kees.sort()
+         for a in kees:
+            kee = improper[a]
+            f.write("improper %5s%5s%5s%5s      %10.2f       0.00\n" % (
+               a[2],a[0],a[1],a[3],self.improper[kee][0]*3.5))
       # torsions
       torsion = {}
       for a in self.torsion.keys():
