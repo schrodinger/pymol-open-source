@@ -117,6 +117,7 @@ class Appearance(Wizard):
          ]
 
       self.menu['scope'] = [
+         [ 2, 'Scope', ''],
          [ 1, self.scope_dict[0][0], 'cmd.get_wizard().set_scope(0)' ],
          [ 1, self.scope_dict[1][0], 'cmd.get_wizard().set_scope(1)' ],
          [ 1, self.scope_dict[2][0], 'cmd.get_wizard().set_scope(2)' ],
