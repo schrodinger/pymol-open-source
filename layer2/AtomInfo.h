@@ -79,6 +79,7 @@ Z* -------------------------------------------------------------------
 #define cAN_Se 34
 #define cAN_Br 35
 #define cAN_I  53
+#define cAN_Hg 80
 
 typedef char Chain[2];
 typedef char SSType[2];

@@ -247,6 +247,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   float dev;
   int trace;
   int ribbon_color;
+  AtomInfoType *ai,*last_ai=NULL;
 
   Pickable *rp=NULL;
   OOAlloc(RepRibbon);
@@ -306,43 +307,65 @@ Rep *RepRibbonNew(CoordSet *cs)
           a=-1;
       } else 
         a=cs->AtmToIdx[a1];
-		if(a>=0)
-		  if(obj->AtomInfo[a1].visRep[cRepRibbon])
-			 if(obj->AtomInfo[a1].protons==cAN_C)
-				if(trace||(WordMatch("CA",obj->AtomInfo[a1].name,1)<0))
-				  {
-                PRINTFD(FB_RepRibbon)
-                  " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
-                  ENDFD;
-
-					 if(a2>=0) {
-                  /*						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-                                    (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-                                    (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
-                  if(trace) {
-                    if(!AtomInfoSequential(obj->AtomInfo+a2,obj->AtomInfo+a1))
-                      a2=-1;
-                  } else {
-                    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
-                      a2=-1;
-                  }
-					 }
-                PRINTFD(FB_RepRibbon)
-                  " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
-                  ENDFD;
-
-					 if(a2<0) nSeg++;
-					 *(s++) = nSeg;
-					 nAt++;
-					 *(i++)=a;
-					 v1 = cs->Coord+3*a;		
-					 *(v++)=*(v1++);
-					 *(v++)=*(v1++);
-					 *(v++)=*(v1++);
-					 
-					 a2=a1;
-				  }
-	 }
+		if(a>=0) {
+        ai = obj->AtomInfo+a1;
+		  if(obj->AtomInfo[a1].visRep[cRepRibbon]) {
+          if(trace||((obj->AtomInfo[a1].protons==cAN_C)&&
+                     (WordMatch("CA",obj->AtomInfo[a1].name,1)<0)&&
+                     !AtomInfoSameResidueP(last_ai,ai))) {
+            PRINTFD(FB_RepRibbon)
+              " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
+              ENDFD;
+            
+            if(a2>=0) {
+              /*						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
+                (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+                (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+              if(trace) {
+                if(!AtomInfoSequential(obj->AtomInfo+a2,obj->AtomInfo+a1))
+                  a2=-1;
+              } else {
+                if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+                  a2=-1;
+              }
+            }
+            PRINTFD(FB_RepRibbon)
+              " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
+              ENDFD;
+            last_ai = ai;
+            if(a2<0) nSeg++;
+            *(s++) = nSeg;
+            nAt++;
+            *(i++)=a;
+            v1 = cs->Coord+3*a;		
+            *(v++)=*(v1++);
+            *(v++)=*(v1++);
+            *(v++)=*(v1++);
+            
+            a2=a1;
+          } else if(trace||(((ai->protons==cAN_P)&&
+                             (WordMatch("P",ai->name,1)<0))&&
+                            !AtomInfoSameResidueP(last_ai,ai))) {
+            if(!trace) 
+              if(a2>=0) {
+                if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
+                  a2=-1;
+              }
+            last_ai = ai;
+            if(a2<0) nSeg++;
+            *(s++) = nSeg;
+            nAt++;
+            *(i++)=a;
+            v1 = cs->Coord+3*a;		
+            *(v++)=*(v1++);
+            *(v++)=*(v1++);
+            *(v++)=*(v1++);
+            
+            a2=a1;
+          }
+        }
+      }
+    }
   PRINTFD(FB_RepRibbon)
     " RepRibbon: nAt %d\n",nAt
     ENDFD;

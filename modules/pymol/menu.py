@@ -219,16 +219,29 @@ def general_color(s):
            [ 1, '\\222black'    ,'cmd.color("grey","'+s+'")'  ]
            ]
 
+def preset_ligand_sites(s):
+   return [[ 2, 'Ligand Sites:', ''],
+           [ 1, 'solid'   , 'preset.ligand_sites("'+s+'")'          ],
+           [ 1, 'solid (better)'   , 'preset.ligand_sites_hq("'+s+'")'          ],
+           [ 0, '', ''],
+           [ 1, 'transparent'   , 'preset.ligand_sites_trans("'+s+'")'          ],
+           [ 1, 'transparent (better)'   , 'preset.ligand_sites_trans_hq("'+s+'")'          ],
+           [ 0, '', ''],
+           [ 1, 'dot surface'   , 'preset.ligand_sites_dots("'+s+'")'          ],
+           [ 0, '', ''],
+           [ 1, 'mesh surface'   , 'preset.ligand_sites_mesh("'+s+'")'          ]]
+
 def presets(s):
    return [[ 2, 'Preset:'       ,''                        ],     
            [ 1, 'simple'   ,'preset.simple("'+s+'")'          ],
            [ 1, 'simple (no solvent)'   ,'preset.simple_no_solv("'+s+'")'          ],           
            [ 1, 'technical'   , 'preset.technical("'+s+'")'          ],
            [ 1, 'ligands'   , 'preset.ligands("'+s+'")'          ],
-           [ 1, 'pretty'     , 'preset.pretty("'+s+'")'          ],
-           [ 1, 'pretty (no solvent)', 'preset.pretty_no_solv("'+s+'")'          ],
-           [ 1, 'publication'   , 'preset.publication("'+s+'")'          ],
-           [ 1, 'publication (no solvent)'   , 'preset.pub_no_solv("'+s+'")'          ],
+           [ 1, 'ligand_sites'   , preset_ligand_sites(s)         ],
+           [ 1, 'pretty ', 'preset.pretty("'+s+'")'          ],
+           [ 1, 'pretty (with solvent)'     , 'preset.pretty_solv("'+s+'")'          ],
+           [ 1, 'publication '   , 'preset.publication("'+s+'")'          ],
+           [ 1, 'publication (with solvent)'   , 'preset.pub_solv("'+s+'")'          ],
            [ 0, ''               ,''                             ],                      
            [ 1, 'default'   ,'preset.default("'+s+'")'          ],           
            ]

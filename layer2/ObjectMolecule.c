@@ -4412,6 +4412,17 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
     }
     
     switch(ai->protons) {
+/* cat-ions, lewis acids etc. */
+    case cAN_Fe:
+    case cAN_Ca: 
+    case cAN_Cu:
+    case cAN_K:
+    case cAN_Na:
+    case cAN_Mg:
+    case cAN_Zn:
+    case cAN_Hg:
+      ai->hb_donor=true;
+      break;
     case cAN_N:
       if(has_hydro)
         ai->hb_donor=true;
