@@ -217,7 +217,9 @@ def all_action(s):
            [ 1, 'origin'   , 'cmd.origin("'+s+'")'   ],
            [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'     ],
            [ 0, ''             , ''                      ],
-           [ 1, 'delete'       , 'cmd.delete("all")'     ]
+           [ 1, 'delete'       , 'cmd.delete("all")'     ],
+           [ 0, ''             , ''                      ],
+           [ 1, 'count atoms'       , 'cmd.count_atoms("all")'     ]
            ]
 
 

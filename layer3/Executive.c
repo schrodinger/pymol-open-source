@@ -2541,7 +2541,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
     ErrMessage("ExecutiveSymExp","No symmetry matrices!");    
   } else {
     PRINTFB(FB_Executive,FB_Actions)
-      " ExecutiveSymExp: Generating symmetry mates"
+      " ExecutiveSymExp: Generating symmetry mates...\n"
       ENDFB;
 	 op.code = OMOP_SUMC;
 	 op.i1 =0;
