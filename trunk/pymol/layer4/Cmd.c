@@ -1103,9 +1103,9 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
 static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args)
 {
   PyObject *result = NULL;
-  APIEntry();
+  APIEnterBlocked();
   result = SettingGetUpdateList(NULL);
-  APIExit();
+  APIExitBlocked();
   return(APIAutoNone(result));
 }
 
