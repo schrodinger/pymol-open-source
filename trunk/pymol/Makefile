@@ -220,12 +220,14 @@ osx-dev: osx
 osx-pdev:
 	/bin/rm -rf $(OSXPYMOL)/modules/pymol
 	cp -R modules/pymol $(OSXPYMOL)/modules/pymol
+	cp -R layerOSX/plugin/pmg_aqua $(OSXPYMOL)/modules/
 
 osx-product: osx 
 	$(PYTHON_EXE) modules/compile_pymol.py
 	/bin/rm -rf $(OSXPYMOL)
 	install -d $(OSXPYMOL)
 	cp -R modules $(OSXPYMOL)/
+	cp -R layerOSX/plugin/pmg_aqua $(OSXPYMOL)/modules/
 	cp -R test $(OSXPYMOL)/
 	cp -R data $(OSXPYMOL)/	
 	cp -R scripts $(OSXPYMOL)/	
@@ -290,7 +292,6 @@ mac-hybrid: mac
 	/bin/rm -r $(OSXHYBRID)/Contents/Resources/English.lproj/MainMenu~.nib
 	/bin/cp -r ext/lib/tcl8.4 $(OSXHYBRID)
 	/bin/cp -r ext/lib/tk8.4 $(OSXHYBRID)
-
 
 mac-beta:
 	make distclean
