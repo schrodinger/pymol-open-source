@@ -55,7 +55,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoLeftMargin 3
 #define cOrthoBottomMargin 5
 
-#define WizardMargin 132
+#define WizardMargin 144
 
 #define ButModeMargin 20
 #define ControlMargin 0

@@ -36,7 +36,7 @@ struct _CButMode {
   Block *Block;
   CodeType Code[cButModeCount+1];
   int NCode;
-  int Mode[20];
+  int Mode[23];
   int NBut;
   float Rate;
   float Samples;
@@ -258,6 +258,21 @@ static void ButModeDraw(Block *block)
 
     y-=cButModeLineHeight;
 
+    TextSetColor(G,I->Block->TextColor);
+    TextSetColor(G,I->TextColor1);
+    TextDrawStrAt(G," SnglClk",x-8,y);
+    TextSetColor(G,I->TextColor2);
+    TextSetPos2i(G,x+64,y);
+    for(a=19;a<22;a++) {
+      mode = I->Mode[a];
+      if(mode<0)
+        TextDrawStr(G,BLANK_STR);
+      else
+        TextDrawStr(G,I->Code[mode]);
+    }
+    TextSetColor(G,I->Block->TextColor);
+    y-=cButModeLineHeight;
+
 
     TextSetColor(G,I->Block->TextColor);
     TextSetColor(G,I->TextColor1);
@@ -343,11 +358,15 @@ int ButModeInit(PyMOLGlobals *G)
     I->Caption[0] = 0;
 
     I->NCode = cButModeCount;
-    I->NBut = 19;
+    I->NBut = 22;
 
     for(a=0;a<I->NBut;a++) {
       I->Mode[a]=-1;
     }
+
+    I->Mode[19] = cButModeSeleToggle;
+    I->Mode[20] = cButModeCent; 
+    I->Mode[21] = cButModeMenu;
 
     strcpy(I->Code[cButModeRotXYZ],  "Rota ");
     strcpy(I->Code[cButModeRotZ],    "RotZ ");  
@@ -472,7 +491,18 @@ int ButModeTranslate(PyMOLGlobals *G,int button, int mod)
     break;
   case P_GLUT_DOUBLE_RIGHT:
     mode = 18;
-
+    mod = 0;
+    break;
+  case P_GLUT_SINGLE_LEFT:
+    mode = 19;
+    mod = 0;
+    break;
+  case P_GLUT_SINGLE_MIDDLE:
+    mode = 20;
+    mod = 0;
+    break;
+  case P_GLUT_SINGLE_RIGHT:
+    mode = 21;
     mod = 0;
     break;
   }

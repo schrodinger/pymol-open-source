@@ -53,6 +53,9 @@ void PyMOLDrawPixels(GLsizei width,
 #define P_GLUT_DOUBLE_LEFT 5
 #define P_GLUT_DOUBLE_MIDDLE 6
 #define P_GLUT_DOUBLE_RIGHT 7
+#define P_GLUT_SINGLE_LEFT 8
+#define P_GLUT_SINGLE_MIDDLE 9
+#define P_GLUT_SINGLE_RIGHT 10
 
 void PyMOLCheckOpenGLErr(char *pos);
 

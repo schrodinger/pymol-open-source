@@ -84,7 +84,8 @@ static Block *PopUpRecursiveFind(Block *block,int x, int y)
   return NULL;
 }
 /*========================================================================*/
-Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
+Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
+                int passive, PyObject *list,Block *parent)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -196,6 +197,9 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,PyObject *list
   I->Block->active=true;
   OrthoGrab(G,I->Block);
   OrthoDirty(G);
+
+  if(passive) 
+    PyMOL_SetPassive(G->PyMOL,true);
   return I->Block;
 #endif
 
@@ -348,6 +352,7 @@ static void PopUpFreeRecursiveChild(Block *block)
   PopUpFree(block);
 }
 
+
 /*========================================================================*/
 int PopUpRelease(Block *block,int button,int x,int y,int mod)
 {
@@ -460,7 +465,8 @@ int PopUpDrag(Block *block,int x,int y,int mod)
           if(I->ChildDelay>UtilGetSeconds(G)) {
             PyMOL_NeedFakeDrag(G->PyMOL); /* keep coming back here... */
           } else {
-            I->Child = PopUpNew(G,I->LastX-300,I->LastY,I->LastX,I->LastY,I->Sub[a],I->Block);
+            I->Child = PopUpNew(G,I->LastX-300,I->LastY,I->LastX,I->LastY,
+                                false,I->Sub[a],I->Block);
             {
               int target_y = block->rect.top - (PopUpConvertY(I,a,true)+ cPopUpCharMargin);
               CPopUp *child = (CPopUp*)(I->Child->reference);

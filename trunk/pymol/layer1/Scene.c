@@ -73,6 +73,7 @@ typedef struct {
   int y;
   int mod;
   double when;
+  int mode_override;
 } DeferredMouse;
 
 struct _CScene {
@@ -86,9 +87,12 @@ struct _CScene {
   int Width,Height;
   int Button;
   int LastX,LastY;
+  int StartX,StartY;
   int LastWinX,LastWinY;
   double LastClickTime;
   int LastButton;
+  int PossibleSingleClick;
+  double LastReleaseTime;
 
   float ViewNormal[3],LinesNormal[3];
   float Pos[3],Origin[3];
@@ -127,7 +131,7 @@ typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
 
-
+static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when);
 int SceneLoopDrag(Block *block,int x,int y,int mod);
 int SceneLoopRelease(Block *block,int button,int x,int y,int mod);
 
@@ -1030,6 +1034,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
   }
   I->CopyFlag=true;
 }
+
 /*========================================================================*/
 void SceneIdle(PyMOLGlobals *G)
 {
@@ -1040,6 +1045,21 @@ void SceneIdle(PyMOLGlobals *G)
   int rockFlag = false;
   float ang_cur,disp,diff;
 
+  if(I->PossibleSingleClick==2) {
+    double now = UtilGetSeconds(G);
+    double single_click_delay = 0.20;
+    double diff = now-I->LastReleaseTime;
+    if(diff>single_click_delay) {
+      /* post a single click processing event */
+      SceneDeferClickWhen(I->Block, 
+                          I->LastButton + P_GLUT_SINGLE_LEFT,
+                          I->LastWinX, I->LastWinY,
+                          I->LastClickTime); /* push a click onto the queue */
+      
+      I->PossibleSingleClick = 0;
+      OrthoDirty(G); /* force an update */
+    }
+  }
   if(MoviePlaying(G))
     {
 		renderTime = -I->LastFrameTime + UtilGetSeconds(G);
@@ -1499,11 +1519,22 @@ unsigned int *SceneReadTriplets(PyMOLGlobals *G,int x,int y,int w,int h,GLenum g
 
 }
 /*========================================================================*/
-static int SceneRelease(Block *block,int button,int x,int y,int mod) 
+static int SceneRelease(Block *block,int button,int x,int y,int mod, double when) 
 {
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
   ObjectMolecule *obj;
+  
+  I->LastReleaseTime = when;
+ 
+  if(I->PossibleSingleClick==1) {
+    double slowest_single_click = 0.25;
+    double diff = when-I->LastClickTime;
+    if((diff<0.0)||(diff>slowest_single_click))
+      I->PossibleSingleClick = 0;
+    else
+      I->PossibleSingleClick = 2;
+  }
   if(I->LoopFlag)
     return SceneLoopRelease(block,button,x,y,mod);
   if(I->SculptingFlag) {
@@ -1609,8 +1640,21 @@ static void SceneDoRoving(PyMOLGlobals *G,float old_front,float old_back,float o
 
 #define cDoubleTime 0.35
 
+static int SceneDoXYPick(PyMOLGlobals *G, int x, int y)
+{
+  CScene *I=G->Scene;
+  if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
+    SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
+  SceneDontCopyNext(G);
+  
+  I->LastPicked.ptr = NULL;
+  SceneRender(G,&I->LastPicked,x,y,NULL);
+  return (I->LastPicked.ptr!=NULL);
+  /* did we pick something? */
+}
 /*========================================================================*/
-static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
+static int SceneClick(Block *block,int button,int x,int y,
+                      int mod,double when)
 {
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
@@ -1620,40 +1664,47 @@ static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
   WordType selName = "";
   register int mode = 0; /* trying to work around something... */
   int atIndex;
-  int double_click = false;
   char empty_string[1] = "";
   char *sel_mode_kw = empty_string;
-  
-  if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(when-I->LastClickTime)<cDoubleTime)
-    {
-      int dx,dy;
-      dx = abs(I->LastWinX - x);
-      dy = abs(I->LastWinY - y);
-      if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
-        switch(button) {
-        case P_GLUT_LEFT_BUTTON:
-          button = P_GLUT_DOUBLE_LEFT;
-          break;
-        case P_GLUT_MIDDLE_BUTTON:
-          button = P_GLUT_DOUBLE_MIDDLE;
-          break;
-        case P_GLUT_RIGHT_BUTTON:
-          button = P_GLUT_DOUBLE_RIGHT;
-          break;
+  int is_single_click = (( button == P_GLUT_SINGLE_LEFT   ) ||
+                         ( button == P_GLUT_SINGLE_MIDDLE ) ||
+                         ( button == P_GLUT_SINGLE_RIGHT  ));
+
+  if(!is_single_click) {
+    if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&((when-I->LastClickTime)<cDoubleTime))
+      {
+        int dx,dy;
+        dx = abs(I->LastWinX - x);
+        dy = abs(I->LastWinY - y);
+        if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
+          switch(button) {
+          case P_GLUT_LEFT_BUTTON:
+            button = P_GLUT_DOUBLE_LEFT;
+            break;
+          case P_GLUT_MIDDLE_BUTTON:
+            button = P_GLUT_DOUBLE_MIDDLE;
+            break;
+          case P_GLUT_RIGHT_BUTTON:
+            button = P_GLUT_DOUBLE_RIGHT;
+            break;
+          }
+        }
       }
-    }
-  }
     
+    if(!mod)
+      I->PossibleSingleClick = 1;
+    else
+      I->PossibleSingleClick = 0;
+  }
+
   I->LastWinX = x;
   I->LastWinY = y;
   I->LastClickTime = when;
   I->LastButton = button;
   I->Threshold = 0;
 
-  if(double_click)
-    mode = cButModeMenu;
-  else
-    mode = ButModeTranslate(G,button,mod); 
+  mode = ButModeTranslate(G,button,mod); 
+
   I->Button=button;    
   I->SculptingSave = 0;
   switch(mode) {
@@ -1715,14 +1766,7 @@ static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
-    if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
-      SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
-    SceneDontCopyNext(G);
-
-    I->LastPicked.ptr = NULL;
-	 SceneRender(G,&I->LastPicked,x,y,NULL);
-	 if(I->LastPicked.ptr) { /* did we pick something? */
-
+    if(SceneDoXYPick(G,x,y)) {
 		obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
@@ -1735,7 +1779,9 @@ static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
           ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.index,buffer);
           ObjectMoleculeGetAtomSeleLog((ObjectMolecule*)obj,I->LastPicked.index,buf1,false);
           MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20,
-                           I->LastWinX,I->LastWinY,"pick_menu",buffer,buf1);
+                           I->LastWinX,I->LastWinY,
+                           is_single_click,
+                           "pick_menu",buffer,buf1);
           break;
         case cButModePickAtom1:
           if(obj&&obj->type==cObjectMolecule) {
@@ -1813,7 +1859,9 @@ static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
     } else { /* no atom picked */
       switch(mode) {
       case cButModeMenu:
-        MenuActivate0Arg(G,I->LastWinX,I->LastWinY,I->LastWinX,I->LastWinY,"main_menu");
+        MenuActivate0Arg(G,I->LastWinX,I->LastWinY,
+                         I->LastWinX,I->LastWinY,
+                         is_single_click,"main_menu");
         break;
       default:
         EditorInactivate(G);
@@ -1827,12 +1875,7 @@ static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
-    if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
-      SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
-    SceneDontCopyNext(G);
-    I->LastPicked.ptr = NULL;
-	 SceneRender(G,&I->LastPicked,x,y,NULL);
-	 if(I->LastPicked.ptr) {
+    if(SceneDoXYPick(G,x,y)) {
 		obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
@@ -1919,13 +1962,9 @@ static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
   case cButModeTorFrag:
   case cButModeRotFrag:
   case cButModeMoveAtom:
-    if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
-      SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
-    SceneDontCopyNext(G);
     if(I->StereoMode>1)
       x = x % (I->Width/2);
-	 SceneRender(G,&I->LastPicked,x,y,NULL);
-	 if(I->LastPicked.ptr) {
+    if(SceneDoXYPick(G,x,y)) {
       obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
@@ -1980,14 +2019,10 @@ static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
 
   case cButModeOrigAt:
   case cButModeCent:
-    if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
-      SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
-    SceneDontCopyNext(G);
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
-	 SceneRender(G,&I->LastPicked,x,y,NULL);
-	 if(I->LastPicked.ptr) {
+	 if(SceneDoXYPick(G,x,y)) {
 		obj=(CObject*)I->LastPicked.ptr;
 
       switch(obj->type) {
@@ -2140,6 +2175,10 @@ static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
 		OrthoRestorePrompt(G);
 	 }
   }
+
+  I->StartX = I->LastX;
+  I->StartY = I->LastY;
+
   return(1);
 }
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v) 
@@ -2546,7 +2585,7 @@ void SceneRovingUpdate(PyMOLGlobals *G)
 }
 
 /*========================================================================*/
-static int SceneDrag(Block *block,int x,int y,int mod)
+static int SceneDrag(Block *block,int x,int y,int mod,double when)
 {
   PyMOLGlobals *G = block->G;
   register CScene *I=G->Scene;
@@ -2561,12 +2600,21 @@ static int SceneDrag(Block *block,int x,int y,int mod)
   int adjust_flag;
   CObject *obj;
 
+  if(I->PossibleSingleClick) {
+    double slowest_single_click_drag = 0.05;
+    if((when-I->LastClickTime)>slowest_single_click_drag) {
+      I->PossibleSingleClick = 0;
+    }
+  }
+
   if(I->LoopFlag)
     return SceneLoopDrag(block,x,y,mod);
 
   mode = ButModeTranslate(G,I->Button,mod);
   
   y=y-I->Block->margin.bottom;
+
+
   scale = (float)I->Height;
   if(scale > I->Width)
 	 scale = (float)I->Width;
@@ -2934,6 +2982,15 @@ static int SceneDrag(Block *block,int x,int y,int mod)
     if(moved_flag)
       SceneDoRoving(G,old_front,old_back,old_origin,adjust_flag);
   }
+  if(I->PossibleSingleClick) {
+    int max_single_click_drag = 6;
+    int dx = abs(I->StartX-I->LastX);
+    int dy = abs(I->StartY-I->LastY);
+    if((dx>max_single_click_drag)||
+       (dy>max_single_click_drag)) {
+      I->PossibleSingleClick = false;
+    }
+  }
   return(1);
 }
 
@@ -2963,9 +3020,27 @@ int SceneDeferClick(Block *block, int button, int x, int y, int mod)
   return 1;
 }
 
+
+static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when)
+{
+  PyMOLGlobals *G=block->G;
+  DeferredMouse *dm = Calloc(DeferredMouse,1);
+  if(dm) {
+    DeferredInit(G,&dm->deferred);
+    dm->block = block;
+    dm->button = button;
+    dm->x = x;
+    dm->y = y;
+    dm->when = when;
+    dm->deferred.fn = (DeferredFn*)SceneDeferredClick;
+  }
+  OrthoDefer(G,&dm->deferred);
+  return 1;
+}
+
 static void SceneDeferredDrag(DeferredMouse *dm)
 {
-  SceneDrag(dm->block, dm->x, dm->y, dm->mod);
+  SceneDrag(dm->block, dm->x, dm->y, dm->mod, dm->when);
 }
 
 int SceneDeferDrag(Block *block,int x,int y,int mod)
@@ -2978,6 +3053,7 @@ int SceneDeferDrag(Block *block,int x,int y,int mod)
     dm->x = x;
     dm->y = y;
     dm->mod = mod;
+    dm->when = UtilGetSeconds(G);
     dm->deferred.fn = (DeferredFn*)SceneDeferredDrag;
   }
   OrthoDefer(G,&dm->deferred);
@@ -2986,7 +3062,7 @@ int SceneDeferDrag(Block *block,int x,int y,int mod)
 
 static void SceneDeferredRelease(DeferredMouse *dm)
 {
-  SceneRelease(dm->block, dm->button, dm->x, dm->y, dm->mod);
+  SceneRelease(dm->block, dm->button, dm->x, dm->y, dm->mod, dm->when);
 }
 
 int SceneDeferRelease(Block *block,int button,int x,int y,int mod) 
@@ -3000,6 +3076,7 @@ int SceneDeferRelease(Block *block,int button,int x,int y,int mod)
     dm->x = x;
     dm->y = y;
     dm->mod = mod;
+    dm->when = UtilGetSeconds(G);
     dm->deferred.fn = (DeferredFn*)SceneDeferredRelease;
   }
   OrthoDefer(G,&dm->deferred);
@@ -3075,6 +3152,8 @@ int  SceneInit(PyMOLGlobals *G)
     I->SculptingSave=0;
     
     I->LastClickTime = UtilGetSeconds(G);
+    I->PossibleSingleClick = 0;
+    I->LastReleaseTime = 0.0F;
     I->LastWinX = 0;
     I->LastWinY = 0;
     I->Threshold = 0;
