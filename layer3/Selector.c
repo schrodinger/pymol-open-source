@@ -1905,7 +1905,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     s=obj->AtomInfo[at].selEntry;
     if(SelectorIsMember(s,sele))
       {
-        I->Table[a].index=c; /* Mark records  */
+        I->Table[a].index=c; /* Mark records as to which atom they'll be */
         c++;
         if(!info_src) info_src = obj;
       }
@@ -1956,6 +1956,9 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   bond=NULL;
   
   ObjectMoleculeMerge(targ,atInfo,cs,false); /* will free atInfo */
+  /* cs->IdxToAtm will now have the reverse mapping from the new subset
+     to the new merged molecule */
+
   ObjectMoleculeExtendIndices(targ);
   ObjectMoleculeUpdateNonbonded(targ);
   
@@ -2037,7 +2040,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
                   a1 = cs1->AtmToIdx[at]; /* coord index in existing object */
                 if(a1>=0) {
                   copy3f(cs1->Coord+a1*3,cs2->Coord+c*3);
-                  a2 = cs->IdxToAtm[c]; /* actual merged atom index */
+                  a2 = cs->IdxToAtm[I->Table[a].index]; /* actual merged atom index */
                   cs2->IdxToAtm[c] = a2;
                   cs2->AtmToIdx[a2] = c;
                   c++;

@@ -341,7 +341,13 @@ void ColorInit(void)
   I->Color[I->NColor].Color[2]=0.9F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"sulfer");
+  strcpy(I->Color[I->NColor].Name,"sulfer"); /* legacy oops */
+  I->Color[I->NColor].Color[0]=1.0F;
+  I->Color[I->NColor].Color[1]=0.5F;
+  I->Color[I->NColor].Color[2]=0.0F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"sulfur");
   I->Color[I->NColor].Color[0]=1.0F;
   I->Color[I->NColor].Color[1]=0.5F;
   I->Color[I->NColor].Color[2]=0.0F;
