@@ -132,4 +132,4 @@ compileall:
 
 osx: 
 	cd layerOSX; $(MAKE)
-	$(MAKE) |& grep -v Precomp
+	$(MAKE) 
