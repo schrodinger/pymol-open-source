@@ -38,6 +38,12 @@ Z* -------------------------------------------------------------------
 
 #define cPI            3.14159265358979323846  /* pi */
 
+
+float get_random0to1f()
+{
+  return(rand()/(1.0+RAND_MAX));
+}
+
 float sqrt1f(float f) { /* no good as a macro because f is used twice */
   if(f>0.0)
 	 return(sqrt(f));
@@ -74,7 +80,8 @@ void get_divergent3f(float *src,float *dst)
   }
 }
 
-void get_random3f(float *x)
+
+void get_random3f(float *x) /* this needs to be fixed as in Tinker */
 {
   x[0]=0.5-(rand()/(1.0+RAND_MAX));
   x[1]=0.5-(rand()/(1.0+RAND_MAX));
@@ -112,6 +119,26 @@ void get_system2f3f(float *x,float *y,float *z) /* make system in direction of x
   normalize3f(x);
 }
 
+void scatter3f(float *v,float weight)
+{
+  float r[3];
+  get_random3f(r);
+  scale3f(r,weight,r);
+  add3f(r,v,v);
+  normalize3f(v);
+}
+
+void wiggle3f(float *v,float *p,float *s)
+{
+  float q[3];
+  q[0]=(float)cos((p[0]+p[1]+p[2])*s[1]);
+  q[1]=(float)cos((p[0]-p[1]+p[2])*s[1]);
+  q[2]=(float)cos((p[0]+p[1]-p[2])*s[1]);
+  scale3f(q,s[0],q);
+  add3f(q,v,v);
+  normalize3f(v);
+
+}
 #ifndef USE_VECTOR_MACROS
 
 void  set3f ( float *v1,float x,float y,float z )

@@ -843,9 +843,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cull_spheres, 1.0F);
 
-  SettingSet_f(I,cSetting_test1, 1.0F);
+  SettingSet_f(I,cSetting_test1, 0.0F);
 
-  SettingSet_f(I,cSetting_test2, 1.0F);
+  SettingSet_f(I,cSetting_test2, 0.0F);
 
   SettingSet_f(I,cSetting_surface_best, 0.2F);
 
@@ -1054,6 +1054,12 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_surface_miserable, 0.8F);
 
   SettingSet_f(I,cSetting_ray_opaque_background, 1.0F);
+
+  SettingSet_f(I,cSetting_transparent, 0.0F);
+
+  SettingSet_f(I,cSetting_ray_texture, 0.0F);
+
+  SettingSet_3f(I,cSetting_ray_texture_settings, 0.1F, 5.0F, 0.0F);
 
 }
 

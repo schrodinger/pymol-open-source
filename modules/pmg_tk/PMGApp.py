@@ -216,6 +216,8 @@ class PMGApp(AbstractApp):
                                          ("Raster3D Scene","*.r3d"),
                                          ("SDF File","*.sdf"),
                                          ("XPLOR Map","*.xplor"),
+                                         ("ChemDraw3D File","*.cc1"),
+                                         ("ChemDraw3D File","*.cc2"),
                                          ("Tinker XYZ File","*.xyz")
                                          ])
       if len(ofile):

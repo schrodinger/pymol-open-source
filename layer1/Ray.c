@@ -39,6 +39,8 @@ typedef float float3[3];
 typedef float float4[4];
 
 void RayRelease(CRay *I);
+void RayTexture(CRay *I,int mode,float *v);
+void RayTransparentf(CRay *I,float v);
 
 void RaySetup(CRay *I);
 void RayColor3fv(CRay *I,float *v);
@@ -77,6 +79,16 @@ void RayReflectSphere(CRay *I,RayInfo *r)
   
   normalize3f(r->surfnormal);
   
+  if(r->prim->texture)
+    switch(r->prim->texture) {
+    case 1:
+      scatter3f(r->surfnormal,r->prim->texture_param[0]);
+      break;
+    case 2:
+      wiggle3f(r->surfnormal,r->impact,r->prim->texture_param);
+      break;
+    }
+
   r->dotgle = -r->surfnormal[2]; 
   
   r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
@@ -428,7 +440,15 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   float fog_start=0.0;
   float gamma,inp,sig=1.0;
   double now;
-
+  float persist,persist_inv;
+  float new_front;
+  int pass;
+  unsigned int last_pixel=0,*pixel;
+  int exclude;
+  float lit;
+  int backface_cull;
+  
+  backface_cull = (int)SettingGet(cSetting_backface_cull);
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
@@ -565,122 +585,166 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
         r1.base[0]=(((float)x)/width)*I->Range[0]+I->Volume[0];
         for(y=0;y<height;y++)
           {
+            pixel = image+((width)*y)+x;
+            exclude = -1;
             r1.base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
-            
-            i=BasisHit(I->Basis+1,&r1,-1,I->Vert2Prim,I->Primitive,false,front,back);
-            
-            if(i>=0) {
-
-              if(r1.prim->type==cPrimTriangle) {
-					 BasisReflectTriangle(I->Basis+1,&r1,i,fc);
-				  } else {
-					 RayReflectSphere(I,&r1);/*,zRay,sphere,dist,surf,impact,reflect,&dotgle);*/
-					 if(r1.prim->type==cPrimCylinder) {
-						ft = r1.tri1;
-						fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
-						fc[1]=(r1.prim->c1[1]*(1-ft))+(r1.prim->c2[1]*ft);
-						fc[2]=(r1.prim->c1[2]*(1-ft))+(r1.prim->c2[2]*ft);
-					 } else {
-						fc[0]=r1.prim->c1[0];
-						fc[1]=r1.prim->c1[1];
-						fc[2]=r1.prim->c1[2];
-					 }
-				  }
-
-              dotgle=-r1.dotgle;
-              if(dotgle<0.0) dotgle=0.0;
-              direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
-              
-              matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
-              
-              if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,true,0.0,0.0)<0) {
-					 
-					 dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
+            persist = 1.0;
+            pass = 0;
+            new_front=front;
+            while((persist>0.0001)&&(pass<25)) {
+              i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,new_front,back);
+              if(i>=0) {
+                new_front=r1.dist;
+                if(r1.prim->type==cPrimTriangle) {
+                  BasisReflectTriangle(I->Basis+1,&r1,i,fc);
+                } else {
+                  RayReflectSphere(I,&r1);/*,zRay,sphere,dist,surf,impact,reflect,&dotgle);*/
+                  if(r1.prim->type==cPrimCylinder) {
+                    ft = r1.tri1;
+                    fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
+                    fc[1]=(r1.prim->c1[1]*(1-ft))+(r1.prim->c2[1]*ft);
+                    fc[2]=(r1.prim->c1[2]*(1-ft))+(r1.prim->c2[2]*ft);
+                  } else {
+                    fc[0]=r1.prim->c1[0];
+                    fc[1]=r1.prim->c1[1];
+                    fc[2]=r1.prim->c1[2];
+                  }
+                }
+                dotgle=-r1.dotgle;
+                              
                 if(dotgle<0.0) dotgle=0.0;
-                reflect_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
-                excess=pow(dotgle,SettingGet(cSetting_spec_power))*
-                  SettingGet(cSetting_spec_reflect);
+                direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
+                
+                matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
+                
+                if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,true,0.0,0.0)>=0) {
+                  lit=pow(r2.prim->trans,0.5);
+                } else {
+                  lit=1.0;
+                }
+                if(lit>0.0) {
+                  dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
+                  
+                  if(dotgle<0.0) dotgle=0.0;
+                  reflect_cmp=lit*(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
+                  excess=pow(dotgle,SettingGet(cSetting_spec_power))*
+                    SettingGet(cSetting_spec_reflect)*lit;
+                } else {
+                  excess=0.0;
+                  reflect_cmp=0.0;
+                }
+                
+                bright=ambient+(1.0-ambient)*(direct*direct_cmp+
+                                              (1.0-direct)*direct_cmp*lreflect*reflect_cmp);
+                
+                if(bright>1.0) bright=1.0;
+                if(bright<0.0) bright=0.0;
+                
+                fc[0] = (bright*fc[0]+excess);
+                fc[1] = (bright*fc[1]+excess);
+                fc[2] = (bright*fc[2]+excess);
+                
+                if (fogFlag) {
+                  ffact = fog*(front-r1.dist)/(front-back);
+                  if(fogRangeFlag) {
+                    ffact = (ffact-fog_start)/(1.0-fog_start);
+                  }
+                  if(ffact<0.0)
+                    ffact=0.0;
+                  if(ffact>1.0)
+                    ffact=0.0;
+                  ffact1m = 1.0-ffact;
+                  if(opaque_back) {
+                    fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
+                    fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
+                    fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
+                  } else {
+                    fc[3]=1.0-ffact;
+                  }
+                }
+                
+                inp=(fc[0]+fc[1]+fc[2])/3.0;
+                if(inp<R_SMALL4) 
+                  sig=1.0;
+                else {
+                  sig = pow(inp,gamma)/inp;
+                }
+                
+                c[0]=(uint)(sig*fc[0]*255.0F);
+                c[1]=(uint)(sig*fc[1]*255.0F);
+                c[2]=(uint)(sig*fc[2]*255.0F);
+                
+                if(c[0]>255) c[0]=255;
+                if(c[1]>255) c[1]=255;
+                if(c[2]>255) c[2]=255;
+                /*			{ int a1,b1,c1;
+                           if(MapInsideXY(I->Basis[1].Map,base,&a1,&b1,&c1))				
+                           {
+                           c[0]=255.0*((float)a1)/I->Basis[1].Map->iMax[0];
+                           c[1]=255.0*((float)b1)/I->Basis[1].Map->iMax[1];
+                           c[2]=0xFF&(c[0]*c[1]);
+                           }}
+                */
+                
+                if(opaque_back) { 
+                  if(I->BigEndian) {
+                    *(image+((width)*y)+x)=
+                      fore_mask|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
+                  } else {
+                    *(image+((width)*y)+x)=
+                      fore_mask|(c[2]<<16)|(c[1]<<8)|c[0];
+                  }
+                } else { /* use alpha channel for fog with transparent backgrounds */
+                  c[3] = (uint)(fc[3]*255.0F);
+                  if(c[3]>255) c[3]=255;
+                  if(I->BigEndian) {
+                    *(pixel) = (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
+                  } else {
+                    *(pixel) = (c[3]<<24)|(c[2]<<16)|(c[1]<<8)|c[0];
+                  }
+                }
               } else {
-                excess=0.0;
-                reflect_cmp=0.0;
-              }
-				  
-              
-              bright=ambient+(1.0-ambient)*(direct*direct_cmp+
-                                            (1.0-direct)*direct_cmp*lreflect*reflect_cmp);
-              
-              if(bright>1.0) bright=1.0;
-              if(bright<0.0) bright=0.0;
-				  
-				  fc[0] = (bright*fc[0]+excess);
-              fc[1] = (bright*fc[1]+excess);
-              fc[2] = (bright*fc[2]+excess);
-              
-              if (fogFlag) {
-                ffact = fog*(front-r1.dist)/(front-back);
-                if(fogRangeFlag) {
-                  ffact = (ffact-fog_start)/(1.0-fog_start);
-                }
-                if(ffact<0.0)
-                  ffact=0.0;
-                if(ffact>1.0)
-                  ffact=0.0;
-                ffact1m = 1.0-ffact;
-                if(opaque_back) {
-                  fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
-                  fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
-                  fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
-                } else {
-                  fc[3]=1.0-ffact;
-                }
+                *(image+((width)*y)+x)=
+                  background;
               }
 
-              inp=(fc[0]+fc[1]+fc[2])/3.0;
-              if(inp<R_SMALL4) 
-                sig=1.0;
-              else {
-                sig = pow(inp,gamma)/inp;
-              }
-
-				  c[0]=(uint)(sig*fc[0]*255.0F);
-				  c[1]=(uint)(sig*fc[1]*255.0F);
-				  c[2]=(uint)(sig*fc[2]*255.0F);
-
-              if(c[0]>255) c[0]=255;
-              if(c[1]>255) c[1]=255;
-              if(c[2]>255) c[2]=255;
-              /*			{ int a1,b1,c1;
-                        if(MapInsideXY(I->Basis[1].Map,base,&a1,&b1,&c1))				
-                        {
-                        c[0]=255.0*((float)a1)/I->Basis[1].Map->iMax[0];
-                        c[1]=255.0*((float)b1)/I->Basis[1].Map->iMax[1];
-                        c[2]=0xFF&(c[0]*c[1]);
-                        }}
-              */
-              
-              if(opaque_back) { 
-                if(I->BigEndian) {
-                  *(image+((width)*y)+x)=
-                    fore_mask|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
-                } else {
-                  *(image+((width)*y)+x)=
-                    fore_mask|(c[2]<<16)|(c[1]<<8)|c[0];
-                }
-              } else { /* use alpha channel for fog in transparent images */
-                c[3] = (uint)(fc[3]*255.0F);
+              if(pass) { /* average all four channels */
+                persist_inv = 1.0-persist;
+                fc[0] = (0xFF&((*pixel)>>24))*persist + (0xFF&(last_pixel>>24))*persist_inv;
+                fc[1] = (0xFF&((*pixel)>>16))*persist + (0xFF&(last_pixel>>16))*persist_inv;
+                fc[2] = (0xFF&((*pixel)>>8))*persist + (0xFF&(last_pixel>>8))*persist_inv;
+                fc[3] = (0xFF&((*pixel)))*persist + (0xFF&(last_pixel))*persist_inv;
+                
+                c[0]=(uint)(fc[0]);
+                c[1]=(uint)(fc[1]);
+                c[2]=(uint)(fc[2]);
+                c[3]=(uint)(fc[3]);
+                
+                if(c[0]>255) c[0]=255;
+                if(c[1]>255) c[1]=255;
+                if(c[2]>255) c[2]=255;
                 if(c[3]>255) c[3]=255;
-                if(I->BigEndian) {
-                  *(image+((width)*y)+x)=
-                  (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
-                } else {
-                  *(image+((width)*y)+x)=
-                    (c[3]<<24)|(c[2]<<16)|(c[1]<<8)|c[0];
+                
+                *(pixel) = (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
+              }
+              if(i>=0) { 
+                if(!backface_cull) 
+                  persist = persist * r1.prim->trans;
+                else {
+                  if((persist<0.9999)&&(r1.prim->trans)) { /* don't combine transparent surfaces */
+                    *(pixel)=last_pixel;
+                  } else {
+                    persist = persist * r1.prim->trans;
+                  }
                 }
               }
-            } else {
-              
-              *(image+((width)*y)+x)=
-                background;
+              if(i<0) {
+                break; /* hit nothing */
+              } else {
+                last_pixel = (*pixel);
+                exclude = i;
+                pass++;
+              }
             }
           }
       }
@@ -888,6 +952,19 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   
 
 }
+
+/*========================================================================*/
+void RayTexture(CRay *I,int mode,float *v)
+{
+  I->Texture=mode;
+  if(v) 
+    copy3f(v,I->TextureParam);
+}
+/*========================================================================*/
+void RayTransparentf(CRay *I,float v)
+{
+  I->Trans=v;
+}
 /*========================================================================*/
 void RayColor3fv(CRay *I,float *v)
 {
@@ -907,7 +984,9 @@ void RaySphere3fv(CRay *I,float *v,float r)
 
   p->type = cPrimSphere;
   p->r1=r;
-
+  p->trans=0.0;
+  p->texture=I->Texture;
+  copy3f(I->TextureParam,p->texture_param);
   vv=p->v1;
   (*vv++)=(*v++);
   (*vv++)=(*v++);
@@ -931,6 +1010,9 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 
   p->type = cPrimCylinder;
   p->r1=r;
+  p->trans=0.0;
+  p->texture=I->Texture;
+  copy3f(I->TextureParam,p->texture_param);
 
   vv=p->v1;
   (*vv++)=(*v1++);
@@ -977,6 +1059,9 @@ void RayTriangle3fv(CRay *I,
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimTriangle;
+  p->trans=I->Trans;
+  p->texture=I->Texture;
+  copy3f(I->TextureParam,p->texture_param);
 
   /* determine exact triangle normal */
   add3f(n1,n2,nx);
@@ -1067,6 +1152,9 @@ CRay *RayNew(void)
   test = 0xFF000000;
   testPtr = (unsigned char*)&test;
   I->BigEndian = *testPtr&&1;
+  I->Trans=0.0;
+  I->Texture=0;
+  zero3f(I->TextureParam);
 
   PRINTFB(FB_Ray,FB_Blather) 
     " RayNew: BigEndian = %d\n",I->BigEndian
@@ -1083,6 +1171,8 @@ CRay *RayNew(void)
   I->fSphere3fv=RaySphere3fv;
   I->fCylinder3fv=RayCylinder3fv;
   I->fTriangle3fv=RayTriangle3fv;
+  I->fTexture=RayTexture;
+  I->fTransparentf=RayTransparentf;
   
   return(I);
 }

@@ -77,6 +77,7 @@ Z* -------------------------------------------------------------------
 #define cRepInvAll    100
 
 struct CoordSet;
+struct Object;
 
 typedef struct Rep {
   void            (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
@@ -84,6 +85,8 @@ typedef struct Rep {
   void        (*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
   void              (*fFree)(struct Rep* I);
   int MaxInvalid,Active;
+  struct Object *obj;
+  struct CoordSet *cs;
   Pickable *P;
   /* private */
   void        (*fRecolor)(struct Rep *I,struct CoordSet *cs);

@@ -107,6 +107,8 @@ void RepInit(Rep *I)
   I->fSameVis = NULL;
   I->fNew = NULL;
   I->P=NULL;
+  I->cs = NULL;
+  I->obj = NULL;
   I->MaxInvalid = 0;
 }
 /*========================================================================*/

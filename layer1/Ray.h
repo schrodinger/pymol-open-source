@@ -29,6 +29,8 @@ typedef struct CRay {
 							  float *v1,float *v2,float *v3,
 							  float *n1,float *n2,float *n3,
 							  float *c1,float *c2,float *c3);
+  void (*fTexture)(struct CRay *ray,int mode,float *par);
+  void (*fTransparentf)(struct CRay *ray,float t);
   CPrimitive *Primitive;
   int NPrimitive;
   CBasis *Basis;
@@ -39,6 +41,9 @@ typedef struct CRay {
   float Volume[6];
   float Range[3];
   int BigEndian;
+  int Texture;
+  float TextureParam[3];
+  float Trans;
 } CRay;
 
 CRay *RayNew(void);

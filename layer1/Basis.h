@@ -29,6 +29,9 @@ typedef struct {
   float n0[3],n1[3],n2[3],n3[3];
   float c1[3],c2[3],c3[3];
   float r1,l1; 
+  float trans;
+  int texture;
+  float texture_param[3];
 } CPrimitive;
 
 typedef struct {

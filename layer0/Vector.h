@@ -28,6 +28,8 @@ typedef int Vector3i[3];
 typedef float Matrix33f[3][3]; 
 typedef double Matrix33d[3][3]; 
 
+float get_random0to1f(void);
+
 float deg_to_rad(float angle);
 float rad_to_deg(float angle);
 
@@ -39,6 +41,9 @@ void normalize3d( double *v1 );
 
 void get_divergent3f(float *src,float *dst);
 void get_random3f(float *x);
+void scatter3f(float *v,float weight);
+void wiggle3f(float *v,float *p,float *s);
+
 void get_system3f(float *x,float *y,float *z); /* make random system */
 void get_system1f3f(float *x,float *y,float *z); /* make system in direction of x */
 void get_system2f3f(float *x,float *y,float *z); /* make system in direction of x, perp to x,y */
