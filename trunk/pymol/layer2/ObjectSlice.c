@@ -641,9 +641,11 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
         subtract3f(pt,v3,n0);
         add3f(pt,mov,n1);
         subtract3f(n1,v3,n1);
+
         normalize3f(n0);
         normalize3f(n1);
         cross_product3f(n0,n1,cp);
+        
         theta = (float)asin(length3f(cp));
 
         normalize23f(cp,n2);        
@@ -783,12 +785,15 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
                 offset = *(strip++);
                 switch(offset) {
                 case -1:
-                  glBegin(GL_TRIANGLES);
+                  if(!strip_active) {
+                    glBegin(GL_TRIANGLES);
+                  }
                   strip_active=true;
                   tri_count = 0;
                   break;
                 case -2:
-                  glEnd();
+                  if(strip_active)
+                    glEnd();
                   strip_active=false;
                   break;
                 default:
@@ -877,11 +882,13 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
                   offset = *(strip++);
                   switch(offset) {
                   case -1:
-                    glBegin(GL_TRIANGLE_STRIP);
+                    if(!strip_active) 
+                      glBegin(GL_TRIANGLE_STRIP);
                     strip_active=true;
                     break;
                   case -2:
-                    glEnd();
+                    if(strip_active)
+                      glEnd();
                     strip_active=false;
                     break;
                   default:
@@ -1502,7 +1509,7 @@ void ObjectSliceStateInit(ObjectSliceState *oss)
   oss->flags=NULL;
   oss->colors=NULL;
   oss->strips=NULL;
-  oss->spacing = 1.0F;
+  oss->spacing = 0.5F;
 
   oss->n_points = 0;
   oss->n_strips = 0;
