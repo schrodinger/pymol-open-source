@@ -56,7 +56,7 @@ COMMANDS
    MAPS          isomesh   isodot
    DISPLAY       cls       viewport  splash    
    SELECTIONS    select    mask
-   SETTINGS      set
+   SETTINGS      set       button
    ATOMS         alter     alter_state
    EDITING       create    replace   remove    h_fill   remove_picked
                  edit      bond      unbond    h_add    fuse       
@@ -3280,6 +3280,32 @@ def paste():
    return r
 
 def button(but,mod,act):
+   '''
+DESCRIPTION
+  
+   "button" can be used to redefine what the mouse buttons do.
+   
+USAGE
+ 
+   button <button-code>,<modifier>,<action>
+ 
+PYMOL API
+ 
+   cmd.button( string button-code, string modifier, string action )
+ 
+NOTES
+
+   button-code: L, M, R
+   modifers:    None, Shft, Ctrl, CtSh
+   actions:     Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
+                lb,   mb,   rb,   +lb,  +mb,  +rb,
+                PkAt, PkBd, RotF, TorF, MovF, Orig
+
+   Switching from visualization to editing mode will redefine the
+   buttons, so don't use the built-in switch if you want to preserve
+   your custom configuration.
+
+'''
    r=1
    try:
       lock()
