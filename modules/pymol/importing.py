@@ -21,7 +21,8 @@ if __name__=='pymol.importing':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
         _feedback,fb_module,fb_mask, \
         file_ext_re,safe_oname_re, \
-        _load, is_list, space_sc
+        _load, is_list, space_sc, safe_list_eval
+   
    import selector
    try:
       from pymol import m4x
@@ -286,7 +287,7 @@ SEE ALSO
          stop = int(stop)
          max = int(max)
          image = int(image)
-         shift = eval(shift) # dangerous
+         shift = safe_list_eval(str(shift)) # dangerous
          if is_list(shift):
             shift = [float(shift[0]),float(shift[1]),float(shift[2])]
          else:

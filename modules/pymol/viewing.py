@@ -29,8 +29,9 @@ if __name__=='pymol.viewing':
         _feedback,fb_module,fb_mask, \
         repres,repres_sc, is_string, is_list, \
         toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
-        palette_dict ,palette_sc, window_dict, window_sc
-
+        palette_dict ,palette_sc, window_dict, window_sc, \
+        safe_list_eval
+   
    rep_list = [ "lines","sticks","spheres",
                 "dots","surface","mesh",
                 "nonbonded", "nb_spheres",
@@ -221,7 +222,7 @@ SEE ALSO
          if position==None: position=(0.0,0.0,0.0)
          else:
             if cmd.is_string(position):
-               position = eval(position)
+               position = safe_list_eval(position)
             selection = ''
          r = _cmd.origin(selection,str(object),
                          (float(position[0]),
@@ -1643,7 +1644,7 @@ EXAMPLES
       '''
       r = 1
       if cmd.is_string(rgb):
-         rgb = eval(rgb)
+         rgb = safe_list_eval(rgb)
       if not (isinstance(rgb,types.ListType) or isinstance(rgb,types.TupleType)):
          print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
       elif len(rgb)!=3:

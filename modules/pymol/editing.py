@@ -19,6 +19,7 @@ if __name__=='pymol.editing':
 
    import cmd
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
+   from cmd import safe_list_eval
    from chempy import cpv
 
    def sculpt_purge():
@@ -1111,7 +1112,7 @@ NOTES
       '''
       r = 1
       if cmd.is_string(vector):
-         vector = eval(vector)
+         vector = safe_list_eval(vector)
       if not cmd.is_list(vector):
          print "Error: bad vector."
          raise QuietException
@@ -1188,7 +1189,7 @@ NOTES
       elif axis in ['z','Z']:
          axis = [0.0,0.0,1.0]
       else:
-         axis = eval(axis)
+         axis = safe_list_eval(str(axis))
       if not cmd.is_list(axis):
          print "Error: bad axis."
          raise QuietException
@@ -1198,7 +1199,7 @@ NOTES
          view = cmd.get_view(0)
          if origin!=None:
             if cmd.is_string(origin):
-               origin = eval(origin) # should be a sequence of floats
+               origin = safe_list_eval(origin) # should be a sequence of floats
             origin = [float(origin[0]),float(origin[1]),float(origin[2])]
          else:
             origin = [view[12],view[13],view[14]]

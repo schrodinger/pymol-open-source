@@ -113,6 +113,13 @@ if __name__=='pymol.cmd':
    reaper = None
    safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
    sanitize_list_re = re.compile(r"[^0-9\.\-\[\]\,]+")
+   sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9\'\"\.\-\[\]\,]+")
+
+   def safe_list_eval(st):
+      return eval(sanitize_list_re.sub('',st))
+
+   def safe_alpha_list_eval(st):
+      return eval(sanitize_alpha_list_re.sub('',st))
    
    QuietException = parsing.QuietException
 
@@ -1440,10 +1447,10 @@ SEE ALSO
       #       which make much better use of built-in python features.
       'abort'         : [ dummy             , 0 , 0 , ''  , parsing.ABORT ],
       'accept'        : [ accept            , 0 , 0 , ''  , parsing.STRICT ],
-      'alias'         : [ alias             , 0 , 0 , ''  , parsing.LITERAL1 ],
+      'alias'         : [ alias             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
       'align'         : [ align             , 0 , 0 , ''  , parsing.STRICT ],
-      'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ],
-      'alter_state'   : [ alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ],
+      'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
+      'alter_state'   : [ alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
       'assert'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
       'attach'        : [ attach            , 0 , 0 , ''  , parsing.STRICT ],
       'backward'      : [ backward          , 0 , 0 , ''  , parsing.STRICT ],
@@ -1535,9 +1542,9 @@ SEE ALSO
       'isolevel'      : [ isolevel           , 0 , 0 , '' , parsing.STRICT ],      
       'isomesh'       : [ isomesh           , 0 , 0 , ''  , parsing.LEGACY ],
       'isosurface'    : [ isosurface        , 0 , 0 , ''  , parsing.LEGACY ],   
-      'iterate'       : [ iterate           , 0 , 0 , ''  , parsing.LITERAL1 ],
-      'iterate_state' : [ iterate_state     , 0 , 0 , ''  , parsing.LITERAL2 ],
-      'label'         : [ label             , 0 , 0 , ''  , parsing.LITERAL1 ],
+      'iterate'       : [ iterate           , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
+      'iterate_state' : [ iterate_state     , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
+      'label'         : [ label             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
       'load'          : [ load              , 0 , 0 , ''  , parsing.STRICT ],
       'space'         : [ space             , 0 , 0 , ''  , parsing.STRICT ],
       'load_embedded' : [ load_embedded     , 0 , 0 , ''  , parsing.STRICT ],
@@ -1601,13 +1608,13 @@ SEE ALSO
 #      'rgbfunction'   : [ rgbfunction       , 0 , 0 , ''  , parsing.LEGACY ],         
       'rock'          : [ rock              , 0 , 0 , ''  , parsing.STRICT ],
       'rotate'        : [ rotate            , 0 , 0 , ''  , parsing.STRICT ],   
-      'run'           : [ helping.run       , 1 , 2 , ',' , parsing.RUN    ],
+      'run'           : [ helping.run       , 1 , 2 , ',' , parsing.RUN    ], # insecure
       'rms'           : [ rms               , 0 , 0 , ''  , parsing.STRICT ],
       'rms_cur'       : [ rms_cur           , 0 , 0 , ''  , parsing.STRICT ],
       'save'          : [ save              , 0 , 0 , ''  , parsing.STRICT ],
       'scene'         : [ scene             , 0 , 0 , ''  , parsing.STRICT ],
       'sculpt_purge'  : [ sculpt_purge      , 0 , 0 , ''  , parsing.STRICT ],   
-      'sculpt_deactivate': [ sculpt_deactivate , 0 , 0 , ''  , parsing.STRICT ],
+      'sculpt_deactivate': [ sculpt_deactivate,0, 0 , ''  , parsing.STRICT ],
       'sculpt_activate': [ sculpt_activate  , 0 , 0 , ''  , parsing.STRICT ],
       'sculpt_iterate': [ sculpt_iterate    , 0 , 0 , ''  , parsing.STRICT ],
       'spectrum'      : [ spectrum          , 0 , 0 , ''  , parsing.STRICT ],
@@ -1627,7 +1634,7 @@ SEE ALSO
 #      'slice_unlock'  : [ slice_unlock      , 0 , 0 , ''  , parsing.LEGACY ],
       'smooth'        : [ smooth            , 0 , 0 , ''  , parsing.STRICT ],
       'sort'          : [ sort              , 0 , 0 , ''  , parsing.STRICT ],
-      'spawn'         : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],
+      'spawn'         : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ], # insecure
       'spheroid'      : [ spheroid          , 0 , 0 , ''  , parsing.STRICT ],
       'splash'        : [ splash            , 0 , 0 , ''  , parsing.STRICT ],
       'split_states'  : [ split_states      , 0 , 0 , ''  , parsing.STRICT ],
