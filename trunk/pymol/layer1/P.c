@@ -1127,7 +1127,7 @@ void PInit(void)
 	/* sglite */
 	initExtensionClass();
 	initsglite();
-   init_champ(void);
+    init_champ();
 	/* initialize numeric python */
 	init_numpy();
 	initmultiarray();
