@@ -326,7 +326,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int antialias;
   RayInfo r1,r2;
   double timing;
-  int fogFlag;
+  int fogFlag=0;
   float fog;
   float *bkrd;
 

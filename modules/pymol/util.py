@@ -79,10 +79,10 @@ def mrock(fir,las,dsp,pha,loop):
    a = 0
    while a<=n:
       deg = (math.sin(ang)*dsp)
-      cmd = "mdo %d:turn y,%8.3f;turn y,%8.3f" % (fir+a,last,deg)
+      com = "mdo %d:turn y,%8.3f;turn y,%8.3f" % (fir+a,last,deg)
       last = -deg;
-      print cmd
-      cmd.do(cmd)
+      print com
+      cmd.do(com)
       ang = ang + step
       a = a + 1
 
@@ -95,9 +95,9 @@ def mroll(fir,las,loop):
    a = 0
    deg = (180*step/math.pi)
    while a<=n:
-      cmd = "mdo %d:turn y,%8.3f" % (fir+a,deg)
-      print cmd
-      cmd.do(cmd)
+      com = "mdo %d:turn y,%8.3f" % (fir+a,deg)
+      print com
+      cmd.do(com)
       a = a + 1
 
 def hbond(a,b,cutoff=3.3):
