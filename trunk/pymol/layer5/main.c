@@ -162,15 +162,8 @@ static void MainDraw(void)
       if(PMGUI) glutSwapBuffers();
       I->SwapFlag=false;
     }
-  if(FinalInitFlag)
-	 {
-		FinalInitFlag=0;
-      PBlockAndUnlockAPI();
-      PRunString("launch_gui()");
-      PRunString("exec_deferred()");
-      PLockAPIAndUnblock();
-    }
   PUnlockAPIAsGlut();
+
 
 }
 /*========================================================================*/
@@ -371,6 +364,19 @@ void MainBusyIdle(void)
     PLockAPIAsGlut();
   }
   PUnlockAPIAsGlut();
+
+  if(FinalInitFlag)
+	 {
+      FinalInitFlag=FinalInitFlag+1;
+      if(FinalInitFlag>=10) {
+        FinalInitFlag=0;
+        PBlock();
+        PRunString("launch_gui()");
+        PRunString("exec_deferred()");
+        PUnblock();
+      }
+    }
+
 }
 
 /*========================================================================*/

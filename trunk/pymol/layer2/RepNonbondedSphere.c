@@ -89,7 +89,7 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 Rep *RepNonbondedSphereNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,c,d,a1,c1;
+  int a,c,d,c1;
   float *v,*v0,*vc;
   float nonbonded_size;
   int *q, *s;
@@ -98,32 +98,26 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   int *active=NULL;
   int visFlag;
   AtomInfoType *ai;
+  int nSphere = 0;
   OOAlloc(RepNonbondedSphere);
   obj = cs->Obj;
 
   active = Alloc(int,cs->NIndex);
-
+  
   for(a=0;a<cs->NIndex;a++) {
     ai = obj->AtomInfo+cs->IdxToAtm[a];
     active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbondedSphere ]);
+    if(active[a]) nSphere++;
   }
-
-  visFlag=false;
-  for(a=0;a<cs->NIndex;a++)
-    if(active[a]) {
-      visFlag=true;
-      break;
-    }
-  if((!visFlag)) {
+  if(!nSphere) {
     OOFreeP(I);
     FreeP(active);
     return(NULL); /* skip if no dots are visible */
   }
-
+  
   nonbonded_size = SettingGet(cSetting_nonbonded_size);
-
-  RepInit(&I->R);
- /* get current dot sampling */
+  
+  /* get current dot sampling */
   ds = (int)SettingGet(cSetting_dot_density);
   ds=1;
   if(ds<0) ds=0;
@@ -134,23 +128,28 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   default: sp=Sphere3; break;
   }
 
+  RepInit(&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepNonbondedSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepNonbondedSphereFree;
   I->R.fRecolor=NULL;
+  I->N=0;
+  I->NC=0;
+  I->V=NULL;
+  I->VC=NULL;
+  I->SP=NULL;
 
   /* raytracing primitives */
-  
-  I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
+
+  I->VC=(float*)mmalloc(sizeof(float)*nSphere*7);
   ErrChkPtr(I->VC);
   I->NC=0;
 
   v=I->VC; 
+
   for(a=0;a<cs->NIndex;a++)
 	 {
       if(active[a])
 		  {
-          a1 = cs->IdxToAtm[a];
-
 			 I->NC++;
 			 c1=*(cs->Color+a);
 			 vc = ColorGet(c1); /* save new color */
@@ -170,20 +169,19 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   else
 	 I->VC=(float*)mrealloc(I->VC,1);
 
-  I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(3+sp->NVertTot*6));
+  I->V=(float*)mmalloc(sizeof(float)*nSphere*(3+sp->NVertTot*6));
   ErrChkPtr(I->V);
-  
+
   /* rendering primitives */
 
   I->N=0;
   I->SP=sp;
   v=I->V;
+
   for(a=0;a<cs->NIndex;a++)
 	 {
 		if(active[a])
 		  {
-          a1 = cs->IdxToAtm[a];
-
 			 c1=*(cs->Color+a);
 			 v0 = cs->Coord+3*a;
 			 vc = ColorGet(c1);
@@ -216,6 +214,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
     I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
   else
     I->V=(float*)mrealloc(I->V,1);
+
   FreeP(active);
   return((void*)(struct Rep*)I);
 }

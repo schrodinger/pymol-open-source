@@ -8,7 +8,7 @@ import string
 
 # list of tests to run ...
 
-standard_tests = ['cmd', 'chempy']
+standard_tests = ['cmd', 'chempy', 'pc' ]
 
 # set module path for generic python stuff
 
@@ -36,7 +36,7 @@ inp = "inp"
 if not os.path.exists(cmp):
    os.mkdir(cmp)
 
-if len(argv):
+if len(argv)>1:
    tests = argv
 else:
    tests = standard_tests

@@ -1,0 +1,42 @@
+PyMOL Molecular Graphics System, Version 0.31.
+Copyright (C) 1998-2000 by DeLano Scientific.
+All Rights Reserved.
+ 
+Principle Author:  Warren L. DeLano, Ph.D.
+ 
+Major Authors and Contributors:
+ 
+      Ralf W. Grosse-Kunstleve, Ph.D.
+ 
+This software is open source and freely available.
+Updates can be found at "http://www.pymol.org".
+ 
+Enter "help commands" for a list of commands.
+Enter "help <command-name>" for information on a specific command.
+ 
+Hit TAB to toggle text or type "cls" to clear.
+ 
+ GL based graphics front end:
+  GL_VENDOR: SGI
+  GL_RENDERER: IMPACT/2/2/4
+  GL_VERSION: 1.1 Irix 6.5
+PyMOL>@inp/cmd_gap01.pml
+ Executive: object "wat" created.
+ Executive: object "prot" created.
+ Selector: selection "t1" defined with 549 atoms.
+ Selector: found 537 atoms.
+ Executive: object "t2" created.
+ Selector: found 504 atoms.
+ Executive: object "t3" created.
+ Selector: found 492 atoms.
+ Executive: object "t4" created.
+ Selector: found 489 atoms.
+ Executive: object "t5" created.
+ Save: wrote "cmp/cmd_gap01.01.pdb".
+ ObjectMolecule: updating state 1 of "wat".
+ ObjectMolecule: updating state 1 of "prot".
+ ObjectMolecule: updating state 1 of "t2".
+ ObjectMolecule: updating state 1 of "t3".
+ ObjectMolecule: updating state 1 of "t4".
+ ObjectMolecule: updating state 1 of "t5".
+ Memory Check: 0 blocks expected, 0 found, 119 maximum allocated.

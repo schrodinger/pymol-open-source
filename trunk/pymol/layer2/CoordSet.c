@@ -222,8 +222,8 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 		if(I->Rep[a]) {
 		  switch(level) {
 		  case cRepInvColor:
-			 if(I->Rep[a]->fRecolor) {
-				I->Rep[a]->fInvalidate(I->Rep[a],level);
+			 if(I->Rep[a]->fRecolor&&I->Rep[a]->fInvalidate) {
+            I->Rep[a]->fInvalidate(I->Rep[a],level);
 			 } else {
 				I->Rep[a]->fFree(I->Rep[a]);
 				I->Rep[a] = NULL;
@@ -292,40 +292,44 @@ void CoordSetUpdate(CoordSet *I)
   if(!I->Rep[cRepSurface]) {
     I->Rep[cRepSurface]=RepSurfaceNew(I);
     SceneDirty();
-  } else {
+  } else if(I->Rep[cRepSurface]->fUpdate) {
     I->Rep[cRepSurface]->fUpdate(I->Rep[cRepSurface],I);
     SceneDirty();
-  }
+  } 
   OrthoBusyFast(8,I->NRep);
   if(!I->Rep[cRepLabel]) {
     I->Rep[cRepLabel]=RepLabelNew(I);
     SceneDirty();
-  } else {
+  } else if(I->Rep[cRepLabel]->fUpdate) {
     I->Rep[cRepLabel]->fUpdate(I->Rep[cRepLabel],I);
     SceneDirty();
-  }
+  } 
   OrthoBusyFast(9,I->NRep);
   if(!I->Rep[cRepNonbonded]) {
     I->Rep[cRepNonbonded]=RepNonbondedNew(I);
     SceneDirty();
-  } else {
+  } else if(I->Rep[cRepNonbonded]->fUpdate) {
     I->Rep[cRepNonbonded]->fUpdate(I->Rep[cRepNonbonded],I);
     SceneDirty();
-  }
+  } 
   OrthoBusyFast(10,I->NRep);
+  
   if(!I->Rep[cRepNonbondedSphere]) {
     I->Rep[cRepNonbondedSphere]=RepNonbondedSphereNew(I);
     SceneDirty();
-  } else {
+  } else if (I->Rep[cRepNonbondedSphere]->fUpdate) {
     I->Rep[cRepNonbondedSphere]->fUpdate(I->Rep[cRepNonbondedSphere],I);
     SceneDirty();
-    }
+  } 
+  
   OrthoBusyFast(1,1);
 }
 /*========================================================================*/
 void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
 {
   int a;
+
+
   for(a=0;a<I->NRep;a++)
 	 if(I->Rep[a]) 
 		{
@@ -334,9 +338,10 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
 		  } else {
 			 ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
 		  }			 
-		  I->Rep[a]->fRender(I->Rep[a],ray,pick);
+        if(I->Rep[a]->fRender) {
+          I->Rep[a]->fRender(I->Rep[a],ray,pick);
+        }
 		}
-
 }
 /*========================================================================*/
 CoordSet *CoordSetNew(void)
@@ -358,7 +363,7 @@ CoordSet *CoordSetNew(void)
   I->AtmToIdx = NULL;
   I->IdxToAtm = NULL;
   I->TmpBond = NULL;
-  I->Rep=VLAlloc(Rep*,10);
+  I->Rep=VLAlloc(Rep*,cRepCnt);
   I->NRep=cRepCnt;
   I->TmpSymmetry = NULL;
   for(a=0;a<I->NRep;a++)

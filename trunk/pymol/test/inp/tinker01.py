@@ -1,7 +1,6 @@
 # python
 
 from chempy import io
-from chempy.tinker import now
 from chempy import tinker
 from chempy.tinker import keyword
 from chempy import protein

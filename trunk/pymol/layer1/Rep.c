@@ -47,6 +47,7 @@ void RepInit(Rep *I)
   I->fInvalidate = RepInvalidate;
   I->fUpdate = RepUpdate;
   I->fRender = RepRenderBox;
+  I->fRecolor = NULL;
   I->P=NULL;
   I->MaxInvalid = 0;
 }

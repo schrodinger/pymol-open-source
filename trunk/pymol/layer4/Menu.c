@@ -29,9 +29,10 @@ void MenuActivate(int x,int y,char *name,char *sele)
 
   PyObject *list;
 
-  PBlock(); /* pmm doesn't currently call API, so leave it locked */
+  PBlock(); /* menu doesn't currently call API, so leave it locked */
 
   list = PyObject_CallMethod(P_menu,name,"s",sele); 
+  if(PyErr_Occurred()) PyErr_Print();
   if(list) {
     PopUpNew(x,y,list);
     Py_DECREF(list);
