@@ -20,7 +20,11 @@ Z* -------------------------------------------------------------------
 #include<windows.h>
 #endif
 
+#ifndef _PYMOL_OSX
 #include<GL/gl.h>
+#else
+#include<gl.h>
+#endif
 
 /* determine whether or not we have a real GLUT */
 
@@ -37,7 +41,11 @@ Z* -------------------------------------------------------------------
 
 /* real GLUT being used... */
 
+#ifndef _PYMOL_OSX
 #include<GL/glut.h>
+#else
+#include<glut.h>
+#endif
 
 /* These are the only glut constants and functions that PyMOL uses ... */
 
