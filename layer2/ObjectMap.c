@@ -351,10 +351,6 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
         /* get the fractional coordinate */
         transform33f3f(ms->Crystal->RealToFrac,inp,frac); 
         
-        x = inp[0];
-        y = inp[1];
-        z = inp[2];
-        
         inp+=3;
 
         /* compute the effective lattice offset as a function of cell spacing */

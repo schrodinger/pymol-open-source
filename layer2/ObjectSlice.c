@@ -40,6 +40,9 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"ObjectGadgetRamp.h"
 
+#define START_STRIP -1
+#define STOP_STRIP -2
+
 typedef struct ObjRec {
   struct CObject *obj;  
   struct ObjRec *next;
@@ -272,27 +275,36 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
   int min[2] = {0,0}, max[2] = {0,0}; /* limits of the rectangle */
   int need_normals = false;
   float grid = SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_grid);  
+  int min_expand = 1;
+
   if(grid<0.01F)
     grid=0.01F;
-
+  
   /* for the given map, compute a new set of interpolated point with accompanying levels */
 
   /* first, find the limits of the enclosing rectangle, starting at the slice origin, 
      via a simple brute-force approach... */
 
+  if(oss->ExtentFlag) { /* how far out do we need to go to be sure we intersect the map? */
+    min_expand = (int)(diff3f(oss->ExtentMax,oss->ExtentMin)/grid);
+  }
   if(ok) {
     int size = 1, minus_size;
     int a;
     int keep_going=true;
+    int n_cycles = 0;
     float point[3];
 
-    while(keep_going) {
+    while(keep_going || (n_cycles<min_expand)) {
       keep_going=false;
       minus_size = -size;
+      n_cycles++;
 
       for(a=-size;a<=size;a++) {
         
-        if(max[1]!=size) {
+        if((max[1]!=size)||
+           (min[0]>a)||
+           (max[0]<a)) {
           point[0] = grid*a;
           point[1] = grid*size;
           point[2] = 0.0F;
@@ -301,23 +313,34 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
           if(ObjectMapStateContainsPoint(oms,point)) {
               keep_going = true;
               if(max[1]<size) max[1]=size;
+              if(min[0]>a) min[0] = a;
+              if(max[0]<a) max[0] = a;
           }
-        }
+          
+        } else 
+          keep_going = true;
 
-        if(min[1]!=minus_size) {
+        if((min[1]!=minus_size)||
+           (min[0]>a)||
+           (max[0]<a)) {
           point[0] = grid*a;
           point[1] = grid*minus_size;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
-          
           if(ObjectMapStateContainsPoint(oms,point)) {
             keep_going = true;
             if(min[1]>minus_size) min[1]=minus_size;
+            if(min[0]>a) min[0] = a;
+            if(max[0]<a) max[0] = a;
+
           }
-        }
+        } else 
+          keep_going = true;
         
-        if(max[0]!=size) {
+        if((max[0]!=size)||
+           (min[1]>a)||
+           (max[1]<a)) {
           point[0] = grid*size;
           point[1] = grid*a;
           point[2] = 0.0F;
@@ -326,10 +349,15 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
           if(ObjectMapStateContainsPoint(oms,point)) {
             keep_going = true;
             if(max[0]<size) max[0]=size;
+            if(min[1]>a) min[1] = a;
+            if(max[1]<a) max[1] = a;
           }
-        }
+        } else 
+          keep_going = true;
         
-        if(min[0]!=minus_size) {
+        if((min[0]!=minus_size)||
+           (min[1]>a)||
+           (max[1]<a)) {
           point[0] = grid*minus_size;
           point[1] = grid*a;
           point[2] = 0.0F;
@@ -338,9 +366,14 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
           if(ObjectMapStateContainsPoint(oms,point)) {
             keep_going = true;
             if(min[0]>minus_size) min[0]=minus_size;
+            if(min[1]>a) min[1] = a;
+            if(max[1]<a) max[1] = a;
           }
-        }
+        } else
+          keep_going = true;
       }
+      if(keep_going) min_expand = 0; /* if we've hit, then don't keep searching blindly */
+      
       size++;
     }
     oss->max[0] = max[0];
@@ -348,7 +381,6 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
     oss->min[0] = min[0];
     oss->min[1] = min[1];
   }
-
   /* now confirm that storage is available */
   if (ok) {
     int n_alloc = (1+oss->max[0]-oss->min[0])*(1+oss->max[1]-oss->min[1]);
@@ -486,7 +518,7 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
           /* start a new strip with correct parity */
           
           VLACheck(oss->strips,int,n+3);
-          oss->strips[n] = -1;
+          oss->strips[n] = START_STRIP;
           oss->strips[n+1] = offset10;
           oss->strips[n+2] = offset00;
           oss->strips[n+3] = offset11;
@@ -513,11 +545,11 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
           /* singleton triangle -- improper order for strip */
           
           VLACheck(oss->strips,int,n+5);
-          oss->strips[n+0] = -1;
+          oss->strips[n+0] = START_STRIP;
           oss->strips[n+1] = offset11;
           oss->strips[n+2] = offset00;
           oss->strips[n+3] = offset01;
-          oss->strips[n+4] = -2;
+          oss->strips[n+4] = STOP_STRIP;
           n+=5;
         }
         offset00++;
@@ -567,11 +599,11 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
       for(a=0;a<n;a++) {
         offset = *(strip++);
         switch(offset) {
-        case -1:
+        case START_STRIP:
           strip_active=true;
           tri_count = 0;
           break;
-        case -2:
+        case STOP_STRIP:
           strip_active=false;
           break;
         default:
@@ -893,14 +925,14 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             for(a=0;a<n;a++) {
               offset = *(strip++);
               switch(offset) {
-              case -1:
+              case START_STRIP:
                 if(!strip_active) {
                   glBegin(GL_TRIANGLES);
                 }
                 strip_active=true;
                 tri_count = 0;
                 break;
-              case -2:
+              case STOP_STRIP:
                 if(strip_active)
                   glEnd();
                 strip_active=false;
@@ -966,14 +998,14 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             for(a=0;a<n;a++) {
               offset = *(strip++);
               switch(offset) {
-              case -1:
+              case START_STRIP:
                 if(!strip_active) {
                   glBegin(GL_TRIANGLES);
                 }
                 strip_active=true;
                 tri_count = 0;
                 break;
-              case -2:
+              case STOP_STRIP:
                 if(strip_active)
                   glEnd();
                 strip_active=false;
@@ -1070,12 +1102,12 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
                 for(a=0;a<n;a++) {
                   offset = *(strip++);
                   switch(offset) {
-                  case -1:
+                  case START_STRIP:
                     if(!strip_active) 
                       glBegin(GL_TRIANGLE_STRIP);
                     strip_active=true;
                     break;
-                  case -2:
+                  case STOP_STRIP:
                     if(strip_active)
                       glEnd();
                     strip_active=false;
