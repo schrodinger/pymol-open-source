@@ -71,5 +71,12 @@ float MatrixFitRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *tt
 float MatrixGetRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt);
 int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2);
 
+typedef long int integer;
+typedef double doublereal;
+
+int pymol_rg_(integer *nm, integer *n, doublereal *a, doublereal *wr, 
+              doublereal *wi, integer *matz,doublereal *z__,integer *iv1,
+              doublereal  *fv1,integer  *ierr);
+
 #endif
 
