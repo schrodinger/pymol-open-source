@@ -4,6 +4,10 @@
 /* Copyright (C) 1994-2000 by Ralf W. Grosse-Kunstleve. */
 /* Please see the LICENSE file for more information.    */
 
+#ifdef _PYMOL_WIN32
+#include"os_predef.h"
+#endif
+
 #include <ctype.h>
 
 #include "ExtensionClass.h"

@@ -1,3 +1,4 @@
+#include"os_predef.h"
 #include"os_gl.h"
 
 #ifdef _PYMOL_PRETEND_GLUT_FONT

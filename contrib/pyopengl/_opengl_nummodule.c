@@ -1,3 +1,6 @@
+#ifdef _PYMOL_WIN32
+#include"os_predef.h"
+#endif
 #ifdef _PYMOL_NUMPY
 
 #define NUMERIC

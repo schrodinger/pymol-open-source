@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _PYMOL_WIN32
+#include"os_predef.h"
+#endif
+
 
 #undef SG_GLOBAL
 #include "sglite.h"
