@@ -533,8 +533,6 @@ int was_main(void)
   myArgvv[1]=NULL;
   myArgv=myArgvv;
 
-  TheDisplay = XOpenDisplay(NULL);
-  
 #ifdef _DRI_WORKAROUND
   dlopen("libGL.so.1",RTLD_LAZY|RTLD_GLOBAL);
 #endif
