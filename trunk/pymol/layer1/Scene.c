@@ -2703,6 +2703,7 @@ static void SceneRenderAll(SceneUnitContext *context,float *normal,Pickable **pi
           glPopMatrix();
           glMatrixMode(GL_PROJECTION);
           glPopMatrix();
+          glMatrixMode(GL_MODELVIEW);
           break;
         }
       glPopMatrix();
