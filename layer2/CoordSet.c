@@ -51,6 +51,67 @@ void CoordSetAppendIndices(CoordSet *I,int offset);
 /*========================================================================*/
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
+
+
+void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
+     /* performs second half of removal */
+{
+  /* NOTE: only works in a compressive mode, where lookup[a]<=a  */
+  int a;
+  int a0;
+  for(a=0;a<I->NAtIndex;a++) {
+    a0=lookup[a];
+    if(a0>=0) {
+      I->AtmToIdx[a0] = I->AtmToIdx[a];
+    }
+  }
+  I->NAtIndex = nAtom;
+  I->AtmToIdx = Realloc(I->AtmToIdx,int,nAtom);
+  for(a=0;a<I->NIndex;a++) { 
+    fflush(stdout);
+    I->IdxToAtm[a] = lookup[I->IdxToAtm[a]];
+  }
+}
+/*========================================================================*/
+void CoordSetPurge(CoordSet *I) 
+     /* performs first half of removal  */
+{
+  int offset = 0;
+  int a,a1,ao;
+  AtomInfoType *ai;
+  ObjectMolecule *obj;
+  float *c0,*c1;
+  obj=I->Obj;
+
+  c0 = I->Coord;
+  c1 = I->Coord;
+
+  for(a=0;a<I->NIndex;a++) {
+    a1 = I->IdxToAtm[a];
+    ai = obj->AtomInfo + a1;
+    if(ai->deleteFlag) {
+      offset--;
+      c0+=3;
+    } else if(offset) {
+        ao=a+offset;
+        *(c1++)=*(c0++);
+        *(c1++)=*(c0++);
+        *(c1++)=*(c0++);
+        I->AtmToIdx[a1] = ao;
+        I->IdxToAtm[ao] = a1; /* no adjustment of these indexes yet...*/
+    } else {
+      c0+=3;
+      c1+=3;
+    }
+  }
+  if(offset) {
+    I->NIndex+=offset;
+    VLASetSize(I->Coord,I->NIndex*3);
+    I->IdxToAtm=Realloc(I->IdxToAtm,int,I->NIndex);
+    if(I->fInvalidateRep)
+      I->fInvalidateRep(I,cRepAll,cRepInvAtoms); /* this will free Color */
+  }
+}
 /*========================================================================*/
 int CoordSetTransformAtom(CoordSet *I,int at,float *TTT)
 {

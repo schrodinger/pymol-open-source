@@ -1244,7 +1244,16 @@ def expfit(a,b):
    finally:
       unlock()
    return r
-   
+
+def remove(sele):
+   r = 1
+   try:
+      lock()   
+      r = _cmd.remove(sele)
+   finally:
+      unlock()
+   return r
+
 def zoom(*arg):
    '''
 DESCRIPTION
@@ -2861,6 +2870,7 @@ keyword = {
    'pairfit'       : [pairfit      , 2 ,98 , ',' , 0 ],
    'ray'           : [ray          , 0 , 0 , ',' , 0 ],
    'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
+   'remove'        : [remove       , 1 , 1 , ',' , 0 ],
    'reset'         : [reset        , 0 , 0 , ',' , 0 ],
    'rewind'        : [rewind       , 0 , 0 , ',' , 0 ],
    'rock'          : [rock         , 0 , 0 , ',' , 0 ],

@@ -55,23 +55,23 @@ typedef struct AtomInfoType {
   TextType textType;
   LabelType label;
   int hydrogen;
-  int ludiType; /* this will go away soon */
   int customType;
   int priority;
   float b,q,vdw,partialCharge;
   int formalCharge;
   signed char hetatm;
-  short int model; /* remaining items only used during selection */
+  short int model; 
   int atom;
   int selEntry;
   short int visRep[cRepCnt];
   int color;
   int id; /* used for reading conect records */
   unsigned int flags;
-  int bonded;
-  int chemFlag;
-  int geom;
-  int valence;
+  signed char bonded; /* be careful not to write at these as (int*) */
+  signed char chemFlag;
+  signed char geom;
+  signed char valence;
+  signed char deleteFlag;
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
