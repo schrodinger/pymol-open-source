@@ -56,7 +56,8 @@ if __name__=='pymol.importing':
       crd = 23      # AMBER coordinate
       rst = 24      # AMBER restart
       pse = 25      # PyMOL session
-
+      xplorstr = 26 # XPLOR map as string
+      
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
    def set_session(session):
@@ -515,6 +516,35 @@ NOTES
          ftype = loadable.pdbstr
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),pdb,int(state)-1,int(ftype),
+                          int(finish),int(discrete))
+      finally:
+         unlock()
+      return r
+
+   def read_xplorstr(xplor,name,state=0,finish=1,discrete=0):
+      '''
+DESCRIPTION
+
+   "read_xplorstr" in an API-only function which reads an XPLOR map
+   from a Python string.  This feature can be used to bypass
+   temporary files.
+
+PYMOL API ONLY
+
+   cmd.read_xplorstr( string xplor-content, string object name 
+      [ ,int state ] )
+
+NOTES
+
+   "state" is a 1-based state index for the object.
+
+   '''
+      r = 1
+      try:
+         lock()   
+         ftype = loadable.xplorstr
+         oname = string.strip(str(name))
+         r = _cmd.load(str(oname),xplor,int(state)-1,int(ftype),
                           int(finish),int(discrete))
       finally:
          unlock()

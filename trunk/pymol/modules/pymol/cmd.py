@@ -787,6 +787,7 @@ if __name__=='pymol.cmd':
         read_mmodstr,       \
         read_molstr,        \
         read_pdbstr,        \
+        read_xplorstr,      \
         loadable,           \
         set_session
 

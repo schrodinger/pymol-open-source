@@ -58,7 +58,7 @@ typedef struct ObjectMapDesc { /* information for creating a new map */
 ObjectMap *ObjectMapNew(void);
 ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int state);
 
-ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_file);
 ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state);
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state);
 

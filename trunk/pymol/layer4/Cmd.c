@@ -94,6 +94,8 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeTRJ  22
 #define cLoadTypeCRD  23
 #define cLoadTypeRST  24
+#define cLoadTypePSE  25
+#define cLoadTypeXPLORStr 26
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -3767,16 +3769,31 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeXPLORMap:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XPLORMap\n" ENDFD;
       if(!origObj) {
-        obj=(CObject*)ObjectMapLoadXPLORFile(NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadXPLORFile(NULL,fname,frame,true);
         if(obj) {
           ObjectSetName(obj,oname);
           ExecutiveManageObject((CObject*)obj,true);
           sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
         }
       } else {
-        ObjectMapLoadXPLORFile((ObjectMap*)origObj,fname,frame);
+        ObjectMapLoadXPLORFile((ObjectMap*)origObj,fname,frame,true);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,oname);
+      }
+      break;
+    case cLoadTypeXPLORStr:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XPLORStr\n" ENDFD;
+      if(!origObj) {
+        obj=(CObject*)ObjectMapLoadXPLORFile(NULL,fname,frame,false);
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject((CObject*)obj,true);
+          sprintf(buf," CmdLoad: XPLOR string loaded into object \"%s\".\n",oname);
+        }
+      } else {
+        ObjectMapLoadXPLORFile((ObjectMap*)origObj,fname,frame,false);
+        sprintf(buf," CmdLoad: XPLOR string appended into object \"%s\".\n",
+                oname);
       }
       break;
     case cLoadTypeCCP4Map:
