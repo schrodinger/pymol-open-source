@@ -845,7 +845,7 @@ void PBlock(void)
 {
 
   if(!PAutoBlock()) {
-    ErrFatal("PBlock","OH NO! -- no saved thread -- your threads must be tangled!");
+    ErrFatal("PBlock","Threading error detected.  Terminating...");
   }
 }
 

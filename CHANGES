@@ -39,6 +39,10 @@ Bugs to Fix
 
 Changes up to 0.63
 
+   * Density wizard
+
+   * isomesh meshes now use mesh_width instead of line_width
+
    * fixed rendering background color bug on BigEndian machines
 
    * fixed fatal bug with symexp
