@@ -75,6 +75,10 @@ float SettingGetNamed(char *name);
 #define cSetting_cull_spheres         33
 #define cSetting_test1                34
 #define cSetting_test2                35
+#define cSetting_surface_best         36
+#define cSetting_surface_normal       37
+#define cSetting_surface_quality      38
+#define cSetting_surface_proximity    39
 
 #endif
 

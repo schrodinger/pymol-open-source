@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"Vector.h"
 
-int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr);
+int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr,float *extent);
 
 extern float TestLine[10000];
 extern int NTestLine;

@@ -265,8 +265,6 @@ void MainReshape(int width, int height)
 {
   float h;
 
-  PLock(cLockAPI,&_save);
-
   WinX = width;
   WinY = height;
 
@@ -281,7 +279,6 @@ void MainReshape(int width, int height)
   glutReshapeWindow(width, height);
   OrthoReshape(width,height);
 
-  PUnlock(cLockAPI,&_save);
 }
 
 /*========================================================================*/

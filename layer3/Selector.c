@@ -259,8 +259,8 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj)
   FreeP(I->Table);
   FreeP(I->Obj);
   I->NAtom=0;
-  if(DebugSelector&DebugState)
-	 printf("SelectorCreate: %s: %d atoms selected.\n",name,c);
+  if(c) 
+    printf(" Selector: %s created with %d atoms.\n",name,c);
 }
 /*========================================================================*/
 int SelectorUpdateTable(void)
@@ -792,12 +792,20 @@ int *SelectorEvaluate(WordType *word)
 							 e->type=SELE_PRP1;
 							 valueFlag=-1;
 							 break;
-						  }
-					 }
-				  else
-					 ok=ErrMessage("Selector","Unknown keyword.");
-				}
-			 break;
+                    }
+					 } else if(SelectorIndexByName(word[c])>=0) {
+						depth++;
+						e=Stack+depth;
+						e->level=level;
+						e->code=code;
+                  e->type=SELE_SEL1;
+                  valueFlag=1;
+                  c--;
+                } else {
+                  ok=ErrMessage("Selector","Unknown keyword or selection.");
+                }
+            }
+          break;
 		  }
 		if(ok)
 		  do 
@@ -865,19 +873,19 @@ int *SelectorEvaluate(WordType *word)
 							 }
 						}
 			 }
-		  while(ok&&opFlag);
+        while(ok&&opFlag); /* part of a do while */
 		if(ok) c++; /* go onto next word */
 	 }
   if(ok)
 	 {
-	 if(level>0)
+      if(level>0)
 		ok=ErrMessage("Selector","Malformed selection.");		
-	 else if(depth!=1)
-		ok=ErrMessage("Selector","Malformed selection.");
-	 else if(Stack[depth].type!=SELE_LIST)
-		ok=ErrMessage("Selector","Invalid selection.");
-	 else
-		result=Stack[depth].sele; /* return the selection list */
+      else if(depth!=1)
+        ok=ErrMessage("Selector","Malformed selection.");
+      else if(Stack[depth].type!=SELE_LIST)
+        ok=ErrMessage("Selector","Invalid selection.");
+      else
+        result=Stack[depth].sele; /* return the selection list */
 	 }
   if(!ok)
 	 {

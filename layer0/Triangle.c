@@ -1002,55 +1002,61 @@ static void TriangleFill(float *v,float *vn,int n)
   int i1,i2=0;
   MapType *map;
 
+  
   map=I->map;
 
   lastTri3=-1;
   while(lastTri3!=I->nTri) {
 	 lastTri3=I->nTri;
-	 
-	 i1=-1;
-	 minDist = MAXFLOAT;
-	 for(a=0;a<n;a++) 
-		if(!I->edgeStatus[a])
-		  {
-			 v0=v+a*3;
-			 MapLocus(map,v0,&h,&k,&l);
-			 i=*(MapEStart(map,h,k,l));
-			 if(i) {
-				j=map->EList[i++];
-				while(j>=0) {
-				  if(j!=a) 
-					 {
-						dif=diff3f(v+3*j,v0);
-						if(dif<minDist)
-						  if(TriangleEdgeStatus(a,j)>=0) /* can we put a triangle here? */
-							 {
-								minDist = dif;
-								i1=a;
-								i2=j;
-							 }
-					 }
-				  j=map->EList[i++];
-				}
-			 }
-		  }
-	 /*	 printf("Follow Actives 0 %i\n",I->nTri);*/
+
 	 I->nActive=0;
+    while((!I->nActive)&&(I->nTri==lastTri3))
+      {
+        i1=-1;
+        minDist = MAXFLOAT;
+        
+        for(a=0;a<n;a++) 
+          if(!I->edgeStatus[a])
+            {
+              v0=v+a*3;
+              MapLocus(map,v0,&h,&k,&l);
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
+                j=map->EList[i++];
+                while(j>=0) {
+                  if(j!=a) 
+                    {
+                      dif=diff3f(v+3*j,v0);
+                      if(dif<minDist)
+                        if(I->vertActive[a]==-1)
+                          if(TriangleEdgeStatus(a,j)>=0) /* can we put a triangle here? */
+                            {
+                              minDist = dif;
+                              i1=a;
+                              i2=j;
+                            }
+                    }
+                  j=map->EList[i++];
+                }
+              }
+            }
 	 
-	 if(i1>=0) {
-		VLACheck(I->activeEdge,int,I->nActive*2+1);
-		I->activeEdge[I->nActive*2] = i1;
-		I->activeEdge[I->nActive*2+1] = i2;
-		I->nActive=1;
-		lastTri=I->nTri;
-		FollowActives(v,vn,n,0);
-		while(lastTri!=I->nTri) {
-		  lastTri=I->nTri;
-		  for(a=0;a<n;a++) 
-			 if(I->vertActive[a])
-				TriangleActivateEdges(a);
-		  FollowActives(v,vn,n,0);
-		}
+        if(i1>=0) {
+          if(I->vertActive[i1]<0) I->vertActive[i1]--;
+          VLACheck(I->activeEdge,int,I->nActive*2+1);
+          I->activeEdge[I->nActive*2] = i1;
+          I->activeEdge[I->nActive*2+1] = i2;
+          I->nActive=1;
+          lastTri=I->nTri;
+          FollowActives(v,vn,n,0);
+          while(lastTri!=I->nTri) {
+            lastTri=I->nTri;
+            for(a=0;a<n;a++) 
+              if(I->vertActive[a])
+                TriangleActivateEdges(a);
+            FollowActives(v,vn,n,0);
+          }
+        } else break;
 	 }
 	 /*		printf("Follow actives 1 %i\n",I->nTri);*/
 	 lastTri=I->nTri-1;
@@ -1212,7 +1218,7 @@ static void TriangleFixProblems(float *v,float *vn,int n)
   FreeP(pFlag);
 }
 
-int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr)
+int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr,float *extent)
 {
   int l;
   TriangleSurfaceRec *I=&TriangleSurface;
@@ -1235,7 +1241,7 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,
   I->tri=VLAlloc(int,n);
   I->nTri = 0;
 
-  I->map=MapNew(cutoff,v,n,NULL);
+  I->map=MapNew(cutoff,v,n,extent);
   MapSetupExpress(I->map);
   map=I->map;
   
