@@ -153,8 +153,6 @@ class Distance(Wizard):
             else:
                cmd.delete(dist_prefix+"%2d"%dist_count)
             name = dist_prefix + "%02d"%dist_count
-            raising = cmd.get_setting_legacy("raise_exceptions")
-            cmd.set("raise_exceptions",0)
             cnt = 0
             if self.mode == 'neigh':
                cnt = cmd.select(sele_prefix,"((pk1 a; %f) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)
@@ -168,7 +166,6 @@ class Distance(Wizard):
             else:
                print " Wizard: No neighbors found."
             cmd.delete(sele_prefix)
-            cmd.set("raise_exceptions",raising)
             cmd.unpick()
             cmd.enable(name)
       cmd.refresh_wizard()
