@@ -361,6 +361,10 @@ if __name__=='pymol.cmd':
          if a == file:
             found = 1
             break
+      for a in sys.argv:
+         if a == file:
+            found = 1
+            break;
       return found
 
    #--------------------------------------------------------------------

@@ -53,4 +53,9 @@ struct _COption {
      ClassPyMOL.c where this global structure is initialized */
 };
 
+#ifndef COption_DEFINED
+typedef struct _COption COption;
+#define COption_DEFINED
+#endif
+
 #endif
