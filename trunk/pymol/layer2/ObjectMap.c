@@ -1894,16 +1894,16 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
         }
       }
 
-      // There's no way to determine the original handedness of input
-      // field files.  So instead, we simplymake an educated guess about
-      // whether we're byte-swapped based on the range of the density
-      // values obtained.
+      /* There's no way to determine the original handedness of input
+          field files.  So instead, we simplymake an educated guess about
+       whether we're byte-swapped based on the range of the density
+       values obtained. */
       
       if(((maxd/FLT_MAX)>0.1F)&&((mind/(-FLT_MAX))>0.1F)) {
         if(pass==0) {
-          map_endian = (!map_endian); // okay, try again swapped
+          map_endian = (!map_endian); /* okay, try again swapped */
         } else if(pass==1) {
-          // didn't help, so resort to original order
+          /* didn't help, so resort to original order */
           map_endian = (!map_endian); 
         } else {
           break;

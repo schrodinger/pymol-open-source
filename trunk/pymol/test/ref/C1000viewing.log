@@ -87,7 +87,6 @@ PyMOL>load dat/1tii.pdb
  ObjectMolecule: read SHEET A 57 A 60
  ObjectMolecule: read SHEET A 111 A 114
  ObjectMolecule: read SHEET A 92 A 94
- PDBStrToCoordSet: Attempting to read symmetry information
  Crystal: Unit Cell          105.700  105.700  171.600
  Crystal: Alpha Beta Gamma    90.000   90.000  120.000
  Crystal: RealToFrac Matrix
@@ -186,7 +185,6 @@ PyMOL>load dat/pept.pdb
 PyMOL>load dat/3al1.pdb
  ObjectMolecule: read HELIX A 102 A 110
  ObjectMolecule: read HELIX B 202 B 210
- PDBStrToCoordSet: Attempting to read symmetry information
  Crystal: Unit Cell           20.544   20.859   26.055
  Crystal: Alpha Beta Gamma   101.160   97.030  118.060
  Crystal: RealToFrac Matrix
@@ -534,7 +532,6 @@ PyMOL>load dat/1tii.pdb,m1
  ObjectMolecule: read SHEET A 57 A 60
  ObjectMolecule: read SHEET A 111 A 114
  ObjectMolecule: read SHEET A 92 A 94
- PDBStrToCoordSet: Attempting to read symmetry information
  Crystal: Unit Cell          105.700  105.700  171.600
  Crystal: Alpha Beta Gamma    90.000   90.000  120.000
  Crystal: RealToFrac Matrix

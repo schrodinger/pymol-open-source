@@ -117,7 +117,6 @@ PyMOL>load dat/1tii.pdb
  ObjectMolecule: read SHEET A 57 A 60
  ObjectMolecule: read SHEET A 111 A 114
  ObjectMolecule: read SHEET A 92 A 94
- PDBStrToCoordSet: Attempting to read symmetry information
  Crystal: Unit Cell          105.700  105.700  171.600
  Crystal: Alpha Beta Gamma    90.000   90.000  120.000
  Crystal: RealToFrac Matrix
