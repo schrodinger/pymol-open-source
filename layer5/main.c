@@ -186,9 +186,7 @@ void MainMovieCopyPrepare(int *width,int *height,int *length)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PLockAPIAsGlut();
-  PyMOL_PushValidContext(G->PyMOL);
   MovieCopyPrepare(G,width,height,length);
-  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
@@ -196,9 +194,7 @@ int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
   PyMOLGlobals *G = TempPyMOLGlobals;
   int result;
   PLockAPIAsGlut();
-  PyMOL_PushValidContext(G->PyMOL);
   result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
-  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
   return result;
 }
@@ -206,18 +202,14 @@ void MainMovieCopyFinish(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PLockAPIAsGlut();
-  PyMOL_PushValidContext(G->PyMOL);
   MovieCopyFinish(G);
-  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 void MainSceneGetSize(int *width,int *height)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PLockAPIAsGlut();
-  PyMOL_PushValidContext(G->PyMOL);
   SceneGetWidthHeight(G,width,height);
-  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
@@ -226,9 +218,7 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 
   int result;
   PLockAPIAsGlut();
-  PyMOL_PushValidContext(G->PyMOL);
   result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr);
-  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
   return result;
 }
@@ -259,8 +249,6 @@ void MainRunCommand(char *str1)
 
   PLockAPIAsGlut();
 
-  PyMOL_PushValidContext(G->PyMOL);
-
   if(str1[0]!='_') { /* suppress internal call-backs */
     if(strncmp(str1,"cmd._",5)) {
       OrthoAddOutput(G,"PyMOL>");
@@ -278,7 +266,6 @@ void MainRunCommand(char *str1)
     PParse(str1);
   }
 
-  PyMOL_PushValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 
@@ -287,9 +274,7 @@ void MainFlushAsync(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PLockAPIAsGlut();
-  PyMOL_PushValidContext(G->PyMOL);
   PFlush();
-  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 /*========================================================================*/
@@ -541,6 +526,7 @@ void MainReshape(int width, int height) /* called by Glut */
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
+  PLockAPIAsGlut();
   if(G->HaveGUI) {
     glViewport(0, 0, (GLint) width, (GLint) height);
     /* wipe the screen ASAP to prevent display of garbage... */
@@ -553,7 +539,7 @@ void MainReshape(int width, int height) /* called by Glut */
     PyMOL_SwapBuffers(PyMOLInstance);
   }
   PyMOL_Reshape(PyMOLInstance, width, height, false);
-
+  PUnlockAPIAsGlut();
 }
 /*========================================================================*/
 
@@ -630,7 +616,7 @@ void MainDoReshape(int width, int height) /* called internally */
     force = true;
   }
 
-  /* if we have a GUI, for a reshape even */
+  /* if we have a GUI, for a reshape event */
 
   if(G->HaveGUI) {
     p_glutReshapeWindow(width,height);
@@ -677,7 +663,10 @@ void MainFree(void)
    int theWindow = G->Main->TheWindow;
 #endif
 
+   PyMOL_PushValidContext(PyMOLInstance);
    PyMOL_Stop(PyMOLInstance);
+   PyMOL_PopValidContext(PyMOLInstance);
+
    PyMOL_Free(PyMOLInstance);
 
   if(show_splash) {

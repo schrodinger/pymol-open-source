@@ -132,6 +132,7 @@ struct _PyMOLGlobals {
 
 };
 
+/* for debugging untimely use of our OpenGL context... */
 
 #if 0
 #define ASSERT_VALID_CONTEXT(G) {if(!(G)->ValidContext) {fprintf(stderr,"Assert-Error: No Valid Context!\n");abort();}}

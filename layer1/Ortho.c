@@ -361,7 +361,7 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
     
     I->BusyLast=now;
     if(PIsGlutThread()) {
-      if(G->HaveGUI) {      
+      if(G->HaveGUI && G->ValidContext) {      
         char *c;
         int x,y;
         float black[3] = {0,0,0};
