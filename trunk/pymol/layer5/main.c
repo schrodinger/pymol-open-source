@@ -15,12 +15,6 @@ Z* -------------------------------------------------------------------
 */
 #include <Python.h>
 
-#include<X11/Xlib.h>
-#include<X11/X.h>
-
-Display *TheDisplay;
-int TkinterWorkaround = 0;
-
 #ifdef WIN32
 #include<signal.h>
 #endif
@@ -376,32 +370,10 @@ void MainBusyIdle(void)
 	* that we have the "glut" thread...glut doesn't seem to be completely
 	* thread safe or rather thread consistent
    */
-  XExposeEvent xe;
 
   CMain *I = &Main;
   /* flush command and output queues */
-
-  xe.type=Expose;
-  xe.serial=0;
-  xe.display=TheDisplay;
-  xe.send_event = 1;
-  xe.window = TkinterWorkaround;
-  xe.x=0;
-  xe.y=0;
-  xe.width=100;
-  xe.height=100;
-  xe.count=0;
   
-  if(TheDisplay&&TkinterWorkaround) {
-    /*    XMapRaised(TheDisplay,(Window)TkinterWorkaround);
-    XMapSubwindows(TheDisplay,(Window)TkinterWorkaround);
-    XSync(TheDisplay,0);
-    XUnmapSubwindows(TheDisplay,(Window)TkinterWorkaround);
-    XUnmapWindow(TheDisplay,(Window)TkinterWorkaround);*/
-    XSync(TheDisplay,0);
-    TkinterWorkaround = 0;
-  }
-
   PLockAPIAsGlut();
 
   if(ControlIdling()) {
