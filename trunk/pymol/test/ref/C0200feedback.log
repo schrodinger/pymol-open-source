@@ -3,156 +3,156 @@ PyMOL>feedback
 set, enable, disable
  feedback: Please specify module names:
     all
-    cmd
-    objectmap
-    feedback
-    repcylbond
-    distset
-    executive
-    parser
-    extrude
-    raw
-    symmetry
     api
-    export
-    repribbon
-    isosurface
-    ray
-    objectgadget
-    vfont
-    coordset
-    objectcgo
-    movie
-    rep
-    mypng
-    setting
-    editor
-    main
-    repnonbondedsphere
-    objectmolecule
-    repdistlabel
-    objectcallback
-    repcartoon
-    map
-    shaker
-    repsphere
-    triangle
+    ccmd
     cgo
-    objectdist
-    python
-    replabel
-    object
-    scene
-    threads
-    repsurface
-    repdot
-    selector
+    cmd
+    coordset
+    distset
+    editor
+    executive
+    export
+    extrude
+    feedback
     gadgetset
-    matrix
-    repwirebond
     isomesh
+    isosurface
+    main
+    map
+    match
+    matrix
+    movie
+    mypng
+    object
+    objectcallback
+    objectcgo
+    objectdist
+    objectgadget
+    objectmap
     objectmesh
-    repdistdash
-    repnonbonded
-    sculpt
+    objectmolecule
     objectsurface
     ortho
-    match
-    ccmd
+    parser
+    python
+    raw
+    ray
+    rep
+    repcartoon
+    repcylbond
+    repdistdash
+    repdistlabel
+    repdot
+    replabel
     repmesh
+    repnonbonded
+    repnonbondedsphere
+    repribbon
+    repsphere
+    repsurface
+    repwirebond
+    scene
+    sculpt
+    selector
+    setting
+    shaker
+    symmetry
+    threads
+    triangle
+    vfont
  feedback: Please specify masks:
-    debugging
-    errors
-    blather
-    warnings
-    results
     actions
-    everything
+    blather
+    debugging
     details
+    errors
+    everything
     output
+    results
+    warnings
 PyMOL>feedback ?
 Usage: feedback [ action [, module [, mask ]]]
 PyMOL>feedback enable
  feedback: Please specify module names:
     all
-    cmd
-    objectmap
-    feedback
-    repcylbond
-    distset
-    executive
-    parser
-    extrude
-    raw
-    symmetry
     api
-    export
-    repribbon
-    isosurface
-    ray
-    objectgadget
-    vfont
-    coordset
-    objectcgo
-    movie
-    rep
-    mypng
-    setting
-    editor
-    main
-    repnonbondedsphere
-    objectmolecule
-    repdistlabel
-    objectcallback
-    repcartoon
-    map
-    shaker
-    repsphere
-    triangle
+    ccmd
     cgo
-    objectdist
-    python
-    replabel
-    object
-    scene
-    threads
-    repsurface
-    repdot
-    selector
+    cmd
+    coordset
+    distset
+    editor
+    executive
+    export
+    extrude
+    feedback
     gadgetset
-    matrix
-    repwirebond
     isomesh
+    isosurface
+    main
+    map
+    match
+    matrix
+    movie
+    mypng
+    object
+    objectcallback
+    objectcgo
+    objectdist
+    objectgadget
+    objectmap
     objectmesh
-    repdistdash
-    repnonbonded
-    sculpt
+    objectmolecule
     objectsurface
     ortho
-    match
-    ccmd
+    parser
+    python
+    raw
+    ray
+    rep
+    repcartoon
+    repcylbond
+    repdistdash
+    repdistlabel
+    repdot
+    replabel
     repmesh
+    repnonbonded
+    repnonbondedsphere
+    repribbon
+    repsphere
+    repsurface
+    repwirebond
+    scene
+    sculpt
+    selector
+    setting
+    shaker
+    symmetry
+    threads
+    triangle
+    vfont
  feedback: Please specify masks:
-    debugging
-    errors
-    blather
-    warnings
-    results
     actions
-    everything
+    blather
+    debugging
     details
+    errors
+    everything
     output
+    results
+    warnings
 PyMOL>feedback enable, selector
  feedback: Please specify masks:
-    debugging
-    errors
-    blather
-    warnings
-    results
     actions
-    everything
+    blather
+    debugging
     details
+    errors
+    everything
     output
+    results
+    warnings
 PyMOL>feedback enable, selector, everything
 PyMOL>feedback enable, repcartoon extrude, everything
 PyMOL>load dat/pept.pdb

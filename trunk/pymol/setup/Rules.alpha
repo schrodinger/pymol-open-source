@@ -27,7 +27,7 @@ EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
 #--- System libraries
 LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
 #--- PyMOL configuration 
-DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY
+DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY 
 #--- How we build shared libraries
 BUILD = -shared -o modules/_cmd.so
 #--- What are we trying to build?
@@ -40,9 +40,9 @@ PYOGL_LIB =  -lglut -lGL -lGLU -lXmu -lXi
 #
 #- Choose One --------------------------------------------------------
 #--- Debugging
-CCOPT2 = -g
+#CCOPT2 = -g
 #--- Optimized
-#CCOPT2 = -O3
+CCOPT2 = -O3
 #---------------------------------------------------------------------
 #
 #-- Choose One --------------------------------------------------------

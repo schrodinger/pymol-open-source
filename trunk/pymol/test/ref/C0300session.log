@@ -14,7 +14,7 @@ PyMOL>get line_width
  get: line_width = 1.00000
 PyMOL>count_atoms rep spheres
  count_atoms: 0 atoms
-PyMOL>load tmp/sess.pse
+PyMOL>load tmp/session.pse
  Executive: Loading version 0.90 session...
 PyMOL>print cmd.get_names()
 ['pept']
