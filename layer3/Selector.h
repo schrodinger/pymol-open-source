@@ -37,7 +37,6 @@ void SelectorToggle(PyMOLGlobals *G,int rep,char *name);
 void SelectorCylinder(PyMOLGlobals *G,char *sele,char *onoff);
 int SelectorUpdateTable(PyMOLGlobals *G);
 int SelectorIndexByName(PyMOLGlobals *G,char *sele);
-int SelectorIsMember(PyMOLGlobals *G,int start,int sele);
 void SelectorFree(PyMOLGlobals *G);
 void SelectorDelete(PyMOLGlobals *G,char *sele);
 void SelectorFreeTmp(PyMOLGlobals *G,char *name);
@@ -106,5 +105,30 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals *G,int sele,in
 ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals *G,int sele);
 MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,float cutoff,float **coord_vla);
 
+
+
+#ifndef _PYMOL_INLINE
+
+int SelectorIsMemberSlow(PyMOLGlobals *G,int start,int sele);
+#define SelectorIsMember SelectorIsMemberSlow
+
+#else
+
+#ifdef _PYMOL_WIN32
+#define __inline__ __inline
+#endif
+
+int _SelectorIsMemberInlinePartial(PyMOLGlobals *G,int s,int sele);
+
+__inline__ static int SelectorIsMember(PyMOLGlobals *G,int s, int sele) 
+{
+  if(sele>1)   
+    return _SelectorIsMemberInlinePartial(G,s,sele);
+  else if(!sele) 
+    return true; /* "all" is selection number 0, unordered */
+  else 
+    return false; /* no atom is a member of none (1), and negative selections don't exist */
+}
+#endif
 
 #endif
