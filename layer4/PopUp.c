@@ -133,7 +133,8 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,PyObject *list
     c = str;
     while(*c) {
       if(*c=='\\') { /* discount the markup */
-        if((c!=str)&&(*(c-1)!='\\'))
+        if((((c!=str)&&(c[-1])!='\\'))||
+           ((c==str)&&(c[1])&&(c[1]!='\\')))
           cl-=4;
       }
       c++;

@@ -872,6 +872,8 @@ DEVELOPMENT TO DO
          color_sc = Shortcut(map(lambda x:x[0],lst))
          color_dict = {}
          for a in lst: color_dict[a[0]]=a[1]
+         color_dict['default']=-1
+         color_dict['auto']=-2
 
    def _invalidate_color_sc():
       # WARNING: internal routine, subject to change

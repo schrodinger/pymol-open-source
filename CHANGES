@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * added 32 new automatic colors
+
    * fixed bugs with import pymol launch approach
 
    * fixed bug with TRJCONV multimodel PDB files
