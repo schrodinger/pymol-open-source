@@ -4133,6 +4133,54 @@ int SelectorOperator22(EvalElem *base)
     ENDFD;
   return(1);
 }
+
+static void remove_quotes(char *st)
+{ 
+  /* nasty */
+
+  WordType store;
+  char *p,*q;
+  char *quote_start = NULL;
+  char active_quote = 0;
+  p = st;
+  q = store;
+  /*  printf("input [%s]\n",st);*/
+
+  while(*p) {
+    if(((*p)==34)||((*p)==39)) {
+      if(quote_start&&(active_quote==*p)) { /* eliminate quotes... */
+        while(quote_start<(q-1)) {
+          *(quote_start)=*(quote_start+1);
+          quote_start++;
+        }
+        q--;
+        quote_start=NULL;
+        p++;
+      } else if(quote_start) {
+        *(q++)=*(p++);
+      } else {
+        if(p==st) { /* at start => real quote */
+          quote_start = q;
+          active_quote = *p;
+        } else if((*(p-1)=='+')||(*(p-1)==',')) { /* after separator => real quote */
+          quote_start = q;
+          active_quote = *p;
+        }
+        *(q++)=*(p++);
+      }
+    } else {
+      if((*p=='+')&&(!quote_start))
+        if(!((*(p+1)==0)||(*(p+1)==',')||(*(p+1)=='+')))
+          *p=',';
+      *(q++)=*(p++);
+    }
+  }
+  *(q++) = 0;
+  strcpy(st,store);
+
+  /*  printf("output [%s]\n",st);*/
+}
+
 /*========================================================================*/
 int *SelectorEvaluate(WordType *word)
 {
@@ -4197,6 +4245,9 @@ int *SelectorEvaluate(WordType *word)
 				  e->type=STYP_VALU;
               cc1 = word[c];
               cc2 = e->text;
+              strcpy(e->text,cc1);
+              
+#if 0
               while(*cc1) { /* remove embedded quotes if any */
                 if((*cc1!=34)&&(*cc1!=39)) {
                   *(cc2++)=*(cc1++);
@@ -4214,6 +4265,9 @@ int *SelectorEvaluate(WordType *word)
                 }
               }
               *cc2=0;
+#endif
+
+              remove_quotes(e->text);
 				  valueFlag--;
 				}
 			 else if(valueFlag<0) /* operation parameter i.e. around X<-- */

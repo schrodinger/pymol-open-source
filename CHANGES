@@ -111,6 +111,10 @@ Current Bugs to Fix
 
 Changes up to 0.84
 
+   * added some nasty code to handle quotes and apostrophes in atom selections
+     so that nucleic acids and sugars with apostrophes will work right while
+     you can also still explicitly use apostrophes or quotes
+
    * added "safe" option to zoom command in order to provide a mode
      which will guarantee against clipping
 
