@@ -109,38 +109,42 @@ static  void ScrollBarDraw(Block *block)
     I->BarMax = bottom;
   }
 
-  glColor3f(0.8F,0.8F,0.8F);
-  glBegin(GL_POLYGON);
-  glVertex2i(right,top);
-  glVertex2i(right,bottom+1);
-  glVertex2i(left,bottom+1);
-  glVertex2i(left,top);
-  glEnd();
+  if(block->G->HaveGUI) {
 
-  glColor3f(0.3F,0.3F,0.3F);
-  glBegin(GL_POLYGON);
-  glVertex2i(right,top-1);
-  glVertex2i(right,bottom);
-  glVertex2i(left+1,bottom);
-  glVertex2i(left+1,top-1);
-  glEnd();
+    ASSERT_VALID_CONTEXT(block->G);
 
-  glColor3f(0.3F,0.3F,0.3F);
-  glBegin(GL_POLYGON);
-  glVertex2i(right,bottom+1);
-  glVertex2i(right,bottom);
-  glVertex2i(left,bottom);
-  glVertex2i(left,bottom+1);
-  glEnd();
-
-  glColor3fv(I->BarColor);
-  glBegin(GL_POLYGON);
-  glVertex2i(right-1,top-1);
-  glVertex2i(right-1,bottom+1);
-  glVertex2i(left+1,bottom+1);
-  glVertex2i(left+1,top-1);
-  glEnd();
-
+    glColor3f(0.8F,0.8F,0.8F);
+    glBegin(GL_POLYGON);
+    glVertex2i(right,top);
+    glVertex2i(right,bottom+1);
+    glVertex2i(left,bottom+1);
+    glVertex2i(left,top);
+    glEnd();
+    
+    glColor3f(0.3F,0.3F,0.3F);
+    glBegin(GL_POLYGON);
+    glVertex2i(right,top-1);
+    glVertex2i(right,bottom);
+    glVertex2i(left+1,bottom);
+    glVertex2i(left+1,top-1);
+    glEnd();
+    
+    glColor3f(0.3F,0.3F,0.3F);
+    glBegin(GL_POLYGON);
+    glVertex2i(right,bottom+1);
+    glVertex2i(right,bottom);
+    glVertex2i(left,bottom);
+    glVertex2i(left,bottom+1);
+    glEnd();
+    
+    glColor3fv(I->BarColor);
+    glBegin(GL_POLYGON);
+    glVertex2i(right-1,top-1);
+    glVertex2i(right-1,bottom+1);
+    glVertex2i(left+1,bottom+1);
+    glVertex2i(left+1,top-1);
+    glEnd();
+  }
 }
 
 void ScrollBarDrawHandle(struct CScrollBar *I,float alpha)
@@ -165,42 +169,47 @@ void ScrollBarDrawHandle(struct CScrollBar *I,float alpha)
     right = block->rect.right-1;
   }
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-      
-  glColor4f(0.8F,0.8F,0.8F,alpha);
-  glBegin(GL_POLYGON);
-  glVertex2i(right,top);
-  glVertex2i(right,bottom+1);
-  glVertex2i(left,bottom+1);
-  glVertex2i(left,top);
-  glEnd();
+  if(block->G->HaveGUI) {
 
-  glColor4f(0.3F,0.3F,0.3F,alpha);
-  glBegin(GL_POLYGON);
-  glVertex2i(right,top-1);
-  glVertex2i(right,bottom);
-  glVertex2i(left+1,bottom);
-  glVertex2i(left+1,top-1);
-  glEnd();
+    ASSERT_VALID_CONTEXT(block->G);
 
-  glColor4f(0.3F,0.3F,0.3F,alpha);
-  glBegin(GL_POLYGON);
-  glVertex2i(right,bottom+1);
-  glVertex2i(right,bottom);
-  glVertex2i(left,bottom);
-  glVertex2i(left,bottom+1);
-  glEnd();
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    
+    glColor4f(0.8F,0.8F,0.8F,alpha);
+    glBegin(GL_POLYGON);
+    glVertex2i(right,top);
+    glVertex2i(right,bottom+1);
+    glVertex2i(left,bottom+1);
+    glVertex2i(left,top);
+    glEnd();
+    
+    glColor4f(0.3F,0.3F,0.3F,alpha);
+    glBegin(GL_POLYGON);
+    glVertex2i(right,top-1);
+    glVertex2i(right,bottom);
+    glVertex2i(left+1,bottom);
+    glVertex2i(left+1,top-1);
+    glEnd();
+    
+    glColor4f(0.3F,0.3F,0.3F,alpha);
+    glBegin(GL_POLYGON);
+    glVertex2i(right,bottom+1);
+    glVertex2i(right,bottom);
+    glVertex2i(left,bottom);
+    glVertex2i(left,bottom+1);
+    glEnd();
+    
+    glColor4f(I->BarColor[0],I->BarColor[1],I->BarColor[2],alpha);
+    glBegin(GL_POLYGON);
+    glVertex2i(right-1,top-1);
+    glVertex2i(right-1,bottom+1);
+    glVertex2i(left+1,bottom+1);
+    glVertex2i(left+1,top-1);
+    glEnd();
 
-  glColor4f(I->BarColor[0],I->BarColor[1],I->BarColor[2],alpha);
-  glBegin(GL_POLYGON);
-  glVertex2i(right-1,top-1);
-  glVertex2i(right-1,bottom+1);
-  glVertex2i(left+1,bottom+1);
-  glVertex2i(left+1,top-1);
-  glEnd();
-
-  glDisable(GL_BLEND);
+    glDisable(GL_BLEND);
+  }
 }
 
 

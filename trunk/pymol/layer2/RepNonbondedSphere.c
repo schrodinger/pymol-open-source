@@ -58,6 +58,7 @@ void RepNonbondedSphereFree(RepNonbondedSphere *I)
 
 void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 {
+  register PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
   int cc=0;
@@ -75,7 +76,9 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 		ray->fSphere3fv(ray,v,*(v+3));
 		v+=4;
 	 }
-  } else if(pick&&I->R.G->HaveGUI) {
+  } else if(pick&&G->HaveGUI) {
+
+    ASSERT_VALID_CONTEXT(G);
 
 	 i=(*pick)->index;
 
@@ -123,7 +126,10 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 
 	 (*pick)[0].index = i;
 
-  } else if(I->R.G->HaveGUI) {
+  } else if(G->HaveGUI) {
+
+    ASSERT_VALID_CONTEXT(G);
+
     sp=I->SP;
     while(c--)
       {

@@ -232,7 +232,11 @@ static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
   int ok=false;
   ok = PyArg_ParseTuple(args,"ii",&int1,&int2);
   if(ok) {
-    glDeleteLists(int1,int2);
+    if(TempPyMOLGlobals->HaveGUI) {
+      if(TempPyMOLGlobals->ValidContext) {
+        glDeleteLists(int1,int2);
+      }
+    }
   }
   return(APIStatus(1));
 }
@@ -3449,10 +3453,13 @@ static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
 static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
 {
   APIEntry();
+  PyMOL_PushValidContext(TempPyMOLGlobals->PyMOL); /* we're trusting the caller on this... */
+
   ExecutiveDrawNow(TempPyMOLGlobals); /* TODO STATUS */
 #ifndef _PYMOL_NO_MAIN
   MainRefreshNow();
 #endif
+  PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
   APIExit();
   return(APISuccess());
 }

@@ -520,14 +520,16 @@ void PopUpDraw(Block *block)
 
   
   if(G->HaveGUI) {
+    
+    ASSERT_VALID_CONTEXT(G);
 
-  if((I->Child)&&(I->Selected!=I->ChildLine))
-    PyMOL_NeedFakeDrag(G->PyMOL);
+    if((I->Child)&&(I->Selected!=I->ChildLine))
+      PyMOL_NeedFakeDrag(G->PyMOL);
     
     /* put raised border around pop-up menu */
-
+    
     /* bottom */
-
+    
     glColor3f(0.2F,0.2F,0.4F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left-2,block->rect.bottom-2);

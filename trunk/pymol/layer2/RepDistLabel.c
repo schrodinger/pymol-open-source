@@ -79,6 +79,8 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
   } else if(pick&&G->HaveGUI) {
   } else if(G->HaveGUI) {
     int float_text;
+	 
+    ASSERT_VALID_CONTEXT(G);
     float_text = (int)SettingGet(G,cSetting_float_labels);
     if(float_text)
       glDisable(GL_DEPTH_TEST);	 

@@ -268,6 +268,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   } else if(pick&&G->HaveGUI) {
   } else if(G->HaveGUI) {
     
+    ASSERT_VALID_CONTEXT(G);
+
     if(I->debug)
       CGORenderGL(I->debug,NULL,NULL,NULL);
 	 if(I->Type==1) {
@@ -1240,8 +1242,10 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   if(G->HaveGUI) {
     if(I->R.displayList) {
       if(PIsGlutThread()) {
-        glDeleteLists(I->R.displayList,1);
-        I->R.displayList = 0;
+        if(G->ValidContext) {
+          glDeleteLists(I->R.displayList,1);
+          I->R.displayList = 0;
+        }
       } else {
         char buffer[255]; /* pass this off to the main thread */
         sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",I->R.displayList,1);

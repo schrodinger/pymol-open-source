@@ -1146,6 +1146,8 @@ void EditorRender(PyMOLGlobals *G,int state)
 
     if(G->HaveGUI) {
       
+      ASSERT_VALID_CONTEXT(G);
+
       sele1 = SelectorIndexByName(G,cEditorSele1);
       sele2 = SelectorIndexByName(G,cEditorSele2);
       sele3 = SelectorIndexByName(G,cEditorSele3);

@@ -5080,11 +5080,13 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
     " ExecutiveDrawNow: entered.\n"
     ENDFD;
 
+  OrthoExecDeferred(G);
+
   if(!SettingGet(G,cSetting_suspend_updates)) {
 
     if(G->HaveGUI) {
-      glMatrixMode(GL_MODELVIEW);
-      /*  glClear( GL_DEPTH_BUFFER_BIT);*/
+      ASSERT_VALID_CONTEXT(G);
+      glMatrixMode(GL_MODELVIEW); /* why is this necessary?  is it? */
     }
 
     SceneUpdate(G);
@@ -6988,7 +6990,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
 
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
-      return SceneClick(SceneGetBlock(G),button,x,y,mod);
+      return SceneDeferClick(SceneGetBlock(G),button,x,y,mod);
   }
   n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
   a=n;
@@ -7294,7 +7296,7 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
 
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
-      return SceneRelease(SceneGetBlock(G),button,x,y,mod);
+      return SceneDeferRelease(SceneGetBlock(G),button,x,y,mod);
   }
 
   n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
@@ -7362,7 +7364,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
 
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
-      return SceneDrag(SceneGetBlock(G),x,y,mod);
+      return SceneDeferDrag(SceneGetBlock(G),x,y,mod);
   }
 
   xx = (x-I->Block->rect.left);

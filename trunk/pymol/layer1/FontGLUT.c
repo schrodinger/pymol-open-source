@@ -60,6 +60,8 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
   FontGLUTBitmapCharRec const *ch;
   int textured = SettingGetGlobal_b(G,cSetting_texture_fonts);
   int pushed = OrthoGetPushed(G);
+
+  ASSERT_VALID_CONTEXT(G);
   if(st&&(*st)) {
     
     if(!textured) {

@@ -97,6 +97,8 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
     }
   } else if(pick&&G->HaveGUI) {
 
+    ASSERT_VALID_CONTEXT(G);
+
     PRINTFD(G,FB_RepRibbon)
       " RepRibbonRender: rendering pickable...\n"
       ENDFD;
@@ -149,9 +151,10 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
       glEnd();
       (*pick)[0].index = i; /* pass the count */
     }
-  } else if(G->HaveGUI) {
-    
+  } else if(G->HaveGUI) {    
     int use_dlst;
+    ASSERT_VALID_CONTEXT(G);
+
     use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);

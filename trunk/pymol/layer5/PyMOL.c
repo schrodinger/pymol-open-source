@@ -274,7 +274,7 @@ void PyMOL_Draw(CPyMOL *I)
 
   if(G->HaveGUI) {
 
-    G->ValidContext = true;
+    PyMOL_PushValidContext(I);
 
     /* get us into a well defined GL state */
     
@@ -293,7 +293,7 @@ void PyMOL_Draw(CPyMOL *I)
   OrthoBusyPrime(G);
   ExecutiveDrawNow(G);
 
-  if(G->HaveGUI) G->ValidContext = false;
+  if(G->HaveGUI) PyMOL_PopValidContext(I);
 
   /* don't claim to be ready until we've drawn at least once */
   G->Ready = true; 
@@ -459,4 +459,14 @@ void PyMOL_SwapBuffers(CPyMOL *I)
 void PyMOL_RunTest(CPyMOL *I, int group, int test)
 {
   TestPyMOLRun(I->G, group, test);
+}
+
+void PyMOL_PushValidContext(CPyMOL *I)
+{
+  I->G->ValidContext++;
+}
+void PyMOL_PopValidContext(CPyMOL *I)
+{
+  if(I->G->ValidContext>0)
+    I->G->ValidContext--;
 }

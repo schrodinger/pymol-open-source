@@ -2384,10 +2384,12 @@ char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state)
 /*========================================================================*/
 void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
 {
+  PyMOLGlobals *G = I->Obj.G;
   CoordSet *cs;
   int a,at;
 
-  if(I->Obj.G->HaveGUI) {
+  if(G->HaveGUI) {
+    ASSERT_VALID_CONTEXT(G);
     if(curState>=0) {
       if(curState<I->NCSet) {
         if(I->CSet[curState]) {
@@ -8423,6 +8425,7 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
                          I->Obj.Setting,NULL);
     } else if(pick&&G->HaveGUI) {
     } else if(G->HaveGUI) {
+      ASSERT_VALID_CONTEXT(G);
       ObjectUseColor(&I->Obj);
       CGORenderGL(I->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
                          I->Obj.Setting,NULL);
