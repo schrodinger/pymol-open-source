@@ -990,6 +990,8 @@ void OrthoReshape(int width, int height)
 	 if(block->fReshape)
 		block->fReshape(block,width,height);			
   OrthoPopMatrix();
+
+  WizardRefresh(); /* safe to call even if no wizard exists */
 }
 
 /*========================================================================*/

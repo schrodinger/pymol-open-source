@@ -27,7 +27,8 @@ import re
 import thread
 import threading
 import os
-
+from glob import glob
+import __builtin__
 
 class PMGApp(AbstractApp):
 
@@ -182,7 +183,17 @@ class PMGApp(AbstractApp):
          self.createButtons()
          self.createMain()
          self.lineCount = 0
-         
+         raw_list = glob(os.environ['PYMOL_PATH']+"/modules/pmg_tk/startup/*.py*")
+         unique = {}
+         for a in raw_list:
+            unique[re.sub(r".*\/|\.py.*$","",a)] = 1
+         for name in unique.keys():
+            if name != "__init__":
+               mod_name = "pmg_tk.startup."+name
+               __builtin__.__import__(mod_name)
+               mod = sys.modules[mod_name]
+               mod.__init__(self)
+
    def quit_app(self):
       cmd.quit()
 
