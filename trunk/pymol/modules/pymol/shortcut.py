@@ -9,6 +9,9 @@ abbr_re = re.compile(r"[^\_]*\_")
 def is_string(obj):
    return isinstance(obj,types.StringType)
 
+def is_list(obj):
+   return isinstance(obj,types.ListType)
+
 class Shortcut:
 
    def __call__(self):
@@ -165,8 +168,19 @@ class Shortcut:
       if not self.shortcut.has_key(kee):
          if descrip!=None:
             print "Error: unknown %s: '%s'."%(
-               descrip,kee)
+               descrip,kee),
+            lst = self.interpret('')
+            if is_list(lst):
+               if len(lst)<100:
+                  print "Choices:"
+                  lst = parsing.list_to_str_list(lst)
+                  for a in lst: print a
+               else:
+                  print
+            else:
+               print
             raise parsing.QuietException
+         
       else:
          result = self.interpret(kee)
          if not is_string(result):

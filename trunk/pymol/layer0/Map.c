@@ -112,6 +112,9 @@ void MapSetupExpressXY(MapType *I) /* setup a list of XY neighbors for each squa
   unsigned int mapSize;
   int st,flag;
 
+  PRINTFD(FB_Map)
+    " MapSetupExpressXY-Debug: entered.\n"
+    ENDFD;
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
   I->EHead=Alloc(int,mapSize);
   ErrChkPtr(I->EHead);
@@ -148,6 +151,11 @@ void MapSetupExpressXY(MapType *I) /* setup a list of XY neighbors for each squa
 			 }
 		  }
   I->NEElem=n;
+
+  PRINTFD(FB_Map)
+    " MapSetupExpressXY-Debug: leaving...\n"
+    ENDFD;
+
 }
 
 void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
@@ -156,6 +164,10 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
   int a,b,c,d,e,f,i;
   unsigned int mapSize;
   int st,flag;
+
+  PRINTFD(FB_Map)
+    " MapSetupExpress-Debug: entered.\n"
+    ENDFD;
 
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
   I->EHead=Alloc(int,mapSize);
@@ -193,6 +205,11 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 				*(MapEStart(I,a,b,c))=0;
 			 }
 		  }
+
+  PRINTFD(FB_Map)
+    " MapSetupExpress-Debug: leaving...\n"
+    ENDFD;
+
 }
 
 void MapLocus(MapType *I,float *v,int *a,int *b,int *c)
@@ -273,6 +290,10 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   Vector3f diagonal;
 
   OOAlloc(MapType);
+
+  PRINTFD(FB_Map)
+    " MapNew-Debug: entered.\n"
+    ENDFD;
 
   I->Head = NULL;
   I->Link = NULL;
@@ -427,6 +448,10 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 
   I->NVert = nVert;
 
+  PRINTFD(FB_Map)
+    " MapNew-Debug: creating 3D hash...\n"
+    ENDFD;
+
   /* create 3-D hash of the vertices*/
   if(flag) {
 	 v=vert;
@@ -452,5 +477,10 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 		  v+=3;
 		}
   }
+
+  PRINTFD(FB_Map)
+    " MapNew-Debug: leaving...\n"
+    ENDFD;
+
   return(I);
 }

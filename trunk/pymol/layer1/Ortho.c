@@ -412,6 +412,7 @@ void OrthoBusyDraw(int force)
       }
       
       glDrawBuffer(GL_BACK);
+      glFlush();
     }
 	 OrthoPopMatrix();
 	 SceneDirty();/* shouldn't this just be OrthoDirty? */
