@@ -293,7 +293,10 @@ void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd
 void AtomInfoPrimeColors(void)
 {
   NColor=ColorGetIndex("nitrogen");
-  CarbColor=ColorGetIndex("carbon");
+  if(SettingGet(cSetting_auto_color))
+    CarbColor=ColorGetNext();
+  else
+    CarbColor=ColorGetIndex("carbon");
   HColor=ColorGetIndex("hydrogen");
   OColor=ColorGetIndex("oxygen");
   SColor=ColorGetIndex("sulfur");
