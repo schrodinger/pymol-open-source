@@ -1,0 +1,16 @@
+include ../../Rules.make
+
+CFLAGS = $(C_FLAGS) 
+
+all: ExtensionClass.o
+
+.c.o: 
+	$(CC) $(CFLAGS) -c $*.c -DPythonTypes
+
+clean:
+	touch .no_fail
+	/bin/rm -f *.so *.o .no_fail*
+
+distclean: clean
+
+
