@@ -283,7 +283,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_connect_cutoff              182
 #define cSetting_save_pdb_ss                 183
 #define cSetting_sculpt_line_weight          184
-#define cSetting_INIT                        185
+#define cSetting_fit_iterations              185
+#define cSetting_fit_tolerance               186
+#define cSetting_INIT                        187
 
 #endif
 

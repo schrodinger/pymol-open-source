@@ -1323,6 +1323,7 @@ auto_arg =[
    'clip'           : [ viewing.clip_action_sc , 'clipping action' , ', ' ],
    'feedback'       : [ fb_action_sc           , 'action'          , ', ' ],
    'button'         : [ controlling.button_sc  , 'button'          , ', ' ],
+   'align'          : [ selection_sc           , 'selection'       , ','  ],
    'zoom'           : [ selection_sc           , 'selection'       , ''   ],
    'origin'         : [ selection_sc           , 'selection'       , ''   ],
    'protect'        : [ selection_sc           , 'selection'       , ''   ],
@@ -1336,6 +1337,7 @@ auto_arg =[
    'help'           : [ help_sc                , 'selection'       , ''   ],         
    },
    {
+   'align'          : [ selection_sc           , 'selection'       , ''   ],
    'feedback'       : [ fb_module_sc           , 'module'          , ', ' ],
    'button'         : [ controlling.but_mod_sc , 'modifier'        , ', ' ],
    'show'           : [ selection_sc           , 'selection'       , ''   ],

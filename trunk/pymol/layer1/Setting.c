@@ -1235,6 +1235,10 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_sculpt_line_weight, 1.0F);
 
+  SettingSet_f(I,cSetting_fit_iterations, 1000.0F);
+
+  SettingSet_f(I,cSetting_fit_tolerance, 0.00001F);
+
 }
 
 

@@ -128,6 +128,12 @@ def launch_gui():
    if invocation.options.external_gui:
       __import__(invocation.options.gui)
 
+# -- Greg Landrum's RPC stuff
+   if invocation.options.rpcServer:
+      import rpc
+      rpc.launch_XMLRPC()
+# --
+
 import _cmd
 import cmd
 

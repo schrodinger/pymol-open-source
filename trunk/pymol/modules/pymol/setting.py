@@ -199,6 +199,8 @@ class SettingIndex:
    connect_cutoff        =182
 #   save_pdb_ss           =183
    sculpt_line_weight    =184
+   fit_iterations        =185
+   fit_tolerance         =186
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

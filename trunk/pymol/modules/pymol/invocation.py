@@ -40,6 +40,8 @@ options.external_gui = 1
 options.gui = 'pmg_tk'
 options.show_splash = 1
 options.read_stdin = 0
+# Greg Landrum
+options.rpcServer = 0
 
 py_re = re.compile(r"\.py$|\.pym$\.PY$|\.PYM$")
 pyc_re = re.compile(r"\.pyc$|\.PYC$")
@@ -124,7 +126,10 @@ def parse_args(argv):
          if "s" in a:
             options.deferred.append("_do_log_open %s"%av.pop())
          if "p" in a:
-            options.read_stdin = 1 
+            options.read_stdin = 1
+         if "X" in a:
+            options.rpcServer = 1
+            
       else:
          options.deferred.append(a)
    if options.show_splash and not options.no_gui:

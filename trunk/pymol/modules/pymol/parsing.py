@@ -282,17 +282,17 @@ def list_to_str_list(list,width=77,margin=2): # format strings into a list
 def dump_arg(name,arg_lst,nreq):
    ac = 0
    pc = 0
-   print "Usage:",name,
+   st = "Usage: "+name
    for a in arg_lst:
       if ac>=nreq:
-         print "[",
+         st = st + " ["
          pc = pc + 1
       if ac:
-         print ","+a,
+         st = st + ", " + a
       else:
-         print a,
+         st = st + " " + a
       ac = ac + 1
-   print "]"*pc
+   print st,"]"*pc
    
 def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or excepts if error
    if name==None:
@@ -310,6 +310,11 @@ def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or exc
    else:
       ndef = 0
    nreq = narg-ndef
+   if len(lst)==1:
+      if lst[0]==(None,'?'):
+         dump_arg(name,arg_nam,nreq)         
+         raise QuietException
+      
    if mode==NO_CHECK:
       # no error checking
       for a in lst:
