@@ -22,8 +22,10 @@ Z* -------------------------------------------------------------------
 
 #ifndef _PYMOL_OSX
 #include<GL/gl.h>
+#include<GL/glu.h>
 #else
 #include<gl.h>
+#include<glu.h>
 #include <OpenGL/glext.h>
 #endif
 
@@ -75,6 +77,11 @@ void PyMOLCheckOpenGLErr(char *pos);
 #ifdef _PYMOL_WX_GLUT
 #define _PYMOL_PRETEND_GLUT
 #define _PYMOL_PRETEND_GLUT_FONT
+#endif
+
+#ifdef _PYMOL_NO_MAIN
+#define _PYMOL_PRETEND_GLUT
+#define _PYMOL_NO_GLUT
 #endif
 
 #ifndef _PYMOL_PRETEND_GLUT
@@ -151,6 +158,7 @@ void PyMOLCheckOpenGLErr(char *pos);
 
 /* ============ GLUT EMULATION MODE ============= */
 
+#ifndef _PYMOL_NO_GLUT
 
 #define P_GLUT_IDLE_EVENT            0
 #define P_GLUT_DISPLAY_EVENT         1
@@ -160,6 +168,7 @@ void PyMOLCheckOpenGLErr(char *pos);
 #define P_GLUT_CHAR_EVENT            5
 #define P_GLUT_SPECIAL_EVENT         6
 #define P_GLUT_PASSIVE_MOTION_EVENT  7
+
 
 typedef struct {
   int event_code;
@@ -172,7 +181,9 @@ typedef struct {
 void p_glutHandleEvent(p_glut_event *ev); 
 int p_glutGetRedisplay(void);
 
-/* here is the interface and constants for a pretend GLUT */
+#endif
+
+/* here is the interface and constants for pretend or no GLUT */
 
 #define P_GLUT_RGBA                     0
 #define P_GLUT_DOUBLE                   2
@@ -215,6 +226,7 @@ int p_glutGetRedisplay(void);
 #define P_GLUT_MIDDLE_BUTTON  1
 #define P_GLUT_RIGHT_BUTTON   2
 
+#ifndef _PYMOL_NO_GLUT
 void     p_glutGameModeString(char *str);
 void     p_glutEnterGameMode(void);
 void     p_glutLeaveGameMode(void);
@@ -250,6 +262,9 @@ void     p_glutSpecialFunc(void (*func)(int key, int x, int y));
 void     p_glutIdleFunc(void (*func)(void));
 
 void     p_glutMainLoop(void);
+
+#endif
+
 #endif
 
 #endif

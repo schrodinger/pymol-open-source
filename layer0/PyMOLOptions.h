@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 
 #define PYMOL_MAX_OPT_STR 1025
 
-struct _COption {
+struct _CPyMOLOptions {
   int pmgui, 
     internal_gui, 
     show_splash,
@@ -41,7 +41,7 @@ struct _COption {
     incentive_product;
 
   char after_load_script[PYMOL_MAX_OPT_STR];
-
+  
   int multisample,
     window_visible, 
     read_stdin;
@@ -53,9 +53,9 @@ struct _COption {
      ClassPyMOL.c where this global structure is initialized */
 };
 
-#ifndef COption_DEFINED
-typedef struct _COption COption;
-#define COption_DEFINED
+#ifndef CPyMOLOptions_DEFINED
+typedef struct _CPyMOLOptions CPyMOLOptions;
+#define CPyMOLOptions_DEFINED
 #endif
 
 #endif

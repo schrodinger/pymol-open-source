@@ -78,7 +78,7 @@ void PInitEmbedded(int argc,char **argv);
 
   struct PyMOLOptionRec;
 
-void PGetOptions(COption *rec);
+void PGetOptions(CPyMOLOptions *rec);
 
 void PFree(void);
 void PExit(int code);

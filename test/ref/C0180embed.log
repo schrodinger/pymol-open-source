@@ -3,6 +3,8 @@ PyMOL>embed peptide
  Embed: read 108 lines.
 PyMOL>load_embedded peptide
  CmdLoad: PDB-string loaded into object "peptide", state 1.
+PyMOL>count_atoms
+ count_atoms: 107 atoms
 PyMOL>hide everything, peptide
 PyMOL>show sticks, peptide
 PyMOL>set valence

@@ -132,7 +132,6 @@ int ExecutiveSaveUndo(PyMOLGlobals *G,char *s1,int state);
 void ExecutiveSetLastObjectEdited(PyMOLGlobals *G,CObject *o);
 CObject *ExecutiveGetLastObjectEdited(PyMOLGlobals *G);
 void ExecutiveFullScreen(PyMOLGlobals *G,int flag);
-void ExecutiveFocus(PyMOLGlobals *G);
 PyObject *ExecutiveGetSettingTuple(PyMOLGlobals *G,int index,char *object,int state);
 PyObject *ExecutiveGetSettingText(PyMOLGlobals *G,int index,char *object,int state);
 ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals *G,char *sele);

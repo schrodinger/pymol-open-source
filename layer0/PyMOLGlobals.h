@@ -50,14 +50,20 @@ typedef struct _CSeeker CSeeker;
 typedef struct _CSelector CSelector;
 typedef struct _CTexture CTexture;
 typedef struct _CMain CMain;
-#ifndef COption_DEFINED
-typedef struct _COption COption;
-#define COption_DEFINED
+
+#ifndef CPyMOLOptions_DEFINED
+typedef struct _CPyMOLOptions CPyMOLOptions;
+#define CPyMOLOptions_DEFINED
 #endif
 
 #ifndef OVCONTEXT_DEFINED
 typedef struct _OVContext OVContext;
 #define OVCONTEXT_DEFINED
+#endif
+
+#ifndef CPyMOL_DEFINED
+typedef struct _CPyMOL CPyMOL;
+#define CPyMOL_DEFINED
 #endif
 
 typedef struct _PyMOLGlobals PyMOLGlobals;
@@ -94,9 +100,10 @@ struct _PyMOLGlobals {
   CSelector *Selector;
   CTexture  *Texture;
   OVContext *Context;
-  COption   *Option;
-  CMain     *Main;
-
+  CMain     *Main; /* host/platform-specific "main" code */
+  CPyMOLOptions *Option; 
+  CPyMOL    *PyMOL; /* the instance */
+  
   /* global variables */
 
   int HaveGUI; /* do we have an OpenGL graphics window/context?
@@ -115,6 +122,9 @@ struct _PyMOLGlobals {
   
   int Security; /* do we warn the use before potentially executing any
                  * Python code and ask for their informed consent? */
+
+  int DragDirtyFlag; /* do we need an extra callback to handle a mouse drag? */
+
 
 };
 

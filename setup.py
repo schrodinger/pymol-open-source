@@ -30,7 +30,7 @@ elif sys.platform=='cygwin':
    ext_comp_args=[]
    ext_link_args=[]
 else:
-   inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
+   inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5","ov/src"]
    libs=["GL","GLU","glut","png"]
    pyogl_libs = ["GL","GLU","glut"]
    lib_dirs=["/usr/X11R6/lib"]
@@ -61,6 +61,13 @@ setup ( # Distribution meta-data
                'pymol/wizard'],
 	ext_modules = [
    Extension("pymol._cmd", [
+   "ov/src/OVContext.c",
+   "ov/src/OVHeapArray.c",
+   "ov/src/OVHeap.c",
+   "ov/src/OVLexicon.c",
+   "ov/src/OVOneToOne.c",
+   "ov/src/OVRandom.c",
+   "ov/src/ov_utility.c",
    "layer0/Block.c",
    "layer0/Crystal.c",
    "layer0/Debug.c",
@@ -156,7 +163,7 @@ setup ( # Distribution meta-data
    "layer4/Export.c",
    "layer4/Menu.c",
    "layer4/PopUp.c",
-   "layer5/ClassPyMOL.c",
+   "layer5/PyMOL.c",
    "layer5/TestPyMOL.c",
    "layer5/main.c",
    ],

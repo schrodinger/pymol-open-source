@@ -75,6 +75,7 @@ Z* -------------------------------------------------------------------
 #include"TestPyMOL.h"
 #include"Color.h"
 #include"Seq.h"
+#include"PyMOL.h"
 
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
@@ -296,7 +297,7 @@ static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdFakeDrag(PyObject *self, 	PyObject *args)
 {
-  MainDragDirty();
+  PyMOL_NeedFakeDrag(TempPyMOLGlobals->PyMOL);
   return(APIStatus(true));
 }
 
@@ -603,32 +604,32 @@ static PyObject *CmdDebug(PyObject *self,PyObject *args)
 
 static PyObject *CmdPGlutGetRedisplay(PyObject *self, PyObject *args)
 {
-  #ifdef _PYMOL_PRETEND_GLUT
-
+#ifdef _PYMOL_PRETEND_GLUT
+#ifndef _PYMOL_NO_GLUT
   return(APIStatus(p_glutGetRedisplay()));  
-  
-  #else
-  
+#else
+  return(APIStatus(0));
+#endif
+#else
   return(APIStatus(0));  
-
-  #endif
-
+#endif
 }
 
 static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
 {
   int ok=true;
 #ifdef _PYMOL_PRETEND_GLUT
+#ifndef _PYMOL_NO_GLUT
   p_glut_event ev;
   ok = PyArg_ParseTuple(args,"iiiiii",&ev.event_code,
                         &ev.x,&ev.y,&ev.input,&ev.state,&ev.mod);
-   if(ok) {
+  if(ok) {
     PUnblock();
     p_glutHandleEvent(&ev);
     PBlock();
   }
 #endif
-
+#endif
   return(APIStatus(ok));
 }
 
@@ -1481,14 +1482,6 @@ static PyObject *CmdPop(PyObject *self,  PyObject *args)
 
 }
 
-static PyObject *CmdFocus(PyObject *self, 	PyObject *args)
-{
-  /* BROKEN */
-  APIEntry();
-  ExecutiveFocus(TempPyMOLGlobals);
-  APIExit();
-  return(APIFailure());
-}
 
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
@@ -2531,6 +2524,9 @@ static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
 {
+#ifdef _PYMOL_NO_MAIN
+  exit(0);
+#else
 #ifndef _PYMOL_WX_GLUT
 
   if(run_only_once) {
@@ -2539,6 +2535,7 @@ static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
     was_main();
 #endif
   }
+#endif
 #endif
 
   return(APISuccess());
@@ -3453,7 +3450,9 @@ static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
 {
   APIEntry();
   ExecutiveDrawNow(TempPyMOLGlobals); /* TODO STATUS */
+#ifndef _PYMOL_NO_MAIN
   MainRefreshNow();
+#endif
   APIExit();
   return(APISuccess());
 }
@@ -3540,7 +3539,9 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
       h=-1;
     }
     APIEntry();
+#ifndef _PYMOL_NO_MAIN
     MainDoReshape(w,h); /* should be moved into Executive */
+#endif
     APIExit();
   }
   return(APIStatus(ok));
@@ -5039,7 +5040,9 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"i",&int1);
   if (ok) {
     APIEntry();
+#ifndef _PYMOL_NO_MAIN
     MainSetWindowVisibility(int1);
+#endif 
     APIExit();
   }
   return(APIStatus(ok));  
@@ -5103,7 +5106,6 @@ static PyMethodDef Cmd_methods[] = {
 	{"flag",                  CmdFlag,                 METH_VARARGS },
 	{"frame",	              CmdFrame,                METH_VARARGS },
    {"flush_now",             CmdFlushNow,             METH_VARARGS },
-   {"focus",                 CmdFocus,                METH_VARARGS },
    {"delete_colorection",    CmdDelColorection,       METH_VARARGS },   
 	{"dss",   	              CmdAssignSS,             METH_VARARGS },
    {"full_screen",           CmdFullScreen,           METH_VARARGS },

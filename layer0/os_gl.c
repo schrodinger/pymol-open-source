@@ -3,10 +3,6 @@
 
 #include<stdio.h>
 
-#ifdef _PYMOL_PRETEND_GLUT_FONT
-void plutBitmapCharacter(int c);
-#endif
-
 void PyMOLReadPixels(GLint x,
                   GLint y,
                   GLsizei width,
@@ -55,7 +51,6 @@ void PyMOLReadPixels(GLint x,
   glPixelStorei(GL_PACK_ALIGNMENT, alignment); 
 
 }
-
 
 void PyMOLDrawPixels(GLsizei width,
                   GLsizei height,
@@ -107,6 +102,12 @@ void PyMOLCheckOpenGLErr(char *pos)
     }
 }
 
+#ifndef _PYMOL_NO_GLUT
+
+#ifdef _PYMOL_PRETEND_GLUT_FONT
+void plutBitmapCharacter(int c);
+#endif
+
 #ifdef _PYMOL_MIN_GLUT
 
 /* NULL GLUT: Bare Minimum GLUT implementation for getting PyMOL up in 
@@ -118,11 +119,8 @@ void PyMOLCheckOpenGLErr(char *pos)
 #define NULL ((void*)0)
 #endif
 
-
 static void (*idleFunc)(void) = NULL;
 static int WinX = 640,WinY=480;
-
-
 
 int      p_glutCreateWindow(const char *title) {
 
@@ -2453,4 +2451,5 @@ void plutBitmapCharacter(int c)
   }
 }
 
+#endif
 #endif
