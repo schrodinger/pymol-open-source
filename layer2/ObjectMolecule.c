@@ -8224,7 +8224,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
         {
           if(!symmetry) symmetry=SymmetryNew();          
           if(symmetry) {
-            PRINTFB(FB_ObjectMolecule,FB_Details)
+            PRINTFB(FB_ObjectMolecule,FB_Blather)
               " PDBStrToCoordSet: Attempting to read symmetry information\n"
               ENDFB;
             p=nskip(p,6);
