@@ -70,7 +70,6 @@ PyMOL>get_area name ca
 PyMOL>load dat/3al1.pdb
  ObjectMolecule: read HELIX A 102 A 110
  ObjectMolecule: read HELIX B 202 B 210
- PDBStrToCoordSet: Attempting to read symmetry information
  Crystal: Unit Cell           20.544   20.859   26.055
  Crystal: Alpha Beta Gamma   101.160   97.030  118.060
  Crystal: RealToFrac Matrix
@@ -219,7 +218,6 @@ Error: selection must refer to exactly one object.
 PyMOL>load dat/3al1.pdb
  ObjectMolecule: read HELIX A 102 A 110
  ObjectMolecule: read HELIX B 202 B 210
- PDBStrToCoordSet: Attempting to read symmetry information
  Crystal: Unit Cell           20.544   20.859   26.055
  Crystal: Alpha Beta Gamma   101.160   97.030  118.060
  Crystal: RealToFrac Matrix

@@ -43,9 +43,6 @@ void MovieCopyPrepare(int *width,int *height,int *length)
 
   int start,stop;
   CMovie *I=&Movie;
-  int a;
-  int i;
-  char fname[255];
   int nFrame;
 
   I->CacheSave = (int)SettingGet(cSetting_cache_frames); 
@@ -71,7 +68,6 @@ int MovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
   CMovie *I=&Movie;
   int result=false;
   int nFrame;
-  int cur_frame;
   
   nFrame = I->NFrame;
   if(!nFrame) {
@@ -130,8 +126,10 @@ void MovieCopyFinish(void)
   SceneDirty(); /* important */
   SettingSet(cSetting_cache_frames,(float)I->CacheSave);
   MoviePlay(cMovieStop);
-  // MovieClearImages();
-  // SceneSuppressMovieFrame();  
+  if(!I->CacheSave) {
+    MovieClearImages(); 
+    SceneSuppressMovieFrame();
+  }
 }
 
 int MovieLocked(void)

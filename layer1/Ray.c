@@ -1600,13 +1600,13 @@ int RayTraceThread(CRayThreadInfo *T)
                       fc[3]	= (0xFF&((*pixel)))     * persist + (0xFF&(last_pixel))*persist_inv;
                       
                       if(!opaque_back) {
-                        if(i<0) { // hit nothing -- so don't blend alpha
+                        if(i<0) { /* hit nothing -- so don't blend alpha*/
                           fc[0] = (0xFF&(last_pixel>>24));
                           fc[1] = (0xFF&(last_pixel>>16));
                           fc[2] = (0xFF&(last_pixel>>8));
                           fc[3] = (0xFF&(last_pixel));
-                        } else { // hit something -- so keep blend and compute cumulative alpha
-                          if(i>=0) { // make sure opaque objects get opaque alpha
+                        } else { /* hit something -- so keep blend and compute cumulative alpha*/
+                          if(i>=0) { /* make sure opaque objects get opaque alpha*/
                             float o1,o2;
                             float m;
                             
@@ -1618,7 +1618,7 @@ int RayTraceThread(CRayThreadInfo *T)
                               o2 = (float)(0xFF&((*pixel)>>24))/255.0F;
                             }
                             
-                            if(o1<o2) { // make sure o1 is largest opacity
+                            if(o1<o2) { /* make sure o1 is largest opacity*/
                               m = o1;
                               o1 = o2;
                               o2 = m;

@@ -521,7 +521,7 @@ int  SceneCopyExternal(int width, int height,int rowbytes,unsigned char *dest)
         unsigned char *src = image + ((height-1)-i) * width*4;
         for (j = 0; j < width; j++)
           {
-            *dst++ = ((unsigned int)src[0]*src[3])/255; // premultiply alpha
+            *dst++ = ((unsigned int)src[0]*src[3])/255; /* premultiply alpha */
             *dst++ = ((unsigned int)src[1]*src[3])/255;
             *dst++ = ((unsigned int)src[2]*src[3])/255;
             *dst++ = src[3];
