@@ -76,8 +76,8 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
       v+=3;
       n++;
 	 }
-  } else if(pick&&PMGUI) {
-  } else if(PMGUI) {
+  } else if(pick&&G->HaveGUI) {
+  } else if(G->HaveGUI) {
     int float_text;
     float_text = (int)SettingGet(G,cSetting_float_labels);
     if(float_text)

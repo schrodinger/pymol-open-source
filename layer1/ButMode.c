@@ -23,7 +23,6 @@ Z* -------------------------------------------------------------------
 #include "ButMode.h"
 #include "Scene.h"
 #include "Util.h"
-#include "Grap.h"
 #include "Ortho.h"
 #include "Setting.h"
 #include "P.h"
@@ -146,7 +145,7 @@ static void ButModeDraw(Block *block)
 
 #define BLANK_STR "     "
 
-  if(PMGUI) {
+  if(G->HaveGUI) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==0) {
       glColor3fv(I->Block->BackColor);
       BlockFill(I->Block);
@@ -155,159 +154,159 @@ static void ButModeDraw(Block *block)
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
 
-
-    glColor3fv(I->TextColor2);
-    GrapDrawStr("Mouse Mode ",x+1,y);
-    glColor3fv(I->TextColor3);
-    GrapDrawStr(SettingGetGlobal_s(G,cSetting_button_mode_name),x+88,y);
-    /*    GrapDrawStr("2-Bttn Selecting",x+88,y);*/
+    TextSetColor(G,I->TextColor2);
+    TextDrawStrAt(G,"Mouse Mode ",x+1,y);
+    TextSetColor(G,I->TextColor3);
+    TextDrawStrAt(G,SettingGetGlobal_s(G,cSetting_button_mode_name),x+88,y);
+    /*    TextDrawStrAt(G,"2-Bttn Selecting",x+88,y);*/
     y-=cButModeLineHeight;
 
 
 
-    glColor3fv(I->Block->TextColor);
-    GrapDrawStr("Buttons ",x+1,y);
-    glColor3fv(I->TextColor1);
-    /*    GrapDrawStr("  Left Mddl Rght Scrl",x+48,y);*/
-    GrapDrawStr("    L    M    R  Wheel",x+43,y);
+    TextSetColor(G,I->Block->TextColor);
+    TextDrawStrAt(G,"Buttons ",x+1,y);
+    TextSetColor(G,I->TextColor1);
+    /*    TextDrawStrAt(G,"  Left Mddl Rght Scrl",x+48,y);*/
+    TextDrawStrAt(G,"    L    M    R  Wheel",x+43,y);
 
     y-=cButModeLineHeight;
     /*    glColor3fv(I->Block->TextColor);
-          GrapDrawStr("K",x,y-4);*/
-    glColor3fv(I->Block->TextColor);
-    GrapDrawStr("&",x+4,y);
-    GrapDrawStr("Keys",x+16,y);
-    glColor3fv(I->TextColor2);
-    glRasterPos4d(x+64,y,0,1);
+          TextDrawStrAt(G,"K",x,y-4);*/
+    TextSetColor(G,I->Block->TextColor);
+    TextDrawStrAt(G,"&",x+4,y);
+    TextDrawStrAt(G,"Keys",x+16,y);
+    TextSetColor(G,I->TextColor2);
+    
+    TextSetPos2i(G,x+64,y);
     for(a=0;a<3;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr(BLANK_STR);
+        TextDrawStr(G,BLANK_STR);
       else
-        GrapContStr(I->Code[mode]);
+        TextDrawStr(G,I->Code[mode]);
     }
     mode = I->Mode[12];
     if(mode<0)
-      GrapContStr(BLANK_STR);
+      TextDrawStr(G,BLANK_STR);
     else 
-      GrapContStr(I->Code[mode]);
+      TextDrawStr(G,I->Code[mode]);
 
     y-=cButModeLineHeight;
-    /*    glColor3fv(I->Block->TextColor);
-          GrapDrawStr("e",x+5,y-1);*/
-    glColor3fv(I->TextColor1);
+    /*    TextSetColor(G,I->Block->TextColor);
+          TextDrawStrAt(G,"e",x+5,y-1);*/
+    TextSetColor(G,I->TextColor1);
 
-    glColor3fv(I->TextColor1);
-    GrapDrawStr("Shft ",x+24,y);
-    glColor3fv(I->TextColor2);
-    glRasterPos4d(x+64,y,0,1);
+    TextSetColor(G,I->TextColor1);
+    TextDrawStrAt(G,"Shft ",x+24,y);
+    TextSetColor(G,I->TextColor2);
+    TextSetPos2i(G,x+64,y);
     for(a=3;a<6;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr(BLANK_STR);
+        TextDrawStr(G,BLANK_STR);
       else 
-        GrapContStr(I->Code[mode]);
+        TextDrawStr(G,I->Code[mode]);
     }
     mode = I->Mode[13];
     if(mode<0)
-      GrapContStr(BLANK_STR);
+      TextDrawStr(G,BLANK_STR);
     else 
-      GrapContStr(I->Code[mode]);
+      TextDrawStr(G,I->Code[mode]);
 
     y-=cButModeLineHeight;
     /*    glColor3fv(I->Block->TextColor);
-          GrapDrawStr("y",x+10,y+2);*/
-    glColor3fv(I->TextColor1);
-    GrapDrawStr("Ctrl ",x+24,y);
-    glColor3fv(I->TextColor2);
-    glRasterPos4d(x+64,y,0,1);
+          TextDrawStrAt(G,"y",x+10,y+2);*/
+    TextSetColor(G,I->TextColor1);
+    TextDrawStrAt(G,"Ctrl ",x+24,y);
+    TextSetColor(G,I->TextColor2);
+    TextSetPos2i(G,x+64,y);
     for(a=6;a<9;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr(BLANK_STR);
+        TextDrawStr(G,BLANK_STR);
       else
-        GrapContStr(I->Code[mode]);
+        TextDrawStr(G,I->Code[mode]);
     }
     mode = I->Mode[14];
     if(mode<0)
-      GrapContStr(BLANK_STR);
+      TextDrawStr(G,BLANK_STR);
     else 
-      GrapContStr(I->Code[mode]);
+      TextDrawStr(G,I->Code[mode]);
     y-=cButModeLineHeight;
 
 
     /*    glColor3fv(I->Block->TextColor);
-          GrapDrawStr("s",x+15,y+3);*/
-    glColor3fv(I->TextColor1);
-    glColor3fv(I->TextColor1);
-    GrapDrawStr("CtSh ",x+24,y);
-    glColor3fv(I->TextColor2);
-    glRasterPos4d(x+64,y,0,1);
+          TextDrawStrAt(G,"s",x+15,y+3);*/
+    TextSetColor(G,I->TextColor1);
+    TextSetColor(G,I->TextColor1);
+    TextDrawStrAt(G,"CtSh ",x+24,y);
+    TextSetColor(G,I->TextColor2);
+    TextSetPos2i(G,x+64,y);
     for(a=9;a<12;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr(BLANK_STR);
+        TextDrawStr(G,BLANK_STR);
       else
-        GrapContStr(I->Code[mode]);
+        TextDrawStr(G,I->Code[mode]);
     }
     mode = I->Mode[15];
     if(mode<0)
-      GrapContStr(BLANK_STR);
+      TextDrawStr(G,BLANK_STR);
     else 
-      GrapContStr(I->Code[mode]);
+      TextDrawStr(G,I->Code[mode]);
 
     y-=cButModeLineHeight;
 
 
-    glColor3fv(I->Block->TextColor);
-    glColor3fv(I->TextColor1);
-    GrapDrawStr(" DblClk",x,y);
-    glColor3fv(I->TextColor2);
-    glRasterPos4d(x+64,y,0,1);
+    TextSetColor(G,I->Block->TextColor);
+    TextSetColor(G,I->TextColor1);
+    TextDrawStrAt(G," DblClk",x,y);
+    TextSetColor(G,I->TextColor2);
+    TextSetPos2i(G,x+64,y);
     for(a=16;a<19;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr(BLANK_STR);
+        TextDrawStr(G,BLANK_STR);
       else
-        GrapContStr(I->Code[mode]);
+        TextDrawStr(G,I->Code[mode]);
     }
-    glColor3fv(I->Block->TextColor);
+    TextSetColor(G,I->Block->TextColor);
     y-=cButModeLineHeight;
 
     /*
-    if(I->Caption[0]) GrapDrawStr(I->Caption,x,y);
+    if(I->Caption[0]) TextDrawStrAt(G,I->Caption,x,y);
     */
 
     {
-      glColor3fv(I->Block->TextColor);
-      GrapDrawStr("Selecting ",x,y);
-      glColor3fv(I->TextColor3);
+      TextSetColor(G,I->Block->TextColor);
+      TextDrawStrAt(G,"Selecting ",x,y);
+      TextSetColor(G,I->TextColor3);
       switch(SettingGetGlobal_i(G,cSetting_mouse_selection_mode)) {
       case 0:
-        GrapDrawStr("Atoms",x+80,y);        
+        TextDrawStrAt(G,"Atoms",x+80,y);        
         break;
       case 1:
-        GrapDrawStr("Residues",x+80,y);        
+        TextDrawStrAt(G,"Residues",x+80,y);        
         break;
       case 2:
-        GrapDrawStr("Chains",x+80,y);        
+        TextDrawStrAt(G,"Chains",x+80,y);        
         break;
       case 3:
-        GrapDrawStr("Segments",x+80,y);        
+        TextDrawStrAt(G,"Segments",x+80,y);        
         break;
       case 4:
-        GrapDrawStr("Objects",x+80,y);        
+        TextDrawStrAt(G,"Objects",x+80,y);        
         break;
       case 5:
-        GrapDrawStr("Molecules",x+80,y);        
+        TextDrawStrAt(G,"Molecules",x+80,y);        
         break;
       case 6:
-        GrapDrawStr("C-alphas",x+80,y);        
+        TextDrawStrAt(G,"C-alphas",x+80,y);        
         break;
       }
     }
 
-    glColor3fv(I->Block->TextColor);
+    TextSetColor(G,I->Block->TextColor);
     y-=cButModeLineHeight;
     if(I->Samples) 
       rate = I->Rate/I->Samples;
@@ -316,12 +315,12 @@ static void ButModeDraw(Block *block)
     nf = SceneGetNFrame(G);
     if(nf==0)
       nf=1;
-    glColor3fv(I->Block->TextColor);
-    GrapDrawStr("Frame ",x,y);
-    glColor3fv(I->TextColor2);
+    TextSetColor(G,I->Block->TextColor);
+    TextDrawStrAt(G,"Frame ",x,y);
+    TextSetColor(G,I->TextColor2);
     sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame(G)+1,
             nf,(int)(rate+0.5F));
-    GrapDrawStr(rateStr,x+48,y);
+    TextDrawStrAt(G,rateStr,x+48,y);
 
 
   }

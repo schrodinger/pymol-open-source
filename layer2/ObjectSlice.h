@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMap.h"
 
 typedef struct {
+  PyMOLGlobals *G;
   /* stored in a session */
 
   int Active;

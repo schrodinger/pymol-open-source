@@ -123,7 +123,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
         result = true;
       }
       ExecutiveDrawNow(G);
-      if(PMGUI) p_glutSwapBuffers();
+      if(G->HaveGUI) p_glutSwapBuffers();
     }
     if(!I->CacheSave) {
       if(I->Image[i])
@@ -439,7 +439,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
           MyPNGWrite(G,fname,I->Image[i],I->Width,I->Height);		
           ExecutiveDrawNow(G);
           OrthoBusySlow(G,a,nFrame);
-          if(PMGUI) p_glutSwapBuffers();
+          if(G->HaveGUI) p_glutSwapBuffers();
           PRINTFB(G,FB_Movie,FB_Debugging)
             " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
             ENDFB(G);

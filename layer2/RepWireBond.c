@@ -375,7 +375,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 		v+=9;
 	 }
 
-  } else if(pick&&PMGUI) {
+  } else if(pick&&G->HaveGUI) {
 	 
 	 i=(*pick)->index;
 
@@ -413,7 +413,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 }
 	 glEnd();
 	 (*pick)[0].index = i; /* pass the count */
-  } else if(PMGUI) {
+  } else if(G->HaveGUI) {
 
     int use_dlst;
     use_dlst = (int)SettingGet(G,cSetting_use_display_lists);

@@ -210,13 +210,14 @@ static int ObjectCGOGetNState(ObjectCGO *I) {
 
 static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int pass)
 {
+  register PyMOLGlobals *G = I->Obj.G;
   ObjectCGOState *sobj = NULL;
   int a;
   float *color;
 
   ObjectPrepareContext(&I->Obj,ray);
 
-  color = ColorGet(I->Obj.G,I->Obj.Color);
+  color = ColorGet(G,I->Obj.Color);
 
   if(!pass) {
     if(I->Obj.RepVis[cRepCGO]) {
@@ -233,8 +234,8 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
                 CGORenderRay(sobj->ray,ray,color,I->Obj.Setting,NULL);
               else
                 CGORenderRay(sobj->std,ray,color,I->Obj.Setting,NULL);
-            } else if(pick&&PMGUI) {
-            } else if(PMGUI) {
+            } else if(pick&&G->HaveGUI) {
+            } else if(G->HaveGUI) {
               if(sobj->std)
                 CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
             }
@@ -242,7 +243,7 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
         }
       } else {
         if(!sobj) {
-          if(I->NState&&SettingGet(I->Obj.G,cSetting_static_singletons)) 
+          if(I->NState&&SettingGet(G,cSetting_static_singletons)) 
             sobj = I->State;
         }
         if(ray) {    
@@ -253,8 +254,8 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
               else
                 CGORenderRay(sobj->std,ray,color,I->Obj.Setting,NULL);
             }
-        } else if(pick&&PMGUI) {
-        } else if(PMGUI) {
+        } else if(pick&&G->HaveGUI) {
+        } else if(G->HaveGUI) {
           if(sobj)
             if(sobj->std)
               CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
@@ -349,8 +350,8 @@ ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals *G,ObjectCGO *obj,CGO *cgo,int state)
   if(I) {
     ObjectCGORecomputeExtent(I);
   }
-  SceneChanged(I->Obj.G);
-  SceneCountFrames(I->Obj.G);
+  SceneChanged(G);
+  SceneCountFrames(G);
   return(I);
 }
 /*========================================================================*/

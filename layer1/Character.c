@@ -109,7 +109,6 @@ unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals *G,int id)
 }
                                    
 int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
-                           int advance,
                            unsigned char *bitmap,
                            CharFngrprnt *fprnt)
 {
@@ -121,7 +120,6 @@ int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
                          fprnt->u.i.color);    
     rec->Width = width;
     rec->Height = height;
-    rec->Advance = advance;
     { /* add this character to the hash */
       int hash_code = get_hash(fprnt);
       int cur_entry;
@@ -139,20 +137,24 @@ int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
 }
 
 
-int CharacterRenderOpenGL(PyMOLGlobals *G,int id) /* need orientation matrix */
+int CharacterRenderOpenGL(PyMOLGlobals *G,int id,float x_orig, float y_orig, float advance)
+/* need orientation matrix */
 {
   register CCharacter *I = G->Character;
   CharRec *rec = I->Char + id;
 
   int texture_id = TextureGetFromChar(G,id,rec->extent);
-  if(texture_id) {
+  if(G->HaveGUI&&texture_id) {
     glEnable(GL_TEXTURE_2D);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     if(glIsTexture(texture_id)) {
-      float *v0;
-      float v1[3],v2[3];
+      float *v,v0[3];
+      float v1[3];
       glBindTexture(GL_TEXTURE_2D, texture_id);
-      v0 = TextGetPos(G);
+      v = TextGetPos(G);
+      copy3f(v,v0);
+      v0[0]-=x_orig;
+      v0[1]-=y_orig;
       copy3f(v0,v1);
       v1[0] += rec->Width;
       v1[1] += rec->Height;
@@ -165,9 +167,7 @@ int CharacterRenderOpenGL(PyMOLGlobals *G,int id) /* need orientation matrix */
       glTexCoord2f(rec->extent[0], rec->extent[1]); glVertex3f(v1[0],v1[1],v0[2]);
       glTexCoord2f(rec->extent[0], 0.0F); glVertex3f(v1[0],v0[1],v0[2]);
       glEnd();
-      copy3f(v0,v2);
-      v2[0] += rec->Advance;
-      TextSetPos(G,v2);
+      TextAdvance(G,advance);
     }
     glDisable(GL_TEXTURE_2D);
   }

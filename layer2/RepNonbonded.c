@@ -76,7 +76,7 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 		v+=21;
 	 }
 
-  } else if(pick&&PMGUI) {
+  } else if(pick&&G->HaveGUI) {
 	 
 	 i=(*pick)->index;
 
@@ -123,7 +123,7 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 	 glEnd();
 
 	 (*pick)[0].index = i;
-  } else if(PMGUI) {
+  } else if(G->HaveGUI) {
 
     int use_dlst;
     glLineWidth(I->Width);

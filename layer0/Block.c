@@ -38,7 +38,7 @@ void BlockInit(PyMOLGlobals *G,Block *I)
 /*========================================================================*/
 void BlockFill(Block *I) 
 {
-  if(PMGUI) {
+  if(I->G->HaveGUI) {
     glBegin(GL_POLYGON);
     glVertex2i(I->rect.right,I->rect.top);
     glVertex2i(I->rect.right,I->rect.bottom);
@@ -50,7 +50,7 @@ void BlockFill(Block *I)
 /*========================================================================*/
 void BlockOutline(Block *I) 
 {
-  if(PMGUI) {
+  if(I->G->HaveGUI) {
     glBegin(GL_LINE_LOOP);
     glVertex2i(I->rect.right,I->rect.top);
     glVertex2i(I->rect.right,I->rect.bottom);

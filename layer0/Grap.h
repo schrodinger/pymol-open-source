@@ -13,20 +13,10 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-
 #ifndef _H_Grap
 #define _H_Grap
 
-/* Graphics wrapper macros and routines.
- * Not widely used at present, but that will change. */
-
-void GrapMoveTo(int x,int y);
-void GrapDrawStr(char *c,int x,int y);
-void GrapDrawSubStrSafe(char *c,int x,int y,int start,int n);
-void GrapDrawSubStrFast(char *c,int x,int y,int start,int n);
-void GrapContStr(char *c);
-int GrapMeasureStr(char *c);
-
+/* obsolete source file */
 
 #endif
 

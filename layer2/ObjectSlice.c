@@ -209,7 +209,7 @@ PyObject *ObjectSliceAsPyList(ObjectSlice *I)
 
 static void ObjectSliceStateFree(ObjectSliceState *oss)
 {
-  if(PMGUI) {
+  if(oss->G->HaveGUI) {
     if(oss->displayList) {
       if(PIsGlutThread()) {
         glDeleteLists(oss->displayList,1);
@@ -849,10 +849,11 @@ int ObjectSliceGetOrigin(ObjectSlice *I,int state,float *origin)
 static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick,int pass)
 {
 
+  PyMOLGlobals *G = I->Obj.G;
   int cur_state = 0;
   float alpha;
-  int track_camera = SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_track_camera);
-  int dynamic_grid = SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_dynamic_grid);
+  int track_camera = SettingGet_b(G,NULL,I->Obj.Setting,cSetting_slice_track_camera);
+  int dynamic_grid = SettingGet_b(G,NULL,I->Obj.Setting,cSetting_slice_dynamic_grid);
   ObjectSliceState *oss = NULL;
 
   if(track_camera||dynamic_grid) {
@@ -872,8 +873,8 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
            SceneViewType view;
            float pos[3];
 
-           SceneGetPos(I->Obj.G,pos);
-           SceneGetView(I->Obj.G,view);
+           SceneGetPos(G,pos);
+           SceneGetView(G,view);
            
            if(track_camera) {
              if((diffsq3f(pos,oss->origin)>R_SMALL8) ||
@@ -891,7 +892,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
                }
            }
            if(dynamic_grid&&(!update_flag)) {
-             float scale = SceneGetScreenVertexScale(I->Obj.G,oss->origin);
+             float scale = SceneGetScreenVertexScale(G,oss->origin);
              
              if(fabs(scale-oss->last_scale)>R_SMALL4) {
                update_flag = true;
@@ -908,7 +909,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
   }
 
   ObjectPrepareContext(&I->Obj,ray);
-  alpha = SettingGet_f(I->Obj.G,NULL,I->Obj.Setting,cSetting_transparency);
+  alpha = SettingGet_f(G,NULL,I->Obj.Setting,cSetting_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
@@ -924,7 +925,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
     } else {
       if(!oss) {
         if(I->NState&&
-           ((SettingGet(I->Obj.G,cSetting_static_singletons)&&(I->NState==1))))
+           ((SettingGet(G,cSetting_static_singletons)&&(I->NState==1))))
           oss=I->State;
       }
     }
@@ -1003,7 +1004,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             }
           }
           ray->fTransparentf(ray,0.0);
-        } else if(pick&&PMGUI) {
+        } else if(pick&&G->HaveGUI) {
           
           int i=(*pick)->index;
           int j;
@@ -1077,7 +1078,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             }
           }
           (*pick)[0].index = i; /* pass the count */
-        } else if(PMGUI) {
+        } else if(G->HaveGUI) {
 
           int render_now = false;
           if(alpha>0.0001) {
@@ -1089,9 +1090,9 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             
             int use_dlst;
        
-            SceneResetNormal(I->Obj.G,false);
+            SceneResetNormal(G,false);
             ObjectUseColor(&I->Obj);
-            use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
+            use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
             if(use_dlst&&oss->displayList) {
               glCallList(oss->displayList);
             } else { 
@@ -1213,6 +1214,7 @@ ObjectSlice *ObjectSliceNew(PyMOLGlobals *G)
 /*========================================================================*/
 void ObjectSliceStateInit(PyMOLGlobals *G,ObjectSliceState *oss)
 {
+  oss->G = G;
   oss->displayList=0;
   oss->Active=true;
   oss->RefreshFlag=true;  

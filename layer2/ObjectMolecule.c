@@ -2387,7 +2387,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
   CoordSet *cs;
   int a,at;
 
-  if(PMGUI) {
+  if(I->Obj.G->HaveGUI) {
     if(curState>=0) {
       if(curState<I->NCSet) {
         if(I->CSet[curState]) {
@@ -8407,6 +8407,7 @@ int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
 /*========================================================================*/
 void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,int pass)
 {
+  PyMOLGlobals *G = I->Obj.G;
   int a;
 
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
@@ -8420,8 +8421,8 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
       
       CGORenderRay(I->UnitCellCGO,ray,ColorGet(I->Obj.G,I->Obj.Color),
                          I->Obj.Setting,NULL);
-    } else if(pick&&PMGUI) {
-    } else if(PMGUI) {
+    } else if(pick&&G->HaveGUI) {
+    } else if(G->HaveGUI) {
       ObjectUseColor(&I->Obj);
       CGORenderGL(I->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
                          I->Obj.Setting,NULL);

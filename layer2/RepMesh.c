@@ -116,8 +116,8 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 				}
 		  }
 	 }
-  } else if(pick&&PMGUI) {
-  } else if(PMGUI) {
+  } else if(pick&&G->HaveGUI) {
+  } else if(G->HaveGUI) {
     int use_dlst;
     int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
     SceneResetNormal(G,true);

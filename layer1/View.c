@@ -170,6 +170,7 @@ PyObject *ViewElemVLAAsPyList(CViewElem *vla,int nFrame)
 CView *ViewNew(PyMOLGlobals *G)
 {
   OOAlloc(G,CView);
+  I->G=G;
   I->View = NULL;
   return I;
 }
@@ -211,7 +212,7 @@ int ViewIterate(CView *I,CViewIterator *iter,CRay *ray,int at_least_once)
   if(elem) { /* are we to apply a transformation? */
     if(ray) {
 
-    } else if(PMGUI) {
+    } else if(I->G->HaveGUI) {
       
       if(elem->pre_flag) {
         /* move the camera to the location we are looking at */

@@ -74,7 +74,7 @@ void TextFree(PyMOLGlobals *G);
 void TextSetPos(PyMOLGlobals *G,float *pos);
 
 void TextSetColor(PyMOLGlobals *G,float *color);
-
+void TextSetColor3f(PyMOLGlobals *G,float red, float green, float blue);
 void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color);
 float *TextGetColor(PyMOLGlobals *G);
 float *TextGetPos(PyMOLGlobals *G);
@@ -84,5 +84,11 @@ void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
                        unsigned char *alpha);
 char *TextRenderOpenGL(PyMOLGlobals *G,int text_id,char *st);
 char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st);
+void TextDrawStrAt(PyMOLGlobals *G,char *st, int x, int y);
+void TextDrawStr(PyMOLGlobals *G,char *st);
+void TextAdvance(PyMOLGlobals *G,float advance);
+void TextSetPos2i(PyMOLGlobals *G,int x,int y);
+void TextDrawChar(PyMOLGlobals *G,char ch);
+void TextDrawSubStrFast(PyMOLGlobals *G,char *c,int x,int y,int start,int n);
 
 #endif

@@ -105,7 +105,7 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
       }
     }
     ray->fTransparentf(ray,0.0);
-  } else if(pick&&PMGUI) {
+  } else if(pick&&G->HaveGUI) {
     int trans_pick_mode = SettingGet_i(G,I->R.cs->Setting,
                                        I->R.obj->Setting,
                                        cSetting_transparency_picking_mode);
@@ -193,7 +193,7 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
       }
 	 (*pick)[0].index = i;
     }
-  } else if(PMGUI) {
+  } else if(G->HaveGUI) {
     int use_dlst;
     use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
 

@@ -51,6 +51,7 @@ Z* -------------------------------------------------------------------
 #include"Editor.h"
 #include"RepDot.h"
 #include"Seq.h"
+#include"Text.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -2952,7 +2953,7 @@ int ExecutivePairIndices(PyMOLGlobals *G,char *s1,char *s2,int state1,int state2
 
 void ExecutiveFocus(PyMOLGlobals *G)
 { /* unfortunately, this doesn't achieve the desired effect */
-  if(PMGUI) {
+  if(G->HaveGUI) {
     p_glutPopWindow();
     p_glutShowWindow();
   }
@@ -3925,7 +3926,7 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
     break;
   default:
     
-    if(PMGUI) {
+    if(G->HaveGUI) {
       stereo_mode = (int)SettingGet(G,cSetting_stereo_mode);
       
       switch(stereo_mode) {
@@ -5077,7 +5078,7 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
 
   if(!SettingGet(G,cSetting_suspend_updates)) {
 
-    if(PMGUI) {
+    if(G->HaveGUI) {
       glMatrixMode(GL_MODELVIEW);
       /*  glClear( GL_DEPTH_BUFFER_BIT);*/
     }
@@ -6166,7 +6167,7 @@ static int oldPX,oldPY,oldWidth,oldHeight,sizeFlag=false;
 /*========================================================================*/
 void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
 {
-  if(PMGUI) {
+  if(G->HaveGUI) {
     if(!SettingGet(G,cSetting_full_screen))
       {
         oldPX = p_glutGet(GLUT_WINDOW_X);
@@ -7527,11 +7528,11 @@ static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, 
 
 }
 
-static void draw_button_char(int x2,int y2,char ch)
+static void draw_button_char(PyMOLGlobals *G,int x2,int y2,char ch)
 {
-  glColor3f(0.0,0.0,0.0);
-  glRasterPos4d((double)(x2+ExecToggleTextShift),(double)(y2),0.0,1.0);
-  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,ch);              
+  TextSetColor3f(G,0.0F,0.0F,0.0F);
+  TextSetPos2i(G,x2+ExecToggleTextShift,y2);
+  TextDrawChar(G,ch);
 }
 
 /*========================================================================*/
@@ -7550,7 +7551,7 @@ static void ExecutiveDraw(Block *block)
   float disabledColor[3] = { 0.3F, 0.3F, 0.3F };
   float lightEdge[3] = {0.6F, 0.6F, 0.6F };
   float darkEdge[3] = {0.35F, 0.35F, 0.35F };
-  float captionColor[3] = {0.1F, 1.0F, 0.1F };
+  float captionColor[3] = {0.2F, 0.8F, 0.2F };
   SpecRec *rec = NULL;
   register CExecutive *I = G->Executive;
   int n_ent;
@@ -7560,7 +7561,7 @@ static void ExecutiveDraw(Block *block)
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int text_lift = (ExecLineHeight/2)-5;
 
-  if(PMGUI) {
+  if(G->HaveGUI) {
     int max_char;
 
 
@@ -7662,7 +7663,7 @@ static void ExecutiveDraw(Block *block)
                               toggleDarkEdge,
                               toggleColor);
 
-                  draw_button_char(x2,y2+text_lift,'A');
+                  draw_button_char(G,x2,y2+text_lift,'A');
                   break;
                 case 1:
                   draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
@@ -7670,36 +7671,37 @@ static void ExecutiveDraw(Block *block)
                               toggleDarkEdge,
                               toggleColor3);
 
-                  draw_button_char(x2,y2+text_lift,'S');
+                  draw_button_char(G,x2,y2+text_lift,'S');
                   break;
                 case 2:
                   draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
                               toggleLightEdge,
                               toggleDarkEdge,
                               toggleColor2);
-                  draw_button_char(x2,y2+text_lift,'H');
+                  draw_button_char(G,x2,y2+text_lift,'H');
                   break;
                 case 3:
                   draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
                               toggleLightEdge,
                               toggleDarkEdge,
                               toggleColor);
-                  draw_button_char(x2,y2+text_lift,'L');
+                  draw_button_char(G,x2,y2+text_lift,'L');
                   break;
                 case 4:
                   draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
                               toggleLightEdge,
                               toggleDarkEdge,
                               NULL);
-                  draw_button_char(x2,y2+text_lift,'C');
+                  draw_button_char(G,x2,y2+text_lift,'C');
                   break;
                 }
                 x2+=ExecToggleWidth;
               }
         
-            glColor3fv(I->Block->TextColor);
-            glRasterPos4d((double)(x)+2,(double)(y2)+text_lift,0.0,1.0);
-            if((rec->type==cExecObject)||(rec->type==cExecAll)||(rec->type==cExecSelection))
+            TextSetColor(G,I->Block->TextColor);
+            TextSetPos2i(G,x+2,y2+text_lift);
+            if((rec->type==cExecObject)||(rec->type==cExecAll)||
+               (rec->type==cExecSelection))
               {
                 y2=y;
                 x2 = xx;
@@ -7714,7 +7716,7 @@ static void ExecutiveDraw(Block *block)
                   draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,disabledColor);
                 }
 
-                glColor3fv(I->Block->TextColor);
+                TextSetColor(G,I->Block->TextColor);
 
                 if(rec->type!=cExecObject)
                   c=rec->name;
@@ -7723,14 +7725,14 @@ static void ExecutiveDraw(Block *block)
 
                 if(rec->type==cExecSelection)
                   if((nChar--)>0) {
-                    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'(');
+                    TextDrawChar(G,'(');
                   }
               }
 
             if(c)
               while(*c) {
                 if((nChar--)>0)
-                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+                  TextDrawChar(G,*(c++));
                 else
                   break;
               }
@@ -7738,7 +7740,7 @@ static void ExecutiveDraw(Block *block)
             if(rec->type==cExecSelection)
               {
                 if((nChar--)>0) {
-                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,')');
+                  TextDrawChar(G,')');
                 }
 
                 c=rec->name;
@@ -7750,14 +7752,13 @@ static void ExecutiveDraw(Block *block)
               if(c && c[0] && nChar>1 && strcmp(c,rec->obj->Name)!=0)
                 {
                   
-                  glColor3fv(captionColor);
-                  glRasterPos4d((double)(x)+2+8*(max_char-nChar),(double)(y2)+text_lift,0.0,1.0);
-
+                  TextSetColor(G,captionColor);
+                  TextSetPos2i(G,x+2+8*(max_char-nChar),y2+text_lift);
                   if((nChar--)>0)
-                    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,' ');
+                    TextDrawChar(G,' ');
                   while(*c) 
                     if((nChar--)>0) 
-                      p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+                      TextDrawChar(G,*(c++));
                     else
                       break;
                 }

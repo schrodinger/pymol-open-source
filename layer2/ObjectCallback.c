@@ -60,6 +60,7 @@ static void ObjectCallbackUpdate(ObjectCallback *I) {
 static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable **pick,int pass)
 {
 #ifndef _PYMOL_NOPY
+  PyMOLGlobals *G = I->Obj.G;
   ObjectCallbackState *sobj = NULL;
   int a;
 
@@ -79,8 +80,8 @@ static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable 
             sobj = I->State+a;
             pobj=sobj->PObj;
             if(ray) {    
-            } else if(pick&&PMGUI) {
-            } else if(PMGUI) {
+            } else if(pick&&G->HaveGUI) {
+            } else if(G->HaveGUI) {
               if(PyObject_HasAttrString(pobj,"__call__")) {
                 Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
               }
@@ -92,12 +93,12 @@ static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable 
         }
       } else {
         if(!sobj) {
-          if(I->NState&&SettingGet(I->Obj.G,cSetting_static_singletons)) 
+          if(I->NState&&SettingGet(G,cSetting_static_singletons)) 
             sobj = I->State;
         }
         if(ray) {    
-        } else if(pick&&PMGUI) {
-        } else if(PMGUI) {
+        } else if(pick&&G->HaveGUI) {
+        } else if(G->HaveGUI) {
           if(sobj) {
             pobj=sobj->PObj;
             PBlock();

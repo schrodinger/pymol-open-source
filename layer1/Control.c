@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include "Grap.h"
 #include "Seq.h"
 #include"Movie.h"
+#include "Text.h"
 
 #define cControlBoxSize 17
 #define cControlLeftMargin 8
@@ -303,7 +304,7 @@ static void ControlDraw(Block *block)
   float darkEdge[3] = {0.3F, 0.3F, 0.3F};
   float active[3] = {0.8F,0.8F,0.8F};
 
-  if(PMGUI) {
+  if(G->HaveGUI) {
     int control_width = I->Block->rect.right - (I->Block->rect.left+cControlLeftMargin);
 
     glColor3fv(I->Block->BackColor);
@@ -446,7 +447,7 @@ static void ControlDraw(Block *block)
         glEnd();
         break;
       case 6:
-        GrapDrawStr("S",x+cControlInnerMargin,
+        TextDrawStrAt(G,"S",x+cControlInnerMargin,
                     y-cControlBoxSize+cControlInnerMargin+1);
         break;
       case 7:

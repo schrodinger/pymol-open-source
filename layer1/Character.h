@@ -48,7 +48,6 @@ typedef struct {
   CPixmap Pixmap;
   int Width;
   int Height;
-  int Advance;
   int Next,Prev,HashNext,HashPrev;
   CharFngrprnt Fngrprnt;
   float extent[2]; /* texture extent */
@@ -74,7 +73,6 @@ int CharacterGetWidth(PyMOLGlobals *G,int id);
 int CharacterGetHeight(PyMOLGlobals *G,int id);
 
 int CharacterNewFromBitmap(PyMOLGlobals *G,int width, int height,
-                           int advance,
                            unsigned char *bitmap,
                            CharFngrprnt *fprnt);
 
@@ -83,7 +81,7 @@ int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt);
 float CharacterInterpolate(PyMOLGlobals *G,int id,float *v);
 void CharacterSetRetention(PyMOLGlobals *G,int retail_all);
 unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals *G,int id);
-int CharacterRenderOpenGL(PyMOLGlobals *G,int id);
+int CharacterRenderOpenGL(PyMOLGlobals *G,int id, float x_orig, float y_orig, float advance);
 
 #endif
 

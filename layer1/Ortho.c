@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #include"Queue.h"
 #include"Pop.h"
 #include"Seq.h"
+#include"Text.h"
 
 #ifndef true
 #define true 1
@@ -90,7 +91,7 @@ struct _COrtho {
   BlockRect LoopRect;
   CQueue *cmds;
   CQueue *feedback;
-
+  int Pushed;
 };
 
 void OrthoParseCurrentLine(PyMOLGlobals *G);
@@ -281,7 +282,7 @@ void OrthoClear(PyMOLGlobals *G)
 void OrthoFeedbackIn(PyMOLGlobals *G,char *buffer)
 {
   register COrtho *I=G->Ortho;
-  if(PMGUI) {
+  if(G->HaveGUI) {
     if(I->feedback)
       QueueStrIn(I->feedback,buffer);
   }
@@ -368,7 +369,7 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
     if(PIsGlutThread()) {
       OrthoPushMatrix(G);
       
-      if(PMGUI) {
+      if(G->HaveGUI) {
         glDrawBuffer(GL_FRONT);
         glClear(GL_DEPTH_BUFFER_BIT);
         
@@ -386,9 +387,9 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
         y=I->Height-cBusyMargin;
         c=I->BusyMessage;
         if(*c) {
-          glRasterPos4d(cBusyMargin,y-(cBusySpacing/2),0.0,1.0);
-          while(*c)
-            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+          TextSetColor(G,white);
+          TextSetPos2i(G,cBusyMargin,y-(cBusySpacing/2));
+          TextDrawStr(G,c);
           y-=cBusySpacing;
         }
         
@@ -937,7 +938,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
   PRINTFD(G,FB_Ortho)
     " OrthoDoDraw: entered.\n"
     ENDFD;
-  if(PMGUI) {
+  if(G->HaveGUI) {
 
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("OrthoDoDraw checkpoint 0");
@@ -1084,20 +1085,20 @@ void OrthoDoDraw(PyMOLGlobals *G)
               break;
             str = I->Line[l&OrthoSaveLines];
             if(strncmp(str,I->Prompt,6)==0)
-              glColor3fv(I->TextColor);            
+              TextSetColor(G,I->TextColor);            
             else
-              glColor3fv(I->OverlayColor);
-            glRasterPos4d((double)x,(double)y,0.0,1.0);
+              TextSetColor(G,I->OverlayColor);
+            TextSetPos2i(G,x,y);
             if(str)
               {
-                while(*str)
-                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(str++));
+                TextDrawStr(G,str);
                 if((lcount==1)&&(I->InputFlag)) 
                   {
                     if(!skip_prompt) {
-                      if(I->CursorChar>=0)  
-                        glRasterPos4d((double)(x+8*I->CursorChar),(double)y,0.0,1.0);
-                      p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'_');
+                      if(I->CursorChar>=0) {
+                        TextSetPos2i(G,x+8*I->CursorChar,y);
+                      }
+                      TextDrawChar(G,'_');
                     }
                   }
               }
@@ -1206,7 +1207,7 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
       
       /* count max line length */
       
-      glRasterPos4d((double)x,(double)y,0.0,1.0);
+      TextSetPos2i(G,x,y);
       xx = x;
       p = vla;
       ll = 0;
@@ -1215,26 +1216,26 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
         if(*p) {
           if((*p=='\\')&&(*(p+1))&&(*(p+2))&&(*(p+3))) {
             if(*(p+1)=='-') {
-              glColor3fv(I->WizardTextColor);
+              TextSetColor(G,I->WizardTextColor);
               p+=4;
               c-=4;
             } else {
-              glColor3f((*(p+1)-'0')/9.0F,(*(p+2)-'0')/9.0F,(*(p+3)-'0')/9.0F);
+              TextSetColor3f(G,(*(p+1)-'0')/9.0F,(*(p+2)-'0')/9.0F,(*(p+3)-'0')/9.0F);
               p+=4;
               c-=4;
             }
-            glRasterPos4d((double)(xx),(double)(y),0.0,1.0);
+            TextSetPos2i(G,xx,y);
           }
         }
         if(c--) {
           if(*p) {
-            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*p);
+            TextDrawChar(G,*p);
             xx = xx + 8;
           }
           if(!*(p++)) {
             y=y-cOrthoLineHeight;
             xx = x;
-            glRasterPos4d((double)x,(double)y,0.0,1.0);          
+            TextSetPos2i(G,x,y);
           }
         }
       }
@@ -1350,7 +1351,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
   BlockSetMargin(block,sceneTop,0,sceneBottom,sceneRight);
   BlockSetMargin(&I->LoopBlock,sceneTop,0,sceneBottom,sceneRight);
 
-  if(PMGUI) 
+  if(G->HaveGUI) 
     glGetIntegerv(GL_VIEWPORT,I->ViewPort);
 
   OrthoPushMatrix(G);
@@ -1563,6 +1564,7 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
 
   ListInit(I->Blocks);
 
+  I->Pushed = false;
   I->cmds = QueueNew(G,0xFFFF);
   I->feedback = QueueNew(G,0xFFFF);
 
@@ -1644,7 +1646,7 @@ void OrthoPushMatrix(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
 
-  if(PMGUI) {
+  if(G->HaveGUI) {
     glGetIntegerv(GL_VIEWPORT,I->ViewPort);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -1666,6 +1668,7 @@ void OrthoPushMatrix(PyMOLGlobals *G)
     if(PyMOLOption->multisample)    
       glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
    }
+  I->Pushed=true;
   /*  glDisable(GL_ALPHA_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_POINT_SMOOTH);*/
@@ -1674,15 +1677,20 @@ void OrthoPushMatrix(PyMOLGlobals *G)
 /*========================================================================*/
 void OrthoPopMatrix(PyMOLGlobals *G)
 {
-
-  if(PMGUI) {
+  register COrtho *I=G->Ortho;
+  if(G->HaveGUI) {
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
   }
+  I->Pushed=false;
 }
 
+int OrthoGetPushed(PyMOLGlobals *G)
+{
+  return G->Ortho->Pushed;
+}
 /*========================================================================*/
 void OrthoCommandIn(PyMOLGlobals *G,char *buffer)
 {

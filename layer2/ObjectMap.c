@@ -866,6 +866,7 @@ static void ObjectMapUpdate(ObjectMap *I) {
 
 static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int pass)
 {
+  PyMOLGlobals *G = I->Obj.G;
   ObjectMapState *ms = NULL;
   if(!pass) {
     if(state<I->NState)
@@ -892,8 +893,8 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
           ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[6],0.20F,vc,vc);
           ray->fSausage3fv(ray,ms->Corner[6],ms->Corner[7],0.20F,vc,vc);
           ray->fSausage3fv(ray,ms->Corner[5],ms->Corner[7],0.20F,vc,vc);
-        } else if(pick&&PMGUI) {
-        } else if(PMGUI) {
+        } else if(pick&&G->HaveGUI) {
+        } else if(G->HaveGUI) {
           ObjectUseColor(&I->Obj);
           glDisable(GL_LIGHTING); 
           glBegin(GL_LINES);

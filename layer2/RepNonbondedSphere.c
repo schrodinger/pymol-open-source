@@ -75,7 +75,7 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 		ray->fSphere3fv(ray,v,*(v+3));
 		v+=4;
 	 }
-  } else if(pick&&PMGUI) {
+  } else if(pick&&I->R.G->HaveGUI) {
 
 	 i=(*pick)->index;
 
@@ -123,7 +123,7 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 
 	 (*pick)[0].index = i;
 
-  } else if(PMGUI) {
+  } else if(I->R.G->HaveGUI) {
     sp=I->SP;
     while(c--)
       {

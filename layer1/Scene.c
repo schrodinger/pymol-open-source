@@ -44,7 +44,6 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"Wizard.h"
 #include"CGO.h"
-#include"Grap.h"
 #include"ObjectGadget.h"
 #include"Seq.h"
 #include"Menu.h"
@@ -653,7 +652,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
   if(!I->CopyFlag) {
 	 image = (GLvoid*)Alloc(char,buffer_size);
 	 ErrChkPtr(G,image);
-    if(PMGUI) {
+    if(G->HaveGUI) {
       glReadBuffer(GL_BACK);
       PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                    GL_RGBA,GL_UNSIGNED_BYTE,image);
@@ -943,7 +942,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
             0.0F,0.0F,false); 
   } else {
 	 v=SettingGetfv(G,cSetting_bg_rgb);
-    if(PMGUI) {
+    if(G->HaveGUI) {
       glDrawBuffer(GL_BACK);
       glClearColor(v[0],v[1],v[2],1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1186,7 +1185,7 @@ void SceneDraw(Block *block)
   int width,height;
   int double_pump;
 
-  if(PMGUI) {
+  if(G->HaveGUI) {
     overlay = (int)SettingGet(G,cSetting_overlay);
     text = (int)SettingGet(G,cSetting_text);
     double_pump = (int)SettingGet(G,cSetting_stereo_double_pump_mono);
@@ -1198,9 +1197,9 @@ void SceneDraw(Block *block)
           glReadBuffer(GL_BACK); 
 
           if(I->ImageBufferHeight>I->Height||I->ImageBufferWidth>I->Width) {
-            glColor3f(1.0F,0.2F,0.2F);
-            GrapDrawStr("Sorry, I can't display an oversize image.",30,60);
-            GrapDrawStr("To save image, use File Menu or enter \"png <filename>\".",30,40);
+            TextSetColor3f(G,1.0F,0.2F,0.2F);
+            TextDrawStrAt(G,"Sorry, I can't display an oversize image.",30,60);
+            TextDrawStrAt(G,"To save image, use File Menu or enter \"png <filename>\".",30,40);
           } else {
             width = I->ImageBufferWidth;
             height = I->ImageBufferHeight;
@@ -1267,7 +1266,7 @@ unsigned int SceneFindTriplet(PyMOLGlobals *G,int x,int y,GLenum gl_buffer)
   int check_alpha = false;
 
 
-  if(PMGUI) { /*just in case*/
+  if(G->HaveGUI) { /*just in case*/
   
 	glGetIntegerv(GL_RED_BITS,&rb);
 	glGetIntegerv(GL_GREEN_BITS,&gb);
@@ -1369,7 +1368,7 @@ unsigned int *SceneReadTriplets(PyMOLGlobals *G,int x,int y,int w,int h,GLenum g
   
   if(w<1) w=1;
   if(h<1) h=1;
-  if(PMGUI) { /*just in case*/
+  if(G->HaveGUI) { /*just in case*/
     
     glGetIntegerv(GL_RED_BITS,&rb);
     glGetIntegerv(GL_RED_BITS,&gb);
@@ -2079,7 +2078,7 @@ void ScenePushRasterMatrix(PyMOLGlobals *G,float *v)
   glTranslatef(v[0],v[1],v[2]); /* go to this position */
   glMultMatrixf(I->InvMatrix);
   glScalef(scale,scale,scale);
-  /*  glTranslatef(-0.33F,-0.33F,0.0F);*/
+  /*  glTranslatef(-0.33F,-0.33F,0.0F); */
   
 }
 
@@ -2094,28 +2093,38 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
   /* get conversion factor from screen point to atomic coodinate */
   register CScene *I=G->Scene;
   float vl,p1[4],p2[4];
+  float width_factor = I->Width/2.0F;
+
   /* now, scale properly given the current projection matrix */
   copy3f(v1,p1);
   p1[3] = 1.0;
   MatrixTransform44f4f(I->ModMatrix,p1,p2); /* modelview transformation */
   copy4f(p2,p1);
   p2[0]+=1.0;
-  MatrixTransform44f4f(I->ProMatrix,p1,p1); /* projection transformation */
+  /* projection transformation */
+  MatrixTransform44f4f(I->ProMatrix,p1,p1); 
   MatrixTransform44f4f(I->ProMatrix,p2,p2);
-  p1[0]=p1[0]/p1[3];/* perspective division */
-  p1[1]=p1[1]/p1[3];
-  p1[2]=0.0;
+  /* perspective division */
+  p1[0]=p1[0]/p1[3];
   p2[0]=p2[0]/p2[3];
-  p2[1]=p2[1]/p2[3];
-  p2[2]=0.0;
-  p1[0]=(p1[0]+1.0F)*(I->Width/2.0F); /* viewport transformation */
-  p1[1]=(p1[1]+1.0F)*(I->Height/2.0F);
-  p2[0]=(p2[0]+1.0F)*(I->Width/2.0F);
-  p2[1]=(p2[1]+1.0F)*(I->Height/2.0F);
-  vl=(float)diff3f(p1,p2);
+  p1[0]=(p1[0]+1.0F)*(width_factor); /* viewport transformation */
+  p2[0]=(p2[0]+1.0F)*(width_factor);
+  /*
+    p1[1]=p1[1]/p1[3];
+    p2[1]=p2[1]/p2[3];
+    p1[2]=0.0;
+    p2[2]=0.0;
+    p1[1]=(p1[1]+1.0F)*(I->Height/2.0F);
+    p2[1]=(p2[1]+1.0F)*(I->Height/2.0F);
+    dump3f(p1,"p1");
+    dump3f(p2,"p2");
+    vl=(float)diff3f(p1,p2);
+  */
+  vl = fabs(p1[0]-p2[0]);
+
   if(vl<R_SMALL4)
     vl=100.0F;
-  
+
   return(1.0F/vl);
 }
 
@@ -3022,7 +3031,7 @@ void SceneDone(PyMOLGlobals *G)
 void SceneResetNormal(PyMOLGlobals *G,int lines)
 {
   register CScene *I=G->Scene;
-  if(PMGUI) {
+  if(G->HaveGUI) {
     if(lines)
       glNormal3fv(I->LinesNormal);
     else
@@ -3300,7 +3309,7 @@ void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
           I->ImageBufferWidth=I->Width;
           I->ImageBufferHeight=I->Height;
         }
-        if(PMGUI) {
+        if(G->HaveGUI) {
           glReadBuffer(buffer);
           PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                        GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
@@ -3527,7 +3536,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     aspRat=aspRat/2;
 
   fov=SettingGet(G,cSetting_field_of_view);
-  if(PMGUI) {
+  if(G->HaveGUI) {
 
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 0");
