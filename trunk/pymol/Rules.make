@@ -10,7 +10,14 @@
 MODULE = -D_PYMOL_MODULE
 BUILD = -shared -o modules/_pm.so
 #---------------------------------------------------------------------
-
+#
+#- Choose One --------------------------------------------------------
+#--- Workaround for XFree86/DRI linux dll problem for module build
+BUGS = -D_DRI_WORKAROUND
+#---
+#BUGS =
+#---------------------------------------------------------------------
+#
 #- Choose One --------------------------------------------------------
 #--- Linux
 CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
@@ -54,7 +61,7 @@ ZLIB = -lz
 # No changes normally required below here
 #---------------------------------------------------------------------
 
-CFLAGS = $(CCOPT1) $(CCOPT2) -D_PYMOL_THREADS $(INC_DIRS) $(PNG) $(MODULE)
+CFLAGS = $(CCOPT1) $(CCOPT2) -D_PYMOL_THREADS $(INC_DIRS) $(PNG) $(MODULE) $(BUGS)
 
 CC = cc
 

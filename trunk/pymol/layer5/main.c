@@ -20,7 +20,9 @@ Z* -------------------------------------------------------------------
 #include <Python.h>
 
 #ifdef _PYMOL_MODULE
+#ifdef _DRI_WORKAROUND
 #include <dlfcn.h>
+#endif
 #endif
 
 #include"MemoryDebug.h"
@@ -434,7 +436,9 @@ void was_main(void)
   char *argv[1],argvv[2] = "\0";
   argv[0]=argvv;
 
+#ifdef _DRI_WORKAROUND
   dlopen("libGL.so.1",RTLD_LAZY|RTLD_GLOBAL);
+#endif
 
 #endif  
 	  
