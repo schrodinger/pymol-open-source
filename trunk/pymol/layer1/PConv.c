@@ -146,17 +146,19 @@ int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
   else if(PyString_Check(object)) {
     st = PyString_AsString(object);
     strncpy(value,st,ln);
-    value[ln]=0;
   } else {
     tmp = PyObject_Str(object);
     if(tmp) {
       st = PyString_AsString(tmp);
       strncpy(value,st,ln);
-      value[ln]=0;
       Py_DECREF(tmp);
     } else
       result=0;
   }
+  if(ln>0)
+    value[ln-1]=0;
+  else
+    value[0]=0;
   return(result);
 }
 
@@ -170,17 +172,19 @@ int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
   else if(PyString_Check(object)) {
     st = PyString_AsString(object);
     strncpy(value,st,ln);
-    value[ln]=0;
   } else {
     tmp = PyObject_Str(object);
     if(tmp) {
       st = PyString_AsString(tmp);
       strncpy(value,st,ln);
-      value[ln]=0;
       Py_DECREF(tmp);
     } else
       result=0;
   }
+  if(ln>0)
+    value[ln-1]=0;
+  else
+    value[0]=0;
   UtilCleanStr(value);
   return(result);
 }
