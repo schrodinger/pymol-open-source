@@ -756,6 +756,28 @@ void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,floa
   }
 }
 
+static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
+{
+  int blocked;
+  PyObject *info_list;
+  int a;
+  blocked = PAutoBlock();
+
+  printf(" Ray: Spawning %d threads.\n",n_thread);
+  info_list = PyList_New(n_thread);
+  for(a=0;a<n_thread;a++) {
+    PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
+  }
+  PyObject_CallMethod(P_cmd,"_ray_hash_spawn","O",info_list);
+  Py_DECREF(info_list);
+  PAutoUnblock(blocked);
+}
+
+int RayHashThread(CRayHashThreadInfo *T)
+{
+  BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox);
+  return 1;
+}
 
 static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
 {
@@ -774,6 +796,7 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   PAutoUnblock(blocked);
   
 }
+
 static void RayTraceStitch(CRayThreadInfo *Thread,int n_thread,unsigned int *image)
 {
   int ctr,cnt,start_at,done_at;
@@ -1245,6 +1268,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   double now;
   int shadows;
   float spec_vector[3];
+  int n_thread;
+
+  n_thread  = (int)SettingGet(cSetting_max_threads);
+  if(n_thread<1)
+    n_thread=1;
+  if(n_thread>MAX_RAY_THREADS)
+    n_thread = MAX_RAY_THREADS;
 
   BasisSetFudge(SettingGet(cSetting_ray_triangle_fudge));
   shadows = (int)SettingGet(cSetting_ray_shadows);
@@ -1304,34 +1334,58 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 	 PRINTFB(FB_Ray,FB_Details)
       " Ray: processed %i graphics primitives in %4.2f sec.\n",I->NPrimitive,now
       ENDFB;
-    BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
 
     I->NBasis=3; /* light source */
     BasisInit(I->Basis+2);
     
-    v=SettingGetfv(cSetting_light);
-    copy3f(v,light);
-
-    if(angle) {
-      float temp[16];
-      MatrixLoadIdentity44f(temp);
-      MatrixRotate44f3f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
-      MatrixTransform44fAs33f3f(temp,light,light);
+    { /* setup light & rotate if necessary  */
+      v=SettingGetfv(cSetting_light);
+      copy3f(v,light);
+      
+      if(angle) {
+        float temp[16];
+        MatrixLoadIdentity44f(temp);
+        MatrixRotate44f3f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
+        MatrixTransform44fAs33f3f(temp,light,light);
+      }
+      
+      I->Basis[2].LightNormal[0]=light[0];
+      I->Basis[2].LightNormal[1]=light[1];
+      I->Basis[2].LightNormal[2]=light[2];
+      normalize3f(I->Basis[2].LightNormal);
+      
+      copy3f(I->Basis[2].LightNormal,spec_vector);
+      spec_vector[2]--; /* HUH? */
+      normalize3f(spec_vector);
+      
     }
 
-    I->Basis[2].LightNormal[0]=light[0];
-    I->Basis[2].LightNormal[1]=light[1];
-    I->Basis[2].LightNormal[2]=light[2];
-    normalize3f(I->Basis[2].LightNormal);
-    
-    copy3f(I->Basis[2].LightNormal,spec_vector);
-    spec_vector[2]--; /* HUH? */
-    normalize3f(spec_vector);
-    
     if(shadows) { /* don't waste time on shadows unless needed */
       BasisSetupMatrix(I->Basis+2);
       RayTransformBasis(I,I->Basis+2);
-      BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
+    }
+
+    if(shadows&&(n_thread>1)) { /* parallel execution */
+
+      CRayHashThreadInfo thread_info[2];
+      
+      thread_info[0].basis = I->Basis+1;
+      thread_info[0].vert2prim = I->Vert2Prim;
+      thread_info[0].prim = I->Primitive;
+      thread_info[0].clipBox = I->Volume;
+
+      thread_info[1].basis = I->Basis+2;
+      thread_info[1].vert2prim = I->Vert2Prim;
+      thread_info[1].prim = I->Primitive;
+      thread_info[1].clipBox = NULL;
+
+      RayHashSpawn(thread_info,2);
+      
+    } else { /* serial execution */
+      BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
+      if(shadows) {
+        BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
+      }
     }
 
     now = UtilGetSeconds()-timing;
@@ -1384,13 +1438,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     for(a=0;a<height;a++)
       for(b=0;b<width;b++)
         *p++=back_mask;
+    
     {
+      /* now spawn threads as needed */
       CRayThreadInfo rt[MAX_RAY_THREADS];
-      int n_thread  = (int)SettingGet(cSetting_max_threads);
-      if(n_thread<1)
-        n_thread=1;
-      if(n_thread>MAX_RAY_THREADS)
-        n_thread = MAX_RAY_THREADS;
       unsigned int buf_size = 0;
       if(n_thread>1) {
         buf_size = n_thread + width*height/n_thread;

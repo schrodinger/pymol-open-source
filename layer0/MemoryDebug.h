@@ -42,7 +42,10 @@ Z* -------------------------------------------------------------------
 /* ==================== Master Switch ============================= 
  * Define _MemoryDebug_ON to enable the debugging system...*/
 
-#define _MemoryDebug_ON
+/* WARNING!!! MemoryDebug is not thread safe...it must be disabled
+   for stable multi-threaded operation within the PyMOL core */
+
+#define _MemoryDebug_OFF
 
 /* ================================================================ 
  * Don't touch below unless you know what you are doing */
@@ -86,6 +89,7 @@ void VLAFree(void *ptr);
 void *VLASetSize(void *ptr,unsigned int newSize);
 unsigned int VLAGetSize(void *ptr);
 void *VLANewCopy(void *ptr);
+void MemoryZero(char *p,char *q);
 
 #ifndef _MemoryDebug_ON
 /* _MemoryDebug_ON not defined */
@@ -134,7 +138,6 @@ void MemoryDebugQuietFree(void *ptr,int type);
 
 void MemoryDebugDump(void);
 int MemoryDebugUsage(void);
-void MemoryZero(char *p,char *q);
 
 #ifdef __cplusplus
 }

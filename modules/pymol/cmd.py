@@ -556,17 +556,16 @@ if __name__=='pymol.cmd':
    #--------------------------------------------------------------------
    # internal API routines
 
-   def _ray_trace_thread(thread_info):
-      _cmd.ray_trace_thread(thread_info)
-      
-   def _ray_spawn(thread_info):
+   
+   def _ray_hash_spawn(thread_info):
       thread_list = []
-      for a in thread_info:
-         t = threading.Thread(target=_ray_trace_thread,
+      for a in thread_info[1:2]:
+         t = threading.Thread(target=_cmd.ray_hash_thread,
                               args=(a,))
          t.setDaemon(1)
          t.start()
          thread_list.append(t)
+      _cmd.ray_hash_thread(thread_info[0])
       while 1:
          all_done = 1
          for t in thread_list:
@@ -574,7 +573,27 @@ if __name__=='pymol.cmd':
                all_done = 0
          if all_done:
             break;
-         time.sleep(0.1)
+         time.sleep(0.01)
+
+   def _ray_spawn(thread_info):
+      thread_list = []
+      for a in thread_info[1:]:
+         t = threading.Thread(target=_cmd.ray_trace_thread,
+                              args=(a,))
+         t.setDaemon(1)
+         thread_list.append(t)
+      for t in thread_list:
+         t.start()
+      _cmd.ray_trace_thread(thread_info[0])
+      while 1:
+         all_done = 1
+         for t in thread_list:
+            if t.isAlive():
+               all_done = 0
+         if all_done:
+            break;
+         time.sleep(0.01)
+         
    # status reporting
 
    def _feedback(module,mask): # feedback test routine
