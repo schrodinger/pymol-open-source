@@ -49,6 +49,8 @@ typedef struct {
   CSeqRow* (*fDrag)    (CSeqRow* rowVLA,int row,int col,int mod);
   CSeqRow* (*fRelease) (CSeqRow* rowVLA,int button,int row,int col,int mod);
   void (*fRefresh) (CSeqRow* rowVLA);
+  int box_active,box_row;
+  int box_start_col,box_stop_col;
 } CSeqHandler;
 
 void SeqInit(void);

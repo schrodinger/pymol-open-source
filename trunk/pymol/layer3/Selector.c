@@ -224,6 +224,7 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_BON1 ( 0x3900 | STYP_OPR1 | 0x40 )
 #define SELE_FST1 ( 0x4000 | STYP_OPR1 | 0x20 )
 #define SELE_CAS1 ( 0x4100 | STYP_OPR1 | 0x20 )
+#define SELE_BEY_ ( 0x4200 | STYP_OP22 | 0x20 ) 
 
 #define SEL_PREMAX 0x8
 
@@ -389,6 +390,9 @@ static WordKeyValue Keyword[] =
 
   {  "within",   SELE_WIT_ },
   {  "w.",       SELE_WIT_ },
+
+  {  "beyond",   SELE_BEY_ },
+  {  "be.",      SELE_BEY_ },
 
   {  "present",  SELE_PREz },
   {  "pr.",      SELE_PREz },
@@ -7394,18 +7398,28 @@ int SelectorOperator22(EvalElem *base)
   switch(base[1].code)
 	 {
 	 case SELE_WIT_:
+    case SELE_BEY_:
 		if(!sscanf(base[2].text,"%f",&dist))
 		  ok=ErrMessage("Selector","Invalid distance.");
 		if(ok)
 		  {
           if(dist<0.0) dist = 0.0;
-
+          
           /* copy starting mask */
-          for(a=0;a<I->NAtom;a++) {
-            I->Flag2[a]=base[0].sele[a];
-            base[0].sele[a]=false;
+          switch(base[1].code) {
+          case SELE_WIT_:
+            for(a=0;a<I->NAtom;a++) {
+              I->Flag2[a]=base[0].sele[a];
+              base[0].sele[a]=false;
+            }
+            break;
+          case SELE_BEY_:
+            for(a=0;a<I->NAtom;a++) {
+              I->Flag2[a]=base[0].sele[a];
+              base[0].sele[a]=false;
+            }
+            break;
           }
-
 			 for(d=0;d<I->NCSet;d++)
 				{
 				  n1=0;
@@ -7461,13 +7475,14 @@ int SelectorOperator22(EvalElem *base)
 										i=*(MapEStart(map,h,k,l));
 										if(i) {
 										  j=map->EList[i++];
-										  while(j>=0) {
-											 if(!base[0].sele[j])
+
+                                while(j>=0) {
+                                  if(!base[0].sele[j])
                                     if(I->Flag2[j])
                                       if(within3f(I->Vertex+3*j,v2,dist)) 
                                         base[0].sele[j]=true;
-											 j=map->EList[i++];
-										  }
+                                  j=map->EList[i++];
+                                }
 										}
 									 }
 								  }
@@ -7478,6 +7493,13 @@ int SelectorOperator22(EvalElem *base)
 					 }
 				  }
             }
+          if(base[1].code==SELE_BEY_) {
+            for(a=0;a<I->NAtom;a++) {
+              if(I->Flag2[a])
+                base[0].sele[a] = !base[0].sele[a];
+            }
+          }
+
           for(a=cNDummyAtoms;a<I->NAtom;a++)
             if(base[0].sele[a]) c++;
         }

@@ -1446,10 +1446,12 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
     n_present = cs->NIndex;
 
-  carve_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
+    carve_selection = SettingGet_s(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
+    carve_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
+    if((!carve_selection)||(!carve_selection[0]))
+       carve_cutoff=0.0F;
     if(carve_cutoff>0.0F) {
       carve_state = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
-      carve_selection = SettingGet_s(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
       carve_cutoff += 2*I->max_vdw+probe_radius;
 
       if(carve_selection) 

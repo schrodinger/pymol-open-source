@@ -1255,6 +1255,8 @@ int ExecutiveSetSession(PyObject *session)
   SceneViewType sv;
   int version=-1;
   int migrate_sessions = SettingGetGlobal_b(cSetting_session_migration);
+  char active[ObjNameMax] = "";
+  int  have_active = false;
 
   ExecutiveDelete("all");
   ColorReset();
@@ -1336,6 +1338,7 @@ int ExecutiveSetSession(PyObject *session)
     if(tmp) {
       if(ok) ok=ExecutiveSetNamedEntries(tmp,version);
       if(ok) ok=ExecutiveSetSelections(tmp);
+      if(ok) have_active = ExecutiveGetActiveSeleName(active,false);
     }
     if(PyErr_Occurred()) {
       PyErr_Print();  
@@ -1445,6 +1448,10 @@ int ExecutiveSetSession(PyObject *session)
         ExecutiveMigrateSession(version);
       }
     }
+  }
+  if(ok) {
+    if(have_active)
+      ExecutiveSetObjVisib(active,true);      
   }
   if(!ok) {
     PRINTFB(FB_Executive,FB_Warnings)

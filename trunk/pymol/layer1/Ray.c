@@ -516,8 +516,9 @@ void RayTransformFirst(CRay *I)
 
   backface_cull = (int)SettingGet(cSetting_backface_cull);
   
-  if(SettingGet(cSetting_two_sided_lighting)||
-     SettingGet(cSetting_ray_interior_color)>=0)
+  if((SettingGet(cSetting_two_sided_lighting)||
+      (SettingGet(cSetting_transparency_mode)==1)||
+      SettingGet(cSetting_ray_interior_color)>=0))
     backface_cull=0;
 
   basis0 = I->Basis;
@@ -1090,6 +1091,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	float excl_trans;
 	int shadows;
 	int trans_shadows;
+   int trans_mode;
 	float first_excess;
 	int pixel_flag;
 	float ray_trans_spec;
@@ -1140,26 +1142,28 @@ int RayTraceThread(CRayThreadInfo *T)
 	*/
 	I = T->ray;
 	
-	interior_shadows	= (int)SettingGet(cSetting_ray_interior_shadows);
-	interior_wobble	= (int)SettingGet(cSetting_ray_interior_texture);
-	interior_color		= (int)SettingGet(cSetting_ray_interior_color);
+	interior_shadows	= SettingGetGlobal_i(cSetting_ray_interior_shadows);
+	interior_wobble	= SettingGetGlobal_i(cSetting_ray_interior_texture);
+	interior_color		= SettingGetGlobal_i(cSetting_ray_interior_color);
    interior_reflect  = 1.0F - SettingGet(cSetting_ray_interior_reflect);
 
 	project_triangle	= SettingGet(cSetting_ray_improve_shadows);
-	shadows				= (int)SettingGet(cSetting_ray_shadows);
-	trans_shadows		= (int)SettingGet(cSetting_ray_transparency_shadows);
-	backface_cull		= (int)SettingGet(cSetting_backface_cull);
-	opaque_back			= (int)SettingGet(cSetting_ray_opaque_background);
-	two_sided_lighting	= (int)SettingGet(cSetting_two_sided_lighting);
+	shadows				= SettingGetGlobal_i(cSetting_ray_shadows);
+	trans_shadows		= SettingGetGlobal_i(cSetting_ray_transparency_shadows);
+	backface_cull		= SettingGetGlobal_i(cSetting_backface_cull);
+	opaque_back			= SettingGetGlobal_i(cSetting_ray_opaque_background);
+	two_sided_lighting	= SettingGetGlobal_i(cSetting_two_sided_lighting);
 	ray_trans_spec		= SettingGet(cSetting_ray_transparency_specular);
-   trans_cont        = SettingGet(cSetting_ray_transparency_contrast);
+   trans_cont        = SettingGetGlobal_f(cSetting_ray_transparency_contrast);
+   trans_mode        = SettingGetGlobal_i(cSetting_transparency_mode);
+   if(trans_mode==1) two_sided_lighting = true;
    if(trans_cont>1.0F)
      trans_cont_flag = true;
 	ambient				= SettingGet(cSetting_ambient);
 	lreflect			= SettingGet(cSetting_reflect);
 	direct				= SettingGet(cSetting_direct);
    trans_spec_cut = SettingGet(cSetting_ray_transparency_spec_cut);
-   blend_colors    = (int)SettingGet(cSetting_ray_blend_colors);
+   blend_colors    = SettingGetGlobal_i(cSetting_ray_blend_colors);
    max_pass = SettingGetGlobal_i(cSetting_ray_max_passes);
    if(blend_colors) {
      red_blend = SettingGet(cSetting_ray_blend_red);
@@ -1183,7 +1187,7 @@ int RayTraceThread(CRayThreadInfo *T)
      settingSpecReflect = 0.0F;
    }
     
-	if((interior_color>=0)||(two_sided_lighting))
+	if((interior_color>=0)||(two_sided_lighting)||(trans_mode==1))
 		backface_cull	= 0;
 
 	shadow_fudge = SettingGet(cSetting_ray_shadow_fudge);
@@ -1742,7 +1746,7 @@ int RayTraceThread(CRayThreadInfo *T)
                       if(r1.prim->type == cPrimSausage)	/* carry ray through the stick */
                         excl_trans	= new_front+(2*r1.surfnormal[2]*r1.prim->r1);
                       
-                      if(!backface_cull) 
+                      if((!backface_cull)&&(trans_mode!=2))
                         persist	= persist * r1.trans;
                       else 
                         {
@@ -2254,15 +2258,15 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   n_skipped = 0;
 #endif
 
-  n_thread  = (int)SettingGet(cSetting_max_threads);
+  n_thread  = SettingGetGlobal_i(cSetting_max_threads);
   if(n_thread<1)
     n_thread=1;
   if(n_thread>MAX_RAY_THREADS)
     n_thread = MAX_RAY_THREADS;
-  opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
+  opaque_back = SettingGetGlobal_i(cSetting_ray_opaque_background);
   BasisSetFudge(SettingGet(cSetting_ray_triangle_fudge));
-  shadows = (int)SettingGet(cSetting_ray_shadows);
-  antialias = (int)SettingGet(cSetting_antialias);
+  shadows = SettingGetGlobal_i(cSetting_ray_shadows);
+  antialias = SettingGetGlobal_i(cSetting_antialias);
   if(antialias<0) antialias=0;
   if(antialias>4) antialias=4;
   mag = antialias;
@@ -2469,7 +2473,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       if(x_stop>width) x_stop = width;
       if(y_stop>height) y_stop = height;
 
-      oversample_cutoff = (int)SettingGet(cSetting_ray_oversample_cutoff);
+      oversample_cutoff = SettingGetGlobal_i(cSetting_ray_oversample_cutoff);
 
       if(!antialias)
         oversample_cutoff = 0;

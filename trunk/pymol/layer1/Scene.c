@@ -3432,7 +3432,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
       glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
-      if(SettingGet(cSetting_two_sided_lighting)) {
+      if(SettingGet(cSetting_two_sided_lighting)||
+         (SettingGetGlobal_i(cSetting_transparency_mode)==1)) {
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
       } else {
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);

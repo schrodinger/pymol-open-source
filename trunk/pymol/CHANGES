@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * transparency_mode now subordinates backface_cull and 
+     two_sided_lighting in OpenGL and the ray tracer
+
    * seq_view settings
 
    * sequence viewer is now "in"
@@ -39,6 +42,8 @@ Changes up to 0.96
 
    * ray_transparency_contrast setting, default=2.0, improves contrast
      of the transparent surface relative to objects inside.  
+
+   * set_name command
 
    * fixed save_session behavior to avoid accidental overwrites after
      opening a new session (mac & tcl GUIs)
