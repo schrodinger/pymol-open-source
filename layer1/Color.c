@@ -82,26 +82,29 @@ int ColorGetRamped(int index,float *vertex,float *color)
   return(ok);
 }
 
-static int ColorFindExtByName(char *name,int null_okay) 
+static int ColorFindExtByName(char *name,int null_okay,int *best) 
 {
   CColor *I=&Color;
   int result = -1;
   int wm;
-  int best;
   int a;
-  best = 0;
+  int mybest;
+  if(!best)
+    best=&mybest;
+  *best = 0;
   for(a=0;a<I->NExt;a++)
     {
       wm = WordMatch(name,I->Ext[a].Name,true);
       if(wm<0) {
         if(null_okay||(I->Ext[a].Ptr)) {
           result=a;
+          *best=0;
           break;
         }
-      } else if ((wm>0)&&(best<wm)) {
+      } else if ((wm>0)&&((*best)<wm)) {
         if(null_okay||(I->Ext[a].Ptr)) {
           result=a;
-          best=wm;
+          *best=wm;
         }
       }
     }
@@ -113,7 +116,7 @@ void ColorRegisterExt(char *name,void *ptr,int type)
   CColor *I=&Color;
   int a;
 
-  a=ColorFindExtByName(name,true);
+  a=ColorFindExtByName(name,true,NULL);
   if(a<0) {
     VLACheck(I->Ext,ExtRec,I->NExt);
     a = I->NExt;
@@ -130,7 +133,7 @@ void ColorForgetExt(char *name)
 {
   CColor *I=&Color;
   int a;
-  a=ColorFindExtByName(name,true);
+  a=ColorFindExtByName(name,true,NULL);
 
   if(a>=0) { /* currently leaks memory TODO fix */
     I->Ext[a].Ptr=NULL;
@@ -312,10 +315,11 @@ int ColorGetIndex(char *name)
 {
   CColor *I=&Color;
   int color=-1; /* default for unknown is white */
+  int ext_color;
   int a;
   int i;
   int wm,best=0;
-
+  int ext_best=0;
 
   if(((name[0]>='0')&&(name[0]<='9'))||(name[0]=='-'))
     if(sscanf(name,"%d",&i)) 
@@ -328,16 +332,20 @@ int ColorGetIndex(char *name)
       wm = WordMatch(name,I->Color[a].Name,true);
       if(wm<0) {
         color=a;
+        best=0;
         break;
       } else if ((wm>0)&&(best<wm)) {
         color=a;
         best=wm;
       }
 	 }
-  if(color<0) {
-    color = ColorFindExtByName(name,false);
-    if(color>=0)
-      color = -10-color; /* indicates external */
+  if(best||(color<0)) {
+    ext_color = ColorFindExtByName(name,false,&ext_best);
+    if(ext_color>=0) {
+      ext_color = -10-ext_color; /* indicates external */
+      if((!ext_best)||(ext_best>best)) /* perfect or better match? */
+        color = ext_color;
+    }
   }
   return(color);
 }
