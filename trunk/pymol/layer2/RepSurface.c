@@ -55,6 +55,7 @@ typedef struct RepSurface {
   int allVisibleFlag;
   int *LastVisib;
   int *LastColor;
+  int Type;
   float max_vdw;
   CGO *debug;
 } RepSurface;
@@ -113,7 +114,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
     alpha=1.0F;
   if(ray) {
     ray->fTransparentf(ray,1.0F-alpha);
-    if(!I->S) {
+    if(I->Type==1) {
       /* dot surface */
 
       float radius;
@@ -143,7 +144,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
             vc+=3;
             v+=3;
           }
-    } else {
+    } else if(I->Type==0) { /* solid surface */
       c=I->NT;
 
       if(I->oneColorFlag) {
@@ -169,18 +170,54 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
             t+=3;
           }
       }
+    } else if(I->Type==2) { /* triangle mesh surface */
+
+      float radius;
+      
+      radius = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_radius);
+
+      if(radius==0.0F) {
+        radius = ray->PixelRadius*SettingGet_f(I->R.cs->Setting,
+                                               I->R.obj->Setting,
+                                               cSetting_mesh_width);
+      }
+
+      c=I->NT;      
+      if(I->oneColorFlag) {
+        col=ColorGet(I->oneColor);
+        while(c--)
+          {
+            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+              ray->fSausage3fv(ray,v+(*t)*3,v+(*(t+1))*3,radius,col,col);
+              ray->fSausage3fv(ray,v+(*(t+1))*3,v+(*(t+2))*3,radius,col,col);
+              ray->fSausage3fv(ray,v+(*(t+2))*3,v+(*(t))*3,radius,col,col);
+            }
+            t+=3;
+          }
+      } else {
+        while(c--)
+          {
+            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) 
+              if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))) {
+                ray->fSausage3fv(ray,v+(*t)*3,v+(*(t+1))*3,radius,vc+(*t)*3,vc+(*(t+1))*3);
+                ray->fSausage3fv(ray,v+(*(t+1))*3,v+(*(t+2))*3,radius,vc+(*(t+1))*3,vc+(*(t+2))*3);
+                ray->fSausage3fv(ray,v+(*(t+2))*3,v+(*(t))*3,radius,vc+(*(t+2))*3,vc+(*t)*3);
+              }
+            t+=3;
+          }
+      }
     }
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
     
-    
-    
     if(I->debug)
       CGORenderGL(I->debug,NULL,NULL,NULL);
-	 if(!I->S) {
+	 if(I->Type==1) {
       /* no triangle information, so we're rendering dots only */
-
+      
       int use_dlst;
       use_dlst = (int)SettingGet(cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
@@ -205,7 +242,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           if(I->oneColorFlag) {
             glColor3fv(ColorGet(I->oneColor));
           }
-
+          
           while(c--)
             {
               if(*vi) {
@@ -226,8 +263,87 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         if(use_dlst&&I->R.displayList) {
           glEndList();
         }
+      }
+    } else if(I->Type==2) { /* rendering triangle mesh */
+
+      int use_dlst;
+      use_dlst = (int)SettingGet(cSetting_use_display_lists);
+      if(use_dlst&&I->R.displayList) {
+        glCallList(I->R.displayList);
+      } else { 
+
+
+        glLineWidth(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
+        
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
+          }
         }
-      } else {
+        
+        
+        c=I->NT;
+        if(c) {
+          if(I->oneColorFlag) {
+            glColor3fv(ColorGet(I->oneColor));
+            while(c--) {
+              if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                
+                glBegin(GL_LINE_STRIP);
+                
+                glNormal3fv(vn+(*(t+2))*3);
+                glVertex3fv(v+(*(t+2))*3);
+                
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glEnd();
+              } else
+                t+=3;
+            }
+          } else {
+            while(c--) {
+              if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                glBegin(GL_LINE_STRIP);
+                
+                glColor3fv(vc+(*(t+2))*3);
+                glNormal3fv(vn+(*(t+2))*3);
+                glVertex3fv(v+(*(t+2))*3);
+                
+                glColor3fv(vc+(*t)*3);
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glColor3fv(vc+(*t)*3);
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glColor3fv(vc+(*t)*3);
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glEnd();
+              } else
+                t+=3;
+            }
+          }
+        }
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
+      }
+    } else {
       /* we're rendering triangles */
       
       if(alpha!=1.0) {
@@ -487,6 +603,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               }
             }
           }
+
           if(I->allVisibleFlag) {
             if(I->oneColorFlag) {
               if(use_dlst&&simplify) { /* simplify: try to help display list optimizer */
@@ -944,7 +1061,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int surface_mode;
   int *present = NULL,*ap;
   int pres_flag;
-  int surface_dots;
+  int surface_type;
   SphereRec *sp = Sphere0;
   SphereRec *ssp = Sphere0;
   AtomInfoType *ai1,*ai2;
@@ -961,7 +1078,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj);
 
   surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
-  surface_dots = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_dots);
+  surface_type = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_type);
+  I->Type = surface_type;
 
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
@@ -1021,7 +1139,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   probe_rad_more = probe_radius*(1.0F+solv_tole);
   probe_rad_more2 = probe_rad_more * probe_rad_more;
 
-  if(surface_dots) { /* dot surface */
+  if(surface_type!=0) { /* not a solid surface */
     probe_rad_less = probe_radius*(1.0F-solv_tole);
   } else { /* solid surface */
     probe_rad_less = probe_radius;
@@ -1067,7 +1185,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
     n_present = cs->NIndex;
 
-    if(1&&!I->allVisibleFlag) {
+    if(!I->allVisibleFlag) {
       /* optimize the space over which we calculate a surface */
       
       /* first find out which atoms are really present */
@@ -1339,7 +1457,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 	 OrthoBusyFast(3,5);
 
     if(I->N) {
-      if(!surface_dots) {
+      if(surface_type!=1) { /* not a dot surface... */
         float cutoff = minimum_sep*5.0F;
         if(cutoff>probe_radius)
           cutoff = probe_radius;

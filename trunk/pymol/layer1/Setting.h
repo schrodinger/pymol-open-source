@@ -472,7 +472,7 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_label_font_id              328
 #define cSetting_pdb_conect_all             329
 #define cSetting_button_mode_name           330
-#define cSetting_surface_dots               331
+#define cSetting_surface_type               331
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 

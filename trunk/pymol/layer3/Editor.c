@@ -55,6 +55,16 @@ typedef struct {
 
 CEditor Editor;
 
+static int EditorGetEffectiveState(ObjectMolecule *obj,int state)
+{
+  if(obj) {
+    if((obj->NCSet==1)&&(state>0))
+      if(SettingGet_i(NULL,obj->Obj.Setting,cSetting_static_singletons))
+        return 0;
+  }
+  return state;
+}
+
 int EditorGetNFrag(void)
 {
   CEditor *I = &Editor;
@@ -1124,6 +1134,8 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state,int enable_bond)
                                          cEditorBasePref,
                                          cEditorComp,
                                          &I->BondMode);
+
+      state = EditorGetEffectiveState(obj,state);
       I->ActiveState=state;
       
       if((I->NFrag>1)&&((int)SettingGet(cSetting_editor_label_fragments))) {
@@ -1163,6 +1175,8 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     " EditorPrepareDrag-Debug: entered. obj %p index %d",obj,index
     ENDFD;
 
+  state = EditorGetEffectiveState(obj,state);
+
   if(!I->Obj) { /* non-anchored */
     /* need to modify this code to move a complete covalent structure */
 
@@ -1186,6 +1200,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       }
     }
     if(seleFlag) { /* normal selection */
+
       
       PRINTFB(FB_Editor,FB_Actions)
         " Editor: grabbing (%s).",name
@@ -1379,6 +1394,8 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
     I->DragIndex,I->DragSelection,I->DragObject,I->DragHaveAxis,I->DragHaveBase,
     I->DragBondFlag,I->DragSlowFlag
     ENDFD;
+
+  state = EditorGetEffectiveState(obj,state);
 
   if((index==I->DragIndex)&&(obj==I->DragObject)) {
     if(obj!=I->Obj) {

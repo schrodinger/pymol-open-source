@@ -6906,6 +6906,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          case OMOP_CSetSumVertices:
          case OMOP_CSetMoment: 
            if((op->cs1>=0)&&(op->cs1<I->NCSet)) {
+             /*
+               if((I->NCSet==1)&&(SettingGet_i(NULL,I->Obj.Setting,cSetting_static_singletons)))
+               cs=I->CSet[0]; treat static singletons as present in each state 
+               else
+             */
              cs=I->CSet[op->cs1];
              if(cs) {
                s=ai->selEntry;
