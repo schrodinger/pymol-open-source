@@ -1126,9 +1126,10 @@ void PInit(void)
 
   PRunString("import util\n");  
   PRunString("import contrib\n");
-#ifdef _PYMOL_XRAY
+  /*#ifdef _PYMOL_XRAY
   PRunString("import sglite\n"); 
-#endif
+  #endif*/
+
   PRunString("import string\n"); 
 
   /* backwards compatibility */
