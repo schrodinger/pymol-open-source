@@ -53,7 +53,6 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
   float *v=I->V;
   int c=I->N;
   char *l=I->L;
-  
   if(ray) {
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
@@ -84,9 +83,10 @@ Rep *RepLabelNew(CoordSet *cs)
   int a,a1,vFlag,c1;
   float *v,*v0,*vc;
   char *p,*l;
+  int label_color;
   AtomInfoType *ai;
   OOAlloc(RepLabel);
-
+  
   obj = cs->Obj;
   vFlag=false;
   for(a=0;a<cs->NIndex;a++) {
@@ -101,6 +101,9 @@ Rep *RepLabelNew(CoordSet *cs)
     return(NULL); /* skip if no label are visible */
   }
 
+  label_color = SettingGet(cSetting_label_color);
+
+  
   RepInit(&I->R);
   
   obj = cs->Obj;
@@ -126,7 +129,10 @@ Rep *RepLabelNew(CoordSet *cs)
 		if(ai->visRep[cRepLabel]&&(ai->label[0]))
 		  {
 			 I->N++;
-			 c1=*(cs->Color+a);
+          if(label_color>=0) 
+            c1 = label_color;
+          else
+            c1=*(cs->Color+a);
 			 vc = ColorGet(c1); /* save new color */
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);

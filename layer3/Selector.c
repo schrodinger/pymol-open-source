@@ -135,6 +135,7 @@ void SelectorPurgeMembers(int sele);
 #define SELE_PCHx ( 0x1C00 | STYP_SEL2 | 0x70 )  
 #define SELE_FCHx ( 0x1D00 | STYP_SEL2 | 0x70 )
 #define SELE_ID_s ( 0x1E00 | STYP_SEL1 | 0x70 )
+#define SELE_BNDz ( 0x1F00 | STYP_SEL0 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -185,6 +186,7 @@ static WordKeyValue Keyword[] =
   {  "tt;",      SELE_TTYs },
   {  "chain",    SELE_CHNs },
   {  "c;",       SELE_CHNs },
+  {  "bonded",   SELE_BNDz },
   {  "segi",     SELE_SEGs },
   {  "s;",       SELE_SEGs },
   {  "model",    SELE_MODs },
@@ -838,6 +840,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   if(cs) cs->fFree(cs);
   if(nAtom) {
     SceneCountFrames();
+    PRINTF " Selector: found %d atoms.\n",nAtom ENDF
     ObjectMoleculeSort(targ);
     if(isNew) {
       ObjectSetName((Object*)targ,name);
@@ -845,6 +848,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     } else {
       ExecutiveUpdateObjectSelection((Object*)targ);
     }
+
     SceneChanged();
   } else {
     targ->Obj.fFree((Object*)targ);
@@ -1211,14 +1215,17 @@ int SelectorModulate1(EvalElem *base)
 		  {
           for(a=0;a<I->NAtom;a++) {
             obj=I->Obj[I->Table[a].model];
+            at=I->Table[a].atom;
             I->Table[a].f1 = obj->AtomInfo[at].vdw;
             base[0].sele[a]=true; /* start selected, subtract off */
+            c=I->NAtom;
           }
 			 for(d=0;d<I->NCSet;d++)
 				{
 				  n1=0;
 				  for(a=0;a<I->NAtom;a++) {
-					 I->Flag1[a]=false;
+                obj=I->Obj[I->Table[a].model];
+                I->Flag1[a]=false;
 					 at=I->Table[a].atom;
                 if(d<obj->NCSet) 
                   cs=obj->CSet[d];
@@ -1265,8 +1272,10 @@ int SelectorModulate1(EvalElem *base)
 												{
 												  if(within3f(I->Vertex+3*j,v2,dist+ /* eliminate atoms w/o gap */
                                                   I->Table[a].f1+
-                                                  I->Table[j].f1)) 
+                                                  I->Table[j].f1)) {
                                         base[0].sele[j]=false;
+                                        c--;
+                                      }
 												}
 											 j=map->EList[i++];
 										  }
@@ -1309,6 +1318,10 @@ int SelectorSelect0(EvalElem *base)
 	 case SELE_NONz:
 		for(a=0;a<I->NAtom;a++)
 		  base[0].sele[a]=false;
+		break;
+	 case SELE_BNDz:
+		for(a=0;a<I->NAtom;a++)
+        base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].bonded;
 		break;
 	 case SELE_HETz:
 		for(a=0;a<I->NAtom;a++)
@@ -1388,6 +1401,8 @@ int SelectorSelect1(EvalElem *base)
                index) {
               base[0].sele[a]=true;
               c++;
+            } else {
+              base[0].sele[a]=false;
             }
           }
       break;
@@ -2308,7 +2323,7 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,f
   int a;
   int nv = 0;
   float *vv,*vv0,*vv1;
-
+  
   ds = DistSetNew();
   vv = VLAlloc(float,10000);
   SelectorUpdateTable();

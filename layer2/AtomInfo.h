@@ -63,6 +63,7 @@ typedef struct AtomInfoType {
   int color;
   int id; /* used for reading conect records */
   unsigned int flags;
+  int bonded;
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);

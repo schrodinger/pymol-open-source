@@ -78,6 +78,11 @@ void SettingSetfv(int index,float *v)
     I->Setting[index].Value[0]=v[0];
     SceneChanged();
     break;
+  case cSetting_label_color:
+    ExecutiveInvalidateRep("all",cRepLabel,cRepInvAll);
+    I->Setting[index].Value[0]=v[0];
+    SceneChanged();
+    break;
   case cSetting_all_states:
 	 I->Setting[index].Value[0]=v[0];
     SceneChanged();
@@ -531,6 +536,17 @@ void SettingInit(void)
   I->Setting[cSetting_valence].Value[0] = 0.0;
   strcpy(I->Setting[cSetting_valence].Name,
 			"valence");
+
+  I->NSetting++;
+  I->Setting[cSetting_nonbonded_size].Value[0] = 0.25;
+  strcpy(I->Setting[cSetting_nonbonded_size].Name,
+			"nonbonded_size");
+
+  I->NSetting++;
+  I->Setting[cSetting_label_color].Value[0] = -1.0;
+  strcpy(I->Setting[cSetting_label_color].Name,
+			"label_color");
+
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS
