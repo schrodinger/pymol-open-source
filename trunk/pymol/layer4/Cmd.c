@@ -1434,7 +1434,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(finish)
         ExecutiveUpdateObjectSelection(origObj);
       if(frame<0)
-        frame = ((ObjectMolecule*)obj)->NCSet-1;
+        frame = ((ObjectMolecule*)origObj)->NCSet-1;
 		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
               fname,oname,frame+1);
 	 }
