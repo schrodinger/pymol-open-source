@@ -105,7 +105,7 @@ static float *CGO_size(CGO *I,int sz)
 
 int CGOFromFloatArray(CGO *I,float *src,int len)
 {
-  int op;
+  int op,iarg;
   int c;
   int ok;
   int all_ok=true;
@@ -115,7 +115,7 @@ int CGOFromFloatArray(CGO *I,float *src,int len)
   int cc;
   float val;
   float *pc,*save_pc,*tf;
-  VLACheck(I->op,float,I->c+len);
+  VLACheck(I->op,float,I->c+len+32);
   save_pc=I->op+I->c;
   while(len-->0) {
     cc++;
@@ -142,7 +142,8 @@ int CGOFromFloatArray(CGO *I,float *src,int len)
       switch(op) { /* now convert any instructions with int arguments */
       case CGO_BEGIN:
         tf=save_pc+1;
-        CGO_write_int(tf,*(tf));
+        iarg = *(tf);
+        CGO_write_int(tf,iarg);
         break;
       }
       save_pc=pc;
@@ -236,6 +237,9 @@ void CGOStop(CGO *I)
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
+
+  CGO_write_int(pc,CGO_STOP);
+  CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
@@ -245,20 +249,19 @@ void CGOStop(CGO *I)
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
 
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
+  CGO_write_int(pc,CGO_STOP);
+  CGO_write_int(pc,CGO_STOP);
+
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
  
-  CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
@@ -458,6 +461,7 @@ void CGORenderRay(CGO *I,CRay *ray)
 static void CGO_gl_begin(float *pc)
 {
   glBegin(CGO_read_int(pc));
+
 }
 
 static void CGO_gl_end(float *pc)
