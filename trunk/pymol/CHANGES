@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * fixed off-center behavior of center command with respect to clipping planes
+
    * fixed label representation memory (on/off only) in scenes
 
    * added support for explicit RESN and RESI specification in 

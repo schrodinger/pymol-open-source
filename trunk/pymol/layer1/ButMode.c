@@ -309,7 +309,8 @@ void ButModeDraw(Block *block)
     /*    glColor3fv(I->Block->TextColor);
           GrapDrawStr("K",x,y-4);*/
     glColor3fv(I->Block->TextColor);
-    GrapDrawStr("Keys  ",x+12,y);
+    GrapDrawStr("&",x+4,y);
+    GrapDrawStr("Keys",x+16,y);
     glColor3fv(I->TextColor2);
     glRasterPos4d(x+64,y,0,1);
     for(a=0;a<3;a++) {
