@@ -132,11 +132,12 @@ SphereRec *MakeDotSphere(int level)
 {
   SphereRec *result;
   int *TriFlag;
-  int a,b,c,h,k,l,curTri,n;
+  int a,b,c,h,k,l,curTri,n,it;
   float area,sumArea=0.0;
   int nStrip,*q,*s;
   int nVertTot;
   int flag;
+  float vt1[3],vt2[3],vt[3];
 
   Dot=(float*)mmalloc(sizeof(float)*3*MAXDOT);
   ErrChkPtr(Dot);
@@ -222,6 +223,17 @@ SphereRec *MakeDotSphere(int level)
 		result->dot[a].area = 0.0;
 	 }
 
+  /* fix normals so that v1-v0 x v2-v0 is the correct normal */
+
+  for(a=0;a<NTri;a++) {
+    subtract3f(result->dot[Tri[a][1]].v,result->dot[Tri[a][0]].v,vt1);
+    subtract3f(result->dot[Tri[a][2]].v,result->dot[Tri[a][0]].v,vt2);
+    cross_product3f(vt1,vt2,vt);
+    if(dot_product3f(vt,result->dot[Tri[a][0]].v)<0.0) { /* if wrong, then interchange */
+      it=Tri[a][2]; Tri[a][2]=Tri[a][1]; Tri[a][1]=it;
+	 }
+  }    
+
   for(a=0;a<NTri;a++)
 	 {
 		area = (SphericalAngle(Tri[a][0],Tri[a][1],Tri[a][2]) +
@@ -239,7 +251,7 @@ SphereRec *MakeDotSphere(int level)
 	 ErrFatal("MakeDotSphere","Area of sphere does not sum to 4*pi!\n");
   /*  printf(" MakeDotSphere: sumArea: %8.3f which is %8.3f Pi\n",sumArea,sumArea/cPI);*/
 
-
+  
   for(a=0;a<NTri;a++)
 	 TriFlag[a]=false;
 
@@ -395,6 +407,7 @@ void SphereFree(SphereRec *I)
   mfree(I->dot);
   mfree(I->StripLen);
   mfree(I->Sequence);
+  mfree(I->Tri);
   FreeP(I);
 }
 

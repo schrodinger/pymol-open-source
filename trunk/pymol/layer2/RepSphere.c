@@ -176,7 +176,7 @@ Rep *RepSphereNew(CoordSet *cs)
   AtomInfoType *ai2;
   int spheroidFlag = false;
   float spheroid_scale;
-  float *sphLen,sphTmp;
+  float *sphLen,sphTmp,*sphNorm,*sphTmpN;
 
   OOAlloc(RepSphere);
 
@@ -436,11 +436,13 @@ Rep *RepSphereNew(CoordSet *cs)
               for(b=0;b<sp->NStrip;b++)
                 {
                   sphLen = cs->Spheroid+(sp->nDot*a1);
+                  sphNorm = cs->SpheroidNormal+(3*sp->nDot*a1);
                   for(c=0;c<(*s);c++)
                     {
-                      *(v++)=sp->dot[*q].v[0]; /* normal */
-                      *(v++)=sp->dot[*q].v[1];
-                      *(v++)=sp->dot[*q].v[2];
+                      sphTmpN = sphNorm + 3*(*q);
+                      *(v++)=*(sphTmpN++);
+                      *(v++)=*(sphTmpN++);
+                      *(v++)=*(sphTmpN++);
                       sphTmp = (*(sphLen+(*q)))*spheroid_scale;
                       *(v++)=v0[0]+sphTmp*sp->dot[*q].v[0]; /* point */
                       *(v++)=v0[1]+sphTmp*sp->dot[*q].v[1];

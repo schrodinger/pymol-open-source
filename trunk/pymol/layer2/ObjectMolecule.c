@@ -173,6 +173,8 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   for(a=0;a<nRow;a++) {
     if(*f>R_SMALL4) {
       (*(s++))/=*(f++);
+      if(s[-1]<0.05)
+        s[-1]=0.05;
     } else {
       *(s++)=0.05; 
       f++;
@@ -203,23 +205,34 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
       t0 = sp->Tri[b*3  ];
       t1 = sp->Tri[b*3+1];
       t2 = sp->Tri[b*3+2];
-      bt0 = base + t1;
+      bt0 = base + t0;
       bt1 = base + t1;
       bt2 = base + t2;
-      scale3f(sp->dot[t0].v,spheroid[bt0],p0);
+      copy3f(sp->dot[t0].v,p0);
+      copy3f(sp->dot[t1].v,p1);
+      copy3f(sp->dot[t2].v,p2);
+      /*      scale3f(sp->dot[t0].v,spheroid[bt0],p0);
       scale3f(sp->dot[t1].v,spheroid[bt1],p1);
-      scale3f(sp->dot[t2].v,spheroid[bt2],p2);
+      scale3f(sp->dot[t2].v,spheroid[bt2],p2);*/
       subtract3f(p1,p0,d1);
       subtract3f(p2,p0,d2);
       cross_product3f(d1,d2,n0);
       normalize3f(n0);
       v = norm+bt0*3;
-      add3f(p0,v,v);
+      add3f(n0,v,v);
       v = norm+bt1*3;
-      add3f(p1,v,v);
+      add3f(n0,v,v);
       v = norm+bt2*3;
-      add3f(p2,v,v);
+      add3f(n0,v,v);
+    }
+  }
 
+  f=norm;
+  for(a=0;a<I->NAtom;a++) {
+    base = a*sp->nDot;
+    for(b=0;b<sp->nDot;b++) {
+      normalize3f(f);
+      f+=3;
     }
   }
   
@@ -231,10 +244,20 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
     FreeP(spheroid);
     FreeP(norm);
   }
+
   FreeP(center);
   FreeP(count);
   FreeP(fsum);
+
+  for(b=1;b<I->NCSet;b++) { /* get rid of the ensemble */
+    cs=I->CSet[b];
+    if(cs) {
+      if(cs->fFree)
+        cs->fFree(cs);
+    }
+  }
   I->NCSet=1;
+
   ObjectMoleculeInvalidate(I,cRepSphere,cRepInvProp);
 }
 /*========================================================================*/
@@ -1628,16 +1651,17 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     if(PyObject_HasAttrString(model,"spheroid")&&
        PyObject_HasAttrString(model,"spheroid_normals"))
       {
-        tmp = PyObject_GetAttrString(mol,"spheroid");
+        tmp = PyObject_GetAttrString(model,"spheroid");
         if(tmp) {
-          PConvPyListToFloatArray(tmp,cset->Spheroid);
+          cset->NSpheroid = PConvPyListToFloatArray(tmp,&cset->Spheroid);
           Py_DECREF(tmp);
         }
-        tmp = PyObject_GetAttrString(mol,"spheroid_normals");
+        tmp = PyObject_GetAttrString(model,"spheroid_normals");
         if(tmp) {
-          PConvPyListToFloatArray(tmp,cset->SpheroidNormal);
+          PConvPyListToFloatArray(tmp,&cset->SpheroidNormal);
           Py_DECREF(tmp);
         }
+        printf("%p %p\n",cset->Spheroid,cset->SpheroidNormal);
       }
     mol = PyObject_GetAttrString(model,"molecule");
     
