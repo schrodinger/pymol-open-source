@@ -172,7 +172,7 @@ int PAlterAtom(AtomInfoType *at,char *expr)
       result=false;
     else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"segi"),segi,sizeof(SegIdent)-1))
       result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"alt"),chain,sizeof(Chain)-1))
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"alt"),alt,sizeof(Chain)-1))
       result=false;
     else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"chain"),chain,sizeof(Chain)-1))
       result=false;
