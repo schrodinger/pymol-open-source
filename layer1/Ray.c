@@ -329,7 +329,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   unsigned int c[3],aa;
   unsigned int *image_copy = NULL;
   int i;
-  unsigned int background,buffer_size,z[12],tot;
+  unsigned int background,buffer_size,z[16],tot;
   int antialias;
   RayInfo r1,r2;
   double timing;
@@ -415,7 +415,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     RayTransformBasis(I,I->Basis+2);
     BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
 
-    PRINTF " Ray: hash spacing: %4.2f/%4.2f\n",
+    PRINTF " Ray: voxel spacing: camera %4.2f, light %4.2f\n",
       I->Basis[1].Map->Div,I->Basis[2].Map->Div ENDF;
     
     /* IMAGING */
@@ -555,8 +555,18 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 
 			 p = image+((width*2)*(y*2-1))+(x*2);
 			 
+          /*     4  5  
+           *  6  0  1  7
+           *  8  2  3  9
+           *    10 11 
+           *
+           * 0-3 are weighted double
+           */
+
+          z[12] = (*(p-1));
 			 z[4] = (*(p));
 			 z[5] = (*(p+1));
+          z[13] = (*(p+2));
 			 p+=(width*2);
 			 z[6] = (*(p-1));
 			 z[0] = (*(p));
@@ -568,34 +578,36 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 z[3] = (*(p+1));
 			 z[9] = (*(p+2));
 			 p+=(width*2);
+          z[14] = (*(p-1));
 			 z[10] = (*(p));
 			 z[11] = (*(p+1));
+          z[15] = (*(p+2));
 
 			 if(I->BigEndian) { 
-				for(a=0;a<12;a++)
+				for(a=0;a<16;a++)
 				  z[a]=z[a]>>8;
 			 }
 
 			 tot=0;
-			 for(a=0;a<12;a++)
+			 for(a=0;a<16;a++)
 				tot+=(z[a]&0xFF);
 			 for(a=0;a<4;a++)
-				tot+=(z[a]&0xFF);
-			 aa=aa|(0xFF&(tot>>4));
+				tot+=(z[a]&0xFF)<<2;
+			 aa=aa|(0xFF&(tot>>5));
 			 
 			 tot=0;
-			 for(a=0;a<12;a++)
+			 for(a=0;a<16;a++)
 				tot+=(z[a]&0xFF00);
 			 for(a=0;a<4;a++)
-				tot+=(z[a]&0xFF00);
-			 aa=aa|(0xFF00&(tot>>4));
+				tot+=(z[a]&0xFF00)<<2;
+			 aa=aa|(0xFF00&(tot>>5));
 
 			 tot=0;
-			 for(a=0;a<12;a++)
+			 for(a=0;a<16;a++)
 				tot+=(z[a]&0xFF0000);
 			 for(a=0;a<4;a++)
-				tot+=(z[a]&0xFF0000);
-			 aa=aa|(0xFF0000&(tot>>4));			 
+				tot+=(z[a]&0xFF0000)<<2;
+			 aa=aa|(0xFF0000&(tot>>5));			 
 			 
 			 if(I->BigEndian) {
 				aa=aa<<8;
@@ -606,6 +618,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 
 			 *(image_copy+((width)*y)+x) = aa;			 
 		  }
+
+    /* top and bottom edges */
 
 	 for(x=0;x<width;x++)
 		for(y=0;y<height;y=y+(height-1))
@@ -621,7 +635,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 z[3] = (*(p+1));
 
 			 if(I->BigEndian) { 
-				for(a=0;a<12;a++)
+				for(a=0;a<4;a++)
 				  z[a]=z[a]>>8;
 			 }
 
@@ -649,6 +663,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 *(image_copy+((width)*y)+x) = aa;			 
 		  }
 
+    /* left and right edges */
+
 	 for(x=0;x<width;x=x+(width-1))
 		for(y=0;y<height;y++)
 		  {
@@ -663,7 +679,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 z[3] = (*(p+1));
 
 			 if(I->BigEndian) { 
-				for(a=0;a<12;a++)
+				for(a=0;a<4;a++)
 				  z[a]=z[a]>>8;
 			 }
 

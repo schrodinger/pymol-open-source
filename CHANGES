@@ -20,6 +20,8 @@ Impending Changes
    
 Changes up to 0.50
 
+   * modified raytrace antialiasing transfer function improve contrast
+
    * alias and extend commands
 
    * Additional test cases.

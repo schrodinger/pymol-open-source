@@ -4264,7 +4264,7 @@ PYMOL API
    
 EXAMPLES
 
-   alias go,load "test.pdb";zoom (i;500);show sticks,(i;500 a;4)
+   alias go,load "test.pdb"; zoom (i;500); show sticks,(i;500 a;4)
    go
    '''
    keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]   
