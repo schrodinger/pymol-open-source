@@ -117,6 +117,7 @@ static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
 static PyObject *CmdLabel(PyObject *self,   PyObject *args);
 static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
+static PyObject *CmdLoadCoords(PyObject *self, PyObject *args);
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args);
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args);
 static PyObject *CmdMDo(PyObject *self, 	PyObject *args);
@@ -190,6 +191,7 @@ static PyMethodDef Cmd_methods[] = {
    {"wait_queue",   CmdWaitQueue,    METH_VARARGS },
    {"label",        CmdLabel,        METH_VARARGS },
 	{"load",	        CmdLoad,         METH_VARARGS },
+	{"load_coords",  CmdLoadCoords,   METH_VARARGS },
 	{"load_object",  CmdLoadObject,   METH_VARARGS },
 	{"mclear",	     CmdMClear,       METH_VARARGS },
 	{"mdo",	        CmdMDo,          METH_VARARGS },
@@ -1300,6 +1302,45 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 	 }
 	 break;
   }
+  if(origObj) {
+	 OrthoAddOutput(buf);
+	 OrthoRestorePrompt();
+  }
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
+{
+  char *oname;
+  PyObject *model;
+  Object *origObj = NULL,*obj;
+  OrthoLineType buf;
+  int frame,type;
+
+  buf[0]=0;
+
+  PyArg_ParseTuple(args,"sOii",&oname,&model,&frame,&type);
+
+  APIEntry();
+  origObj=ExecutiveFindObjectByName(oname);
+  
+      /* TODO check for existing object of wrong type */
+  if(!origObj)
+    ErrMessage("LoadCoords","named object not found.");
+  else 
+    {
+      switch(type) {
+      case cLoadTypeChemPyModel:
+        PBlockAndUnlockAPI();
+        obj=(Object*)ObjectMoleculeLoadCoords((ObjectMolecule*)origObj,model,frame);
+        PLockAPIAndUnblock();
+        ExecutiveUpdateObjectSelection(origObj);
+        sprintf(buf," CmdLoad: Coordinates appended into object \"%s\".\n",oname);
+        break;
+      }
+    }
   if(origObj) {
 	 OrthoAddOutput(buf);
 	 OrthoRestorePrompt();

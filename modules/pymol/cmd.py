@@ -1956,6 +1956,28 @@ def get_feedback():
       unlock()
    return l
 
+def load_coords(*arg):
+   '''
+   '''
+   r = 1
+   try:
+      lock()   
+      ftype = 8
+      state = -1
+      model = arg[0];
+      if len(arg)==2:
+         oname = string.strip(arg[1])
+         r = _cmd.load_coords(oname,model,state,ftype)
+      elif len(arg)==3:
+         oname = string.strip(arg[1])
+         state = int(arg[2])-1
+         r = _cmd.load_coords(oname,model,state,ftype)
+      else:
+         print "Error: invalid arguments."
+   finally:
+      unlock()
+   return r
+
 def load_model(*arg):
    '''
    '''
