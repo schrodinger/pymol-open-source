@@ -1276,8 +1276,8 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Sculpt', 'separator', '')
       
 
-      self.menuBar.addmenuitem('Sculpt', 'command', 'Imprint Geometry',
-                               label='Imprint Geometry',
+      self.menuBar.addmenuitem('Sculpt', 'command', 'Activate',
+                               label='Activate',
                                command = lambda: cmd.do("_ sculpt_activate all"))
 
       self.menuBar.addmenuitem('Sculpt', 'command', 'Deactivate',
@@ -1287,24 +1287,6 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Sculpt', 'command', 'Clear Memory',
                                label='Clear Memory',
                                command = lambda: cmd.do("_ sculpt_purge"))
-
-      self.menuBar.addmenuitem('Sculpt', 'separator', '')
-
-      self.menuBar.addmenuitem('Sculpt', 'command', 'Bonds Only',
-                               label='Bonds Only',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=1"))
-
-      self.menuBar.addmenuitem('Sculpt', 'command', 'Bonds & VDW',
-                               label='Bonds & VDW',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=49"))
-
-      self.menuBar.addmenuitem('Sculpt', 'command', 'All Terms Except 1-4 VDW',
-                               label='All Except 1-4 VDW',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=31"))
-
-      self.menuBar.addmenuitem('Sculpt', 'command', 'All Terms',
-                               label='All Terms',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=63"))
 
       self.menuBar.addmenuitem('Sculpt', 'separator', '')
 
@@ -1320,17 +1302,43 @@ class PMGApp(AbstractApp):
                                label='10 Cycles per Update',
                                command = lambda: cmd.do("_ set sculpting_cycles=10"))
 
-      self.menuBar.addmenuitem('Sculpt', 'command', '30 Cycles/Update',
-                               label='30 Cycles per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=30"))
+      self.menuBar.addmenuitem('Sculpt', 'command', '33 Cycles/Update',
+                               label='33 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=33"))
 
       self.menuBar.addmenuitem('Sculpt', 'command', '100 Cycles/Update',
                                label='100 Cycles per Update',
                                command = lambda: cmd.do("_ set sculpting_cycles=100"))
 
-      self.menuBar.addmenuitem('Sculpt', 'command', '300 Cycles/Update',
-                               label='300 Cycles per Update',
-                               command = lambda: cmd.do("_ set sculpting_cycles=300"))
+      self.menuBar.addmenuitem('Sculpt', 'command', '333 Cycles/Update',
+                               label='333 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=333"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', '1000 Cycles/Update',
+                               label='1000 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=1000"))
+
+      self.menuBar.addmenuitem('Sculpt', 'separator', '')
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'Bonds Only',
+                               label='Bonds Only',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=1"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'Bonds & Angles Only',
+                               label='Bonds & Angles Only',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=3"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'All Except VDW',
+                               label='All Except VDW',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=15"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'All Except 1-4 VDW',
+                               label='All Except 1-4 VDW',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=31"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'All Terms',
+                               label='All Terms',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=63"))
 
       self.menuBar.addmenu('Demo', 'Demonstrations')
 
