@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * dynamic grid for slice module
+
+   * rank attribute for atoms ( = rank/row from input file)
+
    * additional safety margins around glReadPixels...
 
    * cmd.get_color_index
