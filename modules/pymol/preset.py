@@ -247,11 +247,11 @@ def default(selection="(all)"):
    cmd.hide("everything",s)
    cmd.show("lines",s)
    cmd.show("nonbonded",s)
-   cmd.set("transparency",0,s)
+   cmd.unset("transparency",s)
    cmd.set("two_sided_lighting",0)
-   cmd.set("dot_normals",1,s)
-   cmd.set("mesh_normals",1,s)
-   cmd.set("surface_quality",0,s)
+   cmd.unset("dot_normals",1,s)
+   cmd.unset("mesh_normals",1,s)
+   cmd.unset("surface_quality",0,s)
 
    if polar_contacts in cmd.get_names():
       cmd.disable(polar_contacts)

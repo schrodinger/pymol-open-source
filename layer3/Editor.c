@@ -269,6 +269,70 @@ void EditorGetNextMultiatom(char *name)
 }
 
 /*========================================================================*/
+int EditorLogState(int pkresi)
+{
+  CEditor *I = &Editor;
+  if(SettingGet(cSetting_logging)) {
+
+    OrthoLineType buffer,buf1="None",buf2="None",buf3="None",buf4="None";
+    int pkbond = 1;
+    
+    if(!EditorActive()) {
+      PLog("edit",cPLog_pml);
+    } else {
+      int sele1,sele2,sele3,sele4;
+      ObjectMolecule *obj1=NULL,*obj2=NULL,*obj3=NULL,*obj4=NULL;
+      int index1,index2,index3,index4;
+      
+      sele1 = SelectorIndexByName(cEditorSele1);
+      sele2 = SelectorIndexByName(cEditorSele2);
+      sele3 = SelectorIndexByName(cEditorSele3);
+      sele4 = SelectorIndexByName(cEditorSele4);
+
+      obj1 = SelectorGetFastSingleAtomObjectIndex(sele1,&index1);
+      obj2 = SelectorGetFastSingleAtomObjectIndex(sele2,&index2);
+      obj3 = SelectorGetFastSingleAtomObjectIndex(sele3,&index3);
+      obj4 = SelectorGetFastSingleAtomObjectIndex(sele4,&index4);
+
+      if((sele1>=0) && (sele2>=0) && I->BondMode && obj1 && obj2) {
+
+        /* bond mode */
+        ObjectMoleculeGetAtomSeleLog(obj1,index1,buf1,true);
+        ObjectMoleculeGetAtomSeleLog(obj2,index2,buf2,true);
+        
+      } else {
+
+        /* atom mode */
+        pkbond = 0;
+
+        if(obj1) {
+          ObjectMoleculeGetAtomSeleLog(obj1,index1,buf1,true);
+        }
+
+        if(obj2) {
+          ObjectMoleculeGetAtomSeleLog(obj2,index2,buf2,true);
+        }
+
+        if(obj3) {
+          ObjectMoleculeGetAtomSeleLog(obj3,index3,buf3,true);
+        }
+
+        if(obj4) {
+          ObjectMoleculeGetAtomSeleLog(obj4,index4,buf4,true);
+        }
+      }
+  
+      sprintf(buffer,"cmd.edit(%s,%s,%s,%s,pkresi=%d,pkbond=%d)",
+              buf1,buf2,buf3,buf4,pkresi ? 1: 0, pkbond ? 1: 0);
+
+      PLog(buffer,cPLog_pym);
+
+    }
+  }
+  return 1;
+}
+/*========================================================================*/
+
 int EditorInvert(int quiet)
 {
   CEditor *I = &Editor;

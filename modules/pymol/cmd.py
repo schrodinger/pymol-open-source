@@ -84,8 +84,8 @@ if __name__=='pymol.cmd':
    #######################################################################
 
    file_ext_re= re.compile(string.join([
-      "\.pdb$|\.ent$|\.mol$|\.p5m$|",
-      r"\.PDB$|\.ENT$|\.MOL$|\.P5M$|",
+      "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",
+      r"\.PDB$|\.pdb1$|\.ENT$|\.MOL$|\.P5M$|",
       r"\.mmod$|\.mmd$|\.dat$|\.out$|",
       r"\.MMOD$|\.MMD$|\.DAT$|\.OUT$|",
       r"\.xplor$|\.pkl$|\.sdf$|", 
@@ -776,6 +776,16 @@ DEVELOPMENT TO DO
       # WARNING: internal routine, subject to change
       try:
          lock()
+         try: # flush and close log if possible to avoid threading exception
+            if pymol._log_file!=None:
+               try:
+                  pymol._log_file.flush()
+               except:
+                  pass
+               pymol._log_file.close()
+               del pymol._log_file
+         except:
+            pass
          if reaper!=None:
             try:
                reaper.join()

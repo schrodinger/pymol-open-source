@@ -7351,20 +7351,24 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer)
             ai->name);   
 }
 /*========================================================================*/
-void ObjectMoleculeGetAtomSeleLog(ObjectMolecule *I,int index, char *buffer) 
+void ObjectMoleculeGetAtomSeleLog(ObjectMolecule *I,int index, char *buffer,int quote) 
 {
   AtomInfoType *ai;
+  char quo[5] = "";
+  if(quote) {
+    quo[0]='"';
+    quo[1]=0;
+  }
   if(SettingGet(cSetting_robust_logs)) {
     ai=I->AtomInfo+index;
-    
     if(ai->alt[0]) 
-      sprintf(buffer,"/%s/%s/%s/%s`%s/%s`%s",I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,
-              ai->name,ai->alt);
+      sprintf(buffer,"%s/%s/%s/%s/%s`%s/%s`%s%s",quo,I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,
+              ai->name,ai->alt,quo);
     else
-      sprintf(buffer,"/%s/%s/%s/%s`%s/%s`",I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,
-              ai->name);   
+      sprintf(buffer,"%s/%s/%s/%s/%s`%s/%s`%s",quo,I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,
+              ai->name,quo);   
   } else {
-    sprintf(buffer,"(%s`%d)",I->Obj.Name,index+1);
+    sprintf(buffer,"%s(%s`%d)%s",quo,I->Obj.Name,index+1,quo);
   }
 }
 

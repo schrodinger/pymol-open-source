@@ -40,6 +40,7 @@ if __name__=='pymol.commanding':
          try:
             if pymol._log_file!=None:
                pymol._log_file.close()
+               del pymol._log_file
          except:
             pass
          pymol._log_file = open(fname,mode)
@@ -76,6 +77,7 @@ if __name__=='pymol.commanding':
    def log_close():
       if pymol._log_file!=None:
          pymol._log_file.close()
+         del pymol._log_file
          cmd.set("logging",0,quiet=1)
          if _feedback(fb_module.cmd,fb_mask.details): # redundant
             print " Cmd: log closed."

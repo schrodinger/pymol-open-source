@@ -14,14 +14,6 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include"os_predef.h"
-#include"os_std.h"
-
-#include"Base.h"
-#include "MyPNG.h"
-#include"MemoryDebug.h"
-#include "Setting.h"
-
 #ifdef _HAVE_LIBPNG
 #include<png.h>
 
@@ -36,6 +28,15 @@ Z* -------------------------------------------------------------------
 #endif
 
 #endif
+
+#include"os_predef.h"
+#include"os_std.h"
+
+#include"Base.h"
+#include "MyPNG.h"
+#include"MemoryDebug.h"
+#include "Setting.h"
+
 
 int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height)
 {
