@@ -317,13 +317,19 @@ class PMGApp(AbstractApp):
          for a in raw_list:
             unique[re.sub(r".*[\/\\]|\.py.*$","",a)] = 1
          for name in unique.keys():
-            if name != "__init__":
-               module_context = string.join(string.split(__name__,'.')[0:-1])
-               mod_name = module_context+".startup."+name
-               __builtin__.__import__(mod_name)
-               mod = sys.modules[mod_name]
-               mod.__init__(self)
-
+            try:
+               if name != "__init__":
+                  module_context = string.join(string.split(__name__,'.')[0:-1])
+                  mod_name = module_context+".startup."+name
+                  __builtin__.__import__(mod_name)
+                  mod = sys.modules[mod_name]
+                  if hasattr(mod,'__init__'):
+                     mod.__init__(self)
+            except:
+               print "Exception in plugin '%s' -- Traceback follows..."%name
+               traceback.print_exc()
+               print "Error: unable to initialize plugin '%s'."%name
+               
    def quit_app(self):
       cmd.log_close()
       cmd.quit()  # avoid logging this - it is inconvenient...
@@ -384,6 +390,37 @@ class PMGApp(AbstractApp):
          if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
             self.save_file = '' # remove ambiguous default 
          cmd.load(ofile)
+
+   def install_plugin(self):
+      plugdir = os.path.split(__file__)[:-1]
+      path = apply(os.path.join,tuple(list(plugdir)+["startup","check_writable"]))
+      ok = 1
+      try:
+         f=open(path,'wb')
+         f.close()
+         os.unlink(path)
+      except:
+         ok = 0
+         print "Error: Unable to write to plugin directory (insufficient privileges?)."
+      if ok:
+         ofile = askopenfilename(initialdir = self.initialdir,
+                                 filetypes=[("All Readable","*.py"),
+                                            ])
+         if len(ofile):
+            self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
+            plugname = os.path.split(ofile)[-1]
+            try:
+               f=open(ofile,'rb')
+               plugin = f.read()
+               f.close()
+               path = apply(os.path.join,tuple(list(plugdir)+["startup",plugname]))
+               f=open(path,'wb')
+               f.write(plugin)
+               f.close()
+               print " Plugin: '%s' installed.  Please restart PyMOL to begin use."%plugname
+            except:
+               traceback.print_exc()
+               print "Error: Sorry, unable to install plugin '%s'."%plugname
 
    def log_open(self):
       sfile = asksaveasfilename(initialfile = self.log_file,
@@ -2015,6 +2052,10 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Plugin', 'command', 'About',
                                label='About Plugins',
                                command = lambda s=self: s.about_plugins())
+
+      self.menuBar.addmenuitem('Plugin', 'command', 'Install Plugin',
+                               label='Install Plugin...',
+                               command = lambda s=self: s.install_plugin())
       
       self.menuBar.addmenuitem('Plugin', 'separator', '')
 
