@@ -120,7 +120,7 @@ COMMANDS
    ATOMS         alter     alter_state 
    EDITING       create    replace   remove    h_fill   remove_picked
                  edit      bond      unbond    h_add    fuse       
-                 undo      redo      protect   cycle_valence  
+                 undo      redo      protect   cycle_valence  attach
    FITTING       fit       rms       rms_cur   pair_fit  
                  intra_fit intra_rms intra_rms_cur   
    COLORS        color     set_color
@@ -570,15 +570,20 @@ DESCRIPTION
  
    "sort" reorders atoms in the structure.  It usually only necessary
    to run this routine after an "alter" command which has modified the
-   names of atom properties.
+   names of atom properties.  Without an argument, sort will resort
+   all atoms in all objects.
 
 USAGE
  
-   sort object-name
+   sort [object]
 
 PYMOL API
 
-   cmd.sort(string object-name)
+   cmd.sort(string object)
+
+SEE ALSO
+
+   alter
 '''
    try:
       lock()
@@ -1430,15 +1435,18 @@ DESCRIPTION
    using the python evaluator with a separate name space for each
    atom.  The symbols defined in the name space are:
  
-      name, resn, resi, chain, alt, elem
-      q, b, segi, and type (ATOM,HETATM),
-      partial_charge, formal_charge,
+      name, resn, resi, chain, alt, elem, q, b, segi,
+      type (ATOM,HETATM), partial_charge, formal_charge,
       text_type, numeric_type, ID
    
-   All strings in the expression must be explicitly quoted.  This
-   operation typically takes several seconds per thousand atoms
-   altered.
- 
+   All strings must be explicitly quoted.  This operation typically
+   takes several seconds per thousand atoms altered.
+
+   WARNING: You should always issue a "sort" command on an object
+   after modifying any property which might affect canonical atom
+   ordering (names, chains, etc.).  Failure to do so will confound
+   subsequent "create" and "byres" operations.
+   
 USAGE
  
    alter (selection),expression
@@ -1447,10 +1455,11 @@ EXAMPLES
  
    alter (chain A),chain='B'
    alter (all),resi=str(int(resi)+100)
-
+   sort
+   
 SEE ALSO
 
-   alter_state, iterate, iterate_state
+   alter_state, iterate, iterate_state, sort
    '''
    try:
       lock()
@@ -3438,11 +3447,11 @@ DESCRIPTION
  
 USAGE
  
-   save file [,(selection) [,state [,type]] ]
+   save file [,(selection) [,state [,format]] ]
  
 PYMOL API
   
-   cmd.save(file, selection, state, type)
+   cmd.save(file, selection, state, format)
 
 SEE ALSO
 
@@ -3897,7 +3906,7 @@ PYMOL API
    lst.extend(list(arg))
    return apply(load_object,lst)
 
-def load_model(*arg):
+def load_model(*arg,**kw):
    '''
 DESCRIPTION
   
@@ -3909,7 +3918,7 @@ PYMOL API
    '''
    lst = [loadable.model]
    lst.extend(list(arg))
-   return apply(load_object,lst)
+   return apply(load_object,lst,kw)
 
 def _load(oname,finfo,state,ftype,finish,discrete):
    # caller must already hold API lock
