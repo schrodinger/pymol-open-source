@@ -55,11 +55,11 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 
   if(ray) {
     float radius;
-    
+
     if(I->dotSize==0.0F) {
-      radius = ray->PixelRadius*I->Width;
+      radius = ray->PixelRadius*I->Width/1.4142F;
     } else {
-        radius = I->dotSize;
+      radius = I->dotSize;
     }
 
 	 while(c--)
@@ -101,29 +101,28 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
           }
         }
       }
-
-    glPointSize(I->Width);
-	 glBegin(GL_POINTS);
-	 while(c--)
-		{
-		  if(!cc) /* load up the current vertex color */
-			 {
-				cc=(int)(*(v++));
-				glColor3fv(v);
-				v+=3;
-			 }
-		  glNormal3fv(v);
-		  v+=3;
-		  glVertex3fv(v);
-		  v+=3;
-		  cc--;
-		}
-	 glEnd();
-    
-    if(use_dlst&&I->R.displayList) {
-      glEndList();
-    }
-    
+      
+      glPointSize(I->Width);
+      glBegin(GL_POINTS);
+      while(c--)
+        {
+          if(!cc) /* load up the current vertex color */
+            {
+              cc=(int)(*(v++));
+              glColor3fv(v);
+              v+=3;
+            }
+          glNormal3fv(v);
+          v+=3;
+          glVertex3fv(v);
+          v+=3;
+          cc--;
+        }
+      glEnd();
+      
+      if(use_dlst&&I->R.displayList) {
+        glEndList();
+      }
     }
   }
 }
