@@ -1025,6 +1025,16 @@ void SeekerUpdate(void)
         l1->stop = lab->len;
         st_len = l1->stop - l1->start;
 
+        if(label_mode==2) {
+          /* blank equivalent text for sequence row below the fixed label */
+          VLACheck(row->col,CSeqCol,nCol);
+          r1 = row->col + nCol;
+          r1->start = row->len;
+          UtilFillVLA(&row->txt,&row->len,' ',st_len);
+          r1->stop = row->len;
+          r1->spacer = true;
+          nCol++;
+        }
       } 
       if(label_mode<2) { /* no label rows, so put object name into left-hand column */
 
@@ -1040,18 +1050,8 @@ void SeekerUpdate(void)
         row->column_label_flag = true;
         row->title_width = row->len;
         nCol++;
-      }
-      if(label_mode>0) {
-        /* blank equivalent text for sequence row below the fixed label */
-        VLACheck(row->col,CSeqCol,nCol);
-        r1 = row->col + nCol;
-        r1->start = row->len;
-        UtilFillVLA(&row->txt,&row->len,' ',1);
-        r1->stop = row->len;
-        r1->spacer = true;
-        nCol++;
-      }
 
+      }
       if(lab) {
         
         int st_len;
@@ -1060,11 +1060,16 @@ void SeekerUpdate(void)
         VLACheck(lab->col,CSeqCol,nCol);
         l1 = lab->col + nCol;
         l1->start = lab->len;
-        UtilConcatVLA(&lab->txt,&lab->len,"/");
-        UtilConcatVLA(&lab->txt,&lab->len,ai->segi);
-        UtilConcatVLA(&lab->txt,&lab->len,"/");
-        UtilConcatVLA(&lab->txt,&lab->len,ai->chain);
-        UtilConcatVLA(&lab->txt,&lab->len,"/");
+        if(obj->NAtom) {
+          UtilConcatVLA(&lab->txt,&lab->len,"/");
+          UtilConcatVLA(&lab->txt,&lab->len,ai->segi);
+          UtilConcatVLA(&lab->txt,&lab->len,"/");
+          UtilConcatVLA(&lab->txt,&lab->len,ai->chain);
+          UtilConcatVLA(&lab->txt,&lab->len,"/");
+        } else {
+          UtilConcatVLA(&lab->txt,&lab->len,"///");
+        }
+
         l1->stop = lab->len;
         st_len = l1->stop - l1->start;
 
@@ -1104,7 +1109,7 @@ void SeekerUpdate(void)
           UtilConcatVLA(&lab->txt,&lab->len,"/");
           l1->stop = lab->len;
           st_len = l1->stop - l1->start;
-
+          
           /* blank equivalent text for sequence row */
           VLACheck(row->col,CSeqCol,nCol);
           r1 = row->col + nCol;
