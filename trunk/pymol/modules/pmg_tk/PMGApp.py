@@ -928,7 +928,7 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ h_fill"))
 
       self.menuBar.addmenuitem('Build', 'command', 'Invert',
-                               label='Invert (pk2)-(pk1)-(pk3) [Ctrl-X]',
+                               label='Invert (pk2)-(pk1)-(pk3) [Ctrl-E]',
                                command = lambda: cmd.do("_ invert"))
 
       self.menuBar.addmenuitem('Build', 'command', 'Form Bond',
@@ -954,7 +954,7 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ alter pk1,formal_charge=-1.0"))
 
       self.menuBar.addmenuitem('Build', 'command', 'Make Neutral',
-                               label='Make (pk1) Neutral',
+                               label='Make (pk1) Neutral [Ctrl-U]',
                                command = lambda: cmd.do("_ alter pk1,formal_charge=-0.0"))
 
 
