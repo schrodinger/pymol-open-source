@@ -2545,6 +2545,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
               break;
             case 3:
               switch(rec->type) {
+              case cExecAll:
+                MenuActivate(x,y,"mol_labels","(all)");
+                break;
               case cExecSelection:
                 MenuActivate(x,y,"mol_labels",rec->name);
                 break;

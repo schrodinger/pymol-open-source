@@ -23,7 +23,7 @@ class Distance(Wizard):
 
       # mode selection subsystem
       
-      self.mode = 'polar'
+      self.mode = 'pairs'
       self.modes = [
          'polar',
          'heavy',

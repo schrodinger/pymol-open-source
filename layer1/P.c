@@ -381,6 +381,9 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
     ENDFD;
 
   PBlock();
+  PRINTFD(FB_Threads)
+    " PLockAPIAsGlut-DEBUG: acquiring lock as thread 0x%x\n",PyThread_get_thread_ident()
+    ENDFD;
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
   while(P_glut_thread_keep_out) {
     /* IMPORTANT: keeps the glut thread out of an API operation... */
@@ -392,6 +395,10 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 #ifndef WIN32
     { 
       struct timeval tv;
+      PRINTFD(FB_Threads)
+        " PLockAPIAsGlut-DEBUG: glut_thread_keep_out 0x%x\n",PyThread_get_thread_ident()
+        ENDFD;
+
       PUnblock();
       tv.tv_sec=0;
       tv.tv_usec=50000; 
@@ -401,6 +408,8 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 #else
     PXDecRef(PyObject_CallFunction(P_sleep,"f",0.050));
 #endif
+
+
     PXDecRef(PyObject_CallFunction(P_lock,NULL)); 
   }
   PUnblock(); /* API is now locked, so we can free up Python...*/

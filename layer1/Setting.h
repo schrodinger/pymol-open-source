@@ -185,6 +185,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_shininess            86
 #define cSetting_sphere_quality       87
 #define cSetting_fog                  88
+#define cSetting_isomesh_auto_state   89
 
 #define cSetting_INIT                 90
 

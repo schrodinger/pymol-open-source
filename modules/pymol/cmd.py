@@ -40,6 +40,7 @@ import os
 import imp
 import parsing
 import sys
+import copy
 
 from shortcut import Shortcut
 
@@ -146,7 +147,7 @@ editing capability.  However, you will need to set up Tinker if you
 want to to "clean-up" your structures after editing.  Furthermore, if
 you are going to modify molecules other than proteins, then you will
 also need a way of assigning atom types (Amber) on the fly.
-Unfortunately, my solution to that problem hasn't been published yet.
+Unfortunately, my solution to that problem has not been published yet.
 
 To edit a conformation or structure, you first need to enter editing
 mode (see Mouse Menu).  Then you can pick an atom (CTRL-Middle click)
@@ -855,27 +856,27 @@ def config_mouse(quiet=0): # INTERNAL
    finally:
       unlock()
 
-def dist(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,mode=None):
+def distance(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,mode=None):
    '''
 DESCRIPTION
  
-"dist" creates a new distance object between two
+"distance" creates a new distance object between two
 selections.  It will display all distances within a cutoff.
  
 USAGE
  
-   dist 
-   dist (selection1), (selection2)
-   dist name = (selection1), (selection1) [,cutoff [,mode] ]
+   distance 
+   distance (selection1), (selection2)
+   distance name = (selection1), (selection1) [,cutoff [,mode] ]
  
    name = name of distance object 
    selection1,selection2 = atom selections
    cutoff = maximum distance to display
    mode = 0 (default)
- 
+
 PYMOL API
  
-   cmd.dist( string name, string selection1, string selection2,
+   cmd.distance( string name, string selection1, string selection2,
           string cutoff, string mode )
    returns the average distance between all atoms/frames
  
@@ -930,6 +931,11 @@ NOTES
    finally:
       unlock()
    return r
+
+# LEGACY support for cmd.dist
+def dist(*arg,**kw):
+   apply(distance,arg,kw)
+#
 
 def get_view(output=1):
    '''
@@ -1154,17 +1160,14 @@ TO DOCUMENT
    finally:
       unlock()
 
-def help(*arg):
+def help(command = "commands"):
    '''
 USAGE
  
    help <command>
    '''
    set("text","1",quiet=1)
-   if len(arg):
-      cmd = arg[0]
-   else:
-      cmd = 'commands'
+   cmd = command
    if kwhash.has_key(cmd):
       cc = kwhash[cmd]
       if cc:
@@ -1287,7 +1290,7 @@ USAGE
 
    copy target, source
 
-   copy target = source (DEPRECATED)
+   copy target = source         # (DEPRECATED)
  
 PYMOL API
  
@@ -1300,7 +1303,7 @@ PYMOL API
       unlock()
    return r
 
-def label(*arg):
+def label(selection="(all)",expression=""):
    '''
 DESCRIPTION
  
@@ -1317,7 +1320,6 @@ operation typically takes several seconds per thousand atoms altered.
 USAGE
 
    label (selection),expression
-   label expression
    
 EXAMPLES
   
@@ -1325,18 +1327,13 @@ EXAMPLES
    label (n;ca),"%s-%s" % (resn,resi)
    label (resi 200),"%1.3f" % partial_charge
    '''
-   if len(arg)<2:
-      sele = "(all)"
-      expr = arg[0]
-   else:
-      sele = arg[0]
-      expr = arg[1]
+   r = 1
    try:
       lock()
-      if len(expr)==0:
-         r= _cmd.label(str(sele),'')
+      if len(str(expression))==0:
+         r= _cmd.label(str(selection),'')
       else:
-         r = _cmd.label(str(sele),'label='+str(expr))
+         r = _cmd.label(str(selection),'label='+str(expression))
    finally:
       unlock()   
    return r
@@ -1374,7 +1371,7 @@ EXAMPLES
    return r
 
 
-def iterate(sele,expr):
+def iterate(selection,expression):
    '''
 DESCRIPTION
  
@@ -1411,12 +1408,12 @@ EXAMPLES
    '''
    try:
       lock()
-      r = _cmd.alter(str(sele),str(expr),1)
+      r = _cmd.alter(str(selection),str(expression),1)
    finally:
       unlock()   
    return r
 
-def alter_state(state,sele,expr):
+def alter_state(state,selection,expression):
    '''
 DESCRIPTION
  
@@ -1436,7 +1433,7 @@ EXAMPLES
    '''
    try:
       lock()
-      r = _cmd.alter_state(int(state)-1,str(sele),str(expr),0)
+      r = _cmd.alter_state(int(state)-1,str(selection),str(expression),0)
    finally:
       unlock()   
    return r
@@ -1487,7 +1484,7 @@ EXAMPLES
          if _feedback(fb_module.scene,fb_mask.actions):
             print " view: view stored as '%s'."%key
 
-def iterate_state(state,sele,expr):
+def iterate_state(state,selection,expression):
    '''
 DESCRIPTION
  
@@ -1504,7 +1501,7 @@ EXAMPLES
    '''
    try:
       lock()
-      r = _cmd.alter_state(int(state)-1,str(sele),str(expr),1)
+      r = _cmd.alter_state(int(state)-1,str(selection),str(expression),1)
    finally:
       unlock()   
    return r
@@ -1550,43 +1547,17 @@ PYMOL API
          unlock();
    return r
    
-def overlap(*arg):
+def overlap(selection1,selection2,state1=1,state2=1,adjust=0.0):
    '''
 UNSUPPORTED FEATURE - LIKELY TO CHANGE
 (for maximum efficiency, use smaller molecule as selection 1)
    '''
-   state = [ 1,1 ]
-   adjust = 0.0
-   if len(arg)>3:
-      adjust = float(arg[3])
-   if len(arg)==3:
-      state[0]=int(arg[2][0])
-      if state[0]<1: state[0]=1;
-      state[1]=int(arg[2][1])
-      if state[1]<1: state[1]=1
+   r = 1
    try:
       lock()
-      r = _cmd.overlap(str(arg[0]),str(arg[1]),state[0]-1,state[1]-1,float(adjust))
-   finally:
-      unlock()
-   return r
-
-def distance(*arg): # OBSOLETE
-   la = len(arg)
-   if la==0:
-      a="lb"
-      b="rb"
-   elif la==1:
-      a=arg[0]
-      b="lb"
-   elif la==2:
-      a=arg[0]
-      b=arg[1]
-   if a[0]!='(': a="(%"+a+")"
-   if b[0]!='(': b="(%"+b+")"
-   try:
-      lock()   
-      r = _cmd.distance(str(a),str(b))
+      r = _cmd.overlap(str(selection1),str(selection2),
+                       int(state1)-1,int(state2),
+                       float(adjust))
    finally:
       unlock()
    return r
@@ -1611,24 +1582,29 @@ def lock_attempt(): # INTERNAL
       pymol.lock_state = None;
 
 def unlock(): # INTERNAL
-   thred = thread.get_ident()
-   if (thred == pymol.glutThread):
+   if (thread.get_ident() == pymol.glutThread):
       lock_api.release()
       _cmd.flush_now()
    else:
       lock_api.release()
+      c = 0
       while _cmd.wait_queue(): # wait till our instruction (if any)
          e = threading.Event() # has been executed before continuing
          e.wait(0.05)
          del e
+         c = c + 1
+         if c == 20:
+            if _feedback(fb_module.cmd,fb_mask.debugging):
+               f.write(fb_debug,"Debug: possible recursive lock...\n")
+            break # avoid permanent deadlock
 
-def export_dots(a,b):  
+def export_dots(object,state):  
    '''
 UNSUPPORTED - WILL BE REMOVED
    '''
    try:
       lock()
-      r = _cmd.export_dots(a,int(b))
+      r = _cmd.export_dots(object,int(state)-1)
    finally:
       unlock()
    return r
@@ -1645,6 +1621,7 @@ UNDOCUMENTED
    return r
 
 def do(commands):
+   # WARNING: don't call this routine if you already have the API lock
    '''
 DESCRIPTION
  
@@ -1660,7 +1637,7 @@ USAGE (PYTHON)
    from pymol import cmd
    cmd.do("load file.pdb")
    '''
-   lst = string.split(commands,"\n")
+   lst = string.split(commands,"\n")   
    try:
       lock()
       for a in lst:
@@ -1726,7 +1703,7 @@ TO DOCUMENT
    r = _cmd.system(str(command))
    return r
 
-def intra_fit(*arg):
+def intra_fit(selection,state=0):
    '''
 DESCRIPTION
   
@@ -1751,18 +1728,15 @@ PYTHON EXAMPLE
    from pymol import cmd
    rms = cmd.intra_fit("(name ca)",1)
    '''
-   if len(arg)<2:
-      b=-1
-   else:
-      b=int(arg[1])-1
+   r = -1.0
    try:
       lock()
-      r = _cmd.intrafit(str(arg[0]),int(b),2)
+      r = _cmd.intrafit(str(selection),int(state)-1,2)
    finally:
       unlock()
    return r
 
-def intra_rms(*arg):
+def intra_rms(selection,state=0):
    '''
 DESCRIPTION
   
@@ -1780,18 +1754,15 @@ PYTHON EXAMPLE
    from pymol import cmd
    rms = cmd.intra_rms("(name ca)",1)
    '''
-   if len(arg)<2:
-      b=-1
-   else:
-      b=int(arg[1])-1
+   r = -1.0
    try:
       lock()
-      r = _cmd.intrafit(str(arg[0]),int(b),1)
+      r = _cmd.intrafit(str(selection),int(state)-1,1)
    finally:
       unlock()
    return r
 
-def intra_rms_cur(*arg):
+def intra_rms_cur(selection,state=0):
    '''
 DESCRIPTION
   
@@ -1809,13 +1780,10 @@ PYTHON EXAMPLE
    from pymol import cmd
    rms = cmd.intra_rms_cur("(name ca)",1)
    '''
-   if len(arg)<2:
-      b=-1
-   else:
-      b=int(arg[1])-1
+   r = -1.0
    try:
       lock()
-      r = _cmd.intrafit(str(arg[0]),int(b),0)
+      r = _cmd.intrafit(str(selection),int(state)-1,0)
    finally:
       unlock()
    return r
@@ -1987,7 +1955,7 @@ EXAMPLES
       unlock()
    return r
 
-def remove_picked(*arg):
+def remove_picked(hydrogens=1):
    '''
 DESCRIPTION
   
@@ -1996,11 +1964,11 @@ DESCRIPTION
       
 USAGE
  
-   remove_picked [,hydrogen-flag]
+   remove_picked [hydrogens]
  
 PYMOL API
   
-   cmd.remove_picked([integer hydrogen-flag])
+   cmd.remove_picked(integer hydrogens=1)
 
 NOTES
 
@@ -2012,13 +1980,10 @@ NOTES
    
     
 '''
-   hydro=1
-   if len(arg):
-      hydro=int(arg[0])
    r = 1
    try:
       lock()   
-      r = _cmd.remove_picked(int(hydro))
+      r = _cmd.remove_picked(int(hydrogens))
    finally:
       unlock()
    return r
@@ -2088,7 +2053,7 @@ NOTES
       unlock()
    return r
 
-def fuse(*arg):
+def fuse(selection1="(lb)",selection2="(rb)"):
    '''
 DESCRIPTION
   
@@ -2099,11 +2064,11 @@ DESCRIPTION
       
 USAGE
  
-   fuse (selection), (selection)
+   fuse (selection1), (selection2)
  
 PYMOL API
   
-   cmd.fuse( string selection, string selection )
+   cmd.fuse( string selection1="(lb)", string selection2="(lb)" )
 
 NOTES
 
@@ -2113,22 +2078,11 @@ NOTES
    case a bond is formed between the two atoms.
 
 '''
-   la = len(arg)
-   if la==1:
-      print "Error: invalid arguments for fuse command."
-      raise QuietException
-   else:
-      if la>1:
-         sel1 = arg[0]
-         sel2 = arg[1]
-      else:
-         sel1 = "(lb)"
-         sel2 = "(rb)"
-      try:
-         lock()
-         r = _cmd.fuse(str(sel1),str(sel2))
-      finally:
-         unlock()
+   try:
+      lock()
+      r = _cmd.fuse(str(selection1),str(selection2))
+   finally:
+      unlock()
    return r
 
 def unpick(*arg):
@@ -2226,7 +2180,7 @@ NOTES
       unlock()
    return r
 
-def h_add(*arg):
+def h_add(selection="(all)"):
    '''
 DESCRIPTION
   
@@ -2239,17 +2193,13 @@ USAGE
  
 PYMOL API
   
-   cmd.h_add( string selection )
+   cmd.h_add( string selection="(all)" )
 
 '''
    r = 1
-   if len(arg):
-      sele = arg[0]
-   else:
-      sele = "(all)"
    try:
       lock()   
-      r = _cmd.h_add(str(sele))
+      r = _cmd.h_add(str(selection))
    finally:
       unlock()
    return r
@@ -2565,7 +2515,7 @@ USAGE
  
    set name, value [,object-or-selection [,state ]]
 
-   set name = value (DEPRECATED)
+   set name = value      # (DEPRECATED)
 
    WARNING: object and state specific settings are not yet fully
      implemented -- look for them in version 0.51.
@@ -2767,7 +2717,7 @@ USAGE
  
 PYMOL API
  
-   cmd.png( string filename )
+   cmd.png( string file )
    '''
    if thread.get_ident() ==pymol.glutThread:
       r = _png(str(filename))
@@ -2843,23 +2793,17 @@ def _special(k,x,y):
    k=int(k)
    if special.has_key(k):
       if special[k][1]:
-         if special[k][2]:
-            apply(special[k][1],special[k][3])
-         else:
-            apply(special[k][1],())
+         apply(special[k][1],special[k][2],special[k][3])
    return None
 
 def _ctrl(k):
    if ctrl.has_key(k):
-      if ctrl[k][0]:
-         if ctrl[k][1]:
-            apply(ctrl[k][0],ctrl[k][2])
-         else:
-            apply(ctrl[k][0],())
+      if ctrl[k][0]!=None:
+         apply(ctrl[k][0],ctrl[k][1],ctrl[k][2])
    return None
 
 
-def set_key(*arg):  
+def set_key(key,function,arg=(),kw={}):  
    '''
 DESCRIPTION
   
@@ -2882,22 +2826,17 @@ PYTHON EXAMPLE
    // would turn object1 blue when the F1 key is pressed and
    // would turn object2 blue when the F2 key is pressed.
    '''
-   key=arg[0]
-   cmd=arg[1]
-   if len(arg)>2:
-      cmd_arg=arg[2]
-   else:
-      cmd_arg=None 
+   r = 0
    for a in special.keys():
       if special[a][0]==key:
-         special[a][1]=cmd
-         if cmd_arg:
-            special[a][2]=1
-            special[a][3]=cmd_arg
-         else:
-            special[a][2]=0
-            special[a][3]=None
-
+         special[a][1]=function
+         special[a][2]=arg
+         special[a][3]=kw
+         r = 1
+   if not r:
+      print "Error: special '%s' key not found."%key
+   return r
+   
 def mstop():
    '''
 DESCRIPTION
@@ -2977,13 +2916,13 @@ PYMOL API
          unlock()
    return r
 
-def mdo(a,b):
+def mdo(frame,command):
    '''
 DESCRIPTION
   
    "mdo" sets up a command to be executed upon entry into the
    specified frame of the movie.  These commands are usually created
-   by a PyMOL utility program (such as pmu.mrock).  Command can
+   by a PyMOL utility program (such as util.mrock).  Command can
    actually contain several commands separated by semicolons ';'
  
 USAGE
@@ -3011,7 +2950,7 @@ NOTES
    '''
    try:
       lock()   
-      r = _cmd.mdo(int(a)-1,str(b))
+      r = _cmd.mdo(int(frame)-1,str(command))
    finally:
       unlock()
    return r
@@ -3170,7 +3109,7 @@ DEBUGGING
       unlock()
    return r
 
-def save(*arg):
+def save(filename,selection='(all)',state=0,format=''):
    '''
 DESCRIPTION
   
@@ -3179,70 +3118,55 @@ DESCRIPTION
  
 USAGE
  
-   save filename [,(selection) [,state [,format]] ]
+   save file [,(selection) [,state [,type]] ]
  
 PYMOL API
   
-   cmd.save(filename, selection, state, format)
+   cmd.save(file, selection, state, type)
    '''
    r = 1
-   fname = 'save.pdb'
-   sele = '( all )'
-   state = -1
-   format = 'pdb'
-   if len(arg)==1:
-      fname = arg[0]
-   elif len(arg)==2:
-      fname = arg[0]
-      sele = arg[1]
-   elif len(arg)==3:
-      fname = arg[0]
-      sele = arg[1]
-      state = arg[2]
-   elif len(arg)==4:
-      fname = arg[0]
-      sele = arg[1]
-      state = arg[2]
-      format = arg[3]
-   if (len(arg)>0) and (len(arg)<4):
-      if re.search("\.pdb$|\.ent$",fname):
+   if format=='':
+      format = 'pdb'
+      if re.search("\.pdb$|\.ent$",filename):
          format = 'pdb'
-      elif re.search("\.mol$",fname):
+      elif re.search("\.mol$",filename):
          format = 'mol'
-      elif re.search("\.pkl$",fname):
+      elif re.search("\.pkl$",filename):
          format = 'pkl'
-      elif re.search("\.pkl$",fname):
+      elif re.search("\.pkl$",filename):
          format = 'pkla'
-      elif re.search("\.mmd$",fname):
+      elif re.search("\.mmd$",filename):
          format = 'mmod'
-      elif re.search("\.mmod$",fname):
+      elif re.search("\.mmod$",filename):
          format = 'mmod'
+   else:
+      format = str(format)
+   filename = os.path.expanduser(filename)
+   filename = os.path.expandvars(filename)
    if format=='pdb':
-      fname = os.path.expanduser(fname)
-      fname = os.path.expandvars(fname)
-      f=open(fname,"w")
+      f=open(filename,"w")
       if f:
          try:
             lock()
-            st = _cmd.get_pdb(str(sele),int(state)-1)
+            st = _cmd.get_pdb(str(selection),int(state)-1)
          finally:
             unlock()
             f.write(st)
             f.close()
          r = None
-         print " Save: wrote \""+fname+"\"."
+         print " Save: wrote \""+filename+"\"."
    elif format=='pkl': # default binary
-      io.pkl.toFile(get_model(sele),fname)
-      print " Save: wrote \""+fname+"\"."
+      io.pkl.toFile(get_model(selection),filename)
+      print " Save: wrote \""+filename+"\"."
    elif format=='pkla': # ascii override
-      io.pkl.toFile(get_model(sele),fname,bin=0)
-      print " Save: wrote \""+fname+"\"."
+      io.pkl.toFile(get_model(selection),filename,bin=0)
+      print " Save: wrote \""+filename+"\"."
    elif format=='mmod': # macromodel
-      io.mmd.toFile(get_model(sele),fname)
-      print " Save: wrote \""+fname+"\"."
+      io.mmd.toFile(get_model(selection),filename)
+      print " Save: wrote \""+filename+"\"."
    elif format=='mol': 
-      io.mol.toFile(get_model(sele),fname)
-      print " Save: wrote \""+fname+"\"."
+      io.mol.toFile(get_model(selection),filename)
+      print " Save: wrote \""+filename+"\"."
    return r
 
 def get_model(*arg):
@@ -3472,7 +3396,8 @@ USAGE
 
    create name, (selection) [,source_state [,target_state ] ]
    
-   DEPRECATED: create name = (selection) [,source_state [,target_state ] ]
+   create name = (selection) [,source_state [,target_state ] ]
+     # (DEPRECATED)
 
    name = object to create (or modify)
    selection = atoms to include in the new object
@@ -3591,7 +3516,7 @@ TO DOCUMENT
 
 def load_map(*arg):
    '''
-TO DOCUMENT
+Temporary routine for the Phenix project
 '''
    
    lst = [loadable.map]
@@ -3632,6 +3557,8 @@ PYMOL API
    return apply(load_object,lst)
 
 def _load(oname,finfo,state,ftype,finish,discrete):
+   # caller must already hold API lock
+   # NOTE: state index assumes 1-based state
    r = 1
    if ftype not in (loadable.model,loadable.brick):
       if ftype == loadable.r3d:
@@ -3663,7 +3590,7 @@ def _load(oname,finfo,state,ftype,finish,discrete):
          print 'Error: can not load file "%s"' % finfo
    return r
 
-def load(*arg):
+def load(filename,object='',state=0,format='',finish=1,discrete=0):
    '''
 DESCRIPTION
   
@@ -3681,75 +3608,83 @@ DESCRIPTION
  
 USAGE
  
-   load filename [,object [,state [,type [,finish [,discrete ]]]]]
+   load filename [,object [,state [,format [,finish [,discrete ]]]]]
  
 PYMOL API
   
-   cmd.load( filename [,object [,state [,type [,finish [,discrete ]]]]] 
+   cmd.load( filename [,object [,state [,format [,finish [,discrete ]]]]] 
    '''
    r = 1
    try:
-      lock()   
+      lock()
+      type = format
       ftype = 0
-      state = -1
-      finish = 1
-      discrete = 0
-      if len(arg)>4:
-         finish=int(arg[4])
-      if len(arg)>5:
-         discrete=int(arg[5])
-      fname = arg[0];
+      state = int(state)
+      finish = int(finish)
+      discrete = int(discrete)
+      fname = filename
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)
-      if re.search("\.pdb$|\.ent$",arg[0],re.I):
-         ftype = loadable.pdb
-      elif re.search("\.mol$",arg[0],re.I):
-         ftype = loadable.mol
-      elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",arg[0],re.I):
-         ftype = loadable.mmod
-      elif re.search("\.xplor$",arg[0],re.I):
-         ftype = loadable.xplor
-      elif re.search("\.pkl$",arg[0],re.I):
-         ftype = loadable.model
-      elif re.search("\.r3d$",arg[0],re.I):
-         ftype = loadable.r3d
-      elif re.search("\.xyz$",arg[0],re.I):
-         ftype = loadable.xyz
-      elif re.search("\.xyz_[0-9]*$",arg[0],re.I):
-         ftype = loadable.xyz
-      elif re.search("\.sdf$",arg[0],re.I):
-         oname = re.sub(r".*\/|.*\\","",arg[0])
-         oname = re.sub("\.[sS][dD][fF]$","",oname)
+
+      if not len(str(type)):
+         # determine file type if possible
+         if re.search("\.pdb$|\.ent$",filename,re.I):
+            ftype = loadable.pdb
+         elif re.search("\.mol$",filename,re.I):
+            ftype = loadable.mol
+         elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",filename,re.I):
+            ftype = loadable.mmod
+         elif re.search("\.xplor$",filename,re.I):
+            ftype = loadable.xplor
+         elif re.search("\.pkl$",filename,re.I):
+            ftype = loadable.model
+         elif re.search("\.r3d$",filename,re.I):
+            ftype = loadable.r3d
+         elif re.search("\.xyz$",filename,re.I):
+            ftype = loadable.xyz
+         elif re.search("\.xyz_[0-9]*$",filename,re.I):
+            ftype = loadable.xyz
+         elif re.search("\.sdf$",filename,re.I):
+            ftype = loadable.sdf
+      elif is_string(type):
+         try:
+            ftype = int(type)
+         except:
+            type = loadable_sc.auto_err(type,'file type')
+            if hasattr(loadable,type):
+               ftype = getattr(loadable,type)
+            else:
+               print "Error: unknown type '%s'",type
+               raise QuietException
+      else:
+         ftype = int(type)
+         
+# get object name
+      if len(str(object))==0:
+         oname = re.sub(r".*\/|.*\\","",filename) # strip path
+         oname = file_ext_re.sub("",oname) # strip extension
+         if not len(oname): # safety
+            oname = 'obj01'
+      else:
+         oname = string.strip(object)
+
+# special handling of sdf files
+      if ftype == loadable.sdf:
          ftype = loadable.molstr
-         sdf = SDF(arg[0])
+         sdf = SDF(filename)
          while 1:
             rec = sdf.read()
             if not rec: break
             r = _load(oname,string.join(rec.get('MOL'),''),state,ftype,0,1)
          del sdf
          _cmd.finish_object(str(oname))
-         do("zoom (%s)"%oname)
+         _cmd.do("zoom (%s)"%oname) 
          ftype = -1
+
+# standard file handling
+
       if ftype>=0:
-         ok = 1
-         if len(arg)<1:
-            ok = 0
-         if len(arg)==1:
-            oname = re.sub(r".*\/|.*\\","",arg[0])
-            oname = file_ext_re.sub("",oname)
-         else:
-            oname = string.strip(arg[1])
-         if len(arg)>2:
-            state = int(arg[2])
-         if len(arg)>3:
-            if hasattr(loadable,str(arg[3])):
-               ftype = getattr(loadable,str(arg[3]))
-            else:
-               ftype = int(arg[3])
-         if ok:
-            r = _load(oname,fname,state,ftype,finish,discrete)
-         else:
-            print "Error: invalid arguments for dist command."
+         r = _load(oname,fname,state,ftype,finish,discrete)
    finally:
       unlock()
    return r
@@ -3780,7 +3715,7 @@ NOTES
    r = 1
    try:
       lock()
-      r = _cmd.load(str(name),str(molstr),int(state),
+      r = _cmd.load(str(name),str(molstr),int(state)-1,
                     loadable.molstr,int(finish),int(discrete))
    finally:
       unlock()
@@ -3853,7 +3788,7 @@ NOTES
       unlock()
    return r
    
-def select(*arg):
+def select(name,selection="",quiet=0):
    '''
 DESCRIPTION
   
@@ -3862,16 +3797,18 @@ DESCRIPTION
 USAGE
  
    select (selection)
-   select selection-name = (selection)
+   select name, (selection)
+   select name = (selection)            # (DEPRECATED)
  
 PYMOL API
   
-   cmd.select(string selection-name, string selection)
+   cmd.select(string name, string selection)
  
 EXAMPLES 
- 
-   select near = (ll expand 8)
-   select bb = (name ca,n,c,o )
+
+   select near , (ll expand 8)
+   select near , (ll expand 8)
+   select bb, (name ca,n,c,o )
 
 NOTES
 
@@ -3879,18 +3816,15 @@ NOTES
    '''
    try:
       quiet=0
-      lock()   
-      if len(arg)==1:
+      lock()
+      if selection=="":
          sel_cnt = _cmd.get("sel_counter") + 1.0
          _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
-         sel_name = "sel%02.0f" % sel_cnt
-         sel = arg[0]
+         selection = name
+         name = "sel%02.0f" % sel_cnt
       else:
-         sel_name = arg[0]
-         sel = arg[1]
-      if len(arg)==3:
-         quiet=int(arg[2])
-      r = _cmd.select(str(sel_name),str(sel),int(quiet))
+         name = name
+      r = _cmd.select(str(name),str(selection),int(quiet))
    finally:
       unlock()
    return r
@@ -3947,7 +3881,7 @@ EXAMPLES
       unlock()
    return r
 
-def flag(*arg):
+def flag(number,selection):
    '''
 DESCRIPTION
   
@@ -3958,57 +3892,61 @@ DESCRIPTION
    
 USAGE
 
-   flag flag_number = selection 
-    
+   flag number, selection
+   
+   flag number = selection     # (DEPRECATED)
+
 PYMOL API
   
-   cmd.flag( int flag, string selection )
+   cmd.flag( int number, string selection )
  
 EXAMPLES  
  
-   flag 0 = (name ca)
-   flag 1 = (resi 45 x; 6)
+   flag 0, (name ca)
+   flag 1, (resi 45 x; 6)
  
    '''
    try:
       lock()   
-      if len(arg)==2:
-         r = _cmd.flag(int(arg[0]),str(arg[1]))
+      r = _cmd.flag(int(number),str(selection))
    finally:
       unlock()
    return r
 
-def set_color(nam,col):
+def set_color(name,rgb):
    '''
 DESCRIPTION
   
    "set_color" defines a new color with color indices (0.0-1.0)
    
 USAGE
- 
-   set_color color-name = [ red-float, green-float, blue-float ]
- 
+
+   set_color name, [ red-float, green-float, blue-float ]
+   
+   set_color name = [ red-float, green-float, blue-float ]
+     # (DEPRECATED)
+     
 PYMOL API
   
-   cmd.set_color( string color, float-list color-components )
+   cmd.set_color( string name, float-list rgb )
  
 EXAMPLES 
  
    set_color red = [ 1.0, 0.0, 0.0 ]
    '''
    r = 1
-   if is_string(col):
-      col = eval(col)
-   if not (isinstance(col,types.ListType) or isinstance(col,types.TupleType)):
+   if is_string(rgb):
+      rgb = eval(rgb)
+   if not (isinstance(rgb,types.ListType) or isinstance(rgb,types.TupleType)):
       print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
-   elif len(col)!=3:
+   elif len(rgb)!=3:
       print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
    else:
       try:
          lock()
 
-         if len(col)==3:
-            r = _cmd.colordef(str(nam),float(col[0]),float(col[1]),float(col[2]))
+         if len(rgb)==3:
+            r = _cmd.colordef(str(name),float(rgb[0]),float(rgb[1]),float(rgb[2]))
          else:
             print "Error: invalid color."
       finally:
@@ -4063,7 +4001,7 @@ PYMOL API
    finally:
       unlock()
       
-def mpng(a):
+def mpng(prefix):
    '''
 DESCRIPTION
   
@@ -4084,9 +4022,9 @@ PYMOL API
    cmd.mpng( string prefix )
    '''
    if thread.get_ident() ==pymol.glutThread:
-      r = _mpng(a)
+      r = _mpng(prefix)
    else:
-      r = _cmd.do("cmd._mpng('"+a+"')")
+      r = _cmd.do("cmd._mpng('"+prefix+"')")
    return r
 
 def _mpng(*arg):
@@ -4102,7 +4040,7 @@ def _mpng(*arg):
       unlock()
    return r
 
-def show(*arg):
+def show(representation="",selection=""):
    '''
 DESCRIPTION
   
@@ -4119,10 +4057,11 @@ USAGE
    show
    show reprentation [,object]
    show reprentation [,(selection)]
- 
+   show (selection)
+   
 PYMOL API
  
-   cmd.show( string representation, string object-or-selection )
+   cmd.show( string representation="", string selection="" )
  
 EXAMPLES
  
@@ -4130,30 +4069,30 @@ EXAMPLES
    show ribbon
  
 NOTES
- 
+
+   "selection" can be an object name
    "show" alone will turn on lines for all bonds.
    '''
    r=1
    try:
       lock()
-      l = len(arg)
-      if not l:
+      if (representation=="") and (selection==""):
          r = _cmd.showhide("(all)",0,1); # show lines by default       
-      elif l==2:
-         rep = arg[0]
+      elif (representation!="") and (selection!=""):
+         rep = representation
          if rephash.has_key(rep):
             rep = rephash[rep]
          if repres.has_key(rep):      
             repn = repres[rep];
-            r = _cmd.showhide(str(arg[1]),int(repn),1);
+            r = _cmd.showhide(str(selection),int(repn),1);
          else:
             print "Error: unrecognized or ambiguous representation"
-      elif arg[0]=='all':
+      elif representation=='all':
          r = _cmd.showhide("(all)",0,1); # show lines by default 
-      elif arg[0][0]=='(':
-         r = _cmd.showhide(str(arg[0]),0,1);
-      else:
-         rep = arg[0]
+      elif representation[0:1]=='(':
+         r = _cmd.showhide(str(representation),0,1);
+      else: # selection==""
+         rep = representation
          if rephash.has_key(rep):
             rep = rephash[rep]
          if repres.has_key(rep):      
@@ -4165,7 +4104,7 @@ NOTES
       unlock()
    return r
 
-def hide(*arg):
+def hide(representation="",selection=""):
    '''
 DESCRIPTION
   
@@ -4181,10 +4120,11 @@ USAGE
  
    hide reprentation [,object]
    hide reprentation [,(selection)]
- 
+   hide (selection)
+   
 PYMOL API
  
-   cmd.hide( string representation, string object-or-selection )
+   cmd.hide( string representation="", string selection="")
  
 EXAMPLES
  
@@ -4192,26 +4132,25 @@ EXAMPLES
    hide ribbon
    '''
    r = 1
-   l = len(arg)
    try:
       lock()
-      if not l:
+      if (representation=="") and (selection==""):
          r = _cmd.showhide("!",0,0);      
-      elif l==2:
-         rep = arg[0]
+      elif (representation!="") and (selection!=""):
+         rep = representation
          if rephash.has_key(rep):
             rep = rephash[rep]
          if repres.has_key(rep):      
             repn = repres[rep];
-            r = _cmd.showhide(str(arg[1]),int(repn),0);
+            r = _cmd.showhide(str(selection),int(repn),0);
          else:
             print "Error: unrecognized or ambiguous representation"
-      elif arg[0]=='all':
+      elif (representation=='all'):
          r = _cmd.showhide("!",0,0);
-      elif arg[0][0]=='(':
-         r = _cmd.showhide(str(arg[0]),-1,0);
-      else:
-         rep = arg[0]
+      elif representation[0:1]=='(': # selection only
+         r = _cmd.showhide(str(representation),-1,0);
+      else: # selection == ""
+         rep = representation
          if rephash.has_key(rep):
             rep = rephash[rep]
          if repres.has_key(rep):
@@ -4395,26 +4334,7 @@ This function relies on code that is not currently part of PyMOL/ChemPy
       realtime.setup("("+selection+")")
 
 def fast_minimize(*arg):
-   '''
-DESCRIPTION
-
-   Runs Tinker's minimize routine in a separate thread without first 
-   executing the setup procedure.  
-
-USAGE
-
-   fast_minimize <object-name>,<max-iterations>,<final-gradient>,<interval>
-
-PYMOL API
-
-   Direct API calls not recommended due to threading issues.
-
-NOTE
-
-   Assumes that the molecular state has already been set up and that no
-   subsequent changes have been made to atom types.
-
-   '''
+# OBSOLETE, TO BE REMOVED
    from chempy.tinker import realtime  
    grad  = 0.01
    iter = 500
@@ -4437,27 +4357,7 @@ NOTE
       t.start()
    
 def minimize(*arg):
-   '''
-DESCRIPTION
-
-   Minimizes the indicated object in a separate thread after running an automated
-   topology and parameter setup routine which generates a custom parameter file
-   for Tinker based on the current text atom types ("text_type" field).
-
-USAGE
-
-   minimize <object-name>,<max-iterations>,<final-gradient>,<interval>
-
-PYMOL API
-
-   Direct API calls not recommended due to threading issues.  Instead, call the 
-   ChemPy Tinker (chempy.tinker) module directly.
-
-NOTES
-
-   Only all-atom Amber 94/99 atom types are currently supported.
-
-   '''
+# OBSOLETE, TO BE REMOVED
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
    from chempy.tinker import realtime  
    grad  = 0.01
@@ -4545,7 +4445,7 @@ EXAMPLES
    for a in lst:
       print a
       
-def mset(seq):
+def mset(specification):
    '''
 DESCRIPTION
   
@@ -4575,7 +4475,7 @@ EXAMPLES
    try:
       lock()
       output=[]
-      input = string.split(seq," ")
+      input = string.split(specification," ")
       last = 0
       for x in input:
          if x[0]>"9" or x[0]<"0":
@@ -4880,130 +4780,129 @@ keyword = {
    #       which make much better use of built-in python features.
    
    'abort'         : [dummy        , 0 , 0 , ',' , parsing.ABORT  ],
-   'alias'         : [alias        , 0 , 0 , ',' , parsing.LITERAL1 ],
+   'alias'         : [alias        , 0 , 0 , ''  , parsing.LITERAL1 ],
    'align'         : [align        , 0 , 0 , ''  , parsing.STRICT ],
-   'alter'         : [alter        , 2 , 2 , ',' , parsing.SIMPLE ],
-   'alter_state'   : [alter_state  , 3 , 3 , ',' , parsing.SIMPLE ],
-   'api'           : [api          , 0 , 0 , ',' , parsing.STRICT ],
-   'backward'      : [backward     , 0 , 0 , ',' , parsing.STRICT ],
-   'bond'          : [bond         , 0 , 3 , ',' , parsing.STRICT ],
-   'button'        : [button       , 3 , 3 , ',' , parsing.STRICT ],
-   'cd'            : [cd           , 1 , 1 , ',' , parsing.STRICT ],  
-   'check'         : [check        , 0 , 2 , ',' , parsing.STRICT ],
-   'clip'          : [clip         , 2 , 2 , ',' , parsing.STRICT ],
-   'cls'           : [cls          , 0 , 0 , ',' , parsing.STRICT ],
-   'color'         : [color        , 1 , 2 , ',' , parsing.STRICT ],
-   'commands'      : [commands     , 0 , 0 , ',' , parsing.STRICT ],
-   'copy'          : [copy         , 2 , 2 , '=' , parsing.LEGACY ],
-   'count_atoms'   : [count_atoms  , 0 , 1 , ',' , parsing.STRICT ],
-   'count_states'  : [count_states , 0 , 1 , ',' , parsing.STRICT ],
-   'cycle_valence' : [cycle_valence, 0 , 0 , ',' , parsing.STRICT ],
-   'create'        : [create       , 2 , 2 , '=' , parsing.LEGACY ],   
-   'delete'        : [delete       , 1 , 1 , ',' , parsing.STRICT ],
-   'deprotect'     : [deprotect    , 0 , 1 , ',' , parsing.STRICT ],
-   'dir'           : [ls           , 0 , 1 , ',' , parsing.STRICT ],  
-   'disable'       : [disable      , 0 , 1 , ',' , parsing.STRICT ],
-   'dist'          : [dist         , 0 , 2 , '=' , parsing.LEGACY ],
-   'distance'      : [distance     , 0 , 2 , '=' , parsing.SIMPLE ],
-   'dump'          : [dump         , 2 , 2 , ',' , parsing.SIMPLE ],
-   'edit'          : [edit         , 1 , 4 , ',' , parsing.STRICT ],
-   'edit_mode'     : [edit_mode    , 0 , 1 , ',' , parsing.STRICT ],
-   'enable'        : [enable       , 0 , 1 , ',' , parsing.STRICT ],
-   'ending'        : [ending       , 0 , 0 , ',' , parsing.STRICT ],
-   'export_dots'   : [export_dots  , 2 , 2 , ',' , parsing.SIMPLE  ],
-   'extend'        : [extend       , 0 , 0 , ',' , parsing.STRICT ],
-   'fast_minimize' : [fast_minimize, 1,  4 , ',' , parsing.SIMPLE  ],
-   'feedback'      : [feedback     , 0,  0 , ',' , parsing.STRICT ],
-   'fit'           : [fit          , 2 , 2 , ',' , parsing.STRICT ],
-   'flag'          : [flag         , 2 , 2 , '=' , parsing.SIMPLE  ],
+   'alter'         : [alter        , 0 , 0 , ''  , parsing.LITERAL1 ],
+   'alter_state'   : [alter_state  , 0 , 0 , ''  , parsing.LITERAL2 ],
+   'api'           : [api          , 0 , 0 , ''  , parsing.STRICT ],
+   'backward'      : [backward     , 0 , 0 , ''  , parsing.STRICT ],
+   'bond'          : [bond         , 0 , 0 , ''  , parsing.STRICT ],
+   'button'        : [button       , 0 , 0 , ''  , parsing.STRICT ],
+   'cd'            : [cd           , 0 , 0 , ''  , parsing.STRICT ],  
+   'check'         : [check        , 0 , 0 , ''  , parsing.STRICT ],
+   'clip'          : [clip         , 0 , 0 , ''  , parsing.STRICT ],
+   'cls'           : [cls          , 0 , 0 , ''  , parsing.STRICT ],
+   'color'         : [color        , 0 , 0 , ''  , parsing.STRICT ],
+   'commands'      : [commands     , 0 , 0 , ''  , parsing.STRICT ],
+   'copy'          : [copy         , 0 , 0 , ''  , parsing.LEGACY ],
+   'count_atoms'   : [count_atoms  , 0 , 0 , ''  , parsing.STRICT ],
+   'count_states'  : [count_states , 0 , 0 , ''  , parsing.STRICT ],
+   'cycle_valence' : [cycle_valence, 0 , 0 , ''  , parsing.STRICT ],
+   'create'        : [create       , 0 , 0 , ''  , parsing.LEGACY ],   
+   'delete'        : [delete       , 0 , 0 , ''  , parsing.STRICT ],
+   'deprotect'     : [deprotect    , 0 , 0 , ''  , parsing.STRICT ],
+   'dir'           : [ls           , 0 , 0 , ''  , parsing.STRICT ],  
+   'disable'       : [disable      , 0 , 0 , ''  , parsing.STRICT ],
+   'distance'      : [distance     , 0 , 0 , ''  , parsing.LEGACY ],   
+   'dump'          : [dump         , 0 , 0 , ''  , parsing.STRICT ],
+   'edit'          : [edit         , 0 , 0 , ''  , parsing.STRICT ],
+   'edit_mode'     : [edit_mode    , 0 , 0 , ''  , parsing.STRICT ],
+   'enable'        : [enable       , 0 , 0 , ''  , parsing.STRICT ],
+   'ending'        : [ending       , 0 , 0 , ''  , parsing.STRICT ],
+   'export_dots'   : [export_dots  , 0 , 0 , ''  , parsing.STRICT ],
+   'extend'        : [extend       , 0 , 0 , ''  , parsing.STRICT ],
+   'fast_minimize' : [fast_minimize, 1,  4 , ',' , parsing.SIMPLE ], # TO REMOVE
+   'feedback'      : [feedback     , 0,  0 , ''  , parsing.STRICT ],
+   'fit'           : [fit          , 0 , 0 , ''  , parsing.STRICT ],
+   'flag'          : [flag         , 0 , 0 , ''  , parsing.LEGACY ],
    'fork'          : [spawn        , 1 , 2 , ',' , parsing.SPAWN  ],
-   'forward'       : [forward      , 0 , 0 , ',' , parsing.SIMPLE  ],
-   'fragment'      : [fragment     , 1 , 1 , ',' , parsing.STRICT ],
-   'full_screen'   : [full_screen  , 0 , 2 , ',' , parsing.STRICT ],
-   'fuse'          : [fuse         , 0 , 2 , ',' , parsing.SIMPLE  ],
-   'frame'         : [frame        , 1 , 1 , ',' , parsing.STRICT ],
-   'get_view'      : [get_view     , 2 , 2 , '=' , parsing.STRICT ],
-   'h_add'         : [h_add        , 0 , 1 , ',' , parsing.SIMPLE  ],
-   'h_fill'        : [h_fill       , 0 , 0 , ',' , parsing.SIMPLE  ],
-   'help'          : [help         , 0 , 1 , ',' , parsing.SIMPLE  ],
-   'hide'          : [hide         , 0 , 2 , ',' , parsing.SIMPLE  ],
-   'intra_fit'     : [intra_fit    , 1 , 2 , ',' , parsing.SIMPLE  ],
-   'intra_rms'     : [intra_rms    , 1 , 2 , ',' , parsing.SIMPLE  ],
-   'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , parsing.SIMPLE  ],
-   'invert'        : [invert       , 0 , 2 , ',' , parsing.STRICT ],
-   'isodot'        : [isodot       , 2 , 2 , '=' , parsing.LEGACY ],   
-   'isomesh'       : [isomesh      , 2 , 2 , '=' , parsing.LEGACY ],
-   'iterate'       : [iterate      , 2 , 2 , ',' , parsing.SIMPLE  ],
-   'iterate_state' : [iterate_state, 3 , 3 , ',' , parsing.SIMPLE  ],
-   'label'         : [label        , 1 , 2 , ',' , parsing.SIMPLE  ],
-   'load'          : [load         , 1 , 6 , ',' , parsing.SIMPLE  ],
-   'ls'            : [ls           , 0 , 1 , ',' , parsing.STRICT ],  
-   'mask'          : [mask         , 0 , 1 , ',' , parsing.STRICT ],
-   'mem'           : [mem          , 0 , 0 , ',' , parsing.STRICT ],
-   'meter_reset'   : [meter_reset  , 0 , 0 , ',' , parsing.STRICT ],
-   'move'          : [move         , 2 , 2 , ',' , parsing.STRICT ],
-   'mset'          : [mset         , 1 , 1 , ',' , parsing.SIMPLE  ],
-   'mdo'           : [mdo          , 2 , 2 , ':' , parsing.SINGLE  ],
-   'mpng'          : [mpng         , 1 , 2 , ',' , parsing.SIMPLE  ],
-   'mplay'         : [mplay        , 0 , 0 , ',' , parsing.STRICT ],
-   'mray'          : [mray         , 0 , 0 , ',' , parsing.STRICT ],
-   'mstop'         : [mstop        , 0 , 0 , ',' , parsing.STRICT ],
-   'mclear'        : [mclear       , 0 , 0 , ',' , parsing.STRICT ],
-   'middle'        : [middle       , 0 , 0 , ',' , parsing.STRICT ],
-   'minimize'      : [minimize     , 0 , 4 , ',' , parsing.SIMPLE  ],
-   'mmatrix'       : [mmatrix      , 1 , 1 , ',' , parsing.STRICT ],
-   'origin'        : [origin       , 1 , 1 , ',' , parsing.STRICT ],
-   'orient'        : [orient       , 0 , 1 , ',' , parsing.STRICT ],
-   'overlap'       : [overlap      , 2 , 3 , ',' , parsing.SIMPLE  ],
-   'pair_fit'      : [pair_fit     , 2 ,98 , ',' , parsing.SIMPLE  ],
-   'protect'       : [protect      , 0 , 1 , ',' , parsing.STRICT ],
-   'pwd'           : [pwd          , 0 , 0 , ',' , parsing.STRICT ],
-   'ray'           : [ray          , 0 , 0 , ',' , parsing.STRICT ],
-   'rebuild'       : [rebuild      , 0 , 0 , ',' , parsing.STRICT ],
-   'redo'          : [redo         , 0 , 0 , ',' , parsing.STRICT  ],
-   'refresh'       : [refresh      , 0 , 0 , ',' , parsing.STRICT ],
-   'remove'        : [remove       , 1 , 1 , ',' , parsing.STRICT  ],
-   'remove_picked' : [remove_picked, 0 , 1 , ',' , parsing.SIMPLE  ],
-   'rename'        : [rename       , 1 , 2 , ',' , parsing.STRICT ],
-   'replace'       : [replace      , 3 , 3 , ',' , parsing.STRICT ],
-   'reset'         : [reset        , 0 , 0 , ',' , parsing.STRICT ],
-   'rewind'        : [rewind       , 0 , 0 , ',' , parsing.STRICT ],
-   'rock'          : [rock         , 0 , 0 , ',' , parsing.STRICT ],
+   'forward'       : [forward      , 0 , 0 , ''  , parsing.STRICT ],
+   'fragment'      : [fragment     , 0 , 0 , ''  , parsing.STRICT ],
+   'full_screen'   : [full_screen  , 0 , 0 , ''  , parsing.STRICT ],
+   'fuse'          : [fuse         , 0 , 0 , ''  , parsing.STRICT ],
+   'frame'         : [frame        , 0 , 0 , ''  , parsing.STRICT ],
+   'get_view'      : [get_view     , 0 , 0 , ''  , parsing.STRICT ],
+   'h_add'         : [h_add        , 0 , 0 , ''  , parsing.STRICT ],
+   'h_fill'        : [h_fill       , 0 , 0 , ''  , parsing.STRICT ],
+   'help'          : [help         , 0 , 0 , ''  , parsing.STRICT ],
+   'hide'          : [hide         , 0 , 0 , ''  , parsing.STRICT ],
+   'intra_fit'     : [intra_fit    , 0 , 0 , ''  , parsing.STRICT ],
+   'intra_rms'     : [intra_rms    , 0 , 0 , ''  , parsing.STRICT ],
+   'intra_rms_cur' : [intra_rms_cur, 0 , 0 , ''  , parsing.STRICT ],
+   'invert'        : [invert       , 0 , 0 , ''  , parsing.STRICT ],
+   'isodot'        : [isodot       , 0 , 0 , ''  , parsing.LEGACY ],   
+   'isomesh'       : [isomesh      , 0 , 0 , ''  , parsing.LEGACY ],
+   'iterate'       : [iterate      , 0 , 0 , ''  , parsing.LITERAL1 ],
+   'iterate_state' : [iterate_state, 0 , 0 , ''  , parsing.LITERAL2 ],
+   'label'         : [label        , 0 , 0 , ''  , parsing.STRICT ],
+   'load'          : [load         , 0 , 0 , ''  , parsing.STRICT ],
+   'ls'            : [ls           , 0 , 0 , ''  , parsing.STRICT ],  
+   'mask'          : [mask         , 0 , 0 , ''  , parsing.STRICT ],
+   'mem'           : [mem          , 0 , 0 , ''  , parsing.STRICT ],
+   'meter_reset'   : [meter_reset  , 0 , 0 , ''  , parsing.STRICT ],
+   'move'          : [move         , 0 , 0 , ''  , parsing.STRICT ],
+   'mset'          : [mset         , 0 , 0 , ''  , parsing.STRICT ],
+   'mdo'           : [mdo          , 2 , 2 , ':' , parsing.SIMPLE ],
+   'mpng'          : [mpng         , 0 , 0 , ''  , parsing.STRICT ],
+   'mplay'         : [mplay        , 0 , 0 , ''  , parsing.STRICT ],
+   'mray'          : [mray         , 0 , 0 , ''  , parsing.STRICT ],
+   'mstop'         : [mstop        , 0 , 0 , ''  , parsing.STRICT ],
+   'mclear'        : [mclear       , 0 , 0 , ''  , parsing.STRICT ],
+   'middle'        : [middle       , 0 , 0 , ''  , parsing.STRICT ],
+   'minimize'      : [minimize     , 0 , 4 , ',' , parsing.SIMPLE ], # TO REMOVE
+   'mmatrix'       : [mmatrix      , 0 , 0 , ''  , parsing.STRICT ],
+   'origin'        : [origin       , 0 , 0 , ''  , parsing.STRICT ],
+   'orient'        : [orient       , 0 , 0 , ''  , parsing.STRICT ],
+   'overlap'       : [overlap      , 0 , 0 , ''  , parsing.STRICT ],
+   'pair_fit'      : [pair_fit     , 2 ,98 , ',' , parsing.SIMPLE ],
+   'protect'       : [protect      , 0 , 0 , ''  , parsing.STRICT ],
+   'pwd'           : [pwd          , 0 , 0 , ''  , parsing.STRICT ],
+   'ray'           : [ray          , 0 , 0 , ''  , parsing.STRICT ],
+   'rebuild'       : [rebuild      , 0 , 0 , ''  , parsing.STRICT ],
+   'redo'          : [redo         , 0 , 0 , ''  , parsing.STRICT ],
+   'refresh'       : [refresh      , 0 , 0 , ''  , parsing.STRICT ],
+   'remove'        : [remove       , 0 , 0 , ''  , parsing.STRICT ],
+   'remove_picked' : [remove_picked, 0 , 0 , ''  , parsing.STRICT ],
+   'rename'        : [rename       , 0 , 0 , ''  , parsing.STRICT ],
+   'replace'       : [replace      , 0 , 0 , ''  , parsing.STRICT ],
+   'reset'         : [reset        , 0 , 0 , ''  , parsing.STRICT ],
+   'rewind'        : [rewind       , 0 , 0 , ''  , parsing.STRICT ],
+   'rock'          : [rock         , 0 , 0 , ''  , parsing.STRICT ],
    'run'           : [run          , 1 , 2 , ',' , parsing.RUN    ],
-   'rms'           : [rms          , 2 , 2 , ',' , parsing.STRICT ],
-   'rms_cur'       : [rms_cur      , 2 , 2 , ',' , parsing.STRICT ],
-   'save'          : [save         , 0 , 4 , ',' , parsing.SIMPLE  ],
-   'select'        : [select       , 1 , 2 , '=' , parsing.SIMPLE  ],
-   'set'           : [set          , 2 , 2 , '=' , parsing.LEGACY ],
-   'set_color'     : [set_color    , 2 , 2 , '=' , parsing.SIMPLE  ],
-   'set_title'     : [set_title    , 0 , 0 , ',' , parsing.STRICT ],   
-   'set_key'       : [set_key      , 2 , 1 , ',' , parsing.SIMPLE  ], # API only
-   'set_view'      : [set_view     , 2 , 2 , '=' , parsing.STRICT ],   
-   'show'          : [show         , 0 , 2 , ',' , parsing.SIMPLE  ],
-   'sort'          : [sort         , 0 , 1 , ',' , parsing.STRICT ],
+   'rms'           : [rms          , 0 , 0 , ''  , parsing.STRICT ],
+   'rms_cur'       : [rms_cur      , 0 , 0 , ''  , parsing.STRICT ],
+   'save'          : [save         , 0 , 0 , ''  , parsing.STRICT ],
+   'select'        : [select       , 0 , 0 , ''  , parsing.LEGACY ],
+   'set'           : [set          , 0 , 0 , ''  , parsing.LEGACY ],
+   'set_color'     : [set_color    , 0 , 0 , ''  , parsing.LEGACY ],
+   'set_title'     : [set_title    , 0 , 0 , ''  , parsing.STRICT ],   
+   'set_key'       : [set_key      , 0 , 0 , ''  , parsing.STRICT ], # API only
+   'set_view'      : [set_view     , 0 , 0 , ''  , parsing.STRICT ],   
+   'show'          : [show         , 0 , 0 , ''  , parsing.STRICT ],
+   'sort'          : [sort         , 0 , 0 , ''  , parsing.STRICT ],
    'spawn'         : [spawn        , 1 , 2 , ',' , parsing.SPAWN  ],
-   'spheroid'      : [spheroid     , 0 , 1 , ',' , parsing.STRICT ],
-   'splash'        : [splash       , 0 , 0 , ',' , parsing.STRICT ],
-   '_special'      : [_special     , 3 , 3 , ',' , parsing.SIMPLE ],
-   'stereo'        : [stereo       , 1 , 1 , ',' , parsing.STRICT ],
-   'symexp'        : [symexp       , 2 , 2 , '=' , parsing.LEGACY ],
-   'system'        : [system       , 1 , 1 , ',' , parsing.STRICT ],
-   'test'          : [test         , 0 , 0 , ',' , parsing.STRICT ],
-   'torsion'       : [torsion      , 1 , 1 , ',' , parsing.STRICT ],
-   'turn'          : [turn         , 2 , 2 , ',' , parsing.STRICT ],
-   'quit'          : [quit         , 0 , 0 , ',' , parsing.STRICT ],
-   '_quit'         : [_quit        , 0 , 0 , ',' , parsing.STRICT ],
-   'png'           : [png          , 1 , 1 , ',' , parsing.STRICT ],
-   'unbond'        : [unbond       , 0 , 3 , ',' , parsing.STRICT ],
-   'unpick'        : [unpick       , 0 , 0 , ',' , parsing.STRICT ],
-   'undo'          : [undo         , 0 , 0 , ',' , parsing.STRICT ],
-   'unmask'        : [unmask       , 0 , 1 , ',' , parsing.STRICT ],
-   'unprotect'     : [deprotect    , 0 , 1 , ',' , parsing.STRICT ],
-   'update'        : [update       , 2 , 2 , ',' , parsing.STRICT ],
-   'view'          : [view         , 2 , 2 , ',' , parsing.STRICT ],   
-   'viewport'      : [viewport     , 2 , 2 , ',' , parsing.STRICT ],
-   'wizard'        : [wizard       , 1 , 1 , ',' , parsing.STRICT ],
-   'zoom'          : [zoom         , 0 , 2 , ',' , parsing.STRICT ],
+   'spheroid'      : [spheroid     , 0 , 0 , ''  , parsing.STRICT ],
+   'splash'        : [splash       , 0 , 0 , ''  , parsing.STRICT ],
+   '_special'      : [_special     , 0 , 0 , ''  , parsing.STRICT ],
+   'stereo'        : [stereo       , 0 , 0 , ''  , parsing.STRICT ],
+   'symexp'        : [symexp       , 0 , 0 , ''  , parsing.LEGACY ],
+   'system'        : [system       , 0 , 0 , ''  , parsing.STRICT ],
+   'test'          : [test         , 0 , 0 , ''  , parsing.STRICT ],
+   'torsion'       : [torsion      , 0 , 0 , ''  , parsing.STRICT ],
+   'turn'          : [turn         , 0 , 0 , ''  , parsing.STRICT ],
+   'quit'          : [quit         , 0 , 0 , ''  , parsing.STRICT ],
+   '_quit'         : [_quit        , 0 , 0 , ''  , parsing.STRICT ],
+   'png'           : [png          , 0 , 0 , ''  , parsing.STRICT ],
+   'unbond'        : [unbond       , 0 , 0 , ''  , parsing.STRICT ],
+   'unpick'        : [unpick       , 0 , 0 , ''  , parsing.STRICT ],
+   'undo'          : [undo         , 0 , 0 , ''  , parsing.STRICT ],
+   'unmask'        : [unmask       , 0 , 0 , ''  , parsing.STRICT ],
+   'unprotect'     : [deprotect    , 0 , 0 , ''  , parsing.STRICT ],
+   'update'        : [update       , 0 , 0 , ''  , parsing.STRICT ],
+   'view'          : [view         , 0 , 0 , ''  , parsing.STRICT ],   
+   'viewport'      : [viewport     , 0 , 0 , ''  , parsing.STRICT ],
+   'wizard'        : [wizard       , 0 , 0 , ''  , parsing.STRICT ],
+   'zoom'          : [zoom         , 0 , 0 , ''  , parsing.STRICT ],
    }
 
 kwhash = Shortcut(keyword.keys())
@@ -5078,53 +4977,53 @@ but_act_code = {
    }
 
 special = {
-   1        : [ 'F1'        , None                   , 0 , None ],
-   2        : [ 'F2'        , None                   , 0 , None ],
-   3        : [ 'F3'        , None                   , 0 , None ],
-   4        : [ 'F4'        , None                   , 0 , None ],
-   5        : [ 'F5'        , None                   , 0 , None ],
-   6        : [ 'F6'        , None                   , 0 , None ],
-   7        : [ 'F7'        , None                   , 0 , None ],
-   8        : [ 'F8'        , None                   , 0 , None ],
-   9        : [ 'F9'        , None                   , 0 , None ],
-   10       : [ 'F10'       , None                   , 0 , None ],
-   11       : [ 'F11'       , redo                   , 0 , None ],
-   12       : [ 'F12'       , undo                   , 0 , None ],
-   100      : [ 'left'      , backward               , 0 , None ],
-   101      : [ 'up'        , None                   , 0 , None ],
-   102      : [ 'right'     , forward                , 0 , None ],
-   103      : [ 'down'      , None                   , 0 , None ],
-   104      : [ 'pgup'      , None                   , 0 , None ],
-   105      : [ 'pgdown'    , None                   , 0 , None ],
-   106      : [ 'home'      , rewind                 , 0 , None ],
-   107      : [ 'end'       , ending                 , 0 , None ],
-   108      : [ 'insert'    , rock                   , 0 , None ]   
+   1        : [ 'F1'        , None                   , () , {} ],
+   2        : [ 'F2'        , None                   , () , {} ],
+   3        : [ 'F3'        , None                   , () , {} ],
+   4        : [ 'F4'        , None                   , () , {} ],
+   5        : [ 'F5'        , None                   , () , {} ],
+   6        : [ 'F6'        , None                   , () , {} ],
+   7        : [ 'F7'        , None                   , () , {} ],
+   8        : [ 'F8'        , None                   , () , {} ],
+   9        : [ 'F9'        , None                   , () , {} ],
+   10       : [ 'F10'       , None                   , () , {} ],
+   11       : [ 'F11'       , redo                   , () , {} ],
+   12       : [ 'F12'       , undo                   , () , {} ],
+   100      : [ 'left'      , backward               , () , {} ],
+   101      : [ 'up'        , None                   , () , {} ],
+   102      : [ 'right'     , forward                , () , {} ],
+   103      : [ 'down'      , None                   , () , {} ],
+   104      : [ 'pgup'      , None                   , () , {} ],
+   105      : [ 'pgdown'    , None                   , () , {} ],
+   106      : [ 'home'      , rewind                 , () , {} ],
+   107      : [ 'end'       , ending                 , () , {} ],
+   108      : [ 'insert'    , rock                   , () , {} ]   
 }
 
 ctrl = {
-   'A' : [ redo                   , 0 , None ],
-   'B' : [ replace                , 1 , ('Br',1,1) ],
-   'C' : [ replace                , 1 , ('C',4,4) ],
-   'D' : [ remove_picked          , 0 , None ],
-   'E' : [ invert                 , 0 , None ],   
-   'F' : [ replace                , 1 , ('F',1,1) ],   
-   'G' : [ replace                , 1 , ('H',1,1) ],
-   'I' : [ replace                , 1 , ('I',1,1) ],
-   'J' : [ alter                  , 1 , ('pk1','formal_charge=-1.0') ],
-   'K' : [ alter                  , 1 , ('pk1','formal_charge =1.0') ],
-   'L' : [ replace                , 1 , ('Cl',1,1)],   
-   'N' : [ replace                , 1 , ('N',4,3) ],
-   'O' : [ replace                , 1 , ('O',4,2) ],   
-   'P' : [ replace                , 1 , ('P',4,1) ],
-   'Q' : [ h_add                  , 1 , ("pk1",) ],   
-   'R' : [ h_fill                 , 0 , None ],   
-   'S' : [ replace                , 1 , ('S',4,2) ],
-   'T' : [ bond                   , 0 , None ],   
-   'U' : [ alter                  , 1 , ('pk1','formal_charge =0.0') ],
-   'W' : [ cycle_valence          , 0 , None ],   
-   'X' : [ None                   , 0 , None ],
-   'Y' : [ attach                 , 1 , ('H',1,1) ],
-   'Z' : [ undo                   , 0 , None ],   
+   'A' : [ redo                   , () , {}],
+   'B' : [ replace                , ('Br',1,1), {} ],
+   'C' : [ replace                , ('C',4,4), {} ],
+   'D' : [ remove_picked          , () , {} ],
+   'E' : [ invert                 , () , {} ],   
+   'F' : [ replace                , ('F',1,1), {} ],   
+   'G' : [ replace                , ('H',1,1), {} ],
+   'I' : [ replace                , ('I',1,1), {} ],
+   'J' : [ alter                  , ('pk1','formal_charge=-1.0'), {} ],
+   'K' : [ alter                  , ('pk1','formal_charge =1.0'), {} ],
+   'L' : [ replace                , ('Cl',1,1) , {}],   
+   'N' : [ replace                , ('N',4,3) , {}],
+   'O' : [ replace                , ('O',4,2) , {}],   
+   'P' : [ replace                , ('P',4,1) , {}],
+   'Q' : [ h_add                  , ("pk1",) , {}],   
+   'R' : [ h_fill                 , () , {} ],   
+   'S' : [ replace                , ('S',4,2) , {}],
+   'T' : [ bond                   , () , {} ],   
+   'U' : [ alter                  , ('pk1','formal_charge =0.0') , {}],
+   'W' : [ cycle_valence          , () , {}],   
+   'X' : [ None                   , () , {} ],
+   'Y' : [ attach                 , ('H',1,1) , {} ],
+   'Z' : [ undo                   , () , {} ],   
    }
 
 class loadable:
@@ -5141,6 +5040,7 @@ class loadable:
    cgo = 13      # compiled graphic object
    r3d = 14      # r3d, only used within cmd.py
    xyz = 15      # xyz, tinker format
+   sdf = 16      # sdf, only used within cmd.py
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 

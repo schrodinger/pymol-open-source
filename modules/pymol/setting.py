@@ -97,6 +97,7 @@ class SettingIndex:
    shininess            =86
    sphere_quality       =87
    fog                  =88
+   isomesh_auto_state   =89
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

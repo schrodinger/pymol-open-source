@@ -156,6 +156,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai);
 void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode);
 void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1);
+void ObjectGotoState(ObjectMolecule *I,int state);
 
 #endif
 
