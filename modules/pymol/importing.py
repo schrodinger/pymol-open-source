@@ -97,7 +97,8 @@ if __name__=='pymol.importing':
          cmd.wizard("security")
       return r
 
-   def load_object(type,object,name,state=0,finish=1,discrete=0,quiet=1):
+   def load_object(type,object,name,state=0,finish=1,discrete=0,
+                   quiet=1,zoom=-1):
       '''
 DESCRIPTION
 
@@ -119,7 +120,8 @@ PYMOL API
       try:
          lock()   
          r = _cmd.load_object(str(name),object,int(state)-1,
-                                 int(type),int(finish),int(discrete),int(quiet))
+                              int(type),int(finish),int(discrete),
+                              int(quiet),int(zoom))
       finally:
          unlock()
       return r
@@ -354,7 +356,8 @@ SEE ALSO
          cmd._do("zoom (%s)"%oname)
       cmd._do("set seq_view_format,4,"+oname)
    
-   def load(filename,object='',state=0,format='',finish=1,discrete=None,quiet=1,multiplex=None):
+   def load(filename,object='',state=0,format='',finish=1,
+            discrete=None,quiet=1,multiplex=None,zoom=-1):
       '''
 DESCRIPTION
 
@@ -405,6 +408,7 @@ SEE ALSO
          ftype = 0
          state = int(state)
          finish = int(finish)
+         zoom = int(zoom)
          if discrete==None:
             discrete_default = 1
             discrete=0
@@ -535,7 +539,8 @@ SEE ALSO
                
    # standard file handling
          if ftype>=0:
-            r = _load(oname,fname,state,ftype,finish,discrete,quiet,multiplex)
+            r = _load(oname,fname,state,ftype,finish,
+                      discrete,quiet,multiplex,zoom)
       finally:
          unlock()
       return r
@@ -576,7 +581,8 @@ SEE ALSO
             _processSDF(sdf,name,state,quiet)
       return r
    
-   def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1):
+   def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1,
+                   zoom=-1):
       '''
 DESCRIPTION
 
@@ -603,7 +609,8 @@ NOTES
       try:
          lock()
          r = _cmd.load(str(name),str(molstr),int(state)-1,
-                       loadable.molstr,int(finish),int(discrete),int(quiet),0)
+                       loadable.molstr,int(finish),int(discrete),
+                       int(quiet),0,int(zoom))
       finally:
          unlock()
       return r
@@ -624,19 +631,25 @@ DESCRIPTION
             quiet = int(kw['quiet'])
          else:
             quiet = 1
+         if kw.has_key('zoom'):
+            zoom = int(kw['zoom'])
+         else:
+            zoom = -1
          if len(arg)==2:
             oname = string.strip(arg[1])
-            r = _cmd.load(str(oname),arg[0],-1,int(ftype),1,1,quiet,0)
+            r = _cmd.load(str(oname),arg[0],-1,int(ftype),1,1,quiet,0,zoom)
          elif len(arg)==3:
             oname = string.strip(arg[1])
-            r = _cmd.load(str(oname),arg[0],int(arg[2])-1,int(ftype),1,1,quiet,0)
+            r = _cmd.load(str(oname),arg[0],int(arg[2])-1,
+                          int(ftype),1,1,quiet,0,zoom)
          else:
             print "argument error."
       finally:
          unlock()
       return r
 
-   def read_pdbstr(pdb,name,state=0,finish=1,discrete=0,quiet=1):
+   def read_pdbstr(pdb,name,state=0,finish=1,discrete=0,quiet=1,
+                   multiplex=-2,zoom=-1):
       '''
 DESCRIPTION
 
@@ -667,12 +680,14 @@ NOTES
          ftype = loadable.pdbstr
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),pdb,int(state)-1,int(ftype),
-                          int(finish),int(discrete),int(quiet),0)
+                       int(finish),int(discrete),int(quiet),
+                       0,int(zoom))
       finally:
          unlock()
       return r
 
-   def read_mol2str(mol2,name,state=0,finish=1,discrete=0,quiet=1):
+   def read_mol2str(mol2,name,state=0,finish=1,discrete=0,
+                    quiet=1,zoom=-1):
       '''
 DESCRIPTION
 
@@ -703,12 +718,14 @@ NOTES
          ftype = loadable.mol2str
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),mol2,int(state)-1,int(ftype),
-                          int(finish),int(discrete),int(quiet),0)
+                       int(finish),int(discrete),int(quiet),
+                       0,int(zoom))
       finally:
          unlock()
       return r
 
-   def read_xplorstr(xplor,name,state=0,finish=1,discrete=0,quiet=1):
+   def read_xplorstr(xplor,name,state=0,finish=1,discrete=0,
+                     quiet=1,zoom=-1):
       '''
 DESCRIPTION
 
@@ -732,7 +749,8 @@ NOTES
          ftype = loadable.xplorstr
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),xplor,int(state)-1,int(ftype),
-                          int(finish),int(discrete),int(quiet),0)
+                       int(finish),int(discrete),int(quiet),
+                       0,int(zoom))
       finally:
          unlock()
       return r

@@ -66,7 +66,7 @@ int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate, int 
 int ExecutiveGetAtomVertex(PyMOLGlobals *G,char *s1,int state,int index,float *v);
 void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf,
-                             PDBInfoRec *pdb_info,int quiet,int is_string,int multiplex);
+                             PDBInfoRec *pdb_info,int quiet,int is_string,int multiplex,int zoom);
 
 void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
                        char *oname, int frame, int discrete,int finish,
