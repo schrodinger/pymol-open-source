@@ -82,7 +82,6 @@ if __name__=='pymol.importing':
       return r
 
    def load_object(type,object,name,state=0,finish=1,discrete=0):
-         # assume first argument is the object type (numeric)
       '''
 DESCRIPTION
 
@@ -93,7 +92,11 @@ PYMOL API
 
    cmd.load_object(type,object,name,state=0,finish=1,discrete=0)
 
-   NOTE type is one one of the numberic cmd.loadable types
+   type = one one of the numberic cmd.loadable types
+   object =
+   name = object name (string)
+   finish = perform (1) or defer (0) post-processing of structure after load
+   discrete = treat each state as an independent, unrelated set of atoms
       '''
       r = 1
       try:
@@ -122,6 +125,25 @@ PYMOL API
       return apply(load_object,lst)
 
    def space(space="",quiet=0):
+      '''
+DESCRIPTION
+
+   "space" selects a color palette (or color space).
+   
+USAGE
+
+   space space-name
+   
+PYMOL API
+   cmd.space(string space_name)
+   
+EXAMPLES
+
+   space rgb
+   space cmyk
+   space pymol
+   
+   '''
       r=None
       
       tables = { 'cmyk' : "$PYMOL_PATH/data/pymol/cmyk.png",

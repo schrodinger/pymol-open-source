@@ -94,19 +94,19 @@ USAGE
 
    isomesh name, map, level [,(selection) [,buffer [,state [,carve ]]]]
 
-   "name" is the name for the new mesh isosurface object.
+   name = the name for the new mesh isosurface object.
 
-   "map" is the name of the map object to use for computing the mesh.
+   map = the name of the map object to use for computing the mesh.
 
-   "level" is the contour level.
+   level = the contour level.
 
-   "selection" is an atom selection about which to display the mesh with
+   selection = an atom selection about which to display the mesh with
       an additional "buffer" (if provided).
 
-   "state" is the state into which the object should be loaded (default=1)
+   state = the state into which the object should be loaded (default=1)
       (set state=0 to append new mesh as a new state)
 
-   "carve" is a radius about each atom in the selection for which to
+   carve = a radius about each atom in the selection for which to
       include density. If "carve" is not provided, then the whole
       brick is displayed.
 
@@ -161,20 +161,20 @@ USAGE
 
    isosurface name, map, level [,(selection) [,buffer [,state [,carve ]]]]
 
-   "name" is the name for the new mesh isosurface object.
+   name = the name for the new mesh isosurface object.
 
-   "map" is the name of the map object to use for computing the mesh.
+   map = the name of the map object to use for computing the mesh.
 
-   "level" is the contour level.
+   level = the contour level.
 
-   "selection" is an atom selection about which to display the mesh with
+   selection = an atom selection about which to display the mesh with
       an additional "buffer" (if provided).
 
-   "state" is the state into which the object should be loaded (default=1)
+   state = the state into which the object should be loaded (default=1)
       (set state=0 to append new surface as a new state)
 
-   "carve" is a radius about each atom in the selection for which to
-      include density. If "carve" is not provided, then the whole
+   carve = a radius about each atom in the selection for which to
+      include density. If "carve= not provided, then the whole
       brick is displayed.
 
 NOTES
@@ -212,17 +212,17 @@ SEE ALSO
       '''
 DESCRIPTION
 
-"isodot" creates a dot isosurface object from a map object.
+   "isodot" creates a dot isosurface object from a map object.
 
 USAGE
 
    isodot name = map, level [,(selection) [,buffer [, state ] ] ] 
 
-   "map" is the name of the map object to use.
+   map = the name of the map object to use.
 
-   "level" is the contour level.
+   level = the contour level.
 
-   "selection" is an atom selection about which to display the mesh with
+   selection = an atom selection about which to display the mesh with
       an additional "buffer" (if provided).
 
 NOTES
