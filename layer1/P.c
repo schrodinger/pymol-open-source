@@ -365,7 +365,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   LabelType label;
   int id;
   PyObject *ID_id1,*ID_id2=NULL;
-  PyObject *state_id1,*state_id2;
+  PyObject *state_id1,*state_id2=NULL;
   int state;
   PyObject *dict;
   int result=true;
