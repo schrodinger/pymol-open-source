@@ -137,7 +137,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int discrete_colors;
   int cylindrical_helices;
   int last_color,uniform_color;
-  int cartoon_color;
+  int cartoon_color,highlight_color;
   int round_helices;
   int smooth_loops;
   int parity;
@@ -192,6 +192,9 @@ ENDFD;
   if(tube_quality<3) tube_quality=3;
 
   cartoon_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
+
+  highlight_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_cartoon_highlight_color);
+
   oval_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_length);
   oval_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_width);
   oval_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_quality);
@@ -1508,32 +1511,58 @@ ENDFD;
             case cCartoon_tube:
               ExtrudeCircle(ex,tube_quality,tube_radius);
               ExtrudeBuildNormals1f(ex);
-              ExtrudeCGOSurfaceTube(ex,I->ray,1);
+              ExtrudeCGOSurfaceTube(ex,I->ray,1,NULL);
               break;
             case cCartoon_loop:
               ExtrudeCircle(ex,loop_quality,loop_radius);
               ExtrudeBuildNormals1f(ex);
-              ExtrudeCGOSurfaceTube(ex,I->ray,1);
+              ExtrudeCGOSurfaceTube(ex,I->ray,1,NULL);
               break;
             case cCartoon_rect:
-              ExtrudeRectangle(ex,width,length);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygon(ex,I->ray,1);
+              if(highlight_color<0) {
+                ExtrudeRectangle(ex,width,length,0);
+                ExtrudeBuildNormals2f(ex);
+                ExtrudeCGOSurfacePolygon(ex,I->ray,1,NULL);
+              } else {
+                ExtrudeRectangle(ex,width,length,1);
+                ExtrudeBuildNormals2f(ex);
+                ExtrudeCGOSurfacePolygon(ex,I->ray,0,NULL);
+                ExtrudeRectangle(ex,width,length,2);
+                ExtrudeBuildNormals2f(ex);
+                ExtrudeCGOSurfacePolygon(ex,I->ray,1,ColorGet(highlight_color));
+              }
               break;
             case cCartoon_oval:
               ExtrudeOval(ex,oval_quality,oval_width,oval_length);
               ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfaceTube(ex,I->ray,1);
+              if(highlight_color<0) 
+                ExtrudeCGOSurfaceTube(ex,I->ray,1,NULL);
+              else 
+                ExtrudeCGOSurfaceTube(ex,I->ray,1,ColorGet(highlight_color));
               break;
             case cCartoon_arrow:
-              ExtrudeRectangle(ex,width,length);
+              ExtrudeRectangle(ex,width,length,0);
               ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfaceStrand(ex,I->ray,sampling);
+              if(highlight_color<0) 
+                ExtrudeCGOSurfaceStrand(ex,I->ray,sampling,NULL);
+              else
+                ExtrudeCGOSurfaceStrand(ex,I->ray,sampling,ColorGet(highlight_color));                
               break;
             case cCartoon_dumbbell:
-              ExtrudeDumbbell1(ex,dumbbell_width,dumbbell_length);
-              ExtrudeBuildNormals2f(ex);
-              ExtrudeCGOSurfacePolygonTaper(ex,I->ray,sampling);
+              if(highlight_color<0) {
+                ExtrudeDumbbell1(ex,dumbbell_width,dumbbell_length,0);
+                ExtrudeBuildNormals2f(ex);
+                ExtrudeCGOSurfacePolygonTaper(ex,I->ray,sampling,NULL);
+              } else {
+
+                ExtrudeDumbbell1(ex,dumbbell_width,dumbbell_length,1);
+                ExtrudeBuildNormals2f(ex);
+                ExtrudeCGOSurfacePolygonTaper(ex,I->ray,sampling,NULL);
+
+                ExtrudeDumbbell1(ex,dumbbell_width,dumbbell_length,2);
+                ExtrudeBuildNormals2f(ex);
+                ExtrudeCGOSurfacePolygonTaper(ex,I->ray,sampling,ColorGet(highlight_color));
+              }
               /*
                 ExtrudeCGOSurfacePolygonX(ex,I->ray,1);*/
 
@@ -1542,7 +1571,7 @@ ENDFD;
               ExtrudeComputeTangents(ex1);
               ExtrudeCircle(ex1,loop_quality,dumbbell_radius);
               ExtrudeBuildNormals1f(ex1);
-              ExtrudeCGOSurfaceTube(ex1,I->ray,1);
+              ExtrudeCGOSurfaceTube(ex1,I->ray,1,NULL);
               ExtrudeFree(ex1);
 
               ex1 = ExtrudeCopyPointsNormalsColors(ex);
@@ -1550,7 +1579,7 @@ ENDFD;
               ExtrudeComputeTangents(ex1);
               ExtrudeCircle(ex1,loop_quality,dumbbell_radius);
               ExtrudeBuildNormals1f(ex1);
-              ExtrudeCGOSurfaceTube(ex1,I->ray,1);
+              ExtrudeCGOSurfaceTube(ex1,I->ray,1,NULL);
               ExtrudeFree(ex1);
 
               break;

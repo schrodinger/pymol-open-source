@@ -269,6 +269,7 @@ if __name__=='pymol.setting':
       ribbon_smooth         = 237
       auto_color            = 238
       ray_interior_color    = 240
+      cartoon_highlight_color = 241
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
