@@ -379,7 +379,7 @@ Rep *RepMeshNew(CoordSet *cs)
 	 for(a=0;a<dims[0];a++)
 		for(b=0;b<dims[1];b++)
 		  for(c=0;c<dims[2];c++)
-			 F3(field->data,a,b,c,field->dimensions) = 2.0;
+			 F3(field->data,a,b,c) = 2.0;
 
 	 OrthoBusyFast(0,1);
 	 RepMeshGetSolventDots(I,cs,minE,maxE,probe_radius);
@@ -399,9 +399,7 @@ Rep *RepMeshNew(CoordSet *cs)
 					 for(c=0;c<dims[2];c++)
 						{
 						  point[2]=minE[2]+c*gridSize;
-						  for(d=0;d<3;d++)
-							 F4(field->points,a,b,c,d,field->dimensions) = point[d];
-
+                    copy3f(point,F3Ptr(field->points,a,b,c));
 						  aNear = -1;
 						  aLen = MAXFLOAT;
 						  MapLocus(map,point,&h,&k,&l);						  
@@ -456,8 +454,8 @@ Rep *RepMeshNew(CoordSet *cs)
 								} else { /* either too close, or too far from atom...*/
 								  pVal=pVal/vdw;
 								}
-								if(pVal<F3(field->data,a,b,c,field->dimensions))
-								  F3(field->data,a,b,c,field->dimensions) = pVal;
+								if(pVal<F3(field->data,a,b,c))
+								  F3(field->data,a,b,c) = pVal;
 							 }
 						}
 				  }

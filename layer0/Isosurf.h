@@ -19,24 +19,19 @@ Z* -------------------------------------------------------------------
 #include"Map.h"
 #include"MemoryDebug.h"
 #include"Crystal.h"
+#include"Field.h"
 
 typedef struct {
   int dimensions[3];
-  float *points;
-  float *data;
+  CField *points;
+  CField *data;
 } Isofield;
 
-#define F3(Name,P1,P2,P3,dims) \
-(*((Name)+((P1)+((dims[0])*((P2)+((dims[1])*(P3)))))))
+#define F3(field,P1,P2,P3) Ffloat3(field,P1,P2,P3)
+#define F3Ptr(field,P1,P2,P3) Ffloat3p(field,P1,P2,P3)
 
-#define F3Ptr(Name,P1,P2,P3,dims) \
-((Name)+((P1)+((dims[0])*((P2)+((dims[1])*(P3))))))
-
-#define F4(Name,P1,P2,P3,P4,dims) \
-(*((Name)+((P1)+((dims[0])*((P2)+((dims[1])*((P3)+((dims[2])*(P4)))))))))
-
-#define F4Ptr(Name,P1,P2,P3,P4,dims) \
-((Name)+((P1)+((dims[0])*((P2)+((dims[1])*((P3)+((dims[2])*(P4))))))))
+#define F4(field,P1,P2,P3,P4) Ffloat4(field,P1,P2,P3,P4)
+#define F4Ptr(field,P1,P2,P3,P4) Ffloat4p(field,P1,P2,P3,P4)
 
 Isofield *IsosurfFieldAlloc(int *dims);
 void IsosurfFieldFree(Isofield *field);

@@ -379,13 +379,13 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
             v[mapc]=(cc[mapc]+I->Min[mapc])/((float)I->Div[mapc]);
 
             dens = (*f-mean)/stdev;
-            F3(I->Field->data,cc[0],cc[1],cc[2],I->Field->dimensions) = dens;
+            F3(I->Field->data,cc[0],cc[1],cc[2]) = dens;
             if(maxd<*f) maxd = dens;
             if(mind>*f) mind = dens;
             f++;
             transform33f3f(I->Crystal->FracToReal,v,vr);
             for(e=0;e<3;e++) 
-              F4(I->Field->points,cc[0],cc[1],cc[2],e,I->Field->dimensions) = vr[e];
+              F4(I->Field->points,cc[0],cc[1],cc[2],e) = vr[e];
           }
         }
       }
@@ -525,13 +525,13 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
               if(sscanf(cc,"%f",&dens)!=1) {
                 ok=false;
               } else {
-                F3(I->Field->data,a,b,c,I->Field->dimensions) = dens;
+                F3(I->Field->data,a,b,c) = dens;
                 if(maxd<dens) maxd = dens;
                 if(mind>dens) mind = dens;
               }
               transform33f3f(I->Crystal->FracToReal,v,vr);
               for(e=0;e<3;e++) 
-                F4(I->Field->points,a,b,c,e,I->Field->dimensions) = vr[e];
+                F4(I->Field->points,a,b,c,e) = vr[e];
             }
           }
           p=ParseNextLine(p);
@@ -765,11 +765,11 @@ int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary) {
 #else
               dens = 0.0;
 #endif
-              F3(I->Field->data,a,b,c,I->Field->dimensions) = dens;
+              F3(I->Field->data,a,b,c) = dens;
               if(maxd<dens) maxd = dens;
               if(mind>dens) mind = dens;
               for(e=0;e<3;e++) 
-                F4(I->Field->points,a,b,c,e,I->Field->dimensions) = v[e];
+                F4(I->Field->points,a,b,c,e) = v[e];
             }
           }
         }
@@ -955,15 +955,16 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
                   
                   dens = *(cobj++);
 
-                  F3(I->Field->data,a,b,c,I->Field->dimensions) = dens;
+                  F3(I->Field->data,a,b,c) = dens;
                   if(maxd<dens) maxd = dens;
                   if(mind>dens) mind = dens;
                   transform33f3f(I->Crystal->FracToReal,v,vr);
                   for(e=0;e<3;e++) 
-                    F4(I->Field->points,a,b,c,e,I->Field->dimensions) = vr[e];
+                    F4(I->Field->points,a,b,c,e) = vr[e];
                 }
               }
             }
+
           if(ok) {
             d = 0;
             for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))

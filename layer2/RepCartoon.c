@@ -330,11 +330,10 @@ ENDFD;
                     
                     vo+=3;
                   }
-                } else if(WordMatch("P",obj->AtomInfo[a1].name,1)<0)
-                {
+                } else if(WordMatch("P",obj->AtomInfo[a1].name,1)<0) {
                   if(a2>=0) {
                     if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
-                        a2=-1;
+                      a2=-1;
                   }
                   if(a2<=0)
                     nSeg++;
@@ -372,10 +371,10 @@ ENDFD;
                     } else 
                       a4=cs->AtmToIdx[a3];
                     if(a4>=0) {
-
+                      
                       /* need to figure out how to generate a how to do right for DNA...
-                       then we can use oval or rectangle */
-
+                         then we can use oval or rectangle */
+                      
                       if(WordMatch("P",obj->AtomInfo[a3].name,1)<0) {
                         v_c = cs->Coord+3*a4;		
                       } else if(WordMatch("C2",obj->AtomInfo[a3].name,1)<0) {
@@ -390,7 +389,7 @@ ENDFD;
                     vo+=3;
                   } else {
                     /* generate orientation vectors...*/
-
+                    
                     cross_product3f(v_c,v_o,vo);
                     normalize3f(vo);
                     
