@@ -164,6 +164,7 @@ void SeqChanged(void)
 {
   CSeq *I=&Seq;
   I->Changed = true;
+  SceneDirty();
 }
 
 static int SeqDrag(Block *block,int x,int y,int mod)
