@@ -79,6 +79,25 @@ char *ParseWordCopy(char *q,char *p,int n) { /* word copy */
   return p;
 }
 /*========================================================================*/
+char *ParseWord(char *q,char *p,int n) { /* word copy, across lines */
+  while(*p) {
+	 if(*p<=32) 
+		p++;
+	 else
+		break;
+  }
+  while(*p) {
+	 if(*p<=32)
+		break;
+	 if(!n)
+		break;
+	 *(q++)=*(p++);
+	 n--;
+  }
+  *q=0;
+  return p;
+}
+/*========================================================================*/
 char *ParseNCopy(char *q,char *p,int n) {  /* n character copy */
   while(*p) {
 	 if(!n)

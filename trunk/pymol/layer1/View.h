@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_View
 #define _H_View
 
+#include"os_python.h"
+
 #include"Ray.h"
 
 typedef struct CViewElem {
@@ -39,8 +41,16 @@ typedef struct CViewElem {
   int state;
 
   int view_mode; /* 0 = relative/subordinate, 1 = absolute/top-level */
-  int specified;
+
+  int specified_flag;
+
 } CViewElem;
+
+PyObject *ViewElemAsPyList(CViewElem *view);
+int ViewElemFromPyList(PyObject *list, CViewElem *view);
+
+int ViewElemVLAFromPyList(PyObject *list, CViewElem **vla, int nFrame);
+PyObject *ViewElemVLAAsPyList(CViewElem *vla, int nFrame);
 
 typedef struct CView {
   int NView;
@@ -55,6 +65,7 @@ void ViewFree(CView *I);
 
 CViewIterator ViewGetIterator(CView *I);
 int ViewIterate(CView *I,CViewIterator *iter,CRay *ray,int at_least_once);
+
 
 #endif
 

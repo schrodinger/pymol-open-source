@@ -479,6 +479,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
 {
   float *v = NULL;
   float *vc;
+  float radius;
   int *n = NULL;
   int c;
   int a=0;
@@ -511,12 +512,19 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
                          I->Obj.Setting,NULL);
-          ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
-
-
-          if(ms->Radius==0.0F) {
-            ms->Radius = ray->PixelRadius*SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width)/2.0F;
-          } 
+          if(!ms->DotFlag) {
+            radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
+            
+            if(radius==0.0F) {
+              radius = ray->PixelRadius*SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width)/2.0F;
+            } 
+          } else {
+            radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_dot_radius);            
+            if(radius==0.0F) {
+              radius = ray->PixelRadius*SettingGet_f(I->Obj.Setting,NULL,cSetting_dot_width)/1.4142F;
+            } 
+          }
+                  
 
           if(n&&v&&I->Obj.RepVis[cRepMesh]) {
             vc = ColorGet(I->Obj.Color);
@@ -530,7 +538,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
                       v+=3;
                       while(c--)
                         {
-                          ray->fSphere3fv(ray,v,ms->Radius);
+                          ray->fSphere3fv(ray,v,radius);
                           v+=3;
                         }
                     }
@@ -544,7 +552,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
                       v+=3;
                       while(c--)
                         {
-                          ray->fSausage3fv(ray,v-3,v,ms->Radius,vc,vc);
+                          ray->fSausage3fv(ray,v-3,v,radius,vc,vc);
                           v+=3;
                         }
                     }
@@ -577,7 +585,10 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
               }
 
             if(n&&v&&I->Obj.RepVis[cRepMesh]) {
-              glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
+              if(ms->DotFlag) 
+                glPointSize(SettingGet_f(I->Obj.Setting,NULL,cSetting_dot_width));
+              else
+                glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
               while(*n)
                 {
                   c=*(n++);

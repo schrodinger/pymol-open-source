@@ -1294,6 +1294,7 @@ SEE ALSO
 
    #--------------------------------------------------------------------
    from moving import \
+        madd,              \
         mset,              \
         mclear,            \
         mdo,               \
@@ -1524,7 +1525,8 @@ SEE ALSO
       'log'           : [ log               , 0 , 0 , ''  , parsing.STRICT ],
       'log_close'     : [ log_close         , 0 , 0 , ''  , parsing.STRICT ],
       'log_open'      : [ log_open          , 0 , 0 , ''  , parsing.STRICT ],
-      'ls'            : [ ls                , 0 , 0 , ''  , parsing.STRICT ],  
+      'ls'            : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
+      'madd'          : [ madd              , 0 , 0 , ''  , parsing.STRICT ],
       'mask'          : [ mask              , 0 , 0 , ''  , parsing.STRICT ],
       'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
       'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],      

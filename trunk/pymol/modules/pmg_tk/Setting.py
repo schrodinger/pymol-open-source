@@ -313,6 +313,8 @@ class Setting:
          (lambda s,t: (s.virtual_trackball.set(t[1][0]!=0))),
          'seq_view':
          (lambda s,t: (s.seq_view.set(t[1][0]!=0))),
+         'stereo':
+         (lambda s,t: (s.stereo.set(t[1][0]!=0))),         
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -352,6 +354,7 @@ class Setting:
          pymol.setting._get_index("use_display_lists"),
          pymol.setting._get_index("virtual_trackball"),
          pymol.setting._get_index("seq_view"),
+         pymol.setting._get_index("stereo"),
          ]
 
       self.active_dict = {}

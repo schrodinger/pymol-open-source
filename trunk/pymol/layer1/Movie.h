@@ -46,7 +46,7 @@ void MovieInit(void);
 void MovieFree(void);
 void MovieReset(void);
 void MovieDump(void);
-void MovieSequence(char *seq);
+void MovieAppendSequence(char *seq,int start_from);
 int MoviePNG(char *prefix,int save,int start,int stop);
 void MovieSetCommand(int frame,char *command);
 void MovieAppendCommand(int frame,char *command);
@@ -74,7 +74,7 @@ int MovieFrameToIndex(int frame);
 int MovieLocked(void);
 void MovieSetLock(int);
 int MovieDefined(void);
-int MovieView(int action,int first,int last,float power);
+int MovieView(int action,int first,int last,float power,float bias);
 
 #define cMovieMatrixClear  0
 #define cMovieMatrixStore  1

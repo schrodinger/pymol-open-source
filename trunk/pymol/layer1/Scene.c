@@ -139,6 +139,11 @@ static const char SelModeKW[][20]  = {
   "bca.",
 };
 
+void SceneUpdateStereo(void)
+{
+  SceneSetStereo(SettingGetGlobal_b(cSetting_stereo));
+}
+
 char *SceneGetSeleModeKeyword(void)
 {
   int sel_mode = SettingGet(cSetting_mouse_selection_mode);
@@ -493,6 +498,7 @@ void SceneSetStereo(int flag)
     I->StereoMode=(int)SettingGet(cSetting_stereo_mode);
   else
     I->StereoMode=false;
+  SettingSetGlobal_b(cSetting_stereo,flag);
   SceneDirty();
 }
 /*========================================================================*/
@@ -1211,7 +1217,7 @@ void SceneDraw(Block *block)
 /*========================================================================*/
 
 typedef unsigned char pix[4];
-#define cRange 5
+#define cRange 7
 /*typedef pix pix_array[cRange*2+1][cRange*2+1];*/
 
 unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer) 

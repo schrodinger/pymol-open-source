@@ -57,6 +57,7 @@ int SettingSetGlobalsFromPyList(PyObject *list)
     if(PyList_Check(list)) 
       ok = SettingFromPyList(I,list);
   SettingSet_i(I,cSetting_security,Security); /* always override Security setting with global variable */
+  SettingSet_b(I,cSetting_stereo,0); /* don't start in stereo mode */
   return(ok);
 }
 
@@ -1059,6 +1060,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     inv_sele = sele;
   }
   switch(index) {
+  case cSetting_stereo:
+    SceneUpdateStereo();
+    break;
   case cSetting_seq_view:
   case cSetting_seq_view_label_spacing:
   case cSetting_seq_view_label_mode:
@@ -2272,6 +2276,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_color(I,cSetting_seq_view_color, "-1");
   SettingSet_i(I,cSetting_seq_view_label_mode,2);
   SettingSet_i(I,cSetting_surface_ramp_above_mode,0);
+  SettingSet_b(I,cSetting_stereo,0);
 
 }
 

@@ -887,6 +887,69 @@ static void draw_bond(float *v0,float *v1)
 
 }
 
+static void draw_dist(float *v0,float *v1)
+{
+  SceneResetNormal(true);
+  glLineWidth(SettingGet(cSetting_line_width)*2);
+  glBegin(GL_LINES);
+  glVertex3fv(v0);
+  glVertex3fv(v1);
+  glEnd();
+}
+
+static void draw_arc(float *v0,float *v1,float *v2) 
+{
+  int nEdge = (int)SettingGet(cSetting_stick_quality)/2;
+  if(nEdge>20)
+    nEdge=20;
+  if(nEdge<3)
+    nEdge=3;
+  /*
+  int a;
+  if(n<3) {n=3;}
+  for(a=0;a<=n;a++)
+	 {
+		x[a]=(float)cos(a*2*PI/n);
+		y[a]=(float)sin(a*2*PI/n);
+	 }
+  */
+  SceneResetNormal(true);
+  glLineWidth(SettingGet(cSetting_line_width)*2);
+  glBegin(GL_LINE_STRIP);
+  glVertex3fv(v0);
+  glVertex3fv(v1);
+  glVertex3fv(v2);
+  glEnd();
+
+}
+
+static void draw_torsion(float *v0,float *v1,float *v2,float *v3) 
+{
+  int nEdge = (int)SettingGet(cSetting_stick_quality)/2;
+  if(nEdge>20)
+    nEdge=20;
+  if(nEdge<3)
+    nEdge=3;
+  /*
+  int a;
+  if(n<3) {n=3;}
+  for(a=0;a<=n;a++)
+	 {
+		x[a]=(float)cos(a*2*PI/n);
+		y[a]=(float)sin(a*2*PI/n);
+	 }
+  */
+  SceneResetNormal(true);
+  glLineWidth(SettingGet(cSetting_line_width)*2);
+  glBegin(GL_LINE_STRIP);
+  glVertex3fv(v0);
+  glVertex3fv(v1);
+  glVertex3fv(v2);
+  glVertex3fv(v3);
+  glEnd();
+
+}
+
 static void draw_globe(float *v2,int number)
 {
   float v[3];
@@ -1051,10 +1114,12 @@ void EditorRender(int state)
 {
   CEditor *I=&Editor;
   int sele1,sele2,sele3,sele4;
-  float v0[3],v1[3],v2[3];
+  float v0[3],v1[3];
+  float vp[12],*vv;
+  int v_cnt;
   ObjectMolecule *obj1=NULL,*obj2=NULL,*obj3=NULL,*obj4=NULL;
   int index1,index2,index3,index4;
-
+  
   if(EditorActive()) {
 
     PRINTFD(FB_Editor)
@@ -1086,25 +1151,49 @@ void EditorRender(int state)
         
       } else {
         /* atom mode */
-        
+
+        vv = vp;
+
         if(obj1) {
-          if(ObjectMoleculeGetAtomVertex(obj1,state,index1,v2))
-            draw_globe(v2,1);
+          if(ObjectMoleculeGetAtomVertex(obj1,state,index1,vv)) {
+            draw_globe(vv,1);
+            vv+=3;
+          }
         }
 
         if(obj2) {
-          if(ObjectMoleculeGetAtomVertex(obj2,state,index2,v2))
-            draw_globe(v2,2);
+          if(ObjectMoleculeGetAtomVertex(obj2,state,index2,vv)) {
+            draw_globe(vv,2);
+            vv+=3;
+          }
         }
 
         if(obj3) {
-          if(ObjectMoleculeGetAtomVertex(obj3,state,index3,v2))
-            draw_globe(v2,3);
+          if(ObjectMoleculeGetAtomVertex(obj3,state,index3,vv)) {
+            draw_globe(vv,3);
+            vv+=3;
+          }
         }
 
         if(obj4) {
-          if(ObjectMoleculeGetAtomVertex(obj4,state,index4,v2))
-            draw_globe(v2,4);
+          if(ObjectMoleculeGetAtomVertex(obj4,state,index4,vv)) {
+            draw_globe(vv,4);
+            vv+=3;
+          }
+        }
+        
+        v_cnt = (vv-vp)/3;
+        
+        switch(v_cnt) {
+        case 2:
+          draw_dist(vp,vp+3);
+          break;
+        case 3:
+          draw_arc(vp,vp+3,vp+6);
+          break;
+        case 4:
+          draw_torsion(vp,vp+3,vp+6,vp+9);
+          break;
         }
       }
       /*
