@@ -197,12 +197,12 @@ def setup_contexts(context_info):   # Author: Warren DeLano
     labels = 1
     if len(key_list):
         key = key_list.pop(0)
-        cmd.set_key(key,lambda :(cmd.zoom(),toggle_labels(0)))
-        doc_list.append(key+": All")
-    if len(key_list):
-        key = key_list.pop(0)
         cmd.set_key(key,toggle_labels)
         doc_list.append(key+": Dist")        
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,lambda :(cmd.zoom(),toggle_labels(0)))
+        doc_list.append(key+": All")
     
     for a in list:
         water = a+"_water"
