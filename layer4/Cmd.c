@@ -1711,8 +1711,9 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
   Object *obj;
   APIEntry();
   obj=ExecutiveFindObjectByName("test");
-  if(obj) ObjectMoleculeInferChemFromNeighGeom((ObjectMolecule*)obj,0);
-  if(obj) ObjectMoleculeInferChemForProtein((ObjectMolecule*)obj,0);
+  /*  if(obj) ObjectMoleculeInferChemFromNeighGeom((ObjectMolecule*)obj,0);
+      if(obj) ObjectMoleculeInferChemForProtein((ObjectMolecule*)obj,0);*/
+  if(obj) ObjectMoleculeInferChemFromBonds((ObjectMolecule*)obj,0);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

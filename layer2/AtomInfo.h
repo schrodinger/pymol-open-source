@@ -16,7 +16,6 @@ Z* -------------------------------------------------------------------
 #ifndef _H_AtomInfo
 #define _H_AtomInfo
 
-
 #include"Rep.h"
 
 #define cResnLen 5
@@ -31,6 +30,23 @@ Z* -------------------------------------------------------------------
 #define cAtomInfoLinear 2
 #define cAtomInfoSingle 1
 #define cAtomInfoNone 5
+
+
+#define cAN_H   1
+#define cAN_C   6
+#define cAN_N   7
+#define cAN_O   8
+#define cAN_F   9
+#define cAN_Na 11
+#define cAN_Mg 12
+#define cAN_P  15
+#define cAN_S  16
+#define cAN_Cl 17
+#define cAN_K  19
+#define cAN_Ca 20
+#define cAN_Zn 30
+#define cAN_Br 35
+#define cAN_I  53
 
 typedef char Chain[2];
 
@@ -74,6 +90,7 @@ typedef struct AtomInfoType {
   signed char deleteFlag;
   signed char masked;
   signed char protected;
+  signed char protons;
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
@@ -81,6 +98,7 @@ void AtomInfoAssignParameters(AtomInfoType *I);
 void AtomInfoFreeSortedIndexes(int *index,int *outdex);
 void AtomInfoPrimeColors(void);
 int AtomInfoGetColor(AtomInfoType *at1);
+int AtomInfoGetExpectedValence(AtomInfoType *I);
 
 int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2);

@@ -191,6 +191,59 @@ int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2)
   return 0;
 }
 
+int AtomInfoGetExpectedValence(AtomInfoType *I) {
+  int result=-1; /* negative indicates minimum expected valence (abs)
+                but it could be higher  */
+
+  if(I->formalCharge==0) {
+    switch(I->protons) {
+    case cAN_H : result= 1; break;
+    case cAN_C : result= 4; break;
+    case cAN_N : result= 3; break;
+    case cAN_O : result= 2; break;
+    case cAN_F : result= 1; break;
+    case cAN_Cl: result= 1; break;
+    case cAN_Br: result= 1; break;
+    case cAN_I : result= 1; break;
+    case cAN_Na: result= 1; break; 
+    case cAN_Ca: result= 1; break; 
+    case cAN_K : result= 1; break;
+    case cAN_Mg: result= 2; break;
+    case cAN_Zn: result=-1; break;
+    case cAN_S : result=-2; break;
+    case cAN_P : result=-3; break;
+    }
+  } else if(I->formalCharge==1) {
+    switch(I->protons) {
+    case cAN_N : result= 4; break;
+    case cAN_O : result= 3; break;
+    case cAN_Na: result= 0; break; 
+    case cAN_Ca: result= 0; break; 
+    case cAN_K : result= 0; break;
+    case cAN_Mg: result= 1; break; 
+    case cAN_Zn: result=-1; break;
+    case cAN_S : result=-2; break;
+    case cAN_P : result=-3; break;
+    }
+  } else if(I->formalCharge==-1) {
+    switch(I->protons) {
+    case cAN_N : result= 2; break;
+    case cAN_O : result= 1; break;
+    case cAN_C : result= 3; break;
+    case cAN_Zn: result=-1; break;
+    case cAN_S : result=-2; break;
+    case cAN_P : result=-3; break;
+    }
+  } else if(I->formalCharge==2) {
+    switch(I->protons) {
+    case cAN_Mg: result= 0; break;
+    case cAN_Zn: result=-1; break;
+    case cAN_S : result=-2; break;
+    case cAN_P : result=-3; break;
+    }
+  }
+  return(result);
+}
 void AtomInfoAssignParameters(AtomInfoType *I)
 {
   char *n,*e;
@@ -320,6 +373,50 @@ void AtomInfoAssignParameters(AtomInfoType *I)
       vdw=1.8;
       break;
     }
+
+  e = I->elem;
+  if(!e[1]) { /* single letter */
+    switch(e[0]) {
+    case 'H': I->protons=cAN_H; break;
+    case 'C': I->protons=cAN_C; break;
+    case 'N': I->protons=cAN_N; break;
+    case 'O': I->protons=cAN_O; break;
+    case 'F': I->protons=cAN_F; break;
+    case 'S': I->protons=cAN_S; break;
+    case 'P': I->protons=cAN_P; break;
+    case 'K': I->protons=cAN_K; break;
+    case 'I': I->protons=cAN_I; break;
+    }
+  } else {
+    switch(e[0]) {
+    case 'C':
+      switch(e[1]) {
+      case 'L':
+      case 'l': I->protons=cAN_Cl; break;
+      case 'A':
+      case 'a': I->protons=cAN_Ca; break;
+      }
+      break;
+    case 'B':
+      switch(e[1]) {
+      case 'R':
+      case 'r': I->protons=cAN_Br; break;
+      }
+      break;
+    case 'M':
+      switch(e[1]) {
+      case 'G':
+      case 'g': I->protons=cAN_Mg; break;
+      }
+      break;
+    case 'Z':
+      switch(e[1]) {
+      case 'N':
+      case 'n': I->protons=cAN_Zn; break;
+      }
+      break;
+    }
+  }
   if(I->vdw==0.0)
     I->vdw = vdw;
 }

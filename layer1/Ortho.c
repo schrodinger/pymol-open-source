@@ -381,7 +381,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
   OrthoObject *I=&Ortho;
   char buffer[OrthoLineLength];
   int curLine;
-
+  
   if(!I->InputFlag) 
 	 {
 	 if(I->Saved[0]) 
@@ -456,13 +456,15 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 		  }
 		break;
     case 5: /* CTRL E -- ending */
-      I->CursorChar=-1;
+      if(OrthoArrowsGrabbed())
+        I->CursorChar=-1;
       break;
     case 1: /* CTRL A -- beginning */
-      if(I->CurChar)
-        I->CursorChar=I->PromptChar;        
+      if(OrthoArrowsGrabbed())
+        if(I->CurChar)
+          I->CursorChar=I->PromptChar;        
       break;
-	 case 9: /* tab */
+	 case 9: /* CTRL I -- tab */
       if(I->SplashFlag) {
         OrthoRemoveSplash();
       } else {
@@ -471,25 +473,27 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
           SettingSet(cSetting_overlay,(float)(!((int)SettingGet(cSetting_overlay))));
       }
 		break;
-	 case 13:
+	 case 13: /* CTRL M -- carriage return */
       OrthoParseCurrentLine();
 		break;
 	 case 11: /* CTRL K -- truncate */
-      if(I->CursorChar>=0) { 
-        I->Line[I->CurLine&OrthoSaveLines][I->CursorChar]=0;
-        I->CurChar=I->CursorChar;
-        I->CursorChar=-1;
-      }
+      if(OrthoArrowsGrabbed())
+        if(I->CursorChar>=0) { 
+          I->Line[I->CurLine&OrthoSaveLines][I->CursorChar]=0;
+          I->CurChar=I->CursorChar;
+          I->CursorChar=-1;
+        }
       break;
-	 case 18:
-		SceneRay();
-		break;
-    case 22:
+    case 22: /* CTRL V -- paste */
       PBlockAndUnlockAPI();
       PRunString("cmd.paste()");
       PLockAPIAndUnblock();
       break;
 	 default:
+      PBlockAndUnlockAPI();
+      sprintf(buffer,"cmd.ctrl_key('%c')",k);
+      /*PRunString(buffer);*/
+      PLockAPIAndUnblock();      
 		break;
 	 }
   MainDirty();

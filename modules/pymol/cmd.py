@@ -3082,6 +3082,29 @@ special = {
    108      : [ 'insert'    , rock                   , 0 , None ]   
 }
 
+ctrl = {
+   'b' : [ None                   , 0 , None ],
+   'c' : [ None                   , 0 , None ],   
+   'f' : [ None                   , 0 , None ],   
+   'g' : [ None                   , 0 , None ],
+   'h' : [ None                   , 0 , None ],   
+   'j' : [ None                   , 0 , None ],
+   'k' : [ None                   , 0 , None ],   
+   'l' : [ None                   , 0 , None ],   
+   'n' : [ None                   , 0 , None ],   
+   'o' : [ None                   , 0 , None ],   
+   'p' : [ None                   , 0 , None ],
+   'q' : [ None                   , 0 , None ],   
+   'r' : [ ray                    , 0 , None ],   
+   's' : [ None                   , 0 , None ],
+   't' : [ None                   , 0 , None ],   
+   'u' : [ None                   , 0 , None ],   
+   'v' : [ None                   , 0 , None ],
+   'w' : [ None                   , 0 , None ],   
+   'x' : [ None                   , 0 , None ],
+   'y' : [ None                   , 0 , None ],
+   'z' : [ None                   , 0 , None ],   
+   }
 class loadable:
    pdb = 0
    mol = 1
