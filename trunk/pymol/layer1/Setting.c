@@ -1200,6 +1200,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_surface_quality:
   case cSetting_surface_mode:
+  case cSetting_surface_dots:
   case cSetting_surface_proximity:
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
     SceneChanged();
@@ -2191,6 +2192,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_label_font_id,0);
   SettingSet_b(I,cSetting_pdb_conect_all,0);
   SettingSet_s(I,cSetting_button_mode_name,"");
+  SettingSet_b(I,cSetting_surface_dots,0);
 
 }
 

@@ -113,45 +113,129 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
     alpha=1.0F;
   if(ray) {
     ray->fTransparentf(ray,1.0F-alpha);
-	 c=I->NT;
-    if(I->oneColorFlag) {
-      col=ColorGet(I->oneColor);
-      while(c--)
-        {
-          if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-             ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
-            ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
-                              vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
-                              col,col,col);
-          t+=3;
-        }
+    if(!I->S) {
+      /* dot surface */
+
+      float radius;
+      
+      radius = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_radius);
+      
+      if(radius==0.0F) {
+        radius = ray->PixelRadius*SettingGet_f(I->R.cs->Setting,
+                                               I->R.obj->Setting,
+                                               cSetting_dot_width)/1.4142F;
+      }
+      
+      if(I->oneColorFlag) {
+        ray->fColor3fv(ray,ColorGet(I->oneColor));
+      }
+      
+      if(c) 
+        while(c--)
+          {
+            if(*vi) {
+              if(!I->oneColorFlag) {
+                ray->fColor3fv(ray,vc);
+              }
+              ray->fSphere3fv(ray,v,radius);
+            }
+            vi++;
+            vc+=3;
+            v+=3;
+          }
     } else {
-      while(c--)
-        {
-          if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-             ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
-          if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2)))))
-            ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
-                              vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
-                              vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
-          t+=3;
-        }
+      c=I->NT;
+
+      if(I->oneColorFlag) {
+        col=ColorGet(I->oneColor);
+        while(c--)
+          {
+            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
+              ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
+                                vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
+                                col,col,col);
+            t+=3;
+          }
+      } else {
+        while(c--)
+          {
+            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
+              if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2)))))
+                ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
+                                  vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
+                                  vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
+            t+=3;
+          }
+      }
     }
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-
-
-
+    
+    
+    
     if(I->debug)
       CGORenderGL(I->debug,NULL,NULL,NULL);
-	 if(I->S) {
+	 if(!I->S) {
+      /* no triangle information, so we're rendering dots only */
+
+      int use_dlst;
+      use_dlst = (int)SettingGet(cSetting_use_display_lists);
+      if(use_dlst&&I->R.displayList) {
+        glCallList(I->R.displayList);
+      } else { 
+        
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
+          }
+        }
+        
+        glPointSize(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
+        
+        if(c) {
+          glColor3f(1.0,0.0,0.0);
+          glBegin(GL_POINTS);
+          SceneResetNormal(true);
+          if(I->oneColorFlag) {
+            glColor3fv(ColorGet(I->oneColor));
+          }
+
+          while(c--)
+            {
+              if(*vi) {
+                if(!I->oneColorFlag) {
+                  glColor3fv(vc);
+                }
+                glNormal3fv(vn);
+                glVertex3fv(v);
+              }
+              vi++;
+              vc+=3;
+              vn+=3;
+              v+=3;
+            }
+          glEnd();
+        }
+        
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
+        }
+      } else {
+      /* we're rendering triangles */
+      
       if(alpha!=1.0) {
-
+        
         t_mode  = SettingGet_i(I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency_mode);
-
+          
         if(t_mode) {
-
+            
           float **t_buf=NULL,**tb;
           float *z_value=NULL,*zv;
           int *ix=NULL;
@@ -277,8 +361,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           FreeP(t_buf);
         } else { /* fast and ugly */
           /*          glCullFace(GL_BACK);
-          glEnable(GL_CULL_FACE);
-          glDepthMask(GL_FALSE);*/
+                      glEnable(GL_CULL_FACE);
+                      glDepthMask(GL_FALSE);*/
           if(I->allVisibleFlag) {
             if(I->oneColorFlag) {
               col = ColorGet(I->oneColor);
@@ -706,7 +790,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       if(ai1->visRep[cRepSurface]&&
          (inclH||(!ai1->hydrogen))&&
          ((!cullByFlag)||
-            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+          (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
         *ap = 2; 
       else 
         *ap = 0;
@@ -849,7 +933,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
   float *v0=NULL,*v,*vn=NULL,*vn0=NULL,*extent=NULL;
   int SurfaceFlag = false;
   float probe_radius,probe_radius2;
-  float probe_rad_tol,probe_rad_tol2;
+  float probe_rad_more,probe_rad_more2;
+  float probe_rad_less,probe_rad_less2;
   int inclH = true;
   int cullByFlag = false;
   int flag,*dot_flag,*p;
@@ -859,6 +944,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int surface_mode;
   int *present = NULL,*ap;
   int pres_flag;
+  int surface_dots;
   SphereRec *sp = Sphere0;
   SphereRec *ssp = Sphere0;
   AtomInfoType *ai1,*ai2;
@@ -875,6 +961,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj);
 
   surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+  surface_dots = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_dots);
 
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
@@ -900,11 +987,11 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   surface_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
   if(surface_quality>=3) { /* perfect but totally impractical */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/9;
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
     sp=Sphere4;
     ssp=Sphere4;
   } else if(surface_quality>=2) { /* nearly perfect */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
     sp=Sphere3;
     ssp=Sphere3;
   } else if(surface_quality>=1) { /* good */
@@ -931,8 +1018,15 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   probe_radius2 = probe_radius*probe_radius;
-  probe_rad_tol = probe_radius + solv_tole;
-  probe_rad_tol2 = probe_rad_tol * probe_rad_tol;
+  probe_rad_more = probe_radius*(1.0F+solv_tole);
+  probe_rad_more2 = probe_rad_more * probe_rad_more;
+
+  if(surface_dots) { /* dot surface */
+    probe_rad_less = probe_radius*(1.0F-solv_tole);
+  } else { /* solid surface */
+    probe_rad_less = probe_radius;
+  }
+  probe_rad_less2 = probe_rad_less * probe_rad_less;
 
   I->N=0;
   I->NT=0;
@@ -1043,7 +1137,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
     
 	 RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present);
 
-	 solv_map=MapNew(probe_radius,I->Dot,I->NDot,extent);
+	 solv_map=MapNew(probe_rad_less,I->Dot,I->NDot,extent);
 	 map=MapNewFlagged(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
 
     /*    I->debug=CGONew();
@@ -1058,123 +1152,66 @@ Rep *RepSurfaceNew(CoordSet *cs)
 		  MapSetupExpress(solv_map);
 		  MapSetupExpress(map);
 
-#if _PYMOL_UNUSED
-        for(a=0;a<cs->NIndex;a++)
-          {
-            OrthoBusyFast(a+cs->NIndex,cs->NIndex*5); /* 1/5 - 2/5 */
-            ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-            if(present)
-              pres_flag=present[a];
-            else
-              pres_flag=((inclH||(!ai1->hydrogen))&&
-                             ((!cullByFlag)||
-                              (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore)))));
-            if(pres_flag) {
-              c1=*(cs->Color+a);
-              v0 = cs->Coord+3*a;
-              vdw = ai1->vdw;
-              
-              for(b=0;b<sp->nDot;b++)
-                {
-                  v1[0]=v0[0]+vdw*sp->dot[b][0];
-                  v1[1]=v0[1]+vdw*sp->dot[b][1];
-                  v1[2]=v0[2]+vdw*sp->dot[b][2];
-                  
-                  flag=true;
-                  
-                  i=*(MapLocusEStart(map,v1));
-                  if(i) {
-                    j=map->EList[i++];
-                    while(j>=0) {
-                      ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                      if(present)
-                        pres_flag=present[j];
-                      else
-                        pres_flag=((inclH||(!ai2->hydrogen))&&
-                                   ((!cullByFlag)||
-                                    (!(ai2->flags&cAtomFlag_ignore))));
-                      if(pres_flag)
-                        if(j!=a)
-                          if(within3f(cs->Coord+3*j,v1,ai2->vdw))
-                            {
-                              flag=false;
-                              break;
-                            }
-                      j=map->EList[i++];
-                    }
-                  }
-                  if(0&&flag) /* doesn't intersect any atom */
-                    {
-                      flag=true;
-                      i=*(MapLocusEStart(solv_map,v1));
-                      if(i) {
-                        j=solv_map->EList[i++];
-                        while(j>=0) {
-                          if(within3fsq(I->Dot+3*j,v1,probe_rad_tol,probe_rad_tol2))
-                            {
-                              flag=false;
-                              break;
-                            }
-                          j=solv_map->EList[i++];
-                        }
-                      }
-                      if(!flag) /* appropriately close to a water center */
-                        {
-                          *(v++)=v1[0];
-                          *(v++)=v1[1];
-                          *(v++)=v1[2];
-                          *(vn++)=sp->dot[b][0];
-                          *(vn++)=sp->dot[b][1];
-                          *(vn++)=sp->dot[b][2];
-                          I->N++;
-                        }
-                    }
-                }
-            }
-          }
-
-        PRINTFD(FB_RepSurface)
-          " RepSurfaceNew-DEBUG: convex surfaces complete...\n"
-          ENDFD;
-#endif
-
 		  if(I->NDot) {
 
           Vector3f *dot = NULL;
-
+          
           dot=Alloc(Vector3f,sp->nDot);
           for(b=0;b<sp->nDot;b++) {
             scale3f(sp->dot[b],probe_radius,dot[b]);
           }
           v0 = I->Dot;
 
-			 /* concave surfaces - SLOW */
 			 for(a=0;a<I->NDot;a++)
 				{
               OrthoBusyFast(a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
 				  for(b=0;b<sp->nDot;b++)
 					 {
+                  register int ii;
 						v[0]=v0[0]+dot[b][0];
 						v[1]=v0[1]+dot[b][1];
 						v[2]=v0[2]+dot[b][2];
 						flag=true;
-						i=*(MapLocusEStart(solv_map,v));
-						if(i) {
-						  j=solv_map->EList[i++];
-						  while(j>=0) {
-							 if(j!=a) 
+						ii=*(MapLocusEStart(solv_map,v));
+						if(ii) {
+                    register int jj;
+                    register int *elist = solv_map->EList;
+                    register float *i_dot = I->Dot;
+                    register float v_0=v[0], v_1=v[1], v_2=v[2];
+                    register float dist=probe_rad_less;
+                    register float dist2=probe_rad_less2;
+                    register float *v1,dx,dy,dz;
+                    jj=elist[ii++];
+                    v1 = i_dot + 3*jj;                          
+						  while(jj>=0) {
+							 if(jj!=a) 
 								{
-								  if(within3fsq(I->Dot+3*j,v,probe_radius,probe_radius2)) {
-									 flag=false;
-									 break;
-								  }
+                          /* huge bottleneck -- optimized for superscaler processors */
+                          dx = v1[0]-v_0;
+                          dy = v1[1]-v_1;
+                          dz = v1[2]-v_2;
+                          dx = fabs(dx);
+                          dy = fabs(dy);
+                          if(!(dx>dist)) {
+                            dx = dx * dx;
+                            if(!(dy>dist)) {
+                              dz = fabs(dz);
+                              dy = dy * dy;
+                              if(!(dz>dist)) {
+                                dx = dx + dy;
+                                dz = dz * dz;
+                                if(!(dx>dist2)) 
+                                  if((dx + dz)<=dist2) { flag = false; break; }
+                              }
+                            }
+                          }
 								}
-							 j=solv_map->EList[i++];
+							 jj=elist[ii++];
+                      v1 = i_dot + 3*jj;                          
 						  }
 						}
 						if(flag)
 						  {
-							 flag=true;
 							 i=*(MapLocusEStart(map,v));
 							 if(i) {
 								j=map->EList[i++];
@@ -1188,7 +1225,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
                                         (!(ai2->flags&cAtomFlag_ignore))));
                           if(pres_flag)
 									 if(j!=a)
-										if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_rad_tol))
+										if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_rad_more))
 										  {
 											 flag=false;
 											 break;
@@ -1226,11 +1263,11 @@ Rep *RepSurfaceNew(CoordSet *cs)
       " RepSurface: %i surface points.\n",I->N
       ENDFB;
 
-	 if(I->N) 
-		{
-		  dot_flag=Alloc(int,I->N);
-		  for(a=0;a<I->N;a++) dot_flag[a]=1;
-		  map=MapNew(minimum_sep,I->V,I->N,extent);
+    if(I->N)
+      {
+        dot_flag=Alloc(int,I->N);
+        for(a=0;a<I->N;a++) dot_flag[a]=1;
+        map=MapNew(minimum_sep,I->V,I->N,extent);
         MapSetupExpress(map);		  
         v=I->V;
         vn=I->VN;
@@ -1263,27 +1300,27 @@ Rep *RepSurfaceNew(CoordSet *cs)
         vn0=I->VN;
         vn=I->VN;
         p=dot_flag;
-		  c=I->N;
-		  I->N=0;
-		  for(a=0;a<c;a++)
-			 {
-				if(*(p++)) {
-				  *(v0++)=*(v++);
-				  *(v0++)=*(v++);
-				  *(v0++)=*(v++);
+        c=I->N;
+        I->N=0;
+        for(a=0;a<c;a++)
+          {
+            if(*(p++)) {
+              *(v0++)=*(v++);
+              *(v0++)=*(v++);
+              *(v0++)=*(v++);
               normalize3f(vn);
-				  *(vn0++)=*(vn++);
-				  *(vn0++)=*(vn++);
-				  *(vn0++)=*(vn++);
-				  I->N++;
-				} else {
-				  v+=3;
-				  vn+=3;
-				}
-			 }
-		  FreeP(dot_flag);
+              *(vn0++)=*(vn++);
+              *(vn0++)=*(vn++);
+              *(vn0++)=*(vn++);
+              I->N++;
+            } else {
+              v+=3;
+              vn+=3;
+            }
+          }
+        FreeP(dot_flag);
       }
-
+    
     if(I->N) {	
       I->V = ReallocForSure(I->V,float,(v0-I->V));
       I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
@@ -1302,10 +1339,15 @@ Rep *RepSurfaceNew(CoordSet *cs)
 	 OrthoBusyFast(3,5);
 
     if(I->N) {
-      I->T=TrianglePointsToSurface(I->V,I->VN,I->N,probe_radius,&I->NT,&I->S,extent);
-      PRINTFB(FB_RepSurface,FB_Details)
-        " RepSurface: %i triangles.\n",I->NT
-        ENDFB;
+      if(!surface_dots) {
+        float cutoff = minimum_sep*5.0F;
+        if(cutoff>probe_radius)
+          cutoff = probe_radius;
+        I->T=TrianglePointsToSurface(I->V,I->VN,I->N,cutoff,&I->NT,&I->S,extent);
+        PRINTFB(FB_RepSurface,FB_Details)
+          " RepSurface: %i triangles.\n",I->NT
+          ENDFB;
+      }
     } else {
       I->V = ReallocForSure(I->V,float,1);
       I->VN = ReallocForSure(I->VN,float,1);
@@ -1346,7 +1388,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 
   cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 
-  I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot);
+  I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot); 
   ErrChkPtr(I->Dot);
 
   probe_radius_plus = probe_radius * 1.5F;

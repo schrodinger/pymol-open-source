@@ -258,34 +258,46 @@ __inline__ static double inline_diffsq3f ( float *v1, float *v2 )
   register double dx,dy,dz;
   dx = (v1[0]-v2[0]);
   dy = (v1[1]-v2[1]);
+  dx = dx * dx;
   dz = (v1[2]-v2[2]);
-
-  return( dx*dx + dy*dy + dz*dz );
-
+  dy = dy*dy;
+  return( dz*dz + (dx + dy) );
 }
 
 __inline__ static int inline_within3f(float *v1,float *v2,float dist)
 {
-  register float dx,dy,dz;
-  dx = (v1[0]-v2[0]);
-  if(fabs(dx)>dist) return(0);
-  dy = (v1[1]-v2[1]);
-  if(fabs(dy)>dist) return(0);
-  dz = (v1[2]-v2[2]);
-  if(fabs(dz)>dist) return(0);
-  return((dx*dx + dy*dy + dz*dz)<=(dist*dist));
+  register float dx,dy,dz,dist2;
+  dx = fabs(v1[0]-v2[0]);
+  dy = fabs(v1[1]-v2[1]);
+  if(dx>dist) return(0);
+  dz = fabs(v1[2]-v2[2]);
+  dx = dx * dx;
+  if(dy>dist) return(0);
+  dy = dy * dy;
+  dist2 = dist*dist;
+  if(dz>dist) return(0);
+  return(((dx + dy) + dz*dz)<=dist2);
 }
 
 __inline__ static int inline_within3fsq(float *v1,float *v2,float dist,float dist2)
 {
+  /* manually optimized to take advantage of parallel execution units */
   register float dx,dy,dz;
-  dx = (v1[0]-v2[0]);
-  if(fabs(dx)>dist) return(0);
-  dy = (v1[1]-v2[1]);
-  if(fabs(dy)>dist) return(0);
-  dz = (v1[2]-v2[2]);
-  if(fabs(dz)>dist) return(0);
-  return((dx*dx + dy*dy + dz*dz)<=(dist2));
+  dx = v1[0]-v2[0];
+  dy = v1[1]-v2[1];
+  dx = fabs(dx);
+  dy = fabs(dy);
+  if(dx>dist) return(0);
+  dz = v1[2]-v2[2];
+  dx = dx * dx;
+  if(dy>dist) return(0);
+  dz = fabs(dz);
+  dy = dy * dy;
+  if(dz>dist) return(0);
+  dx = dx + dy;
+  dz = dz * dz;
+  if(dx>dist2) return(0);
+  return((dx + dz)<=(dist2));
 }
 
 

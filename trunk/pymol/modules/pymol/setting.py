@@ -368,7 +368,8 @@ if __name__=='pymol.setting':
       label_font_id             = 328
       pdb_conect_all            = 329
       button_mode_name      = 330
-      
+      surface_dots          = 331
+
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []
