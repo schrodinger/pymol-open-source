@@ -1821,11 +1821,7 @@ class PMGApp(AbstractApp):
       self.menuBar.addcascademenu('Scene', 'Store', 'Store',
                                   label=self.pad+'Store')
 
-      self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
-                                  label=self.pad+'Clear')
-
       self.menuBar.addmenuitem('Scene', 'separator', '')
-
       
       for x in range(1,13):
          self.menuBar.addmenuitem('Store', 'checkbutton', 'F%d'%x,
@@ -1833,17 +1829,25 @@ class PMGApp(AbstractApp):
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d,store"%x))
 
-         self.menuBar.addmenuitem('Clear', 'checkbutton', 'F%d'%x,
-                                  label=self.pad+'F%d'%x,
-                                  variable = self.setting.F[x],
-                                  command = lambda x=x: cmd.do("scene F%d,clear"%x))
 
          self.menuBar.addmenuitem('Scene', 'checkbutton', 'Recall F%d'%x,
                                   label=self.pad+'Recall F%d'%x,
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d"%x))
 
+      self.menuBar.addmenuitem('Scene', 'separator', '')
+
+
+      self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
+                                  label=self.pad+'Clear')
+
+      for x in range(1,13):
          
+         self.menuBar.addmenuitem('Clear', 'checkbutton', 'F%d'%x,
+                               label=self.pad+'F%d'%x,
+                               variable = self.setting.F[x],
+                               command = lambda x=x: cmd.do("scene F%d,clear"%x))
+      
       self.menuBar.addmenu('Mouse', 'Mouse Configuration',tearoff=TRUE)
 
       self.menuBar.addcascademenu('Mouse', 'SelectionMode', 'Selection Mode',
