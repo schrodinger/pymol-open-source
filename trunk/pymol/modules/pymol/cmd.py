@@ -771,9 +771,11 @@ DEVELOPMENT TO DO
       if sys.platform[0:4]=='irix':
          if os.path.exists("/usr/gfx/setmon"):
             if flag:
-               os.system("/usr/gfx/setmon -n 1024x768_96s")
+               mode = os.environ.get('PYMOL_SGI_STEREO','1024x768_96s')
+               os.system("/usr/gfx/setmon -n "+mode)
             else:
-               os.system("/usr/gfx/setmon -n 72hz")
+               mode = os.environ.get('PYMOL_SGI_MONO','72hz')
+               os.system("/usr/gfx/setmon -n "+mode)
 
    # color alias interpretation
 

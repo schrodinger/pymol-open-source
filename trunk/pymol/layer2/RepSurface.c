@@ -405,11 +405,11 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           }
           if(I->allVisibleFlag) {
             if(I->oneColorFlag) {
-              if(use_dlst&&simplify) {
+              if(use_dlst&&simplify) { /* simplify: try to help display list optimizer */
                 glColor3fv(ColorGet(I->oneColor));
                 c=*(s++);
                 while(c) {
-                  glBegin(GL_TRIANGLES);
+                  glBegin(GL_TRIANGLES); 
                   s+=2;
                   while(c--)
                     {
@@ -449,7 +449,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
                 }
               } /* use_dlst&&simplify */
             } else {
-              if(use_dlst&&simplify) {
+              if(use_dlst&&simplify) {  /* simplify: try to help display list optimizer */
                 c=*(s++);
                 while(c) {
                   glBegin(GL_TRIANGLES);
