@@ -335,14 +335,25 @@ SEE ALSO
       finally:
          unlock()
 
-   def edit_mode(mode=None):
+   def edit_mode(active=1,quiet=1):
       # legacy function
       if len(mouse_ring):
-         mouse_mode = mouse_ring[0]
-         if mouse_mode[0:10]=='two_button':
-            mouse(action='two_button_editing',quiet=0)
-         elif mouse_mode[0:12] == 'three_button':
-            mouse(action='three_button_editing',quiet=0)
+         if active:
+            mouse_mode = mouse_ring[0]
+            if mouse_mode[0:10]=='two_button':
+               if mouse_mode!='two_button_editing':
+                  mouse(action='two_button_editing',quiet=quiet)
+            elif mouse_mode[0:12] == 'three_button':
+               if mouse_mode!='three_button_editing':
+                  mouse(action='three_button_editing',quiet=quiet)
+         else:
+            mouse_mode = mouse_ring[0]
+            if mouse_mode[0:10]=='two_button':
+               if mouse_mode!='two_button_viewing':               
+                  mouse(action='two_button_viewing',quiet=quiet)
+            elif mouse_mode[0:12] == 'three_button':
+               if mouse_mode!='three_button_viewing':
+                  mouse(action='three_button_viewing',quiet=quiet)
 
    #   try:
    #      lock()

@@ -3616,10 +3616,10 @@ char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only)
 
   while(ListIterate(I->Spec,rec,next)) {
     if(
-       (rec->type==cExecObject&&((!mode)||(mode==1)||(mode==3)))||
-       (rec->type==cExecSelection&&((!mode)||(mode==2)||(mode==3))))
+       (rec->type==cExecObject&&((!mode)||(mode==1)||(mode==3)||(mode==4)))||
+       (rec->type==cExecSelection&&((!mode)||(mode==2)||(mode==3)||(mode==5))))
       {
-        if((mode!=3)||(rec->name[0]!='_')) {
+        if((mode<3)||(rec->name[0]!='_')) {
           if((!enabled_only)||(rec->visible)) {
             stlen = strlen(rec->name);
             VLACheck(result,char,size+stlen+1);
@@ -3715,7 +3715,7 @@ int  ExecutiveInvert(PyMOLGlobals *G,int quiet)
   return(ok);
 }
 /*========================================================================*/
-void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode)
+void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor)
 {
   int i0=-1;
   int i1=-1;
@@ -3748,6 +3748,9 @@ void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode)
           op.ai=obj1->AtomInfo+i1;
           op.i1=mode;
           op.i2=0;
+          op.i3=recolor;
+          if(recolor)
+            op.i4=obj1->Obj.Color;
           ExecutiveObjMolSeleOp(G,sele2,&op);
         }
         SelectorDelete(G,tmp_fuse_sele);
@@ -4382,13 +4385,14 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state)
 #endif
 }
 /*========================================================================*/
-void ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,int source,int target,int discrete)
+void ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
+                           int source,int target,int discrete,int zoom)
 {
   int sele1;
 
   sele1=SelectorIndexByName(G,s1);
 
-  SelectorCreateObjectMolecule(G,sele1,name,target,source,discrete);
+  SelectorCreateObjectMolecule(G,sele1,name,target,source,discrete,zoom);
 }
 /*========================================================================*/
 void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)

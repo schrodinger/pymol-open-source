@@ -152,7 +152,11 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
       }
     } else {
       int use_dlst;
-
+      int ribbon_smooth;
+      
+      ribbon_smooth=SettingGet_i(G,NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
+      if(!ribbon_smooth)
+        glDisable(GL_LINE_SMOOTH);
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
@@ -176,12 +180,8 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
       
         if(c) {
         
-          int ribbon_smooth;
           int first = true;
         
-          ribbon_smooth=SettingGet_i(G,NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
-          if(!ribbon_smooth)
-            glDisable(GL_LINE_SMOOTH);
           glDisable(GL_LIGHTING);
           glBegin(GL_LINE_STRIP);
           while(c--)
@@ -205,13 +205,13 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
             }
           glEnd();
           glEnable(GL_LIGHTING);
-          if(SettingGet(G,cSetting_line_smooth))
-            glEnable(GL_LINE_SMOOTH);
         }
         if(use_dlst&&I->R.displayList) {
           glEndList();
         }
       }
+      if(SettingGetGlobal_b(G,cSetting_line_smooth))
+        glEnable(GL_LINE_SMOOTH);
     }
   }
 }

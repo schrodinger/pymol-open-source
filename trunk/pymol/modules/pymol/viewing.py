@@ -1757,7 +1757,7 @@ SEE ALSO
       finally:
          unlock()
 
-   def color(color,selection="(all)",quiet=1):
+   def color(color,selection="(all)",quiet=1,flags=0):
       '''
 DESCRIPTION
 
@@ -1783,7 +1783,7 @@ EXAMPLES
       #
       try:
          lock()
-         r = _cmd.color(str(color),str(selection),0,int(quiet))
+         r = _cmd.color(str(color),str(selection),int(flags),int(quiet))
       finally:
          unlock()
       if not r:

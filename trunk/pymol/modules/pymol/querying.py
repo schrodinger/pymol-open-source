@@ -632,7 +632,7 @@ DESCRIPTION
 
 PYMOL API
 
-   cmd.get_names( [string: "objects"|"selections"|"all"] )
+   cmd.get_names( [string: "objects"|"selections"|"all"|"public_objects"|"public_selections"] )
 
 NOTES
 
@@ -651,6 +651,10 @@ SEE ALSO
          mode = 0
       elif type=='public':
          mode = 3
+      elif type=='public_objects':
+         mode = 4
+      elif type=='public_selections':
+         mode = 5
       try:
          lock()
          r = _cmd.get_names(int(mode),int(enabled_only))

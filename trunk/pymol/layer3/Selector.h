@@ -50,7 +50,9 @@ float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,int sele2,int s
 DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,int mode,
                             float cutoff,float *result);
 int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele);
-void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,int target_state,int state,int discrete);
+void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
+                                  int target_state,int state,int discrete,
+                                  int zoom);
 int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
                             int sele3,int sele4,
                             char *fragPref,char *compName,int *bondMode);
