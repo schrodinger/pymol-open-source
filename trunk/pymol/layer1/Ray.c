@@ -341,7 +341,8 @@ void RayExpandPrimitives(CRay *I)
   float *v0,*v1,*n0,*n1;
   CBasis *basis;
   int nVert, nNorm;
- 
+  float voxel_floor;
+
   nVert=0;
   nNorm=0;
   for(a=0;a<I->NPrimitive;a++) {
@@ -372,8 +373,10 @@ void RayExpandPrimitives(CRay *I)
 
   VLACacheCheck(I->G,I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
 
+  voxel_floor=I->PixelRadius/2.0F;
+
   basis->MaxRadius = 0.0F;
-  basis->MinVoxel = I->PixelRadius/2.0F;
+  basis->MinVoxel = 0.0F;
   basis->NVertex=nVert;
   basis->NNormal=nNorm;
 
@@ -394,8 +397,8 @@ void RayExpandPrimitives(CRay *I)
 		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*necessary??*/
 		/*		if(basis->Radius[nVert]>basis->MinVoxel)
 				basis->MinVoxel=basis->Radius[nVert];*/
-		if(basis->MinVoxel<0.001F)
-		  basis->MinVoxel=0.001F;
+		if(basis->MinVoxel<voxel_floor)
+		  basis->MinVoxel=voxel_floor;
 		basis->Vert2Normal[nVert]=nNorm;
 		basis->Vert2Normal[nVert+1]=nNorm;
 		basis->Vert2Normal[nVert+2]=nNorm;
@@ -449,8 +452,8 @@ void RayExpandPrimitives(CRay *I)
 		I->Vert2Prim[nVert]=a;
 		basis->Radius[nVert]=I->Primitive[a].r1;
 		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*precompute*/
-		if(basis->MinVoxel<0.001F)
-        basis->MinVoxel=0.001F;
+		if(basis->MinVoxel<voxel_floor)
+        basis->MinVoxel=voxel_floor;
 		subtract3f(I->Primitive[a].v2,I->Primitive[a].v1,n0);
 		I->Primitive[a].l1=(float)length3f(n0);
 		normalize3f(n0);
