@@ -52,3 +52,21 @@ Have someone with experience go over the GL lighting and materials model.
 Add proper order of and precedence to the atom selection code.
 
 
+-- enhancements
+
+automatic differential coloring for carbons
+
+chainfit command for superimposing stretches of backbone sequence
+
+plain
+   disable 
+   enable
+
+show/hide representation caching
+
+-- bugs to fix
+
+orient can sometimes give an inverted matrix...
+
+wrap all lock's inside of try clauses
+
