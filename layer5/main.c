@@ -77,6 +77,9 @@ struct _CMain {
   int FinalInit;
   int TheWindow;
   int WindowIsVisible;
+  CPyMOLOptions *OwnedOptions;
+  /* if Main owns a reference to a copy of the startup options that
+     needs to be freed upon shutdown to fully scrub the heap */
 };
 
 /* global options */
@@ -657,6 +660,7 @@ void MainFree(void)
   PyMOLGlobals *G = PyMOL_GetGlobals(PyMOLInstance); /* temporary -- will change */
     
   int show_splash = G->Option->show_splash;
+  CPyMOLOptions *owned_options = G->Main->OwnedOptions;
 #ifdef WIN32
    int haveGUI = G->HaveGUI;
    int theWindow = G->Main->TheWindow;
@@ -671,12 +675,17 @@ void MainFree(void)
    PyMOL_Stop(PyMOLInstance);
    PyMOL_PopValidContext(PyMOLInstance);
 
+   FreeP(G->Main);   
    PyMOL_Free(PyMOLInstance);
 
-  if(show_splash) {
-    MemoryDebugDump();
-    printf(" PyMOL: normal program termination.\n");
-  }
+   if(owned_options)
+     PyMOLOptions_Free(owned_options); /* clean up launch options if we're supposed to */
+
+   if(show_splash) {
+     if(show_splash)  MemoryDebugDump();
+     printf(" PyMOL: normal program termination.\n");
+
+   }
   
 #ifdef WIN32
   if(haveGUI) p_glutDestroyWindow(theWindow);
@@ -927,7 +936,7 @@ BOOL WINAPI HandlerRoutine(
 void sharp3d_prepare_context(void);
 #endif
 
-static void launch(CPyMOLOptions *options)
+static void launch(CPyMOLOptions *options,int own_the_options)
 {
   int multisample_mask = 0;
   int theWindow = 0;
@@ -1050,6 +1059,9 @@ SetConsoleCtrlHandler(
 #endif
 
    MainInit(G);
+   if(own_the_options)
+     G->Main->OwnedOptions = options; 
+   /* make sure we can clean up these options later if we've been asked to do so */
    {
      CMain *I = G->Main;
      
@@ -1143,6 +1155,8 @@ int was_main(void)
    CPyMOLOptions *options = PyMOLOptions_New();
 
    if(options) {
+     int show_splash;
+
      PGetOptions(options);
 
      /* below need to be phased out by modifying code to use
@@ -1154,8 +1168,10 @@ int was_main(void)
      options->show_splash = 0;
 #endif
 
-     launch(options);
-     PyMOLOptions_Free(options);
+     show_splash = options->show_splash;
+
+     launch(options,true); 
+     /* this only returns when PyMOL is not running under GLUT */
 
    }
  }

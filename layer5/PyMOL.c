@@ -300,6 +300,7 @@ void PyMOL_Stop(CPyMOL *I)
 void PyMOL_Free(CPyMOL *I)
 {
   /* take PyMOL down gracefully */
+  PyMOLOptions_Free(I->G->Option);
   FreeP(I->G);
   FreeP(I);
 }
