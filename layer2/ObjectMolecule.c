@@ -2732,8 +2732,6 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
   oldNBond = I->NBond;
 
 
-  printf("merge %p %p\n",cs->Spheroid,cs->SpheroidNormal);
-
   /* first, sort the coodinate set */
   
   index=AtomInfoGetSortedIndex(ai,cs->NIndex,&outdex);
