@@ -301,8 +301,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                 if(sscanf(cc,"%f",&f3)==1) { /* not a periodic box record */
                   periodic=false;
                   p=p_save;
-                } else {
-                  periodic = true;
+                } else if(periodic) {
                   add[0]=box[0]*1000.0;
                   add[1]=box[1]*1000.0;
                   add[2]=box[2]*1000.0;
@@ -331,7 +330,6 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                     } else {
                       
                       /* compute average */
-                      
                       if(n_avg>1) {
                         fp=cs->Coord;
                         for(i=0;i<cs->NIndex;i++) {
@@ -2895,7 +2893,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
 
 }
 /*========================================================================*/
-void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
+void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
 {
   CoordSet *cs;
   float *spheroid = NULL;
@@ -2916,10 +2914,16 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   float spheroid_minimum = 0.02; /* minimum size - to insure valid normals */
   int row,*count=NULL,base;
   int nRow;
+  int first;
+  int last;
+  int current;
+  int cscount;
+  int n_state=0;
   sp=Sphere1;
   
   nRow = I->NAtom*sp->nDot;
-  spheroid=Alloc(float,nRow);
+
+
   center=Alloc(float,I->NAtom*3);
   count=Alloc(int,I->NAtom);
   fsum=Alloc(float,nRow);
@@ -2931,189 +2935,218 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   spheroid_fill=SettingGet(cSetting_spheroid_fill);
   /* first compute average coordinate */
 
-  v=center;
-  i = count;
-  for(a=0;a<I->NAtom;a++) {
-    *(v++)=0.0;
-    *(v++)=0.0;
-    *(v++)=0.0;
-    *(i++)=0;
-  }
-
-  for(b=0;b<I->NCSet;b++) {
-    cs=I->CSet[b];
-    if(cs) {
-      v = cs->Coord;
-      for(a=0;a<cs->NIndex;a++) {
-        a0=cs->IdxToAtm[a];
-        v0 = center+3*a0;
-        add3f(v,v0,v0);
-        (*(count+a0))++;
-        v+=3;
-      }
+  if(average<1)
+    average=I->NCSet;
+  current=0;
+  cscount=0;
+  while(current<I->NCSet) {
+    if(I->CSet[current]) {
+      if(!cscount)
+        first=current;
+      cscount++;
+      last=current+1;
     }
-  }
+    
+    if(cscount==average)
+      {
+        PRINTFB(FB_ObjectMolecule,FB_Details)
+          " ObjectMolecule: computing spheroid from states %d to %d.\n",
+                 first+1,last
+          ENDFB;
 
-  i=count;
-  v=center;
-  for(a=0;a<I->NAtom;a++) 
-    if(*i) {
-      (*(v++))/=(*i);
-      (*(v++))/=(*i);
-      (*(v++))/=(*i++);
-    } else {
-      v+=3;
-      i++;
-    }
+        spheroid=Alloc(float,nRow);
+        
+        v=center;
+        i = count;
+        for(a=0;a<I->NAtom;a++) {
+          *(v++)=0.0;
+          *(v++)=0.0;
+          *(v++)=0.0;
+          *(i++)=0;
+        }
 
-/* now go through and compute radial distances */
-
-  f = fsum;
-  s = spheroid;
-  for(a=0;a<nRow;a++) {
-    *(f++)=0.0;
-    *(s++)=0.0; 
-  }
-
-  v = max_sq;
-  for(a=0;a<I->NAtom;a++)
-    *(v++)=0.0;
-
-  for(b=0;b<I->NCSet;b++) {
-    cs=I->CSet[b];
-    if(cs) {
-      v = cs->Coord;
-      for(a=0;a<cs->NIndex;a++) {
-        a0=cs->IdxToAtm[a];
-        base = (a0*sp->nDot);
-        v0 = center+(3*a0);
-        subtract3f(v,v0,d0); /* subtract from average */
-        l = lengthsq3f(d0);
-        if(l>max_sq[a0])
-          max_sq[a0]=l;
-        if(l>0.0) {
-          scale3f(d0,1.0/sqrt(l),n0);
-          for(c=0;c<sp->nDot;c++) { /* average over spokes */
-            dp=dot_product3f(sp->dot[c].v,n0);
-            row = base + c;
-            if(dp>=0.0) {
-              ang = acos(dp);
-              ang=(ang/spheroid_smooth)*(cPI/2.0); 
-              if(ang>spheroid_fill)
-                ang=spheroid_fill;
-              /* take envelop to zero over that angle */
-              if(ang<=(cPI/2.0)) {
-                dp = cos(ang);
-                fsum[row] += dp*dp;
-                spheroid[row] += l*dp*dp*dp;
-              }
+        for(b=first;b<last;b++) {
+          cs=I->CSet[b];
+          if(cs) {
+            v = cs->Coord;
+            for(a=0;a<cs->NIndex;a++) {
+              a0=cs->IdxToAtm[a];
+              v0 = center+3*a0;
+              add3f(v,v0,v0);
+              (*(count+a0))++;
+              v+=3;
             }
           }
         }
-        v+=3;
-      }
-    }
-  }
 
-  f=fsum;
-  s=spheroid;
-  for(a=0;a<I->NAtom;a++) {
-    min_dist = spheroid_ratio*sqrt(max_sq[a]);
-    if(min_dist<spheroid_minimum)
-      min_dist=spheroid_minimum;
-    for(b=0;b<sp->nDot;b++) {
-      if(*f>R_SMALL4) {
-        (*s)=sqrt((*s)/(*(f++))); /* we put the "rm" in "rms" */
-      } else {
-        f++;
-      }
-      if(*s<min_dist)
-        *s=min_dist;
-      s++;
-    }
-  }
+        i=count;
+        v=center;
+        for(a=0;a<I->NAtom;a++) 
+          if(*i) {
+            (*(v++))/=(*i);
+            (*(v++))/=(*i);
+            (*(v++))/=(*i++);
+          } else {
+            v+=3;
+            i++;
+          }
 
-  /* set frame 0 coordinates to the average */
+        /* now go through and compute radial distances */
 
-  for(b=0;b<I->NCSet;b++) {
-    cs=I->CSet[b];
-    if(cs) {
-      v = cs->Coord;
-      for(a=0;a<cs->NIndex;a++) {
-        a0=cs->IdxToAtm[a];
-        v0 = center+3*a0;
-        copy3f(v0,v);
-        v+=3;
-      }
-    }
-  }
+        f = fsum;
+        s = spheroid;
+        for(a=0;a<nRow;a++) {
+          *(f++)=0.0;
+          *(s++)=0.0; 
+        }
 
-  /* now compute surface normals */
+        v = max_sq;
+        for(a=0;a<I->NAtom;a++)
+          *(v++)=0.0;
 
-  norm = Alloc(float,nRow*3);
-  for(a=0;a<nRow;a++) {
-    zero3f(norm+a*3);
-  }
-  for(a=0;a<I->NAtom;a++) {
-    base = a*sp->nDot;
-    for(b=0;b<sp->NTri;b++) {
-      t0 = sp->Tri[b*3  ];
-      t1 = sp->Tri[b*3+1];
-      t2 = sp->Tri[b*3+2];
-      bt0 = base + t0;
-      bt1 = base + t1;
-      bt2 = base + t2;
-      copy3f(sp->dot[t0].v,p0);
-      copy3f(sp->dot[t1].v,p1);
-      copy3f(sp->dot[t2].v,p2);
-      /*      scale3f(sp->dot[t0].v,spheroid[bt0],p0);
-      scale3f(sp->dot[t1].v,spheroid[bt1],p1);
-      scale3f(sp->dot[t2].v,spheroid[bt2],p2);*/
-      subtract3f(p1,p0,d1);
-      subtract3f(p2,p0,d2);
-      cross_product3f(d1,d2,n0);
-      normalize3f(n0);
-      v = norm+bt0*3;
-      add3f(n0,v,v);
-      v = norm+bt1*3;
-      add3f(n0,v,v);
-      v = norm+bt2*3;
-      add3f(n0,v,v);
-    }
-  }
+        for(b=first;b<last;b++) {
+          cs=I->CSet[b];
+          if(cs) {
+            v = cs->Coord;
+            for(a=0;a<cs->NIndex;a++) {
+              a0=cs->IdxToAtm[a];
+              base = (a0*sp->nDot);
+              v0 = center+(3*a0);
+              subtract3f(v,v0,d0); /* subtract from average */
+              l = lengthsq3f(d0);
+              if(l>max_sq[a0])
+                max_sq[a0]=l;
+              if(l>0.0) {
+                scale3f(d0,1.0/sqrt(l),n0);
+                for(c=0;c<sp->nDot;c++) { /* average over spokes */
+                  dp=dot_product3f(sp->dot[c].v,n0);
+                  row = base + c;
+                  if(dp>=0.0) {
+                    ang = acos(dp);
+                    ang=(ang/spheroid_smooth)*(cPI/2.0); 
+                    if(ang>spheroid_fill)
+                      ang=spheroid_fill;
+                    /* take envelop to zero over that angle */
+                    if(ang<=(cPI/2.0)) {
+                      dp = cos(ang);
+                      fsum[row] += dp*dp;
+                      spheroid[row] += l*dp*dp*dp;
+                    }
+                  }
+                }
+              }
+              v+=3;
+            }
+          }
+        }
 
-  f=norm;
-  for(a=0;a<I->NAtom;a++) {
-    base = a*sp->nDot;
-    for(b=0;b<sp->nDot;b++) {
-      normalize3f(f);
-      f+=3;
-    }
-  }
+        f=fsum;
+        s=spheroid;
+        for(a=0;a<I->NAtom;a++) {
+          min_dist = spheroid_ratio*sqrt(max_sq[a]);
+          if(min_dist<spheroid_minimum)
+            min_dist=spheroid_minimum;
+          for(b=0;b<sp->nDot;b++) {
+            if(*f>R_SMALL4) {
+              (*s)=sqrt((*s)/(*(f++))); /* we put the "rm" in "rms" */
+            } else {
+              f++;
+            }
+            if(*s<min_dist)
+              *s=min_dist;
+            s++;
+          }
+        }
+
+        /* set frame 0 coordinates to the average */
+
+         cs=I->CSet[first];
+         if(cs) {
+           v = cs->Coord;
+           for(a=0;a<cs->NIndex;a++) {
+             a0=cs->IdxToAtm[a];
+             v0 = center+3*a0;
+             copy3f(v0,v);
+             v+=3;
+           }
+         }
+
+        /* now compute surface normals */
+
+        norm = Alloc(float,nRow*3);
+        for(a=0;a<nRow;a++) {
+          zero3f(norm+a*3);
+        }
+        for(a=0;a<I->NAtom;a++) {
+          base = a*sp->nDot;
+          for(b=0;b<sp->NTri;b++) {
+            t0 = sp->Tri[b*3  ];
+            t1 = sp->Tri[b*3+1];
+            t2 = sp->Tri[b*3+2];
+            bt0 = base + t0;
+            bt1 = base + t1;
+            bt2 = base + t2;
+            copy3f(sp->dot[t0].v,p0);
+            copy3f(sp->dot[t1].v,p1);
+            copy3f(sp->dot[t2].v,p2);
+            /*      scale3f(sp->dot[t0].v,spheroid[bt0],p0);
+                    scale3f(sp->dot[t1].v,spheroid[bt1],p1);
+                    scale3f(sp->dot[t2].v,spheroid[bt2],p2);*/
+            subtract3f(p1,p0,d1);
+            subtract3f(p2,p0,d2);
+            cross_product3f(d1,d2,n0);
+            normalize3f(n0);
+            v = norm+bt0*3;
+            add3f(n0,v,v);
+            v = norm+bt1*3;
+            add3f(n0,v,v);
+            v = norm+bt2*3;
+            add3f(n0,v,v);
+          }
+        }
+
+        f=norm;
+        for(a=0;a<I->NAtom;a++) {
+          base = a*sp->nDot;
+          for(b=0;b<sp->nDot;b++) {
+            normalize3f(f);
+            f+=3;
+          }
+        }
   
-  if(I->CSet[0]) {
-    I->CSet[0]->Spheroid=spheroid;
-    I->CSet[0]->SpheroidNormal=norm;
-    I->CSet[0]->NSpheroid=nRow;
-  } else {
-    FreeP(spheroid);
-    FreeP(norm);
-  }
+        if(I->CSet[first]) {
+          I->CSet[first]->Spheroid=spheroid;
+          I->CSet[first]->SpheroidNormal=norm;
+          I->CSet[first]->NSpheroid=nRow;
+        } else {
+          FreeP(spheroid);
+          FreeP(norm);
+        }
 
+        for(b=first+1;b<last;b++) { 
+          cs=I->CSet[b];
+          if(cs) {
+            if(cs->fFree)
+              cs->fFree(cs);
+          }
+          I->CSet[b]=NULL;
+        }
+        
+        if(n_state!=first) {
+          I->CSet[n_state]=I->CSet[first];
+          I->CSet[first]=NULL;
+        }
+        n_state++;
+
+        cscount=0;
+      }
+    current++;
+  }
+  I->NCSet=n_state;
   FreeP(center);
   FreeP(count);
   FreeP(fsum);
   FreeP(max_sq);
-
-  for(b=1;b<I->NCSet;b++) { 
-    cs=I->CSet[b];
-    if(cs) {
-      if(cs->fFree)
-        cs->fFree(cs);
-    }
-    I->CSet[b]=NULL;
-  }
-  I->NCSet=1;
 
   ObjectMoleculeInvalidate(I,cRepSphere,cRepInvProp);
 }

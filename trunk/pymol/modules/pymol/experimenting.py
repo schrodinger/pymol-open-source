@@ -41,11 +41,25 @@ def focus():  # BROKEN
       unlock()
    return r
 
-def spheroid(object=""):  # EXPERIMENTAL
+def spheroid(object="",average=0):  # EXPERIMENTAL
+   '''
+DESCRIPTION
+
+   "spheroid" averages trajectory frames together to create
+   an ellipsoid-like approximation of the actual anisotropic
+   motion exhibited by the atom over a series of trajectory frames.
+
+USAGE
+
+   spheroid object,average
+
+   average = number of states to average for each resulting spheroid state
+   
+'''
    try:
       print "Warning: 'spheroid' is experimental, incomplete, and unstable."
       lock()
-      r = _cmd.spheroid(str(object))
+      r = _cmd.spheroid(str(object),int(average))
    finally:
       unlock()
    return r

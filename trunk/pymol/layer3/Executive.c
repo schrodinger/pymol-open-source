@@ -1449,7 +1449,7 @@ void ExecutiveFuse(char *s0,char *s1,int mode)
 }
 
 /*========================================================================*/
-void ExecutiveSpheroid(char *name)  /* EXPERIMENTAL */
+void ExecutiveSpheroid(char *name,int average)  /* EXPERIMENTAL */
 {
   CExecutive *I = &Executive;
   CObject *os=NULL;
@@ -1472,7 +1472,7 @@ void ExecutiveSpheroid(char *name)  /* EXPERIMENTAL */
         if(rec->obj->type==cObjectMolecule)
           if((!os)||(rec->obj==os)) {
             obj =(ObjectMolecule*)rec->obj;
-            ObjectMoleculeCreateSpheroid(obj);  
+            ObjectMoleculeCreateSpheroid(obj,average);  
             ObjectMoleculeInvalidate(obj,cRepAll,cRepInvRep);
           }
     }
