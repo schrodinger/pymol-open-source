@@ -890,6 +890,7 @@ void SceneDraw(Block *block)
   int overlay,text;
   int width,height;
   int double_pump;
+  GLint draw_buffer;
 
   if(PMGUI) {
     overlay = SettingGet(cSetting_overlay);
@@ -917,6 +918,9 @@ void SceneDraw(Block *block)
               glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
             }
             if(I->ImageBuffer) {
+#if 1
+              glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+#else
               if(!(double_pump||(I->StereoMode==1))) {
                 glDrawBuffer(GL_BACK);
                 glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
@@ -926,7 +930,9 @@ void SceneDraw(Block *block)
                 glDrawBuffer(GL_BACK_RIGHT);
                 glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
               }
+#endif
             }
+
           }
           I->RenderTime = -I->LastRender;
           I->LastRender = UtilGetSeconds();
@@ -2352,6 +2358,9 @@ void SceneResetNormal(int lines)
 }
 
 /*========================================================================*/
+
+static double accumTiming = 0.0; 
+
 void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
               char **charVLA_ptr,float angle,float shift)
 {
@@ -2512,9 +2521,12 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
 
   timing = UtilGetSeconds()-timing;
   if(mode!=2) { /* don't show timings for tests */
+	accumTiming += timing; 
+	
     PRINTFB(FB_Ray,FB_Details)
-      " Ray: total rendering time: %4.2f sec. = %3.1f frames per hour.\n", 
-      timing,3600/timing 
+      " Ray: rendering time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
+      timing,3600/timing, 
+	  accumTiming 
       ENDFB;
   }
   OrthoDirty();
