@@ -14,8 +14,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include<math.h>
 #include<Python.h>
+#include"os_std.h"
 
 #include"MemoryDebug.h"
 #include"Debug.h"

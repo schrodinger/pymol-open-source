@@ -15,13 +15,11 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include<stdlib.h>
+#include"os_std.h"
+#include"os_time.h"
+#include"os_unix.h"
+
 #include<Python.h>
-#include<signal.h>
-#include<string.h>
-#include<sys/types.h>
-#include<sys/time.h>
-#include<unistd.h>
 
 #include"MemoryDebug.h"
 #include"Base.h"
@@ -438,7 +436,10 @@ void PInit(void)
 
   PRunString("glutThread = thread.get_ident()");
 
+#ifndef _WIN32
   signal(SIGINT,my_interrupt);
+#endif
+
 }
 
 void PStereoOff(void) 

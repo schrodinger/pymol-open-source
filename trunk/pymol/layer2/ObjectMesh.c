@@ -14,9 +14,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include<string.h>
-#include<GL/gl.h>
-#include<stdio.h>
+#include"os_std.h"
+#include"os_gl.h"
 
 #include"OOMac.h"
 #include"ObjectMesh.h"

@@ -13,8 +13,8 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<stdio.h>
-#include<math.h>
+
+#include"os_std.h"
 
 #include"Base.h"
 #include"Vector.h"
@@ -38,7 +38,7 @@ Z* -------------------------------------------------------------------
 
 #define cPI            3.14159265358979323846  /* pi */
 
-float sqrt1f(float f) {
+float sqrt1f(float f) { /* no good as a macro because f is used twice */
   if(f>0.0)
 	 return(sqrt(f));
   else

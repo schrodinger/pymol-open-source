@@ -13,10 +13,8 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<stdlib.h>
-#include<math.h>
-#include<stdio.h>
-#include<string.h>
+
+#include"os_std.h"
 
 #include"Base.h"
 #include"OOMac.h"

@@ -13,11 +13,13 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
+#include"os_std.h"
+#include"os_time.h"
+
 #include"Util.h"
 #include"MemoryDebug.h"
 #include"Err.h"
-#include<sys/time.h>
-#include<string.h>
 
 static unsigned int UtilStartSec;
 

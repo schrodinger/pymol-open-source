@@ -13,8 +13,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include <GL/glut.h>
-#include<string.h>
+
+#include"os_gl.h"
+#include"os_std.h"
 
 #include"main.h"
 #include"Object.h"

@@ -14,8 +14,9 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include<GL/gl.h>
-#include<GL/glut.h>
+#include"os_gl.h"
+
+
 #include"Base.h"
 #include"OOMac.h"
 #include"RepLabel.h"

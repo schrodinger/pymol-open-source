@@ -14,7 +14,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include<GL/gl.h>
+#include"os_gl.h"
+
 #include"Base.h"
 #include"OOMac.h"
 #include"RepNonbondedSphere.h"
@@ -96,7 +97,6 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   SphereRec *sp = Sphere0; 
   int ds;
   int *active=NULL;
-  int visFlag;
   AtomInfoType *ai;
   int nSphere = 0;
   OOAlloc(RepNonbondedSphere);

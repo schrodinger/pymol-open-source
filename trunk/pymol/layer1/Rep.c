@@ -13,9 +13,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<stdlib.h>
-#include<GL/gl.h>
 
+#include"os_std.h"
+#include"os_gl.h"
 
 #include"main.h"
 #include"Rep.h"

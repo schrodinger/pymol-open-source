@@ -13,8 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<stdio.h>
-#include<string.h>
+#include"os_std.h"
 
 #include"Err.h"
 #include"Ortho.h"

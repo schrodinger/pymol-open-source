@@ -16,9 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Base
 #define _H_Base
 
-#include<limits.h>
-#include<float.h>
-#include<sys/types.h>
+#include"os_limits.h"
+#include"os_types.h"
 
 #ifndef true
 #define true 1

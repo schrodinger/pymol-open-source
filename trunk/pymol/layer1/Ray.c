@@ -13,7 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<math.h>
+#include"os_std.h"
 
 #include"Base.h"
 #include"MemoryDebug.h"

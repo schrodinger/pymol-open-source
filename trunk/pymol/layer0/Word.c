@@ -13,10 +13,10 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<ctype.h>
+
+#include"os_std.h"
 
 #include"Word.h"
-
 
 int WordMatch(char *p,char *q,int ignCase) 
 /* allows for terminal wildcard (*) in p

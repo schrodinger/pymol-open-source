@@ -16,7 +16,6 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Vector
 #define _H_Vector
 
-#include<math.h>
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
 /* NOTE: All matrices are assumed to be column-major in this module */

@@ -13,12 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<math.h>
-#include<limits.h>
-
-#ifndef MAXFLOAT
-#define MAXFLOAT FLT_MAX
-#endif
+#include"os_std.h"
 
 #include"MemoryDebug.h"
 #include"Base.h"

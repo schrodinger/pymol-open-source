@@ -13,10 +13,8 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include <time.h>
-#include <string.h>
-#include <stdio.h>
-#include <GL/glut.h>
+#include"os_std.h"
+#include"os_gl.h"
 
 #include "OOMac.h"
 
