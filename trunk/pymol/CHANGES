@@ -167,6 +167,10 @@ CHANGE LOG
 
 Changes up to 0.90
 
+   * Fixed IRIX and Linux minimal dependency Python launch context.
+
+   * Added CPU detection for IRIX and Linux
+
    * Fixed ribbon color and rendering bugs
 
    * Put in checking for overly long selection words to avoid seg.fault.
