@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Scene.h"
 #include"PConv.h"
+#include"Word.h"
 
 #ifdef _PYMOL_NUMPY
 typedef struct {
@@ -293,7 +294,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
     fflush(stdout);
 #endif
   if(!ok) {
-    ErrMessage(" ObjectMap:","Error reading map");
+    ErrMessage("ObjectMap","Error reading map");
   } else {
     printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
   }
@@ -437,7 +438,7 @@ int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary) {
     I->Obj.ExtentFlag=true;
   }
   if(!ok) {
-    ErrMessage(" ObjectMap:","Error reading");
+    ErrMessage("ObjectMap","Error reading map");
   } else {
     printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
   }
@@ -504,6 +505,147 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
 
       }
     SceneChanged();
+  }
+  return(I);
+}
+
+/*========================================================================*/
+ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
+                                  int frame,int discrete)
+{
+
+  int ok=true;
+  int isNew = true;
+  double *cobj;
+  WordType format;
+  float v[3],vr[3],dens,maxd,mind;
+  int a,b,c,d,e;
+
+  double test[1000];
+
+  for(a=0;a<1000;a++) {
+    test[a]=rand()/(1.0+INT_MAX);
+  }
+  PyObject_SetAttrString(Map,"c_object",
+                         PyCObject_FromVoidPtr(test,NULL));
+
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+
+  if(ok) {
+
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew();
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+
+    if(!PConvAttrToStrMaxLen(Map,"format",format,sizeof(WordType)))
+      ok=ErrMessage("LoadChemPyMap","bad 'format' parameter.");
+    else if(!PConvAttrToFloatArrayInPlace(Map,"cell_dim",I->Crystal->Dim,3))
+      ok=ErrMessage("LoadChemPyMap","bad 'cell_dim' parameter.");
+    else if(!PConvAttrToFloatArrayInPlace(Map,"cell_ang",I->Crystal->Angle,3))
+      ok=ErrMessage("LoadChemPyMap","bad 'cell_ang' parameter.");
+    else if(!PConvAttrToIntArrayInPlace(Map,"cell_div",I->Div,3))
+      ok=ErrMessage("LoadChemPyMap","bad 'cell_div' parameter.");
+    else if(!PConvAttrToIntArrayInPlace(Map,"first",I->Min,3))
+      ok=ErrMessage("LoadChemPyMap","bad 'first' parameter.");
+    else if(!PConvAttrToIntArrayInPlace(Map,"last",I->Max,3))
+      ok=ErrMessage("LoadChemPyMap","bad 'last' parameter.");
+
+    if(ok) {
+      if (strcmp(format,"CObjectZYXdouble")==0) {
+        ok = PConvAttrToPtr(Map,"c_object",(void**)&cobj);
+        if(!ok)
+          ErrMessage("LoadChemPyMap","CObject unreadable.");        
+      } else {
+        ok=ErrMessage("LoadChemPyMap","unsupported format.");        
+      }
+    }
+    /* good to go */
+
+    if(ok) {
+      if (strcmp(format,"CObjectZYXdouble")==0) {
+
+        I->FDim[0]=I->Max[0]-I->Min[0]+1;
+        I->FDim[1]=I->Max[1]-I->Min[1]+1;
+        I->FDim[2]=I->Max[2]-I->Min[2]+1;
+        printf(" LoadChemPyMap: CObjectZYXdouble %dx%dx%d\n",I->FDim[0],I->FDim[1],I->FDim[2]);        
+        I->FDim[3]=3;
+        if(!(I->FDim[0]&&I->FDim[1]&&I->FDim[2])) 
+          ok=false;
+        else {
+          CrystalUpdate(I->Crystal);
+          I->Field=IsosurfFieldAlloc(I->FDim);
+          for(c=0;c<I->FDim[2];c++)
+            {
+              v[2]=(c+I->Min[2])/((float)I->Div[2]);
+              for(b=0;b<I->FDim[1];b++) {
+                v[1]=(b+I->Min[1])/((float)I->Div[1]);
+                for(a=0;a<I->FDim[0];a++) {
+                  v[0]=(a+I->Min[0])/((float)I->Div[0]);
+                  
+                  dens = *(cobj+((I->FDim[0]*I->FDim[1]*a)+(I->FDim[0]*b)+c));
+                    
+                  F3(I->Field->data,a,b,c,I->Field->dimensions) = dens;
+                  if(maxd<dens) maxd = dens;
+                  if(mind>dens) mind = dens;
+                  transform33f3f(I->Crystal->FracToReal,v,vr);
+                  for(e=0;e<3;e++) 
+                    F4(I->Field->points,a,b,c,e,I->Field->dimensions) = vr[e];
+                }
+              }
+            }
+          if(ok) {
+            d = 0;
+            for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))
+              {
+                v[2]=(c+I->Min[2])/((float)I->Div[2]);
+                for(b=0;b<I->FDim[1];b+=(I->FDim[1]-1)) {
+                  v[1]=(b+I->Min[1])/((float)I->Div[1]);
+                  for(a=0;a<I->FDim[0];a+=(I->FDim[0]-1)) {
+                    v[0]=(a+I->Min[0])/((float)I->Div[0]);
+                    transform33f3f(I->Crystal->FracToReal,v,vr);
+                    copy3f(vr,I->Corner[d]);
+                    d++;
+                  }
+                }
+              }
+          }
+        }
+      }
+    }
+    
+    if(ok) {
+      CrystalDump(I->Crystal);
+      
+      v[2]=(I->Min[2])/((float)I->Div[2]);
+      v[1]=(I->Min[1])/((float)I->Div[1]);
+      v[0]=(I->Min[0])/((float)I->Div[0]);
+      
+      transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMin);
+      
+      v[2]=((I->FDim[2]-1)+I->Min[2])/((float)I->Div[2]);
+      v[1]=((I->FDim[1]-1)+I->Min[1])/((float)I->Div[1]);
+      v[0]=((I->FDim[0]-1)+I->Min[0])/((float)I->Div[0]);
+      
+      transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMax);
+      I->Obj.ExtentFlag=true;
+    }
+
+    if(!ok) {
+      ErrMessage("ObjectMap","Error reading map");
+    } else {
+      printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+    }
+
+    if(ok) SceneChanged();
   }
   return(I);
 }

@@ -25,6 +25,77 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Util.h"
 
+
+/* Error-checked utility routines */
+
+int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *f,int ll)
+{
+  int ok=true;
+  PyObject *tmp;
+  if(PyObject_HasAttrString(obj,attr)) {
+    tmp = PyObject_GetAttrString(obj,attr);
+    ok = PConvPyListToIntArrayInPlace(tmp,f,ll);
+    Py_DECREF(tmp);
+  } else {
+    ok=false;
+  }
+  return(ok);
+}
+
+int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *f,int ll)
+{
+  int ok=true;
+  PyObject *tmp;
+  if(PyObject_HasAttrString(obj,attr)) {
+    tmp = PyObject_GetAttrString(obj,attr);
+    ok = PConvPyListToFloatArrayInPlace(tmp,f,ll);
+    Py_DECREF(tmp);
+  } else {
+    ok=false;
+  }
+  return(ok);
+}
+
+int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll)
+{
+  int ok=true;
+  PyObject *tmp;
+  if(PyObject_HasAttrString(obj,attr)) {
+    tmp = PyObject_GetAttrString(obj,attr);
+    ok = PConvPyObjectToStrMaxLen(tmp,str,ll);
+    Py_DECREF(tmp);
+  } else {
+    ok=false;
+  }
+  return(ok);
+}
+
+int PConvAttrToPtr(PyObject *obj,char *attr,void **cobj)
+{
+  PyObject *tmp;
+  int ok=true;
+  if(PyObject_HasAttrString(obj,attr)) {
+    tmp = PyObject_GetAttrString(obj,attr);
+    ok = PConvCObjectToPtr(tmp,cobj);
+    Py_DECREF(tmp);
+  } else {
+    ok = false;
+  }
+  return(ok);
+}
+
+int PConvCObjectToPtr(PyObject *obj,void **ptr) {
+  int ok=true;
+  if (!PyCObject_Check(obj))
+    ok=false;
+  else
+    (*ptr) = PyCObject_AsVoidPtr(obj);
+  return(ok);
+}
+
+/* == end == */
+
+
 int PConvPyObjectToFloat(PyObject *object,float *value)
 {
   int result = true;
@@ -72,7 +143,7 @@ int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
   int result=true;
   if(!object)
     result=false;
-  else   if(PyString_Check(object)) {
+  else if(PyString_Check(object)) {
     st = PyString_AsString(object);
     strncpy(value,st,ln);
     value[ln]=0;
@@ -199,11 +270,16 @@ int PConvPyListToFloatArray(PyObject *obj,float **f)
 {
   int a,l;
   float *ff;
-  l=PyList_Size(obj);
-  (*f) = Alloc(float,l);
-  ff = (*f);
-  for(a=0;a<l;a++)
-    *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+  if(!obj) {
+    *f=NULL;
+    l=0;
+  } else {
+    l=PyList_Size(obj);
+    (*f) = Alloc(float,l);
+    ff = (*f);
+    for(a=0;a<l;a++)
+      *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+  }
   return(l);
 }
 
@@ -211,6 +287,10 @@ int PConvPyListToIntArray(PyObject *obj,int **f)
 {
   int a,l;
   int *ff;
+  if(!obj) {
+    *f=NULL;
+    l=0;
+  }
   l=PyList_Size(obj);
   (*f) = Alloc(int,l);
   ff = (*f);
@@ -218,6 +298,43 @@ int PConvPyListToIntArray(PyObject *obj,int **f)
     *(ff++) = PyInt_AsLong(PyList_GetItem(obj,a));
   return(l);
 }
+
+int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll)
+{
+  int ok = true;
+  int a,l;
+  if(!obj) 
+    ok=false;
+  else {
+    l=PyList_Size(obj);
+    if (l!=ll) 
+      ok=false;
+    else 
+      for(a=0;a<l;a++)
+        *(ff++) = (float)PyFloat_AsDouble(PyList_GetItem(obj,a));
+    /* NOTE ASSUMPTION! */
+  }
+  return(ok);
+}
+
+int PConvPyListToIntArrayInPlace(PyObject *obj,int *ii,int ll)
+{
+  int ok = true;
+  int a,l;
+  if(!obj) 
+    ok=false;
+  else {
+    l=PyList_Size(obj);
+    if (l!=ll) 
+      ok=false;
+    else 
+      for(a=0;a<l;a++) 
+        *(ii++) = PyInt_AsLong(PyList_GetItem(obj,a)); 
+    /* NOTE ASSUMPTION! */
+  }
+  return(ok);
+}
+
 
 PyObject *PConvFloatArrayToPyList(float *f,int l)
 {
@@ -310,4 +427,6 @@ void PConv44PyListTo44f(PyObject *src,float *dest) /* note lost of precision */
   dest[14]=PyFloat_AsDouble(PyList_GetItem(row,2));
   dest[15]=PyFloat_AsDouble(PyList_GetItem(row,3));
 }
+
+
 

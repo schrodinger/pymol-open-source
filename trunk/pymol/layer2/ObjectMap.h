@@ -39,8 +39,11 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame);
 ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame);
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame);
 ObjectMap *ObjectMapLoad(ObjectMap *obj,char *fname,int frame);
-ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *model,int frame,int discrete);
-
+ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
+                                    int frame,int discrete);
+ObjectMap *ObjectMapLoadCObject(ObjectMap *obj,int frame);
+ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
+                                  int frame,int discrete);
 
 #endif
 
