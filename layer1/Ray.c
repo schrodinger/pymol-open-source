@@ -8,7 +8,7 @@ F* -------------------------------------------------------------------
 G* Please see the accompanying LICENSE file for further information. 
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* 
+-*   Larry Coopet (various optimizations)
 -* 
 -*
 Z* -------------------------------------------------------------------
