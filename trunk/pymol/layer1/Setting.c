@@ -126,8 +126,11 @@ static int set_list(CSetting *I,PyObject *list)
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&setting_type);
     if(ok&&(index<cSetting_INIT)) { /* ignore unknown settings */
       switch(index) { 
-        /* don't restore the folllowing settings */
+        /* don't restore the folllowing settings,
+           which are inherently system-dependent */
       case cSetting_stereo_double_pump_mono: 
+        break;
+      case cSetting_max_threads:
         break;
       default:
         if(ok) switch(setting_type) {
