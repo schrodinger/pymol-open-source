@@ -197,10 +197,10 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 
 
   if(I->Level&&I->NColor) {
-    sprintf(buffer,"%0.6f",I->Level[0]);
+    sprintf(buffer,"%0.3f",I->Level[0]);
     ShapeFVertex(cgo,REL,11);
     CGOWrite(cgo,buffer);
-    sprintf(buffer,"%0.6f",I->Level[I->NColor-1]);
+    sprintf(buffer,"%0.3f",I->Level[I->NColor-1]);
     ShapeFVertex(cgo,REL,12);
     CGOWriteLeft(cgo,buffer);
   }
@@ -445,25 +445,49 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
   SceneChanged();
 }
 
+
 /*========================================================================*/
 ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level,
-                                               PyObject *color,int map_state)
+                                                  PyObject *color,int map_state,
+                                                  float *vert_vla,float beyond,float within,
+                                                  float sigma,int zero)
 {
   ObjectGadgetRamp *I;
   int ok = true;
-  
+
   I = ObjectGadgetRampNew();
   I->RampType = cRampMap;
 
   PBlock();
-  if(ok) ok = PConvPyListToFloatVLA(level,&I->Level);
   if(ok) ok = PConvPyList3ToFloatVLA(color,&I->Color);
+  if(ok) {     
+    ObjectMapState *ms;
+    float tmp_level[3];
+    if(vert_vla && 
+       (ms = ObjectMapGetState(map,map_state)) &&
+       ObjectMapStateGetExcludedStats(ms,vert_vla,beyond,within,tmp_level)) {
+      tmp_level[0]+=(tmp_level[0]-tmp_level[1])*sigma;
+      tmp_level[2]+=(tmp_level[2]-tmp_level[1])*sigma;
+      if(zero) {
+        if(tmp_level[1]<0.0F) {
+          tmp_level[1]=0.0F;
+          tmp_level[2]=-tmp_level[0];
+        } else if(tmp_level[1]>0.0F) {
+          tmp_level[1]=0.0F;
+          tmp_level[0]=-tmp_level[2];
+        }
+      }
+      I->Level = VLAlloc(float,3);
+      copy3f(tmp_level,I->Level);
+    } else  {
+      ok = PConvPyListToFloatVLA(level,&I->Level);
+    }
+  }
   if(ok) I->NColor=VLAGetSize(I->Level);
   ObjectGadgetRampBuild(I);
   UtilNCopy(I->SrcName,map->Obj.Name,ObjNameMax);
   I->SrcState=map_state;
-
-
+  
   /* test interpolate 
      { 
     float test[3];

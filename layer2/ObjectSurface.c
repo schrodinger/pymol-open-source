@@ -311,7 +311,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
   ObjectMap *map = NULL;
   MapType *voxelmap=NULL; /* this has nothing to do with isosurfaces... */
   int ok=true;
-
+  float carve_buffer;
   for(a=0;a<I->NState;a++) {
     ms = I->State+a;
     if(ms->Active) {
@@ -349,7 +349,12 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                             ms->ExtentMin,ms->ExtentMax,ms->Range);
 
             if(ms->CarveFlag&&ms->AtomVertex) {
-              voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,
+              carve_buffer = ms->CarveBuffer;
+              if(carve_buffer<0.0F) {
+                carve_buffer = -carve_buffer;
+              }
+
+              voxelmap=MapNew(-carve_buffer,ms->AtomVertex,
                               VLAGetSize(ms->AtomVertex)/3,NULL);
               if(voxelmap)
                 MapSetupExpress(voxelmap);  
@@ -760,10 +765,11 @@ float carve,float *vert_vla,int side)
     copy3f(mx,ms->ExtentMax);
     ms->ExtentFlag = true;
   }
-  if(carve>=0.0) 
-  ms->CarveFlag=true;
-  ms->CarveBuffer = carve;
-  ms->AtomVertex = vert_vla;
+  if(carve!=0.0) {
+    ms->CarveFlag=true;
+    ms->CarveBuffer = carve;
+    ms->AtomVertex = vert_vla;
+  }
   if(I) {
     ObjectSurfaceRecomputeExtent(I);
   }

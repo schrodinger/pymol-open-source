@@ -36,13 +36,18 @@ Z* -------------------------------------------------------------------
 
 /* FLAGS 8-15 are free for end users to manipulate */
  
-/* FLAGS 16-23 are reserved for external GUIs and linked applications */
+/* FLAGS 16-21 are reserved for external GUIs and linked applications */
+
+/* FLAGS 22-23 are for temporary use only (inside of self-contained loops) */
 
 /* FLAGS 24-31 are reserved for PyMOL's internal use */
 
 /* FLAG 24 - don't surface these atoms (waters, ligands, etc.) */
+
 #define cAtomFlag_exfoliate     0x01000000
 /* FLAG 25 - ignore atoms altogether when surfacing */
+
+/* FLAG 26 - ? */
 
 /* FLAG 27 - polymer */
 #define cAtomFlag_polymer       0x08000000

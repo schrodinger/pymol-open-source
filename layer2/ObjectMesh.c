@@ -337,6 +337,8 @@ static void ObjectMeshUpdate(ObjectMesh *I)
 
   int *n;
   float *v;
+  float carve_buffer;
+  int avoid_flag=false;
   int *old_n;
   float *old_v;
   int n_cur;
@@ -400,8 +402,14 @@ static void ObjectMeshUpdate(ObjectMesh *I)
           }
           if(ms->CarveFlag&&ms->AtomVertex&&
              VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
+            carve_buffer = ms->CarveBuffer;
+            if(ms->CarveBuffer<0.0F) {
+              avoid_flag=true;
+              carve_buffer = -carve_buffer;
+            }
+              
             /* cull my friend, cull */
-            voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
+            voxelmap=MapNew(-carve_buffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
             if(voxelmap) {
               
               MapSetupExpress(voxelmap);  
@@ -427,13 +435,15 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                     if(i) {
                       j=voxelmap->EList[i++];
                       while(j>=0) {
-                        if(within3f(ms->AtomVertex+3*j,v,ms->CarveBuffer)) {
+                        if(within3f(ms->AtomVertex+3*j,v,carve_buffer)) {
                           flag=true;
                           break;
                         }
                         j=voxelmap->EList[i++];
                       }
                     }
+                    if(avoid_flag)
+                      flag = !flag;
                     if(flag&&(!last_flag)) {
                       VLACheck(ms->V,float,3*(n_line+1));
                       copy3f(v,ms->V+n_line*3);
@@ -706,7 +716,7 @@ ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
     IsosurfGetRange(oms->Field,oms->Crystal,mn,mx,ms->Range);
     ms->ExtentFlag = true;
   }
-  if(carve>=0.0) {
+  if(carve!=0.0) {
     ms->CarveFlag=true;
     ms->CarveBuffer = carve;
     ms->AtomVertex = vert_vla;

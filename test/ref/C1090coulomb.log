@@ -4,23 +4,23 @@ PyMOL>fragment phe
  Executive: object "phe" created.
 PyMOL>map_new t1,coulomb,0.5,phe,5
  ObjectMap: Map created.
- SelectorMapCoulomb: total charge 0.000000 over 20 vertices (20 atoms).
- SelectorMapCoulomb: averages: all =  -0.2653, face =   0.0086, edge =  -0.0046
+ SelectorMapCoulomb: Total charge is 0.000 for 20 points (20 atoms).
+ SelectorMapCoulomb: Evaluating Coulomb potential for grid (no cutoff)...
  Executive: object "t1" created.
 PyMOL>fragment phe,phe
  CmdLoad: ChemPy-model appended into object "phe", state 2.
 PyMOL>map_new t2,coulomb,0.5,phe,5
  ObjectMap: Map created.
- SelectorMapCoulomb: total charge 0.000000 over 20 vertices (20 atoms).
- SelectorMapCoulomb: averages: all =  -0.2653, face =   0.0086, edge =  -0.0046
+ SelectorMapCoulomb: Total charge is 0.000 for 20 points (20 atoms).
+ SelectorMapCoulomb: Evaluating Coulomb potential for grid (no cutoff)...
  Executive: object "t2" created.
  ObjectMap: Map created.
- SelectorMapCoulomb: total charge 0.000000 over 20 vertices (20 atoms).
- SelectorMapCoulomb: averages: all =  -0.2653, face =   0.0086, edge =  -0.0046
+ SelectorMapCoulomb: Total charge is 0.000 for 20 points (20 atoms).
+ SelectorMapCoulomb: Evaluating Coulomb potential for grid (no cutoff)...
 PyMOL>map_new t3,coulomb,0.5,phe,5,state=-3
  ObjectMap: Map created.
- SelectorMapCoulomb: total charge 0.000000 over 40 vertices (40 atoms).
- SelectorMapCoulomb: averages: all =  -0.2653, face =   0.0086, edge =  -0.0046
+ SelectorMapCoulomb: Total charge is 0.000 for 40 points (40 atoms).
+ SelectorMapCoulomb: Evaluating Coulomb potential for grid (no cutoff)...
  Executive: object "t3" created.
 PyMOL>isomesh m1,t1,5
  Executive: object "m1" created.

@@ -404,6 +404,7 @@ if __name__=='pymol.setting':
       surface_ramp_above_mode = 364
       stereo               = 365
       wizard_prompt_mode   = 366
+      coulomb_cutoff       = 367
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

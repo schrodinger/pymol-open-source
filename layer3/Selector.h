@@ -74,7 +74,8 @@ int SelectorClassifyAtoms(int sele, int preserve,ObjectMolecule *only_object);
 void SelectorLogSele(char *name);
 int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer,int state);
 
-int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state);
+int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,int neutral);
+
 int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state);
 PyObject *SelectorAsPyList(int sele1);
 int SelectorFromPyList(char *name,PyObject *list);

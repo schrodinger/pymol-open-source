@@ -56,6 +56,7 @@ int TestPyMOL_00_00(CTestPyMOL *I)
   obj = ObjectMapNew();
   if(obj) {
     ms = ObjectMapNewStateFromDesc(obj,md,0);    
+    ms->Active=true;
   }
   if(obj) {
     ObjectSetName((CObject*)obj,"00_00");
