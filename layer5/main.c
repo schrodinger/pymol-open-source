@@ -71,6 +71,7 @@ typedef struct {
   int IdleMode;
   int SwapFlag;
   float IdleTime;
+  int IdleCount;
 } CMain;
 
 static CMain Main;
@@ -252,15 +253,15 @@ void MainDoReshape(int width, int height) /* called internally */
 /*========================================================================*/
 static void MainInit(void)
 {
-  /*  GLfloat one[4] = { 1,1,1,1 };*/
-  GLfloat low[4] = { 0.20,0.20,0.20,1 };
+  /*  GLfloat one[4] = { 1,1,1,1 }; 
+      GLfloat low[4] = { 0.20,0.20,0.20,1 };*/
 
   CMain *I = &Main;
 
   I->DirtyFlag=true;
   I->IdleMode=2;
   I->IdleTime=UtilGetSeconds();
-
+  I->IdleCount = 0;
   if(PMGUI) {
 
     /* get us into a well defined GL state */
@@ -408,7 +409,18 @@ void MainBusyIdle(void)
         PUnblock();
       }
     }
-
+  if(!PMGUI) {
+    if(!OrthoCommandWaiting()) {
+      I->IdleCount++;
+      if(I->IdleCount==10) {
+        PLockAPIAsGlut();
+        PParse("_quit");
+        PFlush();
+        PUnlockAPIAsGlut();
+      }
+    }
+      
+  }
 }
 
 /*========================================================================*/

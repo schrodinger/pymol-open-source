@@ -2326,21 +2326,38 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         ai->id=a+1;
         if(ok) {
           p=ncopy(cc,p,4);
-          if(sscanf(cc,"%d",&ai->customType)!=1)
+          if(sscanf(cc,"%d",&ai->customType)!=1) 
             ok=ErrMessage("ReadMMDFile","bad atom type");
         }
-
+        if(ok) {
+          if(ai->customType<=14) strcpy(ai->elem,"C");
+          else if(ai->customType<=23) strcpy(ai->elem,"O");
+          else if(ai->customType<=40) strcpy(ai->elem,"N");
+          else if(ai->customType<=48) strcpy(ai->elem,"H");
+          else if(ai->customType<=52) strcpy(ai->elem,"S");
+          else if(ai->customType<=53) strcpy(ai->elem,"P");
+          else if(ai->customType<=55) strcpy(ai->elem,"B");
+          else if(ai->customType<=56) strcpy(ai->elem,"F");
+          else if(ai->customType<=57) strcpy(ai->elem,"Cl");           
+          else if(ai->customType<=58) strcpy(ai->elem,"Br");           
+          else if(ai->customType<=59) strcpy(ai->elem,"I");           
+          else if(ai->customType<=60) strcpy(ai->elem,"Si");           
+          else if(ai->customType<=61) strcpy(ai->elem,"Du");           
+          else if(ai->customType<=62) strcpy(ai->elem,"Z0");
+          else if(ai->customType<=63) strcpy(ai->elem,"Lp");
+          else strcpy(ai->elem,"?");
+        }
         for(c=0;c<6;c++) {
           if(ok) {
             p=ncopy(cc,p,8);
             if(sscanf(cc,"%d%d",&bPart,&bOrder)!=2)
               ok=ErrMessage("ReadMMDFile","bad bond record");
             else {
-              if(bPart&&bOrder) {
+              if(bPart&&bOrder&&(a<(bPart-1))) {
                 nBond++;
                 *(ii++)=a;
                 *(ii++)=bPart-1;
-                *(ii++)=1;
+                *(ii++)=bOrder;
               }
             }
           }
@@ -2361,7 +2378,13 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 				ok=ErrMessage("ReadMMDFile","bad coordinate");
 		  }
         if(ok) {
-          p=nskip(p,31);
+          p=nskip(p,12);
+          p=ncopy(cc,p,9);
+			 if(sscanf(cc,"%f",&ai->partialCharge)!=1)
+				ok=ErrMessage("ReadMMDFile","bad charge");
+        }
+        if(ok) {
+          p=nskip(p,10);
           p=ncopy(cc,p,3);
           if(sscanf(cc,"%s",ai->resn)!=1)
             ai->resn[0]=0;
@@ -2376,22 +2399,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           p=ncopy(ai->name,p,4);
           UtilCleanStr(ai->name);
           if(ai->name[0]==0) {
-            if(ai->customType<=14) strcpy(ai->name,"C");
-            else if(ai->customType<=23) strcpy(ai->name,"O");
-            else if(ai->customType<=40) strcpy(ai->name,"N");
-            else if(ai->customType<=48) strcpy(ai->name,"H");
-            else if(ai->customType<=52) strcpy(ai->name,"S");
-            else if(ai->customType<=53) strcpy(ai->name,"P");
-            else if(ai->customType<=55) strcpy(ai->name,"B");
-            else if(ai->customType<=56) strcpy(ai->name,"F");
-            else if(ai->customType<=57) strcpy(ai->name,"Cl");           
-            else if(ai->customType<=58) strcpy(ai->name,"Br");           
-            else if(ai->customType<=59) strcpy(ai->name,"I");           
-            else if(ai->customType<=60) strcpy(ai->name,"Si");           
-            else if(ai->customType<=61) strcpy(ai->name,"Du");           
-            else if(ai->customType<=62) strcpy(ai->name,"Z0");
-            else if(ai->customType<=63) strcpy(ai->name,"Lp");
-            else strcpy(ai->name,"?");
+            strcpy(ai->name,ai->elem);
             sprintf(cc,"%02d",a+1);
             if((strlen(cc)+strlen(ai->name))>4)
               strcpy(ai->name,cc);

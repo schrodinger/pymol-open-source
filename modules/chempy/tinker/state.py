@@ -125,6 +125,7 @@ class State:
             else:
                try:
                   if int(lin[0:6])==step:
+                     step = step + 1
                      self.summary.append([
                         int(lin[0:6]),
                         float(lin[6:19]),
@@ -134,7 +135,6 @@ class State:
                         float(lin[51:60]),
                         int(lin[60:67]),
                         string.strip(lin[67:])])
-                     step = step + 1
                except ValueError:
                   pass
          f.close()
@@ -215,13 +215,13 @@ class State:
             else:
                try:
                   if int(lin[0:10])==step:
+                     step = step + 1
                      self.summary.append([
                         int(lin[0:10]),
                         float(lin[10:24]),
                         float(lin[24:38]),
                         float(lin[38:50]),
                         float(lin[50:61])])
-                     step = step + 1
                except ValueError:
                   pass
          f.close()
