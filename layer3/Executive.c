@@ -478,7 +478,8 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
         ENDFB;
       ok=false;
     }
-  }
+  } else
+    ok = false;
   ok = ok && (obj=ObjectGadgetRampMapNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
   if(ok) ExecutiveDelete(name); 
   if(ok) ObjectSetName((CObject*)obj,name);
