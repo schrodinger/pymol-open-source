@@ -44,7 +44,7 @@ for test in tests:
       tst = re.sub(r"\..*","",tst)
       print " run_tests: "+tst+"..."
 #      print "    "+cmd+" "+ifil+" >& "+cmp+"/"+tst+".log"
-      os.system(cmd+" "+ifil+" >& "+cmp+"/"+tst+".log")
+      os.system(cmd+" "+ifil+" > "+cmp+"/"+tst+".log")
 #      os.system(cmd+" "+ifil)
       for ref_fil in ( glob.glob(ref+"/"+tst+".*")):
          postfx = re.sub(r".*/","",ref_fil)
