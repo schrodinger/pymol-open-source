@@ -51,8 +51,6 @@ void RepDistLabelFree(RepDistLabel *I)
   OOFreeP(I);
 }
 
-int flip;
-
 void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
 {
   float *v=I->V;

@@ -44,8 +44,6 @@ void RepWireBondFree(RepWireBond *I)
   OOFreeP(I);
 }
 
-int flip;
-
 void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 {
   float *v=I->V;
