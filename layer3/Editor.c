@@ -556,6 +556,7 @@ void EditorReplace(char *elem,int geom,int valence)
         ObjectMoleculeReplaceAtom(I->Obj,i0,&ai); /* invalidates */
         ObjectMoleculeFillOpenValences(I->Obj,i0);
         ObjectMoleculeSort(I->Obj);
+        ObjectMoleculeUpdateIDNumbers(I->Obj);
         EditorSetActiveObject(NULL,0);
       }
     }

@@ -1384,7 +1384,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
   PyObject *model=NULL,*bnd=NULL;
   PyObject *atom_list=NULL,*bond_list=NULL;
   PyObject *tmp;
-  int a,b,b1,b2,b3,c,s,idx,at,a1,a2;
+  int a,b,b1,b2,c,s,idx,at,a1,a2;
   BondType *ii1;
   BondType *bond=NULL;
   int nBond=0;
@@ -1466,7 +1466,6 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
           for(b=0;b<obj->NBond;b++) {
             b1=ii1->index[0];
             b2=ii1->index[1];        
-            b3=ii1->order;
             if(obj->DiscreteFlag) {
               if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
                 a1=obj->DiscreteAtmToIdx[b1];
@@ -1485,11 +1484,11 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
               b2+=obj->SeleBase;
               if(I->Table[b1].index&&I->Table[b2].index) {
                 VLACheck(bond,BondType,nBond);
+                bond[nBond] = *ii1;
                 b1=I->Table[b1].index - 1; /* counteract 1-based */
                 b2=I->Table[b2].index - 1; /* indexing from above */
                 bond[nBond].index[0] = b1;
                 bond[nBond].index[1] = b2;
-                bond[nBond].order = b3;
                 nBond++;
               }
             }
@@ -1517,6 +1516,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
           if(bnd) {
             PConvInt2ToPyObjAttr(bnd,"index",ii1->index);
             PConvIntToPyObjAttr(bnd,"order",ii1->order);
+            PConvIntToPyObjAttr(bnd,"id",ii1->id);
             PyList_SetItem(bond_list,b,bnd);
           }
           ii1++;

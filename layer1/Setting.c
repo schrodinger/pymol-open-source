@@ -860,11 +860,11 @@ void SettingInitGlobal(void)
 
   SettingSet_3f(I,cSetting_bg_rgb, 0.0F, 0.0F, 0.0F);
 
-  SettingSet_f(I,cSetting_ambient, 0.30F);
+  SettingSet_f(I,cSetting_ambient, 0.12F);
 
-  SettingSet_f(I,cSetting_direct, 0.35F);
+  SettingSet_f(I,cSetting_direct, 0.25F);
 
-  SettingSet_f(I,cSetting_reflect, 1.2F);
+  SettingSet_f(I,cSetting_reflect, 0.90F);
 
   SettingSet_3f(I,cSetting_light, -0.4F, -0.4F, -1.0F);
 
@@ -892,9 +892,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_ortho, 0.0F);
 
-  SettingSet_f(I,cSetting_power, 3.0F);
+  SettingSet_f(I,cSetting_power, 1.0F);
 
-  SettingSet_f(I,cSetting_spec_reflect, 0.4F);
+  SettingSet_f(I,cSetting_spec_reflect, 0.5F);
 
   SettingSet_f(I,cSetting_spec_power, 40.0F);
 
@@ -1002,7 +1002,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_backface_cull, 1.0F);
 
-  SettingSet_f(I,cSetting_gamma, 1.2F);
+  SettingSet_f(I,cSetting_gamma, 1.3F);
 
   SettingSet_f(I,cSetting_dot_width, 1.0F);
 
@@ -1157,5 +1157,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_field_of_view,20.0F);
 
   SettingSet_f(I,cSetting_reflect_power, 1.0F);
+
+  SettingSet_f(I,cSetting_preserve_chempy_ids, 0.0F);
+
 }
 

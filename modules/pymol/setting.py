@@ -162,6 +162,7 @@ class SettingIndex:
    ray_default_renderer  =151
    field_of_view         =152
    reflect_power         =153
+   preserve_chempy_ids   =154
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

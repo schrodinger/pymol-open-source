@@ -121,6 +121,7 @@ typedef struct AtomInfoType {
   signed char masked;
   signed char protected;
   signed char protons;
+  int tmp_index; /* kludge field - to remove */
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
