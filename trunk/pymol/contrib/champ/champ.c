@@ -907,13 +907,13 @@ void ChampCountRings(CChamp *I,int index)
                         if(at3->cycle&(cH_Ring4|cH_Ring5|cH_Ring6)) {
                           /* atom 3 is cyclic, therefore system is aromatic */
                           
-                          at3->class|=cH_Aromatic;
-                          at2->class|=cH_Aromatic;
-                          at1->class|=cH_Aromatic;
-                          at0->class|=cH_Aromatic;
-                          bd2->class|=cH_Aromatic;
-                          bd1->class|=cH_Aromatic;
-                          bd0->class|=cH_Aromatic;
+                          at3->class|=cH_Aromatic|cH_Pi;
+                          at2->class|=cH_Aromatic|cH_Pi;
+                          at1->class|=cH_Aromatic|cH_Pi;
+                          at0->class|=cH_Aromatic|cH_Pi;
+                          bd2->class|=cH_Aromatic|cH_Pi;
+                          bd1->class|=cH_Aromatic|cH_Pi;
+                          bd0->class|=cH_Aromatic|cH_Pi;
                         }
                       }
                     }
@@ -951,15 +951,15 @@ void ChampCountRings(CChamp *I,int index)
                                   
                                   /* atom 4 is cyclic, therefore system is aromatic */
                                   
-                                  at4->class|=cH_Aromatic;                              
-                                  at3->class|=cH_Aromatic;
-                                  at2->class|=cH_Aromatic;
-                                  at1->class|=cH_Aromatic;
-                                  at0->class|=cH_Aromatic;
-                                  bd3->class|=cH_Aromatic;
-                                  bd2->class|=cH_Aromatic;
-                                  bd1->class|=cH_Aromatic;
-                                  bd0->class|=cH_Aromatic;
+                                  at4->class|=cH_Aromatic|cH_Pi;                              
+                                  at3->class|=cH_Aromatic|cH_Pi;
+                                  at2->class|=cH_Aromatic|cH_Pi;
+                                  at1->class|=cH_Aromatic|cH_Pi;
+                                  at0->class|=cH_Aromatic|cH_Pi;
+                                  bd3->class|=cH_Aromatic|cH_Pi;
+                                  bd2->class|=cH_Aromatic|cH_Pi;
+                                  bd1->class|=cH_Aromatic|cH_Pi;
+                                  bd0->class|=cH_Aromatic|cH_Pi;
                                 }
                               }
                             }
@@ -1832,6 +1832,9 @@ int ChampMatch_1V1_N(CChamp *I,int pattern,int target,int limit,int tag_flag)
                     limit,NULL,tag_flag));
 }
 
+
+
+
 int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit)
 {
   int match_start = 0;
@@ -1860,6 +1863,36 @@ int ChampMatch_1VN_N(CChamp *I,int pattern,int list)
   }
   return(c);
 }
+
+int ChampExact_1VN_N(CChamp *I,int pattern, int list)
+{
+  int target;
+  int c = 0;
+
+  /* NOTE: should call generalize on molecules first!!! */
+
+  ChampPreparePattern(I,pattern);
+  while(list) {
+    target = I->Int[list].value;
+    if(pattern==target)
+      c++;
+    else {
+      ChampPrepareTarget(I,target);    
+      if(ChampMatch(I,pattern,target,
+                    ChampFindUniqueStart(I,pattern,target,NULL),
+                    1,NULL,false)) {
+        if(ChampMatch(I,target,pattern,
+                      ChampFindUniqueStart(I,target,pattern,NULL),
+                      1,NULL,false)) {
+        c++;
+        }
+      }
+    }
+    list = I->Int[list].link;
+  }
+  return(c);
+}
+
 
 int ChampMatch_NV1_N(CChamp *I,int list,int target,int limit,int tag_flag)
 {
@@ -2373,9 +2406,9 @@ int ChampMatch2(CChamp *I,int template,int target,
             tmpl_at = I->Atom+tmpl_ent->atom;
             targ_at = I->Atom+atom_idx;
 
-            if((tmpl_at->mark_tmpl-targ_at->mark_targ)==1) /* is atom available? */
+            if((tmpl_at->mark_tmpl-targ_at->mark_targ)==1) {/* is atom available? */
               if(ChampBondMatch(I->Bond+tmpl_ent->bond,
-                                I->Bond+bond_idx)) /* does bond match? */
+                                I->Bond+bond_idx)) /* does bond match? */ {
                 if(ChampAtomMatch(tmpl_at,targ_at)) /* does atom match? */
                   
                   {
@@ -2421,7 +2454,22 @@ int ChampMatch2(CChamp *I,int template,int target,
                       
                       break;
                     }
+                  } else {
+#ifdef MATCHDEBUG
+                printf(" atom match failed %d vs %d ",tmpl_ent->atom,atom_idx);
+                ChampAtomDump(I,tmpl_ent->atom);
+                ChampAtomDump(I,atom_idx);
+                printf("\n");
+#endif
                   }
+              
+              } else {
+#ifdef MATCHDEBUG
+                printf(" bond match failed\n");
+#endif
+
+              }
+            }
           }
           if(!match_flag) {
             bond_off++;
@@ -3065,6 +3113,26 @@ char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
   return result;
 }
 
+void ChampGeneralize(CChamp *I,int index)
+{
+  ListBond *bd1;
+  int cur_bond = 0;
+
+  ChampPrepareTarget(I,index);
+
+  cur_bond=I->Pat[index].bond; 
+  while(cur_bond) {
+    bd1 = I->Bond + cur_bond;
+    if(bd1->class&cH_Aromatic) {
+      bd1->order=cH_NoOrder; /* strip specific bond order
+                              * from aromatic bonds */
+      bd1->class=cH_Pi; /* make all bonds Pi bonds */
+    }
+    cur_bond = bd1->link;
+  }
+
+}
+
 void ChampOrientBonds(CChamp *I,int index)
 {
   /* do a prepatory walk through the molecule to figure out how to minimize 
@@ -3213,7 +3281,8 @@ void ChampPatDump(CChamp *I,int index)
     ChampAtomToString(I,cur_atom,buf);
     printf(" atom %d %s 0x%08x",cur_atom,buf,at->atom);
     printf(" cy: %x",at->cycle);
-    printf(" class: %x !class: %x bonds: ",at->class,at->not_class);
+    printf(" class: %x val: %x deg: %x chg: %d bonds: ",
+           at->class,at->valence,at->degree,at->charge);
     for(a=0;a<MAX_BOND;a++) {
       if(!at->bond[a]) break;
       else printf("%d ",at->bond[a]);

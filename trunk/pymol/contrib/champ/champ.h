@@ -156,6 +156,7 @@ typedef struct {
 #define cH_Double      0x00000002
 #define cH_Triple      0x00000004
 #define cH_AnyOrder    0x00000007
+#define cH_NoOrder     0x00000000
 
 typedef struct {
   int link;     /* memory management */
@@ -251,6 +252,7 @@ int ChampMatch_1VN_N(CChamp *I,int pattern,int list);
 int ChampMatch_1V1_N(CChamp *I,int pattern,int target,int limit,int tag_flag);
 
 int ChampMatch_NV1_N(CChamp *I,int list,int target,int limit,int tag_flag);
+int ChampExact_1VN_N(CChamp *I,int pattern,int list);
 
 int ChampModelToPat(CChamp *I,PyObject *model);
 char *ChampPatToSmiVLA(CChamp *I,int index,char *vla);
@@ -259,6 +261,7 @@ int ChampBondToString(CChamp *I,int index,char *buf);
 void ChampPatReindex(CChamp *I,int index);
 void ChampPatDump(CChamp *I,int index);
 void ChampOrientBonds(CChamp *I,int index);
+void ChampGeneralize(CChamp *I,int index);
 
 
 #endif

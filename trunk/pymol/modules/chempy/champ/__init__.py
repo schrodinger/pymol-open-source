@@ -78,12 +78,19 @@ class Champ:
    def list_prepend_pattern_strings(self,handle,pattern):
       '''
       adds pattern string to the top of a list
-      and returns the new list identifier
       '''
       (e,r) = _champ.list_prepend_pattern_strings(self._champ,int(handle),pattern)
       if e: raise RuntimeError
       return r
 
+   def list_prepend_pattern_index(self,handle,index):
+      '''
+      adds pattern index to the top of a list
+      '''
+      (e,r) = _champ.list_prepend_pattern_index(self._champ,int(handle),int(index))
+      if e: raise RuntimeError
+      return r
+   
    def list_new(self):
       '''
       returns a new list handle
@@ -165,6 +172,18 @@ class Champ:
       if e: raise RuntimeError
       return r
 
+   def exact_1vN_n(self,pattern,handle):
+      '''
+      returns count of how many times exact compound occurs in list
+      
+      NOTE: should call generalize first as patterns are loaded...
+            otherwise, equivalent aromatic bonds will be missed.
+      '''
+      (e,r) = _champ.exact_1vN_n(self._champ,
+                           int(pattern),int(handle))
+      if e: raise RuntimeError
+      return r
+      
    def memory_dump(self):
       '''
       dump bulk memory information
@@ -228,4 +247,13 @@ class Champ:
       (e,r) = _champ.pattern_orient_bonds(self._champ,int(index))
       if e: raise RuntimeError
       return r
+
+   def pattern_generalize(self,index):
+      '''
+      experimental
+      '''
+      (e,r) = _champ.pattern_generalize(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
       
