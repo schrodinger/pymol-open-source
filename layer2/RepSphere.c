@@ -398,13 +398,14 @@ Rep *RepSphereNew(CoordSet *cs)
   
   obj = cs->Obj;
   vFlag=false;
-  for(a=0;a<cs->NIndex;a++) {
-	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepSphere])
-		{
-		  vFlag=true;
-		  break;
-		}
-  }
+  if(obj->RepVisCache[cRepSphere])
+    for(a=0;a<cs->NIndex;a++) {
+      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepSphere])
+        {
+          vFlag=true;
+          break;
+        }
+    }
   if(!vFlag) {
     OOFreeP(I);
     return(NULL); /* skip if no dots are visible */

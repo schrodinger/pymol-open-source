@@ -58,28 +58,31 @@ static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
 
 /*========================================================================*/
+int BondCompare(BondType *a,BondType *b)
+{
+  register int ai0=a->index[0];
+  register int bi0=b->index[0];
+  if(ai0==bi0) {
+    register int ai1=a->index[1];
+    register int bi1=b->index[1];
+    if(ai1==bi1) {
+      return 0;
+    } else if(ai1>bi1) {
+      return 1;
+    } else {
+      return -1;
+    }
+  } else if(ai0>bi0) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
+
+/*========================================================================*/
 int BondInOrder(BondType *a,int b1,int b2)
 {
   return(BondCompare(a+b1,a+b2)<=0);
-}
-/*========================================================================*/
-int BondCompare(BondType *a,BondType *b)
-{
-  int result;
-  if(a->index[0]==b->index[0]) {
-	if(a->index[1]==b->index[1]) {
-	  result=0;
-	} else if(a->index[1]>b->index[1]) {
-	  result=1;
-	} else {
-	  result=-1;
-	}
-  } else if(a->index[0]>b->index[0]) {
-	result=1;
-  } else {
-	result=-1;
-  }
-  return(result);
 }
 
 int CoordSetFromPyList(PyMOLGlobals *G,PyObject *list,CoordSet **cs)
@@ -723,7 +726,6 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
   }\
 OrthoBusyFast(I->G,rep,I->NRep);\
 }
-
 /*========================================================================*/
 void CoordSetUpdate(CoordSet *I)
 {
@@ -755,7 +757,6 @@ void CoordSetUpdate(CoordSet *I)
 		}
 	 }
   OrthoBusyFast(I->G,0,I->NRep);
-
   RepUpdateMacro(I, cRepLine,            RepWireBondNew        );
   RepUpdateMacro(I, cRepCyl,             RepCylBondNew         );
   RepUpdateMacro(I, cRepDot,             RepDotNew             );

@@ -55,7 +55,7 @@ typedef struct CObject {
   int type;
   char Name[ObjNameMax];
   int Color;
-  int RepVis[cRepCnt]; /* currently used only by non atomic objects */
+  int RepVis[cRepCnt]; 
   float ExtentMin[3],ExtentMax[3];
   int ExtentFlag,TTTFlag;
   float TTT[16]; /* translate, transform, translate matrix */

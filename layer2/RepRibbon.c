@@ -256,13 +256,14 @@ Rep *RepRibbonNew(CoordSet *cs)
 
   obj = cs->Obj;
   visFlag=false;
-  for(a=0;a<cs->NIndex;a++) {
-	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepRibbon])
-		{
-		  visFlag=true;
-		  break;
-		}
-  }
+  if(obj->RepVisCache[cRepRibbon])
+    for(a=0;a<cs->NIndex;a++) {
+      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepRibbon])
+        {
+          visFlag=true;
+          break;
+        }
+    }
   if(!visFlag) {
     OOFreeP(I);
     return(NULL); /* skip if not visible */

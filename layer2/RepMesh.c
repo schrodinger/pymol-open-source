@@ -401,27 +401,30 @@ Rep *RepMeshNew(CoordSet *cs)
   solv_acc = (SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_solvent));
   mesh_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_type);
 
-  I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc*probe_radius;
 
+  
   mesh_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
   visFlag=false;
-  for(a=0;a<cs->NIndex;a++) {
-    ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-	 if(ai1->visRep[cRepMesh]&&
-       (inclH||(!ai1->hydrogen))&&
-       ((!cullByFlag)||
-        (!(ai1->flags&(cAtomFlag_exclude|cAtomFlag_ignore)))))
-		{
-		  visFlag=true;
-		  break;
-		}
-  }
+  if(obj->RepVisCache[cRepMesh])
+    for(a=0;a<cs->NIndex;a++) {
+      ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+      if(ai1->visRep[cRepMesh]&&
+         (inclH||(!ai1->hydrogen))&&
+         ((!cullByFlag)||
+          (!(ai1->flags&(cAtomFlag_exclude|cAtomFlag_ignore)))))
+        {
+          visFlag=true;
+          break;
+        }
+    }
   if(!visFlag) {
     OOFreeP(I);
     return(NULL); /* skip if no dots are visible */
   }
+
+  I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc*probe_radius;
 
   RepInit(G,&I->R);
 

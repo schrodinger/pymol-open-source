@@ -481,17 +481,18 @@ Rep *RepWireBondNew(CoordSet *cs)
 
   visFlag=false;
   b=obj->Bond;
-  for(a=0;a<obj->NBond;a++)
-    {
-      b1 = b->index[0];
-      b2 = b->index[1];
-      b++;
-      if(obj->AtomInfo[b1].visRep[cRepLine]||
-         obj->AtomInfo[b2].visRep[cRepLine]) {
-        visFlag=true;
-        break;
+  if(obj->RepVisCache[cRepLine])
+    for(a=0;a<obj->NBond;a++)
+      {
+        b1 = b->index[0];
+        b2 = b->index[1];
+        b++;
+        if(obj->AtomInfo[b1].visRep[cRepLine]||
+           obj->AtomInfo[b2].visRep[cRepLine]) {
+          visFlag=true;
+          break;
+        }
       }
-    }
   if(!visFlag) {
     OOFreeP(I);
     return(NULL); /* skip if no dots are visible */

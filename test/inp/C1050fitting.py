@@ -38,6 +38,7 @@ for a in xrange(1,14):
    print "%8.3f"%cmd.rms("ref","trg"),
    print "%8.3f"%cmd.rms_cur("ref","trg")
 
+
 a = 1
 print "%8.3f"%cmd.fit("ref","trg")
 for b in xrange(1,11):

@@ -194,18 +194,18 @@ Rep *RepNonbondedNew(CoordSet *cs)
   obj = cs->Obj;
 
   active = Alloc(int,cs->NIndex);
-  
-  for(a=0;a<cs->NIndex;a++) {
-    ai = obj->AtomInfo+cs->IdxToAtm[a];
-    active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbonded]);/*&& (!ai->masked);*/
-	if(active[a]) {
-		if(ai->masked)
-			active[a]=-1;
-		else
-			active[a]=1;
-	}
-    if(active[a]) nAtom++;
-  }
+  if(obj->RepVisCache[cRepNonbonded])
+    for(a=0;a<cs->NIndex;a++) {
+      ai = obj->AtomInfo+cs->IdxToAtm[a];
+      active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbonded]);/*&& (!ai->masked);*/
+      if(active[a]) {
+        if(ai->masked)
+          active[a]=-1;
+        else
+          active[a]=1;
+      }
+      if(active[a]) nAtom++;
+    }
   if(!nAtom) {
     OOFreeP(I);
     FreeP(active);

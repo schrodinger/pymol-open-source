@@ -1305,8 +1305,6 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   obj = cs->Obj;
 
-  I->max_vdw = ObjectMoleculeGetMaxVDW(obj);
-
   surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
   surface_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_type);
   optimize = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_optimize_subsets);
@@ -1320,21 +1318,24 @@ Rep *RepSurfaceNew(CoordSet *cs)
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
 
   visFlag=false;
-  for(a=0;a<cs->NIndex;a++) {
-     ai1=obj->AtomInfo+cs->IdxToAtm[a];
-     if(ai1->visRep[cRepSurface]&&
-        (inclH||(!ai1->hydrogen))&&
-        ((!cullByFlag)|
-         (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore)))))
-       {
-         visFlag=true;
-         break;
-       }
-  }
+  if(obj->RepVisCache[cRepSurface])
+    for(a=0;a<cs->NIndex;a++) {
+      ai1=obj->AtomInfo+cs->IdxToAtm[a];
+      if(ai1->visRep[cRepSurface]&&
+         (inclH||(!ai1->hydrogen))&&
+         ((!cullByFlag)|
+          (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore)))))
+        {
+          visFlag=true;
+          break;
+        }
+    }
   if(!visFlag) {
     OOFreeP(I);
     return(NULL); /* skip if no thing visible */
   }
+
+  I->max_vdw = ObjectMoleculeGetMaxVDW(obj);
 
   RepInit(G,&I->R);
 
