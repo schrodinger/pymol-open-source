@@ -192,13 +192,15 @@ def mol_labels(s):
   'cmd.label("(name ca and (byres('+s+')))","\'%s-%s\'%(resn,resi)")'  ],
            [ 1, 'Atoms'          , 'cmd.label("'+s+'","name")'         ],
            [ 0, ''               , ''                                  ],
-           [ 1, 'B-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],         
-           [ 1, 'Partial Charge' , 
+           [ 1, 'B-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],           [ 1, 'Partial Charge' , 
   'cmd.label("'+s+'","\'%1.4f\'%partial_charge")'                      ],
            [ 1, 'Formal Charge' , 
   'cmd.label("'+s+'","\'%d\'%formal_charge")'                      ],
            [ 0, ''               , ''                                  ],
            [ 1, 'Text Type'      , 'cmd.label("'+s+'","text_type")'    ],
-           [ 1, 'Numeric Type'   , 'cmd.label("'+s+'","numeric_type")' ]
+           [ 1, 'Numeric Type'   , 'cmd.label("'+s+'","numeric_type")' ],
+           [ 0, ''               , ''                                  ],      
+           [ 1, 'ID'             , 'cmd.label("'+s+'","id")' ],
+           [ 1, 'ID+1'           , 'cmd.label("'+s+'","id+1")' ],
            ]
 
