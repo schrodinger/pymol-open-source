@@ -946,9 +946,9 @@ def config_mouse(quiet=0): # INTERNAL
       r = int(r)
       if not r:
          # visualization
-         button('l','','rota')
-         button('m','','move')
-         button('r','','movz')
+         button('l','none','rota')
+         button('m','none','move')
+         button('r','none','movz')
          button('l','shft','+lbx')
          button('m','shft','-lbx')
          button('r','shft','clip')                  
@@ -962,9 +962,9 @@ def config_mouse(quiet=0): # INTERNAL
             print " Mouse: configured for visualization."
       else:
          # editing
-         button('l','','rota')
-         button('m','','move')
-         button('r','','movz')
+         button('l','none','rota')
+         button('m','none','move')
+         button('r','none','movz')
          button('l','shft','rotf')
          button('m','shft','movf')
          button('r','shft','clip')                  
@@ -4204,6 +4204,10 @@ SEE ALSO
    #      
    try:
       lock()
+      if name==None:
+         sel_cnt = _cmd.get("sel_counter") + 1.0
+         _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
+         name = "obj%02.0f" % sel_cnt
       _cmd.create(str(name),str(selection),
                   int(source_state)-1,int(target_state)-1)
    finally:
@@ -5896,7 +5900,6 @@ button_code = {
 button_sc = Shortcut(button_code.keys())
 
 but_mod_code = {
-   ''      : 0,
    'none'  : 0,
    'shft'  : 1,
    'ctrl'  : 2,
@@ -5999,7 +6002,7 @@ auto_arg =[
    },
    {
    'feedback' : [ fb_mask_sc , 'mask','' ],
-   'button' : [ but_act_sc , 'button actions',', ' ],
+   'button' : [ but_act_sc , 'button actions','' ],
    }
    ]
    

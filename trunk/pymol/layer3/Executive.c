@@ -94,7 +94,7 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
-void ExecutiveSelectRect(BlockRect *rect,int add)
+void ExecutiveSelectRect(BlockRect *rect,int mode)
 {
   Multipick smp;
   OrthoLineType buffer,buf2;
@@ -115,33 +115,39 @@ void ExecutiveSelectRect(BlockRect *rect,int add)
   if(smp.picked[0].index) {
   SelectorCreate(cTempRectSele,NULL,NULL,1,&smp);
   if(log_box) SelectorLogSele(cTempRectSele);
-  if(SelectorIndexByName(cLeftButSele)>=0) {
-    if(add) {
+  if(mode==cButModeRect) {
+    SelectorCreate(cLeftButSele,cTempRectSele,NULL,1,NULL);
+    if(log_box) {
+      sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
+      PLog(buf2,cPLog_no_flush);
+    }
+  } else if(SelectorIndexByName(cLeftButSele)>=0) {
+    if(mode==cButModeRectAdd) {
       sprintf(buffer,"(%s or %s)",cLeftButSele,cTempRectSele);
-      SelectorCreate(cLeftButSele,buffer,NULL,1,NULL);
+      SelectorCreate(cLeftButSele,buffer,NULL,0,NULL);
       if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,buffer);
+        sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,buffer);
         PLog(buf2,cPLog_no_flush);
       }
     } else {
       sprintf(buffer,"(%s and not %s)",cLeftButSele,cTempRectSele);
-      SelectorCreate(cLeftButSele,buffer,NULL,1,NULL);
+      SelectorCreate(cLeftButSele,buffer,NULL,0,NULL);
       if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,buffer);
+        sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,buffer);
         PLog(buf2,cPLog_no_flush);
       }
     }
   } else {
-    if(add) {
-      SelectorCreate(cLeftButSele,cTempRectSele,NULL,1,NULL);
+    if(mode==cButModeRectAdd) {
+      SelectorCreate(cLeftButSele,cTempRectSele,NULL,0,NULL);
       if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
+        sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,cTempRectSele);
         PLog(buf2,cPLog_no_flush);
       }
     } else {
-      SelectorCreate(cLeftButSele,"(none)",NULL,1,NULL);
+      SelectorCreate(cLeftButSele,"(none)",NULL,0,NULL);
       if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"(none)\",quiet=1)\n",prefix,cLeftButSele);
+        sprintf(buf2,"%scmd.select(\"%s\",\"(none)\")\n",prefix,cLeftButSele);
         PLog(buf2,cPLog_no_flush);
       }
     }

@@ -488,6 +488,20 @@ class PMGApp(AbstractApp):
                         label='Quit',
                         command=self.quit)
 
+      self.menuBar.addmenuitem('File', 'separator', '')
+      
+      self.menuBar.addmenuitem('File', 'checkbutton',
+                         'Log Conformations.',
+                         label='Log Conformations',
+                        variable = self.setting.log_conformations,
+                        command = lambda s=self: s.setting.update('log_conformations'))
+
+      self.menuBar.addmenuitem('File', 'checkbutton',
+                         'Log Box Selections.',
+                         label='Log Box Selections',
+                        variable = self.setting.log_box_selections,
+                        command = lambda s=self: s.setting.update('log_box_selections'))
+
       self.menuBar.addmenuitem('Edit', 'command',
                          'To Copy: Use Ctrl-C',
                          label='To copy text use Ctrl-C',
@@ -692,7 +706,6 @@ class PMGApp(AbstractApp):
                                variable = self.setting.ignore_pdb_segi,
                                command = lambda s=self: s.setting.update('ignore_pdb_segi'))
 
-
       self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Auto-Zoom.',
                          label='Auto-Zoom New Objects',
@@ -711,7 +724,7 @@ class PMGApp(AbstractApp):
                         variable = self.setting.auto_hide_selections,
                         command = lambda s=self: s.setting.update('auto_hide_selections'))
 
-
+      
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
       self.menuBar.addmenuitem('Mouse', 'command', 'Visualization',

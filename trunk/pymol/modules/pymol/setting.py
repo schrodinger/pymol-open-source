@@ -142,7 +142,7 @@ class SettingIndex:
    logging               =131
    robust_logs           =132
    log_box_selections    =133
-   log_transformations   =134
+   log_conformations     =134
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

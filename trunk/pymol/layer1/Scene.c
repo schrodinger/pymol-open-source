@@ -726,6 +726,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   switch(mode) {
   case cButModeRectAdd:
   case cButModeRectSub:
+  case cButModeRect:
     return(0);
     break;
   case cButModeRotXYZ:

@@ -93,6 +93,12 @@ class Setting:
       self.ignore_pdb_segi = IntVar()
       self.ignore_pdb_segi.set(int(cmd.get_setting_legacy('ignore_pdb_segi')))
 
+      self.log_box_selections = IntVar()
+      self.log_box_selections.set(int(cmd.get_setting_legacy('log_box_selections')))
+
+      self.log_conformations = IntVar()
+      self.log_conformations.set(int(cmd.get_setting_legacy('log_conformations')))
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
@@ -142,6 +148,10 @@ class Setting:
 
          'ignore_pdb_segi'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.ignore_pdb_segi.get())),log=1))),
+         'log_box_selections'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.log_box_selections.get())),log=1))),
+         'log_conformations'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.log_conformations.get())),log=1))),
          }
 
       self.update_code = {
@@ -187,6 +197,10 @@ class Setting:
          (lambda s,t: (s.cartoon_smooth_loops.set(t[1][0]!=0))),
          'ignore_pdb_segi':
          (lambda s,t: (s.ignore_pdb_segi.set(t[1][0]!=0))),
+         'log_box_selections':
+         (lambda s,t: (s.log_box_selections.set(t[1][0]!=0))),
+         'log_conformations':
+         (lambda s,t: (s.log_conformations.set(t[1][0]!=0))),
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -211,6 +225,8 @@ class Setting:
          pymol.setting._get_index("cartoon_discrete_colors"),
          pymol.setting._get_index("cartoon_smooth_loops"),         
          pymol.setting._get_index("ignore_pdb_segi"),         
+         pymol.setting._get_index("log_box_selections"),
+         pymol.setting._get_index("log_conformations"),
          ]
 
       self.active_dict = {}
