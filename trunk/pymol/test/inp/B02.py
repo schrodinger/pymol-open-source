@@ -28,10 +28,13 @@ def load():
       cmd.color('red','ss h')
       cmd.color('yellow','ss s')
       cmd.hide()
-      if cmd.count_atoms()<10000:
+      if cmd.count_atoms()<15000:
          cmd.show(rep[r],"all")
-      else:
+      elif cmd.count_atoms()<50000:
          cmd.show("cartoon","all")	
+      else:
+         cmd.show("lines","all")	
+
       r = r + 1
       if r>=len(rep): r=0;
       sys.__stderr__.write(".")
