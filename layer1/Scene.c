@@ -551,7 +551,6 @@ void SceneSetFrame(int mode,int frame)
   int movieCommand = false;
   int oldFrame=0;
   newFrame = SettingGetGlobal_i(cSetting_frame) -1;
-  oldFrame = newFrame;
   PRINTFD(FB_Scene)
     " SceneSetFrame: entered.\n"
     ENDFD;
@@ -586,17 +585,14 @@ void SceneSetFrame(int mode,int frame)
     break;
   case 7: /* absolute with forced movie command */
     newFrame=frame;
-    oldFrame = newFrame-1;
     movieCommand = true;
     break;
   case 8: /* relative with forced movie command */
 	 newFrame+=frame;
-    oldFrame = newFrame-1;
     movieCommand = true;
 	 break;
   case 9: /* end with forced movie command */
     newFrame=I->NFrame-1; 
-    oldFrame = newFrame-1;
     movieCommand = true;
     break;
   }
@@ -605,11 +601,11 @@ void SceneSetFrame(int mode,int frame)
     if(newFrame>=I->NFrame) newFrame=I->NFrame-1;
     if(newFrame<0) newFrame=0;
     newState = MovieFrameToIndex(newFrame);
-    if(movieCommand&&(newFrame!=oldFrame)) {
-      MovieDoFrameCommand(newFrame);
-    }
     if(newFrame==0) {
       MovieMatrix(cMovieMatrixRecall);
+    }
+    if(movieCommand) {
+      MovieDoFrameCommand(newFrame);
     }
     if(SettingGet(cSetting_cache_frames))
       I->MovieFrameFlag=true;

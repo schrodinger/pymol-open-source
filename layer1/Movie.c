@@ -447,7 +447,6 @@ void MovieAppendCommand(int frame,char *command)
       " Movie-Error: frame %d does not exist.  Use 'mset' to define movie first.\n",frame+1
       ENDFB;
   }
-  printf("here\n");
 }
 /*========================================================================*/
 ImageType MovieGetImage(int index)
