@@ -866,7 +866,6 @@ normal = {
       ( 'N'   , 'CD'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
-      'HN'   : 'H'    ,
       'HB2'  : '2HB'  ,
       'HB3'  : '3HB'  ,
       'HB1'  : '3HB'  ,
@@ -3772,7 +3771,6 @@ c_terminal = {
    'aliases' : {
       'O1'   : 'O'    ,
       'O2'   : 'OXT'  ,
-      'HN'   : 'H'    ,
       'OT'   : 'OXT'  ,
       'OT2'  : 'OXT'  ,
       'OT1'  : 'O'    ,

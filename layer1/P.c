@@ -85,6 +85,14 @@ void PCatchInit(void);
 void my_interrupt(int a);
 char *getprogramname(void);
 
+PyObject *GetBondsDict(void)
+{
+  PyObject *result = NULL;
+  result = PyObject_GetAttrString(P_chempy,"bonds");
+  if(!result) ErrMessage("PyMOL","can't find 'chempy.bonds.bonds'");
+  return(result);
+}
+
 int PComplete(char *str,int buf_size)
 {
   int ret = false;
@@ -872,6 +880,8 @@ void PInit(void)
   PRunString("import chempy"); 
   P_chempy = PyDict_GetItemString(P_globals,"chempy");
   if(!P_chempy) ErrFatal("PyMOL","can't find 'chempy'");
+
+  PRunString("from chempy.bonds import bonds"); /* load bond dictionary */
 
   PRunString("from chempy import models"); 
   P_models = PyDict_GetItemString(P_globals,"models");

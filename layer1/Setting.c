@@ -1220,6 +1220,7 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_legacy_vdw_radii, 0.0F);  
 
   SettingSet_f(I,cSetting_sculpt_memory, 1.0F);
-
+  
+  SettingSet_f(I,cSetting_connect_mode, 0.0F);
 
 }
