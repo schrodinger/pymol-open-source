@@ -1483,6 +1483,12 @@ class PMGApp(AbstractApp):
                         variable = self.setting.texture_fonts,
                         command = lambda s=self: s.setting.update('texture_fonts'))
 
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Animation',
+                         label=self.pad+'Animation',
+                        variable = self.setting.animation,
+                        command = lambda s=self: s.setting.update('animation'))
+
       self.menuBar.addmenu('Setting', 'Configuration Control',tearoff=TRUE)
 
       self.menuBar.addmenuitem('Setting', 'command',

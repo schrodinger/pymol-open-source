@@ -285,7 +285,7 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
   
   switch(action) {
   case 0: /* center cumulative*/
-    ExecutiveCenter(G,cTempCenterSele,-1,true);
+    ExecutiveCenter(G,cTempCenterSele,-1,true,-1);
     if(logging) {
       sprintf(buf2,"%scmd.center(\"%s\")\n",prefix,cTempCenterSele);
       PLog(buf2,cPLog_no_flush);
@@ -293,7 +293,7 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
     }
     break;
   case 1: /* zoom */
-    ExecutiveWindowZoom(G,cTempCenterSele,0.0,-1,false);
+    ExecutiveWindowZoom(G,cTempCenterSele,0.0,-1,false,-1);
     if(logging) {
       sprintf(buf2,"%scmd.zoom(\"%s\")\n",prefix,cTempCenterSele);
       PLog(buf2,cPLog_no_flush);
@@ -304,7 +304,7 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
     {
       char selName[ObjNameMax];
       if(ExecutiveGetActiveSeleName(G,selName,true)) {
-        ExecutiveCenter(G,selName,-1,true);
+        ExecutiveCenter(G,selName,-1,true,-1);
         if(logging) {
           sprintf(buf2,"%scmd.center(\"%s\")\n",prefix,selName);
           PLog(buf2,cPLog_no_flush);

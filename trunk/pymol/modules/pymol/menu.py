@@ -407,10 +407,10 @@ def sele_action(s):
            [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
            [ 1, 'rename selection', 'cmd.wizard("renaming","'+s+'")'          ],
            [ 0, ''               ,''                             ],
-           [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
-           [ 1, 'center'         ,'cmd.center("'+s+'")'            ],           
+           [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+           [ 1, 'center'         ,'cmd.center("'+s+'",animate=-1)'            ],           
            [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
-           [ 1, 'orient'         ,'cmd.orient("'+s+'")'          ],
+           [ 1, 'orient'         ,'cmd.orient("'+s+'",animate=-1)'          ],
            [ 0, ''               ,''                             ],
            [ 1, 'preset'         ,presets(s)         ],
            [ 0, ''               ,''                             ],
@@ -463,10 +463,10 @@ def sele_action2(s):
 
 def mol_action(s):
    return [[ 2, 'Actions:'     , ''                       ],     
-           [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'      ],
-           [ 1, 'center'         ,'cmd.center("'+s+'")'            ],
+           [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
+           [ 1, 'center'         ,'cmd.center("'+s+'",animate=-1)'            ],
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
-           [ 1, 'orient'       , 'cmd.orient("'+s+'")'    ],
+           [ 1, 'orient'       , 'cmd.orient("'+s+'",animate=-1)'    ],
            [ 0, ''          ,''                                              ],
            [ 1, 'preset'  , presets(s)       ],
            [ 0, ''          ,''                                              ],           
@@ -494,8 +494,8 @@ def mol_action(s):
 
 def slice_action(s):
    return [[ 2, 'Actions:'     , ''                       ],
-           [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'      ],
-           [ 1, 'center'       , 'cmd.center("'+s+'")'    ],           
+           [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
+           [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],         
            [ 0, ''             , ''                       ],
            [ 1, 'tracking on' , 'cmd.set("slice_track_camera",1,"'+s+'")'      ],
@@ -512,8 +512,8 @@ def slice_action(s):
 
 def simple_action(s):
    return [[ 2, 'Actions:'     , ''                       ],
-           [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'      ],
-           [ 1, 'center'       , 'cmd.center("'+s+'")'    ],           
+           [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
+           [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 0, ''             , ''                       ],
            [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
@@ -526,22 +526,22 @@ def ramp_action(s):
 
 def test1(s):
       return [[ 2, 'Test1:'     , ''                      ],     
-           [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
-           [ 1, 'center'   , 'cmd.center("all")'   ],           
+           [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
+           [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],           
            [ 1, 'origin'   , 'cmd.origin("all")'   ],
            ]
 
 def test2(s):
       return [[ 2, 'Test2:'     , ''                      ],     
-           [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
-           [ 1, 'center'   , 'cmd.center("all")'   ],           
+           [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
+           [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],           
            [ 1, 'origin'   , 'cmd.origin("all")'   ],
            ]
 
 def all_action(s):
    return [[ 2, 'Actions:'     , ''                      ],     
-           [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
-           [ 1, 'center'   , 'cmd.center("all")'   ],           
+           [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
+           [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],           
            [ 1, 'origin'   , 'cmd.origin("all")'   ],
            [ 0, ''             , ''                      ],           
            [ 1, 'preset'  , presets(s)     ],           
@@ -611,10 +611,10 @@ def mol_labels(s):
 
 def mol_view(s):
    return [
-      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
-      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
       [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
       ]
 
 def all_option(s):
@@ -626,10 +626,10 @@ def all_option(s):
       [ 1, 'view'      , mol_view(s) ],
       [ 1, 'preset'      , presets(s) ],
       [ 0, ''             , ''                      ],
-      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
-      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
       [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
       [ 0, ''             , ''                      ],
       [ 1, 'label'      , mol_labels(s) ],
       [ 0, '', '' ],
@@ -655,9 +655,9 @@ def enable_disable(enable):
 def main_menu():
    return [
       [ 2, 'Main Pop-Up'  , '' ],
-      [ 1, 'zoom (vis)'           ,'cmd.zoom("visible")'            ],
-      [ 1, 'center (vis)'           ,'cmd.center("visible")'            ],      
-      [ 1, 'orient (vis)'           ,'cmd.orient("visible")'            ],
+      [ 1, 'zoom (vis)'           ,'cmd.zoom("visible",animate=-1)'            ],
+      [ 1, 'center (vis)'           ,'cmd.center("visible",animate=-1)'            ],      
+      [ 1, 'orient (vis)'           ,'cmd.orient("visible",animate=-1)'            ],
       [ 1, 'reset'           ,'cmd.reset()'            ],
       [ 0, ''             , ''                      ],
       [ 1, 'enable', enable_disable(1) ],
@@ -696,10 +696,10 @@ def pick_sele(title,s):
       [ 1, 'hide'      , mol_hide(s) ],
       [ 1, 'preset'  , presets(s)       ],      
       [ 0, ''             , ''                      ],
-      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
-      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
       [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
       [ 0, ''             , ''                      ],
       [ 1, 'labels'      , mol_labels(s) ],
       ]
@@ -713,10 +713,10 @@ def pick_option(title,s,object=0):
       [ 1, 'hide'      , mol_hide(s) ],
       [ 1, 'preset'  , presets(s)       ],      
       [ 0, ''             , ''                      ],
-      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
-      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
       [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
       [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
       [ 0, ''             , ''                      ],
       [ 1, 'labels'      , mol_labels(s) ],
@@ -790,10 +790,10 @@ def seq_option(title,s,object=0):
       [ 1, 'hide'      , mol_hide(s) ],
       [ 1, 'preset'  , presets(s)       ],      
       [ 0, ''             , ''                      ],
-      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
-      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
       [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
       [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
       [ 0, ''             , ''                      ],
       [ 1, 'labels'      , mol_labels(s) ],

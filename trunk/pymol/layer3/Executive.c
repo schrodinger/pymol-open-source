@@ -4289,7 +4289,8 @@ void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)
 }
 
 /*========================================================================*/
-void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,int state)
+void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
+                     int state,int animate)
 {
   double egval[3],egvali[3];
   double evect[3][3];
@@ -4336,6 +4337,11 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,int state)
       for(b=0;b<3;b++)
         m[a][b]=mt[b][a];
 
+    if(animate<0)
+      animate=SettingGetGlobal_b(G,cSetting_animation);
+    if(animate)
+      ScenePrimeAnimation(G);
+
     SceneSetMatrix(G,m[0]); /* load matrix */
 
     /* there must  be a more elegant to get the PC on X and the SC
@@ -4358,7 +4364,9 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,int state)
     }
     /* X < Y < Z  - do nothing - that's what we want */
 
-    ExecutiveWindowZoom(G,sele,0.0,state,0);
+    ExecutiveWindowZoom(G,sele,0.0,state,0,false);
+    if(animate)
+      SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
 
   }
 }
@@ -5109,7 +5117,7 @@ int ExecutiveReset(PyMOLGlobals *G,int cmd,char *name)
   CObject *obj;
   if(!name[0]) {
     SceneResetMatrix(G);
-    ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0); /* reset does all states */
+    ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0); /* reset does all states */
   } else {
     obj = ExecutiveFindObjectByName(G,name);
     if(!obj)
@@ -5962,7 +5970,8 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals *G,char *name,float *pos,float *
   return(flag);  
 }
 /*========================================================================*/
-int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,int state,int inclusive)
+int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
+                        int state,int inclusive,int animate)
 {
   float center[3],radius;
   float mn[3],mx[3],df[3];
@@ -6002,10 +6011,14 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,int state,int in
       " ExecutiveWindowZoom: on center %8.3f %8.3f %8.3f...\n",center[0],
       center[1],center[2]
       ENDFD;
-    ScenePrimeAnimation(G);
+    if(animate<0)
+      animate=SettingGetGlobal_b(G,cSetting_animation);
+    if(animate)
+      ScenePrimeAnimation(G);
     SceneOriginSet(G,center,false);
     SceneWindowSphere(G,center,radius);
-    SceneLoadAnimation(G,0.75);
+    if(animate)
+      SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
     SceneDirty(G);
   } else {
 
@@ -6028,12 +6041,14 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,int state,int in
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int origin)
+int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
+                    int origin,int animate)
 {
   float center[3];
   float mn[3],mx[3],df[3];
   int sele0;
   int ok=true;
+
   if(ExecutiveGetExtent(G,name,mn,mx,true,state,true)) {
     subtract3f(mx,mn,df);
     average3f(mn,mx,center);
@@ -6045,12 +6060,17 @@ int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int origin)
       center[1],center[2]
       ENDFD;
 
-    ScenePrimeAnimation(G);
+    if(animate<0)
+      animate=SettingGetGlobal_b(G,cSetting_animation);
+
+    if(animate)
+      ScenePrimeAnimation(G);
     if(origin) 
       SceneOriginSet(G,center,false);
     SceneRelocate(G,center);
     SceneDirty(G);
-    SceneLoadAnimation(G,0.75);
+    if(animate)
+      SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
   } else {
     sele0 = SelectorIndexByName(G,name);
     if(sele0>=0) { /* any valid selection except "all" */
@@ -6972,10 +6992,10 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int allow_zoom,int quiet
     if(!exists) {
       switch(SettingGetGlobal_i(G,cSetting_auto_zoom)) {
       case 1: /* zoom new one */
-        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0); /* auto zoom (all states) */
+        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0); /* auto zoom (all states) */
         break;
       case 2: /* zoom all */
-        ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0);
+        ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0);
         break;
       }
     }

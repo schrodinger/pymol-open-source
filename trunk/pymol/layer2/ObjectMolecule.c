@@ -565,7 +565,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals *G,ObjectMolecule *I,char
   SceneCountFrames(G);
   if(zoom_flag) 
     if(SettingGet(G,cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(G,I->Obj.Name,0.0,-1,0); /* auto zoom (all states) */
+      ExecutiveWindowZoom(G,I->Obj.Name,0.0,-1,0,0); /* auto zoom (all states) */
     }
   
   return(I);
@@ -681,7 +681,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals *G,ObjectMolecule *I,char
   SceneCountFrames(G);
   if(zoom_flag) 
     if(SettingGet(G,cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(G,I->Obj.Name,0.0,-1,0); /* auto zoom (all states) */
+      ExecutiveWindowZoom(G,I->Obj.Name,0.0,-1,0,0); /* auto zoom (all states) */
     }
   
   return(I);

@@ -92,13 +92,15 @@ void ExecutiveSetAllRepVisib(PyMOLGlobals *G,char *name,int rep,int state);
 void ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state);
 
 int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *pos,int state);
-int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive);
-int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,int state,int inclusive);
+int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive, int animate);
+int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
+                        int state,int inclusive,int animate);
 int ExecutiveGetMoment(PyMOLGlobals *G,char *name,Matrix33d mi,int state);
 
 char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain);
 
-void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,int state);
+void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
+                     int state, int animate);
 char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,int mode);
 int ExecutiveStereo(PyMOLGlobals *G,int flag);
 void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst);
