@@ -10,7 +10,7 @@ compile PyMOL.  If you don't have this experience, save yourself
 frustration and wait until binaries are available for download.  
 
 The following instructions assume you are installing PyMOL in your
-home directory.  You can of course put it anyway, but you'll
+home directory.  You can of course put it anywhere, but you'll
 need to replace "$HOME" with an appropriate path.
 
 STEP (1) The "pymol-ext" CVS source tree is required, but only needs
