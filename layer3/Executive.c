@@ -526,8 +526,10 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
 /*========================================================================*/
 void ExecutiveUpdateObjectSelection(struct Object *obj)
 {
-  SelectorDelete(obj->Name);  
-  SelectorCreate(obj->Name,NULL,(ObjectMolecule*)obj); /* create a selection with same name */ 
+  if(obj->type==cObjectMolecule) {
+    SelectorDelete(obj->Name);  
+    SelectorCreate(obj->Name,NULL,(ObjectMolecule*)obj); /* create a selection with same name */ 
+  }
 }
 /*========================================================================*/
 void ExecutiveReset(int cmd)
@@ -1205,7 +1207,7 @@ matrix checking code...
 		}
 	 }
 
-	 multiply3d3d(mt,mt2,pr);
+	 matrix_multiply33d33d(mt,mt2,pr);
 	 printf("self product 1 \n");
 	 for(a=0;a<3;a++) {
 		for(b=0;b<3;b++) {
@@ -1215,8 +1217,8 @@ matrix checking code...
 	 }
 	 printf("\n");
 
-	 multiply3d3d(mt,mi,im);
-	 multiply3d3d(im,mt2,pr);
+	 matrix_multiply33d33d(mt,mi,im);
+	 matrix_multiply33d33d(im,mt2,pr);
 	 printf("diagonal product 1 \n");
 	 for(a=0;a<3;a++) {
 		for(b=0;b<3;b++) {
@@ -1233,8 +1235,8 @@ matrix checking code...
 		em[a][a]=egval[a];
 	 }
 
-	 multiply3d3d(mt2,em,im);
-	 multiply3d3d(im,mt,pr);
+	 matrix_multiply33d33d(mt2,em,im);
+	 matrix_multiply33d33d(im,mt,pr);
 	 printf("diagonal product 4 \n");
 	 for(a=0;a<3;a++) {
 		for(b=0;b<3;b++) {

@@ -127,13 +127,53 @@ double dot_product3d ( double *v1, double *v2 )
   return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
 }
 
-void multiply3d3d ( Matrix33d m1,Matrix33d m2,Matrix33d m3)
+void transform33f3f ( float *m1,float *m2,float *m3) 
 {
-  int a,b;
-  for(a=0;a<3;a++)
-	 for(b=0;b<3;b++)
-		  m3[b][a] = m1[b][0]*m2[0][a] +
-			 m1[b][1]*m2[1][a] + m1[b][2]*m2[2][a];
+  float m2r0,m2r1,m2r2;
+  m2r0=m2[0];
+  m2r1=m2[1];
+  m2r2=m2[2];
+  m3[0] = m1[0]*m2r0 + m1[1]*m2r1 + m1[2]*m2r2;
+  m3[1] = m1[3]*m2r0 + m1[4]*m2r1 + m1[5]*m2r2;
+  m3[2] = m1[6]*m2r0 + m1[7]*m2r1 + m1[8]*m2r2;
+}
+
+void multiply33f33f ( float *m1,float *m2,float *m3) /* m2 and m3 can be the same matrix */
+{
+  int a;
+  float m2r0,m2r1,m2r2;
+  for(a=0;a<3;a++) {
+    m2r0=m2[a];
+    m2r1=m2[3+a];
+    m2r2=m2[6+a];
+    m3[a  ] = m1[0]*m2r0 + m1[1]*m2r1 + m1[2]*m2r2;
+    m3[3+a] = m1[3]*m2r0 + m1[4]*m2r1 + m1[5]*m2r2;
+    m3[6+a] = m1[6]*m2r0 + m1[7]*m2r1 + m1[8]*m2r2;
+  }
+}
+
+void multiply33d33d ( double *m1,double *m2,double *m3) /* m2 and m3 can be the same matrix */
+{
+  int a;
+  double m2r0,m2r1,m2r2;
+  for(a=0;a<3;a++) {
+    m2r0=m2[a];
+    m2r1=m2[3+a];
+    m2r2=m2[6+a];
+    m3[a  ] = m1[0]*m2r0 + m1[1]*m2r1 + m1[2]*m2r2;
+    m3[3+a] = m1[3]*m2r0 + m1[4]*m2r1 + m1[5]*m2r2;
+    m3[6+a] = m1[6]*m2r0 + m1[7]*m2r1 + m1[8]*m2r2;
+  }
+}
+
+void matrix_multiply33f33f ( Matrix33f m1,Matrix33f m2,Matrix33f m3)
+{
+  multiply33f33f((float*)m1,(float*)m2,(float*)m3);
+}
+
+void matrix_multiply33d33d ( Matrix33d m1,Matrix33d m2,Matrix33d m3)
+{
+  multiply33d33d((double*)m1[0],(double*)m2,(double*)m3);
 }
 
 float deg_to_rad(float angle)
@@ -354,7 +394,7 @@ float distance_halfline2point3f(float *base,float *normal,float *point,float *al
 }
 
 
-void transform33f3f(Matrix33f m1,float *v1,float *v2)
+void matrix_transform33f3f(Matrix33f m1,float *v1,float *v2)
 {
   int b;
   for(b=0;b<3;b++)
@@ -674,7 +714,7 @@ void find_axis( oMatrix3d a, float *axis)
   printf("eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
   printf("%8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
   
-  multiply3d3d(a,v,p);
+  matrix_multiply33d33d(a,v,p);
 
   printf("invariance\n");
   printf("%8.3f %8.3f %8.3f\n",p[0][0],p[0][1],p[0][2]);

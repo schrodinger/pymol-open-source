@@ -16,15 +16,14 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Object
 #define _H_Object
 
-/* literally a 3-D object...also an OO object */
-
+/* literally a 3-D object...also an object object */
 
 #include"Base.h"
 #include"Ray.h"
 
 #define ObjNameMax 255
-
 #define cObjectMolecule 1
+#define cObjectMap 2
 
 typedef struct Object {
   void (*fUpdate)(struct Object *I); /* update representations */
@@ -32,8 +31,6 @@ typedef struct Object {
   void (*fFree)(struct Object *I);
   int  (*fGetNFrame)(struct Object *I);
   void (*fDescribeElement)(struct Object *I,int index);
-  /*  float extent[6];
-      float center[3];*/
   int type;
   char Name[ObjNameMax];
   int Color;
@@ -46,3 +43,6 @@ void ObjectFree(Object *I);
 void ObjectUseColor(Object *I);
 
 #endif
+
+
+

@@ -32,8 +32,6 @@ float rad_to_deg(float angle);
 void normalize3f( float *v1 );
 void normalize3d( double *v1 );
 
-
-
 double dot_product3d ( double *v1, double *v2 );
 float project3f ( float *v1, float *v2, float *proj );
 void remove_component3f ( float *v1, float *unit, float *result);
@@ -47,9 +45,20 @@ int within3f(float *v1,float *v2,float dist);
 
 /* REVISED Matrix Routines */
 
-void transform33f3f ( Matrix33f m1,float *v1,float *v2);
+/* as float pointers */
+
+/* in matrix multiplies, the last two matrices can be the same matrix! */
+
+void transform33f3f (float *m1, float *v1, float *v2);
+void multiply33f33f ( float *m1, float *m2, float *m3);
+void multiply33d33d ( double *m1, double *m2, double *m3);
+
+/* as matrix types */
+
+void matrix_transform33f3f ( Matrix33f m1,float *v1,float *v2);
 void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat);
-void multiply3d3d ( Matrix33d m1,Matrix33d m2,Matrix33d m3);
+void matrix_multiply33f33f ( Matrix33f m1,Matrix33f m2,Matrix33f m3);
+void matrix_multiply33d33d ( Matrix33d m1,Matrix33d m2,Matrix33d m3);
 
 float get_angle3f( float *v1, float *v2 );
 double length3d ( double *v1 );
@@ -88,8 +97,8 @@ void transform5f3f ( oMatrix5f m, float *v1, float *v2 );
 float dot_product3f ( float *v1, float *v2 );
 void  invert3f ( float *v );
 void  scale3f ( float *v1, float v0, float *v2);
-void  copy3f( float *v1 , float *v2);
-void  add3f ( float *v1, float *v2, float *v3 );
+void  copy3f( float *src , float *dst);
+void  add3f ( float *v1, float *v2, float *sum );
 void  subtract3f ( float *v1, float *v2, float *v3 );
 float lengthsq3f ( float *v1 );
 float length3f ( float *v1 );
