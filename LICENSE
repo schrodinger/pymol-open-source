@@ -1,20 +1,22 @@
 
-PyMOL Copyright Notice
-======================
+Open-Source PyMOL Copyright Notice
+==================================
 
-The PyMOL source code is copyrighted, but you can freely use and copy
-it as long as you don't change or remove any of the copyright notices.
+The Open-Source PyMOL source code is copyrighted, but you can freely
+use and copy it as long as you don't change or remove any of the
+copyright notices.
 
 ----------------------------------------------------------------------
-PyMOL is Copyright (C) 1998-2003 Warren L. DeLano and (C) 2003-2004  
-DeLano Scientific LLC, San Carlos, CA, USA (www.delanoscientific.com).
+Open-Source PyMOL is Copyright (C) 1998-2003 Warren L. DeLano and 
+Copyright (C) 2003-2004 DeLano Scientific LLC, San Carlos, CA, USA
+(www.delanoscientific.com).
 
                         All Rights Reserved
 
 Permission to use, copy, modify, distribute, and distribute modified 
 versions of this software and its documentation for any purpose and 
 without fee is hereby granted, provided that the above copyright 
-notice appear in all copies and that both the copyright notice and 
+notice appears in all copies and that both the copyright notice and 
 this permission notice appear in supporting documentation, and that 
 the names of Warren L. DeLano or DeLano Scientific LLC not be used in 
 advertising or publicity pertaining to distribution of the software 
@@ -22,7 +24,7 @@ without specific, written prior permission.
 
 WARREN LYFORD DELANO AND DELANO SCIENTIFIC LLC DISCLAIM ALL WARRANTIES 
 WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL WARREN LYFORD DELANO
+MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL WARREN LYFORD DELANO
 OR DELANO SCIENTIFIC LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR 
 CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
 OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
@@ -30,29 +32,29 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
 USE OR PERFORMANCE OF THIS SOFTWARE.
 ----------------------------------------------------------------------
 
-Where indicated, portions of the PyMOL system are instead protected
+Where indicated, portions of Open-Source PyMOL are instead protected
 under the copyrights of the respective authors.  However, all code in
-the PyMOL system is released as non-restrictive open-source software
-under the above license or an equivalent license.  
+Open-Source PyMOL is released as non-restrictive open-source software
+under the above license or an equivalent license.
 
 PyMOL Trademark Notice
 ======================
 
-PyMOL(TM) is a trademark of DeLano Scientific LLC.  Derivative software
-which contains PyMOL source code must be plainly distinguished from
-the PyMOL package distributed by DeLano Scientific LLC in all publicity,
-advertising, and documentation.
+PyMOL(TM) is a trademark of DeLano Scientific LLC.  Derivative
+software which contains PyMOL source code must be plainly
+distinguished from any and all PyMOL products distributed by DeLano
+Scientific LLC in all publicity, advertising, and documentation.
 
 The slogans, "Includes PyMOL(TM).", "Based on PyMOL(TM) technology.",
 "Contains PyMOL(TM) source code.", and "Built using PyMOL(TM).", may
 be used in advertising, publicity, and documentation of derivative
 software provided that the notice, "PyMOL is a trademark of DeLano
-Scientific LLC.", is included in a footnote or at the end of the document.
+Scientific LLC.", is included in a footnote or at the end of the
+document.
 
 All other endorsements employing the PyMOL trademark require specific,
 written prior permission.
 
---Warren L. DeLano (warren@delanoscientific.com)
 
 
 
