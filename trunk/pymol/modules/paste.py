@@ -10,7 +10,6 @@ def get_selection():
 	f=open(ftmp)
 	sele = f.readlines()
 	f.close()
+	os.unlink(ftmp)
 	return sele
-
-print get_selection()
 
