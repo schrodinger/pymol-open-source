@@ -2,6 +2,10 @@
 
 #ifdef OVHeap_TRACKING
 
+/* all of the code in this module is only used when OVHeap_TRACKING is
+ * active otherwise, OVHeap is simply a Macro-wrapper around stdlib's
+ * memory management routines */
+
 #define OVHeap_SORT
 
 #define OVHeap_ERROR_LOG stderr
@@ -58,6 +62,9 @@ OVHeap *_OVHeap_New(void)
 
 void _OVHeap_Del(OVHeap *I)
 {
+#ifdef OVHeap_DUMP_ON_DEL
+  OVHeap_Dump(I,OVHeap_DUMP_FILES_TOO);  
+#endif
   ov_port_free((void*)I);
 }
 
