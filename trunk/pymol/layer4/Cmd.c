@@ -146,6 +146,7 @@ static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdReset(PyObject *self, PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
+static PyObject *CmdRebuild(PyObject *self, PyObject *args);
 static PyObject *CmdRemove(PyObject *self, PyObject *args);
 static PyObject *CmdResetRate(PyObject *dummy, PyObject *args);
 static PyObject *CmdRefresh(PyObject *self, 	PyObject *args);
@@ -229,6 +230,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"protect",	     CmdProtect,      METH_VARARGS },
 	{"quit",	        CmdQuit,         METH_VARARGS },
 	{"ready",        CmdReady,        METH_VARARGS },
+   {"rebuild",      CmdRebuild,      METH_VARARGS },
 	{"refresh",      CmdRefresh,      METH_VARARGS },
 	{"refresh_now",  CmdRefreshNow,   METH_VARARGS },
 	{"remove",	     CmdRemove,       METH_VARARGS },
@@ -608,6 +610,15 @@ static PyObject *CmdCopy(PyObject *self,   PyObject *args)
   PyArg_ParseTuple(args,"ss",&str1,&str2);
   APIEntry();
   ExecutiveCopy(str1,str2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
+{
+  APIEntry();
+  ExecutiveRebuildAll();
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
@@ -1712,8 +1723,9 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
   APIEntry();
   obj=ExecutiveFindObjectByName("test");
   /*  if(obj) ObjectMoleculeInferChemFromNeighGeom((ObjectMolecule*)obj,0);
-      if(obj) ObjectMoleculeInferChemForProtein((ObjectMolecule*)obj,0);*/
-  if(obj) ObjectMoleculeInferChemFromBonds((ObjectMolecule*)obj,0);
+      if(obj) ObjectMoleculeInferChemForProtein((ObjectMolecule*)obj,0);
+      if(obj) ObjectMoleculeInferChemFromBonds((ObjectMolecule*)obj,0);*/
+  if(obj) ObjectMoleculeCreateSpheroid((ObjectMolecule*)obj);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #define cRepInvText   16
 #define cRepInvVisib  20
 #define cRepInvPick   21
+#define cRepInvProp   22
 #define cRepInvCoord  30
 #define cRepInvBonds  40
 #define cRepInvAtoms  50

@@ -2559,6 +2559,14 @@ EXAMPLES
          unlock()
    return r
 
+def rebuild():
+   r = 1
+   try:
+      lock()
+      r = _cmd.rebuild()
+   finally:
+      unlock()
+      
 def mpng(a):
    '''
 DESCRIPTION
@@ -2964,6 +2972,8 @@ keyword = {
    'pairfit'       : [pairfit      , 2 ,98 , ',' , 0 ],
    'protect'       : [protect      , 0 , 1 , ',' , 0 ],
    'ray'           : [ray          , 0 , 0 , ',' , 0 ],
+   'rebuild'       : [rebuild      , 0 , 0 , ',' , 0 ],
+   'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
    'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
    'remove'        : [remove       , 1 , 1 , ',' , 0 ],
    'reset'         : [reset        , 0 , 0 , ',' , 0 ],

@@ -71,6 +71,7 @@ void ExecutiveRemoveAtoms(char *s1);
 void ExecutiveProtect(char *s1,int mode);
 void ExecutiveMask(char *s1,int mode);
 void ExecutiveUndo(int dir);
+void ExecutiveRebuildAll(void);
 
 #endif
 

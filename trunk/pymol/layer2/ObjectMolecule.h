@@ -137,6 +137,7 @@ void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeGetUniqueName(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,int state,
                                    AtomInfoType *ai,float *v);
+void ObjectMoleculeCreateSpheroid(ObjectMolecule *I);
 
 #endif
 

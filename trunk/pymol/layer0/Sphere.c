@@ -142,7 +142,7 @@ SphereRec *MakeDotSphere(int level)
   ErrChkPtr(Dot);
   EdgeRef=(EdgeArray*)mmalloc(sizeof(EdgeArray));
   ErrChkPtr(EdgeRef);
-  Tri=(Triangle*)mmalloc(sizeof(Triangle)*MAXTRI);
+  Tri=Alloc(Triangle,MAXTRI);
   ErrChkPtr(Tri);
   TriFlag=Alloc(int,MAXTRI);
   ErrChkPtr(TriFlag);
@@ -249,7 +249,6 @@ SphereRec *MakeDotSphere(int level)
   q=result->Sequence;
 
   /* tesselate the sphere in a semi-efficient fashion...this could definitely be improved */
-
 
   flag = true;
   while(flag) {
@@ -365,8 +364,10 @@ SphereRec *MakeDotSphere(int level)
   
   mfree(Dot);
   mfree(EdgeRef);
-  mfree(Tri);  
   mfree(TriFlag);
+  result->Tri = (int*)Tri;
+  result->Tri = Realloc(result->Tri,int,NTri*3);
+  result->NTri = NTri;
   result->StripLen = Realloc(result->StripLen,int,nStrip);
   result->Sequence = Realloc(result->Sequence,int,nVertTot);
   result->nDot = NDot;

@@ -174,6 +174,10 @@ Rep *RepSphereNew(CoordSet *cs)
   MapType *map = NULL;
   int vFlag;
   AtomInfoType *ai2;
+  int spheroidFlag = false;
+  float spheroid_scale;
+  float *sphLen,sphTmp;
+
   OOAlloc(RepSphere);
 
   obj = cs->Obj;
@@ -201,6 +205,12 @@ Rep *RepSphereNew(CoordSet *cs)
   case 2: sp=Sphere2; break;
   default: sp=Sphere3; break;
   }
+
+  spheroid_scale=SettingGet(cSetting_spheroid_scale);
+  if(spheroid_scale&&cs->Spheroid) 
+    spheroidFlag=1;
+  else
+    spheroidFlag=0;
 
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
@@ -244,7 +254,7 @@ Rep *RepSphereNew(CoordSet *cs)
 	 I->VC=(float*)mrealloc(I->VC,1);
 
 
-  if(SettingGet(cSetting_cull_spheres)) {
+  if(SettingGet(cSetting_cull_spheres)&&(!spheroidFlag)) {
 	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(sp->NVertTot*19));
 	 ErrChkPtr(I->V);
 
@@ -286,7 +296,7 @@ Rep *RepSphereNew(CoordSet *cs)
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
 
-			 if(I->cullFlag) {
+			 if(I->cullFlag&&(!spheroidFlag)) {
 				for(b=0;b<sp->nDot;b++) /* Sphere culling mode - more strips, but many fewer atoms */
 				  {
 					 v1[0]=v0[0]+vdw*sp->dot[b].v[0];
@@ -422,21 +432,39 @@ Rep *RepSphereNew(CoordSet *cs)
 			 } else {
 				q=sp->Sequence;
 				s=sp->StripLen;
-
-				for(b=0;b<sp->NStrip;b++)
-				  {
-					 for(c=0;c<(*s);c++)
-						{
-						  *(v++)=sp->dot[*q].v[0]; /* normal */
-						  *(v++)=sp->dot[*q].v[1];
-						  *(v++)=sp->dot[*q].v[2];
-						  *(v++)=v0[0]+vdw*sp->dot[*q].v[0]; /* point */
-						  *(v++)=v0[1]+vdw*sp->dot[*q].v[1];
-						  *(v++)=v0[2]+vdw*sp->dot[*q].v[2];
-						  q++;
-						}
-					 s++;
-				  }
+            if(spheroidFlag) {
+              for(b=0;b<sp->NStrip;b++)
+                {
+                  sphLen = cs->Spheroid+(sp->nDot*a1);
+                  for(c=0;c<(*s);c++)
+                    {
+                      *(v++)=sp->dot[*q].v[0]; /* normal */
+                      *(v++)=sp->dot[*q].v[1];
+                      *(v++)=sp->dot[*q].v[2];
+                      sphTmp = (*(sphLen+(*q)))*spheroid_scale;
+                      *(v++)=v0[0]+sphTmp*sp->dot[*q].v[0]; /* point */
+                      *(v++)=v0[1]+sphTmp*sp->dot[*q].v[1];
+                      *(v++)=v0[2]+sphTmp*sp->dot[*q].v[2];
+                      q++;
+                    }
+                  s++;
+                }
+            } else {
+              for(b=0;b<sp->NStrip;b++)
+                {
+                  for(c=0;c<(*s);c++)
+                    {
+                      *(v++)=sp->dot[*q].v[0]; /* normal */
+                      *(v++)=sp->dot[*q].v[1];
+                      *(v++)=sp->dot[*q].v[2];
+                      *(v++)=v0[0]+vdw*sp->dot[*q].v[0]; /* point */
+                      *(v++)=v0[1]+vdw*sp->dot[*q].v[1];
+                      *(v++)=v0[2]+vdw*sp->dot[*q].v[2];
+                      q++;
+                    }
+                  s++;
+                }
+            }
 			 }
 			 I->N++;
 			 if(nt) nt++;

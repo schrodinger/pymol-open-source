@@ -195,6 +195,27 @@ void PConvStringToPyObjAttr(PyObject *obj,char *attr,char *f)
   Py_DECREF(tmp); 
 }
 
+int PConvPyListToFloatArray(PyObject *obj,float *f)
+{
+  int a,l;
+  float *ff;
+  l=PyList_Size(obj);
+  f = Alloc(float,l);
+  ff = f;
+  for(a=0;a<l;a++)
+    *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+  return(f);
+}
+
+PyObject *PConvFloatArrayToPyList(float *f,int l)
+{
+  int a;
+  PyObject *result = Py_None;
+  result=PyList_New(l);
+  for(a=0;a<l;a++) 
+    PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++)));
+  return(result);
+}
 
 PyObject *PConvFloatVLAToPyList(float *f)
 {
@@ -202,8 +223,9 @@ PyObject *PConvFloatVLAToPyList(float *f)
   PyObject *result = Py_None;
   l=VLAGetSize(f);
   result=PyList_New(l);
-  for(a=0;a<l;a++) 
-    PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++)));
+  for(a=0;a<l;a++) {
+    PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++))); /* set item steals ref */
+  }
   return(result);
 }
 

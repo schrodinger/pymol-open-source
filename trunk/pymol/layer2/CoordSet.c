@@ -485,6 +485,8 @@ CoordSet *CoordSetNew(void)
   I->TmpSymmetry = NULL;
   I->Name[0]=0;
   I->Obj = NULL;
+  I->Spheroid = NULL;
+  I->SpheroidNormal = NULL;
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   return(I);
@@ -635,10 +637,10 @@ void CoordSetFree(CoordSet *I)
 {
   int a;
   ObjectMolecule *obj;
+  if(I)  {
   for(a=0;a<I->NRep;a++)
 	 if(I->Rep[a]) 
 		I->Rep[a]->fFree(I->Rep[a]);
-  if(I)  {
     obj=I->Obj;
     if(obj)
       if(obj->DiscreteFlag) /* remove references to the atoms in discrete objects */
@@ -653,6 +655,8 @@ void CoordSetFree(CoordSet *I)
     /*    VLAFreeP(I->Rep);*/
     VLAFreeP(I->TmpBond);
     if(I->TmpSymmetry) SymmetryFree(I->TmpSymmetry);
+    FreeP(I->Spheroid);
+    FreeP(I->SpheroidNormal);
     OOFreeP(I);
   }
 }

@@ -770,6 +770,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
   SelectorType *I=&Selector;
   PyObject *model=NULL,*bnd=NULL;
   PyObject *atom_list=NULL,*bond_list=NULL;
+  PyObject *tmp;
   int a,b,b1,b2,b3,c,*ii1,s,idx,at,a1,a2;
   int *bond=NULL;
   int nBond=0;
@@ -885,6 +886,18 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
             ii1+=3;
           }
         }
+
+        if(c==cs->NIndex) { /* support for experimental spheroids - likely to change */
+          if(cs->Spheroid&&cs->SpheroidNormal) {
+            tmp = PConvFloatArrayToPyList(cs->Spheroid,cs->NSpheroid);
+            PyObject_SetAttrString(model,"spheroid",tmp);
+            Py_XDECREF(tmp);          
+            tmp = PConvFloatArrayToPyList(cs->SpheroidNormal,cs->NSpheroid*3);
+            PyObject_SetAttrString(model,"spheroid_normals",tmp);
+            Py_XDECREF(tmp);          
+          }
+        }
+
         ii1=bond;
         bond_list = PyList_New(nBond);
         PyObject_SetAttrString(model,"bond",bond_list);

@@ -42,6 +42,9 @@ typedef struct CoordSet {
   int *TmpBond; /* actual bond info is stored in ObjectMolecule */
   CSymmetry *TmpSymmetry;
   WordType Name;
+  float *Spheroid;
+  float *SpheroidNormal;
+  int NSpheroid;
 } CoordSet;
 
 #include"ObjectMolecule.h"

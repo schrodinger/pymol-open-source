@@ -83,6 +83,19 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
 /*========================================================================*/
+void ExecutiveRebuildAll(void)
+{
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec,rec,next,SpecList)) {
+    if(rec->type==cExecObject)
+      if(rec->obj->type==cObjectMolecule) {
+        ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvAll);
+      }
+  }
+  SceneDirty();
+}
+/*========================================================================*/
 void ExecutiveUndo(int dir)
 {
   CExecutive *I = &Executive;
