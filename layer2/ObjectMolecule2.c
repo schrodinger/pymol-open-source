@@ -226,42 +226,46 @@ int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_si
 
   a3 = -1;
   lvl = -1;
-  offset = other[a1];
-  if(offset>=0) {
-    while(1) {
-      ck = other[offset++];
-      if(ck!=a2) {
-        if(ck>=0) {
-          ck_lvl = other[offset];
-          if(ck_lvl>lvl) {
-            a3 = ck;
-            lvl = ck_lvl;
-          }
-          if(ck_lvl>=64)
-            ar_count++;
-        } else
-          break;
+  if(a1>=0) {
+    offset = other[a1];
+    if(offset>=0) {
+      while(1) {
+        ck = other[offset++];
+        if(ck!=a2) {
+          if(ck>=0) {
+            ck_lvl = other[offset];
+            if(ck_lvl>lvl) {
+              a3 = ck;
+              lvl = ck_lvl;
+            }
+            if(ck_lvl>=64)
+              ar_count++;
+          } else
+            break;
+        }
+        offset++;
       }
-      offset++;
     }
   }
-  offset = other[a2];
-  if(offset>=0) {
-    while(1) {
-      ck = other[offset++];
-      if(ck!=a1) {
-        if(ck>=0) {
-          ck_lvl = other[offset];
-          if(ck_lvl>lvl) {
-            a3 = ck;
-            lvl = ck_lvl;
-          }
-          if(ck_lvl>=64)
-            ar_count++;
-        } else
-          break;
+  if(a2>=0) {
+    offset = other[a2];
+    if(offset>=0) {
+      while(1) {
+        ck = other[offset++];
+        if(ck!=a1) {
+          if(ck>=0) {
+            ck_lvl = other[offset];
+            if(ck_lvl>lvl) {
+              a3 = ck;
+              lvl = ck_lvl;
+            }
+            if(ck_lvl>=64)
+              ar_count++;
+          } else
+            break;
+        }
+        offset++;
       }
-      offset++;
     }
   }
 
