@@ -1259,6 +1259,50 @@ normal = {
       '1HB'  : '3HB'  ,
       } ,
    } ,
+'NME': {
+   'atoms' : {
+      'N'    : { 'symbol' : 'N' , } ,
+      '3HH3' : { 'symbol' : 'H' , } ,
+      '1HH3' : { 'symbol' : 'H' , } ,
+      'CH3'  : { 'symbol' : 'C' , } ,
+      'H'    : { 'symbol' : 'H' , } ,
+      '2HH3' : { 'symbol' : 'H' , } ,
+      } ,
+   'bonds' : {
+      ( 'N'   , 'H'    ) : { 'order' : 1 , } ,
+      ( 'N'   , 'CH3'  ) : { 'order' : 1 , } ,
+      ( 'CH3' , '1HH3' ) : { 'order' : 1 , } ,
+      ( 'CH3' , '2HH3' ) : { 'order' : 1 , } ,
+      ( 'CH3' , '3HH3' ) : { 'order' : 1 , } ,
+      } ,
+   'aliases' : {
+      'HH32' : '2HH3' ,
+      'HH33' : '3HH3' ,
+      'HH31' : '1HH3' ,
+      } ,
+   } ,
+'ACE': {
+   'atoms' : {
+      'O'    : { 'symbol' : 'O' , } ,
+      '3HH3' : { 'symbol' : 'H' , } ,
+      '1HH3' : { 'symbol' : 'H' , } ,
+      'CH3'  : { 'symbol' : 'C' , } ,
+      'C'    : { 'symbol' : 'C' , } ,
+      '2HH3' : { 'symbol' : 'H' , } ,
+      } ,
+   'bonds' : {
+      ( 'CH3' , '1HH3' ) : { 'order' : 1 , } ,
+      ( 'CH3' , '2HH3' ) : { 'order' : 1 , } ,
+      ( 'CH3' , '3HH3' ) : { 'order' : 1 , } ,
+      ( 'CH3' , 'C'    ) : { 'order' : 1 , } ,
+      ( 'C'   , 'O'    ) : { 'order' : 2 , } ,
+      } ,
+   'aliases' : {
+      'HH32' : '2HH3' ,
+      'HH33' : '3HH3' ,
+      'HH31' : '1HH3' ,
+      } ,
+   } ,
 }
 n_terminal = {
 'ALA': {
