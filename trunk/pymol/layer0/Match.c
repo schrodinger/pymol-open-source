@@ -64,29 +64,42 @@ int MatchResidueToCode(CMatch *I,int *vla,int n)
   int found;
   int rcode[cNRES],rname[cNRES];
   int *trg;
-  char res[][4] = { "ALA", "A",
-                     "CYS", "C",
-                     "ASP", "D",
-                     "GLU", "E",
-                     "PHE", "F",
-                     
-                     "GLY", "G",
-                     "HIS", "H",
-                     "ILE", "I",
-                     "LYS", "K",
-                     "LEU", "L",
-                     
-                     "MET", "M",
-                     "ASN", "N",
-                     "PRO", "P",
-                     "GLN", "Q",
-                     "ARG", "R",
-                     
-                     "SER", "S",
-                     "THR", "T",
-                     "VAL", "V",
-                     "TRP", "W",
-                     "TYR", "Y" };
+  char res[][4] = { 
+    "A"  , "A",
+    "ADE", "A",
+    "C"  , "C",
+    "CYT", "C",
+    "G"  , "G",
+    "GUA", "G",
+    "T"  , "T",
+    "THY", "T",
+    "U"  , "T",
+    "URA", "T",
+
+    "ALA", "A",
+    "CYS", "C",
+    "ASP", "D",
+    "GLU", "E",
+    "PHE", "F",
+    
+    "GLY", "G",
+    "HIS", "H",
+    "ILE", "I",
+    "LYS", "K",
+    "LEU", "L",
+    
+    "MET", "M",
+    "ASN", "N",
+    "PRO", "P",
+    "GLN", "Q",
+    "ARG", "R",
+    
+    "SER", "S",
+    "THR", "T",
+    "VAL", "V",
+    "TRP", "W",
+    "TYR", "Y" 
+};
   
   /* get integral values for the residue names */
   
