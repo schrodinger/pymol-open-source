@@ -1900,9 +1900,13 @@ void SettingInitGlobal(void)
 
   SettingSet_i(I,cSetting_roving_byres,0);
 
-  SettingSet_i(I,cSetting_roving_ribbon,0.0F);
+  SettingSet_f(I,cSetting_roving_ribbon,0.0F);
   
-  SettingSet_i(I,cSetting_roving_cartoon,0.0F);
+  SettingSet_f(I,cSetting_roving_cartoon,0.0F);
+
+  SettingSet_f(I,cSetting_roving_polar_contacts,0.0F);
+
+  SettingSet_f(I,cSetting_roving_polar_cutoff,0.0F);
 
 }
 

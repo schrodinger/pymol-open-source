@@ -218,7 +218,8 @@ ObjectDist *ObjectDistNew(void)
 
 /*========================================================================*/
 /*========================================================================*/
-ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,float *result)
+ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,
+                                  int labels,float *result)
 {
   int a,mn;
   float dist_sum=0.0,dist;
@@ -245,7 +246,8 @@ ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,floa
           state2=a;
         else
           state2=0;
-        I->DSet[a] = SelectorGetDistSet(sele1,state1,sele2,state2,mode,cutoff,&dist);
+        I->DSet[a] = SelectorGetDistSet(sele1,state1,sele2,
+                                        state2,mode,cutoff,&dist);
         if(I->DSet[a]) {
           dist_sum+=dist;
           dist_cnt++;

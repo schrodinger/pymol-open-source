@@ -1409,7 +1409,8 @@ int ExecutiveValidName(char *name)
 
   if(!ExecutiveFindSpec(name)) {
     if(!WordMatch(name,cKeywordAll,true))
-      result=false;
+      if(!WordMatch(name,cKeywordSame,true))
+        result=false;
   }
   return result;
 }
@@ -2463,16 +2464,21 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
   }
 }
 /*========================================================================*/
-float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
+float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels)
 {
   int sele1,sele2;
   ObjectDist *obj;
   float result;
   sele1=SelectorIndexByName(s1);
-  sele2=SelectorIndexByName(s2);
+  printf("%5s\n",s2);
+  if(!WordMatch(s2,"same",true))
+    sele2=SelectorIndexByName(s2);
+  else {
+    sele2 = sele1;
+  }
   
   if((sele1>=0)&&(sele2>=0)) {
-    obj = ObjectDistNewFromSele(sele1,sele2,mode,cutoff,&result);
+    obj = ObjectDistNewFromSele(sele1,sele2,mode,cutoff,labels,&result);
     if(!obj) {
       ErrMessage("ExecutiveDistance","No such distances found.");
     } else {
@@ -2481,6 +2487,8 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
       ObjectSetName((CObject*)obj,nam);
       ExecutiveManageObject((CObject*)obj,true);
       ExecutiveSetRepVisib(nam,cRepLine,1);
+      if(!labels)
+        ExecutiveSetRepVisib(nam,cRepLabel,0);        
     }
   } else if(sele1<0) {
     ErrMessage("ExecutiveDistance","The first selection contains no atoms.");

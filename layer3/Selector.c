@@ -111,6 +111,9 @@ void SelectorClean(void);
 void SelectorDeletePrefixSet(char *s);
 int *SelectorGetIndexVLA(int sele);
 int *SelectorApplyMultipick(Multipick *mp);
+int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
+                           int *zero,int *scratch);
+
 
 #define STYP_VALU 0
 #define STYP_OPR1 1
@@ -991,6 +994,60 @@ void SelectorDeletePrefixSet(char *pref)
       break;
   }
 }
+
+/*========================================================================*/
+#define MAX_DEPTH 1000
+
+int SelectorCheckNeighbors(int maxDist,ObjectMolecule *obj,int at1,int at2,
+                           int *zero,int *scratch)
+{
+  int s;
+  int a,a1;
+  int stkDepth = 0;
+  int si = 0;
+  int stk[MAX_DEPTH];
+  int dist=0;
+
+  zero[at1]=dist;
+  scratch[si++]=at1;
+  stk[stkDepth]=at1;
+  stkDepth++;
+
+  while(stkDepth) { /* this will explore a tree */
+    stkDepth--;
+    a=stk[stkDepth];
+    dist = zero[a]+1;
+
+    s=obj->Neighbor[a]; /* add neighbors onto the stack */
+    s++; /* skip count */
+    while(1) {
+      a1 = obj->Neighbor[s];
+      if(a1==at2) {
+        while(si--) {
+          zero[scratch[si]]=0;
+        }
+        /* EXIT POINT 1 */
+        return 1;
+      }
+      if(a1>=0) {
+        if((!zero[a1])&&(stkDepth<MAX_DEPTH)&&(dist<maxDist)) {
+          zero[a1]=dist;
+          scratch[si++]=a1;
+          stk[stkDepth]=a1;
+          stkDepth++;
+        }
+      } else 
+        break;
+      s+=2;
+    }
+  }
+  while(si--) {
+    zero[scratch[si]]=0;
+  }
+  /* EXIT POINT 2 */
+  return 0;
+}
+
 /*========================================================================*/
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2)
@@ -4967,21 +5024,42 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
   float dist;
   int a1,a2;
   AtomInfoType *ai1,*ai2;
-  int at1,at2;
+  int at,at1,at2;
   CoordSet *cs1,*cs2;
   DistSet *ds;
-  ObjectMolecule *obj1,*obj2;
+  ObjectMolecule *obj,*obj1,*obj2,*lastObj;
   int idx1,idx2;
   int a;
   int nv = 0;
   float *vv,*vv0,*vv1;
   float dist_sum=0.0;
   int dist_cnt = 0;
-  
+  int s;
+  int a_keeper = false;
   *result = 0.0;
   ds = DistSetNew();
   vv = VLAlloc(float,10000);
-  SelectorUpdateTable();
+  int *zero=NULL,*scratch=NULL;
+
+  SelectorUpdateTable(); 
+
+  if(mode==1) { /* fill in all the neighbor tables */
+    lastObj=NULL;
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      at=I->Table[a].atom;
+      obj=I->Obj[I->Table[a].model];
+      s=obj->AtomInfo[at].selEntry;
+      if(obj!=lastObj) {
+        if(SelectorIsMember(s,sele1)||SelectorIsMember(s,sele2)) {
+          lastObj = obj;
+          ObjectMoleculeUpdateNeighbors(lastObj);
+        }
+      }
+    }
+    zero=Calloc(int,I->NAtom);
+    scratch=Alloc(int,I->NAtom);
+  }
+  
   if(cutoff<0) cutoff = 1000.0;
   c=SelectorGetInterstateVLA(sele1,state1,sele2,state2,cutoff,&vla);
   for(a=0;a<c;a++) {
@@ -4995,18 +5073,13 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
       obj1=I->Obj[I->Table[a1].model];
       obj2=I->Obj[I->Table[a2].model];
       
-
-
       if(state1<obj1->NCSet&&state2<obj2->NCSet) {
         cs1=obj1->CSet[state1];
         cs2=obj2->CSet[state2];
         if(cs1&&cs2) { 
-      
-
     
           ai1=obj1->AtomInfo+at1;
           ai2=obj2->AtomInfo+at2;
-
 
           if(obj1->DiscreteFlag) {
             if(cs1==obj1->DiscreteCSet[at1]) {
@@ -5033,20 +5106,32 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
             dist=(float)diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
             
             if(dist<cutoff) {
-              dist_cnt++;
-              dist_sum+=dist;
-              VLACheck(vv,float,(nv*3)+5);
-              vv0 = vv+ (nv*3);
-              vv1 = cs1->Coord+3*idx1;
-              *(vv0++) = *(vv1++);
-              *(vv0++) = *(vv1++);
-              *(vv0++) = *(vv1++);
-              vv1 = cs2->Coord+3*idx2;
-              *(vv0++) = *(vv1++);
-              *(vv0++) = *(vv1++);
-              *(vv0++) = *(vv1++);
-              
-              nv+=2;
+
+              a_keeper=true;
+              if((mode==1)&&(obj1==obj2)) {
+                a_keeper = !SelectorCheckNeighbors(5,obj1,at1,at2,
+                                                  zero,scratch);
+              }
+              if((sele1==sele2)&&(at1>at2))
+                a_keeper = false;
+
+              if(a_keeper) {
+                
+                dist_cnt++;
+                dist_sum+=dist;
+                VLACheck(vv,float,(nv*3)+5);
+                vv0 = vv+ (nv*3);
+                vv1 = cs1->Coord+3*idx1;
+                *(vv0++) = *(vv1++);
+                *(vv0++) = *(vv1++);
+                *(vv0++) = *(vv1++);
+                vv1 = cs2->Coord+3*idx2;
+                *(vv0++) = *(vv1++);
+                *(vv0++) = *(vv1++);
+                *(vv0++) = *(vv1++);
+                
+                nv+=2;
+              }
             }
           }
         }
@@ -5056,6 +5141,8 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
   if(dist_cnt)
     (*result)=dist_sum/dist_cnt;
   VLAFreeP(vla);
+  FreeP(zero);
+  FreeP(scratch);
   ds->NIndex = nv;
   ds->Coord = vv;
   return(ds);
