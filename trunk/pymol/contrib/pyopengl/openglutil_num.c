@@ -9,5 +9,6 @@
 #endif
 #include<Python.h>
 DL_EXPORT(void)
-initopenglutil_num(void) {};
+initopenglutil_num(void) {}
 #endif
+
