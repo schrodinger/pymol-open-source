@@ -242,6 +242,10 @@ Rep *RepRibbonNew(CoordSet *cs)
 			 if(!obj->AtomInfo[a1].hetatm)
 				if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
 				  {
+                PRINTFD(FB_RepRibbon)
+                  " RepRibbon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  ENDFD;
+
 					 if(a2>=0) {
                   /*						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
                                     (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
@@ -249,8 +253,11 @@ Rep *RepRibbonNew(CoordSet *cs)
                   if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
                     a2=-1;
 					 }
-					 if(a2<=0)
-						nSeg++;
+                PRINTFD(FB_RepRibbon)
+                  " RepRibbon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  ENDFD;
+
+					 if(a2<0) nSeg++;
 					 *(s++) = nSeg;
 					 nAt++;
 					 *(i++)=a;
@@ -262,6 +269,10 @@ Rep *RepRibbonNew(CoordSet *cs)
 					 a2=a1;
 				  }
 	 }
+  PRINTFD(FB_RepRibbon)
+    " RepRibbon: nAt %d\n",nAt
+    ENDFD;
+
   if(nAt)
 	 {
 		/* compute differences and normals */
@@ -331,7 +342,8 @@ Rep *RepRibbonNew(CoordSet *cs)
 		*(v1++)=*(v-3); /* last segment */
 		*(v1++)=*(v-2);
 		*(v1++)=*(v-1);
-		
+
+      
 	 }
 
   /* okay, we now have enough info to generate smooth interpolations */
@@ -377,6 +389,11 @@ Rep *RepRibbonNew(CoordSet *cs)
           rp->bond = -1;
         rp++;
         I->NP++;
+
+        PRINTFD(FB_RepRibbon)
+          " RepRibbon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
+          ENDFD;
+
 		  if(*s==*(s+1))
 			 {
 				c1=*(cs->Color+*atp);

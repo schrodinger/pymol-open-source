@@ -671,6 +671,9 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule *I,int a0,int a1,int dist)
   
   ObjectMoleculeUpdateNeighbors(I);
 
+  PRINTFD(FB_ObjectMolecule)
+    " CBS-Debug: %s %d %d %d\n",I->Obj.Name,a0,a1,dist
+    ENDFD;
   depth = 1;
   history[depth]=a0;
   stack[depth] = I->Neighbor[a0]+1; /* go to first neighbor */
@@ -689,6 +692,7 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule *I,int a0,int a1,int dist)
             if(distinct) {
               depth++; 
               stack[depth] = I->Neighbor[n0]+1; /* then keep moving outward */
+              history[depth] = n0;
             }
           } else if(n0==a1) /* otherwise, see if we have a match */
             result = true;
@@ -696,6 +700,9 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule *I,int a0,int a1,int dist)
       }
     depth--;
   }
+  PRINTFD(FB_ObjectMolecule)
+    " CBS-Debug: result %d\n",result
+    ENDFD;
   return result;
 }
 /*========================================================================*/
