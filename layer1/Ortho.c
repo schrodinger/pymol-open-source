@@ -769,6 +769,8 @@ void OrthoDoDraw()
     overlay = SettingGet(cSetting_overlay);
     text = SettingGet(cSetting_text);
 
+    if(text) overlay=0;
+
     glDrawBuffer(GL_BACK);
     glClearColor(v[0],v[1],v[2],1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
