@@ -4142,7 +4142,11 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   int new_type;
   int quiet;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssiiiii",&oname,&fname,&frame,&type,&finish,&discrete,&quiet);
+  int multiplex;
+
+  ok = PyArg_ParseTuple(args,"ssiiiiii",
+                        &oname,&fname,&frame,&type,
+                        &finish,&discrete,&quiet,&multiplex);
 
   buf[0]=0;
   PRINTFD(TempPyMOLGlobals,FB_CCmd)
@@ -4151,7 +4155,22 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     ENDFD;
   if (ok) {
     APIEntry();
-    origObj=ExecutiveFindObjectByName(TempPyMOLGlobals,oname);
+    if(multiplex==-2) /* use setting default value */
+      multiplex = SettingGetGlobal_i(TempPyMOLGlobals,cSetting_multiplex);
+    if(multiplex<0) /* default behavior is not to multiplex */
+      multiplex = 0;
+
+    if(discrete<0) {/* use default discrete behavior for the file format 
+                     * this will be the case for MOL2 and SDF */ 
+      if(multiplex==1) /* if also multiplexing, then default discrete
+                        * behavior is not load as discrete objects */
+        discrete=0;
+      else
+        discrete=1; /* otherwise, allow discrete to be the default */
+    }
+
+    if(multiplex!=1)
+      origObj=ExecutiveFindObjectByName(TempPyMOLGlobals,oname);
     /* check for existing object of right type, delete if not */
     if(origObj) {
       new_type = -1;
@@ -4196,10 +4215,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     
     switch(type) {
     case cLoadTypePDB:
-      {
-        ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false);
-        /* special handler for concatenated and annotated files */
-      }
+      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false);
       break;
     case cLoadTypePQR:
       {
@@ -4316,33 +4332,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       }
       break;
     case cLoadTypePDBStr:
-      {
-        ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,true);
-#if 0
-        PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading PDBStr\n" ENDFD;
-        obj=(CObject*)ObjectMoleculeReadPDBStr(TempPyMOLGlobals,(ObjectMolecule*)origObj,
-                                               fname,frame,discrete,
-                                               NULL,NULL,NULL,&pdb_info,quiet);
-        if(!origObj) {
-          if(obj) {
-            ObjectSetName(obj,oname);
-            ExecutiveManageObject(TempPyMOLGlobals,obj,true,true);
-            if(frame<0)
-              frame = ((ObjectMolecule*)obj)->NCSet-1;
-            sprintf(buf," CmdLoad: PDB-string loaded as \"%s\"\n",
-                    oname);		  
-          }
-        } else if(origObj) {
-          if(finish)
-            ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj);
-          if(frame<0)
-            frame = ((ObjectMolecule*)origObj)->NCSet-1;
-          sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
-                  oname,frame+1);
-        }
-        break;
-#endif
-      }
+      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,true);
       break;
     case cLoadTypeMOL:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MOL\n" ENDFD;
@@ -4387,8 +4377,13 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       }
       break;
     case cLoadTypeMOL2:
+      ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
+                        discrete,finish,buf,multiplex,quiet,false);
+      /*
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MOL2\n" ENDFD;
-      obj=(CObject*)ObjectMoleculeLoadMOL2File(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,discrete);
+      obj=(CObject*)ObjectMoleculeLoadMOL2File(TempPyMOLGlobals,
+                                               (ObjectMolecule*)origObj,fname,
+                                               frame,discrete,multiplex);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
@@ -4405,7 +4400,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
                 fname,oname,frame+1);
-      }
+                }
+      */
+
       break;
     case cLoadTypeMMD:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MMD\n" ENDFD;

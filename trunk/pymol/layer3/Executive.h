@@ -31,6 +31,11 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char 
                              int frame, int discrete,int finish,OrthoLineType buf,
                              PDBInfoRec *pdb_info,int quiet,int is_string);
 
+void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
+                       char *oname, int frame, int discrete,int finish,
+                       OrthoLineType buf,int multiplex,int quiet,
+                       int is_string);
+
 int ExecutiveDebug(PyMOLGlobals *G,char *name);
 float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
                      float cutoff,int cycles,int quiet,char *oname,int state1,int state2);

@@ -293,6 +293,137 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
   return ok; 
 }
 
+void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
+                       char *oname, int frame, int discrete,int finish,
+                       OrthoLineType buf,int multiplex,int quiet,
+                       int is_string)
+{
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer=NULL,*p;
+  CObject *obj;
+  char new_name[ObjNameMax] = "";
+  char *next_entry = NULL;
+  int repeat_flag = true;
+  int n_processed = 0;
+
+  if(is_string) {
+    buffer=fname;
+  } else {
+    f=fopen(fname,"rb");
+    
+    if(!f) {
+      PRINTFB(G,FB_Executive,FB_Errors)
+        " ExecutiveLoadMOL2-ERROR: Unable to open file '%s'\n",fname
+        ENDFB(G);
+      ok=false;
+    } else
+      {
+        PRINTFB(G,FB_Executive,FB_Blather)
+          " ExecutiveLoadMOL2: Loading from %s.\n",fname
+          ENDFB(G);
+        
+        fseek(f,0,SEEK_END);
+        size=ftell(f);
+        fseek(f,0,SEEK_SET);
+        
+        buffer=(char*)mmalloc(size+255);
+        ErrChkPtr(G,buffer);
+        p=buffer;
+        fseek(f,0,SEEK_SET);
+        fread(p,size,1,f);
+        p[size]=0;
+        fclose(f);
+      }
+  }
+
+  while(repeat_flag&&ok) {
+    char *start_at = buffer;
+    int is_repeat_pass = false;
+    int eff_frame = frame;
+
+    if(next_entry) {
+      start_at = next_entry;
+      is_repeat_pass = true;
+    }
+
+    PRINTFD(G,FB_CCmd) " ExecutiveLoadMOL2-DEBUG: loading PDB\n" ENDFD;
+
+    repeat_flag=false;
+    next_entry = NULL;
+    if(!origObj) {
+
+      new_name[0]=0;
+      obj=(CObject*)ObjectMoleculeReadMOL2Str(G,(ObjectMolecule*)origObj,
+                                              start_at,eff_frame,discrete,
+                                              quiet,multiplex,new_name,
+                                              &next_entry);
+      if(obj) {
+        if(next_entry) { /* NOTE: if set, assume that multiple PDBs are present in the file */
+          repeat_flag=true;
+        }
+
+        /* assign the name (if necessary) */
+
+        if(next_entry||is_repeat_pass) {
+          if(new_name[0]==0) {
+            sprintf(new_name,"%s_%d",oname,n_processed+1);
+          }
+          ObjectSetName(obj,new_name); /* from PDB */
+          ExecutiveDelete(G,new_name); /* just in case */
+        } else {
+          ObjectSetName(obj,oname); /* from filename/parameter */
+        }
+
+        if(obj) {
+          ExecutiveManageObject(G,obj,true,true);
+          if(eff_frame<0)
+            eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
+          if(multiplex>0) {
+            sprintf(buf," CmdLoad: loaded %d objects.\n",n_processed);
+          } else {
+            if(!is_string)
+              sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
+                      fname,oname);
+            else
+              sprintf(buf," CmdLoad: MOL2-string loaded into object \"%s\", state %d.\n",
+                      oname,eff_frame+1);
+          }
+        }
+      }
+    } else {
+
+      ObjectMoleculeReadMOL2Str(G,(ObjectMolecule*)origObj,
+                                start_at,eff_frame,discrete,
+                                quiet,multiplex,new_name,
+                                &next_entry);
+
+      if(finish)
+        ExecutiveUpdateObjectSelection(G,origObj);
+      if(eff_frame<0)
+        eff_frame = ((ObjectMolecule*)origObj)->NCSet-1;
+      if(!is_string) 
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+                fname,oname,eff_frame+1);
+      else
+        sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
+                oname,eff_frame+1);
+      obj = origObj;
+    }
+
+    if(obj) {
+      n_processed++;
+    }
+  }
+
+  if((!is_string)&&buffer) {
+    mfree(buffer);
+  }
+
+}
+
+
 void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                              char *oname, int frame, int discrete,int finish,
                              OrthoLineType buf,PDBInfoRec *pdb_info,int quiet,
@@ -2622,17 +2753,19 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
         match = MatchNew(G,na,nb);
         if (ok) ok = MatchResidueToCode(match,vla1,na);
         if (ok) ok = MatchResidueToCode(match,vla2,nb);
-        if (ok) ok = MatchMatrixFromFile(match,mat_file);
-        if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb);
-        result = MatchAlign(match,gap,extend,skip);
+        if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
+        if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
+        result = MatchAlign(match,gap,extend,skip,quiet);
         if(match->pair) { 
           c = SelectorCreateAlignments(G,match->pair,
                                        sele1,vla1,sele2,vla2,
                                        "_align1","_align2",false);
           if(c) {
-            PRINTFB(G,FB_Executive,FB_Actions)
-              " ExecutiveAlign: %d atoms aligned.\n",c
-              ENDFB(G);
+            if(!quiet) {
+              PRINTFB(G,FB_Executive,FB_Actions)
+                " ExecutiveAlign: %d atoms aligned.\n",c
+                ENDFB(G);
+            }
             result =ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,quiet,oname,
                                  state1,state2,false);
             
