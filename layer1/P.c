@@ -890,7 +890,9 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 
 }
 
-void PGetOptions(int *pmgui,int *internal_gui,int *show_splash,int *internal_feedback,int *security)
+void PGetOptions(int *pmgui,int *internal_gui,int *show_splash,
+  int *internal_feedback,int *security,int *game_mode,int *force_stereo,
+  int *winX,int *winY,int *blue_line)
 {
   PyObject *pymol,*invocation,*options;
 
@@ -908,6 +910,11 @@ void PGetOptions(int *pmgui,int *internal_gui,int *show_splash,int *internal_fee
   (*internal_feedback) = PyInt_AsLong(PyObject_GetAttrString(options,"internal_feedback"));
   (*show_splash) = PyInt_AsLong(PyObject_GetAttrString(options,"show_splash"));
   (*security) = PyInt_AsLong(PyObject_GetAttrString(options,"security"));
+  (*game_mode) = PyInt_AsLong(PyObject_GetAttrString(options,"game_mode"));
+  (*force_stereo) = PyInt_AsLong(PyObject_GetAttrString(options,"force_stereo"));
+  (*winX) = PyInt_AsLong(PyObject_GetAttrString(options,"win_x"));
+  (*winY) = PyInt_AsLong(PyObject_GetAttrString(options,"win_y"));
+  (*blue_line) = PyInt_AsLong(PyObject_GetAttrString(options,"blue_line"));
   
   if(PyErr_Occurred()) {
     PyErr_Print();

@@ -39,9 +39,14 @@ if __name__=='pymol.invocation':
    options.internal_gui = 1
    options.internal_feedback = 1
    options.external_gui = 1
+   options.force_stereo = 0
+   options.game_mode = 0
    options.gui = 'pmg_tk'
    options.show_splash = 1
    options.read_stdin = 0
+   options.win_x = 640
+   options.win_y = 480
+   options.blue_line = 0
    # Greg Landrum
    options.rpcServer = 0
    options.security = 1
@@ -105,8 +110,6 @@ if __name__=='pymol.invocation':
             if "c" in a:
                options.no_gui=1
                options.external_gui=0
-            if "s" in a:
-               pass # stereo now autodetected
             if "2" in a:
                options.deferred.append("_do__ config_mouse two_button")
             if "q" in a:
@@ -115,6 +118,12 @@ if __name__=='pymol.invocation':
                options.internal_gui = 0
             if "f" in a:
                options.internal_feedback = int(av.pop())
+            if "B" in a:
+               options.blue_line = 1
+	    if "W" in a:
+               options.win_x = int(av.pop())
+            if "H" in a:
+               options.win_y = int(av.pop())
             if "x" in a:
                options.external_gui = 0
             if "t" in a:
@@ -125,6 +134,13 @@ if __name__=='pymol.invocation':
                options.deferred.append("_do_%s"%string.replace(av.pop(),'%',' '))
             if "e" in a:
                options.deferred.append("_do__ full_screen on")
+            if "G" in a: # Game mode (reqd for Mac stereo)
+               options.game_mode = 1
+               options.win_x = 1024
+               options.win_y = 768
+	    if "S" in a: # Force Stereo (reqd for Mac stereo)
+               options.force_stereo = 1
+               options.deferred.append("_do__ stereo on")
             if "l" in a:
                options.deferred.append("_do_spawn %s"%av.pop())
             if "r" in a:

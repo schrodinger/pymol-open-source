@@ -1,17 +1,17 @@
 /* 
-A* -------------------------------------------------------------------
-B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
-D* -------------------------------------------------------------------
-E* It is unlawful to modify or remove this copyright notice.
-F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
-H* -------------------------------------------------------------------
-I* Additional authors of this source file include:
--* 
--* 
--*
-Z* -------------------------------------------------------------------
+   A* -------------------------------------------------------------------
+   B* This file contains source code for the PyMOL computer program
+   C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+   D* -------------------------------------------------------------------
+   E* It is unlawful to modify or remove this copyright notice.
+   F* -------------------------------------------------------------------
+   G* Please see the accompanying LICENSE file for further information. 
+   H* -------------------------------------------------------------------
+   I* Additional authors of this source file include:
+   -* 
+   -* 
+   -*
+   Z* -------------------------------------------------------------------
 */
 #include"os_predef.h"
 #include"os_python.h"
@@ -64,8 +64,8 @@ static void MainDrawLocked(void);
 
 GLuint obj;
 
-static GLint WinX = 640;
-static GLint WinY = 480;
+static int WinX = 640;
+static int WinY = 480;
 static GLint Modifiers = 0;
 
 static char **myArgv,*myArgvv[2],myArgvvv[1024];
@@ -90,6 +90,9 @@ int PyMOLTerminating = false;
 int PMGUI = true;
 int StereoCapable=false;
 int Security = true;
+int ForceStereo = false;
+int GameMode = false;
+int BlueLine = false;
 
 static int InternalGUI = true;
 static int InternalFeedback = true;
@@ -99,9 +102,91 @@ void launch(void);
 
 void MainOnExit(void);
 
+#include <OpenGL/glext.h>
+
+static void DrawBlueLine()
+{
+  GLint i;
+  unsigned long buffer;
+  GLint window_width, window_height;
+  window_width=WinX;
+  window_height=WinY;
+
+  if(BlueLine) {
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+ 
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_BLEND);
+    for(i = 0; i < 6; i++) glDisable(GL_CLIP_PLANE0 + i);
+    glDisable(GL_COLOR_LOGIC_OP);
+    glDisable(GL_COLOR_MATERIAL);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_DITHER);
+    glDisable(GL_FOG);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_LINE_STIPPLE);
+    glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_3D);
+    glDisable(GL_TEXTURE_CUBE_MAP);
+    glDisable(GL_TEXTURE_RECTANGLE_EXT);
+    glDisable(GL_VERTEX_PROGRAM_ARB);
+  
+    for(buffer = GL_BACK_LEFT; buffer <= GL_BACK_RIGHT; buffer++) {
+      GLint matrixMode;
+      GLint vp[4];
+  
+      glDrawBuffer(buffer);
+  
+      glGetIntegerv(GL_VIEWPORT, vp);
+      glViewport(0, 0, window_width, window_height);
+  
+      glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
+      glMatrixMode(GL_PROJECTION);
+      glPushMatrix();
+      glLoadIdentity();
+  
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix();
+      glLoadIdentity();
+      glScalef(2.0f / window_width, -2.0f / window_height, 1.0f);
+      glTranslatef(-window_width / 2.0f, -window_height / 2.0f, 0.0f);
+ 
+      /* draw sync lines*/
+      glColor3d(0.0f, 0.0f, 0.0f);
+      glBegin(GL_LINES); /* Draw a background line*/
+      glVertex3f(0.0f, window_height - 0.5f, 0.0f);
+      glVertex3f(window_width, window_height - 0.5f, 0.0f);
+      glEnd();
+      glColor3d(0.0f, 0.0f, 1.0f);
+      glBegin(GL_LINES); /* Draw a line of the correct length (the cross
+			    over is about 40% across the screen from the left */
+      glVertex3f(0.0f, window_height - 0.5f, 0.0f);
+      if(buffer == GL_BACK_LEFT)
+	glVertex3f(window_width * 0.30f, window_height - 0.5f, 0.0f);
+      else
+	glVertex3f(window_width * 0.80f, window_height - 0.5f, 0.0f);
+      glEnd();
+ 
+      glPopMatrix();
+      glMatrixMode(GL_PROJECTION);
+      glPopMatrix();
+      glMatrixMode(matrixMode);
+  
+      glViewport(vp[0], vp[1], vp[2], vp[3]);
+    } 
+    glPopAttrib();
+  }
+}
+
 #ifdef _PYMOL_OSX
 
 void MainRunString(char *str);
+PyObject *MainRunStringBlocked(char *str);
 void MainRunCommand(char *str1);
 
 /*========================================================================*/
@@ -131,9 +216,19 @@ void MainRunString(char *str)
   PRunString(str);
   PUnblock();
 }
+/*========================================================================*/
+PyObject *MainRunStringBlocked(char *str)
+{
+  PyObject *result;
+  printf("input string %s\n",str);
+  result = PyRun_String(str,Py_eval_input,P_globals,P_globals);
+  return(result);
+}
+
 #endif
 
 /*========================================================================*/
+
 void MainOnExit(void)
 { /* 
      here we enter not knowing anything about the current state...
@@ -228,6 +323,7 @@ static void MainDrawLocked(void)
     {
       if(!SettingGet(cSetting_suspend_updates))
         if(PMGUI) {
+	  DrawBlueLine();
           p_glutSwapBuffers();
         }
       I->SwapFlag=false;
@@ -460,6 +556,7 @@ void MainRefreshNow(void)
   if(I->SwapFlag)
     {
       if(PMGUI) {
+	  DrawBlueLine();
         p_glutSwapBuffers();
       }
       I->SwapFlag=false;
@@ -506,6 +603,7 @@ void MainBusyIdle(void)
 
   if(I->SwapFlag) {
     if(PMGUI) {
+	  DrawBlueLine();
       p_glutSwapBuffers();
     }
     I->SwapFlag=false;
@@ -581,22 +679,30 @@ void MainBusyIdle(void)
 
 void launch(void)
 {
-  if(InternalGUI)
+  if(InternalGUI&&(!GameMode))
     WinX+=cOrthoRightSceneMargin;
-  if(InternalFeedback)
+  if(InternalFeedback&&(!GameMode))
     WinY+= (InternalFeedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
 
   if(PMGUI) {
     #ifndef _PYMOL_OSX
     atexit(MainOnExit); /* register callback to help prevent crashes
                                  when GLUT spontaneously kills us */
-  #endif
+    #endif
 
     p_glutInit(&myArgc, myArgv);
 
 #ifdef _PYMOL_OSX
-    p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
+
+    if(!ForceStereo) {
+      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
+      StereoCapable = 0;
+    } else {
+      glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STEREO); /* stereo display mode for glut */
+      StereoCapable = 1;
+    }
 #else
+    /* stereo auto-detection code */
     p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
     if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
       p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
@@ -606,11 +712,21 @@ void launch(void)
     }
 #endif
 
-    p_glutInitWindowPosition(0, 175);
-    p_glutInitWindowSize(WinX, WinY);
-    
-    TheWindow = p_glutCreateWindow("PyMOL Viewer");
+    if(!GameMode) {
+      #ifdef _PYMOL_OSX
+      p_glutInitWindowPosition(0, 200);
+      #else
+      p_glutInitWindowPosition(0, 175);
+      #endif
+      p_glutInitWindowSize(WinX, WinY);
 
+      TheWindow = p_glutCreateWindow("PyMOL Viewer");
+    } else {
+      char str[255];
+      sprintf(str,"%dx%d:32@120",WinX,WinY);
+      glutGameModeString(str);
+      glutEnterGameMode(); 
+    }
   } 
 
   MainInit();
@@ -689,7 +805,9 @@ int was_main(void)
 
 #endif  
 
-  PGetOptions(&PMGUI,&InternalGUI,&ShowSplash,&InternalFeedback,&Security);
+  PGetOptions(&PMGUI,&InternalGUI,&ShowSplash,
+	      &InternalFeedback,&Security,&GameMode,
+	      &ForceStereo,&WinX,&WinY,&BlueLine);
   launch();
 
   return 0;

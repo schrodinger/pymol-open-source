@@ -20,17 +20,21 @@ PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.2 \
 #--- Other external dependencies
 EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include \
 	-I/System/Library/Frameworks/OpenGL.framework/Headers/ \
-	-I/System/Library/Frameworks/Foundation.framework/Headers/ \
+	-I/System/Library/Frameworks/CoreFoundation.framework/Headers/ \
 	-I/System/Library/Frameworks/AppKit.framework/Headers/ \
 	-I/System/Library/Frameworks/ApplicationServices.framework/Headers/ \
+	-I/System/Library/Frameworks/Cocoa.framework/Headers/ \
+	-I/System/Library/Frameworks/IOKit.framework/Headers/ \
    -I$(PYMOL_PATH)/layerOSX
+
 EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
 #---------------------------------------------------------------------
 #
 #- Build for OSX-Darwin as an importable module ----------------------
 #--- System libraries
 LIBS = -lpng $(PYTHON_LIB) $(ZLIB) -lm -framework OpenGL \
-   -framework AppKit -framework ApplicationServices -framework Foundation
+   -framework AppKit -framework ApplicationServices -framework CoreFoundation \
+   -framework Cocoa  -framework IOKit -L./layerOSX -lForeground
 #--- PyMOL configuration
 DEFS = -D_PYMOL_MODULE -D_PYMOL_OSX -D_PYMOL_NUMPY
 #--- How we build shared libraries
