@@ -27,6 +27,7 @@ import thread
 import threading
 import os
 
+
 class PMGApp(AbstractApp):
 
    appversion     = '0.43'
@@ -147,6 +148,7 @@ class PMGApp(AbstractApp):
       self.output.after(1000,self.update_menus)
       self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)
       self.bind(self.entry, 'Command Input Area')
+      self.initialdir = os.getcwd()
 
    def update_feedback(self):
       for a in cmd.get_feedback():
@@ -173,7 +175,7 @@ class PMGApp(AbstractApp):
       cmd.quit()
 
    def file_open(self):
-      ofile = askopenfilename(initialdir = os.getcwd(),
+      ofile = askopenfilename(initialdir = self.initialdir,
                               filetypes=[("PDB File","*.pdb"),
                                          ("All Files","*.*"),
                                          ("PDB File","*.ent"),
@@ -192,13 +194,18 @@ class PMGApp(AbstractApp):
          cmd.load(ofile)
 
    def file_save(self):
+      lst = cmd.get_names('all')
+      lst = filter(lambda x:x[0]!="_",lst)
       self.dialog = Pmw.SelectionDialog(self.root,title="Save",
                           buttons = ('OK', 'Cancel'),
                                    defaultbutton='OK',
                           scrolledlist_labelpos=N,
                           label_text='Which object or selection would you like to save?',
-                          scrolledlist_items = cmd.get_names('all'),
+                          scrolledlist_items = lst,
                           command = self.file_save2)
+      if len(lst):
+         listbox = self.dialog.component('scrolledlist')      
+         listbox.selection_set(0)
       self.my_show(self.dialog)
       
    def file_save2(self,result):
@@ -213,32 +220,39 @@ class PMGApp(AbstractApp):
             del self.dialog
             if result=='OK':
                sfile = asksaveasfilename(initialfile = sfile,
-                                         initialdir = os.getcwd(),
+                                         initialdir = self.initialdir,
                                          filetypes=[("PDB File","*.pdb"),
                                                     ("MOL File","*.mol"),
                                                     ("MMD File","*.mmd"),
                                                     ("PKL File","*.pkl"),
                                                     ])
                if len(sfile):
+                  self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
                   cmd.save(sfile,"(%s)"%sels[0])
          
    def file_run(self):
-      ofile = askopenfilename(filetypes=[("PyMOL Script","*.pml"),("Python Program","*.py")])
+      ofile = askopenfilename(initialdir = os.getcwd(),
+                   filetypes=[("PyMOL Script","*.pml"),("Python Program","*.py")])
       if len(ofile):
+         dir = re.sub(r"[^\/\\]*$","",ofile)
+         os.chdir(dir)	
          if re.search("\.py$",ofile):
             cmd.do("run "+ofile);      
          else:
             cmd.do("@"+ofile);
 
    def file_savepng(self):
-      sfile = asksaveasfilename(filetypes=[("PNG File","*.png")])
+      sfile = asksaveasfilename(initialdir = self.initialdir,
+             filetypes=[("PNG File","*.png")])
       if len(sfile):
+         self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
          cmd.png(sfile)
          
       
    def file_savemovie(self):
       sfile = asksaveasfilename(filetypes=[("Numbered PNG Files","*.png")])
       if len(sfile):
+         self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
          cmd.mpng(sfile)
 
    def demo1(self):
