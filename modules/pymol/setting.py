@@ -293,6 +293,7 @@ if __name__=='pymol.setting':
       cartoon_smooth_cycles = 259
       cartoon_flat_cycles   = 260
       max_threads           = 261
+      show_progress         = 262
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
