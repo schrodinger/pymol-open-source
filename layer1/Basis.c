@@ -243,7 +243,7 @@ void BasisSetupMatrix(CBasis *I)
 
 
 /*========================================================================*/
-void BasisReflectTriangle(CBasis *I,RayInfo *r,int i,float *fc) 
+void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc) 
 {
   float *n0,w2;
   float vt1[3];
@@ -270,21 +270,6 @@ void BasisReflectTriangle(CBasis *I,RayInfo *r,int i,float *fc)
   add3f(vt1,r->surfnormal,r->surfnormal);
 
   normalize3f(r->surfnormal);
-
-  if(r->prim->texture)
-    switch(r->prim->texture) {
-    case 1:
-      scatter3f(r->surfnormal,r->prim->texture_param[0]);
-      break;
-    case 2:
-      wiggle3f(r->surfnormal,r->impact,r->prim->texture_param);
-      break;
-    }
-  r->dotgle = -r->surfnormal[2]; 
-  
-  r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
-  r->reflect[1]= - ( 2 * r->dotgle * r->surfnormal[1] );
-  r->reflect[2]= -1.0 - ( 2 * r->dotgle * r->surfnormal[2] );
 
 }
 /*========================================================================*/
@@ -780,6 +765,7 @@ void BasisFinish(CBasis *I)
 
 
 /*========================================================================*/
+
 
 #define EPSILON 0.000001
 

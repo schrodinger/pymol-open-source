@@ -62,7 +62,7 @@ void BasisInit(CBasis *I);
 void BasisFinish(CBasis *I);
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *clipBox);
 void BasisSetupMatrix(CBasis *I);
-void BasisReflectTriangle(CBasis *I,RayInfo *r,int i,float *fc);
+void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc);
 void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
 
 int BasisHit(CBasis *I,RayInfo *r,int except,
