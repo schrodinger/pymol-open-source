@@ -555,7 +555,7 @@ static int interpolate_view(CViewElem *first,CViewElem *last,float power)
   float last3x3[9];
   float inverse3x3[9];
   float inter3x3[9];
-  float rot_axis[3],trans[3];
+  float rot_axis[3],trans[3]={0.0F,0.0F,0.0F};
   float angle;
   CViewElem *current;
   int n = (last-first)-1;
