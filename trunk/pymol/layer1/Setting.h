@@ -323,7 +323,8 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_security                    197
 #define cSetting_stick_transparency          198 
 #define cSetting_ray_transparency_shadows    199
-#define cSetting_ray_transparency_specular   200
+#define cSetting_session_version_check       200
+#define cSetting_ray_transparency_specular   201
 
 /* cSetting_INIT must always be last setting_index +1 */
 
