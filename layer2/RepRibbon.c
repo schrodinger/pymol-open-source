@@ -175,7 +175,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   int visFlag;
   float dev;
 
-  Pickable *rp;
+  Pickable *rp=NULL;
   OOAlloc(RepRibbon);
 
   obj = cs->Obj;
