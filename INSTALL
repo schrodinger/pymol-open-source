@@ -11,13 +11,8 @@ frustration and wait until binaries are available for download.
 
 KEY FACTS:
 
-1. A unix system with Python 1.5.2, Glut >=3.0, and libPNG
-preinstalled will not need the pymol-ext CVS tree.  However,
-installation of PyMOL usually requires compilation of some or all of
-the external dependencies in the pymol-ext CVS tree.  You should check
-this tree out as well -- but this should only ever need to be done
-one.  Compilation instructions for these dependencies are contained in
-the INSTALL file.
+1. The pymol-ext CVS source tree is required, but only needs to 
+be downloaded once.  
 
 Hopefully we can soon replace the pymol-ext source code with a set of
 precompiled binary libraries for various platforms.  
