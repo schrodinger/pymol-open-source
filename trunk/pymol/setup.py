@@ -147,6 +147,7 @@ setup ( # Distribution meta-data
    "layer2/VFont.c",   
    "layer3/Editor.c",
    "layer3/Executive.c",
+   "layer3/Seeker.c",
    "layer3/Selector.c",
    "layer4/Cmd.c",
    "layer4/Export.c",
