@@ -4814,7 +4814,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,ch
   char *(ss[256]);
   char cc[MAXLINELEN];
   int index;
+  int ignore_pdb_segi = 0;
 
+
+  ignore_pdb_segi = SettingGet(cSetting_ignore_pdb_segi);
   AtomInfoPrimeColors();
 
   p=buffer;
@@ -5100,7 +5103,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,ch
 
           p=nskip(p,6);
           p=ncopy(cc,p,4);
-          if(!sscanf(cc,"%s",ai->segi)) ai->segi[0]=0;
+          if(!ignore_pdb_segi) {
+            if(!sscanf(cc,"%s",ai->segi)) ai->segi[0]=0;
+          } else {
+            ai->segi[0]=0;
+          }
           
           p=ncopy(cc,p,2);
           if(!sscanf(cc,"%s",ai->elem)) 

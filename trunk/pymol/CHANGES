@@ -33,6 +33,18 @@ Ongoing Goals
    * draw all solid representations before drawing lines
      in order to improve antialiasing.
 
+Changes up to 0.60
+
+   * choice of lighting modes for ray-tracing (improved shadows, contrast)
+
+   * settings renames (gl_ambient, dot_radius)
+
+   * settings changes (hash_max) and ray-tracing feedback
+
+   * "help faster"
+
+   * fixed minor glitch with fancy helices
+
 Changes up to 0.59
 
    * fixed valency display bug...
