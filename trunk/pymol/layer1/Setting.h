@@ -355,10 +355,14 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_roving_spheres              222
 #define cSetting_roving_labels               223
 #define cSetting_roving_delay                224
+#define cSetting_roving_selection            225
+#define cSetting_roving_byres                226
+#define cSetting_roving_ribbon               227
+#define cSetting_roving_cartoon              228
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        225
+#define cSetting_INIT                        229
 
 #endif
 
