@@ -1304,6 +1304,14 @@ class PMGApp(AbstractApp):
       
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
+      self.menuBar.addmenuitem('Mouse', 'checkbutton',
+                         'Roving Origin.',
+                         label=self.pad+'Roving Origin',
+                        variable = self.setting.roving_origin,
+                        command = lambda s=self: s.setting.update('roving_origin'))
+
+      self.menuBar.addmenuitem('Mouse', 'separator', '')
+      
       self.menuBar.addmenuitem('Mouse', 'command', '3 Button Universal Cycle',
                                label='3 Button Universal Cycle',
                                command = lambda: cmd.config_mouse('three_button'))

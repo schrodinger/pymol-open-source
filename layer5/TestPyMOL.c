@@ -59,7 +59,7 @@ int TestPyMOL_00_00(CTestPyMOL *I)
   }
   if(obj) {
     ObjectSetName((CObject*)obj,"00_00");
-    ExecutiveManageObject((CObject*)obj,true);
+    ExecutiveManageObject((CObject*)obj,true,false);
   }
   return (obj!=NULL);
 
@@ -86,7 +86,7 @@ int TestPyMOLRun(CTestPyMOL *I,int group,int test)
       PUnblock();
       if(obj) {
         ObjectSetName(obj,"hello");
-        ExecutiveManageObject(obj,true);
+        ExecutiveManageObject(obj,true,false);
       }
     }
     break;
@@ -95,7 +95,7 @@ int TestPyMOLRun(CTestPyMOL *I,int group,int test)
       obj = (CObject*)ObjectGadgetTest();
       if(obj)  {
         ObjectSetName(obj,"gadget");
-        ExecutiveManageObject(obj,true);
+        ExecutiveManageObject(obj,true,false);
       }
     }
     }

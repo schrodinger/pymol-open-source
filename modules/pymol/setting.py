@@ -258,6 +258,10 @@ if __name__=='pymol.setting':
       roving_byres          = 226
       roving_ribbon         = 227
       roving_cartoon        = 228
+      roving_polar_contacts = 229
+      roving_polar_cutoff   = 230
+      roving_nonbonded      = 231
+      float_labels          = 232
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

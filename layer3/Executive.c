@@ -266,7 +266,7 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
   ok = ok && (obj=ObjectGadgetRampMapNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
   if(ok) ObjectSetName((CObject*)obj,name);
   if(ok) ColorRegisterExt(name,(void*)obj,cColorGadgetRamp);
-  if(ok) ExecutiveManageObject((CObject*)obj,false);
+  if(ok) ExecutiveManageObject((CObject*)obj,false,false);
   return(ok);
 }
 
@@ -1034,7 +1034,7 @@ int ExecutiveMapNew(char *name,int type,float *grid,
 
       ObjectSetName((CObject*)objMap,name);
       ObjectMapUpdateExtents(objMap);
-      ExecutiveManageObject((CObject*)objMap,true);
+      ExecutiveManageObject((CObject*)objMap,true,false);
       SceneDirty();
     }
   }
@@ -2470,7 +2470,6 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels
   ObjectDist *obj;
   float result;
   sele1=SelectorIndexByName(s1);
-  printf("%5s\n",s2);
   if(!WordMatch(s2,"same",true))
     sele2=SelectorIndexByName(s2);
   else {
@@ -2485,7 +2484,7 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels
       if(ExecutiveFindObjectByName(nam))
         ExecutiveDelete(nam);
       ObjectSetName((CObject*)obj,nam);
-      ExecutiveManageObject((CObject*)obj,true);
+      ExecutiveManageObject((CObject*)obj,true,false);
       ExecutiveSetRepVisib(nam,cRepLine,1);
       if(!labels)
         ExecutiveSetRepVisib(nam,cRepLabel,0);        
@@ -2619,7 +2618,7 @@ void ExecutiveCopy(char *src,char *dst)
       oDst = ObjectMoleculeCopy(oSrc);
       if(oDst) {
         strcpy(oDst->Obj.Name,dst);
-        ExecutiveManageObject((CObject*)oDst,true);
+        ExecutiveManageObject((CObject*)oDst,true,false);
         rec1=ExecutiveFindSpec(oSrc->Obj.Name);
         rec2=ExecutiveFindSpec(oDst->Obj.Name);
         if(rec1&&rec2) {
@@ -2969,7 +2968,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,int quiet
             ExecutiveDelete(oname);
             auto_save = SettingGet(cSetting_auto_zoom);
             SettingSet(cSetting_auto_zoom,0);
-            ExecutiveManageObject((CObject*)ocgo,true);
+            ExecutiveManageObject((CObject*)ocgo,true,false);
             SettingSet(cSetting_auto_zoom,auto_save);            
             SceneDirty();
           }
@@ -4607,7 +4606,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state
                     sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
                     ObjectSetName((CObject*)new_obj,new_name);
                     ExecutiveDelete(new_name);
-                    ExecutiveManageObject((CObject*)new_obj,true);
+                    ExecutiveManageObject((CObject*)new_obj,true,false);
                     SceneChanged();
                   } else {
                     ((CObject*)new_obj)->fFree((CObject*)new_obj);
@@ -4699,7 +4698,7 @@ void ExecutiveDump(char *fname,char *obj)
   
 }
 /*========================================================================*/
-void ExecutiveManageObject(CObject *obj,int allow_zoom)
+void ExecutiveManageObject(CObject *obj,int allow_zoom,int quiet)
 {
   int a;
   SpecRec *rec = NULL;
@@ -4731,11 +4730,12 @@ void ExecutiveManageObject(CObject *obj,int allow_zoom)
       }
     else 
       {
-        if(obj->Name[0]!='_') { /* suppress internal objects */
-          PRINTFB(FB_Executive,FB_Actions)
-            " Executive: object \"%s\" created.\n",obj->Name 
-            ENDFB;
-        }
+        if(!quiet)
+          if(obj->Name[0]!='_') { /* suppress internal objects */
+            PRINTFB(FB_Executive,FB_Actions)
+              " Executive: object \"%s\" created.\n",obj->Name 
+              ENDFB;
+          }
       }
     if(!rec)
       ListElemAlloc(rec,SpecRec);

@@ -2689,7 +2689,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     ObjectMoleculeSort(targ);
   if(isNew) {
     ObjectSetName((CObject*)targ,name);
-    ExecutiveManageObject((CObject*)targ,true);
+    ExecutiveManageObject((CObject*)targ,true,false);
   } else {
     ExecutiveUpdateObjectSelection((CObject*)targ);
   }

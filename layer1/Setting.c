@@ -1906,7 +1906,11 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_roving_polar_contacts,0.0F);
 
-  SettingSet_f(I,cSetting_roving_polar_cutoff,0.0F);
+  SettingSet_f(I,cSetting_roving_polar_cutoff,3.2F);
+
+  SettingSet_f(I,cSetting_roving_nonbonded,0.0F);
+
+  SettingSet_f(I,cSetting_float_labels,1.0F);
 
 }
 

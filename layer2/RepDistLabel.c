@@ -57,17 +57,28 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
   DistLabel *l = I->L;
   char *cc;
   int n = 0;
-
+  int color;
 
   if(ray) {
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-#ifdef _DRI_WORKAROUND
-    glDisable(GL_DEPTH_TEST);	 
-#endif
+
+    int float_text;
+    float_text = (int)SettingGet(cSetting_float_labels);
+    if(float_text)
+      glDisable(GL_DEPTH_TEST);	 
+
     glDisable(GL_LIGHTING);
+    
+    color = SettingGet_color(NULL,I->Obj->Setting,cSetting_label_color);
+    if(color>=0)
+      glColor3fv(ColorGet(color));
+    else
+      glColor3fv(ColorGet(I->Obj->Color));
+          
     /*	 SceneResetNormal(true);*/
 	 while(c--) {
+
       glRasterPos4f(v[0],v[1],v[2],1.0);
       cc = l[n];
 		v+=3;
@@ -77,9 +88,8 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
       n++;
 	 }
     glEnable(GL_LIGHTING);
-#ifdef _DRI_WORKAROUND
-    glEnable(GL_DEPTH_TEST);
-#endif
+    if(float_text)
+      glEnable(GL_DEPTH_TEST);	 
   }
 }
 

@@ -1425,11 +1425,11 @@ float SceneGetScreenVertexScale(float *v1)
 }
 
 static double last = 0.0;
-static void do_update(void)
+static void SceneRovingUpdate(void)
 {
   char buffer[1024];
   float sticks,lines,spheres,labels,ribbon,cartoon;
-  float polar_contacts,polar_cutoff;
+  float polar_contacts,polar_cutoff,nonbonded;
   char byres[10] = "byres";
   char not[4] = "not";
   char empty[1] = "";
@@ -1449,6 +1449,7 @@ static void do_update(void)
     cartoon = SettingGet(cSetting_roving_cartoon);
     polar_contacts = SettingGet(cSetting_roving_polar_contacts);
     polar_cutoff = SettingGet(cSetting_roving_polar_cutoff);
+    nonbonded = SettingGet(cSetting_roving_nonbonded);
 
     if(SettingGet(cSetting_roving_byres))
       p2 = byres;
@@ -1463,7 +1464,7 @@ static void do_update(void)
         p1=empty;
       }
       sprintf(buffer,
-"cmd.hide('sticks','%s');cmd.show('sticks','%s and %s %s (center expand %3.1f)')",
+"cmd.hide('sticks','%s');cmd.show('sticks','%s and %s %s (center expand %1.3f)')",
               s,s,p1,p2,sticks);
       PParse(buffer);
       PFlush();
@@ -1478,7 +1479,7 @@ static void do_update(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('lines','%s');cmd.show('lines','%s & %s %s (center expand %3.1f)')",
+              "cmd.hide('lines','%s');cmd.show('lines','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,lines);
       PParse(buffer);
       PFlush();
@@ -1493,7 +1494,7 @@ static void do_update(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('labels','%s');cmd.show('labels','%s & %s %s (center expand %3.1f)')",
+              "cmd.hide('labels','%s');cmd.show('labels','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,labels);
       PParse(buffer);
       PFlush();
@@ -1508,7 +1509,7 @@ static void do_update(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('spheres','%s');cmd.show('spheres','%s & %s %s (center expand %3.1f)')",
+              "cmd.hide('spheres','%s');cmd.show('spheres','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,spheres);
       PParse(buffer);
       PFlush();
@@ -1523,7 +1524,7 @@ static void do_update(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('cartoon','%s');cmd.show('cartoon','%s & %s %s (center expand %3.1f)')",
+              "cmd.hide('cartoon','%s');cmd.show('cartoon','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,cartoon);
       PParse(buffer);
       PFlush();
@@ -1538,12 +1539,48 @@ static void do_update(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('ribbon','%s');cmd.show('ribbon','%s & %s %s (center expand %3.1f)');cmd.refresh()",
+              "cmd.hide('ribbon','%s');cmd.show('ribbon','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,ribbon);
-      printf("%s\n",buffer);
       PParse(buffer);
       PFlush();
 
+      refresh_flag=true;
+    }
+
+
+    if(polar_contacts!=0.0F) {
+      int label_flag=0;
+      if(polar_contacts<0.0F) {
+        p1=not;
+        polar_contacts=fabs(polar_contacts);
+      } else {
+        p1=empty;
+      }
+      if(polar_cutoff<0.0F) {
+        label_flag=true;
+        polar_cutoff=fabs(polar_cutoff);
+      }
+      sprintf(buffer,
+ "cmd.dist('rov_pc','%s & (elem n+o) & %s %s (center expand %1.3f)','same',%1.4f,mode=1,labels=%d)",
+              s,p1,p2,polar_contacts,polar_cutoff,label_flag);
+      PParse(buffer);
+      PFlush();
+
+      refresh_flag=true;
+    }
+
+    if(nonbonded!=0.0F) {
+      if(nonbonded<0.0F) {
+        p1=not;
+        nonbonded=fabs(nonbonded);
+      } else {
+        p1=empty;
+      }
+      sprintf(buffer,
+              "cmd.hide('nonbonded','%s');cmd.show('nonbonded','%s & %s %s (center expand %1.3f)')",
+              s,s,p1,p2,nonbonded);
+      PParse(buffer);
+      PFlush();
       refresh_flag=true;
     }
 
@@ -1691,8 +1728,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
     if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
       SceneGetPos(v2);
       SceneOriginSet(v2,true);
-      
-      do_update();
+      SceneRovingUpdate();
     }
     break;
   case cButModeRotXYZ:
@@ -1864,7 +1900,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
       subtract3f(I->Origin,v2,v2);
       SceneOriginSet(v2,true);
 
-      do_update();
+      SceneRovingUpdate();
     }
   }
   return(1);
