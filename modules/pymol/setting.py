@@ -348,7 +348,8 @@ if __name__=='pymol.setting':
       roving_origin_z         = 308
       roving_origin_z_cushion = 309
       specular_intensity    = 310
-      overlay_lines         = 31
+      overlay_lines         = 311
+      ray_transparency_spec_cut = 312
 
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

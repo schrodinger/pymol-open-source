@@ -149,7 +149,7 @@ static int FindRowCol(int x,int y,int *row_num_ptr,int *col_num_ptr)
   CSeq *I=&Seq;
   int result =0;
   int row_num = 0;
-  int col_num;
+  int col_num = 0;
 
   if(I->ScrollBarActive) {
     y-=I->ScrollBarWidth;

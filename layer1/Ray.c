@@ -1103,6 +1103,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float base[2];
    float edge_width = 0.35356F;
    float edge_height = 0.35356F;
+   float trans_spec_cut,trans_spec_scale;
 
 	_0		= 0.0F;
 	_1		= 1.0F;
@@ -1131,6 +1132,12 @@ int RayTraceThread(CRayThreadInfo *T)
 	ambient				= SettingGet(cSetting_ambient);
 	lreflect			= SettingGet(cSetting_reflect);
 	direct				= SettingGet(cSetting_direct);
+   trans_spec_cut = SettingGet(cSetting_ray_transparency_spec_cut);
+
+   if(trans_spec_cut<_1)
+     trans_spec_scale = _1/(_1-trans_spec_cut);
+   else
+     trans_spec_scale = _0;
 
 	/* COOP */
 	settingPower		= SettingGet(cSetting_power);
@@ -1333,7 +1340,6 @@ int RayTraceThread(CRayThreadInfo *T)
               excl_trans		= _0;
               pass			= 0;
               new_front		= T->front;
-              
               while((persist > _persistLimit) && (pass < 25))
                 {
                   pixel_flag		= false;
@@ -1517,10 +1523,14 @@ int RayTraceThread(CRayThreadInfo *T)
                               fc[3] = ffact1m*(_1 - r1.prim->trans);
                             }
                           
-                          if(!pass)
-                            first_excess = excess*ffact1m*ray_trans_spec;
-                          else
-                            {
+                          if(!pass) {
+                            if(r1.prim->trans<trans_spec_cut) {
+                              first_excess = excess*ffact1m*ray_trans_spec;
+                            } else {
+                              first_excess = excess*ffact1m*ray_trans_spec*
+                                trans_spec_scale*(_1 - r1.prim->trans);
+                            }
+                          } else {
                               fc[0]+=first_excess;
                               fc[1]+=first_excess;
                               fc[2]+=first_excess;
@@ -1528,10 +1538,14 @@ int RayTraceThread(CRayThreadInfo *T)
                         }
                       else 
                         {
-                          if(!pass)
-                            first_excess = excess*ray_trans_spec;
-                          else 
-                            {
+                          if(!pass) {
+                            if(r1.prim->trans<trans_spec_cut) {
+                              first_excess = excess*ray_trans_spec;
+                            } else {
+                              first_excess = excess*ray_trans_spec*
+                                trans_spec_scale*(_1 - r1.prim->trans);
+                            }
+                          } else {
                               fc[0]	+= first_excess;
                               fc[1]	+= first_excess;
                               fc[2]	+= first_excess;

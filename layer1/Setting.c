@@ -2158,5 +2158,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_f(I,cSetting_roving_origin_z_cushion,3.0F);
   SettingSet_f(I,cSetting_specular_intensity,0.8F);
   SettingSet_i(I,cSetting_overlay_lines,5);
+  SettingSet_i(I,cSetting_ray_transparency_spec_cut,0.9F);
+  
 }
 
