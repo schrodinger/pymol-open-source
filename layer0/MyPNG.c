@@ -139,6 +139,8 @@ int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int 
 int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr)
 {
 
+#ifdef _HAVE_LIBPNG
+
   FILE *png_file=NULL;
   png_struct    *png_ptr = NULL;
   png_info	*info_ptr = NULL;
@@ -159,7 +161,6 @@ int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsi
   unsigned char *p;
   double        file_gamma;
 
-#ifdef _HAVE_LIBPNG
 
    png_file = fopen(file_name, "rb");
    if (png_file == NULL)
