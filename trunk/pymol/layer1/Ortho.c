@@ -412,6 +412,7 @@ void OrthoKeyControl(unsigned char k) {
   /* safer...*/
 
   sprintf(buffer,"cmd._ctrl('%c')",k+64);
+  PLog(buffer,cPLog_pym);
   PParse(buffer);
   PFlush();
 

@@ -234,6 +234,7 @@ static void MainSpecial(int k, int x, int y)
   }
   if(!grabbed) {
     sprintf(buffer,"_special %d,%d,%d ",k,x,y);
+    PLog(buffer,cPLog_pml);
     PParse(buffer);
     PFlush();
   }
