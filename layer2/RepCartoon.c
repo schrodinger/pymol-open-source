@@ -783,7 +783,7 @@ ENDFD;
             }
             if(end_flag) {
               if(a)
-                if(first)
+                if(first>0) /* 011130 WLD */
                   if(*(seg+first)==*(seg+first-1))
                     first--;
               if(last>0)
