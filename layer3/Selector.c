@@ -1900,6 +1900,10 @@ int SelectorModulate1(EvalElem *base)
                                         c--;
                                       }
 												}
+                                  else if (base[1].sele[j]) {
+                                    base[0].sele[j]=false;
+                                    c--;
+                                  }
 											 j=map->EList[i++];
 										  }
 										}

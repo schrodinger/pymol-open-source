@@ -46,6 +46,29 @@ class QuietException:
 
 lock_api = pymol.lock_api
 
+def write_html_ref(file):
+   lst = globals()
+   f=open(file,'w')
+   head = 'H2'
+   f.write("<HTML><BODY><H1>Reference</H1>")
+   kees = lst.keys()
+   kees.sort()
+   for a in kees:
+      if hasattr(lst[a],'__doc__'):
+         if a[0:1]!='_' and (a not in ['string','thread',
+                                       'setup_global_locks',
+                                       'real_system',
+                                       ]):
+            doc = lst[a].__doc__
+            if type(doc) is types.StringType:
+               if len(doc):
+                  doc = string.strip(doc)
+                  doc = string.replace(doc,"<","&lt;")
+                  f.write("<HR SIZE=1><%s>"%head+a+"</%s>\n"%head)
+                  f.write("<PRE>"+string.strip(doc)+"\n\n</PRE>")
+   f.write("</BODY></HTML>")
+   f.close()
+            
 def commands():
    '''
 COMMANDS
@@ -124,7 +147,7 @@ visualization from directly within Python.  It will be of most benefit
 to hybrid scientist/developers in the fields of structural biology,
 molecular modeling, computational chemistry, and informatics who want
 a completely unrestricted visualization tool capable of working
-directly to their own programs via Python.  It will also be of benefit
+directly with their own programs via Python.  It will also be of benefit
 to advanced non-developers familiar with similar programs such as
 Midas, O, Grasp, X-PLOR and CNS.
 
@@ -276,8 +299,8 @@ def api():
 DESCRIPTION
  
 The PyMOL Python Application Programming Interface (API) should be
-accessed exclusively through the "pm" module.  All command-line
-functions have an equivalent API method with the same name.
+accessed exclusively through the "cmd" module.  Nearly all
+command-line functions have a corresponding API method.
  
 USAGE
  
@@ -434,7 +457,7 @@ for a in ( "frame001.pdb","frame002.pdb" ):
  
    which can be executed at the command line using the "run" command.
    
-   Python built-it glob module can be useful for loading movies.
+   Python built-in glob module can be useful for loading movies.
 
 from pymol import cmd
 import glob
@@ -550,7 +573,7 @@ parenthetical groups (such as atom selections).
 
 def sort(*arg):
    '''
-UNSUPPORTED - LIKELY TO BE REMOVED
+TO DOCUMENT
 '''
    try:
       lock()
@@ -564,7 +587,7 @@ UNSUPPORTED - LIKELY TO BE REMOVED
 
 def spheroid(*arg):
    '''
-EXPERIMENTAL
+TO DOCUMENT, EXPERIMENTAL
 '''
    try:
       print "Warning: 'spheroid' is experimental, incomplete, and unstable."
@@ -578,6 +601,9 @@ EXPERIMENTAL
    return r
 
 def cls():
+   '''
+TO DOCUMENT
+'''
    r = None
    try:
       lock()
@@ -587,12 +613,18 @@ def cls():
    return r
 
 def fragment(name):
+   '''
+TO DOCUMENT
+'''
    try:
       load_model(fragments.get(name),name)
    except:
       print "Error: unable to load fragment %s" % name
 
 def get_dihedral(s1,s2,s3,s4):
+   '''
+TO DOCUMENT
+'''
    r = None
    try:
       lock()
@@ -602,6 +634,9 @@ def get_dihedral(s1,s2,s3,s4):
    return r
 
 def set_dihedral(s1,s2,s3,s4,deg):
+   '''
+NONFUNCTIONAL
+'''
    try:
       lock()
       r = _cmd.set_dihe(str(s1),str(s2),str(s3),str(s4),float(deg),0)
@@ -624,7 +659,10 @@ debugging feature, not an official part of the API.
       unlock()
    return r
 
-def edit_mode(*arg):   
+def edit_mode(*arg):
+   '''
+TO DOCUMENT
+'''
    try:
       lock()
       r = _cmd.get_setting("button_mode")
@@ -645,6 +683,9 @@ def edit_mode(*arg):
    pass
 
 def config_mouse(quiet=0):
+   '''
+TO DOCUMENT
+'''
    # NOTE: PyMOL automatically runs this routine upon start-up
    try:
       lock()
@@ -798,6 +839,7 @@ NOTES
 
 def invert(*arg):
    '''
+TO DOCUMENT
 '''
    la = len(arg)
    if la:
@@ -852,6 +894,9 @@ def show_help(cmd):
    print "(Hit TAB to hide)"
 
 def undo():
+   '''
+TO DOCUMENT
+'''
    try:
       lock()
       _cmd.undo(-1)
@@ -859,6 +904,9 @@ def undo():
       unlock()
 
 def redo():
+   '''
+TO DOCUMENT
+'''
    try:
       lock()
       _cmd.undo(1)
@@ -1454,18 +1502,12 @@ PYMOL API
       unlock()
    return r
 
-def real_system(a):
+def system(a):
    '''
-UNSUPPORTED
+TO DOCUMENT
    '''
    r = _cmd.system(a)
    return r
-
-def system(a):
-   '''
-UNSUPPORTED
-   '''
-   real_system(a)
 
 def intra_fit(*arg):
    '''
@@ -1974,6 +2016,10 @@ PYMOL API
    return r
    
 def protect(*arg):
+   '''
+TO DOCUMENT
+'''
+   
    if len(arg):
       a=arg[0]
    else:
@@ -1986,6 +2032,10 @@ def protect(*arg):
    return r
 
 def unprotect(*arg):
+   '''
+TO DOCUMENT
+'''
+   
    if len(arg):
       a=arg[0]
    else:
@@ -1998,6 +2048,9 @@ def unprotect(*arg):
    return r
 
 def mask(*arg):
+   '''
+TO DOCUMENT
+'''
    if len(arg):
       a=arg[0]
    else:
@@ -2010,6 +2063,9 @@ def mask(*arg):
    return r
 
 def unmask(*arg):
+   '''
+TO DOCUMENT
+'''
    if len(arg):
       a=arg[0]
    else:
@@ -2022,6 +2078,9 @@ def unmask(*arg):
    return r
 
 def replace(name,geom,valence):
+   '''
+TO DOCUMENT
+'''
    r = 1
    try:
       lock()
@@ -2232,9 +2291,6 @@ PYMOL API
    return r
 
 def is_glut_thread():
-   '''
-INTERNAL
-   '''
    if thread.get_ident() == pymol.glutThread:
       return 1
    else:
@@ -2953,6 +3009,9 @@ NOTES
    
    
 def id_atom(*arg):
+   '''
+TO DOCUMENT
+   '''
    r = -1
    la = len(arg)
    l = apply(identify,arg)
@@ -3070,6 +3129,7 @@ def get_feedback():
 
 def load_coords(*arg):
    '''
+TO DOCUMENT
    '''
    r = 1
    try:
@@ -3095,6 +3155,7 @@ def load_coords(*arg):
 
 def finish_object(obj):
    '''
+TO DOCUMENT
    '''
    r = 1
    try:
@@ -3105,6 +3166,9 @@ def finish_object(obj):
    return r
 
 def load_object(*arg): # assume first argument is the object type
+   '''
+TO DOCUMENT
+   '''
    r = 1
    try:
       lock()   
@@ -3131,6 +3195,10 @@ def load_object(*arg): # assume first argument is the object type
    return r
    
 def load_brick(*arg):
+   '''
+TO DOCUMENT
+'''
+   
    lst = [loadable.brick]
    lst.extend(list(arg))
    return apply(load_object,lst)
@@ -3300,6 +3368,9 @@ NOTES
    return r
 
 def read_mmodstr(*arg):
+   '''
+TO DOCUMENT
+'''
    r = 1
    try:
       lock()   
