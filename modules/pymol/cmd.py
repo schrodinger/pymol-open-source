@@ -2969,7 +2969,7 @@ PYMOL API
       state = arg[2]
       format = arg[3]
    if (len(arg)>0) and (len(arg)<4):
-      if re.search("\.pdb$",fname):
+      if re.search("\.pdb$|\.ent$",fname):
          format = 'pdb'
       elif re.search("\.mol$",fname):
          format = 'mol'
@@ -3407,7 +3407,7 @@ PYMOL API
       fname = arg[0];
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)
-      if re.search("\.pdb$",arg[0]):
+      if re.search("\.pdb$|\.ent$",arg[0]):
          ftype = loadable.pdb
       elif re.search("\.mol$",arg[0]):
          ftype = loadable.mol
@@ -3445,7 +3445,7 @@ PYMOL API
          if len(arg)==1:
             oname = re.sub("[^/]*\/","",arg[0])
             oname = re.sub(
-"\.pdb$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.r3d$|\.xyz$|\.xyz_[0-9]*$",
+"\.pdb$|\.ent$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.r3d$|\.xyz$|\.xyz_[0-9]*$",
                            "",oname)
          else:
             oname = string.strip(arg[1])
