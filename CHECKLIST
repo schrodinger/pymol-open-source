@@ -1,0 +1,29 @@
+PyMOL Release Checklist
+
+1) Compile and run command-line tests on Linux, IRIX, Windows, and Tru64
+
+2) Update version numbers in layer0/Version.h and PMGApp.py
+
+3) Update acknowledgements in README
+
+4) Update CVS repository
+
+5) Under Windows and Linux
+   Rebuild, then test and validate all menu items and wizards.
+
+6) Final build:
+
+   Rebuild windows helper app for Py152
+   Rebuild PyMOL for Py152
+   Create installer
+
+   Rebuild windows helper app for Py21
+   Rebuild PyMOL for Py21
+   Create installer
+
+   Check-out a pristine source distribution
+   Create tarball
+
+   As time permits, create usr-local tarballs for IRIX and Linux
+
+7) Release on Sourceforge
