@@ -150,8 +150,9 @@ def load_traj(filename,object='',state=0,format='',interval=1,
    '''
 DESCRIPTION
   
-   "load_traj" reads trajectory files.  The file extension is used to
-   determine the format.  AMBER files must end in ".trj",
+   "load_traj" reads trajectory files (currently just AMBER files).
+   The file extension is used to determine the format.
+   AMBER files must end in ".trj",
  
 USAGE
  
@@ -163,6 +164,11 @@ PYMOL API
    cmd.load_traj( filename [,object [,state [,format [,interval [,average ]
                       [,start [, stop [, max [, selection [, image]]]]]]]]]
 
+NOTES
+
+   You must first load a corresponding topology file before attempting
+   to load a trajectory file.
+   
 SEE ALSO
 
    load
@@ -260,7 +266,10 @@ NOTES
    'xplor' : X-PLOR/CNS map, 'ccp4' : CCP4 map,
    'callback' : PyMOL Callback object (PyOpenGL)
    'cgo' : compressed graphics object (list of floats)
-
+   'trj' : AMBER trajectory (use load_traj command for more control)
+   'top' : AMBER topology file 'rst' : AMBER restart file
+   'cex' : Metaphorics CEX format
+   
 SEE ALSO
 
    save
