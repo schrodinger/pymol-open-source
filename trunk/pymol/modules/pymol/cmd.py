@@ -32,6 +32,10 @@ from chempy import io
 from chempy.sdf import SDF,SDFRec
 from chempy import fragments
 
+class QuietException:
+   def __init__(self,args=None):
+      self.args = args
+
 lock_api = pymol.lock_api
 
 
@@ -507,7 +511,7 @@ NOTES
    la = len(arg)
    if la<2:
       print "Error: invalid arguments for dist command."
-      raise RuntimeError
+      raise QuietException
    else:
       sel1 = arg[0]
       sel2 = arg[1]
@@ -540,7 +544,7 @@ NOTES
    la = len(arg)
    if la==1:
       print "Error: invalid arguments for bond command."
-      raise RuntimeError
+      raise QuietException
    else:
       if la>1:
          sel1 = arg[0]
@@ -574,7 +578,7 @@ NOTES
    la = len(arg)
    if la==1:
       print "Error: invalid arguments for unbond command."
-      raise RuntimeError
+      raise QuietException
    else:
       if la>1:
          sel1 = arg[0]
@@ -659,7 +663,7 @@ PYMOL API
    '''
    if len(arg)<2:
       print "Error: invalid arguments for symexp command."
-      raise RuntimeError
+      raise QuietException
    elif len(arg)<3:
       nam= arg[0]
       argst = arg[1]
@@ -670,7 +674,7 @@ PYMOL API
    la = len(arg)
    if la<3:
       print "Error: invalid arguments for symexp command."
-      raise RuntimeError
+      raise QuietException
    else:
       obj=arg[0]
       sele=arg[1]
@@ -696,7 +700,7 @@ USAGE
    la = len(arg)
    if la<1:
       print "Error: invalid arguments for isomesh command."
-      raise RuntimeError
+      raise QuietException
    else:
       map=arg[0]
       mopt=0
@@ -732,7 +736,7 @@ USAGE
    la = len(arg)
    if la<1:
       print "Error: invalid arguments for isodot command."
-      raise RuntimeError
+      raise QuietException
    else:
       map=arg[0]
       mopt=0
@@ -1282,7 +1286,7 @@ USAGE
       unlock()
    return r
 
-def pairfit(*arg):
+def pair_fit(*arg):
    '''
 DESCRIPTION
   
@@ -1293,7 +1297,7 @@ DESCRIPTION
    
 USAGE
  
-   fit_pairs (selection), (selection) [ (selection), (selection) [ ...] ]
+   fit_pairs (selection), (selection), [ (selection), (selection) [ ...] ]
    '''
    try:
       lock()   
@@ -1353,7 +1357,7 @@ def fuse(*arg):
    la = len(arg)
    if la==1:
       print "Error: invalid arguments for fuse command."
-      raise RuntimeError
+      raise QuietException
    else:
       if la>1:
          sel1 = arg[0]
@@ -2231,13 +2235,13 @@ def id_atom(*arg):
          print "Error: atom %s not found by id_atom." % arg[0]
       else:
          print "Error: atom not found by id_atom."
-      raise RuntimeError
+      raise QuietException
    elif ll>1:
       if la:
          print "Error: multiple atoms %s found by id_atom." % arg[0]
       else:
          print "Error: multiple atoms found by id_atom."
-      raise RuntimeError
+      raise QuietException
    else:
       r = l[0]
    return r
@@ -3131,7 +3135,7 @@ keyword = {
    'origin'        : [origin       , 1 , 1 , ',' , 0 ],
    'orient'        : [orient       , 0 , 1 , ',' , 0 ],
    'overlap'       : [overlap      , 2 , 3 , ',' , 0 ],
-   'pairfit'       : [pairfit      , 2 ,98 , ',' , 0 ],
+   'pair_fit'      : [pair_fit     , 2 ,98 , ',' , 0 ],
    'protect'       : [protect      , 0 , 1 , ',' , 0 ],
    'ray'           : [ray          , 0 , 0 , ',' , 0 ],
    'rebuild'       : [rebuild      , 0 , 0 , ',' , 0 ],

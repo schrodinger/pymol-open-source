@@ -186,6 +186,7 @@ LP-SH  600.0    0.700       cys,cyx
 N3-SO  230.0    1.615       RSM, based on Xray analysis
 O2-SO  525.0    1.430       RSM, based on Xray analysis
 O -SO  525.0    1.430       RSM, based on Xray analysis, WLD O2->O
+CB-CT  317.0    1.510       WLD from CA-CT
 
 HW-OW-HW    100.      104.52    TIP3P water
 HW-HW-OW      0.      127.74    (found in crystallographic water with 3 bonds)
@@ -214,7 +215,6 @@ O -C -OH    80.0      120.00    (check with Junmei for: theta0:120.0?)
 O -C -OS    80.0      125.00    Junmei et al, 1999
 O2-C -O2    80.0      126.00    AA GLU            (SCH JPC 79,2379)
 H4-C -C     50.0      120.00    Junmei et al, 1999 
-H4-C -CA    50.0      120.00    WLD from (H4-C -C)
 H4-C -CM    50.0      115.00    Junmei et al, 1999 
 H4-C -CT    50.0      115.00    Junmei et al, 1999
 H4-C -O     50.0      120.00    Junmei et al, 1999
@@ -228,7 +228,6 @@ C -CA-HA    50.0      120.00    AA (not used in tyr)
 CA-CA-CA    63.0      120.00    changed from 85.0  bsd on C6H6 nmodes
 CA-CA-CB    63.0      120.00    changed from 85.0  bsd on C6H6 nmodes
 CA-CA-CT    70.0      120.00
-CA-C -CT    70.0      120.00    WLD from CA-CA-CT
 CA-CA-HA    50.0      120.00
 CA-CA-H4    50.0      120.00
 CA-CA-OH    70.0      120.00    replacement in tyr
@@ -315,10 +314,7 @@ C -CT-N     63.0      110.10    AA general
 C -CT-N3    80.0      111.20    AA amino terminal residues
 C -CT-CT    63.0      111.10    AA general
 C -CT-OS    60.0      109.50    Junmei et al, 1999
-C -CT-OH    60.0      109.50    WLD from C -CT-OH
 CA-CT-HC    50.0      109.50    AA tyr     changed based on NMA nmodes
-CA-CT-H1    50.0      109.50    WLD from CA-CT-H1
-CA-CT-N     80.0      109.70    WLD from CT-CT-N
 CC-CT-CT    63.0      113.10    AA his
 CC-CT-HC    50.0      109.50    AA his     changed based on NMA nmodes
 CM-CT-CT    63.0      111.00    Junmei et al, 1999 (last change: Mar24,99)
@@ -332,7 +328,6 @@ CT-CT-N*    50.0      109.50
 CT-CT-OH    50.0      109.50
 CT-CT-OS    50.0      109.50
 CT-CT-S     50.0      114.70    AA cyx            (SCHERAGA  JPC 79,1428)
-OH-CT-S     50.0      114.70    WLD from CT-CT-S
 CT-CT-SH    50.0      108.60    AA cys
 CT-CT-CA    63.0      114.00    AA phe tyr          (SCH JPC  79,2379)
 CT-CT-N2    80.0      111.20    AA arg             (JCP 76, 1439)
@@ -351,14 +346,11 @@ OS-CT-CY    50.0      110.00    Junmei et al, 1999
 OS-CT-N*    50.0      109.50
 F -CT-F     77.0      109.10    JCC,13,(1992),963;
 F -CT-H1    50.0      109.50    JCC,13,(1992),963;
-F -CT-CA    50.0      114.00    WLD est. from CT-CT-CA
 F -CT-CT    50.0      109.00    
 F -CT-H2    50.0      109.50  
 Cl-CT-CT    50.0      108.50    (6-31g* opt value)
 Cl-CT-H1    50.0      108.50    (6-31g* opt value)  
-Cl-CT-CA    50.0      113.50    WLD guess
 Br-CT-CT    50.0      108.00    Junmei et al 99 
-Br-CT-CA    50.0      113.00    WLD guess
 Br-CT-H1    50.0      106.50    Junmei et al 99 
 I -CT-CT    50.0      106.00    Junmei et al,99 
 CT-CC-NA    70.0      120.00    AA his
@@ -496,6 +488,21 @@ CA-CT-N3    80.0      111.20    WLD from C -CT-N3
 O -C -CA    70.0      120.00    WLD from CA-C -OH
 N -C -CA    70.0      120.00    WLD from CA-C -OH
 O2-C -CA    70.0      120.00    WLD from CA-C -OH
+CA-CB-CT    63.0      117.30    WLD from CA-CB-CB
+CB-CB-CT    63.0      117.30    WLD from CA-CB-CB
+CB-CT-S     50.0      114.70    WLD from CT-CT-S
+CB-CT-OH    60.0      109.50    WLD from C -CT-OH
+Br-CT-CA    50.0      113.00    WLD guess
+H4-C -CA    50.0      120.00    WLD from (H4-C -C)
+CA-C -CT    70.0      120.00    WLD from CA-CA-CT
+CA-CT-H1    50.0      109.50    WLD from CA-CT-H1
+CA-CT-N     80.0      109.70    WLD from CT-CT-N
+OH-CT-S     50.0      114.70    WLD from CT-CT-S
+F -CT-CA    50.0      114.00    WLD est. from CT-CT-CA
+Cl-CT-CA    50.0      113.50    WLD guess
+CB-CT-CT    63.0      111.10    WLD from C -CT-CT 
+C -CT-CB    63.0      111.10    WLD from C -CT-CT *
+CB-CT-HC    50.0      109.50    WLD from C -CT-HC
 
 X -C -C -X    4   14.50        180.0             2.         Junmei et al, 1999
 X -C -CA-X    4   14.50        180.0             2.         intrpol.bsd.on C6H6
@@ -647,6 +654,7 @@ CT-CT-OS-LP   1    0.000         0.000           3.000
 CM-CM-OS-LP   1    0.000       180.000           2.000
 HA-CM-OS-LP   1    0.000       180.000           2.000
 H4-CM-OS-LP   1    0.000       180.000           2.000
+X -CB-CT-X    6    0.00          0.0             2.         WLD from X -C -CT-X 
 
 X -X -C -O          10.5         180.          2.           JCC,7,(1986),230
 X -O2-C -O2         10.5         180.          2.           JCC,7,(1986),230
