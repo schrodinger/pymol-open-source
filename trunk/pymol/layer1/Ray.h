@@ -55,6 +55,19 @@ typedef struct CRay {
   float PixelRadius;
 } CRay;
 
+typedef struct CRayThread {
+  CRay *ray;
+  int width,height;
+  unsigned int *image;
+  float front,back;
+  unsigned int fore_mask;
+  float *bkrd;
+  unsigned int background;
+  int phase, n_thread;
+  float spec_vector[3];
+} CRayThreadInfo;
+
+
 CRay *RayNew(void);
 void RayFree(CRay *I);
 void RayPrepare(CRay *I,float v0,float v1,float v2,
@@ -70,6 +83,8 @@ void RaySetContext(CRay *I,int context);
 void RayApplyContexToNormal(CRay *I,float *v);
 void RayApplyContextToVertex(CRay *I,float *v);
 void RayRenderColorTable(CRay *I,int width,int height,int *image);
+int RayTraceThread(CRayThreadInfo *T);
+
 #endif
 
 

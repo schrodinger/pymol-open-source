@@ -79,7 +79,7 @@ typedef struct {
   PyThreadState *state;
 } SavedThreadRec;
 
-#define MAX_SAVED_THREAD 10
+#define MAX_SAVED_THREAD 16
 
 static SavedThreadRec SavedThread[MAX_SAVED_THREAD];
 

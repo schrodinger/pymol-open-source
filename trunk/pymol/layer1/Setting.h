@@ -397,9 +397,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_cartoon_smooth_cycles       259
 #define cSetting_cartoon_flat_cycles         260
 
+#define cSetting_max_threads                 261
+
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        261
+#define cSetting_INIT                        262
 
 #endif
 

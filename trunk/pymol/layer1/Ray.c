@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Triangle.h"
 #include"Color.h"
 #include"Matrix.h"
+#include"P.h"
 
 #ifndef RAY_SMALL
 #define RAY_SMALL 0.00001
@@ -38,6 +39,8 @@ Z* -------------------------------------------------------------------
 	1 contains transformed vertices (vector size = 3)
 	2 contains transformed vertices for shadowing 
 */
+
+#define MAX_RAY_THREADS 8
 
 typedef float float3[3];
 typedef float float4[4];
@@ -753,24 +756,76 @@ void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,floa
   }
 }
 
-/*========================================================================*/
-void RayRender(CRay *I,int width,int height,unsigned int *image,
-               float front,float back,
-               double timing,float angle)
+
+static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
 {
+  int blocked;
+  PyObject *info_list;
+  int a;
+  blocked = PAutoBlock();
+
+  printf(" Ray: Spawning %d threads.\n",n_thread);
+  info_list = PyList_New(n_thread);
+  for(a=0;a<n_thread;a++) {
+    PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
+  }
+  PyObject_CallMethod(P_cmd,"_ray_spawn","O",info_list);
+  Py_DECREF(info_list);
+  PAutoUnblock(blocked);
+  
+}
+static void RayTraceStitch(CRayThreadInfo *Thread,int n_thread,unsigned int *image)
+{
+  int ctr,cnt,start_at,done_at;
+  CRayThreadInfo *T;
+  unsigned int *pixel,*p;
+  int phase;
   int x,y;
-  int a,b;
-  unsigned int *p;
+  unsigned int n_pixel;
+
+  n_pixel = Thread->width*Thread->height;
+
+  for(phase=0;phase<n_thread;phase++) {
+    T = Thread + phase;
+    cnt = 0;
+    ctr = 0;
+    start_at = T->phase*(n_pixel/T->n_thread);
+    done_at = n_pixel + start_at;
+    p = T->image;
+    while(cnt<done_at) {
+      for(x=0;x<T->width;x++)
+        {
+          for(y=0;y<T->height;y++)
+            {
+              if((ctr==T->phase)&&(cnt>=start_at)) {
+                pixel = image+((T->width)*y)+x;
+                *(pixel) = *(p++);
+              }
+              ctr++;
+              if(ctr>=T->n_thread) {
+                ctr=0;
+              }
+              cnt++;
+              if(cnt>=done_at)
+                break;
+            }
+          if(cnt>=done_at)
+            break;
+        }
+    }
+  }
+}
+
+int RayTraceThread(CRayThreadInfo *T)
+{
+  CRay *I=NULL;
+  int x,y;
   float excess=0.0F;
   float dotgle;
-  float bright,direct_cmp,reflect_cmp,*v,fc[4],light[3];
+  float bright,direct_cmp,reflect_cmp,fc[4];
   float ambient,direct,lreflect,ft,ffact,ffact1m;
-  unsigned int c[4],aa,za;
-  unsigned int *image_copy = NULL;
+  unsigned int c[4];
   int i;
-  unsigned int back_mask,fore_mask=0;
-  unsigned int background,buffer_size,z[16],zm[16],tot,interior=0;
-  int antialias;
   RayInfo r1,r2;
   int fogFlag=false;
   int fogRangeFlag=false;
@@ -778,32 +833,41 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int n_hit=0;
   int two_sided_lighting;
   float fog;
-  float *bkrd,*inter=NULL;
+  float *inter=NULL;
   float fog_start=0.0F;
   float gamma,inp,sig=1.0F;
-  double now;
   float persist,persist_inv;
   float new_front;
   int pass;
-  unsigned int last_pixel=0,*pixel;
+  unsigned int last_pixel=0,*pixel,*p;
   int exclude;
   float lit;
   int backface_cull;
   float project_triangle;
-  float spec_vector[3];
   float excl_trans;
   int shadows;
   int trans_shadows;
   float first_excess;
   int pixel_flag;
   float ray_trans_spec;
-  float fudge,shadow_fudge;
+  float shadow_fudge;
   int interior_color;
   int interior_flag;
   int interior_shadows;
   int interior_texture;
   int dummy;
   int texture_save;
+  int ctr,cnt,start_at,done_at;
+  unsigned int n_pixel;
+  int tot=0;
+  MapCache cache,shadow_cache;
+  
+  /* SETUP */
+
+  if(T->n_thread>1)
+    printf(" Ray: Thread %d: Spawned.\n",T->phase+1);
+
+  I = T->ray;
 
   interior_shadows = (int)SettingGet(cSetting_ray_interior_shadows);
   interior_texture = (int)SettingGet(cSetting_ray_interior_texture);
@@ -815,11 +879,17 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   two_sided_lighting = (int)SettingGet(cSetting_two_sided_lighting);
   ray_trans_spec = SettingGet(cSetting_ray_transparency_specular);
+  ambient = SettingGet(cSetting_ambient);
+  lreflect = SettingGet(cSetting_reflect);
+  direct = SettingGet(cSetting_direct);
 
+  MapCacheInit(&cache,I->Basis[1].Map);
+  if(shadows&&(I->NBasis>1))
+    MapCacheInit(&shadow_cache,I->Basis[2].Map);
+    
   if((interior_color>=0)||(two_sided_lighting))
     backface_cull=0;
 
-  fudge = SettingGet(cSetting_ray_triangle_fudge);
   shadow_fudge = SettingGet(cSetting_ray_shadow_fudge);
 
   gamma = SettingGet(cSetting_gamma);
@@ -829,6 +899,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     gamma=1.0F;
 
   fog = SettingGet(cSetting_ray_trace_fog);
+
   if(fog!=0.0F) {
     fogFlag=true;
     fog_start = SettingGet(cSetting_ray_trace_fog_start);
@@ -839,8 +910,344 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 
     }
   }
-  /* SETUP */
+
+  if(interior_color>=0) {
+    inter = ColorGet(interior_color);
+  }
+
+  n_pixel = T->width*T->height;
+
+  cnt = 0;
+  ctr = 0;
+  start_at = T->phase*(n_pixel/T->n_thread);
+  p = T->image;
+  /* phased and staggered to minimize contention */
+  done_at = n_pixel + start_at;
+  /* ray-trace */
+  while(cnt<done_at) {
+    r1.base[2]=0.0F;
+    for(x=0;x<T->width;x++)
+      {
+        if(!(x&0xF)) OrthoBusyFast(x,T->width); /* don't slow down rendering too much */
+        r1.base[0]=(((float)x)/T->width)*I->Range[0]+I->Volume[0];
+        for(y=0;y<T->height;y++)
+          {
+            if((ctr==T->phase)&&(cnt>=start_at)) {
+              tot++;
+              if(T->n_thread<2) {
+                pixel = T->image+((T->width)*y)+x;
+              } else {
+                pixel = p++;
+              }
+              exclude = -1;
+              r1.base[1]=(((float)y)/T->height)*I->Range[1]+I->Volume[2];
+              persist = 1.0F;
+              first_excess = 0.0F;
+              pass = 0;
+              excl_trans=0.0F;
+              new_front=T->front;
+              while((persist>0.0001F)&&(pass<25)) {
+                pixel_flag=false;
+                interior_flag=(interior_color>=0);
+                i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,
+                           new_front,T->back,excl_trans,
+                           trans_shadows,&interior_flag,&cache);
+                if((i>=0)||(interior_flag)) {
+                  pixel_flag=true;
+                  n_hit++;
+                  if(interior_flag) {
+                    r1.surfnormal[0]=0.0F;
+                    r1.surfnormal[1]=0.0F;
+                    r1.surfnormal[2]=1.0F;
+                    copy3f(r1.base,r1.impact);
+                    r1.impact[2]-=T->front;
+                    if(interior_texture>=0) {
+                      texture_save = r1.prim->texture; /* This is a no-no for multithreading! */
+                      r1.prim->texture = interior_texture;
+                      RayReflectAndTexture(I,&r1);
+                      r1.prim->texture = texture_save;
+                    } else {
+                      RayReflectAndTexture(I,&r1);
+                    }
+                    dotgle=-r1.dotgle;
+                    copy3f(inter,fc);
+                  } else {
+                    new_front=r1.dist;
+                    if(r1.prim->type==cPrimTriangle) {
+                      BasisGetTriangleNormal(I->Basis+1,&r1,i,fc);
+                      RayProjectTriangle(I,&r1,I->Basis[2].LightNormal,
+                                         I->Basis[1].Vertex+i*3,
+                         I->Basis[1].Normal+I->Basis[1].Vert2Normal[i]*3+3,
+                                         project_triangle);
+                      RayReflectAndTexture(I,&r1);
+                      BasisGetTriangleFlatDotgle(I->Basis+1,&r1,i);
+                    } else {
+                      RayGetSphereNormal(I,&r1);
+                      RayReflectAndTexture(I,&r1);
+                      if((r1.prim->type==cPrimCylinder)||
+                         (r1.prim->type==cPrimSausage)) {
+                        ft = r1.tri1;
+                        fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
+                        fc[1]=(r1.prim->c1[1]*(1-ft))+(r1.prim->c2[1]*ft);
+                        fc[2]=(r1.prim->c1[2]*(1-ft))+(r1.prim->c2[2]*ft);
+                      } else {
+                        fc[0]=r1.prim->c1[0];
+                        fc[1]=r1.prim->c1[1];
+                        fc[2]=r1.prim->c1[2];
+                      }
+                    }
+                    dotgle=-r1.dotgle;
+                    
+                    if(r1.flat_dotgle<0.0F) {
+                      if((!two_sided_lighting)&&(interior_color>=0)) {
+                        interior_flag = true;
+                        r1.surfnormal[0]=0.0F;
+                        r1.surfnormal[1]=0.0F;
+                        r1.surfnormal[2]=1.0F;
+                        copy3f(r1.base,r1.impact);
+                        r1.impact[2]-=T->front;
+                        r1.dist = T->front;
+                        if(interior_texture>=0) {
+                          texture_save = r1.prim->texture;
+                          r1.prim->texture = interior_texture;
+                          RayReflectAndTexture(I,&r1);
+                          r1.prim->texture = texture_save;
+                        } else {
+                          RayReflectAndTexture(I,&r1);
+                        }
+                        dotgle=-r1.dotgle;
+                        copy3f(inter,fc);
+                      }
+                    }
+                    if((dotgle<0.0F)&&(!interior_flag)) {
+                      if(two_sided_lighting) {
+                        dotgle=-dotgle;
+                        invert3f(r1.surfnormal);
+                      } else 
+                        dotgle=0.0F;
+                    }
+                  }
+                  direct_cmp=(float)((dotgle+(pow(dotgle,
+                                                  SettingGet(cSetting_power))))/2.0);
+                  
+                  if(shadows&&((!interior_flag)||(interior_shadows))) {
+                    matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
+                    r2.base[2]-=shadow_fudge;
+                    if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,
+                                true,0.0F,0.0F,0.0F,trans_shadows,&dummy,
+                                &shadow_cache)>=0) {
+                      lit=(float)(pow(r2.prim->trans,0.5));
+                    } else {
+                      lit=1.0F;
+                    }
+                  } else {
+                    lit=1.0F;
+                  }
+                  
+                  if(lit>0.0F) {
+                    dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
+                    if(dotgle<0.0F) dotgle=0.0F;
+                    reflect_cmp=(float)(lit*(dotgle+
+                                             (pow(dotgle,
+                                                  SettingGet(cSetting_reflect_power)
+                                                  )))/2.0);
+                    dotgle=-dot_product3f(r1.surfnormal,T->spec_vector);
+                    if(dotgle<0.0F) dotgle=0.0F;
+                    excess=(float)( pow(dotgle,SettingGet(cSetting_spec_power))*
+                                    SettingGet(cSetting_spec_reflect)*lit);
+                  } else {
+                    excess=0.0F;
+                    reflect_cmp=0.0F;
+                  }
+                  
+                  bright=ambient+(1.0F-ambient)*(direct*direct_cmp+
+                                                 (1.0F-direct)*direct_cmp*
+                                                 lreflect*reflect_cmp);
+                  
+                  if(bright>1.0F) bright=1.0F;
+                  if(bright<0.0F) bright=0.0F;
+                  
+                  fc[0] = (bright*fc[0]+excess);
+                  fc[1] = (bright*fc[1]+excess);
+                  fc[2] = (bright*fc[2]+excess);
+              
+                  if (fogFlag) {
+                    ffact = fog*(T->front-r1.dist)/(T->front-T->back);
+                    if(fogRangeFlag) {
+                      ffact = (ffact-fog_start)/(1.0F-fog_start);
+                    }
+                    if(ffact<0.0F)
+                      ffact=0.0F;
+                    if(ffact>1.0F)
+                      ffact=0.0F;
+                    ffact1m = 1.0F-ffact;
+                    if(opaque_back) {
+                      fc[0]=ffact*T->bkrd[0]+fc[0]*ffact1m;
+                      fc[1]=ffact*T->bkrd[1]+fc[1]*ffact1m;
+                      fc[2]=ffact*T->bkrd[2]+fc[2]*ffact1m;
+                    } else {
+                      fc[3]=ffact1m;
+                    }
+                    if(!pass)
+                      first_excess = excess*ffact1m*ray_trans_spec;
+                    else {
+                      fc[0]+=first_excess;
+                      fc[1]+=first_excess;
+                      fc[2]+=first_excess;
+                    }
+                  } else {
+                    if(!pass)
+                      first_excess = excess*ray_trans_spec;
+                    else {
+                      fc[0]+=first_excess;
+                      fc[1]+=first_excess;
+                      fc[2]+=first_excess;
+                    }
+                    fc[3]=1.0F;
+                  } 
+              
+                  pixel_flag=true;
+                } else if(pass) { 
+                  /* hit nothing, and we're on on second or greater pass */
+                  fc[0] = first_excess+T->bkrd[0];
+                  fc[1] = first_excess+T->bkrd[1];
+                  fc[2] = first_excess+T->bkrd[2];
+                  fc[3] = 1.0F;
+                  pixel_flag=true;
+                }
+            
+                if(pixel_flag) {
+                  inp=(fc[0]+fc[1]+fc[2])/3.0F;
+                  if(inp<R_SMALL4) 
+                    sig=1.0F;
+                  else {
+                    sig = (float)(pow(inp,gamma)/inp);
+                  }
+              
+                  c[0]=(uint)(sig*fc[0]*255.0F);
+                  c[1]=(uint)(sig*fc[1]*255.0F);
+                  c[2]=(uint)(sig*fc[2]*255.0F);
+              
+                  if(c[0]>255) c[0]=255;
+                  if(c[1]>255) c[1]=255;
+                  if(c[2]>255) c[2]=255;
+              
+                  if(opaque_back) { 
+                    if(I->BigEndian) {
+                      *(pixel)=
+                        T->fore_mask|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
+                    } else {
+                      *(pixel)=
+                        T->fore_mask|(c[2]<<16)|(c[1]<<8)|c[0];
+                    }
+                  } else { /* use alpha channel for fog with transparent backgrounds */
+                    c[3] = (uint)(fc[3]*255.0F);
+                    if(c[3]>255) c[3]=255;
+                    if(I->BigEndian) {
+                      *(pixel) = (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
+                    } else {
+                      *(pixel) = (c[3]<<24)|(c[2]<<16)|(c[1]<<8)|c[0];
+                    }
+                  }
+                } else {
+                  *(pixel) = T->background;
+                }
+            
+            
+                if(pass) { /* average all four channels */
+              
+                  persist_inv = 1.0F-persist;
+                  fc[0] = (0xFF&((*pixel)>>24))*persist + 
+                    (0xFF&(last_pixel>>24))*persist_inv;
+                  fc[1] = (0xFF&((*pixel)>>16))*persist + 
+                    (0xFF&(last_pixel>>16))*persist_inv;
+                  fc[2] = (0xFF&((*pixel)>>8))*persist + 
+                    (0xFF&(last_pixel>>8))*persist_inv;
+                  fc[3] = (0xFF&((*pixel)))*persist + 
+                    (0xFF&(last_pixel))*persist_inv;
+              
+                  c[0]=(uint)(fc[0]);
+                  c[1]=(uint)(fc[1]);
+                  c[2]=(uint)(fc[2]);
+                  c[3]=(uint)(fc[3]);
+              
+                  if(c[0]>255) c[0]=255;
+                  if(c[1]>255) c[1]=255;
+                  if(c[2]>255) c[2]=255;
+                  if(c[3]>255) c[3]=255;
+              
+                  *(pixel) = (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
+                }
+                if(i>=0) { 
+              
+                  if(r1.prim->type==cPrimSausage) { /* carry ray through the stick */
+                    excl_trans=new_front+(2*r1.surfnormal[2]*r1.prim->r1);
+                  }
+              
+                  if(!backface_cull) 
+                    persist = persist * r1.prim->trans;
+                  else {
+                    if((persist<0.9999)&&(r1.prim->trans)) { /* don't combine transparent surfaces */
+                      *(pixel)=last_pixel;
+                    } else {
+                      persist = persist * r1.prim->trans;
+                    }
+                  }
+                }
+                if(i<0) {
+                  break; /* hit nothing,*/
+                } else {
+                  last_pixel = (*pixel);
+                  exclude = i;
+                  pass++;
+                }
+              }
+            }
+            
+            ctr++;
+            if(ctr>=T->n_thread) {
+              ctr=0;
+            }
+            cnt++;
+            if(cnt>=done_at)
+              break;
+          }
+        if(cnt>=done_at)
+          break;
+      }
+  }
+  if(T->n_thread>1) 
+    printf(" Ray: Thread %d: Complete.\n",T->phase+1);
+  MapCacheFree(&cache);
+  if(shadows&&(I->NBasis>1))
+    MapCacheFree(&shadow_cache);
   
+  return(n_hit);
+}
+
+/*========================================================================*/
+void RayRender(CRay *I,int width,int height,unsigned int *image,
+               float front,float back,
+               double timing,float angle)
+{
+  int x,y;
+  int a,b;
+  unsigned int *p;
+  float *v,light[3];
+  unsigned int aa,za;
+ unsigned int *image_copy = NULL;
+  unsigned int back_mask,fore_mask=0;
+  unsigned int background,buffer_size,z[16],zm[16],tot;
+  int antialias;
+  int opaque_back=0;
+  int n_hit=0;
+  float *bkrd;
+  double now;
+  int shadows;
+  float spec_vector[3];
+
+  BasisSetFudge(SettingGet(cSetting_ray_triangle_fudge));
+  shadows = (int)SettingGet(cSetting_ray_shadows);
   antialias = (int)SettingGet(cSetting_antialias);
   if(antialias>0) {
 	 width=width*2;
@@ -876,37 +1283,18 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       ((0xFF& ((unsigned int)(bkrd[1]*255))) <<8)|
       ((0xFF& ((unsigned int)(bkrd[0]*255))) );
   }
-  if(interior_color>=0) {
-    inter = ColorGet(interior_color);
-    if(I->BigEndian) {
-      interior = 0x000000FF|
-        ((0xFF& ((unsigned int)(inter[0]*255))) <<24)|
-        ((0xFF& ((unsigned int)(inter[1]*255))) <<16)|
-        ((0xFF& ((unsigned int)(inter[2]*255))) <<8 );
-    } else {
-      interior = 0xFF000000|
-        ((0xFF& ((unsigned int)(inter[2]*255))) <<16)|
-        ((0xFF& ((unsigned int)(inter[1]*255))) <<8)|
-        ((0xFF& ((unsigned int)(inter[0]*255))) );
-    }
-  }
-
 
   PRINTFB(FB_Ray,FB_Blather) 
     " RayNew: Background = %x %d %d %d\n",background,(int)(bkrd[0]*255),
     (int)(bkrd[1]*255),(int)(bkrd[2]*255)
     ENDFB;
 
-  if(!I->NPrimitive) {
+  if(!I->NPrimitive) { /* nothing to render! */
     p=(unsigned int*)image; 
     for(x=0;x<width;x++)
       for(y=0;y<height;y++)
         *(p++)=background;
   } else {
-    
-    ambient=SettingGet(cSetting_ambient);
-    lreflect=SettingGet(cSetting_reflect);
-    direct=SettingGet(cSetting_direct);
     
     RayExpandPrimitives(I);
     RayTransformFirst(I);
@@ -937,7 +1325,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     normalize3f(I->Basis[2].LightNormal);
     
     copy3f(I->Basis[2].LightNormal,spec_vector);
-    spec_vector[2]--;
+    spec_vector[2]--; /* HUH? */
     normalize3f(spec_vector);
     
     if(shadows) { /* don't waste time on shadows unless needed */
@@ -996,287 +1384,47 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     for(a=0;a<height;a++)
       for(b=0;b<width;b++)
         *p++=back_mask;
-    
-    /* ray-trace */
-	 r1.base[2]=0.0F;
-    for(x=0;x<width;x++)
-      {
-        if(!(x&0xF)) OrthoBusyFast(x,width); /* don't slow down rendering too much */
-        r1.base[0]=(((float)x)/width)*I->Range[0]+I->Volume[0];
-        for(y=0;y<height;y++)
-          {
-            pixel = image+((width)*y)+x;
-            exclude = -1;
-            r1.base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
-            persist = 1.0F;
-            first_excess = 0.0F;
-            pass = 0;
-            excl_trans=0.0F;
-            new_front=front;
-            while((persist>0.0001F)&&(pass<25)) {
-              pixel_flag=false;
-              interior_flag=(interior_color>=0);
-              i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,
-                         new_front,back,excl_trans,trans_shadows,fudge,&interior_flag);
-              /*              if(interior_flag) {
-               *(pixel) = interior;
-               break;
-               }*/
-              if((i>=0)||(interior_flag)) {
-                pixel_flag=true;
-                n_hit++;
-                if(interior_flag) {
-                  r1.surfnormal[0]=0.0F;
-                  r1.surfnormal[1]=0.0F;
-                  r1.surfnormal[2]=1.0F;
-                  copy3f(r1.base,r1.impact);
-                  r1.impact[2]-=front;
-                  if(interior_texture>=0) {
-                    texture_save = r1.prim->texture;
-                    r1.prim->texture = interior_texture;
-                    RayReflectAndTexture(I,&r1);
-                    r1.prim->texture = texture_save;
-                  } else {
-                    RayReflectAndTexture(I,&r1);
-                  }
-                  dotgle=-r1.dotgle;
-                  copy3f(inter,fc);
-                } else {
-                  new_front=r1.dist;
-                  if(r1.prim->type==cPrimTriangle) {
-                    BasisGetTriangleNormal(I->Basis+1,&r1,i,fc);
-                    RayProjectTriangle(I,&r1,I->Basis[2].LightNormal,
-                                       I->Basis[1].Vertex+i*3,
-                                       I->Basis[1].Normal+I->Basis[1].Vert2Normal[i]*3+3,
-                                       project_triangle);
-                    RayReflectAndTexture(I,&r1);
-                    BasisGetTriangleFlatDotgle(I->Basis+1,&r1,i);
-                  } else {
-                    RayGetSphereNormal(I,&r1);
-                    RayReflectAndTexture(I,&r1);
-                    if((r1.prim->type==cPrimCylinder)||
-                       (r1.prim->type==cPrimSausage)) {
-                      ft = r1.tri1;
-                      fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
-                      fc[1]=(r1.prim->c1[1]*(1-ft))+(r1.prim->c2[1]*ft);
-                      fc[2]=(r1.prim->c1[2]*(1-ft))+(r1.prim->c2[2]*ft);
-                    } else {
-                      fc[0]=r1.prim->c1[0];
-                      fc[1]=r1.prim->c1[1];
-                      fc[2]=r1.prim->c1[2];
-                    }
-                  }
-                  dotgle=-r1.dotgle;
-                  
-                  if(r1.flat_dotgle<0.0F) {
-                    if((!two_sided_lighting)&&(interior_color>=0)) {
-                      interior_flag = true;
-                      r1.surfnormal[0]=0.0F;
-                      r1.surfnormal[1]=0.0F;
-                      r1.surfnormal[2]=1.0F;
-                      copy3f(r1.base,r1.impact);
-                      r1.impact[2]-=front;
-                      r1.dist = front;
-                      if(interior_texture>=0) {
-                        texture_save = r1.prim->texture;
-                        r1.prim->texture = interior_texture;
-                        RayReflectAndTexture(I,&r1);
-                        r1.prim->texture = texture_save;
-                      } else {
-                        RayReflectAndTexture(I,&r1);
-                      }
-                      dotgle=-r1.dotgle;
-                      copy3f(inter,fc);
-                    }
-                  }
-                  if((dotgle<0.0F)&&(!interior_flag)) {
-                    if(two_sided_lighting) {
-                      dotgle=-dotgle;
-                      invert3f(r1.surfnormal);
-                    } else 
-                      dotgle=0.0F;
-                  }
-                }
-                /*                if(interior_flag) {
-                 *(pixel) = interior;
-                 } else {*/
-                {
-                  direct_cmp=(float)((dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0);
-                  
-                  if(shadows&&((!interior_flag)||(interior_shadows))) {
-                    matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
-                    r2.base[2]-=shadow_fudge;
-                    if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,
-                                true,0.0F,0.0F,0.0F,trans_shadows,fudge,&dummy)>=0) {
-                      lit=(float)(pow(r2.prim->trans,0.5));
-                    } else {
-                      lit=1.0F;
-                    }
-                  } else {
-                    lit=1.0F;
-                  }
-                  
-                  if(lit>0.0F) {
-                    dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
-                    if(dotgle<0.0F) dotgle=0.0F;
-                    reflect_cmp=(float)(lit*(dotgle+(pow(dotgle,SettingGet(cSetting_reflect_power))))/2.0);
-                    dotgle=-dot_product3f(r1.surfnormal,spec_vector);
-                    if(dotgle<0.0F) dotgle=0.0F;
-                    excess=(float)( pow(dotgle,SettingGet(cSetting_spec_power))*
-                                    SettingGet(cSetting_spec_reflect)*lit);
-                  } else {
-                    excess=0.0F;
-                    reflect_cmp=0.0F;
-                  }
-                  
-                  bright=ambient+(1.0F-ambient)*(direct*direct_cmp+
-                                                 (1.0F-direct)*direct_cmp*lreflect*reflect_cmp);
-                  
-                  if(bright>1.0F) bright=1.0F;
-                  if(bright<0.0F) bright=0.0F;
-                  
-                  fc[0] = (bright*fc[0]+excess);
-                  fc[1] = (bright*fc[1]+excess);
-                  fc[2] = (bright*fc[2]+excess);
-                  
-                  if (fogFlag) {
-                    ffact = fog*(front-r1.dist)/(front-back);
-                    if(fogRangeFlag) {
-                      ffact = (ffact-fog_start)/(1.0F-fog_start);
-                    }
-                    if(ffact<0.0F)
-                      ffact=0.0F;
-                    if(ffact>1.0F)
-                      ffact=0.0F;
-                    ffact1m = 1.0F-ffact;
-                    if(opaque_back) {
-                      fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
-                      fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
-                      fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
-                    } else {
-                      fc[3]=ffact1m;
-                    }
-                    if(!pass)
-                      first_excess = excess*ffact1m*ray_trans_spec;
-                    else {
-                      fc[0]+=first_excess;
-                      fc[1]+=first_excess;
-                      fc[2]+=first_excess;
-                    }
-                  } else {
-                    if(!pass)
-                      first_excess = excess*ray_trans_spec;
-                    else {
-                      fc[0]+=first_excess;
-                      fc[1]+=first_excess;
-                      fc[2]+=first_excess;
-                    }
-                    fc[3]=1.0F;
-                  }
-                } 
-                  
-                pixel_flag=true;
-              } else if(pass) { 
-                /* hit nothing, and we're on on second or greater pass */
-                fc[0] = first_excess+bkrd[0];
-                fc[1] = first_excess+bkrd[1];
-                fc[2] = first_excess+bkrd[2];
-                fc[3] = 1.0F;
-                pixel_flag=true;
-              }
-
-              if(pixel_flag) {
-                inp=(fc[0]+fc[1]+fc[2])/3.0F;
-                if(inp<R_SMALL4) 
-                  sig=1.0F;
-                else {
-                  sig = (float)(pow(inp,gamma)/inp);
-                }
-                
-                c[0]=(uint)(sig*fc[0]*255.0F);
-                c[1]=(uint)(sig*fc[1]*255.0F);
-                c[2]=(uint)(sig*fc[2]*255.0F);
-                
-                if(c[0]>255) c[0]=255;
-                if(c[1]>255) c[1]=255;
-                if(c[2]>255) c[2]=255;
-                /*			{ int a1,b1,c1;
-                           if(MapInsideXY(I->Basis[1].Map,base,&a1,&b1,&c1))				
-                           {
-                           c[0]=255.0*((float)a1)/I->Basis[1].Map->iMax[0];
-                           c[1]=255.0*((float)b1)/I->Basis[1].Map->iMax[1];
-                           c[2]=0xFF&(c[0]*c[1]);
-                           }}
-                */
-                
-                if(opaque_back) { 
-                  if(I->BigEndian) {
-                    *(pixel)=
-                      fore_mask|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
-                  } else {
-                    *(pixel)=
-                      fore_mask|(c[2]<<16)|(c[1]<<8)|c[0];
-                  }
-                } else { /* use alpha channel for fog with transparent backgrounds */
-                  c[3] = (uint)(fc[3]*255.0F);
-                  if(c[3]>255) c[3]=255;
-                  if(I->BigEndian) {
-                    *(pixel) = (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
-                  } else {
-                    *(pixel) = (c[3]<<24)|(c[2]<<16)|(c[1]<<8)|c[0];
-                  }
-                }
-              } else {
-                *(pixel) = background;
-              }
-              
-              
-              if(pass) { /* average all four channels */
-                
-                persist_inv = 1.0F-persist;
-                fc[0] = (0xFF&((*pixel)>>24))*persist + (0xFF&(last_pixel>>24))*persist_inv;
-                fc[1] = (0xFF&((*pixel)>>16))*persist + (0xFF&(last_pixel>>16))*persist_inv;
-                fc[2] = (0xFF&((*pixel)>>8))*persist + (0xFF&(last_pixel>>8))*persist_inv;
-                fc[3] = (0xFF&((*pixel)))*persist + (0xFF&(last_pixel))*persist_inv;
-                
-                c[0]=(uint)(fc[0]);
-                c[1]=(uint)(fc[1]);
-                c[2]=(uint)(fc[2]);
-                c[3]=(uint)(fc[3]);
-                
-                if(c[0]>255) c[0]=255;
-                if(c[1]>255) c[1]=255;
-                if(c[2]>255) c[2]=255;
-                if(c[3]>255) c[3]=255;
-                
-                *(pixel) = (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
-              }
-              if(i>=0) { 
-
-                if(r1.prim->type==cPrimSausage) { /* carry ray through the stick */
-                  excl_trans=new_front+(2*r1.surfnormal[2]*r1.prim->r1);
-                }
-
-                if(!backface_cull) 
-                  persist = persist * r1.prim->trans;
-                else {
-                  if((persist<0.9999)&&(r1.prim->trans)) { /* don't combine transparent surfaces */
-                    *(pixel)=last_pixel;
-                  } else {
-                    persist = persist * r1.prim->trans;
-                  }
-                }
-              }
-              if(i<0) {
-                break; /* hit nothing,*/
-              } else {
-                last_pixel = (*pixel);
-                exclude = i;
-                pass++;
-              }
-            }
-          }
+    {
+      CRayThreadInfo rt[MAX_RAY_THREADS];
+      int n_thread  = (int)SettingGet(cSetting_max_threads);
+      if(n_thread<1)
+        n_thread=1;
+      if(n_thread>MAX_RAY_THREADS)
+        n_thread = MAX_RAY_THREADS;
+      unsigned int buf_size = 0;
+      if(n_thread>1) {
+        buf_size = n_thread + width*height/n_thread;
       }
+      for(a=0;a<n_thread;a++) {
+        rt[a].ray = I;
+        rt[a].image = p;
+        rt[a].width = width;
+        rt[a].height = height;
+        if(buf_size) 
+          rt[a].image = Alloc(unsigned int,buf_size);
+        else
+          rt[a].image = image;
+        rt[a].front = front;
+        rt[a].back = back;
+        rt[a].fore_mask = fore_mask;
+        rt[a].bkrd = bkrd;
+        rt[a].background = background;
+        rt[a].phase = a;
+        rt[a].n_thread = n_thread;
+        copy3f(spec_vector,rt[a].spec_vector);
+      }
+      if(n_thread==1)
+        RayTraceThread(rt);
+      else {
+        RayTraceSpawn(rt,n_thread);
+        RayTraceStitch(rt,n_thread,image);
+      }
+      if(buf_size) {
+        for(a=0;a<n_thread;a++) {
+          FreeP(rt[a].image);
+        }
+      }
+    }
   }
   PRINTFD(FB_Ray)
     " RayRender: n_hit %d\n",n_hit

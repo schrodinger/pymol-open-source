@@ -425,9 +425,8 @@ void OrthoBusyDraw(int force)
       }
       OrthoPopMatrix();
       OrthoDirty();/* switched from SceneDirty */
-    }
     I->BusyLast=now;
-    
+    }    
   }
   PRINTFD(FB_Ortho)
     " OrthoBusyDraw: leaving...\n"

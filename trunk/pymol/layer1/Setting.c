@@ -2050,6 +2050,8 @@ void SettingInitGlobal(int alloc)
   SettingSet_i(I,cSetting_cartoon_smooth_cycles,2);
   SettingSet_i(I,cSetting_cartoon_flat_cycles,4);
 
+  SettingSet_i(I,cSetting_max_threads, 1);
+
 }
 
 

@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Basis.h"
 #include"Err.h"
 #include"Feedback.h"
+#include"Util.h"
 
 #ifndef R_SMALL4
 #define R_SMALL4 0.0001
@@ -561,12 +562,19 @@ void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc)
   normalize3f(r->surfnormal);
 
 }
+
+
+void BasisSetFudge(float fudge)
+{
+  BasisFudge0 = 0.0F-fudge;
+  BasisFudge1 = 1.0F+fudge;
+}
 /*========================================================================*/
 int BasisHit(CBasis *I,RayInfo *r,int except,
 				 int *vert2prim,CPrimitive *prim,
 				 int shadow,float front,float back,
              float excl_trans,int trans_shadows,
-             float fudge,int *interior_flag)
+             int *interior_flag,MapCache *cache)
 {
   float oppSq,dist,sph[3],*vv,vt[3],tri1,tri2;
   int minIndex;
@@ -582,14 +590,12 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
   minIndex = -1;
   vt[0]=r->base[0];
   vt[1]=r->base[1];
-  BasisFudge0 = 0.0F-fudge;
-  BasisFudge1 = 1.0F+fudge;
   if(except>=0) except=vert2prim[except];
   excl_trans_flag = (excl_trans!=0.0F);
   if(MapInsideXY(I->Map,r->base,&a,&b,&c))
 	 {
 		r->dist = MAXFLOAT;
-		MapCacheReset(I->Map);
+		MapCacheReset(cache); 
 		while(1) {
 		  h=*MapEStart(I->Map,a,b,c);
 		  if(h)
@@ -598,8 +604,8 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 				i=*(ip++);
 
 				while(i>=0) {
-				  if((vert2prim[i]!=except)&&(!MapCached(I->Map,i))) {
-					 MapCache(I->Map,i);
+				  if((vert2prim[i]!=except)&&(!MapCached(cache,i))) {
+					 MapCache(cache,i);
 					 prm = prim+vert2prim[i];
 					 switch(prm->type) {
 					 case cPrimTriangle:
@@ -834,7 +840,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   float *v,*vv,*d;
   float l;
   CPrimitive *prm;
-  int a,b,c,i,n,h,q,x,y,z;
+  int a,b,c,i,n,h,q,x,y,z,j,k,e;
   int extra_vert = 0;
   float p[3],dd[3],*d1,*d2,vd[3],cx[3],cy[3];
   float *tempVertex;
@@ -849,6 +855,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   float diagonal[3];
   float l1,l2;
   float bh,ch;
+  int n_voxel;
+
 
   PRINTFD(FB_Ray)
     " BasisMakeMap: I->NVertex %d\n",I->NVertex
@@ -1077,7 +1085,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
       printf("BasisMakeMap: %d>%d\n",n,extra_vert);
       ErrFatal("BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
 	 }
-	 
+
+      
 	 if(volume) {
 		v=tempVertex;
 		for(c=0;c<3;c++)
@@ -1123,52 +1132,130 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 		I->Map=MapNew(sep,tempVertex,n,NULL);
 	 }
 
-	 MapSetupExpressXY(I->Map);
-	 
+    n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
+
+    if(n_voxel<(3*n)) {
+      MapSetupExpressXY(I->Map);      
+    } else { 
+      MapSetupExpressXYVert(I->Map,tempVertex,n);
+    }
+
 	 /* now do a filter-reassignment pass to remap fake vertices
 	  to the original line vertex while deleting duplicate entries */
 
 	 ip=tempRef;
 	 for(i=0;i<I->NVertex;i++)
 		*(ip++)=0; /* clear flags */
-	 for(a=I->Map->iMin[0];a<=I->Map->iMax[0];a++)
-		for(b=I->Map->iMin[1];b<=I->Map->iMax[1];b++)
-		  for(c=I->Map->iMin[2];c<=I->Map->iMax[2];c++)
-			 {
-				h=*MapEStart(I->Map,a,b,c);
-				if(h)
-				  {
-					 ip=I->Map->EList+h; 
-					 sp=ip;
-					 i=*(sp++);
-					 while(i>=0) {
-						if(i>=I->NVertex) i=tempRef[i];
-						if(!tempRef[i]) { /*eliminate duplicates */
-						  *(ip++)=i;
-						  tempRef[i]=1;
-						}
-						i=*(sp++);
-					 }
-					 *(ip)=-1; /* terminate list */
-				/* now reset flags efficiently */
-					 h=*MapEStart(I->Map,a,b,c); 
-					 ip=I->Map->EList+h;
-					 i=*(ip++);
-					 while(i>=0) {
-						tempRef[i]=0;
-						i=*(ip++);
-					 }
 
-				  }
-			 }
-	 FreeP(tempVertex);
-	 FreeP(tempRef);
+    if(n_voxel<(3*n)) {
+      int *start;
+      for(a=I->Map->iMin[0];a<=I->Map->iMax[0];a++)
+        for(b=I->Map->iMin[1];b<=I->Map->iMax[1];b++)
+          for(c=I->Map->iMin[2];c<=I->Map->iMax[2];c++)
+            {
+              start = MapEStart(I->Map,a,b,c);
+              h=*start;
+              if(h>=0)
+                {
+                  ip=I->Map->EList+h; 
+                  sp=ip;
+                  i=*(sp++);
+                  while(i>=0) {
+                    if(i>=I->NVertex) i=tempRef[i];
+                    if(!tempRef[i]) { /*eliminate duplicates */
+                      *(ip++)=i;
+                      tempRef[i]=1;
+                    }
+                    i=*(sp++);
+                  }
+                  *(ip)=-1; /* terminate list */
+                  /* now reset flags efficiently */
+                  h = *(start);
+                  ip=I->Map->EList+h;
+                  i=*(ip++);
+                  while(i>=0) {
+                    tempRef[i]=0;
+                    i=*(ip++);
+                  }
+                }
+            }
+    } else {
+      
+      int **site_p, **site = NULL;
+      int *value_p, *value = NULL;
+      int max_site;
+      int *start;
+      int n_site = 0;
+
+      max_site = extra_vert;
+      site = Alloc(int*,max_site);
+      value = Alloc(int,max_site);
+
+      site_p = site;
+      value_p = value;
+      v = tempVertex;
+      for(e=0;e<n;e++) { 
+        MapLocus(I->Map,v,&j,&k,&c);
+        for(a=j-1;a<=j+1;a++)
+          for(b=k-1;b<=k+1;b++) {
+            if((a>=I->Map->iMin[0])&&(a<=I->Map->iMax[0])&&
+               (b>=I->Map->iMin[1])&&(b<=I->Map->iMax[1])&&
+               (c>=I->Map->iMin[2])&&(c<=I->Map->iMax[2]))
+              {
+                start = MapEStart(I->Map,a,b,c);
+                h=*start;
+                if(h>=0)
+                  {
+                    ip=I->Map->EList+h; 
+                    sp=ip;
+                    i=*(sp++);
+                    while(i>=0) {
+                      if(i>=I->NVertex) i=tempRef[i];
+                      if(!tempRef[i]) { /*eliminate duplicates */
+                        *(ip++)=i;
+                        tempRef[i]=1;
+                      }
+                      i=*(sp++);
+                    }
+                    *(ip)=-1; /* terminate list */
+                    /* now reset flags efficiently */
+                    h = *(start);
+                    ip=I->Map->EList+h;
+                    i=*(ip++);
+                    while(i>=0) {
+                      tempRef[i]=0;
+                      i=*(ip++);
+                    }
+                    if(h>0) {
+                      if(n_site<max_site) {
+                        *(value_p++)=(*start);
+                        *(site_p++)=start; /* remember which indexes we've negated */
+                        (*start)=-1;
+                        n_site++;
+                      }
+                    }
+                  }
+              }
+          }
+        v+=3; 
+      }
+      value_p=value;
+      site_p=site;
+      while(n_site--) {
+        start = *(site_p++);
+        *start = *(value_p++);
+      }
+      FreeP(value);
+      FreeP(site);
+    }
+    
+    FreeP(tempVertex);
+    FreeP(tempRef);
   } else {
 	 /* simple sphere mode */
 	 I->Map=MapNew(-sep,I->Vertex,I->NVertex,NULL);
-	 MapSetupExpressXY(I->Map);
+	 MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
   }
-  MapCacheInit(I->Map);
 }
 /*========================================================================*/
 void BasisInit(CBasis *I)
