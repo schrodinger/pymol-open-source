@@ -501,7 +501,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   SceneCountFrames();
   if(zoom_flag) 
     if(SettingGet(cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(I->Obj.Name,0.0,-1); /* auto zoom (all states) */
+      ExecutiveWindowZoom(I->Obj.Name,0.0,-1,0); /* auto zoom (all states) */
     }
   
   return(I);
@@ -617,7 +617,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *I,char *fname,int fram
   SceneCountFrames();
   if(zoom_flag) 
     if(SettingGet(cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(I->Obj.Name,0.0,-1); /* auto zoom (all states) */
+      ExecutiveWindowZoom(I->Obj.Name,0.0,-1,0); /* auto zoom (all states) */
     }
   
   return(I);
@@ -6527,6 +6527,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 
           /* coord-set based properties, iterating only a single coordinate set */
          case OMOP_CSetMinMax:          
+         case OMOP_CSetMaxDistToPt:
          case OMOP_CSetSumVertices:
          case OMOP_CSetMoment: 
            if((op->cs1>=0)&&(op->cs1<I->NCSet)) {
@@ -6583,6 +6584,29 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                              *(op->v2+c)=*(coord+c);
                            }
                          }
+                         op->i1++;
+                       }
+                     break;
+                   case OMOP_CSetMaxDistToPt:
+                     if(I->DiscreteFlag) {
+                       if(cs==I->DiscreteCSet[a])
+                         a1=I->DiscreteAtmToIdx[a];
+                       else
+                         a1=-1;
+                     } else 
+                       a1=cs->AtmToIdx[a];
+                     if(a1>=0)
+                       {
+                         float dist;
+                         coord = cs->Coord+3*a1;
+                         if(op->i2) /* do we want object-transformed coordinates? */
+                           if(I->Obj.TTTFlag) {
+                             transformTTT44f3f(I->Obj.TTT,coord,v1);
+                             coord=v1;
+                           }
+                         dist = diff3f(op->v1,coord);
+                         if(dist>op->f1)
+                           op->f1=dist;
                          op->i1++;
                        }
                      break;
@@ -6671,6 +6695,29 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                               *(op->v2+c)=*(coord+c);
                             }
                           }
+                          op->i1++;
+							   }
+							 break;
+                    case OMOP_MaxDistToPt:
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a];
+							 if(a1>=0)
+							   {
+                          float dist;
+                          coord = cs->Coord+3*a1;
+                          if(op->i2) /* do we want object-transformed coordinates? */
+                            if(I->Obj.TTTFlag) {
+                              transformTTT44f3f(I->Obj.TTT,coord,v1);
+                              coord=v1;
+                            }
+                          dist = diff3f(coord,op->v1);
+                          if(dist>op->f1)
+                            op->f1=dist;
                           op->i1++;
 							   }
 							 break;

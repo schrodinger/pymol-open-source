@@ -66,7 +66,7 @@ void ExecutiveSetRepVisib(char *name,int rep,int state);
 void ExecutiveSetAllRepVisib(char *name,int rep,int state);
 void ExecutiveSetObjVisib(char *name,int state);
 int ExecutiveCenter(char *name,int preserve,char *oname,float *pos,int state);
-int ExecutiveWindowZoom(char *name,float buffer,int state);
+int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive);
 int ExecutiveGetMoment(char *name,Matrix33d mi,int state);
 void ExecutiveOrient(char *sele,Matrix33d mi,int state);
 char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag);

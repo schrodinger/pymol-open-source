@@ -107,6 +107,9 @@ Current Bugs to Fix
 
 Changes up to 0.84
 
+   * added "safe" option to zoom command in order to provide a mode
+     which will guarantee against clipping
+
    * updated SPHEROID command for use with trajectories
 
    * Can now read AMBER topology, coordinate, trajectory, and restart files

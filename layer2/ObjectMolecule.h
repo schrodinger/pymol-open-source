@@ -129,6 +129,8 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_CSetIdxGetAndFlag 39
 #define OMOP_CSetIdxSetFlagged 40
 #define OMOP_GetObjects 41
+#define OMOP_CSetMaxDistToPt 42
+#define OMOP_MaxDistToPt 43
 
 #include"CoordSet.h"
 
