@@ -5084,8 +5084,7 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
 
   if(!SettingGet(G,cSetting_suspend_updates)) {
 
-    if(G->HaveGUI) {
-      ASSERT_VALID_CONTEXT(G);
+    if(G->HaveGUI && G->ValidContext) {
       glMatrixMode(GL_MODELVIEW); /* why is this necessary?  is it? */
     }
 
@@ -6176,7 +6175,7 @@ void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
 
 #ifndef _PYMOL_NO_GLUT
   register CExecutive *I = G->Executive;
-  if(G->HaveGUI) {
+  if(G->HaveGUI && G->ValidContext) {
     if(!SettingGet(G,cSetting_full_screen))
       {
         I->oldPX = p_glutGet(GLUT_WINDOW_X);
@@ -7570,11 +7569,8 @@ static void ExecutiveDraw(Block *block)
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int text_lift = (ExecLineHeight/2)-5;
 
-  if(G->HaveGUI) {
+  if(G->HaveGUI && G->ValidContext) {
     int max_char;
-
-
-    
     int nChar;
     /* do we have enough structures to warrant a scroll bar? */
     n_ent = 0;

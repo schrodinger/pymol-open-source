@@ -107,14 +107,14 @@ struct _PyMOLGlobals {
   CPyMOL    *PyMOL; /* the instance */
   /* global variables */
 
-  int HaveGUI; /* do we have an OpenGL graphics window
-                * or are will command-only? */
+  int HaveGUI; /* do we have an OpenGL graphics window or are we
+                * command-line only? */
 
-  int ValidContext; /* are we guaranteed to have a valid OpenGL context 
-                     * at this very moment? */
+  int ValidContext; /* are we guaranteed to have a valid OpenGL
+                     * context at this exact moment? */
 
-  int Ready; /* is the program fully initialized and ready to
-                   * receive messages? */
+  int Ready; /* is the program fully initialized and ready to receive
+                   * messages? */
 
   int Terminating; /* is the program shutting down? */
   
@@ -131,14 +131,6 @@ struct _PyMOLGlobals {
 
 
 };
-
-/* for debugging untimely use of our OpenGL context... */
-
-#if 0
-#define ASSERT_VALID_CONTEXT(G) {if(!(G)->ValidContext) {fprintf(stderr,"Assert-Error: No Valid Context!\n");abort();}}
-#else
-#define ASSERT_VALID_CONTEXT(G)
-#endif
 
 /* the following transitional global will disappear once we've
    completely removed global state from PyMOL's code */

@@ -374,30 +374,33 @@ void GadgetSetUpdate(GadgetSet *I)
 /*========================================================================*/
 void GadgetSetRender(GadgetSet *I,CRay *ray,Pickable **pick,int pass)
 {
-
   float *color;
 
   color = ColorGet(I->G,I->Obj->Obj.Color);
 
   if(!pass) {
+    PyMOLGlobals *G = I->G;
+  
     if(ray) {    
       if(I->RayCGO)
         CGORenderRay(I->RayCGO,ray,color,I->Obj->Obj.Setting,NULL);
       else
         CGORenderRay(I->StdCGO,ray,color,I->Obj->Obj.Setting,NULL);
-    } else if(pick&&I->G->HaveGUI) {
-      if(I->PickCGO) {
-        CGORenderGLPickable(I->PickCGO,pick,(void*)I->Obj,
-                            I->Obj->Obj.Setting,NULL);
-      }
-    } else if(I->G->HaveGUI) {
-      if(I->StdCGO) {
-        /*CGORenderGL(I->PickCGO,color,I->Obj->Obj.Setting,NULL);*/
-        CGORenderGL(I->StdCGO,color,I->Obj->Obj.Setting,NULL);
+    } else if(G->HaveGUI && G->ValidContext) {
+      if(pick) {
+        if(I->PickCGO) {
+          CGORenderGLPickable(I->PickCGO,pick,(void*)I->Obj,
+                              I->Obj->Obj.Setting,NULL);
+        }
+      } else if(I->G->HaveGUI) {
+        if(I->StdCGO) {
+          /*CGORenderGL(I->PickCGO,color,I->Obj->Obj.Setting,NULL);*/
+          CGORenderGL(I->StdCGO,color,I->Obj->Obj.Setting,NULL);
+        }
       }
     }
   }
-  }
+}
 /*========================================================================*/
 GadgetSet *GadgetSetNew(PyMOLGlobals *G)
 {

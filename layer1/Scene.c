@@ -721,7 +721,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
   if(!I->CopyFlag) {
 	 image = (GLvoid*)Alloc(char,buffer_size);
 	 ErrChkPtr(G,image);
-    if(G->HaveGUI) {
+    if(G->HaveGUI && G->ValidContext) {
       glReadBuffer(GL_BACK);
       PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                    GL_RGBA,GL_UNSIGNED_BYTE,image);
@@ -1011,9 +1011,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
             0.0F,0.0F,false); 
   } else {
 	 v=SettingGetfv(G,cSetting_bg_rgb);
-    if(G->HaveGUI) {
-
-      ASSERT_VALID_CONTEXT(G);
+    if(G->HaveGUI && G->ValidContext) {
 
       glDrawBuffer(GL_BACK);
       glClearColor(v[0],v[1],v[2],1.0);
@@ -1257,7 +1255,7 @@ void SceneDraw(Block *block)
   int width,height;
   int double_pump;
 
-  if(G->HaveGUI) {
+  if(G->HaveGUI && G->ValidContext) {
     overlay = (int)SettingGet(G,cSetting_overlay);
     text = (int)SettingGet(G,cSetting_text);
     double_pump = (int)SettingGet(G,cSetting_stereo_double_pump_mono);
@@ -1338,7 +1336,7 @@ unsigned int SceneFindTriplet(PyMOLGlobals *G,int x,int y,GLenum gl_buffer)
   int check_alpha = false;
 
 
-  if(G->HaveGUI) { /*just in case*/
+  if(G->HaveGUI && G->ValidContext) { /*just in case*/
   
 	glGetIntegerv(GL_RED_BITS,&rb);
 	glGetIntegerv(GL_GREEN_BITS,&gb);
@@ -1440,7 +1438,7 @@ unsigned int *SceneReadTriplets(PyMOLGlobals *G,int x,int y,int w,int h,GLenum g
   
   if(w<1) w=1;
   if(h<1) h=1;
-  if(G->HaveGUI) { /*just in case*/
+  if(G->HaveGUI && G->ValidContext) { /*just in case*/
     
     glGetIntegerv(GL_RED_BITS,&rb);
     glGetIntegerv(GL_RED_BITS,&gb);
@@ -3177,7 +3175,7 @@ void SceneDone(PyMOLGlobals *G)
 void SceneResetNormal(PyMOLGlobals *G,int lines)
 {
   register CScene *I=G->Scene;
-  if(G->HaveGUI) {
+  if(G->HaveGUI && G->ValidContext) {
     if(lines)
       glNormal3fv(I->LinesNormal);
     else
@@ -3455,7 +3453,7 @@ void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
           I->ImageBufferWidth=I->Width;
           I->ImageBufferHeight=I->Height;
         }
-        if(G->HaveGUI) {
+        if(G->HaveGUI && G->ValidContext) {
           glReadBuffer(buffer);
           PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                        GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
@@ -3682,8 +3680,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     aspRat=aspRat/2;
 
   fov=SettingGet(G,cSetting_field_of_view);
-  if(G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
+  if(G->HaveGUI && G->ValidContext) {
     
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 0");

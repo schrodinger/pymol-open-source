@@ -893,50 +893,51 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
           ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[6],0.20F,vc,vc);
           ray->fSausage3fv(ray,ms->Corner[6],ms->Corner[7],0.20F,vc,vc);
           ray->fSausage3fv(ray,ms->Corner[5],ms->Corner[7],0.20F,vc,vc);
-        } else if(pick&&G->HaveGUI) {
-        } else if(G->HaveGUI) {
-          ASSERT_VALID_CONTEXT(G);
-          ObjectUseColor(&I->Obj);
-          glDisable(GL_LIGHTING); 
-          glBegin(GL_LINES);
-          glVertex3fv(ms->Corner[0]);
-          glVertex3fv(ms->Corner[1]);
+        } else if(G->HaveGUI && G->ValidContext) {
+          if(pick) {
+          } else {
+            ObjectUseColor(&I->Obj);
+            glDisable(GL_LIGHTING); 
+            glBegin(GL_LINES);
+            glVertex3fv(ms->Corner[0]);
+            glVertex3fv(ms->Corner[1]);
+            
+            glVertex3fv(ms->Corner[0]);
+            glVertex3fv(ms->Corner[2]);
           
-          glVertex3fv(ms->Corner[0]);
-          glVertex3fv(ms->Corner[2]);
+            glVertex3fv(ms->Corner[2]);
+            glVertex3fv(ms->Corner[3]);
           
-          glVertex3fv(ms->Corner[2]);
-          glVertex3fv(ms->Corner[3]);
+            glVertex3fv(ms->Corner[1]);
+            glVertex3fv(ms->Corner[3]);
           
-          glVertex3fv(ms->Corner[1]);
-          glVertex3fv(ms->Corner[3]);
+            glVertex3fv(ms->Corner[0]);
+            glVertex3fv(ms->Corner[4]);
           
-          glVertex3fv(ms->Corner[0]);
-          glVertex3fv(ms->Corner[4]);
+            glVertex3fv(ms->Corner[1]);
+            glVertex3fv(ms->Corner[5]);
           
-          glVertex3fv(ms->Corner[1]);
-          glVertex3fv(ms->Corner[5]);
+            glVertex3fv(ms->Corner[2]);
+            glVertex3fv(ms->Corner[6]);
           
-          glVertex3fv(ms->Corner[2]);
-          glVertex3fv(ms->Corner[6]);
+            glVertex3fv(ms->Corner[3]);
+            glVertex3fv(ms->Corner[7]);
           
-          glVertex3fv(ms->Corner[3]);
-          glVertex3fv(ms->Corner[7]);
+            glVertex3fv(ms->Corner[4]);
+            glVertex3fv(ms->Corner[5]);
           
-          glVertex3fv(ms->Corner[4]);
-          glVertex3fv(ms->Corner[5]);
+            glVertex3fv(ms->Corner[4]);
+            glVertex3fv(ms->Corner[6]);
           
-          glVertex3fv(ms->Corner[4]);
-          glVertex3fv(ms->Corner[6]);
+            glVertex3fv(ms->Corner[6]);
+            glVertex3fv(ms->Corner[7]);
           
-          glVertex3fv(ms->Corner[6]);
-          glVertex3fv(ms->Corner[7]);
+            glVertex3fv(ms->Corner[5]);
+            glVertex3fv(ms->Corner[7]);
           
-          glVertex3fv(ms->Corner[5]);
-          glVertex3fv(ms->Corner[7]);
-          
-          glEnd();
-          glEnable(GL_LIGHTING);
+            glEnd();
+            glEnable(GL_LIGHTING);
+          }
         }
       }
     }

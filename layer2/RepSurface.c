@@ -265,445 +265,27 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       FreeP(cache);
     }
     ray->fTransparentf(ray,0.0);
-  } else if(pick&&G->HaveGUI) {
-  } else if(G->HaveGUI) {
-    
-    ASSERT_VALID_CONTEXT(G);
-
-    if(I->debug)
-      CGORenderGL(I->debug,NULL,NULL,NULL);
-	 if(I->Type==1) {
-      /* no triangle information, so we're rendering dots only */
-
-      int normals = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
-      int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
-      int use_dlst;
-      if(!normals)
-        SceneResetNormal(G,true);
-      if(!lighting)
-        glDisable(GL_LIGHTING);
-      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-      if(use_dlst&&I->R.displayList) {
-        glCallList(I->R.displayList);
-      } else { 
-        
-        if(use_dlst) {
-          if(!I->R.displayList) {
-            I->R.displayList = glGenLists(1);
-            if(I->R.displayList) {
-              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
-            }
-          }
-        }
-        
-        glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
-        
-        if(c) {
-          glColor3f(1.0,0.0,0.0);
-          glBegin(GL_POINTS);
-          SceneResetNormal(G,true);
-          if(I->oneColorFlag) {
-            glColor3fv(ColorGet(G,I->oneColor));
-          }
-          
-          while(c--)
-            {
-              if(*vi) {
-                if(!I->oneColorFlag) {
-                  glColor3fv(vc);
-                }
-                if(normals) 
-                  glNormal3fv(vn);
-                glVertex3fv(v);
-              }
-              vi++;
-              vc+=3;
-              vn+=3;
-              v+=3;
-            }
-          glEnd();
-        }
-        
-        if(use_dlst&&I->R.displayList) {
-          glEndList();
-        }
-        if(!lighting)
-          glEnable(GL_LIGHTING);
-
-      }
-    } else if(I->Type==2) { /* rendering triangle mesh */
-      
-      int normals = SettingGet_b(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
-      int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
-      int use_dlst;
-      if(!normals)
-        SceneResetNormal(G,true);
-      if(!lighting)
-        glDisable(GL_LIGHTING);
-      
-      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-      if(use_dlst&&I->R.displayList) {
-        glCallList(I->R.displayList);
-      } else { 
-        
-        
-        glLineWidth(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
-        
-        if(use_dlst) {
-          if(!I->R.displayList) {
-            I->R.displayList = glGenLists(1);
-            if(I->R.displayList) {
-              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
-            }
-          }
-        }
-        
-        
-        c=I->NT;
-        if(c) {
-          if(I->oneColorFlag) {
-            glColor3fv(ColorGet(G,I->oneColor));
-            while(c--) {
-              if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                if(normals) {
-                  
-                  glBegin(GL_LINE_STRIP);
-                  
-                  glNormal3fv(vn+(*(t+2))*3);
-                  glVertex3fv(v+(*(t+2))*3);
-                  
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glEnd();
-                } else {
-                  glBegin(GL_LINE_STRIP);
-                  
-                  glVertex3fv(v+(*(t+2))*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glEnd();
-                }
-              } else
-                t+=3;
-            }
-          } else {
-            while(c--) {
-              if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                if(normals) {
-
-                  glBegin(GL_LINE_STRIP);
-                  
-                  glColor3fv(vc+(*(t+2))*3);
-                  glNormal3fv(vn+(*(t+2))*3);
-                  glVertex3fv(v+(*(t+2))*3);
-                  
-                  glColor3fv(vc+(*t)*3);
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glColor3fv(vc+(*t)*3);
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glColor3fv(vc+(*t)*3);
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glEnd();
-                } else {
-                  glBegin(GL_LINE_STRIP);
-                  
-                  glColor3fv(vc+(*(t+2))*3);
-                  glVertex3fv(v+(*(t+2))*3);
-                  
-                  glColor3fv(vc+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glColor3fv(vc+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glColor3fv(vc+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glEnd();
-
-                }
-              } else
-                t+=3;
-            }
-          }
-        }
-        if(use_dlst&&I->R.displayList) {
-          glEndList();
-        }
-        if(!lighting)
-          glEnable(GL_LIGHTING);
-      }
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
     } else {
-      /* we're rendering triangles */
-      
-      if(alpha!=1.0) {
-        
-        t_mode  = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency_mode);
-          
-        if(t_mode) {
-            
-          float **t_buf=NULL,**tb;
-          float *z_value=NULL,*zv;
-          int *ix=NULL;
-          int n_tri = 0;
-          float sum[3];
-          float matrix[16];
+    
+      if(I->debug)
+        CGORenderGL(I->debug,NULL,NULL,NULL);
+      if(I->Type==1) {
+        /* no triangle information, so we're rendering dots only */
 
-          glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
-
-          t_buf = Alloc(float*,I->NT*9);
-
-          z_value = Alloc(float,I->NT);
-          ix = Alloc(int,I->NT);
-
-          zv = z_value;
-          tb = t_buf;
-          c = I->NT;
-          if(I->oneColorFlag) {
-            while(c--) {       
-              if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-
-                *(tb++) = vn+(*t)*3;
-                *(tb++) = v+(*t)*3;
-                *(tb++) = vn+(*(t+1))*3;
-                *(tb++) = v+(*(t+1))*3;
-                *(tb++) = vn+(*(t+2))*3;
-                *(tb++) = v+(*(t+2))*3;
-              
-                add3f(tb[-1],tb[-3],sum);
-                add3f(sum,tb[-5],sum);
-
-                *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
-                n_tri++;
-              }
-              t+=3;
-            
-            }
-          } else {
-            while(c--) {
-              if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
-                if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))) {
-                
-                  *(tb++) = vc+(*t)*3;
-                  *(tb++) = vn+(*t)*3;
-                  *(tb++) = v+(*t)*3;
-
-                  *(tb++) = vc+(*(t+1))*3;
-                  *(tb++) = vn+(*(t+1))*3;
-                  *(tb++) = v+(*(t+1))*3;
-
-                  *(tb++) = vc+(*(t+2))*3;
-                  *(tb++) = vn+(*(t+2))*3;
-                  *(tb++) = v+(*(t+2))*3;
-                
-                  add3f(tb[-1],tb[-4],sum);
-                  add3f(sum,tb[-7],sum);
-
-                  *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
-                  n_tri++;
-                }
-              t+=3;
-            }
-          }
-        
-          switch(t_mode) {
-          case 1:
-            UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);
-            break;
-          default:
-            UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
-            break;
-          }
-
-          c=n_tri;
-          if(I->oneColorFlag) {
-            col=ColorGet(G,I->oneColor);
-          
-            glColor4f(col[0],col[1],col[2],alpha);
-            glBegin(GL_TRIANGLES);
-            for(c=0;c<n_tri;c++) {
-            
-              tb = t_buf+6*ix[c];
-            
-              glNormal3fv(*(tb++));
-              glVertex3fv(*(tb++));
-              glNormal3fv(*(tb++));
-              glVertex3fv(*(tb++));
-              glNormal3fv(*(tb++));
-              glVertex3fv(*(tb++));
-            }
-            glEnd();
-          } else {
-            glBegin(GL_TRIANGLES);
-            for(c=0;c<n_tri;c++) {
-              float *vv;
-            
-              tb = t_buf+9*ix[c];
-            
-              vv = *(tb++);
-            
-              glColor4f(vv[0],vv[1],vv[2],alpha);
-              glNormal3fv(*(tb++));
-              glVertex3fv(*(tb++));
-            
-              vv = *(tb++);
-              glColor4f(vv[0],vv[1],vv[2],alpha);
-              glNormal3fv(*(tb++));
-              glVertex3fv(*(tb++));
-            
-              vv = *(tb++);
-              glColor4f(vv[0],vv[1],vv[2],alpha);
-              glNormal3fv(*(tb++));
-              glVertex3fv(*(tb++));
-            
-            }
-            glEnd();
-          }
-        
-          FreeP(ix);
-          FreeP(z_value);
-          FreeP(t_buf);
-        } else { /* fast and ugly */
-          /*          glCullFace(GL_BACK);
-                      glEnable(GL_CULL_FACE);
-                      glDepthMask(GL_FALSE);*/
-          if(I->allVisibleFlag) {
-            if(I->oneColorFlag) {
-              col = ColorGet(G,I->oneColor);
-              glColor4f(col[0],col[1],col[2],alpha);
-              c=*(s++);
-              while(c) {
-                glBegin(GL_TRIANGLE_STRIP);
-                glNormal3fv(vn+(*s)*3);
-                glVertex3fv(v+(*s)*3);
-                s++;
-                glNormal3fv(vn+(*s)*3);
-                glVertex3fv(v+(*s)*3);
-                s++;
-                while(c--)
-                  {
-                    glNormal3fv(vn+(*s)*3);
-                    glVertex3fv(v+(*s)*3);
-                    s++;
-                  }
-                glEnd();
-                c=*(s++);
-              }
-            } else {
-              c=*(s++);
-              while(c) {
-                glBegin(GL_TRIANGLE_STRIP);
-                col = vc+(*s)*3;
-                glColor4f(col[0],col[1],col[2],alpha);            
-                glNormal3fv(vn+(*s)*3);
-                glVertex3fv(v+(*s)*3);
-                s++;
-                col = vc+(*s)*3;
-                glColor4f(col[0],col[1],col[2],alpha);            
-                glNormal3fv(vn+(*s)*3);
-                glVertex3fv(v+(*s)*3);
-                s++;
-                while(c--)
-                  {
-                    col = vc+(*s)*3;
-                    glColor4f(col[0],col[1],col[2],alpha);            
-                    glNormal3fv(vn+(*s)*3);
-                    glVertex3fv(v+(*s)*3);
-                    s++;
-                  }
-                glEnd();
-                c=*(s++);
-              }
-            }
-          
-          } else { /* subset s*/
-            c=I->NT;
-            if(c) {
-              glBegin(GL_TRIANGLES);
-            
-              if(I->oneColorFlag) {
-                col = ColorGet(G,I->oneColor);
-                glColor4f(col[0],col[1],col[2],alpha);
-                while(c--) {
-
-                  if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                     ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-
-                    col = vc+(*t)*3;
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                    col = vc+(*t)*3;
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                    col = vc+(*t)*3;
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                  } else
-                    t+=3;
-                }
-              } else {
-                while(c--) {
-                  if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                     ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                  
-                    col = vc+(*t)*3;
-                    glColor4f(col[0],col[1],col[2],alpha);            
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                    col = vc+(*t)*3;
-                    glColor4f(col[0],col[1],col[2],alpha);            
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                    col = vc+(*t)*3;
-                    glColor4f(col[0],col[1],col[2],alpha);            
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                  } else
-                    t+=3;
-                }
-              }
-              glEnd();
-            }
-          }
-          /*          glDisable(GL_CULL_FACE);
-                      glDepthMask(GL_TRUE);*/
-        }
-      } else { /* opaque */
-
-        int use_dlst,simplify=0;
+        int normals = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
+        int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
+        int use_dlst;
+        if(!normals)
+          SceneResetNormal(G,true);
+        if(!lighting)
+          glDisable(GL_LIGHTING);
         use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-        simplify = (int)SettingGet(G,cSetting_simplify_display_lists);
         if(use_dlst&&I->R.displayList) {
           glCallList(I->R.displayList);
         } else { 
-          
+        
           if(use_dlst) {
             if(!I->R.displayList) {
               I->R.displayList = glGenLists(1);
@@ -712,192 +294,580 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               }
             }
           }
-
-          if(I->allVisibleFlag) {
+        
+          glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
+        
+          if(c) {
+            glColor3f(1.0,0.0,0.0);
+            glBegin(GL_POINTS);
+            SceneResetNormal(G,true);
             if(I->oneColorFlag) {
-              if(use_dlst&&simplify) { /* simplify: try to help display list optimizer */
-                glColor3fv(ColorGet(G,I->oneColor));
-                c=*(s++);
-                while(c) {
-                  glBegin(GL_TRIANGLES); 
-                  s+=2;
-                  while(c--)
-                    {
-                      s-=2;
-                      glNormal3fv(vn+(*s)*3);
-                      glVertex3fv(v+(*s)*3);
-                      s++;
-                      glNormal3fv(vn+(*s)*3);
-                      glVertex3fv(v+(*s)*3);
-                      s++;
-                      glNormal3fv(vn+(*s)*3);
-                      glVertex3fv(v+(*s)*3);
-                      s++;
-                    }
-                  glEnd();
-                  c=*(s++);
+              glColor3fv(ColorGet(G,I->oneColor));
+            }
+          
+            while(c--)
+              {
+                if(*vi) {
+                  if(!I->oneColorFlag) {
+                    glColor3fv(vc);
+                  }
+                  if(normals) 
+                    glNormal3fv(vn);
+                  glVertex3fv(v);
                 }
-              } else {
-                glColor3fv(ColorGet(G,I->oneColor));
-                c=*(s++);
-                while(c) {
-                  glBegin(GL_TRIANGLE_STRIP);
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                  while(c--)
-                    {
-                      glNormal3fv(vn+(*s)*3);
-                      glVertex3fv(v+(*s)*3);
-                      s++;
-                    }
-                  glEnd();
-                  c=*(s++);
-                }
-              } /* use_dlst&&simplify */
-            } else { /* not one color */
-              if(use_dlst&&simplify) {  /* simplify: try to help display list optimizer */
-                c=*(s++);
-                while(c) {
-                  glBegin(GL_TRIANGLES);
-                  s+=2;
-                  while(c--)
-                    {
-                      s-=2;
-                      glColor3fv(vc+(*s)*3);
-                      glNormal3fv(vn+(*s)*3);
-                      glVertex3fv(v+(*s)*3);
-                      s++;
-                      glColor3fv(vc+(*s)*3);
-                      glNormal3fv(vn+(*s)*3);
-                      glVertex3fv(v+(*s)*3);
-                      s++;
-                      glColor3fv(vc+(*s)*3);
-                      glNormal3fv(vn+(*s)*3);
-                      glVertex3fv(v+(*s)*3);
-                      s++;
-                    }
-                  glEnd();
-                  c=*(s++);
-                }
-              } else {
-                c=*(s++);
-                while(c) {
-                  glBegin(GL_TRIANGLE_STRIP);
-                  glColor3fv(vc+(*s)*3);
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                  glColor3fv(vc+(*s)*3);
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                  while(c--)
-                    {
-                      glColor3fv(vc+(*s)*3);
-                      glNormal3fv(vn+(*s)*3);
-                      glVertex3fv(v+(*s)*3);
-                      s++;
-                    }
-                  glEnd();
-                  c=*(s++);
-                }
+                vi++;
+                vc+=3;
+                vn+=3;
+                v+=3;
               }
-            } /* one color */
-          } else { /* subsets */
-            c=I->NT;
-            if(c) {
-              glBegin(GL_TRIANGLES);
-              if(I->oneColorFlag) {
-                glColor3fv(ColorGet(G,I->oneColor));
-                while(c--) {
-                  if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                     ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                    
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                  } else
-                    t+=3;
-                }
-              } else {
-                while(c--) {
-                  if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                     ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                    
-                    glColor3fv(vc+(*t)*3);
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                    glColor3fv(vc+(*t)*3);
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                    glColor3fv(vc+(*t)*3);
-                    glNormal3fv(vn+(*t)*3);
-                    glVertex3fv(v+(*t)*3);
-                    t++;
-                  } else
-                    t+=3;
-                }
+            glEnd();
+          }
+        
+          if(use_dlst&&I->R.displayList) {
+            glEndList();
+          }
+          if(!lighting)
+            glEnable(GL_LIGHTING);
+
+        }
+      } else if(I->Type==2) { /* rendering triangle mesh */
+      
+        int normals = SettingGet_b(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
+        int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
+        int use_dlst;
+        if(!normals)
+          SceneResetNormal(G,true);
+        if(!lighting)
+          glDisable(GL_LIGHTING);
+      
+        use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+        if(use_dlst&&I->R.displayList) {
+          glCallList(I->R.displayList);
+        } else { 
+        
+        
+          glLineWidth(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
+        
+          if(use_dlst) {
+            if(!I->R.displayList) {
+              I->R.displayList = glGenLists(1);
+              if(I->R.displayList) {
+                glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
               }
-              glEnd();
+            }
+          }
+        
+        
+          c=I->NT;
+          if(c) {
+            if(I->oneColorFlag) {
+              glColor3fv(ColorGet(G,I->oneColor));
+              while(c--) {
+                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                  if(normals) {
+                  
+                    glBegin(GL_LINE_STRIP);
+                  
+                    glNormal3fv(vn+(*(t+2))*3);
+                    glVertex3fv(v+(*(t+2))*3);
+                  
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glEnd();
+                  } else {
+                    glBegin(GL_LINE_STRIP);
+                  
+                    glVertex3fv(v+(*(t+2))*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glEnd();
+                  }
+                } else
+                  t+=3;
+              }
+            } else {
+              while(c--) {
+                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                  if(normals) {
+
+                    glBegin(GL_LINE_STRIP);
+                  
+                    glColor3fv(vc+(*(t+2))*3);
+                    glNormal3fv(vn+(*(t+2))*3);
+                    glVertex3fv(v+(*(t+2))*3);
+                  
+                    glColor3fv(vc+(*t)*3);
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glColor3fv(vc+(*t)*3);
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glColor3fv(vc+(*t)*3);
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glEnd();
+                  } else {
+                    glBegin(GL_LINE_STRIP);
+                  
+                    glColor3fv(vc+(*(t+2))*3);
+                    glVertex3fv(v+(*(t+2))*3);
+                  
+                    glColor3fv(vc+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glColor3fv(vc+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glColor3fv(vc+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glEnd();
+
+                  }
+                } else
+                  t+=3;
+              }
             }
           }
           if(use_dlst&&I->R.displayList) {
             glEndList();
           }
+          if(!lighting)
+            glEnable(GL_LIGHTING);
         }
-      }
-    }
-    if(SettingGet(G,cSetting_surface_debug)) {
-      t=I->T;
-      c=I->NT;
-      if(c) {
-        glBegin(GL_TRIANGLES);
-        while(c--) {
-
-          if(I->allVisibleFlag||((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))) {
+      } else {
+        /* we're rendering triangles */
+      
+        if(alpha!=1.0) {
+        
+          t_mode  = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency_mode);
+          
+          if(t_mode) {
             
-            glNormal3fv(vn+(*t)*3);
-            glVertex3fv(v+(*t)*3);
-            t++;
-            glNormal3fv(vn+(*t)*3);
-            glVertex3fv(v+(*t)*3);
-            t++;
-            glNormal3fv(vn+(*t)*3);
-            glVertex3fv(v+(*t)*3);
-            t++;
-          } else {
-            t+=3;
+            float **t_buf=NULL,**tb;
+            float *z_value=NULL,*zv;
+            int *ix=NULL;
+            int n_tri = 0;
+            float sum[3];
+            float matrix[16];
+
+            glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
+
+            t_buf = Alloc(float*,I->NT*9);
+
+            z_value = Alloc(float,I->NT);
+            ix = Alloc(int,I->NT);
+
+            zv = z_value;
+            tb = t_buf;
+            c = I->NT;
+            if(I->oneColorFlag) {
+              while(c--) {       
+                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+
+                  *(tb++) = vn+(*t)*3;
+                  *(tb++) = v+(*t)*3;
+                  *(tb++) = vn+(*(t+1))*3;
+                  *(tb++) = v+(*(t+1))*3;
+                  *(tb++) = vn+(*(t+2))*3;
+                  *(tb++) = v+(*(t+2))*3;
+              
+                  add3f(tb[-1],tb[-3],sum);
+                  add3f(sum,tb[-5],sum);
+
+                  *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
+                  n_tri++;
+                }
+                t+=3;
+            
+              }
+            } else {
+              while(c--) {
+                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
+                  if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))) {
+                
+                    *(tb++) = vc+(*t)*3;
+                    *(tb++) = vn+(*t)*3;
+                    *(tb++) = v+(*t)*3;
+
+                    *(tb++) = vc+(*(t+1))*3;
+                    *(tb++) = vn+(*(t+1))*3;
+                    *(tb++) = v+(*(t+1))*3;
+
+                    *(tb++) = vc+(*(t+2))*3;
+                    *(tb++) = vn+(*(t+2))*3;
+                    *(tb++) = v+(*(t+2))*3;
+                
+                    add3f(tb[-1],tb[-4],sum);
+                    add3f(sum,tb[-7],sum);
+
+                    *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
+                    n_tri++;
+                  }
+                t+=3;
+              }
+            }
+        
+            switch(t_mode) {
+            case 1:
+              UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);
+              break;
+            default:
+              UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
+              break;
+            }
+
+            c=n_tri;
+            if(I->oneColorFlag) {
+              col=ColorGet(G,I->oneColor);
+          
+              glColor4f(col[0],col[1],col[2],alpha);
+              glBegin(GL_TRIANGLES);
+              for(c=0;c<n_tri;c++) {
+            
+                tb = t_buf+6*ix[c];
+            
+                glNormal3fv(*(tb++));
+                glVertex3fv(*(tb++));
+                glNormal3fv(*(tb++));
+                glVertex3fv(*(tb++));
+                glNormal3fv(*(tb++));
+                glVertex3fv(*(tb++));
+              }
+              glEnd();
+            } else {
+              glBegin(GL_TRIANGLES);
+              for(c=0;c<n_tri;c++) {
+                float *vv;
+            
+                tb = t_buf+9*ix[c];
+            
+                vv = *(tb++);
+            
+                glColor4f(vv[0],vv[1],vv[2],alpha);
+                glNormal3fv(*(tb++));
+                glVertex3fv(*(tb++));
+            
+                vv = *(tb++);
+                glColor4f(vv[0],vv[1],vv[2],alpha);
+                glNormal3fv(*(tb++));
+                glVertex3fv(*(tb++));
+            
+                vv = *(tb++);
+                glColor4f(vv[0],vv[1],vv[2],alpha);
+                glNormal3fv(*(tb++));
+                glVertex3fv(*(tb++));
+            
+              }
+              glEnd();
+            }
+        
+            FreeP(ix);
+            FreeP(z_value);
+            FreeP(t_buf);
+          } else { /* fast and ugly */
+            /*          glCullFace(GL_BACK);
+                        glEnable(GL_CULL_FACE);
+                        glDepthMask(GL_FALSE);*/
+            if(I->allVisibleFlag) {
+              if(I->oneColorFlag) {
+                col = ColorGet(G,I->oneColor);
+                glColor4f(col[0],col[1],col[2],alpha);
+                c=*(s++);
+                while(c) {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  glNormal3fv(vn+(*s)*3);
+                  glVertex3fv(v+(*s)*3);
+                  s++;
+                  glNormal3fv(vn+(*s)*3);
+                  glVertex3fv(v+(*s)*3);
+                  s++;
+                  while(c--)
+                    {
+                      glNormal3fv(vn+(*s)*3);
+                      glVertex3fv(v+(*s)*3);
+                      s++;
+                    }
+                  glEnd();
+                  c=*(s++);
+                }
+              } else {
+                c=*(s++);
+                while(c) {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  col = vc+(*s)*3;
+                  glColor4f(col[0],col[1],col[2],alpha);            
+                  glNormal3fv(vn+(*s)*3);
+                  glVertex3fv(v+(*s)*3);
+                  s++;
+                  col = vc+(*s)*3;
+                  glColor4f(col[0],col[1],col[2],alpha);            
+                  glNormal3fv(vn+(*s)*3);
+                  glVertex3fv(v+(*s)*3);
+                  s++;
+                  while(c--)
+                    {
+                      col = vc+(*s)*3;
+                      glColor4f(col[0],col[1],col[2],alpha);            
+                      glNormal3fv(vn+(*s)*3);
+                      glVertex3fv(v+(*s)*3);
+                      s++;
+                    }
+                  glEnd();
+                  c=*(s++);
+                }
+              }
+          
+            } else { /* subset s*/
+              c=I->NT;
+              if(c) {
+                glBegin(GL_TRIANGLES);
+            
+                if(I->oneColorFlag) {
+                  col = ColorGet(G,I->oneColor);
+                  glColor4f(col[0],col[1],col[2],alpha);
+                  while(c--) {
+
+                    if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                       ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+
+                      col = vc+(*t)*3;
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                      col = vc+(*t)*3;
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                      col = vc+(*t)*3;
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                    } else
+                      t+=3;
+                  }
+                } else {
+                  while(c--) {
+                    if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                       ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                  
+                      col = vc+(*t)*3;
+                      glColor4f(col[0],col[1],col[2],alpha);            
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                      col = vc+(*t)*3;
+                      glColor4f(col[0],col[1],col[2],alpha);            
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                      col = vc+(*t)*3;
+                      glColor4f(col[0],col[1],col[2],alpha);            
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                    } else
+                      t+=3;
+                  }
+                }
+                glEnd();
+              }
+            }
+            /*          glDisable(GL_CULL_FACE);
+                        glDepthMask(GL_TRUE);*/
+          }
+        } else { /* opaque */
+
+          int use_dlst,simplify=0;
+          use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+          simplify = (int)SettingGet(G,cSetting_simplify_display_lists);
+          if(use_dlst&&I->R.displayList) {
+            glCallList(I->R.displayList);
+          } else { 
+          
+            if(use_dlst) {
+              if(!I->R.displayList) {
+                I->R.displayList = glGenLists(1);
+                if(I->R.displayList) {
+                  glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+                }
+              }
+            }
+
+            if(I->allVisibleFlag) {
+              if(I->oneColorFlag) {
+                if(use_dlst&&simplify) { /* simplify: try to help display list optimizer */
+                  glColor3fv(ColorGet(G,I->oneColor));
+                  c=*(s++);
+                  while(c) {
+                    glBegin(GL_TRIANGLES); 
+                    s+=2;
+                    while(c--)
+                      {
+                        s-=2;
+                        glNormal3fv(vn+(*s)*3);
+                        glVertex3fv(v+(*s)*3);
+                        s++;
+                        glNormal3fv(vn+(*s)*3);
+                        glVertex3fv(v+(*s)*3);
+                        s++;
+                        glNormal3fv(vn+(*s)*3);
+                        glVertex3fv(v+(*s)*3);
+                        s++;
+                      }
+                    glEnd();
+                    c=*(s++);
+                  }
+                } else {
+                  glColor3fv(ColorGet(G,I->oneColor));
+                  c=*(s++);
+                  while(c) {
+                    glBegin(GL_TRIANGLE_STRIP);
+                    glNormal3fv(vn+(*s)*3);
+                    glVertex3fv(v+(*s)*3);
+                    s++;
+                    glNormal3fv(vn+(*s)*3);
+                    glVertex3fv(v+(*s)*3);
+                    s++;
+                    while(c--)
+                      {
+                        glNormal3fv(vn+(*s)*3);
+                        glVertex3fv(v+(*s)*3);
+                        s++;
+                      }
+                    glEnd();
+                    c=*(s++);
+                  }
+                } /* use_dlst&&simplify */
+              } else { /* not one color */
+                if(use_dlst&&simplify) {  /* simplify: try to help display list optimizer */
+                  c=*(s++);
+                  while(c) {
+                    glBegin(GL_TRIANGLES);
+                    s+=2;
+                    while(c--)
+                      {
+                        s-=2;
+                        glColor3fv(vc+(*s)*3);
+                        glNormal3fv(vn+(*s)*3);
+                        glVertex3fv(v+(*s)*3);
+                        s++;
+                        glColor3fv(vc+(*s)*3);
+                        glNormal3fv(vn+(*s)*3);
+                        glVertex3fv(v+(*s)*3);
+                        s++;
+                        glColor3fv(vc+(*s)*3);
+                        glNormal3fv(vn+(*s)*3);
+                        glVertex3fv(v+(*s)*3);
+                        s++;
+                      }
+                    glEnd();
+                    c=*(s++);
+                  }
+                } else {
+                  c=*(s++);
+                  while(c) {
+                    glBegin(GL_TRIANGLE_STRIP);
+                    glColor3fv(vc+(*s)*3);
+                    glNormal3fv(vn+(*s)*3);
+                    glVertex3fv(v+(*s)*3);
+                    s++;
+                    glColor3fv(vc+(*s)*3);
+                    glNormal3fv(vn+(*s)*3);
+                    glVertex3fv(v+(*s)*3);
+                    s++;
+                    while(c--)
+                      {
+                        glColor3fv(vc+(*s)*3);
+                        glNormal3fv(vn+(*s)*3);
+                        glVertex3fv(v+(*s)*3);
+                        s++;
+                      }
+                    glEnd();
+                    c=*(s++);
+                  }
+                }
+              } /* one color */
+            } else { /* subsets */
+              c=I->NT;
+              if(c) {
+                glBegin(GL_TRIANGLES);
+                if(I->oneColorFlag) {
+                  glColor3fv(ColorGet(G,I->oneColor));
+                  while(c--) {
+                    if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                       ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                    
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                    } else
+                      t+=3;
+                  }
+                } else {
+                  while(c--) {
+                    if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                       ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                    
+                      glColor3fv(vc+(*t)*3);
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                      glColor3fv(vc+(*t)*3);
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                      glColor3fv(vc+(*t)*3);
+                      glNormal3fv(vn+(*t)*3);
+                      glVertex3fv(v+(*t)*3);
+                      t++;
+                    } else
+                      t+=3;
+                  }
+                }
+                glEnd();
+              }
+            }
+            if(use_dlst&&I->R.displayList) {
+              glEndList();
+            }
           }
         }
-        glEnd();
       }
-      
-      t=I->T;
-      c=I->NT;
-      if(c) {
-        glColor3f(0.0,1.0,0.0);
-        
-        while(c--)
-          {
-            glBegin(GL_LINE_STRIP);
-            
+      if(SettingGet(G,cSetting_surface_debug)) {
+        t=I->T;
+        c=I->NT;
+        if(c) {
+          glBegin(GL_TRIANGLES);
+          while(c--) {
+
             if(I->allVisibleFlag||((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
                                    ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))) {
-              
-              
+            
               glNormal3fv(vn+(*t)*3);
               glVertex3fv(v+(*t)*3);
               t++;
@@ -910,27 +880,54 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
             } else {
               t+=3;
             }
-            glEnd();
           }
-      }
-      c=I->N;
-      if(c) {
-        glColor3f(1.0,0.0,0.0);
-        glBegin(GL_LINES);
-        SceneResetNormal(G,true);
-        while(c--)
-          {
-            glVertex3fv(v);
-            glVertex3f(v[0]+vn[0]/2,v[1]+vn[1]/2,v[2]+vn[2]/2);
-            v+=3;
-            vn+=3;
-          }
-        glEnd();
-      }
-
+          glEnd();
+        }
       
+        t=I->T;
+        c=I->NT;
+        if(c) {
+          glColor3f(0.0,1.0,0.0);
+        
+          while(c--)
+            {
+              glBegin(GL_LINE_STRIP);
+            
+              if(I->allVisibleFlag||((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                                     ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))) {
+              
+              
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+              } else {
+                t+=3;
+              }
+              glEnd();
+            }
+        }
+        c=I->N;
+        if(c) {
+          glColor3f(1.0,0.0,0.0);
+          glBegin(GL_LINES);
+          SceneResetNormal(G,true);
+          while(c--)
+            {
+              glVertex3fv(v);
+              glVertex3f(v[0]+vn[0]/2,v[1]+vn[1]/2,v[2]+vn[2]/2);
+              v+=3;
+              vn+=3;
+            }
+          glEnd();
+        }
+      }
     }
-
   }
 }
 

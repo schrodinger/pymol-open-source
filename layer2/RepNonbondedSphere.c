@@ -76,77 +76,75 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 		ray->fSphere3fv(ray,v,*(v+3));
 		v+=4;
 	 }
-  } else if(pick&&G->HaveGUI) {
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
 
-    ASSERT_VALID_CONTEXT(G);
+      i=(*pick)->index;
 
-	 i=(*pick)->index;
-
-	 v=I->VP;
-	 c=I->NP;
-	 p=I->R.P;
+      v=I->VP;
+      c=I->NP;
+      p=I->R.P;
 	 
-	 glBegin(GL_LINES);
+      glBegin(GL_LINES);
 	 
-	 while(c--) {
+      while(c--) {
 
-		i++;
+        i++;
 
-		if(!(*pick)[0].ptr) {
-		  /* pass 1 - low order bits */
+        if(!(*pick)[0].ptr) {
+          /* pass 1 - low order bits */
 
-		  glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-		  VLACheck((*pick),Pickable,i);
-		  p++;
-		  (*pick)[i] = *p; /* copy object and atom info */
-		} else { 
-		  /* pass 2 - high order bits */
+          glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+          VLACheck((*pick),Pickable,i);
+          p++;
+          (*pick)[i] = *p; /* copy object and atom info */
+        } else { 
+          /* pass 2 - high order bits */
 
-		  j=i>>12;
+          j=i>>12;
 
-		  glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+          glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
 
-		}			 
+        }			 
 
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-
-	 }
-	 glEnd();
-
-	 (*pick)[0].index = i;
-
-  } else if(G->HaveGUI) {
-
-    ASSERT_VALID_CONTEXT(G);
-
-    sp=I->SP;
-    while(c--)
-      {
-        glColor3fv(v);
+        glVertex3fv(v);
         v+=3;
-        for(a=0;a<sp->NStrip;a++) {
-          glBegin(GL_TRIANGLE_STRIP);
-          cc=sp->StripLen[a];
-          while(cc--) {
-            glNormal3fv(v);
-            v+=3;
-            glVertex3fv(v);
-            v+=3;
-          }
-          glEnd();
-        }
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+
       }
+      glEnd();
+
+      (*pick)[0].index = i;
+
+    } else {
+
+      sp=I->SP;
+      while(c--)
+        {
+          glColor3fv(v);
+          v+=3;
+          for(a=0;a<sp->NStrip;a++) {
+            glBegin(GL_TRIANGLE_STRIP);
+            cc=sp->StripLen[a];
+            while(cc--) {
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+            }
+            glEnd();
+          }
+        }
+    }
   }
 }
 

@@ -145,8 +145,7 @@ void CharacterRenderOpenGL(PyMOLGlobals *G,int id,float x_orig, float y_orig, fl
   CharRec *rec = I->Char + id;
 
   int texture_id = TextureGetFromChar(G,id,rec->extent);
-  if(G->HaveGUI&&texture_id) {
-    ASSERT_VALID_CONTEXT(G);
+  if(G->HaveGUI &&  G->ValidContext && texture_id) {
     glEnable(GL_TEXTURE_2D);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     if(glIsTexture(texture_id)) {

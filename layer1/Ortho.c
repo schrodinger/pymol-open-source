@@ -367,7 +367,6 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
         float black[3] = {0,0,0};
         float white[3] = {1,1,1};
 
-        ASSERT_VALID_CONTEXT(G);
         OrthoPushMatrix(G);
         
         glDrawBuffer(GL_FRONT);
@@ -929,7 +928,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
   PRINTFD(G,FB_Ortho)
     " OrthoDoDraw: entered.\n"
     ENDFD;
-  if(G->HaveGUI) {
+  if(G->HaveGUI && G->ValidContext) {
 
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("OrthoDoDraw checkpoint 0");
@@ -1646,8 +1645,8 @@ void OrthoPushMatrix(PyMOLGlobals *G)
   register COrtho *I=G->Ortho;
   GLint ViewPort[4];
 
-  if(G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
+  if(G->HaveGUI && G->ValidContext) {
+
     glGetIntegerv(GL_VIEWPORT,ViewPort);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -1679,9 +1678,8 @@ void OrthoPushMatrix(PyMOLGlobals *G)
 void OrthoPopMatrix(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
-  if(G->HaveGUI) {
+  if(G->HaveGUI && G->ValidContext) {
 
-    ASSERT_VALID_CONTEXT(G);
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

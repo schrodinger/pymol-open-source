@@ -105,24 +105,53 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
       }
     }
     ray->fTransparentf(ray,0.0);
-  } else if(pick&&G->HaveGUI) {
-    int trans_pick_mode = SettingGet_i(G,I->R.cs->Setting,
-                                       I->R.obj->Setting,
-                                       cSetting_transparency_picking_mode);
-    ASSERT_VALID_CONTEXT(G);
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
+      int trans_pick_mode = SettingGet_i(G,I->R.cs->Setting,
+                                         I->R.obj->Setting,
+                                         cSetting_transparency_picking_mode);
 
-    if(I->R.P&&((trans_pick_mode==1)||((trans_pick_mode==2)&&(alpha>0.9F)))) {
-      int i,j;
-      Pickable *p;
-		sp=I->SP;      
-      i=(*pick)->index;
+      if(I->R.P&&((trans_pick_mode==1)||((trans_pick_mode==2)&&(alpha>0.9F)))) {
+        int i,j;
+        Pickable *p;
+        sp=I->SP;      
+        i=(*pick)->index;
       
-      p=I->R.P;
+        p=I->R.P;
       
-      if(I->spheroidFlag) {
-        while(c--)
-          {
+        if(I->spheroidFlag) {
+          while(c--)
+            {
             
+              i++;          
+              if(!(*pick)[0].ptr) {
+                /* pass 1 - low order bits *            */
+                glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+                VLACheck((*pick),Pickable,i);
+                p++;
+                (*pick)[i] = *p; /* copy object and atom info */
+              } else { 
+                /* pass 2 - high order bits */           
+                j=i>>12;            
+                glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
+              }			 
+            
+              v+=3;
+              for(a=0;a<sp->NStrip;a++) {
+                cc=sp->StripLen[a];
+                glBegin(GL_TRIANGLE_STRIP);
+                while((cc--)>0) {
+                  glNormal3fv(v);
+                  glVertex3fv(v+3);
+                  v+=6;
+                }
+                glEnd();
+              }
+            }
+        } else {
+          v=I->VC;
+          c=I->NC;
+          while(c--) {
             i++;          
             if(!(*pick)[0].ptr) {
               /* pass 1 - low order bits *            */
@@ -135,208 +164,179 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
               j=i>>12;            
               glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
             }			 
-            
-            v+=3;
-            for(a=0;a<sp->NStrip;a++) {
-              cc=sp->StripLen[a];
-              glBegin(GL_TRIANGLE_STRIP);
-              while((cc--)>0) {
-                glNormal3fv(v);
-                glVertex3fv(v+3);
-                v+=6;
-              }
-              glEnd();
-            }
-          }
-      } else {
-        v=I->VC;
-        c=I->NC;
-        while(c--) {
-          i++;          
-          if(!(*pick)[0].ptr) {
-            /* pass 1 - low order bits *            */
-            glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-            VLACheck((*pick),Pickable,i);
-            p++;
-            (*pick)[i] = *p; /* copy object and atom info */
-          } else { 
-            /* pass 2 - high order bits */           
-            j=i>>12;            
-            glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
-          }			 
           
-          {
-            int *s,*q,b;
-            float *v0,vdw;
+            {
+              int *s,*q,b;
+              float *v0,vdw;
 
-            v0 = v+3;
-            vdw = v[6];
-            q=sp->Sequence;
-            s=sp->StripLen;
-            for(b=0;b<sp->NStrip;b++)
-              {
-                glBegin(GL_TRIANGLE_STRIP);
-                for(cc=0;cc<(*s);cc++)
-                  {
-                    glNormal3f(sp->dot[*q][0],
-                               sp->dot[*q][1],
-                               sp->dot[*q][2]);
-                    glVertex3f(v0[0]+vdw*sp->dot[*q][0],
-                               v0[1]+vdw*sp->dot[*q][1],
-                               v0[2]+vdw*sp->dot[*q][2]);
-                    q++;
-                  }
-                glEnd();
-                s++;
-              }
-            v+=7;
+              v0 = v+3;
+              vdw = v[6];
+              q=sp->Sequence;
+              s=sp->StripLen;
+              for(b=0;b<sp->NStrip;b++)
+                {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  for(cc=0;cc<(*s);cc++)
+                    {
+                      glNormal3f(sp->dot[*q][0],
+                                 sp->dot[*q][1],
+                                 sp->dot[*q][2]);
+                      glVertex3f(v0[0]+vdw*sp->dot[*q][0],
+                                 v0[1]+vdw*sp->dot[*q][1],
+                                 v0[2]+vdw*sp->dot[*q][2]);
+                      q++;
+                    }
+                  glEnd();
+                  s++;
+                }
+              v+=7;
+            }
           }
         }
+        (*pick)[0].index = i;
       }
-	 (*pick)[0].index = i;
-    }
-  } else if(G->HaveGUI) {
-    int use_dlst;
-    ASSERT_VALID_CONTEXT(G);
+    } else {
+      int use_dlst;
 
-    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
 
-    if(use_dlst&&I->R.displayList) {
-      glCallList(I->R.displayList);
-    } else { /* display list */
-
-      if(use_dlst) {
-        if(!I->R.displayList) {
-          I->R.displayList = glGenLists(1);
-          if(I->R.displayList) {
-            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
-          }
-        }
-      }
-
-      if(I->cullFlag) {
-      
-      if(alpha==1.0) {
-        
-        nt=I->NT; /* number of passes for each sphere */
-        while(c--) /* iterate through all atoms */
-          {
-            glColor3fv(v);
-            v+=3;
-            cc=*(nt++);
-            flag=0;
-            glBegin(GL_TRIANGLE_STRIP);
-            while(cc--) { /* execute loop this many times */
-              restart=*(v++);
-              if(restart) {
-                if(flag) {
-                  glEnd();
-                  glBegin(GL_TRIANGLE_STRIP);
-                }
-                if(restart==2.0) { /* swap triangle polarity */
-                  glNormal3fv(v);
-                  glVertex3fv(v+3);
-                }
-                glNormal3fv(v);
-                v+=3;
-                glVertex3fv(v);
-                v+=3;
-                glNormal3fv(v);
-                v+=3;
-                glVertex3fv(v);
-                v+=3;
-              }
-              glNormal3fv(v);
-              v+=3;
-              glVertex3fv(v);
-              v+=3;
-              flag=1;
-            }
-            glEnd();
-          }
-      } else {
-    
-        nt=I->NT; /* number of passes for each sphere */
-        while(c--) /* iterate through all atoms */
-          {
-            glColor4f(v[0],v[1],v[2],alpha);
-            v+=3;
-            cc=*(nt++);
-            flag=0;
-            glBegin(GL_TRIANGLE_STRIP);
-            while(cc--) { /* execute loop this many times */
-              restart=*(v++);
-              if(restart) {
-                if(flag) {
-                  glEnd();
-                  glBegin(GL_TRIANGLE_STRIP);
-                }
-                if(restart==2.0) { /* swap triangle polarity */
-                  glNormal3fv(v);
-                  glVertex3fv(v+3);
-                }
-                glNormal3fv(v);
-                v+=3;
-                glVertex3fv(v);
-                v+=3;
-                glNormal3fv(v);
-                v+=3;
-                glVertex3fv(v);
-                v+=3;
-              }
-              glNormal3fv(v);
-              v+=3;
-              glVertex3fv(v);
-              v+=3;
-              flag=1;
-            }
-            glEnd();
-          }
-        
-      }
-	 } else {
-
-      if(alpha==1.0) {
-        
-        sp=I->SP;
-        while(c--)
-          {
-            glColor3fv(v);
-            v+=3;
-            for(a=0;a<sp->NStrip;a++) {
-              glBegin(GL_TRIANGLE_STRIP);
-              cc=sp->StripLen[a];
-              while(cc--) {
-                glNormal3fv(v);
-                v+=3;
-                glVertex3fv(v);
-                v+=3;
-              }
-              glEnd();
-            }
-          }
-      } else {
-        sp=I->SP;
-        while(c--)
-          {
-            glColor4f(v[0],v[1],v[2],alpha);
-            v+=3;
-            for(a=0;a<sp->NStrip;a++) {
-              glBegin(GL_TRIANGLE_STRIP);
-              cc=sp->StripLen[a];
-              while(cc--) {
-                glNormal3fv(v);
-                v+=3;
-                glVertex3fv(v);
-                v+=3;
-              }
-              glEnd();
-            }
-          }
-      }
-    }
       if(use_dlst&&I->R.displayList) {
-        glEndList();
+        glCallList(I->R.displayList);
+      } else { /* display list */
+
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
+          }
+        }
+
+        if(I->cullFlag) {
+      
+          if(alpha==1.0) {
+        
+            nt=I->NT; /* number of passes for each sphere */
+            while(c--) /* iterate through all atoms */
+              {
+                glColor3fv(v);
+                v+=3;
+                cc=*(nt++);
+                flag=0;
+                glBegin(GL_TRIANGLE_STRIP);
+                while(cc--) { /* execute loop this many times */
+                  restart=*(v++);
+                  if(restart) {
+                    if(flag) {
+                      glEnd();
+                      glBegin(GL_TRIANGLE_STRIP);
+                    }
+                    if(restart==2.0) { /* swap triangle polarity */
+                      glNormal3fv(v);
+                      glVertex3fv(v+3);
+                    }
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glNormal3fv(v);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=3;
+                  flag=1;
+                }
+                glEnd();
+              }
+          } else {
+    
+            nt=I->NT; /* number of passes for each sphere */
+            while(c--) /* iterate through all atoms */
+              {
+                glColor4f(v[0],v[1],v[2],alpha);
+                v+=3;
+                cc=*(nt++);
+                flag=0;
+                glBegin(GL_TRIANGLE_STRIP);
+                while(cc--) { /* execute loop this many times */
+                  restart=*(v++);
+                  if(restart) {
+                    if(flag) {
+                      glEnd();
+                      glBegin(GL_TRIANGLE_STRIP);
+                    }
+                    if(restart==2.0) { /* swap triangle polarity */
+                      glNormal3fv(v);
+                      glVertex3fv(v+3);
+                    }
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glNormal3fv(v);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=3;
+                  flag=1;
+                }
+                glEnd();
+              }
+        
+          }
+        } else {
+
+          if(alpha==1.0) {
+        
+            sp=I->SP;
+            while(c--)
+              {
+                glColor3fv(v);
+                v+=3;
+                for(a=0;a<sp->NStrip;a++) {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  cc=sp->StripLen[a];
+                  while(cc--) {
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
+                }
+              }
+          } else {
+            sp=I->SP;
+            while(c--)
+              {
+                glColor4f(v[0],v[1],v[2],alpha);
+                v+=3;
+                for(a=0;a<sp->NStrip;a++) {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  cc=sp->StripLen[a];
+                  while(cc--) {
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
+                }
+              }
+          }
+        }
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
       }
     }
   }

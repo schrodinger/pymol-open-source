@@ -85,56 +85,57 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 		v+=4;
 		}*/
 
-  } else if(pick&&G->HaveGUI) {
-  } else if(G->HaveGUI) {
-    int normals = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
-    int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
-    int use_dlst;
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
+    } else {
+      int normals = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
+      int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
+      int use_dlst;
 
-    ASSERT_VALID_CONTEXT(G);
-    if(!normals)
-      SceneResetNormal(G,true);
-    if(!lighting)
-      glDisable(GL_LIGHTING);
+      if(!normals)
+        SceneResetNormal(G,true);
+      if(!lighting)
+        glDisable(GL_LIGHTING);
       
       
-    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-    if(use_dlst&&I->R.displayList) {
-      glCallList(I->R.displayList);
-    } else { 
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+      if(use_dlst&&I->R.displayList) {
+        glCallList(I->R.displayList);
+      } else { 
 
-      if(use_dlst) {
-        if(!I->R.displayList) {
-          I->R.displayList = glGenLists(1);
-          if(I->R.displayList) {
-            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
           }
         }
-      }
-      glPointSize(I->Width);
-      glBegin(GL_POINTS);
-      while(c--)
-        {
-          if(!cc) /* load up the current vertex color */
-            {
-              cc=(int)(*(v++));
-              glColor3fv(v);
-              v+=3;
-            }
-          if(normals) 
-            glNormal3fv(v);
-          v+=3;
-          glVertex3fv(v);
-          v+=3;
-          cc--;
-        }
-      glEnd();
+        glPointSize(I->Width);
+        glBegin(GL_POINTS);
+        while(c--)
+          {
+            if(!cc) /* load up the current vertex color */
+              {
+                cc=(int)(*(v++));
+                glColor3fv(v);
+                v+=3;
+              }
+            if(normals) 
+              glNormal3fv(v);
+            v+=3;
+            glVertex3fv(v);
+            v+=3;
+            cc--;
+          }
+        glEnd();
       
-      if(use_dlst&&I->R.displayList) {
-        glEndList();
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
+        if(!lighting)
+          glEnable(GL_LIGHTING);
       }
-      if(!lighting)
-        glEnable(GL_LIGHTING);
     }
   }
 }

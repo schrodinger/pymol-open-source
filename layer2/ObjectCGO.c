@@ -234,10 +234,12 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
                 CGORenderRay(sobj->ray,ray,color,I->Obj.Setting,NULL);
               else
                 CGORenderRay(sobj->std,ray,color,I->Obj.Setting,NULL);
-            } else if(pick&&G->HaveGUI) {
-            } else if(G->HaveGUI) {
-              if(sobj->std)
-                CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
+            } else if(G->HaveGUI && G->ValidContext) {
+              if(pick) {
+              } else {
+                if(sobj->std)
+                  CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
+              }
             }
           }
         }
@@ -254,11 +256,13 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
               else
                 CGORenderRay(sobj->std,ray,color,I->Obj.Setting,NULL);
             }
-        } else if(pick&&G->HaveGUI) {
-        } else if(G->HaveGUI) {
-          if(sobj)
-            if(sobj->std)
-              CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
+        } else if(G->HaveGUI && G->ValidContext) {
+          if(pick) {
+          } else {
+            if(sobj)
+              if(sobj->std)
+                CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
+          }
         }
       }
     }

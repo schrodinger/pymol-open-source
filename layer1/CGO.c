@@ -1189,52 +1189,52 @@ CGO_op_fn CGO_gl[] = {
 
 void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSetting *set2)
 {
-  register float *pc = I->op;
-  register int op;
-  register CCGORenderer *R = I->G->CGORenderer;
-
-  int i,j;
-  Pickable *p;
-
-  ASSERT_VALID_CONTEXT(I->G);
-
-  if(I->c) {
-    i=(*pick)->index;
-
-    glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width));
-
-    while((op=(CGO_MASK&CGO_read_int(pc)))) {
-      if(op!=CGO_PICK_COLOR) {
-        if(op!=CGO_COLOR) {
-          CGO_gl[op](R,pc); /* ignore color changes */
+  register PyMOLGlobals *G = I->G;
+  if(G->ValidContext) {
+    register float *pc = I->op;
+    register int op;
+    register CCGORenderer *R =G->CGORenderer;
+    
+    int i,j;
+    Pickable *p;
+    
+    if(I->c) {
+      i=(*pick)->index;
+      
+      glLineWidth(SettingGet_f(G,set1,set2,cSetting_cgo_line_width));
+      
+      while((op=(CGO_MASK&CGO_read_int(pc)))) {
+        if(op!=CGO_PICK_COLOR) {
+          if(op!=CGO_COLOR) {
+            CGO_gl[op](R,pc); /* ignore color changes */
+          }
+        } else {
+          i++;
+          if(!(*pick)[0].ptr) {
+            /* pass 1 - low order bits */
+            
+            glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
+            VLACheck((*pick),Pickable,i);
+            p=(*pick)+i;
+            p->ptr = ptr;
+            p->index = (int)*pc;
+            p->bond = (int)*(pc+1); /* actually holds state information */
+          } else { 
+            /* pass 2 - high order bits */
+            
+            j=i>>12;
+            
+            glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+            
+          }			 
+          
         }
-      } else {
-        i++;
-        if(!(*pick)[0].ptr) {
-          /* pass 1 - low order bits */
-          
-          glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
-          VLACheck((*pick),Pickable,i);
-          p=(*pick)+i;
-          p->ptr = ptr;
-          p->index = (int)*pc;
-          p->bond = (int)*(pc+1); /* actually holds state information */
-        } else { 
-          /* pass 2 - high order bits */
-          
-          j=i>>12;
-          
-          glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
-          
-        }			 
-        
+        pc+=CGO_sz[op];
       }
-      pc+=CGO_sz[op];
+      (*pick)[0].index = i; /* pass the count */
+      
     }
-    (*pick)[0].index = i; /* pass the count */
-
   }
-  
 }
 
 
@@ -1243,23 +1243,25 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
       * the ASM loop is about 2X long as raw looped GL calls,
       * but hopefully superscaler processors won't care */
 {
-  register float *pc = I->op;
-  register int op;
-  register CCGORenderer *R = I->G->CGORenderer;
-
-  ASSERT_VALID_CONTEXT(I->G);
-  if(I->c) {
-    R->alpha = 1.0F;
-    if(color) 
-      glColor3fv(color);
-    else
-      glColor3f(1.0,1.0,1.0);
-    glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width));
-    glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width));
-
-    while((op=(CGO_MASK&CGO_read_int(pc)))) {
-      CGO_gl[op](R,pc);
-      pc+=CGO_sz[op];
+  register PyMOLGlobals *G = I->G;
+  if(G->ValidContext) {
+    register float *pc = I->op;
+    register int op;
+    register CCGORenderer *R = G->CGORenderer;
+    
+    if(I->c) {
+      R->alpha = 1.0F;
+      if(color) 
+        glColor3fv(color);
+      else
+        glColor3f(1.0,1.0,1.0);
+      glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width));
+      glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width));
+      
+      while((op=(CGO_MASK&CGO_read_int(pc)))) {
+        CGO_gl[op](R,pc);
+        pc+=CGO_sz[op];
+      }
     }
   }
 }

@@ -652,8 +652,7 @@ static void WizardDraw(Block *block)
 
   text_color = menuColor;
 
-  if(G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
+  if(G->HaveGUI && G->ValidContext) {
 
     glColor3fv(I->Block->BackColor);
     BlockFill(I->Block);

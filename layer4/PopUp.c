@@ -519,9 +519,7 @@ void PopUpDraw(Block *block)
   char *c;
 
   
-  if(G->HaveGUI) {
-    
-    ASSERT_VALID_CONTEXT(G);
+  if(G->HaveGUI && G->ValidContext ) {
 
     if((I->Child)&&(I->Selected!=I->ChildLine))
       PyMOL_NeedFakeDrag(G->PyMOL);
