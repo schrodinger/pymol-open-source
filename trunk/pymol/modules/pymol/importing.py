@@ -424,7 +424,8 @@ SEE ALSO
          fname = filename
          fname = os.path.expanduser(fname)
          fname = os.path.expandvars(fname)
-
+         go_to_first_scene = 0
+         
          if not len(str(type)):
             # determine file type if possible
             if re.search("\.pdb$|\.pdb1$|\.ent$|\.p5m",filename,re.I):
@@ -462,6 +463,8 @@ SEE ALSO
             elif re.search("\.rst$",filename,re.I):
                ftype = loadable.crd
             elif re.search("\.pse$|\.psw$",filename,re.I):
+               if re.search("\.psw$",filename,re.I):
+                  go_to_first_scene = 1
                ftype = loadable.pse
             elif re.search("\.phi$",filename,re.I):
                ftype = loadable.phi
@@ -534,7 +537,6 @@ SEE ALSO
          if ftype == loadable.pse:
             ftype = -1
             cmd.set_session(io.pkl.fromFile(fname))
-
    # special handling for multi-model files (mol2, sdf)
 
          if ftype in ( loadable.mol2, loadable.sdf1, loadable.sdf2):
@@ -547,6 +549,8 @@ SEE ALSO
                       discrete,quiet,multiplex,zoom)
       finally:
          unlock()
+      if go_to_first_scene:
+         cmd.scene("auto","start",animate=0)
       return r
 
    def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1):

@@ -57,6 +57,7 @@ def mol_show(s):
        [ 0, '', '']]
       + rep_action('show',s) +
       [[ 0, '', ''],
+       [ 1, 'organic' , 'cmd.show("lines","(organic and ('+s+'))")' ],       
        [ 1, 'main chain' , 'cmd.show("lines","((byres ('+s+'))&n;ca,c,n,o,h)")' ],
        [ 1, 'side chain' , 'cmd.show("lines","((byres ('+s+'))&(!(n;c,o,h|(n. n&!r. pro))))")' ],
        [ 1, 'disulfides' , 'cmd.show("lines","(byres ((('+s+

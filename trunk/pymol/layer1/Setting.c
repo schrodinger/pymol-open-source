@@ -54,12 +54,18 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   return 0;
 #else
   int ok=true;
-  int stereo=SettingGetGlobal_b(G,cSetting_stereo);
+
   int session_migration=SettingGetGlobal_b(G,cSetting_session_migration);
   int session_version_check=SettingGetGlobal_b(G,cSetting_session_version_check);
   int full_screen = SettingGetGlobal_b(G,cSetting_full_screen);
   int internal_gui = SettingGetGlobal_b(G,cSetting_internal_gui);
   int internal_feedback = SettingGetGlobal_b(G,cSetting_internal_feedback);
+
+  int stereo=SettingGetGlobal_b(G,cSetting_stereo);
+  int text = SettingGetGlobal_b(G,cSetting_text);
+  int texture_fonts = SettingGetGlobal_b(G,cSetting_texture_fonts);
+  int use_display_lists = SettingGetGlobal_b(G,cSetting_use_display_lists);
+  int max_threads = SettingGetGlobal_i(G,cSetting_max_threads);
 
   register CSetting *I=G->Setting;
   if(list)
@@ -67,9 +73,17 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
       ok = SettingFromPyList(I,list);
   
   SettingSet_i(I,cSetting_security,G->Security); /* always override Security setting with global variable */
-  SettingSet_b(I,cSetting_stereo,stereo); /* preserve current stereo mode */
   SettingSet_b(I,cSetting_session_migration,session_migration); /* preserve current migration info */
   SettingSet_b(I,cSetting_session_version_check,session_version_check);
+
+  /* restore the following settings */
+
+  SettingSet_b(I,cSetting_stereo, stereo); 
+  SettingSet_b(I,cSetting_text, text);
+  SettingSet_b(I,cSetting_texture_fonts, texture_fonts);
+  SettingSet_b(I,cSetting_use_display_lists, use_display_lists);
+  SettingSet_i(I,cSetting_max_threads, max_threads);
+
   if(G->Option->presentation) {
       SettingSet_b(I,cSetting_full_screen,full_screen);
       SettingSet_b(I,cSetting_presentation,1);
@@ -2526,12 +2540,13 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_dihedral_label_position, 1.2F);
   SettingSet_i(I,cSetting_defer_builds_mode, G->Option->defer_builds_mode); 
   SettingSet_b(I,cSetting_seq_view_discrete_by_state, 1);
-  SettingSet_f(I,cSetting_scene_animation_duration, -1.0F);
+  SettingSet_f(I,cSetting_scene_animation_duration, 2.25F);
   SettingSet_s(I,cSetting_wildcard, "*");
   SettingSet_s(I,cSetting_atom_name_wildcard, "");
   SettingSet_b(I,cSetting_ignore_case, 1);
   SettingSet_b(I,cSetting_presentation_auto_quit,1);
   SettingSet_b(I,cSetting_editor_auto_dihedral, 1);
+  SettingSet_b(I,cSetting_presentation_auto_start,1);
 
 }
 

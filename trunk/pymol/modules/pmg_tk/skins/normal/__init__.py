@@ -487,7 +487,7 @@ class Normal(PMGSkin):
       if self.save_file!='':
          self.cmd.log("save %s,format=pse\n"%(self.save_file),
                  "cmd.save('%s',format='pse')\n"%(self.save_file))
-         self.cmd.save(self.save_file,"","pse")
+         self.cmd.save(self.save_file,"","pse",quiet=0)
       else:
          self.session_save_as()
 
@@ -496,14 +496,15 @@ class Normal(PMGSkin):
                                 initialdir = self.initialdir,
                                 filetypes=[
          ("PyMOL Session File","*.pse"),
+         ("PyMOL Show File","*.psw"),
          ])
       if len(sfile):
-         if re.search(r"\.pse$|\.PSE$",sfile)==None:
+         if re.search(r"\.pse$|\.PSE$|\.psw$|\.PSW$",sfile)==None:
             sfile=sfile+".pse"
          self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
          self.cmd.log("save %s,format=pse\n"%(sfile),
                  "cmd.save('%s',format='pse')\n"%(sfile))
-         self.cmd.save(sfile,"",format='pse')
+         self.cmd.save(sfile,"",format='pse',quiet=0)
          self.save_file = sfile
    
    def file_save(self):
@@ -1830,6 +1831,16 @@ class Normal(PMGSkin):
 
       self.menuBar.addmenu('Scene', 'Scene Storage',tearoff=TRUE)
 
+      self.menuBar.addmenuitem('Scene', 'command', 'Next',
+                               label=self.pad+'Next [PgDn]',
+                               command = lambda s=self: s.cmd.scene('auto','next'))
+
+      self.menuBar.addmenuitem('Scene', 'command', 'Previous',
+                               label=self.pad+'Previous [PgUp]',
+                               command = lambda s=self: s.cmd.scene('auto','previous'))
+
+      self.menuBar.addmenuitem('Scene', 'separator', '')
+      
       self.menuBar.addmenuitem('Scene', 'command', 'Append',
                                label=self.pad+'Append',
                                command = lambda s=self: s.cmd.scene('new','store'))
@@ -1858,13 +1869,17 @@ class Normal(PMGSkin):
 
       self.menuBar.addmenuitem('Scene', 'separator', '')
 
+      self.menuBar.addcascademenu('Scene', 'Recall', 'Recall',
+                                  label=self.pad+'Recall')
+
       self.menuBar.addcascademenu('Scene', 'Store', 'Store',
                                   label=self.pad+'Store')
 
 #      self.menuBar.addcascademenu('Store', 'StoreSHFT', 'StoreSHFT',
 #                                  label=self.pad+'Shift')
 
-      self.menuBar.addmenuitem('Scene', 'separator', '')
+      self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
+                                  label=self.pad+'Clear')
 
 #      self.menuBar.addcascademenu('Scene', 'SceneSHFT', 'SceneSHFT',
 #                                  label=self.pad+'Shift')
@@ -1875,33 +1890,11 @@ class Normal(PMGSkin):
                                   variable = self.setting.F[x],
                                   command = lambda x=x,s=self: s.cmd.do("scene F%d,store"%x))
 
-         self.menuBar.addmenuitem('Scene', 'checkbutton', 'Recall F%d'%x,
-                                  label=self.pad+'Recall F%d'%x,
+         self.menuBar.addmenuitem('Recall', 'checkbutton', 'Recall F%d'%x,
+                                  label=self.pad+'F%d'%x,
                                   variable = self.setting.F[x],
                                   command = lambda x=x,s=self: s.cmd.do("scene F%d"%x))
-      
-#      for x in range(1,13):
-#         self.menuBar.addmenuitem('StoreSHFT', 'checkbutton', 'SHFT-F%d'%x,
-#                                  label=self.pad+'SHFT-F%d'%x,
-#                                  variable = self.setting.SHFTF[x],
-#                                  command = lambda x=x,s=self: s.cmd.do("scene SHFT-F%d,store"%x))
-#         
-#         self.menuBar.addmenuitem('SceneSHFT', 'checkbutton', 'Recall SHFT-F%d'%x,
-#                                  label=self.pad+'Recall SHFT-F%d'%x,
-#                                  variable = self.setting.SHFTF[x],
-#                                  command = lambda x=x,s=self: s.cmd.do("scene SHFT-F%d"%x))
 
-      self.menuBar.addmenuitem('Scene', 'separator', '')
-
-
-      self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
-                                  label=self.pad+'Clear')
-
-#      self.menuBar.addcascademenu('Clear', 'ClearSHFT', 'ClearSHFT',
-#                                  label=self.pad+'Shift')
-
-      for x in range(1,13):
-         
          self.menuBar.addmenuitem('Clear', 'checkbutton', 'F%d'%x,
                                label=self.pad+'F%d'%x,
                                variable = self.setting.F[x],

@@ -2077,7 +2077,7 @@ SEE ALSO
          'isosurface'     : [ map_sc                 , 'map object'      , ', ' ],
          'slice_new'      : [ map_sc                 , 'map object'      , ', ' ],
          'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
-         'scene'          : [ viewing.view_sc        , 'scene action'    , ','   ],                  
+         'scene'          : [ viewing.scene_action_sc, 'scene action'    , ','   ],                  
          'unset'          : [ selection_sc           , 'selection'        , ','  ],
          'ramp_new'       : [ map_sc                 , 'map object'       , ''   ],      
          },

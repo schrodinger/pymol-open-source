@@ -448,6 +448,7 @@ if __name__=='pymol.setting':
       ignore_case               = (414, '')
       presentation_auto_quit    = (415, '')
       editor_auto_dihedral      = (416, '')
+      presentation_auto_start   = (417, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
