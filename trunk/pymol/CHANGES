@@ -31,6 +31,10 @@ In Progress
 
    * Mutagenesis wizard
 
+Changes up to 0.57
+
+   * finished the set_dihedral command
+
 Changes up to 0.56
 
    * fixed a serious parser bug with the mdo command
