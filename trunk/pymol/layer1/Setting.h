@@ -220,6 +220,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_ribbon_throw                121
 #define cSetting_cartoon_throw               122
 #define cSetting_cartoon_refine              123
+#define cSetting_cartoon_refine_tips         124
 
 #define cSetting_INIT                        125
 

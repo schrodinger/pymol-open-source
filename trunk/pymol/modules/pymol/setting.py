@@ -132,6 +132,7 @@ class SettingIndex:
    ribbon_throw          =121
    cartoon_throw         =122
    cartoon_refine        =123
+   cartoon_refine_tips   =124
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

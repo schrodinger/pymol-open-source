@@ -50,6 +50,7 @@ void ExtrudeBuildNormals2f(CExtrude *I);
 void ExtrudeComputeTangents(CExtrude *I);
 void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap);
 void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap);
+void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling);
 void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling);
 void ExtrudeCGOTraceFrame(CExtrude *I,CGO *cgo);
 void ExtrudeCGOTrace(CExtrude *I,CGO *cgo);

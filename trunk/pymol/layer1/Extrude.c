@@ -859,8 +859,6 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
 
 }
 
-void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling);
-
 void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling)
 {
   int a,b;
