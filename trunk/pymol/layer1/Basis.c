@@ -2414,7 +2414,7 @@ void BasisTrianglePrecompute(float *v0,float *v1,float *v2,float *pre)
 
 void BasisCylinderSausagePrecompute(float *dir,float *pre)
 {
-  float ln  = 1.0f / sqrt1f(dir[1]*dir[1]+dir[0]*dir[0]);
+  float ln  = (float)(1.0f / sqrt1f(dir[1]*dir[1]+dir[0]*dir[0]));
   pre[0] = dir[1] * ln;
   pre[1] = -dir[0] * ln;
 }
