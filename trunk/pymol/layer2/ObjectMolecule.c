@@ -7317,9 +7317,9 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index, char *buffer)
   AtomInfoType *ai;
   ai=I->AtomInfo+index;
   if(ai->alt[0])
-    sprintf(buffer,"%s: /%s/%s/%s/%s/%s`%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name,ai->alt);
+    sprintf(buffer,"%s: /%s/%s/%s/%s`%s/%s`%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,ai->name,ai->alt);
     else
-  sprintf(buffer,"%s: /%s/%s/%s/%s/%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name);
+  sprintf(buffer,"%s: /%s/%s/%s/%s`%s/%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,ai->name);
 }
 
 /*========================================================================*/
@@ -7328,10 +7328,10 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer)
   AtomInfoType *ai;
   ai=I->AtomInfo+index;
   if(ai->alt[0]) 
-    sprintf(buffer,"/%s/%s/%s/%s/%s`%s",I->Obj.Name,ai->segi,ai->chain,ai->resi,
+    sprintf(buffer,"/%s/%s/%s/%s`%s/%s`%s",I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,
             ai->name,ai->alt);
   else
-    sprintf(buffer,"/%s/%s/%s/%s/%s`",I->Obj.Name,ai->segi,ai->chain,ai->resi,
+    sprintf(buffer,"/%s/%s/%s/%s`%s/%s`",I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,
             ai->name);   
 }
 /*========================================================================*/
@@ -7342,10 +7342,10 @@ void ObjectMoleculeGetAtomSeleLog(ObjectMolecule *I,int index, char *buffer)
     ai=I->AtomInfo+index;
     
     if(ai->alt[0]) 
-      sprintf(buffer,"/%s/%s/%s/%s/%s`%s",I->Obj.Name,ai->segi,ai->chain,ai->resi,
+      sprintf(buffer,"/%s/%s/%s/%s`%s/%s`%s",I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,
               ai->name,ai->alt);
     else
-      sprintf(buffer,"/%s/%s/%s/%s/%s`",I->Obj.Name,ai->segi,ai->chain,ai->resi,
+      sprintf(buffer,"/%s/%s/%s/%s`%s/%s`",I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,
               ai->name);   
   } else {
     sprintf(buffer,"(%s`%d)",I->Obj.Name,index+1);

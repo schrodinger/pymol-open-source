@@ -179,6 +179,11 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * fixed label representation memory (on/off only) in scenes
+
+   * added support for explicit RESN and RESI specification in 
+     selection macros: ///RESN`RESI/ vs ///RESN/ or ///RESI/
+
    * fixed nonbonded detection problem with discrete objects
 
    * fixed serious bug with "state" selection operator and discrete objects.

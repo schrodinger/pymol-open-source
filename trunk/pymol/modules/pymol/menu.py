@@ -295,7 +295,7 @@ def sele_action(s):
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'")'          ],
            [ 0, ''               ,''                             ],
            [ 1, 'find polar contacts'  ,
-             'cmd.dist("'+s+'_polar_conts","'+s+'&elem n+o","same",quiet=1,mode=2,labels=0)'
+             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
              ],                      
            [ 0, ''               ,''                             ],
            [ 1, 'expand'         , expand(s)         ],
@@ -327,7 +327,7 @@ def mol_action(s):
            [ 0, ''               ,''                             ],
            [ 1, 'assign sec. struc.'  ,'cmd.dss("'+s+'")'        ],
            [ 1, 'find polar contacts'  ,
-             'cmd.dist("'+s+'_polar_conts","'+s+'&elem n+o","same",3.2,quiet=1,mode=1,labels=0)'
+             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
              ],                      
            [ 0, ''          ,''                                              ],
            [ 1, 'freeze state'  ,'cmd.set("state",cmd.get_state(),"'+s+'")'        ],
