@@ -84,7 +84,7 @@ struct _CExecutive {
   CObject *LastEdited;
   int DragMode;
   int Pressed,Over,OldVisibility,ToggleMode;
-  SpecRec *LastChanged;
+  SpecRec *LastChanged,*LastZoomed;
   int ReorderFlag;
   OrthoLineType ReorderLog;
 
@@ -7338,12 +7338,20 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   I->DragMode = 0;
                   I->ToggleMode=0;
                   I->LastChanged=NULL;
-                  
-                  if(mod&cOrthoSHIFT) {
+                  I->LastZoomed=NULL;
+                  if(mod==(cOrthoSHIFT|cOrthoCTRL)) {
+                    I->ToggleMode=2;
+                    if(!rec->visible) {
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                    }
+                    if(rec!=I->LastZoomed) 
+                      ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,SettingGetGlobal_b(G,cSetting_animation));
+                    I->LastZoomed=rec;
+                    I->LastChanged=rec;
+                  } else if(mod&cOrthoSHIFT) {
                     ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
                     I->ToggleMode=1;
-                  }
-                  if(mod&cOrthoCTRL) {
+                  } else if(mod&cOrthoCTRL) {
                     I->ToggleMode=2;
                     if(!rec->visible) {
                       ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
@@ -7352,10 +7360,22 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   } 
                   break;
                 case P_GLUT_MIDDLE_BUTTON:
+                  I->DragMode = 2; /* TODO center/zoom */
+                  I->LastZoomed=NULL;
+                  if(mod&cOrthoCTRL) {
+                    ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,SettingGetGlobal_b(G,cSetting_animation));
+                  } else {
+                    ExecutiveCenter(G,rec->name,-1,true,SettingGetGlobal_b(G,cSetting_animation));
+                  }
+                  if(!rec->visible) {
+                    ExecutiveSpecSetVisibility(G,rec,!rec->visible,mod);
+                    I->LastChanged=rec;
+                  }
+                  break;
+                case P_GLUT_RIGHT_BUTTON:
                   I->DragMode = 1; /* reorder */
                   I->Pressed = n;
                   I->Over = n;
-                  
                   break;
                 }
                 OrthoGrab(G,I->Block);
@@ -7579,11 +7599,18 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                     break;
                   case 2:
                     if((row==I->Over)&&row) {
-                      if(I->LastChanged!=rec)
+                      if(I->LastChanged!=rec) {
                         ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
+                      }
                       if(!rec->visible) {
                         ExecutiveSpecSetVisibility(G,rec,true,mod);
                         I->LastChanged=rec;
+                      }
+                      if((mod==(cOrthoSHIFT|cOrthoCTRL))) {
+                        if(rec!=I->LastZoomed) 
+                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
+                                              SettingGetGlobal_b(G,cSetting_animation));
+                        I->LastZoomed=rec;
                       }
                     }
                     break;
@@ -7654,6 +7681,34 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
           }
         }
         break;
+        /*
+          case 2:
+          while(ListIterate(I->Spec,rec,next)) {
+          if(rec->name[0]!='_')
+          {
+          if(skip) {
+          skip--;
+          } else {
+          if( ((row>=I->Over)&&(row<=I->Pressed))||
+          ((row>=I->Pressed)&&(row<=I->Over))) {
+          rec->hilight=true;
+          I->Over = row;
+          if(I->LastZoomed!=rec) {
+          if(mod&cOrthoCTRL) {
+          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,SettingGetGlobal_b(G,cSetting_animation));
+          } else {
+          ExecutiveCenter(G,rec->name,-1,true,SettingGetGlobal_b(G,cSetting_animation));
+          }
+          I->LastZoomed = rec;
+                  }
+                  break;
+                  }
+                  row++;
+                  }
+                  }
+                  }
+                  break;*/
+        
       }
     } else if(I->LastChanged)
       ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);      
@@ -8066,6 +8121,8 @@ int ExecutiveInit(PyMOLGlobals *G)
   I->NSkip=0;
   I->HowFarDown=0;
   I->sizeFlag=false;
+  I->LastZoomed = NULL;
+  I->LastChanged = NULL;
 
   ListElemCalloc(G,rec,SpecRec);
   strcpy(rec->name,"(all)");
