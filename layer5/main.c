@@ -102,8 +102,6 @@ void launch(void);
 
 void MainOnExit(void);
 
-#include <OpenGL/glext.h>
-
 static void DrawBlueLine()
 {
   GLint i;
@@ -127,14 +125,18 @@ static void DrawBlueLine()
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_LINE_STIPPLE);
     glDisable(GL_SCISSOR_TEST);
+#ifdef _PYMOL_OSX
     glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
+#endif
     glDisable(GL_STENCIL_TEST);
+#ifdef _PYMOL_OSX
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_3D);
     glDisable(GL_TEXTURE_CUBE_MAP);
     glDisable(GL_TEXTURE_RECTANGLE_EXT);
     glDisable(GL_VERTEX_PROGRAM_ARB);
+#endif
   
     for(buffer = GL_BACK_LEFT; buffer <= GL_BACK_RIGHT; buffer++) {
       GLint matrixMode;
