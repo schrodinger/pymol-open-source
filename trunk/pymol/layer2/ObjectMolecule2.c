@@ -1143,7 +1143,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
       }
 
       if(cont->nbond) {
-        ObjectDist *distObj;
+        /*        ObjectDist *distObj;*/
         UtilNCopy(name,I->Obj.Name,sizeof(WordType));
         UtilNConcat(name,"_",sizeof(WordType));
         UtilNConcat(name,cont->name,sizeof(WordType));

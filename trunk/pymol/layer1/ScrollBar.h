@@ -29,7 +29,9 @@ void ScrollBarDoClick(struct CScrollBar *I,int button,int x,int y,int mod);
 void ScrollBarDoDrag(struct CScrollBar *I,int x,int y,int mod);
 Block *ScrollBarGetBlock(struct CScrollBar *);
 float ScrollBarGetValue(struct CScrollBar *I);
+void ScrollBarMaxOut(struct CScrollBar *I);
 void ScrollBarUpdate(struct CScrollBar *I);
+int ScrollBarIsMaxed(struct CScrollBar *I);
 
 #endif
 

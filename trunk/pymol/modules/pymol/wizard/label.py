@@ -12,6 +12,12 @@ class Label(Wizard):
    labeling=1
    obj_name=None
 
+   def __init__(self):
+
+      cmd.unpick()
+      
+      Wizard.__init__(self)
+      
    def get_prompt(self):
       self.prompt = []
       if (not self.messages):

@@ -26,12 +26,12 @@ Z* -------------------------------------------------------------------
 #define cButModeRotZ     4
 #define cButModeClipN    5
 #define cButModeClipF    6
-#define cButModePk1      7
-#define cButModePk2      8  
-#define cButModePk3      9  
-#define cButModeAddToPk1 10
-#define cButModeAddToPk2 11
-#define cButModeAddToPk3 12
+#define cButModeLB       7
+#define cButModeMB       8  
+#define cButModeRB       9  
+#define cButModeAddToLB 10
+#define cButModeAddToMB 11
+#define cButModeAddToRB 12
 #define cButModePickAtom 13
 #define cButModePickBond 14
 #define cButModeRotFrag  15
@@ -46,16 +46,18 @@ Z* -------------------------------------------------------------------
 #define cButModePkTorBnd 24
 #define cButModeScaleSlab 25
 #define cButModeMoveSlab  26
-#define cButModeSlabMove  27
-#define cButModeCount    28
+#define cButModePickAtom1 27
+#define cButModeMoveAtom 28
+#define cButModeCount    29
+
+/* remaineder only used in scene... */
 
 #define cButModeScaleSlabShrink 101
 #define cButModeScaleSlabExpand 102
 #define cButModeMoveSlabForward 103
 #define cButModeMoveSlabBackward 104
 
-
-typedef char CodeType[25];
+typedef char CodeType[10];
 
 typedef struct {
   Block *Block;

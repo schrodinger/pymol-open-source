@@ -41,17 +41,59 @@ typedef struct {
   int ActiveState;
   int DragIndex;
   int DragSelection;
-  int DragSele0;
-  int DragSele1;
   int DragHaveAxis,DragHaveBase,DragBondFlag,DragSlowFlag;
+  int PickMode; /* 1 = atom, 2 = bond, 3 = multiatom */
+  int NextPickSele;
+  int BondMode;
   ObjectMolecule *DragObject;
   int NFrag;
   float V0[3],V1[3],Axis[3],Center[3],DragBase[3];
-
+  float *PosVLA;
+  int ShowFrags;
 }  CEditor;
 
 CEditor Editor;
 
+int EditorDeselectIfSelected(int index,int update)
+{
+  CEditor *I = &Editor;
+  int result = false;
+  int s,sele;
+  if(I->Obj) {
+    if((index>=0)&&(index<I->Obj->NAtom)) {
+      s=I->Obj->AtomInfo[index].selEntry;                  
+    }
+  }
+  sele = SelectorIndexByName(cEditorSele1);
+  if(SelectorIsMember(s,sele)) {
+    ExecutiveDelete(cEditorSele1);
+    result = true;
+  }
+  sele = SelectorIndexByName(cEditorSele2);
+  if(SelectorIsMember(s,sele)) {
+    ExecutiveDelete(cEditorSele2);
+    result = true;
+  }
+  sele = SelectorIndexByName(cEditorSele3);
+  if(SelectorIsMember(s,sele)) {
+    ExecutiveDelete(cEditorSele3);
+    result = true;
+  }
+  sele = SelectorIndexByName(cEditorSele4);
+  if(SelectorIsMember(s,sele)) {
+    ExecutiveDelete(cEditorSele4);
+    result = true;
+  }
+  if(result&&update)
+    EditorSetActiveObject(I->Obj,I->ActiveState);
+  return result;
+}
+
+int EditorIsBondMode(void)
+{
+  CEditor *I = &Editor;
+  return(I->BondMode);
+}
 
 PyObject *EditorAsPyList(void)
 {
@@ -104,6 +146,12 @@ int EditorFromPyList(PyObject *list)
 
 int EditorActive(void) {
   CEditor *I = &Editor;
+  if(!I->Obj)
+    return 0;
+  if(I->Obj) {
+    return 1;
+  }
+
   return(I->Obj!=NULL);
 }
 
@@ -114,6 +162,73 @@ ObjectMolecule *EditorDragObject(void)
 }
 static void subdivide( int n, float *x, float *y);
 
+int EditorGetSinglePicked(char *name)
+{
+  int cnt = 0;
+  int sele;
+  if((sele = SelectorIndexByName(cEditorSele1))>=0) {
+    cnt++;
+    if(name) strcpy(name,cEditorSele1);
+  }
+  if((sele = SelectorIndexByName(cEditorSele2))>=0) {
+    cnt++;
+    if(name) strcpy(name,cEditorSele2);
+  }
+  if((sele = SelectorIndexByName(cEditorSele3))>=0) {
+    cnt++;
+    if(name) strcpy(name,cEditorSele3);
+  }
+  if((sele = SelectorIndexByName(cEditorSele4))>=0) {
+    cnt++;
+    if(name) strcpy(name,cEditorSele4);
+  }
+  return (cnt==1);
+}
+
+int EditorIsObjectNotCurrent(ObjectMolecule *obj)
+{
+  CEditor *I = &Editor;
+  if(!I->Obj) return 0;
+  return (I->Obj!=obj);
+}
+
+void EditorGetNextMultiatom(char *name)
+{
+  CEditor *I = &Editor;
+  int sele;
+  sele = SelectorIndexByName(cEditorSele1);
+  if(sele<0) {
+    strcpy(name,cEditorSele1);
+    I->NextPickSele=0;
+    return;
+  }
+  sele = SelectorIndexByName(cEditorSele2);
+  if(sele<0) {
+    strcpy(name,cEditorSele2);
+    I->NextPickSele=1;
+    return;
+  }
+  sele = SelectorIndexByName(cEditorSele3);
+  if(sele<0) {
+    strcpy(name,cEditorSele3);
+    I->NextPickSele=2;
+    return;
+  }
+  sele = SelectorIndexByName(cEditorSele4);
+  if(sele<0) {
+    strcpy(name,cEditorSele4);
+    I->NextPickSele=3;
+    return;
+  }
+  I->NextPickSele = (++I->NextPickSele)&0x3;
+  switch(I->NextPickSele) {
+  case 0: strcpy(name,cEditorSele1); break;
+  case 1: strcpy(name,cEditorSele2); break;
+  case 2: strcpy(name,cEditorSele3); break;
+  case 3: strcpy(name,cEditorSele4); break;
+  }
+  return;    
+}
 
 /*========================================================================*/
 int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
@@ -339,9 +454,12 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
 {
   int i0=-1;
   int i1=-1;
-  int sele0,sele1;
+  int i2=-1;
+  int i3=-1;
+  int sele0,sele1,sele2,sele3;
   int result=false;
-  ObjectMolecule *obj0=NULL,*obj1=NULL;
+  int ok = true;
+  ObjectMolecule *obj0=NULL,*obj1=NULL,*obj2=NULL,*obj3=NULL,*consensus_obj=NULL;
 
   if(s0)
     if(!*s0)
@@ -361,55 +479,86 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
     obj0 = SelectorGetSingleObjectMolecule(sele0);
     if(obj0)
       i0 = ObjectMoleculeGetAtomIndex(obj0,sele0);
+    ExecutiveDelete(cEditorSele1);
   }
  
   if(s1) {
     sele1 = SelectorIndexByName(s1);
     if(sele1>=0) {
-      EditorSetActiveObject(NULL,0);
       obj1 = SelectorGetSingleObjectMolecule(sele1);
       if(obj1)
         i1 = ObjectMoleculeGetAtomIndex(obj1,sele1);
     }
+    ExecutiveDelete(cEditorSele2);
   }
-  
-  if(obj0&&s0&&(!s1)) { /* single atom mode */
-    if(i0>=0) {
-      ObjectMoleculeVerifyChemistry(obj0);
-      SelectorCreate(cEditorSele1,s0,NULL,quiet,NULL); /* wasteful but who cares */
-      ExecutiveDelete(cEditorSele2);
-      EditorSetActiveObject(obj0,SceneGetState());
-      if(pkresi) {
-        SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
-        SelectorCreate(cEditorChain,"(bychain pk1)",NULL,true,NULL);
-        SelectorCreate(cEditorObject,"(byobject pk1)",NULL,true,NULL);
-        if(SettingGet(cSetting_auto_hide_selections))
-          ExecutiveHideSelections();
-      }
-      SceneDirty();
-      result=true;
-    } else {
-      EditorSetActiveObject(NULL,0);
-      ErrMessage("Editor","Invalid selection. Requires a single atom selection.");
+
+  if(s2) {
+    sele2 = SelectorIndexByName(s2);
+    if(sele2>=0) {
+      obj2 = SelectorGetSingleObjectMolecule(sele2);
+      if(obj2)
+        i2 = ObjectMoleculeGetAtomIndex(obj2,sele2);
     }
-  } else if (obj0&&s0&&s1) {
-    if((i0>=0)&&(i1>=0)) {
-      if(obj0!=obj1) {
-        i0=-1;
-      } else if(!ObjectMoleculeAreAtomsBonded(obj0,i0,i1)) {
-          i0=-1;
-      }
+    ExecutiveDelete(cEditorSele3);
+  }
+
+  if(s3) {
+    sele3 = SelectorIndexByName(s3);
+    if(sele3>=0) {
+      obj3 = SelectorGetSingleObjectMolecule(sele3);
+      if(obj3)
+        i3 = ObjectMoleculeGetAtomIndex(obj3,sele3);
     }
-    if((i0>=0)&&(i1>=0)) {
-      SelectorCreate(cEditorSele1,s0,NULL,quiet,NULL);
-      SelectorCreate(cEditorSele2,s1,NULL,quiet,NULL);
-      EditorSetActiveObject(obj0,SceneGetState());
-      SceneDirty();
-      result=true;
-    } else {
-      EditorSetActiveObject(NULL,0);
-      ErrMessage("Editor","Invalid selections. Requires two bonded atoms in the same moilecule");
+    ExecutiveDelete(cEditorSele4);
+  }
+
+  /* TODO verify objects */
+
+  if(ok) {
+    if(obj0) {
+      consensus_obj = obj0;
+    } 
+    if(obj1) {
+      if(!consensus_obj)
+        consensus_obj = obj1;
+      else if(consensus_obj!=obj1)
+        ok=false;
     }
+    if(obj2) {
+      if(!consensus_obj)
+        consensus_obj = obj2;
+      else if(consensus_obj!=obj2)
+        ok=false;
+    }
+    if(obj3) {
+      if(!consensus_obj)
+        consensus_obj = obj3;
+      else if(consensus_obj!=obj3)
+        ok=false;
+    }
+  }
+
+  if(!consensus_obj) ok=false;
+  if(ok) {
+    ObjectMoleculeVerifyChemistry(consensus_obj);  
+    
+    if(i0>=0) SelectorCreate(cEditorSele1,s0,NULL,quiet,NULL);
+    if(i1>=0) SelectorCreate(cEditorSele2,s1,NULL,quiet,NULL);
+    if(i2>=0) SelectorCreate(cEditorSele3,s2,NULL,quiet,NULL);
+    if(i3>=0) SelectorCreate(cEditorSele4,s3,NULL,quiet,NULL);
+    
+    EditorSetActiveObject(consensus_obj,SceneGetState());        
+
+    if(pkresi&&((i0>=0)&&(i1<0)&&(i2<0)&&(i3<0))) {
+      SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
+      SelectorCreate(cEditorChain,"(bychain pk1)",NULL,true,NULL);
+      SelectorCreate(cEditorObject,"(byobject pk1)",NULL,true,NULL);
+      if(SettingGet(cSetting_auto_hide_selections))
+        ExecutiveHideSelections();
+    }
+    SceneDirty();
+    result=true;
+
   } else {
     EditorSetActiveObject(NULL,0);
     ErrMessage("Editor","Invalid input.");    
@@ -624,21 +773,191 @@ void EditorReplace(char *elem,int geom,int valence,char *name)
   }
 }
 
+static void draw_bond(float *v0,float *v1)
+{
+  
+  float v[3],v2[3],v3[3];
+  float d0[3],n0[3],n1[3],n2[3];
+  float x[50],y[50];
+  int nEdge;
+  int c,a;
+  float tube_size1=0.5F;
+  float tube_size3=0.45F;
+
+  nEdge = (int)SettingGet(cSetting_stick_quality)*2;
+  if(nEdge>50)
+    nEdge=50;
+  
+  subdivide(nEdge,x,y);
+
+
+  subtract3f(v1,v0,d0);
+  average3f(v1,v0,v2);
+  average3f(v0,v2,v3);
+  average3f(v2,v3,v2);
+  copy3f(d0,n0);
+  get_system1f3f(n0,n1,n2);
+  
+  glColor3fv(ColorGet(0));
+  glBegin(GL_TRIANGLE_STRIP);
+  for(a=0;a<=nEdge;a++) {
+    c=a % nEdge;
+    v[0] =  n1[0]*x[c] + n2[0]*y[c];
+    v[1] =  n1[1]*x[c] + n2[1]*y[c];
+    v[2] =  n1[2]*x[c] + n2[2]*y[c];
+    normalize3f(v);
+    glNormal3fv(v);
+    v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
+    v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
+    v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
+    glVertex3fv(v);
+    
+    v[0] = v3[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
+    v[1] = v3[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
+    v[2] = v3[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
+    glVertex3fv(v);
+  }
+  glEnd();
+  
+  glBegin(GL_TRIANGLE_STRIP);
+  glNormal3fv(n0);
+  for(a=0;a<=nEdge;a++) {
+    c=a % nEdge;
+    v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
+    v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
+    v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
+    glVertex3fv(v);
+    v[0] = v2[0] + n1[0]*tube_size3*x[c] + n2[0]*tube_size3*y[c];
+    v[1] = v2[1] + n1[1]*tube_size3*x[c] + n2[1]*tube_size3*y[c];
+    v[2] = v2[2] + n1[2]*tube_size3*x[c] + n2[2]*tube_size3*y[c];
+    glVertex3fv(v);
+  }
+  glEnd();
+  
+  glBegin(GL_TRIANGLE_STRIP);
+  scale3f(n0,-1.0F,v);
+  glNormal3fv(v);
+  for(a=0;a<=nEdge;a++) {
+    c=a % nEdge;
+    v[0] = v3[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
+    v[1] = v3[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
+    v[2] = v3[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
+    glVertex3fv(v);
+    v[0] = v3[0] + n1[0]*tube_size3*x[c] + n2[0]*tube_size3*y[c];
+    v[1] = v3[1] + n1[1]*tube_size3*x[c] + n2[1]*tube_size3*y[c];
+    v[2] = v3[2] + n1[2]*tube_size3*x[c] + n2[2]*tube_size3*y[c];
+    glVertex3fv(v);
+  }
+  glEnd();
+
+}
+
+static void draw_globe(float *v2)
+{
+  float v[3];
+  float n0[3],n1[3],n2[3];
+  float x[50],y[50];
+  int nEdge;
+  int a,c;
+  float tube_size1=0.5F;
+  float tube_size2=0.07F;
+
+  nEdge = (int)SettingGet(cSetting_stick_quality)*2;
+  if(nEdge>50)
+    nEdge=50;
+  
+  subdivide(nEdge,x,y);
+  
+  
+  n0[0]=1.0;
+  n0[1]=0.0;
+  n0[2]=0.0;
+  get_system1f3f(n0,n1,n2);
+  
+  glColor3fv(ColorGet(0));
+  glBegin(GL_TRIANGLE_STRIP);
+  for(a=0;a<=nEdge;a++) {
+    c=a % nEdge;
+    v[0] =  n1[0]*x[c] + n2[0]*y[c];
+    v[1] =  n1[1]*x[c] + n2[1]*y[c];
+    v[2] =  n1[2]*x[c] + n2[2]*y[c];
+    normalize3f(v);
+    glNormal3fv(v);
+    v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n0[0]*tube_size2;
+    v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n0[1]*tube_size2;
+    v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n0[2]*tube_size2;
+    glVertex3fv(v);
+    v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n0[0]*tube_size2;
+    v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n0[1]*tube_size2;
+    v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n0[2]*tube_size2;
+    glVertex3fv(v);
+  }
+  glEnd();
+  
+  glBegin(GL_TRIANGLE_STRIP);
+  for(a=0;a<=nEdge;a++) {
+    c=a % nEdge;
+    v[0] =  n0[0]*x[c] + n2[0]*y[c];
+    v[1] =  n0[1]*x[c] + n2[1]*y[c];
+    v[2] =  n0[2]*x[c] + n2[2]*y[c];
+    normalize3f(v);
+    glNormal3fv(v);
+    v[0] = v2[0] + n0[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n1[0]*tube_size2;
+    v[1] = v2[1] + n0[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n1[1]*tube_size2;
+    v[2] = v2[2] + n0[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n1[2]*tube_size2;
+    glVertex3fv(v);
+    v[0] = v2[0] + n0[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n1[0]*tube_size2;
+    v[1] = v2[1] + n0[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n1[1]*tube_size2;
+    v[2] = v2[2] + n0[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n1[2]*tube_size2;
+    glVertex3fv(v);
+  }
+  glEnd();
+  
+  glBegin(GL_TRIANGLE_STRIP);
+  for(a=0;a<=nEdge;a++) {
+    c=a % nEdge;
+    v[0] =  n0[0]*x[c] + n1[0]*y[c];
+    v[1] =  n0[1]*x[c] + n1[1]*y[c];
+    v[2] =  n0[2]*x[c] + n1[2]*y[c];
+    normalize3f(v);
+    glNormal3fv(v);
+    v[0] = v2[0] + n0[0]*tube_size1*x[c] + n1[0]*tube_size1*y[c]+n2[0]*tube_size2;
+    v[1] = v2[1] + n0[1]*tube_size1*x[c] + n1[1]*tube_size1*y[c]+n2[1]*tube_size2;
+    v[2] = v2[2] + n0[2]*tube_size1*x[c] + n1[2]*tube_size1*y[c]+n2[2]*tube_size2;
+    glVertex3fv(v);
+    v[0] = v2[0] + n0[0]*tube_size1*x[c] + n1[0]*tube_size1*y[c]-n2[0]*tube_size2;
+    v[1] = v2[1] + n0[1]*tube_size1*x[c] + n1[1]*tube_size1*y[c]-n2[1]*tube_size2;
+    v[2] = v2[2] + n0[2]*tube_size1*x[c] + n1[2]*tube_size1*y[c]-n2[2]*tube_size2;
+    glVertex3fv(v);
+  }
+  glEnd();
+  
+}
+
+
+static void draw_string(float *v,char *l)
+{
+  glDisable(GL_DEPTH_TEST);	 
+  glDisable(GL_LIGHTING);
+  if(*l) {
+    glColor3f(1.0,0.0,0.5);
+    glRasterPos4f(v[0],v[1],v[2],1.0);
+  }
+  while(*l) {
+    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(l++));
+  }
+  glEnable(GL_LIGHTING);
+  glEnable(GL_DEPTH_TEST);	 
+}
+
+
 /*========================================================================*/
 void EditorRender(int state)
 {
   CEditor *I = &Editor;
   int i0,i1;
-  float v[3],v0[3],v1[3],v2[3],v3[3];
-  float d0[3],n0[3],n1[3],n2[3];
-  float x[50],y[50];
-  int sele0,sele1;
-  int nEdge;
-  int c,a;
-  float tube_size1=0.5F;
-  float tube_size2=0.07F;
-  float tube_size3=0.45F;
-
+  int sele1,sele2,sele3,sele4;
+  float v0[3],v1[3],v2[3];
 
   if(I->Obj&&(state!=I->ActiveState))
     {
@@ -652,176 +971,56 @@ void EditorRender(int state)
       ENDFD;
 
     if(PMGUI) {
+      
+      sele1 = SelectorIndexByName(cEditorSele1);
+      sele2 = SelectorIndexByName(cEditorSele2);
+      sele3 = SelectorIndexByName(cEditorSele3);
+      sele4 = SelectorIndexByName(cEditorSele4);
 
-      nEdge = (int)SettingGet(cSetting_stick_quality)*2;
-      if(nEdge>50)
-        nEdge=50;
+      if((sele1>=0)&&(sele2>=0)&&I->BondMode) {
+        /* bond mode */
 
-      subdivide(nEdge,x,y);
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); /* slow */
+        i1 = ObjectMoleculeGetAtomIndex(I->Obj,sele2); /* slow */
+        if((i0>=0)&&(i1>=0)) {
+          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v0);
+          ObjectMoleculeGetAtomVertex(I->Obj,state,i1,v1);
+          draw_bond(v0,v1);
+        }
 
-      sele0 = SelectorIndexByName(cEditorSele1);
-      if(sele0>=0) {
-        sele1 = SelectorIndexByName(cEditorSele2);
-        if(sele1>=0) {
-          /* bond mode */
-          i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
-          i1 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); /* slow */
-          if((i0>=0)&&(i1>=0)) {
-            ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v0);
-            ObjectMoleculeGetAtomVertex(I->Obj,state,i1,v1);
+      } else {
+        /* atom mode */
+        
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); /* slow */
+        if(i0>=0) {
+          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
+          draw_globe(v2);
+        }
+        
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele2); /* slow */
+        if(i0>=0) {
+          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
+          draw_globe(v2);
+        }
 
-            subtract3f(v1,v0,d0);
-            average3f(v1,v0,v2);
-            average3f(v0,v2,v3);
-            average3f(v2,v3,v2);
-            copy3f(d0,n0);
-            get_system1f3f(n0,n1,n2);
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele3); /* slow */
+        if(i0>=0) {
+          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
+          draw_globe(v2);
+        }
 
-            /*            glDisable(GL_LIGHTING);*/
-            glColor3fv(ColorGet(0));
-            glBegin(GL_TRIANGLE_STRIP);
-            for(a=0;a<=nEdge;a++) {
-              c=a % nEdge;
-              v[0] =  n1[0]*x[c] + n2[0]*y[c];
-              v[1] =  n1[1]*x[c] + n2[1]*y[c];
-              v[2] =  n1[2]*x[c] + n2[2]*y[c];
-              normalize3f(v);
-              glNormal3fv(v);
-              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
-              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
-              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
-              glVertex3fv(v);
-
-              v[0] = v3[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
-              v[1] = v3[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
-              v[2] = v3[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
-              glVertex3fv(v);
-            }
-            glEnd();
-
-            glBegin(GL_TRIANGLE_STRIP);
-            glNormal3fv(n0);
-            for(a=0;a<=nEdge;a++) {
-              c=a % nEdge;
-              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
-              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
-              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
-              glVertex3fv(v);
-              v[0] = v2[0] + n1[0]*tube_size3*x[c] + n2[0]*tube_size3*y[c];
-              v[1] = v2[1] + n1[1]*tube_size3*x[c] + n2[1]*tube_size3*y[c];
-              v[2] = v2[2] + n1[2]*tube_size3*x[c] + n2[2]*tube_size3*y[c];
-              glVertex3fv(v);
-            }
-            glEnd();
-
-            glBegin(GL_TRIANGLE_STRIP);
-            scale3f(n0,-1.0F,v);
-            glNormal3fv(v);
-            for(a=0;a<=nEdge;a++) {
-              c=a % nEdge;
-              v[0] = v3[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
-              v[1] = v3[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
-              v[2] = v3[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
-              glVertex3fv(v);
-              v[0] = v3[0] + n1[0]*tube_size3*x[c] + n2[0]*tube_size3*y[c];
-              v[1] = v3[1] + n1[1]*tube_size3*x[c] + n2[1]*tube_size3*y[c];
-              v[2] = v3[2] + n1[2]*tube_size3*x[c] + n2[2]*tube_size3*y[c];
-              glVertex3fv(v);
-            }
-            glEnd();
-
-            /*            glEnable(GL_LIGHTING);*/
-          }
-        } else {
-          /* atom mode */
-          i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
-          if(i0>=0) {
-            ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
-            n0[0]=1.0;
-            n0[1]=0.0;
-            n0[2]=0.0;
-            get_system1f3f(n0,n1,n2);
-
-
-            /*            glColor3fv(ColorGet(0));            
-            for(a=0;a<sp->NMesh,a++) {
-              glBegin(GL_TRIANGLE_STRIP);
-              v3=
-              v[0] =  n1[0]*x[c] + n2[0]*y[c];
-              v[1] =  n1[1]*x[c] + n2[1]*y[c];
-              v[2] =  n1[2]*x[c] + n2[2]*y[c];
-              normalize3f(v);
-              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n0[0]*tube_size2;
-              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n0[1]*tube_size2;
-              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n0[2]*tube_size2;
-              glVertex3fv(v);
-              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n0[0]*tube_size2;
-              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n0[1]*tube_size2;
-              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n0[2]*tube_size2;
-              glVertex3fv(v);
-              
-            }
-            */
-
-            glColor3fv(ColorGet(0));
-            glBegin(GL_TRIANGLE_STRIP);
-            for(a=0;a<=nEdge;a++) {
-              c=a % nEdge;
-              v[0] =  n1[0]*x[c] + n2[0]*y[c];
-              v[1] =  n1[1]*x[c] + n2[1]*y[c];
-              v[2] =  n1[2]*x[c] + n2[2]*y[c];
-              normalize3f(v);
-              glNormal3fv(v);
-              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n0[0]*tube_size2;
-              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n0[1]*tube_size2;
-              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n0[2]*tube_size2;
-              glVertex3fv(v);
-              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n0[0]*tube_size2;
-              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n0[1]*tube_size2;
-              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n0[2]*tube_size2;
-              glVertex3fv(v);
-            }
-            glEnd();
-
-            glBegin(GL_TRIANGLE_STRIP);
-            for(a=0;a<=nEdge;a++) {
-              c=a % nEdge;
-              v[0] =  n0[0]*x[c] + n2[0]*y[c];
-              v[1] =  n0[1]*x[c] + n2[1]*y[c];
-              v[2] =  n0[2]*x[c] + n2[2]*y[c];
-              normalize3f(v);
-              glNormal3fv(v);
-              v[0] = v2[0] + n0[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n1[0]*tube_size2;
-              v[1] = v2[1] + n0[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n1[1]*tube_size2;
-              v[2] = v2[2] + n0[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n1[2]*tube_size2;
-              glVertex3fv(v);
-              v[0] = v2[0] + n0[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n1[0]*tube_size2;
-              v[1] = v2[1] + n0[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n1[1]*tube_size2;
-              v[2] = v2[2] + n0[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n1[2]*tube_size2;
-              glVertex3fv(v);
-            }
-            glEnd();
-
-            glBegin(GL_TRIANGLE_STRIP);
-            for(a=0;a<=nEdge;a++) {
-              c=a % nEdge;
-              v[0] =  n0[0]*x[c] + n1[0]*y[c];
-              v[1] =  n0[1]*x[c] + n1[1]*y[c];
-              v[2] =  n0[2]*x[c] + n1[2]*y[c];
-              normalize3f(v);
-              glNormal3fv(v);
-              v[0] = v2[0] + n0[0]*tube_size1*x[c] + n1[0]*tube_size1*y[c]+n2[0]*tube_size2;
-              v[1] = v2[1] + n0[1]*tube_size1*x[c] + n1[1]*tube_size1*y[c]+n2[1]*tube_size2;
-              v[2] = v2[2] + n0[2]*tube_size1*x[c] + n1[2]*tube_size1*y[c]+n2[2]*tube_size2;
-              glVertex3fv(v);
-              v[0] = v2[0] + n0[0]*tube_size1*x[c] + n1[0]*tube_size1*y[c]-n2[0]*tube_size2;
-              v[1] = v2[1] + n0[1]*tube_size1*x[c] + n1[1]*tube_size1*y[c]-n2[1]*tube_size2;
-              v[2] = v2[2] + n0[2]*tube_size1*x[c] + n1[2]*tube_size1*y[c]-n2[2]*tube_size2;
-              glVertex3fv(v);
-            }
-            glEnd();
-            
-          }
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele4); /* slow */
+        if(i0>=0) {
+          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
+          draw_globe(v2);
+        }
+      }
+      if(I->ShowFrags) {
+        int a;
+        WordType buffer;
+        for(a=0;a<I->NFrag;a++) {
+          sprintf(buffer,"(%d)",a+1);
+          draw_string(I->PosVLA+a*3,buffer);
         }
       }
     }
@@ -837,14 +1036,19 @@ void EditorInactive(void)
     ENDFD;
 
   I->Obj=NULL;
+  I->BondMode = false;
+  I->ShowFrags = false;
   SelectorDeletePrefixSet(cEditorFragPref);
   SelectorDeletePrefixSet(cEditorBasePref);
   ExecutiveDelete(cEditorSele1);      
   ExecutiveDelete(cEditorSele2);    
+  ExecutiveDelete(cEditorSele3);    
+  ExecutiveDelete(cEditorSele4);    
   ExecutiveDelete(cEditorRes);
   ExecutiveDelete(cEditorChain);  
   ExecutiveDelete(cEditorObject);
   ExecutiveDelete(cEditorComp);
+  ExecutiveDelete(cEditorLink);
   /*  if(SettingGet(cSetting_log_conformations)) PLogFlush();
       TODO: resolve this problem:
       we can't assume that Python interpreter isn't blocked
@@ -854,35 +1058,49 @@ void EditorInactive(void)
 /*========================================================================*/
 void EditorSetActiveObject(ObjectMolecule *obj,int state)
 {
-  int sele1,sele2;
+  int sele1,sele2,sele3,sele4;
 
   CEditor *I = &Editor;
   if(obj) {
     I->Obj=obj;
     sele1 = SelectorIndexByName(cEditorSele1);
-    if(sele1>=0) {
-      sele2 = SelectorIndexByName(cEditorSele2);
+    sele2 = SelectorIndexByName(cEditorSele2);
+    sele3 = SelectorIndexByName(cEditorSele3);
+    sele4 = SelectorIndexByName(cEditorSele4);
+
+    if((sele1>=0)||(sele2>=0)||(sele3>=0)||(sele4>=0)) {
+      
       ExecutiveDelete(cEditorComp);      
       ExecutiveDelete(cEditorRes);
       ExecutiveDelete(cEditorChain);
       ExecutiveDelete(cEditorObject);
+      
       I->NFrag = SelectorSubdivideObject(cEditorFragPref,obj,
                                          sele1,sele2,
+                                         sele3,sele4,
                                          cEditorBasePref,
-                                         cEditorComp);
+                                         cEditorComp,
+                                         &I->BondMode);
       I->ActiveState=state;
       
+      if((I->NFrag>1)&&((int)SettingGet(cSetting_editor_label_fragments))) {
+        SelectorComputeFragPos(obj,I->ActiveState,I->NFrag,cEditorFragPref,&I->PosVLA);
+        I->ShowFrags = true;
+      } else {
+        I->ShowFrags = false;
+      }
       if(SettingGet(cSetting_auto_hide_selections))
         ExecutiveHideSelections();
-
+      
     } else {
       EditorInactive();
     }
   } else {
     I->NFrag = SelectorSubdivideObject(cEditorFragPref,NULL,
-                                       -1,-1,
+                                       -1,-1,-1,-1,
                                        cEditorBasePref,
-                                       cEditorComp);
+                                       cEditorComp,
+                                       &I->BondMode);
     EditorInactive();
   }
 }
@@ -890,14 +1108,14 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
 void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
 {
   int frg;
-  int sele0=-1,sele1=-1;
+  int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
   int s;
   WordType name;
   int seleFlag= false;
-  int i0,i1;
+  int i0,i1,i2,i3;
   CEditor *I = &Editor;
   int log_trans = (int)SettingGet(cSetting_log_conformations);
-
+  int drag_sele = -1;
   PRINTFD(FB_Editor)
     " EditorPrepareDrag-Debug: entered. obj %p index %d",obj,index
     ENDFD;
@@ -914,10 +1132,10 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   } else { /* anchored */
     for(frg=1;frg<=I->NFrag;frg++) {
       sprintf(name,"%s%1d",cEditorFragPref,frg);
-      sele0=SelectorIndexByName(name);
-      if(sele0>=0) {
+      drag_sele = SelectorIndexByName(name);
+      if(drag_sele>=0) {
         s=obj->AtomInfo[index].selEntry;
-        seleFlag=SelectorIsMember(s,sele0);
+        seleFlag=SelectorIsMember(s,drag_sele);
       }
       if(seleFlag) {
         strcpy(I->DragSeleName,name);
@@ -931,7 +1149,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
         ENDFB;
 
       I->DragIndex = index;
-      I->DragSelection = sele0;
+      I->DragSelection = drag_sele;
       I->DragObject = obj;
       I->DragHaveAxis = false;
       I->DragHaveBase = false;
@@ -950,39 +1168,107 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
 
       /* get axis or base atom */
 
-      sele0 = SelectorIndexByName(cEditorSele1);
-      if(sele0>=0) {
-        sele1 = SelectorIndexByName(cEditorSele2);
-        I->DragSele0 = sele0;
-        I->DragSele1 = sele1;
-        if((sele0>=0)&&(sele1>=0)) { /* bond mode */
-          I->DragBondFlag=true;
-          i0 = ObjectMoleculeGetAtomIndex(obj,sele0);
-          i1 = ObjectMoleculeGetAtomIndex(obj,sele1);
-          if((i0>=0)&&(i1>=0)) {
-            ObjectMoleculeGetAtomVertex(obj,state,i0,I->V0);
-            ObjectMoleculeGetAtomVertex(obj,state,i1,I->V1);
-            subtract3f(I->V1,I->V0,I->Axis);
-            average3f(I->V1,I->V0,I->Center);
-            normalize3f(I->Axis);
-            I->DragHaveAxis=true;
+      {
+        int cnt=0;
+
+        if((sele0 = SelectorIndexByName(cEditorSele1))>=0) {
+          if(SelectorIsAtomBondedToSele(obj,sele0,drag_sele))
+            cnt++;
+          else
+            sele0 = -1;
+        }
+        if((sele1 = SelectorIndexByName(cEditorSele2))>=0) {
+          if(SelectorIsAtomBondedToSele(obj,sele1,drag_sele))
+            cnt++;
+          else
+            sele1 = -1;
+        }
+        if((sele2 = SelectorIndexByName(cEditorSele3))>=0) {
+          if(SelectorIsAtomBondedToSele(obj,sele2,drag_sele))
+            cnt++;
+          else
+            sele2 = -1;
+        }
+        if((sele3 = SelectorIndexByName(cEditorSele4))>=0) {
+          if(SelectorIsAtomBondedToSele(obj,sele3,drag_sele))
+            cnt++;
+          else
+            sele3 = -1;
+        }
+        
+        i0 = ObjectMoleculeGetAtomIndex(obj,sele0);
+        i1 = ObjectMoleculeGetAtomIndex(obj,sele1);
+        i2 = ObjectMoleculeGetAtomIndex(obj,sele2);
+        i3 = ObjectMoleculeGetAtomIndex(obj,sele3);
+        
+        if(cnt>1) { /* bond/multiatom mode */
+          
+          I->DragBondFlag = I->BondMode;
+          
+          zero3f(I->Center);
+          if(i0>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i0,I->V0);          
+          } else if(i1>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i1,I->V0);          
+          } else if(i2>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i2,I->V0);          
+          } else if(i3>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i3,I->V0);          
           }
+          
+          if(i0>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i0,I->V1);          
+            add3f(I->V1,I->Center,I->Center);
+          } 
+          if(i1>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i1,I->V1);          
+            add3f(I->V1,I->Center,I->Center);
+          }
+          if(i2>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i2,I->V1);          
+            add3f(I->V1,I->Center,I->Center);
+          }
+          if(i3>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i3,I->V1);          
+            add3f(I->V1,I->Center,I->Center);
+          }
+          
+          {
+            float div = 1.0F/cnt;
+            scale3f(I->Center,div,I->Center);
+          }
+          
+          subtract3f(I->Center,I->V0,I->Axis);
+          
+          normalize3f(I->Axis);
+          I->DragHaveAxis=true;
+
         } else { /* atom mode */
-          i0 = ObjectMoleculeGetAtomIndex(obj,sele0);
-          if(i0>=0) 
-            ObjectMoleculeGetAtomVertex(obj,state,i0,I->V0);      
+          
+          if(i0>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i0,I->V0);          
+          } else if(i1>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i1,I->V0);          
+          } else if(i2>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i2,I->V0);          
+          } else if(i3>=0) {
+            ObjectMoleculeGetAtomVertex(obj,state,i3,I->V0);          
+          }
           if(I->DragHaveBase) {
-            copy3f(I->DragBase,I->V1)
-              subtract3f(I->V1,I->V0,I->Axis);
+            copy3f(I->DragBase,I->V1);
+            subtract3f(I->V1,I->V0,I->Axis);
             average3f(I->V1,I->V0,I->Center);
             normalize3f(I->Axis);
             I->DragHaveAxis=true;
           }
         }
       }
-    } else { /* clicked directly on anchor atom */
-
+    } else { /* clicked directly on an anchor atom */
+      
       sele0=SelectorIndexByName(cEditorSele1);
+      if(sele0<0) sele0=SelectorIndexByName(cEditorSele2);
+      if(sele0<0) sele0=SelectorIndexByName(cEditorSele3);
+      if(sele0<0) sele0=SelectorIndexByName(cEditorSele4);
       if(sele0>=0) {
         s=obj->AtomInfo[index].selEntry;
         seleFlag = SelectorIsMember(s,sele0);
@@ -1017,6 +1303,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     }
   }
   if(I->DragObject) {
+    I->ShowFrags = false;
     ObjectMoleculeSaveUndo(I->DragObject,state,log_trans);
     if(SettingGet(cSetting_auto_sculpt)) {
       SettingSet(cSetting_sculpting,1);
@@ -1198,10 +1485,15 @@ void EditorInit(void)
   I->DragObject=NULL;
   I->DragIndex=-1;
   I->DragSelection=-1;
+  I->NextPickSele = 0;
+  I->BondMode = false;
+  I->PosVLA = VLAlloc(float,30);
 }
 /*========================================================================*/
 void EditorFree(void)
 {
+  CEditor *I = &Editor;
+  VLAFreeP(I->PosVLA);
 }
 
 

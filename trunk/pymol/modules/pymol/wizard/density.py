@@ -13,6 +13,8 @@ class Density(Wizard):
 
    def __init__(self):
 
+      cmd.unpick()
+      
       Wizard.__init__(self)
       
       # mode selection subsystem

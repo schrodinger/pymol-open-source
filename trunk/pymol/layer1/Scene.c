@@ -1434,16 +1434,20 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 
     SceneDirty();
     break;
+  case cButModePickAtom1:
   case cButModePickAtom:
+    
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
       SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
+
     I->LastPicked.ptr = NULL;
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) { /* did we pick something? */
+
 		obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
@@ -1451,33 +1455,76 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       I->LastY=y;	
       switch(obj->type) {
       case cObjectMolecule:
-        if(Feedback(FB_ObjectMolecule,FB_Results)) {
-          if(obj->fDescribeElement)
-            obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-          PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
-          if(SettingGet(cSetting_logging)) {
-            objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
-            sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
-            PLog(buf2,cPLog_pym);
+
+        switch(mode) {
+        case cButModePickAtom1:
+          if(Feedback(FB_ObjectMolecule,FB_Results)) {
+            if(obj->fDescribeElement)
+              obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+            PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
+            if(SettingGet(cSetting_logging)) {
+              objMol = (ObjectMolecule*)obj;            
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
+              sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
+              PLog(buf2,cPLog_pym);
+            }
+            OrthoRestorePrompt();
           }
-          OrthoRestorePrompt();
+          sprintf(buffer,"%s`%d",
+                  obj->Name,I->LastPicked.index+1);    
+          SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
+          ExecutiveDelete(cEditorSele2);
+          EditorSetActiveObject((ObjectMolecule*)obj,
+                                SettingGetGlobal_i(cSetting_state)-1);
+          if(EditorActive()) {
+            SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
+            SelectorCreate(cEditorChain,"(bychain pk1)",NULL,true,NULL);
+            SelectorCreate(cEditorObject,"(byobject pk1)",NULL,true,NULL);
+            if(SettingGet(cSetting_auto_hide_selections))
+              ExecutiveHideSelections();
+          }
+          WizardDoPick(0);
+          break;
+        case cButModePickAtom:
+          {
+            WordType name;
+            if(obj->fDescribeElement)
+              obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+            if(EditorIsObjectNotCurrent((ObjectMolecule*)obj))
+              EditorInactive();
+            else if((!EditorIsBondMode())&&EditorDeselectIfSelected(I->LastPicked.index,true)) {
+              
+              PRINTF " You unpicked %s.",buffer ENDF;              
+            } else {
+              if(EditorIsBondMode()&&EditorDeselectIfSelected(I->LastPicked.index,false)) {
+                EditorInactive();
+              }
+              EditorGetNextMultiatom(name);
+              PRINTF " You clicked %s -> (%s)",buffer,name ENDF;
+              /* TODO: logging */
+              
+              sprintf(buffer,"%s`%d",obj->Name,I->LastPicked.index+1);    
+              ExecutiveDelete(name);
+              SelectorCreate(name,buffer,NULL,true,NULL);
+              EditorSetActiveObject((ObjectMolecule*)obj,
+                                    SettingGetGlobal_i(cSetting_state)-1);
+              if(EditorActive()) {
+                if(EditorGetSinglePicked(name)) {
+                  sprintf(buffer,"(byres %s)",name);
+                  SelectorCreate(cEditorRes,buffer,NULL,true,NULL);
+                  sprintf(buffer,"(bychain %s)",name);
+                  SelectorCreate(cEditorChain,buffer,NULL,true,NULL);
+                  sprintf(buffer,"(byobject %s)",name);
+                  SelectorCreate(cEditorObject,buffer,NULL,true,NULL);
+                }
+                if(SettingGet(cSetting_auto_hide_selections))
+                  ExecutiveHideSelections();
+              }
+              WizardDoPick(0);
+            }
+          }
+          break;
         }
-        sprintf(buffer,"%s`%d",
-                obj->Name,I->LastPicked.index+1);    
-        SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
-        ExecutiveDelete(cEditorSele2);
-        EditorSetActiveObject((ObjectMolecule*)obj,
-                              SettingGetGlobal_i(cSetting_state)-1);
-        if(EditorActive()) {
-          SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
-          SelectorCreate(cEditorChain,"(bychain pk1)",NULL,true,NULL);
-          SelectorCreate(cEditorObject,"(byobject pk1)",NULL,true,NULL);
-          if(SettingGet(cSetting_auto_hide_selections))
-            ExecutiveHideSelections();
-        }
-        
-        WizardDoPick(0);
         break;
       case cObjectGadget:
         break;
@@ -1509,6 +1556,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 
       switch(obj->type) {
       case cObjectMolecule:
+
+        EditorInactive();
         if(Feedback(FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement)
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
@@ -1579,7 +1628,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeMovFrag:
   case cButModeTorFrag:
   case cButModeRotFrag:
-
+  case cButModeMoveAtom:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
       SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
@@ -1620,12 +1669,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     }
     break;
  
-  case cButModePk1:
-  case cButModePk2:
-  case cButModePk3:
-  case cButModeAddToPk1:
-  case cButModeAddToPk2:
-  case cButModeAddToPk3:
+  case cButModeLB:
+  case cButModeMB:
+  case cButModeRB:
+  case cButModeAddToLB:
+  case cButModeAddToMB:
+  case cButModeAddToRB:
   case cButModeOrigAt:
   case cButModeCent:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
@@ -1650,16 +1699,16 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         sprintf(buffer,"%s`%d",
                 obj->Name,I->LastPicked.index+1);
         switch(mode) {
-        case cButModePk1:
-        case cButModeAddToPk1:
+        case cButModeLB:
+        case cButModeAddToLB:
           strcpy(selName,"lb");
           break;
-        case cButModePk2:
-        case cButModeAddToPk2:
+        case cButModeMB:
+        case cButModeAddToMB:
           strcpy(selName,"mb");
           break;
-        case cButModePk3:
-        case cButModeAddToPk3:
+        case cButModeRB:
+        case cButModeAddToRB:
           strcpy(selName,"rb");
           break;
         case cButModeOrigAt:
@@ -1701,9 +1750,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           break;
         }
         switch(mode) {
-        case cButModePk1:
-        case cButModePk2:
-        case cButModePk3:
+        case cButModeLB:
+        case cButModeMB:
+        case cButModeRB:
           SelectorCreate(selName,buffer,NULL,false,NULL);
           if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
@@ -1719,9 +1768,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           }
           WizardDoSelect(selName);
           break;
-        case cButModeAddToPk1:
-        case cButModeAddToPk2:
-        case cButModeAddToPk3:
+        case cButModeAddToLB:
+        case cButModeAddToMB:
+        case cButModeAddToRB:
           if(SelectorIndexByName(selName)>=0) {
             sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
                     selName,buffer,buffer,selName);
@@ -2222,6 +2271,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   case cButModeMovFrag:
   case cButModeTorFrag:
   case cButModeRotFrag:
+  case cButModeMoveAtom:
   case cButModePkTorBnd:
     obj=(CObject*)I->LastPicked.ptr;
     if(obj)
@@ -2248,8 +2298,15 @@ int SceneDrag(Block *block,int x,int y,int mod)
           /* transform into model coodinate space */
           MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
           MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
-          EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
-                     SettingGetGlobal_i(cSetting_state)-1,v1,v2,v3);
+          if(mode!=cButModeMoveAtom) {
+            EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
+                       SettingGetGlobal_i(cSetting_state)-1,v1,v2,v3);
+          } else {
+            int log_trans = (int)SettingGet(cSetting_log_conformations);
+            ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(cSetting_state)-1,
+                                   I->LastPicked.index,v2,1,log_trans);
+            SceneDirty();
+          }
         }
         break;
       default:

@@ -358,6 +358,7 @@ if __name__=='pymol.setting':
       ray_blend_blue        = 318
       png_screen_gamma      = 319
       png_file_gamma        = 320
+      editor_label_fragments = 321
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

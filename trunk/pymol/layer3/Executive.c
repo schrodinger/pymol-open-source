@@ -6036,13 +6036,40 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
       OrthoUngrab();
     }
   } 
+
   skip=I->NSkip;
+
+  if(!pass)
+    {
+      int xx,t;
+      
+      xx = (x-I->Block->rect.left);
+      t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
+      
+      if(I->ScrollBarActive) {
+      xx -= (ExecScrollBarWidth+ExecScrollBarMargin);
+      }
+      if((xx>=0)&&(t>=ExecOpCnt)) {
+        int n=(I->Block->rect.top-(y+1))/ExecLineHeight;
+        if(n!=I->Pressed)
+        I->Active = -1;
+        else
+          I->Active = I->Pressed;
+      } else {
+        I->Active = -1;
+      }
+    }
+
+  if(pass) {
+    if(I->Active!=I->Pressed)
+      pass = true;
+  }
   if(!pass) while(ListIterate(I->Spec,rec,next))
     if(rec->name[0]!='_')
       {
         if(skip) {
           skip--;
-        } else 
+        } else if(I->Active>=0) 
           {
             if(!n) {
               {
@@ -6126,11 +6153,23 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
 int ExecutiveDrag(Block *block,int x,int y,int mod)
 {
   CExecutive *I = &Executive;
-  int n=(I->Block->rect.top-(y+1))/ExecLineHeight;
-  if(n!=I->Pressed)
+  int xx,t;
+
+  xx = (x-I->Block->rect.left);
+  t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
+  
+  if(I->ScrollBarActive) {
+    xx -= (ExecScrollBarWidth+ExecScrollBarMargin);
+  }
+  if((xx>=0)&&(t>=ExecOpCnt)) {
+    int n=(I->Block->rect.top-(y+1))/ExecLineHeight;
+    if(n!=I->Pressed)
+      I->Active = -1;
+    else
+      I->Active = I->Pressed;
+  } else {
     I->Active = -1;
-  else
-    I->Active = I->Pressed;
+  }
   OrthoDirty();
   return(1);
 }
@@ -6221,13 +6260,20 @@ void ExecutiveDraw(Block *block)
     if(n_disp<1) n_disp=1;
       
     if(n_ent>n_disp) {
+      int bar_maxed = ScrollBarIsMaxed(I->ScrollBar);
       if(!I->ScrollBarActive) {
         ScrollBarSetLimits(I->ScrollBar,n_ent,n_disp);
-        ScrollBarSetValue(I->ScrollBar,0);
-        I->NSkip =0;
+        if(bar_maxed) {
+          ScrollBarMaxOut(I->ScrollBar);
+          I->NSkip = (int)ScrollBarGetValue(I->ScrollBar);
+        } else {
+          ScrollBarSetValue(I->ScrollBar,0);
+          I->NSkip =0;
+        }
       } else {
         ScrollBarSetLimits(I->ScrollBar,n_ent,n_disp);
-        
+        if(bar_maxed)
+          ScrollBarMaxOut(I->ScrollBar);
         I->NSkip = (int)ScrollBarGetValue(I->ScrollBar);
       }
       I->ScrollBarActive = 1;

@@ -2168,6 +2168,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_f(I,cSetting_ray_blend_blue,0.14F);
   SettingSet_f(I,cSetting_png_screen_gamma,2.4F);
   SettingSet_f(I,cSetting_png_file_gamma,1.0F);
+  SettingSet_b(I,cSetting_editor_label_fragments,0);
 
 }
 

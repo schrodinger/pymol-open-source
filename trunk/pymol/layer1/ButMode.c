@@ -126,7 +126,6 @@ void ButModeInit(void)
     I->Mode[a]=-1;
   }
 
-
   strcpy(I->Code[cButModeRotXYZ],  "Rota ");
   strcpy(I->Code[cButModeRotZ],    "RotZ ");  
   strcpy(I->Code[cButModeTransXY], "Move ");
@@ -139,21 +138,23 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeTorFrag], "TorF ");
   strcpy(I->Code[cButModeRotFrag], "RotF ");
   strcpy(I->Code[cButModeMovFrag], "MovF ");
-  strcpy(I->Code[cButModePk1],     " lb  ");
-  strcpy(I->Code[cButModePk2],     " mb  ");
-  strcpy(I->Code[cButModePk3],     " rb  ");
-  strcpy(I->Code[cButModeAddToPk1],"+lb  ");
-  strcpy(I->Code[cButModeAddToPk2],"+mb  ");
-  strcpy(I->Code[cButModeAddToPk3],"+rb  ");
+  strcpy(I->Code[cButModeLB],     " lb  ");
+  strcpy(I->Code[cButModeMB],     " mb  ");
+  strcpy(I->Code[cButModeRB],     " rb  ");
+  strcpy(I->Code[cButModeAddToLB],"+lb  ");
+  strcpy(I->Code[cButModeAddToMB],"+mb  ");
+  strcpy(I->Code[cButModeAddToRB],"+rb  ");
   strcpy(I->Code[cButModeOrigAt],  "Orig ");
   strcpy(I->Code[cButModeRectAdd], "+lBx ");
   strcpy(I->Code[cButModeRectSub], "-lBx ");
   strcpy(I->Code[cButModeRect],    "lbBx ");
   strcpy(I->Code[cButModeNone],    "  -  ");
   strcpy(I->Code[cButModeCent],    "Cent ");
-  strcpy(I->Code[cButModePkTorBnd], "PkTB");
-  strcpy(I->Code[cButModeScaleSlab], "ScSb");
-  strcpy(I->Code[cButModeMoveSlab], "MvSb");
+  strcpy(I->Code[cButModePkTorBnd], "PkTB ");
+  strcpy(I->Code[cButModeScaleSlab], "Slab ");
+  strcpy(I->Code[cButModeMoveSlab], "MovS ");
+  strcpy(I->Code[cButModePickAtom1], "Pk1 ");
+  strcpy(I->Code[cButModeMoveAtom], "MovA ");
 
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ButModeClick;

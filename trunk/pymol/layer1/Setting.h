@@ -462,10 +462,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_ray_blend_blue             318
 #define cSetting_png_screen_gamma           319
 #define cSetting_png_file_gamma             320
+#define cSetting_editor_label_fragments     321
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        321
+#define cSetting_INIT                        322
 
 #endif
 
