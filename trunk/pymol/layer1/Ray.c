@@ -75,6 +75,8 @@ void RayGetSphereNormal(CRay *I,RayInfo *r);
 void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
 void RayReflectAndTexture(CRay *I,RayInfo *r);
 void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,float scale);
+void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
+                          float *c1,float *c2,int cap1,int cap2);
 
 /*========================================================================*/
 void RayGetSphereNormal(CRay *I,RayInfo *r)
