@@ -56,6 +56,8 @@ void *MemoryCacheCalloc(unsigned int number, unsigned int size,int group_id,int 
   MemoryCacheRec *rec = &MemoryCache[group_id][block_id];
   unsigned int true_size = number * size;
 
+  /* interesting result: calloc is faster than cacheing */
+
   if((group_id<0)||(!(int)SettingGet(cSetting_cache_memory)))
     return(mcalloc(number,size));
   if(!rec->ptr) {
@@ -97,10 +99,11 @@ void MemoryCacheFree(void *ptr,int group_id, int block_id,int force)
   MemoryCacheRec *rec = &MemoryCache[group_id][block_id];
   if((group_id<0)||(!(int)SettingGet(cSetting_cache_memory)))
     return(mfree(ptr));
-  if(ptr!=rec->ptr)
+  if(rec->ptr&&(ptr!=rec->ptr))
     printf("Error: Memory Cache Mismatch 2 %d %d\n",group_id,block_id);
   if(force) {
-    mfree(rec->ptr);
+    if(rec->ptr) 
+      mfree(rec->ptr);
     rec->ptr = NULL;
   }
 }
