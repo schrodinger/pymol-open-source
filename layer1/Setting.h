@@ -216,8 +216,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_cartoon_dumbbell_radius     117
 #define cSetting_cartoon_fancy_helices       118
 #define cSetting_cartoon_fancy_sheets        119
+#define cSetting_ignore_pdb_segi             120
 
-#define cSetting_INIT                        120
+#define cSetting_INIT                        121
 
 #endif
 

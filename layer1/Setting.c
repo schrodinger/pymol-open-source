@@ -987,6 +987,8 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_fancy_sheets, 1.0);  
 
+  SettingSet_f(I,cSetting_ignore_pdb_segi, 0.0);  
+
 
 }
 

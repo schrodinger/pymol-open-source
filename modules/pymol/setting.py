@@ -128,7 +128,8 @@ class SettingIndex:
    cartoon_dumbbell_radius   =  117
    cartoon_fancy_helices    =  118
    cartoon_fancy_sheets     =  119
-
+   ignore_pdb_segi       =120
+   
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
 index_list = []
