@@ -85,6 +85,7 @@ void dump3f( float *v, char *prefix );
 void dump3d( double *v, char *prefix );
 void dump4f( float *v, char *prefix );
 void dump33f( float *m, char *prefix );
+void dump33d( double *m, char *prefix );
 void dump44f( float *m, char *prefix );
 
 void copy44f( float *src,float *dst);
