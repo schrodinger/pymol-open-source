@@ -1431,11 +1431,10 @@ void SceneRender(Pickable *pick,int x,int y)
       glEnable(GL_COLOR_MATERIAL);
       glEnable(GL_DITHER);
 
-      v=SettingGetfv(cSetting_ambient);
-      f=SettingGet(cSetting_ambient_scale);
-      vv[0]=v[0]*f;
-      vv[1]=v[0]*f;
-      vv[2]=v[0]*f;
+      f=SettingGet(cSetting_gl_ambient);
+      vv[0]=f;
+      vv[1]=f;
+      vv[2]=f;
       vv[3]=1.0;
 
       glEnable(GL_LIGHTING);

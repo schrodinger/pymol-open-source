@@ -110,7 +110,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_power                        11
 #define cSetting_antialias                    12
 #define cSetting_cavity_cull                  13
-#define cSetting_ambient_scale                14
+#define cSetting_gl_ambient                   14
 #define cSetting_single_image                 15
 #define cSetting_movie_delay                  16
 #define cSetting_ribbon_power                 17

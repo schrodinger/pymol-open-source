@@ -545,7 +545,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_line_smooth:
   case cSetting_ortho:
-  case cSetting_ambient:
+  case cSetting_gl_ambient:
   case cSetting_bg_rgb:
   case cSetting_depth_cue:
   case cSetting_specular:
@@ -626,7 +626,7 @@ void SettingSetfv(int index,float *v)
     /*I->Setting[index].Value[0]=v[0];*/
 	 break;
   case cSetting_ortho:
-  case cSetting_ambient:
+  case cSetting_gl_ambient:
 	 SceneDirty();
     break;
   case cSetting_overlay:
@@ -767,7 +767,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cavity_cull, 10.0);
 
-  SettingSet_f(I,cSetting_ambient_scale, 0.4);
+  SettingSet_f(I,cSetting_gl_ambient,  0.12);
 
   SettingSet_f(I,cSetting_single_image, 0.0);
 
