@@ -661,6 +661,7 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
 
 #ifdef _PYMOL_MONOLITHIC
+#ifndef _PYMOL_ACTIVEX
 void	initExtensionClass();
 void	initsglite();
 void    init_opengl();
@@ -670,6 +671,7 @@ void    init_glu_num();
 void    init_glut();
 void    initopenglutil();
 void    initopenglutil_num();
+#endif
 #endif
 
 void PInitEmbedded(int argc,char **argv)
@@ -687,12 +689,14 @@ void PInitEmbedded(int argc,char **argv)
   int r1,r2;
 #endif
 
-
+#ifndef PYMOL_ACTIVEX
   Py_Initialize();
   PyEval_InitThreads();
+#endif
 
   init_cmd();
 #ifdef _PYMOL_MONOLITHIC
+#ifndef _PYMOL_ACTIVEX
 	initExtensionClass();
 	initsglite();
 #ifdef WIN32
@@ -711,6 +715,7 @@ void PInitEmbedded(int argc,char **argv)
     init_glut();
     initopenglutil();
 	 initopenglutil_num();
+#endif
 #endif
 
   PyRun_SimpleString("import os\n");
@@ -753,6 +758,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   PyObject_SetAttrString(sys,"argv",args);
 
   PXDecRef(PyObject_CallMethod(invocation,"parse_args","O",args)); /* parse the arguments */
+  PyRun_SimpleString("f=open('/xxx.txt','w'); f.close()");
 
 }
 
@@ -1034,6 +1040,7 @@ void PBlock(void)
 
 int PAutoBlock(void)
 {
+#ifndef _PYMOL_ACTIVEX
   int a,id;
   /* synchronize python */
 
@@ -1066,10 +1073,14 @@ int PAutoBlock(void)
     a--;
   }
   return 0;
+#else
+  return 1;
+#endif
 }
 
 void PUnblock(void)
 {
+#ifndef _PYMOL_ACTIVEX
   int a;
   /* NOTE: ASSUMES a locked API */
 
@@ -1092,7 +1103,7 @@ void PUnblock(void)
   PRINTFD(FB_Threads)
     " PUnblock-DEBUG: stored in slot %d\n",a
     ENDFD;
-
+#endif
 }
 
 

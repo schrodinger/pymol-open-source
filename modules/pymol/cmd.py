@@ -144,6 +144,7 @@ def lock_attempt(): # INTERNAL
    return lock_api.acquire(blocking=0)
 
 def unlock(): # INTERNAL
+   print "unlock"
    if (thread.get_ident() == pymol.glutThread):
       lock_api.release()
       _cmd.flush_now()

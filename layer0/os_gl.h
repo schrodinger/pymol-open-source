@@ -37,8 +37,7 @@ Z* -------------------------------------------------------------------
 #endif
 
 #ifdef _PYMOL_ACTIVEX
-#define _PYMOL_PRETEND_GLUT
-#define _PYMOL_PRETEND_GLUT_FONT
+#define _PYMOL_WX_GLUT
 #endif
 
 #ifdef _PYMOL_MIN_GLUT

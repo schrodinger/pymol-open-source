@@ -484,12 +484,11 @@ static PyObject *CmdPGlutGetRedisplay(PyObject *self, PyObject *args)
 static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
 {
   int ok=true;
-
 #ifdef _PYMOL_PRETEND_GLUT
   p_glut_event ev;
   ok = PyArg_ParseTuple(args,"iiiiii",&ev.event_code,
                         &ev.x,&ev.y,&ev.input,&ev.state,&ev.mod);
-  if(ok) {
+   if(ok) {
     PUnblock();
     p_glutHandleEvent(&ev);
     PBlock();
@@ -1678,10 +1677,12 @@ static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
 static PyObject *CmdRunWXPyMOL(PyObject *dummy, PyObject *args)
 {
 #ifdef _PYMOL_WX_GLUT
+#ifndef _PYMOL_ACTIVEX
   if(run_only_once) {
     run_only_once=false;
     was_main();
   }
+#endif
 #endif
 
   return(APISuccess());
