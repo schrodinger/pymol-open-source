@@ -1663,6 +1663,7 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
   double sum,sumsq;
   float mean,stdev;  
   float sf[256][9],*sfp;
+  float lambda = 1.0;
 
   for(a=0;a<256;a++) {
     sf[256][0]=-1.0;
@@ -1846,6 +1847,8 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
   sf[cAN_Se][3] = 0.272600;
    */    
 
+  lambda = SettingGet(cSetting_gaussian_lambda);
+
   buffer+=MAX_VDW;
   c=0;
   n1=0;
@@ -1952,7 +1955,7 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
 
                 j=map->EList[i++];
                 while(j>=0) {
-                  d = (float)diff3f(point+3*j,v2);
+                  d = (float)diff3f(point+3*j,v2)/lambda;
                   if(d<buffer) {
 
                     d=d*d;

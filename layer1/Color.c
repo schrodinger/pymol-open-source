@@ -883,11 +883,16 @@ void ColorReset(void)
     I->NColor++;
   }
 
+  strcpy(I->Color[I->NColor].Name,"density");
+  I->Color[I->NColor].Color[0]=0.05F;
+  I->Color[I->NColor].Color[1]=0.05F;
+  I->Color[I->NColor].Color[2]=0.5F;
+  I->NColor++;
+
   for(a=0;a<I->NColor;a++) { 
     /* mark all current colors non-custom so that they don't get saved in session files */
     I->Color[a].Custom=false;
   }
-
   I->NExt = 0;
 
 }

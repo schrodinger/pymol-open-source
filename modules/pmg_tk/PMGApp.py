@@ -47,7 +47,7 @@ def complete(event,str,widget,self):
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.86'
+   appversion     = '0.88'
    appname       = 'PyMOL Tcl/Tk GUI'
    copyright      = 'Copyright (C) 1998-2002 by Warren DeLano of\nDeLano Scientific LLC. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
@@ -1697,6 +1697,14 @@ class PMGApp(AbstractApp):
                                label='Cartoon Ribbons',
                                command = lambda s=self:s.demo('cartoon'))
 
+      self.menuBar.addmenuitem('Demo', 'command', 'Roving Detail',
+                               label='Roving Detail',
+                               command = lambda s=self:s.demo('roving'))
+
+      self.menuBar.addmenuitem('Demo', 'command', 'Roving Density',
+                               label='Roving Density',
+                               command = lambda s=self:s.demo('roving_density'))
+
       self.menuBar.addmenuitem('Demo', 'command', 'Transparency',
                                label='Transparency',
                                command = lambda s=self:s.demo('trans'))
@@ -1712,6 +1720,7 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Demo', 'command', 'Scripted Animation',
                                label='Scripted Animation',
                                command = lambda s=self:s.demo('anime'))
+
 
       self.menuBar.addmenuitem('Demo', 'command', 'Molscript/Raster3D Input',
                                label='Molscript/Raster3D Input',

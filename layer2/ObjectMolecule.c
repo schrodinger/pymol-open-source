@@ -2946,7 +2946,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
         sprintf(sele2,"%s`%d",I->Obj.Name,at0+1);
         SelectorGetTmp(sele1,s1);
         SelectorGetTmp(sele2,s2);
-        EditorSelect(s1,s2,NULL,NULL,false);
+        EditorSelect(s1,s2,NULL,NULL,false,true);
         SelectorFreeTmp(s1);
         SelectorFreeTmp(s2);
       }

@@ -2036,6 +2036,8 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_scenes_changed, 1.0F);
 
+  SettingSet_f(I,cSetting_gaussian_lambda, 0.5F );
+
 }
 
 
