@@ -304,7 +304,8 @@ if pymol_launch != 3: # if this isn't a dry run
       def launch_gui():
          if invocation.options.external_gui==1:
             __import__(invocation.options.gui)
-
+            sys.modules[invocation.options.gui].__init__(sys.modules['pymol'])
+            
       # -- Greg Landrum's RPC stuff
          if invocation.options.rpcServer:
             import rpc

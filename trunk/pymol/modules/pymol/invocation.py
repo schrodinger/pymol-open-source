@@ -43,6 +43,7 @@ if __name__=='pymol.invocation':
    options.force_stereo = 0
    options.game_mode = 0
    options.gui = 'pmg_tk'
+   options.skin = 'normal'
    options.show_splash = 1
    options.read_stdin = 0
    options.win_x = 640
@@ -206,6 +207,8 @@ if __name__=='pymol.invocation':
                options.incentive_product = 1
             if "t" in a:
                options.gui = 'pmg_tk'
+            if "T" in a: # what skin to use? 
+               options.skin = str(av.pop())
             if "w" in a:
                options.gui = 'pmg_wx'
             if "z" in a:

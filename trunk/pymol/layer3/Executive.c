@@ -4919,8 +4919,6 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
         }
       }
       
-      printf("matchmaker %d\n",matchmaker);
-
       if(ok && op1.nvv1 && op2.nvv1 && (matchmaker>0)) { /* matchmaker 0 is the default */
         int *idx1 = Alloc(int,op1.nvv1);
         int *idx2 = Alloc(int,op2.nvv1);
@@ -5050,9 +5048,13 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
                   val2=op2.ai1VLA[n2]->rank;
                   break;
                 case 4: /* index (via temp1) */
-                   val1=op1.ai1VLA[n1]->temp1;
-                   val2=op2.ai1VLA[n2]->temp1;
-                   break;
+                  val1=op1.ai1VLA[n1]->temp1;
+                  val2=op2.ai1VLA[n2]->temp1;
+                  break;
+                default:
+                  val1=0;
+                  val2=0;
+                  break;
                 }
                 if(val1==val2)
                   cmp = 0;
@@ -6658,7 +6660,6 @@ void ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
 /*========================================================================*/
 void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
 {
-
 #ifndef _PYMOL_NO_GLUT
   register CExecutive *I = G->Executive;
   if(G->HaveGUI && G->ValidContext) {
