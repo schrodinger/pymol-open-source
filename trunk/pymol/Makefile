@@ -44,10 +44,10 @@ depends:
 	$(MAKE) .depends
 
 clean: 
-	/bin/rm -f *.log core */core game.* log.* layer*/*.o layer*/*.p .update layer*/.files layer*/.depends layer*/.includes
+	/bin/rm -f *.log core */core game.* log.* layer*/*.o layer*/*.p .update layer*/.files layer*/.depends layer*/.includes 
 
 realclean: clean
-	/bin/rm -f pymol
+	/bin/rm -f pymol modules/*.pyc
 
 dist: realclean
 	cd ..;tar -cvf - pymol | gzip > pymol.tgz
