@@ -67,7 +67,7 @@ int  MatrixInvert44f( const float *m, float *out );
 void MatrixApplyTTTfn3f(unsigned int n, float *q, const float m[16], float *p );
 float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt);
 float MatrixGetRMS(int n,float *v1,float *v2,float *wt);
-int MatrixCutoff(float refine,int nv,float *v1,float *v2);
+int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2);
 
 #endif
 
