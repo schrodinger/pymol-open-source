@@ -62,7 +62,6 @@ int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele);
 CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *restart);
 
 void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *cset);
-CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 
 void ObjectMoleculeUpdate(ObjectMolecule *I);
 int ObjectMoleculeGetNFrames(ObjectMolecule *I);
@@ -4567,6 +4566,37 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
       }
       ai0->chemFlag=true;
       ai1->chemFlag=true;
+    } else if(order==4) {
+      ai0->geom = cAtomInfoPlaner;
+      ai1->geom = cAtomInfoPlaner;
+      switch(ai0->protons) {
+      case cAN_O:
+        ai0->valence=1;
+        break;
+      case cAN_N:
+        ai0->valence=2;
+        break;
+      case cAN_C:
+        ai0->valence=3;
+        break;
+      default:
+        ai0->valence=4;
+      }
+      switch(ai1->protons) {
+      case cAN_O:
+        ai1->valence=1;
+        break;
+      case cAN_N:
+        ai1->valence=2;
+        break;
+      case cAN_C:
+        ai1->valence=3;
+        break;
+      default:
+        ai1->valence=1;
+      }
+      ai0->chemFlag=true;
+      ai1->chemFlag=true;
     }
   }
 
@@ -5570,7 +5600,7 @@ void ObjectMoleculeExtendIndices(ObjectMolecule *I)
 }
 /*========================================================================*/
 
-CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
+static CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 {
   char *p;
   int nAtom,nBond;
@@ -5870,6 +5900,382 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 		p[size]=0;
 		fclose(f);
 		I=ObjectMoleculeReadMOLStr(obj,buffer,frame,discrete);
+		mfree(buffer);
+	 }
+
+  return(I);
+}
+
+/*========================================================================*/
+CoordSet *ObjectMoleculeMOL2Str2CoordSet(char *buffer,AtomInfoType **atInfoPtr,char **next_mol)
+{
+  char *p;
+  int nAtom,nBond;
+  int a,c,cnt,atm,chg;
+  float *coord = NULL;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL;
+  char cc[MAXLINELEN],cc1[MAXLINELEN],resn[MAXLINELEN] = "UNK";
+  float *f;
+  char *last_p;
+  BondType *ii;
+  BondType *bond=NULL;
+  int ok=true;
+  int auto_show_lines;
+  int auto_show_nonbonded;
+  int have_molecule = false;
+  WordType nameTmp;
+
+  auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
+  auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
+
+  p=buffer;
+  nAtom=0;
+  if(atInfoPtr)
+	 atInfo = *atInfoPtr;
+
+  while((*p)&&ok) {
+    
+    last_p = p;
+    /* top level -- looking for an RTI, assuming p points to the beginning of a line */
+    p=ParseWordCopy(cc,p,MAXLINELEN);
+
+    if(cc[0]=='@') {
+      if(WordMatchExact(cc,"@<TRIPOS>MOLECULE",true)||WordMatchExact(cc,"@MOLECULE",true)) {
+        if(have_molecule) {
+          *next_mol = last_p;
+          break; /* next record of multi-mol2 */
+        }
+        p=ParseNextLine(p);
+        p=ParseNTrim(nameTmp,p,sizeof(WordType)-1); /* get mol name */         
+        p=ParseNextLine(p);
+        p=ParseWordCopy(cc,p,MAXLINELEN);
+        if(sscanf(cc,"%d",&nAtom)!=1)
+          ok=ErrMessage("ReadMOL2File","bad atom count");
+        else {
+          coord=VLAlloc(float,3*nAtom);
+          if(atInfo)
+            VLACheck(atInfo,AtomInfoType,nAtom);	 
+          
+          p=ParseNCopy(cc,p,MAXLINELEN);
+          if(sscanf(cc,"%d",&nBond)!=1) {
+            nBond = 0;
+          }
+        }
+        p=ParseNextLine(p);
+        p=ParseNextLine(p);
+        have_molecule=true;
+      } else if(WordMatchExact(cc,"@<TRIPOS>ATOM",true)||WordMatchExact(cc,"@ATOM",true)) {
+        if(!have_molecule) {
+          ok=ErrMessage("ReadMOL2File","@ATOM before @MOLECULE!");
+          break;
+        }
+        p=ParseNextLine(p);
+        f=coord;
+        for(a=0;a<nAtom;a++) {
+          if(ok) {
+            p=ParseWordCopy(cc,p,20);
+            if(sscanf(cc,"%d",&atInfo[a].id)!=1)
+              ok=ErrMessage("ReadMOL2File","bad atom id");
+          }
+          if(ok) {
+            p=ParseWordCopy(cc,p,4);
+            if(sscanf(cc,"%s",atInfo[a].name)!=1)
+              ok=ErrMessage("ReadMOL2File","bad atom name");
+          }
+          if(ok) {
+            p=ParseWordCopy(cc,p,200);
+            if(sscanf(cc,"%f",f++)!=1)
+              ok=ErrMessage("ReadMOL2File","bad x coordinate");
+          }
+          if(ok) {
+            p=ParseWordCopy(cc,p,20);
+            if(sscanf(cc,"%f",f++)!=1)
+              ok=ErrMessage("ReadMOL2File","bad y coordinate");
+          }
+          if(ok) {
+            p=ParseWordCopy(cc,p,20);
+            if(sscanf(cc,"%f",f++)!=1)
+              ok=ErrMessage("ReadMOL2File","bad z coordinate");
+          }
+          if(ok) {
+            p=ParseWordCopy(cc,p,cTextTypeLen);
+            if(sscanf(cc,"%s",atInfo[a].textType)!=1)
+              ok=ErrMessage("ReadMOL2File","bad atom type");
+            else { /* convert atom type to elem symbol */
+              char *tt = atInfo[a].textType;
+              char *el = atInfo[a].elem;
+              int elc = 0;
+              while(*tt&&((*tt)!='.')) {
+                *(el++) = *(tt++);
+                elc++;
+                if(elc>cAtomNameLen)
+                  break;
+              }
+              *el=0;
+              if(el[2])
+                el[0];
+            }
+          }
+          if(ok) {
+            p=ParseWordCopy(cc,p,MAXLINELEN);
+            if(p[0]) { /* skip subst_id */
+              p=ParseWordCopy(cc,p,MAXLINELEN); 
+              if(p[0]) { /* skip subst_name */
+                p=ParseWordCopy(cc,p,MAXLINELEN);        
+                if(p[0]) {
+                  if(sscanf(cc,"%f",&atInfo[a].partialCharge)!=1)                    
+                    ok=ErrMessage("ReadMOL2File","bad atom charge");
+                }
+              }
+            }
+          }
+          p=ParseNextLine(p);
+
+          for(c=0;c<cRepCnt;c++) {
+            atInfo[a].visRep[c] = false;
+          }
+          atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
+          atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+
+          atInfo[a].id = a+1;
+          strcpy(atInfo[a].resn,resn);
+          atInfo[a].hetatm=true;
+          AtomInfoAssignParameters(atInfo+a);
+          atInfo[a].color=AtomInfoGetColor(atInfo+a);
+          atInfo[a].alt[0]=0;
+          atInfo[a].segi[0]=0;
+          atInfo[a].resi[0]=0;
+        }
+      } else if(WordMatchExact(cc,"@<TRIPOS>BOND",true)||WordMatchExact(cc,"@BOND",true)) {
+        if(!have_molecule) {
+          ok=ErrMessage("ReadMOL2File","@ATOM before @MOLECULE!");
+          break;
+        }
+        p=ParseNextLine(p);
+
+        if(ok) {
+          bond=VLAlloc(BondType,nBond);
+          ii=bond;
+          for(a=0;a<nBond;a++)
+            {
+              if(ok) {
+                p=ParseWordCopy(cc,p,20);
+                if(sscanf(cc,"%d",&ii->id)!=1)
+                  ok=ErrMessage("ReadMOL2File","bad atom id");
+              }
+
+              if(ok) {
+                p=ParseWordCopy(cc,p,20);
+                if(sscanf(cc,"%d",&ii->index[0])!=1)
+                  ok=ErrMessage("ReadMOL2File","bad source atom id");
+              }
+
+              if(ok) {
+                p=ParseWordCopy(cc,p,20);
+                if(sscanf(cc,"%d",&ii->index[1])!=1)
+                  ok=ErrMessage("ReadMOL2File","bad target atom id");
+              }
+
+              if(ok) {
+                p=ParseWordCopy(cc,p,20);
+                if(!cc[1]) {
+                  switch(cc[0]) {
+                  case '1':
+                    ii->order = 1;
+                    break;
+                  case '2':
+                    ii->order = 2;
+                    break;
+                  case '3':
+                    ii->order = 3;
+                    break;
+                  }
+                } else if(WordMatchExact("ar",cc,true)) {
+                  ii->order = 4;
+                } else if(WordMatchExact("am",cc,true)) {
+                  ii->order = 1;
+                } else if(WordMatchExact("un",cc,true)) {
+                  ii->order = 1;
+                } else if(WordMatchExact("nc",cc,true)) {
+                  ii->order = 0; /* is this legal in PyMOL? */
+                } else if(WordMatchExact("du",cc,true)) { 
+                  ii->order = 1;
+                } else 
+                  ok=ErrMessage("ReadMOL2File","bad bond type");
+              }
+              ii->stereo = 0;
+              ii++;
+              if(!ok) break;
+              p=ParseNextLine(p);
+            }
+          ii=bond;
+          for(a=0;a<nBond;a++) {
+            ii->index[0]--;/* adjust bond indexs down one */
+            ii->index[1]--;
+            ii++;
+          }
+        }
+      } else       
+        p=ParseNextLine(p);
+    } else
+      p=ParseNextLine(p);
+  }
+  if(ok) {
+	 cset = CoordSetNew();
+	 cset->NIndex=nAtom;
+	 cset->Coord=coord;
+	 cset->NTmpBond=nBond;
+	 cset->TmpBond=bond;
+    strcpy(cset->Name,nameTmp);
+  } else {
+	 VLAFreeP(bond);
+	 VLAFreeP(coord);
+  }
+  if(atInfoPtr)
+	 *atInfoPtr = atInfo;
+  return(cset);
+}
+
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeReadMOL2Str(ObjectMolecule *I,char *MOLStr,int frame,int discrete)
+{
+  int ok = true;
+  CoordSet *cset=NULL;
+  AtomInfoType *atInfo;
+  int isNew;
+  int nAtom;
+  char *restart=NULL,*start;
+  int repeatFlag=true;
+  int successCnt = 0;
+
+
+  start=MOLStr;
+  while(repeatFlag) {
+    repeatFlag=false;
+
+    if(!I) 
+      isNew=true;
+    else 
+      isNew=false;
+
+    if(isNew) {
+      I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
+      atInfo = I->AtomInfo;
+      isNew = true;
+    } else {
+      atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+      isNew = false;
+    }
+
+    if(isNew) {
+      AtomInfoPrimeColors();
+      I->Obj.Color = AtomInfoGetCarbColor();
+    }
+
+    restart=NULL;
+    cset=ObjectMoleculeMOL2Str2CoordSet(start,&atInfo,&restart);
+  
+    if(!cset) 
+      {
+        ObjectMoleculeFree(I);
+        I=NULL;
+        ok=false;
+      }
+  
+    if(ok)
+      {
+        if(frame<0)
+          frame=I->NCSet;
+        if(I->NCSet<=frame)
+          I->NCSet=frame+1;
+        VLACheck(I->CSet,CoordSet*,frame);
+      
+        nAtom=cset->NIndex;
+
+        if(I->DiscreteFlag&&atInfo) {
+          int a;
+          int fp1 = frame+1;
+          AtomInfoType *ai = atInfo;
+          for(a=0;a<nAtom;a++) {
+            (ai++)->discrete_state = fp1;
+          }
+        }
+
+        cset->Obj = I;
+        cset->fEnumIndices(cset);
+        if(cset->fInvalidateRep)
+          cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
+        if(isNew) {		
+          I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+        } else {
+          ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_MOLMask); /* NOTE: will release atInfo */
+        }
+
+        if(isNew) I->NAtom=nAtom;
+        if(frame<0) frame=I->NCSet;
+        VLACheck(I->CSet,CoordSet*,frame);
+        if(I->NCSet<=frame) I->NCSet=frame+1;
+        if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+        I->CSet[frame] = cset;
+      
+        if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+      
+        SceneCountFrames();
+        ObjectMoleculeExtendIndices(I);
+        ObjectMoleculeSort(I);
+        ObjectMoleculeUpdateIDNumbers(I);
+        ObjectMoleculeUpdateNonbonded(I);
+        successCnt++;
+        if(successCnt>1) {
+          if(successCnt==2) {
+            PRINTFB(FB_ObjectMolecule,FB_Actions)
+              " ObjectMolReadMOL2Str: read molecule %d\n",1
+              ENDFB;
+          }
+          PRINTFB(FB_ObjectMolecule,FB_Actions)
+            " ObjectMolReadMOL2Str: read molecule %d\n",successCnt
+            ENDFB;
+        }
+      }
+    if(restart) {
+      repeatFlag=true;
+      start=restart;
+      frame=frame+1;
+    }
+  }
+  return(I);
+}
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeLoadMOL2File(ObjectMolecule *obj,char *fname,int frame,int discrete)
+{
+  ObjectMolecule* I=NULL;
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer,*p;
+
+  f=fopen(fname,"rb");
+  if(!f)
+	 ok=ErrMessage("ObjectMoleculeLoadMOL2File","Unable to open file!");
+  else
+	 {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " ObjectMoleculeLoadMOL2File: Loading from %s.\n",fname
+        ENDFB;
+		
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size+255);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		p[size]=0;
+		fclose(f);
+		I=ObjectMoleculeReadMOL2Str(obj,buffer,frame,discrete);
 		mfree(buffer);
 	 }
 
@@ -8166,7 +8572,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
   start=PDBStr;
   while(repeatFlag) {
     repeatFlag = false;
-  
+    
     if(!I) 
       isNew=true;
     else 

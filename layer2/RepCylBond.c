@@ -334,8 +334,8 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
   float v1t[3],v2t[3],vh[3];
   float *v = *v_ptr,*vr = *vr_ptr;
   int n = *n_ptr,nr = *nr_ptr;
-  int a3,ck;
-
+  int a3;
+  int double_sided;
   /* First, we need to construct a coordinate system */
 
   /* get direction vector */
@@ -348,26 +348,8 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
   normalize3f(p0);
   
   /* need a third atom to get planarity*/
+  a3 = ObjectMoleculeGetPrioritizedOther(other,a1,a2,&double_sided);
 
-  a3 = -1;
-  ck = other[a1*2];
-  if((ck>=0)&&(ck!=a2))
-    a3=ck;
-  else {
-    ck = other[a1*2+1];
-    if((ck>=0)&&(ck!=a2))
-      a3=ck;
-    else {
-      ck = other[a2*2];
-      if((ck>=0)&&(ck!=a1))
-        a3=ck;
-      else {
-        ck = other[a2*2+1];
-        if((ck>=0)&&(ck!=a1))
-          a3=ck;
-        }
-      }
-  }
 
   if(a3<0) {    
     t[0] = p0[0];
@@ -586,8 +568,9 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
         copy3f(color1,v);
         
         v+=3;
-        
-        v=RepCylinder(v,v1,v2,n_edge,1,1,radius,
+        copy3f(v1,v1t);
+        copy3f(v2,v2t);
+        v=RepCylinder(v,v1t,v2t,n_edge,1,1,radius,
                       overlap_r,nub_r);
         n++;
 
@@ -658,7 +641,8 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
           copy3f(color1,v);
           v+=3;
           
-          v=RepCylinder(v,v1,vh,n_edge,1,0,radius,
+          copy3f(v1,v1t);
+          v=RepCylinder(v,v1t,vh,n_edge,1,0,radius,
                         overlap_r,nub_r);
           n++;
           
@@ -725,7 +709,8 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
           copy3f(color2,v);
           v+=3;
           
-          v=RepCylinder(v,v2,vh,n_edge,1,0,radius,
+          copy3f(v2,v2t);
+          v=RepCylinder(v,v2t,vh,n_edge,1,0,radius,
                         overlap_r,nub_r);
           n++;
 
@@ -787,10 +772,361 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
         }
       }      
     }
-
+    
     break;
   case 4: 
-    
+    {
+      float radius = tube_size;
+      float radius2 = tube_size;
+      float overlap_r,overlap_r2;
+      float nub_r,nub_r2;
+      float along[3],adj[3],v1tt[3],v2tt[3];
+      float inner1a = 0.24;
+      float inner1b = 0.44;
+      float inner2a = 0.5+(0.5-inner1b);
+      float inner2b = 1.0-inner1a;
+
+      if(!fixed_r) {
+        radius2=radius/2.5;
+        t[0] = p2[0]*1.5*radius;
+        t[1] = p2[1]*1.5*radius;
+        t[2] = p2[2]*1.5*radius;
+      } else {
+        inner1a -= 0.04;
+        inner2b = 1.0-inner1a;
+        t[0] = p2[0]*3*radius;
+        t[1] = p2[1]*3*radius;
+        t[2] = p2[2]*3*radius;
+      }
+      
+
+      overlap_r = radius*overlap;
+      nub_r = radius*nub;
+      overlap_r2 = radius2*overlap;
+      nub_r2 = radius2*nub;
+
+      
+      if(!half_bonds) {
+
+        /* opengl */
+
+        copy3f(color1,v);
+        v+=3;
+        
+        copy3f(v1,v1t);
+        copy3f(v2,v2t);
+        v=RepCylinder(v,v1t,v2t,n_edge,1,1,radius,
+                      overlap_r,nub_r);
+        n++;
+
+        /* ray */
+
+        copy3f(color1,vr);
+        vr+=3;        
+        *(vr++)=radius;						          
+        copy3f(v1,vr);
+        vr+=3;        
+        copy3f(v2,vr);
+        vr+=3;
+        nr++;
+
+
+        copy3f(color1,v);
+        
+        v+=3;
+        
+        subtract3f(v1,t,v1t);
+        subtract3f(v2,t,v2t);
+        
+        subtract3f(v2t,v1t,along);
+        scale3f(along,inner1a,adj);
+        add3f(adj,v1t,v1tt);
+        scale3f(along,inner1b,adj);
+        add3f(adj,v1t,v2tt);
+
+        /* ray */
+
+        copy3f(color1,vr);
+        vr+=3;        
+        *(vr++)=radius2;						          
+        copy3f(v1tt,vr);
+        vr+=3;        
+        copy3f(v2tt,vr);
+        vr+=3;
+        nr++;
+
+        /* opengl */
+
+        v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
+                      overlap_r2,nub_r2);
+        n++;
+
+        copy3f(color1,v);
+        
+        v+=3;
+
+        scale3f(along,inner2a,adj);
+        add3f(adj,v1t,v1tt);
+        scale3f(along,inner2b,adj);
+        add3f(adj,v1t,v2tt);
+
+        /* ray */
+
+        copy3f(color1,vr);
+        vr+=3;        
+        *(vr++)=radius2;						          
+        copy3f(v1tt,vr);
+        vr+=3;        
+        copy3f(v2tt,vr);
+        vr+=3;
+        nr++;
+
+        /* opengl */
+
+        v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
+                      overlap_r2,nub_r2);        
+        n++;
+
+        if(double_sided) {
+          
+          copy3f(color1,v);
+          
+          v+=3;
+          
+          add3f(v1,t,v1t);
+          add3f(v2,t,v2t);
+          
+          subtract3f(v2t,v1t,along);
+          scale3f(along,inner1a,adj);
+          add3f(adj,v1t,v1tt);
+          scale3f(along,inner1b,adj);
+          add3f(adj,v1t,v2tt);
+          
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius2;						          
+          copy3f(v1tt,vr);
+          vr+=3;        
+          copy3f(v2tt,vr);
+          vr+=3;
+          nr++;
+          
+          /* opengl */
+          
+          v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
+                        overlap_r2,nub_r2);
+          n++;
+          
+          copy3f(color1,v);
+          
+          v+=3;
+          
+          scale3f(along,inner2a,adj);
+          add3f(adj,v1t,v1tt);
+          scale3f(along,inner2b,adj);
+          add3f(adj,v1t,v2tt);
+          
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius2;						          
+          copy3f(v1tt,vr);
+          vr+=3;        
+          copy3f(v2tt,vr);
+          vr+=3;
+          nr++;
+          
+          /* opengl */
+          
+          v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
+                        overlap_r2,nub_r2);        
+          n++;
+        
+        }
+
+      } else {
+        vh[0] = (v1[0]+v2[0])*0.5F;
+        vh[1] = (v1[1]+v2[1])*0.5F;
+        vh[2] = (v1[2]+v2[2])*0.5F;
+
+        if(color1) {
+
+        /* opengl */
+          copy3f(color1,v);
+          v+=3;
+
+          copy3f(v1,v1t);
+          copy3f(vh,v2t);
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1,vr);
+          vr+=3;        
+          copy3f(vh,vr);
+          vr+=3;
+          nr++;
+          
+          copy3f(color1,v);
+          v+=3;
+
+          subtract3f(v1,t,v1t);
+          subtract3f(v2,t,v2t);
+          
+          subtract3f(v2t,v1t,along);
+          scale3f(along,inner1a,adj);
+          add3f(adj,v1t,v1tt);
+          scale3f(along,inner1b,adj);
+          add3f(adj,v1t,v2tt);
+
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius2;						          
+          copy3f(v1tt,vr);
+          vr+=3;        
+          copy3f(v2tt,vr);
+          vr+=3;
+          nr++;
+          
+          /* open gl */
+
+          v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
+                        overlap_r2,nub_r2);
+          n++;
+         
+          if(double_sided) {
+
+            copy3f(color1,v);
+            v+=3;
+            
+            add3f(v1,t,v1t);
+            add3f(v2,t,v2t);
+            
+            subtract3f(v2t,v1t,along);
+            scale3f(along,inner1a,adj);
+            add3f(adj,v1t,v1tt);
+            scale3f(along,inner1b,adj);
+            add3f(adj,v1t,v2tt);
+            
+            /* ray */
+            
+            copy3f(color1,vr);
+            vr+=3;        
+            *(vr++)=radius2;						          
+            copy3f(v1tt,vr);
+            vr+=3;        
+            copy3f(v2tt,vr);
+            vr+=3;
+            nr++;
+            
+            /* open gl */
+            
+            v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
+                          overlap_r2,nub_r2);
+            n++;
+            
+            
+          }
+        }
+
+        if(color2) {
+
+          copy3f(color2,v);
+          v+=3;
+
+          copy3f(v2,v1t);
+          copy3f(vh,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color2,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v2,vr);
+          vr+=3;        
+          copy3f(vh,vr);
+          vr+=3;
+          nr++;
+
+
+          copy3f(color2,v);
+          v+=3;
+
+          subtract3f(v1,t,v1t);
+          subtract3f(v2,t,v2t);
+          
+          subtract3f(v2t,v1t,along);
+          scale3f(along,inner2a,adj);
+          add3f(adj,v1t,v1tt);
+          scale3f(along,inner2b,adj);
+          add3f(adj,v1t,v2tt);
+
+          /* ray */
+          
+          copy3f(color2,vr);
+          vr+=3;        
+          *(vr++)=radius2;						          
+          copy3f(v1tt,vr);
+          vr+=3;        
+          copy3f(v2tt,vr);
+          vr+=3;
+          nr++;
+
+          /* opengl */
+
+          v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
+                        overlap_r2,nub_r2);
+          n++;
+          
+          if(double_sided) {
+            
+            copy3f(color2,v);
+            v+=3;
+            
+            add3f(v1,t,v1t);
+            add3f(v2,t,v2t);
+            
+            subtract3f(v2t,v1t,along);
+            scale3f(along,inner2a,adj);
+            add3f(adj,v1t,v1tt);
+            scale3f(along,inner2b,adj);
+            add3f(adj,v1t,v2tt);
+            
+            /* ray */
+            
+            copy3f(color2,vr);
+            vr+=3;        
+            *(vr++)=radius2;						          
+            copy3f(v1tt,vr);
+            vr+=3;        
+            copy3f(v2tt,vr);
+            vr+=3;
+            nr++;
+            
+            /* opengl */
+            
+            v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
+                          overlap_r2,nub_r2);
+            n++;
+            
+          }
+        }
+      }
+    }
     break;
   }
   *v_ptr = v;
@@ -804,7 +1140,7 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
 Rep *RepCylBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,a1,a2,c1,c2,s1,s2,b1,b2,*o;
+  int a,a1,a2,c1,c2,s1,s2,b1,b2;
   BondType *b;
   float *v,*vv1,*vv2,*v0,*vr,*vsp,*vspc;
   float v1[3],v2[3],h[3];
@@ -825,6 +1161,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   float *rgb1,*rgb2,rgb1_buf[3],rgb2_buf[3];
   int fixed_radius = false;
   int caps_req = true;
+  int valence_flag = false;
 
   OOAlloc(RepCylBond);
 
@@ -853,7 +1190,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   }
 
   valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
-
+  valence_flag = (valence!=0.0F);
   maxCyl = 0;
 
   b=obj->Bond;
@@ -881,7 +1218,7 @@ Rep *RepCylBondNew(CoordSet *cs)
           obj->AtomInfo[b1].temp1 = false; /* use the kludge field for sphere marker */
           obj->AtomInfo[b2].temp1 = false;
           
-          if(valence!=0.0F) {
+          if(valence_flag) {
             switch(ord) {
             case 1:
               maxCyl+=2;
@@ -893,7 +1230,7 @@ Rep *RepCylBondNew(CoordSet *cs)
               maxCyl+=6;
               break;
             case 4:
-              maxCyl+=8;
+              maxCyl+=10;
               break;
             }
           } else
@@ -933,49 +1270,10 @@ Rep *RepCylBondNew(CoordSet *cs)
     overlap_r = overlap * radius;
     nub_r = nub * radius;
 
-    if(valence!=0.0) /* build list of up to 2 connected atoms for each atom */
-      {
-        other=Alloc(int,2*obj->NAtom);
-        o=other;
-        for(a=0;a<obj->NAtom;a++) {
-          *(o++)=-1;
-          *(o++)=-1;
-        }
-        b=obj->Bond;
-        for(a=0;a<obj->NBond;a++)
-          {
-            b1 = b->index[0];
-            b2 = b->index[1];
-            b++;
-            if(obj->DiscreteFlag) {
-              if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-                a1=obj->DiscreteAtmToIdx[b1];
-                a2=obj->DiscreteAtmToIdx[b2];
-              } else {
-                a1=-1;
-                a2=-1;
-              }
-            } else {
-              a1=cs->AtmToIdx[b1];
-              a2=cs->AtmToIdx[b2];
-            }
-            if((a1>=0)&&(a2>=0))
-              {
-                o=other+2*a1;
-                if(*o!=a2) {
-                  if(*o>=0) o++;
-                  *o=a2;
-                }
-                o=other+2*a2;              
-                if(*o!=a1) {
-                  if(*o>=0) o++;
-                  *o=a1;
-                }
-              }
-          }
-        
-        fixed_radius = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_stick_fixed_radius);
-      }
+    if(valence_flag) {/* build list of up to 2 connected atoms for each atom */
+      other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
+      fixed_radius = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_stick_fixed_radius);
+    }
     
     /* OpenGL */
 
@@ -1136,7 +1434,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 				if(s1||s2)
 				  {
 					 
-                if((valence!=0.0)&&(ord>1)&&(ord<4)) {
+                if((valence_flag)&&(ord>1)&&(ord<5)) {
                   
                   if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1))) {
 

@@ -212,6 +212,9 @@ void M4XAnnoPurge(M4XAnnoType *m4x);
 void M4XAlignInit(M4XAlignType *align);
 void M4XAlignPurge(M4XAlignType *align);
 
+int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,struct CoordSet *cs);
+int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided);
+
 void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_file,int match_colors,
                                int nbr_sele);
 
@@ -235,6 +238,7 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int fr
 ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x,PDBInfoRec *pdb_info);
 ObjectMolecule *ObjectMoleculeLoadPMOFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadMOL2File(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
                                           int frame,char *sepPrefix,int discrete);
 ObjectMolecule *ObjectMoleculeLoadTOPFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
@@ -252,6 +256,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int 
 ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
 
 ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadMOL2Str(ObjectMolecule *obj,char *molstr,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,
                                          int frame,int discrete,
                                          M4XAnnoType *m4x,char *pdb_name,

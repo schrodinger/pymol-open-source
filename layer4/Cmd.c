@@ -103,6 +103,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeGRDMap 30
 #define cLoadTypePQR 31
 #define cLoadTypeDXMap 32
+#define cLoadTypeMOL2 33
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -3839,6 +3840,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       case cLoadTypeTOP:
       case cLoadTypeTRJ:
       case cLoadTypeCRD:
+      case cLoadTypeMOL2:
         new_type = cObjectMolecule;
         break;
       case cLoadTypeChemPyBrick:
@@ -4045,6 +4047,27 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: MOL-string appended into object \"%s\", state %d.\n",
                 oname,frame+1);
+      }
+      break;
+    case cLoadTypeMOL2:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading MOL2\n" ENDFD;
+      obj=(CObject*)ObjectMoleculeLoadMOL2File((ObjectMolecule*)origObj,fname,frame,discrete);
+      if(!origObj) {
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject(obj,true,quiet);
+          if(frame<0)
+            frame = ((ObjectMolecule*)obj)->NCSet-1;
+          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
+                  fname,oname,frame+1);		  
+        }
+      } else if(origObj) {
+        if(finish)
+          ExecutiveUpdateObjectSelection(origObj);
+        if(frame<0)
+          frame = ((ObjectMolecule*)origObj)->NCSet-1;
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+                fname,oname,frame+1);
       }
       break;
     case cLoadTypeMMD:

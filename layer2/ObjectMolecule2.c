@@ -42,6 +42,239 @@ Z* -------------------------------------------------------------------
 
 #define cResvMask 0x7FFF
 
+#define cMaxOther 6
+
+typedef struct {
+  int n_arom;
+  int arom[cMaxOther];
+  int n_high_val;
+  int high_val[cMaxOther];
+  int n_planer;
+  int planer[cMaxOther];
+  int n_rest;
+  int rest[cMaxOther];
+  int score;
+} OtherRec;
+
+static int populate_other(OtherRec *other,int at,AtomInfoType *ai,BondType *bd)
+{
+  if(bd->order==4) { /* aromatic -- highest priority */
+    if(other->n_arom<cMaxOther) {
+      other->arom[other->n_arom++]=at;
+      other->score+=64;
+      return 1;
+    }
+  }
+  if(bd->order>1) {
+    if(other->n_high_val<cMaxOther) {
+      other->high_val[other->n_high_val++]=at;
+      other->score+=16;
+      return 1;
+    }
+  }
+  if(ai->geom==cAtomInfoPlaner) {
+    if(other->n_planer<cMaxOther) {
+      other->planer[other->n_planer++]=at;
+      other->score+=4;
+      return 1;
+    }
+  }
+  if(other->n_rest<cMaxOther) {
+    other->rest[other->n_rest++]=at;
+    other->score+=1;
+    return 1;
+  }
+  return 0;
+}
+
+static int append_index(int *result, int offset, int a1, int a2, int score)
+{
+  int c;
+  c=result[a1];
+  while(c<offset) {
+    if(result[c]==a2) { /* already entered */
+      result[c+1]=score;
+      return offset;
+    }
+    c+=2;
+  }
+  result[offset++]=a2;
+  result[offset++]=score;
+  return offset;
+}
+
+int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,CoordSet *cs)
+{
+  int a,b;
+  int b1,b2,a1,a2,a3;
+  OtherRec *o;
+  OtherRec *other=Calloc(OtherRec,cs->NIndex);
+  int *result = NULL;
+  int offset;
+  int n_alloc=0;
+  BondType *bd;
+
+  bd=I->Bond;
+  for(a=0;a<I->NBond;a++) {
+    b1 = bd->index[0];
+    b2 = bd->index[1];
+    if(I->DiscreteFlag) {
+      if((cs==I->DiscreteCSet[b1])&&(cs==I->DiscreteCSet[b2])) {
+        a1=I->DiscreteAtmToIdx[b1];
+        a2=I->DiscreteAtmToIdx[b2];
+      } else {
+        a1=-1;
+        a2=-1;
+      }
+    } else {
+      a1=cs->AtmToIdx[b1];
+      a2=cs->AtmToIdx[b2];
+    }
+    if((a1>=0)&&(a2>=0))
+      {
+        n_alloc+=populate_other(other+a1,a2,I->AtomInfo+b2,bd);
+        n_alloc+=populate_other(other+a2,a1,I->AtomInfo+b1,bd);
+      }
+    bd++;
+  }
+
+  n_alloc = 2*(n_alloc+cs->NIndex);
+  o=other;
+  result = Alloc(int,n_alloc);
+  for(a=0;a<cs->NIndex;a++) {
+    result[a]=-1;
+  }
+  offset = cs->NIndex;
+  bd=I->Bond;
+  for(a=0;a<I->NBond;a++) {
+    b1 = bd->index[0];
+    b2 = bd->index[1];
+    if(I->DiscreteFlag) {
+      if((cs==I->DiscreteCSet[b1])&&(cs==I->DiscreteCSet[b2])) {
+        a1=I->DiscreteAtmToIdx[b1];
+        a2=I->DiscreteAtmToIdx[b2];
+      } else {
+        a1=-1;
+        a2=-1;
+      }
+    } else {
+      a1=cs->AtmToIdx[b1];
+      a2=cs->AtmToIdx[b2];
+    }
+    if((a1>=0)&&(a2>=0))
+      {
+        if(result[a1]<0) {
+
+          o = other+a1;
+          result[a1]=offset;
+          for(b=0;b<o->n_arom;b++) {
+            a3 = o->arom[b];
+            offset = append_index(result, offset, a1, a3, 64 + other[a3].score);
+          }
+          for(b=0;b<o->n_high_val;b++) {
+            a3 = o->high_val[b];
+            offset = append_index(result, offset, a1, a3, 16 + other[a3].score);
+          }
+          for(b=0;b<o->n_planer;b++) {
+            a3 = o->planer[b];
+            offset = append_index(result, offset, a1, a3, 4 + other[a3].score);
+          }
+          for(b=0;b<o->n_rest;b++) {
+            a3 = o->rest[b];
+            offset = append_index(result, offset, a1, a3, 1 + other[a3].score);
+          }
+          result[offset++]=-1;
+        }
+
+        if(result[a2]<0) {
+
+          o = other+a2;
+          result[a2]=offset;
+          for(b=0;b<o->n_arom;b++) {
+            a3 = o->arom[b];
+            offset = append_index(result, offset, a2, a3, 64 + other[a3].score);
+          }
+          for(b=0;b<o->n_high_val;b++) {
+            a3 = o->high_val[b];
+            offset = append_index(result, offset, a2, a3, 16 + other[a3].score);
+          }
+          for(b=0;b<o->n_planer;b++) {
+            a3 = o->planer[b];
+            offset = append_index(result, offset, a2, a3, 4 + other[a3].score);
+          }
+          for(b=0;b<o->n_rest;b++) {
+            a3 = o->rest[b];
+            offset = append_index(result, offset, a2, a3, 1 + other[a3].score);
+          }
+          result[offset++]=-1;
+        }
+
+      }
+    bd++;
+  }
+  FreeP(other);
+  return result;
+}
+
+int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided)
+     
+{
+  int a3 = -1;
+  int lvl=-1,ck,ck_lvl;
+  int offset;
+  int ar_count = 0;
+
+  a3 = -1;
+  lvl = -1;
+  offset = other[a1];
+  if(offset>=0) {
+    while(1) {
+      ck = other[offset++];
+      if(ck!=a2) {
+        if(ck>=0) {
+          ck_lvl = other[offset];
+          if(ck_lvl>lvl) {
+            a3 = ck;
+            lvl = ck_lvl;
+          }
+          if(ck_lvl>=64)
+            ar_count++;
+        } else
+          break;
+      }
+      offset++;
+    }
+  }
+  offset = other[a2];
+  if(offset>=0) {
+    while(1) {
+      ck = other[offset++];
+      if(ck!=a1) {
+        if(ck>=0) {
+          ck_lvl = other[offset];
+          if(ck_lvl>lvl) {
+            a3 = ck;
+            lvl = ck_lvl;
+          }
+          if(ck_lvl>=64)
+            ar_count++;
+        } else
+          break;
+      }
+      offset++;
+    }
+  }
+
+  if(double_sided) {
+    if(ar_count==4)
+      *double_sided=true;
+    else
+      *double_sided=false;
+  }
+  return a3;
+}
+
+
 int ObjectMoleculeIsAtomBondedToName(ObjectMolecule *obj,int a0,char *name)
 {
   int a2,s;
@@ -1362,8 +1595,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 } else {
                   strcpy(ai->segi,segi_override);
                 }
-            } else {
-              ai->segi[0]=0;
+            } else {              ai->segi[0]=0;
             }
           
             p=ncopy(cc,p,2);
@@ -1490,7 +1722,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               if(!have_bond_order) { /* handle PDB bond order kludge */
                 if(ii1->order<=2) ii2->order=1;
                 else if(ii1->order<=4) ii2->order=2;
-                else ii2->order=3;
+                else if(ii1->order<=6) ii2->order=3;
+                else ii2->order=4;
               }
 
               atInfo[ii2->index[0]].bonded=true;

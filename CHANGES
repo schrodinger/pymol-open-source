@@ -4,6 +4,11 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * aromatic bond display
+
+   * mol2 and multi-mol2 reading capability
+
+   -- beta 16
    * added experimental ability to calculate vacuum electrostatic 
      potentials
 
