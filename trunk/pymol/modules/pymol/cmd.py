@@ -802,6 +802,7 @@ PYMOL API
       argst = arg[1]
    else:
       nam= arg[0]
+      arg = map(str,arg)
       argst = string.join(arg[1:],',')
    arg = _split(argst,',')
    la = len(arg)
@@ -819,7 +820,7 @@ PYMOL API
          unlock()
    return r
 
-def isomesh(nam,argst):
+def isomesh(*arg):
    '''
 DESCRIPTION
  
@@ -829,13 +830,23 @@ USAGE
  
    isomesh name = map-object, level [,(selection) [,buffer] ] 
    '''
+   if len(arg)<2:
+      print "Error: invalid arguments for isomesh command."
+      raise QuietException
+   elif len(arg)<3:
+      nam= arg[0]
+      argst = arg[1]
+   else:
+      nam= arg[0]
+      arg = map(str,arg)
+      argst = string.join(arg[1:],',')   
    arg = _split(argst,',')
    la = len(arg)
    if la<1:
       print "Error: invalid arguments for isomesh command."
       raise QuietException
    else:
-      map=arg[0]
+      maap=arg[0]
       mopt=0
       optarg1=''
       optarg2=''
@@ -850,12 +861,12 @@ USAGE
          optarg2 = arg[3]
       try:
          lock()
-         r = _cmd.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,0)
+         r = _cmd.isomesh(nam,0,maap,mopt,optarg1,optarg2,lvl,0)
       finally:
          unlock()
    return r
 
-def isodot(nam,argst):
+def isodot(*arg):
    '''
 DESCRIPTION
  
@@ -865,13 +876,23 @@ USAGE
  
    isodot name = map-object, level [,(selection) [,buffer] ] 
    '''
+   if len(arg)<2:
+      print "Error: invalid arguments for isodot command."
+      raise QuietException
+   elif len(arg)<3:
+      nam= arg[0]
+      argst = arg[1]
+   else:
+      nam= arg[0]
+      arg = map(str,arg)
+      argst = string.join(arg[1:],',')   
    arg = _split(argst,',')
    la = len(arg)
    if la<1:
       print "Error: invalid arguments for isodot command."
       raise QuietException
    else:
-      map=arg[0]
+      maap=arg[0]
       mopt=0
       optarg1=''
       optarg2=''
@@ -886,7 +907,7 @@ USAGE
          optarg2 = arg[3]
       try:
          lock()
-         r = _cmd.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,1)
+         r = _cmd.isomesh(nam,0,maap,mopt,optarg1,optarg2,lvl,1)
       finally:
          unlock()
    return r
@@ -1848,7 +1869,7 @@ def rename(*arg):
    '''
 DESCRIPTION
   
-   "rename" creates new atom names which are unique within a selection.
+   "rename" creates new atom names which are unique within residues.
       
 USAGE
 
@@ -2768,45 +2789,46 @@ def finish_object(obj):
    finally:
       unlock()
    return r
-   
-def load_model(*arg):
-   '''
-   '''
+
+def load_object(*arg): # assume first argument is the object type
    r = 1
    try:
       lock()   
-      ftype = 8
+      ftype = arg[0]
       state = -1
       finish = 1
       discrete = 0
-      model = arg[0];
-      if len(arg)==2:
-         oname = string.strip(arg[1])
-         r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
-      elif len(arg)==3:
-         oname = string.strip(arg[1])
-         state = int(arg[2])-1
-         r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
-      elif len(arg)==4:
-         oname = string.strip(arg[1])
-         state = int(arg[2])-1
-         finish = int(arg[3])-1
-         r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
-      elif len(arg)==5:
-         oname = string.strip(arg[1])
-         state = int(arg[2])-1
-         finish = int(arg[3])-1
-         discrete = int(arg[4])-1 
-         r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
+      object = arg[1];
+      la = len(arg)
+      if la>2:
+         oname = string.strip(arg[2])
+      if la>3:
+         state = int(arg[3])-1
+      if la>4:
+         finish = int(arg[4])-1
+      if la>5:
+         discrete = int(arg[5])-1
+      if la>1:
+         r = _cmd.load_object(oname,object,state,ftype,finish,discrete)
       else:
          print "Error: invalid arguments."
    finally:
       unlock()
    return r
+   
+def load_brick(*arg):
+   lst = [loadable.brick]
+   lst.extend(list(arg))
+   return apply(load_object,lst)
+
+def load_model(*arg):
+   lst = [loadable.model]
+   lst.extend(list(arg))
+   return apply(load_object,lst)
 
 def _load(oname,finfo,state,ftype,finish,discrete):
    r = 1
-   if ftype!=loadable.model:
+   if ftype not in (loadable.model,loadable.brick):
       r = _cmd.load(oname,finfo,state,ftype,finish,discrete)
    else:
       try:
@@ -3817,7 +3839,8 @@ class loadable:
    xplor = 7
    model = 8
    pdbstr = 9
-
+   brick = 10
+   
 # build shortcuts list
 
 kwhash = {}
@@ -3845,4 +3868,5 @@ for a in repres.keys():
 
 for a in repres.keys():
    rephash[a]=a
+
 

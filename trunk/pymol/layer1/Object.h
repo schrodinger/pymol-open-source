@@ -41,7 +41,6 @@ typedef struct Object {
   float ExtentMin[3],ExtentMax[3],ExtentFlag;
 } Object;
 
-
 void ObjectInit(Object *I);
 void ObjectSetName(Object *I,char *name);
 void ObjectFree(Object *I);

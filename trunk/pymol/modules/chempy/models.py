@@ -56,7 +56,7 @@ class Indexed(Base):
          return eval(Indexed.attr_value[attr])
       else:
          raise AttributeError(attr)
-      
+
 #------------------------------------------------------------------------------
    def __init__(self):
       self.reset()
@@ -67,7 +67,24 @@ class Indexed(Base):
       self.molecule = chempy.Molecule()
       self.atom = []
       self.bond = []
-   
+
+#------------------------------------------------------------------------------
+   def get_min_max(self):
+      if len(self.atom):
+         mn = copy.deepcopy(self.atom[0].coord)
+         mx = copy.deepcopy(self.atom[0].coord)
+         for a in self.atom:
+            ac = a.coord
+            if mn[0]>ac[0]: mn[0]=ac[0]
+            if mn[1]>ac[1]: mn[1]=ac[1]
+            if mn[2]>ac[2]: mn[2]=ac[2]
+            if mx[0]<ac[0]: mx[0]=ac[0]
+            if mx[1]<ac[1]: mx[1]=ac[1]
+            if mx[2]<ac[2]: mx[2]=ac[2]
+         return [mn,mx]
+      else:
+         return [[0.0,0.0,0.0],[0.0,0.0,0.0]]
+      
 #------------------------------------------------------------------------------
    def merge(self,other): # steals atom objects from 'other' and resets 'other'
       if chempy.feedback['actions']:

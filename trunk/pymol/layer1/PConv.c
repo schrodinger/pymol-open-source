@@ -207,6 +207,18 @@ int PConvPyListToFloatArray(PyObject *obj,float **f)
   return(l);
 }
 
+int PConvPyListToIntArray(PyObject *obj,int **f)
+{
+  int a,l;
+  int *ff;
+  l=PyList_Size(obj);
+  (*f) = Alloc(int,l);
+  ff = (*f);
+  for(a=0;a<l;a++)
+    *(ff++) = PyInt_AsLong(PyList_GetItem(obj,a));
+  return(l);
+}
+
 PyObject *PConvFloatArrayToPyList(float *f,int l)
 {
   int a;

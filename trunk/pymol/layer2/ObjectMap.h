@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectMap
 #define _H_ObjectMap
 
+#include<Python.h>
+
 #include"Object.h"
 #include"Crystal.h"
 #include"Isosurf.h"
@@ -26,13 +28,18 @@ typedef struct ObjectMap {
   int Div[3],Min[3],Max[3],FDim[4];
   Isofield *Field;
   float Corner[8][3];
+  int *Dim;
+  float *Origin;
+  float *Range;
+  float *Grid;
 } ObjectMap;
 
 ObjectMap *ObjectMapNew(void);
 ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame);
 ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame);
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame);
-
+ObjectMap *ObjectMapLoad(ObjectMap *obj,char *fname,int frame);
+ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *model,int frame,int discrete);
 
 
 #endif

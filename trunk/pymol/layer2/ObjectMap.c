@@ -29,6 +29,21 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"main.h"
 #include"Scene.h"
+#include"PConv.h"
+
+#ifdef _PYMOL_NUMPY
+typedef struct {
+  PyObject_HEAD
+  char *data;
+  int nd;
+  int *dimensions, *strides;
+  PyObject *base;
+  void *descr;
+  int flags;
+} MyArrayObject;
+#endif
+
+int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary);
 
 static void ObjectMapFree(ObjectMap *I);
 
@@ -37,6 +52,10 @@ static void ObjectMapFree(ObjectMap *I) {
     IsosurfFieldFree(I->Field);
     I->Field=NULL;
   }
+  FreeP(I->Origin);
+  FreeP(I->Dim);
+  FreeP(I->Range);
+  FreeP(I->Grid);
   OOFreeP(I->Crystal);
   OOFreeP(I);
 }
@@ -121,6 +140,10 @@ ObjectInit((Object*)I);
  I->Obj.fFree = (void (*)(struct Object *))ObjectMapFree;
  I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMapUpdate;
  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMapRender;
+ I->Origin = NULL;
+ I->Dim = NULL;
+ I->Range = NULL;
+ I->Grid = NULL;
 
 #ifdef _NOT_YET_NEEDED
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMapGetNFrames;
@@ -345,7 +368,143 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
 
 }
 
+/*========================================================================*/
+int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary) {
+  
+  int a,b,c,d,e;
+  float v[3],dens,maxd,mind;
+  int ok = true;
+
+#ifdef _PYMOL_NUMPY
+  MyArrayObject *pao;
+  pao = (MyArrayObject*)ary;
+#endif
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
+  if(ok) {
+    I->FDim[0]=I->Dim[0];
+    I->FDim[1]=I->Dim[1];
+    I->FDim[2]=I->Dim[2];
+    I->FDim[3]=3;
+
+    if(!(I->FDim[0]&&I->FDim[1]&&I->FDim[2])) 
+      ok=false;
+    else {
+      I->Field=IsosurfFieldAlloc(I->FDim);
+      for(c=0;c<I->FDim[2];c++)
+        {
+          v[2]=I->Origin[2]+I->Grid[2]*c;
+          for(b=0;b<I->FDim[1];b++) {
+            v[1]=I->Origin[1]+I->Grid[1]*b;
+            for(a=0;a<I->FDim[0];a++) {
+              v[0]=I->Origin[0]+I->Grid[0]*a;
+#ifdef _PYMOL_NUMPY
+              dens = *((double*)
+                (pao->data+
+                 (pao->strides[0]*a)+
+                 (pao->strides[1]*b)+
+                 (pao->strides[2]*c)));
+#else
+              dens = 0.0;
+#endif
+              F3(I->Field->data,a,b,c,I->Field->dimensions) = dens;
+              if(maxd<dens) maxd = dens;
+              if(mind>dens) mind = dens;
+              for(e=0;e<3;e++) 
+                F4(I->Field->points,a,b,c,e,I->Field->dimensions) = v[e];
+            }
+          }
+        }
+      d = 0;
+      for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))
+        {
+          v[2]=I->Origin[2]+I->Grid[2]*c;
+          for(b=0;b<I->FDim[1];b+=(I->FDim[1]-1)) {
+            v[1]=I->Origin[1]+I->Grid[1]*b;
+            for(a=0;a<I->FDim[0];a+=(I->FDim[0]-1)) {
+              v[0]=I->Origin[0]+I->Grid[0]*a;
+              copy3f(v,I->Corner[d]);
+              d++;
+            }
+          }
+        }
+    }
+  }
+  if(ok) {
+    copy3f(I->Origin,I->Obj.ExtentMin);
+    copy3f(I->Origin,I->Obj.ExtentMax);
+    add3f(I->Range,I->Obj.ExtentMax,I->Obj.ExtentMax);
+    I->Obj.ExtentFlag=true;
+  }
+  if(!ok) {
+    ErrMessage(" ObjectMap:","Error reading");
+  } else {
+    printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+  }
+  return(ok);
+}
+/*========================================================================*/
+ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
+                                           int frame,int discrete)
+{
+  int ok=true;
+  int isNew = true;
+  PyObject *tmp;
 
 
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
 
+  if(ok) {
+
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew();
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+    if(PyObject_HasAttrString(Map,"origin")&&
+       PyObject_HasAttrString(Map,"dim")&&
+       PyObject_HasAttrString(Map,"range")&&
+       PyObject_HasAttrString(Map,"grid")&&
+       PyObject_HasAttrString(Map,"lvl"))
+      {
+        tmp = PyObject_GetAttrString(Map,"origin");
+        if(tmp) {
+          PConvPyListToFloatArray(tmp,&I->Origin);
+          Py_DECREF(tmp);
+        } else 
+          ok=ErrMessage("ObjectMap","missing brick origin.");
+        tmp = PyObject_GetAttrString(Map,"dim");
+        if(tmp) {
+          PConvPyListToIntArray(tmp,&I->Dim);
+          Py_DECREF(tmp);
+        } else 
+          ok=ErrMessage("ObjectMap","missing brick dimension.");
+        tmp = PyObject_GetAttrString(Map,"range");
+        if(tmp) {
+          PConvPyListToFloatArray(tmp,&I->Range);
+          Py_DECREF(tmp);
+        } else 
+          ok=ErrMessage("ObjectMap","missing brick range.");
+        tmp = PyObject_GetAttrString(Map,"grid");
+        if(tmp) {
+          PConvPyListToFloatArray(tmp,&I->Grid);
+          Py_DECREF(tmp);
+        } else
+          ok=ErrMessage("ObjectMap","missing brick grid.");
+        tmp = PyObject_GetAttrString(Map,"lvl");
+        if(tmp) {
+          ObjectMapNumPyArrayToMap(I,tmp);	 
+          Py_DECREF(tmp);
+        } else
+          ok=ErrMessage("ObjectMap","missing brick density.");
+
+      }
+    SceneChanged();
+  }
+  return(I);
+}
 
