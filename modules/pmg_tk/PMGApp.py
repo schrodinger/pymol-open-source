@@ -1082,7 +1082,7 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Transparency', 'command', 'Uni-Layer',
                                label='Uni-Layer',
                                command = lambda : cmd.do(
-         "_ cmd.set('transparency_mode',2);cmd.set('backface_cull',0);cmd.set('two_sided_lighting',0)"))
+         "_ cmd.set('transparency_mode',2);cmd.set('backface_cull',1);cmd.set('two_sided_lighting',0)"))
 
       self.menuBar.addmenuitem('Transparency', 'command', 'Multi-Layer',
                                label='Multi-Layer',
@@ -1092,7 +1092,7 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Transparency', 'command', 'Fast and Ugly',
                                label='Fast and Ugly',
                                command = lambda : cmd.do(
-         "_ cmd.set('transparency_mode',0);cmd.set('backface_cull',0);cmd.set('two_sided_lighting',0)"))
+         "_ cmd.set('transparency_mode',0);cmd.set('backface_cull',1);cmd.set('two_sided_lighting',0)"))
       
       self.menuBar.addcascademenu('Display', 'Rendering', 'Rendering',
                                   label='Rendering')
