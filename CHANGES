@@ -23,12 +23,19 @@ Goals for 0.53 release
    * complete first-round test-cases
 
    * feedback conditionals placed around all error output
-   
-Goals for 0.52 release:
 
-   * provide accurate documentation
+   * draw all solid representations before drawing lines
+     in order to improve antialiasing.
 
 Changes up to 0.53
+
+   * change order of drawing within object to improve the
+     interaction with antialiased lines.
+
+   * thread safety improvements (fixed bug involving serial 
+     manipulations of the same object)
+
+   * bug fix with stick representations
 
    * fixed minor goof with cmd.dist retval in 0.52
 

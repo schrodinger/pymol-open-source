@@ -89,7 +89,7 @@ Z* -------------------------------------------------------------------
 #define tmpSele1 "_tmp1"
 #define tmpSele2 "_tmp2"
 
-int flush_count = 0;
+static int flush_count = 0;
 
 int run_only_once = true;
 
@@ -703,11 +703,15 @@ static PyObject *CmdFocus(PyObject *self, 	PyObject *args)
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
   /* only called by the GLUT thread with unlocked API, blocked interpreter */
-  /*  if(!flush_count) {
-      flush_count++;*/
-  PFlushFast();
-    /*    flush_count--;
-          }*/
+  if(flush_count<8) { /* prevent super-deep recursion */
+    flush_count++;
+    PFlushFast();
+    flush_count--;
+  } else {
+    PRINTFB(FB_CCmd,FB_Warnings)
+      " Cmd: PyMOL lagging behind API requests...\n"
+      ENDFB;
+  }
   Py_INCREF(Py_None);
   return Py_None;  
 }
@@ -2044,9 +2048,9 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
         ExecutiveDelete(oname);
         origObj=NULL;
       }
-    PBlockAndUnlockAPI();
+    PBlock(); /*PBlockAndUnlockAPI();*/
 	 obj=(Object*)ObjectMoleculeLoadChemPyModel((ObjectMolecule*)origObj,model,frame,discrete);
-    PLockAPIAndUnblock();
+    PUnblock(); /*PLockAPIAndUnblock();*/
 	 if(!origObj) {
 	   if(obj) {
 		 ObjectSetName(obj,oname);
@@ -2071,9 +2075,9 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
         ExecutiveDelete(oname);
         origObj=NULL;
       }
-    PBlockAndUnlockAPI();
+    PBlock(); /*PBlockAndUnlockAPI();*/
 	 obj=(Object*)ObjectMapLoadChemPyBrick((ObjectMap*)origObj,model,frame,discrete);
-    PLockAPIAndUnblock();
+    PUnblock(); /*PLockAPIAndUnblock();*/
 	 if(!origObj) {
 	   if(obj) {
 		 ObjectSetName(obj,oname);
@@ -2092,9 +2096,9 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
         ExecutiveDelete(oname);
         origObj=NULL;
       }
-    PBlockAndUnlockAPI();
+    PBlock(); /*PBlockAndUnlockAPI();*/
 	 obj=(Object*)ObjectMapLoadChemPyMap((ObjectMap*)origObj,model,frame,discrete);
-    PLockAPIAndUnblock();
+    PUnblock(); /*PLockAPIAndUnblock();*/
 	 if(!origObj) {
 	   if(obj) {
 		 ObjectSetName(obj,oname);
@@ -2113,9 +2117,9 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
         ExecutiveDelete(oname);
         origObj=NULL;
       }
-    PBlockAndUnlockAPI();
+    PBlock(); /*PBlockAndUnlockAPI();*/
 	 obj=(Object*)ObjectCallbackDefine((ObjectCallback*)origObj,model,frame);
-    PLockAPIAndUnblock();
+    PUnblock(); /*PLockAPIAndUnblock();*/
 	 if(!origObj) {
 	   if(obj) {
 		 ObjectSetName(obj,oname);
@@ -2134,9 +2138,9 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
         ExecutiveDelete(oname);
         origObj=NULL;
       }
-    PBlockAndUnlockAPI();
+    PBlock(); /*PBlockAndUnlockAPI();*/
 	 obj=(Object*)ObjectCGODefine((ObjectCGO*)origObj,model,frame);
-    PLockAPIAndUnblock();
+    PUnblock(); /*PLockAPIAndUnblock();*/
 	 if(!origObj) {
 	   if(obj) {
         ObjectSetName(obj,oname);
@@ -2184,9 +2188,9 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
     {
       switch(type) {
       case cLoadTypeChemPyModel:
-        PBlockAndUnlockAPI();
+        PBlock(); /*PBlockAndUnlockAPI();*/
         obj=(Object*)ObjectMoleculeLoadCoords((ObjectMolecule*)origObj,model,frame);
-        PLockAPIAndUnblock();
+        PUnblock(); /*PLockAPIAndUnblock();*/
         if(frame<0)
           frame=((ObjectMolecule*)obj)->NCSet-1;
         sprintf(buf," CmdLoad: Coordinates appended into object \"%s\", state %d.\n",

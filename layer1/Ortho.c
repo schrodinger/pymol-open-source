@@ -404,10 +404,16 @@ void OrthoRestorePrompt(void)
 void OrthoKeyControl(unsigned char k) {
   char buffer[OrthoLineLength];
 
-  PBlockAndUnlockAPI();
+  /* safer...*/
+
   sprintf(buffer,"cmd._ctrl('%c')",k+64);
-  PRunString(buffer);
-  PLockAPIAndUnblock();      
+  PParse(buffer);
+  PFlush();
+
+  /*  PBlockAndUnlockAPI();
+      sprintf(buffer,"cmd._ctrl('%c')",k+64);
+      PRunString(buffer);
+      PLockAPIAndUnblock(); */
 
 }
 /*========================================================================*/
@@ -583,9 +589,11 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       }
       break;
     case 22: /* CTRL V -- paste */
-      PBlockAndUnlockAPI();
-      PRunString("cmd.paste()");
-      PLockAPIAndUnblock();
+      PParse("cmd.paste()");
+      PFlush();
+      /* PBlockAndUnlockAPI();
+        PRunString("cmd.paste()");
+        PLockAPIAndUnblock(); */
       break;
 	 default:
       OrthoKeyControl(k);

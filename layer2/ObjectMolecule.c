@@ -4026,13 +4026,16 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
 	 if(I->CSet[a]) {	
 	   OrthoBusySlow(a,I->NCSet);
 		PRINTFD(FB_ObjectMolecule)
-		  "ObjectMolecule-DEBUG: updating state %d of \"%s\".\n" 
+		  " ObjectMolecule-DEBUG: updating state %d of \"%s\".\n" 
          , a+1, I->Obj.Name
         ENDFD;
 
       if(I->CSet[a]->fUpdate)
         I->CSet[a]->fUpdate(I->CSet[a]);
 	 }
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMolecule: updates complete for object %s.\n",I->Obj.Name
+    ENDFD;
 }
 /*========================================================================*/
 void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
@@ -4094,6 +4097,7 @@ int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
 void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick)
 {
   int a;
+
   if(state<0) {
     for(a=0;a<I->NCSet;a++)
       if(I->CSet[a])
@@ -4110,6 +4114,9 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick)
       if(I->CSet[0]->fRender)
         I->CSet[0]->fRender(I->CSet[0],ray,pick);    
   }
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMolecule: rendering complete for object %s.\n",I->Obj.Name
+    ENDFD;
 }
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag)

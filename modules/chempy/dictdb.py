@@ -242,7 +242,7 @@ class DictDBLocal:
          if self.rec.has_key(key):
 
             # locate and retrieve object
-            f=open(self.data_file)
+            f=open(self.data_file,'rb')
             f.seek(self.rec[key][0])
             result = cPickle.load(f)
             f.close()
@@ -263,7 +263,7 @@ class DictDBLocal:
          if self.rec.has_key(key):
 
             # locate and retrieve string            
-            f=open(self.data_file)
+            f=open(self.data_file,'rb')
             f.seek(self.rec[key][0])
             result = f.read(self.rec[key][1])
             f.close()

@@ -252,9 +252,12 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
     switch(I->Line[a].type) {
     case cWizTypeButton:
       if(I->Wiz) {
-        PBlockAndUnlockAPI();
-        PRunString(I->Line[a].code);
-        PLockAPIAndUnblock();
+        PParse(I->Line[a].code);
+        PFlush();
+        /* PBlockAndUnlockAPI();
+          PRunString(I->Line[a].code);
+          PLockAPIAndUnblock();
+        */
       }
       break;
     }
