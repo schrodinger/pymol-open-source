@@ -27,6 +27,8 @@ Z* -------------------------------------------------------------------
 #include"ObjectGadgetRamp.h"
 #include"Util.h"
 #include"Executive.h"
+#include"MyPNG.h"
+#include"Scene.h"
 
 CColor Color;
 
@@ -145,7 +147,7 @@ PyObject *ColorAsPyList()
   int a,c;
   color=I->Color;
   for(a=0;a<I->NColor;a++) {
-    if(color->Custom)
+    if(color->Custom||color->ClampedFlag)
       n_custom++;
     color++;
   }
@@ -153,11 +155,14 @@ PyObject *ColorAsPyList()
   c=0;
   color=I->Color;
   for(a=0;a<I->NColor;a++) {
-    if(color->Custom) {
-      list = PyList_New(3);
+    if(color->Custom||color->ClampedFlag) {
+      list = PyList_New(6);
       PyList_SetItem(list,0,PyString_FromString(color->Name));
       PyList_SetItem(list,1,PyInt_FromLong(a));
       PyList_SetItem(list,2,PConvFloatArrayToPyList(color->Color,3));
+      PyList_SetItem(list,3,PyInt_FromLong(color->Custom));
+      PyList_SetItem(list,4,PyInt_FromLong(color->ClampedFlag));
+      PyList_SetItem(list,5,PConvFloatArrayToPyList(color->Clamped,3));
       PyList_SetItem(result,c,list);
       c++;
     }
@@ -221,7 +226,13 @@ int ColorFromPyList(PyObject *list)
         color=I->Color+index;
         if(ok) ok=PConvPyStrToStr(PyList_GetItem(rec,0),color->Name,sizeof(ColorName));
         if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,2),color->Color,3);
-        if(ok) {color->Custom=true;}
+        if(PyList_Size(rec)>=6) {
+          if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,3),&color->Custom);
+          if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,4),&color->ClampedFlag);
+          if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,5),color->Clamped,3);
+        } else {
+          if(ok) {color->Custom=true;}
+        }
       }
       if(!ok) break;
     }
@@ -260,6 +271,8 @@ void ColorDef(char *name,float *v)
   I->Color[color].Color[1]=v[1];
   I->Color[color].Color[2]=v[2];
   I->Color[color].Custom=true;
+  ColorUpdateClamp(color);
+
   PRINTFB(FB_Executive,FB_Actions)
     " Color: \"%s\" defined as [ %3.1f, %3.1f, %3.1f ].\n",name,v[0],v[1],v[2] 
     ENDFB;
@@ -343,6 +356,9 @@ int ColorGetNColor(void)
 void ColorFree(void)
 {
   CColor *I=&Color;
+  if(I->ColorTable) {
+    FreeP(I->ColorTable);
+  }
   VLAFreeP(I->Color);
   VLAFreeP(I->Ext);
 }
@@ -355,7 +371,7 @@ void ColorReset(void)
   int set1;
   float f;
   float spectrumS[13][3] = { 
-    { 1.0, 0.0, 1.0 }, /* violet */
+    { 1.0, 0.0, 1.0 }, /* magenta */
     { 0.5, 0.0, 1.0 },
     { 0.0, 0.0, 1.0 }, /* blue - 181.81  */
     { 0.0, 0.5, 1.0 },
@@ -367,7 +383,7 @@ void ColorReset(void)
     { 1.0, 0.5, 0.0 },
     { 1.0, 0.0, 0.0 }, /* red - 909.09 */
     { 1.0, 0.0, 0.5 },
-    { 1.0, 0.0, 1.0 }, /* violet */
+    { 1.0, 0.0, 1.0 }, /* magenta */
   };
 
   float spectrumR[13][3] = { 
@@ -379,15 +395,26 @@ void ColorReset(void)
     { 0.0, 0.5, 1.0 },
     { 0.0, 0.0, 1.0 }, /* blue - 545.45 */
     { 0.5, 0.0, 1.0 },
-    { 1.0, 0.0, 1.0 }, /* violet - 727.27 */
+    { 1.0, 0.0, 1.0 }, /* magenta - 727.27 */
     { 1.0, 0.0, 0.5 },
     { 1.0, 0.0, 0.0 }, /* red - 909.09 */
     { 1.0, 0.5, 0.0 },
     { 1.0, 1.0, 0.0 }, /* yellow */
   };
 
+  float spectrumW[][3] = {
+    { 0.0, 0.0, 1.0 }, /* blue - 0 */
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 1.0, 0.0, 0.0 }, /* red */
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 0.0, 1.0, 0.0 }, /* green */
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 1.0, 0.0, 1.0 }, /* magenta */
+  };
+
   /* BLUE->VIOLET->RED r546 to r909 */
   /* BLUE->CYAN->GREEN->YELLOW->RED s182 to s909 */
+  /* BLUE->WHITE->RED w00 to */
 
   I->NColor=0;
 
@@ -439,7 +466,7 @@ void ColorReset(void)
   I->Color[I->NColor].Color[2]=0.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"violet");
+  strcpy(I->Color[I->NColor].Name,"magenta");
   I->Color[I->NColor].Color[0]=1.0F;
   I->Color[I->NColor].Color[1]=0.0F;
   I->Color[I->NColor].Color[2]=1.0F;
@@ -463,7 +490,7 @@ void ColorReset(void)
   I->Color[I->NColor].Color[2]=1.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"magenta");
+  strcpy(I->Color[I->NColor].Name,"hotpink");
   I->Color[I->NColor].Color[0]=1.0F;
   I->Color[I->NColor].Color[1]=0.0F;
   I->Color[I->NColor].Color[2]=0.5F;
@@ -725,6 +752,24 @@ void ColorReset(void)
     I->NColor++;
   }
 
+  strcpy(I->Color[I->NColor].Name,"violet");
+  I->Color[I->NColor].Color[0]=1.0F;
+  I->Color[I->NColor].Color[1]=0.5F;
+  I->Color[I->NColor].Color[2]=1.0F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"brightorange");
+  I->Color[I->NColor].Color[0]=1.0F;
+  I->Color[I->NColor].Color[1]=0.7F;
+  I->Color[I->NColor].Color[2]=0.2F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"lightmagenta");
+  I->Color[I->NColor].Color[0]=1.0F;
+  I->Color[I->NColor].Color[1]=0.0F;
+  I->Color[I->NColor].Color[2]=0.7F;
+  I->NColor++;
+
   #define A_DIV 90.9091F
 
   /* full spectrum ("S..." colors) */
@@ -751,6 +796,20 @@ void ColorReset(void)
     I->NColor++;
   }
 
+#if 0
+  /* full spectrum ("W..." colors) */
+
+  for(a=0;a<100;a=a+1) {
+    set1=(int)(a/W_DIV);
+    sprintf(I->Color[I->NColor].Name,"w%02d",a);
+    f = 1.0F-(a-(set1*W_DIV))/W_DIV;
+    I->Color[I->NColor].Color[0]=f*spectrumR[set1][0]+(1.0F-f)*spectrumR[set1+1][0];
+    I->Color[I->NColor].Color[1]=f*spectrumR[set1][1]+(1.0F-f)*spectrumR[set1+1][1];
+    I->Color[I->NColor].Color[2]=f*spectrumR[set1][2]+(1.0F-f)*spectrumR[set1+1][2];
+    I->NColor++;
+  }
+#endif
+
   for(a=0;a<I->NColor;a++) { 
     /* mark all current colors non-custom so that they don't get saved in session files */
     I->Color[a].Custom=false;
@@ -758,25 +817,336 @@ void ColorReset(void)
 
 }
 
+int ColorTableLoad(char *fname,int quiet)
+{
+  CColor *I=&Color; 
+  int ok=true;
+  int width=512,height=512;
+  unsigned int *table = NULL;
+
+  if(!strcmp(fname,"rgb")) {
+    FreeP(I->ColorTable);
+    PRINTFB(FB_Color,FB_Actions)
+      " Color: purged table; restoring RGB colors.\n"
+      ENDFB;
+    ColorUpdateClamp(-1);    
+    
+  } else if(!strcmp(fname,"pymol")) {
+    
+    int x,y;
+    unsigned int r=0,g=0,b=0;
+    unsigned int *pixel,mask,*p;
+    unsigned int rc,bc,gc;
+    unsigned int gf,bf,rf;
+
+    float green_max=0.75;
+    float red_max=0.95;
+    float blue_max=0.97;
+    
+    float min_factor=0.15;
+
+    red_max = SettingGet(cSetting_pymol_space_max_red);
+    green_max = SettingGet(cSetting_pymol_space_max_green);
+    blue_max = SettingGet(cSetting_pymol_space_max_blue);
+    min_factor = SettingGet(cSetting_pymol_space_min_factor);
+
+    FreeP(I->ColorTable);
+    if(I->BigEndian)
+      mask = 0x000000FF;
+    else
+      mask = 0xFF000000;
+    
+    table = Alloc(unsigned int,512*512);
+    
+    p=(unsigned int*)table; 
+    for(x=0;x<width;x++)
+      for(y=0;y<height;y++)
+        *(p++)=mask;
+    
+    for(y=0;y<height;y++) 
+      for(x=0;x<width;x++) {
+        rc = r;
+        gc = g;
+        bc = b;
+
+        if((r>=g)&&(r>=b)) {
+          if(rc>255*red_max) {
+            rc=red_max*255;
+            bc=bc*rc/r;
+            gc=gc*rc/r;
+          }
+        } else if((g>=b)&&(g>=r)) {
+          if(gc>255*green_max) {
+            gc=green_max*255;
+            bc=bc*gc/g;
+            rc=rc*gc/g;
+          }
+        } else if((b>=g)&&(b>=r)) {
+          if(bc>255*blue_max) {
+            bc=blue_max*255;
+            gc=gc*bc/b;
+            rc=rc*bc/b;
+          }
+        }
+
+        rf = (int)(min_factor*rc+0.49999);
+        gf = (int)(min_factor*gc+0.49999);
+        bf = (int)(min_factor*bc+0.49999);
+        
+        if (rc<gf) rc = (int)gf;
+        if (bc<gf) bc = (int)gf;
+        
+        if (rc<bf) rc = (int)bf;
+        if (gc<bf) gc = (int)bf;
+        
+        if (gc<rf) gc = (int)rf;
+        if (bc<rf) bc = (int)rf;
+    
+        if(rc>255) rc=255;
+        if(bc>255) bc=255;
+        if(gc>255) gc=255;
+
+        pixel = table+((width)*y)+x;
+        if(I->BigEndian) {
+          *(pixel)=
+            mask|(rc<<24)|(gc<<16)|(bc<<8);
+        } else {
+          *(pixel)=
+            mask|(bc<<16)|(gc<<8)|rc;
+        }
+        b = b + 4;
+        if(!(0xFF&b)) { 
+          b=0;
+          g=g+4;
+          if(!(0xFF&g)) {           
+            g=0;
+            r=r+4;
+          }
+        }
+      }
+  
+    I->ColorTable = table;
+    if(!quiet) {
+      PRINTFB(FB_Color,FB_Actions)
+        " Color: defined table '%s'.\n",fname
+        ENDFB;
+    }
+    
+    ColorUpdateClamp(-1);
+    ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);
+    SceneChanged();
+
+  } else {
+    if(strlen(fname)) {
+      if(MyPNGRead(fname,
+                   (unsigned char**)&table,
+                   (unsigned int*)&width,
+                   (unsigned int*)&height)) {
+        if((width==512)&&(height==512)) {
+          FreeP(I->ColorTable);
+          I->ColorTable = table;
+          if(!quiet) {
+            PRINTFB(FB_Color,FB_Actions)
+              " Color: loaded table '%s'.\n",fname
+              ENDFB;
+          }
+          
+          ColorUpdateClamp(-1);
+
+        } else {
+          PRINTFB(FB_Color,FB_Errors)
+            " ColorTableLoad-Error: invalid dimensions w x h  = %d x %d; should be 512 x 512.\n",
+            width,height
+            ENDFB;
+          
+          ok=false;      
+        }
+      } else {
+        PRINTFB(FB_Color,FB_Errors)
+          " ColorTableLoad-Error: unable to load '%s'.\n",fname
+          ENDFB;
+        ok=false;
+      }
+    } else {
+      PRINTFB(FB_Color,FB_Actions)
+        " Color: purged table; colors unchanged.\n"
+        ENDFB;
+      FreeP(I->ColorTable);
+    }
+  }
+  if(!ok) {
+    FreeP(table);
+  } else {
+    ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);
+    SceneChanged();
+  }
+  return(ok);
+}
+
+/*========================================================================*/
+void ColorUpdateClamp(int index)
+{
+  int i;
+  int once=false;
+  i = index;
+  CColor *I=&Color; 
+  unsigned int *entry;
+  float *color,*new_color;
+  unsigned int r,g,b,rr,gr,br;
+  unsigned int ra,ga,ba;
+  unsigned int rc[2][2][2],gc[2][2][2],bc[2][2][2];
+  float fr,fg,fb,frm1,fgm1,fbm1,rct,gct,bct;
+  int x,y,z;
+
+  if(index>=0) {
+    once=true;
+  }
+  for(i=0;i<I->NColor;i++) {
+    if(!once) index=i;
+   
+    if(index<I->NColor) {
+      if(!I->ColorTable) {
+        I->Color[index].ClampedFlag = false;
+      } else {
+        color = I->Color[index].Color;
+        r = ((int)(255*color[0]+0.5F))&0xFF;
+        g = ((int)(255*color[1]+0.5F))&0xFF;
+        b = ((int)(255*color[2]+0.5F))&0xFF;
+
+        rr = r&0x3;
+        gr = g&0x3;
+        br = b&0x3;
+
+        r = (r>>2);
+        g = (g>>2);
+        b = (b>>2);
+
+        /* now for a crude little trilinear */
+
+        for(x=0;x<2;x++) {
+          ra = r + x;
+          if(ra>63) ra=63;
+          for(y=0;y<2;y++) {
+            ga = g + y;
+            if(ga>63) ga=63;
+            for(z=0;z<2;z++) {
+              ba = b + z;
+              if(ba>63) ba=63;
+              
+              entry = I->ColorTable + (ra<<12) + (ga<<6) + ba;
+              
+              if(I->BigEndian) {
+                rc[x][y][z] = 0xFF&((*entry)>>24);
+                gc[x][y][z] = 0xFF&((*entry)>>16);
+                bc[x][y][z] = 0xFF&((*entry)>>8);
+              } else {
+                rc[x][y][z] = 0xFF&((*entry)    );
+                gc[x][y][z] = 0xFF&((*entry)>> 8);
+                bc[x][y][z] = 0xFF&((*entry)>>16);
+              }
+            }
+          }
+        }
+
+        frm1 = rr/4.0F;
+        fgm1 = gr/4.0F;
+        fbm1 = br/4.0F;
+        
+        fr = 1.0 - frm1;
+        fg = 1.0 - fgm1;
+        fb = 1.0 - fbm1;
+
+        rct = 0.4999 + 
+          (fr   * fg   * fb   * rc[0][0][0]) + 
+          (frm1 * fg   * fb   * rc[1][0][0]) + 
+          (fr   * fgm1 * fb   * rc[0][1][0]) + 
+          (fr   * fg   * fbm1 * rc[0][0][1]) + 
+          (frm1 * fgm1 * fb   * rc[1][1][0]) + 
+          (fr   * fgm1 * fbm1 * rc[0][1][1]) + 
+          (frm1 * fg   * fbm1 * rc[1][0][1]) + 
+          (frm1 * fgm1 * fbm1 * rc[1][1][1]);
+
+        gct = 0.4999 + 
+          (fr   * fg   * fb   * gc[0][0][0]) + 
+          (frm1 * fg   * fb   * gc[1][0][0]) + 
+          (fr   * fgm1 * fb   * gc[0][1][0]) + 
+          (fr   * fg   * fbm1 * gc[0][0][1]) + 
+          (frm1 * fgm1 * fb   * gc[1][1][0]) + 
+          (fr   * fgm1 * fbm1 * gc[0][1][1]) + 
+          (frm1 * fg   * fbm1 * gc[1][0][1]) + 
+          (frm1 * fgm1 * fbm1 * gc[1][1][1]);
+
+        bct = 0.4999 + 
+          (fr   * fg   * fb   * bc[0][0][0]) + 
+          (frm1 * fg   * fb   * bc[1][0][0]) + 
+          (fr   * fgm1 * fb   * bc[0][1][0]) + 
+          (fr   * fg   * fbm1 * bc[0][0][1]) + 
+          (frm1 * fgm1 * fb   * bc[1][1][0]) + 
+          (fr   * fgm1 * fbm1 * bc[0][1][1]) + 
+          (frm1 * fg   * fbm1 * bc[1][0][1]) + 
+          (frm1 * fgm1 * fbm1 * bc[1][1][1]);
+
+        if(r>=63) rct+=rr;
+        if(g>=63) gct+=gr;
+        if(b>=63) bct+=br;
+
+        if(rct<=2.0F) rct=0.0F; /* make sure black is black */
+        if(gct<=2.0F) gct=0.0F;
+        if(bct<=2.0F) bct=0.0F;
+
+        new_color = I->Color[index].Clamped;
+        new_color[0] = rct/255.0F;
+        if(new_color[0]>1.0F) new_color[0]=1.0F;
+        new_color[1] = gct/255.0F;
+        if(new_color[1]>1.0F) new_color[1]=1.0F; 
+        new_color[2] = bct/255.0F;
+        if(new_color[2]>1.0F) new_color[2]=1.0F;
+
+        PRINTFD(FB_Color)
+          "%5.3f %5.3f %5.3f -> %5.3f %5.3f %5.3f\n",
+               color[0],color[1],color[2],
+               new_color[0],new_color[1],new_color[2]
+          ENDFD;
+      
+        I->Color[index].ClampedFlag = true;
+      }
+    }
+      
+    if(once) break;
+  }
+}
 /*========================================================================*/
 void ColorInit(void)
 {
   CColor *I=&Color;
+
+  unsigned int test;
+  unsigned char *testPtr;
+  
+  test = 0xFF000000;
+  testPtr = (unsigned char*)&test;
+  I->BigEndian = (*testPtr)&&1;
 
   I->Color=VLAMalloc(2500,sizeof(ColorRec),5,true);
   I->NColor=0;
   ColorReset();
   I->NExt=0;
   I->Ext=VLAMalloc(10,sizeof(ExtRec),5,true);
+  I->ColorTable=NULL;
 }
 
 /*========================================================================*/
 float *ColorGet(int index)
 {
   CColor *I=&Color;
-  if((index>=0)&&(index<I->NColor))
-	 return(I->Color[index].Color);
-  else
+  float *ptr;
+  if((index>=0)&&(index<I->NColor)) {
+    if(I->Color[index].ClampedFlag&&(int)SettingGet(cSetting_clamp_colors))
+      ptr = I->Color[index].Clamped;
+    else
+      ptr = I->Color[index].Color;
+    return(ptr);
+ } else
 	 return(I->Color[0].Color);
 }
 

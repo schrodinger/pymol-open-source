@@ -100,6 +100,7 @@ function name.
 
 /* layer 1 */
 
+#define FB_Color                     10
 #define FB_CGO                       11
 #define FB_Feedback                  12
 #define FB_Scene                     13

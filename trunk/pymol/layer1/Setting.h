@@ -344,10 +344,15 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_mouse_limit                 211
 #define cSetting_mouse_scale                 212
 #define cSetting_transparency_mode           213
+#define cSetting_clamp_colors                214
+#define cSetting_pymol_space_max_red         215
+#define cSetting_pymol_space_max_green       216
+#define cSetting_pymol_space_max_blue        217
+#define cSetting_pymol_space_min_factor      218
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        214
+#define cSetting_INIT                        219
 
 #endif
 

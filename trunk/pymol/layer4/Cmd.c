@@ -71,6 +71,7 @@ Z* -------------------------------------------------------------------
 #include"Wizard.h"
 #include"SculptCache.h"
 #include"TestPyMOL.h"
+#include"Color.h"
 
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
@@ -278,6 +279,7 @@ static PyObject *CmdMDump(PyObject *self, PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
 static PyObject *CmdLabel(PyObject *self,   PyObject *args);
 static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
+static PyObject *CmdLoadColorTable(PyObject *self, 	PyObject *args);
 static PyObject *CmdLoadCoords(PyObject *self, PyObject *args);
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args);
 static PyObject *CmdLoadPNG(PyObject *self, PyObject *args);
@@ -446,6 +448,7 @@ static PyMethodDef Cmd_methods[] = {
    {"wait_queue",            CmdWaitQueue,            METH_VARARGS },
    {"label",                 CmdLabel,                METH_VARARGS },
 	{"load",	                 CmdLoad,                 METH_VARARGS },
+	{"load_color_table",	     CmdLoadColorTable,       METH_VARARGS },
 	{"load_coords",           CmdLoadCoords,           METH_VARARGS },
 	{"load_png",              CmdLoadPNG,              METH_VARARGS },
 	{"load_object",           CmdLoadObject,           METH_VARARGS },
@@ -537,7 +540,6 @@ static PyMethodDef Cmd_methods[] = {
 
 static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
 {
-  
   char *str1,*expr,*prefix;
   OrthoLineType s1;
   float min,max;
@@ -1040,6 +1042,20 @@ static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
         ENDFB;
       ok=false;
     }
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
+{
+  char *str1;
+  int ok = false;
+  int quiet;
+  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
+  if(ok) {
+    APIEntry();
+    ok = ColorTableLoad(str1,quiet);
+    APIExit();
   }
   return(APIStatus(ok));
 }

@@ -27,7 +27,8 @@ typedef char ColorName[64];
 
 typedef struct {
   ColorName Name;
-  Vector3f Color;
+  Vector3f Color,Clamped;
+  int ClampedFlag;
   int Custom;
 } ColorRec;
 
@@ -42,6 +43,8 @@ typedef struct  {
   int NColor;
   ExtRec *Ext;
   int NExt;
+  unsigned int *ColorTable;
+  int BigEndian;
 } CColor;
 
 void ColorInit(void);
@@ -67,6 +70,8 @@ int ColorFromPyList(PyObject *list);
 
 int ColorExtFromPyList(PyObject *list);
 PyObject *ColorExtAsPyList(void);
+int ColorTableLoad(char *fname,int quiet);
+void ColorUpdateClamp(int index);
 
 #endif
 

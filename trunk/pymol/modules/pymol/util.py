@@ -78,6 +78,15 @@ def cbak(selection="(all)"):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("pink","(elem C and "+s+")")
 
+def cbam(selection="(all)"):
+   s = str(selection)   
+   cmd.color("magenta","("+s+")")
+   cmd.color("oxygen","(elem O and "+s+")")
+   cmd.color("nitrogen","(elem N and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
+   cmd.color("hydrogen","(elem H and "+s+")")
+   cmd.color("lightmagenta","(elem C and "+s+")")
+
 def cbaw(selection="(all)"):
    s = str(selection)   
    cmd.color("magenta","("+s+")")
@@ -95,6 +104,15 @@ def cbab(selection="(all)"):
    cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("slate","(elem C and "+s+")")
+
+def cbao(selection="(all)"):
+   s = str(selection)   
+   cmd.color("magenta","("+s+")")
+   cmd.color("oxygen","(elem O and "+s+")")
+   cmd.color("nitrogen","(elem N and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
+   cmd.color("hydrogen","(elem H and "+s+")")
+   cmd.color("brightorange","(elem C and "+s+")")
 
 def performance(mode):
    mode = int(mode)
@@ -227,16 +245,16 @@ def ray_shadows(mode):
       cmd.set('reflect',0.75) # was 0.70
       cmd.set('direct',0.06)
       cmd.set('power',0.3)
-      cmd.set('gamma',1.43) # was 1.5
+      cmd.set('gamma',1.5) # was 1.43
    elif mode=='black': # best for light backgrounds
       cmd.set('power',0.3)
       cmd.set('spec_reflect',1.1)
       cmd.set('spec_power',90) 
-      cmd.set('ambient',0.00)
+      cmd.set('ambient',0.001)
       cmd.set('reflect',0.8)
       cmd.set('direct',0.00)
       cmd.set('reflect_power',1.7)
-      cmd.set('gamma',1.55) 
+      cmd.set('gamma',1.8) # was 1.55
 
 def ff_copy(src,dst): # NOT THREAD SAFE
    pymol._rcopy = pymol.Scratch_Storage()

@@ -98,7 +98,14 @@ Current Bugs to Fix
 
 Changes up to 0.88
 
-   * added z-ordered transparency (night-and-day!)
+   * overhauled color menu, improved performance of rainbow and color by chain
+
+   * added Transparency and Color Space menus
+
+   * added color space clamping to better enable CMYK color matching as well
+     as improve rendering quality
+
+   * added z-ordered transparency (WOW!) with menu control
 
    * finished session save support for ramps and gadgets
 

@@ -18,7 +18,7 @@ if __name__=='pymol.creating':
 
    import operator
    import cmd
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException
+   from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_list
    from cmd import file_ext_re
    from chempy import fragments
 
@@ -57,12 +57,20 @@ if __name__=='pymol.creating':
          unlock()
 
    def ramp_new(name,map_name,range=[-1.0,0.0,1.0],
-                color=[[1.0,0.0,0.0],[1.0,1.0,1.0],[0.0,0.0,1.0]],
+                color=['red',[1.0,1.0,1.0],'blue'],
                 map_state=1):
       # preprocess selection
+      color = eval(str(color))
+      new_color = []
+      for a in color:
+         if not is_list(a):
+            new_color.append(list(cmd.get_color_tuple(a)))
+         else:
+            new_color.append(a)
+         
       try:
          lock()
-         r = _cmd.ramp_new(str(name),str(map_name),list(eval(str(range))),list(eval(str(color))),
+         r = _cmd.ramp_new(str(name),str(map_name),list(eval(str(range))),list(new_color),
                            int(map_state)-1)
       finally:
          unlock()

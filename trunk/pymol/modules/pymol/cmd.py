@@ -104,6 +104,8 @@ if __name__=='pymol.cmd':
                   'crosseye':2,'quadbuffer':3} #,'walleye':3}
    stereo_sc = Shortcut(stereo_dict.keys())
 
+   space_sc = Shortcut(['cmyk','rgb','pymol'])
+   
    repres = {
       'everything'    : -1,
       'sticks'        : 0,
@@ -809,6 +811,7 @@ if __name__=='pymol.cmd':
         load,               \
         load_brick,         \
         load_callback,      \
+        space,       \
         load_cgo,           \
         load_map,           \
         load_model,         \
@@ -1180,6 +1183,7 @@ if __name__=='pymol.cmd':
       'iterate_state' : [ iterate_state     , 0 , 0 , ''  , parsing.LITERAL2 ],
       'label'         : [ label             , 0 , 0 , ''  , parsing.LITERAL1 ],
       'load'          : [ load              , 0 , 0 , ''  , parsing.STRICT ],
+      'space'         : [ space       , 0 , 0 , ''  , parsing.STRICT ],      
       'load_png'      : [ load_png          , 0 , 0 , ''  , parsing.STRICT ],
       'load_traj'     : [ load_traj         , 0 , 0 , ''  , parsing.STRICT ],
       'log'           : [ log               , 0 , 0 , ''  , parsing.STRICT ],
@@ -1434,8 +1438,10 @@ if __name__=='pymol.cmd':
 
    auto_arg =[
       {
+      'bg'             : [ _get_color_sc          , 'color'           , ''   ],      
       'color'          : [ _get_color_sc          , 'color'           , ', ' ],
-      'cartoon'        : [ viewing.cartoon_sc     , 'cartoon'         , ', ' ],      
+      'cartoon'        : [ viewing.cartoon_sc     , 'cartoon'         , ', ' ],
+      'space'          : [ space_sc               , 'space'           , ''   ],      
       'set'            : [ setting.setting_sc     , 'setting'         , ','  ],
       'flag'           : [ editing.flag_sc        , 'flag'            , ', ' ],
       'show'           : [ repres_sc              , 'representation'  , ', ' ],

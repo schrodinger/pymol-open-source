@@ -1957,6 +1957,8 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
     ErrChkPtr(buffer);
     
     RayRender(ray,ray_width,ray_height,buffer,I->Front,I->Back,timing);
+
+    /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
     
     if(I->ImageBuffer) {
       if(I->MovieOwnsImageFlag) {
