@@ -764,7 +764,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
 
   if(PMGUI) {
     if(curState>=0) {
-      if(curState<I->NCSet)
+      if(curState<I->NCSet) {
         if(I->CSet[curState]) {
           cs=I->CSet[curState];
           for(a=0;a<cs->NIndex;a++) {
@@ -773,6 +773,18 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
               glVertex3fv(cs->Coord+3*a);
           }
         }
+      } else if(SettingGet(cSetting_static_singletons)) {
+        if(I->NCSet==1) {
+          cs=I->CSet[0];
+          if(cs) {
+            for(a=0;a<cs->NIndex;a++) {
+              at=cs->IdxToAtm[a]; /* should work for both discrete and non-discrete objects */
+              if(SelectorIsMember(I->AtomInfo[at].selEntry,sele))
+                glVertex3fv(cs->Coord+3*a);
+            }
+          }
+        }
+      }
     } else { /* all states */
       for(curState=0;curState<I->NCSet;curState++) {
         if(I->CSet[curState]) {

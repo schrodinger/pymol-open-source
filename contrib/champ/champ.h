@@ -26,39 +26,40 @@ Z* -------------------------------------------------------------------
 
 /* atoms */
 
-#define cH_Any 0xFFFFFFFF
-#define cH_C   0x00000001 
-#define cH_N   0x00000002 
-#define cH_O   0x00000004
-#define cH_H   0x00000008
-#define cH_S   0x00000010
-#define cH_P   0x00000020
-#define cH_F   0x00000040
-#define cH_Cl  0x00000080
-#define cH_Br  0x00000100
-#define cH_I   0x00000200
-#define cH_Na  0x00000400
-#define cH_K   0x00000800
-#define cH_Ca  0x00001000
-#define cH_Mg  0x00002000
-#define cH_Zn  0x00004000
-#define cH_Fe  0x00008000
-#define cH_Cu  0x00010000
-#define cH_Se  0x00020000
-#define cH_B   0x00040000
-#define cH_R0  0x00080000
-#define cH_R1  0x00100000
-#define cH_R2  0x00200000
-#define cH_R3  0x00400000
-#define cH_R4  0x00800000
-#define cH_R5  0x01000000
-#define cH_R6  0x02000000
-#define cH_R7  0x04000000
-#define cH_R8  0x08000000
-#define cH_R9  0x10000000
-#define cH_X   0x20000000
-#define cH_Y   0x40000000
-#define cH_Sym 0x80000000 /* match symbol name */
+#define cH_Any  0xFFFFFFFF
+#define cH_NotH 0x00000001
+#define cH_C    0x00000002 
+#define cH_N    0x00000004 
+#define cH_O    0x00000008
+#define cH_H    0x00000010
+#define cH_S    0x00000020
+#define cH_P    0x00000040
+#define cH_F    0x00000080
+#define cH_Cl   0x00000100
+#define cH_Br   0x00000200
+#define cH_I    0x00000400
+#define cH_Na   0x00000800
+#define cH_K    0x00001000
+#define cH_Ca   0x00002000
+#define cH_Mg   0x00004000
+#define cH_Zn   0x00008000
+#define cH_Fe   0x00010000
+#define cH_Cu   0x00020000
+#define cH_Se   0x00040000
+#define cH_B    0x00080000
+#define cH_A    0x00100000
+#define cH_E    0x00200000
+#define cH_G    0x00400000
+#define cH_J    0x00800000
+#define cH_L    0x01000000
+#define cH_M    0x02000000
+#define cH_Q    0x04000000
+#define cH_R    0x08000000
+#define cH_T    0x10000000
+#define cH_X    0x20000000
+#define cH_Z    0x40000000
+
+[Cl,Br,!F,Cl|H3;r5,r6;X1]
 
 /* charge */
 
@@ -106,9 +107,9 @@ Z* -------------------------------------------------------------------
 
 typedef char AtomBuffer[255]; /* maximum length for a single atom */
 
-#define NAM_SIZE 4
-#define RES_SIZE 4
-#define SYM_SIZE 2
+#define NAM_SIZE 5
+#define RES_SIZE 5
+#define SYM_SIZE 3
 
 typedef struct { 
   int link; /* memory management */
@@ -131,6 +132,7 @@ typedef struct {
   int not_class;
   int not_degree;
   int not_valence;
+  int implicit_hydrogens;
   int tag; /* string index for tag */
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
