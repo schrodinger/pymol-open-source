@@ -177,12 +177,29 @@ def get_context_info():  # Author: Warren DeLano
                context_dict[context].append(a)
     return (context_list,context_dict)
 
+def toggle_labels(mode=-1):
+    global labels
+    if mode<0:
+        labels = not labels
+    else:
+        labels = mode
+    if labels:
+        cmd.show("labels")
+    else:
+        cmd.hide("labels")
+
 def setup_contexts(context_info):   # Author: Warren DeLano
     (list,dict) = context_info[0:2]
-    key_list = ['F2','F3','F4','F5','F6','F7','F8','F9']
-    doc_list = ["Key  Context","F1   All"]
-    cmd.set_key('F1',lambda :(cmd.zoom(),cmd.hide("labels")))
+    key_list = ['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10']
+    doc_list = ["Keys"]
     zoom_context = 1
+    global labels
+    labels = 1
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,lambda :(cmd.zoom(),toggle_labels(0)))
+        doc_list.append(key+": All")
+    
     for a in list:
         water = a+"_water"
         ligand = a+"_ligand"
@@ -204,13 +221,13 @@ def setup_contexts(context_info):   # Author: Warren DeLano
             util.cbac(site)
             if len(key_list):
                 key = key_list.pop(0)
-                cmd.set_key(key,lambda x=site:(cmd.zoom(site),cmd.show("labels")))
+                cmd.set_key(key,lambda x=site:(cmd.zoom(x)))
                 mo = re.search("_([^_]+)$",a)
                 if mo:
                     cont_name = mo.groups()[0]
                 else:
                     cont_name = a
-                doc_list.append(key+"   "+cont_name)
+                doc_list.append(key+": "+cont_name)
             # replace cartoon with explicit atoms for "site" atoms
             cmd.hide("cartoon",site)
             cmd.show("sticks","(byres (neighbor ("+site+" and name c))) and name n+ca")
@@ -219,9 +236,18 @@ def setup_contexts(context_info):   # Author: Warren DeLano
         if hbond in name_list:
             cmd.show("dashes",hbond)
             cmd.show("labels",hbond)
+
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_labels)
+        doc_list.append(key+": HBond")        
+        
     cmd.wizard("message",doc_list)
     if zoom_context not in (0,1):
         cmd.zoom(zoom_context)
+    else:
+        toggle_labels(0)
+        
         
 
     
