@@ -176,7 +176,9 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdMask(PyObject *self, PyObject *args);
@@ -291,6 +293,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
 	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
+	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
+   {"get_setting_updates",   CmdGetSettingUpdates,    METH_VARARGS },
 	{"get_state",             CmdGetState,             METH_VARARGS },
 	{"get_type",              CmdGetType,              METH_VARARGS },
    {"get_view",              CmdGetView,              METH_VARARGS },
@@ -365,6 +369,19 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args)
+{
+  PyObject *result = NULL;
+  APIEntry();
+  result = SettingGetUpdateList(NULL);
+  APIExit();
+  if(!result) {
+    result=Py_None;
+    Py_INCREF(result);
+  }
+  return(result);
+}
 
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args)
 {
@@ -1442,6 +1459,18 @@ static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
   PyArg_ParseTuple(args,"isi",&int1,&str1,&int2); /* setting, object, state */
   APIEntry();
   result =  ExecutiveGetSettingTuple(int1,str1,int2);
+  APIExit();
+  return result;
+}
+
+static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args)
+{
+  PyObject *result;
+  int int1,int2;
+  char *str1;
+  PyArg_ParseTuple(args,"isi",&int1,&str1,&int2); /* setting, object, state */
+  APIEntry();
+  result =  ExecutiveGetSettingText(int1,str1,int2);
   APIExit();
   return result;
 }

@@ -94,14 +94,16 @@ class SettingIndex:
 
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
+index_list = []
 name_dict = {}
-lst = SettingIndex.__dict__.keys()
-lst = filter(lambda x:x[0]!='_',lst)
-lst = map(lambda x:(getattr(SettingIndex,x),x),lst)
-for a in lst:
+name_list = SettingIndex.__dict__.keys()
+name_list = filter(lambda x:x[0]!='_',name_list)
+name_list.sort()
+tmp_list = map(lambda x:(getattr(SettingIndex,x),x),name_list)
+for a in tmp_list:
    name_dict[a[0]]=a[1]
-del lst
-
+   index_list.append(a[0])
+   
 boolean_dict = {
    "true" : 1,
    "false" : 0,
@@ -111,7 +113,7 @@ boolean_dict = {
    "0"    : 0,
    }
    
-boolean_sc = Shortcut(boolean_dict.keys())
+boolean_sc = Shortcut(name_list)
   
 def _get_index(name):
    # this may be called from C, so don't raise any exceptions...
@@ -124,9 +126,15 @@ def _get_index(name):
    else:
       return -1
 
-def _get_name(index):
+def _get_name(index): # likewise, this can be called from C so no exceptions
    if name_dict.has_key(index):
       return name_dict[index]
    else:
       return ""
 
+
+def get_index_list():
+   return index_list
+
+def get_name_list():
+   return name_list

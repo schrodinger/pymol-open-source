@@ -567,6 +567,47 @@ TO DOCUMENT
       unlock()
    return r
 
+def get_setting_updates():
+   r = None
+   try:
+      lock()
+      r = _cmd.get_setting_updates()
+   finally:
+      unlock()
+   return r
+
+def get_setting_tuple(name,object='',state=0):
+   r = None
+   if is_string(name):
+      i = setting._get_index(name)
+   else:
+      i = int(name)
+   if i<0:
+      print "Error: unknown setting"
+      raise QuietException
+   try:
+      lock()
+      r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
+   finally:
+      unlock()
+   return r
+
+def get_setting_text(name,object='',state=0):
+   r = None
+   if is_string(name):
+      i = setting._get_index(name)
+   else:
+      i = int(name)
+   if i<0:
+      print "Error: unknown setting"
+      raise QuietException
+   try:
+      lock()
+      r = _cmd.get_setting_text(i,str(object),int(state)-1)
+   finally:
+      unlock()
+   return r
+
 def focus():
    '''
 TO DOCUMENT
@@ -691,6 +732,15 @@ TO DOCUMENT, REVISION IMPENDING
       unlock()
    pass
 
+def get_setting_legacy(name):
+   r = None
+   try:
+      lock()
+      r = _cmd.get_setting(name)
+   finally:
+      unlock()
+   return r
+   
 def config_mouse(quiet=0):
    '''
 TO DOCUMENT

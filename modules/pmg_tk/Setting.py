@@ -12,9 +12,14 @@
 #-* based on code written by Doug Hellmann. 
 #Z* -------------------------------------------------------------------
 
+# this section is devoted to making sure that Tkinter variables which
+# correspond to Menu-displayed settings are kept synchronized with
+# PyMOL
+
 from Tkinter import *
 import Pmw
 from pymol import cmd
+import pymol.setting
 
 pm = cmd
 
@@ -23,57 +28,101 @@ class Setting:
    def __init__(self):
    
       self.ray_trace_frames = IntVar()
-      self.ray_trace_frames.set(0)
-
+      self.ray_trace_frames.set(int(cmd.get_setting_legacy('ray_trace_frames')))
+      
       self.cache_frames = IntVar()
-      self.cache_frames.set(0)
+      self.cache_frames.set(int(cmd.get_setting_legacy('ray_trace_frames')))
 
       self.ortho = IntVar()
-      self.ortho.set(0)
+      self.ortho.set(int(cmd.get_setting_legacy('orthoscopic')))
 
       self.antialias = IntVar()
-      self.antialias.set(0)
+      self.antialias.set(cmd.get_setting_legacy('antialias'))
 
       self.all_states = IntVar()
-      self.all_states.set(0)
+      self.all_states.set(cmd.get_setting_legacy('all_states'))
+
+      self.line_smooth = IntVar()
+      self.line_smooth.set(cmd.get_setting_legacy('line_smooth'))
 
       self.overlay = IntVar()
-      self.overlay.set(0)
-
-      self.normal_workaround = IntVar()
-      self.normal_workaround.set(0)
+      self.overlay.set(cmd.get_setting_legacy('overlay'))
 
       self.valence = IntVar()
-      self.valence.set(0)
+      self.valence.set(cmd.get_setting_legacy('valence'))
 
       self.auto_zoom = IntVar()
-      self.auto_zoom.set(1)
+      self.auto_zoom.set(cmd.get_setting_legacy('auto_zoom'))
+
 
       self.xref = { 
-'ray_trace_frames':
-   (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get())),
-   s.cache_frames.set(s.ray_trace_frames.get()),
-   s.update('cache_frames'))),
-'cache_frames'  :
-   (lambda s,a: (cmd.set(a,("%1.0f" % s.cache_frames.get())))),
-'ortho'         :
-   (lambda s,a: (cmd.set(a,("%1.0f" % s.ortho.get())))),
-'antialias'     :
-   (lambda s,a: (cmd.set(a,("%1.0f" % s.antialias.get())))),
-'valence'       :
-   (lambda s,a: (cmd.set(a,("%1.2f" % (float(s.valence.get())/20.0))))),
-'all_states'    :
-   (lambda s,a: (cmd.set(a,("%1.0f" % s.all_states.get())))),
-'normal_workaround':
-   (lambda s,a: (cmd.set(a,("%1.0f" % s.normal_workaround.get())))),
-'overlay'       :
-   (lambda s,a: (cmd.set(a,("%1.0f" % s.overlay.get())))),
-'auto_zoom'       :
-   (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_zoom.get())))),
-   }
+         'ray_trace_frames':
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get())),
+                       s.cache_frames.set(s.ray_trace_frames.get()),
+                       s.update('cache_frames'))),
+         'cache_frames'  :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.cache_frames.get())))),
+         'ortho'         :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.ortho.get())))),
+         'antialias'     :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.antialias.get())))),
+         'valence'       :
+         (lambda s,a: (cmd.set(a,("%1.2f" % (float(s.valence.get())/20.0))))),
+         'all_states'    :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.all_states.get())))),
+         'overlay'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" %( s.overlay.get()*5))))),
+         'auto_zoom'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_zoom.get())))),
+         }
+
+      self.update_code = {
+         'ray_trace_frames':
+         (lambda s,t: (s.ray_trace_frames.set(int(t[1][0])))),
+         'cache_frames':
+         (lambda s,t: (s.cache_frames.set(int(t[1][0])))),
+         'orthoscopic':
+         (lambda s,t: (s.ortho.set(int(t[1][0])))),
+         'orthoscopic':
+         (lambda s,t: (s.ortho.set(int(t[1][0])))),
+         'all_states':
+         (lambda s,t: (s.all_states.set(int(t[1][0])))),
+         'overlay':
+         (lambda s,t: (s.overlay.set(t[1][0]!=0))),
+         'valence':
+         (lambda s,t: (s.valence.set(t[1][0]>0.0))),
+         'auto_zoom':
+         (lambda s,t: (s.auto_zoom.set(int(t[1][0])))), 
+        }
+      self.active_list = [
+         pymol.setting._get_index("ray_trace_frames"),
+         pymol.setting._get_index("cache_frames"),
+         pymol.setting._get_index("orthoscopic"),
+         pymol.setting._get_index("antialias"),
+         pymol.setting._get_index("all_states"),
+         pymol.setting._get_index("overlay"),
+         pymol.setting._get_index("normal_workaround"),
+         pymol.setting._get_index("valence"),
+         pymol.setting._get_index("auto_zoom"),
+         ]
+
+      self.active_dict = {}
+      for a in self.active_list:
+         self.active_dict[a] = pymol.setting._get_name(a)
          
    def update(self,sttng):
       set_fn = self.xref[sttng]
       set_fn(self,sttng)
 
-
+   def refresh(self): # get any settings changes from PyMOL and update menus
+      lst = cmd.get_setting_updates()
+      for a in lst:
+         if a in self.active_list:
+            name = self.active_dict[a]
+            if self.update_code.has_key(name):
+               code = self.update_code[name]
+               if code!=None:
+                  tup = cmd.get_setting_tuple(name,'',0)
+                  if tup!=None:
+                     apply(code,(self,tup))
+      
