@@ -54,7 +54,7 @@ CWizard Wizard;
 
 #define cWizardLineHeight 14
 #define cWizardLeftMargin 2
-#define cWizardTopMargin -1
+#define cWizardTopMargin (-1)
 #define cWizardClickOffset 4
 
 /*========================================================================*/
