@@ -1626,5 +1626,11 @@ EXAMPLES
       return r
 
 
+# Aliases for Mother England.
 
+   colour = color
+   set_colour = set_color
+   bg_colour = bg_color
+   recolour = recolor
+   
 

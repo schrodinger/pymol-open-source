@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * endianness check for .phi files 
+
    * test cases updated to reflect new molecular editing behavior
 
    * default arguments (and behavior) changed for dist and bond commands

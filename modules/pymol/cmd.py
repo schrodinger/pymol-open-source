@@ -1299,9 +1299,11 @@ SEE ALSO
    import viewing
    from viewing import \
         bg_color,           \
+        bg_colour,          \
         cartoon,            \
         clip,               \
         color,              \
+        colour,             \
         del_colorection,    \
         dirty,              \
         disable,            \
@@ -1322,11 +1324,13 @@ SEE ALSO
         ray,                \
         rebuild,            \
         recolor,            \
+        recolour,           \
         refresh,            \
         reset,              \
         rock,               \
         scene,              \
         set_color,          \
+        set_colour,         \
         set_colorection,    \
         set_vis,            \
         set_view,           \
@@ -1627,7 +1631,14 @@ SEE ALSO
       }
 
    kwhash = Shortcut(keyword.keys())
-
+   
+   # Aliases for Mother England (NOTE: not hashed)
+   
+   keyword['colour'] = keyword['color']
+   keyword['set_colour'] = keyword['set_color']
+   keyword['recolour'] = keyword['recolor']
+   keyword['bg_colour'] = keyword['bg_color']
+   
    # informational, or API-only functions which don't exist in the
    # PyMOL command language namespace
 
