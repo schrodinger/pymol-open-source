@@ -100,7 +100,6 @@ def load(self,fname):
       a5 = l[0:11]
       if not self.improper.has_key(a5):
          self.improper[a5] = []
-      sys.stderr.write(l[11:]+"\n")
       self.improper[a5].append([l[11:]])
    # skip
    while 1:

@@ -960,10 +960,10 @@ Q2-D4-D4-Q2   1    1.175         0.0             2.         Piotr et al.
 Q2-D4-D4-Q2   1    0.144         0.0            -3.         parm98, TC,PC,PAK
 Q1-DJ-Q2-D4   1    2.70        180.0            -2.         Junmei et al, 1999
 Q1-DJ-Q2-D4   1    1.40        180.0             1.         Junmei et al, 1999
-J3-D4-DJ-J3   1    1.700       180.000          -1.
-J3-D4-DJ-J3   1    2.000       180.000           2.
-DJ-J3-D4-DJ   1    0.850       180.000          -2.
-DJ-J3-D4-DJ   1    0.800         0.000           1.
+J3-D4-DJ-J3   1    1.70        180.0            -1.         Junmei et al,1999
+J3-D4-DJ-J3   1    2.00        180.0             2.         Junmei et al,1999
+DJ-J3-D4-DJ   1    0.85        180.0            -2.         Junmei et al,1999
+DJ-J3-D4-DJ   1    0.80          0.0             1.         Junmei et al,1999
 D4-T2-T2-D4   1    3.50          0.0            -2.         JDJ,7,(1986),230
 D4-T2-T2-D4   1    0.60          0.0             3.         JDJ,7,(1986),230
 D4-Q2-D4-Q2   1    0.10          0.0            -3.         Junmei et al, 1999
