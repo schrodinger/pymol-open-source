@@ -79,6 +79,7 @@ typedef struct {
 static CMain Main;
 int PyMOLReady = false;
 int PMGUI = true;
+int StereoCapable=false;
 
 /*========================================================================*/
 void MainDirty(void)
@@ -405,11 +406,11 @@ void MainBusyIdle(void)
 #ifndef _PYMOL_MODULE
 int main(int argc, char *argv[])
 {
+  int flags=-1;
   myArgc=argc;
   myArgv=argv;
-  
 #else
-void was_main(void) 
+void was_main(int flags) 
 {
   int argc = 1;
   char *argv[2],argvv[1024] = "pymol";
@@ -422,23 +423,33 @@ void was_main(void)
 
 #endif  
 
-
   myArgc=argc;
   myArgv=argv;
 
   if(myArgc>1)
-    if(strcmp(myArgv[1],"-c")==0)
-      PMGUI=false;
-  
+    {
+      if(strcmp(myArgv[1],"-c")==0)
+	PMGUI=false;
+      if(strcmp(myArgv[1],"-s")==0)
+	StereoCapable=true;
+    }
+
+  if (flags>=0) { /* started as a python module, flags passed in as args */
+    if(flags&0x1) 
+      PMGUI=true;
+    if(flags&0x2)
+      StereoCapable=true;
+  }
+
   if(PMGUI) {
     
     glutInit(&argc, argv);
-    
-#ifdef _PYMOL_STEREO
-    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
-#else
-    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );      
-#endif
+
+    if(StereoCapable) {
+      glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
+    } else {
+      glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );      
+    }
 
     glutInitWindowPosition(0, 175);
     glutInitWindowSize(WinX, WinY);

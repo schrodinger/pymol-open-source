@@ -207,8 +207,10 @@ static PyObject *PMReady(PyObject *dummy, PyObject *args)
 
 static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args)
 {
+  int gui;
+  PyArg_ParseTuple(args,"i",&gui);
 #ifdef _PYMOL_MODULE
-  was_main();
+  was_main(gui);
 #endif
   Py_INCREF(Py_None);
   return Py_None;
@@ -433,14 +435,14 @@ static PyObject *PMFrame(PyObject *self, PyObject *args)
 static PyObject *PMStereo(PyObject *self, PyObject *args)
 {
   PyObject *result;
-#ifdef _PYMOL_STEREO
   int i1;
+  if(StereoCapable) {
   PyArg_ParseTuple(args,"i",&i1);
   ExecutiveStereo(i1);
   result=Py_BuildValue("i",1);
-#else
+  } else {
   result=Py_BuildValue("i",0);
-#endif
+  }
   return result;
 }
 

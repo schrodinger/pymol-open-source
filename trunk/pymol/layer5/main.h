@@ -24,9 +24,10 @@ void MainRefreshNow(void);
 
 extern int PyMOLReady;
 extern int PMGUI;
+extern int StereoCapable;
 
 #ifdef _PYMOL_MODULE
-void was_main(void);
+void was_main(int gui);
 #endif
 
 #endif

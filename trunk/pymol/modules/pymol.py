@@ -16,10 +16,20 @@ lock_api = threading.RLock()
 
 glutThread = 0
 
+if "-c" in sys.argv:
+   gui=0
+else:
+   gui=1
+
+if "-s" in sys.argv:
+   stereo=2
+else:
+   stereo=1
+
 def start_pymol():
 	global glutThread
 	glutThread = thread.get_ident()
-	_pm.runpymol()
+	_pm.runpymol(gui|stereo)
 	
 threading.Thread(target=start_pymol,args=()).start()
 
@@ -39,7 +49,8 @@ for a in sys.argv:
 	elif re.search(r"\.pml$",a):
 		pm.do("@%s" % a)
 
-execfile(os.environ['PYMOL_PATH']+'/modules/pmg.py',globals(),locals())
+if gui:
+   execfile(os.environ['PYMOL_PATH']+'/modules/pmg.py',globals(),locals())
 
 #t2=threading.Thread(target=execfile,args=(os.environ['PYMOL_PATH']+'/modules/pmg.py',globals(),locals()))
 #t2.setDaemon(1)
