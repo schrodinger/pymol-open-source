@@ -486,15 +486,39 @@ def vacuum(s):
            [ 2, '\\559for macromolecules are only qualitatively', ''],
            [ 2, '\\559meaningful.  Please view with skepticism!', '' ],
            ]
-   
+
+def symmetry(s):
+   return [[ 2, 'Symmetry Mates:'       ,''                        ],
+           [ 2, '\\955 +/- one unit cell and...', '' ],
+           [ 1, 'within 4 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=4)'          ],
+           [ 1, 'within 5 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=5)'          ],
+           [ 1, 'within 6 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=6)'          ],
+           [ 1, 'within 8 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=8)'          ],
+           [ 1, 'within 12 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=12)'          ],
+           [ 1, 'within 20 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=20)'          ],
+           [ 1, 'within 50 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=50)'          ],
+           [ 1, 'within 100 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=100)'          ],
+           [ 1, 'within 250 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=250)'          ],
+           [ 1, 'within 1000 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=1000)'          ]]                      
+
 def mol_assign(s):
    return [[ 2, 'Assign:'       ,''                        ],     
            [ 1, 'Amber 99 atomic properties',  'util.assign_amber99("'+s+'")' ],
            ]
-   
+
+def selection(s):
+   return [[ 2, 'Selections:', '' ],
+           [ 1, 'all', 'cmd.select("'+s+'_all","'+s+'")'],
+           [ 1, 'polymer', 'cmd.select("'+s+'_polymer","('+s+') and polymer")'],
+           [ 1, 'organic', 'cmd.select("'+s+'_organic","('+s+') and organic")'],
+           [ 1, 'solvent', 'cmd.select("'+s+'_solvent","('+s+') and solvent")'],           
+           ]
+
 def mol_generate(s):
    return [[ 2, 'Generate:'       ,''                        ],
-           [ 1, 'vacuum electrostatics', vacuum(s) ],           
+           [ 1, 'selection', selection(s) ],
+           [ 1, 'symmetry mates', symmetry(s) ],           
+           [ 1, 'vacuum electrostatics', vacuum(s) ],
 #           [ 1, 'assign', mol_assign(s) ],
            ]
    
@@ -574,25 +598,46 @@ def extend(s):
            [ 1, 'by 6 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 6))",show=1)' ],
            ]
 
+def polar(s):
+   return [[ 2, 'Polar Contacts:', ''],
+           [ 1, 'within selection'  ,
+             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'excluding intra main chain'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
+             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'excluding main chain'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (polymer and name n,o,h)","('+s+
+             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'just intra side chain'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and name n,o,h))","('+s+
+             ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'excluding solvent'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent)","('+s+
+             ') and not (solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'involving solvent'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and solvent","('+s+
+             ') and not (solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 0, '', '' ],
+           [ 1, 'to other atoms in object',
+             'cmd.dist("'+s+'_polar_conts","('+s+')","(byobj ('+s+')) and (not ('+s+
+             '))",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'to others excluding solvent',
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not solvent","(byobj ('+s+')) and (not ('+s+
+             ')) and (not solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'to any atoms',
+             'cmd.dist("'+s+'_polar_conts","('+s+')","(not '+s+')",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'to any excluding solvent',
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not solvent","(not ('+s+
+             ')) and not solvent",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           ]
+
+def polar_inter(s):
+   return [[ 2, 'Polar Contacts:', ''],
+           ]
+
 def find(s):
    return [[ 2, 'Find:', ''],
-           [ 1, 'polar contacts'  ,
-             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'],
-           [ 1, 'polar contacts (no intra m.c.)'  ,
-             'cmd.dist("'+s+'_polar_conts","'+s+'","('+s+
-             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0)'],
-           [ 1, 'polar contacts (no m.c.)'  ,
-             'cmd.dist("'+s+'_polar_conts","('+s+') and not (polymer and name n,o,h)","('+s+
-             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0)'],
-           [ 1, 'polar contacts (just s.c.)'  ,
-             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and name n,o,h))","('+s+
-             ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,labels=0)'],
-           [ 1, 'polar contacts (no solvent)'  ,
-             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent)","('+s+
-             ') and not (solvent)",quiet=1,mode=2,labels=0)'],
-           [ 1, 'polar contacts (with solvent)'  ,
-             'cmd.dist("'+s+'_polar_conts","('+s+') and solvent","('+s+
-             ') and not (solvent)",quiet=1,mode=2,labels=0)'],
+           [ 1, 'polar contacts', polar(s) ],
            ]
            
 def sele_action(s):
@@ -693,6 +738,8 @@ def slice_action(s):
            [ 1, 'dynamic grid on' , 'cmd.set("slice_dynamic_grid",1,"'+s+'")'    ],
            [ 1, 'dynamic grid off', 'cmd.set("slice_dynamic_grid",0,"'+s+'")'    ],                    
            [ 0, ''             , ''                       ],
+           [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+           [ 0, ''             , ''                       ],
            [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            ]
 
@@ -701,6 +748,8 @@ def simple_action(s):
            [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
            [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+           [ 0, ''             , ''                       ],
+           [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
            [ 0, ''             , ''                       ],
            [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            ]

@@ -22,7 +22,23 @@ try:
    # This section contains python code for supporting
    # x-ray crystallography functions
 
+   hex_to_rhom_xHM = {
+      #  extended Hermann Mauguin symbol translation
+      #  from CCP4's syminfo.lib
+      
+      'H 3'      : 'R 3: H',
+      'H -3'     : 'R -3 :H',
+      'H 3 2'    : 'R 3 2 :H',
+      'H 3 m'    : 'R 3 m :H',
+      'H 3 c'    : 'R 3 c :H',
+      'H -3 2/m' : 'R -3 m :H',
+      'H -3 m'   : 'R -3 m :H',
+      'H -3 2/c' : 'R -3 c :H',
+      'H -3 c'   : 'R -3 c :H',
+      }
+   
    def sg_sym_to_mat_list(sgsymbol):
+      sgsymbol = hex_to_rhom_xHM.get(sgsymbol,sgsymbol)
       try:
          Symbols_Inp = sglite.SgSymbolLookup(sgsymbol)
          if(Symbols_Inp):
