@@ -957,7 +957,11 @@ SetConsoleCtrlHandler(
 
     if(!GameMode) {
       if((WinPX>-1000)&&(WinPY>-1000)) {
+        #ifndef _PYMOL_FINK
         p_glutInitWindowPosition(WinPX,WinPY);
+        #else
+        p_glutInitWindowPosition(WinPX,WinPY-22); /* somethings wrong with FinkGlut's window positioning...*/
+        #endif
       }
       p_glutInitWindowSize(WinX, WinY);
 
