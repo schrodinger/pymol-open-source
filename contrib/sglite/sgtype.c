@@ -1,14 +1,15 @@
 /* $Id$ */
 
-/* The source code contained in this file is 
- * Copyright (C) 2000 by Ralf W. Grosse-Kunstleve.
- * Please see the LICENSE file for more information. */
+/* The source code contained in this file is            */
+/* Copyright (C) 1994-2000 by Ralf W. Grosse-Kunstleve. */
+/* Please see the LICENSE file for more information.    */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 
+#undef SG_GLOBAL
 #include "sglite.h"
 #include "sgconst.h"
 #include "sgrefset.h"
@@ -1160,7 +1161,7 @@ static int CmpCBMx(const T_RTMx *a, const T_RTMx *b)
 }
 
 
-static void GetMonoRefSetAffNormTrialRanges(const int CBMxR[9], int RBF,
+static void GetMonoRefSetAffNormTrialRanges(const int CBMxR[9],
                                             int r00[1], int r22[1])
 {
   /* International Tables Volume A, chapter 15, tables 15.3.3 & 15.3.4.
@@ -1207,7 +1208,7 @@ static int getBestCBMx(const T_SgOps *SgOps, int SgNumber,
   T_RTMx    AddlG[3];
   T_SgOps  NormSgOps[1];
   int      iLTr, iInv, iSMx, icmp, det, r00, r22, f;
-  T_RTMx   SMx[1], LISMx[2], TrialCBMx[2], M[2], M_TrialCBMx[1], BestCBMx[2];
+  T_RTMx   SMx[1], LISMx[2], TrialCBMx[2], M[2], M_TrialCBMx[2], BestCBMx[2];
 
       nAddlG = GetRefSetNormAddlG(SgNumber, 1, 1, 1, AddlG);
   if (nAddlG < 0)
@@ -1251,7 +1252,7 @@ static int getBestCBMx(const T_SgOps *SgOps, int SgNumber,
     else {
       IntSetZero(M[0].a, 12);
       IntSetZero(M[1].a, 12);
-      GetMonoRefSetAffNormTrialRanges(TrialCBMx[0].s.R, CRBF, &r00, &r22);
+      GetMonoRefSetAffNormTrialRanges(TrialCBMx[0].s.R, &r00, &r22);
 #define loop(i, r) \
       for (M[0].s.R[i] = -r*CRBF; M[0].s.R[i] <= r*CRBF; M[0].s.R[i] += CRBF)
       loop(0, r00)
@@ -1292,6 +1293,8 @@ int TidyCBMx(const T_SgOps *SgOps, int SgNumber, T_RTMx CBMx[2])
 {
   T_SgOps  TdRefSgOps[1];
 
+  if (SgNumber < 1 || SgNumber > 230) return IE(-1);
+
   ResetSgOps(TdRefSgOps);
   if (ParseHallSymbol(RefSetHallSymbols[SgNumber],
                       TdRefSgOps, PHSymOptPedantic) < 0) return IE(-1);
@@ -1304,39 +1307,40 @@ int TidyCBMx(const T_SgOps *SgOps, int SgNumber, T_RTMx CBMx[2])
 int BuildHallSymbol(const T_SgOps *SgOps, int SgNumber, const T_RTMx CBMx[2],
                     char *HallSymbol, int sizeHallSymbol)
 {
-  int         iHS;
-  char        HS[32], xyz[128];
+  int         HaveCBMx, iHS;
+  char        xyz[128];
   const char  *RefHS;
+  T_RTMx      RefCBMx[2], HallCBMx[2];
   T_SgOps     TdRefSgOps[1];
-  T_RTMx      HallCBMx[2];
 
-  HallSymbol[0] = '\0';
-
-  /* get Hall symbol without the change-of-basis operator */
+  if (SgNumber < 1 || SgNumber > 230) return IE(-1);
   RefHS = RefSetHallSymbols[SgNumber];
-  for (iHS = 0; RefHS[iHS]; iHS++) {
-    if (RefHS[iHS] == '(') break;
-    HS[iHS] = RefHS[iHS];
-  }
-  if (HS[iHS - 1] == ' ') iHS--;
-  HS[iHS] = '\0';
 
   ResetSgOps(TdRefSgOps);
-  if (ParseHallSymbol(HS, TdRefSgOps, PHSymOptPedantic) < 0) return IE(-1);
+  if (ParseHallSymbolCBMx(RefHS, TdRefSgOps, PHSymOptPedantic,
+                          RefCBMx, &HaveCBMx) < 0) return IE(-1);
   if (TidySgOps(TdRefSgOps) != 0) return IE(-1);
 
-  MemCpy(HallCBMx, CBMx, 2);
+  if (HaveCBMx == 0)
+    MemCpy(HallCBMx, CBMx, 2);
+  else {
+    IntSwap(RefCBMx[0].a, RefCBMx[1].a, 12);
+    if (CBMx2Multiply(HallCBMx, RefCBMx, CBMx) != 0) return IE(-1);
+  }
+
   if (getBestCBMx(SgOps, SgNumber, TdRefSgOps, HallCBMx) != 0) return IE(-1);
 
-  if (MemCmp(&HallCBMx[1], CBMx_1_000, 1) == 0) {
-    if (sizeHallSymbol < strlen(HS) + 1) return IE(-1);
-    strcpy(HallSymbol, HS);
+  for (iHS = 0; RefHS[iHS]; iHS++) {
+    if (RefHS[iHS] == ' ' && RefHS[iHS + 1] == '(') break;
+    if (iHS >= sizeHallSymbol) return IE(-1);
+    HallSymbol[iHS] = RefHS[iHS];
   }
-  else {
+  HallSymbol[iHS] = '\0';
+
+  if (MemCmp(&HallCBMx[1], CBMx_1_000, 1) != 0) {
     if (RTMx2XYZ(&HallCBMx[1], CRBF, CTBF, 0, 0, 1, NULL,
-        xyz, sizeof xyz) == NULL) return IE(-1);
-    if (sizeHallSymbol < strlen(HS) + strlen(xyz) + 4) return IE(-1);
-    strcpy(HallSymbol, HS);
+                 xyz, sizeof xyz) == NULL) return IE(-1);
+    if (sizeHallSymbol < iHS + (int) strlen(xyz) + 4) return IE(-1);
     strcat(HallSymbol, " (");
     strcat(HallSymbol, xyz);
     strcat(HallSymbol, ")");

@@ -1,15 +1,16 @@
 /* $Id$ */
 
-/* The source code contained in this file is 
- * Copyright (C) 2000 by Ralf W. Grosse-Kunstleve.
- * Please see the LICENSE file for more information. */
+/* The source code contained in this file is            */
+/* Copyright (C) 1994-2000 by Ralf W. Grosse-Kunstleve. */
+/* Please see the LICENSE file for more information.    */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
+#include <ctype.h>
 
 
+#undef SG_GLOBAL
 #include "sglite.h"
 #include "sgconst.h"
 
@@ -221,7 +222,8 @@ static int ParseShortCBO(const char *HSym, int StopChar, int *T, int TBF)
 }
 
 
-int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
+int ParseHallSymbolCBMx(const char *HSym, T_SgOps *SgOps, int Options,
+                        T_RTMx CBMx[2], int *HaveCBMx)
 {
   int      Pedantic, NoCType;
   int      iHSym, nAddedMx, iMxSym, i;
@@ -229,23 +231,20 @@ int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
   int      RefAxis, DirCode;
   int      FirstAbsOrder;
   int      FirstRefAxis;
-  T_RTMx   SMx[1], CBMx[2];
-  T_SgOps  LocSgOps[1];
+  T_RTMx   SMx[1];
 
   const T_HallTr  *HTr;
 
 #define cHSym HSym[iHSym]
 #define ReturnErr return -(++iHSym)
 
+  rangei(2) InitRTMx(&CBMx[i], CRBF);
+  *HaveCBMx = 0;
+
   Pedantic = NoCType = 0;
 
   if (Options & PHSymOptPedantic) Pedantic = 1;
   if (Options & PHSymOptNoCType)  NoCType  = 1;
-
-  if (SgOps)
-    SgOpsCpy(LocSgOps, SgOps);
-  else
-    ResetSgOps(LocSgOps);
 
   iHSym = 0;
   nAddedMx = 0;
@@ -255,7 +254,7 @@ int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
     while (IsHSymSpace(cHSym)) iHSym++;
 
     if (cHSym == '-') {
-      if (ExpSgInv(LocSgOps, NULL) < 0) ReturnErr;
+      if (ExpSgInv(SgOps, NULL) < 0) ReturnErr;
       iHSym++;
       nAddedMx++;
     }
@@ -265,7 +264,7 @@ int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
       ReturnErr;
     }
 
-        i = ExpSgSymCType(LocSgOps, cHSym);
+        i = ExpSgSymCType(SgOps, cHSym);
     if (i < 0) ReturnErr;
     iHSym++;
     nAddedMx += i;
@@ -464,7 +463,7 @@ int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
       SMx->s.T[i] += STBF * Screw / AbsOrder;
     }
 
-    if (ExpSgSMx(LocSgOps, SMx) < 0)
+    if (ExpSgSMx(SgOps, SMx) < 0)
       ReturnErr;
 
     if (iMxSym == 0) {
@@ -485,11 +484,7 @@ int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
     iHSym++;
 
         i = ParseShortCBO(&cHSym, ')', CBMx[0].s.T, CTBF);
-    if (i > 0) {
-      InitRotMx(CBMx[0].s.R, CRBF);
-    }
-    else
-    {
+    if (i <= 0) {
           i = ParseStrXYZ(&cHSym, ')', &CBMx[0], CRBF, CTBF);
       if (i < 0) {
         iHSym += -i - 1;
@@ -513,12 +508,8 @@ int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
       ReturnErr;
     }
 
-    SgOpsCpy(SgOps, LocSgOps);
-    ResetSgOps(LocSgOps);
-    LocSgOps->NoExpand = SgOps->NoExpand;
-    if (CB_SgOps(SgOps, &CBMx[0], &CBMx[1], LocSgOps) != 0) ReturnErr;
-
     iHSym++;
+    *HaveCBMx = -iHSym;
   }
 
   while (IsHSymSpace(cHSym)) iHSym++;
@@ -528,10 +519,37 @@ int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
     ReturnErr;
   }
 
-  SgOpsCpy(SgOps, LocSgOps);
-
 #undef cHSym
 #undef ReturnErr
 
   return nAddedMx;
+}
+
+
+int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options)
+{
+  int      status, HaveCBMx;
+  T_RTMx   CBMx[2];
+  T_SgOps  LocSgOps[2];
+
+
+  if (SgOps)
+    SgOpsCpy(LocSgOps, SgOps);
+  else
+    ResetSgOps(LocSgOps);
+
+      status = ParseHallSymbolCBMx(HSym, LocSgOps, Options, CBMx, &HaveCBMx);
+  if (status < 0) return status;
+
+  if (HaveCBMx != 0) {
+    if (SgOps == NULL) SgOps = &LocSgOps[2];
+    ResetSgOps(SgOps);
+    SgOps->NoExpand = LocSgOps->NoExpand;
+    if (CB_SgOps(LocSgOps, &CBMx[0], &CBMx[1], SgOps) != 0)
+      return HaveCBMx;
+  }
+  else if (SgOps)
+    SgOpsCpy(SgOps, LocSgOps);
+
+  return status;
 }
