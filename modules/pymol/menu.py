@@ -110,7 +110,9 @@ def mesh_hide(s):
            [ 1, 'everything'  , 'cmd.disable("'+s+'")'          ]]
 
 def by_elem(s):
-   return [[ 1, '\\292C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbag("'+s+'")'],
+   return [
+      [ 2, 'By Element:'     ,''                               ],
+      [ 1, '\\292C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbag("'+s+'")'],
    [ 1, '\\099C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbac("'+s+'")'],
    [ 1, '\\909C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbam("'+s+'")'],           
    [ 1, '\\990C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbay("'+s+'")'],
@@ -122,12 +124,14 @@ def by_elem(s):
 
 def by_ss(s):
    return [
+            [ 2, 'By Secondary Structure:'     ,''                               ],
    [ 1, '\\900Helix \\990Sheet \\090Loop'  , 'util.cbss("'+s+'","red","yellow","green")'],
    [ 1, '\\099Helix \\909Sheet \\955Loop'  , 'util.cbss("'+s+'","cyan","magenta","salmon")'],
            ]
 
 def spectrum(s):
    return [
+            [ 2, 'Spectrum:'     ,''                               ],
            [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(e. c)',
              'cmd.spectrum("count",selection="('+s+')&e. c")'],           
            [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(*/ca)',
@@ -135,19 +139,26 @@ def spectrum(s):
            [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
              'cmd.spectrum("count",selection="'+s+'",byres=1)'],
            [ 0, ''                                , ''                 ],
-           [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n',
-             'util.color_chains("('+s+')")'],
-           [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
-             'util.chainbow("('+s+')")'],                                 
-           [ 0, ''                                , ''                 ],
            [ 1, 'b-factors'   , 'cmd.spectrum("b",selection=("'+s+'"))'         ],           
            ]
 
-
-   
+def by_chain(s):
+   return [
+      [ 2, 'By Chain:'     ,''                               ],
+           [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(e. c)',
+             'util.color_chains("('+s+' and elem c)")'],
+           [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(*/ca)',
+             'util.color_chains("('+s+' and name ca)")'],
+           [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n',
+             'util.color_chains("('+s+')")'],
+                 [ 0, ''                                , ''                 ],
+           [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
+             'util.chainbow("('+s+')")'],                                 
+      ]
 def mol_color(s):
    return [[ 2, 'Color:'     ,''                               ],
-           [ 1, 'by elem'  , by_elem(s) ],
+           [ 1, 'by chain' , by_chain(s) ],
+           [ 1, 'by element'  , by_elem(s) ],
            [ 1, 'by ss  '  , by_ss(s) ],
            [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(s) ],
            [ 0, ''                                , ''                 ],           
