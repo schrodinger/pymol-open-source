@@ -61,8 +61,6 @@ int PComplete(char *str,int buf_size);
 
 int PTruthCallStr(PyObject *object,char *method,char *argument);
 
-void PBlockForEmergencyShutdown(void);
-
 extern PyObject *P_globals;
 
 extern PyObject *P_cmd;
@@ -73,7 +71,6 @@ extern PyObject *P_models;
 
 extern PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 extern PyThreadState *P_api_thread_state; /* this is the thread state for a non-glut API thread */
-extern int P_glut_thread_active; 
 extern int P_glut_thread_keep_out;
 
 #endif

@@ -1726,10 +1726,25 @@ int *SelectorSelect(char *sele)
 {
   WordType *parsed;
   int *result=NULL;
+  PRINTFD(FB_Selector)
+    "SelectorSelect-DEBUG: sele = '%s'\n",sele
+    ENDFD;
   SelectorUpdateTable();
   parsed=SelectorParse(sele);
   if(parsed)
 	 {
+      if(Feedback(FB_Selector,FB_Debugging)) {
+        WordType *a;
+        fprintf(stderr,"SelectorSelect-DEBUG: parsed tokens:\n");
+        a = parsed;
+        while(1) {
+          if(!a[0][0]) break;
+          fprintf(stderr,"  '%s'\n",(a[0]));
+          a++;
+        }
+        fprintf(stderr,"SelectorSelect-DEBUG: end of tokens.\n");
+      }
+      MemoryDebugDump();
 		result=SelectorEvaluate(parsed);
 		VLAFreeP(parsed);
 	 }
@@ -2725,6 +2740,7 @@ int *SelectorEvaluate(WordType *word)
   OrthoLineType line;
   EvalElem Stack[SelectorMaxDepth],*e;
   SelectorType *I=&Selector;
+
   Stack[0].sele=NULL;
   Stack[0].type=0;
   /* converts all keywords into code, adds them into a operation list */
@@ -3016,7 +3032,7 @@ WordType *SelectorParse(char *s) {
   r=VLAlloc(WordType,100);
   while(*p) 
 	 {
-		if(w_flag) /* currently in a word */
+		if(w_flag) /* currently in a word, thus q is a valid pointer */
 		  {
 			 switch(*p)
 				{
@@ -3038,12 +3054,12 @@ WordType *SelectorParse(char *s) {
 				case '<':
             case '=':
 				case '%':
-				  *q=0;
-				  q=r[c];
+				  *q=0; /* terminate current word */
 				  c++;
-				  VLACheck(r,WordType,c);
+				  VLACheck(r,WordType,c); /* add new word */
+				  q=r[c-1];
 				  *q++=*p;
-				  *q=0;
+				  *q=0;  /* terminate current word */
 				  w_flag=false;
 				  break;
 				default:
@@ -3051,15 +3067,14 @@ WordType *SelectorParse(char *s) {
 				  break;
 				}
 		  }
-		else /*outside a word*/
+		else /*outside a word -- q is undefined */
 		  {
 			 switch(*p)
 				{
 				case '*': /* special case */
-				  *q=0;
-				  q=r[c];
 				  c++;
 				  VLACheck(r,WordType,c);
+				  q=r[c-1];
 				  *q++='+';
 				  *q=0;
 				  w_flag=false;
@@ -3073,20 +3088,20 @@ WordType *SelectorParse(char *s) {
 				case '<':
             case '=':
 				case '%':
-				  q=r[c];
-				  *q++=(*p);
-				  *q=0;
 				  c++;
 				  VLACheck(r,WordType,c);
+				  q=r[c-1];
+				  *q++=(*p);
+				  *q=0;
 				  break;
             case ' ':
               break;
 				default:
 				  w_flag=true;
-				  q=r[c];
-				  *q++=*p;
 				  c++;
-				  VLACheck(r,WordType,c);
+              VLACheck(r,WordType,c);
+				  q=r[c-1];
+				  *q++=*p;
 				  break;
 				}
 		  }
@@ -3099,7 +3114,7 @@ WordType *SelectorParse(char *s) {
   /* null strings terminate the list*/
   q=r[c];
   *q=0;
-  if(DebugState&DebugSelector)
+  if(DebugState&DebugSelector) /* Legacy...get rid of this */
 	 {
 		c=0;
 		while(r[c][0])

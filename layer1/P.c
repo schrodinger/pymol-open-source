@@ -57,16 +57,21 @@ PyObject *P_unlock = NULL;
 PyObject *P_time = NULL;
 PyObject *P_sleep = NULL;
 
-PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
-PyThreadState *P_api_thread_state; /* this is the thread state for an alternate thread */
+unsigned int PyThread_get_thread_ident(void); /* critical functionality */
 
-int P_blocked_interpreter_flag = true; /* this is not reliable and is not used for 
-                                        * any purpose other than trying to avoid
-                                        * a crash/hang when GLUT unilaterally terminates
-                                        * the program */
-int P_glut_thread_active = 1;
-int P_glut_thread_keep_out = 0; /* enables us to keep glut out if by chance it grabs the API
-                                 * in the middle of a nested API based operation */
+typedef struct {
+  int id;
+  PyThreadState *state;
+} SavedThreadRec;
+
+#define MAX_SAVED_THREAD 255
+
+int NSavedThread = 0;
+SavedThreadRec SavedThread[MAX_SAVED_THREAD];
+
+int P_glut_thread_keep_out = 0; 
+/* enables us to keep glut out if by chance it grabs the API
+ * in the middle of a nested API based operation */
 
 void PCatchInit(void);
 void my_interrupt(int a);
@@ -356,45 +361,46 @@ int PLabelAtom(AtomInfoType *at,char *expr)
   return(result);
 }
 
-void PUnlockAPIAsGlut(void)
+void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
 {
-  PyEval_RestoreThread(P_glut_thread_state); /* grab python */
-  P_blocked_interpreter_flag=true;
+  PRINTFD(FB_Threads)
+    " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
+    ENDFD;
+  PBlock();
   PXDecRef(PyObject_CallFunction(P_unlock,NULL));
-  P_glut_thread_state = PyEval_SaveThread(); /* release python */
-  P_blocked_interpreter_flag=false;
+  PUnblock();
 }
 
-void PLockAPIAsGlut(void)
+void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 {
-  PyEval_RestoreThread(P_glut_thread_state); /* grab python */
-  P_blocked_interpreter_flag=true;
+  PRINTFD(FB_Threads)
+    " PLockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
+    ENDFD;
+
+  PBlock();
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
-  while(P_glut_thread_keep_out) { /* IMPORTANT: keeps the glut thread out of an API operation... */
+  while(P_glut_thread_keep_out) {
+    /* IMPORTANT: keeps the glut thread out of an API operation... */
     /* NOTE: the keep_out variable can only be changed by the thread
        holding the API lock, therefore it is safe even through increment
        isn't atomic. */
-
+    
     PXDecRef(PyObject_CallFunction(P_unlock,NULL));
 #ifndef WIN32
     { 
       struct timeval tv;
-      P_glut_thread_state = PyEval_SaveThread(); /* release python */
-      P_blocked_interpreter_flag=false;
+      PUnblock();
       tv.tv_sec=0;
       tv.tv_usec=50000; 
       select(0,NULL,NULL,NULL,&tv);
-      PyEval_RestoreThread(P_glut_thread_state); /* grab python */
-      P_blocked_interpreter_flag=true;
+      PBlock();
     } 
 #else
     PXDecRef(PyObject_CallFunction(P_sleep,"f",0.050));
 #endif
     PXDecRef(PyObject_CallFunction(P_lock,NULL));
   }
-  P_glut_thread_active = 1; /* if we come in on a glut event - then it is the active thread */
-  P_glut_thread_state = PyEval_SaveThread(); /* release python */
-  P_blocked_interpreter_flag = false;
+  PUnblock();
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
@@ -633,26 +639,29 @@ void PFlushFast(void) {
   }
 }
 
-void PBlockForEmergencyShutdown(void) /* synchronize before take-down to avoid crashes */
-{
-  if(!P_blocked_interpreter_flag) {
-    if(P_glut_thread_active)
-      PyEval_RestoreThread(P_glut_thread_state);
-    else 
-      PyEval_RestoreThread(P_api_thread_state);
-    P_blocked_interpreter_flag = true;
-  }
-}
-
 void PBlock(void)
 {
+  int a,id;
   /* synchronize python */
 
-  if(P_glut_thread_active)
-    PyEval_RestoreThread(P_glut_thread_state);
-  else 
-    PyEval_RestoreThread(P_api_thread_state);
-  P_blocked_interpreter_flag = true;
+  PRINTFD(FB_Threads)
+    " PBlock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
+    ENDFD;
+
+  id = PyThread_get_thread_ident();
+  a = NSavedThread;
+  while(a) {
+    a--;
+    if(SavedThread[a].id==id) {
+      PyEval_RestoreThread(SavedThread[a].state);
+      NSavedThread--;
+      if(NSavedThread) {
+        SavedThread[a] = SavedThread[NSavedThread];
+      }
+      return;
+    }
+  }
+  ErrFatal("P","can't restore an unknown python thread");
 }
 
 void PBlockAndUnlockAPI(void)
@@ -671,22 +680,13 @@ void PUnblock(void)
 {
   /* NOTE: ASSUMES a locked API */
 
-  PyObject *is_glut;
+  PRINTFD(FB_Threads)
+    " PUnblock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
+    ENDFD;
 
-  /* P_glut_thread_active will not change as long as lock holds */
-
-  is_glut = PyObject_CallMethod(P_cmd,"is_glut_thread","");
-  ErrChkPtr(is_glut);
-  P_glut_thread_active = PyInt_AsLong(is_glut);
-  Py_DECREF(is_glut);
-
-  /* allow python to run async */
-
-  if(P_glut_thread_active) 
-    P_glut_thread_state = PyEval_SaveThread();
-  else
-    P_api_thread_state = PyEval_SaveThread();
-  P_blocked_interpreter_flag = false;
+  SavedThread[NSavedThread].id = PyThread_get_thread_ident();
+  SavedThread[NSavedThread].state = PyEval_SaveThread();  
+  NSavedThread++;
 }
 
 void PDefineFloat(char *name,float value) {

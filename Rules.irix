@@ -16,7 +16,7 @@
 #--- Build for unix as an importable module (SGI/IRIX)
 XLIB_DIR = -L/usr/X11R6/lib
 LIBS = -lpython1.5 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
-DEFS = -D_PYMOL_MODULE
+DEFS = -D_PYMOL_MODULE  -D_PYMOL_NUMPY
 BUILD = -shared -o modules/_cmd.so
 #--- Build for Windows as an importable module
 #XLIB_DIR = 
