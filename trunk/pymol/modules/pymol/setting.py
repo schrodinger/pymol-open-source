@@ -430,12 +430,14 @@ PYMOL API
          lock()
          r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
          typ = r[0]
-         if typ<3:
+         if typ<3: # boolean, int
             r = int(r[1][0])
-         elif typ<4:
+         elif typ<4: # float
             r = r[1][0]
-         elif typ<5:
+         elif typ<5: # vector
             r = r[1]
+         else:
+            r = r[1] # color or string
       finally:
          unlock()
       return r

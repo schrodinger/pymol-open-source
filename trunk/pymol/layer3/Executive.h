@@ -138,10 +138,12 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
                          float alpha,float beta,float gamma,char *sgroup);
 int ExecutiveGetSession(PyObject *dict);
 int ExecutiveSetSession(PyObject *session);
+
 ObjectMap *ExecutiveFindObjectMapByName(char *name);
 
 int  ExecutiveUnsetSetting(int index,char *sele,
                            int state,int quiet,int updates);
+
 
 #endif
 

@@ -304,7 +304,7 @@ int SettingSetTuple(CSetting *I,int index,PyObject *tuple)
 /*========================================================================*/
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
 {
-  PyObject *result;
+  PyObject *result = NULL;
   float *ptr;
   int type = SettingGetType(index);
 
@@ -341,6 +341,59 @@ PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
   }
   return result;
 }
+/*========================================================================*/
+PyObject *SettingGetDefinedTuple(CSetting *set1,int index)
+{
+  PyObject *result = NULL;
+  int defined = true;
+  int type = SettingGetType(index);
+  int int1;
+  float float1,*vect1;
+  char *str1;
+  switch(type) {
+  case cSetting_boolean:
+    defined = SettingGetIfDefined_b(set1,index,&int1);
+    if(defined) 
+      result = Py_BuildValue("(i(i))",type,int1);
+    break;
+  case cSetting_int:
+    defined = SettingGetIfDefined_i(set1,index,&int1);
+    if(defined) 
+      result = Py_BuildValue("(i(i))",type,int1);
+    break;
+  case cSetting_float:
+    defined = SettingGetIfDefined_f(set1,index,&float1);
+    if(defined) 
+      result = Py_BuildValue("(i(f))",type,float1);
+    break;
+  case cSetting_float3:
+    defined = SettingGetIfDefined_3fv(set1,index,&vect1);
+    result = Py_BuildValue("(i(fff))",type,
+                           vect1[0],vect1[1],vect1[2]);
+    break;
+  case cSetting_color:
+    defined = SettingGetIfDefined_color(set1,index,&int1);
+    if(defined) 
+      result = Py_BuildValue("(i(i))",type,int1);
+    break;
+  case cSetting_string:
+    defined = SettingGetIfDefined_s(set1,index,&str1);
+    if(defined) 
+      result = Py_BuildValue("(i(s))",type,str1);
+    break;
+  default:
+    break;
+  }
+  if(!defined)  {
+    result = Py_BuildValue("(i)",0);
+    }
+  if(!result) {
+    Py_INCREF(Py_None);
+    result = Py_None;
+  }
+  return result;
+}
+
 /*========================================================================*/
 CSetting *SettingNew(void)
 {
@@ -764,6 +817,18 @@ int   SettingGet_b  (CSetting *set1,CSetting *set2,int index)
   return(SettingGetGlobal_i(index));
 }
 /*========================================================================*/
+int SettingGetIfDefined_b(CSetting *set1,int index,int *value)
+{
+  int result=false;
+  if(set1) {
+    if(set1->info[index].defined) {
+      *value=get_b(set1,index);
+      result=true;
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
 int SettingGetIfDefined_i(CSetting *set1,int index,int *value)
 {
   int result=false;
@@ -775,6 +840,54 @@ int SettingGetIfDefined_i(CSetting *set1,int index,int *value)
   }
   return(result);
 }
+/*========================================================================*/
+int   SettingGetIfDefined_color(CSetting *set1,int index,int *value)
+{
+  int result=false;
+  if(set1) {
+    if(set1->info[index].defined) {
+      *value=get_color(set1,index);
+      result=true;
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
+int   SettingGetIfDefined_f(CSetting *set1,int index,float *value){
+  int result=false;
+  if(set1) {
+    if(set1->info[index].defined) {
+      *value=get_f(set1,index);
+      result=true;
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
+int   SettingGetIfDefined_3fv(CSetting *set1,int index,float **value)
+{
+  int result=false;
+  if(set1) {
+    if(set1->info[index].defined) {
+      (*value) = (float*)(set1->data+set1->info[index].offset);
+      result=true;
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
+int   SettingGetIfDefined_s(CSetting *set1,int index,char **value)
+{
+  int result=false;
+  if(set1) {
+    if(set1->info[index].defined) {
+      *value=get_s(set1,index);
+      result=true;
+    }
+  }
+  return(result);
+}
+
 /*========================================================================*/
 int   SettingGet_i  (CSetting *set1,CSetting *set2,int index)
 {
