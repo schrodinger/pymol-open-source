@@ -32,73 +32,35 @@ void ExportDotsObjFree(ExportDotsObj *rec);
 
 /*--------------------------------------------------------------------- */
 
-#ifndef _MMechIO
-void *ExportMMGet(char *obj,int state)
-{
-  return(NULL);
-}
-int ExportMMUpdate(char *obj,int state,void *mmdat)
-{
-  return(0);
-}
-void ExportMMFree(void *mmdat)
-{
-}
-#else
+/* routines for shuttling coordinates to and from molecular mechanics routines */
 
-/* compile routines for shuttling opaque CObjects
-   to and from molecular mechanics routines */
-
-#include"mmechio.h" 
-
-void *ExportMMGet(char *name,int state)
+ExportCoords *ExportCoordsExport(char *name,int state)
 {
-  CMMechIO *io = NULL;
+  ExportCoords *io = NULL;
   ObjectMolecule *obj;
   CoordSet *cs;
-  int a,b,a0,a1,a2,at;
-  CMMechIOAtom *mmat;
-  int *mmbnd,*bnd;
-  AtomInfoType *ai;
-  float *crd;
+  int a;
+  float *crd0,*crd1;
+
   obj = ExecutiveFindObjectMoleculeByName(name);
   if(obj&&(state>=0)) {
     if((state<obj->NCSet)&&(!obj->DiscreteFlag)) {
       if(obj->CSet[state]) {
+
         cs=obj->CSet[state];
-        io= (CMMechIO*)mmalloc(sizeof(CMMechIO));
+
+        io= (ExportCoords*)mmalloc(sizeof(ExportCoords));
+
         io->nAtom=cs->NIndex;
-        io->atom=Alloc(CMMechIOAtom,cs->NIndex);
-        io->nBond=0;
-        io->bond=VLAlloc(int,cs->NIndex*9);
+        io->coord=Alloc(float,cs->NIndex*3);
 
-        mmat = io->atom;
-        crd=cs->Coord;
+        crd0=cs->Coord;
+        crd1=io->coord;
+
         for(a=0;a<cs->NIndex;a++) {
-          at=cs->IdxToAtm[a]; /* alway valid */
-          ai=obj->AtomInfo+at;
-          mmat->type = ai->customType;
-          mmat->flags = ai->flags;
-          mmat->coord[0]=*(crd++);
-          mmat->coord[1]=*(crd++);
-          mmat->coord[2]=*(crd++);
-          mmat++;
-        }
-
-        bnd=obj->Bond;
-
-        for(b=0;b<obj->NBond;b++) {
-          a0 = cs->AtmToIdx[*(bnd++)];
-          a1 = cs->AtmToIdx[*(bnd++)];
-          a2 = *(bnd++);
-          if((a0>=0)&&(a1>=0)) {
-            VLACheck(io->bond,int,3*io->nBond+2);
-            mmbnd = io->bond+3*io->nBond;
-            mmbnd[0] = a0;
-            mmbnd[1] = a1;
-            mmbnd[2] = a2; /* convey valence in case we adopt a different type of ffield */
-            io->nBond++;
-          }
+          *(crd1++) = *(crd0++);
+          *(crd1++) = *(crd0++);
+          *(crd1++) = *(crd0++);
         }
       }
     }
@@ -106,40 +68,37 @@ void *ExportMMGet(char *name,int state)
   return((void*)io);
 }
 
-int ExportMMUpdate(char *name,int state,void *mmdat)
+int ExportCoordsImport(char *name,int state,ExportCoords *io)
 {
-  
-  CMMechIO *io = mmdat;
   int result = false;
   ObjectMolecule *obj;
   CoordSet *cs;
   int a;
-  CMMechIOAtom *mmat;
-  AtomInfoType *ai;
-  float *crd;
+  float *crd0,*crd1;
+
   obj = ExecutiveFindObjectMoleculeByName(name);
   if(io) {
     if(!obj) {
-      result=ErrMessage("MMUpdate","invalid object");
+      result=ErrMessage("ExportCoordsImport","invalid object");
     } else {
       if((state<0)||(state>=obj->NCSet)||(obj->DiscreteFlag)) {
-        result=ErrMessage("MMUpdate","invalid state for object.");
+        result=ErrMessage("ExportCoordsImport","invalid state for object.");
       } else  {
         if(!obj->CSet[state]) {
-          result=ErrMessage("MMUpdate","empty state.");
+          result=ErrMessage("ExportCoordsImport","empty state.");
         } else {
           cs=obj->CSet[state];
           if(cs->NIndex!=io->nAtom) {
-            result=ErrMessage("MMUpdate","atom count mismatch.");
-            PRINTF "MMUpdate: cset %d != mmechio %d \n",cs->NIndex,io->nAtom ENDF;
+            result=ErrMessage("ExportCoordsImport","atom count mismatch.");
+            PRINTF "ExportCoordsImport: cset %d != io %d \n",cs->NIndex,io->nAtom ENDF;
           } else {
-            mmat = io->atom;
-            crd=cs->Coord;
+
+            crd0=cs->Coord;
+            crd1=io->coord;
             for(a=0;a<cs->NIndex;a++) {
-              *(crd++) = mmat->coord[0];
-              *(crd++) = mmat->coord[1];
-              *(crd++) = mmat->coord[2];
-              mmat++;
+              *(crd0++) = *(crd1++);
+              *(crd0++) = *(crd1++);
+              *(crd0++) = *(crd1++);
             }
 
             if(cs->fInvalidateRep)
@@ -154,19 +113,13 @@ int ExportMMUpdate(char *name,int state,void *mmdat)
   return(result);
 }
 
-
-void ExportMMFree(void *mmdat)
+void ExportCoordsFree(ExportCoords *io)
 {
-  CMMechIO *io=(CMMechIO*)mmdat;
   if(io) {
-    FreeP(io->atom);
-    VLAFreeP(io->bond);
+    FreeP(io->coord);
     FreeP(io);
   }
 }
-
-#endif
-
 
 ExportDotsObj *ExportDots(char *name,int csIndex)
 {

@@ -39,12 +39,16 @@ typedef struct {
   int nPoint;
 } ExportDotsObj;
 
+typedef struct {
+  int nAtom;
+  float *coord;
+} ExportCoords;
+
+ExportCoords *ExportCoordsExport(char *name,int state);
+int ExportCoordsImport(char *name,int state,ExportCoords *io);
+void ExportCoordsFree(ExportCoords *io);
+
 void ExportDeleteMDebug(struct Export *ex); /* for mmalloc/mfree blocks */
-
-void *ExportMMGet(char *name,int state);
-int ExportMMUpdate(char *name,int state,void *mmdat);
-void ExportMMFree(void *mmdat);
-
 ExportDotsObj *ExportDots(char *sele,int coordSet);
 
 /*--------------------------------------------------------------------- */

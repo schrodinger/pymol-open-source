@@ -2591,26 +2591,26 @@ def _png(a):
       unlock()
    return r
 
-def mm_get(obj,state):
+def export_coords(obj,state):
    '''
    EXPERIMENTAL
    '''
    r = None
    try:
       lock()   
-      r = _cmd.mm_get(obj,state)
+      r = _cmd.export_coords(obj,state)
    finally:
       unlock()
    return r
 
-def mm_update(obj,state,mmechio):
+def import_coords(obj,state,mechio):
    '''
    EXPERIMENTAL
    '''
    r = None
    try:
       lock()   
-      r = _cmd.mm_update(obj,state,mmechio)
+      r = _cmd.import_coords(obj,state,mechio)
    finally:
       unlock()
    return r
