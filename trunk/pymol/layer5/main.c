@@ -200,10 +200,27 @@ static void MainKey(unsigned char k, int x, int y)
 static void MainSpecial(int k, int x, int y)
 {
   char buffer[255];
+  int grabbed = false;
   PLockAPIAsGlut();
-  sprintf(buffer,"_special %d,%d,%d ",k,x,y);
-  PParse(buffer);
-  PFlush();
+  switch(k) {
+    case GLUT_KEY_UP:
+    case GLUT_KEY_DOWN:
+      grabbed=1;
+      OrthoSpecial(k,x,y);
+      break;
+    case GLUT_KEY_LEFT:
+    case GLUT_KEY_RIGHT:      
+      if(OrthoArrowsGrabbed()) {
+        grabbed=1;
+        OrthoSpecial(k,x,y);
+      }
+      break;
+  }
+  if(!grabbed) {
+    sprintf(buffer,"_special %d,%d,%d ",k,x,y);
+    PParse(buffer);
+    PFlush();
+  }
   PUnlockAPIAsGlut();
 }
 

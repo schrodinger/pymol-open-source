@@ -127,6 +127,7 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args);
 static PyObject *CmdOnOff(PyObject *self, 	PyObject *args);
 static PyObject *CmdOrient(PyObject *dummy, PyObject *args);
 static PyObject *CmdOverlap(PyObject *self, 	PyObject *args);
+static PyObject *CmdPaste(PyObject *self, 	PyObject *args);
 static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdReset(PyObject *self, PyObject *args);
@@ -196,6 +197,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"orient",	     CmdOrient,       METH_VARARGS },
 	{"onoff",        CmdOnOff,        METH_VARARGS },
 	{"overlap",      CmdOverlap,      METH_VARARGS },
+	{"paste",	     CmdPaste,        METH_VARARGS },
 	{"png",	        CmdPNG,          METH_VARARGS },
 	{"quit",	        CmdQuit,         METH_VARARGS },
 	{"ready",        CmdReady,        METH_VARARGS },
@@ -222,6 +224,31 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *CmdPaste(PyObject *dummy, PyObject *args)
+{
+  PyObject *list,*str;
+  char *st;
+  int l,a;
+  APIEntry();
+  PyArg_ParseTuple(args,"O",&list);
+  if(list) 
+    if(PyList_Check(list)) 
+      {
+        l=PyList_Size(list);
+        for(a=0;a<l;a++) {
+          str = PyList_GetItem(list,a);
+          if(str)
+            if(PyString_Check(str)) {
+              st = PyString_AsString(str);
+              OrthoPasteIn(st);
+            }
+        }
+      }
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
 
 static PyObject *CmdSplash(PyObject *dummy, PyObject *args)
 {

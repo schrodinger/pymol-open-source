@@ -48,6 +48,7 @@ Z* -------------------------------------------------------------------
 ListVarDeclare(BlockList,Block);
 
 #define OrthoSaveLines 0xFF
+#define OrthoHistoryLines 0xFF
 
 #define cOrthoLineHeight 12
 #define cOrthoLeftMargin 8
@@ -64,10 +65,12 @@ typedef struct {
   int X,Y,Height,Width;
   int ActiveButton;
   int DrawText;
-  int InputFlag;
+  int InputFlag; /* whether or not we have active input on the line */
+
   OrthoLineType Line[OrthoSaveLines+1];
-  OrthoLineType Command;
-  int CurLine,CurChar,PromptChar;
+  OrthoLineType History[OrthoHistoryLines+1];
+  int HistoryLine,HistoryView;
+  int CurLine,CurChar,PromptChar,CursorChar;
   FILE *Pipe;
   char Prompt[255];
   int ShowLines;
@@ -81,10 +84,10 @@ typedef struct {
   int SplashFlag;
   CQueue *cmds;
   CQueue *feedback;
-
 } OrthoObject;
 
 static OrthoObject Ortho;
+void OrthoParseCurrentLine(void);
 
 Block *OrthoFindBlock(int x,int y);
 
@@ -95,7 +98,73 @@ Block *OrthoFindBlock(int x,int y);
 #define cBusySpacing 15
 
 #define cBusyUpdate 1.0
+/*========================================================================*/
 
+void OrthoSpecial(int k,int x,int y)
+{
+  OrthoObject *I=&Ortho;
+  int curLine = I->CurLine&OrthoSaveLines;
+  switch(k) {
+  case GLUT_KEY_DOWN:
+    if(I->CurChar&&(I->HistoryView==I->HistoryLine)) {
+      strcpy(I->History[I->HistoryLine],I->Line[curLine]+I->PromptChar);
+    }
+    I->HistoryView = (I->HistoryView+1)&OrthoHistoryLines;
+    strcpy(I->Line[curLine],I->Prompt);
+    I->PromptChar = strlen(I->Prompt);
+    if(I->History[I->HistoryView][0]) {
+      strcat(I->Line[curLine],I->History[I->HistoryView]);
+      I->CurChar = strlen(I->Line[curLine]);
+    } else {
+      I->CurChar=I->PromptChar;
+    }
+    I->InputFlag=1;
+    I->CursorChar=-1;
+    break;
+  case GLUT_KEY_UP:
+    if(I->CurChar&&(I->HistoryView==I->HistoryLine)) {
+      strcpy(I->History[I->HistoryLine],I->Line[curLine]+I->PromptChar);
+    }
+    I->HistoryView = (I->HistoryView-1)&OrthoHistoryLines;
+    strcpy(I->Line[curLine],I->Prompt);
+    I->PromptChar = strlen(I->Prompt);
+    if(I->History[I->HistoryView][0]) {
+      strcat(I->Line[curLine],I->History[I->HistoryView]);
+      I->CurChar = strlen(I->Line[curLine]);
+    } else {
+      I->CurChar=I->PromptChar;
+    }
+    I->CursorChar=-1;
+    I->InputFlag=1;
+    break;
+  case GLUT_KEY_LEFT:
+    if(I->CursorChar>=0) {
+      I->CursorChar--;
+    } else {
+      I->CursorChar = I->CurChar-1;
+    }
+    if(I->CursorChar<I->PromptChar)
+      I->CursorChar=I->PromptChar;
+    break;
+  case GLUT_KEY_RIGHT:
+    if(I->CursorChar>=0) {
+      I->CursorChar++;
+    } else {
+      I->CursorChar = I->CurChar-1;
+    }
+    if(I->CursorChar>strlen(I->Line[curLine]))
+      I->CursorChar=strlen(I->Line[curLine]);
+    break;
+  }
+  OrthoDirty();
+}
+/*========================================================================*/
+
+int OrthoArrowsGrabbed(void)
+{
+  OrthoObject *I=&Ortho;
+  return(I->CurChar>I->PromptChar);
+}
 /*========================================================================*/
 void  OrthoRemoveSplash(void)
 {
@@ -338,22 +407,50 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
   }
   if(k>=32)
 	 {
-		I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=k;
-		I->CurChar++;
-		I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
+      curLine=I->CurLine&OrthoSaveLines;
+      
+      if(I->CursorChar>=0) {
+        strcpy(buffer,I->Line[curLine]+I->CursorChar);
+        I->Line[curLine][I->CursorChar]=k;
+        I->CursorChar++;
+        I->CurChar++;
+        strcpy(I->Line[curLine]+I->CursorChar,buffer);
+      } else {
+        I->Line[curLine][I->CurChar]=k;
+        I->CurChar++;
+        I->Line[curLine][I->CurChar]=0;
+      }
 	 }
   else switch(k)
 	 {
 	 case 8:
 		if(I->CurChar>I->PromptChar)
 		  {
-			 I->CurChar--;
-			 I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
+          curLine=I->CurLine&OrthoSaveLines;
+          if(I->CursorChar>=0) {
+            if(I->CursorChar>I->PromptChar) {
+              strcpy(buffer,I->Line[curLine]+I->CursorChar);
+              I->Line[curLine][I->CursorChar]=k;
+              I->CursorChar--;
+              I->CurChar--;
+              strcpy(I->Line[curLine]+I->CursorChar,buffer);
+            }
+          } else {
+            I->CurChar--;
+            I->Line[curLine][I->CurChar]=0;
+          }
 		  }
 		break;
 	 case 4:
-		exit(0);
+      exit(0);
 		break;
+    case 5: /* CTRL E -- ending */
+      I->CursorChar=-1;
+      break;
+    case 1: /* CTRL A -- beginning */
+      if(I->CurChar)
+        I->CursorChar=I->PromptChar;        
+      break;
 	 case 9: /* tab */
       if(I->SplashFlag) {
         OrthoRemoveSplash();
@@ -364,23 +461,49 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       }
 		break;
 	 case 13:
-		I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
-		strcpy(buffer,&I->Line[I->CurLine&OrthoSaveLines][I->PromptChar]);
-		if(buffer[0])
-		  {
-			 OrthoNewLine(NULL);
-			 ExecutiveDrawNow();
-			 PParse(buffer);
-			 OrthoRestorePrompt();
-		  }
+      OrthoParseCurrentLine();
 		break;
+	 case 11: /* CTRL K -- truncate */
+      if(I->CursorChar>=0) { 
+        I->Line[I->CurLine&OrthoSaveLines][I->CursorChar]=0;
+        I->CurChar=I->CursorChar;
+        I->CursorChar=-1;
+      }
+      break;
 	 case 18:
 		SceneRay();
 		break;
+    case 22:
+      PBlockAndUnlockAPI();
+      PRunString("cmd.paste()");
+      PLockAPIAndUnblock();
+      break;
 	 default:
 		break;
 	 }
   MainDirty();
+}
+/*========================================================================*/
+void OrthoParseCurrentLine(void) 
+{
+  OrthoObject *I=&Ortho;
+  char buffer[OrthoLineLength];
+  int curLine;
+  curLine=I->CurLine&OrthoSaveLines;
+  I->Line[curLine][I->CurChar]=0;
+  strcpy(buffer,I->Line[curLine]+I->PromptChar);
+  if(buffer[0])
+    {
+      strcpy(I->History[I->HistoryLine],buffer);
+      I->HistoryLine = (I->HistoryLine+1)&OrthoHistoryLines;
+      I->History[I->HistoryLine][0]=0;
+      I->HistoryView=I->HistoryLine;
+      OrthoNewLine(NULL);
+      ExecutiveDrawNow();
+      PParse(buffer);
+      OrthoRestorePrompt();
+    }
+  I->CursorChar=-1;
 }
 /*========================================================================*/
 void OrthoAddOutput(char *str)
@@ -586,7 +709,11 @@ void OrthoDoDraw()
               while(*str)
                 glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(str++));
               if((lcount==1)&&(I->InputFlag)) 
-                glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'_');
+                {
+                  if(I->CursorChar>=0)  
+                    glRasterPos4d((double)(x+8*I->CursorChar),(double)y,0.0,1.0);
+                  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'_');
+                }
             }
           l=(I->CurLine-lcount)&OrthoSaveLines;
           y=y+cOrthoLineHeight;
@@ -751,7 +878,8 @@ void OrthoSplash(void)
 void OrthoInit(void)
 {
   OrthoObject *I=&Ortho;
-  
+  int a;
+
   I->cmds = QueueNew(0xFFFF);
   I->feedback = QueueNew(0xFFFF);
 
@@ -768,6 +896,9 @@ void OrthoInit(void)
   I->CurLine=1000;
   I->PromptChar=0;
   I->CurChar=0;
+  I->CursorChar=-1;
+  I->HistoryLine=0;
+  I->HistoryView=0;
   I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
 
   I->SplashFlag = true;
@@ -782,6 +913,8 @@ void OrthoInit(void)
   ButModeInit();
   ControlInit();
   PopInit();
+  for(a=0;a<=OrthoHistoryLines;a++)
+    I->History[a][0]=0;
 }
 /*========================================================================*/
 void OrthoFree(void)
@@ -828,7 +961,60 @@ void OrthoCommandIn(char *buffer)
   if(I->cmds) 
 	QueueStrIn(I->cmds,buffer);
 }
+/*========================================================================*/
+void OrthoPasteIn(char *buffer)
+{
+  OrthoObject *I=&Ortho;
+  int curLine = I->CurLine&OrthoSaveLines;
+  int execFlag=false;
+  OrthoLineType buf2;
 
+  if(I->CurChar) {
+    if(I->CursorChar>=0) {
+      strcpy(buf2,I->Line[curLine]+I->CursorChar);
+      strcpy(I->Line[curLine]+I->CursorChar,buffer);
+      I->CurChar = strlen(I->Line[curLine]);
+      I->CursorChar = I->CurChar;
+      while((I->Line[curLine][I->CurChar-1]==10)||(I->Line[curLine][I->CurChar-1]==13)) 
+        {
+          execFlag=true;
+          I->CurChar--;
+          I->Line[curLine][I->CurChar]=0;
+          if(I->CurChar<=I->PromptChar)
+            break;
+        }
+      if(!execFlag) {
+        strcpy(I->Line[curLine]+I->CursorChar,buf2);
+        I->CurChar=strlen(I->Line[curLine]);
+      }
+    } else {
+      strcat(I->Line[curLine],buffer);
+      I->CurChar=strlen(I->Line[curLine]);
+      while((I->Line[curLine][I->CurChar-1]==10)||(I->Line[curLine][I->CurChar-1]==13)) 
+        {
+          execFlag=true;
+          I->CurChar--;
+          I->Line[curLine][I->CurChar]=0;
+          if(I->CurChar<=I->PromptChar)
+            break;
+        }
+    }
+  } else {
+    strcpy(I->Line[curLine]+I->PromptChar,buffer);
+    I->CurChar=strlen(I->Line[curLine]);
+    
+    while((I->Line[curLine][I->CurChar-1]==10)||(I->Line[curLine][I->CurChar-1]==13)) 
+      {
+        execFlag=true;
+        I->CurChar--;
+        I->Line[curLine][I->CurChar]=0;
+        if(I->CurChar<=I->PromptChar)
+          break;
+      }
+  }
+  if(execFlag)
+    OrthoParseCurrentLine();
+}
 
 
 
