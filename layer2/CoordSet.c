@@ -517,6 +517,10 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
 {
   int a;
 
+  PRINTFD(FB_CoordSet)
+    " CoordSetRender: entered (%p).\n",I
+    ENDFD;
+
   if(I->Name[0])
     ButModeCaption(I->Name);
   for(a=0;a<I->NRep;a++)
@@ -532,6 +536,11 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
             I->Rep[a]->fRender(I->Rep[a],ray,pick);
           }
         }
+
+  PRINTFD(FB_CoordSet)
+    " CoordSetRender: leaving...\n",I
+    ENDFD;
+
 }
 /*========================================================================*/
 CoordSet *CoordSetNew(void)

@@ -511,8 +511,6 @@ void launch(void)
     p_glutIdleFunc(         MainBusyIdle );
 
     p_glutPostRedisplay();
-
-    SettingSet(cSetting_line_smooth,1.0);
   }
 
   PUnblock();

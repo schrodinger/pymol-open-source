@@ -30,9 +30,9 @@ Z* -------------------------------------------------------------------
 #include"Extrude.h"
 
 typedef struct RepCartoon {
+  Rep R; /* must be first! */
   ObjectMolecule *obj;
   CoordSet *cs;
-  Rep R;
   CGO *ray,*std;
 } RepCartoon;
 

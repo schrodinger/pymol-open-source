@@ -476,7 +476,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_sel_counter:
 	 break;
   case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
-    SettingSet(cSetting_line_smooth,0);
+    /*    SettingSet(cSetting_line_smooth,0);  NO LONGER */
   case cSetting_line_radius:
     ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
     SceneChanged();
@@ -698,8 +698,6 @@ void SettingSetNamed(char *name,char *value)
     case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
     case cSetting_mesh_width:
       sscanf(value,"%f",&v);
-      if(v!=1.0)
-        SettingSet(cSetting_line_smooth,0);
 		SettingSetfv(index,&v);
 		sprintf(buffer," Setting: %s set to %5.3f\n",realName,v);
       SceneDirty();
@@ -833,7 +831,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_stereo_shift, 2.0);
 
-  SettingSet_f(I,cSetting_line_smooth, 0.0);
+  SettingSet_f(I,cSetting_line_smooth, 1.0);
 
   SettingSet_f(I,cSetting_line_width, 1.0);
 
@@ -893,7 +891,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_auto_show_nonbonded, 1.0);
 
-  SettingSet_f(I,cSetting_mesh_radius, 0.05);
+  SettingSet_f(I,cSetting_mesh_radius, 0.025);
  
 #ifdef WIN32
   SettingSet_f(I,cSetting_cache_display, 0.0);
