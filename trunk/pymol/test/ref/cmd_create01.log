@@ -18,7 +18,7 @@ Hit TAB to toggle text or type "cls" to clear.
  
  GL based graphics front end:
   GL_VENDOR: Precision Insight, Inc.
-  GL_RENDERER: Mesa DRI Voodoo3 20000616
+  GL_RENDERER: Mesa DRI Voodoo3 20000420
   GL_VERSION: 1.2 Mesa 3.3 beta
 PyMOL>@inp/cmd_create01.pml
  PDBStrToCoordSet: Attempting to read symmetry information
@@ -42,11 +42,21 @@ PyMOL>@inp/cmd_create01.pml
  Symmetry:      0.00000      0.00000     -1.00000      0.00000
  Symmetry:      0.00000      0.00000      0.00000      1.00000
  Executive: object "t0" created.
+ Selector: found 488 atoms.
  Executive: object "t1" created.
+ Selector: found 97 atoms.
  Executive: object "t2" created.
+ Selector: found 153 atoms.
  Executive: object "t3" created.
+ Selector: found 250 atoms.
  Executive: object "t4" created.
+ Selector: found 56 atoms.
  Executive: object "t5" created.
+ Selector: found 114 atoms.
+ Selector: found 194 atoms.
+ Selector: found 287 atoms.
+ Selector: found 409 atoms.
+ Selector: found 679 atoms.
  Save: wrote "cmp/cmd_create01.01.pdb".
  Save: wrote "cmp/cmd_create01.02.pdb".
  Save: wrote "cmp/cmd_create01.03.pdb".
@@ -66,4 +76,4 @@ PyMOL>@inp/cmd_create01.pml
  ObjectMolecule: updating state 3 of "t5".
  ObjectMolecule: updating state 4 of "t5".
  ObjectMolecule: updating state 5 of "t5".
- Memory Check: 0 blocks expected, 0 found, 177 maximum allocated.
+ Memory Check: 0 blocks expected, 0 found, 178 maximum allocated.
