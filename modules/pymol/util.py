@@ -63,6 +63,15 @@ def cbap(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("purple","(elem C and "+s+")")
 
+def cbak(selection):
+   s = str(selection)   
+   cmd.color("magenta","("+s+")")
+   cmd.color("oxygen","(elem O and "+s+")")
+   cmd.color("nitrogen","(elem N and "+s+")")
+   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("hydrogen","(elem H and "+s+")")
+   cmd.color("pink","(elem C and "+s+")")
+
 def cbaw(selection):
    s = str(selection)   
    cmd.color("magenta","("+s+")")
