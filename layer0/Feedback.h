@@ -93,6 +93,7 @@ function name.
 #define FB_Map                       2
 #define FB_Matrix                    3
 #define FB_MyPNG                     4
+#define FB_Triangle                  5
 
 /* layer 1 */
 

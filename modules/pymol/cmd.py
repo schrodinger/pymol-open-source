@@ -4651,7 +4651,8 @@ class fb_module:
    map                       =2
    matrix                    =3
    mypng                     =4
-
+   triangle                  =5
+   
    feedback                  =12
    scene                     =13
    threads                   =14  

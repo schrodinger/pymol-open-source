@@ -827,6 +827,8 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_static_singletons, 1.0);
 
+  SettingSet_f(I,cSetting_max_triangles, 1000000.0);
+
 }
 
 

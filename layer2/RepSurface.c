@@ -409,7 +409,6 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int inclH = true;
   int cullByFlag = false;
   int flag,*dot_flag,*p;
-  int cnt;
   float minimum_sep;
   int visFlag;
   SphereRec *sp = Sphere0;
@@ -431,8 +430,6 @@ Rep *RepSurfaceNew(CoordSet *cs)
   }
 
   RepInit(&I->R);
-
-  cnt = SettingGet(cSetting_test2);
 
   if((int)SettingGet(cSetting_surface_quality)) {
     minimum_sep = SettingGet(cSetting_surface_best);
@@ -698,7 +695,16 @@ Rep *RepSurfaceNew(CoordSet *cs)
       I->VN = Realloc(I->VN,float,(vn0-I->VN));
     }
 
+    PRINTFD(FB_RepSurface)
+      " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
+      ENDFD;
+
 	 RepSurfaceColor(I,cs);
+
+    PRINTFD(FB_RepSurface)
+      " RepSurfaceNew-DEBUG: %i surface points after coloring.\n",I->N
+      ENDFD;
+
 	 OrthoBusyFast(5,10);
 
     if(I->N) {
@@ -857,7 +863,12 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,Sphe
 		}
 	 FreeP(dot_flag);
   }
-  /*  printf("NDot: %d->%d\n",c,I->NDot);*/
+  
+  PRINTFD(FB_RepSurface)
+    " GetSolventDots-DEBUG: %d->%d\n",c,I->NDot
+    ENDFD;
+           
+
 }
 
 

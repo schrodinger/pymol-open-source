@@ -57,6 +57,9 @@ class Setting:
       self.static_singletons = IntVar()
       self.static_singletons.set(int(cmd.get_setting_legacy('static_singletons')))
 
+      self.backface_cull = IntVar()
+      self.backface_cull.set(int(cmd.get_setting_legacy('backface_cull')))
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get())),
@@ -80,6 +83,8 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_zoom.get())))),
          'static_singletons'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.static_singletons.get())))),
+         'backface_cull'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.backface_cull.get())))),
          }
 
       self.update_code = {
@@ -101,6 +106,8 @@ class Setting:
          (lambda s,t: (s.auto_zoom.set(int(t[1][0])))), 
          'static_singletons':
          (lambda s,t: (s.static_singletons.set(int(t[1][0])))), 
+         'backface_cull':
+         (lambda s,t: (s.backface_cull.set(int(t[1][0])))), 
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -113,6 +120,7 @@ class Setting:
          pymol.setting._get_index("valence"),
          pymol.setting._get_index("auto_zoom"),
          pymol.setting._get_index("static_singletons"),
+         pymol.setting._get_index("backface_cull"),
          ]
 
       self.active_dict = {}

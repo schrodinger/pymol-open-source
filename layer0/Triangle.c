@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Setting.h"
 #include"Ortho.h"
+#include"Feedback.h"
 
 
 float TestLine[10000];
@@ -963,7 +964,7 @@ static void FollowActives(float *v,float *vn,int n,int mode)
   int i1,i2;
   int cnt;
 
-  cnt = SettingGet(cSetting_test1);
+  cnt = SettingGet(cSetting_max_triangles);
   
   OrthoBusyFast((I->N*2)+I->nTri,I->N*4);
 
@@ -1256,13 +1257,20 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,
 
   TriangleFill(v,vn,n);
 
-  /*  for(a=0;a<n;a++) 
-	 if(I->vertActive[a])
-	 printf("before fix %i %i\n",a,I->vertActive[a]);
-  */
+  if(Feedback(FB_Triangle,FB_Debugging)) {
+    for(a=0;a<n;a++) 
+      if(I->vertActive[a])
+        printf(" TrianglePTS-DEBUG: before fix %i %i\n",a,I->vertActive[a]);
+  }
+
 
   TriangleFixProblems(v,vn,n);  
 
+  if(Feedback(FB_Triangle,FB_Debugging)) {
+    for(a=0;a<n;a++) 
+      if(I->vertActive[a])
+        printf(" TrianglePTS-DEBUG: after fix %i %i\n",a,I->vertActive[a]);
+  }
   /*  for(a=0;a<n;a++) 
 	 if(I->vertActive[a])
 		printf("after fix %i %i\n",a,I->vertActive[a]);
@@ -1290,7 +1298,7 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,
 
   *(stripPtr) = TriangleMakeStripVLA(v,vn,n);
 
-  cnt = SettingGet(cSetting_test1);
+  cnt = SettingGet(cSetting_max_triangles);
   if(I->nTri>cnt)
 	 I->nTri=cnt;
 
