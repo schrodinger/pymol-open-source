@@ -491,12 +491,16 @@ DEVELOPMENT TO DO
       if (act_int<3) and ("?" in [action,module,mask]):
          if module=="?":
             print " feedback: Please specify module names:"
-            for a in fb_module.__dict__.keys():
+            lst = fb_module.__dict__.keys()
+            lst.sort()
+            for a in lst:
                if a[0]!='_':
                   print "   ",a
          if mask=="?":
             print " feedback: Please specify masks:"
-            for a in fb_mask.__dict__.keys():
+            lst = fb_mask.__dict__.keys()
+            lst.sort()
+            for a in lst:
                if a[0]!='_':
                   print "   ",a
       else:

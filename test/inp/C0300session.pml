@@ -14,7 +14,7 @@ print cmd.get_names()
 get line_width
 count_atoms rep spheres
 
-load tmp/sess.pse
+load tmp/session.pse
 
 print cmd.get_names()
 get line_width
