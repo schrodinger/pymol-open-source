@@ -516,12 +516,14 @@ void MainReshape(int width, int height) /* called by Glut */
 
   if(G->HaveGUI) {
     glViewport(0, 0, (GLint) width, (GLint) height);
+    /* wipe the screen ASAP to prevent display of garbage... */
+    glDrawBuffer(GL_FRONT);
     glClearColor(0.0,0.0,0.0,1.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    PyMOL_SwapBuffers();
+    glDrawBuffer(GL_BACK);
     glClearColor(0.0,0.0,0.0,1.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    PyMOL_SwapBuffers();
+    PyMOL_SwapBuffers(PyMOLInstance);
   }
   PyMOL_Reshape(PyMOLInstance, width, height, false);
 
