@@ -1708,6 +1708,9 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   /* now compute surface normals */
 
   norm = Alloc(float,nRow*3);
+  for(a=0;a<nRow;a++) {
+    zero3f(norm+a*3);
+  }
   for(a=0;a<I->NAtom;a++) {
     base = a*sp->nDot;
     for(b=0;b<sp->NTri;b++) {
