@@ -66,15 +66,17 @@ Z* -------------------------------------------------------------------
 #define cAN_F   9
 #define cAN_Na 11
 #define cAN_Mg 12
+#define cAN_Si 14
 #define cAN_P  15
 #define cAN_S  16
 #define cAN_Cl 17
 #define cAN_K  19
 #define cAN_Ca 20
+#define cAN_Fe 26
+#define cAN_Cu 29
 #define cAN_Zn 30
 #define cAN_Br 35
 #define cAN_I  53
-
 
 typedef char Chain[2];
 typedef char SSType[2];
