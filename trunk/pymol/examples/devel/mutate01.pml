@@ -1,3 +1,7 @@
+# This example shows how to make a single mutation using a script
+# note that no conformational analysis is done to insure
+# that the resulting pose is at all reasonable.
+
 # load a structure
 
 load $PYMOL_PATH/test/dat/pept.pdb
