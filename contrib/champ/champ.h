@@ -149,6 +149,7 @@ typedef struct {
   char symbol[SYM_SIZE];
   char name[NAM_SIZE];
   char residue[RES_SIZE];
+  float coord[3];
   int neg_flag;
   int not_atom;
   int not_charge;
@@ -157,7 +158,8 @@ typedef struct {
   int not_degree;
   int not_valence;
   int comp_imp_hydro_flag; /* do we need to compute implicit hydrogens? */
-  int stereo; /* 0 = unspecified, 1 = anti-clockwise, -1 = clockwise */
+  int stereo; /* based on lexical ordering: 0 = unspecified, 1 = anti-clockwise, -1 = clockwise */
+  int stereo_internal; /* based on internal atom IDs */
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
   int first_base; 
@@ -257,6 +259,7 @@ typedef struct {
 
 /* prototypes */
 
+
 CChamp *ChampNew(void);
 void ChampFree(CChamp *I);
 
@@ -284,14 +287,14 @@ int ChampMatch_NV1_N(CChamp *I,int list,int target,int limit,int tag_flag);
 int ChampExact_1VN_N(CChamp *I,int pattern,int list);
 
 int ChampModelToPat(CChamp *I,PyObject *model);
-char *ChampPatToSmiVLA(CChamp *I,int index,char *vla);
+char *ChampPatToSmiVLA(CChamp *I,int index,char *vla,int mode);
 int ChampAtomToString(CChamp *I,int index,char *buf);
 int ChampBondToString(CChamp *I,int index,char *buf);
 void ChampPatReindex(CChamp *I,int index);
 void ChampPatDump(CChamp *I,int index);
 void ChampOrientBonds(CChamp *I,int index);
 void ChampGeneralize(CChamp *I,int index);
-
+void ChampDetectChirality(CChamp *I,int index);
 
 #endif
 

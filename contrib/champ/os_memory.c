@@ -125,7 +125,7 @@ void OSMemoryDump(void)
 	{
      tot+=rec->size;
      printf(" OSMemory: @%10p:%7x:%i %s:%i     \n",
-            rec+1,rec->size,rec->type,rec->file,rec->line);
+            (void*)rec+1,rec->size,rec->type,rec->file,rec->line);
 	  rec=rec->next;
 	  cnt++;
 	}

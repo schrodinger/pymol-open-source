@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_memory.h"
 #include"const.h"
 #include"err.h"
+#include"sort.h"
 
 #include"feedback.h"
 
@@ -1241,8 +1242,7 @@ void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 	 }
 }
 
-int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln);
-int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
+static int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
 {
   char *st;
   PyObject *tmp;
@@ -1269,8 +1269,7 @@ int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
   return(result);
 }
 
-int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln);
-int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
+/*static int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
 {
   char *st;
   PyObject *tmp;
@@ -1296,8 +1295,7 @@ int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
   return(result);
 }
 
-int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll);
-int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll)
+static int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll)
 {
   int ok=true;
   PyObject *tmp;
@@ -1307,6 +1305,32 @@ int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll)
     Py_DECREF(tmp);
   } else {
     ok=false;
+  }
+  return(ok);
+}
+*/
+
+static int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll)
+{
+  int ok = true;
+  int a,l;
+  if(!obj) { 
+    ok=false;
+  } else if(!PyList_Check(obj)) {
+    ok=false;
+  } else {
+    l=PyList_Size(obj);
+    if (l!=ll) 
+      ok=false;
+    else {
+      if(!l)
+        ok=-1;
+      else
+        ok=l;
+      for(a=0;a<l;a++)
+        *(ff++) = (float)PyFloat_AsDouble(PyList_GetItem(obj,a));
+    }
+    /* NOTE ASSUMPTION! */
   }
   return(ok);
 }
@@ -1384,7 +1408,18 @@ int ChampModelToPat(CChamp *I,PyObject *model)
             at->tag = 0;
           }
         }
-        
+
+        if(ok) {
+          if(PTruthCallStr(atom,"has","coord")) {         
+            tmp = PyObject_GetAttrString(atom,"coord");
+            if (tmp)
+              ok = PConvPyListToFloatArrayInPlace(tmp,at->coord,3);
+            if(!ok) 
+              err_message("ChampModel2Pat","can't read coordinates");
+            Py_XDECREF(tmp);
+          }
+        }
+
         if(ok) {
           if(PTruthCallStr(atom,"has","formal_charge")) { 
             tmp = PyObject_GetAttrString(atom,"formal_charge");
@@ -1610,6 +1645,7 @@ int ChampModelToPat(CChamp *I,PyObject *model)
   if(result) ChampPatReindex(I,result);
   return(result);
 }
+
 /* =============================================================== 
  * Class-specific Memory Management 
  * =============================================================== */
@@ -3516,7 +3552,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
 #define cSym_Separator  8
 #define cSym_Qualifier  9
 
-char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
+char *ChampPatToSmiVLA(CChamp *I,int index,char *vla,int mode)
 {
   char *result;
   int n_atom;
@@ -3590,7 +3626,16 @@ char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
           concat_s(buf,c);
           /*          sprintf(buf,":%d:",cur_atom);
                       concat_s(buf,strlen(buf));*/
-          
+
+          switch(mode) {
+          case 0:
+            break;
+          case 1:
+            concat_s("<",1);
+            concat_s(at1->name,strlen(at1->name));
+            concat_s(">",1);
+            break;
+          }
           /* write opening marks */
           
           for(a=0;a<MAX_BOND;a++) {
@@ -3707,6 +3752,151 @@ char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
   return result;
 }
 
+static void ChampReassignLexPri(CChamp *I,int index)
+{
+  /* reassigns lexical priorities based on the current tree
+  NOTE: unless stereo information is stored elsewhere, this trashes it 
+  */
+  int n_atom;
+  int cur_scope = 0;
+  int cur_atom = 0;
+  int cur_bond = 0;
+  int a;
+  int mark[MAX_RING];
+  int mark_bond[MAX_RING];
+  int i;
+  int left_to_do = 0;
+  int next_mark =1;
+  int start_atom = 0;
+  ListAtom *at1;
+  ListBond *bd1;
+  ListScope *scp1,*scp2;
+  int lex_pri = 0;
+  
+  for(a=0;a<MAX_RING;a++) {
+    mark[a]=0;
+  }
+  
+  cur_atom=I->Pat[index].atom;
+  n_atom=0;
+  while(cur_atom) {
+    n_atom++;
+    at1 = I->Atom + cur_atom;
+    at1->mark_tmpl = 0;
+    cur_atom = at1->link;
+  }
+
+  start_atom = I->Pat[index].atom;
+  while(start_atom) {
+    if(!I->Atom[start_atom].mark_tmpl) {
+      lex_pri++;
+      cur_scope = ListElemNewZero(&I->Scope);
+      I->Scope[cur_scope].atom = start_atom;
+      I->Scope[cur_scope].bond = -1; /* signals start in new scope */
+      while(cur_scope) {
+        scp1 = I->Scope + cur_scope;
+        cur_atom = scp1->atom;
+        at1=I->Atom + cur_atom;
+        
+        if(scp1->bond<0) { /* starting new scope, so print atom and continue */
+          /* print bond, if required */
+          if(scp1->base_bond) {
+            bd1 = I->Bond+scp1->base_bond;
+            lex_pri++;
+            bd1->pri[0] = lex_pri; 
+            bd1->pri[1] = lex_pri; 
+          }
+          /* write atom string */
+          at1->mark_tmpl = 1;
+          lex_pri ++;
+
+          /* write opening marks */
+          
+          for(a=0;a<MAX_BOND;a++) {
+            cur_bond = at1->bond[a];
+            if(!cur_bond) break;
+            bd1 = I->Bond+cur_bond;
+            /* write cycle indicator if necessary */
+            if(bd1->atom[0]!=cur_atom) {/* opposite direction -> explicit cycle */
+              if(!I->Atom[bd1->atom[0]].mark_tmpl)
+                {
+                  if(mark[next_mark]) {
+                    for(index=0;index<9;index++) {
+                      if(!mark[index]) break;
+                    }
+                  } else {
+                    index = next_mark++;
+                  }
+                  if(index<MAX_RING) {
+                    mark[index]=bd1->atom[0]; /* save for matching other end of cycle */
+                    mark_bond[index]=cur_bond;
+                    lex_pri++;
+                    bd1->pri[1] = lex_pri; /* from this atom's point of view, this is the priority location*/
+                  }
+                }
+            }
+          }
+          
+          /* write closing marks */
+          
+          for(index=0;index<MAX_RING;index++) {
+            if(mark[index]==cur_atom) {
+              lex_pri++;
+              bd1 = I->Bond + mark_bond[index];
+              bd1->pri[0] = lex_pri;
+              mark[index]=0;
+            }
+          }
+        }
+        
+        /* increment bond index index counter */
+        
+        scp1->bond++;
+        
+        /* now determine whether or not we need to create a new scope, 
+           and figure out which bond to work on */
+        
+        i = scp1->bond;
+        left_to_do = 0;
+        cur_bond = 0;
+        while(i<MAX_BOND) {
+          if(!at1->bond[i]) break;
+          bd1 = I->Bond + at1->bond[i];
+          if(bd1->atom[0]==cur_atom) {
+            if(!I->Atom[bd1->atom[1]].mark_tmpl) { /* not yet complete */ 
+              if(!cur_bond) cur_bond = at1->bond[i];
+              left_to_do++;
+            }
+          }
+          i++;
+        }
+        
+        if(left_to_do>1) { /* yes, we need a new scope */
+          cur_scope = ListElemPush(&I->Scope,cur_scope);
+          scp2 = I->Scope + cur_scope;
+          scp2->base_bond = cur_bond;
+          scp2->atom = I->Bond[cur_bond].atom[1];
+          scp2->bond = -1;
+          lex_pri++;
+          scp2->paren_flag=true;
+
+        } else if(left_to_do) { /* no we do not, so just extend current scope */
+          scp1->atom = I->Bond[cur_bond].atom[1];
+          scp1->base_bond = cur_bond;
+          scp1->bond = -1;
+
+        } else { /* nothing attached, so just close scope */
+          if(scp1->paren_flag)
+            lex_pri++;
+          cur_scope = ListElemPop(I->Scope,cur_scope);
+        }
+      }
+    }
+    start_atom = I->Atom[start_atom].link;
+  }
+  
+}
+
 void ChampGeneralize(CChamp *I,int index)
 {
   ListBond *bd1;
@@ -3727,7 +3917,175 @@ void ChampGeneralize(CChamp *I,int index)
 
 }
 
-void ChampOrientBonds(CChamp *I,int index)
+static void ChampStereoToInternal(CChamp *I, int index)
+{
+  
+  {
+     int n_atom;
+     int cur_atom = 0;
+     int cur_bond = 0;
+     int start_atom = 0;
+     int a;
+     int order_handedness;
+     int pri_handedness;
+     ListAtom *at1;
+     ListBond *bd1;
+     int n_bond;
+     int ati[4],pri[4];
+
+    /* first we need to sweep the molecule in order and assign lexical
+       priorities to bonds based on when atoms are written out */
+    
+    cur_atom=I->Pat[index].atom;
+    n_atom=0;
+    while(cur_atom) {
+      n_atom++;
+      at1 = I->Atom + cur_atom;
+      at1->mark_tmpl = 0;
+      at1->stereo_internal = 0; /* clear stereo orientation */
+      cur_atom = at1->link;
+    }
+
+    start_atom = I->Pat[index].atom;
+    while(start_atom) {
+      if(!I->Atom[start_atom].mark_tmpl) {
+        
+        cur_atom = start_atom;
+        at1=I->Atom + cur_atom;
+        
+        at1->mark_tmpl = 1;
+        
+        if(at1->stereo) {
+          
+          n_bond = 0;
+          for(a=0;a<MAX_BOND;a++) {
+            cur_bond = at1->bond[a];
+            if(!cur_bond) break;
+            n_bond++;
+          }
+          
+          if(n_bond==4) {
+            n_bond = 0;
+            for(a=0;a<MAX_BOND;a++) {
+              cur_bond = at1->bond[a];
+              if(!cur_bond) break;
+              bd1 = I->Bond+cur_bond;
+              if(bd1->atom[0]==cur_atom) {
+                pri[n_bond] = bd1->pri[0];
+                ati[n_bond] = bd1->atom[1];
+              } else {
+                pri[n_bond] = bd1->pri[1];
+                ati[n_bond] = bd1->atom[0];
+              }
+              n_bond++;
+            }
+            
+            { /* get coordinates into absolute atom order */
+              int idx[4];
+              SortIntIndex(4,pri,idx);
+              pri_handedness = ChiralHandedness(idx);
+              SortIntIndex(4,ati,idx);
+              order_handedness = ChiralHandedness(idx);
+            }
+
+            if(pri_handedness == order_handedness)
+              at1->stereo_internal = at1->stereo;
+            else
+              at1->stereo_internal = -at1->stereo;
+          }
+        }
+        start_atom = I->Atom[start_atom].link;
+      }
+    }
+  }
+}
+
+static void ChampStereoFromInternal(CChamp *I, int index)
+{
+  
+  {
+     int n_atom;
+     int cur_atom = 0;
+     int cur_bond = 0;
+     int start_atom = 0;
+     int pri_handedness,order_handedness;
+     int a;
+     ListAtom *at1;
+     ListBond *bd1;
+     int n_bond;
+     int ati[4],pri[4];
+
+
+    /* first we need to sweep the molecule in order and assign lexical
+       priorities to bonds based on when atoms are written out */
+    
+    cur_atom=I->Pat[index].atom;
+    n_atom=0;
+    while(cur_atom) {
+      n_atom++;
+      at1 = I->Atom + cur_atom;
+      at1->mark_tmpl = 0;
+      at1->stereo = 0; /* clear stereo orientation */
+      cur_atom = at1->link;
+    }
+
+    start_atom = I->Pat[index].atom;
+    while(start_atom) {
+      if(!I->Atom[start_atom].mark_tmpl) {
+        
+        cur_atom = start_atom;
+        at1=I->Atom + cur_atom;
+        
+        at1->mark_tmpl = 1;
+        
+        if(at1->stereo_internal) {
+          
+          n_bond = 0;
+          for(a=0;a<MAX_BOND;a++) {
+            cur_bond = at1->bond[a];
+            if(!cur_bond) break;
+            n_bond++;
+          }
+          
+          if(n_bond==4) {
+            n_bond = 0;
+            for(a=0;a<MAX_BOND;a++) {
+              cur_bond = at1->bond[a];
+              if(!cur_bond) break;
+              bd1 = I->Bond+cur_bond;
+              if(bd1->atom[0]==cur_atom) {
+                pri[n_bond] = bd1->pri[0];
+                ati[n_bond] = bd1->atom[1];
+              } else {
+                pri[n_bond] = bd1->pri[1];
+                ati[n_bond] = bd1->atom[0];
+              }
+              n_bond++;
+            }
+            
+            { /* get coordinates into absolute atom order */
+              int idx[4];
+              SortIntIndex(4,pri,idx);
+              pri_handedness = ChiralHandedness(idx);
+              SortIntIndex(4,ati,idx);
+              order_handedness = ChiralHandedness(idx);
+            }
+          
+            if(pri_handedness==order_handedness)
+              at1->stereo = at1->stereo_internal;
+            else
+              at1->stereo = -at1->stereo_internal;
+          }
+        }
+        start_atom = I->Atom[start_atom].link;
+      }
+    }
+  }
+}
+
+
+void ChampOrientBonds(CChamp *I,int index) 
+     /* This destroys stereo information...right? */
 {
   /* do a prepatory walk through the molecule to figure out how to minimize 
      explicit connections */
@@ -3743,6 +4101,9 @@ void ChampOrientBonds(CChamp *I,int index)
   ListAtom *at1;
   ListBond *bd1;
   ListScope *scp1,*scp2;
+
+  ChampStereoToInternal(I,index); 
+  /* convert stereo information into bond-order-independent internal representation */
 
   cur_atom=I->Pat[index].atom;
   n_atom=0;
@@ -3851,9 +4212,198 @@ void ChampOrientBonds(CChamp *I,int index)
     }
     start_atom = I->Atom[start_atom].link;
   }
+  ChampReassignLexPri(I,index);
+  ChampStereoFromInternal(I,index);
+
 }
 
-void ChampAtomDump(CChamp *I,int index)
+#define R_SMALL 0.0000001F
+
+static double sqrt1f(float f) { /* no good as a macro because f is used twice */
+  if(f>0.0F)
+	 return(sqrt(f));
+  else
+	 return 0.0;
+}
+
+static double length3f ( float *v1 )
+{
+  return(sqrt1f((v1[0]*v1[0]) + 
+					 (v1[1]*v1[1]) + 
+					 (v1[2]*v1[2])));
+} 
+
+static void normalize3f( float *v1 )
+{
+	double vlen = length3f(v1);
+	if(vlen > R_SMALL)
+	{
+		float	inV	= (float)(1.0F / vlen);
+		v1[0] *= inV;
+		v1[1] *= inV;
+		v1[2] *= inV;
+	}
+	else
+	{
+		v1[0]=v1[1]=v1[2]=0.0F;
+	}
+} 
+
+static void remove_component3f ( float *v1, float *unit, float *result)
+{
+  float dot;
+
+  dot = v1[0]*unit[0] + v1[1]*unit[1] + v1[2]*unit[2];
+  result[0]=v1[0]-unit[0]*dot;
+  result[1]=v1[1]-unit[1]*dot;
+  result[2]=v1[2]-unit[2]*dot;  
+}
+
+static float dot_product3f ( float *v1, float *v2 )
+{
+  return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
+}
+
+static void subtract3f ( float *v1, float *v2, float *v3 )
+{
+  v3[0]=v1[0]-v2[0];
+  v3[1]=v1[1]-v2[1];
+  v3[2]=v1[2]-v2[2];
+}
+
+static void cross_product3f ( float *v1, float *v2, float *cross )
+{
+  cross[0] = (v1[1]*v2[2]) - (v1[2]*v2[1]);
+  cross[1] = (v1[2]*v2[0]) - (v1[0]*v2[2]);
+  cross[2] = (v1[0]*v2[1]) - (v1[1]*v2[0]);
+}
+
+
+
+void ChampDetectChirality(CChamp *I,int index)
+{
+
+
+  ChampReassignLexPri(I,index);
+
+  /*  ChampPatDump(I,index);*/
+  
+  /* now, find the chiral atoms and geometrically determine their handedness 
+     based on their coordinates */
+
+  {
+     int n_atom;
+     int cur_atom = 0;
+     int cur_bond = 0;
+     int start_atom = 0;
+     int a;
+     ListAtom *at1;
+     ListBond *bd1;
+     int pri[4];
+     int n_bond;
+     int ati[4];
+     float *vc, *v[4],vd[4][3],vr[4][3],vt[3];
+
+    /* first we need to sweep the molecule in order and assign lexical
+       priorities to bonds based on when atoms are written out */
+    
+    cur_atom=I->Pat[index].atom;
+    n_atom=0;
+    while(cur_atom) {
+      n_atom++;
+      at1 = I->Atom + cur_atom;
+      at1->mark_tmpl = 0;
+      at1->stereo = 0; /* clear stereo orientation */
+      cur_atom = at1->link;
+    }
+
+    start_atom = I->Pat[index].atom;
+    while(start_atom) {
+      if(!I->Atom[start_atom].mark_tmpl) {
+        
+        cur_atom = start_atom;
+        at1=I->Atom + cur_atom;
+        
+        /*        printf("name: %s\n",at1->name);*/
+        at1->mark_tmpl = 1;
+
+        n_bond = 0;
+        for(a=0;a<MAX_BOND;a++) {
+          cur_bond = at1->bond[a];
+          if(!cur_bond) break;
+          n_bond++;
+        }
+
+        if(n_bond==4) {
+        
+          /* get the relative lexical priorities for each bond */
+
+          n_bond = 0;
+          for(a=0;a<MAX_BOND;a++) {
+            cur_bond = at1->bond[a];
+            if(!cur_bond) break;
+            bd1 = I->Bond+cur_bond;
+            if(bd1->atom[0]==cur_atom) {
+              pri[n_bond] = bd1->pri[0];
+              ati[n_bond] = bd1->atom[1];
+            } else {
+              pri[n_bond] = bd1->pri[1];
+              ati[n_bond] = bd1->atom[0];
+            }
+            n_bond++;
+          }
+
+          { /* get coordinates into lexical rotational order */
+            int idx[4];
+            SortIntIndex(4,pri,idx);
+            /*
+            printf("pri: %d %d %d %d\n",pri[0],pri[1],pri[2],pri[3]);
+            printf("idx: %d %d %d %d\n",idx[0],idx[1],idx[2],idx[3]);
+            printf("ord: %d %d %d %d\n",pri[idx[0]],pri[idx[1]],pri[idx[2]],pri[idx[3]]);
+
+            printf("%s %s %s %s\n",
+                   I->Atom[ati[idx[0]]].name,
+                   I->Atom[ati[idx[1]]].name,
+                   I->Atom[ati[idx[2]]].name,
+                   I->Atom[ati[idx[3]]].name);
+            */
+     
+            v[0]=I->Atom[ati[idx[0]]].coord;
+            v[1]=I->Atom[ati[idx[1]]].coord;
+            v[2]=I->Atom[ati[idx[2]]].coord;
+            v[3]=I->Atom[ati[idx[3]]].coord;
+          }
+            
+          vc = at1->coord;
+          subtract3f(v[0],vc,vd[0]);
+          subtract3f(v[1],vc,vd[1]);
+          subtract3f(v[2],vc,vd[2]);
+          subtract3f(v[3],vc,vd[3]);
+         
+          normalize3f(vd[0]);
+          
+          remove_component3f(vd[1],vd[0],vr[1]);
+          remove_component3f(vd[2],vd[0],vr[2]);
+          remove_component3f(vd[3],vd[0],vr[3]);
+          
+          cross_product3f(vr[1],vr[2],vt);
+          normalize3f(vt);
+
+          /*          printf("%s %8.3f\n",at1->name,dot_product3f(vd[0],vt));*/
+          if(dot_product3f(vd[0],vt)>0.0F) {
+            at1->stereo = cH_Anticlock;
+          } else {
+            at1->stereo = cH_Clockwise;
+          } 
+        }
+      start_atom = I->Atom[start_atom].link;
+      }
+    }
+  }
+}
+  
+  
+  void ChampAtomDump(CChamp *I,int index)
 {
   char buf[3];
   ChampAtomToString(I,index,buf);
@@ -3893,9 +4443,9 @@ void ChampPatDump(CChamp *I,int index)
   cur_bond = I->Pat[index].bond;
   while(cur_bond) {
     bd = I->Bond+cur_bond;
-    printf(" bond %d 0x%01x atoms %d %d order 0x%01x cycle %x dir %d class %x\n",
+    printf(" bond %d 0x%01x atoms %d %d order 0x%01x cycle %x dir %d class %x pri: %d %d\n",
            cur_bond,bd->order,bd->atom[0],bd->atom[1],bd->order,bd->cycle,
-           bd->direction,bd->class);
+           bd->direction,bd->class,bd->pri[0],bd->pri[1]);
     cur_bond = I->Bond[cur_bond].link;
   }
   fflush(stdout);
@@ -3948,7 +4498,9 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
                                       cH_A  | cH_E  | cH_G  | cH_J  |
                                       cH_L  | cH_M  | cH_Q  | cH_R  |
                                       cH_T | cH_X | cH_Z ));
-    
+
+    trivial = trivial && (at->stereo==0);
+
     if(trivial&&(at->atom!=cH_Any)) {
       /* check number of atoms represented */
       c = 0;
@@ -4037,6 +4589,14 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
         case cH_Z: strcat(buf,"Z"); break;
         default: sprintf(buf,"%x",at->atom); break;
         }
+      }
+      switch(at->stereo) {
+      case cH_Anticlock:
+        strcat(buf,"@");
+        break;
+      case cH_Clockwise:
+        strcat(buf,"@@");
+        break;
       }
       if(at->imp_hydro) {
         switch(at->imp_hydro) {
@@ -4134,8 +4694,8 @@ int ChampSmiToPat(CChamp *I,char *c)
   int result = 0;
   int sym;
   int ok = true;
-  int bond_tags = 0;
-  int bond_not_tags = 0;
+  unsigned int bond_tags = 0;
+  unsigned int bond_not_tags = 0;
   int a;
   int not_bond = false;
   int lex_pri = 0;
@@ -4455,6 +5015,8 @@ int ChampSmiToPat(CChamp *I,char *c)
           if(!mark[mark_code]) { /* opening cycle */
             mark[mark_code] = base_atom;
             mark_pri[mark_code] = lex_pri;
+            bond_flag = false; /* ignore the first bond valence...we'll get it from the second half of the mark*/
+            not_bond = false;
           } else { /* closing cycle */
             I->Bond[cur_bond].atom[0] = base_atom;
             I->Bond[cur_bond].atom[1] = mark[mark_code];
