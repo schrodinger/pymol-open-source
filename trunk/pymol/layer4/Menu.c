@@ -24,7 +24,6 @@ Z* -------------------------------------------------------------------
 #include "PUtils.h"
 #include "Ortho.h"
 
-extern PyThreadState *_save;
 
 void MenuActivate(int x,int y,char *name,char *sele)
 {

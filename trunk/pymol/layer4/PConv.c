@@ -28,8 +28,6 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"PUtils.h"
 
-extern PyThreadState *_save;
-
 void PConv44To44f(PyObject *src,float *dest)
 {
   PBlock();
