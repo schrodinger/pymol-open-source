@@ -4810,7 +4810,7 @@ SEE ALSO
          else:
             print "Error: unrecognized or ambiguous representation"
       elif representation=='all':
-         r = _cmd.showhide("(all)",repres['lines'],1); # show lines by default 
+         r = _cmd.showhide("all",repres['lines'],1); # show lines by default 
       elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
          # preprocess selection
          selection = selector.process(representation)
@@ -4822,7 +4822,7 @@ SEE ALSO
             rep = rephash[rep]
          if repres.has_key(rep):      
             repn = repres[rep];
-            r = _cmd.showhide("(all)",int(repn),1);
+            r = _cmd.showhide("all",int(repn),1);
          else:
             print "Error: unrecognized or ambiguous representation"
    finally:
@@ -4890,7 +4890,7 @@ SEE ALSO
             rep = rephash[rep]
          if repres.has_key(rep):
             repn = repres[rep];
-            r = _cmd.showhide("(all)",int(repn),0);
+            r = _cmd.showhide("all",int(repn),0);
          else:
             print "Error: unrecognized or ambiguous representation"
    finally:
@@ -5738,6 +5738,7 @@ repres = {
    'dots'          : 9,
    'dashes'        :10,
    'nonbonded'     :11,
+   'cell'          :12,
 }
 
 rephash = Shortcut(repres.keys())

@@ -89,6 +89,14 @@ Changes up to 0.64
 
    * simple cartoon ribbon for DNA/RNA
 
+   * selection language now supports '+' as substitute for commas, and '-'
+     as substitute for ':' in residue identifiers (more user friendly)
+
+   * selections no longer require parentheses unless they have commas or
+     semicolons
+
+   * unit cell display for molecules and meshes
+
 Changes up to 0.63
 
    * Density wizard

@@ -47,6 +47,7 @@ typedef struct ObjectMolecule {
   int UndoState[cUndoMask+1];
   int UndoNIndex[cUndoMask+1];
   int UndoIter;
+  CGO *UnitCellCGO;
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {

@@ -80,6 +80,11 @@ void ObjectUseColor(Object *I)
   if(PMGUI) glColor3fv(ColorGet(I->Color));
 }
 /*========================================================================*/
+static void ObjectInvalidate(Object *this,int rep,int level,int state)
+{
+  
+}
+/*========================================================================*/
 void ObjectInit(Object *I)
 {
   int a;
@@ -89,12 +94,14 @@ void ObjectInit(Object *I)
   I->fGetNFrame = ObjectGetNFrames;
   I->fDescribeElement = ObjectDescribeElement;
   I->fGetSettingHandle = ObjectGetSettingHandle;
+  I->fInvalidate = ObjectInvalidate;
   I->Name[0]=0;
   I->Color=0;
   I->ExtentFlag=false;
   I->Setting=NULL;
   OrthoRemoveSplash();
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
+  I->RepVis[cRepCell]=false;
 }
 /*========================================================================*/
 void ObjectRenderUnitBox(Object *this,int frame,CRay *ray,Pickable **pick)

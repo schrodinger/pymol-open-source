@@ -3988,8 +3988,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                 if(op->i1<0)
                   for(d=0;d<cRepCnt;d++) 
                     I->AtomInfo[a].visRep[d]=op->i2;                      
-                else
+                else {
                   I->AtomInfo[a].visRep[op->i1]=op->i2;
+                  if(op->i1==cRepCell) I->Obj.RepVis[cRepCell]=op->i2;
+                }
+                break;
                 break;
               case OMOP_COLR:
                 I->AtomInfo[a].color=op->i1;
@@ -4281,6 +4284,15 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
       if(I->CSet[a]->fUpdate)
         I->CSet[a]->fUpdate(I->CSet[a]);
 	 }
+  if(I->Obj.RepVis[cRepCell]) {
+    if(I->Symmetry) {
+      if(I->Symmetry->Crystal) {
+        if(I->UnitCellCGO)
+          CGOFree(I->UnitCellCGO);
+        I->UnitCellCGO = CrystalGetUnitCellCGO(I->Symmetry->Crystal);
+      }
+    }
+  } 
   PRINTFD(FB_ObjectMolecule)
     " ObjectMolecule: updates complete for object %s.\n",I->Obj.Name
     ENDFD;
@@ -4405,6 +4417,14 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick)
 {
   int a;
 
+  if(I->UnitCellCGO&&(I->Obj.RepVis[cRepCell])) {
+    if(ray) {
+      CGORenderRay(I->UnitCellCGO,ray);
+    } else if(pick&&PMGUI) {
+    } else if(PMGUI) {
+      CGORenderGL(I->UnitCellCGO);
+    }
+  }
   if(state<0) {
     for(a=0;a<I->NCSet;a++)
       if(I->CSet[a])
@@ -4438,6 +4458,7 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->NCSet=0;
   I->Bond=NULL;
   I->DiscreteFlag=discreteFlag;
+  I->UnitCellCGO=NULL;
   if(I->DiscreteFlag) { /* discrete objects don't share atoms between states */
     I->DiscreteAtmToIdx = VLAMalloc(10,sizeof(int),6,false);
     I->DiscreteCSet = VLAMalloc(10,sizeof(CoordSet*),5,false);
@@ -4473,6 +4494,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
   OOAlloc(ObjectMolecule);
   (*I)=(*obj);
   I->Symmetry=NULL; /* TODO: add  copy */
+  I->UnitCellCGO=NULL;
   I->Neighbor=NULL;
   I->CSet=VLAMalloc(I->NCSet,sizeof(CoordSet*),5,true); /* auto-zero */
   for(a=0;a<I->NCSet;a++) {
@@ -4520,6 +4542,8 @@ void ObjectMoleculeFree(ObjectMolecule *I)
   VLAFreeP(I->CSet);
   VLAFreeP(I->AtomInfo);
   VLAFreeP(I->Bond);
+  if(I->UnitCellCGO) 
+    CGOFree(I->UnitCellCGO);
   for(a=0;a<=cUndoMask;a++)
     FreeP(I->UndoCoord[a]);
   ObjectPurge(&I->Obj);

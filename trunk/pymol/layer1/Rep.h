@@ -42,8 +42,9 @@ Z* -------------------------------------------------------------------
 #define cRepDot        9
 #define cRepDash       10
 #define cRepNonbonded  11
+#define cRepCell       12
 
-#define cRepCnt       12
+#define cRepCnt       13
 
 
 /* Hierarchical invalidation scheme - 

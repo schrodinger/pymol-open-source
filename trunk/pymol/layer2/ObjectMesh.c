@@ -37,12 +37,20 @@ static void ObjectMeshFree(ObjectMesh *I);
 void ObjectMeshStateInit(ObjectMeshState *ms);
 void ObjectMeshRecomputeExtent(ObjectMesh *I);
 
+static void ObjectMeshStateFree(ObjectMeshState *ms)
+{
+  VLAFreeP(ms->N);
+  VLAFreeP(ms->V);
+  VLAFreeP(ms->AtomVertex);
+  if(ms->UnitCellCGO)
+    CGOFree(ms->UnitCellCGO);
+}
+
 static void ObjectMeshFree(ObjectMesh *I) {
   int a;
   for(a=0;a<I->NState;a++) {
-    VLAFreeP(I->State[a].N);
-    VLAFreeP(I->State[a].V);
-    VLAFreeP(I->State[a].AtomVertex);
+    if(I->State[a].Active)
+      ObjectMeshStateFree(I->State+a);
   }
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
@@ -80,6 +88,14 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
   }
 }
 
+static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
+{
+  int a;
+  for(a=0;a<I->NState;a++) {
+    I->State[a].RefreshFlag=true;
+  }
+}
+
 static void ObjectMeshUpdate(ObjectMesh *I) 
 {
   int a;
@@ -97,82 +113,93 @@ static void ObjectMeshUpdate(ObjectMesh *I)
   int h,k,l;
   int i,j;
   MapType *voxelmap; /* this has nothing to do with isosurfaces... */
-
+  
   for(a=0;a<I->NState;a++) {
     ms = I->State+a;
-    
-    if(ms->N&&ms->V) {
-      if(ms->ResurfaceFlag) {
-        ms->ResurfaceFlag=false;
-        PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF;
-        if(ms->Map->Field) IsosurfVolume(ms->Map->Field,
-                                         ms->Level,
-                                         &ms->N,&ms->V,
-                                         ms->Range,
-                                         ms->DotFlag); 
-        if(ms->CarveFlag&&ms->AtomVertex&&
-           VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
-          /* cull my friend, cull */
-          voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
-          if(voxelmap) {
+    if(ms->Active) {
+      if(ms->RefreshFlag||ms->ResurfaceFlag) {
+        ms->Crystal = *(ms->Map->Crystal);
+        if(I->Obj.RepVis[cRepCell]) {
+          if(ms->UnitCellCGO)
+            CGOFree(ms->UnitCellCGO);
+          ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
+        } 
+        ms->RefreshFlag=false;
+      }
+
+      if(ms->N&&ms->V) {
+        if(ms->ResurfaceFlag) {
+          ms->ResurfaceFlag=false;
+          PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF;
+          if(ms->Map->Field) IsosurfVolume(ms->Map->Field,
+                                           ms->Level,
+                                           &ms->N,&ms->V,
+                                           ms->Range,
+                                           ms->DotFlag); 
+          if(ms->CarveFlag&&ms->AtomVertex&&
+             VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
+            /* cull my friend, cull */
+            voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
+            if(voxelmap) {
             
-            MapSetupExpress(voxelmap);  
+              MapSetupExpress(voxelmap);  
             
-            old_n = ms->N;
-            old_v = ms->V;
-            ms->N=VLAlloc(int,VLAGetSize(old_n));
-            ms->V=VLAlloc(float,VLAGetSize(old_v));
+              old_n = ms->N;
+              old_v = ms->V;
+              ms->N=VLAlloc(int,VLAGetSize(old_n));
+              ms->V=VLAlloc(float,VLAGetSize(old_v));
             
-            n = old_n;
-            v = old_v;
-            n_cur = 0;
-            n_seg = 0;
-            n_line = 0;
-            while(*n)
-              {
-                last_flag=false;
-                c=*(n++);
-                while(c--) {
-                  flag=false;
-                  MapLocus(voxelmap,v,&h,&k,&l);
-                  i=*(MapEStart(voxelmap,h,k,l));
-                  if(i) {
-                    j=voxelmap->EList[i++];
-                    while(j>=0) {
-                      if(within3f(ms->AtomVertex+3*j,v,ms->CarveBuffer)) {
-                        flag=true;
-                        break;
-                      }
+              n = old_n;
+              v = old_v;
+              n_cur = 0;
+              n_seg = 0;
+              n_line = 0;
+              while(*n)
+                {
+                  last_flag=false;
+                  c=*(n++);
+                  while(c--) {
+                    flag=false;
+                    MapLocus(voxelmap,v,&h,&k,&l);
+                    i=*(MapEStart(voxelmap,h,k,l));
+                    if(i) {
                       j=voxelmap->EList[i++];
+                      while(j>=0) {
+                        if(within3f(ms->AtomVertex+3*j,v,ms->CarveBuffer)) {
+                          flag=true;
+                          break;
+                        }
+                        j=voxelmap->EList[i++];
+                      }
                     }
+                    if(flag&&(!last_flag)) {
+                      copy3f(v,ms->V+n_line*3);
+                      n_cur++;
+                      n_line++;
+                    }
+                    if(flag&&last_flag) { /* continue segment */
+                      copy3f(v,ms->V+n_line*3);
+                      n_cur++;
+                      n_line++;
+                    } if((!flag)&&last_flag) { /* terminate segment */
+                      ms->N[n_seg]=n_cur;
+                      n_seg++;
+                      n_cur=0;
+                    }
+                    last_flag=flag;
+                    v+=3;
                   }
-                  if(flag&&(!last_flag)) {
-                    copy3f(v,ms->V+n_line*3);
-                    n_cur++;
-                    n_line++;
-                  }
-                  if(flag&&last_flag) { /* continue segment */
-                    copy3f(v,ms->V+n_line*3);
-                    n_cur++;
-                    n_line++;
-                  } if((!flag)&&last_flag) { /* terminate segment */
+                  if(last_flag) { /* terminate segment */
                     ms->N[n_seg]=n_cur;
                     n_seg++;
                     n_cur=0;
                   }
-                  last_flag=flag;
-                  v+=3;
                 }
-                if(last_flag) { /* terminate segment */
-                  ms->N[n_seg]=n_cur;
-                  n_seg++;
-                  n_cur=0;
-                }
-              }
-            ms->N[n_seg]=0;
-            VLAFreeP(old_n);
-            VLAFreeP(old_v);
-            MapFree(voxelmap);
+              ms->N[n_seg]=0;
+              VLAFreeP(old_n);
+              VLAFreeP(old_v);
+              MapFree(voxelmap);
+            }
           }
         }
       }
@@ -191,8 +218,9 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
   ObjectMeshState *ms = NULL;
 
   if(state<I->NState) {
-    if(I->State[state].V&&I->State[state].N)
-      ms=I->State+state;
+    if(I->State[state].Active)
+      if(I->State[state].V&&I->State[state].N)
+        ms=I->State+state;
   }
   while(1) {
     if(state<0) { /* all_states */
@@ -204,64 +232,71 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
       }
     }
     if(ms) {
-      v=ms->V;
-      n=ms->N;
-    }
-    
-    if(ray) {
-      ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
-      if(n&&v) {
-        vc = ColorGet(I->Obj.Color);
-        if(ms->DotFlag) {
-          ray->fColor3fv(ray,vc);
-          while(*n)
-            {
-              c=*(n++);
-              if(c--)
+      if(ms->Active) {
+        v=ms->V;
+        n=ms->N;
+        if(ray) {
+          
+          if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
+            CGORenderRay(ms->UnitCellCGO,ray);
+          
+          ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
+          if(n&&v) {
+            vc = ColorGet(I->Obj.Color);
+            if(ms->DotFlag) {
+              ray->fColor3fv(ray,vc);
+              while(*n)
                 {
-                  v+=3;
-                  while(c--)
+                  c=*(n++);
+                  if(c--)
                     {
-                      ray->fSphere3fv(ray,v,ms->Radius);
                       v+=3;
+                      while(c--)
+                        {
+                          ray->fSphere3fv(ray,v,ms->Radius);
+                          v+=3;
+                        }
+                    }
+                }
+            } else {
+              while(*n)
+                {
+                  c=*(n++);
+                  if(c--)
+                    {
+                      v+=3;
+                      while(c--)
+                        {
+                          ray->fCylinder3fv(ray,v-3,v,ms->Radius,vc,vc);
+                          v+=3;
+                        }
                     }
                 }
             }
-        } else {
-          while(*n)
-            {
-              c=*(n++);
-              if(c--)
-                {
-                  v+=3;
-                  while(c--)
-                    {
-                      ray->fCylinder3fv(ray,v-3,v,ms->Radius,vc,vc);
-                      v+=3;
-                    }
-                }
-            }
-        }
-      }
-    } else if(pick&&PMGUI) {
-    } else if(PMGUI) {
-      if(n&&v) {
-        ObjectUseColor(&I->Obj);
-        glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
-        while(*n)
-          {
-            c=*(n++);
-            if(ms->DotFlag) 
-              glBegin(GL_POINTS);
-            else 
-              glBegin(GL_LINE_STRIP);
-            SceneResetNormal(false);
-            while(c--) {
-              glVertex3fv(v);
-              v+=3;
-            }
-            glEnd();
           }
+        } else if(pick&&PMGUI) {
+        } else if(PMGUI) {
+          if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
+            CGORenderGL(ms->UnitCellCGO);
+          if(n&&v) {
+            ObjectUseColor(&I->Obj);
+            glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
+            while(*n)
+              {
+                c=*(n++);
+                if(ms->DotFlag) 
+                  glBegin(GL_POINTS);
+                else 
+                  glBegin(GL_LINE_STRIP);
+                SceneResetNormal(false);
+                while(c--) {
+                  glVertex3fv(v);
+                  v+=3;
+                }
+                glEnd();
+              }
+          }
+        }
       }
     }
     if(state<0) break;
@@ -285,14 +320,14 @@ ObjectMesh *ObjectMeshNew(void)
   ObjectInit((Object*)I);
   
   I->NState = 0;
-  I->State=VLAMalloc(10,sizeof(ObjectMeshState),5,true);
+  I->State=VLAMalloc(10,sizeof(ObjectMeshState),5,true); /* autozero important */
 
   I->Obj.type = cObjectMesh;
 
   I->Obj.fFree = (void (*)(struct Object *))ObjectMeshFree;
   I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMeshUpdate;
   I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMeshRender;
-
+  I->Obj.fInvalidate =(void (*)(struct Object *,int,int,int))ObjectMeshInvalidate;
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMeshGetNStates;
   return(I);
 }
@@ -308,11 +343,12 @@ void ObjectMeshStateInit(ObjectMeshState *ms)
 
   }
   ms->N[0]=0;
+  ms->Active=true;
   ms->ResurfaceFlag=true;
   ms->ExtentFlag=false;
   ms->CarveFlag=false;
   ms->AtomVertex=NULL;
-
+  ms->UnitCellCGO=NULL;
 }
 
 /*========================================================================*/
@@ -369,14 +405,16 @@ void ObjectMeshRecomputeExtent(ObjectMesh *I)
 
   for(a=0;a<I->NState;a++) {
     ms=I->State+a;
-    if(ms->ExtentFlag) {
-      if(!extent_flag) {
-        extent_flag=true;
-        copy3f(ms->ExtentMax,I->Obj.ExtentMax);
-        copy3f(ms->ExtentMin,I->Obj.ExtentMin);
-      } else {
-        max3f(ms->ExtentMax,I->Obj.ExtentMax,I->Obj.ExtentMax);
-        min3f(ms->ExtentMin,I->Obj.ExtentMin,I->Obj.ExtentMin);
+    if(ms->Active) {
+      if(ms->ExtentFlag) {
+        if(!extent_flag) {
+          extent_flag=true;
+          copy3f(ms->ExtentMax,I->Obj.ExtentMax);
+          copy3f(ms->ExtentMin,I->Obj.ExtentMin);
+        } else {
+          max3f(ms->ExtentMax,I->Obj.ExtentMax,I->Obj.ExtentMax);
+          min3f(ms->ExtentMin,I->Obj.ExtentMin,I->Obj.ExtentMin);
+        }
       }
     }
   }

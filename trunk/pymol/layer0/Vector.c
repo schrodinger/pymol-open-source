@@ -114,6 +114,13 @@ void get_system2f3f(float *x,float *y,float *z) /* make system in direction of x
 
 #ifndef USE_VECTOR_MACROS
 
+void  set3f ( float *v1,float x,float y,float z )
+{
+  v1[0]=x;
+  v1[1]=y;
+  v1[2]=z;
+}
+
 void zero3f(float *v1)
 {
 	v1[0]=0.0;

@@ -88,8 +88,8 @@ static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
     ObjectUseColor(&I->Obj);
-   glDisable(GL_LIGHTING); 
-   glBegin(GL_LINES);
+    glDisable(GL_LIGHTING); 
+    glBegin(GL_LINES);
     glVertex3fv(I->Corner[0]);
     glVertex3fv(I->Corner[1]);
 
@@ -148,7 +148,6 @@ ObjectInit((Object*)I);
  I->Dim = NULL;
  I->Range = NULL;
  I->Grid = NULL;
-
 #ifdef _NOT_YET_NEEDED
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMapGetNFrames;
 #endif

@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_Crystal
 
 #include"Vector.h"
+#include"CGO.h"
 
 typedef struct { 
   float Dim[3];
@@ -33,6 +34,7 @@ void CrystalInit(CCrystal *I);
 CCrystal *CrystalNew(void);
 void CrystalUpdate(CCrystal *I);
 void CrystalDump(CCrystal *I);
+CGO *CrystalGetUnitCellCGO(CCrystal *I);
 
 #endif
 

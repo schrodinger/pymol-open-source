@@ -43,6 +43,7 @@ typedef struct Object {
   void (*fFree)(struct Object *I);
   int  (*fGetNFrame)(struct Object *I);
   void (*fDescribeElement)(struct Object *I,int index,char *buffer);
+  void (*fInvalidate)(struct Object *I,int rep,int level,int state);
   CSetting **(*fGetSettingHandle)(struct Object *I,int state);
   int type;
   char Name[ObjNameMax];

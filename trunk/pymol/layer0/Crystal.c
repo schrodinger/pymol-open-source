@@ -15,7 +15,7 @@ Z* -------------------------------------------------------------------
 */
 
 #include"os_std.h"
-
+#include"os_gl.h"
 #include"MemoryDebug.h"
 #include"Err.h"
 #include"Base.h"
@@ -145,4 +145,84 @@ void CrystalDump(CCrystal *I)
 
 }
 
+CGO *CrystalGetUnitCellCGO(CCrystal *I)
+{
+  float v[3];
+  CGO *cgo=NULL;
+  if(I) {
+    cgo=CGONew();
+    CGOBegin(cgo,GL_LINE_STRIP);
+
+    set3f(v,0,0,0);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,1,0,0);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,1,1,0);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,0,1,0);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,0,0,0);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,0,0,1);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,1,0,1);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,1,1,1);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,0,1,1);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,0,0,1);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+    CGOEnd(cgo);
+
+    CGOBegin(cgo,GL_LINES);
+
+    set3f(v,0,1,0);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,0,1,1);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,1,1,0);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,1,1,1);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,1,0,0);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+
+    set3f(v,1,0,1);
+    transform33f3f(I->FracToReal,v,v);
+    CGOVertexv(cgo,v);
+    CGOEnd(cgo);
+
+    CGOStop(cgo);
+  }
+  return(cgo);
+}
 
