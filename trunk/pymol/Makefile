@@ -1,8 +1,12 @@
+
 include Rules.make
 
 all: unix contrib
 
 PRIME = ls *.c | sed 's/.c$$/.o/'| awk 'BEGIN{printf("OBJS=")}{printf("%s ",$$1)}END{print}'>.files;ls *.c | sed 's/.c$$/.p/'| awk 'BEGIN{printf("DEPS=")}{printf("%s ",$$1)}END{print}'>>.files; touch .depends; cat .files .depends > .includes
+
+MINDEP=products/unix-mindep
+MDP=$(MINDEP)/pymol
 
 .includes:
 	cd layer0;$(PRIME)
@@ -57,7 +61,28 @@ contrib: .contrib
 
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
-	cc $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)
+
+semistatic: .includes .depends .update
+	/bin/rm -f .update .includes
+	cd contrib;$(MAKE) static
+	cc $(BUILD) */*.o $(DEST)  $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
+
+unix-mindep: semistatic
+	$(PYTHON_EXE) modules/compile_pymol.py
+	/bin/rm -rf $(MINDEP)
+	install -d $(MDP)/ext/lib
+	cp -r modules $(MDP)
+	cp -r test $(MDP)
+	cp -r examples $(MDP)
+	cp -r pymol.exe $(MDP)
+	cp -r ext/lib/python2.1 $(MDP)/ext/lib
+	cp -r ext/lib/tcl8.3 $(MDP)/ext/lib
+	cp -r ext/lib/tk8.3 $(MDP)/ext/lib
+	/bin/rm -f $(MDP)/ext/lib/python2.1/config/libpython2.1.a
+	cp LICENSE $(MDP)
+	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
+	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
+	cd $(MINDEP);tar -zcvf ../pymol-0_xx-bin-xxxxx-mindep.tgz pymol
 
 windows: .includes .depends .update 
 	echo "EXPORTS" > _cmd.def
