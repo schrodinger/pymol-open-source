@@ -129,7 +129,8 @@ int ExecutiveMapNew(char *name,int type,float *grid,char *sele,
                     float buffer,float *minCorner,float *maxCorner);
 
 int ***ExecutiveGetBondPrint(char *name,int max_bond,int max_type,int *dim);
-
+int ExecutiveSetCrystal(char *sele,float a,float b,float c,
+                         float alpha,float beta,float gamma,char *sgroup);
 #endif
 
 

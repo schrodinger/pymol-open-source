@@ -297,6 +297,7 @@ static PyObject *CmdSetTitle(PyObject *self, PyObject *args);
 static PyObject *CmdGetTitle(PyObject *self, PyObject *args);
 static PyObject *CmdSetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
+static PyObject *CmdSetCrystal(PyObject *self, PyObject *args);
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
 static PyObject *CmdSmooth(PyObject *self,PyObject *args);
@@ -456,6 +457,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
    {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
    {"set_session",           CmdSetSession,           METH_VARARGS },
+   {"set_symmetry",          CmdSetCrystal,          METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
 	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
    {"set_view",              CmdSetView,              METH_VARARGS },
@@ -481,6 +483,24 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+static PyObject *CmdSetCrystal(PyObject *self,PyObject *args)
+{
+  int ok=true;
+  char *str1,*str2;
+  OrthoLineType s1;
+  float a,b,c,alpha,beta,gamma;
+
+  ok = PyArg_ParseTuple(args,"sffffffs",&str1,&a,&b,&c,
+                        &alpha,&beta,&gamma,&str2);
+  if(ok) {
+    SelectorGetTmp(str1,s1);
+    APIEntry();
+    ok = ExecutiveSetCrystal(s1,a,b,c,alpha,beta,gamma,str2);
+    APIExit();
+    SelectorFreeTmp(s1);
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdSmooth(PyObject *self,PyObject *args)
 {

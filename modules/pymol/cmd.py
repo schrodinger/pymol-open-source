@@ -867,6 +867,7 @@ from editing import \
      sculpt_iterate,     \
      set_dihedral,       \
      set_geometry,       \
+     set_symmetry,       \
      set_title,          \
      smooth,             \
      sort,               \
@@ -1145,7 +1146,8 @@ keyword = {
    'set'           : [ set               , 0 , 0 , ''  , parsing.LEGACY ],
    'set_color'     : [ set_color         , 0 , 0 , ''  , parsing.LEGACY ],
    'set_dihedral'  : [ set_dihedral      , 0 , 0 , ''  , parsing.STRICT ],   
-   'set_geometry'  : [ set_geometry      , 0 , 0 , ''  , parsing.STRICT ],      
+   'set_geometry'  : [ set_geometry      , 0 , 0 , ''  , parsing.STRICT ],
+   'set_symmetry'  : [ set_symmetry      , 0 , 0 , ''  , parsing.STRICT ],         
    'set_title'     : [ set_title         , 0 , 0 , ''  , parsing.STRICT ],   
    'set_key'       : [ set_key           , 0 , 0 , ''  , parsing.STRICT ], # API only
    'set_view'      : [ set_view          , 0 , 0 , ''  , parsing.STRICT ],   
