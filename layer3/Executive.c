@@ -96,6 +96,76 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
 /*========================================================================*/
+int ExecutiveMapNew(char *name,int type,float *grid,
+                    char *sele,float buffer,
+                    float *minCorner,float *maxCorner)
+{
+  Object *origObj;
+  ObjectMap *objMap;
+  int a;
+  float v[3];
+  ObjectMapDesc _md,*md;
+  int ok = true;
+  int sele0 = SelectorIndexByName(sele);
+
+  md=&_md;
+  /* remove object if it already exists */
+
+  origObj=ExecutiveFindObjectByName(name);
+
+  if(origObj) {
+    ExecutiveDelete(origObj->Name);
+  }
+  
+  if(strlen(sele)) {
+    ok = ExecutiveGetExtent(sele,md->MinCorner,md->MaxCorner,true);
+  } else {
+    copy3f(minCorner,md->MinCorner);
+    copy3f(maxCorner,md->MaxCorner);
+  }
+  copy3f(grid,md->Grid);
+
+  subtract3f(md->MaxCorner,md->MinCorner,v);
+  for(a=0;a<3;a++) { if(v[a]<0.0) swap1f(md->MaxCorner+a,md->MinCorner+a); };
+  subtract3f(md->MaxCorner,md->MinCorner,v);
+
+  if(buffer!=0.0F) {
+    for(a=0;a<3;a++) {
+      md->MinCorner[a]-=buffer;
+      md->MaxCorner[a]+=buffer;
+    }
+  }
+  md->mode = cObjectMap_OrthoMinMaxGrid;
+  md->init_mode=-1; /* no initialization */
+
+  /* validate grid */
+  for(a=0;a<3;a++) 
+    if(md->Grid[a]<=R_SMALL8) md->Grid[a]=R_SMALL8;
+
+  if(ok) {
+    objMap = ObjectMapNewFromDesc(md);
+    if(!objMap)
+      ok=false;
+
+    if(ok) {
+
+      switch(type) {
+      case 0: /* vdw */
+        SelectorMapMaskVDW(sele0,objMap,0.0F);
+        break;
+      case 1: /* coulomb */
+        SelectorMapCoulomb(sele0,objMap,12.0F);
+        break;
+      }
+
+      ObjectSetName((Object*)objMap,name);
+      ExecutiveManageObject((Object*)objMap);
+      SceneDirty();
+    }
+  }
+  return(ok);
+}
+/*========================================================================*/
 int ExecutiveSculptIterateAll(void)
 {
   int active = false;

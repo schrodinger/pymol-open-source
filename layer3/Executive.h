@@ -119,7 +119,8 @@ int ExecutiveSculptIterateAll(void);
 int ExecutiveSculptDeactivate(char *name);
 int ExecutiveSculptActivate(char *name,int state);
 int ExecutiveSculptIterate(char *name,int state,int n_cycle);
-
+int ExecutiveMapNew(char *name,int type,float *grid,char *sele,
+                    float buffer,float *minCorner,float *maxCorner);
 #endif
 
 

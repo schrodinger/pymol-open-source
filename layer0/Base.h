@@ -55,6 +55,10 @@ Z* -------------------------------------------------------------------
 #define R_SMALL4 0.0001
 #endif
 
+#ifndef R_SMALL8
+#define R_SMALL8 0.00000001
+#endif
+
 typedef struct { 
   void *ptr;
   int index; /* atom index.

@@ -20,6 +20,39 @@ from cmd import _cmd,lock,unlock,Shortcut,QuietException
 from cmd import file_ext_re
 from chempy import fragments
 
+map_type_dict = {
+   'vdw' : 0,
+   'coulomb' : 1,
+   }
+
+map_type_sc = Shortcut(map_type_dict.keys())
+
+def map_new(name,type,grid=None,selection=None,buffer=0.0,box=None):
+   # preprocess selection
+   r = None
+   if selection!=None:
+      selection = selector.process(selection)
+   else:
+      selection = ""
+   if box!=None: # box should be [[x1,y1,z1],[x2,y2,z2]]
+      if cmd.is_string(box):
+         box = eval(box)
+      box = (float(box[0][0]),
+             float(box[0][1]),
+             float(box[0][2]),
+             float(box[1][0]),
+             float(box[1][1]),
+             float(box[1][2]))
+   else:
+      box = (0.0,0.0,0.0,1.0,1.0,1.0)
+   grid = float(grid) # for now, uniform xyz; later (x,y,z)
+   type = map_type_dict[map_type_sc.auto_err(str(type),'map type')]
+   try:
+      lock()
+      r = _cmd.map_new(str(name),int(type),grid,str(selection),float(buffer),box)
+   finally:
+      unlock()
+      
 def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=0,carve=None):
    '''
 DESCRIPTION

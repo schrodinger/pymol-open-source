@@ -756,7 +756,8 @@ from creating import \
      fragment,           \
      isodot,             \
      isomesh,            \
-     symexp
+     symexp,             \
+     map_new
 
 #--------------------------------------------------------------------
 from commanding import \
@@ -1073,7 +1074,8 @@ keyword = {
    'log_open'      : [ log_open          , 0 , 0 , ''  , parsing.STRICT ],
    'ls'            : [ ls                , 0 , 0 , ''  , parsing.STRICT ],  
    'mask'          : [ mask              , 0 , 0 , ''  , parsing.STRICT ],
-   'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],    
+   'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
+   'map_new'       : [ map_new           , 0 , 0 , ''  , parsing.STRICT ],    
    'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.SINGLE ], 
    'mem'           : [ mem               , 0 , 0 , ''  , parsing.STRICT ],
    'meter_reset'   : [ meter_reset       , 0 , 0 , ''  , parsing.STRICT ],

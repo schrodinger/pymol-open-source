@@ -68,6 +68,7 @@ Z* -------------------------------------------------------------------
 #include"Editor.h"
 #include"Wizard.h"
 #include"SculptCache.h"
+#include"TestPyMOL.h"
 
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
@@ -236,6 +237,7 @@ static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
 static PyObject *CmdLoadCoords(PyObject *self, PyObject *args);
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args);
 static PyObject *CmdLoadPNG(PyObject *self, PyObject *args);
+static PyObject *CmdMapNew(PyObject *self, 	PyObject *args);
 static PyObject *CmdMapSetBorder(PyObject *self, 	PyObject *args);
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args);
 static PyObject *CmdMDo(PyObject *self, 	PyObject *args);
@@ -383,6 +385,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"load_coords",           CmdLoadCoords,           METH_VARARGS },
 	{"load_png",              CmdLoadPNG,              METH_VARARGS },
 	{"load_object",           CmdLoadObject,           METH_VARARGS },
+   {"map_new",               CmdMapNew,               METH_VARARGS },
    {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
 	{"mask",	                 CmdMask,                 METH_VARARGS },
 	{"mclear",	              CmdMClear,               METH_VARARGS },
@@ -591,6 +594,28 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
   if(ok) {
     APIEntry();
     ok = ExecutiveMultiSave(name,object,state,append);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdMapNew(PyObject *self, PyObject *args)
+{
+  char *name;
+  float minCorner[3],maxCorner[3];
+  float grid[3];
+  float buffer;
+  int type;
+  char *selection;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"sifsf(ffffff)",&name,&type,&grid[0],&selection,&buffer,
+                        &minCorner[0],&minCorner[1],&minCorner[2],
+                        &maxCorner[0],&maxCorner[1],&maxCorner[2]);
+  if(ok) {
+    grid[1]=grid[0];
+    grid[2]=grid[0];
+    APIEntry();
+    ok = ExecutiveMapNew(name,type,grid,selection,buffer,minCorner,maxCorner);
     APIExit();
   }
   return(APIStatus(ok));
@@ -3284,15 +3309,23 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 
 static PyObject *CmdTest(PyObject *self, PyObject *args)
 {
+  /* regression tests */
+
   int ok=true;
-  int int1;
-  char *str1;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  int code;
+  int group;
+  CTestPyMOL tst;
+
+  ok = PyArg_ParseTuple(args,"ii",&group,&code);
   if(ok) {
-    PRINTFB(FB_CCmd,FB_Details)
-      " Cmd: test called with %s %d\n",str1,int1
-      ENDFB;
     APIEntry();
+    PRINTFB(FB_CCmd,FB_Details)
+      " Cmd: initiating test %d-%d.\n",group,code
+      ENDFB;
+    ok = TestPyMOLRun(&tst,group,code);
+    PRINTFB(FB_CCmd,FB_Details)
+      " Cmd: concluding test %d-%d.\n",group,code
+      ENDFB;
     APIExit();
   }
   return(APIStatus(ok));
