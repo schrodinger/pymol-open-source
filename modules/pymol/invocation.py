@@ -18,6 +18,7 @@
 #
 
 import copy
+import re
 
 class generic:
    pass
@@ -35,6 +36,9 @@ options.read_stdin = 0
 
 def parse_args(argv):
    av = copy.deepcopy(argv)
+   print av
+   av = av[1:] # throw out the executable path
+   print av
    av.reverse()
    global options
    options.deferred = []
@@ -42,6 +46,7 @@ def parse_args(argv):
       if not len(av):
          break
       a = av.pop()
+      a = re.sub(r'''^"|"$|^'|'$''','',a) # strip extra quotes
       if a[0:1]=='-':
          if "c" in a:
             options.no_gui=1
