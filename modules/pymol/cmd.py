@@ -1208,7 +1208,7 @@ special = {
    102      : [ 'right'     , forward                , () , {} ],
    103      : [ 'down'      , None                   , () , {} ],
    104      : [ 'pgup'      , None                   , () , {} ],
-   105      : [ 'pgdown'    , None                   , () , {} ],
+   105      : [ 'pgdn'      , None                   , () , {} ],
    106      : [ 'home'      , rewind                 , () , {} ],
    107      : [ 'end'       , ending                 , () , {} ],
    108      : [ 'insert'    , rock                   , () , {} ]   

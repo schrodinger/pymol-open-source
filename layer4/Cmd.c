@@ -1857,16 +1857,17 @@ static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args)
   char *str1;
   int state;
   int mode;
+  int quiet;
   OrthoLineType s1;
   float *fVLA;
   PyObject *result=Py_None;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&mode);
+  ok = PyArg_ParseTuple(args,"siii",&str1,&state,&mode,&quiet);
   if(state<0) state=0;
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    fVLA=ExecutiveRMSStates(s1,state,mode);
+    fVLA=ExecutiveRMSStates(s1,state,mode,quiet);
     SelectorFreeTmp(s1);
     APIExit();
     if(fVLA) {
@@ -1881,17 +1882,18 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   int mode;
+  int quiet;
   OrthoLineType s1,s2;
   PyObject *result;
   float tmp_result = -1.0;
   
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&mode);
+  ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&mode,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
     SelectorGetTmp(str2,s2);
-    tmp_result=ExecutiveRMS(s1,s2,mode,0.0);
+    tmp_result=ExecutiveRMS(s1,s2,mode,0.0,quiet);
     SelectorFreeTmp(s1);
     SelectorFreeTmp(s2);
     APIExit();

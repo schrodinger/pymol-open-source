@@ -16,6 +16,8 @@ import cmd
 from cmd import _cmd,lock,unlock
 import selector
 
+from cmd import _cmd,lock,unlock,Shortcut,QuietException
+
 def align(source,target): # EXPERIMENTAL, BUGGY
    r = None
    try:
@@ -25,7 +27,7 @@ def align(source,target): # EXPERIMENTAL, BUGGY
       unlock()
    return r
 
-def intra_fit(selection,state=1):
+def intra_fit(selection,state=1,quiet=1):
    '''
 DESCRIPTION
   
@@ -57,15 +59,24 @@ SEE ALSO
    # preprocess selection
    selection = selector.process(selection)
    #   
-   r = -1.0
+   r = None
+   state = int(state)
    try:
       lock()
-      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,2)
+      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,2,int(quiet))
    finally:
       unlock()
+   if not r:
+      if cmd._raising(): raise QuietException
+   elif not quiet:
+      st = 1
+      for a in r:
+         if a>=0.0:
+            print " cmd.intra_fit: %5.3f in state %d vs state %d"%(a,st,state)
+         st = st + 1
    return r
 
-def intra_rms(selection,state=0):
+def intra_rms(selection,state=0,quiet=1):
    '''
 DESCRIPTION
   
@@ -90,15 +101,24 @@ SEE ALSO
    # preprocess selection
    selection = selector.process(selection)
    #   
-   r = -1.0
+   r = None
+   state = int(state)
    try:
       lock()
-      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,1)
+      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,1,int(quiet))
    finally:
       unlock()
+   if not r:
+      if cmd._raising(): raise QuietException
+   elif not quiet:
+      st = 1
+      for a in r:
+         if a>=0.0:
+            print " cmd.intra_rms: %5.3f in state %d vs state %d"%(a,st,state)
+         st = st + 1
    return r
 
-def intra_rms_cur(selection,state=0):
+def intra_rms_cur(selection,state=0,quiet=1):
    '''
 DESCRIPTION
   
@@ -123,15 +143,24 @@ SEE ALSO
    # preprocess selection
    selection = selector.process(selection)
    #   
-   r = -1.0
+   r = None
+   state = int(state)
    try:
       lock()
-      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,0)
+      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,0,int(quiet))
    finally:
       unlock()
+   if not r:
+      if cmd._raising(): raise QuietException
+   elif not quiet:
+      st = 1
+      for a in r:
+         if a>=0.0:
+            print " cmd.intra_rms_cur: %5.3f in state %d vs state %d"%(a,st,state)
+         st = st + 1
    return r
 
-def fit(selection,target):
+def fit(selection,target,quiet=1):
    '''
 DESCRIPTION
   
@@ -160,12 +189,12 @@ SEE ALSO
    try:
       lock()   
       r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                  "((%s) in (%s))" % (str(b),str(a)),2)
+                  "((%s) in (%s))" % (str(b),str(a)),2,int(quiet))
    finally:
       unlock()
    return r
 
-def rms(selection,target):
+def rms(selection,target,quiet=1):
    '''
 DESCRIPTION
   
@@ -193,12 +222,12 @@ SEE ALSO
    try:
       lock()   
       r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                  "((%s) in (%s))" % (str(b),str(a)),1)
+                  "((%s) in (%s))" % (str(b),str(a)),1,int(quiet))
    finally:
       unlock()
    return r
 
-def rms_cur(selection,target):
+def rms_cur(selection,target,quiet=1):
    '''
 DESCRIPTION
   
@@ -222,7 +251,7 @@ SEE ALSO
    try:
       lock()   
       r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                  "((%s) in (%s))" % (str(b),str(a)),0)
+                  "((%s) in (%s))" % (str(b),str(a)),0,int(quiet))
    finally:
       unlock()
    return r

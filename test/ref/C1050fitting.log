@@ -1,0 +1,171 @@
+ Executive: object "ref" created.
+ Selector: found 107 atoms.
+ Executive: object "trg" created.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ Selector: found 107 atoms.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+ AlterState: modified 107 atom states.
+   0.081
+1    0.079    0.088    0.090
+2    0.056    0.082    0.135
+3    0.058    0.082    0.235
+4    0.081    0.081    0.087
+5    0.061    0.082    0.094
+6    0.081    0.081    0.171
+7    0.042    0.087    0.531
+8    0.087    0.082    0.121
+9    0.071    0.082    0.177
+10    0.045    0.081    0.111
+11    0.095    0.082    0.099
+12    0.066    0.081    0.163
+13    0.072    0.081    0.195
+   0.081
+1    0.079    0.088    0.090
+2    0.056    0.082    0.135
+3    0.058    0.082    0.235
+4    0.081    0.081    0.087
+5    0.061    0.082    0.094
+6    0.081    0.081    0.171
+7    0.042    0.087    0.531
+8    0.087    0.082    0.121
+9    0.071    0.082    0.177
+10    0.045    0.081    0.111
+11    0.095    0.082    0.099
+12    0.066    0.081    0.163
+13    0.072    0.081    0.195
+   0.081
+ -1.000   0.388   0.333   0.315   0.332   0.381   0.319   0.388   0.314
+  0.315
+ -1.000   0.336   0.345   0.342   0.333   0.361   0.342   0.356   0.330
+  0.344
+ -1.000   0.891   0.762   0.653   0.374   0.625   0.458   0.623   0.782
+  0.562
+  0.388  -1.000   0.296   0.281   0.272   0.318   0.220   0.265   0.177
+  0.282
+  0.336  -1.000   0.378   0.350   0.326   0.345   0.343   0.345   0.321
+  0.335
+  0.891  -1.000   1.297   1.313   0.579   1.228   0.912   1.319   0.938
+  0.527
+  0.333   0.296  -1.000   0.228   0.272   0.331   0.231   0.270   0.326
+  0.309
+  0.345   0.378  -1.000   0.350   0.612   0.394   0.350   0.349   0.343
+  0.340
+  0.759   1.297  -1.000   0.620   0.946   0.466   0.803   0.886   0.866
+  1.098
+  0.315   0.281   0.228  -1.000   0.263   0.284   0.248   0.244   0.246
+  0.289
+  0.344   0.350   0.350  -1.000   0.346   0.372   0.345   0.347   0.346
+  0.335
+  0.674   1.313   0.620  -1.000   0.818   0.543   0.554   0.589   1.101
+  1.078
+  0.333   0.272   0.271   0.263  -1.000   0.302   0.287   0.328   0.295
+  0.350
+  0.333   0.326   0.361   0.346  -1.000   0.355   0.368   0.340   0.338
+  0.411
+  0.421   0.581   0.869   0.818  -1.000   0.803   0.524   0.892   0.767
+  0.464
+  0.381   0.318   0.331   0.284   0.302  -1.000   0.309   0.251   0.337
+  0.348
+  0.361   0.345   0.361   0.371   0.355  -1.000   0.333   0.355   0.354
+  0.370
+  0.585   1.202   0.490   0.543   0.803  -1.000   0.524   0.678   0.915
+  0.883
+  0.319   0.220   0.231   0.248   0.287   0.309  -1.000   0.280   0.252
+  0.246
+  0.342   0.343   0.350   0.345   0.368   0.333  -1.000   0.355   0.333
+  0.348
+  0.468   1.021   0.748   0.546   0.526   0.524  -1.000   0.465   1.047
+  0.621
+  0.388   0.265   0.270   0.244   0.328   0.251   0.280  -1.000   0.267
+  0.309
+  0.356   0.344   0.350   0.348   0.339   0.355   0.355  -1.000   0.340
+  0.339
+  0.695   1.314   0.888   0.598   0.899   0.682   0.465  -1.000   1.304
+  0.865
+  0.314   0.177   0.326   0.247   0.295   0.337   0.251   0.267  -1.000
+  0.226
+  0.332   0.321   0.345   0.346   0.336   0.357   0.335   0.343  -1.000
+  0.335
+  0.789   0.924   0.916   1.099   0.768   0.947   1.037   1.304  -1.000
+  0.892
+  0.315   0.282   0.309   0.288   0.349   0.348   0.246   0.308   0.226
+ -1.000
+  0.344   0.335   0.340   0.335   0.327   0.370   0.348   0.339   0.333
+ -1.000
+  0.575   0.523   1.114   0.918   0.412   0.880   0.619   0.981   0.892
+ -1.000
+PyMOL>intra_fit (trg),10
+ cmd.intra_fit: 0.344 in state 1 vs state 10
+ cmd.intra_fit: 0.335 in state 2 vs state 10
+ cmd.intra_fit: 0.340 in state 3 vs state 10
+ cmd.intra_fit: 0.335 in state 4 vs state 10
+ cmd.intra_fit: 0.327 in state 5 vs state 10
+ cmd.intra_fit: 0.370 in state 6 vs state 10
+ cmd.intra_fit: 0.348 in state 7 vs state 10
+ cmd.intra_fit: 0.339 in state 8 vs state 10
+ cmd.intra_fit: 0.333 in state 9 vs state 10
+PyMOL>intra_fit (trg and resi 1),10
+ cmd.intra_fit: 0.315 in state 1 vs state 10
+ cmd.intra_fit: 0.282 in state 2 vs state 10
+ cmd.intra_fit: 0.309 in state 3 vs state 10
+ cmd.intra_fit: 0.288 in state 4 vs state 10
+ cmd.intra_fit: 0.349 in state 5 vs state 10
+ cmd.intra_fit: 0.348 in state 6 vs state 10
+ cmd.intra_fit: 0.246 in state 7 vs state 10
+ cmd.intra_fit: 0.308 in state 8 vs state 10
+ cmd.intra_fit: 0.226 in state 9 vs state 10
+PyMOL>intra_rms (trg),10
+ cmd.intra_rms: 0.344 in state 1 vs state 10
+ cmd.intra_rms: 0.335 in state 2 vs state 10
+ cmd.intra_rms: 0.340 in state 3 vs state 10
+ cmd.intra_rms: 0.335 in state 4 vs state 10
+ cmd.intra_rms: 0.327 in state 5 vs state 10
+ cmd.intra_rms: 0.370 in state 6 vs state 10
+ cmd.intra_rms: 0.348 in state 7 vs state 10
+ cmd.intra_rms: 0.339 in state 8 vs state 10
+ cmd.intra_rms: 0.333 in state 9 vs state 10
+PyMOL>intra_rms_cur (trg),10
+ cmd.intra_rms_cur: 0.562 in state 1 vs state 10
+ cmd.intra_rms_cur: 0.550 in state 2 vs state 10
+ cmd.intra_rms_cur: 1.095 in state 3 vs state 10
+ cmd.intra_rms_cur: 0.898 in state 4 vs state 10
+ cmd.intra_rms_cur: 0.408 in state 5 vs state 10
+ cmd.intra_rms_cur: 0.861 in state 6 vs state 10
+ cmd.intra_rms_cur: 0.605 in state 7 vs state 10
+ cmd.intra_rms_cur: 0.964 in state 8 vs state 10
+ cmd.intra_rms_cur: 0.892 in state 9 vs state 10
