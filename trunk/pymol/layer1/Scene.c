@@ -94,6 +94,7 @@ typedef struct {
   Pickable LastPicked;
   int StereoMode;
   OrthoLineType vendor,renderer,version;
+  int SculptingSave;
 } CScene;
 
 CScene Scene;
@@ -788,6 +789,9 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
 /*========================================================================*/
 int SceneRelease(Block *block,int button,int x,int y,int mod) 
 {
+  CScene *I=&Scene;
+  if(I->SculptingSave)
+    SettingSet(cSetting_sculpting,1);
   return(1);
 }
 /*========================================================================*/
@@ -802,6 +806,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   int atIndex;
   mode = ButModeTranslate(button,mod);
   I->Button=button;    
+  I->SculptingSave = 0;
 
   switch(mode) {
   case cButModeRectAdd:
@@ -938,6 +943,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       x=x-I->Block->margin.left;
       I->LastX=x;
       I->LastY=y;	
+      I->SculptingSave = (int)SettingGet(cSetting_sculpting);
+      SettingSet(cSetting_sculpting,0);
     }
     break;
  
@@ -1344,6 +1351,7 @@ void SceneInit(void)
   I->TextColor[0]=0.2;
   I->TextColor[1]=1.0;
   I->TextColor[2]=0.2;
+  I->SculptingSave=0;
 
   SceneSetDefaultView();
 

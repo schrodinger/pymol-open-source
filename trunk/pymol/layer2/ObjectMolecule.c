@@ -104,12 +104,10 @@ void ObjectMoleculeSculptUpdate(ObjectMolecule *I,int state)
 
 void ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle)
 {
-  if(!I->Sculpt) {
-    PRINTFD(FB_ObjectMolecule)
-      " ObjectMoleculeIterateSculpt: entered.\n"
-      ENDFD;
-  } else {
-    if(!I->Sculpt) I->Sculpt = SculptNew();
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMoleculeIterateSculpt: entered.\n"
+    ENDFD;
+  if(I->Sculpt) {
     SculptIterateObject(I->Sculpt,I,state,n_cycle);
   }
 }
@@ -5186,7 +5184,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
   if(I->Sculpt) {
     protect = I->AtomInfo[index].protected;
     I->AtomInfo[index].protected=1;
-    SculptIterateObject(I->Sculpt,I,state,10);
+    SculptIterateObject(I->Sculpt,I,state,1);
     I->AtomInfo[index].protected=0;
   }
   return(result);

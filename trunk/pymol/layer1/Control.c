@@ -47,7 +47,7 @@ Block *ControlGetBlock(void)
 int ControlIdling(void)
 {
   CControl *I=&Control;
-  return(MoviePlaying()||I->Rocking);
+  return(MoviePlaying()||I->Rocking||SettingGet(cSetting_sculpting));
 }
 /*========================================================================*/
 void ControlInterrupt(void)

@@ -22,15 +22,37 @@ typedef struct {
 } ShakerDistCon;
 
 typedef struct {
+  int at0,at1,at2,at3;
+  float targ;
+} ShakerPyraCon;
+
+typedef struct {
+  int at0,at1,at2,at3;
+} ShakerPlanCon;
+
+typedef struct {
   ShakerDistCon *DistCon;
   int NDistCon;
+  ShakerPyraCon *PyraCon;
+  int NPyraCon;
+  ShakerPlanCon *PlanCon;
+  int NPlanCon;
 } CShaker;
 
 CShaker *ShakerNew(void);
 void ShakerReset(CShaker *I);
-void ShakerAddCons(CShaker *I,int atom0,int atom1,float dist);
+void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float dist);
 
+void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float target);
+void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3);
+
+float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3);
 float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0);
+float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
+                   float *p0,float *p1,float *p2,float *p3);
+
+float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
+                   float *p0,float *p1,float *p2,float *p3);
 
 void ShakerFree(CShaker *I);
 
