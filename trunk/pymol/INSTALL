@@ -28,27 +28,37 @@ notes for more information.
 
 http://sourceforge.net/project/showfiles.php?group_id=4546
 
-The external dependencies can be installed in an "ext"
-subdirectory within the main pymol directory.
+The external dependencies can be installed in an "ext" subdirectory
+within the main pymol directory.
 
    cd $HOME/pymol
-   gunzip < ext-0.50-req-src.tgz | tar -xvf -
+   gunzip < ext-0.51-req-src.tgz | tar -xvf -
    cd ext
-   (READ INSTALL in that directory for installation information)
+  **READ INSTALL in that directory for "ext" building instructions.**
 
 Alternatively, you can put the external dependencies into a different
-directory and then symbolic link it to "ext" in the pymol directory.
+directory and then use a symbolic link to "ext" in the pymol directory.
 
+   cd $HOME
+   gunzip < ext-0.51-req-src.tgz | tar -xvf -
+   cd $HOME/pymol
+   ln -s ../ext ext
+   cd ext
+  **READ INSTALL in that directory for "ext" building instructions.**
+
+   
 STEP(2) 
 
-If this is a binary release, skip to (4). Otherwise, after you have
-set up the external dependencies, copy Rules.<platform> to Rules.make
-and choose options appropriate for your configuration (here is where
-experience counts).  Unless you're planning on doing heavy PyMOL
-development under Linux, you should choose to make PyMOL as a Python
-module and not as a standalone application.
+After you have built the external dependencies, copy Rules.<platform>
+to Rules.make and choose options appropriate for your configuration
+(here is where experience counts).
+
+Unless you are planning on doing heavy PyMOL development under Linux,
+you should choose to make PyMOL as a Python module and not as a
+standalone application.
 
 	cd $HOME/pymol
+   cp Rules.<platform> Rules.make
 	vi ./Rules.make
 
 Also, if you don't have a 3DFX card, get rid of the -D_PYMOL_3DFX
@@ -64,40 +74,27 @@ STEP (3)
 
 STEP (4) 
   
-Assuming that you chose to build PyMOL as a Python module, edit
-pymol.com to point to appropriate locations on your system...
+Assuming that you chose to build PyMOL as a Python module, copy
+pymol.com.template to pymol.com.
+
+Next, edit pymol.com so that PYMOL_PATH points to the correct location
+on your system.
 
 	cd $HOME/pymol
-	vi ./pymol.com
+   cp pymol.com.template pymol.com
+	vi pymol.com
 	
  Now you should be all set to run pymol.
 
 	./pymol.com
 
+ I suggest putting a link to this file into a your bin directory, if
+you have one.
+
+=======
+
 NOTE: If you ever want to clean up the tree
 	"make clean" gets rid of all intermediate objects, etc.
 	"make distclean" restores the tree to near "distribution" quality 
        (NOTE it does not remove Rules.make or the "ext" directory/symlink)
-
-STEP (4) ALTERNATE APPROACH: (only recommended for easier debugging on linux)
-
- If you opted to make pymol as a standalone application...(LINUX ONLY)
-
- Edit "pymol.csh" to point to appropriate locations on your system
-
-	cd $HOME/pymol
-	vi ./pymol.csh
-
- source "pymol.csh" from a csh command line in order to set the
- appropriate environment variables.  If you're going to use pymol a lot,
- add this file to your .cshrc login script
-
-	source $HOME/pymol/pymol.csh
-
- You should be all set to run pymol.
-
-	pymol.exe
-
-
-
 
