@@ -480,17 +480,21 @@ void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc)
 /*========================================================================*/
 int BasisHit(CBasis *I,RayInfo *r,int except,
 				 int *vert2prim,CPrimitive *prim,
-				 int shadow,float front,float back)
+				 int shadow,float front,float back,
+             float excl_trans,int trans_shadows)
 {
   float oppSq,dist,sph[3],*vv,vt[3],tri1,tri2;
   int minIndex;
   int a,b,c,h,i,*ip,aa,bb,cc;
+  int excl_trans_flag;
+  int tmp_flag;
   CPrimitive *prm;
   /* assumption: always heading in the negative Z direction with our vector... */
   minIndex = -1;
   vt[0]=r->base[0];
   vt[1]=r->base[1];
   if(except>=0) except=vert2prim[except];
+  excl_trans_flag = (excl_trans!=0.0F);
   if(MapInsideXY(I->Map,r->base,&a,&b,&c))
 	 {
 		r->dist = MAXFLOAT;
@@ -513,12 +517,12 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 													 I->Vertex+prm->vert*3,&tri1,&tri2,&dist)) 
 						  {
 							 if(shadow) {
-                        if(prm->trans==0.0) { /* opaque? return immed. */
+                        if(prm->trans==0.0F) { /* opaque? return immed. */
                           if((dist>(-R_SMALL4))&&(dist<r->dist)) {
                             r->prim = prm;
                             return(1);
                           }
-                        } else {
+                        } else if(trans_shadows) {
                           if((dist>(-R_SMALL4))&&(dist<r->dist)) {
 									 minIndex=prm->vert;
 									 r->tri1=tri1;
@@ -543,12 +547,12 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 						  {
 							 dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
 							 if(shadow) {
-                        if(prm->trans==0) {
+                        if(prm->trans==0.0F) {
                           if((dist>(-R_SMALL4))&&(dist<r->dist)) {
                             r->prim = prm;
                             return(1);
                           }
-                        } else {
+                        } else if(trans_shadows){
                           if((dist>(-R_SMALL4))&&(dist<r->dist)) {
 									 minIndex=prm->vert;
                             r->dist=dist;
@@ -578,7 +582,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                                 r->prim = prm;
                                 return(1);
                               }
-                            } else {
+                            } else if(trans_shadows) {
                               if((dist>(-R_SMALL4))&&(dist<r->dist)) {
                                 if(prm->l1>R_SMALL4)
                                   r->tri1=tri1/prm->l1;
@@ -619,7 +623,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                                 r->prim = prm;
                                 return(1);
                               }
-                            } else {
+                            } else if(trans_shadows) {
                               if((dist>(-R_SMALL4))&&(dist<r->dist)) {
                                 if(prm->l1>R_SMALL4)
                                   r->tri1=tri1/prm->l1;
@@ -631,16 +635,25 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                               }
                             }
 								  } else {
-									 if(dist<r->dist)
+									 if(dist<r->dist) {
 										if((dist>=front)&&(dist<=back)) {
-                                if(prm->l1>R_SMALL4)
-                                  r->tri1=tri1/prm->l1;
-										  r->sphere[0]=sph[0];
-										  r->sphere[1]=sph[1];										
-										  r->sphere[2]=sph[2];
-										  minIndex=prm->vert;
-										  r->dist=dist;
+                                tmp_flag = true;
+                                if(excl_trans_flag) {
+                                  if(prm->trans>0.0)
+                                    if(dist<excl_trans)
+                                      tmp_flag=false;
+                                }
+                                if(tmp_flag) {
+                                  if(prm->l1>R_SMALL4)
+                                    r->tri1=tri1/prm->l1;
+                                  r->sphere[0]=sph[0];
+                                  r->sphere[1]=sph[1];										
+                                  r->sphere[2]=sph[2];
+                                  minIndex=prm->vert;
+                                  r->dist=dist;
+                                }
 										}
+                            }
 								  }
 								}
 						  }

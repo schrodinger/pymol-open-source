@@ -1063,6 +1063,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_line_smooth:
   case cSetting_transparency:
+  case cSetting_sphere_transparency:
+  case cSetting_stick_transparency:
   case cSetting_ortho:
   case cSetting_gl_ambient:
   case cSetting_bg_rgb:
@@ -1707,6 +1709,8 @@ void SettingInitGlobal(void)
   SettingSet_i(I,cSetting_security,1);
 
   SettingSet_f(I,cSetting_stick_transparency,0.0F);
+
+  SettingSet_i(I,cSetting_ray_transparency_shadows,1);
 
 }
 

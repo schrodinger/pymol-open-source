@@ -734,11 +734,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int backface_cull;
   float project_triangle;
   float spec_vector[3];
+  float excl_trans;
   int shadows;
+  int trans_shadows;
 
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
   shadows = (int)SettingGet(cSetting_ray_shadows);
-
+  trans_shadows = (int)SettingGet(cSetting_ray_transparency_shadows);
   backface_cull = (int)SettingGet(cSetting_backface_cull);
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   two_sided_lighting = (int)SettingGet(cSetting_two_sided_lighting);
@@ -908,9 +910,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
             r1.base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
             persist = 1.0;
             pass = 0;
+            excl_trans=0.0;
             new_front=front;
             while((persist>0.0001)&&(pass<25)) {
-              i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,new_front,back);
+              i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,
+                         new_front,back,excl_trans,trans_shadows);
               if(i>=0) {
                 n_hit++;
                 new_front=r1.dist;
@@ -950,7 +954,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 if(shadows) {
                   matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
                   
-                  if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,true,0.0,0.0)>=0) {
+                  if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,
+                              true,0.0,0.0,0.0,trans_shadows)>=0) {
                     lit=pow(r2.prim->trans,0.5);
                   } else {
                     lit=1.0;
@@ -1070,8 +1075,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               if(i>=0) { 
 
                 if(r1.prim->type==cPrimSausage) { /* carry ray through the stick */
-                  new_front+=2*r1.surfnormal[2]*r1.prim->r1;
+                  excl_trans=new_front+(2*r1.surfnormal[2]*r1.prim->r1);
                 }
+
                 if(!backface_cull) 
                   persist = persist * r1.prim->trans;
                 else {
