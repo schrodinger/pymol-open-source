@@ -5360,7 +5360,7 @@ void ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,float angle,floa
 int *ExecutiveGetG3d(PyMOLGlobals *G)
 {
   int *result = NULL;
-  SceneRay(G,0,0,3,NULL,NULL,0.0F,0.0F,true,&result);
+  SceneRay(G,0,0,3,NULL,NULL,0.0F,0.0F,true,(G3dPrimitive**)&result);
   return result;
 }
 /*========================================================================*/

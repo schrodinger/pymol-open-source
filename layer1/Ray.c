@@ -736,7 +736,8 @@ void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov
 }
 /*========================================================================*/
 
-G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,float front, float back, float fov)
+G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
+                           float front, float back, float fov,int quiet)
 {
   /* generate a rendering stream for Miguel's G3d java rendering engine */
 
@@ -767,13 +768,14 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,float front, float back
 #define convert_y(y) height - (shift_y + (int)(y*scale_y));
 #define convert_z(z) -(int)((z+front)*scale_x);
 
-  printf("%8.3f\n",z_range);
   RayExpandPrimitives(I);
   RayTransformFirst(I,0);
 
-  PRINTFB(I->G,FB_Ray,FB_Details)
-    " RayRenderG3d: processed %i graphics primitives.\n",I->NPrimitive 
-    ENDFB(I->G);
+  if(!quiet) {
+    PRINTFB(I->G,FB_Ray,FB_Details)
+      " RayRenderG3d: processed %i graphics primitives.\n",I->NPrimitive 
+      ENDFB(I->G);
+  }
   base = I->Basis+1;
 
   /* always orthoscopic */
