@@ -38,8 +38,10 @@ typedef struct CoordSet {
   Rep *Rep[cRepCnt]; /* an array of pointers to representations */
   int Active[cRepCnt]; /* active flags */
   int NRep;
-  int NTmpBond; /* optional + temporary (for coord set transfers) */
+  int NTmpBond; /* optional, temporary (for coord set transfers) */
   int *TmpBond; /* actual bond info is stored in ObjectMolecule */
+  int NTmpLinkBond; /* optional, temporary storage of linkage  info. */
+  int *TmpLinkBond; /* first atom is in obj, second is in cset */
   CSymmetry *TmpSymmetry;
   WordType Name;
   float *Spheroid;
@@ -65,6 +67,7 @@ int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode);
 int CoordSetTransformAtom(CoordSet *I,int at,float *TTT);
 void CoordSetPurge(CoordSet *I);
 void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom);
+void CoordSetMerge(CoordSet *I,CoordSet *cs); /* must be non-overlapping */
 
 #endif
 

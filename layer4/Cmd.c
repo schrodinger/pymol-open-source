@@ -113,6 +113,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args);
+static PyObject *CmdHAdd(PyObject *self, PyObject *args);
 static PyObject *CmdIdentify(PyObject *dummy, PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
@@ -210,7 +211,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_moment",	  CmdGetMoment,    METH_VARARGS },
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
 	{"get_setting",  CmdGetSetting,   METH_VARARGS },
-	{"identify",     CmdIdentify,     METH_VARARGS },
+	{"h_add",        CmdHAdd,         METH_VARARGS },
+   {"identify",     CmdIdentify,     METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
 	{"isomesh",	     CmdIsomesh,      METH_VARARGS },
    {"wait_queue",   CmdWaitQueue,    METH_VARARGS },
@@ -1775,6 +1777,21 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   APIEntry();
   SelectorGetTmp(str1,s1);
   ExecutiveWindowZoom(s1);
+  SelectorFreeTmp(s1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdHAdd(PyObject *self, PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  ExecutiveAddHydrogens(s1);
   SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);

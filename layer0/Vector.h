@@ -38,6 +38,8 @@ void normalize23f( float *v1 , float *v2);
 void normalize3d( double *v1 );
 
 void get_divergent3f(float *src,float *dst);
+void get_random3f(float *x);
+void get_system3f(float *x,float *y,float *z); /* make random system */
 void get_system1f3f(float *x,float *y,float *z); /* make system in direction of x */
 void get_system2f3f(float *x,float *y,float *z); /* make system in direction of x, perp to x,y */
 
