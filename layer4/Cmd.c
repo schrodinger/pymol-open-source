@@ -48,6 +48,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"ObjectMesh.h"
 #include"ObjectMap.h"
+#include"ObjectCallback.h"
 #include"Executive.h"
 #include"Selector.h"
 #include"main.h"
@@ -72,6 +73,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypePDBStr 9
 #define cLoadTypeChemPyBrick 10
 #define cLoadTypeChemPyMap 11
+#define cLoadTypeCallback 12
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -1705,6 +1707,22 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 	   }
 	 } else if(origObj) {
 		sprintf(buf," CmdLoad: chempy.map appended into object \"%s\"\n",
+              oname);
+	 }
+    break;
+  case cLoadTypeCallback:
+    PBlockAndUnlockAPI();
+	 obj=(Object*)ObjectCallbackDefine((ObjectCallback*)origObj,model);
+    PLockAPIAndUnblock();
+	 if(!origObj) {
+	   if(obj) {
+		 ObjectSetName(obj,oname);
+		 ExecutiveManageObject(obj);
+		 sprintf(buf," CmdLoad: pymol.callback loaded into object \"%s\"\n",
+               oname);		  
+	   }
+	 } else if(origObj) {
+		sprintf(buf," CmdLoad: pymol.callback appended into object \"%s\"\n",
               oname);
 	 }
     break;
