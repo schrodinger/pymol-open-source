@@ -50,7 +50,7 @@ distclean: clean
 	/bin/rm -f pymol modules/*.pyc 
 	/bin/rm -f modules/Pmw/*.pyc modules/Pmw/*/*.pyc modules/Pmw/*/*/*.pyc
 
-dist: realclean
+dist: distclean
 	cd ..;tar -cvf - pymol | gzip > pymol.tgz
 
 
