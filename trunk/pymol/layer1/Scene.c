@@ -3511,7 +3511,8 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,char **heade
     buffer=(GLvoid*)Alloc(char,buffer_size);
     ErrChkPtr(G,buffer);
     
-    RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->Back,timing,angle);
+    RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->Back,timing,angle,
+              fov,I->Pos);
     SceneApplyImageGamma(G,buffer,ray_width,ray_height);
 
     /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
@@ -3918,7 +3919,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
       curState=SettingGetGlobal_i(G,cSetting_state)-1;
     }
 
-    if(SettingGet(G,cSetting_ortho)==0.0) {
+    if(!SettingGetGlobal_b(G,cSetting_ortho)) {
       gluPerspective(fov,aspRat,I->FrontSafe,I->Back);
     } else {
       height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 

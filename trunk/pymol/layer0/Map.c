@@ -36,6 +36,10 @@ Z* ------------------------------------------------------------------- */
 static MapType *_MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,
                         float *extent,int *flag,int group_id,int block_id);
 
+float MapGetDiv(MapType *I)
+{
+  return I->Div;
+}
 void MapFree(MapType *I)
 {
   if(I)
@@ -116,14 +120,14 @@ int MapInside(MapType *I,float *v,int *a,int *b,int *c) /* special version for r
 
 	if(atmp < I->iMin[0])
 	{
-		if((I->iMin[0] - atmp) > 1)
+		if((I->iMin[0] - atmp) > 3)
 			return(-1);
 		else 
 			atmp = I->iMin[0]; 
 	}
 	else if(atmp > I->iMax[0]) 
 	{ 
-		if((atmp - I->iMax[0]) > 1) 
+		if((atmp - I->iMax[0]) > 3) 
 			return(-1);
 		else 
 			atmp = I->iMax[0]; 
@@ -131,14 +135,14 @@ int MapInside(MapType *I,float *v,int *a,int *b,int *c) /* special version for r
 
 	if(btmp < I->iMin[1]) 
 	{ 
-		if((I->iMin[1] - btmp) > 1) 
+		if((I->iMin[1] - btmp) > 3) 
 			return(-1);
 		else 
 			btmp = I->iMin[1];
 	}
 	else if(btmp > I->iMax[1]) 
 	{
-		if((btmp - I->iMax[1]) > 1)
+		if((btmp - I->iMax[1]) > 3)
 			return(-1);
 		else 
 			btmp = I->iMax[1];
@@ -147,14 +151,14 @@ int MapInside(MapType *I,float *v,int *a,int *b,int *c) /* special version for r
    /*    printf("%d %d %d\n",ctmp,I->iMin[2],I->iMax[2]);*/
 	if(ctmp < I->iMin[2]) 
 	{ 
-		if((I->iMin[2] - ctmp) > 1) 
+		if((I->iMin[2] - ctmp) > 3) 
 			return(-1);
 		else 
 			ctmp = I->iMin[2];
 	}
 	else if(ctmp > I->iMax[2]) 
 	{
-		if((ctmp - I->iMax[2]) > 1)
+		if((ctmp - I->iMax[2]) > 3)
         return(0); /* just keep searching... */
 		else 
 			ctmp = I->iMax[2];
@@ -466,7 +470,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 
 
   PRINTFD(G,FB_Map)
-    " MapSetupExpress-Debug: leaving...\n"
+    " MapSetupExpress-Debug: leaving...n=%d\n",n
     ENDFD;
 
 }
