@@ -1780,7 +1780,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_cgo_line_radius, -0.05F);
 
-  SettingSet_b(I,cSetting_logging, 0);
+  SettingSet_i(I,cSetting_logging, 0); /* 0 = off, 1 = regular (PML), 2 = python (PYM) */
 
   SettingSet_b(I,cSetting_robust_logs, 0);
 
