@@ -34,6 +34,7 @@ import threading
 import types
 import pymol
 import os
+import imp
 from glob import glob
 
 from chempy import io
@@ -206,7 +207,7 @@ ATOM MODIFICATION
    CTRL-K    Set charge on picked atom to +1
    CTRL-D    Remove atom or bond (DELETE works too).
    CTRL-Y    Add a hydrogen to the current atom
-   CTRL-F    Adjust hydrogens to match valence.
+   CTRL-R    Adjust hydrogens to match valence.
 
 BONDS
 
@@ -216,7 +217,7 @@ BONDS
 MISC
 
    CTRL-Z    undo the previous conformational change.
-             (you can not currently undo modifications).
+             (you can not currently undo atom modifications).
    CTRL-A    redo the previous conformational change.
 
 '''
@@ -240,6 +241,7 @@ Not directly available. Instead, use cmd.do("@...").
  
 '''
    help(at_sign)
+
 
 def run():
    '''
@@ -627,6 +629,23 @@ TO DOCUMENT
    except:
       print "Error: unable to load fragment %s" % name
 
+def wizard(name):
+   '''
+   TO DOCUMENT
+   '''
+   import wizard
+   try:
+      mod_tup = imp.find_module(name,wizard.__path__)
+      mod_obj = imp.load_module(name,mod_tup[0],mod_tup[1],mod_tup[2])
+      if mod_obj:
+         oname = string.capitalize(name)
+         if hasattr(mod_obj,oname):
+            wiz = apply(getattr(mod_obj,oname))
+            if wiz:
+               set_wizard(wiz)
+   except ImportError:
+      print "Error: Sorry, couldn't find the '"+name+"' Wizard."
+      
 def get_dihedral(s1,s2,s3,s4):
    '''
 TO DOCUMENT
@@ -899,6 +918,48 @@ def show_help(cmd):
    help(cmd)
    print "(Hit TAB to hide)"
 
+def set_wizard(*arg):
+   '''
+   TO DOCUMENT
+   '''
+   r = None
+   wiz = None
+   if len(arg):
+      wiz=arg[0]
+   try:
+      lock()
+      r = _cmd.set_wizard(wiz)
+   finally:
+      unlock()
+   return r
+
+def refresh_wizard(*arg):
+   '''
+   TO DOCUMENT
+   '''
+   r = None
+   wiz = None
+   if len(arg):
+      wiz=arg[0]
+   try:
+      lock()
+      r = _cmd.refresh_wizard()
+   finally:
+      unlock()
+   return r
+
+def get_wizard(*arg):
+   '''
+   TO DOCUMENT
+   '''
+   r = None
+   try:
+      lock()
+      r = _cmd.get_wizard()
+   finally:
+      unlock()
+   return r
+
 def undo():
    '''
 TO DOCUMENT
@@ -1161,7 +1222,10 @@ EXAMPLES
       expr = arg[1]
    try:
       lock()
-      r = _cmd.label(sele,'label='+expr)
+      if len(expr)==0:
+         r= _cmd.label(sele,'')
+      else:
+         r = _cmd.label(sele,'label='+expr)
    finally:
       unlock()   
    return r
@@ -1909,6 +1973,17 @@ NOTES
          unlock()
    return r
 
+def unpick(*arg):
+   '''
+   INTERNAL
+   '''
+   try:
+      lock()   
+      r = _cmd.unpick()
+   finally:
+      unlock()
+   return r
+   
 def edit(*arg):
    '''
 DESCRIPTION
@@ -3112,7 +3187,7 @@ DESCRIPTION
  
 USAGE
  
-   create name = (selection) [,source_state [,target_state] ]
+   create name = (selection) [,source_state [,target_state ] ]
  
 PYMOL API
   
@@ -4299,6 +4374,7 @@ keyword = {
    'unprotect'     : [unprotect    , 0 , 1 , ',' , 0 ],
    'update'        : [update       , 2 , 2 , ',' , 0 ],
    'viewport'      : [viewport     , 2 , 2 , ',' , 0 ],
+   'wizard'        : [wizard       , 1 , 1 , ',' , 0 ],
    'zoom'          : [zoom         , 0 , 2 , ',' , 0 ],
    }
 
@@ -4401,17 +4477,17 @@ ctrl = {
    'F' : [ replace                , 1 , ('F',1,1) ],   
    'G' : [ replace                , 1 , ('H',1,1) ],
    'I' : [ replace                , 1 , ('I',1,1) ],
-   'J' : [ alter                  , 1 , ('pk_a1','formal_charge=-1.0') ],
-   'K' : [ alter                  , 1 , ('pk_a1','formal_charge =1.0') ],
+   'J' : [ alter                  , 1 , ('pk1','formal_charge=-1.0') ],
+   'K' : [ alter                  , 1 , ('pk1','formal_charge =1.0') ],
    'L' : [ replace                , 1 , ('Cl',1,1)],   
    'N' : [ replace                , 1 , ('N',4,3) ],
    'O' : [ replace                , 1 , ('O',4,2) ],   
    'P' : [ replace                , 1 , ('P',4,1) ],
-   'Q' : [ h_add                  , 1 , ("pk_a1",) ],   
+   'Q' : [ h_add                  , 1 , ("pk1",) ],   
    'R' : [ h_fill                 , 0 , None ],   
    'S' : [ replace                , 1 , ('S',4,2) ],
    'T' : [ bond                   , 0 , None ],   
-   'U' : [ alter                  , 1 , ('pk_a1','formal_charge =0.0') ],
+   'U' : [ alter                  , 1 , ('pk1','formal_charge =0.0') ],
    'W' : [ cycle_valence          , 0 , None ],   
    'X' : [ None                   , 0 , None ],
    'Y' : [ attach                 , 1 , ('H',1,1) ],

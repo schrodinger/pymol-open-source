@@ -33,6 +33,8 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Matrix.h"
 #include"P.h"
+#include"PConv.h"
+
 #include"Menu.h"
 #include"Map.h"
 #include"Editor.h"
@@ -49,9 +51,11 @@ typedef struct SpecRec {
   struct SpecRec *next;
   int repOn[cRepCnt];
   int visible;
+  int sele_color;
 } SpecRec; /* specification record (a line in the executive window) */
 
 ListVarDeclare(SpecList,SpecRec);
+ListVarDeclare(SpecList1,SpecRec);
 
 typedef struct Executive {
   Block *Block;
@@ -62,11 +66,10 @@ typedef struct Executive {
 CExecutive Executive;
 
 int ExecutiveClick(Block *block,int button,int x,int y,int mod);
-int ExecutiveRelease(Block *block,int x,int y,int mod);
+int ExecutiveRelease(Block *block,int button,int x,int y,int mod);
 int ExecutiveDrag(Block *block,int x,int y,int mod);
 void ExecutiveDraw(Block *block);
 void ExecutiveReshape(Block *block,int width,int height);
-
 
 #define ExecLineHeight 14
 #define ExecTopMargin 0
@@ -83,6 +86,65 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
+/*========================================================================*/
+void ExecutiveHideSelections(void)
+{
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+
+  while(ListIterate(I->Spec,rec,next,SpecList)) {
+    if(rec->type==cExecSelection) {
+      if(rec->visible) {
+        rec->visible=false;
+        SceneDirty();
+      }
+    }
+  }
+}
+/*========================================================================*/
+void ExecutiveRenderSelections(int curState)
+{
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  SpecRec *rec1;
+  int sele;
+  int no_depth;
+  float width;
+
+  no_depth = SettingGet(cSetting_selection_overlay);
+  width = SettingGet(cSetting_selection_width);
+
+  while(ListIterate(I->Spec,rec,next,SpecList)) {
+    if(rec->type==cExecSelection) {
+
+      if(rec->visible) {
+        sele = SelectorIndexByName(rec->name); /* TODO: speed this up */
+        if(sele>=0) {
+          rec1 = NULL;
+          if(rec->sele_color<0)
+            glColor3f(1.0,0.2,0.8);
+          else
+            glColor3fv(ColorGet(rec->sele_color));
+          glPointSize(width);
+          if(no_depth)
+            glDisable(GL_DEPTH_TEST);
+          glBegin(GL_POINTS);
+          while(ListIterate(I->Spec,rec1,next,SpecList1)) {
+            if(rec1->type==cExecObject) {
+              if(rec1->obj->type==cObjectMolecule) {
+                ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+              }
+            }
+          }
+          glEnd();
+          if(no_depth)
+            glEnable(GL_DEPTH_TEST);
+
+        }
+      }
+    }
+  }
+}
 /*========================================================================*/
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state)
 {
@@ -937,12 +999,13 @@ void ExecutiveLabel(char *s1,char *expr)
   }
 }
 /*========================================================================*/
-void ExecutiveIterate(char *s1,char *expr,int read_only)
+int ExecutiveIterate(char *s1,char *expr,int read_only)
 {
   int sele1;
   char buffer[255];
   ObjectMoleculeOpRec op1;
   
+  op1.i1=0;
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
     op1.code = OMOP_ALTR;
@@ -960,6 +1023,7 @@ void ExecutiveIterate(char *s1,char *expr,int read_only)
   } else {
     ErrMessage("ExecutiveIterate","No atoms selected.");
   }
+  return(op1.i1);
 }
 /*========================================================================*/
 void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
@@ -1543,13 +1607,14 @@ void ExecutiveSetObjVisib(char *name,int state)
           else 
             SceneObjectAdd(tRec->obj);
         }
-        tRec->visible=!tRec->visible;
+        if((tRec->type!=cExecSelection)||(!state)) /* hide all selections, but show all */
+          tRec->visible=!tRec->visible;
       }
     }
   } else {
     tRec = ExecutiveFindSpec(name);
     if(tRec) {
-      if(tRec->type==cExecObject)
+      if(tRec->type==cExecObject) {
         if(tRec->visible!=state)
           {
             if(tRec->visible)
@@ -1558,6 +1623,11 @@ void ExecutiveSetObjVisib(char *name,int state)
               SceneObjectAdd(tRec->obj);
             tRec->visible=!tRec->visible;
           }
+      }
+      else if(tRec->type==cExecSelection) {
+        if(tRec->visible!=state)
+          tRec->visible=!tRec->visible;
+      }
     }
   }
 }
@@ -1892,6 +1962,10 @@ void ExecutiveManageObject(Object *obj)
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
   int exists=false;
+
+  if(SettingGet(cSetting_autohide_selections))
+    ExecutiveHideSelections();
+
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
 		if(rec->obj==obj) {
@@ -1962,11 +2036,21 @@ void ExecutiveManageSelection(char *name)
     strcpy(rec->name,name);
     rec->type=cExecSelection;
     rec->next=NULL;
+    rec->sele_color=-1;
     ListAppend(I->Spec,rec,next,SpecList);
   }
-  for(a=0;a<cRepCnt;a++)
-    rec->repOn[a]=false;
-
+  if(rec) {
+    for(a=0;a<cRepCnt;a++)
+      rec->repOn[a]=false;
+    if(name[0]!='_') {
+      if(SettingGet(cSetting_autohide_selections))
+        ExecutiveHideSelections();
+      if(SettingGet(cSetting_autoshow_selections)) {
+        rec->visible=true;
+      }
+    }
+    if(rec->visible) SceneDirty();
+  }
 }
 /*========================================================================*/
 int ExecutiveClick(Block *block,int button,int x,int y,int mod)
@@ -2106,7 +2190,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 /*========================================================================*/
-int ExecutiveRelease(Block *block,int x,int y,int mod)
+int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
 {
   CExecutive *I = &Executive;
   int n;  
@@ -2136,6 +2220,27 @@ int ExecutiveRelease(Block *block,int x,int y,int mod)
               {
                 ExecutiveSetObjVisib("all",!rec->visible);
               }
+            else if(rec->type==cExecSelection)
+              {
+                if(mod&cOrthoCTRL) {
+                  SettingSet(cSetting_selection_overlay,
+                             (float)(!((int)SettingGet(cSetting_selection_overlay))));
+                  rec->visible=true;
+                } else if(mod&cOrthoSHIFT) {
+                  if(rec->sele_color<0)
+                    rec->sele_color=7;
+                  else {
+                    rec->sele_color--;
+                    if(rec->sele_color<7)
+                      rec->sele_color=15;
+                  }
+                  rec->visible=true;
+                } else {
+                  rec->visible=!rec->visible; 
+                }
+                SceneChanged();
+              }
+
           }
         n--;
       }
@@ -2271,7 +2376,7 @@ void ExecutiveDraw(Block *block)
 
         glColor3fv(I->Block->TextColor);
         glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-        if((rec->type==cExecObject)||(rec->type==cExecAll))
+        if((rec->type==cExecObject)||(rec->type==cExecAll)||(rec->type==cExecSelection))
           {
             y2=y-ExecToggleMargin;
             if(rec->visible)
@@ -2286,15 +2391,13 @@ void ExecutiveDraw(Block *block)
             glEnd();
             glColor3fv(I->Block->TextColor);
 
-            if(rec->type==cExecAll)
+            if(rec->type!=cExecObject)
               c=rec->name;
             else 
               c=rec->obj->Name;
-          }
-        else if(rec->type==cExecSelection)
-          {
-            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'(');
-            c=rec->name;
+
+            if(rec->type==cExecSelection)
+              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'(');
           }
 
         if(c)
@@ -2308,6 +2411,8 @@ void ExecutiveDraw(Block *block)
           }
 
         y-=ExecLineHeight;
+        if(y<(I->Block->rect.bottom+2))
+          break;
       }
   }
 }

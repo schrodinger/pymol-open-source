@@ -352,6 +352,12 @@ class PMGApp(AbstractApp):
                                label='Editing',
                                command = lambda: cmd.edit_mode("on"))
 
+      self.menuBar.addmenu('Wizards', 'Task Wizards')
+      
+      self.menuBar.addmenuitem('Wizards', 'command', 'Charge',
+                               label='Charge',
+                               command = lambda: cmd.wizard("charge"))
+
 
 
 

@@ -15,6 +15,7 @@ Z* -------------------------------------------------------------------
 */
 
 #include"os_std.h"
+#include"os_gl.h"
 
 #include"Base.h"
 #include"Debug.h"
@@ -37,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"Setting.h"
 #include"Sphere.h"
+#include"main.h"
 
 #define wcopy ParseWordCopy
 #define nextline ParseNextLine
@@ -72,6 +74,25 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
+
+/*========================================================================*/
+void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
+{
+  CoordSet *cs;
+  int a,at;
+
+  if(PMGUI) {
+    if(curState<I->NCSet)
+      if(I->CSet[curState]) {
+        cs=I->CSet[curState];
+        for(a=0;a<cs->NIndex;a++) {
+          at=cs->IdxToAtm[a]; /* should work for both discrete and non-discrete objects */
+          if(SelectorIsMember(I->AtomInfo[at].selEntry,sele))
+            glVertex3fv(cs->Coord+3*a);
+        }
+      }
+  }
+}
 
 /*========================================================================*/
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
@@ -3606,12 +3627,19 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                 break;
               case OMOP_LABL:
                 if (ok) {
-                  if(PLabelAtom(&I->AtomInfo[a],op->s1)) {
+                  if(!op->s1[0]) {
+                    I->AtomInfo[a].label[0]=0;
                     op->i1++;
-                    I->AtomInfo[a].visRep[cRepLabel]=true;
+                    I->AtomInfo[a].visRep[cRepLabel]=false;
                     hit_flag=true;
-                  } else
-                    ok=false;
+                  }  else {
+                    if(PLabelAtom(&I->AtomInfo[a],op->s1)) {
+                      op->i1++;
+                      I->AtomInfo[a].visRep[cRepLabel]=true;
+                      hit_flag=true;
+                    } else
+                      ok=false;
+                  }
                 }
                 break;
               case OMOP_ALTR:

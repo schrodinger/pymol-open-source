@@ -117,6 +117,8 @@ void ObjectMoleculeExtendIndices(ObjectMolecule *I);
 
 void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level);
 
+void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele);
+
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
 CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);

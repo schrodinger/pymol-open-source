@@ -606,6 +606,31 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_gamma].Name,
 			"gamma");
 
+  I->NSetting++;
+  I->Setting[cSetting_dot_width].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_dot_width].Name,
+			"dot_width");
+
+  I->NSetting++;
+  I->Setting[cSetting_autoshow_selections].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_autoshow_selections].Name,
+			"autoshow_selections");
+
+  I->NSetting++;
+  I->Setting[cSetting_autohide_selections].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_autohide_selections].Name,
+			"autohide_selections");
+
+  I->NSetting++;
+  I->Setting[cSetting_selection_width].Value[0] = 4.0;
+  strcpy(I->Setting[cSetting_selection_width].Name,
+			"selection_width");
+
+  I->NSetting++;
+  I->Setting[cSetting_selection_overlay].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_selection_overlay].Name,
+			"selection_overlay");
+
 }
 
 

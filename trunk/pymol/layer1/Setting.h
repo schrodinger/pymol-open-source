@@ -116,6 +116,11 @@ float SettingGetNamed(char *name);
 #define cSetting_mesh_radius          74
 #define cSetting_backface_cull        75
 #define cSetting_gamma                76
+#define cSetting_dot_width            77
+#define cSetting_autoshow_selections  78
+#define cSetting_autohide_selections  79
+#define cSetting_selection_width      80
+#define cSetting_selection_overlay    81
 
 #endif
 

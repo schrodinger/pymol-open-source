@@ -22,6 +22,7 @@ char *UtilConcat(char *where,char *what);
 void UtilNConcat(char *dst,char *str,int n);
 void UtilNCopy(char *dst,char *src,int n);
 void UtilCleanStr(char *s);
+int UtilCountStringVLA(char *vla);
 
 double UtilGetSeconds(void);
 void UtilInit(void);

@@ -30,6 +30,21 @@ void UtilInit(void) {
 }
 
 
+int UtilCountStringVLA(char *vla)
+{
+  int result=0;
+  int cc;
+  if (vla) {
+    cc=VLAGetSize(vla);
+    while(cc--) {
+      if(!*vla) 
+        result++;
+      vla++;
+    }
+  }
+  return(result);
+}
+
 double UtilGetSeconds(void)
 {
 #ifndef WIN32

@@ -34,7 +34,6 @@ Z* -------------------------------------------------------------------
 
 CControl Control;
 
-int ControlRelease(Block *block,int x,int y);
 void ControlDraw(Block *block);
 int ControlClick(Block *block,int button,int x,int y,int mod);
 

@@ -403,7 +403,38 @@ PyObject *PConvStringVLAToPyList(char *vla)
     while(*(p++));
   }
   return(result);
+}
 
+int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr)
+{
+  int a,l,ll;
+  char *vla = NULL,*p,*q;
+  PyObject *i;
+  if(obj) 
+    if(PyList_Check(obj)) {
+      l=PyList_Size(obj);
+      ll=0;
+      for(a=0;a<l;a++) {
+        i = PyList_GetItem(obj,a);
+        if (PyString_Check(i)) {
+          ll+=strlen(PyString_AsString(i))+1;
+        }
+      }
+      vla=VLAlloc(char,ll);
+      VLASetSize(vla,ll);
+      q=vla;
+      for(a=0;a<l;a++) {
+        i = PyList_GetItem(obj,a);
+        if (PyString_Check(i)) {
+          p=PyString_AsString(i);
+          while(*p) 
+            *(q++)=*(p++);
+          *(q++)=0;
+        }
+      }
+    }
+  (*vla_ptr)=vla;
+  return(vla);
 }
 
 void PConv44PyListTo44f(PyObject *src,float *dest) /* note lost of precision */

@@ -20,14 +20,14 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"ObjectMolecule.h"
 
-#define cEditorSele1 "pk_a1"
-#define cEditorSele2 "pk_a2"
-#define cEditorFragPref "pk_f"
+#define cEditorSele1 "pk1"
+#define cEditorSele2 "pk2"
+#define cEditorFragPref "pkfrag"
 #define cEditorBasePref "_pkbase"
-#define cEditorComp   "pk_ch"
+#define cEditorComp   "pkchain"
 
 void EditorInit(void);
-int EditorActive(void);
+int EditorActive(void); 
 void EditorRender(int state);
 
 void EditorFree(void);
