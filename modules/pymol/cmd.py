@@ -2591,6 +2591,30 @@ def _png(a):
       unlock()
    return r
 
+def mm_get(obj,state):
+   '''
+   EXPERIMENTAL
+   '''
+   r = None
+   try:
+      lock()   
+      r = _cmd.mm_get(obj,state)
+   finally:
+      unlock()
+   return r
+
+def mm_update(obj,state,mmechio):
+   '''
+   EXPERIMENTAL
+   '''
+   r = None
+   try:
+      lock()   
+      r = _cmd.mm_update(obj,state,mmechio)
+   finally:
+      unlock()
+   return r
+
 def mclear():
    '''
 DESCRIPTION

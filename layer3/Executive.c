@@ -21,7 +21,6 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"OOMac.h"
 #include"Executive.h"
-#include"ObjectMolecule.h"
 #include"ObjectMesh.h"
 #include"ObjectDist.h"
 #include"ListMacros.h"
@@ -1744,6 +1743,18 @@ Object *ExecutiveFindObjectByName(char *name)
 				}
 		  }
 	 }
+  return(obj);
+}
+/*========================================================================*/
+ObjectMolecule *ExecutiveFindObjectMoleculeByName(char *name)
+{
+  CExecutive *I = &Executive;
+  Object *obj;
+  
+  obj = ExecutiveFindObjectByName(name);
+  if(obj)
+    if(obj->type!=cObjectMolecule)
+      obj=NULL;
   return(obj);
 }
 /*========================================================================*/

@@ -167,6 +167,8 @@ static PyObject *CmdMove(PyObject *self, 	PyObject *args);
 static PyObject *CmdMPlay(PyObject *self, 	PyObject *args);
 static PyObject *CmdMPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdMSet(PyObject *self, 	PyObject *args);
+static PyObject *CmdMMGet(PyObject *self, 	PyObject *args);
+static PyObject *CmdMMUpdate(PyObject *self, 	PyObject *args);
 static PyObject *CmdOrigin(PyObject *self, PyObject *args);
 static PyObject *CmdOnOff(PyObject *self, 	PyObject *args);
 static PyObject *CmdOrient(PyObject *dummy, PyObject *args);
@@ -276,6 +278,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"mplay",	              CmdMPlay,        METH_VARARGS },
 	{"mpng_",	              CmdMPNG,         METH_VARARGS },
 	{"mmatrix",	              CmdMMatrix,      METH_VARARGS },
+	{"mm_get",	              CmdMMGet,        METH_VARARGS },
+	{"mm_update",             CmdMMUpdate,     METH_VARARGS },
 	{"origin",	              CmdOrigin,       METH_VARARGS },
 	{"orient",	              CmdOrient,       METH_VARARGS },
 	{"onoff",                 CmdOnOff,        METH_VARARGS },
@@ -320,6 +324,45 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,         METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+
+static PyObject *CmdMMGet(PyObject *self, 	PyObject *args)
+{
+  void *result;
+  char *str1;
+  int int1;
+
+  PyArg_ParseTuple(args,"si",&str1,&int1);
+  APIEntry();
+  result = ExportMMGet(str1,int1);
+  APIExit();
+  if(result) {
+    return(PyCObject_FromVoidPtr(result,(void(*)(void*))ExportMMFree));
+  } else {
+    Py_INCREF(Py_None);
+    return(Py_None);
+  }
+}
+
+static PyObject *CmdMMUpdate(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  int int1;
+  PyObject *cObj;
+  void *mmdat=NULL;
+  int result;
+
+  result=0;
+
+  PyArg_ParseTuple(args,"siO",&str1,&int1,&cObj);
+  if(PyCObject_Check(cObj))
+    mmdat = PyCObject_AsVoidPtr(cObj);
+  APIEntry();
+  if(mmdat)
+    result = ExportMMUpdate(str1,int1,mmdat);
+  APIExit();
+  return(Py_BuildValue("i",result));
+}
 
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
 {

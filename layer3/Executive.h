@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include<Python.h>
 
 #include"Object.h"
+#include"ObjectMolecule.h"
 #include"Ortho.h"
 #include"Word.h"
 
@@ -36,6 +37,7 @@ void ExecutiveUpdateObjectSelection(struct Object *obj);
 void ExecutiveManageSelection(char *name);
 Block *ExecutiveGetBlock(void);
 Object *ExecutiveFindObjectByName(char *name);
+ObjectMolecule *ExecutiveFindObjectMoleculeByName(char *name);
 int ExecutiveIterateObject(Object **obj,void **hidden);
 void ExecutiveDelete(char *name);
 void ExecutiveDump(char *fname,char *obj);
