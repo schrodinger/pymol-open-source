@@ -1,4 +1,4 @@
- #A* -------------------------------------------------------------------
+#A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
 #C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
 #D* -------------------------------------------------------------------
