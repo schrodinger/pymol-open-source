@@ -82,7 +82,7 @@ NOTES
    orthoscopic view.  To absolutely prevent clipping, you may also
    need to add a buffer (typically 2 A) to account for the perpective
    transformation and for graphical representations which extend
-   beyond the atom coordinates.
+   beyond the atom coordinates..
 
 SEE ALSO
 
@@ -103,7 +103,7 @@ SEE ALSO
 DESCRIPTION
 
    "center" translates the window, the clipping slab, and the
-   origin to point centered within the atom selection.
+   origin to a point centered within the atom selection.
 
 USAGE
 
@@ -275,7 +275,7 @@ SEE ALSO
       '''
 DESCRIPTION
 
-   "move" translates the world about one of the three primary axes.
+   "move" translates the camera about one of the three primary axes.
 
 USAGE
 
@@ -292,7 +292,7 @@ PYMOL API
 
 SEE ALSO
 
-   turn
+   turn, rotate, translate, zoom, center, clip
       '''
       try:
          lock()   
@@ -490,13 +490,16 @@ SEE ALSO
       return r
 
 
-   def get_view(output=1):
+   def get_view(output=1,quiet=1):
       '''
 DESCRIPTION
 
    "get_view" returns and optionally prints out the current view
    information in a format which can be embedded into a command
-   script and used in subsequent calls to "set_view"
+   script and can be used in subsequent calls to "set_view".
+
+   If a log file is currently open, get_view will not write the view
+   matrix to the screen unless the "output" parameter is 2.
 
 USAGE
 
@@ -504,11 +507,21 @@ USAGE
 
 PYMOL API
 
-   cmd.get_view(output=1)  
+   cmd.get_view(output=1,quiet=1)
+   
+   my_view= cmd.get_view()
 
+   output:
+   
+      0 = output matrix to screen
+      1 = don't output matrix to screen
+      2 = force output to screen even if log file is open
+      
 API USAGE
 
-   cmd.get_view(0) # zero option suppresses output
+   cmd.get_view(0) # zero option suppresses output (LEGACY approach)
+   cmd.get_view(quiet=1) # suppresses output using PyMOL's normal "quiet" parameter.
+   
    '''
 
       r = None
@@ -519,7 +532,8 @@ API USAGE
          unlock()
       if len(r):
          if cmd.get_setting_legacy("logging")!=0.0:
-            print " get_view: matrix written to log file."
+            if not quiet:
+               print " get_view: matrix written to log file."
             cmd.log("_ set_view (\\\n","cmd.set_view((\\\n")
             cmd.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
             cmd.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
@@ -529,7 +543,7 @@ API USAGE
             cmd.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
             if output<2: # suppress if we have a log file open
                output=0
-         if output:
+         if output and not quiet:
             print "### cut below here and paste into script ###"
             print "set_view (\\"
             print "  %14.9f, %14.9f, %14.9f,\\"%r[0:3]
@@ -605,6 +619,13 @@ PYMOL API
 
    cmd.view(string key,string action)
 
+VIEWS
+
+   Views F1 through F12 are automatically bound to function keys
+   provided that "set_key" hasn't been used to redefine the behaviour
+   of the respective key, and that a "scene" hasn't been defined for
+   that key.
+
 EXAMPLES
 
    view 0,store
@@ -612,7 +633,7 @@ EXAMPLES
 
 SEE ALSO
 
-   set_view, get_view
+   scene, set_view, get_view
       '''
       global view_dict,view_dict_sc
    
@@ -701,29 +722,58 @@ SEE ALSO
       '''
 DESCRIPTION
 
-   "scene" makes it possible to save and restore scenes
-   scene within a single session.
+   "scene" makes it possible to save and restore multiple scenes scene
+   within a single session.  A scene consists of the view, all object
+   activity information, all atom-wise visibility, color,
+   representations, and the global frame index.  
 
 USAGE
 
-   scene key [,action [,message ]]
+   scene key [,action [,message [ ,view [,color [,active [,rep [,frame]]]]]]]
    scene *
 
    key can be any string
    action should be 'store' or 'recall' (default: 'recall')
 
+   view: 1 or 0 controls whether the view is stored
+   color: 1 or 0 controls whether colors are stored
+   active: 1 or 0 controls whether activity is stored
+   rep: 1 or 0 controls whether the representations are stored
+   frame: 1 or 0 controls whether the frame is stored
+   
 PYMOL API
 
-   cmd.scene(string key,string action,string-or-list message)
+   cmd.scene(string key,string action,string-or-list message,int view,
+             int color, int active, int rep, int frame)
 
 EXAMPLES
 
-   scene 0,store
-   scene 0
+   scene F1 ,store
+   scene F2, store, This view shows you the critical hydrogen bond.
 
+   scene F1
+   scene F2
+
+NOTES
+
+   Scenes F1 through F12 are automatically bound to function keys
+   provided that "set_key" hasn't been used to redefine the behaviour
+   of the respective key.
+   
 SEE ALSO
 
    view, set_view, get_view
+
+DEVELOPMENT TO DO
+
+   Add support for save/restore of a certain global and
+      object-and-state specific settings, such as: state,
+      surface_color, ribbon_color, stick_color, transparency,
+      sphere_transparency, etc.  This would probably best be done by
+      defining a class of "scene" settings which are treated in this
+      manner.  The current workaround is to create separate objects
+      which are enabled/disabled differentially.
+      
       '''
       global scene_dict,scene_dict_sc
 
@@ -927,13 +977,14 @@ USAGE
    stereo on
    stereo off
    stereo swap
-   stereo crosseye 
+   stereo crosseye
+   stereo walleye
    stereo quadbuffer
 
 NOTES
 
    quadbuffer is the default stereo mode if hardware stereo is available
-   otherwise, crosseye is the default
+   otherwise, crosseye is the default.
 
 PYMOL API
 
@@ -963,7 +1014,8 @@ PYMOL API
       '''
 DESCRIPTION
 
-   "turn" rotates the world about one of the three primary axes
+   "turn" rotates the camera about one of the three primary axes,
+   centered at the origin.
 
 USAGE
 
@@ -980,7 +1032,7 @@ PYMOL API
 
 SEE ALSO
 
-   move
+   move, rotate, translate, zoom, center, clip
       '''
       try:
          lock()
@@ -994,8 +1046,8 @@ SEE ALSO
       '''
 DESCRIPTION
 
-   "full_screen" enables or disables PyMOL's full_screen mode.  This
-   is only functions well on PC's.
+   "full_screen" enables or disables PyMOL's full screen mode.  This
+   does not work well on all platforms.  
 
 USAGE
 

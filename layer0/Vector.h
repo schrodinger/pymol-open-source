@@ -312,7 +312,7 @@ __inline__ static float inline_project3f ( float *v1, float *v2, float *proj )
 #define diff3f slow_diff3f
 #define diffsq3f slow_diffsq3f
 #define within3f slow_within3f
-#define within3fsq3 slow_within3fsq
+#define within3fsq slow_within3fsq
 #define project3f slow_project3f
 #define remove_component3f slow_remove_component3f
 

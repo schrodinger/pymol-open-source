@@ -165,9 +165,24 @@ Current Bugs to Fix
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.90
+
+   * partial surface calculations are now much much faster
+
+   * intensive optimization of ray tracer, incl. inlining
+
+   * updated online documentation & tests for the following commands
+      feedback
+      extend
+      alias
+      (python_help)
+      get_view
+      view
+      scene
+
 Changes up to 0.89
    
-   * Fixed major session save bug
+   * Fixed major session save and restore bugs
 
    * Updated ExtensionClass for improved Python 2.2 and 2.3 compatibility.
 

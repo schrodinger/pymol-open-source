@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"main.h"
 #include"Util.h"
+#include"CGO.h"
 
 #ifdef NT
 #undef NT
@@ -54,6 +55,7 @@ typedef struct RepSurface {
   int *LastVisib;
   int *LastColor;
   float max_vdw;
+  CGO *debug;
 } RepSurface;
 
 
@@ -71,13 +73,16 @@ void RepSurfaceFree(RepSurface *I)
   FreeP(I->Vis);
   FreeP(I->LastColor);
   FreeP(I->LastVisib);
+  CGOFree(I->debug);
   VLAFreeP(I->T);
   VLAFreeP(I->S);
   /*  VLAFreeP(I->N);*/
   OOFreeP(I);
 }
 
-void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,SphereRec *sp,float *extent);
+void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
+                              float probe_radius,SphereRec *sp,
+                              float *extent,int *present);
 
 static int ZOrderFn(float *array,int l,int r)
 {
@@ -134,6 +139,9 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
+
+    if(I->debug)
+      CGORenderGL(I->debug,NULL,NULL,NULL);
 	 if(I->S) {
       if(alpha!=1.0) {
 
@@ -581,8 +589,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int cullByFlag = false;
   int surface_mode;
   int surface_color;
-
-  AtomInfoType *ai2;
+  int *present=NULL,*ap;
+  AtomInfoType *ai2,*ai1;
 
   obj=cs->Obj;
   surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
@@ -618,9 +626,54 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       I->oneColorFlag=true;
     }
     first_color=-1;
+
+    present = Alloc(int,cs->NIndex); 
+    ap = present;
+    for(a=0;a<cs->NIndex;a++) {
+      ai1 = obj->AtomInfo + cs->IdxToAtm[a];
+      if(ai1->visRep[cRepSurface]&&
+         (inclH||(!ai1->hydrogen))&&
+         ((!cullByFlag)||
+            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+        *ap = 2; 
+      else 
+        *ap = 0;
+      ap++;
+    }
+    
+    map=MapNewFlagged(2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present);
+    MapSetupExpress(map);
+    
+    for(a=0;a<cs->NIndex;a++)
+      if(!present[a])
+        {
+          ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+          if((!cullByFlag)||!(ai1->flags&cAtomFlag_ignore)) {
+            v0 = cs->Coord+3*a;
+            i=*(MapLocusEStart(map,v0));
+            if(i) {
+              j=map->EList[i++];
+              while(j>=0) {
+                if(present[j]>1) {
+                  ai2 = obj->AtomInfo+cs->IdxToAtm[j];                  
+                  if(within3f(cs->Coord+3*j,v0,ai1->vdw+ai2->vdw+probe_radius))
+                      {
+                        present[a]=1;
+                        break;
+                      }
+                }
+                
+                j=map->EList[i++];
+              }
+            }
+          }
+        }
+    MapFree(map);
+    map = NULL;
+      
     
     /* now, assign colors to each point */
-    map=MapNew(cutoff,cs->Coord,cs->NIndex,NULL);
+    map=MapNewFlagged(cutoff,cs->Coord,cs->NIndex,NULL,present);
     if(map)
       {
         MapSetupExpress(map);
@@ -700,15 +753,15 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     I->oneColorFlag=true;
     I->oneColor=surface_color;
   }
+  FreeP(present);
 }
 
 Rep *RepSurfaceNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,b,i,j,c,c1;
+  int a,b,i,j,c;
   MapType *map,*solv_map;
-  float v1[3],*v0=NULL,*v,*vn=NULL,*vn0=NULL,*extent=NULL;
-  float vdw;
+  float *v0=NULL,*v,*vn=NULL,*vn0=NULL,*extent=NULL;
   int SurfaceFlag = false;
   float probe_radius,probe_radius2;
   float probe_rad_tol,probe_rad_tol2;
@@ -719,9 +772,16 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int visFlag;
   int surface_quality;
   int surface_mode;
+  int *present = NULL,*ap;
+  int pres_flag;
   SphereRec *sp = Sphere0;
   SphereRec *ssp = Sphere0;
   AtomInfoType *ai1,*ai2;
+  #if 0
+  int c1;
+  float v1[3];
+  float vdw;
+#endif
   OOAlloc(RepSurface);
 
   obj = cs->Obj;
@@ -808,7 +868,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->R.cs = cs;
   I->Dot=NULL;
   I->allVisibleFlag=true;
-
+  I->debug = NULL;
   obj = cs->Obj;
 
   /* don't waist time computing a Surface unless we need it!! */
@@ -825,6 +885,56 @@ Rep *RepSurfaceNew(CoordSet *cs)
       
 	 OrthoBusyFast(0,1);
 
+    if(1&&!I->allVisibleFlag) {
+      /* optimize the space over which we calculate a surface */
+      
+      /* first find out which atoms are really present */
+
+      present = Alloc(int,cs->NIndex); 
+      ap = present;
+      for(a=0;a<cs->NIndex;a++) {
+        ai1 = obj->AtomInfo + cs->IdxToAtm[a];
+        if(ai1->visRep[cRepSurface]&&
+           (inclH||(!ai1->hydrogen))&&
+           ((!cullByFlag)||
+            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+          *ap = 2; 
+        else 
+          *ap = 0;
+        ap++;
+      }
+
+      map=MapNewFlagged(2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
+      MapSetupExpress(map);
+      
+      for(a=0;a<cs->NIndex;a++)
+        if(!present[a])
+          {
+            ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+            if((!cullByFlag)||!(ai1->flags&cAtomFlag_ignore)) {
+              v0 = cs->Coord+3*a;
+              i=*(MapLocusEStart(map,v0));
+              if(i) {
+                j=map->EList[i++];
+                while(j>=0) {
+                  if(present[j]>1) {
+                    ai2 = obj->AtomInfo+cs->IdxToAtm[j];                  
+                    if(within3f(cs->Coord+3*j,v0,ai1->vdw+ai2->vdw+probe_radius))
+                      {
+                        present[a]=1;
+                        break;
+                      }
+                  }
+                  
+                  j=map->EList[i++];
+                }
+              }
+            }
+          }
+      MapFree(map);
+      map = NULL;
+    }
+    
 	 I->V=Alloc(float,cs->NIndex*3*sp->nDot*9);
     ErrChkPtr(I->V);
 	 I->VN=Alloc(float,cs->NIndex*3*sp->nDot*9);
@@ -833,22 +943,35 @@ Rep *RepSurfaceNew(CoordSet *cs)
     v=I->V;
     vn=I->VN;
     
-	 RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent);
+	 RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present);
 
 	 solv_map=MapNew(probe_radius,I->Dot,I->NDot,extent);
-	 map=MapNew(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent);
+	 map=MapNewFlagged(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
 
+    /*    I->debug=CGONew();
+
+    CGOBegin(I->debug,GL_POINTS);
+    for(a=0;a<I->NDot;a++)
+      CGOVertexv(I->debug,I->Dot+3*a);
+    CGOEnd(I->debug);
+    */
 	 if(map&&solv_map)
 		{
 		  MapSetupExpress(solv_map);
 		  MapSetupExpress(map);
+
+#if _PYMOL_UNUSED
         for(a=0;a<cs->NIndex;a++)
           {
             OrthoBusyFast(a+cs->NIndex,cs->NIndex*5); /* 1/5 - 2/5 */
             ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-            if((inclH||(!ai1->hydrogen))&&
-               ((!cullByFlag)||
-                (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore))))) {
+            if(present)
+              pres_flag=present[a];
+            else
+              pres_flag=((inclH||(!ai1->hydrogen))&&
+                             ((!cullByFlag)||
+                              (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore)))));
+            if(pres_flag) {
               c1=*(cs->Color+a);
               v0 = cs->Coord+3*a;
               vdw = ai1->vdw;
@@ -866,10 +989,13 @@ Rep *RepSurfaceNew(CoordSet *cs)
                     j=map->EList[i++];
                     while(j>=0) {
                       ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                      if((inclH||(!ai2->hydrogen))&&
-                         ((!cullByFlag)||
-                          (!(ai2->flags&cAtomFlag_ignore))))  
-                        /* ignore atom if flag 25 if set !!!*/
+                      if(present)
+                        pres_flag=present[j];
+                      else
+                        pres_flag=((inclH||(!ai2->hydrogen))&&
+                                   ((!cullByFlag)||
+                                    (!(ai2->flags&cAtomFlag_ignore))));
+                      if(pres_flag)
                         if(j!=a)
                           if(within3f(cs->Coord+3*j,v1,ai2->vdw))
                             {
@@ -879,7 +1005,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
                       j=map->EList[i++];
                     }
                   }
-                  if(flag) /* doesn't intersect any atom */
+                  if(0&&flag) /* doesn't intersect any atom */
                     {
                       flag=true;
                       i=*(MapLocusEStart(solv_map,v1));
@@ -912,6 +1038,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
         PRINTFD(FB_RepSurface)
           " RepSurfaceNew-DEBUG: convex surfaces complete...\n"
           ENDFD;
+#endif
 
 		  if(I->NDot) {
 
@@ -955,9 +1082,13 @@ Rep *RepSurfaceNew(CoordSet *cs)
 								j=map->EList[i++];
 								while(j>=0) {
 								  ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                          if((inclH||(!ai2->hydrogen))&&
-									  ((!cullByFlag)||
-                              (!(ai2->flags&cAtomFlag_ignore))))
+                          if(present)
+                            pres_flag=present[j];
+                          else
+                            pres_flag=((inclH||(!ai2->hydrogen))&&
+                                       ((!cullByFlag)||
+                                        (!(ai2->flags&cAtomFlag_ignore))));
+                          if(pres_flag)
 									 if(j!=a)
 										if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_rad_tol))
 										  {
@@ -985,6 +1116,13 @@ Rep *RepSurfaceNew(CoordSet *cs)
 		  FreeP(I->Dot);	 
 		}
 	 /* now, eliminate dots that are too close to each other*/
+
+    /*    CGOColor(I->debug,0.0,1.0,0.0);
+    CGOBegin(I->debug,GL_POINTS);
+    for(a=0;a<I->N;a++)
+      CGOVertexv(I->debug,I->V+3*a);
+    CGOEnd(I->debug);
+    */
 
     PRINTFB(FB_RepSurface,FB_Details)
       " RepSurface: %i surface points.\n",I->N
@@ -1076,13 +1214,16 @@ Rep *RepSurfaceNew(CoordSet *cs)
     }
     
   }
+  if(I->debug)
+    CGOStop(I->debug);
   OrthoBusyFast(4,4);
+  FreeP(present);
   return((void*)(struct Rep*)I);
 }
 
 void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                               float probe_radius,SphereRec *sp,
-                              float *extent)
+                              float *extent,int *present)
 {
   ObjectMolecule *obj;
   int a,b,c=0,flag,i,j;
@@ -1096,6 +1237,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
   int surface_mode;
   int cullByFlag;
   int inclH;
+  int pres_flag;
   AtomInfoType *ai1,*ai2;
 
   obj = cs->Obj;
@@ -1112,7 +1254,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
   probe_radius_plus = probe_radius * 1.5;
 
   I->NDot=0;
-  map=MapNew(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent);
+  map=MapNewFlagged(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
   if(map)
 	 {
 		MapSetupExpress(map);
@@ -1123,9 +1265,13 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 			 OrthoBusyFast(a,cs->NIndex*5);
 
           ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-          if((inclH||(!ai1->hydrogen))&&
+          if(present)
+            pres_flag=present[a];
+          else
+            pres_flag = (inclH||(!ai1->hydrogen))&&
              ((!cullByFlag)||
-              (!(ai1->flags&(cAtomFlag_ignore))))) {
+              (!(ai1->flags&(cAtomFlag_ignore))));
+          if(pres_flag){
             
             dotCnt=0;
             v0 = cs->Coord+3*a;

@@ -258,10 +258,12 @@ if __name__=='pymol.cmd':
    lock_api = pymol.lock_api
    lock_api_c = pymol.lock_api_c
 
-   def lock_c(): # INTERNAL
+   def lock_c(): 
+      # WARNING: internal routine, subject to change      
       lock_api_c.acquire(1)
 
-   def unlock_c(): # INTERNAL
+   def unlock_c():
+      # WARNING: internal routine, subject to change      
       lock_api_c.release()
 
    def lock(): # INTERNAL
@@ -398,7 +400,7 @@ if __name__=='pymol.cmd':
       main                      =80  
 
    # This second set, with negative indices
-   # represent python level systems
+   # represent "python-only" subsystems
 
       parser                    =-1
       cmd                       =-2
@@ -429,40 +431,46 @@ if __name__=='pymol.cmd':
 
    def feedback(action="?",module="?",mask="?"):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "feedback" allows you to control what and how much text is output
-      from PyMOL.
+   "feedback" allows you to change the amount of information output by pymol.
 
-   USAGE
+USAGE
 
-      feedback action,module,mask
+   feedback action,module,mask
 
-      action is one of ['set','enable','disable']
-      module is a space-separated list of strings or simply "all"
-      mask is a space-separated list of strings or simply "everything"
+   action is one of ['set','enable','disable']
+   module is a space-separated list of strings or simply "all"
+   mask is a space-separated list of strings or simply "everything"
 
-   NOTES:
+NOTES:
 
-      "feedback" alone will print a list of the available choices
+   "feedback" alone will print a list of the available module choices
 
-   PYMOL API
+PYMOL API
 
-      cmd.feedback(string action,string module,string mask)
+   cmd.feedback(string action,string module,string mask)
 
-   EXAMPLES
+EXAMPLES
 
-      feedback enable, all , debugging
-      feedback disable, selector, warnings actions
-      feedback enable, main, blather
+   feedback enable, all , debugging
+   feedback disable, selector, warnings actions
+   feedback enable, main, blather
+
+DEVELOPMENT TO DO
+
+   Add a way of querying the current feedback settings.
+   Check C source code to make source correct modules are being used.
+   Check C source code to insure that all output is properly
+   Update Python API and C source code to use "quiet" parameter as well.
    '''
       r = None
 
       # validate action
 
       if action=="?":
-         print " feedback: available actions: set, enable, disable"
-         act_kee = 0
+         print " feedback: possible actions: \nset, enable, disable"
+         act_int = 0
       else:
          act_kee = fb_action_sc.interpret(action)
          if act_kee == None:
@@ -482,12 +490,12 @@ if __name__=='pymol.cmd':
 
       if (act_int<3) and ("?" in [action,module,mask]):
          if module=="?":
-            print " feedback: available modules:"
+            print " feedback: Please specify module names:"
             for a in fb_module.__dict__.keys():
                if a[0]!='_':
                   print "   ",a
          if mask=="?":
-            print " feedback: available masks:"
+            print " feedback: Please specify masks:"
             for a in fb_mask.__dict__.keys():
                if a[0]!='_':
                   print "   ",a
@@ -558,6 +566,8 @@ if __name__=='pymol.cmd':
 
    
    def _ray_hash_spawn(thread_info):
+      # WARNING: internal routine, subject to change      
+      # internal routine to support multithreaded raytracing
       thread_list = []
       for a in thread_info[1:2]:
          t = threading.Thread(target=_cmd.ray_hash_thread,
@@ -570,6 +580,8 @@ if __name__=='pymol.cmd':
          t.join()
 
    def _ray_spawn(thread_info):
+      # WARNING: internal routine, subject to change      
+      # internal routine to support multithreaded raytracing
       thread_list = []
       for a in thread_info[1:]:
          t = threading.Thread(target=_cmd.ray_trace_thread,
@@ -584,7 +596,8 @@ if __name__=='pymol.cmd':
          
    # status reporting
 
-   def _feedback(module,mask): # feedback test routine
+   def _feedback(module,mask): # feedback query routine
+      # WARNING: internal routine, subject to change      
       r = 0
       module = int(module)
       mask = int(mask)
@@ -602,6 +615,7 @@ if __name__=='pymol.cmd':
    # movie rendering
 
    def _mpng(*arg): # INTERNAL
+      # WARNING: internal routine, subject to change
       try:
          lock()   
          fname = arg[0]
@@ -617,6 +631,7 @@ if __name__=='pymol.cmd':
    # loading
 
    def _load(oname,finfo,state,ftype,finish,discrete):
+      # WARNING: internal routine, subject to change
       # caller must already hold API lock
       # NOTE: state index assumes 1-based state
       r = 1
@@ -658,6 +673,7 @@ if __name__=='pymol.cmd':
    # function keys and other specials
 
    def _special(k,x,y): # INTERNAL (invoked when special key is pressed)
+      # WARNING: internal routine, subject to change
       k=int(k)
       if special.has_key(k):
          if special[k][1]:
@@ -673,6 +689,7 @@ if __name__=='pymol.cmd':
    # control keys
 
    def _ctrl(k):
+      # WARNING: internal routine, subject to change
       if ctrl.has_key(k):
          ck = ctrl[k]
          if ck[0]!=None:
@@ -682,6 +699,7 @@ if __name__=='pymol.cmd':
    # alt keys
 
    def _alt(k):
+      # WARNING: internal routine, subject to change
       if alt.has_key(k):
          ak=alt[k]
          if ak[0]!=None:
@@ -691,6 +709,7 @@ if __name__=='pymol.cmd':
    # writing PNG files (thread-unsafe)
 
    def _png(a): # INTERNAL - can only be safely called by GLUT thread 
+      # WARNING: internal routine, subject to change
       try:
          lock()   
          fname = a
@@ -706,6 +725,7 @@ if __name__=='pymol.cmd':
    # quitting (thread-specific)
 
    def _quit():
+      # WARNING: internal routine, subject to change
       try:
          lock()
          r = _cmd.quit()
@@ -716,6 +736,7 @@ if __name__=='pymol.cmd':
    # screen redraws (thread-specific)
 
    def _refresh(swap_buffers=1):  # Only call with GLUT thread!
+      # WARNING: internal routine, subject to change
       try:
          lock()
          if thread.get_ident() == pymol.glutThread:
@@ -732,7 +753,7 @@ if __name__=='pymol.cmd':
    # stereo (platform dependent )
 
    def _sgi_stereo(flag): # SGI-SPECIFIC - bad bad bad
-
+      # WARNING: internal routine, subject to change
       if sys.platform[0:4]=='irix':
          if os.path.exists("/usr/gfx/setmon"):
             if flag:
@@ -743,6 +764,7 @@ if __name__=='pymol.cmd':
    # color alias interpretation
 
    def _interpret_color(color):
+      # WARNING: internal routine, subject to change
       _validate_color_sc()
       new_color = color_sc.interpret(color)
       if new_color:
@@ -754,6 +776,7 @@ if __name__=='pymol.cmd':
          return color
 
    def _validate_color_sc():
+      # WARNING: internal routine, subject to change
       global color_sc
       if color_sc == None: # update color shortcuts if needed
          lst = get_color_indices()
@@ -762,14 +785,17 @@ if __name__=='pymol.cmd':
          for a in lst: color_dict[a[0]]=a[1]
 
    def _invalidate_color_sc():
+      # WARNING: internal routine, subject to change
       global color_sc
       color_sc = None
 
    def _get_color_sc():
+      # WARNING: internal routine, subject to change
       _validate_color_sc()
       return color_sc
 
    def _get_feedback(): # INTERNAL
+      # WARNING: internal routine, subject to change
       l = []
       if lock_attempt():
          try:
@@ -788,6 +814,7 @@ if __name__=='pymol.cmd':
    # different FPUs
 
    def _dump_floats(lst,format="%7.3f",cnt=9):
+      # WARNING: internal routine, subject to change
       c = cnt
       for a in lst:
          print format%a,
@@ -799,6 +826,7 @@ if __name__=='pymol.cmd':
          print
 
    def _dump_ufloats(lst,format="%7.3f",cnt=9):
+      # WARNING: internal routine, subject to change
       c = cnt
       for a in lst:
          print format%abs(a),
@@ -815,6 +843,7 @@ if __name__=='pymol.cmd':
       return None
 
    def _raising():
+      # WARNING: internal routine, subject to change
       return get_setting_legacy("raise_exceptions")
 
    #######################################################################
@@ -828,9 +857,11 @@ if __name__=='pymol.cmd':
    #######################################################################
 
    def ready(): # INTERNAL
+      # WARNING: internal routine, subject to change
       return _cmd.ready()
 
    def setup_global_locks(): # INTERNAL, OBSOLETE?
+      # WARNING: internal routine, subject to change
       pass
 
    def null():
@@ -840,29 +871,39 @@ if __name__=='pymol.cmd':
 
    def extend(name,function):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "extend" is an API-only function which binds a new external
-      function as a command into the PyMOL scripting language.
+   "extend" is an API-only function which binds a new external
+   function as a command into the PyMOL scripting language.
 
-   PYMOL API
+PYMOL API
 
-      cmd.extend(string name,function function)
+   cmd.extend(string name,function function)
 
-   PYTHON EXAMPLE
+PYTHON EXAMPLE
 
-      def foo(moo=2): print moo
-      cmd.extend('foo',foo)
+   def foo(moo=2): print moo
+   cmd.extend('foo',foo)
 
-      The following would now be valid within PyMOL:
+   The following would now work within PyMOL:
 
-      foo
-      foo 3
-      foo moo=5
+   PyMOL>foo
+   2
+   PyMOL>foo 3
+   3
+   PyMOL>foo moo=5
+   5
+   PyMOL>foo ?
+   Usage: foo [ moo ]
 
-   SEE ALSO
+NOTES
 
-      alias, api
+   For security reasons, new PyMOL commands created using "extend" are
+   not saved or restored in sessions.
+   
+SEE ALSO
+
+   alias, api
       '''
       keyword[name] = [function, 0,0,',',parsing.STRICT]
       kwhash.append(name)
@@ -872,26 +913,31 @@ if __name__=='pymol.cmd':
 
    def alias(name,command):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "alias" allows you to bind a commonly used command to a single word
+   "alias" allows you to bind a commonly used command to a single PyMOL keyword.
 
-   USAGE
+USAGE
 
-      alias name, command-sequence
+   alias name, command-sequence
 
-   PYMOL API
+PYMOL API
 
-      cmd.alias(string name,string command)
+   cmd.alias(string name,string command)
 
-   EXAMPLES
+EXAMPLES
 
-      alias go,load "test.pdb"; zoom (i;500); show sticks,(i;500 a;4)
-      go
+   alias go,load $TUT/1hpv.pdb; zoom 200/; show sticks, 200/ around 8
+   go
 
-   SEE ALSO
+NOTES
 
-      extend
+   For security reasons, new PyMOL commands created using "extend" are
+   not saved or restored in sessions.
+
+SEE ALSO
+
+   extend, api
       '''
       keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]
       kwhash.append(name)
@@ -921,33 +967,42 @@ if __name__=='pymol.cmd':
 
    def dummy(*arg):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      This is a dummy function which returns None.
+   This is a dummy function which returns None.
       '''
       #'
       return None
 
-   def dummy_python(*arg):
-      '''
-   DESCRIPTION
+   def python_help(*arg):
+      r'''
+DESCRIPTION
 
-      This is a Python keyword which is available from within the PyMOL
-      command language.  Note that multi-line blocks of Python in PyMOL
-      command files will require explicit continuation syntax in order to
-      execute properly (see below).  
+   You've asked for help on a Python keyword which is available from
+   within the PyMOL command language.  Please consult the official
+   Python documentation at http://www.python.org for detailed
+   information on Python keywords.
 
-      Generally, if you want to write Python command which span multiple
-      lines, use ".py" file.  You will get better error checking, and
-      more predictable results.
+   You may include Python blocks in your PyMOL command scripts, but do
+   note that multi-line blocks of Python in PyMOL command files will
+   require explicit continuation syntax in order to execute properly
+   (see below).
 
-   EXAMPLES
+   Generally, if you want to write Python block which span multiple
+   lines, you will want to use ".py" file, and then use "extend" in
+   order to expose your new code to the PyMOL command language.  This
+   will give you better error checking and more predictable results.
 
-      a=1
-      while a<10: \
-         print a \
-         a=a+1
+EXAMPLES
 
+   a=1
+   while a<10: \
+      print a \
+      a=a+1
+
+SEE ALSO
+
+   extend, run, @
       '''
       return None
 
@@ -1263,24 +1318,24 @@ if __name__=='pymol.cmd':
       'align'         : [ align             , 0 , 0 , ''  , parsing.STRICT ],
       'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ],
       'alter_state'   : [ alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ],
-      'assert'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ], 
+      'assert'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
       'attach'        : [ attach            , 0 , 0 , ''  , parsing.STRICT ],
       'backward'      : [ backward          , 0 , 0 , ''  , parsing.STRICT ],
       'bg_color'      : [ bg_color          , 0 , 0 , ''  , parsing.STRICT ],
       'bond'          : [ bond              , 0 , 0 , ''  , parsing.STRICT ],
-      'break'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
+      'break'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'button'        : [ button            , 0 , 0 , ''  , parsing.STRICT ],
       'cartoon'       : [ cartoon           , 0 , 0 , ''  , parsing.STRICT ],
       'cd'            : [ cd                , 0 , 0 , ''  , parsing.STRICT ],
       'center'        : [ center            , 0 , 0 , ''  , parsing.STRICT ],     
       'check'         : [ check             , 0 , 0 , ''  , parsing.STRICT ],
-      'class'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ], 
+      'class'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
       'clip'          : [ clip              , 0 , 0 , ''  , parsing.STRICT ],
       'cls'           : [ cls               , 0 , 0 , ''  , parsing.STRICT ],
       'color'         : [ color             , 0 , 0 , ''  , parsing.STRICT ],
       'commands'      : [ helping.commands  , 0 , 0 , ''  , parsing.STRICT ],
       'config_mouse'  : [ config_mouse      , 0 , 0 , ''  , parsing.STRICT ],
-      'continue'      : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'continue'      : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'copy'          : [ copy              , 0 , 0 , ''  , parsing.LEGACY ],
       'count_atoms'   : [ count_atoms       , 0 , 0 , ''  , parsing.STRICT ],
       'count_frames'  : [ count_frames      , 0 , 0 , ''  , parsing.STRICT ],   
@@ -1289,8 +1344,8 @@ if __name__=='pymol.cmd':
       'create'        : [ create            , 0 , 0 , ''  , parsing.LEGACY ],
       'decline'       : [ decline           , 0 , 0 , ''  , parsing.STRICT ],      
       'delete'        : [ delete            , 0 , 0 , ''  , parsing.STRICT ],
-      'def'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
-      'del'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'def'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
+      'del'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'deprotect'     : [ deprotect         , 0 , 0 , ''  , parsing.STRICT ],
       'deselect'      : [ deselect          , 0 , 0 , ''  , parsing.STRICT ],
       'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
@@ -1300,20 +1355,20 @@ if __name__=='pymol.cmd':
       'dummy'         : [ dummy             , 0 , 0 , ''  , parsing.STRICT ],   
       'edit'          : [ edit              , 0 , 0 , ''  , parsing.STRICT ],
       'edit_mode'     : [ edit_mode         , 0 , 0 , ''  , parsing.STRICT ],
-      'elif'          : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
-      'else'          : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'elif'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
+      'else'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'enable'        : [ enable            , 0 , 0 , ''  , parsing.STRICT ],
       'ending'        : [ ending            , 0 , 0 , ''  , parsing.STRICT ],
-      'except'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],      
-      'exec'          : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
+      'except'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],      
+      'exec'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'export_dots'   : [ export_dots       , 0 , 0 , ''  , parsing.STRICT ],
       'extend'        : [ extend            , 0 , 0 , ''  , parsing.STRICT ],
       'fast_minimize' : [ fast_minimize     , 1,  4 , ',' , parsing.SIMPLE ], # TO REMOVE
       'feedback'      : [ feedback          , 0,  0 , ''  , parsing.STRICT ],
       'fit'           : [ fit               , 0 , 0 , ''  , parsing.STRICT ],
-      'finally'       : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'finally'       : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'flag'          : [ flag              , 0 , 0 , ''  , parsing.LEGACY ],
-      'for'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'for'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'fork'          : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],
       'forward'       : [ forward           , 0 , 0 , ''  , parsing.STRICT ],
       'fragment'      : [ fragment          , 0 , 0 , ''  , parsing.STRICT ],
@@ -1329,15 +1384,15 @@ if __name__=='pymol.cmd':
       'get_title'     : [ get_title         , 0 , 0 , ''  , parsing.STRICT ],   
       'get_type'      : [ get_type          , 0 , 0 , ''  , parsing.STRICT ],
       'get_view'      : [ get_view          , 0 , 0 , ''  , parsing.STRICT ],
-      'global'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
+      'global'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'h_add'         : [ h_add             , 0 , 0 , ''  , parsing.STRICT ],
       'h_fill'        : [ h_fill            , 0 , 0 , ''  , parsing.STRICT ],
       'help'          : [ help              , 0 , 0 , ''  , parsing.STRICT ],
       'hide'          : [ hide              , 0 , 0 , ''  , parsing.STRICT ],
       'id_atom'       : [ id_atom           , 0 , 0 , ''  , parsing.STRICT ],
       'identify'      : [ identify          , 0 , 0 , ''  , parsing.STRICT ],
-      'if'            : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
-      'import'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
+      'if'            : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
+      'import'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'index'         : [ index             , 0 , 0 , ''  , parsing.STRICT ],
       'indicate'      : [ indicate          , 0 , 0 , ''  , parsing.STRICT ],   
       'intra_fit'     : [ intra_fit         , 0 , 0 , ''  , parsing.STRICT ],
@@ -1383,12 +1438,12 @@ if __name__=='pymol.cmd':
       'orient'        : [ orient            , 0 , 0 , ''  , parsing.STRICT ],
       'overlap'       : [ overlap           , 0 , 0 , ''  , parsing.STRICT ],
       'pair_fit'      : [ pair_fit          , 2 ,98 , ',' , parsing.SIMPLE ],
-      'pass'          : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'pass'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'phi_psi'       : [ phi_psi           , 0 , 0 , ''  , parsing.STRICT ],
       'protect'       : [ protect           , 0 , 0 , ''  , parsing.STRICT ],
       'push_undo'     : [ push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
       'pwd'           : [ pwd               , 0 , 0 , ''  , parsing.STRICT ],
-      'raise'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'raise'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'ramp_new'      : [ ramp_new          , 0 , 0 , ''  , parsing.STRICT ],      
       'ray'           : [ ray               , 0 , 0 , ''  , parsing.STRICT ],
       'rebuild'       : [ rebuild           , 0 , 0 , ''  , parsing.STRICT ],
@@ -1404,7 +1459,7 @@ if __name__=='pymol.cmd':
       'replace_wizard': [ replace_wizard    , 0 , 0 , ''  , parsing.STRICT ],
       'reset'         : [ reset             , 0 , 0 , ''  , parsing.STRICT ],
       'resume'        : [ resume            , 0 , 0 , ''  , parsing.STRICT ],
-      'return'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
+      'return'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'rewind'        : [ rewind            , 0 , 0 , ''  , parsing.STRICT ],
       'rock'          : [ rock              , 0 , 0 , ''  , parsing.STRICT ],
       'rotate'        : [ rotate            , 0 , 0 , ''  , parsing.STRICT ],   
@@ -1440,7 +1495,7 @@ if __name__=='pymol.cmd':
       'test'          : [ test              , 0 , 0 , ''  , parsing.STRICT ],
       'torsion'       : [ torsion           , 0 , 0 , ''  , parsing.STRICT ],
       'translate'     : [ translate         , 0 , 0 , ''  , parsing.STRICT ],
-      'try'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'try'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'turn'          : [ turn              , 0 , 0 , ''  , parsing.STRICT ],
       'quit'          : [ quit              , 0 , 0 , ''  , parsing.STRICT ],
       '_quit'         : [ _quit             , 0 , 0 , ''  , parsing.STRICT ],
@@ -1454,7 +1509,7 @@ if __name__=='pymol.cmd':
       'update'        : [ update            , 0 , 0 , ''  , parsing.STRICT ],
       'view'          : [ view              , 0 , 0 , ''  , parsing.STRICT ],   
       'viewport'      : [ viewport          , 0 , 0 , ''  , parsing.STRICT ],
-      'while'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
+      'while'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'wizard'        : [ wizard            , 0 , 0 , ''  , parsing.STRICT ],
       'zoom'          : [ zoom              , 0 , 0 , ''  , parsing.STRICT ],
    # utility programs
@@ -1506,7 +1561,8 @@ if __name__=='pymol.cmd':
       'get_type'      : [ get_type              , 0 , 0 , '' , 0 ],
       'faster'        : [ helping.faster       , 0 , 0 , '' , 0 ],
       'sync'          : [ sync                 , 0 , 0 , '' , 0],
-      'transparency'  : [ helping.transparency , 0 , 0 , '' , 0 ],  
+      'transparency'  : [ helping.transparency , 0 , 0 , '' , 0 ],
+      'python_help'   : [ python_help          , 0 , 0 , '' , 0 ],        
       '@'             : [ helping.at_sign      , 0 , 0 , '' , 0 ],  
    }
 
