@@ -290,7 +290,6 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 
 static void ObjectGadgetRampBuild(ObjectGadgetRamp *I)
 {
-  OrthoBusyPrime();
   GadgetSet *gs = NULL;
   ObjectGadget *og;
   int a;
@@ -328,6 +327,8 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp *I)
    -1.0, 0.0, 0.0,
     0.0,-1.0, 0.0,
   };
+
+  OrthoBusyPrime();
 
   og = &I->Gadget;
   gs = GadgetSetNew();

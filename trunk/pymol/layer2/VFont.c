@@ -47,8 +47,8 @@ void VFontRecFree(VFontRec *I);
 
 VFontRec *VFontRecNew(void)
 {
-  OOAlloc(VFontRec);
   int a;
+  OOAlloc(VFontRec);
   for(a=0;a<=VFONT_MASK;a++) {
     I->advance[a]=0.0F;
     I->offset[a]=-1;
