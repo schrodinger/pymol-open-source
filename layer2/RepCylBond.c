@@ -878,8 +878,8 @@ Rep *RepCylBondNew(CoordSet *cs)
       }
       if((a1>=0)&&(a2>=0))
         {
-          obj->AtomInfo[a1].temp1 = false; /* use the kludge field for sphere marker */
-          obj->AtomInfo[a2].temp1 = false;
+          obj->AtomInfo[b1].temp1 = false; /* use the kludge field for sphere marker */
+          obj->AtomInfo[b2].temp1 = false;
           
           if(valence!=0.0F) {
             switch(ord) {

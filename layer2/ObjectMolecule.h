@@ -190,6 +190,7 @@ typedef struct {
 
 typedef struct {
   int annotated_flag;
+  int invisible;
   int n_context;
   M4XContextType *context;
   int xname_flag;

@@ -83,7 +83,7 @@ void OrthoPasteIn(char *buffer);
 void OrthoRemoveSplash(void);
 void OrthoSplash(void);
 int OrthoArrowsGrabbed(void);
-void OrthoSpecial(int k,int x,int y);
+void OrthoSpecial(int k,int x,int y,int mod);
 int  OrthoCommandWaiting(void);
 
 int OrthoTextVisible(void);

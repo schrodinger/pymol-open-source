@@ -712,14 +712,20 @@ DEVELOPMENT TO DO
 
    # function keys and other specials
 
-   def _special(k,x,y): # INTERNAL (invoked when special key is pressed)
+   def _special(k,x,y,m=0): # INTERNAL (invoked when special key is pressed)
       # WARNING: internal routine, subject to change
       k=int(k)
-      if special.has_key(k):
-         if special[k][1]:
-            apply(special[k][1],special[k][2],special[k][3])
+      m=int(m)
+      my_special = special
+      if(m>0) and (m<5):
+         my_special = (special, shft_special, ctrl_special, special, alt_special)[m]
+      if my_special.has_key(k):
+         if my_special[k][1]:
+            apply(my_special[k][1],my_special[k][2],my_special[k][3])
          else:
-            key = special[k][0]
+            key = my_special[k][0]
+            if(m>0) and (m<5):
+               key = ('','SHFT-','CTRL-','','ALT-')[m] + key
             if viewing.scene_dict.has_key(key):
                scene(key)
             elif viewing.view_dict.has_key(key):
@@ -1134,6 +1140,7 @@ SEE ALSO
         get_area,           \
         get_chains,         \
         get_color_indices,  \
+        get_object_color_index, \
         get_color_tuple,    \
         get_dihedral,       \
         get_extent,         \
@@ -1657,6 +1664,78 @@ SEE ALSO
       108      : [ 'insert'    , rock                   , () , {} ]   
    }
 
+   shft_special = {
+      1        : [ 'F1'        , None                   , () , {} ],
+      2        : [ 'F2'        , None                   , () , {} ],
+      3        : [ 'F3'        , None                   , () , {} ],
+      4        : [ 'F4'        , None                   , () , {} ],
+      5        : [ 'F5'        , None                   , () , {} ],
+      6        : [ 'F6'        , None                   , () , {} ],
+      7        : [ 'F7'        , None                   , () , {} ],
+      8        : [ 'F8'        , None                   , () , {} ],
+      9        : [ 'F9'        , None                   , () , {} ],
+      10       : [ 'F10'       , None                   , () , {} ],
+      11       : [ 'F11'       , None                   , () , {} ],
+      12       : [ 'F12'       , None                   , () , {} ],
+      100      : [ 'left'      , backward               , () , {} ],
+      101      : [ 'up'        , None                   , () , {} ],
+      102      : [ 'right'     , forward                , () , {} ],
+      103      : [ 'down'      , None                   , () , {} ],
+      104      : [ 'pgup'      , rewind                 , () , {} ],
+      105      : [ 'pgdn'      , ending                 , () , {} ],
+      106      : [ 'home'      , zoom                   , () , {} ],
+      107      : [ 'end'       , ending                 , () , {} ],
+      108      : [ 'insert'    , rock                   , () , {} ]   
+   }
+
+   alt_special = { # NOTE: some OSes/Windowing systems intercept ALT-Fn keys.
+      1        : [ 'F1'        , None                   , () , {} ],
+      2        : [ 'F2'        , None                   , () , {} ],
+      3        : [ 'F3'        , None                   , () , {} ],
+      4        : [ 'F4'        , None                   , () , {} ],
+      5        : [ 'F5'        , None                   , () , {} ],
+      6        : [ 'F6'        , None                   , () , {} ],
+      7        : [ 'F7'        , None                   , () , {} ],
+      8        : [ 'F8'        , None                   , () , {} ],
+      9        : [ 'F9'        , None                   , () , {} ],
+      10       : [ 'F10'       , None                   , () , {} ],
+      11       : [ 'F11'       , None                   , () , {} ],
+      12       : [ 'F12'       , None                   , () , {} ],
+      100      : [ 'left'      , backward               , () , {} ],
+      101      : [ 'up'        , None                   , () , {} ],
+      102      : [ 'right'     , forward                , () , {} ],
+      103      : [ 'down'      , None                   , () , {} ],
+      104      : [ 'pgup'      , rewind                 , () , {} ],
+      105      : [ 'pgdn'      , ending                 , () , {} ],
+      106      : [ 'home'      , zoom                   , () , {} ],
+      107      : [ 'end'       , ending                 , () , {} ],
+      108      : [ 'insert'    , rock                   , () , {} ]   
+   }
+
+   ctrl_special = { # NOTE: some OSes/Windowing systems intercept CTRL-Fn keys.
+      1        : [ 'F1'        , None                   , () , {} ],
+      2        : [ 'F2'        , None                   , () , {} ],
+      3        : [ 'F3'        , None                   , () , {} ],
+      4        : [ 'F4'        , None                   , () , {} ],
+      5        : [ 'F5'        , None                   , () , {} ],
+      6        : [ 'F6'        , None                   , () , {} ],
+      7        : [ 'F7'        , None                   , () , {} ],
+      8        : [ 'F8'        , None                   , () , {} ],
+      9        : [ 'F9'        , None                   , () , {} ],
+      10       : [ 'F10'       , None                   , () , {} ],
+      11       : [ 'F11'       , None                   , () , {} ],
+      12       : [ 'F12'       , None                   , () , {} ],
+      100      : [ 'left'      , backward               , () , {} ],
+      101      : [ 'up'        , None                   , () , {} ],
+      102      : [ 'right'     , forward                , () , {} ],
+      103      : [ 'down'      , None                   , () , {} ],
+      104      : [ 'pgup'      , rewind                 , () , {} ],
+      105      : [ 'pgdn'      , ending                 , () , {} ],
+      106      : [ 'home'      , zoom                   , () , {} ],
+      107      : [ 'end'       , ending                 , () , {} ],
+      108      : [ 'insert'    , rock                   , () , {} ]   
+   }
+
    ctrl = {
       'A' : [ redo                   , () , {}],
       'B' : [ replace                , ('Br',1,1), {} ],
@@ -1720,8 +1799,9 @@ SEE ALSO
       'v' : [ editor.attach_amino_acid, ("pk1","val"), {}],
       'w' : [ editor.attach_amino_acid, ("pk1","trp"), {}],
       'y' : [ editor.attach_amino_acid, ("pk1","tyr"), {}],
-      'z' : [ editor.attach_amino_acid, ("pk1","nme"), {}],                              
+      'z' : [ editor.attach_amino_acid, ("pk1","nme"), {}],         
       }
+
 
    selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
    object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))

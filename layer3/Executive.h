@@ -174,6 +174,7 @@ int ExecutiveSetVisFromPyDict(PyObject *dict);
 int ExecutiveGetCrystal(char *sele,float *a,float *b,float *c,
                         float *alpha,float *beta,float *gamma,char *sgroup,int *defined);
 int ExecutiveIterateObjectMolecule(ObjectMolecule **obj,void **hidden);
+int ExecutiveGetObjectColorIndex(char *name);
 
 #endif
 

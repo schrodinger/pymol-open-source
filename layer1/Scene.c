@@ -1410,8 +1410,6 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                                 SettingGetGlobal_i(cSetting_state)-1);
 
 
-          WizardDoPick(1);
-
           if(mode==cButModePkTorBnd) {
             /* get ready to drag */
             SceneDontCopyNext();
@@ -1426,7 +1424,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               break;
             }
           }
+          WizardDoPick(1);
+        } else {
+          WizardDoPick(0);
         }
+        if(SettingGet(cSetting_auto_hide_selections))
+          ExecutiveHideSelections();
         break;
       case cObjectGadget:
         break;
@@ -1534,6 +1537,13 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
               sprintf(buffer,"cmd.origin(\"%s\")",buf1);
               PLog(buffer,cPLog_pym);
+
+            }
+            if(Feedback(FB_ObjectMolecule,FB_Results)) {
+              if(obj->fDescribeElement) 
+                obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+              PRINTF " You clicked %s",buffer ENDF;        
+              OrthoRestorePrompt();
             }
           }
           PRINTFB(FB_Scene,FB_Actions) 
