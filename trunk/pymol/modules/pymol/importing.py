@@ -50,6 +50,8 @@ class loadable:
    cex = 20      # cex format
    top = 21      # AMBER topology
    trj = 22      # AMBER trajectory
+   crd = 23      # AMBER coordinate
+   rst = 24      # AMBER restart
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -143,6 +145,83 @@ PYMOL API
    lst.extend(list(arg))
    return apply(load_object,lst,kw)
 
+def load_traj(filename,object='',state=0,format='',interval=1,
+              average=1,start=1,stop=-1,max=-1):
+   '''
+DESCRIPTION
+  
+   "load_traj" reads trajectory files.  The file extension is used to
+   determine the format.  AMBER files must end in ".trj",
+ 
+USAGE
+ 
+   load_traj filename [,object [,state [,format [,interval [,average ]
+                      [,start [, stop ]]]]]]
+ 
+PYMOL API
+  
+   cmd.load_traj( filename [,object [,state [,format [,interval [,average ]
+                      [,start [, stop [, max ]]]]]]]
+
+SEE ALSO
+
+   load
+   '''
+   r = 1
+   try:
+      lock()
+      type = format
+      ftype = 0
+      state = int(state)
+      interval = int(interval)
+      average = int(average)
+      start = int(start)
+      stop = int(stop)
+      max = int(max)
+
+      fname = filename
+      fname = os.path.expanduser(fname)
+      fname = os.path.expandvars(fname)
+
+      if not len(str(type)):
+         # determine file type if possible
+         if re.search("\.trj$",filename,re.I):
+            ftype = loadable.trj
+         else:
+            raise QuietException
+      elif cmd.is_string(type):
+         try:
+            ftype = int(type)
+         except:
+            type = loadable_sc.auto_err(type,'file type')
+            if hasattr(loadable,type):
+               ftype = getattr(loadable,type)
+            else:
+               print "Error: unknown type '%s'",type
+               raise QuietException
+      else:
+         ftype = int(type)
+
+# get object name
+      if len(str(object))==0:
+         oname = re.sub(r".*\/|.*\\","",filename) # strip path
+         oname = file_ext_re.sub("",oname) # strip extension
+         oname = safe_oname_re.sub("_",oname)
+         if not len(oname): # safety
+            oname = 'obj01'
+      else:
+         oname = string.strip(object)
+
+      if ftype>=0:
+         r = _cmd.load_traj(str(oname),fname,int(state)-1,int(ftype),
+                            int(interval),int(average),int(start),
+                            int(stop),int(max))
+   finally:
+      unlock()
+   return r
+   
+              
+              
 def load(filename,object='',state=0,format='',finish=1,discrete=0):
    '''
 DESCRIPTION
@@ -225,6 +304,10 @@ SEE ALSO
             ftype = loadable.top
          elif re.search("\.trj$",filename,re.I):
             ftype = loadable.trj
+         elif re.search("\.crd$",filename,re.I):
+            ftype = loadable.crd
+         elif re.search("\.rst$",filename,re.I):
+            ftype = loadable.crd
          else:
             ftype = loadable.pdb # default is PDB
       elif cmd.is_string(type):

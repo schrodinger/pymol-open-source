@@ -92,6 +92,8 @@ Z* -------------------------------------------------------------------
 #define cLoadTypePMO  19
 #define cLoadTypeTOP  21
 #define cLoadTypeTRJ  22
+#define cLoadTypeCRD  23
+#define cLoadTypeRST  24
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -245,6 +247,7 @@ static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
 static PyObject *CmdLoadCoords(PyObject *self, PyObject *args);
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args);
 static PyObject *CmdLoadPNG(PyObject *self, PyObject *args);
+static PyObject *CmdLoadTraj(PyObject *self, 	PyObject *args);
 static PyObject *CmdMapNew(PyObject *self, 	PyObject *args);
 static PyObject *CmdMapSetBorder(PyObject *self, 	PyObject *args);
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args);
@@ -405,6 +408,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"load_coords",           CmdLoadCoords,           METH_VARARGS },
 	{"load_png",              CmdLoadPNG,              METH_VARARGS },
 	{"load_object",           CmdLoadObject,           METH_VARARGS },
+	{"load_traj",             CmdLoadTraj,             METH_VARARGS },
    {"map_new",               CmdMapNew,               METH_VARARGS },
    {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
 	{"mask",	                 CmdMask,                 METH_VARARGS },
@@ -3293,6 +3297,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       case cLoadTypePMO:
       case cLoadTypeTOP:
       case cLoadTypeTRJ:
+      case cLoadTypeCRD:
         new_type = cObjectMolecule;
         break;
       case cLoadTypeChemPyBrick:
@@ -3359,14 +3364,43 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeTRJ:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
-        ObjectMoleculeLoadTRJFile((ObjectMolecule*)origObj,fname,frame,discrete);
+        ObjectMoleculeLoadTRJFile((ObjectMolecule*)origObj,fname,frame,
+                                  1,1,1,-1,-1);
         /* if(finish)
            ExecutiveUpdateObjectSelection(origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
                 fname,oname,((ObjectMolecule*)origObj)->NCSet);
       } else {
         PRINTFB(FB_CCmd,FB_Errors)
-          "CmdLoad-Error: object must exist before loading trajectory!\n"
+          "CmdLoad-Error: must load object topology before loading trajectory!"
+          ENDFB;
+      }
+      break;
+    case cLoadTypeCRD:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading CRD\n" ENDFD;
+      if(origObj) { /* always reinitialize topology objects from scratch */
+        ObjectMoleculeLoadRSTFile((ObjectMolecule*)origObj,fname,frame);
+        /* if(finish)
+           ExecutiveUpdateObjectSelection(origObj); unnecc */
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
+                fname,oname,((ObjectMolecule*)origObj)->NCSet);
+      } else {
+        PRINTFB(FB_CCmd,FB_Errors)
+          "CmdLoad-Error: must load object topology before loading coordinate file!"
+          ENDFB;
+      }
+      break;
+    case cLoadTypeRST:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading RST\n" ENDFD;
+      if(origObj) { /* always reinitialize topology objects from scratch */
+        ObjectMoleculeLoadRSTFile((ObjectMolecule*)origObj,fname,frame);
+        /* if(finish)
+           ExecutiveUpdateObjectSelection(origObj); unnecc */
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
+                fname,oname,((ObjectMolecule*)origObj)->NCSet);
+      } else {
+        PRINTFB(FB_CCmd,FB_Errors)
+          "CmdLoad-Error: must load object topology before loading restart file!"
           ENDFB;
       }
       break;
@@ -3550,6 +3584,65 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         ObjectMapLoadXPLORFile((ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,oname);
+      }
+      break;
+    }
+    if(origObj) {
+      PRINTFB(FB_Executive,FB_Actions) 
+        "%s",buf
+        ENDFB;
+      OrthoRestorePrompt();
+    }
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+
+static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
+{
+  char *fname,*oname;
+  CObject *origObj = NULL;
+  OrthoLineType buf;
+  int frame,type;
+  int new_type;
+  int interval,average,start,stop,max;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"ssiiiiiii",&oname,&fname,&frame,&type,
+                        &interval,&average,&start,&stop,&max);
+
+  buf[0]=0;
+  if (ok) {
+    APIEntry();
+    origObj=ExecutiveFindObjectByName(oname);
+    /* check for existing object of right type, delete if not */
+    if(origObj) {
+      new_type = -1;
+      switch(type) {
+      case cLoadTypeTRJ:
+        new_type = cObjectMolecule;
+        break;
+      }
+      if (new_type!=origObj->type) {
+        ExecutiveDelete(origObj->Name);
+        origObj=NULL;
+      }
+    }
+    
+    switch(type) {
+    case cLoadTypeTRJ:
+      PRINTFD(FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
+      if(origObj) { /* always reinitialize topology objects from scratch */
+        ObjectMoleculeLoadTRJFile((ObjectMolecule*)origObj,fname,frame,
+                                  interval,average,start,stop,max);
+        /* if(finish)
+           ExecutiveUpdateObjectSelection(origObj); unnecc */
+        sprintf(buf," CmdLoadTraj: \"%s\" appended into object \"%s\".\n CmdLoadTraj: %d total states in the object.\n",
+                fname,oname,((ObjectMolecule*)origObj)->NCSet);
+      } else {
+        PRINTFB(FB_CCmd,FB_Errors)
+          "CmdLoadTraj-Error: must load object topology before loading trajectory!\n"
+          ENDFB;
       }
       break;
     }

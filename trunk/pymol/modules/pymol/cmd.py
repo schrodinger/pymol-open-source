@@ -77,8 +77,10 @@ file_ext_re= re.compile(string.join([
    r"\.pmo$|", # Experimental molecular object format
    r"\.PMO$|",
    r"\.ccp4$|\.CCP4$|", # CCP4
-   r"\.top$|\.TOP$|", # Topology
-   r"\.trj$|\.TRJ$|", # Trajectory
+   r"\.top$|\.TOP$|", # AMBER Topology
+   r"\.trj$|\.TRJ$|", # AMBER Trajectory
+   r"\.crd$|\.CRD$|", # AMBER coordinate file
+   r"\.rst$|\.RST$|", # AMBER restart
    r"\.cex$|\.CEX$", # CEX format (used by metaphorics)
    ],''))
 
@@ -755,6 +757,7 @@ from importing import \
      load_map,           \
      load_model,         \
      load_object,        \
+     load_traj,          \
      read_mmodstr,       \
      read_molstr,        \
      read_pdbstr,        \
@@ -1091,6 +1094,7 @@ keyword = {
    'label'         : [ label             , 0 , 0 , ''  , parsing.LITERAL1 ],
    'load'          : [ load              , 0 , 0 , ''  , parsing.STRICT ],
    'load_png'      : [ load_png          , 0 , 0 , ''  , parsing.STRICT ],
+   'load_traj'     : [ load_traj         , 0 , 0 , ''  , parsing.STRICT ],
    'log'           : [ log               , 0 , 0 , ''  , parsing.STRICT ],
    'log_close'     : [ log_close         , 0 , 0 , ''  , parsing.STRICT ],
    'log_open'      : [ log_open          , 0 , 0 , ''  , parsing.STRICT ],
@@ -1369,6 +1373,7 @@ auto_arg =[
    'save'           : [ selection_sc           , 'selection'       , ', ' ],
    'flag'           : [ selection_sc           , 'selection'       , ', ' ],   
    'load'           : [ selection_sc           , 'selection'       , ', ' ],
+   'load_traj'      : [ selection_sc           , 'selection'       , ', ' ],
    'create'         : [ selection_sc           , 'selection'       , ', ' ],
    'symexp'         : [ object_sc              , 'object'          , ', ' ],   
    'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
