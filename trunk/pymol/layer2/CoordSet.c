@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"ButMode.h"
 #include"Matrix.h"
+#include"Sphere.h"
 
 #include"RepWireBond.h"
 #include"RepCylBond.h"
@@ -381,7 +382,8 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 
   /*  printf("inv %d %d \n",type,level);fflush(stdout);*/
 
-  if(I->NSpheroid!=I->NIndex) {
+  if(I->NSpheroid!=I->NIndex*I->SpheroidSphereSize) {
+
     FreeP(I->Spheroid);
     FreeP(I->SpheroidNormal);
   }
@@ -534,6 +536,7 @@ CoordSet *CoordSetNew(void)
   I->Obj = NULL;
   I->Spheroid = NULL;
   I->SpheroidNormal = NULL;
+  I->SpheroidSphereSize = Sphere1->nDot;
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   return(I);

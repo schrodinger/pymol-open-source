@@ -2249,7 +2249,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     
 	 nAtom=cset->NIndex;
   }
-
+  printf("load chempy model %p %p\n",cset->Spheroid,cset->SpheroidNormal);
   /* include coordinate set */
   if(ok) {
     cset->Obj = I;
@@ -2730,6 +2730,9 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
 
   oldNAtom = I->NAtom;
   oldNBond = I->NBond;
+
+
+  printf("merge %p %p\n",cs->Spheroid,cs->SpheroidNormal);
 
   /* first, sort the coodinate set */
   
