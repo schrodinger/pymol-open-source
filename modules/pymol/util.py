@@ -42,7 +42,7 @@ def sum_partial_charges(selection="(all)",quiet=1):
       print " util.sum_partial_charges: sum = %0.3f"%result
    return result
 
-def protein_vacuum_esp(selection, absolute=1,border=10.0,quiet = 1):
+def protein_vacuum_esp(selection, mode=2,border=10.0,quiet = 1):
 
    if ((string.split(selection)!=[selection]) or
        selection not in cmd.get_names('objects')):
@@ -112,15 +112,18 @@ def protein_vacuum_esp(selection, absolute=1,border=10.0,quiet = 1):
    sep = max_length/50.0
    if sep<1.0: sep = 1.0
    print " Util: Calculating electrostatic potential..."
-   if absolute:
+   if mode==0: # absolute, no cutoff
       cmd.map_new(map_name,"coulomb",sep,obj_name,border)
-   else:
+   elif mode==1: # neutral, no cutoff
       cmd.map_new(map_name,"coulomb_neutral",sep,obj_name,border)
+   else: # local, with cutoff
+      cmd.map_new(map_name,"coulomb_local",sep,obj_name,border)      
       
    cmd.ramp_new(pot_name, map_name, selection=obj_name,zero=1)
    cmd.hide("everything",obj_name)
    cmd.show("surface",obj_name)
    cmd.set("surface_color",pot_name,obj_name)
+   cmd.set("surface_ramp_above_mode",1,obj_name)
    
 def color_carbon(color,selection="(all)"):
    selection = str(selection)

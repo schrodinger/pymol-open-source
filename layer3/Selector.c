@@ -1,7 +1,7 @@
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+C* copyright 1998-2004 by Warren Lyford Delano of DeLano Scientific. 
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
 F* -------------------------------------------------------------------
@@ -4661,7 +4661,8 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
 
 
 /*========================================================================*/
-int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,int neutral)
+int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,
+                       int neutral,int shift,float shift_power)
 {
   SelectorType *I=&Selector;
   MapType *map;
@@ -4683,6 +4684,11 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,int
   int n_occur;
   float *v0,*v1;
   float c_factor = 1.0F;
+  float cutoff_to_power = 1.0F;
+  const float _1=1.0F;
+
+  if(shift)
+    cutoff_to_power = pow(cutoff,shift_power);
 
   c_factor=SettingGet(cSetting_coulomb_units_factor)/
     SettingGet(cSetting_coulomb_dielectric);
@@ -4803,9 +4809,16 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,int
     register float dist;
 
     if(cutoff>0.0F) {/* we are using a cutoff */
-      PRINTFB(FB_Selector,FB_Details)
-        " SelectorMapCoulomb: Evaluating Coulomb potential for grid (cutoff=%0.2f)...\n",cutoff
-        ENDFB;
+      if(shift) {
+        PRINTFB(FB_Selector,FB_Details)
+          " SelectorMapCoulomb: Evaluating local Coulomb potential for grid (shift=%0.2f)...\n",
+          cutoff
+          ENDFB;        
+      } else {
+        PRINTFB(FB_Selector,FB_Details)
+          " SelectorMapCoulomb: Evaluating Coulomb potential for grid (cutoff=%0.2f)...\n",cutoff
+          ENDFB;
+      }
 
       map=MapNew(-(cutoff),point,n_point,NULL);
       if(map) {
@@ -4850,8 +4863,16 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,int
                       dist = (float)sqrt1f(dy);
 
                       if(dist>R_SMALL4) {
-                        F3(data,a,b,c) +=  charge[j]/dist;
+                        if(shift) {
+                          if(dist<cutoff) {
+                            F3(data,a,b,c) +=  (charge[j]/dist)*
+                              (_1-pow(dist,shift_power)/cutoff_to_power);
+                          } 
+                        } else {
+                          F3(data,a,b,c) +=  charge[j]/dist;
+                        }
                       }
+
                       break;
                     } 
                     j=map->EList[i++];

@@ -28,6 +28,7 @@ if __name__=='pymol.creating':
       'coulomb' : 1,
       'gaussian' : 2,
       'coulomb_neutral' : 3,
+      'coulomb_local' : 4,
       }
 
    map_type_sc = Shortcut(map_type_dict.keys())
