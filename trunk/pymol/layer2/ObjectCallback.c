@@ -60,44 +60,46 @@ static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable 
 
   PyObject *pobj = NULL;
 
-  if(state<I->NState) {
-    sobj = I->State+state;
-  }
-  if(state<0) {
-    if(I->State) {
-      PBlock();
-      for(a=0;a<I->NState;a++) {
-        sobj = I->State+a;
-        pobj=sobj->PObj;
-        if(ray) {    
-        } else if(pick&&PMGUI) {
-        } else if(PMGUI) {
+  if(I->Obj.RepVis[cRepCallback]) {
+    if(state<I->NState) {
+      sobj = I->State+state;
+    }
+    if(state<0) {
+      if(I->State) {
+        PBlock();
+        for(a=0;a<I->NState;a++) {
+          sobj = I->State+a;
+          pobj=sobj->PObj;
+          if(ray) {    
+          } else if(pick&&PMGUI) {
+          } else if(PMGUI) {
+            if(PyObject_HasAttrString(pobj,"__call__")) {
+              Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
+            }
+            if(PyErr_Occurred())
+              PyErr_Print();
+          }
+        }
+        PUnblock();
+      }
+    } else {
+      if(!sobj) {
+        if(I->NState&&SettingGet(cSetting_static_singletons)) 
+          sobj = I->State;
+      }
+      if(ray) {    
+      } else if(pick&&PMGUI) {
+      } else if(PMGUI) {
+        if(sobj) {
+          pobj=sobj->PObj;
+          PBlock();
           if(PyObject_HasAttrString(pobj,"__call__")) {
             Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
           }
           if(PyErr_Occurred())
             PyErr_Print();
+          PUnblock();
         }
-      }
-      PUnblock();
-    }
-  } else {
-    if(!sobj) {
-      if(I->NState&&SettingGet(cSetting_static_singletons)) 
-        sobj = I->State;
-    }
-    if(ray) {    
-    } else if(pick&&PMGUI) {
-    } else if(PMGUI) {
-      if(sobj) {
-        pobj=sobj->PObj;
-        PBlock();
-        if(PyObject_HasAttrString(pobj,"__call__")) {
-          Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
-        }
-        if(PyErr_Occurred())
-          PyErr_Print();
-        PUnblock();
       }
     }
   }

@@ -54,7 +54,7 @@ def mol_hide(s):
            [ 1, 'surface'   , 'cmd.hide("surface"   ,"'+s+'")'  ],
            [ 0, ''          , ''                                ],
            [ 1, 'hydrogens' , 'cmd.hide("('+s+' and hydro)")'   ],
-           [ 1, 'everything', 'cmd.hide("('+s+')")'             ],
+           [ 1, 'everything', 'cmd.hide("everything","'+s+'")'  ],
            [ 0, ''          , ''                                ],           
            [ 1, 'unselected', 'cmd.hide("(not '+s+')")'         ],
            ]
@@ -214,8 +214,8 @@ def simple_action(s):
 
 def all_action(s):
    return [[ 2, 'Actions:'     , ''                      ],     
-           [ 1, 'origin'   , 'cmd.origin("'+s+'")'   ],
-           [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'     ],
+           [ 1, 'origin'   , 'cmd.origin("all")'   ],
+           [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
            [ 0, ''             , ''                      ],
            [ 1, 'delete'       , 'cmd.delete("all")'     ],
            [ 0, ''             , ''                      ],

@@ -1603,6 +1603,10 @@ static PyObject *CmdUpdate(PyObject *dummy, PyObject *args)
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
 {
   APIEntry();
+  PRINTFD(FB_CCmd)
+    " CmdDirty: called.\n"
+    ENDFD;
+
   OrthoDirty();
   APIExit();
   Py_INCREF(Py_None);
@@ -1903,9 +1907,14 @@ static PyObject *CmdMDo(PyObject *self, 	PyObject *args)
 {
   char *cmd;
   int frame;
-  PyArg_ParseTuple(args,"is",&frame,&cmd);
+  int append;
+  PyArg_ParseTuple(args,"isi",&frame,&cmd,&append);
   APIEntry();
-  MovieSetCommand(frame,cmd);
+  if(append) {
+    MovieAppendCommand(frame,cmd);
+  } else {
+    MovieSetCommand(frame,cmd);
+  }
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

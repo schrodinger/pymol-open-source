@@ -856,6 +856,10 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
   int c,s,n;
   int cycFlag=false;
   WordType name;
+
+  PRINTFD(FB_Selector)
+    " SelectorSubdivideObject: entered...\n"
+    ENDFD;
   SelectorDeletePrefixSet(pref);
   SelectorDeletePrefixSet(fragPref);
   /* delete any existing matches */
@@ -1023,6 +1027,10 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
       SelectorClean();
     }
   }
+  PRINTFD(FB_Selector)
+    " SelectorSubdivideObject: leaving...nFrag %d\n",nFrag
+    ENDFD;
+
   return(nFrag);
 }
 /*========================================================================*/

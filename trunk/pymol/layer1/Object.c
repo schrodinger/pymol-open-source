@@ -102,6 +102,7 @@ void ObjectInit(Object *I)
   OrthoRemoveSplash();
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
   I->RepVis[cRepCell]=false;
+  I->RepVis[cRepExtent]=false;
 }
 /*========================================================================*/
 void ObjectRenderUnitBox(Object *this,int frame,CRay *ray,Pickable **pick)

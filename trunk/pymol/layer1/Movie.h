@@ -36,6 +36,8 @@ void MovieFree(void);
 void MovieSequence(char *seq);
 void MoviePNG(char *prefix,int save);
 void MovieSetCommand(int frame,char *command);
+void MovieAppendCommand(int frame,char *command);
+
 void MovieDoFrameCommand(int frame);
 
 #define cMovieStop 0

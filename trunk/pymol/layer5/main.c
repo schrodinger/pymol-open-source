@@ -117,6 +117,9 @@ int MainSavingUnderWhileIdle(void)
 void MainDirty(void)
 {
   CMain *I = &Main;
+  PRINTFD(FB_Main)
+    " MainDirty: called.\n"
+    ENDFD;
   I->DirtyFlag=true;
   I->IdleMode = 0;
 }
@@ -392,6 +395,10 @@ void MainBusyIdle(void)
   CMain *I = &Main;
   /* flush command and output queues */
   
+  PRINTFD(FB_Main)
+    " MainBusyIdle: entered, IdleMode %d, DirtyFlag %d, SwapFlag %d\n",
+    I->IdleMode,I->DirtyFlag,I->SwapFlag
+    ENDFD;
   PLockAPIAsGlut();
 
   if(ControlIdling()) {
@@ -464,6 +471,10 @@ void MainBusyIdle(void)
     }
       
   }
+  PRINTFD(FB_Main)
+    " MainBusyIdle: leaving... IdleMode %d, DirtyFlag %d, SwapFlag %d\n",
+    I->IdleMode,I->DirtyFlag,I->SwapFlag
+    ENDFD;
 
 }
 
