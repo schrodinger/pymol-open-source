@@ -56,7 +56,7 @@ PyObject *CrystalAsPyList(CCrystal *I)
 int CrystalFromPyList(CCrystal *I,PyObject *list)
 {
   int ok=true;
-  int ll;
+  int ll=0;
   if(ok) ok = (I!=NULL);
   if(ok) ok = PyList_Check(list);
   if(ok) ll = PyList_Size(list);

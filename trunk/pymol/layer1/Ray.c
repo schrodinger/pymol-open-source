@@ -880,7 +880,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	MapCache cache,shadow_cache;
 	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect, _0, _1, _p5, _255, _persistLimit, _inv3;
 	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth;
-	int offset;
+	int offset=0;
 	
 	_0		= 0.0F;
 	_1		= 1.0F;
@@ -966,10 +966,11 @@ int RayTraceThread(CRayThreadInfo *T)
 		
 	for(yy = 0; (yy < T->height); yy++)
 	{
-		if((!T->phase)&&!(y & 0xF))
-			OrthoBusyFast(y,T->height); /* don't slow down rendering too much */
 		
-      y = (yy + offset) % ( T->height);
+      y = (yy + offset) % ( T->height); /* make sure threads write to different pages */
+
+		if((!T->phase)&&!(yy & 0xF))
+			OrthoBusyFast(y,T->height); /* don't slow down rendering too much */
 				
 		pixel = T->image + (T->width * y);
 	
