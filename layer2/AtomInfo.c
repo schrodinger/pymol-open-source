@@ -637,15 +637,15 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
           if(!wc) {
             wc=WordCompare(at1->resn,at2->resn,true);
             if(!wc) {
-              if(at1->alt[0]==at2->alt[0]) {
-                if(at1->priority==at2->priority) {
+              if(at1->priority==at2->priority) {
+                if(at1->alt[0]==at2->alt[0]) {
                   result=AtomNameCompare(at1->name,at2->name);
-                } else if(at1->priority<at2->priority) {
+                } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                   result=-1;
                 } else {
                   result=1;
                 }
-              } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+              } else if(at1->priority<at2->priority) {
                 result=-1;
               } else {
                 result=1;
@@ -713,15 +713,15 @@ int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2)
         if(!wc) {
           wc=WordCompare(at1->resn,at2->resn,true);
           if(!wc) {
-            if(at1->alt[0]==at2->alt[0]) {
-              if(at1->priority==at2->priority) {
+            if(at1->priority==at2->priority) {
+              if(at1->alt[0]==at2->alt[0]) {
                 result=AtomNameCompare(at1->name,at2->name);
-              } else if(at1->priority<at2->priority) {
+              } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                 result=-1;
               } else {
                 result=1;
               }
-            } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+            } else if(at1->priority<at2->priority) {
               result=-1;
             } else {
               result=1;

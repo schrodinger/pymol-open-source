@@ -160,9 +160,12 @@ PyMOL>ray
 PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
-PyMOL>edit id 2
+PyMOL>edit id 2,id 6, id 5
  Selector: selection "pk1" defined with 1 atoms.
-PyMOL>invert id 6,id 5
+ Selector: selection "pk2" defined with 1 atoms.
+ Selector: selection "pk3" defined with 1 atoms.
+PyMOL>invert
+ Editor: Inverted atom.
 PyMOL>print "%8.3f"%cmd.dist("id 28","id 17")
    1.957
 PyMOL>dele all
@@ -399,8 +402,8 @@ PyMOL>cmd.push_undo("pept",1)
 PyMOL>cmd.edit("(pept`10)",pkresi=1)
 PyMOL>cmd.push_undo("pept",1)
 PyMOL>get_extent
- cmd.extent: min: [  -5.188, -16.674,  13.157]
- cmd.extent: max: [   7.284,   0.863,  27.756]
+ cmd.extent: min: [  -5.124, -31.391,  12.760]
+ cmd.extent: max: [   8.919, -12.759,  27.469]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.

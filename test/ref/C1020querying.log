@@ -31,32 +31,34 @@ PyMOL>cmd.count_frames()
 PyMOL>cmd.count_states()
 PyMOL>cmd.count_atoms()
 PyMOL>dist
-cmd-Error: The 'lb' selection is undefined.
-cmd-Error: The 'rb' selection is undefined.
+cmd-Error: The 'pk1' selection is undefined.
+cmd-Error: The 'pk2' selection is undefined.
 PyMOL>distance
-cmd-Error: The 'lb' selection is undefined.
-cmd-Error: The 'rb' selection is undefined.
+cmd-Error: The 'pk1' selection is undefined.
+cmd-Error: The 'pk2' selection is undefined.
 PyMOL>select lb,resi 5 and name ca
  Selector: selection "lb" defined with 2 atoms.
 PyMOL>dist
-cmd-Error: The 'rb' selection is undefined.
+cmd-Error: The 'pk1' selection is undefined.
+cmd-Error: The 'pk2' selection is undefined.
 PyMOL>select rb,resi 8 and name ca
  Selector: selection "rb" defined with 2 atoms.
 PyMOL>dist
- Executive: object "dist01" created.
+cmd-Error: The 'pk1' selection is undefined.
+cmd-Error: The 'pk2' selection is undefined.
 PyMOL>dist (lb),resi 10 and name ca
- Executive: object "dist02" created.
+ Executive: object "dist01" created.
 PyMOL>distance resi 6 and name n,resi 9
- Executive: object "dist03" created.
+ Executive: object "dist02" created.
 PyMOL>distance resi 7 and name ca,all,3.0,zoom=1
- Executive: object "dist04" created.
+ Executive: object "dist03" created.
 PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 13 and name ca")
  3.841
 PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 14 and name ca")
  Distance-ERR: selection 2 contains no atoms.
 -1.000
 PyMOL>print cmd.find_pairs("name o","name n",mode=1,cutoff=3.4)
-[(('cpy', 107), ('pept', 1)), (('pept', 107), ('pept', 1)), (('cpy', 93), ('pept', 15)), (('pept', 93), ('pept', 15)), (('cpy', 64), ('pept', 34)), (('pept', 64), ('pept', 34)), (('cpy', 51), ('pept', 56)), (('cpy', 43), ('pept', 56)), (('pept', 51), ('pept', 56)), (('pept', 43), ('pept', 56)), (('cpy', 19), ('pept', 73)), (('pept', 19), ('pept', 73)), (('cpy', 8), ('pept', 100)), (('pept', 8), ('pept', 100)), (('cpy', 107), ('cpy', 1)), (('pept', 107), ('cpy', 1)), (('cpy', 93), ('cpy', 15)), (('pept', 93), ('cpy', 15)), (('cpy', 64), ('cpy', 34)), (('pept', 64), ('cpy', 34)), (('cpy', 51), ('cpy', 56)), (('cpy', 43), ('cpy', 56)), (('pept', 51), ('cpy', 56)), (('pept', 43), ('cpy', 56)), (('cpy', 19), ('cpy', 73)), (('pept', 19), ('cpy', 73)), (('cpy', 8), ('cpy', 100)), (('pept', 8), ('cpy', 100))]
+[(('cpy', 103), ('pept', 1)), (('pept', 103), ('pept', 1)), (('cpy', 83), ('pept', 15)), (('pept', 83), ('pept', 15)), (('cpy', 59), ('pept', 34)), (('pept', 59), ('pept', 34)), (('cpy', 47), ('pept', 56)), (('cpy', 37), ('pept', 56)), (('pept', 47), ('pept', 56)), (('pept', 37), ('pept', 56)), (('cpy', 18), ('pept', 73)), (('pept', 18), ('pept', 73)), (('cpy', 4), ('pept', 100)), (('pept', 4), ('pept', 100)), (('cpy', 103), ('cpy', 1)), (('pept', 103), ('cpy', 1)), (('cpy', 83), ('cpy', 15)), (('pept', 83), ('cpy', 15)), (('cpy', 59), ('cpy', 34)), (('pept', 59), ('cpy', 34)), (('cpy', 47), ('cpy', 56)), (('cpy', 37), ('cpy', 56)), (('pept', 47), ('cpy', 56)), (('pept', 37), ('cpy', 56)), (('cpy', 18), ('cpy', 73)), (('pept', 18), ('cpy', 73)), (('cpy', 4), ('cpy', 100)), (('pept', 4), ('cpy', 100))]
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.

@@ -126,8 +126,8 @@ ray
 
 dele all
 load dat/small01.mol
-edit id 2
-invert id 6,id 5
+edit id 2,id 6, id 5
+invert 
 print "%8.3f"%cmd.dist("id 28","id 17")
 
 #     iterate,            

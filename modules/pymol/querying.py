@@ -116,7 +116,7 @@ USAGE
    distance name = (selection1), (selection1) [,cutoff [,mode] ]
 
    name = name of distance object 
-   selection1,selection2 = atom selections
+   selection1, selection2 = atom selections
    cutoff = maximum distance to display
    mode = 0 (default)
 
@@ -142,22 +142,22 @@ NOTES
             if name[0]=='(' or ' ' in name or '/' in name: # we're one argument off...
                if cutoff!=None:
                   mode = cutoff
-               if selection2!="(rb)":
+               if selection2!="(pk2)":
                   cutoff = selection2
-               if selection1!="(lb)":
+               if selection1!="(pk1)":
                   selection2 = selection1
                selection1=name
                name = None
 
-      if selection1=="(lb)":
-         if "lb" not in cmd.get_names('selections'):
+      if selection1=="(pk1)":
+         if "pk1" not in cmd.get_names('selections'):
             if _feedback(fb_module.cmd,fb_mask.errors):
-               print "cmd-Error: The 'lb' selection is undefined."
+               print "cmd-Error: The 'pk1' selection is undefined."
             r = 0
-      if selection2=="(rb)":
-         if "rb" not in cmd.get_names('selections'):
+      if selection2=="(pk2)":
+         if "pk2" not in cmd.get_names('selections'):
             if _feedback(fb_module.cmd,fb_mask.errors):         
-               print "cmd-Error: The 'rb' selection is undefined."
+               print "cmd-Error: The 'pk2' selection is undefined."
             r = 0
       if r:         
          save=cmd.get_setting_legacy('auto_zoom')

@@ -12,10 +12,6 @@
 
 load dat/pept.pdb
 
-# don't change these, they're used later on
-
-select lb=(i;11&n;n)
-select rb=(i;11&n;c) 
 
 # trivial stuff
 
@@ -108,15 +104,17 @@ print "%8.4f"%cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)","(i;11&n
 
 # stuff which relies on mouse button selections
 
-dist 
-dist (lb),(rb)
-dist tst 
-dist tst2 = (lb),(rb)
+edit (i;11&n;n), (i;11&n;c), pkbond=0
 
-bond (lb),(rb)
+dist 
+dist (pk1),(pk2)
+dist tst 
+dist tst2 = (pk1),(pk2)
+
+bond 
 unbond 
-bond (lb),(rb),2
-unbond (lb),(rb)
+bond (pk1),(pk2),2
+unbond (pk1),(pk2)
 
 # copying, and some 2 object stuff
 
@@ -193,11 +191,9 @@ unmask
 
 # stuff which relies on an active editing selection
 
-select lb=(i;11&n;n)
-select rb=(i;11&n;c) 
-edit (i;11&n;ca)
+edit (i;11&n;ca),(i;11&n;n),(i;11&n;c) 
 invert 
-invert (lb),(rb)
+invert 
 
 edit (i;11&n;ca),(i;11&n;cb)
 torsion 10
