@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * adjusted reflectivity of interior color to better match exterior
+
+   * minor fixes to depth_cue and ray_trace_fog control and input 
+
    * now uses 3X less memory when rendering surface_type=2 (meshes)
 
    * fixed bug in surface generation code, & treaked surface modes

@@ -879,37 +879,36 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
 /*========================================================================*/
 void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,float scale)
 {
-  float w2;
+  register float w2;
   float d1[3],d2[3],d3[3];
   float p1[3],p2[3],p3[3];
-  int c=0;
+  register int c=0;
+  register const float _0 = 0.0F;
+  register float *impact = r->impact;
 
-  if(dot_product3f(light,n0-3)>=0.0F) c++;  
-  if(dot_product3f(light,n0)>=0.0F) c++;
-  if(dot_product3f(light,n0+3)>=0.0F) c++;
-  if(dot_product3f(light,n0+6)>=0.0F) c++;
+  if(dot_product3f(light,n0-3)>=_0) c++;  
+  else if(dot_product3f(light,n0)>=_0) c++;
+  else if(dot_product3f(light,n0+3)>=_0) c++;
+  else if(dot_product3f(light,n0+6)>=_0) c++;
   
   if(c) {
 
     w2 = 1.0F-(r->tri1+r->tri2);
     
-    subtract3f(v0,r->impact,d1);
+    subtract3f(v0,impact,d1);
+    subtract3f(v0+3,impact,d2);
+    subtract3f(v0+6,impact,d3);
     project3f(d1,n0,p1);
-    scale3f(p1,w2,d1);
-    
-    subtract3f(v0+3,r->impact,d2);
     project3f(d2,n0+3,p2);
-    scale3f(p2,r->tri1,d2);
-    
-    subtract3f(v0+6,r->impact,d3);
     project3f(d3,n0+6,p3);
+    scale3f(p1,w2,d1);
+    scale3f(p2,r->tri1,d2);
     scale3f(p3,r->tri2,d3);
-    
     add3f(d1,d2,d2);
     add3f(d2,d3,d3);
     scale3f(d3,scale,d3);
-    if(dot_product3f(r->surfnormal,d3)>=0.0F)
-      add3f(d3,r->impact,r->impact);
+    if(dot_product3f(r->surfnormal,d3)>=_0)
+      add3f(d3,impact,impact);
   }
 }
 
@@ -1101,6 +1100,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	int interior_flag;
 	int interior_shadows;
 	int interior_wobble;
+   float interior_reflect;
 	int wobble_save;
 	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect, _0, _1, _p5, _255, _persistLimit, _inv3;
 	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth,invHgtRange;
@@ -1115,6 +1115,7 @@ int RayTraceThread(CRayThreadInfo *T)
    unsigned int edge_avg[4];
    int edge_cnt=0;
    float base[2];
+   float interior_normal[3];
    float edge_width = 0.35356F;
    float edge_height = 0.35356F;
    float trans_spec_cut,trans_spec_scale;
@@ -1141,6 +1142,8 @@ int RayTraceThread(CRayThreadInfo *T)
 	interior_shadows	= (int)SettingGet(cSetting_ray_interior_shadows);
 	interior_wobble	= (int)SettingGet(cSetting_ray_interior_texture);
 	interior_color		= (int)SettingGet(cSetting_ray_interior_color);
+   interior_reflect  = 1.0F - SettingGet(cSetting_ray_interior_reflect);
+
 	project_triangle	= SettingGet(cSetting_ray_improve_shadows);
 	shadows				= (int)SettingGet(cSetting_ray_shadows);
 	trans_shadows		= (int)SettingGet(cSetting_ray_transparency_shadows);
@@ -1189,8 +1192,13 @@ int RayTraceThread(CRayThreadInfo *T)
 	inv1minusFogStart	= _1;
 	
 	fog = SettingGet(cSetting_ray_trace_fog);
-   if(fog<0.0F)
-     fog = SettingGet(cSetting_depth_cue);
+   if(fog<0.0F) {
+     if(SettingGet(cSetting_depth_cue)) {
+       fog = SettingGet(cSetting_fog);
+     } else 
+       fog = _0;
+   }
+   
 	if(fog != _0) 
 	{
 		fogFlag	= true;
@@ -1204,8 +1212,6 @@ int RayTraceThread(CRayThreadInfo *T)
 		inv1minusFogStart	= _1 / (_1 - fog_start);
 	}
 
-	if(interior_color>=0)
-		inter = ColorGet(interior_color);
 
 	/* ray-trace */
 	
@@ -1233,6 +1239,14 @@ int RayTraceThread(CRayThreadInfo *T)
    if(render_height) {
      offset = (T->phase * render_height/T->n_thread);
      offset = offset - (offset % T->n_thread) + T->phase;
+   }
+
+	if(interior_color>=0) {
+		inter = ColorGet(interior_color);
+      interior_normal[0] = interior_reflect*bp2->LightNormal[0];
+      interior_normal[1] = interior_reflect*bp2->LightNormal[1];
+      interior_normal[2] = 1.0F+interior_reflect*bp2->LightNormal[2];
+      normalize3f(interior_normal);
    }
      
 	r1.base[2]	= _0;
@@ -1384,10 +1398,8 @@ int RayTraceThread(CRayThreadInfo *T)
                       r1.trans = r1.prim->trans;
                       if(interior_flag)
                         {
+                          copy3f(interior_normal,r1.surfnormal);
                           copy3f(r1.base,r1.impact);
-                          r1.surfnormal[0]	= _0;
-                          r1.surfnormal[1]	= _0;
-                          r1.surfnormal[2]	= _1;
                           r1.impact[2]	-= T->front;
                           
                           if(interior_wobble >= 0) 
@@ -1455,9 +1467,7 @@ int RayTraceThread(CRayThreadInfo *T)
                               if((!two_sided_lighting) && (interior_color>=0)) 
                                 {
                                   interior_flag		= true;
-                                  r1.surfnormal[0]	= _0;
-                                  r1.surfnormal[1]	= _0;
-                                  r1.surfnormal[2]	= _1;
+                                  copy3f(interior_normal,r1.surfnormal);
                                   copy3f(r1.base,r1.impact);
                                   r1.impact[2]		-= T->front;
                                   r1.dist				= T->front;

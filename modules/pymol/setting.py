@@ -377,6 +377,7 @@ if __name__=='pymol.setting':
       mesh_lighting         = 337
       surface_solvent       = 338
       triangle_max_passes   = 339
+      ray_interior_reflect  = 340
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
@@ -503,7 +504,12 @@ NOTES
                   else:
                      v = (int(value),)
                elif type==3: # float
-                  v = (float(value),)
+                  if boolean_sc.has_key(str(value)):
+                     v = (float(boolean_dict[
+                        boolean_sc.auto_err(
+                        str(value),"boolean")]),)
+                  else:
+                     v = (float(value),)
                elif type==4: # float3 - some legacy handling req.
                   if is_string(value):
                      if not ',' in value:
