@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
-PyMOL (C) 1998-2002 by Warren L. DeLano of DeLano Scientific.
+PyMOL (C) 1998-2003 by Warren L. DeLano of DeLano Scientific.
 http://www.pymol.org  EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 PyMOL is an OPEN SOURCE program distributed under the "Python" license.
@@ -14,9 +14,35 @@ PyMOL has the following external dependencies:
   4. libpng (can compiled without it, but image saves won't work)
   5. Tcl/Tk (technically optional)
   6. Numerical Python (technically optional)
-  7. Python megawidgets (Pmw)
+  7. Python megawidgets (Pmw -- only required for the "external" GUI)
 ----------------------------------------------------------------------
 Specific Acknowledgments:
+
+* Thanks to Aaron Miller (GlaxoSmithKline) for a continuous stream of
+  thoughful opinions and suggestions.
+
+* Thanks to Dave Weininger for being ordinary at just the right time.
+
+* Thanks to Mick Savage for experienced practical advice.
+
+* Thanks to Ian Matthew for outside experience and information.
+
+* Thanks for Jeff Blaney for numerous insightful discussions.
+
+* Thanks to Elizabeth Pehrson for making this a team effort.
+
+* Thanks to Erin Bradley for schooling in focus and vision.
+
+* Thanks to Vera Povolona for catalytic clarity and introspection.
+
+* Thanks to Anthony Nichols for proving that it can be done, yet again.
+
+* Thanks to Thompson Doman for timely Open-Source validation.
+
+* Thanks to Manfred Sippl for making it all seem so simple.
+
+* Thanks to Kristian Rother for all his excellent work building on the
+  PyMOL foundation, and in helping others learn to use the software.
 
 * Thanks to Dave Weininger, Scott Dixon, Roger Sayle, Andrew Dalke, 
   Anthony Nichols, Dick Cramer, and David Miller, as well as rest of 
@@ -37,7 +63,7 @@ Specific Acknowledgments:
 
 * Thanks to the anonymous pharmacetical companies who have provided 
   financial support for hardware and development expenses (you know
-  who you are).
+  who you are!).
 
 * Thanks to Brian Paul and the Precision Insight team for development
   of Mesa/DRI which greatly assisted in the early development of PyMOL.
@@ -57,7 +83,7 @@ Specific Acknowledgments:
 ----------------------------------------------------------------------
 The PyMOL Team:
 
-   Founder and Principle Author:
+   Founder and Principal Author:
 
       Warren L. DeLano
 
@@ -78,47 +104,98 @@ The PyMOL Team:
       Stephen Adler
       Jun Aishima 
       Dennis Allison
-      Daniel Appelman
+      Daniel Appelman   
+      Diosdado "Rey" Banatao
       Michael Banck
       Ulrich Baumann
+      Joseph Becker
+      Balaji Bhyravbhatla
       Jeff Bizzaro
       Jeff Blaney 
+      Michael Bower
+      Sarina Bromberg
       Axel Brunger
       Robert Campbell
+      Duilio Cascio
+      Shawn Christensen
+      Scott Classen
       Jacob Corn
+      Ben Cornett
       Andrew Dalke 
       Huub van Dam
+      Harry Dailey
       Byron DeLaBarre
       Bill DeGrado
       Thomas Earnest
       Nathaniel Echols
+      Erik Evensen
+      David Fahrney
       Tim Fenn
       Thierry Fischmann
+      Michael Ford
+      Kevin Gardner
+      R. Michael Garavito
+      John Gerig
       Jonathan Greene
-      Peter Haebel 
+      Joel Harp
+      Richard Hart
+      Peter Haebel
+      Douglas Henry 
       Uwe Hoffmann
+      Jenny Hinshaw
       Carly Huitema
       Bjorn Kauppi
+      Greg Landrum
       Robert Lawrence Kehrer 
+      Eugen Leitl
+      Ken Lind
+      Luca Jovine
       Andrey Khavryuchenko
       David Konerding
       Greg Landrum
       Michael Love 
+      Tadashi Matsushita
+      Aaron Miller
       Robert McDowell
+      Gustavo Mercier      
+      Naveen Michaud-Agrawal
+      Holly Miller
+      Tim Moore
+      Kelley Moremen
+      Hideaki Moriyama
       Nigel Moriarty 
+      Geoffrey Mueller
+      Michael Nilges
+      Hoa Nguyen
+      Shoichiro Ono
       Andre Padilla
+      Jay Pandit
       Ezequiel "Zac" Panepucci
+      Robert Phillips
+      Hans Purkey
+      Rama Ranganathan
       Michael Randal
       Ian Robinson
       Kristian Rother
       Marc Saric
+      Bill Scott
+      Denis Shcherbakov
+      Goede Schueler
       Paul Sherwood
+      Ward Smith
       Paul Sprengeler
       Matt Stephenson 
       John Stone
+      Charlie Strauss
+      Michael Summers
+      Brian Sutton
+      Andras Varadi
       Scott Walsh
+      Mark White
+      Michael Wilson
       Dave Weininger
       Chris Wiesmann
+      Charles Wolfus
       Richard Xie
    
    PyMOL Testers: Others users who answered my calls for testing
@@ -161,6 +238,12 @@ The PyMOL Team:
       VA Linux (CVS Hosting)
       Richard Stallman/Free Software Foundation (GNU Suite)
       The unknown authors of EISPACK (Linear Algebra)
+
+   Graphics Technology "Enablers" (essential!)
+
+      3dfx 
+      nVidia 
+      ATI
       
 ----------------------------------------------------------------------
       

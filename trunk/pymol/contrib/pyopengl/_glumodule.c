@@ -38,7 +38,7 @@
 #define MCALLBACK (void (__stdcall *)(void))
 #define GLUCALLBACK WINAPI
 #else
-#define MCALLBACK
+#define MCALLBACK (void (*)(void))
 #define GLUCALLBACK
 #endif
 
@@ -263,12 +263,12 @@ static void GLUCALLBACK endCB(PyObject * obj)
     Py_XDECREF(retval);
 }
 
-static void GLUCALLBACK errorCB(GLenum errno, PyObject * obj)
+static void GLUCALLBACK errorCB(GLenum errnum, PyObject * obj)
 {
     PyObject *retval = NULL;
     if (obj == NULL)
 	return;
-    if (!(retval = PyObject_CallMethod(obj, "errorCB", "i", errno)))
+    if (!(retval = PyObject_CallMethod(obj, "errorCB", "i", errnum)))
 	PyErr_Print();
     Py_XDECREF(retval);
 }
@@ -347,7 +347,7 @@ static PyObject *py_glu_NewTess(PyObject * self, PyObject * args)
     gluTessCallback(tobj, GLU_TESS_END_DATA, MCALLBACK endCB);
     gluTessCallback(tobj, GLU_TESS_VERTEX_DATA, MCALLBACK vertexCB);
     gluTessCallback(tobj, GLU_TESS_COMBINE_DATA, MCALLBACK combineCB);
-    gluTessCallback(tobj, GLU_TESS_EDGE_FLAG_DATA, MCALLBACK(void (*)()) edgeFlagCB);
+    gluTessCallback(tobj, GLU_TESS_EDGE_FLAG_DATA, MCALLBACK(void (*)(void)) edgeFlagCB);
     gluTessCallback(tobj, GLU_TESS_ERROR_DATA, MCALLBACK errorCB);
 
     return (PyObject *) o;

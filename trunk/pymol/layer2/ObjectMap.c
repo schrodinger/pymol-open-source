@@ -1211,9 +1211,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
       v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
 
       for(a=0;a<ms->FDim[2];a+=ms->FDim[2]-1) {
-
         v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
-        F4(ms->Field->points,a,b,c,e) = v[e];
         copy3f(v,ms->Corner[d]);
         d++;
       }
@@ -1358,8 +1356,9 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
                 if(mind>dens) mind = dens;
               }
               transform33f3f(ms->Crystal->FracToReal,v,vr);
-              for(e=0;e<3;e++) 
+              for(e=0;e<3;e++) {
                 F4(ms->Field->points,a,b,c,e) = vr[e];
+              }
             }
           }
           p=ParseNextLine(p);
@@ -1605,7 +1604,7 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_fi
 {
   ObjectMap *I = NULL;
   int ok=true;
-  FILE *f;
+  FILE *f = NULL;
   long size;
   char *buffer,*p;
   float mat[9];

@@ -169,9 +169,10 @@ int GadgetSetFetchNormal(GadgetSet *I,float *inp,float *out)
 
 int GadgetSetFromPyList(PyObject *list,GadgetSet **cs)
 {
-  GadgetSet *I = NULL;
   int ok = true;
+  *cs=NULL;
 #if TO_DO
+  GadgetSet *I = NULL;
   if(*cs) {
     GadgetSetFree(*cs);
     *cs=NULL;

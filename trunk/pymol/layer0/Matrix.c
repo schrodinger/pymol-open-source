@@ -938,6 +938,7 @@ typedef struct Namelist Namelist;
 
 /* procedure parameter types for -A and -C++ */
 
+#if 0
 #define F2C_proc_par_types 1
 #ifdef __cplusplus
 typedef int /* Unknown procedure type */ (*U_fp)(...);
@@ -969,6 +970,7 @@ typedef VOID C_f;	/* complex function */
 typedef VOID H_f;	/* character function */
 typedef VOID Z_f;	/* double complex function */
 typedef doublereal E_f;	/* real function with -R not specified */
+#endif
 
 /* undef any lower-case symbols that your C compiler predefines, e.g.: */
 

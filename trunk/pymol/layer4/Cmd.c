@@ -110,7 +110,7 @@ int run_only_once = true;
    holding the API lock, therefore this is safe even through increment
    isn't (necessarily) atomic. */
 
-int PyThread_get_thread_ident();
+int PyThread_get_thread_ident(void);
 
 static void APIEntry(void) /* assumes API is locked */
 {

@@ -223,36 +223,44 @@ static PyObject *gl_SaveEPS(PyObject * self, PyObject * args)
     for (i = 0; i < width * height * components;) {
 	bitpixel = 0;
 	pix = 0.0;
-	pix = 0.30 * (double) curpix[i++] + 0.59 *
-	    (double) curpix[i++] + 0.11 * (double) curpix[i++];
+	pix = 0.30 * (double) curpix[i++] + 0.59;
+   pix += (double) curpix[i++];
+   pix += 0.11 * (double) curpix[i++];
 	if (pix > 127.0)
 	    bitpixel |= 0x80;
-	pix = 0.30 * (double) curpix[i++] + 0.59 *
-	    (double) curpix[i++] + 0.11 * (double) curpix[i++];
+	pix = 0.30 * (double) curpix[i++] + 0.59;
+   pix += (double) curpix[i++];
+   pix += 0.11 * (double) curpix[i++];
 	if (pix > 127.0)
 	    bitpixel |= 0x40;
-	pix = 0.30 * (double) curpix[i++] + 0.59 *
-	    (double) curpix[i++] + 0.11 * (double) curpix[i++];
+	pix = 0.30 * (double) curpix[i++] + 0.59;
+   pix += (double) curpix[i++];
+   pix += 0.11 * (double) curpix[i++];
 	if (pix > 127.0)
 	    bitpixel |= 0x20;
-	pix = 0.30 * (double) curpix[i++] + 0.59 *
-	    (double) curpix[i++] + 0.11 * (double) curpix[i++];
+	pix = 0.30 * (double) curpix[i++] + 0.59;
+   pix += (double) curpix[i++];
+   pix += 0.11 * (double) curpix[i++];
 	if (pix > 127.0)
 	    bitpixel |= 0x10;
-	pix = 0.30 * (double) curpix[i++] + 0.59 *
-	    (double) curpix[i++] + 0.11 * (double) curpix[i++];
+	pix = 0.30 * (double) curpix[i++] + 0.59;
+   pix += (double) curpix[i++];
+   pix += 0.11 * (double) curpix[i++];
 	if (pix > 127.0)
 	    bitpixel |= 0x08;
-	pix = 0.30 * (double) curpix[i++] + 0.59 *
-	    (double) curpix[i++] + 0.11 * (double) curpix[i++];
+	pix = 0.30 * (double) curpix[i++] + 0.59;
+   pix += (double) curpix[i++];
+   pix += 0.11 * (double) curpix[i++];
 	if (pix > 127.0)
 	    bitpixel |= 0x04;
-	pix = 0.30 * (double) curpix[i++] + 0.59 *
-	    (double) curpix[i++] + 0.11 * (double) curpix[i++];
+	pix = 0.30 * (double) curpix[i++] + 0.59;
+   pix += (double) curpix[i++];
+   pix += 0.11 * (double) curpix[i++];
 	if (pix > 127.0)
 	    bitpixel |= 0x02;
-	pix = 0.30 * (double) curpix[i++] + 0.59 *
-	    (double) curpix[i++] + 0.11 * (double) curpix[i++];
+	pix = 0.30 * (double) curpix[i++] + 0.59;
+   pix += (double) curpix[i++];
+   pix += 0.11 * (double) curpix[i++];
 	if (pix > 127.0)
 	    bitpixel |= 0x01;
 

@@ -381,7 +381,7 @@ static void TriangleEdgeSetStatus(int i1,int i2,int value)
   }
 }
 
-static void TriangleMove(from,to)
+static void TriangleMove(int from,int to)
 {
   TriangleSurfaceRec *I=&TriangleSurface;
   int i0,i1,i2,s01,s02,s12;

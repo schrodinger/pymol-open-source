@@ -22,7 +22,7 @@ else:
    pyogl_libs = []
    lib_dirs=["/usr/X11R6/lib"]
    def_macros=[("_PYMOL_MODULE",None),
-                  ("_PYMOL_NUMPY",None),
+#                  ("_PYMOL_NUMPY",None),
                   ("_HAVE_LIBPNG",None)]
    
 setup ( # Distribution meta-data

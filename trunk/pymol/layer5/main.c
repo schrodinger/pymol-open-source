@@ -111,7 +111,7 @@ void launch(void);
 
 void MainOnExit(void);
 
-static void DrawBlueLine()
+static void DrawBlueLine(void)
 {
   GLint i;
   unsigned long buffer;

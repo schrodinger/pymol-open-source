@@ -98,6 +98,12 @@ Current Bugs to Fix
 
 Changes up to 0.88
 
+   * huge cleanup of code to eliminate compiler warnings on VisualC and Windows & GCC32
+      - at least one bug fixed
+      - more careful handling of precision 
+
+   * updated acknowledgements in the README file
+
    * Tcl/Tk external gui now also follows -X, -Y, -W, and -V window parameters
      "-V value" controls the size of the external Tcl/Tk GUI (if present)
 

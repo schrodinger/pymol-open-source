@@ -111,7 +111,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 {
   CGO *cgo;
   int n_extra;
-  int a,c;
+  int a,c=0;
   float *p;
   char buffer[255];
 
@@ -146,7 +146,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   n_extra = 3*(I->NColor * 1);
 
   if(I->NColor<2) {
-    
+    /* TO DO */
   } else {
     VLACheck(gs->Coord,float,(I->var_index+n_extra)*3);      
     c = I->var_index;
@@ -173,7 +173,10 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
       c++;
 
     }
+
   }
+  gs->NCoord = c;
+
 
   CGOColor(cgo,0.5F,0.5F,0.5F);
 
@@ -218,8 +221,6 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   ShapeVertex(cgo,REL,2);
   ShapeVertex(cgo,REL,4);
   CGOEnd(cgo);
-
-  gs->NCoord = c;
 
   /* center */
   CGOEnd(cgo);
