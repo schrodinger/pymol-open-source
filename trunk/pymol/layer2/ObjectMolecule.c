@@ -2396,7 +2396,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
           cs=I->CSet[curState];
           for(a=0;a<cs->NIndex;a++) {
             at=cs->IdxToAtm[a]; /* should work for both discrete and non-discrete objects */
-            if(SelectorIsMember(I->Obj.G,I->AtomInfo[at].selEntry,sele))
+            if(SelectorIsMember(I->Obj.G,I->AtomInfo[at].selEntry,sele)) 
               glVertex3fv(cs->Coord+3*a);
           }
         }

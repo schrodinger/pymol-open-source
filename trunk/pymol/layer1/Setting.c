@@ -1362,6 +1362,12 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_ribbon_side_chain_helper:
+    ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    SceneChanged(G);
+    break;
   case cSetting_cartoon_transparency:
   case cSetting_cartoon_trace:
   case cSetting_cartoon_refine:
@@ -1428,6 +1434,8 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_specular_intensity:
   case cSetting_cgo_line_width:
   case cSetting_selection_width:
+  case cSetting_selection_width_scale:
+  case cSetting_selection_width_max:
     SceneDirty(G);
     break;
   case cSetting_depth_cue: 
@@ -1833,7 +1841,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_auto_hide_selections, 1);
 
-  SettingSet_f(I,cSetting_selection_width, 4.0F);
+  SettingSet_f(I,cSetting_selection_width, 3.0F);
 
   SettingSet_f(I,cSetting_selection_overlay, 1.0F);
 
@@ -2409,6 +2417,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_scene_animation,-1);
   SettingSet_b(I,cSetting_line_stick_helper, 1);
   SettingSet_i(I,cSetting_ray_orthoscopic, -1);
+  SettingSet_i(I,cSetting_ribbon_side_chain_helper, 0);
+  SettingSet_f(I,cSetting_selection_width_max,12.0F);
+  SettingSet_f(I,cSetting_selection_width_scale,1.0F);
+
 }
 
 

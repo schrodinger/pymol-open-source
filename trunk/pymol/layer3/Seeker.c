@@ -367,7 +367,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
         char name[ObjNameMax];
 
         if(ExecutiveGetActiveSeleName(G,name, false) && col->inverse) {
-          MenuActivate2Arg(G,x,y+16,x,y,false,"pick_option",name,name);
+          MenuActivate2Arg(G,x,y+16,x,y,false,"pick_sele",name,name);
         } else if( (obj = ExecutiveFindObjectMoleculeByName(G,row->name) )) {
           OrthoLineType buffer;
           {

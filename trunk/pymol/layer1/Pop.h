@@ -22,6 +22,6 @@ int PopInit(PyMOLGlobals *G);
 void PopFree(PyMOLGlobals *G);
 void PopFitBlock(Block *block);
 Block *PopGetBlock(PyMOLGlobals *G);
-void PopPlaceChild(Block *block,int left_x,int right_x,int row_y);
+int PopPlaceChild(Block *block,int left_x,int right_x,int row_y,int affinity);
 
 #endif

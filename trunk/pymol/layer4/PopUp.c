@@ -62,6 +62,7 @@ typedef struct CPopUp {
   double PassiveDelay;
   int DirtyDelayFlag;
   int NeverDragged;
+  int PlacementAffinity;
 }  CPopUp;
 
 int PopUpRelease(Block *block,int button,int x,int y,int mod);
@@ -127,6 +128,7 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
   I->DirtyDelay = false;
   I->DirtyDelayFlag = false;
   I->NeverDragged = true;
+  I->PlacementAffinity = 0;
   mx=1;
   cmx=1;
   for(a=0;a<I->NLine;a++) {
@@ -473,7 +475,8 @@ int PopUpDrag(Block *block,int x,int y,int mod)
               if(child->NLine)
                 if(child->Code[0]!=1)
                   target_y+=cPopUpTitleHeight+2;
-              PopPlaceChild(I->Child,block->rect.left-5,block->rect.right+5,target_y);
+              child->PlacementAffinity = PopPlaceChild(I->Child,block->rect.left-5,
+                                                       block->rect.right+5,target_y,I->PlacementAffinity);
             }
                           
             OrthoGrab(G,I->Block);

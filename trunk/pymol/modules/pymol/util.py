@@ -147,6 +147,11 @@ def cbac(selection="(all)",quiet=1):
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("cyan","(elem C and ("+s+"))",quiet=quiet)
 
+def cbam(selection="(all)",quiet=1):
+   s = str(selection)   
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
+   cmd.color("lightmagenta","(elem C and ("+s+"))",quiet=quiet)
+
 def cbay(selection="(all)",quiet=1):
    s = str(selection)   
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -156,21 +161,6 @@ def cbas(selection="(all)",quiet=1):
    s = str(selection)   
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("salmon","(elem C and ("+s+"))",quiet=quiet)
-
-def cbap(selection="(all)",quiet=1):
-   s = str(selection)   
-   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
-   cmd.color("purple","(elem C and ("+s+"))",quiet=quiet)
-
-def cbak(selection="(all)",quiet=1):
-   s = str(selection)   
-   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
-   cmd.color("pink","(elem C and ("+s+"))",quiet=quiet)
-
-def cbam(selection="(all)",quiet=1):
-   s = str(selection)   
-   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
-   cmd.color("lightmagenta","(elem C and ("+s+"))",quiet=quiet)
 
 def cbaw(selection="(all)",quiet=1):
    s = str(selection)   
@@ -187,9 +177,24 @@ def cbao(selection="(all)",quiet=1):
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("brightorange","(elem C and ("+s+"))",quiet=quiet)
 
+def cbap(selection="(all)",quiet=1):
+   s = str(selection)   
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
+   cmd.color("purple","(elem C and ("+s+"))",quiet=quiet)
+
+def cbak(selection="(all)",quiet=1):
+   s = str(selection)   
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
+   cmd.color("pink","(elem C and ("+s+"))",quiet=quiet)
+
 def cnc(selection="(all)",quiet=1):
    s = str(selection)
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
+
+def cba(color,selection="(all)",quiet=1):
+   s = str(selection)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
+   cmd.color(color,"(elem C and ("+s+"))",quiet=quiet)
 
 def performance(mode):
    mode = int(mode)
