@@ -2653,7 +2653,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   float cutoff_s;
   float cutoff_h;
   float cutoff_v;
-  float cutoff_mg;
   float cutoff;
   float max_cutoff;
   int water_flag;

@@ -3242,11 +3242,11 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
   if(width_scale>=0.0F) {
     width = (int)((width_scale*SettingGetGlobal_f(G,cSetting_stick_radius)/SceneGetScreenVertexScale(G,NULL)));
   if(width<min_width)
-    width = min_width;
+    width = (int)min_width;
   else if(width>max_width)
-    width = max_width;
+    width = (int)max_width;
   } else
-    width = min_width;
+    width = (int)min_width;
 
   no_depth = (int)SettingGet(G,cSetting_selection_overlay);
 
