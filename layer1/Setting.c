@@ -1206,6 +1206,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_surface_quality:
   case cSetting_surface_mode:
   case cSetting_surface_type:
+  case cSetting_surface_carve_state:
+  case cSetting_surface_carve_cutoff:
+  case cSetting_surface_carve_selection:
   case cSetting_surface_solvent:
   case cSetting_surface_proximity:
   case cSetting_cavity_cull:
@@ -2213,6 +2216,10 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_triangle_max_passes,5);
   SettingSet_f(I,cSetting_ray_interior_reflect,0.4F);
   SettingSet_i(I,cSetting_internal_gui_mode,0);
+  SettingSet_s(I,cSetting_surface_carve_selection,"");
+  SettingSet_i(I,cSetting_surface_carve_state,0);
+  SettingSet_f(I,cSetting_surface_carve_cutoff,0.0F);
+
 }
 
 

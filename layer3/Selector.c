@@ -482,6 +482,85 @@ void SelectorComputeFragPos(ObjectMolecule *obj,int state,int n_frag, char *pref
   FreeP(cnt);
 }
 
+MapType *SelectorGetSpacialMapFromSeleCoord(int sele,int state,float cutoff,float **coord_vla)
+{
+  SelectorType *I=&Selector;
+  int *index_vla = NULL;
+  float *coord = NULL;
+  int n,nc=0;
+  MapType *result = NULL;
+  if(sele<0)
+    return NULL;
+  else {
+    
+    SelectorUpdateTable();
+    index_vla = SelectorGetIndexVLA(sele);
+
+    if(index_vla) {
+      n=VLAGetSize(index_vla);
+      if(n) 
+        coord = VLAlloc(float,n*3);
+      if(coord) {
+        int i,a;
+        int st,sta;
+        ObjectMolecule *obj;
+        CoordSet *cs;
+        int at;
+        AtomInfoType *ai;
+        int idx;
+        float *src,*dst;
+        for(i=0;i<n;i++) {
+          a=index_vla[i];
+
+          obj = I->Obj[I->Table[a].model];
+          at = + I->Table[a].atom;
+          ai = obj->AtomInfo + at;
+          for(st=0;st<I->NCSet;st++) {
+
+            if((state<0)||(st==state)) {
+
+              sta = st;
+              if(sta<obj->NCSet) 
+                cs=obj->CSet[sta];
+              else
+                cs=NULL;
+              if(cs) {
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[at])
+                    idx=obj->DiscreteAtmToIdx[at];
+                  else
+                    idx=-1;
+                } else 
+                  idx=cs->AtmToIdx[at];
+              } else {
+                idx = -1;
+              }
+              if(idx>=0) {
+                VLACheck(coord,float,nc*3+2);
+                src = cs->Coord + 3*idx;
+                dst = coord + 3*nc;
+                *(dst++) = *(src++);
+                *(dst++) = *(src++);
+                *(dst++) = *(src++); 
+                nc++;
+
+              }
+            }
+          }
+        }
+        if(nc) {
+          result = MapNew(cutoff,coord, nc,NULL);
+        }
+      }
+    }
+  }
+  VLAFreeP(index_vla);
+  if(coord)
+    VLASize(coord,float,nc*3);
+  *(coord_vla)=coord;
+  return(result);
+}
+
 static int SelectorWordIndex(SelectorWordType *list,char *word,int minMatch,int ignCase)
 {
   int c,i,mi,mc;

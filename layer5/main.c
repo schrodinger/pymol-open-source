@@ -459,7 +459,7 @@ static void MainDrawLocked(void)
   ExecutiveDrawNow();
 
   if(PMGUI) {
-    if(Feedback(FB_OpenGL,FB_Errors)) {
+    if(Feedback(FB_OpenGL,FB_Debugging)) {
       PyMOLCheckOpenGLErr("During Rendering");
     }
   }

@@ -379,6 +379,9 @@ if __name__=='pymol.setting':
       triangle_max_passes   = 339
       ray_interior_reflect  = 340
       internal_gui_mode     = 341
+      surface_carve_selection = 342
+      surface_carve_state   = 343
+      surface_carve_cutoff  = 344
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
