@@ -2110,4 +2110,7 @@ for a in keyword.keys():
          kwhash[sub]=0
       else:
          kwhash[sub]=a
-   
+
+for a in keyword.keys():
+   kwhash[a]=a
+
