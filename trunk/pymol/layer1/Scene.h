@@ -28,6 +28,7 @@ int SceneRenderCached(void);
 void SceneRender(Pickable *pick,int x,int y);
 void SceneSetFrame(int mode,int frame);
 int SceneGetFrame(void);
+int SceneGetState(void);
 void SceneDirty(void); /* must update transformation */
 void SceneChanged(void); /* must actually update 3D objects */
 void SceneCountFrames(void) ;

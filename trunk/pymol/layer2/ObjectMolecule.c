@@ -68,6 +68,68 @@ int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
 
 
 /*========================================================================*/
+void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state)
+{
+  CoordSet *cs;
+
+  FreeP(I->UndoCoord[I->UndoIter]);
+  I->UndoState[I->UndoIter]=-1;
+  if(state<0) state=0;
+  if(I->NCSet==1) state=0;
+  state = state % I->NCSet;
+  cs = I->CSet[state];
+  if(cs) {
+    I->UndoCoord[I->UndoIter] = Alloc(float,cs->NIndex*3);
+    memcpy(I->UndoCoord[I->UndoIter],cs->Coord,sizeof(float)*cs->NIndex*3);
+    I->UndoState[I->UndoIter]=state;
+    I->UndoNIndex[I->UndoIter] = cs->NIndex;
+  }
+  I->UndoIter=cUndoMask&(I->UndoIter+1);
+}
+/*========================================================================*/
+void ObjectMoleculeUndo(ObjectMolecule *I,int dir)
+{
+  CoordSet *cs;
+  int state;
+
+  FreeP(I->UndoCoord[I->UndoIter]);
+  I->UndoState[I->UndoIter]=-1;
+  state=SceneGetState();
+  if(state<0) state=0;
+  if(I->NCSet==1) state=0;
+  state = state % I->NCSet;
+  cs = I->CSet[state];
+  if(cs) {
+    I->UndoCoord[I->UndoIter] = Alloc(float,cs->NIndex*3);
+    memcpy(I->UndoCoord[I->UndoIter],cs->Coord,sizeof(float)*cs->NIndex*3);
+    I->UndoState[I->UndoIter]=state;
+    I->UndoNIndex[I->UndoIter] = cs->NIndex;
+  }
+
+  I->UndoIter=cUndoMask&(I->UndoIter+dir);
+  if(!I->UndoCoord[I->UndoIter])
+    I->UndoIter=cUndoMask&(I->UndoIter-dir);
+
+  if(I->UndoState[I->UndoIter]>=0) {
+    state=I->UndoState[I->UndoIter];
+    if(state<0) state=0;
+    
+    if(I->NCSet==1) state=0;
+    state = state % I->NCSet;
+    cs = I->CSet[state];
+    if(cs) {
+      if(cs->NIndex==I->UndoNIndex[I->UndoIter]) {
+        memcpy(cs->Coord,I->UndoCoord[I->UndoIter],sizeof(float)*cs->NIndex*3);
+        I->UndoState[I->UndoIter]=-1;
+        FreeP(I->UndoCoord[I->UndoIter]);
+        if(cs->fInvalidateRep)
+          cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+        SceneChanged();
+      }
+    }
+  }
+}
+/*========================================================================*/
 int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
 {
   int a1,a2;
@@ -2518,6 +2580,7 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick)
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
 {
+  int a;
   OOAlloc(ObjectMolecule);
   ObjectInit((Object*)I);
   I->Obj.type=cObjectMolecule;
@@ -2544,6 +2607,11 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->CurCSet=0;
   I->Symmetry=NULL;
   I->Neighbor=NULL;
+  for(a=0;a<=cUndoMask;a++) {
+    I->UndoCoord[a]=NULL;
+    I->UndoState[a]=-1;
+  }
+  I->UndoIter=0;
   return(I);
 }
 /*========================================================================*/
@@ -2602,6 +2670,8 @@ void ObjectMoleculeFree(ObjectMolecule *I)
   VLAFreeP(I->CSet);
   VLAFreeP(I->AtomInfo);
   VLAFreeP(I->Bond);
+  for(a=0;a<=cUndoMask;a++)
+    FreeP(I->UndoCoord[a]);
   OOFreeP(I);
 }
 

@@ -30,8 +30,8 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 
 typedef struct {
-  int Active;
   ObjectMolecule *Obj;
+  int ActiveState;
   int DragIndex;
   int DragSelection;
   int DragSele0;
@@ -47,7 +47,13 @@ CEditor Editor;
 
 int EditorActive(void) {
   CEditor *I = &Editor;
-  return(I->Active);
+  return(I->Obj!=NULL);
+}
+
+ObjectMolecule *EditorDragObject(void)
+{
+  CEditor *I = &Editor;
+  return(I->DragObject);
 }
 static void subdivide( int n, float *x, float *y);
 
@@ -74,6 +80,11 @@ void EditorRender(int state)
   int c;
   float tube_size=0.5;
 
+
+  if(state!=I->ActiveState)
+    {
+      EditorSetActiveObject(NULL,0);
+    }
 
   if(I->Obj) {
     if(PMGUI) {
@@ -158,7 +169,7 @@ void EditorRender(int state)
 }
 
 
-void EditorSetActiveObject(ObjectMolecule *obj)
+void EditorSetActiveObject(ObjectMolecule *obj,int state)
 {
   int sele1,sele2;
 
@@ -170,6 +181,7 @@ void EditorSetActiveObject(ObjectMolecule *obj)
       sele2 = SelectorIndexByName(cEditorSele2);
       I->NFrag = SelectorSubdivideObject(cEditorFragPref,obj,
                                          sele1,sele2,cEditorBasePref);
+      I->ActiveState=state;
     } else {
       I->Obj=NULL;
     }
@@ -190,11 +202,14 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   int i0,i1;
   CEditor *I = &Editor;
   
-  if(!I->Obj) {
+  if(!I->Obj) { /* non-anchored */
     I->DragObject=obj;
     I->DragIndex=index;
     I->DragSelection=-1;
-  } else {
+  } else if(I->ActiveState!=state) {
+    EditorSetActiveObject(NULL,0); /* recurses */
+    return;
+  } else { /* anchored */
     for(frg=0;frg<I->NFrag;frg++) {
       sprintf(name,"%s%02d",cEditorFragPref,frg);
       sele0=SelectorIndexByName(name);
@@ -269,6 +284,8 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       I->DragObject=NULL;
     }
   }
+  if(I->DragObject)
+    ObjectMoleculeSaveUndo(I->DragObject,state);
 }
 
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float *mov)
@@ -394,7 +411,6 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
 void EditorInit(void)
 {
   CEditor *I = &Editor;
-  I->Active = false;
   I->Obj = NULL;
   I->NFrag= 0;
   I->DragObject=NULL;

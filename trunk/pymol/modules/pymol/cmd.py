@@ -574,7 +574,21 @@ def show_help(cmd):
    print "PyMOL>help %s\n" % cmd
    help(cmd)
    print "(Hit TAB to hide)"
-      
+
+def undo():
+   try:
+      lock()
+      _cmd.undo(-1)
+   finally:
+      unlock()
+
+def redo():
+   try:
+      lock()
+      _cmd.undo(1)
+   finally:
+      unlock()
+
 def help(*arg):
    '''
 USAGE
@@ -2978,6 +2992,7 @@ keyword = {
    '_quit'         : [_quit        , 0 , 0 , ',' , 0 ],
    'png'           : [png          , 1 , 1 , ',' , 0 ],
    'unbond'        : [unbond       , 0 , 3 , ',' , 0 ],
+   'undo'          : [undo         , 0 , 0 , ',' , 0 ],
    'unmask'        : [unmask       , 0 , 1 , ',' , 0 ],
    'unprotect'     : [unprotect    , 0 , 1 , ',' , 0 ],
    'viewport'      : [viewport     , 2 , 2 , ',' , 0 ],
@@ -3054,8 +3069,8 @@ special = {
    8        : [ 'F8'        , None                   , 0 , None ],
    9        : [ 'F9'        , None                   , 0 , None ],
    10       : [ 'F10'       , None                   , 0 , None ],
-   11       : [ 'F11'       , None                   , 0 , None ],
-   12       : [ 'F12'       , None                   , 0 , None ],
+   11       : [ 'F11'       , redo                   , 0 , None ],
+   12       : [ 'F12'       , undo                   , 0 , None ],
    100      : [ 'left'      , backward               , 0 , None ],
    101      : [ 'up'        , None                   , 0 , None ],
    102      : [ 'right'     , forward                , 0 , None ],

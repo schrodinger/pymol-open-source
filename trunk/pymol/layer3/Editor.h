@@ -33,6 +33,7 @@ void EditorFree(void);
 void EditorPrepareDrag(ObjectMolecule *obj,int index,int state);
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float *mov);
 
-void EditorSetActiveObject(ObjectMolecule *obj);
+void EditorSetActiveObject(ObjectMolecule *obj,int state);
+ObjectMolecule *EditorDragObject(void);
 
 #endif

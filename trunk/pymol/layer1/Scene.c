@@ -157,6 +157,12 @@ void SceneSetMatrix(float *m)
 	 I->RotMatrix[a]=m[a];
 }
 /*========================================================================*/
+int SceneGetState(void)
+{
+  CScene *I=&Scene;
+  return(I->StateIndex);
+}
+/*========================================================================*/
 float *SceneGetMatrix()
 {
   CScene *I=&Scene;
@@ -287,6 +293,7 @@ void SceneChanged(void)
 {
   CScene *I=&Scene;
   I->ChangedFlag=true;
+  SceneDirty();
 }
 /*========================================================================*/
 Block *SceneGetBlock(void)
@@ -542,14 +549,14 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                 obj->Name,I->LastPicked.index+1);    
         SelectorCreate(cEditorSele1,buffer,NULL,false);
         ExecutiveDelete(cEditorSele2);
-        EditorSetActiveObject((ObjectMolecule*)obj);
+        EditorSetActiveObject((ObjectMolecule*)obj,I->StateIndex);
       } else {
-      EditorSetActiveObject(NULL);
+      EditorSetActiveObject(NULL,0);
       ExecutiveDelete(cEditorSele1);      
       ExecutiveDelete(cEditorSele2);      
       }
     } else {
-      EditorSetActiveObject(NULL);
+      EditorSetActiveObject(NULL,0);
       ExecutiveDelete(cEditorSele1);      
       ExecutiveDelete(cEditorSele2);      
     }
@@ -578,15 +585,15 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           sprintf(buffer,"model %s and index %i",
                   obj->Name,atIndex+1);    
           SelectorCreate(cEditorSele2,buffer,NULL,false);
-          EditorSetActiveObject(objMol);
+          EditorSetActiveObject(objMol,I->StateIndex);
         }
       } else {
-        EditorSetActiveObject(NULL);
+        EditorSetActiveObject(NULL,0);
         ExecutiveDelete(cEditorSele1);      
         ExecutiveDelete(cEditorSele2);      
       }
     } else {
-      EditorSetActiveObject(NULL);
+      EditorSetActiveObject(NULL,0);
       ExecutiveDelete(cEditorSele1);      
       ExecutiveDelete(cEditorSele2);      
     }

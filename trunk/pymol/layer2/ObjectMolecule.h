@@ -24,6 +24,8 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Symmetry.h"
 
+#define cUndoMask 0x7
+
 typedef struct ObjectMolecule {
   Object Obj;
   struct CoordSet **CSet;
@@ -41,6 +43,10 @@ typedef struct ObjectMolecule {
   int SeleBase; /* for internal usage by  selector & only valid during selection process */
   CSymmetry *Symmetry;
   int *Neighbor;
+  float *UndoCoord[cUndoMask+1];
+  int UndoState[cUndoMask+1];
+  int UndoNIndex[cUndoMask+1];
+  int UndoIter;
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {
@@ -124,6 +130,8 @@ void ObjectMoleculePurge(ObjectMolecule *I);
 int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order);
 int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele1,int sele2);
 
+void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state);
+void ObjectMoleculeUndo(ObjectMolecule *I,int dir);
 
 #endif
 

@@ -168,6 +168,7 @@ static PyObject *CmdTurn(PyObject *self, 	PyObject *args);
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args);
 static PyObject *CmdZoom(PyObject *self, PyObject *args);
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
+static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
 
 static PyMethodDef Cmd_methods[] = {
 	{"alter",	     CmdAlter,        METH_VARARGS },
@@ -249,9 +250,21 @@ static PyMethodDef Cmd_methods[] = {
 	{"test",	        CmdTest,         METH_VARARGS },
 	{"turn",	        CmdTurn,         METH_VARARGS },
 	{"viewport",     CmdViewport,     METH_VARARGS },
+	{"undo",         CmdUndo,         METH_VARARGS },
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *CmdUndo(PyObject *self, PyObject *args)
+{
+  int int1;
+  PyArg_ParseTuple(args,"i",&int1);
+  APIEntry();
+  ExecutiveUndo(int1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 static PyObject *CmdMask(PyObject *self, PyObject *args)
 {
