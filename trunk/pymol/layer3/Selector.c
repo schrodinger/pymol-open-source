@@ -5364,7 +5364,7 @@ WordType *SelectorParse(char *s) {
   int c=0;
   int w_flag=false;
   char *p = s;
-  char *q = NULL;
+  char *q = NULL, *q_base = NULL;
   r=VLAlloc(WordType,100);
   while(*p) 
 	 {
@@ -5402,6 +5402,15 @@ WordType *SelectorParse(char *s) {
 				  *q++=*p;
 				  break;
 				}
+          if(w_flag) {
+            if((q-q_base)>=sizeof(WordType)) {
+              q_base[sizeof(WordType)-1]=0;
+              w_flag=false;
+              PRINTFB(FB_Selector,FB_Errors) 
+                "Selector-Error: Word too long. Truncated:\nSelector-Error: %s...\n",q_base
+                ENDFB;
+            }
+          }
 		  }
 		else /*outside a word -- q is undefined */
 		  {
@@ -5437,6 +5446,7 @@ WordType *SelectorParse(char *s) {
 				  c++;
               VLACheck(r,WordType,c);
 				  q=r[c-1];
+              q_base = q;
 				  *q++=*p;
 				  break;
 				}

@@ -167,6 +167,16 @@ CHANGE LOG
 
 Changes up to 0.90
 
+   * Put in checking for overly long selection words to avoid seg.fault.
+
+   * Incorporated Tom Lee's density wizard changes.
+
+   * TCL_LIBRARY not overridden by PyMOLWin.exe if it exists
+
+   * Various NULL POINTER Errors removed
+
+   * Memory debugger disabled by default to support multithreading
+
    * initial support for display lists -- not yet enabled by default
 
    * partial surface calculations are now much much faster
