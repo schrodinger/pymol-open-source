@@ -7,7 +7,7 @@
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /users/warren/pymol
+PYMOL_PATH = /users/warren/mindep
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
@@ -16,7 +16,7 @@ XLIB_DIR = -L/usr/X11R6/lib
 XINC_DIR = -I/usr/X11R6/include
 #--- Python
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
-PYTHON_LIB = -lpython2.1 /usr/lib/libpthread.a /usr/lib/libutil.a
+PYTHON_LIB = -lpython2.1 -lpthread -lutil
 PYTHON_LIB_DIR = -L$(PYMOL_PATH)/ext/lib/python2.1/config
 PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.1
 #--- Other external dependencies
@@ -27,11 +27,11 @@ EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
 #- Build for LINUX as an importable module ---------------------------
 #--- System libraries
 LIBS = contrib/modules/*.o contrib/pyopengl/*.o contrib/sglite/*.o \
- $(PYTHON_LIB) ext/lib/libglut.a -lGL -lGLU -lXmu -lm \
-ext/lib/libtcl8.3.a ext/lib/libtk8.3.a /usr/lib/libdl.a \
+ $(PYTHON_LIB) ext/lib/libglut.a -lGL -lGLU -lXmu -ldl -lm \
+ext/lib/libtcl8.3.a ext/lib/libtk8.3.a \
 ext/lib/libpng.a $(ZLIB)
 #--- PyMOL configuration
-DEFS = -D_PYMOL_MONOLITHIC -D_PYMOL_SETUP_TCLTK83
+DEFS = -D_PYMOL_MONOLITHIC -D_PYMOL_SETUP_TCLTK83 -D_PYMOL_SETUP_PY21
 #--- How we build shared libraries
 BUILD = 
 #--- What are we trying to build?
@@ -44,7 +44,7 @@ PYOGL_LIB =
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
+CCOPT1 = -O3 -funroll-loops -fomit-frame-pointer
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Debugging
