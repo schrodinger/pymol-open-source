@@ -22,5 +22,6 @@ Z* -------------------------------------------------------------------
 int SeekerInit(PyMOLGlobals *G);
 void SeekerFree(PyMOLGlobals *G);
 void SeekerUpdate(PyMOLGlobals *G);
+char SeekerGetAbbr(PyMOLGlobals *G,char *abbr);
 
 #endif

@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"Seq.h"
 #include"Editor.h"
+#include"Seeker.h"
 
 #define SelectorWordLength 1024
 typedef char SelectorWordType[SelectorWordLength];
@@ -89,7 +90,6 @@ typedef struct {
   int model;
   int atom;
   int index;
-  int branch;
   float f1;
 } TableRec;
 
@@ -228,6 +228,7 @@ int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *obj,int 
 #define SELE_INOz ( 0x4600 | STYP_SEL0 | 0x80 )
 #define SELE_GIDz ( 0x4700 | STYP_SEL0 | 0x80 )
 #define SELE_RNKs ( 0x4800 | STYP_SEL1 | 0x70 )
+#define SELE_SEQs ( 0x4900 | STYP_SEL1 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -397,6 +398,14 @@ static WordKeyValue Keyword[] =
 
   {  "beyond",   SELE_BEY_ },
   {  "be.",      SELE_BEY_ },
+
+  {  "sequence", SELE_SEQs },
+  {  "seq.",     SELE_SEQs },
+ 
+  /*
+  {  "nucleic",  SELE_NUCs },
+  {  "nuc.",      SELE_NUCs },
+  */
 
   {  "polymer",  SELE_POLz },
   {  "pol.",     SELE_POLz },
@@ -6825,7 +6834,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
   CoordSet *cs=NULL;
 
   base->type=STYP_LIST;
-  base->sele=Calloc(int,I->NAtom);
+  base->sele=Calloc(int,I->NAtom); /* starting with zeros */
   PRINTFD(G,FB_Selector)
     " SelectorSelect1: base: %p sele: %p\n",
     (void*)base,(void*)base->sele
@@ -6833,6 +6842,62 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
   ErrChkPtr(G,base->sele);
   switch(base->code)
 	 {
+    case SELE_SEQs:
+      if(base[1].text[0]) {
+        AtomInfoType *last_ai0 = NULL, *ai0;
+        for(a=cNDummyAtoms;a<I->NAtom;a++) {
+          ai0 = I->Obj[I->Table[a].model]->AtomInfo + I->Table[a].atom;
+          if(!AtomInfoSameResidueP(G,ai0,last_ai0)) { /* new starting residue */
+            int match_found = false;
+            char *ch = base[1].text; /* sequence argument */
+            AtomInfoType *ai1,*last_ai1 = NULL;
+            for(b=a;b<I->NAtom;b++) {
+              ai1 = I->Obj[I->Table[b].model]->AtomInfo + I->Table[b].atom; 
+              if(!AtomInfoSameResidueP(G,ai1,last_ai1)) {
+                if(*ch!='-') { /* if not skipping this residue */
+                  if(!((*ch=='+')||(SeekerGetAbbr(G,ai1->resn)==*ch))) { /* if a mismatch */
+                    break; 
+                  }
+                }
+                ch++;
+                if(!*ch) { /* end of sequence pattern */
+                  match_found = true;
+                  break;
+                }
+                last_ai1 = ai1;
+              }
+            }
+            if(match_found) {
+              char *ch = base[1].text; /* sequence argument */
+              AtomInfoType *ai1,*last_ai1 = NULL, *ai2;
+              for(b=a;b<I->NAtom;b++) {
+                ai1 = I->Obj[I->Table[b].model]->AtomInfo + I->Table[b].atom;              
+                if(!AtomInfoSameResidueP(G,ai1,last_ai1)) {
+                  if(*ch!='-') { /* if not skipping this residue */
+                    if((*ch=='+')||(SeekerGetAbbr(G,ai1->resn)==*ch)) { /* if matched */
+                      int d;
+                      for(d=b;d<I->NAtom;d++) {
+                        ai2 = I->Obj[I->Table[d].model]->AtomInfo 
+                          + I->Table[d].atom; /* complete residue */            
+                        if(AtomInfoSameResidue(G,ai1,ai2)) {
+                          c++;
+                          base[0].sele[d]=true;
+                        }
+                      }
+                    }
+                  }
+                  ch++;
+                  if(!*ch) { /* end of sequence pattern */
+                    break;
+                  }
+                  last_ai1 = ai1;
+                }
+              }
+            }
+          }
+        }
+      }
+      break;
 	 case SELE_IDXs:
 		if(sscanf(base[1].text,"%i",&index)!=1)		
 		  ok=ErrMessage(G,"Selector","Invalid Index.");
