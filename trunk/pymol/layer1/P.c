@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #include"AtomInfo.h"
 #include"CoordSet.h"
 #include"Util.h"
+#include"Executive.h"
 
 PyObject *P_globals = NULL;
 
@@ -654,7 +655,7 @@ void PInitEmbedded(int argc,char **argv)
     init_glu_num();
     init_glut();
     initopenglutil();
-	/* missing initopenglutil_num()???  WLD 3/26/2001*/
+	 initopenglutil_num();
 #endif
 
   PyRun_SimpleString("import os\n");
@@ -839,6 +840,7 @@ void PFree(void)
 
 void PExit(int code)
 {
+  ExecutiveDelete("all");
   PBlock();
   MainFree();
   Py_Exit(code);
