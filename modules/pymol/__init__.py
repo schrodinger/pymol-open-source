@@ -1,21 +1,23 @@
+# How do I launch PyMOL?
 
+# THE SUPPORTED WAY:
 
-# How do I launch PyMOL?  There are two supported ways:
+# "python pymol/__init__.py" in an environment in which $PYMOL_PATH
+# points to the main PyMOL directory and $PYTHONPATH includes
+# $PYMOL_PATH/modules or where the contents of $PYMOL_PATH/modules
+# have been installed in a standard location such as
+# /usr/lib/python2.1/site-packages
 
-# Method 1: "import pymol" from within a Python program in an
+# THE UNSUPPORTED/EXPERIMENTAL WAY:
+
+# Method 2: "import pymol" from within a Python program in an
 # environment where $PYMOL_PATH points to the main PyMOL directory
 # and $PYTHONPATH includes $PYMOL_PATH/modules or where the contents of
 # $PYMOL_PATH/modules have been installed in a standard location such
 # as /usr/lib/python2.1/site-packages
 #
-# NOTE: with method 1, you should call pymol.finish_launching()
+# NOTE: with method 2, you should call pymol.finish_launching()
 # before using any PYMOL API functions
-
-# Method 2: "python pymol/__init__.py" in an environment in which
-# $PYMOL_PATH points to the main PyMOL directory and $PYTHONPATH
-# includes $PYMOL_PATH/modules or where the contents of
-# $PYMOL_PATH/modules have been installed in a standard location such
-# as /usr/lib/python2.1/site-packages
 
 # NOTE: with both methods, you should be able to get away with not
 # specifying PYMOL_PATH if there is a subdirectory pymol_path located
