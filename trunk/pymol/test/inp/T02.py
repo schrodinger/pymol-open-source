@@ -7,7 +7,7 @@ import threading
 import time
 import whrandom
 from pymol import cmd
-
+#cmd.feedback("ena","thread","debug")
 
 cmd.rock()
 cmd.load("dat/pept.pdb","obj1")
@@ -29,7 +29,7 @@ def reps():
       time.sleep(whrandom.random()*0.1)
       cmd.show('sticks')
       time.sleep(whrandom.random()*0.2)
-      cmd.show('lines')
+      cmd.hide('sticks')
 
 t = threading.Thread(target=reps)
 t.setDaemon(1)
@@ -73,6 +73,20 @@ def sets():
       cmd.set('ortho',str(ortho))
 
 t = threading.Thread(target=sets)
+t.setDaemon(1)
+t.start()
+
+
+def turns():
+   while 1:
+      time.sleep(whrandom.random()*0.05)
+      cmd.turn('x',whrandom.random()*10-5)
+      time.sleep(whrandom.random()*0.05)
+      cmd.turn('y',whrandom.random()*10-5)
+      time.sleep(whrandom.random()*0.05)
+      cmd.turn('z',whrandom.random()*10-5)
+
+t = threading.Thread(target=turns)
 t.setDaemon(1)
 t.start()
 
