@@ -18,7 +18,7 @@ Changes Under Consideration
 
    * Save dialog for objects/selections
 
-makeGoals for 0.51 release:
+Goals for 0.51 release:
 
    * fill-out object/coord set specific settings
 
@@ -32,9 +32,11 @@ makeGoals for 0.51 release:
 
    * feedback conditionals placed around all error output
 
-Goals for 0.50 release:
-
    * provide accurate documentation
+
+Changes up to 0.51
+
+   * depth_cue toggle setting (important for low-end PC hardware)
 
 Changes up to 0.50
 
