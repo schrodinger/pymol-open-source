@@ -67,7 +67,7 @@ def start_pymol():
    global glutThread
    glutThread = thread.get_ident()
    _cmd.runpymol() # only returns if we are running pretend GLUT
-   from pymol import wxpymol # never returns
+   from pymol.embed import wxpymol # never returns
 
 def exec_str(s):
    try:
