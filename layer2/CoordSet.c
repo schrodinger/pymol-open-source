@@ -417,11 +417,11 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 
   /*  printf("inv %d %d \n",type,level);fflush(stdout);*/
 
-  if(I->NSpheroid!=I->NIndex*I->SpheroidSphereSize) {
-
-    FreeP(I->Spheroid);
-    FreeP(I->SpheroidNormal);
-  }
+  if(I->Spheroid)
+    if(I->NSpheroid!=I->NAtIndex*I->SpheroidSphereSize) {
+      FreeP(I->Spheroid);
+      FreeP(I->SpheroidNormal);
+    }
   if(level>=cRepInvColor) 
 	 VLAFreeP(I->Color);
   if(type>=0) {

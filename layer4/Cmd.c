@@ -3706,10 +3706,11 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 {
   char *name;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&name);
+  int average;
+  ok = PyArg_ParseTuple(args,"si",&name,&average);
   if (ok) {
     APIEntry();
-    ExecutiveSpheroid(name); /* TODO STATUS */
+    ExecutiveSpheroid(name,average); /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));

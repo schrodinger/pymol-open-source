@@ -107,6 +107,8 @@ Current Bugs to Fix
 
 Changes up to 0.84
 
+   * updated SPHEROID command for use with trajectories
+
    * Can now read AMBER topology, coordinate, trajectory, and restart files
 
    * PyMOL now transforms 4-character atom names appropriately by default.

@@ -199,7 +199,7 @@ void ObjectMoleculeUndo(ObjectMolecule *I,int dir);
 void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
-void ObjectMoleculeCreateSpheroid(ObjectMolecule *I);
+void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
 int ObjectMoleculeVerifyChemistry(ObjectMolecule *I);
 int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index);

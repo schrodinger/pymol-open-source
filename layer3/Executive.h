@@ -85,7 +85,7 @@ void ExecutiveProtect(char *s1,int mode);
 void ExecutiveMask(char *s1,int mode);
 void ExecutiveUndo(int dir);
 void ExecutiveRebuildAll(void);
-void ExecutiveSpheroid(char *name);
+void ExecutiveSpheroid(char *name,int average);
 void ExecutiveAddHydrogens(char *s1);
 void ExecutiveFuse(char *s0,char *s1,int mode);
 void ExecutiveRenameObjectAtoms(char *name,int force);
