@@ -63,20 +63,22 @@ void ObjectDistInvalidateRep(ObjectDist *I,int rep)
 void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick,int pass)
 {
   int a;
-  if(frame<0) {
-    for(a=0;a<I->NDSet;a++)
-      if(I->DSet[a])
-        if(I->DSet[a]->fRender)
-          I->DSet[a]->fRender(I->DSet[a],ray,pick,pass);        
-  } else if(frame<I->NDSet) {
-	 I->CurDSet=frame % I->NDSet;
-	 if(I->DSet[I->CurDSet]) {
-      if(I->DSet[I->CurDSet]->fRender)
-        I->DSet[I->CurDSet]->fRender(I->DSet[I->CurDSet],ray,pick,pass);
-	 }
-  } else if(I->NDSet==1) { /* if only one coordinate set, assume static */
-    if(I->DSet[0]->fRender)
-      I->DSet[0]->fRender(I->DSet[0],ray,pick,pass);    
+  if(!pass) {
+    if(frame<0) {
+      for(a=0;a<I->NDSet;a++)
+        if(I->DSet[a])
+          if(I->DSet[a]->fRender)
+            I->DSet[a]->fRender(I->DSet[a],ray,pick,pass);        
+    } else if(frame<I->NDSet) {
+      I->CurDSet=frame % I->NDSet;
+      if(I->DSet[I->CurDSet]) {
+        if(I->DSet[I->CurDSet]->fRender)
+          I->DSet[I->CurDSet]->fRender(I->DSet[I->CurDSet],ray,pick,pass);
+      }
+    } else if(I->NDSet==1) { /* if only one coordinate set, assume static */
+      if(I->DSet[0]->fRender)
+        I->DSet[0]->fRender(I->DSet[0],ray,pick,pass);    
+    }
   }
 }
 /*========================================================================*/

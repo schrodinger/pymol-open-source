@@ -276,26 +276,28 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
           }
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
-          if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-            CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
-                        I->Obj.Setting,NULL);
-          if(n&&v&&I->Obj.RepVis[cRepMesh]) {
-            ObjectUseColor(&I->Obj);
-            glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
-            while(*n)
-              {
-                c=*(n++);
-                if(ms->DotFlag) 
-                  glBegin(GL_POINTS);
-                else 
-                  glBegin(GL_LINE_STRIP);
-                SceneResetNormal(false);
-                while(c--) {
-                  glVertex3fv(v);
-                  v+=3;
+          if(!pass) {
+            if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
+              CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
+                          I->Obj.Setting,NULL);
+            if(n&&v&&I->Obj.RepVis[cRepMesh]) {
+              ObjectUseColor(&I->Obj);
+              glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
+              while(*n)
+                {
+                  c=*(n++);
+                  if(ms->DotFlag) 
+                    glBegin(GL_POINTS);
+                  else 
+                    glBegin(GL_LINE_STRIP);
+                  SceneResetNormal(false);
+                  while(c--) {
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
                 }
-                glEnd();
-              }
+            }
           }
         }
       }

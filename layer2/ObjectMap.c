@@ -99,66 +99,68 @@ static void ObjectMapUpdate(ObjectMap *I) {
 
 static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick,int pass)
 {
-  if(I->Obj.RepVis[cRepExtent]) {
-    if(ray) {
-      float *vc;
-      vc = ColorGet(I->Obj.Color);
-      ray->fColor3fv(ray,vc);
-      ray->fCylinder3fv(ray,I->Corner[0],I->Corner[1],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[0],I->Corner[2],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[2],I->Corner[3],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[1],I->Corner[3],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[0],I->Corner[4],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[1],I->Corner[5],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[2],I->Corner[6],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[3],I->Corner[7],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[4],I->Corner[5],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[4],I->Corner[6],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[6],I->Corner[7],0.20,vc,vc);
-      ray->fCylinder3fv(ray,I->Corner[5],I->Corner[7],0.20,vc,vc);
-    } else if(pick&&PMGUI) {
-    } else if(PMGUI) {
-      ObjectUseColor(&I->Obj);
-      glDisable(GL_LIGHTING); 
-      glBegin(GL_LINES);
-      glVertex3fv(I->Corner[0]);
-      glVertex3fv(I->Corner[1]);
-      
-      glVertex3fv(I->Corner[0]);
-      glVertex3fv(I->Corner[2]);
-      
-      glVertex3fv(I->Corner[2]);
-      glVertex3fv(I->Corner[3]);
-      
-      glVertex3fv(I->Corner[1]);
-      glVertex3fv(I->Corner[3]);
-      
-      glVertex3fv(I->Corner[0]);
-      glVertex3fv(I->Corner[4]);
-      
-      glVertex3fv(I->Corner[1]);
-      glVertex3fv(I->Corner[5]);
-      
-      glVertex3fv(I->Corner[2]);
-      glVertex3fv(I->Corner[6]);
-      
-      glVertex3fv(I->Corner[3]);
-      glVertex3fv(I->Corner[7]);
-      
-      glVertex3fv(I->Corner[4]);
-      glVertex3fv(I->Corner[5]);
-      
-      glVertex3fv(I->Corner[4]);
-      glVertex3fv(I->Corner[6]);
-      
-      glVertex3fv(I->Corner[6]);
-      glVertex3fv(I->Corner[7]);
-      
-      glVertex3fv(I->Corner[5]);
-      glVertex3fv(I->Corner[7]);
-      
-      glEnd();
-      glEnable(GL_LIGHTING);
+  if(!pass) {
+    if(I->Obj.RepVis[cRepExtent]) {
+      if(ray) {
+        float *vc;
+        vc = ColorGet(I->Obj.Color);
+        ray->fColor3fv(ray,vc);
+        ray->fCylinder3fv(ray,I->Corner[0],I->Corner[1],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[0],I->Corner[2],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[2],I->Corner[3],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[1],I->Corner[3],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[0],I->Corner[4],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[1],I->Corner[5],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[2],I->Corner[6],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[3],I->Corner[7],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[4],I->Corner[5],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[4],I->Corner[6],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[6],I->Corner[7],0.20,vc,vc);
+        ray->fCylinder3fv(ray,I->Corner[5],I->Corner[7],0.20,vc,vc);
+      } else if(pick&&PMGUI) {
+      } else if(PMGUI) {
+        ObjectUseColor(&I->Obj);
+        glDisable(GL_LIGHTING); 
+        glBegin(GL_LINES);
+        glVertex3fv(I->Corner[0]);
+        glVertex3fv(I->Corner[1]);
+        
+        glVertex3fv(I->Corner[0]);
+        glVertex3fv(I->Corner[2]);
+        
+        glVertex3fv(I->Corner[2]);
+        glVertex3fv(I->Corner[3]);
+        
+        glVertex3fv(I->Corner[1]);
+        glVertex3fv(I->Corner[3]);
+        
+        glVertex3fv(I->Corner[0]);
+        glVertex3fv(I->Corner[4]);
+        
+        glVertex3fv(I->Corner[1]);
+        glVertex3fv(I->Corner[5]);
+        
+        glVertex3fv(I->Corner[2]);
+        glVertex3fv(I->Corner[6]);
+        
+        glVertex3fv(I->Corner[3]);
+        glVertex3fv(I->Corner[7]);
+        
+        glVertex3fv(I->Corner[4]);
+        glVertex3fv(I->Corner[5]);
+        
+        glVertex3fv(I->Corner[4]);
+        glVertex3fv(I->Corner[6]);
+        
+        glVertex3fv(I->Corner[6]);
+        glVertex3fv(I->Corner[7]);
+        
+        glVertex3fv(I->Corner[5]);
+        glVertex3fv(I->Corner[7]);
+        
+        glEnd();
+        glEnable(GL_LIGHTING);
+      }
     }
   }
 }
