@@ -93,6 +93,8 @@ class SettingIndex:
    static_singletons    =82
    max_triangles        =83
    depth_cue            =84
+   specular             =85
+   shininess            =86
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

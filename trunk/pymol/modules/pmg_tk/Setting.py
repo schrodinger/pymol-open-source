@@ -63,6 +63,9 @@ class Setting:
       self.depth_cue = IntVar()
       self.depth_cue.set(int(cmd.get_setting_legacy('depth_cue')))
 
+      self.specular = IntVar()
+      self.specular.set(int(cmd.get_setting_legacy('specular')))
+
 
       self.xref = { 
          'ray_trace_frames':
@@ -91,6 +94,8 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % s.backface_cull.get())))),
          'depth_cue'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.depth_cue.get())))),
+         'specular'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.specular.get())))),
          }
 
       self.update_code = {
@@ -116,6 +121,9 @@ class Setting:
          (lambda s,t: (s.backface_cull.set(int(t[1][0])))), 
          'depth_cue'       :
          (lambda s,t: (s.depth_cue.set(int(t[1][0])))), 
+         'specular'       :
+         (lambda s,t: (s.specular.set(int(t[1][0])))), 
+
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -130,6 +138,7 @@ class Setting:
          pymol.setting._get_index("static_singletons"),
          pymol.setting._get_index("backface_cull"),
          pymol.setting._get_index("depth_cue"),
+         pymol.setting._get_index("specular"),
          ]
 
       self.active_dict = {}
