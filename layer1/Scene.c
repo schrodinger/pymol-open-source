@@ -1428,68 +1428,127 @@ static double last = 0.0;
 static void do_update(void)
 {
   char buffer[1024];
-  float sticks,lines,spheres,labels;
+  float sticks,lines,spheres,labels,ribbon,cartoon;
   char byres[10] = "byres";
+  char not[4] = "not";
   char empty[1] = "";
-  char *p;
+  char *p1;
+  char *p2;
+  char *s;
+  int refresh_flag;
+
   if((UtilGetSeconds()-last)>SettingGet(cSetting_roving_delay)) {
 
+    s = SettingGet_s(NULL,NULL,cSetting_roving_selection);
     sticks = SettingGet(cSetting_roving_sticks);
     lines = SettingGet(cSetting_roving_lines);
     labels = SettingGet(cSetting_roving_labels);
     spheres = SettingGet(cSetting_roving_spheres);
+    ribbon = SettingGet(cSetting_roving_ribbon);
+    cartoon = SettingGet(cSetting_roving_cartoon);
+
+    if(SettingGet(cSetting_roving_byres))
+      p2 = byres;
+    else
+      p2 = empty;
 
     if(sticks!=0.0F) {
       if(sticks<0.0F) {
-        p=byres;
+        p1=not;
         sticks=fabs(sticks);
       } else {
-        p=empty;
+        p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('sticks');cmd.show('sticks','%s(center expand %8.1f)');cmd.refresh()",
-              p,sticks);
+"cmd.hide('sticks','%s');cmd.show('sticks','%s and %s %s (center expand %3.1f)')",
+              s,s,p1,p2,sticks);
       PParse(buffer);
+      PFlush();
+      refresh_flag=true;
     }
+
     if(lines!=0.0F) {
       if(lines<0.0F) {
-        p=byres;
+        p1=not;
         lines=fabs(lines);
       } else {
-        p=empty;
+        p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('lines');cmd.show('lines','%s(center expand %8.1f)');cmd.refresh()",
-              p,lines);
+              "cmd.hide('lines','%s');cmd.show('lines','%s & %s %s (center expand %3.1f)')",
+              s,s,p1,p2,lines);
       PParse(buffer);
+      PFlush();
+      refresh_flag=true;
     }
+
     if(labels!=0.0F) {
       if(labels<0.0F) {
-        p=byres;
+        p1=not;
         labels=fabs(labels);
       } else {
-        p=empty;
+        p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('labels');cmd.show('labels','%s(center expand %8.1f)');cmd.refresh()",
-              p,labels);
+              "cmd.hide('labels','%s');cmd.show('labels','%s & %s %s (center expand %3.1f)')",
+              s,s,p1,p2,labels);
       PParse(buffer);
+      PFlush();
+      refresh_flag=true;
     }
+
     if(spheres!=0.0F) {
       if(spheres<0.0F) {
-        p=byres;
+        p1=not;
         spheres=fabs(spheres);
       } else {
-        p=empty;
+        p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('spheres');cmd.show('spheres','%s(center expand %8.1f)');cmd.refresh()",
-              p,spheres);
+              "cmd.hide('spheres','%s');cmd.show('spheres','%s & %s %s (center expand %3.1f)')",
+              s,s,p1,p2,spheres);
       PParse(buffer);
+      PFlush();
+      refresh_flag=true;
     }
 
+    if(cartoon!=0.0F) {
+      if(cartoon<0.0F) {
+        p1=not;
+        cartoon=fabs(cartoon);
+      } else {
+        p1=empty;
+      }
+      sprintf(buffer,
+              "cmd.hide('cartoon','%s');cmd.show('cartoon','%s & %s %s (center expand %3.1f)')",
+              s,s,p1,p2,cartoon);
+      PParse(buffer);
+      PFlush();
+      refresh_flag=true;
+    }
 
-    PFlush();
+    if(ribbon!=0.0F) {
+      if(ribbon<0.0F) {
+        p1=not;
+        ribbon=fabs(ribbon);
+      } else {
+        p1=empty;
+      }
+      sprintf(buffer,
+              "cmd.hide('ribbon','%s');cmd.show('ribbon','%s & %s %s (center expand %3.1f)');cmd.refresh()",
+              s,s,p1,p2,ribbon);
+      printf("%s\n",buffer);
+      PParse(buffer);
+      PFlush();
+
+      refresh_flag=true;
+    }
+
+    if(refresh_flag) {
+      PParse("cmd.refresh()");
+      PFlush();
+    }
+
     last=UtilGetSeconds();
   }
 }

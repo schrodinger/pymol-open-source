@@ -254,6 +254,10 @@ if __name__=='pymol.setting':
       roving_spheres        = 222
       roving_labels         = 223
       roving_delay          = 224
+      roving_selection      = 225
+      roving_byres          = 226
+      roving_ribbon         = 227
+      roving_cartoon        = 228
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
