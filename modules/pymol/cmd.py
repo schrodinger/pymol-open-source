@@ -471,7 +471,7 @@ PyMOL COMMAND LINE OPTIONS
    -p   Listen for commands on standard input.
 
    -f <# line> Controls display of commands and feedback in OpenGL (0=off).
-   -r <file.py>[,global|local|module] Run a python program in on startup.
+   -r <file.py>[,global|local|module] Run a python program on startup.
    -l <file.py>[,global|local|module] Spawn a python program in new thread.
    -d <string> Run pymol command string upon startup.
 
@@ -483,7 +483,8 @@ PyMOL COMMAND LINE OPTIONS
     .pdb            Protein Data Bank format file to be loaded on startup
     .mmod           Macromodel format to be loaded on startup
     .mol            MDL MOL file to be loaded on startup
-    .xplor          X-PLOR Map file to be loaded on startup
+    .xplor          X-PLOR Map file (ASCII) to be loaded on startup
+    .ccp4           CCP4 map file (BINARY) to be loaded on startup
     .pkl            Pickled ChemPy Model (class "chempy.model.Indexed")
     .r3d            Raster3D Object
     .cc1, .cc2      ChemDraw 3D cartesian coordinate file
