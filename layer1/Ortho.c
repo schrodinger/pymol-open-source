@@ -1462,7 +1462,7 @@ void OrthoSplash(void)
     PRINTF " Copyright (C) 2004 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;    
     PRINTF " Legal usage of this product beyond your free 90 evaluation period requires\n" ENDF;
     PRINTF " a current PyMOL subscription from DeLano Scientific LLC unless you meet the\n" ENDF;
-    PRINTF " MacPyMOL incentive exemption criteria. \n \n" ENDF;
+    PRINTF " exemption criteria for this Incentive Product. \n \n" ENDF;
     PRINTF " Please visit http://www.pymol.org/funding.html for subscription information.\n \n"ENDF;
     PRINTF " Based on the PyMOL(TM) Molecular Graphics System, Version " ENDF;
     PRINTF _PyMOL_VERSION ENDF;
