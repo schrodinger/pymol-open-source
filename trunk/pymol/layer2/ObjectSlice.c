@@ -557,7 +557,7 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
       float *normal = oss->normals;
       int n=oss->n_strips;
       int a;
-      int offset0,offset1,offset2,offset;
+      int offset0=0,offset1=0,offset2,offset;
       int strip_active =false;
       int tri_count = 0;
 
@@ -878,7 +878,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             float *color = oss->colors;
             int n=oss->n_strips;
             int a;
-            int offset0,offset1,offset2,offset;
+            int offset0=0,offset1=0,offset2,offset;
             int strip_active =false;
             int tri_count = 0;
             
@@ -960,7 +960,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             float *point = oss->points;
             int n=oss->n_strips;
             int a;
-            int offset0,offset1,offset2,offset;
+            int offset0=0,offset1=0,offset2,offset;
             int strip_active =false;
             int tri_count = 0;
             for(a=0;a<n;a++) {
