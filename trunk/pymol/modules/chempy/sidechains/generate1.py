@@ -105,10 +105,11 @@ sc_dict = {}
 cmd.feedback('disable','selector','result')
 cmd.feedback('disable','executive','action')
 
-for fyle in glob("source/*")[0:1]:
+for fyle in glob("source/*"):
    cmd.load(fyle)
    cmd.remove("(het)")
    cmd.remove("(hydro or not alt '')")
+   cmd.remove("(byres b>25)") # only use well-defined residues
    cmd.refresh()
    measure_all_torsions("all",sc_dict)
    cmd.delete("all")

@@ -647,9 +647,13 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenu('Wizards', 'Task Wizards')
       
 
-      self.menuBar.addmenuitem('Wizards', 'command', 'Distances',
-                               label='Distances',
+      self.menuBar.addmenuitem('Wizards', 'command', 'Distance',
+                               label='Distance',
                                command = lambda: cmd.wizard("distance"))
+
+      self.menuBar.addmenuitem('Wizards', 'command', 'Mutagenesis',
+                               label='Mutagenesis',
+                               command = lambda: cmd.wizard("mutagenesis"))
 
       self.menuBar.addmenuitem('Wizards', 'command', 'Pair Fitting',
                                label='Pair Fitting',
