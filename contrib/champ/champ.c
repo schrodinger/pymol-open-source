@@ -44,11 +44,11 @@ void ChampAtomFlagDump(CChamp *I,int index);
 int ChampAddBondToAtom(CChamp *I,int atom_index,int bond_index);
 
 int ChampMatch(CChamp *I,int template,int target,
-                int unique_start,int n_wanted,int *match_start,int tag_flag);
+                int unique_start,int n_wanted,int *match_start,int tag_mode);
 
 int ChampMatch2(CChamp *I,int template,int target,
                         int start_tmpl,int start_targ,
-                        int n_wanted,int *match_start,int tag_flag);
+                        int n_wanted,int *match_start,int tag_mode);
 
 int ChampFindUniqueStart(CChamp *I,int template,int target,int *multiplicity);
 int ChampUniqueListNew(CChamp *I,int atom, int unique_list);
@@ -1410,6 +1410,20 @@ int ChampModelToPat(CChamp *I,PyObject *model)
         }
 
         if(ok) {
+          if(PTruthCallStr(atom,"has","index")) {  /* note -- chempy models have 1-based index attributes
+                                                      even though the arrays are zero-based */
+            tmp = PyObject_GetAttrString(atom,"index");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,(int*)&at->ext_index);
+            if(!ok) 
+              err_message("ChampModel2Pat","can't read index");
+            Py_XDECREF(tmp);
+          } else {
+            at->index = 0;
+          }
+        }
+
+        if(ok) {
           if(PTruthCallStr(atom,"has","coord")) {         
             tmp = PyObject_GetAttrString(atom,"coord");
             if (tmp)
@@ -1882,19 +1896,19 @@ int ChampMatch_1V1_B(CChamp *I,int pattern,int target)
                     1,NULL,false));
 }
 
-int ChampMatch_1V1_N(CChamp *I,int pattern,int target,int limit,int tag_flag)
+int ChampMatch_1V1_N(CChamp *I,int pattern,int target,int limit,int tag_mode)
 {
   ChampPreparePattern(I,pattern);
   ChampPrepareTarget(I,target);
   return(ChampMatch(I,pattern,target,
                     ChampFindUniqueStart(I,pattern,target,NULL),
-                    limit,NULL,tag_flag));
+                    limit,NULL,tag_mode));
 }
 
 
 
 
-int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit,int tag_flag)
+int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit,int tag_mode)
 {
   int match_start = 0;
 
@@ -1902,7 +1916,7 @@ int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit,int tag_flag)
   ChampPrepareTarget(I,target);
   ChampMatch(I,pattern,target,
              ChampFindUniqueStart(I,pattern,target,NULL),
-             limit,&match_start,tag_flag);
+             limit,&match_start,tag_mode);
   return(match_start);
 }
 
@@ -1954,7 +1968,7 @@ int ChampExact_1VN_N(CChamp *I,int pattern, int list)
 }
 
 
-int ChampMatch_NV1_N(CChamp *I,int list,int target,int limit,int tag_flag)
+int ChampMatch_NV1_N(CChamp *I,int list,int target,int limit,int tag_mode)
 {
   int pattern;
   int c = 0;
@@ -1964,7 +1978,7 @@ int ChampMatch_NV1_N(CChamp *I,int list,int target,int limit,int tag_flag)
     ChampPreparePattern(I,pattern);
     if(ChampMatch(I,pattern,target,
                   ChampFindUniqueStart(I,pattern,target,NULL),
-                  limit,NULL,tag_flag))
+                  limit,NULL,tag_mode))
       c++;
     list = I->Int[list].link;
   }
@@ -2061,7 +2075,7 @@ void ChampMatchDump(CChamp *I,int match_idx)
 }
 
 int ChampMatch(CChamp *I,int template,int target,int unique_start,
-               int n_wanted,int *match_start,int tag_flag) 
+               int n_wanted,int *match_start,int tag_mode) 
 { /* returns whether or not substructure exists, but doesn't do alignment */
   int n_match = 0;
   int start_targ;
@@ -2071,7 +2085,7 @@ int ChampMatch(CChamp *I,int template,int target,int unique_start,
 
 #ifdef MATCHDEBUG
   printf("\n\n ChampMatch: temp %d targ %d uniq %d n_want %d start %p tag %d\n",
-         template,target,unique_start,n_wanted,match_start,tag_flag);
+         template,target,unique_start,n_wanted,match_start,tag_mode);
 
 #endif
 
@@ -2093,7 +2107,7 @@ int ChampMatch(CChamp *I,int template,int target,int unique_start,
             n_match += ChampMatch2(I,template,target,
                                     tmpl_atom,targ_atom,
                                     (n_wanted-n_match),
-                                   match_start,tag_flag);
+                                   match_start,tag_mode);
             start_targ = I->Int[start_targ].link;            
             if(n_match>=n_wanted) break;
           }
@@ -2107,7 +2121,7 @@ int ChampMatch(CChamp *I,int template,int target,int unique_start,
 
 int ChampMatch2(CChamp *I,int template,int target,
                  int start_tmpl,int start_targ,int n_wanted,
-                 int *match_start,int tag_flag)
+                 int *match_start,int tag_mode)
 
 { /* does the template covalent tree match the target? */
   
@@ -2545,7 +2559,7 @@ int ChampMatch2(CChamp *I,int template,int target,
 #endif
             }
             
-            if(tag_flag) { /* are we using tags to mark atoms and bonds? */
+            if(tag_mode) { /* are we using tags to mark atoms and bonds? */
               
               tmpl_idx = tmpl_stack; /* prepare to read... */
               while(tmpl_idx) {
@@ -2560,15 +2574,22 @@ int ChampMatch2(CChamp *I,int template,int target,
                 targ_ent = I->Targ + targ_idx;
                 if(!I->Atom[tmpl_ent->atom].mark_read) { /* save non-virtual atom match */
                   I->Atom[tmpl_ent->atom].mark_read = true;
-                  I->Atom[targ_ent->atom].tag |= I->Atom[tmpl_ent->atom].tag;
-                  I->Atom[targ_ent->atom].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->atom].not_tag);
+                  if(tag_mode==cTag_merge) { /* merge */                                                                                         
+                    I->Atom[targ_ent->atom].tag |= I->Atom[tmpl_ent->atom].tag;
+                    I->Atom[targ_ent->atom].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->atom].not_tag);
+                  } else if(tag_mode==cTag_copy) { /* copy */
+                    I->Atom[targ_ent->atom].tag = I->Atom[tmpl_ent->atom].tag;
+                  }
                 }
                 
                 if(tmpl_ent->bond) { /* record bond match */
-                  I->Bond[targ_ent->bond].tag |= I->Bond[tmpl_ent->bond].tag;
-                  I->Bond[targ_ent->bond].tag &= (0xFFFFFFFF^I->Bond[tmpl_ent->bond].not_tag);
-                }
-                
+                  if(tag_mode==cTag_merge) {
+                    I->Bond[targ_ent->bond].tag |= I->Bond[tmpl_ent->bond].tag;
+                    I->Bond[targ_ent->bond].tag &= (0xFFFFFFFF^I->Bond[tmpl_ent->bond].not_tag);
+                  } else if(tag_mode==cTag_copy) {
+                    I->Bond[targ_ent->bond].tag = I->Bond[tmpl_ent->bond].tag;
+                  }
+                }                
                 tmpl_idx = tmpl_ent->link;
                 targ_idx = targ_ent->link;
               }

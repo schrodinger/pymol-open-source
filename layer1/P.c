@@ -326,6 +326,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   Chain alt;
   PyObject *alt_id1,*alt_id2=NULL;
   SegIdent segi;
+  PyObject *flags_id1,*flags_id2=NULL;
+  int flags;
   PyObject *segi_id1,*segi_id2=NULL;
   TextType textType;
   PyObject *text_type_id1,*text_type_id2=NULL;
@@ -374,6 +376,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   type_id1 = PConvStringToPyDictItem(dict,"type",atype);
   name_id1 = PConvStringToPyDictItem(dict,"name",at->name);
   resn_id1 = PConvStringToPyDictItem(dict,"resn",at->resn);
+  flags_id1 = PConvIntToPyDictItem(dict,"flags",at->flags);
   resi_id1 = PConvStringToPyDictItem(dict,"resi",at->resi);
   resv_id1 = PConvIntToPyDictItem(dict,"resv",at->resv); /* subordinate to resi */
   chain_id1 = PConvStringToPyDictItem(dict,"chain",at->chain);
@@ -417,6 +420,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
       else if(!(elem_id2 = PyDict_GetItemString(dict,"elem")))
         result=false;
       else if(!(resn_id2 = PyDict_GetItemString(dict,"resn")))
+        result=false;
+      else if(!(flags_id2 = PyDict_GetItemString(dict,"flags")))
         result=false;
       else if(!(resi_id2 = PyDict_GetItemString(dict,"resi")))
         result=false;
@@ -604,6 +609,13 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
           strcpy(at->label,label);
         }
       }
+      if(flags_id1!=flags_id2) {
+        if(!PConvPyObjectToInt(flags_id2,&flags))
+          result=false;
+        else
+          at->flags = flags;
+      }
+
       if(numeric_type_id1!=numeric_type_id2) {
         if(!PConvPyObjectToInt(numeric_type_id2,&numericType))
           result=false;

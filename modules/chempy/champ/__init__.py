@@ -7,7 +7,7 @@
 #G* Please see the accompanying LICENSE file for further information. 
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* Scott Dixon, Metaphorics, LLC
+#-* 
 #-* 
 #-*
 #Z* -------------------------------------------------------------------
@@ -177,7 +177,7 @@ class Champ:
 
    def match_Nv1_n(self,pattern,target,limit,tag):
       '''
-      returns tag list for list of patterns onto a target
+      returns count of matches
       '''
       (e,r) = _champ.match_Nv1_n(self._champ,
                            int(pattern),int(target),
@@ -252,6 +252,14 @@ class Champ:
       get tags (numeric lists)
       '''
       (e,r) = _champ.pattern_get_tags(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
+   def pattern_get_ext_indices_with_tags(self,index):
+      '''
+      get tags (numeric lists)
+      '''
+      (e,r) = _champ.pattern_get_ext_indices_with_tags(self._champ,int(index))
       if e: raise RuntimeError
       return r
 
