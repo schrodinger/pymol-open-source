@@ -72,6 +72,7 @@ void ExecutiveProtect(char *s1,int mode);
 void ExecutiveMask(char *s1,int mode);
 void ExecutiveUndo(int dir);
 void ExecutiveRebuildAll(void);
+void ExecutiveSpheroid(char *name);
 
 #endif
 
