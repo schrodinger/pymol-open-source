@@ -48,9 +48,9 @@ CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
 #
 #- Choose One --------------------------------------------------------
 #--- Workaround for very old XFree86/DRI linux dll problem
-#BUGS = -D_DRI_WORKAROUND
+BUGS = -D_DRI_WORKAROUND
 #---
-BUGS =
+#BUGS =
 #---------------------------------------------------------------------
 #
 #- Choose One Pair ---------------------------------------------------
