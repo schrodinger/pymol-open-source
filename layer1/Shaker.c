@@ -285,7 +285,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
 
     dp = dot_product3f(cp0,cp1);
     
-    result = (dev = 1.0F - fabs(dp));
+    result = (dev = 1.0F - (float)fabs(dp));
     
     if(dev>R_SMALL4) {
 
@@ -297,14 +297,14 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
       
       if(fixed && (dp*target<0.0F)) {
         if(dp<0.0F) {
-          sc = -wt*dev/2.0;
+          sc = -wt*dev/2.0F;
         } else {
-          sc = wt*dev/2.0;
+          sc = wt*dev/2.0F;
         }
       } else if(dp>0) {
-        sc = -wt*dev/2.0;
+        sc = -wt*dev/2.0F;
       } else {
-        sc = wt*dev/2.0;
+        sc = wt*dev/2.0F;
       }
 
       subtract3f(v0,v3,d0);
