@@ -4146,7 +4146,6 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   OrthoLineType buf;
   int frame,type;
   int finish,discrete;
-  int new_type;
   int quiet;
   int ok=false;
   int multiplex;

@@ -586,7 +586,8 @@ int EditorSelect(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,int pkresi,
 
   } else {
     EditorInactivate(G);
-    ErrMessage(G,"Editor","Invalid input.");    
+    if(s0&&s0[0])
+      ErrMessage(G,"Editor","Invalid input.");    
   }
   return(result);
 }
