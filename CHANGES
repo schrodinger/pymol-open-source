@@ -9,19 +9,31 @@ PyMOL Architecture and Development Status
 
       Currently, deployed only in glutPyMOL (a.k.a. standard "PyMOL").
 
-   Syndicated Applications 
+   Syndicated Application Ideas...
 
       glutPyMOL (PyMOL in GLUT window with an external GUI)
        
          Deployed -- the current standard, in use globally.
 
-      wxPyMOL (PyMOL inside of a wxPython Widget)
+      ePyMOL Lite (EasyPyMOL, free version, win32 only)
 
-         Working prototype near completion.
+         Planned for mid 2003
+
+      ePyMOL Pro (EasyPyMOL, professional version, win32 only)
+   
+         Planned for mid 2003
 
       axPyMOL (PyMOL inside of an ActiveX Control)
 
          Working prototype partially completed
+
+      wxPyMOL (PyMOL inside of a wxPython Widget)
+
+         Working prototype near completion.
+
+      MacPyMOL (fully Aqua-based native version of PyMOL)
+
+         Planned for late 2003
 
       tkPyMOL (PyMOL inside of a Tcl/Tk TOGL widget)
 
@@ -167,8 +179,12 @@ CHANGE LOG
 
 Changes up to 0.91
 
+
+      
+   * Fixed processor mis-detection bug on Linux with certain P4s
+
    * PyMOL now building warning-free on VC++ warning level 3
-      (catches sloppy precision and conversion handling)
+      (catches sloppy precision handling and conversion)
 
 Changes up to 0.90
 
