@@ -64,7 +64,7 @@ class PMGApp(AbstractApp):
 		btn_stop = self.buttonAdd(row1,'Stop',pm.mstop)
 		btn_forward = self.buttonAdd(row1,'>',pm.forward)
 		btn_last = self.buttonAdd(row1,'>|',pm.ending)
-		btn_ccache = self.buttonAdd(row1,'Clear',pm.mclear)
+		btn_ccache = self.buttonAdd(row1,'MClear',pm.mclear)
 
 
 	def createMain(self):
@@ -175,7 +175,6 @@ class PMGApp(AbstractApp):
 								label='Quit',
 								command=pm.quit)
 
-
 		self.menuBar.addmenu('Movie', 'Movie Control')
 
 		self.menuBar.addmenuitem('Movie', 'checkbutton',
@@ -190,7 +189,45 @@ class PMGApp(AbstractApp):
 								variable = self.setting.cache_frames,
 								command = lambda s=self: s.setting.update('cache_frames'))
 
+		self.menuBar.addmenuitem('Movie', 'separator', '')
+
+		self.menuBar.addmenuitem('Movie', 'command', 'Maximum Speed',
+                               label='Maximum Speed',
+                               command = lambda: pm.set("movie_delay","0"))
+
+		self.menuBar.addmenuitem('Movie', 'command', '30 FPS Maximum',
+                               label='30 FPS Maximum',
+                               command = lambda: pm.set("movie_delay","30"))
+
+		self.menuBar.addmenuitem('Movie', 'command', '15 FPS Maximum',
+                               label='15 FPS Maximum',
+                               command = lambda: pm.set("movie_delay","62"))
+
+		self.menuBar.addmenuitem('Movie', 'command', '5 FPS Maximum',
+                               label='5 FPS Maximum',
+                               command = lambda: pm.set("movie_delay","195"))
+
+		self.menuBar.addmenuitem('Movie', 'separator', '')
+
+		self.menuBar.addmenuitem('Movie', 'command', 'Reset Meter',
+                               label='Reset Meter',
+                               command = lambda: pm.meter_reset())
+
 		self.menuBar.addmenu('Display', 'Display Control')
+
+		self.menuBar.addmenuitem('Display', 'command', 'Clear Text Output',
+                               label='Clear Text',
+                               command = lambda: pm.cls())
+
+		self.menuBar.addmenuitem('Display', 'command', 'Show Text Output',
+                               label='Show Text',
+                               command = lambda: pm.set("text","1"))
+
+		self.menuBar.addmenuitem('Display', 'command', 'Hide Text Output',
+                               label='Hide Text',
+                               command = lambda: pm.set("text","0"))
+
+		self.menuBar.addmenuitem('Display', 'separator', '')
       
 		self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
                                label='Stereo On',
@@ -219,6 +256,39 @@ class PMGApp(AbstractApp):
 							 	label='Antialias',
 								variable = self.setting.antialias,
 								command = lambda s=self: s.setting.update('antialias'))
+
+		self.menuBar.addmenuitem('Options', 'checkbutton',
+							 	'Overlay',
+							 	label='Overlay Text on Graphics',
+								variable = self.setting.overlay,
+								command = lambda s=self: s.setting.update('overlay'))
+
+		self.menuBar.addmenu('Mouse', 'Mouse Configuration')
+
+		self.menuBar.addmenuitem('Mouse', 'command', 'Left Mode 1',
+                               label='Left Mode 1',
+                               command = lambda: pm.set("button_mode","0"))
+      
+		self.menuBar.addmenuitem('Mouse', 'command', 'Left Mode 2',
+                               label='Left Mode 2',
+                               command = lambda: pm.set("button_mode","1"))      
+
+		self.menuBar.addmenuitem('Mouse', 'command', 'Left Mode 3',
+                               label='Left Mode 3',
+                               command = lambda: pm.set("button_mode","2"))      
+
+		self.menuBar.addmenuitem('Mouse', 'command', 'Right Mode 1',
+                               label='Right Mode 1',
+                               command = lambda: pm.set("button_mode","3"))
+      
+		self.menuBar.addmenuitem('Mouse', 'command', 'Right Mode 2',
+                               label='Right Mode 2',
+                               command = lambda: pm.set("button_mode","4"))      
+
+		self.menuBar.addmenuitem('Mouse', 'command', 'Right Mode 3',
+                               label='Right Mode 3',
+                               command = lambda: pm.set("button_mode","5"))      
+
 
 
 

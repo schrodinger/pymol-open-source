@@ -41,7 +41,10 @@ def mol_hide(s):
            [ 1, 'surface'   ,'pm.hide("surface"   ,"'+s+'")'],
            [ 0, ''          ,''                             ],
            [ 1, 'hydrogens' ,'pm.hide("('+s+' and hydro)")' ],
-           [ 1, 'everything','pm.hide("('+s+')")'           ]]
+           [ 1, 'everything','pm.hide("('+s+')")'           ],
+           [ 0, ''          ,''                             ],
+           [ 1, 'unselected','pm.hide("(not '+s+')")'      ],
+           ]
 
 def dist_show(s):
    return [[ 2, 'Show:'     ,''                             ],
@@ -90,10 +93,13 @@ def sele_action(s):
            [ 0, ''          ,''                         ],
            [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ],
            [ 0, ''          ,''                         ],
-           [ 1, 'Expand by residue' ,'pm.select("'+s+'","(byres '+s+')")' ],
+           [ 1, 'Duplicate'    ,'pm.select("('+s+')")'  ],
            [ 0, ''          ,''                         ],
-           [ 1, 'Expand by 6'  ,'pm.select("'+s+'","('+s+' expand 6)")' ],
-           [ 1, 'Expand by 8'  ,'pm.select("'+s+'","('+s+' expand 8)")' ],
+           [ 1, 'Expand By 3 A'  ,'pm.select("'+s+'","('+s+' expand 3)")' ],
+           [ 1, 'Expand By 7 A'  ,'pm.select("'+s+'","('+s+' expand 7)")' ],
+           [ 1, 'Expand By 10 A'  ,'pm.select("'+s+'","('+s+' expand 10)")' ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'Full Residues' ,'pm.select("'+s+'","(byres '+s+')")' ],
            ]
 
 def mol_action(s):
@@ -102,7 +108,6 @@ def mol_action(s):
            [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
            [ 0, ''          ,''                         ],
            [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ],
-           [ 0, ''          ,''                         ]
            ]
 
 def all_action(s):
@@ -110,6 +115,6 @@ def all_action(s):
            [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
            [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
            [ 0, ''          ,''                         ],
-           [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ]
+           [ 1, 'Delete'       ,'pm.delete("all")'    ]
            ]
 

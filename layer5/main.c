@@ -81,6 +81,12 @@ int PMGUI = true;
 int StereoCapable=false;
 
 /*========================================================================*/
+int MainSavingUnderWhileIdle(void)
+{
+  CMain *I = &Main;
+  return(I->IdleMode==2);
+}
+/*========================================================================*/
 void MainDirty(void)
 {
   CMain *I = &Main;

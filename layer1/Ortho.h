@@ -74,6 +74,8 @@ int  OrthoCommandOut(char *buffer);
 void OrthoFeedbackIn(char *buffer);
 int OrthoFeedbackOut(char *buffer);
 
+void OrthoRemoveSplash(void);
+
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 

@@ -21,15 +21,18 @@ Z* -------------------------------------------------------------------
 #define cButModeRotXYZ   0 
 #define cButModeTransXY  1
 #define cButModeTransZ   2
-#define cButModeClipZZ  3
+#define cButModeClipZZ   3
+#define cButModeRotZ     4
+#define cButModeClipN    5
+#define cButModeClipF    6
 
 typedef char CodeType[25];
 
 typedef struct {
   Block *Block;
-  CodeType Code[4];
+  CodeType Code[7];
   int Mode[6];
-  int NMode;
+  int NCode;
   float Rate;
   float Samples;
 }  CButMode;
@@ -41,5 +44,6 @@ void ButModeFree(void);
 Block *ButModeGetBlock(void);
 void ButModeSetRate(float renderTime);
 void ButModeResetRate(void);
+void ButModeChange(int mode);
 
 #endif

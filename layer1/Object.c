@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Object.h"
 #include"Color.h"
+#include"Ortho.h"
 
 int ObjectGetNFrames(Object *I);
 
@@ -73,6 +74,7 @@ void ObjectInit(Object *I)
   I->fDescribeElement = ObjectDescribeElement;
   I->Name[0]=0;
   I->Color=0;
+  OrthoRemoveSplash();
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
 }
 /*========================================================================*/
