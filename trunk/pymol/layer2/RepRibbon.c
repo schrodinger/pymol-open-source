@@ -113,11 +113,13 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
     }
   } else if(PMGUI) {
     
+
     PRINTFD(FB_RepRibbon)
       " RepRibbonRender: rendering GL...\n"
       ENDFD;
-	 
 
+    glLineWidth(SettingGet(cSetting_line_width));
+	 
     if(c) {
 	   glDisable(GL_LIGHTING);
       glBegin(GL_LINES);

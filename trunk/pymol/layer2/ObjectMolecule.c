@@ -1355,6 +1355,7 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
     ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
   }
   return(c);    
 }
@@ -1409,6 +1410,7 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int
       ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
       ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
       ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
+      ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
     }
     b0+=3;
   }
@@ -1469,6 +1471,7 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
     ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
   }
 
   return(-offset);

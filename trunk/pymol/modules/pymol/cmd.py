@@ -41,6 +41,7 @@ import imp
 import parsing
 import sys
 import copy
+import selector
 
 from shortcut import Shortcut
 
@@ -739,6 +740,12 @@ EXAMPLE
       print "Error: Sorry, couldn't find the '"+name+"' wizard."
       
 def get_dihedral(atom1,atom2,atom3,atom4,state=0):
+   # preprocess selections
+   atom1 = selector.process(atom1)
+   atom2 = selector.process(atom2)
+   atom3 = selector.process(atom3)
+   atom4 = selector.process(atom4)
+   #   
    r = None
    try:
       lock()
@@ -748,6 +755,12 @@ def get_dihedral(atom1,atom2,atom3,atom4,state=0):
    return r
 
 def set_dihedral(atom1,atom2,atom3,atom4,angle,state=0):
+   # preprocess selections
+   atom1 = selector.process(atom1)
+   atom2 = selector.process(atom2)
+   atom3 = selector.process(atom3)
+   atom4 = selector.process(atom4)
+   #   
    try:
       lock()
       r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),float(angle),int(state)-1)
@@ -907,7 +920,9 @@ NOTES
       mode = 0
    if cutoff == None:
       cutoff = -1.0
-
+   # preprocess selections
+   selection1 = selector.process(selection1)
+   selection2 = selector.process(selection2)
    # now do the deed
    try:
       lock()
@@ -1030,9 +1045,12 @@ SEE ALSO
 
    unbond, fuse, attach, replace, remove_picked
 '''
+   # preprocess selections
+   atom1 = selector.process(atom1)
+   atom2 = selector.process(atom2)
    try:
       lock()
-      r = _cmd.bond(str(atom1),str(atom2),int(order),1)
+      r = _cmd.bond(atom1,atom2,int(order),1)
    finally:
       unlock()
    return r
@@ -1064,6 +1082,10 @@ NOTE
    click, then hit CTRL-E to invert the atom.
 
 '''
+   # preprocess selections
+   selection1 = selector.process(selection1)
+   selection2 = selector.process(selection2)
+   #
    try:
       lock()
       r = _cmd.invert(str(selection1),str(selection2),0)
@@ -1090,6 +1112,9 @@ SEE ALSO
    bond, fuse, remove_picked, attach, detach, replace
  
 '''
+   # preprocess selections
+   atom1 = selector.process(atom1)
+   atom2 = selector.process(atom2)   
    try:
       lock()
       r = _cmd.bond(str(atom1),str(atom2),0,0)
@@ -1173,6 +1198,9 @@ SEE ALSO
 
    undo, redo
 '''
+   # preprocess selections
+   selection = selector.process(selection)
+   #
    r = None
    try:
       lock()
@@ -1254,6 +1282,9 @@ SEE ALSO
 
    load
    '''
+   # preprocess selection
+   selection=selector.process(selection)
+   #
    try:
       lock()
       r = _cmd.symexp(str(prefix),str(object),str(selection),float(cutoff))
@@ -1291,6 +1322,9 @@ SEE ALSO
       mopt = 1 # about a selection
    else:
       mopt = 0 # render the whole map
+   # preprocess selection
+   selection = selector.process(selection)
+   #
    try:
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
@@ -1330,6 +1364,9 @@ SEE ALSO
       mopt = 1 # about a selection
    else:
       mopt = 0 # render the whole map
+   # preprocess selections
+   selection = selector.process(selection)
+   #
    try:
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
@@ -1416,6 +1453,9 @@ EXAMPLES
    label (n;ca),"%s-%s" % (resn,resi)
    label (resi 200),"%1.3f" % partial_charge
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #
    r = 1
    try:
       lock()
@@ -1461,6 +1501,9 @@ SEE ALSO
 
    alter_state, iterate, iterate_state, sort
    '''
+   # preprocess selections
+   selection = selector.process(selection)
+   #
    try:
       lock()
       r = _cmd.alter(str(selection),str(expression),0)
@@ -1508,6 +1551,9 @@ SEE ALSO
 
    iterate_state, atler, alter_state
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #
    try:
       lock()
       r = _cmd.alter(str(selection),str(expression),1)
@@ -1537,6 +1583,9 @@ SEE ALSO
 
    iterate_state, alter, iterate
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #
    try:
       lock()
       r = _cmd.alter_state(int(state)-1,str(selection),str(expression),0)
@@ -1612,6 +1661,9 @@ SEE ALSO
 
    iterate, alter, alter_state
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #
    try:
       lock()
       r = _cmd.alter_state(int(state)-1,str(selection),str(expression),1)
@@ -1666,6 +1718,10 @@ def overlap(selection1,selection2,state1=1,state2=1,adjust=0.0):
 #   UNSUPPORTED FEATURE - LIKELY TO CHANGE
 #   (for maximum efficiency, use smaller molecule as selection 1)
 #
+   # preprocess selections
+   selection1 = selector.process(selection1)
+   selection2 = selector.process(selection2)
+   #
    r = 1
    try:
       lock()
@@ -1735,6 +1791,9 @@ SEE ALSO
 
    frame
 '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #
    try:
       lock()
       r = _cmd.count_states(selection)
@@ -1872,6 +1931,9 @@ SEE ALSO
 
    fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    r = -1.0
    try:
       lock()
@@ -1902,6 +1964,9 @@ SEE ALSO
 
    fit, rms, rms_cur, intra_fit, intra_rms_cur, pair_fit
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    r = -1.0
    try:
       lock()
@@ -1932,6 +1997,9 @@ SEE ALSO
 
    fit, rms, rms_cur, intra_fit, intra_rms, pair_fit
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    r = -1.0
    try:
       lock()
@@ -1962,10 +2030,15 @@ SEE ALSO
 
    load
 '''
+   
    a=target
    b=source
-   if a[0]!='(': a="(%"+str(a)+")"
-   if b[0]!='(': b="(%"+str(b)+")"
+   # preprocess selections
+   a = selector.process(a)
+   b = selector.process(b)
+   #
+   if a[0]!='(': a="("+str(a)+")"
+   if b[0]!='(': b="("+str(b)+")"   
    try:
       lock()   
       r = _cmd.update(str(a),str(b),-1,-1)
@@ -1995,8 +2068,12 @@ SEE ALSO
    '''
    a=str(selection)
    b=str(target)
-   if a[0]!='(': a="(%"+a+")"
-   if b[0]!='(': b="(%"+b+")"
+   # preprocess selections
+   a = selector.process(a)
+   b = selector.process(b)
+   #
+   if a[0]!='(': a="("+a+")"
+   if b[0]!='(': b="("+b+")"
    try:
       lock()   
       r = _cmd.fit("(%s in %s)" % (str(a),str(b)),
@@ -2026,6 +2103,10 @@ SEE ALSO
    '''
    a=str(selection)
    b=str(target)
+   # preprocess selections
+   a = selector.process(a)
+   b = selector.process(b)
+   #
    if a[0]!='(': a="(%"+a+")"
    if b[0]!='(': b="(%"+b+")"
    try:
@@ -2053,6 +2134,10 @@ SEE ALSO
    '''
    a=str(selection)
    b=str(target)
+   # preprocess selections
+   a = selector.process(a)
+   b = selector.process(b)
+   #   
    if a[0]!='(': a="(%"+a+")"
    if b[0]!='(': b="(%"+b+")"
    try:
@@ -2080,9 +2165,12 @@ SEE ALSO
 
    fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
    '''
+   new_arg = []
+   for a in arg:
+      new_arg.append(selector.process(a))
    try:
       lock()   
-      r = _cmd.fit_pairs(arg)
+      r = _cmd.fit_pairs(new_arg)
    finally:
       unlock()
    return r
@@ -2118,10 +2206,13 @@ SEE ALSO
 
    delete
 '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    r = 1
    try:
       lock()   
-      r = _cmd.remove(str(selection))
+      r = _cmd.remove(selection)
    finally:
       unlock()
    return r
@@ -2257,6 +2348,10 @@ SEE ALSO
 
    bond, unbond, attach, replace, fuse, remove_picked
 '''
+   # preprocess selections
+   selection1 = selector.process(selection1)
+   selection2 = selector.process(selection2)
+   #   
    try:
       lock()
       r = _cmd.fuse(str(selection1),str(selection2))
@@ -2314,6 +2409,12 @@ SEE ALSO
 
    unpick, remove_picked, cycle_valence, torsion
 '''
+   # preprocess selections
+   selection1 = selector.process(selection1)
+   selection2 = selector.process(selection2)
+   selection3 = selector.process(selection3)
+   selection4 = selector.process(selection4)
+   #
    r = 1
    try:
       lock()   
@@ -2403,10 +2504,13 @@ SEE ALSO
 
    h_fill
 '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    r = 1
    try:
       lock()   
-      r = _cmd.h_add(str(selection))
+      r = _cmd.h_add(selection)
    finally:
       unlock()
    return r
@@ -2432,6 +2536,9 @@ SEE ALSO
 
    deprotect, mask, unmask, mouse, editing
 '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    try:
       lock()   
       r = _cmd.protect(str(selection),1)
@@ -2457,6 +2564,9 @@ SEE ALSO
 
    protect, mask, unmask, mouse, editing
 '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    try:
       lock()   
       r = _cmd.protect(str(selection),0)
@@ -2485,6 +2595,9 @@ SEE ALSO
 
    unmask, protect, deprotect, mouse
 '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #
    try:
       lock()   
       r = _cmd.mask(str(selection),1)
@@ -2510,6 +2623,9 @@ SEE ALSO
 
    mask, protect, deprotect, mouse
 '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    try:
       lock()   
       r = _cmd.mask(str(selection),0)
@@ -2567,6 +2683,9 @@ SEE ALSO
 
    origin, orient
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    try:
       lock()   
       r = _cmd.zoom(str(selection),float(buffer))
@@ -2606,7 +2725,7 @@ NOTES
 SEE ALSO
 
    alter
-'''
+'''   
    try:
       lock()   
       r = _cmd.rename(str(object),int(force))
@@ -2727,9 +2846,12 @@ SEE ALSO
 
    zoom, orient, reset
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    try:
       lock()   
-      r = _cmd.origin(str(selection))
+      r = _cmd.origin(selection)
    finally:
       unlock()
    return r
@@ -2755,9 +2877,12 @@ SEE ALSO
 
    zoom, origin, reset
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    try:
       lock()
-      r = _cmd.orient(str(selection))
+      r = _cmd.orient(selection)
    finally:
       unlock()
    return r
@@ -3457,6 +3582,9 @@ SEE ALSO
 
    load, get_model
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    r = 1
    if format=='':
       format = 'pdb'
@@ -3513,6 +3641,9 @@ PYMOL API
    cmd.get_model(string selection [,int state] )
  
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
    r = 1
    try:
       lock()
@@ -3521,23 +3652,16 @@ PYMOL API
       unlock()
    return r
 
-def get_area(*arg):
+def get_area(selection="(all)",state=1,load_b=0):
    '''
    PRE-RELEASE functionality - API will change
    '''
-   la=len(arg)
-   sele = "(all)"
-   state = 1
-   load_b = 0
-   if la>0:
-      sele = arg[0]
-   if la>1:
-      state = int(arg[1])
-   if la>2:
-      load_b = int(arg[2])
+   # preprocess selection
+   selection = selector.process(selection)
+   #      
    try:
       lock()
-      r = _cmd.get_area(str(sele),int(state)-1,int(load_b))
+      r = _cmd.get_area(str(selection),int(state)-1,int(load_b))
    finally:
       unlock()
    return r
@@ -3693,6 +3817,9 @@ PYMOL API
    list = cmd.identify(string selection="(all)")
  
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #      
    r = []
    try:
       lock()
@@ -3714,6 +3841,9 @@ PYMOL API
    cmd.get_extent(string selection="(all)", state=0 )
  
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #      
    r = 1
    try:
       lock()
@@ -3756,6 +3886,9 @@ SEE ALSO
 
    load, copy
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #      
    try:
       lock()
       _cmd.create(str(name),str(selection),
@@ -4174,7 +4307,7 @@ EXAMPLES
 NOTES
 
    'help selections' for more information about selections.
-   '''
+   '''   
    try:
       quiet=0
       lock()
@@ -4185,6 +4318,9 @@ NOTES
          name = "sel%02.0f" % sel_cnt
       else:
          name = name
+      # preprocess selection (note: inside TRY)
+      selection = selector.process(selection)
+      #            
       r = _cmd.select(str(name),str(selection),int(quiet))
    finally:
       unlock()
@@ -4205,6 +4341,9 @@ PYMOL API
    cmd.count(string selection)
  
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #      
    try:
       lock()   
       r = _cmd.select("_count_tmp",str(selection),1)
@@ -4235,8 +4374,11 @@ EXAMPLES
  
    color yellow, (name C*)
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #
    try:
-      lock()   
+      lock()
       r = _cmd.color(str(color),str(selection),0)
    finally:
       unlock()
@@ -4267,6 +4409,9 @@ EXAMPLES
    flag 1, (resi 45 x; 6)
  
    '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #      
    try:
       lock()   
       r = _cmd.flag(int(number),str(selection))
@@ -4452,13 +4597,19 @@ SEE ALSO
             rep = rephash[rep]
          if repres.has_key(rep):      
             repn = repres[rep];
+            # preprocess selection 
+            selection = selector.process(selection)
+            #   
             r = _cmd.showhide(str(selection),int(repn),1);
          else:
             print "Error: unrecognized or ambiguous representation"
       elif representation=='all':
          r = _cmd.showhide("(all)",repres['lines'],1); # show lines by default 
-      elif representation[0:1]=='(':
-         r = _cmd.showhide(str(representation),repres['lines'],1);
+      elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
+         # preprocess selection
+         selection = selector.process(representation)
+         #                  
+         r = _cmd.showhide(str(selection),repres['lines'],1);
       else: # selection==""
          rep = representation
          if rephash.has_key(rep):
@@ -4514,13 +4665,19 @@ SEE ALSO
             rep = rephash[rep]
          if repres.has_key(rep):      
             repn = repres[rep];
+            # preprocess selection
+            selection = selector.process(selection)
+            #
             r = _cmd.showhide(str(selection),int(repn),0);
          else:
             print "Error: unrecognized or ambiguous representation"
       elif (representation=='all'):
          r = _cmd.showhide("!",0,0);
-      elif representation[0:1]=='(': # selection only
-         r = _cmd.showhide(str(representation),-1,0);
+      elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
+         # preprocess selection
+         selection = selector.process(representation)
+         #         
+         r = _cmd.showhide(str(selection),-1,0);
       else: # selection == ""
          rep = representation
          if rephash.has_key(rep):
@@ -4707,6 +4864,7 @@ def check(selection=None,preserve=0):
          if len(arg):
             selection = arg
    if selection!=None:
+      selection = selector.process(selection)
       realtime.assign("("+selection+")",int(preserve))
       realtime.setup("("+selection+")")
 
@@ -5236,7 +5394,7 @@ keyword = {
    'isomesh'       : [isomesh      , 0 , 0 , ''  , parsing.LEGACY ],
    'iterate'       : [iterate      , 0 , 0 , ''  , parsing.LITERAL1 ],
    'iterate_state' : [iterate_state, 0 , 0 , ''  , parsing.LITERAL2 ],
-   'label'         : [label        , 0 , 0 , ''  , parsing.STRICT ],
+   'label'         : [label        , 0 , 0 , ''  , parsing.LITERAL1 ],
    'load'          : [load         , 0 , 0 , ''  , parsing.STRICT ],
    'ls'            : [ls           , 0 , 0 , ''  , parsing.STRICT ],  
    'mask'          : [mask         , 0 , 0 , ''  , parsing.STRICT ],

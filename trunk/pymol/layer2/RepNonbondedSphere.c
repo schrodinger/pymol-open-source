@@ -115,7 +115,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
   
-  nonbonded_size = SettingGet(cSetting_nonbonded_size);
+  nonbonded_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_nonbonded_size);
   
   /* get current dot sampling */
   ds = (int)SettingGet(cSetting_dot_density);

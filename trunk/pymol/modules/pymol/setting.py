@@ -98,6 +98,7 @@ class SettingIndex:
    sphere_quality       =87
    fog                  =88
    isomesh_auto_state   =89
+   mesh_width           =90
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
