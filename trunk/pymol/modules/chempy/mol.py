@@ -1,5 +1,7 @@
 from chempy.models import Indexed
-from chempy import Storage
+from chempy import Storage,Atom,Bond
+
+import string
 
 class MOL(Storage):
 
@@ -63,7 +65,7 @@ class MOL(Storage):
 
       # write header records
       molList.append(model.molecule.title+"\n")
-      molList.append("  MolObj            %2s                             0\n" %
+      molList.append("  Chempy            %2s                             0\n" %
              model.molecule.dimcode)
       molList.append(model.molecule.comments+"\n")
       molList.append("%3d%3d  0  0  %1d  0  0  0  0  0  1 V2000\n" %
@@ -78,8 +80,8 @@ class MOL(Storage):
 
          # write bond records
       for b in model.bond:
-         molList.append("%3d%3d%3d  0  0  0  0\n" % (b.atom[0]+1, 
-            b.atom[1]+1, b.order))
+         molList.append("%3d%3d%3d  0  0  0  0\n" % (b.index[0]+1, 
+            b.index[1]+1, b.order))
 
          # if necessary, write M  CHG records for charged atoms
       charge_atoms = []
