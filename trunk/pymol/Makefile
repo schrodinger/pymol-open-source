@@ -84,6 +84,7 @@ unix-mindep: semistatic
 	cp README $(MDP)
 	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
 	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
+	cd $(MINDEP);chown -R nobody.nobody pymol
 	cd $(MINDEP);tar -zcvf ../pymol-0_xx-bin-xxxxx-mindep.tgz pymol
 
 windows: .includes .depends .update 
