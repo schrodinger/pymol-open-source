@@ -4,20 +4,20 @@
 #
 #- Choose One Set ----------------------------------------------------
 #--- Build for LINUX with embedded Python 
-#XLIB_DIR = -L/usr/X11R6/lib 
-#LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
-#DEFS = -D_PYMOL_3DFX
-#BUILD = -o pymol.exe
+XLIB_DIR = -L/usr/X11R6/lib 
+LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
+DEFS = -D_PYMOL_3DFX
+BUILD = -o pymol.exe
 #--- Build for LINUX as an importable module
 #XLIB_DIR = -L/usr/X11R6/lib
 #LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
 #DEFS = -D_PYMOL_3DFX
 #BUILD = -shared -o modules/_pm.so
 #--- Build for unix as an importable module (SGI/IRIX)
-XLIB_DIR = -L/usr/X11R6/lib
-LIBS = -lpython1.5 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
-DEFS = -D_PYMOL_MODULE -D_PYMOL_STEREO
-BUILD = -shared -o modules/_pm.so
+#XLIB_DIR = -L/usr/X11R6/lib
+#LIBS = -lpython1.5 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
+#DEFS = -D_PYMOL_MODULE -D_PYMOL_STEREO
+#BUILD = -shared -o modules/_pm.so
 #--- Build for Windows as an importable module
 #XLIB_DIR = 
 #LIBS = -lpython15 -lopengl32 -lglu32 -lglut32 -lpng -lz
@@ -27,7 +27,7 @@ BUILD = -shared -o modules/_pm.so
 #
 #- Choose One --------------------------------------------------------
 #--- Workaround for XFree86/DRI linux dll problem for module build
-#BUGS = -D_DRI_WORKAROUND
+BUGS = -D_DRI_WORKAROUND
 #--- Running under windows (perhaps the biggest bug of all)
 #BUGS = -D_PYMOL_WINDOWS -DWIN32 -D_WIN32
 #---
@@ -36,9 +36,9 @@ BUILD = -shared -o modules/_pm.so
 #
 #- Choose One --------------------------------------------------------
 #--- Gcc under Linux or Windows
-#CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
+CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
 #--- SGI Irix 6.x
-CCOPT1 = -ansi -n32 -woff 1429,1204
+#CCOPT1 = -ansi -n32 -woff 1429,1204
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
