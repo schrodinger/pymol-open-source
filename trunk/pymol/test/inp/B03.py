@@ -21,7 +21,6 @@ def load():
 #   while list[0]!="pdb/f8/pdb1f8u":
 #      list.pop(0)
    for file in list:
-      print file
       cmd.delete('pdb')
       cmd.load(file,'pdb')
       cmd.orient('pdb')
@@ -38,6 +37,7 @@ def load():
          for a in range(1,n+1):
             cmd.forward()
             cmd.refresh()
+cmd.feedback('disable','symmetry objectmolecule executive','everything')
 load()
 
 
