@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Util.h"
 #include"CGO.h"
+#include"P.h"
 
 #ifdef NT
 #undef NT
@@ -775,6 +776,19 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     I->oneColorFlag=true;
     I->oneColor=surface_color;
   }
+  if(PMGUI) {
+    if(I->R.displayList) {
+      if(PIsGlutThread()) {
+        glDeleteLists(I->R.displayList,1);
+        I->R.displayList = 0;
+      } else {
+        char buffer[255]; /* pass this off to the main thread */
+        sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",I->R.displayList,1);
+        PParse(buffer);
+      }
+    }
+  }
+
   FreeP(present);
 }
 
