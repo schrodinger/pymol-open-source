@@ -28,7 +28,7 @@ cmd.set_key("F8",adjust,(30,))
 cmd.set_key("F9",adjust,(60,))
 cmd.set_key("F10",adjust,(120,))
 
-cycle_time = 10.0
+cycle_time = 2.0
 
 cmd.set("line_width","2")
 cmd.set("cartoon_tube_radius","0.2")
@@ -45,37 +45,39 @@ def load():
          cmd.set("suspend_updates","1")  
          cmd.delete('pdb')
          cmd.load(file,'pdb')
+         print file
 #      cmd.refresh()
 #      cmd.hide()
          cmd.show('cartoon')
          cmd.color('red','ss h')
          cmd.color('yellow','ss s')
          cmd.orient('pdb')
-	 cmd.move('z',-100.0)
+         cmd.move('z',-100.0)
          sys.__stderr__.write(".")
          sys.__stderr__.flush()
          n = cmd.count_states()
       finally:
- 	 cmd.set("suspend_updates","0")
-      start=time.time()
-      if n>1:
-         while (time.time()-start)<cycle_time:
-            for a in range(1,n+1):
-               cmd.refresh()
-               cmd.frame(a)
-               cmd.move('z',0.5)
-	       cmd.turn('y',0.5)
-               time.sleep(0.025)
-         sys.__stderr__.write(" %d of %d"%(c,l))
-         sys.__stderr__.write("\n")
-         sys.__stderr__.flush()
-      else:
-         cmd.refresh()
-         while (time.time()-start)<cycle_time:
-            for a in range(1,n+1):
-               time.sleep(0.05)
-               cmd.move('z',1.0)
-	       cmd.turn('y',1)
+         cmd.set("suspend_updates","0")
+      if cmd.count_atoms():
+         start=time.time()
+         if n>1:
+            while (time.time()-start)<cycle_time:
+               for a in range(1,n+1):
+                  cmd.refresh()
+                  cmd.frame(a)
+                  cmd.move('z',2)
+                  cmd.turn('y',1)
+                  time.sleep(0.025)
+            sys.__stderr__.write(" %d of %d"%(c,l))
+            sys.__stderr__.write("\n")
+            sys.__stderr__.flush()
+         else:
+            cmd.refresh()
+            while (time.time()-start)<cycle_time:
+               for a in range(1,n+1):
+                  time.sleep(0.05)
+                  cmd.move('z',1.0)
+                  cmd.turn('y',1)
 load()
 
 
