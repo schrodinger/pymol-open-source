@@ -1,0 +1,50 @@
+# -c
+
+from pymol import cmd
+
+/print "BEGIN-LOG"
+
+load dat/small01.mol
+
+save tmp/small01.mol
+save tmp/small01.pkl
+save tmp/small02.pkl,format=pkla
+save tmp/small01.mmod
+save tmp/small01.mmd
+save tmp/small01.pdb
+
+multisave tmp/small01.pmo,small01
+
+del all
+load tmp/small01.pmo
+
+del all
+load tmp/small01.pdb
+count_atoms
+
+del all
+load tmp/small01.mmd
+count_atoms
+
+del all
+load tmp/small01.mmod
+count_atoms
+
+del all
+load tmp/small01.pkl
+count_atoms
+
+del all
+load tmp/small02.pkl
+count_atoms
+
+del all
+load tmp/small01.mol
+count_atoms
+
+/print "END-LOG"
+
+
+
+
+

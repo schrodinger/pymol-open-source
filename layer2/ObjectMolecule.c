@@ -98,7 +98,7 @@ void ObjectMoleculeSculptClear(ObjectMolecule *I)
     " ObjectMoleculeSculptClear: entered.\n"
     ENDFD;
 
-  if(!I->Sculpt) SculptFree(I->Sculpt);
+  if(I->Sculpt) SculptFree(I->Sculpt);
   I->Sculpt=NULL;
 }
 
@@ -1864,6 +1864,7 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
     ai->resv=ai0->resv;
     ai->hetatm=ai0->hetatm;
     ai->flags=ai0->flags;
+    ai->geom=ai0->geom; /* ?*/
     strcpy(ai->chain,ai0->chain);
     strcpy(ai->alt,ai0->alt);
     strcpy(ai->resi,ai0->resi);
@@ -1889,31 +1890,47 @@ void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,
   AtomInfoType *ai1;
   float v0[3],v1[3],v[3];
   float d0[3],d,n0[3];
+  int cnt;
+  float t[3],sum[3];
   int a;
+  int ncycle;
   ObjectMoleculeUpdateNeighbors(I);
   for(a=0;a<I->NCSet;a++) {
     if(I->CSet[a]) {
       if(ObjectMoleculeGetAtomVertex(I,a,index,v0)) {
         copy3f(v0,v); /* default is direct superposition */
-        n = I->Neighbor[index];
-        n++; /* skip count */
-        while(1) { /* look for an attached non-hydrogen as a base */
-          a1 = I->Neighbor[n];
-          n+=2;
-          if(a1<0) break;
-          ai1=I->AtomInfo+a1;
-          if(ai1->protons!=1) 
-            if(ObjectMoleculeGetAtomVertex(I,a,a1,v1)) {        
-              d = AtomInfoGetBondLength(ai,ai1);
-              subtract3f(v0,v1,n0);
-              normalize3f(n0);
-              scale3f(n0,d,d0);
-              add3f(d0,v1,v);
-              ObjectMoleculeSetAtomVertex(I,a,index,v);
-              break;
-            }
+        ncycle=-1;
+        while(ncycle) {
+          cnt = 0;
+          n = I->Neighbor[index];
+          n++; /* skip count */
+          zero3f(sum);
+          while(1) { /* look for an attached non-hydrogen as a base */
+            a1 = I->Neighbor[n];
+            n+=2;
+            if(a1<0) break;
+            ai1=I->AtomInfo+a1;
+            if(ai1->protons!=1) 
+              if(ObjectMoleculeGetAtomVertex(I,a,a1,v1)) {        
+                d = AtomInfoGetBondLength(ai,ai1);
+                subtract3f(v0,v1,n0);
+                normalize3f(n0);
+                scale3f(n0,d,d0);
+                add3f(d0,v1,t);
+                add3f(t,sum,sum);
+                cnt++;
+              }
+          }
+          if(cnt) {
+            scale3f(sum,1.0/cnt,sum);
+            copy3f(sum,v0);
+            if((cnt>1)&&(ncycle<0))
+              ncycle=5;
+          }
+          ncycle=abs(ncycle)-1;
         }
-        
+        if(cnt) copy3f(sum,v);
+        ObjectMoleculeSetAtomVertex(I,a,index,v);            
       }
     }
   }
@@ -5756,7 +5773,13 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
   else 
 	 isNew=false;
 
-  atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+  if(isNew) {
+    I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
+    atInfo = I->AtomInfo;
+  } else {
+    atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+  }
+  
   cset=ObjectMoleculeMMDStr2CoordSet(MMDStr,&atInfo);  
 
   if(!cset) 

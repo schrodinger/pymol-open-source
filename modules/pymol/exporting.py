@@ -18,6 +18,7 @@ import selector
 import re
 
 import pymol
+import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 from chempy import io
 from cmd import _feedback,fb_module,fb_mask
@@ -116,16 +117,16 @@ SEE ALSO
          r = None
          print " Save: wrote \""+filename+"\"."
    elif format=='pkl': # python binary
-      io.pkl.toFile(get_model(selection,state),filename)
+      io.pkl.toFile(cmd.get_model(selection,state),filename)
       print " Save: wrote \""+filename+"\"."
    elif format=='pkla': # ascii override
-      io.pkl.toFile(get_model(selection),filename,bin=0)
+      io.pkl.toFile(cmd.get_model(selection),filename,bin=0)
       print " Save: wrote \""+filename+"\"."
    elif format=='mmod': # macromodel
-      io.mmd.toFile(get_model(selection),filename)
+      io.mmd.toFile(cmd.get_model(selection),filename)
       print " Save: wrote \""+filename+"\"."
    elif format=='mol': 
-      io.mol.toFile(get_model(selection),filename)
+      io.mol.toFile(cmd.get_model(selection),filename)
       print " Save: wrote \""+filename+"\"."
    return r
 

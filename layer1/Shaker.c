@@ -43,7 +43,7 @@ void ShakerReset(CShaker *I)
   I->NDistCon = 0;
 }
 
-float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0)
+float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
 {
   float d[3],push[3];
   float len,dev,dev_2,sc;
@@ -52,7 +52,7 @@ float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0)
   len = length3f(d);
   dev = target-len;
   if(fabs(dev)>R_SMALL8) {
-    dev_2 = dev/2.0;
+    dev_2 = wt*dev/2.0;
     if(len>R_SMALL8) { /* nonoverlapping */
       sc = dev_2/len;
       scale3f(d,sc,push);
@@ -67,7 +67,7 @@ float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0)
   return dev;
 }
 
-void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target)
+void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type)
 {
   ShakerDistCon *sdc;
 
@@ -76,6 +76,7 @@ void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target)
   sdc->at0=atom0;
   sdc->at1=atom1;
   sdc->targ = target;
+  sdc->type = type;
   I->NDistCon++;
 }
 
@@ -93,7 +94,7 @@ float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3)
 }
 
 float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
-                   float *p0,float *p1,float *p2,float *p3)
+                   float *p0,float *p1,float *p2,float *p3,float wt)
 {
   float d0[3],cp[3],d2[3],d3[3],push[3];
   float cur,dev,sc;
@@ -108,7 +109,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
 
   dev = cur-target;
   if(fabs(dev)>R_SMALL8) {
-    sc =  dev;
+    sc = wt*dev;
     scale3f(cp,sc,push);
     add3f(push,p0,p0);
     scale3f(push,1.0/3,push);
@@ -122,7 +123,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
 }
 
 float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
-                   float *p0,float *p1,float *p2,float *p3)
+                   float *p0,float *p1,float *p2,float *p3,float wt)
 {
   float vc[3],d0[3],d1[3],d2[3],cp[3];
   float push[3];
@@ -145,7 +146,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
   dev = fabs(cur);
   if(fabs(dev)>R_SMALL8) {
 
-    sc = -dev/2.0;
+    sc = -wt*dev/2.0;
 
     subtract3f(v0,v3,d0);
     normalize3f(d0);

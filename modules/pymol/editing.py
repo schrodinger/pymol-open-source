@@ -32,19 +32,19 @@ def sculpt_clear(object):
       unlock()
    return r
    
-def sculpt_imprint(object):
+def sculpt_imprint(object,state=0):
    '''
 undocumented.
 '''
    r = 0
    try:
       lock()
-      r = _cmd.sculpt_imprint(str(object))
+      r = _cmd.sculpt_imprint(str(object),int(state)-1)
    finally:
       unlock()
    return r
 
-def sculpt_iterate(object,state,cycles):
+def sculpt_iterate(object,state=0,cycles=10):
    '''
 undocumented.
 '''

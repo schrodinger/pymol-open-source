@@ -498,7 +498,22 @@ class PMGApp(AbstractApp):
       cmd.set("suspend_updates",0,quiet=1)
       cmd.refresh()
       cmd.do("ray")
-      
+
+   def demo8(self):
+      cmd.set("suspend_updates",1,quiet=1)
+      cmd.disable()
+      cmd.delete("sculpt")
+      cmd.load("$PYMOL_PATH/test/dat/pept.pdb","sculpt")
+      cmd.show("spheres","sculpt")
+      cmd.set("sphere_scale","0.5","sculpt")
+      cmd.set("sphere_transparency","0.5","sculpt")
+      cmd.set("sphere_color","grey","sculpt")
+      cmd.sculpt_imprint("sculpt")
+      cmd.set("sculpting","1")
+      cmd.do("edit_mode")
+      cmd.set("valence","0.05")
+      cmd.set("suspend_updates",0,quiet=0)
+
    def hide_sele(self):
       cmd.log("util.hide_sele()\n","util.hide_sele()\n")
       util.hide_sele()
@@ -1258,6 +1273,52 @@ class PMGApp(AbstractApp):
                         variable = self.setting.sculpting,
                         command = lambda s=self: s.setting.update('sculpting'))
 
+      self.menuBar.addmenuitem('Sculpt', 'separator', '')
+      
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'Imprint Geometry',
+                               label='Imprint Geometry',
+                               command = lambda: cmd.do("_ sculpt_imprint all"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'Clear Memory',
+                               label='Clear Memory',
+                               command = lambda: cmd.do("_ sculpt_clear all"))
+
+      self.menuBar.addmenuitem('Sculpt', 'separator', '')
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'Bonds Only',
+                               label='Bonds Only',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=1"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'Bonds & VDW',
+                               label='Bonds & VDW',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=49"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'All Terms Except 1-4 VDW',
+                               label='All Except 1-4 VDW',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=31"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', 'All Terms',
+                               label='All Terms',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=63"))
+
+      self.menuBar.addmenuitem('Sculpt', 'separator', '')
+
+      self.menuBar.addmenuitem('Sculpt', 'command', '1 Cycle/Refresh',
+                               label='1 Cycle/Refresh',
+                               command = lambda: cmd.do("_ set sculpting_cycles=1"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', '3 Cycles/Refresh',
+                               label='3 Cycles/Refresh',
+                               command = lambda: cmd.do("_ set sculpting_cycles=10"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', '10 Cycles/Refresh',
+                               label='10 Cycles/Refresh',
+                               command = lambda: cmd.do("_ set sculpting_cycles=10"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', '30 Cycles/Refresh',
+                               label='35 Cycles/Refresh',
+                               command = lambda: cmd.do("_ set sculpting_cycles=100"))
       
       self.menuBar.addmenu('Demo', 'Demonstrations')
 
@@ -1276,6 +1337,10 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Demo', 'command', 'Ray Tracing',
                                label='Ray Tracing',
                                command = self.demo7)
+
+      self.menuBar.addmenuitem('Demo', 'command', 'Sculpting',
+                               label='Sculpting',
+                               command = self.demo8)
 
       self.menuBar.addmenuitem('Demo', 'command', 'Scripted Animation',
                                label='Scripted Animation',

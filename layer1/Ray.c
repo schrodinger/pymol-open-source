@@ -1275,7 +1275,7 @@ void RaySphere3fv(CRay *I,float *v,float r)
 
   p->type = cPrimSphere;
   p->r1=r;
-  p->trans=0.0;
+  p->trans=I->Trans;
   p->texture=I->Texture;
   copy3f(I->TextureParam,p->texture_param);
   vv=p->v1;

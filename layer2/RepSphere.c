@@ -70,8 +70,13 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
   int flag;
   SphereRec *sp;
   float restart;
-
+  float alpha;
+  alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_transparency);
+  alpha=1.0-alpha;
+  if(fabs(alpha-1.0)<R_SMALL4)
+    alpha=1.0;
   if(ray) {
+    ray->fTransparentf(ray,1.0-alpha);
     if(I->spheroidFlag) {
 		sp=I->SP;
       while(c--)
@@ -97,65 +102,132 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
         v+=4;
       }
     }
+    ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
+
 	 if(I->cullFlag) {
-		nt=I->NT; /* number of passes for each sphere */
-		while(c--) /* iterate through all atoms */
-		  {
-			 glColor3fv(v);
-			 v+=3;
-			 cc=*(nt++);
-          flag=0;
-			 glBegin(GL_TRIANGLE_STRIP);
-			 while(cc--) { /* execute loop this many times */
-				restart=*(v++);
-				if(restart) {
-              if(flag) {
-                glEnd();
-                glBegin(GL_TRIANGLE_STRIP);
-              }
-              if(restart==2.0) { /* swap triangle polarity */
-                glNormal3fv(v);
-                glVertex3fv(v+3);
-              }
-              glNormal3fv(v);
-              v+=3;
-              glVertex3fv(v);
-              v+=3;
-              glNormal3fv(v);
-              v+=3;
-              glVertex3fv(v);
-              v+=3;
-            }
-				glNormal3fv(v);
-				v+=3;
-				glVertex3fv(v);
-				v+=3;
-            flag=1;
-			 }
-			 glEnd();
-		  }
-	 } else {
-      sp=I->SP;
-      while(c--)
-        {
-          glColor3fv(v);
-          v+=3;
-          for(a=0;a<sp->NStrip;a++) {
+      
+      if(alpha==1.0) {
+        
+        nt=I->NT; /* number of passes for each sphere */
+        while(c--) /* iterate through all atoms */
+          {
+            glColor3fv(v);
+            v+=3;
+            cc=*(nt++);
+            flag=0;
             glBegin(GL_TRIANGLE_STRIP);
-            cc=sp->StripLen[a];
-            while(cc--) {
+            while(cc--) { /* execute loop this many times */
+              restart=*(v++);
+              if(restart) {
+                if(flag) {
+                  glEnd();
+                  glBegin(GL_TRIANGLE_STRIP);
+                }
+                if(restart==2.0) { /* swap triangle polarity */
+                  glNormal3fv(v);
+                  glVertex3fv(v+3);
+                }
+                glNormal3fv(v);
+                v+=3;
+                glVertex3fv(v);
+                v+=3;
+                glNormal3fv(v);
+                v+=3;
+                glVertex3fv(v);
+                v+=3;
+              }
               glNormal3fv(v);
               v+=3;
               glVertex3fv(v);
               v+=3;
+              flag=1;
             }
             glEnd();
           }
-        }
+      } else {
+    
+        nt=I->NT; /* number of passes for each sphere */
+        while(c--) /* iterate through all atoms */
+          {
+            glColor4f(v[0],v[1],v[2],alpha);
+            v+=3;
+            cc=*(nt++);
+            flag=0;
+            glBegin(GL_TRIANGLE_STRIP);
+            while(cc--) { /* execute loop this many times */
+              restart=*(v++);
+              if(restart) {
+                if(flag) {
+                  glEnd();
+                  glBegin(GL_TRIANGLE_STRIP);
+                }
+                if(restart==2.0) { /* swap triangle polarity */
+                  glNormal3fv(v);
+                  glVertex3fv(v+3);
+                }
+                glNormal3fv(v);
+                v+=3;
+                glVertex3fv(v);
+                v+=3;
+                glNormal3fv(v);
+                v+=3;
+                glVertex3fv(v);
+                v+=3;
+              }
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+              flag=1;
+            }
+            glEnd();
+          }
+        
+      }
+	 } else {
+
+      if(alpha==1.0) {
+        
+        sp=I->SP;
+        while(c--)
+          {
+            glColor3fv(v);
+            v+=3;
+            for(a=0;a<sp->NStrip;a++) {
+              glBegin(GL_TRIANGLE_STRIP);
+              cc=sp->StripLen[a];
+              while(cc--) {
+                glNormal3fv(v);
+                v+=3;
+                glVertex3fv(v);
+                v+=3;
+              }
+              glEnd();
+            }
+          }
+      } else {
+        sp=I->SP;
+        while(c--)
+          {
+            glColor4f(v[0],v[1],v[2],alpha);
+            v+=3;
+            for(a=0;a<sp->NStrip;a++) {
+              glBegin(GL_TRIANGLE_STRIP);
+              cc=sp->StripLen[a];
+              while(cc--) {
+                glNormal3fv(v);
+                v+=3;
+                glVertex3fv(v);
+                v+=3;
+              }
+              glEnd();
+            }
+          }
+      }
     }
-}
+  }
 }
 
 int RepSphereSameVis(RepSphere *I,CoordSet *cs)
@@ -204,7 +276,8 @@ Rep *RepSphereNew(CoordSet *cs)
   float spheroid_scale;
   float *sphLen,sphTmp,*sphNorm,*sphTmpN;
   float sphere_scale;
-  
+  int one_color;
+
 #ifdef _this_code_is_not_used
   float vv0[3],vv1[3],vv2[3];
   float tn[3],vt1[3],vt2[3],xtn[3],*tn0,*tn1,*tn2;
@@ -236,6 +309,8 @@ Rep *RepSphereNew(CoordSet *cs)
   default: sp=Sphere3; break;
   }
 
+  one_color=(int)SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
+
   spheroid_scale=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_spheroid_scale);
   if(spheroid_scale&&cs->Spheroid) 
     spheroidFlag=1;
@@ -250,7 +325,8 @@ Rep *RepSphereNew(CoordSet *cs)
   I->R.fRecolor=NULL;
   I->LastVisib=NULL;
   I->LastColor=NULL;
-
+  I->R.obj=(Object*)obj;
+  I->R.cs = cs;
   /* raytracing primitives */
   
 
@@ -269,7 +345,10 @@ Rep *RepSphereNew(CoordSet *cs)
       if(obj->AtomInfo[a1].visRep[cRepSphere])
         {
           I->NC++;
-          c1=*(cs->Color+a);
+          if(one_color<0)
+            c1=*(cs->Color+a);
+          else
+            c1=one_color;
           vc = ColorGet(c1); /* save new color */
           *(v++)=*(vc++);
           *(v++)=*(vc++);
@@ -287,27 +366,28 @@ Rep *RepSphereNew(CoordSet *cs)
   else
 	 I->VC=(float*)mrealloc(I->VC,1);
 
+  I->cullFlag = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
+  if(spheroidFlag) I->cullFlag=false;
+  if((I->cullFlag<2)&&
+     (SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpting))) 
+    /* optimize build-time performance when sculpting */
+    I->cullFlag=false;
 
-  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cull_spheres)&&(!spheroidFlag)) {
+  if(I->cullFlag) {
 	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(sp->NVertTot*19));
 	 ErrChkPtr(I->V);
 
 	 I->NT=Alloc(int,cs->NIndex);
 	 ErrChkPtr(I->NT);
 
-	 I->cullFlag = true;
 	 visFlag = Alloc(int,sp->nDot);
 	 ErrChkPtr(visFlag);
 
-	 if(I->cullFlag) {
-		map=MapNew(MAX_VDW*sphere_scale,cs->Coord,cs->NIndex,NULL);
-		if(map) MapSetupExpress(map);
-	 }
+    map=MapNew(MAX_VDW*sphere_scale,cs->Coord,cs->NIndex,NULL);
+    if(map) MapSetupExpress(map);
   } else {
 	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(3+sp->NVertTot*6));
 	 ErrChkPtr(I->V);
-
-	 I->cullFlag = false;
   }
 
   /* rendering primitives */
@@ -322,7 +402,10 @@ Rep *RepSphereNew(CoordSet *cs)
 		a1 = cs->IdxToAtm[a];
 		if(obj->AtomInfo[a1].visRep[cRepSphere])
 		  {
-			 c1=*(cs->Color+a);
+          if(one_color<0)
+            c1=*(cs->Color+a);
+          else
+            c1=one_color;
 			 v0 = cs->Coord+3*a;
 			 vdw = cs->Obj->AtomInfo[a1].vdw*sphere_scale;
 			 vc = ColorGet(c1);
@@ -525,11 +608,18 @@ Rep *RepSphereNew(CoordSet *cs)
   cc = cs->Color;
   obj=cs->Obj;
   ai2=obj->AtomInfo;
-  for(a=0;a<cs->NIndex;a++)
-    {
-      *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSphere];
-      *(lc++) = *(cc++);
-    }
+  if(one_color<0) 
+    for(a=0;a<cs->NIndex;a++)
+      {
+        *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSphere];
+        *(lc++) = *(cc++);
+      }
+  else 
+    for(a=0;a<cs->NIndex;a++)
+      {
+        *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSphere];
+        *(lc++) = one_color;
+      }
 
   /*TODO: NEED TO SHRINK POINTERS HERE*/
 

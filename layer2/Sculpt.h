@@ -19,6 +19,13 @@ Z* -------------------------------------------------------------------
 #include"Shaker.h"
 #include"ObjectMolecule.h"
 
+#define cSculptBond  0x01
+#define cSculptAngl  0x02
+#define cSculptPyra  0x04
+#define cSculptPlan  0x08
+#define cSculptVDW   0x10
+#define cSculptVDW14 0x20
+
 typedef struct CSculpt {
   CShaker *Shaker;
   ObjectMolecule *Obj;

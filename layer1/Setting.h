@@ -261,11 +261,19 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_stop_on_exceptions          160
 #define cSetting_sculpting                   161
 #define cSetting_auto_sculpt                 162
-#define cSetting_sculpt_vdw                  163
-#define cSetting_sculpt_vdw14                164
-#define cSetting_sculpting_cycles            165
-
-#define cSetting_INIT                        166
+#define cSetting_sculpt_vdw_scale            163
+#define cSetting_sculpt_vdw_scale14          164
+#define cSetting_sculpt_vdw_weight           165
+#define cSetting_sculpt_vdw_weight14         166
+#define cSetting_sculpt_bond_weight          167
+#define cSetting_sculpt_angl_weight          168
+#define cSetting_sculpt_pyra_weight          169
+#define cSetting_sculpt_plan_weight          170
+#define cSetting_sculpting_cycles            171
+#define cSetting_sphere_transparency         172
+#define cSetting_sphere_color                173
+#define cSetting_sculpt_field_mask           174
+#define cSetting_INIT                        175
 
 #endif
 
