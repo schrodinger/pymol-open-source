@@ -1836,7 +1836,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
-      SceneClip(G,6,0.15F,NULL,0);
+      SceneClip(G,6,0.1F,NULL,0);
       SceneDoRoving(G,old_front,old_back,old_origin,true,true);
     }
     break;
@@ -1845,7 +1845,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
-      SceneClip(G,6,-0.15F,NULL,0);
+      SceneClip(G,6,-0.1F,NULL,0);
       SceneDoRoving(G,old_front,old_back,old_origin,true,true);
     }
     break;
