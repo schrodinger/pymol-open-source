@@ -1268,9 +1268,9 @@ Rep *RepSurfaceNew(CoordSet *cs)
     CGOBegin(I->debug,GL_POINTS);
     for(a=0;a<I->NDot;a++)
       CGOVertexv(I->debug,I->Dot+3*a);
-    CGOEnd(I->debug);
-    */
-	 if(map&&solv_map)
+      CGOEnd(I->debug);*/
+
+    if(map&&solv_map)
 		{
 		  MapSetupExpress(solv_map);
 		  MapSetupExpress(map);
@@ -1490,10 +1490,10 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 {
   ObjectMolecule *obj;
   int a,b,c=0,flag,i,j;
-  float *v,*v0,vdw;
+  float *v,*v0,vdw,*v1;
   MapType *map;
   int *p,*dot_flag;
-  int cavity_cull;
+  int cavity_cull,skip_flag;
   float probe_radius_plus;
   int dotCnt,maxCnt,maxDot=0;
   int cnt;
@@ -1502,7 +1502,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
   int inclH;
   int pres_flag;
   AtomInfoType *ai1,*ai2;
-
+  
   obj = cs->Obj;
 
   surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
@@ -1534,43 +1534,80 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
             pres_flag = (inclH||(!ai1->hydrogen))&&
              ((!cullByFlag)||
               (!(ai1->flags&(cAtomFlag_ignore))));
-          if(pres_flag){
+          if(pres_flag) {
             
             dotCnt=0;
             v0 = cs->Coord+3*a;
-            vdw = cs->Obj->AtomInfo[cs->IdxToAtm[a]].vdw+probe_radius;
-            for(b=0;b<sp->nDot;b++)
-              {
-                v[0]=v0[0]+vdw*sp->dot[b][0];
-                v[1]=v0[1]+vdw*sp->dot[b][1];
-                v[2]=v0[2]+vdw*sp->dot[b][2];
-                flag=true;
-                i=*(MapLocusEStart(map,v));
-                if(i) {
-                  j=map->EList[i++];
-                  while(j>=0) {
-                    
-                    ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                    if((inclH||(!ai2->hydrogen))&&
-                       ((!cullByFlag)||
-                        (!(ai2->flags&cAtomFlag_ignore))))
-                      if(j!=a) 
-                        {
-                          if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_radius)) {
-                            flag=false;
-                            break;
-                          }
-                        }
-                    j=map->EList[i++];
-                  }
-                }
-                if(flag)
-                  {
-                    dotCnt++;
-                    v+=3;
-                    I->NDot++;
-                  }
+            vdw = ai1->vdw+probe_radius;
+            
+            skip_flag=false;
+            
+            i=*(MapLocusEStart(map,v0));
+            if(i) {
+              j=map->EList[i++];
+              while(j>=0) {
+                
+                ai2 = obj->AtomInfo + cs->IdxToAtm[j];
+                if(j>a) /* only check if this is atom trails */
+                  if((inclH||(!ai2->hydrogen))&&
+                     ((!cullByFlag)||
+                      (!(ai2->flags&cAtomFlag_ignore))))
+                    {
+                      if((ai2->vdw == ai1->vdw)) { /* handle singularities */
+                        v1 = cs->Coord+3*j;
+                        if((v0[0]==v1[0]) &&
+                           (v0[1]==v1[1]) &&
+                           (v0[2]==v1[2]))
+                          skip_flag=true;
+                      }
+                    }
+                j=map->EList[i++];
               }
+            }
+            
+            if(!skip_flag) {
+              for(b=0;b<sp->nDot;b++)
+                {
+                  v[0]=v0[0]+vdw*sp->dot[b][0];
+                  v[1]=v0[1]+vdw*sp->dot[b][1];
+                  v[2]=v0[2]+vdw*sp->dot[b][2];
+                  flag=true;
+                  i=*(MapLocusEStart(map,v));
+                  if(i) {
+                    j=map->EList[i++];
+                    while(j>=0) {
+                      
+                      ai2 = obj->AtomInfo + cs->IdxToAtm[j];
+                      if((inclH||(!ai2->hydrogen))&&
+                         ((!cullByFlag)||
+                          (!(ai2->flags&cAtomFlag_ignore))))
+                        if(j!=a) 
+                          { 
+                            skip_flag=false;
+                            if(ai1->vdw==ai2->vdw) { /* handle singularities */
+                              v1 = cs->Coord+3*j;                              
+                              if((v0[0]==v1[0]) &&
+                                 (v0[1]==v1[1]) &&
+                                 (v0[2]==v1[2]))
+                                skip_flag=true;
+                            }
+                            if(!skip_flag)
+                              if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_radius)) {
+                                flag=false;
+                                break;
+                              }
+                          }
+                      j=map->EList[i++];
+                    }
+                  }
+                  if(flag)
+                    {
+                      dotCnt++;
+                      v+=3;
+                      I->NDot++;
+                    }
+                }
+            }
             if(dotCnt>maxCnt)
               {
                 maxCnt=dotCnt;
