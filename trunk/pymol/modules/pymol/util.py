@@ -114,6 +114,14 @@ def cbao(selection="(all)"):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("brightorange","(elem C and "+s+")")
 
+def cnc(selection="(all)"):
+   s = str(selection)
+   cmd.color("magenta","("+s+" and not elem c)")
+   cmd.color("oxygen","(elem O and "+s+")")
+   cmd.color("nitrogen","(elem N and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
+   cmd.color("hydrogen","(elem H and "+s+")")   
+
 def performance(mode):
    mode = int(mode)
    if mode==0: # maximum quality
