@@ -54,9 +54,9 @@ def get_user_config():
    second = []
    for a in lst:
       if py_re.search(a):
-         first.append("_do__ run "+a)
+         first.append("_do__ run "+a) # preceeding "_ " cloaks 
       else:
-         second.append("_do__ @"+a)
+         second.append("_do__ @"+a) # preceeding "_ " cloaks 
    first.sort()
    second.sort()
    return first+second

@@ -15,7 +15,6 @@
 import cmd
 import math
 import string
-import glob
 import pymol
 from pymol import movie
 # legacy mappings, remove in PyMOL 2.0
