@@ -517,7 +517,9 @@ ENDFD;
 				  subtract3f(v+3,v,v1);
 				  *d = (float)length3f(v1);
               if(*d>R_SMALL4) {
-                scale3f(v1,1.0F/(*d),v2);
+		float d_1;
+		d_1 = 1.0F/(*d);
+                scale3f(v1,d_1,v2);
               } else if(a)  {
                 copy3f(v2-3,v2); 
               } else {
@@ -914,10 +916,12 @@ ENDFD;
           {
             if(*s==*(s+1))
               {
+		float d_1;
                 subtract3f(v+3,v,v1);
                 *d = (float)length3f(v1);
                 if(*d>R_SMALL4) {
-                  scale3f(v1,1.0F/(*d),v2);
+		  d_1 = 1.0F/(*d);
+                  scale3f(v1,d_1,v2);
                 } else if(a)  {
                   copy3f(v2-3,v2); 
                 } else {
