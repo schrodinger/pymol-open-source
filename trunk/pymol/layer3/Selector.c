@@ -5400,12 +5400,25 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
 
     b = 0;
     for(a=0;a<c1;a++) { /* iterate over source atoms */
+      /* NOTE, this algorithm is N^2 and slow in the worst case...
+         however the best case (N) is quite common, especially when merging 
+         files written out of PyMOL */
+
       i1 = vla1[a];
       at1=I->Table[i1].atom;
       obj1=I->Obj[I->Table[i1].model];
       
       switch(matchmaker) {
-      case 0: /* match atom info */
+      case 0: /* simply assume that atoms are stored in PyMOL in the identical order, one for one */
+        if(b<c0) {
+          i0 = vla0[b];
+          at0=I->Table[i0].atom;
+          obj0=I->Obj[I->Table[i0].model];
+          b++;
+          matched_flag=true;
+        }
+        break;
+      case 1: /* match each pair based on atom info */
         b_start = b;
         matched_flag=false;
         while(1) {
@@ -5424,14 +5437,71 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
           if(b==b_start) 
             break;
         }
-      case 1: /* assume that atoms are stored in PyMOL in the identical order */
-        if(b<c0) {
-          i0 = vla0[b];
-          at0=I->Table[i0].atom;
-          obj0=I->Obj[I->Table[i0].model];
-          b++;
-          matched_flag=true;
+        break;
+      case 2: /* match based on ID */
+       { 
+          int target = obj1->AtomInfo[at1].id;
+          b_start = b;
+          matched_flag=false;
+          while(1) {
+            i0 = vla0[b];
+            at0=I->Table[i0].atom;
+            obj0=I->Obj[I->Table[i0].model];
+            if(obj0!=obj1)
+              if(obj0->AtomInfo[at0].id==target) {
+                matched_flag=true;
+                break;
+              }
+            b++;
+            if(b>=c0)
+              b = 0;
+            if(b==b_start) 
+              break;
+          }
         }
+        break;
+      case 3: /* match based on rank */
+         { 
+          int target = obj1->AtomInfo[at1].rank;
+          b_start = b;
+          matched_flag=false;
+          while(1) {
+            i0 = vla0[b];
+            at0=I->Table[i0].atom;
+            obj0=I->Obj[I->Table[i0].model];
+            if(obj0!=obj1)
+              if(obj0->AtomInfo[at0].rank==target) {
+                matched_flag=true;
+                break;
+              }
+            b++;
+            if(b>=c0)
+              b = 0;
+            if(b==b_start) 
+              break;
+          }
+        }
+        break;
+      case 4: /* match based on index */
+         { 
+          b_start = b;
+          matched_flag=false;
+          while(1) {
+            i0 = vla0[b];
+            at0=I->Table[i0].atom;
+            obj0=I->Obj[I->Table[i0].model];
+            if(obj0!=obj1)
+              if(at0 == at1) {
+                matched_flag=true;
+                break;
+              }
+            b++;
+            if(b>=c0)
+              b = 0;
+            if(b==b_start) 
+              break;
+          }
+         }
         break;
       }
       

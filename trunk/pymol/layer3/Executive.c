@@ -4783,10 +4783,38 @@ static int fVertexOrdered(FitVertexRec *array,int l, int r)
   return( array[l].priority <= array[r].priority );
 }
 
+static int fAtomOrdered(PyMOLGlobals *G,AtomInfoType **array,int l,int r)
+{
+  return(AtomInfoCompare(G, array[l], array[r]));
+}
+
 static int fAtomIDOrdered(AtomInfoType **array,int l,int r)
 {
   return( array[l]->id <= array[r]->id );
 }
+
+static int fAtomRankOrdered(AtomInfoType **array,int l,int r)
+{
+  return( array[l]->rank <= array[r]->rank );
+}
+
+static int fAtomTemp1Ordered(AtomInfoType **array,int l,int r)
+{
+  return( array[l]->temp1 <= array[r]->temp1 );
+}
+
+static void PackSortedIndices(int n,int *x, int rec_size, void *data)
+{
+  register int a;
+  for(a=0;a<n;a++) {
+    if(a!=x[a]) {
+    memcpy(((char*)data)+(a*rec_size),
+           ((char*)data)+(x[a]*rec_size),
+           rec_size);
+    }
+  }
+}
+  
 /*========================================================================*/
 float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max_cyc,
                    int quiet,char *oname,int state1,int state2,
@@ -4812,7 +4840,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
   op2.vv1=NULL;
   op2.vc1=NULL;
 
-  
+        
   if(sele1>=0) {
     if(state1<0) {
       op1.code = OMOP_AVRT;
@@ -4874,14 +4902,10 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
   }
 
   if(op1.vv1&&op2.vv1) {
-    if(op1.nvv1!=op2.nvv1) {
-      sprintf(buffer,"Atom counts between selections don't match (%d vs %d)",
-              op1.nvv1,op2.nvv1);
-      ErrMessage(G,"ExecutiveRMS",buffer);
-    } else if(op1.nvv1) {
+    if(op1.nvv1&&op2.nvv1) {
 
-      int n_pair = op1.nvv1;
-      
+      int n_pair = 0;
+
       if(!SelectorGetSingleObjectMolecule(G,sele1)) {
         if(mode!=2) {
           PRINTFB(G,FB_Executive,FB_Warnings)
@@ -4895,85 +4919,99 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
         }
       }
       
-      if(ok && op1.nvv1 && op1.nvv2 && 
-         (matchmaker>1)) { /* matchmaker 0 & 1 are the defaults */
-        int *idx1 = Alloc(int,n_pair);
-        int *idx2 = Alloc(int,n_pair);
+      printf("matchmaker %d\n",matchmaker);
+
+      if(ok && op1.nvv1 && op2.nvv1 && (matchmaker>0)) { /* matchmaker 0 is the default */
+        int *idx1 = Alloc(int,op1.nvv1);
+        int *idx2 = Alloc(int,op2.nvv1);
         int sort_flag = false;
         if(!(idx1&&idx2)) ok=false; else {
           switch(matchmaker) {
+          case 1: /* by atom info */
+            UtilSortIndexGlobals(G,op1.nvv1,op1.ai1VLA,idx1,(UtilOrderFnGlobals*)fAtomOrdered);
+            UtilSortIndexGlobals(G,op2.nvv1,op2.ai1VLA,idx2,(UtilOrderFnGlobals*)fAtomOrdered);
+            sort_flag = true;
+            break;
           case 2: /* by matching atom identifiers */
-            {
-              UtilSortIndex(n_pair,op1.ai1VLA,idx1,(UtilOrderFn*)fAtomIDOrdered);
-              UtilSortIndex(n_pair,op2.ai1VLA,idx2,(UtilOrderFn*)fAtomIDOrdered);
-              sort_flag = true;
-            }
+            UtilSortIndex(op1.nvv1,op1.ai1VLA,idx1,(UtilOrderFn*)fAtomIDOrdered);
+            UtilSortIndex(op2.nvv1,op2.ai1VLA,idx2,(UtilOrderFn*)fAtomIDOrdered);
+            sort_flag = true;
+            break;
+          case 3: /* by matching atom ranks */
+            UtilSortIndex(op1.nvv1,op1.ai1VLA,idx1,(UtilOrderFn*)fAtomRankOrdered);
+            UtilSortIndex(op2.nvv1,op2.ai1VLA,idx2,(UtilOrderFn*)fAtomRankOrdered);
+            sort_flag = true;
+            break;
+          case 4: /* by internal atom indexes (stored in temp1 kludge field) */
+            UtilSortIndex(op1.nvv1,op1.ai1VLA,idx1,(UtilOrderFn*)fAtomTemp1Ordered);
+            UtilSortIndex(op2.nvv1,op2.ai1VLA,idx2,(UtilOrderFn*)fAtomTemp1Ordered);
+            sort_flag = true;
             break;
           }
           if(sort_flag) {  
             /* GOD this is SO ugly! */
             
             if(op1.vv1) {
-              float *tmp = VLAlloc(float,n_pair*3);
+              float *tmp = VLAlloc(float,op1.nvv1*3);
               if(!tmp) ok=false; else {
-                UtilApplySortedIndices(n_pair,idx1,3*sizeof(float),op1.vv1,tmp);
+                UtilApplySortedIndices(op1.nvv1,idx1,3*sizeof(float),op1.vv1,tmp);
                 VLAFreeP(op1.vv1);
                 op1.vv1 = tmp;
               }
             }
             if(op1.vc1) {
-              int *tmp = VLAlloc(int, n_pair);
+              int *tmp = VLAlloc(int, op1.nvv1);
               if(!tmp) ok=false; else {
-                UtilApplySortedIndices(n_pair,idx1,sizeof(int),op1.vc1,tmp);
+                UtilApplySortedIndices(op1.nvv1,idx1,sizeof(int),op1.vc1,tmp);
                 VLAFreeP(op1.vc1);
                 op1.vc1 = tmp;
               }
             }
             if(op1.vp1) {
-              int *tmp = VLAlloc(int, n_pair);
+              int *tmp = VLAlloc(int, op1.nvv1);
               if(!tmp) ok=false; else {
-                UtilApplySortedIndices(n_pair,idx1,sizeof(int),op1.vp1,tmp);
+                UtilApplySortedIndices(op1.nvv1,idx1,sizeof(int),op1.vp1,tmp);
                 VLAFreeP(op1.vp1);
                 op1.vp1 = tmp;
               }
             }
             if(op1.ai1VLA) {
-              AtomInfoType **tmp = VLAlloc(AtomInfoType*, n_pair);
+              AtomInfoType **tmp = VLAlloc(AtomInfoType*, op1.nvv1);
               if(!tmp) ok=false; else {
-                UtilApplySortedIndices(n_pair,idx1,sizeof(AtomInfoType*),op1.ai1VLA,tmp);
+                UtilApplySortedIndices(op1.nvv1,idx1,sizeof(AtomInfoType*),op1.ai1VLA,tmp);
                 VLAFreeP(op1.ai1VLA);
                 op1.ai1VLA = tmp;
               }
             }
 
             if(op2.vv1) {
-              float *tmp = VLAlloc(float,n_pair*3);
+              float *tmp = VLAlloc(float,op2.nvv1*3);
               if(!tmp) ok=false; else {
-                UtilApplySortedIndices(n_pair,idx2,3*sizeof(float),op2.vv1,tmp);
+                UtilApplySortedIndices(op2.nvv1,idx2,3*sizeof(float),op2.vv1,tmp);
                 VLAFreeP(op2.vv1);
                 op2.vv1 = tmp;
               }
             }
-            if(op2.vc1) {
-              int *tmp = VLAlloc(int, n_pair);
+            if(op2.vc1) { 
+              int *tmp = VLAlloc(int, op2.nvv1);
               if(!tmp) ok=false; else {
-                UtilApplySortedIndices(n_pair,idx2,sizeof(int),op2.vc1,tmp);
+                UtilApplySortedIndices(op2.nvv1,idx2,sizeof(int),op2.vc1,tmp);
                 VLAFreeP(op2.vc1);
                 op2.vc1 = tmp;
               }
             }
             if(op2.vp1) {
-              int *tmp = VLAlloc(int, n_pair);
+              int *tmp = VLAlloc(int, op2.nvv1);
               if(!tmp) ok=false; else {
-                UtilApplySortedIndices(n_pair,idx2,sizeof(int),op2.vp1,tmp);
+                UtilApplySortedIndices(op2.nvv1,idx2,sizeof(int),op2.vp1,tmp);
                 VLAFreeP(op2.vp1);
                 op2.vp1 = tmp;
               }
             }
             if(op2.ai1VLA) {
-              AtomInfoType **tmp = VLAlloc(AtomInfoType*, n_pair);
+              AtomInfoType **tmp = VLAlloc(AtomInfoType*, op2.nvv1);
               if(!tmp) ok=false; else {
-                UtilApplySortedIndices(n_pair,idx2,sizeof(AtomInfoType*),op2.ai1VLA,tmp);
+                UtilApplySortedIndices(op2.nvv1,idx2,sizeof(AtomInfoType*),op2.ai1VLA,tmp);
                 VLAFreeP(op2.ai1VLA);
                 op2.ai1VLA = tmp;
               }
@@ -4981,140 +5019,209 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
 
           }
         }
+
+        if(matchmaker!=0) {
+          int n1=0,n2=0,c1=0,c2=0;
+          int cmp;
+          
+          while((n1<op1.nvv1)&&(n2<op2.nvv1)) {
+            cmp = 0;
+            switch(matchmaker) {
+            case 1: /* insure that AtomInfoType matches */
+              if(AtomInfoMatch(G,op1.ai1VLA[n1],op2.ai1VLA[n2]))
+                cmp=0;
+              else
+                cmp=AtomInfoCompare(G,op1.ai1VLA[n1],op2.ai1VLA[n2]);
+              printf("%d-%d %d-%d: %d\n",c1,n1,c2,n2,cmp);
+              break;
+            case 2: /* ID */
+            case 3: /* rank */
+              {
+                int val1;
+                int val2;
+                
+                switch(matchmaker) {
+                case 2: /* ID */
+                  val1=op1.ai1VLA[n1]->id;
+                  val2=op2.ai1VLA[n2]->id;
+                  break;
+                case 3: /* rank */
+                  val1=op1.ai1VLA[n1]->rank;
+                  val2=op2.ai1VLA[n2]->rank;
+                  break;
+                case 4: /* index (via temp1) */
+                   val1=op1.ai1VLA[n1]->temp1;
+                   val2=op2.ai1VLA[n2]->temp1;
+                   break;
+                }
+                if(val1==val2)
+                  cmp = 0;
+                else if(val1<val2)
+                  cmp = -1;
+                else
+                  cmp = 1;
+              }
+              break;
+            }
+            if(!cmp) { /* match found */
+              idx1[c1++]=n1++;
+              idx2[c2++]=n2++;
+              n_pair++;
+            } else if(cmp<0) { /* op1 below op2 */
+              n1++;
+            } else { /* op2 below op1 */
+              n2++;
+            }
+          }
+
+          if(n_pair) {
+            if(op1.vv1) PackSortedIndices(n_pair,idx1,3*sizeof(float),op1.vv1);
+            if(op1.vc1) PackSortedIndices(n_pair,idx1,sizeof(int),op1.vc1);
+            if(op1.vp1) PackSortedIndices(n_pair,idx1,sizeof(int),op1.vp1);
+            if(op1.ai1VLA) PackSortedIndices(n_pair,idx1,sizeof(AtomInfoType*),op1.ai1VLA);
+            
+            if(op2.vv1) PackSortedIndices(n_pair,idx2,3*sizeof(float),op2.vv1);
+            if(op2.vc1) PackSortedIndices(n_pair,idx2,sizeof(int),op2.vc1);
+            if(op2.vp1) PackSortedIndices(n_pair,idx2,sizeof(int),op2.vp1);
+            if(op2.ai1VLA) PackSortedIndices(n_pair,idx2,sizeof(AtomInfoType*),op2.ai1VLA);
+          }
+        }
         FreeP(idx1);
         FreeP(idx2);
-      }
-      if(matchmaker!=0) {
-        switch(matchmaker) {
-        case 1: /* insure that AtomInfoType matches */
-          break;
-        case 2: /* insure that ID matches */
-          break;
-        }
-      }
-      if(ordered_selections&&op1.vp1&&op2.vp1) {
-        /* if we expected ordered selections and have priorities, 
-           then we may need to sort vertices */
+      } else if(op1.nvv1!=op2.nvv1) {
+        sprintf(buffer,"Atom counts between selections don't match (%d vs %d)",
+                op1.nvv1,op2.nvv1);
+        ErrMessage(G,"ExecutiveRMS",buffer);
+        n_pair = 0;
+      } else 
+        n_pair = op1.nvv1;
 
-        int sort_flag1 = false, sort_flag2 = false;
-        int well_defined1 = true, well_defined2 = true;
+      if(n_pair) {
         
-        for(a=0;a<(op1.nvv1-1);a++) {
-          /*          printf("op1 vertex %d priority %d\n",a,op1.vp1[a]);
-                      printf("op2 vertex %d priority %d\n",a,op2.vp1[a]);*/
-
-          if(op1.vp1[a]>op1.vp1[a+1])
-            sort_flag1 = true;
-          else if(op1.vp1[a]==op1.vp1[a+1])
-            well_defined1 = false;
-          if(op2.vp1[a]>op2.vp1[a+1])
-            sort_flag2 = true;
-          else if(op2.vp1[a]==op2.vp1[a+1])
-            well_defined2 = false;
-        }
-        
-        if(sort_flag1||sort_flag2) {
-          if(!(well_defined1||well_defined2)) {
-            PRINTFB(G,FB_Executive,FB_Warnings) 
-              "Executive-Warning: Ordering requested but not well defined.\n"
-               ENDFB(G);
-          } else {
-            FitVertexRec *vert = Alloc(FitVertexRec,op1.nvv1);
-
-            if(sort_flag1) {
-              float *src,*dst;
-              src = op1.vv1;
-              for(a=0;a<op1.nvv1;a++) {              
-                vert[a].priority = op1.vp1[a];
-                dst=vert[a].vertex;
-                copy3f(src,dst);
-                src+=3;
-              }
-              UtilSortInPlace(G,vert,op1.nvv1,sizeof(FitVertexRec),(UtilOrderFn*)fVertexOrdered);
-              dst = op1.vv1;
-              for(a=0;a<op1.nvv1;a++) {              
-                src=vert[a].vertex;
-                copy3f(src,dst);
-                dst+=3;
-              }
-            }
-
-            if(sort_flag2) {
-              float *src,*dst;
-              src = op2.vv1;
-              for(a=0;a<op2.nvv1;a++) {              
-                vert[a].priority = op2.vp1[a];
-                dst=vert[a].vertex;
-                copy3f(src,dst);
-                src+=3;
-              }
-              UtilSortInPlace(G,vert,op2.nvv1,sizeof(FitVertexRec),(UtilOrderFn*)fVertexOrdered);
-              dst = op2.vv1;
-              for(a=0;a<op2.nvv1;a++) {              
-                src=vert[a].vertex;
-                copy3f(src,dst);
-                dst+=3;
-              }
-            }
+        if(ordered_selections&&op1.vp1&&op2.vp1) {
+          /* if we expected ordered selections and have priorities, 
+             then we may need to sort vertices */
+          
+          int sort_flag1 = false, sort_flag2 = false;
+          int well_defined1 = true, well_defined2 = true;
+          
+          for(a=0;a<(n_pair-1);a++) {
+            /*          printf("op1 vertex %d priority %d\n",a,op1.vp1[a]);
+                        printf("op2 vertex %d priority %d\n",a,op2.vp1[a]);*/
             
-            FreeP(vert);
+            if(op1.vp1[a]>op1.vp1[a+1])
+              sort_flag1 = true;
+            else if(op1.vp1[a]==op1.vp1[a+1])
+              well_defined1 = false;
+            if(op2.vp1[a]>op2.vp1[a+1])
+              sort_flag2 = true;
+            else if(op2.vp1[a]==op2.vp1[a+1])
+              well_defined2 = false;
+          }
+          
+          if(sort_flag1||sort_flag2) {
+            if(!(well_defined1||well_defined2)) {
+              PRINTFB(G,FB_Executive,FB_Warnings) 
+                "Executive-Warning: Ordering requested but not well defined.\n"
+                ENDFB(G);
+            } else {
+              FitVertexRec *vert = Alloc(FitVertexRec,n_pair);
+
+              if(sort_flag1) {
+                float *src,*dst;
+                src = op1.vv1;
+                for(a=0;a<n_pair;a++) {              
+                  vert[a].priority = op1.vp1[a];
+                  dst=vert[a].vertex;
+                  copy3f(src,dst);
+                  src+=3;
+                }
+                UtilSortInPlace(G,vert,n_pair,sizeof(FitVertexRec),(UtilOrderFn*)fVertexOrdered);
+                dst = op1.vv1;
+                for(a=0;a<n_pair;a++) {              
+                  src=vert[a].vertex;
+                  copy3f(src,dst);
+                  dst+=3;
+                }
+              }
+
+              if(sort_flag2) {
+                float *src,*dst;
+                src = op2.vv1;
+                for(a=0;a<n_pair;a++) {              
+                  vert[a].priority = op2.vp1[a];
+                  dst=vert[a].vertex;
+                  copy3f(src,dst);
+                  src+=3;
+                }
+                UtilSortInPlace(G,vert,n_pair,sizeof(FitVertexRec),(UtilOrderFn*)fVertexOrdered);
+                dst = op2.vv1;
+                for(a=0;a<n_pair;a++) {              
+                  src=vert[a].vertex;
+                  copy3f(src,dst);
+                  dst+=3;
+                }
+              }
+            
+              FreeP(vert);
+            }
           }
         }
-      }
-      if(mode!=0) {
-        rms = MatrixFitRMS(G,op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
-        repeat=true;
-        b=0;
-        while(repeat) {
-          repeat=false;
-          b++;
-          if(b>max_cyc)
-            break;
-          if((refine>R_SMALL4)&&(rms>R_SMALL4)) {
-            flag=Alloc(int,op1.nvv1);
-            
-            if(flag) {          
-              for(a=0;a<op1.nvv1;a++) {
-                MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
-                v2=op2.vv1+(a*3);
-                if((diff3f(v1,v2)/rms)>refine) {
-                  flag[a] = false;
-                  repeat=true;
+        if(mode!=0) {
+          rms = MatrixFitRMS(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);
+          repeat=true;
+          b=0;
+          while(repeat) {
+            repeat=false;
+            b++;
+            if(b>max_cyc)
+              break;
+            if((refine>R_SMALL4)&&(rms>R_SMALL4)) {
+              int n_next = n_pair;
+              flag=Alloc(int,n_pair);
+              
+              if(flag) {          
+                for(a=0;a<n_pair;a++) {
+                  MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
+                  v2=op2.vv1+(a*3);
+                  if((diff3f(v1,v2)/rms)>refine) {
+                    flag[a] = false;
+                    repeat=true;
+                  }
+                  else
+                    flag[a] = true;
                 }
+                f1 = op1.vv1;
+                f2 = op2.vv1;
+                for(a=0;a<n_pair;a++) {
+                  if(!flag[a]) {
+                    n_next--;
+                  } else {
+                    copy3f(op1.vv1+(3*a),f1);
+                    copy3f(op2.vv1+(3*a),f2);
+                    f1+=3;
+                    f2+=3;
+                  }
+                }
+                if(n_next!=n_pair) {
+                  PRINTFB(G,FB_Executive,FB_Actions)
+                    " ExecutiveRMS: %d atoms rejected during cycle %d (RMS=%0.2f).\n",n_pair-n_next,b,rms
+                    ENDFB(G);
+                }
+                n_pair = n_next;
+                FreeP(flag);
+                if(n_pair) 
+                  rms = MatrixFitRMS(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);            
                 else
-                  flag[a] = true;
+                  break;
               }
-              f1 = op1.vv1;
-              f2 = op2.vv1;
-              for(a=0;a<op1.nvv1;a++) {
-                if(!flag[a]) {
-                  op2.nvv1--;
-                } else {
-                  copy3f(op1.vv1+(3*a),f1);
-                  copy3f(op2.vv1+(3*a),f2);
-                  f1+=3;
-                  f2+=3;
-                }
-              }
-              if(op2.nvv1!=op1.nvv1) {
-                PRINTFB(G,FB_Executive,FB_Actions)
-                  " ExecutiveRMS: %d atoms rejected during cycle %d (RMS=%0.2f).\n",op1.nvv1-op2.nvv1,b,rms
-                  ENDFB(G);
-              }
-              op1.nvv1 = op2.nvv1;
-              FreeP(flag);
-              if(op1.nvv1) 
-                rms = MatrixFitRMS(G,op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);            
-              else
-                break;
             }
           }
         }
+        else
+          rms = MatrixGetRMS(G,n_pair,op1.vv1,op2.vv1,NULL);
       }
-      else
-        rms = MatrixGetRMS(G,op1.nvv1,op1.vv1,op2.vv1,NULL);
-
-      if(!op1.nvv1) {
+      if(!n_pair) {
         PRINTFB(G,FB_Executive,FB_Results) 
           " Executive: Error -- no atoms left after refinement!\n"
           ENDFB(G);
@@ -5124,7 +5231,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
       if(ok) {
         if(!quiet) {
           PRINTFB(G,FB_Executive,FB_Results) 
-            " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,op1.nvv1,op2.nvv1 
+            " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,n_pair,n_pair
             ENDFB(G);
         }
         if(oname) 
@@ -5137,7 +5244,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
             /*             CGOColor(cgo,1.0,1.0,0.0); 
                            CGOLinewidth(cgo,3.0);*/
             CGOBegin(cgo,GL_LINES);
-            for(a=0;a<op1.nvv1;a++) {
+            for(a=0;a<n_pair;a++) {
               CGOVertexv(cgo,op2.vv1+(a*3));
               MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
               CGOVertexv(cgo,v1);
