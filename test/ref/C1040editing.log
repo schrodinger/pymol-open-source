@@ -5,7 +5,7 @@ PyMOL>alter (elem n,o),vdw=4.0
  Alter: modified 36 atoms.
 PyMOL>show dots
 PyMOL>ray
- RayRenderTest: obtained 2016 graphics primitives.
+ RayRenderTest: obtained 2032 graphics primitives.
 PyMOL>alter_state 1,(all),x=x+y
  AlterState: modified 107 atom states.
 PyMOL>hide
@@ -135,9 +135,9 @@ PyMOL>flag exfoliate,(*/cb)
  Flag: flag 24 is set in 12 of 107 atoms.
 PyMOL>show surf
 PyMOL>ray
- RepSurface: 1317 surface points.
- RepSurface: 1764 triangles.
- RayRenderTest: obtained 1460 graphics primitives.
+ RepSurface: 1349 surface points.
+ RepSurface: 1840 triangles.
+ RayRenderTest: obtained 1530 graphics primitives.
 PyMOL>del all
 PyMOL>load dat/small01.mol,m1
  Executive: object "m1" created.
@@ -235,7 +235,7 @@ PyMOL>print "%8.3f"%stored.sum
 PyMOL>rebuild
 PyMOL>show dots
 PyMOL>ray
- RayRenderTest: obtained 95617 graphics primitives.
+ RayRenderTest: obtained 111435 graphics primitives.
 PyMOL>del all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
@@ -355,7 +355,7 @@ PyMOL>set_dihedral 1/n,1/ca,1/c,1/o,180
  Selector: selection "pk2" defined with 1 atoms.
  SetDihedral: adjusted to 180.000
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
- cmd.get_dihedral: 180.000 degrees.
+ cmd.get_dihedral: -179.980 degrees.
 PyMOL>get_extent
  cmd.extent: min: [  -1.282, -20.240,   6.314]
  cmd.extent: max: [  10.284,  -4.939,  29.777]

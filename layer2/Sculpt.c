@@ -486,10 +486,9 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
               n0+=2;
             }
           }
-        FreeP(planer);
+          FreeP(planer);
         }
       }
-
   
   PRINTFB(FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NDistCon %d\n",I->Shaker->NDistCon
@@ -551,7 +550,7 @@ int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,fl
 void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
 {
   CShaker *shk;
-  int a,a0,a1,a2,a3,b0,b1,b2,b3;
+  int a,aa,a0,a1,a2,a3,b0,b1,b2,b3;
   CoordSet *cs;
   ShakerDistCon *sdc;
   ShakerPyraCon *spc;
@@ -583,7 +582,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   float plan_wt;
   int active_flag=false;
   float hb_overlap,hb_overlap_base;
-
+  int *active,n_active;
   AtomInfoType *ai0,*ai1;
 
   PRINTFD(FB_Sculpt)
@@ -596,6 +595,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         disp = Alloc(float,3*obj->NAtom);
         atm2idx = Alloc(int,obj->NAtom);
         cnt = Alloc(int,obj->NAtom);
+        active = Alloc(int,obj->NAtom);
         shk=I->Shaker;
 
         PRINTFD(FB_Sculpt)
@@ -616,6 +616,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         hb_overlap = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
         hb_overlap_base = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
 
+        n_active = 0;
         ai0=obj->AtomInfo;
         for(a=0;a<obj->NAtom;a++) {
           if(ai0->flags&cAtomFlag_exclude) {
@@ -631,7 +632,11 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
               a1=cs->AtmToIdx[a];
             }
           }
-          if(a1>=0) active_flag=true;
+          if(a1>=0) {
+            active_flag=true;
+            active[n_active] = a;
+            n_active++;
+          }
           atm2idx[a] = a1;
           ai0++;
         }
@@ -647,16 +652,13 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         
             v = disp;
             i = cnt;
-            for(a=0;a<obj->NAtom;a++) {
-              if(atm2idx[a]>=0) {
-                *(v++)=0.0;
-                *(i++)=0;
-                *(v++)=0.0;          
-                *(v++)=0.0;
-              } else {
-                i++;
-                v+=3;
-              }
+            for(aa=0;aa<n_active;aa++) {
+              a = active[aa];
+              v=disp+a*3;
+              *(v++)=0.0;
+              *(v++)=0.0;          
+              *(v++)=0.0;
+              cnt[a]=0;
             }
           
             /* apply distance constraints */
@@ -769,123 +771,122 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
               /* construct nonbonded hash */
             
               nb_next = 1;
-              for(b0=0;b0<obj->NAtom;b0++) {
+              for(aa=0;aa<n_active;aa++) {
+                b0 = active[aa];
                 a0 = atm2idx[b0];
-                if(a0>=0) {
-                  VLACheck(I->NBList,int,nb_next+2);
-                  v0 = cs->Coord+3*a0;
-                  hash = nb_hash(v0);
-                  i = I->NBList+nb_next;
-                  *(i++)=*(I->NBHash+hash);
-                  *(i++)=hash;
-                  *(i++)=b0;
-                  *(I->NBHash+hash)=nb_next;
-                  nb_next+=3;
-                }
+                VLACheck(I->NBList,int,nb_next+2);
+                v0 = cs->Coord+3*a0;
+                hash = nb_hash(v0);
+                i = I->NBList+nb_next;
+                *(i++)=*(I->NBHash+hash);
+                *(i++)=hash;
+                *(i++)=b0;
+                *(I->NBHash+hash)=nb_next;
+                nb_next+=3;
               }
             
               /* find neighbors for each atom */
             
-              for(b0=0;b0<obj->NAtom;b0++) {
+              for(aa=0;aa<n_active;aa++) {
+                b0 = active[aa];
                 a0 = atm2idx[b0];
-                if(a0>=0) {
-                  ai0=obj->AtomInfo+b0;
-                  v0 = cs->Coord+3*a0;
-                  for(h=-4;h<5;h+=4)
-                    for(k=-4;k<5;k+=4)
-                      for(l=-4;l<5;l+=4) 
-                        {
-                          offset = *(I->NBHash+nb_hash_off(v0,h,k,l));
-                          while(offset) {
-                            i = I->NBList + offset;
-                            b1 = *(i+2);
-                            if(b1>b0) { 
-                              /* determine exclusion (if any) */
-                              xoffset = *(I->EXHash+ex_hash(b0,b1));
-                              ex = 10;
-                              while(xoffset) {
-                                j = I->EXList + xoffset;
-                                if((*(j+1)==b0)&&
-                                   (*(j+2)==b1)) {
-                                  ex1 = *(j+3);
-                                  if(ex1<ex) {
-                                    ex=ex1;
-                                  }
+                ai0=obj->AtomInfo+b0;
+                v0 = cs->Coord+3*a0;
+                for(h=-4;h<5;h+=4)
+                  for(k=-4;k<5;k+=4)
+                    for(l=-4;l<5;l+=4) 
+                      {
+                        offset = *(I->NBHash+nb_hash_off(v0,h,k,l));
+                        while(offset) {
+                          i = I->NBList + offset;
+                          b1 = *(i+2);
+                          if(b1>b0) { 
+                            /* determine exclusion (if any) */
+                            xoffset = *(I->EXHash+ex_hash(b0,b1));
+                            ex = 10;
+                            while(xoffset) {
+                              j = I->EXList + xoffset;
+                              if((*(j+1)==b0)&&
+                                 (*(j+2)==b1)) {
+                                ex1 = *(j+3);
+                                if(ex1<ex) {
+                                  ex=ex1;
                                 }
-                                xoffset = (*j);
                               }
-                              if(ex>3) {
-                                ai1=obj->AtomInfo+b1;
-                                cutoff = ai0->vdw+ai1->vdw;
-                                if(ex==4) { /* 1-4 interation */
-                                  cutoff*=vdw14;
-                                  wt = vdw_wt14;
-                                  eval_flag = cSculptVDW14 & mask;
-                                } else { /* standard interaction */
-                                  if(I->Don[b0]&&I->Acc[b1]) { /* h-bond */
-                                    if(ai0->protons==cAN_H) {
-                                      cutoff-=hb_overlap;
-                                    } else {
-                                      cutoff-=hb_overlap_base;
-                                    }
-                                  } else if(I->Acc[b0]&&I->Don[b1]) { /* h-bond */
-                                    if(ai1->protons==cAN_H) {
-                                      cutoff-=hb_overlap;
-                                    } else {
-                                      cutoff-=hb_overlap_base;
-                                    } 
+                              xoffset = (*j);
+                            }
+                            if(ex>3) {
+                              ai1=obj->AtomInfo+b1;
+                              cutoff = ai0->vdw+ai1->vdw;
+                              if(ex==4) { /* 1-4 interation */
+                                cutoff*=vdw14;
+                                wt = vdw_wt14;
+                                eval_flag = cSculptVDW14 & mask;
+                              } else { /* standard interaction */
+                                if(I->Don[b0]&&I->Acc[b1]) { /* h-bond */
+                                  if(ai0->protons==cAN_H) {
+                                    cutoff-=hb_overlap;
+                                  } else {
+                                    cutoff-=hb_overlap_base;
                                   }
-                                  cutoff=cutoff*vdw;
-                                  wt = vdw_wt;
-                                  eval_flag = cSculptVDW & mask;
+                                } else if(I->Acc[b0]&&I->Don[b1]) { /* h-bond */
+                                  if(ai1->protons==cAN_H) {
+                                    cutoff-=hb_overlap;
+                                  } else {
+                                    cutoff-=hb_overlap_base;
+                                  } 
                                 }
-                                if(eval_flag) {
-                                  a1 = atm2idx[b1];
-                                  v1 = cs->Coord+3*a1;
-                                  if(SculptCheckBump(v0,v1,diff,&len,cutoff))
-                                    if(SculptDoBump(cutoff,len,diff,
-                                                    disp+b0*3,disp+b1*3,wt)) {
-                                      cnt[b0]++;
-                                      cnt[b1]++;
-                                    }
-                                }
+                                cutoff=cutoff*vdw;
+                                wt = vdw_wt;
+                                eval_flag = cSculptVDW & mask;
+                              }
+                              if(eval_flag) {
+                                a1 = atm2idx[b1];
+                                v1 = cs->Coord+3*a1;
+                                if(SculptCheckBump(v0,v1,diff,&len,cutoff))
+                                  if(SculptDoBump(cutoff,len,diff,
+                                                  disp+b0*3,disp+b1*3,wt)) {
+                                    cnt[b0]++;
+                                    cnt[b1]++;
+                                  }
                               }
                             }
-                            offset=(*i);
                           }
+                          offset=(*i);
                         }
-                }
+                      }
               }
-            
+              
               /* clean up nonbonded hash */
-          
+              
               i = I->NBList+2;
               while(nb_next>1) {
                 *(I->NBHash+*i)=0; 
                 i+=3;
                 nb_next-=3;
               }
-            
+              
             }
             /* average the displacements */
             
-            for(a=0;a<obj->NAtom;a++) {
-              if(atm2idx[a]>=0) 
-                if(cnt[a]) {
-                  if(!obj->AtomInfo[a].protected) {
-                    v1 = disp+3*a;
-                    sc = 0.99/cnt[a];
-                    scale3f(v1,sc,v1);
-                    v2 = cs->Coord+3*atm2idx[a];
-                    add3f(v1,v2,v2);
-                  }
+            for(aa=0;aa<n_active;aa++) {
+              a = active[aa];
+              if(cnt[a]) {
+                if(!obj->AtomInfo[a].protected) {
+                  v1 = disp+3*a;
+                  sc = 0.99/cnt[a];
+                  scale3f(v1,sc,v1);
+                  v2 = cs->Coord+3*atm2idx[a];
+                  add3f(v1,v2,v2);
                 }
+              }
             }
           
             ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);
           
           }
         }
+        FreeP(active);
         FreeP(cnt);
         FreeP(disp);
         FreeP(atm2idx);

@@ -1262,7 +1262,7 @@ int OrthoDrag(int x, int y,int mod)
 void OrthoSplash(void) 
 {
   OrthoNewLine(NULL);
-  PRINTF " PyMOL Molecular Graphics System, Version " ENDF;
+  PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF;
   PRINTF _PyMOL_VERSION ENDF;
   PRINTF ".\n" ENDF;
   PRINTF " Copyright (C) 1998-2002 by DeLano Scientific.\n All Rights Reserved.\n \n" ENDF;
@@ -1278,7 +1278,7 @@ void OrthoSplash(void)
   PRINTF "    Is PyMOL a free and open-source project worthy of your support?\n\n" ENDF;
   PRINTF "    Then visit the home page to learn what you can do to contribute!\n\n" ENDF;
 
-  PRINTF "    Also, please cite PYMOL in publications and presentations:\n\n" ENDF;
+  PRINTF "    Also, please cite PyMOL in publications and presentations:\n\n" ENDF;
   PRINTF "       Warren L. DeLano \"The PyMOL Molecular Graphics System.\"\n" ENDF;
   PRINTF "       DeLano Scientific, San Carlos, CA, USA. http://www.pymol.org\n\n" ENDF;
 
@@ -1326,7 +1326,7 @@ void OrthoInit(int showSplash)
   I->WizardPromptVLA=NULL;
   I->LoopFlag=0;
   I->LoopMod=0;
-  I->SplashFlag = true;
+  I->SplashFlag = false;
   I->ShowLines = 1;
   I->Saved[0]=0;
   I->DirtyFlag = true;
@@ -1335,8 +1335,10 @@ void OrthoInit(int showSplash)
   I->LoopBlock.fDrag = OrthoLoopBlockDrag;
   I->LoopBlock.fRelease = OrthoLoopBlockRelease;
   
-  if(showSplash)
+  if(showSplash) {
 	 OrthoSplash();
+    I->SplashFlag=true;
+  }
   strcpy(I->Prompt,"PyMOL>");
   OrthoNewLine(I->Prompt);
   

@@ -111,6 +111,8 @@ Changes up to 0.77
 
    * sculpting information now cached between changes to molecular structures
 
+   * optimized sculpting for small regions of large proteins
+
 Changes up to 0.76
 
    * VDW radii adjusted.  Use "set legacy_vdw_radii=1" on start-up for old values.
