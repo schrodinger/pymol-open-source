@@ -728,23 +728,22 @@ EXAMPLE
    except ImportError:
       print "Error: Sorry, couldn't find the '"+name+"' Wizard."
       
-def get_dihedral(atom1,atom2,atom3,atom4):
+def get_dihedral(atom1,atom2,atom3,atom4,state=0):
    r = None
    try:
       lock()
-      r = _cmd.get_dihe(str(atom1),str(atom2),str(atom3),str(atom4),0)
+      r = _cmd.get_dihe(str(atom1),str(atom2),str(atom3),str(atom4),int(state)-1)
    finally:
       unlock()
    return r
 
-def set_dihedral(atom1,atom2,atom3,atom4,angle):  # unfinished
+def set_dihedral(atom1,atom2,atom3,atom4,angle,state=0):
    try:
       lock()
-      r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),float(angle),0)
+      r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),float(angle),int(state)-1)
    finally:
       unlock()
    return r
-
 
 def mem():
    '''

@@ -14,7 +14,10 @@ Changes Under Consideration
 
    * Real Edit Menu in Tk
 
-Goals for 0.53 release
+   * draw all solid representations before drawing lines
+     in order to improve antialiasing.
+
+Ongoing Goals
 
    * fill-out object/coord set specific settings
 
@@ -24,8 +27,13 @@ Goals for 0.53 release
 
    * feedback conditionals placed around all error output
 
-   * draw all solid representations before drawing lines
-     in order to improve antialiasing.
+In Progress
+
+   * Mutagenesis wizard
+
+Changes up to 0.56
+
+   * fixed a serious parser bug with the mdo command
 
 Changes up to 0.53
 
