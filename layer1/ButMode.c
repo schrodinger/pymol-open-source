@@ -72,8 +72,9 @@ void ButModeCaptionReset(void)
 void ButModeSetRate(float interval)
 {
   CButMode *I=&ButMode;
-  I->Samples*=0.9;
-  I->Rate*=0.9;
+
+  I->Samples*=0.99;
+  I->Rate*=0.99;
 
   I->Samples++;
 
@@ -217,6 +218,7 @@ void ButModeDraw(Block *block)
   float rate;
   char rateStr[255];
   int mode;
+  int nf;
 
   if(PMGUI) {
     glColor3fv(I->Block->BackColor);
@@ -290,7 +292,11 @@ void ButModeDraw(Block *block)
       rate = I->Rate/I->Samples;
     else 
       rate = 0;
-    sprintf(rateStr,"Frame:%3d %4.1f FPS",SceneGetFrame()+1,rate);
+    nf = SceneGetNFrame();
+    if(nf==0)
+      nf=1;
+    sprintf(rateStr,"Frame[%3d/%3d] %d/s",SceneGetFrame()+1,
+            nf,(int)rate);
     GrapDrawStr(rateStr,x,y);
 
   }

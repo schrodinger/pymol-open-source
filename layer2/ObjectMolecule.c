@@ -98,9 +98,14 @@ int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text)
   int result=false;
   if(state<0) state=I->NCSet-1;
   if(state>=I->NCSet) {
-    PRINTF "Error: invalid state %d",state ENDF;
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: invalid state %d",state 
+      ENDFB;
+    
   } else if(!I->CSet[state]) {
-    PRINTF "Error: empty state %d",state ENDF;
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: empty state %d",state 
+      ENDFB;
   } else {
     UtilNCopy(I->CSet[state]->Name,text,sizeof(WordType));
     result=true;
@@ -168,10 +173,9 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   bond=VLAlloc(int,18*nAtom);  
   ii=bond;
 
-  if(DebugState & DebugMolecule) {
-	 printf(" ObjectMoleculeReadXYZ: Found %i atoms...\n",nAtom);
-	 fflush(stdout);
-  }
+  PRINTFB(FB_ObjectMolecule,FB_Blather)
+	 " ObjectMoleculeReadXYZ: Found %i atoms...\n",nAtom
+    ENDFB;
 
   a=0;
   atomCount=0;
@@ -238,13 +242,12 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         }
       }
       
-      if(DebugState&DebugMolecule) {
-        printf("%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
-               ai->name,ai->resn,ai->resi,ai->chain,
-               *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
-               ai->segi);
-        fflush(stdout);
-      }
+      PRINTFD(FB_ObjectMolecule) 
+        " ObjectMolecule-DEBUG: %s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
+        ai->name,ai->resn,ai->resi,ai->chain,
+        *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
+        ai->segi
+        ENDFD;
       
       a+=3;
       atomCount++;
@@ -253,8 +256,10 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       p=nextline(p);
     }
 
-  if(DebugState&DebugMolecule)
-    printf(" XYZStr2CoordSet: Read %d bonds.\n",nBond);
+  PRINTFB(FB_ObjectMolecule,FB_Blather) 
+   " XYZStr2CoordSet: Read %d bonds.\n",nBond
+    ENDFB;
+
   cset = CoordSetNew();
   cset->NIndex=nAtom;
   cset->Coord=coord;
@@ -338,10 +343,9 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int fr
 	 ok=ErrMessage("ObjectMoleculeLoadXYZFile","Unable to open file!");
   else
 	 {
-		if(DebugState&DebugMolecule)
-		  {
-			printf(" ObjectMoleculeLoadXYZFile: Loading from %s.\n",fname);
-		  }
+      PRINTFB(FB_ObjectMolecule,FB_Blather) 
+        " ObjectMoleculeLoadXYZFile: Loading from %s.\n",fname
+        ENDFB;
 		
 		fseek(f,0,SEEK_END);
       size=ftell(f);
@@ -3017,11 +3021,9 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 	 ok=ErrMessage("ObjectMoleculeLoadMOLFile","Unable to open file!");
   else
 	 {
-		if(DebugState&DebugMolecule)
-		  {
-			 printf(" ObjectMoleculeLoadMOLFile: Loading from %s.\n",fname);
-			 fflush(stdout);
-		  }
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " ObjectMoleculeLoadMOLFile: Loading from %s.\n",fname
+        ENDFB;
 		
 		fseek(f,0,SEEK_END);
       size=ftell(f);
@@ -3311,10 +3313,9 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
 	 ok=ErrMessage("ObjectMoleculeLoadPDBFile","Unable to open file!");
   else
 	 {
-		if(DebugState&DebugMolecule)
-		  {
-			printf(" ObjectMoleculeLoadPDBFile: Loading from %s.\n",fname);
-		  }
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " ObjectMoleculeLoadPDBFile: Loading from %s.\n",fname
+        ENDFB;
 		
 		fseek(f,0,SEEK_END);
       size=ftell(f);
@@ -3930,17 +3931,16 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 /*========================================================================*/
 void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index) 
 {
-  char buffer[1024];
   AtomInfoType *ai;
 
   ai=I->AtomInfo+index;
-  sprintf(buffer," Atom: [#%d:%s:%s:%d] %s:%s:%s:%s:%s:%s ",
-			 ai->id,ai->elem,
-          ai->textType,ai->customType,
-          I->Obj.Name,ai->segi,ai->chain,
-			 ai->resi,ai->resn,ai->name);
-  OrthoAddOutput(buffer);
-  OrthoNewLine(NULL);
+  PRINTFB(FB_ObjectMolecule,FB_Results)
+    " Atom: [#%d:%s:%s:%d] %s:%s:%s:%s:%s:%s ",
+    ai->id,ai->elem,
+    ai->textType,ai->customType,
+    I->Obj.Name,ai->segi,ai->chain,
+    ai->resi,ai->resn,ai->name
+    ENDFB;
   OrthoRestorePrompt();
 }
 /*========================================================================*/
@@ -4209,14 +4209,16 @@ int ObjectMoleculeConnect(ObjectMolecule *I,int **bond,AtomInfoType *ai,
             }
           MapFree(map);
         }
-      if(DebugState&DebugMolecule) 
-        printf(" ObjectMoleculeConnect: Found %d bonds.\n",nBond);
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " ObjectMoleculeConnect: Found %d bonds.\n",nBond
+        ENDFB;
     }
 
   if(cs->NTmpBond&&cs->TmpBond) {
-    if(DebugState&DebugMolecule) 
-      printf(" ObjectMoleculeConnect: incorporating explicit bonds. %d %d\n",
-             nBond,cs->NTmpBond);
+      PRINTFB(FB_ObjectMolecule,FB_Blather) 
+      " ObjectMoleculeConnect: incorporating explicit bonds. %d %d\n",
+             nBond,cs->NTmpBond
+        ENDFB;
     VLACheck((*bond),int,(nBond+cs->NTmpBond)*3);
     ii1=(*bond)+nBond*3;
     ii2=cs->TmpBond;
@@ -4236,9 +4238,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,int **bond,AtomInfoType *ai,
   }
 
   if(cs->NTmpLinkBond&&cs->TmpLinkBond) {
-    if(DebugState&DebugMolecule) 
-      printf("ObjectMoleculeConnect: incorporating linkage bonds. %d %d\n",
-             nBond,cs->NTmpLinkBond);
+    PRINTFB(FB_ObjectMolecule,FB_Blather) 
+      "ObjectMoleculeConnect: incorporating linkage bonds. %d %d\n",
+      nBond,cs->NTmpLinkBond
+      ENDFB;
     VLACheck((*bond),int,(nBond+cs->NTmpLinkBond)*3);
     ii1=(*bond)+nBond*3;
     ii2=cs->TmpLinkBond;
@@ -4355,11 +4358,9 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 	 ok=ErrMessage("ObjectMoleculeLoadMMDFile","Unable to open file!");
   else
 	 {
-		if(DebugState&DebugMolecule)
-		  {
-			 printf(" ObjectMoleculeLoadMMDFile: Loading from %s.\n",fname);
-			 fflush(stdout);
-		  }		
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " ObjectMoleculeLoadMMDFile: Loading from %s.\n",fname
+        ENDFB;
 		fseek(f,0,SEEK_END);
       size=ftell(f);
 		fseek(f,0,SEEK_SET);
@@ -4451,10 +4452,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
     bond=VLAlloc(int,18*nAtom);  
   }
   p=buffer;
-  if(DebugState & DebugMolecule) {
-	 printf(" ObjectMoleculeReadPDB: Found %i atoms...\n",nAtom);
-	 fflush(stdout);
-  }
+  PRINTFB(FB_ObjectMolecule,FB_Blather)
+	 " ObjectMoleculeReadPDB: Found %i atoms...\n",nAtom
+    ENDFB;
   a=0;
   atomCount=0;
   
@@ -4477,7 +4477,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         {
           if(!symmetry) symmetry=SymmetryNew();          
           if(symmetry) {
-            ErrOk(" PDBStrToCoordSet","Attempting to read symmetry information");
+            PRINTFB(FB_ObjectMolecule,FB_Details)
+              " PDBStrToCoordSet: Attempting to read symmetry information"
+              ENDFB;
             p=nskip(p,6);
             symFlag=true;
             p=ncopy(cc,p,9);
@@ -4608,11 +4610,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           AtomInfoAssignParameters(ai);
           ai->color=AtomInfoGetColor(ai);
 
-          if(DebugState&DebugMolecule)
-            printf("%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
+          PRINTFD(FB_ObjectMolecule)
+            "%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
                     ai->name,ai->resn,ai->resi,ai->chain,
                     *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
-                    ai->segi);
+                    ai->segi
+            ENDFD;
 
 			 a+=3;
 			 atomCount++;
@@ -4680,8 +4683,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       FreeP(idx);
     }
   }
-  if(DebugState&DebugMolecule)
-    printf(" PDBStr2CoordSet: Read %d bonds from CONECT records (%p).\n",nBond,bond);
+  PRINTFB(FB_ObjectMolecule,FB_Blather)
+   " PDBStr2CoordSet: Read %d bonds from CONECT records (%p).\n",nBond,bond
+    ENDFB;
   cset = CoordSetNew();
   cset->NIndex=nAtom;
   cset->Coord=coord;

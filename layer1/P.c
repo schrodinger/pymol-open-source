@@ -663,8 +663,7 @@ void PBlock(void)
 {
 
   if(!PAutoBlock()) {
-    printf("%d\n",P_glut_thread_keep_out);
-    ErrFatal("PBlock","oops, no saved thread -- your threads must be tangled!");
+    ErrFatal("PBlock","OH NO! -- no saved thread -- your threads must be tangled!");
   }
 }
 
@@ -758,7 +757,9 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
   
   PyArg_ParseTuple(args,"s",&str);
   if(str[0]) {
-	 OrthoAddOutput(str);
+    if(Feedback(FB_Python,FB_Results)) {
+      OrthoAddOutput(str);
+    }
   }
   Py_INCREF(Py_None);
   return Py_None;

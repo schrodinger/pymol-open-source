@@ -28,19 +28,15 @@ void ErrFatal(const char *where,const char *what)
 int ErrMessage(const char *where,const char *what)
 {
   char buffer[1024];
-  sprintf(buffer,"%s-ERR: %s\n",where,what);
-  OrthoAddOutput(buffer);
-  OrthoRestorePrompt();
-  return(0);
-}
+  if(Feedback(FB_Executive,FB_Errors)) {
 
-int ErrOk(const char *where,const char *what)
-{
-  char buffer[1024];
-  sprintf(buffer,"%s: %s\n",where,what);
-  OrthoAddOutput(buffer);
-  OrthoRestorePrompt();
-  return(1);
+    /* unclassified errors are assigned to the Executive catch-all */
+
+    sprintf(buffer,"%s-ERR: %s\n",where,what);
+    OrthoAddOutput(buffer);
+    OrthoRestorePrompt();
+  }
+  return(0);
 }
 
 void ErrPointer(const char *file,int line)

@@ -119,7 +119,9 @@ void MoviePNG(char *prefix,int save)
 		MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
 		ExecutiveDrawNow();
 		if(PMGUI) glutSwapBuffers();
-		printf(" MoviePNG: wrote %s\n",fname);
+      if(Feedback(FB_Movie,FB_Actions)) {
+        printf(" MoviePNG: wrote %s\n",fname);
+      }
 		if(!save) {
 		  SceneDirty();
 		  mfree(I->Image[i]);

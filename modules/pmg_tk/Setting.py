@@ -37,22 +37,25 @@ class Setting:
       self.ortho.set(int(cmd.get_setting_legacy('orthoscopic')))
 
       self.antialias = IntVar()
-      self.antialias.set(cmd.get_setting_legacy('antialias'))
+      self.antialias.set(int(cmd.get_setting_legacy('antialias')))
 
       self.all_states = IntVar()
-      self.all_states.set(cmd.get_setting_legacy('all_states'))
+      self.all_states.set(int(cmd.get_setting_legacy('all_states')))
 
       self.line_smooth = IntVar()
-      self.line_smooth.set(cmd.get_setting_legacy('line_smooth'))
+      self.line_smooth.set(int(cmd.get_setting_legacy('line_smooth')))
 
       self.overlay = IntVar()
-      self.overlay.set(cmd.get_setting_legacy('overlay'))
+      self.overlay.set(int(cmd.get_setting_legacy('overlay')))
 
       self.valence = IntVar()
-      self.valence.set(cmd.get_setting_legacy('valence'))
+      self.valence.set(int(cmd.get_setting_legacy('valence')))
 
       self.auto_zoom = IntVar()
-      self.auto_zoom.set(cmd.get_setting_legacy('auto_zoom'))
+      self.auto_zoom.set(int(cmd.get_setting_legacy('auto_zoom')))
+
+      self.static_singletons = IntVar()
+      self.static_singletons.set(int(cmd.get_setting_legacy('static_singletons')))
 
       self.xref = { 
          'ray_trace_frames':
@@ -75,6 +78,8 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" %( s.overlay.get()*5))))),
          'auto_zoom'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_zoom.get())))),
+         'static_singletons'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.static_singletons.get())))),
          }
 
       self.update_code = {
@@ -82,8 +87,6 @@ class Setting:
          (lambda s,t: (s.ray_trace_frames.set(int(t[1][0])))),
          'cache_frames':
          (lambda s,t: (s.cache_frames.set(int(t[1][0])))),
-         'orthoscopic':
-         (lambda s,t: (s.ortho.set(int(t[1][0])))),
          'orthoscopic':
          (lambda s,t: (s.ortho.set(int(t[1][0])))),
          'all_states':
@@ -96,6 +99,8 @@ class Setting:
          (lambda s,t: (s.valence.set(t[1][0]>0.0))),
          'auto_zoom':
          (lambda s,t: (s.auto_zoom.set(int(t[1][0])))), 
+         'static_singletons':
+         (lambda s,t: (s.static_singletons.set(int(t[1][0])))), 
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -107,6 +112,7 @@ class Setting:
          pymol.setting._get_index("line_smooth"),
          pymol.setting._get_index("valence"),
          pymol.setting._get_index("auto_zoom"),
+         pymol.setting._get_index("static_singletons"),
          ]
 
       self.active_dict = {}

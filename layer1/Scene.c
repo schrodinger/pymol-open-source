@@ -102,7 +102,12 @@ void SceneDraw(Block *block);
 int SceneClick(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
-
+/*========================================================================*/
+int SceneGetNFrame(void)
+{
+  CScene *I=&Scene;
+  return(I->NFrame);
+}
 /*========================================================================*/
 void SceneGetView(SceneViewType view)
 {
@@ -731,8 +736,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         break;
       }
 	 } else {
-		OrthoAddOutput(" SceneClick: no atom found nearby.\n");
-		OrthoNewLine(NULL);
+      PRINTFB(FB_Scene,FB_Warnings) 
+        " SceneClick: no atom found nearby.\n"
+        ENDFB;
 		OrthoRestorePrompt();
 	 }
   }
@@ -1007,6 +1013,7 @@ void SceneInit(void)
 
   MatrixLoadIdentity44f(I->RotMatrix);
 
+  I->NFrame = 0;
   I->Scale = 1.0;
   I->Frame=0;
   I->StateIndex=0;

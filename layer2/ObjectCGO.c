@@ -84,28 +84,46 @@ static int ObjectCGOGetNState(ObjectCGO *I) {
 static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick)
 {
   ObjectCGOState *sobj = NULL;
+  int a;
 
   if(state<I->NState) {
     sobj = I->State+state;
   }
-  if(!sobj) {
-    if(I->NState&&SettingGet(cSetting_static_singletons)) 
-      sobj = I->State;
-  }
-  
-  if(ray) {    
-    if(sobj)
-      {
-        if(sobj->ray)
-          CGORenderRay(sobj->ray,ray);
-        else
-          CGORenderRay(sobj->std,ray);
+  if(state<0) {
+    if(I->State) {
+      for(a=0;a<I->NState;a++) {
+        sobj = I->State+a;
+        if(ray) {    
+          if(sobj->ray)
+            CGORenderRay(sobj->ray,ray);
+          else
+            CGORenderRay(sobj->std,ray);
+        } else if(pick&&PMGUI) {
+        } else if(PMGUI) {
+          if(sobj->std)
+            CGORenderGL(sobj->std);
+        }
       }
-  } else if(pick&&PMGUI) {
-  } else if(PMGUI) {
-    if(sobj)
-      if(sobj->std)
-        CGORenderGL(sobj->std);
+    }
+  } else {
+    if(!sobj) {
+      if(I->NState&&SettingGet(cSetting_static_singletons)) 
+        sobj = I->State;
+    }
+    if(ray) {    
+      if(sobj)
+        {
+          if(sobj->ray)
+            CGORenderRay(sobj->ray,ray);
+          else
+            CGORenderRay(sobj->std,ray);
+        }
+    } else if(pick&&PMGUI) {
+    } else if(PMGUI) {
+      if(sobj)
+        if(sobj->std)
+          CGORenderGL(sobj->std);
+    }
   }
 }
 

@@ -15,6 +15,8 @@ Z* -------------------------------------------------------------------
 */
 #include"Debug.h"
 
+/* OBSOLETE -- USE THE FEEDBACK FACILITY */
+
 unsigned int DebugState=0;
 
 /* 

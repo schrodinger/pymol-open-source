@@ -43,6 +43,7 @@ int SceneGetState(void);
 void SceneDirty(void); /* must update transformation */
 void SceneChanged(void); /* must actually update 3D objects */
 void SceneCountFrames(void) ;
+int SceneGetNFrame(void);
 void SceneSetMatrix(float *);
 float *SceneGetMatrix(void);
 

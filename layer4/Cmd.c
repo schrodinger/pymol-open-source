@@ -844,11 +844,13 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
       ObjectSetName(obj,str1);
       ExecutiveManageObject((Object*)obj);
     }
-    sprintf(buf," Mesh: created \"%s\", setting level to %5.3f\n",str1,lvl);
-    OrthoAddOutput(buf);
+    PRINTFB(FB_ObjectMesh,FB_Actions)
+      " Mesh: created \"%s\", setting level to %5.3f\n",str1,lvl
+      ENDFB;
   } else {
-    sprintf(buf,"Map or brick object '%s' not found.",str2);
-    ErrMessage("Mesh",buf);
+    PRINTFB(FB_ObjectMesh,FB_Errors)
+      "Map or brick object '%s' not found.",str2
+      ENDFB;
   }
   APIExit();
   Py_INCREF(Py_None);
@@ -2120,7 +2122,9 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 
   }
   if(origObj) {
-	 OrthoAddOutput(buf);
+    PRINTFB(FB_Executive,FB_Actions) 
+      "%s",buf
+      ENDFB;
 	 OrthoRestorePrompt();
   }
   APIExit();
@@ -2161,7 +2165,9 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
       }
     }
   if(origObj) {
-	 OrthoAddOutput(buf);
+    PRINTFB(FB_Executive,FB_Actions) 
+      "%s",buf
+      ENDFB;
 	 OrthoRestorePrompt();
   }
   APIExit();
@@ -2348,7 +2354,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 	 break;
   }
   if(origObj) {
-	 OrthoAddOutput(buf);
+    PRINTFB(FB_Executive,FB_Actions) 
+      "%s",buf
+      ENDFB;
 	 OrthoRestorePrompt();
   }
   APIExit();

@@ -16,8 +16,11 @@ for x in range(0,30):
 
 # create a 63 frame movie inside of PyMOL
 
-for a in range(1,63):
+for a in range(0,63):
 
+   aa = a/9.973
+   ab = a/4.987
+   
    # blank list
    
    obj = []
@@ -26,7 +29,7 @@ for a in range(1,63):
    
    for x in range(0,30):
       for y in range(0,30):
-         z[x][y]=(math.cos((a/10.0)+x/2.0)+math.sin((a/10.0)+(y/2.0)))
+         z[x][y]=(math.cos((aa)+x/2.0)+math.sin((aa)+(y/2.0)))
 
    obj.extend( [ COLOR, 0.3, 0.3, 1.0 ] )
    
@@ -45,24 +48,24 @@ for a in range(1,63):
    # add into this a couple circulating spheres
 
    obj.extend( [ COLOR, 1.0, 0.2, 0.2 ] )
-   obj.extend( [ SPHERE, 5*math.cos(a/5.0)+15.0, 5*math.sin(a/5.0)+15.0, 6.0, 1.0 ] )
+   obj.extend( [ SPHERE, 5*math.cos(ab)+15.0, 5*math.sin(ab)+15.0, 6.0, 1.0 ] )
 
    obj.extend( [ COLOR, 1.0, 1.0, 0.2 ] )
-   obj.extend( [ SPHERE, 5*math.cos(a/10.0)+15.0, 5*math.sin(a/10.0)+15.0, 3.0, 2.0 ] )
+   obj.extend( [ SPHERE, 5*math.cos(aa)+15.0, 5*math.sin(aa)+15.0, 3.0, 2.0 ] )
 
    # now add a colorful cylinder
 
    obj.extend( [ CYLINDER,
-                 5.0,  15+math.sin(a/10.0)*10, -5.0,      # XYZ 1
-                 25.0, 15+math.sin(a/10.0)*10, -5.0,      # XYZ 2
+                 5.0,  15+math.sin(aa)*10, -5.0,      # XYZ 1
+                 25.0, 15+math.sin(aa)*10, -5.0,      # XYZ 2
                  2.0,                                     # Radius
-                 1.0, (1.0+math.sin(a/10.0))/2.0,(1.0+math.cos(a/10.0))/2.0, # RGB Color 1
-                 0.3, (1.0+math.cos(a/10.0))/2.0, 0.5,              # RGB Color 2
+                 1.0, (1.0+math.sin(aa))/2.0,(1.0+math.cos(aa))/2.0, # RGB Color 1
+                 0.3, (1.0+math.cos(aa))/2.0, 0.5,              # RGB Color 2
                  ] )
                 
    # load this state into the PyMOL object
 
-   cmd.load_cgo(obj,'cgo03',a)
+   cmd.load_cgo(obj,'cgo03',a+1)
 
 # this zooms out a bit more than usual
 

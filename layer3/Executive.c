@@ -161,7 +161,9 @@ int ExecutiveSetTitle(char *name,int state,char *text)
   ObjectMolecule *obj;
   obj =ExecutiveFindObjectMoleculeByName(name);
   if(!obj) {
-    PRINTF "Error: object %s not found.",name ENDF;
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: object %s not found.\n",name 
+      ENDFB;
   } else {
     result = ObjectMoleculeSetStateTitle(obj,state,text);
   }
@@ -649,8 +651,10 @@ void ExecutiveRemoveAtoms(char *s1)
 						ObjectMoleculeSeleOp(obj,sele,&op);
                   if(op.i1) {
                     ObjectMoleculePurge(obj);
-                    PRINTF " Remove: eliminated %d atoms in model '%s'.\n",
-                      op.i1,obj->Obj.Name ENDF;
+                    PRINTFB(FB_Editor,FB_Actions)
+                      " Remove: eliminated %d atoms in model '%s'.\n",
+                      op.i1,obj->Obj.Name 
+                      ENDFB;
                     flag=true;
                   }
 					 }
@@ -686,10 +690,13 @@ void ExecutiveFlag(int flag,char *s1)
     op.i2 = ((unsigned int)0xFFFFFFFF - (((unsigned int)1)<<flag));
     op.i3 = 0;
     ExecutiveObjMolSeleOp(sele1,&op);    
-    if(op.i3) 
-      PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF
-    else
-      PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF
+    if(Feedback(FB_Executive,FB_Actions)) {
+      if(op.i3) {
+        PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF;
+      } else {
+        PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF;
+      }
+    }
   }
 }
 /*========================================================================*/
@@ -721,11 +728,13 @@ void ExecutiveProtect(char *s1,int mode)
       op.i1 = mode;
       op.i2 = 0;
       ExecutiveObjMolSeleOp(sele1,&op);    
-      if(op.i2) {
-        if(mode) {
-          PRINTF " Protect: %d atoms protected from movement.\n",op.i2 ENDF;
-        } else {
-          PRINTF " Protect: %d atoms deprotected.\n", op.i2 ENDF;
+      if(Feedback(FB_Executive,FB_Actions)) {
+        if(op.i2) {
+          if(mode) {
+            PRINTF " Protect: %d atoms protected from movement.\n",op.i2 ENDF;
+          } else {
+            PRINTF " Protect: %d atoms deprotected.\n", op.i2 ENDF;
+          }
         }
       }
   }
@@ -741,12 +750,14 @@ void ExecutiveMask(char *s1,int mode)
       op.code = OMOP_Mask;
       op.i1 = mode;
       op.i2 = 0;
-      ExecutiveObjMolSeleOp(sele1,&op);    
-      if(op.i2) {
-        if(mode) {
-          PRINTF " Protect: %d atoms masked (can not be picked).\n",op.i2 ENDF;
-        } else {
-          PRINTF " Protect: %d atoms unmasked.\n", op.i2 ENDF;
+      ExecutiveObjMolSeleOp(sele1,&op);
+      if(Feedback(FB_Executive,FB_Actions)) {    
+        if(op.i2) {
+          if(mode) {
+            PRINTF " Protect: %d atoms masked (can not be picked).\n",op.i2 ENDF;
+          } else {
+            PRINTF " Protect: %d atoms unmasked.\n", op.i2 ENDF;
+          }
         }
       }
       op.code = OMOP_INVA; /* need to invalidate all pickable representations */
@@ -788,7 +799,9 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
                   if(add==1) {
                     cnt = ObjectMoleculeAddBond((ObjectMolecule*)rec->obj,sele1,sele2,order);
                     if(cnt) {
-                      PRINTF " AddBond: %d bonds added to model '%s'.\n",cnt,rec->obj->Name ENDF;
+                      PRINTFB(FB_Editor,FB_Actions)
+                        " AddBond: %d bonds added to model '%s'.\n",cnt,rec->obj->Name 
+                        ENDFB;
                       flag=true;
                     }
                   } else if(add==2) {
@@ -797,7 +810,10 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
                   else {
                     cnt = ObjectMoleculeRemoveBonds((ObjectMolecule*)rec->obj,sele1,sele2);
                     if(cnt) {
-                      PRINTF " RemoveBond: %d bonds removed from model '%s'.\n",cnt,rec->obj->Name ENDF;
+                      PRINTFB(FB_Editor,FB_Actions)
+                        " RemoveBond: %d bonds removed from model '%s'.\n",
+                        cnt,rec->obj->Name 
+                        ENDFB;
                       flag=true;
                     }
                   }
@@ -848,48 +864,48 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
 float ExecutiveDistance(char *s1,char *s2)
 {
   int sele1,sele2;
-   char buffer[255];
-   float dist = -1.0;
-
-   ObjectMoleculeOpRec op1;
-   ObjectMoleculeOpRec op2;
-
-   sele1=SelectorIndexByName(s1);
-   op1.i1=0;
-   if(sele1>=0) {
-     op1.code = OMOP_SUMC;
-     op1.v1[0]=0.0;
-     op1.v1[1]=0.0;
-     op1.v1[2]=0.0;
-     ExecutiveObjMolSeleOp(sele1,&op1);
-   } else {
-     ErrMessage("ExecutiveDistance","The first selection contains no atoms.");
-   }
-
-   sele2=SelectorIndexByName(s2);
-   op2.i1=0;
-   if(sele2>=0) {
-     op2.code = OMOP_SUMC;
-     op2.v1[0]=0.0;
-     op2.v1[1]=0.0;
-     op2.v1[2]=0.0;
-     op2.i1=0;
-     ExecutiveObjMolSeleOp(sele2,&op2);
-   } else {
-     ErrMessage("ExecutiveDistance","The second selection contains no atoms.");
-   }
-   
-   if(op1.i1&&op2.i1) {
-     scale3f(op1.v1,1.0/op1.i1,op1.v1);
-     scale3f(op2.v1,1.0/op2.i1,op2.v1);
-     dist = diff3f(op1.v1,op2.v1);
-     sprintf(buffer," Distance: %8.3f [%i atom(s) to %i atom(s)]\n",
-             dist,op1.i1,op2.i1);
-    OrthoAddOutput(buffer);
+  float dist = -1.0;
+  
+  ObjectMoleculeOpRec op1;
+  ObjectMoleculeOpRec op2;
+  
+  sele1=SelectorIndexByName(s1);
+  op1.i1=0;
+  if(sele1>=0) {
+    op1.code = OMOP_SUMC;
+    op1.v1[0]=0.0;
+    op1.v1[1]=0.0;
+    op1.v1[2]=0.0;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+  } else {
+    ErrMessage("ExecutiveDistance","The first selection contains no atoms.");
+  }
+  
+  sele2=SelectorIndexByName(s2);
+  op2.i1=0;
+  if(sele2>=0) {
+    op2.code = OMOP_SUMC;
+    op2.v1[0]=0.0;
+    op2.v1[1]=0.0;
+    op2.v1[2]=0.0;
+    op2.i1=0;
+    ExecutiveObjMolSeleOp(sele2,&op2);
+  } else {
+    ErrMessage("ExecutiveDistance","The second selection contains no atoms.");
+  }
+  
+  if(op1.i1&&op2.i1) {
+    scale3f(op1.v1,1.0/op1.i1,op1.v1);
+    scale3f(op2.v1,1.0/op2.i1,op2.v1);
+    dist = diff3f(op1.v1,op2.v1);
+    PRINTFB(FB_Executive,FB_Results)
+      " Distance: %8.3f [%i atom(s) to %i atom(s)]\n",
+      dist,op1.i1,op2.i1
+      ENDFB;
   } else {
     ErrMessage("ExecutiveRMS","No atoms selected.");
-	}
-   return(dist);
+  }
+  return(dist);
 }
 /*========================================================================*/
 char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
@@ -973,7 +989,10 @@ void ExecutiveCopy(char *src,char *dst)
           for(a=0;a<cRepCnt;a++)
             rec2->repOn[a]=rec1->repOn[a];
         }
-        PRINTF " Executive: object %s created.\n",oDst->Obj.Name ENDF
+        
+        PRINTFB(FB_Executive,FB_Actions)
+          " Executive: object %s created.\n",oDst->Obj.Name 
+          ENDFB;
       }
     }
   SceneChanged();
@@ -1057,7 +1076,6 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
 void ExecutiveLabel(char *s1,char *expr)
 {
   int sele1;
-  char buffer[255];
   ObjectMoleculeOpRec op1;
   int cnt;
 
@@ -1077,17 +1095,19 @@ void ExecutiveLabel(char *s1,char *expr)
     op1.i2=cRepInvVisib;
     ExecutiveObjMolSeleOp(sele1,&op1);
 
-    sprintf(buffer,"labelled %i atoms.",cnt);
-    ErrOk(" Label",buffer);
+    PRINTFB(FB_Executive,FB_Actions)
+      " Label: labelled %i atoms.\n",cnt
+      ENDFB;
   } else {
-    ErrMessage("ExecutiveLabel","No atoms selected.");
+    PRINTFB(FB_Executive,FB_Warnings)
+      " Label: no atoms selections.\n"
+      ENDFB;
   }
 }
 /*========================================================================*/
 int ExecutiveIterate(char *s1,char *expr,int read_only)
 {
   int sele1;
-  char buffer[255];
   ObjectMoleculeOpRec op1;
   
   op1.i1=0;
@@ -1099,14 +1119,18 @@ int ExecutiveIterate(char *s1,char *expr,int read_only)
     op1.i2 = read_only;
     ExecutiveObjMolSeleOp(sele1,&op1);
     if(!read_only) {
-      sprintf(buffer,"modified %i atoms.",op1.i1);
-      ErrOk(" Alter",buffer);
+      PRINTFB(FB_Executive,FB_Actions)
+        " Alter: modified %i atoms.\n",op1.i1
+        ENDFB;
     } else {
-      sprintf(buffer,"iterated over %i atoms.",op1.i1);
-      ErrOk(" Iterate",buffer);
+      PRINTFB(FB_Executive,FB_Actions)
+        " Iterate: iterated over %i atoms.\n",op1.i1
+        ENDFB;
     }
   } else {
-    ErrMessage("ExecutiveIterate","No atoms selected.");
+      PRINTFB(FB_Executive,FB_Warnings)
+        "ExecutiveIterate: No atoms selected.\n"
+        ENDFB;
   }
   return(op1.i1);
 }
@@ -1114,7 +1138,6 @@ int ExecutiveIterate(char *s1,char *expr,int read_only)
 void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
 {
   int sele1;
-  char buffer[255];
   ObjectMoleculeOpRec op1;
   
   sele1=SelectorIndexByName(s1);
@@ -1126,14 +1149,18 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
     op1.i3 = read_only;
     ExecutiveObjMolSeleOp(sele1,&op1);
     if(!read_only) {
-      sprintf(buffer,"modified %i atom states.",op1.i1);
-      ErrOk(" Alter",buffer);
+      PRINTFB(FB_Executive,FB_Actions)
+        " AlterState: modified %i atom states.\n",op1.i1
+        ENDFB;
     } else {
-      sprintf(buffer,"iterated over %i atom states.",op1.i1);
-      ErrOk(" Iterate",buffer);
+      PRINTFB(FB_Executive,FB_Actions)
+        " IterateState: iterated over %i atom states.\n",op1.i1
+        ENDFB;
     }
   } else {
-    ErrMessage("ExecutiveIterateState","No atoms selected.");
+      PRINTFB(FB_Executive,FB_Warnings)
+        "ExecutiveIterateState: No atoms selected.\n"
+        ENDFB;
   }
 }
 /*========================================================================*/
@@ -1202,7 +1229,9 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
         rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
       else
         rms = MatrixGetRMS(op1.nvv1,op1.vv1,op2.vv1,NULL);
-      PRINTF " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,op1.nvv1,op2.nvv1 ENDF
+      PRINTFB(FB_Executive,FB_Results) 
+        " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,op1.nvv1,op2.nvv1 
+        ENDFB
       if(mode==2) {
         op2.code = OMOP_TTTF;
         ExecutiveObjMolSeleOp(sele1,&op2);
@@ -1334,8 +1363,11 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
         rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
       else
         rms = MatrixGetRMS(op1.nvv1,op1.vv1,op2.vv1,NULL);
-      printf(" ExecutiveRMS: RMS = %8.3f (%d to %d atoms)\n",
-             rms,op1.nvv1,op2.nvv1);
+      PRINTFB(FB_Executive,FB_Results) 
+        " ExecutiveRMS: RMS = %8.3f (%d to %d atoms)\n",
+        rms,op1.nvv1,op2.nvv1
+        ENDFB;
+    
       op2.code = OMOP_TTTF;
       SelectorGetTmp(combi,s1);
       sele1=SelectorIndexByName(s1);
@@ -2064,7 +2096,9 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
   } else if(!obj->Symmetry->NSymMat) {
     ErrMessage("ExecutiveSymExp","No symmetry matrices!");    
   } else {
-    ErrOk(" ExecutiveSymExp","Generating symmetry mates");
+    PRINTFB(FB_Executive,FB_Actions)
+      " ExecutiveSymExp: Generating symmetry mates"
+      ENDFB;
 	 op.code = OMOP_SUMC;
 	 op.i1 =0;
     op.v1[0]= 0.0;
@@ -2262,7 +2296,9 @@ void ExecutiveManageObject(Object *obj)
     else 
       {
         if(obj->Name[0]!='_') { /* suppress internal objects */
-          PRINTF " Executive: object \"%s\" created.\n",obj->Name ENDF;
+          PRINTFB(FB_Executive,FB_Actions)
+            " Executive: object \"%s\" created.\n",obj->Name 
+            ENDFB;
         }
       }
     if(!rec)

@@ -417,8 +417,7 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
 		I->vertActive[i0]--; /* deactivate when all active edges are closed */
 		I->vertActive[i1]--;
 	 } else {
-		printf("s01 negative\n");
-		while(1);
+      ErrFatal("TriangleAdd","Invalid triangle - s01 negative");
 	 }
   } else {
 	 VLACheck(I->edge,EdgeRec,I->nEdge);
@@ -438,8 +437,7 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
 		I->vertActive[i0]--; /* deactivate when all active edges are closed */
 		I->vertActive[i2]--;
 	 } else {
-		printf("s02 negative\n");
-		while(1);
+      ErrFatal("TriangleAdd","Invalid triangle - s02 negative");
 	 }
   } else {
 	 VLACheck(I->edge,EdgeRec,I->nEdge);
@@ -459,8 +457,7 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
 		I->vertActive[i1]--; /* deactivate when all active edges are closed */
 		I->vertActive[i2]--;
 	 } else {
-		printf("s12 negative\n");
-		while(1);
+      ErrFatal("TriangleAdd","Invalid triangle - s12 negative");
 	 }
   } else {
 	 VLACheck(I->edge,EdgeRec,I->nEdge);

@@ -18,11 +18,11 @@ Z* -------------------------------------------------------------------
 
 
 #include"MemoryDebug.h"
-#include"Debug.h"
 #include"Err.h"
 #include"OOMac.h"
 #include"Map.h"
 #include"Setting.h"
+#include"Feedback.h"
 
 #ifndef true
 #define true 1
@@ -360,7 +360,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
     }
   }
      
-  if(DebugState&DebugMap) {
+  if(Feedback(FB_Map,FB_Debugging)) {
     printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
            I->Min[0],I->Min[1],I->Min[2],
            I->Max[0],I->Max[1],I->Max[2]);
@@ -389,7 +389,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   I->Dim[1]=(diagonal[1]/I->Div)+1+(2*MapBorder);
   I->Dim[2]=(diagonal[2]/I->Div)+1+(2*MapBorder);
 
-  if(DebugState&DebugMap) {
+  if(Feedback(FB_Map,FB_Debugging)) {
     printf(" MapSetup: nVert: %d\n",nVert);
     printf(" MapSetup: I->Div: %8.3f\n",I->Div);
     printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",

@@ -2554,6 +2554,9 @@ USAGE
    set name, value [,object-or-selection [,state ]]
 
    set name = value (DEPRECATED)
+
+   WARNING: object and state specific settings are not yet fully
+     implemented -- look for them in version 0.51.
  
 PYMOL API
  
@@ -4654,7 +4657,9 @@ class fb_module:
    setting                   =17
    object                    =18
    ortho                     =19
-
+   movie                     =20
+   python                    =21
+   
    coordset                  =25
    distset                   =26
 

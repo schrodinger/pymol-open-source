@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Triangle.h"
 #include"Vector.h"
+#include"Feedback.h"
 #include"main.h"
 
 #ifdef NT
@@ -629,7 +630,9 @@ Rep *RepSurfaceNew(CoordSet *cs)
 	 /* now, eliminate dots that are too close to each other*/
 
 	 OrthoBusyFast(4,10);
-    printf(" RepSurface: %i surface points.\n",I->N);
+    PRINTFB(FB_RepSurface,FB_Details)
+      " RepSurface: %i surface points.\n",I->N
+      ENDFB;
 
 	 if(I->N) 
 		{
@@ -700,7 +703,9 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
     if(I->N) {
       I->T=TrianglePointsToSurface(I->V,I->VN,I->N,probe_radius,&I->NT,&I->S,extent);
-		printf(" RepSurface: %i triangles.\n",I->NT);
+      PRINTFB(FB_RepSurface,FB_Details)
+        " RepSurface: %i triangles.\n",I->NT
+        ENDFB;
     } else {
       I->V = Realloc(I->V,float,1);
       I->VN = Realloc(I->VN,float,1);

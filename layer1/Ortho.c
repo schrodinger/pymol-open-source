@@ -678,8 +678,10 @@ void OrthoNewLine(char *prompt)
     OrthoFeedbackIn(I->Line[I->CurLine&OrthoSaveLines]);
   else
     OrthoFeedbackIn(" ");
-  printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
-  fflush(stdout);
+  if(Feedback(FB_Ortho,FB_Details)) {
+    printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
+    fflush(stdout);
+  }
       /*	 }*/
 
       /*  if(I->Line[I->CurLine&OrthoSaveLines][0])*/
@@ -1082,25 +1084,26 @@ int OrthoDrag(int x, int y,int mod)
 void OrthoSplash(void) 
 {
   OrthoNewLine(NULL);
-  OrthoAddOutput(" PyMOL Molecular Graphics System, Version ");
-  OrthoAddOutput(_PyMOL_VERSION);
-  OrthoAddOutput(".");
-  OrthoNewLine(NULL);
-  OrthoAddOutput(" Copyright (C) 1998-2001 by DeLano Scientific.\n All Rights Reserved.\n \n");
+  PRINTF " PyMOL Molecular Graphics System, Version " ENDF;
+  PRINTF _PyMOL_VERSION ENDF;
+  PRINTF ".\n" ENDF;
+  PRINTF " Copyright (C) 1998-2001 by DeLano Scientific.\n All Rights Reserved.\n \n" ENDF;
 
-  OrthoAddOutput("    Created by:   Warren L. DeLano, Ph.D. \n \n");
+  PRINTF "    Created by:   Warren L. DeLano, Ph.D. \n \n" ENDF;
 
-  OrthoAddOutput("    Other Major Authors and Contributors:\n");
-  OrthoAddOutput("       Ralf W. Grosse-Kunstleve, Ph.D.\n \n");
+  PRINTF "    Other Major Authors and Contributors:\n" ENDF;
+  PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF;
 
-  OrthoAddOutput("    This software is open source and freely available.\n");
-  OrthoAddOutput("    Updates can be found at \"http://www.pymol.org\".\n \n");
+  PRINTF "    This software is open source and freely available.\n" ENDF;
+  PRINTF "    Updates can be found at \"http://www.pymol.org\".\n \n" ENDF;
 
-  OrthoAddOutput("    Enter \"help release\" for release notes (PLEASE READ!).\n");
-  OrthoAddOutput("    Enter \"help commands\" for a list of commands.\n");
-  OrthoAddOutput("    Enter \"help <command-name>\" for information on a specific command.\n \n");
-
-  OrthoAddOutput(" Hit ESC anytime to toggle between text and graphics.\n");
+  PRINTF "    Enter \"help release\" for release notes (PLEASE READ!).\n" ENDF;
+  PRINTF "    Enter \"help commands\" for a list of commands.\n" ENDF;
+  PRINTF 
+    "    Enter \"help <command-name>\" for information on a specific command.\n\n"
+    ENDF;
+  
+  PRINTF " Hit ESC anytime to toggle between text and graphics.\n" ENDF;
 }
 /*========================================================================*/
 void OrthoInit(int showSplash)
