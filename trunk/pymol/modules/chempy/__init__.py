@@ -62,14 +62,17 @@ class Atom:
       if self.segi == other.segi:
          if self.chain == other.chain:
             if self.resi_number == other.resi_number:
-               if self.resi == other.resi:
-                  if self.symbol == other.symbol:
-                     if self.name == other.name:
-                        return cmp(id(self),id(other))
+               if self.resn == other.resn:
+                  if self.resi == other.resi:
+                     if self.symbol == other.symbol:
+                        if self.name == other.name:
+                           return cmp(id(self),id(other))
+                        else:
+                           return cmp(self.name,other.name)
                      else:
-                        return cmp(self.name,other.name)
+                        return cmp(self.symbol,other.symbol)
                   else:
-                     return cmp(self.symbol,other.symbol)
+                     return cmp(self.resn,other.resn)
                else:
                   return cmp(self.resi,other.resi)
             else:
