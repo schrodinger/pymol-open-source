@@ -471,6 +471,9 @@ Rep *RepCartoonNew(CoordSet *cs)
                   cur_car = cCartoon_tube;
                 *ss=3; /* DNA/RNA */
 
+                if(cur_car==cCartoon_putty)
+                  putty_flag=true;
+
                 *(cc++)=cur_car;
                 v1 = cs->Coord+3*a;
                 v_ca = v1;
@@ -542,7 +545,7 @@ Rep *RepCartoonNew(CoordSet *cs)
         cnt++;
       }
     }
-    
+
     if(cnt) {
       putty_mean = (float)(sum/cnt);
       putty_stdev = (float)sqrt1d((sumsq - (sum*sum/cnt))/(cnt));
@@ -580,8 +583,8 @@ ENDFD;
 				  subtract3f(v+3,v,v1);
 				  *d = (float)length3f(v1);
               if(*d>R_SMALL4) {
-		float d_1;
-		d_1 = 1.0F/(*d);
+                float d_1;
+                d_1 = 1.0F/(*d);
                 scale3f(v1,d_1,v2);
               } else if(a)  {
                 copy3f(v2-3,v2); 
