@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.98
+
+   * fixed bug with symexp for when template atoms are outside the
+     target cell...
+
 Changes up to 0.97
 
    * install plugin menu item
