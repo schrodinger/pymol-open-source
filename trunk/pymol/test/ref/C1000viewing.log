@@ -91,13 +91,13 @@ PyMOL>load dat/1tii.pdb
  Crystal: Unit Cell          105.700  105.700  171.600
  Crystal: Alpha Beta Gamma    90.000   90.000  120.000
  Crystal: RealToFrac Matrix
- Crystal:    0.00946    0.00546   -0.00000
- Crystal:    0.00000    0.01092   -0.00000
- Crystal:    0.00000    0.00000    0.00583
+ Crystal:    0.0095    0.0055   -0.0000
+ Crystal:    0.0000    0.0109   -0.0000
+ Crystal:    0.0000    0.0000    0.0058
  Crystal: FracToReal Matrix
- Crystal:  105.70000  -52.85000    0.00000
- Crystal:    0.00000   91.53888    0.00000
- Crystal:    0.00000    0.00000  171.60001
+ Crystal:  105.7000  -52.8500    0.0000
+ Crystal:    0.0000   91.5389    0.0000
+ Crystal:    0.0000    0.0000  171.6000
  Crystal: Unit Cell Volume 1660343.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
@@ -190,13 +190,13 @@ PyMOL>load dat/3al1.pdb
  Crystal: Unit Cell           20.544   20.859   26.055
  Crystal: Alpha Beta Gamma   101.160   97.030  118.060
  Crystal: RealToFrac Matrix
- Crystal:    0.04868    0.02595    0.01403
- Crystal:    0.00000    0.05433    0.01626
- Crystal:    0.00000    0.00000    0.04037
+ Crystal:    0.0487    0.0259    0.0140
+ Crystal:    0.0000    0.0543    0.0163
+ Crystal:    0.0000    0.0000    0.0404
  Crystal: FracToReal Matrix
- Crystal:   20.54400   -9.81199   -3.18885
- Crystal:    0.00000   18.40714   -7.41448
- Crystal:    0.00000    0.00000   24.77337
+ Crystal:   20.5440   -9.8120   -3.1888
+ Crystal:    0.0000   18.4071   -7.4145
+ Crystal:    0.0000    0.0000   24.7734
  Crystal: Unit Cell Volume   9368.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
@@ -538,13 +538,13 @@ PyMOL>load dat/1tii.pdb,m1
  Crystal: Unit Cell          105.700  105.700  171.600
  Crystal: Alpha Beta Gamma    90.000   90.000  120.000
  Crystal: RealToFrac Matrix
- Crystal:    0.00946    0.00546   -0.00000
- Crystal:    0.00000    0.01092   -0.00000
- Crystal:    0.00000    0.00000    0.00583
+ Crystal:    0.0095    0.0055   -0.0000
+ Crystal:    0.0000    0.0109   -0.0000
+ Crystal:    0.0000    0.0000    0.0058
  Crystal: FracToReal Matrix
- Crystal:  105.70000  -52.85000    0.00000
- Crystal:    0.00000   91.53888    0.00000
- Crystal:    0.00000    0.00000  171.60001
+ Crystal:  105.7000  -52.8500    0.0000
+ Crystal:    0.0000   91.5389    0.0000
+ Crystal:    0.0000    0.0000  171.6000
  Crystal: Unit Cell Volume 1660343.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
