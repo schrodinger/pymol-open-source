@@ -53,12 +53,19 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   return 0;
 #else
   int ok=true;
+  int stereo=SettingGetGlobal_b(G,cSetting_stereo);
+  int session_migration=SettingGetGlobal_b(G,cSetting_session_migration);
+  int session_version_check=SettingGetGlobal_b(G,cSetting_session_version_check);
+
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
       ok = SettingFromPyList(I,list);
+  
   SettingSet_i(I,cSetting_security,Security); /* always override Security setting with global variable */
-  SettingSet_b(I,cSetting_stereo,0); /* don't start in stereo mode */
+  SettingSet_b(I,cSetting_stereo,stereo); /* preserve current stereo mode */
+  SettingSet_b(I,cSetting_session_migration,session_migration); /* preserve current migration info */
+  SettingSet_b(I,cSetting_session_version_check,session_version_check);
   return(ok);
 #endif
 }
@@ -2047,7 +2054,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_ray_transparency_shadows,1);
 
-  SettingSet_i(I,cSetting_session_version_check,1);
+  SettingSet_i(I,cSetting_session_version_check,0);
 
   SettingSet_f(I,cSetting_ray_transparency_specular,0.4F);
 

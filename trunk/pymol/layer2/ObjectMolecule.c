@@ -1740,12 +1740,14 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL,*ai;
+#if 0
   AtomInfoType068 *atInfo068 = NULL;
   AtomInfoType076 *atInfo076 = NULL;
   AtomInfoType083 *atInfo083 = NULL;
-  BondType *bond=NULL;
   BondType068 *bond068=NULL;
   BondType083 *bond083=NULL;
+#endif
+  BondType *bond=NULL;
 
   int ok=true;
   int auto_show_lines;
@@ -1771,12 +1773,13 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
     PRINTFD(G,FB_ObjectMolecule)
       " ObjectMolPMO2CoordSet: loading atom info %d bytes = %8.3f\n",size,((float)size)/sizeof(AtomInfoType)
       ENDFD;
-    if(version<66) {
+    if(version<98) {
       PRINTFB(G,FB_ObjectMolecule,FB_Errors)
         " ObjectMolecule: unsupported binary file (version %d). aborting.\n",
         version
         ENDFB(G);
       ok=false;
+#if 0
     } else if(version<69) { /* legacy atom format */
       nAtom = size/sizeof(AtomInfoType068);
       atInfo068 = Alloc(AtomInfoType068,nAtom);
@@ -1802,7 +1805,8 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
       UtilExpandArrayElements(atInfo083,atInfo,nAtom,
                               sizeof(AtomInfoType083),sizeof(AtomInfoType));
       FreeP(atInfo083);
-      
+#endif
+
     } else {
       nAtom = size/sizeof(AtomInfoType);
       VLACheck(atInfo,AtomInfoType,nAtom);
@@ -1866,12 +1870,13 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
       if(ok) {
 
         /* legacy bond format */
-        if(version<66) {
+        if(version<98) {
           PRINTFB(G,FB_ObjectMolecule,FB_Errors)
             " ObjectMolecule: unsupported binary file (version %d). aborting.\n",
             version
             ENDFB(G);
           ok=false;
+#if 0
         } else if(version<69) { /* legacy atom format */
           nBond = size/sizeof(BondType068);
           bond068 = Alloc(BondType068,nBond);
@@ -1890,6 +1895,7 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
           UtilExpandArrayElements(bond083,bond,nBond,
                                   sizeof(BondType083),sizeof(BondType));
           FreeP(bond083);
+#endif
         } else {
           bond=(BondType*)RawReadVLA(pmo,cRaw_Bonds1,sizeof(BondType),5,false);
           nBond = VLAGetSize(bond);

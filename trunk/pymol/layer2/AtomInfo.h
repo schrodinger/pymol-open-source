@@ -147,11 +147,12 @@ typedef struct AtomInfoType {
   signed char masked;
   signed char protekted;
   signed char protons;
+  signed char hb_donor; 
+  signed char hb_acceptor;
+
   int temp1; /* kludge field - to remove */
   int sculpt_id; /* introduced in version 0.77 */
-  int stereo; /* for 2D representation */
-  int hb_donor; 
-  int hb_acceptor;
+  int stereo; /* for 2D representation  (NOTE: could probably be converted to signed char */
   int discrete_state; /* state+1 for atoms in discrete objects */
   float bohr_radius;
   int rank;
@@ -220,6 +221,7 @@ typedef struct  {
 } SSEntry;
 
 /* legacy binary file support */
+#if 0
 
 typedef struct AtomInfoType068 {
   int resv;
@@ -412,5 +414,7 @@ typedef struct AtomInfoType095 {
   int hb_donor;
   int hb_acceptor;
 } AtomInfoType095;
+
+#endif
 
 #endif
