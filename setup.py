@@ -75,7 +75,7 @@ setup ( # Distribution meta-data
    "layer0/MemoryCache.c",
    "layer0/MyPNG.c",
    "layer0/Parse.c",
-   "layer0/PixMap.c",
+   "layer0/Pixmap.c",
    "layer0/Queue.c",
    "layer0/Raw.c",
    "layer0/Sphere.c",
