@@ -49,7 +49,6 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"Menu.h"
 
-#define cFrontMin 0.1F
 #define cSliceMin 0.1F
 
 #define SceneLineHeight 12
@@ -115,6 +114,15 @@ CScene Scene;
 typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
+
+static float GetFrontSafe(float front,float back)
+{
+  if(front<0.1F)
+    front = 0.1F;
+  if(back/front>100.0F)
+    front = back/100.0F;
+  return front;
+}
 
 void SceneCopy(GLenum buffer,int force);
 
@@ -364,8 +372,7 @@ void SceneTranslate(float x,float y, float z)
   I->Front-=z;
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
-  /*  if(I->Front<cFrontMin) I->Front=cFrontMin;*/
-  I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+  I->FrontSafe= GetFrontSafe(I->Front,I->Back);
   SceneDirty();
 }
 /*========================================================================*/
@@ -376,8 +383,7 @@ void SceneClipSet(float front,float back)
   I->Back=back;
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
-  /*  if(I->Front<cFrontMin) I->Front=cFrontMin;*/
-  I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+  I->FrontSafe= GetFrontSafe(I->Front,I->Back);
   SceneDirty();
 }
 /*========================================================================*/
@@ -867,8 +873,8 @@ void SceneWindowSphere(float *location,float radius)
 
   I->Pos[2]-=dist;
   I->Front=(-I->Pos[2]-radius*1.2F);
-  I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
   I->Back=(-I->Pos[2]+radius*1.2F);
+  I->FrontSafe= GetFrontSafe(I->Front,I->Back);
 
   SceneRovingDirty();
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
@@ -895,8 +901,8 @@ void SceneRelocate(float *location)
 
   I->Pos[2]=dist;
   I->Front=(-I->Pos[2]-(slab_width*0.50F));
-  I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
   I->Back=(-I->Pos[2]+(slab_width*0.50F));
+  I->FrontSafe= GetFrontSafe(I->Front,I->Back);
   SceneRovingDirty();
 
 }
@@ -2518,7 +2524,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
             I->Pos[2]+=factor;
             I->Front-=factor;
             I->Back-=factor;
-            I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+            I->FrontSafe = GetFrontSafe(I->Front,I->Back);
           }
           I->LastY=y;
           SceneDirty();
@@ -2540,8 +2546,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->Front-=(((float)y)-I->LastY)/10;
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
-          /*			 if(I->Front<cFrontMin) I->Front=cFrontMin;*/
-			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+          I->FrontSafe = GetFrontSafe(I->Front,I->Back);
 			 I->LastY=y;
 			 SceneDirty();
           moved_flag=true;
@@ -2553,8 +2558,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->Front-=(((float)x)-I->LastX)/10;
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
-			 /* if(I->Front<cFrontMin) I->Front=cFrontMin;*/
-			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+          I->FrontSafe = GetFrontSafe(I->Front,I->Back);
 			 I->LastX=x;
 			 SceneDirty();
           moved_flag=true;
@@ -2564,8 +2568,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->Front-=(((float)y)-I->LastY)/10;
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
-			 /*if(I->Front<cFrontMin) I->Front=cFrontMin;*/
-			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+          I->FrontSafe = GetFrontSafe(I->Front,I->Back);
 			 I->LastY=y;
 			 SceneDirty();
           moved_flag=true;
@@ -2631,9 +2634,9 @@ void SceneSetDefaultView(void) {
   I->Origin[2] = 0.0;
 
   I->Front=40;
-  I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
   I->Back=100;
-
+  I->FrontSafe= GetFrontSafe(I->Front,I->Back);
+  
   I->Scale = 1.0;
   
 }

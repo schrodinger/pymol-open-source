@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * adjusted clipping plane bounds to eliminate shingle effect from
+     excessive depth ranges.
+
    * mesh_normals setting for surface_type 2
 
    * launch option: -P # enables multisampling on Macs & Windows.
