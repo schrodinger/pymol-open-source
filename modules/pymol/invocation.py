@@ -53,11 +53,11 @@ def get_user_config():
       if os.environ.has_key("HOME"):
          lst = glob.glob(os.environ['HOME']+"/"+pattern2)
    if not len(lst): # win32
-      if os.environ.has_key("HOMEPATH"):
-         lst = glob.glob(os.environ['HOMEPATH']+"/"+pattern1)
+      if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
+         lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pattern1)
    if not len(lst): # win32
-      if os.environ.has_key("HOMEPATH"):
-         lst = glob.glob(os.environ['HOMEPATH']+"/"+pattern2)
+      if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
+         lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pattern2)
    if not len(lst): # all
       if os.environ.has_key("PYMOL_PATH"):
          lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern1)
