@@ -226,7 +226,7 @@ int WordMatchComma(PyMOLGlobals *G,char *pp,char *qq,int ignCase)
      /* allows for comma list in p, also allows wildcards (*) in p */
 {
   register char *p=pp, *q=qq;
-  register i=0;
+  register int i=0;
   register char WILDCARD = G->Word->Wildcard;
   register char pc,qc;
   register int ic = ignCase;
