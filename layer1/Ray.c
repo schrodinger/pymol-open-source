@@ -460,13 +460,18 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 	 background = 0x000000FF|
 		((0xFF& ((unsigned int)(bkrd[0]*255))) <<24)|
 		((0xFF& ((unsigned int)(bkrd[1]*255))) <<16)|
-		((0xFF& ((unsigned int)(bkrd[2]*255)) <<8 ));
+		((0xFF& ((unsigned int)(bkrd[2]*255))) <<8 );
   } else {
 	 background = 0xFF000000|
 		((0xFF& ((unsigned int)(bkrd[2]*255))) <<16)|
 		((0xFF& ((unsigned int)(bkrd[1]*255))) <<8)|
-		((0xFF& ((unsigned int)(bkrd[0]*255)) ));
+		((0xFF& ((unsigned int)(bkrd[0]*255))) );
   }
+
+  PRINTFB(FB_Ray,FB_Blather) 
+    " RayNew: Background = %x %d %d %d\n",background,bkrd[0]*255,
+    bkrd[1]*255,bkrd[2]*255
+    ENDFB;
 
   if(!I->NPrimitive) {
     p=(unsigned int*)image; 
@@ -999,7 +1004,11 @@ CRay *RayNew(void)
   
   test = 0xFF000000;
   testPtr = (unsigned char*)&test;
-  I->BigEndian = *testPtr;
+  I->BigEndian = *testPtr&&1;
+
+  PRINTFB(FB_Ray,FB_Blather) 
+    " RayNew: BigEndian = %d\n",I->BigEndian
+    ENDFB;
 
   I->Basis=VLAlloc(CBasis,10);
   BasisInit(I->Basis);
