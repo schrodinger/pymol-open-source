@@ -822,11 +822,17 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
 }
 
 static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
-  char *str2,*str3;
+  char *str2,*str3,*mfile,*oname;
   OrthoLineType s2="",s3="";
   float result = -1.0;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ss",&str2,&str3);
+  int quiet,cycles,skip;
+  float cutoff,gap,extend;
+
+  ok = PyArg_ParseTuple(args,"ssfiffissi",&str2,&str3,
+                        &cutoff,&cycles,&gap,&extend,&skip,&oname,
+                        &mfile,&quiet);
+
   if(ok) {
     PRINTFD(FB_CCmd)
       "CmdAlign-DEBUG %s %s\n",
@@ -836,7 +842,7 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
     APIEntry();
     SelectorGetTmp(str2,s2);
     SelectorGetTmp(str3,s3);
-    result = ExecutiveAlign(s2,s3);
+    result = ExecutiveAlign(s2,s3,mfile,gap,extend,skip,cutoff,cycles,quiet,oname);
     SelectorFreeTmp(s2);
     SelectorFreeTmp(s3);
     APIExit();
@@ -2129,7 +2135,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
     APIEntry();
     SelectorGetTmp(str1,s1);
     SelectorGetTmp(str2,s2);
-    tmp_result=ExecutiveRMS(s1,s2,mode,0.0,quiet);
+    tmp_result=ExecutiveRMS(s1,s2,mode,0.0,0,quiet,NULL);
     SelectorFreeTmp(s1);
     SelectorFreeTmp(s2);
     APIExit();

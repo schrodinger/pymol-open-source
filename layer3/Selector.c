@@ -385,7 +385,7 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
 
 /*========================================================================*/
 int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
-                              int *vla2,char *name1,char *name2)
+                              int *vla2,char *name1,char *name2,int identical)
 {
   SelectorType *I=&Selector;
   int *flag1=NULL,*flag2=NULL;
@@ -458,7 +458,7 @@ int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
 
           if(SelectorIsMember(ai1a->selEntry,sele1)&&
              SelectorIsMember(ai2a->selEntry,sele2)) {
-            if(strcmp(ai1a->resn,ai2a->resn)==0) {
+            if((!identical)||(strcmp(ai1a->resn,ai2a->resn)==0)) {
               flag1[index1] = true;
               flag2[index2] = true; 
               cnt++;

@@ -180,7 +180,7 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
 {
   int *flag;
   float center1[3],center2[3];
-  int a,b,c;
+  int a,b,c,cc;
   float *vv1,*vv2;
   float *dev,avg_dev;
   int wc;
@@ -197,125 +197,141 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
       
     /* find the geometric center */
     
+    cc=0;
     copy3f(v1,center1);
     copy3f(v2,center2);
     for(a=1;a<nv;a++) {
-      vv1 = v1+3*a;
-      vv2 = v2+3*a;
-      add3f(v1,center1,center1);
-      add3f(v2,center2,center2);
+      if(flag[a]) {
+        vv1 = v1+3*a;
+        vv2 = v2+3*a;
+        add3f(v1,center1,center1);
+        add3f(v2,center2,center2);
+        cc++;
+      }
     }
-    scale3f(center1,1.0/nv,center1);
-    scale3f(center2,1.0/nv,center2);
+    if(cc) {
+      scale3f(center1,1.0/cc,center1);
+      scale3f(center2,1.0/cc,center2);
+    }
     
     /* store average deviation from it */
     avg_dev = 0.0;
+    cc=0;
     for(a=0;a<nv;a++) {
-      flag[a]=true;
-      vv1 = v1+3*a;
-      vv2 = v2+3*a;
-      dev[a] = fabs(diff3f(center1,vv1)-diff3f(center2,vv2));
-      avg_dev+=dev[a];
-    }
-    avg_dev/=nv;
-    
-    if(avg_dev>R_SMALL4) {
-      
-      /* eliminate pairs that are greater than cutoff */
-
-      for(a=0;a<nv;a++) {
-        if((dev[a]/avg_dev)>cutoff)
-          flag[a]=false;
+      if(flag[a]) {
+        vv1 = v1+3*a;
+        vv2 = v2+3*a;
+        dev[a] = fabs(diff3f(center1,vv1)-diff3f(center2,vv2));
+        avg_dev+=dev[a];
+        cc++;
       }
+    }
+    if(cc) {
+      avg_dev/=cc;
       
-      /* the grossest outliers have been eliminated -- now for the more subtle ones...*/
-      
-      /* run a sliding window along the sequence, measuring how deviations of a particular atom compare
-       * to the surrounding atoms.   Then eliminate the outliers. */
-      
-      for(a=0;a<nv;a++) 
-        if(flag[a]) {
-
-          /* define a window of active pairs surrounding this residue */
-
-          cnt = window;
-          b=a;
-          start = a;
-          finish = a;
-          while(cnt>(window/2)) {
-            if(b<0) break;
-            if(flag[b]) {
-              start = b;
-              cnt--;
-            }
-            b--;
-          }
-          b = a+1;
-          while(cnt>0) {
-            if(b>=nv) break;
-            if(flag[b]) {
-              finish=b;
-              cnt--;
-            }
-            b++;
-          }
-          b = start-1;
-          while(cnt>0) {
-            if(b<0) break;
-            if(flag[b]) {
-              start = b;
-              cnt--;
-            }
-            b--;
-          }
-
-          if(finish==start) break;
-
-          /* compute geometric center of the window */
-
-          wc =0;
-          for(b=0;b<nv;b++) 
-            if(flag[b]){
-              vv1 = v1+3*b;
-              vv2 = v2+3*b;
-              if(!wc) {
-                copy3f(vv1,center1);
-                copy3f(vv2,center2);
-              } else {
-                add3f(v1,center1,center1);
-                add3f(v2,center2,center2);
-              }
-              wc++;
-            }
-          scale3f(center1,1.0/wc,center1);
-          scale3f(center2,1.0/wc,center2);
-
-          /* compute average deviation over window */
-          avg_dev = 0.0;
-          wc = 0;
-          for(b=start;b<=finish;b++) 
-            if(flag[b]) {
-              vv1 = v1+3*b;
-              vv2 = v2+3*b;
-              avg_dev+=fabs(diff3f(center1,vv1)-diff3f(center2,vv2));
-              wc++;
-            }
-          if(wc) { /* store ratio of the actual vs. average deviation */
-            avg_dev/=wc;
-            vv1 = v1+3*a;
-            vv2 = v2+3*a;
-            if(avg_dev>R_SMALL4) 
-              dev[a] = fabs(diff3f(center1,vv1)-diff3f(center2,vv2))/avg_dev;
-            else
-              dev[a] = 0.0;
-          }
+      if(avg_dev>R_SMALL4) {
+        
+        /* eliminate pairs that are greater than cutoff */
+        
+        for(a=0;a<nv;a++) {
+          if((dev[a]/avg_dev)>cutoff)
+            flag[a]=false;
+          dev[a]=0.0F;
         }
       
-      /* now eliminate those above cutoff */
-      for(a=0;a<nv;a++) 
-        if(flag[a])
-          if(dev[a]>cutoff)
-            flag[a] = false;
+        /* the grossest outliers have been eliminated -- now for the more subtle ones...*/
+      
+        /* run a sliding window along the sequence, measuring how deviations of a particular atom compare
+         * to the surrounding atoms.   Then eliminate the outliers. */
+
+        for(a=0;a<nv;a++) {
+          if(flag[a]) {
+
+            /* define a window of active pairs surrounding this residue */
+
+            cnt = window;
+            b=a;
+            start = a;
+            finish = a;
+            while(cnt>(window/2)) { /* back up to half window size */
+              if(b<0) break;
+              if(flag[b]) {
+                start = b;
+                cnt--;
+              }
+              b--;
+            }
+            b = a+1;
+            while(cnt>0) { /* go forward to complete window */
+              if(b>=nv) break;
+              if(flag[b]) {
+                finish=b;
+                cnt--;
+              }
+              b++;
+            }
+            b = start-1;
+            while(cnt>0) { /* back up more if necc. */
+              if(b<0) break;
+              if(flag[b]) {
+                start = b;
+                cnt--;
+              }
+              b--;
+            }
+
+            if((finish-start)>=window) {
+
+              /* compute geometric center of the window */
+              
+              wc =0;
+              for(b=start;b<=finish;b++) 
+                if(flag[b]){
+                  vv1 = v1+3*b;
+                  vv2 = v2+3*b;
+                  if(!wc) {
+                    copy3f(vv1,center1);
+                    copy3f(vv2,center2);
+                  } else {
+                    add3f(v1,center1,center1);
+                    add3f(v2,center2,center2);
+                  }
+                  wc++;
+                }
+              if(wc) {
+                scale3f(center1,1.0/wc,center1);
+                scale3f(center2,1.0/wc,center2);
+                
+                /* compute average deviation over window */
+                avg_dev = 0.0;
+                wc = 0;
+                for(b=start;b<=finish;b++) 
+                  if(flag[b]) {
+                    vv1 = v1+3*b;
+                    vv2 = v2+3*b;
+                    avg_dev+=fabs(diff3f(center1,vv1)-diff3f(center2,vv2));
+                    wc++;
+                  }
+                if(wc) { /* store ratio of the actual vs. average deviation */
+                  avg_dev/=wc;
+                  vv1 = v1+3*a;
+                  vv2 = v2+3*a;
+                  if(avg_dev>R_SMALL4) 
+                    dev[a] = fabs(diff3f(center1,vv1)-diff3f(center2,vv2))/avg_dev;
+                  else
+                    dev[a] = 0.0;
+                  printf("%8.3f\n",dev[a]);
+                }
+              }
+            }
+          }
+        }
+        /* now eliminate those above cutoff */
+        for(a=0;a<nv;a++) 
+          if(flag[a])
+            if(dev[a]>cutoff)
+              flag[a] = false;
+      }
     }
   }
   FreeP(dev);

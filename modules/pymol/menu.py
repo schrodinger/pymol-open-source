@@ -77,6 +77,16 @@ def dist_hide(s):
            [ 1, 'labels'    , 'cmd.hide("labels"    ,"'+s+'")'  ]
           ]
 
+def cgo_show(s):
+   return [[ 2, 'Show:'     , ''                               ],
+           [ 1, 'cgo'    , 'cmd.show("cgo"    ,"'+s+'")' ],
+          ]   
+
+def cgo_hide(s):
+   return [[ 2, 'Hide:'     , ''                                ],
+           [ 1, 'cgo'    , 'cmd.hide("cgo"    ,"'+s+'")'  ],
+          ]
+
 def simple_show(s):
    return [[ 2, 'Show:'       , ''                             ],
            [ 1, 'everything'  , 'cmd.enable("'+s+'")'          ]]
