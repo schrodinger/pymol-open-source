@@ -348,7 +348,6 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   ShapeVertex(cgo,REL,8);
   CGOEnd(cgo);
   
-  CGOEnd(cgo);
   CGOStop(cgo);
 
   CGOFree(gs->PickShapeCGO);
