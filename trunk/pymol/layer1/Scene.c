@@ -572,11 +572,17 @@ void SceneGetView(PyMOLGlobals *G,SceneViewType view)
   *(p++) = SettingGet(G,cSetting_ortho);
 }
 /*========================================================================*/
-void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet)
+void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet,int animate)
 {
   float *p;
   int a;
   register CScene *I=G->Scene;
+
+  if(animate<0)
+    animate=SettingGetGlobal_b(G,cSetting_animation);
+  if(animate)
+    ScenePrimeAnimation(G);
+
   p=view;
   for(a=0;a<16;a++)
     I->RotMatrix[a] = *(p++); 
@@ -595,6 +601,9 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet)
       " Scene: view updated.\n"
       ENDFB(G);
   }
+  if(animate)
+    SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
+
   SceneRovingDirty(G);
 }
 /*========================================================================*/

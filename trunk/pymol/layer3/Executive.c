@@ -1847,7 +1847,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
     if(tmp) {
       ok = PConvPyListToFloatArrayInPlace(tmp,sv,cSceneViewSize);
     }
-    if(ok) SceneSetView(G,sv,true);
+    if(ok) SceneSetView(G,sv,true,0);
     
     
     

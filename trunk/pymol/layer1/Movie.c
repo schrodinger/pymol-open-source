@@ -362,7 +362,7 @@ int  MovieMatrix(PyMOLGlobals *G,int action)
 	 break;
   case cMovieMatrixRecall:
 	 if(I->MatrixFlag) 
-		SceneSetView(G,I->Matrix,true);
+		SceneSetView(G,I->Matrix,true,0);
     else
       result = 0;
 	 break;

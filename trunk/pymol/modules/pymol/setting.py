@@ -421,6 +421,7 @@ if __name__=='pymol.setting':
       pqr_no_chain_id           = (387, '')
       animation                 = (388, '')
       animation_duration        = (389, '')
+      scene_animation           = (390, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
