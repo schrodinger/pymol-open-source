@@ -1529,14 +1529,14 @@ void SettingInitGlobal(void)
 
   SettingSet_b(I,cSetting_auto_show_lines, 1);
 
-  SettingSet_f(I,cSetting_fast_idle, 20000.0F);
+  SettingSet_f(I,cSetting_fast_idle, 20000.0F); /* 1/50 of a sec. */
 
-  SettingSet_f(I,cSetting_no_idle, 5000.0F);
+  SettingSet_f(I,cSetting_no_idle, 10000.0F); /* 1/100 of a sec. */ 
 
 #ifdef _PYMOL_OSX
-  SettingSet_f(I,cSetting_slow_idle, 40000.0F);
+  SettingSet_f(I,cSetting_slow_idle, 40000.0F); /* 1/25 of a sec. */
 #else
-  SettingSet_f(I,cSetting_slow_idle, 200000.0F);
+  SettingSet_f(I,cSetting_slow_idle, 200000.0F); /* 1/5 of a sec. */
 #endif
 
   SettingSet_f(I,cSetting_idle_delay, 1.5F);
