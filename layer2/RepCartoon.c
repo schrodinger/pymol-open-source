@@ -215,7 +215,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   cartoon_debug=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_debug);
   length=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_length);
   width=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
-  trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_trace);
+  trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_trace_atoms);
 
   alpha=1.0F - SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_transparency);
   throw=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_throw);

@@ -332,7 +332,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_state                       193
 #define cSetting_frame                       194
 #define cSetting_ray_shadows                 195
-#define cSetting_ribbon_trace                196
+#define cSetting_ribbon_trace_atoms          196
 #define cSetting_security                    197
 #define cSetting_stick_transparency          198 
 #define cSetting_ray_transparency_shadows    199
@@ -411,7 +411,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_retain_order                266
 #define cSetting_pdb_hetatm_sort             267
 #define cSetting_pdb_use_ter_records         268
-#define cSetting_cartoon_trace               269
+#define cSetting_cartoon_trace_atoms         269
 #define cSetting_ray_oversample_cutoff       270
 #define cSetting_gaussian_resolution         271
 #define cSetting_gaussian_b_floor            272

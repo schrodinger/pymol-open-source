@@ -275,7 +275,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   power_a=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_power);
   power_b=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
   throw=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
-  trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace);
+  trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace_atoms);
 
   ribbon_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_color);
 

@@ -1377,7 +1377,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_ribbon_radius:
   case cSetting_ribbon_width:
   case cSetting_ribbon_throw:
-  case cSetting_ribbon_trace:
+  case cSetting_ribbon_trace_atoms:
     ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged(G);
     break;
@@ -1396,7 +1396,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_cartoon_transparency:
-  case cSetting_cartoon_trace:
+  case cSetting_cartoon_trace_atoms:
   case cSetting_cartoon_refine:
   case cSetting_cartoon_nucleic_acid_mode:
   case cSetting_cartoon_sampling:
@@ -2108,7 +2108,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_ray_shadows,1);
 
-  SettingSet_i(I,cSetting_ribbon_trace,0);
+  SettingSet_i(I,cSetting_ribbon_trace_atoms,0);
 
   SettingSet_i(I,cSetting_security,1);
 
@@ -2289,7 +2289,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_pdb_use_ter_records,1);
 
-  SettingSet_i(I,cSetting_cartoon_trace,0);
+  SettingSet_i(I,cSetting_cartoon_trace_atoms,0);
 
   SettingSet_i(I,cSetting_ray_oversample_cutoff,64);
 
