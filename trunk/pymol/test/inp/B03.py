@@ -15,7 +15,7 @@ ent_dir = "pdb/*"
 def load():
    try:
       r = 0
-      reps = [ "lines", "sticks", "cartoon" ]
+      reps = [ "lines"]
       list = glob(ent_dir)
       for dir in list:
          print dir
@@ -37,7 +37,7 @@ def load():
             print "sleeping"
             time.sleep(0.05)
          print "sleeping longer"
-         time.sleep(2)
+         time.sleep(0.3)
          print "next!"
    except:
       traceback.print_exc()
