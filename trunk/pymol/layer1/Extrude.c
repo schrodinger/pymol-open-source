@@ -66,6 +66,75 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
 	 }
 }
 
+void ExtrudeRectangle(CExtrude *I,float thick,float width)
+{
+  float *v,*vn;
+
+  I->Ns = 8;
+  
+  I->sv = Alloc(float,3*(I->Ns+1));
+  I->sn = Alloc(float,3*(I->Ns+1));
+  I->tv = Alloc(float,3*(I->Ns+1));
+  I->tn = Alloc(float,3*(I->Ns+1));
+  
+  v = I->sv;
+  vn = I->sn;
+
+  *(vn++) = 0.0;
+  *(vn++) = 1.0;
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = 1.0;
+  *(vn++) = 0.0;
+  *(v++) = 0.0;
+  *(v++) = cos(PI/4)*thick;
+  *(v++) = -sin(PI/4)*width;
+  *(v++) = 0.0;
+  *(v++) = cos(PI/4)*thick;
+  *(v++) = sin(PI/4)*width;
+
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = 1.0;
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = 1.0;
+  *(v++) = 0.0;
+  *(v++) = cos(PI/4)*thick;
+  *(v++) = sin(PI/4)*width;
+  *(v++) = 0.0;
+  *(v++) = -cos(PI/4)*thick;
+  *(v++) = sin(PI/4)*width;
+
+  *(vn++) = 0.0;
+  *(vn++) = -1.0;
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = -1.0;
+  *(vn++) = 0.0;
+  *(v++) = 0.0;
+  *(v++) = -cos(PI/4)*thick;
+  *(v++) = sin(PI/4)*width;
+  *(v++) = 0.0;
+  *(v++) = -cos(PI/4)*thick;
+  *(v++) = -sin(PI/4)*width;
+
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = -1.0;
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = -1.0;
+  *(v++) = 0.0;
+  *(v++) = -cos(PI/4)*thick;
+  *(v++) = -sin(PI/4)*width;
+  *(v++) = 0.0;
+  *(v++) = cos(PI/4)*thick;
+  *(v++) = -sin(PI/4)*width;
+
+
+}
+
 CExtrude *ExtrudeNew(void)
 {
   OOAlloc(CExtrude);
@@ -84,6 +153,20 @@ void ExtrudeBuildNormals1f(CExtrude *I)
       {
         copy3f(v-6,v+3);
         get_system2f3f(v,v+3,v+6); /* the rest are relative to first */
+        v+=9;
+      }
+  }
+}
+
+void ExtrudeBuildNormals2f(CExtrude *I)
+{
+  int a;
+  float *v;
+  if(I->N) {
+    v = I->n;
+    for(a=0;a<I->N;a++)
+      {
+        get_system2f3f(v,v+3,v+6); 
         v+=9;
       }
   }
@@ -306,6 +389,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
         sv+=3;
         tv+=3;
       }
+
       CGOBegin(cgo,GL_TRIANGLE_FAN);
       copy3f(I->n,v0);
       invert3f(v0);
@@ -332,6 +416,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
         sv+=3;
         tv+=3;
       }
+
       CGOBegin(cgo,GL_TRIANGLE_FAN);
       CGOColorv(cgo,I->c+3*(I->N-1));
       CGONormalv(cgo,n);
@@ -345,6 +430,138 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
       CGOVertexv(cgo,I->tv);
       CGOEnd(cgo);
       
+    }
+    FreeP(TV);
+    FreeP(TN);
+  }
+  
+}
+
+
+void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
+{
+  int a,b;
+  float *v;
+  float *n;
+  float *c;
+  float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN;
+  float v0[3];
+  
+  if(I->N&&I->Ns) {
+
+    TV=Alloc(float,3*(I->Ns+1)*I->N);
+    TN=Alloc(float,3*(I->Ns+1)*I->N);
+    
+    /* compute transformed shape vertices */
+    
+    tn=TN;
+    tv=TV;
+
+    sv = I->sv;
+    sn = I->sn;
+    for(b=0;b<=I->Ns;b++) {
+      if(b==I->Ns) {
+        sv = I->sv;
+        sn = I->sn;
+      }
+      v=I->p;
+      n=I->n;
+      
+      for(a=0;a<I->N;a++) {
+        transform33Tf3f(n,sv,tv);
+        add3f(v,tv,tv);
+        tv+=3;
+        transform33Tf3f(n,sn,tn);
+        tn+=3;
+        n+=9;
+        v+=3;
+      }
+      sv+=3;
+      sn+=3;
+    }
+  
+    /* fill in each strip separately */
+
+    tv = TV;
+    tn = TN;
+    
+    tv1 = TV+3*I->N;
+    tn1 = TN+3*I->N;
+
+    for(b=0;b<I->Ns;b+=2) {
+      CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      c = I->c;
+      for(a=0;a<I->N;a++) {
+        CGOColorv(cgo,c);
+        CGONormalv(cgo,tn);
+        CGOVertexv(cgo,tv);
+        tn+=3;
+        tv+=3;
+        CGONormalv(cgo,tn1);
+        CGOVertexv(cgo,tv1);
+        tn1+=3;
+        tv1+=3;
+        c+=3;
+      }
+      tv+=3*I->N;
+      tn+=3*I->N;
+      tv1+=3*I->N;
+      tn1+=3*I->N;
+      CGOEnd(cgo);
+    }
+    
+    if(cap) {
+
+      n = I->n;
+      v = I->p;
+
+      sv = I->sv;
+      tv = I->tv;
+      for(b=0;b<I->Ns;b++) {
+        transform33Tf3f(n,sv,tv);
+        add3f(v,tv,tv)
+        sv+=3;
+        tv+=3;
+      }
+      CGOBegin(cgo,GL_TRIANGLE_FAN);
+      copy3f(I->n,v0);
+      invert3f(v0);
+      CGOColorv(cgo,I->c);
+      CGONormalv(cgo,v0);
+      CGOVertexv(cgo,v);
+      /* trace shape */
+      tv = I->tv;
+      for(b=0;b<I->Ns;b+=2) {
+        CGOVertexv(cgo,tv);
+        tv+=6;
+      }
+      CGOVertexv(cgo,I->tv);
+      CGOEnd(cgo);
+
+      n = I->n+9*(I->N-1);
+      v = I->p+3*(I->N-1);
+
+      sv = I->sv;
+      tv = I->tv;
+      for(b=0;b<I->Ns;b++) {
+        transform33Tf3f(n,sv,tv);
+        add3f(v,tv,tv)
+        sv+=3;
+        tv+=3;
+      }
+      CGOBegin(cgo,GL_TRIANGLE_FAN);
+      CGOColorv(cgo,I->c+3*(I->N-1));
+      CGONormalv(cgo,n);
+      CGOVertexv(cgo,v);
+      /* trace shape */
+      tv = I->tv;
+      for(b=0;b<I->Ns;b+=2) {
+        CGOVertexv(cgo,tv);
+        tv+=6;
+      }
+      CGOVertexv(cgo,I->tv);
+      CGOEnd(cgo);
+      
 
     }
     FreeP(TV);
@@ -352,6 +569,8 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
   }
   
 }
+
+
 
 void ExtrudeTruncate(CExtrude *I,int n)
 {
