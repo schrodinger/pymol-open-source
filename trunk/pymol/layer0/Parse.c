@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 
 #include"Parse.h"
 
-unsigned char *ParseNextLine(unsigned char *p) {
+char *ParseNextLine(char *p) {
   while(*p) {
 	 if(*p==0xD) { /* Mac or PC */
 		if(*(p+1)==0xA) /* PC */
@@ -34,7 +34,7 @@ unsigned char *ParseNextLine(unsigned char *p) {
   return p;
 }
 /*========================================================================*/
-unsigned char *ParseWordCopy(unsigned char *q,unsigned char *p,int n) { /* word copy */
+char *ParseWordCopy(char *q,char *p,int n) { /* word copy */
   while(*p) {
 	 if(*p<=32) 
 		p++;
@@ -55,7 +55,7 @@ unsigned char *ParseWordCopy(unsigned char *q,unsigned char *p,int n) { /* word 
   return p;
 }
 /*========================================================================*/
-unsigned char *ParseNCopy(unsigned char *q,unsigned char *p,int n) {  /* n unsigned character copy */
+char *ParseNCopy(char *q,char *p,int n) {  /* n character copy */
   while(*p) {
 	 if(!n)
 		break;
@@ -68,7 +68,7 @@ unsigned char *ParseNCopy(unsigned char *q,unsigned char *p,int n) {  /* n unsig
   return p;
 }
 /*========================================================================*/
-unsigned char *ParseNSkip(unsigned char *p,int n) {  /* n unsigned character skip */
+char *ParseNSkip(char *p,int n) {  /* n character skip */
   while(*p) {
 	 if(!n)
 		break;

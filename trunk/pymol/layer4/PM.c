@@ -898,7 +898,7 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 	 }
     break;
   case cLoadTypeMMDSeparate:
-	 ObjectMoleculeLoadMMDFile(origObj,fname,frame,oname);
+	 ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,oname);
     break;
   case cLoadTypeMMDStr:
 	 obj=(Object*)ObjectMoleculeReadMMDStr((ObjectMolecule*)origObj,fname,frame);

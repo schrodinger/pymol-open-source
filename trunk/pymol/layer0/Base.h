@@ -28,6 +28,10 @@ Z* -------------------------------------------------------------------
 #define PI 3.14159265358979323846
 #endif
 
+#ifndef uchar
+#define uchar unsigned char
+#endif
+
 #define MAX_VDW 2.5
 
 #include<limits.h>
