@@ -1307,7 +1307,8 @@ PYMOL API
       'oval'        : 3,
       'tube'        : 4,
       'arrow'       : 5,
-      'dumbbell'    : 6,   
+      'dumbbell'    : 6,
+      'putty'       : 7,
    }
 
    cartoon_sc = Shortcut(cartoon_dict.keys())

@@ -523,10 +523,16 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_slice_dynamic_grid_resolution 373
 #define cSetting_pdb_insure_orthogonal        374
 #define cSetting_ray_direct_shade           375
+#define cSetting_stick_color                376
+#define cSetting_cartoon_putty_radius       377
+#define cSetting_cartoon_putty_quality      378
+#define cSetting_cartoon_putty_scale_min    379
+#define cSetting_cartoon_putty_scale_max    380
+#define cSetting_cartoon_putty_scale_power  381
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       376
+#define cSetting_INIT                       382
 
 #endif
 

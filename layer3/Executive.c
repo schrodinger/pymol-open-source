@@ -1,6 +1,6 @@
 /* 
 A* -------------------------------------------------------------------
-B* This file contains source code for the PyMOL computer program
+B* This fil econtains source code for the PyMOL computer program
 C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
@@ -6935,20 +6935,21 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
         /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
         rec->visible=true;
       } else {
-        if(SettingGet(G,cSetting_logging)) {
-          if(rec->visible)
+        
+        if(rec->visible&&!new_vis) {
+          if(SettingGet(G,cSetting_logging)) 
             sprintf(buffer,"cmd.disable('%s')",rec->name);
-          else
-            sprintf(buffer,"cmd.enable('%s')",rec->name);
+        }
+        else if((!rec->visible)&&new_vis) {
+          sprintf(buffer,"cmd.enable('%s')",rec->name);
+        }
+        if(new_vis && SettingGetGlobal_b(G,cSetting_active_selections)) {
+          ExecutiveHideSelections(G);
+        }
+        if(SettingGet(G,cSetting_logging)) {
           PLog(buffer,cPLog_pym);
         }
-        rec->visible=!rec->visible; 
-        if(rec->visible)
-          if(SettingGetGlobal_b(G,cSetting_active_selections)) {
-            ExecutiveHideSelections(G);
-            rec->visible=true;
-          }
-        
+        rec->visible=new_vis;
       }
       SceneChanged(G);
     }
@@ -6994,7 +6995,11 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
               if(skip) {
                 skip--;
               } else if(rec->hilight) {
-                ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                if(rec->type==cExecSelection) {
+                  ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,0);                    
+                } else {
+                  ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                }
               }
             }
         }

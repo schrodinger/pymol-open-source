@@ -8,7 +8,7 @@ F* -------------------------------------------------------------------
 G* Please see the accompanying LICENSE file for further information. 
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* 
+-* Cameron Mura
 -* 
 -*
 Z* -------------------------------------------------------------------
@@ -140,10 +140,12 @@ Rep *RepCartoonNew(CoordSet *cs)
   float power_b = 5;
   float loop_radius;
   float tube_radius;
+  float putty_radius;
+
   int visFlag;
   CExtrude *ex=NULL,*ex1;
   int n_p,n_pm1,n_pm2;
-  int loop_quality,oval_quality,tube_quality;
+  int loop_quality,oval_quality,tube_quality, putty_quality;
   float oval_width,oval_length;
   float dumbbell_radius,dumbbell_width,dumbbell_length;
   float throw;
@@ -177,15 +179,16 @@ Rep *RepCartoonNew(CoordSet *cs)
   int skip_to;
   AtomInfoType *ai,*last_ai=NULL;
   float alpha;
-
+  int putty_flag = false;
+  float putty_mean,putty_stdev;
   /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
-
+  
   OOAlloc(G,RepCartoon);
-
-PRINTFD(G,FB_RepCartoon)
-" RepCartoonNew-Debug: entered.\n"
-ENDFD;
+  
+  PRINTFD(G,FB_RepCartoon)
+    " RepCartoonNew-Debug: entered.\n"
+    ENDFD;
 	
 
   obj = cs->Obj;
@@ -225,6 +228,11 @@ ENDFD;
   if(tube_radius<0.01F) tube_radius=0.01F;
   tube_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_quality);
   if(tube_quality<3) tube_quality=3;
+
+  putty_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_radius);
+  if(putty_radius<0.01F) putty_radius=0.01F;
+  putty_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_quality);
+  if(putty_quality<3) putty_quality=3;
 
   cartoon_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
 
@@ -302,6 +310,7 @@ ENDFD;
         a=cs->AtmToIdx[a1];
 		if(a>=0) {
         ai = obj->AtomInfo+a1;
+
 		  if(ai->visRep[cRepCartoon]) {
           /*			 if(!obj->AtomInfo[a1].hetatm)*/
           if((!ai->alt[0])||
@@ -370,7 +379,12 @@ ENDFD;
                   *ss=0;
                   break;
                 }
+                
                 *(cc++)=cur_car;
+                
+                if(cur_car==cCartoon_putty)
+                  putty_flag=true;
+                
                 v1 = cs->Coord+3*a;
                 v_ca = v1;
                 *(v++)=*(v1++);
@@ -395,7 +409,7 @@ ENDFD;
                   skip_to=cs->AtmToIdx[nd];
                   
                 for(a3=st;a3<=nd;a3++) {
-                    
+                  
                   if(obj->DiscreteFlag) {
                     if(cs==obj->DiscreteCSet[a3]) 
                       a4=obj->DiscreteAtmToIdx[a3];
@@ -501,10 +515,10 @@ ENDFD;
                   vo+=3;
                 } else {
                   /* generate orientation vectors...*/
-                    
+                  
                   cross_product3f(v_c,v_o,vo);
                   normalize3f(vo);
-                    
+                  
                   vo+=3;
                 }
               }
@@ -512,6 +526,31 @@ ENDFD;
         }
       }
 	 }
+
+  if(nAt&&putty_flag) {
+    double sum=0.0,sumsq=0.0;
+    float value;
+    int cnt = 0;
+
+    for(a=0;a<obj->NAtom;a++) {
+      ai=obj->AtomInfo+a;
+      
+      if(ai->visRep[cRepCartoon]) {
+        value = ai->b;
+        sum+=value;
+        sumsq+=(value*value);
+        cnt++;
+      }
+    }
+    
+    if(cnt) {
+      putty_mean = (float)(sum/cnt);
+      putty_stdev = (float)sqrt1d((sumsq - (sum*sum/cnt))/(cnt));
+    } else {
+      putty_mean = 10.0F;
+      putty_stdev = 10.0F;
+    }
+  }
 
 PRINTFD(G,FB_RepCartoon)
 " RepCartoon-Debug: path outlined, interpolating...\n"
@@ -1519,6 +1558,7 @@ ENDFD;
                   *(vc++)=*(v0++);
                   *(vc++)=*(v0++);
                   *(vi++)=i0;
+
                   /* end of line/cylinder */
                 
                   f1=1.0F-f0;
@@ -1644,6 +1684,26 @@ ENDFD;
               ExtrudeCircle(ex,tube_quality,tube_radius);
               ExtrudeBuildNormals1f(ex);
               ExtrudeCGOSurfaceTube(ex,I->ray,1,NULL);
+              break;
+            case cCartoon_putty:
+              ExtrudeCircle(ex,putty_quality,putty_radius);
+              ExtrudeBuildNormals1f(ex);
+              ExtrudeComputeScaleFactors(ex,obj,0,
+                                         putty_mean,putty_stdev,
+                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_scale_power),
+                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_scale_min),
+                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_scale_max),
+                                         sampling/2);
+
+              /* ExtrudeMakePuttyLUT(ex,obj);*/
+
+              /* SAUSAGE look-up table -- nearest neighbors to extrusion points */
+              /* Because of the way it's written, need to do it here rather than above --
+                 i.e., after ExtrudeCircle has already defined the number shapepoints (I->Ns).
+                 Of course, could re-write ExtrudeMakeSausLUT() to not depend on I->Ns, but 
+                 that raises other difficulties with downstream steps... */
+
+              ExtrudeCGOSurfaceVariableTube(ex,I->ray,1);
               break;
             case cCartoon_loop:
               ExtrudeCircle(ex,loop_quality,loop_radius);

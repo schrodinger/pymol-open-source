@@ -8,7 +8,7 @@ F* -------------------------------------------------------------------
 G* Please see the accompanying LICENSE file for further information. 
 H* --------------------------------------------------\-----------------
 I* Additional authors of this source file include:
--* 
+-* Cameron Mura
 -* 
 -*
 Z* -------------------------------------------------------------------
@@ -50,6 +50,9 @@ CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig)
   CopyArray(I->n,orig->n,float,9*I->N);
   CopyArray(I->c,orig->c,float,3*I->N);
   CopyArray(I->i,orig->i,int,    I->N);
+  CopyArray(I->sf,orig->sf,float,I->N); /* SAUSAGE: scale factors from LUT */
+  CopyArray(I->z,orig->z,int,    I->N);	 /* SAUSAGE: nearest atom index */
+     
   return(I);
 }
 
@@ -69,6 +72,8 @@ void ExtrudeInit(PyMOLGlobals *G,CExtrude *I)
   I->tn = NULL; /* transformed normals */
   I->Ns = 0; /* number of shape points */
 
+  I->z = NULL;
+  I->sf = NULL;
 }
 
 void ExtrudeCircle(CExtrude *I, int n,float size)
@@ -693,11 +698,11 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
       tv = I->tv;
       for(b=0;b<I->Ns;b++) {
         transform33Tf3f(n,sv,tv);
-        add3f(v,tv,tv)
+        add3f(v,tv,tv);
         sv+=3;
         tv+=3;
       }
-
+      
       CGOBegin(cgo,GL_TRIANGLE_FAN);
       copy3f(I->n,v0);
       invert3f(v0);
@@ -752,6 +757,282 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
     ENDFD;
 
 }
+
+
+void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
+{
+  int a,b,*i;
+  float *v;
+  float *n;
+  float *c;
+  float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN,*AN,*an;
+  float v0[3];
+  float *sf;                            /* SAUSAGE: scale factor from ExtrudeMakeSausLUT() */
+  int start,stop;
+  PRINTFD(I->G,FB_Extrude)
+    " ExtrudeCGOSurfaceTube-DEBUG: entered.\n"
+    ENDFD;
+
+  
+  if(I->N&&I->Ns) {
+
+    TV=Alloc(float,3*(I->Ns+1)*I->N);
+    TN=Alloc(float,3*(I->Ns+1)*I->N);
+    AN = Alloc(float,3*I->N); /* normals adjusted for changing widths */
+
+    /* compute transformed shape vertices */
+    
+    tv=TV;
+
+    sv = I->sv;
+    for(b=0;b<=I->Ns;b++) {
+      if(b==I->Ns) {
+        sv = I->sv;
+      }
+
+      n=I->n; /* NOTE: n is not a counter -- it's a 3x3 coordinate system! */
+      v=I->p;
+      sf=I->sf;                         /* SAUSAGE: scale factors */
+
+      for(a=0;a<I->N;a++) {
+        transform33Tf3f(n,sv,tv);
+        
+        *(tv) *= *sf;
+        *(tv+1) *= *sf;
+        *(tv+2) *= *sf;
+        
+        add3f(v,tv,tv);
+        tv+=3;
+        v+=3;
+        sf++;
+        n+=9;
+      }
+      sv+=3;
+    }
+
+    /* compute transformed normals, taking into account changing radii */
+
+    tn=TN;
+    tv=TV;
+    
+    sn = I->sn;
+    for(b=0;b<=I->Ns;b++) {
+
+      float d1,d2,r0,r1,r2,x1,x2;        
+      
+      if(b==I->Ns) {
+        sn = I->sn;
+      }
+
+      an = AN;
+      v=I->p;
+
+      for(a=0;a<I->N;a++) { 
+        if((a>0) && (a<(I->N-1))) {
+          /* compute rises */
+
+          r0 = diff3f(v,tv);
+          r1 = diff3f(v-3,tv-3) - r0;
+          r2 = diff3f(v+3,tv+3) - r0;
+          
+          /* compute runs */
+          
+          d1 = diff3f(v-3,v);
+          d2 = diff3f(v+3,v);
+          
+          /* compute x-to-yz weights */
+          
+          x1 = r1/d1;
+          x2 = -r2/d2;
+     
+          if(a==1) {
+            an[-3] = x1;
+            an[-2] = sn[1];
+            an[-1] = sn[2];
+            normalize3f(an-3);
+          } else if(a==I->N-2) {
+            an[3] = x2;
+            an[4] = sn[1];
+            an[5] = sn[2];
+            normalize3f(an+3);
+          }
+          an[0] = (x1 + x2)/2.0F;
+          an[1] = sn[1];
+          an[2] = sn[2];
+          normalize3f(an);
+        }
+        tv+=3;
+        v+=3;
+        an+=3;
+      }
+   
+      n=I->n; /* NOTE: n is not a counter -- it's a 3x3 coordinate system! */
+      an=AN;
+
+      for(a=0;a<I->N;a++) {
+        transform33Tf3f(n,an,tn);
+        tn+=3;
+        an+=3;
+        n+=9;
+      }
+      sn+=3;
+    }
+    
+    /* fill in each strip separately */
+
+    tv = TV;
+    tn = TN;
+    
+    tv1 = TV+3*I->N;
+    tn1 = TN+3*I->N;
+
+    start=I->Ns/4;
+    stop=3*I->Ns/4;
+    for(b=0;b<I->Ns;b++) {
+      if(SettingGet(I->G,cSetting_cartoon_debug)<1.5)
+        CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      else {
+        CGOBegin(cgo,GL_LINE_STRIP);        
+        CGODisable(cgo,GL_LIGHTING);
+      }
+      c = I->c;
+      i = I->i;
+      for(a=0;a<I->N;a++) {
+        CGOColorv(cgo,c);
+        CGOPickColor(cgo,*i,-1);
+        CGONormalv(cgo,tn);
+        CGOVertexv(cgo,tv);
+        tn+=3;
+        tv+=3;
+        CGONormalv(cgo,tn1);
+        CGOVertexv(cgo,tv1);
+        tn1+=3;
+        tv1+=3;
+        c+=3;
+        i++;
+      }
+      CGOEnd(cgo);
+    }
+
+    if(SettingGet(I->G,cSetting_cartoon_debug)>3.5) {
+
+      tv = TV;
+      tn = TN;
+      
+      tv1 = TV+3*I->N;
+      tn1 = TN+3*I->N;
+      
+      start=I->Ns/4;
+      stop=3*I->Ns/4;
+      for(b=0;b<I->Ns;b++) {
+        float vv[3];
+        CGOBegin(cgo,GL_LINES);
+        c = I->c;
+        i = I->i;
+        for(a=0;a<I->N;a++) {
+          CGOColorv(cgo,c);
+          copy3f(tn,vv);
+          scale3f(vv,0.3,vv)
+          add3f(vv,tv,vv);
+          CGONormalv(cgo,tn);
+          CGOVertexv(cgo,tv);
+          CGOVertexv(cgo,vv);
+          tn+=3;
+          tv+=3;
+          copy3f(tn1,vv);
+          scale3f(vv,0.3,vv)
+          add3f(vv,tv1,vv);
+          CGONormalv(cgo,tn1);
+          CGOVertexv(cgo,tv1);
+          CGOVertexv(cgo,vv);
+          tn1+=3;
+          tv1+=3;
+          c+=3;
+          i++;
+        }
+        CGOEnd(cgo);
+      }
+    }
+      
+    if(SettingGet(I->G,cSetting_cartoon_debug)>=1.5) {
+      CGOEnable(cgo,GL_LIGHTING);
+    }
+    
+    if(cap) {
+
+      n = I->n;
+      v = I->p;
+      sf = I->sf;
+
+      sv = I->sv;
+      tv = I->tv;
+      for(b=0;b<I->Ns;b++) {
+        transform33Tf3f(n,sv,tv);
+
+        *(tv) *= *sf;         
+        *(tv+1) *= *sf;
+        *(tv+2) *= *sf;
+
+        add3f(v,tv,tv);
+        sv+=3;
+        tv+=3;
+      }
+      
+      CGOBegin(cgo,GL_TRIANGLE_FAN);
+      copy3f(I->n,v0);
+      invert3f(v0);
+      CGOColorv(cgo,I->c);
+      CGOPickColor(cgo,I->i[0],-1);
+      CGONormalv(cgo,v0);
+      CGOVertexv(cgo,v);
+      /* trace shape */
+      CGOVertexv(cgo,I->tv);
+      for(b=I->Ns-1;b>=0;b--) {
+        CGOVertexv(cgo,I->tv+b*3);
+      }
+      CGOEnd(cgo);
+
+      n = I->n+9*(I->N-1);
+      v = I->p+3*(I->N-1);
+      sf = I->sf+(I->N-1);		/* SAUSAGE */
+
+      sv = I->sv;
+      tv = I->tv;
+      for(b=0;b<I->Ns;b++) {
+        transform33Tf3f(n,sv,tv);
+
+        *(tv) *= *(sf);         
+        *(tv+1) *= *(sf);
+        *(tv+2) *= *(sf);
+
+        add3f(v,tv,tv)
+        sv+=3;
+        tv+=3;
+      }
+
+      CGOBegin(cgo,GL_TRIANGLE_FAN);
+      CGOColorv(cgo,I->c+3*(I->N-1));
+      CGOPickColor(cgo,I->i[I->N-1],-1);
+      CGONormalv(cgo,n);
+      CGOVertexv(cgo,v);
+      /* trace shape */
+      for(b=0;b<I->Ns;b++) {
+        CGOVertexv(cgo,I->tv+b*3);
+      }
+      CGOVertexv(cgo,I->tv);
+      CGOEnd(cgo);
+      
+    }
+    FreeP(TV);
+    FreeP(TN);
+  }
+  
+  PRINTFD(I->G,FB_Extrude)
+    " ExtrudeCGOSurfaceTube-DEBUG: exiting...\n"
+    ENDFD;
+
+}
+
 
 
 void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override)
@@ -926,7 +1207,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
   subN=I->N-sampling;
 
   PRINTFD(I->G,FB_Extrude)
-    " ExtrudeCGOSurfacePolygon-DEBUG: entered.\n"
+    " ExtrudeCGOSurfacePolygonTaper-DEBUG: entered.\n"
     ENDFD;
   
 
@@ -1036,7 +1317,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
   }
   
   PRINTFD(I->G,FB_Extrude)
-    " ExtrudeCGOSurfacePolygon-DEBUG: exiting...\n"
+    " ExtrudeCGOSurfacePolygonTaper-DEBUG: exiting...\n"
     ENDFD;
   
 }
@@ -1301,7 +1582,188 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
 
 }
 
+void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field,
+                                float mean, float stdev, float power,
+                                float min_scale, float max_scale,
+                                int window)
+{
+  float *sf;
+  int a;
+  int *i;
+  AtomInfoType *at;
+  float scale;
 
+  if(I->N&&I->Ns) {
+
+    i=I->i;
+    sf=I->sf;
+
+    for(a=0;a<I->N;a++) {
+      at = obj->AtomInfo + (*i);
+
+      switch(source_field) {
+      default: /* b*/
+        scale = (at->b - mean)/stdev;
+        if(scale<0.0F)
+          scale = 0.0F;
+        scale=pow(scale,power);
+        if(scale<min_scale)
+          scale=min_scale;
+        if(scale>max_scale)
+          scale=max_scale;
+        *sf = scale;
+        break;
+      }
+      sf++;
+      i++;
+    }
+
+    /* now compute window average */
+    
+    
+    {
+      float *SF = Alloc(float,I->N);
+      int w,ww;
+      float accum;
+      int cnt;
+
+      sf=I->sf;
+      
+      for(a=1;a<(I->N-1);a++) {
+        accum = 0.0F;
+        
+        ww = window;
+        cnt=0;
+        for(w=-window;w<=window;w++) {
+          ww=w + a;
+          if(ww<0) ww=0;
+          else if(ww>(I->N-1))
+            ww=I->N-1;
+          accum += sf[ww];
+          cnt++;
+        }
+        SF[a] = accum / cnt;
+      }
+      for(a=1;a<I->N-1;a++)
+        sf[a] = SF[a];
+      FreeP(SF);
+    }
+  }
+}
+
+#if 0
+/* SAUSAGE: look-up table of nearest neighbors and scaling factors (derived from nearby B-facts) */
+void ExtrudeMakePuttyLUT(CExtrude *I,ObjectMolecule *Sauce_obj)
+{
+  int a,b;		  /* loop indices */
+  float *v;    		  /* extrusion points */
+  float *sf;		  /* SAUSAGE: scale factors */
+  float min_dist = 0.0;   /* SAUSAGE: distance between given extrusion point 'p' and nearest atom */
+  float minB = 0.0;	  /* SAUSAGE: overall minimum b-fact */
+  float maxB = 0.0;   	  /* SAUSAGE: overall maximum b-fact */
+  int my_i = 0;		  /* SAUSAGE: loop index */
+  int startAt = 0;	  /* SAUSAGE: starting atom index for extrusion point nearest neighbor search */
+  int endAt = 0;	  /* SAUSAGE: ending atom index for extrusion point nearest neighbor search */
+  int atm2use = 0;	  /* SAUSAGE: temporary index of atom nearest to given extrusion point 'p' */
+  int *z;		  /* SAUSAGE: indices of all such atoms nearest to extrusion points 'p' */
+  
+  PRINTFD(I->G,FB_Extrude)
+    " ExtrudeMakePuttyLUT-DEBUG: entered.\n"
+    ENDFD;
+
+  if(I->N&&I->Ns) {
+    
+    float curAtmVrtx[3];
+    float ex2atmDiff[3];
+
+    /* Arbitrarily initialize to values for first atom and then extract max and min b-facts */
+
+    minB = ( maxB = Sauce_obj->AtomInfo[0].b );
+
+    for(my_i=0; my_i<((*(Sauce_obj->CSet))->NIndex); my_i++) { /* WLD: uses all atoms in coordinate set... */
+      if (Sauce_obj->AtomInfo[my_i].b > maxB)	
+        maxB = Sauce_obj->AtomInfo[my_i].b;
+      else if (Sauce_obj->AtomInfo[my_i].b < minB)	
+        minB = Sauce_obj->AtomInfo[my_i].b;
+    }
+
+    PRINTFB(I->G,FB_RepCartoon,FB_Blather)
+      "Puttyage: will scale between minB = %.2f and maxB = %.2f for this chain...\n",minB,maxB
+      ENDFB(I->G)
+    
+    for(b=0;b<=I->Ns;b++) {
+
+      v=I->p;
+      z=I->z;
+      sf=I->sf;
+      
+      for(a=0;a<I->N;a++) {
+        
+        /* NOTE: To fully scan each extrusion point against all atoms, set startAt = 0 and 
+         * 	 endAt = ((*(Sauce_obj->CSet))->NIndex). This is VERY slow if have large num 
+         * 	 atoms (>500), so I've assumed that atoms of interest for given extrusion pnt
+         * 	 will be within +/- 30 of nearest atom to previous extrusion point. Also, could
+         * 	 consider just the CA's, but that makes more jagged cartoons... */
+
+        startAt = ( *(z-3) && *(z-3) > 30 ) ? (*(z-3) - 30) : 0 ;
+        endAt =   ( *(z-3) && *(z-3) < ((*(Sauce_obj->CSet))->NIndex - 30) ) ? (*(z-3) + 30) : ((*(Sauce_obj->CSet))->NIndex) ;
+
+        /* Arbitrarily initialize atm2use to startAt and min_dist to distance between extrusion 
+         * point 'v' and this atom: */
+
+        CoordSetGetAtomVertex((*(Sauce_obj->CSet)),startAt,curAtmVrtx);
+        subtract3f(curAtmVrtx,v,ex2atmDiff);
+        min_dist = length3f(ex2atmDiff);
+        atm2use = startAt;
+        
+        for(my_i=startAt; my_i<endAt; my_i++) {
+          /*			if(strcmp(Sauce_obj->AtomInfo[my_i].name,"CA") == 0) {		*/
+          CoordSetGetAtomVertex((*(Sauce_obj->CSet)),my_i,curAtmVrtx);
+
+          /* basic atom info: name, resid #, b-fact */
+          /* printf("name: '%s', resi: %d, b = %f)\n",	Sauce_obj->AtomInfo[my_i].name,
+           *		   	   			Sauce_obj->AtomInfo[my_i].resi,
+           *		   	   			Sauce_obj->AtomInfo[my_i].b);  		*/
+
+          subtract3f(curAtmVrtx,v,ex2atmDiff);	  
+
+          /*		   	   printf("(%.3f, %.3f, %.3f)\n",*ex2atmDiff,*(ex2atmDiff+1),*(ex2atmDiff+2));		*/
+
+          if ( length3f(ex2atmDiff) <= min_dist )  {
+            min_dist = length3f(ex2atmDiff);
+            atm2use = my_i; 
+          }
+
+          /*			}		*/
+        }
+        
+        /* Apply an arbitrarily chosen nonlinear scaling; could try other recipes, exponents, etc.
+         * Note: doing this as triplets b/c could imagine utilizing anisotropic scaling factors or
+         * something like that in future... */
+
+        *(sf) =   (float)pow((2.0*Sauce_obj->AtomInfo[atm2use].b / (maxB - minB)), 1.5 );
+        *(sf+1) = (float)pow((2.0*Sauce_obj->AtomInfo[atm2use].b / (maxB - minB)), 1.5 );
+        *(sf+2) = (float)pow((2.0*Sauce_obj->AtomInfo[atm2use].b / (maxB - minB)), 1.5 );
+        
+        /* record nearest atom indices: */
+
+        *z = atm2use;
+        *(z+1) = atm2use;
+        *(z+2) = atm2use;
+        
+        v+=3;
+        sf+=3;
+        z+=3;
+      }
+    }
+    
+  }
+  
+  PRINTFD(I->G,FB_Extrude)
+    " ExtrudeMakePuttyLUT-DEBUG: exiting...\n"
+    ENDFD;
+}
+#endif
 
 void ExtrudeTruncate(CExtrude *I,int n)
 {
@@ -1318,10 +1780,14 @@ void ExtrudeAllocPointsNormalsColors(CExtrude *I,int n)
     FreeP(I->n);
     FreeP(I->c);
     FreeP(I->i);
+    FreeP(I->z);
+    FreeP(I->sf);		/* SAUSAGE */
     I->p = Alloc(float,3*(n+1));
     I->n = Alloc(float,9*(n+1));
     I->c = Alloc(float,3*(n+1));
     I->i = Alloc(int,3*(n+1));
+    I->z = Alloc(int,3*(n+1));	/* SAUSAGE: nearest atoms to extrusion points from the LUT */
+    I->sf= Alloc(float,n+1); /* SAUSAGE: scale factors */ 
   }
   I->N = n;
 }
@@ -1336,6 +1802,8 @@ void ExtrudeFree(CExtrude *I)
   FreeP(I->sn);
   FreeP(I->sv);
   FreeP(I->i);
+  FreeP(I->z);
+  FreeP(I->sf);
   OOFreeP(I);
 }
 

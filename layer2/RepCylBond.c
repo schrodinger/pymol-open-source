@@ -1163,7 +1163,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   int fixed_radius = false;
   int caps_req = true;
   int valence_flag = false;
-
+  int stick_color = 0;
   OOAlloc(G,RepCylBond);
 
   PRINTFD(G,FB_RepCylBond)
@@ -1193,6 +1193,8 @@ Rep *RepCylBondNew(CoordSet *cs)
   valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence);
   valence_flag = (valence!=0.0F);
   maxCyl = 0;
+
+  stick_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_stick_color);
 
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
@@ -1332,8 +1334,12 @@ Rep *RepCylBondNew(CoordSet *cs)
         }
 		  if((a1>=0)&&(a2>=0))
 			 {
-				c1=*(cs->Color+a1);
-				c2=*(cs->Color+a2);
+            if(stick_color<0) {
+              c1=*(cs->Color+a1);
+              c2=*(cs->Color+a2);
+            } else {
+              c1 = (c2 = stick_color);
+            }
 				
 				vv1 = cs->Coord+3*a1;
 				vv2 = cs->Coord+3*a2;
