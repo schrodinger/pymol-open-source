@@ -1,0 +1,37 @@
+PyMOL>load lrg/molb.phi,e_map
+ ObjectMapLoadPHIFile: Loading from 'lrg/molb.phi'.
+ PHIMapToStr: now starting phimap 
+ PHIMapToStr: potential 
+ PHIMapToStr: Phimap written from within Grasp                            
+ PHIMapToStr:  end of phimap  
+ ObjectMap: Map Read.  Range = -244.525848 to 158.284439
+ Crystal: Unit Cell            1.000    1.000    1.000
+ Crystal: Alpha Beta Gamma    90.000   90.000   90.000
+ Crystal: RealToFrac Matrix
+ Crystal:    1.0000    0.0000    0.0000
+ Crystal:    0.0000    1.0000    0.0000
+ Crystal:    0.0000    0.0000    1.0000
+ Crystal: FracToReal Matrix
+ Crystal:    1.0000    0.0000    0.0000
+ Crystal:    0.0000    1.0000    0.0000
+ Crystal:    0.0000    0.0000    1.0000
+ Crystal: Unit Cell Volume        1.
+ Executive: object "e_map" created.
+PyMOL>load lrg/molb.pdb,molb
+ Executive: object "molb" created.
+PyMOL>hide
+PyMOL>show surf,molb
+PyMOL>ramp_new e_pot,e_map,[-10,0,10]
+ Executive: object "e_pot" created.
+PyMOL>isomesh pos,e_map,0.4
+ Executive: object "pos" created.
+ Isomesh: created "pos", setting level to 0.400
+PyMOL>color blue,pos
+ Executive: Colored 1 object.
+PyMOL>isomesh neg,e_map,-0.4
+ Executive: object "neg" created.
+ Isomesh: created "neg", setting level to -0.400
+PyMOL>color red,neg
+ Executive: Colored 1 object.
+PyMOL>color e_pot,molb
+ Executive: Colored 962 atoms and 1 object.
