@@ -397,6 +397,31 @@ void rotation_matrix3f( float angle, float x, float y, float z,float *m )
 
 #define get_angle USED_TO_RETURN_DEGREES
 
+float get_dihedral3f( float *v0, float *v1, float *v2, float *v3 )
+{
+  Vector3f d01,d21,d32,dd1,dd3,pos_d;
+  float result=0.0;
+
+  subtract3f(v2,v1,d21);
+  subtract3f(v0,v1,d01);
+  subtract3f(v3,v2,d32);
+  if (length3f(d21)<R_SMALL) {
+    result = get_angle3f(d01,d32);
+  } else { 
+    cross_product3f(d21,d01,dd1);
+    cross_product3f(d21,d32,dd3);
+    if ((length3f(dd1)<R_SMALL)||(length3f(dd3)<R_SMALL)) /* degenerate cases */
+      result = get_angle3f(d01,d32); /* fall back to angle between vectors */
+    else {
+      result = get_angle3f(dd1,dd3);
+      cross_product3f(d21,dd1,pos_d);
+      if(dot_product3f(dd3,pos_d)<0.0)
+        result = -result;
+    }
+  }
+  return(result);
+}
+
 float get_angle3f( float *v1, float *v2 )
 {
   double denom;

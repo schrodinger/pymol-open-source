@@ -55,6 +55,7 @@ double diff3f ( float *v1, float *v2 );
 int within3f(float *v1,float *v2,float dist);
 
 float get_angle3f( float *v1, float *v2 );
+float get_dihedral3f( float *v0, float *v1, float *v2, float *v3 );
 double length3d ( double *v1 );
 
 void min3f ( float *v1, float *v2, float *v3 );

@@ -1049,7 +1049,7 @@ static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
   int int1;
 
   OrthoLineType s1,s2,s3,s4;
-  PyArg_ParseTuple(args,"ssss",&str1,&str2,&str3,&str4,&int1);
+  PyArg_ParseTuple(args,"ssssi",&str1,&str2,&str3,&str4,&int1);
 
   APIEntry();
   SelectorGetTmp(str1,s1);
@@ -1064,8 +1064,7 @@ static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
   APIExit();
 
   if(ok) {
-    Py_INCREF(Cmd_Success);
-    return Cmd_Success;
+    return(Py_BuildValue("f",result));
   } else {
     Py_INCREF(Cmd_Failure);
     return Cmd_Failure;
@@ -1081,7 +1080,7 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
   int ok = true;
 
   OrthoLineType s1,s2,s3,s4;
-  PyArg_ParseTuple(args,"ssssf",&str1,&str2,&str3,&str4,&float1,&int1);
+  PyArg_ParseTuple(args,"ssssfi",&str1,&str2,&str3,&str4,&float1,&int1);
 
   APIEntry();
   SelectorGetTmp(str1,s1);
@@ -1096,6 +1095,7 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
   APIExit();
 
   if(ok) {
+
     Py_INCREF(Cmd_Success);
     return Cmd_Success;
   } else {

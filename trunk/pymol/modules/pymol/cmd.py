@@ -3084,6 +3084,16 @@ def load_brick(*arg):
    return apply(load_object,lst)
 
 def load_model(*arg):
+   '''
+DESCRIPTION
+  
+   "load_model" reads a ChemPy model into an object
+
+ 
+PYMOL API
+  
+   cmd.load_model(model, object [,state [,finish [,discrete ]]])
+   '''
    lst = [loadable.model]
    lst.extend(list(arg))
    return apply(load_object,lst)
@@ -4095,6 +4105,7 @@ help_only = {  # for API-only features
    'read_molstr'   : [read_molstr  , 0 , 0 , ',' , 0 ],
    
    'launching'     : [launching    , 0 , 0 , ',' , 0 ],
+   'load_model'    : [load_model   , 0 , 0 , ',' , 0 ],
    'movies'        : [movies       , 0 , 0 , ',' , 0 ],
    'editing'       : [editing      , 0 , 0 , ',' , 0 ],  
    'edit_keys'     : [edit_keys    , 0 , 0 , ',' , 0 ],
