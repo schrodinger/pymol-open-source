@@ -13,21 +13,24 @@ make-modules:
 	cd modules;cat Makefile.pre.in.src >> Makefile.pre.in 
 	cd modules;$(MAKE) -f Makefile.pre.in boot
 	cd modules;$(MAKE)
-	mv modules/*.so ../modules
+	mv modules/*.so ../modules/pymol
 	cd modules;$(MAKE) distclean
 	cd modules;/bin/rm Makefile.pre.in
 
 make-sglite:
 	cd sglite;$(MAKE) 
-	mv sglite/*.so ../modules
+	mv sglite/*.so ../modules/pymol
 
 make-pyopengl:
 	cd pyopengl;$(MAKE) 
-	mv pyopengl/*.so ../modules
+	mv pyopengl/_glut*.so ../modules/pymol/opengl/glut
+	mv pyopengl/_opengl*.so ../modules/pymol/opengl/gl
+	mv pyopengl/_glu*.so ../modules/pymol/opengl/glu
+	mv pyopengl/opengl*.so ../modules/pymol/opengl/gl
 
 make-champ:
 	cd champ;$(MAKE) 
-	mv champ/*.so ../modules
+	mv champ/*.so ../modules/pymol
 
 clean: 
 	cd sglite;$(MAKE) clean

@@ -36,7 +36,7 @@ DEFS = -D_PYMOL_MODULE -D_PYMOL_OSX -D_PYMOL_NUMPY
 #--- How we build shared libraries
 BUILD = -bundle -undefined warning -flat_namespace
 #--- What are we trying to build?
-DEST = -o modules/_cmd.so
+DEST = -o modules/pymol/_cmd.so
 #--- CC options
 CCOPT1 = -ffast-math
 #--- libraries for PyOpenGL 

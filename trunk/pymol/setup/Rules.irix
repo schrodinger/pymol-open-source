@@ -30,7 +30,7 @@ DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY
 #--- How we build shared libraries
 BUILD = -shared 
 #--- What are we trying to build?
-DEST = -o modules/_cmd.so
+DEST = -o modules/pymol/_cmd.so
 #--- CC Options for IRIX
 CCOPT1 = -ansi -n32 -woff 1429,1204
 #--- libraries for PyOpenGL 
