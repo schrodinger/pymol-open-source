@@ -53,6 +53,8 @@ int MapExclLocus(MapType *map,float *v,int *a,int *b,int *c);
 void MapCacheInit(MapType *I);
 void MapCacheReset(MapType *I);
 
+float MapGetSeparation(float range,float *mx,float *mn,float *diagonal);
+
 /* special routines for raytracing */
 
 int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c); 

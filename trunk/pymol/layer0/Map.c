@@ -216,21 +216,41 @@ int MapExclLocus(MapType *I,float *v,int *a,int *b,int *c)
   return(1);
 }
 
+float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
+{
+  int maxSize;
+  float size,subDiv;
+
+  maxSize = SettingGet(cSetting_hash_max);
+
+  /* find longest axis */
+
+  subtract3f(mx,mn,diagonal);
+  size=diagonal[0];
+  if(diagonal[1]>size) size=diagonal[1];
+  if(diagonal[2]>size) size=diagonal[2];
+
+  /* compute maximum number of subdivisions */
+  subDiv = (int)(size/(range+MapSafety)); 
+  if(subDiv>maxSize ) subDiv = maxSize; /* keep it reasonable - we're talking N^3 here... */
+  if(subDiv<1.0) subDiv = 1.0;
+
+  return(size/subDiv);
+}
+
+
 MapType *MapNew(float range,float *vert,int nVert,float *extent)
 {
-  Vector3f diagonal;
-  float size,subDiv;
   int a,c;
   int mapSize;
   int h,k,l;
   int *i;
   int *list;
   float *v;
-  int maxSize;
+  Vector3f diagonal;
 
   OOAlloc(MapType);
 
-  maxSize = SettingGet(cSetting_hash_max);
   I->Head = NULL;
   I->Link = NULL;
   I->Cache = NULL;
@@ -290,20 +310,9 @@ MapType *MapNew(float range,float *vert,int nVert,float *extent)
 		  I->Max[c]+=range;
 		}
   }
-  /* find longest axis */
-
-  subtract3f(I->Max,I->Min,diagonal);
-  size=diagonal[0];
-  if(diagonal[1]>size) size=diagonal[1];
-  if(diagonal[2]>size) size=diagonal[2];
-
-  /* compute maximum number of subdivisions */
-  subDiv = (int)(size/(range+MapSafety)); 
-  if(subDiv>maxSize ) subDiv = maxSize; /* keep it reasonable - we're talking N^3 here... */
-  if(subDiv<1.0) subDiv = 1.0;
 
   /* compute final box size */
-  I->Div = size/subDiv;
+  I->Div = MapGetSeparation(range,I->Max,I->Min,diagonal);
 
   /* add borders to avoid special edge cases */
   I->Dim[0]=(diagonal[0]/I->Div)+1+(2*MapBorder); 
