@@ -661,9 +661,6 @@ void PFlushFast(void) {
 
 void PBlock(void)
 {
-  PRINTFD(FB_Threads)
-    " PBlock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
-    ENDFD;
 
   if(!PAutoBlock()) {
     printf("%d\n",P_glut_thread_keep_out);
@@ -676,6 +673,7 @@ int PAutoBlock(void)
   int a,id;
   /* synchronize python */
 
+
   id = PyThread_get_thread_ident();
   a = MAX_SAVED_THREAD-1;
   while(a) {
@@ -685,6 +683,11 @@ int PAutoBlock(void)
       PXDecRef(PyObject_CallFunction(P_lock_c,NULL));
       SavedThread[a].id = -1; /* this is the only safe time we can change things */
       PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
+
+      PRINTFD(FB_Threads)
+        " PBlock-DEBUG: blocked as thread 0x%x\n",PyThread_get_thread_ident()
+        ENDFD;
+
       return 1;
     }
     a--;

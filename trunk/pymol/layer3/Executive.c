@@ -1403,18 +1403,19 @@ void ExecutiveRay(void)
 void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                          int state,int quiet,int updates)
 {
-  int unblock;
-  OrthoLineType name,value;
   CExecutive *I=&Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   int sele1;
   ObjectMoleculeOpRec op;
+  OrthoLineType value;
   CSetting **handle=NULL;
+  SettingName name;
   int nObj=0;
-  unblock = PAutoBlock();
+  int unblock;
 
-  if(sele[0]==0) { /* global setting */
+  unblock = PAutoBlock();
+  if(sele[0]==0) { 
     SettingSetTuple(NULL,index,tuple);
     if(!quiet) {
       if(Feedback(FB_Setting,FB_Actions)) {
@@ -1427,8 +1428,8 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
     }
     if(updates) 
       SettingGenerateSideEffects(index,sele,state);
-    
-  } else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
+  } 
+  else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
     while(ListIterate(I->Spec,rec,next))
       {
         if(rec->type==cExecObject) {
@@ -1464,61 +1465,53 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
           }
         }
       }
-  } else { /* based on a selection/object name */
+  }
+ else { /* based on a selection/object name */
     sele1=SelectorIndexByName(sele);
-    if(sele1>=0)
-      {
-        while(ListIterate(I->Spec,rec,next))
+    while((sele1>=0)&&(ListIterate(I->Spec,rec,next)))
+      if(rec->type==cExecObject)
+        if(rec->obj->type==cObjectMolecule)
           {
-            if(rec->type==cExecObject)
-              {
-                if(rec->obj->type==cObjectMolecule)
-                  {
-                    obj=(ObjectMolecule*)rec->obj;
-                    op.code=OMOP_CountAtoms;
-                    op.i1=0;
-                    ObjectMoleculeSeleOp(obj,sele1,&op);
-                    if(op.i1) {
-                      if(rec->obj->fGetSettingHandle) {
-                        handle = rec->obj->fGetSettingHandle(rec->obj,state);
-                        if(handle) {
-                          SettingCheckHandle(handle);
-                          SettingSetTuple(*handle,index,tuple);
-                          if(!quiet) {
-                            if(state<0) { /* object-specific */
-                              if(Feedback(FB_Setting,FB_Actions)) {
-                                SettingGetTextValue(*handle,NULL,index,value);
-                                SettingGetName(index,name);
-                                PRINTF
-                                  " Setting: %s set to %s in object '%s'.\n",
-                                  name,value,rec->obj->Name
-                                  ENDF;
-                                if(updates)
-                                  SettingGenerateSideEffects(index,sele,state);
-                                
-                              }
-                            } else { /* state-specific */
-                              if(Feedback(FB_Setting,FB_Actions)) {
-                                SettingGetTextValue(*handle,NULL,index,value);
-                                SettingGetName(index,name);
-                                PRINTF
-                                  " Setting: %s set to %s in object '%s', state %d.\n",
-                                  name,value,rec->obj->Name,state+1
-                                  ENDF;
-                                if(updates) 
-                                  SettingGenerateSideEffects(index,sele,state);
-                                
-                              }
-                            }
-                          }
-                        }
-                      }
+            obj=(ObjectMolecule*)rec->obj;
+            op.code=OMOP_CountAtoms;
+            op.i1=0;
+            ObjectMoleculeSeleOp(obj,sele1,&op);
+            if(op.i1&&rec->obj->fGetSettingHandle) {
+              handle = rec->obj->fGetSettingHandle(rec->obj,state);
+              if(handle) {
+                SettingCheckHandle(handle);
+                SettingSetTuple(*handle,index,tuple);
+                if(!quiet) {
+                  if(state<0) { /* object-specific */
+                    if(Feedback(FB_Setting,FB_Actions)) {
+                      SettingGetTextValue(*handle,NULL,index,value);
+                      SettingGetName(index,name);
+                      PRINTF
+                        " Setting: %s set to %s in object '%s'.\n",
+                        name,value,rec->obj->Name
+                        ENDF;
+                      if(updates)
+                        SettingGenerateSideEffects(index,sele,state);
+                      
+                    }
+                  } else { /* state-specific */
+                    if(Feedback(FB_Setting,FB_Actions)) {
+                      SettingGetTextValue(*handle,NULL,index,value);
+                      SettingGetName(index,name);
+                      PRINTF
+                        " Setting: %s set to %s in object '%s', state %d.\n",
+                        name,value,rec->obj->Name,state+1
+                        ENDF;
+                      if(updates) 
+                        SettingGenerateSideEffects(index,sele,state);
+                      
                     }
                   }
+                }
               }
+            }
           }
-      }
-  } 
+ }
   PAutoUnblock(unblock);
 }
 /*========================================================================*/

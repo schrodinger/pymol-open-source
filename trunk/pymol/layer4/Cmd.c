@@ -103,7 +103,7 @@ static PyObject *Cmd_Failure;
 static void APIEntry(void) /* assumes API is locked */
 {
   PRINTFD(FB_API)
-    " APIEntry-DEBUG: called.\n"
+    " APIEntry-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
 
 if(PyMOLTerminating) {/* try to bail */
@@ -118,11 +118,11 @@ if(PyMOLTerminating) {/* try to bail */
 
 static void APIExit(void) /* assumes API is locked */
 {
-  PRINTFD(FB_API)
-    " APIExit-DEBUG: called.\n"
-    ENDFD;
   PBlock();
   P_glut_thread_keep_out--;
+  PRINTFD(FB_API)
+    " APIExit-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
+    ENDFD;
 }
 
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
@@ -1861,8 +1861,11 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
   int state;
   int quiet;
   int updates;
+  int unblock;
 
-  OrthoLineType s1 = "";
+  OrthoLineType s1;
+  s1[0]=0;
+
   PyArg_ParseTuple(args,"iOsiii",&index,&value,&str3,&state,&quiet,&updates);
   APIEntry();
   if(!strcmp(str3,"all")) {

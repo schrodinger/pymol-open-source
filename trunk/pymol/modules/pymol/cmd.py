@@ -2583,7 +2583,7 @@ NOTES
       success = 0
       try:
          lock()
-         type = _cmd.get_setting_tuple(index,"",-1)[0]
+         type = _cmd.get_setting_tuple(int(index),str(""),int(-1))[0]
          if type==None:
             print "Error: unable to get setting type."
             raise QuietException
@@ -2606,7 +2606,7 @@ NOTES
                   v = value
                v = (float(v[0]),float(v[1]),float(v[2]))
             v = (type,v)
-            r = _cmd.set(index,v,
+            r = _cmd.set(int(index),v,
                          string.strip(str(selection)),
                          int(state)-1,int(quiet),
                          int(updates))
