@@ -71,12 +71,12 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       glBegin(GL_TRIANGLES);
       while(c--)
         {
-          if(c==2)
+			 /*          if(c==2)
             glColor3f(0.0,1.0,1.0);
           if(c==1)
             glColor3f(1.0,0.0,1.0);
           if(!c)
-            glColor3f(1.0,1.0,0.0);            
+			 glColor3f(1.0,1.0,0.0);            */
           glNormal3fv(vn+(*t)*3);
           glVertex3fv(v+(*t)*3);
 			 t++;
@@ -89,7 +89,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         }
 		glEnd();
 
-      /**/
+      /*
       glColor3f(0.0,1.0,0.0);
       t=I->T;
       c=I->NT;
@@ -123,13 +123,28 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           vn+=3;
         }
 		  glEnd();
-        /*      */
+              */
     }
+	 v=TestLine;
+	 c=NTestLine;
+	 glBegin(GL_LINES);
+	 while(c--) {
+		glVertex3fv(v);
+		v+=3;
+		glVertex3fv(v);
+		v+=3;
+		if(c>1)
+		  glColor3f(1.0,1.0,1.0);
+		else
+		  glColor3f(0.5,1.0,0.5);
+
+	 }
+	 glEnd();
   }
 }
 
 #define solv_tole 0.02
-#define minimum_sep 0.3
+#define minimum_sep 0.5
 #define detect_range 0.7
 #define average_range 1.5
 
@@ -411,190 +426,6 @@ Rep *RepSurfaceNew(CoordSet *cs)
 			 }
 		  FreeP(dot_flag);
       }
-
-	 if(I->N) 
-		{
-		  dot_flag=Alloc(int,I->N);
-		  for(a=0;a<I->N;a++) dot_flag[a]=1;
-		  map=MapNew(minimum_sep,I->V,I->N,NULL);
-        MapSetupExpress(map);		  
-        v=I->V;
-        vn=I->VN;
-        for(a=0;a<I->N;a++) {
-          if(dot_flag[a]) {
-            MapLocus(map,v,&h,&k,&l);
-            i=*(MapEStart(map,h,k,l));
-            if(i) {
-              j=map->EList[i++];
-              while(j>=0) {
-                if(j!=a) 
-                  {
-                    if(dot_flag[j]) {
-                      if(within3f(I->V+(3*j),v,0.5)) {
-                        if(dot_product3f(I->VN+(3*j),vn)<0.5) {
-                          dot_flag[j]=0;
-                          add3f(vn,I->VN+(3*j),vn);
-                          average3f(I->V+(3*j),v,v);
-                        }
-                      }
-                    }
-                  }
-                j=map->EList[i++];
-              }
-            }
-          }
-          v+=3;
-          vn+=3;
-        }
-        MapFree(map);
-        v0=I->V;
-        v=I->V;
-        vn0=I->VN;
-        vn=I->VN;
-        p=dot_flag;
-		  c=I->N;
-		  I->N=0;
-		  for(a=0;a<c;a++)
-			 {
-				if(*(p++)) {
-				  *(v0++)=*(v++);
-				  *(v0++)=*(v++);
-				  *(v0++)=*(v++);
-              normalize3f(vn);
-				  *(vn0++)=*(vn++);
-				  *(vn0++)=*(vn++);
-				  *(vn0++)=*(vn++);
-				  I->N++;
-				} else {
-				  v+=3;
-				  vn+=3;
-				}
-			 }
-		  FreeP(dot_flag);
-      }
-
-	 if(I->N) 
-		{
-		  dot_flag=Alloc(int,I->N);
-		  for(a=0;a<I->N;a++) dot_flag[a]=1;
-		  map=MapNew(minimum_sep,I->V,I->N,NULL);
-        MapSetupExpress(map);		  
-        v=I->V;
-        vn=I->VN;
-        for(a=0;a<I->N;a++) {
-          if(dot_flag[a]) {
-            MapLocus(map,v,&h,&k,&l);
-            i=*(MapEStart(map,h,k,l));
-            if(i) {
-              j=map->EList[i++];
-              while(j>=0) {
-                if(j!=a) 
-                  {
-                    if(dot_flag[j]) {
-                      if(within3f(I->V+(3*j),v,0.7)) {
-                        if(dot_product3f(I->VN+(3*j),vn)<0.3) {
-                          dot_flag[j]=0;
-                          add3f(vn,I->VN+(3*j),vn);
-                          average3f(I->V+(3*j),v,v);
-                        }
-                      }
-                    }
-                  }
-                j=map->EList[i++];
-              }
-            }
-          }
-          v+=3;
-          vn+=3;
-        }
-        MapFree(map);
-        v0=I->V;
-        v=I->V;
-        vn0=I->VN;
-        vn=I->VN;
-        p=dot_flag;
-		  c=I->N;
-		  I->N=0;
-		  for(a=0;a<c;a++)
-			 {
-				if(*(p++)) {
-				  *(v0++)=*(v++);
-				  *(v0++)=*(v++);
-				  *(v0++)=*(v++);
-              normalize3f(vn);
-				  *(vn0++)=*(vn++);
-				  *(vn0++)=*(vn++);
-				  *(vn0++)=*(vn++);
-				  I->N++;
-				} else {
-				  v+=3;
-				  vn+=3;
-				}
-			 }
-		  FreeP(dot_flag);
-      }
-
-	 if(I->N) 
-		{
-		  dot_flag=Alloc(int,I->N);
-		  for(a=0;a<I->N;a++) dot_flag[a]=1;
-		  map=MapNew(minimum_sep,I->V,I->N,NULL);
-        MapSetupExpress(map);		  
-        v=I->V;
-        vn=I->VN;
-        for(a=0;a<I->N;a++) {
-          if(dot_flag[a]) {
-            MapLocus(map,v,&h,&k,&l);
-            i=*(MapEStart(map,h,k,l));
-            if(i) {
-              j=map->EList[i++];
-              while(j>=0) {
-                if(j!=a) 
-                  {
-                    if(dot_flag[j]) {
-                      if(within3f(I->V+(3*j),v,1.0)) {
-                        if(dot_product3f(I->VN+(3*j),vn)<0.1) {
-                          dot_flag[j]=0;
-                          add3f(vn,I->VN+(3*j),vn);
-                          average3f(I->V+(3*j),v,v);
-                        }
-                      }
-                    }
-                  }
-                j=map->EList[i++];
-              }
-            }
-          }
-          v+=3;
-          vn+=3;
-        }
-        MapFree(map);
-        v0=I->V;
-        v=I->V;
-        vn0=I->VN;
-        vn=I->VN;
-        p=dot_flag;
-		  c=I->N;
-		  I->N=0;
-		  for(a=0;a<c;a++)
-			 {
-				if(*(p++)) {
-				  *(v0++)=*(v++);
-				  *(v0++)=*(v++);
-				  *(v0++)=*(v++);
-              normalize3f(vn);
-				  *(vn0++)=*(vn++);
-				  *(vn0++)=*(vn++);
-				  *(vn0++)=*(vn++);
-				  I->N++;
-				} else {
-				  v+=3;
-				  vn+=3;
-				}
-			 }
-		  FreeP(dot_flag);
-      }
-
 
     if(I->N) {	
       I->V = Realloc(I->V,float,(v0-I->V));

@@ -21,4 +21,7 @@ Z* -------------------------------------------------------------------
 
 int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTri);
 
+extern float TestLine[10000];
+extern int NTestLine;
+
 #endif
