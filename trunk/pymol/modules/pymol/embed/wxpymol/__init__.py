@@ -5,6 +5,11 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 import _cmd
 import threading
+
+import __main__
+
+__main__.pymol_argv = [ 'pymol', '-xq' ]
+
 import pymol
 from pymol.embed import EmbeddedPyMOL
 
@@ -61,7 +66,8 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       EVT_CHAR(self,self.OnChar)
 
    def ProcessEvent(self,event):
-      print "event"
+      pass
+      #print "event"
       #wxGLCanvas.ProcessEvent(event)
       
    def OnEraseBackground(self, event):
@@ -71,11 +77,11 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       size = self.GetClientSize()
       if self.GetContext():
          self.SetCurrent()
-         glViewport(0, 0, size.width, size.height)
-         self.ep_reshape(size.width,size.height)
+         #glViewport(0, 0, int(size.width), int(size.height))
+         self.ep_reshape(int(size.width),int(size.height))
 
    def OnChar(self, evt):
-      print "char"
+      #print "char"
       code = evt.GetKeyCode()
       if code<256:
          self.ep_char(evt.GetX(),evt.GetY(),code,
@@ -88,7 +94,7 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       self.CheckPyMOL()
       
    def OnPaint(self, event):
-      print "paint"
+      #print "paint"
       dc = wxPaintDC(self)
       self.SetCurrent()
       if not self.init:
@@ -118,8 +124,8 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
          self.ep_motion(x,y,
                      evt.LeftIsDown(),evt.MiddleIsDown(),evt.RightIsDown(),
                      evt.ShiftDown(),evt.ControlDown(),evt.MetaDown())
-         self.CheckPyMOL()            
-        #            print "mouse motion"
+         self.CheckPyMOL()
+         #            print "mouse motion"
 
    def OnIdle(self,evt):
       self.ep_idle()
@@ -128,8 +134,7 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       self.CheckPyMOL()
 
    def Repaint(self):
-      pass
-   #self.AddPendingEvent(wxPaintEvent())
+      self.AddPendingEvent(wxPaintEvent())
 
 class PyMOLCanvas(MyCanvasBase):
    def InitGL(self):
@@ -148,7 +153,8 @@ class PyMOLCanvas(MyCanvasBase):
 
    def CheckPyMOL(self):
       if self.ep_get_redisplay():
-         self.Repaint()
+         self.Refresh()
+         #self.Repaint()
 
 #----------------------------------------------------------------------
 
@@ -213,7 +219,7 @@ class MainWindow(wxFrame):
       self.control = wxTextCtrl(self.splitterV, -1, style=wxTE_MULTILINE)
       
       self.splitterV.SplitHorizontally(self.control,self.pymol_canvas)
-      self.splitterV.SetSashPosition(100, true)
+      self.splitterV.SetSashPosition(300, true)
       self.splitterV.SetMinimumPaneSize(20)
       
       # Use some sizers to see layout options 
