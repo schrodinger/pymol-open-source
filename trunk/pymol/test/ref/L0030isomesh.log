@@ -11,7 +11,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -23,7 +23,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>isomesh m1,map,1.0
  Executive: object "m1" created.
@@ -50,7 +50,7 @@ PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 lines.
  RayRenderTest: obtained 0 graphics primitives.
-PyMOL>del m1
+PyMOL>dele m1
  Executive: object "m2" created.
  Isomesh: created "m2", setting level to 1.100
  Isomesh: created "m2", setting level to 1.200
@@ -87,7 +87,7 @@ PyMOL>ray renderer=2
 PyMOL>frame 8
 PyMOL>ray renderer=2
  RayRenderTest: obtained 96677 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load lrg/map.xplor
  ObjectMapLoadXPLORFile: Loading from 'lrg/map.xplor'.
  ObjectMap: Map Read.  Range = -3.439 to 8.717
@@ -101,7 +101,7 @@ PyMOL>load lrg/map.xplor
  Crystal:   91.14430    0.00000    0.00000
  Crystal:    0.00000   91.14430    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.344
+ Crystal: Unit Cell Volume 380936.3
  Executive: object "map" created.
 PyMOL>isomesh m1,map,1.0
  Executive: object "m1" created.
@@ -128,7 +128,7 @@ PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 lines.
  RayRenderTest: obtained 0 graphics primitives.
-PyMOL>del m1
+PyMOL>dele m1
  Executive: object "m2" created.
  Isomesh: created "m2", setting level to 1.100
  Isomesh: created "m2", setting level to 1.200

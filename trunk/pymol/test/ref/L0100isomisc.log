@@ -11,7 +11,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -23,7 +23,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>isosurf m1,map,1.0
  Executive: object "m1" created.
@@ -50,13 +50,12 @@ PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
  TetsurfVolume: Surface generated using 0 triangles.
  RayRenderTest: obtained 0 graphics primitives.
-PyMOL>del m1
+PyMOL>dele m1
 Traceback (most recent call last):
-  File "/users/warren/linux/local/pymol/modules/pymol/parser.py", line 98, in 
-parse
-    exec(com2[nest],pymol_names,pymol_names)
+  File "/users/warren/pymol/modules/pymol/parser.py", line 105, in parse
+    exec(com2[nest]+"\n",pymol_names,pymol_names)
   File "<string>", line 1, in ?
-AttributeError: 'pymol.cmd' module has no attribute 'isosurf'
+AttributeError: 'module' object has no attribute 'isosurf'
 PyMOL>ray renderer=2
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>frame 3
@@ -65,7 +64,7 @@ PyMOL>ray renderer=2
 PyMOL>frame 8
 PyMOL>ray renderer=2
  RayRenderTest: obtained 0 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load lrg/map.xplor
  ObjectMapLoadXPLORFile: Loading from 'lrg/map.xplor'.
  ObjectMap: Map Read.  Range = -3.439 to 8.717
@@ -79,7 +78,7 @@ PyMOL>load lrg/map.xplor
  Crystal:   91.14430    0.00000    0.00000
  Crystal:    0.00000   91.14430    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.344
+ Crystal: Unit Cell Volume 380936.3
  Executive: object "map" created.
 PyMOL>isosurf m1,map,1.0
  Executive: object "m1" created.
@@ -106,13 +105,12 @@ PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
  TetsurfVolume: Surface generated using 0 triangles.
  RayRenderTest: obtained 0 graphics primitives.
-PyMOL>del m1
+PyMOL>dele m1
 Traceback (most recent call last):
-  File "/users/warren/linux/local/pymol/modules/pymol/parser.py", line 98, in 
-parse
-    exec(com2[nest],pymol_names,pymol_names)
+  File "/users/warren/pymol/modules/pymol/parser.py", line 105, in parse
+    exec(com2[nest]+"\n",pymol_names,pymol_names)
   File "<string>", line 1, in ?
-AttributeError: 'pymol.cmd' module has no attribute 'isosurf'
+AttributeError: 'module' object has no attribute 'isosurf'
 PyMOL>ray renderer=2
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>frame 3
@@ -121,7 +119,7 @@ PyMOL>ray renderer=2
 PyMOL>frame 8
 PyMOL>ray renderer=2
  RayRenderTest: obtained 0 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load lrg/map.ccp4
  ObjectMapLoadCCP4File: Loading from 'lrg/map.ccp4'.
  ObjectMapCCP4: Normalizing with mean = 0.000987 and stdev = 0.265128.
@@ -135,7 +133,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -147,7 +145,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>load lrg/ref.pdb
  PDBStrToCoordSet: Attempting to read symmetry information
@@ -161,7 +159,7 @@ PyMOL>load lrg/ref.pdb
  Crystal:   91.14400    0.00000    0.00000
  Crystal:    0.00000   91.14400    0.00000
  Crystal:    0.00000    0.00000   45.85600
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -200,43 +198,43 @@ PyMOL>isosurf m1,map,1.0,(ref)
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 289982 triangles.
- RayRenderTest: obtained 292024 graphics primitives.
+ TetsurfVolume: Surface generated using 249146 triangles.
+ RayRenderTest: obtained 251188 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/10:20/
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 31508 triangles.
- RayRenderTest: obtained 33550 graphics primitives.
+ TetsurfVolume: Surface generated using 23598 triangles.
+ RayRenderTest: obtained 25640 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/50:60/
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 27398 triangles.
- RayRenderTest: obtained 29440 graphics primitives.
+ TetsurfVolume: Surface generated using 20928 triangles.
+ RayRenderTest: obtained 22970 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/100/
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 300 triangles.
- RayRenderTest: obtained 2342 graphics primitives.
+ TetsurfVolume: Surface generated using 258 triangles.
+ RayRenderTest: obtained 2300 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/100/,2.0
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 1060 triangles.
- RayRenderTest: obtained 3102 graphics primitives.
+ TetsurfVolume: Surface generated using 1030 triangles.
+ RayRenderTest: obtained 3072 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/100/,4.0
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 3104 triangles.
- RayRenderTest: obtained 5146 graphics primitives.
+ TetsurfVolume: Surface generated using 3096 triangles.
+ RayRenderTest: obtained 5138 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/53/,carve=2.0
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 5446 triangles.
+ TetsurfVolume: Surface generated using 4248 triangles.
  RayRenderTest: obtained 3592 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/53/,carve=100
  Isosurface: created "m1", setting level to 1.000
@@ -248,21 +246,21 @@ PyMOL>isosurf m1,map,1.0,A/53/,carve=-0.5
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 1098 triangles.
- RayRenderTest: obtained 3140 graphics primitives.
+ TetsurfVolume: Surface generated using 702 triangles.
+ RayRenderTest: obtained 2744 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/53/,carve=10
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 76460 triangles.
- RayRenderTest: obtained 40489 graphics primitives.
+ TetsurfVolume: Surface generated using 69240 triangles.
+ RayRenderTest: obtained 40485 graphics primitives.
 PyMOL>isosurf m1,map,1.0,A/53/,carve=0.0
  Isosurface: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectSurface: updating "m1".
- TetsurfVolume: Surface generated using 1098 triangles.
+ TetsurfVolume: Surface generated using 702 triangles.
  RayRenderTest: obtained 2042 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load lrg/map.ccp4
  ObjectMapLoadCCP4File: Loading from 'lrg/map.ccp4'.
  ObjectMapCCP4: Normalizing with mean = 0.000987 and stdev = 0.265128.
@@ -276,7 +274,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -288,7 +286,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>isodot m1,map,1.0
  Executive: object "m1" created.
@@ -302,20 +300,20 @@ PyMOL>isodot m1,map,0.5
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 140060 dots.
- RayRenderTest: obtained 78933 graphics primitives.
+ RayRenderTest: obtained 140052 graphics primitives.
 PyMOL>isodot m1,map,500
  Isomesh: created "m1", setting level to 500.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 dots.
- RayRenderTest: obtained 78933 graphics primitives.
+ RayRenderTest: obtained 0 graphics primitives.
 PyMOL>isodot m1,map,-3000
  Isomesh: created "m1", setting level to -3000.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 dots.
- RayRenderTest: obtained 78933 graphics primitives.
-PyMOL>del m1
+ RayRenderTest: obtained 0 graphics primitives.
+PyMOL>dele m1
  Executive: object "m2" created.
  Isomesh: created "m2", setting level to 1.100
  Isomesh: created "m2", setting level to 1.200
@@ -352,7 +350,7 @@ PyMOL>ray renderer=2
 PyMOL>frame 8
 PyMOL>ray renderer=2
  RayRenderTest: obtained 49569 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load lrg/map.xplor
  ObjectMapLoadXPLORFile: Loading from 'lrg/map.xplor'.
  ObjectMap: Map Read.  Range = -3.439 to 8.717
@@ -366,7 +364,7 @@ PyMOL>load lrg/map.xplor
  Crystal:   91.14430    0.00000    0.00000
  Crystal:    0.00000   91.14430    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.344
+ Crystal: Unit Cell Volume 380936.3
  Executive: object "map" created.
 PyMOL>isodot m1,map,1.0
  Executive: object "m1" created.
@@ -380,20 +378,20 @@ PyMOL>isodot m1,map,0.5
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 140060 dots.
- RayRenderTest: obtained 78933 graphics primitives.
+ RayRenderTest: obtained 140052 graphics primitives.
 PyMOL>isodot m1,map,500
  Isomesh: created "m1", setting level to 500.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 dots.
- RayRenderTest: obtained 78933 graphics primitives.
+ RayRenderTest: obtained 0 graphics primitives.
 PyMOL>isodot m1,map,-3000
  Isomesh: created "m1", setting level to -3000.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 dots.
- RayRenderTest: obtained 78933 graphics primitives.
-PyMOL>del m1
+ RayRenderTest: obtained 0 graphics primitives.
+PyMOL>dele m1
  Executive: object "m2" created.
  Isomesh: created "m2", setting level to 1.100
  Isomesh: created "m2", setting level to 1.200
@@ -430,7 +428,7 @@ PyMOL>ray renderer=2
 PyMOL>frame 8
 PyMOL>ray renderer=2
  RayRenderTest: obtained 49569 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load lrg/map.ccp4
  ObjectMapLoadCCP4File: Loading from 'lrg/map.ccp4'.
  ObjectMapCCP4: Normalizing with mean = 0.000987 and stdev = 0.265128.
@@ -444,7 +442,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -456,7 +454,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>load lrg/ref.pdb
  PDBStrToCoordSet: Attempting to read symmetry information
@@ -470,7 +468,7 @@ PyMOL>load lrg/ref.pdb
  Crystal:   91.14400    0.00000    0.00000
  Crystal:    0.00000   91.14400    0.00000
  Crystal:    0.00000    0.00000   45.85600
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -509,44 +507,44 @@ PyMOL>isodot m1,map,1.0,(ref)
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 52423 dots.
+ IsosurfVolume: Surface generated using 44479 dots.
  RayRenderTest: obtained 2042 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/10:20/
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 5735 dots.
+ IsosurfVolume: Surface generated using 4299 dots.
  RayRenderTest: obtained 2042 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/50:60/
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 5177 dots.
+ IsosurfVolume: Surface generated using 3969 dots.
  RayRenderTest: obtained 2042 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/100/
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 70 dots.
+ IsosurfVolume: Surface generated using 62 dots.
  RayRenderTest: obtained 2042 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/100/,2.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 218 dots.
+ IsosurfVolume: Surface generated using 211 dots.
  RayRenderTest: obtained 2042 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/100/,4.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 641 dots.
+ IsosurfVolume: Surface generated using 640 dots.
  RayRenderTest: obtained 2042 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/53/,carve=2.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 1065 dots.
- RayRenderTest: obtained 2042 graphics primitives.
+ IsosurfVolume: Surface generated using 848 dots.
+ RayRenderTest: obtained 2238 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/53/,carve=100
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
@@ -557,17 +555,17 @@ PyMOL>isodot m1,map,1.0,A/53/,carve=-0.5
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 232 dots.
- RayRenderTest: obtained 80975 graphics primitives.
+ IsosurfVolume: Surface generated using 165 dots.
+ RayRenderTest: obtained 2206 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/53/,carve=10
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 13844 dots.
- RayRenderTest: obtained 80975 graphics primitives.
+ IsosurfVolume: Surface generated using 12557 dots.
+ RayRenderTest: obtained 7732 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/53/,carve=0.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 232 dots.
- RayRenderTest: obtained 80975 graphics primitives.
+ IsosurfVolume: Surface generated using 165 dots.
+ RayRenderTest: obtained 2042 graphics primitives.

@@ -11,7 +11,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -23,7 +23,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.14429    0.00000    0.00000
  Crystal:    0.00000   91.14429    0.00000
  Crystal:    0.00000    0.00000   45.85570
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>load lrg/ref.pdb
  PDBStrToCoordSet: Attempting to read symmetry information
@@ -37,7 +37,7 @@ PyMOL>load lrg/ref.pdb
  Crystal:   91.14400    0.00000    0.00000
  Crystal:    0.00000   91.14400    0.00000
  Crystal:    0.00000    0.00000   45.85600
- Crystal: Unit Cell Volume 380936.250
+ Crystal: Unit Cell Volume 380936.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -76,43 +76,43 @@ PyMOL>isomesh m1,map,1.0,(ref)
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 107495 lines.
- RayRenderTest: obtained 104445 graphics primitives.
+ IsosurfVolume: Surface generated using 91237 lines.
+ RayRenderTest: obtained 89373 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/10:20/
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 11766 lines.
- RayRenderTest: obtained 13157 graphics primitives.
+ IsosurfVolume: Surface generated using 8809 lines.
+ RayRenderTest: obtained 10331 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/50:60/
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 10580 lines.
- RayRenderTest: obtained 12027 graphics primitives.
+ IsosurfVolume: Surface generated using 8114 lines.
+ RayRenderTest: obtained 9660 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/100/
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 138 lines.
- RayRenderTest: obtained 2167 graphics primitives.
+ IsosurfVolume: Surface generated using 122 lines.
+ RayRenderTest: obtained 2151 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/100/,2.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 442 lines.
- RayRenderTest: obtained 2448 graphics primitives.
+ IsosurfVolume: Surface generated using 427 lines.
+ RayRenderTest: obtained 2435 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/100/,4.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 1313 lines.
- RayRenderTest: obtained 3239 graphics primitives.
+ IsosurfVolume: Surface generated using 1309 lines.
+ RayRenderTest: obtained 3236 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/53/,carve=2.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 2177 lines.
+ IsosurfVolume: Surface generated using 1734 lines.
  RayRenderTest: obtained 2574 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/53/,carve=100
  Isomesh: created "m1", setting level to 1.000
@@ -124,17 +124,17 @@ PyMOL>isomesh m1,map,1.0,A/53/,carve=-0.5
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 463 lines.
- RayRenderTest: obtained 2458 graphics primitives.
+ IsosurfVolume: Surface generated using 333 lines.
+ RayRenderTest: obtained 2324 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/53/,carve=10
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 28397 lines.
- RayRenderTest: obtained 15427 graphics primitives.
+ IsosurfVolume: Surface generated using 25744 lines.
+ RayRenderTest: obtained 15423 graphics primitives.
 PyMOL>isomesh m1,map,1.0,A/53/,carve=0.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 463 lines.
+ IsosurfVolume: Surface generated using 333 lines.
  RayRenderTest: obtained 2042 graphics primitives.
