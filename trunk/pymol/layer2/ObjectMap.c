@@ -107,7 +107,7 @@ ObjectInit((Object*)I);
 
  I->Crystal = CrystalNew();
  I->Field = NULL;
-
+ I->Obj.type = cObjectMap;
  I->Obj.fFree = (void (*)(struct Object *))ObjectMapFree;
  I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMapUpdate;
  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMapRender;

@@ -782,12 +782,7 @@ void SceneRay(void)
 
   ray = RayNew();
 
-  if(I->ChangedFlag) {
-	 while(ListIterate(I->Obj,rec,next,ObjList))
-      if(rec->obj->fUpdate) 
-        rec->obj->fUpdate(rec->obj);
-	 I->ChangedFlag=false;
-  }
+  SceneUpdate();
 
   
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
@@ -893,9 +888,10 @@ void SceneUpdate(void)
 
   if(I->ChangedFlag) {
 	 while(ListIterate(I->Obj,rec,next,ObjList))
-		rec->obj->fUpdate(rec->obj);
+      if(rec->obj->fUpdate) 
+        rec->obj->fUpdate(rec->obj);
 	 I->ChangedFlag=false;
-  } 
+  }
 }
 /*========================================================================*/
 int SceneRenderCached(void)

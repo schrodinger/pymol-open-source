@@ -496,7 +496,6 @@ void OrthoDoDraw()
   char *str;
   float *v;
 
-  SceneUpdate();
   
   /*  SceneCopy(1);*/ /* Copy if necessary before clear */
   

@@ -76,7 +76,7 @@ def mem():
 def isomesh(nam,argst):
    arg = split(argst,',')
    la = len(arg)
-   if la<3:
+   if la<1:
       print " error: invalid mesh arguments"
       raise RunError
    else:
@@ -85,18 +85,41 @@ def isomesh(nam,argst):
       optarg1=''
       optarg2=''
       lvl = 1.0
-      if la>=2:
-         if arg[1][0] == '(':
+      if la>1:
+         lvl = float(arg[1])
+      if la>2:
+         if arg[2][0] == '(':
             mopt = 1
-            sel = split(arg[1],' ')
-            optarg2 = '0'
-            if len(sel)==2:
-               optarg2 = sel[1]
-            optarg1 = sel[0]
-      if la>=3:
-         lvl = float(arg[2])
+            optarg1=arg[2]
+      if la>3:
+         optarg2 = arg[3]
       lock()
-      r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl)
+      r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,0)
+      unlock()
+   return r
+
+def isodot(nam,argst):
+   arg = split(argst,',')
+   la = len(arg)
+   if la<1:
+      print " error: invalid dot arguments"
+      raise RunError
+   else:
+      map=arg[0]
+      mopt=0
+      optarg1=''
+      optarg2=''
+      lvl = 1.0
+      if la>1:
+         lvl = float(arg[1])
+      if la>2:
+         if arg[2][0] == '(':
+            mopt = 1
+            optarg1=arg[2]
+      if la>3:
+         optarg2 = arg[3]
+      lock()
+      r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,1)
       unlock()
    return r
 
@@ -536,6 +559,12 @@ def middle():
    unlock()
    return r
 
+def dump(fnam,obj):
+   lock()
+   r = _pm.dump(fnam,obj)
+   unlock()
+   return r
+
 def save(*arg):
    r = 1
    lock()
@@ -588,6 +617,7 @@ def load(*arg):
    r = 1
    lock()   
    ftype = 0
+   state = -1
    if re.search("\.pdb$",arg[0]):
       ftype = 0
    elif re.search("\.mol$",arg[0]):
@@ -599,21 +629,28 @@ def load(*arg):
    if len(arg)==1:
       oname = re.sub("[^/]*\/","",arg[0])
       oname = re.sub("\.pdb|\.mol|\.mmod|\.xplor","",oname)
-      r = _pm.load(oname,arg[0],-1,ftype)
+      r = _pm.load(oname,arg[0],state,ftype)
    elif len(arg)==2:
       oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],-1,ftype)
+      r = _pm.load(oname,arg[0],state,ftype)
    elif len(arg)==3:
       oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
+      state = int(arg[2])-1
+      r = _pm.load(oname,arg[0],state,ftype)
    elif len(arg)==4:
+      if loadable.has_key(arg[3]):
+         ftype = loadable[arg[3]]
+      else:
+         ftype = int(arg[3])
+      state = int(arg[2])-1
       oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],int(arg[2])-1,int(arg[3]))
+      r = _pm.load(oname,arg[0],state,ftype)
    else:
       print "argument error."
    unlock()
    return r
 
+   
 def read_molstr(*arg):
    r = 1
    lock()   
@@ -799,7 +836,8 @@ keyword = {
    'count_states'  : [count_states , 0 , 1 , ',' , 0 ],   
    'delete'        : [delete       , 1 , 1 , ',' , 0 ],
    'disable'       : [disable      , 1 , 1 , ',' , 0 ],
-   'dist'          : [distance     , 0 , 2 , ',' , 0 ],
+   'dist'          : [distance     , 0 , 2 , ',' , 0 ],\
+   'dump'          : [dump         , 2 , 2 , ',' , 0 ],
    'enable'        : [enable       , 1 , 1 , ',' , 0 ],
    'export_dots'   : [export_dots  , 2 , 2 , ',' , 0 ],
    'fit'           : [fit          , 2 , 2 , ',' , 0 ],
@@ -812,6 +850,7 @@ keyword = {
    'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , 0 ],
    'load'          : [load         , 1 , 4 , ',' , 0 ],
    'mem'           : [mem          , 0 , 0 , ',' , 0 ],
+   'isodot'        : [isodot       , 2 , 2 , '=' , 0 ],   
    'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],   
    'move'          : [move         , 2 , 2 , ',' , 0 ],
    'mset'          : [mset         , 1 , 1 , ',' , 0 ],
@@ -887,4 +926,11 @@ special = {
    106      : [ 'home'      , beginning              , 0 , None ],
    107      : [ 'end'       , ending                 , 0 , None ],
    108      : [ 'insert'    , rock                   , 0 , None ]   
+}
+
+loadable = {
+   'pdb'   : 0,
+   'mol'   : 1,
+   'mmod'  : 4,
+   'xplor' : 7
 }

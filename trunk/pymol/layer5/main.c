@@ -445,7 +445,7 @@ void was_main(int flags)
     if(StereoCapable) {
       glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
     } else {
-      glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );      
+      glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE );      
     }
 
     glutInitWindowPosition(0, 175);
@@ -467,8 +467,10 @@ void was_main(int flags)
     /*  glutPassiveMotionFunc(   MainMove );*/
     glutSpecialFunc(         MainSpecial );
     glutIdleFunc(         MainBusyIdle );
-    
+
     glutPostRedisplay();
+
+    if(StereoCapable) SettingSet(cSetting_line_smooth,1.0);
   }
 
   Py_UNBLOCK_THREADS;
@@ -483,10 +485,13 @@ void was_main(int flags)
     /*    printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));*/
     glutMainLoop();
   } else {
-    printf(" No graphics front end.\n");
+    printf(" Command mode. No graphics front end.\n");
     MainReshape(WinX,WinY);
     MainDraw(); /* for command line processing */
-    while(1) MainBusyIdle();
+    while(1) {
+      MainBusyIdle();
+      
+    }
   }
 
 #ifndef _PYMOL_MODULE

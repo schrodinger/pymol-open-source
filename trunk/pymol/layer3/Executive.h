@@ -32,6 +32,7 @@ Block *ExecutiveGetBlock(void);
 Object *ExecutiveFindObjectByName(char *name);
 int ExecutiveIterateObject(Object **obj,void **hidden);
 void ExecutiveDelete(char *name);
+void ExecutiveDump(char *fname,char *obj);
 void ExecutiveSetControlsOff(char *name);
 void ExecutiveSort(char *name);
 void ExecutiveSetSetting(char *sname,char *value);
