@@ -5130,7 +5130,7 @@ SEE ALSO
    try:
       lock()
       if (representation=="") and (selection==""):
-         r = _cmd.showhide("!",0,0);      
+         r = _cmd.showhide("@",0,0);      
       elif (representation!="") and (selection!=""):
          rep = representation
          rep = repres_sc.auto_err(rep,'representation')
@@ -5138,7 +5138,7 @@ SEE ALSO
          selection = selector.process(selection)
          r = _cmd.showhide(str(selection),int(repn),0);
       elif (representation=='all'):
-         r = _cmd.showhide("!",0,0);
+         r = _cmd.showhide("@",0,0);
       elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
          selection = selector.process(representation)
          r = _cmd.showhide(str(selection),-1,0);
