@@ -63,6 +63,7 @@ typedef struct {
   EdgeRec *edge;
   int nEdge;
   MapType *map;
+  MapCache map_cache;
   LinkType *link;
   int nLink;
   int N;
@@ -463,13 +464,41 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
   int s01,s12,s02,it;
   float *v0,*v1,*v2,*n0,*n1,*n2,*ft;
   float vt[3],vt1[3],vt2[3],vt3[3];
-
+  int e1,e2,e3,h,j,k,l;
   v0 = v+3*i0;
   v1 = v+3*i1;
   v2 = v+3*i2;
   n0 = vn+3*i0;
   n1 = vn+3*i1;
   n2 = vn+3*i2;
+
+  /* mark this quadrant as visited so that further activity in this
+     quadrant won't prolong the rendering process indefinitely */
+  
+  MapType *map = I->map;
+  MapCache *cache = &I->map_cache;
+  
+  MapLocus(map,v0,&h,&k,&l);
+  e1=*(MapEStart(map,h,k,l));
+  
+  if(e1) {
+    j=map->EList[e1];
+    MapCache(cache,j);
+  }
+  
+  MapLocus(map,v1,&h,&k,&l);
+  e2=*(MapEStart(map,h,k,l));
+  if(e2&&(e1!=e2)) {
+    j=map->EList[e2];
+    MapCache(cache,j);
+  }
+  
+  MapLocus(map,v2,&h,&k,&l);
+  e3=*(MapEStart(map,h,k,l));
+  if(e3&&(e3!=e2)&&(e3!=e1)) {
+    j=map->EList[e3];
+    MapCache(cache,j);
+  }
 
   /* make sure the triangle obeys the right hand rule */
 
@@ -587,7 +616,6 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
   float maxDot,dot,dot1,dot2;
   const float _plus = R_SMALL4, _0=0.0F;
   const float _5 = 0.5F;
-
   /*  PRINTFD(FB_Triangle)
       " TriangleBuildObvious-Debug: entered: i1=%d i2=%d n=%d\n",i1,i2,n
       ENDFD;*/
@@ -1322,7 +1350,7 @@ static void FollowActives(float *v,float *vn,int n,int mode)
 
 }
 
-static void TriangleFill(float *v,float *vn,int n)
+static void TriangleFill(float *v,float *vn,int n,int first_time)
 {
   TriangleSurfaceRec *I=&TriangleSurface;
   int lastTri,lastTri2,lastTri3;
@@ -1330,14 +1358,18 @@ static void TriangleFill(float *v,float *vn,int n)
   float dif,minDist,*v0,*n0,*n1;
   int i1,i2=0;
   int n_pass =0;
+  int first_vert=0,first_vert_used=0;
+
   MapType *map;
+  MapCache *cache;
 
   PRINTFD(FB_Triangle)
     " TriangleFill-Debug: entered: n=%d\n",n
     ENDFD;
   
   map=I->map;
-  
+  cache = &I->map_cache;
+
   lastTri3=-1;
   while(lastTri3!=I->nTri) {
 	 lastTri3=I->nTri;
@@ -1361,6 +1393,7 @@ static void TriangleFill(float *v,float *vn,int n)
               i=*(MapEStart(map,h,k,l));
               if(i) {
                 j=map->EList[i++];
+                first_vert = j;
                 while(j>=0) {
                   if(j!=a) 
                     {
@@ -1374,6 +1407,7 @@ static void TriangleFill(float *v,float *vn,int n)
                                 minDist = dif;
                                 i1=a;
                                 i2=j;
+                                first_vert_used = first_vert;
                               }
                             }
                     }
@@ -1381,8 +1415,21 @@ static void TriangleFill(float *v,float *vn,int n)
                 }
               }
             }
-	 
+        
         if(i1>=0) {
+
+          if(!MapCached(cache,first_vert_used)) {
+            MapCache(cache,first_vert_used);
+            if(first_time) {
+              n_pass=n_pass/2; 
+              /* if we've entered a new map quadrant then half the effective number of passes */
+
+              /* this is a very non-obvious way of making sure that we
+                 don't prematurely terminate when surfacing
+                 discontinuous surfaces that will always require many passes */
+            }
+          }
+
           if(I->vertActive[i1]<0) I->vertActive[i1]--;
           VLACheck(I->activeEdge,int,I->nActive*2+1);
           I->activeEdge[I->nActive*2] = i1;
@@ -1608,7 +1655,7 @@ static void TriangleFixProblems(float *v,float *vn,int n)
 		}
 		
 		TriangleAdjustNormals(v,vn,n);
-		TriangleFill(v,vn,n);
+		TriangleFill(v,vn,n,false);
 
 	 }
   FreeP(vFlag);
@@ -1752,7 +1799,8 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,
   I->map=MapNew(cutoff,v,n,extent);
   MapSetupExpress(I->map);
   map=I->map;
-  
+  MapCacheInit(&I->map_cache,map,0,0);
+
   I->edgeStatus = Alloc(int,n);
   for(a=0;a<n;a++) {
 	 I->edgeStatus[a]=0;
@@ -1768,7 +1816,7 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,
 	 I->vertWeight[a]=2;
   }
 
-  TriangleFill(v,vn,n);
+  TriangleFill(v,vn,n,true);
 
   if(Feedback(FB_Triangle,FB_Debugging)) {
     for(a=0;a<n;a++) 
@@ -1823,6 +1871,7 @@ NTestLine=0; for(a=0;a<n;a++)
   FreeP(I->edgeStatus);
   FreeP(I->vertActive);
   FreeP(I->vertWeight);
+  MapCacheFree(&I->map_cache,0,0);
   MapFree(map);
   return(I->tri);
 }
