@@ -285,8 +285,10 @@ void ButModeDraw(Block *block)
   int nf;
 
   if(PMGUI) {
-    glColor3fv(I->Block->BackColor);
-    BlockFill(I->Block);
+    if(SettingGetGlobal_b(cSetting_internal_gui_mode)==0) {
+      glColor3fv(I->Block->BackColor);
+      BlockFill(I->Block);
+    }
 
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;

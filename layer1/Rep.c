@@ -37,7 +37,7 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
   Rep *tmp = NULL;
 
   PRINTFD(FB_Rep)
-    " RepRebuild-Debug: entered: rep %d I->fNew %p\n",rep,I->fNew
+    " RepRebuild-Debug: entered: rep %d I->fNew %p\n",rep,(void*)I->fNew
     ENDFD;
 
   if(I->fNew) {

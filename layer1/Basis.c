@@ -2109,4 +2109,7 @@ static int intersect_triangle(float orig[3], float *pre,float vert0[3],
 #endif
 
 
+#else
+typedef int this_file_is_no_longer_empty;
+
 #endif

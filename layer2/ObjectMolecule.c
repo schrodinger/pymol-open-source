@@ -1815,7 +1815,8 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
         ok=false;
 
       PRINTFD(FB_ObjectMolecule)
-        " ObjectMolPMO2CoordSet: loaded spheroid %p size %d \n",spheroid,size
+        " ObjectMolPMO2CoordSet: loaded spheroid %p size %d \n",
+        (void*)spheroid,size
         ENDFD;
 
     }
@@ -1825,7 +1826,8 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
         ok=false;
       }
       PRINTFD(FB_ObjectMolecule)
-        " ObjectMolPMO2CoordSet: loaded spheroid %p size %d \n",spheroid_normal,size
+        " ObjectMolPMO2CoordSet: loaded spheroid %p size %d \n",
+        (void*)spheroid_normal,size
         ENDFD;
 
     } 

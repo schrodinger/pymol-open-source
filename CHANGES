@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * stick_transparency opengl rendering fixed
+
+   * passive stereo GLUT support (extra-wide desktop) for Windows
+
    * adjusted reflectivity of interior color to better match exterior
 
    * minor fixes to depth_cue and ray_trace_fog control and input 

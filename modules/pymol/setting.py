@@ -378,6 +378,7 @@ if __name__=='pymol.setting':
       surface_solvent       = 338
       triangle_max_passes   = 339
       ray_interior_reflect  = 340
+      internal_gui_mode     = 341
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

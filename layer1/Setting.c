@@ -1300,6 +1300,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_text:
     OrthoDirty();
     break;
+  case cSetting_internal_gui_mode:
+    break;
   case cSetting_internal_gui_width:
   case cSetting_internal_gui:
   case cSetting_internal_feedback:
@@ -2210,7 +2212,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_surface_solvent,0);
   SettingSet_i(I,cSetting_triangle_max_passes,5);
   SettingSet_f(I,cSetting_ray_interior_reflect,0.4F);
-
+  SettingSet_i(I,cSetting_internal_gui_mode,0);
 }
 
 

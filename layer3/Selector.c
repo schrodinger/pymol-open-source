@@ -2484,7 +2484,8 @@ int *SelectorGetResidueVLA(int sele)
     VLASize(result,int,(r-result));
   }
   PRINTFD(FB_Selector)
-    " SelectorGetResidueVLA-DEBUG: exit, result = %p, size = %d\n",result,VLAGetSize(result)
+    " SelectorGetResidueVLA-DEBUG: exit, result = %p, size = %d\n",
+    (void*)result,VLAGetSize(result)
     ENDFD;
   
   return(result);
@@ -6242,7 +6243,8 @@ int SelectorSelect1(EvalElem *base)
   base->type=STYP_LIST;
   base->sele=Calloc(int,I->NAtom);
   PRINTFD(FB_Selector)
-    " SelectorSelect1: base: %p sele: %p\n",base,base->sele
+    " SelectorSelect1: base: %p sele: %p\n",
+    (void*)base,(void*)base->sele
   ENDFD;
   ErrChkPtr(base->sele);
   switch(base->code)
@@ -7648,7 +7650,8 @@ int *SelectorEvaluate(SelectorWordType *word)
       for(a=1;a<=totDepth;a++) {
         PRINTFD(FB_Selector)
           " Selector initial stack %d-%p lv: %x co: %d type: %x sele %p\n",
-          a,Stack+a,Stack[a].level,Stack[a].code,Stack[a].type,Stack[a].sele
+          a,(void*)(Stack+a),Stack[a].level,Stack[a].code,
+          Stack[a].type,(void*)Stack[a].sele
           ENDFD;
                  
         if(Stack[a].level>maxLevel) 
@@ -7668,8 +7671,9 @@ int *SelectorEvaluate(SelectorWordType *word)
           while(ok&&opFlag) { /* loop through all entries looking for ops at the current level */
             PRINTFD(FB_Selector)
               " Selector: lvl: %d de:%d-%p slv:%d co: %x typ %x sele %p td: %d\n",
-              level,depth,Stack+depth,Stack[depth].level,Stack[depth].code,
-              Stack[depth].type,Stack[depth].sele,totDepth
+              level,depth,(void*)(Stack+depth),Stack[depth].level,
+              Stack[depth].code,
+              Stack[depth].type,(void*)Stack[depth].sele,totDepth
               ENDFD;
           
             opFlag=false;
@@ -7819,7 +7823,7 @@ int *SelectorEvaluate(SelectorWordType *word)
 	 {
 		for(a=1;a<=depth;a++) {
         PRINTFD(FB_Selector)
-          " Selector: releasing %d %x %p\n",a,Stack[a].type,Stack[a].sele
+          " Selector: releasing %d %x %p\n",a,Stack[a].type,(void*)Stack[a].sele
           ENDFD;
 		  if(Stack[a].type==STYP_LIST)
 			 FreeP(Stack[a].sele);

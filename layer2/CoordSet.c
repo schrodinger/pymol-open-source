@@ -155,7 +155,7 @@ void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
 
   PRINTFD(FB_CoordSet)
     " CoordSetAdjustAtmIdx-Debug: entered NAtIndex: %d NIndex %d\n I->AtmToIdx %p\n",
-    I->NAtIndex,I->NIndex,I->AtmToIdx
+    I->NAtIndex,I->NIndex,(void*)I->AtmToIdx
     ENDFD;
 
   for(a=0;a<I->NAtIndex;a++) {
@@ -694,7 +694,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
   Rep *r;
 
   PRINTFD(FB_CoordSet)
-    " CoordSetRender: entered (%p).\n",I
+    " CoordSetRender: entered (%p).\n",(void*)I
     ENDFD;
 
   if((!pass)&&I->Name[0])
@@ -731,7 +731,6 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
               r->fRender(r,ray,pick);                
             } else 
               switch(a) {
-              case cRepCyl:
               case cRepLabel:
               case cRepNonbondedSphere:
               case cRepRibbon:
@@ -748,6 +747,16 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
               case cRepExtent:
                 if(!pass) r->fRender(r,ray,pick);                
                 break;
+              case cRepCyl: /* render sticks differently depending on transparency */
+                if(SettingGet_f(r->cs->Setting,
+                                r->obj->Setting,
+                                cSetting_stick_transparency)>0.0001) {
+                  if(pass==-1)
+                    r->fRender(r,ray,pick);                                
+                } else if(pass==1)
+                  r->fRender(r,ray,pick);
+                break;
+
               case cRepSurface:
                 /*                if(pass==-1) r->fRender(r,ray,pick);              */
                 if(SettingGet_f(r->cs->Setting,

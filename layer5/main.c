@@ -603,8 +603,8 @@ void MainDoReshape(int width, int height) /* called internally */
   int internal_feedback;
   if(width<0) {
     BlockGetSize(SceneGetBlock(),&width,&h);
-    if(SettingGet(cSetting_internal_gui))
-      width+=(int)SettingGet(cSetting_internal_gui_width);
+    if(SettingGetGlobal_b(cSetting_internal_gui))
+      width+=SettingGetGlobal_i(cSetting_internal_gui_width);
   }
 
   if(height<0) { 
@@ -667,6 +667,8 @@ static void MainInit(void)
   SelectorInit();
   MovieInit();
   SceneInit();
+  ButModeInit();
+  ControlInit();
   SculptCacheInit();
   VFontInit();
   ExecutiveInit();
@@ -689,6 +691,8 @@ void MainFree(void)
   ExecutiveFree();
   VFontFree();
   SculptCacheFree();
+  ButModeFree();
+  ControlFree();
   SceneFree();
   MovieFree();
   SelectorFree();
