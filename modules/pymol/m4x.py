@@ -14,7 +14,9 @@ from chempy import Storage,Atom,Bond
 from chempy.models import Indexed
 
 import string
-from chempy import cex as CEX
+
+from chempy import cex
+CEX=cex
 
 class CEXpyParser(CEX.CEXsmilesParser):
     def __init__(self):

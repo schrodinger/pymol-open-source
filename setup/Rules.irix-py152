@@ -4,7 +4,7 @@
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /apps/pymol/irix
+PYMOL_PATH = /usr/local/pymol-0_86pre
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
@@ -15,8 +15,8 @@ XINC_DIR = -I/usr/X11R6/include
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
 PYTHON_LIB = 
 PYTHON_LIB_DIR = 
-PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.1 \
-   -I$(PYMOL_PATH)/ext/include/python2.1/Numeric
+PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python1.5 \
+   -I$(PYMOL_PATH)/ext/include/python1.5/Numeric
 #--- Other external dependencies
 EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include 
 EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib

@@ -35,8 +35,8 @@ PyObject *FieldAsPyList(CField *I)
   PyList_SetItem(result,1,PyInt_FromLong(I->n_dim));
   PyList_SetItem(result,2,PyInt_FromLong(I->base_size));
   PyList_SetItem(result,3,PyInt_FromLong(I->size));
-  PyList_SetItem(result,4,PConvIntArrayToPyList(I->dim,I->n_dim));
-  PyList_SetItem(result,5,PConvIntArrayToPyList(I->stride,I->n_dim));
+  PyList_SetItem(result,4,PConvIntArrayToPyList((int*)I->dim,I->n_dim));
+  PyList_SetItem(result,5,PConvIntArrayToPyList((int*)I->stride,I->n_dim));
   n_elem = I->size/I->base_size;
   switch(I->type) {
   case cFieldInt:
@@ -73,8 +73,8 @@ CField *FieldNewFromPyList(PyObject *list)
   if(ok) ok=PyList_Check(list);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->type);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&I->n_dim);
-  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,2),&I->base_size);
-  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,3),&I->size);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,2),(int*)&I->base_size);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,3),(int*)&I->size);
   if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,4),(int**)&I->dim);
   if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,5),(int**)&I->stride);
 
