@@ -631,12 +631,13 @@ X -CC-N2-X    2    4.80        180.0             2.         WLD from X -CC-NB-X
 X -CW-N2-X    4    6.00        180.0             2.         WLD from X -CW-NA-X
 X -CC-OS-X    2    5.40        180.0             2.         WLD from X -C -OS-X
 X -NB-OS-X    2    5.40        180.0             2.         WLD from X -C -OS-X
-N -CT-C -N    1    2.000       180.000           2.
-C -N -CT-C    1    0.850       180.000          -2.
-C -N -CT-C    1    0.800         0.000           1.
-C -CT-N -C    1    0.50        180.0            -4.         phi,psi,parm94
-C -CT-N -C    1    0.15        180.0            -3.         phi,psi,parm94
-C -CT-N -C    1    0.53          0.0             1.         phi,psi,parm94
+N -CT-C -N    1    1.70        180.0            -1.         Junmei et al,1999
+N -CT-C -N    1    2.00        180.0             2.         Junmei et al,1999
+C -N -CT-C    1    0.85        180.0            -2.         Junmei et al,1999
+C -N -CT-C    1    0.80          0.0             1.         Junmei et al,1999
+CT-CT-N -C    1    0.50        180.0            -4.         phi,psi,parm94
+CT-CT-N -C    1    0.15        180.0            -3.         phi,psi,parm94
+CT-CT-N -C    1    0.53          0.0             1.         phi,psi,parm94
 CT-CT-C -N    1    0.100         0.0            -4.         phi,psi,parm94
 CT-CT-C -N    1    0.07          0.0             2.         phi,psi,parm94
 H -N -C -O    1    2.50        180.0            -2.         JCC,7,(1986),230
