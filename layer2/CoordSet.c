@@ -125,7 +125,10 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
     }
   VLACheck(*charVLA,char,(*c)+1000);  
 
-  if(strlen(ai->name)<4) {
+  if(!ai->name[0]) {
+    sprintf(name," %s",ai->elem);
+  }
+  else if(strlen(ai->name)<4) {
     if(!((ai->name[0]>='0')&&(ai->name[0])<='9')) {
       name[0]=' ';	
       strcpy(name+1,ai->name);

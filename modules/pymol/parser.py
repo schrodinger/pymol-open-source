@@ -111,7 +111,7 @@ def parse(s):
                         elif args[nest][1]=='local':
                            execfile(args[nest][0],pymol_names,{})
                         elif args[nest][1]=='global':
-                           execfile(args[nest][0],pymol_names,local_names)
+                           execfile(args[nest][0],pymol_names,pymol_names)
                      else:
                         print 'Error: invalid arguments for %s command.' % com
                   elif len(input[nest][0]):
