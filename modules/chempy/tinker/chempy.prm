@@ -1,3 +1,6 @@
+# This is a modified version of tinker's amber.prm
+# with several corrections (?) which bring it into
+# compliance with Amber's "parm96.dat"
 
       ##############################
       ##                          ##
@@ -140,7 +143,7 @@ vdw         16              1.8240     0.1700
 vdw         17              1.8240     0.1700
 vdw         18              1.8240     0.1700
 vdw         19              1.8240     0.1700
-vdw         20              1.8750     0.1700
+vdw         20              1.8240     0.1700
 vdw         21              1.7683     0.1520
 vdw         22              1.7210     0.2104
 vdw         23              1.6837     0.1700

@@ -7,7 +7,8 @@ from chempy.tinker import keyword
 from chempy import protein
 import os
 
-a = io.pdb.fromFile("dat/il2.pdb")
+#a = io.pdb.fromFile("dat/il2.pdb")
+a = io.pdb.fromFile("dat/pept.pdb")
 
 a=protein.generate(a)
 

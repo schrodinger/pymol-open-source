@@ -787,3 +787,98 @@ MOD4      RE
  
 END
 END
+
+
+
+# bromine 
+CHEMPY    BR    35    1 
+# carbon                        
+CHEMPY    C      6    3 
+CHEMPY    CA     6    3 
+CHEMPY    CB     6    3 
+CHEMPY    CC     6    3 
+CHEMPY    CF     6    3 
+CHEMPY    CK     6    3 
+CHEMPY    CM     6    3 
+CHEMPY    CN     6    3 
+CHEMPY    CQ     6    3 
+CHEMPY    CR     6    3 
+CHEMPY    CT     6    4 
+CHEMPY    CV     6    3 
+CHEMPY    CW     6    3  
+CHEMPY    CY     6    2 
+CHEMPY    CX     6    2 
+CHEMPY    C5     6    3 
+CHEMPY    C*     6    3 
+# calcium       
+CHEMPY    C0    20    3 
+# chloride      
+CHEMPY    Cl    17    1  
+# fluorine      
+CHEMPY    F      9    1 
+# hydrogen      
+CHEMPY    H      1    1 
+CHEMPY    H1     1    1 
+CHEMPY    H2     1    1 
+CHEMPY    H3     1    1 
+CHEMPY    H4     1    1 
+CHEMPY    H5     1    1 
+CHEMPY    HA     1    1 
+CHEMPY    HC     1    1 
+CHEMPY    HO     1    1 
+CHEMPY    HP     1    1 
+CHEMPY    HS     1    1 
+CHEMPY    HW     1    1 
+# iodine        
+CHEMPY    I     53    1 
+# chloride anion
+CHEMPY    IM    17    0 
+# sodium cation 
+CHEMPY    IP    11    0 
+# magnesium     
+CHEMPY    MG    12    0 
+# nitrogen      
+CHEMPY    N      7    3 
+CHEMPY    N*     7    2 
+CHEMPY    N2     7    3 
+CHEMPY    N3     7    4 
+CHEMPY    NA     7    3 
+CHEMPY    NB     7    2 
+CHEMPY    NC     7    2 
+CHEMPY    NX     7    2 
+CHEMPY    NZ     7    3 
+   #            
+CHEMPY    OW     8    2 
+CHEMPY    OH     8    2 
+CHEMPY    OS     8    2 
+CHEMPY    O      8    1 
+CHEMPY    O2     8    1 
+CHEMPY    OM     8    1 
+CHEMPY    OZ     8    1    
+CHEMPY    P     15    4 
+CHEMPY    S     16    2 
+CHEMPY    SO    16    4 
+CHEMPY    SX    16    2 
+CHEMPY    SH    16    2 
+   # copper     
+CHEMPY    CU    29    0 
+   # iron       
+CHEMPY    FE    26    0 
+   # lithium    
+CHEMPY    Li     3    0 
+   # potassium  
+CHEMPY    K     19    0 
+   # rubidium   
+CHEMPY    Rb    37    0 
+   # cesium     
+CHEMPY    Cs    55    0 
+   # calcium (alternate)
+CHEMPY    Ca    20    0 
+   # dummy
+CHEMPY    X      6    1 
+   # zinc
+CHEMPY    Z0    30    0 
+CHEMPY    Z4    30    4 
+CHEMPY    Z5    30    5 
+
+

@@ -16,9 +16,9 @@ PEPT_CUTOFF = 1.7
 #---------------------------------------------------------------------------------
 def generate(model, forcefield = protein_amber, histidine = 'HIE' ):
 
-   add_bonds(model)
+   add_bonds(model,forcefield=forcefield)   
    connected = model.convert_to_connected()
-   add_hydrogens(connected)
+   add_hydrogens(connected,forcefield=forcefield)
    place.simple_unknowns(connected)
    return connected.convert_to_indexed()
 

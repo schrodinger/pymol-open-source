@@ -1,6 +1,6 @@
 # python
 
-# dynamics test
+# test of chempy forcefield for comparison with the others.
 
 from chempy import io
 from chempy import tinker
@@ -10,25 +10,24 @@ from chempy import feedback
 
 import os
 
-feedback['atoms'] = 1
+#model= io.pdb.fromFile("dat/il2.pdb")
+model= io.pdb.fromFile("dat/pept.pdb")
 
-m = io.pdb.fromFile("dat/pept.pdb")
+model = protein.generate(model)
 
-m = protein.generate(m)
+state = State()
 
-s = State()
+state.echo = 0
 
-s.echo = 0
+state.load_model(model)
+print " test: atom 0 position:",model.atom[0].coord
+state.energy(kw=["debug\n"])
 
-s.load_model(m)
-print " test: atom 0 position:",m.atom[0].coord
-s.energy(kw=["debug\n"])
+print " test: energy is ->",state.energy
 
-print " test: energy is ->",s.energy
-
-for a in s.summary:
+for a in state.summary:
    print " test: summary ",a
 
-#os.system("touch .no_fail tinker_*")
-#os.system("/bin/rm .no_fail tinker_*")
+os.system("touch .no_fail tinker_*")
+os.system("/bin/rm .no_fail tinker_*")
 
