@@ -1320,11 +1320,12 @@ void OrthoSplash(void)
   PRINTF "    Other Major Authors and Contributors:\n\n" ENDF;
   PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF;
 
-  PRINTF "    PyMOL is user-supported open-source software and is NOT public domain.\n \n" ENDF;
+  PRINTF "    PyMOL is user-supported open-source software.  Although most versions\n" ENDF;
+  PRINTF "    are freely available, PyMOL is not in the public domain.\n \n" ENDF;
 
   PRINTF "    If PyMOL is helpful in your work or study, then please volunteer \n" ENDF;
   PRINTF "    support for our ongoing campaign to create open and affordable software \n" ENDF;
-  PRINTF "    for molecular research.\n \n" ENDF;
+  PRINTF "    for molecular research.\n\n" ENDF;
 
   PRINTF "    Updates and other information can be found at \"http://www.pymol.org\".\n \n" ENDF;
 

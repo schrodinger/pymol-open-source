@@ -90,7 +90,7 @@ int PyMOLTerminating = false;
 int PMGUI = true;
 int StereoCapable=false;
 int Security = true;
-int ForceStereo = false;
+int ForceStereo = 0; /* 1 = force stereo (if possible); -1 = force mono; 0 = autodetect */
 int GameMode = false;
 int BlueLine = false;
 
@@ -325,7 +325,7 @@ static void MainDrawLocked(void)
     {
       if(!SettingGet(cSetting_suspend_updates))
         if(PMGUI) {
-	  DrawBlueLine();
+          DrawBlueLine();
           p_glutSwapBuffers();
         }
       I->SwapFlag=false;
@@ -558,7 +558,7 @@ void MainRefreshNow(void)
   if(I->SwapFlag)
     {
       if(PMGUI) {
-	  DrawBlueLine();
+        DrawBlueLine();
         p_glutSwapBuffers();
       }
       I->SwapFlag=false;
@@ -605,7 +605,7 @@ void MainBusyIdle(void)
 
   if(I->SwapFlag) {
     if(PMGUI) {
-	  DrawBlueLine();
+      DrawBlueLine();
       p_glutSwapBuffers();
     }
     I->SwapFlag=false;
@@ -694,25 +694,37 @@ void launch(void)
 
     p_glutInit(&myArgc, myArgv);
 
-#ifdef _PYMOL_OSX
+    switch(ForceStereo) {
 
-    if(!ForceStereo) {
+    case -1: /* force mono */
       p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
       StereoCapable = 0;
-    } else {
-      glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STEREO); /* stereo display mode for glut */
-      StereoCapable = 1;
-    }
-#else
-    /* stereo auto-detection code */
-    p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
-    if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
-      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
-      StereoCapable = 0;
-    } else {
-      StereoCapable = 1;
-    }
+      break;
+
+    case 0: /* default/autodetect (stereo on win/unix; mono on macs) */
+#ifndef _PYMOL_OSX
+      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
+      if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
 #endif
+        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
+        StereoCapable = 0;
+#ifndef _PYMOL_OSX
+      } else {
+        StereoCapable = 1;
+      }
+#endif
+      break;
+
+    case 1: /* force stereo (if possible) */
+      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
+      if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
+        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
+        StereoCapable = 0;
+      } else {
+        StereoCapable = 1;
+      }      
+      break;
+    }
 
     if(!GameMode) {
       #ifdef _PYMOL_OSX
@@ -765,6 +777,8 @@ void launch(void)
       /*        printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));*/
       if(StereoCapable) {
         printf(" Hardware stereo capability detected.\n");
+      } else if((ForceStereo==1)&&(!StereoCapable)) {
+        printf(" Hardware stereo not present (unable to force).\n");
       }
     } 
     p_glutMainLoop();

@@ -120,7 +120,7 @@ if __name__=='pymol.invocation':
                options.internal_feedback = int(av.pop())
             if "B" in a:
                options.blue_line = 1
-	    if "W" in a:
+            if "W" in a:
                options.win_x = int(av.pop())
             if "H" in a:
                options.win_y = int(av.pop())
@@ -138,9 +138,11 @@ if __name__=='pymol.invocation':
                options.game_mode = 1
                options.win_x = 1024
                options.win_y = 768
-	    if "S" in a: # Force Stereo (reqd for Mac stereo)
+            if "S" in a: # Force stereo on stereo hardware (OSX only)
                options.force_stereo = 1
                options.deferred.append("_do__ stereo on")
+            if "M" in a: # Force mono on stereo hardware (all)
+               options.force_stereo = -1
             if "l" in a:
                options.deferred.append("_do_spawn %s"%av.pop())
             if "r" in a:
