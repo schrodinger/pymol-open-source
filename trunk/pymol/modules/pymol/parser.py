@@ -278,12 +278,12 @@ def complete(st):
          if cmd.auto_arg[count].has_key(full): # autocomplete arguments
             flag = 1
             try:
-               pre = re.sub("^[^ ]* ",' ',st,count=1) # trim command
-               if re.search(",",pre)!=None:
-                  pre = re.sub(",\s*[^\, ]*$",", ",pre,count=1) # trim 1 arg
+               pre = re.sub(r"^[^ ]* ",' ',st,count=1) # trim command
+               if re.search(r",",pre)!=None:
+                  pre = re.sub(r",\s*[^\, ]*$",", ",pre,count=1) # trim 1 arg
                else:
                   pre = re.sub("[^ ]*$","",pre,count=1) # trim 1 arg               
-               pre = re.sub("^ *",'',pre)
+               pre = re.sub(r"^ *",'',pre)
                pre = full+' '+pre
                pat = re.sub(r".*[\, ]",'',st)
                result = apply(complete_sc,tuple([pat]+cmd.auto_arg[count][full]),{})
@@ -293,20 +293,15 @@ def complete(st):
          if(st[:1]=='@'):
             st=st[1:]
             pre = '@'
-         lst = map(None,st)
-         lst.reverse()
-         st2 = string.join(lst,'')
-         mo = re.search("^[^,\[\( ]+",st2,1)
-         if mo!=None:
-            pat = mo.group(0)
-            lst = map(None,pat)
-            lst.reverse()
-            st3 = string.join(lst,'')
-            loc = string.find(st,st3)
-         else:
-            st3 = ''
-            loc = len(st)
+         loc = reduce(max,[string.rfind(st,','),
+                           string.rfind(st,' '),
+                           string.rfind(st,']'),
+                           string.rfind(st,')')])+1
+         st3 = st[loc:]
          flist = glob.glob(os.path.expanduser(os.path.expandvars(st3))+"*")
+         lst = map(None,st3)
+         lst.reverse()
+         st3 = string.join(lst,'')
          lf = len(flist)
          if lf == 0:
             print " parser: no matching files."
