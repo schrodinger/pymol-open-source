@@ -129,7 +129,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
     }
     
     if(ray) {
-      ms->Radius=SettingGet(cSetting_mesh_radius);
+      ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
       if(n&&v) {
         vc = ColorGet(I->Obj.Color);
         if(ms->DotFlag) {
@@ -167,6 +167,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
     } else if(PMGUI) {
       if(n&&v) {
         ObjectUseColor(&I->Obj);
+        glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
         while(*n)
           {
             c=*(n++);
