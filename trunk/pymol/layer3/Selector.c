@@ -2747,7 +2747,8 @@ int SelectorSelect0(EvalElem *base)
     case SELE_PREz:
       state = SceneGetState();
       static_singletons = SettingGet(cSetting_static_singletons);
-
+      flag=false;
+      cs = NULL;
       for(a=0;a<I->NAtom;a++)
         {
           base[0].sele[a]=false;
@@ -3184,8 +3185,12 @@ int SelectorSelect1(EvalElem *base)
               }
           }
 		  }
-		else
-		  ErrFatal("SelectorSelect1","Invalid Model");
+		else {
+        PRINTFB(FB_Selector,FB_Errors)
+          " Selector-Error: invalid model '%s'.\n",base[1].text
+          ENDFB;
+        ok=false;
+      }
 		break;
 	 }
   PRINTFD(FB_Selector)
