@@ -1170,7 +1170,8 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
 {
   SceneViewType view;
   int quiet;
-  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)i",
+  int animate;
+  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)ii",
                    &view[ 0],&view[ 1],&view[ 2],&view[ 3], /* 4x4 mat */
                    &view[ 4],&view[ 5],&view[ 6],&view[ 7],
                    &view[ 8],&view[ 9],&view[10],&view[11],
@@ -1179,10 +1180,10 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
                    &view[19],&view[20],&view[21], /* origin */
                    &view[22],&view[23], /* clip */
                    &view[24], /* orthoscopic*/
-                   &quiet);
+                   &quiet,&animate);
   if(ok) {
     APIEntry();
-    SceneSetView(TempPyMOLGlobals,view,quiet); /* TODO STATUS */
+    SceneSetView(TempPyMOLGlobals,view,quiet,animate); /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));

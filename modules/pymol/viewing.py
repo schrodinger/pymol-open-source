@@ -641,7 +641,7 @@ SEE ALSO
       r = r[0:3]+r[4:7]+r[8:11]+r[16:25]
       return r
 
-   def set_view(view,quiet=1):
+   def set_view(view,quiet=1,animate=0):
       '''
 DESCRIPTION
 
@@ -661,7 +661,6 @@ SEE ALSO
 
    get_view
    '''
-
       r = None
       if cmd.is_string(view):
          try:
@@ -682,7 +681,7 @@ SEE ALSO
                0.0,0.0,0.0,1.0,
                float(view[ 9]),float(view[10]),float(view[11]),
                float(view[12]),float(view[13]),float(view[14]),
-               float(view[15]),float(view[16]),float(view[17])),quiet)
+               float(view[15]),float(view[16]),float(view[17])),quiet,int(animate))
          finally:
             unlock()
       return r
@@ -739,7 +738,7 @@ SEE ALSO
          action = view_sc.auto_err(action,'action')
          if action=='recall':
             key = view_dict_sc.auto_err(key,'view')
-            set_view(view_dict[key])
+            set_view(view_dict[key],animate=-1)
             if _feedback(fb_module.scene,fb_mask.actions): # redundant
                print " view: \"%s\" recalled."%key
          elif action=='store':
@@ -901,7 +900,8 @@ DEVELOPMENT TO DO
                ll = len(list)
                if (ll>0) and (view):
                   if list[0]!=None:
-                     set_view(list[0])
+                     set_view(list[0],
+                              animate=int(cmd.get_setting_legacy("scene_animation")))
                if (ll>1) and (active):
                   if list[1]!=None:
                      cmd.disable()

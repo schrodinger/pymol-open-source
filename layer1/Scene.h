@@ -93,7 +93,7 @@ void ScenePrepareExit(PyMOLGlobals *G);
 void SceneGetViewNormal(PyMOLGlobals *G,float *v);
 void SceneClipSet(PyMOLGlobals *G,float front,float back);
 void SceneGetView(PyMOLGlobals *G,SceneViewType view);
-void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet);
+void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet,int animate);
 
 void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem);
 void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem);
