@@ -135,6 +135,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args);
+static PyObject *CmdFocus(PyObject *self, 	PyObject *args);
 static PyObject *CmdFullScreen(PyObject *self,PyObject *args);
 static PyObject *CmdFuse(PyObject *self, 	PyObject *args);
 static PyObject *CmdHAdd(PyObject *self, PyObject *args);
@@ -251,6 +252,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"flag",                  CmdFlag,         METH_VARARGS },
 	{"frame",	              CmdFrame,        METH_VARARGS },
    {"flush_now",             CmdFlushNow,     METH_VARARGS },
+   {"focus",                 CmdFocus,        METH_VARARGS },
    {"full_screen",           CmdFullScreen,   METH_VARARGS },
    {"fuse",                  CmdFuse,         METH_VARARGS },
 	{"get",	                 CmdGet,          METH_VARARGS },
@@ -545,6 +547,15 @@ static PyObject *CmdButton(PyObject *self, 	PyObject *args)
   PyArg_ParseTuple(args,"ii",&i1,&i2);
   APIEntry();
   ButModeSet(i1,i2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
+static PyObject *CmdFocus(PyObject *self, 	PyObject *args)
+{
+  APIEntry();
+  ExecutiveFocus();
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;  
@@ -992,6 +1003,8 @@ static PyObject *CmdSystem(PyObject *dummy, PyObject *args)
   result = Py_BuildValue("i",code);
   return(result);
 }
+
+static int pop_flag = false;
 
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
 {

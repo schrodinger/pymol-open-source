@@ -541,6 +541,17 @@ TO DOCUMENT
       unlock()
    return r
 
+def focus():
+   '''
+TO DOCUMENT
+'''
+   try:
+      lock()
+      r = _cmd.focus()
+   finally:
+      unlock()
+   return r
+
 def spheroid(object=""):
    '''
 TO DOCUMENT, EXPERIMENTAL
