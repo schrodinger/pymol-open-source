@@ -33,6 +33,7 @@ Object *ExecutiveFindObjectByName(char *name);
 int ExecutiveIterateObject(Object **obj,void **hidden);
 void ExecutiveDelete(char *name);
 void ExecutiveSetControlsOff(char *name);
+void ExecutiveSort(char *name);
 void ExecutiveSetSetting(char *sname,char *value);
 void ExecutiveRay(void);
 void ExecutiveFit(char *sele1,char *sele2);
