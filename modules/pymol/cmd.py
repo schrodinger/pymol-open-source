@@ -1727,7 +1727,7 @@ PYMOL API
    '''
    try:
       lock()   
-      r = _cmd.setframe(0,0)
+      r = _cmd.setframe(4,0)
    finally:
       unlock()
    return r
