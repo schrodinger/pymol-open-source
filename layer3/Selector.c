@@ -162,6 +162,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   int *bond=NULL;
   int nBond=0;
   int cLen =0;
+  int newline;
   CoordSet *cs;
   ObjectMolecule *obj;
   AtomInfoType *atInfo;
@@ -224,8 +225,12 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
     UtilSortInPlace(bond,nBond,sizeof(int)*2,(UtilOrderFn*)BondInOrder);
     ii1=bond;
     b1=-1;
+    newline = false;
     for(a=0;a<nBond;a++) {
-      if(b1!=ii1[0]||((b1==ii1[0])&&(b2==ii1[1]))) {
+      if(a<(nBond-1)) 
+        if((ii1[0]==ii1[2])&&(ii1[1]==ii1[3])) newline=true;
+      if(b1!=ii1[0]||((b1==ii1[0])&&(b2==ii1[1]))||newline) {
+        newline=false;
         if(a) cLen+=sprintf((*charVLA)+cLen,"\n");
         cLen+=sprintf((*charVLA)+cLen,"CONECT%5d%5d",
                       ii1[0],ii1[1]);
