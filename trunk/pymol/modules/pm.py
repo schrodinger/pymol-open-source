@@ -447,7 +447,16 @@ def color(*args):
    else:
       _pm.color(args[0],"(all)",0)   
    unlock()
-   
+
+def colordef(nam,col):
+   lock()
+   c = string.split(col)
+   if len(c)==3:
+      _pm.colordef(nam,float(c[0]),float(c[1]),float(c[2]))
+   else:
+      print "invalid color vector"
+   unlock()
+
 def mpng(a):
    if thread.get_ident() ==__main__.glutThread:
       _mpng(a)
@@ -542,6 +551,7 @@ keyword = {
    'beginning'   : [beginning    , 0 , 0 , ',' , 0 ],
    'clip'        : [clip         , 2 , 2 , ',' , 0 ],
    'color'       : [color        , 1 , 2 , ',' , 0 ],
+   'colordef'    : [colordef     , 2 , 2 , ',' , 0 ],
    'copy'        : [copy         , 2 , 2 , ',' , 0 ],   
    'delete'      : [delete       , 1 , 1 , ',' , 0 ],
    'disable'     : [disable      , 1 , 1 , ',' , 0 ],

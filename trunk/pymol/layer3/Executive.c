@@ -336,8 +336,9 @@ void ExecutiveFit(char *s1,char *s2)
     if(op1.nvv1!=op2.nvv1) {
       ErrMessage("ExecutiveFit","Atom counts between selections don't match.");
     } else if(op1.nvv1) {
-      printf(" ExecutiveFit: RMS = %8.3f\n",
-             MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt));
+      printf(" ExecutiveFit: RMS = %8.3f (%d to %d atoms)\n",
+             MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt),
+             op1.nvv1,op2.nvv1);
       op2.code = 'TTTF';
       ExecutiveObjMolSeleOp(sele1,&op2);
     } else {
