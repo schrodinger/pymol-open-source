@@ -69,11 +69,20 @@ if pymol_launch != 3: # if this isn't a dry run
    if __name__!='__main__':
       if not os.environ.has_key("PYMOL_PATH"):
          try:
+
+            # first, see if we've got "site-packages/pymol/pymol_path"
+            # which would the case from a DISTUTILS install
             pymol_path = re.sub(r"[\/\\][^\/\\]*$","/pymol_path",__file__)
             if pymol_path[0:1]!='/' and pymol_path[1:2]!=':': 
                pymol_path = os.getcwd()+"/"+pymol_path # make path absolute
             if os.path.isdir(pymol_path):
                os.environ['PYMOL_PATH'] = pymol_path
+            # that didn't work, so check for reverse situation "site-packages/pymol/modules"
+            # which would be the result of an RPM install
+            else:
+               pymol_path = re.sub(r"pymol\/modules\/pymol\/__init__\.py$","pymol",__file__)
+               if os.path.isdir(pymol_path):
+                  os.environ['PYMOL_PATH'] = pymol_path
          except NameError:
             pass
 
