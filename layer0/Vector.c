@@ -251,7 +251,7 @@ float lengthsq3f ( float *v1 )
 					 (v1[2]*v1[2]));
 } 
 
-void average ( float *v1, float *v2, float *avg )
+void average3f ( float *v1, float *v2, float *avg )
 {
   avg[0] = (v1[0]+v2[0])/2;
   avg[1] = (v1[1]+v2[1])/2;
@@ -517,7 +517,7 @@ void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
 		/*		printf("length match? %8.3f %8.3f\n",length3f(p0),length3f(p1));*/
 		hyplen = length3f(p0);
 		
-		average(mat[3],mat[4],center);
+		average3f(mat[3],mat[4],center);
 		
 		cross_product3f(p1,p0,rotaxis);
 		normalize3f(rotaxis);
