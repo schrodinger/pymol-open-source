@@ -639,8 +639,8 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 	{
 	  if(wt) {
 		for(a=0;a<3;a++) {
-		  x[a] = wt[c]*vv1[a] - t1[a];
-		  xx[a] = wt[c]*vv2[a] - t2[a];
+		  x[a] = wt[c]*(vv1[a] - t1[a]);
+		  xx[a] = wt[c]*(vv2[a] - t2[a]);
 		}
 	  } else {
 		for(a=0;a<3;a++) {
