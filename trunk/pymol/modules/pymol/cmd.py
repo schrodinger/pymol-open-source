@@ -756,14 +756,14 @@ DEVELOPMENT TO DO
          m=int(m)
          my_special = special
          if(m>0) and (m<5):
-            my_special = (special, shft_special, ctrl_special, special, alt_special)[m]
+            my_special = (special, shft_special, ctrl_special, ctsh_special, alt_special)[m]
          if my_special.has_key(k):
             if my_special[k][1]:
                apply(my_special[k][1],my_special[k][2],my_special[k][3])
             else:
                key = my_special[k][0]
                if(m>0) and (m<5):
-                  key = ('','SHFT-','CTRL-','','ALT-')[m] + key
+                  key = ('','SHFT-','CTRL-','CTSH-','ALT-')[m] + key
                if viewing.scene_dict.has_key(key):
                   scene(key)
                elif viewing.view_dict.has_key(key):
@@ -1827,18 +1827,42 @@ SEE ALSO
       }
 
       ctrl_special = { # NOTE: some OSes/Windowing systems intercept CTRL-Fn keys.
-         1        : [ 'F1'        , None                   , () , {} ],
-         2        : [ 'F2'        , None                   , () , {} ],
-         3        : [ 'F3'        , None                   , () , {} ],
-         4        : [ 'F4'        , None                   , () , {} ],
-         5        : [ 'F5'        , None                   , () , {} ],
-         6        : [ 'F6'        , None                   , () , {} ],
-         7        : [ 'F7'        , None                   , () , {} ],
-         8        : [ 'F8'        , None                   , () , {} ],
-         9        : [ 'F9'        , None                   , () , {} ],
-         10       : [ 'F10'       , None                   , () , {} ],
-         11       : [ 'F11'       , None                   , () , {} ],
-         12       : [ 'F12'       , None                   , () , {} ],
+         1        : [ 'F1'        , scene  , ('F1','store') , {} ],
+         2        : [ 'F2'        , scene,('F2','store')    , {} ],
+         3        : [ 'F3'        , scene,('F3','store')    , {} ],
+         4        : [ 'F4'        , scene,('F4','store')    , {} ],
+         5        : [ 'F5'        , scene,('F5','store')    , {} ],
+         6        : [ 'F6'        , scene,('F6','store')    , {} ],
+         7        : [ 'F7'        , scene,('F7','store')    , {} ],
+         8        : [ 'F8'        , scene,('F8','store')    , {} ],
+         9        : [ 'F9'        , scene,('F9','store')    , {} ],
+         10       : [ 'F10'       , scene,('F10','store')   , {} ],
+         11       : [ 'F11'       , scene,('F11','store')   , {} ],
+         12       : [ 'F12'       , scene,('F12','store')   , {} ],
+         100      : [ 'left'      , backward               , () , {} ],
+         101      : [ 'up'        , None                   , () , {} ],
+         102      : [ 'right'     , forward                , () , {} ],
+         103      : [ 'down'      , None                   , () , {} ],
+         104      : [ 'pgup'      , rewind                 , () , {} ],
+         105      : [ 'pgdn'      , ending                 , () , {} ],
+         106      : [ 'home'      , zoom                   , () , {} ],
+         107      : [ 'end'       , ending                 , () , {} ],
+         108      : [ 'insert'    , rock                   , () , {} ]   
+      }
+
+      ctsh_special = { # NOTE: some OSes/Windowing systems intercept CTRL-Fn keys.
+         1        : [ 'F1'        , scene,('SHFT-F1','store') , {} ],
+         2        : [ 'F2'        , scene,('SHFT-F2','store')    , {} ],
+         3        : [ 'F3'        , scene,('SHFT-F3','store')    , {} ],
+         4        : [ 'F4'        , scene,('SHFT-F4','store')    , {} ],
+         5        : [ 'F5'        , scene,('SHFT-F5','store')    , {} ],
+         6        : [ 'F6'        , scene,('SHFT-F6','store')    , {} ],
+         7        : [ 'F7'        , scene,('SHFT-F7','store')    , {} ],
+         8        : [ 'F8'        , scene,('SHFT-F8','store')    , {} ],
+         9        : [ 'F9'        , scene,('SHFT-F9','store')    , {} ],
+         10       : [ 'F10'       , scene,('SHFT-F10','store')   , {} ],
+         11       : [ 'F11'       , scene,('SHFT-F11','store')   , {} ],
+         12       : [ 'F12'       , scene,('SHFT-F12','store')   , {} ],
          100      : [ 'left'      , backward               , () , {} ],
          101      : [ 'up'        , None                   , () , {} ],
          102      : [ 'right'     , forward                , () , {} ],
