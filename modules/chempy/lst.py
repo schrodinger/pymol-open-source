@@ -12,7 +12,11 @@ class LST(Storage):
 #---------------------------------------------------------------------------
    def toFile(self,list,fname,**params):
       fp = open(fname,'w')
-      fp.writelines(list)
+      try:
+         fp.writelines(list)
+      except TypeError:
+         for a in list:
+            fp.write(str(a)+"\n")
       fp.close()
       
 
