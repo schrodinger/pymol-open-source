@@ -1325,7 +1325,7 @@ int OrthoButton(int button,int state,int x,int y,int mod)
   int handled = 0; 
 
   OrthoRemoveSplash();
-  I->X=x;
+  I->X=x+1;
   I->Y=y;
 
   if(state==P_GLUT_DOWN)
@@ -1547,7 +1547,8 @@ void OrthoPushMatrix(void)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    
+    glTranslatef(0.375F,0.375F,0.0F);
+
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
     glDisable(GL_NORMALIZE);

@@ -23,6 +23,7 @@ if __name__=='pymol.controlling':
       'left' : 0,
       'middle' : 1,
       'right' : 2,
+      'scroll' : 3,
       }
    button_sc = Shortcut(button_code.keys())
 
@@ -60,6 +61,8 @@ if __name__=='pymol.controlling':
       'none' : 22 ,
       'cent' : 23 ,
       'pktb' : 24 ,
+      'scsb' : 25 ,
+      'mvsb' : 26 ,
       }
    but_act_sc = Shortcut(but_act_code.keys())
 
@@ -100,7 +103,11 @@ if __name__=='pymol.controlling':
                                  ('r','ctrl','pkbd'),                 
                                  ('l','ctsh','lb'),
                                  ('m','ctsh','cent'),
-                                 ('r','ctsh','rb')
+                                 ('r','ctsh','rb'),
+                                 ('s','none','scsb'),
+                                 ('s','shft','mvsb'),
+                                 ('s','ctrl','none'),
+                                 ('s','ctsh','none'),
                                  ],
 
       'three_button_editing': [ ('l','none','rota'),
@@ -115,6 +122,10 @@ if __name__=='pymol.controlling':
                                 ('l','ctsh','lb'),
                                 ('m','ctsh','cent'),
                                 ('r','ctsh','rb'),
+                                ('s','none','scsb'),
+                                ('s','shft','mvsb'),
+                                ('s','ctrl','none'),
+                                ('s','ctsh','none'),
                                 ],
 
       'two_button_viewing' : [ ('l','none','rota'),
@@ -128,7 +139,9 @@ if __name__=='pymol.controlling':
                                ('r','ctrl','pkbd'),                 
                                ('l','ctsh','lb'),
                                ('m','ctsh','none'),
-                               ('r','ctsh','cent')
+                               ('r','ctsh','cent'),
+                               ('s','none','none'),
+                               ('s','shft','none'),
                                ],
       'two_button_selecting' : [ ('l','none','rota'),
                                  ('m','none','none'),
@@ -141,7 +154,11 @@ if __name__=='pymol.controlling':
                                  ('r','ctrl','+rb'),                 
                                  ('l','ctsh','lb'),
                                  ('m','ctsh','none'),
-                                 ('r','ctsh','rb')
+                                 ('r','ctsh','rb'),
+                                 ('s','none','none'),
+                                 ('s','shft','none'),
+                                 ('s','ctrl','none'),
+                                 ('s','ctsh','none'),
                                ],
       'two_button_editing' : [ ('l','none','rota'),
                                ('m','none','none'),
@@ -154,7 +171,11 @@ if __name__=='pymol.controlling':
                                ('r','ctrl','pktb'),                 
                                ('l','ctsh','rotf'),
                                ('m','ctsh','none'),
-                               ('r','ctsh','movf')
+                               ('r','ctsh','movf'),
+                               ('s','none','none'),
+                               ('s','shft','none'),
+                               ('s','ctrl','none'),
+                               ('s','ctsh','none'),
                                ],
       }
 
@@ -337,7 +358,7 @@ PYMOL API
 
 NOTES
 
-   button:      L, M, R
+   button:      L, M, R, S
    modifers:    None, Shft, Ctrl, CtSh
    actions:     Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
                 lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
@@ -353,7 +374,10 @@ NOTES
          modifier = but_mod_sc.auto_err(modifier,'modifier')
          action = string.lower(action)
          action = but_act_sc.auto_err(action,'action')
-         but_code = button_code[button] + 3*but_mod_code[modifier]
+         if button_code[button]<3:
+            but_code = button_code[button] + 3*but_mod_code[modifier]
+         else:
+            but_code = 12 + but_mod_code[modifier]
          act_code = but_act_code[action]
          r = _cmd.button(but_code,act_code)
       finally:

@@ -23,7 +23,7 @@ class AbstractApp(Pmw.MegaWidget):
    contactweb      = ''
    contactemail    = ''
           
-   frameWidth      = 800 # these days, overriden by values in pymol.invocation
+   frameWidth      = 860 # these days, overriden by values in pymol.invocation
    frameHeight     = 120
    frameXPos       = 0
    frameYPos       = 0
@@ -57,7 +57,7 @@ class AbstractApp(Pmw.MegaWidget):
          
       inv = sys.modules.get("pymol.invocation",None)
       if inv!=None:
-         self.frameWidth = inv.options.win_x+160
+         self.frameWidth = inv.options.win_x+220
          self.frameXPos = inv.options.win_px
          self.frameHeight = inv.options.ext_y
          self.frameYPos = inv.options.win_py - (

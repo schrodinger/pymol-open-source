@@ -381,6 +381,8 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
       EditorSetActiveObject(obj0,SceneGetState());
       if(pkresi) {
         SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
+        SelectorCreate(cEditorChain,"(bychain pk1)",NULL,true,NULL);
+        SelectorCreate(cEditorObject,"(byobject pk1)",NULL,true,NULL);
         if(SettingGet(cSetting_auto_hide_selections))
           ExecutiveHideSelections();
       }
@@ -840,6 +842,8 @@ void EditorInactive(void)
   ExecutiveDelete(cEditorSele1);      
   ExecutiveDelete(cEditorSele2);    
   ExecutiveDelete(cEditorRes);
+  ExecutiveDelete(cEditorChain);  
+  ExecutiveDelete(cEditorObject);
   ExecutiveDelete(cEditorComp);
   /*  if(SettingGet(cSetting_log_conformations)) PLogFlush();
       TODO: resolve this problem:
@@ -860,6 +864,8 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
       sele2 = SelectorIndexByName(cEditorSele2);
       ExecutiveDelete(cEditorComp);      
       ExecutiveDelete(cEditorRes);
+      ExecutiveDelete(cEditorChain);
+      ExecutiveDelete(cEditorObject);
       I->NFrag = SelectorSubdivideObject(cEditorFragPref,obj,
                                          sele1,sele2,
                                          cEditorBasePref,

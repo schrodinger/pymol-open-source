@@ -81,6 +81,7 @@ typedef struct Executive {
   int NSkip;
   struct CScrollBar *ScrollBar;
   CObject *LastEdited;
+  int Pressed,Active;
 } CExecutive;
 
 CExecutive Executive;
@@ -95,17 +96,18 @@ void ExecutiveReshape(Block *block,int width,int height);
 int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int state);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
-#define ExecLineHeight 14
-#define ExecTopMargin 0
+#define ExecLineHeight 18
+#define ExecTopMargin (-3)
 #define ExecToggleMargin 2
-#define ExecLeftMargin 5
-#define ExecRightMargin 2
-#define ExecToggleWidth 14
-#define ExecToggleSize 13
+#define ExecLeftMargin 1
+#define ExecRightMargin 0
+#define ExecToggleWidth 17
+#define ExecToggleHeight 17
+#define ExecToggleSize 16
+#define ExecToggleTextLift 4
+#define ExecToggleTextShift 4
 
 #define ExecOpCnt 5
-#define ExecGreyVisible 0.45F
-#define ExecGreyHidden 0.3F
 
 typedef struct { 
   M4XAnnoType m4x;
@@ -1244,7 +1246,7 @@ int ExecutiveSetSession(PyObject *session)
   return(ok);
 }
 
-#define ExecScrollBarMargin 2
+#define ExecScrollBarMargin 1
 #define ExecScrollBarWidth 13
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
@@ -5847,7 +5849,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   int t;
   int pass = false;
   int skip;
-  n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
+  n=(I->Block->rect.top-(y+1))/ExecLineHeight;
   a=n;
   if(I->ScrollBarActive) {
     if((x-I->Block->rect.left)<(ExecScrollBarWidth+ExecScrollBarMargin+ExecToggleMargin)) {
@@ -5865,7 +5867,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
           if(!a) {
             t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
             if(t<ExecOpCnt) {
-              y = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight) - 1;
+              y = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight) - 5;
               x = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
               t = (ExecOpCnt-t)-1;
               switch(t) {
@@ -6000,6 +6002,11 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 }
                 break;
               }
+            } else {
+              I->Pressed = n;
+              I->Active = n;
+              OrthoGrab(I->Block);
+              OrthoDirty();
             }
           }
           a--;
@@ -6109,30 +6116,100 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
             n--;
         }
       }
+  I->Active = -1;
+  I->Pressed = -1;
+  OrthoUngrab();
   MainDirty();
   return(1);
 }
 /*========================================================================*/
 int ExecutiveDrag(Block *block,int x,int y,int mod)
 {
+  CExecutive *I = &Executive;
+  int n=(I->Block->rect.top-(y+1))/ExecLineHeight;
+  if(n!=I->Pressed)
+    I->Active = -1;
+  else
+    I->Active = I->Pressed;
+  OrthoDirty();
   return(1);
 }
+
+static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, float *inside)
+{
+  glColor3fv(light);
+  glBegin(GL_POLYGON);
+  glVertex2i(x2,y2);
+  glVertex2i(x2,y2+h);
+  glVertex2i(x2+w,y2+h);
+  glVertex2i(x2+w,y2);
+  glEnd();
+  
+  glColor3fv(dark);
+  glBegin(GL_POLYGON);
+  glVertex2i(x2+1,y2);
+  glVertex2i(x2+1,y2+h-1);
+  glVertex2i(x2+w,y2+h-1);
+  glVertex2i(x2+w,y2);
+  glEnd();
+  
+  if(inside) {
+    glColor3fv(inside);
+    glBegin(GL_POLYGON);
+    glVertex2i(x2+1,y2+1);
+    glVertex2i(x2+1,y2+h-1);
+    glVertex2i(x2+w-1,y2+h-1);
+    glVertex2i(x2+w-1,y2+1);
+    glEnd();
+  } else { /* rainbow */
+    glBegin(GL_POLYGON);
+    glColor3f(1.0F,0.1F,0.1F);
+    glVertex2i(x2+1,y2+1);
+    glColor3f(0.1F,1.0F,0.1F);
+    glVertex2i(x2+1,y2+h-1);
+    glColor3f(1.0F,1.0F,0.1F);
+    glVertex2i(x2+w-1,y2+h-1);
+    glColor3f(0.1F,0.1F,1.0F);
+    glVertex2i(x2+w-1,y2+1);
+    glEnd();
+  }
+
+}
+
+static void draw_button_char(int x2,int y2,char ch)
+{
+  glColor3f(0.0,0.0,0.0);
+  glRasterPos4d((double)(x2+ExecToggleTextShift),(double)(y2+ExecToggleTextLift),0.0,1.0);
+  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,ch);              
+}
+
 /*========================================================================*/
 void ExecutiveDraw(Block *block)
 {
   int a,x,y,xx,x2,y2;
   char *c=NULL;
   float toggleColor[3] = { 0.5F, 0.5F, 1.0F };
-  float toggleColor2[3] = { 0.3F, 0.3F, 0.6F };
+  float toggleColor2[3] = { 0.4F, 0.4F, 0.6F };
+  float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
+  float toggleDarkEdge[3] = { 0.3F, 0.3F, 0.5F};
+  float toggleLightEdge[3] = { 0.7F, 0.7F, 0.9F};
+  float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
+  float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
+  float disabledColor[3] = { 0.3F, 0.3F, 0.3F };
+  float lightEdge[3] = {0.6F, 0.6F, 0.6F };
+  float darkEdge[3] = {0.35F, 0.35F, 0.35F };
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
   int n_ent;
   int n_disp;
   int skip=0;
-
+  int row = -1;
   if(PMGUI) {
 
+
+
     
+    int nChar;
     /* do we have enough structures to warrant a scroll bar? */
     n_ent = 0;
     while(ListIterate(I->Spec,rec,next)) {
@@ -6159,7 +6236,14 @@ void ExecutiveDraw(Block *block)
       I->ScrollBarActive = 0;
       I->NSkip =0;
     }
-      
+
+    int max_char = (((I->Block->rect.right-I->Block->rect.left)-(ExecLeftMargin+ExecRightMargin+4)) -
+                     (ExecOpCnt*ExecToggleWidth));
+    if(I->ScrollBarActive) {
+      max_char -= (ExecScrollBarMargin+ExecScrollBarWidth);
+    }      
+    max_char/=8;
+
     glColor3fv(I->Block->BackColor);
     BlockFill(I->Block);
 
@@ -6185,8 +6269,10 @@ void ExecutiveDraw(Block *block)
           if(skip) {
             skip--;
           } else {
+            row++;
             x2=xx;
             y2=y-ExecToggleMargin;
+            nChar = max_char;
 
             if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
               x2 = x+10;
@@ -6196,6 +6282,7 @@ void ExecutiveDraw(Block *block)
               {
                 switch(a) {
                 case 0:
+                  /*
                   glColor3fv(toggleColor);
                   glBegin(GL_POLYGON);
                   glVertex2i(x2,y2+(ExecToggleSize)/2);
@@ -6203,109 +6290,73 @@ void ExecutiveDraw(Block *block)
                   glVertex2i(x2+ExecToggleSize,y2+(ExecToggleSize)/2);
                   glVertex2i(x2+(ExecToggleSize)/2,y2+ExecToggleSize);
                   glEnd();
+                  */
+
+                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                              toggleLightEdge,
+                              toggleDarkEdge,
+                              toggleColor);
+
+                  draw_button_char(x2,y2,'A');
                   break;
                 case 1:
-                  glColor3fv(toggleColor);
-                  glBegin(GL_POLYGON);
-                  glVertex2i(x2,y2);
-                  glVertex2i(x2,y2+ExecToggleSize);
-                  glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-                  glVertex2i(x2+ExecToggleSize,y2);
-                  glEnd();
-                  glColor3f(0.0,0.0,0.0);
-                  glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'S');              
-                  glColor3fv(toggleColor);
+                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                              toggleLightEdge,
+                              toggleDarkEdge,
+                              toggleColor3);
+
+                  draw_button_char(x2,y2,'S');
                   break;
                 case 2:
-                  glColor3fv(toggleColor2);
-                  glBegin(GL_POLYGON);
-                  glVertex2i(x2,y2);
-                  glVertex2i(x2,y2+ExecToggleSize);
-                  glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-                  glVertex2i(x2+ExecToggleSize,y2);
-                  glEnd();
-                  glColor3f(0.0,0.0,0.0);
-                  glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'H');              
-                  glColor3fv(toggleColor);
+                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                              toggleLightEdge,
+                              toggleDarkEdge,
+                              toggleColor2);
+                  draw_button_char(x2,y2,'H');
                   break;
                 case 3:
-                  glColor3fv(toggleColor);
-                  glBegin(GL_POLYGON);
-                  glVertex2i(x2,y2);
-                  glVertex2i(x2,y2+ExecToggleSize);
-                  glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-                  glVertex2i(x2+ExecToggleSize,y2);
-                  glEnd();
-                  glColor3f(0.0,0.0,0.0);
-                  glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'L');              
-                  glColor3fv(toggleColor);
+                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                              toggleLightEdge,
+                              toggleDarkEdge,
+                              toggleColor);
+                  draw_button_char(x2,y2,'L');
                   break;
                 case 4:
-                  glBegin(GL_POLYGON);
-                  glColor3f(1.0F,0.1F,0.1F);
-                  glVertex2i(x2,y2);
-                  glColor3f(0.1F,1.0F,0.1F);
-                  glVertex2i(x2,y2+ExecToggleSize);
-                  glColor3f(1.0F,1.0F,0.1F);
-                  glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-                  glColor3f(0.1F,0.1F,1.0F);
-                  glVertex2i(x2+ExecToggleSize,y2);
-                  glEnd();
-                  /*              glColor3f(0.0,0.0,0.0);
-                                  glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-                                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'C');              */
-                  glColor3fv(toggleColor);
+                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                              toggleLightEdge,
+                              toggleDarkEdge,
+                              NULL);
+                  draw_button_char(x2,y2,'C');
                   break;
                 }
                 x2+=ExecToggleWidth;
               }
         
-#ifdef PYMOL_OLD_CODE 
-            for(a=0;a<cRepCnt;a++)
-              {
-                if(rec->repOn[a]) 
-                  {
-                    glBegin(GL_POLYGON);
-                    glVertex2i(x2,y2);
-                    glVertex2i(x2,y2+ExecToggleSize);
-                    glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-                    glVertex2i(x2+ExecToggleSize,y2);
-                  }
-                else
-                  {
-                    glBegin(GL_LINE_LOOP);
-                    glVertex2i(x2,y2);
-                    glVertex2i(x2,y2+ExecToggleSize-1);
-                    glVertex2i(x2+ExecToggleSize-1,y2+ExecToggleSize-1);
-                    glVertex2i(x2+ExecToggleSize-1,y2);
-                  }
-                glEnd();
-                x2+=ExecToggleWidth;
-              }
-#endif
-
             glColor3fv(I->Block->TextColor);
-            glRasterPos4d((double)(x),(double)(y),0.0,1.0);
+            glRasterPos4d((double)(x)+2,(double)(y)+2,0.0,1.0);
             if((rec->type==cExecObject)||(rec->type==cExecAll)||(rec->type==cExecSelection))
               {
                 y2=y-ExecToggleMargin;
-                if(rec->visible)
-                  glColor3f(ExecGreyVisible,ExecGreyVisible,ExecGreyVisible);
-                else
-                  glColor3f(ExecGreyHidden,ExecGreyHidden,ExecGreyHidden);
                 x2 = xx;
                 if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
                   x2 = x+10;
                 }
-                glBegin(GL_POLYGON);
+                if(row==I->Active) {
+                  draw_button(x,y2,(x2-x)-1,ExecToggleHeight,lightEdge,darkEdge,pressedColor);
+                } else if(rec->visible) {
+                  draw_button(x,y2,(x2-x)-1,ExecToggleHeight,lightEdge,darkEdge,enabledColor);
+                } else {
+                  draw_button(x,y2,(x2-x)-1,ExecToggleHeight,lightEdge,darkEdge,disabledColor);
+                }
+
+
+                /*                glBegin(GL_POLYGON);
                 glVertex2i(x-ExecToggleMargin,y2);
                 glVertex2i(x2-ExecToggleMargin,y2);
                 glVertex2i(x2-ExecToggleMargin,y2+ExecToggleSize);
                 glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
-                glEnd();
+                glEnd();*/
+
                 glColor3fv(I->Block->TextColor);
 
                 if(rec->type!=cExecObject)
@@ -6314,16 +6365,25 @@ void ExecutiveDraw(Block *block)
                   c=rec->obj->Name;
 
                 if(rec->type==cExecSelection)
-                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'(');
+                  if((nChar--)>0) {
+                    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'(');
+                  }
               }
 
             if(c)
-              while(*c) 
-                p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+              while(*c) {
+                if((nChar--)>0)
+                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+                else
+                  break;
+              }
 
             if(rec->type==cExecSelection)
               {
-                p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,')');
+                if((nChar--)>0) {
+                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,')');
+                }
+
                 c=rec->name;
               }
 
@@ -6432,7 +6492,8 @@ void ExecutiveInit(void)
   I->ScrollBarActive = 0;
   I->ScrollBar=ScrollBarNew(false);
   OrthoAttach(I->Block,cOrthoTool);
-
+  I->Pressed = -1;
+  I->Active = -1;
   I->LastEdited=NULL;
   I->NSkip=0;
   ListElemAlloc(rec,SpecRec);
