@@ -70,9 +70,7 @@ static void subdivide( int n, float *x, float *y)
 	 }
 }
 /*========================================================================*/
-void EditorReplace(void);
-
-void EditorReplace(void)
+void EditorReplace(char *elem,int geom,int valence)
 {
   CEditor *I = &Editor;
   int i0,i1;
@@ -80,25 +78,37 @@ void EditorReplace(void)
   float d0[3],n0[3],n1[3],n2[3];
   int sele0,sele1;
   int c;
-
   int state;
-  sele0 = SelectorIndexByName(cEditorSele1);
-  if(sele0>=0) {
-    sele1 = SelectorIndexByName(cEditorSele2);
-    if(sele1>=0) {
-      /* bond mode */
-      i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
-      i1 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); /* slow */
-      if((i0>=0)&&(i1>=0)) {
+  AtomInfoType ai;
+  
+  if(I->Obj) {
+    state = SceneGetState();
+
+    sele0 = SelectorIndexByName(cEditorSele1);
+    if(sele0>=0) {
+      sele1 = SelectorIndexByName(cEditorSele2);
+      if(sele1>=0) {
+        /* bond mode */
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
+        i1 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); /* slow */
+        if((i0>=0)&&(i1>=0)) {
+          
+          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v0);
+          ObjectMoleculeGetAtomVertex(I->Obj,state,i1,v1);
+        }
         
-        ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v0);
-        ObjectMoleculeGetAtomVertex(I->Obj,state,i1,v1);
+      } else {
+        /* atom mode */
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slox */
+        if(i0>=0) {
+          UtilNCopy(ai.elem,elem,2);
+          ai.geom=geom;
+          ai.valence=valence;
+          ObjectMoleculePrepareAtom(I->Obj,i0,&ai);
+          ObjectMoleculePreposReplAtom(I->Obj,i0,&ai);
+          ObjectMoleculeReplaceAtom(I->Obj,i0,&ai);
+        }
       }
-      
-    } else {
-      /* atom mode */
-      
-      
     }
   }
 }
@@ -115,7 +125,6 @@ void EditorRender(int state)
   int nEdge;
   int c;
   float tube_size=0.5;
-
 
   if(state!=I->ActiveState)
     {

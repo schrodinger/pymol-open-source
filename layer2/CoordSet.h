@@ -60,6 +60,7 @@ void CoordSetFracToReal(CoordSet *I,CCrystal *cryst);
 void CoordSetGetAverage(CoordSet *I,float *v0);
 PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v);
 int CoordSetGetAtomVertex(CoordSet *I,int at,float *v);
+int CoordSetSetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode);
 int CoordSetTransformAtom(CoordSet *I,int at,float *TTT);
 void CoordSetPurge(CoordSet *I);

@@ -491,8 +491,8 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       break;
 	 default:
       PBlockAndUnlockAPI();
-      sprintf(buffer,"cmd.ctrl_key('%c')",k);
-      /*PRunString(buffer);*/
+      sprintf(buffer,"cmd._ctrl('%c')",k+65);
+      PRunString(buffer);
       PLockAPIAndUnblock();      
 		break;
 	 }

@@ -45,7 +45,7 @@ def parse(s):
    try:
       com1[nest] = string.rstrip(com0[nest])
       if len(com1[nest]) > 0:
-         if com1[nest][-1] == '\\':
+         if str(com1[nest][-1]) == "\\":
             cont[nest] = cont[nest] + com1[nest][:-1]
          else:
             if cont[nest] != '':
