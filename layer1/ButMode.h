@@ -58,6 +58,7 @@ typedef struct {
   WordType Caption;
   float TextColor1[3];
   float TextColor2[3];
+  float TextColor3[3];
 }  CButMode;
 
 extern CButMode ButMode;

@@ -43,6 +43,7 @@ Block *OrthoNewBlock(Block *block);
 void OrthoFreeBlock(Block *block);
 
 void OrthoReshape(int width,int height);
+int OrthoGetWidth(void);
 void OrthoDoDraw(void);
 
 void OrthoPushMatrix(void);

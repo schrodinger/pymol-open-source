@@ -973,7 +973,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_sweep_angle, 15.0F);
 
-  SettingSet_f(I,cSetting_sweep_speed, 0.3F);
+  SettingSet_f(I,cSetting_sweep_speed, 0.5F);
 
   SettingSet_f(I,cSetting_dot_hydrogens, 1.0F);
 

@@ -21,6 +21,11 @@ Z* -------------------------------------------------------------------
 typedef struct {
   Block *Block;
   int Rocking;
+  int DragFlag;
+  int LastPos;
+  int ExtraSpace;
+  float ButtonColor[3];
+  float ActiveColor[3];
 }  CControl;
 
 extern CControl Control;

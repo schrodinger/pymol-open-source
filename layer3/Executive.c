@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectCGO.h"
 #include"Util.h"
 #include"Wizard.h"
+#include"ScrollBar.h"
 
 #include"Menu.h"
 #include"Map.h"
@@ -73,6 +74,11 @@ typedef struct Executive {
   Block *Block;
   SpecRec *Spec;
   int Width,Height;
+  int ScrollBarActive;
+  int ScrollBarRange;
+  int ScrollBarValue;
+  int NSkip;
+  struct CScrollBar *ScrollBar;
   CObject *LastEdited;
 } CExecutive;
 
@@ -98,6 +104,10 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
 #define ExecOpCnt 5
 #define ExecColorVisible 0.45,0.45,0.45
 #define ExecColorHidden 0.3,0.3,0.3
+
+#define ExecScrollBarMargin 2
+#define ExecScrollBarWidth 13
+
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 CObject **ExecutiveSeleToObjectVLA(char *s1);
@@ -718,54 +728,54 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
   smp.h=rect->top-rect->bottom;
   SceneMultipick(&smp);
   if(smp.picked[0].index) {
-  SelectorCreate(cTempRectSele,NULL,NULL,1,&smp);
-  if(log_box) SelectorLogSele(cTempRectSele);
-  if(mode==cButModeRect) {
-    SelectorCreate(cLeftButSele,cTempRectSele,NULL,1,NULL);
+    SelectorCreate(cTempRectSele,NULL,NULL,1,&smp);
+    if(log_box) SelectorLogSele(cTempRectSele);
+    if(mode==cButModeRect) {
+      SelectorCreate(cLeftButSele,cTempRectSele,NULL,1,NULL);
+      if(log_box) {
+        sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
+        PLog(buf2,cPLog_no_flush);
+      }
+    } else if(SelectorIndexByName(cLeftButSele)>=0) {
+      if(mode==cButModeRectAdd) {
+        sprintf(buffer,"(%s or %s)",cLeftButSele,cTempRectSele);
+        SelectorCreate(cLeftButSele,buffer,NULL,0,NULL);
+        if(log_box) {
+          sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,buffer);
+          PLog(buf2,cPLog_no_flush);
+        }
+      } else {
+        sprintf(buffer,"(%s and not %s)",cLeftButSele,cTempRectSele);
+        SelectorCreate(cLeftButSele,buffer,NULL,0,NULL);
+        if(log_box) {
+          sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,buffer);
+          PLog(buf2,cPLog_no_flush);
+        }
+      }
+    } else {
+      if(mode==cButModeRectAdd) {
+        SelectorCreate(cLeftButSele,cTempRectSele,NULL,0,NULL);
+        if(log_box) {
+          sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,cTempRectSele);
+          PLog(buf2,cPLog_no_flush);
+        }
+      } else {
+        SelectorCreate(cLeftButSele,"(none)",NULL,0,NULL);
+        if(log_box) {
+          sprintf(buf2,"%scmd.select(\"%s\",\"(none)\")\n",prefix,cLeftButSele);
+          PLog(buf2,cPLog_no_flush);
+        }
+      }
+    }
+    if(SettingGet(cSetting_auto_show_selections)) {
+      ExecutiveSetObjVisib(cLeftButSele,true);
+    }
     if(log_box) {
-      sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
+      sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempRectSele);
       PLog(buf2,cPLog_no_flush);
+      PLogFlush();
     }
-  } else if(SelectorIndexByName(cLeftButSele)>=0) {
-    if(mode==cButModeRectAdd) {
-      sprintf(buffer,"(%s or %s)",cLeftButSele,cTempRectSele);
-      SelectorCreate(cLeftButSele,buffer,NULL,0,NULL);
-      if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,buffer);
-        PLog(buf2,cPLog_no_flush);
-      }
-    } else {
-      sprintf(buffer,"(%s and not %s)",cLeftButSele,cTempRectSele);
-      SelectorCreate(cLeftButSele,buffer,NULL,0,NULL);
-      if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,buffer);
-        PLog(buf2,cPLog_no_flush);
-      }
-    }
-  } else {
-    if(mode==cButModeRectAdd) {
-      SelectorCreate(cLeftButSele,cTempRectSele,NULL,0,NULL);
-      if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,cTempRectSele);
-        PLog(buf2,cPLog_no_flush);
-      }
-    } else {
-      SelectorCreate(cLeftButSele,"(none)",NULL,0,NULL);
-      if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"(none)\")\n",prefix,cLeftButSele);
-        PLog(buf2,cPLog_no_flush);
-      }
-    }
-  }
-  if(SettingGet(cSetting_auto_show_selections)) {
-    ExecutiveSetObjVisib(cLeftButSele,true);
-  }
-  if(log_box) {
-    sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempRectSele);
-    PLog(buf2,cPLog_no_flush);
-    PLogFlush();
-  }
-  ExecutiveDelete(cTempRectSele);
+    ExecutiveDelete(cTempRectSele);
   }
   VLAFreeP(smp.picked);
   WizardDoSelect(cLeftButSele);
@@ -828,9 +838,9 @@ int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,floa
   int ok=true;
 
   if(s1[0]) {
-     sele = SelectorIndexByName(s1);
-     if(sele<0)
-       ok=false;
+    sele = SelectorIndexByName(s1);
+    if(sele<0)
+      ok=false;
   }
   if(!obj) {
     PRINTFB(FB_ObjectMolecule,FB_Errors)
@@ -1232,7 +1242,7 @@ int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
     SceneSetFrame(6,save_state);
     PRINTFB(FB_Editor,FB_Actions)
       " SetDihedral: adjusted to %5.3f\n",value
-    ENDFB;
+      ENDFB;
 
   }
   return ok;
@@ -1329,7 +1339,7 @@ char *ExecutiveGetNames(int mode)
           strcpy(result+size,rec->name);
           size+=stlen+1;
         }
-    }
+      }
   }
   VLASize(result,char,size);
   return(result);
@@ -1447,7 +1457,7 @@ void ExecutiveFuse(char *s0,char *s1,int mode)
   ObjectMolecule *obj0,*obj1;
   ObjectMoleculeOpRec op;
   
-  #define tmp_fuse_sele "tmp_fuse_sele"
+#define tmp_fuse_sele "tmp_fuse_sele"
 
   sele0 = SelectorIndexByName(s0);
   if(sele0>=0) {
@@ -1763,19 +1773,19 @@ void ExecutiveProtect(char *s1,int mode)
   
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
-      op.code = OMOP_Protect;
-      op.i1 = mode;
-      op.i2 = 0;
-      ExecutiveObjMolSeleOp(sele1,&op);    
-      if(Feedback(FB_Executive,FB_Actions)) {
-        if(op.i2) {
-          if(mode) {
-            PRINTF " Protect: %d atoms protected from movement.\n",op.i2 ENDF;
-          } else {
-            PRINTF " Protect: %d atoms deprotected.\n", op.i2 ENDF;
-          }
+    op.code = OMOP_Protect;
+    op.i1 = mode;
+    op.i2 = 0;
+    ExecutiveObjMolSeleOp(sele1,&op);    
+    if(Feedback(FB_Executive,FB_Actions)) {
+      if(op.i2) {
+        if(mode) {
+          PRINTF " Protect: %d atoms protected from movement.\n",op.i2 ENDF;
+        } else {
+          PRINTF " Protect: %d atoms deprotected.\n", op.i2 ENDF;
         }
       }
+    }
   }
 }
 /*========================================================================*/
@@ -1786,23 +1796,23 @@ void ExecutiveMask(char *s1,int mode)
   
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
-      op.code = OMOP_Mask;
-      op.i1 = mode;
-      op.i2 = 0;
-      ExecutiveObjMolSeleOp(sele1,&op);
-      if(Feedback(FB_Executive,FB_Actions)) {    
-        if(op.i2) {
-          if(mode) {
-            PRINTF " Protect: %d atoms masked (can not be picked).\n",op.i2 ENDF;
-          } else {
-            PRINTF " Protect: %d atoms unmasked.\n", op.i2 ENDF;
-          }
+    op.code = OMOP_Mask;
+    op.i1 = mode;
+    op.i2 = 0;
+    ExecutiveObjMolSeleOp(sele1,&op);
+    if(Feedback(FB_Executive,FB_Actions)) {    
+      if(op.i2) {
+        if(mode) {
+          PRINTF " Protect: %d atoms masked (can not be picked).\n",op.i2 ENDF;
+        } else {
+          PRINTF " Protect: %d atoms unmasked.\n", op.i2 ENDF;
         }
       }
-      op.code = OMOP_INVA; /* need to invalidate all pickable representations */
-      op.i1 = cRepAll;
-      op.i2 = cRepInvPick;
-      ExecutiveObjMolSeleOp(sele1,&op);    
+    }
+    op.code = OMOP_INVA; /* need to invalidate all pickable representations */
+    op.i1 = cRepAll;
+    op.i2 = cRepInvPick;
+    ExecutiveObjMolSeleOp(sele1,&op);    
   }
 }
 /*========================================================================*/
@@ -2190,9 +2200,9 @@ int ExecutiveIterate(char *s1,char *expr,int read_only)
         ENDFB;
     }
   } else {
-      PRINTFB(FB_Executive,FB_Warnings)
-        "ExecutiveIterate: No atoms selected.\n"
-        ENDFB;
+    PRINTFB(FB_Executive,FB_Warnings)
+      "ExecutiveIterate: No atoms selected.\n"
+      ENDFB;
   }
   return(op1.i1);
 }
@@ -2221,9 +2231,9 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,int atomi
         ENDFB;
     }
   } else {
-      PRINTFB(FB_Executive,FB_Warnings)
-        "ExecutiveIterateState: No atoms selected.\n"
-        ENDFB;
+    PRINTFB(FB_Executive,FB_Warnings)
+      "ExecutiveIterateState: No atoms selected.\n"
+      ENDFB;
   }
 }
 /*========================================================================*/
@@ -2644,7 +2654,7 @@ void ExecutiveDrawNow(void)
 
   if(PMGUI) {
     glMatrixMode(GL_MODELVIEW);
-  /*  glClear( GL_DEPTH_BUFFER_BIT);*/
+    /*  glClear( GL_DEPTH_BUFFER_BIT);*/
   }
 
   SceneUpdate();
@@ -2718,13 +2728,13 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
         if(rec->type==cExecObject) {
           if(rec->obj->fGetSettingHandle) {
             handle = rec->obj->fGetSettingHandle(rec->obj,state);
-          if(handle) {
-            SettingCheckHandle(handle);
-            ok = SettingSetTuple(*handle,index,tuple);
-            if(updates) 
-              SettingGenerateSideEffects(index,sele,state);
-            nObj++;
-          }
+            if(handle) {
+              SettingCheckHandle(handle);
+              ok = SettingSetTuple(*handle,index,tuple);
+              if(updates) 
+                SettingGenerateSideEffects(index,sele,state);
+              nObj++;
+            }
           }
         }
         if(Feedback(FB_Setting,FB_Actions)) {
@@ -3329,7 +3339,7 @@ int ExecutiveOrigin(char *name,int preserve,char *oname,float *pos,int state)
         average3f(mn,mx,center);
     } else {
       copy3f(pos,center)
-    }
+        }
   }
   if(ok) {
     if(obj) {
@@ -3411,7 +3421,7 @@ void ExecutiveSetObjVisib(char *name,int state)
   SpecRec *tRec;
 
   PRINTFD(FB_Executive)
-     " ExecutiveSetObjVisib: entered.\n"
+    " ExecutiveSetObjVisib: entered.\n"
     ENDFD;
 
   if(strcmp(name,cKeywordAll)==0) {
@@ -3452,7 +3462,7 @@ void ExecutiveSetObjVisib(char *name,int state)
     }
   }
   PRINTFD(FB_Executive)
-     " ExecutiveSetObjVisib: leaving...\n"
+    " ExecutiveSetObjVisib: leaving...\n"
     ENDFD;
 
 }
@@ -3480,7 +3490,7 @@ void ExecutiveSetAllVisib(int state)
   SpecRec *rec = NULL;
 
   PRINTFD(FB_Executive)
-     " ExecutiveSetAllVisib: entered.\n"
+    " ExecutiveSetAllVisib: entered.\n"
     ENDFD;
 
 
@@ -3514,7 +3524,7 @@ void ExecutiveSetAllVisib(int state)
 		}
   }
   PRINTFD(FB_Executive)
-     " ExecutiveSetAllVisib: leaving...\n"
+    " ExecutiveSetAllVisib: leaving...\n"
     ENDFD;
 
 }
@@ -3528,7 +3538,7 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
   ObjectMoleculeOpRec op;
 
   PRINTFD(FB_Executive)
-     " ExecutiveSetRepVisib: entered.\n"
+    " ExecutiveSetRepVisib: entered.\n"
     ENDFD;
 
   tRec = ExecutiveFindSpec(name);
@@ -3553,13 +3563,13 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
           if(tRec->obj->fInvalidate)
             tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
         } else {
-        for(a=0;a<cRepCnt;a++)
-          tRec->repOn[a]=state; 
-        ObjectSetRepVis(tRec->obj,a,state);
-        if(tRec->obj->fInvalidate)
-          tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
+          for(a=0;a<cRepCnt;a++)
+            tRec->repOn[a]=state; 
+          ObjectSetRepVis(tRec->obj,a,state);
+          if(tRec->obj->fInvalidate)
+            tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
         }
-          SceneChanged();
+        SceneChanged();
         break;
       }
     if(!handled)
@@ -3580,7 +3590,7 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
       }
   }
   PRINTFD(FB_Executive)
-     " ExecutiveSetRepVisib: leaving...\n"
+    " ExecutiveSetRepVisib: leaving...\n"
     ENDFD;
 
 }
@@ -3594,7 +3604,7 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
   PRINTFD(FB_Executive)
-     " ExecutiveSetAllRepVisib: entered.\n"
+    " ExecutiveSetAllRepVisib: entered.\n"
     ENDFD;
   while(ListIterate(I->Spec,rec,next)) {
 	 if(rec->type==cExecObject)
@@ -3646,7 +3656,7 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
 		}
   }
   PRINTFD(FB_Executive)
-     " ExecutiveSetAllRepVisib: leaving...\n"
+    " ExecutiveSetAllRepVisib: leaving...\n"
     ENDFD;
 
 }
@@ -4041,156 +4051,166 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   int n,a;
   SpecRec *rec = NULL;
   int t;
-
+  int pass = false;
+  int skip;
   n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
   a=n;
-
-  while(ListIterate(I->Spec,rec,next))
+  if(I->ScrollBarActive) {
+    if((x-I->Block->rect.left)<(ExecScrollBarWidth+ExecScrollBarMargin+ExecToggleMargin)) {
+      pass = 1;
+      ScrollBarDoClick(I->ScrollBar,button,x,y,mod);      
+    }
+  } 
+  skip = I->NSkip;
+  if(!pass)   while(ListIterate(I->Spec,rec,next))
     if(rec->name[0]!='_')
-	 {
-		if(!a)
-		  {
-			 t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-          if(t<ExecOpCnt) {
-            y = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight) - 1;
-            x = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
-            t = (ExecOpCnt-t)-1;
-            switch(t) {
-            case 0:
-              switch(rec->type) {
-              case cExecAll:
-                MenuActivate(x,y,"all_action",rec->name);
-                break;
-              case cExecSelection:
-                MenuActivate(x,y,"sele_action",rec->name);
-                break;
-              case cExecObject:
-                switch(rec->obj->type) {
-                case cObjectMolecule:
-                  MenuActivate(x,y,"mol_action",rec->obj->Name);
+      {
+        if(skip) {
+          skip--;
+        } else {
+          if(!a) {
+            t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
+            if(t<ExecOpCnt) {
+              y = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight) - 1;
+              x = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
+              t = (ExecOpCnt-t)-1;
+              switch(t) {
+              case 0:
+                switch(rec->type) {
+                case cExecAll:
+                  MenuActivate(x,y,"all_action",rec->name);
                   break;
-                case cObjectSurface:
-                case cObjectMesh:
-                case cObjectDist:
-                case cObjectMap:
-                case cObjectCGO:
-                case cObjectCallback:
-                  MenuActivate(x,y,"simple_action",rec->obj->Name);
+                case cExecSelection:
+                  MenuActivate(x,y,"sele_action",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectMolecule:
+                    MenuActivate(x,y,"mol_action",rec->obj->Name);
+                    break;
+                  case cObjectSurface:
+                  case cObjectMesh:
+                  case cObjectDist:
+                  case cObjectMap:
+                  case cObjectCGO:
+                  case cObjectCallback:
+                    MenuActivate(x,y,"simple_action",rec->obj->Name);
+                    break;
+                  }
+                  break;
+                }
+                break;
+              case 1:
+                switch(rec->type) {
+                case cExecAll:
+                  MenuActivate(x,y,"mol_show",cKeywordAll);
+                  break;
+                case cExecSelection:
+                  MenuActivate(x,y,"mol_show",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectMolecule:
+                    MenuActivate(x,y,"mol_show",rec->obj->Name);
+                    break;
+                  case cObjectCGO:
+                    MenuActivate(x,y,"cgo_show",rec->obj->Name);
+                    break;
+                  case cObjectDist:
+                    MenuActivate(x,y,"dist_show",rec->obj->Name);
+                    break;
+                  case cObjectMap:
+                    MenuActivate(x,y,"simple_show",rec->obj->Name);
+                    break;
+                  case cObjectSurface:
+                  case cObjectMesh:
+                    MenuActivate(x,y,"mesh_show",rec->obj->Name);
+                    break;
+                  }
+                  break;
+                }
+                break;
+              case 2:
+                switch(rec->type) {
+                case cExecAll:
+                  MenuActivate(x,y,"mol_hide",cKeywordAll);
+                  break;
+                case cExecSelection:
+                  MenuActivate(x,y,"mol_hide",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectMolecule:
+                    MenuActivate(x,y,"mol_hide",rec->obj->Name);
+                    break;
+                  case cObjectCGO:
+                    MenuActivate(x,y,"cgo_hide",rec->obj->Name);
+                    break;
+                  case cObjectDist:
+                    MenuActivate(x,y,"dist_hide",rec->obj->Name);
+                    break;
+                  case cObjectMap:
+                    MenuActivate(x,y,"simple_hide",rec->obj->Name);
+                    break;
+                  case cObjectSurface:
+                  case cObjectMesh:
+                    MenuActivate(x,y,"mesh_hide",rec->obj->Name);
+                    break;
+                  }
+                  break;
+                }
+                break;
+              case 3:
+                switch(rec->type) {
+                case cExecAll:
+                  MenuActivate(x,y,"mol_labels","(all)");
+                  break;
+                case cExecSelection:
+                  MenuActivate(x,y,"mol_labels",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectMolecule:
+                    MenuActivate(x,y,"mol_labels",rec->obj->Name);
+                    break;
+                  case cObjectDist:
+                    break;
+                  case cObjectMap:
+                  case cObjectSurface:
+                  case cObjectMesh:
+                    break;
+                  }
+                  break;
+                }
+                break;
+              case 4:
+                switch(rec->type) {
+                case cExecAll:
+                case cExecSelection:
+                  MenuActivate(x,y,"mol_color",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectMolecule:
+                    MenuActivate(x,y,"mol_color",rec->obj->Name);
+                    break;
+                  case cObjectDist:
+                  case cObjectMap:
+                  case cObjectSurface:
+                  case cObjectCGO:
+                  case cObjectMesh:
+                    MenuActivate(x,y,"general_color",rec->obj->Name);
+                    break;
+                  }
                   break;
                 }
                 break;
               }
-              break;
-            case 1:
-              switch(rec->type) {
-              case cExecAll:
-                MenuActivate(x,y,"mol_show",cKeywordAll);
-                break;
-              case cExecSelection:
-                MenuActivate(x,y,"mol_show",rec->name);
-                break;
-              case cExecObject:
-                switch(rec->obj->type) {
-                case cObjectMolecule:
-                  MenuActivate(x,y,"mol_show",rec->obj->Name);
-                  break;
-                case cObjectCGO:
-                  MenuActivate(x,y,"cgo_show",rec->obj->Name);
-                  break;
-                case cObjectDist:
-                  MenuActivate(x,y,"dist_show",rec->obj->Name);
-                  break;
-                case cObjectMap:
-                  MenuActivate(x,y,"simple_show",rec->obj->Name);
-                  break;
-                case cObjectSurface:
-                case cObjectMesh:
-                  MenuActivate(x,y,"mesh_show",rec->obj->Name);
-                  break;
-                }
-                break;
-              }
-              break;
-            case 2:
-              switch(rec->type) {
-              case cExecAll:
-                MenuActivate(x,y,"mol_hide",cKeywordAll);
-                break;
-              case cExecSelection:
-                MenuActivate(x,y,"mol_hide",rec->name);
-                break;
-              case cExecObject:
-                switch(rec->obj->type) {
-                case cObjectMolecule:
-                  MenuActivate(x,y,"mol_hide",rec->obj->Name);
-                  break;
-                case cObjectCGO:
-                  MenuActivate(x,y,"cgo_hide",rec->obj->Name);
-                  break;
-                case cObjectDist:
-                  MenuActivate(x,y,"dist_hide",rec->obj->Name);
-                  break;
-                case cObjectMap:
-                  MenuActivate(x,y,"simple_hide",rec->obj->Name);
-                  break;
-                case cObjectSurface:
-                case cObjectMesh:
-                  MenuActivate(x,y,"mesh_hide",rec->obj->Name);
-                  break;
-                }
-                break;
-              }
-              break;
-            case 3:
-              switch(rec->type) {
-              case cExecAll:
-                MenuActivate(x,y,"mol_labels","(all)");
-                break;
-              case cExecSelection:
-                MenuActivate(x,y,"mol_labels",rec->name);
-                break;
-              case cExecObject:
-                switch(rec->obj->type) {
-                case cObjectMolecule:
-                  MenuActivate(x,y,"mol_labels",rec->obj->Name);
-                  break;
-                case cObjectDist:
-                  break;
-                case cObjectMap:
-                case cObjectSurface:
-                case cObjectMesh:
-                  break;
-                }
-                break;
-              }
-              break;
-            case 4:
-              switch(rec->type) {
-              case cExecAll:
-              case cExecSelection:
-                MenuActivate(x,y,"mol_color",rec->name);
-                break;
-              case cExecObject:
-                switch(rec->obj->type) {
-                case cObjectMolecule:
-                  MenuActivate(x,y,"mol_color",rec->obj->Name);
-                  break;
-                case cObjectDist:
-                case cObjectMap:
-                case cObjectSurface:
-                case cObjectCGO:
-                case cObjectMesh:
-                  MenuActivate(x,y,"general_color",rec->obj->Name);
-                  break;
-                }
-                break;
-              }
-              break;
             }
           }
+          a--;
         }
-      a--;
-    }
+      }
   MainDirty();
   
   return(1);
@@ -4203,81 +4223,96 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   SpecRec *rec = NULL;
   int t;
   OrthoLineType buffer;
+  int pass = false;
+  int skip;
 
   n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
 
-  while(ListIterate(I->Spec,rec,next))
+  if(I->ScrollBarActive) {
+    if((x-I->Block->rect.left)<(ExecScrollBarWidth+ExecScrollBarMargin+ExecToggleMargin)) {
+      pass = 1;
+      ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
+      OrthoUngrab();
+    }
+  } 
+  skip=I->NSkip;
+  if(!pass) while(ListIterate(I->Spec,rec,next))
     if(rec->name[0]!='_')
       {
-        if(!n)
+        if(skip) {
+          skip--;
+        } else 
           {
-            t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-            if(t<ExecOpCnt) {
-              /* nothing to do anymore now that we have menus! */
-            } else if(rec->type==cExecObject)
+            if(!n) {
               {
-                if(rec->visible)
-                  SceneObjectDel(rec->obj);				
-                else 
-                  SceneObjectAdd(rec->obj);
-                SceneChanged();
-                if(SettingGet(cSetting_logging)) {
-                  if(rec->visible)
-                    sprintf(buffer,"cmd.disable('%s')",rec->obj->Name);
-                  else
-                    sprintf(buffer,"cmd.enable('%s')",rec->obj->Name);
-                  PLog(buffer,cPLog_pym);
-                }
-                rec->visible=!rec->visible;
-              }
-            else if(rec->type==cExecAll)
-              {
-                if(SettingGet(cSetting_logging)) {
-                  if(rec->visible)
-                    sprintf(buffer,"cmd.disable('all')");
-                  else
-                    sprintf(buffer,"cmd.enable('all')");
-                  PLog(buffer,cPLog_pym);
-                }
-                ExecutiveSetObjVisib(cKeywordAll,!rec->visible);
-              }
-            else if(rec->type==cExecSelection)
-              {
-                if(mod&cOrthoCTRL) {
-                  SettingSet(cSetting_selection_overlay,
-                             (float)(!((int)SettingGet(cSetting_selection_overlay))));
-                  if(SettingGet(cSetting_logging)) {
-                    sprintf(buffer,"cmd.set('selection_overlay',%d)",(int)SettingGet(cSetting_selection_overlay));
-                    PLog(buffer,cPLog_pym);
-                    sprintf(buffer,"cmd.enable('%s')",rec->name);
-                    PLog(buffer,cPLog_pym);
-                  }
-                  rec->visible=true; 
-                } else if(mod&cOrthoSHIFT) {
-                  if(rec->sele_color<7)
-                    rec->sele_color=15;
-                  else {
-                    rec->sele_color--;
-                    if(rec->sele_color<7)
-                      rec->sele_color=15;
-                  }
-                  /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
-                  rec->visible=true;
-                } else {
-                  if(SettingGet(cSetting_logging)) {
+                t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
+                if(t<ExecOpCnt) {
+                  /* nothing to do anymore now that we have menus! */
+                } else if(rec->type==cExecObject)
+                  {
                     if(rec->visible)
-                      sprintf(buffer,"cmd.disable('%s')",rec->name);
-                    else
-                      sprintf(buffer,"cmd.enable('%s')",rec->name);
-                    PLog(buffer,cPLog_pym);
+                      SceneObjectDel(rec->obj);				
+                    else 
+                      SceneObjectAdd(rec->obj);
+                    SceneChanged();
+                    if(SettingGet(cSetting_logging)) {
+                      if(rec->visible)
+                        sprintf(buffer,"cmd.disable('%s')",rec->obj->Name);
+                      else
+                        sprintf(buffer,"cmd.enable('%s')",rec->obj->Name);
+                      PLog(buffer,cPLog_pym);
+                    }
+                    rec->visible=!rec->visible;
                   }
-                  rec->visible=!rec->visible; 
-                }
-                SceneChanged();
+                else if(rec->type==cExecAll)
+                  {
+                    if(SettingGet(cSetting_logging)) {
+                      if(rec->visible)
+                        sprintf(buffer,"cmd.disable('all')");
+                      else
+                        sprintf(buffer,"cmd.enable('all')");
+                      PLog(buffer,cPLog_pym);
+                    }
+                    ExecutiveSetObjVisib(cKeywordAll,!rec->visible);
+                  }
+                else if(rec->type==cExecSelection)
+                  {
+                    if(mod&cOrthoCTRL) {
+                      SettingSet(cSetting_selection_overlay,
+                                 (float)(!((int)SettingGet(cSetting_selection_overlay))));
+                      if(SettingGet(cSetting_logging)) {
+                        sprintf(buffer,"cmd.set('selection_overlay',%d)",(int)SettingGet(cSetting_selection_overlay));
+                        PLog(buffer,cPLog_pym);
+                        sprintf(buffer,"cmd.enable('%s')",rec->name);
+                        PLog(buffer,cPLog_pym);
+                      }
+                      rec->visible=true; 
+                    } else if(mod&cOrthoSHIFT) {
+                      if(rec->sele_color<7)
+                        rec->sele_color=15;
+                      else {
+                        rec->sele_color--;
+                        if(rec->sele_color<7)
+                          rec->sele_color=15;
+                      }
+                      /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
+                      rec->visible=true;
+                    } else {
+                      if(SettingGet(cSetting_logging)) {
+                        if(rec->visible)
+                          sprintf(buffer,"cmd.disable('%s')",rec->name);
+                        else
+                          sprintf(buffer,"cmd.enable('%s')",rec->name);
+                        PLog(buffer,cPLog_pym);
+                      }
+                      rec->visible=!rec->visible; 
+                    }
+                    SceneChanged();
+                  }
               }
-            
-          }
-        n--;
+            }
+            n--;
+        }
       }
   MainDirty();
   return(1);
@@ -4296,159 +4331,205 @@ void ExecutiveDraw(Block *block)
   float toggleColor2[3] = { 0.3, 0.3, 0.6 };
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
+  int n_ent;
+  int n_disp;
+  int skip=0;
 
   if(PMGUI) {
+
+    
+    /* do we have enough structures to warrant a scroll bar? */
+    n_ent = 0;
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->name[0]!='_') 
+        n_ent++;
+    }
+
+    n_disp = ((I->Block->rect.top-I->Block->rect.bottom)-(2+ExecTopMargin))/ExecLineHeight;
+    if(n_disp<1) n_disp=1;
+      
+    if(n_ent>n_disp) {
+      if(!I->ScrollBarActive) {
+        ScrollBarSetLimits(I->ScrollBar,n_ent,n_disp);
+        ScrollBarSetValue(I->ScrollBar,0);
+        I->NSkip =0;
+      } else {
+        ScrollBarSetLimits(I->ScrollBar,n_ent,n_disp);
+        
+        I->NSkip = (int)ScrollBarGetValue(I->ScrollBar);
+      }
+      I->ScrollBarActive = 1;
+
+    } else {
+      I->ScrollBarActive = 0;
+      I->NSkip =0;
+    }
+      
     glColor3fv(I->Block->BackColor);
     BlockFill(I->Block);
+
+    if(I->ScrollBarActive) {
+      ScrollBarSetBox(I->ScrollBar,I->Block->rect.top-ExecScrollBarMargin,
+                      I->Block->rect.left+ExecScrollBarMargin,
+                      I->Block->rect.bottom+2,
+                      I->Block->rect.left+ExecScrollBarMargin+ExecScrollBarWidth);
+      ScrollBarDoDraw(I->ScrollBar);
+    }
     
     x = I->Block->rect.left+ExecLeftMargin;
     y = (I->Block->rect.top-ExecLineHeight)-ExecTopMargin;
     /*    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+ExecOpCnt);*/
     xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(ExecOpCnt);
-    
+    if(I->ScrollBarActive) {
+      x+=ExecScrollBarWidth+ExecScrollBarMargin;
+    }
+    skip=I->NSkip;
     while(ListIterate(I->Spec,rec,next))
       if(rec->name[0]!='_')
-      {
-        x2=xx;
-        y2=y-ExecToggleMargin;
+        {
+          if(skip) {
+            skip--;
+          } else {
+            x2=xx;
+            y2=y-ExecToggleMargin;
 
-
-        glColor3fv(toggleColor);
-        for(a=0;a<ExecOpCnt;a++)
-          {
-            switch(a) {
-            case 0:
-              glColor3fv(toggleColor);
-              glBegin(GL_POLYGON);
-              glVertex2i(x2,y2+(ExecToggleSize)/2);
-              glVertex2i(x2+(ExecToggleSize)/2,y2);
-              glVertex2i(x2+ExecToggleSize,y2+(ExecToggleSize)/2);
-              glVertex2i(x2+(ExecToggleSize)/2,y2+ExecToggleSize);
-              glEnd();
-              break;
-            case 1:
-              glColor3fv(toggleColor);
-              glBegin(GL_POLYGON);
-              glVertex2i(x2,y2);
-              glVertex2i(x2,y2+ExecToggleSize);
-              glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-              glVertex2i(x2+ExecToggleSize,y2);
-              glEnd();
-              glColor3f(0.0,0.0,0.0);
-              glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'S');              
-              glColor3fv(toggleColor);
-              break;
-            case 2:
-              glColor3fv(toggleColor2);
-              glBegin(GL_POLYGON);
-              glVertex2i(x2,y2);
-              glVertex2i(x2,y2+ExecToggleSize);
-              glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-              glVertex2i(x2+ExecToggleSize,y2);
-              glEnd();
-              glColor3f(0.0,0.0,0.0);
-              glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'H');              
-              glColor3fv(toggleColor);
-              break;
-            case 3:
-              glColor3fv(toggleColor);
-              glBegin(GL_POLYGON);
-              glVertex2i(x2,y2);
-              glVertex2i(x2,y2+ExecToggleSize);
-              glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-              glVertex2i(x2+ExecToggleSize,y2);
-              glEnd();
-              glColor3f(0.0,0.0,0.0);
-              glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'L');              
-              glColor3fv(toggleColor);
-              break;
-            case 4:
-              glBegin(GL_POLYGON);
-              glColor3f(1.0,0.1,0.1);
-              glVertex2i(x2,y2);
-              glColor3f(0.1,1.0,0.1);
-              glVertex2i(x2,y2+ExecToggleSize);
-              glColor3f(1.0,1.0,0.1);
-              glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-              glColor3f(0.1,0.1,1.0);
-              glVertex2i(x2+ExecToggleSize,y2);
-              glEnd();
-              /*              glColor3f(0.0,0.0,0.0);
-              glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'C');              */
-              glColor3fv(toggleColor);
-              break;
-            }
-            x2+=ExecToggleWidth;
-          }
+            glColor3fv(toggleColor);
+            for(a=0;a<ExecOpCnt;a++)
+              {
+                switch(a) {
+                case 0:
+                  glColor3fv(toggleColor);
+                  glBegin(GL_POLYGON);
+                  glVertex2i(x2,y2+(ExecToggleSize)/2);
+                  glVertex2i(x2+(ExecToggleSize)/2,y2);
+                  glVertex2i(x2+ExecToggleSize,y2+(ExecToggleSize)/2);
+                  glVertex2i(x2+(ExecToggleSize)/2,y2+ExecToggleSize);
+                  glEnd();
+                  break;
+                case 1:
+                  glColor3fv(toggleColor);
+                  glBegin(GL_POLYGON);
+                  glVertex2i(x2,y2);
+                  glVertex2i(x2,y2+ExecToggleSize);
+                  glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+                  glVertex2i(x2+ExecToggleSize,y2);
+                  glEnd();
+                  glColor3f(0.0,0.0,0.0);
+                  glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
+                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'S');              
+                  glColor3fv(toggleColor);
+                  break;
+                case 2:
+                  glColor3fv(toggleColor2);
+                  glBegin(GL_POLYGON);
+                  glVertex2i(x2,y2);
+                  glVertex2i(x2,y2+ExecToggleSize);
+                  glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+                  glVertex2i(x2+ExecToggleSize,y2);
+                  glEnd();
+                  glColor3f(0.0,0.0,0.0);
+                  glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
+                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'H');              
+                  glColor3fv(toggleColor);
+                  break;
+                case 3:
+                  glColor3fv(toggleColor);
+                  glBegin(GL_POLYGON);
+                  glVertex2i(x2,y2);
+                  glVertex2i(x2,y2+ExecToggleSize);
+                  glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+                  glVertex2i(x2+ExecToggleSize,y2);
+                  glEnd();
+                  glColor3f(0.0,0.0,0.0);
+                  glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
+                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'L');              
+                  glColor3fv(toggleColor);
+                  break;
+                case 4:
+                  glBegin(GL_POLYGON);
+                  glColor3f(1.0,0.1,0.1);
+                  glVertex2i(x2,y2);
+                  glColor3f(0.1,1.0,0.1);
+                  glVertex2i(x2,y2+ExecToggleSize);
+                  glColor3f(1.0,1.0,0.1);
+                  glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+                  glColor3f(0.1,0.1,1.0);
+                  glVertex2i(x2+ExecToggleSize,y2);
+                  glEnd();
+                  /*              glColor3f(0.0,0.0,0.0);
+                                  glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
+                                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'C');              */
+                  glColor3fv(toggleColor);
+                  break;
+                }
+                x2+=ExecToggleWidth;
+              }
         
 #ifdef PYMOL_OLD_CODE 
-        for(a=0;a<cRepCnt;a++)
-          {
-            if(rec->repOn[a]) 
+            for(a=0;a<cRepCnt;a++)
               {
-                glBegin(GL_POLYGON);
-                glVertex2i(x2,y2);
-                glVertex2i(x2,y2+ExecToggleSize);
-                glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-                glVertex2i(x2+ExecToggleSize,y2);
+                if(rec->repOn[a]) 
+                  {
+                    glBegin(GL_POLYGON);
+                    glVertex2i(x2,y2);
+                    glVertex2i(x2,y2+ExecToggleSize);
+                    glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+                    glVertex2i(x2+ExecToggleSize,y2);
+                  }
+                else
+                  {
+                    glBegin(GL_LINE_LOOP);
+                    glVertex2i(x2,y2);
+                    glVertex2i(x2,y2+ExecToggleSize-1);
+                    glVertex2i(x2+ExecToggleSize-1,y2+ExecToggleSize-1);
+                    glVertex2i(x2+ExecToggleSize-1,y2);
+                  }
+                glEnd();
+                x2+=ExecToggleWidth;
               }
-            else
-              {
-                glBegin(GL_LINE_LOOP);
-                glVertex2i(x2,y2);
-                glVertex2i(x2,y2+ExecToggleSize-1);
-                glVertex2i(x2+ExecToggleSize-1,y2+ExecToggleSize-1);
-                glVertex2i(x2+ExecToggleSize-1,y2);
-              }
-            glEnd();
-            x2+=ExecToggleWidth;
-          }
 #endif
 
-        glColor3fv(I->Block->TextColor);
-        glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-        if((rec->type==cExecObject)||(rec->type==cExecAll)||(rec->type==cExecSelection))
-          {
-            y2=y-ExecToggleMargin;
-            if(rec->visible)
-              glColor3f(ExecColorVisible);
-            else
-              glColor3f(ExecColorHidden);
-            glBegin(GL_POLYGON);
-            glVertex2i(x-ExecToggleMargin,y2);
-            glVertex2i(xx-ExecToggleMargin,y2);
-            glVertex2i(xx-ExecToggleMargin,y2+ExecToggleSize);
-            glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
-            glEnd();
             glColor3fv(I->Block->TextColor);
+            glRasterPos4d((double)(x),(double)(y),0.0,1.0);
+            if((rec->type==cExecObject)||(rec->type==cExecAll)||(rec->type==cExecSelection))
+              {
+                y2=y-ExecToggleMargin;
+                if(rec->visible)
+                  glColor3f(ExecColorVisible);
+                else
+                  glColor3f(ExecColorHidden);
+                glBegin(GL_POLYGON);
+                glVertex2i(x-ExecToggleMargin,y2);
+                glVertex2i(xx-ExecToggleMargin,y2);
+                glVertex2i(xx-ExecToggleMargin,y2+ExecToggleSize);
+                glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
+                glEnd();
+                glColor3fv(I->Block->TextColor);
 
-            if(rec->type!=cExecObject)
-              c=rec->name;
-            else 
-              c=rec->obj->Name;
+                if(rec->type!=cExecObject)
+                  c=rec->name;
+                else 
+                  c=rec->obj->Name;
+
+                if(rec->type==cExecSelection)
+                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'(');
+              }
+
+            if(c)
+              while(*c) 
+                p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
 
             if(rec->type==cExecSelection)
-              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'(');
+              {
+                p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,')');
+                c=rec->name;
+              }
+
+            y-=ExecLineHeight;
+            if(y<(I->Block->rect.bottom+2))
+              break;
           }
-
-        if(c)
-          while(*c) 
-            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
-
-        if(rec->type==cExecSelection)
-          {
-            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,')');
-            c=rec->name;
-          }
-
-        y-=ExecLineHeight;
-        if(y<(I->Block->rect.bottom+2))
-          break;
-      }
+        }
   }
 }
 /*========================================================================*/
@@ -4498,10 +4579,12 @@ void ExecutiveInit(void)
   I->Block->fDraw    = ExecutiveDraw;
   I->Block->fReshape = ExecutiveReshape;
   I->Block->active = true;
-
+  I->ScrollBarActive = 0;
+  I->ScrollBar=ScrollBarNew(false);
   OrthoAttach(I->Block,cOrthoTool);
 
   I->LastEdited=NULL;
+  I->NSkip=0;
   ListElemAlloc(rec,SpecRec);
   strcpy(rec->name,"(all)");
   rec->type=cExecAll;
@@ -4523,6 +4606,8 @@ void ExecutiveFree(void)
 		  rec->obj->fFree(rec->obj);
 	 }
   ListFree(I->Spec,next,SpecList);
+  if(I->ScrollBar)
+    ScrollBarFree(I->ScrollBar);
   OrthoFreeBlock(I->Block);
   I->Block=NULL;
 }
