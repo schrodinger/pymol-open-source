@@ -164,19 +164,21 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * fixed quadro stereo support
+
    * cartoon_highlight_color now provides Molscript-like cartoon coloring
      which provides for an alternate color inside of helices and on the
      sides of beta strands.
 
    * ray_interior_color can enable solid interiors in the ray tracer!
 
-   * fixed truncation error in view matrix composition
+   * fixed truncation error in view matrix composition.
 
    * Roving details. Many new settings.
 
    * Roving origin.
 
-   * ribbon_color, cartoon_color
+   * Added ribbon_color, cartoon_color settings.
 
    * overhauled color menu, improved performance of rainbow and color by chain
 
