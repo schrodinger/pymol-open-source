@@ -167,6 +167,8 @@ CHANGE LOG
 
 Changes up to 0.89
    
+   * Fixed major session save bug
+
    * Updated ExtensionClass for improved Python 2.2 and 2.3 compatibility.
 
    * Improving hash-table construction performance in ray tracer.

@@ -18,6 +18,8 @@ def load():
    r = 0
    rep = [ "lines","sticks","spheres","dots","ribbon","cartoon" ]
    list = glob("pdb/*/*")
+#   while list[0]!="pdb/f8/pdb1f8u":
+#      list.pop(0)
    for file in list:
       print file
       cmd.delete('pdb')
@@ -32,7 +34,8 @@ def load():
       sys.__stderr__.write(".")
       sys.__stderr__.flush()
       n = cmd.count_states()
-      cmd.ray(100,75)
+      print file
+      cmd.ray(160,120)
       if n>1:
          sys.__stderr__.write("\n")
          sys.__stderr__.flush()
