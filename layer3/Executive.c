@@ -6178,9 +6178,9 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state
   ObjectMoleculeOpRec op;
   MapType *map;
   int x,y,z,a,b,c,i,j,h,k,l,n;
-  CoordSet *cs;
+  CoordSet *cs,*os;
   int keepFlag,sele,tt[3];
-  float *v2,m[16],tc[3],ts[3];
+  float *v1,*v2,m[16],tc[3],ts[3];
   OrthoLineType new_name;
   float auto_save;
 
@@ -6233,64 +6233,81 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state
       map=MapNew(-cutoff,op.vv1,op.nvv1,NULL);
       if(map) {
         MapSetupExpress(map);  
-
+        /* go out no more than one lattice step in each direction */
         for(x=-1;x<2;x++)
           for(y=-1;y<2;y++)
             for(z=-1;z<2;z++)
               for(a=0;a<obj->Symmetry->NSymMat;a++) {
-                if(a||x||y||z) {
-                  new_obj = ObjectMoleculeCopy(obj);
-                  keepFlag=false;
-                  for(b=0;b<new_obj->NCSet;b++) 
-                    if(new_obj->CSet[b]) {
-                      cs = new_obj->CSet[b];
-                      CoordSetRealToFrac(cs,obj->Symmetry->Crystal);
-                      CoordSetTransform44f(cs,obj->Symmetry->SymMatVLA+(a*16));
-                      CoordSetGetAverage(cs,ts);
-                      identity44f(m);
-                      for(c=0;c<3;c++) { /* manual rounding - rint broken */
-                        ts[c]=tc[c]-ts[c];
-                        if(ts[c]<0)
-                          ts[c]-=0.5;
-                        else
-                          ts[c]+=0.5;
-                        tt[c]=(int)ts[c];
-                      }
-                      m[3] = (float)tt[0]+x;
-                      m[7] = (float)tt[1]+y;
-                      m[11] = (float)tt[2]+z;
-                      CoordSetTransform44f(cs,m);
-                      CoordSetFracToReal(cs,obj->Symmetry->Crystal);
-                      if(!keepFlag) {
-                        v2 = cs->Coord;
-                        n=cs->NIndex;
-                        while(n--) {
-                          MapLocus(map,v2,&h,&k,&l);
-                          i=*(MapEStart(map,h,k,l));
-                          if(i) {
-                            j=map->EList[i++];
-                            while(j>=0) {
-                              if(within3f(op.vv1+3*j,v2,cutoff)) {
-                                keepFlag=true;
-                                break;
-                              }
-                              j=map->EList[i++];
+                new_obj = ObjectMoleculeCopy(obj);
+                keepFlag=false;
+                for(b=0;b<new_obj->NCSet;b++) 
+                  if(new_obj->CSet[b]) {
+                    cs = new_obj->CSet[b];
+                    os = obj->CSet[b];
+                    CoordSetRealToFrac(cs,obj->Symmetry->Crystal);
+                    CoordSetTransform44f(cs,obj->Symmetry->SymMatVLA+(a*16));
+                    CoordSetGetAverage(cs,ts);
+                    identity44f(m);
+                    /* compute the effective translation resulting
+                       from application of the symmetry operator so
+                       that we can shift it into the cell of the
+                       target selection */
+                    for(c=0;c<3;c++) { /* manual rounding - rint broken */
+                      ts[c]=tc[c]-ts[c];
+                      if(ts[c]<0)
+                        ts[c]-=0.5;
+                      else
+                        ts[c]+=0.5;
+                      tt[c]=(int)ts[c];
+                    }
+                    m[3] = (float)tt[0]+x;
+                    m[7] = (float)tt[1]+y;
+                    m[11] = (float)tt[2]+z;
+                    CoordSetTransform44f(cs,m);
+                    CoordSetFracToReal(cs,obj->Symmetry->Crystal);
+                    if(!keepFlag) {
+                      v2 = cs->Coord;
+                      n=cs->NIndex;
+                      while(n--) {
+                        MapLocus(map,v2,&h,&k,&l);
+                        i=*(MapEStart(map,h,k,l));
+                        if(i) {
+                          j=map->EList[i++];
+                          while(j>=0) {
+                            if(within3f(op.vv1+3*j,v2,cutoff)) {
+                              keepFlag=true;
+                              break;
                             }
+                            j=map->EList[i++];
                           }
-                          v2+=3;
-                          if(keepFlag) break;
                         }
+                        v2+=3;
+                        if(keepFlag) break;
                       }
                     }
-                  if(keepFlag) { /* need to create new object */
-                    sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
-                    ObjectSetName((CObject*)new_obj,new_name);
-                    ExecutiveDelete(new_name);
-                    ExecutiveManageObject((CObject*)new_obj,true,false);
-                    SceneChanged();
-                  } else {
-                    ((CObject*)new_obj)->fFree((CObject*)new_obj);
+                    if(keepFlag) { /* make sure that we don't aren't simply duplicating the template coordinates */
+                      keepFlag = false;
+                      v1 = os->Coord;
+                      v2 = cs->Coord;
+                      n = cs->NIndex;
+                      while(n--) {
+                        if(diffsq3f(v1,v2)>R_SMALL8) {
+                          keepFlag = true;
+                          break;
+                        }
+                        v1++;
+                        v2++;
+                      }
+                    }
                   }
+                if(keepFlag) { /* we need to create new object */
+                  sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
+                  ObjectSetName((CObject*)new_obj,new_name);
+                  ExecutiveDelete(new_name);
+                  ExecutiveManageObject((CObject*)new_obj,true,false);
+                  SceneChanged();
+                } else {
+                  ((CObject*)new_obj)->fFree((CObject*)new_obj);
                 }
               }
         MapFree(map);
@@ -6299,7 +6316,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state
     VLAFreeP(op.vv1);
   }
   PRINTFD(FB_Executive)
-    " ExecutiveSymExp: leaving...\n"
+     " ExecutiveSymExp: leaving...\n"
     ENDFD;
   SettingSet(cSetting_auto_zoom,auto_save);
 }
