@@ -1174,6 +1174,7 @@ void PInit(void)
 
   /* required environment variables */
 
+  PyRun_SimpleString("import os");
   PyRun_SimpleString(
 "if not os.environ.has_key('PYMOL_DATA'): os.environ['PYMOL_DATA']=os.environ['PYMOL_PATH']+'/data'");
   PyRun_SimpleString(
