@@ -427,6 +427,9 @@ if __name__=='pymol.setting':
       ribbon_side_chain_helper  = (393, '')
       selection_width_max       = (394, '')
       selection_width_scale     = (395, '')
+      scene_current_name        = (396, '')
+      presentation              = (397, '')
+      presentation_mode         = (398, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * overhaul of the scene subsystem to create some order
+
    * orient command now chooses the least perturbation from the 
      current view
 

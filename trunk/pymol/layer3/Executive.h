@@ -44,13 +44,13 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
 float ExecutiveDistance(PyMOLGlobals *G,char *sele1,char *sele2);
 float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float cutoff,int labels,int quiet);
 void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add);
-int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet);
-int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet);
+int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet,PyObject *space);
+int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet,PyObject *space);
 int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,
                         PyObject *list,int quiet,int id_type);
 void ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet);
 void ExecutiveIterateState(PyMOLGlobals *G,int i1,char *s1,char *expr,int read_only,
-                           int atomic_props,int quiet);
+                           int atomic_props,int quiet,PyObject *space);
 int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet);
 int ExecutiveInit(PyMOLGlobals *G);
 void ExecutiveFree(PyMOLGlobals *G);

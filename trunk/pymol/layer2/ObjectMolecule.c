@@ -7563,7 +7563,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                 break;
               case OMOP_ALTR:
                 if (ok) {
-                  if(PAlterAtom(&I->AtomInfo[a],op->s1,op->i2,I->Obj.Name,a))
+                  if(PAlterAtom(&I->AtomInfo[a],op->s1,op->i2,I->Obj.Name,a,op->py_ob1))
                     op->i1++;
                   else
                     ok=false;
@@ -7587,7 +7587,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                         else
                           ai_option = NULL;
                         if(PAlterAtomState(cs->Coord+(a1*3),op->s1,op->i3,
-                                           ai_option,I->Obj.Name,a)) {
+                                           ai_option,I->Obj.Name,a,op->py_ob1)) {
                           op->i1++;
                           hit_flag=true;
                         } else

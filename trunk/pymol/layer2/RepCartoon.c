@@ -354,7 +354,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                 *fp = ai->flags; /* store atom flags */
 
                 if(cartoon_side_chain_helper) {
-                  if(ai->visRep[cRepLine]||ai->visRep[cRepCyl])
+                  if(ai->visRep[cRepLine]||ai->visRep[cRepCyl]||ai->visRep[cRepSphere])
                     *fp |= cAtomFlag_no_smooth;
                 }
                 

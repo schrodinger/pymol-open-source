@@ -67,9 +67,9 @@ Z* -------------------------------------------------------------------
 #define PInitEmbedded(a,b)
 #define PGetOptions(a)
 
-#define PAlterAtom(a,b,c,d,e) 0
+#define PAlterAtom(a,b,c,d,e,f) 0
 #define PLabelAtom(a,b,c) 0
-#define PAlterAtomState(a,b,c,d,e,f) 0
+#define PAlterAtomState(a,b,c,d,e,f,g) 0
 
 #else
 
@@ -86,9 +86,9 @@ void PParse(char *str); /* only accepts one command */
 void PDo(char *str); /* accepts multple commands seperated by newlines */
 
 
-int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index);
+int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index,PyObject *space);
 int PLabelAtom(AtomInfoType *at,char *expr,int index);
-int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *model, int index);
+int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *model, int index,PyObject *space);
 
 
 void PLog(char *str,int lf);

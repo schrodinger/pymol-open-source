@@ -45,6 +45,7 @@ void MovieCopyFinish(PyMOLGlobals *G);
 
 #define cMovieStop 0
 #define cMoviePlay 1
+#define cMovieToggle -1
 
 void MoviePlay(PyMOLGlobals *G,int cmd);
 int MoviePlaying(PyMOLGlobals *G);

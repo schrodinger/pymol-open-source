@@ -1365,12 +1365,14 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepCartoon,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepSphere,cRepInvRep);
     SceneChanged(G);
     break;
   case cSetting_ribbon_side_chain_helper:
     ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepSphere,cRepInvRep);
     SceneChanged(G);
     break;
   case cSetting_cartoon_transparency:
@@ -2425,7 +2427,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_ribbon_side_chain_helper, 0);
   SettingSet_f(I,cSetting_selection_width_max,6.0F);
   SettingSet_f(I,cSetting_selection_width_scale,2.0F);
-
+  SettingSet_s(I,cSetting_scene_current_name,"");
+  SettingSet_b(I,cSetting_presentation,0);
+  SettingSet_i(I,cSetting_presentation_mode,1);
 }
 
 

@@ -85,6 +85,7 @@ typedef struct ObjectMoleculeOpRec {
   char *s1;
   ObjectMolecule **obj1VLA;
   AtomInfoType *ai;
+  PyObject *py_ob1;
   float ttt[16],*mat1;
   int nvv1,nvv2;
 } ObjectMoleculeOpRec;

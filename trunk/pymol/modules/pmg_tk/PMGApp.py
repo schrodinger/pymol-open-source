@@ -94,7 +94,7 @@ class PMGApp(AbstractApp):
          Frame,self.get_commandFrame(),bd=0)
       row3.pack(side=TOP,fill=BOTH,expand=YES)
       btn_unpick = self.buttonAdd(row3,'Unpick',lambda : cmd.do("_ unpick"))
-      btn_hidesele = self.buttonAdd(row3,'Hide Sele',self.hide_sele)
+      btn_hidesele = self.buttonAdd(row3,'Deselect',self.hide_sele)
       btn_getview = self.buttonAdd(row3,'Get View',lambda s=self: s.get_view()) # doesn't get logged
 
 #      row3 = self.createcomponent('row3', (), None,
@@ -268,6 +268,16 @@ class PMGApp(AbstractApp):
                       e=self.entry,s=self:cmd.do("cmd._special(11,0,0)"))
       self.bind_all('<F12>',lambda event,w=self.command,
                       e=self.entry,s=self:cmd.do("cmd._special(12,0,0)"))
+
+      self.entry.bind('<Prior>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(104,0,0)"))
+      self.entry.bind('<Next>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(105,0,0)"))
+      self.entry.bind('<Home>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(106,0,0)"))
+      self.entry.bind('<End>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(107,0,0)"))
+
 
    def flush_commands_once(self):
       # flush the external GUI fifo command queue
@@ -1742,7 +1752,6 @@ class PMGApp(AbstractApp):
                                command = lambda s=self:
                                s.text.configure(font=(s.font,12)))
 
-
       self.menuBar.addcascademenu('Setting', 'Control', 'Control Size',
                                   label=self.pad+'Control Size')
 
@@ -1833,22 +1842,66 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenu('Scene', 'Scene Storage',tearoff=TRUE)
 
+      self.menuBar.addmenuitem('Scene', 'command', 'Append',
+                               label=self.pad+'Append',
+                               command = lambda: cmd.scene('new','store'))
+
+      self.menuBar.addmenuitem('Scene', 'command', 'Insert Before',
+                               label=self.pad+'Insert (before)',
+                               command = lambda: cmd.scene('','insert_before'))
+
+      self.menuBar.addmenuitem('Scene', 'command', 'Insert After',
+                               label=self.pad+'Insert (after)',
+                               command = lambda: cmd.scene('','insert_after'))
+
+      self.menuBar.addmenuitem('Scene', 'command', 'Update',
+                               label=self.pad+'Update',
+                               command = lambda: cmd.scene('auto','store'))
+
+#      self.menuBar.addmenuitem('Scene', 'command', 'Annotate',
+#                               label=self.pad+'Append',
+#                               command = lambda: cmd.scene('new','store'))
+
+      self.menuBar.addmenuitem('Scene', 'separator', '')
+
+      self.menuBar.addmenuitem('Scene', 'command', 'Delete',
+                               label=self.pad+'Delete',
+                               command = lambda: cmd.scene('auto','clear'))
+
+      self.menuBar.addmenuitem('Scene', 'separator', '')
+
       self.menuBar.addcascademenu('Scene', 'Store', 'Store',
                                   label=self.pad+'Store')
 
+#      self.menuBar.addcascademenu('Store', 'StoreSHFT', 'StoreSHFT',
+#                                  label=self.pad+'Shift')
+
       self.menuBar.addmenuitem('Scene', 'separator', '')
-      
+
+#      self.menuBar.addcascademenu('Scene', 'SceneSHFT', 'SceneSHFT',
+#                                  label=self.pad+'Shift')
+
       for x in range(1,13):
          self.menuBar.addmenuitem('Store', 'checkbutton', 'F%d'%x,
                                   label=self.pad+'F%d'%x,
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d,store"%x))
 
-
          self.menuBar.addmenuitem('Scene', 'checkbutton', 'Recall F%d'%x,
                                   label=self.pad+'Recall F%d'%x,
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d"%x))
+      
+#      for x in range(1,13):
+#         self.menuBar.addmenuitem('StoreSHFT', 'checkbutton', 'SHFT-F%d'%x,
+#                                  label=self.pad+'SHFT-F%d'%x,
+#                                  variable = self.setting.SHFTF[x],
+#                                  command = lambda x=x: cmd.do("scene SHFT-F%d,store"%x))
+#         
+#         self.menuBar.addmenuitem('SceneSHFT', 'checkbutton', 'Recall SHFT-F%d'%x,
+#                                  label=self.pad+'Recall SHFT-F%d'%x,
+#                                  variable = self.setting.SHFTF[x],
+#                                  command = lambda x=x: cmd.do("scene SHFT-F%d"%x))
 
       self.menuBar.addmenuitem('Scene', 'separator', '')
 
@@ -1856,13 +1909,21 @@ class PMGApp(AbstractApp):
       self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
                                   label=self.pad+'Clear')
 
+#      self.menuBar.addcascademenu('Clear', 'ClearSHFT', 'ClearSHFT',
+#                                  label=self.pad+'Shift')
+
       for x in range(1,13):
          
          self.menuBar.addmenuitem('Clear', 'checkbutton', 'F%d'%x,
                                label=self.pad+'F%d'%x,
                                variable = self.setting.F[x],
                                command = lambda x=x: cmd.do("scene F%d,clear"%x))
-      
+
+#         self.menuBar.addmenuitem('ClearSHFT', 'checkbutton', 'SHFT-F%d'%x,
+#                                  label=self.pad+'SHFT-F%d'%x,
+#                                  variable = self.setting.SHFTF[x],
+#                                  command = lambda x=x: cmd.do("scene SHFT-F%d,clear"%x))
+         
       self.menuBar.addmenu('Mouse', 'Mouse Configuration',tearoff=TRUE)
 
       self.menuBar.addcascademenu('Mouse', 'SelectionMode', 'Selection Mode',

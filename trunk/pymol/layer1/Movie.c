@@ -330,6 +330,9 @@ void MoviePlay(PyMOLGlobals *G,int cmd)
 {
   register CMovie *I=G->Movie;
   switch(cmd) {
+  case cMovieToggle:
+    I->Playing=!I->Playing;
+    break;
   case cMovieStop:
 	 I->Playing=false;
 	 break;

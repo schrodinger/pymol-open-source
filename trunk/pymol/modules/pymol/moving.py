@@ -47,6 +47,15 @@ if __name__=='pymol.moving':
       finally:
          unlock()
 
+   def get_movie_playing():
+      r = 0
+      try:
+         lock()
+         r = _cmd.get_movie_playing()
+      finally:
+         unlock()
+      return r
+   
    def mdump():
       '''
 DESCRIPTION
@@ -72,6 +81,14 @@ SEE ALSO
          unlock()
       return r
 
+   def mtoggle():
+      try:
+         lock()   
+         r = _cmd.mplay(-1)
+      finally:
+         unlock()
+      return r
+   
    def mstop():
       '''
 DESCRIPTION

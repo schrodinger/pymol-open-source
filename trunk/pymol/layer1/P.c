@@ -243,7 +243,9 @@ void PDumpException()
   PyObject_CallMethod(P_traceback,"print_exc","");
 }
 
-int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *model,int index) 
+int PAlterAtomState(float *v,char *expr,int read_only,
+                    AtomInfoType *at,char *model,int index,
+                    PyObject *space) 
      /* assumes Blocked python interpreter*/
 {
   PyObject *dict; 
@@ -290,7 +292,7 @@ int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *mod
   x_id1 = PConvFloatToPyDictItem(dict,"x",v[0]);
   y_id1 = PConvFloatToPyDictItem(dict,"y",v[1]);
   z_id1 = PConvFloatToPyDictItem(dict,"z",v[2]);
-  PyRun_String(expr,Py_single_input,P_globals,dict);
+  PXDecRef(PyRun_String(expr,Py_single_input,space,dict));
   if(PyErr_Occurred()) {
     PyErr_Print();
     result=false;
@@ -328,7 +330,8 @@ int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *mod
   return result;
 }
 
-int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
+int PAlterAtom(AtomInfoType *at,char *expr,int read_only,
+               char *model,int index,PyObject *space)
 {
   /* assumes Blocked python interpreter*/
   WordType buf;
@@ -421,7 +424,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   ID_id1 = PConvIntToPyDictItem(dict,"ID",at->id);
   state_id1 = PConvIntToPyDictItem(dict,"state",at->discrete_state);
   rank_id1 = PConvIntToPyDictItem(dict,"rank",at->rank);
-  PyRun_String(expr,Py_single_input,P_globals,dict);
+
+  PXDecRef(PyRun_String(expr,Py_single_input,space,dict));
   if(PyErr_Occurred()) {
     ErrMessage(TempPyMOLGlobals,"Alter","Aborting on error. Assignment may be incomplete.");
     PyErr_Print();
@@ -725,7 +729,7 @@ int PLabelAtom(AtomInfoType *at,char *expr,int index)
   PConvIntToPyDictItem(dict,"color",at->color);
   PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
   PConvIntToPyDictItem(dict,"ID",at->id);
-  PyRun_String(expr,Py_single_input,P_globals,dict);
+  PXDecRef(PyRun_String(expr,Py_single_input,P_globals,dict));
   if(PyErr_Occurred()) {
     PyErr_Print();
     result=false;

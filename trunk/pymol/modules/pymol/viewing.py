@@ -37,13 +37,15 @@ if __name__=='pymol.viewing':
                 "nonbonded", "nb_spheres",
                 "cartoon","ribbon","labels","slice"]
 
-   view_sc = Shortcut(['store','recall','clear'])
+   view_sc = Shortcut(['store','recall','clear','insert_before','insert_after','next','previous'])
    view_dict = {}
    view_dict_sc = Shortcut([])
 
    scene_dict = {}
    scene_dict_sc = Shortcut([])
-
+   scene_order = []
+   scene_counter = 1
+   
    def zoom(selection="all",buffer=0.0,state=0,complete=0,animate=0):
       '''
 DESCRIPTION
@@ -783,8 +785,8 @@ PYMOL API
 VIEWS
 
    Views F1 through F12 are automatically bound to function keys
-   provided that "set_key" hasn't been used to redefine the behaviour
-   of the respective key, and that a "scene" hasn't been defined for
+   provided that "set_key" has not been used to redefine the behaviour
+   of the respective key, and that a "scene" has not been defined for
    that key.
 
 EXAMPLES
@@ -877,9 +879,57 @@ SEE ALSO
       finally:
          unlock()
       return cpy
+
+   scene_sort_dict = {
+      'F1' : 'F01',
+      'F2' : 'F02',
+      'F3' : 'F03',
+      'F4' : 'F04',
+      'F5' : 'F05',
+      'F6' : 'F06',
+      'F7' : 'F07',
+      'F8' : 'F08',
+      'F9' : 'F09',
+#      'SHFT-F1' : 'SHFT-F01',
+#      'SHFT-F2' : 'SHFT-F02',
+#      'SHFT-F3' : 'SHFT-F03',
+#      'SHFT-F4' : 'SHFT-F04',
+#      'SHFT-F5' : 'SHFT-F05',
+#      'SHFT-F6' : 'SHFT-F06',
+#      'SHFT-F7' : 'SHFT-F07',
+#      'SHFT-F8' : 'SHFT-F08',
+#      'SHFT-F9' : 'SHFT-F09',
+      }
+
+   def _scene_get_unique_key():
+      global scene_dict,scene_order      
+      global scene_counter
+      keys = scene_dict.keys()
+      while 1:
+         key = "%03d"%scene_counter
+         if scene_dict.has_key(key):
+            scene_counter = scene_counter + 1
+         else:
+            break;
+      return key
    
+   def _scene_validate_list():
+      global scene_dict,scene_order      
+      new_list = []
+      new_dict = {}
+      for a in scene_order:
+         if scene_dict.has_key(a):
+            new_list.append(a)
+            new_dict[a] = 1
+      for a in scene_dict.keys():
+         if not new_dict.has_key(a):
+            new_list.append(a)
+      scene_order = new_list
+      return scene_order
+
    def scene(key,action='recall',message=None,
-             view=1,color=1,active=1,rep=1,frame=1):
+             view=1,color=1,active=1,rep=1,frame=1,animate=-1,
+             quiet=1):
       '''
 DESCRIPTION
 
@@ -936,20 +986,20 @@ DEVELOPMENT TO DO
       which are enabled/disabled differentially.
       
       '''
-      global scene_dict,scene_dict_sc
-
+      global scene_dict,scene_dict_sc,scene_order
+      
       try:
          view = int(view)
          rep = int(rep)
          color = int(color)
          active = int(active)
          frame = int(frame)
+         if animate<0:
+            animate=int(cmd.get_setting_legacy("scene_animation"))         
          lock() # manipulating global data, so need lock
-         
          if key=='*':
             action = view_sc.auto_err(action,'action')
             if action=='clear':
-
                for key in scene_dict.keys():
                   # free selections
                   list = scene_dict[key]
@@ -960,17 +1010,38 @@ DEVELOPMENT TO DO
                   name = "_scene_"+key+"_*"
                   cmd.delete(name)
                scene_dict = {}
-               scene_dict_sc = Shortcut(scene_dict.keys())                        
+               scene_dict_sc = Shortcut(scene_dict.keys())
+               scene_order = []
             else:
                print " scene: stored scenes:"
-               lst = scene_dict.keys()
-               lst.sort()
+               lst = _scene_validate_list()
                parsing.dump_str_list(lst)
          else:
             action = view_sc.auto_err(action,'action')
+            
+            if action=='insert_before':
+               key = _scene_get_unique_key()
+               cur_scene = setting.get("scene_current_name")
+               if cur_scene in scene_order:
+                  ix = scene_order.index(cur_scene)
+               else:
+                  ix = 0
+               scene_order.insert(ix,key)
+               action='store'
+            elif action=='insert_after':
+               key = _scene_get_unique_key()            
+               cur_scene = setting.get("scene_current_name")
+               if cur_scene in scene_order:
+                  ix = scene_order.index(cur_scene) + 1
+               else:
+                  ix = len(scene_order)
+               scene_order.insert(ix,key)
+               action='store'
+               
             if action=='recall':
                cmd.set("scenes_changed",1,quiet=1);
                key = scene_dict_sc.auto_err(key,'scene')
+               cmd.set('scene_current_name', key, quiet=1)               
                list = scene_dict[key]
                ll = len(list)
                if (ll>1) and (active):
@@ -979,7 +1050,8 @@ DEVELOPMENT TO DO
                      cmd.set_vis(list[1])
                if (ll>2) and (frame):
                   if list[2]!=None:
-                     cmd.frame(list[2])
+                     if not cmd.get_movie_playing(): # don't set frame when movie is already playing
+                        cmd.frame(list[2])
                if (ll>3) and (color):
                   if list[3]!=None:
                      cmd.set_colorection(list[3],key)
@@ -1022,11 +1094,16 @@ DEVELOPMENT TO DO
                   cmd.wizard()
                if (ll>0) and (view):
                   if list[0]!=None:
-                     set_view(list[0],
-                              animate=int(cmd.get_setting_legacy("scene_animation")))
-               if _feedback(fb_module.scene,fb_mask.actions): # redundant
+                     set_view(list[0],quiet,animate)
+               if not quiet and _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
             elif action=='store':
+               if key =='new':
+                  key=_scene_get_unique_key()               
+               if key =='auto':
+                  key = setting.get("scene_current_name")
+                  if key=='':
+                     key=_scene_get_unique_key()
                if not scene_dict.has_key(key):
                   scene_dict_sc.append(key)
                else: # get rid of existing one (if exists)
@@ -1037,6 +1114,8 @@ DEVELOPMENT TO DO
                         cmd.del_colorection(colorection,key) # important -- free RAM
                   name = "_scene_"+key+"_*"
                   cmd.delete(name)
+               if key not in scene_order:
+                  scene_order.append(key)
                entry = []
                if view:
                   entry.append(cmd.get_view(0))
@@ -1073,10 +1152,12 @@ DEVELOPMENT TO DO
                if _feedback(fb_module.scene,fb_mask.actions):
                   print " scene: scene stored as \"%s\"."%key
                cmd.set("scenes_changed",1,quiet=1);
+               cmd.set('scene_current_name',key,quiet=1)
             elif action=='clear':
+               if key=='auto':
+                  key = setting.get("scene_current_name")
                key = scene_dict_sc.auto_err(key,'view')
                if scene_dict.has_key(key):
-
                   list = scene_dict[key]
                   if len(list)>3:
                      colorection = list[3]
@@ -1090,6 +1171,37 @@ DEVELOPMENT TO DO
                   scene_dict_sc = Shortcut(scene_dict.keys())            
                   if _feedback(fb_module.scene,fb_mask.actions):
                      print " scene: '%s' deleted."%key
+            elif action=='next':
+               lst = _scene_validate_list()
+               cur_scene = setting.get('scene_current_name',quiet=1)
+               if cur_scene in lst:
+                  ix = lst.index(cur_scene) + 1
+               else:
+                  ix = 0
+                  animate = 0
+               if ix<len(lst):
+                  scene_name = lst[ix]
+                  cmd.set('scene_current_name', scene_name, quiet=1)
+                  scene(scene_name,'recall',animate=animate)
+               else:
+                  cmd.set('scene_current_name','',quiet=1)
+                  if len(lst):
+                     cmd.disable() # just hide everything               
+            elif action=='previous':
+               lst = _scene_validate_list()            
+               cur_scene = setting.get('scene_current_name',quiet=1)
+               if cur_scene in lst:
+                  ix = lst.index(cur_scene) - 1
+               else:
+                  ix = len(lst)-1
+                  animate = 0
+               if ix>=0:
+                  scene_name = lst[ix]
+                  scene(scene_name,'recall',animate=animate)
+               else:
+                  cmd.set('scene_current_name','',quiet=1)
+                  if len(lst):
+                     cmd.disable() # just hide everything
       finally:
          unlock()
          
@@ -1113,13 +1225,16 @@ DEVELOPMENT TO DO
 
    def session_save_scenes(session):
       session['scene_dict']=copy.deepcopy(scene_dict)
+      session['scene_order']=copy.deepcopy(scene_order)
       return 1
 
    def session_restore_scenes(session):
-      global scene_dict,scene_dict_sc
+      global scene_dict,scene_dict_sc,scene_order
       if session.has_key('scene_dict'):
          scene_dict=copy.deepcopy(session['scene_dict'])
          scene_dict_sc = Shortcut(scene_dict.keys())
+      if session.has_key('scene_order'):
+         scene_order=copy.deepcopy(session['scene_order'])
       return 1
 
    if session_restore_scenes not in pymol._session_restore_tasks:
@@ -1930,3 +2045,5 @@ NOTES
    recolour = recolor
    
 
+   import setting
+   

@@ -391,6 +391,10 @@ Rep *RepSphereNew(CoordSet *cs)
   float sphere_scale,sphere_add=0.0;
   int one_color;
   int *map_flag=NULL,*mf;
+  int cartoon_side_chain_helper = 0;
+  int ribbon_side_chain_helper = 0;
+  AtomInfoType *ati1;
+  int vis_flag;
 
 #ifdef _this_code_is_not_used
   float vv0[3],vv1[3],vv2[3];
@@ -422,6 +426,10 @@ Rep *RepSphereNew(CoordSet *cs)
   sp = G->Sphere->Sphere[ds];
 
   one_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
+  cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
+                                         cSetting_cartoon_side_chain_helper);
+  ribbon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
+                                         cSetting_ribbon_side_chain_helper);
 
   spheroid_scale=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_spheroid_scale);
   if(spheroid_scale&&cs->Spheroid) 
@@ -467,9 +475,35 @@ Rep *RepSphereNew(CoordSet *cs)
   for(a=0;a<cs->NIndex;a++)
     {
       a1 = cs->IdxToAtm[a];
-      if(obj->AtomInfo[a1].visRep[cRepSphere])
-        {
+      ati1 = obj->AtomInfo+a1;
+      vis_flag = ati1->visRep[cRepSphere];
 
+      if(vis_flag &&
+         (!ati1->hetatm) &&
+         ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]) ||
+          (ribbon_side_chain_helper && ati1->visRep[cRepRibbon]))) {
+        
+        register char *name1=ati1->name;
+        register int prot1=ati1->protons;
+        if(prot1 == cAN_N) { 
+          if((!name1[1])&&(name1[0]=='N')) { /* N */
+            register char *resn1 = ati1->resn;
+            if(!((resn1[0]=='P')&&(resn1[1]=='R')&&(resn1[2]=='O')))
+              vis_flag=false;
+          }
+        } else if(prot1 == cAN_O) { 
+          if((!name1[1])&&(name1[0]=='O'))
+            vis_flag=false;
+        } else if(prot1 == cAN_C) {
+          if((!name1[1])&&(name1[0]=='C'))
+            vis_flag=false;
+        }
+      }
+      ati1->temp1 = vis_flag; /* store temporary visibility information */
+
+      if(vis_flag)
+        {
+          
           if(I->R.P) {
             I->NP++;
             
@@ -477,7 +511,7 @@ Rep *RepSphereNew(CoordSet *cs)
             I->R.P[I->NP].index = a1;
             I->R.P[I->NP].bond = -1;
           }
-
+          
           *mf=true;
           I->NC++;
           if(one_color==-1)
@@ -501,7 +535,7 @@ Rep *RepSphereNew(CoordSet *cs)
         }
       mf++;
     }
-
+  
   if(I->NC) 
 	 I->VC=ReallocForSure(I->VC,float,(v-I->VC));
   else
@@ -548,7 +582,12 @@ Rep *RepSphereNew(CoordSet *cs)
   for(a=0;a<cs->NIndex;a++)
 	 {
 		a1 = cs->IdxToAtm[a];
-		if(obj->AtomInfo[a1].visRep[cRepSphere])
+      ati1 = obj->AtomInfo+a1;
+      vis_flag = ati1->temp1;
+      
+      /* don't show backbone atoms if side_chain_helper is on */
+
+		if(vis_flag)
 		  {
           if(one_color==-1)
             c1=*(cs->Color+a);
@@ -581,7 +620,7 @@ Rep *RepSphereNew(CoordSet *cs)
 						j=map->EList[i++];
 						while(j>=0) {
 						  a2 = cs->IdxToAtm[j];
-						  if(obj->AtomInfo[a2].visRep[cRepSphere]) {
+						  if(obj->AtomInfo[a2].temp1) {
 							 if(j!=a)
 								if(within3f(cs->Coord+3*j,v1,
                                     cs->Obj->AtomInfo[a2].vdw*
@@ -633,7 +672,7 @@ Rep *RepSphereNew(CoordSet *cs)
 							 j=map->EList[i++];
 							 while(j>=0) {
 								a2 = cs->IdxToAtm[j];
-								if(obj->AtomInfo[a2].visRep[cRepSphere]) {
+								if(obj->AtomInfo[a2].temp1) {
 								  if(j!=a)
 									 if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale+sphere_add))
 										{
@@ -754,7 +793,8 @@ Rep *RepSphereNew(CoordSet *cs)
 			 I->N++;
 			 if(nt) nt++;
 		  }
-	 }
+      }
+
 
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
   if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
@@ -766,13 +806,13 @@ Rep *RepSphereNew(CoordSet *cs)
   if(one_color==-1) 
     for(a=0;a<cs->NIndex;a++)
       {
-        *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSphere];
+        *(lv++) = (ai2 + cs->IdxToAtm[a])->temp1;
         *(lc++) = *(cc++);
       }
   else 
     for(a=0;a<cs->NIndex;a++)
       {
-        *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSphere];
+        *(lv++) = (ai2 + cs->IdxToAtm[a])->temp1;
         *(lc++) = one_color;
       }
 
