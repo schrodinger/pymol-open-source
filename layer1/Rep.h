@@ -26,14 +26,15 @@ Z* -------------------------------------------------------------------
 #define cRepSurface    2
 #define cRepLabel      3
 #define cRepNonbondedSphere 4
-#define cRepRibbon     5
-#define cRepLine       6
-#define cRepMesh       7
-#define cRepDot        8
-#define cRepDash       9
-#define cRepNonbonded  10
+#define cRepCartoon    5
+#define cRepRibbon     6
+#define cRepLine       7
+#define cRepMesh       8
+#define cRepDot        9
+#define cRepDash       10
+#define cRepNonbonded  11
 
-#define cRepCnt       11
+#define cRepCnt       12
 
 
 /* Hierarchical invalidation scheme - 

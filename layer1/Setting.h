@@ -187,6 +187,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_fog                  88
 #define cSetting_isomesh_auto_state   89
 #define cSetting_mesh_width           90
+#define cSetting_cartoon_sampling     91
+#define cSetting_cartoon_loop_radius  92
+#define cSetting_cartoon_loop_quality 93
 
 #define cSetting_INIT                 99
 

@@ -176,11 +176,13 @@ Rep *RepRibbonNew(CoordSet *cs)
   }
 
   RepInit(&I->R);
-  power_a=SettingGet(cSetting_ribbon_power);
-  power_b=SettingGet(cSetting_ribbon_power_b);
+  power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power);
+  power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
 
-  sampling=SettingGet(cSetting_ribbon_sampling);
-  radius=SettingGet(cSetting_ribbon_radius);
+  sampling=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
+  if(sampling<1) sampling=1;
+  radius=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_radius);
+  if(radius<0.01) radius=0.01;
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;

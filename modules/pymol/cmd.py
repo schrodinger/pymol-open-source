@@ -5136,7 +5136,8 @@ class fb_module:
    repdistdash               =55
    repdistlabel              =56
    repribbon                 =57
-
+   repcartoon                =58
+   
    executive                 =70
    selector                  =71
    editor                    =72
@@ -5502,13 +5503,13 @@ repres = {
    'surface'       : 2,
    'labels'        : 3,
    'nb_spheres'    : 4,
-   'ribbon'        : 5,
-   'lines'         : 6,
-   'mesh'          : 7,
-   'dots'          : 8,
-   'dashes'        : 9,
-   'nonbonded'     :10,
-   
+   'cartoon'       : 5,
+   'ribbon'        : 6,
+   'lines'         : 7,
+   'mesh'          : 8,
+   'dots'          : 9,
+   'dashes'        :10,
+   'nonbonded'     :11,
 }
 
 rephash = Shortcut(repres.keys())

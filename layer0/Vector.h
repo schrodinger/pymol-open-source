@@ -76,6 +76,8 @@ void copy44f44f ( float *src, float *dst );
    the last two matrices can be the same matrix! */
 
 void transform33f3f ( float  *m1, float  *m2,  float  *m3 );
+void transform33Tf3f ( float  *m1, float  *m2,  float  *m3 ); /* uses transpose */
+
 void transform44f3f ( float  *m1, float  *m2,  float  *m3 );
 void transform44f4f ( float  *m1, float  *m2,  float  *m3 );
 
