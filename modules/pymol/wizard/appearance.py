@@ -187,13 +187,13 @@ class Appearance(Wizard):
          color = self.color_dict[self.current_color][1]
          mode = self.mode_dict[self.current_mode][1]
          cmmd = mode+'("%s","%s")'%(color,sele)
-         cmd.do(cmmd)
+         cmd.do(cmmd,log=0)
       elif self.current_mode in [2,3,4]: # show/hide/toggle
          sele = "(%s pk1)"%self.scope_dict[self.current_scope][1]
          what = self.what_dict[self.current_what][1]
          mode = self.mode_dict[self.current_mode][1]
          cmmd = mode+'("%s","%s")'%(what,sele)
-         cmd.do(cmmd)
+         cmd.do(cmmd,log=0)
       else: # select
          pass
       cmd.unpick()
@@ -206,13 +206,13 @@ class Appearance(Wizard):
          color = self.color_dict[self.current_color][1]
          mode = self.mode_dict[self.current_mode][1]
          cmmd = mode+'("%s","%s")'%(color,sele)
-         cmd.do(cmmd)
+         cmd.do(cmmd,log=0)
       elif self.current_mode in [2,3,4]: # show/hide/toggle
          sele = "(%s %s)"%(self.scope_dict[self.current_scope][1],selection)
          what = self.what_dict[self.current_what][1]
          mode = self.mode_dict[self.current_mode][1]
          cmmd = mode+'("%s","%s")'%(what,sele)
-         cmd.do(cmmd)
+         cmd.do(cmmd,log=0)
       cmd.delete(selection)
       cmd.deselect()
       cmd.unpick()

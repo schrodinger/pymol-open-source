@@ -170,6 +170,18 @@ int PTruthCallStr1i(PyObject *object,char *method,int argument)
   }
   return(result);
 }
+int PTruthCallStr4i(PyObject *object,char *method,int a1,int a2,int a3,int a4)
+{
+  int result = false;
+  PyObject *tmp;
+  tmp = PyObject_CallMethod(object,method,"iiii",a1,a2,a3,a4);
+  if(tmp) {
+    if(PyObject_IsTrue(tmp))
+      result = 1;
+    Py_DECREF(tmp);
+  }
+  return(result);
+}
                                        
 void PXDecRef(PyObject *obj)
 {
@@ -336,6 +348,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   LabelType label;
   int id;
   PyObject *ID_id1,*ID_id2=NULL;
+  PyObject *state_id1,*state_id2;
+  int state;
   PyObject *dict;
   int result=true;
   
@@ -376,6 +390,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   label_id1 = PConvStringToPyDictItem(dict,"label",at->label);
   color_id1 = PConvIntToPyDictItem(dict,"color",at->color);
   ID_id1 = PConvIntToPyDictItem(dict,"ID",at->id);
+  state_id1 = PConvIntToPyDictItem(dict,"state",at->discrete_state);
 
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
@@ -434,6 +449,9 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
         result=false;
       if(!(ID_id2 = PyDict_GetItemString(dict,"ID")))
         result=false;
+      if(!(state_id2 = PyDict_GetItemString(dict,"state")))
+        result=false;
+
       if(PyErr_Occurred()) {
         PyErr_Print();
         result=false;
@@ -561,6 +579,12 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
           result=false;
         else
           at->color=color;
+      }
+      if(state_id1!=state_id2) {
+        if(!PConvPyObjectToInt(state_id2,&state))
+          result=false;
+        else
+          at->discrete_state=state;
       }
       if(label_id1!=label_id2) {
         if(!PConvPyObjectToStrMaxLen(label_id2,label,sizeof(LabelType)-1))
@@ -1288,6 +1312,8 @@ void PLog(char *str,int format)
             }
             break;
           case cPLog_pym: /* .pym file */
+            if((str[0]=='_')&&(str[1])==' ')
+              str+=2;
             switch(format) {
             case cPLog_pml_lf:
               a =strlen(str);

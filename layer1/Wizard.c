@@ -37,6 +37,11 @@ Z* -------------------------------------------------------------------
 #define cWizTypeButton 2
 #define cWizTypePopUp  3
 
+#define cWizEventPick    1
+#define cWizEventSelect  2
+#define cWizEventKey     4
+#define cWizEventSpecial 8
+
 typedef struct {
   int type;
   WordType text;
@@ -50,6 +55,7 @@ typedef struct {
   int NLine;
   int Stack;
   int Pressed;
+  int EventMask;
 }  CWizard;
 
 CWizard Wizard;
@@ -76,17 +82,18 @@ int WizardDoSelect(char *name)
   CWizard *I=&Wizard;
   int result = false;
 
-  if(I->Stack>=0)
-    if(I->Wiz[I->Stack]) {
-      sprintf(buf,"cmd.get_wizard().do_select('''%s''')",name);
-      PLog(buf,cPLog_pym);
-      PBlock(); 
-      if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_select")) {
-        result = PTruthCallStr(I->Wiz[I->Stack],"do_select",name);
+  if(I->EventMask & cWizEventSelect) 
+    if(I->Stack>=0)
+      if(I->Wiz[I->Stack]) {
+        sprintf(buf,"cmd.get_wizard().do_select('''%s''')",name);
+        PLog(buf,cPLog_pym);
+        PBlock(); 
+        if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_select")) {
+          result = PTruthCallStr(I->Wiz[I->Stack],"do_select",name);
         if(PyErr_Occurred()) PyErr_Print();
+        }
+        PUnblock();
       }
-    PUnblock();
-  }
   return result;
 }
 /*========================================================================*/
@@ -121,7 +128,16 @@ void WizardRefresh(void)
   I->NLine = 0;
   if(I->Stack>=0)
     if(I->Wiz[I->Stack]) {
+
+      I->EventMask = cWizEventPick + cWizEventSelect;
       
+      if(PyObject_HasAttrString(I->Wiz[I->Stack],"get_event_mask")) {      
+        i = PyObject_CallMethod(I->Wiz[I->Stack],"get_event_mask","");
+        if(!PConvPyIntToInt(i,&I->EventMask))
+          I->EventMask = cWizEventPick + cWizEventSelect;
+        Py_XDECREF(i);
+      }
+
       if(PyObject_HasAttrString(I->Wiz[I->Stack],"get_panel")) {
         P_list = PyObject_CallMethod(I->Wiz[I->Stack],"get_panel","");
         if(PyErr_Occurred()) PyErr_Print();
@@ -216,25 +232,74 @@ int WizardDoPick(int bondFlag)
 {
   CWizard *I=&Wizard;
   int result=false;
-  if(I->Stack>=0) 
-    if(I->Wiz[I->Stack]) {
-      if(bondFlag)
-        PLog("cmd.get_wizard().do_pick(1)",cPLog_pym);
-      else
-        PLog("cmd.get_wizard().do_pick(0)",cPLog_pym);
-      
-      PBlock(); 
-      if(I->Stack>=0)
-        if(I->Wiz[I->Stack]) {
-          if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_pick")) {
-            result = PTruthCallStr1i(I->Wiz[I->Stack],"do_pick",bondFlag);
-            if(PyErr_Occurred()) PyErr_Print();
+  if(I->EventMask & cWizEventPick) 
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        if(bondFlag)
+          PLog("cmd.get_wizard().do_pick(1)",cPLog_pym);
+        else
+          PLog("cmd.get_wizard().do_pick(0)",cPLog_pym);
+        
+        PBlock(); 
+        if(I->Stack>=0)
+          if(I->Wiz[I->Stack]) {
+            if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_pick")) {
+              result = PTruthCallStr1i(I->Wiz[I->Stack],"do_pick",bondFlag);
+              if(PyErr_Occurred()) PyErr_Print();
+            }
           }
-        }
-      PUnblock();
-    }
+        PUnblock();
+      }
   return result;
 }
+
+int WizardDoKey(unsigned char k, int x, int y, int mod)
+{
+  CWizard *I=&Wizard;
+  int result=false;
+  if(I->EventMask & cWizEventKey) 
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        OrthoLineType buffer;
+        sprintf(buffer,"cmd.get_wizard().do_key(%d,%d,%d,%d)",k,x,y,mod);
+        PLog(buffer,cPLog_pym);
+        PBlock(); 
+        if(I->Stack>=0)
+          if(I->Wiz[I->Stack]) {
+            if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_key")) {
+              result = PTruthCallStr4i(I->Wiz[I->Stack],"do_key",k,x,y,mod);
+              if(PyErr_Occurred()) PyErr_Print();
+            }
+          }
+        PUnblock();
+      }
+  return result;
+}
+
+int WizardDoSpecial(int k, int x, int y, int mod)
+{
+  CWizard *I=&Wizard;
+  int result=false;
+
+  if(I->EventMask & cWizEventSpecial) 
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        OrthoLineType buffer;
+        sprintf(buffer,"cmd.get_wizard().do_special(%d,%d,%d,%d)",k,x,y,mod);
+        PLog(buffer,cPLog_pym);
+        PBlock(); 
+        if(I->Stack>=0)
+          if(I->Wiz[I->Stack]) {
+            if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_special")) {
+              result = PTruthCallStr4i(I->Wiz[I->Stack],"do_special",k,x,y,mod);
+              if(PyErr_Occurred()) PyErr_Print();
+            }
+          }
+        PUnblock();
+      }
+  return result;
+}
+
 /*========================================================================*/
 static int WizardClick(Block *block,int button,int x,int y,int mod)
 {
@@ -555,7 +620,7 @@ void WizardInit(void)
   I->Line = VLAlloc(WizardLine,10);
   I->NLine = 0;
   I->Pressed = -1;
-
+  I->EventMask = 0;
   I->Stack = -1;
   I->Wiz = VLAlloc(PyObject*,10);
 }

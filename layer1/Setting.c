@@ -37,6 +37,18 @@ CSetting Setting;
 
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
+int SettingSetSmart_i(CSetting *set1,CSetting *set2,int index, int value)
+{
+  int dummy;
+  if(set1 && SettingGetIfDefined_i(set1,index,&dummy)) {
+    return SettingSet_i(set1,index,value);
+  }
+  if(set2 && SettingGetIfDefined_i(set2,index,&dummy)) {
+    return SettingSet_i(set2,index,value);
+  }
+  return SettingSetGlobal_i(index,value);
+}
+
 int SettingSetGlobalsFromPyList(PyObject *list)
 {
   int ok=true;
@@ -1050,7 +1062,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_seq_view:
   case cSetting_seq_view_label_spacing:
   case cSetting_seq_view_label_start:
-  case cSetting_seq_view_codes:
+  case cSetting_seq_view_format:
     SeqChanged();
     break;
   case cSetting_stereo_mode:
@@ -1330,8 +1342,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_security:
     Security = (int)SettingGet(cSetting_security);
     break;
-  case cSetting_frame:
   case cSetting_state:
+  case cSetting_frame:
     SceneChanged();
     break;
   default:
@@ -2243,7 +2255,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_mouse_selection_mode,1);
   SettingSet_i(I,cSetting_seq_view_label_spacing,5);
   SettingSet_i(I,cSetting_seq_view_label_start,1);
-  SettingSet_i(I,cSetting_seq_view_codes,0);
+  SettingSet_i(I,cSetting_seq_view_format,0);
 
 }
 

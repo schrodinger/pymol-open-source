@@ -268,6 +268,7 @@ int ButModeTranslate(int button, int mod)
 /*========================================================================*/
 int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
+
   switch(mod) {
   case cOrthoSHIFT:
     PLog("cmd.mouse('backward')",cPLog_pym);
@@ -305,6 +306,8 @@ void ButModeDraw(Block *block)
     GrapDrawStr(SettingGetGlobal_s(cSetting_button_mode_name),x+88,y);
     /*    GrapDrawStr("2-Bttn Selecting",x+88,y);*/
     y-=cButModeLineHeight;
+
+
 
     glColor3fv(I->Block->TextColor);
     GrapDrawStr("Buttons ",x+1,y);
@@ -401,7 +404,8 @@ void ButModeDraw(Block *block)
 
 
     glColor3fv(I->Block->TextColor);
-    GrapDrawStr("Dbl-Clk ",x,y);
+    glColor3fv(I->TextColor1);
+    GrapDrawStr(" DblClk",x,y);
     glColor3fv(I->TextColor2);
     glRasterPos4d(x+64,y,0,1);
     for(a=16;a<19;a++) {
@@ -414,11 +418,14 @@ void ButModeDraw(Block *block)
     glColor3fv(I->Block->TextColor);
     y-=cButModeLineHeight;
 
-
-
-
-    glColor3fv(I->TextColor3);
+    /*
     if(I->Caption[0]) GrapDrawStr(I->Caption,x,y);
+    */
+
+    glColor3fv(I->Block->TextColor);
+    GrapDrawStr("Selecting ",x,y);
+    glColor3fv(I->TextColor3);
+    GrapDrawStr("Residues",x+80,y);
 
     glColor3fv(I->Block->TextColor);
     y-=cButModeLineHeight;
@@ -435,6 +442,7 @@ void ButModeDraw(Block *block)
     sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame()+1,
             nf,(int)(rate+0.5F));
     GrapDrawStr(rateStr,x+48,y);
+
 
   }
 }

@@ -94,7 +94,7 @@ int ExecutiveCountStates(char *s1);
 void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
 int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state,int weighted);
 int ExecutiveGetCameraExtent(char *name,float *mn,float *mx,int transformed,int state);
-void ExecutiveSeleToObject(char *name,char *s1,int source,int target);
+void ExecutiveSeleToObject(char *name,char *s1,int source,int target,int discrete);
 PyObject *ExecutiveSeleToChemPyModel(char *s1,int state);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
 void ExecutiveFlag(int flag,char *s1,int action,int quiet);

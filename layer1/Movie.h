@@ -71,6 +71,7 @@ int MovieFrameToImage(int frame);
 int MovieFrameToIndex(int frame);
 int MovieLocked(void);
 void MovieSetLock(int);
+int MovieDefined(void);
 
 #define cMovieMatrixClear  0
 #define cMovieMatrixStore  1

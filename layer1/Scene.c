@@ -613,7 +613,10 @@ void ScenePerspective(int flag)
 /*========================================================================*/
 int SceneGetFrame(void)
 {
-  return(SettingGetGlobal_i(cSetting_frame)-1);
+  if(MovieDefined())
+    return(SettingGetGlobal_i(cSetting_frame)-1);
+  else
+    return(SettingGetGlobal_i(cSetting_state)-1);    
 }
 /*========================================================================*/
 void SceneCountFrames() 
@@ -1416,7 +1419,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   char empty_string[1] = "";
   char *sel_mode_kw = empty_string;
 
-  if((UtilGetSeconds()-I->LastClickTime)<cDoubleTime)
+  if((!mod&(cOrthoCTRL+cOrthoSHIFT))&&(UtilGetSeconds()-I->LastClickTime)<cDoubleTime)
     {
       int dx,dy;
       dx = abs(I->LastWinX - x);
@@ -1844,7 +1847,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case cButModeMB:
         case cButModeRB:
         case cButModeSeleSet:
-          SelectorCreate(selName,buffer,NULL,false,NULL);
+          sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) in %s(%s)))",
+                  selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
+          SelectorCreate(selName,buf2,NULL,false,NULL);
           if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
           if(SettingGet(cSetting_auto_show_selections))
@@ -1904,6 +1909,18 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         break;
       }
 	 } else {
+      if(mode==cButModeSeleSet) {
+        OrthoLineType buf2;
+        char name[ObjNameMax];
+        if(ExecutiveGetActiveSeleName(name, false)) {
+          SelectorCreate(name,"none",NULL,true,NULL);
+          if(SettingGet(cSetting_logging)) {
+            sprintf(buf2,"cmd.select('%s','none')\n",name);
+            PLog(buf2,cPLog_no_flush);
+          }
+          SeqDirty();
+        }
+      }
       PRINTFB(FB_Scene,FB_Warnings) 
         " SceneClick: no atom found nearby.\n"
         ENDFB;

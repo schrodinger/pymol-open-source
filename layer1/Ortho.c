@@ -1146,7 +1146,7 @@ static void OrthoDrawWizardPrompt(void)
           ll=0;
           p++;
           c--;
-        } else if(((*p)=='`')&& /* color encoded */
+        } else if(((*p)=='\\')&& /* color encoded */
                   (p[1]>='0')&&(p[1]<='9')&&
                   (p[2]>='0')&&(p[2]<='9')&&
                   (p[3]>='0')&&(p[3]<='9')) /* relying upon short-circuit logic to avoid overrun */ {
@@ -1189,7 +1189,7 @@ static void OrthoDrawWizardPrompt(void)
       c=nChar;
       while(c>0) {
         if(*p) {
-          if((*p=='`')&&(*(p+1))&&(*(p+2))&&(*(p+3))) {
+          if((*p=='\\')&&(*(p+1))&&(*(p+2))&&(*(p+3))) {
             if(*(p+1)=='-') {
               glColor3fv(I->WizardTextColor);
               p+=4;

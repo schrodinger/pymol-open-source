@@ -129,8 +129,9 @@ typedef struct AtomInfoType {
   int temp1; /* kludge field - to remove */
   int sculpt_id; /* introduced in version 0.77 */
   int stereo; /* for 2D representation */
-  int hb_donor;
+  int hb_donor; 
   int hb_acceptor;
+  int discrete_state; /* state+1 for atoms in discrete objects */
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
@@ -168,6 +169,7 @@ int AtomResvFromResi(char *resi);
 #define cAIC_id        0x0020
 #define cAIC_flags     0x0080
 #define cAIC_tt        0x0100
+#define cAIC_state     0x0200
 
 #define cAIC_IDMask (cAIC_id)
 #define cAIC_NoneMask (cAIC_b|cAIC_q|cAIC_id)
@@ -340,5 +342,45 @@ typedef struct AtomInfoType090 {
   int stereo; /* for 2D representation */
 } AtomInfoType090;
 
+typedef struct AtomInfoType095 {
+  int resv;
+  Chain chain;
+  Chain alt;
+  ResIdent resi;
+  SegIdent segi;
+  ResName resn;
+  AtomName name;
+  AtomName elem;
+  TextType textType;
+  LabelType label;
+  SSType ssType; /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
+  int hydrogen;
+  int customType;
+  int priority;
+  float b,q,vdw,partialCharge;
+  int formalCharge;
+  signed char hetatm;
+  short int model; /* obsolete?? */
+  int atom;       /* obsolete?? */
+  int selEntry;
+  short int visRep[cRepCnt];
+  int color;
+  int id; 
+  int cartoon; /* 0 = default which is auto (use ssType) */
+  unsigned int flags;
+  signed char bonded; /* be careful not to write at these as (int*) */
+  signed char chemFlag;
+  signed char geom;
+  signed char valence;
+  signed char deleteFlag;
+  signed char masked;
+  signed char protekted;
+  signed char protons;
+  int temp1; /* kludge field - to remove */
+  int sculpt_id; /* introduced in version 0.77 */
+  int stereo; /* for 2D representation */
+  int hb_donor;
+  int hb_acceptor;
+} AtomInfoType095;
 
 #endif

@@ -394,7 +394,7 @@ if __name__=='pymol.setting':
       mouse_selection_mode  = 354
       seq_view_label_spacing = 355
       seq_view_label_start = 356
-      seq_view_codes       = 357
+      seq_view_format      = 357
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

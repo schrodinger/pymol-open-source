@@ -254,6 +254,7 @@ void ObjectInit(CObject *I)
   I->fDescribeElement = ObjectDescribeElement;
   I->fGetSettingHandle = ObjectGetSettingHandle;
   I->fInvalidate = ObjectInvalidate;
+  I->fGetCaption = NULL;
   I->Name[0]=0;
   I->Color=0; /* white */
   I->ExtentFlag=false;

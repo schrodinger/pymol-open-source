@@ -31,4 +31,7 @@ int WizardDoSelect(char *name);
 void WizardPurgeStack(void);
 PyObject *WizardGetStack(void);
 int WizardSetStack(PyObject *wiz);
+int WizardDoKey(unsigned char k, int x, int y, int mod);
+int WizardDoSpecial(int k, int x, int y, int mod);
+
 #endif

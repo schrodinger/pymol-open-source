@@ -2206,8 +2206,8 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
   logging = (int)SettingGet(cSetting_logging);
   if(logging)
     log_box= (int)SettingGet(cSetting_log_box_selections);
-  if(logging==cPLog_pml)
-    strcpy(prefix,"_ ");
+  /*  if(logging==cPLog_pml)
+      strcpy(prefix,"_ ");*/
   smp.picked=VLAlloc(Pickable,1000);
   smp.x=rect->left;
   smp.y=rect->bottom;
@@ -3657,13 +3657,13 @@ PyObject *ExecutiveSeleToChemPyModel(char *s1,int state)
   return(result);
 }
 /*========================================================================*/
-void ExecutiveSeleToObject(char *name,char *s1,int source,int target)
+void ExecutiveSeleToObject(char *name,char *s1,int source,int target,int discrete)
 {
   int sele1;
 
   sele1=SelectorIndexByName(s1);
 
-  SelectorCreateObjectMolecule(sele1,name,target,source);
+  SelectorCreateObjectMolecule(sele1,name,target,source,discrete);
 }
 /*========================================================================*/
 void ExecutiveCopy(char *src,char *dst)
@@ -6676,6 +6676,7 @@ void ExecutiveDraw(Block *block)
   float disabledColor[3] = { 0.3F, 0.3F, 0.3F };
   float lightEdge[3] = {0.6F, 0.6F, 0.6F };
   float darkEdge[3] = {0.35F, 0.35F, 0.35F };
+  float captionColor[3] = {0.1F, 1.0F, 0.1F };
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
   int n_ent;
@@ -6868,6 +6869,25 @@ void ExecutiveDraw(Block *block)
 
                 c=rec->name;
               }
+
+            if(rec->type==cExecObject) {
+              if(rec->obj->fGetCaption)
+                c = rec->obj->fGetCaption(rec->obj);
+              if(c && c[0] && nChar>1)
+                {
+                  
+                  glColor3fv(captionColor);
+                  glRasterPos4d((double)(x)+2+8*(max_char-nChar),(double)(y2)+text_lift,0.0,1.0);
+
+                  if((nChar--)>0)
+                    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,' ');
+                  while(*c) 
+                    if((nChar--)>0) 
+                      p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+                    else
+                      break;
+                }
+            }
 
             y-=ExecLineHeight;
             if(y<(I->Block->rect.bottom))

@@ -1,5 +1,12 @@
 
+
+
 class Wizard:
+
+   event_mask_pick    = 1
+   event_mask_select  = 2
+   event_mask_key     = 4
+   event_mask_special = 8
 
    def __init__(self):
       self.menu = {}
@@ -12,12 +19,21 @@ class Wizard:
    def get_panel(self):
       return self.panel
 
+   def get_event_mask(self):
+      return Wizard.event_mask_pick + Wizard.event_mask_select
+      
    def do_pick(self,bondFlag):
-      pass
+      return None
 
    def do_select(self,name):
-      pass
-   
+      return None
+
+   def do_key(self,k,x,y,mod):
+      return None
+
+   def do_special(self,k,x,y,mod):
+      return None
+
    def cleanup(self):
       pass
 
