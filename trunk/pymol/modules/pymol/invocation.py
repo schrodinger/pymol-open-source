@@ -62,9 +62,11 @@ if __name__=='pymol.invocation':
       options.ext_y = options.ext_y + 48
       
    options.blue_line = 0
+
    # Greg Landrum
    options.rpcServer = 0
    options.security = 1
+   # end
    
    pml_re = re.compile(r"pymolrc$|\.pml$|\.PML$")
    py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
@@ -112,6 +114,7 @@ if __name__=='pymol.invocation':
       av.reverse()
       global options
       options.deferred = []
+      loaded_something = 0
       # append user settings file as an option
       options.deferred.extend(get_user_config())
       while 1:
@@ -211,5 +214,8 @@ if __name__=='pymol.invocation':
                pass
          else:
             options.deferred.append(a)
+            loaded_something = 1
+      if loaded_something and (options.after_load_script!=""):
+         options.deferred.append(options.after_load_script)
       if options.show_splash and not options.no_gui:
          options.deferred.insert(0,"_do__ cmd.splash(1)")
