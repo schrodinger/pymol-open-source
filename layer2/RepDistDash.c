@@ -32,6 +32,7 @@ typedef struct RepDistDash {
   float *V;
   int N;
   Object *Obj;
+  float linewidth,radius;
 } RepDistDash;
 
 #include"ObjectDist.h"
@@ -61,7 +62,7 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 	 
 	 while(c>0) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
-		ray->fCylinder3fv(ray,v,v+3,0.14,vc,vc);
+		ray->fCylinder3fv(ray,v,v+3,I->radius,vc,vc);
 		v+=6;
       c-=2;
 	 }
@@ -73,6 +74,7 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 	 c=I->N;
 	 
     glDisable(GL_LIGHTING);
+    glLineWidth(I->linewidth);
 	 glBegin(GL_LINES);	 
 	 SceneResetNormal(true);
 	 while(c>0) {
@@ -112,6 +114,9 @@ Rep *RepDistDashNew(DistSet *ds)
   dash_gap = SettingGet(cSetting_dash_gap);
   dash_sum = dash_len+dash_gap;
   if(dash_sum<R_SMALL4) dash_sum=0.5;
+
+  I->linewidth = SettingGet(cSetting_dash_width);
+  I->radius = SettingGet(cSetting_dash_radius);
 
   I->N=0;
   I->V=NULL;

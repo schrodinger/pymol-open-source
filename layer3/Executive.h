@@ -102,6 +102,7 @@ PyObject *ExecutiveGetSettingText(int index,char *object,int state);
 int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
                          int mode,float cutoff,float h_angle,
                          int **indexVLA, ObjectMolecule ***objVLA);
+void ExecutiveRebuildAllObjectDist(void);
 
 #endif
 

@@ -661,10 +661,27 @@ void ExecutiveRebuildAll(void)
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
   while(ListIterate(I->Spec,rec,next)) {
-    if(rec->type==cExecObject)
+    if(rec->type==cExecObject) {
       if(rec->obj->type==cObjectMolecule) {
         ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep);
+      } else if(rec->obj->type==cObjectDist) {
+        ObjectDistInvalidateRep((ObjectDist*)rec->obj,cRepAll);
       }
+    }
+  }
+  SceneDirty();
+}
+/*========================================================================*/
+void ExecutiveRebuildAllObjectDist(void)
+{
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->type==cExecObject) {
+      if(rec->obj->type==cObjectDist) {
+        ObjectDistInvalidateRep((ObjectDist*)rec->obj,cRepAll);
+      }
+    }
   }
   SceneDirty();
 }

@@ -31,6 +31,7 @@ typedef struct RepRibbon {
   Rep R;
   float *V;
   float *VC;
+  float linewidth;
   int N,NC;
   int NS;
   int NP;
@@ -118,7 +119,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
       " RepRibbonRender: rendering GL...\n"
       ENDFD;
 
-    glLineWidth(SettingGet(cSetting_line_width));
+    glLineWidth(I->linewidth);
 	 
     if(c) {
 	   glDisable(GL_LIGHTING);
@@ -187,6 +188,8 @@ Rep *RepRibbonNew(CoordSet *cs)
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
   I->R.fRecolor=NULL;
+
+  I->linewidth = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
 
   /* find all of the CA points */
 

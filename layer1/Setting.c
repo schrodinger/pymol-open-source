@@ -448,7 +448,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_dash_length:
   case cSetting_dash_gap:
-    ExecutiveInvalidateRep(inv_sele,cRepDash,cRepInvRep);
+  case cSetting_dash_radius:
+  case cSetting_dash_width:
+    ExecutiveRebuildAllObjectDist();
     SceneChanged();
     break;
   case cSetting_button_mode:
@@ -495,11 +497,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_ribbon_power:
   case cSetting_ribbon_power_b:
-    ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
-    ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
-    break;
   case cSetting_ribbon_sampling:
   case cSetting_ribbon_radius:
+  case cSetting_ribbon_width:
     ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged();
     break;
@@ -933,6 +933,13 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_cartoon_tube_quality, 9);
 
   SettingSet_f(I,cSetting_cartoon_debug, 0);
+
+  SettingSet_f(I,cSetting_ribbon_width, 1.0);
+
+  SettingSet_f(I,cSetting_dash_width, 1.0);
+
+  SettingSet_f(I,cSetting_dash_radius, 0.14);
+
   
 }
 
