@@ -14,7 +14,7 @@
 
 import string
 import selector
-
+import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 
 button_code = {
@@ -148,14 +148,15 @@ SEE ALSO
    button
    '''
    r = 0
-   for a in special.keys():
-      if special[a][0]==key:
-         special[a][1]=fn
-         special[a][2]=arg
-         special[a][3]=kw
+   for a in cmd.special.keys():
+      if cmd.special[a][0]==key:
+         cmd.special[a][1]=fn
+         cmd.special[a][2]=arg
+         cmd.special[a][3]=kw
          r = 1
    if not r:
       print "Error: special '%s' key not found."%key
+      if cmd._raising(): raise QuietException
    return r
    
 def button(button,modifier,action):
@@ -260,3 +261,4 @@ SEE ALSO
    finally:
       unlock()
    return r
+
