@@ -1099,7 +1099,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_fog, 0.75F);
 
-  SettingSet_f(I,cSetting_isomesh_auto_state, 1.0F);
+  SettingSet_f(I,cSetting_isomesh_auto_state, 0.0F); /* no longer necessary? */
 
   SettingSet_f(I,cSetting_mesh_width, 1.0F);
 

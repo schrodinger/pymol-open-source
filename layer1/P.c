@@ -783,10 +783,10 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
 
   invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
-  if(!pymol) ErrFatal("PyMOL","can't find module 'invocation'");
+  if(!invocation) ErrFatal("PyMOL","can't find module 'invocation'");
 
   args = PConvStringListToPyList(argc,argv); /* prepare our argument list */
-  if(!pymol) ErrFatal("PyMOL","can't process arguments.");
+  if(!args) ErrFatal("PyMOL","can't process arguments.");
 
   /* copy arguments to sys.argv */
   PyObject_SetAttrString(sys,"argv",args);
