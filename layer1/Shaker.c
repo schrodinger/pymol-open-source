@@ -81,7 +81,7 @@ void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target)
 
 float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3)
 {
-  float d0[0],cp[3],d2[3],d3[3];
+  float d0[3],cp[3],d2[3],d3[3];
   subtract3f(v2,v1,d2);
   normalize3f(d2);
   subtract3f(v3,v1,d3);
@@ -95,7 +95,7 @@ float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3)
 float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3)
 {
-  float d0[0],cp[3],d2[3],d3[3],push[3];
+  float d0[3],cp[3],d2[3],d3[3],push[3];
   float cur,dev,sc;
   subtract3f(v2,v1,d2);
   normalize3f(d2);
