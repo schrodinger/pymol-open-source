@@ -422,6 +422,15 @@ void ExecutiveLabel(char *s1,char *expr)
     op1.s1 = expr;
     op1.i1 = 0;
     ExecutiveObjMolSeleOp(sele1,&op1);
+    op1.code=OMOP_VISI;
+    op1.i1=cRepLabel;
+    op1.i2=1;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+    op1.code = OMOP_INVA;
+    op1.i1=cRepLabel; 
+    op1.i2=cRepInvVisib;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+
     sprintf(buffer,"labelled %i atoms.",op1.i1);
     ErrOk(" Label",buffer);
   } else {
