@@ -125,7 +125,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 void RepMeshColor(RepMesh *I,CoordSet *cs)
 {
   MapType *map;
-  int a,a2,i0,i,j,h,k,l,c1;
+  int a,i0,i,j,h,k,l,c1;
   float *v0,*vc,*c0;
   int first_color;
   ObjectMolecule *obj;
@@ -133,6 +133,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   float dist,minDist;
   int inclH;
   int cullByFlag;
+  AtomInfoType *ai2;
 
   cullByFlag = SettingGet(cSetting_trim_dots);
   inclH = SettingGet(cSetting_dot_hydrogens);
@@ -162,9 +163,9 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 				if(i) {
 				  j=map->EList[i++];
 				  while(j>=0) {
-					 a2 = cs->IdxToAtm[j];
-					 if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
-						 ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
+					 ai2=obj->AtomInfo+cs->IdxToAtm[j];
+					 if((inclH||(!ai2->hydrogen))&&
+						 ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
 						/* ignore if the "2" bit is set */
 						{
 						  dist = diff3f(v0,cs->Coord+j*3);

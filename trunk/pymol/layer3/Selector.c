@@ -74,7 +74,6 @@ SelectorType Selector;
 
 int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
 									  float cutoff,int **vla);
-int SelectorGetSeleNCSet(int sele);
 int SelectorGetArrayNCSet(int *array);
 
 int SelectorModulate1(EvalElem *base);
@@ -108,9 +107,11 @@ static WordType Keyword[] =
   "all",      "ALLz", /* 0 parameter */
   "none",     "NONz", /* 0 parameter */
   "hetatm",   "HETz", /* 0 parameter */
+  "hydro",    "HYDz", /* 0 parameter */
   "around",   "ARD_", /* 1 parameter */
   "expand",   "EXP_", /* 1 parameter */
   "name",     "NAMs",
+  "elem",     "ELEs",
   "resi",     "RSIs",
   "chain",    "CHNs",
   "segi",     "SEGs",
@@ -822,6 +823,10 @@ int SelectorSelect0(EvalElem *base)
 		for(a=0;a<I->NAtom;a++)
         base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hetatm;
 		break;
+	 case 'HYDz':
+		for(a=0;a<I->NAtom;a++)
+        base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hydrogen;
+		break;
 	 case 'ALLz':
 		for(a=0;a<I->NAtom;a++)
 		  {
@@ -871,6 +876,20 @@ int SelectorSelect1(EvalElem *base)
 		  {
 			 if(WordMatchComma(base[1].text,
                        I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].name,
+                       I->IgnoreCase)<0)
+				{
+				  base[0].sele[a]=true;
+				  c++;
+				}
+			 else
+				base[0].sele[a]=false;
+		  }
+		break;
+	 case 'ELEs':
+		for(a=0;a<I->NAtom;a++)
+		  {
+			 if(WordMatchComma(base[1].text,
+                       I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].elem,
                        I->IgnoreCase)<0)
 				{
 				  base[0].sele[a]=true;

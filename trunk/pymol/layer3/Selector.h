@@ -33,5 +33,6 @@ void SelectorFreeTmp(char *name);
 void SelectorGetTmp(char *input,char *store);
 int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag);
 float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2);
+int SelectorGetSeleNCSet(int sele);
 
 #endif

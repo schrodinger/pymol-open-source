@@ -203,9 +203,10 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
       op1.i1 = state;
       ExecutiveObjMolSeleOp(sele1,&op1);
     }
-    op1.charVLA[op1.i2]=0;
-    op1.i2++; /* get trailing null */
   }
+  VLACheck(op1.charVLA,char,op1.i2);
+  op1.charVLA[op1.i2]=0;
+  op1.i2++; /* get trailing null */
   result=Alloc(char,op1.i2);
   memcpy(result,op1.charVLA,op1.i2);
   VLAFreeP(op1.charVLA);
@@ -788,11 +789,13 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
 	 if(name[0]=='_') {
 		flag=true;
 	 } else {
-		if(state!=tRec->repOn[rep])  /* more intuitive behavior for REAL selections */
-		  {
-			 flag=true;
-			 tRec->repOn[rep]=state;
-		  }
+      if(rep>0) {
+        if(state!=tRec->repOn[rep])  /* more intuitive behavior for REAL selections */
+          {
+            flag=true;
+            tRec->repOn[rep]=state;
+          }
+      }
 	 }
 	 
 	 if(flag) {
@@ -1167,7 +1170,7 @@ void ExecutiveFree(void)
 }
 
 
-	 /*
+#ifdef _undefined
 
 matrix checking code...
 
@@ -1240,4 +1243,5 @@ matrix checking code...
 		printf("\n");
 	 }
 	 printf("\n");
-	 */
+#endif
+
