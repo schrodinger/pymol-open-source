@@ -1085,6 +1085,7 @@ int BasisHitPerspective(BasisCallRec *BC)
   int     i,ii;
   int except = BC->except;
   int check_interior_flag   = BC->check_interior;
+
   MapCache *cache = &BC->cache;   
 
   CPrimitive *r_prim = NULL;  
@@ -1142,6 +1143,10 @@ int BasisHitPerspective(BasisCallRec *BC)
         b = iMax1;
     }
 
+    if(base2 == BC->front) 
+      if(!*(map->EMask + a * map->Dim[1] + b))
+        return -1;
+
     if(c < iMin2) { 
       if((iMin2 - c) > 1) 
         break;
@@ -1153,6 +1158,7 @@ int BasisHitPerspective(BasisCallRec *BC)
       else 
         c = iMax2;
     }
+    
 
     if(inside_code && (((a!=last_a)||(b!=last_b)||(c!=last_c))) &&
        (h  = *(map->EHead + (a * map->D1D2) + (b * map->Dim[2]) + c))) {
@@ -2125,7 +2131,8 @@ void BasisOptimizeMap(CBasis *I,float *vertex,int n,int *vert2prim)
 
 /*========================================================================*/
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
-                  int group_id,int block_base,int perspective)
+                  int group_id,int block_base,
+                  int perspective,float front)
 {
   float *v,*vv,*d;
   float ll;
@@ -2503,7 +2510,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
 
       if(perspective) {
-        MapSetupExpress(I->Map);
+        MapSetupExpressPerp(I->Map,tempVertex,front);
       } else if(n_voxel < (3*n)) {
         MapSetupExpressXY(I->Map,n);      
       } else {
@@ -2751,7 +2758,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       /* simple sphere mode */
       I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
       if(perspective) {
-        MapSetupExpress(I->Map);
+        MapSetupExpressPerp(I->Map,I->Vertex,front);
       } else {
         MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
       }

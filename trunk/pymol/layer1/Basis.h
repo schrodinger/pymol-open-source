@@ -92,7 +92,8 @@ typedef struct {
 void BasisInit(PyMOLGlobals *G,CBasis *I,int group_id);
 void BasisFinish(CBasis *I,int group_id);
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
-                  int group_id,int block_base,int perspective);
+                  int group_id,int block_base,
+                  int perspective,float front);
 
 void BasisSetupMatrix(CBasis *I);
 void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc,int perspective);
