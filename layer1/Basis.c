@@ -95,8 +95,10 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 	 }
 
   /*tan_acos_dangle = tan(acos(dangle));*/
-  tan_acos_dangle = (float)(sqrt1d(1.0-dangle*dangle)/dangle);
-
+  if(ab_dangle<R_SMALL4)
+    tan_acos_dangle = (float)(sqrt1d(1.0-dangle*dangle)/dangle);
+  else
+    tan_acos_dangle = MAXFLOAT;
   /*
   printf("perpDist %8.3f\n",perpDist);
   printf("dir %8.3f %8.3f %8.3f\n",dir[0],dir[1],dir[2]);

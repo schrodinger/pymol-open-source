@@ -166,6 +166,11 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * validated current test suite and source code build against:
+        Linux, Win32, IRIX, Mac OSX, and OSF
+
+   * new cartoon settings controls & tweaks
+
    * reinit command
 
    * Moved demo code into a Wizard
