@@ -37,6 +37,13 @@ Bugs to Fix
 
    * superpositions system fails with degenerate sets (planer atoms, etc).
 
+Changes up to 0.62
+
+   * tuned up the util.ray_shadows function, added a "matte" mode for better
+     definition of ribbons...
+
+   * integrated workaround for an apparent GCC serial optimizer bug on x86.
+
 Changes up to 0.61
 
    * bg_color command for easier background adjustments...
