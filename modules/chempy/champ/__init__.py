@@ -221,4 +221,11 @@ class Champ:
       if e: raise RuntimeError
       return r
 
-
+   def pattern_orient_bonds(self,index):
+      '''
+      experimental
+      '''
+      (e,r) = _champ.pattern_orient_bonds(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+      

@@ -585,7 +585,10 @@ int PLabelAtom(AtomInfoType *at,char *expr,int index)
   }
   PConvFloatToPyDictItem(dict,"q",at->q);
   PConvFloatToPyDictItem(dict,"b",at->b);
-  PConvIntToPyDictItem(dict,"numeric_type",at->customType);
+  if(at->customType!=cAtomInfoNoType)
+    PConvIntToPyDictItem(dict,"numeric_type",at->customType);
+  else
+    PConvStringToPyDictItem(dict,"numeric_type","?");  
   PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
   PConvIntToPyDictItem(dict,"color",at->color);

@@ -136,6 +136,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   float valence;
   float *v,*v0,*v1,*v2,h[3];
   int visFlag;
+  int maxBond;
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
   OOAlloc(RepWireBond);
@@ -162,6 +163,34 @@ Rep *RepWireBondNew(CoordSet *cs)
     OOFreeP(I);
     return(NULL); /* skip if no dots are visible */
   }
+
+  maxBond = 0;
+
+  b=obj->Bond;
+  for(a=0;a<obj->NBond;a++)
+    {
+      b1 = b->index[0];
+      b2 = b->index[1];
+      b++;
+      
+      if(obj->DiscreteFlag) {
+        if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+          a1=obj->DiscreteAtmToIdx[b1];
+          a2=obj->DiscreteAtmToIdx[b2];
+        } else {
+          a1=-1;
+          a2=-1;
+        }
+      } else {
+        a1=cs->AtmToIdx[b1];
+        a2=cs->AtmToIdx[b2];
+      }
+      if((a1>=0)&&(a2>=0))
+        {
+          maxBond++;
+        }
+    }
+
 
   RepInit(&I->R);
 
@@ -223,7 +252,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->R.fRecolor=NULL;
 
   if(obj->NBond) {
-	 I->V=(float*)mmalloc(sizeof(float)*obj->NBond*54);
+	 I->V=(float*)mmalloc(sizeof(float)*maxBond*54);
 	 ErrChkPtr(I->V);
 	 	 
 	 v=I->V;
@@ -360,10 +389,10 @@ Rep *RepWireBondNew(CoordSet *cs)
 	 /* now create pickable verson */
 
 	 if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
-		I->VP=(float*)mmalloc(sizeof(float)*obj->NBond*6*2);
+		I->VP=(float*)mmalloc(sizeof(float)*maxBond*6*2);
 		ErrChkPtr(I->VP);
 		
-		I->R.P=Alloc(Pickable,2*obj->NBond+1);
+		I->R.P=Alloc(Pickable,2*maxBond+1);
 		ErrChkPtr(I->R.P);
 		rp = I->R.P + 1; /* skip first record! */
 

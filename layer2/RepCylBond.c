@@ -230,6 +230,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   int nEdge;
   int half_bonds;
   int visFlag;
+  int maxBond;
   unsigned int v_size,vr_size,rp_size,vp_size;
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
@@ -247,6 +248,7 @@ Rep *RepCylBondNew(CoordSet *cs)
     {
       b1 = b->index[0];
       b2 = b->index[1];
+
       b++;
       if(obj->AtomInfo[b1].visRep[cRepCyl]||
          obj->AtomInfo[b2].visRep[cRepCyl]) {
@@ -258,6 +260,34 @@ Rep *RepCylBondNew(CoordSet *cs)
     OOFreeP(I);
     return(NULL); /* skip if no dots are visible */
   }
+
+  maxBond = 0;
+
+  b=obj->Bond;
+  for(a=0;a<obj->NBond;a++)
+    {
+      b1 = b->index[0];
+      b2 = b->index[1];
+      b++;
+      
+      if(obj->DiscreteFlag) {
+        if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+          a1=obj->DiscreteAtmToIdx[b1];
+          a2=obj->DiscreteAtmToIdx[b2];
+        } else {
+          a1=-1;
+          a2=-1;
+        }
+      } else {
+        a1=cs->AtmToIdx[b1];
+        a2=cs->AtmToIdx[b2];
+      }
+      if((a1>=0)&&(a2>=0))
+        {
+          maxBond++;
+        }
+    }
+
 
   nEdge = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
   radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
@@ -276,11 +306,11 @@ Rep *RepCylBondNew(CoordSet *cs)
 
   if(obj->NBond) {
 
-    v_size = ((obj->NBond)*((nEdge+2)*42)+32);
+    v_size = ((maxBond)*((nEdge+2)*42)+32);
 	 I->V = Alloc(float,v_size);
 	 ErrChkPtr(I->V);
 
-    vr_size = obj->NBond*10*3;
+    vr_size = maxBond*10*3;
     I->VR=Alloc(float,vr_size);
 	 ErrChkPtr(I->VR);
 	 
@@ -462,11 +492,11 @@ Rep *RepCylBondNew(CoordSet *cs)
          vertices: 8 points * 3 = 32  * 2 = 48 floats per bond
       */
 
-      vp_size = obj->NBond*48;
+      vp_size = maxBond*48;
       I->VP=Alloc(float,vp_size);
 		ErrChkPtr(I->VP);
 		
-      rp_size = 2*obj->NBond+1;
+      rp_size = 2*maxBond+1;
 		I->R.P=Alloc(Pickable,rp_size);
 		ErrChkPtr(I->R.P);
 		rp = I->R.P + 1; /* skip first record! */
