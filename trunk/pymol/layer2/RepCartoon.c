@@ -242,6 +242,9 @@ ENDFD;
                (obj->AtomInfo[a1].alt[0]=='A')) {
               if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
                 {
+                PRINTFD(FB_RepCartoon)
+                  " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  ENDFD;
                   if(a2>=0) {
                     /*
                       if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
@@ -251,7 +254,12 @@ ENDFD;
                         a2=-1;
 
                   }
-                  if(a2<=0)
+                PRINTFD(FB_RepCartoon)
+                  " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  ENDFD;
+
+
+                  if(a2<0)
                     nSeg++;
                   *(s++) = nSeg;
                   nAt++;
@@ -342,7 +350,7 @@ ENDFD;
                     if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
                       a2=-1;
                   }
-                  if(a2<=0)
+                  if(a2<0)
                     nSeg++;
                   *(s++) = nSeg;
                   nAt++;
@@ -427,6 +435,10 @@ ENDFD;
 		d=dl;
 		for(a=0;a<(nAt-1);a++)
 		  {
+        PRINTFD(FB_RepCartoon)
+          " RepCartoon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
+          ENDFD;
+
 			 if(*s==*(s+1))
 				{
 				  subtract3f(v+3,v,v1);
