@@ -2325,6 +2325,63 @@ static PyObject *CmdAngle(PyObject *dummy, PyObject *args)
   return(Py_BuildValue("f",result));
 }
 
+static PyObject *CmdDihedral(PyObject *dummy, PyObject *args)
+{
+  char *name,*str1,*str2,*str3,*str4;
+  float result=-999.0;
+  int labels,quiet;
+  int mode;
+  OrthoLineType s1,s2,s3,s4;
+  int ok=false;
+  int c1,c2,c3,c4;
+  int reset, zoom;
+  ok = PyArg_ParseTuple(args,"sssssiiiii",
+                        &name,&str1,&str2,&str3,&str4,
+                        &mode,&labels,&reset,&zoom,&quiet);
+  if (ok) {
+    APIEntry();
+    c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    c2 = SelectorGetTmp(TempPyMOLGlobals,str2,s2);
+    c3 = SelectorGetTmp(TempPyMOLGlobals,str3,s3);
+    c4 = SelectorGetTmp(TempPyMOLGlobals,str4,s4);
+    if(c1&&
+       (c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true))&&
+       (c3||WordMatch(TempPyMOLGlobals,cKeywordSame,s3,true))&&
+       (c4||WordMatch(TempPyMOLGlobals,cKeywordSame,s4,true)))
+      result = ExecutiveDihedral(TempPyMOLGlobals,name,s1,s2,s3,s4,mode,labels,reset,zoom,quiet);
+    else {
+      if((!quiet)&&(!c1)) {
+        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+          " Distance-ERR: selection 1 contains no atoms.\n"
+          ENDFB(TempPyMOLGlobals);
+      } 
+      if((quiet!=2)&&(!c2)) {
+        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+          " Distance-ERR: selection 2 contains no atoms.\n"
+          ENDFB(TempPyMOLGlobals);
+      }
+      if((quiet!=2)&&(!c3)) {
+        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+          " Distance-ERR: selection 3 contains no atoms.\n"
+          ENDFB(TempPyMOLGlobals);
+      }
+      if((quiet!=2)&&(!c4)) {
+        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+          " Distance-ERR: selection 4 contains no atoms.\n"
+          ENDFB(TempPyMOLGlobals);
+      }
+      result = -1.0;
+    }
+    SelectorFreeTmp(TempPyMOLGlobals,s1);
+    SelectorFreeTmp(TempPyMOLGlobals,s2);
+    SelectorFreeTmp(TempPyMOLGlobals,s3);
+    SelectorFreeTmp(TempPyMOLGlobals,s4);
+    APIExit();
+  }
+  return(Py_BuildValue("f",result));
+}
+
+
 static PyObject *CmdBond(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
@@ -5106,8 +5163,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"delete",                CmdDelete,               METH_VARARGS },
 	{"dirty",                 CmdDirty,                METH_VARARGS },
 	{"dirty_wizard",          CmdDirtyWizard,          METH_VARARGS },
-
-   /*	{"distance",	           CmdDistance,             METH_VARARGS },*/
+   {"dihedral",              CmdDihedral,             METH_VARARGS },
+   /*	{"distance",	        CmdDistance,             METH_VARARGS }, * abandoned long ago, right? */
 
 	{"dist",    	           CmdDist,                 METH_VARARGS },
 	{"do",	                 CmdDo,                   METH_VARARGS },

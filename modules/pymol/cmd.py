@@ -1204,6 +1204,7 @@ SEE ALSO
            count_frames,       \
            count_states,       \
            dist,               \
+           dihedral,           \
            distance,           \
            export_dots,        \
            find_pairs,         \
@@ -1516,6 +1517,7 @@ SEE ALSO
          'del'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
          'deprotect'     : [ deprotect         , 0 , 0 , ''  , parsing.STRICT ],
          'deselect'      : [ deselect          , 0 , 0 , ''  , parsing.STRICT ],
+         'dihedral'      : [ dihedral          , 0 , 0 , ''  , parsing.STRICT ],
          'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
          'disable'       : [ disable           , 0 , 0 , ''  , parsing.STRICT ],
          'distance'      : [ distance          , 0 , 0 , ''  , parsing.LEGACY ],   

@@ -243,6 +243,9 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type);
 float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mode,
                      int labels,int reset,int zoom,int quiet);
 
+float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
+                     int labels,int reset,int zoom,int quiet);
+
 
 #endif
 
