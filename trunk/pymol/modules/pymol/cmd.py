@@ -77,6 +77,8 @@ file_ext_re= re.compile(string.join([
    r"\.pmo$|", # Experimental molecular object format
    r"\.PMO$|",
    r"\.ccp4$|\.CCP4$|", # CCP4
+   r"\.top$|\.TOP$|", # Topology
+   r"\.trj$|\.TRJ$|", # Trajectory
    r"\.cex$|\.CEX$", # CEX format (used by metaphorics)
    ],''))
 
