@@ -14,8 +14,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 #include<GL/gl.h>
-#include<values.h>
 #include<math.h>
+
 #include"Base.h"
 #include"MemoryDebug.h"
 #include"OOMac.h"
@@ -93,6 +93,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 			 {
 				c=*(n++);
 				glBegin(GL_LINE_STRIP);
+				SceneResetNormal(false);
 				while(c--) {
 				  glVertex3fv(v);
 				  v+=3;
@@ -104,6 +105,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 			 {
 				c=*(n++);
 				glBegin(GL_LINE_STRIP);
+				SceneResetNormal(false);
 				while(c--) {
 				  glColor3fv(vc);
 				  vc+=3;

@@ -188,19 +188,19 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 	 aa=I->A;
 	 tp=I->T;
 	 tf=I->F;
-	 vn=I->VN;
 	 inclH=true;
 	 cullByFlag=true;
   }
+  vn=I->VN;
 
   I->N=0;
   lastColor=-1;
   colorCnt=0;
   map=MapNew(max_vdw,cs->Coord,cs->NIndex,NULL);
+  v=I->V;
   if(map)
 	 {
 		MapSetupExpress(map);
-		v=I->V;
 		for(a=0;a<cs->NIndex;a++)
 		  {
 			 a1 = cs->IdxToAtm[a];

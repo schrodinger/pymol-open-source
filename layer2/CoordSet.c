@@ -175,12 +175,10 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
 	 if(I->Rep[a]) 
 		{
 		  if(!ray) {
-			 SceneResetNormal();
 			 ObjectUseColor((Object*)I->Obj);
 		  } else {
 			 ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
-		  }
-			 
+		  }			 
 		  I->Rep[a]->fRender(I->Rep[a],ray,pick);
 		}
 

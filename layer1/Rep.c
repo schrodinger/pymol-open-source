@@ -21,6 +21,8 @@ Z* -------------------------------------------------------------------
 /*========================================================================*/
 
 void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick);
+void RepInvalidate(struct Rep *I,int level);
+void RepUpdate(struct Rep *I,struct CoordSet *cs);
 
 /*========================================================================*/
 void RepUpdate(struct Rep *I,struct CoordSet *cs)

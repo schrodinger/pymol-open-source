@@ -376,6 +376,15 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_surface_proximity].Name,
 			"surface_proximity");
 
+  I->NSetting++;
+#ifdef _PYMOL_WINDOWS
+  I->Setting[cSetting_normal_workaround].Value[0] = 1;
+#else
+  I->Setting[cSetting_normal_workaround].Value[0] = 0;
+#endif
+  strcpy(I->Setting[cSetting_normal_workaround].Name,
+			"normal_workaround");
+
 }
 
 

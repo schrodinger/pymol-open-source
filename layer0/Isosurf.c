@@ -16,7 +16,6 @@ Z* -------------------------------------------------------------------
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-#include<values.h>
 
 #include"Isosurf.h"
 #include"MemoryDebug.h"

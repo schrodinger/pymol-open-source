@@ -100,11 +100,12 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 (*pick)[0].index = i;
   } else {
 
-
+	 
 	 v=I->V;
 	 c=I->N;
 	 
 	 glBegin(GL_LINES);	 
+	 SceneResetNormal(true);
 	 while(c--) {
 		glColor3fv(v);
 		v+=3;

@@ -79,6 +79,7 @@ float SettingGetNamed(char *name);
 #define cSetting_surface_normal       37
 #define cSetting_surface_quality      38
 #define cSetting_surface_proximity    39
+#define cSetting_normal_workaround    40 
 
 #endif
 

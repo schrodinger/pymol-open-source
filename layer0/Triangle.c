@@ -27,7 +27,6 @@ Z* -------------------------------------------------------------------
 #include<stdlib.h>
 #include<stdio.h>
 #include<math.h>
-#include<values.h>
 
 #include"Base.h"
 #include"Triangle.h"
@@ -36,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Setting.h"
 #include"Ortho.h"
+
 
 float TestLine[10000];
 int NTestLine = 0;
@@ -1220,7 +1220,6 @@ static void TriangleFixProblems(float *v,float *vn,int n)
 
 int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr,float *extent)
 {
-  int l;
   TriangleSurfaceRec *I=&TriangleSurface;
   MapType *map;
   int a;

@@ -30,6 +30,13 @@ Z* -------------------------------------------------------------------
 
 #define MAX_VDW 2.5
 
+#include<limits.h>
+#include<float.h>
+
+#ifndef MAXFLOAT
+#define MAXFLOAT FLT_MAX
+#endif
+
 typedef struct { 
   void *ptr;
   int index; /* NOTE: that first record contains the list count...not pick info */

@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Setting.h"
 #include"Word.h"
+#include"Scene.h"
 
 typedef struct RepRibbon {
   Rep R;
@@ -63,6 +64,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
   } else if(pick) {
   } else {
 	 glBegin(GL_LINES);
+	 SceneResetNormal(true);
 	 while(c--)
 		{
 		  glColor3fv(v);
