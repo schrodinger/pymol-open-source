@@ -116,6 +116,7 @@ setup ( # Distribution meta-data
    "layer1/Symmetry.c",
    "layer1/Text.c",
    "layer1/Wizard.c",
+   "layer1/View.c",
    "layer2/AtomInfo.c",
    "layer2/CoordSet.c",
    "layer2/GadgetSet.c",   
@@ -189,7 +190,7 @@ setup ( # Distribution meta-data
    define_macros=[("PythonTypes",None)],   
    include_dirs=["contrib/sglite","contrib/modules"]
              ),
-   Extension("pymol.chempy.champ._champ", [
+   Extension("chempy.champ._champ", [
    "contrib/champ/champ.c",
    "contrib/champ/champ_module.c",
    "contrib/champ/chiral.c",
