@@ -13,49 +13,23 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#ifndef _H_Tetsurf
+#define _H_Tetsurf
 
-#include"os_predef.h"
-#include"os_std.h"
-#include"OOMac.h"
-
+#include"Map.h"
+#include"MemoryDebug.h"
+#include"Crystal.h"
 #include"Field.h"
 
-void FieldZero(CField *I)
-{
-  char *p,*q;
-  p=(char*)I->data;
-  q=p+I->size;
-  MemoryZero(p,q);
-}
+#define F3(field,P1,P2,P3) Ffloat3(field,P1,P2,P3)
+#define F3Ptr(field,P1,P2,P3) Ffloat3p(field,P1,P2,P3)
 
-CField *FieldNew(int *dim,int n_dim,unsigned int base_size)
-{
-  unsigned int stride;
-  int a;
+#define F4(field,P1,P2,P3,P4) Ffloat4(field,P1,P2,P3,P4)
+#define F4Ptr(field,P1,P2,P3,P4) Ffloat4p(field,P1,P2,P3,P4)
 
-  OOAlloc(CField);
-  
-  I->stride=(unsigned int*)Alloc(int,n_dim);
-  I->dim=(unsigned int*)Alloc(int,n_dim);
-  
-  stride = base_size;
-  for(a=n_dim-1;a>=0;a--) {
-    I->stride[a] = stride;
-    I->dim[a] = dim[a];
-    stride *= dim[a];
-  }
-  I->data=(char*)mmalloc(stride);
-  I->n_dim=n_dim;
-  I->size=stride;
-  return(I);
-}
+int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,int mode);
+void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
-void FieldFree(CField *I)
-{
-  if(I) {
-    FreeP(I->dim);
-    FreeP(I->stride);
-    FreeP(I->data);
-  }
-  OOFreeP(I);
-}
+int	TetsurfInit(void);
+
+#endif

@@ -22,6 +22,8 @@ typedef struct {
   char *data;
   unsigned int *dim;
   unsigned int *stride;
+  int n_dim;
+  unsigned int size;
 } CField;
 
 #define Ffloat3(f,a,b,c) (*((float*)((f)->data + \
@@ -77,6 +79,7 @@ typedef struct {
                                      (d)*(f)->stride[3]))
 
 CField *FieldNew(int *dim,int n_dim,unsigned int base_size);
+void FieldZero(CField *I);
 void FieldFree(CField *I);
 
 #endif

@@ -89,13 +89,14 @@ function name.
 
 /* layer 0 */
 
-#define FB_Isosurf                   1
+#define FB_Isomesh                   1
 #define FB_Map                       2
 #define FB_Matrix                    3
 #define FB_MyPNG                     4
 #define FB_Triangle                  5
 #define FB_Match                     6
 #define FB_Raw                       7
+#define FB_Isosurface                8
 
 /* layer 1 */
 
@@ -124,6 +125,7 @@ function name.
 #define FB_ObjectDist                33 
 #define FB_ObjectCGO                 34
 #define FB_ObjectCallback            35
+#define FB_ObjectSurface             36
 
 #define FB_RepWireBond               45
 #define FB_RepCylBond                46

@@ -56,6 +56,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMap.h"
 #include"ObjectCallback.h"
 #include"ObjectCGO.h"
+#include"ObjectSurface.h"
 #include"Executive.h"
 #include"Selector.h"
 #include"main.h"
@@ -204,6 +205,7 @@ static PyObject *CmdIndex(PyObject *dummy, PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdInvert(PyObject *self, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
+static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args);
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
@@ -383,6 +385,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"intrafit",              CmdIntraFit,             METH_VARARGS },
    {"invert",                CmdInvert,               METH_VARARGS },
 	{"isomesh",	              CmdIsomesh,              METH_VARARGS },
+	{"isosurface",	           CmdIsosurface,           METH_VARARGS },
    {"wait_queue",            CmdWaitQueue,            METH_VARARGS },
    {"label",                 CmdLabel,                METH_VARARGS },
 	{"load",	                 CmdLoad,                 METH_VARARGS },
@@ -1385,6 +1388,90 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
     } else {
       PRINTFB(FB_ObjectMesh,FB_Errors)
         " Isomesh: Map or brick object '%s' not found.\n",str2
+        ENDFB;
+      ok=false;
+    }
+    APIExit();
+  }
+  return(APIStatus(ok));  
+}
+
+static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
+  char *str1,*str2,*str3;
+  float lvl,fbuf;
+  int dotFlag;
+  int c,state=-1;
+  OrthoLineType s1;
+  int oper,frame;
+  float carve;
+  CObject *obj,*mObj,*origObj;
+  ObjectMap *mapObj;
+  float mn[3] = { 0,0,0};
+  float mx[3] = { 15,15,15};
+  float *vert_vla = NULL;
+  int ok = false;
+  /* oper 0 = all, 1 = sele + buffer, 2 = vector */
+
+  ok = PyArg_ParseTuple(args,"sisisffiif",&str1,&frame,&str2,&oper,
+                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve);
+  if (ok) {
+    APIEntry();
+
+    origObj=ExecutiveFindObjectByName(str1);  
+    if(origObj) {
+      if(origObj->type!=cObjectSurface) {
+        ExecutiveDelete(str1);
+        origObj=NULL;
+      }
+    }
+    
+    mObj=ExecutiveFindObjectByName(str2);  
+    if(mObj) {
+      if(mObj->type!=cObjectMap)
+        mObj=NULL;
+    }
+    if(mObj) {
+      mapObj = (ObjectMap*)mObj;
+      switch(oper) {
+      case 0:
+        for(c=0;c<3;c++) {
+          mn[c] = mapObj->Corner[0][c];
+          mx[c] = mapObj->Corner[7][c];
+        }
+        carve = false; /* impossible */
+        break;
+      case 1:
+        SelectorGetTmp(str3,s1);
+        ExecutiveGetExtent(s1,mn,mx,false);
+        if(carve>=0.0) {
+          vert_vla = ExecutiveGetVertexVLA(s1,state);
+          if(fbuf<=R_SMALL4)
+            fbuf = carve;
+        }
+        SelectorFreeTmp(s1);
+        for(c=0;c<3;c++) {
+          mn[c]-=fbuf;
+          mx[c]+=fbuf;
+        }
+        break;
+      }
+      PRINTFB(FB_CCmd,FB_Blather)
+        " Isosurface: buffer %8.3f carve %8.3f \n",fbuf,carve
+        ENDFB;
+      obj=(CObject*)ObjectSurfaceFromBox((ObjectSurface*)origObj,mapObj,state,mn,mx,lvl,dotFlag,
+                                     carve,vert_vla);
+      if(!origObj) {
+        ObjectSetName(obj,str1);
+        ExecutiveManageObject((CObject*)obj);
+      }
+      if(SettingGet(cSetting_isomesh_auto_state))
+        if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
+      PRINTFB(FB_ObjectSurface,FB_Actions)
+        " Isosurface: created \"%s\", setting level to %5.3f\n",str1,lvl
+        ENDFB;
+    } else {
+      PRINTFB(FB_ObjectSurface,FB_Errors)
+        " Isosurface: Map or brick object '%s' not found.\n",str2
         ENDFB;
       ok=false;
     }
