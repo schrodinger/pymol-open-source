@@ -4,7 +4,6 @@ from chempy import io
 from chempy import protein
 from chempy import protein_amber99
 
-
 model= io.pdb.fromFile("../../test/dat/pept.pdb")
 
 model= protein.generate(model,forcefield=protein_amber99)
