@@ -1,22 +1,26 @@
-# Here is how to build PyMOL for RedHat 7x with installation in /usr/local/pymol:
+# Here is how to build PyMOL for RedHat 7x with installation in:
+# "/usr/local/pymol"
 # 
-# Assuming you've already extracted the archive into /usr/local/pymol...
-#
-# Step 1: Copy the appropriate makefile rules to "Rules.make"
+# Extract the archive and change to that directory.
 
-cp Rules.rh7x-usr-local Rules.make
+cd /usr/local/pymol
+
+#
+# Step 1: Copy the appropriate makefile rules to "Rules.make".
+
+cp Rules.rh7x Rules.make
 
 # Step 2: Build PyMOL.
 
 make
 
-# Step 3: You probably don't have PMW, so install a local copy.
+# Step 3: You probably don't have Pmw, so install a local copy.
 
 make pmw
 
 # Step 4: Create a resilient copy of the site-specific start-up script.
 
-cp pymol.com.rh7x-usr-local pymol.com
+cp pymol.com.rh7x pymol.com
 
 # Step 5: Test it.
 
