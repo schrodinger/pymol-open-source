@@ -179,6 +179,13 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * changed PyMOL file output to comply with PDB standards with respect
+     to placement of the atomic symbol in the atom name field
+
+   * overhauled C0700 test case
+
+   * pdb_reformat_names_mode setting (for PDB and AMBER conversions)
+
    * appearance wizard
 
    * toggle command

@@ -869,7 +869,21 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               if(strlen(ai->name)>3) {
                 if((ai->name[0]>='A')&&((ai->name[0]<='Z'))&&
                    (ai->name[3]>='0')&&(ai->name[3]<='9')) {
-                  if(!((ai->name[1]>='a')&&(ai->name[1]<='z'))) {
+                  if(!(((ai->name[1]>='a')&&(ai->name[1]<='z'))||
+                       ((ai->name[0]=='C')&&(ai->name[1]=='L'))|| /* try to be smart about */
+                       ((ai->name[0]=='B')&&(ai->name[1]=='R'))|| /* distinguishing common atoms */
+                       ((ai->name[0]=='C')&&(ai->name[1]=='A'))|| /* in all-caps from typical */
+                       ((ai->name[0]=='F')&&(ai->name[1]=='E'))|| /* nonatomic abbreviations */
+                       ((ai->name[0]=='C')&&(ai->name[1]=='U'))||
+                       ((ai->name[0]=='N')&&(ai->name[1]=='A'))||
+                       ((ai->name[0]=='N')&&(ai->name[1]=='I'))||
+                       ((ai->name[0]=='M')&&(ai->name[1]=='G'))||
+                       ((ai->name[0]=='M')&&(ai->name[1]=='N'))||
+                       ((ai->name[0]=='H')&&(ai->name[1]=='G'))||
+                       ((ai->name[0]=='S')&&(ai->name[1]=='E'))||
+                       ((ai->name[0]=='S')&&(ai->name[1]=='I'))||
+                       ((ai->name[0]=='Z')&&(ai->name[1]=='N'))
+                       )) {
                     ctmp = ai->name[3];
                     ai->name[3]= ai->name[2];
                     ai->name[2]= ai->name[1];

@@ -74,7 +74,7 @@ dele all
 load cmp/C0700odd.5.pdb
 iterate all,print name
 
-set pdb_reformat_names,mode,0
+set pdb_reformat_names_mode,0
 save cmp/C0700odd.9.pdb
 
 # test AMBER->PDB back conversion on write
@@ -95,5 +95,24 @@ iterate all,print name
 dele all
 load cmp/C0700odd.5.pdb
 iterate all,print name
+
+# check halogen handling
+
+reinit
+
+load dat/small02.pdb
+save cmp/C0700odd.C.pdb
+
+reinit
+
+set pdb_reformat_names_mode, 1
+load dat/small02.pdb
+iterate all, print name
+save cmp/C0700odd.D.pdb
+
+set pdb_reformat_names_mode, 2
+load dat/small02.pdb
+iterate all, print name
+save cmp/C0700odd.E.pdb
 
 /print "END-LOG"
