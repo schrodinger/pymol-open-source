@@ -1699,7 +1699,7 @@ int RayTraceThread(CRayThreadInfo *T)
                       n_hit++;
                       if( ((r1.trans = r1.prim->trans) != _0 ) &&
                           trans_cont_flag ) {
-                        r1.trans = pow(r1.trans,inv_trans_cont);
+                        r1.trans = (float)pow(r1.trans,inv_trans_cont);
                       }
                       if(interior_flag)
                         {
@@ -2017,7 +2017,7 @@ int RayTraceThread(CRayThreadInfo *T)
                             } else {
                               m = _1 - (float)(0xFF&(last_pixel>>24))/_255;
                             }
-                            m = _1 - pow(m,trans_cont);
+                            m = _1 - (float)pow(m,trans_cont);
                             if(I->BigEndian) {
                               fc[3]	= m*_255 + _p499;
                             } else {
