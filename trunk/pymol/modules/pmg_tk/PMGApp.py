@@ -425,14 +425,40 @@ class PMGApp(AbstractApp):
       cmd.show("sticks","arg")
       cmd.feedback('dis','sel','res')
       for a in xrange(1,181):
+         cmd.set("suspend_updates",1,quiet=1)
          cmd.edit("(arg and n;cd)","(arg and n;cg)")
          cmd.torsion("6")
          cmd.unpick()
          cmd.edit("(arg and n;cb)","(arg and n;ca)")
          cmd.torsion("2")
          cmd.unpick()
+         cmd.set("suspend_updates",0,quiet=1)         
          cmd.refresh()
       cmd.feedback('ena','sel','res')
+
+   def demo5(self):
+      cmd.set("suspend_updates",1,quiet=1)
+      cmd.disable()
+      cmd.load("$PYMOL_PATH/test/dat/1tii.pdb")
+      cmd.hide("(1tii)")
+      cmd.show("cartoon","1tii")
+      cmd.zoom("1tii")
+      util.color_chains("1tii")
+      cmd.set("suspend_updates",0,quiet=1)
+      cmd.refresh()
+
+   def demo6(self):
+      cmd.set("suspend_updates",1,quiet=1)
+      cmd.disable()
+      cmd.load("$PYMOL_PATH/test/dat/pept.pdb","trans")
+      cmd.hide("(tran)")
+      cmd.show("surface","trans")
+      cmd.show("sticks","trans")
+      cmd.set("surface_color","white","trans")
+      cmd.set("transparency",0.5,"trans")
+      cmd.zoom("trans")
+      cmd.set("suspend_updates",0,quiet=1)
+      cmd.refresh()
 
    def hide_sele(self):
       cmd.log("util.hide_sele()\n","util.hide_sele()\n")
@@ -905,6 +931,14 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Demos', 'command', 'Representations',
                                label='Representations',
                                command = self.demo1)
+
+      self.menuBar.addmenuitem('Demos', 'command', 'Cartoon Ribbons',
+                               label='Cartoon Ribbons',
+                               command = self.demo5)
+
+      self.menuBar.addmenuitem('Demos', 'command', 'Transparency',
+                               label='Transparency',
+                               command = self.demo6)
 
       self.menuBar.addmenuitem('Demos', 'command', 'Scripted Animation',
                                label='Scripted Animation',

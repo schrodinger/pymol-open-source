@@ -150,7 +150,7 @@ class Mutagenesis(Wizard):
                cmd.create(tmp_obj2,obj_name,src_frame,1)
                cmd.delete(new_name)
                # create the merged molecule
-               cmd.create(new_name,"(%s or %s)"%(tmp_obj1,tmp_obj2))
+               cmd.create(new_name,"(%s or %s)"%(tmp_obj1,tmp_obj2),1) # only one state in merged object...
                # now connect them
                cmd.bond("(%s in %s and n;N)"%(new_name,tmp_obj2),
                         "(name C and (%s in (neighbor %s)))"%
@@ -163,6 +163,8 @@ class Mutagenesis(Wizard):
                cmd.delete(tmp_obj2)
                cmd.delete(tmp_obj3)
                self.clear()
+               # and return to frame 1
+               cmd.frame(1)
                cmd.refresh_wizard()               
             else:
                # create copy with conformation in correct state
@@ -175,6 +177,8 @@ class Mutagenesis(Wizard):
 #               cmd.unpick()
                cmd.delete(tmp_obj2)
                self.clear()
+               # and return to frame 1
+               cmd.frame(1)
                cmd.refresh_wizard()                              
             cmd.set('auto_zoom',auto_zoom,quiet=1)
                

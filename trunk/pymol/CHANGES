@@ -100,11 +100,17 @@ Current Bugs to Fix
 
    * intra_fit broken?
 
+Changes up to 0.72
+
+   * now possible to create empty objects, fixed mutagenesis wizard in response
+ 
+   * all readable files are shown by default in the Tkinter file dialogs.
+
 Changes up to 0.71
 
    * seg. fault bug fix in ObjectMoleculeConnect
 
-   * two_sided_lighting option
+   * two_sided_lighting option to help Jun at CCI project
 
    * revamped PyMOL's internal bond handling data structure.  I've done my best
      to insure that this doesn't break anything, but it is a major change
