@@ -69,7 +69,8 @@ def attach_amino_acid(selection,amino_acid):
          cmd.fuse("(%s and name C)"%(tmp_editor),"(pk1)",2)
          if cmd.get_setting_legacy("auto_remove_hydrogens"):
             cmd.remove("(pkmol and hydro)")
-         cmd.set_dihedral("(name ca and neighbor pk2)","(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
+         cmd.set_dihedral("(name ca and neighbor pk2)",
+                          "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
          cmd.set_geometry("pk2",3,3) # make nitrogen planer
          if ss:
             cmd.select(tpk1,"pk2")
@@ -103,7 +104,8 @@ def attach_amino_acid(selection,amino_acid):
          cmd.fuse("(%s and name N)"%(tmp_editor),"(pk1)",2)
          if cmd.get_setting_legacy("auto_remove_hydrogens"):
             cmd.remove("(pkmol and hydro)")
-         cmd.set_dihedral("(name ca and neighbor pk2)","(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
+         cmd.set_dihedral("(name ca and neighbor pk2)",
+                          "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
          cmd.set_geometry("pk1",3,3) # make nitrogen planer
          if ss:
             cmd.select(tpk1,"pk1")
