@@ -2688,7 +2688,7 @@ NOTES
    "object:map"
    "object:mesh"
    "object:distance"
-   "selction"
+   "selection"
    
    '''
    try:
