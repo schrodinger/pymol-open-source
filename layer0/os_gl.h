@@ -125,9 +125,9 @@ int p_glutGetRedisplay(void);
 
 /* here is the interface and constants for a pretend GLUT */
 
-#define P_GLUT_ACTIVE_ALT               1
-#define P_GLUT_ACTIVE_CTRL              2
-#define P_GLUT_ACTIVE_SHIFT             3
+#define P_GLUT_ACTIVE_ALT               32
+#define P_GLUT_ACTIVE_CTRL              64
+#define P_GLUT_ACTIVE_SHIFT             128
 #define P_GLUT_BITMAP_8_BY_13           ((void*)4)
 #define P_GLUT_DEPTH                    5
 #define P_GLUT_DISPLAY_MODE_POSSIBLE    6
