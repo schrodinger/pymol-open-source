@@ -45,6 +45,9 @@ class Atom:
 
    def get_mass(self):
       return atomic_mass[self.symbol]
+
+   def get_implicit_valences(self):
+      return implicit_valence[self.symbol]
    
    def has(self,attr):
       return self.__dict__.has_key(attr) 
@@ -212,3 +215,26 @@ atomic_mass = {
    'P'  :  30.974
    }
 
+implicit_valence = {
+   'H'  :  {0:1,1:0},
+   'C'  :  {0:4,1:3,2:2,3:1,4:0},
+   'N'  :  {0:3,1:2,2:1,3:0},
+   'O'  :  {0:2,1:1,2:0},
+   'F'  :  {0:1,1:0},
+   'Cl' :  {0:1,1:0},
+   'CL' :  {0:1,1:0},
+   'Br' :  {0:1,1:0},
+   'BR' :  {0:1,1:0},
+   'I'  :  {0:1,1:0},
+   'S'  :  {0:2,1:2,2:0,3:1,4:0,5:1,6:0}, # ambiguity?
+   'K'  :  {0:0,1:0},     # as drawn
+   'Cu' :  {0:0,1:0,2:0}, # as drawn
+   'CU' :  {0:0,1:0,2:0}, # as drawn
+   'Zn' :  {0:0,1:0,2:0}, # as drawn
+   'ZN' :  {0:0,1:0,2:0}, # as drawn
+   'Mg' :  {0:1,1:0},
+   'MG' :  {0:1,1:0},
+   'Ca' :  {0:1,1:0},
+   'CA' :  {0:1,1:0},
+   'P'  :  {6:0},
+   }
