@@ -862,13 +862,16 @@ void SceneDraw(Block *block)
 
 typedef unsigned char pix[4];
 #define cRange 5
+/*typedef pix pix_array[cRange*2+1][cRange*2+1];*/
 
 unsigned int SceneFindTriplet(int x,int y) 
 {
   int result = 0;
-  int before_check[100];
+  /*int before_check[100];*/
   pix buffer[cRange*2+1][cRange*2+1];
-  int after_check[100];
+ /*int after_check[100];*/
+  /* pix_array *array_ptr;
+  char *safe_place;*/
   int a,b,d,flag;
   int debug = false;
   unsigned char *c;
@@ -889,14 +892,28 @@ unsigned int SceneFindTriplet(int x,int y)
     
     glReadBuffer(GL_BACK);
 
-    int_ptr = before_check;
+/*	safe_place = (char*)malloc(1000000);
+	array_ptr = (pix_array*)(safe_place+500000);*/
+
+    /*int_ptr = before_check;
     for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
     int_ptr = after_check;
     for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
-
+*/
+/*printf("%d %d %d %d %p %p\n",x-cRange,y-cRange,cRange*2+1,cRange*2+1,buffer,&buffer[0][0][0]);*/
     glReadPixels(x-cRange,y-cRange,cRange*2+1,cRange*2+1,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0][0]);
 
-    int_ptr = before_check;
+/*	{
+	for(a=0;a<=(cRange*2);a++)
+       for(b=0;b<=(cRange*2);b++)
+		  for(d=0;d<4;d++)
+            buffer[a][b][d]=(*array_ptr)[a][b][d];
+		 
+         
+    }
+	free(safe_place);*/
+
+      /*int_ptr = before_check;
     for(a=0;a<100;a++) {
       if(*(int_ptr++)!=0x12345678) {
         printf(" SceneFindTriplet-WARNING: OpenGL glReadPixels may have damaged stack\n");
@@ -907,9 +924,9 @@ unsigned int SceneFindTriplet(int x,int y)
       if(*(int_ptr++)!=0x12345678) {
         printf(" SceneFindTriplet-WARNING: OpenGL glReadPixels may have damaged stack\n");
       }
-    }
-    for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
-    if(debug) {
+    }*/
+    
+	  if(debug) {
       for(a=0;a<=(cRange*2);a++)
         {
           for(b=0;b<=(cRange*2);b++)
