@@ -42,7 +42,7 @@ void PDo(char *str); /* accepts multple commands seperated by newlines */
 
 int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index);
 int PLabelAtom(AtomInfoType *at,char *expr,int index);
-int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at);
+int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *model, int index);
 
 #define cPLog_pml_lf    0
 #define cPLog_pml       1

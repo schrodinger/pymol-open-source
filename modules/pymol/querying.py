@@ -349,17 +349,31 @@ SEE ALSO
          if cmd._raising(): raise QuietException
       return r
 
-   def get_color_indices():
+   def get_color_indices(all=0):
       r = None
       try:
          lock()
-         r = _cmd.get_color('',1)
+         if all:
+            r = _cmd.get_color('',2)
+         else:
+            r = _cmd.get_color('',1)            
       finally:
          unlock()
       if not r:
          if cmd._raising(): raise QuietException
       return r
 
+   def get_color_index(color):
+      r = None
+      try:
+         lock()
+         r = _cmd.get_color(str(color),3)
+      finally:
+         unlock()
+      if r == None:
+         if cmd._raising(): raise QuietException
+      return r
+         
    def get_renderer():  # 
       try:
          lock()

@@ -972,6 +972,7 @@ void SeekerUpdate(void)
       int est_col = obj->NAtom/5+1;
       int est_char = obj->NAtom*4;
       int first_atom_in_label;
+
       int min_pad = -1;
       CSeqCol *r1 = NULL,*l1=NULL;/* *col */
 

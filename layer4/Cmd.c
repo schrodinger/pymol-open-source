@@ -733,7 +733,27 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
       nc=ColorGetNColor();
       nvc=0;
       for(a=0;a<nc;a++) {
-        if(ColorGetStatus(a))
+        if(ColorGetStatus(a)==1)
+          nvc++;
+      }
+      result = PyList_New(nvc);
+      nvc=0;
+      for(a=0;a<nc;a++) {
+        if(ColorGetStatus(a)==1) {
+          tup = PyTuple_New(2);
+          PyTuple_SetItem(tup,0,PyString_FromString(ColorGetName(a)));
+          PyTuple_SetItem(tup,1,PyInt_FromLong(a));
+          PyList_SetItem(result,nvc++,tup);
+        }
+      }
+      PUnblock();
+      break;
+    case 2: /* get all colors */
+      PBlock();
+      nc=ColorGetNColor();
+      nvc=0;
+      for(a=0;a<nc;a++) {
+        if(ColorGetStatus(a)!=0)
           nvc++;
       }
       result = PyList_New(nvc);
@@ -746,6 +766,11 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
           PyList_SetItem(result,nvc++,tup);
         }
       }
+      PUnblock();
+      break;
+    case 3: /* get a single color index */
+      PBlock();
+      result = PyInt_FromLong(ColorGetIndex(name));
       PUnblock();
       break;
     }
