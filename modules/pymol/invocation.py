@@ -41,6 +41,7 @@ options.show_splash = 1
 options.read_stdin = 0
 
 py_re = re.compile(r"\.py$|\.pym$\.PY$|\.PYM$")
+pyc_re = re.compile(r"\.pyc$|\.PYC$")
 
 def get_user_config():
    lst = glob.glob(pattern)
@@ -55,7 +56,7 @@ def get_user_config():
    for a in lst:
       if py_re.search(a):
          first.append("_do__ run "+a) # preceeding "_ " cloaks 
-      else:
+      elif not pyc_re.search(a): # ignore compiled versions for now
          second.append("_do__ @"+a) # preceeding "_ " cloaks 
    first.sort()
    second.sort()
