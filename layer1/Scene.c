@@ -2202,15 +2202,17 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       if(I->StereoMode) {
         /*stereo*/
         
+        /* render left side */
+
         switch(I->StereoMode) {
+        case 1:
+          glDrawBuffer(GL_BACK_LEFT);
+          break;
         case 2:
           glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
           
-        /* render left side */
-
-        glDrawBuffer(GL_BACK_LEFT);
         glPushMatrix();
         ScenePrepareMatrix(1);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
@@ -2247,15 +2249,17 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           }
         glPopMatrix();
         
+        /* render right side */
+
         switch(I->StereoMode) {
+        case 1:
+          glDrawBuffer(GL_BACK_RIGHT);
+          break;
         case 2:
           glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
 
-        /* render right side */
-
-        glDrawBuffer(GL_BACK_RIGHT);
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix();
         ScenePrepareMatrix(2);
@@ -2293,7 +2297,13 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           }
 
         glPopMatrix();        
-        glDrawBuffer(GL_BACK);
+
+        switch(I->StereoMode) {
+        case 1:
+          glDrawBuffer(GL_BACK);
+          break;
+        }
+
 
       } else {
 
