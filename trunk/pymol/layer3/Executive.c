@@ -109,6 +109,131 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 #define ExecGreyVisible 0.45
 #define ExecGreyHidden 0.3
 
+PyObject *ExecutiveGetVisAsPyDict(void)
+{
+  PyObject *result=NULL,*list,*repList;
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  int a;
+  int n_vis;
+  result = PyDict_New();
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->name[0]!='_') {
+      list = PyList_New(3);
+      PyList_SetItem(list,0,PyInt_FromLong(rec->visible));
+
+      /* all executive entries have repOn */
+      n_vis=0;
+      for(a=0;a<cRepCnt;a++) {
+        if(rec->repOn[a])
+          n_vis++;
+      }
+      repList = PyList_New(n_vis);
+      n_vis=0;
+      for(a=0;a<cRepCnt;a++) {
+        if(rec->repOn[a]) {
+          PyList_SetItem(repList,n_vis,PyInt_FromLong(a));
+          n_vis++;
+        }
+      }
+      PyList_SetItem(list,1,repList);
+      
+      if(rec->type!=cExecObject) {
+        PyList_SetItem(list,2,Py_None);
+      } else { 
+        /* objects have their own visib list too */
+        n_vis=0;
+        for(a=0;a<cRepCnt;a++) {
+          if(rec->obj->RepVis[a])
+            n_vis++;
+        }
+        repList = PyList_New(n_vis);
+        n_vis=0;
+        for(a=0;a<cRepCnt;a++) {
+          if(rec->obj->RepVis[a]) {
+            PyList_SetItem(repList,n_vis,PyInt_FromLong(a));
+            n_vis++;
+          }
+        }
+        PyList_SetItem(list,2,repList);
+      }
+      PyDict_SetItemString(result,rec->name,list);
+      Py_DECREF(list);
+    }
+  }
+  return(result);
+}
+
+int ExecutiveSetVisFromPyDict(PyObject *dict)
+{
+  int ok=true;
+  WordType name;
+  PyObject *key,*list;
+  PyObject *vis_list = NULL;
+  int pos = 0;
+  SpecRec *rec;
+  int n_vis;
+  int rep;
+  int a;
+  if(ok) ok=(dict!=NULL);
+  if(ok) ok=PyDict_Check(dict);
+  if(ok) {
+
+    SceneObjectDel(NULL);
+    while (PyDict_Next(dict, &pos, &key, &list)) {
+      if(!PConvPyStrToStr(key,name,sizeof(WordType))) {
+        ok=false;
+      } else {
+        
+        rec = ExecutiveFindSpec(name);
+        printf("%s\n",name);
+        if(rec) {
+          if(ok) ok = (list!=NULL);
+          if(ok) ok = PyList_Check(list);
+          if(ok) ok = (PyList_Size(list)>=2);
+          if(ok) ok = PConvPyObjectToInt(PyList_GetItem(list,0),&rec->visible);
+          if(ok) { /* rec visibility */
+            vis_list = PyList_GetItem(list,1);
+            if(ok) ok = (vis_list!=NULL);
+            if(ok) ok = PyList_Check(vis_list);
+            if(ok) {
+              n_vis = PyList_Size(vis_list);
+              for(a=0;a<cRepCnt;a++)
+                rec->repOn[a]=false;
+              for(a=0;a<n_vis;a++) {
+                if(PConvPyObjectToInt(PyList_GetItem(vis_list,a),&rep)) {
+                  if((rep>=0)&&(rep<cRepCnt))
+                    rec->repOn[rep]=true;
+                }
+              }
+            }
+          }
+
+          if(ok) { /* object visibility */
+            
+            vis_list = PyList_GetItem(list,2);
+            if(ok) ok = (vis_list!=NULL);
+            if(ok) if(PyList_Check(vis_list)&&(rec->type==cExecObject)) {
+              n_vis = PyList_Size(vis_list);
+              for(a=0;a<cRepCnt;a++)
+                rec->obj->RepVis[a]=false;
+              for(a=0;a<n_vis;a++) {
+                if(PConvPyObjectToInt(PyList_GetItem(vis_list,a),&rep)) {
+                  if((rep>=0)&&(rep<cRepCnt))
+                    rec->obj->RepVis[rep]=true;
+                }
+              }
+            }
+          }
+          if(rec->visible&&(rec->type==cExecObject))
+            SceneObjectAdd(rec->obj); 
+        }
+      }
+    }
+  }
+  return ok;
+}
+
 int ExecutiveIsolevel(char *name,float level,int state)
 {
   int ok =true;

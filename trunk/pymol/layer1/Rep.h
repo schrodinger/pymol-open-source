@@ -31,6 +31,9 @@ Z* -------------------------------------------------------------------
 
 #define cRepAll       -1
 
+/* WARNING: don't change these -- you'll break sessions!
+   (you can add to them however, I think) */
+
 #define cRepCyl        0
 #define cRepSphere     1
 #define cRepSurface    2

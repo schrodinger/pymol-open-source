@@ -1129,6 +1129,7 @@ if __name__=='pymol.cmd':
         enable,             \
         full_screen,        \
         get_view,           \
+        get_vis,            \
         hide,               \
         label,              \
         load_png,           \
@@ -1145,6 +1146,7 @@ if __name__=='pymol.cmd':
         rock,               \
         scene,              \
         set_color,          \
+        set_vis,            \
         set_view,           \
         show,               \
         spectrum,           \

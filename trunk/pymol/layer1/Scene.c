@@ -820,13 +820,22 @@ void SceneObjectDel(CObject *obj)
   CScene *I=&Scene;
   ObjRec *rec = NULL;
 
-  while(ListIterate(I->Obj,rec,next))
-	 if(rec->obj==obj)
-		break;
-  if(rec) {
-    rec->obj->Enabled=false;
-	 ListDetach(I->Obj,rec,next,ObjList);
-	 ListElemFree(rec);
+  if(!obj) {
+    while(ListIterate(I->Obj,rec,next)) {
+      if(rec) {
+        ListDetach(I->Obj,rec,next,ObjList);
+        ListElemFree(rec);
+      }
+    }
+  } else {
+    while(ListIterate(I->Obj,rec,next))
+      if(rec->obj==obj)
+        break;
+    if(rec) {
+      rec->obj->Enabled=false;
+      ListDetach(I->Obj,rec,next,ObjList);
+      ListElemFree(rec);
+    }
   }
   SceneCountFrames();
   SceneDirty();
