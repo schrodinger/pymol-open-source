@@ -61,6 +61,12 @@ void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
   /* NOTE: only works in a compressive mode, where lookup[a]<=a  */
   int a;
   int a0;
+
+  PRINTFD(FB_CoordSet)
+    " CoordSetAdjustAtmIdx-Debug: entered NAtIndex: %d NIndex %d\n I->AtmToIdx %p\n",
+    I->NAtIndex,I->NIndex,I->AtmToIdx
+    ENDFD;
+
   for(a=0;a<I->NAtIndex;a++) {
     a0=lookup[a];
     if(a0>=0) {
@@ -72,6 +78,11 @@ void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
   for(a=0;a<I->NIndex;a++) { 
     I->IdxToAtm[a] = lookup[I->IdxToAtm[a]];
   }
+  PRINTFD(FB_CoordSet)
+    " CoordSetAdjustAtmIdx-Debug: leaving... NAtIndex: %d NIndex %d\n",
+    I->NAtIndex,I->NIndex
+    ENDFD;
+
 }
 /*========================================================================*/
 void CoordSetMerge(CoordSet *I,CoordSet *cs) /* must be non-overlapping */
@@ -103,6 +114,10 @@ void CoordSetPurge(CoordSet *I)
   float *c0,*c1;
   obj=I->Obj;
 
+  PRINTFD(FB_CoordSet)
+    " CoordSetPurge-Debug: entering..."
+    ENDFD;
+
   c0 = I->Coord;
   c1 = I->Coord;
 
@@ -126,11 +141,19 @@ void CoordSetPurge(CoordSet *I)
   }
   if(offset) {
     I->NIndex+=offset;
-    VLASetSize(I->Coord,I->NIndex*3);
+    VLASize(I->Coord,float,I->NIndex*3);
     I->IdxToAtm=Realloc(I->IdxToAtm,int,I->NIndex);
+    PRINTFD(FB_CoordSet)
+      " CoordSetPurge-Debug: I->IdxToAtm shrunk to %d\n",I->NIndex
+      ENDFD;
     if(I->fInvalidateRep)
       I->fInvalidateRep(I,cRepAll,cRepInvAtoms); /* this will free Color */
   }
+  PRINTFD(FB_CoordSet)
+    " CoordSetPurge-Debug: leaving NAtIndex %d NIndex %d...\n",
+    I->NAtIndex,I->NIndex
+    ENDFD;
+
 }
 /*========================================================================*/
 int CoordSetTransformAtom(CoordSet *I,int at,float *TTT)

@@ -214,6 +214,6 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
 /* debugging: goes to stderr */
 
 #define PRINTFD(sysmod) {if(Feedback(sysmod,FB_Debugging)) fprintf(stderr,
-#define ENDFD   );}
+#define ENDFD   );fflush(stderr);}
 
 #endif

@@ -1888,6 +1888,11 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet)
   OrthoLineType name;
   int ok=true;
   int c=0;
+
+  PRINTFD(FB_Selector)
+    "SelectorCreate-Debug: entered...\n"
+    ENDFD;
+
   if(sname[0]=='%')
 	 strcpy(name,&sname[1]);
   else
@@ -1950,6 +1955,12 @@ int SelectorUpdateTableSingleObject(ObjectMolecule *obj)
   int modelCnt;
 
   SelectorType *I=&Selector;
+
+  PRINTFD(FB_Selector)
+    "SelectorUpdateTableSingleObject-Debug: entered..\n"
+    ENDFD;
+  
+
   SelectorClean();
 
   I->NCSet = 0;
@@ -1981,6 +1992,11 @@ int SelectorUpdateTableSingleObject(ObjectMolecule *obj)
   ErrChkPtr(I->Flag2);
   I->Vertex=Alloc(float,c*3);
   ErrChkPtr(I->Vertex);
+
+  PRINTFD(FB_Selector)
+    "SelectorUpdateTableSingleObject-Debug: leaving...\n"
+    ENDFD;
+
   return(true);
 }
 /*========================================================================*/
