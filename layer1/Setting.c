@@ -1191,6 +1191,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_valence:
+  case cSetting_valence_size:
   case cSetting_half_bonds:
   case cSetting_line_stick_helper:
     ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
@@ -1349,6 +1350,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepDot,cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_ribbon_smooth:
   case cSetting_ribbon_power:
   case cSetting_ribbon_power_b:
   case cSetting_ribbon_sampling:
