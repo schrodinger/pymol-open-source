@@ -1048,7 +1048,7 @@ class PMGApp(AbstractApp):
                                label='CMYK (for publications)',
                                command = lambda : cmd.do("_ cmd.space('cmyk')"))
 
-      self.menuBar.addmenuitem('Color Space', 'command', 'PyMOL (for web & video)',
+      self.menuBar.addmenuitem('Color Space', 'command', 'PyMOL (for rendering & video)',
                                label='PyMOL (for web & video)',
                                command = lambda : cmd.do("_ cmd.space('pymol')"))
 

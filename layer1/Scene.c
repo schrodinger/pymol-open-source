@@ -100,6 +100,7 @@ typedef struct {
   int SculptingFlag,SculptingSave;
   int RovingDirtyFlag;
   int RovingCleanupFlag;
+  int RovingLastUpdate;
 } CScene;
 
 CScene Scene;
@@ -587,12 +588,24 @@ void SceneDirty(void)
   OrthoDirty();
 }
 
+void SceneRovingPostpone(void)
+{
+  CScene *I=&Scene;
+  float delay;
+  if(SettingGet(cSetting_roving_detail)) {
+    delay = SettingGet(cSetting_roving_delay);
+    if(delay<0.0F)
+      I->RovingLastUpdate = UtilGetSeconds(); /* put off delay */
+  }
+}
+
 void SceneRovingDirty(void)
 {
   CScene *I=&Scene;
+
   if(SettingGet(cSetting_roving_detail)) {
+    SceneRovingPostpone();
     I->RovingDirtyFlag=true;
-    SceneDirty();
   }
 }
 
@@ -1439,8 +1452,6 @@ float SceneGetScreenVertexScale(float *v1)
   return(1.0/vl);
 }
 
-static double last = 0.0;
-
 void SceneRovingChanged(void)
 {
   CScene *I=&Scene;  
@@ -1496,7 +1507,8 @@ void SceneRovingUpdate(void)
   int refresh_flag;
 
   if(I->RovingDirtyFlag&&(
-     (UtilGetSeconds()-last)>SettingGet(cSetting_roving_delay))) {
+                          (UtilGetSeconds()-I->RovingLastUpdate)>
+                          fabs(SettingGet(cSetting_roving_delay)))) {
 
     if(I->RovingCleanupFlag)
       SceneRovingCleanup();
@@ -1667,7 +1679,7 @@ void SceneRovingUpdate(void)
       PFlush();
     }
 
-    last=UtilGetSeconds();
+    I->RovingLastUpdate=UtilGetSeconds();
     I->RovingDirtyFlag=false;
   } 
 }
@@ -1682,6 +1694,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   int mode;
   int eff_width;
   int moved_flag;
+  int adjust_flag;
   CObject *obj;
 
   mode = ButModeTranslate(I->Button,mod);
@@ -1807,6 +1820,8 @@ int SceneDrag(Block *block,int x,int y,int mod)
     if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
       SceneGetPos(v2);
       SceneOriginSet(v2,true);
+    }
+    if(moved_flag&&(int)SettingGet(cSetting_roving_detail)) {    
       SceneRovingDirty();
       SceneRovingUpdate();
     }
@@ -1868,17 +1883,20 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 normalize23f(cp,axis2);	 
     old_z = (I->Back + I->FrontSafe )/ 2.0F;
     moved_flag=false;
+    adjust_flag=false;
 	 switch(mode) {
 	 case cButModeRotXYZ:
 		if(I->LastX!=x)
 		  {
 			 SceneRotate(theta,axis[0],axis[1],-axis[2]);
 			 I->LastX=x;
+          adjust_flag=true;
 		  }
 		if(I->LastY!=y)
 		  {
 			 SceneRotate(theta,axis[0],axis[1],-axis[2]);
 			 I->LastY=y;
+          adjust_flag=true;
 		  }
 		break;
 	 case cButModeRotZ:
@@ -1886,13 +1904,15 @@ int SceneDrag(Block *block,int x,int y,int mod)
 		  {
 			 SceneRotate(omega,axis2[0],axis2[1],-axis2[2]);
 			 I->LastX=x;
+          adjust_flag=true;
 		  }
 		if(I->LastY!=y)
 		  {
 			 SceneRotate(omega,axis2[0],axis2[1],-axis2[2]);
 			 I->LastY=y;
+          adjust_flag=true;		
 		  }
-		break;
+      break;
 	 case cButModeTransZ:
 		if(I->LastY!=y)
 		  {
@@ -1902,6 +1922,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->Back-=(((float)y)-I->LastY)/5;
 			 I->LastY=y;
 			 SceneDirty();
+          adjust_flag=true;
 		  }
 		break;
 	 case cButModeClipNF:
@@ -1979,10 +2000,15 @@ int SceneDrag(Block *block,int x,int y,int mod)
       MatrixInvTransform3f(I->RotMatrix,v2,v2);
       subtract3f(I->Origin,v2,v2);
       SceneOriginSet(v2,true);
-
+    }
+    if((adjust_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
+      SceneRovingPostpone();
+    }
+    if((moved_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
       SceneRovingDirty();
       SceneRovingUpdate();
     }
+
   }
   return(1);
 }

@@ -1919,7 +1919,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_roving_labels,0.0F);
 
-  SettingSet_f(I,cSetting_roving_delay,0.1F);
+  SettingSet_f(I,cSetting_roving_delay,0.2F);
 
   SettingSet_s(I,cSetting_roving_selection,"all");
 
