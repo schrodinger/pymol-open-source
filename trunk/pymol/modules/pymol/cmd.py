@@ -3746,6 +3746,10 @@ NOTE
    iter = 500
    interval = 50
    la = len(arg)
+   if not la:
+      arg = get_names("objects")
+      arg = arg[0:1]
+      la = len(arg)
    if la:
       sele  = "("+arg[0]+")"
       if la>1:
@@ -3905,8 +3909,7 @@ keyword = {
    'bond'          : [bond         , 0 , 3 , ',' , 0 ],
    'button'        : [button       , 3 , 3 , ',' , 0 ],
    'cd'            : [cd           , 1 , 1 , ',' , 0 ],  
-   'check'         : [check        , 1 , 1 , ',' , 0 ],
-   'check'         : [check        , 1 , 1 , ',' , 0 ],
+   'check'         : [check        , 0 , 1 , ',' , 0 ],
    'clip'          : [clip         , 2 , 2 , ',' , 0 ],
    'cls'           : [cls          , 0 , 0 , ',' , 0 ],
    'color'         : [color        , 1 , 2 , ',' , 0 ],
