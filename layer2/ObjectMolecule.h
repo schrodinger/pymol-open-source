@@ -68,7 +68,6 @@ typedef struct ObjectMolecule {
   struct CSculpt *Sculpt;
 } ObjectMolecule;
 
-
 typedef struct ObjectMoleculeOpRec {
   unsigned int code;
   Vector3f v1,v2;

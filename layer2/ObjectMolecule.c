@@ -149,7 +149,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   int skip_first_line = true;
   int periodic=false;
   float f0,f1,f2,f3,*fp;
-  float box[3],add[3];
+  float box[3],pre[3],post[3];
   float r_cent[3],r_trans[3];
   int r_act,r_val,r_cnt;
   float *r_fp_start=NULL,*r_fp_stop=NULL;
@@ -307,9 +307,26 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                   periodic=false;
                   p=p_save;
                 } else if(periodic) {
-                  add[0]=box[0]*1000.0;
-                  add[1]=box[1]*1000.0;
-                  add[2]=box[2]*1000.0;
+                  if(!cs->PeriodicBox)
+                    cs->PeriodicBox=CrystalNew();
+                  cs->PeriodicBox->Dim[0] = box[0];
+                  cs->PeriodicBox->Dim[1] = box[1];
+                  cs->PeriodicBox->Dim[2] = box[2];
+                  pre[0]=box[0]*1000.0;
+                  pre[1]=box[1]*1000.0;
+                  pre[2]=box[2]*1000.0;
+                  if(cs->PeriodicBoxType==cCSet_Octahedral) {
+                    pre[0]+=box[0]*0.5;
+                    pre[1]+=box[1]*0.5;
+                    pre[2]+=box[2]*0.5;
+                    post[0]=-box[0]*0.5;
+                    post[1]=-box[1]*0.5;
+                    post[2]=-box[2]*0.5;
+                  } else {
+                    post[0]=0.0;
+                    post[1]=0.0;
+                    post[2]=0.0;
+                  }
                   p=nextline(p);
                   b=0;
                 }
@@ -407,9 +424,9 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                               r_cent[0]/=r_cnt;
                               r_cent[1]/=r_cnt;
                               r_cent[2]/=r_cnt;
-                              r_trans[0]=fmod(add[0]+r_cent[0],box[0]);
-                              r_trans[1]=fmod(add[1]+r_cent[1],box[1]);
-                              r_trans[2]=fmod(add[2]+r_cent[2],box[2]);
+                              r_trans[0]=fmod(pre[0]+r_cent[0],box[0])+post[0];
+                              r_trans[1]=fmod(pre[1]+r_cent[1],box[1])+post[1];
+                              r_trans[2]=fmod(pre[2]+r_cent[2],box[2])+post[2];
                               r_trans[0]-=r_cent[0];
                               r_trans[1]-=r_cent[1];
                               r_trans[2]-=r_cent[2];
@@ -691,6 +708,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
 
   
   AtomInfoPrimeColors();
+  cset = CoordSetNew();  
 
   p=buffer;
   nAtom=0;
@@ -813,6 +831,20 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     p=ncopy(cc,p,6); if(sscanf(cc,"%d",&NEXTRA)!=1) NEXTRA=0;
 
   }
+
+  switch(IFBOX) {
+  case 2:
+    cset->PeriodicBoxType = cCSet_Octahedral;
+    break;
+  case 1:
+    cset->PeriodicBoxType = cCSet_Orthogonal;
+    break;
+  case 0:
+  default:
+    cset->PeriodicBoxType = cCSet_NoPeriodicity;
+    break;
+  }
+
   p=nextline_top(p);
 
   if(!ok) {
@@ -1244,7 +1276,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         p=nextline_top(p);
 
       }
-
+      
       if(IFCAP>0) {
         p=nextline_top(p);
         p=nextline_top(p);
@@ -1374,12 +1406,14 @@ was at the end of the file. Maybe that's good enough.
       ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
     }
   }
-  cset = CoordSetNew();  /* needed to preserve original ordering... */
   if(ok) {
     cset->NIndex=nAtom;
     cset->Coord=coord;
     cset->TmpBond=bond;
     cset->NTmpBond=nBond;
+  } else {
+    if(cset) 
+      cset->fFree(cset);
   }
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
