@@ -183,6 +183,10 @@ def sum_charge(*arg): # NOT THREAD SAFE
    return result
 
 def ray_shadows(mode):
+   if mode=='none':
+      cmd.set('ray_shadows',0)
+   else:
+      cmd.set('ray_shadows',1)
    if mode=='light': # maximum quality
       cmd.set('ambient',0.3)
       cmd.set('spec_reflect',0.4)

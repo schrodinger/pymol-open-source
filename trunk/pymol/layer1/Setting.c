@@ -1077,11 +1077,13 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_overlay:
   case cSetting_text:
     OrthoDirty();
+    break;
   case cSetting_internal_gui_width:
   case cSetting_internal_gui:
   case cSetting_internal_feedback:
     sprintf(command,"viewport");
     OrthoCommandIn(command);
+    break;
   case cSetting_suspend_updates:
     if(!SettingGet(cSetting_suspend_updates))
       SceneChanged(); /* force big update upon resumption */
@@ -1578,7 +1580,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_transparency, 0.0F);
 
-  SettingSet_b(I,cSetting_ray_texture, 0);
+  SettingSet_i(I,cSetting_ray_texture, 0);
 
   SettingSet_3f(I,cSetting_ray_texture_settings, 0.1F, 5.0F, 1.0F);
 

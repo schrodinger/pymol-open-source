@@ -102,8 +102,6 @@ def parse(s):
                   if len(com2[nest])>0:
                       exec(com2[nest]+"\n",pymol_names,pymol_names)
                else:
-                  # remove line breaks (only important for Python expressions)
-                  com2[nest]=string.replace(com2[nest],'\n','')
                   # try to find a keyword which matches
                   if cmd.kwhash.has_key(com):
                      amb = cmd.kwhash.interpret(com)
@@ -122,6 +120,9 @@ def parse(s):
                      kw[nest] = cmd.keyword[com]
                      if kw[nest][4]>=parsing.NO_CHECK:
 # stricter, Python-based argument parsing
+                        # remove line breaks (only important for Python expressions)
+                        com2[nest]=string.replace(com2[nest],'\n','')
+
                         if kw[nest][4]>=parsing.LITERAL: # treat literally
                            next[nest] = ()
                            com2[nest]=com1[nest]
@@ -135,9 +136,10 @@ def parse(s):
                            # handle python keyword
                            com2[nest] = string.strip(com2[nest])
                            if len(com2[nest])>0:
-                              print com2[nest]+"\n"
                               exec(com2[nest]+"\n",pymol_names,pymol_names)
                      else:
+                        # remove line breaks (only important for Python expressions)
+                        com2[nest]=string.replace(com2[nest],'\n','')
 # old parsing style, being phased out
                         if kw[nest][4]==parsing.ABORT:
                            return None # SCRIPT ABORT EXIT POINT
