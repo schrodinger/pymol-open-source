@@ -350,11 +350,11 @@ void OrthoBusyDraw(int force)
     ENDFD;
   now = UtilGetSeconds();
   busyTime = (-I->BusyLast) + now;
-  if(force||(busyTime>cBusyUpdate)) {
-
+  if(SettingGet(cSetting_show_progress)&&(force||(busyTime>cBusyUpdate))) {
+    
     if(PIsGlutThread()) {
       OrthoPushMatrix();
-	 
+      
       if(PMGUI) {
         glDrawBuffer(GL_FRONT);
         glClear(GL_DEPTH_BUFFER_BIT);

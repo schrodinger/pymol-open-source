@@ -2055,6 +2055,8 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_max_threads, 1);
 
+  SettingSet_i(I,cSetting_show_progress, 1);
+
 }
 
 
