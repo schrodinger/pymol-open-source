@@ -41,6 +41,10 @@ typedef struct {
 
 void ExportDeleteMDebug(struct Export *ex); /* for mmalloc/mfree blocks */
 
+void *ExportMMGet(char *name,int state);
+int ExportMMUpdate(char *name,int state,void *mmdat);
+void ExportMMFree(void *mmdat);
+
 ExportDotsObj *ExportDots(char *sele,int coordSet);
 
 /*--------------------------------------------------------------------- */
