@@ -2524,7 +2524,8 @@ void SceneCopy(GLenum buffer)
   CScene *I=&Scene;
   unsigned int buffer_size;
 
-  if(!I->StereoMode) { /* no copies while in stereo mode */
+  if(!(I->StereoMode||SettingGet(cSetting_stereo_double_pump_mono)))
+  { /* no copies while in stereo mode */
     if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
       buffer_size = 4*I->Width*I->Height;
       if(buffer_size) {
