@@ -1189,7 +1189,8 @@ DEVELOPMENT TO DO
                else:
                   cmd.set('scene_current_name','',quiet=1)
                   if len(lst):
-                     cmd.disable() # just hide everything               
+                     cmd.disable() # just hide everything
+                     cmd.wizard()
             elif action=='previous':
                lst = _scene_validate_list()            
                cur_scene = setting.get('scene_current_name',quiet=1)
@@ -1205,6 +1206,7 @@ DEVELOPMENT TO DO
                   cmd.set('scene_current_name','',quiet=1)
                   if len(lst):
                      cmd.disable() # just hide everything
+                     cmd.wizard()
       finally:
          unlock()
          
