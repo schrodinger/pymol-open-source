@@ -711,7 +711,7 @@ void MainFree(void)
   }
   
 #ifdef WIN32
-  if(PMGUI) p_glutDestroyWindow(theWindow);
+  if(PMGUI) p_glutDestroyWindow(TheWindow);
   TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
 #endif
 
