@@ -357,8 +357,6 @@ static void SeqDraw(Block *block)
           row = I->Row + box_row;
           if((start_col>=0)&&(start_col<row->nCol)&&
              (stop_col>=0)&&(stop_col<row->nCol)) {
-            int start;
-            int stop;
             int xx2;
             CSeqCol *col2;
             col = row->col + start_col;

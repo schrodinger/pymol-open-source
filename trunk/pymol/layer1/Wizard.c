@@ -87,7 +87,6 @@ int WizardDoSelect(char *name)
       }
     PUnblock();
   }
-  printf("%d\n",result);
   return result;
 }
 /*========================================================================*/
