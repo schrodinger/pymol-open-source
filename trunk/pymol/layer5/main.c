@@ -84,17 +84,19 @@ int ShowSplash=true;
 
 void launch(void);
 
-void MainOnExit(int i,void *v);
+void MainOnExit(int i);
 
-void MainOnExit(int i,void *v)
-{ /* here we enternot knowing anything about the thread state,
-     so the best thing we can hope for is to shield PyMOL from
-     against any further API calls by setting a flag.  Otherwise,
-     spontaneous asynchronous calls may cause a crash (particularly
-     under windows ).
+void MainOnExit(int i)
+{ /* 
+     here we enter not knowing anything about the current state, so the
+     best thing we can hope for is to shield PyMOL from against any
+     further API calls by setting a flag and trying to grab the
+     interpreter.  Otherwise, spontaneous asynchronous calls may cause
+     a crash (particularly under windows).
   */
   if(!PyMOLTerminating) {
     PyMOLTerminating=true;
+    PBlockForEmergencyShutdown();
   }
 }
 /*========================================================================*/

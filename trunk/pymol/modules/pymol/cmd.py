@@ -2380,6 +2380,28 @@ PYMOL API
          unlock()
    return r
 
+def full_screen(toggle=1):
+   '''
+UNSUPPORTED
+'''
+   if str(toggle)=='on':
+      toggle = 1
+   if str(toggle)=='off':
+      toggle = 0
+   if thread.get_ident() == pymol.glutThread:
+      try: 
+         lock()
+         r = _cmd.full_screen(int(toggle))
+      finally:
+         unlock()
+   else:
+      try:
+         lock()
+         r = _cmd.do("_cmd.full_screen(%d)"%int(toggle))
+      finally:
+         unlock()
+   return r
+
 def png(filename):
    '''
 DESCRIPTION
@@ -4324,6 +4346,7 @@ keyword = {
    'fork'          : [spawn        , 1 , 2 , ',' , parsing.SPAWN  ],
    'forward'       : [forward      , 0 , 0 , ',' , parsing.SIMPLE  ],
    'fragment'      : [fragment     , 1 , 1 , ',' , parsing.STRICT ],
+   'full_screen'   : [full_screen  , 0 , 2 , ',' , parsing.STRICT ],
    'fuse'          : [fuse         , 0 , 2 , ',' , parsing.SIMPLE  ],
    'frame'         : [frame        , 1 , 1 , ',' , parsing.STRICT ],
    'h_add'         : [h_add        , 0 , 1 , ',' , parsing.SIMPLE  ],
