@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * surface code now tolerates superimposed identical atoms more gracefully
+
    * dot_normals setting
 
    * bound_to selection operator now complements neighbor...
