@@ -179,6 +179,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_selection_width      80
 #define cSetting_selection_overlay    81
 #define cSetting_static_singletons    82
+#define cSetting_max_triangles        83
 
 #define cSetting_INIT                  85
 

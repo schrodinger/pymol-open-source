@@ -565,6 +565,12 @@ class PMGApp(AbstractApp):
                         variable = self.setting.antialias,
                         command = lambda s=self: s.setting.update('antialias'))
 
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Cull Backfaces when Rendering',
+                         label='Cull Backfaces when Rendering',
+                        variable = self.setting.backface_cull,
+                        command = lambda s=self: s.setting.update('backface_cull'))
+
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
       self.menuBar.addmenuitem('Mouse', 'command', 'Visualization',
