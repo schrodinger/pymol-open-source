@@ -66,7 +66,8 @@ class State:
       
       bmin.do(self.prefix)
       io.mmd.updateFromFile(self.model,self.prefix+".out")
-      
+      if hasattr(self.model.molecule,'energy'):
+         self.model.molecule.title = "%1.3f"%self.model.molecule.energy
    def load_model(self,a):
       if feedback['verbose']:
          print ' '+str(self.__class__)+': new model loaded.'
