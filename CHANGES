@@ -18,7 +18,7 @@ Changes Under Consideration
 
    * Save dialog for objects/selections
 
-Goals for 0.51 release:
+Goals for 0.52 release:
 
    * fill-out object/coord set specific settings
 
@@ -36,12 +36,15 @@ Goals for 0.51 release:
 
 Changes up to 0.51
 
+   * performance/quality options in the display menu
+
    * sphere quality setting
-   
-    
+       
    * depth_cue toggle setting (important for low-end PC hardware)
  
    * specular reflections
+
+   * fog setting
 
 Changes up to 0.50
 
