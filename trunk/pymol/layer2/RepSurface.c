@@ -1340,12 +1340,12 @@ Rep *RepSurfaceNew(CoordSet *cs)
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
     sp=Sphere4;
     ssp=Sphere4;
-    circumscribe = 240;
+    circumscribe = 120;
   } else if(surface_quality>=3) { /* nearly impractical */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
     sp=Sphere4;
     ssp=Sphere3;
-    circumscribe = 120;
+    circumscribe = 90;
   } else if(surface_quality>=2) { /* nearly perfect */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
     sp=Sphere3;
@@ -1377,13 +1377,16 @@ Rep *RepSurfaceNew(CoordSet *cs)
     ssp=Sphere1;
   }
 
+
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   if(!surface_solvent) {
     if(probe_radius<(2.5F*minimum_sep)) {
       probe_radius = 2.5F*minimum_sep;
     }
-
-  }    
+  } else {
+    circumscribe = 0;
+  }
+          
 
   solv_tole = minimum_sep * 0.04;
 
@@ -1394,8 +1397,10 @@ Rep *RepSurfaceNew(CoordSet *cs)
   if(surface_type!=0) { /* not a solid surface */
     probe_rad_less = probe_radius*(1.0F-solv_tole);
   } else { /* solid surface */
-    if(surface_quality>1) {
-      probe_rad_less = probe_radius*(1.0F-solv_tole);
+    if(surface_quality>2) {
+      probe_rad_less = probe_radius*(1.0F-solv_tole/2);
+    } else if(surface_quality>1) {
+      probe_rad_less = probe_radius*(1.0F-solv_tole);      
     } else {
       probe_rad_less = probe_radius;
     }
@@ -2048,7 +2053,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 
       /* for each pair of proximal atoms, circumscribe a circle for their intersection */
       
-      if(circumscribe)
+      if(circumscribe&&(!surface_solvent))
         map2=MapNewFlagged(2*(I->max_vdw+probe_radius),cs->Coord,cs->NIndex,extent,present);
       if(map2)
         {
@@ -2108,12 +2113,13 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                            ((!cullByFlag)||
                             (!(ai3->flags&cAtomFlag_ignore))))
                           {
+                            float vdw3 = ai3->vdw+probe_radius;
+
                             v2 = cs->Coord+3*jj;
                             dist = diff3f(v0,v2);
-                            
-                            if(dist>R_SMALL4) {
+                            if((dist>R_SMALL4)&&(dist<(vdw+vdw3))) {
                               float vz[3],vx[3],vy[3], vp[3];
-                              float tri_a=vdw, tri_b=ai3->vdw+probe_radius, tri_c = dist;
+                              float tri_a=vdw, tri_b=vdw3, tri_c = dist;
                               float tri_s = (tri_a+tri_b+tri_c)*0.5F;
                               float area = sqrt1f(tri_s*(tri_s-tri_a)*
                                                   (tri_s-tri_b)*(tri_s-tri_c));
@@ -2127,10 +2133,9 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                               scale3f(vp,adj,vp);
                               add3f(v0,vp,vp);
                               
-#define STEPS 90
-                              for(b=0;b<=STEPS;b++) {
-                                float xcos = cos((b*2*cPI)/STEPS);
-                                float ysin = sin((b*2*cPI)/STEPS);
+                              for(b=0;b<=circumscribe;b++) {
+                                float xcos = cos((b*2*cPI)/circumscribe);
+                                float ysin = sin((b*2*cPI)/circumscribe);
                                 float xcosr = xcos * radius;
                                 float ysinr = ysin * radius;
                                 v[0] = vp[0] + vx[0] * xcosr + vy[0] * ysinr;
