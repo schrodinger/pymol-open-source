@@ -20,7 +20,10 @@ import pymol
 import traceback
 import string
 import cmd
+import exceptions
 
+from cmd import QuietException
+      
 pymol_names = pymol.__dict__
 
 nest=0
@@ -71,7 +74,7 @@ def parse(s):
                         for a in cmd.keyword.keys():
                            if a[0:lcm] == com:
                               print a+' ',
-                        raise RuntimeError
+                        raise QuietException
                   if cmd.keyword.has_key(com):
                      kw[nest] = cmd.keyword[com]
                      if kw[nest][4]==1:
@@ -135,7 +138,7 @@ def parse(s):
                cont[nest]=''
                parse(com0[nest])
                nest=nest-1
-   except RuntimeError,e:
+   except QuietException:
       pass
-   except StandardError:
+   except:
       traceback.print_exc()

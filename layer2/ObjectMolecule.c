@@ -2808,8 +2808,10 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
 		a1=cs->IdxToAtm[a]; /* a1 is in sorted atom info space */
 		a2=index[a1];
 		i2a[a]=a2; /* a2 is in object space */
-      AtomInfoCombine(I->AtomInfo+a2,ai+a1);
-
+      if(a2<oldNAtom)
+        AtomInfoCombine(I->AtomInfo+a2,ai+a1);
+      else
+        *(I->AtomInfo+a2)=*(ai+a1);
     }
   
   if(I->DiscreteFlag) {

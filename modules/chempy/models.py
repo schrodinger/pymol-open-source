@@ -118,6 +118,69 @@ class Indexed(Base):
          if b.index[1] > index: 
             b.index[1] = b.index[1] - 1
 
+#--------------------------------------------------------------------------------
+   def delete_list(self,list): # delete a list of indexed atoms
+
+      if chempy.feedback['atoms']:
+         print " "+str(self.__class__)+": deleting atoms %s." % str(list)
+
+      nAtom=self.nAtom
+
+      lrev = copy.deepcopy(list)
+      lrev.sort()
+      lrev.reverse()
+      
+      # generate cross-reference tables
+   
+      o2n = {} # old to new
+      if len(lrev):
+         nxt = lrev.pop()
+      else:
+         nxt = None
+      shft = 0
+      for i in range(nAtom):
+         if i == nxt:
+            o2n[i]=-1
+            if len(lrev):
+               nxt = lrev.pop()
+            else:
+               nxt = None
+            shft = shft - 1
+         else:
+            ixs = i + shft
+            o2n[i] = ixs
+
+      if shft:
+
+         # delete atoms
+
+         new_atom = []
+         for i in range(nAtom):
+            if o2n[i]>=0:
+               new_atom.append(self.atom[i])
+         self.atom = new_atom
+         
+         # delete bonds 
+
+         new_bond = []   
+         for b in self.bond:
+            b0 = b.index[0]
+            b1 = b.index[1]
+            if (o2n[b0]>=0) and (o2n[b1]>=0):
+               b.index[0] = o2n[b0]
+               b.index[1] = o2n[b1]
+               new_bond.append(b)
+         self.bond = new_bond
+
+         # update index if it exists
+         if self.index:
+            self.index = {}
+            idx = self.index
+            i = 0
+            for a in self.atom:
+               idx[id(a)] = i
+               i = i + 1
+
 #------------------------------------------------------------------------------
    def insert_atom(self,index,atom):
       if chempy.feedback['atoms']:
@@ -141,6 +204,7 @@ class Indexed(Base):
             if idx[k] >= index:
                idx[k] = idx[k] + 1
          idx[id(atom)] = index
+         
 #------------------------------------------------------------------------------
    def index_atom(self,atom):
       c = 0
