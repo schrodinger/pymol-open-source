@@ -235,7 +235,9 @@ PyMOL>sort
 PyMOL>sort pept
 PyMOL>spheroid
 Warning: 'spheroid' is experimental, incomplete, and unstable.
+ ObjectMolecule: computing spheroid from states 1 to 1.
 PyMOL>spheroid pept
 Warning: 'spheroid' is experimental, incomplete, and unstable.
+ ObjectMolecule: computing spheroid from states 1 to 1.
 PyMOL>cmd.config_mouse(quiet=0)
  config_mouse: three_button

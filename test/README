@@ -14,3 +14,7 @@ C : Automated command line tests
 G : Automated graphical tests
 T : Manual threading tests
 U : Unix tests
+B : PDB-based tests -- require a local copy of the PDB linked from ./pdb
+L : Large datafile tests -- requires files too large to fit in distro.
+    
+
