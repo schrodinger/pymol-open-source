@@ -456,7 +456,9 @@ void MainBusyIdle(void)
       if(FinalInitFlag>=10) {
         FinalInitFlag=0;
         PBlock();
+#ifndef _PYMOL_WX_GLUT
         PRunString("launch_gui()");
+#endif
         PRunString("adapt_to_hardware()");
         PRunString("exec_deferred()");
         PUnblock();
@@ -551,6 +553,7 @@ void launch(void)
       printf(" Hardware stereo capability detected.\n");
     } 
     p_glutMainLoop();
+    PBlock(); /* if we've gotten here, then we're heading back to Python... */
   } else {
     SceneSetCardInfo("none","ray trace only","none");
     printf(" Command mode. No graphics front end.\n");
