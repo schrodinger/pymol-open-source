@@ -3537,6 +3537,9 @@ static PyObject *py_gl_DrawPixels(PyObject * self, PyObject * args)
 
 #ifdef MS_WIN32
 char *my_mmap(char *filename)
+#ifdef NUMERIC
+;
+#else
 {
     unsigned long map_size = 0;
     char complaint[256];
@@ -3567,7 +3570,7 @@ char *my_mmap(char *filename)
     PyErr_SetString(py_gl_Error, complaint);
     return (NULL);
 }
-
+#endif
 #endif				/* MS_WIN32 */
 
 #if 0
@@ -4328,8 +4331,10 @@ init_opengl(void)
 {
     PyObject *m, *d;
     PyObject *nl, *gl;
+
 #ifdef NUMERIC
     m = Py_InitModule("_opengl_num", py_gl_methods);
+
 #ifdef import_array		/* Konrad Hinsen's version */
     import_array();
 #endif

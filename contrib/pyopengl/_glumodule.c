@@ -143,6 +143,9 @@ static PyTypeObject GLUquadricType =
 #define is_gluCallbackObject(op) ((op)->ob_type == &GLUcallbackType)
 
 GLUquadricObj *getgluquadricvalue(PyObject * op)
+#ifdef NUMERIC
+;
+#else
 {
     if (!op || !is_gluQuadricObject(op)) {
 	PyErr_BadInternalCall();
@@ -150,8 +153,12 @@ GLUquadricObj *getgluquadricvalue(PyObject * op)
     } else
 	return ((gluQuadricObject *) op)->quad;
 }
+#endif
 
 PyObject *newgluQuadricObject(GLUquadricObj * Quad)
+#ifdef NUMERIC
+;
+#else
 {
     gluQuadricObject *op;
     op = PyObject_NEW(gluQuadricObject, &GLUquadricType);
@@ -161,6 +168,7 @@ PyObject *newgluQuadricObject(GLUquadricObj * Quad)
     op->quad = Quad;
     return (PyObject *) op;
 }
+#endif
 
 static PyObject *py_glu_NewQuadric(PyObject * self, PyObject * args)
 {
@@ -215,6 +223,9 @@ static PyTypeObject GLUtesselatorType =
 #define is_gluTesselatorPyObject(op) ((op)->ob_type == &GLUtesselatorType)
 
 GLUtesselator *getglutesselatorvalue(PyObject * op)
+#ifdef NUMERIC
+;
+#else
 {
     if (!op || !is_gluTesselatorPyObject(op)) {
 	PyErr_BadInternalCall();
@@ -222,6 +233,7 @@ GLUtesselator *getglutesselatorvalue(PyObject * op)
     } else
 	return ((gluTesselatorPyObject *) op)->tess;
 }
+#endif
 
 static void GLUCALLBACK beginCB(GLenum type, PyObject * obj)
 {

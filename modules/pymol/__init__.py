@@ -42,6 +42,11 @@ _log_file = None
 
 sys.path.append(os.environ['PYMOL_PATH']+'/modules')
 
+# include installed numpy on win32 
+
+if sys.platform=='win32':
+   sys.path.append(os.environ['PYMOL_PATH']+'/modules/numeric')
+
 sys.setcheckinterval(1)
 lock_api = threading.RLock() # mutex for API 
 lock_api_c = threading.RLock() # mutex for C management of python threads

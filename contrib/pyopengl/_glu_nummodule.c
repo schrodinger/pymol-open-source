@@ -10,8 +10,11 @@
 #endif
 
 #include<Python.h>
+
+#ifndef WIN32
 DL_EXPORT(void)
 init_glu_num(void) {}
+#endif
 
 #endif
  

@@ -639,6 +639,15 @@ void PInitEmbedded(int argc,char **argv)
 #ifdef _PYMOL_MONOLITHIC
 	initExtensionClass();
 	initsglite();
+#ifdef WIN32
+	/* initialize numeric python */
+	init_numpy();
+	initmultiarray();
+	initarrayfns();
+	initlapack_lite();
+	initumath();
+	initranlib();
+#endif
     init_opengl();
     init_opengl_num();
     init_glu();
