@@ -6119,15 +6119,14 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
           SceneDirty();
         }
       }
-  } else {
-    sele=SelectorIndexByName(name);
-    if(sele>=0) {
-      ObjectMoleculeOpRecInit(&op);
-      op.code = OMOP_INVA;
-      op.i1=rep;
-      op.i2=level;
-      ExecutiveObjMolSeleOp(sele,&op);
-    }
+  }
+  sele=SelectorIndexByName(name);
+  if(sele>=0) {
+    ObjectMoleculeOpRecInit(&op);
+    op.code = OMOP_INVA;
+    op.i1=rep;
+    op.i2=level;
+    ExecutiveObjMolSeleOp(sele,&op);
   }
 }
 

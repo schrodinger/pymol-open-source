@@ -291,8 +291,9 @@ def compute(s):
 def vacuum(s):
    return [[ 2, 'Vacuum Electrostatics:'       ,''                        ],
            [ 2, '\\955WARNING:\\595 Unvalidated and experimental code!', '' ],
-           [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+s+'",quiet=0)'          ],
-           [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+s+'",absolute=0,quiet=0)'          ],
+           [ 1, 'protein contact potential (local)', 'util.protein_vacuum_esp("'+s+'",mode=2,quiet=0)'          ],
+#           [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+s+'",mode=0,quiet=0)'          ],
+#           [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+s+'",mode=1,quiet=0)'          ],
            [ 2, '\\955NOTE:\\559 Due to absence of solvent dielectric', ''],
            [ 2, '\\559"screening", vacuum electrostatic potentials', ''],
            [ 2, '\\559for macromolecules are only qualitatively', ''],
