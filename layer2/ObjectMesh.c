@@ -31,12 +31,175 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Scene.h"
 #include"Setting.h"
+#include"Executive.h"
+#include"PConv.h"
 
 ObjectMesh *ObjectMeshNew(void);
 
 static void ObjectMeshFree(ObjectMesh *I);
 void ObjectMeshStateInit(ObjectMeshState *ms);
 void ObjectMeshRecomputeExtent(ObjectMesh *I);
+
+
+static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
+{
+  PyObject *result = NULL;
+
+  result = PyList_New(14);
+  
+  PyList_SetItem(result,0,PyInt_FromLong(I->Active));
+  PyList_SetItem(result,1,PyString_FromString(I->MapName));
+  PyList_SetItem(result,2,PyInt_FromLong(I->MapState));
+  PyList_SetItem(result,3,CrystalAsPyList(&I->Crystal));
+  PyList_SetItem(result,4,PyInt_FromLong(I->ExtentFlag));
+  PyList_SetItem(result,5,PConvFloatArrayToPyList(I->ExtentMin,3));
+  PyList_SetItem(result,6,PConvFloatArrayToPyList(I->ExtentMax,3));
+  PyList_SetItem(result,7,PConvIntArrayToPyList(I->Range,6));
+  PyList_SetItem(result,8,PyFloat_FromDouble(I->Level));
+  PyList_SetItem(result,9,PyFloat_FromDouble(I->Radius));
+  PyList_SetItem(result,10,PyInt_FromLong(I->CarveFlag));
+  PyList_SetItem(result,11,PyFloat_FromDouble(I->CarveBuffer));
+  if(I->CarveFlag&&I->AtomVertex) {
+    PyList_SetItem(result,12,PConvFloatVLAToPyList(I->AtomVertex));
+  } else {
+    PyList_SetItem(result,12,PConvAutoNone(NULL));
+  }
+  PyList_SetItem(result,13,PyInt_FromLong(I->DotFlag));
+
+#if 0
+  char MapName[ObjNameMax];
+  int MapState;
+  CCrystal Crystal;
+  int Active;
+  int *N;
+  float *V;
+  int Range[6];
+  float ExtentMin[3],ExtentMax[3];
+  int ExtentFlag;
+  float Level,Radius;
+  int RefreshFlag;
+  int ResurfaceFlag;
+  float *AtomVertex;
+  int CarveFlag;
+  float CarveBuffer;
+  int DotFlag;
+  CGO *UnitCellCGO;
+#endif
+
+  return(PConvAutoNone(result));  
+}
+
+
+static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh *I)
+{
+  
+  PyObject *result=NULL;
+  int a;
+  result = PyList_New(I->NState);
+  for(a=0;a<I->NState;a++) {
+    if(I->State[a].Active) {
+      PyList_SetItem(result,a,ObjectMeshStateAsPyList(I->State+a));
+    } else {
+      PyList_SetItem(result,a,PConvAutoNone(NULL));
+    }
+  }
+  return(PConvAutoNone(result));  
+
+}
+
+static int ObjectMeshStateFromPyList(ObjectMeshState *I,PyObject *list)
+{
+  int ok=true;
+  PyObject *tmp;
+  if(ok) ok=(list!=NULL);
+  if(ok) {
+    if(!PyList_Check(list))
+      I->Active=false;
+    else {
+      ObjectMeshStateInit(I);
+      if(ok) ok=PyList_Check(list);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
+      if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
+      if(ok) ok = CrystalFromPyList(&I->Crystal,PyList_GetItem(list,3));
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,4),&I->ExtentFlag);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,5),I->ExtentMin,3);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,6),I->ExtentMax,3);
+      if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,7),I->Range,6);
+      if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,8),&I->Level);
+      if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,9),&I->Radius);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,10),&I->CarveFlag);
+      if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,11),&I->CarveBuffer);
+      if(ok) {
+        tmp = PyList_GetItem(list,12);
+        if(tmp == Py_None)
+          I->AtomVertex = NULL;
+        else 
+          ok = PConvPyListToFloatVLA(tmp,&I->AtomVertex);
+      }
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->DotFlag);
+      if(ok) {
+        I->RefreshFlag=true;
+        I->ResurfaceFlag=true;
+      }
+    }
+  }
+  return(ok);
+}
+
+static int ObjectMeshAllStatesFromPyList(ObjectMesh *I,PyObject *list)
+{
+  int ok=true;
+  int a;
+  VLACheck(I->State,ObjectMeshState,I->NState);
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    for(a=0;a<I->NState;a++) {
+      ok = ObjectMeshStateFromPyList(I->State+a,PyList_GetItem(list,a));
+      if(!ok) break;
+    }
+  }
+  return(ok);
+}
+
+int ObjectMeshNewFromPyList(PyObject *list,ObjectMesh **result)
+{
+  int ok = true;
+  ObjectMesh *I=NULL;
+  (*result) = NULL;
+  
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+
+  I=ObjectMeshNew();
+  if(ok) ok = (I!=NULL);
+
+  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
+  if(ok) ok = ObjectMeshAllStatesFromPyList(I,PyList_GetItem(list,2));
+  if(ok) {
+    (*result) = I;
+    ObjectMeshRecomputeExtent(I);
+  } else {
+    /* cleanup? */
+  }
+  return(ok);
+}
+
+
+
+PyObject *ObjectMeshAsPyList(ObjectMesh *I)
+{
+  
+  PyObject *result=NULL;
+
+  result = PyList_New(3);
+  PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result,1,PyInt_FromLong(I->NState));
+  PyList_SetItem(result,2,ObjectMeshAllStatesAsPyList(I));
+
+  return(PConvAutoNone(result));  
+}
 
 static void ObjectMeshStateFree(ObjectMeshState *ms)
 {
@@ -105,6 +268,9 @@ static void ObjectMeshUpdate(ObjectMesh *I)
   int a;
   int c;
   ObjectMeshState *ms;
+  ObjectMapState *oms = NULL;
+  ObjectMap *map = NULL;
+
   int *n;
   float *v;
   int *old_n;
@@ -121,8 +287,12 @@ static void ObjectMeshUpdate(ObjectMesh *I)
   for(a=0;a<I->NState;a++) {
     ms = I->State+a;
     if(ms->Active) {
+      
+      map = ExecutiveFindObjectMapByName(ms->MapName);
+      if(map)
+        oms = ObjectMapGetState(map,ms->MapState);
       if(ms->RefreshFlag||ms->ResurfaceFlag) {
-        ms->Crystal = *(ms->Map->Crystal);
+        ms->Crystal = *(oms->Crystal);
         if(I->Obj.RepVis[cRepCell]) {
           if(ms->UnitCellCGO)
             CGOFree(ms->UnitCellCGO);
@@ -130,29 +300,29 @@ static void ObjectMeshUpdate(ObjectMesh *I)
         } 
         ms->RefreshFlag=false;
       }
-
-      if(ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
+      
+      if(oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag=false;
           PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF;
-          if(ms->Map->Field) IsosurfVolume(ms->Map->Field,
-                                           ms->Level,
-                                           &ms->N,&ms->V,
-                                           ms->Range,
-                                           ms->DotFlag); 
+          if(oms->Field) IsosurfVolume(oms->Field,
+                                       ms->Level,
+                                       &ms->N,&ms->V,
+                                       ms->Range,
+                                       ms->DotFlag); 
           if(ms->CarveFlag&&ms->AtomVertex&&
              VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
             /* cull my friend, cull */
             voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
             if(voxelmap) {
-            
+              
               MapSetupExpress(voxelmap);  
-            
+              
               old_n = ms->N;
               old_v = ms->V;
               ms->N=VLAlloc(int,VLAGetSize(old_n));
               ms->V=VLAlloc(float,VLAGetSize(old_v));
-            
+              
               n = old_n;
               v = old_v;
               n_cur = 0;
@@ -213,8 +383,8 @@ static void ObjectMeshUpdate(ObjectMesh *I)
         }
       }
     }
+    SceneDirty();
   }
-  SceneDirty();
 }
 
 static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,int pass)
@@ -364,17 +534,21 @@ void ObjectMeshStateInit(ObjectMeshState *ms)
   ms->ResurfaceFlag=true;
   ms->ExtentFlag=false;
   ms->CarveFlag=false;
+  ms->CarveBuffer=0.0;
   ms->AtomVertex=NULL;
   ms->UnitCellCGO=NULL;
 }
 
 /*========================================================================*/
-ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMapState *map,
-int state,float *mn,float *mx,float level,int dotFlag,
-float carve,float *vert_vla)
+ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
+                              int map_state,
+                              int state,float *mn,float *mx,
+                              float level,int dotFlag,
+                              float carve,float *vert_vla)
 {
   ObjectMesh *I;
   ObjectMeshState *ms;
+  ObjectMapState *oms;
 
   if(!obj) {
     I=ObjectMeshNew();
@@ -391,17 +565,23 @@ float carve,float *vert_vla)
   ms=I->State+state;
   ObjectMeshStateInit(ms);
 
-  ms->Map = map;
+  strcpy(ms->MapName,map->Obj.Name);
+  ms->MapState = map_state;
+  oms = ObjectMapGetState(map,map_state);
+
   ms->Level = level;
   ms->DotFlag = dotFlag;
-  IsosurfGetRange(ms->Map->Field,ms->Map->Crystal,mn,mx,ms->Range);
-  copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
-  copy3f(mx,ms->ExtentMax);
-  ms->ExtentFlag = true;
-  if(carve>=0.0) 
-  ms->CarveFlag=true;
-  ms->CarveBuffer = carve;
-  ms->AtomVertex = vert_vla;
+  if(oms) {
+    IsosurfGetRange(oms->Field,oms->Crystal,mn,mx,ms->Range);
+    copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
+    copy3f(mx,ms->ExtentMax);
+    ms->ExtentFlag = true;
+  }
+  if(carve>=0.0) {
+    ms->CarveFlag=true;
+    ms->CarveBuffer = carve;
+    ms->AtomVertex = vert_vla;
+  }
   if(I) {
     ObjectMeshRecomputeExtent(I);
   }

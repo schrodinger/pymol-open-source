@@ -27,14 +27,14 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 
 /*========================================================================*/
-static PyObject *ObjectMoleculeGetCSetPyList(ObjectMolecule *I)
+static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule *I)
 {
   PyObject *result = NULL;
   int a;
   result = PyList_New(I->NCSet);
   for(a=0;a<I->NCSet;a++) {
     if(I->CSet[a]) {
-      PyList_SetItem(result,a,CoordSetGetPyList(I->CSet[a]));
+      PyList_SetItem(result,a,CoordSetAsPyList(I->CSet[a]));
     } else {
       PyList_SetItem(result,a,Py_None);
       Py_INCREF(Py_None);
@@ -43,13 +43,13 @@ static PyObject *ObjectMoleculeGetCSetPyList(ObjectMolecule *I)
   return(PConvAutoNone(result));
 }
 
-static PyObject *ObjectMoleculeGetDiscreteCSetPyList(ObjectMolecule *I)
+static PyObject *ObjectMoleculeDiscreteCSetAsPyList(ObjectMolecule *I)
 {
   PyObject *result = NULL;
   return(PConvAutoNone(result));
 }
 
-static int ObjectMoleculeSetCSetPyList(ObjectMolecule *I,PyObject *list)
+static int ObjectMoleculeCSetFromPyList(ObjectMolecule *I,PyObject *list)
 {
   int ok=true;
   int a;
@@ -57,14 +57,14 @@ static int ObjectMoleculeSetCSetPyList(ObjectMolecule *I,PyObject *list)
   if(ok) {
     VLACheck(I->CSet,CoordSet*,I->NCSet);
     for(a=0;a<I->NCSet;a++) {
-      if(ok) ok = CoordSetSetPyList(PyList_GetItem(list,a),&I->CSet[a]);
+      if(ok) ok = CoordSetFromPyList(PyList_GetItem(list,a),&I->CSet[a]);
       if(ok) I->CSet[a]->Obj = I;
     }
   }
   return(ok);
 }
 
-static PyObject *ObjectMoleculeGetBondPyList(ObjectMolecule *I)
+static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule *I)
 {
   PyObject *result = NULL;
   PyObject *bond_list;
@@ -87,7 +87,7 @@ static PyObject *ObjectMoleculeGetBondPyList(ObjectMolecule *I)
   return(PConvAutoNone(result));
 }
 
-static int ObjectMoleculeSetBondPyList(ObjectMolecule *I,PyObject *list) 
+static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list) 
 {
   int ok=true;
   int a;
@@ -109,7 +109,7 @@ static int ObjectMoleculeSetBondPyList(ObjectMolecule *I,PyObject *list)
   return(ok);
 }
 
-static PyObject *ObjectMoleculeGetAtomPyList(ObjectMolecule *I)
+static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule *I)
 {
   PyObject *result = NULL;
   AtomInfoType *ai;
@@ -118,13 +118,13 @@ static PyObject *ObjectMoleculeGetAtomPyList(ObjectMolecule *I)
   result = PyList_New(I->NAtom);  
   ai = I->AtomInfo;
   for(a=0;a<I->NAtom;a++) {
-    PyList_SetItem(result,a,AtomInfoGetPyList(ai));
+    PyList_SetItem(result,a,AtomInfoAsPyList(ai));
     ai++;
   }
   return(PConvAutoNone(result));
 }
 
-static int ObjectMoleculeSetAtomPyList(ObjectMolecule *I,PyObject *list) 
+static int ObjectMoleculeAtomFromPyList(ObjectMolecule *I,PyObject *list) 
 {
   int ok=true;
   int a;
@@ -133,7 +133,7 @@ static int ObjectMoleculeSetAtomPyList(ObjectMolecule *I,PyObject *list)
   VLACheck(I->AtomInfo,AtomInfoType,I->NAtom+1);
   ai = I->AtomInfo;
   for(a=0;a<I->NAtom;a++) {
-    if(ok) ok = AtomInfoSetPyList(ai,PyList_GetItem(list,a));
+    if(ok) ok = AtomInfoFromPyList(ai,PyList_GetItem(list,a));
     ai++;
   }
   return(ok);
@@ -154,14 +154,14 @@ int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result)
   I=ObjectMoleculeNew(discrete_flag);
   if(ok) ok = (I!=NULL);
 
-  if(ok) ok = ObjectSetPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NCSet);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NBond);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,3),&I->NAtom);
-  if(ok) ok = ObjectMoleculeSetCSetPyList(I,PyList_GetItem(list,4));
-  if(ok) ok = CoordSetSetPyList(PyList_GetItem(list,5),&I->CSTmpl);
-  if(ok) ok = ObjectMoleculeSetBondPyList(I,PyList_GetItem(list,6));
-  if(ok) ok = ObjectMoleculeSetAtomPyList(I,PyList_GetItem(list,7));
+  if(ok) ok = ObjectMoleculeCSetFromPyList(I,PyList_GetItem(list,4));
+  if(ok) ok = CoordSetFromPyList(PyList_GetItem(list,5),&I->CSTmpl);
+  if(ok) ok = ObjectMoleculeBondFromPyList(I,PyList_GetItem(list,6));
+  if(ok) ok = ObjectMoleculeAtomFromPyList(I,PyList_GetItem(list,7));
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,8),&I->DiscreteFlag);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->NDiscrete);
   if(ok) I->Symmetry = SymmetryNewFromPyList(PyList_GetItem(list,10));
@@ -206,7 +206,7 @@ int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result)
 
 
 /*========================================================================*/
-PyObject *ObjectMoleculeGetPyList(ObjectMolecule *I)
+PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I)
 {
   PyObject *result = NULL;
 
@@ -214,17 +214,17 @@ PyObject *ObjectMoleculeGetPyList(ObjectMolecule *I)
   /* first, dump the atoms */
 
   result = PyList_New(16);
-  PyList_SetItem(result,0,ObjectGetPyList(&I->Obj));
+  PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
   PyList_SetItem(result,1,PyInt_FromLong(I->NCSet));
   PyList_SetItem(result,2,PyInt_FromLong(I->NBond));
   PyList_SetItem(result,3,PyInt_FromLong(I->NAtom));
-  PyList_SetItem(result,4,ObjectMoleculeGetCSetPyList(I));
-  PyList_SetItem(result,5,CoordSetGetPyList(I->CSTmpl));
-  PyList_SetItem(result,6,ObjectMoleculeGetBondPyList(I));
-  PyList_SetItem(result,7,ObjectMoleculeGetAtomPyList(I));
+  PyList_SetItem(result,4,ObjectMoleculeCSetAsPyList(I));
+  PyList_SetItem(result,5,CoordSetAsPyList(I->CSTmpl));
+  PyList_SetItem(result,6,ObjectMoleculeBondAsPyList(I));
+  PyList_SetItem(result,7,ObjectMoleculeAtomAsPyList(I));
   PyList_SetItem(result,8,PyInt_FromLong(I->DiscreteFlag));
   PyList_SetItem(result,9,PyInt_FromLong(I->NDiscrete));
-  PyList_SetItem(result,10,SymmetryGetPyList(I->Symmetry));
+  PyList_SetItem(result,10,SymmetryAsPyList(I->Symmetry));
   PyList_SetItem(result,11,PyInt_FromLong(I->CurCSet));
   PyList_SetItem(result,12,PyInt_FromLong(I->BondCounter));
   PyList_SetItem(result,13,PyInt_FromLong(I->AtomCounter));

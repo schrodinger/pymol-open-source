@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct {
   int dimensions[3];
+  int save_points;
   CField *points;
   CField *data;
 } Isofield;
@@ -42,7 +43,7 @@ void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
 
 int	IsosurfInit(void);
 
-PyObject *IsosurfGetPyList(Isofield *I);
+PyObject *IsosurfAsPyList(Isofield *I);
 Isofield *IsosurfNewFromPyList(PyObject *list);
 
 #endif

@@ -20,6 +20,8 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLObject.h"
 #include"ObjectMolecule.h"
+#include"ObjectMap.h"
+
 #include"Ortho.h"
 #include"Word.h"
 
@@ -134,10 +136,7 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
                          float alpha,float beta,float gamma,char *sgroup);
 PyObject *ExecutiveGetSession(void);
 int ExecutiveSetSession(PyObject *session);
-
-
-
-
+ObjectMap *ExecutiveFindObjectMapByName(char *name);
 #endif
 
 

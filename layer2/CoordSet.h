@@ -61,8 +61,8 @@ typedef struct CoordSet {
 #define cCSet_Orthogonal 1
 #define cCSet_Octahedral 2
 
-PyObject *CoordSetGetPyList(CoordSet *I);
-int CoordSetSetPyList(PyObject *list,CoordSet **cs);
+PyObject *CoordSetAsPyList(CoordSet *I);
+int CoordSetFromPyList(PyObject *list,CoordSet **cs);
 
 CoordSet *CoordSetNew(void);
 void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt);

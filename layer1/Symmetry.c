@@ -33,26 +33,26 @@ Z* -------------------------------------------------------------------
 
 
 
-PyObject *SymmetryGetPyList(CSymmetry *I)
+PyObject *SymmetryAsPyList(CSymmetry *I)
 {
   PyObject *result = NULL;
 
   if(I) {
     result = PyList_New(2);
-    PyList_SetItem(result,0,CrystalGetPyList(I->Crystal));
+    PyList_SetItem(result,0,CrystalAsPyList(I->Crystal));
     PyList_SetItem(result,1,PyString_FromString(I->SpaceGroup));
   }
   return(PConvAutoNone(result));
   
 }
 
-int SymmetrySetPyList(CSymmetry *I,PyObject *list)
+int SymmetryFromPyList(CSymmetry *I,PyObject *list)
 {
   int ok=true;
   if(ok) ok = (I!=NULL);
   if(ok) SymmetryReset(I);
   if(ok) ok = PyList_Check(list);
-  if(ok) ok = CrystalSetPyList(I->Crystal,PyList_GetItem(list,0));
+  if(ok) ok = CrystalFromPyList(I->Crystal,PyList_GetItem(list,0));
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->SpaceGroup,sizeof(WordType));
    if(ok) {
     ok = SymmetryAttemptGeneration(I,true,true);
@@ -65,7 +65,7 @@ CSymmetry *SymmetryNewFromPyList(PyObject *list)
   CSymmetry *I=NULL;
   I=SymmetryNew();
   if(I) {
-    if(!SymmetrySetPyList(I,list)) {
+    if(!SymmetryFromPyList(I,list)) {
       SymmetryFree(I);
       I=NULL;
     }

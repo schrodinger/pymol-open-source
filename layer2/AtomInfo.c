@@ -31,7 +31,7 @@ static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
 
 /*========================================================================*/
-PyObject *AtomInfoGetPyList(AtomInfoType *I)
+PyObject *AtomInfoAsPyList(AtomInfoType *I)
 {
   PyObject *result = NULL;
 
@@ -74,7 +74,7 @@ PyObject *AtomInfoGetPyList(AtomInfoType *I)
   return(PConvAutoNone(result));
 }
 
-int AtomInfoSetPyList(AtomInfoType *I,PyObject *list)
+int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
 {
   int ok=true;
   int hetatm;
@@ -525,6 +525,7 @@ int AtomInfoGetColor(AtomInfoType *at1)
           color = IColor;
         else
           color = CarbColor;
+        break;
       case 0:
       case 32:
         color = CarbColor; 
@@ -750,7 +751,10 @@ void AtomInfoAssignParameters(AtomInfoType *I)
     e=I->elem;
     switch ( *e ) {
     case 'C':
-      if(!(
+      if(*(e+1)=='A') {
+        if(!(WordMatch("CA",I->resn,true)<0))
+          *(e+1)=0; 
+      } else if(!(
            (*(e+1)=='a')||/* CA intpreted as carbon, not calcium */
            (*(e+1)=='l')||(*(e+1)=='L')||
            (*(e+1)=='u')||(*(e+1)=='U')||

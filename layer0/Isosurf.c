@@ -35,7 +35,6 @@ Z* -------------------------------------------------------------------
 #define false 0
 #endif
 
-
 #define O3(field,P1,P2,P3,offs) Ffloat3(field,P1+offs[0],P2+offs[1],P3+offs[2])
 
 #define O3Ptr(field,P1,P2,P3,offs) Ffloat3p(field,P1+offs[0],P2+offs[1],P3+offs[2])
@@ -51,7 +50,6 @@ Z* -------------------------------------------------------------------
 #define I4(field,P1,P2,P3,P4) Fint4(field,P1,P2,P3,P4)
 
 #define I4Ptr(field,P1,P2,P3,P4) Fint4p(field,P1,P2,P3,P4)
-
 
 typedef struct	PointType {
 	float		Point[3];
@@ -95,61 +93,54 @@ int	IsosurfPoints(void);
 
 #define IsosurfSubSize		50
 
-PyObject *IsosurfGetPyList(Isofield *I)
+PyObject *IsosurfAsPyList(Isofield *I)
 {
   PyObject *result=NULL;
 
-  result = PyList_New(3);
+  result = PyList_New(4);
+
   PyList_SetItem(result,0,PConvIntArrayToPyList(I->dimensions,3));
-  PyList_SetItem(result,1,PConvFloatArrayToPyList((float*)I->data->data,
-                                                  I->dimensions[0]*
-                                                  I->dimensions[1]*
-                                                  I->dimensions[2]));
-  PyList_SetItem(result,2,PConvFloatArrayToPyList((float*)I->points->data,
-                                                  I->dimensions[0]*
-                                                  I->dimensions[1]*
-                                                  I->dimensions[2]*
-                                                  I->dimensions[3]));
+  PyList_SetItem(result,1,PyInt_FromLong(I->save_points));
+  PyList_SetItem(result,2,FieldAsPyList(I->data));
+  if(I->save_points) 
+    PyList_SetItem(result,3,FieldAsPyList(I->points));
+  else
+    PyList_SetItem(result,3,PConvAutoNone(NULL));
   return(PConvAutoNone(result));
 }
 
 Isofield *IsosurfNewFromPyList(PyObject *list)
 {
   int ok=true;
-  Isofield *result = NULL;
   int dim4[4];
+  int a;
+  Isofield *result = NULL;
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
-  if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,0),dim4,3);
-  dim4[3] = 3;
-  
-  result=mmalloc(sizeof(Isofield));
-  result->data = NULL;
-  result->points = NULL;
 
-  ErrChkPtr(result);
-  result->data = FieldNew(dim4,3,sizeof(float));
-  ErrChkPtr(result->data);
-  if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,1),
-                                           (float*)result->data->data,
-                                           dim4[0]*dim4[1]*dim4[2]);
-
-  result->points = FieldNew(dim4,4,sizeof(float));
-  ErrChkPtr(result->points);
-  if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,2),
-                                           (float*)result->points->data,
-                                           dim4[0]*dim4[1]*dim4[2]*dim4[3]);
-
-  result->dimensions[0]=dim4[0];
-  result->dimensions[1]=dim4[1];
-  result->dimensions[2]=dim4[2];
+  if(ok) ok=((result=mmalloc(sizeof(Isofield)))!=NULL);
+  if(ok) {result->data=NULL;result->points=NULL;}
+  if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,0),result->dimensions,3);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&result->save_points);
+  if(ok) ok=((result->data = FieldNewFromPyList(PyList_GetItem(list,2)))!=NULL);
+  if(ok) {
+    if(result->save_points)
+      ok=((result->points = FieldNewFromPyList(PyList_GetItem(list,3)))!=NULL);
+    else {
+      for(a=0;a<3;a++)
+        dim4[a]=result->dimensions[a];
+      dim4[3] = 3;
+      ok=((result->points = FieldNew(dim4,4,sizeof(float),cFieldFloat))!=NULL);
+    }
+  }
   if(!ok) {
     if(result) {
-      if(result->dimensions)
-        mfree(result->dimensions);
+      if(result->data)
+        FieldFree(result->data);
       if(result->points)
-        mfree(result->points);
+        FieldFree(result->points);
       mfree(result);
+      result=NULL;
     }
   }
   return(result);
@@ -169,13 +160,14 @@ Isofield *IsosurfFieldAlloc(int *dims)
   
   result=mmalloc(sizeof(Isofield));
   ErrChkPtr(result);
-  result->data = FieldNew(dims,3,sizeof(float));
+  result->data = FieldNew(dims,3,sizeof(float),cFieldFloat);
   ErrChkPtr(result->data);
-  result->points = FieldNew(dim4,4,sizeof(float));
+  result->points = FieldNew(dim4,4,sizeof(float),cFieldFloat);
   ErrChkPtr(result->points);
   result->dimensions[0]=dims[0];
   result->dimensions[1]=dims[1];
   result->dimensions[2]=dims[2];
+  result->save_points=true;
   return(result);
 }
 /*===========================================================================*/
@@ -324,6 +316,11 @@ void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   float rmn[3],rmx[3];
   float imn[3],imx[3];
   int a;
+  PRINTFD(FB_Isosurface)
+    " IsosurfGetRange: entered mn: %4.2f %4.2f %4.2f mx: %4.2f %4.2f %4.2f\n",
+    mn[0],mn[1],mn[2],mx[0],mx[1],mx[2]
+    ENDFD;
+
   transform33f3f(cryst->RealToFrac,mn,fmn);
   transform33f3f(cryst->RealToFrac,mx,fmx);
   for(a=0;a<3;a++) {
@@ -344,6 +341,10 @@ void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
     if(range[a+3]>field->dimensions[a])
       range[a+3]=field->dimensions[a];
   }
+  PRINTFD(FB_Isosurface)
+    " IsosurfGetRange: returning range: %d %d %d %d %d %d\n",
+    range[0],range[1],range[2],range[3],range[4],range[5]
+    ENDFD;
 }
   /*===========================================================================*/
 int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,int mode)
@@ -460,11 +461,11 @@ int	IsosurfAlloc(void)
      dim4[a]=CurDim[a];
    dim4[3]=3;
 
-	VertexCodes=FieldNew(CurDim,3,sizeof(int));
+	VertexCodes=FieldNew(CurDim,3,sizeof(int),cFieldInt);
 	ErrChkPtr(VertexCodes);
-	ActiveEdges=FieldNew(dim4,4,sizeof(int));
+	ActiveEdges=FieldNew(dim4,4,sizeof(int),cFieldInt);
 	ErrChkPtr(ActiveEdges);
-	Point=FieldNew(dim4,4,sizeof(PointType));
+	Point=FieldNew(dim4,4,sizeof(PointType),cFieldOther);
 	ErrChkPtr(Point);
 	if(!(VertexCodes&&ActiveEdges&&Point))
 		{

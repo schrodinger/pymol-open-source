@@ -124,4 +124,7 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2);
 void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);
 void CGOReset(CGO *I);
 
+PyObject *CGOAsPyList(CGO *I);
+CGO *CGONewFromPyList(PyObject *list);
+
 #endif

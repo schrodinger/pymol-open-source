@@ -32,7 +32,7 @@ int ObjectGetNFrames(CObject *I);
 void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
 CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
 
-PyObject *ObjectGetPyList(CObject *I)
+PyObject *ObjectAsPyList(CObject *I)
 {
   PyObject *result = NULL;
   result = PyList_New(10);
@@ -44,13 +44,13 @@ PyObject *ObjectGetPyList(CObject *I)
   PyList_SetItem(result,5,PConvFloatArrayToPyList(I->ExtentMax,3));
   PyList_SetItem(result,6,PyInt_FromLong(I->ExtentFlag));
   PyList_SetItem(result,7,PyInt_FromLong(I->TTTFlag));
-  PyList_SetItem(result,8,SettingGetPyList(I->Setting));
+  PyList_SetItem(result,8,SettingAsPyList(I->Setting));
   PyList_SetItem(result,9,PyInt_FromLong(I->Enabled));
 
   return(PConvAutoNone(result));
 }
 
-int ObjectSetPyList(PyObject *list,CObject *I)
+int ObjectFromPyList(PyObject *list,CObject *I)
 {
   int ok=true;
   if(ok) ok = PyList_Check(list);

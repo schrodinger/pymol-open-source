@@ -55,7 +55,7 @@ void CoordSetAppendIndices(CoordSet *I,int offset);
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
 
-int CoordSetSetPyList(PyObject *list,CoordSet **cs)
+int CoordSetFromPyList(PyObject *list,CoordSet **cs)
 {
   CoordSet *I = NULL;
   PyObject *tmp;
@@ -92,7 +92,7 @@ int CoordSetSetPyList(PyObject *list,CoordSet **cs)
   return(ok);
 }
 
-PyObject *CoordSetGetPyList(CoordSet *I)
+PyObject *CoordSetAsPyList(CoordSet *I)
 {
   PyObject *result = NULL;
 

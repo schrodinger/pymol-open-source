@@ -100,7 +100,13 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
 
+In Progress
+
+   * real session saves nearing completion...
+
 Changes up to 0.85
+
+   * fixed handling of calcium atoms
    
    * added automatic scroll bar for when you get too many objects/selections
 

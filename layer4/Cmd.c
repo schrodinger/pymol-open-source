@@ -1520,7 +1520,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
               mn[c] = ms->Corner[0][c];
               mx[c] = ms->Corner[7][c];
             }
-            carve = false; /* impossible */
+            carve = -1.0; /* impossible */
             break;
           case 1:
             SelectorGetTmp(str3,s1);
@@ -1540,7 +1540,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
           PRINTFB(FB_CCmd,FB_Blather)
             " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
             ENDFB;
-          obj=(CObject*)ObjectMeshFromBox((ObjectMesh*)origObj,ms,state,mn,mx,lvl,dotFlag,
+          obj=(CObject*)ObjectMeshFromBox((ObjectMesh*)origObj,mapObj,map_state,state,mn,mx,lvl,dotFlag,
                                           carve,vert_vla);
           if(!origObj) {
             ObjectSetName(obj,str1);
@@ -1656,7 +1656,8 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
           PRINTFB(FB_CCmd,FB_Blather)
             " Isosurface: buffer %8.3f carve %8.3f\n",fbuf,carve
             ENDFB;
-          obj=(CObject*)ObjectSurfaceFromBox((ObjectSurface*)origObj,ms,state,mn,mx,lvl,dotFlag,
+          obj=(CObject*)ObjectSurfaceFromBox((ObjectSurface*)origObj,mapObj,map_state,
+                                             state,mn,mx,lvl,dotFlag,
                                              carve,vert_vla);
           if(!origObj) {
             ObjectSetName(obj,str1);

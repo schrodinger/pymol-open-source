@@ -19,7 +19,8 @@ Z* -------------------------------------------------------------------
 #include"ObjectMap.h"
 
 typedef struct {
-  ObjectMapState *Map;
+  char MapName[ObjNameMax];
+  int MapState;
   CCrystal Crystal;
   int Active;
   int *N;
@@ -44,11 +45,15 @@ typedef struct ObjectSurface {
   int NState;
 } ObjectSurface;
 
-ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMapState *map,
+ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMap *map,
+                                    int map_state,
                               int state,float *mn,float *mx,
                               float level,int mode,
                               float carve,float *vert_vla);
 void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state);
+
+int ObjectSurfaceNewFromPyList(PyObject *list,ObjectSurface **result);
+PyObject *ObjectSurfaceAsPyList(ObjectSurface *I);
 
 #endif
 

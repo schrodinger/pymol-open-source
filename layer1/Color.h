@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Color
 #define _H_Color
 
+#include"os_python.h"
+
 #include"Rep.h"
 #include"Vector.h"
 
@@ -24,6 +26,7 @@ typedef char ColorName[64];
 typedef struct {
   ColorName Name;
   Vector3f Color;
+  int Custom;
 } ColorRec;
 
 typedef struct  {
@@ -41,6 +44,10 @@ void ColorDef(char *name,float *v);
 int ColorGetNColor(void);
 char *ColorGetName(int index);
 int ColorGetStatus(int index);
+void ColorReset(void);
+
+PyObject *ColorAsPyList(void);
+int ColorFromPyList(PyObject *list);
 
 #endif
 

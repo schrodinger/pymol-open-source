@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"OOMac.h"
 #include"Setting.h"
 #include"Sphere.h"
+#include"PConv.h"
 
 #define CGO_read_int(p) (*((int*)(p++)))
 #define CGO_get_int(p) (*((int*)(p)))
@@ -62,6 +63,34 @@ static float *CGO_size(CGO *I,int sz);
 static void subdivide( int n, float *x, float *y);
 void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2);
 void CGOSimpleSphere(CGO *I,float *v,float vdw);
+
+
+PyObject *CGOAsPyList(CGO *I)
+{
+  PyObject *result;
+  result = PyList_New(2);
+  PyList_SetItem(result,0,PyInt_FromLong(I->c));
+  PyList_SetItem(result,1,PConvFloatArrayToPyList(I->op,I->c));
+  return(result);
+}
+
+CGO *CGONewFromPyList(PyObject *list)
+{
+  int ok=true;
+  OOAlloc(CGO);
+  I->op=NULL;
+  if(ok) ok=(list!=Py_None);
+  if(ok) ok=PyList_Check(list);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->c);
+  if(ok) ok=((I->op=VLAlloc(float,I->c+1))!=NULL);
+  if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,1),I->op,I->c);
+
+  if(!ok) {
+    CGOFree(I);
+    I=NULL;
+  }
+  return(I);
+}
 
 CGO *CGONew(void)
 {

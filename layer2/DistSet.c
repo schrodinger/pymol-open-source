@@ -34,7 +34,7 @@ void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass);
 void DistSetStrip(DistSet *I);
 void DistSetInvalidateRep(DistSet *I,int type,int level);
 
-int DistSetSetPyList(PyObject *list,DistSet **cs)
+int DistSetFromPyList(PyObject *list,DistSet **cs)
 {
   DistSet *I = NULL;
   int ok = true;
@@ -61,7 +61,7 @@ int DistSetSetPyList(PyObject *list,DistSet **cs)
   return(ok);
 }
 
-PyObject *DistSetGetPyList(DistSet *I)
+PyObject *DistSetAsPyList(DistSet *I)
 {
   PyObject *result = NULL;
 

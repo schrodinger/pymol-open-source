@@ -37,6 +37,9 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state);
 ObjectCGO *ObjectCGOFromCGO(ObjectCGO *obj,CGO *cgo,int state);
 void ObjectCGORecomputeExtent(ObjectCGO *I);
 
+PyObject *ObjectCGOAsPyList(ObjectCGO *I);
+int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result);
+
 #endif
 
 
