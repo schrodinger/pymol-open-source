@@ -484,9 +484,9 @@ void PFlush(void) {
   /* NOTE: ASSUMES we current have unblocked Python threads and a locked API */
   char buffer[OrthoLineLength+1];
   if(OrthoCommandOut(buffer)) {
-   PBlockAndUnlockAPI();
-   PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
-   PLockAPIAndUnblock();
+    PBlockAndUnlockAPI();
+    PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
+    PLockAPIAndUnblock();
   }
 }
 

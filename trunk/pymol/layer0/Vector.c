@@ -57,11 +57,50 @@ void dump33f( float *m, char *prefix ) /* for debugging */
   printf("%s:2 %8.3f %8.3f %8.3f\n",prefix,m[6],m[7],m[8]);
 }
 
+void get_divergent3f(float *src,float *dst)
+{
+  if(src[0]!=0.0) {
+    *(dst++)=-*(src++);
+    *(dst++)= *(src++)+0.1;
+    *(dst++)= *(src++);
+  } else if(src[1]!=0.0) {
+    *(dst++)= *(src++)+0.1;
+    *(dst++)=-*(src++);
+    *(dst++)= *(src++);
+  } else {
+    *(dst++)= *(src++)+0.1;
+    *(dst++)= *(src++);
+    *(dst++)=-*(src++);
+  }
+}
+
+void get_system1f3f(float *x,float *y,float *z) /* make system in direction of x */
+{
+  get_divergent3f(x,y);
+  cross_product3f(x,y,z);
+  normalize3f(z);
+  cross_product3f(z,x,y);
+  normalize3f(y);
+  normalize3f(x);
+}
+
+void get_system2f3f(float *x,float *y,float *z) /* make system in direction of x */
+{
+  cross_product3f(x,y,z);
+  normalize3f(z);
+  cross_product3f(z,x,y);
+  normalize3f(y);
+  normalize3f(x);
+}
+
 #ifndef USE_VECTOR_MACROS
 float dot_product3f ( float *v1, float *v2 )
 {
   return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
 }
+
+void copy4f(v1,v2) 
+{(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2]; (v2)[3]=(v1)[3];}
 
 void invert3f (float *v)
 {
@@ -168,20 +207,23 @@ void identity44f ( float *m1 )
   for(a=0;a<16;a=a+5) m1[a]=1.0;
 }
 
-void copy44f44f ( float *src, float *dst )
+void copy44f ( float *src, float *dst )
 {
   *(dst++)=*(src++);
   *(dst++)=*(src++);
   *(dst++)=*(src++);
   *(dst++)=*(src++);
+
   *(dst++)=*(src++);
   *(dst++)=*(src++);
   *(dst++)=*(src++);
   *(dst++)=*(src++);
+
   *(dst++)=*(src++);
   *(dst++)=*(src++);
   *(dst++)=*(src++);
   *(dst++)=*(src++);
+
   *(dst++)=*(src++);
   *(dst++)=*(src++);
   *(dst++)=*(src++);

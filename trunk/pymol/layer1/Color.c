@@ -55,6 +55,11 @@ int ColorGetIndex(char *name)
   CColor *I=&Color;
   int color=1; /* default for unknown is white */
   int a;
+  int i;
+  if((name[0]>='0')&&(name[0]<='9'))
+    if(sscanf(name,"%d",&i)) 
+      if(i<I->NColor)
+        return(i);
   for(a=0;a<I->NColor;a++)
 	 {
 		if(strcmp(name,I->Color[a].Name)==0) 

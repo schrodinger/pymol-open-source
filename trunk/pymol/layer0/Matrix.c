@@ -8,8 +8,8 @@ F* -------------------------------------------------------------------
 G* Please see the accompanying LICENSE file for further information. 
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* 
--* Thomas Malik (matmul derived)
+-* Jacques Leroy (matrix inversion)
+-* Thomas Malik (matrix multiplication)
 -* Whoever wrote EISPACK
 Z* -------------------------------------------------------------------
 */
@@ -45,6 +45,135 @@ Z* -------------------------------------------------------------------
    module Algebra.h/.c (for linear algebra and fitting).
 
 */
+
+int MatrixInvert44f( const float *m, float *out )
+{
+
+  /* This routine included in PyMOL under the terms of the 
+   * MIT consortium license for Brian Paul's Mesa, from which it was derived. */
+  
+  /* MESA comments:
+   * Compute inverse of 4x4 transformation matrix.
+   * Code contributed by Jacques Leroy jle@star.be
+   * Return GL_TRUE for success, GL_FALSE for failure (singular matrix)
+   */
+  
+  /* NB. OpenGL Matrices are COLUMN major. */
+#define SWAP_ROWS(a, b) { float *_tmp = a; (a)=(b); (b)=_tmp; }
+#define MAT(m,r,c) (m)[(c)*4+(r)]
+  
+  float wtmp[4][8];
+  float m0, m1, m2, m3, s;
+  float *r0, *r1, *r2, *r3;
+  
+  r0 = wtmp[0], r1 = wtmp[1], r2 = wtmp[2], r3 = wtmp[3];
+  
+  r0[0] = MAT(m,0,0), r0[1] = MAT(m,0,1),
+    r0[2] = MAT(m,0,2), r0[3] = MAT(m,0,3),
+    r0[4] = 1.0, r0[5] = r0[6] = r0[7] = 0.0,
+    
+    r1[0] = MAT(m,1,0), r1[1] = MAT(m,1,1),
+    r1[2] = MAT(m,1,2), r1[3] = MAT(m,1,3),
+    r1[5] = 1.0, r1[4] = r1[6] = r1[7] = 0.0,
+    
+    r2[0] = MAT(m,2,0), r2[1] = MAT(m,2,1),
+    r2[2] = MAT(m,2,2), r2[3] = MAT(m,2,3),
+    r2[6] = 1.0, r2[4] = r2[5] = r2[7] = 0.0,
+    
+    r3[0] = MAT(m,3,0), r3[1] = MAT(m,3,1),
+    r3[2] = MAT(m,3,2), r3[3] = MAT(m,3,3),
+    r3[7] = 1.0, r3[4] = r3[5] = r3[6] = 0.0;
+  
+  /* choose pivot - or die */
+  if (fabs(r3[0])>fabs(r2[0])) SWAP_ROWS(r3, r2);
+  if (fabs(r2[0])>fabs(r1[0])) SWAP_ROWS(r2, r1);
+  if (fabs(r1[0])>fabs(r0[0])) SWAP_ROWS(r1, r0);
+  if (0.0 == r0[0])  return 0;
+  
+  /* eliminate first variable     */
+  m1 = r1[0]/r0[0]; m2 = r2[0]/r0[0]; m3 = r3[0]/r0[0];
+  s = r0[1]; r1[1] -= m1 * s; r2[1] -= m2 * s; r3[1] -= m3 * s;
+  s = r0[2]; r1[2] -= m1 * s; r2[2] -= m2 * s; r3[2] -= m3 * s;
+  s = r0[3]; r1[3] -= m1 * s; r2[3] -= m2 * s; r3[3] -= m3 * s;
+  s = r0[4];
+  if (s != 0.0) { r1[4] -= m1 * s; r2[4] -= m2 * s; r3[4] -= m3 * s; }
+  s = r0[5];
+  if (s != 0.0) { r1[5] -= m1 * s; r2[5] -= m2 * s; r3[5] -= m3 * s; }
+  s = r0[6];
+  if (s != 0.0) { r1[6] -= m1 * s; r2[6] -= m2 * s; r3[6] -= m3 * s; }
+  s = r0[7];
+  if (s != 0.0) { r1[7] -= m1 * s; r2[7] -= m2 * s; r3[7] -= m3 * s; }
+  
+  /* choose pivot - or die */
+  if (fabs(r3[1])>fabs(r2[1])) SWAP_ROWS(r3, r2);
+  if (fabs(r2[1])>fabs(r1[1])) SWAP_ROWS(r2, r1);
+  if (0.0 == r1[1])  return 0;
+  
+  /* eliminate second variable */
+  m2 = r2[1]/r1[1]; m3 = r3[1]/r1[1];
+  r2[2] -= m2 * r1[2]; r3[2] -= m3 * r1[2];
+  r2[3] -= m2 * r1[3]; r3[3] -= m3 * r1[3];
+  s = r1[4]; if (0.0 != s) { r2[4] -= m2 * s; r3[4] -= m3 * s; }
+  s = r1[5]; if (0.0 != s) { r2[5] -= m2 * s; r3[5] -= m3 * s; }
+  s = r1[6]; if (0.0 != s) { r2[6] -= m2 * s; r3[6] -= m3 * s; }
+  s = r1[7]; if (0.0 != s) { r2[7] -= m2 * s; r3[7] -= m3 * s; }
+  
+  /* choose pivot - or die */
+  if (fabs(r3[2])>fabs(r2[2])) SWAP_ROWS(r3, r2);
+  if (0.0 == r2[2])  return 0;
+  
+  /* eliminate third variable */
+  m3 = r3[2]/r2[2];
+  r3[3] -= m3 * r2[3], r3[4] -= m3 * r2[4],
+    r3[5] -= m3 * r2[5], r3[6] -= m3 * r2[6],
+    r3[7] -= m3 * r2[7];
+  
+  /* last check */
+  if (0.0 == r3[3]) return 0;
+  
+  s = 1.0/r3[3];              /* now back substitute row 3 */
+  r3[4] *= s; r3[5] *= s; r3[6] *= s; r3[7] *= s;
+  
+  m2 = r2[3];                 /* now back substitute row 2 */
+  s  = 1.0/r2[2];
+  r2[4] = s * (r2[4] - r3[4] * m2), r2[5] = s * (r2[5] - r3[5] * m2),
+    r2[6] = s * (r2[6] - r3[6] * m2), r2[7] = s * (r2[7] - r3[7] * m2);
+  m1 = r1[3];
+  r1[4] -= r3[4] * m1, r1[5] -= r3[5] * m1,
+    r1[6] -= r3[6] * m1, r1[7] -= r3[7] * m1;
+  m0 = r0[3];
+  r0[4] -= r3[4] * m0, r0[5] -= r3[5] * m0,
+    r0[6] -= r3[6] * m0, r0[7] -= r3[7] * m0;
+  
+  m1 = r1[2];                 /* now back substitute row 1 */
+  s  = 1.0/r1[1];
+  r1[4] = s * (r1[4] - r2[4] * m1), r1[5] = s * (r1[5] - r2[5] * m1),
+    r1[6] = s * (r1[6] - r2[6] * m1), r1[7] = s * (r1[7] - r2[7] * m1);
+  m0 = r0[2];
+  r0[4] -= r2[4] * m0, r0[5] -= r2[5] * m0,
+    r0[6] -= r2[6] * m0, r0[7] -= r2[7] * m0;
+  
+  m0 = r0[1];                 /* now back substitute row 0 */
+  s  = 1.0/r0[0];
+  r0[4] = s * (r0[4] - r1[4] * m0), r0[5] = s * (r0[5] - r1[5] * m0),
+    r0[6] = s * (r0[6] - r1[6] * m0), r0[7] = s * (r0[7] - r1[7] * m0);
+  
+  MAT(out,0,0) = r0[4]; MAT(out,0,1) = r0[5],
+  MAT(out,0,2) = r0[6]; MAT(out,0,3) = r0[7],
+  MAT(out,1,0) = r1[4]; MAT(out,1,1) = r1[5],
+  MAT(out,1,2) = r1[6]; MAT(out,1,3) = r1[7],
+  MAT(out,2,0) = r2[4]; MAT(out,2,1) = r2[5],
+  MAT(out,2,2) = r2[6]; MAT(out,2,3) = r2[7],
+  MAT(out,3,0) = r3[4]; MAT(out,3,1) = r3[5],
+  MAT(out,3,2) = r3[6]; MAT(out,3,3) = r3[7]; 
+
+  return 1;
+
+#undef MAT
+#undef SWAP_ROWS
+}
+
+
 
 /*========================================================================*/
 void MatrixDump44f(float *m,char *prefix)
@@ -105,6 +234,28 @@ void MatrixLoadIdentity44f(float *m)
    m[15]=1.0;
 }
 /*========================================================================*/
+void MatrixRotation44f( float *m44, const float angle, const float x,const float y,const float z)
+{
+  float m33[9];
+  rotation_matrix3f(angle,x,y,z,m33);
+  m44[0]=m33[0];
+  m44[1]=m33[3];
+  m44[2]=m33[6];
+  m44[3]=0.0;
+  m44[4]=m33[1];
+  m44[5]=m33[4];
+  m44[6]=m33[7];
+  m44[7]=0.0;
+  m44[8]=m33[2];
+  m44[9]=m33[5];
+  m44[10]=m33[8];
+  m44[11]=0.0;
+  m44[12]=0.0;
+  m44[13]=0.0;
+  m44[14]=0.0;
+  m44[15]=1.0;
+}
+/*========================================================================*/
 void MatrixRotate44f3f( float *m, const float angle, const float x,const float y,const float z)
 {
   float m33[9];
@@ -141,7 +292,10 @@ void MatrixTranslate44f3f( float *m, const float x,const float y,const float z)
 /*========================================================================*/
 void MatrixMultiply44f( const float *b, float *m )
 {
-  
+  /* This routine included in PyMOL under the terms of the 
+   * MIT consortium license for Brian Paul's Mesa, from which it was derived. */
+  /* original author: Thomas Malik */
+
    int i;
  
 #define A(row,col)  m[(col<<2)+row]
@@ -163,26 +317,40 @@ void MatrixMultiply44f( const float *b, float *m )
 }
                                                                                                                              
 /*========================================================================*/
-void MatrixInvTransform3f(float *p, float *m, float *q)
+void MatrixTransform44f3f(float *m, float *q,float *p)
 {
-  register float p1  = *p    , p2  = *(p+1), p3  = *(p+2);
-
-  *(q++) = p1*(* m   ) + p2*(*(m+1)) + p3*(*(m+2));
-  *(q++) = p1*(*(m+4)) + p2*(*(m+5)) + p3*(*(m+6));
-  *(q  ) = p1*(*(m+8)) + p2*(*(m+9)) + p3*(*(m+10));
-
+  register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
+  *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2+m[12];
+  *(p++) = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2+m[13];
+  *(p++) = m[ 2]*q0+m[ 6]*q1+m[10]*q2+m[14];
 }
 /*========================================================================*/
-void MatrixTransform3f(float *p, float *m, float *q)
+void MatrixTransform44f4f(float *m, float *q,float *p)
 {
-  register float p1  = *p    , p2  = *(p+1), p3  = *(p+2);
-
-  *(q++) = p1*(* m   ) + p2*(*(m+4)) + p3*(*(m+8));
-  *(q++) = p1*(*(m+1)) + p2*(*(m+5)) + p3*(*(m+9));
-  *(q  ) = p1*(*(m+2)) + p2*(*(m+6)) + p3*(*(m+10));
-
+  register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
+  *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2+m[12];
+  *(p++) = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2+m[13];
+  *(p++) = m[ 2]*q0+m[ 6]*q1+m[10]*q2+m[14];
+  *(p++) = m[ 3]*q0+m[ 7]*q1+m[11]*q2+m[15];
 }
-
+/*========================================================================*/
+void MatrixInvRotate44f3f(float *m, float *q,float *p)
+{
+  /* multiplying a column major rotation matrix as row-major will
+   * give the inverse rotation */
+  register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
+  *(p++) = m[ 0]*q0+m[ 1]*q1+m[ 2]*q2;
+  *(p++) = m[ 4]*q0+m[ 5]*q1+m[ 6]*q2;
+  *(p++) = m[ 8]*q0+m[ 9]*q1+m[10]*q2;
+}
+/*========================================================================*/
+void MatrixTransform44fAs33f3f(float *q, float *m, float *p) 
+{
+  register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
+  *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2;
+  *(p++) = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2;
+  *(p++) = m[ 2]*q0+m[ 6]*q1+m[10]*q2;
+}
 /*========================================================================*/
 float MatrixGetRMS(int n,float *v1,float *v2,float *wt)
 {

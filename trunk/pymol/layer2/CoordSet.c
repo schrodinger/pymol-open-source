@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"P.h"
 #include"ButMode.h"
+#include"Matrix.h"
 
 #include"RepWireBond.h"
 #include"RepCylBond.h"
@@ -50,6 +51,78 @@ void CoordSetAppendIndices(CoordSet *I,int offset);
 /*========================================================================*/
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
+/*========================================================================*/
+int CoordSetTransformAtom(CoordSet *I,int at,float *TTT)
+{
+  ObjectMolecule *obj;
+  int a1 = 01;
+  int result = 0;
+  float *v1;
+
+  obj = I->Obj;
+  if(obj->DiscreteFlag) {
+    if(I==obj->DiscreteCSet[at])
+      a1=obj->DiscreteAtmToIdx[at];
+  } else 
+    a1=I->AtmToIdx[at];
+  
+  if(a1>=0) {
+    result = 1;
+    v1 = I->Coord+3*a1;
+    MatrixApplyTTTfn3f(1,v1,TTT,v1);
+  }
+
+  return(result);
+}
+/*========================================================================*/
+int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode)
+{
+  ObjectMolecule *obj;
+  int a1 = 01;
+  int result = 0;
+  float *v1;
+
+  obj = I->Obj;
+  if(obj->DiscreteFlag) {
+    if(I==obj->DiscreteCSet[at])
+      a1=obj->DiscreteAtmToIdx[at];
+  } else 
+    a1=I->AtmToIdx[at];
+  
+  if(a1>=0) {
+    result = 1;
+    v1 = I->Coord+3*a1;
+    if(mode) {
+      add3f(v,v1,v1);
+    } else {
+      copy3f(v,v1);
+    }
+  }
+
+  return(result);
+}
+/*========================================================================*/
+int CoordSetGetAtomVertex(CoordSet *I,int at,float *v)
+{
+  ObjectMolecule *obj;
+  int a1 = 01;
+  int result = 0;
+
+  obj = I->Obj;
+  if(obj->DiscreteFlag) {
+    if(I==obj->DiscreteCSet[at])
+      a1=obj->DiscreteAtmToIdx[at];
+  } else 
+    a1=I->AtmToIdx[at];
+  
+  if(a1>=0) {
+    result = 1;
+    copy3f(I->Coord+3*a1,v);
+  }
+
+  return(result);
+}
+
 /*========================================================================*/
 void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst)
 {

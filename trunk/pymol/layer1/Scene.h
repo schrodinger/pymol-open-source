@@ -61,6 +61,7 @@ void SceneResetNormal(int lines);
 void SceneObjectAdd(Object *obj);
 void SceneObjectDel(Object *obj);
 void SceneOriginSet(float *origin,int preserve);
+void SceneOriginGet(float *origin);
 void SceneWindowSphere(float *location,float radius);
 Block *SceneGetBlock(void);
 void SceneApplyMatrix(float *m);

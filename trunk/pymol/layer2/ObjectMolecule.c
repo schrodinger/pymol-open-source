@@ -65,6 +65,60 @@ static int BondCompare(int *a,int *b);
 CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
 
 /*========================================================================*/
+void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float *TTT) 
+{
+  /* if sele == -1, then the whole object state is transformed */
+
+  int a,s;
+  int flag=false;
+  CoordSet *cs;
+
+  if(state<0) state=0;
+  if(I->NCSet==1) state=0;
+  state = state % I->NCSet;
+  cs = I->CSet[state];
+  if(cs) {
+    if(sele>=0) {
+      for(a=0;a<I->NAtom;a++) {
+        s=I->AtomInfo[a].selEntry;
+        while(s) 
+          {
+            if(SelectorMatch(s,sele))
+              {
+                CoordSetTransformAtom(cs,a,TTT);
+                flag=true;
+                break;
+              }
+            s=SelectorNext(s);
+          }
+      }
+    } else {
+      for(a=0;a<I->NAtom;a++) {
+        CoordSetTransformAtom(cs,a,TTT);
+      }
+        flag=true;
+
+    }
+    if(flag) 
+      cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+  }
+}
+/*========================================================================*/
+int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele)
+{
+  int a,s;
+  for(a=0;a<I->NAtom;a++) {
+    s=I->AtomInfo[a].selEntry;
+    while(s) 
+      {
+        if(SelectorMatch(s,sele))
+          return(a);
+        s=SelectorNext(s);
+      }
+  }
+  return(-1);
+}
+/*========================================================================*/
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I)
 {
   int a,*b;
@@ -84,6 +138,71 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I)
         ai[*(b++)].bonded=true;
         b++;
       }
+  }
+}
+/*========================================================================*/
+void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
+{
+  /* neighbor storage structure:
+     
+     0       list offset for atom 0
+     1       list offset for atom 1
+     ...
+     n-1     list offset for atom n-1
+     n       neighbor of atom 0
+     n+1     neighbor ot atom 1
+     ...
+     n+m     -1
+     n+m+1   neighbor of atom 1
+     n+m+2   neighbor of atom 1
+     etc.
+ */
+
+  int size;
+  int a,b,c,d,*l,l0,l1;
+  if(!I->Neighbor) {
+    size = (I->NAtom*2)+(I->NBond*2); 
+    if(I->Neighbor) {
+      VLACheck(I->Neighbor,int,size);
+    } else {
+      I->Neighbor=VLAlloc(int,size);
+    }
+    
+    /* initialize */
+    l = I->Neighbor;
+    for(a=0;a<I->NAtom;a++)
+      (*l++)=0;
+    
+    /* count neighbors for each atom */
+    l = I->Bond;
+    for(b=0;b<I->NBond;b++) {
+      I->Neighbor[(*l++)]++;
+      I->Neighbor[(*l++)]++;
+      l++;
+    }
+    
+    /* set up offsets and list terminators */
+    c = I-> NAtom;
+    for(a=0;a<I->NAtom;a++) {
+      d = I->Neighbor[a];
+      I->Neighbor[a]+=c;
+      I->Neighbor[I->Neighbor[a]]=-1;
+      c = c + d + 1;
+    }
+    
+    /* now load neighbors in a sequential list for each atom (reverse order) */
+    l = I->Bond;
+    for(b=0;b<I->NBond;b++) {
+      l0 = *(l++);
+      l1 = *(l++);
+      l++;
+      I->Neighbor[l0]--;
+      I->Neighbor[I->Neighbor[l0]]=l1;
+      
+      I->Neighbor[l1]--;
+      I->Neighbor[I->Neighbor[l1]]=l0;
+    }
+    l=I->Neighbor;
   }
 }
 /*========================================================================*/
@@ -1387,8 +1506,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                rms = MatrixFitRMS(op->nvv1,op->vv1,op->vv2,NULL,op->ttt);
              else 
                rms = MatrixGetRMS(op->nvv1,op->vv1,op->vv2,NULL);
-             printf(" Executive: RMS = %8.3f (%d atoms)\n",
-                    rms,op->nvv1);
+             PRINTF " Executive: RMS = %8.3f (%d atoms)\n",
+                    rms,op->nvv1 ENDF
              if(op->i1==2) 
                ObjectMoleculeTransformTTTf(I,op->ttt,b);
            } else {
@@ -1706,10 +1825,11 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index)
   AtomInfoType *ai;
 
   ai=I->AtomInfo+index;
-  sprintf(buffer," Pick: %s:%s:%s:%s:%s:%s [#%d:%s:%s:%d]",
-			 I->Obj.Name,ai->segi,ai->chain,
-			 ai->resi,ai->resn,ai->name,ai->id,ai->elem,
-          ai->textType,ai->customType);
+  sprintf(buffer," Atom: [#%d:%s:%s:%d] %s:%s:%s:%s:%s:%s ",
+			 ai->id,ai->elem,
+          ai->textType,ai->customType,
+          I->Obj.Name,ai->segi,ai->chain,
+			 ai->resi,ai->resn,ai->name);
   OrthoAddOutput(buffer);
   OrthoNewLine(NULL);
   OrthoRestorePrompt();
@@ -1727,7 +1847,7 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) {	
 	   OrthoBusySlow(a,I->NCSet);
-	   printf(" ObjectMolecule: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);
+      /*	   printf(" ObjectMolecule: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);*/
       if(I->CSet[a]->fUpdate)
         I->CSet[a]->fUpdate(I->CSet[a]);
 	 }
@@ -1743,16 +1863,42 @@ void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep)
 	 }
 }
 /*========================================================================*/
-void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick)
+int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode)
+{
+  int result = 0;
+  CoordSet *cs;
+  if(state<0) state=0;
+  if(I->NCSet==1) state=0;
+  state = state % I->NCSet;
+  cs = I->CSet[state];
+  if(cs) {
+    result = CoordSetMoveAtom(I->CSet[state],index,v,mode);
+    cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+  }
+  return(result);
+}
+/*========================================================================*/
+int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
+{
+  int result = 0;
+  if(state<0) state=0;
+  if(I->NCSet==1) state=0;
+  state = state % I->NCSet;
+  if(I->CSet[state]) 
+    result = CoordSetGetAtomVertex(I->CSet[state],index,v);
+  return(result);
+}
+/*========================================================================*/
+void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick)
 {
   int a;
-  if(frame<0) {
+  if(state<0) {
     for(a=0;a<I->NCSet;a++)
       if(I->CSet[a])
         if(I->CSet[a]->fRender)
           I->CSet[a]->fRender(I->CSet[a],ray,pick);        
-  } else if(frame<I->NCSet) {
-	 I->CurCSet=frame % I->NCSet;
+  } else if(state<I->NCSet) {
+	 I->CurCSet=state % I->NCSet;
 	 if(I->CSet[I->CurCSet]) {
       if(I->CSet[I->CurCSet]->fRender)
         I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],ray,pick);
@@ -1790,6 +1936,7 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->AtomInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   I->CurCSet=0;
   I->Symmetry=NULL;
+  I->Neighbor=NULL;
   return(I);
 }
 /*========================================================================*/
@@ -1842,6 +1989,7 @@ void ObjectMoleculeFree(ObjectMolecule *I)
 		I->CSet[a]=NULL;
 	 }
   if(I->Symmetry) SymmetryFree(I->Symmetry);
+  VLAFreeP(I->Neighbor);
   VLAFreeP(I->DiscreteAtmToIdx);
   VLAFreeP(I->DiscreteCSet);
   VLAFreeP(I->CSet);

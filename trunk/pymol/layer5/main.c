@@ -44,6 +44,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Movie.h"
 #include"main.h"
+#include"Editor.h"
 
 void MainFree(void);
 void MainTest(void);
@@ -301,6 +302,7 @@ static void MainInit(void)
   SceneInit();
   ExecutiveInit();
   RepMeshInit();
+  EditorInit();  
 
 }
 
@@ -308,6 +310,7 @@ static void MainInit(void)
 void MainFree(void)
 {
   
+  EditorFree();
   ExecutiveFree();
   SceneFree();
   MovieFree();

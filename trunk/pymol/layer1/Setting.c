@@ -522,7 +522,7 @@ void SettingInit(void)
   I->NSetting++;
   I->Setting[cSetting_button_mode].Value[0] = 0.0;
   strcpy(I->Setting[cSetting_button_mode].Name,
-			"button_mode"); /* outdated */
+			"button_mode"); 
 
   I->NSetting++;
   I->Setting[cSetting_valence].Value[0] = 0.0;

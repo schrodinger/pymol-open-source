@@ -44,6 +44,7 @@ def exec_str(s):
    
 def exec_deferred():
 #   pm.do("@t.pml")
+   pm.config_mouse()
    for a in invocation.options.deferred:
       if re.search(r"pymol\.py$",a):
          pass
@@ -53,7 +54,6 @@ def exec_deferred():
          pm.load(a)
       elif re.search(r"\.pml$",a):
          pm.do("@%s" % a)
-
 def launch_gui():
    if invocation.options.external_gui:
       __import__(invocation.options.gui)

@@ -40,9 +40,15 @@ Z* -------------------------------------------------------------------
 
 */
 
+void MatrixRotation44f( float *m44, const float angle, const float x,const float y,const float z);
+
 void MatrixDump44f(float *m,char *prefix);
-void MatrixInvTransform3f(float *vector,float *matrix,float *result);
-void MatrixTransform3f(float *vector,float *matrix,float *result);
+
+void MatrixTransform44f3f(float *m, float *q,float *p);
+void MatrixTransform44f4f(float *m, float *q,float *p);
+void MatrixInvRotate44f3f(float *m, float *q,float *p);
+
+void MatrixTransform44fAs33f3f(float *p, float *m, float *q);
 void MatrixTransform44fn( unsigned int n, float *q, const float m[16], float *p);
 int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v);
 
@@ -50,6 +56,10 @@ void MatrixLoadIdentity44f(float *m);
 void MatrixTranslate44f3f( float *m, const float x,const float y,const float z);
 void MatrixRotate44f3f( float *m, const float angle, const float x,const float y,const float z);
 void MatrixMultiply44f( const float *mat, float *product );
+int  MatrixInvert44f( const float *m, float *out );
+
+#define MatrixInvTransform3f MatrixInvRotate44f3f
+#define MatrixTransform3f MatrixTransform44fAs33f3f
 
 /* WARNING - routines below use a "non-conventional" 4x4 
   pre-translation - tranformation - and post-translation (TTT) matrix */

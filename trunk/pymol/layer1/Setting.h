@@ -102,7 +102,7 @@ float SettingGetNamed(char *name);
 #define cSetting_auto_zoom            60
 #define cSetting_overlay              61
 #define cSetting_text                 62
-#define cSetting_button_mode          63 /* outdated */
+#define cSetting_button_mode          63 
 #define cSetting_valence              64
 #define cSetting_nonbonded_size       65
 #define cSetting_label_color          66

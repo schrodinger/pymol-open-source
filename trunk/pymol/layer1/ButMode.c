@@ -69,64 +69,6 @@ void ButModeCaptionReset(void)
   I->Caption[0]=0;
 }
 /*========================================================================*/
-void ButModeChange(int mode)
-{
-  /* THIS STUFF SHOULD DEFINITELY BE MOVED INTO PYTHON */
-  CButMode *I=&ButMode;
-  switch(mode) {
-  case 0: 
-    I->Mode[0]=cButModeRotXYZ;
-    I->Mode[1]=cButModeTransXY;
-    I->Mode[2]=cButModeTransZ;
-    I->Mode[3]=cButModeRotZ;
-    I->Mode[4]=cButModeTransXY;
-    I->Mode[5]=cButModeClipNF;
-    break;
-  case 1: 
-    I->Mode[0]=cButModeRotXYZ;
-    I->Mode[1]=cButModeTransXY;
-    I->Mode[2]=cButModeTransZ;
-    I->Mode[3]=cButModeTransXY;
-    I->Mode[4]=cButModeRotZ;
-    I->Mode[5]=cButModeClipNF;
-    break;
-  case 2: 
-    I->Mode[0]=cButModeRotXYZ;
-    I->Mode[1]=cButModeTransXY;
-    I->Mode[2]=cButModeTransZ;
-    I->Mode[3]=cButModeRotZ;
-    I->Mode[4]=cButModeClipN;
-    I->Mode[5]=cButModeClipF;
-    break;
-  case 3: 
-    I->Mode[2]=cButModeRotXYZ;
-    I->Mode[1]=cButModeTransXY;
-    I->Mode[0]=cButModeTransZ;
-    I->Mode[5]=cButModeRotZ;
-    I->Mode[4]=cButModeTransXY;
-    I->Mode[3]=cButModeClipNF;
-    break;
-  case 4: 
-    I->Mode[2]=cButModeRotXYZ;
-    I->Mode[1]=cButModeTransXY;
-    I->Mode[0]=cButModeTransZ;
-    I->Mode[5]=cButModeTransXY;
-    I->Mode[4]=cButModeRotZ;
-    I->Mode[3]=cButModeClipNF;
-    break;
-  case 5: 
-    I->Mode[2]=cButModeRotXYZ;
-    I->Mode[1]=cButModeTransXY;
-    I->Mode[0]=cButModeTransZ;
-    I->Mode[5]=cButModeRotZ;
-    I->Mode[4]=cButModeClipN;
-    I->Mode[3]=cButModeClipF;
-    break;
-
-  }
-  OrthoDirty();
-}
-/*========================================================================*/
 void ButModeSetRate(float interval)
 {
   CButMode *I=&ButMode;
@@ -159,28 +101,35 @@ void ButModeInit(void)
 {
 
   CButMode *I=&ButMode;
+  int a;
 
   I->Rate=0.0;
   I->Samples = 0.0;
-  
-  I->Mode[0]=cButModeRotXYZ;
-  I->Mode[1]=cButModeTransXY;
-  I->Mode[2]=cButModeTransZ;
-  I->Mode[3]=cButModeRotZ;
-  I->Mode[4]=cButModeTransXY;
-  I->Mode[5]=cButModeClipNF;
-  I->Mode[6]=cButModePk1;
-  I->Mode[7]=cButModePk2;
-  I->Mode[8]=cButModePk3;
-  I->Mode[9]=cButModeAddToPk1;
-  I->Mode[10]=cButModeAddToPk2;
-  I->Mode[11]=cButModeAddToPk3;
+
+  /* Outdated code below:  Mouse configuration now handled completely from Python
+     I->Mode[0]=cButModeRotXYZ;
+     I->Mode[1]=cButModeTransXY;
+     I->Mode[2]=cButModeTransZ;
+     I->Mode[3]=cButModeRotZ;
+     I->Mode[4]=cButModeTransXY;
+     I->Mode[5]=cButModeClipNF;
+     I->Mode[6]=cButModePk1;
+     I->Mode[7]=cButModePk2;
+     I->Mode[8]=cButModePk3;
+     I->Mode[9]=cButModeAddToPk1;
+     I->Mode[10]=cButModeOrigAt;
+     I->Mode[11]=cButModeAddToPk3;
+  */
 
   I->Caption[0] = 0;
 
-  I->NCode = 18;
+  I->NCode = 19;
   I->NBut = 12;
 
+  for(a=0;a<I->NBut;a++) {
+    I->Mode[a]=-1;
+  }
+    
   strcpy(I->Code[cButModeRotXYZ],  "Rota ");
   strcpy(I->Code[cButModeRotZ],    "RotZ ");  
   strcpy(I->Code[cButModeTransXY], "Move ");
@@ -199,6 +148,7 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeAddToPk1],"+Pk1 ");
   strcpy(I->Code[cButModeAddToPk2],"+Pk2 ");
   strcpy(I->Code[cButModeAddToPk3],"+Pk3 ");
+  strcpy(I->Code[cButModeOrigAt],  "Orig ");
 
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ButModeClick;
@@ -209,6 +159,14 @@ void ButModeInit(void)
   I->Block->TextColor[0]=0.2;
   I->Block->TextColor[1]=1.0;
   I->Block->TextColor[2]=0.2;
+
+  I->TextColor1[0]=0.5;
+  I->TextColor1[1]=0.5;
+  I->TextColor1[2]=1.0;
+
+  I->TextColor2[0]=0.8;
+  I->TextColor2[1]=0.8;
+  I->TextColor2[2]=0.8;
 
   OrthoAttach(I->Block,cOrthoTool);
 
@@ -247,14 +205,6 @@ int ButModeTranslate(int button, int mod)
 /*========================================================================*/
 int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
-  CButMode *I=&ButMode;
-  int n;
-  n=((I->Block->rect.top-(y+2))-cButModeTopMargin)/cButModeLineHeight;
-  SceneDirty();
-  if((n>=0)&&(n<3)) {
-	 if((x>(I->Block->rect.left+I->Block->rect.right)/2)) n+=3;
-	 I->Mode[n]=(I->Mode[n]+1)%I->NCode;
-  }
   return(1);
 }
 /*========================================================================*/
@@ -264,6 +214,7 @@ void ButModeDraw(Block *block)
   int x,y,a;
   float rate;
   char rateStr[255];
+  int mode;
 
   if(PMGUI) {
     glColor3fv(I->Block->BackColor);
@@ -273,24 +224,61 @@ void ButModeDraw(Block *block)
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
 
-    GrapDrawStr("Mouse   L    M    R",x,y);
+    GrapDrawStr("Mouse:",x,y);
+    glColor3fv(I->TextColor1);
+    GrapDrawStr("  L    M    R",x+40,y);
 
     y-=cButModeLineHeight;
     GrapDrawStr("None ",x,y);
-    for(a=0;a<3;a++) GrapContStr(I->Code[I->Mode[a]]);
+    glColor3fv(I->TextColor2);
+    glRasterPos4d(x+40,y,0,1);
+    for(a=0;a<3;a++) {
+      mode = I->Mode[a];
+      if(mode<0)
+        GrapContStr("    ");
+      else
+        GrapContStr(I->Code[mode]);
+    }
 
     y-=cButModeLineHeight;
+    glColor3fv(I->TextColor1);
     GrapDrawStr("Shft ",x,y);
-    for(a=3;a<6;a++) GrapContStr(I->Code[I->Mode[a]]);
+    glColor3fv(I->TextColor2);
+    glRasterPos4d(x+40,y,0,1);
+    for(a=3;a<6;a++) {
+      mode = I->Mode[a];
+      if(mode<0)
+        GrapContStr("    ");
+      else
+        GrapContStr(I->Code[mode]);
+    }
 
     y-=cButModeLineHeight;
+    glColor3fv(I->TextColor1);
     GrapDrawStr("Ctrl ",x,y);
-    for(a=6;a<9;a++) GrapContStr(I->Code[I->Mode[a]]);
+    glColor3fv(I->TextColor2);
+    glRasterPos4d(x+40,y,0,1);
+    for(a=6;a<9;a++) {
+      mode = I->Mode[a];
+      if(mode<0)
+        GrapContStr("    ");
+      else
+        GrapContStr(I->Code[mode]);
+    }
 
     y-=cButModeLineHeight;
+    glColor3fv(I->TextColor1);
     GrapDrawStr("CtSh ",x,y);
-    for(a=9;a<12;a++) GrapContStr(I->Code[I->Mode[a]]);
-
+    glColor3fv(I->TextColor2);
+    glRasterPos4d(x+40,y,0,1);
+    for(a=9;a<12;a++) {
+      mode = I->Mode[a];
+      if(mode<0)
+        GrapContStr("    ");
+      else
+        GrapContStr(I->Code[mode]);
+    }
+    glColor3fv(I->Block->TextColor);
     y-=cButModeLineHeight;
 
     if(I->Caption[0]) GrapDrawStr(I->Caption,x,y);

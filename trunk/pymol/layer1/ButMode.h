@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #define cButModeRotFrag  15
 #define cButModeTorFrag  16
 #define cButModeMovFrag  17
+#define cButModeOrigAt   18
 
 typedef char CodeType[25];
 
@@ -49,6 +50,8 @@ typedef struct {
   float Rate;
   float Samples;
   WordType Caption;
+  float TextColor1[3];
+  float TextColor2[3];
 }  CButMode;
 
 extern CButMode ButMode;

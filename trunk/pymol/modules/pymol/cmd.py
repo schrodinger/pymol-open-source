@@ -33,6 +33,7 @@ from chempy.sdf import SDF,SDFRec
 
 lock_api = pymol.lock_api
 
+
 def commands():
    '''
 COMMANDS
@@ -95,7 +96,7 @@ NOTES
    internal states do not get corrupted.
    '''
    help('api')
-   
+
 def keyboard():
    '''
 KEYBOARD COMMANDS and MODIFIERS
@@ -374,6 +375,66 @@ debugging feature, not an official part of the API.
    finally:
       unlock()
    return r
+
+def edit(*arg):   
+   try:
+      lock()
+      r = _cmd.get_setting("button_mode")
+      r = int(r)
+      if not len(arg):
+         if r:
+            _cmd.set("button_mode","0")
+         else:
+            _cmd.set("button_mode","1")            
+      else:
+         if arg[0]=='on':
+            _cmd.set("button_mode","1")
+         if arg[0]=='off':
+            _cmd.set("button_mode","0")
+      config_mouse()
+   finally:
+      unlock()
+   pass
+
+def config_mouse():
+   # NOTE: PyMOL automatically runs this routine upon start-up
+   try:
+      lock()
+      r = _cmd.get_setting("button_mode")
+      r = int(r)
+      if not r:
+         # visualization
+         button('l','','rota')
+         button('m','','move')
+         button('r','','movz')
+         button('l','shft','rotz')
+         button('m','shft','move')
+         button('r','shft','clip')                  
+         button('l','ctrl','pk1')
+         button('m','ctrl','pk2')
+         button('r','ctrl','pk3')                  
+         button('l','ctsh','+pk1')
+         button('m','ctsh','orig')
+         button('r','ctsh','+pk3')
+         print " Mouse: configured for visualization."
+      else:
+         # editing
+         button('l','','rota')
+         button('m','','move')
+         button('r','','movz')
+         button('l','shft','rotf')
+         button('m','shft','movf')
+         button('r','shft','clip')                  
+         button('l','ctrl','torf')
+         button('m','ctrl','pkat')
+         button('r','ctrl','pkbd')                  
+         button('l','ctsh','pk1')
+         button('m','ctsh','orig')
+         button('r','ctsh','pk3')
+         print " Mouse: configured for editing."
+   finally:
+      unlock()
+
 
 def dist(*arg):
    '''
@@ -846,13 +907,12 @@ INTERNAL
    pass
 #   pymol.lock_api = _cmd.get_globals()['lock_api']
 
-
 def lock():
    '''
 INTERNAL
    '''
    thred = thread.get_ident()
-   if thred == pymol.glutThread:
+   if (thred == pymol.glutThread):
       _cmd.flush_now()
    else:
       while _cmd.wait_queue():
@@ -2765,6 +2825,7 @@ keyword = {
    'dist'          : [dist         , 0 , 2 , '=' , 0 ],
    'distance'      : [distance     , 0 , 2 , '=' , 0 ],
    'dump'          : [dump         , 2 , 2 , ',' , 0 ],
+   'edit'          : [edit         , 0 , 1 , ',' , 0 ],
    'enable'        : [enable       , 0 , 1 , ',' , 0 ],
    'ending'        : [ending       , 0 , 0 , ',' , 0 ],
    'export_dots'   : [export_dots  , 2 , 2 , ',' , 0 ],
@@ -2879,10 +2940,11 @@ but_act_code = {
    '+pk2' : 11 ,
    '+pk3' : 12 ,
    'pkat' : 13 ,
-   'pkdd' : 14 ,
+   'pkbd' : 14 ,
    'rotf' : 15 ,
    'torf' : 16 ,
    'movf' : 17 ,
+   'orig' : 18 ,
    }
 
 special = {

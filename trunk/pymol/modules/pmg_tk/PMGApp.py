@@ -326,9 +326,13 @@ class PMGApp(AbstractApp):
 
 		self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
-		self.menuBar.addmenuitem('Mouse', 'command', 'Not Yet Implemented',
-                               label='Not Yet Implemented',
-                               command = lambda: cmd.set("button_mode","0"))
+		self.menuBar.addmenuitem('Mouse', 'command', 'Visualization',
+                               label='Visualization',
+                               command = lambda: cmd.edit("off"))
+
+		self.menuBar.addmenuitem('Mouse', 'command', 'Editing',
+                               label='Editing',
+                               command = lambda: cmd.edit("on"))
 
 
 

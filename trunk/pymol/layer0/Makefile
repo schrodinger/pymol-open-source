@@ -5,7 +5,7 @@ include ../Rules.make
 include .includes
 
 .c.p:
-	$(CC) -M $(CFLAGS) $< | sed 's/$*\\.o[ :]*/& $@/g' >$@
+	$(CC) -M $(CFLAGS) $< | sed 's/$*\\.o[ :]*/& $@/g;s/[^ ]*\/usr\/[^ ]*//g;s/[^ ]*\/ext\/[^ ]*//g' > $@
 
 layer: $(DEPS) $(OBJS)
 

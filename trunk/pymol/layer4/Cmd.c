@@ -74,6 +74,8 @@ Z* -------------------------------------------------------------------
 #define tmpSele1 "_tmp1"
 #define tmpSele2 "_tmp2"
 
+int flush_count = 0;
+
 static void APIEntry(void)
 {
   P_glut_thread_keep_out++;
@@ -120,6 +122,7 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
 static PyObject *CmdLabel(PyObject *self,   PyObject *args);
 static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
@@ -195,6 +198,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_model",	  CmdGetModel,     METH_VARARGS },
 	{"get_moment",	  CmdGetMoment,    METH_VARARGS },
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
+	{"get_setting",  CmdGetSetting,   METH_VARARGS },
 	{"identify",     CmdIdentify,     METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
 	{"isomesh",	     CmdIsomesh,      METH_VARARGS },
@@ -245,7 +249,7 @@ static PyMethodDef Cmd_methods[] = {
 
 static PyObject *CmdButton(PyObject *self, 	PyObject *args)
 {
-  char *i1,*i2;
+  int i1,i2;
   PyArg_ParseTuple(args,"ii",&i1,&i2);
   APIEntry();
   ButModeSet(i1,i2);
@@ -258,7 +262,11 @@ static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
   /* only called by the GLUT thread with unlocked API */
   P_glut_thread_keep_out++;
-  PFlushFast();
+  if(!flush_count) {
+    flush_count++;
+    PFlushFast();
+    flush_count--;
+  }
   P_glut_thread_keep_out--;
   Py_INCREF(Py_None);
   return Py_None;  
@@ -872,6 +880,19 @@ static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args)
 								 m[0][0],m[0][1],m[0][2],
 								 m[1][0],m[1][1],m[1][2],
 								 m[2][0],m[2][1],m[2][2]);
+  return result;
+}
+
+static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
+{
+  PyObject *result;
+  char *str1;
+  float value;
+  PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
+  value=SettingGetNamed(str1);
+  APIExit();
+  result = Py_BuildValue("f", SettingGetNamed(str1));
   return result;
 }
 
