@@ -64,6 +64,7 @@ PyObject *P_unlock_c = NULL;
 
 PyObject *P_time = NULL;
 PyObject *P_sleep = NULL;
+PyObject *P_main = NULL;
 
 #define P_log_file_str "_log_file"
 
@@ -698,7 +699,7 @@ void PInitEmbedded(int argc,char **argv)
 {
   /* This routine is called if we are running with an embedded Python interpreter */
   
-  PyObject *args,*pymol,*sys,*invocation;
+  PyObject *args,*pymol;
 
 #ifdef WIN32
   OrthoLineType path_buffer,command;
@@ -747,6 +748,7 @@ void PInitEmbedded(int argc,char **argv)
   }
 }
 #endif
+
 
 #ifndef PYMOL_ACTIVEX
   Py_Initialize();
@@ -811,26 +813,19 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
 #endif
 
-  PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
-
-  pymol = PyImport_AddModule("pymol"); /* get it */
-
-  sys = PyObject_GetAttrString(pymol,"sys");
-  if(!sys) ErrFatal("PyMOL","PYMOL_PATH may not be set properly.");
-  if(!sys) ErrFatal("PyMOL","can't find 'pymol.sys'");
-
-  if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
-
-  invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
-  if(!invocation) ErrFatal("PyMOL","can't find module 'invocation'");
+  P_main = PyImport_AddModule("__main__");
+  if(!P_main) ErrFatal("PyMOL","can't find '__main__'");
 
   args = PConvStringListToPyList(argc,argv); /* prepare our argument list */
   if(!args) ErrFatal("PyMOL","can't process arguments.");
 
-  /* copy arguments to sys.argv */
-  PyObject_SetAttrString(sys,"argv",args);
+  /* copy arguments to __main__.pymol_argv */
+  PyObject_SetAttrString(P_main,"pymol_argv",args);
 
-  PXDecRef(PyObject_CallMethod(invocation,"parse_args","O",args)); /* parse the arguments */
+  PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
+
+  pymol = PyImport_AddModule("pymol"); /* get it */
+  if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
 
 
 }
