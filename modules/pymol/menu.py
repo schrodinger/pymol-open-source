@@ -18,57 +18,66 @@
 
 import cmd
 
+def rep_action(action,s) :
+   return [
+      [ 1, 'lines'      , 'cmd.'+action+'("lines"     ,"'+s+'")' ],
+      [ 1, 'nonbonded'  , 'cmd.'+action+'("nonbonded" ,"'+s+'")' ],
+      [ 1, 'sticks'     , 'cmd.'+action+'("sticks"    ,"'+s+'")' ],
+      [ 1, 'ribbon'     , 'cmd.'+action+'("ribbon"    ,"'+s+'")' ],
+      [ 1, 'cartoon'    , 'cmd.'+action+'("cartoon"   ,"'+s+'")' ],
+      [ 0, ''           , ''                               ],
+      [ 1, 'labels'     , 'cmd.'+action+'("labels"    ,"'+s+'")' ],
+      [ 1, 'cell'       , 'cmd.'+action+'("cell"      ,"'+s+'")' ],
+      [ 0, ''           , ''                               ],
+      [ 1, 'dots'       , 'cmd.'+action+'("dots"      ,"'+s+'")' ],
+      [ 1, 'spheres'    , 'cmd.'+action+'("spheres"   ,"'+s+'")' ],
+      [ 1, 'nb_spheres' , 'cmd.'+action+'("nb_spheres","'+s+'")' ],
+      [ 0, ''           , ''                               ],
+      [ 1, 'mesh'       , 'cmd.'+action+'("mesh"      ,"'+s+'")' ],
+      [ 1, 'surface'    , 'cmd.'+action+'("surface"   ,"'+s+'")' ],
+      ]
+
+def mol_as(s):
+   return (
+      [[ 2, 'As:'   , '']]
+      +rep_action('as',s)
+      )
+
+def mol_toggle(s):
+   return (
+      [[ 2, 'As:'   , '']]
+      +rep_action('toggle',s)
+      )
+
 def mol_show(s):
-   return [[ 2, 'Show:'      , ''                               ],
-           [ 1, 'lines'      , 'cmd.show("lines"     ,"'+s+'")' ],
-           [ 1, 'nonbonded'  , 'cmd.show("nonbonded" ,"'+s+'")' ],
-           [ 1, 'sticks'     , 'cmd.show("sticks"    ,"'+s+'")' ],
-           [ 1, 'ribbon'     , 'cmd.show("ribbon"    ,"'+s+'")' ],
-           [ 1, 'cartoon'    , 'cmd.show("cartoon"   ,"'+s+'")' ],
-           [ 0, ''           , ''                               ],
-           [ 1, 'labels'     , 'cmd.show("labels"    ,"'+s+'")' ],
-           [ 1, 'cell'       , 'cmd.show("cell"      ,"'+s+'")' ],
-           [ 0, ''           , ''                               ],
-           [ 1, 'dots'       , 'cmd.show("dots"      ,"'+s+'")' ],
-           [ 1, 'spheres'    , 'cmd.show("spheres"   ,"'+s+'")' ],
-           [ 1, 'nb_spheres' , 'cmd.show("nb_spheres","'+s+'")' ],
-           [ 0, ''           , ''                               ],
-           [ 1, 'mesh'       , 'cmd.show("mesh"      ,"'+s+'")' ],
-           [ 1, 'surface'    , 'cmd.show("surface"   ,"'+s+'")' ],
-           [ 0, ''           , ''                               ],           
-           [ 1, 'main chain' , 'cmd.show("lines","((byres ('+s+'))&n;ca,c,n,o,h)")' ],
-           [ 1, 'side chain' , 'cmd.show("lines","((byres ('+s+'))&(!(n;c,o,h|(n. n&!r. pro))))")' ],
-           ]
+   return (
+      [[ 2, 'Show:'      , ''                               ],
+       [ 1, 'as'    , mol_as(s) ],
+#       [ 1, 'toggle'    , mol_toggle(s) ],
+       [ 0, '', '']]
+      + rep_action('show',s) +
+      [[ 0, '', ''],
+       [ 1, 'main chain' , 'cmd.show("lines","((byres ('+s+'))&n;ca,c,n,o,h)")' ],
+       [ 1, 'side chain' , 'cmd.show("lines","((byres ('+s+'))&(!(n;c,o,h|(n. n&!r. pro))))")' ],
+       ])
 
 def mol_hide(s):
-   return [[ 2, 'Hide:'     , ''                                ],
-           [ 1, 'everything', 'cmd.hide("everything","'+s+'")'  ],
-           [ 0, ''          , ''                                ],
-           [ 1, 'lines'     , 'cmd.hide("lines"     ,"'+s+'")'  ],
-           [ 1, 'nonbonded' , 'cmd.hide("nonbonded" ,"'+s+'")'  ],           
-           [ 1, 'sticks'    , 'cmd.hide("sticks"    ,"'+s+'")'  ],
-           [ 1, 'ribbon'    , 'cmd.hide("ribbon"    ,"'+s+'")'  ],
-           [ 1, 'cartoon'   , 'cmd.hide("cartoon"   ,"'+s+'")' ],           
-           [ 0, ''          , ''                                ],
-           [ 1, 'labels'    , 'cmd.hide("labels"    ,"'+s+'")'  ],
-           [ 1, 'cell'      , 'cmd.hide("cell"      ,"'+s+'")' ],
-           [ 0, ''          , ''                                ],
-           [ 1, 'dots'      , 'cmd.hide("dots"      ,"'+s+'")'  ],
-           [ 1, 'spheres'   , 'cmd.hide("spheres"   ,"'+s+'")'  ],
-           [ 1, 'nb_spheres', 'cmd.hide("nb_spheres","'+s+'")'  ],           
-           [ 0, ''          , ''                                ],
-           [ 1, 'mesh'      , 'cmd.hide("mesh"      ,"'+s+'")'  ],
-           [ 1, 'surface'   , 'cmd.hide("surface"   ,"'+s+'")'  ],
-           [ 0, ''          , ''                                ],
-           [ 1, 'main chain', 'cmd.hide("((byres ('+s+'))&(n. c,o,h|(n. n&!r. pro)))")' ],
-           [ 1, 'side chain', 'cmd.hide("((byres ('+s+'))&!(n. ca,c,o,h|(n. n&!r. pro)))")' ],
-           [ 1, 'waters'    , 'cmd.hide("(solvent and ('+s+'))")'     ],                      
-           [ 0, ''          , ''                                ],
-           [ 1, 'hydrogens' , 'cmd.hide("('+s+' and hydro)")'   ],
-           [ 0, ''          , ''                                ],           
-           [ 1, 'unselected', 'cmd.hide("(not '+s+')")'         ],
-           ]
-
+   return (
+      [[ 2, 'Hide:'     , ''                                ],
+       [ 1, 'everything', 'cmd.hide("everything","'+s+'")'  ],
+       [ 0, ''          , ''                                ]]
+      + rep_action('hide',s) +
+      [[ 0, ''          , ''                                ],
+       [ 1, 'main chain', 'cmd.hide("((byres ('+s+'))&(n. c,o,h|(n. n&!r. pro)))")' ],
+       [ 1, 'side chain', 'cmd.hide("((byres ('+s+'))&!(n. ca,c,o,h|(n. n&!r. pro)))")' ],
+       [ 1, 'waters'    , 'cmd.hide("(solvent and ('+s+'))")'     ],                      
+       [ 0, ''          , ''                                ],
+       [ 1, 'hydrogens' , 'cmd.hide("('+s+' and hydro)")'   ],
+       [ 0, ''          , ''                                ],           
+       [ 1, 'unselected', 'cmd.hide("(not '+s+')")'         ],
+       ]
+      )
+      
 def dist_show(s):
    return [[ 2, 'Show:'     , ''                               ],
            [ 1, 'dashes'    , 'cmd.show("dashes"    ,"'+s+'")' ],
