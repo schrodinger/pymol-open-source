@@ -886,7 +886,8 @@ void OrthoDoDraw()
   int times=1;
   int double_pump=false;
   float *bg_color;
-
+  
+  int render = false;
   double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);
   bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
 
@@ -912,6 +913,10 @@ void OrthoDoDraw()
     
     glClearColor(v[0],v[1],v[2],1.0);
 
+    if(overlay||(!text)) 
+      if(!SceneRenderCached())
+        render=true;
+
     if(SceneGetStereo()||double_pump) {
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -927,9 +932,9 @@ void OrthoDoDraw()
       times = 1;
       double_pump=false;
     }    
-    if(overlay||(!text)) 
-      if(!SceneRenderCached())
-        SceneRender(NULL,0,0,NULL);
+
+    if(render)
+      SceneRender(NULL,0,0,NULL);
 
     while(times--) {
       switch(times) {
