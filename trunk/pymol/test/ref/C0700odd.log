@@ -71,6 +71,8 @@ PyMOL>save cmp/C0700odd.5.pdb
 PyMOL>dele all
 PyMOL>load cmp/C0700odd.3.pdb
  Executive: object "C0700odd.3" created.
+PyMOL>set pdb_reformat_names_mode, 0
+ Setting: pdb_reformat_names_mode set to 0.
 PyMOL>save cmp/C0700odd.6.pdb
  Save: wrote "cmp/C0700odd.6.pdb".
 PyMOL>iterate all,print name
@@ -91,8 +93,8 @@ LMN
 PyMOL>reinit
 PyMOL>set pdb_reformat_names_mode, 1
  Setting: pdb_reformat_names_mode set to 1.
-PyMOL>load cmp/C0700odd.5.pdb
- Executive: object "C0700odd.5" created.
+PyMOL>load cmp/C0700odd.3.pdb
+ Executive: object "C0700odd.3" created.
 PyMOL>iterate all,print name
 CZ
 NH1
