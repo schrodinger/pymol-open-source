@@ -185,7 +185,8 @@ static void MainDrawLocked(void)
 
   if(I->SwapFlag)
     {
-      if(PMGUI) p_glutSwapBuffers();
+      if(!SettingGet(cSetting_suspend_updates))
+        if(PMGUI) p_glutSwapBuffers();
       I->SwapFlag=false;
     }
 }

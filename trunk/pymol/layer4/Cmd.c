@@ -945,7 +945,7 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
 {
   /* called by non-GLUT thread with unlocked API, blocked interpreter */
   PyObject *result;
-  if(OrthoCommandWaiting()) 
+  if(OrthoCommandWaiting()||(flush_count>1)) 
     result = PyInt_FromLong(1);
   else
     result = PyInt_FromLong(0);

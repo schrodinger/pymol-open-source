@@ -149,6 +149,7 @@ class SettingIndex:
    transparent           =138
    ray_texture           =139
    ray_texture_settings  =140
+   suspend_updates       =141
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

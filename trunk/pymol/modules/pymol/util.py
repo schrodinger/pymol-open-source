@@ -23,7 +23,7 @@ mload = movie.load
 mrock = movie.rock
 mroll = movie.roll
 
-def cbag(selection):
+def cbag(selection="(all)"):
    s = str(selection)
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
@@ -32,7 +32,7 @@ def cbag(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("carbon","(elem C and "+s+")")
 
-def cbac(selection):
+def cbac(selection="(all)"):
    s = str(selection)
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
@@ -41,7 +41,7 @@ def cbac(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("cyan","(elem C and "+s+")")
 
-def cbay(selection):
+def cbay(selection="(all)"):
    s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
@@ -50,7 +50,7 @@ def cbay(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("yellow","(elem C and "+s+")")
 
-def cbas(selection):
+def cbas(selection="(all)"):
    s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
@@ -59,7 +59,7 @@ def cbas(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("salmon","(elem C and "+s+")")
 
-def cbap(selection):
+def cbap(selection="(all)"):
    s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
@@ -68,7 +68,7 @@ def cbap(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("purple","(elem C and "+s+")")
 
-def cbak(selection):
+def cbak(selection="(all)"):
    s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
@@ -77,7 +77,7 @@ def cbak(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("pink","(elem C and "+s+")")
 
-def cbaw(selection):
+def cbaw(selection="(all)"):
    s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
@@ -86,7 +86,7 @@ def cbaw(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("hydrogen","(elem C and "+s+")")
 
-def cbab(selection):
+def cbab(selection="(all)"):
    s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
@@ -144,18 +144,23 @@ def hbond(a,b,cutoff=3.3):
    st = "(%s and (%s around %4.2f) and elem N,O),(%s and (%s around %4.2f) and elem N,O),%4.2f" % (a,b,cutoff,b,a,cutoff,cutoff)
 #   cmd.dist("hbond",st)
 
-def cbc(selection='(all)'): # NOT THREAD SAFE
+def cbc(selection='(all)',first_color=7): # NOT THREAD SAFE
    '''
    Color all chains a different color
    '''
    pymol.stored.chain = {}
    cmd.iterate("(%s)"%selection,"stored.chain[chain]=1")
-   c = 7
+   c = first_color
    for a in pymol.stored.chain.keys():
       if len(a):
          print ("%d,(chain %s)"%(c,a))
          cmd.color("%d"%c,"(chain %s)"%a)
          c = c + 1
+      else:
+         print ("%d,(chain '')"%(c))
+         cmd.color("%d"%c,"(chain '')")
+         c = c + 1
+         
 
 color_chains = cbc
 
