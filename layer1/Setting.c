@@ -1188,13 +1188,13 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_auto_sculpt, 0.0F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw_scale, 1.00F);  
+  SettingSet_f(I,cSetting_sculpt_vdw_scale, 0.97F);  
 
   SettingSet_f(I,cSetting_sculpt_vdw_scale14, 0.915F);  
 
   SettingSet_f(I,cSetting_sculpt_vdw_weight, 1.0F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 0.2F);  
+  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 1.0F);  
 
   SettingSet_f(I,cSetting_sculpt_bond_weight, 2.25F);  
 
