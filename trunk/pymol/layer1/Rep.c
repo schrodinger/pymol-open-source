@@ -145,15 +145,15 @@ void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick)
 {
   if(PMGUI) {
     glBegin(GL_LINE_LOOP);
-    glVertex3i(-0.5,-0.5,-0.5);
-    glVertex3i(-0.5,-0.5, 0.5);
-    glVertex3i(-0.5, 0.5, 0.5);
-    glVertex3i(-0.5, 0.5,-0.5);
+    glVertex3f(-0.5F,-0.5F,-0.5F);
+    glVertex3f(-0.5F,-0.5F, 0.5F);
+    glVertex3f(-0.5F, 0.5F, 0.5F);
+    glVertex3f(-0.5F, 0.5F,-0.5F);
     
-    glVertex3i( 0.5, 0.5,-0.5);
-    glVertex3i( 0.5, 0.5, 0.5);
-    glVertex3i( 0.5,-0.5, 0.5);
-    glVertex3i( 0.5,-0.5,-0.5);
+    glVertex3f( 0.5F, 0.5F,-0.5F);
+    glVertex3f( 0.5F, 0.5F, 0.5F);
+    glVertex3f( 0.5F,-0.5F, 0.5F);
+    glVertex3f( 0.5F,-0.5F,-0.5F);
     glEnd();
     
     glBegin(GL_LINES);

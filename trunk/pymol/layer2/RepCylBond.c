@@ -314,9 +314,9 @@ Rep *RepCylBondNew(CoordSet *cs)
     }
 
 
-  nEdge = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
+  nEdge = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
   radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
-  half_bonds = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
+  half_bonds = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
 
   RepInit(&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;

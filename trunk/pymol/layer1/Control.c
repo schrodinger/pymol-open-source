@@ -63,10 +63,10 @@ static int ControlDrag(Block *block,int x,int y,int mod)
   delta = x-I->LastPos;
   if(I->DragFlag) {
     if(delta) {
-      gui_width = SettingGet(cSetting_internal_gui_width)-delta;
+      gui_width = (int)SettingGet(cSetting_internal_gui_width)-delta;
       if(gui_width<3)
         gui_width = 3;
-      delta = SettingGet(cSetting_internal_gui_width)-gui_width;
+      delta = (int)SettingGet(cSetting_internal_gui_width)-gui_width;
       width = OrthoGetWidth()+delta;
     I->LastPos = x;
     SettingSet(cSetting_internal_gui_width,(float)gui_width);
@@ -117,12 +117,12 @@ void ControlInit(void)
   I->Block->TextColor[0]=1.0;
   I->Block->TextColor[1]=0.75;
   I->Block->TextColor[2]=0.75;
-  I->ButtonColor[0]=0.5;
-  I->ButtonColor[1]=0.5;
-  I->ButtonColor[2]=0.5;
-  I->ActiveColor[0]=0.8;
-  I->ActiveColor[1]=0.8;
-  I->ActiveColor[2]=0.8;
+  I->ButtonColor[0]=0.5F;
+  I->ButtonColor[1]=0.5F;
+  I->ButtonColor[2]=0.5F;
+  I->ActiveColor[0]=0.8F;
+  I->ActiveColor[1]=0.8F;
+  I->ActiveColor[2]=0.8F;
   OrthoAttach(I->Block,cOrthoTool);
 
   I->Rocking=false;
@@ -278,7 +278,7 @@ void ControlDraw(Block *block)
       right=left+4;
       
       
-      glColor3f(0.8,0.8,0.8);
+      glColor3f(0.8F,0.8F,0.8F);
       glBegin(GL_POLYGON);
       glVertex2i(right,top);
       glVertex2i(right,bottom+1);
@@ -286,7 +286,7 @@ void ControlDraw(Block *block)
       glVertex2i(left,top);
       glEnd();
       
-      glColor3f(0.3,0.3,0.3);
+      glColor3f(0.3F,0.3F,0.3F);
       glBegin(GL_POLYGON);
       glVertex2i(right,top-1);
       glVertex2i(right,bottom);
@@ -294,7 +294,7 @@ void ControlDraw(Block *block)
       glVertex2i(left+1,top-1);
       glEnd();
       
-      glColor3f(0.3,0.3,0.3);
+      glColor3f(0.3F,0.3F,0.3F);
       glBegin(GL_POLYGON);
       glVertex2i(right,bottom+1);
       glVertex2i(right,bottom);

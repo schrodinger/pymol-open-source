@@ -1181,7 +1181,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
         tv+=3;
         copy3f(sn,n0);
         if(fabs(dot_product3f(sn,z))>R_SMALL4) {
-          n0[0]+=0.4;
+          n0[0]+=0.4F;
           normalize3f(n0);
         }
         transform33Tf3f(n,n0,tn);

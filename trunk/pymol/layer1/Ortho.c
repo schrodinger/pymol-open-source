@@ -902,12 +902,12 @@ void OrthoDoDraw()
     ENDFD;
   if(PMGUI) {
 
-    rightSceneMargin=SettingGet(cSetting_internal_gui_width);
-    internal_feedback=SettingGet(cSetting_internal_feedback);
+    rightSceneMargin=(int)SettingGet(cSetting_internal_gui_width);
+    internal_feedback=(int)SettingGet(cSetting_internal_feedback);
 
     v=SettingGetfv(cSetting_bg_rgb);
-    overlay = SettingGet(cSetting_overlay);
-    text = SettingGet(cSetting_text);
+    overlay = (int)SettingGet(cSetting_overlay);
+    text = (int)SettingGet(cSetting_text);
 
     if(text) overlay=0;
     
@@ -1138,13 +1138,13 @@ void OrthoReshape(int width, int height)
   I->Width=width;
   I->ShowLines = height/cOrthoLineHeight;
   
-  internal_feedback = SettingGet(cSetting_internal_feedback);
+  internal_feedback = (int)SettingGet(cSetting_internal_feedback);
   if(internal_feedback)
     sceneBottom = (internal_feedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
   else
     sceneBottom = 0;
     
-  internal_gui_width = SettingGet(cSetting_internal_gui_width);
+  internal_gui_width = (int)SettingGet(cSetting_internal_gui_width);
   if(SettingGet(cSetting_internal_gui)>0.0) {
     sceneRight = internal_gui_width;
   } else {
@@ -1209,7 +1209,7 @@ void OrthoReshapeWizard(int wizHeight)
   width=I->Width;
 
   if(SettingGet(cSetting_internal_gui)>0.0) {
-    internal_gui_width = SettingGet(cSetting_internal_gui_width);
+    internal_gui_width = (int)SettingGet(cSetting_internal_gui_width);
     block=ExecutiveGetBlock();
     if(height) {
       BlockSetMargin(block,0,width-internal_gui_width,WizardMargin+wizHeight,0);

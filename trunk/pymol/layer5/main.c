@@ -174,8 +174,8 @@ static void DrawBlueLine(void)
       /* draw sync lines*/
       glColor3d(0.0f, 0.0f, 0.0f);
       glBegin(GL_LINES); /* Draw a background line*/
-      glVertex3f(0.0f, window_height - 0.5f, 0.0f);
-      glVertex3f(window_width, window_height - 0.5f, 0.0f);
+      glVertex3f(0.0F, window_height - 0.5F, 0.0F);
+      glVertex3f((float)window_width, window_height - 0.5F, 0.0F);
       glEnd();
       glColor3d(0.0f, 0.0f, 1.0f);
       glBegin(GL_LINES); /* Draw a line of the correct length (the cross
@@ -471,12 +471,12 @@ void MainDoReshape(int width, int height) /* called internally */
   if(width<0) {
     BlockGetSize(SceneGetBlock(),&width,&h);
     if(SettingGet(cSetting_internal_gui))
-      width+=SettingGet(cSetting_internal_gui_width);
+      width+=(int)SettingGet(cSetting_internal_gui_width);
   }
 
   if(height<0) { 
     BlockGetSize(SceneGetBlock(),&w,&height);
-    internal_feedback = SettingGet(cSetting_internal_feedback);
+    internal_feedback = (int)SettingGet(cSetting_internal_feedback);
     if(internal_feedback)
       height+=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
   }
@@ -521,8 +521,8 @@ static void MainInit(void)
   FeedbackInit();
   UtilInit();
   SettingInitGlobal(true);  
-  SettingSet(cSetting_internal_gui,InternalGUI);
-  SettingSet(cSetting_internal_feedback,InternalFeedback);
+  SettingSet(cSetting_internal_gui,(float)InternalGUI);
+  SettingSet(cSetting_internal_feedback,(float)InternalFeedback);
   SphereInit();
   ColorInit();
   OrthoInit(ShowSplash);
@@ -664,11 +664,11 @@ void MainBusyIdle(void)
       }
     }
     if(I->IdleMode==1)
-      PSleep(SettingGet(cSetting_fast_idle)); /* fast idle - more responsive */
+      PSleep((int)SettingGet(cSetting_fast_idle)); /* fast idle - more responsive */
     else
-      PSleep(SettingGet(cSetting_slow_idle)); /* slow idle - save CPU cycles */
+      PSleep((int)SettingGet(cSetting_slow_idle)); /* slow idle - save CPU cycles */
   } else {
-    PSleep(SettingGet(cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+    PSleep((int)SettingGet(cSetting_no_idle)); /* give Tcl/Tk a chance to run */
   }
   PUnlockAPIAsGlut();
 

@@ -2293,7 +2293,7 @@ void plutBitmapCharacter(int c)
   GLint swapbytes, lsbfirst, rowlength;
   GLint skiprows, skippixels, alignment;
 
-  fontinfo = &plutBitmap8By13;
+  fontinfo = (BitmapFontPtr)&plutBitmap8By13;
 
   if (c < fontinfo->first ||
     c >= fontinfo->first + fontinfo->num_chars)

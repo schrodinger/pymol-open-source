@@ -30,7 +30,7 @@ typedef struct CScrollBar {
   int BarSize;
   float Value;
   float StartValue;
-  int ValueMax;
+  float ValueMax;
   int BarRange;
   int BarMin;
   int BarMax;
@@ -52,17 +52,17 @@ void ScrollBarUpdate(struct CScrollBar *I)
   I->BarRange = range - I->BarSize;
   if(I->BarRange<2)
     I->BarRange=2;
-  I->ValueMax = I->ListSize-I->DisplaySize;
+  I->ValueMax = (float)I->ListSize-I->DisplaySize;
   if(I->ValueMax<1)
     I->ValueMax=1;
   if(I->Value>I->ValueMax)
-    I->Value=I->ValueMax;
+    I->Value=(float)I->ValueMax;
 
 }
 
 static  void ScrollBarDraw(Block *block)
 {
-  int value;
+  float value;
   int top,left,bottom,right;
 
   CScrollBar *I = (CScrollBar*)block->reference;
@@ -78,12 +78,12 @@ static  void ScrollBarDraw(Block *block)
   if(I->HorV) {
     top = block->rect.top-1;
     bottom = block->rect.bottom+1;
-    left = block->rect.left+(I->BarRange*value)/I->ValueMax;
+    left = (int)(block->rect.left+(I->BarRange*value)/I->ValueMax);
     right = left+I->BarSize;
     I->BarMin = left;
     I->BarMax = right;
   } else {
-    top = block->rect.top-(I->BarRange*value)/I->ValueMax;
+    top = (int)(block->rect.top-(I->BarRange*value)/I->ValueMax);
     bottom = top-I->BarSize;
     left = block->rect.left+1;
     right = block->rect.right-1;
@@ -91,7 +91,7 @@ static  void ScrollBarDraw(Block *block)
     I->BarMax = bottom;
   }
 
-  glColor3f(0.8,0.8,0.8);
+  glColor3f(0.8F,0.8F,0.8F);
   glBegin(GL_POLYGON);
   glVertex2i(right,top);
   glVertex2i(right,bottom+1);
@@ -99,7 +99,7 @@ static  void ScrollBarDraw(Block *block)
   glVertex2i(left,top);
   glEnd();
 
-  glColor3f(0.3,0.3,0.3);
+  glColor3f(0.3F,0.3F,0.3F);
   glBegin(GL_POLYGON);
   glVertex2i(right,top-1);
   glVertex2i(right,bottom);
@@ -107,7 +107,7 @@ static  void ScrollBarDraw(Block *block)
   glVertex2i(left+1,top-1);
   glEnd();
 
-  glColor3f(0.3,0.3,0.3);
+  glColor3f(0.3F,0.3F,0.3F);
   glBegin(GL_POLYGON);
   glVertex2i(right,bottom+1);
   glVertex2i(right,bottom);
@@ -125,12 +125,12 @@ static  void ScrollBarDraw(Block *block)
 
 }
 
-void ScrollBarSetValue(struct CScrollBar *I,int value)
+void ScrollBarSetValue(struct CScrollBar *I,float value)
 {
   I->Value=value;
   ScrollBarUpdate(I);
 }
-int ScrollBarGetValue(struct CScrollBar *I)
+float ScrollBarGetValue(struct CScrollBar *I)
 {
   return(I->Value);
 }
@@ -258,12 +258,12 @@ struct CScrollBar *ScrollBarNew(int horizontal)
   I->Block->active = false;
   I->Block->reference = (void*)I;
   I->HorV = horizontal;
-  I->BackColor[0]=0.1;
-  I->BackColor[1]=0.1;
-  I->BackColor[2]=0.1;
-  I->BarColor[0]=0.5;
-  I->BarColor[1]=0.5;
-  I->BarColor[2]=0.5;
+  I->BackColor[0]=0.1F;
+  I->BackColor[1]=0.1F;
+  I->BackColor[2]=0.1F;
+  I->BarColor[0]=0.5F;
+  I->BarColor[1]=0.5F;
+  I->BarColor[2]=0.5F;
   I->ListSize = 10;
   I->DisplaySize = 7;
   I->Value = 2.0;

@@ -58,7 +58,7 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 		{
 		  if(!cc) /* load up the current vertex color */
 			 {
-				cc=(*(v++));
+				cc=(int)(*(v++));
 				ray->fColor3fv(ray,v);
 				v+=3;
 			 }
@@ -100,7 +100,7 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 		{
 		  if(!cc) /* load up the current vertex color */
 			 {
-				cc=(*(v++));
+				cc=(int)(*(v++));
 				glColor3fv(v);
 				v+=3;
 			 }
@@ -188,10 +188,10 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->R.fRecolor=NULL;
 
   I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_width);
-  cullByFlag = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_trim_dots); /* are we using flags 24 & 25 */
+  cullByFlag = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_trim_dots); /* are we using flags 24 & 25 */
 
   dot_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_dot_color); /* are we using flags 24 & 25 */
-  inclH = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
+  inclH = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
   if(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_solvent)) { /* are we generating a solvent surface? */
     solv_rad = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
   }

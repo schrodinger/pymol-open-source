@@ -372,7 +372,7 @@ int CGOFromFloatArray(CGO *I,float *src,int len)
       case CGO_ENABLE:
       case CGO_DISABLE:
         tf=save_pc+1;
-        iarg = *(tf);
+        iarg = (int)*(tf);
         CGO_write_int(tf,iarg);
         break;
       }
@@ -646,7 +646,7 @@ int CGOCheckComplex(CGO *I)
   
   sp = Sphere1;
 
-  nEdge= SettingGet(cSetting_stick_quality);
+  nEdge= (int) SettingGet(cSetting_stick_quality);
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
@@ -806,7 +806,7 @@ CGO *CGOSimplify(CGO *I,int est)
       CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,2,2);
       break;
     case CGO_CUSTOM_CYLINDER:
-      CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,*(pc+13),*(pc+14));
+      CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,(int)*(pc+13),(int)*(pc+14));
       break;
     case CGO_SPHERE:
       CGOSimpleSphere(cgo,pc,*(pc+3));
@@ -883,8 +883,8 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   register float *pc = I->op;
   register int op;
   int vc=0;
-  float linewidth=1.0;
-  float widthscale=0.15;
+  float linewidth=1.0F;
+  float widthscale=0.15F;
   float primwidth;
   float white[] = {1.0,1.0,1.0};
   float zee[] = {0.0,0.0,1.0};
@@ -1004,7 +1004,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
       ray->fSphere3fv(ray,pc,*(pc+3));
       break;
     case CGO_CUSTOM_CYLINDER:
-      ray->fCustomCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10,*(pc+13),*(pc+14));
+      ray->fCustomCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10,(int)*(pc+13),(int)*(pc+14));
       break;
     case CGO_CYLINDER:
       ray->fCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10);
@@ -1262,7 +1262,7 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
   int c;
 
   v=v_buf;
-  nEdge= SettingGet(cSetting_stick_quality);
+  nEdge= (int)SettingGet(cSetting_stick_quality);
   overlap = tube_size*SettingGet(cSetting_stick_overlap);
   nub = tube_size*SettingGet(cSetting_stick_nub);
 

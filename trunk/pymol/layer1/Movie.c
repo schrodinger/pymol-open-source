@@ -232,7 +232,7 @@ int MoviePNG(char *prefix,int save,int start,int stop)
   char buffer[255];
   int nFrame;
 
-  save = SettingGet(cSetting_cache_frames); 
+  save = (int)SettingGet(cSetting_cache_frames); 
   SettingSet(cSetting_cache_frames,1.0);
   OrthoBusyPrime();
   nFrame = I->NFrame;
@@ -292,7 +292,7 @@ int MoviePNG(char *prefix,int save,int start,int stop)
   PRINTFB(FB_Movie,FB_Debugging)
     " MoviePNG-DEBUG: done.\n"
     ENDFB;
-  SettingSet(cSetting_cache_frames,save);
+  SettingSet(cSetting_cache_frames,(float)save);
   MoviePlay(cMovieStop);
   return(true);
 }

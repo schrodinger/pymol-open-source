@@ -214,7 +214,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   mesh_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_mesh_color);
-  mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  mesh_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
   
@@ -354,7 +354,7 @@ Rep *RepMeshNew(CoordSet *cs)
   
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc*probe_radius;
 
-  mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  mesh_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
   visFlag=false;
@@ -450,7 +450,7 @@ Rep *RepMeshNew(CoordSet *cs)
 		gridSize=min_spacing;
 
 	 for(c=0;c<3;c++)
-		dims[c] = ((sizeE[c]/gridSize)+1.5);
+		dims[c] = (int)((sizeE[c]/gridSize)+1.5F);
 	 
 	 field = IsosurfFieldAlloc(dims);
 	 

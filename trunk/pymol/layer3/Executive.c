@@ -106,8 +106,8 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 #define ExecToggleSize 13
 
 #define ExecOpCnt 5
-#define ExecGreyVisible 0.45
-#define ExecGreyHidden 0.3
+#define ExecGreyVisible 0.45F
+#define ExecGreyHidden 0.3F
 
 PyObject *ExecutiveGetVisAsPyDict(void)
 {
@@ -1619,9 +1619,9 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
   char prefix[3]="";
   int log_box = 0;
   int logging;
-  logging =SettingGet(cSetting_logging);
+  logging = (int)SettingGet(cSetting_logging);
   if(logging)
-    log_box=SettingGet(cSetting_log_box_selections);
+    log_box= (int)SettingGet(cSetting_log_box_selections);
   if(logging==cPLog_pml)
     strcpy(prefix,"_ ");
   smp.picked=VLAlloc(Pickable,1000);
@@ -2125,7 +2125,7 @@ void ExecutiveRenderSelections(int curState)
   int no_depth;
   float width;
 
-  no_depth = SettingGet(cSetting_selection_overlay);
+  no_depth = (int)SettingGet(cSetting_selection_overlay);
   width = SettingGet(cSetting_selection_width);
 
   while(ListIterate(I->Spec,rec,next)) {
@@ -2136,7 +2136,7 @@ void ExecutiveRenderSelections(int curState)
         if(sele>=0) {
           rec1 = NULL;
           if(rec->sele_color<0)
-            glColor3f(1.0,0.2,0.8);
+            glColor3f(1.0F,0.2F,0.8F);
           else
             glColor3fv(ColorGet(rec->sele_color));
           glPointSize(width);
@@ -3265,7 +3265,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
     ExecutiveObjMolSeleOp(sele1,&op1);
     for(a=0;a<op1.nvv1;a++)
       {
-        inv=op1.vc1[a]; /* average over coordinate sets */
+        inv=(float)op1.vc1[a]; /* average over coordinate sets */
         if(inv)
           {
             f=op1.vv1+(a*3);
@@ -3292,7 +3292,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
     ExecutiveObjMolSeleOp(sele2,&op2);
     for(a=0;a<op2.nvv1;a++)
       {
-        inv=op2.vc1[a]; /* average over coordinate sets */
+        inv=(float)op2.vc1[a]; /* average over coordinate sets */
         if(inv)
           {
             f=op2.vv1+(a*3);
@@ -3405,10 +3405,10 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
             ocgo = ObjectCGOFromCGO(NULL,cgo,0);
             ObjectSetName((CObject*)ocgo,oname);
             ExecutiveDelete(oname);
-            auto_save = SettingGet(cSetting_auto_zoom);
+            auto_save = (int)SettingGet(cSetting_auto_zoom);
             SettingSet(cSetting_auto_zoom,0);
             ExecutiveManageObject((CObject*)ocgo,true,false);
-            SettingSet(cSetting_auto_zoom,auto_save);            
+            SettingSet(cSetting_auto_zoom,(float)auto_save);            
             SceneDirty();
           }
         if(mode==2) {
@@ -3572,7 +3572,7 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
   strcat(combi,")");
   for(a=0;a<op1.nvv1;a++)
     {
-      inv=op1.vc1[a];
+      inv=(float)op1.vc1[a];
       if(inv)
         {
           f=op1.vv1+(a*3);
@@ -3584,7 +3584,7 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
     }
   for(a=0;a<op2.nvv1;a++)
     {
-      inv=op2.vc1[a];
+      inv=(float)op2.vc1[a];
       if(inv)
         {
           f=op2.vv1+(a*3);
@@ -4719,7 +4719,7 @@ void ExecutiveFullScreen(int flag)
     if(flag) {
       p_glutFullScreen();
     } else {
-      p_glutReshapeWindow(640+SettingGet(cSetting_internal_gui_width),
+      p_glutReshapeWindow(640+(int)SettingGet(cSetting_internal_gui_width),
                           480+cOrthoBottomSceneMargin);
     }
   }
@@ -5074,9 +5074,9 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state
                           ts[c]+=0.5;
                         tt[c]=(int)ts[c];
                       }
-                      m[3] = tt[0]+x;
-                      m[7] = tt[1]+y;
-                      m[11] = tt[2]+z;
+                      m[3] = (float)tt[0]+x;
+                      m[7] = (float)tt[1]+y;
+                      m[11] = (float)tt[2]+z;
                       CoordSetTransform44f(cs,m);
                       CoordSetFracToReal(cs,obj->Symmetry->Crystal);
                       if(!keepFlag) {
@@ -5595,8 +5595,8 @@ void ExecutiveDraw(Block *block)
 {
   int a,x,y,xx,x2,y2;
   char *c=NULL;
-  float toggleColor[3] = { 0.5, 0.5, 1.0 };
-  float toggleColor2[3] = { 0.3, 0.3, 0.6 };
+  float toggleColor[3] = { 0.5F, 0.5F, 1.0F };
+  float toggleColor2[3] = { 0.3F, 0.3F, 0.6F };
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
   int n_ent;
@@ -5718,13 +5718,13 @@ void ExecutiveDraw(Block *block)
                   break;
                 case 4:
                   glBegin(GL_POLYGON);
-                  glColor3f(1.0,0.1,0.1);
+                  glColor3f(1.0F,0.1F,0.1F);
                   glVertex2i(x2,y2);
-                  glColor3f(0.1,1.0,0.1);
+                  glColor3f(0.1F,1.0F,0.1F);
                   glVertex2i(x2,y2+ExecToggleSize);
-                  glColor3f(1.0,1.0,0.1);
+                  glColor3f(1.0F,1.0F,0.1F);
                   glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-                  glColor3f(0.1,0.1,1.0);
+                  glColor3f(0.1F,0.1F,1.0F);
                   glVertex2i(x2+ExecToggleSize,y2);
                   glEnd();
                   /*              glColor3f(0.0,0.0,0.0);

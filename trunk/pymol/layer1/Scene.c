@@ -47,8 +47,8 @@ Z* -------------------------------------------------------------------
 #include"Grap.h"
 #include"ObjectGadget.h"
 
-#define cFrontMin 0.1
-#define cSliceMin 0.1
+#define cFrontMin 0.1F
+#define cSliceMin 0.1F
 
 #define SceneLineHeight 12
 #define SceneTopMargin 0
@@ -490,7 +490,7 @@ void ScenePNG(char *png)
 void ScenePerspective(int flag)
 {
   float persp;
-  persp=!flag;
+  persp=(float)(!flag);
   SettingSetfv(cSetting_ortho,&persp);
   SceneDirty();
 }
@@ -651,7 +651,7 @@ void SceneMakeMovieImage(void) {
 
   I->DirtyFlag=false;
   if(SettingGet(cSetting_ray_trace_frames)) {
-	SceneRay(0,0,SettingGet(cSetting_ray_default_renderer),NULL,NULL,
+	SceneRay(0,0,(int)SettingGet(cSetting_ray_default_renderer),NULL,NULL,
             0.0F,0.0F); 
   } else {
 	 v=SettingGetfv(cSetting_bg_rgb);
@@ -892,9 +892,9 @@ void SceneDraw(Block *block)
   int double_pump;
 
   if(PMGUI) {
-    overlay = SettingGet(cSetting_overlay);
-    text = SettingGet(cSetting_text);
-    double_pump = SettingGet(cSetting_stereo_double_pump_mono);
+    overlay = (int)SettingGet(cSetting_overlay);
+    text = (int)SettingGet(cSetting_text);
+    double_pump = (int)SettingGet(cSetting_stereo_double_pump_mono);
 
     if(overlay||(!text)) 
 
@@ -903,7 +903,7 @@ void SceneDraw(Block *block)
           glReadBuffer(GL_BACK); 
 
           if(I->ImageBufferHeight>I->Height||I->ImageBufferWidth>I->Width) {
-            glColor3f(1.0,0.2,0.2);
+            glColor3f(1.0F,0.2F,0.2F);
             GrapDrawStr("Sorry, I can't display an oversize image.",30,60);
             GrapDrawStr("To save image, use File Menu or enter \"png <filename>\".",30,40);
           } else {
@@ -1755,7 +1755,7 @@ void SceneRovingUpdate(void)
     if(isomesh!=0.0F) {
       int auto_save;
 
-      auto_save = SettingGet(cSetting_auto_zoom);
+      auto_save = (int)SettingGet(cSetting_auto_zoom);
       SettingSet(cSetting_auto_zoom,0);
       
       name = SettingGet_s(NULL,NULL,cSetting_roving_map1_name);
@@ -1801,14 +1801,14 @@ void SceneRovingUpdate(void)
             }
 
 
-      SettingSet(cSetting_auto_zoom,auto_save);            
+      SettingSet(cSetting_auto_zoom,(float)auto_save);            
     }
 
     if(isosurface!=0.0F) {
       int auto_save;
 
-      auto_save = SettingGet(cSetting_auto_zoom);
-      SettingSet(cSetting_auto_zoom,0);
+      auto_save = (int)SettingGet(cSetting_auto_zoom);
+      SettingSet(cSetting_auto_zoom,0.0F);
       
       name = SettingGet_s(NULL,NULL,cSetting_roving_map1_name);
       if(name)
@@ -1853,7 +1853,7 @@ void SceneRovingUpdate(void)
             }
 
 
-      SettingSet(cSetting_auto_zoom,auto_save);            
+      SettingSet(cSetting_auto_zoom,(float)auto_save);            
     }
 
 
@@ -1883,10 +1883,10 @@ int SceneDrag(Block *block,int x,int y,int mod)
   mode = ButModeTranslate(I->Button,mod);
   
   y=y-I->Block->margin.bottom;
-  scale = I->Height;
+  scale = (float)I->Height;
   if(scale > I->Width)
-	 scale = I->Width;
-  scale = 0.45 * scale;
+	 scale = (float)I->Width;
+  scale = 0.45F * scale;
 
   SceneDontCopyNext();
   switch(mode) {
@@ -1918,9 +1918,9 @@ int SceneDrag(Block *block,int x,int y,int mod)
         case 1:
           {
             float divisor;
-            divisor = I->Width;
+            divisor = (float)I->Width;
             if(I->Height<I->Width)
-              divisor = I->Height;
+              divisor = (float)I->Height;
             v2[0] = (x-I->LastX)/divisor;
             v2[1] = (y-I->LastY)/divisor;
             v2[2] = 0;
@@ -2027,11 +2027,11 @@ int SceneDrag(Block *block,int x,int y,int mod)
       x = x % eff_width;
     }
 
-    v1[0] = (eff_width/2) - x;
-    v1[1] = (I->Height/2) - y;
+    v1[0] = (float)(eff_width/2) - x;
+    v1[1] = (float)(I->Height/2) - y;
     
-	 v2[0] = (eff_width/2) - I->LastX;
-	 v2[1] = (I->Height/2) - I->LastY;
+	 v2[0] = (float)(eff_width/2) - I->LastX;
+	 v2[1] = (float)(I->Height/2) - I->LastY;
 	 
 	 r1 = sqrt1f(v1[0]*v1[0] + v1[1]*v1[1]);
 	 r2 = sqrt1f(v2[0]*v2[0] + v2[1]*v2[1]);
@@ -2258,9 +2258,9 @@ void SceneInit(void)
   ListInit(I->Obj);
 
   I->RockTime=0;
-  I->TextColor[0]=0.2;
-  I->TextColor[1]=1.0;
-  I->TextColor[2]=0.2;
+  I->TextColor[0]=0.2F;
+  I->TextColor[1]=1.0F;
+  I->TextColor[2]=0.2F;
   I->SculptingSave=0;
   
   SceneSetDefaultView();
@@ -2504,7 +2504,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
     if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
       strcpy(prefix,SettingGet_s(NULL,NULL,cSetting_batch_prefix));
       if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
-                       ray_height,SettingGet(cSetting_antialias))) {
+                       ray_height,(int)SettingGet(cSetting_antialias))) {
         strcat(prefix,".png");
         SceneLoadPNG(prefix,false,false);
         I->DirtyFlag=false;
@@ -2641,7 +2641,7 @@ int SceneRenderCached(void)
 		  renderedFlag=true;
 		}
 	} else if(MoviePlaying()&&SettingGet(cSetting_ray_trace_frames)) {
-	  SceneRay(0,0,SettingGet(cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F); 
+	  SceneRay(0,0,(int)SettingGet(cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F); 
 	} else {
 	  renderedFlag=false;
 	  I->CopyFlag = false;
@@ -2795,7 +2795,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
     glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
     
-    debug_pick = SettingGet(cSetting_debug_pick);
+    debug_pick = (int)SettingGet(cSetting_debug_pick);
 
     if(SettingGet(cSetting_line_smooth)) {
       if(!(pick||smp)) {

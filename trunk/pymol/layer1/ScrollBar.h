@@ -23,12 +23,12 @@ void ScrollBarFree(struct CScrollBar *I);
 void ScrollBarSetBox(struct CScrollBar *I,int top,int left,int bottom, int right);
 void ScrollBarDoDraw(struct CScrollBar *I);
 void ScrollBarSetLimits(struct CScrollBar *I,int list_size,int display_size);
-void ScrollBarSetValue(struct CScrollBar *I,int value);
+void ScrollBarSetValue(struct CScrollBar *I,float value);
 void ScrollBarDoRelease(struct CScrollBar *I,int button,int x,int y,int mod);
 void ScrollBarDoClick(struct CScrollBar *I,int button,int x,int y,int mod);
 void ScrollBarDoDrag(struct CScrollBar *I,int x,int y,int mod);
 Block *ScrollBarGetBlock(struct CScrollBar *);
-int ScrollBarGetValue(struct CScrollBar *I);
+float ScrollBarGetValue(struct CScrollBar *I);
 void ScrollBarUpdate(struct CScrollBar *I);
 
 #endif

@@ -69,13 +69,13 @@ void PopUpNew(int x,int y,PyObject *list)
   I->Block->fDrag    = PopUpDrag;
   I->Block->fRelease = PopUpRelease;
   I->Block->active = false;
-  I->Block->TextColor[0]=1.0;
-  I->Block->TextColor[1]=1.0;
-  I->Block->TextColor[2]=1.0;
+  I->Block->TextColor[0]=1.0F;
+  I->Block->TextColor[1]=1.0F;
+  I->Block->TextColor[2]=1.0F;
 
-  I->Block->BackColor[0]=0.1;
-  I->Block->BackColor[1]=0.1;
-  I->Block->BackColor[2]=0.1;
+  I->Block->BackColor[0]=0.1F;
+  I->Block->BackColor[1]=0.1F;
+  I->Block->BackColor[2]=0.1F;
 
   I->NLine=PyList_Size(list);
   I->Text = NULL;

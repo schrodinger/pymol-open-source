@@ -97,7 +97,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
       glBegin(GL_LINES);
       while(c--)
         {
-          ip=*(v);
+          ip=(int)*(v);
           if(ip!=last) {
             i++;
             last=ip;
@@ -114,7 +114,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
             }
           }	 
           glVertex3fv(v+4);
-          ip=*(v+7);
+          ip=(int)*(v+7);
           if(ip!=last) {
             glVertex3fv(v+15); /* switch colors at midpoint */
             glVertex3fv(v+15);
@@ -259,14 +259,14 @@ Rep *RepRibbonNew(CoordSet *cs)
   power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power);
   power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
   throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
-  trace=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace);
+  trace=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace);
 
   ribbon_color=SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_ribbon_color);
 
-  sampling=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
+  sampling=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
   if(sampling<1) sampling=1;
   radius=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_radius);
-  if(radius<0.01) radius=0.01;
+  if(radius<0.01F) radius=0.01F;
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
@@ -478,10 +478,10 @@ Rep *RepRibbonNew(CoordSet *cs)
 					 }
 
                 /* store index */
-                if(f0<0.5)
-                  *(v++)=I->NP-1;
+                if(f0<0.5F)
+                  *(v++)=(float)I->NP-1;
                 else
-                  *(v++)=I->NP;
+                  *(v++)=(float)I->NP;
                 
                 /* store colors */
 
@@ -516,9 +516,9 @@ Rep *RepRibbonNew(CoordSet *cs)
 
                 /* store index */
                 if(f0<0.5)
-                  *(v++)=I->NP-1;
+                  *(v++)=(float)I->NP-1;
                 else
-                  *(v++)=I->NP;
+                  *(v++)=(float)I->NP;
                 
                 /* store colors */
 

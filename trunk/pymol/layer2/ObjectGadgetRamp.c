@@ -371,7 +371,7 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp *I)
   };
 #define VV(a,b,c) {coord[ix++]=a;coord[ix++]=b;coord[ix++]=c;};
 
-VV(    I->x ,  I->y , 0.3 );
+VV(    I->x ,  I->y , 0.3F );
 
     /* outer points */
 
