@@ -411,7 +411,7 @@ SEE ALSO
 
       if ftype == loadable.pse:
          ftype = -1
-         cmd.set_session(io.pkl.fromFile(filename))
+         cmd.set_session(io.pkl.fromFile(fname))
          
 # standard file handling
 
