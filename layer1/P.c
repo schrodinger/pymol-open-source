@@ -828,8 +828,6 @@ static line3[5000];
   if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
     if(getenv("PYMOL_PATH")) {
 	strcpy(line2,"PYTHONPATH=");
-	printf("%s\n",getenv("PYMOL_PATH"));
-fflush(stdout);
       strcat(line2,getenv("PYMOL_PATH"));
       strcat(line2,"/ext/lib/python2.2:");
       strcat(line2,getenv("PYMOL_PATH"));
