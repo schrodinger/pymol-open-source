@@ -185,7 +185,7 @@ static int MovieCmdFromPyList(PyObject *list,int *warning)
   
   for(a=0;a<I->NFrame;a++) {
     if(ok) ok=PConvPyStrToStr(PyList_GetItem(list,a),I->Cmd[a],OrthoLineLength);
-    if(ok) warn=warn||I->Cmd[a][0];
+    if(ok) warn= (warn||I->Cmd[a][0]);
   }
   *warning=warn;
   return(ok);
@@ -212,7 +212,7 @@ int MovieFromPyList(PyObject *list,int *warning)
     I->Cmd=Alloc(MovieCmdType,I->NFrame+1);
     if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,4),I->Sequence,I->NFrame);
     if(ok) ok=MovieCmdFromPyList(PyList_GetItem(list,5),warning);
-    if(warning&&Security) {
+    if((*warning)&&Security) {
       MovieSetLock(true);
     }
   }

@@ -483,10 +483,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_triangle_max_passes        339
 #define cSetting_ray_interior_reflect       340
 #define cSetting_internal_gui_mode          341
-
+#define cSetting_surface_carve_selection    342
+#define cSetting_surface_carve_state        343
+#define cSetting_surface_carve_cutoff       344
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        342
+#define cSetting_INIT                        345
 
 #endif
 

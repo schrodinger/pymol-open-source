@@ -97,6 +97,7 @@ ObjectMolecule *SelectorGetCachedSingleAtom(int sele,int *theAtom);
 
 ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(int sele,int *index);
 ObjectMolecule *SelectorGetFastSingleObjectMolecule(int sele);
+MapType *SelectorGetSpacialMapFromSeleCoord(int sele,int state,float cutoff,float **coord_vla);
 
 
 #endif

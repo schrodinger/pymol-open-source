@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"CGO.h"
 #include"P.h"
+#include"Selector.h"
 
 #ifdef NT
 #undef NT
@@ -966,6 +967,13 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int surface_mode;
   int surface_color;
   int *present=NULL,*ap;
+  int carve_state = 0;
+  int carve_flag = false;
+  float carve_cutoff;
+  char *carve_selection = NULL;
+  float *carve_vla = NULL;
+  MapType *carve_map = NULL;
+
   AtomInfoType *ai2,*ai1;
 
   obj=cs->Obj;
@@ -975,7 +983,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   I->proximity = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
-
+  carve_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
   cutoff = I->max_vdw+2*probe_radius;
 
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
@@ -991,6 +999,19 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     }
   
   if(I->N) {
+
+    if(carve_cutoff>0.0F) {
+      carve_state = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
+      carve_selection = SettingGet_s(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
+      if(carve_selection) 
+        carve_map = SelectorGetSpacialMapFromSeleCoord(SelectorIndexByName(carve_selection),
+                                                       carve_state,
+                                                       carve_cutoff,&carve_vla);
+      if(carve_map) 
+        MapSetupExpress(carve_map);
+      carve_flag = true;
+    }
+
     if(!I->VC) I->VC = Alloc(float,3*I->N);
     vc=I->VC;
     if(!I->Vis) I->Vis = Alloc(int,I->N);
@@ -1103,6 +1124,26 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
             } else {
               *vi = 0;
             }
+            if(carve_flag && (*vi)) { /* is point visible, and are we carving? */
+              *vi = 0;
+
+              if(carve_map) {
+                
+                minDist=MAXFLOAT;                
+                i=*(MapLocusEStart(carve_map,v0));
+                if(i) {
+                  j=carve_map->EList[i++];
+                  while(j>=0) {
+                    if(within3f(carve_vla+3*j,v0,carve_cutoff)) {
+                      *vi=1;
+                      break;
+                    }
+                    j=carve_map->EList[i++];
+                  }
+                }
+              }
+
+            }
             if(ColorCheckRamped(surface_color)) {
               c1 = surface_color;
             }
@@ -1117,6 +1158,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
               *(vc++) = *(c0++);
               *(vc++) = *(c0++);
             }
+            if(!*vi)
+              I->allVisibleFlag=false;
             vi++;
           }
         MapFree(map);
@@ -1141,7 +1184,9 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       }
     }
   }
-
+  if(carve_map)
+    MapFree(carve_map);
+  VLAFreeP(carve_vla);
   FreeP(present);
 }
 
@@ -1172,6 +1217,13 @@ Rep *RepSurfaceNew(CoordSet *cs)
   AtomInfoType *ai1,*ai2;
   int n_present = 0;
   float solv_tole;
+  int carve_state = 0;
+  int carve_flag = false;
+  float carve_cutoff;
+  char *carve_selection = NULL;
+  float *carve_vla = NULL;
+  MapType *carve_map = NULL;
+
   #if 0
   int c1;
   float v1[3];
@@ -1308,6 +1360,23 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
     n_present = cs->NIndex;
 
+  carve_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
+    if(carve_cutoff>0.0F) {
+      carve_state = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
+      carve_selection = SettingGet_s(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
+      carve_cutoff += 2*I->max_vdw+probe_radius;
+
+      if(carve_selection) 
+        carve_map = SelectorGetSpacialMapFromSeleCoord(SelectorIndexByName(carve_selection),
+                                                       carve_state,
+                                                       carve_cutoff,
+                                                       &carve_vla);
+      if(carve_map) 
+        MapSetupExpress(carve_map);
+      carve_flag = true;
+      I->allVisibleFlag=false;
+    }
+
     if(!I->allVisibleFlag) {
       /* optimize the space over which we calculate a surface */
       
@@ -1354,6 +1423,28 @@ Rep *RepSurfaceNew(CoordSet *cs)
               }
             }
           }
+
+      if(carve_flag) {
+        for(a=0;a<cs->NIndex;a++) {
+          int include_flag = false;
+          if(carve_map) {
+            v0 = cs->Coord+3*a;
+            i=*(MapLocusEStart(carve_map,v0));
+            if(i) {
+              j=carve_map->EList[i++];
+              while(j>=0) {
+                if(within3f(carve_vla+3*j,v0,carve_cutoff)) {
+                  include_flag = true;
+                  break;
+                }
+                j=carve_map->EList[i++];
+              }
+            }
+          }
+          if(!include_flag)
+            present[a]=0;
+        }
+      }
       MapFree(map);
       map = NULL;
 
@@ -1632,6 +1723,9 @@ Rep *RepSurfaceNew(CoordSet *cs)
     }
     
   }
+  if(carve_map)
+    MapFree(carve_map);
+  VLAFreeP(carve_vla);
   if(I->debug)
     CGOStop(I->debug);
   OrthoBusyFast(4,4);
