@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Base.h"
 #include"Basis.h"
+#include"Err.h"
 
 #ifndef R_SMALL4
 #define R_SMALL4 0.0001
@@ -487,6 +488,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 				l2=length3f(I->Precomp+I->Vert2Normal[a]*3+3);
 				b = ceil(l1/sep)+1;
 				c = ceil(l2/sep)+1;
+            fflush(stdout);
 				extra_vert += b*c;
 			 }
 			 break;
@@ -503,6 +505,10 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 	 extra_vert+=I->NVertex;
 	 tempVertex = Alloc(float,extra_vert*3);
 	 tempRef = Alloc(int,extra_vert); 
+
+    ErrChkPtr(tempVertex); /* can happen if extra vert is unreasonable */
+    ErrChkPtr(tempRef);
+
 	 /* lower indexes->flags, top is ref->lower index*/
 	 
 	 v=tempVertex;

@@ -89,13 +89,12 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   sp=Sphere1;
   
   nRow = I->NAtom*sp->nDot;
-  normalize3f(v);
   spheroid=Alloc(float,nRow);
   center=Alloc(float,I->NAtom*3);
   count=Alloc(int,I->NAtom);
   fsum=Alloc(float,nRow);
   spl=spheroid;
-  
+
   /* first compute average coordinate */
 
   v=center;
@@ -249,7 +248,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   FreeP(count);
   FreeP(fsum);
 
-  for(b=1;b<I->NCSet;b++) { /* get rid of the ensemble */
+  for(b=1;b<I->NCSet;b++) { 
     cs=I->CSet[b];
     if(cs) {
       if(cs->fFree)

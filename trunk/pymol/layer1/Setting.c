@@ -549,6 +549,10 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_spheroid_scale].Name,
 			"spheroid_scale");
 
+  I->NSetting++;
+  I->Setting[cSetting_ray_trace_fog_start].Value[0] = 0.30;
+  strcpy(I->Setting[cSetting_ray_trace_fog_start].Name,
+			"ray_trace_fog_start");
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS

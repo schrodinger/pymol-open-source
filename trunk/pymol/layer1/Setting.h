@@ -108,6 +108,7 @@ float SettingGetNamed(char *name);
 #define cSetting_label_color          66
 #define cSetting_ray_trace_fog        67
 #define cSetting_spheroid_scale       68
+#define cSetting_ray_trace_fog_start  69
 
 #endif
 
