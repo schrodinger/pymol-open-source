@@ -568,7 +568,7 @@ DESCRIPTION
    functionality required for rendering molecular surfaces.  Details
    can be found on the DINO website.
 
-      http://www.biozentrm.unibas.ch/~xray/dino
+      http://www.biozentrum.unibas.ch/~xray/dino
 
    To use PovRay, you must be running under Unix and have x-povray in
    your path.  Unfortunately, the developers of PovRay do not share
