@@ -27,7 +27,6 @@ import threading
 
 # PyMOL __init__.py
 
-
 # Create a temporary object "stored" in the PyMOL global namespace
 # for usage with evaluate based-commands such as alter
 
@@ -36,9 +35,20 @@ class Scratch_Storage:
 
 stored = Scratch_Storage()
 
+# This global will be non-None if logging is active
+# (global variable used for efficiency)
+
 _log_file = None
 
-#
+# This global will be non-None if an external gui
+# exists. It mainly exists so that events which occur
+# in the Python thread can be handed off to the
+# external GUI thread through one or more FIFO Queues
+# (global variable used for efficiency)
+
+_ext_gui = None
+
+# include the modules directory
 
 sys.path.append(os.environ['PYMOL_PATH']+'/modules')
 
@@ -47,7 +57,8 @@ sys.path.append(os.environ['PYMOL_PATH']+'/modules')
 if sys.platform=='win32':
    sys.path.append(os.environ['PYMOL_PATH']+'/modules/numeric')
 
-sys.setcheckinterval(1)
+sys.setcheckinterval(1) # maximize responsiveness
+
 lock_api = threading.RLock() # mutex for API 
 lock_api_c = threading.RLock() # mutex for C management of python threads
 
