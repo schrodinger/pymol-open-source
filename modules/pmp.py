@@ -54,7 +54,7 @@ if len(pmp_cmd1[pmp_nest]) > 0:\n\
                pmp_next[pmp_nest] = ()\n\
                pmp_input[pmp_nest] = string.split(pmp_cmd1[pmp_nest],' ',1)   \n\
             if len(pmp_input[pmp_nest])>1:\n\
-               pmp_args[pmp_nest] = string.split(pmp_input[pmp_nest][1],pmp_kw[pmp_nest][3])\n\
+               pmp_args[pmp_nest] = pm.split(pmp_input[pmp_nest][1],pmp_kw[pmp_nest][3])\n\
                while 1:\n\
                   pmp_nArg = len(pmp_args[pmp_nest]) - 1\n\
                   pmp_c = 0\n\

@@ -753,7 +753,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
 /*========================================================================*/
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 {
-  int a,b,s,d;
+  int a,b,c,s,d;
   int a1,ind;
   float r,rms;
   float v1[3],v2,*vv1,*vv2;
@@ -934,6 +934,26 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 							   {
 								 add3f(op->v1,I->CSet[b]->Coord+(3*a1),op->v1);
 								 op->i1++;
+							   }
+							 break;
+						   case 'MNMX': 
+							 a1=I->CSet[b]->AtmToIdx[a];
+							 if(a1>=0)
+							   {
+                          if(op->i1) {
+                            for(c=0;c<3;c++) {
+                              if(*(op->v1+c)>*(I->CSet[b]->Coord+(3*a1+c)))
+                                *(op->v1+c)=*(I->CSet[b]->Coord+(3*a1+c));
+                              if(*(op->v2+c)<*(I->CSet[b]->Coord+(3*a1+c)))
+                                *(op->v2+c)=*(I->CSet[b]->Coord+(3*a1+c));
+                            }
+                          } else {
+                            for(c=0;c<3;c++) {
+                              *(op->v1+c)=*(I->CSet[b]->Coord+(3*a1+c));
+                              *(op->v2+c)=*(I->CSet[b]->Coord+(3*a1+c));
+                              op->i1=1;
+                            }
+                          }
 							   }
 							 break;
 						   case 'MDST': 

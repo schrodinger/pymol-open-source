@@ -20,7 +20,8 @@ Z* -------------------------------------------------------------------
 #include"Isosurf.h"
 #include"MemoryDebug.h"
 #include"Err.h"
-
+#include"Crystal.h"
+#include"Vector.h"
 
 #define Trace_OFF
 
@@ -68,11 +69,9 @@ static	float	Level;
 static	int	NVerts;
 static	int	Code[256];
 
-static MapType	*Map;
 static int      *Num;
 static int      NSeg;
 static float    *Line;
-static int      *Idx;
 
 int	IsosurfInit(void);
 int	IsosurfAlloc(void);
@@ -246,26 +245,64 @@ int	IsosurfInit(void)
 }
 
 /*===========================================================================*/
-/*===========================================================================*/
-int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,MapType *map,int *idx)
+void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range)
+{
+  float fmn[3],fmx[3];
+  float rmn[3],rmx[3];
+  float imn[3],imx[3];
+  int a;
+  transform33f3f(cryst->RealToFrac,mn,fmn);
+  transform33f3f(cryst->RealToFrac,mx,fmx);
+  for(a=0;a<3;a++) {
+    rmn[a] = F4(field->points,0,0,0,a,field->dimensions);
+    rmx[a] = F4(field->points,field->dimensions[0]-1,field->dimensions[1]-1,
+                field->dimensions[2]-1,a,field->dimensions);
+  }
+  
+  transform33f3f(cryst->RealToFrac,rmn,imn);
+  transform33f3f(cryst->RealToFrac,rmx,imx);
+
+  for(a=0;a<3;a++) {
+    range[a] = (int)((field->dimensions[a]*(fmn[a]-imn[a])/(imx[a]-imn[a])));
+    if(range[a]<0) range[a]=0;
+    range[a+3] = (int)((field->dimensions[a]*(fmx[a]-imn[a])/(imx[a]-imn[a]))+0.999);
+    if(range[a]>field->dimensions[a])
+      range[a]=field->dimensions[a];
+    if(range[a+3]>field->dimensions[a])
+      range[a+3]=field->dimensions[a];
+  }
+}
+  /*===========================================================================*/
+int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range)
 {
 	int	ok=true;
 	int	Steps[3];
 	int	c,i,j,k;
-	int	percomp;
 	int	x,y,z;
-
-	Map = map;
+   int range_store[6];
 	Num = *num;
 	Line = *vert;
-	Idx = idx;
 
-	for(c=0;c<3;c++)
-		{
-		AbsDim[c]=field->dimensions[c];
-		CurDim[c]=IsosurfSubSize+1;
-		Steps[c]=(AbsDim[c]-2)/IsosurfSubSize+1;
-		}
+   
+   if(range) {
+     for(c=0;c<3;c++)
+       {
+         AbsDim[c]=field->dimensions[c];
+         CurDim[c]=IsosurfSubSize+1;
+         Steps[c]=((range[3+c]-range[c])-2)/IsosurfSubSize+1;
+       }     
+   } else {
+     range=range_store;
+     for(c=0;c<3;c++)
+       {
+         range[c]=0;
+         range[3+c]=field->dimensions[c];
+         AbsDim[c]=field->dimensions[c];
+         CurDim[c]=IsosurfSubSize+1;
+         Steps[c]=(AbsDim[c]-2)/IsosurfSubSize+1;
+       }
+   }
+
 	Coord=field->points;
 	Data=field->data;
 	Level=level;
@@ -284,23 +321,24 @@ int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,MapType *ma
 		for(j=0;j<Steps[1];j++)
 		for(k=0;k<Steps[2];k++)
 			{
-			percomp=100*(k+(Steps[1]*(j+Steps[0]*i)))/(Steps[0]*Steps[1]*Steps[2]);
 			CurOff[0]=IsosurfSubSize*i;
 			CurOff[1]=IsosurfSubSize*j;
 			CurOff[2]=IsosurfSubSize*k;
+         for(c=0;c<3;c++)
+           CurOff[c]+=range[c];
 			for(c=0;c<3;c++)
 				{
-				Max[c]=AbsDim[c]-CurOff[c];
+				Max[c]=range[3+c]-CurOff[c];
 				if(Max[c]>(IsosurfSubSize+1))
 					Max[c]=(IsosurfSubSize+1);
 				}
 			if(!(i||j||k))
 				{
-				for(x=0;x<Max[0];x++)
-				for(y=0;y<Max[1];y++)
-				for(z=0;z<Max[2];z++)
-				for(c=0;c<3;c++)
-					EdgePt(Point,x,y,z,c,CurDim).NLink=0;
+              for(x=0;x<Max[0];x++)
+                for(y=0;y<Max[1];y++)
+                  for(z=0;z<Max[2];z++)
+                    for(c=0;c<3;c++)
+                      EdgePt(Point,x,y,z,c,CurDim).NLink=0;
 				}
 
 #ifdef Trace

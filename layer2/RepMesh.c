@@ -401,7 +401,7 @@ Rep *RepMeshNew(CoordSet *cs)
 	 MapFree(map);
 	 FreeP(I->Dot);	 
 	 OrthoBusyFast(2,3);
-	 IsosurfVolume(field,1.0,&I->N,&I->V,NULL,NULL);
+	 IsosurfVolume(field,1.0,&I->N,&I->V,NULL);
 	 IsosurfFieldFree(field);
 	 n=I->N;
 	 I->NTot=0;

@@ -25,15 +25,15 @@ typedef struct ObjectMap {
   CCrystal *Crystal;
   int Div[3],Min[3],Max[3],FDim[4];
   Isofield *Field;
-  int *N;
-  float *V;
-  int ResurfaceFlag;
+  float Corner[8][3];
 } ObjectMap;
 
 ObjectMap *ObjectMapNew(void);
 ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame);
 ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame);
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame);
+
+
 
 #endif
 

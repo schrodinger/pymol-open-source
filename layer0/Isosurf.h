@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"Map.h"
 #include"MemoryDebug.h"
+#include"Crystal.h"
 
 typedef struct {
   int dimensions[3];
@@ -40,7 +41,9 @@ typedef struct {
 Isofield *IsosurfFieldAlloc(int *dims);
 void IsosurfFieldFree(Isofield *field);
 
-int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,MapType *map,int *idx);
+int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range);
+void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
+
 int	IsosurfInit(void);
 
 #endif

@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"Ortho.h"
 #include"ObjectMolecule.h"
+#include"ObjectMesh.h"
 #include"ObjectMap.h"
 #include"Executive.h"
 #include"Selector.h"
@@ -63,6 +64,7 @@ static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args);
 static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *PMGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *PMMem(PyObject *self, 	PyObject *args);
+static PyObject *PMIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *PMLoad(PyObject *self, 	PyObject *args);
 static PyObject *PMMClear(PyObject *self, 	PyObject *args);
 static PyObject *PMMDo(PyObject *self, 	PyObject *args);
@@ -120,6 +122,7 @@ static PyMethodDef PM_methods[] = {
 	{"get_moment",	  PMGetMoment,    METH_VARARGS },
 	{"get_pdb",	     PMGetPDB,       METH_VARARGS },
 	{"intrafit",     PMIntraFit,     METH_VARARGS },
+	{"isomesh",	     PMIsomesh,      METH_VARARGS },
 	{"load",	        PMLoad,         METH_VARARGS },
 	{"mclear",	     PMMClear,       METH_VARARGS },
 	{"mdo",	        PMMDo,          METH_VARARGS },
@@ -157,6 +160,59 @@ static PyMethodDef PM_methods[] = {
 	{"zoom",	        PMZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
+  char *str1,*str2,*str3,*str4;
+  float lvl,fbuf;
+  int c;
+  OrthoLineType s1;
+  int oper,frame;
+  Object *obj,*mObj;
+  ObjectMap *mapObj;
+  float mn[3] = { 0,0,0};
+  float mx[3] = { 15,15,15};
+  OrthoLineType buf;
+
+  /* oper 0 = all, 1 = sele + buffer, 2 = vector */
+
+  PyArg_ParseTuple(args,"sisissf",&str1,&frame,&str2,&oper,&str3,&str4,&lvl);
+  
+  mObj=ExecutiveFindObjectByName(str2);  
+  if(mObj) {
+    mapObj = (ObjectMap*)mObj;
+    switch(oper) {
+    case 0:
+      for(c=0;c<3;c++) {
+        mn[c] = mapObj->Corner[0][c];
+        mx[c] = mapObj->Corner[7][c];
+      }
+      break;
+    case 1:
+      SelectorGetTmp(str3,s1);
+      ExecutiveGetBBox(s1,mn,mx);
+      SelectorFreeTmp(s1);
+      if(sscanf(str4,"%f",&fbuf)==1) {
+        for(c=0;c<3;c++) {
+          mn[c]-=fbuf;
+          mx[c]+=fbuf;
+        }
+      }
+      break;
+    }
+    obj=(Object*)ObjectMeshFromBox(mapObj,mn,mx,lvl);
+    if(obj) {
+      ObjectSetName(obj,str1);
+      ExecutiveManageObject((Object*)obj);
+      sprintf(buf," Mesh: created \"%s\".\n",str1);
+      OrthoAddOutput(buf);
+      Py_INCREF(Py_None);
+    }
+  } else {
+    sprintf(buf,"Map object '%s' not found.",str2);
+    ErrMessage("Mesh",buf);
+  }
+  return Py_None;  
+}
 
 
 static PyObject *PMOverlap(PyObject *dummy, PyObject *args)

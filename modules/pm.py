@@ -27,12 +27,43 @@ import __main__
 import os
 
 
-def sort(*args):
+def split(str,tok):
+   pair = { '(':')','[':']','{':'}',"'":"'",'"':'"' }
+   plst = pair.keys()
+   stack = []
+   lst = []
+   c = 0
+   l = len(str)
+   wd = ""
+   while str[c]==tok:
+      c = c + 1
+   while c<l:
+      ch = str[c]
+      if (ch in tok) and (len(stack)==0):
+         lst.append(string.strip(wd))
+         wd = ''
+         w = 0
+      else:
+         if len(stack):
+            if ch==stack[0]:
+               stack = stack[1:]
+            elif (ch in plst):
+               stack[:0]=[pair[ch]]
+         elif (ch in plst):
+            stack[:0]=[pair[ch]]
+         wd = wd + ch
+      c = c + 1
+   if len(wd):
+      lst.append(string.strip(wd))
+   return lst
+   
+
+def sort(*arg):
    lock()
-   if len(args)==0:
+   if len(arg)==0:
       r = _pm.sort("")
    else:
-      r = _pm.sort(args[0])
+      r = _pm.sort(arg[0])
    unlock()
    return r
 
@@ -40,6 +71,33 @@ def mem():
    lock()
    r = _pm.mem()
    unlock()
+   return r
+
+def isomesh(nam,argst):
+   arg = split(argst,',')
+   la = len(arg)
+   if la<3:
+      print " error: invalid mesh arguments"
+      raise RunError
+   else:
+      map=arg[0]
+      mopt=0
+      optarg1=''
+      optarg2=''
+      lvl = 1.0
+      if la>=2:
+         if arg[1][0] == '(':
+            mopt = 1
+            sel = split(arg[1],' ')
+            optarg2 = '0'
+            if len(sel)==2:
+               optarg2 = sel[1]
+            optarg1 = sel[0]
+      if la>=3:
+         lvl = float(arg[2])
+      lock()
+      r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl)
+      unlock()
    return r
 
 def ready():
@@ -79,29 +137,29 @@ def stereo(a):
       unlock();
    return r
    
-def overlap(*args):
+def overlap(*arg):
    state = [0,0]
-   if len(args)==3:
-      state[0]=int(args[2][0])
+   if len(arg)==3:
+      state[0]=int(arg[2][0])
       if state[0]<1: state[0]=1;
-      state[1]=int(args[2][1])
+      state[1]=int(arg[2][1])
       if state[1]<1: state[1]=1
    lock()
-   r = _pm.overlap(args[0],args[1],state[0]-1,state[1]-1)
+   r = _pm.overlap(arg[0],arg[1],state[0]-1,state[1]-1)
    unlock()
    return r
 
-def distance(*args):
-   la = len(args)
+def distance(*arg):
+   la = len(arg)
    if la==0:
       a="pk1"
       b="pk3"
    elif la==1:
-      a=args[0]
+      a=arg[0]
       b="pk1"
    elif la==2:
-      a=args[0]
-      b=args[1]
+      a=arg[0]
+      b=arg[1]
    if a[0]!='(': a="(%"+a+")"
    if b[0]!='(': b="(%"+b+")"
    lock()   
@@ -163,12 +221,12 @@ def export_dots(a,b):
    unlock()
    return r
 
-def count_states(*args):
+def count_states(*arg):
    lock()
-   if not len(args):
+   if not len(arg):
       a = "(all)"
    else:
-      a=args[0]
+      a=arg[0]
    r = _pm.count_states(a)
    unlock()
    return r
@@ -204,33 +262,33 @@ def real_system(a):
 def system(a):
    real_system(a)
 
-def intra_fit(*args):
+def intra_fit(*arg):
    lock()
-   if len(args)<2:
+   if len(arg)<2:
       b=-1
    else:
-      b=int(args[1])-1
-   r = _pm.intrafit(args[0],b,2)
+      b=int(arg[1])-1
+   r = _pm.intrafit(arg[0],b,2)
    unlock()
    return r
 
-def intra_rms(*args):
+def intra_rms(*arg):
    lock()
-   if len(args)<2:
+   if len(arg)<2:
       b=-1
    else:
-      b=int(args[1])-1
-   r = _pm.intrafit(args[0],b,1)
+      b=int(arg[1])-1
+   r = _pm.intrafit(arg[0],b,1)
    unlock()
    return r
 
-def intra_rms_cur(*args):
+def intra_rms_cur(*arg):
    lock()
-   if len(args)<2:
+   if len(arg)<2:
       b=-1
    else:
-      b=int(args[1])-1
-   r = _pm.intrafit(args[0],b,0)
+      b=int(arg[1])-1
+   r = _pm.intrafit(arg[0],b,0)
    unlock()
    return r
 
@@ -261,9 +319,9 @@ def rms_cur(a,b):
    unlock()
    return r
 
-def pairfit(*args):
+def pairfit(*arg):
    lock()   
-   r = _pm.fit_pairs(args)
+   r = _pm.fit_pairs(arg)
    unlock()
    return r
 
@@ -392,19 +450,19 @@ def _special(k,x,y):
             apply(special[k][1],())
    return None
 
-def set_key(*args):  
-   key=args[0]
-   cmd=args[1]
-   if len(args)>2:
-      cmd_args=args[2]
+def set_key(*arg):  
+   key=arg[0]
+   cmd=arg[1]
+   if len(arg)>2:
+      cmd_arg=arg[2]
    else:
-      cmd_args=None 
+      cmd_arg=None 
    for a in special.keys():
       if special[a][0]==key:
          special[a][1]=cmd
-         if cmd_args:
+         if cmd_arg:
             special[a][2]=1
-            special[a][3]=cmd_args
+            special[a][3]=cmd_arg
          else:
             special[a][2]=0
             special[a][3]=None
@@ -436,7 +494,7 @@ def mdo(a,b):
    unlock()
    return r
 
-def dummy(*args):
+def dummy(*arg):
    lock()   
    pass
    unlock()
@@ -526,86 +584,86 @@ def get_feedback():
       r = _pm.get_feedback()
    return l
 
-def load(*args):
+def load(*arg):
    r = 1
    lock()   
    ftype = 0
-   if re.search("\.pdb$",args[0]):
+   if re.search("\.pdb$",arg[0]):
       ftype = 0
-   elif re.search("\.mol$",args[0]):
+   elif re.search("\.mol$",arg[0]):
       ftype = 1
-   elif re.search("\.mmod$",args[0]):
+   elif re.search("\.mmod$",arg[0]):
       ftype = 4
-   elif re.search("\.xplor$",args[0]):
+   elif re.search("\.xplor$",arg[0]):
       ftype = 7
-   if len(args)==1:
-      oname = re.sub("[^/]*\/","",args[0])
+   if len(arg)==1:
+      oname = re.sub("[^/]*\/","",arg[0])
       oname = re.sub("\.pdb|\.mol|\.mmod|\.xplor","",oname)
-      r = _pm.load(oname,args[0],-1,ftype)
-   elif len(args)==2:
-      oname = string.strip(args[1])
-      r = _pm.load(oname,args[0],-1,ftype)
-   elif len(args)==3:
-      oname = string.strip(args[1])
-      r = _pm.load(oname,args[0],int(args[2])-1,ftype)
-   elif len(args)==4:
-      oname = string.strip(args[1])
-      r = _pm.load(oname,args[0],int(args[2])-1,int(args[3]))
+      r = _pm.load(oname,arg[0],-1,ftype)
+   elif len(arg)==2:
+      oname = string.strip(arg[1])
+      r = _pm.load(oname,arg[0],-1,ftype)
+   elif len(arg)==3:
+      oname = string.strip(arg[1])
+      r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
+   elif len(arg)==4:
+      oname = string.strip(arg[1])
+      r = _pm.load(oname,arg[0],int(arg[2])-1,int(arg[3]))
    else:
       print "argument error."
    unlock()
    return r
 
-def read_molstr(*args):
+def read_molstr(*arg):
    r = 1
    lock()   
    ftype = 3
-   if len(args)==2:
-      oname = string.strip(args[1])
-      r = _pm.load(oname,args[0],-1,ftype)
-   elif len(args)==3:
-      oname = string.strip(args[1])
-      r = _pm.load(oname,args[0],int(args[2])-1,ftype)
+   if len(arg)==2:
+      oname = string.strip(arg[1])
+      r = _pm.load(oname,arg[0],-1,ftype)
+   elif len(arg)==3:
+      oname = string.strip(arg[1])
+      r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
    else:
       print "argument error."
    unlock()
    return r
 
-def read_mmodstr(*args):
+def read_mmodstr(*arg):
    r = 1
    lock()   
    ftype = 6
-   if len(args)==2:
-      oname = string.strip(args[1])
-      r = _pm.load(oname,args[0],-1,ftype)
-   elif len(args)==3:
-      oname = string.strip(args[1])
-      r = _pm.load(oname,args[0],int(args[2])-1,ftype)
+   if len(arg)==2:
+      oname = string.strip(arg[1])
+      r = _pm.load(oname,arg[0],-1,ftype)
+   elif len(arg)==3:
+      oname = string.strip(arg[1])
+      r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
    else:
       print "argument error."
    unlock()
    return r
    
-def select(*args):
+def select(*arg):
    lock()   
-   if len(args)==1:
+   if len(arg)==1:
       sel_cnt = _pm.get("sel_counter") + 1.0
       _pm.set("sel_counter","%1.0f" % sel_cnt)
       sel_name = "sel%02.0f" % sel_cnt
-      sel = args[0]
+      sel = arg[0]
    else:
-      sel_name = args[0]
-      sel = args[1]
+      sel_name = arg[0]
+      sel = arg[1]
    r = _pm.select(sel_name,sel)
    unlock()
    return r
 
-def color(*args):
+def color(*arg):
    lock()   
-   if len(args)==2:
-      r = _pm.color(args[0],args[1],0)
+   if len(arg)==2:
+      r = _pm.color(arg[0],arg[1],0)
    else:
-      r = _pm.color(args[0],"(all)",0)   
+      r = _pm.color(arg[0],"(all)",0)   
    unlock()
    return r
 
@@ -627,51 +685,51 @@ def mpng(a):
       r = _pm.do("pm._mpng('"+a+"')")
    return r
 
-def _mpng(*args):
+def _mpng(*arg):
    lock()   
-   fname = args[0]
+   fname = arg[0]
    if re.search("\.png$",fname):
       fname = re.sub("\.png$","",fname)
    r = _pm.mpng_(fname)
    unlock()
    return r
 
-def show(*args):
+def show(*arg):
    r=1
    lock()
-   l = len(args)
+   l = len(arg)
    if not l:
       r = _pm.showhide("(all)",0,1); # show lines by default       
    elif l==2:
-      if repres.has_key(args[0]):      
-         repn = repres[args[0]];
-         r = _pm.showhide(args[1],repn,1);
-   elif args[0]=='all':
+      if repres.has_key(arg[0]):      
+         repn = repres[arg[0]];
+         r = _pm.showhide(arg[1],repn,1);
+   elif arg[0]=='all':
       r = _pm.showhide("(all)",0,1); # show lines by default 
-   elif args[0][0]=='(':
-      r = _pm.showhide(args[0],0,1);
-   elif repres.has_key(args[0]):      
-      repn = repres[args[0]];
+   elif arg[0][0]=='(':
+      r = _pm.showhide(arg[0],0,1);
+   elif repres.has_key(arg[0]):      
+      repn = repres[arg[0]];
       r = _pm.showhide("(all)",repn,1);
    unlock()
    return r
 
-def hide(*args):
+def hide(*arg):
    r = 1
-   l = len(args)
+   l = len(arg)
    lock()
    if not l:
       r = _pm.showhide("!",0,0);      
    elif l==2:
-      if repres.has_key(args[0]):      
-         repn = repres[args[0]];
-         r = _pm.showhide(args[1],repn,0);
-   elif args[0]=='all':
+      if repres.has_key(arg[0]):      
+         repn = repres[arg[0]];
+         r = _pm.showhide(arg[1],repn,0);
+   elif arg[0]=='all':
       r = _pm.showhide("!",0,0);
-   elif args[0][0]=='(':
-      r = _pm.showhide(args[0],-1,0);
-   elif repres.has_key(args[0]):      
-      repn = repres[args[0]];
+   elif arg[0][0]=='(':
+      r = _pm.showhide(arg[0],-1,0);
+   elif repres.has_key(arg[0]):      
+      repn = repres[arg[0]];
       r = _pm.showhide("(all)",repn,0);      
    unlock()
    return r
@@ -754,6 +812,7 @@ keyword = {
    'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , 0 ],
    'load'          : [load         , 1 , 4 , ',' , 0 ],
    'mem'           : [mem          , 0 , 0 , ',' , 0 ],
+   'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],   
    'move'          : [move         , 2 , 2 , ',' , 0 ],
    'mset'          : [mset         , 1 , 1 , ',' , 0 ],
    'mdo'           : [mdo          , 2 , 2 , ':' , 1 ],
@@ -804,6 +863,7 @@ repres = {
    'ribbon'        : 5,
    'surface'       : 6
 }
+
 
 special = {
    1        : [ 'F1'        , None                   , 0 , None ],
