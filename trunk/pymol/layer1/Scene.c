@@ -490,53 +490,18 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   CScene *I=&Scene;
   Object *obj;
   char buffer[OrthoLineLength],buf2[OrthoLineLength];
-  WordType selName;
+  WordType selName = "";
+  int mode;
 
-  if(mod&cOrthoCTRL) {
-    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text))) {
-      SceneRender(NULL,0,0);
-    }
-    SceneDontCopyNext();
-	 SceneRender(&I->LastPicked,x,y);
-	 if(I->LastPicked.ptr) {
-		obj=(Object*)I->LastPicked.ptr;
-
-      if(obj->fDescribeElement) 
-        obj->fDescribeElement(obj,I->LastPicked.index);
-		  sprintf(buffer,"model %s and index %i",
-					 obj->Name,I->LastPicked.index+1);
-        /*        if(I->LastPicked.bond>=0)
-          printf("Bond: %d %d %d\n",I->LastPicked.bond,
-                 ((ObjectMolecule*)obj)->Bond[I->LastPicked.bond*3],
-                 ((ObjectMolecule*)obj)->Bond[I->LastPicked.bond*3+1]);*/
-		switch(button) {
-		case GLUT_LEFT_BUTTON:
-        strcpy(selName,"%pk1");
-		  break;
-		case GLUT_MIDDLE_BUTTON:
-        strcpy(selName,"%pk2");
-		  break;
-		case GLUT_RIGHT_BUTTON:
-		default:
-        strcpy(selName,"%pk3");
-		  break;
-		}
-      if(mod&cOrthoSHIFT) {
-        if(SelectorIndexByName(selName)>=0) {
-          sprintf(buf2,"( %s or (%s))",selName,buffer);
-          SelectorCreate(selName,buf2,NULL,false);
-        }
-        else 
-          SelectorCreate(selName,buffer,NULL,false);
-      } else {
-        SelectorCreate(selName,buffer,NULL,false);
-      }
-	 } else {
-		OrthoAddOutput(" SceneClick: no atom found nearby.\n");
-		OrthoNewLine(NULL);
-		OrthoRestorePrompt();
-	 }
-  } else {
+  mode = ButModeTranslate(button,mod);
+  switch(mode) {
+  case cButModeRotXYZ:
+  case cButModeTransXY:
+  case cButModeTransZ:
+  case cButModeClipNF:
+  case cButModeClipN:    
+  case cButModeClipF:    
+  case cButModeRotZ:
     SceneDontCopyNext();
 
 	 y=y-I->Block->margin.bottom;
@@ -545,7 +510,60 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 I->LastX=x;
 	 I->LastY=y;	 
 	 SceneDirty();
-	 I->Button=button;
+	 I->Button=button;    
+    break;
+  case cButModePk1:
+  case cButModePk2:
+  case cButModePk3:
+  case cButModeAddToPk1:
+  case cButModeAddToPk2:
+  case cButModeAddToPk3:
+    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
+      SceneRender(NULL,0,0);
+    SceneDontCopyNext();
+
+	 SceneRender(&I->LastPicked,x,y);
+	 if(I->LastPicked.ptr) {
+		obj=(Object*)I->LastPicked.ptr;
+      if(obj->fDescribeElement) 
+        obj->fDescribeElement(obj,I->LastPicked.index);
+		  sprintf(buffer,"model %s and index %i",
+					 obj->Name,I->LastPicked.index+1);
+		switch(mode) {
+      case cButModePk1:
+      case cButModeAddToPk1:
+        strcpy(selName,"%pk1");
+		  break;
+      case cButModePk2:
+      case cButModeAddToPk2:
+        strcpy(selName,"%pk2");
+		  break;
+      case cButModePk3:
+      case cButModeAddToPk3:
+        strcpy(selName,"%pk3");
+		  break;
+      }
+      switch(mode) {
+      case cButModePk1:
+      case cButModePk2:
+      case cButModePk3:
+        SelectorCreate(selName,buffer,NULL,false);
+        break;
+      case cButModeAddToPk1:
+      case cButModeAddToPk2:
+      case cButModeAddToPk3:
+        if(SelectorIndexByName(selName)>=0) {
+          sprintf(buf2,"( %s or (%s))",selName,buffer);
+          SelectorCreate(selName,buf2,NULL,false);
+        } else 
+          SelectorCreate(selName,buffer,NULL,false);
+        break;
+      }
+	 } else {
+		OrthoAddOutput(" SceneClick: no atom found nearby.\n");
+		OrthoNewLine(NULL);
+		OrthoRestorePrompt();
+	 }
   }
   return(1);
 }
@@ -556,7 +574,10 @@ int SceneDrag(Block *block,int x,int y,int mod)
   float scale;
   float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
   float axis[3],axis2[3],theta,omega;
-  int but;
+  int mode;
+
+  mode = ButModeTranslate(I->Button,mod);
+  
   y=y-I->Block->margin.bottom;
   scale = I->Height;
   if(scale > I->Width)
@@ -564,10 +585,18 @@ int SceneDrag(Block *block,int x,int y,int mod)
   scale = 0.38 * scale;
 
   SceneDontCopyNext();
-  if(!(mod&cOrthoCTRL)) {
-	 v1[0] = (I->Width/2) - x;
-	 v1[1] = (I->Height/2) - y;
-	 
+  switch(mode) {
+  case cButModeRotXYZ:
+  case cButModeRotZ:
+  case cButModeTransXY:
+  case cButModeTransZ:
+  case cButModeClipNF:
+  case cButModeClipN:    
+  case cButModeClipF:    
+
+    v1[0] = (I->Width/2) - x;
+    v1[1] = (I->Height/2) - y;
+    
 	 v2[0] = (I->Width/2) - I->LastX;
 	 v2[1] = (I->Height/2) - I->LastY;
 	 
@@ -600,21 +629,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
     omega = 2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
 	 normalize23f(cp,axis2);	 
 
-	 switch(I->Button) {
-	 case GLUT_LEFT_BUTTON:
-		but=0;
-		break;
-	 case GLUT_MIDDLE_BUTTON:
-		but=1;
-		break;
-	 case GLUT_RIGHT_BUTTON:
-	 default:
-		but=2;
-		break;
-	 }
-	 if(mod&cOrthoSHIFT)
-		but+=3;
-	 switch(ButMode.Mode[but]) {
+	 switch(mode) {
 	 case cButModeRotXYZ:
 		if(I->LastX!=x)
 		  {
@@ -664,7 +679,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 SceneDirty();
 		  }
 		break;
-	 case cButModeClipZZ:
+	 case cButModeClipNF:
 		if(I->LastX!=x)
 		  {
 			 I->Back-=(((float)x)-I->LastX)/10;
@@ -724,7 +739,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 SceneDirty();
 		  }
 		break;
-	 }
+    }
   }
   return(1);
 }
