@@ -16,6 +16,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_gl
 #define _H_os_gl
 
+#ifdef WIN32
+#include<windows.h>
+#endif
+
 #include<GL/gl.h>
 #include<GL/glut.h>
 

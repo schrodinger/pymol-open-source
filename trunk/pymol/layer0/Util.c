@@ -25,16 +25,21 @@ static unsigned int UtilStartSec;
 
 
 void UtilInit(void) {
+#ifndef WIN32
   struct timeval tv;
   gettimeofday(&tv,NULL);
   UtilStartSec = tv.tv_sec;
+#endif
 }
 
 double UtilGetSeconds(void)
 {
+#ifndef WIN32
   struct timeval tv;
   gettimeofday(&tv,NULL);
   return((tv.tv_sec-UtilStartSec)+(tv.tv_usec/((double)1000000.0)));
+#endif
+  return(0.0);
 }
 
 char *UtilConcat(char *where,char *what)

@@ -18,8 +18,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
-#include <unistd.h>
-
 #include"Util.h"
 
 #include"Word.h"
@@ -1062,7 +1060,6 @@ void SceneRender(Pickable *pick,int x,int y)
 
   if(PMGUI) {
     glDrawBuffer(GL_BACK);
-    glEnable(GL_DEPTH_TEST);
   
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
     glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
@@ -1123,8 +1120,28 @@ void SceneRender(Pickable *pick,int x,int y)
       glLineWidth(SettingGet(cSetting_line_width));
       glDisable(GL_LINE_SMOOTH);
     }
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_NORMALIZE);
     
     if(!pick) {
+
+      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
+      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+      glEnable(GL_COLOR_MATERIAL);
+      glEnable(GL_DITHER);
+
+      v=SettingGetfv(cSetting_ambient);
+      f=SettingGet(cSetting_ambient_scale);
+      vv[0]=v[0]*f;
+      vv[1]=v[0]*f;
+      vv[2]=v[0]*f;
+      vv[3]=1.0;
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
+      /*glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);*/
 	
 #ifdef _PYMOL_3DFX
       if(SettingGet(cSetting_ortho)==0.0) {
@@ -1159,22 +1176,12 @@ void SceneRender(Pickable *pick,int x,int y)
       }
 #endif
 
-      glNormal3fv(normal);
-	
-      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
-      glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-      glEnable(GL_COLOR_MATERIAL);
-      glEnable(GL_LIGHTING);
-      v=SettingGetfv(cSetting_ambient);
-      f=SettingGet(cSetting_ambient_scale);
-      vv[0]=v[0]*f;
-      vv[1]=v[0]*f;
-      vv[2]=v[0]*f;
-      vv[3]=1.0;
-      glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
       glColor4ub(255,255,255,255);
-	
+      glNormal3fv(normal);
+      
     } else {
+      /* picking mode: we want flat, unshaded colors */
+
       glDisable(GL_COLOR_MATERIAL);
       glDisable(GL_LIGHTING);
       glDisable(GL_DITHER);
@@ -1273,10 +1280,15 @@ void SceneRender(Pickable *pick,int x,int y)
   
     if(!pick) {
       glDisable(GL_FOG);
+      glDisable(GL_LIGHTING);
+      glDisable(GL_COLOR_MATERIAL);
+      glDisable(GL_DITHER);
     }
     glLineWidth(1.0);
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_BLEND);
+    glDisable(GL_NORMALIZE);
+    glDisable(GL_DEPTH_TEST);
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
   }
   if(!pick) {

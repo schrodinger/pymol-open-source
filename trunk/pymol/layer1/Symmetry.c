@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 
 void SymmetryAttemptGeneration(CSymmetry *I)
 {
+#ifdef PYMOL_XRAY
   PyObject *mats;
   int a,l;
   CrystalUpdate(I->Crystal);
@@ -55,7 +56,7 @@ void SymmetryAttemptGeneration(CSymmetry *I)
     }
     PUnblock();
   }
-
+#endif
 }
 
 void SymmetryFree(CSymmetry *I)

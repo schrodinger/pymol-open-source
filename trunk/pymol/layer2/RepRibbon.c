@@ -65,8 +65,10 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
 		}
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-	 glBegin(GL_LINES);
-	 SceneResetNormal(true);
+    if(c) {
+	   glDisable(GL_LIGHTING);
+      glBegin(GL_LINES);
+      SceneResetNormal(true);
 	 while(c--)
 		{
 		  glColor3fv(v);
@@ -77,7 +79,8 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
 		  v+=3;
 		}
 	 glEnd();
-	 
+    glEnable(GL_LIGHTING);
+	 }
   }
 }
 Rep *RepRibbonNew(CoordSet *cs)

@@ -281,7 +281,7 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2)
   int *vla=NULL;
   int c;
   float result=0.0;
-  float sumVDW,dist;
+  float sumVDW=0.0,dist;
   int a1,a2;
   AtomInfoType *ai1,*ai2;
   int at1,at2;
@@ -2361,8 +2361,7 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,f
   SelectorType *I=&Selector;
   int *vla=NULL;
   int c;
-  float result=0.0;
-  float sumVDW,dist;
+  float dist;
   int a1,a2;
   AtomInfoType *ai1,*ai2;
   int at1,at2;
@@ -2400,8 +2399,6 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,f
           
           idx1=cs1->AtmToIdx[at1];
           idx2=cs2->AtmToIdx[at2];
-          
-          /*          sumVDW=ai1->vdw+ai2->vdw;*/
 
           dist=diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
           
@@ -2417,8 +2414,7 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,f
             *(vv0++) = *(vv1++);
             *(vv0++) = *(vv1++);
 
-            result+=((sumVDW-dist)/2.0);
-            nv+=2;
+             nv+=2;
           }
         }
       }

@@ -262,14 +262,30 @@ static void MainInit(void)
   I->IdleTime=UtilGetSeconds();
 
   if(PMGUI) {
-    glMatrixMode(GL_MODELVIEW);
+
+    /* get us into a well defined GL state */
+    
+    glDisable(GL_LIGHTING);
+    glDisable(GL_FOG);
+    glDisable(GL_NORMALIZE);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_COLOR_MATERIAL);
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_DITHER);
+    glDisable(GL_BLEND);
+    /*    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_POINT_SMOOTH);*/
+    
+
+/*    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT,low);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_NORMALIZE);
+    glEnable(GL_NORMALIZE);*/
   }
 
   UtilInit();
@@ -454,6 +470,7 @@ void launch(void)
     }
   }
 }
+
 
 /*========================================================================*/
 #ifndef _PYMOL_MODULE
