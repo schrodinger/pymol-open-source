@@ -218,7 +218,7 @@ ObjectDist *ObjectDistNew(void)
 
 /*========================================================================*/
 /*========================================================================*/
-ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,
+ObjectDist *ObjectDistNewFromSele(ObjectDist *oldObj,int sele1,int sele2,int mode,float cutoff,
                                   int labels,float *result)
 {
   int a,mn;
@@ -226,7 +226,19 @@ ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,
   int dist_cnt = 0;
   int n_state1,n_state2,state1,state2;
   ObjectDist *I;
-  I=ObjectDistNew();
+
+  if(!oldObj)
+    I=ObjectDistNew();
+  else {
+    I=oldObj;
+    for(a=0;a<I->NDSet;a++)
+      if(I->DSet[a]) {
+        if(I->DSet[a]->fFree)
+          I->DSet[a]->fFree(I->DSet[a]);
+        I->DSet[a]=NULL;
+      }
+    I->NDSet=0;
+  }
   *result = 0.0;
   mn = 0;
   SelectorUpdateTable();
@@ -255,10 +267,12 @@ ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,
           I->NDSet=a+1;
         }
       }  
-  } else {
-    VLAFreeP(I->DSet);
-    OOFreeP(I);
-  }
+  } 
+  /* else {
+     VLAFreeP(I->DSet);
+     OOFreeP(I);
+     }
+  */
   ObjectDistUpdateExtents(I);
 
   if(dist_cnt)

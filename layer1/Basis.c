@@ -656,8 +656,12 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                             vt[0]=r->base[0];
                             vt[1]=r->base[1];
                             vt[2]=r->base[2]-front;
-                            if(diffsq3f(vt,I->Vertex+i*3)<I->Radius2[i])
+                            if(diffsq3f(vt,I->Vertex+i*3)<I->Radius2[i]) {
                               (*interior_flag)=true;
+                              r->prim = prm;
+                              r->dist = front;
+                              minIndex=prm->vert;
+                            }
                           }
                         }
 							 }
@@ -712,6 +716,9 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                                                                     prm->cap1,
                                                                     prm->cap2)) {
                                   (*interior_flag)=true;
+                                  r->prim = prm;
+                                  r->dist = front;
+                                  minIndex=prm->vert;
                                 }
                               }
                             }
@@ -775,6 +782,9 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                                                               I->Radius2[i],
                                                               prm->l1)) {
                                   (*interior_flag)=true;
+                                  r->prim = prm;
+                                  r->dist = front;
+                                  minIndex=prm->vert;
                                 }
                               }
                             }
@@ -797,6 +807,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 		  c--;
 		  if(c<MapBorder)
 			 break;
+        if(*interior_flag) break;
 		}
 	 }
   if(minIndex>=0) {

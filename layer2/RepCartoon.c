@@ -96,7 +96,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   ObjectMolecule *obj;
   int a,b,c,f,e,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4=0,*car,*cc,*sstype;
   float *v,*v0,*v1,*v2,*v3,*v4,*v5,*vo,*vn,*va;
-  float *p0,*p1,*p2;
+  float *p0,*p1,*p2,*p3;
   float *pv=NULL;
   float *pvo=NULL,*pva=NULL;
   float *dv=NULL;
@@ -144,6 +144,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   float refine_tips;
   float helix_radius;
   float *h_start=NULL,*h_end=NULL;
+  float *stmp;
 
   /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -234,6 +235,7 @@ ENDFD;
   seg = Alloc(int,cs->NAtIndex);
   car = Alloc(int,cs->NAtIndex);
   sstype = Alloc(int,cs->NAtIndex);
+  stmp = Alloc(float,sampling*3);
 
   i=at;
   v=pv;
@@ -788,10 +790,12 @@ ENDFD;
                 end_flag=1;
             }
             if(end_flag) {
+
               if(a)
                 if(first>0) /* 011130 WLD */
                   if(*(seg+first)==*(seg+first-1))
                     first--;
+
               if(last>0)
                 if(*s==*(s-1))
                   if(last<(nAt-1)) 
@@ -1353,8 +1357,8 @@ ENDFD;
                   
                     /* provide starting point on first point in segment only... */
 
-                    f0=((float)b)/sampling; /* fraction of completion */
-                    f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */
+                    f0 = ((float)b)/sampling; /* fraction of completion */
+                    f0 = smooth(f0,power_a); /* bias sampling towards the center of the curve */
                   
                     if(f0<0.5) {
                       v0 = ColorGet(c1);
@@ -1370,9 +1374,9 @@ ENDFD;
 
                     /* start of line/cylinder */
                   
-                    f1=1.0-f0;
-                    f2=smooth(f0,power_b);
-                    f3=smooth(f1,power_b);
+                    f1 = 1.0-f0;
+                    f2 = smooth(f0,power_b);
+                    f3 = smooth(f1,power_b);
                     f4 = dev*f2*f3; /* displacement magnitude */
 
                     *(v++)=f1*v1[0]+f0*v1[3]+
@@ -1384,16 +1388,10 @@ ENDFD;
                     *(v++)=f1*v1[2]+f0*v1[5]+
                       f4*( f3*v2[2]-f2*v2[5] );
 
-                    /* compute orientation vector at point, and store
-                       in second position of axes */
-                     
-                    vn+=3;
-                    *(vn++)=f1*(vo[0]*f2)+f0*(vo[3]*f3);
-                    *(vn++)=f1*(vo[1]*f2)+f0*(vo[4]*f3);
-                    *(vn++)=f1*(vo[2]*f2)+f0*(vo[5]*f3);     
-                    vn+=3;
-                  
+                    vn+=9;
+
                     copy3f(vo,vn-6); /* starter... */
+
                     n_p++;
 
                   }
@@ -1437,7 +1435,7 @@ ENDFD;
                   *(vn++)=f1*(vo[1]*f2)+f0*(vo[4]*f3);
                   *(vn++)=f1*(vo[2]*f2)+f0*(vo[5]*f3);                 
                   vn+=3;
-                
+
                   if(b==sampling-1)
                     copy3f(vo+3,vn-6); /* starter... */                  
                   n_p++;
@@ -1449,6 +1447,8 @@ ENDFD;
 
               c = refine;
               cross_product3f(vn+3-(sampling*9),vn+3-9,t0);
+
+              cross_product3f(vo-3,vo,t0);
               if((sampling>1)&&length3f(t0)>R_SMALL4) {
 
                 normalize3f(t0);
@@ -1463,15 +1463,18 @@ ENDFD;
                   
                     f3 = (f2+f0)/2.0;
                     scale3f(t0,f3-f1,t1);
-                    add3f(t1,p1,p1);
-
-                    f0=dot_product3f(t0,p0);
-                    f1=dot_product3f(t0,p1);
-                    f2=dot_product3f(t0,p2);
+                    p3 = stmp+b*3;
+                    add3f(t1,p1,p3);
                   
                     p0=p1;
                     p1=p2;
                     p2+=3;
+                  }
+                  p1=v-(sampling*3);
+                  for(b=0;b<(sampling-1);b++) {
+                    p3 = stmp+b*3;
+                    copy3f(p3,p1);
+                    p1+=3;
                   }
                 }
               }
@@ -1503,6 +1506,27 @@ ENDFD;
 
           if((cur_car!=cCartoon_skip)&&
              (cur_car!=cCartoon_skip_helix)) {
+            
+            if((cartoon_debug>0.5)&&(cartoon_debug<2.5)) {
+              CGOColor(I->ray,0.0,1.0,0.0);
+
+              v = ex->p;
+              vn = ex->n+3;
+              CGODisable(I->ray,GL_LIGHTING);
+              CGOBegin(I->ray,GL_LINES);
+              for(b=0;b<n_p;b++) 
+                {
+                  CGOVertexv(I->ray,v);
+                  add3f(v,vn,t0);
+                  CGOVertexv(I->ray,t0);
+                  v+=3;
+                  vn+=9;
+                }
+              CGOEnd(I->ray);
+              CGOEnable(I->ray,GL_LIGHTING);
+            }
+            
+
             ExtrudeTruncate(ex,n_p);
             ExtrudeComputeTangents(ex);
           
@@ -1595,9 +1619,8 @@ ENDFD;
         }
       }
     }
-  if(ex) {
-    ExtrudeFree(ex); 
-  }
+
+
   if(nAt>1) {
     if((cartoon_debug>0.5)&&(cartoon_debug<2.5)) {
       CGOColor(I->ray,1.0,1.0,1.0);
@@ -1624,6 +1647,9 @@ ENDFD;
       CGOEnable(I->ray,GL_LIGHTING);
     }
   }
+  if(ex) {
+    ExtrudeFree(ex); 
+  }
 
   CGOStop(I->ray);
   I->std = CGOSimplify(I->ray,0);
@@ -1639,6 +1665,7 @@ ENDFD;
   FreeP(car);
   FreeP(tmp);
   FreeP(sstype);
+  FreeP(stmp);
   return((void*)(struct Rep*)I);
 }
 

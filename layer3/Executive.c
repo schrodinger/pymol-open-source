@@ -1572,7 +1572,8 @@ int ExecutiveValidName(char *name)
     if(!WordMatch(name,cKeywordAll,true))
       if(!WordMatch(name,cKeywordSame,true))
         if(!WordMatch(name,cKeywordCenter,true))
-          result=false;
+          if(!WordMatch(name,cKeywordOrigin,true))
+            result=false;
   }
   return result;
 }
@@ -2664,6 +2665,7 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,
 {
   int sele1,sele2;
   ObjectDist *obj;
+  CObject *anyObj = NULL;
   float result;
   sele1=SelectorIndexByName(s1);
   if(!WordMatch(s2,"same",true))
@@ -2673,12 +2675,14 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,
   }
   
   if((sele1>=0)&&(sele2>=0)) {
-    obj = ObjectDistNewFromSele(sele1,sele2,mode,cutoff,labels,&result);
+    anyObj = ExecutiveFindObjectByName(nam);
+    if(anyObj)
+      if(anyObj->type!=cObjectDist)
+        ExecutiveDelete(nam);
+    obj = ObjectDistNewFromSele((ObjectDist*)anyObj,sele1,sele2,mode,cutoff,labels,&result);
     if(!obj) {
       ErrMessage("ExecutiveDistance","No such distances found.");
     } else {
-      if(ExecutiveFindObjectByName(nam))
-        ExecutiveDelete(nam);
       ObjectSetName((CObject*)obj,nam);
       ExecutiveManageObject((CObject*)obj,true,quiet);
       ExecutiveSetRepVisib(nam,cRepLine,1);
@@ -3974,6 +3978,11 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state,
 
   if(WordMatch(cKeywordCenter,name,1)) {
     SceneGetPos(mn);
+    copy3f(mn,mx);
+    return 1;
+  }
+  if(WordMatch(cKeywordOrigin,name,1)) {
+    SceneOriginGet(mn);
     copy3f(mn,mx);
     return 1;
   }

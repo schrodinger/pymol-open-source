@@ -374,10 +374,23 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_cartoon_highlight_color     241
 #define cSetting_coulomb_units_factor        242
 #define cSetting_coulomb_dielectric          243
+#define cSetting_ray_interior_shadows        244
+#define cSetting_ray_interior_texture        245
+
+#define cSetting_roving_map1_name            246
+#define cSetting_roving_map2_name            247
+#define cSetting_roving_map3_name            248
+
+#define cSetting_roving_map1_level           249
+#define cSetting_roving_map2_level           250
+#define cSetting_roving_map3_level           251
+
+#define cSetting_roving_isomesh              252
+#define cSetting_roving_isosurface           253
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        244
+#define cSetting_INIT                        254
 
 #endif
 

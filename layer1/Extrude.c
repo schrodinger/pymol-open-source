@@ -886,7 +886,6 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
       }
       CGOVertexv(cgo,I->tv);
       CGOEnd(cgo);
-      
 
     }
     FreeP(TV);
@@ -1248,11 +1247,11 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
       sv+=3;
       tv+=3;
     }
-    
+
     CGOBegin(cgo,GL_TRIANGLE_FAN);
-    copy3f(I->n,v0);
+    copy3f(n,v0);
     invert3f(v0);
-    if(color_override&&((b==2)||(b==3)||(b==6)||(b==7)))
+    if(color_override)
       CGOColorv(cgo,color_override);
     else
       CGOColorv(cgo,I->c+3*(subN-1));
@@ -1266,7 +1265,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
     }
     CGOVertexv(cgo,I->tv);
     CGOEnd(cgo);
-    
+
     FreeP(TV);
     FreeP(TN);
   }

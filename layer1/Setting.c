@@ -503,7 +503,7 @@ static int get_b(CSetting *I,int index)
     break;
   default:
     PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type read mismatch (boolean)\n"
+      "Setting-Error: type read mismatch (boolean) %d\n",index
       ENDFB;
     result = 0;
   }
@@ -524,7 +524,7 @@ static int get_color(CSetting *I,int index)
     break;
   default:
     PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type read mismatch (color)\n"
+      "Setting-Error: type read mismatch (color) %d\n",index
       ENDFB;
     result = 0;
   }
@@ -545,7 +545,7 @@ static float get_f(CSetting *I,int index)
     break;
   default:
     PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type read mismatch (float)\n"
+      "Setting-Error: type read mismatch (float) %d\n",index
       ENDFB;
     result = 0.0F;
   }
@@ -561,7 +561,7 @@ static char *get_s(CSetting *I,int index)
     break;
   default:
     PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type read mismatch (string)\n"
+      "Setting-Error: type read mismatch (string) %d\n",index
       ENDFB;
     result = NULL;
   }
@@ -586,7 +586,7 @@ int SettingSet_b(CSetting *I,int index, int value)
       break;
     default:
       PRINTFB(FB_Setting,FB_Errors)
-        "Setting-Error: type set mismatch (boolean)\n"
+        "Setting-Error: type set mismatch (boolean) %d\n",index
         ENDFB
         ok=false;
     }
@@ -1078,6 +1078,14 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_roving_polar_cutoff:
   case cSetting_roving_nonbonded:
   case cSetting_roving_nb_spheres:
+  case cSetting_roving_map1_level:
+  case cSetting_roving_map2_level:
+  case cSetting_roving_map3_level:
+  case cSetting_roving_map1_name:
+  case cSetting_roving_map2_name:
+  case cSetting_roving_map3_name:
+  case cSetting_roving_isosurface:
+  case cSetting_roving_isomesh:
     SceneRovingChanged();
     break;
   case cSetting_roving_byres:
@@ -2005,6 +2013,26 @@ void SettingInitGlobal(int alloc)
   SettingSet_f(I,cSetting_coulomb_units_factor,557.00000F);
 
   SettingSet_f(I,cSetting_coulomb_dielectric,2.0F);
+
+  SettingSet_b(I,cSetting_ray_interior_shadows,0);
+
+  SettingSet_i(I,cSetting_ray_interior_texture,-1);
+
+  SettingSet_s(I,cSetting_roving_map1_name,"");
+
+  SettingSet_s(I,cSetting_roving_map2_name,"");
+
+  SettingSet_s(I,cSetting_roving_map3_name,"");
+
+  SettingSet_f(I,cSetting_roving_map1_level,1.0F);
+
+  SettingSet_f(I,cSetting_roving_map2_level,2.0F);
+
+  SettingSet_f(I,cSetting_roving_map3_level,3.0F);
+
+  SettingSet_f(I,cSetting_roving_isomesh, 8.0F);
+
+  SettingSet_f(I,cSetting_roving_isosurface, 0.0F);
 
 }
 

@@ -121,6 +121,12 @@ class Setting:
       self.roving_detail = IntVar()
       self.roving_detail.set(int(cmd.get_setting_legacy('roving_detail')))
 
+      self.ray_interior_color = IntVar()
+      self.ray_interior_color.set(int(cmd.get_setting_legacy('ray_interior_color')!=-1))
+
+      self.cartoon_highlight_color = IntVar()
+      self.cartoon_highlight_color.set(int(cmd.get_setting_legacy('ray_interior_color')!=-1))
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
@@ -192,6 +198,11 @@ class Setting:
 
          'roving_detail'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.roving_detail.get())),log=1))),
+         
+         'ray_interior_color'        :
+         (lambda s,a: (s.ray_interior_color_set())),
+         'cartoon_highlight_color'        :
+         (lambda s,a: (s.cartoon_highlight_color_set()))
          }
 
       self.update_code = {
@@ -255,6 +266,10 @@ class Setting:
          (lambda s,t: (s.roving_origin.set(t[1][0]!=0))),
          'roving_detail':
          (lambda s,t: (s.roving_detail.set(t[1][0]!=0))),
+         'ray_interior_color':
+         (lambda s,t: (s.ray_interior_color.set(t[1][0]!=-1))),
+         'cartoon_highlight_color':
+         (lambda s,t: (s.cartoon_highlight_color.set(t[1][0]!=-1))),
 
         }
       self.active_list = [
@@ -289,6 +304,8 @@ class Setting:
          pymol.setting._get_index("sculpting"),
          pymol.setting._get_index("roving_origin"),
          pymol.setting._get_index("roving_detail"),                           
+         pymol.setting._get_index("ray_interior_color"),
+         pymol.setting._get_index("cartoon_highlight_color"),                           
          ]
 
       self.active_dict = {}
@@ -302,6 +319,18 @@ class Setting:
    def specular_set(self):
       cmd.set("specular",("%0.3f" % (self.specular.get()*0.8)),log=1,quiet=0) # hardcoded workaround
       cmd.set("spec_reflect",("%0.3f" % (self.specular.get()*0.500)),log=1,quiet=0) # workaround 
+
+   def ray_interior_color_set(self):
+      if(self.ray_interior_color.get()):
+         cmd.set("ray_interior_color","grey20")
+      else:
+         cmd.set("ray_interior_color","-1")
+
+   def cartoon_highlight_color_set(self):
+      if(self.cartoon_highlight_color.get()):
+         cmd.set("cartoon_highlight_color","grey70")
+      else:
+         cmd.set("cartoon_highlight_color","-1")
       
    def update(self,sttng):
       set_fn = self.xref[sttng]
