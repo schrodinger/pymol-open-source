@@ -707,6 +707,7 @@ void MainFree(void)
   }
   
 #ifdef WIN32
+  if(PMGUI) p_glutDestroyWindow(theWindow);
   TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
 #endif
 
@@ -982,7 +983,7 @@ SetConsoleCtrlHandler(
         #endif
       }
       p_glutInitWindowSize(WinX, WinY);
-
+ 
       TheWindow = p_glutCreateWindow("PyMOL Viewer");
     } else {
       char str[255];
