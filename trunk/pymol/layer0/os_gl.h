@@ -119,6 +119,7 @@ void PyMOLCheckOpenGLErr(char *pos);
 #define p_glutPopWindow            glutPopWindow
 #define p_glutShowWindow           glutShowWindow
 #define p_glutReshapeWindow        glutReshapeWindow
+#define p_glutDestroyWindow        glutDestroyWindow
 
 #define p_glutFullScreen           glutFullScreen
 #define p_glutPostRedisplay        glutPostRedisplay
@@ -220,6 +221,7 @@ int      p_glutCreateWindow(const char *title); /* NOTE: once this function call
 void     p_glutPopWindow(void);
 void     p_glutShowWindow(void);
 void     p_glutReshapeWindow(int width, int height);
+void     p_glutDestroyWindow(int theWindow);
 
 void     p_glutFullScreen(void);
 void     p_glutPostRedisplay(void);

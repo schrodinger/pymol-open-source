@@ -1286,7 +1286,9 @@ int SceneRelease(Block *block,int button,int x,int y,int mod)
   if(I->SculptingFlag) {
     /* SettingSet(cSetting_sculpting,1); */
     obj=(ObjectMolecule*)I->LastPicked.ptr;
-    obj->AtomInfo[I->LastPicked.index].protekted=I->SculptingSave;
+    if(obj) {
+      obj->AtomInfo[I->LastPicked.index].protekted=I->SculptingSave;
+    }
     I->SculptingFlag=0;
   }
   return(1);
