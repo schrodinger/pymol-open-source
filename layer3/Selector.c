@@ -99,8 +99,8 @@ void SelectorPurgeMembers(int sele);
 #define STYP_SEL3 8
 #define STYP_PVAL 0
 
-#define SELE_NOT1 ( 0x0100 | STYP_SEL1 )
-#define SELE_BYR1 ( 0x0200 | STYP_SEL1 )
+#define SELE_NOT1 ( 0x0100 | STYP_OPR1 )
+#define SELE_BYR1 ( 0x0200 | STYP_OPR1 )
 #define SELE_AND2 ( 0x0300 | STYP_OPR2 )
 #define SELE_OR_2 ( 0x0400 | STYP_OPR2 )
 #define SELE_IN_2 ( 0x0500 | STYP_OPR2 )
