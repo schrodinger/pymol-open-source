@@ -133,6 +133,7 @@ class SettingIndex:
    cartoon_throw         =122
    cartoon_refine        =123
    cartoon_refine_tips   =124
+   cartoon_discrete_colors  =125
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

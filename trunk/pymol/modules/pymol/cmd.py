@@ -1413,6 +1413,28 @@ USAGE
       unlock()
    return r
 
+def bg_color(color="black"):
+   '''
+DESCRIPTION
+ 
+   "bg_color" sets the background color
+
+USAGE
+
+   bg_color [color]
+
+PYMOL API
+
+   cmd.color(string color="black")
+   
+   '''
+   try:
+      lock()
+      r = _cmd.bg_color(str(color))
+   finally:
+      unlock()
+   return r
+
 def copy(target,source):
    '''
 DESCRIPTION
@@ -5516,6 +5538,7 @@ keyword = {
    'alter_state'   : [alter_state  , 0 , 0 , ''  , parsing.LITERAL2 ],
    'api'           : [api          , 0 , 0 , ''  , parsing.STRICT ],
    'backward'      : [backward     , 0 , 0 , ''  , parsing.STRICT ],
+   'bg_color'      : [bg_color     , 0 , 0 , ''  , parsing.STRICT ],
    'bond'          : [bond         , 0 , 0 , ''  , parsing.STRICT ],
    'button'        : [button       , 0 , 0 , ''  , parsing.STRICT ],
    'cartoon'       : [cartoon      , 0 , 0 , ''  , parsing.STRICT ],

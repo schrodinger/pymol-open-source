@@ -126,6 +126,9 @@ Rep *RepCartoonNew(CoordSet *cs)
   int fancy_helices;
   int fancy_sheets;
   int refine;
+  int contigFlag;
+  int discrete_colors;
+
   float refine_tips;
 
   OOAlloc(RepCartoon);
@@ -186,6 +189,8 @@ ENDFD;
   fancy_sheets = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_sheets);
   refine = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine);
   refine_tips = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_tips);
+
+  discrete_colors = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_discrete_colors);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -922,8 +927,11 @@ ENDFD;
     contFlag=true;
     cur_car = cCartoon_skip;
     extrudeFlag=false;
+    contigFlag=false;
 
     while(contFlag) {
+
+
       if ((*cc)!=cur_car) { /* new cartoon type */
         if(n_p) { /* any cartoon points? */
           extrudeFlag=true;
@@ -951,8 +959,9 @@ ENDFD;
           }
         }
       }
-      if(!extrudeFlag) {
+      if((a<(nAt-1))&&!extrudeFlag) {
         if((*s)!=*(s+1)) { /* new segment */
+          contigFlag=false;
           if(n_p) { /* any cartoon points? */
             extrudeFlag=true;
           } else {
@@ -965,10 +974,33 @@ ENDFD;
         }
       }
       if(!extrudeFlag) {
-		  if(*s==*(s+1)) /* working in the same segment... */
+		  if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
 			 {
 				c1=*(cs->Color+*atp);
 				c2=*(cs->Color+*(atp+1));
+            if(discrete_colors) {
+              if(n_p==0) {
+                if(contigFlag) {
+                  if(cur_car!=cCartoon_loop)
+                    c2=c1;
+                  else {
+                    if ((*cc+1)==cur_car)
+                      c2=c1;
+                    else
+                      c1=c2;
+                  }
+                } else if((cur_car==cCartoon_loop)&&
+                          (*(cc+1)!=cCartoon_loop)) {
+                  c2=c1;
+                }
+              } else {
+                if((cur_car==cCartoon_loop)&&
+                   (*(cc+1)!=cCartoon_loop)) {
+                  c2=c1;
+                }
+              }/* not contig */
+              
+            }
             dev = throw*(*d);
 				for(b=0;b<sampling;b++) /* needs optimization */
 				  {
@@ -976,7 +1008,7 @@ ENDFD;
                 if(n_p==0) {
                   
                   /* provide starting point on first point in segment only... */
-                  
+
                   f0=((float)b)/sampling; /* fraction of completion */
                   f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */
                   
@@ -1108,15 +1140,23 @@ ENDFD;
 		  atp+=1;
 		  s++;
         cc++;
+
       }
 
+
       a++;
-      if(a==(nAt-1)) {
+      if(a==nAt) {
         contFlag=false;
         if(n_p) 
           extrudeFlag=true;
       }
       if(extrudeFlag) {
+        contigFlag=true;
+        if((a<nAt)&&extrudeFlag) {
+          if(*(s-1)!=*(s))
+            contigFlag=false;
+        }
+
         if(cur_car!=cCartoon_skip) {
           ExtrudeTruncate(ex,n_p);
           ExtrudeComputeTangents(ex);
@@ -1182,7 +1222,7 @@ ENDFD;
         vc = ex->c;
         vn = ex->n;
       }
-    }
+      }
     ExtrudeFree(ex); 
     if((cartoon_debug>0.5)&&(cartoon_debug<2.5)) {
       CGOColor(I->std,1.0,1.0,1.0);

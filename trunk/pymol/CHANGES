@@ -33,9 +33,21 @@ Ongoing Goals
    * draw all solid representations before drawing lines
      in order to improve antialiasing.
 
+Bugs to Fix
+
+   * superpositions system fails with degenerate sets (planer atoms, etc).
+
 Changes up to 0.61
 
-   * move cartoon ribbons improvements -- flat fancy sheets now VERY nice.
+   * bg_color command for easier background adjustments...
+
+   * depth cue menu item and ray_trace_fog linked
+
+   * cartoon_discrete_colors hack for coloring secondary structure properly
+
+   * (ss ...) primitive in selector for selecting helices, etc.
+
+   * many cartoon ribbons improvements -- flat fancy sheets now VERY nice.
 
 Changes up to 0.60
 

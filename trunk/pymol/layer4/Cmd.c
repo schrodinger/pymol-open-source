@@ -131,6 +131,7 @@ static PyObject *CmdAlign(PyObject *self,   PyObject *args);
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
 static PyObject *CmdAttach(PyObject *self, 	PyObject *args);
+static PyObject *CmdBackgroundColor(PyObject *dummy, PyObject *args);
 static PyObject *CmdBond(PyObject *dummy, PyObject *args);
 static PyObject *CmdButton(PyObject *dummy, PyObject *args);
 static PyObject *CmdCartoon(PyObject *self, 	PyObject *args);
@@ -258,6 +259,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"alter",	              CmdAlter,                METH_VARARGS },
 	{"alter_state",           CmdAlterState,           METH_VARARGS },
 	{"attach",                CmdAttach,               METH_VARARGS },
+   {"bg_color",              CmdBackgroundColor,      METH_VARARGS },
 	{"bond",                  CmdBond,                 METH_VARARGS },
    {"button",                CmdButton,               METH_VARARGS },
    {"cartoon",               CmdCartoon,              METH_VARARGS },
@@ -381,6 +383,19 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+
+static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
+{
+  char *str1;
+  PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
+  SettingSetfv(cSetting_bg_rgb,ColorGetNamed(str1));
+  APIExit();
+  Py_INCREF(Py_None);
+  return(Py_None);
+
+}
 
 static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
 {

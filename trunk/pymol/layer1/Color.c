@@ -66,7 +66,8 @@ int ColorGetIndex(char *name)
   int color=-1; /* default for unknown is white */
   int a;
   int i;
-  int wm,best;
+  int wm,best=0;
+
 
   if((name[0]>='0')&&(name[0]<='9'))
     if(sscanf(name,"%d",&i)) 
@@ -101,8 +102,26 @@ void ColorFree(void)
 void ColorInit(void)
 {
   CColor *I=&Color;
+  int a;
+  int set1;
+  float f;
+  float spectrum[13][3] = { 
+    { 1.0, 0.0, 1.0 },
+    { 0.5, 0.0, 1.0 },
+    { 0.0, 0.0, 1.0 },
+    { 0.0, 0.5, 1.0 },
+    { 0.0, 1.0, 1.0 },
+    { 0.0, 1.0, 0.5 },
+    { 0.0, 1.0, 0.0 },
+    { 0.5, 1.0, 0.0 },
+    { 1.0, 1.0, 0.0 },
+    { 1.0, 0.5, 0.0 },
+    { 1.0, 0.0, 0.0 },
+    { 1.0, 0.0, 0.5 },
+    { 1.0, 0.0, 0.5 }
+  };
 
-  I->Color=VLAlloc(ColorRec,100);
+  I->Color=VLAlloc(ColorRec,2500);
   I->NColor=0;
 
   strcpy(I->Color[I->NColor].Name,"white");
@@ -291,37 +310,6 @@ void ColorInit(void)
   I->Color[I->NColor].Color[2]=0.0;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"grey90");
-  I->Color[I->NColor].Color[0]=0.9;
-  I->Color[I->NColor].Color[1]=0.9;
-  I->Color[I->NColor].Color[2]=0.9;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"grey95");
-  I->Color[I->NColor].Color[0]=0.95;
-  I->Color[I->NColor].Color[1]=0.95;
-  I->Color[I->NColor].Color[2]=0.95;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"grey80");
-  I->Color[I->NColor].Color[0]=0.8;
-  I->Color[I->NColor].Color[1]=0.8;
-  I->Color[I->NColor].Color[2]=0.8;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"grey70");
-  I->Color[I->NColor].Color[0]=0.7;
-  I->Color[I->NColor].Color[1]=0.7;
-  I->Color[I->NColor].Color[2]=0.7;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"grey60");
-  I->Color[I->NColor].Color[0]=0.6;
-  I->Color[I->NColor].Color[1]=0.6;
-  I->Color[I->NColor].Color[2]=0.6;
-  I->NColor++;
-
-
   strcpy(I->Color[I->NColor].Name,"tv_red");
   I->Color[I->NColor].Color[0]=1.0;
   I->Color[I->NColor].Color[1]=0.2;
@@ -436,12 +424,6 @@ void ColorInit(void)
   I->Color[I->NColor].Color[2]=0.111;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"chocolate");
-  I->Color[I->NColor].Color[0]=0.555;
-  I->Color[I->NColor].Color[1]=0.222;
-  I->Color[I->NColor].Color[2]=0.111;
-  I->NColor++;
-
   strcpy(I->Color[I->NColor].Name,"brown");
   I->Color[I->NColor].Color[0]=0.555;
   I->Color[I->NColor].Color[1]=0.274;
@@ -454,6 +436,36 @@ void ColorInit(void)
   I->Color[I->NColor].Color[2]=0.65;
   I->NColor++;
 
+  strcpy(I->Color[I->NColor].Name,"grey100"); /* legacy = grey99 */
+  I->Color[I->NColor].Color[0]=1.0;
+  I->Color[I->NColor].Color[1]=1.0;
+  I->Color[I->NColor].Color[2]=1.0;
+  I->NColor++;
+
+  /* greybow */
+
+  for(a=0;a<100;a=a+1) {
+    sprintf(I->Color[I->NColor].Name,"grey%02d",a);
+    I->Color[I->NColor].Color[0]=a/99.0;
+    I->Color[I->NColor].Color[1]=a/99.0;
+    I->Color[I->NColor].Color[2]=a/99.0;
+    I->NColor++;
+  }
+
+  /* full spectrum ("S..." colors) */
+
+  #define A_DIV 90.9091
+
+  for(a=0;a<1000;a=a+1) {
+    set1=(a/A_DIV);
+    sprintf(I->Color[I->NColor].Name,"s%03d",a);
+    f = 1.0-(a-(set1*A_DIV))/A_DIV;
+    I->Color[I->NColor].Color[0]=f*spectrum[set1][0]+(1.0-f)*spectrum[set1+1][0];
+    I->Color[I->NColor].Color[1]=f*spectrum[set1][1]+(1.0-f)*spectrum[set1+1][1];
+    I->Color[I->NColor].Color[2]=f*spectrum[set1][2]+(1.0-f)*spectrum[set1+1][2];
+
+    I->NColor++;
+  }
 
 }
 
