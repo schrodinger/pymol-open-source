@@ -109,6 +109,10 @@ Current Bugs to Fix
 
 Changes up to 0.85
 
+   * updated OpenGL depth_cue setting to more closely match those of raytracer
+
+   * "center" command
+
    * PyMOL no longer wraps output lines by default "set wrap_output=78"
      to get previous behavior
 

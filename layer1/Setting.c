@@ -573,6 +573,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   }
   switch(index) {
   case cSetting_light:
+  case cSetting_fog:
+  case cSetting_fog_start:
 	 SceneDirty();
 	 break;
   case cSetting_stereo_shift:
@@ -1057,7 +1059,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_spheroid_scale, 1.0F);
 
-  SettingSet_f(I,cSetting_ray_trace_fog_start, 0.30F);
+  SettingSet_f(I,cSetting_ray_trace_fog_start, 0.35F);
 
   SettingSet_f(I,cSetting_spheroid_smooth, 1.1F);
 
@@ -1101,7 +1103,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_sphere_quality, 1.0F);
 
-  SettingSet_f(I,cSetting_fog, 0.75F);
+  SettingSet_f(I,cSetting_fog, 1.0F);
 
   SettingSet_f(I,cSetting_isomesh_auto_state, 0.0F); /* no longer necessary? */
 
@@ -1312,6 +1314,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_pdb_literal_names, 0.0);
 
   SettingSet_f(I,cSetting_wrap_output, 0.0);
+
+  SettingSet_f(I,cSetting_fog_start, 0.30F);
 
 }
 

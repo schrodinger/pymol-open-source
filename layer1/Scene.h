@@ -76,6 +76,7 @@ void SceneObjectDel(CObject *obj);
 void SceneOriginSet(float *origin,int preserve);
 void SceneOriginGet(float *origin);
 void SceneWindowSphere(float *location,float radius);
+void SceneRelocate(float *location);
 Block *SceneGetBlock(void);
 void SceneApplyMatrix(float *m);
 void SceneSetStereo(int flag);

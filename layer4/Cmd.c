@@ -175,6 +175,7 @@ static PyObject *CmdBackgroundColor(PyObject *dummy, PyObject *args);
 static PyObject *CmdBond(PyObject *dummy, PyObject *args);
 static PyObject *CmdButton(PyObject *dummy, PyObject *args);
 static PyObject *CmdCartoon(PyObject *self, 	PyObject *args);
+static PyObject *CmdCenter(PyObject *self, PyObject *args);
 static PyObject *CmdClip(PyObject *self, 	PyObject *args);
 static PyObject *CmdCls(PyObject *self, 	PyObject *args);
 static PyObject *CmdColor(PyObject *self, PyObject *args);
@@ -334,6 +335,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"bond",                  CmdBond,                 METH_VARARGS },
    {"button",                CmdButton,               METH_VARARGS },
    {"cartoon",               CmdCartoon,              METH_VARARGS },
+   {"center",                CmdCenter,               METH_VARARGS },
 	{"clip",	                 CmdClip,                 METH_VARARGS },
 	{"cls",	                 CmdCls,                  METH_VARARGS },
 	{"color",	              CmdColor,                METH_VARARGS },
@@ -3747,7 +3749,7 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args)
       SelectorGetTmp(str1,s1);
     else
       s1[0]=0; /* no selection */
-    ok = ExecutiveCenter(s1,1,obj,v,state); /* TODO STATUS */
+    ok = ExecutiveOrigin(s1,1,obj,v,state); /* TODO STATUS */
     if(str1[0])
       SelectorFreeTmp(s1);
     APIExit();
@@ -3807,6 +3809,24 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdCenter(PyObject *self, PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+  int state;
+  int origin;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&origin);
+  if (ok) {
+    APIEntry();
+    SelectorGetTmp(str1,s1);
+    ok = ExecutiveCenter(s1,state,origin);
+    SelectorFreeTmp(s1);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdZoom(PyObject *self, PyObject *args)
 {
   char *str1;
@@ -3819,7 +3839,7 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ok = ExecutiveWindowZoom(s1,buffer,state,inclusive); /* TODO STATUS */
+    ok = ExecutiveWindowZoom(s1,buffer,state,inclusive); 
     SelectorFreeTmp(s1);
     APIExit();
   }

@@ -953,6 +953,7 @@ from viewing import \
      move,               \
      orient,             \
      origin,             \
+     center,             \
      ray,                \
      rebuild,            \
      recolor,            \
@@ -967,7 +968,6 @@ from viewing import \
      view,               \
      viewport,           \
      zoom
-
 
 #--------------------------------------------------------------------
 import setting
@@ -1031,7 +1031,8 @@ keyword = {
    'bond'          : [ bond              , 0 , 0 , ''  , parsing.STRICT ],
    'button'        : [ button            , 0 , 0 , ''  , parsing.STRICT ],
    'cartoon'       : [ cartoon           , 0 , 0 , ''  , parsing.STRICT ],
-   'cd'            : [ cd                , 0 , 0 , ''  , parsing.STRICT ],  
+   'cd'            : [ cd                , 0 , 0 , ''  , parsing.STRICT ],
+   'center'        : [ center            , 0 , 0 , ''  , parsing.STRICT ],     
    'check'         : [ check             , 0 , 0 , ''  , parsing.STRICT ],
    'clip'          : [ clip              , 0 , 0 , ''  , parsing.STRICT ],
    'cls'           : [ cls               , 0 , 0 , ''  , parsing.STRICT ],
@@ -1353,6 +1354,7 @@ auto_arg =[
    'align'          : [ selection_sc           , 'selection'       , ','  ],
    'zoom'           : [ selection_sc           , 'selection'       , ''   ],
    'origin'         : [ selection_sc           , 'selection'       , ''   ],
+   'center'         : [ selection_sc           , 'selection'       , ''   ],   
    'protect'        : [ selection_sc           , 'selection'       , ''   ],
    'deprotect'      : [ selection_sc           , 'selection'       , ''   ],   
    'mask'           : [ selection_sc           , 'selection'       , ''   ],

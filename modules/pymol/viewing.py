@@ -73,7 +73,7 @@ NOTES
 
 SEE ALSO
 
-   origin, orient
+   origin, orient, center
    '''
    # preprocess selection
    selection = selector.process(selection)
@@ -85,6 +85,51 @@ SEE ALSO
       unlock()
    return r
 
+def center(selection="all",state=0,origin=1):
+   '''
+DESCRIPTION
+  
+   "center" translates the window, the clipping slab, and the
+   origin to point centered within the atom selection.
+
+USAGE
+ 
+   center [ selection [,state [, origin]]]
+
+EXAMPLES
+
+   center 145/
+   
+   zoom safe=1
+   zoom (chain A)
+   zoom 142/
+   
+PYMOL API
+
+   cmd.zoom( string selection,int state=0, int safe=0 )
+
+NOTES
+
+   state = 0 (default) use all coordinate states
+   state = -1 use only coordinates for the current state
+   state > 0  use coordinates for a specific state
+
+   origin = 1 (default) move the origin
+   origin = 0 leave the origin unchanged
+
+SEE ALSO
+
+   origin, orient, zoom
+   '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #   
+   try:
+      lock()   
+      r = _cmd.center(str(selection),int(state)-1,int(origin))
+   finally:
+      unlock()
+   return r
 
 clip_action_sc = Shortcut([ 'near','far','move','slab' ])
 

@@ -206,6 +206,7 @@ class SettingIndex:
    cgo_sphere_quality    =189
    pdb_literal_names     =190
    wrap_output           =191
+   fog_start             =192
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

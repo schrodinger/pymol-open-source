@@ -579,6 +579,8 @@ void SceneWindowSphere(float *location,float radius)
 
   /* find where this point is in relationship to the origin */
   subtract3f(I->Origin,location,v0); 
+
+  dist = I->Pos[2];
   /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 
   MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
@@ -589,10 +591,42 @@ void SceneWindowSphere(float *location,float radius)
   dist = radius/tan((fov/2.0)*cPI/180.0);
 
   I->Pos[2]-=dist;
-  I->Front=(-I->Pos[2]-radius*1.4);
+  I->Front=(-I->Pos[2]-radius*1.2);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+radius*1.7);
+  I->Back=(-I->Pos[2]+radius*1.2);
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
+}
+/*========================================================================*/
+void SceneRelocate(float *location)
+{
+  CScene *I=&Scene;
+  float v0[3];
+  float slab_width;
+  float dist;
+
+  dump3f(I->Pos,"pos 0");
+  dump3f(I->Origin,"origin 0");
+  slab_width = I->Back-I->Front;
+
+  /* find out how far camera was from previous origin */
+  MatrixTransform3f(I->RotMatrix,I->Origin,v0); 
+  dist = I->Pos[2];
+
+  /* find where this point is in relationship to the origin */
+  subtract3f(I->Origin,location,v0); 
+
+  /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
+
+  MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
+
+  I->Pos[2]=dist;
+  I->Front=(-I->Pos[2]-(slab_width/2));
+  I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
+  I->Back=(-I->Pos[2]+(slab_width/2));
+
+  dump3f(I->Pos,"pos 1");
+  dump3f(I->Origin,"origin 1");
+
 }
 /*========================================================================*/
 void SceneOriginGet(float *origin)
@@ -1872,6 +1906,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   int nPick,nHighBits,nLowBits;
   int pass;
   float fov;
+  float fog_start;
 
   PRINTFD(FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
@@ -2006,14 +2041,14 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         glMaterialfv(GL_FRONT,GL_SPECULAR,zero); 
       }
       if(SettingGet(cSetting_depth_cue)&&SettingGet(cSetting_fog)) {
+        fog_start = (I->Back-I->FrontSafe)*SettingGet(cSetting_fog_start)+I->FrontSafe;
 #ifdef _PYMOL_3DFX
         if(SettingGet(cSetting_ortho)==0.0) {
 #endif
-          
           glEnable(GL_FOG);
           glFogf(GL_FOG_MODE, GL_LINEAR);
           glHint(GL_FOG_HINT,GL_NICEST);
-          glFogf(GL_FOG_START, I->FrontSafe);
+          glFogf(GL_FOG_START, fog_start);
 #ifdef _PYMOL_3DFX
           if(I->Back>(I->FrontSafe*4.0))
             glFogf(GL_FOG_END, I->Back);

@@ -3275,7 +3275,43 @@ int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive)
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveCenter(char *name,int preserve,char *oname,float *pos,int state)
+int ExecutiveCenter(char *name,int state,int origin)
+{
+  float center[3];
+  float mn[3],mx[3],df[3];
+  int sele0;
+  int ok=true;
+  if(ExecutiveGetExtent(name,mn,mx,true,state)) {
+    subtract3f(mx,mn,df);
+    average3f(mn,mx,center);
+    PRINTFD(FB_Executive)
+      " ExecutiveCenter: centering state %d\n",state
+      ENDFD;
+    PRINTFD(FB_Executive)
+      " ExecutiveCenter: on center %8.3f %8.3f %8.3f...\n",center[0],
+      center[1],center[2]
+      ENDFD;
+    if(origin) 
+      SceneOriginSet(center,false);
+    SceneRelocate(center);
+    SceneDirty();
+  } else {
+    sele0 = SelectorIndexByName(name);
+    if(sele0>=0) {
+      ErrMessage("ExecutiveCenter","selection doesn't specify any coordinates.");
+      ok=false;
+    } else if(ExecutiveValidName(name)) {
+      SceneSetDefaultView();
+      SceneDirty();
+    } else {
+      ErrMessage("ExecutiveCenter","selection or object unknown.");
+      ok=false;
+    }
+  }
+  return(ok);
+}
+/*========================================================================*/
+int ExecutiveOrigin(char *name,int preserve,char *oname,float *pos,int state)
 {
   float center[3];
   float mn[3],mx[3];
