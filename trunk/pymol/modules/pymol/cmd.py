@@ -2251,7 +2251,11 @@ PYMOL API
    if thread.get_ident() == pymol.glutThread:
       r = _cmd.refresh_now()
    else:
-      r = _cmd.do("cmd._refresh()")
+      try:
+         lock()
+         r = _cmd.do("cmd._refresh()")
+      finally:
+         unlock()
    return r
 
 def _refresh(swap_buffers=1):
@@ -2381,12 +2385,18 @@ PYMOL API
  
    cmd.quit()
    '''
-   if thread.get_ident() ==pymol.glutThread:
-      lock()
-      r = _cmd.do("_quit")
+   if thread.get_ident() == pymol.glutThread:
+      try: 
+         lock()
+         r = _cmd.quit()
+      finally:
+         unlock()
    else:
-      r = _cmd.do("_quit")
-      thread.exit()
+      try:
+         lock()
+         r = _cmd.do("_cmd.quit()")
+      finally:
+         unlock()
    return r
 
 def png(a):

@@ -522,9 +522,8 @@ void PFree(void)
 
 void PExit(int code)
 {
-  MainFree();
   PBlock();
-  Py_Finalize();
+  MainFree();
   Py_Exit(code);
 }
 

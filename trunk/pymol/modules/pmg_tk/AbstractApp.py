@@ -178,7 +178,7 @@ class AbstractApp(Pmw.MegaWidget):
 											 Frame, (self._hull,), 
 											 relief=SUNKEN, 
 											 bd=1)
-		self.dataArea.pack(side=LEFT, fill=BOTH, expand=NO,
+		self.dataArea.pack(side=LEFT, fill=BOTH, expand=YES,
 						   padx=1, pady=1)
 
 	def __createCommandArea(self):
@@ -187,12 +187,10 @@ class AbstractApp(Pmw.MegaWidget):
 		   Frame,(self._hull,),relief=SUNKEN,bd=1)
 		self.commandFrame.place(width=500)
 		self.commandFrame.pack(side=TOP, 
-						 expand=YES, 
+						 expand=NO, 
 						 fill=BOTH,
 						 padx=1,
 						 pady=1)
-
-
 
 	def __createMessageBar(self):
 		# Create the message bar area for help and status messages.
