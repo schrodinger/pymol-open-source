@@ -171,7 +171,7 @@ def launching():
    '''
 PyMOL COMMAND LINE OPTIONS 
  
-   pymol.com [-cstwx] <file> ...
+   pymol.com [-cistwx] <file> ...
  
    -c   Command line mode, no GUI at all.
   
@@ -179,8 +179,8 @@ PyMOL COMMAND LINE OPTIONS
  
    -s   Enable stereo mode (not currently autodetected).
   
-   -t   Use Tcl/Tk based external GUI module (pmg_tk)
-   -w   Use wxPython based external GUI module (pmg_wx)
+   -t   Use Tcl/Tk based external GUI module (pmg_tk).
+   -w   Use wxPython based external GUI module (pmg_wx).
  
    -x   Disable the external GUI module.
  
