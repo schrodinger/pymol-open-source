@@ -421,7 +421,6 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ cmd.show_help('release')"))
 
       self.menuBar.addmenuitem('Help', 'separator', '')
-      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Commands',
                                label='Commands',
@@ -1181,6 +1180,10 @@ class PMGApp(AbstractApp):
                                label='Distance',
                                command = lambda: cmd.do("_ wizard distance"))
 
+      self.menuBar.addmenuitem('Wizard', 'command', 'Filter',
+                               label='Filter',
+                               command = lambda: cmd.do("_ wizard filter"))
+
       self.menuBar.addmenuitem('Wizard', 'command', 'Mutagenesis',
                                label='Mutagenesis',
                                command = lambda: cmd.do("_ wizard mutagenesis"))
@@ -1193,6 +1196,8 @@ class PMGApp(AbstractApp):
                                label='Sculpting',
                                command = lambda: cmd.do("_ wizard sculpting"))
 
+      self.menuBar.addmenuitem('Wizard', 'separator', '')
+      
       self.menuBar.addmenuitem('Wizard', 'command', 'Label',
                                label='Label',
                                command = lambda: cmd.do("_ wizard label"))
@@ -1200,6 +1205,7 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Wizard', 'command', 'Charge',
                                label='Charge',
                                command = lambda: cmd.do("_ wizard charge"))
+
 
       self.menuBar.addmenu('Sculpting', 'Sculpting')
 

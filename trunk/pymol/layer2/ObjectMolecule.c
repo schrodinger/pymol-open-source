@@ -742,16 +742,35 @@ int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text)
   if(state<0) state=I->NCSet-1;
   if(state>=I->NCSet) {
     PRINTFB(FB_ObjectMolecule,FB_Errors)
-      "Error: invalid state %d",state 
+      "Error: invalid state %d\n",state +1
       ENDFB;
     
   } else if(!I->CSet[state]) {
     PRINTFB(FB_ObjectMolecule,FB_Errors)
-      "Error: empty state %d",state 
+      "Error: empty state %d\n",state +1
       ENDFB;
   } else {
     UtilNCopy(I->CSet[state]->Name,text,sizeof(WordType));
     result=true;
+  }
+  return(result);
+}
+
+/*========================================================================*/
+char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state)
+{
+  char *result=NULL;
+  if(state<0) state=I->NCSet-1;
+  if(state>=I->NCSet) {
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: invalid state %d\n",state +1
+      ENDFB;
+  } else if(!I->CSet[state]) {
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: empty state %d\n",state +1
+      ENDFB;
+  } else {
+    result = I->CSet[state]->Name;
   }
   return(result);
 }

@@ -776,6 +776,22 @@ int ExecutiveSetTitle(char *name,int state,char *text)
   return(result);
 }
 /*========================================================================*/
+char *ExecutiveGetTitle(char *name,int state)
+{
+  char *result = NULL;
+  ObjectMolecule *obj;
+  obj =ExecutiveFindObjectMoleculeByName(name);
+  if(!obj) {
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: object %s not found.\n",name 
+      ENDFB;
+  } else {
+    result = ObjectMoleculeGetStateTitle(obj,state);
+  }
+  SceneDirty();
+  return(result);
+}
+/*========================================================================*/
 void ExecutiveHideSelections(void)
 {
   CExecutive *I = &Executive;
