@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * fixed major bug in GRD map reading code & added normalization option
+
    * fix potential crasher bug with stick_balls
 
    * SHFT-F# key support, for set_key, scenes, and views

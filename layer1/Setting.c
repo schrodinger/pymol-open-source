@@ -2160,6 +2160,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_overlay_lines,5);
   SettingSet_i(I,cSetting_ray_transparency_spec_cut,0.9F);
   SettingSet_b(I,cSetting_internal_prompt,1);
+  SettingSet_b(I,cSetting_normalize_grd_maps,0);
 
 }
 

@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"P.h"
 #include"ObjectCGO.h"
+#include"Scene.h"
 
 #define ntrim ParseNTrim
 #define nextline ParseNextLine
@@ -1158,7 +1159,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
         {
           CGO *cgo = NULL;
           ObjectCGO *ocgo;
-          int auto_save;
+
           
           cgo=CGONew();
           /*

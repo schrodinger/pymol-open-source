@@ -4844,6 +4844,7 @@ int SelectorCreateOrderedFromObjectIndices(char *sname, ObjectMolecule *obj, int
 {
   return _SelectorCreate(sname,NULL,obj,true,NULL,NULL,0,idx,n_idx);
 }
+int SelectorCreateFromSeqRowVLA(char *sname,CSeqRow *rowVLA,int nRow);
 int SelectorCreateFromSeqRowVLA(char *sname,CSeqRow *rowVLA,int nRow)
 {
   return _SelectorCreate(sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0);
