@@ -154,16 +154,14 @@ if __name__=='pymol.cmd':
 
    def lock(): # INTERNAL
 #      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
-#      lock_api.acquire(1)
       if not lock_api.acquire(0):
          w = 0.001
          while 1:
-            time.sleep(w)
 #            print " lock: ... as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
-#            e = threading.Event() # using this for portable delay
-#            e.wait(w)
-#            del e
-#            print " lock: ... as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)            
+            for a in range(1,10):
+               e = threading.Event() 
+               e.wait(w/10)          # stimulate lagging threads...
+               del e
             if lock_api.acquire(0):
                break
             if w<0.1:
@@ -188,13 +186,11 @@ if __name__=='pymol.cmd':
          if _cmd.wait_queue(): # commands waiting to be executed?
             w = 0.0025 # NOTE: affects API perf. for "do" and delayed-exec
             while 1:
-               a = 0
-               for a in range(1,100):
-                  a = a + 1
-               time.sleep(w)
-#               e = threading.Event() # using this for portable delay
-#               e.wait(w)
-#               del e
+               for a in range(1,10):
+                  e = threading.Event() 
+                  e.wait(w/10.0)   # stimulate lagging threads
+                  del e
+#                  time.sleep(w/10)
                if not _cmd.wait_queue():
                   break
                if w > 0.1: # wait up 0.2 sec max for PyMOL to flush queue

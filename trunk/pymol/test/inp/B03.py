@@ -14,29 +14,40 @@ ent_dir = "pdb/*"
 
 def load():
    try:
+      cmd.set("movie_delay","333")
       cmd.mplay()
       r = 0
       reps = [ "lines", "sticks", "cartoon" ]
       list = glob(ent_dir)
       for dir in list:
          print dir
+         print "deleting"
          cmd.delete("all")
          for file in glob(dir+"/pdb*"):
+            print "loading"
             cmd.load(file)
+            print "refreshing"
             cmd.refresh()
-            cmd.sync()
-            time.sleep(0.1)
+            print "sleeping"
+            time.sleep(0.05)
          cmd.zoom()
          for rep in reps:
+            print "showing"
             cmd.show(rep)
+            print "refreshing"
             cmd.refresh()
-            cmd.sync()
-            time.sleep(0.1)
-         time.sleep(1)
+            print "sleeping"
+            time.sleep(0.05)
+         print "sleeping longer"
+         time.sleep(2)
+         print "next!"
    except:
       traceback.print_exc()
-      
-#time.sleep(4)
+
+# allow the Tcl/Tk GUI time to get out of the way...
+time.sleep(3)
+
+# now start
 load()
 
 
