@@ -966,7 +966,7 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ replace C,4,4"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Carbonyl',
-                               label='Carbonyl',
+                               label='Carbonyl (Alt-0)',
                                command = lambda: cmd.do(
          "_ editor.attach_fragment('pk1','formaldehyde',2,0)"))
 
@@ -975,27 +975,27 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ replace Cl,1,1"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Cyclobutyl',
-                               label='Cyclobutyl',
+                               label='Cyclobutyl (Alt-4)',
                                command = lambda: cmd.do(
          "_ editor.attach_fragment('pk1','cyclobutane',4,0)"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Cyclopentyl',
-                               label='Cyclopentyl',
+                               label='Cyclopentyl (Alt-5)',
                                command = lambda: cmd.do(
          "_ editor.attach_fragment('pk1','cyclopentane',5,0)"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Cyclopentadiene',
-                               label='Cyclopentadiene',
+                               label='Cyclopentadiene (Alt-8)',
                                command = lambda: cmd.do(
            "_ editor.attach_fragment('pk1','cyclopentadiene',5,0)"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Cyclohexyl',
-                               label='Cyclohexyl',
+                               label='Cyclohexyl (Alt-6)',
                                command = lambda: cmd.do(
          "_ editor.attach_fragment('pk1','cyclohexane',7,0)"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Cycloheptyl',
-                               label='Cycloheptyl',
+                               label='Cycloheptyl (Alt-7)',
                                command = lambda: cmd.do(
          "_ editor.attach_fragment('pk1','cycloheptane',8,0)"))
 
@@ -1021,7 +1021,7 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ replace O,4,2"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Phenyl',
-                               label='Phenyl',
+                               label='Phenyl (Alt-9)',
                                command = lambda: cmd.do(
          "_ editor.attach_fragment('pk1','benzene',6,0)"))
 
@@ -1030,7 +1030,7 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ replace S,2,2"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Sulfonyl',
-                               label='Sulfonyl',
+                               label='Sulfonyl (Alt-3)',
                                command = lambda: cmd.do(
          "_ editor.attach_fragment('pk1','sulfone',3,1)"))
 
