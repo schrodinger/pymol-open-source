@@ -60,7 +60,7 @@ clean:
 	/bin/rm -f layer*/*.o layer*/*.p \
 	layer*/.files layer*/.depends layer*/.includes \
 	*.log core */core game.* log.* _pm.def .update .contrib .no_fail*
-#	cd contrib;$(MAKE) clean
+	cd contrib;$(MAKE) clean
 
 distclean: clean
 	touch .no_fail
