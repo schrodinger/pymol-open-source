@@ -190,6 +190,7 @@ if pymol_launch != 3: # if this isn't a dry run
       lock_api = threading.RLock() # mutex for API 
       lock_api_c = threading.RLock() # mutex for C management of python threads
       lock_api_status = threading.RLock() # mutex for PyMOL status info
+      lock_api_glut = threading.RLock() # mutex for avoiding GLUT
       
       def exec_str(s):
          try:
