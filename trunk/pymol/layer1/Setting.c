@@ -487,6 +487,11 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
     SceneChanged();
     break;
+  case cSetting_sphere_quality:
+    ExecutiveInvalidateRep(inv_sele,cRepNonbondedSphere,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvRep);
+    SceneChanged();
+    break;
   case cSetting_nonbonded_size:
     ExecutiveInvalidateRep(inv_sele,cRepNonbonded,cRepInvRep);
     ExecutiveInvalidateRep(inv_sele,cRepNonbondedSphere,cRepInvRep);

@@ -125,7 +125,7 @@ def mroll(first,last,loop=1,axis='y'):
 
 def hbond(a,b,cutoff=3.3):
    st = "(%s and (%s around %4.2f) and elem N,O),(%s and (%s around %4.2f) and elem N,O),%4.2f" % (a,b,cutoff,b,a,cutoff,cutoff)
-   cmd.dist("hbond",st)
+#   cmd.dist("hbond",st)
         
 def mload(*args):
    nam = "mov"
@@ -190,7 +190,7 @@ def b2vdw(*arg):
    # rms = sqrt(b/(8*(PI^2)))
    cmd.alter("(%s)"%sele,"vdw=math.sqrt(b/78.9568352087)")
    
-def phipsi(selection="(pk1)"): # NOT THREAD SAFE
+def phipsi(selection="(pk1)"): # NOT THREAD SAFE - REPLACE this with C for speed
    n_sele =   "((byres (%s)) & name n)"%selection
    c_sele =   "((byres (%s)) & name c)"%selection
    ca_sele =  "((byres (%s)) & name ca)"%selection
@@ -255,6 +255,9 @@ def rainbow(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    
 def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
 
+   print ' util.ss: WARNING: This is not a "correct" secondary structure'
+   print ' util.ss: assignment algorithm!  Please use only as a last resort.'
+   
    cmd.feedback("push")
    cmd.feedback("disable","executive","actions")
    
@@ -265,10 +268,11 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    cas = cmd.index(sss1)
    if not len(cas):
       return
-
+   # set cartoon mode to auto over the selection
+   
    cmd.cartoon("auto",sss1)
 
-   print " util.ss: extracting residue sequence..."
+   print " util.ss: extracting sequence and relationships..."
 
    # get CA list
    
@@ -279,123 +283,412 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
 
    # generate atom-to-residue conversion dictionaries
 
+   ca_dict = {}
    n_dict = {}
    o_dict = {}
-   scr_dict = {}
+   scr_dict = {} # scr = segment,chain,resi 
    pymol._ss.n_dict = n_dict
    pymol._ss.o_dict = o_dict
    pymol._ss.scr_dict = scr_dict
-   cmd.iterate(sss1,'_ss.scr_dict[(model,index)]=(segi,chain,resi)')
-   cmd.iterate("((byres "+sss1+") and n;n)",'_ss.n_dict[(segi,chain,resi)] = (model,index)')
-   cmd.iterate("((byres "+sss1+") and n;o)",'_ss.o_dict[(segi,chain,resi)] = (model,index)')
+   pymol._ss.ca_dict = ca_dict
+   cmd.iterate(sss1,
+               '_ss.scr_dict[(model,index)]=(segi,chain,resi)') # CA's
+   cmd.iterate("((byres "+sss1+") and n;n)"
+               ,'_ss.scr_dict[(model,index)]=(segi,chain,resi)') # N's
+   cmd.iterate("((byres "+sss1+") and n;o)",
+               '_ss.scr_dict[(model,index)]=(segi,chain,resi)') # O's
+   cmd.iterate(sss1,
+               '_ss.ca_dict[(segi,chain,resi)] = (model,index)')
+   cmd.iterate("((byres "+sss1+") and n;n)",
+               '_ss.n_dict[(segi,chain,resi)] = (model,index)')
+   cmd.iterate("((byres "+sss1+") and n;o)",
+               '_ss.o_dict[(segi,chain,resi)] = (model,index)')
 
-   # find gaps
+   scr_dict[None]=None
+   o_dict[None]=None
+   n_dict[None]=None
+   ca_dict[None]=None
+   
+   # create special version of cas with gaps
 
-   gap_list = [None,None,None,None]  # large enough to distinguish i+4 interations from gaps
+   gap = [None,None,None,None]  
+   # gap large enough to distinguish i+4 interations from gaps
    last = None
    for a in res_list:
       if last!=None:
          if(cmd.count_atoms(
             "((neighbor(neighbor(neighbor (%s`%d)))) and (%s`%d))"%
             (last[0],last[1],a[0],a[1]),quiet=1)==0):
-            gap_list.extend([None,None,None,None])
-         gap_list.append(a)
+            gap.extend([None,None,None,None])
+      gap.append(a)
       last = a
-   gap_list.extend([None,None,None,None])
+   gap.extend([None,None,None,None])
 
-   print " util.ss: analyzing phi/psi angles..."
+   print " util.ss: analyzing phi/psi angles (slow)..."
 
+   # generate reverse-lookup for gap indices
+
+   ss = {}
+
+   c = 0
+   gap_idx = {}
+   for a in gap:
+      gap_idx[a] = c
+      c = c + 1
+
+   # secondary structure database...
+   
    ss = {}
    ss[None]=None
    
-   # intialize all residues to loop
-   
-   for a in cas:
-      ss[a] = 'L'
-      
    # make decisions based on phi/psi
 
    for a in cas:
       (phi,psi) = phipsi("(%s`%d)"%(a[0],a[1]))
+#      print scr_dict[a],(phi,psi)
       if (phi!=None) and (psi!=None):
-         if ((phi<-45) and (phi>-160) and (psi>90)): # beta?
-            ss[a]='S'
+         if ((phi<-45) and (phi>-160) and
+             (psi<-170) or (psi>10)): # beta?
+            ss[a] = 's'
          elif ((phi<-45) and (phi>-160) and
-               (psi>-80) and (psi<-30)): # helix?
-            ss[a]='H'
-
+               (psi>-80) and (psi<-25)): # helix?
+            ss[a] = 'H'
+         else: 
+            ss[a] = 'L'
+      else:
+         ss[a] = 'L'
+            
+   print " util.ss: finding hydrogen bonds..."
+   
    # find all pairwise hydrogen bonds and make note of them in dict
 
    hb = cmd.find_pairs("((byres "+sss1+") and n;n)",
-                       "((byres "+sss1+") and n;o)",mode=1,angle=35)
-   hb_dict = {}
+                       "((byres "+sss1+") and n;o)",mode=1,cutoff=3.7,angle=55)
+   hb_dict = {}  # [((N-atom) (O-atom))] = 1
+   n_hb_dict = {} # [(N-atom)] = [(O-atom),...]
+   o_hb_dict = {} # [(O-atom)] = [(N-atom),...]
    for a in hb:
+#      cmd.dist("(%s`%d)"%a[0],"(%s`%d)"%a[1])
       hb_dict[a] = 1
-      print a
+      n = a[0]
+      o = a[1]
+      if not n_hb_dict.has_key(n): n_hb_dict[n]=[]
+      if not o_hb_dict.has_key(o): o_hb_dict[o]=[]
+      n_hb_dict[n].append(o)
+      o_hb_dict[o].append(n)
 
    # check to insure that all helical residues have at least an i +/- 4
    # hydrogen bond
 
-   for c in xrange(4,len(cas)-4):
-      a = cas[c]
+   for c in xrange(4,len(gap)-4):
+      a = gap[c]
       if ss[a]=='H':
          aN = n_dict[scr_dict[a]]
          aO = o_dict[scr_dict[a]]
-         am4O = o_dict[scr_dict[cas[c-4]]]
-         ap4N = n_dict[scr_dict[cas[c+4]]]
+         am4O = o_dict[scr_dict[gap[c-4]]]
+         ap4N = n_dict[scr_dict[gap[c+4]]]
          if not hb_dict.has_key((aN,am4O)):
             if not hb_dict.has_key((ap4N,aO)):
                ss[a]='L'
 
-   # extend helices if hydrogen bonding requirements are met
+   print " util.ss: verifying beta sheets..."
+   
+   # check to insure that all beta residues have proper interactions
 
+   rep_dict = {}
    repeat = 1
    while repeat:
       repeat = 0
-      for c in xrange(4,len(cas)-4):
-         if ss[cas[c+1]]=='H': 
-            a = cas[c]
-            if ss[a]!='H': # N-terminal end
-               aO = o_dict[scr_dict[a]]
-               ap4N = n_dict[scr_dict[cas[c+4]]]
-               if hb_dict.has_key((ap4N,aO)):
-                  ss[a]='H'
-                  repeat = 1
-         if ss[cas[c-1]]=='H':
-            a = cas[c]
-            if ss[a]!='H': # C-terminal end
-               aN = n_dict[scr_dict[a]]
-               am4O = o_dict[scr_dict[cas[c-4]]]
-               if hb_dict.has_key((aN,am4O)):
-                  ss[a]='H'
-                  repeat = 1
+      c = 4
+      cc = len(gap)-4
+      while c<cc:
+         a1 = gap[c]
+         if (ss[a1] in ['s','S']) and not rep_dict.has_key(a1):
+            rep_dict[a1] = 1
+            valid = 0
+            scr_a1 = scr_dict[a1]
+            # look for antiparallel 2:2 H-bonds (NH-O=C + C=O-HN) 
+            n_a1_atom = n_dict[scr_a1]
+            o_a1_atom = o_dict[scr_a1]
+            if (n_hb_dict.has_key(n_a1_atom) and 
+                o_hb_dict.has_key(o_a1_atom)):
+               for n_hb_atom in n_hb_dict[n_a1_atom]:
+                  for o_hb_atom in o_hb_dict[o_a1_atom]:
+                     n_hb_scr = scr_dict[n_hb_atom]
+                     o_hb_scr = scr_dict[o_hb_atom]
+                     if o_hb_scr == n_hb_scr:
+                        b1 = ca_dict[o_hb_scr]
+                        if abs(c-gap_idx[b1])>2:
+                           ss[b1] = 'S' 
+                           ss[a1] = 'S' 
+                           valid = 1
+            # look for antiparallel offset HB (i,i+2,j,j-2)
+            a3 = gap[c+2]
+            if (a3!=None):
+               scr_a3 = scr_dict[a3]
+               o_a1_atom = o_dict[scr_a1]
+               n_a3_atom = n_dict[scr_a3]
+               if (n_hb_dict.has_key(n_a3_atom) and
+                   o_hb_dict.has_key(o_a1_atom)):               
+                  for n_hb_atom in n_hb_dict[n_a3_atom]:
+                     for o_hb_atom in o_hb_dict[o_a1_atom]:
+                        n_hb_scr = scr_dict[n_hb_atom]
+                        o_hb_scr = scr_dict[o_hb_atom]
+                        b1 = ca_dict[o_hb_scr]
+                        if b1!=None:
+                           b1_i = gap_idx[b1]
+                           if abs(c-b1_i)>2: # no turns!
+                              b3 = gap[b1_i-2]
+                              if b3!=None:
+                                 b3_scr = scr_dict[b3]
+                                 if b3_scr == n_hb_scr:
+                                    a2 = gap[c+1]
+                                    b2 = gap[gap_idx[b1]-1]
+                                    ss[b1] = 'S'
+                                    ss[b3] = 'S'
+                                    ss[a1] = 'S'
+                                    ss[a3] = 'S'
+                                    if ss[a2]=='L': ss[a2] = 's'
+                                    if ss[b2]=='L': ss[b2] = 's'
+                                    valid = 1
+            # look for antiparallel offset HB (i,i-2,j,j+2)
+            a3 = gap[c-2]
+            if (a3!=None):
+               scr_a3 = scr_dict[a3]
+               n_a1_atom = n_dict[scr_a1]
+               o_a3_atom = o_dict[scr_a3]
+               if (n_hb_dict.has_key(n_a1_atom) and
+                   o_hb_dict.has_key(o_a3_atom)):               
+                  for n_hb_atom in n_hb_dict[n_a1_atom]:
+                     for o_hb_atom in o_hb_dict[o_a3_atom]:
+                        n_hb_scr = scr_dict[n_hb_atom]
+                        o_hb_scr = scr_dict[o_hb_atom]
+                        b1 = ca_dict[o_hb_scr]
+                        if b1!=None:
+                           b1_i = gap_idx[b1]
+                           if abs(c-b1_i)>2: # no turns!
+                              b3 = gap[b1_i-2]
+                              if b3!=None:
+                                 b3_scr = scr_dict[b3]
+                                 if b3_scr == n_hb_scr:
+                                    a2 = gap[c-1]
+                                    b2 = gap[gap_idx[b1]-1]
+                                    ss[b1] = 'S'
+                                    ss[b3] = 'S'
+                                    ss[a1] = 'S'
+                                    ss[a3] = 'S'
+                                    if ss[a2]=='L': ss[a2] = 's'
+                                    if ss[b2]=='L': ss[b2] = 's'
+                                    valid = 1
+            # look for parallel 1:3 HB (i,j-1,j+1)
+            n_a1_atom = n_dict[scr_a1]
+            o_a1_atom = o_dict[scr_a1]
+            if (n_hb_dict.has_key(n_a1_atom) and
+                o_hb_dict.has_key(o_a1_atom)):
+               for n_hb_atom in n_hb_dict[n_a1_atom]:
+                  for o_hb_atom in o_hb_dict[o_a1_atom]:
+                     n_hb_scr = scr_dict[n_hb_atom]
+                     o_hb_scr = scr_dict[o_hb_atom]
+                     b0 = ca_dict[n_hb_scr]
+                     if b0!=None:
+                        b2 = gap[gap_idx[b0]+2]
+                        if b2!=None:
+                           b2_scr = scr_dict[b2]
+                           if b2_scr == o_hb_scr:
+                              b1 = gap[gap_idx[b0]+1]
+                              ss[a1] = 'S' 
+                              ss[b0] = 'S'
+                              if ss[b1]=='L': ss[b1]='s'
+                              ss[b2] = 'S'
+                              valid = 1
+                              repeat = 1
+            if not valid:
+               ss[a1] = 'L'
+         c = c + 1
 
-   # check to insure that all beta residues have at least a pair
-   # of interacting pairs
+   # automatically fill 1 residue gaps in helices and well-defined sheets
+   c = 4
+   cc = len(gap)-6
+   while c<cc:
+      a1 = gap[c]
+      a3 = gap[c+2]
+      ss_a1 = ss[a1]
+      ss_a3 = ss[a3]
+      if (ss_a1==ss_a3) and (ss_a1 in ['S','H']):
+         a2 = gap[c+1]
+         ss[a2] = ss_a1
+      c = c + 1
 
-   if 0:
-      for c in xrange(4,len(cas)-4):
-         a = cas[c]
-         if ss[a]=='S':
-            print c,cas[c]
-            aN = n_dict[scr1]
-            aO = o_dict[scr1]
-            aS = scr_dict[a]
-            aSp1 = cas[c+1]
-            aSm1 = cas[c-1]
-            found = 0
-            # antiparallel, Na->Ob, Nb+2->Oa-2
-            if not found:
+   # remove singleton sheet residues
+   c = 4
+   cc = len(gap)-4
+   while c<cc:
+      a0 = gap[c-1]
+      a1 = gap[c]
+      a2 = gap[c+1]
+      if ss[a1] in ['s','S']:
+         if ((not ss[a0] in ['s','S']) and
+             (not ss[a2] in ['s','S'])):
+             ss[a1] = 'L'
+      c = c + 1
 
-               am1O = o_dict[scr_dict[cas[c-4]]]
-               ap1N = n_dict[scr_dict[cas[c+4]]]
-               if not hb_dict.has_key((aN,am4O)):
-                  if not hb_dict.has_key((ap4N,aO)):
-                     ss[a]='L'
+   # remove sheet residues which aren't next to another sheet 
+   c = 4
+   cc = len(gap)-4
+   while c<cc:
+      a1 = gap[c]
+      if ss[a1]=='S':
+         a1 = gap[c]
+         scr_a1 = scr_dict[a1]
+         # look for antiparallel 2:2 H-bonds (NH-O=C + C=O-HN) 
+         n_a1_atom = n_dict[scr_a1]
+         o_a1_atom = o_dict[scr_a1]
+         certain = 0
+         if n_hb_dict.has_key(n_a1_atom):
+            for n_hb_atom in n_hb_dict[n_a1_atom]:
+               n_hb_ca_atom=ca_dict[scr_dict[n_hb_atom]]
+               if ss[n_hb_ca_atom]=='S':
+                  certain = 1
+                  break
+         if o_hb_dict.has_key(o_a1_atom):
+            for o_hb_atom in o_hb_dict[o_a1_atom]:
+               o_hb_ca_atom=ca_dict[scr_dict[o_hb_atom]]
+               if ss[o_hb_ca_atom]=='S':
+                  certain = 1
+                  break
+         if not certain:
+            ss[a1] = 's'
+      c = c + 1
 
-   
+   # remove questionable sheet residues
+   c = 4
+   cc = len(gap)-4
+   while c<cc:
+      a0 = gap[c-1]
+      a1 = gap[c]
+      a2 = gap[c+1]
+      if ss[a1]=='s':
+         if (not ((ss[a0]=='S') and (ss[a2]=='S'))):
+            ss[a1] = 'L'
+      c = c + 1
+
+   # extend helices if hydrogen bonding requirements are met
+   rep_dict = {}
+   repeat = 1
+   while repeat:
+      repeat = 0
+      c = 4
+      cc = len(gap)-4
+      while c<cc:
+         a = gap[c]
+         if not rep_dict.has_key(a):
+            if ss[gap[c+1]]=='H':
+               rep_dict[a] = 1
+               if ss[a]!='H': # N-terminal end
+                  aO = o_dict[scr_dict[a]]
+                  ap4N = n_dict[scr_dict[gap[c+4]]]
+                  ap3N = n_dict[scr_dict[gap[c+3]]]
+                  if hb_dict.has_key((ap4N,aO)) or hb_dict.has_key((ap3N,aO)):
+                     ss[a]='H'
+                     repeat = 1
+                     c = c - 5
+                     if c<4: c=4
+            if ss[gap[c-1]]=='H':
+               a = gap[c]
+               if ss[a]!='H': # C-terminal end
+                  rep_dict[a] = 1
+                  aN = n_dict[scr_dict[a]]
+                  am4O = o_dict[scr_dict[gap[c-4]]]
+                  am3O = o_dict[scr_dict[gap[c-3]]]
+                  if hb_dict.has_key((aN,am4O)) or hb_dict.has_key((aN,am3O)):
+                     ss[a]='H'
+                     repeat = 1
+                     c = c - 5
+                     if c<4: c=4
+         c = c + 1
+
+   # remove doubleton helices
+
+   c = 4
+   cc = len(gap)-5
+   while c<cc:
+      a0 = gap[c-1]
+      a1 = gap[c]
+      a2 = gap[c+1]
+      a3 = gap[c+2]
+      ss_a0 = ss[gap[c-1]]
+      ss_a1 = ss[gap[c]]
+      ss_a2 = ss[gap[c+1]]
+      ss_a3 = ss[gap[c+2]]
+      if ss_a1=='H':
+         if (ss_a2==ss_a1) and (ss_a0!=ss_a2) and (ss_a2!=ss_a3):
+            ss[a1] = 'L'
+            ss[a2] = 'L'
+      c = c + 1
+
+   for x in range(1,3):
+      # remove singleton sheet residues
+      c = 4
+      cc = len(gap)-4
+      while c<cc:
+         a0 = gap[c-1]
+         a1 = gap[c]
+         a2 = gap[c+1]
+         if ss[a1] in ['s','S']:
+            if ((not ss[a0] in ['s','S']) and
+                (not ss[a2] in ['s','S'])):
+                ss[a1] = 'L'
+         c = c + 1
+
+      # remove sheet residues which aren't next to another sheet 
+      c = 4
+      cc = len(gap)-4
+      while c<cc:
+         a1 = gap[c]
+         if ss[a1]=='S':
+            a1 = gap[c]
+            scr_a1 = scr_dict[a1]
+            # look for antiparallel 2:2 H-bonds (NH-O=C + C=O-HN) 
+            n_a1_atom = n_dict[scr_a1]
+            o_a1_atom = o_dict[scr_a1]
+            certain = 0
+            if n_hb_dict.has_key(n_a1_atom):
+               for n_hb_atom in n_hb_dict[n_a1_atom]:
+                  n_hb_ca_atom=ca_dict[scr_dict[n_hb_atom]]
+                  if ss[n_hb_ca_atom]=='S':
+                     certain = 1
+                     break
+            if o_hb_dict.has_key(o_a1_atom):
+               for o_hb_atom in o_hb_dict[o_a1_atom]:
+                  o_hb_ca_atom=ca_dict[scr_dict[o_hb_atom]]
+                  if ss[o_hb_ca_atom]=='S':
+                     certain = 1
+                     break
+            if not certain:
+               ss[a1] = 's'
+         c = c + 1
+
+      # remove questionable sheet residues
+      c = 4
+      cc = len(gap)-4
+      while c<cc:
+         a0 = gap[c-1]
+         a1 = gap[c]
+         a2 = gap[c+1]
+         if ss[a1]=='s':
+            if (not ((ss[a0]=='S') and (ss[a2]=='S'))):
+               ss[a1] = 'L'
+         c = c + 1
+
+#      lst = ss.keys()
+#      lst.sort()
+#      for a in lst: print scr_dict[a],ss[a]
+      
    # assign protein
-   
+   for a in cas:
+      if ss[a]=='s':
+         ss[a]='S'
+      
    cmd.alter(sss1,"ss ='L'")
    for a in cas:
       if ss[a]!='L':

@@ -213,23 +213,27 @@ ENDFD;
                   nAt++;
                   *(i++)=a;
                   cur_car = obj->AtomInfo[a1].cartoon;
-                  if (cur_car==cCartoon_auto) {
-                    switch (obj->AtomInfo[a1].ssType[0]) {
-                    case 'H':
-                    case 'h':
+                  switch (obj->AtomInfo[a1].ssType[0]) {
+                  case 'H':
+                  case 'h':
+                    if (cur_car==cCartoon_auto) {
                       cur_car = cCartoon_oval;
-                      *hel=true;
-                      break;
-                    case 'S':
-                    case 's':
-                      cur_car = cCartoon_rect;
-                      *hel=false;
-                      break;
-                    default: /* 'L', 'T', 0, etc. */
-                      cur_car = cCartoon_loop;
-                      *hel=false;
-                      break;
                     }
+                    *hel=true;
+                    break;
+                  case 'S':
+                  case 's':
+                    if (cur_car==cCartoon_auto) {
+                      cur_car = cCartoon_rect;
+                    }
+                    *hel=false;
+                    break;
+                  default: /* 'L', 'T', 0, etc. */
+                    if (cur_car==cCartoon_auto) {
+                      cur_car = cCartoon_loop;
+                    }
+                    *hel=false;
+                    break;
                   }
                   *(cc++)=cur_car;
                   v1 = cs->Coord+3*a;
@@ -379,6 +383,7 @@ ENDFD;
         v3 = NULL;
         v4 = NULL;
         v5 = NULL;
+        s = seg;
         v = pv;
         hel = helix;
         vo = pvo;
@@ -386,6 +391,16 @@ ENDFD;
         last = 0;
         if(nAt>1) {
           for(a=0;a<nAt;a++) {
+            if(a) {
+              if(*s!=*(s-1)) { /* contiguous helices in disconnected segments */
+                v1 = NULL;
+                v2 = NULL;
+                v3 = NULL;
+                v4 = NULL;
+                v5 = NULL;
+                last = 0;
+              }
+            }
             v5 = v4;
             v4 = v3;
             v3 = v2;
@@ -463,6 +478,7 @@ ENDFD;
             hel++;
             vo+=3;
             v0+=3;
+            s++;
           }
         }
       }
