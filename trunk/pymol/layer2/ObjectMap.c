@@ -326,7 +326,9 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
     ObjectMapFree(I);
     I=NULL;
   } else {
-    printf(" ObjectMap: Map created.");
+    PRINTFB(FB_ObjectMap,FB_Actions) 
+      " ObjectMap: Map created.\n"
+      ENDFB;
   }
   
   return(I);

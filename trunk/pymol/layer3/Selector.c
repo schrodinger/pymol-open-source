@@ -1344,6 +1344,365 @@ int SelectorMapMaskVDW(int sele1,ObjectMap *oMap,float buffer)
 
 
 /*========================================================================*/
+int SelectorMapGaussian(int sele1,ObjectMap *oMap,float buffer)
+{
+  SelectorType *I=&Selector;
+  MapType *map;
+  float *v2;
+  int n1,n2;
+  int a,b,c,i,j,h,k,l;
+  int at;
+  int s,idx;
+  AtomInfoType *ai;
+  ObjectMolecule *obj;
+  CoordSet *cs;
+  int state1;
+  float *point=NULL,*fp;
+  int *sfidx=NULL,*ip;
+  int prot;
+  float d,e_val;
+  double sum,sumsq;
+  float mean,stdev;  
+  float sf[256][9],*sfp;
+
+  for(a=0;a<256;a++) {
+    sf[256][0]=-1.0;
+  }
+
+  sf[cAN_H][0] =  0.493002;
+  sf[cAN_H][1] = 10.510900;
+  sf[cAN_H][2] =  0.322912;
+  sf[cAN_H][3] = 26.125700;
+  sf[cAN_H][4] =  0.140191;
+  sf[cAN_H][5] =  3.142360;
+  sf[cAN_H][6] =  0.040810;
+  sf[cAN_H][7] = 57.799698;
+  sf[cAN_H][8] = 13.166500;
+
+  sf[cAN_C][0] =  2.310000;
+  sf[cAN_C][1] = 20.843899;
+  sf[cAN_C][2] =  1.020000;
+  sf[cAN_C][3] = 10.207500;
+  sf[cAN_C][4] =  1.588600;
+  sf[cAN_C][5] =  0.568700;
+  sf[cAN_C][6] =  0.865000;
+  sf[cAN_C][7] = 51.651199;
+  sf[cAN_C][8] =  0.215600;
+
+  sf[cAN_O][0] =  3.048500;
+  sf[cAN_O][1] =  13.277100;
+  sf[cAN_O][2] =  2.286800;
+  sf[cAN_O][3] =  5.701100;
+  sf[cAN_O][4] =  1.546300;
+  sf[cAN_O][5] =  0.323900;
+  sf[cAN_O][6] =  0.867000;
+  sf[cAN_O][7] =  32.908897;
+  sf[cAN_O][8] =  0.250800;
+
+  sf[cAN_N][0] = 12.212600;
+  sf[cAN_N][1] =  0.005700;
+  sf[cAN_N][2] =  3.132200;
+  sf[cAN_N][3] =  9.893300;
+  sf[cAN_N][4] =  2.012500;
+  sf[cAN_N][5] = 28.997499;
+  sf[cAN_N][6] =  1.166300;
+  sf[cAN_N][7] =  0.582600;
+  sf[cAN_N][8] = -11.528999;
+  
+  sf[cAN_S][0] =  6.905300;
+  sf[cAN_S][1] =  1.467900;
+  sf[cAN_S][2] =  5.203400;
+  sf[cAN_S][3] = 22.215099;
+  sf[cAN_S][4] =  1.437900;
+  sf[cAN_S][5] =  0.253600;
+  sf[cAN_S][6] =  1.586300;
+  sf[cAN_S][7] = 56.172001;
+  sf[cAN_S][8] =  0.866900;
+
+  sf[cAN_Cl][0] = 11.460400;
+  sf[cAN_Cl][1] =  0.010400; 
+  sf[cAN_Cl][2] =  7.196400;
+  sf[cAN_Cl][3] =  1.166200;
+  sf[cAN_Cl][4] =  6.255600;
+  sf[cAN_Cl][5] = 18.519400;
+  sf[cAN_Cl][6] =  1.645500;
+  sf[cAN_Cl][7] = 47.778400;
+  sf[cAN_Cl][8] =  0.866900;
+
+  sf[cAN_Br][0] = 17.178900;
+  sf[cAN_Br][1] =  2.172300;
+  sf[cAN_Br][2] =  5.235800;
+  sf[cAN_Br][3] = 16.579599;
+  sf[cAN_Br][4] =  5.637700;
+  sf[cAN_Br][5] =  0.260900;
+  sf[cAN_Br][6] =  3.985100;
+  sf[cAN_Br][7] = 41.432800;
+  sf[cAN_Br][8] =  2.955700;
+
+  sf[cAN_I][0] = 20.147200;
+  sf[cAN_I][1] = 4.347000;
+  sf[cAN_I][2] = 18.994900;
+  sf[cAN_I][3] = 0.381400;
+  sf[cAN_I][4] = 7.513800;
+  sf[cAN_I][5] = 27.765999;
+  sf[cAN_I][6] = 2.273500;
+  sf[cAN_I][7] = 66.877602;
+  sf[cAN_I][8] = 4.071200;
+  
+  sf[cAN_F][0] = 3.539200;
+  sf[cAN_F][1] = 10.282499;
+  sf[cAN_F][2] = 2.641200;
+  sf[cAN_F][3] = 4.294400;
+  sf[cAN_F][4] = 1.517000;
+  sf[cAN_F][5] = 0.261500;
+  sf[cAN_F][6] = 1.024300;
+  sf[cAN_F][7] = 26.147600;
+  sf[cAN_F][8] = 0.277600;
+  
+  sf[cAN_K][0] =   8.218599;
+  sf[cAN_K][1] =  12.794900;
+  sf[cAN_K][2] =   7.439800;
+  sf[cAN_K][3] =   0.774800;
+  sf[cAN_K][4] =   1.051900;
+  sf[cAN_K][5] = 213.186996;
+  sf[cAN_K][6] =    0.865900;
+  sf[cAN_K][7] =   41.684097;
+  sf[cAN_K][8] =    1.422800;
+  
+  sf[cAN_Mg][0] = 5.420400;
+  sf[cAN_Mg][1] = 2.827500;
+  sf[cAN_Mg][2] = 2.173500;
+  sf[cAN_Mg][3] = 79.261101;
+  sf[cAN_Mg][4] =  1.226900;
+  sf[cAN_Mg][5] = 0.380800;
+  sf[cAN_Mg][6] =  2.307300;
+  sf[cAN_Mg][7] = 7.193700;
+  sf[cAN_Mg][8] = 0.858400;
+
+  sf[cAN_Na][0] = 4.762600;
+  sf[cAN_Na][1] = 3.285000;
+  sf[cAN_Na][2] = 3.173600;
+  sf[cAN_Na][3] = 8.842199;
+  sf[cAN_Na][4] = 1.267400;
+  sf[cAN_Na][5] = 0.313600;
+  sf[cAN_Na][6] = 1.112800;
+  sf[cAN_Na][7] = 129.423996;
+  sf[cAN_Na][8] = 0.676000;
+
+  sf[cAN_P][0] = 6.434500;
+  sf[cAN_P][1] = 1.906700;
+  sf[cAN_P][2] = 4.179100;
+  sf[cAN_P][3] = 27.157000;
+  sf[cAN_P][4] =  1.780000;
+  sf[cAN_P][5] =  0.526000;
+  sf[cAN_P][6] =  1.490800;
+  sf[cAN_P][7] = 68.164497;
+  sf[cAN_P][8] = 1.114900;
+  
+  sf[cAN_Zn][0] = 14.074300;
+  sf[cAN_Zn][1] = 3.265500;
+  sf[cAN_Zn][2] = 7.031800;
+  sf[cAN_Zn][3] = 0.233300;
+  sf[cAN_Zn][4] = 5.162500;
+  sf[cAN_Zn][5] = 10.316299;
+  sf[cAN_Zn][6] = 2.410000;
+  sf[cAN_Zn][7] = 58.709702;
+  sf[cAN_Zn][8] = 1.304100;
+  
+  sf[cAN_Ca][0] = 8.626600;
+  sf[cAN_Ca][1] = 10.442100;
+  sf[cAN_Ca][2] = 7.387300;
+  sf[cAN_Ca][3] = 0.659900;
+  sf[cAN_Ca][4] = 1.589900;
+  sf[cAN_Ca][5] = 85.748398;
+  sf[cAN_Ca][6] = 1.021100;
+  sf[cAN_Ca][7] = 178.436996;
+  sf[cAN_Ca][8] = 1.375100;
+  
+  sf[cAN_Cu][0] = 13.337999;
+  sf[cAN_Cu][1] = 3.582800;
+  sf[cAN_Cu][2] = 7.167600;
+  sf[cAN_Cu][3] = 0.247000;
+  sf[cAN_Cu][4] = 5.615800;;
+  sf[cAN_Cu][5] = 11.396600;
+  sf[cAN_Cu][6] = 1.673500;
+  sf[cAN_Cu][7] = 64.812599;
+  sf[cAN_Cu][8] = 1.191000;
+  
+  sf[cAN_Fe][0] = 11.769500;
+  sf[cAN_Fe][1] = 4.761100;
+  sf[cAN_Fe][2] = 7.357300;
+  sf[cAN_Fe][3] = 0.307200;
+  sf[cAN_Fe][4] = 3.522200;
+  sf[cAN_Fe][5] = 15.353500;
+  sf[cAN_Fe][6] = 2.304500;
+  sf[cAN_Fe][7] = 76.880501;
+  sf[cAN_Fe][8] = 1.036900;
+  
+
+  /* 
+  sf[cAN_Se][0] = 17.000599;
+  sf[cAN_Se][1] = 2.409800;
+  sf[cAN_Se][2] = 5.819600;
+  sf[cAN_Se][3] = 0.272600;
+   */    
+
+  buffer+=MAX_VDW;
+  c=0;
+  n1=0;
+  SelectorUpdateTable();
+  n1=0;
+  for(a=0;a<I->NAtom;a++) {
+    at=I->Table[a].atom;
+    obj=I->Obj[I->Table[a].model];
+    s=obj->AtomInfo[at].selEntry;
+    if(SelectorIsMember(s,sele1))
+      {
+        for(state1=0;state1<obj->NCSet;state1++) {
+          if(state1<obj->NCSet) 
+            cs=obj->CSet[state1];
+          else
+            cs=NULL;
+          if(cs) {
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[at])
+                idx=obj->DiscreteAtmToIdx[at];
+              else
+                idx=-1;
+            } else 
+              idx=cs->AtmToIdx[at];
+            if(idx>=0) {
+              n1++;
+            }
+          }
+        }
+      }
+  }
+  point=Alloc(float,3*n1);
+  sfidx=Alloc(int,n1);
+  fp=point;
+  ip=sfidx;
+  for(a=0;a<I->NAtom;a++) {
+    at=I->Table[a].atom;
+    obj=I->Obj[I->Table[a].model];
+    ai=obj->AtomInfo + at;
+    s=ai->selEntry;
+    if(SelectorIsMember(s,sele1))
+      {
+
+        for(state1=0;state1<obj->NCSet;state1++) {
+
+          if(state1<obj->NCSet) 
+            cs=obj->CSet[state1];
+          else
+            cs=NULL;
+          if(cs) {
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[at])
+                idx=obj->DiscreteAtmToIdx[at];
+              else
+                idx=-1;
+            } else 
+              idx=cs->AtmToIdx[at];
+            if(idx>=0) {
+              copy3f(cs->Coord+(3*idx),fp);
+              fp+=3;
+              prot = ai->protons;
+              if(sf[prot][0]==-1.0)
+                prot=cAN_C;
+              *(ip++)=prot;
+            }
+          }
+        }
+      }
+  }
+
+  PRINTFB(FB_ObjectMap,FB_Details)
+    " ObjectMap: Computing Gaussian map for %d atom positions.\n",n1
+    ENDFB;
+  /* now create and apply voxel map */
+  c=0;
+  if(n1) {
+	 n2=0;
+	 map=MapNew(-(buffer),point,n1,NULL);
+	 if(map) {
+		MapSetupExpress(map);
+      sum = 0.0;
+      sumsq = 0.0;
+      for(a=oMap->Min[0];a<oMap->Max[0];a++) {      
+        for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
+          for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
+            e_val=0.0;
+            v2 = F4Ptr(oMap->Field->points,a,b,c,0);
+
+            if(MapExclLocus(map,v2,&h,&k,&l)) {
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
+
+                j=map->EList[i++];
+                while(j>=0) {
+                  d = diff3f(point+3*j,v2);
+                  if(d<buffer) {
+
+                    d=d*d;
+                    if(d<R_SMALL8) d=R_SMALL8;
+                    sfp=sf[sfidx[j]];
+                    e_val+=
+                      (sfp[0]*exp(-sfp[1]*d))
+                      +(sfp[2]*exp(-sfp[3]*d))
+                      +(sfp[4]*exp(-sfp[5]*d))
+                      +(sfp[6]*exp(-sfp[7]*d))
+                      +sfp[8];
+                  }
+                  j=map->EList[i++];
+                }
+              }
+            }
+            F3(oMap->Field->data,a,b,c)=e_val;
+            sum+=e_val;
+            sumsq+=(e_val*e_val);
+            n2++;
+          }
+        }
+      }
+      mean = sum/n2;
+      stdev = sqrt1f((sumsq - (sum*sum/n2))/(n2-1));
+      if((int)SettingGet(cSetting_normalize_ccp4_maps)) {
+
+        PRINTFB(FB_ObjectMap,FB_Details)
+          " ObjectMap: Normalizing: mean = %8.6f & stdev = %8.6f.\n"
+          ,mean,stdev
+          ENDFB;
+        
+        if(stdev<R_SMALL8)
+          stdev=R_SMALL8;
+        
+        for(a=oMap->Min[0];a<oMap->Max[0];a++) {      
+          for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
+            for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
+              fp = F3Ptr(oMap->Field->data,a,b,c);
+              
+              *fp = (*fp-mean)/stdev;
+            }
+          }
+        }
+      } else {
+        PRINTFB(FB_ObjectMap,FB_Details)
+          " ObjectMap: Not normalizing: mean = %8.6f and stdev = %8.6f.\n",
+          mean,stdev
+          ENDFB;
+        
+      }
+      MapFree(map);
+    }
+  }
+  FreeP(point);
+  FreeP(sfidx);
+  return(c);
+}
+
+
+/*========================================================================*/
 int SelectorMapCoulomb(int sele1,ObjectMap *oMap,float cutoff)
 {
   SelectorType *I=&Selector;
@@ -1403,9 +1762,8 @@ int SelectorMapCoulomb(int sele1,ObjectMap *oMap,float cutoff)
         for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
           for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
             F3(oMap->Field->data,a,b,c)=0.0;            
-
             v2 = F4Ptr(oMap->Field->points,a,b,c,0);
-            
+
             if(MapExclLocus(map,v2,&h,&k,&l)) {
               i=*(MapEStart(map,h,k,l));
               if(i) {

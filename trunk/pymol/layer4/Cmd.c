@@ -747,6 +747,7 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
   float buffer;
   int type;
   char *selection;
+  OrthoLineType s1;
   int ok = false;
   ok = PyArg_ParseTuple(args,"sifsf(ffffff)",&name,&type,&grid[0],&selection,&buffer,
                         &minCorner[0],&minCorner[1],&minCorner[2],
@@ -755,7 +756,9 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
     grid[1]=grid[0];
     grid[2]=grid[0];
     APIEntry();
-    ok = ExecutiveMapNew(name,type,grid,selection,buffer,minCorner,maxCorner);
+    SelectorGetTmp(selection,s1);
+    ok = ExecutiveMapNew(name,type,grid,s1,buffer,minCorner,maxCorner);
+    SelectorFreeTmp(s1);
     APIExit();
   }
   return(APIStatus(ok));

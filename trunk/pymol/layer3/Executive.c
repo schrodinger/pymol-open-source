@@ -463,6 +463,9 @@ int ExecutiveMapNew(char *name,int type,float *grid,
       case 1: /* coulomb */
         SelectorMapCoulomb(sele0,objMap,20.0F);
         break;
+      case 2: /* gaussian */
+        SelectorMapGaussian(sele0,objMap,0.0F);
+        break;
       }
 
       ObjectSetName((CObject*)objMap,name);

@@ -152,7 +152,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   float box[3],add[3];
   float r_cent[3],r_trans[3];
   int r_act,r_val,r_cnt;
-  float *r_fp_start,*r_fp_stop;
+  float *r_fp_start=NULL,*r_fp_stop=NULL;
   int a,b,c,i;
   int *to;
   int zoom_flag=false;
@@ -2914,8 +2914,8 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
   float spheroid_minimum = 0.02; /* minimum size - to insure valid normals */
   int row,*count=NULL,base;
   int nRow;
-  int first;
-  int last;
+  int first=0;
+  int last=0;
   int current;
   int cscount;
   int n_state=0;

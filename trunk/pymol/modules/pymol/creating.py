@@ -23,6 +23,7 @@ from chempy import fragments
 map_type_dict = {
    'vdw' : 0,
    'coulomb' : 1,
+   'gaussian' : 2,
    }
 
 map_type_sc = Shortcut(map_type_dict.keys())
