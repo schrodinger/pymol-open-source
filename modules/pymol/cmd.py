@@ -104,7 +104,8 @@ if __name__=='pymol.cmd':
       r"\.rst$|\.RST$|", # AMBER restart
       r"\.cex$|\.CEX$|", # CEX format (used by metaphorics)
       r"\.phi$|\.PHI$|", # PHI format (delphi)
-      r"\.fld$|\.FLD$", # FLD format (AVS)
+      r"\.fld$|\.FLD$|", # FLD format (AVS)
+      r"\.o$|\.O$|\.omap$|\.OMAP$|\.brix$|\.BRIX$", # BRIX/O format
       ],''))
 
    safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters

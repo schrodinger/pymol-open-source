@@ -99,6 +99,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeXPLORStr 26
 #define cLoadTypePHIMap 27
 #define cLoadTypeFLDMap 28
+#define cLoadTypeBRIXMap 29
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -4223,6 +4224,21 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading AVS Map\n" ENDFD;
       if(!origObj) {
         obj=(CObject*)ObjectMapLoadFLDFile(NULL,fname,frame);
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject((CObject*)obj,true,false);
+          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
+        }
+      } else {
+        ObjectMapLoadFLDFile((ObjectMap*)origObj,fname,frame);
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
+                fname,oname);
+      }
+      break;
+    case cLoadTypeBRIXMap:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading BRIX/DSN6 Map\n" ENDFD;
+      if(!origObj) {
+        obj=(CObject*)ObjectMapLoadBRIXFile(NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
           ExecutiveManageObject((CObject*)obj,true,false);

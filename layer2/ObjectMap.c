@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #define cMapSourcePHI 3
 #define cMapSourceDesc 4
 #define cMapSourceFLD 5
+#define cMapSourceBRIX 6
 
 #ifdef _PYMOL_NUMPY
 typedef struct {
@@ -142,6 +143,7 @@ static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
   switch(ms->MapSource) {
   case cMapSourceXPLOR:
   case cMapSourceCCP4:
+  case cMapSourceBRIX:
     for(c=0;c<ms->FDim[2];c++)
       {
         v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
@@ -1635,11 +1637,11 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
       if(!strcmp(cc,"min_ext")) {
         p = ParseSkipEquals(p);
         p = ParseWordCopy(cc,p,50);
-        if(sscanf(cc,"%f",&ms->ExtentMin[0])) {
+        if(sscanf(cc,"%f",&ms->ExtentMin[0])==1) {
           p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%f",&ms->ExtentMin[1])) {
+          if(sscanf(cc,"%f",&ms->ExtentMin[1])==1) {
             p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%f",&ms->ExtentMin[2])) {
+            if(sscanf(cc,"%f",&ms->ExtentMin[2])==1) {
               got_min_ext=true;
             }
           }
@@ -1652,11 +1654,11 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
       if(!strcmp(cc,"max_ext")) {
         p = ParseSkipEquals(p);
         p = ParseWordCopy(cc,p,50);
-        if(sscanf(cc,"%f",&ms->ExtentMax[0])) {
+        if(sscanf(cc,"%f",&ms->ExtentMax[0])==1) {
           p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%f",&ms->ExtentMax[1])) {
+          if(sscanf(cc,"%f",&ms->ExtentMax[1])==1) {
             p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%f",&ms->ExtentMax[2])) {
+            if(sscanf(cc,"%f",&ms->ExtentMax[2])==1) {
               got_max_ext=true;
             }
           }
@@ -1818,6 +1820,284 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
 
 }
 /*========================================================================*/
+static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state) 
+{
+  char *p,*pp;
+  float dens;
+  int a,b,c,d,e;
+  float v[3],vr[3],maxd,mind;
+  int ok = true;
+  char cc[MAXLINELEN];
+  ObjectMapState *ms;
+  int got_origin=false;
+  int got_extent=false;
+  int got_grid=false;
+  int got_cell=false;
+  int got_prod=false;
+  int got_plus=false;
+  int got_sigma=false;
+  int got_smiley=false;
+  float prod=1.0F;
+  float plus=0.0F;
+  float sigma=0.0F;
+
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+  ms=&I->State[state];
+  ObjectMapStateInit(ms);
+
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
+  
+  p = BRIXStr;
+
+  ParseNCopy(cc,p,3);
+  got_smiley = (!strcmp(cc,":-)"));
+
+
+  while((*p)&&(!(
+                 got_origin&&
+                 got_extent&&
+                 got_grid&&
+                 got_cell&&
+                 got_prod&&
+                 got_plus&&
+                 got_sigma))) {
+
+    if(!got_origin) {
+      pp=ParseWordCopy(cc,p,6);
+      if(WordMatch("origin",cc,true)<0) {
+        p = ParseWordCopy(cc,pp,50);
+        printf("->%s\n",cc);
+        if(sscanf(cc,"%d",&ms->Min[0])==1) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%d",&ms->Min[1])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%d",&ms->Min[2])==1) {
+              got_origin=true;
+            }
+          }
+        }
+      }
+    }
+
+    if(!got_extent) {
+      pp=ParseWordCopy(cc,p,6);
+      if(WordMatch("extent",cc,true)<0) {
+        p = ParseWordCopy(cc,pp,50);
+        if(sscanf(cc,"%d",&ms->Max[0])==1) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%d",&ms->Max[1])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%d",&ms->Max[2])==1) {
+              got_extent=true;
+              ms->Max[0]+=ms->Min[0]-1;
+              ms->Max[1]+=ms->Min[1]-1;
+              ms->Max[2]+=ms->Min[2]-1;
+            }
+          }
+        }
+      }
+    }
+
+    if(!got_grid) {
+      pp=ParseWordCopy(cc,p,4);
+      if(WordMatch("grid",cc,true)<0) {
+        p = ParseWordCopy(cc,pp,50);
+        if(sscanf(cc,"%d",&ms->Div[0])==1) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%d",&ms->Div[1])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%d",&ms->Div[2])==1) {
+              got_grid=true;
+            }
+          }
+        }
+      }
+    }
+
+    if(!got_cell) {
+      pp = ParseWordCopy(cc,p,4);
+      if(WordMatch("cell",cc,true)<0) {
+        p = ParseWordCopy(cc,pp,50);
+
+        if(sscanf(cc,"%f",&ms->Crystal->Dim[0])==1) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%f",&ms->Crystal->Dim[1])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%f",&ms->Crystal->Dim[2])==1) {
+              p = ParseWordCopy(cc,p,50);
+              if(sscanf(cc,"%f",&ms->Crystal->Angle[0])==1) {
+                p = ParseWordCopy(cc,p,50);
+                if(sscanf(cc,"%f",&ms->Crystal->Angle[1])==1) {
+                  p = ParseWordCopy(cc,p,50);
+                  if(sscanf(cc,"%f",&ms->Crystal->Angle[2])==1) {
+                    got_cell=true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if(!got_plus) {
+      pp=ParseWordCopy(cc,p,4);
+      if(WordMatch("plus",cc,true)<0) {
+        p = ParseWordCopy(cc,pp,50);
+        if(sscanf(cc,"%f",&plus)==1) {
+          got_plus=true;
+        }
+      }
+    }
+
+    if(!got_prod) {
+      pp=ParseWordCopy(cc,p,4);
+      if(WordMatch("prod",cc,true)<0) {
+        p = ParseWordCopy(cc,pp,50);
+        if(sscanf(cc,"%f",&prod)==1) {
+          got_prod=true;
+        }
+      }
+    }
+
+    if(!got_sigma) {
+      pp = ParseWordCopy(cc,p,5);
+      if(WordMatch("sigma",cc,true)<0) {
+        p = ParseWordCopy(cc,pp,50);
+        if(sscanf(cc,"%f",&sigma)==1) {
+          got_sigma=true;
+        }
+      }
+    }
+
+    p++;
+  }
+  
+  if(got_origin&&
+     got_extent&&
+     got_grid&&
+     got_cell&&
+     got_plus&&
+     got_prod&&
+     got_sigma) {
+    
+    ms->FDim[0]=ms->Max[0]-ms->Min[0]+1;
+    ms->FDim[1]=ms->Max[1]-ms->Min[1]+1;
+    ms->FDim[2]=ms->Max[2]-ms->Min[2]+1;
+    ms->FDim[3]=3;
+    if(!(ms->FDim[0]&&ms->FDim[1]&&ms->FDim[2])) 
+      ok=false;
+    else {
+      CrystalUpdate(ms->Crystal);
+      ms->Field=IsosurfFieldAlloc(ms->FDim);
+      ms->MapSource = cMapSourceBRIX;
+      ms->Field->save_points=false;
+      
+      {
+        int block_size = 8;
+        int xblocks = ((ms->FDim[0]-1)/block_size)+1;
+        int yblocks = ((ms->FDim[1]-1)/block_size)+1;
+        int zblocks = ((ms->FDim[2]-1)/block_size)+1;
+        int cc,bb,aa,ia,ib,ic,xa,xb,xc;
+        
+        p=BRIXStr + 512;
+        for(cc=0;cc<zblocks;cc++) {
+          for(bb=0;bb<yblocks;bb++) {
+            for(aa=0;aa<xblocks;aa++) {
+              
+                  for(c=0;c<block_size;c++) {
+                    xc = c + cc*block_size;
+                    ic = xc + ms->Min[2];
+                    v[2]=ic/((float)ms->Div[2]);
+                
+              for(b=0;b<block_size;b++) {
+                xb = b + bb*block_size;
+                ib = xb + ms->Min[1];
+                v[1]=ib/((float)ms->Div[1]);
+
+                for(a=0;a<block_size;a++) {
+                  xa = a + aa*block_size;
+                  ia = xa + ms->Min[0];
+                  v[0]=ia/((float)ms->Div[0]);
+                  
+                    
+                    dens = (((float)(*((unsigned char*)(p++)))) - plus) / prod;
+                    if((ia<=ms->Max[0])&&(ib<=ms->Max[1])&&(ic<=ms->Max[2])) {
+                      F3(ms->Field->data,xa,xb,xc) = dens;
+                      if(maxd<dens) maxd = dens;
+                      if(mind>dens) mind = dens;
+                      transform33f3f(ms->Crystal->FracToReal,v,vr);
+                      for(e=0;e<3;e++) {
+                        F4(ms->Field->points,xa,xb,xc,e) = vr[e];
+                      }
+
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      if(ok) {
+        d = 0;
+        for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1))
+          {
+            v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+            for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+              v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+              for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+                v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+                transform33f3f(ms->Crystal->FracToReal,v,vr);
+                copy3f(vr,ms->Corner[d]);
+                d++;
+              }
+            }
+          }
+      }
+
+      v[2]=(ms->Min[2])/((float)ms->Div[2]);
+      v[1]=(ms->Min[1])/((float)ms->Div[1]);
+      v[0]=(ms->Min[0])/((float)ms->Div[0]);
+      
+      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
+      
+      v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+      v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+      v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
+      
+      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+      
+      PRINTFB(FB_Details,FB_ObjectMap) 
+        " BRIXMapToStr: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+        ENDFB;
+
+      PRINTFB(FB_Details,FB_ObjectMap) 
+        " BRIXMapToStr: Sigma = %8.3f\n",sigma
+        ENDFB;
+      
+      ms->Active=true;
+      ObjectMapUpdateExtents(I);
+      printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
+    }
+  } else {
+    PRINTFB(FB_Errors,FB_ObjectMap) 
+      " Error: unable to read BRIX file.\n"
+      ENDFB;
+  }
+  
+  
+  return(ok);
+  
+}
+/*========================================================================*/
 ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state)
 {
   int ok=true;
@@ -1942,6 +2222,30 @@ static ObjectMap *ObjectMapReadFLDStr(ObjectMap *I,char *MapStr,int bytes,int st
 }
 
 /*========================================================================*/
+static ObjectMap *ObjectMapReadBRIXStr(ObjectMap *I,char *MapStr,int bytes,int state)
+{
+  int ok=true;
+  int isNew = true;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+  if(ok) {
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew();
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+    ObjectMapBRIXStrToMap(I,MapStr,bytes,state);
+    SceneChanged();
+    SceneCountFrames();
+  }
+  return(I);
+}
+
+/*========================================================================*/
 static ObjectMap *ObjectMapReadPHIStr(ObjectMap *I,char *MapStr,int bytes,int state)
 {
   int ok=true;
@@ -2008,12 +2312,6 @@ ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state)
         }
       }
     }
-#ifdef _UNDEFINED
-  {int a;
-  for(a=0;a<9;a++)
-    printf("%10.5f\n",mat[a]);
-  }
-#endif
   return(I);
 
 }
@@ -2062,16 +2360,59 @@ ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state)
         }
       }
     }
-#ifdef _UNDEFINED
-  {int a;
-  for(a=0;a<9;a++)
-    printf("%10.5f\n",mat[a]);
-  }
-#endif
   return(I);
 
 }
 
+/*========================================================================*/
+ObjectMap *ObjectMapLoadBRIXFile(ObjectMap *obj,char *fname,int state)
+{
+  ObjectMap *I = NULL;
+  int ok=true;
+  FILE *f = NULL;
+  long size;
+  char *buffer,*p;
+  float mat[9];
+
+  f=fopen(fname,"rb");
+  if(!f)
+    ok=ErrMessage("ObjectMapLoadBRIXFile","Unable to open file!");
+  if(ok)
+	 {
+      if(Feedback(FB_ObjectMap,FB_Actions))
+        {
+          printf(" ObjectMapLoadBRIXFile: Loading from '%s'.\n",fname);
+        }
+      
+      fseek(f,0,SEEK_END);
+      size=ftell(f);
+      fseek(f,0,SEEK_SET);
+      
+      buffer=(char*)mmalloc(size+255);
+      ErrChkPtr(buffer);
+      p=buffer;
+      fseek(f,0,SEEK_SET);
+      fread(p,size,1,f);
+      p[size]=0;
+      fclose(f);
+      
+		I=ObjectMapReadBRIXStr(obj,buffer,size,state);
+
+      mfree(buffer);
+      if(state<0)
+        state=I->NState-1;
+      if(state<I->NState) {
+        ObjectMapState *ms;
+        ms = &I->State[state];
+        if(ms->Active) {
+          CrystalDump(ms->Crystal);
+          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+        }
+      }
+    }
+  return(I);
+
+}
 /*========================================================================*/
 ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_file)
 {
@@ -2130,12 +2471,6 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_fi
         }
       }
     }
-#ifdef _UNDEFINED
-  {int a;
-  for(a=0;a<9;a++)
-    printf("%10.5f\n",mat[a]);
-  }
-#endif
   return(I);
 
 }
