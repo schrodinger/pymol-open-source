@@ -289,8 +289,8 @@ def sequence(s):
            [ 1, 'default'   ,'cmd.unset("seq_view","'+s+'")'          ],                      
            ]
 
-def selection(s):
-   return [[ 2, 'Selection:'       ,''                        ],     
+def masking(s):
+   return [[ 2, 'Masking:'       ,''                        ],     
            [ 1, 'mask'   ,'cmd.mask("'+s+'")'          ],
            [ 1, 'unmask'   ,'cmd.unmask("'+s+'")'          ],           
            ]
@@ -428,8 +428,34 @@ def sele_action(s):
              'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
              ],                      
            [ 0, ''          ,''                                  ],
-           [ 1, 'selection'      , selection(s)         ],
-           [ 1, 'sequence'       , sequence(s)         ],
+           [ 1, 'masking'        , masking(s)         ],
+           [ 1, 'movement'       , movement(s)         ],
+           [ 1, 'compute'        , compute(s)         ],           
+           ]
+
+
+def sele_action2(s):
+   return [[ 2, 'Actions:'       ,''                        ],     
+           [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
+           [ 1, 'rename selection', 'cmd.wizard("renaming","'+s+'")'          ],
+           [ 0, ''               ,''                             ],
+           [ 1, 'preset'         ,presets(s)         ],
+           [ 0, ''               ,''                             ],
+           [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
+           [ 0, ''               ,''                             ],
+           [ 1, 'around'         , around(s)         ],           
+           [ 1, 'expand'         , expand(s)         ],
+           [ 1, 'extend'         , extend(s)         ],
+           [ 1, 'invert'         , invert(s)         ],
+           [ 1, 'complete'       , complete(s)         ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'duplicate selection'      ,'cmd.select("'+s+'")'          ],
+           [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],           
+           [ 1, 'find polar contacts'  ,
+             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
+             ],                      
+           [ 0, ''          ,''                                  ],
+           [ 1, 'masking'      , masking(s)         ],
            [ 1, 'movement'       , movement(s)         ],
            [ 1, 'compute'        , compute(s)         ],           
            ]
@@ -459,8 +485,8 @@ def mol_action(s):
            [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+s+'))")'     ],           
            [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+s+'))")'     ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'state'      , state(s)         ],                      
-           [ 1, 'selection'      , selection(s)         ],
+           [ 1, 'state'          , state(s)         ],                      
+           [ 1, 'masking'        , masking(s)         ],
            [ 1, 'sequence'       , sequence(s)         ],                      
            [ 1, 'movement'       , movement(s)         ],           
            [ 1, 'compute'        , compute(s)         ],
@@ -519,14 +545,16 @@ def all_action(s):
            [ 1, 'origin'   , 'cmd.origin("all")'   ],
            [ 0, ''             , ''                      ],           
            [ 1, 'preset'  , presets(s)     ],           
-           [ 0, ''             , ''                      ],           
-           [ 1, 'delete everything'  , 'cmd.delete("all")'     ],           
            [ 0, ''          ,''                                              ],
            [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
            [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
            [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+s+'))")'     ],                      
+           [ 0, ''             , ''                      ],
+           [ 1, 'delete selections'  , 'map(cmd.delete,cmd.get_names("selections"))'     ],           
            [ 0, ''          ,''                                              ],
-           [ 1, 'selection'      , selection(s)         ],                      
+           [ 1, 'delete everything'  , 'cmd.delete("all")'     ],           
+           [ 0, ''          ,''                                              ],
+           [ 1, 'masking'      , masking(s)         ],                      
            [ 1, 'movement'       , movement(s)         ],
            [ 1, 'compute'        , compute(s)         ],                      
            ]
@@ -616,8 +644,14 @@ def enable_disable(enable):
    else:
       result = [[ 2, 'Disable', '']]
       cmmd = 'cmd.disable("'
-   return result + map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+cmd.get_names('objects'))
-   
+   result = result + map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+cmd.get_names('objects'))
+   if not enable:
+      result.insert(2,[1, 'selections', "util.hide_sele()"])
+   else:
+      result2 = [[ 2, 'Selections', '']]
+      
+   return result
+
 def main_menu():
    return [
       [ 2, 'Main Pop-Up'  , '' ],
@@ -625,20 +659,52 @@ def main_menu():
       [ 1, 'center (vis)'           ,'cmd.center("visible")'            ],      
       [ 1, 'orient (vis)'           ,'cmd.orient("visible")'            ],
       [ 1, 'reset'           ,'cmd.reset()'            ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'enable', enable_disable(1) ],
+      [ 1, 'disable', enable_disable(0) ],   
       [ 0, ''             , ''                      ],           
       [ 1, '(all)'      , all_option("all") ],
       [ 1, '(visible)'      , all_option("visible") ],
       [ 0, ''             , ''                      ],
       [ 1, 'ray'           ,'cmd.ray()' ],
       [ 0, ''             , ''                      ],
-      [ 1, 'enable', enable_disable(1) ],
-      [ 1, 'disable', enable_disable(0) ],   
-      [ 0, ''             , ''                      ],
       [ 1, 'delete all'           ,'cmd.delete("all")' ],
       [ 1, 'reinitialize'           ,'cmd.reinitialize()' ],
       [ 1, 'quit'           ,'cmd.quit()' ],
       ]
 
+def pick_sele_sub(s):
+   result = [
+      [ 2, 'Actions'  , '' ],      
+      [ 1, 'rename', 'cmd.wizard("renaming","'+s+'")'          ],
+      [ 1, 'clear'    , 'cmd.select("'+s+'","none")' ],
+      [ 1, 'delete selection', 'cmd.delete("'+s+'")' ],
+      [ 1, 'create object','cmd.create(None,"'+s+'")'            ],
+      [ 1, 'remove atoms'  , 'cmd.remove("'+s+'")' ],     
+      ]
+   return result
+
+def pick_sele(title,s):
+   result = [
+      [ 2, title, '' ],
+      [ 1, 'disable'    , 'cmd.disable("'+s+'")' ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'actions', sele_action2(s) ],  
+      [ 0, ''             , ''                      ],      
+      [ 1, 'color'      , mol_color(s) ],
+      [ 1, 'show'      , mol_show(s) ],
+      [ 1, 'hide'      , mol_hide(s) ],
+      [ 1, 'preset'  , presets(s)       ],      
+      [ 0, ''             , ''                      ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'labels'      , mol_labels(s) ],
+      ]
+   return result
+   
 def pick_option(title,s,object=0):
    result = [
       [ 2, title, '' ],
@@ -665,10 +731,10 @@ def pick_option(title,s,object=0):
          ])
    else:
       result.extend([
-      [ 0, ''             , ''                      ],      
-      [ 1, 'create object','cmd.create(None,"'+s+'")'            ],      
-      [ 0, ''             , ''                      ],
-      [ 1, 'remove'      , 'cmd.remove("'+s+'")' ],     
+         [ 0, ''             , ''                      ],      
+         [ 1, 'create object','cmd.create(None,"'+s+'")'            ],      
+         [ 0, ''             , ''                      ],
+         [ 1, 'remove atoms' , 'cmd.remove("'+s+'")' ],     
                     ])
    return result
 
