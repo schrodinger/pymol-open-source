@@ -18,6 +18,9 @@ PyMOL has the following external dependencies:
 ----------------------------------------------------------------------
 The PyMOL Team:
 
+   NOTE: this list is only current as of Fall 2003.  More recent
+   contributors have not yet have been formally recognized.
+
    Founder and Principal Author:
 
       Warren L. DeLano
@@ -192,7 +195,7 @@ Specific Acknowledgments:
   thoughtful opinions and suggestions.
 
 * Thanks to Dave Weininger for suggesting the "roving" feature and for
-  being an ordinary friend at just the right time.
+  being just an ordinary friend at just the right times.
 
 * Thanks to Mick Savage for providing experienced practical advice on
   the marketing of scientific software.
