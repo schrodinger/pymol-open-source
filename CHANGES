@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * improved quality of the surface rendering algorithm
+
    * fixed over-zealous movie security warning: no longer warns if
      there weren't any commands defined
 

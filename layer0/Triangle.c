@@ -567,6 +567,9 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
   float dif,minDist,d1,d2,dp;
   int flag;
   int used = -1;
+  float maxDot,dot,dot1,dot2;
+  const float _plus = R_SMALL4, _0=0.0F;
+  const float _5 = 0.5F;
 
   /*  PRINTFD(FB_Triangle)
       " TriangleBuildObvious-Debug: entered: i1=%d i2=%d n=%d\n",i1,i2,n
@@ -583,8 +586,10 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
   if(s12>0) used = I->edge[s12].vert3;
   if(s12>=0) {
     minDist = MAXFLOAT;
+    maxDot = _plus;
     i0=-1;
     v1=v+i1*3; v2=v+i2*3;
+    n1 = vn+3*i1; n2 = vn+3*i2;							 
     MapLocus(map,v1,&h,&k,&l);
 	 i=*(MapEStart(map,h,k,l));
     if(i) {
@@ -598,8 +603,25 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
             dif= ( d2 > d1 ? d2 : d1 );
 				if(dif<minDist)
 				  {
-					 minDist = dif;
-					 i0=j; 
+                n0 = vn + 3*j;
+                dot1 = dot_product3f(n0,n1);
+                dot2 = dot_product3f(n0,n2);
+                dot = dot1 + dot2;
+                if((dif/minDist)<_5) {
+                  minDist = dif;
+                  maxDot = dot;
+                  i0=j; 
+                } else if((dot>_0)&&(dot1>_0)&&(dot2>_0)) {
+                  if((i0<0)||(dot>maxDot)) {
+                    minDist = dif;
+                    maxDot = dot;
+                    i0=j; 
+                  } else if( (dif/minDist) < (dot/maxDot)) {
+                    minDist = dif;
+                    maxDot = dot;
+                    i0=j; 
+                  }
+                }
 				  }
 			 }
 		  j=map->EList[i++];
@@ -722,7 +744,7 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
   }
 }
 
-static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
+static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n,float cutoff)
 {
 
   /* in this version, the closest active point is tried.  Closed points
@@ -735,6 +757,8 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
   float dif,minDist,d1,d2,dp;
   int flag;
   int used = -1;
+  float dot;
+  const float _33 = 0.33;
 
   map=I->map;
   s12 = TriangleEdgeStatus(i1,i2);
@@ -743,6 +767,7 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
     minDist = MAXFLOAT;
     i0=-1;
     v1=v+i1*3; v2=v+i2*3;
+    n1 = vn+3*i1; n2 = vn+3*i2;							 
     MapLocus(map,v1,&h,&k,&l);
 	 i=*(MapEStart(map,h,k,l));
     if(i) {
@@ -752,13 +777,17 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
 			 /* eliminate closed vertices from consideration - where vertactive is 0 */
           {
             v0 = v+3*j;
+            n0 = vn+3*j;
             d1 = (float)diff3f(v0,v1);
             d2 = (float)diff3f(v0,v2);
             dif= ( d2 > d1 ? d2 : d1 );
 				if(dif<minDist)
 				  {
-					 minDist = dif;
-					 i0=j; 
+                dot = dot_product3f(n0,n1) + dot_product3f(n0,n2);
+                if((dot>cutoff)||((dif/minDist)<_33)) {
+                  minDist = dif;
+                  i0=j; 
+                }
 				  }
 			 }
 		  j=map->EList[i++];
@@ -965,9 +994,7 @@ static void TriangleBuildSingle(int i1,int i2,float *v,float *vn,int n)
 
 static void TriangleBuildThirdPass(int i1,int i2,float *v,float *vn,int n)
 {
-  /* This routine fills in triangles surrounded by three active edges
-
-	*/
+  /* This routine fills in triangles surrounded by three active edges */
 
   TriangleSurfaceRec *I=&TriangleSurface;
   MapType *map;
@@ -1107,12 +1134,12 @@ static void FollowActives(float *v,float *vn,int n,int mode)
 		TriangleBuildObvious(i1,i2,v,vn,n);
 		break;
 	 case 1:
-		TriangleBuildSecondPass(i1,i2,v,vn,n);
+		TriangleBuildSecondPass(i1,i2,v,vn,n,0.0F);
 		break;
-	 case 2:
+	 case 4:
 		TriangleBuildThirdPass(i1,i2,v,vn,n);
 		break;
-	 case 3:
+	 case 5:
 		TriangleBuildLast(i1,i2,v,vn,n);
 		break;
 	 }
@@ -1208,9 +1235,9 @@ static void TriangleFill(float *v,float *vn,int n)
 			 TriangleActivateEdges(a);
 		FollowActives(v,vn,n,1);
 	 }	 
+    
     lastTri2=I->nTri-1;
     while(lastTri2!=I->nTri) {
-      fflush(stdout);
       lastTri2=I->nTri;
       for(a=0;a<n;a++) 
         if(I->vertActive[a])
@@ -1231,23 +1258,27 @@ static void TriangleFill(float *v,float *vn,int n)
             }
           }
     }
+    
     PRINTFD(FB_Triangle)
-                " TriangleFill-Debug: follow actives 2: nTri=%d nActive=%d\n",I->nTri,I->nActive
+                " TriangleFill-Debug: follow actives 4: nTri=%d nActive=%d\n",I->nTri,I->nActive
       ENDFD;
+
 	 for(a=0;a<n;a++) 
 		if(I->vertActive[a])
 		  TriangleActivateEdges(a);
-	 FollowActives(v,vn,n,2);
+	 FollowActives(v,vn,n,4);
+
     PRINTFD(FB_Triangle)
-      " TriangleFill-Debug: follow actives 3: nTri=%d nActive=%d\n",I->nTri,I->nActive
+      " TriangleFill-Debug: follow actives 5: nTri=%d nActive=%d\n",I->nTri,I->nActive
       ENDFD;
+
 	 lastTri=I->nTri-1;
 	 while(lastTri!=I->nTri) {
 		lastTri=I->nTri;
 		for(a=0;a<n;a++) 
 		  if(I->vertActive[a])
 			 TriangleActivateEdges(a);
-		FollowActives(v,vn,n,3); /* this is a sloppy, forcing tesselation */
+		FollowActives(v,vn,n,5); /* this is a sloppy, forcing tesselation */
 	 }
   }
     PRINTFD(FB_Triangle)
