@@ -1557,7 +1557,7 @@ void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('lines','''%s''');cmd.show('lines','%s & enabled & %s %s (center expand %1.3f)')",
+"cmd.hide('lines','''%s''');cmd.show('lines','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,lines);
       PParse(buffer);
       PFlush();
@@ -1572,7 +1572,7 @@ void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('labels','''%s''');cmd.show('labels','%s & enabled & %s %s (center expand %1.3f)')",
+"cmd.hide('labels','''%s''');cmd.show('labels','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,labels);
       PParse(buffer);
       PFlush();
@@ -1587,7 +1587,7 @@ void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('spheres','''%s''');cmd.show('spheres','%s & enabled & %s %s (center expand %1.3f)')",
+"cmd.hide('spheres','''%s''');cmd.show('spheres','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,spheres);
       PParse(buffer);
       PFlush();
@@ -1602,7 +1602,7 @@ void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('cartoon','''%s''');cmd.show('cartoon','%s & enabled & %s %s (center expand %1.3f)')",
+"cmd.hide('cartoon','''%s''');cmd.show('cartoon','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,cartoon);
       PParse(buffer);
       PFlush();
@@ -1617,7 +1617,7 @@ void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('ribbon','''%s''');cmd.show('ribbon','%s & enabled & %s %s (center expand %1.3f)')",
+"cmd.hide('ribbon','''%s''');cmd.show('ribbon','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,ribbon);
       PParse(buffer);
       PFlush();
@@ -1639,7 +1639,7 @@ void SceneRovingUpdate(void)
         polar_cutoff=fabs(polar_cutoff);
       }
       sprintf(buffer,
- "cmd.dist('rov_pc','%s & (elem n+o) & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=1,labels=%d)",
+"cmd.dist('rov_pc','%s & (elem n+o) & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=1,labels=%d)",
               s,p1,p2,polar_contacts,polar_cutoff,label_flag);
       PParse(buffer);
       PFlush();
@@ -1655,7 +1655,7 @@ void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('nonbonded','''%s''');cmd.show('nonbonded','%s & enabled & %s %s (center expand %1.3f)')",
+"cmd.hide('nonbonded','''%s''');cmd.show('nonbonded','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,nonbonded);
       PParse(buffer);
       PFlush();
@@ -1670,7 +1670,7 @@ void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('nb_spheres','''%s''');cmd.show('nb_spheres','%s & enabled & %s %s (center expand %1.3f)')",
+ "cmd.hide('nb_spheres','''%s''');cmd.show('nb_spheres','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,nb_spheres);
       PParse(buffer);
       PFlush();
