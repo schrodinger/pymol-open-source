@@ -1,0 +1,743 @@
+/* 
+A* -------------------------------------------------------------------
+B* This file contains source code for the PyMOL computer program
+C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+D* -------------------------------------------------------------------
+E* It is unlawful to modify or remove this copyright notice.
+F* -------------------------------------------------------------------
+G* Please see the accompanying LICENSE file for further information. 
+H* -------------------------------------------------------------------
+I* Additional authors of this source file include:
+-* 
+-* 
+-*
+Z* -------------------------------------------------------------------
+*/
+
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <GL/glut.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include"Version.h"
+#include"MemoryDebug.h"
+#include"Err.h"
+#include"Util.h"
+#include"ListMacros.h"
+#include"Ortho.h"
+#include"PUtils.h"
+#include"Scene.h"
+#include"Executive.h"
+#include"ButMode.h"
+#include"Control.h"
+#include"Setting.h"
+
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
+ListVarDeclare(BlockList,Block);
+
+#define OrthoSaveLines 0xFF
+
+#define cOrthoLineHeight 12
+#define cOrthoLeftMargin 8
+#define cOrthoBottomMargin 10
+
+#define ExecutiveMargin 100
+#define ButModeMargin 40
+#define ControlMargin 0
+
+typedef struct {
+  Block *Blocks;
+  Block *GrabbedBy,*ClickedIn;
+  GLint ViewPort[4];
+  int X,Y,Height,Width;
+  int ActiveButton;
+  int DrawText;
+  int CursorFlag,InputFlag;
+  OrthoLineType Line[OrthoSaveLines+1];
+  int CurLine,CurChar,PromptChar;
+  FILE *Pipe;
+  char Prompt[255];
+  int ShowLines;
+  char Saved[OrthoSaveLines];
+  int SavedPC,SavedCC;
+  float TextColor[3];
+  int DirtyFlag;
+  float BusyLast;
+  int BusyStatus[4];
+  char BusyMessage[255];
+
+} OrthoObject;
+
+static OrthoObject Ortho;
+
+Block *OrthoFindBlock(int x,int y);
+
+#define cBusyWidth 180
+#define cBusyHeight 60
+#define cBusyMargin 10
+#define cBusyBar 10
+#define cBusySpacing 15
+
+#define cBusyUpdate 1.0
+
+/*========================================================================*/
+void OrthoDirty(void) {
+  OrthoObject *I=&Ortho;
+  if(!I->DirtyFlag) {
+	 I->DirtyFlag = true;
+	 glutPostRedisplay();
+  }
+}
+/*========================================================================*/
+void OrthoBusyMessage(char *message)
+{
+  OrthoObject *I=&Ortho;
+  if(strlen(message)<255)
+	 strcpy(I->BusyMessage,message);
+}
+/*========================================================================*/
+void OrthoBusySlow(int progress,int total)
+{
+  OrthoObject *I=&Ortho;
+  I->BusyStatus[0]=progress;
+  I->BusyStatus[1]=total;
+  OrthoBusyDraw(false);
+}
+/*========================================================================*/
+void OrthoBusyFast(int progress,int total)
+{
+  OrthoObject *I=&Ortho;
+  I->BusyStatus[2]=progress;
+  I->BusyStatus[3]=total;
+  OrthoBusyDraw(false);
+}
+/*========================================================================*/
+void OrthoBusyPrime(void)
+{
+  OrthoObject *I=&Ortho;
+  int a;
+  for(a=0;a<4;a++)
+	 I->BusyStatus[a]=0;
+  I->BusyMessage[0]=0;
+  I->BusyLast = UtilGetSeconds();
+}
+/*========================================================================*/
+void OrthoBusyDraw(int force)
+{
+  OrthoObject *I=&Ortho;
+  char *c;
+  int x,y;
+  float black[3] = {0,0,0};
+  float white[3] = {1,1,1};
+
+  float now;
+  float busyTime;
+
+  now = UtilGetSeconds();
+  busyTime = (-I->BusyLast) + now;
+  if(force||(busyTime>cBusyUpdate)) {
+
+	 glDrawBuffer(GL_FRONT);
+	 glClear(GL_DEPTH_BUFFER_BIT);
+	 OrthoPushMatrix();
+	 
+	 glColor3fv(black);
+	 glBegin(GL_POLYGON);
+	 glVertex2i(0,I->Height);
+	 glVertex2i(cBusyWidth,I->Height);
+	 glVertex2i(cBusyWidth,I->Height-cBusyHeight);
+	 glVertex2i(0,I->Height-cBusyHeight);
+	 glEnd();
+
+	 glColor3fv(white);	 
+
+	 y=I->Height-cBusyMargin;
+	 c=I->BusyMessage;
+	 if(*c) {
+		glRasterPos4d(cBusyMargin,y-(cBusySpacing/2),0.0,1.0);
+		while(*c)
+		  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+		y-=cBusySpacing;
+	 }
+
+	 if(I->BusyStatus[1]) {
+		glBegin(GL_LINE_LOOP);
+		glVertex2i(cBusyMargin,y);
+		glVertex2i(cBusyWidth-cBusyMargin,y);
+		glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+		glVertex2i(cBusyMargin,y-cBusyBar);
+		glEnd();
+		glColor3fv(white);	 
+		glBegin(GL_POLYGON);
+		glVertex2i(cBusyMargin,y);
+		x=(I->BusyStatus[0]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[1])+cBusyMargin;
+		glVertex2i(x,y);
+		glVertex2i(x,y-cBusyBar);
+		glVertex2i(cBusyMargin,y-cBusyBar);
+		glEnd();
+		y-=cBusySpacing;
+	 }
+
+	 if(I->BusyStatus[3]) {
+		glColor3fv(white);	 
+		glBegin(GL_LINE_LOOP);
+		glVertex2i(cBusyMargin,y);
+		glVertex2i(cBusyWidth-cBusyMargin,y);
+		glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+		glVertex2i(cBusyMargin,y-cBusyBar);
+		glEnd();
+		x=(I->BusyStatus[2]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[3])+cBusyMargin;
+		glColor3fv(white);	 
+		glBegin(GL_POLYGON);
+		glVertex2i(cBusyMargin,y);
+		glVertex2i(x,y);
+		glVertex2i(x,y-cBusyBar);
+		glVertex2i(cBusyMargin,y-cBusyBar);
+		glEnd();
+		y-=cBusySpacing;
+	 }
+
+	 OrthoPopMatrix();
+	 glDrawBuffer(GL_BACK);
+	 SceneDirty();
+	 I->BusyLast=now;
+  }
+  
+}
+/*========================================================================*/
+void OrthoRestorePrompt(void) 
+{
+  OrthoObject *I=&Ortho;
+  int curLine;
+  if(!I->InputFlag) 
+	 {
+	 if(I->Saved[0]) 
+		{
+		  if(I->CurChar) {
+			 OrthoNewLine(NULL);
+		  }
+		  curLine = I->CurLine&OrthoSaveLines;
+		  strcpy(I->Line[curLine],I->Saved);
+		  I->Saved[0]=0;
+		  I->CurChar = I->SavedCC;
+		  I->PromptChar = I->SavedPC;
+		} 
+	 else 
+		{
+		  if(I->CurChar) 
+			 OrthoNewLine(I->Prompt);
+		  else
+			 {
+				curLine = I->CurLine&OrthoSaveLines;
+				strcpy(I->Line[curLine],I->Prompt);
+				I->CurChar = (I->PromptChar = strlen(I->Prompt));
+			 }
+		}
+	 I->InputFlag=1;
+  }
+}
+/*========================================================================*/
+void OrthoKey(unsigned char k,int x,int y)
+{
+  OrthoObject *I=&Ortho;
+  char buffer[OrthoLineLength];
+  int curLine;
+
+  if(!I->InputFlag) 
+	 {
+	 if(I->Saved[0]) 
+		{
+		  if(I->CurChar) {
+			 OrthoNewLine(NULL);
+		  }
+		  curLine = I->CurLine&OrthoSaveLines;
+		  strcpy(I->Line[curLine],I->Saved);
+		  I->Saved[0]=0;
+		  I->CurChar = I->SavedCC;
+		  I->PromptChar = I->SavedPC;
+		} 
+	 else 
+		{
+		  if(I->CurChar) 
+			 OrthoNewLine(I->Prompt);
+		  else
+			 {
+				curLine = I->CurLine&OrthoSaveLines;
+				strcpy(I->Line[curLine],I->Prompt);
+				I->CurChar = (I->PromptChar = strlen(I->Prompt));
+			 }
+		}
+	 I->InputFlag=1;
+  }
+  if(k>=32)
+	 {
+		I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=k;
+		I->CurChar++;
+		I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
+	 }
+  else switch(k)
+	 {
+	 case 8:
+		if(I->CurChar>I->PromptChar)
+		  {
+			 I->CurChar--;
+			 I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
+		  }
+		break;
+	 case 4:
+		exit(0);
+		break;
+	 case 9:
+		ScenePerspective(true);
+		break;
+	 case 13:
+		I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
+		strcpy(buffer,&I->Line[I->CurLine&OrthoSaveLines][I->PromptChar]);
+		if(buffer[0])
+		  {
+			 OrthoNewLine(NULL);
+			 ExecutiveDrawNow();
+			 PParse(buffer);
+			 OrthoRestorePrompt();
+		  }
+		break;
+	 case 18:
+		SceneRay();
+		break;
+	 default:
+		break;
+	 }
+  glutPostRedisplay();
+}
+/*========================================================================*/
+void OrthoAddOutput(char *str)
+{
+  OrthoObject *I=&Ortho;
+  int curLine;
+  char *p,*q;
+  int cc;
+  curLine = I->CurLine&OrthoSaveLines;
+  if(I->InputFlag)
+	 {
+		strcpy(I->Saved,I->Line[curLine]);
+		I->SavedPC=I->PromptChar;
+		I->SavedCC=I->CurChar;
+		I->PromptChar=0;
+		I->CurChar=0;
+		I->Line[curLine][0]=0;
+		I->InputFlag=0;
+	 }
+  curLine = I->CurLine&OrthoSaveLines;
+  p=str;
+  q=I->Line[curLine]+I->CurChar;
+  cc=I->CurChar;
+  while(*p)
+	 {
+		if(*p>=32)
+		  {
+			 cc++;
+			 if(cc>76)
+				{
+				  *q=0;
+				  I->CurChar = cc;
+				  OrthoNewLine(NULL);
+				  cc=0;
+				  q=I->Line[I->CurLine&OrthoSaveLines];
+				  curLine = I->CurLine&OrthoSaveLines;
+				}
+			 *q++=*p++;
+		  }
+		else if((*p==13)||(*p==10))
+		  {
+			 *q=0;
+			 I->CurChar = cc;
+			 OrthoNewLine(NULL);
+			 q=I->Line[I->CurLine&OrthoSaveLines];
+			 curLine = I->CurLine&OrthoSaveLines;
+			 p++;
+			 cc=0;
+		  }
+		else
+		  p++;
+	 }
+  *q=0;
+  I->CurChar = strlen(I->Line[curLine]);
+  OrthoDirty();
+}
+/*========================================================================*/
+void OrthoNewLine(char *prompt)
+{
+  int curLine;
+  OrthoObject *I=&Ortho;
+
+  /*  printf("orthoNewLine: CC: %d CL:%d PC: %d IF:L %d\n",I->CurChar,I->CurLine,
+		I->PromptChar,I->InputFlag);*/
+  if(I->CurChar)
+	 {
+		printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
+		fflush(stdout);
+	 }
+
+  if(I->Line[I->CurLine&OrthoSaveLines][0])
+	 I->CurLine++;
+  curLine = I->CurLine&OrthoSaveLines;
+
+  if(prompt)
+	 {
+		strcpy(I->Line[curLine],prompt);
+		I->CurChar = (I->PromptChar = strlen(prompt));
+		I->InputFlag=1;
+	 }
+  else
+	 {
+		I->CurChar = 0;
+		I->Line[curLine][0] = 0;
+		I->PromptChar = 0;
+		I->InputFlag = 0;
+	 }
+  /*printf("orthoNewLine: CC: %d CL:%d PC: %d IF:L %d\n",I->CurChar,I->CurLine,
+	 I->PromptChar,I->InputFlag);*/
+
+}
+/*========================================================================*/
+void OrthoGrab(Block *block)
+{
+  OrthoObject *I=&Ortho;
+  I->GrabbedBy = block;
+}
+/*========================================================================*/
+void OrthoUngrab(void)
+{
+  OrthoObject *I=&Ortho;
+  I->GrabbedBy = NULL;
+}
+/*========================================================================*/
+Block *OrthoNewBlock(Block *block)
+{
+  if(!block)
+	 ListElemAlloc(block,Block);
+  UtilZeroMem(block,sizeof(Block));
+  BlockInit(block);
+  return(block);
+}
+/*========================================================================*/
+void OrthoFreeBlock(Block *block)
+{
+  ListElemFree(block);
+}
+/*========================================================================*/
+void OrthoAttach(Block *block,int type)
+{
+  OrthoObject *I=&Ortho;
+  ListInsert(I->Blocks,block,NULL,next,BlockList);
+}
+/*========================================================================*/
+void OrthoDetach(Block *block)
+{
+  OrthoObject *I=&Ortho;
+  ListDetach(I->Blocks,block,next,BlockList);
+}
+/*========================================================================*/
+void OrthoDoDraw()
+{
+  OrthoObject *I=&Ortho;
+
+  int x,y;
+  int l,lcount;
+  char *str;
+  float *v;
+
+  SceneUpdate();
+
+  SceneCopy(); /* Copy if necessary before clear */
+
+  v=SettingGetfv(cSetting_bg_rgb);
+
+  glDrawBuffer(GL_BACK);
+  glClearColor(v[0],v[1],v[2],1.0);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  glClearColor(0.0,0.0,0.0,1.0);
+
+  SceneRender(NULL,0,0);
+
+  OrthoPushMatrix();
+    
+  x = I->X;
+  y = I->Y;
+  
+  if(I->CursorFlag)
+	 {
+		glBegin(GL_LINES);
+		glVertex3i(I->X,I->Y-1,0);
+		glVertex3i(I->X+1,I->Y,0);
+		glEnd();
+	 }
+  
+  BlockRecursiveDraw(I->Blocks);
+  
+
+  if(I->DrawText) {	 
+	 /* now print the text */
+	 
+	 lcount = 0;
+	 l=(I->CurLine-lcount)&OrthoSaveLines;
+	 x = cOrthoLeftMargin;
+	 y = cOrthoBottomMargin;
+
+	 glColor3f(0.0,0.0,0.0);
+	 glBegin(GL_POLYGON);
+	 glVertex2i(I->Width-cOrthoRightSceneMargin,cOrthoBottomSceneMargin-1);
+	 glVertex2i(I->Width-cOrthoRightSceneMargin,0);
+	 glVertex2i(0,0);
+	 glVertex2i(0,cOrthoBottomSceneMargin-1);
+	 glEnd();
+
+	 glColor3fv(I->TextColor);
+	 while(l>=0)
+		{
+		  lcount++;
+		  if(lcount>I->ShowLines)
+			 break;
+		  glRasterPos4d((double)x,(double)y,0.0,1.0);
+		  str = I->Line[l&OrthoSaveLines];
+		  if(str)
+			 {
+				while(*str)
+				  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(str++));
+				if((lcount==1)&&(I->InputFlag)) 
+				  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'_');
+			 }
+		  l=(I->CurLine-lcount)&OrthoSaveLines;
+		  y=y+cOrthoLineHeight;
+		}
+  }
+  OrthoPopMatrix();
+  I->DirtyFlag =false;
+}
+/*========================================================================*/
+void OrthoReshape(int width, int height)
+{
+  OrthoObject *I=&Ortho;
+
+  Block *block = NULL;
+
+  I->Height=height;
+  I->Width=width;
+
+
+  block=SceneGetBlock();
+  BlockSetMargin(block,0,0,cOrthoBottomSceneMargin,cOrthoRightSceneMargin);
+  block=ExecutiveGetBlock();
+  BlockSetMargin(block,0,width-cOrthoRightSceneMargin,ExecutiveMargin,0);
+  block=ButModeGetBlock();
+  BlockSetMargin(block,height-ExecutiveMargin,width-cOrthoRightSceneMargin,ButModeMargin,0);
+  block=ControlGetBlock();
+  BlockSetMargin(block,height-ButModeMargin,width-cOrthoRightSceneMargin,ControlMargin,0);
+
+  glGetIntegerv(GL_VIEWPORT,I->ViewPort);
+
+  /*  printf("%i %i %i %i\n",I->ViewPort[0],I->ViewPort[1],I->ViewPort[2],I->ViewPort[3]);*/
+  OrthoPushMatrix();
+  block=NULL;
+  while(ListIterate(I->Blocks,block,next,BlockList))
+	 if(block->fReshape)
+		block->fReshape(block,width,height);			
+  OrthoPopMatrix();
+}
+/*========================================================================*/
+Block *OrthoFindBlock(int x,int y)
+{
+  OrthoObject *I=&Ortho;
+
+  return(BlockRecursiveFind(I->Blocks,x,y));
+}
+/*========================================================================*/
+int OrthoButton(int button,int state,int x,int y,int mod)
+{
+  OrthoObject *I=&Ortho;
+
+  Block *block;
+  int handled = 0;
+  OrthoCursor(x,y);
+
+  if(state==GLUT_DOWN)
+	 {
+		I->ActiveButton = button;
+		if(I->GrabbedBy)
+		  {
+			 if(I->GrabbedBy->inside)
+				block = BlockRecursiveFind(I->GrabbedBy->inside,x,y);
+			 else
+				block = I->GrabbedBy;
+		  }
+		else
+		  block = OrthoFindBlock(x,y);
+		if(block)
+		  {
+			 I->ClickedIn = block;
+			 if(block->fClick)
+				{
+				  handled = block->fClick(block,button,x,y,mod);
+				}
+		  }
+	 }
+  else if(state==GLUT_UP)
+	 {
+		if(I->ClickedIn)
+		  {
+			 block=I->ClickedIn;
+			 if(block->fRelease)
+				{
+				  handled = block->fRelease(block,x,y,mod);
+				}
+			 I->ClickedIn = NULL;
+		  }
+	 }
+  return(handled);
+}
+/*========================================================================*/
+int OrthoCursor(int x,int y)
+{
+  OrthoObject *I=&Ortho;
+
+  int handled = 0;
+  if(I->CursorFlag)
+	 {
+		glDrawBuffer(GL_FRONT);
+		OrthoPushMatrix();
+		glColor3f(0.0,0.0,0.0);
+
+		glBegin(GL_LINES);
+		glVertex3i(I->X,I->Y-1,0);
+		glVertex3i(I->X+1,I->Y,0);
+		glEnd();
+
+		glColor3f(1.0,1.0,1.0);
+
+		glBegin(GL_LINES);
+		glVertex3i(x,y-1,0);
+		glVertex3i(x+1,y,0);
+		glEnd();
+		
+		OrthoPopMatrix();
+		glDrawBuffer(GL_BACK);
+	 }
+
+  I->X=x;
+  I->Y=y;
+
+  return(handled);
+}
+/*========================================================================*/ 
+int OrthoDrag(int x, int y,int mod)
+{
+  OrthoObject *I=&Ortho;
+
+  Block *block;
+  int handled = 0;
+
+  I->X=x;
+  I->Y=y;
+  if(I->ClickedIn)
+	 {
+		block = I->ClickedIn;
+		if(block->fDrag)
+		  {
+			 handled = block->fDrag(block,x,y,mod);
+		  }
+	 }
+  return(handled);
+}
+/*========================================================================*/
+void OrthoInit(void)
+{
+  OrthoObject *I=&Ortho;
+  
+  char *c;
+
+  I->Blocks = NULL;
+  I->GrabbedBy = NULL;
+  I->ClickedIn = NULL;
+  I->DrawText=1;
+  I->TextColor[0]=0.7;
+  I->TextColor[1]=0.7;
+  I->TextColor[2]=1.0;
+  I->CurLine=1000;
+  I->PromptChar=0;
+  I->CurChar=0;
+  I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
+
+  c = getenv("MESA_GLX_FX");
+  if(c)
+	 I->CursorFlag = (c[0] == 'f');
+  else
+	 I->CursorFlag = 0;
+  I->ShowLines = 8;
+  I->Saved[0]=0;
+  I->DirtyFlag = true;
+
+  OrthoNewLine(NULL);
+  OrthoAddOutput("PyMOL Molecular Graphics System, Version ");
+  OrthoAddOutput(_PyMOL_VERSION);
+  OrthoAddOutput(".");
+  OrthoNewLine(NULL);
+  OrthoAddOutput("Copyright (C) 1998-2000 by Warren L. DeLano, Ph.D.\n");
+  OrthoAddOutput("This software is open source and freely available.\n");
+  OrthoAddOutput("Updates at http://www.pymol.org\n");
+  strcpy(I->Prompt,"PyMOL>");
+  OrthoNewLine(I->Prompt);
+
+  ButModeInit();
+  ControlInit();
+}
+/*========================================================================*/
+void OrthoFree(void)
+{
+  ButModeFree();
+  ControlFree();
+
+}
+/*========================================================================*/
+void OrthoPushMatrix(void)
+{
+  OrthoObject *I=&Ortho;
+
+  glGetIntegerv(GL_VIEWPORT,I->ViewPort);
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0,I->ViewPort[2],0,I->ViewPort[3],-1,1);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+  glDisable(GL_LIGHTING);
+  glDisable(GL_DEPTH_TEST);
+}
+/*========================================================================*/
+void OrthoPopMatrix(void)
+{
+
+  glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+}
+
+
+
+
+
+
+
+
+
+

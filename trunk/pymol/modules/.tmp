@@ -1,0 +1,11 @@
+
+}
+
+# tkCheckRadioInvoke --
+# The procedure below is invoked when the mouse button is pressed in
+# a checkbutton or radiobutton widget, or when the widget is invoked
+# through the keyboard.  It invokes the widget if it
+# isn't disabled.
+#
+# Arguments:
+
