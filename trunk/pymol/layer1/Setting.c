@@ -1070,6 +1070,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SceneChanged();
     break;
   case cSetting_valence:
+  case cSetting_half_bonds:
     ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
     ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
     SceneChanged();
@@ -1627,7 +1628,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_button_mode, 0);
 
-  SettingSet_f(I,cSetting_valence, 0.0F);
+  SettingSet_b(I,cSetting_valence, 0.0F);
 
   SettingSet_f(I,cSetting_nonbonded_size, 0.25F);
 
@@ -2136,4 +2137,8 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_b(I,cSetting_movie_loop, 1);
      
+  SettingSet_b(I,cSetting_pdb_retain_ids, 0);
+
+  SettingSet_b(I,cSetting_pdb_no_end_record, 0);
+
 }

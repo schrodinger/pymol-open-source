@@ -20,8 +20,11 @@ dif_file = "tmp/dif.pdb"
 def load():
    try:
       r = 0
-      list = glob(ent_dir)      
+      list = glob(ent_dir)
+#      list = ["pdb/bn/"]
       for dir in list:
+         sys.__stdout__.write("\n"+dir)
+         sys.__stdout__.flush()
          for file in glob(dir+"/pdb*"):
             cmd.delete('all')
             cmd.load(file)
@@ -30,21 +33,26 @@ def load():
             if cmd.count_atoms()<0:
                break
             cmd.save(out_file)
-            os.system("awk '/^ATOM  /{print substr($0,12,40)};{next;}' < %s > %s"%(out_file,cmp_file))
-            os.system("awk '/^ATOM  /{print substr($0,12,40)};{next;}' < %s  > %s"%(file,ref_file))
+            os.system("awk '/^ATOM  /{print substr($0,12,16)+\" \"};{next;}' < %s | sed 's/  */ /g' > %s"%(out_file,cmp_file))
+            os.system("awk '/^ATOM  /{print substr($0,12,16)+\" \"};{next;}' < %s | sed 's/  */ /g' > %s"%(file,ref_file))
             os.system("diff %s %s > %s"%(ref_file,cmp_file,dif_file))
                       
             f=open(dif_file)
             l=f.readlines()
             f.close()
-            print file
             if len(l):
+               print
                for a in l:
                   print a,
                # save it so we have something to look at...
                os.system("/bin/cp -f %s %s_s"%(cmp_file,cmp_file))
                os.system("/bin/cp -f %s %s_s"%(ref_file,ref_file))               
-            
+               os.system("/bin/cp -f %s %s_src"%(out_file,cmp_file))
+               os.system("/bin/cp -f %s %s_src"%(file,ref_file))
+               print file
+            else:
+               sys.__stdout__.write(".")
+               sys.__stdout__.flush()
    except:
       traceback.print_exc()
 

@@ -3,7 +3,6 @@ PyMOL>load dat/pept.pdb
 PyMOL>print cmd.get_names()
 ['pept']
 PyMOL>print cmd.select("(all)")
- Selector: selection "sel01" defined with 107 atoms.
 107
 PyMOL>save cmp/C0020pdb.pdb
  Save: wrote "cmp/C0020pdb.pdb".

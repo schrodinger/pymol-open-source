@@ -15,6 +15,9 @@
 try:
    import sglite
 
+   from cmd import QuietException, \
+        _feedback,fb_module,fb_mask 
+
    # xray.py 
    # This section contains python code for supporting
    # x-ray crystallography functions
@@ -40,7 +43,8 @@ try:
                                     [ Mx[6]/rb, Mx[7]/rb, Mx[8]/rb, Mx[11]/tb],
                                     [        0,        0,        0,         1]] )                  
       except:
-         print " xray: unrecognized space group symbol '"+sgsymbol+"'"
+         if(_feedback(fb_module.symmetry,fb_mask.errors)):
+            print "Symmetry-Error: Urecognized space group symbol '"+sgsymbol+"'."
          result = None
       return result
 

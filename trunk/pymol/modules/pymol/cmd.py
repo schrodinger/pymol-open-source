@@ -84,8 +84,8 @@ if __name__=='pymol.cmd':
    #######################################################################
 
    file_ext_re= re.compile(string.join([
-      "\.pdb$|\.ent$|\.mol$|",
-      r"\.PDB$|\.ENT$|\.MOL$|",
+      "\.pdb$|\.ent$|\.mol$|\.pm5$|",
+      r"\.PDB$|\.ENT$|\.MOL$|\.PM5$|",
       r"\.mmod$|\.mmd$|\.dat$|\.out$|",
       r"\.MMOD$|\.MMD$|\.DAT$|\.OUT$|",
       r"\.xplor$|\.pkl$|\.sdf$|", 

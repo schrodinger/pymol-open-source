@@ -179,6 +179,17 @@ CHANGE LOG
 
 Changes up to 0.92
 
+   * new test case for PDB file IO (C0700odd).
+
+   * WARNING: select API argument reordering may break existing code
+
+   * adjusted behavior of "set" and "unset" to enable more concise
+     changes of global settings: "set setting-name" "unset setting-name"
+     WARNING: API changes to "set" and "unset" argument ordering may
+     break existing code
+
+   * pdb_retain_ids setting
+
    * Deuterium atom support
 
    * split_states command

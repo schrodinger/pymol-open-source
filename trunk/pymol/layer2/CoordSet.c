@@ -456,6 +456,9 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
       strcpy(name,ai->name);
     }
   }
+  if((int)SettingGet(cSetting_pdb_retain_ids)) {
+    cnt = ai->id - 1;
+  }
   (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
                 aType,cnt+1,name,ai->alt,ai->resn,
                 ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);

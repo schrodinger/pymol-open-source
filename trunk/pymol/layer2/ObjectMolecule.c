@@ -48,18 +48,21 @@ Z* -------------------------------------------------------------------
 
 #define cMaxNegResi 100
 
-#define wcopy ParseWordCopy
+#define ntrim ParseNTrim
 #define nextline ParseNextLine
 #define ncopy ParseNCopy
 #define nskip ParseNSkip
 
 #define cResvMask 0x7FFF
+
+
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 
 CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,
-                                        char **restart,char *segi_override);
+                                        char **restart,char *segi_override,
+                                        M4XAnnoType *m4x);
 
 CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *restart);
 
@@ -131,6 +134,25 @@ static char *skip_fortran(int num,int per_line,char *p)
   }  
   if(b) p=nextline(p);
   return(p);
+}
+
+void M4XAnnoInit(M4XAnnoType *m4x)
+{
+  UtilZeroMem((char*)m4x,sizeof(M4XAnnoType));
+}
+
+void M4XAnnoPurge(M4XAnnoType *m4x)
+{
+  int c;
+  if(m4x) {
+    for(c=0;c<m4x->n_context;c++) {
+      VLAFreeP(m4x->context[c].hbond);
+      VLAFreeP(m4x->context[c].site);
+      VLAFreeP(m4x->context[c].ligand);
+      VLAFreeP(m4x->context[c].water);
+    }
+    VLAFreeP(m4x->context);
+  }
 }
 
 /*========================================================================*/
@@ -5864,7 +5886,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 
 }
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int frame,int discrete)
+ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int frame,int discrete,M4XAnnoType *m4x)
 {
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
@@ -5874,6 +5896,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
   char *start,*restart=NULL;
   int repeatFlag = true;
   int successCnt = 0;
+
   SegIdent segi_override=""; /* saved segi for corrupted NMR pdb files */
 
   start=PDBStr;
@@ -5897,7 +5920,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       }
       if(isNew) AtomInfoPrimeColors();
 
-      cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart,segi_override);	 
+      cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart,segi_override,m4x);	 
       nAtom=cset->NIndex;
     }
     
@@ -5950,7 +5973,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
   return(I);
 }
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete)
+ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x)
 {
   ObjectMolecule *I=NULL;
   int ok=true;
@@ -5982,7 +6005,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
 		p[size]=0;
 		fclose(f);
 
-		I=ObjectMoleculeReadPDBStr(obj,buffer,frame,discrete);
+		I=ObjectMoleculeReadPDBStr(obj,buffer,frame,discrete,m4x);
 
 		mfree(buffer);
 	 }
@@ -7941,7 +7964,8 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                                         AtomInfoType **atInfoPtr,
                                         char **restart,
-                                        char *segi_override)
+                                        char *segi_override,
+                                        M4XAnnoType *m4x)
 {
 
   char *p;
@@ -7953,7 +7977,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int AFlag;
   char SSCode;
   int atomCount;
-  int conectFlag = false;
+  int bondFlag = false;
   BondType *bond=NULL,*ii1,*ii2;
   int *idx;
   int nBond=0;
@@ -7980,6 +8004,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   SSEntry *sst;
   int ssi = 0;
   int only_read_one_model = false;
+  int ignore_conect = false;
+  int have_bond_order = false;
 
   ignore_pdb_segi = (int)SettingGet(cSetting_ignore_pdb_segi);
 
@@ -7993,6 +8019,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
   if(buffer == *restart)
     only_read_one_model = true;
+
+  /* PASS 1 */
 
   *restart = NULL;
   while(*p)
@@ -8018,7 +8046,65 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       }
 		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
          (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
-        conectFlag=true;
+        bondFlag=true;
+		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')&&(*(p+3)=='R')&&(!*restart)&&m4x) {
+        p = nskip(p,10);
+        p = ntrim(cc,p,6);
+        m4x->annotated_flag = true;
+        if(WordMatchExact("HINT",cc,true)) {
+          p = nskip(p,1);
+          p = ntrim(cc,p,6);
+          if(!m4x->context) {
+            m4x->context = VLACalloc(M4XContextType,10);
+          } 
+          if(m4x->context) {
+            int cn;
+            int found=false;
+            
+            /* does context already exist ? */
+            for(cn=0;cn<m4x->n_context;cn++) {
+              if(WordMatchExact(m4x->context[cn].name,cc,true)) {
+                found=true;
+                break;
+              }
+            }
+
+            /* if not, then create it */
+            if(!found) {
+              cn = m4x->n_context++;
+              VLACheck(m4x->context,M4XContextType,cn);
+              UtilNCopy(m4x->context[cn].name,cc,sizeof(WordType));
+            }
+
+            while(*cc) {
+              p = nskip(p,1);
+              p = ntrim(cc,p,6);
+              if(WordMatchExact("BORDER",cc,true)) {
+                /* ignore PDB CONECT if BORDER present */
+                ignore_conect = true;
+                have_bond_order = true;
+                bondFlag = true;
+              } else if(WordMatchExact("SITE",cc,true)) {
+                if(!m4x->context[cn].site) {
+                  m4x->context[cn].site=VLAlloc(int,50);
+                }
+              } else if(WordMatchExact("LIGAND",cc,true)) {
+                if(!m4x->context[cn].ligand) {
+                  m4x->context[cn].ligand=VLAlloc(int,50);
+                }
+              } else if(WordMatchExact("WATER",cc,true)) {
+                if(!m4x->context[cn].water) {
+                  m4x->context[cn].water=VLAlloc(int,50);
+                }
+              } else if(WordMatchExact("HBOND",cc,true)) {
+                if(!m4x->context[cn].hbond) {
+                  m4x->context[cn].hbond=VLAlloc(M4XHBondType,50);
+                }
+              }
+            }
+          }
+        }
+      }
       p=nextline(p);
 	 }
 
@@ -8028,7 +8114,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   if(atInfo)
 	 VLACheck(atInfo,AtomInfoType,nAtom);
 
-  if(conectFlag) {
+  if(bondFlag) {
     nBond=0;
     bond=VLAlloc(BondType,6*nAtom);  
   }
@@ -8046,6 +8132,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
   a=0; /* WATCHOUT */
   atomCount=0;
+
+  /* PASS 2 */
 
   while(*p)
 	 {
@@ -8161,7 +8249,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           }
         }
 		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
-         (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T')&&bond)
+              (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T')&&bondFlag&&(!ignore_conect))
         {
           p=nskip(p,6);
           p=ncopy(cc,p,5);
@@ -8190,6 +8278,127 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               }
             }
         }
+		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')&&(*(p+3)=='R')&&(!*restart)&&m4x) {
+
+        p = nskip(p,10);
+        p = ntrim(cc,p,6);
+
+        if(m4x->context) {
+          int cn;
+          int found=false;
+
+          /* does context already exist ? */
+          for(cn=0;cn<m4x->n_context;cn++) {
+            if(WordMatchExact(m4x->context[cn].name,cc,true)) {
+              found=true;
+              break;
+            }
+          }
+
+          if(found) {
+            
+            M4XContextType *cont = m4x->context+cn;
+
+            p = nskip(p,1);
+            p = ntrim(cc,p,6);
+            if(WordMatchExact("BORDER",cc,true)&&bondFlag) {
+              int order;
+
+              p=nskip(p,1);
+              p=ncopy(cc,p,6);
+              if(sscanf(cc,"%d",&b1)==1) {
+                p=nskip(p,1);
+                p=ncopy(cc,p,6);
+                if(sscanf(cc,"%d",&b2)==1) {
+                  p = nskip(p,1);
+                  p = ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&order)==1) {                  
+                    if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
+                      VLACheck(bond,BondType,nBond);
+                      if(b1<=b2) {
+                        bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
+                        bond[nBond].index[1]=b2;
+                        bond[nBond].order=order;
+                        bond[nBond].stereo=0;
+                        
+                      } else {
+                        bond[nBond].index[0]=b2;
+                        bond[nBond].index[1]=b1;
+                        bond[nBond].order=order;
+                        bond[nBond].stereo=0;
+                      }
+                      nBond++;
+                    }
+                  }
+                }
+              }
+            } else if(WordMatchExact("SITE",cc,true)) {
+              if(cont->site) {
+                int id;
+                while(*cc) {
+                  p = nskip(p,1);
+                  p = ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&id)==1) {
+                    VLACheck(cont->site,int,cont->n_site);
+                    cont->site[cont->n_site++] = id;
+                  }
+                }
+              }
+            } else if(WordMatchExact("LIGAND",cc,true)) {
+              if(cont->ligand) {
+                int id;
+                while(*cc) {
+                  p = nskip(p,1);
+                  p = ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&id)==1) {
+                    VLACheck(cont->ligand,int,cont->n_ligand);
+                    cont->ligand[cont->n_ligand++] = id;
+                  }
+                }
+              }
+            } else if(WordMatchExact("WATER",cc,true)) {
+              if(cont->water) {
+                int id;
+                while(*cc) {
+                  p = nskip(p,1);
+                  p = ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&id)==1) {
+                    VLACheck(cont->water,int,cont->n_water);
+                    cont->water[cont->n_water++] = id;
+                  }
+                }
+              }
+            } else if(WordMatchExact("HBOND",cc,true)) {
+              if(cont->hbond) {
+                int id1,id2;
+                float strength;
+                p = nskip(p,1);
+                p = ncopy(cc,p,6);
+                if(sscanf(cc,"%d",&id1)==1) {
+                  p = nskip(p,1);
+                  p = ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&id2)==1) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%f",&strength)==1) {                  
+                      VLACheck(cont->hbond,M4XHBondType,cont->n_hbond);
+                      cont->hbond[cont->n_hbond].atom1 = id1;
+                      cont->hbond[cont->n_hbond].atom2 = id2;
+                      cont->hbond[cont->n_hbond].strength = strength;
+                      cont->n_hbond++;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      /* END KEYWORDS */
+
+      /* Secondary structure records */
+
       
       if(SSCode) {
         
@@ -8249,6 +8458,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           }
         }
       }
+      /* Atom records */
+
       if(AFlag&&(!*restart))
         {
           ai=atInfo+atomCount;
@@ -8424,30 +8635,35 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 		  }
       p=nextline(p);
 	 }
-  if(conectFlag) {
+  
+  /* END PASS 2 */
+  
+  if(bondFlag) {
     UtilSortInPlace(bond,nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);              
     if(nBond) {
-      ii1=bond;
-      ii2=bond+1;
-      nReal=1;
-      ii1->order=1;
-      a=nBond-1;
-      while(a) {
-        if((ii1->index[0]==ii2->index[0])&&(ii1->index[1]==ii2->index[1])) {
-          ii1->order++; /* count dup */
-        } else {
-          ii1++; /* non-dup, make copy */
-          ii1->index[0]=ii2->index[0];
-          ii1->index[1]=ii2->index[1];
-          ii1->order=ii2->order;
-          ii1->stereo=ii2->stereo;
-          nReal++;
-        }
-        ii2++;
-        a--;
-      }
 
-      nBond=nReal;
+      if(!have_bond_order) { /* handle PDB bond-order kludge */
+        ii1=bond;
+        ii2=bond+1;
+        nReal=1;
+        ii1->order=1;
+        a=nBond-1;
+        while(a) {
+          if((ii1->index[0]==ii2->index[0])&&(ii1->index[1]==ii2->index[1])) {
+            ii1->order++; /* count dup */
+          } else {
+            ii1++; /* non-dup, make copy */
+            ii1->index[0]=ii2->index[0];
+            ii1->index[1]=ii2->index[1];
+            ii1->order=ii2->order;
+            ii1->stereo=ii2->stereo;
+            nReal++;
+          }
+          ii2++;
+          a--;
+        }
+        nBond=nReal;
+      }
       /* now, find atoms we're looking for */
 
       /* determine ranges */
@@ -8478,9 +8694,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
             ii2->index[0]=idx[ii1->index[0]];
             ii2->index[1]=idx[ii1->index[1]];
             if((ii2->index[0]>=0)&&(ii2->index[1]>=0)) {
-              if(ii1->order<=2) ii2->order=1;
-              else if(ii1->order<=4) ii2->order=2;
-              else ii2->order=3;
+
+              if(!have_bond_order) { /* handle PDB bond order kludge */
+                if(ii1->order<=2) ii2->order=1;
+                else if(ii1->order<=4) ii2->order=2;
+                else ii2->order=3;
+              }
               nReal++;
               ii2++;
             }

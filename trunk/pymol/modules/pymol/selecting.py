@@ -40,7 +40,7 @@ PYMOL API
       for a in arg:
          cmd.disable(a)
 
-   def select(name,selection="",quiet=0,show=0):
+   def select(name,selection="",show=0,quiet=1):
       '''
 DESCRIPTION
 

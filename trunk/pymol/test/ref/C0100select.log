@@ -86,7 +86,6 @@ PyMOL>select tst,pept within 50 of tiny
 PyMOL>select tst, pept w. 1 of pept
  Selector: selection "tst" defined with 107 atoms.
 PyMOL>print cmd.select("(none)")
- Selector: no atoms selected.
 0
 PyMOL>dele all
 PyMOL>load dat/pept.pdb,mult

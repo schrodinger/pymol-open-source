@@ -113,7 +113,7 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
       ok = true;
       Py_DECREF(mats);
     } else {
-      ErrMessage("Symmetry","Unable to get matrices from sglite");
+      ErrMessage("Symmetry","Unable to get matrices from sglite.");
     }
     if(!blocked) 
       PUnblock();

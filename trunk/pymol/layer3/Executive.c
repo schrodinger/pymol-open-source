@@ -2673,21 +2673,25 @@ void ExecutiveSort(char *name)
   ObjectMolecule *obj;
   SpecRec *rec = NULL;
   ObjectMoleculeOpRec op;
+  int all_obj = false;
   int sele;
 
   if(strlen(name)) {
     os=ExecutiveFindObjectByName(name);
-    if(!os)
-      ErrMessage(" Executive","object not found.");
-    else if(os->type!=cObjectMolecule)
+    if(!os) {
+      if(!WordMatchExact(cKeywordAll,name,true))
+        ErrMessage(" Executive","object not found.");
+      else
+        all_obj=true;
+    } else if(os->type!=cObjectMolecule)
       ErrMessage(" Executive","bad object type.");
   }
   
-  if(os||(!strlen(name))) { /* sort one or all */
+  if(os||all_obj) { /* sort one or all */
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject)
         if(rec->obj->type==cObjectMolecule)
-          if((!os)||(rec->obj==os)) {
+          if((rec->obj==os)||all_obj) {
             obj =(ObjectMolecule*)rec->obj;
             ObjectMoleculeSort(obj);
             sele=SelectorIndexByName(rec->obj->Name);
@@ -3076,10 +3080,16 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
       ExecutiveObjMolSeleOp(sele1,&op1);
     }
   }
-  l=strlen(end_str);
-  VLACheck(op1.charVLA,char,op1.i2+l+1);
-  strcpy(op1.charVLA+op1.i2,end_str);
-  op1.i2+=l+1;
+  if(!(int)SettingGet(cSetting_pdb_no_end_record)) { /* terminate with END */
+    l=strlen(end_str);
+    VLACheck(op1.charVLA,char,op1.i2+l+1);
+    strcpy(op1.charVLA+op1.i2,end_str);
+    op1.i2+=l+1;
+  } else { /* terminate */
+    VLACheck(op1.charVLA,char,op1.i2+1);
+    op1.charVLA[op1.i2]=0;
+    op1.i2++;
+  }
   result=Alloc(char,op1.i2);
   memcpy(result,op1.charVLA,op1.i2);
   VLAFreeP(op1.charVLA);
