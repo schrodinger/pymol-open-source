@@ -489,7 +489,12 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
     tn1 = TN+3*I->N;
 
     for(b=0;b<I->Ns;b+=2) {
-      CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      if(SettingGet(cSetting_test1)<0.5)
+        CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      else {
+        CGOBegin(cgo,GL_LINE_STRIP);        
+        CGODisable(cgo,GL_LIGHTING);
+      }
       c = I->c;
       for(a=0;a<I->N;a++) {
         CGOColorv(cgo,c);

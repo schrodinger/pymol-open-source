@@ -504,6 +504,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
   case cSetting_cartoon_loop_radius:
+  case cSetting_cartoon_power:
+  case cSetting_cartoon_power_b:
+  case cSetting_cartoon_rect_width:
+  case cSetting_cartoon_rect_thickness:
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
     SceneChanged();
     break;
@@ -893,6 +897,13 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_loop_quality, 6);
 
+  SettingSet_f(I,cSetting_cartoon_power, 1.8);
+
+  SettingSet_f(I,cSetting_cartoon_power_b, 0.45);
+
+  SettingSet_f(I,cSetting_cartoon_rect_width, 1.30);
+
+  SettingSet_f(I,cSetting_cartoon_rect_thickness, 0.4);
   
 }
 
