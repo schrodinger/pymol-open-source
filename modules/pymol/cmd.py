@@ -621,6 +621,51 @@ DESCRIPTION
    '''
    help('selections')
 
+def povray():
+   '''
+DESCRIPTION
+
+   PovRay: Persistance of Vision Support Information (EXPERIMENTAL)
+   
+   The built-in ray-tracer (technically a ray-caster) is as fast or
+   faster than PovRay for most figures (provided that hash_max is
+   tuned for your system).  However, PovRay blows PyMOL away when it
+   comes to rendering images without using lots of RAM, and with
+   PovRay you get the ability use perspective, textures, reflections,
+   infinite objects, and a superior lighting model.
+
+   PovRay does not include interpolated colors within triangles (!!),
+   so you must patch the source code in order to obtain this basic
+   functionality required for rendering molecular surfaces.  Details
+   can be found on the DINO website.
+   
+      http://www.biozentrm.unibas.ch/~xray/dino
+
+   To use PovRay, you must be running under Unix and have x-povray in
+   your path.  Unfortunately, the developers of PovRay do not share
+   PyMOL's open-source philosophy, so you will need to download,
+   configure, patch (for smooth_color_triangles), and install it
+   yourself.  Despite being free and open-source, PovRay's license
+   prevents it from being modified or conveniently combined with
+   PyMOL, and thus it serves as a textbook example for why open-source
+   licenses should be wholly non-restrictive.
+
+   Assuming that PovRay is built and in your path...
+
+   ray renderer=1   # will use PovRay instead of the built-in engine
+
+   set ray_default_renderer=1 # changes the default renderer to PovRay
+   ray                        # will now use PovRay by default
+
+   cmd.get_povray() # will give you a tuple of PovRay input strings
+                    # which you can manipulate from Python
+
+   set smooth_color_triangles = 1 # is required in order to get decent
+      surfaces in PovRay.  You must patch PovRay first.
+      
+   '''
+   help('povray')
+
 def sort(object=""):
    '''
 DESCRIPTION
@@ -2160,21 +2205,38 @@ def ray(width=0,height=0,renderer=-1):
    '''
 DESCRIPTION
   
-   "ray" creates a ray traced image of the current frame. This
+   "ray" creates a ray-traced image of the current frame. This
    can take some time (up to several minutes, depending on image
    complexity).
       
 USAGE
  
    ray [width,height [,renderer]]
- 
+
+EXAMPLES
+
+   ray
+   ray 1024,768
+   ray renderer=0
+   
 PYMOL API
   
    cmd.ray(int width,int height,int renderer=-1)
 
+NOTES
+
+   renderer = -1 is default (use value in ray_default_renderer)
+   renderer =  0 uses PyMOL's internal renderer
+   renderer =  1 uses PovRay's renderer.  This is Unix-only
+      and you must have "x-povray" in your path.  It utilizes two
+      two temporary files: "tmp_pymol.pov" and "tmp_pymol.png".
+      
 SEE ALSO
 
-   "help faster" for optimization tips
+   "help faster" for optimization tips with the builtin renderer.
+   "help povray" for how to use PovRay instead of PyMOL's built-in
+      ray-tracing engine.
+   
    '''
    try:
       lock()   
@@ -2225,7 +2287,7 @@ RAY TRACING OPTIMIZATION
 
    2. Increase "hash_max" so as to obtain a voxel dimensions of
       0.3-0.6.  Proper tuning of "hash_max" can speed up
-      rendering by a factor of 2-3 for non-trivial scenes.
+      rendering by a factor of 2-5X for non-trivial scenes.
       
       WARNING: memory usage depends on hash_max^3, so avoid
       pushing into virtual memory.  Roughly speaking:
@@ -2234,15 +2296,12 @@ RAY TRACING OPTIMIZATION
          hash_max = 160 -->  ~72 MB hash + data
          hash_max = 240 --> ~243 MB hash + data
 
-      Avoid using virtual memory.
+      Avoid utilizing virtual memory for the voxel hash,
+      it will slow things way down.
       
    3. Recompiling with optimizations on usually gives a 25-33%
       performance boost for ray tracing.
 
-   The built-in RayTracer is faster than PovRay for most simple
-   figures (spheres and cylinders), but PovRay blows past PyMOL when
-   it comes to rendering systems with many triangles.
-   
    '''
 
    help('faster')
@@ -6211,6 +6270,7 @@ help_only = {  # for API-only features
    'movies'        : [movies       , 0 , 0 , ',' , 0 ],
    'editing'       : [editing      , 0 , 0 , ',' , 0 ],  
    'edit_keys'     : [edit_keys    , 0 , 0 , ',' , 0 ],
+   'povray'        : [povray       , 0 , 0 , ',' , 0 ],
    'get_names'     : [get_names    , 0 , 0 , ',' , 0 ],
    'get_type'      : [get_type     , 0 , 0 , ',' , 0 ],
    'faster'        : [faster       , 0 , 0 , ',' , 0 ],
