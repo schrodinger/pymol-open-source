@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #ifdef _os_memory_debug_on
 
 #include<stdio.h>
+#include<string.h>
 
 #define GDB_ENTRY
 
