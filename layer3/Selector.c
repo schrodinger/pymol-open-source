@@ -439,7 +439,7 @@ int SelectorColorectionApply(PyObject *list,char *prefix)
 {
   SelectorType *I=&Selector;
   int ok=true;
-  ColorectionRec *used;
+  ColorectionRec *used=NULL;
   int n_used;
   int a,b;
   AtomInfoType *ai;
@@ -484,7 +484,7 @@ int SelectorColorectionApply(PyObject *list,char *prefix)
 int SelectorColorectionFree(PyObject *list,char *prefix)
 {
   int ok=true;
-  ColorectionRec *used;
+  ColorectionRec *used=NULL;
   int n_used;
   int b;
   WordType name;
@@ -543,9 +543,9 @@ int SelectorSecretsFromPyList(PyObject *list)
   int ok=true;
   int n_secret;
   int a;
-  PyObject *entry;
+  PyObject *entry=NULL;
   WordType name;
-  int ll;
+  int ll=0;
   if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
   if(ok) n_secret = PyList_Size(list);

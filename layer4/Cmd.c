@@ -595,7 +595,7 @@ static PyObject *CmdSetColorection(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdGetColorection(PyObject *dummy, PyObject *args)
 {
-  PyObject *result;
+  PyObject *result=NULL;
   int ok=true;
   char *prefix;
   ok = PyArg_ParseTuple(args,"s",&prefix);
@@ -1831,7 +1831,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   float *vert_vla = NULL;
   int ok = false;
   int map_state;
-  int multi;
+  int multi=false;
   ObjectMapState *ms;
 
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
@@ -1965,7 +1965,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
   int ok = false;
   ObjectMapState *ms;
   int map_state=0;
-  int multi;
+  int multi=false;
   int side;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 

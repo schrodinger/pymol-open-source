@@ -340,15 +340,15 @@ class Setting:
 
    def ray_interior_color_set(self):
       if(self.ray_interior_color.get()):
-         cmd.set("ray_interior_color","grey20")
+         cmd.set("ray_interior_color","grey20",log=1)
       else:
-         cmd.set("ray_interior_color","-1")
+         cmd.set("ray_interior_color","-1",log=1)
 
    def cartoon_highlight_color_set(self):
       if(self.cartoon_highlight_color.get()):
-         cmd.set("cartoon_highlight_color","grey50")
+         cmd.set("cartoon_highlight_color","grey50",log=1)
       else:
-         cmd.set("cartoon_highlight_color","-1")
+         cmd.set("cartoon_highlight_color","-1",log=1)
       
    def update(self,sttng):
       set_fn = self.xref[sttng]
