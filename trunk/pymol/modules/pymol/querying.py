@@ -203,7 +203,7 @@ NOTES
          finally:
             unlock()
          cmd.set('auto_zoom',save,quiet=1)
-      if r<0.0:
+      if (r<0.0) and (not quiet):
          if cmd._raising(): raise QuietException
       return r
 

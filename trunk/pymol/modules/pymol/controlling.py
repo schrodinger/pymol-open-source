@@ -136,6 +136,9 @@ if __name__=='pymol.controlling':
                                 ('s','shft','movs'),
                                 ('s','ctrl','none'),
                                 ('s','ctsh','none'),
+                                ('double_left','none','menu'),
+                                ('double_middle','none','cent'),
+                                ('double_right','none', 'none'),
                                 ],
 
       'two_button_viewing' : [ ('l','none','rota'),
@@ -152,6 +155,10 @@ if __name__=='pymol.controlling':
                                ('r','ctsh','cent'),
                                ('s','none','none'),
                                ('s','shft','none'),
+                               ('double_left','none','menu'),
+                               ('double_middle','none','none'),                               
+                               ('double_right','none','cent'),
+                               
                                ],
       'two_button_selecting' : [ ('l','none','rota'),
                                  ('m','none','none'),
@@ -169,6 +176,10 @@ if __name__=='pymol.controlling':
                                  ('s','shft','none'),
                                  ('s','ctrl','none'),
                                  ('s','ctsh','none'),
+                               ('double_left','none','menu'),
+                               ('double_middle','none','none'),                               
+                               ('double_right','none','cent'),
+                                 
                                ],
       'two_button_editing' : [ ('l','none','rota'),
                                ('m','none','none'),
@@ -186,6 +197,10 @@ if __name__=='pymol.controlling':
                                ('s','shft','none'),
                                ('s','ctrl','none'),
                                ('s','ctsh','none'),
+                               ('double_left','none','menu'),
+                               ('double_middle','none','none'),                               
+                               ('double_right','none','cent'),
+                               
                                ],
       }
 
