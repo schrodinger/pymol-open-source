@@ -417,6 +417,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
     } else {
       int use_dlst;
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+            
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 

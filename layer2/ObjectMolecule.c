@@ -6872,8 +6872,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                strcpy(ai->resn,ai0->resn);    
              }
              AtomInfoAssignColors(G,ai);
-             if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
-               ai->color=ai0->color;
+             if(op->i3) { 
+               if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
+                 ai->color=ai0->color;
+               else if(ai->protons == cAN_C) {
+                 ai->color=op->i4;
+               }
+             }
+             
              for(b=0;b<cRepCnt;b++)
                ai->visRep[b]=ai0->visRep[b];
              ai->id=-1;

@@ -532,7 +532,7 @@ NOTES
       return r
 
 
-   def fuse(selection1="(pk1)",selection2="(pk2)",mode=0):
+   def fuse(selection1="(pk1)",selection2="(pk2)",mode=0,recolor=1):
       '''
 DESCRIPTION
 
@@ -566,7 +566,8 @@ SEE ALSO
       #   
       try:
          lock()
-         r = _cmd.fuse(str(selection1),str(selection2),int(mode))
+         r = _cmd.fuse(str(selection1),str(selection2),
+                       int(mode),int(recolor))
       finally:
          unlock()
       return r

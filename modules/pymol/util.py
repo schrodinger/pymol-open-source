@@ -141,12 +141,12 @@ def cbag(selection="(all)",quiet=1):
    s = str(selection)
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("carbon","(elem C and ("+s+"))",quiet=quiet)
-
+   
 def cbac(selection="(all)",quiet=1):
    s = str(selection)
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("cyan","(elem C and ("+s+"))",quiet=quiet)
-
+   
 def cbam(selection="(all)",quiet=1):
    s = str(selection)   
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
@@ -195,6 +195,8 @@ def cba(color,selection="(all)",quiet=1):
    s = str(selection)
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color(color,"(elem C and ("+s+"))",quiet=quiet)
+   print s
+   cmd.color(color,s,flags=1,quiet=quiet)
 
 def performance(mode):
    mode = int(mode)

@@ -5369,13 +5369,13 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
 {
   register CSelector *I=G->Selector;
   int a,b;
-  int at0,at1;
+  int at0=0,at1;
   int *vla0=NULL;
   int *vla1=NULL;
   int c0,c1;
   int i0=0,i1;
   int cc1;
-  ObjectMolecule *obj0,*obj1;
+  ObjectMolecule *obj0=NULL,*obj1;
   CoordSet *cs0,*cs1;
   int matched_flag;
   int b_start;
@@ -5407,7 +5407,8 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
       i1 = vla1[a];
       at1=I->Table[i1].atom;
       obj1=I->Obj[I->Table[i1].model];
-      
+      matched_flag=false;
+
       switch(matchmaker) {
       case 0: /* simply assume that atoms are stored in PyMOL in the identical order, one for one */
         if(b<c0) {
@@ -5549,7 +5550,9 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
 }
 /*========================================================================*/
 
-void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,int target,int source,int discrete)
+void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
+                                  int target,int source,int discrete,
+                                  int zoom)
 {
   register CSelector *I=G->Selector;
 
@@ -5775,7 +5778,7 @@ void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,int target
     ObjectMoleculeSort(targ);
   if(isNew) {
     ObjectSetName((CObject*)targ,name);
-    ExecutiveManageObject(G,(CObject*)targ,-1,false);
+    ExecutiveManageObject(G,(CObject*)targ,zoom,false);
   } else {
     ExecutiveUpdateObjectSelection(G,(CObject*)targ);
   }

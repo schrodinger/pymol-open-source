@@ -145,7 +145,8 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1);
 void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *obj,char *sele,float cutoff);
 int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state,int weighted);
 int ExecutiveGetCameraExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state);
-void ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,int source,int target,int discrete);
+void ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
+                           int source,int target,int discrete,int zoom);
 PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state);
 void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level);
 void ExecutiveFlag(PyMOLGlobals *G,int flag,char *s1,int action,int quiet);
@@ -156,7 +157,7 @@ void ExecutiveUndo(PyMOLGlobals *G,int dir);
 void ExecutiveRebuildAll(PyMOLGlobals *G);
 void ExecutiveSpheroid(PyMOLGlobals *G,char *name,int average);
 void ExecutiveAddHydrogens(PyMOLGlobals *G,char *s1,int quiet);
-void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode);
+void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor);
 void ExecutiveRenameObjectAtoms(PyMOLGlobals *G,char *name,int force);
 int ExecutiveInvert(PyMOLGlobals *G,int quiet);
 char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only);

@@ -445,7 +445,7 @@ USAGE
          if cmd._raising(): raise QuietException
       return r
 
-   def create(name,selection,source_state=0,target_state=0,discrete=0):
+   def create(name,selection,source_state=0,target_state=0,discrete=0,zoom=-1):
       '''
 DESCRIPTION
 
@@ -489,7 +489,7 @@ SEE ALSO
             _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
             name = "obj%02.0f" % sel_cnt
          _cmd.create(str(name),"("+str(selection)+")",
-                     int(source_state)-1,int(target_state)-1,int(discrete))
+                     int(source_state)-1,int(target_state)-1,int(discrete),int(zoom))
       finally:
          unlock()
       return None

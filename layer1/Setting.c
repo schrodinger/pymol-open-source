@@ -1775,7 +1775,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_line_smooth, 1);
 
-  SettingSet_f(I,cSetting_line_width, 1.0F);
+  SettingSet_f(I,cSetting_line_width, 1.5F);
 
   SettingSet_b(I,cSetting_half_bonds, 0);
 
