@@ -721,7 +721,7 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenu('Build', 'Build',tearoff=TRUE)
 
       self.menuBar.addcascademenu('Build', 'Fragment', 'Fragment',
-                                  label='Fragment')
+                                  label='Fragment',tearoff=TRUE)
       
 #      self.menuBar.addmenu('Fragment', 'Fragment')
 
@@ -824,7 +824,7 @@ class PMGApp(AbstractApp):
 #      self.menuBar.addmenu('Residue', 'Residue')
 
       self.menuBar.addcascademenu('Build', 'Residue', 'Residue',
-                                  label='Residue')
+                                  label='Residue',tearoff=TRUE)
 
  
       self.menuBar.addmenuitem('Residue', 'command', 'Acetyl',
@@ -1425,11 +1425,11 @@ class PMGApp(AbstractApp):
 
 
       self.menuBar.addmenuitem('Setting', 'command', 'Show Text Output',
-                               label='Show Text',
+                               label=self.pad+'Show Text',
                                command = lambda: cmd.set("text","1",log=1))
 
       self.menuBar.addmenuitem('Setting', 'command', 'Hide Text Output',
-                               label='Hide Text',
+                               label=self.pad+'Hide Text',
                                command = lambda: cmd.set("text","0",log=1))
 
       self.menuBar.addmenuitem('Setting', 'checkbutton',
@@ -1732,3 +1732,9 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Demo', 'command', 'Compiled Graphics Objects',
                                label='Compiled Graphics Objects',
                                command = lambda s=self:s.demo('cgo'))
+
+      self.menuBar.addmenuitem('Demo', 'separator', '')
+      
+      self.menuBar.addmenuitem('Demo', 'command', 'Clear',
+                               label='Clear',
+                               command = lambda s=self:s.demo('finish'))

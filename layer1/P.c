@@ -933,6 +933,12 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
 #endif
 
+#ifdef _PYMOL_SETUP_PY23
+/* used by semistatic pymol */
+  PyRun_SimpleString("import string");
+  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
+#endif
+
 #ifdef WIN32
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
 #endif
