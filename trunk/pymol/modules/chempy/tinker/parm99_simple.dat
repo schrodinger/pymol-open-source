@@ -646,6 +646,8 @@ NC-CV-H4    50.0      120.00    WLD from CC-CV-H4
 CC-CT-N2    63.0      113.10    WLD from CC-CT-CT
 CC-CT-CY    63.0      110.00    WLD from CT-CT-CY
 N2-CT-CY    63.0      110.00    WLD from CT-CT-CY
+SH-CT-OH    60.0      109.50    WLD from C -CT-OH
+CA-CT-S     60.0      109.50    WLD guess
 A -A -Q2      0.      127.74    (found in crystallographic water with 3 bonds)
 A -D2-D2    50.0      180.00    Junmei et al, 1999
 A -D3-A     35.0      119.50    combination of 2
