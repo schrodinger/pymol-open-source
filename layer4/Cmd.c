@@ -5031,7 +5031,17 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
   return(APIStatus(ok));  
 }
 
+
+static PyObject *CmdGetCThreadingAPI(PyObject *self, 	PyObject *args)
+{
+  PyObject *result = PyList_New(2);
+  PyList_SetItem(result,0,PyCObject_FromVoidPtr(PBlock,NULL));
+  PyList_SetItem(result,1,PyCObject_FromVoidPtr(PUnblock,NULL));
+  return result;
+}
+
 static PyMethodDef Cmd_methods[] = {
+   {"_get_c_threading_api",  CmdGetCThreadingAPI,         METH_VARARGS },
 	{"accept",	              CmdAccept,               METH_VARARGS },
 	{"align",	              CmdAlign,                METH_VARARGS },
 	{"alter",	              CmdAlter,                METH_VARARGS },
