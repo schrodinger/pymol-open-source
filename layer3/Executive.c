@@ -82,6 +82,19 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
+
+float ExecutiveUpdateCmd(char *s0,char *s1,int sta0,int sta1)
+{
+  int sele0,sele1;
+
+  sele0 = SelectorIndexByName(s0);
+  sele1 = SelectorIndexByName(s1);
+  if(!(sele0&&sele1)) {
+    ErrMessage("Update","Invalid input selections.");
+  } else {
+    SelectorUpdateCmd(sele0,sele1,sta0,sta1);
+  }
+}
 /*========================================================================*/
 void ExecutiveRenameObjectAtoms(char *name,int force) 
 {

@@ -318,7 +318,7 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
   
 }
 /*========================================================================*/
-PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v)
+PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v,int index)
 {
   PyObject *atom;
   int ok = true;
@@ -348,6 +348,8 @@ PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v)
       PConvStringToPyObjAttr(atom,"text_type",ai->textType);      
     PConvIntToPyObjAttr(atom,"hetatm",ai->hetatm);      
     PConvIntToPyObjAttr(atom,"flags",ai->flags);      
+    PConvIntToPyObjAttr(atom,"id",ai->id);  /* not necc. unique */
+    PConvIntToPyObjAttr(atom,"index",index+1);  /* fragile */
   }
   if(PyErr_Occurred())
     PyErr_Print();

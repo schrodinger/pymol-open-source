@@ -183,6 +183,7 @@ static PyObject *CmdTest(PyObject *self, 	PyObject *args);
 static PyObject *CmdTurn(PyObject *self, 	PyObject *args);
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args);
 static PyObject *CmdZoom(PyObject *self, PyObject *args);
+static PyObject *CmdUpdate(PyObject *dummy, PyObject *args);
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
 static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
 
@@ -280,6 +281,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"turn",	        CmdTurn,         METH_VARARGS },
 	{"viewport",     CmdViewport,     METH_VARARGS },
 	{"undo",         CmdUndo,         METH_VARARGS },
+	{"update",       CmdUpdate,       METH_VARARGS },
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
@@ -954,6 +956,24 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
   return result;
 }
 
+static PyObject *CmdUpdate(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  int *int1,*int2;
+  OrthoLineType s1,s2;
+  PyObject *result;
+  PyArg_ParseTuple(args,"ssii",&str1,&str2,&int1,&int2);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
+  ExecutiveUpdateCmd(s1,s2,int1,int2);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
 {
   APIEntry();
@@ -1465,14 +1485,14 @@ static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 static PyObject *CmdSelect(PyObject *self, PyObject *args)
 {
   char *sname,*sele;
-
-  PyArg_ParseTuple(args,"ss",&sname,&sele);
+  int cnt = 0;
+  int quiet;
+  PyArg_ParseTuple(args,"ssi",&sname,&sele,&quiet);
   APIEntry();
-  SelectorCreate(sname,sele,NULL,false);
+  cnt = SelectorCreate(sname,sele,NULL,quiet);
   OrthoDirty();
   APIExit();
-  Py_INCREF(Py_None);
-  return Py_None;
+  return PyInt_FromLong(cnt);
 }
 
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
@@ -1942,12 +1962,13 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
 static PyObject *CmdRename(PyObject *self, 	PyObject *args)
 {
   char *str1;
+  int int1;
   OrthoLineType s1;
 
-  PyArg_ParseTuple(args,"s",&str1);
+  PyArg_ParseTuple(args,"si",&str1,&int1);
   APIEntry();
   SelectorGetTmp(str1,s1);
-  ExecutiveRenameObjectAtoms(s1,1);
+  ExecutiveRenameObjectAtoms(s1,int1);
   SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);
