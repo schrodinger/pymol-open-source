@@ -1504,7 +1504,6 @@ int RayTraceThread(CRayThreadInfo *T)
                               fc[0]	= ffact*T->bkrd[0]+fc[0]*ffact1m;
                               fc[1]	= ffact*T->bkrd[1]+fc[1]*ffact1m;
                               fc[2]	= ffact*T->bkrd[2]+fc[2]*ffact1m;
-
                             }
                           else 
                             {
@@ -1587,10 +1586,20 @@ int RayTraceThread(CRayThreadInfo *T)
                   if(pass)	/* average all four channels */
                     {	
                       persist_inv = _1-persist;
+
                       fc[0]	= (0xFF&((*pixel)>>24)) * persist + (0xFF&(last_pixel>>24))*persist_inv;
                       fc[1]	= (0xFF&((*pixel)>>16)) * persist + (0xFF&(last_pixel>>16))*persist_inv;
                       fc[2]	= (0xFF&((*pixel)>>8))  * persist + (0xFF&(last_pixel>>8))*persist_inv;
                       fc[3]	= (0xFF&((*pixel)))     * persist + (0xFF&(last_pixel))*persist_inv;
+                      
+                      if((i<0)&&(!opaque_back)) {
+                        if(I->BigEndian) {
+                          fc[3]	= (float)(0xFF&(last_pixel));
+                        } else {
+                          fc[0]	= (float)(0xFF&(last_pixel>>24));
+                        }
+                      }
+                      
                       
                       cc0		= (uint)(fc[0]);
                       cc1		= (uint)(fc[1]);

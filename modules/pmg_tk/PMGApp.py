@@ -642,6 +642,10 @@ class PMGApp(AbstractApp):
                         label=self.pad+'Quit',
                         command=self.quit)
 
+      self.menuBar.addmenuitem('File', 'command', 'Reinitialize PyMOL',
+                        label=self.pad+'Reinitialize',
+                        command=cmd.reinitialize)
+
       self.menuBar.addmenuitem('File', 'separator', '')
       
       self.menuBar.addmenuitem('File', 'checkbutton',

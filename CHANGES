@@ -179,6 +179,18 @@ CHANGE LOG
 
 Changes up to 0.92
 
+   * fixed alpha channel handling for transparent surfaces in ray tracer
+     with a non-opaque background, with fog, and with both togetherset 
+
+   * added defer_updates setting to provide a gentler alternative
+     to suspend_updates and which can allow a threading applications
+     to process a series of cmd.do commands without unnecessary
+     updates
+
+   * fixed a couple annoying bugs in mpng command movie rendering
+     COMPATIBILITY WARNING: mpng no longer automatically adds an 
+     underscore to the movie filename prefix!
+
    * fixed Calcium detection for "CA+" residues
 
    * cmd.do updated to take multiple commands as a string or list of strings
@@ -186,7 +198,7 @@ Changes up to 0.92
    * increase the word length limit in the selector so that long lists
      of residues can be supplied.
 
-   * new test case for PDB file IO (C0700odd).
+   * new test case for PDB file IO (C0700odd), do command (c1100do)
 
    * WARNING: cmd.select API argument reordering may break existing code
 
@@ -205,7 +217,7 @@ Changes up to 0.92
 
    * get_symmetry & set_symmetry commands for molecule objects
 
-   * mutagenesis wizard now preserves cartoon information
+   * mutagenesis wizard now preserves cartoon display
 
    * fixed alpha channel handling for transparency OpenGL objects
 

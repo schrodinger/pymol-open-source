@@ -341,6 +341,7 @@ if __name__=='pymol.setting':
       pdb_no_end_record     = 301
       cgo_dot_width         = 302
       cgo_dot_radius        = 303
+      defer_updates         = 304
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
