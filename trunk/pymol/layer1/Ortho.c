@@ -177,7 +177,10 @@ void OrthoSpecial(int k,int x,int y)
 int OrthoArrowsGrabbed(void)
 {
   OrthoObject *I=&Ortho;
-  return(I->CurChar>I->PromptChar);
+  return(I->CurChar>I->PromptChar&& /* can't grab arrows if we can't see the text */
+         (SettingGet(cSetting_internal_feedback)||
+          SettingGet(cSetting_text)||
+          SettingGet(cSetting_overlay)));
 }
 /*========================================================================*/
 void  OrthoRemoveSplash(void)

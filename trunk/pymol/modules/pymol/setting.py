@@ -137,6 +137,8 @@ class SettingIndex:
    normalize_ccp4_maps   =126
    surface_poor          =127
    internal_feedback     =128
+   cgo_line_width        =129
+   cgo_line_radius       =130
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

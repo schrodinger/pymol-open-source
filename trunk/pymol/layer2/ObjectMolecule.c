@@ -4419,10 +4419,14 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick)
 
   if(I->UnitCellCGO&&(I->Obj.RepVis[cRepCell])) {
     if(ray) {
-      CGORenderRay(I->UnitCellCGO,ray);
+      
+      CGORenderRay(I->UnitCellCGO,ray,ColorGet(I->Obj.Color),
+                         I->Obj.Setting,NULL);
     } else if(pick&&PMGUI) {
     } else if(PMGUI) {
-      CGORenderGL(I->UnitCellCGO);
+      ObjectUseColor(&I->Obj);
+      CGORenderGL(I->UnitCellCGO,ColorGet(I->Obj.Color),
+                         I->Obj.Setting,NULL);
     }
   }
   if(state<0) {
