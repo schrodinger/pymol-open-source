@@ -1,9 +1,9 @@
-#!/bin/csh 
+#!/bin/csh -f
 #
 # PyMOL startup script
 #
-setenv PYMOL_PATH ${WLD_MTK}/pkg/pymol
-setenv PYMOL_EXTLIBPATH $PYMOL_PATH/ext/lib
+setenv PYMOL_PATH /apps/pymol/pymol
+setenv PYMOL_EXTLIBPATH ${PYMOL_PATH}/ext/lib
 #
 # Tcl/Tk path
 setenv TCL_LIBRARY $PYMOL_EXTLIBPATH/tcl8.0
