@@ -14,11 +14,11 @@ MAX_BOND_LEN = 2.2
 PEPT_CUTOFF = 1.7
 
 #---------------------------------------------------------------------------------
-def generate(model, forcefield = protein_amber, histidine = 'HIE' ):
+def generate(model, forcefield = protein_amber, histidine = 'HIE',skip_sort=None ):
 
    add_bonds(model,forcefield=forcefield)   
    connected = model.convert_to_connected()
-   add_hydrogens(connected,forcefield=forcefield)
+   add_hydrogens(connected,forcefield=forcefield,skip_sort=skip_sort)
    place.simple_unknowns(connected)
    return connected.convert_to_indexed()
 
@@ -235,7 +235,8 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                                     break
                      
 #---------------------------------------------------------------------------------
-def add_hydrogens(model,forcefield=protein_amber):  # assumes no bonds between non-hetatms
+def add_hydrogens(model,forcefield=protein_amber,skip_sort=None):
+   # assumes no bonds between non-hetatms
    if feedback['actions']:
       print " "+str(__name__)+": adding hydrogens..."
    if str(model.__class__) != 'chempy.models.Connected':
@@ -318,4 +319,5 @@ def add_hydrogens(model,forcefield=protein_amber):  # assumes no bonds between n
                               bnd.order = bonds[b]['order']
                               mbond[idx1].append(bnd)
                               mbond[idx2].append(bnd)
-      model.sort()
+      if not skip_sort:
+         model.sort()
