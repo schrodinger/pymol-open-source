@@ -405,7 +405,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 		}
 	 I->InputFlag=1;
   }
-  if(k>=32)
+  if((k>=32)&&(k!=127))
 	 {
       curLine=I->CurLine&OrthoSaveLines;
       
@@ -423,6 +423,13 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 	 }
   else switch(k)
 	 {
+    case 127: /* delete */
+      if(I->CursorChar>=0) {
+        if(I->CursorChar<I->CurChar)
+          I->CursorChar++;
+        if(I->CursorChar==I->CurChar)
+          I->CursorChar=-1;
+      }
 	 case 8:
 		if(I->CurChar>I->PromptChar)
 		  {
