@@ -46,7 +46,6 @@ void PFlush(void);
 void PStereoOff(void);
 void PDefineFloat(char *name,float value);
 
-PyObject *PFloatVLAToPyList(float *f);
 
 extern PyObject *P_pm;
 extern PyObject *P_pmm;

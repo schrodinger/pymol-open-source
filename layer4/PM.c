@@ -535,7 +535,7 @@ static PyObject *PMIntraFit(PyObject *dummy, PyObject *args)
   SelectorFreeTmp(s1);
   APIExit();
   if(fVLA) {
-    result=PFloatVLAToPyList(fVLA);
+    result=PConvFloatVLAToPyList(fVLA);
     VLAFreeP(fVLA);
   }
   if(result==Py_None) Py_INCREF(result);

@@ -19,7 +19,23 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Matrix.h"
 #include"MemoryDebug.h"
+#include"Ortho.h"
 
+/*========================================================================*/
+void MatrixDump44f(float *m,char *prefix)
+{
+  if(prefix) {
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 0],m[ 1],m[ 2],m[ 3] ENDF;
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 4],m[ 5],m[ 6],m[ 7] ENDF;
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 8],m[ 9],m[10],m[11] ENDF;
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[12],m[13],m[14],m[15] ENDF;
+  } else {
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 0],m[ 1],m[ 2],m[ 3] ENDF;
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 4],m[ 5],m[ 6],m[ 7] ENDF;
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 8],m[ 9],m[10],m[11] ENDF;
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[12],m[13],m[14],m[15] ENDF;
+  }
+}
 /*========================================================================*/
 void MatrixApplyTTTfn3f( unsigned int n, float *q, const float m[16], float *p )
 /* NOTE: THIS DOESN'T EXPECT A NORMAL 4x4 TRANFORMATION MATRIX...

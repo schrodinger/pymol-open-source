@@ -93,6 +93,19 @@ static int BondCompare(int *a,int *b)
   return(result);
 }
 /*========================================================================*/
+void ObjectMoleculeBlindSymMovie(ObjectMolecule *I)
+{
+/*
+  CoordSet *frac;
+  if(I->NCSet!=1) {
+    ErrMessage("ObjectMolecule:","SymMovie only works on objects with a single state.");
+  } else if(I->CSet[0]) {
+    frac = CoordSetCopy(I->CSet[0]);
+    CoordSetOrthogonalize(I->CSet[0],I->Symmetry->Crystal);
+  }
+*/
+}
+/*========================================================================*/
 void ObjectMoleculeExtendIndices(ObjectMolecule *I)
 {
   int a;
@@ -647,6 +660,11 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
     if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2);
+    if(cset->TmpSymmetry&&(!I->Symmetry)) {
+      I->Symmetry=cset->TmpSymmetry;
+      cset->TmpSymmetry=NULL;
+      SymmetryAttemptGeneration(I->Symmetry);
+    }
     SceneCountFrames();
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeSort(I);
@@ -1147,6 +1165,7 @@ ObjectMolecule *ObjectMoleculeNew(void)
   I->Obj.fDescribeElement = (void (*)(struct Object *,int index)) ObjectMoleculeDescribeElement;
   I->AtomInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   I->CurCSet=0;
+  I->Symmetry=NULL;
   return(I);
 }
 /*========================================================================*/
@@ -1423,7 +1442,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int nBond=0;
   int b1,b2,nReal,maxAt;
   int autoshow_lines;
-
+  CSymmetry *symmetry = NULL;
+  int symFlag;
   autoshow_lines = SettingGet(cSetting_autoshow_lines);
 
   AtomInfoPrimeColors();
@@ -1438,14 +1458,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 
   while(*p)
 	 {
-		if(*p == 'A') if(*(p+1)=='T') if(*(p+2)=='O') if(*(p+3)=='M')
+		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M'))
 		  nAtom++;
-		if( *p == 'H') if(*(p+1)=='E') if(*(p+2)=='T') if(*(p+3)=='A')
-		  if(*(p+4)=='T') if(*(p+5)=='M')
-			 nAtom++;
-		if( *p == 'C') if(*(p+1)=='O') if(*(p+2)=='N') if(*(p+3)=='E')
-		  if(*(p+4)=='C') if(*(p+5)=='T')
-          conectFlag=true;
+		if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
+         (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M'))
+        nAtom++;
+		if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
+         (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
+        conectFlag=true;
       p=nextline(p);
 	 }
   for(a=0;a<255;a++) /*to prevent hopping over end of file*/
@@ -1471,36 +1491,74 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   while(*p)
 	 {
 		AFlag=false;
-		if(*p == 'A') if(*(p+1)=='T') if(*(p+2)=='O') if(*(p+3)=='M')
+		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M'))
 		  AFlag = 1;
-		if( *p == 'H') if(*(p+1)=='E') if(*(p+2)=='T') if(*(p+3)=='A')
-		  if(*(p+4)=='T') if(*(p+5)=='M')
-			 AFlag = 2;
-		if( *p == 'C') if(*(p+1)=='O') if(*(p+2)=='N') if(*(p+3)=='E')
-		  if(*(p+4)=='C') if(*(p+5)=='T')
-          {
+		if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
+         (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M'))
+        AFlag = 2;
+		if((*p == 'R')&&(*(p+1)=='E')&&(*(p+2)=='M')&&
+         (*(p+3)=='A')&&(*(p+4)=='R')&&(*(p+5)=='K')&&
+         (*(p+6)==' ')&&(*(p+7)=='2')&&(*(p+8)=='9')&&
+         (*(p+9)=='0'))
+        {
+        }
+		if((*p == 'C')&&(*(p+1)=='R')&&(*(p+2)=='Y')&&
+         (*(p+3)=='S')&&(*(p+4)=='T')&&(*(p+5)=='1'))
+        {
+          if(!symmetry) symmetry=SymmetryNew();          
+          if(symmetry) {
+            ErrOk(" PDBStrToCoordSet","Attempting to read symmetry information");
             p=nskip(p,6);
-            p=ncopy(cc,p,5);
-            if(sscanf(cc,"%d",&b1)==1)
-              while (1) {
-                p=ncopy(cc,p,5);
-                if(sscanf(cc,"%d",&b2)!=1)
-                  break;
-                else {
-                  VLACheck(bond,int,(nBond*3)+2);
-                  if(b1<=b2) {
-                    bond[nBond*3]=b1; /* temporarily store the atom indexes */
-                    bond[nBond*3+1]=b2;
-                    bond[nBond*3+2]=1;
-                  } else {
-                    bond[nBond*3]=b2;
-                    bond[nBond*3+1]=b1;
-                    bond[nBond*3+2]=1;
-                  }
-                  nBond++;
-                }
-              }
+            symFlag=true;
+            p=ncopy(cc,p,9);
+            if(sscanf(cc,"%f",&symmetry->Crystal->Dim[0])!=1) symFlag=false;
+            p=ncopy(cc,p,9);
+            if(sscanf(cc,"%f",&symmetry->Crystal->Dim[1])!=1) symFlag=false;
+            p=ncopy(cc,p,9);
+            if(sscanf(cc,"%f",&symmetry->Crystal->Dim[2])!=1) symFlag=false;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%f",&symmetry->Crystal->Angle[0])!=1) symFlag=false;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%f",&symmetry->Crystal->Angle[1])!=1) symFlag=false;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%f",&symmetry->Crystal->Angle[2])!=1) symFlag=false;
+            p=nskip(p,1);
+            p=ncopy(symmetry->SpaceGroup,p,10);
+            UtilCleanStr(symmetry->SpaceGroup);
+            p=ncopy(cc,p,4);
+            if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
+            if(!symFlag) {
+              ErrMessage("PDBStrToCoordSet","Error reading CRYST1 record\n");
+              SymmetryFree(symmetry);
+              symmetry=NULL;
+            } 
           }
+        }
+		if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
+         (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
+        {
+          p=nskip(p,6);
+          p=ncopy(cc,p,5);
+          if(sscanf(cc,"%d",&b1)==1)
+            while (1) {
+              p=ncopy(cc,p,5);
+              if(sscanf(cc,"%d",&b2)!=1)
+                break;
+              else {
+                VLACheck(bond,int,(nBond*3)+2);
+                if(b1<=b2) {
+                  bond[nBond*3]=b1; /* temporarily store the atom indexes */
+                  bond[nBond*3+1]=b2;
+                  bond[nBond*3+2]=1;
+                } else {
+                  bond[nBond*3]=b2;
+                  bond[nBond*3+1]=b1;
+                  bond[nBond*3+2]=1;
+                }
+                nBond++;
+              }
+            }
+        }
 		if(AFlag)
 		  {
 			 llen=0;
@@ -1575,11 +1633,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 a+=3;
 			 atomCount++;
 		  }
-
-
       p=nextline(p);
 	 }
-
   if(conectFlag) {
     UtilSortInPlace(bond,nBond,sizeof(int)*3,(UtilOrderFn*)BondInOrder);              
     if(nBond) {
@@ -1645,6 +1700,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   cset->Coord=coord;
   cset->TmpBond=bond;
   cset->NTmpBond=nBond;
+  if(symmetry) cset->TmpSymmetry=symmetry;
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
   return(cset);

@@ -23,5 +23,6 @@ endif
 #
 #
 #dbx $PYMOL_PATH/ext/bin/python 
-$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/pymol.py $*
+gdb $PYMOL_PATH/ext/bin/python 
+#$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/pymol.py $*
 

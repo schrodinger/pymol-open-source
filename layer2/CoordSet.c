@@ -48,6 +48,41 @@ void CoordSetAppendIndices(CoordSet *I,int offset);
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
 /*========================================================================*/
+void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst)
+{
+  int a;
+  float *v;
+  v=I->Coord;
+  for(a=0;a<I->NIndex;a++) {
+    transform33f3f(cryst->RealToFrac,v,v);
+    v+=3;
+  }
+}
+/*========================================================================*/
+void CoordSetTransform44f(CoordSet *I,float *mat)
+{
+/*
+  int a;
+  float *v;
+  v=I->Coord;
+  for(a=0;a<I->NIndex;a++) {
+    MatrixTransform44f3f(mat,v,v);
+    v+=3;
+  }  
+*/
+}
+/*========================================================================*/
+void CoordSetFracToReal(CoordSet *I,CCrystal *cryst)
+{
+  int a;
+  float *v;
+  v=I->Coord;
+  for(a=0;a<I->NIndex;a++) {
+    transform33f3f(cryst->FracToReal,v,v);
+    v+=3;
+  }
+}
+/*========================================================================*/
 void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt)
 {
   char *aType;
@@ -216,7 +251,7 @@ CoordSet *CoordSetNew(void)
   I->TmpBond = NULL;
   I->Rep=VLAlloc(Rep*,10);
   I->NRep=cRepCnt;
-
+  I->TmpSymmetry = NULL;
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   return(I);
@@ -334,12 +369,14 @@ void CoordSetFree(CoordSet *I)
 		I->Rep[a]->fFree(I->Rep[a]);
   if(I) 
 	 {
+      
 	 FreeP(I->AtmToIdx);
 	 FreeP(I->IdxToAtm);
 	 VLAFreeP(I->Color);
 	 VLAFreeP(I->Coord);
 	 VLAFreeP(I->Rep);
 	 VLAFreeP(I->TmpBond);
+    if(I->TmpSymmetry) SymmetryFree(I->TmpSymmetry);
 	 OOFreeP(I);
 	 }
 }

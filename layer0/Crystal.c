@@ -31,11 +31,9 @@ void CrystalFree(CCrystal *I)
   OOFreeP(I);
 }
 
-CCrystal *CrystalNew(void)
+void CrystalInit(CCrystal *I)
 {
   int a;
-  OOAlloc(CCrystal);
-
   for(a=0;a<9;a++) {
     I->RealToFrac[a]=0.0;
     I->FracToReal[a]=0.0;
@@ -47,6 +45,13 @@ CCrystal *CrystalNew(void)
     I->FracToReal[a+a*3]=1.0;
   }
   I->UnitCellVolume=1.0;
+
+}
+
+CCrystal *CrystalNew(void)
+{
+  OOAlloc(CCrystal);
+  CrystalInit(I);
   return(I);
 }
 
