@@ -33,7 +33,12 @@ def sort(*args):
    else:
       _pm.sort(args[0])
    unlock()
-   
+
+def mem():
+   lock()
+   _pm.mem()
+   unlock()
+
 def ready():
    return _pm.ready()
 
@@ -584,6 +589,7 @@ keyword = {
    'hide'        : [hide         , 1 , 2 , ',' , 0 ],
    'intrafit'    : [intrafit     , 1 , 2 , ',' , 0 ],
    'load'        : [load         , 1 , 4 , ',' , 0 ],
+   'mem'         : [mem          , 0 , 0 , ',' , 0 ],
    'move'        : [move         , 2 , 2 , ',' , 0 ],
    'mset'        : [mset         , 1 , 1 , ',' , 0 ],
    'mdo'         : [mdo          , 2 , 2 , ':' , 1 ],

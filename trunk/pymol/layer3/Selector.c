@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include<math.h>
 
 #include"Base.h"
+#include"Map.h"
 #include"Vector.h"
 #include"Debug.h"
 #include"Err.h"
@@ -151,7 +152,88 @@ static int BondCompare(int *a,int *b)
   }
   return(result);
 }
+/*========================================================================*/
+int *SelectorGetInteractions(int sele1,int state1,int sele2,int state2,
+									  float cutoff,int *count)
+{
+  SelectorType *I=&Selector;
+  MapType *map;
+  float *v1,*v2,*v;
+  int *i1,*i2,*i,*res;
+  int n1,n2,n;
+  int c;
+  int at;
+  int a,s,ind;
+  ObjectMolecule *obj;
 
+  c=0;
+  res=VLAlloc(int,1000);
+  
+  v1=VLAlloc(float,10000);
+  v2=VLAlloc(float,10000);
+  i1=VLAlloc(int,10000);
+  i2=VLAlloc(int,10000);
+
+  n1=0;
+  n2=0;
+
+  SelectorUpdateTable();
+
+  /* first, get vertex lists */
+
+  for(a=0;a<I->NAtom;a++) {
+    at=I->Table[a].atom;
+    obj=I->Obj[I->Table[a].model];
+    s=obj->AtomInfo[at].selEntry;
+    while(s) 
+      {
+        if(I->Member[s].selection==sele1)
+          {
+            ind=obj->CSet[state1]->AtmToIdx[at];
+            if(ind>=0) {
+				  VLACheck(v1,float,n1*3+2);
+				  VLACheck(i1,int,n1);
+				  copy3f(v1+3*n1,obj->CSet[state1]->Coord+(3*ind));
+				  *(i1+n1)=a;
+				  n1++;
+				}
+			 }
+        if(I->Member[s].selection==sele1)
+          {
+            ind=obj->CSet[state2]->AtmToIdx[at];
+            if(ind>=0) {
+				  VLACheck(v2,float,n2*3+2);
+				  VLACheck(i2,int,n2);
+				  copy3f(v2+3*n2,obj->CSet[state2]->Coord+(3*ind));
+				  *(i2+n2)=a;
+				  n2++;
+				}
+          }
+        s=SelectorNext(s);
+		}
+  }
+  if(n1&&n2) {
+	 /* make n1 the smaller of the two */
+	 if(n1>n2) {
+		n=n1;
+		n1=n2;
+		n2=n ;
+		v=v1;
+		v1=v2;
+		v2=v;
+		i=i1;
+		i1=i2;
+		i2=i;
+	 }
+  }
+  VLAFreeP(v1);
+  VLAFreeP(v2);
+  VLAFreeP(i1);
+  VLAFreeP(i2);
+
+  (*count)=c;
+  return(res);
+}
 /*========================================================================*/
 int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
 {

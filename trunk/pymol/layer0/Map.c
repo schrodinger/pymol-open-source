@@ -27,6 +27,8 @@ Z* -------------------------------------------------------------------
 #define false 0
 #endif
 
+static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *flag);
+
 void MapFree(MapType *I)
 {
   if(I)
@@ -244,8 +246,17 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
   return(size/subDiv);
 }
 
-
 MapType *MapNew(float range,float *vert,int nVert,float *extent)
+{
+  return(_MapNew(range,vert,nVert,extent,NULL));
+}
+
+MapType *MapNewFlagged(float range,float *vert,int nVert,float *extent,int *flag)
+{
+  return(_MapNew(range,vert,nVert,extent,flag));
+}
+
+static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *flag)
 {
   int a,c;
   int mapSize;
@@ -253,6 +264,7 @@ MapType *MapNew(float range,float *vert,int nVert,float *extent)
   int *i;
   int *list;
   float *v;
+  int firstFlag;
   Vector3f diagonal;
 
   OOAlloc(MapType);
@@ -283,24 +295,55 @@ MapType *MapNew(float range,float *vert,int nVert,float *extent)
 	 }
   else
 	 {
-		v=vert;
-		for(c=0;c<3;c++)
-		  {
-			 I->Min[c] = v[c];
-			 I->Max[c] = v[c];
-		  }
-		v+=3;
-		for(a=1;a<nVert;a++)
-		  {
-			 for(c=0;c<3;c++)
-				{
-				  if(I->Min[c]>v[c])
-					 I->Min[c]=v[c];
-				  if(I->Max[c]<v[c])
-					 I->Max[c]=v[c];
+		I->Min[0]=0;
+		I->Max[0]=0;
+		I->Min[1]=0;
+		I->Max[1]=0;
+		I->Min[2]=0;
+		I->Max[2]=0;
+		if(flag) {
+		  firstFlag=true;
+		  v=vert;
+		  for(a=0;a<nVert;a++)
+			 {
+				if(flag[a]) {
+				  if(firstFlag) {
+					 for(c=0;c<3;c++)
+						{
+						  I->Min[c]=v[c];
+						  I->Max[c]=v[c];
+						}
+					 firstFlag=false;
+				  } else {
+					 for(c=0;c<3;c++)
+						{
+						  if(I->Min[c]>v[c]) I->Min[c]=v[c];
+						  if(I->Max[c]<v[c]) I->Max[c]=v[c];
+						}
+				  }
 				}
-			 v+=3;
-		  }
+				v+=3;
+			 }
+		} else {
+		  v=vert;
+		  for(c=0;c<3;c++)
+			 {
+				I->Min[c] = v[c];
+				I->Max[c] = v[c];
+			 }
+		  v+=3;
+		  for(a=1;a<nVert;a++)
+			 {
+				for(c=0;c<3;c++)
+				  {
+					 if(I->Min[c]>v[c])
+						I->Min[c]=v[c];
+					 if(I->Max[c]<v[c])
+						I->Max[c]=v[c];
+				  }
+				v+=3;
+			 }
+		}
 	 }
   for(c=0;c<3;c++)
 	 {
@@ -362,16 +405,30 @@ MapType *MapNew(float range,float *vert,int nVert,float *extent)
   I->NVert = nVert;
 
   /* create 3-D hash of the vertices*/
-  v=vert;
-  for(a=0;a<nVert;a++)
-	 {
-		if(MapExclLocus(I,v,&h,&k,&l)) {
-		  list = MapFirst(I,h,k,l);
-		  I->Link[a] = *list; 
-		  *list = a; /*add to top of list*/
+  if(flag) {
+	 v=vert;
+	 for(a=0;a<nVert;a++)
+		{
+		  if(flag[a]) 
+			 if(MapExclLocus(I,v,&h,&k,&l)) {
+				list = MapFirst(I,h,k,l);
+				I->Link[a] = *list; 
+				*list = a; /*add to top of list*/
+			 }
+		  v+=3;
 		}
-		v+=3;
-	 }
+  } else {
+	 v=vert;
+	 for(a=0;a<nVert;a++)
+		{
+		  if(MapExclLocus(I,v,&h,&k,&l)) {
+			 list = MapFirst(I,h,k,l);
+			 I->Link[a] = *list; 
+			 *list = a; /*add to top of list*/
+		  }
+		  v+=3;
+		}
+  }
 
   return(I);
 }

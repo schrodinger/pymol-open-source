@@ -44,12 +44,12 @@ typedef struct AtomInfoType {
   int customFlag;
   int priority;
   float b,q,vdw;
-  int model; /* remaining items only used during selection */
+  signed char hetatm;
+  short int model; /* remaining items only used during selection */
   int atom; 
   int selEntry;
-  int visRep[cRepCnt];
+  short int visRep[cRepCnt];
   int color;
-  int hetatm;
   int tmpID; /* used for reading conect records */
 } AtomInfoType;
 

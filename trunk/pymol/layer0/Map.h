@@ -36,6 +36,7 @@ typedef struct {
 #define MapBorder 2
 
 MapType *MapNew(float range,float *vert,int nVert,float *extent);
+MapType *MapNewFlagged(float range,float *vert,int nVert,float *extent,int *flag);
 void MapSetupExpress(MapType *I);
 void MapFree(MapType *I);
 
