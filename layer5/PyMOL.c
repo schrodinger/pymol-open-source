@@ -513,6 +513,9 @@ typedef struct _CPyMOL {
   ov_word lex_defer_builds_mode;
   ov_word lex_seq_view_discrete_by_state;
   ov_word lex_scene_animation_duration;
+  ov_word lex_wildcard;
+  ov_word lex_atom_name_wildcard;
+  ov_word lex_ignore_case;
 
 } _CPyMOL;
 
@@ -1022,8 +1025,11 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(defer_builds_mode, 409);
   LEX_SETTING(seq_view_discrete_by_state, 410);
   LEX_SETTING(scene_animation_duration, 411);
+  LEX_SETTING(wildcard,412);
+  LEX_SETTING(atom_name_wildcard,413);
+  LEX_SETTING(ignore_case,414);
 
- return_OVstatus_SUCCESS;
+  return_OVstatus_SUCCESS;
 }
 
 int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr)

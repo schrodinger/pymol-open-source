@@ -64,17 +64,18 @@ def process(sele): # expand slash notation into a standard atom selection
          if len(res_name):
             lst.append("r;"+string.replace(res_name,'+',','))            
          if len(res_id):
-               res_id = string.replace(res_id,'+',',')
-               res_id = string.replace(res_id,'-',':')
-               if ((string.find(res_id,',')>=0) and # compound residue specification
-                   (string.find(res_id,':')>=0)):
-                  new_list = []
-                  for a in string.split(res_id,','): # spread it out...
-                     new_list.append("i;"+a)
-                  res_id = "("+string.join(new_list,'|')+")"
-                  lst.append(res_id)
-               else:
-                  lst.append("i;"+res_id)                        
+            lst.append("i;"+res_id)
+#               res_id = string.replace(res_id,'+',',')
+#               res_id = string.replace(res_id,'-',':')
+#               if ((string.find(res_id,',')>=0) and # compound residue specification
+#                   (string.find(res_id,':')>=0)):
+#                  new_list = []
+#                  for a in string.split(res_id,','): # spread it out...
+#                     new_list.append("i;"+a)
+#                  res_id = "("+string.join(new_list,'|')+")"
+#                  lst.append(res_id)
+#               else:
+#                  lst.append("i;"+res_id)                        
       if name!='':
          if(string.find(name,'`')>=0): # alternate conformations present
             (name,alt) = string.split(name,'`')

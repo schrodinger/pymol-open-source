@@ -33,6 +33,29 @@ typedef struct {
   int n_word;
 } CWordList;
 
+#define cWordMatchOptionNoRanges 0
+#define cWordMatchOptionNumericRanges 1
+#define cWordMatchOptionAlphaRanges 2
+
+typedef struct {
+  int range_mode; /* 0 = none, 1 = numeric, 2 = alpha */
+  int lists;
+  int ignore_case;
+  char wildcard;
+} CWordMatchOptions;
+
+typedef struct _CWordMatcher CWordMatcher;
+
+void WordMatchOptionsConfigInteger(CWordMatchOptions *I);
+void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore_case);
+void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore_case);
+
+CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *option, int force);
+int WordMatcherMatchAlpha(CWordMatcher *I, char *text);
+int WordMatcherMatchMixed(CWordMatcher *I, char *text,int value);
+int WordMatcherMatchInteger(CWordMatcher *I,int value);
+void WordMatcherFree(CWordMatcher *I);
+
 CWordList *WordListNew(PyMOLGlobals *G,char *st);
 void WordListFreeP(CWordList *I);
 void WordListDump(CWordList *I,char *prefix);

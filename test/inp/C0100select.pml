@@ -80,4 +80,36 @@ select tst,present and vis
 frame 1
 select tst,present and vis
 
+
+dele all
+load dat/pept.pdb
+indicate name ca
+count_atoms indicate
+indicate name *c*
+count_atoms indicate
+indicate (name *c*,*n*)
+count_atoms indicate
+indicate (name *c*+*n*)
+count_atoms indicate
+indicate name *G
+count_atoms indicate
+indicate */*G
+count_atoms indicate
+
+indicate rank -3+5+10-23+7+40-
+count_atoms indicate
+
+indicate id -3+5+10-23+7+40-
+count_atoms indicate
+
+indicate index -3+5+10-23+7+40-
+count_atoms indicate
+
+dele all
+load dat/1tii.pdb
+indicate A-C+F/10+90+100-/ca+c+n*
+
+count_atoms indicate
+
+
 /print "END-LOG"

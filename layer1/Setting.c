@@ -2524,6 +2524,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_defer_builds_mode, G->Option->defer_builds_mode); 
   SettingSet_b(I,cSetting_seq_view_discrete_by_state, 1);
   SettingSet_f(I,cSetting_scene_animation_duration, -1.0F);
+  SettingSet_s(I,cSetting_wildcard, "*");
+  SettingSet_s(I,cSetting_atom_name_wildcard, "");
+  SettingSet_b(I,cSetting_ignore_case, 1);
+
 }
 
 
