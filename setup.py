@@ -46,6 +46,7 @@ setup ( # Distribution meta-data
 	package_dir = {'' : 'modules'},
 	packages = ['chempy',
                'chempy/bmin',
+               'chempy/champ',
                'chempy/fast',
                'chempy/fragments',
                'chempy/tinker',
@@ -187,6 +188,20 @@ setup ( # Distribution meta-data
    ],
    define_macros=[("PythonTypes",None)],   
    include_dirs=["contrib/sglite","contrib/modules"]
+             ),
+   Extension("pymol.chempy.champ._champ", [
+   "contrib/champ/champ.c",
+   "contrib/champ/champ_module.c",
+   "contrib/champ/chiral.c",
+   "contrib/champ/err2.c",
+   "contrib/champ/feedback2.c",
+   "contrib/champ/list.c",
+   "contrib/champ/os_memory.c",
+   "contrib/champ/sort.c",
+   "contrib/champ/strblock.c",
+   "contrib/champ/vla.c",
+   ],
+   include_dirs=["contrib/champ"]
              ),
    Extension("pymol.ExtensionClass",["contrib/modules/ExtensionClass.c"]),
    Extension("pymol.opengl.glu._glu_num", ["contrib/pyopengl/_glu_nummodule.c"],
