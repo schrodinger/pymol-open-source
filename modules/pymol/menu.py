@@ -59,8 +59,11 @@ def mol_show(s):
       [[ 0, '', ''],
        [ 1, 'main chain' , 'cmd.show("lines","((byres ('+s+'))&n;ca,c,n,o,h)")' ],
        [ 1, 'side chain' , 'cmd.show("lines","((byres ('+s+'))&(!(n;c,o,h|(n. n&!r. pro))))")' ],
+       [ 1, 'disulfides' , 'cmd.show("lines","(byres ((('+s+
+         ') & r. CYS+CYX & n. SG) & bound_to (('+s+') & r. CYS+CYX & n. SG))) & n. CA+CB+SG")' ]
        ])
 
+   cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
 def mol_hide(s):
    return (
       [[ 2, 'Hide:'     , ''                                ],
