@@ -2172,14 +2172,37 @@ INTERNAL
 
 def refresh():
    '''
-INTERNAL
+DESCRIPTION
+  
+   "refresh" causes the scene to be refresh as soon as possible.
+
+USAGE
+
+   refresh
+
+PYMOL API
+ 
+   cmd.refresh()
+   '''
+   if thread.get_ident() == pymol.glutThread:
+      r = _cmd.refresh_now()
+   else:
+      r = _cmd.do("cmd._refresh()")
+   return r
+
+def _refresh(swap_buffers=1):
+   '''
+   INTERNAL - can only be safely called by GLUT thread 
    '''
    try:
       lock()
       if thread.get_ident() == pymol.glutThread:
-         r = _cmd.refresh_now()
+         if swap_buffers:
+            r = _cmd.refresh_now()
+         else:
+            r = _cmd.refresh()
       else:
-         r = _cmd.refresh()
+         print "Error: Ignoring an unsafe call to cmd._refresh"
    finally:
       unlock()
    return r
@@ -2323,6 +2346,9 @@ PYMOL API
    return r
 
 def _png(a):
+   '''
+   INTERNAL - can only be safely called by GLUT thread 
+   '''
    try:
       lock()   
       fname = a

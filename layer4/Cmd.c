@@ -1040,12 +1040,14 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
 
   PyArg_ParseTuple(args,"s",&str1);
   APIEntry();
-  if(str1[0]!='_') {
-    OrthoAddOutput("PyMOL>");
-    OrthoAddOutput(str1);
+  if(str1[0]!='_') { /* suppress internal call-backs */
+    if(strncmp(str1,"cmd._",5)) {
+      OrthoAddOutput("PyMOL>");
+      OrthoAddOutput(str1);
+      PParse(str1);
+      OrthoNewLine(NULL);
+    }
   }
-  PParse(str1);
-  OrthoNewLine(NULL);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
