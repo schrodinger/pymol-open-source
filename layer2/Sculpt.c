@@ -407,13 +407,14 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                 I->Don[a] = true;
               } 
             }
-            
+            /*            
             if(I->Acc[a]) {
               printf("ACC %s %s %s\n",ai1->chain,ai1->resi,ai1->name);
             }
             if(I->Don[a]) {
               printf("DON %s %s %s\n",ai1->chain,ai1->resi,ai1->name);
-            }
+              }*/
+
             ai1++;
           }
           
