@@ -167,6 +167,8 @@ CHANGE LOG
 
 Changes up to 0.90
 
+   * initial support for display lists -- not yet enabled by default
+
    * partial surface calculations are now much much faster
 
    * intensive optimization of ray tracer, incl. inlining
