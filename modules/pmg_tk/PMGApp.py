@@ -1084,8 +1084,8 @@ class PMGApp(AbstractApp):
                                command = lambda : cmd.do(
          "_ cmd.set('transparency_mode',2);cmd.set('backface_cull',0);cmd.set('two_sided_lighting',0)"))
 
-      self.menuBar.addmenuitem('Transparency', 'command', 'Multi Layer',
-                               label='Multi Layer',
+      self.menuBar.addmenuitem('Transparency', 'command', 'Multi-Layer',
+                               label='Multi-Layer',
                                command = lambda : cmd.do(
          "_ cmd.set('transparency_mode',1);cmd.set('backface_cull',0);cmd.set('two_sided_lighting',1)"))
 
