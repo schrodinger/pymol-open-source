@@ -476,32 +476,57 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   float vdw;
 
   e = I->elem;
-  if(!*e) {
-    if(!*e) {
-      n = I->name;
-      while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;  
-      while((((*n)>='A')&&((*n)<='Z'))||(((*n)>='a')&&((*n)<='z'))) {
-        *(e++)=*(n++);
-      }
-      *e=0;
+  if(!*e) { /* try to guess atomic type from name */
+    n = I->name;
+    while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;  
+    while((((*n)>='A')&&((*n)<='Z'))||(((*n)>='a')&&((*n)<='z'))) {
+      *(e++)=*(n++);
     }
+    *e=0;
     e=I->elem;
     switch ( *e ) {
     case 'C':
-      if(!((*(e+1)=='l')||(*(e+1)=='L')||
-           (*(e+1)=='u')||(*(e+1)=='U')
+      if(!(
+           (*(e+1)=='a')||/* CA intpreted as carbon, not calcium */
+           (*(e+1)=='l')||(*(e+1)=='L')||
+           (*(e+1)=='u')||(*(e+1)=='U')||
+           (*(e+1)=='o')||(*(e+1)=='O')||
+           (*(e+1)=='s')||(*(e+1)=='S')||
+           (*(e+1)=='r')||(*(e+1)=='R')
            ))
-        if(!(((*(e+1))=='A')&&(I->hetatm)))
-          *(e+1)=0; /* CA intpreted as carbon, not calcium */
+        *(e+1)=0; 
       break;
-    case 'B':
-      if(!((*(e+1)=='r')||(*(e+1)=='R')))
+    case 'H':
+      if(!((*(e+1)=='e')
+           ))
+        *(e+1)=0;
+      break;
+    case 'N':
+      if(!(
+           (*(e+1)=='i')||(*(e+1)=='I')||
+           (*(e+1)=='a')||(*(e+1)=='A')||
+           (*(e+1)=='b')||(*(e+1)=='B')
+           ))
+        *(e+1)=0; 
+      break;
+    case 'S':
+      if(!(
+           (*(e+1)=='e')||(*(e+1)=='E')||
+           (*(e+1)=='r')||(*(e+1)=='R')||
+           (*(e+1)=='c')||(*(e+1)=='C')||
+           (*(e+1)=='b')||(*(e+1)=='B')
+           ))
+        *(e+1)=0; 
+      
+      break;
+    case 'O':
+      if(!((*(e+1)=='s')))
         *(e+1)=0;
       break;
     default:
-      *(e+1)=0;
       break;
     }
+    if(*(e+1)) *(e+1)=tolower(*(e+1));
   }
   I->hydrogen=(((*I->elem)=='H')&&(!(*(I->elem+1))));
   n = I->name;

@@ -587,6 +587,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_surface_quality:
   case cSetting_surface_mode:
+  case cSetting_surface_proximity:
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
     SceneChanged();
     break;
