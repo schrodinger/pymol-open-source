@@ -353,7 +353,7 @@ PyMOL>set_dihedral 1/n,1/ca,1/c,1/o,180
  Selector: selection "pk2" defined with 1 atoms.
  SetDihedral: adjusted to 180.000
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
- cmd.get_dihedral: -179.980 degrees.
+ cmd.get_dihedral: 180.000 degrees.
 PyMOL>get_extent
  cmd.extent: min: [  -1.282, -17.809,   6.314]
  cmd.extent: max: [  10.270,  -4.939,  29.070]

@@ -125,6 +125,7 @@ static PyObject *gluquadric_getattr(gluQuadricObject * op, char *name)
     return Py_FindMethod(py_glu_methods, (PyObject *) op, name);
 }
 
+#ifndef NUMERIC
 static PyTypeObject GLUquadricType =
 {
 #ifdef MS_WIN32
@@ -148,11 +149,13 @@ static PyTypeObject GLUquadricType =
 };
 
 #define is_gluQuadricObject(op) ((op)->ob_type == &GLUquadricType)
+#endif
+
 #define is_gluCallbackObject(op) ((op)->ob_type == &GLUcallbackType)
 
-GLUquadricObj *getgluquadricvalue(PyObject * op)
+static GLUquadricObj *getgluquadricvalue(PyObject * op)
 #ifdef NUMERIC
-;
+{return NULL;};
 #else
 {
     if (!op || !is_gluQuadricObject(op)) {
@@ -163,9 +166,9 @@ GLUquadricObj *getgluquadricvalue(PyObject * op)
 }
 #endif
 
-PyObject *newgluQuadricObject(GLUquadricObj * Quad)
+static PyObject *newgluQuadricObject(GLUquadricObj * Quad)
 #ifdef NUMERIC
-;
+{return NULL;};
 #else
 {
     gluQuadricObject *op;
@@ -228,11 +231,20 @@ static PyTypeObject GLUtesselatorType =
     0,				/* tp_as_mapping */
 };
 
-#define is_gluTesselatorPyObject(op) ((op)->ob_type == &GLUtesselatorType)
+static void suppress_compiler_warnings(void)
+{
+  gluquadric_delete(NULL);
+  gluquadric_getattr(NULL,NULL);
+  getgluquadricvalue(NULL);
+  newgluQuadricObject(NULL);
+  ErrorReturn(NULL);
+  suppress_compiler_warnings();
+}
 
-GLUtesselator *getglutesselatorvalue(PyObject * op)
+#define is_gluTesselatorPyObject(op) ((op)->ob_type == &GLUtesselatorType)
+static GLUtesselator *getglutesselatorvalue(PyObject * op)
 #ifdef NUMERIC
-;
+{return NULL;};
 #else
 {
     if (!op || !is_gluTesselatorPyObject(op)) {
@@ -809,11 +821,15 @@ static PyMethodDef py_glu_methods[] =
 
 
 #ifdef NUMERIC
-DL_EXPORT(void)
-init_glu_num(void)
+
+/* C prototype to suppress GCC compiler warning...*/
+DL_EXPORT(void)  init_glu_num(void);
+DL_EXPORT(void) init_glu_num(void)
 #else
-DL_EXPORT(void)
-init_glu(void)
+
+/* C prototype to suppress GCC compiler warning...*/
+DL_EXPORT(void)  init_glu(void);
+DL_EXPORT(void) init_glu(void)
 #endif
 {
 #ifdef MS_WIN32
@@ -831,5 +847,7 @@ init_glu(void)
 
 /* for distutils compatibility on WIN32 */
 #ifndef NUMERIC
+/* C prototype to suppress GCC compiler warning...*/
+DL_EXPORT(void) init_glumodule(void);
 DL_EXPORT(void) init_glumodule(void) {init_glu();}
 #endif

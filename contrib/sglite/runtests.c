@@ -483,3 +483,14 @@ int RunSgLiteTests(const char *HallSymbol, const char *Mode, int Range)
 
   return 0;
 }
+
+/* the following code gets rid of a few annoying warnings on GCC
+   so that we can watch out for genuine problems... */
+
+static void suppress_compiler_warnings(void)
+{
+   Test_GetRefSetNormAddlG(NULL);
+   Test_TidyCBMx(NULL);
+   Test_Set_ss(NULL);
+   suppress_compiler_warnings();
+}

@@ -366,7 +366,7 @@ DESCRIPTION
    The available representations are:
 
       lines     spheres   mesh      ribbon     cartoon
-      sticks    dots      surface   labels
+      sticks    dots      surface   labels     extent
       nonbonded nb_spheres 
 
 USAGE

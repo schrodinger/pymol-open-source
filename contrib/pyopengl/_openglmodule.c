@@ -4333,11 +4333,11 @@ static PyMethodDef py_gl_methods[] = {
 
 
 #ifdef NUMERIC
-DL_EXPORT(void)
-init_opengl_num(void)
+DL_EXPORT(void) init_opengl_num(void);
+DL_EXPORT(void) init_opengl_num(void)
 #else
-DL_EXPORT(void)
-init_opengl(void)
+DL_EXPORT(void) init_opengl(void);
+DL_EXPORT(void) init_opengl(void)
 #endif
 {
     PyObject *m, *d;
@@ -4383,5 +4383,6 @@ init_opengl(void)
 
 /* for distutils compatibility on WIN32 */
 #ifndef NUMERIC
+void init_openglmodule(void);
 void init_openglmodule(void) {init_opengl();}
 #endif

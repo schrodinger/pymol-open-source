@@ -159,19 +159,19 @@ setup ( # Distribution meta-data
    include_dirs=["contrib/sglite","contrib/modules"]
              ),
    Extension("pymol.ExtensionClass",["contrib/modules/ExtensionClass.c"]),
-   Extension("pymol.opengl.glu._glu_nummodule", ["contrib/pyopengl/_glu_nummodule.c"],
+   Extension("pymol.opengl.glu._glu_num", ["contrib/pyopengl/_glu_nummodule.c"],
              include_dirs = inc_dirs,
              libraries = pyogl_libs,
              library_dirs = lib_dirs,
              define_macros = def_macros
              ),
-   Extension("pymol.opengl.glu._glumodule", ["contrib/pyopengl/_glumodule.c"],
+   Extension("pymol.opengl.glu._glu", ["contrib/pyopengl/_glumodule.c"],
              include_dirs = inc_dirs,
              libraries = pyogl_libs,
              library_dirs = lib_dirs,
              define_macros = def_macros
              ),
-   Extension("pymol.opengl.glut._glutmodule", ["contrib/pyopengl/_glutmodule.c"],
+   Extension("pymol.opengl.glut._glut", ["contrib/pyopengl/_glutmodule.c"],
              include_dirs = inc_dirs,
              libraries = pyogl_libs,
              library_dirs = lib_dirs,

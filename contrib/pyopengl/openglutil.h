@@ -2,12 +2,6 @@
 #define OPENGL_UTIL_H
 
 static PyObject *gl_Error;
-static PyObject *ErrorReturn(char *message)
-{
-    PyErr_SetString(gl_Error, message);
-    return NULL;
-}
-
 #define TRY(E) if(! (E)) return NULL
 #define ASSERT(E,M) if(!(E)) return ErrorReturn(M)
 
