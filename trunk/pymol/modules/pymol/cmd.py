@@ -2975,6 +2975,26 @@ EXAMPLE
       unlock()
    return r
 
+def minimize(*arg):
+   # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
+   from chempy.tinker import realtime  
+   grad  = 0.01
+   iter = 500
+   interval = 50
+   la = len(arg)
+   if la:
+      sele  = "("+arg[0]+")"
+      if la>1:
+         iter = int(arg[1])
+      if la>2:
+         grad = float(arg[2])
+      if la>3:
+         interval = int(arg[3])
+      if realtime.setup(sele):
+         realtime.mini(iter,grad,interval,arg[0])
+      else:
+         print " minimize: missing parameters, can't continue"
+   
 def mset(seq):
    '''
 DESCRIPTION
@@ -3086,6 +3106,7 @@ keyword = {
    'mstop'         : [mstop        , 0 , 0 , ',' , 0 ],
    'mclear'        : [mclear       , 0 , 0 , ',' , 0 ],
    'middle'        : [middle       , 0 , 0 , ',' , 0 ],
+   'minimize'      : [minimize     , 1 , 4 , ',' , 0 ],
    'mmatrix'       : [mmatrix      , 1 , 1 , ',' , 0 ],
    'origin'        : [origin       , 1 , 1 , ',' , 0 ],
    'orient'        : [orient       , 0 , 1 , ',' , 0 ],

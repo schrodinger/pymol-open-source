@@ -619,19 +619,42 @@ class Subset:
       for b in kees:
          print b,self.vdw[b]
 
-   def dump_missing(self):
+   def dump_missing(self,impropers=0):
+      if len(self.miss_mw):
+         print ' '+str(self.__class__)+': missing molecular weights...'
       for b in self.miss_mw:
-         print b
+         print " ",b
+      if len(self.miss_vdw):
+         print ' '+str(self.__class__)+': missing van der Waalss...'
       for b in self.miss_vdw:
-         print b
+         print " ",b
+      if len(self.miss_bond):
+         print ' '+str(self.__class__)+': missing bonds...'
       for b in self.miss_bond:
-         print b
+         print " ",b
+      if len(self.miss_angle):
+         print ' '+str(self.__class__)+': missing angless...'
       for b in self.miss_angle:
-         print b
+         print " ",b
+      if len(self.miss_torsion):
+         print ' '+str(self.__class__)+': missing torsions...'
       for b in self.miss_torsion:
-         print b
-      for b in self.miss_improper:
-         print b
+         print " ",b
+      if impropers:
+         if len(self.miss_improper):
+            print ' '+str(self.__class__)+': missing impropers...'
+         for b in self.miss_improper:
+            print " ",b
+
+   def complete(self):
+      if not ( len(self.miss_mw) or
+               len(self.miss_vdw) or
+               len(self.miss_bond) or
+               len(self.miss_angle) or
+               len(self.miss_torsion) ):
+         return 1
+      else:
+         return 0
       
    def write_tinker_prm(self,fname,proofread=None):
       c = 0
