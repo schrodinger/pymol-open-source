@@ -214,7 +214,9 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
   int n_pts;
   double sum,sumsq;
   float mean,stdev;
+  int normalize;
 
+  normalize=(int)SettingGet(cSetting_normalize_ccp4_maps);
   maxd = FLT_MIN;
   mind = FLT_MAX;
   p=CCP4Str;
@@ -345,12 +347,21 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
     mean = sum/n_pts;
     stdev = sqrt1f((sumsq - (sum*sum/n_pts))/(n_pts-1));
 
+    if(normalize) {
+      PRINTFB(FB_ObjectMap,FB_Details)
+        " ObjectMapCCP4: Normalizing with mean = %8.6f and stdev = %8.6f.\n",
+        mean,stdev
+        ENDFB;
+    } else {
+      PRINTFB(FB_ObjectMap,FB_Details)
+        " ObjectMapCCP4: Map will not be normalized.\n ObjectMapCCP4: Current mean = %8.6f and stdev = %8.6f.\n",
+        mean,stdev
+        ENDFB;
+    }
+
     if(stdev<0.000001)
       stdev = 1.0;
-  PRINTFB(FB_ObjectMap,FB_Details)
-    " ObjectMapCCP4: Normalizing with mean %8.6f and stdev %8.6f.\n",
-    mean,stdev
-    ENDFB;
+    
   } else {
     mean = 1.0;
     stdev = 1.0;
@@ -412,7 +423,10 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
           for(cc[mapc]=0;cc[mapc]<I->FDim[mapc];cc[mapc]++) {
             v[mapc]=(cc[mapc]+I->Min[mapc])/((float)I->Div[mapc]);
 
-            dens = (*f-mean)/stdev;
+            if(normalize) 
+              dens = (*f-mean)/stdev;
+            else 
+              dens = *f;
             F3(I->Field->data,cc[0],cc[1],cc[2]) = dens;
             if(maxd<*f) maxd = dens;
             if(mind>*f) mind = dens;
