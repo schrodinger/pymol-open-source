@@ -68,6 +68,7 @@ contrib: .contrib
 lib:  .includes .depends .update 
 	/bin/rm -f .update .includes
 	ar crv libPyMOL.a */*.o ov/src/*.o 
+	ranlib libPyMOL.a
 
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
