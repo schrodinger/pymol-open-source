@@ -4,7 +4,7 @@
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /Applications/PyMOL/Darwin
+PYMOL_PATH = /users/delwarl/pymol
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
@@ -15,8 +15,7 @@ XINC_DIR =
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
 PYTHON_LIB = 
 PYTHON_LIB_DIR = 
-PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.2 \
-   -I$(PYMOL_PATH)/ext/include/python2.2/Numeric 
+PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.3
 #--- Other external dependencies
 EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include \
 	-I/System/Library/Frameworks/OpenGL.framework/Headers/ \
@@ -26,7 +25,6 @@ EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include \
 	-I/System/Library/Frameworks/Cocoa.framework/Headers/ \
 	-I/System/Library/Frameworks/IOKit.framework/Headers/ \
    -I$(PYMOL_PATH)/layerOSX
-
 EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
 #---------------------------------------------------------------------
 #
@@ -36,20 +34,20 @@ LIBS = -lpng $(PYTHON_LIB) $(ZLIB) -lm -framework OpenGL \
    -framework AppKit -framework ApplicationServices -framework CoreFoundation \
    -framework Cocoa  -framework IOKit -L./layerOSX -lForeground
 #--- PyMOL configuration
-DEFS = -D_PYMOL_MODULE -D_PYMOL_OSX -D_PYMOL_NUMPY
+DEFS = -D_PYMOL_MODULE -D_PYMOL_OSX 
 #--- How we build shared libraries
 BUILD = -bundle -undefined suppress -flat_namespace
 #--- What are we trying to build?
 DEST = -o modules/pymol/_cmd.so
 #--- CC options
-CCOPT1 = -ffast-math -no-cpp-precomp
+CCOPT1 =  -no-cpp-precomp -Wno-long-double
 #--- libraries for PyOpenGL 
 PYOGL_LIB = -framework OpenGL 
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer -g
+CCOPT2 = -O3 -ffast-math -funroll-loops -fomit-frame-pointer 
 
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
