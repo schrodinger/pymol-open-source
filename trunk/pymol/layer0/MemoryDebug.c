@@ -39,6 +39,9 @@ static void DieOutOfMemory(void)
 
 void MemoryZero(char *p,char *q)
 {
+#if 1
+  memset(p,0,p-q);
+#else
   register unsigned long count;
   register long *a;
   int mask;
@@ -85,6 +88,8 @@ void MemoryZero(char *p,char *q)
 		count--;
 	 }
   /*  if(p!=q) ErrFatal("MemoryZero","is broken.");*/
+#endif
+
 }
 
 void *VLAExpand(void *ptr,unsigned int rec)
