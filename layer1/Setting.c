@@ -632,7 +632,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_dumbbell_radius:
   case cSetting_cartoon_fancy_helices:
   case cSetting_cartoon_fancy_sheets:
+  case cSetting_cartoon_cylindrical_helices:
   case cSetting_cartoon_refine_tips:
+  case cSetting_cartoon_helix_radius:
   case cSetting_cartoon_throw:
   case cSetting_cartoon_debug:
   case cSetting_cartoon_discrete_colors:
@@ -1223,4 +1225,12 @@ void SettingInitGlobal(void)
   
   SettingSet_f(I,cSetting_connect_mode, 0.0F);
 
+  SettingSet_f(I,cSetting_cartoon_cylindrical_helices, 0.0F);
+
+  SettingSet_f(I,cSetting_cartoon_helix_radius, 2.25F);
+
 }
+
+
+
+

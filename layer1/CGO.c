@@ -48,8 +48,8 @@ int CGO_sz[] = {
   CGO_WIDTHSCALE_SZ,
   CGO_ENABLE_SZ,
   CGO_DISABLE_SZ,
-  CGO_NULL_SZ,
-  CGO_NULL_SZ,
+  CGO_SAUSAGE_SZ,
+  CGO_CUSTOM_CYLINDER_SZ,
   CGO_NULL_SZ,
   CGO_NULL_SZ
 };
@@ -60,7 +60,7 @@ typedef CGO_op *CGO_op_fn;
 static float *CGO_add(CGO *I,int c);
 static float *CGO_size(CGO *I,int sz);
 static void subdivide( int n, float *x, float *y);
-void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2);
+void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2);
 void CGOSimpleSphere(CGO *I,float *v,float vdw);
 
 CGO *CGONew(void)
@@ -150,6 +150,8 @@ int CGOFromFloatArray(CGO *I,float *src,int len)
     if(ok) {
       switch(op) { /* now convert any instructions with int arguments */
       case CGO_BEGIN:
+      case CGO_ENABLE:
+      case CGO_DISABLE:
         tf=save_pc+1;
         iarg = *(tf);
         CGO_write_int(tf,iarg);
@@ -194,6 +196,49 @@ void CGOLinewidth(CGO *I,float v)
   CGO_write_int(pc,CGO_LINEWIDTH);
   *(pc++)=v;
 }
+
+void CGOCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2)
+{
+  float *pc = CGO_add(I,14);
+  CGO_write_int(pc,CGO_CYLINDER);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p2++);
+  *(pc++)=*(p2++);
+  *(pc++)=*(p2++);
+  *(pc++)=r;
+  *(pc++)=*(c1++);
+  *(pc++)=*(c1++);
+  *(pc++)=*(c1++);
+  *(pc++)=*(c2++);
+  *(pc++)=*(c2++);
+  *(pc++)=*(c2++);
+}
+
+
+void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
+                      float cap1,float cap2)
+{
+  float *pc = CGO_add(I,16);
+  CGO_write_int(pc,CGO_CUSTOM_CYLINDER);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p2++);
+  *(pc++)=*(p2++);
+  *(pc++)=*(p2++);
+  *(pc++)=r;
+  *(pc++)=*(c1++);
+  *(pc++)=*(c1++);
+  *(pc++)=*(c1++);
+  *(pc++)=*(c2++);
+  *(pc++)=*(c2++);
+  *(pc++)=*(c2++);
+  *(pc++)=cap1;
+  *(pc++)=cap2;
+}
+
 
 void CGOVertex(CGO *I,float v1,float v2,float v3)
 {
@@ -318,6 +363,8 @@ int CGOCheckComplex(CGO *I)
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
     case CGO_CYLINDER:
+    case CGO_SAUSAGE:
+    case CGO_CUSTOM_CYLINDER:
       fc+=3*(3+(nEdge+1)*9)+9;
       break;
     case CGO_SPHERE:
@@ -345,7 +392,13 @@ CGO *CGOSimplify(CGO *I,int est)
     save_pc=pc;
     switch(op) {
     case CGO_CYLINDER:
-      CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10);
+      CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,1,1);
+      break;
+    case CGO_SAUSAGE:
+      CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,2,2);
+      break;
+    case CGO_CUSTOM_CYLINDER:
+      CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,*(pc+13),*(pc+14));
       break;
     case CGO_SPHERE:
       CGOSimpleSphere(cgo,pc,*(pc+3));
@@ -399,6 +452,8 @@ int CGOGetExtent(CGO *I,float *mn,float *mx)
       check_extent(pc,*(pc+3));
       break;
     case CGO_CYLINDER:
+    case CGO_SAUSAGE:
+    case CGO_CUSTOM_CYLINDER:
       check_extent(pc  ,*(pc+6));
       check_extent(pc+3,*(pc+6));
       break;
@@ -448,7 +503,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
     case CGO_END:
       switch(mode) {
       case GL_LINE_LOOP:
-        if(vc>1) ray->fCylinder3fv(ray,v0,v2,primwidth,c0,c2);
+        if(vc>1) ray->fSausage3fv(ray,v0,v2,primwidth,c0,c2);
         break;
       }
       mode=-1;
@@ -475,18 +530,18 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
         ray->fSphere3fv(ray,v0,primwidth);
         break;
       case GL_LINES:
-        if(vc&0x1) ray->fCylinder3fv(ray,v0,v1,primwidth,c0,c1);
+        if(vc&0x1) ray->fSausage3fv(ray,v0,v1,primwidth,c0,c1);
         v1=v0;
         c1=c0;
         break;
       case GL_LINE_STRIP:
-        if(vc) ray->fCylinder3fv(ray,v0,v1,primwidth,c0,c1);
+        if(vc) ray->fSausage3fv(ray,v0,v1,primwidth,c0,c1);
         v1=v0;
         c1=c0;
         break;
       case GL_LINE_LOOP:
         if(vc) 
-          ray->fCylinder3fv(ray,v0,v1,primwidth,c0,c1);
+          ray->fSausage3fv(ray,v0,v1,primwidth,c0,c1);
         else {
           v2=v0;
           c2=c0;
@@ -533,8 +588,14 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
       ray->fColor3fv(ray,c0);
       ray->fSphere3fv(ray,pc,*(pc+3));
       break;
+    case CGO_CUSTOM_CYLINDER:
+      ray->fCustomCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10,*(pc+13),*(pc+14));
+      break;
     case CGO_CYLINDER:
       ray->fCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10);
+      break;
+    case CGO_SAUSAGE:
+      ray->fSausage3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10);
       break;
     case CGO_TRIANGLE:
       ray->fTriangle3fv(ray,pc,pc+3,pc+6,pc+9,pc+12,pc+15,pc+18,pc+21,pc+24);
@@ -686,12 +747,12 @@ static void subdivide( int n, float *x, float *y)
 	 }
 }
 
-void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2)
+void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2)
 {
 
 #define MAX_EDGE 50
 
-  float d[3],t[3],p0[3],p1[3],p2[3],v_buf[9],*v;
+  float d[3],t[3],p0[3],p1[3],p2[3],vv1[3],vv2[3],v_buf[9],*v;
   float x[50],y[50];
   float overlap;
   float nub;
@@ -720,17 +781,28 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
   
   normalize3f(p0);
   
-  v1[0]-=p0[0]*overlap;
-  v1[1]-=p0[1]*overlap;
-  v1[2]-=p0[2]*overlap;
+  if(cap1==cCylCapRound) {
+    vv1[0]=v1[0]-p0[0]*overlap;
+    vv1[1]=v1[1]-p0[1]*overlap;
+    vv1[2]=v1[2]-p0[2]*overlap;
+  } else {
+    vv1[0]=v1[0];
+    vv1[1]=v1[1];
+    vv1[2]=v1[2];
+  }
+  if(cap2==cCylCapRound) {
+    vv2[0]=v2[0]+p0[0]*overlap;
+    vv2[1]=v2[1]+p0[1]*overlap;
+    vv2[2]=v2[2]+p0[2]*overlap;
+  } else {
+    vv2[0]=v2[0];
+    vv2[1]=v2[1];
+    vv2[2]=v2[2];
+  }
   
-  v2[0]+=p0[0]*overlap;
-  v2[1]+=p0[1]*overlap;
-  v2[2]+=p0[2]*overlap;
-  
-  d[0] = (v2[0] - v1[0]);
-  d[1] = (v2[1] - v1[1]);
-  d[2] = (v2[2] - v1[2]);
+  d[0] = (vv2[0] - vv1[0]);
+  d[1] = (vv2[1] - vv1[1]);
+  d[2] = (vv2[2] - vv1[2]);
   
   t[0] = d[1];
   t[1] = d[2];
@@ -753,9 +825,9 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
 		v[1] = p1[1]*x[c] + p2[1]*y[c];
 		v[2] = p1[2]*x[c] + p2[2]*y[c];
 		
-		v[3] = v1[0] + v[0]*tube_size;
-		v[4] = v1[1] + v[1]*tube_size;
-		v[5] = v1[2] + v[2]*tube_size;
+		v[3] = vv1[0] + v[0]*tube_size;
+		v[4] = vv1[1] + v[1]*tube_size;
+		v[5] = vv1[2] + v[2]*tube_size;
 		
 		v[6] = v[3] + d[0];
 		v[7] = v[4] + d[1];
@@ -769,63 +841,78 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
 	 }
   CGOEnd(I);
 
+  if(cap1) {
   v[0] = -p0[0];
   v[1] = -p0[1];
   v[2] = -p0[2];
-  
-  v[3] = v1[0] - p0[0]*nub;
-  v[4] = v1[1] - p0[1]*nub;
-  v[5] = v1[2] - p0[2]*nub;
-  
-  if(colorFlag) CGOColorv(I,c1);
-  CGOBegin(I,GL_TRIANGLE_FAN);
-  CGONormalv(I,v);
-  CGOVertexv(I,v+3);
 
-  for(c=0;c<=nEdge;c++)
-	 {
-		
-		v[0] = p1[0]*x[c] + p2[0]*y[c];
-		v[1] = p1[1]*x[c] + p2[1]*y[c];
-		v[2] = p1[2]*x[c] + p2[2]*y[c];
-		
-		v[3] = v1[0] + v[0]*tube_size;
-		v[4] = v1[1] + v[1]*tube_size;
-		v[5] = v1[2] + v[2]*tube_size;
-		
-      CGONormalv(I,v);
-      CGOVertexv(I,v+3);
-	 }
-  CGOEnd(I);
-
-  v[0] = p0[0];
-  v[1] = p0[1];
-  v[2] = p0[2];
-  
-  v[3] = v2[0] + p0[0]*nub;
-  v[4] = v2[1] + p0[1]*nub;
-  v[5] = v2[2] + p0[2]*nub;
-  
-  if(colorFlag) CGOColorv(I,c2);
-  CGOBegin(I,GL_TRIANGLE_FAN);
-  CGONormalv(I,v);
-  CGOVertexv(I,v+3);
-
-  for(c=0;c<=nEdge;c++)
-    {
-      
-      v[0] = p1[0]*x[c] + p2[0]*y[c];
-      v[1] = p1[1]*x[c] + p2[1]*y[c];
-      v[2] = p1[2]*x[c] + p2[2]*y[c];
-      
-      v[3] = v2[0] + v[0]*tube_size;
-      v[4] = v2[1] + v[1]*tube_size;
-      v[5] = v2[2] + v[2]*tube_size;
-      
-      CGONormalv(I,v);
-      CGOVertexv(I,v+3);
+    if(cap1==cCylCapRound) {
+      v[3] = vv1[0] - p0[0]*nub;
+      v[4] = vv1[1] - p0[1]*nub;
+      v[5] = vv1[2] - p0[2]*nub;
+    } else {
+      v[3] = vv1[0];
+      v[4] = vv1[1];
+      v[5] = vv1[2];
     }
-  CGOEnd(I);
+    
+    if(colorFlag) CGOColorv(I,c1);
+    CGOBegin(I,GL_TRIANGLE_FAN);
+    CGONormalv(I,v);
+    CGOVertexv(I,v+3);
+    
+    for(c=0;c<=nEdge;c++)
+      {
+        v[0] = p1[0]*x[c] + p2[0]*y[c];
+        v[1] = p1[1]*x[c] + p2[1]*y[c];
+        v[2] = p1[2]*x[c] + p2[2]*y[c];
+        
+        v[3] = vv1[0] + v[0]*tube_size;
+        v[4] = vv1[1] + v[1]*tube_size;
+        v[5] = vv1[2] + v[2]*tube_size;
+        
+        if(cap1==cCylCapRound) CGONormalv(I,v);
+        CGOVertexv(I,v+3);
+      }
+    CGOEnd(I);
+  }
+
+  if(cap2) {
+    
+    v[0] = p0[0];
+    v[1] = p0[1];
+    v[2] = p0[2];
+    
+    if(cap2==cCylCapRound) {
+      v[3] = vv2[0] + p0[0]*nub;
+      v[4] = vv2[1] + p0[1]*nub;
+      v[5] = vv2[2] + p0[2]*nub;
+    } else {
+      v[3] = vv2[0];
+      v[4] = vv2[1];
+      v[5] = vv2[2];
+    }
+    
+    if(colorFlag) CGOColorv(I,c2);
+    CGOBegin(I,GL_TRIANGLE_FAN);
+    CGONormalv(I,v);
+    CGOVertexv(I,v+3);
+    
+    for(c=0;c<=nEdge;c++)
+      {
+        v[0] = p1[0]*x[c] + p2[0]*y[c];
+        v[1] = p1[1]*x[c] + p2[1]*y[c];
+        v[2] = p1[2]*x[c] + p2[2]*y[c];
+        
+        v[3] = vv2[0] + v[0]*tube_size;
+        v[4] = vv2[1] + v[1]*tube_size;
+        v[5] = vv2[2] + v[2]*tube_size;
+        
+        if(cap1==cCylCapRound) CGONormalv(I,v);
+        CGOVertexv(I,v+3);
+      }
+    CGOEnd(I);
+  }
 }
 
 

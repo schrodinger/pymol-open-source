@@ -73,7 +73,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 	 v=I->VR;
 	 c=I->NR;
 	 while(c--) {
-		ray->fCylinder3fv(ray,v+4,v+7,*(v+3),v,v);
+		ray->fSausage3fv(ray,v+4,v+7,*(v+3),v,v);
 		v+=10;
 	 }
   } else if(pick&&PMGUI) {

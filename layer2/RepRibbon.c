@@ -72,7 +72,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
 	 c=I->NC-1;
 	 if(c>0)
 		while(c--) {
-		  ray->fCylinder3fv(ray,v+4,v+7,*(v+3),v,v);
+		  ray->fSausage3fv(ray,v+4,v+7,*(v+3),v,v);
 		  v+=10;
 		}
   } else if(pick&&PMGUI) {

@@ -22,6 +22,11 @@ Z* -------------------------------------------------------------------
 #define cPrimSphere 1
 #define cPrimCylinder 2
 #define cPrimTriangle 3
+#define cPrimSausage 4
+
+#define cCylCapNone 0
+#define cCylCapFlat 1
+#define cCylCapRound 2
 
 typedef struct {
   int type,vert,cull;
@@ -30,6 +35,7 @@ typedef struct {
   float c1[3],c2[3],c3[3];
   float r1,l1; 
   float trans;
+  int cap1,cap2;
   int texture;
   float texture_param[3];
 } CPrimitive;

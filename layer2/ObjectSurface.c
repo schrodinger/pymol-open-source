@@ -214,7 +214,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                   c--;
                   v+=3;
                   while(c>0) {
-                    ray->fCylinder3fv(ray,v-3,v,ms->Radius,vc,vc);
+                    ray->fSausage3fv(ray,v-3,v,ms->Radius,vc,vc);
                     v+=3;
                     c--;
                   }

@@ -2537,15 +2537,15 @@ int ExecutiveColor(char *name,char *color,int flags)
       if(n_obj<2) objs[0]=0;
       if(n_atm<2) atms[0]=0;
       if(n_obj&&n_atm) {
-        PRINTFB(FB_Executive,FB_Details)
+        PRINTFB(FB_Executive,FB_Actions)
           " Executive: Colored %d atom%s and %d object%s.\n",n_atm,atms,n_obj,objs
           ENDFB;
       } else if (n_obj) {
-        PRINTFB(FB_Executive,FB_Details)
+        PRINTFB(FB_Executive,FB_Actions)
           " Executive: Colored %d object%s.\n",n_obj,objs
           ENDFB;
       } else {
-        PRINTFB(FB_Executive,FB_Details)
+        PRINTFB(FB_Executive,FB_Actions)
           " Executive: Colored %d atom%s.\n",n_atm,atms
           ENDFB;
       }

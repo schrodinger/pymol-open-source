@@ -268,7 +268,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
                       v+=3;
                       while(c--)
                         {
-                          ray->fCylinder3fv(ray,v-3,v,ms->Radius,vc,vc);
+                          ray->fSausage3fv(ray,v-3,v,ms->Radius,vc,vc);
                           v+=3;
                         }
                     }

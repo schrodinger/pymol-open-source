@@ -52,6 +52,7 @@ void RaySetup(CRay *I);
 void RayColor3fv(CRay *I,float *v);
 void RaySphere3fv(CRay *I,float *v,float r);
 void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
+void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 
 void RayTriangle3fv(CRay *I,
 						  float *v1,float *v2,float *v3,
@@ -205,6 +206,7 @@ void RayExpandPrimitives(CRay *I)
 		nVert++;
 		break;
 	 case cPrimCylinder:
+    case cPrimSausage:
 		nVert++;
 		nNorm++;
 		break;
@@ -293,12 +295,13 @@ void RayExpandPrimitives(CRay *I)
 		nVert++;
 		break;
 	 case cPrimCylinder:
+    case cPrimSausage:
 		I->Primitive[a].vert=nVert;
 		I->Vert2Prim[nVert]=a;
 		basis->Radius[nVert]=I->Primitive[a].r1;
 		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*precompute*/
-		if(basis->Radius[nVert]>basis->MinVoxel)
-		  basis->MinVoxel=basis->Radius[nVert];
+		if(basis->MinVoxel<0.001F)
+        basis->MinVoxel=0.001F;
 		subtract3f(I->Primitive[a].v2,I->Primitive[a].v1,n0);
 		I->Primitive[a].l1=length3f(n0);
 		normalize3f(n0);
@@ -550,6 +553,21 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
       UtilConcatVLA(&charVLA,&cc,buffer);
 		break;
 	 case cPrimCylinder:
+      d=base->Normal+3*base->Vert2Normal[prim->vert];
+      scale3f(d,prim->l1,vert2);
+      add3f(vert,vert2,vert2);
+      sprintf(buffer,"cylinder{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n %12.10f\n",
+              vert[0],vert[1],vert[2],
+              vert2[0],vert2[1],vert2[2],
+              prim->r1);
+      UtilConcatVLA(&charVLA,&cc,buffer);
+      sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
+              (prim->c1[0]+prim->c2[0])/2,
+              (prim->c1[1]+prim->c2[1])/2,
+              (prim->c1[2]+prim->c2[2])/2);
+      UtilConcatVLA(&charVLA,&cc,buffer);
+		break;
+    case cPrimSausage:
       d=base->Normal+3*base->Vert2Normal[prim->vert];
       scale3f(d,prim->l1,vert2);
       add3f(vert,vert2,vert2);
@@ -881,7 +899,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 } else {
                   RayGetSphereNormal(I,&r1);
                   RayReflectAndTexture(I,&r1);
-                  if(r1.prim->type==cPrimCylinder) {
+                  if((r1.prim->type==cPrimCylinder)||
+                     (r1.prim->type==cPrimSausage)) {
                     ft = r1.tri1;
                     fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
                     fc[1]=(r1.prim->c1[1]*(1-ft))+(r1.prim->c2[1]*ft);
@@ -1309,6 +1328,93 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   p->r1=r;
   p->trans=0.0;
   p->texture=I->Texture;
+  p->cap1=cCylCapFlat;
+  p->cap2=cCylCapFlat;
+  copy3f(I->TextureParam,p->texture_param);
+
+  vv=p->v1;
+  (*vv++)=(*v1++);
+  (*vv++)=(*v1++);
+  (*vv++)=(*v1++);
+  vv=p->v2;
+  (*vv++)=(*v2++);
+  (*vv++)=(*v2++);
+  (*vv++)=(*v2++);
+
+  if(I->TTTFlag) {
+    transformTTT44f3f(I->TTT,p->v1,p->v1);
+    transformTTT44f3f(I->TTT,p->v2,p->v2);
+  }
+
+  vv=p->c1;
+  (*vv++)=(*c1++);
+  (*vv++)=(*c1++);
+  (*vv++)=(*c1++);
+  vv=p->c2;
+  (*vv++)=(*c2++);
+  (*vv++)=(*c2++);
+  (*vv++)=(*c2++);
+
+  I->NPrimitive++;
+}
+/*========================================================================*/
+void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
+                          float *c1,float *c2,int cap1,int cap2)
+{
+  CPrimitive *p;
+
+  float *vv;
+
+  VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
+  p = I->Primitive+I->NPrimitive;
+
+  p->type = cPrimCylinder;
+  p->r1=r;
+  p->trans=0.0;
+  p->texture=I->Texture;
+  p->cap1=cap1;
+  p->cap2=cap2;
+  copy3f(I->TextureParam,p->texture_param);
+
+  vv=p->v1;
+  (*vv++)=(*v1++);
+  (*vv++)=(*v1++);
+  (*vv++)=(*v1++);
+  vv=p->v2;
+  (*vv++)=(*v2++);
+  (*vv++)=(*v2++);
+  (*vv++)=(*v2++);
+
+  if(I->TTTFlag) {
+    transformTTT44f3f(I->TTT,p->v1,p->v1);
+    transformTTT44f3f(I->TTT,p->v2,p->v2);
+  }
+
+  vv=p->c1;
+  (*vv++)=(*c1++);
+  (*vv++)=(*c1++);
+  (*vv++)=(*c1++);
+  vv=p->c2;
+  (*vv++)=(*c2++);
+  (*vv++)=(*c2++);
+  (*vv++)=(*c2++);
+
+  I->NPrimitive++;
+}
+/*========================================================================*/
+void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
+{
+  CPrimitive *p;
+
+  float *vv;
+
+  VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
+  p = I->Primitive+I->NPrimitive;
+
+  p->type = cPrimSausage;
+  p->r1=r;
+  p->trans=0.0;
+  p->texture=I->Texture;
   copy3f(I->TextureParam,p->texture_param);
 
   vv=p->v1;
@@ -1485,6 +1591,8 @@ CRay *RayNew(void)
   I->fColor3fv=RayColor3fv;
   I->fSphere3fv=RaySphere3fv;
   I->fCylinder3fv=RayCylinder3fv;
+  I->fCustomCylinder3fv=RayCustomCylinder3fv;
+  I->fSausage3fv=RaySausage3fv;
   I->fTriangle3fv=RayTriangle3fv;
   I->fTexture=RayTexture;
   I->fTransparentf=RayTransparentf;

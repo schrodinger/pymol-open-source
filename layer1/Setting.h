@@ -278,7 +278,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_legacy_vdw_radii            177
 #define cSetting_sculpt_memory               178
 #define cSetting_connect_mode                179
-#define cSetting_INIT                        180
+#define cSetting_cartoon_cylindrical_helices 180
+#define cSetting_cartoon_helix_radius        181
+#define cSetting_INIT                        182
 
 #endif
 

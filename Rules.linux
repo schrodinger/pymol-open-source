@@ -39,11 +39,11 @@ PYOGL_LIB =  -lglut -lGL -lGLU -lXmu -lXi
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
+#CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Debugging
-#CCOPT2 = -g
+CCOPT2 = -g
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
