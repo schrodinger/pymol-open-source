@@ -1546,7 +1546,7 @@ int RayTraceThread(CRayThreadInfo *T)
   var += (src[1 ] & mask); \
   var += (src[2 ] & mask); \
   var += (src[3 ] & mask); \
-  var = (var >> 4) & mask; \
+  var = (var >> 2) & mask; \
  }
 
 
