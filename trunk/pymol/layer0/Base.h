@@ -58,6 +58,12 @@ typedef struct {
   int bond; /* bond index, otherwise -1 */
 } Pickable;
 
+typedef struct {
+  int mode;
+  int x,y,w,h;
+  Pickable *picked;
+} Multipick;
+
 #define MAXLINELEN 1024
 
 #ifndef _PYMOL_NO_XRAY

@@ -38,13 +38,17 @@ Z* -------------------------------------------------------------------
 #define cButModeTorFrag  16
 #define cButModeMovFrag  17
 #define cButModeOrigAt   18
-#define cButLoop         19
+#define cButModeRectAdd  19
+#define cButModeRectSub  20
+#define cButModeRect     21
+
+#define cButModeCount    22
 
 typedef char CodeType[25];
 
 typedef struct {
   Block *Block;
-  CodeType Code[20];
+  CodeType Code[cButModeCount+1];
   int NCode;
   int Mode[12];
   int NBut;

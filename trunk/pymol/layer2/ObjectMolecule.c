@@ -2283,7 +2283,7 @@ void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     case cPLog_pym:
       
       sprintf(line,
-              "cmd.transform_object('%s',[\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n,%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n],%d,%d%s)\n",
+              "cmd.transform_object('%s',[\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n],%d,%d%s)\n",
               I->Obj.Name,
               TTT[ 0],TTT[ 1],TTT[ 2],TTT[ 3],
               TTT[ 4],TTT[ 5],TTT[ 6],TTT[ 7],
@@ -4323,6 +4323,45 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer)
   else
     sprintf(buffer,"/%s/%s/%s/%s/%s`",I->Obj.Name,ai->segi,ai->chain,ai->resi,
             ai->name);   
+}
+/*========================================================================*/
+void ObjectMoleculeGetAtomSeleFast(ObjectMolecule *I,int index, char *buffer) 
+{
+  AtomInfoType *ai;
+  WordType segi,chain,resi,name,alt;
+  ai=I->AtomInfo+index;
+
+  if(ai->segi[0]) {
+    strcpy(segi,"s;");
+    strcat(segi,ai->segi);
+  } else {
+    strcpy(segi,"s;''");
+  }
+  if(ai->chain[0]) {
+    strcpy(chain,"c;");
+    strcat(chain,ai->chain);
+  } else {
+    strcpy(chain,"c;''");
+  }
+  if(ai->resi[0]) {
+    strcpy(resi,"i;");
+    strcat(resi,ai->resi);
+  } else {
+    strcpy(resi,"i;''");
+  }
+  if(ai->name[0]) {
+    strcpy(name,"n;");
+    strcat(name,ai->name);
+  } else {
+    strcpy(name,"n;''");
+  }
+  if(ai->alt[0]) {
+    strcpy(alt,"alt ");
+    strcat(alt,ai->alt);
+  } else {
+    strcpy(alt,"alt ''");
+  }
+  sprintf(buffer,"(%s&%s&%s&%s&%s&%s)",I->Obj.Name,segi,chain,resi,name,alt);
 }
 /*========================================================================*/
 int ObjectMoleculeGetNFrames(ObjectMolecule *I)

@@ -13,7 +13,7 @@ class Shortcut:
    
    def __init__(self,list,filter_leading_underscore=1):
       if filter_leading_underscore:
-         self.keywords=filter(lambda x:x[0]!='_',list)
+         self.keywords=filter(lambda x:x[:1]!='_',list)
       else:
          self.keywords = copy.deepcopy(list)
       self.shortcut = {}

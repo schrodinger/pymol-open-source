@@ -36,7 +36,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"CGO.h"
 
-#define SelectorMaxDepth 100
+#define SelectorMaxDepth 1000
 
 #define cSelectorTmpPrefix "_sel_tmp_"
 
@@ -99,6 +99,7 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj);
 void SelectorClean(void);
 void SelectorDeletePrefixSet(char *s);
 int *SelectorGetIndexVLA(int sele);
+int *SelectorApplyMultipick(Multipick *mp);
 
 #define STYP_VALU 0
 #define STYP_OPR1 1
@@ -598,7 +599,98 @@ void SelectorUpdateObjectSele(ObjectMolecule *obj)
 {
   if(obj->Obj.Name[0]) {
     SelectorDelete(obj->Obj.Name);  
-    SelectorCreate(obj->Obj.Name,NULL,obj,true); /* create a selection with same name */ 
+    SelectorCreate(obj->Obj.Name,NULL,obj,true,NULL); /* create a selection with same name */ 
+  }
+}
+
+/*========================================================================*/
+void SelectorLogSele(char *name)
+{
+  SelectorType *I=&Selector;
+  int a;
+  OrthoLineType line,buf1;
+  int cnt=-1;
+  int first = 1;
+  int append=0;
+  ObjectMolecule *obj;
+  int at1;
+  int sele;
+  int logging;
+  int robust;
+  logging = SettingGet(cSetting_logging);
+  robust = SettingGet(cSetting_robust_logs);
+  if(logging) {
+    sele = SelectorIndexByName(name);
+    if(sele>=0) {
+      SelectorUpdateTable();
+      for(a=0;a<I->NAtom;a++)
+        {
+          obj=I->Obj[I->Table[a].model];
+          at1=I->Table[a].atom;
+          if(SelectorIsMember(obj->AtomInfo[at1].selEntry,sele)) {
+            
+            if(cnt<0) {
+              if(first) {
+                switch(logging) {
+                case cPLog_pml:
+                  sprintf(line,"_ select %s,(",name);
+                  break;
+                case cPLog_pym:
+                  sprintf(line,"cmd.select(\"%s\",\"(",name);
+                  break;
+                }
+                append=0;
+                cnt=0;
+                first=0;
+              } else {
+                switch(logging) {
+                case cPLog_pml:
+                  sprintf(line,"_ select %s,(%s",name,name);
+                  break;
+                case cPLog_pym:
+                  sprintf(line,"cmd.select(\"%s\",\"(%s",name,name);
+                  break;
+                }
+                append=1;
+                cnt=0;
+              }
+            }
+            if(append) 
+              strcat(line,"|");
+            if(robust) 
+              ObjectMoleculeGetAtomSeleFast(obj,at1,buf1);
+            else 
+              sprintf(buf1,"%s`%d",obj->Obj.Name,at1+1);
+            strcat(line,buf1);
+            append=1;
+            cnt++;
+            if(strlen(line)>(sizeof(OrthoLineType)/2)) {
+              switch(logging) {
+              case cPLog_pml:
+                strcat(line,")\n");
+                break;
+              case cPLog_pym:
+                strcat(line,")\")\n");
+                break;
+              }
+              PLog(line,cPLog_no_flush);
+              cnt=-1;
+            }
+          }
+        }
+      if(cnt>0) {
+        switch(logging) {
+        case cPLog_pml:
+          strcat(line,")\n");
+          break;
+        case cPLog_pym:
+          strcat(line,")\")\n");
+          break;
+        }
+        PLog(line,cPLog_no_flush);
+        PLogFlush();
+      }
+    }
   }
 }
 /*========================================================================*/
@@ -1826,7 +1918,7 @@ void SelectorGetTmp(char *input,char *store)
   OrthoLineType buffer;
   if(input[0]=='(') {
     sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
-	 SelectorCreate(name,input,NULL,false);
+	 SelectorCreate(name,input,NULL,false,NULL);
 	 strcpy(store,name);
   } else {
     if(ExecutiveValidName(input))
@@ -1836,7 +1928,7 @@ void SelectorGetTmp(char *input,char *store)
       strcat(buffer,input);
       strcat(buffer,")");
       sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);      
-      SelectorCreate(name,buffer,NULL,false);
+      SelectorCreate(name,buffer,NULL,false,NULL);
       strcpy(store,name);
     }
   }
@@ -1911,7 +2003,28 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
   return(c);
 }
 /*========================================================================*/
-int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet) 
+int *SelectorApplyMultipick(Multipick *mp)
+{
+  SelectorType *I=&Selector;
+  int *result;
+  int a,n;
+  Pickable *p;
+  ObjectMolecule *obj;
+  SelectorUpdateTable();  
+  result = Alloc(int,I->NAtom);
+  n=mp->picked[0].index;
+  p=mp->picked+1;
+  for(a=0;a<I->NAtom;a++) 
+    result[a]=0;
+  while(n--) {
+    obj=(ObjectMolecule*)p->ptr;
+    result[obj->SeleBase+p->index] = true;
+    p++;
+  }
+  return(result);
+}
+/*========================================================================*/
+int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp) 
 {
   SelectorType *I=&Selector;
   int *atom=NULL;
@@ -1942,7 +2055,9 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet)
 		 if(!atom) ok=false;
 	   } else if(obj) { /* optimized full-object selection */
         SelectorUpdateTableSingleObject(obj);
-	   } else 
+	   } else if(mp) {
+        atom=SelectorApplyMultipick(mp);
+      } else
         ok=false;
 	 }
   if(ok)	c=SelectorEmbedSelection(atom,name,obj);

@@ -125,7 +125,7 @@ void ButModeInit(void)
 
   I->Caption[0] = 0;
 
-  I->NCode = 19;
+  I->NCode = cButModeCount;
   I->NBut = 12;
 
   for(a=0;a<I->NBut;a++) {
@@ -151,6 +151,9 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeAddToPk2],"+mb  ");
   strcpy(I->Code[cButModeAddToPk3],"+rb  ");
   strcpy(I->Code[cButModeOrigAt],  "Orig ");
+  strcpy(I->Code[cButModeRectAdd], "+lbX ");
+  strcpy(I->Code[cButModeRectSub], "-lbX ");
+  strcpy(I->Code[cButModeRect],    "lbBx ");
 
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ButModeClick;
@@ -207,8 +210,11 @@ int ButModeTranslate(int button, int mod)
 /*========================================================================*/
 int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
-  SettingSetNamed("valence","0.05");
-  PLog("cmd.set('valence',0.05)",cPLog_pym);
+  WordType buf1,buf2;
+  sprintf(buf1,"%1.4f",SettingGet(cSetting_valence_default));
+  SettingSetNamed("valence",buf1);
+  sprintf(buf2,"cmd.set('valence','%s')",buf1);
+  PLog(buf2,cPLog_pym);
   PLog("cmd.edit_mode()",cPLog_pym);
   OrthoCommandIn("edit_mode");
   return(1);
@@ -256,7 +262,7 @@ void ButModeDraw(Block *block)
       mode = I->Mode[a];
       if(mode<0)
         GrapContStr("    ");
-      else
+      else 
         GrapContStr(I->Code[mode]);
     }
 

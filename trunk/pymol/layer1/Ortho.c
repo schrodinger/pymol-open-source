@@ -60,6 +60,7 @@ ListVarDeclare(BlockList,Block);
 typedef struct {
   Block *Blocks;
   Block *GrabbedBy,*ClickedIn;
+  Block LoopBlock;
   GLint ViewPort[4];
   int X,Y,Height,Width;
   int ActiveButton;
@@ -82,6 +83,8 @@ typedef struct {
   char BusyMessage[255];
   char *WizardPromptVLA;
   int SplashFlag;
+  int LoopFlag;
+  BlockRect LoopRect;
   CQueue *cmds;
   CQueue *feedback;
 } OrthoObject;
@@ -104,7 +107,41 @@ void OrthoKeyControl(unsigned char k);
 #define cWizardTopMargin 15
 #define cWizardLeftMargin 15
 #define cWizardBorder 7
+int OrthoLoopBlockDrag(Block *block,int x,int y,int mod);
+int OrthoLoopBlockRelease(Block *block,int button,int x,int y,int mod);
+/*========================================================================*/
+int OrthoLoopBlockDrag(Block *block,int x,int y,int mod)
+{
+  OrthoObject *I=&Ortho;  
+  I->LoopRect.right=x;
+  I->LoopRect.bottom=y;
+  OrthoDirty();
+  return(1);
+}
+/*========================================================================*/
+int OrthoLoopBlockRelease(Block *block,int button,int x,int y,int mod)
+{
+  OrthoObject *I=&Ortho;
+  int tmp;
+  int mode;
+  mode = ButModeTranslate(button,mod);
 
+  if(I->LoopRect.top<I->LoopRect.bottom) {
+    tmp=I->LoopRect.top;
+    I->LoopRect.top=I->LoopRect.bottom;
+    I->LoopRect.bottom=tmp;
+  }
+  if(I->LoopRect.right<I->LoopRect.left) {
+    tmp=I->LoopRect.right;
+    I->LoopRect.right=I->LoopRect.left;
+    I->LoopRect.left=tmp;
+  }
+  ExecutiveSelectRect(&I->LoopRect,mode==cButModeRectAdd);
+  I->LoopFlag=false;
+  I->GrabbedBy=NULL;
+  OrthoDirty();
+  return(1);
+}
 /*========================================================================*/
 void OrthoSetWizardPrompt(char *vla)
 {
@@ -799,7 +836,7 @@ void OrthoDoDraw()
     
     if(overlay||(!text)) 
       if(!SceneRenderCached())
-        SceneRender(NULL,0,0);
+        SceneRender(NULL,0,0,NULL);
 
     
     OrthoPushMatrix();
@@ -820,6 +857,17 @@ void OrthoDoDraw()
     }
     
     BlockRecursiveDraw(I->Blocks);
+
+    if(I->LoopFlag) {
+      glColor3f(1.0,1.0,1.0);
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(I->LoopRect.left,I->LoopRect.top);
+      glVertex2i(I->LoopRect.right,I->LoopRect.top);
+      glVertex2i(I->LoopRect.right,I->LoopRect.bottom);
+      glVertex2i(I->LoopRect.left,I->LoopRect.bottom);
+      glVertex2i(I->LoopRect.left,I->LoopRect.top);
+      glEnd();
+    }
     
     OrthoRestorePrompt();
 
@@ -979,6 +1027,7 @@ void OrthoReshape(int width, int height)
 
   block=SceneGetBlock();
   BlockSetMargin(block,0,0,sceneBottom,sceneRight);
+  BlockSetMargin(&I->LoopBlock,0,0,sceneBottom,sceneRight);
 
   if(SettingGet(cSetting_internal_gui)) {
     block=ExecutiveGetBlock();
@@ -1068,7 +1117,7 @@ int OrthoButton(int button,int state,int x,int y,int mod)
 {
   OrthoObject *I=&Ortho;
 
-  Block *block;
+  Block *block=NULL;
   int handled = 0; 
 
   OrthoRemoveSplash();
@@ -1113,6 +1162,19 @@ int OrthoButton(int button,int state,int x,int y,int mod)
 			 I->ClickedIn = NULL;
 		  }
 	 }
+  if(block&&!handled) {
+    if(SceneGetBlock()==block) {
+      if(state==P_GLUT_DOWN) {
+        I->LoopRect.left=x;
+        I->LoopRect.top=y;
+        I->LoopRect.right=x;
+        I->LoopRect.bottom=y;
+        I->LoopFlag=true;
+        I->GrabbedBy=&I->LoopBlock;
+        OrthoDirty();
+      } 
+    }
+  }
   return(handled);
 }
 /*========================================================================*/ 
@@ -1120,7 +1182,7 @@ int OrthoDrag(int x, int y,int mod)
 {
   OrthoObject *I=&Ortho;
 
-  Block *block;
+  Block *block=NULL;
   int handled = 0;
 
   I->X=x;
@@ -1205,18 +1267,22 @@ void OrthoInit(int showSplash)
   I->HistoryView=0;
   I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
   I->WizardPromptVLA=NULL;
-  
+  I->LoopFlag=0;
     
   I->SplashFlag = true;
   I->ShowLines = 1;
   I->Saved[0]=0;
   I->DirtyFlag = true;
 
+  BlockInit(&I->LoopBlock);
+  I->LoopBlock.fDrag = OrthoLoopBlockDrag;
+  I->LoopBlock.fRelease = OrthoLoopBlockRelease;
+  
   if(showSplash)
 	 OrthoSplash();
   strcpy(I->Prompt,"PyMOL>");
   OrthoNewLine(I->Prompt);
-
+  
   ButModeInit();
   ControlInit();
   WizardInit();

@@ -2271,7 +2271,7 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
   int quiet;
   PyArg_ParseTuple(args,"ssi",&sname,&sele,&quiet);
   APIEntry();
-  cnt = SelectorCreate(sname,sele,NULL,quiet);
+  cnt = SelectorCreate(sname,sele,NULL,quiet,NULL);
   SceneDirty();
   APIExit();
   return PyInt_FromLong(cnt);

@@ -140,6 +140,9 @@ class SettingIndex:
    cgo_line_width        =129
    cgo_line_radius       =130
    logging               =131
+   robust_logs           =132
+   log_box_selections    =133
+   log_transformations   =134
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
