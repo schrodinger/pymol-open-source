@@ -87,7 +87,8 @@ static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
     ObjectUseColor(&I->Obj);
-    glBegin(GL_LINES);
+   glDisable(GL_LIGHTING); 
+   glBegin(GL_LINES);
     glVertex3fv(I->Corner[0]);
     glVertex3fv(I->Corner[1]);
 
@@ -125,6 +126,7 @@ static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick)
     glVertex3fv(I->Corner[7]);
 
     glEnd();
+	glEnable(GL_LIGHTING);
   }
 }
 
