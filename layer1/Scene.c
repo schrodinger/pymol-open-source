@@ -46,6 +46,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"Grap.h"
 #include"ObjectGadget.h"
+#include"Seq.h"
 
 #define cFrontMin 0.1F
 #define cSliceMin 0.1F

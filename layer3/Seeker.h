@@ -21,5 +21,6 @@ Z* -------------------------------------------------------------------
 
 void SeekerInit(void);
 void SeekerFree(void);
+void SeekerUpdate(void);
 
 #endif
