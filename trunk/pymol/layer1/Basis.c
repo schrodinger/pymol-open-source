@@ -237,11 +237,11 @@ void BasisSetupMatrix(CBasis *I)
   /*
   printf("%8.3f %8.3f %8.3f %8.3f\n",angle*180.0/cPI,newY[0],newY[1],newY[2]);
   
-  transform33f3f(I->Matrix,newY,test);
+  matrix_transform33f3f(I->Matrix,newY,test);
   printf("   %8.3f %8.3f %8.3f\n",test[0],test[1],test[2]);
 
   printf("   %8.3f %8.3f %8.3f\n",I->LightNormal[0],I->LightNormal[1],I->LightNormal[2]);
-  transform33f3f(I->Matrix,I->LightNormal,test);
+  matrix_transform33f3f(I->Matrix,I->LightNormal,test);
   printf("   %8.3f %8.3f %8.3f\n",test[0],test[1],test[2]);
 
   printf(">%8.3f %8.3f %8.3f\n",I->Matrix[0][0],I->Matrix[0][1],I->Matrix[0][2]);

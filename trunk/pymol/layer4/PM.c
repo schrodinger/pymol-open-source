@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"Ortho.h"
 #include"ObjectMolecule.h"
+#include"ObjectMap.h"
 #include"Executive.h"
 #include"Selector.h"
 #include"main.h"
@@ -822,7 +823,7 @@ static PyObject *PMSelect(PyObject *self, PyObject *args)
 static PyObject *PMLoad(PyObject *self, PyObject *args)
 {
   char *fname,*oname;
-  ObjectMolecule *objMol = NULL,*obj;
+  Object *origObj = NULL,*obj;
   OrthoLineType buf;
   int frame,type;
 
@@ -834,99 +835,103 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
   #define cLoadTypeMMD 4
   #define cLoadTypeMMDSeparate 5
   #define cLoadTypeMMDStr 6
+  #define cLoadTypeXPLORMap 7
 
   PyArg_ParseTuple(args,"ssii",&oname,&fname,&frame,&type);
 
-  objMol=(ObjectMolecule*)ExecutiveFindObjectByName(oname);
+  origObj=ExecutiveFindObjectByName(oname);
+
+      /* TODO check for existing object of wrong type */
   
   switch(type) {
   case cLoadTypePDB:
-	 if(!objMol) {
-		obj=ObjectMoleculeLoadPDBFile(NULL,fname,frame);
-		fflush(stdout);
+	 if(!origObj) {
+		obj=(Object*)ObjectMoleculeLoadPDBFile(NULL,fname,frame);
 		if(obj) {
-		  ObjectSetName((Object*)obj,oname);
-		  ExecutiveManageObject((Object*)obj);
-		  sprintf(buf,"PMLoad: \"%s\" loaded into object \"%s\".\n",
-					 fname,oname);
+		  ObjectSetName(obj,oname);
+		  ExecutiveManageObject(obj);
+		  sprintf(buf," PMLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
 		}
 	 } else {
-		ObjectMoleculeLoadPDBFile(objMol,fname,frame);
-		ExecutiveUpdateObjectSelection((Object*)objMol);
-		sprintf(buf,"PMAppend: \"%s\" appended into object \"%s\".\n",
-				  fname,oname);
+		ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame);
+		ExecutiveUpdateObjectSelection(origObj);
+		sprintf(buf," PMLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
 	 break;
   case cLoadTypeMOL:
-	 obj=ObjectMoleculeLoadMOLFile(objMol,fname,frame);
-	 if(!objMol) {
+	 obj=(Object*)ObjectMoleculeLoadMOLFile((ObjectMolecule*)origObj,fname,frame);
+	 if(!origObj) {
 	   if(obj) {
-		 ObjectSetName((Object*)obj,oname);
-		 ExecutiveManageObject((Object*)obj);
-		 sprintf(buf,"PMLoad: \"%s\" loaded into object \"%s\".\n",
-				 fname,oname);		  
+		 ObjectSetName(obj,oname);
+		 ExecutiveManageObject(obj);
+		 sprintf(buf," PMLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);		  
 	   }
-	 } else if(objMol) {
-		ExecutiveUpdateObjectSelection((Object*)objMol);
-		sprintf(buf,"PMAppend: \"%s\" appended into object \"%s\".\n",
-				  fname,oname);
+	 } else if(origObj) {
+		ExecutiveUpdateObjectSelection(origObj);
+		sprintf(buf," PMLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
 	 break;
   case cLoadTypeMOLStr:
-	 obj=ObjectMoleculeReadMOLStr(objMol,fname,frame);
-	 if(!objMol) {
+	 obj=(Object*)ObjectMoleculeReadMOLStr((ObjectMolecule*)origObj,fname,frame);
+	 if(!origObj) {
 	   if(obj) {
-		 ObjectSetName((Object*)obj,oname);
-		 ExecutiveManageObject((Object*)obj);
-		 sprintf(buf,"PMLoad: MOL-string loaded into object \"%s\".\n",
-				 oname);		  
+		 ObjectSetName(obj,oname);
+		 ExecutiveManageObject(obj);
+		 sprintf(buf," PMLoad: MOL-string loaded into object \"%s\".\n",oname);		  
 	   }
-	 } else if(objMol) {
-		ExecutiveUpdateObjectSelection((Object*)objMol);
-		sprintf(buf,"PMAppend: MOL-string appended into object \"%s\".\n",
-				  oname);
+	 } else if(origObj) {
+		ExecutiveUpdateObjectSelection(origObj);
+		sprintf(buf," PMLoad: MOL-string appended into object \"%s\".\n",oname);
 	 }
 	 break;
   case cLoadTypeMMD:
-	 obj=ObjectMoleculeLoadMMDFile(objMol,fname,frame,NULL);
-	 if(!objMol) {
+	 obj=(Object*)ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,NULL);
+	 if(!origObj) {
 	   if(obj) {
-        ObjectSetName((Object*)obj,oname);
-        ExecutiveManageObject((Object*)obj);
-        sprintf(buf,"PMLoad: \"%s\" loaded into object \"%s\".\n",
-                fname,oname);		  
+        ObjectSetName(obj,oname);
+        ExecutiveManageObject(obj);
+        sprintf(buf," PMLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);		  
 	   }
-	 } else if(objMol) {
-		ExecutiveUpdateObjectSelection((Object*)objMol);
-		sprintf(buf,"PMAppend: \"%s\" appended into object \"%s\".\n",
-				  fname,oname);
+	 } else if(origObj) {
+		ExecutiveUpdateObjectSelection(origObj);
+		sprintf(buf," PMLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
     break;
   case cLoadTypeMMDSeparate:
-	 ObjectMoleculeLoadMMDFile(objMol,fname,frame,oname);
+	 ObjectMoleculeLoadMMDFile(origObj,fname,frame,oname);
     break;
   case cLoadTypeMMDStr:
-	 obj=ObjectMoleculeReadMMDStr(objMol,fname,frame);
-	 if(!objMol) {
+	 obj=(Object*)ObjectMoleculeReadMMDStr((ObjectMolecule*)origObj,fname,frame);
+	 if(!origObj) {
 	   if(obj) {
-		 ObjectSetName((Object*)obj,oname);
-		 ExecutiveManageObject((Object*)obj);
-		 sprintf(buf,"PMLoad: MMD-string loaded into object \"%s\".\n",
-				 oname);		  
+		 ObjectSetName(obj,oname);
+		 ExecutiveManageObject(obj);
+		 sprintf(buf," PMLoad: MMD-string loaded into object \"%s\".\n",oname);		  
 	   }
-	 } else if(objMol) {
-		ExecutiveUpdateObjectSelection((Object*)objMol);
-		sprintf(buf,"PMAppend: MMD-string appended into object \"%s\".\n",
-				  oname);
+	 } else if(origObj) {
+		ExecutiveUpdateObjectSelection(origObj);
+		sprintf(buf," PMLoad: MMD-string appended into object \"%s\".\n",oname);
 	 }
 	 break;
-
+  case cLoadTypeXPLORMap:
+	 if(!origObj) {
+		obj=(Object*)ObjectMapLoadXPLORFile(NULL,fname,frame);
+		if(obj) {
+		  ObjectSetName(obj,oname);
+		  ExecutiveManageObject((Object*)obj);
+		  sprintf(buf," PMLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
+		}
+	 } else {
+		ObjectMapLoadXPLORFile((ObjectMap*)origObj,fname,frame);
+		sprintf(buf," PMLoad: \"%s\" appended into object \"%s\".\n",
+				  fname,oname);
+	 }
+	 break;
   }
-  if(objMol) {
+  if(origObj) {
 	 OrthoAddOutput(buf);
 	 OrthoRestorePrompt();
   }
-
   Py_INCREF(Py_None);
   return Py_None;
 }

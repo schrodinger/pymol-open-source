@@ -46,5 +46,6 @@ typedef struct {
   int index; /* NOTE: that first record contains the list count...not pick info */
 } Pickable;
 
+#define MAXLINELEN 1024
 
 #endif

@@ -276,7 +276,7 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
   v1=basis1->Vertex;
   for(a=0;a<basis0->NVertex;a++)
 	 {
-		transform33f3f(basis1->Matrix,v0,v1);
+		matrix_transform33f3f(basis1->Matrix,v0,v1);
 		v0+=3;
 		v1+=3;
 		basis1->Radius[a]=basis0->Radius[a];
@@ -287,7 +287,7 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
   v1=basis1->Normal;
   for(a=0;a<basis0->NNormal;a++)
 	 {
-		transform33f3f(basis1->Matrix,v0,v1);
+		matrix_transform33f3f(basis1->Matrix,v0,v1);
 		v0+=3;
 		v1+=3;
 	 }
@@ -435,7 +435,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               dotgle=-r1.dotgle;
               direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
               
-              transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
+              matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
               
               if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,true,0.0,0.0)<0) {
 					 

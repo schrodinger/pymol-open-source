@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 
 #include"Base.h"
 #include"Debug.h"
+#include"Parse.h"
 #include"OOMac.h"
 #include"Vector.h"
 #include"MemoryDebug.h"
@@ -37,6 +38,12 @@ Z* -------------------------------------------------------------------
 #include"PUtils.h"
 #include"Executive.h"
 #include"Setting.h"
+
+
+#define wcopy ParseWordCopy
+#define nextline ParseNextLine
+#define ncopy ParseNCopy
+#define nskip ParseNSkip
 
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
@@ -60,8 +67,6 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 
 static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
-
-#define MAXLINELEN 1024
 
 /*========================================================================*/
 static int BondInOrder(int *a,int b1,int b2)
@@ -95,70 +100,6 @@ void ObjectMoleculeExtendIndices(ObjectMolecule *I)
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a])
 		I->CSet[a]->fExtendIndices(I->CSet[a],I->NAtom);
-}
-/*========================================================================*/
-static char *nextline(char *p) {
-  while(*p) {
-	 if(*p==0xD) { /* Mac or PC */
-		if(*(p+1)==0xA) /* PC */
-		  p++;
-		p++;
-		break;
-	 }
-	 if(*p==0xA) /* Unix */
-		{
-		  p++;
-		  break;
-		}
-	 p++;
-  }
-  return p;
-}
-/*========================================================================*/
-static char *wcopy(char *q,char *p,int n) { /* word copy */
-  while(*p) {
-	 if(*p<=32) 
-		p++;
-	 else
-		break;
-  }
-  while(*p) {
-	 if(*p<=32)
-		break;
-	 if(!n)
-		break;
-	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
-		break;
-	 *(q++)=*(p++);
-	 n--;
-  }
-  *q=0;
-  return p;
-}
-/*========================================================================*/
-static char *ncopy(char *q,char *p,int n) {  /* n character copy */
-  while(*p) {
-	 if(!n)
-		break;
-	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
-		break;
-	 *(q++)=*(p++);
-	 n--;
-  }
-  *q=0;
-  return p;
-}
-/*========================================================================*/
-static char *nskip(char *p,int n) {  /* n character skip */
-  while(*p) {
-	 if(!n)
-		break;
-	 if((*p==0xD)||(*p==0xA)) /* stop at newlines */
-		break;
-    p++;
-	 n--;
-  }
-  return p;
 }
 /*========================================================================*/
 void ObjectMoleculeSort(ObjectMolecule *I)
@@ -1812,3 +1753,71 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   return(cset);
 }
 
+
+#ifdef _NO_LONGER_USED
+/*========================================================================*/
+static char *nextline(char *p) {
+  while(*p) {
+	 if(*p==0xD) { /* Mac or PC */
+		if(*(p+1)==0xA) /* PC */
+		  p++;
+		p++;
+		break;
+	 }
+	 if(*p==0xA) /* Unix */
+		{
+		  p++;
+		  break;
+		}
+	 p++;
+  }
+  return p;
+}
+/*========================================================================*/
+static char *wcopy(char *q,char *p,int n) { /* word copy */
+  while(*p) {
+	 if(*p<=32) 
+		p++;
+	 else
+		break;
+  }
+  while(*p) {
+	 if(*p<=32)
+		break;
+	 if(!n)
+		break;
+	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
+		break;
+	 *(q++)=*(p++);
+	 n--;
+  }
+  *q=0;
+  return p;
+}
+/*========================================================================*/
+static char *ncopy(char *q,char *p,int n) {  /* n character copy */
+  while(*p) {
+	 if(!n)
+		break;
+	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
+		break;
+	 *(q++)=*(p++);
+	 n--;
+  }
+  *q=0;
+  return p;
+}
+/*========================================================================*/
+static char *nskip(char *p,int n) {  /* n character skip */
+  while(*p) {
+	 if(!n)
+		break;
+	 if((*p==0xD)||(*p==0xA)) /* stop at newlines */
+		break;
+    p++;
+	 n--;
+  }
+  return p;
+}
+
+#endif

@@ -536,9 +536,11 @@ def load(*args):
       ftype = 1
    elif re.search("\.mmod$",args[0]):
       ftype = 4
+   elif re.search("\.xplor$",args[0]):
+      ftype = 7
    if len(args)==1:
       oname = re.sub("[^/]*\/","",args[0])
-      oname = re.sub("\.pdb|\.mol|\.mmod","",oname)
+      oname = re.sub("\.pdb|\.mol|\.mmod|\.xplor","",oname)
       r = _pm.load(oname,args[0],-1,ftype)
    elif len(args)==2:
       oname = string.strip(args[1])

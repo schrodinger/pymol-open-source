@@ -197,7 +197,10 @@ void SceneCountFrames()
   I->NFrame=0;
   while(ListIterate(I->Obj,rec,next,ObjList))
 	 {
-		n=rec->obj->fGetNFrame(rec->obj);
+      if(rec->obj->fGetNFrame)
+        n=rec->obj->fGetNFrame(rec->obj);
+      else
+        n=0;
 		if(n>I->NFrame)
 		  I->NFrame=n;
 	 }
@@ -473,7 +476,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
 
-		obj->fDescribeElement(obj,I->LastPicked.index);
+      if(obj->fDescribeElement) 
+        obj->fDescribeElement(obj,I->LastPicked.index);
 		  sprintf(buffer,"model %s and index %i",
 					 obj->Name,I->LastPicked.index+1);
 		
@@ -635,15 +639,8 @@ int SceneDrag(Block *block,int x,int y,int mod)
 /*========================================================================*/
 void SceneFree(void)
 {
-  ObjRec *rec = NULL;
   CScene *I=&Scene;
   OrthoFreeBlock(I->Block);
-  
-  while(ListIterate(I->Obj,rec,next,ObjList))
-	 {
-		if(rec->obj->fFree)
-		  rec->obj->fFree(rec->obj);
-	 }
   
   ListFree(I->Obj,next,ObjList);
   if(!I->MovieOwnsImageFlag)
@@ -787,7 +784,8 @@ void SceneRay(void)
 
   if(I->ChangedFlag) {
 	 while(ListIterate(I->Obj,rec,next,ObjList))
-		rec->obj->fUpdate(rec->obj);
+      if(rec->obj->fUpdate) 
+        rec->obj->fUpdate(rec->obj);
 	 I->ChangedFlag=false;
   }
 
