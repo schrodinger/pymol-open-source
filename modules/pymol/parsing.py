@@ -13,7 +13,8 @@
 #Z* -------------------------------------------------------------------
 
 # parser2.py
-# An improved command parser for PyMOL
+# An improved command parser for PyMOL, but still a terrible kluuge
+# PyMOL needs to migrate to a real parser soon!
 
 # === Goals:
 #  1. improved 1to1 mapping between pymol "cmd" API and command language
@@ -89,11 +90,13 @@ whitesp_re = re.compile(r"\s+")
 comma_re = re.compile(r"\s*,\s*")
 arg_name_re = re.compile(r"[A-Za-z0-9_]+\s*\=")
 nester_char_re = re.compile(r"\(|\)|\[|\]")
+nester_re = re.compile(r"[^,;]*[\(\[]")
+arg_pre_nester_re = re.compile(r"([^,;\(\[]+)[\(\[]")
+arg_post_nester_re = re.compile(r"[^,;\(\[]*")
 arg_easy_nester_re = re.compile(r"\([^,]*\)|\[[^,]*\]")
 arg_hard_nester_re = re.compile(r"\(.*\)|\[.*\]")
 # NOTE '''sdf'sdfs''' doesn't work in below.
 arg_value_re = re.compile(r"'''[^']*'''|'[^']*'|"+r'"[^"]*"|[^,;]+')
-
 def trim_nester(st):
    # utility routine, returns single instance of a nested string
    # should be modified to handle quotes too                  
@@ -148,44 +151,74 @@ returns list of tuples of strings: [(None,value),(name,value)...]
          mo = whitesp_re.match(st[cc:])
          if mo:
             cc=cc+mo.end(0)
-         # special handling for nesters (selections, lists, tuples, etc.)
-         mo = arg_easy_nester_re.match(st[cc:]) # no internal commas
-         if mo:
-            cnt = len(nester_char_re.findall(mo.group(0))) 
-            if (2*(cnt/2))!=cnt: # make sure nesters are matched in count
-               mo = None
-         if mo:
-            result.append((nam,string.strip(mo.group(0))))
-            cc=cc+mo.end(0)
-         else:
-            mo = arg_hard_nester_re.match(st[cc:])
-            if mo:
-               se = trim_nester(mo.group(0))
-               if se==None:
-                  print "Error: "+st
-                  print "Error: "+" "*cc+"^ syntax error (type 1)."
-                  raise QuietException
+         # is one or more nesters present?
+         skip_flag = 0
+         if nester_re.match(st[cc:]):
+            skip_flag = 1
+            nest_flag = 1
+            nest_str = ''
+            while nest_flag: # parse all the nesters
+               nest_flag = 0
+               # text before nester?
+               mo = arg_pre_nester_re.match(st[cc:])
+               if mo:
+                  nest_str = nest_str + mo.group(1)
+                  cc=cc+mo.end(1)
+               # special handling for nesters (selections, lists, tuples, etc.)
+               mo = arg_easy_nester_re.match(st[cc:]) # no internal commas
+               if mo:
+                  cnt = len(nester_char_re.findall(mo.group(0))) 
+                  if (2*(cnt/2))!=cnt: # make sure nesters are matched in count
+                     mo = None
+               if mo:
+                  nest_str = nest_str + mo.group(0)
+                  cc=cc+mo.end(0)
+                  # text after nester?
+                  mo = arg_post_nester_re.match(st[cc:])
+                  if mo:
+                     post_nester = mo.group(0)
+                     cc=cc+mo.end(0)
+                  nest_str = nest_str + post_nester
+                  nest_flag = 1 # one more cycle
                else:
-                  result.append((nam,se))
-                  cc = cc + len(se)
+                  mo = arg_hard_nester_re.match(st[cc:])
+                  if mo:
+                     se = trim_nester(mo.group(0))
+                     if se==None:
+                        print "Error: "+st
+                        print "Error: "+" "*cc+"^ syntax error (type 1)."
+                        raise QuietException
+                     else:
+                        cc = cc + len(se)
+                        nest_str = nest_str + se
+                        # text after nester?
+                        mo = arg_post_nester_re.match(st[cc:])
+                        if mo:
+                           nest_str = nest_str + mo.group(0)
+                           cc=cc+mo.end(0)
+                        nest_flag = 1 # one more cycle
+            if not len(nest_str): # we must have failed to parse...
+               skip_flag = 0
             else:
-               # read normal argument value
-               argval = None
+               result.append((nam,string.strip(nest_str)))
+         if not skip_flag:
+            # no nester, so just read normal argument value
+            argval = None
+            mo = arg_value_re.match(st[cc:])
+            if not mo:
+               print "Error: "+st
+               print "Error: "+" "*cc+"^ syntax error (type 2)."
+               raise QuietException
+            argval = mo.group(0)
+            cc=cc+mo.end(0)
+            while 1: # pickup unqouted characters after quotes
                mo = arg_value_re.match(st[cc:])
                if not mo:
-                  print "Error: "+st
-                  print "Error: "+" "*cc+"^ syntax error (type 2)."
-                  raise QuietException
-               argval = mo.group(0)
+                  break
+               argval = argval + mo.group(0)
                cc=cc+mo.end(0)
-               while 1: # pickup unqouted characters after quotes
-                  mo = arg_value_re.match(st[cc:])
-                  if not mo:
-                     break
-                  argval = argval + mo.group(0)
-                  cc=cc+mo.end(0)
-               if argval!=None:
-                  result.append((nam,string.strip(argval)))
+            if argval!=None:
+               result.append((nam,string.strip(argval)))
          # clean whitespace
          mo = whitesp_re.match(st[cc:])
          if mo:
@@ -199,8 +232,9 @@ returns list of tuples of strings: [(None,value),(name,value)...]
                print "Error: "+st
                print "Error: "+" "*cc+"^ syntax error (type 3)."
                raise QuietException
-   if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
-      cmd.fb_debug.write(" parsing-DEBUG: tup: "+str(result)+"\n")
+   if __name__!='__main__':
+      if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
+         cmd.fb_debug.write(" parsing-DEBUG: tup: "+str(result)+"\n")
    return result
 
 def dump_str_list(list):
@@ -286,8 +320,9 @@ def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or exc
       # set feedback argument (quiet), if extant, results enabled, and not overridden
       if "quiet" in arg_nam:
          if not kw.has_key("quiet"):
-            if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
-               kw["quiet"] = 0
+            if __name__!='__main__':
+               if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
+                  kw["quiet"] = 0
    else:
       # error checking enabled
 
@@ -348,8 +383,9 @@ def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or exc
          if not kw.has_key("quiet"):
             if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
                kw["quiet"] = 0
-   if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
-      cmd.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")      
+   if __name__!='__main__':
+      if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
+         cmd.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")      
    return (arg,kw)
 
 
@@ -532,19 +568,19 @@ if __name__=='__main__':
       tv = parse_arg("command ( byres (name;ca,c,n ), sel1= (name c,n) ")      
       print 0, "exception missed"
    except QuietException:
-      print 1, "exception raised"
+      print 1, "exception raised (as expected)"
 
    try:
       tv = parse_arg("command ,")
       print 0, "exception missed"
    except QuietException:
-      print 1, "exception raised"
+      print 1, "exception raised (as expected)"
 
    try:
       tv = parse_arg("command berf=,")
       print 0, "exception missed"
    except QuietException:
-      print 1, "exception raised"
+      print 1, "exception raised (as expected)"
 
    try:
       tv = parse_arg("command 'hello''bob'")
@@ -596,7 +632,22 @@ if __name__=='__main__':
    tv = prepare_call(fn4,parse_arg("dummy req1=hello,req2=world,opt2=hi")) 
    print tv==([], {'opt2': 'hi', 'req2': 'world', 'req1': 'hello'}),tv
 
+   tv = prepare_call(fn4,parse_arg("dummy req1=hi and (r; 10) and r. 10,req2=world,opt2=hi")) 
+   print tv==([], {'opt2': 'hi', 'req2': 'world', 'req1': 'hi and (r; 10) and r. 10'}),tv
+
+   tv = prepare_call(fn4,parse_arg("dummy req1=hi and (r. 10,12) and r. 10,req2=world,opt2=hi")) 
+   print tv==([], {'opt2': 'hi', 'req2': 'world', 'req1': 'hi and (r. 10,12) and r. 10'}),tv
+
+   tv = prepare_call(fn4,parse_arg("dummy req1=hi & (r. 10,12) & (r;10),req2=world,opt2=hi")) 
+   print tv==([], {'opt2': 'hi', 'req2': 'world', 'req1': 'hi & (r. 10,12) & (r;10)'}),tv
+
+   tv = prepare_call(fn4,parse_arg("dummy req1=hi & (r. 10,12) & (r;10) & resi 10,req2=world,opt2=hi")) 
+   print tv==([], {'opt2': 'hi', 'req2': 'world', 'req1': 'hi & (r. 10,12) & (r;10) & resi 10'}),tv
+
+   tv = prepare_call(fn4,parse_arg("dummy req1=(r. 10,12) & (r;10) & resi 10,req2=world,opt2=hi")) 
+   print tv==([], {'opt2': 'hi', 'req2': 'world', 'req1': '(r. 10,12) & (r;10) & resi 10'}),tv
+
 #   tv = list_to_str_list(['hello','world','this-long-string','hi','dude'])
 #   print tv
-   
-import cmd
+else:
+   import cmd
