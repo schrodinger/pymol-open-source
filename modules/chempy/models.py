@@ -41,7 +41,6 @@ class Base:
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
-#------------------------------------------------------------------------------
 
 class Indexed(Base):
 
@@ -104,12 +103,11 @@ class Indexed(Base):
       nBond = len(self.bond)
       templist = []
       for i in range(nBond):
-         b = self.bond[i]
-         if b.index[0] == index or b.index[1] == index:
+         if index in self.bond[i].index:
             templist.append(i)
       for i in range(len(templist)):
-         i = templist[i] - i
-         del self.bond[i]
+         j = templist[i] - i
+         del self.bond[j]
 
 # re-index bond table
       for b in self.bond:
@@ -164,7 +162,8 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
    def add_bond(self,bond):
       if chempy.feedback['bonds']:
-         print " "+str(self.__class__)+": adding bond (%d,%d)." % bond.index
+         print " "+str(self.__class__)+": adding bond (%d,%d)." % \
+               (bond.index[0],bond.index[1])
       self.bond.append(bond)      
 
 #------------------------------------------------------------------------------
@@ -339,12 +338,12 @@ class Connected(Base):
          i = 0
          templist = []
          for b in a:
-            if b.index[0] == index or b.index[1] == index:
+            if index in b.index:
                templist.append(i)
             i = i + 1
          for i in range(len(templist)):
-            i = templist[i] - i
-            del a[i]
+            j = templist[i] - i
+            del a[j]
 
 # re-index bond table
       for b in self.bond:

@@ -145,6 +145,8 @@ def simple_unknowns(model,bondfield=bond_amber):
                elif len(know): # no 1-4 found
                   d2 = [1.0,0,0]
                   at3 = model.atom[know[0]]
+                  d1 = sub(at1.coord,at3.coord)
+                  p0 = normalize(d1)                  
                   p1 = normalize(cross_product(d2,p0))
                   p2 = normalize(cross_product(p0,p1))
                   v = scale(p2,TRI_TAN)
@@ -180,7 +182,9 @@ def simple_unknowns(model,bondfield=bond_amber):
             else:
                if len(know): # sulfonamide? 
                   d2 = [1.0,0,0]
-                  at3 = model.atom[know[0]]                  
+                  at3 = model.atom[know[0]]
+                  d1 = sub(at1.coord,at3.coord)
+                  p0 = normalize(d1)                                    
                   p1 = normalize(cross_product(d2,p0))
                   v = scale(p1,TET_TAN)
                   v = normalize(add(p0,v))

@@ -188,8 +188,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
   v=I->V;
   for(a=0;a<cs->NIndex;a++) 
     if(active[a]) {
-      a1=cs->IdxToAtm[a];
-      c1=*(cs->Color+a1);
+      c1=*(cs->Color+a);
       v0 = ColorGet(c1);
       v1 = cs->Coord+3*a;
       *(v++)=*(v0++);
@@ -232,11 +231,12 @@ Rep *RepNonbondedNew(CoordSet *cs)
       if(active[a]) {
         
         I->NP++;
+
+        a1=cs->IdxToAtm[a];
         
         I->R.P[I->NP].ptr = (void*)obj;
-        I->R.P[I->NP].index = a;
+        I->R.P[I->NP].index = a1;
         
-        a1=cs->IdxToAtm[a];
         v1 = cs->Coord+3*a;
         
         *(v++)=v1[0]-nonbonded_size;
