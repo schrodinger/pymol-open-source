@@ -218,11 +218,13 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 	 if(I->Type==1) {
       /* no triangle information, so we're rendering dots only */
 
-    int normals = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
-    
+      int normals = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
+      int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
       int use_dlst;
       if(!normals)
         SceneResetNormal(true);
+      if(!lighting)
+        glDisable(GL_LIGHTING);
       use_dlst = (int)SettingGet(cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
@@ -268,6 +270,9 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         if(use_dlst&&I->R.displayList) {
           glEndList();
         }
+        if(!lighting)
+          glEnable(GL_LIGHTING);
+
       }
     } else if(I->Type==2) { /* rendering triangle mesh */
 
@@ -278,9 +283,11 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       } else { 
 
         int normals = SettingGet_b(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
-        
+        int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
         if(!normals)
           SceneResetNormal(true);
+        if(!lighting)
+          glDisable(GL_LIGHTING);
         
         glLineWidth(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
         
@@ -384,6 +391,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         if(use_dlst&&I->R.displayList) {
           glEndList();
         }
+        if(!lighting)
+          glEnable(GL_LIGHTING);
       }
     } else {
       /* we're rendering triangles */

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.951
 
+   * mesh_type, mesh_lighting, dot_lighting settings
+
    * reinitialize now stops rocking
 
    * fixed logging of button presses in MacPyMOL

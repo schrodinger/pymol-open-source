@@ -476,10 +476,13 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_dot_normals                332
 #define cSetting_session_migration          333
 #define cSetting_mesh_normals               334
+#define cSetting_mesh_type                  335
+#define cSetting_dot_lighting               336
+#define cSetting_mesh_lighting              337
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        335
+#define cSetting_INIT                        338
 
 #endif
 
