@@ -5,7 +5,7 @@
 # Please run this script after using Distutils "setup.py":
 #   python setup.py build
 #   python setup.py install
-#   python install.py
+#   python setup2.py
 
 import os
 import re
