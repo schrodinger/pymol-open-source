@@ -58,7 +58,7 @@ class PMGApp(AbstractApp):
          Frame,self.get_commandFrame(),bd=0)
       row3.pack(side=TOP,fill=BOTH,expand=YES)
       btn_unpick = self.buttonAdd(row3,'Unpick',lambda : cmd.do("_ unpick"))
-      btn_hidesele = self.buttonAdd(row3,'Hide Sele',self.hide_selections)
+      btn_hidesele = self.buttonAdd(row3,'Hide Sele',self.hide_sele)
       btn_getview = self.buttonAdd(row3,'Get View',lambda : cmd.get_view()) # doesn't get logged
 
 #      row3 = self.createcomponent('row3', (), None,
@@ -363,11 +363,9 @@ class PMGApp(AbstractApp):
          cmd.refresh()
       cmd.feedback('ena','sel','res')
 
-   def hide_selections(self):
-      arg = cmd.get_names("selections")
-      for a in arg:
-         cmd.log("disable %s\n"%a)
-         cmd.disable(a)
+   def hide_sele(self):
+      cmd.log("util.hide_sele()\n","util.hide_sele()\n")
+      util.hide_sele()
 
    def createMenuBar(self):
       self.menuBar.addmenuitem('Help', 'command',

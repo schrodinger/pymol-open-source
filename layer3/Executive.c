@@ -2131,7 +2131,7 @@ void ExecutiveSetObjVisib(char *name,int state)
           }
       }
       else if(tRec->type==cExecSelection) {
-        if(!(tRec->visible&&state)) {
+        if(tRec->visible!=state) {
           tRec->visible=!tRec->visible;
           SceneChanged();
         }
