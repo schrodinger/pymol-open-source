@@ -1,54 +1,38 @@
-NOTE: PyMOL'S MAKEFILES CHANGES AS OF VERSION 0.78!
-This Makefile has yet to be updated.
-
 #---------------------------------------------------------------------
 # PyMOL Makefile Rules 
 #---------------------------------------------------------------------
 #
-#- Choose One Set ----------------------------------------------------
-#--- Build for LINUX as an importable module
-#XLIB_DIR = -L/usr/X11R6/lib
-#LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
-#DEFS = -D_PYMOL_3DFX -D_PYMOL_MODULE
-#BUILD = -shared -o modules/_cmd.so
-#--- Build for LINUX with embedded Python (not recommended)
-#XLIB_DIR = -L/usr/X11R6/lib 
-#LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
-#DEFS = -D_PYMOL_3DFX
-#BUILD = -o pymol.exe
-#--- Build for unix as an importable module (SGI/IRIX)
+#- Building ----------------------------------------------------------
+#--- Tell "make" how to get to PyMOL 
+PYMOL_PATH = /users/warren/pymol
+#---------------------------------------------------------------------
+#
+#- Dependencies ------------------------------------------------------
+#--- X-windows
 XLIB_DIR = -L/usr/X11R6/lib
-LIBS = -lpython1.5 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
-DEFS = -D_PYMOL_MODULE  -D_PYMOL_NUMPY
+XINC_DIR = -L/usr/X11R6/include
+#--- Python
+PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
+PYTHON_LIB = -lpython1.5
+PYTHON_LIB_DIR = 
+PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python1.5
+#--- Other external dependencies
+EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include
+EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
+#---------------------------------------------------------------------
+#
+#- Build for LINUX as an importable module ---------------------------
+#--- System libraries
+LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
+#--- PyMOL configuration
+DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY 
+#--- How we build shared libraries
 BUILD = -shared -o modules/_cmd.so
-#--- Build for Windows as an importable module
-#XLIB_DIR = 
-#LIBS = -lpython15 -lopengl32 -lglu32 -lglut32 -lpng -lz
-#DEFS = -D_PYMOL_MODULE
-#BUILD = -o modules/_cmd.pyd
-#---------------------------------------------------------------------
-#
-#- Choose One --------------------------------------------------------
-#--- Workaround for XFree86/DRI linux dll problem for module build
-#BUGS = -D_DRI_WORKAROUND
-#--- Running under windows (perhaps the biggest bug of all)
-#BUGS = -D_PYMOL_WINDOWS -DWIN32 -D_WIN32
-#---
-#BUGS =
-#---------------------------------------------------------------------
-#
-#- Choose One --------------------------------------------------------
-#--- Gcc under Linux or Windows
-#CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
-#--- SGI Irix 6.x
+#--- CC Options for IRIX
 CCOPT1 = -ansi -n32 -woff 1429,1204
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
-#--- GCC Optimized
-#CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
-#--- GCC Profiling
-#CCOPT2 = -pg -O3 -funroll-loops
 #--- Irix CC Optimized
 CCOPT2 = -O2
 #--- Debugging
@@ -56,10 +40,10 @@ CCOPT2 = -O2
 #---------------------------------------------------------------------
 #
 #- Choose One Pair ---------------------------------------------------
-#--- Libpng2 in system libraries (/usr/include,/usr/lib)
+#--- Libpng2 available and contains zlib 
 #PNG = -D_HAVE_LIBPNG 
 #ZLIB = 
-#--- Libpng2 in local user files (pymol/ext/...)
+#--- Libpng2 available but needs zlib 
 PNG = -D_HAVE_LIBPNG 
 ZLIB = -lz
 #--- Libpng2 not available
@@ -71,15 +55,19 @@ ZLIB = -lz
 # No changes normally required below here
 #---------------------------------------------------------------------
 
-CFLAGS = $(CCOPT1) $(CCOPT2) $(INC_DIRS) $(PNG) $(DEFS) $(BUGS)
-
 CC = cc
 
-LIB_DIRS = -L./ext/lib $(XLIB_DIR)
+LIB_DIRS = $(EXT_LIB_DIR) $(PYTHON_LIB_DIR) $(XLIB_DIR)
 
-INC_DIRS = -I../layer0 -I../layer1 -I../layer2 \
-	-I../layer3 -I../layer4 -I../layer5 \
-	-I../ext/include -I../ext/include/python1.5
+# Enable source files to find headers
+PYMOL_INC_DIRS = -I../layer0 -I../layer1 -I../layer2 \
+   -I../layer3 -I../layer4 -I../layer5 
+
+C_FLAGS = $(CCOPT1) $(CCOPT2) $(EXT_INC_DIR) $(PYTHON_INC_DIR) \
+   $(X_INC_DIR) $(PNG) $(DEFS) $(BUGS)
+
+CFLAGS = $(C_FLAGS)
+
 
 
 
