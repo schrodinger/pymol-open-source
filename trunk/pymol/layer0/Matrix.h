@@ -23,20 +23,20 @@ Z* -------------------------------------------------------------------
    STRAIGHTENED OUT before any further use is made of the following
    routines.
 
-   The problem is that OpenGL uses row-major matrix storage, while C
-   and Python following the column-major convention.  The situation
+   The problem is that OpenGL uses one matrix storage format, while C
+   and Python follow the other convention.  The situation
    arose because some of the routines below are used to emulate OpenGL
    transformations...(and are in fact based on Mesa code).
    
    Proposed Solution: 
 
-   (1) Assume the C-PYTHON convention of column-major
+   (1) Assume the C-PYTHON convention of fast-column (row-major?)
    ordering - and specifically rename routines which don't conform as
-   "RM44f" matrices.  Clean up and resolve problems with existing code
-   that call these routines.
+   fast row (column-major?) "CM44f" matrices.  Clean up and resolve
+   problems with existing code that call these routines.
    
    (2) Move all of the 4x4 transformation code into Vector.h and rename this
-   module Algebra.h/.c (for linear algebra and fitting).
+   module to Algebra.h/.c (for linear algebra and fitting).
 
 */
 

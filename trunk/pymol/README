@@ -51,6 +51,12 @@ The PyMOL Team:
    
    Minor Authors and Contributors:
 
+   Miscellaneous Code Snippets Lifted From:
+
+      Thomas Malik (fast matrix-multiply code)
+      John E. Grayson (Author of "Python and Tkinter")
+      Doug Hellmann (Wrote code that JEG later modified.)
+
    Open-Source "Enablers" (essential, but not directly involved):
 
       Brian Paul (Mesa)
