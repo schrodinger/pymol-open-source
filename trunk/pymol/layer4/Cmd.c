@@ -500,12 +500,12 @@ static PyObject *CmdSmooth(PyObject *self,PyObject *args)
   int ok=true;
   char *str1;
   OrthoLineType s1;
-  int int1,int2,int3,int4,int5;
-  ok = PyArg_ParseTuple(args,"siiiii",&str1,&int1,&int2,&int3,&int4,&int5);
+  int int1,int2,int3,int4,int5,int6;
+  ok = PyArg_ParseTuple(args,"siiiiii",&str1,&int1,&int2,&int3,&int4,&int5,&int6);
   if(ok) {
     SelectorGetTmp(str1,s1);
     APIEntry();
-    ok = ExecutiveSmooth(s1,int1,int2,int3,int4,int5);
+    ok = ExecutiveSmooth(s1,int1,int2,int3,int4,int5,int6);
     APIExit();
     SelectorFreeTmp(s1);
   }

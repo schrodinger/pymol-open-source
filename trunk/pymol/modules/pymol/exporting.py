@@ -130,6 +130,12 @@ PYMOL API
 
    cmd.save(file, selection, state, format)
 
+NOTES
+
+   When saving a session file, then "state" has no effect.
+   When state = 0 (default), only the current state is written.
+   When state = -1, then a multi-state output file is written (PDB only).
+   
 SEE ALSO
 
    load, get_model

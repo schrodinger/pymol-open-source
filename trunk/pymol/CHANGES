@@ -4,8 +4,12 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * movie.sweep convenience function for simple back & forth movies
+
+   * PyMOL can now write multi-model PDB files (save with state=-2)
+   
    * atoms with the name resi, but not the same resn are now considered
-     to be in different residues.
+     to be in different residues (fixed byres bugs).
 
    * ray_transparency_contrast setting, default=2.0, improves contrast
      of the transparent surface relative to objects inside.  

@@ -1608,7 +1608,7 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
   return(ok);
 }
 
-int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int ends)
+int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int ends, int quiet)
 {
   int sele = -1;
   ObjectMoleculeOpRec op;
@@ -1703,10 +1703,11 @@ int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int en
         UtilZeroMem(flag0,sizeof(int)*n_atom*n_state);
         
         /* get the data */
-        
-        PRINTFB(FB_Executive,FB_Actions)
-          " Smooth: copying coordinates to temporary arrays..\n"
-          ENDFB;
+        if(!quiet) {
+          PRINTFB(FB_Executive,FB_Actions)
+            " Smooth: copying coordinates to temporary arrays..\n"
+            ENDFB;
+        }
         op.code = OMOP_CSetIdxGetAndFlag;
         op.i1 = n_atom; 
         op.i2 = 0;
@@ -1725,9 +1726,11 @@ int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int en
         UtilZeroMem(flag1,sizeof(int)*n_atom*n_state);
         
         for(a=0;a<cycles;a++) {                
-          PRINTFB(FB_Executive,FB_Actions)
-            " Smooth: smoothing (pass %d)...\n",a+1
-            ENDFB;
+          if(!quiet) {
+            PRINTFB(FB_Executive,FB_Actions)
+              " Smooth: smoothing (pass %d)...\n",a+1
+              ENDFB;
+          }
           for(b=0;b<range;b++) {
             for(c=0;c<n_atom;c++) {
               zero3f(sum);
@@ -1768,9 +1771,11 @@ int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int en
           }
         }
 
-        PRINTFB(FB_Executive,FB_Actions)
-          " Smooth: updating coordinates...\n"
-          ENDFB;
+        if(!quiet) {
+          PRINTFB(FB_Executive,FB_Actions)
+            " Smooth: updating coordinates...\n"
+            ENDFB;
+        }
         
         /* set the new coordinates */
         
@@ -1791,10 +1796,9 @@ int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int en
         op.nvv1 = 0;
         
         ExecutiveObjMolSeleOp(sele,&op);      
-        PRINTFD(FB_Executive)  
-          " ExecutiveSmooth: put %d %d\n",op.i2,op.nvv1
-          ENDFD;
-        
+          PRINTFD(FB_Executive)  
+            " ExecutiveSmooth: put %d %d\n",op.i2,op.nvv1
+            ENDFD;
         
         FreeP(coord0);
         FreeP(coord1);
@@ -3550,38 +3554,64 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
 {
   char *result=NULL;
   ObjectMoleculeOpRec op1;
-  int sele1,l;
+  int sele1;
   char end_str[] = "END\n";
+  int model_count = 1;
+  int actual_state = 0;
+  int n_state = 1;
+  int a;
+  char model_record[50];
 
   ObjectMoleculeOpRecInit(&op1);
   sele1=SelectorIndexByName(s1);
+  op1.i2 = 0;
   op1.charVLA=VLAlloc(char,10000);
-  if(state<0) state=SceneGetState();
-  if(conectFlag) {
-    op1.i2=SelectorGetPDB(&op1.charVLA,sele1,state,conectFlag);
-  } else {
-
-    op1.i2 = 0;
-    op1.i3 = 0; /* atIndex */
-    if(sele1>=0) {
-      op1.code = OMOP_PDB1;
-      op1.i1 = state;
-      ExecutiveObjMolSeleOp(sele1,&op1);
+  if(state==-2) { /* multimodel PDB */
+    n_state = ExecutiveCountStates(s1);
+  }
+  for(a=0;a<n_state;a++) {
+    switch(state) {
+    case -2:
+      sprintf(model_record,"MODEL     %4d\n",model_count++);
+      UtilConcatVLA(&op1.charVLA,&op1.i2,model_record);
+      actual_state = a;
+      break;
+    case -1:
+      if(state==-1) actual_state=SceneGetState();
+      break;
+    default:
+      actual_state = state;
+      break;
+    }
+    
+    if(conectFlag) {
+      op1.i2=SelectorGetPDB(&op1.charVLA,op1.i2,sele1,actual_state,conectFlag);
+    } else {
+      op1.i3 = 0; /* atIndex */
+      if(sele1>=0) {
+        op1.code = OMOP_PDB1;
+        op1.i1 = actual_state;
+        ExecutiveObjMolSeleOp(sele1,&op1);
+      }
+    }
+    if(!(int)SettingGet(cSetting_pdb_no_end_record)) /* terminate with END */
+      UtilConcatVLA(&op1.charVLA,&op1.i2,end_str);
+    switch(state) {
+    case -2:
+      UtilConcatVLA(&op1.charVLA,&op1.i2,"ENDMDL\n");
+      break;
     }
   }
-  if(!(int)SettingGet(cSetting_pdb_no_end_record)) { /* terminate with END */
-    l=strlen(end_str);
-    VLACheck(op1.charVLA,char,op1.i2+l+1);
-    strcpy(op1.charVLA+op1.i2,end_str);
-    op1.i2+=l+1;
-  } else { /* terminate */
-    VLACheck(op1.charVLA,char,op1.i2+1);
-    op1.charVLA[op1.i2]=0;
-    op1.i2++;
-  }
+
+  /* terminate (just in case) */
+  VLACheck(op1.charVLA,char,op1.i2+1);
+  op1.charVLA[op1.i2]=0;
+  op1.i2++;
+  
   result=Alloc(char,op1.i2);
   memcpy(result,op1.charVLA,op1.i2);
   VLAFreeP(op1.charVLA);
+  
   return(result);
 }
 /*========================================================================*/
