@@ -7,6 +7,7 @@ OBJ= sgglobal.o sgcb.o sgcharmx.o sgfile.o sggen.o sghall.o sghkl.o \
     sgtidy.o sgtype.o sgutil.o runtests.o sglitemodule.o 
 
 all: sglite.so
+static: $(OBJ)
 
 .c.o: 
 	$(CC) $(CFLAGS) -c $*.c -DPythonTypes

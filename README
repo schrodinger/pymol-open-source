@@ -5,6 +5,8 @@ http://www.pymol.org  EMAIL: warren@delanoscientific.com
 PyMOL is an OPEN SOURCE program distributed under the "Python" license.
 Please see the LICENSE file for additional information.
 ----------------------------------------------------------------------
+See INSTALL for installation instructions
+----------------------------------------------------------------------
 PyMOL has the following external dependencies:
   1. OpenGL
   2. GLUT library for OpenGL
@@ -13,8 +15,6 @@ PyMOL has the following external dependencies:
   5. Tcl/Tk (technically optional)
   6. Numerical Python (technically optional)
   7. Python megawidgets (Pmw)
-----------------------------------------------------------------------
-see INSTALL for installation instructions
 ----------------------------------------------------------------------
 Specific Acknowledgments:
 
