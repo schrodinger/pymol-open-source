@@ -1064,10 +1064,11 @@ void OrthoDoDraw()
                   p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(str++));
                 if((lcount==1)&&(I->InputFlag)) 
                   {
-                    if(I->CursorChar>=0)  
-                      glRasterPos4d((double)(x+8*I->CursorChar),(double)y,0.0,1.0);
-                    if(!skip_prompt)
+                    if(!skip_prompt) {
+                      if(I->CursorChar>=0)  
+                        glRasterPos4d((double)(x+8*I->CursorChar),(double)y,0.0,1.0);
                       p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'_');
+                    }
                   }
               }
             l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
