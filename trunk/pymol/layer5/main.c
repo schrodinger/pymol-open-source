@@ -59,7 +59,7 @@ static void MainDrawLocked(void);
 
 GLuint obj;
 
-static GLint WinX = 640+180;
+static GLint WinX = 640+160;
 static GLint WinY = 480+cOrthoBottomSceneMargin;
 static GLint Modifiers = 0;
 

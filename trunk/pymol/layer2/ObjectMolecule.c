@@ -288,8 +288,8 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int nBond=0;
   int b1,b2;
   WordType tmp_name;
-  int autoshow_lines = SettingGet(cSetting_autoshow_lines);
-  int autoshow_nonbonded = SettingGet(cSetting_autoshow_nonbonded);
+  int auto_show_lines = SettingGet(cSetting_auto_show_lines);
+  int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
   int *ii;
 
 
@@ -355,8 +355,8 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       for(c=0;c<cRepCnt;c++) {
         ai->visRep[c] = false;
       }
-      ai->visRep[cRepLine] = autoshow_lines; /* show lines by default */
-      ai->visRep[cRepNonbonded] = autoshow_nonbonded; /* show lines by default */
+      ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
+      ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
       
       p=ncopy(cc,p,6);
       sscanf(cc,"%d",&ai->customType);
@@ -2380,8 +2380,8 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   float *f;
   int *ii,*bond=NULL;
   int ok=true;
-  int autoshow_lines;
-  int autoshow_nonbonded;
+  int auto_show_lines;
+  int auto_show_nonbonded;
   int hetatm;
 
   PyObject *atomList = NULL;
@@ -2391,8 +2391,8 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   PyObject *index = NULL;
   PyObject *crd = NULL;
   PyObject *tmp = NULL;
-  autoshow_lines = SettingGet(cSetting_autoshow_lines);
-  autoshow_nonbonded = SettingGet(cSetting_autoshow_nonbonded);
+  auto_show_lines = SettingGet(cSetting_auto_show_lines);
+  auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
   AtomInfoPrimeColors();
 
   nAtom=0;
@@ -2627,8 +2627,8 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
         for(c=0;c<cRepCnt;c++) {
           atInfo[a].visRep[c] = false;
 		  }
-        atInfo[a].visRep[cRepLine] = autoshow_lines; /* show lines by default */
-        atInfo[a].visRep[cRepNonbonded] = autoshow_nonbonded; /* show lines by default */
+        atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
+        atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
 
 		  if(ok&&atInfo) {
 			 AtomInfoAssignParameters(ai);
@@ -2986,12 +2986,12 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   float *f;
   int *ii,*bond=NULL;
   int ok=true;
-  int autoshow_lines;
-  int autoshow_nonbonded;
+  int auto_show_lines;
+  int auto_show_nonbonded;
   WordType nameTmp;
 
-  autoshow_lines = SettingGet(cSetting_autoshow_lines);
-  autoshow_nonbonded = SettingGet(cSetting_autoshow_nonbonded);
+  auto_show_lines = SettingGet(cSetting_auto_show_lines);
+  auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
   AtomInfoPrimeColors();
 
   p=buffer;
@@ -3053,8 +3053,8 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           for(c=0;c<cRepCnt;c++) {
             atInfo[a].visRep[c] = false;
           }
-          atInfo[a].visRep[cRepLine] = autoshow_lines; /* show lines by default */
-          atInfo[a].visRep[cRepNonbonded] = autoshow_nonbonded; /* show lines by default */
+          atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
+          atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
 
 		  }
         if(ok) {
@@ -4805,8 +4805,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,ch
   int b1,b2,nReal,maxAt;
   CSymmetry *symmetry = NULL;
   int symFlag;
-  int autoshow_lines = SettingGet(cSetting_autoshow_lines);
-  int autoshow_nonbonded = SettingGet(cSetting_autoshow_nonbonded);
+  int auto_show_lines = SettingGet(cSetting_auto_show_lines);
+  int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
   int newModelFlag = false;
   int ssFlag = false;
   int ss_resi1,ss_resi2;
@@ -5119,8 +5119,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,ch
           for(c=0;c<cRepCnt;c++) {
             ai->visRep[c] = false;
           }
-          ai->visRep[cRepLine] = autoshow_lines; /* show lines by default */
-          ai->visRep[cRepNonbonded] = autoshow_nonbonded; /* show lines by default */
+          ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
+          ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
 
           if(AFlag==1) 
             ai->hetatm=0;
@@ -5261,8 +5261,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   float *f;
   int *ii,*bond=NULL;
   int ok=true;
-  int autoshow_lines = SettingGet(cSetting_autoshow_lines);
-  int autoshow_nonbonded = SettingGet(cSetting_autoshow_nonbonded);
+  int auto_show_lines = SettingGet(cSetting_auto_show_lines);
+  int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
   AtomInfoPrimeColors();
 
   p=buffer;
@@ -5395,8 +5395,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           for(c=0;c<cRepCnt;c++) {
             ai->visRep[c] = false;
           }
-          ai->visRep[cRepLine] = autoshow_lines; /* show lines by default */
-          ai->visRep[cRepNonbonded] = autoshow_nonbonded; /* show lines by default */
+          ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
+          ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
 
         }
         if(ok) {

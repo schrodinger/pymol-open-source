@@ -45,7 +45,7 @@ void ExecutiveSetControlsOff(char *name);
 void ExecutiveSort(char *name);
 void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,
                          int quiet,int updates);
-void ExecutiveRay(void);
+void ExecutiveRay(int width,int height);
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
 int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state);
 float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine);

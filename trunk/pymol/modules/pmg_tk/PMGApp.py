@@ -44,12 +44,20 @@ class PMGApp(AbstractApp):
       newBtn.pack(side=LEFT,fill=BOTH,expand=YES)
       
    def createButtons(self):
+
+      
       row2 = self.createcomponent('row2', (), None,
          Frame,self.get_commandFrame(),bd=0)
       row2.pack(side=TOP,fill=BOTH,expand=YES)
       btn_reset = self.buttonAdd(row2,'Reset',cmd.reset)
       btn_rtrace = self.buttonAdd(row2,'Ray Trace',lambda : cmd.do("ray"))
       btn_reset = self.buttonAdd(row2,'Rock',cmd.rock)
+
+      row3 = self.createcomponent('row3', (), None,
+         Frame,self.get_commandFrame(),bd=0)
+      row3.pack(side=TOP,fill=BOTH,expand=YES)
+      btn_reset = self.buttonAdd(row3,'Unpick',cmd.unpick)
+      btn_rtrace = self.buttonAdd(row3,'Hide Selections',self.hide_selections)
 
 #      row3 = self.createcomponent('row3', (), None,
 #         Frame,self.get_commandFrame(),bd=0)
@@ -140,7 +148,7 @@ class PMGApp(AbstractApp):
 
       text = self.output.component('text')
       if sys.platform=='linux2':
-         self.my_fw_font=('Courier',12)
+         self.my_fw_font=('Courier',9)
       elif sys.platform=='win32':
          self.my_fw_font=('Courier',9)
       else:
@@ -308,6 +316,11 @@ class PMGApp(AbstractApp):
          cmd.refresh()
       cmd.feedback('ena','sel','res')
 
+   def hide_selections(self):
+      arg = cmd.get_names("selections")
+      for a in arg:
+         cmd.disable(a)
+      
    def performance(self,mode):
       if mode==0: # maximum quality
          cmd.set('line_smooth',1)
@@ -649,19 +662,31 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('backface_cull'))
 
       self.menuBar.addmenuitem('Settings', 'separator', '')
-      
+
       self.menuBar.addmenuitem('Settings', 'checkbutton',
-                         'Auto Zoom.',
-                         label='Auto Zoom New Objects',
+                               'Ignore PDB segi.',
+                               label='Ignore PDB Segment Identifier',
+                               variable = self.setting.ignore_pdb_segi,
+                               command = lambda s=self: s.setting.update('ignore_pdb_segi'))
+
+
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Auto-Zoom.',
+                         label='Auto-Zoom New Objects',
                         variable = self.setting.auto_zoom,
                         command = lambda s=self: s.setting.update('auto_zoom'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
-                         'Ignore PDB segi.',
-                         label='Ignore PDB Segment Identifier',
-                        variable = self.setting.ignore_pdb_segi,
-                        command = lambda s=self: s.setting.update('ignore_pdb_segi'))
+                         'Auto-Show Selections.',
+                         label='Auto-Show New Selections',
+                        variable = self.setting.auto_show_selections,
+                        command = lambda s=self: s.setting.update('auto_show_selections'))
 
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Auto-Hide Selections.',
+                         label='Auto-Hide Selections',
+                        variable = self.setting.auto_hide_selections,
+                        command = lambda s=self: s.setting.update('auto_hide_selections'))
 
 
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')

@@ -45,6 +45,8 @@ def reps():
       time.sleep(whrandom.random()*5)
       cmd.show('surface')
       time.sleep(whrandom.random()*5)
+      cmd.show('cartoon')
+      time.sleep(whrandom.random()*5)
       cmd.show('mesh')
 
 t = threading.Thread(target=reps)

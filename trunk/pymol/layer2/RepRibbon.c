@@ -140,6 +140,19 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
 	 }
   }
 }
+
+static float smooth(float x,float power)
+{
+
+  if(x<=0.5) {
+    if(x<=0.0) x=0.0;
+    return (0.5*pow(2.0*x,power));    
+  } else {
+    if(x>=1.0) x=1.0;
+    return (1.0-(0.5*pow(2*(1.0-x),power)));
+  }
+}
+
 Rep *RepRibbonNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
@@ -150,15 +163,18 @@ Rep *RepRibbonNew(CoordSet *cs)
   float *nv=NULL;
   float *tv=NULL;
   float *vc=NULL;
-  float f0,f1,f2,f3,len_seg;
+
+  float f0,f1,f2,f3,f4;
   float *d;
   float *dl=NULL;
   int nSeg;
   int sampling;
   float  power_a = 5;
   float power_b = 5;
-  float radius,angle,ratio,dot;
+  float radius,throw;
   int visFlag;
+  float dev;
+
   Pickable *rp;
   OOAlloc(RepRibbon);
 
@@ -179,6 +195,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   RepInit(&I->R);
   power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power);
   power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
+  throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
 
   sampling=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
   if(sampling<1) sampling=1;
@@ -354,24 +371,13 @@ Rep *RepRibbonNew(CoordSet *cs)
 				c1=*(cs->Color+*atp);
 				c2=*(cs->Color+*(atp+1));
 
-            dot =  dot_product3f(v2,v2+3);
-            angle = acos(dot);
-            
-            if(angle>0.001) {
-              ratio=angle/sqrt1f((pow(1-cos(angle),2)+pow(sin(angle),2)));
-            } else {
-              ratio=1.0;
-            }
-            len_seg = ratio*(*d)/2.0;
+            dev = throw*(*d);
+
 				for(b=0;b<sampling;b++) /* needs optimization */
 				  {
 
 					 f0=((float)b)/sampling; /* fraction of completion */
-
-                if(f0<0.5) /* bias sampling towards the center of the curve */
-                  f0=0.5*pow(2*f0,power_a);
-                else
-                  f0=1.0-0.5*pow(2*(1-f0),power_a);
+                f0 = smooth(f0,power_a);  /* bias sampling towards the center of the curve */
 
 					 if(f0<0.5) {
 						v0 = ColorGet(c1);
@@ -397,41 +403,42 @@ Rep *RepRibbonNew(CoordSet *cs)
                 /* start of line/cylinder */
 
 					 f1=1.0-f0;
-                f2=pow(f0,power_b);
-                f3=pow(f1,power_b);
-
-                *(v++)=f1*(v1[0]+v2[0]*len_seg*f2)+
-                  f0*(v1[3]-v2[3]*len_seg*f3);
-                *(v++)=f1*(v1[1]+v2[1]*len_seg*f2)+
-                  f0*(v1[4]-v2[4]*len_seg*f3);
-                *(v++)=f1*(v1[2]+v2[2]*len_seg*f2)+
-                  f0*(v1[5]-v2[5]*len_seg*f3);
-
+                f2=smooth(f0,power_b);
+                f3=smooth(f1,power_b);
+                f4 = dev*f2*f3; /* displacement magnitude */
+                
+                *(v++)=f1*v1[0]+f0*v1[3]+
+                  f4*( f3*v2[0]-f2*v2[3] );
+                
+                *(v++)=f1*v1[1]+f0*v1[4]+
+                  f4*( f3*v2[1]-f2*v2[4] );
+                
+                *(v++)=f1*v1[2]+f0*v1[5]+
+                  f4*( f3*v2[2]-f2*v2[5] );
+                
 					 *(vc++)=radius;
 					 *(vc++)=*(v-3);
 					 *(vc++)=*(v-2);
 					 *(vc++)=*(v-1);
 
 					 f0=((float)b+1)/sampling;
-
-                if(f0<0.5) /* bias sampling towards the center of the curve */
-                  f0=0.5*pow(2*f0,power_a);
-                else
-                  f0=1.0-0.5*pow(2*(1-f0),power_a);
-
+                f0 = smooth(f0,power_a);
 
                 /* end of line/cylinder */
 
 					 f1=1.0-f0;
-                f2=pow(f0,power_b);
-                f3=pow(f1,power_b);
-
-                *(v++)=f1*(v1[0]+v2[0]*len_seg*f2)+
-                  f0*(v1[3]-v2[3]*len_seg*f3);
-                *(v++)=f1*(v1[1]+v2[1]*len_seg*f2)+
-                  f0*(v1[4]-v2[4]*len_seg*f3);
-                *(v++)=f1*(v1[2]+v2[2]*len_seg*f2)+
-                  f0*(v1[5]-v2[5]*len_seg*f3);
+                f2=smooth(f0,power_b);
+                f3=smooth(f1,power_b);
+                f4 = dev*f2*f3; /* displacement magnitude */
+                
+                *(v++)=f1*v1[0]+f0*v1[3]+
+                  f4*( f3*v2[0]-f2*v2[3] );
+                
+                *(v++)=f1*v1[1]+f0*v1[4]+
+                  f4*( f3*v2[1]-f2*v2[4] );
+                
+                *(v++)=f1*v1[2]+f0*v1[5]+
+                  f4*( f3*v2[2]-f2*v2[5] );
 
 					 *(vc++)=*(v-3);
 					 *(vc++)=*(v-2);
@@ -439,10 +446,9 @@ Rep *RepRibbonNew(CoordSet *cs)
 					 I->NC++;
 					 I->N++;
 				  }
-
-
-			 }
-		  v1+=3;
+            
+          }
+        v1+=3;
 		  v2+=3;
 		  v3+=3;
         d++;

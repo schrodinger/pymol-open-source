@@ -147,7 +147,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_stick_nub                    48
 #define cSetting_all_states                   49
 #define cSetting_pickable                     50
-#define cSetting_autoshow_lines               51
+#define cSetting_auto_show_lines              51
 #define cSetting_idle_delay                   52
 #define cSetting_no_idle                      53
 #define cSetting_fast_idle                    54
@@ -168,14 +168,14 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_ray_trace_fog_start          69
 #define cSetting_spheroid_smooth              70
 #define cSetting_spheroid_fill                71
-#define cSetting_autoshow_nonbonded           72
+#define cSetting_auto_show_nonbonded          72
 #define cSetting_cache_display                73
 #define cSetting_mesh_radius                  74
 #define cSetting_backface_cull                75
 #define cSetting_gamma                        76
 #define cSetting_dot_width                    77
-#define cSetting_autoshow_selections          78
-#define cSetting_autohide_selections          79
+#define cSetting_auto_show_selections         78
+#define cSetting_auto_hide_selections         79
 #define cSetting_selection_width              80
 #define cSetting_selection_overlay            81
 #define cSetting_static_singletons            82
@@ -217,8 +217,11 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_cartoon_fancy_helices       118
 #define cSetting_cartoon_fancy_sheets        119
 #define cSetting_ignore_pdb_segi             120
+#define cSetting_ribbon_throw                121
+#define cSetting_cartoon_throw               122
+#define cSetting_cartoon_refine              123
 
-#define cSetting_INIT                        121
+#define cSetting_INIT                        125
 
 #endif
 

@@ -35,6 +35,14 @@ Ongoing Goals
 
 Changes up to 0.60
 
+   * third generation fancy helices complete -- revamped interpolation code.
+
+   * ray now takes dimensions for rendering larger than screen
+
+   * unpick and hide selection buttons
+
+   * various new menu items...
+
    * preparing for GLUT independence on selected platforms...
 
    * choice of lighting modes for ray-tracing (improved shadows, contrast)

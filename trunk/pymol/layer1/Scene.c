@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"Wizard.h"
 #include"CGO.h"
+#include"Grap.h"
 
 #define cFrontMin 0.1
 #define cSliceMin 0.1
@@ -86,6 +87,7 @@ typedef struct {
   int CopyFlag,CopyNextFlag;
   int StateIndex,Frame,NFrame;
   GLvoid *ImageBuffer;
+  int ImageBufferHeight,ImageBufferWidth;
   int MovieOwnsImageFlag;
   int MovieFrameFlag;
   unsigned ImageBufferSize;
@@ -256,11 +258,24 @@ void ScenePNG(char *png)
       glReadBuffer(GL_BACK);
       glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                    GL_RGBA,GL_UNSIGNED_BYTE,image);
+      I->ImageBufferHeight=I->Height;
+      I->ImageBufferWidth=I->Width;
     }
   } else {
 	 image=I->ImageBuffer;
   }
-  MyPNGWrite(png,image,I->Width,I->Height);
+  if(MyPNGWrite(png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
+    PRINTFB(FB_Scene,FB_Actions) 
+      " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
+      I->ImageBufferWidth,I->ImageBufferHeight,png
+      ENDFB;
+  } else {
+    PRINTFB(FB_Scene,FB_Errors) 
+      " ScenePNG-Error: error writing \"%s\"! Please check directory...\n",
+      png
+      ENDFB;
+  }
+  
   if(!I->CopyFlag)
 	 FreeP(image);
 }
@@ -387,7 +402,7 @@ void SceneMakeMovieImage(void) {
 
   I->DirtyFlag=false;
   if(SettingGet(cSetting_ray_trace_frames)) {
-	SceneRay(); 
+	SceneRay(0,0); 
   } else {
 	 v=SettingGetfv(cSetting_bg_rgb);
     if(PMGUI) {
@@ -399,8 +414,9 @@ void SceneMakeMovieImage(void) {
       SceneCopy(0);
     }
   }
-  if(I->ImageBuffer)
+  if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
 	 MovieSetImage(MovieFrameToImage(I->Frame),I->ImageBuffer);
+  }
   I->MovieOwnsImageFlag=true;
   I->CopyFlag=true;
 }
@@ -412,6 +428,8 @@ void SceneIdle(void)
   float minTime;
   int frameFlag = false;
   int rockFlag = false;
+  float ang_cur,disp,diff;
+
   if(MoviePlaying())
     {
 		renderTime = -I->LastFrameTime + UtilGetSeconds();
@@ -431,10 +449,15 @@ void SceneIdle(void)
       }
     }
   if(Control.Rocking&&rockFlag) {
-	 SceneRotate(-I->LastRock,0.0,1.0,0.0);
+
+
 	 I->RockTime+=I->RenderTime;
-	 I->LastRock=sin(I->RockTime*SettingGet(cSetting_sweep_speed))*SettingGet(cSetting_sweep_angle);
-	 SceneRotate(I->LastRock,0.0,1.0,0.0);
+    ang_cur = (I->RockTime*SettingGet(cSetting_sweep_speed));
+    
+    disp = SettingGet(cSetting_sweep_angle)*(3.1415/180.0)*sin(ang_cur)/2;
+    diff = disp-I->LastRock;
+    SceneRotate(180*diff/3.1415,0.0,1.0,0.0);
+    I->LastRock = disp;
   }
   if(MoviePlaying()&&frameFlag)
 	 {
@@ -521,6 +544,7 @@ void SceneDraw(Block *block)
 {
   CScene *I=&Scene;
   int overlay,text;
+  int width,height;
 
   if(PMGUI) {
     overlay = SettingGet(cSetting_overlay);
@@ -531,8 +555,23 @@ void SceneDraw(Block *block)
       if(I->CopyFlag)
         {
           glReadBuffer(GL_BACK);
-          glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
-          glDrawPixels(I->Width,I->Height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
+
+          if(I->ImageBufferHeight>I->Height||I->ImageBufferWidth>I->Width) {
+            glColor3f(1.0,0.2,0.2);
+            GrapDrawStr("Sorry, I can't display an oversize image.",30,60);
+            GrapDrawStr("To save image, use File Menu or enter \"png <filename>\".",30,40);
+          } else {
+            width = I->ImageBufferWidth;
+            height = I->ImageBufferHeight;
+            
+            if((width<I->Width)||(height<I->Height)) {
+              glRasterPos3i((I->Block->rect.right-width)/2.0,
+                            (I->Block->rect.top-height)/2.0,0);
+            } else {
+              glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
+            }
+            glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+          }
           I->RenderTime = -I->LastRender;
           I->LastRender = UtilGetSeconds();
           I->RenderTime += I->LastRender;
@@ -631,7 +670,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         EditorSetActiveObject((ObjectMolecule*)obj,I->StateIndex);
         if(EditorActive()) {
           SelectorCreate(cEditorRes,"(byres pk1)",NULL,false);
-          if(SettingGet(cSetting_autohide_selections))
+          if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
         }
 
@@ -739,9 +778,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cButModePk2:
       case cButModePk3:
         SelectorCreate(selName,buffer,NULL,false);
-        if(SettingGet(cSetting_autohide_selections))
+        if(SettingGet(cSetting_auto_hide_selections))
           ExecutiveHideSelections();
-        if(SettingGet(cSetting_autoshow_selections))
+        if(SettingGet(cSetting_auto_show_selections))
           ExecutiveSetObjVisib(selName,1);
         break;
       case cButModeAddToPk1:
@@ -753,9 +792,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           SelectorCreate(selName,buf2,NULL,false);
         } else 
           SelectorCreate(selName,buffer,NULL,false);
-        if(SettingGet(cSetting_autohide_selections))
+        if(SettingGet(cSetting_auto_hide_selections))
           ExecutiveHideSelections();
-        if(SettingGet(cSetting_autoshow_selections))
+        if(SettingGet(cSetting_auto_show_selections))
           ExecutiveSetObjVisib(selName,1);
         break;
       }
@@ -1071,6 +1110,8 @@ void SceneInit(void)
 
   I->DirtyFlag = true;
   I->ImageBuffer = NULL;
+  I->ImageBufferWidth=0;
+  I->ImageBufferHeight=0;
   I->ImageBufferSize = 0;
   I->MovieOwnsImageFlag = false;
   I->MovieFrameFlag = false;
@@ -1136,19 +1177,26 @@ void SceneResetNormal(int lines)
 }
 
 /*========================================================================*/
-void SceneRay(void)
+void SceneRay(int ray_width,int ray_height)
 {
   CScene *I=&Scene;
   ObjRec *rec=NULL;
   CRay *ray;
   unsigned int buffer_size;
   float height,width;
-  float aspRat = ((float) I->Width) / ((float) I->Height);
+  float aspRat;
   float white[3] = {1.0,1.0,1.0};
   unsigned int *buffer;
   float rayView[16];
   int curState;
   double timing;
+
+  if((!ray_width)||(!ray_height)) {
+    ray_width=I->Width;
+    ray_height=I->Height;
+  }
+
+  aspRat = ((float) ray_width) / ((float) ray_height);
 
   if(SettingGet(cSetting_all_states)) {
     curState=-1;
@@ -1195,21 +1243,27 @@ void SceneRay(void)
 		}
 	 }
 
-  buffer_size = 4*I->Width*I->Height;
+  buffer_size = 4*ray_width*ray_height;
   buffer=(GLvoid*)Alloc(char,buffer_size);
   ErrChkPtr(buffer);
 
-  RayRender(ray,I->Width,I->Height,buffer,I->Front,I->Back,timing);
+  PRINTFB(FB_Ray,FB_Details)
+    " Ray: tracing %dx%d = %d rays...\n",ray_width,ray_height,
+    ray_width*ray_height
+    ENDFB;
+
+  RayRender(ray,ray_width,ray_height,buffer,I->Front,I->Back,timing);
 
   timing = UtilGetSeconds()-timing;
   PRINTFB(FB_Ray,FB_Details)
-    " Ray: total rendering time: %4.2f sec. (%3.1f fph).\n", 
+    " Ray: total rendering time: %4.2f sec. = %3.1f frames per hour.\n", 
     timing,3600/timing 
     ENDFB;
 
   /*
   RayRenderPOV(ray,I->Width,I->Height,NULL,I->Front,I->Back,SceneFOV);
   */
+
   if(I->ImageBuffer) {
 	 if(I->MovieOwnsImageFlag) {
 		I->MovieOwnsImageFlag=false;
@@ -1221,6 +1275,8 @@ void SceneRay(void)
 
   I->ImageBuffer = buffer;
   I->ImageBufferSize = buffer_size;
+  I->ImageBufferWidth=ray_width;
+  I->ImageBufferHeight=ray_height;
   I->DirtyFlag=false;
   I->CopyFlag = true;
   I->MovieOwnsImageFlag = false;
@@ -1246,10 +1302,15 @@ void SceneCopy(int buffer)
               FreeP(I->ImageBuffer);
             }
           }
+          if((I->ImageBufferWidth!=I->Width)||(I->ImageBufferHeight!=I->Height)) {
+            FreeP(I->ImageBuffer);
+          }
           if(!I->ImageBuffer) {
             I->ImageBuffer=(GLvoid*)Alloc(char,buffer_size);
             ErrChkPtr(I->ImageBuffer);
             I->ImageBufferSize = buffer_size;
+            I->ImageBufferWidth=I->Width;
+            I->ImageBufferHeight=I->Height;
           }
           if(PMGUI) {
             if(buffer)
@@ -1258,6 +1319,8 @@ void SceneCopy(int buffer)
               glReadBuffer(GL_BACK);
             glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                          GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
+            I->ImageBufferWidth=I->Width;
+            I->ImageBufferHeight=I->Height;
           }
         }
         I->CopyFlag = true;
@@ -1314,7 +1377,7 @@ int SceneRenderCached(void)
 		  renderedFlag=true;
 		}
 	} else if(MoviePlaying()&&SettingGet(cSetting_ray_trace_frames)) {
-	  SceneRay(); 
+	  SceneRay(0,0); 
 	} else {
 	  renderedFlag=false;
 	  I->CopyFlag = false;

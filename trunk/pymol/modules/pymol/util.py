@@ -99,9 +99,9 @@ def mrock(first,last,angle=30,phase=0,loop=1,axis='y'):
    ang_cur = ang_cur - ang_inc
    a = 0
    while a<nstep:
-      last = angle*math.sin(ang_cur)
+      last = angle*math.sin(ang_cur)/2
       ang_cur = ang_cur + ang_inc
-      disp = angle*math.sin(ang_cur)
+      disp = angle*math.sin(ang_cur)/2
       diff = disp-last
       com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
       cmd.do(com)

@@ -59,7 +59,7 @@ class SettingIndex:
    stick_nub            =48
    all_states           =49
    pickable             =50
-   autoshow_lines       =51
+   auto_show_lines       =51
    idle_delay           =52
    no_idle              =53
    fast_idle            =54
@@ -80,14 +80,14 @@ class SettingIndex:
    ray_trace_fog_start  =69
    spheroid_smooth      =70
    spheroid_fill        =71
-   autoshow_nonbonded   =72
+   auto_show_nonbonded   =72
    cache_display        =73
    mesh_radius          =74
    backface_cull        =75
    gamma                =76
    dot_width            =77
-   autoshow_selections  =78
-   autohide_selections  =79
+   auto_show_selections  =78
+   auto_hide_selections  =79
    selection_width      =80
    selection_overlay    =81
    static_singletons    =82
@@ -129,6 +129,9 @@ class SettingIndex:
    cartoon_fancy_helices    =  118
    cartoon_fancy_sheets     =  119
    ignore_pdb_segi       =120
+   ribbon_throw          =121
+   cartoon_throw         =122
+   cartoon_refine        =123
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

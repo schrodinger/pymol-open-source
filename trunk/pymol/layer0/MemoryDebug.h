@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_MemoryDebug
 #define _H_MemoryDebug
 
-#include<stdlib.h>
+#include "os_std.h"
 
 /* This file can be included by C and C++ programs for
    debugging of malloc, realloc, free in C and in addition,
@@ -49,13 +49,17 @@ Z* -------------------------------------------------------------------
 /* ================================================================ 
  * Don't touch below unless you know what you are doing */
 
+
+#define CopyArray(dst,src,type,count) memcpy(dst,src,sizeof(type)*(count))
+
+void UtilMemCpy(void *dst,void *src,unsigned int *size);
+
 typedef struct VLARec {
   unsigned int nAlloc;
   unsigned int recSize;
   unsigned int growFactor;
   int autoZero;
 } VLARec;
-
 
 /* NOTE: in VLACheck, rec is a zero based array index, not a record count */
 #define VLACheck(ptr,type,rec) (ptr=(type*)((((rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,(rec)) : (ptr))))
