@@ -141,7 +141,7 @@ void ObjectMoleculeExtendIndices(ObjectMolecule *I)
         I->CSet[a]->fExtendIndices(I->CSet[a],I->NAtom);
 }
 /*========================================================================*/
-void ObjectMoleculeSort(ObjectMolecule *I)
+void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
 {
   int *index,*outdex;
   int a,b;
@@ -180,6 +180,9 @@ void ObjectMoleculeSort(ObjectMolecule *I)
 	 {
 		printf("%d %s\n",I->AtomInfo[a].resv,I->AtomInfo[a].chain);
 		}*/
+
+  UtilSortInPlace(I->Bond,I->NBond,sizeof(int)*3,(UtilOrderFn*)BondInOrder);
+  /* sort...important! */
 }
 /*========================================================================*/
 CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
@@ -267,6 +270,9 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 atInfo[a].hetatm=true;
 			 AtomInfoAssignParameters(atInfo+a);
 			 atInfo[a].color=AtomInfoGetColor(atInfo+a);
+          atInfo[a].alt[0]=0;
+          atInfo[a].segi[0]=0;
+          atInfo[a].resi[0]=0;
 		  }
 		  p=nextline(p);
 		  if(!ok)
@@ -484,7 +490,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag)
 {
   int *index,*outdex,*a2i,*i2a,*bond=NULL;
-  int a,b,c,lb,ac,a1,a2;
+  int a,b,c,lb,nb,ac,a1,a2;
   int found;
   int nAt,nBd,nBond;
   int expansionFlag = false;
@@ -594,26 +600,26 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
       
       c=0;
       b=0;  
-      for(a=0;a<nBond;a++) {
+      nb=0;
+      for(a=0;a<nBond;a++) { /* iterate over new bonds */
         found=false;
-        lb=b;
-        while(b<I->NBond) {
-          ac=BondCompare(bond+a,I->Bond+b);
-          if(!ac) {
+        b=nb; /* pick up where we left off */
+        while(b<I->NBond) { 
+          ac=BondCompare(bond+a*3,I->Bond+b*3);
+          if(!ac) { /* zero is a match */
             found=true;
             break;
-          } else if(ac<0) {
+          } else if(ac<0) { /* gone past position of this bond */
             break;
           }
-          b++;
+          b++; /* no match yet, keep looking */
         }
         if(found) {
-          index[a]=b;
-          b++;
-        } else {
+          index[a]=b; /* existing bond...*/
+          nb=b+1;
+        } else { /* this is a new bond, save index and increment */
           index[a]=I->NBond+c;
-          c++;
-          b=lb;
+          c++; 
         }
       }
       /* first, reassign atom info for matched atoms */
@@ -623,13 +629,13 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
         
         VLACheck(I->Bond,int,nBd*3);
         
-        for(a=0;a<nBond;a++)
+        for(a=0;a<nBond;a++) /* copy the new bonds */
           {
             a2=index[a];
             if(a2 >= I->NBond) { 
-              I->Bond[3*a2]=bond[3*a]; /* copy bond info */
-              I->Bond[3*a2+1]=bond[3*a+1]; /* copy bond info */
-              I->Bond[3*a2+2]=bond[3*a+2]; /* copy bond info */
+              I->Bond[3*a2]=bond[3*a]; 
+              I->Bond[3*a2+1]=bond[3*a+1]; 
+              I->Bond[3*a2+2]=bond[3*a+2]; 
             }
           }
         I->NBond=nBd;
@@ -1283,8 +1289,9 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,
   int maxBond;
   MapType *map;
   int nBond,*ii1,*ii2;
-  nBond = 0;
+  int flag;
 
+  nBond = 0;
   maxBond = cs->NIndex * 8;
   (*bond) = VLAlloc(int,maxBond*3);
   if(cs->NIndex&&bondSearchFlag)
@@ -1318,11 +1325,19 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,
                                   (!(ai[a1].hydrogen&&ai[a2].hydrogen))&&
                                   ((!cs->TmpBond)||(!(ai[a1].hetatm&&ai[a2].hetatm))))
                                 {
-                                  VLACheck((*bond),int,nBond*3+2);
-                                  (*bond)[nBond*3  ] = a1;
-                                  (*bond)[nBond*3+1] = a2;
-                                  (*bond)[nBond*3+2] = 1;
-                                  nBond++;
+                                  flag=true;
+                                  if(ai[a1].alt[0]!=ai[a2].alt[0]) { /* handle alternate conformers */
+                                    if(ai[a1].alt[0]&&ai[a2].alt)
+                                      if(AtomInfoAltMatch(ai+a1,ai+a2))
+                                        flag=false;
+                                  }
+                                  if(flag) {
+                                    VLACheck((*bond),int,nBond*3+2);
+                                    (*bond)[nBond*3  ] = a1;
+                                    (*bond)[nBond*3+1] = a2;
+                                    (*bond)[nBond*3+2] = 1;
+                                    nBond++;
+                                  }
                                 }
                             }
                           j=MapNext(map,j);
@@ -1337,22 +1352,40 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,
 
   if(cs->NTmpBond&&cs->TmpBond) {
     if(DebugState&DebugMolecule) 
-      printf("ObjectMoleculeConnect: incorporating CONECT bonds. %d\n",nBond);
+      printf("ObjectMoleculeConnect: incorporating explicit bonds. %d\n",nBond);
     VLACheck((*bond),int,(nBond+cs->NTmpBond)*3);
     ii1=(*bond)+nBond*3;
     ii2=cs->TmpBond;
     for(a=0;a<cs->NTmpBond;a++)
       {
-        *(ii1++)=*(ii2++);
-        *(ii1++)=*(ii2++);
+        *(ii1++)=cs->IdxToAtm[*(ii2++)]; /* convert bonds from index space */
+        *(ii1++)=cs->IdxToAtm[*(ii2++)]; /* to atom space */
         *(ii1++)=*(ii2++);
       }
     nBond=nBond+cs->NTmpBond;
     VLAFreeP(cs->TmpBond);
     cs->NTmpBond=0;
   }
-  VLASize((*bond),int,nBond*3);
   UtilSortInPlace((*bond),nBond,sizeof(int)*3,(UtilOrderFn*)BondInOrder);
+  if(nBond) { /* eliminate duplicates */
+    ii1=(*bond)+3;
+    ii2=(*bond)+3;
+    a=nBond-1;
+    nBond=1;
+    if(a>0) 
+      while(a--) {
+        if((ii2[0]!=ii1[-3])||
+           (ii2[1]!=ii1[-2])) {
+          *(ii1++)=*(ii2++);
+          *(ii1++)=*(ii2++);
+          *(ii1++)=*(ii2++);
+          nBond++;
+        } else {
+          ii2+=3;
+        }
+      }
+    VLASize((*bond),int,nBond*3);
+  }
   return(nBond);
 }
 
@@ -1624,7 +1657,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           p=ncopy(cc,p,4); 
           if(!sscanf(cc,"%s",ai->name)) ai->name[0]=0;
           
-          p=nskip(p,1);
+          p=ncopy(cc,p,1);
+          if(*cc==32)
+            ai->alt[0]=0;
+          else {
+            ai->alt[0]=*cc;
+            ai->alt[1]=0;
+          }
+
           p=ncopy(cc,p,3); 
           if(!sscanf(cc,"%s",ai->resn)) ai->resn[0]=0;
 
@@ -1853,6 +1893,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         }
 
         ai->segi[0]=0;
+        ai->alt[0]=0;
 
         if(ok) {
           p=nskip(p,2);

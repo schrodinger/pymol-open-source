@@ -125,13 +125,16 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
 
   if(strlen(ai->name)<4)
 	{
-	  name[0]=' ';	
-	  strcpy(name+1,ai->name);
+     if(!((ai->name[0]>='0')&&(ai->name[0])<='9')) {
+       name[0]=' ';	
+       strcpy(name+1,ai->name);
+     } else 
+       strcpy(name,ai->name);
 	} else {
 	  strcpy(name,ai->name);
 	}
-  (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s %3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s\n",
-				aType,cnt+1,name,ai->resn,
+  (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s\n",
+				aType,cnt+1,name,ai->alt,ai->resn,
 				ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi);
   
 }
@@ -263,6 +266,7 @@ CoordSet *CoordSetNew(void)
   I->fAppendIndices=CoordSetAppendIndices;
   I->fInvalidateRep=CoordSetInvalidateRep;
   I->NIndex=0;
+  I->NAtIndex=0;
   I->Coord = NULL;
   I->Color = NULL;
   I->AtmToIdx = NULL;

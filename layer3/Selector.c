@@ -122,6 +122,7 @@ void SelectorPurgeMembers(int sele);
 #define SELE_RSNs ( 0x1400 | STYP_SEL1 )
 #define SELE_SELs ( 0x1500 | STYP_SEL1 )
 #define SELE_BVLx ( 0x1606 | STYP_SEL2 )
+#define SELE_ALTs ( 0x1700 | STYP_SEL1 )
 
 static WordKeyValue Keyword[] = 
 {
@@ -153,6 +154,8 @@ static WordKeyValue Keyword[] =
   {  "e;",       SELE_ELEs },
   {  "resi",     SELE_RSIs },
   {  "i;",       SELE_RSIs },
+  {  "alt",      SELE_ALTs },
+  {  "l;",       SELE_ALTs },
   {  "chain",    SELE_CHNs },
   {  "c;",       SELE_CHNs },
   {  "segi",     SELE_SEGs },
@@ -499,13 +502,14 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
 {
   SelectorType *I=&Selector;
 
-  int a,b,a1,b1,b2,c,d,*ii1,s,at;
+  int a,b,a1,a2,b1,b2,c,d,*ii1,s,at;
   int *bond=NULL;
   int nBond=0;
   int nCSet,nAtom,ts;
   AtomInfoType *atInfo = NULL;
   int isNew,csFlag;
-  CoordSet *cs,*cs1,*cs2;
+  CoordSet *cs = NULL;
+  CoordSet *cs1,*cs2;
   ObjectMolecule *obj;
   Object *ob;
   ObjectMolecule *targ = NULL;
@@ -570,6 +574,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
         at=I->Table[a].atom;
         VLACheck(atInfo,AtomInfoType,c);
         atInfo[c] = obj->AtomInfo[at];
+        atInfo[c].selEntry=0;
         c++;
       }
     }
@@ -580,9 +585,32 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     cs->TmpBond = bond; /* load up the bonds */
     cs->NTmpBond = nBond;
     bond=NULL;
-    
-    ObjectMoleculeMerge(targ,atInfo,cs,false); /* will free atInfo */
 
+    ObjectMoleculeMerge(targ,atInfo,cs,false); /* will free atInfo */
+    ObjectMoleculeExtendIndices(targ);
+    
+    if(!isNew) { /* recreate selection table */
+      SelectorUpdateTable(); 
+      
+      c=0;
+      for(a=0;a<I->NAtom;a++) {
+        at=I->Table[a].atom;
+        I->Table[a].index=-1;
+        obj=I->Obj[I->Table[a].model];
+        s=obj->AtomInfo[at].selEntry;
+        while(s) 
+          {
+            if(I->Member[s].selection==sele)
+              {
+                I->Table[a].index=c; /* Mark records  */
+                c++;
+                break;
+              }
+            s=SelectorNext(s);
+          }
+      }
+    }
+    if(c!=nAtom) ErrFatal("SelectorCreate","inconsistent selection.");
     /* cs->IdxToAtm now has the relevant indexes for the coordinate transfer */
     
     /* get maximum state index */
@@ -615,9 +643,8 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
           cs2->AtmToIdx = Alloc(int,targ->NAtom+1);
           for(a=0;a<targ->NAtom;a++) 
             cs2->AtmToIdx[a]=-1;
+          cs2->NAtIndex = targ->NAtom;
           cs2->IdxToAtm = Alloc(int,nAtom);
-        
-          /* THERE IS A PROBLEM IN THE CODE RIGHT HERE  */
           for(a=0;a<I->NAtom;a++)  /* any selected atoms in this state? */
             if(I->Table[a].index>=0) {
               at=I->Table[a].atom;
@@ -625,25 +652,24 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
               if(d<obj->NCSet) {
                 cs1 = obj->CSet[d];
                 if(cs1) {
-                  a1 = cs1->AtmToIdx[at];
+                  a1 = cs1->AtmToIdx[at]; /* coord index in existing object */
                   if(a1>=0) {
                     copy3f(cs1->Coord+a1*3,cs2->Coord+c*3);
-                    cs2->IdxToAtm[c] = cs->IdxToAtm[I->Table[a].atom]; /* used merged index 
-                                                                        * from dummy cset */
-                    cs2->AtmToIdx[cs->IdxToAtm[c]]=c;
+                    a2 = cs->IdxToAtm[c]; /* actual merged atom index */
+                    cs2->IdxToAtm[c] = a2;
+                    cs2->AtmToIdx[a2] = c;
                     c++;
                   }
                 }
               }
             }
-          printf("cs %d\n",c);
           cs2->IdxToAtm=Realloc(cs2->IdxToAtm,int,c);
           VLASize(cs2->Coord,float,c*3);
           cs2->NIndex = c;
           if(target>=0)
             ts = target;
           else
-            ts=d;
+            ts = d;
           VLACheck(targ->CSet,CoordSet*,ts);
           if(targ->NCSet<=ts) 
             targ->NCSet=ts+1;
@@ -656,14 +682,15 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     }               
   }
   VLAFreeP(bond); /* null-safe */
-  
+  if(cs) cs->fFree(cs);
   if(nAtom) {
     SceneCountFrames();
-    ObjectMoleculeExtendIndices(targ);
     ObjectMoleculeSort(targ);
     if(isNew) {
       ObjectSetName((Object*)targ,name);
       ExecutiveManageObject((Object*)targ);
+    } else {
+      ExecutiveUpdateObjectSelection((Object*)targ);
     }
     SceneChanged();
   } else {
@@ -1173,6 +1200,20 @@ int SelectorSelect1(EvalElem *base)
 				base[0].sele[a]=false;
         }
 		break;
+	 case SELE_ALTs:
+		for(a=0;a<I->NAtom;a++)
+		  {
+			 if(WordMatchComma(base[1].text,
+                            I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].alt,
+                            I->IgnoreCase)<0)
+				{
+				  base[0].sele[a]=true;
+				  c++;
+				}
+			 else
+				base[0].sele[a]=false;
+        }
+		break;
 	 case SELE_RSIs:
 		if((p=strstr(base[1].text,":"))) /* range */
 		  {
@@ -1484,8 +1525,8 @@ int *SelectorEvaluate(WordType *word)
   unsigned int code;
   int valueFlag = 0; /* are we expecting? */
   int *result = NULL;
-  int opFlag,lt;
-  char *q;
+  int opFlag;
+  char *q,*cc1,*cc2;
   OrthoLineType line;
   EvalElem Stack[SelectorMaxDepth],*e;
   SelectorType *I=&Selector;
@@ -1515,17 +1556,15 @@ int *SelectorEvaluate(WordType *word)
 				  e=Stack+depth;
 				  e->level=level;
 				  e->type=STYP_VALU;
-				  strcpy(e->text,word[c]);
-              if((e->text[0]==34)||(e->text[0]==39)) { /* remove surrounding quotes if any */
-                strcpy(e->text,word[c]+1);
+              cc1 = word[c];
+              cc2 = e->text;
+              while(*cc1) { /* remove embedded quotes if any */
+                if((*cc1!=34)&&(*cc1!=39)) {
+                  *(cc2++)=*(cc1++);
+                } else 
+                  cc1++;
               }
-              lt=strlen(e->text);
-              if(lt) {
-                lt--;
-                if((e->text[lt]==34)||(e->text[lt]==39)) {
-                  e->text[lt]=0;
-                }
-              }
+              *cc2=0;
 				  valueFlag--;
 				}
 			 else if(valueFlag<0) /* operation parameter i.e. around X<-- */

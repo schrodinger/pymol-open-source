@@ -1816,7 +1816,7 @@ DESCRIPTION
   
    "create" creates a new object from a selection
  
-   NOTE: not yet debugged!!!!!!!
+   NOTE: this command has not yet been throughly tested
  
 USAGE
  
@@ -1834,9 +1834,9 @@ PYMOL API
    la = len(arg)
    sele = arg[0]
    if la>1:
-      source = int(arg[1])
+      source = int(arg[1])-1
    if la>2:
-      target = int(arg[2])
+      target = int(arg[2])-1
    try:
       lock()
       _cmd.create(name,sele,source,target)

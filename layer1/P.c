@@ -131,7 +131,7 @@ int PAlterAtom(AtomInfoType *at,char *expr)
   AtomName name;
   ResName resn;
   ResIdent resi;
-  Chain chain;
+  Chain chain,alt;
   SegIdent segi;
   char atype[7];
   float b,q;
@@ -151,6 +151,7 @@ int PAlterAtom(AtomInfoType *at,char *expr)
   PConvStringToPyDictItem(dict,"resn",at->resn);
   PConvStringToPyDictItem(dict,"resi",at->resi);
   PConvStringToPyDictItem(dict,"chain",at->chain);
+  PConvStringToPyDictItem(dict,"alt",at->alt);
   PConvStringToPyDictItem(dict,"segi",at->segi);
   PConvFloatToPyDictItem(dict,"q",at->q);
   PConvFloatToPyDictItem(dict,"b",at->b);
@@ -171,6 +172,8 @@ int PAlterAtom(AtomInfoType *at,char *expr)
       result=false;
     else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"segi"),segi,sizeof(SegIdent)-1))
       result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"alt"),chain,sizeof(Chain)-1))
+      result=false;
     else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"chain"),chain,sizeof(Chain)-1))
       result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"b"),&b))
@@ -189,6 +192,7 @@ int PAlterAtom(AtomInfoType *at,char *expr)
       strcpy(at->resi,resi);
       strcpy(at->segi,segi);
       strcpy(at->chain,chain);
+      strcpy(at->alt,alt);
       at->b=b;
       at->q=q;
     } else {
