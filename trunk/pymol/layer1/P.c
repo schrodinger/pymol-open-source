@@ -1012,6 +1012,7 @@ void PGetOptions(PyMOLOptionRec *rec)
   rec->incentive_product = PyInt_AsLong(PyObject_GetAttrString(options,"incentive_product"));
   rec->multisample = PyInt_AsLong(PyObject_GetAttrString(options,"multisample"));
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
+
   if(load_str) {
     if(load_str[0]) {
       UtilNCopy(rec->after_load_script,load_str,PYMOL_MAX_OPT_STR);
