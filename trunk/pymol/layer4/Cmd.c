@@ -277,6 +277,7 @@ static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetState(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
+static PyObject *CmdGetWizardStack(PyObject *self, PyObject *args);
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetVis(PyObject *self, 	PyObject *args);
 static PyObject *CmdMask(PyObject *self, PyObject *args);
@@ -345,6 +346,7 @@ static PyObject *CmdSetTitle(PyObject *self, PyObject *args);
 static PyObject *CmdGetTitle(PyObject *self, PyObject *args);
 static PyObject *CmdSetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
+static PyObject *CmdSetWizardStack(PyObject *self, PyObject *args);
 static PyObject *CmdSetCrystal(PyObject *self, PyObject *args);
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
 static PyObject *CmdSetVis(PyObject *self, 	PyObject *args);
@@ -447,6 +449,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_view",              CmdGetView,              METH_VARARGS },
    {"get_vis",               CmdGetVis,               METH_VARARGS },
    {"get_wizard",            CmdGetWizard,            METH_VARARGS },
+   {"get_wizard_stack",      CmdGetWizardStack,       METH_VARARGS },
 	{"h_add",                 CmdHAdd,                 METH_VARARGS },
 	{"h_fill",                CmdHFill,                METH_VARARGS },
    {"identify",              CmdIdentify,             METH_VARARGS },
@@ -526,6 +529,7 @@ static PyMethodDef Cmd_methods[] = {
    {"set_symmetry",          CmdSetCrystal,           METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
 	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
+	{"set_wizard_stack",      CmdSetWizardStack,       METH_VARARGS },
    {"set_view",              CmdSetView,              METH_VARARGS },
    {"set_vis",               CmdSetVis,               METH_VARARGS },
 	{"setframe",	           CmdSetFrame,             METH_VARARGS },
@@ -1715,7 +1719,38 @@ static PyObject *CmdGetWizard(PyObject *dummy, PyObject *args)
   return APIIncRef(result);
 }
 
+static PyObject *CmdGetWizardStack(PyObject *dummy, PyObject *args)
+{
+  PyObject *result;
+  APIEntry();
+  result = WizardGetStack();
+  APIExit();
+  if(!result)
+    result=Py_None;
+  return APIIncRef(result);
+}
+
 static PyObject *CmdSetWizard(PyObject *dummy, PyObject *args)
+{
+  
+  PyObject *obj;
+  int ok=false;
+  int replace;
+  ok = PyArg_ParseTuple(args,"Oi",&obj,&replace);
+  if(ok) {
+    if(!obj)
+      ok=false;
+    else
+      {
+        APIEntry();
+        WizardSet(obj,replace); /* TODO STATUS */
+        APIExit();
+      }
+  }
+  return(APIStatus(ok));  
+}
+
+static PyObject *CmdSetWizardStack(PyObject *dummy, PyObject *args)
 {
   
   PyObject *obj;
@@ -1727,7 +1762,7 @@ static PyObject *CmdSetWizard(PyObject *dummy, PyObject *args)
     else
       {
         APIEntry();
-        WizardSet(obj); /* TODO STATUS */
+        WizardSetStack(obj); /* TODO STATUS */
         APIExit();
       }
   }
@@ -1739,6 +1774,7 @@ static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args)
   
   APIEntry();
   WizardRefresh();
+  OrthoDirty();
   APIExit();
   return(APISuccess());  
 }

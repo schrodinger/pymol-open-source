@@ -5855,6 +5855,7 @@ int ExecutiveReinitialize(void)
   blocked = PAutoBlock();
   PRunString("cmd.view('*','clear')");
   PRunString("cmd.scene('*','clear')");
+  WizardSet(NULL,false);
   PAutoUnblock(blocked);
   
   SculptCachePurge();

@@ -55,6 +55,7 @@
 #include"Tetsurf.h"
 #include"PConv.h"
 #include"VFont.h"
+#include"Wizard.h"
 
 void MainFree(void);
 void MainTest(void);
@@ -521,6 +522,7 @@ static void MainInit(void)
   SphereInit();
   ColorInit();
   OrthoInit(ShowSplash);
+  WizardInit(); /* must come after ortho */
   SelectorInit();
   MovieInit();
   SceneInit();
@@ -540,7 +542,8 @@ static void MainInit(void)
 void MainFree(void)
 {
   PyMOLTerminating=true;
-  
+
+  WizardFree();
   SceneCleanupStereo();
   EditorFree();
   ExecutiveFree();

@@ -1081,8 +1081,11 @@ if __name__=='pymol.cmd':
    #--------------------------------------------------------------------
    from wizarding import \
         get_wizard,         \
+        get_wizard_stack,   \
         refresh_wizard,     \
+        replace_wizard,     \
         set_wizard,         \
+        set_wizard_stack,   \
         wizard
 
    #--------------------------------------------------------------------
@@ -1252,7 +1255,7 @@ if __name__=='pymol.cmd':
       'del'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
       'deprotect'     : [ deprotect         , 0 , 0 , ''  , parsing.STRICT ],
       'deselect'      : [ deselect          , 0 , 0 , ''  , parsing.STRICT ],
-      'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],  
+      'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
       'disable'       : [ disable           , 0 , 0 , ''  , parsing.STRICT ],
       'distance'      : [ distance          , 0 , 0 , ''  , parsing.LEGACY ],   
       'dump'          : [ dump              , 0 , 0 , ''  , parsing.STRICT ],
@@ -1355,10 +1358,12 @@ if __name__=='pymol.cmd':
       'redo'          : [ redo              , 0 , 0 , ''  , parsing.STRICT ],
       'reinitialize'  : [ reinitialize      , 0 , 0 , ''  , parsing.STRICT ],      
       'refresh'       : [ refresh           , 0 , 0 , ''  , parsing.STRICT ],
+      'refresh_wizard' : [ refresh_wizard   , 0 , 0 , ''  , parsing.STRICT ],
       'remove'        : [ remove            , 0 , 0 , ''  , parsing.STRICT ],
       'remove_picked' : [ remove_picked     , 0 , 0 , ''  , parsing.STRICT ],
       'rename'        : [ rename            , 0 , 0 , ''  , parsing.STRICT ],
       'replace'       : [ replace           , 0 , 0 , ''  , parsing.STRICT ],
+      'replace_wizard': [ replace_wizard    , 0 , 0 , ''  , parsing.STRICT ],
       'reset'         : [ reset             , 0 , 0 , ''  , parsing.STRICT ],
       'resume'        : [ resume            , 0 , 0 , ''  , parsing.STRICT ],
       'return'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   

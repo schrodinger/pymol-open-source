@@ -1420,7 +1420,6 @@ void OrthoInit(int showSplash)
   
   ButModeInit();
   ControlInit();
-  WizardInit();
   PopInit();
   for(a=0;a<=OrthoHistoryLines;a++)
     I->History[a][0]=0;
@@ -1434,7 +1433,6 @@ void OrthoFree(void)
   PopFree();
   ButModeFree();
   ControlFree();
-  WizardFree();
   QueueFree(I->cmds);
   I->cmds=NULL;
   QueueFree(I->feedback);

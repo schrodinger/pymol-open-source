@@ -13,15 +13,39 @@
 #Z* -------------------------------------------------------------------
 
 if __name__=='pymol.wizarding':
-   
+
+   import pymol
    import imp
    import sys
    import string
    import cmd
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
         _feedback,fb_module,fb_mask
+   import cPickle
 
-   def wizard(name,*arg,**kwd):
+   def _wizard(name,arg,kwd,replace):
+      import wizard
+      try:
+         full_name = 'pymol.wizard.'+name
+         if not sys.modules.has_key(full_name):
+            mod_tup = imp.find_module(name,wizard.__path__)
+            mod_obj = imp.load_module(full_name,mod_tup[0],
+                                      mod_tup[1],mod_tup[2])
+         else:
+            mod_obj = sys.modules[full_name]
+         if mod_obj:
+            oname = string.capitalize(name)
+            if hasattr(mod_obj,oname):
+               wiz = apply(getattr(mod_obj,oname),arg,kwd)
+               if wiz:
+                  set_wizard(wiz,replace)
+                  cmd.do("_ refresh_wizard")
+         else:
+            print "Error: Sorry, couldn't import the '"+name+"' wizard."         
+      except ImportError:
+         print "Error: Sorry, couldn't import the '"+name+"' wizard."
+      
+   def wizard(name=None,*arg,**kwd):
       '''
 DESCRIPTION
 
@@ -41,34 +65,31 @@ EXAMPLE
 
    wizard distance  # launches the distance measurement wizard
    '''
-      import wizard
-      try:
-         if not sys.modules.has_key(name):
-            mod_tup = imp.find_module(name,wizard.__path__)
-            mod_obj = imp.load_module(name,mod_tup[0],mod_tup[1],mod_tup[2])
-         else:
-            mod_obj = sys.modules[name]
-         if mod_obj:
-            oname = string.capitalize(name)
-            if hasattr(mod_obj,oname):
-               wiz = apply(getattr(mod_obj,oname),arg,kwd)
-               if wiz:
-                  set_wizard(wiz)
-                  cmd.do("refresh")
-         else:
-            print "Error: Sorry, couldn't import the '"+name+"' wizard."         
-      except ImportError:
-         print "Error: Sorry, couldn't import the '"+name+"' wizard."
+      if name==None:
+         cmd.set_wizard()
+      else:
+         _wizard(name,arg,kwd,0)
 
+   def replace_wizard(name=None,*arg,**kwd):
+      if name==None:
+         cmd.set_wizard()
+      else:
+         _wizard(name,arg,kwd,1)
 
-   def set_wizard(*arg): # INTERNAL
+   def set_wizard(wizard=None,replace=0): # INTERNAL
       r = None
-      wiz = None
-      if len(arg):
-         wiz=arg[0]
       try:
          lock()
-         r = _cmd.set_wizard(wiz)
+         r = _cmd.set_wizard(wizard,replace)
+      finally:
+         unlock()
+      return r
+
+   def set_wizard_stack(stack=[]): # INTERNAL
+      r = None
+      try:
+         lock()
+         r = _cmd.set_wizard_stack(stack)
       finally:
          unlock()
       return r
@@ -94,5 +115,36 @@ EXAMPLE
          unlock()
       return r
 
+   def get_wizard_stack(*arg): # INTERNAL
+      r = None
+      try:
+         lock()
+         r = _cmd.get_wizard_stack()
+      finally:
+         unlock()
+      return r
 
+   def session_save_wizard(session):
+      # double-pickle so that session file is class-independent
+      session['wizard']=cPickle.dumps(cmd.get_wizard_stack(),1)
+      return 1
+
+   def session_restore_wizard(session):
+      if session.has_key('wizard'):
+         from pymol.wizard import message
+         import __main__
+#         __main__.message = message
+         sys.modules['message'] = message
+         try:
+            wizards = cPickle.loads(session['wizard'])
+         except:
+            print "Session-Warning: unable to restore wizard."
+         cmd.set_wizard_stack(wizards)
+      return 1
+
+   if session_restore_wizard not in pymol._session_restore_tasks:
+      pymol._session_restore_tasks.append(session_restore_wizard)
+
+   if session_save_wizard not in pymol._session_save_tasks:
+      pymol._session_save_tasks.append(session_save_wizard)
 

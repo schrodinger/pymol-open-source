@@ -45,9 +45,10 @@ typedef struct {
 
 typedef struct {
   Block *Block;
-  PyObject *Wiz;
+  PyObject **Wiz;
   WizardLine *Line;
   int NLine;
+  int Stack;
   int Pressed;
 }  CWizard;
 
@@ -58,18 +59,31 @@ CWizard Wizard;
 #define cWizardTopMargin (-1)
 #define cWizardClickOffset 4
 
+void WizardPurgeStack(void)
+{
+  int blocked;
+  int a;
+  CWizard *I=&Wizard;
+  blocked = PAutoBlock();
+  for(a=I->Stack;a>=0;a--)
+    Py_XDECREF(I->Wiz[a]);
+  I->Stack = -1;
+  PAutoUnblock(blocked);
+
+}
 void WizardDoSelect(char *name)
 {
   OrthoLineType buf;
   CWizard *I=&Wizard;
-  if(I->Wiz) {
-    sprintf(buf,"cmd.get_wizard().do_select('''%s''')",name);
-    PLog(buf,cPLog_pym);
-    PBlock(); 
-    if(PyObject_HasAttrString(I->Wiz,"do_select")) {
-      PXDecRef(PyObject_CallMethod(I->Wiz,"do_select","s",name));
-      if(PyErr_Occurred()) PyErr_Print();
-    }
+  if(I->Stack>=0)
+    if(I->Wiz[I->Stack]) {
+      sprintf(buf,"cmd.get_wizard().do_select('''%s''')",name);
+      PLog(buf,cPLog_pym);
+      PBlock(); 
+      if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_select")) {
+        PXDecRef(PyObject_CallMethod(I->Wiz[I->Stack],"do_select","s",name));
+        if(PyErr_Occurred()) PyErr_Print();
+      }
     PUnblock();
   }
 }
@@ -77,90 +91,117 @@ void WizardDoSelect(char *name)
 void WizardRefresh(void)
 {
   CWizard *I = &Wizard;
-  char *vla;
+  char *vla = NULL;
   PyObject *P_list;
   int ll;
   PyObject *i;
   int a;
-  PBlock();
+  int blocked;
+  blocked = PAutoBlock();
 
   /* get the current prompt */
-
-  if(I->Wiz) {
-    vla = NULL;
-    if(PyObject_HasAttrString(I->Wiz,"get_prompt")) {
-      P_list = PyObject_CallMethod(I->Wiz,"get_prompt","");
-      if(PyErr_Occurred()) PyErr_Print();
-      if(P_list) 
-        PConvPyListToStringVLA(P_list,&vla);
-      Py_XDECREF(P_list);
-    }
-    OrthoSetWizardPrompt(vla);
-  }
-  /* get the current panel list */
-
-  I->NLine = 0;
-  if(I->Wiz) {
-
-    if(PyObject_HasAttrString(I->Wiz,"get_panel")) {
-      P_list = PyObject_CallMethod(I->Wiz,"get_panel","");
-      if(PyErr_Occurred()) PyErr_Print();
-      if(P_list) {
-        if(PyList_Check(P_list)) {
-          ll = PyList_Size(P_list);
-          VLACheck(I->Line,WizardLine,ll);
-          for(a=0;a<ll;a++) {
-            /* fallback defaults */
-            
-            I->Line[a].text[0]=0;
-            I->Line[a].code[0]=0;
-            I->Line[a].type = 0;
-            
-            i = PyList_GetItem(P_list,a);
-            if(PyList_Check(i))
-              if(PyList_Size(i)>2) {
-                PConvPyObjectToInt(PyList_GetItem(i,0),&I->Line[a].type);
-                PConvPyObjectToStrMaxLen(PyList_GetItem(i,1),I->Line[a].text,sizeof(WordType)-1);
-                PConvPyObjectToStrMaxLen(PyList_GetItem(i,2),I->Line[a].code,sizeof(OrthoLineType)-1);
-              }
-          }
-          I->NLine=ll;
-        }
+  if(I->Stack>=0)
+    if(I->Wiz[I->Stack]) {
+      vla = NULL;
+      if(PyObject_HasAttrString(I->Wiz[I->Stack],"get_prompt")) {
+        P_list = PyObject_CallMethod(I->Wiz[I->Stack],"get_prompt","");
+        if(PyErr_Occurred()) PyErr_Print();
+        if(P_list) 
+          PConvPyListToStringVLA(P_list,&vla);
+        Py_XDECREF(P_list);
       }
-      Py_XDECREF(P_list);
     }
-  }
+
+  OrthoSetWizardPrompt(vla);
+
+  /* get the current panel list */
+  
+  I->NLine = 0;
+  if(I->Stack>=0)
+    if(I->Wiz[I->Stack]) {
+      
+      if(PyObject_HasAttrString(I->Wiz[I->Stack],"get_panel")) {
+        P_list = PyObject_CallMethod(I->Wiz[I->Stack],"get_panel","");
+        if(PyErr_Occurred()) PyErr_Print();
+        if(P_list) {
+          if(PyList_Check(P_list)) {
+            ll = PyList_Size(P_list);
+            VLACheck(I->Line,WizardLine,ll);
+            for(a=0;a<ll;a++) {
+              /* fallback defaults */
+              
+              I->Line[a].text[0]=0;
+              I->Line[a].code[0]=0;
+              I->Line[a].type = 0;
+              
+              i = PyList_GetItem(P_list,a);
+              if(PyList_Check(i))
+                if(PyList_Size(i)>2) {
+                  PConvPyObjectToInt(PyList_GetItem(i,0),&I->Line[a].type);
+                  PConvPyObjectToStrMaxLen(PyList_GetItem(i,1),
+                                           I->Line[a].text,
+                                           sizeof(WordType)-1);
+                  PConvPyObjectToStrMaxLen(PyList_GetItem(i,2),
+                                           I->Line[a].code,
+                                           sizeof(OrthoLineType)-1);
+                }
+            }
+            I->NLine=ll;
+          }
+        }
+        Py_XDECREF(P_list);
+      }
+    }
   if(I->NLine) {
     OrthoReshapeWizard(cWizardLineHeight*I->NLine+4);
   } else {
     OrthoReshapeWizard(0);
   }
-  PUnblock();
+  PAutoUnblock(blocked);
 }
 /*========================================================================*/
-void WizardSet(PyObject *wiz)
+void WizardSet(PyObject *wiz,int replace)
 {
   CWizard *I = &Wizard;
-  PBlock();
+  int blocked;
+  blocked = PAutoBlock();
+
   if(I->Wiz) {
-    if(PyObject_HasAttrString(I->Wiz,"cleanup")) {
-      PXDecRef(PyObject_CallMethod(I->Wiz,"cleanup",""));
-      if(PyErr_Occurred()) PyErr_Print();
+    if((!wiz)||(wiz==Py_None)||((I->Stack>=0)&&replace)) { 
+      if(I->Stack>=0) {  /* pop */
+        if(I->Wiz[I->Stack]) {
+          if(PyObject_HasAttrString(I->Wiz[I->Stack],"cleanup")) {
+            PXDecRef(PyObject_CallMethod(I->Wiz[I->Stack],"cleanup",""));
+            if(PyErr_Occurred()) PyErr_Print();
+          }
+          Py_DECREF(I->Wiz[I->Stack]);
+          I->Wiz[I->Stack]=NULL;
+          I->Stack--;
+        }
+      }
     }
-    Py_DECREF(I->Wiz);
-    I->Wiz=NULL;
+    if(wiz&&(wiz!=Py_None)) { /* push */
+      if(wiz) { 
+        I->Stack++;
+        VLACheck(I->Wiz,PyObject*,I->Stack);
+        I->Wiz[I->Stack]=wiz;
+        if(I->Wiz[I->Stack])
+          Py_INCREF(I->Wiz[I->Stack]);
+      }
+    }
   }
-  I->Wiz=wiz;
-  if(I->Wiz)
-    Py_INCREF(I->Wiz);
-  PUnblock();
   WizardRefresh();
+  PAutoUnblock(blocked);
 }
 /*========================================================================*/
 int WizardActive(void)
 {
   CWizard *I = &Wizard;
-  return(I->Wiz&&1);
+  if(!I->Wiz)
+    return(false);
+  if(I->Stack<0)
+    return false;
+  return(I->Wiz[I->Stack]&&1);
 }
 /*========================================================================*/
 Block *WizardGetBlock(void)
@@ -172,21 +213,23 @@ Block *WizardGetBlock(void)
 void WizardDoPick(int bondFlag)
 {
   CWizard *I=&Wizard;
-  if(I->Wiz) {
-    if(bondFlag)
-      PLog("cmd.get_wizard().do_pick(1)",cPLog_pym);
-    else
-      PLog("cmd.get_wizard().do_pick(0)",cPLog_pym);
-
-    PBlock(); 
-    if(I->Wiz) {
-      if(PyObject_HasAttrString(I->Wiz,"do_pick")) {
-        PXDecRef(PyObject_CallMethod(I->Wiz,"do_pick","i",bondFlag));
-        if(PyErr_Occurred()) PyErr_Print();
-      }
+  if(I->Stack>=0) 
+    if(I->Wiz[I->Stack]) {
+      if(bondFlag)
+        PLog("cmd.get_wizard().do_pick(1)",cPLog_pym);
+      else
+        PLog("cmd.get_wizard().do_pick(0)",cPLog_pym);
+      
+      PBlock(); 
+      if(I->Stack>=0)
+        if(I->Wiz[I->Stack]) {
+          if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_pick")) {
+            PXDecRef(PyObject_CallMethod(I->Wiz[I->Stack],"do_pick","i",bondFlag));
+            if(PyErr_Occurred()) PyErr_Print();
+          }
+        }
+      PUnblock();
     }
-    PUnblock();
-  }
 }
 /*========================================================================*/
 static int WizardClick(Block *block,int button,int x,int y,int mod)
@@ -206,12 +249,13 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
       break;
     case cWizTypePopUp:
       PBlock(); 
-      if(I->Wiz) {
-        if(PyObject_HasAttrString(I->Wiz,"get_menu")) {
-          menuList = PyObject_CallMethod(I->Wiz,"get_menu","s",I->Line[a].code);
-          if(PyErr_Occurred()) PyErr_Print();
+      if(I->Stack>=0)
+        if(I->Wiz[I->Stack]) {
+          if(PyObject_HasAttrString(I->Wiz[I->Stack],"get_menu")) {
+            menuList = PyObject_CallMethod(I->Wiz[I->Stack],"get_menu","s",I->Line[a].code);
+            if(PyErr_Occurred()) PyErr_Print();
+          }
         }
-      }
      
       if(PyErr_Occurred()) PyErr_Print();
       if(menuList&&(menuList!=Py_None)) {
@@ -233,7 +277,8 @@ static int WizardDrag(Block *block,int x,int y,int mod)
   CWizard *I=&Wizard;
 
   int a;
-  a=((I->Block->rect.top-(y+cWizardClickOffset))-cWizardTopMargin)/cWizardLineHeight;
+  a=((I->Block->rect.top-(y+cWizardClickOffset))-
+     cWizardTopMargin)/cWizardLineHeight;
 
   if((x<I->Block->rect.left)||(x>I->Block->rect.right))
     a=-1;
@@ -261,7 +306,8 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
   CWizard *I=&Wizard;
 
   int a;
-  a=((I->Block->rect.top-(y+cWizardClickOffset))-cWizardTopMargin)/cWizardLineHeight;
+  a=((I->Block->rect.top-(y+cWizardClickOffset))-
+     cWizardTopMargin)/cWizardLineHeight;
 
   if(I->Pressed)
     I->Pressed=-1;
@@ -272,15 +318,12 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
   if((a>=0)&&(a<I->NLine)) {
     switch(I->Line[a].type) {
     case cWizTypeButton:
-      if(I->Wiz) {
-        PLog(I->Line[a].code,cPLog_pym);
-        PParse(I->Line[a].code);
-        PFlush();
-        /* PBlockAndUnlockAPI();
-          PRunString(I->Line[a].code);
-          PLockAPIAndUnblock();
-        */
-      }
+      if(I->Stack>=0)
+        if(I->Wiz[I->Stack]) {
+          PLog(I->Line[a].code,cPLog_pym);
+          PParse(I->Line[a].code);
+          PFlush();
+        }
       break;
     }
   }
@@ -359,7 +402,51 @@ static void WizardDraw(Block *block)
 PyObject *WizardGet(void)
 {
   CWizard *I=&Wizard;
-  return(I->Wiz);
+  if(!I->Wiz)
+    return(NULL);
+  if(I->Stack<0)
+    return(NULL);
+  return(I->Wiz[I->Stack]);
+}
+/*========================================================================*/
+PyObject *WizardGetStack(void)
+{
+  CWizard *I=&Wizard;
+  int a;
+  PyObject *result;
+
+  result = PyList_New(I->Stack-(-1));
+  if(I->Wiz) {
+    for(a=I->Stack;a>=0;a--) {
+      Py_INCREF(I->Wiz[a]);
+      PyList_SetItem(result,a,I->Wiz[a]); /* steals ref */
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
+int WizardSetStack(PyObject *list)
+{
+  CWizard *I=&Wizard;
+  int a;
+  int ok= true;
+  
+  if(I->Wiz) {
+    WizardPurgeStack();
+    if(ok) ok = (list!=NULL);
+    if(ok) ok = PyList_Check(list);
+    if(ok) {
+      I->Stack = PyList_Size(list)-1;
+      VLACheck(I->Wiz,PyObject*,I->Stack);
+      for(a=I->Stack;a>=0;a--) {
+        I->Wiz[a] = PyList_GetItem(list,a);
+        Py_INCREF(I->Wiz[a]); 
+      }
+    }
+    if(ok) WizardRefresh();
+    if(ok) OrthoDirty();
+  }
+  return(ok);
 }
 /*========================================================================*/
 void WizardInit(void)
@@ -384,14 +471,17 @@ void WizardInit(void)
   I->NLine = 0;
   I->Pressed = -1;
 
-  I->Wiz = NULL;
+  I->Stack = -1;
+  I->Wiz = VLAlloc(PyObject*,10);
 }
 /*========================================================================*/
 void WizardFree(void)
 {
   CWizard *I = &Wizard;
+  WizardPurgeStack();
   OrthoFreeBlock(I->Block);
   VLAFreeP(I->Line);
-  Py_XDECREF(I->Wiz);
+  VLAFreeP(I->Wiz)
+    
 }
 

@@ -24,9 +24,10 @@ if __name__=='pymol.viewing':
    import parsing
 
    import cmd
+   
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
         _feedback,fb_module,fb_mask, \
-        repres,repres_sc, is_string,\
+        repres,repres_sc, is_string, is_list, \
         toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
         palette_dict ,palette_sc
 
@@ -705,7 +706,7 @@ DESCRIPTION
 
 USAGE
 
-   scene key[,action]
+   scene key [,action [,message ]]
    scene *
 
    key can be any string
@@ -713,7 +714,7 @@ USAGE
 
 PYMOL API
 
-   cmd.scene(string key,string action)
+   cmd.scene(string key,string action,string-or-list message)
 
 EXAMPLES
 
@@ -781,18 +782,28 @@ SEE ALSO
                   if list[5]!=None:
                      message=list[5]
                if rep!=0:
-                  cmd.hide()
+                  cmd.hide("(all)")
                   for rep_name in rep_list:
-                     print rep_name                     
                      name = "_scene_"+key+"_"+rep_name
                      cmd.show(rep_name,name)
+               mess_flag = 0
                if message!=None:
                   if is_string(message):
                      if len(message):
                         cmd.wizard("message",message)
-                  if is_tuple(message):
+                        cmd.get_wizard().from_scene = 1
+                        mess_flag = 1
+                  if is_list(message):
                      if len(message):
                         cmd.wizard("message",*message)
+                        cmd.get_wizard().from_scene = 1
+                        mess_flag = 1
+               if not mess_flag:
+                  wiz = cmd.get_wizard()
+                  if wiz!=None:
+                     if str(wiz.__class__) == 'message.Message':
+                        if hasattr(wiz,'from_scene'):
+                           cmd.set_wizard()
                if _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
             elif action=='store':
@@ -836,7 +847,7 @@ SEE ALSO
                          message[-1:] in [ '"',"'"]):
                         message=message[1:-1]
                      else:
-                        message = string.split(message[1:-1],"\n")
+                        message = string.split(message,"\n")
                entry.append(message)
                scene_dict[key]=entry
                if _feedback(fb_module.scene,fb_mask.actions):
@@ -1476,7 +1487,6 @@ EXAMPLES
          finally:
             unlock()
       return r
-
 
 
 

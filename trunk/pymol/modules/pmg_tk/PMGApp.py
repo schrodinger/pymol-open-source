@@ -19,7 +19,7 @@ from AbstractApp import AbstractApp
 from Setting import Setting
 from SetEditor import SetEditor
 from ColorEditor import ColorEditor
-from Demo import Demo
+from pymol.wizard.demo import singleton_DemoState
 
 import Pmw
 import sys, string
@@ -1687,54 +1687,67 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenu('Demo', 'Demonstrations',tearoff=TRUE)
 
-      self.demo = Demo()
+      self.demo = singleton_DemoState
       
       self.menuBar.addmenuitem('Demo', 'command', 'Representations',
                                label='Representations',
-                               command = lambda s=self:s.demo('rep'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,reps"))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Cartoon Ribbons',
                                label='Cartoon Ribbons',
-                               command = lambda s=self:s.demo('cartoon'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,cartoon"))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Roving Detail',
                                label='Roving Detail',
-                               command = lambda s=self:s.demo('roving'))
-
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,roving"))
+      
       self.menuBar.addmenuitem('Demo', 'command', 'Roving Density',
                                label='Roving Density',
-                               command = lambda s=self:s.demo('roving_density'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,roving_density"))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Transparency',
                                label='Transparency',
-                               command = lambda s=self:s.demo('trans'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,trans"))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Ray Tracing',
                                label='Ray Tracing',
-                               command = lambda s=self:s.demo('ray'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,ray"))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Sculpting',
                                label='Sculpting',
-                               command = lambda s=self:s.demo('sculpt'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,sculpt"))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Scripted Animation',
                                label='Scripted Animation',
-                               command = lambda s=self:s.demo('anime'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,anime"))
 
-      self.menuBar.addmenuitem('Demo', 'command', 'MolScript/Raster3D Input',
-                               label='Molscript/Raster3D Input',
-                               command = lambda s=self:s.demo('raster3d'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Electrostatics',
                                label='Electrostatics',
-                               command = lambda s=self:s.demo('elec'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,elec"))
+
 
       self.menuBar.addmenuitem('Demo', 'command', 'Compiled Graphics Objects',
                                label='Compiled Graphics Objects',
-                               command = lambda s=self:s.demo('cgo'))
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,cgo"))
+
+      self.menuBar.addmenuitem('Demo', 'command', 'MolScript/Raster3D Input',
+                               label='Molscript/Raster3D Input',
+                               command = lambda: cmd.do(
+         "_ replace_wizard demo,raster3d"))
 
       self.menuBar.addmenuitem('Demo', 'separator', '')
       
-      self.menuBar.addmenuitem('Demo', 'command', 'Clear',
-                               label='Clear',
+      self.menuBar.addmenuitem('Demo', 'command', 'End Demonstration',
+                               label='End Demonstration',
                                command = lambda s=self:s.demo('finish'))
