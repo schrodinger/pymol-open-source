@@ -55,7 +55,7 @@ ListVarDeclare(BlockList,Block);
 
 #define WizardMargin 119
 
-#define ButModeMargin 29
+#define ButModeMargin 26
 #define ControlMargin 0
 
 typedef struct {
@@ -112,6 +112,12 @@ void OrthoKeyAlt(unsigned char k);
 #define cWizardBorder 7
 int OrthoLoopBlockDrag(Block *block,int x,int y,int mod);
 int OrthoLoopBlockRelease(Block *block,int button,int x,int y,int mod);
+
+int OrthoGetWidth(void)
+{
+  OrthoObject *I=&Ortho;
+  return(I->Width);
+}
 /*========================================================================*/
 int OrthoLoopBlockDrag(Block *block,int x,int y,int mod)
 {

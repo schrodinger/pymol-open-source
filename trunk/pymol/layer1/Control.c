@@ -24,20 +24,62 @@ Z* -------------------------------------------------------------------
 #include "Executive.h"
 #include "Setting.h"
 #include "P.h"
+#include "Grap.h"
 
 #include"Movie.h"
 
 #define cControlBoxSize 17
-#define cControlLeftMargin 4
+#define cControlLeftMargin 8
 #define cControlTopMargin 5
 #define cControlSpacing 2
 #define cControlInnerMargin 4
 #define cControlSpread 6
+#define cControlSize 160
+
+#define cControlButtons 7
 
 CControl Control;
 
 void ControlDraw(Block *block);
 int ControlClick(Block *block,int button,int x,int y,int mod);
+
+static void ControlReshape(Block *block,int width, int height)
+{
+  CControl *I=&Control;
+  BlockReshape(block,width,height);
+
+  I->ExtraSpace = ((block->rect.right-block->rect.left)-cControlSize);
+  if(I->ExtraSpace<0)
+    I->ExtraSpace=0;
+  
+}
+
+static int ControlDrag(Block *block,int x,int y,int mod)
+{
+  int width;
+  int delta;
+  int gui_width;
+  CControl *I=&Control;
+  delta = x-I->LastPos;
+  if(I->DragFlag) {
+    if(delta) {
+      gui_width = SettingGet(cSetting_internal_gui_width)-delta;
+      width = OrthoGetWidth()+delta;
+    I->LastPos = x;
+    SettingSet(cSetting_internal_gui_width,(float)gui_width);
+    OrthoReshape(-1,-1);
+    }
+  }
+  return(1);
+}
+
+static int ControlRelease(Block *block,int button,int x,int y,int mod)
+{
+  CControl *I=&Control;  
+  OrthoUngrab();
+  I->DragFlag=false;
+  return(1);
+}
 
 Block *ControlGetBlock(void)
 {
@@ -65,13 +107,19 @@ void ControlInit(void)
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ControlClick;
   I->Block->fDraw    = ControlDraw;
-  I->Block->fReshape = BlockReshape;
+  I->Block->fDrag = ControlDrag;
+  I->Block->fRelease = ControlRelease;
+  I->Block->fReshape = ControlReshape;
   I->Block->active = true;
-
-  I->Block->TextColor[0]=1.0;
-  I->Block->TextColor[1]=0.2;
-  I->Block->TextColor[2]=0.2;
-
+  I->Block->TextColor[0]=0.9;
+  I->Block->TextColor[1]=0.9;
+  I->Block->TextColor[2]=0.9;
+  I->ButtonColor[0]=0.5;
+  I->ButtonColor[1]=0.5;
+  I->ButtonColor[2]=0.5;
+  I->ActiveColor[0]=0.8;
+  I->ActiveColor[1]=0.8;
+  I->ActiveColor[2]=0.8;
   OrthoAttach(I->Block,cOrthoTool);
 
   I->Rocking=false;
@@ -102,23 +150,35 @@ void ControlRock(int mode)
   OrthoDirty();
 }
 
+static int gap(int c)
+{
+  CControl *I=&Control;
+  return((c*I->ExtraSpace)/cControlButtons-((c-1)*I->ExtraSpace)/cControlButtons);
+}
 /*========================================================================*/
 int ControlClick(Block *block,int button,int x,int y,int mod)
 {
   CControl *I=&Control;
   int sel = 0;
   int flag = false;
-	
+  int c;
+
+  I->LastPos =x;
   x -= I->Block->rect.left+cControlLeftMargin;
   y -= I->Block->rect.top-cControlTopMargin;
+  if(x<0) {
+    OrthoGrab(block);
+    I->DragFlag=true;
+  }
   if((y<=0)&&(y>(-cControlBoxSize)))
+    c=1;
 	 while(x>=0) {
 		if(x<cControlBoxSize)
 		  {
 			 flag=true;
 			 break;
 		  }
-		x-=cControlBoxSize+cControlSpacing;
+		x-=cControlBoxSize+cControlSpacing+gap(c++);
 		sel++;
 	 }
   if(flag) {
@@ -198,62 +258,122 @@ void ControlDraw(Block *block)
 {
   CControl *I=&Control;
   int x,y;
+  int c=0;
 
   if(PMGUI) {
+
     glColor3fv(I->Block->BackColor);
     BlockFill(I->Block);
     glColor3fv(I->Block->TextColor);
+
+    {
+      int top,left,bottom,right;
+
+      left = I->Block->rect.left;
+      bottom = I->Block->rect.bottom+3;
+      top = bottom+cControlBoxSize+1;
+      right=left+4;
+      
+      
+      glColor3f(0.8,0.8,0.8);
+      glBegin(GL_POLYGON);
+      glVertex2i(right,top);
+      glVertex2i(right,bottom+1);
+      glVertex2i(left,bottom+1);
+      glVertex2i(left,top);
+      glEnd();
+      
+      glColor3f(0.3,0.3,0.3);
+      glBegin(GL_POLYGON);
+      glVertex2i(right,top-1);
+      glVertex2i(right,bottom);
+      glVertex2i(left+1,bottom);
+      glVertex2i(left+1,top-1);
+      glEnd();
+      
+      glColor3f(0.3,0.3,0.3);
+      glBegin(GL_POLYGON);
+      glVertex2i(right,bottom+1);
+      glVertex2i(right,bottom);
+      glVertex2i(left,bottom);
+      glVertex2i(left,bottom+1);
+      glEnd();
+
+      glColor3fv(I->ButtonColor);
+      
+      glBegin(GL_POLYGON);
+      glVertex2i(right-1,top-1);
+      glVertex2i(right-1,bottom+1);
+      glVertex2i(left+1,bottom+1);
+      glVertex2i(left+1,top-1);
+      glEnd();
+    }
+
+
     
     x = I->Block->rect.left+cControlLeftMargin;
     y = I->Block->rect.top-cControlTopMargin;
-    
-    
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x,y);
+
+    glColor3fv(I->ButtonColor);
+    glBegin(GL_POLYGON);
+    glVertex2i(x,y+1);
     glVertex2i(x,y-(cControlBoxSize-1));
     glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y);
+    glVertex2i(x+cControlBoxSize-1,y+1);
     glEnd();
-    glBegin(GL_LINE_LOOP);
+    glColor3fv(I->Block->TextColor);
+
+    glBegin(GL_TRIANGLES);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
                y-(cControlBoxSize-1)+cControlInnerMargin);
     glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
+    glEnd();
+    glBegin(GL_LINES);
     glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
     glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
     glEnd();
-    x+=cControlBoxSize+cControlSpacing;
-    
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x,y);
+    x+=cControlBoxSize+cControlSpacing+gap(c++);
+
+    glColor3fv(I->ButtonColor);
+    glBegin(GL_POLYGON);
+    glVertex2i(x,y+1);
     glVertex2i(x,y-(cControlBoxSize-1));
     glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y);
+    glVertex2i(x+cControlBoxSize-1,y+1);
     glEnd();
-    glBegin(GL_LINE_STRIP);
-    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
-    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
+    glColor3fv(I->Block->TextColor);
+
+    glBegin(GL_POLYGON);
+    glVertex2i(x+cControlBoxSize/2+2,
+               y-(cControlBoxSize/2));  
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+               y-cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,
+               y-(cControlBoxSize/2));  
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
                y-(cControlBoxSize-1)+cControlInnerMargin);
     glEnd();
-    x+=cControlBoxSize+cControlSpacing;
+    x+=cControlBoxSize+cControlSpacing+gap(c++);
 
 
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x,y);
+    glColor3fv(I->ButtonColor);
+    glBegin(GL_POLYGON);
+    glVertex2i(x,y+1);
     glVertex2i(x,y-(cControlBoxSize-1));
     glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y);
+    glVertex2i(x+cControlBoxSize-1,y+1);
     glEnd();
-    glBegin(GL_LINE_LOOP);
+    glColor3fv(I->Block->TextColor);
+
+    glBegin(GL_POLYGON);
     glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
     glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
                y-(cControlBoxSize-1)+cControlInnerMargin);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
     glEnd();
-    x+=cControlBoxSize+cControlSpacing;
+    x+=cControlBoxSize+cControlSpacing+gap(c++);
 
     if(MoviePlaying()) {
       glBegin(GL_TRIANGLE_STRIP);
@@ -264,7 +384,7 @@ void ControlDraw(Block *block)
 
       glEnd();
       glColor3fv(I->Block->BackColor);
-      glBegin(GL_LINE_LOOP);
+      glBegin(GL_TRIANGLES);
       glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin+1);
       glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin-1);
       glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
@@ -272,99 +392,99 @@ void ControlDraw(Block *block)
       glEnd();
       glColor3fv(I->Block->TextColor);
     } else {
-      glBegin(GL_LINE_LOOP);
-      glVertex2i(x,y);
+
+      glColor3fv(I->ButtonColor);
+      glBegin(GL_POLYGON);
+      glVertex2i(x,y+1);
       glVertex2i(x,y-(cControlBoxSize-1));
       glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-      glVertex2i(x+cControlBoxSize-1,y);
+      glVertex2i(x+cControlBoxSize-1,y+1);
       glEnd();
-      glBegin(GL_LINE_LOOP);
+      glColor3fv(I->Block->TextColor);
+
+      glBegin(GL_TRIANGLES);
       glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
       glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
       glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
                  y-(cControlBoxSize/2));  
       glEnd();
     }
-    x+=cControlBoxSize+cControlSpacing;
+    x+=cControlBoxSize+cControlSpacing+gap(c++);
 
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x,y);
+    glColor3fv(I->ButtonColor);
+    glBegin(GL_POLYGON);
+    glVertex2i(x,y+1);
     glVertex2i(x,y-(cControlBoxSize-1));
     glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y);
+    glVertex2i(x+cControlBoxSize-1,y+1);
     glEnd();
-    glBegin(GL_LINE_STRIP);
+    glColor3fv(I->Block->TextColor);
+
+    glBegin(GL_POLYGON);
+    glVertex2i(x+cControlBoxSize/2-2,
+               y-(cControlBoxSize/2));  
     glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
                y-(cControlBoxSize/2));  
     glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
     glEnd();
-    x+=cControlBoxSize+cControlSpacing;
+    x+=cControlBoxSize+cControlSpacing+gap(c++);
     
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x,y);
+    glColor3fv(I->ButtonColor);
+    glBegin(GL_POLYGON);
+    glVertex2i(x,y+1);
     glVertex2i(x,y-(cControlBoxSize-1));
     glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y);
+    glVertex2i(x+cControlBoxSize-1,y+1);
     glEnd();
-    glBegin(GL_LINE_LOOP);
+    glColor3fv(I->Block->TextColor);
+
+    glBegin(GL_TRIANGLES);
     glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
     glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
                y-(cControlBoxSize/2));  
+    glEnd();
+    glBegin(GL_LINES);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
                y-(cControlBoxSize-1)+cControlInnerMargin);
-    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-(cControlBoxSize/2));  
     glEnd();
-    x+=cControlBoxSize+cControlSpacing;
+    x+=cControlBoxSize+cControlSpacing+gap(c++);
 
     if(SettingGet(cSetting_sculpting)) {
-      glBegin(GL_TRIANGLE_STRIP);
+
+      glColor3fv(I->ActiveColor);
+      glBegin(GL_POLYGON);
       glVertex2i(x,y+1);
       glVertex2i(x,y-(cControlBoxSize-1));
-      glVertex2i(x+cControlBoxSize,y+1);
-      glVertex2i(x+cControlBoxSize,y-(cControlBoxSize-1));
-      
+      glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize-1,y+1);
       glEnd();
+
       glColor3fv(I->Block->BackColor);
-      glBegin(GL_LINE_STRIP);
-      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
-                 y-cControlInnerMargin+1);
-      glVertex2i(x+cControlInnerMargin,
-                 y-(cControlBoxSize/3));  
-      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
-                 y-(2*cControlBoxSize/3)+cControlInnerMargin-2);  
-      glVertex2i(x+cControlInnerMargin,
-                 y-(cControlBoxSize-1)+cControlInnerMargin-1);
-      
-      glEnd();
+
+      GrapDrawStr("S",x+cControlInnerMargin,
+                  y-cControlBoxSize+cControlInnerMargin+1);
       glColor3fv(I->Block->TextColor);    
     } else {
-
-      glBegin(GL_LINE_LOOP);
-      glVertex2i(x,y);
+      
+      glColor3fv(I->ButtonColor);
+      glBegin(GL_POLYGON);
+      glVertex2i(x,y+1);
       glVertex2i(x,y-(cControlBoxSize-1));
       glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-      glVertex2i(x+cControlBoxSize-1,y);
+      glVertex2i(x+cControlBoxSize-1,y+1);
       glEnd();
-      glBegin(GL_LINE_STRIP);
-      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
-                 y-cControlInnerMargin+1);
-      glVertex2i(x+cControlInnerMargin,
-                 y-(cControlBoxSize/3));  
-      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
-                 y-(2*cControlBoxSize/3)+cControlInnerMargin-2);  
-      glVertex2i(x+cControlInnerMargin,
-                 y-(cControlBoxSize-1)+cControlInnerMargin-1);
-      glEnd();
-      
+      glColor3fv(I->Block->TextColor);
+      GrapDrawStr("S",x+cControlInnerMargin,
+                  y-cControlBoxSize+cControlInnerMargin+1);
 
     }
-    x+=cControlBoxSize+cControlSpacing; 
+    x+=cControlBoxSize+cControlSpacing+gap(c++);
     
     if(I->Rocking) {
-      
+      glColor3fv(I->ActiveColor);
       glBegin(GL_TRIANGLE_STRIP);
       glVertex2i(x,y+1);
       glVertex2i(x,y-(cControlBoxSize-1));
@@ -373,7 +493,7 @@ void ControlDraw(Block *block)
       
       glEnd();
       glColor3fv(I->Block->BackColor);
-      glBegin(GL_LINE_LOOP);
+      glBegin(GL_POLYGON);
       glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
                  y-cControlInnerMargin);
       glVertex2i(x+(cControlBoxSize/2),
@@ -383,13 +503,16 @@ void ControlDraw(Block *block)
       glEnd();
       glColor3fv(I->Block->TextColor);
     } else {
-      glBegin(GL_LINE_LOOP);
-      glVertex2i(x,y);
+      glColor3fv(I->ActiveColor);
+      glColor3fv(I->ButtonColor);
+      glBegin(GL_POLYGON);
+      glVertex2i(x,y+1);
       glVertex2i(x,y-(cControlBoxSize-1));
       glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-      glVertex2i(x+cControlBoxSize-1,y);
+      glVertex2i(x+cControlBoxSize-1,y+1);
       glEnd();
-      glBegin(GL_LINE_LOOP);
+      glColor3fv(I->Block->TextColor);
+      glBegin(GL_POLYGON);
       glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
                  y-cControlInnerMargin);
       glVertex2i(x+(cControlBoxSize/2),
@@ -399,7 +522,7 @@ void ControlDraw(Block *block)
       glEnd();
       
     }
-    x+=cControlBoxSize+cControlSpacing; 
+    x+=cControlBoxSize+cControlSpacing+gap(c++);
 
 
 

@@ -160,6 +160,10 @@ void ButModeInit(void)
   I->TextColor2[1]=0.8;
   I->TextColor2[2]=0.8;
 
+  I->TextColor3[0]=1.0;
+  I->TextColor3[1]=0.5;
+  I->TextColor3[2]=0.5;
+
   OrthoAttach(I->Block,cOrthoTool);
 
 }
@@ -283,8 +287,10 @@ void ButModeDraw(Block *block)
     glColor3fv(I->Block->TextColor);
     y-=cButModeLineHeight;
 
+    glColor3fv(I->TextColor3);
     if(I->Caption[0]) GrapDrawStr(I->Caption,x,y);
 
+    glColor3fv(I->Block->TextColor);
     y-=cButModeLineHeight;
     if(I->Samples) 
       rate = I->Rate/I->Samples;
