@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"PConv.h"
 #include"Match.h"
+#include"ObjectCGO.h"
 
 #include"Menu.h"
 #include"Map.h"
@@ -542,7 +543,8 @@ int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,
 }
 
 
-float ExecutiveAlign(char *s1,char *s2)
+float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
+                     float cutoff,int cycles,int quiet,char *oname)
 {
   int sele1=SelectorIndexByName(s1);
   int sele2=SelectorIndexByName(s2);
@@ -564,18 +566,19 @@ float ExecutiveAlign(char *s1,char *s2)
         match = MatchNew(na,nb);
         if (ok) ok = MatchResidueToCode(match,vla1,na);
         if (ok) ok = MatchResidueToCode(match,vla2,nb);
-        if (ok) ok = MatchMatrixFromFile(match,"/apps/pymol/linux/modules/pymol/blastmat/BLOSUM62");
+        if (ok) ok = MatchMatrixFromFile(match,mat_file);
         if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb);
-        result = MatchAlign(match,-10.0,-0.5,0);
-        if(match->pair) { /* alignment was successful */
+        result = MatchAlign(match,gap,extend,skip);
+        if(match->pair) { 
           c = SelectorCreateAlignments(match->pair,
                                        sele1,vla1,sele2,vla2,
-                                       "align1","align2");
+                                       "_align1","_align2",false);
           if(c) {
             PRINTFB(FB_Executive,FB_Actions)
               " ExecutiveAlign: %d atoms aligned.\n",c
               ENDFB;
-              ExecutiveRMS("align1","align2",2,2.0,0);
+            ExecutiveRMS("_align1","_align2",2,cutoff,cycles,quiet,oname);
+            
           }
         }
         if(match) 
@@ -585,7 +588,7 @@ float ExecutiveAlign(char *s1,char *s2)
   }
   VLAFreeP(vla1);
   VLAFreeP(vla2);
-  return 1.0;
+  return result;
 }
 
 int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
@@ -1836,17 +1839,21 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,int atomi
   }
 }
 /*========================================================================*/
-float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int quiet)
+float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,int quiet,char *oname)
 {
   int sele1,sele2;
   float rms = -1.0;
-  int a;
+  int a,b;
   float inv,*f,*f1,*f2;
   ObjectMoleculeOpRec op1;
   ObjectMoleculeOpRec op2;
   OrthoLineType buffer;
   int *flag;
   int ok=true;
+  int repeat;
+  CGO *cgo = NULL;
+  ObjectCGO *ocgo;
+  float v1[3],*v2;
 
   sele1=SelectorIndexByName(s1);
   op1.vv1=NULL;
@@ -1855,8 +1862,6 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int quiet)
   op2.vc1=NULL;
 
   if(sele1>=0) {
-    
-    
     op1.code = OMOP_AVRT;
     op1.nvv1=0;
     op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
@@ -1896,37 +1901,6 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int quiet)
           }
       }
   }
-  if(op1.vv1&&op2.vv1) {
-    if(op1.nvv1==op2.nvv1) {
-      if(refine>R_SMALL4) {
-        flag = MatrixFilter(refine,20,2,op1.nvv1,op1.vv1,op2.vv1);
-
-        /* eliminate unflagged vertices -- they're considered outliers */
-
-        if(flag) {
-          f1 = op1.vv1;
-          f2 = op2.vv1;
-          for(a=0;a<op1.nvv1;a++) {
-            if(!flag[a]) {
-              op2.nvv1--;
-            } else {
-              f1+=3;
-              f2+=3;
-            }
-          copy3f(op1.vv1+3*a,f1);
-          copy3f(op2.vv1+3*a,f2);
-          }
-          if(op2.nvv1!=op1.nvv1) {
-            PRINTFB(FB_Executive,FB_Actions)
-              " ExecutiveRMS: %d atoms thrown out..\n",op1.nvv1-op2.nvv1
-              ENDFB;
-          }
-          op1.nvv1 = op2.nvv1;
-          FreeP(flag);
-        }
-      }
-    }
-  }
 
   if(op1.vv1&&op2.vv1) {
     if(op1.nvv1!=op2.nvv1) {
@@ -1946,16 +1920,90 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int quiet)
           ok=false;
         }
       }
-      if(mode!=0) 
+      
+      if(mode!=0) {
         rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
+        repeat=true;
+        b=0;
+        while(repeat) {
+          repeat=false;
+          b++;
+          if(b>max_cyc)
+            break;
+          if((refine>R_SMALL4)&&(rms>R_SMALL4)) {
+            flag=Alloc(int,op1.nvv1);
+            
+            if(flag) {          
+              for(a=0;a<op1.nvv1;a++) {
+                MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
+                v2=op2.vv1+(a*3);
+                if((diff3f(v1,v2)/rms)>refine) {
+                  flag[a] = false;
+                  repeat=true;
+                }
+                else
+                  flag[a] = true;
+              }
+              f1 = op1.vv1;
+              f2 = op2.vv1;
+              for(a=0;a<op1.nvv1;a++) {
+                if(!flag[a]) {
+                  op2.nvv1--;
+                } else {
+                  copy3f(op1.vv1+(3*a),f1);
+                  copy3f(op2.vv1+(3*a),f2);
+                  f1+=3;
+                  f2+=3;
+                }
+              }
+              if(op2.nvv1!=op1.nvv1) {
+                PRINTFB(FB_Executive,FB_Actions)
+                  " ExecutiveRMS: %d atoms rejected during cycle %d (RMS=%0.2f).\n",op1.nvv1-op2.nvv1,b,rms
+                  ENDFB;
+              }
+              op1.nvv1 = op2.nvv1;
+              FreeP(flag);
+              if(op1.nvv1) 
+                rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);            
+              else
+                break;
+            }
+          }
+        }
+      }
       else
         rms = MatrixGetRMS(op1.nvv1,op1.vv1,op2.vv1,NULL);
+
+      if(!op1.nvv1) {
+        PRINTFB(FB_Executive,FB_Results) 
+          " Executive: Error -- no atoms left after refinement!\n"
+          ENDFB;
+        ok=false;
+      }
+
       if(ok) {
         if(!quiet) {
           PRINTFB(FB_Executive,FB_Results) 
             " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,op1.nvv1,op2.nvv1 
-            ENDFB
-            }
+            ENDFB;
+        }
+        if(oname) {
+          cgo=CGONew();
+          CGOColor(cgo,1.0,1.0,0.0);
+          CGOBegin(cgo,GL_LINES);
+          for(a=0;a<op1.nvv1;a++) {
+            CGOVertexv(cgo,op2.vv1+(a*3));
+            MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
+            CGOVertexv(cgo,v1);
+          }
+          CGOEnd(cgo);
+          CGOStop(cgo);
+          ocgo = ObjectCGOFromCGO(NULL,cgo,0);
+          ObjectSetName((CObject*)ocgo,oname);
+          ExecutiveDelete(oname);
+          ExecutiveManageObject((CObject*)ocgo);
+          SceneDirty();
+        }
         if(mode==2) {
           if(ok) {
             op2.code = OMOP_TTTF;
@@ -3345,6 +3393,7 @@ void ExecutiveManageObject(CObject *obj)
     if(SettingGet(cSetting_auto_zoom)) {
       ExecutiveWindowZoom(obj->Name,0.0);
     }
+
 }
 /*========================================================================*/
 void ExecutiveManageSelection(char *name)
@@ -3442,6 +3491,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectMolecule:
                   MenuActivate(x,y,"mol_show",rec->obj->Name);
                   break;
+                case cObjectCGO:
+                  MenuActivate(x,y,"cgo_show",rec->obj->Name);
+                  break;
                 case cObjectDist:
                   MenuActivate(x,y,"dist_show",rec->obj->Name);
                   break;
@@ -3468,6 +3520,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 switch(rec->obj->type) {
                 case cObjectMolecule:
                   MenuActivate(x,y,"mol_hide",rec->obj->Name);
+                  break;
+                case cObjectCGO:
+                  MenuActivate(x,y,"cgo_hide",rec->obj->Name);
                   break;
                 case cObjectDist:
                   MenuActivate(x,y,"dist_hide",rec->obj->Name);
@@ -3520,6 +3575,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectDist:
                 case cObjectMap:
                 case cObjectSurface:
+                case cObjectCGO:
                 case cObjectMesh:
                   MenuActivate(x,y,"general_color",rec->obj->Name);
                   break;

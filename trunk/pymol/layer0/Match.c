@@ -285,12 +285,11 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
       mxa=-1;
       mxb=-1;
 
-      /* search for gross insertions and deletions */
+      /* search for asymmetric insertions and deletions */
       f = a+1;
       for(g=b+1;g<ng;g++) {
         tst = score[f][g];
-        /* only penalize if we are not at the end */
-        if(tst!=0.0) {
+        if(!((f==I->na)||(g==I->nb))) {
           gap = g-(b+1);
           if(gap) tst+=gap_penalty+ext_penalty*gap;
         }
@@ -302,18 +301,16 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
       }
       g = b+1;
       for(f=a+1;f<nf;f++) {
-          tst = score[f][g];
-          /* only penalize if we are not at the end */
+        tst = score[f][g];
+        if(!((f==I->na)||(g==I->nb))) {
           gap=(f-(a+1));
-          if(tst!=0.0) {
-            gap = f-(a+1);
-            if(gap) tst+=gap_penalty+ext_penalty*gap;
-          }
-          if(tst>mxv) {
-            mxv = tst;
-            mxa = f;
-            mxb = g;
-          }
+          if(gap) tst+=gap_penalty+ext_penalty*gap;
+        }
+        if(tst>mxv) {
+          mxv = tst;
+          mxa = f;
+          mxb = g;
+        }
       }
 
       /* search for high scoring mismatched stretches */
@@ -327,7 +324,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
         for(g=b+1;g<sg;g++) {
           tst = score[f][g];
           /* only penalize if we are not at the end */
-          if(tst!=0.0) {
+          if(!((f==I->na)||(g==I->nb)))
             gap = ((f-(a+1))+(g-(b+1)));
             tst+=2*gap_penalty+ext_penalty*gap;
           }
@@ -336,7 +333,6 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
             mxa = f;
             mxb = g;
           }
-        }
       }
       
       /* store what the best next step is */
@@ -346,9 +342,9 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
       
       /* and store the cumulative score for this cell */
       score[a][b] = mxv+I->mat[a][b];
-    
-    }
+      
   }
+}
 
   if(Feedback(FB_Match,FB_Debugging)) {
     for(b=0;b<I->nb;b++) {

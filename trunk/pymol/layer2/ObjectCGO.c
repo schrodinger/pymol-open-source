@@ -93,6 +93,7 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
 
   if(!pass) {
     if(I->Obj.RepVis[cRepCGO]) {
+      
       if(state<I->NState) {
         sobj = I->State+state;
       }
@@ -180,6 +181,46 @@ CGO *ObjectCGOPyListFloatToCGO(PyObject *list)
     }
   }
   return(cgo);
+}
+/*========================================================================*/
+ObjectCGO *ObjectCGOFromCGO(ObjectCGO *obj,CGO *cgo,int state)
+{
+  ObjectCGO *I = NULL;
+  int est;
+
+  if(obj) {
+    if(obj->Obj.type!=cObjectCGO) /* TODO: handle this */
+      obj=NULL;
+  }
+  if(!obj) {
+    I=ObjectCGONew();
+  } else {
+    I=obj;
+  }
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectCGOState,state);
+    I->NState=state+1;
+  }
+
+  if(I->State[state].std) {
+    CGOFree(I->State[state].std);
+  }
+  if(I->State[state].ray) {
+    CGOFree(I->State[state].ray);
+  }
+  est=CGOCheckComplex(cgo);
+  if(est) {
+    I->State[state].ray=cgo;
+    I->State[state].std=CGOSimplify(cgo,est);
+  } else 
+    I->State[state].std=cgo;
+  if(I) {
+    ObjectCGORecomputeExtent(I);
+  }
+  SceneChanged();
+  SceneCountFrames();
+  return(I);
 }
 /*========================================================================*/
 ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
