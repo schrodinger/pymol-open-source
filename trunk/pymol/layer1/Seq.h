@@ -23,18 +23,22 @@ Z* -------------------------------------------------------------------
 typedef struct {
   int start;
   int stop;
+  int offset; 
   int atom_at; /* starting offset in list */
   int inverse;
 } CSeqCol;
   
 typedef struct {
   int len;
+  int label_flag;
+  int color;
   char *txt;
   CSeqCol *col;
   int nCol;
   int *char2col;
   int *atom_lists;
   char name[ObjNameMax]; /* associated object */
+  struct ObjectMolecule *obj; /* this pointer only valid during update */
 } CSeqRow;
 
 typedef struct {

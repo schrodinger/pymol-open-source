@@ -93,7 +93,7 @@ static void SeqReshape(Block *block,int width, int height)
 
   {
     int extra;
-    I->VisSize = (I->Block->rect.right - I->Block->rect.left)/I->CharWidth;
+    I->VisSize = (I->Block->rect.right - I->Block->rect.left -1)/I->CharWidth;
     /*    printf("%d %d %d %d %d\n",cw,I->Block->rect.right,I->Block->rect.left,I->VisSize,I->Size);*/
     
     if(I->VisSize<1) I->VisSize = 1;
@@ -239,35 +239,43 @@ static void SeqDraw(Block *block)
       int a,b;
       float white[3] = {1,1,1};
       float black[3] = {0,0,0};
+      float blue[3] = {0.5,0.5,1.0};
+      float *cur_color;
       CSeqRow *row;
       CSeqCol *col;
-       int xx,yy,ch_wid,pix_wid,tot_len;
-     glColor3fv(white);	 
+      int xx,yy,ch_wid,pix_wid,tot_len;
+
+
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
+        if(row->label_flag)
+          cur_color = white;
+        else
+          cur_color = blue;
+        glColor3fv(cur_color);
         yy=y-2;
         for(b=0;b<row->nCol;b++) {
           col = row->col+b;
-          if(col->start>=I->NSkip) {
-            xx=x+I->CharMargin+I->CharWidth*(col->start-I->NSkip);
+          if((col->offset+(col->stop-col->start))>=I->NSkip) {
+            xx=x+I->CharMargin+I->CharWidth*(col->offset-I->NSkip);
             ch_wid = (col->stop-col->start);
             pix_wid = I->CharWidth * ch_wid;
-            tot_len = col->start+ch_wid-I->NSkip;
+            tot_len = col->offset+ch_wid-I->NSkip;
             if(tot_len<=I->VisSize) {
               if(col->inverse) {
-                glColor3fv(white);
+                glColor3fv(cur_color);
                 glBegin(GL_POLYGON);
-                glVertex2i(xx-1,yy);
-                glVertex2i(xx-1,yy+I->LineHeight-1);
-                glVertex2i(xx+pix_wid-1,yy+I->LineHeight-1);
-                glVertex2i(xx+pix_wid-1,yy);
+                glVertex2i(xx,yy-1);
+                glVertex2i(xx,yy+I->LineHeight-1);
+                glVertex2i(xx+pix_wid,yy+I->LineHeight-1);
+                glVertex2i(xx+pix_wid,yy-1);
                 glEnd();
                 glColor3fv(black);
-                GrapDrawSubStrFast(I->Row[a].txt,xx,y,
+                GrapDrawSubStrFast(row->txt,xx,y,
                                    col->start,ch_wid);
-                glColor3fv(white);
+                glColor3fv(cur_color);
               } else {
-                GrapDrawSubStrFast(I->Row[a].txt,xx,y,
+                GrapDrawSubStrFast(row->txt,xx,y,
                                    col->start,ch_wid);
               }
             }
