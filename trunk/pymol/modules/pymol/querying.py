@@ -67,7 +67,7 @@ PYMOL API
       return r
 
    def distance(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,
-                mode=None,zoom=0,width=None,length=None,gap=None,labels=1):
+                mode=None,zoom=0,width=None,length=None,gap=None,labels=1,quiet=1):
       '''
 DESCRIPTION
 
@@ -157,7 +157,8 @@ NOTES
             if selection2!="same":
                selection2 = "("+selection2+")"
             r = _cmd.dist(str(nam),"("+str(selection1)+")",
-                          str(selection2),int(mode),float(cutoff),int(labels))
+                          str(selection2),int(mode),float(cutoff),
+                          int(labels),int(quiet))
             if width!=None:
                cmd.set("dash_width",width,nam)
             if length!=None:

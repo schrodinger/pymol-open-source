@@ -1956,25 +1956,25 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
 {
   char *name,*str1,*str2;
   float cutoff,result=-1.0;
-  int labels;
+  int labels,quiet;
   int mode;
   OrthoLineType s1,s2;
   int ok=false;
   int c1,c2;
-  ok = PyArg_ParseTuple(args,"sssifi",&name,&str1,&str2,&mode,&cutoff,&labels);
+  ok = PyArg_ParseTuple(args,"sssifii",&name,&str1,&str2,&mode,&cutoff,&labels,&quiet);
   if (ok) {
     APIEntry();
     c1 = SelectorGetTmp(str1,s1);
     c2 = SelectorGetTmp(str2,s2);
     if(c1&&(c2||WordMatch(cKeywordSame,s2,true)))
-        result = ExecutiveDist(name,s1,s2,mode,cutoff,labels);
+        result = ExecutiveDist(name,s1,s2,mode,cutoff,labels,quiet);
     else {
-      if(!c1) {
+      if((!quiet)&&(!c1)) {
         PRINTFB(FB_Executive,FB_Errors)
           " Distance-ERR: selection 1 contains no atoms.\n"
           ENDFB;
       } 
-      if(!c2) {
+      if((!quiet)&&(!c2)) {
         PRINTFB(FB_Executive,FB_Errors)
           " Distance-ERR: selection 2 contains no atoms.\n"
           ENDFB;

@@ -189,6 +189,10 @@ def sele_action(s):
            [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'")'          ],
            [ 0, ''               ,''                             ],
+           [ 1, 'polar contacts'  ,
+             'cmd.dist("'+s+'_pc","'+s+'&elem n+o","same",3.2,quiet=1,mode=1,labels=0)'
+             ],                      
+           [ 0, ''               ,''                             ],
            [ 1, 'full residues'  ,'cmd.select("'+s+'","(byres '+s+')",show=1)'      ],
            [ 1, 'expand by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",show=1)' ],
            [ 1, 'expand by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",show=1)' ],
@@ -213,7 +217,10 @@ def mol_action(s):
            [ 1, 'center'         ,'cmd.center("'+s+'")'            ],
            [ 1, 'orient'       , 'cmd.orient("'+s+'")'    ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'assign S.S.'  ,'util.ss("'+s+'")'        ],           
+           [ 1, 'assign S.S.'  ,'util.ss("'+s+'")'        ],
+           [ 1, 'polar contacts'  ,
+             'cmd.dist("'+s+'_pc","'+s+'&elem n+o","same",3.2,quiet=1,mode=1,labels=0)'
+             ],                      
            [ 0, ''          ,''                                              ],
            [ 1, 'freeze state'  ,'cmd.set("state",cmd.get_state(),"'+s+'")'        ],
            [ 1, 'thaw state'  ,'cmd.set("state",0,"'+s+'")'        ],           

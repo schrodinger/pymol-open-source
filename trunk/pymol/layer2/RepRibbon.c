@@ -129,21 +129,40 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
     glLineWidth(I->linewidth);
 	 
     if(c) {
+
+      int ribbon_smooth;
+
+      ribbon_smooth=SettingGet_i(NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
+      if(!ribbon_smooth)
+        glDisable(GL_LINE_SMOOTH);
+      int first = true;
 	   glDisable(GL_LIGHTING);
-      glBegin(GL_LINES);
+      glBegin(GL_LINE_STRIP);
       SceneResetNormal(true);
-	 while(c--)
-		{
-        v++;
-		  glColor3fv(v);
-		  v+=3;
-		  glVertex3fv(v);
-		  v+=3;
-		  glVertex3fv(v);
-		  v+=3;
-		}
-	 glEnd();
-    glEnable(GL_LIGHTING);
+      while(c--)
+        {
+          v++;
+          glColor3fv(v);
+          v+=3;
+          if(first) {
+            glVertex3fv(v);
+            first=false;
+          } else if(
+                    (v[0]!=v[-7])||
+                    (v[1]!=v[-6])||
+                    (v[2]!=v[-5])) {
+            glEnd();
+            glBegin(GL_LINE_STRIP);
+            glVertex3fv(v);
+          }
+          v+=3;
+          glVertex3fv(v);
+          v+=3;
+        }
+      glEnd();
+      glEnable(GL_LIGHTING);
+      if(SettingGet(cSetting_line_smooth))
+        glEnable(GL_LINE_SMOOTH);
 	 }
   }
 }
@@ -182,6 +201,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   int visFlag;
   float dev;
   int trace;
+  int ribbon_color;
 
   Pickable *rp=NULL;
   OOAlloc(RepRibbon);
@@ -206,6 +226,8 @@ Rep *RepRibbonNew(CoordSet *cs)
   throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
   trace=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace);
 
+  ribbon_color=SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_ribbon_color);
+
   sampling=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
   if(sampling<1) sampling=1;
   radius=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_radius);
@@ -214,8 +236,9 @@ Rep *RepRibbonNew(CoordSet *cs)
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
   I->R.fRecolor=NULL;
-
+  I->R.obj = (CObject*)obj;
   I->linewidth = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_width);
+
 
   /* find all of the CA points */
 
@@ -405,6 +428,10 @@ Rep *RepRibbonNew(CoordSet *cs)
 			 {
 				c1=*(cs->Color+*atp);
 				c2=*(cs->Color+*(atp+1));
+
+            if(ribbon_color>=0) {
+              c1 = (c2 = ribbon_color);
+            }
 
             dev = throw*(*d);
 

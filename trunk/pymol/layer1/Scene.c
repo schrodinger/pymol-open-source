@@ -98,6 +98,8 @@ typedef struct {
   int StereoMode;
   OrthoLineType vendor,renderer,version;
   int SculptingFlag,SculptingSave;
+  int RovingDirtyFlag;
+  int RovingCleanupFlag;
 } CScene;
 
 CScene Scene;
@@ -584,6 +586,16 @@ void SceneDirty(void)
   ScenePurgeCopy();
   OrthoDirty();
 }
+
+void SceneRovingDirty(void)
+{
+  CScene *I=&Scene;
+  if(SettingGet(cSetting_roving_detail)) {
+    I->RovingDirtyFlag=true;
+    SceneDirty();
+  }
+}
+
 /*========================================================================*/
 void SceneChanged(void)
 {
@@ -699,6 +711,8 @@ void SceneWindowSphere(float *location,float radius)
   I->Front=(-I->Pos[2]-radius*1.2);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
   I->Back=(-I->Pos[2]+radius*1.55);
+
+  SceneRovingDirty();
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 }
 /*========================================================================*/
@@ -725,6 +739,7 @@ void SceneRelocate(float *location)
   I->Front=(-I->Pos[2]-(slab_width*0.45));
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
   I->Back=(-I->Pos[2]+(slab_width*0.55));
+  SceneRovingDirty();
 
 }
 /*========================================================================*/
@@ -1425,11 +1440,53 @@ float SceneGetScreenVertexScale(float *v1)
 }
 
 static double last = 0.0;
-static void SceneRovingUpdate(void)
+
+void SceneRovingChanged(void)
 {
-  char buffer[1024];
+  CScene *I=&Scene;  
+  SceneRovingDirty();
+  I->RovingCleanupFlag=true;
+}
+
+static void SceneRovingCleanup(void)
+{
+  CScene *I=&Scene;  
+  I->RovingCleanupFlag=false;
+
+  char *s;  
+  char buffer[OrthoLineLength];
+
+  s = SettingGet_s(NULL,NULL,cSetting_roving_selection);
+
+  sprintf(buffer,"cmd.hide('lines','''%s''')",s);
+  PParse(buffer);
+  PFlush();
+  sprintf(buffer,"cmd.hide('sticks','''%s''')",s);
+  PParse(buffer);
+  PFlush();
+  sprintf(buffer,"cmd.hide('spheres','''%s''')",s);
+  PParse(buffer);
+  PFlush();
+  sprintf(buffer,"cmd.hide('ribbon','''%s''')",s);
+  PParse(buffer);
+  PFlush();
+  sprintf(buffer,"cmd.hide('cartoon','''%s''')",s);
+  PParse(buffer);
+  PFlush();
+  sprintf(buffer,"cmd.hide('nonbonded','''%s''')",s);
+  PParse(buffer);
+  PFlush();
+  sprintf(buffer,"cmd.hide('nb_spheres','''%s''')",s);
+  PParse(buffer);
+  PFlush();
+}
+
+void SceneRovingUpdate(void)
+{
+  CScene *I=&Scene;
+  char buffer[OrthoLineLength];
   float sticks,lines,spheres,labels,ribbon,cartoon;
-  float polar_contacts,polar_cutoff,nonbonded;
+  float polar_contacts,polar_cutoff,nonbonded,nb_spheres;
   char byres[10] = "byres";
   char not[4] = "not";
   char empty[1] = "";
@@ -1438,7 +1495,11 @@ static void SceneRovingUpdate(void)
   char *s;
   int refresh_flag;
 
-  if((UtilGetSeconds()-last)>SettingGet(cSetting_roving_delay)) {
+  if(I->RovingDirtyFlag&&(
+     (UtilGetSeconds()-last)>SettingGet(cSetting_roving_delay))) {
+
+    if(I->RovingCleanupFlag)
+      SceneRovingCleanup();
 
     s = SettingGet_s(NULL,NULL,cSetting_roving_selection);
     sticks = SettingGet(cSetting_roving_sticks);
@@ -1450,6 +1511,7 @@ static void SceneRovingUpdate(void)
     polar_contacts = SettingGet(cSetting_roving_polar_contacts);
     polar_cutoff = SettingGet(cSetting_roving_polar_cutoff);
     nonbonded = SettingGet(cSetting_roving_nonbonded);
+    nb_spheres = SettingGet(cSetting_roving_nb_spheres);
 
     if(SettingGet(cSetting_roving_byres))
       p2 = byres;
@@ -1464,7 +1526,7 @@ static void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-"cmd.hide('sticks','%s');cmd.show('sticks','%s and %s %s (center expand %1.3f)')",
+"cmd.hide('sticks','''%s''');cmd.show('sticks','%s and %s %s (center expand %1.3f)')",
               s,s,p1,p2,sticks);
       PParse(buffer);
       PFlush();
@@ -1479,7 +1541,7 @@ static void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('lines','%s');cmd.show('lines','%s & %s %s (center expand %1.3f)')",
+              "cmd.hide('lines','''%s''');cmd.show('lines','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,lines);
       PParse(buffer);
       PFlush();
@@ -1494,7 +1556,7 @@ static void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('labels','%s');cmd.show('labels','%s & %s %s (center expand %1.3f)')",
+              "cmd.hide('labels','''%s''');cmd.show('labels','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,labels);
       PParse(buffer);
       PFlush();
@@ -1509,7 +1571,7 @@ static void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('spheres','%s');cmd.show('spheres','%s & %s %s (center expand %1.3f)')",
+              "cmd.hide('spheres','''%s''');cmd.show('spheres','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,spheres);
       PParse(buffer);
       PFlush();
@@ -1524,7 +1586,7 @@ static void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('cartoon','%s');cmd.show('cartoon','%s & %s %s (center expand %1.3f)')",
+              "cmd.hide('cartoon','''%s''');cmd.show('cartoon','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,cartoon);
       PParse(buffer);
       PFlush();
@@ -1539,7 +1601,7 @@ static void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('ribbon','%s');cmd.show('ribbon','%s & %s %s (center expand %1.3f)')",
+              "cmd.hide('ribbon','''%s''');cmd.show('ribbon','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,ribbon);
       PParse(buffer);
       PFlush();
@@ -1577,12 +1639,28 @@ static void SceneRovingUpdate(void)
         p1=empty;
       }
       sprintf(buffer,
-              "cmd.hide('nonbonded','%s');cmd.show('nonbonded','%s & %s %s (center expand %1.3f)')",
+              "cmd.hide('nonbonded','''%s''');cmd.show('nonbonded','%s & %s %s (center expand %1.3f)')",
               s,s,p1,p2,nonbonded);
       PParse(buffer);
       PFlush();
       refresh_flag=true;
     }
+
+    if(nb_spheres!=0.0F) {
+      if(nb_spheres<0.0F) {
+        p1=not;
+        nb_spheres=fabs(nb_spheres);
+      } else {
+        p1=empty;
+      }
+      sprintf(buffer,
+              "cmd.hide('nb_spheres','''%s''');cmd.show('nb_spheres','%s & %s %s (center expand %1.3f)')",
+              s,s,p1,p2,nb_spheres);
+      PParse(buffer);
+      PFlush();
+      refresh_flag=true;
+    }
+
 
     if(refresh_flag) {
       PParse("cmd.refresh()");
@@ -1590,7 +1668,8 @@ static void SceneRovingUpdate(void)
     }
 
     last=UtilGetSeconds();
-  }
+    I->RovingDirtyFlag=false;
+  } 
 }
 /*========================================================================*/
 int SceneDrag(Block *block,int x,int y,int mod)
@@ -1728,6 +1807,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
     if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
       SceneGetPos(v2);
       SceneOriginSet(v2,true);
+      SceneRovingDirty();
       SceneRovingUpdate();
     }
     break;
@@ -1900,6 +1980,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
       subtract3f(I->Origin,v2,v2);
       SceneOriginSet(v2,true);
 
+      SceneRovingDirty();
       SceneRovingUpdate();
     }
   }
@@ -1962,7 +2043,7 @@ void SceneInit(void)
   I->TextColor[1]=1.0;
   I->TextColor[2]=0.2;
   I->SculptingSave=0;
-
+  
   SceneSetDefaultView();
 
   I->NFrame = 0;
@@ -1978,6 +2059,7 @@ void SceneInit(void)
   OrthoAttach(I->Block,cOrthoScene);
 
   I->DirtyFlag = true;
+  I->RovingDirtyFlag = false;
   I->ImageBuffer = NULL;
   I->ImageBufferWidth=0;
   I->ImageBufferHeight=0;
@@ -2248,6 +2330,13 @@ void SceneCopy(GLenum buffer)
 }
 
 /*========================================================================*/
+int SceneRovingCheckDirty(void)
+{
+  CScene *I=&Scene;
+
+  return(I->RovingDirtyFlag);
+}
+/*========================================================================*/
 void SceneUpdate(void)
 {
   CScene *I=&Scene;
@@ -2463,7 +2552,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     if(SettingGet(cSetting_line_smooth)) {
       if(!(pick||smp)) {
         glEnable(GL_LINE_SMOOTH);
-        glHint(GL_LINE_SMOOTH_HINT,GL_DONT_CARE);
+        glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
       }
       glLineWidth(0.0);
     } else {

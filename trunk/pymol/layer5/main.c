@@ -621,6 +621,10 @@ void MainBusyIdle(void)
     }
   }
 
+  if(SceneRovingCheckDirty()) {
+    SceneRovingUpdate();
+    I->IdleMode = 0;
+  }
   PFlush();
 
   if(I->SwapFlag) {

@@ -2464,7 +2464,8 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
   }
 }
 /*========================================================================*/
-float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels)
+float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,
+                    int labels,int quiet)
 {
   int sele1,sele2;
   ObjectDist *obj;
@@ -2484,7 +2485,7 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels
       if(ExecutiveFindObjectByName(nam))
         ExecutiveDelete(nam);
       ObjectSetName((CObject*)obj,nam);
-      ExecutiveManageObject((CObject*)obj,true,false);
+      ExecutiveManageObject((CObject*)obj,true,quiet);
       ExecutiveSetRepVisib(nam,cRepLine,1);
       if(!labels)
         ExecutiveSetRepVisib(nam,cRepLabel,0);        

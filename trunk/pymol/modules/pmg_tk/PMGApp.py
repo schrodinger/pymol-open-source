@@ -1310,6 +1310,12 @@ class PMGApp(AbstractApp):
                         variable = self.setting.roving_origin,
                         command = lambda s=self: s.setting.update('roving_origin'))
 
+      self.menuBar.addmenuitem('Mouse', 'checkbutton',
+                         'Roving Detail.',
+                         label=self.pad+'Roving Detail',
+                        variable = self.setting.roving_detail,
+                        command = lambda s=self: s.setting.update('roving_detail'))
+
       self.menuBar.addmenuitem('Mouse', 'separator', '')
       
       self.menuBar.addmenuitem('Mouse', 'command', '3 Button Universal Cycle',
