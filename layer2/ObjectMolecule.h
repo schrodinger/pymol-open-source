@@ -368,6 +368,7 @@ struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                                PDBInfoRec *pdb_info,
                                                int quiet);
 
+#if 0
 /* legacy binary file suppoort */
 
 typedef struct {
@@ -380,6 +381,7 @@ typedef struct {
   int order;
   int stereo;
 } BondType083;
+#endif
 
 #endif
 

@@ -603,7 +603,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
 #else
   PyObject *result = NULL;
 
-  result = PyList_New(37);
+  result = PyList_New(39);
   PyList_SetItem(result, 0,PyInt_FromLong(I->resv));
   PyList_SetItem(result, 1,PyString_FromString(I->chain));
   PyList_SetItem(result, 2,PyString_FromString(I->alt));
@@ -641,6 +641,8 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,34,PyInt_FromLong(I->discrete_state));
   PyList_SetItem(result,35,PyFloat_FromDouble(I->bohr_radius));
   PyList_SetItem(result,36,PyInt_FromLong(I->rank));
+  PyList_SetItem(result,37,PyInt_FromLong((int)I->hb_donor));
+  PyList_SetItem(result,38,PyInt_FromLong((int)I->hb_acceptor));
   return(PConvAutoNone(result));
 #endif
 }
@@ -693,6 +695,8 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok&&(ll>34)) ok = PConvPyIntToInt(PyList_GetItem(list,34),&I->discrete_state);
   if(ok&&(ll>35)) ok = PConvPyFloatToFloat(PyList_GetItem(list,35),&I->bohr_radius);
   if(ok&&(ll>36)) ok = PConvPyIntToInt(PyList_GetItem(list,36),&I->rank);
+  if(ok&&(ll>37)) ok = PConvPyIntToChar(PyList_GetItem(list,37),&I->hb_donor);
+  if(ok&&(ll>38)) ok = PConvPyIntToChar(PyList_GetItem(list,38),&I->hb_acceptor);
   return(ok);
 #endif
 }

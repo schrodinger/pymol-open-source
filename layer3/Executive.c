@@ -68,6 +68,8 @@ typedef struct SpecRec {
   int repOn[cRepCnt];
   int visible;
   int sele_color;
+  int hilight;
+  int previous;
 } SpecRec; /* specification record (a line in the executive window) */
 
 struct _CExecutive {
@@ -78,10 +80,11 @@ struct _CExecutive {
   int NSkip;
   struct CScrollBar *ScrollBar;
   CObject *LastEdited;
-  int Pressed,Active;
+  int Pressed,Over,OldVisibility,Immediate;
 };
 
-SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
+static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
+static int ExecutiveDrag(Block *block,int x,int y,int mod);
 
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
@@ -1090,7 +1093,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
     if(cur!=Py_None) { /* skip over None w/o aborting */
       skip=false;
       rec=NULL;
-      ListElemAlloc(G,rec,SpecRec); 
+      ListElemCalloc(G,rec,SpecRec); 
       rec->next=NULL;
       rec->name[0]=0;
       if(ok) ok = PyList_Check(cur);
@@ -1129,7 +1132,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
           break;
         default:
           PRINTFB(G,FB_Executive,FB_Errors)
-            " Executive:  unrecognized object \"%s\" of type %d.\n",
+            " Executive: skipping unrecognized object \"%s\" of type %d.\n",
             rec->name,rec->type
             ENDFB(G);
           skip=true;
@@ -1184,7 +1187,7 @@ static int ExecutiveSetSelections(PyMOLGlobals *G,PyObject *names)
     cur = PyList_GetItem(names,a);
     if(cur!=Py_None) { /* skip over None w/o aborting */
       rec=NULL;
-      ListElemAlloc(G,rec,SpecRec); 
+      ListElemCalloc(G,rec,SpecRec); 
       rec->next=NULL;
 
       if(ok) ok = PyList_Check(cur);
@@ -1382,19 +1385,26 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
   ColorReset(G);
   if(ok) ok = PyDict_Check(session);
 
-  if(ok&&SettingGet(G,cSetting_session_version_check)) {
+  if(ok) {
     tmp = PyDict_GetItemString(session,"version");
     if(tmp) {
       ok = PConvPyIntToInt(tmp,&version);
       if(ok) {
         if(version>_PyMOL_VERSION_int) {
           PRINTFB(G,FB_Executive,FB_Errors)
-            "Error: This session was created with a newer version of PyMOL (%1.2f).\n",version/100.0
+            "Warning: This session was created with a newer version of PyMOL (%1.2f).\n",
+            version/100.
             ENDFB(G);
-          PRINTFB(G,FB_Executive,FB_Errors)
-            "Error: Please obtain a more recent version from http://www.pymol.org\n"
-            ENDFB(G);
-          ok=false;
+          if(SettingGet(G,cSetting_session_version_check)) {
+            PRINTFB(G,FB_Executive,FB_Errors)
+              "Error: Please update first -- see http://www.pymol.org\n"
+              ENDFB(G);
+            ok=false;
+          } else {
+            PRINTFB(G,FB_Executive,FB_Errors)
+              "Warning: Some content may not load completely.\n"
+              ENDFB(G);
+          }
         } else {
           PRINTFB(G,FB_Executive,FB_Details)          
             " Executive: Loading version %1.2f session...\n",
@@ -5210,7 +5220,7 @@ char *ExecutiveFindBestNameMatch(PyMOLGlobals *G,char *name)
   return(result);
 }
 /*========================================================================*/
-SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name)
+static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -6534,7 +6544,7 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int allow_zoom,int quiet
           }
       }
     if(!rec)
-      ListElemAlloc(G,rec,SpecRec);
+      ListElemCalloc(G,rec,SpecRec);
 
     if(WordMatch(G,cKeywordAll,obj->Name,true)<0) {
       PRINTFB(G,FB_Executive,FB_Warnings) 
@@ -6609,7 +6619,7 @@ void ExecutiveManageSelection(PyMOLGlobals *G,char *name)
         rec->visible=false;
 
   if(!rec) {
-    ListElemAlloc(G,rec,SpecRec);
+    ListElemCalloc(G,rec,SpecRec);
     strcpy(rec->name,name);
     rec->type=cExecSelection;
     rec->next=NULL;
@@ -6817,8 +6827,11 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   break;
                 }
               } else {
+                rec->hilight=true;
                 I->Pressed = n;
-                I->Active = n;
+                I->OldVisibility = rec->visible;
+                I->Over = n;
+                I->Immediate = mod & cOrthoSHIFT;
                 OrthoGrab(G,I->Block);
                 OrthoDirty(G);
               }
@@ -6831,14 +6844,88 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 /*========================================================================*/
+static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
+                                      int new_vis,int mod)
+{
+  OrthoLineType buffer = "";
+
+  if(rec->type==cExecObject)
+    {
+      if(rec->visible&&!new_vis) {
+        if(SettingGet(G,cSetting_logging)) 
+          sprintf(buffer,"cmd.disable('%s')",rec->obj->Name);
+        SceneObjectDel(G,rec->obj);			
+      }
+      else if((!rec->visible)&&new_vis) {
+        sprintf(buffer,"cmd.enable('%s')",rec->obj->Name);
+        SceneObjectAdd(G,rec->obj);
+      }
+      SceneChanged(G);
+      if(SettingGet(G,cSetting_logging)) {
+        PLog(buffer,cPLog_pym);
+      }
+      rec->visible=new_vis;
+    }
+  else if(rec->type==cExecAll)
+    {
+      if(SettingGet(G,cSetting_logging)) {
+        if(rec->visible)
+          sprintf(buffer,"cmd.disable('all')");
+        else
+          sprintf(buffer,"cmd.enable('all')");
+        PLog(buffer,cPLog_pym);
+      }
+      ExecutiveSetObjVisib(G,cKeywordAll,!rec->visible);
+    }
+  else if(rec->type==cExecSelection)
+    {
+      if(mod&cOrthoCTRL) {
+        SettingSet(G,cSetting_selection_overlay,
+                   (float)(!((int)SettingGet(G,cSetting_selection_overlay))));
+        if(SettingGet(G,cSetting_logging)) {
+          sprintf(buffer,"cmd.set('selection_overlay',%d)",
+                  (int)SettingGet(G,cSetting_selection_overlay));
+          PLog(buffer,cPLog_pym);
+          sprintf(buffer,"cmd.enable('%s')",rec->name);
+          PLog(buffer,cPLog_pym);
+        }
+        rec->visible=true; 
+      } else if(mod&cOrthoSHIFT) {
+        if(rec->sele_color<7)
+          rec->sele_color=15;
+        else {
+          rec->sele_color--;
+          if(rec->sele_color<7)
+            rec->sele_color=15;
+        }
+        /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
+        rec->visible=true;
+      } else {
+        if(SettingGet(G,cSetting_logging)) {
+          if(rec->visible)
+            sprintf(buffer,"cmd.disable('%s')",rec->name);
+          else
+            sprintf(buffer,"cmd.enable('%s')",rec->name);
+          PLog(buffer,cPLog_pym);
+        }
+        rec->visible=!rec->visible; 
+        if(rec->visible)
+          if(SettingGetGlobal_b(G,cSetting_active_selections)) {
+            ExecutiveHideSelections(G);
+            rec->visible=true;
+          }
+        
+      }
+      SceneChanged(G);
+    }
+}
+
 static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
 {
   PyMOLGlobals *G=block->G;
   register CExecutive *I = G->Executive;
   int n;  
   SpecRec *rec = NULL;
-  int t;
-  OrthoLineType buffer;
   int pass = false;
   int skip;
 
@@ -6863,114 +6950,27 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
 
   if(!pass)
     {
-      int xx,t;
-      
-      xx = (x-I->Block->rect.left);
-      t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-      
-      if(I->ScrollBarActive) {
-      xx -= (ExecScrollBarWidth+ExecScrollBarMargin);
-      }
-      if((xx>=0)&&(t>=ExecOpCnt)) {
-        if(n!=I->Pressed)
-        I->Active = -1;
-        else
-          I->Active = I->Pressed;
-      } else {
-        I->Active = -1;
-      }
-    }
-
-  if(pass) {
-    if(I->Active!=I->Pressed)
-      pass = true;
-  }
-  if(!pass) while(ListIterate(I->Spec,rec,next))
-    if(rec->name[0]!='_')
-      {
-        if(skip) {
-          skip--;
-        } else if(I->Active>=0) 
-          {
-            if(!n) {
-              {
-                t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-                if(t<ExecOpCnt) {
-                  /* nothing to do anymore now that we have menus! */
-                } else if(rec->type==cExecObject)
-                  {
-                    if(rec->visible)
-                      SceneObjectDel(G,rec->obj);				
-                    else 
-                      SceneObjectAdd(G,rec->obj);
-                    SceneChanged(G);
-                    if(SettingGet(G,cSetting_logging)) {
-                      if(rec->visible)
-                        sprintf(buffer,"cmd.disable('%s')",rec->obj->Name);
-                      else
-                        sprintf(buffer,"cmd.enable('%s')",rec->obj->Name);
-                      PLog(buffer,cPLog_pym);
-                    }
-                    rec->visible=!rec->visible;
-                  }
-                else if(rec->type==cExecAll)
-                  {
-                    if(SettingGet(G,cSetting_logging)) {
-                      if(rec->visible)
-                        sprintf(buffer,"cmd.disable('all')");
-                      else
-                        sprintf(buffer,"cmd.enable('all')");
-                      PLog(buffer,cPLog_pym);
-                    }
-                    ExecutiveSetObjVisib(G,cKeywordAll,!rec->visible);
-                  }
-                else if(rec->type==cExecSelection)
-                  {
-                    if(mod&cOrthoCTRL) {
-                      SettingSet(G,cSetting_selection_overlay,
-                                 (float)(!((int)SettingGet(G,cSetting_selection_overlay))));
-                      if(SettingGet(G,cSetting_logging)) {
-                        sprintf(buffer,"cmd.set('selection_overlay',%d)",
-                                (int)SettingGet(G,cSetting_selection_overlay));
-                        PLog(buffer,cPLog_pym);
-                        sprintf(buffer,"cmd.enable('%s')",rec->name);
-                        PLog(buffer,cPLog_pym);
-                      }
-                      rec->visible=true; 
-                    } else if(mod&cOrthoSHIFT) {
-                      if(rec->sele_color<7)
-                        rec->sele_color=15;
-                      else {
-                        rec->sele_color--;
-                        if(rec->sele_color<7)
-                          rec->sele_color=15;
-                      }
-                      /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
-                      rec->visible=true;
-                    } else {
-                      if(SettingGet(G,cSetting_logging)) {
-                        if(rec->visible)
-                          sprintf(buffer,"cmd.disable('%s')",rec->name);
-                        else
-                          sprintf(buffer,"cmd.enable('%s')",rec->name);
-                        PLog(buffer,cPLog_pym);
-                      }
-                      rec->visible=!rec->visible; 
-                      if(rec->visible)
-                        if(SettingGetGlobal_b(G,cSetting_active_selections)) {
-                          ExecutiveHideSelections(G);
-                          rec->visible=true;
-                        }
-                      
-                    }
-                    SceneChanged(G);
-                  }
+      ExecutiveDrag(block,x,y,mod); /* incorporate final changes in cursor position */
+      while(ListIterate(I->Spec,rec,next)) {
+          if(rec->name[0]!='_')
+            {
+              if(skip) {
+                skip--;
+              } else if(rec->hilight) {
+                ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
               }
             }
-            n--;
         }
-      }
-  I->Active = -1;
+    }
+  
+  {
+    SpecRec *rec=NULL;
+    while(ListIterate(I->Spec,rec,next)) {
+      rec->hilight=false;
+    }
+  }
+
+  I->Over = -1;
   I->Pressed = -1;
   OrthoUngrab(G);
   MainDirty();
@@ -6991,20 +6991,52 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
 
   xx = (x-I->Block->rect.left);
   t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-  
   if(I->ScrollBarActive) {
     xx -= (ExecScrollBarWidth+ExecScrollBarMargin);
   }
-  if((xx>=0)&&(t>=ExecOpCnt)) {
-    int n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
-    if(n!=I->Pressed)
-      I->Active = -1;
-    else
-      I->Active = I->Pressed;
-  } else {
-    I->Active = -1;
+  
+  {
+    int row_offset;
+    if((xx>=0)&&(t>=ExecOpCnt)) {
+      row_offset = ((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
+      I->Over = row_offset;
+    } else {
+      I->Over = -1;
+      row_offset = -1;
+      {
+        SpecRec *rec=NULL;
+        while(ListIterate(I->Spec,rec,next))      
+          rec->hilight=false;
+      }
+    }
+    
+    if(I->Over>=0) {
+      SpecRec *rec = NULL;
+      int skip=I->NSkip;
+      int row=0;
+      
+      while(ListIterate(I->Spec,rec,next)) {
+        if(rec->name[0]!='_')
+          {
+            if(skip) {
+              skip--;
+            } else {
+              rec->hilight=false;
+              if( ((row>=I->Over)&&(row<=I->Pressed))||
+                  ((row>=I->Pressed)&&(row<=I->Over))) {
+                if(I->Immediate) {
+                  ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                } else {
+                  rec->hilight=true;
+                }
+              }
+              row++;
+            }
+          }
+      }
+    }
+    OrthoDirty(G);
   }
-  OrthoDirty(G);
   return(1);
 }
 
@@ -7228,7 +7260,7 @@ static void ExecutiveDraw(Block *block)
                 if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
                   x2 = x+10;
                 }
-                if(row==I->Active) {
+                if(rec->hilight||(row==I->Over)) {
                   draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,pressedColor);
                 } else if(rec->visible) {
                   draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,enabledColor);
@@ -7397,11 +7429,11 @@ int ExecutiveInit(PyMOLGlobals *G)
   I->ScrollBar=ScrollBarNew(G,false);
   OrthoAttach(G,I->Block,cOrthoTool);
   I->Pressed = -1;
-  I->Active = -1;
+  I->Over = -1;
   I->LastEdited=NULL;
   I->NSkip=0;
   I->HowFarDown=0;
-  ListElemAlloc(G,rec,SpecRec);
+  ListElemCalloc(G,rec,SpecRec);
   strcpy(rec->name,"(all)");
   rec->type=cExecAll;
   rec->visible=true;

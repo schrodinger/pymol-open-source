@@ -117,6 +117,14 @@ if(!(Elem)) \
 	 ErrChkPtr(G,Elem); \
   } \
 }
+#define ListElemCalloc(G,Elem,ElemType) \
+{ \
+if(!(Elem)) \
+  { \
+	 (Elem) = (ElemType*)mcalloc(sizeof(ElemType),1); \
+	 ErrChkPtr(G,Elem); \
+  } \
+}
 
 
 #define ListElemInit(List,Link) (List)->Link = NULL
