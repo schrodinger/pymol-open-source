@@ -164,7 +164,7 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
-   * fixed quadro stereo support
+   * fixed quadro stereo support with sessions...
 
    * cartoon_highlight_color now provides Molscript-like cartoon coloring
      which provides for an alternate color inside of helices and on the
