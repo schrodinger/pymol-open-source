@@ -82,7 +82,6 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
 void ObjectMoleculeBracketResidue(ObjectMolecule *I,AtomInfoType *ai,int *st,int *nd);
 
-int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,float *v);
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
 
@@ -93,6 +92,8 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
                                         AtomInfoType **atInfoPtr);
 
 ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int frame,int discrete);
+
+void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I);
 
 #define MAX_BOND_DIST 50
 
@@ -2706,7 +2707,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
             if(tcs) {
               for(a=0;a<nH;a++) {
                 ObjectMoleculeGetAtomVertex(I,b,index[a],v0);
-                ObjectMoleculeFindOpenValenceVector(I,b,index[a],v);
+                ObjectMoleculeFindOpenValenceVector(I,b,index[a],v,NULL);
                 d = AtomInfoGetBondLength(I->AtomInfo+index[a],&fakeH);
                 scale3f(v,d,v);
                 add3f(v0,v,cs->Coord+3*a);
@@ -2845,7 +2846,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
       break;
     case 1:
       copy3f(backup+3*anch1,va1);
-      ObjectMoleculeFindOpenValenceVector(src,state1,at1,x1);
+      ObjectMoleculeFindOpenValenceVector(src,state1,at1,x1,NULL);
       scale3f(x1,-1.0F,x1);
       get_system1f3f(x1,y1,z1);      
       break;
@@ -2900,7 +2901,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
           ca0 = tcs->AtmToIdx[at0]; /* anchor */
 
           if(ca0>=0) {
-            ObjectMoleculeFindOpenValenceVector(I,a,at0,x0);
+            ObjectMoleculeFindOpenValenceVector(I,a,at0,x0,NULL);
             copy3f(tcs->Coord+3*ca0,va0);
             get_system1f3f(x0,y0,z0);
             
@@ -2977,6 +2978,7 @@ int ObjectMoleculeVerifyChemistry(ObjectMolecule *I)
     if(I->CSet[0]) { /* right now this stuff is locked to state 0 */
       ObjectMoleculeInferChemFromBonds(I,0);
       ObjectMoleculeInferChemFromNeighGeom(I,0);
+      ObjectMoleculeInferHBondFromChem(I);
       /*      ObjectMoleculeInferChemForProtein(I,0);*/
     }
     flag=true;
@@ -3027,7 +3029,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
   for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
     if(I->CSet[a]) {
       ObjectMoleculeGetAtomVertex(I,a,index,v0);
-      ObjectMoleculeFindOpenValenceVector(I,a,index,v);
+      ObjectMoleculeFindOpenValenceVector(I,a,index,v,NULL);
       scale3f(v,d,v);
       add3f(v0,v,cs->Coord);
       CoordSetMerge(I->CSet[a],cs); 
@@ -3085,7 +3087,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
         if(I->CSet[a]) {
           ObjectMoleculeGetAtomVertex(I,a,index,v0);
-          ObjectMoleculeFindOpenValenceVector(I,a,index,v);
+          ObjectMoleculeFindOpenValenceVector(I,a,index,v,NULL);
           scale3f(v,d,v);
           add3f(v0,v,cs->Coord);
           CoordSetMerge(I->CSet[a],cs); 
@@ -3101,7 +3103,8 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
   return(result);
 }
 /*========================================================================*/
-int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,float *v)
+int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
+                                        int index,float *v,float *seek)
 {
   #define MaxOcc 100
   CoordSet *cs;
@@ -3137,7 +3140,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
           ai1=I->AtomInfo+a1;
           if(ObjectMoleculeGetAtomVertex(I,state,a1,v1)) {        
             subtract3f(v1,v0,n0);
-            normalize3f(n0);
+            normalize3f(n0); /* n0's point away from center atom */
             copy3f(n0,occ+3*nOcc);
             nOcc++; 
             if(nOcc==MaxOcc) /* safety valve */
@@ -3145,64 +3148,113 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
           }
         }
         if((!nOcc)||(nOcc>4)||(ai->geom==cAtomInfoNone)) {
-          get_random3f(v);
+          if(!seek) 
+            get_random3f(v);
+          else
+            copy3f(seek,v);
+          result = true;
         } else {
           switch(nOcc) {
-          case 1:
+          case 1:  /* only one current occupied position */
             switch(ai->geom) {
-            case cAtomInfoTetrahedral:
-              get_system1f3f(occ,y,z);
-              scale3f(occ,-0.334F,v);
-              scale3f(z,  0.943F,t);
-              add3f(t,v,v);              
+            case cAtomInfoTetrahedral: 
+              if(!seek) {
+                get_system1f3f(occ,y,z);
+                scale3f(occ,-0.334F,v);
+                scale3f(z,  0.943F,t);
+                add3f(t,v,v);              
+              } else { /* point hydrogen towards sought vector */
+                copy3f(seek,z);
+                get_system2f3f(occ,z,y);
+                scale3f(occ,-0.334F,v);
+                scale3f(z,  0.943F,t);
+                add3f(t,v,v);              
+              }
+              result = true;
               break;
             case cAtomInfoPlaner:
-              get_system1f3f(occ,y,z);
-              scale3f(occ,-0.500F,v);
-              scale3f(z,      0.866F,t);
-              add3f(t,v,v);
+              if(!seek) {
+                get_system1f3f(occ,y,z);
+                scale3f(occ,-0.500F,v);
+                scale3f(z,      0.866F,t);
+                add3f(t,v,v);
+              } else {
+                copy3f(seek,z);
+                get_system2f3f(occ,z,y);
+                scale3f(occ,-0.500F,v);
+                scale3f(z,      0.866F,t);
+                add3f(t,v,v);
+              }
+              result = true;
               break;
             case cAtomInfoLinear:
               scale3f(occ,-1.0F,v);
+              result = true;
               break;
             default:
-              get_random3f(v); /* hypervalent */
+              if(!seek) 
+                get_random3f(v);
+              else
+                copy3f(seek,v);
+              result = true;
               break;
             }
             break;
-          case 2:
+          case 2:  /* only two current occupied positions */
             switch(ai->geom) {
             case cAtomInfoTetrahedral:
               add3f(occ,occ+3,t);
               get_system2f3f(t,occ,z);
               scale3f(t,-1.0F,v);
+              if(seek) {
+                if(dot_product3f(z,seek)<0.0F) {
+                  invert3f(z);
+                }
+              } 
               scale3f(z,1.41F,t);
               add3f(t,v,v);              
+              result = true;
               break;
             case cAtomInfoPlaner:
-            add3f(occ,occ+3,t);
+              add3f(occ,occ+3,t);
               scale3f(t,-1.0F,v);
+              result = true;
               break;
             default:
-              get_random3f(v); /* hypervalent */
+              if(!seek) 
+                get_random3f(v);
+              else
+                copy3f(seek,v);
+              /* hypervalent */
+              result = true;
               break;
             }
             break;
-          case 3:
+          case 3:  /* only three current occupied positions */
             switch(ai->geom) {
             case cAtomInfoTetrahedral:
               add3f(occ,occ+3,t);
               add3f(occ+6,t,t);
               scale3f(t,-1.0F,v);
+              result = true;
               break;
             default:
-              get_random3f(v); /* hypervalent */
+              if(!seek) 
+                get_random3f(v);
+              else
+                copy3f(seek,v);
+              /* hypervalent */
+              result = true;
               break;
-              
             }
             break;
           case 4:
-            get_random3f(v); /* hypervalent */
+            if(!seek) 
+              get_random3f(v);
+            else
+              copy3f(seek,v);
+            /* hypervalent */
+            result = true;
             break;
           }
         }
@@ -3210,7 +3262,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
     }
   }
   normalize3f(v);
-  return(result); /* return false if we're using the default */
+  return(result); 
 #undef MaxOcc
 
 }
@@ -4202,6 +4254,76 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
       }
     }
   }
+}
+
+/*========================================================================*/
+void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
+{
+  int a;
+  AtomInfoType *ai;
+  int a1;
+  int n,nn;
+  int has_hydro,may_have_lone_pair;
+  /* initialize accumulators on uncategorized atoms */
+
+  ObjectMoleculeUpdateNeighbors(I);
+  ai=I->AtomInfo;
+  for(a=0;a<I->NAtom;a++) {
+    n = I->Neighbor[a];
+    nn = I->Neighbor[n++];
+    ai->hb_donor = false;
+    ai->hb_acceptor = false;
+
+    has_hydro = (nn < ai->valence); /* implicit hydrogens? */
+
+    if(!has_hydro) {
+      /* explicit hydrogens? */
+      has_hydro = false;
+      switch(ai->protons) {
+      case cAN_N:
+      case cAN_O:
+        while((a1 = I->Neighbor[n])>=0) {
+          n+=2; 
+          if(I->AtomInfo[a1].protons==1) {
+            has_hydro=true;
+            break;
+          }
+        }
+        break;
+      }
+    }
+    
+    switch(ai->protons) {
+    case cAN_N:
+      if(has_hydro)
+        ai->hb_donor=true;
+      else {
+        may_have_lone_pair = false;
+        
+        if((!has_hydro)&&(ai->protons==cAN_N)) {
+          n = I->Neighbor[a] + 1;
+          while(I->Neighbor[n]>=0) {
+            if(I->Neighbor[n+1]>1) { /* any double/triple/delocalized bonds? */
+              may_have_lone_pair = true;
+            }
+            n+=2; 
+          }
+        }
+        if((ai->formalCharge<=0)&&may_have_lone_pair) {
+          ai->hb_acceptor = true;
+        }
+      }
+      break;
+    case cAN_O:
+      if(has_hydro)
+        ai->hb_donor = true;
+      if(ai->formalCharge<=0)
+        ai->hb_acceptor = true;
+      break;
+    }
+    ai++;
+  }
+  
 }
 
 /*========================================================================*/
@@ -7406,7 +7528,6 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
   float v_atom[3],v_neigh[3],v_diff[3],v_acc[3] = {0.0,0.0,0.0};
   CoordSet *cs;
 
-  
   ObjectMoleculeUpdateNeighbors(I);
 
   a1 = atom;
@@ -7423,7 +7544,7 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
         if(a2<0) break;
         n+=2;
         
-        if(I->AtomInfo[a2].elem[0]!='H') { /* ignore hydrogens */
+        if(I->AtomInfo[a2].protons!=1) { /* ignore hydrogens */
           if(CoordSetGetAtomVertex(cs,a2,v_neigh)) { 
             subtract3f(v_atom,v_neigh,v_diff);
             normalize3f(v_diff);

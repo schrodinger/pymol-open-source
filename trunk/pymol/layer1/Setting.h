@@ -416,10 +416,18 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_stick_ball_ratio            277
 #define cSetting_stick_fixed_radius          278
 #define cSetting_cartoon_transparency        279
+#define cSetting_dash_round_ends             280
+#define cSetting_h_bond_max_angle            281
+#define cSetting_h_bond_cutoff_center        282
+#define cSetting_h_bond_cutoff_edge          283
+#define cSetting_h_bond_power_a              284
+#define cSetting_h_bond_power_b              285
+#define cSetting_h_bond_cone                 286
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        280
+#define cSetting_INIT                        287
 
 #endif
+
 

@@ -225,7 +225,7 @@ def mol_action(s):
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 1, 'orient'       , 'cmd.orient("'+s+'")'    ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'assign S.S.'  ,'util.ss("'+s+'")'        ],
+           [ 1, 'assign S.S.'  ,'cmd.ss("'+s+'")'        ],
            [ 1, 'polar contacts'  ,
              'cmd.dist("'+s+'_pc","'+s+'&elem n+o","same",3.2,quiet=1,mode=1,labels=0)'
              ],                      

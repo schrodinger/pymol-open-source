@@ -75,4 +75,6 @@ void SelectorReinit(void);
 PyObject *SelectorSecretsAsPyList(void);
 int SelectorSecretsFromPyList(PyObject *list);
 void SelectorMemoryDump(void);
+int SelectorAssignSS(int target,int present,int state,int quiet);
+
 #endif

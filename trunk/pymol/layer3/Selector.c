@@ -192,6 +192,8 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_ENAz ( 0x2900 | STYP_SEL0 | 0x80 )
 #define SELE_REPs ( 0x3000 | STYP_SEL1 | 0x70 )
 #define SELE_COLs ( 0x3100 | STYP_SEL1 | 0x70 )
+#define SELE_HBDs ( 0x3200 | STYP_SEL0 | 0x70 )
+#define SELE_HBAs ( 0x3300 | STYP_SEL0 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -229,6 +231,8 @@ static WordKeyValue Keyword[] =
   {  "hydrogens",SELE_HYDz }, /* 0 parameter */
   {  "h;",       SELE_HYDz }, /* deprecated */
   {  "h.",       SELE_HYDz }, /* 0 parameter */
+  {  "hba",      SELE_HBAs },
+  {  "hbd",      SELE_HBDs },
   {  "visible",  SELE_VISz }, /* 0 parameter */
   {  "v;",       SELE_VISz }, /* 0 parameter */
   {  "v.",       SELE_VISz }, /* 0 parameter */
@@ -352,6 +356,907 @@ static void SelectorDeleteIndex(int index)
   }
   if(n) 
     SelectorDeleteOffset(n);
+}
+
+#define cSSMaxHBond 6
+
+#define cSSHelix3HBond        0x0001
+#define cSSHelix4HBond        0x0002
+#define cSSHelix5HBond        0x0004
+#define cSSGotPhiPsi          0x0008
+#define cSSPhiPsiHelix        0x0010
+#define cSSPhiPsiNotHelix     0x0020
+#define cSSPhiPsiBeta         0x0040
+#define cSSPhiPsiNotBeta      0x0080
+#define cSSAntiBetaSingleHB   0x0100
+#define cSSAntiBetaDoubleHB   0x0200
+#define cSSAntiBetaBuldgeHB   0x0400
+#define cSSAntiBetaSkip       0x0800
+#define cSSParaBetaSingleHB   0x1000
+#define cSSParaBetaDoubleHB   0x2000
+#define cSSParaBetaSkip       0x4000
+
+#define cSSBreakSize 5
+    
+
+typedef struct {
+  int real;
+  int ca,n,c,o; /* indices in selection-table space */
+  float phi,psi;
+  char ss;
+  int flags;
+  int n_acc,n_don;
+  int acc[cSSMaxHBond]; /* interactions where this residue is an acceptor */
+  int don[cSSMaxHBond]; /* interactions where this residue is a donor */
+  ObjectMolecule *obj;
+} SSResi;
+
+int SelectorAssignSS(int target,int present,int state,int quiet)
+{
+
+  /* PyMOL's secondary structure assignment algorithm: 
+
+  General principal -- if it looks like a duck, then it's a duck:
+
+     I. Helices
+       - must have reasonably helical geometry within the helical span
+       - near-ideal geometry guarantees helix assignment
+       - a continuous ladder stre i+3, i+4, or i+5 hydrogen bonding
+        with permissible geometry can reinforce marginal cases
+       - a minimum helix is three residues with i+3 H-bond
+
+     II. Sheets
+       - Hydrogen bonding ladders are the primary guide
+       - Out-of-the envelope 
+       - 1-residue gaps in sheets are filled unless there
+         is a turn.
+
+  */
+
+
+  SelectorType *I=&Selector;
+  SSResi *res;
+  int n_res = 0;
+
+  SelectorUpdateTable();
+
+  res = VLACalloc(SSResi,1000);
+
+  {
+
+    int a;
+    ObjectMolecule *obj;
+    int aa,a0,a1;
+    AtomInfoType *ai,*ai0,*ai1;
+    ObjectMolecule *last_obj = NULL;
+    /* first, we need to count the number of residues under consideration */
+    
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+
+      obj = I->Obj[I->Table[a].model];
+      ai = obj->AtomInfo + I->Table[a].atom;
+      
+      if(SelectorIsMember(ai->selEntry,present)&&
+         (ai->protons==cAN_C)&&
+         (WordMatch("CA",ai->name,true)<0)) {
+        
+        if(last_obj!=obj) {
+          ObjectMoleculeUpdateNeighbors(obj);
+          ObjectMoleculeVerifyChemistry(obj);
+          last_obj=obj;
+        }
+        /* delimit residue */
+        
+        a0 = a-1;
+        while(a0>=cNDummyAtoms) {
+          ai0 = I->Obj[I->Table[a0].model]->AtomInfo + I->Table[a0].atom;
+          if(!AtomInfoSameResidue(ai0,ai))
+            break;
+          a0--;
+        }
+        
+        a1 = a+1;
+        while(a1<I->NAtom) {
+          ai1 = I->Obj[I->Table[a1].model]->AtomInfo + I->Table[a1].atom;
+          if(!AtomInfoSameResidue(ai1,ai))
+            break;
+          a1++;
+        }
+        
+        {
+          int found_N = 0;
+          int found_O = 0;
+          int found_C = 0;
+          
+          /* locate key atoms */
+          
+          for(aa=a0+1;aa<a1;aa++) {
+            ai = I->Obj[I->Table[aa].model]->AtomInfo + I->Table[aa].atom;
+            if((ai->protons==cAN_C)&&
+               (WordMatch("C",ai->name,true)<0)) {
+              found_C = aa;
+            }
+            if((ai->protons==cAN_N)&&
+               (WordMatch("N",ai->name,true)<0)) {
+              found_N = aa;
+            }
+            if((ai->protons==cAN_O)&&
+               (WordMatch("O",ai->name,true)<0)) {
+              found_O = aa;
+            }
+          }
+          
+          if((found_C)&&
+             (found_N)&&
+             (found_O)) {
+            
+            VLACheck(res,SSResi,n_res);
+            res[n_res].n = found_N;
+            res[n_res].o = found_O;
+            res[n_res].c = found_C;
+            res[n_res].ca = a;
+            res[n_res].obj = I->Obj[I->Table[a].model];
+            res[n_res].real = true; /* for down below... */
+            n_res++;
+            
+          } else {
+            PRINTFB(FB_Selector,FB_Warnings)
+              " Ignoring incomplete residue %s %d %d %d\n",ai->resi,found_N,found_C,found_O
+              ENDFB;
+          }
+        }
+      }
+    } /* count pass */
+  }
+  
+  /*  printf("n_res %d\n",n_res);*/
+
+  /* now, let's repack res. into discrete chunks so that we can do easy gap & ladder analysis */
+  
+  {
+    SSResi *res2;
+    int a;
+    int n_res2 = 0;
+    int add_break;
+    int at_ca0,at_ca1;
+
+    res2 = VLACalloc(SSResi,n_res*2);
+    
+    for(a=0;a<n_res;a++) {
+      add_break = false;
+
+      if(!a) { 
+        add_break=true;
+      } else if(res[a].obj!=res[a-1].obj) {
+        add_break=true;
+      } else if(res[a].obj) {
+        at_ca0 = I->Table[res[a].ca].atom;
+        at_ca1 = I->Table[res[a-1].ca].atom;
+        if(!ObjectMoleculeCheckBondSep(res[a].obj,at_ca0,at_ca1,3)) { /* CA->N->C->CA = 3 bonds */
+          add_break=true;
+        }
+      }
+      
+      if(add_break) {
+        n_res2 += cSSBreakSize;
+      }
+      
+      VLACheck(res2,SSResi,n_res2);
+      res2[n_res2] = res[a];
+      n_res2++;
+    }
+
+    n_res2+=cSSBreakSize;
+    VLACheck(res2,SSResi,n_res2);
+
+    VLAFreeP(res);
+    res=res2;
+    n_res = n_res2;
+  }
+
+  /*  printf("n_res %d\n",n_res);*/
+  
+  /* next, we need to record hydrogen bonding relationships */
+
+  {
+    
+    MapType *map;
+    float *v0,*v1;
+    int n1;
+    int c,i,h,k,l;
+    int at;
+    int idx;
+
+    int a,aa;
+    int a0,a1; /* SS res space */
+    int as0,as1; /* selection space */
+    int at0,at1; /* object-atom space */
+
+    ObjectMolecule *obj0,*obj1;
+
+    CoordSet *cs;
+    float cutoff;
+    HBondCriteria hbcRec,*hbc;
+
+    hbc = &hbcRec;
+    ObjectMoleculeInitHBondCriteria(hbc);
+
+    /* use parameters which reflect the spirit of Kabsch and Sander
+     ( i.e. long hydrogen-bonds/polar electrostatic interactions ) */
+
+    hbc->maxAngle = 63.0F;
+    hbc->maxDistAtMaxAngle = 3.2F;
+    hbc->maxDistAtZero = 4.0F;
+    hbc->power_a = 1.6F;
+    hbc->power_b = 5.0F;
+    hbc->cone_dangle = 0.0F; /* 180 deg. */
+    if(hbc->maxDistAtMaxAngle!=0.0F) {
+      hbc->factor_a = 0.5/pow(hbc->maxAngle,hbc->power_a);
+      hbc->factor_b = 0.5/pow(hbc->maxAngle,hbc->power_b);
+    }
+    
+    cutoff = hbc->maxDistAtMaxAngle;
+    if(cutoff<hbc->maxDistAtZero) {
+      cutoff = hbc->maxDistAtZero; 
+    }
+    
+    c=0;
+    n1=0;
+    
+    for(aa=0;aa<I->NAtom;aa++) { /* first, clear flags */
+      I->Flag1[aa]=false;
+      I->Flag2[aa]=false;
+    }
+
+    for(a=0;a<n_res;a++) {
+
+      if(res[a].real) {
+        obj0=res[a].obj;
+      
+        if(obj0) {
+          /* map will contain the h-bond backbone nitrogens */
+        
+          aa=res[a].n;
+          at=I->Table[aa].atom;    
+          I->Flag2[aa] = a; /* so we can find the atom again... */
+        
+          if(state<obj0->NCSet) 
+            cs=obj0->CSet[state];
+          else
+            cs=NULL;
+          if(cs) {
+            if(obj0->DiscreteFlag) {
+              if(cs==obj0->DiscreteCSet[at])
+                idx=obj0->DiscreteAtmToIdx[at];
+              else
+                idx=-1;
+            } else 
+              idx=cs->AtmToIdx[at];
+            if(idx>=0) {
+              copy3f(cs->Coord+(3*idx),I->Vertex+3*aa); /* record coordinate */
+              I->Flag1[aa]=true;
+
+              /*              printf(" storing donor for %s %d at %8.3f %8.3f %8.3f\n",
+                     res[a].obj->AtomInfo[at].resi,idx,
+                     I->Vertex[3*aa],I->Vertex[3*aa+1],I->Vertex[3*aa+2]);*/
+              n1++;
+            }
+          }
+
+
+          /* also copy O coordinates for usage below */
+          
+          aa=res[a].o;
+          at=I->Table[aa].atom;    
+        
+          if(state<obj0->NCSet) 
+            cs=obj0->CSet[state];
+          else
+            cs=NULL;
+          if(cs) {
+            if(obj0->DiscreteFlag) {
+              if(cs==obj0->DiscreteCSet[at])
+                idx=obj0->DiscreteAtmToIdx[at];
+              else
+                idx=-1;
+            } else 
+              idx=cs->AtmToIdx[at];
+            if(idx>=0) {
+              copy3f(cs->Coord+(3*idx),I->Vertex+3*aa); /* record coordinate */
+
+              /*              printf(" storing acceptor for %s %d at %8.3f %8.3f %8.3f\n",
+                     res[a].obj->AtomInfo[at].resi,idx,
+                     I->Vertex[3*aa],I->Vertex[3*aa+1],I->Vertex[3*aa+2]);*/
+
+            }
+          }
+
+        }
+      }
+    }
+
+    
+    if(n1) {
+      map=MapNewFlagged(-cutoff,I->Vertex,I->NAtom,NULL,I->Flag1);
+      if(map) {
+        MapSetupExpress(map);
+        
+        for(a0=0;a0<n_res;a0++) { 
+       
+          if(res[a0].obj) { 
+
+            /* now iterate through carbonyls */
+            obj0 = res[a0].obj;            
+            as0 = res[a0].o;
+            at0 = I->Table[as0].atom;
+            
+            v0 = I->Vertex + 3*as0;
+            if(MapExclLocus(map,v0,&h,&k,&l)) {
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
+                as1=map->EList[i++];
+                while(as1>=0) {
+                  v1 = I->Vertex+3*as1;
+
+                  if(within3f(v0,v1,cutoff)) {
+                    
+                    obj1 = I->Obj[I->Table[as1].model];
+                    at1 = I->Table[as1].atom;
+
+                    
+                    if(ObjectMoleculeGetCheckHBond(obj1, /* donor first */
+                                                   at1,
+                                                   state,
+                                                   obj0, /* then acceptor */
+                                                   at0,
+                                                   state,
+                                                   hbc)) {
+                      
+                      /*                      printf(" found hbond between acceptor resi %s and donor resi %s\n",
+                                              res[a0].obj->AtomInfo[at0].resi,
+                                              res[I->Flag2[as1]].obj->AtomInfo[I->Table[as1].atom].resi);*/
+                      
+                      a1 = I->Flag2[as1]; /* index in SS n_res space */
+
+                      /* store acceptor link */
+                    
+                      n1 = res[a0].n_acc;
+                      if(n1<(cSSMaxHBond-1)) {
+                        res[a0].acc[n1] = a1;
+                        res[a0].n_acc = n1+1;
+                      }
+                  
+                      /* store donor link */
+                    
+                      n1 = res[a1].n_don;
+                      if(n1<(cSSMaxHBond-1)) {
+                        res[a1].don[n1] = a0;
+                        res[a1].n_don = n1+1;
+                      }
+                    }
+                  }
+                  as1=map->EList[i++];
+                }
+              }
+            }
+          }
+        }
+      }
+      MapFree(map);
+    }
+  }
+
+  { /* compute phi, psi's */
+
+    SSResi *r;
+    int a;
+    int helix_delta;
+    int beta_delta;
+
+    for(a=0;a<n_res;a++) {
+      r = res + a;
+      if(r->real&&((r-1)->real)) {
+        
+        if(ObjectMoleculeGetPhiPsi(r->obj,I->Table[r->ca].atom,&r->phi,&r->psi,state)) {
+          r->flags |= cSSGotPhiPsi;
+
+          if( r->phi > 30 ) {
+            r->flags |= ( cSSPhiPsiNotHelix | cSSPhiPsiNotBeta );
+          } else {
+            helix_delta = abs(r->psi-( -48.0));
+            if(helix_delta>180)
+              helix_delta = 360-helix_delta;
+            beta_delta  = abs(r->psi-( 124.0));
+            if(beta_delta>180)
+              beta_delta = 360-beta_delta;
+
+            /*            printf("helix %d beta %d\n",helix_delta,beta_delta);*/
+              
+            if(helix_delta>90.0) {
+              r->flags |= cSSPhiPsiNotHelix;
+            } else if(helix_delta<45) {
+              r->flags |= cSSPhiPsiHelix;
+            }
+            if(beta_delta>90.0) {
+              r->flags |= cSSPhiPsiNotBeta;
+            } else if(beta_delta<66) {
+              if((r->phi<-60)&&(r->phi>-150)) {
+                r->flags |= cSSPhiPsiBeta;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+  /* by default, tentatively assign everything as loop */
+    
+  { 
+    int a;
+    for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
+      if(res[a].real)
+        res[a].ss = 'L';
+    }
+  }
+
+
+  { 
+    SSResi *r,*r2;
+    int a,b,c;
+
+    for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
+      r = res + a;
+      if(r->real) {
+
+        /* look for tell-tale i+3,4,5 hydrogen bonds for helix  */
+                
+        /* is residue an acceptor for i+3,4,5 residue? */
+        for(b=0;b<r->n_acc;b++) {
+          r->flags |= 
+            ( (r->acc[b]==(a+3)) ? cSSHelix3HBond : 0 ) |
+            ( (r->acc[b]==(a+4)) ? cSSHelix4HBond : 0 ) |
+            ( (r->acc[b]==(a+5)) ? cSSHelix5HBond : 0 );
+
+        }
+
+        /* is residue a donor for i-3,4,5 residue */
+        for(b=0;b<r->n_don;b++) {
+          r->flags |= 
+            ( (r->don[b]==(a-3)) ? cSSHelix3HBond : 0 ) |
+            ( (r->don[b]==(a-4)) ? cSSHelix4HBond : 0 ) |
+            ( (r->don[b]==(a-5)) ? cSSHelix5HBond : 0 );
+
+        }
+
+        /*        if(r->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) {
+          printf("HelixHB %s \n",
+                 r->obj->AtomInfo[I->Table[r->ca].atom].resi);
+        }
+        */
+
+
+        /* look for double h-bonded antiparallel beta sheet pairs:
+         * 
+         *  \ /\ /
+         *   N  C
+         *   #  O
+         *   O  #
+         *   C  N
+         *  / \/ \
+         *
+        */
+        
+        for(b=0;b<r->n_acc;b++) { /* iterate through acceptors */
+          r2 = (res + r->acc[b]);
+          if(r2->real) {
+            for(c=0;c<r2->n_acc;c++) {
+              if(r2->acc[c] == a) { /* found a pair */
+                r->flags |= cSSAntiBetaDoubleHB;
+                r2->flags |= cSSAntiBetaDoubleHB;
+
+                /*                printf("anti double %s to %s\n",
+                       r->obj->AtomInfo[I->Table[r->ca].atom].resi,
+                       r2->obj->AtomInfo[I->Table[r2->ca].atom].resi);*/
+                
+              }
+            }
+          }
+        }
+
+        /* look for antiparallel beta buldges
+         * 
+         *     CCNC
+         *  \ / O  \ /
+         *   N      C
+         *   #      O
+         *    O    #
+         *     C  N
+         *    / \/ \
+         *
+        */
+        
+        for(b=0;b<r->n_acc;b++) { /* iterate through acceptors */
+          r2 = (res + r->acc[b])+1; /* go forward 1 */
+          if(r2->real) {
+            for(c=0;c<r2->n_acc;c++) {
+              if(r2->acc[c] == a) { /* found a buldge */
+                r->flags      |= cSSAntiBetaDoubleHB;
+                r2->flags     |= cSSAntiBetaBuldgeHB;
+                (r2-1)->flags |= cSSAntiBetaBuldgeHB;
+
+                /*                printf("anti BULDGE %s to %s %s\n",
+                       r->obj->AtomInfo[I->Table[r->ca].atom].resi,
+                       r2->obj->AtomInfo[I->Table[r2->ca].atom].resi,
+                       r2->obj->AtomInfo[I->Table[(r2-1)->ca].atom].resi);*/
+
+              }
+            }
+          }
+        }
+        
+        /* look for antiparallel beta sheet ladders (single or double)
+         *
+         *        O
+         *     N  C
+         *  \ / \/ \ /
+         *   C      N
+         *   O      #
+         *   #      O
+         *   N      C
+         *  / \ /\ / \
+         *     C  N
+         *     O
+         */
+        
+        if( (r+1)->real && (r+2)->real ) {
+          
+          for(b=0;b<r->n_acc;b++) { /* iterate through acceptors */
+            r2 = (res + r->acc[b])-2; /* go back 2 */
+            if(r2->real) {
+              
+              for(c=0;c<r2->n_acc;c++) {
+                
+                if(r2->acc[c] == a+2) { /* found a ladder */
+                  
+                  (r    )->flags |= cSSAntiBetaSingleHB;
+                  (r  +1)->flags |= cSSAntiBetaSkip;
+                  (r  +2)->flags |= cSSAntiBetaSingleHB;
+                  
+                  (r2   )->flags |= cSSAntiBetaSingleHB;
+                  (r2 +1)->flags |= cSSAntiBetaSkip;
+                  (r2 +2)->flags |= cSSAntiBetaSingleHB;
+                  
+                  /*                  printf("anti ladder %s %s to %s %s\n",
+                         r->obj->AtomInfo[I->Table[r->ca].atom].resi,
+                         r->obj->AtomInfo[I->Table[(r+2)->ca].atom].resi,
+                         r2->obj->AtomInfo[I->Table[r2->ca].atom].resi,
+                         r2->obj->AtomInfo[I->Table[(r2+2)->ca].atom].resi);*/
+                }
+              }
+            }
+          }
+        }
+
+
+        /* look for parallel beta sheet ladders 
+         *
+
+         *    \ /\ /
+         *     C  N
+         *    O    #
+         *   #      O
+         *   N      C
+         *  / \ /\ / \
+         *     C  N
+         *     O
+         */
+        
+        if( (r+1)->real && (r+2)->real ) {
+          
+          for(b=0;b<r->n_acc;b++) { /* iterate through acceptors */
+            r2 = (res + r->acc[b]);
+            if(r2->real) {
+              
+              for(c=0;c<r2->n_acc;c++) {
+                
+                if(r2->acc[c] == a+2) { /* found a ladder */
+                  
+                  (r    )->flags |= cSSParaBetaSingleHB;
+                  (r  +1)->flags |= cSSParaBetaSkip;
+                  (r  +2)->flags |= cSSParaBetaSingleHB;
+                  
+                  (r2   )->flags |= cSSParaBetaDoubleHB;
+                  
+                  /*                                    printf("parallel ladder %s %s to %s \n",
+                         r->obj->AtomInfo[I->Table[r->ca].atom].resi,
+                         r->obj->AtomInfo[I->Table[(r+2)->ca].atom].resi,
+                         r2->obj->AtomInfo[I->Table[r2->ca].atom].resi);*/
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  
+  {
+    int a;
+    SSResi *r;
+    /* convert flags to assignments */
+    
+    /* HELICES FIRST */
+
+    for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
+      r = res + a;
+      
+      if(r->real) {
+        /* clean internal helical residues are to find just using H-bonds */
+
+        if(((r-1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r  )->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r+1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond))) {
+          if(!(r->flags & (cSSPhiPsiNotHelix))) {
+            r->ss = 'H';
+          }
+        }
+
+      }
+    }
+
+
+    for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
+      r = res + a;
+
+      if(r->real) {
+
+        /* occasionally they'll be one whacked out residue missing h-bonds... */
+
+        if(((r-2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r-1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r-1)->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r  )->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r+1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r+1)->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r+2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond))) {
+          if(!(r->flags & (cSSPhiPsiNotHelix))) {
+            r->ss = 'h';
+          }
+        }
+      }
+    }
+
+
+    for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
+      r = res + a;
+      if(r->real) {
+        if(r->ss=='h') {
+          r->flags |= (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond);
+          r->ss = 'H';
+        }
+      }
+    }
+
+    for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
+      r = res + a;
+
+      if(r->real) {
+
+
+        /* deciding where the helix ends is trickier -- here we use helix geometry */
+
+        if(((r  )->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r  )->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r+1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r+1)->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r+2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r+2)->flags & (cSSPhiPsiHelix                                  ))
+           ) {
+          r->ss = 'H';
+        }
+
+        if(((r  )->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r  )->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r-1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r-1)->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r-2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
+           ((r-2)->flags & (cSSPhiPsiHelix                                  ))
+           ) {
+          r->ss = 'H';
+        }
+
+      }
+    }
+    
+    /* THEN SHEETS/STRANDS */
+    
+    for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
+      r = res + a;
+      if(r->real) {
+
+        /* Antiparallel Sheets */
+
+        if(((r  )->flags & (cSSAntiBetaDoubleHB))) {
+          (r  )->ss = 'S';
+        }
+
+        if(((r  )->flags & (cSSAntiBetaBuldgeHB))&&
+           ((r+1)->flags & (cSSAntiBetaBuldgeHB))) {
+          (r  )->ss = 'S';
+          (r+1)->ss = 'S';
+        }
+
+        if(((r-1)->flags & (cSSAntiBetaDoubleHB)) &&
+           ((r  )->flags & (cSSAntiBetaSkip))     &&
+           ((r+1)->flags & (cSSAntiBetaSingleHB | cSSAntiBetaDoubleHB))) {
+
+          (r  )->ss = 'S';
+        }
+
+        if(((r-1)->flags & (cSSAntiBetaSingleHB | cSSAntiBetaDoubleHB)) &&
+           ((r  )->flags & (cSSAntiBetaSkip))     &&
+           ((r+1)->flags & (cSSAntiBetaDoubleHB))) {
+          (r  )->ss = 'S';
+        }
+
+        /* include open "ladders" if PHIPSI geometry supports assignment */
+
+        if(((r-1)->flags & (cSSAntiBetaSingleHB | cSSAntiBetaDoubleHB)) &&
+           ((r-1)->flags & (cSSPhiPsiBeta)) &&
+           ((r  )->flags & (cSSAntiBetaSkip))     &&
+           ((r  )->flags & (cSSPhiPsiBeta)) &&
+           ((r+1)->flags & (cSSAntiBetaSingleHB | cSSAntiBetaDoubleHB)) &&
+           ((r+1)->flags & (cSSPhiPsiBeta))) {
+          
+          (r-1)->ss = 'S';
+          (r  )->ss = 'S';
+          (r+1)->ss = 'S';
+        }
+
+        /* Parallel Sheets */
+
+        if(((r  )->flags & (cSSParaBetaDoubleHB))) {
+          (r  )->ss = 'S';
+        }
+        
+        if(((r-1)->flags & (cSSParaBetaDoubleHB)) &&
+           ((r  )->flags & (cSSParaBetaSkip))     &&
+           ((r+1)->flags & (cSSParaBetaSingleHB | cSSParaBetaDoubleHB))) {
+          (r  )->ss = 'S';
+        }
+
+        if(((r-1)->flags & (cSSParaBetaSingleHB | cSSParaBetaDoubleHB)) &&
+           ((r  )->flags & (cSSParaBetaSkip))     &&
+           ((r+1)->flags & (cSSParaBetaDoubleHB))) {
+          (r  )->ss = 'S';
+        }
+
+        /* include open "ladders" if PHIPSI geometry supports assignment */
+
+        if(((r-1)->flags & (cSSParaBetaSingleHB | cSSParaBetaDoubleHB)) &&
+           ((r-1)->flags & (cSSPhiPsiBeta)) &&
+           ((r  )->flags & (cSSParaBetaSkip))     &&
+           ((r  )->flags & (cSSPhiPsiBeta)) &&
+           ((r+1)->flags & (cSSParaBetaSingleHB | cSSParaBetaDoubleHB)) &&
+           ((r+1)->flags & (cSSPhiPsiBeta))) {
+            
+            (r-1)->ss = 'S';
+            (r  )->ss = 'S';
+            (r+1)->ss = 'S';
+          
+        }
+      }
+    }
+  }
+  
+  
+  {
+    int a,b;
+    SSResi *r,*r2;
+    int repeat = true;
+    int found;
+    
+    while(repeat) {
+      repeat = false;
+      
+      
+      for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
+        r = res + a;
+        if(r->real) {
+          
+          /* make sure we don't have any 2-residue strands */
+          
+          if((r->ss == 'S')&&((r+1)->ss == 'S') &&
+             ( ((r-1)->ss!='S') && ((r+2)->ss!='S') )) {
+            r->ss = 'L';
+            (r+1)->ss = 'L';
+            
+            repeat=true;
+          }
+          
+          /* double-check to make sure every terminal strand residue 
+             that should have a partner has one */
+          
+          if((r->ss == 'S')&&(!(r->flags & 
+                                (cSSAntiBetaSkip | cSSParaBetaSkip |
+                                 cSSAntiBetaDoubleHB | cSSParaBetaDoubleHB))) &&
+             ( ((r-1)->ss!='S') || ((r+1)->ss!='S') )) {
+            
+            found = false;
+
+            for(b=0;b<r->n_acc;b++) {
+              r2 = res+r->acc[b];
+              if(r2->ss == r->ss) {
+                found=true;
+                break;
+              }
+            }
+
+            if(!found) {
+              for(b=0;b<r->n_don;b++) {
+                r2 = res+r->don[b];
+                if(r2->ss == r->ss) {
+                  found=true;
+                  break;
+                }
+              }
+            }
+
+            if(!found) {
+              r->ss = 'L';
+              repeat=true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  { 
+    int a,aa;
+    ObjectMolecule *obj=NULL,*last_obj = NULL;
+    AtomInfoType *ai;
+    int changed_flag = false;
+
+    for(a=0;a<n_res;a++) {
+       if(res[a].real) {
+
+        aa = res[a].ca;
+        obj=I->Obj[I->Table[aa].model];
+
+        if(obj!=last_obj) {
+          if(changed_flag&&last_obj) {
+            ObjectMoleculeInvalidate(last_obj,cRepCartoon,cRepInvRep);
+            SceneChanged();
+            changed_flag=false;
+          }
+          last_obj=obj;
+        }
+        ai = obj->AtomInfo + I->Table[aa].atom;
+        
+        if(SelectorIsMember(ai->selEntry,target)) {
+          ai->ssType[0] = res[a].ss;
+          ai->ssType[1] = 0;
+          changed_flag=true;
+        }
+      }
+    }
+
+    if(changed_flag&&last_obj) {
+      ObjectMoleculeInvalidate(last_obj,cRepCartoon,cRepInvRep);
+      SceneChanged();
+      changed_flag=false;
+    }
+    
+  }
+
+       
+  VLAFreeP(res);
+ 
+  return 1;
 }
 
 
@@ -698,6 +1603,7 @@ int SelectorFromPyList(char *name,PyObject *list)
     }
   return(ok);
 }
+
 
 /*========================================================================*/
 
@@ -3938,6 +4844,34 @@ int SelectorSelect0(EvalElem *base)
 
   switch(base->code)
 	 {
+    case SELE_HBAs:
+    case SELE_HBDs:
+      { 
+        /* first, verify chemistry for all atoms... */
+        ObjectMolecule *lastObj=NULL,*obj;
+        int at,s;
+        for(a=cNDummyAtoms;a<I->NAtom;a++) {
+          at=I->Table[a].atom;
+          obj=I->Obj[I->Table[a].model];
+          s=obj->AtomInfo[at].selEntry;
+          if(obj!=lastObj) {
+            ObjectMoleculeUpdateNeighbors(obj);
+            ObjectMoleculeVerifyChemistry(obj);
+            lastObj = obj;
+          }
+        }
+      }
+      switch(base->code) {
+      case SELE_HBAs:
+        for(a=cNDummyAtoms;a<I->NAtom;a++)
+          base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hb_acceptor;
+        break;
+      case SELE_HBDs:
+        for(a=cNDummyAtoms;a<I->NAtom;a++)
+          base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hb_donor;
+        break;
+      }
+      break;
 	 case SELE_NONz:
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  base[0].sele[a]=false;
@@ -5673,14 +6607,29 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
   int dist_cnt = 0;
   int s;
   int a_keeper = false;
-  int *zero=NULL,*scratch=NULL;
+  int *zero=NULL,*scratch=NULL,*coverage=NULL;
+  HBondCriteria hbcRec,*hbc;
+
+  hbc=&hbcRec;
   *result = 0.0;
   ds = DistSetNew();
   vv = VLAlloc(float,10000);
 
   SelectorUpdateTable(); 
 
-  if(mode==1) { /* fill in all the neighbor tables */
+  coverage=Calloc(int,I->NAtom);
+
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
+    at=I->Table[a].atom;
+    obj=I->Obj[I->Table[a].model];
+    s=obj->AtomInfo[at].selEntry;
+    if(SelectorIsMember(s,sele1))
+      coverage[a]++;
+    if(SelectorIsMember(s,sele2))
+      coverage[a]++;
+  }
+
+  if((mode==1)||(mode==2)) { /* fill in all the neighbor tables */
     lastObj=NULL;
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
       at=I->Table[a].atom;
@@ -5688,22 +6637,34 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
       s=obj->AtomInfo[at].selEntry;
       if(obj!=lastObj) {
         if(SelectorIsMember(s,sele1)||SelectorIsMember(s,sele2)) {
+          ObjectMoleculeUpdateNeighbors(obj);
+          if(mode==2)
+            ObjectMoleculeVerifyChemistry(obj);
           lastObj = obj;
-          ObjectMoleculeUpdateNeighbors(lastObj);
         }
       }
     }
     zero=Calloc(int,I->NAtom);
     scratch=Alloc(int,I->NAtom);
   }
-  
+
+  if(mode==2) {
+    ObjectMoleculeInitHBondCriteria(hbc);
+    cutoff = hbc->maxDistAtMaxAngle;
+    if(cutoff<hbc->maxDistAtZero) {
+      cutoff = hbc->maxDistAtZero; 
+    }
+  }
   if(cutoff<0) cutoff = 1000.0;
   c=SelectorGetInterstateVLA(sele1,state1,sele2,state2,cutoff,&vla);
   for(a=0;a<c;a++) {
     a1=vla[a*2];
     a2=vla[a*2+1];
 
-    if(a1!=a2) {
+    if((a1!=a2)&&(
+                  (!((coverage[a1]==2)&&(coverage[a2]==2)))|| 
+                  (a1<a2))) /* eliminate reverse duplicates */
+      {
       at1=I->Table[a1].atom;
       at2=I->Table[a2].atom;
       
@@ -5738,16 +6699,38 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
           } else {
             idx2=cs2->AtmToIdx[at2];
           }
-            
+          
           if((idx1>=0)&&(idx2>=0)) {
             dist=(float)diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
             
             if(dist<cutoff) {
-
+              
               a_keeper=true;
-              if((mode==1)&&(obj1==obj2)) {
+              if(((mode==1)||(mode==2))&&(obj1==obj2)) {
                 a_keeper = !SelectorCheckNeighbors(5,obj1,at1,at2,
-                                                  zero,scratch);
+                                                   zero,scratch);
+              }
+              if(a_keeper&&(mode==2)) {
+                if(ai1->hb_donor&&ai2->hb_acceptor) {
+                  a_keeper = ObjectMoleculeGetCheckHBond(obj1,
+                                                         at1,
+                                                         state1,
+                                                         obj2,
+                                                         at2,
+                                                         state2,
+                                                         hbc);
+                } else if(ai1->hb_acceptor&&ai2->hb_donor) {
+                  a_keeper = ObjectMoleculeGetCheckHBond(obj2,
+                                                         at2,
+                                                         state2,
+                                                         obj1,
+                                                         at1,
+                                                         state1,
+                                                         hbc);
+                  
+                } else {
+                  a_keeper = false;
+                }
               }
               if((sele1==sele2)&&(at1>at2))
                 a_keeper = false;
@@ -5780,6 +6763,7 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
   VLAFreeP(vla);
   FreeP(zero);
   FreeP(scratch);
+  FreeP(coverage);
   ds->NIndex = nv;
   ds->Coord = vv;
   return(ds);

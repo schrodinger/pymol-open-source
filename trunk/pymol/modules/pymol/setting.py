@@ -313,6 +313,13 @@ if __name__=='pymol.setting':
       stick_ball_ratio      = 277
       stick_fixed_radius    = 278
       cartoon_transparency  = 279
+      dash_round_ends       = 280
+      h_bond_max_angle      = 281
+      h_bond_cutoff_center  = 282
+      h_bond_cutoff_edge    = 283
+      h_bond_power_a        = 284
+      h_bond_power_b        = 285
+      h_bond_cone           = 286
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -1059,6 +1059,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_stereo_angle:
 	 SceneDirty();
 	 break;
+  case cSetting_dash_round_ends:
+	 SceneDirty();
+	 break;
   case cSetting_min_mesh_spacing:
   case cSetting_mesh_mode:
   case cSetting_mesh_solvent:
@@ -2100,6 +2103,20 @@ void SettingInitGlobal(int alloc)
   SettingSet_b(I,cSetting_stick_fixed_radius, false);
 
   SettingSet_f(I,cSetting_cartoon_transparency, 0.0F);
+
+  SettingSet_b(I,cSetting_dash_round_ends,1);
+
+  SettingSet_f(I,cSetting_h_bond_max_angle,63.0F);
+
+  SettingSet_f(I,cSetting_h_bond_cutoff_center,3.6F);
+
+  SettingSet_f(I,cSetting_h_bond_cutoff_edge,3.2F);
+
+  SettingSet_f(I,cSetting_h_bond_power_a,1.6F);
+
+  SettingSet_f(I,cSetting_h_bond_power_b,5.0F);
+
+  SettingSet_f(I,cSetting_h_bond_cone, 180.0F);
 
 }
 

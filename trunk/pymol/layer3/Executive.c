@@ -109,6 +109,28 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 #define ExecGreyVisible 0.45F
 #define ExecGreyHidden 0.3F
 
+int  ExecutiveAssignSS(char *target,int state,char *context,int quiet)
+{
+  int sele0=-1;
+  int sele1=-1;
+  int ok = false;
+  sele0 = SelectorIndexByName(target);
+  if(state<0)
+    state=0;
+  if(sele0>=0) {
+    if(!context[0]) {
+      sele1=sele0;
+    } else {
+      sele1 = SelectorIndexByName(context);
+    }
+
+    if(sele1>=0) {
+      ok =  SelectorAssignSS(sele0,sele1,state,quiet);
+    }
+  }
+  return(ok);
+}
+
 PyObject *ExecutiveGetVisAsPyDict(void)
 {
   PyObject *result=NULL,*list,*repList;

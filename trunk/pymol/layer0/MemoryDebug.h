@@ -71,6 +71,7 @@ typedef struct VLARec {
 #define VLACacheSize(ptr,type,size,t,i) {ptr=(type*)VLACacheSetSize(ptr,size,t,i);}
 
 #define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
+#define VLACalloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,1)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
 #define VLACopy(ptr,type) (type*)VLANewCopy(ptr);

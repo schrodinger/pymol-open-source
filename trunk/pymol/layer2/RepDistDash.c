@@ -55,9 +55,10 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
   float *v=I->V;
   int c=I->N;
   float *vc;
-
+  int round_ends;
   I->linewidth = SettingGet_f(I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_width);
   I->radius = SettingGet_f(I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_radius);
+  round_ends = SettingGet_b(I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_round_ends);
 
   if(ray) {
 
@@ -75,7 +76,11 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 	 
 	 while(c>0) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
-		ray->fSausage3fv(ray,v,v+3,radius,vc,vc);
+      if(round_ends) {
+        ray->fSausage3fv(ray,v,v+3,radius,vc,vc);
+      } else {
+        ray->fCustomCylinder3fv(ray,v,v+3,radius,vc,vc,cCylCapFlat,cCylCapFlat);
+      }
 		v+=6;
       c-=2;
 	 }
