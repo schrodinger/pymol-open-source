@@ -1,5 +1,5 @@
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>print cmd.get_names()
 ['pept']
 PyMOL>print cmd.select("(all)")

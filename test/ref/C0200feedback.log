@@ -162,7 +162,6 @@ PyMOL>feedback enable, selector
 PyMOL>feedback enable, selector, everything
 PyMOL>feedback enable, repcartoon extrude, everything
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
 SelectorCreate-Debug: entered...
 SelectorUpdateTableSingleObject-Debug: entered..
 SelectorUpdateTableSingleObject-Debug: leaving...
@@ -170,6 +169,7 @@ SelectorUpdateTableSingleObject-Debug: leaving...
  SelectorCreate: "pept" created with 107 atoms.
 SelectorUpdateTableSingleObject-Debug: entered..
 SelectorUpdateTableSingleObject-Debug: leaving...
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>show cartoon
  SelectorGetTmp-Debug: entered with "all".
  SelectorGetTmp-Debug: leaving with "all".

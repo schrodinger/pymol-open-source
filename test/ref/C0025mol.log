@@ -1,5 +1,5 @@
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>print cmd.get_names()
 ['small01']
 PyMOL>print cmd.select("(all)")

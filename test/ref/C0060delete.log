@@ -12,7 +12,7 @@ PyMOL>load dat/pept.pkl
  Executive: object "pept" created.
 PyMOL>delete pept
 PyMOL>load dat/il2.pdb
- Executive: object "il2" created.
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>load dat/pept.pkl
  Executive: object "pept" created.
 PyMOL>print cmd.get_names()
@@ -22,13 +22,13 @@ PyMOL>delete pept
 PyMOL>print cmd.get_names()
 []
 PyMOL>load dat/il2.pdb
- Executive: object "il2" created.
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>load dat/pept.pkl
  Executive: object "pept" created.
 PyMOL>delete il2
 PyMOL>delete pept
 PyMOL>load dat/il2.pdb
- Executive: object "il2" created.
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>load dat/pept.pkl
  Executive: object "pept" created.
 PyMOL>delete il2

@@ -1,5 +1,5 @@
 PyMOL>load dat/names.pdb
- Executive: object "names" created.
+ CmdLoad: "dat/names.pdb" loaded as "names".
 PyMOL>select test,name O4'
  Selector: selection "test" defined with 2 atoms.
 PyMOL>select test,*/O4'

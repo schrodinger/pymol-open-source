@@ -1,6 +1,6 @@
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>alter (elem n,o),vdw=4.0
  Alter: modified 36 atoms.
 PyMOL>show dots
@@ -14,7 +14,7 @@ PyMOL>ray
  RayRenderTest: obtained 166 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>remove hydro
  Remove: eliminated 20 atoms in model "small01".
 PyMOL>h_add
@@ -22,10 +22,10 @@ PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>remove id 17
  Remove: eliminated 1 atoms in model "small01".
 PyMOL>count_atoms
@@ -49,7 +49,7 @@ PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>unbond id 1,id 2
  RemoveBond: 1 bonds removed from model "small01".
 PyMOL>h_add
@@ -64,7 +64,7 @@ PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>edit id 6,id 10
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
@@ -88,7 +88,7 @@ PyMOL>ray
  RayRenderTest: obtained 43 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>get_extent
  cmd.extent: min: [  -5.188, -20.331,  13.157]
  cmd.extent: max: [   8.919,   0.863,  27.058]
@@ -124,7 +124,7 @@ PyMOL>get_extent
  cmd.extent: max: [   5.893,  -8.073,  25.808]
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>flag ignore,(!*/ca,c,n,o,cb)
  Flag: flag 25 is set in 43 of 107 atoms.
 PyMOL>flag exfoliate,(*/cb)
@@ -136,9 +136,9 @@ PyMOL>ray
  RayRenderTest: obtained 1529 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol,m1
- Executive: object "m1" created.
+ CmdLoad: "dat/small01.mol" loaded as "m1".
 PyMOL>load dat/small01.mol,m2
- Executive: object "m2" created.
+ CmdLoad: "dat/small01.mol" loaded as "m2".
 PyMOL>fuse m1 and id 31,m2 and id 31
 PyMOL>dele m1
 PyMOL>zoom
@@ -146,9 +146,9 @@ PyMOL>ray
  RayRenderTest: obtained 122 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol,m1
- Executive: object "m1" created.
+ CmdLoad: "dat/small01.mol" loaded as "m1".
 PyMOL>load dat/small01.mol,m2
- Executive: object "m2" created.
+ CmdLoad: "dat/small01.mol" loaded as "m2".
 PyMOL>remove id 30
  Remove: eliminated 1 atoms in model "m1".
  Remove: eliminated 1 atoms in model "m2".
@@ -159,7 +159,7 @@ PyMOL>ray
  RayRenderTest: obtained 122 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>edit id 2,id 6, id 5
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
@@ -170,7 +170,7 @@ PyMOL>print "%8.3f"%cmd.dist("id 28","id 17")
    1.957
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>iterate (name n),print resi
 1
 2
@@ -203,7 +203,7 @@ PyMOL>iterate_state 1,(name o),print "%8.3f %8.3f %8.3f"%(x,y,z)
  IterateState: iterated over 13 atom states.
 PyMOL>dele all
 PyMOL>load dat/il2.pdb
- Executive: object "il2" created.
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>stored.sum = 0
 PyMOL>iterate_state 1,(il2),stored.sum=stored.sum+x
  IterateState: iterated over 2084 atom states.
@@ -232,7 +232,7 @@ PyMOL>ray
  RayRenderTest: obtained 111433 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>iterate (all),print name
 C
 C
@@ -312,14 +312,14 @@ H
  Iterate: iterated over 36 atoms.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>edit id 3
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>replace N,3,3
  Remove: eliminated 1 atoms in model "small01".
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>get_extent
  cmd.extent: min: [  -5.188, -20.331,  13.157]
  cmd.extent: max: [   8.919,   0.863,  27.058]
@@ -338,7 +338,7 @@ PyMOL>get_extent
  cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
  cmd.get_dihedral: -8.586 degrees.
 PyMOL>get_extent
@@ -353,7 +353,7 @@ PyMOL>get_extent
  cmd.extent: max: [  10.270,  -4.939,  29.070]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>remove not id 3
  Remove: eliminated 35 atoms in model "small01".
 PyMOL>zoom
@@ -383,7 +383,7 @@ PyMOL>count_atoms
  count_atoms: 3 atoms
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>alter (all),resi = (999-int(resi)-ID/4)
  Alter: modified 107 atoms.
 PyMOL>sort
@@ -393,7 +393,7 @@ PyMOL>ray
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>get_extent
  cmd.extent: min: [  -5.188, -20.331,  13.157]
  cmd.extent: max: [   8.919,   0.863,  27.058]
@@ -406,21 +406,21 @@ PyMOL>get_extent
  cmd.extent: max: [   8.919, -12.759,  27.469]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>cmd.edit("(small01`3)",pkresi=1)
 PyMOL>cmd.edit_mode()
  mouse: three_button_editing
 PyMOL>cmd.push_undo("small01",1)
 PyMOL>get_extent
  cmd.extent: min: [ -15.344,  -2.159,  -3.683]
- cmd.extent: max: [   2.256,   2.247,   2.517]
+ cmd.extent: max: [  -3.585,   2.683,   3.171]
 PyMOL>undo
 PyMOL>get_extent
  cmd.extent: min: [  -8.369,  -2.595,  -4.337]
  cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>get_extent
  cmd.extent: min: [  -8.369,  -2.595,  -4.337]
  cmd.extent: max: [   2.256,   2.247,   2.517]
@@ -478,7 +478,7 @@ PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    0.
 PyMOL>cmd.translate_atom("/small01////C`",   -0.020101367,    0.000000000,    0.000000000,1,1,0)
 PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,    0.000000000,    0.000000000,1,1,0)
 PyMOL>get_extent
- cmd.extent: min: [  -8.369,  -4.305,  -4.337]
+ cmd.extent: min: [  -8.369,  -3.896,  -4.337]
  cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>undo
 PyMOL>get_extent
@@ -486,12 +486,12 @@ PyMOL>get_extent
  cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>get_extent
  cmd.extent: min: [  -5.188, -20.331,  13.157]
  cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>load dat/pept.pdb,sav
- Executive: object "sav" created.
+ CmdLoad: "dat/pept.pdb" loaded as "sav".
 PyMOL>alter_state 1,(pept),x=1;y=2;z=3;
  AlterState: modified 107 atom states.
 PyMOL>rebuild

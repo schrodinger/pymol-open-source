@@ -1,5 +1,5 @@
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>cls
 
 PyMOL>print cmd.count_states()

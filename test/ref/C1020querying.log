@@ -1,6 +1,6 @@
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>count_atoms
  count_atoms: 107 atoms
 PyMOL>count_atoms name ca
@@ -61,7 +61,7 @@ PyMOL>print cmd.find_pairs("name o","name n",mode=1,cutoff=3.4)
 [(('cpy', 103), ('pept', 1)), (('pept', 103), ('pept', 1)), (('cpy', 83), ('pept', 15)), (('pept', 83), ('pept', 15)), (('cpy', 59), ('pept', 34)), (('pept', 59), ('pept', 34)), (('cpy', 47), ('pept', 56)), (('cpy', 37), ('pept', 56)), (('pept', 47), ('pept', 56)), (('pept', 37), ('pept', 56)), (('cpy', 18), ('pept', 73)), (('pept', 18), ('pept', 73)), (('cpy', 4), ('pept', 100)), (('pept', 4), ('pept', 100)), (('cpy', 103), ('cpy', 1)), (('pept', 103), ('cpy', 1)), (('cpy', 83), ('cpy', 15)), (('pept', 83), ('cpy', 15)), (('cpy', 59), ('cpy', 34)), (('pept', 59), ('cpy', 34)), (('cpy', 47), ('cpy', 56)), (('cpy', 37), ('cpy', 56)), (('pept', 47), ('cpy', 56)), (('pept', 37), ('cpy', 56)), (('cpy', 18), ('cpy', 73)), (('pept', 18), ('cpy', 73)), (('cpy', 4), ('cpy', 100)), (('pept', 4), ('cpy', 100))]
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>get_area (none)
  cmd.get_area: 0.000 Angstroms^2.
 PyMOL>get_area
@@ -74,7 +74,7 @@ PyMOL>load dat/3al1.pdb
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 2 symmetry operators.
- Executive: object "3al1" created.
+ CmdLoad: "dat/3al1.pdb" loaded as "3al1".
 PyMOL>get_area
 Area-Error: Selection must be within a single object.
 PyMOL>dele all
@@ -90,7 +90,7 @@ PyMOL>print cmd.get_color_tuple("white")
 (1.0, 1.0, 1.0)
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
  cmd.get_dihedral: -8.586 degrees.
  -5.188 -20.331  13.157   8.919   0.863  27.058
@@ -103,7 +103,7 @@ PyMOL>dele all
 PyMOL>print cmd.get_names()
 []
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>print cmd.get_names()
 ['pept']
 PyMOL>edit 4/ca
@@ -193,7 +193,7 @@ PyMOL>phi_psi all
  CYS-12:   ( -138.9,  133.5 )
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>get_symmetry
  get_symmetry: No symmetry defined.
 PyMOL>get_symmetry pept
@@ -204,7 +204,7 @@ PyMOL>load dat/3al1.pdb
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 2 symmetry operators.
- Executive: object "3al1" created.
+ CmdLoad: "dat/3al1.pdb" loaded as "3al1".
 PyMOL>get_symmetry
 Error: selection must refer to exactly one object.
 PyMOL>get_symmetry 3al1

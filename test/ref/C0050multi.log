@@ -1,8 +1,8 @@
 PyMOL>load dat/pept.pkl
  Executive: object "pept" created.
 PyMOL>load dat/il2.pdb
- Executive: object "il2" created.
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>load dat/tiny.pdb
- Executive: object "tiny" created.
+ CmdLoad: "dat/tiny.pdb" loaded as "tiny".
 PyMOL>load dat/water.pdb
- Executive: object "water" created.
+ CmdLoad: "dat/water.pdb" loaded as "water".
