@@ -64,6 +64,8 @@ static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable 
   PyObject *pobj = NULL;
 
   if(!pass) {
+
+    ObjectPrepareContext(&I->Obj,ray);
     if(I->Obj.RepVis[cRepCallback]) {
       if(state<I->NState) {
         sobj = I->State+state;

@@ -503,6 +503,7 @@ int ExecutiveCombineObjectTTT(char *name,float *ttt)
     ok=false;
   } else {
     ObjectCombineTTT(obj,ttt);
+    SceneDirty();
   }
   return(ok);
 }

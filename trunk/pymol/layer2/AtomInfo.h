@@ -147,6 +147,13 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
 void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src);
 int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2);
 
+typedef struct  {
+  int resv1,resv2;
+  ResIdent resi1,resi2;
+  unsigned char chain1,chain2;
+  unsigned char type;
+  int next;
+} SSEntry;
 
 /* legacy binary file support */
 

@@ -438,6 +438,25 @@ void *MemoryDebugMalloc(size_t size,const char *file,int line,int type)
   return((void *) rec);
 }
 
+void *MemoryDebugCalloc(size_t num,size_t size,const char *file,int line,int type)
+{
+  DebugRec *rec;
+
+  if(InitFlag) MemoryDebugInit();
+  rec=(DebugRec*)calloc(1,sizeof(DebugRec)+size*num);
+  if(!rec)
+    return(NULL);
+  strcpy(rec->file,file);
+  rec->line=line;
+  rec->size=size;
+  rec->type=type;
+  MemoryDebugHashAdd(rec);
+  rec++;
+  Count++;
+  if(MaxCount<Count) MaxCount=Count;
+  return((void *) rec);
+}
+
 void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 			 int line,int type)
 {

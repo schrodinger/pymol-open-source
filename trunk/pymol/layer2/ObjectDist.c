@@ -69,6 +69,8 @@ void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick,int pass
 {
   int a;
   if(!pass) {
+
+    ObjectPrepareContext(&I->Obj,ray);
     if(frame<0) {
       for(a=0;a<I->NDSet;a++)
         if(I->DSet[a])

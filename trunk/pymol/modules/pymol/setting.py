@@ -197,6 +197,8 @@ class SettingIndex:
    cartoon_cylindrical_helices = 180
    cartoon_helix_radius  =181
    connect_cutoff        =182
+#   save_pdb_ss           =183
+   sculpt_line_weight    =184
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

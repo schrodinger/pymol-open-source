@@ -156,6 +156,8 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
   ObjectSurfaceState *ms = NULL;
   float alpha;
 
+  ObjectPrepareContext(&I->Obj,ray);
+
   alpha = SettingGet_f(NULL,I->Obj.Setting,cSetting_transparency);
   alpha=1.0-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)

@@ -53,6 +53,8 @@ Z* -------------------------------------------------------------------
 #define ncopy ParseNCopy
 #define nskip ParseNSkip
 
+#define cResvMask 0x7FFF
+
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
@@ -6074,6 +6076,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL,*ai;
   int AFlag;
+  char SSCode;
   int atomCount;
   int conectFlag = false;
   BondType *bond=NULL,*ii1,*ii2;
@@ -6086,14 +6089,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
   int newModelFlag = false;
   int ssFlag = false;
-  int ss_resi1,ss_resi2;
-  unsigned char ss_chain1,ss_chain2;
-  char *(ss[256]);
+  int ss_resv1=0,ss_resv2=0;
+  ResIdent ss_resi1="",ss_resi2="";
+  unsigned char ss_chain1=0,ss_chain2=0;
+  SSEntry *ss_list = NULL;
+  int n_ss = 1;
+  int *(ss[256]); /* one array for each chain identifier */
+
   char cc[MAXLINELEN];
   char cc_saved;
   int index;
   int ignore_pdb_segi = 0;
-
+  int ss_valid;
+  SSEntry *sst;
+  int ssi;
 
   ignore_pdb_segi = SettingGet(cSetting_ignore_pdb_segi);
   AtomInfoPrimeColors();
@@ -6148,8 +6157,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
   if(ssFlag) {
     for(a=0;a<=255;a++) {
-      ss[a]=NULL;
+      ss[a]=0;
     }
+    ss_list=VLAlloc(SSEntry,50);
   }
 
   a=0; /* WATCHOUT */
@@ -6158,6 +6168,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   while(*p)
 	 {
 		AFlag=false;
+      SSCode=0;
 		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M'))
 		  AFlag = 1;
 		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
@@ -6171,86 +6182,61 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
         }
 		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='L')&&(*(p+3)=='I')&&(*(p+4)=='X'))
         {
+          ss_valid=true;
+
           p=nskip(p,19);
           ss_chain1 = (*p);
           p=nskip(p,2);
           p=ncopy(cc,p,4);
-          if(sscanf(cc,"%d",&ss_resi1)!=1) ss_resi1=1;
+          if(!sscanf(cc,"%s",ss_resi1)) ss_valid=false;
+          if(!sscanf(cc,"%d",&ss_resv1)) ss_valid=false;
+
           p=nskip(p,6);
           ss_chain2 = (*p);
           p=nskip(p,2);
           p=ncopy(cc,p,4);
-          if(sscanf(cc,"%d",&ss_resi2)!=1) ss_resi2=1;
 
-          PRINTFB(FB_ObjectMolecule,FB_Details)
-          " ObjectMolecule: read HELIX %c %d %c %d\n",
-            ss_chain1,ss_resi1,ss_chain2,ss_resi2
-          ENDFB;
+          if(!sscanf(cc,"%s",ss_resi2)) ss_valid=false;
+          if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
+
 
           if(ss_chain1==' ') ss_chain1=0;
           if(ss_chain2==' ') ss_chain2=0;          
-          if(ss_resi1<-cMaxNegResi) ss_resi1=-cMaxNegResi;
-          if(ss_resi2<-cMaxNegResi) ss_resi2=-cMaxNegResi;
     
-          if(!ss[ss_chain1])
-            ss[ss_chain1]=(char*)VLAMalloc(300,sizeof(char),5,1);
-          for(b=ss_resi1;b<=ss_resi2;b++) {
-            index = b+cMaxNegResi;
-            VLACheck(ss[ss_chain1],char,index);
-            ss[ss_chain1][index]='H';
-          }
-          if(!ss[ss_chain2])
-            ss[ss_chain2]=(char*)VLAMalloc(300,sizeof(char),5,1);
-          if(ss_chain2!=ss_chain1) {
-            for(b=ss_resi1;b<=ss_resi2;b++) {
-              index = b+cMaxNegResi;
-              VLACheck(ss[ss_chain2],char,index);
-              ss[ss_chain2][index]='H';
-            }
+          if(ss_valid) {
+            PRINTFB(FB_ObjectMolecule,FB_Details)
+              " ObjectMolecule: read HELIX %c %s %c %s\n",
+              ss_chain1,ss_resi1,ss_chain2,ss_resi2
+              ENDFB;
+            SSCode='H';
           }
         }
 		else if((*p == 'S')&&(*(p+1)=='H')&&(*(p+2)=='E')&&(*(p+3)=='E')&&(*(p+4)=='T'))
         {
-
+          ss_valid=true;
           p=nskip(p,21);
           ss_chain1 = (*p);
           p=nskip(p,1);
           p=ncopy(cc,p,4);
-          if(sscanf(cc,"%d",&ss_resi1)!=1) ss_resi1=1;
+          if(!sscanf(cc,"%s",ss_resi1)) ss_valid=false;
+          if(!sscanf(cc,"%d",&ss_resv1)) ss_valid=false;
           p=nskip(p,6);
           ss_chain2 = (*p);
           p=nskip(p,1);
           p=ncopy(cc,p,4);
-          if(sscanf(cc,"%d",&ss_resi2)!=1) ss_resi2=1;
-
-
-          PRINTFB(FB_ObjectMolecule,FB_Details)
-          " ObjectMolecule: read SHEET %c %d %c %d\n",
-            ss_chain1,ss_resi1,ss_chain2,ss_resi2
-          ENDFB;
+          if(!sscanf(cc,"%s",ss_resi2)) ss_valid=false;
+          if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
 
           if(ss_chain1==' ') ss_chain1=0;
-          if(ss_chain2==' ') ss_chain2=0;          
-          if(ss_resi1<-cMaxNegResi) ss_resi1=-cMaxNegResi;
-          if(ss_resi2<-cMaxNegResi) ss_resi2=-cMaxNegResi;
-    
-          if(!ss[ss_chain1])
-            ss[ss_chain1]=(char*)VLAMalloc(300,sizeof(char),5,1);
-          for(b=ss_resi1;b<=ss_resi2;b++) {
-            index = b+cMaxNegResi;
-            VLACheck(ss[ss_chain1],char,index);
-            ss[ss_chain1][index]='S';
+          if(ss_chain2==' ') ss_chain2=0;   
+       
+          if(ss_valid) {
+            PRINTFB(FB_ObjectMolecule,FB_Details)
+              " ObjectMolecule: read SHEET %c %s %c %s\n",
+              ss_chain1,ss_resi1,ss_chain2,ss_resi2
+              ENDFB;
+            SSCode = 'S';
           }
-          if(!ss[ss_chain2])
-            ss[ss_chain2]=(char*)VLAMalloc(300,sizeof(char),5,1);
-          if(ss_chain2!=ss_chain1) {
-            for(b=ss_resi1;b<=ss_resi2;b++) {
-              index = b+cMaxNegResi;
-              VLACheck(ss[ss_chain2],char,index);
-              ss[ss_chain2][index]='S';
-            }
-          }
-
         }
 		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
          (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart))
@@ -6316,10 +6302,69 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               }
             }
         }
-		if(AFlag&&(!*restart))
-		  {
-          ai=atInfo+atomCount;
+      
+      if(SSCode) {
+        
+        /* pretty confusing how this works... the following efficient (i.e. array-based)
+           secondary structure lookup even when there are multiple insertion codes
+           and where there may be multiple SS records for the residue using different 
+           insertion codes */
 
+        if(!ss[ss_chain1]) { /* allocate new array for chain if necc. */
+          ss[ss_chain1]=Calloc(int,cResvMask+1);
+        }
+
+        sst = NULL; 
+        for(b=ss_resv1;b<=ss_resv2;b++) { /* iterate over all residues indicated */
+          index = b & cResvMask;
+          if(ss[ss_chain1][index]) sst = NULL; /* make a unique copy in the event of multiple entries for one resv */
+          if(!sst) {
+            VLACheck(ss_list,SSEntry,n_ss);
+            ssi = n_ss++;
+            sst = ss_list + ssi;
+            sst->resv1 = ss_resv1;
+            sst->resv2 = ss_resv2;
+            sst->chain1 = ss_chain1;
+            sst->chain2 = ss_chain2;
+            sst->type=SSCode;
+            strcpy(sst->resi1,ss_resi1);
+            strcpy(sst->resi2,ss_resi2);
+          }
+          sst->next = ss[ss_chain1][index];
+          ss[ss_chain1][index]=ssi;
+          if(sst->next) sst = NULL; /* force another unique copy */
+        }
+        
+        if(ss_chain2!=ss_chain1) { /* handle case where chains are not the same (undefined in PDB spec?) */
+          if(!ss[ss_chain2]) {
+            ss[ss_chain2]=Calloc(int,cResvMask+1);
+          }
+          sst = NULL; 
+          for(b=ss_resv1;b<=ss_resv2;b++) { /* iterate over all residues indicated */
+            index = b & cResvMask;
+            if(ss[ss_chain2][index]) sst = NULL; /* make a unique copy in the event of multiple entries for one resv */
+            if(!sst) {
+              VLACheck(ss_list,SSEntry,n_ss);
+              ssi = n_ss++;
+              sst = ss_list + ssi;
+              sst->resv1 = ss_resv1;
+              sst->resv2 = ss_resv2;
+              sst->chain1 = ss_chain1;
+              sst->chain2 = ss_chain2;
+              sst->type=SSCode;
+              strcpy(sst->resi1,ss_resi1);
+              strcpy(sst->resi2,ss_resi2);
+            }
+            sst->next = ss[ss_chain2][index];
+            ss[ss_chain2][index]=ssi;
+            if(sst->next) sst = NULL; /* force another unique copy */
+          }
+        }
+      }
+      if(AFlag&&(!*restart))
+        {
+          ai=atInfo+atomCount;
+          
           p=nskip(p,6);
           p=ncopy(cc,p,5);
           if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
@@ -6353,13 +6398,30 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(!sscanf(cc,"%d",&ai->resv)) ai->resv=1;
           
           if(ssFlag) { /* get secondary structure information (if avail) */
+
             ss_chain1=ai->chain[0];
+            index = ai->resv & cResvMask;
             if(ss[ss_chain1]) {
-              index = ai->resv+cMaxNegResi;
-              if(index<0) index=0;
-              VLACheck(ss[ss_chain1],char,index);
-              ai->ssType[0]=ss[ss_chain1][index];
+              ssi = ss[ss_chain1][index];
+              while(ssi) {
+                sst = ss_list + ssi; /* contains shared entry, or unique linked list for each residue */
+                /*                printf("%d<=%d<=%d, %s<=%s<=%s ", 
+                                  sst->resv1,ai->resv,sst->resv2,
+                                  sst->resi1,ai->resi,sst->resi2);*/
+                if(ai->resv>=sst->resv1)
+                  if(ai->resv<=sst->resv2)
+                    if((ai->resv!=sst->resv1)||(WordCompare(ai->resi,sst->resi1,true)>=0))
+                      if((ai->resv!=sst->resv2)||(WordCompare(ai->resi,sst->resi2,true)<=0))
+                        {
+                          ai->ssType[0]=sst->type;
+                          /*                          printf(" Y\n");*/
+                          break;
+                        }
+                /*                printf(" N\n");*/
+                ssi = sst->next;
+              }
             }
+            
           } else {
             ai->cartoon = cCartoon_tube;
           }
@@ -6545,8 +6607,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
   if(ssFlag) {
     for(a=0;a<=255;a++) {
-      VLAFreeP(ss[a]);
+      FreeP(ss[a]);
     }
+    VLAFreeP(ss_list);
   }
   return(cset);
 }
