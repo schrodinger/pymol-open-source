@@ -6475,6 +6475,7 @@ special = {
 }
 
 ctrl = {
+   '1' : [ sys.stdout.write       , ('hello\n',), {} ],
    'A' : [ redo                   , () , {}],
    'B' : [ replace                , ('Br',1,1), {} ],
    'C' : [ replace                , ('C',4,4), {} ],
