@@ -20,7 +20,6 @@ Z* -------------------------------------------------------------------
 
 #define cRayMaxBasis 10
 
-
 typedef struct CRay {
   void (*fSphere3fv)(struct CRay *ray,float *v,float r);
   void (*fCylinder3fv)(struct CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);
@@ -32,8 +31,9 @@ typedef struct CRay {
 							  float *v1,float *v2,float *v3,
 							  float *n1,float *n2,float *n3,
 							  float *c1,float *c2,float *c3);
-  void (*fTexture)(struct CRay *ray,int mode,float *par);
+  void (*fWobble)(struct CRay *ray,int mode,float *par);
   void (*fTransparentf)(struct CRay *ray,float t);
+  void (*fCharacter)(struct CRay *ray,int char_id,float xorig,float yorig,float advance);
   CPrimitive *Primitive;
   int NPrimitive;
   CBasis *Basis;
@@ -41,11 +41,12 @@ typedef struct CRay {
   int *Vert2Prim;
   float CurColor[3];
   float ModelView[16];
+  float Rotation[16];
   float Volume[6];
   float Range[3];
   int BigEndian;
-  int Texture;
-  float TextureParam[3];
+  int Wobble;
+  float WobbleParam[3];
   float Trans;
   float Random[256];
   int TTTFlag;
@@ -98,7 +99,7 @@ typedef struct {
 CRay *RayNew(void);
 void RayFree(CRay *I);
 void RayPrepare(CRay *I,float v0,float v1,float v2,
-                float v3,float v4,float v5,float *mat,
+                float v3,float v4,float v5,float *mat,float *rotMat,
                 float aspRat,int ray_width);
 void RayRender(CRay *I,int width,int height,unsigned int *image,
                float front,float back,double timing,float angle);

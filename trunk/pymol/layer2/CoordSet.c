@@ -300,7 +300,7 @@ int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode)
 int CoordSetGetAtomVertex(CoordSet *I,int at,float *v)
 {
   ObjectMolecule *obj;
-  int a1 = 0;
+  int a1 = -1;
   int result = 0;
 
   obj = I->Obj;
@@ -708,11 +708,11 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
             ObjectUseColor((CObject*)I->Obj);
           } else {
             if(I->Obj) 
-              ray->fTexture(ray,
+              ray->fWobble(ray,
                             SettingGet_i(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
                             SettingGet_3fv(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
             else
-              ray->fTexture(ray,
+              ray->fWobble(ray,
                             SettingGet_i(I->Setting,NULL,cSetting_ray_texture),
                             SettingGet_3fv(I->Setting,NULL,cSetting_ray_texture_settings));
             ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
@@ -773,7 +773,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
             
           }
           if(ray)
-            ray->fTexture(ray,0,NULL);
+            ray->fWobble(ray,0,NULL);
         }
   
   PRINTFD(FB_CoordSet)

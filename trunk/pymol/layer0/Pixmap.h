@@ -13,13 +13,25 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_Menu
-#define _H_Menu
+#ifndef _H_Pixmap
+#define _H_Pixmap
 
-#include"os_python.h"
 
-void MenuActivate(int x,int y,int last_x,int last_y,char *name,char *sele);
-void MenuActivate0Arg(int x,int y,int last_x,int last_y,char *name);
-void MenuActivate2Arg(int x,int y,int last_x,int last_y,char *name,char *sele1,char *sele2);
+/* for the sake of simplicity, all pixmaps are 32-bit RGBA */
+
+typedef struct {
+  int height,width;
+  unsigned char *buffer;
+} CPixmap;
+
+void PixmapInit(CPixmap *I,int width,int height);
+
+CPixmap *PixmapNew(int width,int height);
+void PixmapInitFromBitmap(CPixmap *I,int width, int height,
+                             unsigned char *bitmap,
+                             unsigned char *rgba);
+void PixmapPurge(CPixmap *I);
+void PixmapFreeP(CPixmap *I);
 
 #endif
+

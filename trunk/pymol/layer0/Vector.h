@@ -63,6 +63,7 @@ double slow_diffsq3f ( float *v1, float *v2 );
 double slow_diff3f ( float *v1, float *v2 );
 int slow_within3f(float *v1,float *v2,float dist);
 int slow_within3fsq(float *v1,float *v2,float dist,float dist2);
+void slow_copy3f( float *src, float *dst);
 
 int equal3f(float *v1,float *v2);
 

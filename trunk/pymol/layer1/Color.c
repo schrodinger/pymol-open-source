@@ -656,13 +656,13 @@ void ColorReset(void)
   I->Color[I->NColor].Color[2]=0.5F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"grey");
+  strcpy(I->Color[I->NColor].Name,"grey"); /* english spelling */
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=0.5F;
   I->Color[I->NColor].Color[2]=0.5F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"gray"); /* for the poor spellers */
+  strcpy(I->Color[I->NColor].Name,"gray"); /* american spelling */
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=0.5F;
   I->Color[I->NColor].Color[2]=0.5F;
@@ -839,7 +839,7 @@ void ColorReset(void)
   /* greybow */
 
   for(a=0;a<100;a=a+1) {
-    sprintf(I->Color[I->NColor].Name,"grey%02d",a);
+    sprintf(I->Color[I->NColor].Name,"grey%02d",a); /* english spelling */
     I->Color[I->NColor].Color[0]=a/99.0F;
     I->Color[I->NColor].Color[1]=a/99.0F;
     I->Color[I->NColor].Color[2]=a/99.0F;
@@ -909,6 +909,17 @@ void ColorReset(void)
   I->Color[I->NColor].Color[1]=0.05F;
   I->Color[I->NColor].Color[2]=0.5F;
   I->NColor++;
+
+
+  for(a=0;a<100;a=a+1) {
+    sprintf(I->Color[I->NColor].Name,"gray%02d",a); /* american */
+    I->Color[I->NColor].Color[0]=a/99.0F;
+    I->Color[I->NColor].Color[1]=a/99.0F;
+    I->Color[I->NColor].Color[2]=a/99.0F;
+    I->NColor++;
+  }
+
+  /* if any more colors need to be added, add them here at the end so that existing files won't have their colors changed */
 
   for(a=0;a<I->NColor;a++) { 
     /* mark all current colors non-custom so that they don't get saved in session files */

@@ -304,7 +304,7 @@ SEE ALSO
          lock()
          r = _cmd.bond(atom1,atom2,int(order),1)
          if r and edit:
-            _cmd.edit(str(atom1),str(atom2),'','',0,1)
+            _cmd.edit(str(atom1),str(atom2),'','',0,0,1)
       finally:
          unlock()
       return r
@@ -583,7 +583,7 @@ SEE ALSO
 
 
    def edit(selection1='',selection2='none',selection3='none',
-            selection4='none',pkresi=0,quiet=1):
+            selection4='none',pkresi=0, pkbond=1,quiet=1):
       '''
 DESCRIPTION
 
@@ -618,7 +618,7 @@ SEE ALSO
          lock()   
          r = _cmd.edit(str(selection1),str(selection2),
                        str(selection3),str(selection4),
-                       int(pkresi),int(quiet))
+                       int(pkresi),int(pkbond),int(quiet))
       finally:
          unlock()
       return r

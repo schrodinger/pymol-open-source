@@ -23,10 +23,12 @@ Z* -------------------------------------------------------------------
 #define cPrimCylinder 2
 #define cPrimTriangle 3
 #define cPrimSausage 4
+#define cPrimCharacter 5
 
 #define cCylCapNone 0
 #define cCylCapFlat 1
 #define cCylCapRound 2
+
 
 typedef struct {
   int type,vert,cull;
@@ -36,8 +38,9 @@ typedef struct {
   float r1,l1; 
   float trans;
   int cap1,cap2;
-  int texture;
-  float texture_param[3];
+  int char_id;
+  int wobble;
+  float wobble_param[3];
 } CPrimitive;
 
 typedef struct {
@@ -62,6 +65,7 @@ typedef struct {
   float dist;
   float dotgle,flat_dotgle;
   float reflect[3];
+  float trans;
 } RayInfo;
 
 typedef struct {
@@ -92,14 +96,8 @@ void BasisSetupMatrix(CBasis *I);
 void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc);
 void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
 
-#define SPLIT_BASIS	1
-
-#if SPLIT_BASIS
 int BasisHitNoShadow(BasisCallRec *BC);
 int BasisHitShadow(BasisCallRec *BC);
-#else
-int BasisHit(BasisCallRec *BC);
-#endif
 
 void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i);
 void BasisSetFudge(float fudge);

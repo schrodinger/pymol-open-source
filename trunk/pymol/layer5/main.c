@@ -57,6 +57,8 @@
 #include"PConv.h"
 #include"VFont.h"
 #include"Wizard.h"
+#include"Text.h"
+#include"Character.h"
 
 void MainFree(void);
 void MainTest(void);
@@ -629,6 +631,8 @@ static void MainInit(void)
   SettingInitGlobal(true,true);  
   SettingSet(cSetting_internal_gui,(float)InternalGUI);
   SettingSet(cSetting_internal_feedback,(float)InternalFeedback);
+  TextInit();
+  CharacterInit();
   SphereInit();
   ColorInit();
   OrthoInit(ShowSplash);
@@ -664,6 +668,8 @@ void MainFree(void)
   OrthoFree();
   SettingFreeGlobal();
   ColorFree();
+  CharacterFree();
+  TextFree();
   SphereDone();
   PFree();
   FeedbackFree();

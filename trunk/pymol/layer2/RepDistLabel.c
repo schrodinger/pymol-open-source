@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Setting.h"
 #include"PyMOLObject.h"
+#include"Text.h"
 
 typedef char DistLabel[6];
 
@@ -55,14 +56,27 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
   float *v=I->V;
   int c=I->N;
   DistLabel *l = I->L;
-  char *cc;
   int n = 0;
   int color;
+  int font_id = SettingGet_i(NULL,I->Obj->Setting,cSetting_label_font_id);
 
   if(ray) {
+
+    color = SettingGet_color(NULL,I->Obj->Setting,cSetting_label_color);
+    
+    if(color>=0)
+      TextSetColor(ColorGet(color));
+    else
+      TextSetColor(ColorGet(I->Obj->Color));
+
+	 while(c--) {
+      TextSetPos(v);
+      TextRenderRay(ray,font_id,l[n]);
+      v+=3;
+      n++;
+	 }
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-
     int float_text;
     float_text = (int)SettingGet(cSetting_float_labels);
     if(float_text)
@@ -71,21 +85,16 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
     glDisable(GL_LIGHTING);
     
     color = SettingGet_color(NULL,I->Obj->Setting,cSetting_label_color);
+    
     if(color>=0)
-      glColor3fv(ColorGet(color));
+      TextSetColor(ColorGet(color));
     else
-      glColor3fv(ColorGet(I->Obj->Color));
-    /*    printf("color %d %d \n",color,I->Obj->Color);
-          dump3f(ColorGet(I->Obj->Color),"components");*/
- /*	 SceneResetNormal(true);*/
+      TextSetColor(ColorGet(I->Obj->Color));
 	 while(c--) {
 
-      glRasterPos4f(v[0],v[1],v[2],1.0);
-      cc = l[n];
-		v+=3;
-      while(*cc) {
-        p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(cc++));
-      }
+      TextSetPos(v);
+      TextRenderOpenGL(font_id,l[n]);
+      v+=3;
       n++;
 	 }
     glEnable(GL_LIGHTING);

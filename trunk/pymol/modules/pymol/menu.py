@@ -415,7 +415,7 @@ def enable_disable(enable):
       cmmd = 'cmd.disable("'
    return result + map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+cmd.get_names('objects'))
    
-def main_menu(s):
+def main_menu():
    return [
       [ 2, 'Main Pop-Up'  , '' ],
       [ 1, 'zoom (vis)'           ,'cmd.zoom("visible")'            ],
@@ -452,29 +452,37 @@ def pick_option(title,s,object=0):
       [ 0, ''             , ''                      ],
       [ 1, 'labels'      , mol_labels(s) ],      
       ]
+   
    if object:
       result.extend([
          [ 0, ''             , ''                      ],         
-         [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ]
+         [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ],
+         [ 0, ''             , ''                      ],
+         [ 1, 'delete'        ,'cmd.delete("'+s+'")'            ]         
          ])
+   else:
+      result.extend([
+      [ 0, ''             , ''                      ],
+      [ 1, 'remove'      , 'cmd.remove("'+s+'")' ],     
+                    ])
    return result
 
-def pick_menu(s):
-   if s[-1]=='`':
-      title = s[0:-1]
+def pick_menu(s1,s2):
+   if s1[-1]=='`':
+      title = s1[0:-1]
    else:
-      title = s
+      title = s1
    return [[ 2, title     , '' ],
-           [ 1, 'atom'    , pick_option("Atom",s) ],
-           [ 1, 'residue' , pick_option("Residue","(byres ("+s+"))") ],
-           [ 1, 'chain'   , pick_option("Chain","(bychain ("+s+"))") ],
-           [ 1, 'segment' , pick_option("Segment","(byseg ("+s+"))") ],
-           [ 1, 'object'  , pick_option("Object","(byobject ("+s+"))",1) ],
+           [ 1, 'atom'    , pick_option("Atom",s2) ],
+           [ 1, 'residue' , pick_option("Residue","(byres ("+s2+"))") ],
+           [ 1, 'chain'   , pick_option("Chain","(bychain ("+s2+"))") ],
+           [ 1, 'segment' , pick_option("Segment","(byseg ("+s2+"))") ],
+           [ 1, 'object'  , pick_option("Object","(byobject ("+s2+"))",1) ],
            [ 0, ''             , ''                      ],
-           [ 1, 'molecule', pick_option("Molecule","(bymol ("+s+"))") ],
+           [ 1, 'molecule', pick_option("Molecule","(bymol ("+s2+"))") ],
            [ 0, ''             , ''                      ],
-           [ 1, 'fragment', pick_option("Fragment","(byfrag ("+s+"))") ],
-           [ 1, '""+joint(s)', pick_option("Fragment","((byfrag ("+s+")) extend 1)") ],
+           [ 1, 'fragment', pick_option("Fragment","(byfrag ("+s2+"))") ],
+           [ 1, '""+joint(s)', pick_option("Fragment","((byfrag ("+s2+")) extend 1)") ],
            ]
       
 

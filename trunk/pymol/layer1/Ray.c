@@ -30,6 +30,8 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"P.h"
 #include"MemoryCache.h"
+#include"Character.h"
+#include"Text.h"
 
 #ifdef _PYMOL_INLINE
 #undef _PYMOL_INLINE
@@ -57,12 +59,13 @@ static int RandomFlag=0;
 static float Random[256];
 
 void RayRelease(CRay *I);
-void RayTexture(CRay *I,int mode,float *v);
+void RayWobble(CRay *I,int mode,float *v);
 void RayTransparentf(CRay *I,float v);
 
 void RaySetup(CRay *I);
 void RayColor3fv(CRay *I,float *v);
 void RaySphere3fv(CRay *I,float *v,float r);
+void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance);
 void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 
@@ -202,13 +205,13 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
 {
   r->flat_dotgle = r->surfnormal[2];
 
-  if(r->prim->texture)
-    switch(r->prim->texture) {
+  if(r->prim->wobble)
+    switch(r->prim->wobble) {
     case 1:
-      scatter3f(r->surfnormal,r->prim->texture_param[0]);
+      scatter3f(r->surfnormal,r->prim->wobble_param[0]);
       break;
     case 2:
-      wiggle3f(r->surfnormal,r->impact,r->prim->texture_param);
+      wiggle3f(r->surfnormal,r->impact,r->prim->wobble_param);
       break;
     case 3: 
       {
@@ -216,11 +219,11 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
         float3 n;
         copy3f(r->impact,v);
         RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
-        n[0]=(float)cos((v[0]+v[1]+v[2])*r->prim->texture_param[1]);
-        n[1]=(float)cos((v[0]-v[1]+v[2])*r->prim->texture_param[1]);
-        n[2]=(float)cos((v[0]+v[1]-v[2])*r->prim->texture_param[1]);
+        n[0]=(float)cos((v[0]+v[1]+v[2])*r->prim->wobble_param[1]);
+        n[1]=(float)cos((v[0]-v[1]+v[2])*r->prim->wobble_param[1]);
+        n[2]=(float)cos((v[0]+v[1]-v[2])*r->prim->wobble_param[1]);
         RayTransformNormals33(1,&n,I->ModelView,&n);
-        scale3f(n,r->prim->texture_param[0],n);
+        scale3f(n,r->prim->wobble_param[0],n);
         add3f(n,r->surfnormal,r->surfnormal);
         normalize3f(r->surfnormal);
       }
@@ -228,7 +231,7 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
       {
         float3 v;
         float3 n;
-        float *tp = r->prim->texture_param;
+        float *tp = r->prim->wobble_param;
         copy3f(r->impact,v);
         RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
         n[0]=Random[0xFF&(int)((cos((v[0])*tp[1])*256*tp[2]))];
@@ -244,7 +247,7 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
       {
         float3 v;
         float3 n;
-        float *tp = r->prim->texture_param;
+        float *tp = r->prim->wobble_param;
         copy3f(r->impact,v);
         RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
         n[0]=Random[0xFF&(int)((v[0]*tp[1])+0)]+
@@ -318,6 +321,7 @@ void RayExpandPrimitives(CRay *I)
 		nNorm++;
 		break;
 	 case cPrimTriangle:
+	 case cPrimCharacter:
 		nVert+=3;
 		nNorm+=4;
 		break;
@@ -346,6 +350,8 @@ void RayExpandPrimitives(CRay *I)
   for(a=0;a<I->NPrimitive;a++) {
 	 switch(I->Primitive[a].type) {
 	 case cPrimTriangle:
+	 case cPrimCharacter:
+
 		I->Primitive[a].vert=nVert;
 		I->Vert2Prim[nVert]=a;
 		I->Vert2Prim[nVert+1]=a;
@@ -465,6 +471,8 @@ static void RayComputeBox(CRay *I)
       switch(prm->type) 
       {
       case cPrimTriangle:
+      case cPrimCharacter:
+
         r = _0;
         v = basis1->Vertex + prm->vert*3;
         minmax(v,r);
@@ -544,6 +552,8 @@ void RayTransformFirst(CRay *I)
 	 prm=I->Primitive+a;
     switch(prm->type) {
     case cPrimTriangle:
+	 case cPrimCharacter:
+
         BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
                                 basis1->Vertex+prm->vert*3+3,
                                 basis1->Vertex+prm->vert*3+6,
@@ -605,6 +615,8 @@ void RayTransformBasis(CRay *I,CBasis *basis1,int group_id)
 	 prm=I->Primitive+a;
     switch(prm->type) {
     case cPrimTriangle:
+	 case cPrimCharacter:
+
         BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
                                 basis1->Vertex+prm->vert*3+3,
                                 basis1->Vertex+prm->vert*3+6,
@@ -1086,8 +1098,8 @@ int RayTraceThread(CRayThreadInfo *T)
 	int interior_color;
 	int interior_flag;
 	int interior_shadows;
-	int interior_texture;
-	int texture_save;
+	int interior_wobble;
+	int wobble_save;
 	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect, _0, _1, _p5, _255, _persistLimit, _inv3;
 	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth,invHgtRange;
 	register float       invWdthRange,vol0;
@@ -1125,7 +1137,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	I = T->ray;
 	
 	interior_shadows	= (int)SettingGet(cSetting_ray_interior_shadows);
-	interior_texture	= (int)SettingGet(cSetting_ray_interior_texture);
+	interior_wobble	= (int)SettingGet(cSetting_ray_interior_texture);
 	interior_color		= (int)SettingGet(cSetting_ray_interior_color);
 	project_triangle	= SettingGet(cSetting_ray_improve_shadows);
 	shadows				= (int)SettingGet(cSetting_ray_shadows);
@@ -1359,18 +1371,16 @@ int RayTraceThread(CRayThreadInfo *T)
                   SceneCall.front = new_front;
                   SceneCall.excl_trans = excl_trans;
                   
-#if SPLIT_BASIS
+
                   i	= BasisHitNoShadow( &SceneCall );
-#else
-                  i	= BasisHit( &SceneCall );
-#endif               
+
                   interior_flag = SceneCall.interior_flag;
                   
                   if((i >= 0) || interior_flag) 
                     {
                       pixel_flag		= true;
                       n_hit++;
-                      
+                      r1.trans = r1.prim->trans;
                       if(interior_flag)
                         {
                           copy3f(r1.base,r1.impact);
@@ -1379,14 +1389,14 @@ int RayTraceThread(CRayThreadInfo *T)
                           r1.surfnormal[2]	= _1;
                           r1.impact[2]	-= T->front;
                           
-                          if(interior_texture >= 0) 
+                          if(interior_wobble >= 0) 
                             {
-                              texture_save		= r1.prim->texture; /* This is a no-no for multithreading! */
-                              r1.prim->texture	= interior_texture;
+                              wobble_save		= r1.prim->wobble; /* This is a no-no for multithreading! */
+                              r1.prim->wobble	= interior_wobble;
                               
                               RayReflectAndTexture(I,&r1);
                               
-                              r1.prim->texture	= texture_save;
+                              r1.prim->wobble	= wobble_save;
                             }
                           else
                             RayReflectAndTexture(I,&r1);
@@ -1397,7 +1407,8 @@ int RayTraceThread(CRayThreadInfo *T)
                       else
                         {
                           new_front	= r1.dist;
-                          if(r1.prim->type==cPrimTriangle) 
+                          
+                          if(r1.prim->type==cPrimTriangle)
                             {
                               BasisGetTriangleNormal(bp1,&r1,i,fc);
                               
@@ -1409,7 +1420,15 @@ int RayTraceThread(CRayThreadInfo *T)
                               RayReflectAndTexture(I,&r1);
                               BasisGetTriangleFlatDotgle(bp1,&r1,i);
                             }
-                          else 
+                          else if(r1.prim->type==cPrimCharacter) {
+                            BasisGetTriangleNormal(bp1,&r1,i,fc);
+                            
+                            r1.trans = CharacterInterpolate(r1.prim->char_id,fc);
+
+                            RayReflectAndTexture(I,&r1);
+                            BasisGetTriangleFlatDotgle(bp1,&r1,i);
+                            
+                          } else 
                             {
                               RayGetSphereNormal(I,&r1);
                               RayReflectAndTexture(I,&r1);
@@ -1442,12 +1461,12 @@ int RayTraceThread(CRayThreadInfo *T)
                                   r1.impact[2]		-= T->front;
                                   r1.dist				= T->front;
                                   
-                                  if(interior_texture >= 0)
+                                  if(interior_wobble >= 0)
                                     {
-                                      texture_save		= r1.prim->texture;
-                                      r1.prim->texture	= interior_texture;
+                                      wobble_save		= r1.prim->wobble;
+                                      r1.prim->wobble	= interior_wobble;
                                       RayReflectAndTexture(I,&r1);
-                                      r1.prim->texture	= texture_save;
+                                      r1.prim->wobble	= wobble_save;
                                     }
                                   else
                                     RayReflectAndTexture(I,&r1);
@@ -1478,13 +1497,8 @@ int RayTraceThread(CRayThreadInfo *T)
                           matrix_transform33f3f(bp2->Matrix,r1.impact,r2.base);
                           r2.base[2]-=shadow_fudge;
                           ShadeCall.except = i;
-#if SPLIT_BASIS
                           if(BasisHitShadow(&ShadeCall) > -1)
-                            lit	= (float) pow(r2.prim->trans, _p5);
-#else
-                          if(BasisHit(&ShadeCall) > -1)
-                            lit	= (float) pow(r2.prim->trans, _p5);
-#endif
+                            lit	= (float) pow(r2.trans, _p5);
                         }
                       
                       if(lit>_0)
@@ -1531,15 +1545,15 @@ int RayTraceThread(CRayThreadInfo *T)
                             }
                           else 
                             {
-                              fc[3] = ffact1m*(_1 - r1.prim->trans);
+                              fc[3] = ffact1m*(_1 - r1.trans);
                             }
                           
                           if(!pass) {
-                            if(r1.prim->trans<trans_spec_cut) {
+                            if(r1.trans<trans_spec_cut) {
                               first_excess = excess*ffact1m*ray_trans_spec;
                             } else {
                               first_excess = excess*ffact1m*ray_trans_spec*
-                                trans_spec_scale*(_1 - r1.prim->trans);
+                                trans_spec_scale*(_1 - r1.trans);
                             }
                           } else {
                               fc[0]+=first_excess;
@@ -1550,11 +1564,11 @@ int RayTraceThread(CRayThreadInfo *T)
                       else 
                         {
                           if(!pass) {
-                            if(r1.prim->trans<trans_spec_cut) {
+                            if(r1.trans<trans_spec_cut) {
                               first_excess = excess*ray_trans_spec;
                             } else {
                               first_excess = excess*ray_trans_spec*
-                                trans_spec_scale*(_1 - r1.prim->trans);
+                                trans_spec_scale*(_1 - r1.trans);
                             }
                           } else {
                               fc[0]	+= first_excess;
@@ -1564,7 +1578,7 @@ int RayTraceThread(CRayThreadInfo *T)
                           if(opaque_back) {
                             fc[3]	= _1;
                           } else {
-                            fc[3] = _1 - r1.prim->trans;
+                            fc[3] = _1 - r1.trans;
                           }
                         }
                     }
@@ -1678,13 +1692,13 @@ int RayTraceThread(CRayThreadInfo *T)
                         excl_trans	= new_front+(2*r1.surfnormal[2]*r1.prim->r1);
                       
                       if(!backface_cull) 
-                        persist	= persist * r1.prim->trans;
+                        persist	= persist * r1.trans;
                       else 
                         {
-                          if((persist < 0.9999) && (r1.prim->trans))	/* don't combine transparent surfaces */
+                          if((persist < 0.9999) && (r1.trans))	/* don't combine transparent surfaces */
                             *pixel	= last_pixel;
                           else
-                            persist	= persist * r1.prim->trans;
+                            persist	= persist * r1.trans;
                         }
                       
                     }
@@ -2524,11 +2538,11 @@ void RayRenderColorTable(CRay *I,int width,int height,int *image)
   }
 }
 /*========================================================================*/
-void RayTexture(CRay *I,int mode,float *v)
+void RayWobble(CRay *I,int mode,float *v)
 {
-  I->Texture=mode;
+  I->Wobble=mode;
   if(v) 
-    copy3f(v,I->TextureParam);
+    copy3f(v,I->WobbleParam);
 }
 /*========================================================================*/
 void RayTransparentf(CRay *I,float v)
@@ -2555,8 +2569,8 @@ void RaySphere3fv(CRay *I,float *v,float r)
   p->type = cPrimSphere;
   p->r1=r;
   p->trans=I->Trans;
-  p->texture=I->Texture;
-  copy3f(I->TextureParam,p->texture_param);
+  p->wobble=I->Wobble;
+  copy3f(I->WobbleParam,p->wobble_param);
   vv=p->v1;
   (*vv++)=(*v++);
   (*vv++)=(*v++);
@@ -2579,6 +2593,109 @@ void RaySphere3fv(CRay *I,float *v,float r)
 
   I->NPrimitive++;
 }
+
+/*========================================================================*/
+void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance)
+{
+  CPrimitive *p;
+  float *v;
+  float vt[3];
+  float *vv;
+  float width,height;
+
+  v = TextGetPos();
+  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive+1,0,cCache_ray_primitive);
+  p = I->Primitive+I->NPrimitive;
+
+  p->type = cPrimCharacter;
+  p->trans=I->Trans;
+  p->wobble=I->Wobble;
+  p->char_id = char_id;
+  copy3f(I->WobbleParam,p->wobble_param);
+
+  vv=p->v1;
+  (*vv++)=v[0];
+  (*vv++)=v[1];
+  (*vv++)=v[2];
+
+  if(I->TTTFlag) {
+    transformTTT44f3f(I->TTT,p->v1,p->v1);
+  }
+
+  if(I->Context) {
+    RayApplyContextToVertex(I,p->v1);
+  }
+
+  {
+    float xn[3] = {1.0F,0.0F,0.0F};
+    float yn[3] = {0.0F,1.0F,0.0F};
+    float zn[3] = {0.0F,0.0F,1.0F};
+    float sc[3];
+    float scale;
+    CPrimitive *pp = p+1;
+
+    RayApplyMatrixInverse33(1,(float3*)xn,I->Rotation,(float3*)xn);    
+    RayApplyMatrixInverse33(1,(float3*)yn,I->Rotation,(float3*)yn);    
+    RayApplyMatrixInverse33(1,(float3*)zn,I->Rotation,(float3*)zn);    
+
+    scale = I->PixelRadius * advance;
+    scale3f(xn,scale,vt); /* advance raster position in 3-space */
+    add3f(v,vt,vt);
+    TextSetPos(vt);
+
+    /* position the pixmap relative to raster position */
+
+    scale = ((-xorig)-0.5F)*I->PixelRadius;
+    scale3f(xn,scale,sc);
+    add3f(sc,p->v1,p->v1);
+         
+    scale = ((-yorig)-0.5F)*I->PixelRadius;
+    scale3f(yn,scale,sc);
+    add3f(sc,p->v1,p->v1);
+    
+    width = (float)CharacterGetWidth(char_id);
+    height = (float)CharacterGetHeight(char_id);
+
+    scale = I->PixelRadius*width;
+    scale3f(xn,scale,xn);
+    scale = I->PixelRadius*height;
+    scale3f(yn,scale,yn);
+
+    copy3f(zn,p->n0);
+    copy3f(zn,p->n1);
+    copy3f(zn,p->n2);
+    copy3f(zn,p->n3);
+
+
+    *(pp)=(*p);
+
+    /* define coordinates of first triangle */
+
+    add3f(p->v1,xn,p->v2);
+    add3f(p->v1,yn,p->v3);
+    
+    /* encode characters coordinates in the colors  */
+
+    zero3f(p->c1);
+    set3f(p->c2,width,0.0F,0.0F);
+    set3f(p->c3,0.0F,height,0.0F);
+
+    /* define coordinates of second triangle */
+
+    add3f(yn,xn,pp->v1);
+    add3f(p->v1,pp->v1,pp->v1);
+    add3f(p->v1,yn,pp->v2);
+    add3f(p->v1,xn,pp->v3);
+
+    /* encode integral character coordinates into the vertex colors  */
+
+    set3f(pp->c1,width,height,0.0F);
+    set3f(pp->c2,0.0F,height,0.0F);
+    set3f(pp->c3,width,0.0F,0.0F);
+
+  }
+  I->NPrimitive+=2;
+}
 /*========================================================================*/
 void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 {
@@ -2592,10 +2709,10 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   p->type = cPrimCylinder;
   p->r1=r;
   p->trans=I->Trans;
-  p->texture=I->Texture;
+  p->wobble=I->Wobble;
   p->cap1=cCylCapFlat;
   p->cap2=cCylCapFlat;
-  copy3f(I->TextureParam,p->texture_param);
+  copy3f(I->WobbleParam,p->wobble_param);
 
   vv=p->v1;
   (*vv++)=(*v1++);
@@ -2641,10 +2758,10 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
   p->type = cPrimCylinder;
   p->r1=r;
   p->trans=I->Trans;
-  p->texture=I->Texture;
+  p->wobble=I->Wobble;
   p->cap1=cap1;
   p->cap2=cap2;
-  copy3f(I->TextureParam,p->texture_param);
+  copy3f(I->WobbleParam,p->wobble_param);
 
   vv=p->v1;
   (*vv++)=(*v1++);
@@ -2689,8 +2806,8 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   p->type = cPrimSausage;
   p->r1=r;
   p->trans=I->Trans;
-  p->texture=I->Texture;
-  copy3f(I->TextureParam,p->texture_param);
+  p->wobble=I->Wobble;
+  copy3f(I->WobbleParam,p->wobble_param);
 
   vv=p->v1;
   (*vv++)=(*v1++);
@@ -2748,8 +2865,8 @@ void RayTriangle3fv(CRay *I,
 
   p->type = cPrimTriangle;
   p->trans=I->Trans;
-  p->texture=I->Texture;
-  copy3f(I->TextureParam,p->texture_param);
+  p->wobble=I->Wobble;
+  copy3f(I->WobbleParam,p->wobble_param);
 
   /* determine exact triangle normal */
   add3f(n1,n2,nx);
@@ -2863,9 +2980,9 @@ CRay *RayNew(void)
   testPtr = (unsigned char*)&test;
   I->BigEndian = (*testPtr)&&1;
   I->Trans=0.0F;
-  I->Texture=0;
+  I->Wobble=0;
   I->TTTFlag=false;
-  zero3f(I->TextureParam);
+  zero3f(I->WobbleParam);
   PRINTFB(FB_Ray,FB_Blather) 
     " RayNew: BigEndian = %d\n",I->BigEndian
     ENDFB;
@@ -2883,7 +3000,8 @@ CRay *RayNew(void)
   I->fCustomCylinder3fv=RayCustomCylinder3fv;
   I->fSausage3fv=RaySausage3fv;
   I->fTriangle3fv=RayTriangle3fv;
-  I->fTexture=RayTexture;
+  I->fCharacter=RayCharacter;
+  I->fWobble=RayWobble;
   I->fTransparentf=RayTransparentf;
   if(!RandomFlag) {
     for(a=0;a<256;a++) {
@@ -2897,7 +3015,7 @@ CRay *RayNew(void)
 /*========================================================================*/
 void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,
-                float *mat,float aspRat,int ray_width)
+                float *mat,float *rotMat,float aspRat,int ray_width)
 	  /*prepare for vertex calls */
 {
   int a;
@@ -2915,6 +3033,7 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   I->Range[1]=I->Volume[3]-I->Volume[2];
   I->Range[2]=I->Volume[5]-I->Volume[4];
   I->AspRatio=aspRat;
+  CharacterSetRetention(true);
 
   if(mat)  
     for(a=0;a<16;a++)
@@ -2925,6 +3044,9 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
     for(a=0;a<3;a++)
       I->ModelView[a*5]=1.0F;
   }
+  if(rotMat)  
+    for(a=0;a<16;a++)
+      I->Rotation[a]=rotMat[a];
   if(ray_width)
     I->PixelRadius = ((float)I->Range[0])/ray_width;
   else
@@ -2956,6 +3078,7 @@ void RayRelease(CRay *I)
 void RayFree(CRay *I)
 {
   RayRelease(I);
+  CharacterSetRetention(false);
   CacheFreeP(I->Basis,0,cCache_ray_basis,false);
   VLACacheFreeP(I->Vert2Prim,0,cCache_ray_vert2prim,false);
   OOFreeP(I);

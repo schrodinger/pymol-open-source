@@ -2998,7 +2998,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
         sprintf(sele2,"%s`%d",I->Obj.Name,at0+1);
         SelectorGetTmp(sele1,s1);
         SelectorGetTmp(sele2,s2);
-        EditorSelect(s1,s2,NULL,NULL,false,true);
+        EditorSelect(s1,s2,NULL,NULL,false,true,true);
         SelectorFreeTmp(s1);
         SelectorFreeTmp(s2);
       }
@@ -3667,6 +3667,9 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
     strcpy(ai->resn,ai0->resn);    
     if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
       ai->color=ai0->color;
+    else if((ai->elem[0]=='C')&&(ai->elem[1]==0)) 
+      /* carbons are always colored according to the object color */
+      ai->color=I->Obj.Color;
     else
       ai->color=AtomInfoGetColor(ai);
     for(a=0;a<cRepCnt;a++)
