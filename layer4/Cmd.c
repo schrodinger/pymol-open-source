@@ -1315,12 +1315,18 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 	   if(obj) {
 		 ObjectSetName(obj,oname);
 		 ExecutiveManageObject(obj);
-		 sprintf(buf," CmdLoad: ChemPy-model loaded into object \"%s\".\n",oname);		  
+       if(frame<0)
+         frame = ((ObjectMolecule*)obj)->NCSet-1;
+		 sprintf(buf," CmdLoad: ChemPy-model loaded into object \"%s\", frame %d.\n",
+               oname,frame+1);		  
 	   }
 	 } else if(origObj) {
       if(finish)
       ExecutiveUpdateObjectSelection(origObj);
-		sprintf(buf," CmdLoad: ChemPy-model appended into object \"%s\".\n",oname);
+       if(frame<0)
+         frame = ((ObjectMolecule*)origObj)->NCSet-1;
+		sprintf(buf," CmdLoad: ChemPy-model appended into object \"%s\", frame %d.\n",
+              oname,frame+1);
 	 }
 	 break;
   }
