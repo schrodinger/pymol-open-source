@@ -223,7 +223,21 @@ class PMGApp(AbstractApp):
 
    def file_open(self):
       ofile = askopenfilename(initialdir = self.initialdir,
-                              filetypes=[("PDB File","*.pdb"),
+                              filetypes=[("All Readable","*.pdb"),
+                                         ("All Readable","*.ccp4"),
+                                         ("All Readable","*.xplor"),
+                                         ("All Readable","*.mol"),                                         
+                                         ("All Readable","*.sdf"),
+                                         ("All Readable","*.xyz"),                                         
+                                         ("All Readable","*.r3d"),
+                                         ("All Readable","*.cc1"),
+                                         ("All Readable","*.cc2"),                                         
+                                         ("All Readable","*.ent"),
+                                         ("All Readable","*.dat"),
+                                         ("All Readable","*.out"),
+                                         ("All Readable","*.mmd"),
+                                         ("All Readable","*.mmod"),
+                                         ("PDB File","*.pdb"),
                                          ("All Files","*.*"),
                                          ("All Files","*"),                                         
                                          ("CCP4 Map","*.ccp4"),                                         
@@ -249,7 +263,8 @@ class PMGApp(AbstractApp):
    def log_open(self):
       sfile = asksaveasfilename(initialfile = self.log_file,
                                 initialdir = self.initialdir,
-                                filetypes=[("PyMOL Script","*.pml"),
+                                filetypes=[
+                                           ("PyMOL Script","*.pml"),
                                            ("PyMOL Program","*.pym"),
                                            ("Python Program","*.py"),
                                            ("All Files","*.*"),                                           
@@ -261,7 +276,10 @@ class PMGApp(AbstractApp):
 
    def log_resume(self,append_only=0):
       ofile = askopenfilename(initialdir = os.getcwd(),
-                   filetypes=[("PyMOL Script","*.pml"),
+                   filetypes=[("All Resumable","*.pml"),
+                              ("All Resumable","*.pym"),
+                              ("All Resumable","*.py"),
+                              ("PyMOL Script","*.pml"),
                               ("PyMOL Program","*.pym"),
                               ("Python Program","*.py"),
                               ("All Files","*.*"),                                           
@@ -274,7 +292,10 @@ class PMGApp(AbstractApp):
 
    def log_append(self,append_only=0):
       ofile = askopenfilename(initialdir = os.getcwd(),
-                   filetypes=[("PyMOL Script","*.pml"),
+                   filetypes=[("All Appendable","*.pml"),
+                              ("All Appendable","*.pym"),
+                              ("All Appendable","*.py"),
+                              ("PyMOL Script","*.pml"),
                               ("PyMOL Program","*.pym"),
                               ("Python Program","*.py"),
                               ("All Files","*.*"),                                           
@@ -313,7 +334,8 @@ class PMGApp(AbstractApp):
             if result=='OK':
                sfile = asksaveasfilename(initialfile = sfile,
                                          initialdir = self.initialdir,
-                                         filetypes=[("PDB File","*.pdb"),
+                                         filetypes=[
+                                                    ("PDB File","*.pdb"),
                                                     ("MOL File","*.mol"),
                                                     ("MMD File","*.mmd"),
                                                     ("PKL File","*.pkl"),
