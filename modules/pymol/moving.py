@@ -49,21 +49,21 @@ if __name__=='pymol.moving':
 
    def mdump():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mdump" dumps the current set of movie commands
+   "mdump" dumps the current set of movie commands
 
-   USAGE
+USAGE
 
-      mdump
+   mdump
 
-   PYMOL API
+PYMOL API
 
-      cmd.mdump()
+   cmd.mdump()
 
-   SEE ALSO
+SEE ALSO
 
-      mplay, mset, mdo, mclear, mmatrix
+   mplay, mset, mdo, mclear, mmatrix
       '''
       try:
          lock()   
@@ -74,21 +74,21 @@ if __name__=='pymol.moving':
 
    def mstop():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mstop" stops the movie.
+   "mstop" stops the movie.
 
-   USAGE
+USAGE
 
-      mstop
+   mstop
 
-   PYMOL API
+PYMOL API
 
-      cmd.mstop()
+   cmd.mstop()
 
-   SEE ALSO
+SEE ALSO
 
-      mplay, mset, mdo, mclear, mmatrix
+   mplay, mset, mdo, mclear, mmatrix
       '''
       try:
          lock()   
@@ -99,21 +99,21 @@ if __name__=='pymol.moving':
 
    def mplay():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mplay" starts the movie.
+   "mplay" starts the movie.
 
-   USAGE
+USAGE
 
-      mplay
+   mplay
 
-   PYMOL API
+PYMOL API
 
-      cmd.mplay()
+   cmd.mplay()
 
-   SEE ALSO
+SEE ALSO
 
-      mstop, mset, mdo, mclear, mmatrix
+   mstop, mset, mdo, mclear, mmatrix
       '''
       try:
          lock()   
@@ -132,39 +132,39 @@ if __name__=='pymol.moving':
 
    def mdo(frame,command):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mdo" sets up a command to be executed upon entry into the
-      specified frame of the movie.  These commands are usually created
-      by a PyMOL utility program (such as util.mrock).  Command can
-      actually contain several commands separated by semicolons ';'
+   "mdo" sets up a command to be executed upon entry into the
+   specified frame of the movie.  These commands are usually created
+   by a PyMOL utility program (such as util.mrock).  Command can
+   actually contain several commands separated by semicolons ';'
 
-   USAGE
+USAGE
 
-      mdo frame : command
+   mdo frame : command
 
-   PYMOL API
+PYMOL API
 
-      cmd.mdo( int frame, string command )
+   cmd.mdo( int frame, string command )
 
-   EXAMPLE
+EXAMPLE
 
-      // Creates a single frame movie involving a rotation about X and Y
+   // Creates a single frame movie involving a rotation about X and Y
 
-      load test.pdb
-      mset 1
-      mdo 1, turn x,5; turn y,5;
-      mplay
+   load test.pdb
+   mset 1
+   mdo 1, turn x,5; turn y,5;
+   mplay
 
-   NOTES
+NOTES
 
-      The "mset" command must first be used to define the movie before
-      "mdo" statements will have any effect.  Redefinition of the movie
-      clears any existing mdo statements.
+   The "mset" command must first be used to define the movie before
+   "mdo" statements will have any effect.  Redefinition of the movie
+   clears any existing mdo statements.
 
-   SEE ALSO
+SEE ALSO
 
-      mset, mplay, mstop
+   mset, mplay, mstop
       '''
       try:
          lock()   
@@ -175,21 +175,21 @@ if __name__=='pymol.moving':
 
    def mappend(frame,command):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-   USAGE
+USAGE
 
-      mappend frame : command
+   mappend frame : command
 
-   PYMOL API
+PYMOL API
 
-   EXAMPLE
+EXAMPLE
 
-   NOTES
+NOTES
 
-   SEE ALSO
+SEE ALSO
 
-      mset, mplay, mstop
+   mset, mplay, mstop
       '''
       try:
          lock()   
@@ -200,29 +200,29 @@ if __name__=='pymol.moving':
 
    def mpng(prefix,first=0,last=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mpng" writes a series of numbered movie frames to png files with
-      the specified prefix.  If the "ray_trace_frames" variable is
-      non-zero, these frames will be ray-traced.  This operation can take
-      several hours for a long movie.
+   "mpng" writes a series of numbered movie frames to png files with
+   the specified prefix.  If the "ray_trace_frames" variable is
+   non-zero, these frames will be ray-traced.  This operation can take
+   several hours for a long movie.
 
-      Be sure to disable "cache_frames" when issuing this operation on a
-      long movie (>100 frames) to avoid running out of memory.
+   Be sure to disable "cache_frames" when issuing this operation on a
+   long movie (>100 frames) to avoid running out of memory.
 
-   USAGE
+USAGE
 
-      mpng prefix [, first [, last]]
+   mpng prefix [, first [, last]]
 
-      Options "first" and "last" can be used to specify an inclusive
-      interval over which to render frames.  Thus, you can write a smart
-      Python program that will automatically distribute rendering over a
-      cluster of workstations.  If these options are left at zero, then
-      the entire movie will be rendered.
+   Options "first" and "last" can be used to specify an inclusive
+   interval over which to render frames.  Thus, you can write a smart
+   Python program that will automatically distribute rendering over a
+   cluster of workstations.  If these options are left at zero, then
+   the entire movie will be rendered.
 
-   PYMOL API
+PYMOL API
 
-      cmd.mpng( string prefix, int first=0, int last=0 )
+   cmd.mpng( string prefix, int first=0, int last=0 )
       '''
       if thread.get_ident() ==pymol.glutThread:
          r = cmd._mpng(prefix,int(first)-1,int(last)-1)
@@ -232,17 +232,17 @@ if __name__=='pymol.moving':
 
    def mclear():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mclear" clears the movie frame image cache.
+   "mclear" clears the movie frame image cache.
 
-   USAGE
+USAGE
 
-      mclear
+   mclear
 
-   PYMOL API
+PYMOL API
 
-      cmd.mclear()
+   cmd.mclear()
       '''
       try:
          lock()   
@@ -254,25 +254,25 @@ if __name__=='pymol.moving':
 
    def frame(frame):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "frame" sets the viewer to the indicated movie frame.
+   "frame" sets the viewer to the indicated movie frame.
 
-   USAGE
+USAGE
 
-      frame frame-number
+   frame frame-number
 
-   PYMOL API
+PYMOL API
 
-      cmd.frame( int frame_number )
+   cmd.frame( int frame_number )
 
-   NOTES
+NOTES
 
-      Frame numbers are 1-based
+   Frame numbers are 1-based
 
-   SEE ALSO
+SEE ALSO
 
-      count_states
+   count_states
       '''
       try:
          lock()   
@@ -283,34 +283,34 @@ if __name__=='pymol.moving':
 
    def mset(specification=""):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mset" sets up a relationship between molecular states and movie
-      frames.  This makes it possible to control which states are shown
-      in which frame.
+   "mset" sets up a relationship between molecular states and movie
+   frames.  This makes it possible to control which states are shown
+   in which frame.
 
-   USAGE
+USAGE
 
-      mset specification
+   mset specification
 
-   PYMOL API
+PYMOL API
 
-      cmd.mset( string specification )
+   cmd.mset( string specification )
 
-   EXAMPLES
+EXAMPLES
 
-      mset 1         // simplest case, one state -> one frame
-      mset 1 x10     // ten frames, all corresponding to state 1
-      mset 1 x30 1 -15 15 x30 15 -1
-        // more realistic example:
-        // the first thirty frames are state 1
-        // the next 15 frames pass through states 1-15
-        // the next 30 frames are of state 15
-        // the next 15 frames iterate back to state 1
+   mset 1         // simplest case, one state -> one frame
+   mset 1 x10     // ten frames, all corresponding to state 1
+   mset 1 x30 1 -15 15 x30 15 -1
+     // more realistic example:
+     // the first thirty frames are state 1
+     // the next 15 frames pass through states 1-15
+     // the next 30 frames are of state 15
+     // the next 15 frames iterate back to state 1
 
-   SEE ALSO
+SEE ALSO
 
-      mdo, mplay, mclear
+   mdo, mplay, mclear
       '''
       try:
          lock()
@@ -345,21 +345,21 @@ if __name__=='pymol.moving':
 
    def mmatrix(action):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "mmatrix" sets up a matrix to be used for the first frame of the movie.
+   "mmatrix" sets up a matrix to be used for the first frame of the movie.
 
-   USAGE
+USAGE
 
-      mmatrix {clear|store|recall}
+   mmatrix {clear|store|recall}
 
-   PYMOL API
+PYMOL API
 
-      cmd.mmatrix( string action )
+   cmd.mmatrix( string action )
 
-   EXAMPLES
+EXAMPLES
 
-      mmatrix store
+   mmatrix store
       '''
       r = 1
       try:
@@ -377,21 +377,21 @@ if __name__=='pymol.moving':
 
    def forward():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "forward" moves the movie one frame forward.
+   "forward" moves the movie one frame forward.
 
-   USAGE
+USAGE
 
-      forward
+   forward
 
-   PYMOL API
+PYMOL API
 
-      cmd.forward()
+   cmd.forward()
 
-   SEE ALSO
+SEE ALSO
 
-      mset, backward, rewind
+   mset, backward, rewind
       '''
       try:
          lock()   
@@ -402,21 +402,21 @@ if __name__=='pymol.moving':
 
    def backward():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "backward" moves the movie back one frame.
+   "backward" moves the movie back one frame.
 
-   USAGE
+USAGE
 
-      backward
+   backward
 
-   PYMOL API
+PYMOL API
 
-      cmd.backward()
+   cmd.backward()
 
-   SEE ALSO
+SEE ALSO
 
-      mset, forward, rewind
+   mset, forward, rewind
       '''
       try:
          lock()   
@@ -428,17 +428,17 @@ if __name__=='pymol.moving':
 
    def rewind():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "rewind" goes to the beginning of the movie.
+   "rewind" goes to the beginning of the movie.
 
-   USAGE
+USAGE
 
-      rewind
+   rewind
 
-   PYMOL API
+PYMOL API
 
-      cmd.rewind()
+   cmd.rewind()
       '''
       try:
          lock()   
@@ -449,17 +449,17 @@ if __name__=='pymol.moving':
 
    def ending():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "ending" goes to the end of the movie.
+   "ending" goes to the end of the movie.
 
-   USAGE
+USAGE
 
-      ending
+   ending
 
-   PYMOL API
+PYMOL API
 
-      cmd.ending()
+   cmd.ending()
       '''
       try:
          lock()   
@@ -470,17 +470,17 @@ if __name__=='pymol.moving':
 
    def middle():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "middle" goes to the middle of the movie.
+   "middle" goes to the middle of the movie.
 
-   USAGE
+USAGE
 
-      middle
+   middle
 
-   PYMOL API
+PYMOL API
 
-      cmd.middle()
+   cmd.middle()
       '''
       try:
          lock()   
@@ -492,25 +492,25 @@ if __name__=='pymol.moving':
 
    def get_state():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_state" returns the current state index (1-based)
+   "get_state" returns the current state index (1-based)
 
-   PYMOL API
+PYMOL API
 
-      cmd.get_state()
+   cmd.get_state()
 
-   NOTES
+NOTES
 
-      States refer to different geometric configurations which an object
-      can above.  By default, states and movie frames have a one-to-one
-      relationship.  States can be visited in an arbitrary order to
-      create frames.  The "mset" command allows you to build a
-      relationship between states and frames.
+   States refer to different geometric configurations which an object
+   can above.  By default, states and movie frames have a one-to-one
+   relationship.  States can be visited in an arbitrary order to
+   create frames.  The "mset" command allows you to build a
+   relationship between states and frames.
 
-   SEE ALSO
+SEE ALSO
 
-      get_frame
+   get_frame
       '''
       # NOTE: NO LOCKS...this is/can be called from cmd.refresh()
       r = _cmd.get_state()+1
@@ -518,20 +518,20 @@ if __name__=='pymol.moving':
 
    def get_frame():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "get_frame" returns the current frame index (1-based)
+   "get_frame" returns the current frame index (1-based)
 
-   PYMOL API
+PYMOL API
 
-      Frames refers to sequences of images in a movie.  Sequential frames
-      may contain identical molecular states, they may have one-to-one
-      correspondance to molecular states (default), or they may have an
-      arbitrary relationship, specific using the "mset" command.
+   Frames refers to sequences of images in a movie.  Sequential frames
+   may contain identical molecular states, they may have one-to-one
+   correspondance to molecular states (default), or they may have an
+   arbitrary relationship, specific using the "mset" command.
 
-   SEE ALSO
+SEE ALSO
 
-      get_state
+   get_state
 
       '''
       # NOTE: NO LOCKS...this is/can be be called from cmd.refresh()

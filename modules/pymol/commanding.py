@@ -82,13 +82,13 @@ if __name__=='pymol.commanding':
 
    def cls(): 
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "cls" clears the output buffer.
+   "cls" clears the output buffer.
 
-   USAGE
+USAGE
 
-      cls
+   cls
    '''
       r = None
       try:
@@ -100,13 +100,13 @@ if __name__=='pymol.commanding':
 
    def splash(mode=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "splash" shows the splash screen information.
+   "splash" shows the splash screen information.
 
-   USAGE
+USAGE
 
-      splash
+   splash
       '''
       r = None
       mode = int(mode)
@@ -128,19 +128,19 @@ if __name__=='pymol.commanding':
 
    def sync(timeout=1.0,poll=0.05):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "sync" is an API-only function which waits until all current
-      commmands have been executed before returning.  A timeout
-      can be used to insure that this command eventually returns.
+   "sync" is an API-only function which waits until all current
+   commmands have been executed before returning.  A timeout
+   can be used to insure that this command eventually returns.
 
-   PYMOL API
+PYMOL API
 
-      cmd.sync(float timeout=1.0,float poll=0.05)
+   cmd.sync(float timeout=1.0,float poll=0.05)
 
-   SEE ALSO
+SEE ALSO
 
-      frame
+   frame
    '''
       now = time.time()
       timeout = float(timeout)
@@ -159,19 +159,19 @@ if __name__=='pymol.commanding':
    def do(commands):
       # WARNING: don't call this routine if you already have the API lock
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "do" makes it possible for python programs to issue simple PyMOL
-      commands as if they were entered on the command line.
+   "do" makes it possible for python programs to issue simple PyMOL
+   commands as if they were entered on the command line.
 
-   PYMOL API
+PYMOL API
 
-      cmd.do( commands )
+   cmd.do( commands )
 
-   USAGE (PYTHON)
+USAGE (PYTHON)
 
-      from pymol import cmd
-      cmd.do("load file.pdb")
+   from pymol import cmd
+   cmd.do("load file.pdb")
       '''
       lst = string.split(commands,"\n")   
       try:
@@ -187,17 +187,17 @@ if __name__=='pymol.commanding':
 
    def quit():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "quit" terminates the program. 
+   "quit" terminates the program. 
 
-   USAGE
+USAGE
 
-      quit
+   quit
 
-   PYMOL API
+PYMOL API
 
-      cmd.quit()
+   cmd.quit()
       '''
       if thread.get_ident() == pymol.glutThread:
          try: 
@@ -215,24 +215,24 @@ if __name__=='pymol.commanding':
 
    def delete(name):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "delete" removes an object or a selection. 
+   "delete" removes an object or a selection. 
 
-   USAGE
+USAGE
 
-      delete name  
-      delete all   # deletes all objects
+   delete name  
+   delete all   # deletes all objects
 
-      name = name of object or selection
+   name = name of object or selection
 
-   PYMOL API
+PYMOL API
 
-      cmd.delete (string name = object-or-selection-name )
+   cmd.delete (string name = object-or-selection-name )
 
-   SEE ALSO
+SEE ALSO
 
-      remove
+   remove
       '''
       try:
          lock()   

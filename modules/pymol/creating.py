@@ -58,38 +58,38 @@ if __name__=='pymol.creating':
 
    def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,source=-1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "isomesh" creates a mesh isosurface object from a map object.
+   "isomesh" creates a mesh isosurface object from a map object.
 
-   USAGE
+USAGE
 
-      isomesh name, map, level [,(selection) [,buffer [,state [,carve ]]]]
+   isomesh name, map, level [,(selection) [,buffer [,state [,carve ]]]]
 
-      "name" is the name for the new mesh isosurface object.
+   "name" is the name for the new mesh isosurface object.
 
-      "map" is the name of the map object to use for computing the mesh.
+   "map" is the name of the map object to use for computing the mesh.
 
-      "level" is the contour level.
+   "level" is the contour level.
 
-      "selection" is an atom selection about which to display the mesh with
-         an additional "buffer" (if provided).
+   "selection" is an atom selection about which to display the mesh with
+      an additional "buffer" (if provided).
 
-      "state" is the state into which the object should be loaded (default=1)
-         (set state=0 to append new mesh as a new state)
+   "state" is the state into which the object should be loaded (default=1)
+      (set state=0 to append new mesh as a new state)
 
-      "carve" is a radius about each atom in the selection for which to
-         include density. If "carve" is not provided, then the whole
-         brick is displayed.
+   "carve" is a radius about each atom in the selection for which to
+      include density. If "carve" is not provided, then the whole
+      brick is displayed.
 
-   NOTES
+NOTES
 
-      If the mesh object already exists, then the new mesh will be
-      appended onto the object as a new state (unless you indicate a state).
+   If the mesh object already exists, then the new mesh will be
+   appended onto the object as a new state (unless you indicate a state).
 
-   SEE ALSO
+SEE ALSO
 
-      isodot, load
+   isodot, load
       '''
       if selection!='':
          mopt = 1 # about a selection
@@ -113,38 +113,38 @@ if __name__=='pymol.creating':
    def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,
                   source=-1):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "isosurface" creates a new surface object from a map object.
+   "isosurface" creates a new surface object from a map object.
 
-   USAGE
+USAGE
 
-      isosurface name, map, level [,(selection) [,buffer [,state [,carve ]]]]
+   isosurface name, map, level [,(selection) [,buffer [,state [,carve ]]]]
 
-      "name" is the name for the new mesh isosurface object.
+   "name" is the name for the new mesh isosurface object.
 
-      "map" is the name of the map object to use for computing the mesh.
+   "map" is the name of the map object to use for computing the mesh.
 
-      "level" is the contour level.
+   "level" is the contour level.
 
-      "selection" is an atom selection about which to display the mesh with
-         an additional "buffer" (if provided).
+   "selection" is an atom selection about which to display the mesh with
+      an additional "buffer" (if provided).
 
-      "state" is the state into which the object should be loaded (default=1)
-         (set state=0 to append new surface as a new state)
+   "state" is the state into which the object should be loaded (default=1)
+      (set state=0 to append new surface as a new state)
 
-      "carve" is a radius about each atom in the selection for which to
-         include density. If "carve" is not provided, then the whole
-         brick is displayed.
+   "carve" is a radius about each atom in the selection for which to
+      include density. If "carve" is not provided, then the whole
+      brick is displayed.
 
-   NOTES
+NOTES
 
-      If the surface object already exists, then the new surface will be
-      appended onto the object as a new state (unless you indicate a state).
+   If the surface object already exists, then the new surface will be
+   appended onto the object as a new state (unless you indicate a state).
 
-   SEE ALSO
+SEE ALSO
 
-      isodot, isomesh, load
+   isodot, isomesh, load
       '''
       if selection!='':
          mopt = 1 # about a selection
@@ -168,29 +168,29 @@ if __name__=='pymol.creating':
    def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
               carve=0,source=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-   "isodot" creates a dot isosurface object from a map object.
+"isodot" creates a dot isosurface object from a map object.
 
-   USAGE
+USAGE
 
-      isodot name = map, level [,(selection) [,buffer [, state ] ] ] 
+   isodot name = map, level [,(selection) [,buffer [, state ] ] ] 
 
-      "map" is the name of the map object to use.
+   "map" is the name of the map object to use.
 
-      "level" is the contour level.
+   "level" is the contour level.
 
-      "selection" is an atom selection about which to display the mesh with
-         an additional "buffer" (if provided).
+   "selection" is an atom selection about which to display the mesh with
+      an additional "buffer" (if provided).
 
-   NOTES
+NOTES
 
-      If the dot isosurface object already exists, then the new dots will
-      be appended onto the object as a new state.
+   If the dot isosurface object already exists, then the new dots will
+   be appended onto the object as a new state.
 
-   SEE ALSO
+SEE ALSO
 
-      load, isomesh
+   load, isomesh
       '''
       if selection!='':
          mopt = 1 # about a selection
@@ -211,24 +211,24 @@ if __name__=='pymol.creating':
 
    def copy(target,source):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "copy" creates a new object that is an identical copy of an
-      existing object
+   "copy" creates a new object that is an identical copy of an
+   existing object
 
-   USAGE
+USAGE
 
-      copy target, source
+   copy target, source
 
-      copy target = source         # (DEPRECATED)
+   copy target = source         # (DEPRECATED)
 
-   PYMOL API
+PYMOL API
 
-      cmd.copy(string target,string source)
+   cmd.copy(string target,string source)
 
-   SEE ALSO
+SEE ALSO
 
-      create
+   create
       '''
       try:
          lock()
@@ -239,24 +239,24 @@ if __name__=='pymol.creating':
 
    def symexp(prefix,object,selection,cutoff):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "symexp" creates all symmetry related objects for the specified object
-      that occurs within a cutoff about an atom selection.  The new objects
-      are labeled using the prefix provided along with their crystallographic
-      symmetry operation and translation.
+   "symexp" creates all symmetry related objects for the specified object
+   that occurs within a cutoff about an atom selection.  The new objects
+   are labeled using the prefix provided along with their crystallographic
+   symmetry operation and translation.
 
-   USAGE
+USAGE
 
-      symexp prefix = object, (selection), cutoff
+   symexp prefix = object, (selection), cutoff
 
-   PYMOL API
+PYMOL API
 
-      cmd.symexp( string prefix, string object, string selection, float cutoff) 
+   cmd.symexp( string prefix, string object, string selection, float cutoff) 
 
-   SEE ALSO
+SEE ALSO
 
-      load
+   load
       '''
       # preprocess selection
       selection=selector.process(selection)
@@ -270,14 +270,14 @@ if __name__=='pymol.creating':
 
    def fragment(name,object=None,origin=1,zoom=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "fragment" retrieves a 3D structure from the fragment library, which is currently
-      pretty meager (just amino acids).
+   "fragment" retrieves a 3D structure from the fragment library, which is currently
+   pretty meager (just amino acids).
 
-   USAGE
+USAGE
 
-      fragment name
+   fragment name
 
    '''
       r = 1
@@ -315,37 +315,37 @@ if __name__=='pymol.creating':
 
    def create(name,selection,source_state=0,target_state=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "create" creates a new molecule object from a selection.  It can
-      also be used to create states in an existing object.
+   "create" creates a new molecule object from a selection.  It can
+   also be used to create states in an existing object.
 
-      NOTE: this command has not yet been throughly tested.
+   NOTE: this command has not yet been throughly tested.
 
-   USAGE
+USAGE
 
-      create name, (selection) [,source_state [,target_state ] ]
+   create name, (selection) [,source_state [,target_state ] ]
 
-      create name = (selection) [,source_state [,target_state ] ]
-        # (DEPRECATED)
+   create name = (selection) [,source_state [,target_state ] ]
+     # (DEPRECATED)
 
-      name = object to create (or modify)
-      selection = atoms to include in the new object
-      source_state (default: 0 - copy all states)
-      target_state (default: 0)
+   name = object to create (or modify)
+   selection = atoms to include in the new object
+   source_state (default: 0 - copy all states)
+   target_state (default: 0)
 
-   PYMOL API
+PYMOL API
 
-      cmd.create(string name, string selection, int state, int target_state)
+   cmd.create(string name, string selection, int state, int target_state)
 
-   NOTES
+NOTES
 
-      If the source and target states are zero (default), all states will
-      be copied.  Otherwise, only the indicated states will be copied.
+   If the source and target states are zero (default), all states will
+   be copied.  Otherwise, only the indicated states will be copied.
 
-   SEE ALSO
+SEE ALSO
 
-      load, copy
+   load, copy
       '''
       # preprocess selection
       selection = selector.process(selection)
@@ -361,6 +361,7 @@ if __name__=='pymol.creating':
       finally:
          unlock()
       return None
+
 
 
 

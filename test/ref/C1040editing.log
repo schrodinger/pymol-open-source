@@ -94,8 +94,8 @@ PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>protect resi 1-6
  Protect: 51 atoms protected from movement.
 PyMOL>edit 2/sg,12/sg
@@ -103,20 +103,20 @@ PyMOL>edit 2/sg,12/sg
  Selector: selection "pk2" defined with 1 atoms.
 PyMOL>torsion 90
 PyMOL>get_extent
- cmd.extent: min: [ -10.445, -25.194,  11.965]
- cmd.extent: max: [   8.417,   0.863,  28.330]
+ cmd.extent: min: [ -10.445, -22.170,  11.965]
+ cmd.extent: max: [   6.787,   0.863,  27.058]
 PyMOL>undo
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>redo
 PyMOL>get_extent
- cmd.extent: min: [ -10.445, -25.194,  11.965]
- cmd.extent: max: [   8.417,   0.863,  28.330]
+ cmd.extent: min: [ -10.445, -22.170,  11.965]
+ cmd.extent: max: [   6.787,   0.863,  27.058]
 PyMOL>undo
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>deprotect
  Protect: 107 atoms deprotected.
 PyMOL>edit 2/sg,12/sg
@@ -124,8 +124,8 @@ PyMOL>edit 2/sg,12/sg
  Selector: selection "pk2" defined with 1 atoms.
 PyMOL>torsion 90
 PyMOL>get_extent
- cmd.extent: min: [ -15.562, -23.335,  11.965]
- cmd.extent: max: [   7.087,  -8.073,  27.252]
+ cmd.extent: min: [ -15.562, -22.170,  11.965]
+ cmd.extent: max: [   5.893,  -8.073,  25.808]
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
@@ -325,38 +325,38 @@ PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>origin pept,object=pept
 PyMOL>rotate x,45,object=pept
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -18.391,  12.126]
+ cmd.extent: max: [   8.919,  -1.236,  29.153]
 PyMOL>reset
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -18.391,  12.126]
+ cmd.extent: max: [   8.919,  -1.236,  29.153]
 PyMOL>rotate x,45,pept
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -18.886,  11.502]
- cmd.extent: max: [   8.919,  -1.672,  29.588]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
  cmd.get_dihedral: -8.586 degrees.
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>set_dihedral 1/n,1/ca,1/c,1/o,180
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.
  SetDihedral: adjusted to 180.000
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
- cmd.get_dihedral: 180.000 degrees.
+ cmd.get_dihedral: -179.980 degrees.
 PyMOL>get_extent
- cmd.extent: min: [  -1.282, -20.240,   6.314]
- cmd.extent: max: [  10.284,  -4.939,  29.777]
+ cmd.extent: min: [  -1.282, -17.809,   6.314]
+ cmd.extent: max: [  10.270,  -4.939,  29.070]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
@@ -401,8 +401,8 @@ PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>cmd.edit("(pept`95)",pkresi=1)
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>cmd.push_undo("pept",1)
@@ -410,8 +410,8 @@ PyMOL>cmd.edit("(pept`10)",pkresi=1)
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>cmd.push_undo("pept",1)
 PyMOL>get_extent
- cmd.extent: min: [  -5.848, -19.569,  13.157]
- cmd.extent: max: [   7.284,   0.863,  28.004]
+ cmd.extent: min: [  -5.188, -16.674,  13.157]
+ cmd.extent: max: [   7.284,   0.863,  27.756]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
@@ -421,18 +421,18 @@ PyMOL>cmd.edit_mode()
  mouse: three_button_editing
 PyMOL>cmd.push_undo("small01",1)
 PyMOL>get_extent
- cmd.extent: min: [ -15.771,  -2.490,  -3.683]
- cmd.extent: max: [   2.256,   2.247,   2.875]
+ cmd.extent: min: [ -15.344,  -2.159,  -3.683]
+ cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>undo
 PyMOL>get_extent
- cmd.extent: min: [  -9.184,  -2.901,  -4.337]
- cmd.extent: max: [   2.256,   2.247,   2.911]
+ cmd.extent: min: [  -8.369,  -2.595,  -4.337]
+ cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>get_extent
- cmd.extent: min: [  -9.184,  -2.901,  -4.337]
- cmd.extent: max: [   2.256,   2.247,   2.911]
+ cmd.extent: min: [  -8.369,  -2.595,  -4.337]
+ cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>cmd.set('valence','0.0500')
 PyMOL>cmd.edit_mode()
  mouse: three_button_editing
@@ -487,18 +487,18 @@ PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    0.
 PyMOL>cmd.translate_atom("/small01////C`",   -0.020101367,    0.000000000,    0.000000000,1,1,0)
 PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,    0.000000000,    0.000000000,1,1,0)
 PyMOL>get_extent
- cmd.extent: min: [  -9.156,  -4.305,  -4.337]
- cmd.extent: max: [   2.256,   3.464,   2.911]
+ cmd.extent: min: [  -8.369,  -4.305,  -4.337]
+ cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>undo
 PyMOL>get_extent
- cmd.extent: min: [  -9.184,  -2.901,  -4.337]
- cmd.extent: max: [   2.256,   2.247,   2.911]
+ cmd.extent: min: [  -8.369,  -2.595,  -4.337]
+ cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_extent
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>load dat/pept.pdb,sav
  Executive: object "sav" created.
 PyMOL>alter_state 1,(pept),x=1;y=2;z=3;
@@ -510,5 +510,5 @@ PyMOL>get_extent pept
 PyMOL>update pept,sav
  Update: coordinates updated for 107 atoms.
 PyMOL>get_extent pept
- cmd.extent: min: [  -6.471, -21.421,  13.157]
- cmd.extent: max: [   8.919,   0.863,  27.934]
+ cmd.extent: min: [  -5.188, -20.331,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.058]

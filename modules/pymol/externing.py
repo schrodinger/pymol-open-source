@@ -26,17 +26,17 @@ if __name__=='pymol.externing':
 
    def cd(dir):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "cd" changes the current working directory.
+   "cd" changes the current working directory.
 
-   USAGE
+USAGE
 
-      cd <path>
+   cd <path>
 
-   SEE ALSO
+SEE ALSO
 
-      pwd, ls, system
+   pwd, ls, system
       '''
       dir = os.path.expanduser(dir)
       dir = os.path.expandvars(dir)
@@ -45,40 +45,40 @@ if __name__=='pymol.externing':
 
    def pwd():
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      Print current working directory.
+   Print current working directory.
 
-   USAGE
+USAGE
 
-      pwd
+   pwd
 
-   SEE ALSO
+SEE ALSO
 
-      cd, ls, system
+   cd, ls, system
       '''
       print os.getcwd()
       return 1
 
    def ls(pattern=None):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      List contents of the current working directory.
+   List contents of the current working directory.
 
-   USAGE
+USAGE
 
-      ls [pattern]
-      dir [pattern]
+   ls [pattern]
+   dir [pattern]
 
-   EXAMPLES
+EXAMPLES
 
-      ls
-      ls *.pml
+   ls
+   ls *.pml
 
-   SEE ALSO
+SEE ALSO
 
-      cd, pwd, system   
+   cd, pwd, system   
       '''
       if pattern==None:
          pattern = "*"
@@ -102,30 +102,30 @@ if __name__=='pymol.externing':
 
    def system(command,async=0):
       '''
-   DESCRIPTION
+DESCRIPTION
 
-      "system" executes a command in a subshell under Unix or Windows.
+   "system" executes a command in a subshell under Unix or Windows.
 
-   USAGE
+USAGE
 
-      system command 
+   system command 
 
-   PYMOL API
+PYMOL API
 
-      cmd.system(string command,int sync=1)
+   cmd.system(string command,int sync=1)
 
-   NOTES
+NOTES
 
-      async can only be specified from the Python level (not the command language)
+   async can only be specified from the Python level (not the command language)
 
-      if async is 0 (default), then the result code from "system" is returned in r
+   if async is 0 (default), then the result code from "system" is returned in r
 
-      if async is 1, then the command is run in a separate thread whose object is
-      returned
+   if async is 1, then the command is run in a separate thread whose object is
+   returned
 
-   SEE ALSO
+SEE ALSO
 
-      ls, cd, pwd
+   ls, cd, pwd
       '''
       if async:
          r = threading.Thread(target=_cmd.system,args=(str(command),1))
@@ -149,3 +149,6 @@ if __name__=='pymol.externing':
             lst[-1]=lst[-1][:-1]
          _cmd.paste(lst)      
       return r 
+
+
+
