@@ -804,7 +804,7 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
                     minDist = dif;
                     maxDot = dot;
                     i0=j; 
-                  } else if( (dif/minDist) < (dot/maxDot)) {
+                  } else if( 0.5*(dif/minDist) < (dot/maxDot)) {
                     maxDot = dot;
                     minDist = dif;
                     i0=j; 
