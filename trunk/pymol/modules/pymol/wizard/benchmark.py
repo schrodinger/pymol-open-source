@@ -20,6 +20,7 @@ class Benchmark(Wizard):
    def configure(self):
       cmd.reinitialize()
       cmd.set('use_display_lists',1)
+      cmd.set('max_threads',2)
       
    def __init__(self,*arg):
       self.gl = 5.0
@@ -253,13 +254,13 @@ class Benchmark(Wizard):
       cmd.show("cartoon","71-110/")
       cmd.turn('x',25)
       cmd.turn('y',25)
-      cmd.set('hash_max','150')
+      cmd.set('hash_max','100')
       cnt = 0
       elapsed = 0.0
       cmd.refresh()
       start = time.time()
       while elapsed<self.long_cpu: # how many times can we flush the framebuffer?
-         cmd.ray(200,200)
+         cmd.ray()
          cnt = cnt + 1
          elapsed = time.time()-start
       report('RAY_TRACING',60*cnt/elapsed)
