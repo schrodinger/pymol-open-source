@@ -280,7 +280,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_connect_mode                179
 #define cSetting_cartoon_cylindrical_helices 180
 #define cSetting_cartoon_helix_radius        181
-#define cSetting_INIT                        182
+#define cSetting_connect_cutoff              182
+#define cSetting_INIT                        183
 
 #endif
 

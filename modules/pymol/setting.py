@@ -196,6 +196,7 @@ class SettingIndex:
    connect_mode          =179
    cartoon_cylindrical_helices = 180
    cartoon_helix_radius  =181
+   connect_cutoff        =182
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

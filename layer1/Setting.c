@@ -1229,6 +1229,8 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_helix_radius, 2.25F);
 
+  SettingSet_f(I,cSetting_connect_cutoff, 0.35F);
+
 }
 
 
