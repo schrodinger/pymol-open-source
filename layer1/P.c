@@ -275,7 +275,7 @@ int PLabelAtom(AtomInfoType *at,char *expr)
     PConvIntToPyDictItem(dict,"numeric_type",at->customType);
   PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   PConvFloatToPyDictItem(dict,"formal_charge",at->formalCharge);
-  
+  PConvIntToPyDictItem(dict,"id",at->id);
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
     PyErr_Print();

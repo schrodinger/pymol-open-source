@@ -141,7 +141,16 @@ class Indexed(Base):
             if idx[k] >= index:
                idx[k] = idx[k] + 1
          idx[id(atom)] = index
-
+#------------------------------------------------------------------------------
+   def index_atom(self,atom):
+      c = 0
+      id_at = id(atom)
+      for a in self.atom:
+         if id(a)==id_at:
+            return c
+         c = c + 1
+      return -1
+      
 #------------------------------------------------------------------------------
    def add_atom(self,atom):
       if chempy.feedback['atoms']:
