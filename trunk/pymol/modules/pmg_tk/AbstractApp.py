@@ -181,8 +181,8 @@ class AbstractApp(Pmw.MegaWidget):
 
       self.menuBar.pack(fill=X)
       self.menuBar.addmenu('Help', 'About %s' % self.appname, side='right')
-      self.menuBar.addmenu('File', 'File Input')
-      self.menuBar.addmenu('Edit', 'Text Editing')
+      self.menuBar.addmenu('File', 'File Input',tearoff=TRUE)
+      self.menuBar.addmenu('Edit', 'Text Editing',tearoff=TRUE)
                      
    def createMenuBar(self):
 #override this

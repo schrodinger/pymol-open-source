@@ -718,7 +718,7 @@ class PMGApp(AbstractApp):
                                label='Make (pk1) Neutral',
                                command = lambda: cmd.do("_ alter pk1,formal_charge=-0.0"))
 
-      self.menuBar.addmenu('Build', 'Build')
+      self.menuBar.addmenu('Build', 'Build',tearoff=TRUE)
 
       self.menuBar.addcascademenu('Build', 'Fragment', 'Fragment',
                                   label='Fragment')
@@ -951,7 +951,7 @@ class PMGApp(AbstractApp):
                                label='Parallel Beta Sheet',
                                command = lambda: cmd.do("_ set secondary_structure,3"))
 
-      self.menuBar.addmenu('Movie', 'Movie Control')
+      self.menuBar.addmenu('Movie', 'Movie Control',tearoff=TRUE)
 
       
       self.menuBar.addcascademenu('Movie', 'Speed', 'Playback Speed',
@@ -1017,7 +1017,7 @@ class PMGApp(AbstractApp):
                         variable = self.setting.all_states,
                         command = lambda s=self: s.setting.update('all_states'))
 
-      self.menuBar.addmenu('Display', 'Display Control')
+      self.menuBar.addmenu('Display', 'Display Control',tearoff=TRUE)
       
       self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
                                label='Stereo On',
@@ -1347,7 +1347,7 @@ class PMGApp(AbstractApp):
                         variable = self.setting.specular,
                         command = lambda s=self: s.setting.update('specular'))
 
-      self.menuBar.addmenu('Setting', 'Configuration Control')
+      self.menuBar.addmenu('Setting', 'Configuration Control',tearoff=TRUE)
 
       self.menuBar.addmenuitem('Setting', 'command',
                          'Edit PyMOL Settings',
@@ -1438,7 +1438,7 @@ class PMGApp(AbstractApp):
                         variable = self.setting.overlay,
                         command = lambda s=self: s.setting.update('overlay'))
 
-      self.menuBar.addmenu('Scene', 'Scene Storage')
+      self.menuBar.addmenu('Scene', 'Scene Storage',tearoff=TRUE)
 
       self.menuBar.addcascademenu('Scene', 'Store', 'Store',
                                   label=self.pad+'Store')
@@ -1465,7 +1465,7 @@ class PMGApp(AbstractApp):
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d"%x))
                       
-      self.menuBar.addmenu('Mouse', 'Mouse Configuration')
+      self.menuBar.addmenu('Mouse', 'Mouse Configuration',tearoff=TRUE)
 
       self.menuBar.addmenuitem('Mouse', 'checkbutton',
                          'Roving Origin.',
@@ -1515,7 +1515,7 @@ class PMGApp(AbstractApp):
                                label='2 Button Editing Mode',
                                command = lambda: cmd.mouse('two_button_editing'))
 
-      self.menuBar.addmenu('Cartoon', 'Cartoon Properties')
+      self.menuBar.addmenu('Cartoon', 'Cartoon Properties',tearoff=TRUE)
 
       self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Round Helices',
@@ -1567,7 +1567,7 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('cartoon_highlight_color'))
 
 
-      self.menuBar.addmenu('Wizard', 'Task Wizards')
+      self.menuBar.addmenu('Wizard', 'Task Wizards',tearoff=TRUE)
       
       self.menuBar.addmenuitem('Wizard', 'command', 'Density Map Wizard',
                                label='Density',
@@ -1604,7 +1604,7 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ wizard charge"))
 
 
-      self.menuBar.addmenu('Sculpting', 'Sculpting')
+      self.menuBar.addmenu('Sculpting', 'Sculpting',tearoff=TRUE)
 
       self.menuBar.addmenuitem('Sculpting', 'checkbutton',
                          'Auto-Sculpt.',
@@ -1685,7 +1685,7 @@ class PMGApp(AbstractApp):
                                label='All Terms',
                                command = lambda: cmd.do("_ set sculpt_field_mask=127"))
 
-      self.menuBar.addmenu('Demo', 'Demonstrations')
+      self.menuBar.addmenu('Demo', 'Demonstrations',tearoff=TRUE)
 
       self.demo = Demo()
       
