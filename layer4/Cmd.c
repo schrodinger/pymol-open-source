@@ -1778,7 +1778,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   return(APIStatus(ok));  
 }
 
-static PyObject *CmdSliceMap(PyObject *self, 	PyObject *args) 
+static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args) 
 {
   int ok = true;
   int multi = false;
@@ -1786,12 +1786,12 @@ static PyObject *CmdSliceMap(PyObject *self, 	PyObject *args)
   char * map;
   float opacity = -1;
   int state,map_state;
-  int resolution = 5;
+  float grid;
   CObject *obj=NULL,*mObj,*origObj;
   ObjectMap *mapObj;
   ObjectMapState *ms;
 
-  ok = PyArg_ParseTuple(args,"ssfiii",&slice,&map,&opacity,&resolution,&state,&map_state);  
+  ok = PyArg_ParseTuple(args,"ssfii",&slice,&map,&grid,&state,&map_state);  
   if (ok) {
     APIEntry();
     if(opacity == -1){
@@ -1840,8 +1840,8 @@ static PyObject *CmdSliceMap(PyObject *self, 	PyObject *args)
           map_state=ObjectMapGetNStates(mapObj)-1;
         ms = ObjectMapStateGetActive(mapObj,map_state);
         if(ms) {
-          obj=(CObject*)ObjectSliceFromBox((ObjectSlice*)origObj,mapObj,
-                                           opacity,resolution,state,map_state);
+          obj=(CObject*)ObjectSliceFromMap((ObjectSlice*)origObj,mapObj,
+                                           grid,state,map_state);
      
           if(!origObj) {
             ObjectSetName(obj,slice);
@@ -5150,7 +5150,7 @@ static PyMethodDef Cmd_methods[] = {
    {"set_vis",               CmdSetVis,               METH_VARARGS },
 	{"setframe",	           CmdSetFrame,             METH_VARARGS },
 	{"showhide",              CmdShowHide,             METH_VARARGS },
-	{"slice_map",                 CmdSliceMap,              METH_VARARGS },
+	{"slice_new",                 CmdSliceNew,              METH_VARARGS },
    /*	{"slice_setlock",             CmdSliceSetLock,              METH_VARARGS}, */
    /*	{"slice_heightmap",           CmdSliceHeightmap,              METH_VARARGS},*/
 	{"smooth",	              CmdSmooth,               METH_VARARGS },

@@ -112,7 +112,8 @@ if __name__=='pymol.cmd':
 
    reaper = None
    safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
-
+   sanitize_list_re = re.compile(r"[^0-9\.\-\[\]\,]+")
+   
    QuietException = parsing.QuietException
 
    #--------------------------------------------------------------------
@@ -1126,7 +1127,7 @@ SEE ALSO
         isolevel,           \
         isomesh,            \
         isosurface,         \
-        slice_map,          \
+        slice_new,          \
         symexp,             \
         map_new,            \
         ramp_new
@@ -1614,7 +1615,7 @@ SEE ALSO
       'set_key'       : [ set_key           , 0 , 0 , ''  , parsing.STRICT ], # API only
       'set_view'      : [ set_view          , 0 , 0 , ''  , parsing.STRICT ],   
       'show'          : [ show              , 0 , 0 , ''  , parsing.STRICT ],
-      'slice_map'     : [ slice_map         , 0 , 0 , ''  , parsing.LEGACY ],
+      'slice_new'     : [ slice_new         , 0 , 0 , ''  , parsing.STRICT ],
 #      'slice_lock'    : [ slice_lock        , 0 , 0 , ''  , parsing.LEGACY ],
 #      'slice_unlock'  : [ slice_unlock      , 0 , 0 , ''  , parsing.LEGACY ],
       'smooth'        : [ smooth            , 0 , 0 , ''  , parsing.STRICT ],
@@ -1949,7 +1950,7 @@ SEE ALSO
       'symexp'         : [ object_sc              , 'object'          , ', ' ],   
       'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
       'isosurface'     : [ map_sc                 , 'map object'      , ', ' ],
-      'slice_map'      : [ map_sc                 , 'map object'      , ', ' ],
+      'slice_new'      : [ map_sc                 , 'map object'      , ', ' ],
       'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
       'scene'          : [ viewing.view_sc        , 'scene action'    , ','   ],                  
       'unset'          : [ selection_sc           , 'selection'        , ','  ],
@@ -1965,6 +1966,7 @@ SEE ALSO
       },
 #4th
       {
+      'ramp_new'       : [ creating.ramp_spectrum_sc , 'ramp color spectrum'        , ', ' ],      
       'map_new'        : [ selection_sc           , 'selection'       , ', ' ],
       'isosurface'     : [ selection_sc           , 'selection'       , ', ' ],
       'isomesh'        : [ selection_sc           , 'selection'       , ', ' ],      

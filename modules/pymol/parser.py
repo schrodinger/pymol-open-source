@@ -280,6 +280,8 @@ if __name__=='pymol.parser':
       else:
          return None
 
+   remove_lists_re = re.compile("\[[^\]]*\]")
+   
    def complete_sc(st,sc,type_name,postfix):
       result = None
       sc=sc() # invoke lambda functions (if any)
@@ -325,7 +327,8 @@ if __name__=='pymol.parser':
             traceback.print_exc()
       else:
          full = cmd.kwhash.interpret(re.sub(r" .*","",st))
-         count = string.count(st,',') # which argument are we on
+         st_no_lists = remove_lists_re.sub("",st)
+         count = string.count(st_no_lists,',') # which argument are we on
          if cmd.is_string(full):
             if count<len(cmd.auto_arg):
                if cmd.auto_arg[count].has_key(full): # autocomplete arguments

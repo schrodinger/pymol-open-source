@@ -30,7 +30,7 @@ typedef struct {
   
   float origin[3]; /* the origin of the plane */
   float system[9]; /* x, y, and z of the system */
-  float spacing;   /* sampling interval for the map */
+  float grid;   /* sampling interval for the map */
 
   int min[2],max[2]; /* extents of the arrays */
 
@@ -41,6 +41,7 @@ typedef struct {
   float *points;
   int   *flags;
   float *colors;
+  float *normals;
 
   int   n_strips;
   int   *strips;
@@ -54,11 +55,6 @@ typedef struct {
   float ExtentMax[3];
 
   int ExtentFlag;
-  int LockedFlag;
-
-  int HeightmapFlag;
-
-  int RGBFunction;  
 
   CGO *UnitCellCGO;
 } ObjectSliceState;
@@ -69,7 +65,7 @@ typedef struct ObjectSlice {
   int NState;
 } ObjectSlice;
 
-ObjectSlice *ObjectSliceFromBox(ObjectSlice * obj, ObjectMap* map,float opacity,int resolution,int state,int map_state);
+ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj, ObjectMap* map,float grid,int state,int map_state);
 /*void ObjectSliceDump(ObjectSlice *I,char *fname,int state);*/
 
 PyObject *ObjectSliceAsPyList(ObjectSlice *I);

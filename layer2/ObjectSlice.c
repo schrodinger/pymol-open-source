@@ -61,7 +61,6 @@ static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   PyList_SetItem(result,1,PyString_FromString(I->MapName));
   PyList_SetItem(result,2,PyInt_FromLong(I->MapState));
-  PyList_SetItem(result,3,CrystalAsPyList(&I->Crystal));
   PyList_SetItem(result,4,PyFloat_FromDouble(I->opacity));
   PyList_SetItem(result,5,PyInt_FromLong(I->x_samples));
   PyList_SetItem(result,6,PyInt_FromLong(I->y_samples));
@@ -75,7 +74,6 @@ static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
   PyList_SetItem(result,14,PyInt_FromLong(I->LockedFlag));
   PyList_SetItem(result,15,PyInt_FromLong(I->RGBFunction));
   PyList_SetItem(result,16,PConvFloatArrayToPyList(I->up,3));
-  PyList_SetItem(result,17,PyInt_FromLong(I->HeightmapFlag));
 #endif
 
 #if 0
@@ -86,7 +84,6 @@ static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
   int displayList;
   int RefreshFlag;
   int LockedFlag;
-  CCrystal Crystal;
   /* the data is normalized for easier ploting */
   float * values;
   float * points;
@@ -142,7 +139,6 @@ static int ObjectSliceStateFromPyList(ObjectSliceState *I,PyObject *list)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
       if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
-      if(ok) ok = CrystalFromPyList(&I->Crystal,PyList_GetItem(list,3));
       if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,4),&I->opacity);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->x_samples);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,6),&I->y_samples);
@@ -158,7 +154,6 @@ static int ObjectSliceStateFromPyList(ObjectSliceState *I,PyObject *list)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,14),&I->LockedFlag);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,15),&I->RGBFunction);
       if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,16),I->up,3);
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,17),&I->HeightmapFlag);
       I->flags = VLAMalloc((I->x_samples)*(I->y_samples),sizeof(char),5,false);
 
       I->RefreshFlag=true;
@@ -244,8 +239,6 @@ static void ObjectSliceStateFree(ObjectSliceState *ms)
   VLAFreeP(ms->values);
   VLAFreeP(ms->points);
   VLAFreeP(ms->flags);
-  if(ms->UnitCellCGO)
-    CGOFree(ms->UnitCellCGO);
 }
 
 static void ObjectSliceFree(ObjectSlice *I) {
@@ -326,11 +319,12 @@ static void ObjectSliceStateAssignColors(ObjectSliceState *oss, ObjectGadgetRamp
 }
 
 
-static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
+static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectMapState *oms)
 {
   int ok=true;
   int min[2] = {0,0}, max[2] = {0,0}; /* limits of the rectangle */
-    
+  int need_normals = false;
+
   /* for the given map, compute a new set of interpolated point with accompanying levels */
 
   /* first, find the limits of the enclosing rectangle, starting at the slice origin, 
@@ -349,8 +343,8 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
       for(a=-size;a<=size;a++) {
         
         if(max[1]!=size) {
-          point[0] = oss->spacing*a;
-          point[1] = oss->spacing*size;
+          point[0] = oss->grid*a;
+          point[1] = oss->grid*size;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
@@ -361,8 +355,8 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
         }
 
         if(min[1]!=minus_size) {
-          point[0] = oss->spacing*a;
-          point[1] = oss->spacing*minus_size;
+          point[0] = oss->grid*a;
+          point[1] = oss->grid*minus_size;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
@@ -374,8 +368,8 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
         }
         
         if(max[0]!=size) {
-          point[0] = oss->spacing*size;
-          point[1] = oss->spacing*a;
+          point[0] = oss->grid*size;
+          point[1] = oss->grid*a;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
@@ -386,8 +380,8 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
         }
         
         if(min[0]!=minus_size) {
-          point[0] = oss->spacing*minus_size;
-          point[1] = oss->spacing*a;
+          point[0] = oss->grid*minus_size;
+          point[1] = oss->grid*a;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
@@ -452,8 +446,8 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
     float *point = oss->points;
     for(y=min[1];y<=max[1];y++) {
       for(x=min[0];x<=max[0];x++) {
-        point[0] = oss->spacing*x;
-        point[1] = oss->spacing*y;
+        point[0] = oss->grid*x;
+        point[1] = oss->grid*y;
         point[2] = 0.0F;
         transform33f3f(oss->system, point, point);
         add3f(oss->origin, point, point);
@@ -468,7 +462,33 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
     ObjectMapStateInterpolate(oms,oss->points, oss->values, oss->flags, oss->n_points);
   }
 
+  /* apply the height scale (if nonzero) */
 
+  if(ok) {
+    float height_scale = SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_height_scale);
+    
+    if(fabs(height_scale)>R_SMALL8) {
+      float *value = oss->values;
+      float up[3],scaled[3],factor;
+      int x,y;
+      float *point = oss->points;
+
+      need_normals=true;
+      up[0] = oss->system[2];
+      up[1] = oss->system[5];
+      up[2] = oss->system[8];
+
+      for(y=min[1];y<=max[1];y++) {
+        for(x=min[0];x<=max[0];x++) {
+          factor = *value * height_scale;
+          scale3f(up,factor,scaled);
+          add3f(scaled,point,point);
+          point +=3;
+          value ++;
+        }
+      }
+    }
+  }
   /* now generate efficient triangle strips based on the points that are present in the map */
 
   if(ok) {
@@ -563,6 +583,89 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
     oss->n_strips = n;
 
   }
+
+  /* compute triangle normals if we need them */
+
+  if(!need_normals) {
+    VLAFreeP(oss->normals);
+  } else {
+    int *cnt = NULL;
+
+    if(!oss->normals) {
+      oss->normals = VLAlloc(float, oss->n_points*3);
+    } else {
+      VLACheck(oss->normals, float, oss->n_points*3); /* note: this is a macro which reassigns the pointer */
+    }
+    cnt = Calloc(int,oss->n_points);
+
+    if(cnt&&oss->normals) {
+      int *strip = oss->strips;
+      float *point = oss->points;
+      float *normal = oss->normals;
+      int n=oss->n_strips;
+      int a;
+      int offset0,offset1,offset2,offset;
+      int strip_active =false;
+      int tri_count = 0;
+
+      float d1[3],d2[3],cp[3];
+      UtilZeroMem(oss->normals,sizeof(float)*3*oss->n_points);
+
+      for(a=0;a<n;a++) {
+        offset = *(strip++);
+        switch(offset) {
+        case -1:
+          strip_active=true;
+          tri_count = 0;
+          break;
+        case -2:
+          strip_active=false;
+          break;
+        default:
+          if(strip_active) {
+            tri_count++;
+            offset2 = offset1;
+            offset1 = offset0;
+            offset0 = offset;
+            
+            if(tri_count>=3) {
+              
+              if(tri_count&0x1) { /* get the handedness right ... */
+                subtract3f(point+3*offset1,point+3*offset0,d1);
+                subtract3f(point+3*offset2,point+3*offset1,d2);
+              } else {
+                subtract3f(point+3*offset0,point+3*offset1,d1);
+                subtract3f(point+3*offset2,point+3*offset0,d2);
+              }
+              cross_product3f(d2,d1,cp);
+              normalize3f(cp);
+              add3f(cp,normal+3*offset0,normal+3*offset0);
+              add3f(cp,normal+3*offset1,normal+3*offset1);
+              add3f(cp,normal+3*offset2,normal+3*offset2);
+              cnt[offset0]++;
+              cnt[offset1]++;
+              cnt[offset2]++;
+            }
+          }
+        }
+      }
+
+      { /* now normalize the average normals for active vertices */
+        int x,y;
+        float *normal = oss->normals;
+        int *c = cnt;
+        for(y=min[1];y<=max[1];y++) {
+          for(x=min[0];x<=max[0];x++) {
+            if(*c) 
+              normalize3f(normal);
+            point +=3;
+            c++;
+          }
+        }
+      }
+    }
+    FreeP(cnt);
+  }
 }
 
 static void ObjectSliceUpdate(ObjectSlice *I) 
@@ -590,19 +693,14 @@ static void ObjectSliceUpdate(ObjectSlice *I)
         if(!oms) ok=false;
       }
       if(oms) {
+        
         if(oss->RefreshFlag) {
-          oss->Crystal = *(oms->Crystal);
-          if(I->Obj.RepVis[cRepCell]) {
-            if(oss->UnitCellCGO)
-              CGOFree(oss->UnitCellCGO);
-            oss->UnitCellCGO = CrystalGetUnitCellCGO(&oss->Crystal);
-          } 
           oss->RefreshFlag=false;
           PRINTFB(FB_ObjectSlice,FB_Blather)
             " ObjectSlice: updating \"%s\".\n" , I->Obj.Name 
             ENDFB;
           if(oms->Field) {
-            ObjectSliceStateUpdate(oss, oms);
+            ObjectSliceStateUpdate(I,oss, oms);
             ogr = ColorGetRamp(I->Obj.Color);
             if(ogr) 
               ObjectSliceStateAssignColors(oss, ogr);
@@ -748,10 +846,58 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
 {
 
   int cur_state = 0;
+  float alpha;
+  
   ObjectSliceState *oss = NULL;
 
+  if(SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_track_camera)) {
+    int update_flag = false;
+
+    if(state>=0) 
+      if(state<I->NState) 
+        if(I->State[state].Active)
+          oss=I->State+state;
+    
+    while(1) {
+      if(state<0) { /* all_states */
+        oss = I->State + cur_state;
+      } else {
+        if(oss) {
+
+          SceneViewType view;
+          float pos[3];
+          
+          SceneGetPos(pos);
+          SceneGetView(view);
+          
+          if((diffsq3f(pos,oss->origin)>R_SMALL8) ||
+             (diffsq3f(view,oss->system)>R_SMALL8) ||
+             (diffsq3f(view+4,oss->system+3)>R_SMALL8) ||
+             (diffsq3f(view+8,oss->system+6)>R_SMALL8))
+            {
+              copy3f(pos,oss->origin);
+              
+              copy3f(view,oss->system);
+              copy3f(view+4,oss->system+3);
+              copy3f(view+8,oss->system+6);
+              oss->RefreshFlag=true;
+              update_flag=true;
+            }
+        }
+        if(state>=0) break;
+        cur_state = cur_state + 1;
+        if(cur_state>=I->NState) break;
+      }
+    }
+    ObjectSliceUpdate(I);
+  }
+
   ObjectPrepareContext(&I->Obj,ray);
-  
+  alpha = SettingGet_f(NULL,I->Obj.Setting,cSetting_transparency);
+  alpha=1.0F-alpha;
+  if(fabs(alpha-1.0)<R_SMALL4)
+    alpha=1.0F;
+
   if(state>=0) 
     if(state<I->NState) 
       if(I->State[state].Active)
@@ -770,90 +916,168 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
     if(oss) {
       if(oss->Active) {	
         if(ray){
-        } else if(pick&&PMGUI) {
           
+          ray->fTransparentf(ray,1.0F-alpha);       
           if(I->Obj.RepVis[cRepSlice]) {
+            float normal[3], *n0,*n1,*n2;
+            int *strip = oss->strips;
+            float *point = oss->points;
+            float *color = oss->colors;
+            int n=oss->n_strips;
+            int a;
+            int offset0,offset1,offset2,offset;
+            int strip_active =false;
+            int tri_count = 0;
             
-            int i=(*pick)->index;
-            int j;
-            Pickable p;
-            
-            p.ptr = (void*)I;
-            p.index = state+1;
-            
-            {
-              int *strip = oss->strips;
-              float *point = oss->points;
-              int n=oss->n_strips;
-              int a;
-              int offset0,offset1,offset2,offset;
-              int strip_active =false;
-              int tri_count = 0;
-              for(a=0;a<n;a++) {
-                offset = *(strip++);
-                switch(offset) {
-                case -1:
-                  if(!strip_active) {
-                    glBegin(GL_TRIANGLES);
-                  }
-                  strip_active=true;
-                  tri_count = 0;
-                  break;
-                case -2:
-                  if(strip_active)
-                    glEnd();
-                  strip_active=false;
-                  break;
-                default:
-                  if(strip_active) {
-                    tri_count++;
-                    offset2 = offset1;
-                    offset1 = offset0;
-                    offset0 = offset;
+            normal[0]=oss->system[2];
+            normal[1]=oss->system[5];
+            normal[2]=oss->system[8];
 
-                    if(tri_count>=3) {
+            n0=normal;
+            n1=normal;
+            n2=normal;
+
+            for(a=0;a<n;a++) {
+              offset = *(strip++);
+              switch(offset) {
+              case -1:
+                if(!strip_active) {
+                  glBegin(GL_TRIANGLES);
+                }
+                strip_active=true;
+                tri_count = 0;
+                break;
+              case -2:
+                if(strip_active)
+                  glEnd();
+                strip_active=false;
+                break;
+              default:
+                if(strip_active) {
+                  tri_count++;
+                  offset2 = offset1;
+                  offset1 = offset0;
+                  offset0 = offset;
+                  
+                  if(tri_count>=3) {
+                    
+                    if(oss->normals) {
+                      n0 = oss->normals + 3*offset0;
+                      n1 = oss->normals + 3*offset1;
+                      n2 = oss->normals + 3*offset2;
+                    }
                       
-                      i++;
-                      if(!(*pick)[0].ptr) {
-                        /* pass 1 - low order bits */
-                        glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-                        VLACheck((*pick),Pickable,i);
-                        (*pick)[i] = p; /* copy object and atom info */
-                      } else { 
-                        /* pass 2 - high order bits */
-                        
-                        j=i>>12;
-                        glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
-                      }
-                      p.bond = offset0 + 1;
-                      
-                      if(tri_count&0x1) { /* get the handedness right ... */
-                        glVertex3fv(point+3*offset0);
-                        glVertex3fv(point+3*offset1);
-                        glVertex3fv(point+3*offset2);
-                      } else {
-                        glVertex3fv(point+3*offset1);
-                        glVertex3fv(point+3*offset0);
-                        glVertex3fv(point+3*offset2);
-                      }
+                    if(tri_count&0x1) { /* get the handedness right ... */
+                      ray->fTriangle3fv(ray,
+                                        point+3*offset0,
+                                        point+3*offset1,
+                                        point+3*offset2,
+                                        n0,n1,n2,
+                                        color+3*offset0,
+                                        color+3*offset1,
+                                        color+3*offset2);
+                    } else {
+                      ray->fTriangle3fv(ray,
+                                        point+3*offset1,
+                                        point+3*offset0,
+                                        point+3*offset2,
+                                        n1,n0,n2,
+                                        color+3*offset1,
+                                        color+3*offset0,
+                                        color+3*offset2);
                     }
                   }
-                  break;
                 }
-              }
-              if(strip_active) { /* just in case */
-                glEnd();
+                break;
               }
             }
-            (*pick)[0].index = i; /* pass the count */
           }
+          ray->fTransparentf(ray,0.0);
+        } else if(pick&&PMGUI) {
+          
+          int i=(*pick)->index;
+          int j;
+          Pickable p;
+          
+          p.ptr = (void*)I;
+          p.index = state+1;
+          
+          if(I->Obj.RepVis[cRepSlice]) {
+            int *strip = oss->strips;
+            float *point = oss->points;
+            int n=oss->n_strips;
+            int a;
+            int offset0,offset1,offset2,offset;
+            int strip_active =false;
+            int tri_count = 0;
+            for(a=0;a<n;a++) {
+              offset = *(strip++);
+              switch(offset) {
+              case -1:
+                if(!strip_active) {
+                  glBegin(GL_TRIANGLES);
+                }
+                strip_active=true;
+                tri_count = 0;
+                break;
+              case -2:
+                if(strip_active)
+                  glEnd();
+                strip_active=false;
+                break;
+              default:
+                if(strip_active) {
+                  tri_count++;
+                  offset2 = offset1;
+                  offset1 = offset0;
+                  offset0 = offset;
+                  
+                  if(tri_count>=3) {
+                    
+                    i++;
+                    if(!(*pick)[0].ptr) {
+                      /* pass 1 - low order bits */
+                      glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+                      VLACheck((*pick),Pickable,i);
+                      (*pick)[i] = p; /* copy object and atom info */
+                    } else { 
+                      /* pass 2 - high order bits */
+                      
+                      j=i>>12;
+                      glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+                    }
+                    p.bond = offset0 + 1;
+                    
+                    if(tri_count&0x1) { /* get the handedness right ... */
+                      glVertex3fv(point+3*offset0);
+                      glVertex3fv(point+3*offset1);
+                      glVertex3fv(point+3*offset2);
+                    } else {
+                      glVertex3fv(point+3*offset1);
+                      glVertex3fv(point+3*offset0);
+                      glVertex3fv(point+3*offset2);
+                    }
+                  }
+                }
+                break;
+              }
+            }
+            if(strip_active) { /* just in case */
+              glEnd();
+            }
+          }
+          (*pick)[0].index = i; /* pass the count */
         } else if(PMGUI) {
-          if(!pass) {
+
+          int render_now = false;
+          if(alpha>0.0001) {
+            render_now = (pass==-1);
+          } else 
+            render_now = (!pass);
+
+          if(render_now) {
             
             int use_dlst;
-            if(oss->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-              CGORenderGL(oss->UnitCellCGO,ColorGet(I->Obj.Color),
-                          I->Obj.Setting,NULL);
        
             SceneResetNormal(false);
             ObjectUseColor(&I->Obj);
@@ -870,6 +1094,18 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
                   }
                 }
               }
+
+              if(I->Obj.RepVis[cRepSlice]) {
+                int *strip = oss->strips;
+                float *point = oss->points;
+                float *color = oss->colors;
+                float *col;
+                float *vnormal = oss->normals;
+                int n=oss->n_strips;
+                int a;
+                int offset;
+                int strip_active =false;
+
               {
                 float normal[3];
                 normal[0]=oss->system[2];
@@ -878,14 +1114,6 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
                 glNormal3fv(normal);
               }
 
-              if(I->Obj.RepVis[cRepSlice]) {
-                int *strip = oss->strips;
-                float *point = oss->points;
-                float *color = oss->colors;
-                int n=oss->n_strips;
-                int a;
-                int offset;
-                int strip_active =false;
                 for(a=0;a<n;a++) {
                   offset = *(strip++);
                   switch(offset) {
@@ -901,7 +1129,10 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
                     break;
                   default:
                     if(strip_active) {
-                      glColor3fv(color+3*offset);
+                      col = color+3*offset;
+                      if(vnormal)
+                        glNormal3fv(vnormal+3*offset);
+                      glColor4f(col[0],col[1],col[2],alpha);
                       glVertex3fv(point+3*offset);
                     }
                     break;
@@ -920,8 +1151,8 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
           }
         }
       }
-    }
-    if(state>=0) break;
+  }
+  if(state>=0) break;
     cur_state = cur_state + 1;
     if(cur_state>=I->NState) break;
   }
@@ -977,21 +1208,16 @@ void ObjectSliceStateInit(ObjectSliceState *oss)
   oss->Active=true;
   oss->RefreshFlag=true;  
   oss->ExtentFlag=false;
-  oss->UnitCellCGO=NULL;
 
   oss->values=NULL;
   oss->points=NULL;
   oss->flags=NULL;
   oss->colors=NULL;
   oss->strips=NULL;
-  oss->spacing = 0.5F;
+  oss->grid = 0.5F;
 
   oss->n_points = 0;
   oss->n_strips = 0;
-
-  oss->LockedFlag= 1;
-  oss->HeightmapFlag= 0;
-  oss->RGBFunction= 1;
 
   UtilZeroMem(&oss->system,sizeof(float)*9); /* simple orthogonal coordinate system */
   oss->system[0] = 1.0F;
@@ -1003,10 +1229,10 @@ void ObjectSliceStateInit(ObjectSliceState *oss)
 }
 
 /*========================================================================*/
-ObjectSlice *ObjectSliceFromBox(ObjectSlice * obj,ObjectMap *map,float opacity,int resolution,int state,int map_state)
+ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,float grid,int state,int map_state)
 {
   ObjectSlice *I;
-  ObjectSliceState *ms;
+  ObjectSliceState *oss;
   ObjectMapState *oms;
 
   if(!obj) {
@@ -1021,41 +1247,35 @@ ObjectSlice *ObjectSliceFromBox(ObjectSlice * obj,ObjectMap *map,float opacity,i
     I->NState=state+1;
   }
 
-  ms=I->State+state;
+  oss=I->State+state;
 
-  ObjectSliceStateInit(ms);
-  ms->opacity = opacity;
-  ms->MapState = map_state;
-  /*  
-      ms->x_samples = Scene.Width/resolution;
-      ms->y_samples = Scene.Height/resolution;
-  */
-
+  ObjectSliceStateInit(oss);
+  oss->MapState = map_state;
+  oss->grid = grid;
   oms = ObjectMapGetState(map,map_state);
   if(oms) {
-    ms->Crystal = *(oms->Crystal);
-    if(ms->points) {
-      VLAFreeP(ms->points);
+    if(oss->points) {
+      VLAFreeP(oss->points);
     }
-    if(ms->values) {
-      VLAFreeP(ms->points);
+    if(oss->values) {
+      VLAFreeP(oss->points);
     }
-    if(ms->flags) {
-      VLAFreeP(ms->flags);
+    if(oss->flags) {
+      VLAFreeP(oss->flags);
     }
   }
 
   /* simply copy the extents from the map -- not quite correct, but probably good enough */
 
-  strcpy(ms->MapName,map->Obj.Name);
-  memcpy(ms->ExtentMin,oms->ExtentMin,3*sizeof(float));
-  memcpy(ms->ExtentMax,oms->ExtentMax,3*sizeof(float));
+  strcpy(oss->MapName,map->Obj.Name);
+  memcpy(oss->ExtentMin,oms->ExtentMin,3*sizeof(float));
+  memcpy(oss->ExtentMax,oms->ExtentMax,3*sizeof(float));
 
-  ms->ExtentFlag = true;
+  oss->ExtentFlag = true;
 
   /* set the origin of the slice to the center of the map */
 
-  average3f(ms->ExtentMin,ms->ExtentMax,ms->origin);
+  average3f(oss->ExtentMin,oss->ExtentMax,oss->origin);
 
   /* set the slice's system matrix to the current camera rotation matrix */
 
@@ -1064,12 +1284,12 @@ ObjectSlice *ObjectSliceFromBox(ObjectSlice * obj,ObjectMap *map,float opacity,i
     SceneViewType view;
      
     SceneGetView(view);
-    copy3f(view,ms->system);
-    copy3f(view+4,ms->system+3);
-    copy3f(view+8,ms->system+6);
+    copy3f(view,oss->system);
+    copy3f(view+4,oss->system+3);
+    copy3f(view+8,oss->system+6);
   }
 
-  ms->RefreshFlag = true;
+  oss->RefreshFlag = true;
 
   if(I) {
     ObjectSliceRecomputeExtent(I);
@@ -1108,78 +1328,3 @@ void ObjectSliceRecomputeExtent(ObjectSlice *I)
   I->Obj.ExtentFlag=extent_flag;
 }
 
-#if 0
-
-#define SLICE_TRADITIONAL 1
-#define SLICE_SLUDGE 2
-#define SLICE_OCEAN 3
-#define SLICE_HOT 4
-#define SLICE_GRAYABLE 5
-#define SLICE_RAINBOW 6
-#define SLICE_AFMHOT 7
-#define SLICE_GRAYSCALE 8
-
-void ObjectSliceStateValue2RGB(ObjectSliceState * ms,float v,float * result)
-{
-  int i;
-  /* All of this functions are taken right of the gnuplot manual */
-  switch(ms->RGBFunction){
-  case SLICE_TRADITIONAL:
-    result[0] = sqrt(v);
-    result[1] = v*v*v;
-    result[2] = sin(v*2*cPI);
-    break;
-  case SLICE_SLUDGE:
-    result[0] = v;
-    result[1] = fabs(v-0.5);
-    result[2] = v*v*v*v;
-    break;
-  case SLICE_OCEAN:
-    result[0] = 3*v-2;
-    result[1] = fabs((3*v-1)/2);
-    result[2] = v;
-    break;
-  case SLICE_HOT:
-    result[0] = 3*v;
-    result[1] = 3*v-1;
-    result[2] = 3*v-2;
-    break;
-  case SLICE_GRAYABLE:
-    result[0] = v/0.32-0.78125; 
-    result[1] = 2*v-0.84;
-    result[2] = v/0.08-11.5; /* I'm not so sure about this one */
-    break;
-  case SLICE_RAINBOW:
-    result[0] = fabs(2*v - 0.5);
-    result[1] = sin(v*cPI);
-    result[2] = cos(v*cPI/2.0);
-    break;
-  case SLICE_AFMHOT:
-    result[0] = 2*v;
-    result[1] = 2*v-0.5;
-    result[2] = 2*v-1.0;
-    break;
-  case SLICE_GRAYSCALE:
-    result[0] = v;
-    result[1] = v;
-    result[2] = v;
-    break;
-  default:
-    PRINTFB(FB_ObjectSlice,FB_Errors)
-      "ObjectSliceRGB-Error: No RGB converting function defined.\n"
-      ENDFB;
-    result[0] = 1;
-    result[1] = 1;
-    result[2] = 1;
-    break;
-  }  
-  for(i = 0;i<3;i++){
-    if(result[i] > 1){
-      result[i] = 1;
-    }else if(result[i]<0){
-      result[i] = 0;
-    }
-  }
-
-}
-#endif

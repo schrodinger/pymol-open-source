@@ -405,6 +405,8 @@ if __name__=='pymol.setting':
       stereo               = 365
       wizard_prompt_mode   = 366
       coulomb_cutoff       = 367
+      slice_track_camera   = 368
+      slice_height_scale   = 369
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
