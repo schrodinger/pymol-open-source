@@ -129,7 +129,9 @@ def parse_args(argv):
             options.read_stdin = 1
          if "X" in a:
             options.rpcServer = 1
-            
+         if "g" in a:
+            options.deferred.append("_do_png %s"%av.pop())
+         
       else:
          options.deferred.append(a)
    if options.show_splash and not options.no_gui:
