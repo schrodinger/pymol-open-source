@@ -1410,7 +1410,6 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
   float mx[3] = { 15,15,15};
   float *vert_vla = NULL;
   int ok = false;
-  int n_a_vert=0;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
   ok = PyArg_ParseTuple(args,"sisisffiif",&str1,&frame,&str2,&oper,
