@@ -42,6 +42,27 @@ Z* -------------------------------------------------------------------
 
 #define cResvMask 0x7FFF
 
+int ObjectMoleculeIsAtomBondedToName(ObjectMolecule *obj,int a0,char *name)
+{
+  int a2,s;
+  int bonded =false;
+  
+  if(a0>=0) { 
+    s=obj->Neighbor[a0]; 
+    s++; /* skip count */
+    while(1) {
+      a2 = obj->Neighbor[s];
+      if(a2<0)
+        break;
+      if(WordMatch(obj->AtomInfo[a2].name,name,true)<0)
+        bonded = true;
+      break;
+      s+=2;
+    }
+  }
+  return bonded;
+}
+
 int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele)
 {
   int result = false;

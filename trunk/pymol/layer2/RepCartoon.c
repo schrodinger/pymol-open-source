@@ -164,6 +164,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int cartoon_color,highlight_color;
   int round_helices;
   int smooth_loops;
+  int na_mode;
   int parity;
   float refine_tips;
   float helix_radius;
@@ -253,6 +254,8 @@ ENDFD;
   smooth_last = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_last);
   smooth_cycles = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_cycles);
   flat_cycles = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_cycles);
+
+  na_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -428,9 +431,15 @@ ENDFD;
                   }
                   vo+=3;
                 }
-              } else if(trace||(((ai->protons==cAN_P)&&
-                                 (WordMatch("P",ai->name,1)<0))&&
-                        !AtomInfoSameResidueP(last_ai,ai))) {
+              } else if(trace|| 
+                        ((
+                          ((na_mode==0)&&(ai->protons==cAN_P) &&
+                           (WordMatch("P",ai->name,1)<0) ) ||
+                          ((na_mode==1)&&(ai->protons==cAN_C) &&
+                           (WordMatchExact("C4*",ai->name,1) ||
+                            WordMatchExact("C4'",ai->name,1)))
+                          )
+                         && !AtomInfoSameResidueP(last_ai,ai))) {
                 if(!trace) 
                   if(a2>=0) {
                     if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */

@@ -114,7 +114,7 @@ void SeqUpdate(void)
     SeekerUpdate();
     I->Changed = false;
     I->Dirty = true;
-    OrthoReshape(-1,-1); /* careful, this is recursive... */
+    OrthoReshape(-1,-1,false); /* careful, this is recursive... */
   }
   if(I->Dirty) {
     if(I->Handler->fRefresh)
@@ -387,8 +387,8 @@ static void SeqDraw(Block *block)
             pix_wid = I->CharWidth * ch_wid;
             tot_len = col->offset+ch_wid-I->NSkip;
             if(tot_len<=vis_size) {
+              glColor3fv(ColorGet(col->color));
               if(col->inverse) {
-                glColor3fv(cur_color);
                 glBegin(GL_POLYGON);
                 glVertex2i(xx,yy);
                 glVertex2i(xx,yy+I->LineHeight-1);

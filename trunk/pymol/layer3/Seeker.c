@@ -779,7 +779,13 @@ static char SeekerGetAbbr(char *abbr)
         break;
       }
       break;
-
+    case '2': 
+      switch(abbr[2]) {
+      case 'O':
+        return 'O';
+        break;
+      }
+      break;
     }
   case 'I':
     switch(abbr[1]) {
@@ -857,6 +863,13 @@ static char SeekerGetAbbr(char *abbr)
         break;
       }
       break;
+    case 'I': 
+      switch(abbr[2]) {
+      case 'P':
+        return 'O';
+        break;
+      }
+      break;
     case 'R': 
       switch(abbr[2]) {
       case 'P':
@@ -884,10 +897,42 @@ static char SeekerGetAbbr(char *abbr)
       break;
     }
     break;
+  case 'W':
+    switch(abbr[1]) {
+    case 'A': 
+      switch(abbr[2]) {
+      case 'T':
+        return 'O';
+        break;
+      }
+      break;
+    }
+    break;
+
   }
+
   return 0;
 }
 
+static int FindColor(AtomInfoType *ai,int n_more)
+{
+  int result = ai->color; /* default -- use first atom color */
+  AtomInfoType *ai0 =ai;
+  while(1) {
+    if(ai0->flags & cAtomFlag_guide) /* best use guide color */
+      return ai0->color;
+    if(ai0->protons == cAN_C) /* or use carbon color */
+      result = ai0->color;
+    n_more--;
+    if(n_more>0) {
+      ai0++;
+      if(!AtomInfoSameResidueP(ai,ai0))
+        break;
+    } else 
+      break;
+  }
+  return result;
+}
 
 void SeekerUpdate(void)
 {
@@ -1117,6 +1162,7 @@ void SeekerUpdate(void)
               UtilConcatVLA(&row->txt,&row->len,abbr);
               r1->stop = row->len;
             }
+            r1->color = FindColor(ai,obj->NAtom-a);
             nCol++;
             last_abbr=abbr[0];
           }
@@ -1138,6 +1184,7 @@ void SeekerUpdate(void)
             else
               UtilConcatVLA(&row->txt,&row->len,"''");
             r1->stop = row->len;
+            r1->color = FindColor(ai,obj->NAtom-a);
             UtilConcatVLA(&row->txt,&row->len," ");
             nCol++;
           }
@@ -1152,6 +1199,7 @@ void SeekerUpdate(void)
           else
             UtilConcatVLA(&row->txt,&row->len,"''");
           r1->stop = row->len;
+          r1->color = ai->color;
           UtilConcatVLA(&row->txt,&row->len," ");
           nCol++;
           break;
@@ -1169,6 +1217,7 @@ void SeekerUpdate(void)
             else
               UtilConcatVLA(&row->txt,&row->len,"''");
             r1->stop = row->len;
+            r1->color = FindColor(ai,obj->NAtom-a);
             UtilConcatVLA(&row->txt,&row->len," ");
             nCol++;
           }

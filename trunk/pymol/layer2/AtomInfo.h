@@ -43,6 +43,22 @@ Z* -------------------------------------------------------------------
 /* FLAG 24 - don't surface these atoms (waters, ligands, etc.) */
 #define cAtomFlag_exfoliate     0x01000000
 /* FLAG 25 - ignore atoms altogether when surfacing */
+
+/* FLAG 27 - polymer */
+#define cAtomFlag_polymer       0x08000000
+/* FLAG 28 - waters */
+#define cAtomFlag_solvent       0x10000000
+/* FLAG 29 - organics */
+#define cAtomFlag_organic       0x20000000
+/* FLAG 30 - inorganics */
+#define cAtomFlag_inorganic     0x40000000
+
+/* FLAG 31 - guide atom: e.g. CA in proteins */
+#define cAtomFlag_guide         0x80000000
+
+#define cAtomFlag_class         0xF8000000
+#define cAtomFlag_class_mask    0x07FFFFFF
+
 #define cAtomFlag_ignore        0x02000000
 #define cAtomFlag_no_smooth     0x04000000
 
@@ -160,6 +176,8 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
 int AtomInfoGetCarbColor(void);
 int AtomResvFromResi(char *resi);
 
+int AtomInfoKnownWaterResName(char *resn);
+int AtomInfoKnownPolymerResName(char *resn);
 
 #define cAIC_ct        0x0001
 #define cAIC_fc        0x0002
