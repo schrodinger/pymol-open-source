@@ -146,7 +146,7 @@ if pymol_launch != 3: # if this isn't a dry run
       glutThread = thread.get_ident()
       pymol_launch = 0 # never do this again : )
       _cmd.runpymol() # only returns if we are running pretend GLUT
-      from pymol.embed import wxpymol # never returns
+#      from pymol.embed import wxpymol # never returns
 
    def exec_str(s):
       try:
