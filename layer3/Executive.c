@@ -76,6 +76,43 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
 
+void ExecutiveSort(char *name)
+{
+  CExecutive *I = &Executive;
+  Object *os=NULL;
+  ObjectMolecule *obj;
+  SpecRec *rec = NULL;
+  ObjectMoleculeOpRec op;
+  int a;
+  int sele;
+
+  if(strlen(name)) {
+    os=ExecutiveFindObjectByName(name);
+    if(!os)
+      ErrMessage(" Executive","object not found.");
+    else if(os->type!=cObjectMolecule)
+      ErrMessage(" Executive","bad object type.");
+  }
+  
+  if(os||(!strlen(name))) { /* sort one or all */
+    while(ListIterate(I->Spec,rec,next,SpecList)) {
+      if(rec->type==cExecObject)
+        if(rec->obj->type==cObjectMolecule)
+          if((!os)||(rec->obj==os)) {
+            obj =(ObjectMolecule*)rec->obj;
+            ObjectMoleculeSort(obj);
+            sele=SelectorIndexByName(rec->obj->Name);
+            if(sele>=0) {
+              op.code='INVA';
+              op.i1=cRepAll; 
+              op.i2=cRepInvAll;
+              ExecutiveObjMolSeleOp(sele,&op);
+            }
+          }
+    }
+    SceneChanged();
+  }
+}
 /*========================================================================*/
 void ExecutiveStereo(int flag)
 {

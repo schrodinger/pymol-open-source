@@ -85,6 +85,7 @@ static PyObject *PMSystem(PyObject *dummy, PyObject *args);
 static PyObject *PMSet(PyObject *self, 	PyObject *args);
 static PyObject *PMSetFrame(PyObject *self, PyObject *args);
 static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args);
+static PyObject *PMSort(PyObject *dummy, PyObject *args);
 static PyObject *PMStereo(PyObject *self, PyObject *args);
 static PyObject *PMTurn(PyObject *self, 	PyObject *args);
 static PyObject *PMViewport(PyObject *self, 	PyObject *args);
@@ -135,6 +136,7 @@ static PyMethodDef PM_methods[] = {
 	{"showhide",     PMShowHide,     METH_VARARGS },
 	{"set_globals",  PMSetGlobals,   METH_VARARGS },
 	{"set_matrix",	  PMSetMatrix,    METH_VARARGS },
+	{"sort",         PMSort,         METH_VARARGS },
 	{"stereo",	     PMStereo,       METH_VARARGS },
 	{"system",	     PMSystem,       METH_VARARGS },
 	{"turn",	        PMTurn,         METH_VARARGS },
@@ -428,10 +430,9 @@ static PyObject *PMFrame(PyObject *self, PyObject *args)
 
 static PyObject *PMStereo(PyObject *self, PyObject *args)
 {
-  int i1;
   PyObject *result;
-
 #ifdef _PYMOL_STEREO
+  int i1;
   PyArg_ParseTuple(args,"i",&i1);
   ExecutiveStereo(i1);
   result=Py_BuildValue("i",1);
@@ -840,6 +841,15 @@ static PyObject *PMOrigin(PyObject *self, PyObject *args)
   char *name;
   PyArg_ParseTuple(args,"s",&name);
   ExecutiveCenter(name,1);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *PMSort(PyObject *self, PyObject *args)
+{
+  char *name;
+  PyArg_ParseTuple(args,"s",&name);
+  ExecutiveSort(name);
   Py_INCREF(Py_None);
   return Py_None;
 }

@@ -26,6 +26,14 @@ import thread
 import __main__
 import os
 
+def sort(*args):
+   lock()
+   if len(args)==0:
+      _pm.sort("")
+   else:
+      _pm.sort(args[0])
+   unlock()
+   
 def ready():
    return _pm.ready()
 
@@ -571,6 +579,7 @@ keyword = {
    'sel'         : [select       , 1 , 2 , '=' , 0 ],
    'set'         : [set          , 2 , 2 , '=' , 0 ],
    'show'        : [show         , 1 , 2 , ',' , 0 ],
+   'sort'        : [sort         , 0 , 1 , ',' , 0 ],
    'stereo'      : [stereo       , 1 , 1 , ',' , 0 ],
    'system'      : [system       , 1 , 1 , ',' , 0 ],
    'turn'        : [turn         , 2 , 2 , ',' , 0 ],

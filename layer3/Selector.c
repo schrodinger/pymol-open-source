@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"ObjectMolecule.h"
 
+
 #define SelectorMaxDepth 100
 
 typedef struct {
@@ -820,7 +821,7 @@ int *SelectorEvaluate(WordType *word)
   unsigned int code;
   int valueFlag = 0; /* are we expecting? */
   int *result = NULL;
-  int opFlag;
+  int opFlag,lt;
   char *q;
   OrthoLineType line;
   EvalElem Stack[SelectorMaxDepth],*e;
@@ -852,6 +853,16 @@ int *SelectorEvaluate(WordType *word)
 				  e->level=level;
 				  e->type=SELE_VALU;
 				  strcpy(e->text,word[c]);
+              if((e->text[0]==34)||(e->text[0]==39)) { /* remove surrounding quotes if any */
+                strcpy(e->text,word[c]+1);
+              }
+              lt=strlen(e->text);
+              if(lt) {
+                lt--;
+                if((e->text[lt]==34)||(e->text[lt]==39)) {
+                  e->text[lt]=0;
+                }
+              }
 				  valueFlag--;
 				}
 			 else if(valueFlag<0) /* operation parameter i.e. around X<-- */
@@ -1076,8 +1087,8 @@ WordType *SelectorParse(char *s) {
 				  c++;
 				  VLACheck(r,WordType,c);
 				  break;
-				case ' ':
-				  break;
+            case ' ':
+              break;
 				default:
 				  w_flag=true;
 				  q=r[c];
