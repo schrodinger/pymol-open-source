@@ -702,27 +702,24 @@ static PyObject *CmdFocus(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
-  /* only called by the GLUT thread with unlocked API */
-  P_glut_thread_keep_out++;  /* unnecc. right? */
+  /* only called by the GLUT thread with unlocked API, blocked interpreter */
   /*  if(!flush_count) {
       flush_count++;*/
   PFlushFast();
     /*    flush_count--;
           }*/
-  P_glut_thread_keep_out--; /* unnecc. right? */
   Py_INCREF(Py_None);
   return Py_None;  
 }
 
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
 {
+  /* called by non-GLUT thread with unlocked API, blocked interpreter */
   PyObject *result;
-  P_glut_thread_keep_out++;
   if(OrthoCommandWaiting()) 
     result = PyInt_FromLong(1);
   else
     result = PyInt_FromLong(0);
-  P_glut_thread_keep_out--;
   return result;
 }
 
