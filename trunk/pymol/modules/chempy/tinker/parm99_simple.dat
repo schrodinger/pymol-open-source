@@ -1817,40 +1817,7 @@ CA-CA-CA-Br         1.1          180.          2.           Junmei et al.1999
 CM-H4-C -O          1.1          180.          2.           Junmei et al.1999
 C -CT-N -H          1.1          180.          2.           Junmei et al.1999
 C -CT-N -O          1.1          180.          2.           Junmei et al.1999
-X -X -J3-DA         1.0          180.          2.           RSM, estimated
-X -X -J3-D4         10.5         180.          2.           RSM, korig = 1.0
-X -X -J3-A          1.0          180.          2.           JDJ,7,(1986),230
-X -X -DJ-Q1         10.5         180.          2.           JDJ,7,(1986),230
-X -X -DA-TA         1.1          180.          2.           RSM, estimated
-X -X -DA-JA         1.1          180.          2.           RSM, estimated
-X -X -DA-J3         1.1          180.          2.           RSM, estimated
-X -X -DA-D4         1.1          180.          2.           RSM, estimated
-X -X -DA-D2         1.1          180.          2.           RSM, estimated
-X -X -DA-A          1.1          180.          2.           bsd.on C6H6 nmodes
-X -X -D3-A          1.1          180.          2.
-X -QN-DJ-QN         10.5         180.          2.           JDJ,7,(1986),230
-X -J3-DA-J3         10.5         180.          2.           JDJ,7,(1986),230
-X -D4-J3-D4         1.0          180.          2.           JDJ,7,(1986),230
-JA-DA-DJ-D4         1.1          180.          2.
-JA-D3-DA-J3         1.1          180.          2.           dac guess, 9/94
-J3-JA-DA-J3         1.1          180.          2.           dac, 10/94
-J3-DA-DJ-D4         1.1          180.          2.
-DJ-JA-DA-J3         1.1          180.          2.           dac, 10/94
-DJ-D4-J3-Q1         1.1          180.          2.           Junmei et al.1999
-DJ-D4-J3-A          1.1          180.          2.           Junmei et al.1999
-DJ-D3-D3-D4         1.1          180.          2.           dac guess, 9/94
-DA-DJ-J3-D4         1.0          180.          2.
-DA-DJ-DA-D4         1.1          180.          2.
-DA-DA-DJ-Q2         1.1          180.          2.           (not used in tyr!)
-DA-DA-DA-R3         1.1          180.          2.           Junmei et al.1999
-DA-DA-DA-Q2         1.1          180.          2.           in tyr
-DA-DA-DA-D4         1.1          180.          2.
-D4-Q1-DJ-Q2         10.5         180.          2.
-D3-DJ-J3-D4         1.0          180.          2.           dac guess, 9/94
-D3-DJ-D3-D4         1.1          180.          2.
-D3-D4-D3-A          1.1          180.          2.           Junmei et al.1999
-D3-A -DJ-Q1         1.1          180.          2.           Junmei et al.1999
-A -Q1-DJ-Q2         1.1          180.          2.           Junmei et al.1999
+X -X -DJ-JA         10.5         180.          2.           WLD from X -X -DJ-Q1
 
   HW  OW  0000.     0000.                                4.  flag for fast water
 
