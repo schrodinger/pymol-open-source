@@ -35,7 +35,9 @@ int PConvPyObjectToFloat(PyObject *object,float *value)
 {
   int result = true;
   PyObject *tmp;
-  if(PyFloat_Check(object)) {
+  if(!object)
+    result=false;
+  else if(PyFloat_Check(object)) {
     (*value) = PyFloat_AsDouble(object);
   } else if(PyInt_Check(object)) {
     (*value) = (float)PyInt_AsLong(object);
@@ -54,7 +56,9 @@ int PConvPyObjectToInt(PyObject *object,int *value)
 {
   int result = true;
   PyObject *tmp;
-  if(PyInt_Check(object)) {
+  if(!object)
+    result=false;
+  else   if(PyInt_Check(object)) {
     (*value) = (int)PyInt_AsLong(object);
   } else {
     tmp = PyNumber_Int(object);
@@ -72,7 +76,9 @@ int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
   char *st;
   PyObject *tmp;
   int result=true;
-  if(PyString_Check(object)) {
+  if(!object)
+    result=false;
+  else   if(PyString_Check(object)) {
     st = PyString_AsString(object);
     strncpy(value,st,ln);
     value[ln]=0;
@@ -94,7 +100,9 @@ int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
   char *st;
   PyObject *tmp;
   int result=true;
-  if(PyString_Check(object)) {
+  if(!object)
+    result=false;
+  else if(PyString_Check(object)) {
     st = PyString_AsString(object);
     strncpy(value,st,ln);
     value[ln]=0;

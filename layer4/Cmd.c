@@ -66,7 +66,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeMMDSeparate 5
 #define cLoadTypeMMDStr 6
 #define cLoadTypeXPLORMap 7
-#define cLoadTypeChempyModel 8
+#define cLoadTypeChemPyModel 8
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -113,6 +113,7 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
+static PyObject *CmdLabel(PyObject *self,   PyObject *args);
 static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args);
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args);
@@ -180,6 +181,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
 	{"isomesh",	     CmdIsomesh,      METH_VARARGS },
+   {"label",        CmdLabel,        METH_VARARGS },
 	{"load",	        CmdLoad,         METH_VARARGS },
 	{"load_object",  CmdLoadObject,   METH_VARARGS },
 	{"mclear",	     CmdMClear,       METH_VARARGS },
@@ -396,6 +398,22 @@ static PyObject *CmdDistance(PyObject *dummy, PyObject *args)
   return result;
 }
 
+static PyObject *CmdLabel(PyObject *self,   PyObject *args)
+{
+  char *str1,*str2;
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"ss",&str1,&str2);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  ExecutiveLabel(s1,str2);
+  SelectorFreeTmp(s1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+
+}
+
 static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
@@ -560,7 +578,7 @@ static PyObject *CmdGetModel(PyObject *dummy, PyObject *args)
   PyArg_ParseTuple(args,"si",&str1,&state);
   APIEntry();
   SelectorGetTmp(str1,s1);
-  model=ExecutiveSeleToChempyModel(s1,state);
+  model=ExecutiveSeleToChemPyModel(s1,state);
   SelectorFreeTmp(s1);
   APIExit();
   if(model)
@@ -1184,19 +1202,19 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       /* TODO check for existing object of wrong type */
   
   switch(type) {
-  case cLoadTypeChempyModel:
+  case cLoadTypeChemPyModel:
     PBlockAndUnlockAPI();
-	 obj=(Object*)ObjectMoleculeLoadChempyModel((ObjectMolecule*)origObj,model,frame);
+	 obj=(Object*)ObjectMoleculeLoadChemPyModel((ObjectMolecule*)origObj,model,frame);
     PLockAPIAndUnblock();
 	 if(!origObj) {
 	   if(obj) {
 		 ObjectSetName(obj,oname);
 		 ExecutiveManageObject(obj);
-		 sprintf(buf," CmdLoad: Chempy-model loaded into object \"%s\".\n",oname);		  
+		 sprintf(buf," CmdLoad: ChemPy-model loaded into object \"%s\".\n",oname);		  
 	   }
 	 } else if(origObj) {
 		ExecutiveUpdateObjectSelection(origObj);
-		sprintf(buf," CmdLoad: Chempy-model appended into object \"%s\".\n",oname);
+		sprintf(buf," CmdLoad: ChemPy-model appended into object \"%s\".\n",oname);
 	 }
 	 break;
   }

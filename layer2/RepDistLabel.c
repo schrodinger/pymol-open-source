@@ -59,11 +59,13 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
   char *cc;
   int n = 0;
 
-  glDisable(GL_DEPTH_TEST);
+
   if(ray) {
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-	 
+#ifdef _DRI_WORKAROUND
+    glDisable(GL_DEPTH_TEST);	 
+#endif
 	 SceneResetNormal(true);
 	 while(c--) {
       glRasterPos4f(v[0],v[1],v[2],1.0);
@@ -74,8 +76,10 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
       }
       n++;
 	 }
+#ifdef _DRI_WORKAROUND
+    glEnable(GL_DEPTH_TEST);
+#endif
   }
-  glEnable(GL_DEPTH_TEST);
 }
 
 Rep *RepDistLabelNew(DistSet *ds)

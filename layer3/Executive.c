@@ -76,7 +76,7 @@ void ExecutiveReshape(Block *block,int width,int height);
 #define ExecToggleWidth 14
 #define ExecToggleSize 13
 
-#define ExecOpCnt 4
+#define ExecOpCnt 5
 #define ExecColorVisible 0.45,0.45,0.45
 #define ExecColorHidden 0.3,0.3,0.3
 
@@ -264,14 +264,14 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
   return(result);
 }
 /*========================================================================*/
-PyObject *ExecutiveSeleToChempyModel(char *s1,int state)
+PyObject *ExecutiveSeleToChemPyModel(char *s1,int state)
 {
   PyObject *result;
   int sele1;
   sele1=SelectorIndexByName(s1);
   if(state<0) state=0;
   PBlockAndUnlockAPI();
-  result=SelectorGetChempyModel(sele1,state);
+  result=SelectorGetChemPyModel(sele1,state);
   if(PyErr_Occurred()) PyErr_Print();
   PLockAPIAndUnblock();
   return(result);
@@ -391,6 +391,25 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
 
     ExecutiveWindowZoom(sele);
 
+  }
+}
+/*========================================================================*/
+void ExecutiveLabel(char *s1,char *expr)
+{
+  int sele1;
+  char buffer[255];
+  ObjectMoleculeOpRec op1;
+  
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op1.code = OMOP_LABL;
+    op1.s1 = expr;
+    op1.i1 = 0;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+    sprintf(buffer,"labelled %i atoms.",op1.i1);
+    ErrOk(" Label",buffer);
+  } else {
+    ErrMessage("ExecutiveLabel","No atoms selected.");
   }
 }
 /*========================================================================*/
@@ -1431,6 +1450,26 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
               switch(rec->type) {
               case cExecAll:
               case cExecSelection:
+                MenuActivate(x,y,"mol_labels",rec->name);
+                break;
+              case cExecObject:
+                switch(rec->obj->type) {
+                case cObjectMolecule:
+                  MenuActivate(x,y,"mol_labels",rec->obj->Name);
+                  break;
+                case cObjectDist:
+                  break;
+                case cObjectMap:
+                case cObjectMesh:
+                  break;
+                }
+                break;
+              }
+              break;
+            case 4:
+              switch(rec->type) {
+              case cExecAll:
+              case cExecSelection:
                 MenuActivate(x,y,"mol_color",rec->name);
                 break;
               case cExecObject:
@@ -1562,6 +1601,19 @@ void ExecutiveDraw(Block *block)
               glColor3fv(toggleColor);
               break;
             case 3:
+              glColor3fv(toggleColor);
+              glBegin(GL_POLYGON);
+              glVertex2i(x2,y2);
+              glVertex2i(x2,y2+ExecToggleSize);
+              glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+              glVertex2i(x2+ExecToggleSize,y2);
+              glEnd();
+              glColor3f(0.0,0.0,0.0);
+              glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
+              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'L');              
+              glColor3fv(toggleColor);
+              break;
+            case 4:
               glBegin(GL_POLYGON);
               glColor3f(1.0,0.1,0.1);
               glVertex2i(x2,y2);

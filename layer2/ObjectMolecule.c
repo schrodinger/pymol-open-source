@@ -65,10 +65,10 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
 
-CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
+CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
 
 /*========================================================================*/
-CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr)
+CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr)
 {
   int nAtom,nBond;
   int a,c;
@@ -100,7 +100,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   if(atomList) 
     nAtom = PyList_Size(atomList);
   else 
-    ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get atom list");
+    ok=ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't get atom list");
 
 
   if(ok) {
@@ -116,17 +116,17 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
 		{
         atom = PyList_GetItem(atomList,a);
         if(!atom) 
-          ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get atom");
+          ok=ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't get atom");
         crd = PyObject_GetAttrString(atom,"coord");
         if(!crd) 
-          ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get coordinates");
+          ok=ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't get coordinates");
         else {
           for(c=0;c<3;c++) {
             tmp = PyList_GetItem(crd,c);
             if (tmp) 
               ok = PConvPyObjectToFloat(tmp,f++);
             if(!ok) {
-              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read coordinates");
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read coordinates");
               break;
             }
           }
@@ -134,13 +134,14 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
         Py_XDECREF(crd);
         
         ai = atInfo+a;
-        
+        ai->id = a; /* chempy models are zero-based */
+
         if(ok) {
           tmp = PyObject_GetAttrString(atom,"name");
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->name,sizeof(AtomName)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read name");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read name");
           Py_XDECREF(tmp);
         }
 
@@ -150,7 +151,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
             if (tmp)
               ok = PConvPyObjectToStrMaxClean(tmp,ai->textType,sizeof(TextType)-1);
             if(!ok) 
-              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read text_type");
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read text_type");
             Py_XDECREF(tmp);
           } else {
             ai->textType[0]=0;
@@ -163,10 +164,36 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
             if (tmp)
               ok = PConvPyObjectToInt(tmp,&ai->customType);
             if(!ok) 
-              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read numeric_type");
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read numeric_type");
             Py_XDECREF(tmp);
           } else {
             ai->customType = cAtomInfoNoType;
+          }
+        }
+
+        if(ok) {
+          if(PTruthCallStr(atom,"has","formal_charge")) { 
+            tmp = PyObject_GetAttrString(atom,"formal_charge");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,&ai->formalCharge);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read formal_charge");
+            Py_XDECREF(tmp);
+          } else {
+            ai->formalCharge = 0;
+          }
+        }
+
+        if(ok) {
+          if(PTruthCallStr(atom,"has","partial_charge")) { 
+            tmp = PyObject_GetAttrString(atom,"partial_charge");
+            if (tmp)
+              ok = PConvPyObjectToFloat(tmp,&ai->partialCharge);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read partial_charge");
+            Py_XDECREF(tmp);
+          } else {
+            ai->partialCharge = 0.0;
           }
         }
 
@@ -176,7 +203,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
             if (tmp)
               ok = PConvPyObjectToInt(tmp,(int*)&ai->flags);
             if(!ok) 
-              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read flags");
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read flags");
             Py_XDECREF(tmp);
           } else {
             ai->flags = 0;
@@ -188,7 +215,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->resn,sizeof(ResName)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read resn");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read resn");
           Py_XDECREF(tmp);
         }
         
@@ -197,10 +224,21 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->resi,sizeof(ResIdent)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read resi");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read resi");
           else
             sscanf(ai->resi,"%d",&ai->resv);
           Py_XDECREF(tmp);
+        }
+
+        if(ok) {
+          if(PTruthCallStr(atom,"has","resi_number")) {         
+            tmp = PyObject_GetAttrString(atom,"resi_number");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,&ai->resv);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read resi_number");
+            Py_XDECREF(tmp);
+          }
         }
         
 		  if(ok) {
@@ -208,7 +246,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->segi,sizeof(SegIdent)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read segi");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read segi");
           Py_XDECREF(tmp);
         }
 
@@ -217,7 +255,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToFloat(tmp,&ai->b);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read b value");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read b value");
           Py_XDECREF(tmp);
         }
 
@@ -226,7 +264,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToFloat(tmp,&ai->q);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read occupancy");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read occupancy");
           Py_XDECREF(tmp);
         }
 
@@ -236,7 +274,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->chain,sizeof(Chain)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read chain");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read chain");
           Py_XDECREF(tmp);
         }
         
@@ -245,7 +283,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToInt(tmp,&hetatm);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read hetatm");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read hetatm");
           else
             ai->hetatm = hetatm;
           Py_XDECREF(tmp);
@@ -256,7 +294,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->alt,sizeof(Chain)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read alternate conformation");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read alternate conformation");
           Py_XDECREF(tmp);
         }
 
@@ -265,7 +303,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->elem,sizeof(AtomName)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read symbol");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read symbol");
           Py_XDECREF(tmp);
         }
         
@@ -288,7 +326,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   if(bondList) 
     nBond = PyList_Size(bondList);
   else
-    ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get bond list");
+    ok=ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't get bond list");
 
   if(ok) {
 	 bond=VLAlloc(int,3*nBond);
@@ -297,17 +335,17 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
 		{
         bnd = PyList_GetItem(bondList,a);
         if(!bnd) 
-          ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get bond");
+          ok=ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't get bond");
         index = PyObject_GetAttrString(bnd,"index");
         if(!index) 
-          ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get bond indices");
+          ok=ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't get bond indices");
         else {
           for(c=0;c<2;c++) {
             tmp = PyList_GetItem(index,c);
             if (tmp) 
               ok = PConvPyObjectToInt(tmp,ii++);
             if(!ok) {
-              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read coordinates");
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read coordinates");
               break;
             }
           }
@@ -317,7 +355,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToInt(tmp,ii++);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read bond order");
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read bond order");
           Py_XDECREF(tmp);
         }
         Py_XDECREF(index);
@@ -347,7 +385,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
 
 
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeLoadChempyModel(ObjectMolecule *I,PyObject *model,int frame)
+ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,int frame)
 {
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
@@ -370,7 +408,7 @@ ObjectMolecule *ObjectMoleculeLoadChempyModel(ObjectMolecule *I,PyObject *model,
 		atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
 		isNew = false;
 	 }
-	 cset=ObjectMoleculeChempyModel2CoordSet(model,&atInfo);	 
+	 cset=ObjectMoleculeChemPyModel2CoordSet(model,&atInfo);	 
 	 nAtom=cset->NIndex;
   }
 
@@ -604,6 +642,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 }
 		  }
 		  if(ok&&atInfo) {
+          atInfo[a].id = a+1;
 			 strcpy(atInfo[a].resn,resn);
 			 atInfo[a].hetatm=true;
 			 AtomInfoAssignParameters(atInfo+a);
@@ -1280,6 +1319,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 		   case OMOP_VISI:
 		   case OMOP_TTTF:
          case OMOP_ALTR:
+         case OMOP_LABL:
          case OMOP_AlterState:
 			 s=I->AtomInfo[a].selEntry;
 			 while(s)
@@ -1304,6 +1344,16 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 					 case OMOP_TTTF:
 					   hit_flag=true;
 					   break;
+                case OMOP_LABL:
+                  if (ok) {
+                    if(PLabelAtom(&I->AtomInfo[a],op->s1)) {
+                      op->i1++;
+                      I->AtomInfo[a].visRep[cRepLabel]=true;
+                      hit_flag=true;
+                    } else
+                      ok=false;
+                  }
+                  break;
                 case OMOP_ALTR:
                   if (ok) {
                     if(PAlterAtom(&I->AtomInfo[a],op->s1))
@@ -1311,6 +1361,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                     else
                       ok=false;
                   }
+                  break;
                 case OMOP_AlterState:
                   if (ok) {
                     if(op->i2<I->NCSet) {
@@ -1478,6 +1529,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	  switch(op->code) {
 	  case OMOP_TTTF:
 		ObjectMoleculeTransformTTTf(I,op->ttt,-1);
+		break;
+	  case OMOP_LABL:
+       ObjectMoleculeInvalidateRep(I,cRepLabel);
 		break;
      case OMOP_AlterState: /* overly coarse - doing all states, could do just 1 */
        ObjectMoleculeInvalidateRep(I,-1);
@@ -1997,7 +2051,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 
           p=nskip(p,6);
           p=ncopy(cc,p,5);
-          if(!sscanf(cc,"%d",&ai->tmpID)) ai->tmpID=0;
+          if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
 
           p=nskip(p,1);/* to 12 */
           p=ncopy(cc,p,4); 
@@ -2103,12 +2157,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         ii1+=3;
       }
       for(a=0;a<nAtom;a++) 
-        if(maxAt<atInfo[a].tmpID) maxAt=atInfo[a].tmpID;
+        if(maxAt<atInfo[a].id) maxAt=atInfo[a].id;
       /* build index */
       idx = Alloc(int,maxAt+1);
       for(a=0;a<maxAt;a++) idx[a]=-1;
       for(a=0;a<nAtom;a++)
-        idx[atInfo[a].tmpID]=a;
+        idx[atInfo[a].id]=a;
       /* convert indices to bonds */
       ii1=bond;
       ii2=bond;
@@ -2197,6 +2251,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 		{
         ai=atInfo+a;
 
+        ai->id=a+1;
         if(ok) {
           p=ncopy(cc,p,4);
           if(sscanf(cc,"%d",&ai->customType)!=1)

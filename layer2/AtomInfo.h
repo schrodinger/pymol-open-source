@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #define cAtomNameLen 4
 #define cSegiLen 4
 #define cTextTypeLen 10
+#define cLabelTypeLen 20
 
 typedef char Chain[2];
 
@@ -32,6 +33,7 @@ typedef char ResIdent[cResiLen+1];
 typedef char ResName[cResnLen+1];
 typedef char AtomName[cAtomNameLen+1];
 typedef char TextType[cTextTypeLen+1];
+typedef char LabelType[cLabelTypeLen+1];
 
 #define cAtomInfoNoType -9999
 
@@ -45,19 +47,21 @@ typedef struct AtomInfoType {
   AtomName name;
   AtomName elem;
   TextType textType;
+  LabelType label;
   int hydrogen;
   int ludiType; /* this will go away soon */
   int customType;
   int customFlag; /* still needed?? */
   int priority;
-  float b,q,vdw;
+  float b,q,vdw,partialCharge;
+  int formalCharge;
   signed char hetatm;
   short int model; /* remaining items only used during selection */
-  int atom; 
+  int atom;
   int selEntry;
   short int visRep[cRepCnt];
   int color;
-  int tmpID; /* used for reading conect records */
+  int id; /* used for reading conect records */
   unsigned int flags;
 } AtomInfoType;
 

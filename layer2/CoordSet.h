@@ -52,7 +52,7 @@ void CoordSetTransform44f(CoordSet *I,float *mat);
 void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst);
 void CoordSetFracToReal(CoordSet *I,CCrystal *cryst);
 void CoordSetGetAverage(CoordSet *I,float *v0);
-PyObject *CoordSetAtomToChempyAtom(AtomInfoType *ai,float *v);
+PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v);
 
 #endif
 

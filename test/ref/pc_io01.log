@@ -1,0 +1,241 @@
+PyMOL Molecular Graphics System, Version 0.31.
+Copyright (C) 1998-2000 by DeLano Scientific.
+All Rights Reserved.
+ 
+Principle Author:  Warren L. DeLano, Ph.D.
+ 
+Major Authors and Contributors:
+ 
+      Ralf W. Grosse-Kunstleve, Ph.D.
+ 
+This software is open source and freely available.
+Updates can be found at "http://www.pymol.org".
+ 
+Enter "help commands" for a list of commands.
+Enter "help <command-name>" for information on a specific command.
+ 
+Hit TAB to toggle text or type "cls" to clear.
+ 
+ GL based graphics front end:
+  GL_VENDOR: Precision Insight, Inc.
+  GL_RENDERER: Mesa DRI Voodoo3 20000616
+  GL_VERSION: 1.2 Mesa 3.3 beta
+PyMOL>run inp/pc_io01.py
+ chempy: reading "dat/helix_amber.pdb".
+ chempy.protein: assigning types and bonds...
+ chempy.protein: assigning types...
+ chempy.models: sorting...
+ chempy.models.Indexed: updating indexes...
+ chempy.models.Indexed: updating indexes...
+ chempy: writing "cmp/pc_io01.01.pdb".
+ chempy: writing "cmp/pc_io01.01.xyz".
+ chempy.models.Indexed: converting to connected model...
+    C    1  ACE  0.597  C
+  CH3    1  ACE -0.366 CT
+ 1HH3    1  ACE  0.112 HC
+ 2HH3    1  ACE  0.112 HC
+ 3HH3    1  ACE  0.112 HC
+    O    1  ACE -0.568  O
+    C    2  ALA  0.597  C
+   CA    2  ALA  0.034 CT
+   CB    2  ALA -0.182 CT
+  1HB    2  ALA  0.060 HC
+  2HB    2  ALA  0.060 HC
+  3HB    2  ALA  0.060 HC
+    H    2  ALA  0.272  H
+   HA    2  ALA  0.082 H1
+    N    2  ALA -0.416  N
+    O    2  ALA -0.568  O
+    C    3  ARG  0.734  C
+   CA    3  ARG -0.264 CT
+   CB    3  ARG -0.001 CT
+   CD    3  ARG  0.049 CT
+   CG    3  ARG  0.039 CT
+   CZ    3  ARG  0.808 CA
+ 1HH1    3  ARG  0.448  H
+ 1HH2    3  ARG  0.448  H
+  2HB    3  ARG  0.033 HC
+  2HD    3  ARG  0.069 H1
+  2HG    3  ARG  0.029 HC
+ 2HH1    3  ARG  0.448  H
+ 2HH2    3  ARG  0.448  H
+  3HB    3  ARG  0.033 HC
+  3HD    3  ARG  0.069 H1
+  3HG    3  ARG  0.029 HC
+    H    3  ARG  0.275  H
+   HA    3  ARG  0.156 H1
+   HE    3  ARG  0.346  H
+    N    3  ARG -0.348  N
+   NE    3  ARG -0.529 N2
+  NH1    3  ARG -0.863 N2
+  NH2    3  ARG -0.863 N2
+    O    3  ARG -0.589  O
+    C    4  ASP  0.537  C
+   CA    4  ASP  0.038 CT
+   CB    4  ASP -0.030 CT
+   CG    4  ASP  0.799  C
+  2HB    4  ASP -0.012 HC
+  3HB    4  ASP -0.012 HC
+    H    4  ASP  0.294  H
+   HA    4  ASP  0.088 H1
+    N    4  ASP -0.516  N
+    O    4  ASP -0.582  O
+  OD1    4  ASP -0.801 O2
+  OD2    4  ASP -0.801 O2
+    C    5  ASN  0.597  C
+   CA    5  ASN  0.014 CT
+   CB    5  ASN -0.204 CT
+   CG    5  ASN  0.713  C
+ 1HD2    5  ASN  0.420  H
+  2HB    5  ASN  0.080 HC
+ 2HD2    5  ASN  0.420  H
+  3HB    5  ASN  0.080 HC
+    H    5  ASN  0.272  H
+   HA    5  ASN  0.105 H1
+    N    5  ASN -0.416  N
+  ND2    5  ASN -0.919  N
+    O    5  ASN -0.568  O
+  OD1    5  ASN -0.593  O
+    C    6  CYX  0.597  C
+   CA    6  CYX  0.043 CT
+   CB    6  CYX -0.079 CT
+  2HB    6  CYX  0.091 H1
+  3HB    6  CYX  0.091 H1
+    H    6  CYX  0.272  H
+   HA    6  CYX  0.077 H1
+    N    6  CYX -0.416  N
+    O    6  CYX -0.568  O
+   SG    6  CYX -0.108  S
+    C    7  GLU  0.537  C
+   CA    7  GLU  0.040 CT
+   CB    7  GLU  0.056 CT
+   CD    7  GLU  0.805  C
+   CG    7  GLU  0.014 CT
+  2HB    7  GLU -0.017 HC
+  2HG    7  GLU -0.043 HC
+  3HB    7  GLU -0.017 HC
+  3HG    7  GLU -0.043 HC
+    H    7  GLU  0.294  H
+   HA    7  GLU  0.111 H1
+    N    7  GLU -0.516  N
+    O    7  GLU -0.582  O
+  OE1    7  GLU -0.819 O2
+  OE2    7  GLU -0.819 O2
+    C    8  GLN  0.597  C
+   CA    8  GLN -0.003 CT
+   CB    8  GLN -0.004 CT
+   CD    8  GLN  0.695  C
+   CG    8  GLN -0.065 CT
+ 1HE2    8  GLN  0.425  H
+  2HB    8  GLN  0.017 HC
+ 2HE2    8  GLN  0.425  H
+  2HG    8  GLN  0.035 HC
+ Executive: object "test" created.
+ chempy.models: sorting...
+ chempy.models.Indexed: updating indexes...
+ chempy.models.Indexed: updating indexes...
+    C    1  ACE  0.597  C
+  CH3    1  ACE -0.366 CT
+ 1HH3    1  ACE  0.112 HC
+ 2HH3    1  ACE  0.112 HC
+ 3HH3    1  ACE  0.112 HC
+    O    1  ACE -0.568  O
+    C    2  ALA  0.597  C
+   CA    2  ALA  0.034 CT
+   CB    2  ALA -0.183 CT
+  1HB    2  ALA  0.060 HC
+  2HB    2  ALA  0.060 HC
+  3HB    2  ALA  0.060 HC
+    H    2  ALA  0.272  H
+   HA    2  ALA  0.082 H1
+    N    2  ALA -0.416  N
+    O    2  ALA -0.568  O
+    C    3  ARG  0.734  C
+   CA    3  ARG -0.264 CT
+   CB    3  ARG -0.001 CT
+   CD    3  ARG  0.049 CT
+   CG    3  ARG  0.039 CT
+   CZ    3  ARG  0.808 CA
+ 1HH1    3  ARG  0.448  H
+ 1HH2    3  ARG  0.448  H
+  2HB    3  ARG  0.033 HC
+  2HD    3  ARG  0.069 H1
+  2HG    3  ARG  0.029 HC
+ 2HH1    3  ARG  0.448  H
+ 2HH2    3  ARG  0.448  H
+  3HB    3  ARG  0.033 HC
+  3HD    3  ARG  0.069 H1
+  3HG    3  ARG  0.029 HC
+    H    3  ARG  0.275  H
+   HA    3  ARG  0.156 H1
+   HE    3  ARG  0.346  H
+    N    3  ARG -0.348  N
+   NE    3  ARG -0.530 N2
+  NH1    3  ARG -0.863 N2
+  NH2    3  ARG -0.863 N2
+    O    3  ARG -0.589  O
+    C    4  ASP  0.537  C
+   CA    4  ASP  0.038 CT
+   CB    4  ASP -0.030 CT
+   CG    4  ASP  0.799  C
+  2HB    4  ASP -0.012 HC
+  3HB    4  ASP -0.012 HC
+    H    4  ASP  0.294  H
+   HA    4  ASP  0.088 H1
+    N    4  ASP -0.516  N
+    O    4  ASP -0.582  O
+  OD1    4  ASP -0.801 O2
+  OD2    4  ASP -0.801 O2
+    C    5  ASN  0.597  C
+   CA    5  ASN  0.014 CT
+   CB    5  ASN -0.204 CT
+   CG    5  ASN  0.713  C
+ 1HD2    5  ASN  0.420  H
+  2HB    5  ASN  0.080 HC
+ 2HD2    5  ASN  0.420  H
+  3HB    5  ASN  0.080 HC
+    H    5  ASN  0.272  H
+   HA    5  ASN  0.105 H1
+    N    5  ASN -0.416  N
+  ND2    5  ASN -0.919  N
+    O    5  ASN -0.568  O
+  OD1    5  ASN -0.593  O
+    C    6  CYX  0.597  C
+   CA    6  CYX  0.043 CT
+   CB    6  CYX -0.079 CT
+  2HB    6  CYX  0.091 H1
+  3HB    6  CYX  0.091 H1
+    H    6  CYX  0.272  H
+   HA    6  CYX  0.077 H1
+    N    6  CYX -0.416  N
+    O    6  CYX -0.568  O
+   SG    6  CYX -0.108  S
+    C    7  GLU  0.537  C
+   CA    7  GLU  0.040 CT
+   CB    7  GLU  0.056 CT
+   CD    7  GLU  0.805  C
+   CG    7  GLU  0.014 CT
+  2HB    7  GLU -0.017 HC
+  2HG    7  GLU -0.043 HC
+  3HB    7  GLU -0.017 HC
+  3HG    7  GLU -0.043 HC
+    H    7  GLU  0.294  H
+   HA    7  GLU  0.111 H1
+    N    7  GLU -0.516  N
+    O    7  GLU -0.582  O
+  OE1    7  GLU -0.819 O2
+  OE2    7  GLU -0.819 O2
+    C    8  GLN  0.597  C
+   CA    8  GLN -0.003 CT
+   CB    8  GLN -0.004 CT
+   CD    8  GLN  0.695  C
+   CG    8  GLN -0.064 CT
+ 1HE2    8  GLN  0.425  H
+  2HB    8  GLN  0.017 HC
+ 2HE2    8  GLN  0.425  H
+  2HG    8  GLN  0.035 HC
+ chempy: writing "cmp/pc_io01.02.pdb".
+ chempy: writing "cmp/pc_io01.02.xyz".
+ chempy.models.Indexed: converting to connected model...
+ ObjectMolecule: updating state 1 of "test".
+ Memory Check: 0 blocks expected, 0 found, 53 maximum allocated.

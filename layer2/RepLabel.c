@@ -1,0 +1,158 @@
+/* 
+A* -------------------------------------------------------------------
+B* This file contains source code for the PyMOL computer program
+C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+D* -------------------------------------------------------------------
+E* It is unlawful to modify or remove this copyright notice.
+F* -------------------------------------------------------------------
+G* Please see the accompanying LICENSE file for further information. 
+H* -------------------------------------------------------------------
+I* Additional authors of this source file include:
+-* 
+-* 
+-*
+Z* -------------------------------------------------------------------
+*/
+
+#include<GL/gl.h>
+#include<GL/glut.h>
+#include"Base.h"
+#include"OOMac.h"
+#include"RepLabel.h"
+#include"Color.h"
+#include"Map.h"
+#include"Setting.h"
+#include"main.h"
+#include"Scene.h"
+
+typedef struct RepLabel {
+  Rep R;
+  float *V;
+  char *L;
+  int N;
+} RepLabel;
+
+#include"ObjectMolecule.h"
+
+void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick);
+void RepLabelFree(RepLabel *I);
+
+void RepLabelInit(void)
+{
+}
+
+void RepLabelFree(RepLabel *I)
+{
+  FreeP(I->V);
+  FreeP(I->L);
+  OOFreeP(I);
+}
+
+void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
+{
+  float *v=I->V;
+  int c=I->N;
+  char *l=I->L;
+  
+  if(ray) {
+  } else if(pick&&PMGUI) {
+  } else if(PMGUI) {
+#ifdef _DRI_WORKAROUND
+    glDisable(GL_DEPTH_TEST);	 
+#endif
+	 SceneResetNormal(true);
+	 while(c--) {
+      if(*l) {
+        glColor3fv(v);
+        glRasterPos4f(v[3],v[4],v[5],1.0);
+      }
+		v+=6;
+      while(*l) {
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(l++));
+      }
+      l++;
+    }
+#ifdef _DRI_WORKAROUND
+    glDisable(GL_DEPTH_TEST);	 
+#endif
+  }
+}
+
+Rep *RepLabelNew(CoordSet *cs)
+{
+  ObjectMolecule *obj;
+  int a,a1,vFlag,c1;
+  float *v,*v0,*vc;
+  char *p,*l;
+  AtomInfoType *ai;
+  OOAlloc(RepLabel);
+
+  obj = cs->Obj;
+  vFlag=false;
+  for(a=0;a<cs->NIndex;a++) {
+	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepLabel])
+		{
+		  vFlag=true;
+		  break;
+		}
+  }
+  if(!vFlag) {
+    OOFreeP(I);
+    return(NULL); /* skip if no label are visible */
+  }
+
+  RepInit(&I->R);
+  
+  obj = cs->Obj;
+  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepLabelRender;
+  I->R.fFree=(void (*)(struct Rep *))RepLabelFree;
+  I->R.fRecolor=NULL;
+
+  /* raytracing primitives */
+
+  I->L=Alloc(char,sizeof(LabelType)*cs->NIndex);
+  ErrChkPtr(I->L);
+  I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*6);
+  ErrChkPtr(I->V);
+
+  I->N=0;
+  
+  v=I->V; 
+  l=I->L;
+  for(a=0;a<cs->NIndex;a++)
+	 {
+		a1 = cs->IdxToAtm[a];
+      ai = obj->AtomInfo+a1;
+		if(ai->visRep[cRepLabel]&&(ai->label[0]))
+		  {
+			 I->N++;
+			 c1=*(cs->Color+a);
+			 vc = ColorGet(c1); /* save new color */
+			 *(v++)=*(vc++);
+			 *(v++)=*(vc++);
+			 *(v++)=*(vc++);
+			 v0 = cs->Coord+3*a;			 
+			 *(v++)=*(v0++);
+			 *(v++)=*(v0++);
+			 *(v++)=*(v0++);
+          p=ai->label;
+          while(*p) 
+            *(l++)=*(p++);
+          *(l++)=0;
+		  }
+	 }
+
+  if(I->N) 
+	 {
+		I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
+		I->L=(char*)mrealloc(I->L,sizeof(char)*(l-I->L));      
+	 }
+  else
+	 {
+		I->V=(float*)mrealloc(I->V,1);
+		I->L=(char*)mrealloc(I->L,1);
+	 }
+  return((void*)(struct Rep*)I);
+}
+
+

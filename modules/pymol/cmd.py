@@ -254,9 +254,14 @@ DESCRIPTION
       chain <chain ID>            c;<chain identifiers>
       segi <segment identifiers>  s;<segment identifiers>
       elem <element symbol>       e;<element symbols>
-      b <operator> <value>        -
       flag <number>               f;
-      alt <code>                  - 
+      alt <code>                  -
+      n_type <numeric type>       nt; <numeric type>
+      t_type <text type>          tt; <text type>
+      b <operator> <value>        -
+      formal_charge <op> <value>  fc; <operator> <value>
+      partial_charge <op> <value> pc; <operator> <value>
+      id <original-index>         -
    Generic 
       hydro                       h;
       all                         *
@@ -269,6 +274,7 @@ DESCRIPTION
       byres <selection>           b;<selection>
       around <distance>           a;<distance>
       expand <distance>           e;<distance>
+      gap <distance>              -
       in <selection>              -
  
    Objects and selections can be referred to by name from within
@@ -620,6 +626,37 @@ PYMOL API
       r = _cmd.copy(src,dst)
    finally:
       unlock()
+   return r
+
+def label(sele,expr):
+   '''
+DESCRIPTION
+ 
+"label" labels one or more atoms properties over a selection using
+the python evaluator with a separate name space for each atom.  The
+symbols defined in the name space are:
+ 
+   name, resn, resi, chain, q, b, segi, type (ATOM,HETATM) 
+   formal_charge, partial_charge, numeric_type, text_type
+   
+All strings in the expression must be explicitly quoted.  This
+operation typically takes several seconds per thousand atoms altered.
+ 
+USAGE
+ 
+   label (selection),expression
+ 
+EXAMPLES
+  
+   label (chain A),chain
+   label (n;ca),"%s-%s" % (resn,resi)
+   label (resi 200),"%1.3f" % partial_charge
+   '''
+   try:
+      lock()
+      r = _cmd.label(sele,'label='+expr)
+   finally:
+      unlock()   
    return r
 
 def alter(sele,expr):
@@ -1929,6 +1966,8 @@ DESCRIPTION
    determine the format.  PDB files must end in ".pdb", MOL files must
    end in ".mol", Macromodel files must end in ".mmod".  and XPLOR
    maps must end in ".xplor".
+
+   Pickled ChemPy models with a ".pkl" can also be directly read.
  
    If an object is specified, then the file is load into that object.
    Otherwise, an object is created with the same name as the file
@@ -2493,6 +2532,7 @@ keyword = {
    'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , 0 ],
    'isodot'        : [isodot       , 2 , 2 , '=' , 0 ],   
    'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],
+   'label'         : [label        , 2 , 2 , ',' , 0 ],
    'load'          : [load         , 1 , 4 , ',' , 0 ],
    'mem'           : [mem          , 0 , 0 , ',' , 0 ],
    'meter_reset'   : [meter_reset  , 0 , 0 , ',' , 0 ],

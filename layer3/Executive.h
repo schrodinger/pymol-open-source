@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 float ExecutiveDistance(char *sele1,char *sele2);
 void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
 void ExecutiveAlter(char *s1,char *expr);
+void ExecutiveLabel(char *s1,char *expr);
 void ExecutiveAlterState(int i1,char *s1,char *expr);
 void ExecutiveColor(char *name,char *color,int flags);
 void ExecutiveInit(void);
@@ -61,7 +62,7 @@ int ExecutiveCountStates(char *s1);
 void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
 int ExecutiveGetExtent(char *name,float *mn,float *mx);
 void ExecutiveSeleToObject(char *name,char *s1,int source,int target);
-PyObject *ExecutiveSeleToChempyModel(char *s1,int state);
+PyObject *ExecutiveSeleToChemPyModel(char *s1,int state);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
 void ExecutiveFlag(int flag,char *s1);
 
