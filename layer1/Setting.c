@@ -1212,6 +1212,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_surface_clear_state:
   case cSetting_surface_clear_cutoff:
   case cSetting_surface_clear_selection:
+  case cSetting_surface_trim_cutoff:
+  case cSetting_surface_trim_factor:
   case cSetting_surface_solvent:
   case cSetting_surface_proximity:
   case cSetting_cavity_cull:
@@ -2225,6 +2227,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_s(I,cSetting_surface_clear_selection,"");
   SettingSet_i(I,cSetting_surface_clear_state,0);
   SettingSet_f(I,cSetting_surface_clear_cutoff,0.0F);
+  SettingSet_f(I,cSetting_surface_trim_cutoff,0.2F);
+  SettingSet_f(I,cSetting_surface_trim_factor,2.0F);
 
 }
 

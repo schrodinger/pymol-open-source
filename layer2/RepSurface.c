@@ -1268,6 +1268,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   float probe_radius,probe_radius2;
   float probe_rad_more,probe_rad_more2;
   float probe_rad_less,probe_rad_less2;
+  float trim_cutoff,trim_factor;
   int inclH = true;
   int cullByFlag = false;
   int flag,*dot_flag,*p;
@@ -1308,6 +1309,9 @@ Rep *RepSurfaceNew(CoordSet *cs)
   surface_type = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_type);
   surface_solvent = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
   I->Type = surface_type;
+
+  trim_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_trim_cutoff);
+  trim_factor = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_trim_factor);
 
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
@@ -1774,10 +1778,10 @@ Rep *RepSurfaceNew(CoordSet *cs)
   
     /* now eliminate troublesome vertices in regions of extremely high curvature */
 
-    if(I->N)
+    if(I->N&&(trim_cutoff>0.0F)&&(trim_factor>0.0F))
       {
         int repeat_flag=true;
-        float neighborhood = 2*minimum_sep;
+        float neighborhood = trim_factor*minimum_sep;
         float *v0,dot_sum;
         int n_nbr;
         dot_flag=Alloc(int,I->N);
@@ -1786,7 +1790,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
           repeat_flag=false;
           
           for(a=0;a<I->N;a++) dot_flag[a]=1;
-          map=MapNew(minimum_sep,I->V,I->N,extent);
+          map=MapNew(neighborhood,I->V,I->N,extent);
           MapSetupExpress(map);		  
           v=I->V;
           vn=I->VN;
@@ -1816,7 +1820,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
                 if(n_nbr) {
                   dot_sum/=n_nbr;
-                  if(dot_sum<0.2F) {
+                  if(dot_sum<trim_cutoff) {
                     dot_flag[a]=false;
                     repeat_flag = true;
                   }
