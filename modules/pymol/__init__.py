@@ -239,6 +239,41 @@ if pymol_launch != 3: # if this isn't a dry run
                print " Adapting to FireGL hardware..."
             cmd.set('line_width','2',quiet=1)            
 
+      # find out how many processors we have, and adjust hash
+      # table size to reflect available RAM
+
+      try:
+         if sys.platform=='darwin':
+            if os.path.exists("/usr/sbin/sysctl"):
+               f=os.popen("/usr/sbin/sysctl hw.ncpu hw.physmem")
+               l=f.readlines()
+               f.close()
+               if len(l):
+                  for ll in l:
+                     ll = string.split(string.strip(ll))
+                     if ll[0]=='hw.ncpu':
+                        ncpu = int(ll[2])
+                        if ncpu>0:
+                           cmd.set("max_threads",ncpu)
+                           print "  Detected %d CPUs."%ncpu,
+                           print " Enabling multithreaded rendering."
+                     elif ll[0]=='hw.physmem':
+                        mem = int(ll[2])
+                        flag = 0
+                        if mem>1000000000: # Gig or more
+                           cmd.set("hash_max",160)
+                           flag = 1
+                        elif mem>500000000:
+                           cmd.set("hash_max",120)
+                           flag = 1
+                        elif mem<256000000:
+                           cmd.set("hash_max",80)
+                           flag = 1
+                        if flag: 
+                           print "  Optimizing for available RAM."
+      except:
+         pass
+                     
    # NEED SOME CONTRIBUTIONS HERE!
 
    def launch_gui():

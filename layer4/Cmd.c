@@ -2383,14 +2383,14 @@ static PyObject *CmdReady(PyObject *dummy, PyObject *args)
   return(APIStatus(PyMOLReady));
 }
 
-#if 1
+#if 0
 extern int _Py_CountReferences(void);
 #endif
 static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 {
   MemoryDebugDump();
   SelectorMemoryDump();
-#if 1
+#if 0
   printf(" Py_Debug: %d total references.\n",_Py_CountReferences());
 #endif
   return(APISuccess());
