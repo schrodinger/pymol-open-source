@@ -670,52 +670,8 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 		for(c=0;c<I->Dim[2];c++)
 		*(MapFirst(I,a,b,c))=-1;*/
 
-#if 0
-  a = mapSize;
-  i=I->Head;
-  while(a&0xFFFFFF80) {
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;    
-    a-=0x20;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;
-    *(i++) = -1;    
-    *(i++) = -1;    
-  }
-  while(a--)
-    *(i++)=-1;
-#else
 	/* Trick for fast clearing to -1! */
 	memset( I->Head, 0xFF, mapSize * sizeof(int) );
-#endif
 
   I->NVert = nVert;
 

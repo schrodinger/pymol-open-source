@@ -26,6 +26,15 @@ Z* -------------------------------------------------------------------
 
 #define GDB_ENTRY
 
+void *MemoryReallocForSure(void *ptr, unsigned int newSize)
+{
+  float *tmp = malloc(newSize);
+  if(tmp)
+    memcpy(tmp,ptr,newSize);
+  FreeP(ptr);
+  return tmp;
+}
+
 static void DieOutOfMemory(void) 
 {
   printf("****************************************************************************\n");
@@ -33,7 +42,10 @@ static void DieOutOfMemory(void)
   printf("*** you may need to reduce the quality, size, or complexity of the scene ***\n");
   printf("*** that you are viewing or rendering.    Sorry for the inconvenience... ***\n");
   printf("****************************************************************************\n");
-  
+#ifdef GDB_ENTRY
+  abort();
+#endif
+
   exit(EXIT_FAILURE);
 }
 
@@ -382,8 +394,7 @@ void MemoryDebugRegister(void *addr,const char *note,
       printf("MemoryDebugRegister-ERR: memory allocation failure\n"); 
 #ifdef GDB_ENTRY
   MemoryDebugDump();
-  printf("hit ctrl/c to enter debugger\n");
-  while(true);
+  abort();
 #endif
   DieOutOfMemory();
     }
@@ -437,8 +448,7 @@ void MemoryDebugForget(void *addr,const char *file,int line)
 	     file,line,addr);
 #ifdef GDB_ENTRY
   MemoryDebugDump();
-  printf("hit ctrl/c to enter debugger\n");
-  while(true);
+  abort();
 #endif
       exit(EXIT_FAILURE);
     }
@@ -595,8 +605,7 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 	     file,line);
 #ifdef GDB_ENTRY
   MemoryDebugDump();
-  printf("hit ctrl/c to enter debugger\n");
-  while(true);
+  abort();
 #endif
       exit(EXIT_FAILURE);
     }
@@ -617,8 +626,7 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 					  file,line,ptr);
 #ifdef GDB_ENTRY
   MemoryDebugDump();
-  printf("hit ctrl/c to enter debugger\n");
-			 while(true);
+  abort();
 #endif
 			 exit(EXIT_FAILURE);
 		  }	
@@ -630,8 +638,7 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 							ptr,rec->type,type,file,line);
 #ifdef GDB_ENTRY
               MemoryDebugDump();
-				  printf("hit ctrl/c to enter debugger\n");
-				  while(true);
+              abort();
 #endif
               exit(EXIT_FAILURE);
             }
@@ -642,8 +649,7 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 							file,line);
 #ifdef GDB_ENTRY
               MemoryDebugDump();
-				  printf("hit ctrl/c to enter debugger\n");
-				  while(true);
+              abort();
 #endif
               DieOutOfMemory();
 				}
@@ -658,6 +664,87 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
     }
   return(ptr);
 }
+
+
+
+void *MemoryDebugReallocForSure(void *ptr,size_t size,const char *file,
+			 int line,int type)
+{
+  DebugRec *rec,*new_rec;
+
+  if(InitFlag) MemoryDebugInit();
+  if((!ptr)&&(!size))
+    {
+      printf(
+	     "MemoryDebug-ERR: realloc given (NULL,zero) (%s:%i)\n",
+	     file,line);
+#ifdef GDB_ENTRY
+  MemoryDebugDump();
+  abort();
+#endif
+      exit(EXIT_FAILURE);
+    }
+  if(!ptr)
+      return(MemoryDebugMalloc(size,file,line,type));
+  else if(!size)
+    {
+      MemoryDebugFree(ptr,file,line,type);
+      return(NULL);
+    }
+  else
+    {
+      rec=MemoryDebugHashRemove(ptr);
+      if(!rec)
+		  {
+			 printf(
+					  "MemoryDebug-ERR: realloc() corrupted tree or bad ptr! (%s:%i @%p)\n",
+					  file,line,ptr);
+#ifdef GDB_ENTRY
+  MemoryDebugDump();
+  abort();
+#endif
+			 exit(EXIT_FAILURE);
+		  }	
+      else
+		  {
+			 if(rec->type!=type)
+				{
+				  printf("MemoryDebug-ERR: ptr %p is of wrong type: %i!=%i (%s:%i)\n",
+							ptr,rec->type,type,file,line);
+#ifdef GDB_ENTRY
+              MemoryDebugDump();
+              abort();
+#endif
+              exit(EXIT_FAILURE);
+            }
+
+          new_rec=malloc(size+sizeof(DebugRec));
+          if(new_rec)
+            memcpy(new_rec,rec,size+sizeof(DebugRec));
+          free(rec);
+          rec=new_rec;
+			 if(!rec)
+				{
+				  printf("MemoryDebug-ERR: realloc() failed reallocation! (%s:%i)\n",
+							file,line);
+#ifdef GDB_ENTRY
+              MemoryDebugDump();
+              abort();
+#endif
+              DieOutOfMemory();
+				}
+			 else
+				{
+				  MemoryDebugHashAdd(rec);
+				  rec->size=size;
+				  rec++;
+				  return((void*)rec);
+				}
+		  }
+    }
+  return(ptr);
+}
+
 
 void MemoryDebugQuietFree(void *ptr,int type)
 {
@@ -677,8 +764,7 @@ void MemoryDebugQuietFree(void *ptr,int type)
 					  ptr,rec->type,type,rec->file,rec->line);
 #ifdef GDB_ENTRY
   MemoryDebugDump();
-  printf("hit ctrl/c to enter debugger\n");
-			 while(true);
+  abort();
 #endif
 			 exit(EXIT_FAILURE);
 		  }
@@ -700,8 +786,7 @@ void MemoryDebugFree(void *ptr,const char*file,int line,int type)
 				 file,line);
 #ifdef GDB_ENTRY
   MemoryDebugDump();
-  printf("hit ctrl/c to enter debugger\n");
-		while(true);
+  abort();
 #endif
       exit(EXIT_FAILURE);
     }
@@ -714,8 +799,7 @@ void MemoryDebugFree(void *ptr,const char*file,int line,int type)
 					  ptr,rec->type,type,file,line);
 #ifdef GDB_ENTRY
           MemoryDebugDump();
-          printf("hit ctrl/c to enter debugger\n");
-			 while(true);
+          abort();
 #endif
 			 exit(EXIT_FAILURE);
 		  }
@@ -729,8 +813,7 @@ void MemoryDebugFree(void *ptr,const char*file,int line,int type)
 				 file,line,ptr);
 #ifdef GDB_ENTRY
       MemoryDebugDump();
-      printf("hit ctrl/c to enter debugger\n");
-		while(true);
+      abort();
 #endif
       exit(EXIT_FAILURE);
     }

@@ -426,7 +426,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 			 }
 		}
 
-	 I->V = Realloc(I->V,float,I->N*9);
+	 I->V = ReallocForSure(I->V,float,I->N*9);
 
 	 /* now create pickable verson */
 

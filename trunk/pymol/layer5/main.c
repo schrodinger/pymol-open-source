@@ -438,8 +438,10 @@ static void MainDrawLocked(void)
   OrthoBusyPrime();
   ExecutiveDrawNow();
 
-  if(Feedback(FB_Main,FB_Errors)) {
-    PyMOLCheckOpenGLErr("During Rendering");
+  if(PMGUI) {
+    if(Feedback(FB_Main,FB_Errors)) {
+      PyMOLCheckOpenGLErr("During Rendering");
+    }
   }
 
   if(I->SwapFlag)

@@ -589,9 +589,9 @@ Rep *RepRibbonNew(CoordSet *cs)
   FreeP(pv);
   
   if(I->N) 
-	 I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
+	 I->V=ReallocForSure(I->V,float,(v-I->V));
   else
-	 I->V=(float*)mrealloc(I->V,1);
+	 I->V=ReallocForSure(I->V,float,1);
 
   return((void*)(struct Rep*)I);
 }

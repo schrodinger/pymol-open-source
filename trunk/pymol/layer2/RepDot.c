@@ -354,14 +354,14 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 		MapFree(map);
 	 }
   
-  I->V = Realloc(I->V,float,(v-I->V));
+  I->V = ReallocForSure(I->V,float,(v-I->V));
   
   if(mode==cRepDotAreaType) {
-	 I->A = Realloc(I->A,float,(aa-I->A));
-	 I->T= Realloc(I->T,int,(tp-I->T));
-	 I->F= Realloc(I->F,int,(tf-I->F));
-	 I->VN= Realloc(I->VN,float,(vn-I->VN));
-    I->Atom= Realloc(I->Atom,int,(ati-I->Atom));
+	 I->A = ReallocForSure(I->A,float,(aa-I->A));
+	 I->T= ReallocForSure(I->T,int,(tp-I->T));
+	 I->F= ReallocForSure(I->F,int,(tf-I->F));
+	 I->VN= ReallocForSure(I->VN,float,(vn-I->VN));
+    I->Atom= ReallocForSure(I->Atom,int,(ati-I->Atom));
   }
   return((void*)(struct Rep*)I);
 }

@@ -208,10 +208,10 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
   if(r->prim->wobble)
     switch(r->prim->wobble) {
     case 1:
-      scatter3f(r->surfnormal,r->prim->wobble_param[0]);
+      scatter3f(r->surfnormal,I->WobbleParam[0]);
       break;
     case 2:
-      wiggle3f(r->surfnormal,r->impact,r->prim->wobble_param);
+      wiggle3f(r->surfnormal,r->impact,I->WobbleParam);
       break;
     case 3: 
       {
@@ -219,11 +219,11 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
         float3 n;
         copy3f(r->impact,v);
         RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
-        n[0]=(float)cos((v[0]+v[1]+v[2])*r->prim->wobble_param[1]);
-        n[1]=(float)cos((v[0]-v[1]+v[2])*r->prim->wobble_param[1]);
-        n[2]=(float)cos((v[0]+v[1]-v[2])*r->prim->wobble_param[1]);
+        n[0]=(float)cos((v[0]+v[1]+v[2])*I->WobbleParam[1]);
+        n[1]=(float)cos((v[0]-v[1]+v[2])*I->WobbleParam[1]);
+        n[2]=(float)cos((v[0]+v[1]-v[2])*I->WobbleParam[1]);
         RayTransformNormals33(1,&n,I->ModelView,&n);
-        scale3f(n,r->prim->wobble_param[0],n);
+        scale3f(n,I->WobbleParam[0],n);
         add3f(n,r->surfnormal,r->surfnormal);
         normalize3f(r->surfnormal);
       }
@@ -231,7 +231,7 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
       {
         float3 v;
         float3 n;
-        float *tp = r->prim->wobble_param;
+        float *tp = I->WobbleParam;
         copy3f(r->impact,v);
         RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
         n[0]=Random[0xFF&(int)((cos((v[0])*tp[1])*256*tp[2]))];
@@ -247,7 +247,7 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
       {
         float3 v;
         float3 n;
-        float *tp = r->prim->wobble_param;
+        float *tp = I->WobbleParam;
         copy3f(r->impact,v);
         RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
         n[0]=Random[0xFF&(int)((v[0]*tp[1])+0)]+
@@ -339,7 +339,7 @@ void RayExpandPrimitives(CRay *I)
   VLACacheCheck(I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
 
   basis->MaxRadius = 0.0F;
-  basis->MinVoxel = 0.0F;
+  basis->MinVoxel = I->PixelRadius/2.0F;
   basis->NVertex=nVert;
   basis->NNormal=nNorm;
 
@@ -2570,7 +2570,8 @@ void RaySphere3fv(CRay *I,float *v,float r)
   p->r1=r;
   p->trans=I->Trans;
   p->wobble=I->Wobble;
-  copy3f(I->WobbleParam,p->wobble_param);
+  /* 
+    copy3f(I->WobbleParam,p->wobble_param);*/
   vv=p->v1;
   (*vv++)=(*v++);
   (*vv++)=(*v++);
@@ -2609,9 +2610,10 @@ void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance)
 
   p->type = cPrimCharacter;
   p->trans=I->Trans;
-  p->wobble=I->Wobble;
   p->char_id = char_id;
-  copy3f(I->WobbleParam,p->wobble_param);
+  p->wobble=I->Wobble;
+  /*
+    copy3f(I->WobbleParam,p->wobble_param);*/
 
   vv=p->v1;
   (*vv++)=v[0];
@@ -2709,10 +2711,11 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   p->type = cPrimCylinder;
   p->r1=r;
   p->trans=I->Trans;
-  p->wobble=I->Wobble;
   p->cap1=cCylCapFlat;
   p->cap2=cCylCapFlat;
-  copy3f(I->WobbleParam,p->wobble_param);
+  p->wobble=I->Wobble;
+  /* 
+ copy3f(I->WobbleParam,p->wobble_param);*/
 
   vv=p->v1;
   (*vv++)=(*v1++);
@@ -2758,10 +2761,11 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
   p->type = cPrimCylinder;
   p->r1=r;
   p->trans=I->Trans;
-  p->wobble=I->Wobble;
   p->cap1=cap1;
   p->cap2=cap2;
-  copy3f(I->WobbleParam,p->wobble_param);
+  p->wobble=I->Wobble;
+  /*
+  copy3f(I->WobbleParam,p->wobble_param);*/
 
   vv=p->v1;
   (*vv++)=(*v1++);
@@ -2807,7 +2811,8 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   p->r1=r;
   p->trans=I->Trans;
   p->wobble=I->Wobble;
-  copy3f(I->WobbleParam,p->wobble_param);
+  /*  
+    copy3f(I->WobbleParam,p->wobble_param);*/
 
   vv=p->v1;
   (*vv++)=(*v1++);
@@ -2866,7 +2871,8 @@ void RayTriangle3fv(CRay *I,
   p->type = cPrimTriangle;
   p->trans=I->Trans;
   p->wobble=I->Wobble;
-  copy3f(I->WobbleParam,p->wobble_param);
+  /*
+    copy3f(I->WobbleParam,p->wobble_param);*/
 
   /* determine exact triangle normal */
   add3f(n1,n2,nx);
@@ -3008,6 +3014,12 @@ CRay *RayNew(void)
       Random[a]=(float)((rand()/(1.0+RAND_MAX))-0.5);
     }
     RandomFlag=1;
+  }
+
+  I->Wobble = SettingGet_i(NULL,NULL,cSetting_ray_texture);
+  {
+    float *v = SettingGet_3fv(NULL,NULL,cSetting_ray_texture_settings);
+    copy3f(v,I->WobbleParam);
   }
 
   return(I);

@@ -84,6 +84,7 @@ typedef struct VLARec {
 
 void *VLAExpand(void *ptr,unsigned int rec); /* NOTE: rec is index (total-1) */
 void *VLACacheExpand(void *ptr,unsigned int rec,int thread_index,int block_id);
+void *MemoryReallocForSure(void *ptr, unsigned int newSize);
 
 #ifndef _MemoryDebug_ON
 void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
@@ -115,6 +116,7 @@ void MemoryZero(char *p,char *q);
 #define mfree free
 #define mregister(x,y) 
 #define mforget(x)
+#define ReallocForSure(ptr,type,size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size))
 
 #define MemoryDebugDump()
 
@@ -139,15 +141,18 @@ extern "C" {
 #define mfree(x) MemoryDebugFree(x,__FILE__,__LINE__,_MDPointer)
 #define mregister(x,y) MemoryDebugRegister((void*)x,y,__FILE__,__LINE__)
 #define mforget(x) MemoryDebugForget((void*)x,__FILE__,__LINE__)
+#define ReallocForSure(ptr,type,size) (type*)MemoryDebugReallocForSure(ptr,sizeof(type)*(size),__FILE__,__LINE__,_MDPointer)
 
 void MemoryDebugRegister(void *addr,const char *note,
-			 const char *file,int line);
+                         const char *file,int line);
 void MemoryDebugForget(void *addr,const char *file,int line);
 
 void *MemoryDebugMalloc(size_t size,const char *file,int line,int type);
 void *MemoryDebugCalloc(size_t nmemb,size_t size,const char *file,int line,int type);
 void *MemoryDebugRealloc(void *ptr,size_t size,
 			 const char *file,int line,int type);
+void *MemoryDebugReallocForSure(void *ptr, unsigned int newSize,const char *file,int line,int type);
+
 void MemoryDebugFree(void *ptr,const char *file,int line,int type);
 void MemoryDebugQuietFree(void *ptr,int type);
 

@@ -501,11 +501,11 @@ Rep *RepSphereNew(CoordSet *cs)
     }
 
   if(I->NC) 
-	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(v-I->VC));
+	 I->VC=ReallocForSure(I->VC,float,(v-I->VC));
   else
-	 I->VC=(float*)mrealloc(I->VC,1);
+	 I->VC=ReallocForSure(I->VC,float,1);
   if(I->R.P) {
-    I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
+    I->R.P = ReallocForSure(I->R.P,Pickable,I->NP+1);
     I->R.P[0].index = I->NP;
   }
 
@@ -774,17 +774,16 @@ Rep *RepSphereNew(CoordSet *cs)
         *(lc++) = one_color;
       }
 
-  /*TODO: NEED TO SHRINK POINTERS HERE*/
 
   if(I->N) 
 	 {
-		I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
-		if(I->NT) I->NT=Realloc(I->NT,int,nt-I->NT);
+		I->V=ReallocForSure(I->V,float,(v-I->V));
+		if(I->NT) I->NT=ReallocForSure(I->NT,int,(nt-I->NT));
 	 }
   else
 	 {
-		I->V=(float*)mrealloc(I->V,1);
-		if(I->NT) I->NT=Realloc(I->NT,int,1);
+		I->V=ReallocForSure(I->V,float,1);
+		if(I->NT) I->NT=ReallocForSure(I->NT,int,1);
 	 }
 
 
