@@ -96,6 +96,41 @@ void launch(void);
 
 void MainOnExit(void);
 
+#ifdef _PYMOL_OSX
+
+void MainRunString(char *str);
+void MainRunCommand(char *str1);
+
+/*========================================================================*/
+void MainRunCommand(char *str1)
+{
+  if(str1[0]!='_') { /* suppress internal call-backs */
+    if(strncmp(str1,"cmd._",5)) {
+      OrthoAddOutput("PyMOL>");
+      OrthoAddOutput(str1);
+      OrthoNewLine(NULL);
+      if(WordMatch(str1,"quit",true)==0) /* don't log quit */
+        PLog(str1,cPLog_pml);
+    }
+    PParse(str1);
+  } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
+    if(WordMatch(str1+2,"quit",true)==0) /* don't log quit */
+      PLog(str1+2,cPLog_pml);
+    PParse(str1+2);    
+  } else {
+    PParse(str1);
+  }
+}
+/*========================================================================*/
+void MainRunString(char *str)
+{
+  PBlock();
+  PRunString(str);
+  PUnblock();
+}
+#endif
+
+/*========================================================================*/
 void MainOnExit(void)
 { /* 
      here we enter not knowing anything about the current state...
@@ -517,10 +552,11 @@ void launch(void)
     WinY+= (InternalFeedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
 
   if(PMGUI) {
-    
+    #ifndef _PYMOL_OSX
     atexit(MainOnExit); /* register callback to help prevent crashes
                                  when GLUT spontaneously kills us */
-  
+  #endif
+
     p_glutInit(&myArgc, myArgv);
 
 #ifdef _PYMOL_OSX
