@@ -766,7 +766,6 @@ l = [
 
 'J3-D4-J4    50.0      109.50    WLD gross estimate',
 'J3-D4-JA    50.0      109.50    WLD gross estimate',
-'J3-D4-T2    50.0      111.65    WLD from D4-D4-T2',
 'J3-D4-T4    80.0      111.20    WLD from DJ-J4-T4',
 'J3-D4-TA    80.0      111.20    WLD from DJ-J4-T4',
 'J3-T4-Q2    60.0      107.80    WLD gross estimates',

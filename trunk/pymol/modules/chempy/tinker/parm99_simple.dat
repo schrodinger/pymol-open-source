@@ -698,6 +698,8 @@ OS-CC-OS    70.0      120.00    WLD from NA-CR-NA
 CC-NB-CC    70.0      117.00    WLD from CC-NB-CR
 CC-OS-NB    60.0      117.00    WLD from C -OS-CT
 CA-OS-CC    60.0      117.00    WLD from C -OS-CT
+N -CT-S     50.0      114.70    WLD from CT-CT-S
+OH-CT-N     80.0      109.70    WLD from CT-CT-N
 A -A -Q2      0.      127.74    (found in crystallographic water with 3 bonds)
 A -D2-D2    50.0      180.00    Junmei et al, 1999
 A -D3-A     35.0      119.50    combination of 2
@@ -859,7 +861,8 @@ DJ-DJ-Q2    73.3      112.95    combination of 3
 DJ-J3-DJ    70.0      123.20    combination of 2
 DJ-Q2-DJ    55.0      120.40    RSM, estimated
 J3-D4-J3    50.0      109.50    RSM, estimated
-J3-D4-Q2    50.0      109.50
+J3-D4-Q2    65.0      109.60    combination of 2
+J3-D4-T2    50.0      114.70    WLD from D4-D4-S
 J3-DA-J3    70.0      118.67    combination of 3
 J3-DA-JA    70.0      120.96    combination of 5
 J3-DA-Q2    70.0      116.40    RSM, estimated
@@ -1263,7 +1266,6 @@ J3-DJ-T2    70.0      123.20    WLD from J3-DA-T2
 J3-DJ-JN    70.0      113.13    WLD from J3-DJ-J3
 J3-D4-J4    50.0      109.50    WLD gross estimate
 J3-D4-JA    50.0      109.50    WLD gross estimate
-J3-D4-T2    50.0      111.65    WLD from D4-D4-T2
 J3-D4-T4    80.0      111.20    WLD from DJ-J4-T4
 J3-D4-TA    80.0      111.20    WLD from DJ-J4-T4
 J3-T4-Q2    60.0      107.80    WLD gross estimates

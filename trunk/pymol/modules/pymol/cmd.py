@@ -641,26 +641,36 @@ PYMOL API
  
    cmd.dist( string name, string selection1, string selection2,
           string cutoff, string mode )
-   returns None
+   returns the average distance between all atoms/frames
  
 NOTES
  
    "dist" alone will show distances between selections (lb) and (rb)
    created by left and right button atom picks (hold down CTRL)
 '''
+   # the following needs to be seriously reworked...
+   #
    la = len(arg)
-   if la<2:
-      try:
-         lock()
-         cnt = _cmd.get("dist_counter") + 1.0
-         _cmd.set("dist_counter","%1.0f" % cnt)
-         nam = "dist%02.0f" % cnt
-      finally:
-         unlock()
-      if la==0:
+   argst = None
+   nam = None
+   if la<3:
+      if la>0:
+         if arg[0][0]!='(':
+            nam = arg[0]
+            if la>1:
+               argst = string.join(arg[1:],',')
+         else:
+            argst = string.join(arg,',')
+      if not argst:
          argst = "(lb),(rb)"
-      else:
-         argst = arg[0]
+      if not nam:
+         try:
+            lock()
+            cnt = _cmd.get("dist_counter") + 1.0
+            _cmd.set("dist_counter","%1.0f" % cnt)
+            nam = "dist%02.0f" % cnt
+         finally:
+            unlock()
    else:
       nam = arg[0]
       argst = string.join(arg[1:],',')

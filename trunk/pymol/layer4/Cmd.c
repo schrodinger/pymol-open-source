@@ -612,19 +612,18 @@ static PyObject *CmdOverlap(PyObject *dummy, PyObject *args)
 static PyObject *CmdDist(PyObject *dummy, PyObject *args)
 {
   char *name,*str1,*str2;
-  float cutoff;
+  float cutoff,result;
   int mode;
   OrthoLineType s1,s2;
   PyArg_ParseTuple(args,"sssif",&name,&str1,&str2,&mode,&cutoff);
   APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  ExecutiveDist(name,s1,s2,mode,cutoff);
+  result = ExecutiveDist(name,s1,s2,mode,cutoff);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
   APIExit();
-  Py_INCREF(Py_None);
-  return Py_None;  
+  return Py_BuildValue("f",result);
 }
 
 static PyObject *CmdBond(PyObject *dummy, PyObject *args)

@@ -612,6 +612,8 @@ C -OH-CC    55.0      120.40    RSM, estimated
 CT-P -O2   100.0      108.00    RSM, from CSD analysis
 CT-P -OH   100.0      104.80    RSM, from CSD analysis
 CR-S -CW    80.0       90.10    RSM, from xray
+N -CT-S     50.0      114.70    WLD from CT-CT-S
+OH-CT-N     80.0      109.70    WLD from CT-CT-N
 
 X -C -C -X    4    3.00        180.0             2.         RSM, estimated1
 X -CA-CX-X    4   14.50        180.0             2.         RSM: X -CA-CA-X 1

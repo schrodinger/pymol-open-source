@@ -31,7 +31,7 @@ typedef struct ObjectDist {
   char Color[3];
 } ObjectDist;
 
-ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff);
+ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *result);
 void ObjectDistInvalidateRep(ObjectDist *I,int rep);
 
 #endif

@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 
 float ExecutiveDistance(char *sele1,char *sele2);
-void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
+float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
 void ExecutiveBond(char *s1,char *s2,int order,int add);
 void ExecutiveIterate(char *s1,char *expr,int read_only);
 void ExecutiveLabel(char *s1,char *expr);

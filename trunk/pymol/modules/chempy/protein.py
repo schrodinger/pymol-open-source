@@ -188,6 +188,8 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                            raise RuntimeError("no parameters for '"+str(k)+"'")
                   # now add bonds for atoms which are present
                   bonds = tmpl[resn]['bonds']
+                  print "bonds ",bonds
+                  print "dict ",dict
                   mbond = model.bond
                   for b in bonds.keys():
                      if dict.has_key(b[0]) and dict.has_key(b[1]):

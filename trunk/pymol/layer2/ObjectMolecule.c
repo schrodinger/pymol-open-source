@@ -2257,6 +2257,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
         if(tmp) {
           UtilNCopy(cset->Name,PyString_AsString(tmp),sizeof(WordType));
           Py_DECREF(tmp);
+          if(!strcmp(cset->Name,"untitled")) /* ignore untitled */
+            cset->Name[0]=0;
         }
       }
       Py_DECREF(mol);
