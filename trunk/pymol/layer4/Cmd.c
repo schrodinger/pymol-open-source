@@ -131,6 +131,8 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
+static PyObject *CmdGetNames(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
@@ -224,10 +226,12 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_min_max",  CmdGetMinMax,    METH_VARARGS },
 	{"get_model",	  CmdGetModel,     METH_VARARGS },
 	{"get_moment",	  CmdGetMoment,    METH_VARARGS },
+   {"get_names",    CmdGetNames,     METH_VARARGS },
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
 	{"get_setting",  CmdGetSetting,   METH_VARARGS },
+	{"get_type",     CmdGetType,      METH_VARARGS },
 	{"h_add",        CmdHAdd,         METH_VARARGS },
-	{"h_fill",       CmdHFill,       METH_VARARGS },
+	{"h_fill",       CmdHFill,        METH_VARARGS },
    {"identify",     CmdIdentify,     METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
    {"invert",       CmdInvert,       METH_VARARGS },
@@ -286,6 +290,31 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  WordType type = "";
+  PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
+  ExecutiveGetType(str1,type);
+  APIExit();
+  return(Py_BuildValue("s",type));
+
+}
+static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
+{
+  int int1;
+  char *vla = NULL;
+  PyObject *result;
+  PyArg_ParseTuple(args,"i",&int1);
+  APIEntry();
+  vla = ExecutiveGetNames(int1);
+  APIExit();
+  result = PConvStringVLAToPyList(vla);
+  VLAFreeP(vla);
+  return result;
+}
 
 static PyObject *CmdInvert(PyObject *self, PyObject *args)
 {

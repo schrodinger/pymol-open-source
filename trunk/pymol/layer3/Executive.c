@@ -82,8 +82,57 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
+/*========================================================================*/
+char *ExecutiveGetNames(int mode)
+{
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  char *result;
+  int size = 0;
+  int stlen;
+  result=VLAlloc(char,1000);
 
-float ExecutiveUpdateCmd(char *s0,char *s1,int sta0,int sta1)
+  while(ListIterate(I->Spec,rec,next,SpecList)) {
+    if(
+       (rec->type==cExecObject&&((!mode)||(mode==1)))||
+       (rec->type==cExecSelection&&((!mode)||(mode==2))))
+    {
+      stlen = strlen(rec->name);
+      VLACheck(result,char,size+stlen+1);
+      strcpy(result+size,rec->name);
+      size+=stlen+1;
+    }
+  }
+  VLASize(result,char,size);
+  return(result);
+}
+/*========================================================================*/
+void ExecutiveGetType(char *name,WordType type)
+{
+  SpecRec *rec = NULL;
+
+  rec = ExecutiveFindSpec(name);
+  if(!rec)
+    strcpy(type,"nonexistent");
+  else {
+    if(rec->type==cExecObject) {
+      strcpy(type,"object:");
+      if(rec->obj->type==cObjectMolecule)
+        strcat(type,"molecule");
+      else if(rec->obj->type==cObjectMap)
+        strcat(type,"map");
+      else if(rec->obj->type==cObjectMesh)
+        strcat(type,"mesh");
+      else if(rec->obj->type==cObjectDist)
+        strcat(type,"distance");
+    } else if(rec->type==cExecSelection) {
+      strcpy(type,"selection");
+    }
+  }
+}
+
+/*========================================================================*/
+void ExecutiveUpdateCmd(char *s0,char *s1,int sta0,int sta1)
 {
   int sele0,sele1;
 

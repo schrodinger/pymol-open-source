@@ -263,6 +263,28 @@ PyObject *PConvStringListToPyList(int l,char **str)
   return(result);
 }
 
+PyObject *PConvStringVLAToPyList(char *vla)
+{
+  int a,c,n=0;
+  char *p;
+  PyObject *result = Py_None;
+  p=vla;
+  c = VLAGetSize(vla);
+  while(c--) { /* count strings */
+    if(!*(p++))
+      n++;
+  }
+
+  result=PyList_New(n); 
+  p=vla;
+  for(a=0;a<n;a++) {
+    PyList_SetItem(result,a,PyString_FromString(p));
+    while(*(p++));
+  }
+  return(result);
+
+}
+
 void PConv44PyListTo44f(PyObject *src,float *dest) /* note lost of precision */
 {
   PyObject *row;
