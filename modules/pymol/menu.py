@@ -37,7 +37,7 @@ def mol_show(s):
            [ 1, 'surface'    , 'cmd.show("surface"   ,"'+s+'")' ],
            [ 0, ''           , ''                               ],           
            [ 1, 'main chain' , 'cmd.show("lines","((byres ('+s+'))&n;ca,c,n,o,h)")' ],
-           [ 1, 'side chain' , 'cmd.show("lines","((byres ('+s+'))&(!n;c,n,o,h))")' ],
+           [ 1, 'side chain' , 'cmd.show("lines","((byres ('+s+'))&(!(n;c,o,h|(n. n&!r. pro))))")' ],
            ]
 
 def mol_hide(s):
@@ -60,8 +60,8 @@ def mol_hide(s):
            [ 1, 'mesh'      , 'cmd.hide("mesh"      ,"'+s+'")'  ],
            [ 1, 'surface'   , 'cmd.hide("surface"   ,"'+s+'")'  ],
            [ 0, ''          , ''                                ],
-           [ 1, 'main chain', 'cmd.hide("((byres ('+s+'))&n;c,n,o,h)")' ],
-           [ 1, 'side chain', 'cmd.hide("((byres ('+s+'))&!n;ca,c,n,o,h)")' ],
+           [ 1, 'main chain', 'cmd.hide("((byres ('+s+'))&(n. c,o,h|(n. n&!r. pro)))")' ],
+           [ 1, 'side chain', 'cmd.hide("((byres ('+s+'))&!(n. ca,c,o,h|(n. n&!r. pro)))")' ],
            [ 1, 'waters'    , 'cmd.hide("(resn HOH+WAT and ('+s+'))")'     ],                      
            [ 0, ''          , ''                                ],
            [ 1, 'hydrogens' , 'cmd.hide("('+s+' and hydro)")'   ],
