@@ -12,7 +12,7 @@ PYMOL_PATH = /usr/local/pymol/pymol
 #- Dependencies ------------------------------------------------------
 #--- X-windows
 XLIB_DIR = -L/usr/X11R6/lib
-XINC_DIR = -L/usr/X11R6/include
+XINC_DIR = -I/usr/X11R6/include
 #--- Python
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
 PYTHON_LIB = -lpython2.0
@@ -70,7 +70,7 @@ PYMOL_INC_DIRS = -I../layer0 -I../layer1 -I../layer2 \
    -I../layer3 -I../layer4 -I../layer5 
 
 C_FLAGS = $(CCOPT1) $(CCOPT2) $(EXT_INC_DIR) $(PYTHON_INC_DIR) \
-   $(X_INC_DIR) $(PNG) $(DEFS) $(BUGS)
+   $(XINC_DIR) $(PNG) $(DEFS) $(BUGS)
 
 CFLAGS = $(C_FLAGS)
 
