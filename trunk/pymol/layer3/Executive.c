@@ -218,11 +218,11 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
 {
   char *result=NULL;
   ObjectMoleculeOpRec op1;
-  int sele1;
+  int sele1,l;
+  char end_str[] = "END\n";
 
   sele1=SelectorIndexByName(s1);
   op1.charVLA=VLAlloc(char,10000);
-
   if(conectFlag) {
     if(state<0) state=0;
     op1.i2=SelectorGetPDB(&op1.charVLA,sele1,state,conectFlag);
@@ -236,9 +236,10 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
       ExecutiveObjMolSeleOp(sele1,&op1);
     }
   }
-  VLACheck(op1.charVLA,char,op1.i2);
-  op1.charVLA[op1.i2]=0;
-  op1.i2++; /* get trailing null */
+  l=strlen(end_str);
+  VLACheck(op1.charVLA,char,op1.i2+l+1);
+  strcpy(op1.charVLA+op1.i2,end_str);
+  op1.i2+=l;
   result=Alloc(char,op1.i2);
   memcpy(result,op1.charVLA,op1.i2);
   VLAFreeP(op1.charVLA);
