@@ -73,7 +73,7 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index,char *buffer);
 
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
-int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,int searchFlag);
+int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,CoordSet *cs,int searchFlag);
 void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 static int BondInOrder(BondType *a,int b1,int b2);
 static int BondCompare(BondType *a,BondType *b);
@@ -410,7 +410,8 @@ ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *I,CRaw *pmo,int frame,int 
       if(I->NCSet<=frame) I->NCSet=frame+1;
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.35,false);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
         SymmetryAttemptGeneration(I->Symmetry);
@@ -970,7 +971,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
     if(I->NCSet<=frame) I->NCSet=frame+1;
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
-    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.35,false);
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry);
@@ -3445,7 +3446,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     if(I->NCSet<=frame) I->NCSet=frame+1;
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
-    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.35,false);
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry);
@@ -3880,7 +3881,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
       
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.35,false);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
       
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
@@ -4063,7 +4064,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
   
   /* now find and integrate and any new bonds */
   if(expansionFlag) { /* expansion flag means we have introduced at least 1 new atom */
-    nBond = ObjectMoleculeConnect(I,&bond,I->AtomInfo,cs,0.35,bondSearchFlag);
+    nBond = ObjectMoleculeConnect(I,&bond,I->AtomInfo,cs,bondSearchFlag);
     if(nBond) {
       index=Alloc(int,nBond);
       
@@ -4177,7 +4178,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       if(I->NCSet<=frame) I->NCSet=frame+1;
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.35,true);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
         SymmetryAttemptGeneration(I->Symmetry);
@@ -5581,7 +5582,7 @@ void ObjectMoleculeFree(ObjectMolecule *I)
 
 /*========================================================================*/
 int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
-                          CoordSet *cs,float cutoff,int bondSearchFlag)
+                          CoordSet *cs,int bondSearchFlag)
 {
   #define cMULT 1
 
@@ -5595,6 +5596,17 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   int flag;
   int order;
   AtomInfoType *ai1,*ai2;
+  float cutoff_s;
+  float cutoff_h;
+  float cutoff_v;
+  float cutoff;
+  float max_cutoff;
+  int water_flag;
+
+  cutoff_v=SettingGet(cSetting_connect_cutoff);
+  cutoff_s=cutoff_v + 0.2;
+  cutoff_h=cutoff_v - 0.2;
+  max_cutoff = cutoff_s;
 
   /*  FeedbackMask[FB_ObjectMolecule]=0xFF;*/
   nBond = 0;
@@ -5606,7 +5618,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
       case 0:
         /* distance-based bond location  */
 
-      map=MapNew(cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
+      map=MapNew(max_cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
       if(map)
         {
           for(i=0;i<cs->NIndex;i++)
@@ -5627,22 +5639,46 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                               
                               a1=cs->IdxToAtm[i];
                               a2=cs->IdxToAtm[j];
+
+                              ai1=ai+a1;
+                              ai2=ai+a2;
+                                    
+                              dst -= ((ai1->vdw+ai2->vdw)/2);
+
+                              /* workaround for waters, which usually don't have CONECT records */
+
+                              water_flag=false;
+                              if(ai1->hetatm&&ai1->hydrogen) {
+                                if((WordMatch("WAT",ai1->resn,true)<0)||
+                                   (WordMatch("HOH",ai1->resn,true)<0))
+                                  water_flag=true;
+                              } else if (ai2->hetatm&&ai2->hydrogen) {
+                                if((WordMatch("WAT",ai2->resn,true)<0)||
+                                   (WordMatch("HOH",ai2->resn,true)<0))
+                                  water_flag=true;
+                              }
+                              cutoff = cutoff_h;
                               
-                              dst -= ((ai[a1].vdw+ai[a2].vdw)/2);
+                              /* workaround for hydrogens and sulfurs... */
                               
+                              if(ai1->hydrogen||ai2->hydrogen)
+                                cutoff = cutoff_h;
+                              else if(((ai1->elem[0]=='S')&&(!ai1->elem[1]))||
+                                   ((ai2->elem[0]=='S')&&(!ai2->elem[1])))
+                                cutoff = cutoff_s;
+                              else
+                                cutoff = cutoff_v;
                               if( (dst <= cutoff)&&
-                                  (!(ai[a1].hydrogen&&ai[a2].hydrogen))&&
-                                  ((!cs->TmpBond)||(!(ai[a1].hetatm&&ai[a2].hetatm))))
+                                  (!(ai1->hydrogen&&ai2->hydrogen))&&
+                                  (water_flag||(!cs->TmpBond)||(!(ai1->hetatm&&ai2->hetatm))))
                                 {
                                   flag=true;
-                                  if(ai[a1].alt[0]!=ai[a2].alt[0]) { /* handle alternate conformers */
-                                    if(ai[a1].alt[0]&&ai[a2].alt)
-                                      if(AtomInfoAltMatch(ai+a1,ai+a2))
+                                  if(ai1->alt[0]!=ai2->alt[0]) { /* handle alternate conformers */
+                                    if(ai1->alt[0]&&ai2->alt)
+                                      if(AtomInfoAltMatch(ai1,ai2))
                                         flag=false;
                                   }
                                   if(flag) {
-                                    ai1=ai+a1;
-                                    ai2=ai+a2;
                                     ai1->bonded=true;
                                     ai2->bonded=true;
                                     VLACheck((*bond),BondType,nBond);
@@ -5958,7 +5994,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
       VLACheck(I->CSet,CoordSet*,frame);
       if(I->NCSet<=frame) I->NCSet=frame+1;
       I->CSet[frame] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.35,false);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);
