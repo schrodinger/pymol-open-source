@@ -1493,7 +1493,8 @@ class PMGApp(AbstractApp):
                                   label=self.pad+'Recall F%d'%x,
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d"%x))
-                      
+
+         
       self.menuBar.addmenu('Mouse', 'Mouse Configuration',tearoff=TRUE)
 
       self.menuBar.addmenuitem('Mouse', 'checkbutton',

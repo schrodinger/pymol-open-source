@@ -1477,11 +1477,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           EditorSetActiveObject((ObjectMolecule*)obj,
                                 SettingGetGlobal_i(cSetting_state)-1);
           if(EditorActive()) {
-            SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
-            SelectorCreate(cEditorChain,"(bychain pk1)",NULL,true,NULL);
-            SelectorCreate(cEditorObject,"(byobject pk1)",NULL,true,NULL);
-            if(SettingGet(cSetting_auto_hide_selections))
-              ExecutiveHideSelections();
+            EditorDefineExtraPks();
           }
           WizardDoPick(0);
           break;
@@ -1494,7 +1490,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               EditorInactive();
             else if((!EditorIsBondMode())&&EditorDeselectIfSelected(I->LastPicked.index,true)) {
               
-              PRINTF " You unpicked %s.",buffer ENDF;              
+              PRINTF " You unpicked %s.",buffer ENDF;
+              if(EditorActive())
+                EditorDefineExtraPks();
             } else {
               if(EditorIsBondMode()&&EditorDeselectIfSelected(I->LastPicked.index,false)) {
                 EditorInactive();
@@ -1509,16 +1507,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               EditorSetActiveObject((ObjectMolecule*)obj,
                                     SettingGetGlobal_i(cSetting_state)-1);
               if(EditorActive()) {
-                if(EditorGetSinglePicked(name)) {
-                  sprintf(buffer,"(byres %s)",name);
-                  SelectorCreate(cEditorRes,buffer,NULL,true,NULL);
-                  sprintf(buffer,"(bychain %s)",name);
-                  SelectorCreate(cEditorChain,buffer,NULL,true,NULL);
-                  sprintf(buffer,"(byobject %s)",name);
-                  SelectorCreate(cEditorObject,buffer,NULL,true,NULL);
-                }
-                if(SettingGet(cSetting_auto_hide_selections))
-                  ExecutiveHideSelections();
+                EditorDefineExtraPks();
               }
               WizardDoPick(0);
             }

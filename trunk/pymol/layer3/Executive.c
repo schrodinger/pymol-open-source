@@ -2554,7 +2554,7 @@ int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state)
   return ok;
 }
 /*========================================================================*/
-int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
+int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state,int quiet)
 {
   Vector3f v0,v1,v2,v3;
   int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
@@ -2592,9 +2592,11 @@ int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
     EditorSelect(s2,s1,NULL,NULL,false,true);
     EditorTorsion(change);
     SceneSetFrame(-1,save_state);
-    PRINTFB(FB_Editor,FB_Actions)
-      " SetDihedral: adjusted to %5.3f\n",value
-      ENDFB;
+    if(!quiet) {
+      PRINTFB(FB_Editor,FB_Actions)
+        " SetDihedral: adjusted to %5.3f\n",value
+        ENDFB;
+    }
 
   }
   return ok;

@@ -584,8 +584,8 @@ SEE ALSO
 
 
 
-   def edit(selection1='',selection2='',selection3='',
-            selection4='',pkresi=0,quiet=1):
+   def edit(selection1='',selection2='none',selection3='none',
+            selection4='none',pkresi=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -1332,7 +1332,7 @@ SEE ALSO
       return r
 
 
-   def set_dihedral(atom1,atom2,atom3,atom4,angle,state=1):
+   def set_dihedral(atom1,atom2,atom3,atom4,angle,state=1,quiet=1):
       # preprocess selections
       atom1 = selector.process(atom1)
       atom2 = selector.process(atom2)
@@ -1341,7 +1341,7 @@ SEE ALSO
       #   
       try:
          lock()
-         r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),float(angle),int(state)-1)
+         r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),float(angle),int(state)-1,int(quiet))
       finally:
          unlock()
       return r

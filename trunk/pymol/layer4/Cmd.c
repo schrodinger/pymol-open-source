@@ -2577,16 +2577,17 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
   char *str1,*str2,*str3,*str4;
   float float1;
   int int1;
+  int quiet;
   OrthoLineType s1,s2,s3,s4;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssssfi",&str1,&str2,&str3,&str4,&float1,&int1);
+  ok = PyArg_ParseTuple(args,"ssssfii",&str1,&str2,&str3,&str4,&float1,&int1,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
     SelectorGetTmp(str2,s2);
     SelectorGetTmp(str3,s3);
     SelectorGetTmp(str4,s4);
-    ok = ExecutiveSetDihe(s1,s2,s3,s4,float1,int1);
+    ok = ExecutiveSetDihe(s1,s2,s3,s4,float1,int1,quiet);
     SelectorFreeTmp(s1);
     SelectorFreeTmp(s2);
     SelectorFreeTmp(s3);
