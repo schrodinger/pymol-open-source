@@ -1468,7 +1468,13 @@ Rep *RepCylBondNew(CoordSet *cs)
                   if((name2[1]=='D')&&(name2[0]=='C')&&(!name2[2])) 
                     c1 = c2; /* N->CD in PRO */
                   else if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])&&(!ati1->temp1))
-                    s1 = s2 = 0; /* suppress N-CA */
+                    {
+                      char *resn2 = ati2->resn;
+                      if(!((resn2[0]=='P')&&(resn2[1]=='R')&&(resn2[2]=='O')))
+                        s1 = s2 = 0; /* suppress N-CA, except in pro */
+                      else
+                        c1 = c2;
+                    }
                   else if((!name2[1])&&(name2[0]=='C')&&(!ati1->temp1))
                     s1 = s2 = 0; /* suppress N-C */
                 } else if(prot2 == cAN_H)
@@ -1497,8 +1503,14 @@ Rep *RepCylBondNew(CoordSet *cs)
                 if(prot1 == cAN_C) { 
                   if((name1[1]=='D')&&(name1[0]=='C')&&(!name1[2]))
                     c2 = c1; /* N->CD in PRO */
-                  else if((name1[1]=='A')&&(name1[0]=='C')&&(ati2->temp1))
-                    s1 = s2 = 0; /* suppress N-CA */
+                  else if((name1[1]=='A')&&(name1[0]=='C')&&(ati2->temp1)) 
+                    { 
+                      char *resn1 = ati1->resn;
+                      if(!((resn1[0]=='P')&&(resn1[1]=='R')&&(resn1[2]=='O')))
+                        s1 = s2 = 0; /* suppress N-CA, except in pro */
+                      else
+                        c2 = c1;
+                    }
                   else if((!name1[1])&&(name1[0]=='C')&&(!ati2->temp1))
                     s1 = s2 = 0; /* suppress N-C */
                 } else if(prot1 == cAN_H)

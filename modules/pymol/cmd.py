@@ -1353,10 +1353,12 @@ SEE ALSO
            middle,            \
            ending,            \
            mplay,             \
+           mtoggle,           \
            mstop,             \
            mpng,              \
            mray,              \
            frame,             \
+           get_movie_playing, \
            get_state,         \
            get_frame         
 
@@ -1590,6 +1592,7 @@ SEE ALSO
          'mdump'         : [ mdump             , 0 , 0 , ''  , parsing.STRICT ],      
          'mpng'          : [ mpng              , 0 , 0 , ''  , parsing.STRICT ],
          'mplay'         : [ mplay             , 0 , 0 , ''  , parsing.STRICT ],
+         'mtoggle'       : [ mtoggle           , 0 , 0 , ''  , parsing.STRICT ],         
          'mray'          : [ mray              , 0 , 0 , ''  , parsing.STRICT ],
          'mstop'         : [ mstop             , 0 , 0 , ''  , parsing.STRICT ],
          'mclear'        : [ mclear            , 0 , 0 , ''  , parsing.STRICT ],
@@ -1773,10 +1776,10 @@ SEE ALSO
          101      : [ 'up'        , None                   , () , {} ],
          102      : [ 'right'     , forward                , () , {} ],
          103      : [ 'down'      , None                   , () , {} ],
-         104      : [ 'pgup'      , rewind                 , () , {} ],
-         105      : [ 'pgdn'      , ending                 , () , {} ],
-         106      : [ 'home'      , zoom                   , () , {} ],
-         107      : [ 'end'       , ending                 , () , {} ],
+         104      : [ 'pgup'      , scene                  , ('','previous') , {} ],
+         105      : [ 'pgdn'      , scene                  , ('','next') , {} ],
+         106      : [ 'home'      , zoom                   , () ,  {'animate':-1} ],
+         107      : [ 'end'       , mtoggle                , () , {} ],
          108      : [ 'insert'    , rock                   , () , {} ]   
       }
 
@@ -1797,9 +1800,9 @@ SEE ALSO
          101      : [ 'up'        , None                   , () , {} ],
          102      : [ 'right'     , forward                , () , {} ],
          103      : [ 'down'      , None                   , () , {} ],
-         104      : [ 'pgup'      , rewind                 , () , {} ],
-         105      : [ 'pgdn'      , ending                 , () , {} ],
-         106      : [ 'home'      , zoom                   , () , {} ],
+         104      : [ 'pgup'      , scene                  , ('','previous') , {} ],
+         105      : [ 'pgdn'      , scene                  , ('','next') , {} ],
+         106      : [ 'home'      , rewind                 , () ,  {'animate':-1} ],
          107      : [ 'end'       , ending                 , () , {} ],
          108      : [ 'insert'    , rock                   , () , {} ]   
       }
@@ -1823,7 +1826,7 @@ SEE ALSO
          103      : [ 'down'      , None                   , () , {} ],
          104      : [ 'pgup'      , rewind                 , () , {} ],
          105      : [ 'pgdn'      , ending                 , () , {} ],
-         106      : [ 'home'      , zoom                   , () , {} ],
+         106      : [ 'home'      , zoom                   , () ,  {'animate':-1} ],
          107      : [ 'end'       , ending                 , () , {} ],
          108      : [ 'insert'    , rock                   , () , {} ]   
       }
@@ -1845,11 +1848,11 @@ SEE ALSO
          101      : [ 'up'        , None                   , () , {} ],
          102      : [ 'right'     , forward                , () , {} ],
          103      : [ 'down'      , None                   , () , {} ],
-         104      : [ 'pgup'      , rewind                 , () , {} ],
-         105      : [ 'pgdn'      , ending                 , () , {} ],
-         106      : [ 'home'      , zoom                   , () , {} ],
-         107      : [ 'end'       , ending                 , () , {} ],
-         108      : [ 'insert'    , rock                   , () , {} ]   
+         104      : [ 'pgup'      , scene                  , ('','insert_before') , {} ],
+         105      : [ 'pgdn'      , scene                  , ('','insert_after') , {} ],
+         106      : [ 'home'      , zoom                   , () , {'animate':-1} ],
+         107      : [ 'end'       , scene                  , ('new','store') , {} ],
+         108      : [ 'insert'    , scene                  , ('auto','store') , {} ]   
       }
 
       ctsh_special = { # NOTE: some OSes/Windowing systems intercept CTRL-Fn keys.
@@ -1869,10 +1872,10 @@ SEE ALSO
          101      : [ 'up'        , None                   , () , {} ],
          102      : [ 'right'     , forward                , () , {} ],
          103      : [ 'down'      , None                   , () , {} ],
-         104      : [ 'pgup'      , rewind                 , () , {} ],
-         105      : [ 'pgdn'      , ending                 , () , {} ],
-         106      : [ 'home'      , zoom                   , () , {} ],
-         107      : [ 'end'       , ending                 , () , {} ],
+         104      : [ 'pgup'      , scene                  , ('','insert_before') , {} ],
+         105      : [ 'pgdn'      , ending                 , ('','insert_after') , {} ],
+         106      : [ 'home'      , zoom                 , () ,  {'animate':-1} ],
+         107      : [ 'end'       , mtoggle                , () , {} ],
          108      : [ 'insert'    , rock                   , () , {} ]   
       }
 

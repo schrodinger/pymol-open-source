@@ -543,10 +543,13 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ribbon_side_chain_helper   393
 #define cSetting_selection_width_max        394
 #define cSetting_selection_width_scale      395
+#define cSetting_scene_current_name         396
+#define cSetting_presentation               397
+#define cSetting_presentation_mode          398
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       396
+#define cSetting_INIT                       399
 
 #endif
 

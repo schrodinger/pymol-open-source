@@ -21,7 +21,7 @@ if __name__=='pymol.editing':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
    from cmd import safe_list_eval
    from chempy import cpv
-
+   
    def sculpt_purge():
       '''
       undocumented
@@ -895,7 +895,7 @@ NOTES
          unlock()   
       return r
 
-   def alter(selection,expression,quiet=1):
+   def alter(selection,expression,quiet=1,space=cmd.pymol.__dict__):
       '''
 DESCRIPTION
 
@@ -934,12 +934,12 @@ SEE ALSO
       #
       try:
          lock()
-         r = _cmd.alter("("+str(selection)+")",str(expression),0,int(quiet))
+         r = _cmd.alter("("+str(selection)+")",str(expression),0,int(quiet),dict(space))
       finally:
          unlock()   
       return r
 
-   def alter_list(object,expr_list,quiet=1):
+   def alter_list(object,expr_list,quiet=1,space=cmd.pymol.__dict__):
       '''
 DESCRIPTION
    "alter_list" is currently in development
@@ -948,13 +948,13 @@ DESCRIPTION
       #
       try:
          lock()
-         r = _cmd.alter_list(str(object),list(expr_list),int(quiet))
+         r = _cmd.alter_list(str(object),list(expr_list),int(quiet),dict(space))
       finally:
          unlock()   
       return r
 
 
-   def iterate(selection,expression,quiet=1):
+   def iterate(selection,expression,quiet=1,space=cmd.pymol.__dict__):
       '''
 DESCRIPTION
 
@@ -998,12 +998,12 @@ SEE ALSO
       #
       try:
          lock()
-         r = _cmd.alter("("+str(selection)+")",str(expression),1,int(quiet))
+         r = _cmd.alter("("+str(selection)+")",str(expression),1,int(quiet),dict(space))
       finally:
          unlock()   
       return r
 
-   def alter_state(state,selection,expression,quiet=1):
+   def alter_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__):
       '''
 DESCRIPTION
 
@@ -1033,12 +1033,12 @@ SEE ALSO
       try:
          lock()
          r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),
-                              0,int(atomic_props),int(quiet))
+                              0,int(atomic_props),int(quiet),dict(space))
       finally:
          unlock()   
       return r
 
-   def iterate_state(state,selection,expression,quiet=1):
+   def iterate_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__):
       '''
 DESCRIPTION
 
@@ -1065,7 +1065,8 @@ SEE ALSO
       try:
          lock()
          r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",
-                              str(expression),1,int(atomic_props),int(quiet))
+                              str(expression),1,int(atomic_props),
+                              int(quiet),dict(space))
       finally:
          unlock()   
       return r
@@ -1576,3 +1577,4 @@ RESERVED FLAGS
          unlock()
       return r
 
+   import pymol

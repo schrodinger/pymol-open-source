@@ -601,6 +601,10 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet,int animate)
   I->Origin[0] = *(p++);
   I->Origin[1] = *(p++);
   I->Origin[2] = *(p++);
+
+  I->LastRock = 0.0F;
+  I->RockTime = 0.0;
+
   SceneClipSet(G,p[0],p[1]);
   p+=2;
   SettingSet(G,cSetting_ortho,*(p++));
@@ -1131,13 +1135,19 @@ void SceneIdle(PyMOLGlobals *G)
       }
     }
   if(ControlRocking(G)&&rockFlag) {
-	I->RockTime+=I->RenderTime;
-    ang_cur = (float)(I->RockTime*SettingGet(G,cSetting_sweep_speed));
-    
-    disp = (float)(SettingGet(G,cSetting_sweep_angle)*(3.1415/180.0)*sin(ang_cur)/2);
-    diff = (float)(disp-I->LastRock);
+    float sweep_angle = SettingGet(G,cSetting_sweep_angle);
+    float sweep_speed = SettingGet(G,cSetting_sweep_speed);
+    I->RockTime+=I->RenderTime;
+
+    if(sweep_angle<=0.0F) {
+      diff = (float)((3.1415/180.0)*I->RenderTime*10);
+    } else {
+      ang_cur = (float)(I->RockTime*sweep_speed);
+      disp = (float)(sweep_angle*(3.1415/180.0)*sin(ang_cur)/2);
+      diff = (float)(disp-I->LastRock);
+      I->LastRock = disp;
+    }
     SceneRotate(G,(float)(180*diff/cPI),0.0F,1.0F,0.0F);
-    I->LastRock = disp;
   }
   if(MoviePlaying(G)&&frameFlag)
 	 {
@@ -3927,6 +3937,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     }
     I->cur_ani_elem = cur;
     SceneFromViewElem(G,I->ani_elem+cur);
+
+    I->LastRock = 0.0F; /* continue to defer rocking until this is done */
+    I->RockTime = 0.0;
   }
 
   double_pump=SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono);

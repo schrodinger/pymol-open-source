@@ -159,6 +159,21 @@ class Setting:
                IntVar(),
                IntVar(),
                ]
+      self.SHFTF=[ None,
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               ]
       
       self.xref = { 
          'ray_trace_frames':
@@ -406,6 +421,10 @@ class Setting:
             self.F[x].set(1)
          else:
             self.F[x].set(0)
+         if dict.has_key('SHFT-F%d'%x):
+            self.SHFTF[x].set(1)
+         else:
+            self.SHFTF[x].set(0)
             
    def refresh(self): # get any settings changes from PyMOL and update menus
       lst = cmd.get_setting_updates()

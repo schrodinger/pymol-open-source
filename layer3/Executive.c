@@ -4497,7 +4497,7 @@ void ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet)
   }
 }
 /*========================================================================*/
-int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet)
+int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet,PyObject *space)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -4509,6 +4509,7 @@ int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet
     op1.s1 = expr;
     op1.i1 = 0;
     op1.i2 = read_only;
+    op1.py_ob1 = space;
     ExecutiveObjMolSeleOp(G,sele1,&op1);
     if(!quiet) {
       if(!read_only) {
@@ -4600,7 +4601,8 @@ int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,
 
 
 /*========================================================================*/
-int ExecutiveIterateList(PyMOLGlobals *G,char *name,PyObject *list,int read_only,int quiet)
+int ExecutiveIterateList(PyMOLGlobals *G,char *name,
+                         PyObject *list,int read_only,int quiet,PyObject *space)
 {
 #ifdef _PYMOL_NOPY
   return -1;
@@ -4627,7 +4629,7 @@ int ExecutiveIterateList(PyMOLGlobals *G,char *name,PyObject *list,int read_only
         if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry,0),&index);
         if(ok) ok = PConvPyStrToStrPtr(PyList_GetItem(entry,1),&expr);
         if(ok) ok = ((index<=n_atom) && (index>0));
-        if(ok) ok = PAlterAtom(obj->AtomInfo+index-1,expr,read_only,name,index-1);
+        if(ok) ok = PAlterAtom(obj->AtomInfo+index-1,expr,read_only,name,index-1,space);
         if(ok) n_eval++;
       }
     }
@@ -4663,7 +4665,7 @@ int ExecutiveIterateList(PyMOLGlobals *G,char *name,PyObject *list,int read_only
 }
 /*========================================================================*/
 void ExecutiveIterateState(PyMOLGlobals *G,int state,char *s1,char *expr,int read_only,
-                           int atomic_props,int quiet)
+                           int atomic_props,int quiet,PyObject *space)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -4677,6 +4679,7 @@ void ExecutiveIterateState(PyMOLGlobals *G,int state,char *s1,char *expr,int rea
     op1.i2 = state;
     op1.i3 = read_only;
     op1.i4 = atomic_props;
+    op1.py_ob1 = space;
     ExecutiveObjMolSeleOp(G,sele1,&op1);
     if(!quiet) {
       if(!read_only) {

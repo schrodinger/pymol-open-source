@@ -76,6 +76,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Seq.h"
 #include"PyMOL.h"
+#include"Movie.h"
 
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
@@ -1059,6 +1060,14 @@ static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args)
   result=PConvFloatArrayToPyList(v,3);
   return(result);
 }
+
+static PyObject *CmdGetMoviePlaying(PyObject *self, 	PyObject *args)
+{
+  PyObject *result;
+  result=PyInt_FromLong(MoviePlaying(TempPyMOLGlobals));
+  return(result);
+}
+
 
 static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
 {
@@ -2363,11 +2372,12 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
   OrthoLineType s1;
   int result=0;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&i1,&quiet);
+  PyObject *space;
+  ok = PyArg_ParseTuple(args,"ssiiO",&str1,&str2,&i1,&quiet,&space);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    result=ExecutiveIterate(TempPyMOLGlobals,s1,str2,i1,quiet); /* TODO STATUS */
+    result=ExecutiveIterate(TempPyMOLGlobals,s1,str2,i1,quiet,space); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -2381,12 +2391,13 @@ static PyObject *CmdAlterList(PyObject *self,   PyObject *args)
   int quiet;
   int result=0;
   int ok=false;
+  PyObject *space;
   PyObject *list;
-  ok = PyArg_ParseTuple(args,"sOi",&str1,&list,&quiet);
+  ok = PyArg_ParseTuple(args,"sOiO",&str1,&list,&quiet,&space);
   if (ok) {
     APIEnterBlocked();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    result=ExecutiveIterateList(TempPyMOLGlobals,s1,list,false,quiet); /* TODO STATUS */
+    result=ExecutiveIterateList(TempPyMOLGlobals,s1,list,false,quiet,space); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExitBlocked();
   }
@@ -2420,13 +2431,13 @@ static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
   char *str1,*str2;
   int i1,i2,i3,quiet;
   OrthoLineType s1;
-
+  PyObject *obj;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"issiii",&i1,&str1,&str2,&i2,&i3,&quiet);
+  ok = PyArg_ParseTuple(args,"issiiiO",&i1,&str1,&str2,&i2,&i3,&quiet,&obj);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    ExecutiveIterateState(TempPyMOLGlobals,i1,s1,str2,i2,i3,quiet); /* TODO STATUS */
+    ExecutiveIterateState(TempPyMOLGlobals,i1,s1,str2,i2,i3,quiet,obj); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -5140,6 +5151,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
    {"get_object_color_index",CmdGetObjectColorIndex,  METH_VARARGS },
+   {"get_movie_playing",     CmdGetMoviePlaying,      METH_VARARGS },
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },

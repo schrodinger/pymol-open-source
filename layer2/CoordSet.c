@@ -683,25 +683,27 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
   if(level==cRepInvVisib) {
     if(SettingGet_b(I->G,I->Setting,I->Obj->Obj.Setting,
                     cSetting_cartoon_side_chain_helper)) {
-      if((type==cRepCyl)||(type==cRepLine))
+      if((type==cRepCyl)||(type==cRepLine)||(type==cRepSphere))
         CoordSetInvalidateRep(I,cRepCartoon,cRepInvVisib2);
       else if(type==cRepCartoon) {
         CoordSetInvalidateRep(I,cRepLine,cRepInvVisib2);
         CoordSetInvalidateRep(I,cRepCyl,cRepInvVisib2);
+        CoordSetInvalidateRep(I,cRepSphere,cRepInvVisib2);
       }
     }
     if(SettingGet_b(I->G,I->Setting,I->Obj->Obj.Setting,
                     cSetting_ribbon_side_chain_helper)) {
-      if((type==cRepCyl)||(type==cRepLine))
+      if((type==cRepCyl)||(type==cRepLine)||(type==cRepSphere))
         CoordSetInvalidateRep(I,cRepRibbon,cRepInvVisib2);
       else if(type==cRepRibbon) {
         CoordSetInvalidateRep(I,cRepLine,cRepInvVisib2);
         CoordSetInvalidateRep(I,cRepCyl,cRepInvVisib2);
+        CoordSetInvalidateRep(I,cRepSphere,cRepInvVisib2);
       }
     }
     if(SettingGet_b(I->G,I->Setting,I->Obj->Obj.Setting,
                     cSetting_line_stick_helper)) {
-      if(type==cRepCyl)
+      if(type==cRepCyl) 
         CoordSetInvalidateRep(I,cRepLine,cRepInvVisib2);
       else if(type==cRepLine) {
         CoordSetInvalidateRep(I,cRepCyl,cRepInvVisib2);

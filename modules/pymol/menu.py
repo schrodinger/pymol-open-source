@@ -573,6 +573,27 @@ def extend(s):
            [ 1, 'by 6 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 6))",show=1)' ],
            ]
 
+def find(s):
+   return [[ 2, 'Find:', ''],
+           [ 1, 'polar contacts'  ,
+             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'],
+           [ 1, 'polar contacts (no intra m.c.)'  ,
+             'cmd.dist("'+s+'_polar_conts","'+s+'","('+s+
+             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0)'],
+           [ 1, 'polar contacts (no m.c.)'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (polymer and name n,o,h)","('+s+
+             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0)'],
+           [ 1, 'polar contacts (just s.c.)'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and name n,o,h))","('+s+
+             ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,labels=0)'],
+           [ 1, 'polar contacts (no solvent)'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent)","('+s+
+             ') and not (solvent)",quiet=1,mode=2,labels=0)'],
+           [ 1, 'polar contacts (with solvent)'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and solvent","('+s+
+             ') and not (solvent)",quiet=1,mode=2,labels=0)'],
+           ]
+           
 def sele_action(s):
    return [[ 2, 'Actions:'       ,''                        ],     
            [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
@@ -584,6 +605,7 @@ def sele_action(s):
            [ 1, 'orient'         ,'cmd.orient("'+s+'",animate=-1)'          ],
            [ 0, ''               ,''                             ],
            [ 1, 'preset'         ,presets(s)         ],
+           [ 1, 'find', find(s) ],
            [ 0, ''               ,''                             ],
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
            [ 0, ''               ,''                             ],
@@ -595,9 +617,6 @@ def sele_action(s):
            [ 0, ''          ,''                                              ],
            [ 1, 'duplicate selection'      ,'cmd.select("'+s+'")'          ],
            [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],           
-           [ 1, 'find polar contacts'  ,
-             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
-             ],                      
            [ 0, ''          ,''                                  ],
            [ 1, 'masking'        , masking(s)         ],
            [ 1, 'movement'       , movement(s)         ],
@@ -611,6 +630,7 @@ def sele_action2(s):
            [ 1, 'rename selection', 'cmd.wizard("renaming","'+s+'")'          ],
            [ 0, ''               ,''                             ],
            [ 1, 'preset'         ,presets(s)         ],
+           [ 1, 'find', find(s) ],
            [ 0, ''               ,''                             ],
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
            [ 0, ''               ,''                             ],
@@ -622,9 +642,6 @@ def sele_action2(s):
            [ 0, ''          ,''                                              ],
            [ 1, 'duplicate selection'      ,'cmd.select("'+s+'")'          ],
            [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],           
-           [ 1, 'find polar contacts'  ,
-             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
-             ],                      
            [ 0, ''          ,''                                  ],
            [ 1, 'masking'      , masking(s)         ],
            [ 1, 'movement'       , movement(s)         ],
@@ -639,14 +656,11 @@ def mol_action(s):
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 1, 'orient'       , 'cmd.orient("'+s+'",animate=-1)'    ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'preset'  , presets(s)       ],
-           [ 0, ''          ,''                                              ],           
-           [ 1, 'generate'  , mol_generate(s)       ],           
+           [ 1, 'preset'  ,   presets(s)       ],
+           [ 1, 'find',     find(s) ],           
+           [ 1, 'generate'  ,   mol_generate(s)       ],           
            [ 0, ''               ,''                             ],
            [ 1, 'assign sec. struc.'  ,'cmd.dss("'+s+'")'        ],
-           [ 1, 'find polar contacts'  ,
-             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
-             ],                      
            [ 0, ''             , ''                       ],
            [ 1, 'rename object', 'cmd.wizard("renaming","'+s+'")'          ],
            [ 1, 'duplicate object'    ,'cmd.create(None,"'+s+'")'     ],           
@@ -715,7 +729,8 @@ def all_action(s):
            [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],           
            [ 1, 'origin'   , 'cmd.origin("all")'   ],
            [ 0, ''             , ''                      ],           
-           [ 1, 'preset'  , presets(s)     ],           
+           [ 1, 'preset'  , presets("all")     ],
+           [ 1, 'find', find("all") ],           
            [ 0, ''          ,''                                              ],
            [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
            [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
