@@ -173,6 +173,7 @@ void PInit(void)
   PyRun_SimpleString("import pmu\n");  
   PyRun_SimpleString("import pmm\n");  
   PyRun_SimpleString("import string\n"); 
+  PyRun_SimpleString("import sglite\n"); 
 
 #ifndef _PYMOL_MODULE
   PyRun_SimpleString("import thread\n"); 
