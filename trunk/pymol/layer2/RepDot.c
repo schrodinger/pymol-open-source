@@ -41,6 +41,7 @@ void RepDotFree(RepDot *I)
   FreeP(I->F);
   FreeP(I->VN);
   FreeP(I->A);
+  FreeP(I->Atom);
   OOFreeP(I);
 }
 
@@ -105,6 +106,10 @@ Rep *RepDotNew(CoordSet *cs)
 
 Rep *RepDotDoNew(CoordSet *cs,int mode)
 {
+
+  /* this routine does double duty - generating the dot representation,
+     but also acting as our surface area computation routine */
+
   ObjectMolecule *obj;
   int a,b,flag,h,k,l,i,j,c1;
   float *v,*v0,*vc,vdw,*vn;
@@ -122,17 +127,24 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   int inclH = true;
   int cullByFlag = false;
   int visFlag;
+  int atm,*ati;
   AtomInfoType *ai1,*ai2;
+
   OOAlloc(RepDot);
 
   obj = cs->Obj;
-  visFlag=false;
-  for(a=0;a<cs->NIndex;a++) {
-	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepDot])
-		{
-		  visFlag=true;
-		  break;
-		}
+
+  if(mode==cRepDotAreaType) {
+    visFlag=true;
+  } else {
+    visFlag=false;
+    for(a=0;a<cs->NIndex;a++) {
+      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepDot])
+        {
+          visFlag=true;
+          break;
+        }
+    }
   }
   if(!visFlag) {
     OOFreeP(I);
@@ -140,10 +152,8 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   }
 
   RepInit(&I->R);
-  I->dotSize = SettingGet(cSetting_dot_size);
-  cullByFlag = SettingGet(cSetting_trim_dots);
 
-  inclH = SettingGet(cSetting_dot_hydrogens);
+  I->dotSize = SettingGet(cSetting_dot_size);
 
   I->A=NULL;
   I->T=NULL;
@@ -151,15 +161,19 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->V=NULL;
   I->VC=NULL;
   I->VN=NULL;
+  I->Atom=NULL;
   I->R.fRecolor=NULL;
 
-  if(SettingGet(cSetting_dot_surface)>0.0) {
-	 solv_rad = SettingGet(cSetting_solvent_radius);
-	 max_vdw+=solv_rad;
+  cullByFlag = SettingGet(cSetting_trim_dots);
+  inclH = SettingGet(cSetting_dot_hydrogens);
+  if(SettingGet(cSetting_dot_mode)>0.0) {
+    solv_rad = SettingGet(cSetting_solvent_radius);
   }
- 
- /* get current dot sampling */
+  /* get current dot sampling */
   ds = (int)SettingGet(cSetting_dot_density);
+
+  max_vdw+=solv_rad;
+
   if(ds<0) ds=0;
   switch(ds) {
   case 0: sp=Sphere0; break;
@@ -179,9 +193,11 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 	 I->T=Alloc(int,cs->NIndex*sp->nDot);
 	 I->F=Alloc(int,cs->NIndex*sp->nDot);
 	 I->VN=Alloc(float,cs->NIndex*sp->nDot*3);
+    I->Atom=Alloc(int,cs->NIndex*sp->nDot);
 	 aa=I->A;
 	 tp=I->T;
 	 tf=I->F;
+    ati=I->Atom;
 	 inclH=true;
 	 cullByFlag=true;
   }
@@ -197,8 +213,9 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 		MapSetupExpress(map);
 		for(a=0;a<cs->NIndex;a++)
 		  {
-          ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-			 if(ai1->visRep[cRepDot])
+          atm = cs->IdxToAtm[a];
+          ai1 = obj->AtomInfo+atm;
+			 if(ai1->visRep[cRepDot]||mode==cRepDotAreaType) 
 				if((inclH||(!ai1->hydrogen))&&
                ((!cullByFlag)||
                 (!(ai1->flags&0x1000000)))) {
@@ -272,6 +289,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 								*(vn++)=sp->dot[b].v[0];
 								*(vn++)=sp->dot[b].v[1];
 								*(vn++)=sp->dot[b].v[2];
+                        *(ati++)=atm;
 								I->N++;
 								break;
 							 }
@@ -290,6 +308,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 	 I->T= Realloc(I->T,int,(tp-I->T));
 	 I->F= Realloc(I->F,int,(tf-I->F));
 	 I->VN= Realloc(I->VN,float,(vn-I->VN));
+    I->Atom= Realloc(I->Atom,int,(ati-I->Atom));
   }
   return((void*)(struct Rep*)I);
 }

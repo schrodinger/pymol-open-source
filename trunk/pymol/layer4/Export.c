@@ -47,7 +47,7 @@ ExportDotsObj *ExportDots(char *name,int csIndex)
 	 ok=ErrMessage("ExportDots","Not molecule object.");
 
   if(ok) {
-	 ExecutiveSetRepVisib(name,cRepDot,1); 
+    /*	 ExecutiveSetRepVisib(name,cRepDot,1); */
 	 objMol = (ObjectMolecule*)obj;
 	 cs = ObjectMoleculeGetCoordSet(objMol,csIndex);
 	 if(!cs)
@@ -79,6 +79,11 @@ ExportDotsObj *ExportDots(char *name,int csIndex)
   }
   return(result);
 }
+
+/*---------------------------------------------------------------------*/
+
+
+
 
 void ExportDotsObjFree(ExportDotsObj *obj)
 {

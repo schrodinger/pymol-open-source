@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #include"Menu.h"
 #include"Map.h"
 #include"Editor.h"
+#include"RepDot.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -81,6 +82,62 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
+
+/*========================================================================*/
+float ExecutiveGetArea(char *s0,int sta0)
+{
+  ObjectMolecule *obj0;
+  RepDot *rep;
+  CoordSet *cs;
+  float result=-1.0;
+  int a,sele0;
+  int known_member=-1;
+  int is_member;
+  int *ati;
+  float *area;
+  AtomInfoType *ai;
+
+  sele0 = SelectorIndexByName(s0);
+  if(sele0<0) {
+    ErrMessage("Area","Invalid selection.");
+  } else {
+    obj0 = SelectorGetSingleObjectMolecule(sele0);
+    if(!(obj0))
+      ErrMessage("Area","Selection must be within a single object.");
+    else {
+      cs = ObjectMoleculeGetCoordSet(obj0,sta0);
+      if(!cs)
+        ErrMessage("Area","Invalid state.");
+      else {
+        rep = (RepDot*)RepDotDoNew(cs,cRepDotAreaType);
+        if(!rep) 
+          ErrMessage("Area","Can't get dot representation.");
+        else {
+          result=0.0;
+          
+          area=rep->A;
+          ati=rep->Atom;
+          
+          for(a=0;a<rep->N;a++) {
+            
+            if(known_member!=(*ati)) {
+              known_member=(*ati);
+              ai=obj0->AtomInfo+known_member;
+              is_member = SelectorIsMember(ai->selEntry,sele0);
+            }
+            
+            if(is_member) result+=(*area);
+            area++;
+            ati++;
+          }
+          
+          rep->R.fFree((Rep*)rep); /* free the representation */
+        }
+      }
+    }
+  }
+  return(result);
+}
 
 /*========================================================================*/
 char *ExecutiveGetNames(int mode)

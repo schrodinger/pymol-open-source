@@ -2638,6 +2638,25 @@ PYMOL API
       unlock()
    return r
 
+
+def get_area(*arg):
+   '''
+   PRE-RELEASE functionality - API will change
+   '''
+   la=len(arg)
+   sele = "(all)"
+   state = 1
+   if la>0:
+      sele = arg[0]
+   if la>1:
+      state = int(arg[1])
+   try:
+      lock()
+      r = _cmd.get_area(sele,int(state)-1)
+   finally:
+      unlock()
+   return r
+
 def get_names(*arg):
    '''
 DESCRIPTION
