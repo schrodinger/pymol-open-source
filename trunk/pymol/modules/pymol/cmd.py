@@ -5844,6 +5844,7 @@ keyword = {
    'log_open'      : [log_open     , 0 , 0 , ''  , parsing.STRICT ],
    'ls'            : [ls           , 0 , 0 , ''  , parsing.STRICT ],  
    'mask'          : [mask         , 0 , 0 , ''  , parsing.STRICT ],
+   'map_set_border': [map_set_border,0 , 0 , ''  , parsing.STRICT ],    
    'mappend'       : [mappend      , 2 , 2 , ':' , parsing.SINGLE ], 
    'mem'           : [mem          , 0 , 0 , ''  , parsing.STRICT ],
    'meter_reset'   : [meter_reset  , 0 , 0 , ''  , parsing.STRICT ],
