@@ -279,6 +279,7 @@ DESCRIPTION
       expand <distance>           e;<distance>
       gap <distance>              -
       in <selection>              -
+      like <selection>            l;
  
    Objects and selections can be referred to by name from within
    subsequent selections.
