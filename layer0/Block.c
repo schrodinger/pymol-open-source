@@ -27,12 +27,12 @@ void BlockGetSize(Block *I,int *width,int *height)
 /*========================================================================*/
 void BlockInit(Block *I)
 {
-  I->BackColor[0]=0.2;
-  I->BackColor[1]=0.2;
-  I->BackColor[2]=0.2;
-  I->TextColor[0]=1.0;
-  I->TextColor[1]=1.0;
-  I->TextColor[2]=1.0;
+  I->BackColor[0]=0.2F;
+  I->BackColor[1]=0.2F;
+  I->BackColor[2]=0.2F;
+  I->TextColor[0]=1.0F;
+  I->TextColor[1]=1.0F;
+  I->TextColor[2]=1.0F;
 }
 /*========================================================================*/
 void BlockFill(Block *I) 

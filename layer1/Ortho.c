@@ -1314,18 +1314,18 @@ void OrthoInit(int showSplash)
   I->cmds = QueueNew(0xFFFF);
   I->feedback = QueueNew(0xFFFF);
 
-  I->WizardBackColor[0]=0.2;
-  I->WizardBackColor[1]=0.2;
-  I->WizardBackColor[2]=0.2;
-  I->WizardTextColor[0]=0.2;
-  I->WizardTextColor[1]=1.0;
-  I->WizardTextColor[2]=0.2;
+  I->WizardBackColor[0]=0.2F;
+  I->WizardBackColor[1]=0.2F;
+  I->WizardBackColor[2]=0.2F;
+  I->WizardTextColor[0]=0.2F;
+  I->WizardTextColor[1]=1.0F;
+  I->WizardTextColor[2]=0.2F;
   I->Blocks = NULL;
   I->GrabbedBy = NULL;
   I->ClickedIn = NULL;
   I->DrawText=1;
-  I->TextColor[0]=0.7;
-  I->TextColor[1]=0.7;
+  I->TextColor[0]=0.7F;
+  I->TextColor[1]=0.7F;
   I->TextColor[2]=1.0;
   I->OverlayColor[0]=1.0;
   I->OverlayColor[1]=1.0;

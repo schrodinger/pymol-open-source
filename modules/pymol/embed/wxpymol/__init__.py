@@ -32,6 +32,9 @@ code_dict = {
    318 : 'RIGHT',
    }
 
+def pst(st):
+   print st
+   return 1
 
 class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
    def __init__(self, parent):
@@ -40,6 +43,10 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       # initial mouse position
       self.lastx = self.x = 30
       self.lasty = self.y = 30
+      EVT_KILL_FOCUS(self, lambda s:pst("kill focus"))
+      EVT_SET_FOCUS(self, lambda s:pst("idle"))
+      EVT_SET_FOCUS(self, lambda s:pst("set focus"))
+      EVT_CHAR(self, lambda s:pst("char"))
       EVT_ERASE_BACKGROUND(self, self.OnEraseBackground)
       EVT_SIZE(self, self.OnSize)
       EVT_PAINT(self, self.OnPaint)
@@ -53,6 +60,10 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       EVT_IDLE(self,self.OnIdle)
       EVT_CHAR(self,self.OnChar)
 
+   def ProcessEvent(self,event):
+      print "event"
+      #wxGLCanvas.ProcessEvent(event)
+      
    def OnEraseBackground(self, event):
       pass # Do nothing, to avoid flashing on MSW.
 
@@ -64,6 +75,7 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
          self.ep_reshape(size.width,size.height)
 
    def OnChar(self, evt):
+      print "char"
       code = evt.GetKeyCode()
       if code<256:
          self.ep_char(evt.GetX(),evt.GetY(),code,
@@ -76,6 +88,7 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       self.CheckPyMOL()
       
    def OnPaint(self, event):
+      print "paint"
       dc = wxPaintDC(self)
       self.SetCurrent()
       if not self.init:
@@ -115,7 +128,8 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       self.CheckPyMOL()
 
    def Repaint(self):
-      self.AddPendingEvent(wxPaintEvent())
+      pass
+   #self.AddPendingEvent(wxPaintEvent())
 
 class PyMOLCanvas(MyCanvasBase):
    def InitGL(self):

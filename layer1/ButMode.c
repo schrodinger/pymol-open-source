@@ -75,8 +75,8 @@ void ButModeSetRate(float interval)
 {
   CButMode *I=&ButMode;
 
-  I->Samples*=0.99;
-  I->Rate*=0.99;
+  I->Samples*=0.99F;
+  I->Rate*=0.99F;
 
   I->Samples++;
 
@@ -148,9 +148,9 @@ void ButModeInit(void)
   I->Block->fReshape = BlockReshape;
   I->Block->active = true;
 
-  I->Block->TextColor[0]=0.2;
-  I->Block->TextColor[1]=1.0;
-  I->Block->TextColor[2]=0.2;
+  I->Block->TextColor[0]=0.2F;
+  I->Block->TextColor[1]=1.0F;
+  I->Block->TextColor[2]=0.2F;
 
   I->TextColor1[0]=0.5;
   I->TextColor1[1]=0.5;

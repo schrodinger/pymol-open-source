@@ -669,6 +669,15 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
+void	initExtensionClass();
+void	initsglite();
+void    init_opengl();
+void    init_opengl_num();
+void    init_glu();
+void    init_glu_num();
+void    init_glut();
+void    initopenglutil();
+void    initopenglutil_num();
 
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
@@ -852,6 +861,28 @@ void PInit(void)
 {
   PyObject *pymol,*sys,*pcatch;
   int a;
+
+#ifdef WIN32
+	/* Win32 module build: includes pyopengl, numpy, and sglite */
+	/* sglite */
+	initExtensionClass();
+	initsglite();
+	/* initialize numeric python */
+	init_numpy();
+	initmultiarray();
+	initarrayfns();
+	initlapack_lite();
+	initumath();
+	initranlib();
+	/* initialize PyOpenGL */
+    init_opengl();
+    init_opengl_num();
+    init_glu();
+    init_glu_num();
+    init_glut();
+    initopenglutil();
+	initopenglutil_num();
+#endif
 
   for(a=0;a<MAX_SAVED_THREAD;a++) {
     SavedThread[a].id=-1;

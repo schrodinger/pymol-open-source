@@ -263,7 +263,7 @@ void PopUpDraw(Block *block)
 
     /* bottom */
 
-    glColor3f(0.2,0.2,0.4);
+    glColor3f(0.2F,0.2F,0.4F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left-2,block->rect.bottom-2);
     glVertex2i(block->rect.right+2,block->rect.bottom-2);
@@ -271,7 +271,7 @@ void PopUpDraw(Block *block)
     glVertex2i(block->rect.left-2,block->rect.bottom+1);
     glEnd();
 
-    glColor3f(0.4,0.4,0.6);
+    glColor3f(0.4F,0.4F,0.6F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left-1,block->rect.bottom-1);
     glVertex2i(block->rect.right+1,block->rect.bottom-1);
@@ -281,7 +281,7 @@ void PopUpDraw(Block *block)
 
     /* right */
 
-    glColor3f(0.2,0.2,0.4);
+    glColor3f(0.2F,0.2F,0.4F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.right,block->rect.bottom-2);
     glVertex2i(block->rect.right+2,block->rect.bottom-2);
@@ -289,7 +289,7 @@ void PopUpDraw(Block *block)
     glVertex2i(block->rect.right,block->rect.top);
     glEnd();
 
-    glColor3f(0.4,0.4,0.6);
+    glColor3f(0.4F,0.4F,0.6F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.right,block->rect.bottom-1);
     glVertex2i(block->rect.right+1,block->rect.bottom-1);
@@ -299,7 +299,7 @@ void PopUpDraw(Block *block)
 
     /* top */
 
-    glColor3f(0.5,0.5,0.7);
+    glColor3f(0.5F,0.5F,0.7F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left-2,block->rect.top+2);
     glVertex2i(block->rect.right+2,block->rect.top+2);
@@ -307,7 +307,7 @@ void PopUpDraw(Block *block)
     glVertex2i(block->rect.left-2,block->rect.top);
     glEnd();
 
-    glColor3f(0.6,0.6,0.8);
+    glColor3f(0.6F,0.6F,0.8F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left-1,block->rect.top+1);
     glVertex2i(block->rect.right+1,block->rect.top+1);
@@ -317,7 +317,7 @@ void PopUpDraw(Block *block)
 
     /* left */
 
-    glColor3f(0.5,0.5,0.7);
+    glColor3f(0.5F,0.5F,0.7F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left-2,block->rect.bottom-2);
     glVertex2i(block->rect.left,block->rect.bottom);
@@ -325,7 +325,7 @@ void PopUpDraw(Block *block)
     glVertex2i(block->rect.left-2,block->rect.top);
     glEnd();
 
-    glColor3f(0.6,0.6,0.8);
+    glColor3f(0.6F,0.6F,0.8F);
     glBegin(GL_POLYGON);
     glVertex2i(block->rect.left-1,block->rect.bottom-1);
     glVertex2i(block->rect.left,block->rect.bottom-1);
@@ -356,7 +356,7 @@ void PopUpDraw(Block *block)
 
     if(I->Code[0]==2) { /* menu name */
         
-      glColor3f(0.3,0.3,0.6);
+      glColor3f(0.3F,0.3F,0.6F);
       x = I->Block->rect.left;
       y = I->Block->rect.top;
       
@@ -367,7 +367,7 @@ void PopUpDraw(Block *block)
       glVertex2i(x,y-(cPopUpLineHeight+cPopUpCharMargin));
       glEnd();
 
-      glColor3f(0.2,0.2,0.4);
+      glColor3f(0.2F,0.2F,0.4F);
       glBegin(GL_LINES);
       glVertex2i(x+I->Width-1,y-(cPopUpLineHeight+cPopUpCharMargin));
       glVertex2i(x,y-(cPopUpLineHeight+cPopUpCharMargin));
@@ -407,10 +407,10 @@ void PopUpDraw(Block *block)
           y-=cPopUpLineHeight;
         } else {
           glBegin(GL_LINES);
-          glColor3f(0.3,0.3,0.5);
+          glColor3f(0.3F,0.3F,0.5F);
           glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+2);
           glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+2);
-          glColor3f(0.6,0.6,0.8);
+          glColor3f(0.6F,0.6F,0.8F);
           glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+3);
           glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+3);
           glEnd();
