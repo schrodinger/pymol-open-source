@@ -376,9 +376,6 @@ Rep *RepRibbonNew(CoordSet *cs)
 				  } else {
 				    zero3f(v2);
 				  }
-{
-				    zero3f(v2);
-				  }
 				}
 			 d++;
 			 v+=3;
