@@ -375,7 +375,7 @@ class State:
          ]
       return gmsList
    
-   def get_scf(dirscf=1):
+   def get_scf(self,dirscf=1):
       gmsList = []
       if dirscf:
          gmsList.append(" $SCF DIRSCF=.TRUE. $END\n")
