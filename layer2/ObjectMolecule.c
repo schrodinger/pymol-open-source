@@ -2728,7 +2728,6 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
       cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
   }
   if(log) {
-
     OrthoLineType line;
     WordType sele_str = ",'";
     logging = SettingGet(cSetting_logging);
