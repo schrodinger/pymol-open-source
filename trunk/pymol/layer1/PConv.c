@@ -814,27 +814,36 @@ int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr)
 void PConv44PyListTo44f(PyObject *src,float *dest) /* note lost of precision */
 {
   PyObject *row;
-
-  row = PyList_GetItem(src,0);
-  dest[ 0]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
-  dest[ 1]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
-  dest[ 2]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
-  dest[ 3]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
-  row = PyList_GetItem(src,1);
-  dest[ 4]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
-  dest[ 5]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
-  dest[ 6]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
-  dest[ 7]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
-  row = PyList_GetItem(src,2);
-  dest[ 8]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
-  dest[ 9]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
-  dest[10]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
-  dest[11]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
-  row = PyList_GetItem(src,3);    
-  dest[12]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
-  dest[13]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
-  dest[14]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
-  dest[15]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
+  if(src&&dest&&PyList_Check(src)) {
+      row = PyList_GetItem(src,0);
+      if(row&&PyList_Check(row)) {
+        dest[ 0]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
+        dest[ 1]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
+        dest[ 2]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
+        dest[ 3]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
+      }
+      row = PyList_GetItem(src,1); 
+      if(row&&PyList_Check(row)) {
+        dest[ 4]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
+        dest[ 5]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
+        dest[ 6]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
+        dest[ 7]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
+      }
+      row = PyList_GetItem(src,2);
+      if(row&&PyList_Check(row)) {
+        dest[ 8]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
+        dest[ 9]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
+        dest[10]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
+        dest[11]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
+      }
+      row = PyList_GetItem(src,3);    
+      if(row&&PyList_Check(row)) {
+        dest[12]=(float)PyFloat_AsDouble(PyList_GetItem(row,0));
+        dest[13]=(float)PyFloat_AsDouble(PyList_GetItem(row,1));
+        dest[14]=(float)PyFloat_AsDouble(PyList_GetItem(row,2));
+        dest[15]=(float)PyFloat_AsDouble(PyList_GetItem(row,3));
+      }
+  }
 }
 
 
