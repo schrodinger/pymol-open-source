@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 void EditorInit(void);
 int EditorActive(void); 
 void EditorRender(int state);
+int EditorLogState(int pkresi);
 
 void EditorFree(void);
 void EditorPrepareDrag(ObjectMolecule *obj,int index,int state);

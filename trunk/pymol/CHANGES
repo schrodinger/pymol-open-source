@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.96
+
+   * pdb1 extension support
+
+   * fixed unintentional default OpenGL bug reporting 
+
 Changes up to 0.95
 
    * changed cartoon_tube_radius to a more aestically pleasing 0.5A

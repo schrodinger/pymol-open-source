@@ -46,7 +46,10 @@ void FeedbackInit(int quiet)
   } else {
     for(a=0;a<FB_Total;a++) {
       FeedbackMask[a] = FB_Output | FB_Results | FB_Errors | FB_Warnings | FB_Actions | FB_Details;
-    }  
+    }
+
+    FeedbackMask[FB_Main] &= ~(FB_Errors); /* suppress opengl errors in main */
+
   }
 }
 
