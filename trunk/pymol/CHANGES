@@ -94,7 +94,7 @@ Changes up to 0.64
 
    * carve command on isomesh
 
-   * .pymolrc and .pymolrc.py(m) support
+   * pymolrc support 
  
    * isosurface speed boosted by about 33% using C-oriented field object.
 
