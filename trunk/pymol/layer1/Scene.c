@@ -1054,7 +1054,7 @@ void SceneRender(Pickable *pick,int x,int y)
   float normal[4] = { 0.0, 0.0, 1.0, 0.0 };
   float aspRat = ((float) I->Width) / ((float) I->Height);
   float height,width;
-  float start_time;
+  float start_time=0;
   int view_save[4];
   Pickable *pickVLA;
   int index;
