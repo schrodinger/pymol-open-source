@@ -447,7 +447,7 @@ int MainFromPyList(PyObject *list)
 {
   int ok=true;
   int win_x,win_y;
-  int ll;
+  int ll=0;
   OrthoLineType buffer;
   if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
