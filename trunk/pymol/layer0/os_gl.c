@@ -6,6 +6,89 @@
 void plutBitmapCharacter(int c);
 #endif
 
+void PyMOLReadPixels(GLint x,
+                  GLint y,
+                  GLsizei width,
+                  GLsizei height,
+                  GLenum format,
+                  GLenum type,
+                      GLvoid *pixels)
+{
+
+  /* special "safe" version of glReadPixels for buggy OpenGL implementations */
+
+  GLint swapbytes, lsbfirst, rowlength;
+  GLint skiprows, skippixels, alignment;
+  
+  /* Save current pixel store state. */
+  glGetIntegerv(GL_PACK_SWAP_BYTES, &swapbytes);
+  glGetIntegerv(GL_PACK_LSB_FIRST, &lsbfirst);
+  glGetIntegerv(GL_PACK_ROW_LENGTH, &rowlength);
+  glGetIntegerv(GL_PACK_SKIP_ROWS, &skiprows);
+  glGetIntegerv(GL_PACK_SKIP_PIXELS, &skippixels);
+  glGetIntegerv(GL_PACK_ALIGNMENT, &alignment);
+  
+  /* Set desired pixel store state. */
+  glPixelStorei(GL_PACK_SWAP_BYTES, GL_FALSE);
+  glPixelStorei(GL_PACK_LSB_FIRST, GL_FALSE);
+  glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+  glPixelStorei(GL_PACK_SKIP_ROWS, 0);
+  glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  
+  glReadPixels(x,y,width,height,format,type,pixels);
+  
+  /* Restore current pixel store state. */
+  glPixelStorei(GL_PACK_SWAP_BYTES, swapbytes);
+  glPixelStorei(GL_PACK_LSB_FIRST, lsbfirst);
+  glPixelStorei(GL_PACK_ROW_LENGTH, rowlength);
+  glPixelStorei(GL_PACK_SKIP_ROWS, skiprows);
+  glPixelStorei(GL_PACK_SKIP_PIXELS, skippixels);
+  glPixelStorei(GL_PACK_ALIGNMENT, alignment); 
+
+}
+
+
+void PyMOLDrawPixels(GLsizei width,
+                  GLsizei height,
+                  GLenum format,
+                  GLenum type,
+                  const GLvoid *pixels)
+{
+
+  /* special "safe" version of glDrawPixels for buggy OpenGL implementations */
+
+  GLint swapbytes, lsbfirst, rowlength;
+  GLint skiprows, skippixels, alignment;
+  
+  /* Save current pixel store state. */
+  glGetIntegerv(GL_UNPACK_SWAP_BYTES, &swapbytes);
+  glGetIntegerv(GL_UNPACK_LSB_FIRST, &lsbfirst);
+  glGetIntegerv(GL_UNPACK_ROW_LENGTH, &rowlength);
+  glGetIntegerv(GL_UNPACK_SKIP_ROWS, &skiprows);
+  glGetIntegerv(GL_UNPACK_SKIP_PIXELS, &skippixels);
+  glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignment);
+  
+  /* Set desired pixel store state. */
+  glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
+  glPixelStorei(GL_UNPACK_LSB_FIRST, GL_FALSE);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+  glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+  glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  
+  glDrawPixels(width,height,format,type,pixels);
+  
+  /* Restore current pixel store state. */
+  glPixelStorei(GL_UNPACK_SWAP_BYTES, swapbytes);
+  glPixelStorei(GL_UNPACK_LSB_FIRST, lsbfirst);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, rowlength);
+  glPixelStorei(GL_UNPACK_SKIP_ROWS, skiprows);
+  glPixelStorei(GL_UNPACK_SKIP_PIXELS, skippixels);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, alignment); 
+
+}
+
 void PyMOLCheckOpenGLErr(char *pos)
 {
   GLenum  glerr = glGetError( );

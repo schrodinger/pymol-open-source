@@ -301,9 +301,6 @@ void ColorDef(char *name,float *v)
       if(wm<0) {
         color=a;
         break;
-      } else if ((wm>0)&&(best<wm)) {
-        color=a;
-        best=wm;
       }
 	 }
   if(color<0) {
@@ -319,9 +316,11 @@ void ColorDef(char *name,float *v)
   ColorUpdateClamp(color);
 
   PRINTFB(FB_Executive,FB_Actions)
-    " Color: \"%s\" defined as [ %3.1f, %3.1f, %3.1f ].\n",name,v[0],v[1],v[2] 
+    " Color: \"%s\" defined as [ %3.3f, %3.3f, %3.3f ].\n",name,v[0],v[1],v[2] 
     ENDFB;
-
+  PRINTFD(FB_Color) 
+    " Color: and assigned number %d.\n",color
+    ENDFD;
 }
 /*========================================================================*/
 int ColorGetIndex(char *name)

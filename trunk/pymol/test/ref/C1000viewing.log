@@ -349,12 +349,12 @@ PyMOL>load dat/pept.pdb
 PyMOL>color shoot
 Color-Error: Unknown color.
 PyMOL>set_color shoot,[1.0,0.9,1.0]
- Color: "shoot" defined as [ 1.0, 0.9, 1.0 ].
+ Color: "shoot" defined as [ 1.000, 0.900, 1.000 ].
 PyMOL>color shoot
  Executive: Colored 107 atoms.
 PyMOL>refresh
 PyMOL>set_color shoot,[1.0,0.0,1.0]
- Color: "shoot" defined as [ 1.0, 0.0, 1.0 ].
+ Color: "shoot" defined as [ 1.000, 0.000, 1.000 ].
 PyMOL>recolor
 PyMOL>refresh
 PyMOL>dele all

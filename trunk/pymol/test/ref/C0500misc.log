@@ -46,7 +46,7 @@ PyMOL>color blue,(name n)
 PyMOL>flag 3=(resn his)
  Flag: flag 3 is set in 10 of 107 atoms.
 PyMOL>set_color dude = [ 1.0,0.6,0.3]
- Color: "dude" defined as [ 1.0, 0.6, 0.3 ].
+ Color: "dude" defined as [ 1.000, 0.600, 0.300 ].
 PyMOL>color dude,(name o)
  Executive: Colored 13 atoms.
 PyMOL>show sticks,(all)

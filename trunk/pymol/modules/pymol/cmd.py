@@ -367,6 +367,7 @@ if __name__=='pymol.cmd':
       raw                       =7
       isosurface                =8
 
+      color                     =10
       cgo                       =11
       feedback                  =12
       scene                     =13
