@@ -67,6 +67,7 @@ void PDefineFloat(char *name,float value);
 
 void PRunString(char *str);
 void PDumpTraceback(PyObject *err);
+void PDumpException(void);
 
 int PComplete(char *str,int buf_size);
 

@@ -3,6 +3,8 @@ from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
 
+import traceback
+
 sele_prefix = "_dw"
 sele_prefix_len = len(sele_prefix)
 
@@ -124,6 +126,7 @@ class Distance(Wizard):
       
    def do_pick(self,bondFlag):
       global dist_count
+
       if bondFlag:
          self.error = "Error: please select an atom, not a bond."
          print self.error
@@ -155,11 +158,11 @@ class Distance(Wizard):
             name = dist_prefix + "%02d"%dist_count
             cnt = 0
             if self.mode == 'neigh':
-               cnt = cmd.select(sele_prefix,"((pk1 a; %f) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)
+               cnt = cmd.select(sele_prefix,"(v. and (pk1 a; %f) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"%self.__class__.cutoff)
             elif self.mode == 'polar':
-               cnt = cmd.select(sele_prefix,"((pk1 a; %f) and (e;n,o) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)            
+               cnt = cmd.select(sele_prefix,"(v. and (pk1 a; %f) and (e. n,o) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"%self.__class__.cutoff)            
             elif self.mode == 'heavy':
-               cnt = cmd.select(sele_prefix,"((pk1 a; %f) and (not hydro) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)            
+               cnt = cmd.select(sele_prefix,"(v. and (pk1 a; %f) and (not h.) and (not (nbr. pk1)) and (not (nbr. (nbr. pk1))) and (not (nbr. (nbr. (nbr. pk1)))))"%self.__class__.cutoff)            
             cmd.delete(name)
             if cnt:
                cmd.dist(name,"(pk1)",sele_prefix)

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -92,6 +93,7 @@ int SelectorSelect1(EvalElem *base);
 int SelectorSelect2(EvalElem *base);
 int SelectorLogic1(EvalElem *base);
 int SelectorLogic2(EvalElem *base);
+int SelectorOperator22(EvalElem *base);
 int *SelectorEvaluate(WordType *word);
 WordType *SelectorParse(char *s);
 void SelectorPurgeMembers(int sele);
@@ -112,7 +114,9 @@ int *SelectorApplyMultipick(Multipick *mp);
 #define STYP_PRP1 7
 #define STYP_SEL3 8
 #define STYP_PVAL 0
+#define STYP_OP22 9   /* sele oper arg1 arg2 sele */
 
+/*                  code   |   type    | priority */
 
 #define SELE_NOT1 ( 0x0100 | STYP_OPR1 | 0x60 )
 #define SELE_BYR1 ( 0x0200 | STYP_OPR1 | 0x10 )
@@ -151,6 +155,7 @@ int *SelectorApplyMultipick(Multipick *mp);
 #define SELE_BYO1 ( 0x2300 | STYP_OPR1 | 0x10 )
 #define SELE_SSTs ( 0x2400 | STYP_SEL1 | 0x70 )
 #define SELE_STAs ( 0x2500 | STYP_SEL1 | 0x70 )
+#define SELE_WIT_ ( 0x2600 | STYP_OP22 | 0x20 ) 
 
 #define SEL_PREMAX 0x8
 
@@ -159,15 +164,16 @@ static WordKeyValue Keyword[] =
   {  "not",      SELE_NOT1 },
   {  "!",        SELE_NOT1 },
   {  "neighbor", SELE_NGH1 },
-  {  "nbr;",     SELE_NGH1 },
+  {  "nbr;",     SELE_NGH1 }, /* deprecated */
+  {  "nbr.",     SELE_NGH1 },
   {  "byresi",   SELE_BYR1 },
   {  "byres",    SELE_BYR1 },
-  {  "br;",      SELE_BYR1 },
+  {  "br;",      SELE_BYR1 },/* deprecated */
   {  "br.",      SELE_BYR1 },
   {  "b;",       SELE_BYR1 }, /* deprecated */
   {  "byobj",    SELE_BYO1 },
   {  "byobject", SELE_BYO1 },
-  {  "bo;",      SELE_BYO1 },
+  {  "bo;",      SELE_BYO1 },/* deprecated */
   {  "bo.",      SELE_BYO1 },
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
@@ -183,62 +189,64 @@ static WordKeyValue Keyword[] =
   {  "hetatm",   SELE_HETz }, /* 0 parameter */
   {  "het",      SELE_HETz }, /* 0 parameter */
   {  "hydro",    SELE_HYDz }, /* 0 parameter */
-  {  "h;",       SELE_HYDz }, /* 0 parameter */
+  {  "h;",       SELE_HYDz }, /* deprecated */
   {  "h.",       SELE_HYDz }, /* 0 parameter */
   {  "visible",  SELE_VISz }, /* 0 parameter */
   {  "v;",       SELE_VISz }, /* 0 parameter */
   {  "v.",       SELE_VISz }, /* 0 parameter */
   {  "around",   SELE_ARD_ }, /* 1 parameter */
-  {  "a;",       SELE_ARD_ }, /* 1 parameter */
+  {  "a;",       SELE_ARD_ }, /* deprecated */
   {  "a.",       SELE_ARD_ }, /* 1 parameter */
   {  "expand",   SELE_EXP_ }, /* 1 parameter */
   {  "x;",       SELE_EXP_ }, /* 1 parameter */
   {  "x.",       SELE_EXP_ }, /* 1 parameter */
   {  "name",     SELE_NAMs },
-  {  "n;",       SELE_NAMs },
+  {  "n;",       SELE_NAMs },/* deprecated */
   {  "n.",       SELE_NAMs },
   {  "symbol",   SELE_ELEs },
   {  "element",  SELE_ELEs },
   {  "elem",     SELE_ELEs },
-  {  "e;",       SELE_ELEs },
+  {  "e;",       SELE_ELEs },/* deprecated */
   {  "e.",       SELE_ELEs },
   {  "resi",     SELE_RSIs },
   {  "resid",    SELE_RSIs },
-  {  "i;",       SELE_RSIs },
+  {  "i;",       SELE_RSIs },/* deprecated */
   {  "i.",       SELE_RSIs },
   {  "alt",      SELE_ALTs },
   {  "flag",     SELE_FLGs },
-  {  "f;",       SELE_FLGs },
+  {  "f;",       SELE_FLGs },/* deprecated */
   {  "f.",       SELE_FLGs },
   {  "gap",      SELE_GAP_ },
   {  "partial_charge",SELE_PCHx },
-  {  "pc;",      SELE_PCHx },
+  {  "pc;",      SELE_PCHx },/* deprecated */
   {  "pc.",      SELE_PCHx },
   {  "formal_charge", SELE_FCHx },
-  {  "fc;",      SELE_FCHx },
+  {  "fc;",      SELE_FCHx },/* deprecated */
   {  "fc.",      SELE_FCHx },
   {  "numeric_type",SELE_NTYs },
-  {  "nt;",      SELE_NTYs },
+  {  "nt;",      SELE_NTYs },/* deprecated */
   {  "nt.",      SELE_NTYs },
   {  "text_type",SELE_TTYs },
-  {  "tt;",      SELE_TTYs },
+  {  "tt;",      SELE_TTYs },/* deprecated */
   {  "tt.",      SELE_TTYs },
   {  "chain",    SELE_CHNs },
-  {  "c;",       SELE_CHNs },
+  {  "c;",       SELE_CHNs },/* deprecated */
   {  "c.",       SELE_CHNs },
   {  "bonded",   SELE_BNDz },
   {  "segi",     SELE_SEGs },
-  {  "s;",       SELE_SEGs },
+  {  "s;",       SELE_SEGs },/* deprecated */
   {  "s.",       SELE_SEGs },
   {  "ss",       SELE_SSTs },
   {  "state",    SELE_STAs },
   {  "model",    SELE_MODs },
-  {  "m;",       SELE_MODs },
+  {  "m;",       SELE_MODs },/* deprecated */
   {  "m.",       SELE_MODs },
   {  "index",    SELE_IDXs },
   {  "id",       SELE_ID_s },
   {  "resn",     SELE_RSNs },
-  {  "r;",       SELE_RSNs },
+  {  "within",   SELE_WIT_ },
+  {  "w.",       SELE_WIT_ },
+  {  "r;",       SELE_RSNs },/* deprecated */
   {  "r.",       SELE_RSNs },
   {  "%",        SELE_SELs },
   {  "b",        SELE_BVLx, }, /* 2 operand selection operator */ 
@@ -2740,11 +2748,14 @@ int SelectorSelect0(EvalElem *base)
 		for(a=0;a<I->NAtom;a++)
 		  {
           flag = false;
-          vis = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].visRep; 
-          for(b=0;b<cRepCnt;b++) {
-            if(vis[b]) {
-              flag=true;
-              break;
+          if(I->Obj[I->Table[a].model]->Obj.Enabled) {
+            vis = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].visRep ;
+            
+            for(b=0;b<cRepCnt;b++) {
+              if(vis[b]) {
+                flag=true;
+                break;
+              }
             }
           }
           base[0].sele[a]=flag;
@@ -3567,6 +3578,121 @@ int SelectorLogic2(EvalElem *base)
   return(1);
 }
 /*========================================================================*/
+int SelectorOperator22(EvalElem *base)
+{
+  int c=0;
+  int a,d,e;
+  SelectorType *I=&Selector;
+  ObjectMolecule *obj;
+
+  float dist;
+  float *v2;
+  CoordSet *cs;
+  int ok=true;
+  int nCSet;
+  MapType *map;
+  int i,j,h,k,l;
+  int n1,at,idx;
+
+  switch(base[1].code)
+	 {
+	 case SELE_WIT_:
+		if(!sscanf(base[2].text,"%f",&dist))
+		  ok=ErrMessage("Selector","Invalid distance.");
+		if(ok)
+		  {
+          if(dist<0.0) dist = 0.0;
+
+          /* copy starting mask */
+          for(a=0;a<I->NAtom;a++) {
+            I->Flag2[a]=base[0].sele[a];
+            base[0].sele[a]=false;
+          }
+
+			 for(d=0;d<I->NCSet;d++)
+				{
+				  n1=0;
+ 				  for(a=0;a<I->NAtom;a++) {
+                I->Flag1[a]=false;
+					 at=I->Table[a].atom;
+					 obj=I->Obj[I->Table[a].model];
+                if(d<obj->NCSet) 
+                  cs=obj->CSet[d];
+                else
+                  cs=NULL;
+					 if(cs) {
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[at])
+                      idx=obj->DiscreteAtmToIdx[at];
+                    else
+                      idx=-1;
+                  } else 
+                    idx=cs->AtmToIdx[at];
+						if(idx>=0) {
+						  copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+						  I->Flag1[a]=true;
+						  n1++;
+						}
+					 }
+				  }
+				  if(n1) {
+					 map=MapNewFlagged(-dist,I->Vertex,I->NAtom,NULL,I->Flag1);
+					 if(map) {
+						MapSetupExpress(map);
+						nCSet=SelectorGetArrayNCSet(base[4].sele);
+						for(e=0;e<nCSet;e++) {
+						  for(a=0;a<I->NAtom;a++) {
+							 if(base[4].sele[a])
+								{
+								  at=I->Table[a].atom;
+								  obj=I->Obj[I->Table[a].model];
+                          if(e<obj->NCSet) 
+                            cs=obj->CSet[e];
+                          else
+                            cs=NULL;
+								  if(cs) {
+                            if(obj->DiscreteFlag) {
+                              if(cs==obj->DiscreteCSet[at])
+                                idx=obj->DiscreteAtmToIdx[at];
+                              else
+                                idx=-1;
+                            } else 
+                              idx=cs->AtmToIdx[at];
+									 if(idx>=0) {
+										v2 = cs->Coord+(3*idx);
+										MapLocus(map,v2,&h,&k,&l);
+										i=*(MapEStart(map,h,k,l));
+										if(i) {
+										  j=map->EList[i++];
+										  while(j>=0) {
+											 if(!base[0].sele[j])
+                                    if(I->Flag2[j])
+                                      if(within3f(I->Vertex+3*j,v2,dist)) 
+                                        base[0].sele[j]=true;
+											 j=map->EList[i++];
+										  }
+										}
+									 }
+								  }
+								}
+						  }
+						}
+						MapFree(map);
+					 }
+				  }
+            }
+          for(a=0;a<I->NAtom;a++)
+            if(base[0].sele[a]) c++;
+        }
+      break;
+    }
+  FreeP(base[4].sele);
+  PRINTFD(FB_Selector)
+	 " SelectorOperator22: %d atoms selected.\n",c
+    ENDFD;
+  return(1);
+}
+/*========================================================================*/
 int *SelectorEvaluate(WordType *word)
 {
   int level = 0;
@@ -3703,6 +3829,9 @@ int *SelectorEvaluate(WordType *word)
                     case STYP_PRP1: 
 							 valueFlag=-1;
 							 break;
+                    case STYP_OP22: 
+							 valueFlag=-2;
+							 break;
                     }
 					 } else {
                   strcpy(tmpKW,word[c]); /* handle <object-name>[`index] syntax */
@@ -3797,7 +3926,7 @@ int *SelectorEvaluate(WordType *word)
                           Stack[a-1]=Stack[a];
                         totDepth--;
                       }
-                    if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR1)
+                    else if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR1)
                        &&(Stack[depth].type==STYP_LIST))
                       { /* 1 argument logical operator */
                         opFlag=true;
@@ -3822,7 +3951,7 @@ int *SelectorEvaluate(WordType *word)
                           Stack[a-2]=Stack[a];
                         totDepth-=2;
                       }
-                    if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_PRP1)
+                    else if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_PRP1)
                        &&(Stack[depth].type==STYP_PVAL)
                        &&(Stack[depth-2].type==STYP_LIST))
                       { /* 2 argument logical operator */
@@ -3866,6 +3995,27 @@ int *SelectorEvaluate(WordType *word)
                           Stack[a-3]=Stack[a];
                         totDepth-=3;
                       }
+                  }
+            if(ok)
+              if(depth>4)
+                if((Stack[depth-3].level>=Stack[depth].level)&&
+                   (Stack[depth-3].level>=Stack[depth-1].level)&&
+                   (Stack[depth-3].level>=Stack[depth-2].level)&&
+                   (Stack[depth-3].level>=Stack[depth-4].level))
+                  {
+                    if(ok&&(!opFlag)&&(Stack[depth-3].type==STYP_OP22)
+                       &&(Stack[depth-1].type==STYP_VALU)
+                       &&(Stack[depth-2].type==STYP_VALU)
+                       &&(Stack[depth].type==STYP_LIST)
+                       &&(Stack[depth-4].type==STYP_LIST))
+                      { 
+                        ok=SelectorOperator22(&Stack[depth-4]);
+                        opFlag=true;
+                        for(a=depth+1;a<=totDepth;a++) 
+                          Stack[a-4]=Stack[a];
+                        totDepth-=4;
+                      }
+
                   }
             if(opFlag) {
               opFlag2=true; /* make note that we performed an operation */

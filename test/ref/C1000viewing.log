@@ -316,30 +316,10 @@ PyMOL>del all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>orient
- Eigensolve: eigenvectors   -0.537    0.841   -0.072
- Eigensolve:                -0.784   -0.529   -0.325
- Eigensolve:                -0.312   -0.118    0.943
- Eigensolve: eigenvalues  1525.596 4798.706 4370.246
- Eigensolve:                 0.000    0.000    0.000
 PyMOL>orient (none)
 PyMOL>orient (name ca)
- Eigensolve: eigenvectors    0.568   -0.823    0.076
- Eigensolve:                 0.821    0.567    0.010
- Eigensolve:                -0.051    0.056    0.996
- Eigensolve: eigenvalues    93.821  482.357  448.979
- Eigensolve:                 0.000    0.000    0.000
 PyMOL>orient (resi 10)
- Eigensolve: eigenvectors   -0.976   -0.108    0.287
- Eigensolve:                 0.440   -0.804    1.190
- Eigensolve:                 0.043    0.546    0.352
- Eigensolve: eigenvalues    15.513   22.484    8.001
- Eigensolve:                 0.000    0.000    0.000
 PyMOL>orient (name ca and i. 10)
- Eigensolve: eigenvectors    1.000    0.000    0.000
- Eigensolve:                 0.000    1.000    0.000
- Eigensolve:                 0.000    0.000    1.000
- Eigensolve: eigenvalues     0.000    0.000    0.000
- Eigensolve:                 0.000    0.000    0.000
 PyMOL>del all
 PyMOL>del all
 PyMOL>load dat/pept.pdb
@@ -461,3 +441,190 @@ PyMOL>zoom resi 5,5
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -47.650   0.247  -2.740  20.030  35.887  61.934   0.000
+PyMOL>del all
+PyMOL>load dat/1tii.pdb,m1
+ ObjectMolecule: read HELIX D 4 D 10
+ ObjectMolecule: read HELIX D 57 D 74
+ ObjectMolecule: read HELIX E 4 E 10
+ ObjectMolecule: read HELIX E 57 E 74
+ ObjectMolecule: read HELIX F 4 F 11
+ ObjectMolecule: read HELIX F 57 F 74
+ ObjectMolecule: read HELIX G 4 G 11
+ ObjectMolecule: read HELIX G 57 G 74
+ ObjectMolecule: read HELIX H 4 H 11
+ ObjectMolecule: read HELIX H 57 H 74
+ ObjectMolecule: read HELIX A 11 A 17
+ ObjectMolecule: read HELIX A 39 A 44
+ ObjectMolecule: read HELIX A 64 A 74
+ ObjectMolecule: read HELIX A 95 A 102
+ ObjectMolecule: read HELIX A 106 A 108
+ ObjectMolecule: read HELIX A 119 A 121
+ ObjectMolecule: read HELIX A 145 A 148
+ ObjectMolecule: read HELIX A 156 A 162
+ ObjectMolecule: read HELIX A 170 A 173
+ ObjectMolecule: read HELIX A 177 A 179
+ ObjectMolecule: read HELIX A 183 A 185
+ ObjectMolecule: read HELIX C 197 C 228
+ ObjectMolecule: read SHEET D 16 D 18
+ ObjectMolecule: read SHEET D 78 D 83
+ ObjectMolecule: read SHEET D 89 D 96
+ ObjectMolecule: read SHEET D 46 D 49
+ ObjectMolecule: read SHEET D 36 D 41
+ ObjectMolecule: read SHEET D 23 D 29
+ ObjectMolecule: read SHEET H 90 H 97
+ ObjectMolecule: read SHEET H 78 H 83
+ ObjectMolecule: read SHEET H 16 H 18
+ ObjectMolecule: read SHEET D 93 D 97
+ ObjectMolecule: read SHEET E 23 E 29
+ ObjectMolecule: read SHEET E 36 E 41
+ ObjectMolecule: read SHEET E 46 E 49
+ ObjectMolecule: read SHEET E 89 E 96
+ ObjectMolecule: read SHEET E 78 E 83
+ ObjectMolecule: read SHEET E 16 E 18
+ ObjectMolecule: read SHEET E 93 E 97
+ ObjectMolecule: read SHEET F 23 F 29
+ ObjectMolecule: read SHEET F 36 F 41
+ ObjectMolecule: read SHEET F 46 F 49
+ ObjectMolecule: read SHEET F 89 F 96
+ ObjectMolecule: read SHEET F 78 F 83
+ ObjectMolecule: read SHEET F 16 F 18
+ ObjectMolecule: read SHEET F 93 F 97
+ ObjectMolecule: read SHEET G 23 G 29
+ ObjectMolecule: read SHEET G 36 G 41
+ ObjectMolecule: read SHEET G 46 G 49
+ ObjectMolecule: read SHEET G 89 G 96
+ ObjectMolecule: read SHEET G 78 G 83
+ ObjectMolecule: read SHEET G 16 G 18
+ ObjectMolecule: read SHEET G 93 G 97
+ ObjectMolecule: read SHEET H 23 H 29
+ ObjectMolecule: read SHEET H 36 H 41
+ ObjectMolecule: read SHEET H 46 H 49
+ ObjectMolecule: read SHEET H 89 H 91
+ ObjectMolecule: read SHEET A 2 A 7
+ ObjectMolecule: read SHEET A 81 A 87
+ ObjectMolecule: read SHEET A 122 A 128
+ ObjectMolecule: read SHEET A 57 A 60
+ ObjectMolecule: read SHEET A 111 A 114
+ ObjectMolecule: read SHEET A 92 A 94
+ PDBStrToCoordSet: Attempting to read symmetry information
+ Crystal: Unit Cell          105.700  105.700  171.600
+ Crystal: Alpha Beta Gamma    90.000   90.000  120.000
+ Crystal: RealToFrac Matrix
+ Crystal:    0.00946    0.00546   -0.00000
+ Crystal:    0.00000    0.01092   -0.00000
+ Crystal:    0.00000    0.00000    0.00583
+ Crystal: FracToReal Matrix
+ Crystal:  105.70000  -52.85000    0.00000
+ Crystal:    0.00000   91.53888    0.00000
+ Crystal:    0.00000    0.00000  171.60001
+ Crystal: Unit Cell Volume 1660343.250
+ Symmetry:      1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000      1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000      1.00000      0.00000
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry:      0.00000     -1.00000      0.00000      0.00000
+ Symmetry:      1.00000     -1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000      1.00000      0.33333
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry:     -1.00000      1.00000      0.00000      0.00000
+ Symmetry:     -1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000      1.00000      0.66667
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry:      0.00000      1.00000      0.00000      0.00000
+ Symmetry:      1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000     -1.00000      0.00000
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry:     -1.00000      0.00000      0.00000      0.00000
+ Symmetry:     -1.00000      1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000     -1.00000      0.33333
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry:      1.00000     -1.00000      0.00000      0.00000
+ Symmetry:      0.00000     -1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000     -1.00000      0.66667
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Executive: object "m1" created.
+PyMOL>load dat/il2.pdb,m1
+ CmdLoad: "dat/il2.pdb" appended into object "m1", state 2.
+PyMOL>load dat/pept.pdb,m1
+ CmdLoad: "dat/pept.pdb" appended into object "m1", state 3.
+PyMOL>zoom m1
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -273.941  39.950   5.709  13.189 206.317 356.057   0.000
+PyMOL>zoom m1,state=0
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -273.941  39.950   5.709  13.189 206.317 356.057   0.000
+PyMOL>zoom m1,state=1
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -247.023  51.665  11.519  10.196 186.044 321.070   0.000
+PyMOL>zoom m1,state=2
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -143.210   9.985  -9.318  20.976 107.857 186.137   0.000
+PyMOL>zoom m1,state=3
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -58.322   1.224 -10.279  20.545  43.925  75.804   0.000
+PyMOL>zoom m1,state=4
+ExecutiveWindowZoom-Error: selection doesn't specify any coordinates.
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -58.322   1.224 -10.279  20.545  43.925  75.804   0.000
+PyMOL>origin m1
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+ 38.726  15.988 -65.678  39.950   5.709  13.189  43.925  75.804   0.000
+PyMOL>origin m1,state=0
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+ 38.726  15.988 -65.678  39.950   5.709  13.189  43.925  75.804   0.000
+PyMOL>origin m1,state=1
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+ 50.441  21.798 -68.672  51.665  11.519  10.196  43.925  75.804   0.000
+PyMOL>origin m1,state=2
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  8.761   0.961 -57.891   9.985  -9.318  20.976  43.925  75.804   0.000
+PyMOL>origin m1,state=3
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -58.322   1.224 -10.279  20.545  43.925  75.804   0.000
+PyMOL>origin m1,state=4
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -58.322   1.224 -10.279  20.545  43.925  75.804   0.000
+PyMOL>orient m1
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  0.924   0.347   0.160   0.338  -0.550  -0.763  -0.177   0.760  -0.626
+  0.000   0.000 -273.941  39.950   5.709  13.189 206.317 356.057   0.000
+PyMOL>orient m1,state=0
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  0.924   0.347   0.160   0.338  -0.550  -0.763  -0.177   0.760  -0.626
+  0.000   0.000 -273.941  39.950   5.709  13.189 206.317 356.057   0.000
+PyMOL>orient m1,state=1
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  0.899   0.239   0.366  -0.288  -0.306   0.907   0.329  -0.921  -0.206
+  0.000   0.000 -247.023  51.665  11.519  10.196 186.044 321.070   0.000
+PyMOL>orient m1,state=2
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+  0.288   0.019   0.958  -0.301   0.951   0.072  -0.909  -0.309   0.279
+  0.000   0.000 -143.210   9.985  -9.318  20.976 107.857 186.137   0.000
+PyMOL>orient m1,state=3
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+ -0.537   0.312  -0.784   0.841   0.118  -0.529  -0.072  -0.943  -0.325
+  0.000   0.000 -58.322   1.224 -10.279  20.545  43.925  75.804   0.000
+PyMOL>orient m1,state=4
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+ -0.537   0.312  -0.784   0.841   0.118  -0.529  -0.072  -0.943  -0.325
+  0.000   0.000 -58.322   1.224 -10.279  20.545  43.925  75.804   0.000
+PyMOL>zoom m1,state=-5000
+PyMOL>zoom (none),state=5
+ExecutiveWindowZoom-Error: selection doesn't specify any coordinates.
+PyMOL>zoom (all),state=-1
+PyMOL>zoom (all),state=0
+PyMOL>cmd._dump_floats(cmd.get_view(0))
+ -0.537   0.312  -0.784   0.841   0.118  -0.529  -0.072  -0.943  -0.325
+  0.000   0.000 -273.941  39.950   5.709  13.189 206.317 356.057   0.000

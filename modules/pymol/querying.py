@@ -24,7 +24,7 @@ def distance(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,
 DESCRIPTION
  
    "distance" creates a new distance object between two
-   selections.  It will display all distances within a cutoff.
+   selections.  It will display all distances within the cutoff.
  
 USAGE
  
@@ -82,7 +82,7 @@ NOTES
       save=cmd.get_setting_legacy('auto_zoom')
       cmd.set('auto_zoom',zoom,quiet=1)
 
-      # in unlabeled, then get next name in series
+      # if unlabeled, then get next name in series
 
       if name!=None:
          nam=name
@@ -129,8 +129,8 @@ def get_povray():
    '''
 DESCRIPTION
   
-   "get_povray" returns a tuple corresponding to strings
-   for a PovRay input file.
+   "get_povray" returns a tuple corresponding to strings for a PovRay
+   input file.
       
 PYMOL API
   
@@ -314,7 +314,7 @@ def get_model(selection="(all)",state=1):
    '''
 DESCRIPTION
   
-   "get_model" returns a Chempy "Indexed" format model from a selection.
+   "get_model" returns a ChemPy "Indexed" format model from a selection.
  
 PYMOL API
  

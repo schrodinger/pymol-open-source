@@ -430,7 +430,7 @@ def _mpng(*arg): # INTERNAL
          fname = re.sub("\.png$","",fname)
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)
-      r = _cmd.mpng_(str(fname))
+      r = _cmd.mpng_(str(fname),arg[1],arg[2])
    finally:
       unlock()
    return r

@@ -68,7 +68,7 @@ typedef struct ObjectMolecule {
 
 
 typedef struct ObjectMoleculeOpRec {
-  unsigned long code;
+  unsigned int code;
   Vector3f v1,v2;
   int cs1;
   int i1,i2,i3,i4,*vc1,*i1VLA;
@@ -122,6 +122,9 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_FlagClear 33
 #define OMOP_PrepareFromTemplate 34
 #define OMOP_SetGeometry 35
+#define OMOP_CSetSumVertices 36
+#define OMOP_CSetMoment 37
+#define OMOP_CSetMinMax 38
 
 #include"CoordSet.h"
 

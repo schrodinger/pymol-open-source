@@ -7,8 +7,10 @@ INSTALLATION AND COMPILATION GUIDE
 NOTE: 
 
    These are the general installation instructions.  If you are on a
-   commmon platform such as RedHat Linux, look for a INSTALL file which
-   covers your platform (for example, "INSTALL.linux-rh7x")
+   commmon platform such as RedHat Linux, look for a INSTALL file
+   which specifically address your platform (for example,
+   "INSTALL.linux-rh7x") in the setup directory.
+
 
 WARNING:
 
@@ -37,17 +39,16 @@ NOTE:
    to work.
 
 You will need to compile the external dependencies from the sources
-(currently in the file "ext-0.51-req-src.tgz"). See the ext package
+(currently in the file "ext-0.79-req-src.tgz"). See the ext package
 release notes for more information.
 
 http://sourceforge.net/project/showfiles.php?group_id=4546
-
 
 The external dependencies can be installed in an "ext" subdirectory
 within the main pymol directory.
 
    cd $HOME/pymol
-   gunzip < ext-0.51-req-src.tgz | tar -xvf -
+   gunzip < ext-0.79-req-src.tgz | tar -xvf -
    cd ext
 
   **READ INSTALL in that directory for "ext" building instructions.**
@@ -56,16 +57,15 @@ Alternatively, you can put the external dependencies into a different
 directory and then use a symbolic link to "ext" in the pymol directory.
 
    cd $HOME
-   gunzip < ext-0.51-req-src.tgz | tar -xvf -
+   gunzip < ext-0.79-req-src.tgz | tar -xvf -
    cd $HOME/pymol
    ln -s ../ext ext
    cd ext
   **READ INSTALL in that directory for "ext" building instructions.**
-
    
 STEP(2) 
 
-After you have built the external dependencies, copy Rules.<platform>
+After you have built the external dependencies, copy setup/Rules.<platform>
 to "Rules.make" and choose options appropriate for your configuration
 (here is where experience counts).
 
@@ -73,9 +73,9 @@ Unless you are planning on doing heavy PyMOL development under Linux,
 you should choose to make PyMOL as a Python module and not as a
 standalone application.
 
-	cd $HOME/pymol
-   cp Rules.<platform> Rules.make
-	vi Rules.make
+   cd $HOME/pymol
+   cp setup/Rules.<platform> Rules.make
+   vi Rules.make
 
 STEP (3) 
 
@@ -86,23 +86,22 @@ STEP (3)
 
 STEP (4) 
   
-Copy "pymol.com.template" to "pymol.com".
+Copy "setup/pymol.com.template" to "pymol.com".
 
 Next, edit pymol.com so that PYMOL_PATH points to the correct location
 on your system.
 
-	cd $HOME/pymol
+   cd $HOME/pymol
    cp pymol.com.template pymol.com
-	vi pymol.com
+   vi pymol.com
 	
 Now you should be all set to run pymol.
 
-	./pymol.com
+   ./pymol.com
 
- I suggest putting a link to this file into a your bin directory, if
-you have one.
+ I suggest putting a link to this file into a directory in your path.
 
-   ln -s $HOME/pymol/pymol.com /usr/local/bin
+   ln -s $HOME/pymol/pymol.com /usr/local/bin/pymol
 
 =======
 

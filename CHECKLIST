@@ -14,12 +14,12 @@ PyMOL Release Checklist
 
 6) Final build:
 
-   Rebuild windows helper app for Py152
-   Rebuild PyMOL for Py152
-   Create installer
-
    Rebuild windows helper app for Py21
    Rebuild PyMOL for Py21
+   Create installer
+
+   Rebuild windows helper app for lastest Python version
+   Rebuild PyMOL for latest Python version
    Create installer
 
    Check-out a pristine source distribution
@@ -30,4 +30,5 @@ PyMOL Release Checklist
 8) Release files on Sourceforge
 
 9) As time permits, create usr-local tarballs for IRIX and Linux
+
 

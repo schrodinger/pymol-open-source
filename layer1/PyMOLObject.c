@@ -180,6 +180,7 @@ void ObjectInit(CObject *I)
   I->ExtentFlag=false;
   I->Setting=NULL;
   I->TTTFlag=false;
+  I->Enabled=false;
   OrthoRemoveSplash();
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
   I->RepVis[cRepCell]=false;

@@ -47,6 +47,7 @@ PyObject *P_xray = NULL;
 PyObject *P_parser = NULL;
 PyObject *P_setting = NULL;
 PyObject *P_povray = NULL;
+PyObject *P_traceback = NULL;
 
 PyObject *P_chempy = NULL;
 PyObject *P_models = NULL;
@@ -159,13 +160,12 @@ void my_interrupt(int a)
 
 void PDumpTraceback(PyObject *err)
 {
-  PyObject *traceback;
-  traceback = PyObject_GetAttrString(P_globals,"traceback");
-  if(!traceback) 
-    ErrFatal("PyMOL","can't find module 'traceback'");
-  else {
-    PyObject_CallMethod(traceback,"print_tb","o",err);
-  }
+  PyObject_CallMethod(P_traceback,"print_tb","O",err);
+}
+
+void PDumpException()
+{
+  PyObject_CallMethod(P_traceback,"print_exc","");
 }
 
 int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at) 
@@ -183,7 +183,6 @@ int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at)
       strcpy(atype,"HETATM");
     else
       strcpy(atype,"ATOM");
-
     PConvStringToPyDictItem(dict,"type",atype);
     PConvStringToPyDictItem(dict,"name",at->name);
     PConvStringToPyDictItem(dict,"resn",at->resn);
@@ -825,6 +824,10 @@ void PInit(void)
   PyObject_SetAttrString(sys,"stdout",pcatch);
   PyObject_SetAttrString(sys,"stderr",pcatch);
 
+  PRunString("import traceback\n");  
+  P_traceback = PyDict_GetItemString(P_globals,"traceback");
+  if(!P_traceback) ErrFatal("PyMOL","can't find 'traceback'");
+
   PRunString("import cmd\n");  
   P_cmd = PyDict_GetItemString(P_globals,"cmd");
   if(!P_cmd) ErrFatal("PyMOL","can't find 'cmd'");
@@ -894,7 +897,6 @@ void PInit(void)
   PRunString("import sglite\n"); 
 #endif
   PRunString("import string\n"); 
-  PRunString("import traceback\n"); 
 
   /* backwards compatibility */
 
@@ -1020,22 +1022,38 @@ void PLogFlush(void)
 
 void PFlush(void) {  
   /* NOTE: ASSUMES unblocked Python threads and a locked API */
+  PyObject *err;
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(buffer)) {
     PBlockAndUnlockAPI();
     PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
+    err = PyErr_Occurred();
+    if(err) {
+      PyErr_Print();
+      PRINTFB(FB_Python,FB_Errors)
+        " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
+        ENDFB;
+    }
     PLockAPIAndUnblock();
   }
 }
 
 void PFlushFast(void) {
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */ 
- char buffer[OrthoLineLength+1];
+  PyObject *err;
+  char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(buffer)) {
-  PRINTFD(FB_Threads)
-    " PFlushFast-DEBUG: executing '%s'\n",buffer
-    ENDFD;
-   PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
+    PRINTFD(FB_Threads)
+      " PFlushFast-DEBUG: executing '%s'\n",buffer
+      ENDFD;
+    PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
+    err = PyErr_Occurred();
+    if(err) {
+      PyErr_Print();
+      PRINTFB(FB_Python,FB_Errors)
+        " PFlushFast: Uncaught exception.  PyMOL may have a bug.\n"
+        ENDFB;
+    }
   }
 }
 

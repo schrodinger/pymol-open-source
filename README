@@ -60,31 +60,58 @@ The PyMOL Team:
 
       Ralf W. Grosse-Kunstleve (SGLite Module)
    
-   Other Authors and Contributors:
-
-      Paul Adams
+   Other Authors and Contributors: These are the people who have gone
+      out of their way to help the project with their ideas, actions, 
+      information, support, or code.
+      
+      Paul Adams 
       Stephen Adler
-      Jun Aishima
+      Jun Aishima 
       Daan van Aalten
+      Dennis Allison
+      Daniel Appelman
+      Michael Banck
+      Ulrich Baumann
+      Jeff Bizzaro
+      Jeff Blaney 
+      Axel Brunger
+      Andrew Dalke 
       Huub van Dam
-      Peter Haebel
+      Byron DeLaBarre
+      Bill DeGrado
+      Scott Dixon 
+      Thomas Earnest
+      Tim Fenn
+      Thierry Fischmann
+      Peter Haebel 
       Uwe Hoffmann
       Andrey Khavryuchenko
-      Michael Love
-      Nigel Moriarty
+      David Konerding
+      Greg Landrum
+      Michael Love 
+      Robert McDowell
+      Nigel Moriarty 
       Andre Padilla
       Ezequiel "Zac" Panepucci
       Michael Randal
+      Ian Robinson
       Paul Sherwood
+      Paul Sprengeler
+      John Stone
       Scott Walsh
+      Dave Weininger
       Chris Wiesmann
-
+      Richard Xie
+   
    People Who Nurtured The Nascent PyMOL Community...
    (helping other users, answering questions, providing key feedback, etc.)
 
       Jacob Corn
       Marc Saric
 
+   OSX Testing
+
+      
    Miscellaneous Code Snippets Lifted From:
 
       Thomas Malik (fast matrix-multiply code)

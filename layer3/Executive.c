@@ -153,7 +153,7 @@ int ExecutiveMapNew(char *name,int type,float *grid,
   }
   
   if(strlen(sele)) {
-    ok = ExecutiveGetExtent(sele,md->MinCorner,md->MaxCorner,true);
+    ok = ExecutiveGetExtent(sele,md->MinCorner,md->MaxCorner,true,-1); /* TODO restrict to state */
   } else {
     copy3f(minCorner,md->MinCorner);
     copy3f(maxCorner,md->MaxCorner);
@@ -1708,7 +1708,7 @@ void ExecutiveCopy(char *src,char *dst)
 }
 
 /*========================================================================*/
-void ExecutiveOrient(char *sele,Matrix33d mi)
+void ExecutiveOrient(char *sele,Matrix33d mi,int state)
 {
   double egval[3],egvali[3];
   double evect[3][3];
@@ -1777,7 +1777,7 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
     }
     /* X < Y < Z  - do nothing - that's what we want */
 
-    ExecutiveWindowZoom(sele,0.0);
+    ExecutiveWindowZoom(sele,0.0,state);
 
   }
 }
@@ -2272,7 +2272,7 @@ int ExecutiveReset(int cmd,char *name)
   CObject *obj;
   if(!name[0]) {
     SceneResetMatrix();
-    ExecutiveWindowZoom(cKeywordAll,0.0);
+    ExecutiveWindowZoom(cKeywordAll,0.0,-1); /* reset does all states */
   } else {
     obj = ExecutiveFindObjectByName(name);
     if(!obj)
@@ -2596,7 +2596,7 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op)
 }
 
 /*========================================================================*/
-int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
+int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
 {
   int sele;
   ObjectMoleculeOpRec op,op2;
@@ -2609,8 +2609,11 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
   float f1,f2,fmx;
   int a;
 
-
-
+  
+  PRINTFD(FB_Executive)
+    " ExecutiveGetExtent: name %s state %d\n",name,state
+    ENDFD;
+  
   op2.i1 = 0;
   op2.v1[0]=-1.0;
   op2.v1[1]=-1.0;
@@ -2627,7 +2630,12 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
   sele=SelectorIndexByName(name);
 
   if(sele>=0) {
-	 op.code = OMOP_MNMX;
+    if(state<0) {
+      op.code = OMOP_MNMX;
+    } else {
+      op.code = OMOP_CSetMinMax;
+      op.cs1 = state;
+    }
 	 op.v1[0]=FLT_MAX;
 	 op.v1[1]=FLT_MAX;
 	 op.v1[2]=FLT_MAX;
@@ -2637,6 +2645,11 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
     op.i1 = 0;
     op.i2 = transformed;
     ExecutiveObjMolSeleOp(sele,&op);
+
+    PRINTFD(FB_Executive)
+      " ExecutiveGetExtent: minmax over %d vertices\n",op.i1
+      ENDFD;
+
     if(op.i1)
       flag = true;
     if(all_flag) {
@@ -2658,7 +2671,13 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
     }
     op2.i1=0;
     op2.i2=transformed;
-	 op2.code = OMOP_SUMC;
+    if(state<0) 
+      op2.code = OMOP_SUMC;
+    else {
+      op2.code = OMOP_CSetSumVertices;
+      op2.cs1 = state;
+    }
+      
 	 op2.v1[0]=0.0;
 	 op2.v1[1]=0.0;
 	 op2.v1[2]=0.0;
@@ -2732,13 +2751,13 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
   return(flag);  
 }
 /*========================================================================*/
-int ExecutiveWindowZoom(char *name,float buffer)
+int ExecutiveWindowZoom(char *name,float buffer,int state)
 {
   float center[3],radius;
   float mn[3],mx[3];
   int sele0;
   int ok=true;
-  if(ExecutiveGetExtent(name,mn,mx,true)) {
+  if(ExecutiveGetExtent(name,mn,mx,true,state)) {
     if(buffer!=0.0) {
       buffer = buffer;
       mx[0]+=buffer;
@@ -2753,7 +2772,7 @@ int ExecutiveWindowZoom(char *name,float buffer)
     if(radius<MAX_VDW)
       radius=MAX_VDW;
     PRINTFD(FB_Executive)
-      " ExecutiveWindowZoom: zooming with radius %8.3f...\n",radius
+      " ExecutiveWindowZoom: zooming with radius %8.3f...state %d\n",radius,state
       ENDFD;
     PRINTFD(FB_Executive)
       " ExecutiveWindowZoom: on center %8.3f %8.3f %8.3f...\n",center[0],
@@ -2765,7 +2784,7 @@ int ExecutiveWindowZoom(char *name,float buffer)
   } else {
     sele0 = SelectorIndexByName(name);
     if(sele0>=0) {
-      ErrMessage("ExecutiveWindowZoom","selection is empty.");
+      ErrMessage("ExecutiveWindowZoom","selection doesn't specify any coordinates.");
       ok=false;
     } else if(ExecutiveValidName(name)) {
       SceneSetDefaultView();
@@ -2778,7 +2797,7 @@ int ExecutiveWindowZoom(char *name,float buffer)
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveCenter(char *name,int preserve,char *oname,float *pos)
+int ExecutiveCenter(char *name,int preserve,char *oname,float *pos,int state)
 {
   float center[3];
   float mn[3],mx[3];
@@ -2791,7 +2810,7 @@ int ExecutiveCenter(char *name,int preserve,char *oname,float *pos)
   }
   if(ok) {
     if(name[0]) {
-      ok = ExecutiveGetExtent(name,mn,mx,(oname[0]==0));
+      ok = ExecutiveGetExtent(name,mn,mx,(oname[0]==0),state);
       if(ok) 
         average3f(mn,mx,center);
     } else {
@@ -2818,7 +2837,7 @@ int ExecutiveCenter(char *name,int preserve,char *oname,float *pos)
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveGetMoment(char *name,Matrix33d mi)
+int ExecutiveGetMoment(char *name,Matrix33d mi,int state)
 {
   int sele;
   ObjectMoleculeOpRec op;
@@ -2833,19 +2852,30 @@ int ExecutiveGetMoment(char *name,Matrix33d mi)
   
   sele=SelectorIndexByName(name);
   if(sele>=0) {
-	 op.code = OMOP_SUMC;
-	 op.v1[0]=0.0;
-	 op.v1[1]=0.0;
-	 op.v1[2]=0.0;
-	 op.i1=0;
-    op.i2=0;
+    if(state<0) {
+      op.code = OMOP_SUMC;
+    } else {
+      op.code = OMOP_CSetSumVertices;
+      op.cs1=state;
+    }
+    
+    op.v1[0]=0.0;
+    op.v1[1]=0.0;
+    op.v1[2]=0.0;
+    op.i1=0;
+    op.i2=0; /* untransformed...is this right? */
 	 
 	 ExecutiveObjMolSeleOp(sele,&op);
 	 
-	 if(op.i1) {
+	 if(op.i1) { /* any vertices? */
 		c+=op.i1;
-		scale3f(op.v1,1.0/op.i1,op.v1);
-		op.code = OMOP_MOME;		
+		scale3f(op.v1,1.0/op.i1,op.v1); /* compute raw average */
+      if(state<0) {
+        op.code = OMOP_MOME;		
+      } else {
+        op.code = OMOP_CSetMoment;
+        op.cs1=state;
+      }
 		for(a=0;a<3;a++)
 		  for(b=0;b<3;b++)
 			 op.d[a][b]=0.0;
@@ -3178,7 +3208,7 @@ void ExecutiveSetControlsOff(char *name)
 	 }
 }
 /*========================================================================*/
-void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
+void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state */
 {
   CObject *ob;
   ObjectMolecule *obj = NULL;
@@ -3445,7 +3475,7 @@ void ExecutiveManageObject(CObject *obj)
   }
   if(!exists) 
     if(SettingGet(cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(obj->Name,0.0);
+      ExecutiveWindowZoom(obj->Name,0.0,-1); /* auto zoom (all states) */
     }
 
 }

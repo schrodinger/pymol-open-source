@@ -17,7 +17,7 @@ cd /usr/local/pymol
 
 # Step 3: Copy the appropriate makefile rules to "Rules.make".
 
-cp Rules.linux-rh7x Rules.make
+cp setup/Rules.linux-rh7x Rules.make
 
 # Step 4: Build PyMOL.
 
@@ -29,7 +29,9 @@ make pmw
 
 # Step 6: Create you own copy of the start-up script.
 
-cp pymol.com.linux-rh7x pymol.com
+(in /usr/local/pymol)
+
+cp setup/pymol.com.linux-rh7x pymol.com
 
 # Step 7: Test it.
 

@@ -148,7 +148,7 @@ SEE ALSO
       unlock()
    return r
 
-def mpng(prefix):
+def mpng(prefix,first=0,last=0):
    '''
 DESCRIPTION
   
@@ -158,20 +158,26 @@ DESCRIPTION
    several hours for a long movie.
  
    Be sure to disable "cache_frames" when issuing this operation on a
-   long movie (typically >100 frames to avoid running out of memory).
+   long movie (>100 frames) to avoid running out of memory.
    
 USAGE
  
-   mpng prefix
- 
+   mpng prefix [, first [, last]]
+
+   Options "first" and "last" can be used to specify an inclusive
+   interval over which to render frames.  Thus, you can write a smart
+   Python program that will automatically distribute rendering over a
+   cluster of workstations.  If these options are left at zero, then
+   the entire movie will be rendered.
+
 PYMOL API
  
-   cmd.mpng( string prefix )
+   cmd.mpng( string prefix, int first=0, int last=0 )
    '''
    if thread.get_ident() ==pymol.glutThread:
-      r = cmd._mpng(prefix)
+      r = cmd._mpng(prefix,int(start)-1,int(stop)-1)
    else:
-      r = _cmd.do("cmd._mpng('"+prefix+"')")
+      r = _cmd.do("cmd._mpng('"+prefix+","+str(start)+","+str(stop)+"')")
    return r
 
 def mclear():

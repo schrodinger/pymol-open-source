@@ -55,6 +55,14 @@ select (q=1.0)
 
 select (b=0.0)
 
+load dat/pept.pdb
+
+select tst,pept within 5 of tiny
+select tst,pept within 50 of tiny
+
+select tst, pept w. 1 of pept
+
 print cmd.select("(none)")
+
 
 /print "END-LOG"
