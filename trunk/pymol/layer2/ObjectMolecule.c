@@ -2797,11 +2797,11 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 {
   char *p;
   int nAtom,nBond;
-  int a,c;
+  int a,c,cnt,atm,chg;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL;
-  char cc[MAXLINELEN],resn[MAXLINELEN] = "UNK";
+  char cc[MAXLINELEN],cc1[MAXLINELEN],resn[MAXLINELEN] = "UNK";
   float *f;
   int *ii,*bond=NULL;
   int ok=true;
@@ -2876,6 +2876,16 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           atInfo[a].visRep[cRepNonbonded] = autoshow_nonbonded; /* show lines by default */
 
 		  }
+        if(ok) {
+          p=nskip(p,2);
+          p=ncopy(cc,p,3);
+          if(sscanf(cc,"%d",&atInfo[a].formalCharge)==1) {
+            if(atInfo[a].formalCharge) {
+              atInfo[a].formalCharge = 4-atInfo[a].formalCharge;
+            }
+          }
+            
+        }
 		  if(ok&&atInfo) {
           atInfo[a].id = a+1;
 			 strcpy(atInfo[a].resn,resn);
@@ -2913,6 +2923,8 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 if(sscanf(cc,"%d",ii++)!=1)
 				ok=ErrMessage("ReadMOLFile","bad bond order");
 		  }
+        
+
 		  if(!ok)
 			 break;
 		  p=nextline(p);
@@ -2923,6 +2935,26 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 		(*(ii++))--; 
       ii++;
 	 }
+  }
+  while(*p) { /* read M  CHG records */
+    p=ncopy(cc,p,6);
+    if(!strcmp(cc,"M  CHG")) {
+      p=ncopy(cc,p,3);
+      if(sscanf(cc,"%d",&cnt)==1) {
+        while(cnt--) {
+          p=ncopy(cc,p,4);
+          p=ncopy(cc1,p,4);
+          if(!((*cc)||(*cc1))) break;
+          if((sscanf(cc,"%d",&atm)==1)&&
+             (sscanf(cc1,"%d",&chg)==1)) {
+            atm--;
+            if((atm>=0)&&(atm<nAtom))
+              atInfo[atm].formalCharge = chg;
+          }
+        }
+      }
+    }
+    p=nextline(p);
   }
   if(ok) {
 	 cset = CoordSetNew();

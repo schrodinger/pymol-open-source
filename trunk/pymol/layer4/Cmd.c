@@ -2193,6 +2193,10 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 
   PyArg_ParseTuple(args,"ssiiii",&oname,&fname,&frame,&type,&finish,&discrete);
 
+  PRINTFD(FB_CCmd)
+    "CmdLoad-DEBUG %s %s %d %d %d %d\n",
+    oname,fname,frame,type,finish,discrete
+    ENDFD;
   APIEntry();
   origObj=ExecutiveFindObjectByName(oname);
 
@@ -2200,6 +2204,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   
   switch(type) {
   case cLoadTypePDB:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDB\n" ENDFD;
 	 if(!origObj) {
 		obj=(Object*)ObjectMoleculeLoadPDBFile(NULL,fname,frame,discrete);
 		if(obj) {
@@ -2221,6 +2226,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 	 }
 	 break;
   case cLoadTypeXYZ:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XYZStr\n" ENDFD;
 	 if(!origObj) {
 		obj=(Object*)ObjectMoleculeLoadXYZFile(NULL,fname,frame,discrete);
 		if(obj) {
@@ -2242,6 +2248,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 	 }
 	 break;
   case cLoadTypePDBStr:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDBStr\n" ENDFD;
 	 obj=(Object*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete);
 	 if(!origObj) {
 	   if(obj) {
@@ -2262,6 +2269,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 	 }
 	 break;
   case cLoadTypeMOL:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading MOL\n" ENDFD;
 	 obj=(Object*)ObjectMoleculeLoadMOLFile((ObjectMolecule*)origObj,fname,frame,discrete);
 	 if(!origObj) {
 	   if(obj) {
@@ -2282,6 +2290,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 	 }
 	 break;
   case cLoadTypeMOLStr:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: reading MOLStr\n" ENDFD;
 	 obj=(Object*)ObjectMoleculeReadMOLStr((ObjectMolecule*)origObj,fname,frame,discrete);
 	 if(!origObj) {
 	   if(obj) {
@@ -2302,6 +2311,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 	 }
 	 break;
   case cLoadTypeMMD:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading MMD\n" ENDFD;
 	 obj=(Object*)ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,NULL,discrete);
 	 if(!origObj) {
 	   if(obj) {
@@ -2325,6 +2335,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 	 ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,oname,discrete);
     break;
   case cLoadTypeMMDStr:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading MMDStr\n" ENDFD;
 	 obj=(Object*)ObjectMoleculeReadMMDStr((ObjectMolecule*)origObj,fname,frame,discrete);
 	 if(!origObj) {
 	   if(obj) {
@@ -2345,6 +2356,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 	 }
 	 break;
   case cLoadTypeXPLORMap:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XPLORMap\n" ENDFD;
 	 if(!origObj) {
 		obj=(Object*)ObjectMapLoadXPLORFile(NULL,fname,frame);
 		if(obj) {
