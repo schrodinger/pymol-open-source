@@ -1036,7 +1036,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
                     ExecutiveManageObject((Object*)new_obj);
                     SceneChanged();
                   } else {
-                    ((Object*)new_obj)->fFree(new_obj);
+                    ((Object*)new_obj)->fFree((Object*)new_obj);
                   }
                 }
               }

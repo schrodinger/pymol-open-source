@@ -76,8 +76,7 @@ CSymmetry *SymmetryNew(void)
   I->NSymMat=0;
   I->SymMatVLA=VLAlloc(float,16);
   I->NSymOp=0;
-  I->SymOpVLA=VLAlloc(char,100);
-
+  I->SymOpVLA=VLAlloc(WordType,1);
   return(I);
 }
 
