@@ -596,18 +596,18 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       if(OrthoArrowsGrabbed()) {
         I->CursorChar=-1;
       } else 
-        OrthoKeyControl((unsigned char)k+64);
+        OrthoKeyControl((unsigned char)(k+64));
       break;
     case 1: /* CTRL A -- beginning */
       if(OrthoArrowsGrabbed()) {
         if(I->CurChar)
           I->CursorChar=I->PromptChar;        
       } else 
-        OrthoKeyControl((unsigned char)k+64);
+        OrthoKeyControl((unsigned char)(k+64));
       break;
     case 4: /* CTRL D */
       if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible()) {
-        OrthoKeyControl((unsigned char)4+64);
+        OrthoKeyControl((unsigned char)(4+64));
       } else if((I->CurChar>I->PromptChar)&&
                 (I->CursorChar>=0)&&
                 (I->CursorChar<I->CurChar)) { /* deleting */
@@ -626,7 +626,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       break;
 	 case 9: /* CTRL I -- tab */
       if(mod&cOrthoCTRL) {
-        OrthoKeyControl((unsigned char)k+64); 
+        OrthoKeyControl((unsigned char)(k+64)); 
       } else {
         curLine=I->CurLine&OrthoSaveLines;
         if(I->PromptChar) {
@@ -664,7 +664,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
         }
       } else {
         if(mod&cOrthoCTRL) {
-          OrthoKeyControl((unsigned char)k+64);
+          OrthoKeyControl((unsigned char)(k+64));
         }
       }
       break;
@@ -676,7 +676,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
         PLockAPIAndUnblock(); */
       break;
 	 default:
-      OrthoKeyControl((unsigned char)k+64);
+      OrthoKeyControl((unsigned char)(k+64));
 		break;
 	 }
   MainDirty();
