@@ -1955,7 +1955,8 @@ int SceneDrag(Block *block,int x,int y,int mod)
   float scale,vScale;
   float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3],v3[3];
   float dx,dy,dt;
-  float axis[3],axis2[3],theta,omega,old_z;
+  float axis[3],axis2[3],theta,omega;
+  float old_front,old_back,old_origin;
   int mode;
   int eff_width;
   int moved_flag;
@@ -2151,7 +2152,11 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 cross_product3f(n1,n2,cp);
     omega = (float)(2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/cPI);
 	 normalize23f(cp,axis2);	 
-    old_z = (I->Back + I->FrontSafe )/ 2.0F;
+    /*    old_z = (I->Back + I->FrontSafe )/ 2.0F;*/
+    old_front = I->Front;
+    old_back = I->Back;
+    old_origin = -I->Pos[2];
+
     moved_flag=false;
     adjust_flag=false;
 	 switch(mode) {
@@ -2265,13 +2270,51 @@ int SceneDrag(Block *block,int x,int y,int mod)
 		break;
     }
     if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
-      v2[0] = 0.0F;
-      v2[1] = 0.0F;
-      v2[2] = (I->Back + I->FrontSafe)/2.0F - old_z;
+
+      float delta_front,delta_back;
+      float front_weight,back_weight,slab_width;
+
+      delta_front = I->Front - old_front;
+      delta_back = I->Back - old_back;
+
+      zero3f(v2);
+
+      slab_width = I->Back - I->FrontSafe;
+      if(old_origin<old_front) {
+        front_weight = 1.0F;
+        if((old_origin+delta_front)<old_front)
+          delta_front = old_front-old_origin;
+      } else if(old_origin>old_back) {
+        front_weight = 0.0F;
+        if((old_origin+delta_back)>old_back)
+          delta_back = old_back-old_origin;
+      } else if(slab_width>=R_SMALL4) {
+        front_weight = (old_back-old_origin)/slab_width;
+      } else {
+        front_weight = 0.5F;
+      }
+      
+      back_weight = 1.0F - front_weight;
+      if((front_weight>0.1)&&(back_weight>0.1)) {
+        if(delta_front*delta_back>0.0F) { /* same direction */
+          if(fabs(delta_front)>fabs(delta_back)) {
+            v2[2] = delta_back;
+          } else {
+            v2[2] = delta_front;
+          }
+        }
+      } else {
+        if(front_weight<back_weight) {
+          v2[2] = delta_back;
+        } else {
+          v2[2] = delta_front;
+        }
+      }
 
       MatrixInvTransform3f(I->RotMatrix,v2,v2);
       subtract3f(I->Origin,v2,v2);
       SceneOriginSet(v2,true);
+
     }
     if((adjust_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
       SceneRovingPostpone();
