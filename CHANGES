@@ -26,13 +26,12 @@ Impending Changes
 
    * Tuning-up of the Tk-based GUI
 
-   * Tracking down thread-related hangs upon program termination
-   
    * Saving and restoring matrix, center, origin, zoom, clip
 
 Changes up to 0.50
 
-
+   * Eliminated hangs and crashes upon program termination with Win2k/NT.
+   
    * "Distances" wizard (internal gui;replace with external version later)
 
    * "Pair Fit" wizard (internal gui; replace with external version later)
