@@ -193,7 +193,9 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   if(PyErr_Occurred()) {
     PyErr_Print();
     result=false;
-  } else if(!read_only) {
+  } else if(read_only) {
+    result=true;
+  } else {
     result=true;
     if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"type"),atype,6)) 
       result=false;
