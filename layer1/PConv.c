@@ -195,13 +195,13 @@ void PConvStringToPyObjAttr(PyObject *obj,char *attr,char *f)
   Py_DECREF(tmp); 
 }
 
-int PConvPyListToFloatArray(PyObject *obj,float *f)
+int PConvPyListToFloatArray(PyObject *obj,float **f)
 {
   int a,l;
   float *ff;
   l=PyList_Size(obj);
-  f = Alloc(float,l);
-  ff = f;
+  (*f) = Alloc(float,l);
+  ff = (*f);
   for(a=0;a<l;a++)
     *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
   return(f);

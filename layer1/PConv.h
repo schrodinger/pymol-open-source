@@ -60,7 +60,7 @@ PyObject *PConvStringListToPyList(int l,char **str);
 
 void PConv44PyListTo44f(PyObject *src,float *dest); /* note loss of precision */
 
-int PConvPyListToFloatArray(PyObject *obj,float *f);
+int PConvPyListToFloatArray(PyObject *obj,float **f);
 PyObject *PConvFloatArrayToPyList(float *f,int l);
 
 #endif
