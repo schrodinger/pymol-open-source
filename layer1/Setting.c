@@ -187,15 +187,13 @@ int SettingFromPyList(CSetting *I,PyObject *list)
 }
 /*========================================================================*/
 PyObject *SettingGetUpdateList(CSetting *I)
-{
+{ /* assumes blocked interpreter */
   int a;
   int n;
-  int unblock;
   PyObject *result;
 
   if(!I) I=&Setting; /* fall back on global settings */
 
-  unblock = PAutoBlock();
   n=VLAGetSize(I->info);
   result=PyList_New(0);
   for(a=0;a<n;a++) {
@@ -204,7 +202,6 @@ PyObject *SettingGetUpdateList(CSetting *I)
       PyList_Append(result,PyInt_FromLong(a));
     }
   }
-  PAutoUnblock(unblock);
 
   return(result);
 }
@@ -1865,9 +1862,9 @@ void SettingInitGlobal(void)
 
   SettingSet_color(I,cSetting_dot_color,"-1"); /* use atom colors by default */
 
-  SettingSet_f(I,cSetting_mouse_limit,60.0F);
+  SettingSet_f(I,cSetting_mouse_limit,100.0F);
 
-  SettingSet_f(I,cSetting_mouse_scale,1.5F);
+  SettingSet_f(I,cSetting_mouse_scale,1.3F);
 }
 
 

@@ -98,6 +98,11 @@ Current Bugs to Fix
 
 Changes up to 0.88
 
+   * Added mouse_scale and mouse_limit settings.  Reduced "jumping" of virtual trackball.
+
+   * Worked to resolve threading issues with multiple demanding
+     clients...some progress made, but not a 100% solution yet.
+
    * Finally fixed sporadic "GC object already in linked list" bug
 
    * huge cleanup of code to eliminate compiler warnings on VisualC
