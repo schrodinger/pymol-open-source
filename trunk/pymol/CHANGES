@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * updated setup.py
+
    * surface_type setting:  0 = solid, 1 = dot, 2 = mesh
 
    * fixed off-center behavior of center command with respect to clipping planes
