@@ -4272,8 +4272,8 @@ DESCRIPTION
    "load" reads several file formats.  The file extension is used to
    determine the format.  PDB files must end in ".pdb", MOL files must
    end in ".mol", Macromodel files must end in ".mmod", XPLOR
-   maps must end in ".xplor", Raster3D input (Molscript output) must
-   end in ".r3d".
+   maps must end in ".xplor", CCP4 maps must end in ".ccp4",
+   Raster3D input (Molscript output) must end in ".r3d".
 
    Pickled ChemPy models with a ".pkl" can also be directly read.
  
@@ -4288,6 +4288,16 @@ USAGE
 PYMOL API
   
    cmd.load( filename [,object [,state [,format [,finish [,discrete ]]]]]
+
+NOTES
+
+   You can override the file extension by giving a format string:
+
+   'pdb' : PDB,  'mmod' : Macromodel, 'xyz' : Tinker, 'cc1' : ChemDraw3D  
+   'mol' : MDL MOL-file, 'sdf' : MDL SD-file
+   'xplor' : X-PLOR/CNS map, 'ccp4' : CCP4 map,
+   'callback' : PyMOL Callback object (PyOpenGL)
+   'cgo' : compressed graphics object (list of floats)
 
 SEE ALSO
 
