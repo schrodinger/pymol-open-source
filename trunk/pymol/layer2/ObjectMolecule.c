@@ -513,7 +513,8 @@ ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int 
       f=cset->Coord;
       for(a=0;a<l;a++) {
         v=PyList_GetItem(coords,a);
-        *(f++)=PyFloat_AsDouble(PyList_GetItem(v,0)); /* no error checking */
+/* no error checking */
+        *(f++)=PyFloat_AsDouble(PyList_GetItem(v,0)); 
         *(f++)=PyFloat_AsDouble(PyList_GetItem(v,1));
         *(f++)=PyFloat_AsDouble(PyList_GetItem(v,2));
       }
