@@ -72,6 +72,9 @@ static PyObject *P_unlock_c = NULL;
 static PyObject *P_lock_status = NULL; /* status locks */
 static PyObject *P_unlock_status = NULL;
 
+static PyObject *P_lock_glut = NULL; /* GLUT locks */
+static PyObject *P_unlock_glut = NULL;
+
 static PyObject *P_do = NULL;
 
 #ifdef WIN32
@@ -101,6 +104,16 @@ void PLockStatus(void) /* assumes we have the GIL */
 void PUnlockStatus(void) /* assumes we have the GIL */
 {
   PXDecRef(PyObject_CallFunction(P_unlock_status,NULL));
+}
+
+static void PLockGLUT(void) /* assumes we have the GIL */
+{
+  PXDecRef(PyObject_CallFunction(P_lock_glut,NULL));
+}
+
+static void PUnlockGLUT(void) /* assumes we have the GIL */
+{
+  PXDecRef(PyObject_CallFunction(P_unlock_glut,NULL));
 }
 
 #define MAX_SAVED_THREAD 16
@@ -224,6 +237,26 @@ void PXDecRef(PyObject *obj)
 
 void PSleepWhileBusy(int usec)
 {
+#ifndef WIN32
+  struct timeval tv;
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
+    " PSleep-DEBUG: napping.\n"
+  ENDFD;
+  tv.tv_sec=0;
+  tv.tv_usec=usec; 
+  select(0,NULL,NULL,NULL,&tv);
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
+    " PSleep-DEBUG: nap over.\n"
+  ENDFD;
+#else
+  PBlock();
+  PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
+  PUnblock();
+#endif
+}
+
+void PSleepUnlocked(int usec)
+{ /* can only be called by the glut process */
 #ifndef WIN32
   struct timeval tv;
   PRINTFD(TempPyMOLGlobals,FB_Threads)
@@ -815,6 +848,7 @@ void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
   PLockStatus();
   PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
   PUnlockStatus();
+  PUnlockGLUT();
   PUnblock();
 }
 
@@ -855,6 +889,8 @@ int PLockAPIAsGlut(int block_if_busy)
 
   PBlock();
 
+  PLockGLUT();
+
   PLockStatus();
   PyMOL_PushValidContext(TempPyMOLGlobals->PyMOL);
   PUnlockStatus();
@@ -867,6 +903,7 @@ int PLockAPIAsGlut(int block_if_busy)
     PLockStatus();
     PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
     PUnlockStatus();
+    PUnlockGLUT();
     PUnblock();
     return false;/* busy -- so allow main to update busy status display (if any) */
   }
@@ -900,6 +937,7 @@ int PLockAPIAsGlut(int block_if_busy)
       PLockStatus();
       PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
       PUnlockStatus();
+      PUnlockGLUT();
       PUnblock();
       return false;
     }
@@ -1332,6 +1370,12 @@ void PInit(PyMOLGlobals *G)
   P_unlock_status = PyObject_GetAttrString(P_cmd,"unlock_status");
   if(!P_unlock_status) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.unlock_status()'");
 
+  P_lock_glut = PyObject_GetAttrString(P_cmd,"lock_glut");
+  if(!P_lock_glut) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.lock_glut()'");
+
+  P_unlock_glut = PyObject_GetAttrString(P_cmd,"unlock_glut");
+  if(!P_unlock_glut) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.unlock_glut()'");
+
   P_do = PyObject_GetAttrString(P_cmd,"do");
   if(!P_do) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.do()'");
 
@@ -1560,6 +1604,7 @@ void PFlush(void) {
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(TempPyMOLGlobals,buffer)) {
     PBlockAndUnlockAPI();
+    
     PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
     err = PyErr_Occurred();
     if(err) {

@@ -560,7 +560,9 @@ static void MainDrawProgress(PyMOLGlobals *G)
   PBlock();
   PLockStatus();
   PyMOL_GetProgress(G->PyMOL,progress,true);
-  
+  PUnlockStatus();
+  PUnblock();
+
   /*
 
   printf("show progress %d %d %d %d %d %d\n",
@@ -669,9 +671,6 @@ static void MainDrawProgress(PyMOLGlobals *G)
   PRINTFD(G,FB_Ortho)
     " OrthoBusyDraw: leaving...\n"
     ENDFD;
-  
-  PUnlockStatus();
-  PUnblock();
 }
 
 /*========================================================================*/
@@ -1008,6 +1007,10 @@ static void MainBusyIdle(void)
 
   if(PLockAPIAsGlut(false)) {
     
+    PRINTFD(G,FB_Main)
+      " MainBusyIdle: got lock.\n"
+      ENDFD;
+
     /* change window visibility & refresh, if necessary */
     
     if(G->HaveGUI) {
@@ -1023,8 +1026,9 @@ static void MainBusyIdle(void)
     }
     
     PRINTFD(G,FB_Main)
-      " MainBusyIdle: got lock.\n"
+      " MainBusyIdle: calling idle function.\n"
       ENDFD;
+
     
     if(PyMOL_Idle(PyMOLInstance)) {
       I->IdleMode=0;
@@ -1032,6 +1036,10 @@ static void MainBusyIdle(void)
       I->IdleTime=UtilGetSeconds(G);
       I->IdleMode=1;
     }
+
+    PRINTFD(G,FB_Main)
+      " MainBusyIdle: swap check.\n"
+      ENDFD;
     
     if(PyMOL_GetSwap(G->PyMOL,true)) {
       if(G->HaveGUI) {
@@ -1042,6 +1050,10 @@ static void MainBusyIdle(void)
     
     /* if the screen has become dirty, post a redisplay event, or if
        we're running without a GUI, then call the draw routine (if we */
+
+    PRINTFD(G,FB_Main)
+      " MainBusyIdle: redisplay.\n"
+      ENDFD;
     
     if(PyMOL_GetRedisplay(PyMOLInstance, true)) {
       if(G->HaveGUI) 
@@ -1050,6 +1062,10 @@ static void MainBusyIdle(void)
         MainDrawLocked();
       I->IdleMode = 0;
     }
+
+    PRINTFD(G,FB_Main)
+      " MainBusyIdle: redisplay.\n"
+      ENDFD;
     
     /* the following code enables PyMOL to avoid busy-idling 
      * even though we're using GLUT! */
@@ -1063,16 +1079,22 @@ static void MainBusyIdle(void)
               p_glutPostRedisplay(); /* trigger caching of the current scene */
         }
       }
-      if(I->IdleMode==1)
-        PSleep((int)SettingGet(G,cSetting_fast_idle)); /* fast idle - more responsive */
-      else
-        PSleep((int)SettingGet(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
-    } else {
-      PSleep((int)SettingGet(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
     }
-    
+
+    PRINTFD(G,FB_Main)
+      " MainBusyIdle: unlocking.\n"
+      ENDFD;
+
     PUnlockAPIAsGlut();
     
+    if(I->IdleMode) {
+      if(I->IdleMode==1)
+        PSleepUnlocked(SettingGetGlobal_i(G,cSetting_fast_idle)); /* fast idle - more responsive */
+      else
+        PSleepUnlocked(SettingGetGlobal_i(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
+    } else {
+      PSleepUnlocked(SettingGetGlobal_i(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+    }
     
     /* run final initilization code for Python-based PyMOL implementations. */
     
@@ -1109,6 +1131,10 @@ static void MainBusyIdle(void)
       }
     }
   } else {
+    PRINTFD(G,FB_Main)
+      " MainBusyIdle: lock not obtained...\n"
+      ENDFD;
+
     PSleepWhileBusy(100000); /* 10 per second */
     if(G->HaveGUI) {
       PBlock();

@@ -62,6 +62,7 @@ Z* -------------------------------------------------------------------
 
 #define PSleep(a)
 #define PSleepWhileBusy(a)
+#define PSleepUnlocked(a)
 
 #define PFree()
 #define PInit(G)
@@ -97,6 +98,7 @@ void PLogFlush(void);
 
 void PSleep(int usec);
 void PSleepWhileBusy(int usec);
+void PSleepUnlocked(int usec);
 
 int PLockAPIAsGlut(int block_if_busy);
 void PUnlockAPIAsGlut(void);

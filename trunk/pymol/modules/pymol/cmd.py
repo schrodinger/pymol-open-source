@@ -293,22 +293,33 @@ if __name__=='pymol.cmd':
       lock_api = pymol.lock_api
       lock_api_c = pymol.lock_api_c
       lock_api_status = pymol.lock_api_status
-
+      lock_api_glut = pymol.lock_api_glut
+      
+      # WARNING: internal routines, subject to change      
       def lock_c(): 
-         # WARNING: internal routine, subject to change      
          lock_api_c.acquire(1)
 
       def unlock_c():
-         # WARNING: internal routine, subject to change      
          lock_api_c.release()
 
       def lock_status(): 
-         # WARNING: internal routine, subject to change      
          lock_api_status.acquire(1)
 
       def unlock_status():
-         # WARNING: internal routine, subject to change      
          lock_api_status.release()
+
+      def lock_glut(): 
+         lock_api_glut.acquire(1)
+
+      def unlock_glut():
+         lock_api_glut.release()
+
+      def lock_without_glut():
+         try:
+            lock_glut()
+            lock()
+         finally:
+            unlock_glut()
 
       def lock(): # INTERNAL -- API lock
    #      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)

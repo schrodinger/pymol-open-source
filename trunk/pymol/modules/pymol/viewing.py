@@ -31,7 +31,7 @@ if __name__=='pymol.viewing':
         repres,repres_sc, is_string, is_list, \
         toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
         palette_dict ,palette_sc, window_dict, window_sc, \
-        safe_list_eval
+        safe_list_eval, lock_without_glut
    
    rep_list = [ "lines","sticks","spheres",
                 "dots","surface","mesh",
@@ -1644,7 +1644,7 @@ NOTES
 
    def _ray(width,height,renderer,angle,shift,quiet):
       try:
-         lock()
+         lock_without_glut()
          try:
             _cmd.set_busy(1)
             r = _cmd.render(int(width),int(height),
