@@ -203,6 +203,85 @@ void MapSetupExpressXY(MapType *I) /* setup a list of XY neighbors for each squa
 }
 
 
+#if 1
+void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
+{
+	int n=0;
+	int a,b,c,flag;
+	register int d,e,i;
+	unsigned int mapSize;
+	int st;
+	float *v;
+	int h;
+	int j,k;
+	
+	PRINTFD(FB_Map)
+		" MapSetupExpressXY-Debug: entered.\n"
+	ENDFD;
+	
+	mapSize 	= I->Dim[0]*I->Dim[1]*I->Dim[2];
+	I->EHead	= Calloc(int,mapSize);
+	ErrChkPtr(I->EHead);
+	I->EList	= VLAMalloc(256000,sizeof(int),5,0); /* autozero */
+	
+	n	= 1;
+	v	= vert;
+	
+	for(h = 0; h < n_vert; h++) 
+	{ 
+		MapLocus(I,v,&j,&k,&c);
+		
+		for(a = j-1; a <= j+1; a++)
+		{
+			for(b = k-1; b <= k+1; b++)
+			{
+				if(!*(MapEStart(I,a,b,c)))
+				{
+					st		= n;
+					flag	= false;
+					
+					for(d = a-1; d <= a+1;d++)
+					{
+						int *iPtr	= I->Head + (d * I->D1D2) + c;
+						
+						for(e = b-1; e <= b+1; e++)
+						{
+							i	= *(iPtr + (e * I->Dim[2]));
+							//i	= *MapFirst(I,d,e,c);
+							
+							if(i > -1)
+							{
+								flag = true;
+								while(i > -1) 
+								{
+									VLACheck(I->EList,int,n);
+									I->EList[n]	= i;
+									n++;
+									i = MapNext(I,i);
+								}
+							}
+						}
+					}
+					
+					if(flag) 
+					{
+						*(MapEStart(I,a,b,c))	= st;
+						VLACheck(I->EList,int,n);
+						I->EList[n] = -1;
+						n++;
+					}
+				}
+			}
+		}
+		v += 3;
+	}
+
+	I->NEElem = n;
+	PRINTFD(FB_Map)
+		" MapSetupExpressXY-Debug: leaving...\n"
+	ENDFD;
+}
+#else
 void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
 {
   int n=0;
@@ -262,7 +341,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
     ENDFD;
   
 }
-
+#endif
 
 void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 {
@@ -606,9 +685,10 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 		for(c=0;c<I->Dim[2];c++)
 		*(MapFirst(I,a,b,c))=-1;*/
 
-  a=mapSize;
+#if 0
+  a = mapSize;
   i=I->Head;
-  while(a&0xFFFFFFF80) {
+  while(a&0xFFFFFF80) {
     *(i++) = -1;
     *(i++) = -1;
     *(i++) = -1;
@@ -647,6 +727,10 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   }
   while(a--)
     *(i++)=-1;
+#else
+	/* Trick for fast clearing to -1! */
+	memset( I->Head, 0xFF, mapSize * sizeof(int) );
+#endif
 
   I->NVert = nVert;
 

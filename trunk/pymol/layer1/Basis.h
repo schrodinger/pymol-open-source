@@ -64,6 +64,25 @@ typedef struct {
   float reflect[3];
 } RayInfo;
 
+typedef struct {
+  CBasis *Basis;
+  RayInfo *rr;
+  int except;
+  int *vert2prim;
+  int shadow;
+  float front;
+  float back;
+  float excl_trans;
+  int trans_shadows;
+  int check_interior;
+  CPrimitive *prim;
+  MapCache cache;
+
+  /* returns */
+  int interior_flag; 
+} BasisCallRec; 
+
+
 void BasisInit(CBasis *I);
 void BasisFinish(CBasis *I);
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *clipBox);
@@ -71,14 +90,20 @@ void BasisSetupMatrix(CBasis *I);
 void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc);
 void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
 
-int BasisHit(CBasis *I,RayInfo *r,int except,
-				 int *vert2prim,CPrimitive *prim,
-				 int shadow,float front,float back,
-             float excl_trans,int trans_shadows,
-             int *interior_flag,MapCache *cache);
+#define SPLIT_BASIS	1
+
+#if SPLIT_BASIS
+int BasisHitNoShadow(BasisCallRec *BC);
+int BasisHitShadow(BasisCallRec *BC);
+#else
+int BasisHit(BasisCallRec *BC);
+#endif
 
 void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i);
 void BasisSetFudge(float fudge);
+void BasisCylinderSausagePrecompute(float *dir,float *pre);
+
+#define PROFILE_BASIS_OFF
 
 #endif
 
