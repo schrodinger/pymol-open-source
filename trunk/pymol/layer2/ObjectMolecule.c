@@ -1576,7 +1576,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals *G,ObjectMolecule *I,char 
   if(ok) {
 
       if(I->DiscreteFlag&&atInfo) {
-        int a;
+        unsigned int a;
         int fp1 = frame+1;
         AtomInfoType *ai = atInfo;
         for(a=0;a<nAtom;a++) {
@@ -1997,7 +1997,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *I,CRaw *pm
     if(ok) {
 
       if(I->DiscreteFlag&&atInfo) {
-        int a;
+        unsigned int a;
         int fp1 = frame+1;
         AtomInfoType *ai = atInfo;
         for(a=0;a<nAtom;a++) {
@@ -2603,7 +2603,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char 
   if(ok) {
 
       if(I->DiscreteFlag&&atInfo) {
-        int a;
+        unsigned int a;
         int fp1 = frame+1;
         AtomInfoType *ai = atInfo;
         for(a=0;a<nAtom;a++) {
@@ -8830,7 +8830,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
     if(ok) {
       
       if(I->DiscreteFlag&&atInfo) {
-        int a;
+        unsigned int a;
         int fp1 = frame+1;
         AtomInfoType *ai = atInfo;
         for(a=0;a<nAtom;a++) {

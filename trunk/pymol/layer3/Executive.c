@@ -3286,7 +3286,7 @@ int ExecutiveGetDistance(PyMOLGlobals *G,char *s0,char *s1,float *value,int stat
       ok = ErrMessage(G,"GetDistance","Selection 2 doesn't contain a single atom/vertex.");
   }
   if(ok) {
-    (*value)=diff3f(v0,v1);
+    (*value)=(float)diff3f(v0,v1);
   }
   return ok;
 }

@@ -1340,8 +1340,8 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
       hbc->power_b = 5.0F;
       hbc->cone_dangle = 0.0F; /* 180 deg. */
       if(hbc->maxDistAtMaxAngle!=0.0F) {
-        hbc->factor_a = 0.5/pow(hbc->maxAngle,hbc->power_a);
-        hbc->factor_b = 0.5/pow(hbc->maxAngle,hbc->power_b);
+        hbc->factor_a = 0.5F/(float)pow(hbc->maxAngle,hbc->power_a);
+        hbc->factor_b = 0.5F/(float)pow(hbc->maxAngle,hbc->power_b);
       }
     
       cutoff = hbc->maxDistAtMaxAngle;
@@ -4292,7 +4292,8 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buf
   AtomSF *atom_sf = NULL;
   double b_adjust = (double)SettingGet(G,cSetting_gaussian_b_adjust);
   double elim = 7.0;
-  float rcut2,rcut;
+  double rcut2;
+  float rcut;
   float max_rcut = 0.0F;
   float blur = SettingGet(G,cSetting_gaussian_resolution)/2.0F;
   float b_floor = SettingGet(G,cSetting_gaussian_b_floor);
@@ -4584,9 +4585,9 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buf
             if(idx>=0) {
               copy3f(cs->Coord+(3*idx),fp);
               prot = ai->protons;
-              if(sf[prot][0]==-1.0)
+              if(sf[prot][0]==-1.0F)
                 prot=cAN_C;
-              bfact = ai->b + b_adjust;
+              bfact = ai->b + (float)b_adjust;
               if(bfact<b_floor)
                 bfact = b_floor;
               if((bfact>R_SMALL4)&&(ai->q>R_SMALL4)) {
@@ -4624,7 +4625,7 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buf
                   (elim + log(max2d(fabs(atom_sf[a][4]),D_SMALL10)))/atom_sf[a][5],
                   (elim + log(max2d(fabs(atom_sf[a][6]),D_SMALL10)))/atom_sf[a][7],
                   (elim + log(max2d(fabs(atom_sf[a][8]),D_SMALL10)))/atom_sf[a][9]);
-    rcut = sqrt1d(rcut2);
+    rcut = (float)sqrt1d(rcut2);
     rcut *= blur;
     atom_sf[a][10] = rcut;
     if(max_rcut<rcut)
@@ -4745,7 +4746,7 @@ int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cuto
   const float _1=1.0F;
 
   if(shift)
-    cutoff_to_power = pow(cutoff,shift_power);
+    cutoff_to_power = (float)pow(cutoff,shift_power);
 
   c_factor=SettingGet(G,cSetting_coulomb_units_factor)/
     SettingGet(G,cSetting_coulomb_dielectric);
@@ -4839,7 +4840,7 @@ int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cuto
   if(neutral&&(fabs(tot_charge)>R_SMALL4)) {
     float adjust;
 
-    adjust = -tot_charge/n_point;
+    adjust = (float)(-tot_charge/n_point);
 
     for(a=0;a<n_point;a++) {
       charge[a]+=adjust;
@@ -4903,13 +4904,13 @@ int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cuto
                       
                       dx = v1[0]-v2[0];
                       dy = v1[1]-v2[1];
-                      dx = fabs(dx);
-                      dy = fabs(dy);
+                      dx = (float)fabs(dx);
+                      dy = (float)fabs(dy);
                       if(dx>cut) break;
                       dz = v1[2]-v2[2];
                       dx = dx * dx;
                       if(dy>cut) break;
-                      dz = fabs(dz);
+                      dz = (float)fabs(dz);
                       dy = dy * dy;
                       if(dz>cut) break;
                       dx = dx + dy;
@@ -4923,7 +4924,7 @@ int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cuto
                         if(shift) {
                           if(dist<cutoff) {
                             F3(data,a,b,c) +=  (charge[j]/dist)*
-                              (_1-pow(dist,shift_power)/cutoff_to_power);
+                              (_1-(float)pow(dist,shift_power)/cutoff_to_power);
                           } 
                         } else {
                           F3(data,a,b,c) +=  charge[j]/dist;
@@ -4955,7 +4956,7 @@ int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cuto
             v1 = point;
             v2 = F4Ptr(points,a,b,c,0);
             for(j=0;j<n_point;j++) {
-              dist = diff3f(v1,v2);
+              dist = (float)diff3f(v1,v2);
               v1+=3;
               if(dist>R_SMALL4) {
                 F3(data,a,b,c) +=  charge[j]/dist;

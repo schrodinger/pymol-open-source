@@ -641,8 +641,8 @@ static void WizardDraw(Block *block)
   float dimDarkEdge[3] = {0.25F, 0.25F,0.25F};
 
   float menuBGColor[3] = {0.5F, 0.5F,1.0};
-  float menuLightEdge[3] = {0.7,0.7,0.9F};
-  float menuDarkEdge[3] = {0.3,0.3,0.5F};
+  float menuLightEdge[3] = {0.7F,0.7F,0.9F};
+  float menuDarkEdge[3] = {0.3F,0.3F,0.5F};
 
   float black_color[3] = {0.0F,0.0F,0.0F};
   float menuColor[3] = { 0.0,0.0,0.0};

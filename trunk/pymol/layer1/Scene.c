@@ -267,7 +267,7 @@ void SceneUpdateStereo(PyMOLGlobals *G)
 
 char *SceneGetSeleModeKeyword(PyMOLGlobals *G)
 {
-  int sel_mode = SettingGet(G,cSetting_mouse_selection_mode);
+  int sel_mode = SettingGetGlobal_i(G,cSetting_mouse_selection_mode);
   if((sel_mode>=0)&&(sel_mode<SELE_MODE_MAX))
     return (char*)SelModeKW[sel_mode];
   return (char*)SelModeKW[0];
@@ -353,7 +353,7 @@ void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem)
   elem->back = I->Back;
 
   elem->ortho_flag = true;
-  elem->ortho = SettingGet(G,cSetting_ortho);
+  elem->ortho = SettingGetGlobal_b(G,cSetting_ortho);
   
 }
 
@@ -411,7 +411,7 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
     SceneClipSet(G,elem->front,elem->back);
   }
   if(elem->ortho_flag) {
-    SettingSet(G,cSetting_ortho,elem->ortho);
+    SettingSetGlobal_b(G,cSetting_ortho,elem->ortho);
   }
   if(changed_flag) 
     SceneRovingDirty(G);
@@ -2290,7 +2290,7 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
     dump3f(p2,"p2");
     vl=(float)diff3f(p1,p2);
   */
-  vl = fabs(p1[0]-p2[0]);
+  vl = (float)fabs(p1[0]-p2[0]);
 
   if(vl<R_SMALL4)
     vl=100.0F;
@@ -2911,7 +2911,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
 	 normalize23f(cp,axis);
 
-    theta = theta/(1.0F+fabs(axis[2]));
+    theta = theta/(1.0F+(float)fabs(axis[2]));
 
     v1[2]=0.0;
     v2[2]=0.0;
@@ -3367,9 +3367,9 @@ static void SceneApplyImageGamma(PyMOLGlobals *G,unsigned int *buffer, int width
           sig = _1;
         else
           sig = (float)(pow(inp,gamma) / inp);
-        i1 = sig * c1;
-        i2 = sig * c2;
-        i3 = sig * c3;
+        i1 = (unsigned int)(sig * c1);
+        i2 = (unsigned int)(sig * c2);
+        i3 = (unsigned int)(sig * c3);
         if(i1>255) i1 = 255;
         if(i2>255) i2 = 255;
         if(i3>255) i3 = 255;

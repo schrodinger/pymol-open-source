@@ -885,7 +885,7 @@ double matdiffsq ( float *v1, oMatrix5f m, float *v2 )
 void transform5f3f (oMatrix5f m, float *v1, float *v2 )
 {
   register double dx,dy,dz;
-  float vx,vy,vz;
+  double vx,vy,vz;
   
   dx = v1[0] - m[3][0];
   dy = v1[1] - m[3][1];
@@ -895,9 +895,9 @@ void transform5f3f (oMatrix5f m, float *v1, float *v2 )
   vy = m[1][0] * dx + m[1][1] * dy + m[1][2] * dz;
   vz = m[2][0] * dx + m[2][1] * dy + m[2][2] * dz;
 
-  v2[0] = (vx+m[4][0]);
-  v2[1] = (vy+m[4][1]);
-  v2[2] = (vz+m[4][2]);
+  v2[0] = (((float)vx)+m[4][0]);
+  v2[1] = (((float)vy)+m[4][1]);
+  v2[2] = (((float)vz)+m[4][2]);
 
 }
 
@@ -913,8 +913,8 @@ void transform33d3f ( Matrix33d m1,float *v1,float *v2)
 {
   int b;
   for(b=0;b<3;b++)
-	 v2[b] = m1[b][0]*v1[0] +
-		m1[b][1]*v1[1] + m1[b][2]*v1[2];
+	 v2[b] = (float)(m1[b][0]*v1[0] +
+		m1[b][1]*v1[1] + m1[b][2]*v1[2]);
 }
 
 /*
@@ -1028,7 +1028,7 @@ void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
 		subtract3f(mat[4],pivot,p1);
 
 		/*		printf("length match? %8.3f %8.3f\n",length3f(p0),length3f(p1));*/
-		hyplen = length3f(p0);
+		hyplen = (float)length3f(p0);
 		
 		average3f(mat[3],mat[4],center);
 		
@@ -1039,10 +1039,10 @@ void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
 		cross_product3f(rotaxis,adjdir,oppdir);
 		normalize3f(oppdir);
 		
-		tAlpha = fabs(0.5-fxn)*tAngle;
+		tAlpha = (float)(fabs(0.5-fxn)*tAngle);
 		
-		opplen = fabs(hyplen * sin(tAlpha));
-		adjlen = fabs(hyplen * cos(tAlpha));
+		opplen = (float)fabs(hyplen * sin(tAlpha));
+		adjlen = (float)fabs(hyplen * cos(tAlpha));
 		
 		scale3f(oppdir,opplen,opp);
 		scale3f(adjdir,adjlen,adj);
@@ -1178,7 +1178,7 @@ void find_axis( Matrix33d a, float *axis)
 		if((fabs(wr[x]-_1)<R_MED)&&
 			(fabs(wi[x])<R_SMALL))
 		  for(y=0;y<3;y++)
-			 axis[y] = v[y][x];
+			 axis[y] = (float)v[y][x];
 		else
 		  for(y=0;y<3;y++)
 			 v[y][x]=_0;

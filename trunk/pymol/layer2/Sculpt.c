@@ -74,7 +74,7 @@ static float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d
   subtract3f(v0,v1,d);
   len = (float)length3f(d);
   dev = target-len;
-  if((result=fabs(dev))>R_SMALL8) {
+  if((result=(float)fabs(dev))>R_SMALL8) {
     dev_2 = wt*dev/2.0F;
     if(len>R_SMALL8) { /* nonoverlapping */
       sc = dev_2/len;
@@ -143,7 +143,7 @@ static float ShakerDoTors(int type,float *v0,float *v1,float *v2,float *v3,
     
     if(dp>-0.5F)
       return 0.0F;
-    result = fabs(dp)-0.5F;
+    result = ((float)fabs(dp))-0.5F;
     
     if(result<tole) /* discontinuous low bottom well */
       result = result/25.F;       
@@ -808,7 +808,7 @@ static int SculptDoBump(float target,float actual,float *d,
   float dev,dev_2,sc,abs_dev;
 
   dev = target-actual;
-  if((abs_dev=fabs(dev))>R_SMALL8) {
+  if((abs_dev=(float)fabs(dev))>R_SMALL8) {
     dev_2 = wt*dev/2.0F;
     (*strain) += abs_dev;
     if(actual>R_SMALL8) { /* nonoverlapping */

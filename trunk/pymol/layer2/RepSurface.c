@@ -274,8 +274,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       if(I->Type==1) {
         /* no triangle information, so we're rendering dots only */
 
-        int normals = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
-        int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
+        int normals = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
+        int lighting = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
         int use_dlst;
         if(!normals)
           SceneResetNormal(G,true);
@@ -332,8 +332,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         }
       } else if(I->Type==2) { /* rendering triangle mesh */
       
-        int normals = SettingGet_b(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
-        int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
+        int normals = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
+        int lighting = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
         int use_dlst;
         if(!normals)
           SceneResetNormal(G,true);
@@ -1393,7 +1393,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   }
           
 
-  solv_tole = minimum_sep * 0.04;
+  solv_tole = minimum_sep * 0.04F;
 
   probe_radius2 = probe_radius*probe_radius;
   probe_rad_more = probe_radius*(1.0F+solv_tole);
@@ -1639,12 +1639,12 @@ Rep *RepSurfaceNew(CoordSet *cs)
                             dx = v1[0]-v_0;
                             dy = v1[1]-v_1;
                             dz = v1[2]-v_2;
-                            dx = fabs(dx);
-                            dy = fabs(dy);
+                            dx = (float)fabs(dx);
+                            dy = (float)fabs(dy);
                             if(!(dx>dist)) {
                               dx = dx * dx;
                               if(!(dy>dist)) {
-                                dz = fabs(dz);
+                                dz = (float)fabs(dz);
                                 dy = dy * dy;
                                 if(!(dz>dist)) {
                                   dx = dx + dy;
@@ -2145,15 +2145,15 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                             float vdw3 = ai3->vdw+probe_radius;
 
                             v2 = cs->Coord+3*jj;
-                            dist = diff3f(v0,v2);
+                            dist = (float)diff3f(v0,v2);
                             if((dist>R_SMALL4)&&(dist<(vdw+vdw3))) {
                               float vz[3],vx[3],vy[3], vp[3];
                               float tri_a=vdw, tri_b=vdw3, tri_c = dist;
                               float tri_s = (tri_a+tri_b+tri_c)*0.5F;
-                              float area = sqrt1f(tri_s*(tri_s-tri_a)*
+                              float area = (float)sqrt1f(tri_s*(tri_s-tri_a)*
                                                   (tri_s-tri_b)*(tri_s-tri_c));
                               float radius = (2*area)/dist;
-                              float adj = sqrt1f(vdw2 - radius*radius);
+                              float adj = (float)sqrt1f(vdw2 - radius*radius);
                               
                               subtract3f(v2,v0,vz);
                               get_system1f3f(vz,vx,vy);
@@ -2163,8 +2163,8 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                               add3f(v0,vp,vp);
                               
                               for(b=0;b<=circumscribe;b++) {
-                                float xcos = cos((b*2*cPI)/circumscribe);
-                                float ysin = sin((b*2*cPI)/circumscribe);
+                                float xcos = (float)cos((b*2*cPI)/circumscribe);
+                                float ysin = (float)sin((b*2*cPI)/circumscribe);
                                 float xcosr = xcos * radius;
                                 float ysinr = ysin * radius;
                                 v[0] = vp[0] + vx[0] * xcosr + vy[0] * ysinr;

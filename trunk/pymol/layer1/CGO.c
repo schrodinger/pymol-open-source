@@ -954,11 +954,11 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   dotwidth = SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width);
   dotradius = SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_radius);
   if(lineradius<0.0F) 
-    lineradius = linewidth * ray->PixelRadius/2.0;
+    lineradius = linewidth * ray->PixelRadius/2.0F;
   if(dotradius<0.0F) 
-    dotradius = dotwidth * ray->PixelRadius/2.0;
+    dotradius = dotwidth * ray->PixelRadius/2.0F;
   if(widthscale<0.0F)
-    widthscale = ray->PixelRadius/2.0;
+    widthscale = ray->PixelRadius/2.0F;
 
   if(color)
     c0=color;

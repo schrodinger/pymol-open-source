@@ -2047,10 +2047,10 @@ void ObjectMoleculeInitHBondCriteria(PyMOLGlobals *G,HBondCriteria *hbc)
   hbc->maxDistAtZero = SettingGet_f(G,NULL,NULL,cSetting_h_bond_cutoff_center);
   hbc->power_a = SettingGet_f(G,NULL,NULL,cSetting_h_bond_power_a);
   hbc->power_b = SettingGet_f(G,NULL,NULL,cSetting_h_bond_power_b);
-  hbc->cone_dangle = cos(PI*0.5*SettingGet_f(G,NULL,NULL,cSetting_h_bond_cone)/180.0F);
+  hbc->cone_dangle = (float)cos(PI*0.5*SettingGet_f(G,NULL,NULL,cSetting_h_bond_cone)/180.0F);
   if(hbc->maxDistAtMaxAngle!=0.0F) {
-    hbc->factor_a = 0.5/pow(hbc->maxAngle,hbc->power_a);
-    hbc->factor_b = 0.5/pow(hbc->maxAngle,hbc->power_b);
+    hbc->factor_a = (float)(0.5/pow(hbc->maxAngle,hbc->power_a));
+    hbc->factor_b = (float)(0.5/pow(hbc->maxAngle,hbc->power_b));
   }
 }
     

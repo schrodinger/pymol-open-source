@@ -120,7 +120,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
     if(pick) {
     } else {
       int use_dlst;
-      int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
+      int lighting = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
 
       SceneResetNormal(G,true);
       if(!lighting)
