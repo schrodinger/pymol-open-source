@@ -11,7 +11,7 @@ class MOL(Storage):
 
       # read header information
       model.molecule.title = string.strip(molList[0])
-      model.molecule.dimcode = string.strip(molList[1][20:22])
+      model.molecule.dim_code = string.strip(molList[1][20:22])
       model.molecule.comments = string.strip(molList[2])
       model.molecule.chiral = int(molList[3][12:15])
       nAtom = int(molList[3][0:3])
@@ -66,7 +66,7 @@ class MOL(Storage):
       # write header records
       molList.append(model.molecule.title+"\n")
       molList.append("  ChemPy            %2s                             0\n" %
-             model.molecule.dimcode)
+             model.molecule.dim_code)
       molList.append(model.molecule.comments+"\n")
       molList.append("%3d%3d  0  0  %1d  0  0  0  0  0999 V2000\n" %
                      (model.nAtom, model.nBond, model.molecule.chiral))
