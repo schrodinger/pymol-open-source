@@ -57,7 +57,8 @@ COMMANDS
 Try "help <command-name>" for more information on a given command.
  
 Additional help topics include:
-   "keyboard", "mouse", "selections", "examples", "launching", and "api".
+   "movies", "keyboard", "mouse", "selections",
+   "examples", "launching", and "api".
    '''
    help('commands')
 
@@ -186,6 +187,44 @@ PyMOL COMMAND LINE OPTIONS
    '''
    help('launching')
 
+def movies():
+   '''
+MOVIES
+ 
+   To create a movie, simply load multiple coordinate files
+   into the same object.  This can be accomplish at the command line,
+   using script files, or by writing PyMOL API-based programs.
+ 
+   The commands:
+   
+load frame001.pdb,mov
+load frame002.pdb,mov
+ 
+   will create a two frame movie.  So will the following program:
+   
+import pm
+   
+for a in ( "frame001.pdb","frame002.pdb" ):
+   pm.load(a,"mov")
+ 
+   which can be executed at the command line using the "run" command.
+   
+   Python's built-it glob module can be useful for loading movies.
+ 
+import pm
+import glob
+for a in ( glob.glob("frame*.pdb") ):
+   pm.load(a,"mov")
+ 
+NOTE
+ 
+   Because PyMOL stores all movie frames in memory, there is a
+   a practical limit to the number of atoms in all coordinate files. 
+   160 MB free RAM enables 500,000 atoms with line representations.
+   Complex representations require significantly more memory.
+   '''
+   help('movies')
+   
 ### -------------------------------------------------------------------
 def selections():
    '''
@@ -2368,7 +2407,8 @@ help_only = {
    'keyboard'      : [keyboard     , 0 , 0 , ',' , 0 ],
    'mouse'         : [mouse        , 0 , 0 , ',' , 0 ],
    'examples'      : [examples     , 0 , 0 , ',' , 0 ],
-   'launching'        : [launching       , 0 , 0 , ',' , 0 ],
+   'launching'     : [launching    , 0 , 0 , ',' , 0 ],
+   'movies'        : [movies       , 0 , 0 , ',' , 0 ],
 }
 
 repres = {
