@@ -1,9 +1,5 @@
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
-PyMOL>select lb=(i;11&n;n)
- Selector: selection "lb" defined with 1 atoms.
-PyMOL>select rb=(i;11&n;c)
- Selector: selection "rb" defined with 1 atoms.
 PyMOL>cls
 
 PyMOL>print cmd.count_states()
@@ -87,21 +83,24 @@ PyMOL>alter_state 1,(all),x = x + 1.0
  AlterState: modified 107 atom states.
 PyMOL>print "%8.4f"%cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)","(i;11&n;cg)")
 -160.7909
+PyMOL>edit (i;11&n;n), (i;11&n;c), pkbond=0
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
 PyMOL>dist
  Executive: object "dist01" created.
-PyMOL>dist (lb),(rb)
+PyMOL>dist (pk1),(pk2)
  Executive: object "dist02" created.
 PyMOL>dist tst
  Executive: object "tst" created.
-PyMOL>dist tst2 = (lb),(rb)
+PyMOL>dist tst2 = (pk1),(pk2)
  Executive: object "tst2" created.
-PyMOL>bond (lb),(rb)
+PyMOL>bond
  AddBond: 1 bonds added to model "pept".
 PyMOL>unbond
  RemoveBond: 1 bonds removed from model "pept".
-PyMOL>bond (lb),(rb),2
+PyMOL>bond (pk1),(pk2),2
  AddBond: 1 bonds added to model "pept".
-PyMOL>unbond (lb),(rb)
+PyMOL>unbond (pk1),(pk2)
  RemoveBond: 1 bonds removed from model "pept".
 PyMOL>copy cpy=pept
  Executive: object "cpy" created.
@@ -196,14 +195,14 @@ PyMOL>unmask (pept and n;ca)
  Protect: 13 atoms unmasked.
 PyMOL>unmask
  Protect: 107 atoms unmasked.
-PyMOL>select lb=(i;11&n;n)
- Selector: selection "lb" defined with 1 atoms.
-PyMOL>select rb=(i;11&n;c)
- Selector: selection "rb" defined with 1 atoms.
-PyMOL>edit (i;11&n;ca)
+PyMOL>edit (i;11&n;ca),(i;11&n;n),(i;11&n;c)
  Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
+ Selector: selection "pk3" defined with 1 atoms.
 PyMOL>invert
-PyMOL>invert (lb),(rb)
+ Editor: Inverted atom.
+PyMOL>invert
+ Editor: Inverted atom.
 PyMOL>edit (i;11&n;ca),(i;11&n;cb)
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.

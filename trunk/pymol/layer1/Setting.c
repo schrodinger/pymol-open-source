@@ -2072,7 +2072,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_gaussian_b_adjust, 0.0F );
 
-  SettingSet_b(I,cSetting_pdb_standard_order, 0);
+  SettingSet_b(I,cSetting_pdb_standard_order, 1);
 
   SettingSet_i(I,cSetting_cartoon_smooth_first, 1);
   SettingSet_i(I,cSetting_cartoon_smooth_last, 1);

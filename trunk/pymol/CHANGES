@@ -179,6 +179,12 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * test cases updated to reflect new molecular editing behavior
+
+   * default arguments (and behavior) changed for dist and bond commands
+
+   * pdb_standard_order now default on
+
    * textual button mode indicator, more button changes...
 
    * ray-tracing of RGBA pixmap text now supported FINALLY.

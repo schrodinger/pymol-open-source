@@ -1411,7 +1411,7 @@ SEE ALSO
          unlock()
       return r
 
-   def deprotect(selection="(all)"):
+   def deprotect(selection="(all)",quiet=1):
       '''
 DESCRIPTION
 
@@ -1434,7 +1434,7 @@ SEE ALSO
       #   
       try:
          lock()   
-         r = _cmd.protect("("+str(selection)+")",0)
+         r = _cmd.protect("("+str(selection)+")",0,int(quiet))
       finally:
          unlock()
       return r
