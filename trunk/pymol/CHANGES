@@ -179,6 +179,9 @@ CHANGE LOG
 
 Changes up to 0.94
 
+   * no_smooth flag to make it easier to combine cartoon and atomistic
+     representations
+
    * fixed yet another ray-tracing alpha channel bug with mixed 
      transparent/opaque objects.
 
