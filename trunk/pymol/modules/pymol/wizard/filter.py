@@ -290,6 +290,15 @@ class Filter(Wizard):
          fname = self.object+".txt"
          try:
             f=open(fname,'w')
+            f.close()
+         except:
+            print " Filter-Warning: '"+fname+"' in current directory is not writable."
+            print " Filter-Warning: attempting to write as '$HOME/%s'"%(fname)
+            fname = "$HOME/"+fname
+            fname = os.path.expanduser(fname)
+            fname = os.path.expandvars(fname)
+         try:
+            f=open(fname,'w')
             sd = self.state_dict
             sdo = self.dict[self.object]
             f.write('Object\t"%s"%s'%(self.object,os.linesep))
@@ -311,10 +320,10 @@ class Filter(Wizard):
                else:
                   f.write('%d\t"%s"\t"?"%s'%(a[0],a[1],os.linesep))
             f.close()
-            print "Wrote '%s'."%fname
+            print " Filter: Wrote '%s'."%fname
          except:
             traceback.print_exc()
-            print "Unable to write '%s'."%fname
+            print " Filter-Error: Unable to write '%s'."%fname
             
    def cleanup(self):
       # save current state in global vars...
