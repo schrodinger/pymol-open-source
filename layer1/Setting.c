@@ -376,7 +376,7 @@ void SettingInit(void)
 			"cache_frames");
 
   I->NSetting++;
-  I->Setting[cSetting_trim_dots].Value[0] = 0.0;
+  I->Setting[cSetting_trim_dots].Value[0] = 1.0;
   strcpy(I->Setting[cSetting_trim_dots].Name,
 			"trim_dots");
 
@@ -549,6 +549,11 @@ void SettingInit(void)
   I->Setting[cSetting_ray_trace_fog].Value[0] = 1.0;
   strcpy(I->Setting[cSetting_ray_trace_fog].Name,
 			"ray_trace_fog");
+
+  I->NSetting++;
+  I->Setting[cSetting_discrete].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_discrete].Name,
+			"discrete");
 
 
   I->NSetting++;

@@ -50,6 +50,22 @@ char *UtilConcat(char *where,char *what)
   return(where);
 }
 
+void UtilNConcat(char *dst,char *src,int n) { /* copies up to N-1 chars */
+  int l;
+  l=strlen(dst);
+  UtilNCopy(dst+l,src,n-l);
+}
+
+void UtilNCopy(char *dst,char *src,int n) { /* copies up to N-1 chars */
+  n--;
+  while((n--)>=0) {
+    if(!*src)
+      break;
+    else
+      *(dst++)=*(src++);
+  }
+  *dst=0;
+}
 
 void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 {

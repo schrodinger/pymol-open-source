@@ -28,6 +28,7 @@ import pymol
 import os
 
 from chempy import io
+from chempy.sdf import SDF,SDFRec
 
 lock_api = pymol.lock_api
 
@@ -629,7 +630,7 @@ PYMOL API
       unlock()
    return r
 
-def label(sele,expr):
+def label(*arg):
    '''
 DESCRIPTION
  
@@ -644,15 +645,22 @@ All strings in the expression must be explicitly quoted.  This
 operation typically takes several seconds per thousand atoms altered.
  
 USAGE
- 
+
    label (selection),expression
- 
+   label expression
+   
 EXAMPLES
   
    label (chain A),chain
    label (n;ca),"%s-%s" % (resn,resi)
    label (resi 200),"%1.3f" % partial_charge
    '''
+   if len(arg)<2:
+      sele = "(all)"
+      expr = arg[0]
+   else:
+      sele = arg[0]
+      expr = arg[1]
    try:
       lock()
       r = _cmd.label(sele,'label='+expr)
@@ -1857,7 +1865,6 @@ PYMOL API
       unlock()
    return r
 
-
 def get_model(*arg):
    '''
 DESCRIPTION
@@ -2053,27 +2060,40 @@ PYMOL API
          ftype = 7
       elif re.search("\.pkl$",arg[0]):
          ftype = 8
-      if len(arg)==1:
+      elif re.search("\.sdf$",arg[0]):
          oname = re.sub("[^/]*\/","",arg[0])
-         oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.xplor$|\.pkl$","",oname)
-         r = _load(oname,fname,state,ftype)
-      elif len(arg)==2:
-         oname = string.strip(arg[1])
-         r = _load(oname,fname,state,ftype)
-      elif len(arg)==3:
-         oname = string.strip(arg[1])
-         state = int(arg[2])-1
-         r = _load(oname,fname,state,ftype)
-      elif len(arg)==4:
-         if loadable.has_key(arg[3]):
-            ftype = loadable[arg[3]]
+         oname = re.sub("\.sdf$","",oname)
+         ftype = 3
+         sdf = SDF(arg[0])
+         while 1:
+            rec = sdf.read()
+            if not rec: break
+            r = _load(oname,string.join(rec.get('MOL'),''),state,ftype)
+         del sdf
+         do("zoom (%s)"%oname)
+         ftype = -1
+      if ftype>=0:
+         if len(arg)==1:
+            oname = re.sub("[^/]*\/","",arg[0])
+            oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.xplor$|\.pkl$","",oname)
+            r = _load(oname,fname,state,ftype)
+         elif len(arg)==2:
+            oname = string.strip(arg[1])
+            r = _load(oname,fname,state,ftype)
+         elif len(arg)==3:
+            oname = string.strip(arg[1])
+            state = int(arg[2])-1
+            r = _load(oname,fname,state,ftype)
+         elif len(arg)==4:
+            if loadable.has_key(arg[3]):
+               ftype = loadable[arg[3]]
+            else:
+               ftype = int(arg[3])
+            state = int(arg[2])-1
+            oname = string.strip(arg[1])
+            r = _load(oname,fname,state,ftype)
          else:
-            ftype = int(arg[3])
-         state = int(arg[2])-1
-         oname = string.strip(arg[1])
-         r = _load(oname,fname,state,ftype)
-      else:
-         print "Error: invalid arguments."
+            print "Error: invalid arguments."
    finally:
       unlock()
    return r
@@ -2605,7 +2625,7 @@ keyword = {
    'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , 0 ],
    'isodot'        : [isodot       , 2 , 2 , '=' , 0 ],   
    'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],
-   'label'         : [label        , 2 , 2 , ',' , 0 ],
+   'label'         : [label        , 1 , 2 , ',' , 0 ],
    'load'          : [load         , 1 , 4 , ',' , 0 ],
    'mem'           : [mem          , 0 , 0 , ',' , 0 ],
    'meter_reset'   : [meter_reset  , 0 , 0 , ',' , 0 ],

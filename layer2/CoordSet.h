@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include<Python.h>
 #include"Rep.h"
 #include"Symmetry.h"
+#include"Word.h"
 
 typedef struct CoordSet {
   void (*fUpdate)(struct CoordSet *I);
@@ -39,6 +40,7 @@ typedef struct CoordSet {
   int NTmpBond; /* optional + temporary (for coord set transfers) */
   int *TmpBond; /* actual bond info is stored in ObjectMolecule */
   CSymmetry *TmpSymmetry;
+  WordType Name;
 } CoordSet;
 
 #include"ObjectMolecule.h"

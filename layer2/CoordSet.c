@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"PConv.h"
 #include"P.h"
+#include"ButMode.h"
 
 #include"RepWireBond.h"
 #include"RepCylBond.h"
@@ -165,6 +166,7 @@ PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v)
     PConvStringToPyObjAttr(atom,"segi",ai->segi);
     PConvFloatToPyObjAttr(atom,"q",ai->q);
     PConvFloatToPyObjAttr(atom,"b",ai->b);
+    PConvFloatToPyObjAttr(atom,"vdw",ai->vdw);
     PConvFloatToPyObjAttr(atom,"partial_charge",ai->partialCharge);
     PConvIntToPyObjAttr(atom,"formal_charge",ai->formalCharge);
     if(ai->customType!=-9999)
@@ -327,7 +329,8 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
 {
   int a;
 
-
+  if(I->Name[0])
+    ButModeCaption(I->Name);
   for(a=0;a<I->NRep;a++)
 	 if(I->Rep[a]) 
 		{
@@ -364,6 +367,7 @@ CoordSet *CoordSetNew(void)
   I->Rep=VLAlloc(Rep*,cRepCnt);
   I->NRep=cRepCnt;
   I->TmpSymmetry = NULL;
+  I->Name[0]=0;
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   return(I);

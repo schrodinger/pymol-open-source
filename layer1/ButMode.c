@@ -36,6 +36,24 @@ Block *ButModeGetBlock(void)
   CButMode *I=&ButMode;
   {return(I->Block);}
 }
+
+/*========================================================================*/
+void ButModeCaption(char *text)
+{
+  CButMode *I=&ButMode;
+  int l;
+  l = strlen(I->Caption);
+  if((l>0)&&(l<(sizeof(WordType)-1)))
+    strcat(I->Caption,",");
+  l = (sizeof(WordType)-2)-l;
+  UtilNConcat(I->Caption,text,l);
+}
+/*========================================================================*/
+void ButModeCaptionReset(void)
+{
+  CButMode *I=&ButMode;
+  I->Caption[0]=0;
+}
 /*========================================================================*/
 void ButModeChange(int mode)
 {
@@ -138,6 +156,8 @@ void ButModeInit(void)
   I->Mode[4]=cButModeTransXY;
   I->Mode[5]=cButModeClipZZ;
 
+  I->Caption[0] = 0;
+
   I->NCode = 7;
 
   strcpy(I->Code[cButModeRotXYZ],"R-XYZ");
@@ -216,6 +236,14 @@ void ButModeDraw(Block *block)
     c=rateStr;
     while(*c)
       glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+
+    y-=cButModeLineHeight;
+    if(I->Caption[0]) {
+      glRasterPos4d((double)(x),(double)(y),0.0,1.0);
+      c=I->Caption;
+      while(*c)
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+    }
 
     x = (I->Block->rect.left+80+cButModeLeftMargin);
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;

@@ -249,10 +249,10 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   float dist,minDist;
   float proximity,cutoff;
   int inclH;
-  int cullByFlag;
+  int cullByFlag = false;
   AtomInfoType *ai2;
 
-  cullByFlag = SettingGet(cSetting_trim_dots);
+  /*  cullByFlag = SettingGet(cSetting_trim_dots);*/
   inclH = SettingGet(cSetting_dot_hydrogens);
   probe_radius = SettingGet(cSetting_solvent_radius);
   proximity = SettingGet(cSetting_surface_proximity);
@@ -288,8 +288,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 				  while(j>=0) {
 					 ai2 = obj->AtomInfo + cs->IdxToAtm[j];
 					 if((inclH||(!ai2->hydrogen))&&
-						 ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
-						/* ignore if the "2" bit is set */
+						 ((!cullByFlag)||(!(ai2->flags&0x2000000))))  
+						/* ignore atom if flag 25 is set */
 						{
 						  dist = diff3f(v0,cs->Coord+j*3);
 						  if(dist<minDist)
@@ -326,7 +326,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                   ai2 = obj->AtomInfo+cs->IdxToAtm[j];
                   if(ai2->visRep[cRepSurface])
                     if((inclH||(!ai2->hydrogen))&&
-                       ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
+                       ((!cullByFlag)||(!(ai2->flags&0x2000000))))  
                       /* ignore if the "2" bit is set */
                       {
                         dist = diff3f(v0,cs->Coord+j*3);
@@ -451,8 +451,9 @@ Rep *RepSurfaceNew(CoordSet *cs)
           {
             ai1 = obj->AtomInfo+cs->IdxToAtm[a];
             if((inclH||(!ai1->hydrogen))&&
-               ((!cullByFlag)||(!(ai1->customFlag&0x2)))) {
-              /* ignore if the "2" bit is set */
+               ((!cullByFlag)||
+                (!(ai1->flags&1000000)))) {
+              /* don't surface if flag 24 is set BROKEN */
               c1=*(cs->Color+a);
               v0 = cs->Coord+3*a;
               vdw = ai1->vdw;
@@ -473,8 +474,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
                     while(j>=0) {
                       ai2 = obj->AtomInfo + cs->IdxToAtm[j];
                       if((inclH||(!ai2->hydrogen))&&
-                           ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
-                        /* ignore if the "2" bit is set */
+                           ((!cullByFlag)||(!(ai2->flags&0x2000000))))  
+                        /* ignore atom if flag 25 if set BROKEN !!!*/
                         if(j!=a)
                           if(within3f(cs->Coord+3*j,v1,ai2->vdw))
                             {
@@ -553,8 +554,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
 								while(j>=0) {
 								  ai2 = obj->AtomInfo + cs->IdxToAtm[j];
 								  if((inclH||(!ai2->hydrogen))&&
-									  ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
-										  /* ignore if the "2" bit is set */
+									  ((!cullByFlag)||(!(ai2->flags&0x2000000))))  
+										  /* ignore if flag 25 is set  - BROKEN */
 									 if(j!=a)
 										if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_radius+solv_tole))
 										  {

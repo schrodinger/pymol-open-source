@@ -137,6 +137,7 @@ Rep *RepDotNew(CoordSet *cs,int mode)
   RepInit(&I->R);
   I->dotSize = SettingGet(cSetting_dot_size);
   cullByFlag = SettingGet(cSetting_trim_dots);
+
   inclH = SettingGet(cSetting_dot_hydrogens);
 
   I->A=NULL;
@@ -194,7 +195,9 @@ Rep *RepDotNew(CoordSet *cs,int mode)
           ai1 = obj->AtomInfo+cs->IdxToAtm[a];
 			 if(ai1->visRep[cRepDot])
 				if((inclH||(!ai1->hydrogen))&&
-					((!cullByFlag)||(!(ai1->customFlag&0x2)))) { /* ignore if the "2" bit is set */
+               ((!cullByFlag)||
+                (!(ai1->flags&0x1000000)))) {
+              /* don't surface if flag 24 (bit 23) is set */
 				  c1=*(cs->Color+a);
 				  v0 = cs->Coord+3*a;
 				  vdw = ai1->vdw+solv_rad;
@@ -214,7 +217,8 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 						  while(j>=0) {
                       ai2 = obj->AtomInfo+cs->IdxToAtm[j];
 							 if((inclH||(!(ai2->hydrogen)))&&
-								 ((!cullByFlag)||(!(ai2->customFlag&0x2))))  /* ignore if the "2" bit is set */
+								 ((!cullByFlag)||
+                          (!(ai2->flags&0x2000000))))  /* ignore if flag 25 (bit 24) is set */
 								if(j!=a)
 								  if(within3f(cs->Coord+3*j,v1,ai2->vdw+solv_rad))
 									 {
@@ -254,9 +258,9 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 								*(v++)=v1[0];
 								*(v++)=v1[1];
 								*(v++)=v1[2];
-								*(aa++)=vdw*vdw*sp->dot[b].area;
-								*(tp++)=ai1->customType;
-								*(tf++)=ai1->customFlag;
+								*(aa++)=vdw*vdw*sp->dot[b].area; /* area */
+								*(tp++)=ai1->customType; /* numeric type */
+								*(tf++)=ai1->flags; /* flags */
 								*(vn++)=sp->dot[b].v[0];
 								*(vn++)=sp->dot[b].v[1];
 								*(vn++)=sp->dot[b].v[2];

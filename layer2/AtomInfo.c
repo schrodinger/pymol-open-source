@@ -321,7 +321,8 @@ void AtomInfoAssignParameters(AtomInfoType *I)
       vdw=1.8;
       break;
     }
-  I->vdw = vdw;
+  if(I->vdw==0.0)
+    I->vdw = vdw;
 }
 
 

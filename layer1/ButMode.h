@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_ButMode
 
 #include"Ortho.h"
+#include"Word.h"
 
 #define cButModeRotXYZ   0 
 #define cButModeTransXY  1
@@ -35,6 +36,7 @@ typedef struct {
   int NCode;
   float Rate;
   float Samples;
+  WordType Caption;
 }  CButMode;
 
 extern CButMode ButMode;
@@ -45,5 +47,7 @@ Block *ButModeGetBlock(void);
 void ButModeSetRate(float renderTime);
 void ButModeResetRate(void);
 void ButModeChange(int mode);
+void ButModeCaption(char *text);
+void ButModeCaptionReset(void);
 
 #endif

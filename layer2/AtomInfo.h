@@ -51,7 +51,6 @@ typedef struct AtomInfoType {
   int hydrogen;
   int ludiType; /* this will go away soon */
   int customType;
-  int customFlag; /* still needed?? */
   int priority;
   float b,q,vdw,partialCharge;
   int formalCharge;

@@ -191,12 +191,20 @@ class Indexed(Base):
 #------------------------------------------------------------------------------
    def from_molobj(self,molobj): 
       self.reset()
+      mol = self.molecule
+      if len(molobj.title):
+         mol.title = molobj.title
+      if len(molobj.comments):
+         mol.comments = molobj.comments
+      mol.chiral = molobj.chiral
+      mol.dim_code = molobj.dimcode
       for a in molobj.atom:
+         at = chempy.Atom()
          at.symbol = a.symbol
          at.name = a.name
-         if a.resn != Atom.defaults['resn']:
+         if a.resn != chempy.Atom.defaults['resn']:
             at.resn = a.resn
-         if a.resn_code != Atom.defaults['resn_code']:
+         if a.resn_code != chempy.Atom.defaults['resn_code']:
             at.resn_code = a.resn_code
          at.resi = a.resi
          at.resi_number = a.resi_number
@@ -204,9 +212,9 @@ class Indexed(Base):
          at.q = a.q
          at.alt = a.alt
          at.hetatm = a.hetatm
-         if a.segi != Atom.defaults['segi']:
+         if a.segi != chempy.Atom.defaults['segi']:
             at.segi = a.segi
-         if a.chain != Atom.defaults['chain']:
+         if a.chain != chempy.Atom.defaults['chain']:
             at.chain = a.chain
          at.color_code = a.color_code
          at.coord = a.coord
@@ -217,11 +225,13 @@ class Indexed(Base):
          if a.text_type != 'UNKNOWN':
             at.text_type = a.text_type
          at.stereo = a.stereo
-         if hasattr(a,flags): # just in case
+         if hasattr(a,'flags'):
             at.flags = a.flags
+         if hasattr(a,'vdw'):
+            at.vdw = a.vdw
          self.atom.append(at)
       for b in molobj.bond:
-         bnd = Bond()
+         bnd = chempy.Bond()
          bnd.index = [b.atom[0],b.atom[1]]
          bnd.order = b.order
          bnd.stereo = b.stereo

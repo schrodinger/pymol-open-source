@@ -253,6 +253,7 @@ int PLabelAtom(AtomInfoType *at,char *expr)
   int result;
   LabelType label;
   char atype[7];
+  OrthoLineType buffer;
   if(at->hetatm)
     strcpy(atype,"HETATM");
   else
@@ -270,6 +271,12 @@ int PLabelAtom(AtomInfoType *at,char *expr)
   PConvStringToPyDictItem(dict,"segi",at->segi);
   PConvStringToPyDictItem(dict,"text_type",at->textType);
   PConvStringToPyDictItem(dict,"elem",at->elem);
+  if(at->flags) {
+    sprintf(buffer,"%X",at->flags);
+    PConvStringToPyDictItem(dict,"flags",buffer);
+  } else {
+    PConvStringToPyDictItem(dict,"flags","0");
+  }
   PConvFloatToPyDictItem(dict,"q",at->q);
   PConvFloatToPyDictItem(dict,"b",at->b);
   if(at->customType!=cAtomInfoNoType)
