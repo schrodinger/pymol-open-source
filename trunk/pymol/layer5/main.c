@@ -461,7 +461,6 @@ void MainReshape(int width, int height) /* called by Glut */
   h = ((float)height)/width;
   if(PMGUI) glViewport(0, 0, (GLint) width, (GLint) height);
   
-
   OrthoReshape(width,height);
 }
 /*========================================================================*/
