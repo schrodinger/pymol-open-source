@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectMap
 #define _H_ObjectMap
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"Object.h"
 #include"Crystal.h"

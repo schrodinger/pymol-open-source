@@ -15,7 +15,7 @@ Z* -------------------------------------------------------------------
 */
 /* Example of embedding Python in another program */
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"os_std.h"
 

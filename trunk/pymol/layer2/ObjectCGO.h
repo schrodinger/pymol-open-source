@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectCGO
 #define _H_ObjectCGO
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"Object.h"
 #include"CGO.h"

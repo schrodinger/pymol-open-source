@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_PyMol
 #define _H_PyMol
 
-#include<Python.h>
+#include"os_python.h"
 
 void init_cmd(void);
 

@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Selector
 #define _H_Selector
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"ObjectMolecule.h"
 #include"DistSet.h"

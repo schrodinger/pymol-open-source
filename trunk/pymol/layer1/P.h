@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_P
 #define _H_P
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"AtomInfo.h"
 
