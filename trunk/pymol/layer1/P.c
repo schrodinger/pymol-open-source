@@ -352,9 +352,18 @@ void PLockAPIAsGlut(void)
   P_glut_thread_active = 1; /* if we come in on a glut event - then it is the active thread */
 }
 
+/* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
+
 #ifdef _PYMOL_MONOLITHIC
 void	initExtensionClass();
 void	initsglite();
+void    init_opengl();
+void    init_opengl_num();
+void    init_glu();
+void    init_glu_num();
+void    init_glut();
+void    initopenglutil();
+void    initopenglutil_num();
 #endif
 
 void PInitEmbedded(int argc,char **argv)
@@ -371,6 +380,12 @@ void PInitEmbedded(int argc,char **argv)
 #ifdef _PYMOL_MONOLITHIC
 	initExtensionClass();
 	initsglite();
+    init_opengl();
+    init_opengl_num();
+    init_glu();
+    init_glu_num();
+    init_glut();
+    initopenglutil();
 #endif
 
   PyRun_SimpleString("import os\n");
