@@ -540,6 +540,7 @@ void ExecutiveDelete(char *name)
 				  rec->obj->fFree(rec->obj);
 				  rec->obj=NULL;
 				  ListDelete(I->Spec,rec,next,SpecList);
+				  rec=NULL;
 				}
 		  }
 		else if(rec->type==cExecSelection)
@@ -549,6 +550,7 @@ void ExecutiveDelete(char *name)
 				{
 				  SelectorDelete(rec->name);
 				  ListDelete(I->Spec,rec,next,SpecList);
+				  rec=NULL;
 				}
 		  }
 	 }
