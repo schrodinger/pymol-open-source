@@ -1,11 +1,11 @@
 Summary: PyMOL Molecular Graphics System
 Name: pymol
-Version: 0.92
+Version: 0.93
 Release: 1.rh62.py152
 Copyright: Python
 Group: Development/Tools
 URL: http://www.pymol.org
-Source: /usr/src/redhat/SOURCES/pymol-0_92-src.tgz
+Source: /usr/src/redhat/SOURCES/pymol-0_93-src.tgz
 BuildRoot: /var/tmp/pymol-root
 Requires: python >= 1.5.2
 Requires: tcl >= 8.0.0
