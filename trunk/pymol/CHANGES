@@ -29,6 +29,10 @@ Impending Changes
    * Saving and restoring matrix, center, origin, zoom, clip
 
 Changes up to 0.50
+   
+   * Found a workaround for KDE/Gnome/Tkinter/Tcl/Tk problems under linux
+
+   * Created Save option on the Tkinter menu, and added additional file types.
 
    * TAB-activated filename and command completion (CTRL-D too)
 
@@ -36,7 +40,7 @@ Changes up to 0.50
 
    * Auto-detection of stereo capability
 
-   * Robust Feedback control mechanism
+   * Created a robust Feedback control mechanism
 
    * Eliminated hangs and crashes upon program termination with Win2k/NT.
    

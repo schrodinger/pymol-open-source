@@ -44,6 +44,17 @@ from chempy import io
 from chempy.sdf import SDF,SDFRec
 from chempy import fragments
 
+file_ext_re= re.compile(string.join([
+   "\.pdb$|\.ent$|\.mol$|",
+   r"\.PDB$|\.ENT$|\.MOL$|",
+   r"\.mmod$|\.mmd$|\.dat$|\.out$|",
+   r"\.MMOD$|\.MMD$|\.DAT$|\.OUT$|",
+   r"\.xplor$|\.pkl$|\.sdf$|",
+   r"\.XPLOR$|\.PKL$|\.SDF$|",                        
+   r"\.r3d$|\.xyz$|\.xyz_[0-9]*$",
+   r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$"],''))
+
+
 QuietException = parsing.QuietException
 
 # the following lock is used by both C and Python to insure that no more than
@@ -2802,13 +2813,13 @@ PYMOL API
       unlock()
    return r
 
-def test(): # generic test routine for development
+def test(winid): # generic test routine for development
    '''
 DEBUGGING
    '''
    try:
       lock()   
-      r=_cmd.test()
+      r=_cmd.test(winid)
    finally:
       unlock()
    return r
@@ -3358,9 +3369,7 @@ PYMOL API
          ftype = loadable.pdb
       elif re.search("\.mol$",arg[0],re.I):
          ftype = loadable.mol
-      elif re.search("\.mmod$",arg[0],re.I):
-         ftype = loadable.mmod
-      elif re.search("\.mmd$",arg[0],re.I):
+      elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",arg[0],re.I):
          ftype = loadable.mmod
       elif re.search("\.xplor$",arg[0],re.I):
          ftype = loadable.xplor
@@ -3391,14 +3400,11 @@ PYMOL API
             ok = 0
          if len(arg)==1:
             oname = re.sub("[^/]*\/","",arg[0])
-            oname = re.sub(
-"\.pdb$|\.ent$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.r3d$|\.xyz$|\.xyz_[0-9]*$|"+
-"\.PDB$|\.ENT$|\.MOL$|\.MMOD$|\.MMD$|\.XPLOR$|\.PKL$|\.R3D$|\.XYZ$|\.XYZ_[0-9]*$",
-                           "",oname)
+            oname = file_ext_re.sub("",oname)
          else:
             oname = string.strip(arg[1])
          if len(arg)>2:
-            state = int(arg[2])-1
+            state = int(arg[2])
          if len(arg)>3:
             if hasattr(loadable,str(arg[3])):
                ftype = getattr(loadable,str(arg[3]))
@@ -4202,7 +4208,13 @@ EXAMPLES
    else:
       pattern = os.path.expanduser(pattern)
       pattern = os.path.expandvars(pattern)
-   lst = glob(pattern)
+   if string.find("*",pattern)<0:
+      lst = glob(pattern+"/*")
+   else:
+      lst = []
+   if not len(lst):
+      lst = glob(pattern)
+   lst = parsing.list_to_str_list(lst)
    for a in lst:
       print a
       
