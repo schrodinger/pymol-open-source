@@ -545,7 +545,7 @@ CC-CT-N2    63.0      113.10    WLD from CC-CT-CT
 CC-CT-CY    63.0      110.00    WLD from CT-CT-CY
 N2-CT-CY    63.0      110.00    WLD from CT-CT-CY
 SH-CT-OH    60.0      109.50    WLD from C -CT-OH
-CA-CT-S     60.0      109.50    WLD guess
+CA-CT-S     60.0      109.50    WLD gross estimate
 CC-NB-OS    70.0      117.00    WLD from CC-NB-CR
 NB-CC-OS    70.0      120.00    WLD from NA-CR-NA
 NB-CC-NB    70.0      120.00    WLD from NA-CR-NA
@@ -912,7 +912,6 @@ TINKER    P     15    4
 # sulfer
 TINKER    S     16    2 
 TINKER    SO    16    4 
-TINKER    SX    16    2 
 TINKER    SH    16    2 
 # copper     
 TINKER    CU    29    0 
