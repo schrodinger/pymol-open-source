@@ -91,7 +91,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list)
 {
   int ok=true;
   int a;
-  PyObject *bond_list;
+  PyObject *bond_list=NULL;
   BondType *bond;
   if(ok) ok=PyList_Check(list);  
   if(ok) ok=((I->Bond=VLAlloc(BondType,I->NBond))!=NULL);

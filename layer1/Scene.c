@@ -419,8 +419,8 @@ void SceneCountFrames()
 void SceneSetFrame(int mode,int frame)
 {
   CScene *I=&Scene;
-  int newFrame;
-  int newState;
+  int newFrame=0;
+  int newState=0;
 
   newFrame = SettingGetGlobal_i(cSetting_frame) -1;
   PRINTFD(FB_Scene)

@@ -734,9 +734,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int backface_cull;
   float project_triangle;
   float spec_vector[3];
+  int shadows;
 
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
-  
+  shadows = SettingGet(cSetting_ray_shadows);
+
   backface_cull = (int)SettingGet(cSetting_backface_cull);
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   two_sided_lighting = (int)SettingGet(cSetting_two_sided_lighting);
@@ -821,7 +823,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
       " Ray: processed %i graphics primitives in %4.2f sec.\n",I->NPrimitive,now
       ENDFB;
     BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
-    
+
     I->NBasis=3; /* light source */
     BasisInit(I->Basis+2);
     
@@ -831,38 +833,59 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     I->Basis[2].LightNormal[1]=v[1];
     I->Basis[2].LightNormal[2]=v[2];
     normalize3f(I->Basis[2].LightNormal);
-
+    
     copy3f(I->Basis[2].LightNormal,spec_vector);
     spec_vector[2]--;
     normalize3f(spec_vector);
-                    
-    BasisSetupMatrix(I->Basis+2);
-    RayTransformBasis(I,I->Basis+2);
-    BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
+    
+    if(shadows) { /* don't waste time on shadows unless needed */
+      BasisSetupMatrix(I->Basis+2);
+      RayTransformBasis(I,I->Basis+2);
+      BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
+    }
 
     now = UtilGetSeconds()-timing;
 
 #ifdef _MemoryDebug_ON
-    PRINTFB(FB_Ray,FB_Details)
-      " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
-      I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
-      I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
-      I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
-      I->Basis[1].Map->Dim[2],I->Basis[2].Map->Dim[2],
-      (int)(MemoryDebugUsage()/(1024.0*1024)),
-      now
-      ENDFB;
+    if(shadows) {
+      PRINTFB(FB_Ray,FB_Details)
+        " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
+        I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
+        I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
+        I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
+        I->Basis[2].Map->Dim[2],I->Basis[2].Map->Dim[2],
+        (int)(MemoryDebugUsage()/(1024.0*1024)),
+        now
+        ENDFB;
+    } else {
+      PRINTFB(FB_Ray,FB_Details)
+        " Ray: voxels: [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
+        I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
+        I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
+        (int)(MemoryDebugUsage()/(1024.0*1024)),
+        now
+        ENDFB;
+    }
 #else
-    PRINTFB(FB_Ray,FB_Details)
-      " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %4.2f sec.\n",
-      I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
-      I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
-      I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
-      I->Basis[1].Map->Dim[2],I->Basis[2].Map->Dim[2],
-      now
-      ENDFB;
-#endif
+    if(shadows) {
+      PRINTFB(FB_Ray,FB_Details)
+        " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %4.2f sec.\n",
+        I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
+        I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
+        I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
+        I->Basis[2].Map->Dim[2],I->Basis[2].Map->Dim[2],
+        now
+        ENDFB;
+    } else {
+      PRINTFB(FB_Ray,FB_Details)
+        " Ray: voxels: [%4.2f:%dx%dx%d], %4.2f sec.\n",
+        I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
+        I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
+        now
+        ENDFB;
+    }
 
+#endif
     /* IMAGING */
     
     /* erase buffer */
@@ -924,13 +947,18 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 }
                 direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
                 
-                matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
-                
-                if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,true,0.0,0.0)>=0) {
-                  lit=pow(r2.prim->trans,0.5);
+                if(shadows) {
+                  matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
+                  
+                  if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,true,0.0,0.0)>=0) {
+                    lit=pow(r2.prim->trans,0.5);
+                  } else {
+                    lit=1.0;
+                  }
                 } else {
                   lit=1.0;
                 }
+                          
                 if(lit>0.0) {
                   dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
                   if(dotgle<0.0) dotgle=0.0;

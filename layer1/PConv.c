@@ -441,11 +441,11 @@ int PConvPyListToIntArray(PyObject *obj,int **f)
     *f=NULL;
     ok=false;
   } else {
+    l=PyList_Size(obj);
     if(!l)
       ok=-1;
     else
       ok=l;
-    l=PyList_Size(obj);
     (*f) = Alloc(int,l);
     ff = (*f);
     for(a=0;a<l;a++)
@@ -466,11 +466,11 @@ int PConvPyListToIntVLA(PyObject *obj,int **f)
     *f=NULL;
     ok=false;
   } else {
+    l=PyList_Size(obj);
     if(!l)
       ok=-1;
     else
       ok=l;
-    l=PyList_Size(obj);
     (*f) = VLAlloc(int,l);
     ff = (*f);
     for(a=0;a<l;a++)

@@ -365,9 +365,9 @@ int SelectorFromPyList(char *name,PyObject *list)
   int ok=true;
   SelectorType *I=&Selector;
   int n,a,b,m,sele;
-  PyObject *obj_list;
+  PyObject *obj_list=NULL;
   PyObject *idx_list;
-  int n_obj,n_idx,idx;
+  int n_obj=0,n_idx=0,idx;
   char *oname;
   ObjectMolecule *obj;
 
