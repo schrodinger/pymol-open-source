@@ -53,7 +53,7 @@ void SceneReshape(Block *block,int width,int height);
 void SceneTest(void);
 void SceneIdle(void);
 void SceneFree(void);
-void SceneRay(int width,int height);
+void SceneRay(int width,int height,int mode,char **headerVLA,char **charVLA);
 void SceneMakeMovieImage(void);
 void SceneCopy(int buffer);
 
@@ -91,6 +91,8 @@ int SceneMultipick(Multipick *smp);
 
 void SceneSetCardInfo(char *vendor,char *renderer,char *version);
 void SceneGetCardInfo(char **vendor,char **renderer,char **version);
+int SceneLoadPNG(char *fname,int movie_flag);
+
 #endif
 
 

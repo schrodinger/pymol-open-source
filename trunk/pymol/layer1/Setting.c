@@ -1150,5 +1150,12 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_ray_improve_shadows,0.1F);
 
+  SettingSet_f(I,cSetting_smooth_color_triangle,0.0F);
+
+  SettingSet_f(I,cSetting_ray_default_renderer,0.0F);
+
+  SettingSet_f(I,cSetting_field_of_view,20.0F);
+
+  SettingSet_f(I,cSetting_reflect_power, 1.0F);
 }
 

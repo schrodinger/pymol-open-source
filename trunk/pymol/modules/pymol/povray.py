@@ -17,18 +17,23 @@ import traceback
 
 povray_exe = "x-povray"
 
-def render_from_string(pov_inp,prefix):
+def render_from_string(header,pov_inp,prefix,width,height,antialias):
    r = None
    try:
       pov = prefix +".pov"
       png = prefix +".png"
       f=open(pov,'w')
+      f.write(header)
       f.write(pov_inp)
       f.close()
       if os.path.exists(png):
          os.unlink(png)
-      os.system("%s +I%s +O%s +W640 +H480 -A0.01"%(
-                povray_exe,pov,png))
+      if antialias:
+         ant="+A"
+      else:
+         ant=""
+      os.system("%s +I%s +O%s +W%d +H%d %s"%(
+                povray_exe,pov,png,width,height,ant))
       if os.path.exists(png):
          r = 1
    except:

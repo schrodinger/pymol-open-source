@@ -71,6 +71,7 @@ void PDumpTraceback(PyObject *err);
 int PComplete(char *str,int buf_size);
 
 int PTruthCallStr(PyObject *object,char *method,char *argument);
+int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias);
 
 extern PyObject *P_globals;
 

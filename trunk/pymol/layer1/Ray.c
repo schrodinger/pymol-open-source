@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Util.h"
 #include"Ray.h"
+#include"Triangle.h"
 
 #ifndef RAY_SMALL
 #define RAY_SMALL 0.00001
@@ -422,9 +423,8 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
 
 
 /*========================================================================*/
-void RayRenderPOV(CRay *I,int width,int height,char *charVLA,float front,float back,float fov)
+void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charVLA_ptr,float front,float back,float fov)
 {
-  float *light;
   int antialias;
   int fogFlag=false;
   int fogRangeFlag=false;
@@ -432,12 +432,23 @@ void RayRenderPOV(CRay *I,int width,int height,char *charVLA,float front,float b
   float *bkrd;
   float fog_start=0.0;
   float gamma;
+  float *d;
   CBasis *base;
   CPrimitive *prim;
-  float *vert;
-
+  OrthoLineType buffer;
+  float *vert,*norm;
+  float vert2[3];
+  float *light;
+  int cc,hc;
   int a;
+  int smooth_color_triangle;
+  int mesh_obj = false;
+  char *charVLA,*headerVLA;
+  char transmit[64];
 
+  charVLA=*charVLA_ptr;
+  headerVLA=*headerVLA_ptr;
+  smooth_color_triangle=SettingGet(cSetting_smooth_color_triangle);
   PRINTFB(FB_Ray,FB_Details)
     " RayRenderPOV: w %d h %d f %8.3f b %8.3f\n",width,height,front,back
     ENDFB;
@@ -445,9 +456,8 @@ void RayRenderPOV(CRay *I,int width,int height,char *charVLA,float front,float b
     dump3f(I->Volume," RayRenderPOV: vol");
     dump3f(I->Volume+3," RayRenderPOV: vol");
   }
-  if(!charVLA) {
-    charVLA=VLAlloc(char,10000);
-  }
+  cc=0;
+  hc=0;
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
     gamma=1.0/gamma;
@@ -476,31 +486,149 @@ void RayRenderPOV(CRay *I,int width,int height,char *charVLA,float front,float b
     " RayRenderPovRay: processed %i graphics primitives.\n",I->NPrimitive 
     ENDFB;
   base = I->Basis+1;
-  printf("#include \"colors.inc\"\n");
-  printf("  camera {location <0.0 , 0.0 , %10.6f>\nlook_at  <0.0 , 0.0 , -1.0> angle %10.6f}\n",
-         front,fov*0.75);
-  printf("    light_source{<-400,400,1000> color White}\n");
+
+  if(!SettingGet(cSetting_ortho)) {
+    sprintf(buffer,"camera {location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> angle %12.10f}\n",
+            front,fov*0.78);
+  } else {
+    sprintf(buffer,"camera {orthographic location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> right -%12.10f*x up %12.10f*y}\n",
+            front,I->Range[0],I->Range[1]);
+  }
+  UtilConcatVLA(&headerVLA,&hc,buffer);
+
+  sprintf(buffer,"#default { finish{phong %8.3f ambient %8.3f diffuse %8.3f phong_size %8.6f}}\n",
+          SettingGet(cSetting_spec_reflect),
+          SettingGet(cSetting_ambient)*1.2,
+          SettingGet(cSetting_reflect)*1.2,
+          SettingGet(cSetting_spec_power)/4.0);
+  UtilConcatVLA(&headerVLA,&hc,buffer);
+
+  light = SettingGet_fv(NULL,NULL,cSetting_light);
+  sprintf(buffer,"light_source{<%6.4f,%6.4f,%6.4f>  rgb<1.0,1.0,1.0>}\n",
+          light[0]*10000.0F,
+          -light[1]*10000.0F,
+          -light[2]*10000.0F-front
+          );
+  UtilConcatVLA(&headerVLA,&hc,buffer);
+
+
+  sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,
+          bkrd[0],bkrd[1],bkrd[2]);
+  UtilConcatVLA(&headerVLA,&hc,buffer);
 
   for(a=0;a<I->NPrimitive;a++) {
     prim = I->Primitive+a;
     vert = base->Vertex+3*(prim->vert);
+    if(prim->type==cPrimTriangle) {
+      if(smooth_color_triangle)
+        if(!mesh_obj) {
+          sprintf(buffer,"mesh {\n");
+          UtilConcatVLA(&charVLA,&cc,buffer);        
+          mesh_obj=true;
+        }
+    } else if(mesh_obj) {
+      sprintf(buffer,"}");
+      UtilConcatVLA(&charVLA,&cc,buffer);     
+      mesh_obj=false;
+    }
     switch(prim->type) {
 	 case cPrimSphere:
-      printf("sphere{<%10.6f,%10.6f,%10.6f>, %10.6f\n",
+      sprintf(buffer,"sphere{<%12.10f,%12.10f,%12.10f>, %12.10f\n",
              -vert[0],vert[1],vert[2],prim->r1);
-      printf("pigment{color rgb<1,0.8,0>}}\n");
+      UtilConcatVLA(&charVLA,&cc,buffer);      
+      sprintf(buffer,"pigment{color rgb<%6.4f,%6.4f,%6.4f>}}\n",
+              prim->c1[0],prim->c1[1],prim->c1[2]);
+      UtilConcatVLA(&charVLA,&cc,buffer);
 		break;
 	 case cPrimCylinder:
+      d=base->Normal+3*base->Vert2Normal[prim->vert];
+      scale3f(d,prim->l1,vert2);
+      add3f(vert,vert2,vert2);
+      sprintf(buffer,"cylinder{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n %12.10f\nopen\n",
+              -vert[0],vert[1],vert[2],
+              -vert2[0],vert2[1],vert2[2],
+              prim->r1);
+      UtilConcatVLA(&charVLA,&cc,buffer);
+      sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
+              (prim->c1[0]+prim->c2[0])/2,
+              (prim->c1[1]+prim->c2[1])/2,
+              (prim->c1[2]+prim->c2[2])/2);
+      UtilConcatVLA(&charVLA,&cc,buffer);
+
+      sprintf(buffer,"sphere{<%12.10f,%12.10f,%12.10f>, %12.10f\n",
+             -vert[0],vert[1],vert[2],prim->r1);
+      UtilConcatVLA(&charVLA,&cc,buffer);      
+      sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
+              prim->c1[0],prim->c1[1],prim->c1[2]);
+      UtilConcatVLA(&charVLA,&cc,buffer);
+
+      sprintf(buffer,"sphere{<%12.10f,%12.10f,%12.10f>, %12.10f\n",
+             -vert2[0],vert2[1],vert2[2],prim->r1);
+      UtilConcatVLA(&charVLA,&cc,buffer);      
+      sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
+              prim->c2[0],prim->c2[1],prim->c2[2]);
+      UtilConcatVLA(&charVLA,&cc,buffer);
+
 		break;
 	 case cPrimTriangle:
+      norm=base->Normal+3*base->Vert2Normal[prim->vert]+3;/* first normal is the average */      
+
+
+      if(!TriangleDegenerate(vert,norm,vert+3,norm+3,vert+6,norm+6)) {
+
+        if(smooth_color_triangle) {
+          sprintf(buffer,"smooth_color_triangle{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%6.4f1,%6.4f,%6.4f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%6.4f1,%6.4f,%6.4f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%6.4f1,%6.4f,%6.4f> }\n",
+                  -vert[0],vert[1],vert[2],
+                  -norm[0],norm[1],norm[2],
+                  prim->c1[0],prim->c1[1],prim->c1[2],
+                  -vert[3],vert[4],vert[5],
+                  -norm[3],norm[4],norm[5],
+                  prim->c2[0],prim->c2[1],prim->c2[2],
+                  -vert[6],vert[7],vert[8],
+                  -norm[6],norm[7],norm[8],
+                  prim->c3[0],prim->c3[1],prim->c3[2]
+                  );
+          UtilConcatVLA(&charVLA,&cc,buffer);
+        } else {
+          sprintf(buffer,"smooth_triangle{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>\n",
+                  -vert[0],vert[1],vert[2],
+                  -norm[0],norm[1],norm[2],
+                  -vert[3],vert[4],vert[5],
+                  -norm[3],norm[4],norm[5],
+                  -vert[6],vert[7],vert[8],
+                  -norm[6],norm[7],norm[8]
+                  );
+          UtilConcatVLA(&charVLA,&cc,buffer);
+          if(prim->trans>R_SMALL4) 
+            sprintf(transmit,"transmit %4.6f",prim->trans);
+          else
+            transmit[0]=0;
+          if(equal3f(prim->c1,prim->c2)||equal3f(prim->c1,prim->c3)) {
+            sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}}\n",
+                    prim->c1[0],prim->c1[1],prim->c1[2],transmit);
+          } else if(equal3f(prim->c2,prim->c3)) {
+            sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}}\n",
+                    prim->c2[0],prim->c2[1],prim->c2[2],transmit);
+          } else {
+            sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}}\n",
+                    (prim->c1[0]+prim->c2[0]+prim->c3[0])/3,
+                  (prim->c1[1]+prim->c2[1]+prim->c3[1])/3,
+                    (prim->c1[2]+prim->c2[2]+prim->c3[2])/3,transmit);
+          }
+        UtilConcatVLA(&charVLA,&cc,buffer);
+        }
+      }
 		break;
     }
   }
-  /*  BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);*/
   
-  light=SettingGetfv(cSetting_light);
-  dump3f(light,"light");
-  
+  if(mesh_obj) {
+    sprintf(buffer,"}");
+    UtilConcatVLA(&charVLA,&cc,buffer);     
+    mesh_obj=false;
+  }
+  *charVLA_ptr=charVLA;
+  *headerVLA_ptr=headerVLA;
 }
 
 /*========================================================================*/
@@ -575,6 +703,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   float lit;
   int backface_cull;
   float project_triangle;
+  float spec_vector[3];
 
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
   
@@ -670,7 +799,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     I->Basis[2].LightNormal[1]=v[1];
     I->Basis[2].LightNormal[2]=v[2];
     normalize3f(I->Basis[2].LightNormal);
-    
+
+    copy3f(I->Basis[2].LightNormal,spec_vector);
+    spec_vector[2]--;
+    normalize3f(spec_vector);
+                    
     BasisSetupMatrix(I->Basis+2);
     RayTransformBasis(I,I->Basis+2);
     BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
@@ -760,9 +893,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 }
                 if(lit>0.0) {
                   dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
-                  
                   if(dotgle<0.0) dotgle=0.0;
-                  reflect_cmp=lit*(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
+                  reflect_cmp=lit*(dotgle+(pow(dotgle,SettingGet(cSetting_reflect_power))))/2.0;
+                  dotgle=-dot_product3f(r1.surfnormal,spec_vector);
+                  if(dotgle<0.0) dotgle=0.0;
                   excess=pow(dotgle,SettingGet(cSetting_spec_power))*
                     SettingGet(cSetting_spec_reflect)*lit;
                 } else {

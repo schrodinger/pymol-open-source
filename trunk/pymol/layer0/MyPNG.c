@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_std.h"
 
+#include"Base.h"
 #include "MyPNG.h"
 #include"MemoryDebug.h"
 
@@ -33,7 +34,6 @@ Z* -------------------------------------------------------------------
 #endif
 
 #endif
-
 
 int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height)
 {
@@ -134,9 +134,178 @@ int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int 
 #else
    return 0;
 #endif
-
-
-
 }
+
+int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr)
+{
+
+  FILE *png_file;
+  png_struct    *png_ptr = NULL;
+  png_info	*info_ptr = NULL;
+  png_byte      buf[8];
+  png_byte      *png_pixels = NULL;
+  png_byte      **row_pointers = NULL;
+  png_byte      *pix_ptr = NULL;
+  png_uint_32   row_bytes;
+
+  png_uint_32   width;
+  png_uint_32   height;
+  int           bit_depth;
+  int           color_type;
+  int           row, col;
+  int           ret;
+  int           i;
+  int ok=true;
+  unsigned char *p;
+  double        file_gamma;
+
+#ifdef _HAVE_LIBPNG
+
+   png_file = fopen(file_name, "rb");
+   if (png_file == NULL)
+     return 0;
+
+   /* read and check signature in PNG file */
+   ret = fread (buf, 1, 8, png_file);
+   if (ret != 8)
+     ok=false;
+   
+   if(ok) {
+     ret = png_check_sig (buf, 8);
+     if (!ret)
+       ok=false;
+   }
+   /* create png and info structures */
+   if(ok) {
+     png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING,
+                                       NULL, NULL, NULL);
+     if (!png_ptr)
+       ok=false;
+   }
+   
+   if(ok) {
+     info_ptr = png_create_info_struct (png_ptr);
+     if (!info_ptr)
+       ok=false;
+   }
+   
+   if (setjmp (png_jmpbuf(png_ptr)))
+     ok = false;
+   
+   if(ok) {
+     /* set up the input control for C streams */
+     png_init_io (png_ptr, png_file);
+     png_set_sig_bytes (png_ptr, 8);  /* we already read the 8 signature bytes */
+     
+     /* read the file information */
+     png_read_info (png_ptr, info_ptr);
+     
+     /* get size and bit-depth of the PNG-image */
+     png_get_IHDR (png_ptr, info_ptr,
+                   &width, &height, &bit_depth, &color_type,
+                   NULL, NULL, NULL);
+     
+     /* set-up the transformations */
+
+     if(color_type!=PNG_COLOR_TYPE_RGB_ALPHA) {
+       png_set_expand(png_ptr);
+       png_set_filler(png_ptr,0xFF,PNG_FILLER_AFTER);
+     }
+     
+     if (color_type == PNG_COLOR_TYPE_GRAY ||
+         color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+       png_set_gray_to_rgb (png_ptr);
+     /* only if file has a file gamma, we do a correction */
+     if (png_get_gAMA (png_ptr, info_ptr, &file_gamma))
+       png_set_gamma (png_ptr, (double) 2.2, file_gamma);
+     
+     /* all transformations have been registered; now update info_ptr data,
+      * get rowbytes and channels, and allocate image memory */
+     
+     png_read_update_info (png_ptr, info_ptr);
+     
+     /* get the new color-type and bit-depth (after expansion/stripping) */
+     png_get_IHDR (png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
+                   NULL, NULL, NULL);
+     
+     /* row_bytes is the width x number of channels x (bit-depth / 8) */
+     row_bytes = png_get_rowbytes (png_ptr, info_ptr);
+     if ((png_pixels = (png_byte *) malloc (row_bytes * height * sizeof (png_byte))) == NULL) {
+       ok=false;
+     }
+   }
+   
+   if(ok) {
+     
+     if ((row_pointers = (png_byte **) malloc (height * sizeof (png_bytep))) == NULL)
+       {
+         png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+         free (png_pixels);
+         png_pixels = NULL;
+         ok=false;
+       }
+   }
+   
+   if(ok) {
+     
+     /* set the individual row_pointers to point at the correct offsets */
+     for (i = 0; i < (height); i++)
+       row_pointers[i] = png_pixels + i * row_bytes;
+     
+     /* now we can go ahead and just read the whole image */
+     png_read_image (png_ptr, row_pointers);
+     
+     /* read rest of file, and get additional chunks in info_ptr - REQUIRED */
+     png_read_end (png_ptr, info_ptr);
+   }
+   
+   if(ok) {
+     /* now reformat image into PyMOL format */
+     
+     p=(unsigned char*)mmalloc(4*width*height);
+     if(!p)
+       ok=false;
+   }
+   if(ok) {
+     *(p_ptr)=p;
+     *(width_ptr)=width;
+     *(height_ptr)=height;
+     
+     for (row = 0; row < height; row++)
+       {
+         pix_ptr=row_pointers[(height-1)-row];
+         for (col = 0; col < width; col++)
+           {
+             *p++=*pix_ptr++;
+             *p++=*pix_ptr++;
+             *p++=*pix_ptr++;
+             *p++=*pix_ptr++;
+           }
+       }
+     
+   } 
+   
+   if (row_pointers != (unsigned char**) NULL)
+     free (row_pointers);
+   if (png_pixels != (unsigned char*) NULL)
+     free (png_pixels);
+   
+   if(png_ptr) {
+     png_destroy_read_struct (&png_ptr, &info_ptr, (png_infopp) NULL);
+   }
+   
+   return(ok);
+#else
+   return (false);
+#endif
+  
+} /* end of source */
+
+
+
+
+
+
+
 
 
