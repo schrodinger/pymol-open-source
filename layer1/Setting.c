@@ -2038,7 +2038,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_gaussian_lambda, 0.5F );
 
-  SettingSet_b(I,cSetting_pdb_standard_order, 0.0F);
+  SettingSet_b(I,cSetting_pdb_standard_order, 0);
 }
 
 

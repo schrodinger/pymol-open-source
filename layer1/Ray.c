@@ -572,7 +572,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   if(angle) {
     float temp[16];
     MatrixLoadIdentity44f(temp);
-    MatrixRotate44f3f(temp,-PI*angle/180,0.0F,1.0F,0.0F);
+    MatrixRotate44f3f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
     MatrixTransform44fAs33f3f(temp,light,light);
   }
   sprintf(buffer,"light_source{<%6.4f,%6.4f,%6.4f>  rgb<1.0,1.0,1.0>}\n",
@@ -927,7 +927,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     if(angle) {
       float temp[16];
       MatrixLoadIdentity44f(temp);
-      MatrixRotate44f3f(temp,-PI*angle/180,0.0F,1.0F,0.0F);
+      MatrixRotate44f3f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
       MatrixTransform44fAs33f3f(temp,light,light);
     }
 
@@ -1931,7 +1931,7 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   if(ray_width)
     I->PixelRadius = ((float)I->Range[0])/ray_width;
   else
-    I->PixelRadius = 0.15;
+    I->PixelRadius = 0.15F;
 }
 /*========================================================================*/
 
