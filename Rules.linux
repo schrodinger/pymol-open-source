@@ -29,11 +29,11 @@ BUILD = -shared -o modules/_cmd.so
 #
 #- Choose One --------------------------------------------------------
 #--- Workaround for XFree86/DRI linux dll problem for module build
-BUGS = -D_DRI_WORKAROUND
+#BUGS = -D_DRI_WORKAROUND
 #--- Running under windows (perhaps the biggest bug of all)
 #BUGS = -D_PYMOL_WINDOWS -DWIN32 -D_WIN32
 #---
-#BUGS =
+BUGS =
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
