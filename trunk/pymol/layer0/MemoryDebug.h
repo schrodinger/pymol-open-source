@@ -125,6 +125,7 @@ void MemoryDebugFree(void *ptr,const char *file,int line,int type);
 void MemoryDebugQuietFree(void *ptr,int type);
 
 void MemoryDebugDump(void);
+int MemoryDebugUsage(void);
 
 #ifdef __cplusplus
 }

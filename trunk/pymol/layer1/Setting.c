@@ -473,8 +473,6 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_all_states:
     SceneChanged();
     break;
-  case cSetting_dot_density:
-	 break;
   case cSetting_sel_counter:
 	 break;
   case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
@@ -539,6 +537,12 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SceneChanged();
     break;
   case cSetting_dot_width:
+  case cSetting_dot_radius:
+  case cSetting_dot_density:
+  case cSetting_dot_hydrogens:
+    ExecutiveInvalidateRep(inv_sele,cRepDot,cRepInvRep);
+    SceneChanged();
+    break;
   case cSetting_line_smooth:
   case cSetting_ortho:
   case cSetting_ambient:
@@ -779,7 +783,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_stick_radius, 0.3);
 
-  SettingSet_f(I,cSetting_hash_max, 80);
+  SettingSet_f(I,cSetting_hash_max, 100);
 
   SettingSet_f(I,cSetting_ortho, 0);
 
@@ -795,7 +799,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_dot_hydrogens, 1.0);
 
-  SettingSet_f(I,cSetting_dot_size, 0.06);
+  SettingSet_f(I,cSetting_dot_radius, 0.06);
 
   SettingSet_f(I,cSetting_ray_trace_frames, 0.0);
 

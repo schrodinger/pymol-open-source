@@ -151,7 +151,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 
   RepInit(&I->R);
 
-  I->dotSize = SettingGet(cSetting_dot_size);
+  I->dotSize = SettingGet(cSetting_dot_radius);
 
   I->A=NULL;
   I->T=NULL;

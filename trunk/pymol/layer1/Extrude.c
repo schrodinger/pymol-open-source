@@ -758,9 +758,9 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
       CGOVertexv(cgo,v);
       /* trace shape */
       tv = I->tv;
-      for(b=0;b<I->Ns;b+=2) {
+      for(b=0;b<I->Ns;b++) {
         CGOVertexv(cgo,tv);
-        tv+=6;
+        tv+=3;
       }
       CGOVertexv(cgo,I->tv);
       CGOEnd(cgo);
@@ -782,9 +782,9 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
       CGOVertexv(cgo,v);
       /* trace shape */
       tv = I->tv;
-      for(b=0;b<I->Ns;b+=2) {
+      for(b=0;b<I->Ns;b++) {
         CGOVertexv(cgo,tv);
-        tv+=6;
+        tv+=3;
       }
       CGOVertexv(cgo,I->tv);
       CGOEnd(cgo);

@@ -1148,6 +1148,7 @@ void SceneRay(void)
   unsigned int *buffer;
   float rayView[16];
   int curState;
+  double timing;
 
   if(SettingGet(cSetting_all_states)) {
     curState=-1;
@@ -1159,6 +1160,7 @@ void SceneRay(void)
 
   SceneUpdate();
 
+  timing = UtilGetSeconds(); /* start timing the process */
   
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
   MatrixLoadIdentity44f(rayView);
@@ -1197,8 +1199,14 @@ void SceneRay(void)
   buffer=(GLvoid*)Alloc(char,buffer_size);
   ErrChkPtr(buffer);
 
+  RayRender(ray,I->Width,I->Height,buffer,I->Front,I->Back,timing);
 
-  RayRender(ray,I->Width,I->Height,buffer,I->Front,I->Back);
+  timing = UtilGetSeconds()-timing;
+  PRINTFB(FB_Ray,FB_Details)
+    " Ray: total rendering time: %4.2f sec. (%3.1f fph).\n", 
+    timing,3600/timing 
+    ENDFB;
+
   /*
   RayRenderPOV(ray,I->Width,I->Height,NULL,I->Front,I->Back,SceneFOV);
   */

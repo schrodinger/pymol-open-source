@@ -186,7 +186,7 @@ def ray_shadows(mode):
       cmd.set('ambient_scale',1.0)
       cmd.set('reflect',0.9)         
       cmd.set('direct',0.25)
-      cmd.set('gamma',1.28)
+      cmd.set('gamma',1.30)
    elif mode=='heavy':
       cmd.set('power',0.30)
       cmd.set('spec_power',60)
@@ -194,7 +194,7 @@ def ray_shadows(mode):
       cmd.set('ambient_scale',1.2)
       cmd.set('reflect',0.75)         
       cmd.set('direct',0.06)
-      cmd.set('gamma',1.35)
+      cmd.set('gamma',1.5)
    
 def ff_copy(src,dst): # NOT THREAD SAFE
    pymol._rcopy = pymol.Scratch_Storage()

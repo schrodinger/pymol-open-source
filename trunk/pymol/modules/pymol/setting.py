@@ -37,7 +37,7 @@ class SettingIndex:
    sweep_angle          =26
    sweep_speed          =27
    dot_hydrogens        =28
-   dot_size             =29
+   dot_radius           =29
    ray_trace_frames     =30
    cache_frames         =31
    trim_dots            =32
