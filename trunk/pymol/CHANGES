@@ -4,8 +4,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
-   * launch option: -P # enables multisampling on Macs & Windows
-     (NOTE: on windows, only "-P 4" works, and only on ATI hardware?)
+   * launch option: -P # enables multisampling on Macs & Windows.
+     NOTE: on windows, only "-P 4" works, and only tested on ATI cards.
 
    * session_migration setting
 
