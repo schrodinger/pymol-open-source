@@ -121,15 +121,28 @@ void ButModeFree(PyMOLGlobals *G)
 static int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
   PyMOLGlobals *G = block->G;
+  int dy = (y-block->rect.bottom)/cButModeLineHeight;
   /*  register CButMode *I=block->G->ButMode; */
-  switch(mod) {
-  case cOrthoSHIFT:
-    PLog("cmd.mouse('backward')",cPLog_pym);
-    OrthoCommandIn(G,"mouse backward");
-    break;
-  default:
-    PLog("cmd.mouse('forward')",cPLog_pym);
-    OrthoCommandIn(G,"mouse forward");
+  if(dy<2) {
+    switch(mod) {
+    case cOrthoSHIFT:
+      PLog("cmd.mouse('select_backward')",cPLog_pym);
+      OrthoCommandIn(G,"mouse select_backward");
+      break;
+    default:
+      PLog("cmd.mouse('select_forward')",cPLog_pym);
+      OrthoCommandIn(G,"mouse select_forward");
+    }
+  } else {
+    switch(mod) {
+    case cOrthoSHIFT:
+      PLog("cmd.mouse('backward')",cPLog_pym);
+      OrthoCommandIn(G,"mouse backward");
+      break;
+    default:
+      PLog("cmd.mouse('forward')",cPLog_pym);
+      OrthoCommandIn(G,"mouse forward");
+    }
   }
   return(1);
 }
