@@ -30,6 +30,8 @@ Goals for 0.52 release:
 
 Changes up to 0.52
 
+   * many improvements to online help
+
    * fixed discrete objects created from PDB files
 
    * prevented deadlock condition with re-entrant API locks
