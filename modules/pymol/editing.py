@@ -58,11 +58,13 @@ if __name__=='pymol.editing':
          unlock()
       return r
 
-   def split_states(object,first=1,last=0):
+   def split_states(object,first=1,last=0,prefix=None):
       '''
       '''
       r = 0
       object = str(object)
+      if prefix==None:
+         prefix = object+"_"
       first=int(first)
       last=int(last)
       n_state = cmd.count_states(object)
@@ -72,9 +74,9 @@ if __name__=='pymol.editing':
          try:
             name = cmd.get_title(object,a)
             if len(name)==0:
-               name = object+"%04d"%a
+               name = prefix+"%04d"%a
          except:
-            name = object+"%04d"%a
+            name = prefix+"%04d"%a
          cmd.frame(a)
          cmd.create(name,"%s and present"%object,a,1)
       return r

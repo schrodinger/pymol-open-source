@@ -4,7 +4,7 @@ PyMOL>show sticks,pept
 PyMOL>set ray_default_renderer=2
  Setting: ray_default_renderer set to 2.
 PyMOL>ray
- RayRenderTest: obtained 332 graphics primitives.
+ RayRenderTest: obtained 166 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/il2.pdb
  CmdLoad: "dat/il2.pdb" loaded as "il2".

@@ -34,6 +34,8 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"Control.h"
 
+#include"PyMOL.h"
+
 static int TestPyMOL_00_00(PyMOLGlobals *G)
 {
   ObjectMap *obj;
@@ -332,7 +334,8 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
     case 1: 
       {
         char *st = get_st(pdb_01_01);
-        ExecutiveProcessPDBFile(G,NULL,st,"test_01_01",0,0,1,NULL, NULL, 1, true, false );
+
+        PyMOL_Load(G->PyMOL,st, "c_string", "pdb", "test_01_01", 0, false, true, true, false);
         ExecutiveSetRepVisib(G,"test_01_01",cRepCyl,1);
         ExecutiveSetRepVisib(G,"test_01_01",cRepLine,0);
         SettingSetGlobal_f(G,cSetting_sweep_speed,3.0F);
@@ -344,7 +347,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
     case 2: 
       {
         char *st = get_st(pdb_01_01);
-        ExecutiveProcessPDBFile(G,NULL,st,"test_01_02",0,0,1,NULL, NULL, 1, true, false);
+        PyMOL_Load(G->PyMOL,st, "c_string", "pdb", "test_01_02", 0, false, true, true, false);
         ExecutiveSetRepVisib(G,"test_01_02",cRepLine,0);
         ExecutiveSetRepVisib(G,"test_01_02",cRepSurface,1);
         ControlRock(G,1);
@@ -355,7 +358,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
     case 3: 
       {
         char *st = get_st(pdb_01_01);
-        ExecutiveProcessPDBFile(G,NULL,st,"test_01_03",0,0,1,NULL, NULL, 1, true, false);
+        PyMOL_Load(G->PyMOL,st, "c_string", "pdb", "test_01_03", 0, false, true, true, false);
         ExecutiveSetRepVisib(G,"test_01_03",cRepLine,0);
         ExecutiveSetRepVisib(G,"test_01_03",cRepCartoon,1);
         SettingSetGlobal_f(G,cSetting_sweep_speed,1.50F);
@@ -367,7 +370,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
     case 4: 
       {
         char *st = get_st(pdb_01_01);
-        ExecutiveProcessPDBFile(G,NULL,st,"test_01_04",0,0,1,NULL, NULL, 1, true, false);
+        PyMOL_Load(G->PyMOL,st, "c_string", "pdb", "test_01_04", 0, false, true, true, false);
         ExecutiveSetRepVisib(G,"test_01_04",cRepLine,0);
         ExecutiveSetRepVisib(G,"test_01_04",cRepDot,1);
         SettingSetGlobal_f(G,cSetting_sweep_speed,1.50F);
@@ -379,7 +382,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
     case 5: 
       {
         char *st = get_st(pdb_01_01);
-        ExecutiveProcessPDBFile(G,NULL,st,"test_01_05",0,0,1,NULL, NULL, 1, true, false);
+        PyMOL_Load(G->PyMOL,st, "c_string", "pdb", "test_01_05", 0, false, true, true, false);
         ExecutiveSetRepVisib(G,"test_01_05",cRepLine,0);
         ExecutiveSetRepVisib(G,"test_01_05",cRepSphere,1);
         SettingSetGlobal_f(G,cSetting_sweep_speed,4.50F);
@@ -391,7 +394,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
     case 6: 
       {
         char *st = get_st(pdb_01_01);
-        ExecutiveProcessPDBFile(G,NULL,st,"test_01_05",0,0,1,NULL, NULL, 1, true, false);
+        PyMOL_Load(G->PyMOL,st, "c_string", "pdb", "test_01_06", 0, false, true, true, false);
         SettingSetGlobal_f(G,cSetting_sweep_speed,4.50F);
         ControlRock(G,1);
         FreeP(st);

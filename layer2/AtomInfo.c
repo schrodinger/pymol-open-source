@@ -1783,15 +1783,18 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
       if(!((*(e+1)=='s')))
         *(e+1)=0;
       break;
+    case 'Q':
+      *(e+1)=0;
+      break;
     default:
       break;
     }
     if(*(e+1)) *(e+1)=tolower(*(e+1));
   }
-  I->hydrogen=((
-                ((*I->elem)=='H')||((*I->elem)=='D')
-                )&&(!(*(I->elem+1))));
-  
+  I->hydrogen=((((*I->elem)=='H')||
+                ((*I->elem)=='D')||
+                ((*I->elem)=='Q'))
+               &&(!(*(I->elem+1))));
   n = I->name;
   while((*n>='0')&&(*n<='9')&&(*(n+1))) n++;
   if(toupper(*n)!=I->elem[0]) {
@@ -2059,8 +2062,9 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
         vdw = 1.80F; break;
       }
       break;
-    case 'H' :
-    case 'D' :
+    case 'H':
+    case 'D':
+    case 'Q':
       vdw = 1.2F; /* WLD */
       break;
     case 'Z':
@@ -2093,6 +2097,7 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
     switch(e[0]) {
     case 'H': I->protons=cAN_H; break;
     case 'D': I->protons=cAN_H; break;
+    case 'Q': I->protons=cAN_H; break; /* for NMR structures */
     case 'C': I->protons=cAN_C; break;
     case 'N': I->protons=cAN_N; break;
     case 'O': I->protons=cAN_O; break;
@@ -2156,7 +2161,7 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
   }
   if(I->vdw==0.0)
     I->vdw = vdw;
-
+  if(I->protons==cAN_H) I->hydrogen = true;
   /*  printf("I->name %s I->priority %d\n",I->name,I->priority);*/
 }
-
+  
