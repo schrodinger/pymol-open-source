@@ -3970,9 +3970,9 @@ int ExecutiveIterateList(char *name,PyObject *list,int read_only,int quiet)
   int ok=true;
   int n_eval=0;
   int sele0 = SelectorIndexByName(name);
+  PyObject *entry;
   ObjectMolecule *obj = NULL;
   if(sele0>=0) obj = SelectorGetSingleObjectMolecule(sele0);
-  PyObject *entry;
   if(obj) {
     int n_atom = obj->NAtom;
     int list_len = 0;
