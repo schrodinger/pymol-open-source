@@ -1581,6 +1581,8 @@ SEE ALSO
       'util.cbak'     : [ util.cbak         , 0 , 0 , ''  , parsing.STRICT ],
       'util.cbaw'     : [ util.cbaw         , 0 , 0 , ''  , parsing.STRICT ],
       'util.cbab'     : [ util.cbab         , 0 , 0 , ''  , parsing.STRICT ],
+      'util.cbao'     : [ util.cbao         , 0 , 0 , ''  , parsing.STRICT ],
+      'util.cbam'     : [ util.cbam         , 0 , 0 , ''  , parsing.STRICT ],
       'util.cbc'      : [ util.cbc          , 0 , 0 , ''  , parsing.STRICT ],
       'util.mrock'    : [ util.mrock        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
       'util.mroll'    : [ util.mroll        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
