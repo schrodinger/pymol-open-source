@@ -121,8 +121,13 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name);
 void ExecutiveDump(PyMOLGlobals *G,char *fname,char *obj);
 void ExecutiveSetControlsOff(PyMOLGlobals *G,char *name);
 void ExecutiveSort(PyMOLGlobals *G,char *name);
-int ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,int state,
+int ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,
+                        char *sele,int state,
                          int quiet,int updates);
+int  ExecutiveSetSettingFromString(PyMOLGlobals *G,int index,char *value,
+                                   char *sele,
+                                   int state,int quiet,int updates);
+
 void ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,float angle,float shift,int quiet);
 int ExecutiveGetDistance(PyMOLGlobals *G,char *s0,char *s1,float *value,int state);
 int ExecutiveGetAngle(PyMOLGlobals *G,char *s0,char *s1,char *s2,float *value,int state);
@@ -147,15 +152,15 @@ void ExecutiveSetAllRepVisib(PyMOLGlobals *G,char *name,int rep,int state);
 void ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state);
 
 int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *pos,int state);
-int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive, int animate, float *pos);
+int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive, float animate, float *pos);
 int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
-                        int state,int inclusive,int animate);
+                        int state,int inclusive,float animate);
 int ExecutiveGetMoment(PyMOLGlobals *G,char *name,Matrix33d mi,int state);
 
 char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain);
 
 void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
-                     int state, int animate);
+                     int state, float animate,int complete, float buffer);
 char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,int mode);
 int ExecutiveStereo(PyMOLGlobals *G,int flag);
 void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst);

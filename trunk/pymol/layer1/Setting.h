@@ -107,8 +107,10 @@ void  SettingGet_3f(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,floa
 float *SettingGet_3fv(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
 int   SettingGet_color(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
 
+int SettingSetFromString(PyMOLGlobals *G,CSetting *I,int index,char *st);
+
 #ifndef _PYMOL_NOPY
-int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple);
+int SettingSetFromTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple);
 PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
 PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index);
 PyObject *SettingGetUpdateList(PyMOLGlobals *G,CSetting *I);
@@ -558,6 +560,12 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_dihedral_label_position    408
 #define cSetting_defer_builds_mode          409
 #define cSetting_seq_view_discrete_by_state 410
+
+/* when you add a new settingg also remember:
+   layer1/Setting.c
+   modules/pymol/setting.py
+   layer5/PyMOL.c 
+*/
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 

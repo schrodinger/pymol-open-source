@@ -4771,7 +4771,7 @@ void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)
 
 /*========================================================================*/
 void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
-                     int state,int animate)
+                     int state,float animate,int complete,float buffer)
 {
   double egval[3],egvali[3];
   double evect[3][3];
@@ -4818,9 +4818,13 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
       for(b=0;b<3;b++)
         m[a][b]=mt[b][a];
 
-    if(animate<0)
-      animate=SettingGetGlobal_b(G,cSetting_animation);
-    if(animate)
+    if(animate<0.0F) {
+      if(SettingGetGlobal_b(G,cSetting_animation))
+        animate=SettingGetGlobal_f(G,cSetting_animation_duration);
+      else
+        animate=0.0F;
+    }
+    if(animate!=0.0F)
       ScenePrimeAnimation(G);
 
     {
@@ -4870,8 +4874,8 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
     
     /* X < Y < Z  - do nothing - that's what we want */
     
-    ExecutiveWindowZoom(G,sele,0.0,state,0,false);
-    if(animate)
+    ExecutiveWindowZoom(G,sele,buffer,state,complete,false);
+    if(animate!=0.0F)
       SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
     
   }
@@ -5952,7 +5956,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
     ENDFD;
   unblock = PAutoBlock();
   if(sele[0]==0) { 
-    ok = SettingSetTuple(G,NULL,index,tuple);
+    ok = SettingSetFromTuple(G,NULL,index,tuple);
     if(ok) {
       if(!quiet) {
         if(Feedback(G,FB_Setting,FB_Actions)) {
@@ -5975,7 +5979,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
             handle = rec->obj->fGetSettingHandle(rec->obj,state);
             if(handle) {
               SettingCheckHandle(G,handle);
-              ok = SettingSetTuple(G,*handle,index,tuple);
+              ok = SettingSetFromTuple(G,*handle,index,tuple);
               nObj++;
             }
           }
@@ -6019,7 +6023,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
                 handle = rec->obj->fGetSettingHandle(rec->obj,state);
                 if(handle) {
                   SettingCheckHandle(G,handle);
-                  ok = SettingSetTuple(G,*handle,index,tuple);
+                  ok = SettingSetFromTuple(G,*handle,index,tuple);
                   if(ok) {
                     if(updates) 
                       SettingGenerateSideEffects(G,index,sele,state);
@@ -6053,7 +6057,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
               handle = rec->obj->fGetSettingHandle(rec->obj,state);
               if(handle) {
                 SettingCheckHandle(G,handle);
-                ok = SettingSetTuple(G,*handle,index,tuple);
+                ok = SettingSetFromTuple(G,*handle,index,tuple);
                 if(ok) {
                   if(updates)
                     SettingGenerateSideEffects(G,index,sele,state);
@@ -6087,6 +6091,164 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
   PAutoUnblock(unblock);
   return(ok);
 #endif
+}
+
+int  ExecutiveSetSettingFromString(PyMOLGlobals *G,
+                                   int index,char *value,char *sele,
+                                   int state,int quiet,int updates)
+{
+  register CExecutive *I=G->Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj = NULL;
+  int sele1;
+  ObjectMoleculeOpRec op;
+  OrthoLineType value2;
+  CSetting **handle=NULL;
+  SettingName name;
+  int nObj=0;
+  int unblock;
+  int ok =true;
+
+  PRINTFD(G,FB_Executive)
+    " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
+    ENDFD;
+  unblock = PAutoBlock();
+  if(sele[0]==0) { 
+    ok = SettingSetFromString(G,NULL,index,value);
+    if(ok) {
+      if(!quiet) {
+        if(Feedback(G,FB_Setting,FB_Actions)) {
+          SettingGetTextValue(G,NULL,NULL,index,value2);
+          SettingGetName(G,index,name);
+          PRINTF
+            " Setting: %s set to %s.\n",name,value2
+            ENDF(G);
+        }
+      }
+      if(updates) 
+        SettingGenerateSideEffects(G,index,sele,state);
+    }
+  } 
+  else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
+    while(ListIterate(I->Spec,rec,next))
+      {
+        if(rec->type==cExecObject) {
+          if(rec->obj->fGetSettingHandle) {
+            handle = rec->obj->fGetSettingHandle(rec->obj,state);
+            if(handle) {
+              SettingCheckHandle(G,handle);
+              ok = SettingSetFromString(G,*handle,index,value);
+              nObj++;
+            }
+          }
+        }
+        if(nObj) {
+          if(updates) 
+            SettingGenerateSideEffects(G,index,sele,state);
+        }
+        if(Feedback(G,FB_Setting,FB_Actions)) {
+          if(nObj&&handle) {
+            SettingGetTextValue(G,*handle,NULL,index,value2);
+            SettingGetName(G,index,name);
+            if(!quiet) {
+              if(state<0) {
+                PRINTF
+                  " Setting: %s set to %s in %d objects.\n",name,value2,nObj
+                  ENDF(G);
+              } else {
+                PRINTF
+                  " Setting: %s set to %s in %d objects, state %d.\n",
+                  name,value2,nObj,state+1
+                  ENDF(G);
+              }
+            }
+          }
+        }
+      }
+  } else { /* based on a selection/object name */
+    sele1=SelectorIndexByName(G,sele);
+    while((ListIterate(I->Spec,rec,next)))
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==cObjectMolecule)
+          {
+            if(sele1>=0) {
+              obj=(ObjectMolecule*)rec->obj;
+              ObjectMoleculeOpRecInit(&op);
+              op.code=OMOP_CountAtoms;
+              op.i1=0;
+              ObjectMoleculeSeleOp(obj,sele1,&op);
+              if(op.i1&&rec->obj->fGetSettingHandle) {
+                handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                if(handle) {
+                  SettingCheckHandle(G,handle);
+                  ok = SettingSetFromString(G,*handle,index,value);
+                  if(ok) {
+                    if(updates) 
+                      SettingGenerateSideEffects(G,index,sele,state);
+                    if(!quiet) {
+                      if(state<0) { /* object-specific */
+                        if(Feedback(G,FB_Setting,FB_Actions)) {
+                          SettingGetTextValue(G,*handle,NULL,index,value2);
+                          SettingGetName(G,index,name);
+                          PRINTF
+                            " Setting: %s set to %s in object \"%s\".\n",
+                            name,value2,rec->obj->Name
+                            ENDF(G);
+                        }
+                      } else { /* state-specific */
+                        if(Feedback(G,FB_Setting,FB_Actions)) {
+                          SettingGetTextValue(G,*handle,NULL,index,value2);
+                          SettingGetName(G,index,name);
+                          PRINTF
+                            " Setting: %s set to %s in object \"%s\", state %d.\n",
+                            name,value2,rec->obj->Name,state+1
+                            ENDF(G);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } else if(strcmp(rec->obj->Name,sele)==0) {
+            if(rec->obj->fGetSettingHandle) {
+              handle = rec->obj->fGetSettingHandle(rec->obj,state);
+              if(handle) {
+                SettingCheckHandle(G,handle);
+                ok = SettingSetFromString(G,*handle,index,value);
+                if(ok) {
+                  if(updates)
+                    SettingGenerateSideEffects(G,index,sele,state);
+                  if(!quiet) {
+                    if(state<0) { /* object-specific */
+                      if(Feedback(G,FB_Setting,FB_Actions)) {
+                        SettingGetTextValue(G,*handle,NULL,index,value2);
+                        SettingGetName(G,index,name);
+                        PRINTF
+                          " Setting: %s set to %s in object \"%s\".\n",
+                          name,value2,rec->obj->Name
+                          ENDF(G);
+                      }
+                    } else { /* state-specific */
+                      if(Feedback(G,FB_Setting,FB_Actions)) {
+                        SettingGetTextValue(G,*handle,NULL,index,value2);
+                        SettingGetName(G,index,name);
+                        PRINTF
+                          " Setting: %s set to %s in object \"%s\", state %d.\n",
+                          name,value2,rec->obj->Name,state+1
+                          ENDF(G);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+      }
+  }
+  PAutoUnblock(unblock);
+  return(ok);
+
 }
 /*========================================================================*/
 int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
@@ -6720,7 +6882,7 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals *G,char *name,float *pos,float *
 }
 /*========================================================================*/
 int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
-                        int state,int inclusive,int animate)
+                        int state,int inclusive,float animate)
 {
   float center[3],radius;
   float mn[3],mx[3],df[3];
@@ -6731,7 +6893,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
     " ExecutiveWindowZoom-DEBUG: entered\n"
     ENDFD;
   if(ExecutiveGetExtent(G,name,mn,mx,true,state,true)) {
-    if(buffer!=0.0) {
+    if(buffer!=0.0F) {
       buffer = buffer;
       mx[0]+=buffer;
       mx[1]+=buffer;
@@ -6760,14 +6922,18 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
       " ExecutiveWindowZoom: on center %8.3f %8.3f %8.3f...\n",center[0],
       center[1],center[2]
       ENDFD;
-    if(animate<0)
-      animate=SettingGetGlobal_b(G,cSetting_animation);
-    if(animate)
+    if(animate<0.0F) {
+      if(SettingGetGlobal_b(G,cSetting_animation))
+        animate=SettingGetGlobal_f(G,cSetting_animation_duration);
+      else
+        animate=0.0F;
+    }
+    if(animate!=0.0F)
       ScenePrimeAnimation(G);
     SceneOriginSet(G,center,false);
     SceneWindowSphere(G,center,radius);
-    if(animate)
-      SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
+    if(animate!=0.0F)
+      SceneLoadAnimation(G,animate);
     SceneDirty(G);
   } else {
 
@@ -6791,7 +6957,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
 }
 /*========================================================================*/
 int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
-                    int origin,int animate, float *pos)
+                    int origin,float animate, float *pos)
 {
   float center[3];
   float mn[3],mx[3],df[3];
@@ -6815,17 +6981,21 @@ int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
     copy3f(pos,center);
   }
   if(have_center) {
-    if(animate<0)
-      animate=SettingGetGlobal_b(G,cSetting_animation);
-    
-    if(animate)
+    if(animate<0.0F) {
+      if(SettingGetGlobal_b(G,cSetting_animation))
+        animate=SettingGetGlobal_f(G,cSetting_animation_duration);
+      else
+        animate=0.0F;
+    }
+
+    if(animate!=0.0F)
       ScenePrimeAnimation(G);
     if(origin) 
       SceneOriginSet(G,center,false);
     SceneRelocate(G,center);
     SceneDirty(G);
-    if(animate)
-      SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
+    if(animate!=0.0F)
+      SceneLoadAnimation(G,animate);
   } else {
     sele0 = SelectorIndexByName(G,name);
     if(sele0>=0) { /* any valid selection except "all" */

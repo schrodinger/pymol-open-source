@@ -328,7 +328,7 @@ int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,
 
 /*========================================================================*/
 #ifndef _PYMOL_NOPY
-int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple) 
+int SettingSetFromTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple) 
      /* must have interpret locked to make this call */
 {
   PyObject *value;
@@ -371,6 +371,65 @@ int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple)
   return(ok);
 }
 #endif
+/*========================================================================*/
+
+int SettingSetFromString(PyMOLGlobals *G,CSetting *I,int index,char *st)
+{
+  int type;
+  int ok=true;
+  if(!I) I=G->Setting; /* fall back on global settings */
+
+  /* this data structure has been pre-checked at the python level... */
+
+  type  = SettingGetType(G,index); 
+
+  switch(type) {
+  case cSetting_boolean:
+    if((!*st) || (*st=='0'))
+      SettingSet_b(I,index,0);
+    else
+      SettingSet_b(I,index,1);      
+    break;
+  case cSetting_int: 
+    {
+      int tmp;
+      if(sscanf(st,"%d",&tmp)==1)
+        SettingSet_i(I,index,tmp);
+      else 
+        ok=false;
+    }
+    break;
+  case cSetting_float:
+    {
+      float tmp;
+      if(sscanf(st,"%f",&tmp)==1)
+        SettingSet_f(I,index,tmp);
+      else 
+        ok=false;
+    }
+    break;
+  case cSetting_float3:
+    {
+      float tmp1,tmp2,tmp3;
+      if(sscanf(st,"%f%f%f",&tmp1,&tmp2,&tmp3)==3)
+        SettingSet_3f(I,index,tmp1,tmp2,tmp3);
+      else 
+        ok=false;
+    }
+    break;
+  case cSetting_color:
+    SettingSet_color(I,index,st);
+    break;
+  case cSetting_string:
+    SettingSet_s(I,index,st);
+    break;
+  default:
+    ok=false;
+    break;
+  }
+  return(ok);
+}
+
 /*========================================================================*/
 #ifndef _PYMOL_NOPY
 PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
