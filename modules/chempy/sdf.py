@@ -135,11 +135,15 @@ class SDF:
          mode = args[2]
       self.mode = mode
       self.at_eof = 0
-      if mode not in ('w','r','wa','pf'):
+      if mode not in ('w','r','wa','pf','url'):
          print " SDF: bad mode"
          return None
       if mode=='pf': # pseudofile
          self.file = fname
+      elif (mode[0:1]=='r') and (string.find(fname,':')>1):
+         # does this look like a URL? (but not a DOS path)
+         from urllib import urlopen
+         self.file = urlopen(fname)
       else:
          self.file = open(fname,mode)
 

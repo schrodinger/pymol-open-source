@@ -41,6 +41,7 @@ if __name__=='pymol.importing':
       mol = 1
       molstr = 3
       mmod = 4
+      mmodstr = 6
       xplor = 7
       model = 8
       pdbstr = 9    
@@ -626,7 +627,7 @@ DESCRIPTION
       r = 1
       try:
          lock()   
-         ftype = 6
+         ftype = loadable.mmodstr
          if kw.has_key('quiet'):
             quiet = int(kw['quiet'])
          else:

@@ -164,7 +164,11 @@ def cyl_text(cgo,font,pos,text,radius=0.1,color=[1.0,1.0,1.0],
 
 def from_r3d(fname):
    result = None
-   input = open(fname)
+   if (mode[0:1]=='r') and (string.find(fname,':')>1):
+      import urllib
+      input = urllib.urlopen(fname)
+   else:
+      input = open(fname,mode)
    if input:
       rr = RenderReader(input)
       result = rr.obj
