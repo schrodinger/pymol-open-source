@@ -259,16 +259,19 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
 
   if(sele>=0) {
     if(last<0) 
-      last = ExecutiveCountStates(name);
+      last = ExecutiveCountStates(name)-1;
     if(first<0)
-      first = 1;
+      first = 0;
     if(last<first) {
       state=last;last=first;first=state;
     }
     n_state=last-first+1;
 
-    backward=(window+1)/2;
+    backward=window/2;
     forward=window/2;
+
+    if((forward-backward)==(window+1))
+      forward--; /* even sizes window */
 
     if(ends) {
       range = (last-first)+1;
@@ -326,15 +329,15 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
         
         for(a=0;a<cycles;a++) {                
           PRINTFB(FB_Executive,FB_Actions)
-            " Smooth: smoothing (cycle %d)...\n",a+1
+            " Smooth: smoothing (pass %d)...\n",a+1
             ENDFB;
           for(b=0;b<range;b++) {
             for(c=0;c<n_atom;c++) {
               zero3f(sum);
               cnt = 0;
               for(d=-backward;d<=forward;d++) {
-                st = b + d;
-                if((st>=0)&&(st<range)) {
+                st = b + offset + d;
+                if((st>=0)&&(st<n_state)) {
                   cnt+=flag0[(n_atom*st)+c];
                   v0 = coord0 + 3*(n_atom*st+c);
                   add3f(sum,v0,sum);
@@ -342,7 +345,7 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
               }
               if(cnt) {
                 st = b + offset;
-                flag1[(n_atom*b)+c] = 1;
+                flag1[(n_atom*st)+c] = 1;
                 i_cnt = 1.0/cnt;
                 v1 = coord1 + 3*((n_atom*st)+c);
                 scale3f(sum,i_cnt,v1);
@@ -351,8 +354,8 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
           }
           for(b=0;b<range;b++) {
             for(c=0;c<n_atom;c++) {
-              if(flag1[(n_atom*b)+c]) {
-                st = b + offset;
+              st = b + offset;
+              if(flag1[(n_atom*st)+c]) {
                 v0 = coord0 + 3*((n_atom*st)+c);
                 v1 = coord1 + 3*((n_atom*st)+c);
                 copy3f(v1,v0);
@@ -377,8 +380,8 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
           op.cs1 = first+backward;
           op.cs2 = last-forward;
         }
-        op.vv1 = coord1;
-        op.ii1 = flag1;
+        op.vv1 = coord1+(backward*3*n_atom);
+        op.ii1 = flag1+(backward*n_atom);
         op.nvv1 = 0;
         
         ExecutiveObjMolSeleOp(sele,&op);      

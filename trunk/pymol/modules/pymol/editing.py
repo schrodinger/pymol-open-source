@@ -87,6 +87,7 @@ SEE ALSO
 ARGUMENTS
 
    ends (0 or 1) controls whether or not the end states are also smoothed
+   using a partial asymmetric window
 
 NOTES
 
