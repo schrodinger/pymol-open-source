@@ -5409,7 +5409,7 @@ SEE ALSO
    try:
       lock()
       output=[]
-      input = string.split(specification," ")
+      input = string.split(string.strip(specification))
       last = 0
       for x in input:
          if x[0]>"9" or x[0]<"0":
