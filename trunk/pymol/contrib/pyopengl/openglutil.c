@@ -2330,7 +2330,7 @@ static PyObject *gl_TranslateScene(PyObject * self, PyObject * args)
     glMatrixMode(GL_MODELVIEW);
     glGetDoublev(GL_MODELVIEW_MATRIX, mat);
     glLoadIdentity();
-    glTranslatef(s * (x - mousex), s * (mousey - y), 0.0);
+    glTranslatef((float)(s * (x - mousex)),(float)( s * (mousey - y)), 0.0F);
     glMultMatrixd(mat);
     Py_INCREF(Py_None);
     return Py_None;
@@ -2346,10 +2346,10 @@ static PyObject *gl_RotateScene(PyObject * self, PyObject * args)
     glMatrixMode(GL_MODELVIEW);
     glGetDoublev(GL_MODELVIEW_MATRIX, mat);
     glLoadIdentity();
-    glTranslatef(xcenter, ycenter, zcenter);
-    glRotatef(s * (y - mousey), 1., 0., 0.);
-    glRotatef(s * (x - mousex), 0., 1., 0.);
-    glTranslatef(-xcenter, -ycenter, -zcenter);
+    glTranslatef((float)xcenter,(float) ycenter,(float) zcenter);
+    glRotatef((float)(s * (y - mousey)), 1.0F, 0.0F, 0.0F);
+    glRotatef((float)(s * (x - mousex)), 0.0F, 1.0F, 0.0F);
+    glTranslatef((float)-xcenter,(float) -ycenter,(float) -zcenter);
     glMultMatrixd(mat);
     Py_INCREF(Py_None);
     return Py_None;

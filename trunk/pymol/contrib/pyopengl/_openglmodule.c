@@ -218,7 +218,7 @@ static int PyArray_AsFloatArray(PyObject ** op, GLfloat ** pitems, int *pn)
     }
     for (i = 0; i < n; i++) {
 	if ((item = PySequence_GetItem(*op, i))) {
-	    items[i] = PyFloat_AsDouble(item);
+	    items[i] = (float)PyFloat_AsDouble(item);
 	    Py_DECREF(item);
 	}
 	if (PyErr_Occurred())
@@ -270,7 +270,7 @@ static int PyArray_AsShortArray(PyObject ** op, GLshort ** pitems, int *pn)
     }
     for (i = 0; i < n; i++) {
 	if ((item = PySequence_GetItem(*op, i))) {
-	    items[i] = PyInt_AsLong(item);
+	    items[i] = (GLshort)PyInt_AsLong(item);
 	    Py_DECREF(item);
 	}
 	if (PyErr_Occurred())
