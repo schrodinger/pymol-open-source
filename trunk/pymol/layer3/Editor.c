@@ -160,7 +160,6 @@ int EditorFromPyList(PyObject *list)
 {
   int ok=true;
   int active_flag = false;
-  ObjectMolecule *objMol;
   int active_state;
   WordType obj_name;
   int ll = 0;
@@ -179,11 +178,8 @@ int EditorFromPyList(PyObject *list)
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&active_state);
     if(ok&&(ll>2)) ok=PConvPyIntToInt(PyList_GetItem(list,2),&bond_mode); /* newer session files */
     if(ok) {
-      objMol=ExecutiveFindObjectMoleculeByName(obj_name);
-      if(objMol) {
-        EditorActivate(active_state,bond_mode);
-        EditorDefineExtraPks();
-      }
+      EditorActivate(active_state,bond_mode);
+      EditorDefineExtraPks();
     } else {
       EditorInactivate();
     }
