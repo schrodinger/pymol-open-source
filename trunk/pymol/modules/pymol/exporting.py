@@ -37,7 +37,6 @@ if __name__=='pymol.exporting':
             finally:
                unlock()
          else:
-            print a
             r = apply(a,(session,))
          if not r: break
       return session
