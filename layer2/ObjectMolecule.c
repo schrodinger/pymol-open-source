@@ -3478,8 +3478,19 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   CoordSet *cs;
   AtomInfoType *ai;
 
+  
   if(sele>=0) {
 	SelectorUpdateTable();
+   /* always run on entry */
+	switch(op->code) {
+	case OMOP_ALTR: 
+   case OMOP_AlterState:
+     PBlock();
+     /* PBlockAndUnlockAPI() is not safe.
+      * what if "v" is invalidated by another thread? */
+     break;
+   }
+   /* */
 	switch(op->code) {
 	case OMOP_AddHydrogens:
      ObjectMoleculeAddSeleHydrogens(I,sele);
@@ -3790,7 +3801,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                 break;
               case OMOP_ALTR:
                 if (ok) {
-                  if(PAlterAtom(&I->AtomInfo[a],op->s1,op->i2))
+                  if(PAlterAtom(&I->AtomInfo[a],op->s1,op->i2,I->Obj.Name,a))
                     op->i1++;
                   else
                     ok=false;
@@ -4016,6 +4027,15 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        break;
 	  }
 	}
+
+   /* always run on exit...*/
+	switch(op->code) {
+	case OMOP_ALTR:
+   case OMOP_AlterState:
+     PUnblock();
+     break;
+   }
+   /* */
   }
 }
 /*========================================================================*/

@@ -155,174 +155,318 @@ void PDumpTraceback(PyObject *err)
   }
 }
 
-int PAlterAtomState(float *v,char *expr,int read_only)
+int PAlterAtomState(float *v,char *expr,int read_only) 
+     /* assumes Blocked python interpreter*/
 {
-  PyObject *dict; /* TODO: this function badly need error checking code */
-  int result=false;
+  PyObject *dict; 
+  int result=true;
   float f[3];
-  
-  PBlock();
-  /* PBlockAndUnlockAPI() is not safe.
-   * what if "v" is invalidated by another thread? */
+  PyObject *x_id1,*x_id2,*y_id1,*y_id2,*z_id1,*z_id2;
 
   dict = PyDict_New();
 
-  PConvFloatToPyDictItem(dict,"x",v[0]);
-  PConvFloatToPyDictItem(dict,"y",v[1]);
-  PConvFloatToPyDictItem(dict,"z",v[2]);
+  x_id1 = PConvFloatToPyDictItem(dict,"x",v[0]);
+  y_id1 = PConvFloatToPyDictItem(dict,"y",v[1]);
+  z_id1 = PConvFloatToPyDictItem(dict,"z",v[2]);
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
     PyErr_Print();
     result=false;
   } else if(!read_only) {
-    f[0]=PyFloat_AsDouble(PyDict_GetItemString(dict,"x"));
-    f[1]=PyFloat_AsDouble(PyDict_GetItemString(dict,"y"));
-    f[2]=PyFloat_AsDouble(PyDict_GetItemString(dict,"z"));
-    if(PyErr_Occurred()) {
-      PyErr_Print();
-      result=false;
-      ErrMessage("AlterState","Aborting on error. Assignment may be incomplete.");
-    } else {
-      v[0]=f[0];
-      v[1]=f[1];
-      v[2]=f[2];
-      result=true;
+    if(result) {
+      if(!(x_id2 = PyDict_GetItemString(dict,"x")))
+        result=false;
+      if(!(y_id2 = PyDict_GetItemString(dict,"y")))
+        result=false;
+      if(!(z_id2 = PyDict_GetItemString(dict,"z")))
+        result=false;
+      if(PyErr_Occurred()) {
+        PyErr_Print();
+        result=false;
+        ErrMessage("AlterState","Aborting on error. Assignment may be incomplete.");
+      }
     }
-  } else {
-    result=true;
+    if(result) {
+      f[0]=PyFloat_AsDouble(x_id2);
+      f[1]=PyFloat_AsDouble(y_id2);
+      f[2]=PyFloat_AsDouble(z_id2);
+      if(PyErr_Occurred()) {
+        PyErr_Print();
+        result=false;
+        ErrMessage("AlterState","Aborting on error. Assignment may be incomplete.");
+      } else {
+        v[0]=f[0];
+        v[1]=f[1];
+        v[2]=f[2];
+      }
+    }
   }
   Py_DECREF(dict);
-  PUnblock(); /* PLockAPIAndUnblock(); */
   return result;
 }
 
-int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
+int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
 {
-  AtomName name,elem;
+  /* assumes Blocked python interpreter*/
+  
+  AtomName name;
+  PyObject *name_id1,*name_id2;
+  AtomName elem;
+  PyObject *elem_id1,*elem_id2;
   ResName resn;
+  PyObject *resn_id1,*resn_id2;
   ResIdent resi;
-  Chain chain,alt;
+  PyObject *resi_id1,*resi_id2;
+  Chain chain;
+  PyObject *chain_id1,*chain_id2;
+  Chain alt;
+  PyObject *alt_id1,*alt_id2;
   SegIdent segi;
+  PyObject *segi_id1,*segi_id2;
   TextType textType;
+  PyObject *text_type_id1,*text_type_id2;
   SSType ssType;
+  PyObject *ss_id1,*ss_id2;
   char atype[7];
+  PyObject *type_id1,*type_id2;
   float b,q,partialCharge,vdw;
+  PyObject *b_id1,*b_id2;
+  PyObject *q_id1,*q_id2;
+  PyObject *partial_charge_id1,*partial_charge_id2;
+  PyObject *vdw_id1,*vdw_id2;
   int formalCharge,numericType;
-  int id;
+  PyObject *formal_charge_id1,*formal_charge_id2;
+  PyObject *numeric_type_id1,*numeric_type_id2;
   int cartoon;
+  PyObject *cartoon_id1,*cartoon_id2;
+  int id;
+  PyObject *ID_id1,*ID_id2;
 
   PyObject *dict;
-  int result=false;
+  int result=true;
   
   if(at->hetatm)
     strcpy(atype,"HETATM");
   else
     strcpy(atype,"ATOM");
-  PBlock();
-  /* PBlockAndUnlockAPI() is not safe.
+
+  /* PBlockAndUnlockAPI() is not safe, thus these
+   * expressions must not call the PyMOL API...
    * what if "at" is destroyed by another thread? */
 
   dict = PyDict_New();
 
-  PConvStringToPyDictItem(dict,"type",atype);
-  PConvStringToPyDictItem(dict,"name",at->name);
-  PConvStringToPyDictItem(dict,"resn",at->resn);
-  PConvStringToPyDictItem(dict,"resi",at->resi);
-  PConvStringToPyDictItem(dict,"chain",at->chain);
-  PConvStringToPyDictItem(dict,"alt",at->alt);
-  PConvStringToPyDictItem(dict,"segi",at->segi);
-  PConvStringToPyDictItem(dict,"elem",at->elem);
-  PConvStringToPyDictItem(dict,"ss",at->ssType);
-  PConvStringToPyDictItem(dict,"text_type",at->textType);
-  if(at->customType!=cAtomInfoNoType)
-    PConvIntToPyDictItem(dict,"numeric_type",at->customType);
-  PConvFloatToPyDictItem(dict,"q",at->q);
-  PConvFloatToPyDictItem(dict,"b",at->b);
-  PConvFloatToPyDictItem(dict,"vdw",at->vdw);
-  PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
-  PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
-  PConvIntToPyDictItem(dict,"ID",at->id);
-  PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
+  /* immutables */
+  PConvStringToPyDictItem(dict,"model",model);
+  PConvIntToPyDictItem(dict,"index",index+1);
+
+  /* mutables */
+  type_id1 = PConvStringToPyDictItem(dict,"type",atype);
+  name_id1 = PConvStringToPyDictItem(dict,"name",at->name);
+  resn_id1 = PConvStringToPyDictItem(dict,"resn",at->resn);
+  resi_id1 = PConvStringToPyDictItem(dict,"resi",at->resi);
+  chain_id1 = PConvStringToPyDictItem(dict,"chain",at->chain);
+  alt_id1 = PConvStringToPyDictItem(dict,"alt",at->alt);
+  segi_id1 = PConvStringToPyDictItem(dict,"segi",at->segi);
+  elem_id1 = PConvStringToPyDictItem(dict,"elem",at->elem);
+  ss_id1 = PConvStringToPyDictItem(dict,"ss",at->ssType);
+  text_type_id1 = PConvStringToPyDictItem(dict,"text_type",at->textType);
+  numeric_type_id1 = PConvIntToPyDictItem(dict,"numeric_type",at->customType);
+  q_id1 = PConvFloatToPyDictItem(dict,"q",at->q);
+  b_id1 = PConvFloatToPyDictItem(dict,"b",at->b);
+  vdw_id1 = PConvFloatToPyDictItem(dict,"vdw",at->vdw);
+  partial_charge_id1 = PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
+  formal_charge_id1 = PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
+  cartoon_id1 = PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
+  ID_id1 = PConvIntToPyDictItem(dict,"ID",at->id);
 
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
+    ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
     PyErr_Print();
     result=false;
   } else if(read_only) {
     result=true;
-  } else {
-    result=true;
-    if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"type"),atype,6)) 
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"name"),name,sizeof(AtomName)-1))
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"elem"),elem,sizeof(AtomName)-1))
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"resn"),resn,sizeof(ResName)-1))
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"resi"),resi,sizeof(ResIdent)-1))
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"segi"),segi,sizeof(SegIdent)-1))
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"alt"),alt,sizeof(Chain)-1))
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"chain"),chain,sizeof(Chain)-1))
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"text_type"),textType,sizeof(TextType)-1))
-      result=false;
-    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"ss"),ssType,sizeof(SSType)-1))
-      result=false;
-    else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"b"),&b))
-      result=false;
-    else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"q"),&q))
-      result=false;
+  } if(PyErr_Occurred()) {
+    PyErr_Print();
+    result=false;
+  } else if(!read_only) {
 
-    else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"vdw"),&vdw))
-      result=false;
-    else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"partial_charge"),&partialCharge))
-      result=false;
-    else if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"formal_charge"),&formalCharge))
-      result=false;
-    else if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"cartoon"),&cartoon))
-      result=false;
-    if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"numeric_type"),&numericType))
-      numericType = cAtomInfoNoType;
-    if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"ID"),&id))
-      result=false;
-    if(PyErr_Occurred()) {
-      PyErr_Print();
-      result=false;
+    if(result) {
+      /* get new object IDs */
+      
+      if(!(type_id2 = PyDict_GetItemString(dict,"type")))
+        result=false;
+      else if(!(name_id2 = PyDict_GetItemString(dict,"name")))
+        result=false;
+      else if(!(elem_id2 = PyDict_GetItemString(dict,"elem")))
+        result=false;
+      else if(!(resn_id2 = PyDict_GetItemString(dict,"resn")))
+        result=false;
+      else if(!(resi_id2 = PyDict_GetItemString(dict,"resi")))
+        result=false;
+      else if(!(segi_id2 = PyDict_GetItemString(dict,"segi")))
+        result=false;
+      else if(!(alt_id2 = PyDict_GetItemString(dict,"alt")))
+        result=false;
+      else if(!(chain_id2 = PyDict_GetItemString(dict,"chain")))
+        result=false;
+      else if(!(text_type_id2 = PyDict_GetItemString(dict,"text_type")))
+        result=false;
+      else if(!(ss_id2 = PyDict_GetItemString(dict,"ss")))
+        result=false;
+      else if(!(b_id2 = PyDict_GetItemString(dict,"b")))
+        result=false;
+      else if(!(q_id2 = PyDict_GetItemString(dict,"q")))
+        result=false;
+      else if(!(vdw_id2=PyDict_GetItemString(dict,"vdw")))
+        result=false;
+      else if(!(partial_charge_id2 = PyDict_GetItemString(dict,"partial_charge")))
+        result=false;
+      else if(!(formal_charge_id2 = PyDict_GetItemString(dict,"formal_charge")))
+        result=false;
+      else if(!(cartoon_id2 = PyDict_GetItemString(dict,"cartoon")))
+        result=false;
+      if(!(numeric_type_id2 = PyDict_GetItemString(dict,"numeric_type")))
+        result=false;
+      if(!(ID_id2 = PyDict_GetItemString(dict,"ID")))
+        result=false;
+      if(PyErr_Occurred()) {
+        PyErr_Print();
+        result=false;
+      }
     }
-    if(result) { 
-      at->hetatm=((atype[0]=='h')||(atype[0]=='H'));
-      strcpy(at->name,name);
-      strcpy(at->chain,chain);
-      strcpy(at->resn,resn);
+    if(result) {
+      if(type_id1!=type_id2) {
+        if(!PConvPyObjectToStrMaxLen(type_id2,atype,6))
+          result=false;
+        else
+          at->hetatm=((atype[0]=='h')||(atype[0]=='H'));
+      }
+      if(name_id1!=name_id2) {
+        if(!PConvPyObjectToStrMaxLen(name_id2,name,sizeof(AtomName)-1))
+          result=false;
+        else
+          strcpy(at->name,name);
+      }
+      if(elem_id1!=elem_id2) {
+        if(!PConvPyObjectToStrMaxLen(elem_id2,elem,sizeof(AtomName)-1)) 
+          result=false;
+        else
       strcpy(at->elem,elem);
-      if(strcmp(at->resi,resi)!=0)
-        if(!sscanf(resi,"%i",&at->resv))
-          at->resv=1;
-      strcpy(at->resi,resi);
-      strcpy(at->segi,segi);
-      strcpy(at->chain,chain);
-      strcpy(at->ssType,ssType);
-      strcpy(at->textType,textType);
-      strcpy(at->alt,alt);
-      if(numericType!=cAtomInfoNoType)
-        at->customType = numericType;
-      at->b=b;
-      at->q=q;
-      at->vdw=vdw;
-      at->partialCharge=partialCharge;
-      at->formalCharge=formalCharge;
-      at->id=id;
-      at->cartoon=cartoon;
-    } else {
+
+      }
+      if(resn_id1!=resn_id2) {
+        if(!PConvPyObjectToStrMaxLen(resn_id2,resn,sizeof(ResName)-1))
+          result=false;
+        else
+          strcpy(at->resn,resn);
+      }
+      if(resi_id1!=resi_id2) {
+        if(!PConvPyObjectToStrMaxLen(resi_id2,resi,sizeof(ResIdent)-1))
+          result=false;
+        else {
+          if(strcmp(at->resi,resi)!=0)
+            if(!sscanf(resi,"%i",&at->resv))
+              at->resv=1;
+          strcpy(at->resi,resi);
+        }
+      
+      }
+      if(segi_id1!=segi_id2) {
+        if(!PConvPyObjectToStrMaxLen(segi_id2,segi,sizeof(SegIdent)-1))
+          result=false;
+        else
+          strcpy(at->segi,segi);
+
+      }
+      if(chain_id1!=chain_id2) {
+        if(!PConvPyObjectToStrMaxLen(chain_id2,chain,sizeof(Chain)-1))
+          result=false;
+        else
+          strcpy(at->chain,chain);
+      }
+      if(alt_id1!=alt_id2) {
+        if(!PConvPyObjectToStrMaxLen(alt_id2,alt,sizeof(Chain)-1))
+          result=false;
+        else
+          strcpy(at->alt,alt);
+      }
+      if(text_type_id1!=text_type_id2) {
+        if(!PConvPyObjectToStrMaxLen(text_type_id2,textType,sizeof(TextType)-1))
+          result=false;
+        else
+          strcpy(at->textType,textType);
+      }
+      if(ss_id1!=ss_id2) {
+        if(!PConvPyObjectToStrMaxLen(ss_id2,ssType,sizeof(SSType)-1))
+          result=false;
+        else
+          strcpy(at->ssType,ssType);
+
+      }
+      if(b_id1!=b_id2) {
+        if(!PConvPyObjectToFloat(b_id2,&b))
+          result=false;
+        else
+          at->b=b;
+      }
+      if(q_id1!=q_id2) {
+        if(!PConvPyObjectToFloat(q_id2,&q))
+          result=false;
+        else
+          at->q=q;
+      }
+      if(vdw_id1!=vdw_id2) {
+        if(!PConvPyObjectToFloat(vdw_id2,&vdw))
+          result=false;
+        else
+          at->vdw=vdw;
+
+      }
+      if(partial_charge_id1!=partial_charge_id2) {
+        if(!PConvPyObjectToFloat(partial_charge_id2,&partialCharge))
+          result=false;
+        else
+          at->partialCharge=partialCharge;
+
+      }
+      if(formal_charge_id1!=formal_charge_id2) {
+        if(!PConvPyObjectToInt(formal_charge_id2,&formalCharge))
+          result=false;
+        else
+          at->formalCharge=formalCharge;
+
+      }
+      if(cartoon_id1!=cartoon_id2) {
+        if(!PConvPyObjectToInt(cartoon_id2,&cartoon))
+          result=false;
+        else
+          at->cartoon=cartoon;
+      }
+      if(numeric_type_id1!=numeric_type_id2) {
+        if(!PConvPyObjectToInt(numeric_type_id2,&numericType))
+          result=false;
+        else
+          at->customType = numericType;
+      }
+      if(ID_id1!=ID_id2) {
+        if(!PConvPyObjectToInt(ID_id2,&id))
+          result=false;
+        else
+          at->id=id;
+      }
+
+      if(PyErr_Occurred()) {
+        PyErr_Print();
+        result=false;
+      }
+    }
+    if(!result) { 
       ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
     }
   } 
   Py_DECREF(dict);
-  PUnblock(); 
   return(result);
 }
 

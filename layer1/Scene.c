@@ -624,7 +624,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       if(obj->type==cObjectMolecule) {
         if(obj->fDescribeElement)
           obj->fDescribeElement(obj,I->LastPicked.index);
-        sprintf(buffer,"model %s and index %i",
+        sprintf(buffer,"%s`%d",
                 obj->Name,I->LastPicked.index+1);    
         SelectorCreate(cEditorSele1,buffer,NULL,false);
         ExecutiveDelete(cEditorSele2);
@@ -649,7 +649,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       if(obj->type==cObjectMolecule) {
         if(obj->fDescribeElement) 
           obj->fDescribeElement(obj,I->LastPicked.index);
-		  sprintf(buffer,"model %s and index %i",
+		  sprintf(buffer,"%s`%d",
 					 obj->Name,I->LastPicked.index+1);    
         SelectorCreate(cEditorSele1,buffer,NULL,false);
         objMol = (ObjectMolecule*)obj;
@@ -658,7 +658,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           if(atIndex == I->LastPicked.index)
             atIndex = objMol->Bond[I->LastPicked.bond*3+1];              
           obj->fDescribeElement(obj,atIndex);
-          sprintf(buffer,"model %s and index %i",
+          sprintf(buffer,"%s`%d",
                   obj->Name,atIndex+1);    
           SelectorCreate(cEditorSele2,buffer,NULL,false);
           EditorSetActiveObject(objMol,I->StateIndex);
@@ -708,7 +708,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 		obj=(Object*)I->LastPicked.ptr;
       if(obj->fDescribeElement) 
         obj->fDescribeElement(obj,I->LastPicked.index);
-		  sprintf(buffer,"model %s and index %i",
+		  sprintf(buffer,"%s`%d",
 					 obj->Name,I->LastPicked.index+1);
 		switch(mode) {
       case cButModePk1:
