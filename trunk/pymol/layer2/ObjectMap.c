@@ -1046,7 +1046,6 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
 static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   
   char *p;
-  float *f;
   float dens,dens_rev;
   int a,b,c,d,e;
   float v[3],maxd,mind;
@@ -1131,8 +1130,8 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
         rev[3]=p[0];
         dens = *((float*)rev);
         F3(ms->Field->data,a,b,c) = dens;
-        if(maxd<*f) maxd = dens;
-        if(mind>*f) mind = dens;
+        if(maxd<dens) maxd = dens;
+        if(mind>dens) mind = dens;
         p+=4;
       }
     }

@@ -24,8 +24,6 @@ Z* -------------------------------------------------------------------
 #include"GadgetSet.h"
 
 
-typedef struct ObjectGadgetState {
-} ObjectGadgetState;
 
 typedef struct ObjectGadget {
   CObject Obj;
