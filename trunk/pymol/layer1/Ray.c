@@ -1059,8 +1059,6 @@ static int find_edge(unsigned int *ptr,unsigned int width,int threshold)
   return 0;
 }
 
-#define RAY_MAX_PASS 25
-
 int RayTraceThread(CRayThreadInfo *T)
 {
 	CRay *I=NULL;
@@ -1124,6 +1122,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float blue_blend=0.0F;
    float green_blend=0.0F;
    int blend_colors;
+   int max_pass;
 
 	_0		= 0.0F;
 	_1		= 1.0F;
@@ -1156,6 +1155,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	direct				= SettingGet(cSetting_direct);
    trans_spec_cut = SettingGet(cSetting_ray_transparency_spec_cut);
    blend_colors    = (int)SettingGet(cSetting_ray_blend_colors);
+   max_pass = SettingGetGlobal_i(cSetting_ray_max_passes);
    if(blend_colors) {
      red_blend = SettingGet(cSetting_ray_blend_red);
      green_blend = SettingGet(cSetting_ray_blend_green);
@@ -1380,7 +1380,7 @@ int RayTraceThread(CRayThreadInfo *T)
               excl_trans		= _0;
               pass			= 0;
               new_front		= T->front;
-              while((persist > _persistLimit) && (pass <= RAY_MAX_PASS))
+              while((persist > _persistLimit) && (pass <= max_pass))
                 {
                   pixel_flag		= false;
                   SceneCall.except = exclude;
@@ -1392,7 +1392,7 @@ int RayTraceThread(CRayThreadInfo *T)
 
                   interior_flag = SceneCall.interior_flag;
                   
-                  if(((i >= 0) || interior_flag) && (pass < RAY_MAX_PASS)) 
+                  if(((i >= 0) || interior_flag) && (pass < max_pass))
                     {
                       pixel_flag		= true;
                       n_hit++;
