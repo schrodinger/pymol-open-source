@@ -17,6 +17,10 @@ class Benchmark(Wizard):
    def launch(self,name):
       return None
 
+   def configure(self):
+      cmd.reinitialize()
+      cmd.set('use_display_lists',1)
+      
    def __init__(self,*arg):
       self.gl = 5.0
       self.short_cpu = 10.0
@@ -35,30 +39,30 @@ class Benchmark(Wizard):
 
    def run_cpu(self):
       self.surface_calculation()
-      cmd.reinitialize()
+      self.configure()
       self.mesh_calculation()
-      cmd.reinitialize()
+      self.configure()
       self.ray_tracing()
-      cmd.reinitialize()
+      self.configure()
 
    def run_gl(self):
-      cmd.reinitialize()
+      self.configure()
       self.updates()
-      cmd.reinitialize()
+      self.configure()
       self.smooth_lines()
-      cmd.reinitialize()
+      self.configure()
       self.jagged_lines()
-      cmd.reinitialize()
+      self.configure()
       self.dots()
-      cmd.reinitialize()
+      self.configure()
       self.sticks()
-      cmd.reinitialize()
+      self.configure()
       self.surface()
-      cmd.reinitialize()
+      self.configure()
       self.spheres()
-      cmd.reinitialize()
+      self.configure()
       self.cartoon()
-      cmd.reinitialize()
+      self.configure()
 
    def updates(self):
       cmd.fragment("methane")
@@ -265,7 +269,7 @@ class Benchmark(Wizard):
       return self.prompt
 
    def delay_launch(self,action):
-      cmd.reinitialize()
+      self.configure()
       cmd.viewport(640,480)
       cmd.feedback("disable","all","everything")
       cmd.feedback("enable","python","output")

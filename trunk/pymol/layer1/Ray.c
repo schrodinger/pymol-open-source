@@ -1134,7 +1134,7 @@ int RayTraceThread(CRayThreadInfo *T)
       y = T->y_start + ((yy-T->y_start) + offset) % ( render_height); /* make sure threads write to different pages */
 
 		if((!T->phase)&&!(yy & 0xF))
-			OrthoBusyFast(y,T->height); /* don't slow down rendering too much */
+			OrthoBusyFast(T->height/3 + y,4*T->height/3); /* don't slow down rendering too much */
 				
 		pixel = T->image + (T->width * y) + T->x_start;
 	
@@ -1829,6 +1829,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       ((0xFF& ((unsigned int)(bkrd[0]*255))) );
   }
 
+  OrthoBusyFast(3,20);
+
   PRINTFB(FB_Ray,FB_Blather) 
     " RayNew: Background = %x %d %d %d\n",background,(int)(bkrd[0]*255),
     (int)(bkrd[1]*255),(int)(bkrd[2]*255)
@@ -1911,6 +1913,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
        
     }
 
+    OrthoBusyFast(5,20);
     now = UtilGetSeconds()-timing;
 
 #ifdef _MemoryDebug_ON
