@@ -24,12 +24,13 @@ from pymol import cmd
 import re
 import thread
 import threading
+import os
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.2'
+   appversion     = '0.43'
    appname       = 'PyMOL Molecular Graphics System'
-   copyright      = 'Copyright (C) 1998-2000 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
+   copyright      = 'Copyright (C) 1998-2001 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
    contactemail   = 'warren@delanoscientific.com'
 
@@ -69,23 +70,30 @@ class PMGApp(AbstractApp):
 
    def createMain(self):
       self.command = StringVar()
+      if os.name == 'nt':
+         entryWidth=40
+      else:
+         entryWidth=60
       self.entry = self.createcomponent('entry', (), None,
                            Entry,
                            (self.get_dataArea(),),
                            justify=LEFT,
-                           width=60,
+                           width=entryWidth,
                            textvariable=self.command)
       self.entry.pack(side=BOTTOM,expand=NO,fill=X)
       self.entry.bind('<Return>',lambda event,w=self.command:
          (cmd.do(w.get()),cmd.dirty(),w.set('')))
-      self.bind(self.entry, 'Command line entry field')
 
       self.output = self.createcomponent('output', (), None,
                            Pmw.ScrolledText,
                            (self.get_dataArea(),))
+
+      text = self.output.component('text')
+      text.configure(font=('Courier',9))
+      text.configure(width=72)
       self.output.after(50,self.update_feedback)
-      self.output.pack(side=BOTTOM,expand=NO,fill=X)
-      self.bind(self.entry, 'Output Area')
+      self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)
+      self.bind(self.entry, 'Command Input Area')
 
    def update_feedback(self):
       for a in cmd.get_feedback():
@@ -112,7 +120,7 @@ class PMGApp(AbstractApp):
                     ("MOL File","*.mol"),("XPLOR Map","*.xplor"),
                     ("ChemPy Model","*.pkl"),("All Files","*.*")])
       if len(ofile):
-                        cmd.load(ofile)
+         cmd.do("cmd.load('%s')"%ofile)
 
    def file_run(self):
       ofile = askopenfilename(filetypes=[("PyMOL Script","*.pml"),("Python Program","*.py")])

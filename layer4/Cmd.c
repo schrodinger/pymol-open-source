@@ -1114,10 +1114,10 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
     if(strncmp(str1,"cmd._",5)) {
       OrthoAddOutput("PyMOL>");
       OrthoAddOutput(str1);
-      PParse(str1);
       OrthoNewLine(NULL);
     }
   }
+  PParse(str1);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
