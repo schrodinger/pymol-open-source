@@ -237,7 +237,7 @@ int ExecutiveSetName(char *old_name, char *new_name)
 
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname, 
                              int frame, int discrete,int finish,
-                             OrthoLineType buf,PDBInfoRec *pdb_info)
+                             OrthoLineType buf,PDBInfoRec *pdb_info,int quiet)
 {
   int ok=true;
   FILE *f;
@@ -340,7 +340,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
         }
 
         if(obj) {
-          ExecutiveManageObject(obj,true,false);
+          ExecutiveManageObject(obj,true,quiet);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
@@ -3221,7 +3221,7 @@ void ExecutiveSort(char *name)
   }
 }
 /*========================================================================*/
-void ExecutiveRemoveAtoms(char *s1)
+void ExecutiveRemoveAtoms(char *s1,int quiet)
 {
   int sele;
   CExecutive *I=&Executive;
@@ -3246,15 +3246,19 @@ void ExecutiveRemoveAtoms(char *s1)
                   ObjectMoleculeVerifyChemistry(obj); /* remember chemistry for later */
 						ObjectMoleculeSeleOp(obj,sele,&op);
                   if(op.i1) {
+                    if(!quiet) {
                     PRINTFD(FB_Editor)
                       " ExecutiveRemove-Debug: purging %i of %i atoms in %s\n",
                       op.i1,obj->NAtom,obj->Obj.Name
                       ENDFD;
+                    }
                     ObjectMoleculePurge(obj);
-                    PRINTFB(FB_Editor,FB_Actions)
-                      " Remove: eliminated %d atoms in model \"%s\".\n",
-                      op.i1,obj->Obj.Name 
-                      ENDFB;
+                    if(!quiet) {
+                      PRINTFB(FB_Editor,FB_Actions)
+                        " Remove: eliminated %d atoms in model \"%s\".\n",
+                        op.i1,obj->Obj.Name 
+                        ENDFB;
+                    }
                     flag=true;
                   }
 					 }
@@ -3266,7 +3270,7 @@ void ExecutiveRemoveAtoms(char *s1)
       }*/
 }
 /*========================================================================*/
-void ExecutiveAddHydrogens(char *s1)
+void ExecutiveAddHydrogens(char *s1,int quiet)
 {
   int sele1;
   ObjectMoleculeOpRec op;
@@ -3854,6 +3858,59 @@ int ExecutiveIterate(char *s1,char *expr,int read_only,int quiet)
     }
   }
   return(op1.i1);
+}
+/*========================================================================*/
+int ExecutiveIterateList(char *name,PyObject *list,int read_only,int quiet)
+{
+  int ok;
+  int n_eval=0;
+
+  ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(name);
+  PyObject *entry;
+  if(obj) {
+    int n_atom = obj->NAtom;
+    int list_len = 0;
+    int a;
+    int index = 0;
+    char *expr = NULL;
+    if(ok) ok=PyList_Check(list);
+    if(ok) {
+      list_len = PyList_Size(list);
+      for(a=0;a<list_len;a++) {
+        if(ok) entry=PyList_GetItem(list,a);
+        if(ok) ok = PyList_Check(entry);
+        if(ok) ok = (PyList_Size(entry)==2);
+        if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry,0),&index);
+        if(ok) ok = PConvPyStrToStrPtr(PyList_GetItem(entry,1),&expr);
+        if(ok) ok = (index<=n_atom);
+        if(ok) ok = PAlterAtom(obj->AtomInfo+index-1,expr,read_only,name,index-1);
+        if(ok) n_eval++;
+      }
+    }
+  }
+  if(ok) {
+    if(!quiet) {
+      if(!read_only) {
+        PRINTFB(FB_Executive,FB_Actions)
+          " AlterList: modified %i atoms.\n",n_eval
+          ENDFB;
+      } else {
+        PRINTFB(FB_Executive,FB_Actions)
+          " IterateList: iterated over %i atoms.\n",n_eval
+          ENDFB;
+      }
+    }
+  } else {
+    if(!quiet) {
+      PRINTFB(FB_Executive,FB_Warnings)
+        "ExecutiveIterateList: An error occurred.\n"
+        ENDFB;
+    }
+  }
+  if(!ok)
+    return -1;
+  else
+    return n_eval;
 }
 /*========================================================================*/
 void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,

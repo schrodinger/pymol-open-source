@@ -2032,8 +2032,24 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
     APIExit();
   }
   return Py_BuildValue("i",result);
-
 }
+
+static PyObject *CmdAlterList(PyObject *self,   PyObject *args)
+{
+  char *name;
+  int quiet;
+  int result=0;
+  int ok=false;
+  PyObject *list;
+  ok = PyArg_ParseTuple(args,"sOi",&name,&list,&quiet);
+  if (ok) {
+    APIEnterBlocked();
+    result=ExecutiveIterateList(name,list,false,quiet); /* TODO STATUS */
+    APIExitBlocked();
+  }
+  return Py_BuildValue("i",result);
+}
+
 
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
 {
@@ -3732,7 +3748,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     
     switch(type) {
     case cLoadTypePDB:
-      ExecutiveProcessPDBFile(origObj,fname,oname,frame,discrete,finish,buf,NULL);
+      ExecutiveProcessPDBFile(origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet);
       /* special handler for concatenated and annotated files */
       break;
     case cLoadTypePQR:
@@ -3741,7 +3757,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         UtilZeroMem(&pdb_info,sizeof(PDBInfoRec));
 
         pdb_info.is_pqr_file = true;        
-        ExecutiveProcessPDBFile(origObj,fname,oname,frame,discrete,finish,buf,&pdb_info);
+        ExecutiveProcessPDBFile(origObj,fname,oname,frame,discrete,finish,buf,&pdb_info,quiet);
       }
       break;
     case cLoadTypeTOP:
@@ -4309,22 +4325,22 @@ static PyObject *CmdHAdd(PyObject *self, PyObject *args)
 {
   char *str1;
   OrthoLineType s1;
-
+  int quiet;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveAddHydrogens(s1); /* TODO STATUS */
+    ExecutiveAddHydrogens(s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(s1);
     SelectorGetTmp(str1,s1);
-    ExecutiveAddHydrogens(s1); /* TODO STATUS */
+    ExecutiveAddHydrogens(s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(s1);
     SelectorGetTmp(str1,s1);
-    ExecutiveAddHydrogens(s1); /* TODO STATUS */
+    ExecutiveAddHydrogens(s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(s1);
     SelectorGetTmp(str1,s1);
-    ExecutiveAddHydrogens(s1); /* TODO STATUS */
+    ExecutiveAddHydrogens(s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }
@@ -4349,13 +4365,13 @@ static PyObject *CmdRemove(PyObject *self, PyObject *args)
 {
   char *str1;
   OrthoLineType s1;
-
+  int quiet;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveRemoveAtoms(s1); /* TODO STATUS */
+    ExecutiveRemoveAtoms(s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }
@@ -4366,10 +4382,11 @@ static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
 {
   int i1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"i",&i1);
+  int quiet;
+  ok = PyArg_ParseTuple(args,"ii",&i1,&quiet);
   if (ok) {
     APIEntry();
-    EditorRemove(i1); /* TODO STATUS */
+    EditorRemove(i1,quiet); /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));
@@ -4378,9 +4395,13 @@ static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
 static PyObject *CmdHFill(PyObject *self, PyObject *args)
 {
   int ok = true;
-  APIEntry();
-  EditorHFill(); /* TODO STATUS */
-  APIExit();
+  int quiet;
+  ok = PyArg_ParseTuple(args,"i",&quiet);
+  if(ok) {
+    APIEntry();
+    EditorHFill(quiet); /* TODO STATUS */
+    APIExit();
+  }
   return(APIStatus(ok));
 }
 
@@ -4517,6 +4538,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"accept",	              CmdAccept,               METH_VARARGS },
 	{"align",	              CmdAlign,                METH_VARARGS },
 	{"alter",	              CmdAlter,                METH_VARARGS },
+	{"alter_list",            CmdAlterList,            METH_VARARGS },
 	{"alter_state",           CmdAlterState,           METH_VARARGS },
 	{"attach",                CmdAttach,               METH_VARARGS },
    {"bg_color",              CmdBackgroundColor,      METH_VARARGS },

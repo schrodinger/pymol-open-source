@@ -390,7 +390,7 @@ SEE ALSO
          unlock()
       return r
 
-   def remove(selection):
+   def remove(selection,quiet=1):
       '''
 DESCRIPTION
 
@@ -418,13 +418,13 @@ SEE ALSO
       r = 1
       try:
          lock()   
-         r = _cmd.remove("("+selection+")")
+         r = _cmd.remove("("+selection+")",int(quiet))
       finally:
          unlock()
       return r
 
 
-   def remove_picked(hydrogens=1):
+   def remove_picked(hydrogens=1,quiet=1):
       '''
 DESCRIPTION
 
@@ -454,7 +454,7 @@ SEE ALSO
       r = 1
       try:
          lock()   
-         r = _cmd.remove_picked(int(hydrogens))
+         r = _cmd.remove_picked(int(hydrogens),int(quiet))
       finally:
          unlock()
       return r
@@ -666,7 +666,7 @@ SEE ALSO
          unlock()
       return r
 
-   def h_fill():
+   def h_fill(quiet=1):
       '''
 DESCRIPTION
 
@@ -693,12 +693,12 @@ SEE ALSO
       r = 1
       try:
          lock()   
-         r = _cmd.h_fill()
+         r = _cmd.h_fill(int(quiet))
       finally:
          unlock()
       return r
 
-   def h_add(selection="(all)"):
+   def h_add(selection="(all)",quiet=1):
       '''
 DESCRIPTION
 
@@ -723,7 +723,7 @@ SEE ALSO
       r = 1
       try:
          lock()   
-         r = _cmd.h_add(selection)
+         r = _cmd.h_add(selection,int(quiet))
       finally:
          unlock()
       return r
@@ -938,13 +938,27 @@ SEE ALSO
          unlock()   
       return r
 
+   def alter_list(object,expr_list,quiet=1):
+      '''
+DESCRIPTION
+   "alter_list" is currently in development
+   
+      '''
+      #
+      try:
+         lock()
+         r = _cmd.alter_list(str(object),list(expr_list),int(quiet))
+      finally:
+         unlock()   
+      return r
+
 
    def iterate(selection,expression,quiet=1):
       '''
 DESCRIPTION
 
    "iterate" iterates over an expression with a separate name space
-   for each atom.  However, unlike the "alter" command, atomic
+   for each atom.  However, unlike the "alter" comman3d, atomic
    properties can not be altered.  Thus, "iterate" is more efficient
    than "alter".
 
@@ -1544,10 +1558,11 @@ RESERVED FLAGS
       exclude    4 = Atoms which should not be part of any simulation
    Flags 8-15 are free for end users to manipulate
    Flags 16-23 are reserved for external GUIs and linked applications
-   Flags 24-31 are reserved for PyMOL internal usage
+   Flags 24-30 are reserved for PyMOL internal usage
       exfoliate 24 = Remove surface from atoms when surfacing
       ignore    25 = Ignore atoms altogether when surfacing
       no_smooth 26 = Don\'t smooth atom position
+   Flag 31 is reserved for coverage tracking when assigning parameters, etc.
       '''
       # preprocess selection
       new_flag = flag_sc.interpret(str(flag))

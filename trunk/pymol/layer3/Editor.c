@@ -675,7 +675,7 @@ void EditorAttach(char *elem,int geom,int valence,char *name)
   VLAFreeP(ai); /* safety */
 }
 /*========================================================================*/
-void EditorRemove(int hydrogen)
+void EditorRemove(int hydrogen,int quiet)
 {
   int sele0,sele1;
   int i0;
@@ -706,13 +706,13 @@ void EditorRemove(int hydrogen)
         if(SelectorGetFastSingleAtomObjectIndex(sele0,&i0)) {
           /* atom mode */
           if(i0>=0) {
-            ExecutiveRemoveAtoms(cEditorSele1);
+            ExecutiveRemoveAtoms(cEditorSele1,quiet);
             EditorInactivate();
           }
         }
 
         if(h_flag) {
-          ExecutiveRemoveAtoms(cEditorRemoveSele);
+          ExecutiveRemoveAtoms(cEditorRemoveSele,quiet);
           SelectorDelete(cEditorRemoveSele);
         }
 
@@ -722,7 +722,7 @@ void EditorRemove(int hydrogen)
 #undef cEditorRemoveSele
 }
 /*========================================================================*/
-void EditorHFill(void)
+void EditorHFill(int quiet)
 {
   int sele0,sele1;
   int i0;
@@ -743,11 +743,11 @@ void EditorHFill(void)
           sprintf(buffer,"((neighbor %s) and (elem h))",
                   cEditorSele1);
         SelectorGetTmp(buffer,s1);
-        ExecutiveRemoveAtoms(s1);
+        ExecutiveRemoveAtoms(s1,quiet);
         SelectorFreeTmp(s1);
         i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); 
         obj0->AtomInfo[i0].chemFlag=false;
-        ExecutiveAddHydrogens(cEditorSele1);
+        ExecutiveAddHydrogens(cEditorSele1,quiet);
       }
       
       if(sele1>=0) {
@@ -759,11 +759,11 @@ void EditorHFill(void)
           sprintf(buffer,"((neighbor %s) and (elem h))",
                   cEditorSele2);
         SelectorGetTmp(buffer,s1);
-        ExecutiveRemoveAtoms(s1);
+        ExecutiveRemoveAtoms(s1,quiet);
         SelectorFreeTmp(s1);
         i0 = ObjectMoleculeGetAtomIndex(obj1,sele1); 
         obj1->AtomInfo[i0].chemFlag=false;
-        ExecutiveAddHydrogens(cEditorSele2);
+        ExecutiveAddHydrogens(cEditorSele2,quiet);
       }
     }
   }

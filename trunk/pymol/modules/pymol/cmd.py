@@ -1203,6 +1203,7 @@ SEE ALSO
    import editing
    from editing import \
         alter,              \
+        alter_list,         \
         alter_state,        \
         attach,             \
         bond,               \

@@ -132,6 +132,10 @@ typedef char AtomBuffer[255]; /* maximum length for a single atom */
 #define RES_SIZE 5
 #define SYM_SIZE 3
 
+#define dTag_disable 0
+#define cTag_merge   1
+#define cTag_copy    2
+
 typedef struct { 
   int link; /* memory management */
   int index;
@@ -163,6 +167,7 @@ typedef struct {
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
   int first_base; 
+  int ext_index; /* for maintaining atom references with PyMOL */
   unsigned int tag,not_tag;
   PyObject *chempy_atom;
 } ListAtom;
@@ -199,6 +204,7 @@ typedef struct {
   int direction; /* 0 = specified, 1 = up, -1 = down */
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   unsigned int tag,not_tag;
+  int ext_index;
   PyObject *chempy_bond;
 } ListBond;
 

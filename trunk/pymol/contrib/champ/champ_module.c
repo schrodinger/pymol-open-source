@@ -398,6 +398,96 @@ static PyObject *pattern_get_tags(PyObject *self,      PyObject *args)
   return(RetObj(ok,result));
 }
 
+static PyObject *pattern_get_ext_indices_with_tags(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1,ai,bi;
+  PyObject *result = NULL;
+  PyObject *O,*l1,*l2,*l3,*l4;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  ListBond *bd;
+  int a,b,c;
+  int n_atom,n_bond;
+  int bit_mask;
+  int bit_no;
+  int n_bits;
+
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    n_atom = ListLen(I->Atom,pat->atom);
+    ai = pat->atom;
+    l1 = PyList_New(n_atom);
+    for(a=0;a<n_atom;a++) {
+      at = I->Atom + ai;
+
+      n_bits = 0;
+      bit_mask = at->tag;
+      while(bit_mask) { /* count bits */
+        if(bit_mask&0x1) 
+          n_bits++;
+        bit_mask=((bit_mask>>1)&0x7FFFFFFF);
+      }
+      l4 = PyList_New(2);
+      l3 = PyList_New(n_bits);
+      bit_no = 0;
+      bit_mask = at->tag;
+      c=0;
+      for(bit_no=0;bit_no<32;bit_no++) {
+        if(bit_mask&0x1) {
+          PyList_SetItem(l3,c,PyInt_FromLong(bit_no));
+          c++;
+        }
+        bit_mask=((bit_mask>>1)&0x7FFFFFFF);
+      }
+      PyList_SetItem(l1,a,l4);
+      PyList_SetItem(l4,0,PyInt_FromLong(at->ext_index));
+      PyList_SetItem(l4,1,l3);
+      ai = at->link;
+    }
+
+    n_bond = ListLen(I->Bond,pat->bond);
+    l2 = PyList_New(n_bond);
+    bi = pat->bond;
+    for(b=0;b<n_bond;b++) {
+      bd = I->Bond + bi;
+      n_bits = 0;
+      bit_mask = bd->tag;
+      while(bit_mask) { /* count bits */
+        if(bit_mask&0x1) 
+          n_bits++;
+        bit_mask=((bit_mask>>1)&0x7FFFFFFF);
+      }
+      l4 = PyList_New(2);
+      l3 = PyList_New(n_bits);
+      bit_no = 0;
+      bit_mask = bd->tag;
+      c=0;
+      for(bit_no=0;bit_no<32;bit_no++) {
+        if(bit_mask&0x1) {
+          PyList_SetItem(l3,c,PyInt_FromLong(bit_no));
+          c++;
+        }
+        bit_mask=((bit_mask>>1)&0x7FFFFFFF);
+      }
+      PyList_SetItem(l2,b,l4);
+      PyList_SetItem(l4,0,PyInt_FromLong(bd->ext_index));
+      PyList_SetItem(l4,1,l3);
+
+      bi = bd->link;
+    }
+
+    result = PyList_New(2);
+    PyList_SetItem(result,0,l1);
+    PyList_SetItem(result,1,l2);
+  }
+  return(RetObj(ok,result));
+}
+
 static PyObject *pattern_get_tag_masks(PyObject *self,      PyObject *args)
 {
   int ok=true;
@@ -935,6 +1025,7 @@ static PyMethodDef champ_methods[] = {
   {"pattern_get_tag_masks",    pattern_get_tag_masks,       METH_VARARGS },
   {"pattern_get_atom_symbols",  pattern_get_atom_symbols,     METH_VARARGS },
   {"pattern_get_atom_names",  pattern_get_atom_names,     METH_VARARGS },
+  {"pattern_get_ext_indices_with_tags",  pattern_get_ext_indices_with_tags, METH_VARARGS },
   {"pattern_dump",  pattern_dump,     METH_VARARGS },
   {"pattern_orient_bonds",   pattern_orient_bonds,       METH_VARARGS },
   {"pattern_detect_chirality",   pattern_detect_chirality,       METH_VARARGS },
@@ -950,6 +1041,7 @@ static PyMethodDef champ_methods[] = {
   {"match_1v1_n",               match_1v1_n,             METH_VARARGS},
   {"match_1vN_n",               match_1vN_n,              METH_VARARGS },
   {"match_Nv1_n",               match_Nv1_n,              METH_VARARGS },
+  /*  {"map_1v1_to_indexed_strings",  map_1v1_to_indexed_strings, METH_VARARGS },*/
   {"exact_1vN_n",               exact_1vN_n,              METH_VARARGS },
 
   {NULL,		                    NULL}     /* sentinel */        

@@ -29,7 +29,7 @@ int ExecutiveFixChemistry(char *s1,char *s2,int quiet);
 int ExecutiveGetAtomVertex(char *s1,int state,int index,float *v);
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf,
-                             PDBInfoRec *pdb_info);
+                             PDBInfoRec *pdb_info,int quiet);
 
 int ExecutiveDebug(char *name);
 float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
@@ -39,6 +39,7 @@ float ExecutiveDistance(char *sele1,char *sele2);
 float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels,int quiet);
 void ExecutiveBond(char *s1,char *s2,int order,int add);
 int ExecutiveIterate(char *s1,char *expr,int read_only,int quiet);
+int ExecutiveIterateList(char *s1,PyObject *list,int read_only,int quiet);
 void ExecutiveLabel(char *s1,char *expr,int quiet);
 void ExecutiveIterateState(int i1,char *s1,char *expr,int read_only,
                            int atomic_props,int quiet);
@@ -99,13 +100,13 @@ void ExecutiveSeleToObject(char *name,char *s1,int source,int target,int discret
 PyObject *ExecutiveSeleToChemPyModel(char *s1,int state);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
 void ExecutiveFlag(int flag,char *s1,int action,int quiet);
-void ExecutiveRemoveAtoms(char *s1);
+void ExecutiveRemoveAtoms(char *s1,int quiet);
 void ExecutiveProtect(char *s1,int mode,int quiet);
 void ExecutiveMask(char *s1,int mode);
 void ExecutiveUndo(int dir);
 void ExecutiveRebuildAll(void);
 void ExecutiveSpheroid(char *name,int average);
-void ExecutiveAddHydrogens(char *s1);
+void ExecutiveAddHydrogens(char *s1,int quiet);
 void ExecutiveFuse(char *s0,char *s1,int mode);
 void ExecutiveRenameObjectAtoms(char *name,int force);
 int ExecutiveInvert(int quiet);
