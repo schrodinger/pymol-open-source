@@ -2266,7 +2266,7 @@ def expfit(a,b): # Huh?
 
 cartoon_dict = {
    'skip'        : -1,
-   'auto'        : 0,
+   'automatic'   : 0,
    'loop'        : 1,
    'rectangle'   : 2,
    'oval'        : 3,
