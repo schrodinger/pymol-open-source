@@ -5249,16 +5249,32 @@ void ExecutiveSetObjVisib(char *name,int state)
     ENDFD;
 
 }
+
+static int oldPX,oldPY,oldWidth,oldHeight,sizeFlag=false;
+
 /*========================================================================*/
 void ExecutiveFullScreen(int flag)
 {
   if(PMGUI) {
+    if(!SettingGet(cSetting_full_screen))
+      {
+        oldPX = p_glutGet(GLUT_WINDOW_X);
+        oldPY = p_glutGet(GLUT_WINDOW_Y);
+        oldWidth = p_glutGet(GLUT_WINDOW_WIDTH);
+        oldHeight = p_glutGet(GLUT_WINDOW_HEIGHT);
+        sizeFlag = true;
+      }
+      
     SettingSet(cSetting_full_screen,(float)flag);
     if(flag) {
       p_glutFullScreen();
     } else {
-      p_glutReshapeWindow(640+(int)SettingGet(cSetting_internal_gui_width),
-                          480+cOrthoBottomSceneMargin);
+      if(sizeFlag) {
+        p_glutPositionWindow(oldPX,oldPY);
+        p_glutReshapeWindow(oldWidth,oldHeight);
+      } else {
+        MainRepositionWindowDefault();
+      }
     }
   }
 }
