@@ -5917,7 +5917,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,Ato
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL;
-  char cc[MAXLINELEN],resn[MAXLINELEN] = "UNK";
+  char cc[MAXLINELEN];
   float *f;
   char *last_p;
   BondType *ii;
@@ -5975,15 +5975,18 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,Ato
         p=ParseNextLine(p);
         f=coord;
         for(a=0;a<nAtom;a++) {
+          AtomInfoType *ai = atInfo + a;
+
           if(ok) {
             p=ParseWordCopy(cc,p,MAXLINELEN);
-            if(sscanf(cc,"%d",&atInfo[a].id)!=1)
+
+            if(sscanf(cc,"%d",&ai->id)!=1)
               ok=ErrMessage(G,"ReadMOL2File","bad atom id");
           }
           if(ok) {
             p=ParseWordCopy(cc,p,MAXLINELEN);
             cc[cAtomNameLen] = 0; 
-            if(sscanf(cc,"%s",atInfo[a].name)!=1)
+            if(sscanf(cc,"%s",ai->name)!=1)
               ok=ErrMessage(G,"ReadMOL2File","bad atom name");
           }
           if(ok) {
@@ -6003,11 +6006,11 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,Ato
           }
           if(ok) {
             p=ParseWordCopy(cc,p,cTextTypeLen);
-            if(sscanf(cc,"%s",atInfo[a].textType)!=1)
+            if(sscanf(cc,"%s",ai->textType)!=1)
               ok=ErrMessage(G,"ReadMOL2File","bad atom type");
             else { /* convert atom type to elem symbol */
-              char *tt = atInfo[a].textType;
-              char *el = atInfo[a].elem;
+              char *tt = ai->textType;
+              char *el = ai->elem;
               int elc = 0;
               while(*tt&&((*tt)!='.')) {
                 *(el++) = *(tt++);
@@ -6022,12 +6025,16 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,Ato
           }
           if(ok) {
             p=ParseWordCopy(cc,p,MAXLINELEN);
-            if(p[0]) { /* skip subst_id */
+            if(cc[0]) { /* subst_id is residue identifier */
+              UtilNCopy(ai->resi,cc,cResiLen);
+              ai->resv = AtomResvFromResi(cc);
               p=ParseWordCopy(cc,p,MAXLINELEN); 
-              if(p[0]) { /* skip subst_name */
+              if(cc[0]) { /* subst_name is residue name */
+                cc[3] = 0; /* enforce 3-letter residue names */
+                UtilNCopy(ai->resn,cc,cResnLen);
                 p=ParseWordCopy(cc,p,MAXLINELEN);        
-                if(p[0]) {
-                  if(sscanf(cc,"%f",&atInfo[a].partialCharge)!=1)                    
+                if(cc[0]) {
+                  if(sscanf(cc,"%f",&ai->partialCharge)!=1)                    
                     ok=ErrMessage(G,"ReadMOL2File","bad atom charge");
                 }
               }
@@ -6036,20 +6043,20 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,Ato
           p=ParseNextLine(p);
 
           for(c=0;c<cRepCnt;c++) {
-            atInfo[a].visRep[c] = false;
+            ai->visRep[c] = false;
           }
-          atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
-          atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+          ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
+          ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
 
-          atInfo[a].id = a+1;
-          atInfo[a].rank = a;
-          strcpy(atInfo[a].resn,resn);
-          atInfo[a].hetatm=true;
+
+          ai->id = a+1;
+          ai->rank = a;
+          ai->hetatm=true;
           AtomInfoAssignParameters(G,atInfo+a);
-          atInfo[a].color=AtomInfoGetColor(G,atInfo+a);
-          atInfo[a].alt[0]=0;
-          atInfo[a].segi[0]=0;
-          atInfo[a].resi[0]=0;
+          ai->color=AtomInfoGetColor(G,atInfo+a);
+          ai->alt[0]=0;
+          ai->segi[0]=0;
+
         }
       } else if(WordMatchExact(G,cc,"@<TRIPOS>BOND",true)||WordMatchExact(G,cc,"@BOND",true)) {
         if(!have_molecule) {
