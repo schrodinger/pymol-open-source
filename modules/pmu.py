@@ -61,3 +61,9 @@ def mroll(fir,las,loop):
 		pmp_nest=pmp_nest-1
 		a = a + 1
 
+def hbond(a,b,cutoff=3.3):
+   st = "(%s and (%s around %4.2f) and elem N,O),(%s and (%s around %4.2f) and elem N,O),%4.2f" % (a,b,cutoff,b,a,cutoff,cutoff)
+   pm.dist("hbond",st)
+        
+          
+

@@ -98,6 +98,8 @@ def dist(*arg):
       sel2 = arg[1]
       optarg1=-1.0
       optarg2=0
+      if(la>2):
+         optarg1 = float(arg[2])
       lock()
       r = _pm.dist(nam,sel1,sel2,optarg2,optarg1)
       unlock()
