@@ -333,6 +333,10 @@ void PLockAPIAsGlut(void)
   PyEval_RestoreThread(P_glut_thread_state); /* grab python */
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
   while(P_glut_thread_keep_out) { /* IMPORTANT: keeps the glut thread out of an API operation... */
+    /* NOTE: the keep_out variable can only be changed by the thread
+       holding the API lock, therefore it is safe even through increment
+       isn't atomic. */
+
     PXDecRef(PyObject_CallFunction(P_unlock,NULL));
 #ifndef WIN32
     { 
@@ -549,7 +553,7 @@ void PParse(char *str)
 void PFlush(void) {  
   /* NOTE: ASSUMES we current have unblocked Python threads and a locked API */
   char buffer[OrthoLineLength+1];
-  if(OrthoCommandOut(buffer)) {
+  while(OrthoCommandOut(buffer)) {
     PBlockAndUnlockAPI();
     PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
     PLockAPIAndUnblock();
@@ -557,9 +561,9 @@ void PFlush(void) {
 }
 
 void PFlushFast(void) {
-  /* NOTE: ASSUMES we current have blocked Python threads and an unlocked API */ 
+  /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */ 
  char buffer[OrthoLineLength+1];
-  if(OrthoCommandOut(buffer)) {
+  while(OrthoCommandOut(buffer)) {
    PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
   }
 }

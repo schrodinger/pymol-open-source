@@ -54,15 +54,17 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
 
   int a,b,c;
   AtomInfoType *ai0,*ai1,*lai1,*lai0;
-  int st1,nd1,st0,nd0;
+  int st1,nd1,st0,nd0; /* starts and ends */
   int matchFlag;
   int bracketFlag;
   WordType name;
 
   ai1=atInfo1;
-  lai0=NULL;
+  lai0=NULL; /* last atom compared against in each object */
   lai1=NULL;
   c=1;
+  /* ai1->name is the atom we're currently on */
+
   b=0;
   while(b<n1) {
     matchFlag=false;
@@ -80,12 +82,14 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
         bracketFlag=false;
       if(bracketFlag) {
         c=1;
-        AtomInfoBracketResidue(atInfo1,b,ai1,&st1,&nd1);
+        AtomInfoBracketResidue(atInfo1,n1,ai1,&st1,&nd1);
         lai1=ai1;
       }
       ai0 = atInfo1 + st1;
-      for(a=st1;a<=b;a++) {
+      for(a=st1;a<=nd1;a++) {
         if(strcmp(ai1->name,ai0->name))
+          ai0++;
+        else if(!AtomInfoSameResidue(ai1,ai0))
           ai0++;
         else if(ai1!=ai0) {
           matchFlag=true;
@@ -112,6 +116,8 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
         for(a=st0;a<=nd0;a++) {
           if(strcmp(ai1->name,ai0->name))
             ai0++;
+          else if(!AtomInfoSameResidue(ai1,ai0))
+            ai0++;
           else if(ai1!=ai0) {
             matchFlag=true;
             break;
@@ -123,7 +129,7 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
 
     if(matchFlag) {
       if(c<100) {
-        if(c<10&&ai1->elem[1]) /* try to keep halogens 3 or under */
+        if((c<10)&&ai1->elem[1]) /* try to keep halogens 3 or under */
           sprintf(name,"%2s%1d",ai1->elem,c);
         else 
           sprintf(name,"%1s%02d",ai1->elem,c);
@@ -335,17 +341,13 @@ int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2)
 
 int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2)
 {
-  int result=false;
   if(at1->hetatm==at2->hetatm)
     if(at1->chain[0]==at2->chain[0])
-      if(WordMatch(at1->resi,at2->resi,true)<0) {
-        if(WordMatch(at1->segi,at2->segi,true)<0) {
-          result = true;
-        } else {
-          result = false;
-        }
-      }
-  return(result);
+      if(at1->resv==at2->resv)
+        if(WordMatch(at1->resi,at2->resi,true)<0) 
+          if(WordMatch(at1->segi,at2->segi,true)<0) 
+            return 1;
+  return 0;
 }
 
 int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2)

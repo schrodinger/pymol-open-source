@@ -44,6 +44,9 @@ class QuietException:
    def __init__(self,args=None):
       self.args = args
 
+# the following lock is used by both C and Python to insure that no more than
+# one active thread enters PyMOL at a given time. 
+# 
 lock_api = pymol.lock_api
 
 def write_html_ref(file):
