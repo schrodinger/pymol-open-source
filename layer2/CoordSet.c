@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"RepMesh.h"
 #include"RepSphere.h"
 #include"RepRibbon.h"
+#include"RepSurface.h"
 
 void CoordSetUpdate(CoordSet *I);
 
@@ -142,6 +143,10 @@ void CoordSetUpdate(CoordSet *I)
 		  }
 	 	if(!I->Rep[cRepRibbon]) {
 		  I->Rep[cRepRibbon]=RepRibbonNew(I);
+		  SceneDirty();
+		  }
+	 	if(!I->Rep[cRepSurface]) {
+		  I->Rep[cRepSurface]=RepSurfaceNew(I);
 		  SceneDirty();
 		  }
 	 }

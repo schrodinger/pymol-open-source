@@ -13,34 +13,16 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_Rep
-#define _H_Rep
+#ifndef _H_Triangle
+#define _H_Triangle
 
-#include"Base.h"
-#include"Ray.h"
+#include"Vector.h"
 
-#define cRepAll    -1
-#define cRepLine    0
-#define cRepCyl     1
-#define cRepDot     2
-#define cRepMesh    3
-#define cRepSphere  4
-#define cRepRibbon  5
-#define cRepSurface 6
+typedef struct {
+  int *Tri;
 
-#define cRepCnt  7
+} TriangleSurfaceRec;
 
-#define cRepInvVisib 10
-#define cRepInvColor 20
-#define cRepInvCoord 30
-
-typedef struct Rep {
-  void (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
-  void (*fFree)(struct Rep* I);
-  Pickable *P;
-} Rep;
-
-void RepInit(Rep *I);
-void RepFree(Rep *I);
+TriangleSurfaceRec *TrianglePointsToSurface(float *v,int n,float cutoff);
 
 #endif

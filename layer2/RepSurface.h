@@ -13,34 +13,12 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_Rep
-#define _H_Rep
+#ifndef _H_RepSurface
+#define _H_RepSurface
 
-#include"Base.h"
-#include"Ray.h"
+#include"Rep.h"
+#include"CoordSet.h"
 
-#define cRepAll    -1
-#define cRepLine    0
-#define cRepCyl     1
-#define cRepDot     2
-#define cRepMesh    3
-#define cRepSphere  4
-#define cRepRibbon  5
-#define cRepSurface 6
-
-#define cRepCnt  7
-
-#define cRepInvVisib 10
-#define cRepInvColor 20
-#define cRepInvCoord 30
-
-typedef struct Rep {
-  void (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
-  void (*fFree)(struct Rep* I);
-  Pickable *P;
-} Rep;
-
-void RepInit(Rep *I);
-void RepFree(Rep *I);
+Rep *RepSurfaceNew(CoordSet *cset);
 
 #endif

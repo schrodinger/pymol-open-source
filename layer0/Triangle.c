@@ -13,34 +13,44 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_Rep
-#define _H_Rep
+
+#include<stdlib.h>
+#include<stdio.h>
+#include<math.h>
 
 #include"Base.h"
-#include"Ray.h"
+#include"Triangle.h"
+#include"Map.h"
 
-#define cRepAll    -1
-#define cRepLine    0
-#define cRepCyl     1
-#define cRepDot     2
-#define cRepMesh    3
-#define cRepSphere  4
-#define cRepRibbon  5
-#define cRepSurface 6
+TriangleSurfaceRec *TrianglePointsToSurface(float *v,int n,float cutoff)
+{
+  MapType *map;
 
-#define cRepCnt  7
+  map=MapNew(cutoff,v,n,NULL);
+  MapSetupExpress(map);
 
-#define cRepInvVisib 10
-#define cRepInvColor 20
-#define cRepInvCoord 30
+  /*
+  MapLocus(map,v,&h,&k,&l);
+  flag=true;
+  i=*(MapEStart(map,h,k,l));
+  if(i) {
+    j=map->EList[i++];
+    while(j>=0) {
+      if(j!=a) 
+        {
+          a2 = cs->IdxToAtm[j];
+          if(within3f(cs->Coord+3*j,v,cs->Obj->AtomInfo[a2].vdw+probe_radius)) {
+            flag=false;
+            break;
+          }
+        }
+      j=map->EList[i++];
+    }
+  }
+  if(flag)
+    {
+  */
 
-typedef struct Rep {
-  void (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
-  void (*fFree)(struct Rep* I);
-  Pickable *P;
-} Rep;
+  MapFree(map);
 
-void RepInit(Rep *I);
-void RepFree(Rep *I);
-
-#endif
+}
