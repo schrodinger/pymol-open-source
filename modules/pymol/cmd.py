@@ -1707,10 +1707,12 @@ SEE ALSO
          'util.cbao'     : [ util.cbao         , 0 , 0 , ''  , parsing.STRICT ],
          'util.cbam'     : [ util.cbam         , 0 , 0 , ''  , parsing.STRICT ],
          'util.cbc'      : [ util.cbc          , 0 , 0 , ''  , parsing.STRICT ],
+         'util.chainbow' : [ util.chainbow     , 0 , 0 , ''  , parsing.STRICT ],
+         'util.colors'   : [ util.colors       , 0 , 0 , ''  , parsing.STRICT ],
          'util.mrock'    : [ util.mrock        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
          'util.mroll'    : [ util.mroll        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
          'util.ss'       : [ util.ss           , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
-         'util.rainbow'  : [ util.rainbow      , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
+         'util.rainbow'  : [ util.rainbow      , 0 , 0 , ''  , parsing.STRICT ],
       # movie programs
          'movie.rock'    : [ movie.rock        , 0 , 0 , ''  , parsing.STRICT ],
          'movie.roll'    : [ movie.roll        , 0 , 0 , ''  , parsing.STRICT ],

@@ -980,3 +980,16 @@ def ss(selection="(name ca and alt '',A)",state=1): # NOT THREAD SAFE
 #   print conn_hash.keys()
    print " util.ss: assignment complete."
 
+def colors(scheme=""):
+   if scheme=="jmol":
+      cmd.set("auto_color",0)
+      cmd.set_color("hydrogen",[1.000,1.000,1.000])
+      cmd.set_color("carbon",[0.567,0.567,0.567])
+      cmd.set_color("nitrogen",[0.189,0.315,0.976])
+      cmd.set_color("oxygen",[1.000,0.051,0.051])
+      cmd.set_color("fluorine",[0.567,0.882,0.314])
+      cmd.set_color("sulfur",[1.000,1.000,0.189])
+      cmd.color("carbon","elem c")
+      cmd.recolor()
+      
+                    
