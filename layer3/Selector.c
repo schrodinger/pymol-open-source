@@ -143,6 +143,7 @@ int *SelectorGetIndexVLA(int sele);
 #define SELE_BNDz ( 0x1F00 | STYP_SEL0 | 0x70 )
 #define SELE_LIK2 ( 0x2000 | STYP_OPR2 | 0x30 )
 #define SELE_NGH1 ( 0x2100 | STYP_OPR1 | 0x10 )
+#define SELE_QVLx ( 0x2200 | STYP_SEL2 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -208,6 +209,7 @@ static WordKeyValue Keyword[] =
   {  "r;",       SELE_RSNs },
   {  "%",        SELE_SELs },
   {  "b",        SELE_BVLx, }, /* 2 operand selection operator */ 
+  {  "q",        SELE_QVLx, }, /* 2 operand selection operator */ 
   {  "", 0 }
 };
 
@@ -2276,6 +2278,7 @@ int SelectorSelect2(EvalElem *base)
 	 case SELE_PCHx:
 	 case SELE_FCHx:
 	 case SELE_BVLx:
+	 case SELE_QVLx:
       oper=WordKey(AtOper,base[1].text,4,I->IgnoreCase);
       if(!oper)
         ok=ErrMessage("Selector","Invalid Operator.");
@@ -2296,6 +2299,17 @@ int SelectorSelect2(EvalElem *base)
               for(a=0;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->b>comp1) {
+                  base[0].sele[a]=true;
+                  c++;
+                } else {
+                  base[0].sele[a]=false;
+                }
+              }
+              break;
+            case SELE_QVLx:
+              for(a=0;a<I->NAtom;a++) {
+                at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+                if(at1->q>comp1) {
                   base[0].sele[a]=true;
                   c++;
                 } else {
@@ -2340,6 +2354,17 @@ int SelectorSelect2(EvalElem *base)
                 }
               }
               break;               
+            case SELE_QVLx:
+              for(a=0;a<I->NAtom;a++) {
+                at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+                if(at1->q<comp1) {
+                  base[0].sele[a]=true;
+                  c++;
+                } else {
+                  base[0].sele[a]=false;
+                }
+              }
+              break;               
             case SELE_PCHx:
               for(a=0;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
@@ -2370,6 +2395,17 @@ int SelectorSelect2(EvalElem *base)
               for(a=0;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(fabs(at1->b-comp1)<R_SMALL4) {
+                  base[0].sele[a]=true;
+                  c++;
+                } else {
+                  base[0].sele[a]=false;
+                }
+              }
+              break;
+            case SELE_QVLx:
+              for(a=0;a<I->NAtom;a++) {
+                at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+                if(fabs(at1->q-comp1)<R_SMALL4) {
                   base[0].sele[a]=true;
                   c++;
                 } else {
