@@ -1202,7 +1202,6 @@ void find_axis( Matrix33d a, float *axis)
       }
     }
   }
-  dump3f(axis,"axis");
 
   /*
     printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0][0],v[0][1],v[0][2]);
