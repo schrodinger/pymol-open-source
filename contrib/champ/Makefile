@@ -14,6 +14,7 @@ PRIME = ls *.c | sed 's/.c$$/.o/'| awk 'BEGIN{printf("OBJS=")}{printf("%s ",$$1)
 
 module: $(DEPS) $(OBJS)
 	$(CC) $(CCOPT1) -shared *.o -o _champ.so $(GLLIBS)
+	mv _champ.so ../../modules
 
 depends: $(DEPS)
 	cat *.p > .depends;cat .files .depends > .includes;

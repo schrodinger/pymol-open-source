@@ -207,7 +207,7 @@ static PyObject *list_get_smiles_list(PyObject *self,      PyObject *args)
 static PyObject *list_prepend_smiles_list(PyObject *self,      PyObject *args)
 {
   int ok=true;
-  int list_index,list_handle,pat_index;
+  int list_handle,pat_index;
   int a,l;
   PyObject *O,*smi_list;
   CChamp *I;
@@ -223,9 +223,7 @@ static PyObject *list_prepend_smiles_list(PyObject *self,      PyObject *args)
         ok=false;
         break;
       }
-      list_index = ListElemPush(&I->Int,I->Int[list_handle].link);
-      I->Int[list_index].value = pat_index;
-      I->Int[list_handle].link = list_index;
+      I->Int[list_handle].link = ListElemPushInt(&I->Int,I->Int[list_handle].link,pat_index);
     }
   }
   return(RetStatus(ok));
