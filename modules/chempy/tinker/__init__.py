@@ -28,9 +28,9 @@ def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
       dst = run_prefix+'.'+dst[len(dst)-1]
       shutil.copyfile(src,dst)
    if capture==1:
-      pipe = os.popen(bin_path+command+"> "+out_prefix+".out","w")      
+      pipe = os.popen(bin_path+command+"> "+run_prefix+".out","w")      
    elif capture==2:
-      pipe = os.popen(bin_path+command+" | tee "+out_prefix+".out","w")      
+      pipe = os.popen(bin_path+command+" | tee "+run_prefix+".out","w")      
    else:
       pipe = os.popen(bin_path+command,"w")
    if not pipe:
