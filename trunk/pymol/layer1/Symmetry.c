@@ -97,7 +97,7 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
   int a,l;
   CrystalUpdate(I->Crystal);
   if(!quiet) {
-    if(Feedback(I->G,FB_Symmetry,FB_Details)) {
+    if(Feedback(I->G,FB_Symmetry,FB_Blather)) {
       CrystalDump(I->Crystal);
     }
   }
@@ -110,10 +110,15 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
     if(mats&&(mats!=Py_None)) {
       l = PyList_Size(mats);
       VLACheck(I->SymMatVLA,float,16*l);
+      if(!quiet) {
+        PRINTFB(I->G,FB_Symmetry,FB_Details)
+          " Symmetry: Found %d symmetry operators.\n",l
+          ENDFB(I->G);
+      }
       for(a=0;a<l;a++) {
         PConv44PyListTo44f(PyList_GetItem(mats,a),I->SymMatVLA+(a*16));
         if(!quiet) {
-          if(Feedback(I->G,FB_Symmetry,FB_Details)) {
+          if(Feedback(I->G,FB_Symmetry,FB_Blather)) {
             MatrixDump44f(I->G,I->SymMatVLA+(a*16)," Symmetry:");
           }
         }

@@ -29,7 +29,7 @@ int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate, int 
 int ExecutiveGetAtomVertex(PyMOLGlobals *G,char *s1,int state,int index,float *v);
 void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf,
-                             PDBInfoRec *pdb_info,int quiet);
+                             PDBInfoRec *pdb_info,int quiet,int is_string);
 
 int ExecutiveDebug(PyMOLGlobals *G,char *name);
 float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,int skip,

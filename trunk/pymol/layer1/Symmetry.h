@@ -30,6 +30,7 @@ typedef struct {
   float *SymMatVLA;
   int NSymOp;
   WordType *SymOpVLA;
+
 } CSymmetry;
 
 int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet);

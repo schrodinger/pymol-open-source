@@ -230,6 +230,7 @@ int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *obj,int 
 #define SELE_ORGz ( 0x4500 | STYP_SEL0 | 0x80 )
 #define SELE_INOz ( 0x4600 | STYP_SEL0 | 0x80 )
 #define SELE_GIDz ( 0x4700 | STYP_SEL0 | 0x80 )
+#define SELE_RNKs ( 0x4800 | STYP_SEL1 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -392,6 +393,7 @@ static WordKeyValue Keyword[] =
   {  "idx.",     SELE_IDXs },
 
   {  "id",       SELE_ID_s },
+  {  "rank",     SELE_RNKs },
 
   {  "within",   SELE_WIT_ },
   {  "w.",       SELE_WIT_ },
@@ -6824,6 +6826,20 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
         {
           if(WordMatchCommaInt(G,base[1].text,
                                I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].id)<0)
+            {
+              base[0].sele[a]=true;
+              c++;
+            } else {
+              base[0].sele[a]=false;
+            }
+        }
+      break;
+	 case SELE_RNKs:
+      WordPrimeCommaMatch(G,base[1].text);
+      for(a=cNDummyAtoms;a<I->NAtom;a++)
+        {
+          if(WordMatchCommaInt(G,base[1].text,
+                               I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].rank)<0)
             {
               base[0].sele[a]=true;
               c++;

@@ -206,11 +206,11 @@ if pymol_launch != 3: # if this isn't a dry run
             elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
                cmd.do("_ run %s" % a)
             elif cmd.file_ext_re.search(a):
-               cmd.load(a)
+               cmd.load(a,quiet=0)
             elif re.search(r"\.pml$",a,re.I):
                cmd.do("_ @%s" % a)
             else:
-               cmd.load(a)
+               cmd.load(a,quiet=0)
       except:
          traceback.print_exc()
       if invocation.options.read_stdin:

@@ -2357,6 +2357,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_slice_grid, 0.3F);
   SettingSet_b(I,cSetting_slice_dynamic_grid, 0);
   SettingSet_f(I,cSetting_slice_dynamic_grid_resolution, 3.0F);
+  SettingSet_b(I,cSetting_pdb_insure_orthogonal, 1);
 
 }
 

@@ -374,6 +374,18 @@ void CoordSetTransform44f(CoordSet *I,float *mat)
   }  
 }
 /*========================================================================*/
+
+void CoordSetTransform33f(CoordSet *I,float *mat)
+{
+  int a;
+  float *v;
+  v=I->Coord;
+  for(a=0;a<I->NIndex;a++) {
+    transform33f3f(mat,v,v);
+    v+=3;
+  }  
+}
+/*========================================================================*/
 void CoordSetGetAverage(CoordSet *I,float *v0)
 {
   int a;
