@@ -1340,20 +1340,15 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
   d[1] = (vv2[1] - vv1[1]);
   d[2] = (vv2[2] - vv1[2]);
   
-  
-  t[0] = d[0];
-  t[1] = d[1];
-  t[2] = d[2];
+  get_divergent3f(d,t);
 
-  get_system1f3f(t,p1,p2);
-
-  /*  cross_product3f(d,t,p1);
+  cross_product3f(d,t,p1);
   
   normalize3f(p1);
   
   cross_product3f(d,p1,p2);
   
-  normalize3f(p2);*/
+  normalize3f(p2);
   
   /* now we have a coordinate system*/
   
