@@ -8,7 +8,7 @@ import string
 
 # list of tests to run ...
 
-standard_tests = ['create']
+standard_tests = ['cmd', 'chempy']
 
 #-------------
 
