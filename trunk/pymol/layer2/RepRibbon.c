@@ -343,7 +343,7 @@ Rep *RepRibbonNew(CoordSet *cs)
 	 I->V=(float*)mrealloc(I->V,1);
 
   if(I->NC) 
-	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(v-I->VC));
+	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(vc-I->VC));
   else
 	 I->VC=(float*)mrealloc(I->VC,1);
   

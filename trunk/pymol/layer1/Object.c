@@ -29,6 +29,12 @@ void ObjectDescribeElement(struct Object *I,int index)
 {
 }
 /*========================================================================*/
+void ObjectSetRepVis(Object *I,int rep,int state)
+{
+  if((rep>=0)&&(rep<cRepCnt))
+    I->RepVis[rep]=state;
+}
+/*========================================================================*/
 void ObjectSetName(Object *I,char *name)
 {
   strcpy(I->Name,name);
@@ -59,6 +65,7 @@ void ObjectUseColor(Object *I)
 /*========================================================================*/
 void ObjectInit(Object *I)
 {
+  int a;
   I->fFree = ObjectFree;
   I->fRender = ObjectRenderUnitBox;
   I->fUpdate = ObjectUpdate;
@@ -66,6 +73,7 @@ void ObjectInit(Object *I)
   I->fDescribeElement = ObjectDescribeElement;
   I->Name[0]=0;
   I->Color=1;
+  for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
 }
 /*========================================================================*/
 void ObjectRenderUnitBox(Object *this,int frame,CRay *ray,Pickable **pick)

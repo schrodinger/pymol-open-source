@@ -843,8 +843,10 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
 {
   int sele;
   int a;
+  int handled = false;
   SpecRec *tRec;
   ObjectMoleculeOpRec op;
+
   tRec = ExecutiveFindSpec(name);
   if(tRec) {
 	 if(name[0]!='_') {
@@ -856,16 +858,28 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
           tRec->repOn[a]=state; 
       }
 	 }
-    sele=SelectorIndexByName(name);
-    if(sele>=0) {
-      op.code='VISI';
-      op.i1=rep;
-      op.i2=state;
-      ExecutiveObjMolSeleOp(sele,&op);
-      op.code='INVA';
-      op.i2=cRepInvVisib;
-      ExecutiveObjMolSeleOp(sele,&op);
-	 }
+    if(tRec->type==cExecObject) 
+      if(tRec->obj->type==cObjectDist)
+        {
+          ObjectSetRepVis(tRec->obj,rep,state);
+          SceneDirty();
+        }
+    if(!handled)
+      switch(tRec->type) {
+      case cExecSelection:
+      case cExecObject:
+        sele=SelectorIndexByName(name);
+        if(sele>=0) {
+          op.code='VISI';
+          op.i1=rep;
+          op.i2=state;
+          ExecutiveObjMolSeleOp(sele,&op);
+          op.code='INVA';
+          op.i2=cRepInvVisib;
+          ExecutiveObjMolSeleOp(sele,&op);
+        }
+        break;
+      }
   }
 }
 /*========================================================================*/
@@ -1048,7 +1062,6 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   int n,a;
   SpecRec *rec = NULL;
   int t;
-  Object *obj;
 
   n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
   a=n;
@@ -1074,6 +1087,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectMolecule:
                   MenuActivate(x,y,"mol_show",rec->obj->Name);
                   break;
+                case cObjectDist:
+                  MenuActivate(x,y,"dist_show",rec->obj->Name);
+                  break;
                 }
                 break;
               }
@@ -1088,6 +1104,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 switch(rec->obj->type) {
                 case cObjectMolecule:
                   MenuActivate(x,y,"mol_hide",rec->obj->Name);
+                  break;
+                case cObjectDist:
+                  MenuActivate(x,y,"dist_hide",rec->obj->Name);
                   break;
                 }
                 break;
