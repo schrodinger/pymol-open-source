@@ -487,6 +487,7 @@ static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
     APIExit();
     if(array) {
       result = PConv3DIntArrayTo3DPyList(array,dim);
+      FreeP(array);
     }
   }
   return(APIAutoNone(result));
