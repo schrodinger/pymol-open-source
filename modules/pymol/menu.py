@@ -33,6 +33,9 @@ def mol_show(s):
            [ 0, ''           , ''                               ],
            [ 1, 'mesh'       , 'cmd.show("mesh"      ,"'+s+'")' ],
            [ 1, 'surface'    , 'cmd.show("surface"   ,"'+s+'")' ],
+           [ 0, ''           , ''                               ],           
+           [ 1, 'main chain' , 'cmd.show("lines","((byres ('+s+'))&n;ca,c,n,o,h)")' ],
+           [ 1, 'side chain' , 'cmd.show("lines","((byres ('+s+'))&(!n;c,n,o,h))")' ],
            ]
 
 def mol_hide(s):
@@ -52,6 +55,9 @@ def mol_hide(s):
            [ 0, ''          , ''                                ],
            [ 1, 'mesh'      , 'cmd.hide("mesh"      ,"'+s+'")'  ],
            [ 1, 'surface'   , 'cmd.hide("surface"   ,"'+s+'")'  ],
+           [ 0, ''          , ''                                ],
+           [ 1, 'main chain', 'cmd.hide("((byres ('+s+'))&n;c,n,o,h)")' ],
+           [ 1, 'side chain', 'cmd.hide("((byres ('+s+'))&!n;ca,c,n,o,h)")' ],
            [ 0, ''          , ''                                ],
            [ 1, 'hydrogens' , 'cmd.hide("('+s+' and hydro)")'   ],
            [ 1, 'everything', 'cmd.hide("everything","'+s+'")'  ],

@@ -50,6 +50,21 @@ class Base:
       return sm
 
 #------------------------------------------------------------------------------
+   def get_nuclear_charges(self):
+      '''Return the sum of nuclear charges of all atoms in a molecule.'''
+      sm = 0
+      for a in self.atom:
+         sm = sm + a.get_number()
+      return sm
+
+#------------------------------------------------------------------------------
+   def list(self):
+      for a in self.atom:
+         print a.symbol, a.name,  a.coord
+      for a in self.bond:
+         print a.index
+         
+#------------------------------------------------------------------------------
    def get_implicit_mass(self):
       # mass calculation for implicit models
 
