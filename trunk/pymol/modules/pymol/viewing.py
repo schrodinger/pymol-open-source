@@ -792,6 +792,7 @@ SEE ALSO
                   if str(wiz.__class__) == 'pymol.wizard.message.Message':
                      if hasattr(wiz,'from_scene'):
                         replace_flag = 1
+               mass_flag = 0
                if message!=None:
                   if is_string(message):
                      if len(message):
@@ -809,6 +810,8 @@ SEE ALSO
                            cmd.wizard("message",*message)
                         cmd.get_wizard().from_scene = 1
                         mess_flag = 1
+               if replace and not mess_flag:
+                  cmd.wizard()
                if _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
             elif action=='store':
