@@ -2118,6 +2118,7 @@ USAGE (PYTHON)
    lst = string.split(commands,"\n")   
    try:
       lock()
+      r = None
       for a in lst:
          if(len(a)):
             r = _cmd.do(a)
