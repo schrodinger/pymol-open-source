@@ -15,6 +15,7 @@ Z* -------------------------------------------------------------------
 */
 #include "os_gl.h"
 
+#include "Base.h"
 #include "PyMOLGlobals.h"
 #include "Texture.h"
 #include "OOMac.h"
@@ -25,25 +26,27 @@ Z* -------------------------------------------------------------------
 
 #include "Setting.h"
 #include "Character.h"
+#include "Util.h"
 
 struct _CTexture {
   OVOneToOne *ch2tex;
-  int *ch_list;
+  int *id_list;
   int next_slot;
-  int n_active;
+  int max_active;
 };
 
 int TextureInit(PyMOLGlobals *G)
 {
   OOAlloc(G,CTexture);  
 
-  I->n_active = 0;
-  I->next_slot = 1;
+  I->max_active = 1000;
+
+  I->next_slot = 0;
   I->ch2tex = OVOneToOne_New(G->Context->heap);
-  I->ch_list = OVHeapArray_MALLOC(G->Context->heap, int, 1);
+  I->id_list = OVHeapArray_CALLOC(G->Context->heap, int, I->max_active);
   
   G->Texture = I;
-  return (I && I->ch2tex && I->ch_list);
+  return (I && I->ch2tex && I->id_list);
 }
 
 
@@ -51,6 +54,7 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
 {
   OVreturn_word result;
   CTexture *I=G->Texture;
+  int is_new = false;
 
   if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->ch2tex,char_id))) {
     return result.word;
@@ -60,8 +64,10 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
       int w = CharacterGetWidth(G,char_id);
       int h = CharacterGetHeight(G,char_id);
       unsigned char temp_buffer[64][64][4];
+      GLuint texture_id = 0;
+
       {
-        int a,b,c;
+        int a,b;
         unsigned char *p = buffer;
           
         UtilZeroMem(temp_buffer,64*64*4);
@@ -81,8 +87,19 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
         extent[0]=w/64.0F;
         extent[1]=h/64.0F;
       }
-      GLuint texture_id;
-      glGenTextures(1,&texture_id);
+
+      if(!I->id_list[I->next_slot]) {
+        glGenTextures(1,&texture_id);
+        is_new = true;
+        I->id_list[I->next_slot] = texture_id;
+      } else {
+        texture_id = I->id_list[I->next_slot];
+        OVOneToOne_DelReverse(I->ch2tex,texture_id);
+      }
+      I->next_slot++;
+      if(I->next_slot>=I->max_active)
+        I->next_slot = 0;
+
       if(texture_id &&
          OVreturn_IS_OK(OVOneToOne_Set(I->ch2tex,char_id,texture_id))) {
         
@@ -92,13 +109,22 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                     64,
-                     64,
-                     0,
-                     GL_RGBA,
-                     GL_UNSIGNED_BYTE,
-                     temp_buffer);
+        if(is_new) {
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+                       64,
+                       64,
+                       0,
+                       GL_RGBA,
+                       GL_UNSIGNED_BYTE,
+                       temp_buffer);
+        } else {
+          glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                       64,
+                       64,
+                       GL_RGBA,
+                       GL_UNSIGNED_BYTE,
+                       temp_buffer);
+        }
       }
       return texture_id;
     }
@@ -112,7 +138,7 @@ void TextureFree(PyMOLGlobals *G)
   /* TODO -- free all the resident textures */
 
   OVOneToOne_DEL_AUTO_NULL(I->ch2tex);
-  OVHeapArray_FREE_AUTO_NULL(I->ch_list);
+  OVHeapArray_FREE_AUTO_NULL(I->id_list);
 
   OOFreeP(I);
 }
