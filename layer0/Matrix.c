@@ -659,7 +659,10 @@ int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v)
   rg_(&nm,&n,at,wr,wi,&matz,v,iv1,fv1,&ierr);
 
   /* NOTE: the returned eigenvectors are stored one per row which is
-	  is actually the inverse of the normal eigenvalue matrix */
+	  is actually the inverse of the normal eigenvalue matrix -
+     ----
+     IS that because we're actually solving the transpose?
+  */
 
   printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);
   printf("%8.3f %8.3f %8.3f\n",v[3],v[4],v[5]);
