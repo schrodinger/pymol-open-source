@@ -236,7 +236,7 @@ class PMGApp(AbstractApp):
          self.log_file = re.sub(r"^.*[^\/\\]","",sfile)
          cmd.log_open(sfile)
 
-   def log_resume(self):
+   def log_resume(self,append_only=0):
       ofile = askopenfilename(initialdir = os.getcwd(),
                    filetypes=[("PyMOL Script","*.pml"),
                               ("PyMOL Program","*.pym"),
@@ -246,8 +246,21 @@ class PMGApp(AbstractApp):
       if len(ofile):
          self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
          self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
-         cmd.resume(ofile)
          os.chdir(self.initialdir)	         
+         cmd.resume(ofile)
+
+   def log_append(self,append_only=0):
+      ofile = askopenfilename(initialdir = os.getcwd(),
+                   filetypes=[("PyMOL Script","*.pml"),
+                              ("PyMOL Program","*.pym"),
+                              ("Python Program","*.py"),
+                              ("All Files","*.*"),                                           
+                              ])
+      if len(ofile):
+         self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
+         self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
+         os.chdir(self.initialdir)	         
+         cmd.log_open(ofile,'a')
 
    def file_save(self):
       lst = cmd.get_names('all')
@@ -475,6 +488,10 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('File', 'command', 'Resume log file.',
                         label=self.pad+'Resume...',
                         command=self.log_resume)
+
+      self.menuBar.addmenuitem('File', 'command', 'Append log file.',
+                        label=self.pad+'Append...',
+                        command=self.log_append)
 
       self.menuBar.addmenuitem('File', 'command', 'Close log file.',
                         label=self.pad+'Close Log',
