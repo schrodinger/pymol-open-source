@@ -312,7 +312,7 @@ int EditorTorsion(float angle)
             copy3f(d1,n0);
             normalize3f(n0);
             
-            theta=cPI*angle/180.0;
+            theta=(float)(cPI*angle/180.0);
             MatrixRotation44f(m,theta,n0[0],n0[1],n0[2]);
             m[3 ] = -v1[0];
             m[7 ] = -v1[1];
@@ -421,8 +421,8 @@ static void subdivide( int n, float *x, float *y)
   if(n<3) {n=3;}
   for(a=0;a<=n;a++)
 	 {
-		x[a]=cos(a*2*PI/n);
-		y[a]=sin(a*2*PI/n);
+		x[a]=(float)cos(a*2*PI/n);
+		y[a]=(float)sin(a*2*PI/n);
 	 }
 }
 
@@ -713,7 +713,7 @@ void EditorRender(int state)
             glEnd();
 
             glBegin(GL_TRIANGLE_STRIP);
-            scale3f(n0,-1.0,v);
+            scale3f(n0,-1.0F,v);
             glNormal3fv(v);
             for(a=0;a<=nEdge;a++) {
               c=a % nEdge;
@@ -1056,7 +1056,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
         normalize3f(n0);
         normalize3f(n1);
         cross_product3f(n0,n1,cp);
-        theta = asin(length3f(cp));
+        theta = (float)asin(length3f(cp));
         normalize23f(cp,n2);        
         
         MatrixRotation44f(m,theta,n2[0],n2[1],n2[2]);
@@ -1090,7 +1090,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
         }
         if(I->DragSlowFlag) {
           SceneGetViewNormal(v4);
-          scale3f(v4,-1.0,v4);
+          scale3f(v4,-1.0F,v4);
           add3f(v3,v4,v4)
           subtract3f(pt,v4,n0);
           add3f(pt,mov,n1);
@@ -1103,7 +1103,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
         normalize3f(n0);
         normalize3f(n1);
         cross_product3f(n0,n1,cp);
-        theta = asin(length3f(cp));
+        theta = (float)asin(length3f(cp));
         normalize23f(cp,n2);        
         
         MatrixRotation44f(m,theta,n2[0],n2[1],n2[2]);
@@ -1136,10 +1136,10 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
           project3f(d0,n0,v2);
           add3f(I->Center,v2,v2); /* v2 is the perpendicular point on the axis */
           subtract3f(pt,v2,d2);
-          opp=length3f(mov);
-          adj=length3f(d2);
+          opp=(float)length3f(mov);
+          adj=(float)length3f(d2);
           if(adj>R_SMALL4) {
-            theta=atan(opp/adj);
+            theta=(float)atan(opp/adj);
             if(dot_product3f(n1,mov)<0.0)
               theta=-theta;
             MatrixRotation44f(m,theta,n0[0],n0[1],n0[2]);

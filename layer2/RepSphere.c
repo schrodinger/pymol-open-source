@@ -75,11 +75,11 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
   float alpha;
   alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_transparency);
 
-  alpha=1.0-alpha;
+  alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
-    alpha=1.0;
+    alpha=1.0F;
   if(ray) {
-    ray->fTransparentf(ray,1.0-alpha);
+    ray->fTransparentf(ray,1.0F-alpha);
     if(I->spheroidFlag) {
 		sp=I->SP;
       while(c--)

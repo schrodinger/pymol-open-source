@@ -376,9 +376,9 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
   ObjectPrepareContext(&I->Obj,ray);
 
   alpha = SettingGet_f(NULL,I->Obj.Setting,cSetting_transparency);
-  alpha=1.0-alpha;
+  alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
-    alpha=1.0;
+    alpha=1.0F;
   
   if(state>=0) 
     if(state<I->NState) 
@@ -400,7 +400,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
         v=ms->V;
         n=ms->N;
         if(ray) {
-          ray->fTransparentf(ray,1.0-alpha);       
+          ray->fTransparentf(ray,1.0F-alpha);       
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
                          I->Obj.Setting,NULL);

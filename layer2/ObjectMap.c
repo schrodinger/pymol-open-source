@@ -636,7 +636,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
       ENDFB;
 
     average3f(md->MaxCorner,md->MinCorner,v);
-    for(a=0;a<3;a++) { md->MinCorner[a] = v[a]-0.5*md->Dim[a]*md->Grid[a]; }
+    for(a=0;a<3;a++) { md->MinCorner[a] = v[a]-0.5F*md->Dim[a]*md->Grid[a]; }
 
     if(Feedback(FB_ObjectMap,FB_Blather)) {
       dump3f(md->MinCorner," ObjectMap: MinCorner:");
@@ -661,11 +661,11 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
     d = 0;
     for(c=0;c<2;c++) {
       {
-        v[2] = (c ? ms->Range[2] : 0.0);
+        v[2] = (c ? ms->Range[2] : 0.0F);
         for(b=0;b<2;b++) {
-          v[1]= (b ? ms->Range[1] : 0.0);
+          v[1]= (b ? ms->Range[1] : 0.0F);
           for(a=0;a<2;a++) {
-            v[0]= (a ? ms->Range[0] : 0.0);
+            v[0]= (a ? ms->Range[0] : 0.0F);
             add3f(v,ms->Corner[d],ms->Corner[d]);
             d++;
           }
@@ -719,7 +719,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
       for(a=0;a<md->Dim[0];a++) {      
         for(b=0;b<md->Dim[1];b++) {
           for(c=0;c<md->Dim[2];c++) {
-            F3(ms->Field->data,a,b,c)=sqrt1f((float)a*a+b*b+c*c);
+            F3(ms->Field->data,a,b,c)=(float)sqrt1d(a*a+b*b+c*c);
           }
         }
       }
@@ -909,8 +909,8 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
       sumsq+=(*f)*(*f);
       sum+=*f++;
     }
-    mean = sum/n_pts;
-    stdev = sqrt1f((sumsq - (sum*sum/n_pts))/(n_pts-1));
+    mean = (float)(sum/n_pts);
+    stdev = (float)sqrt1d((sumsq - (sum*sum/n_pts))/(n_pts-1));
 
     if(normalize) {
       PRINTFB(FB_ObjectMap,FB_Details)
@@ -1762,11 +1762,11 @@ int ObjectMapNumPyArrayToMapState(ObjectMapState *ms,PyObject *ary) {
             for(a=0;a<ms->FDim[0];a++) {
               v[0]=ms->Origin[0]+ms->Grid[0]*a;
 #ifdef _PYMOL_NUMPY
-              dens = *((double*)
+              dens = (float)(*((double*)
                 (pao->data+
                  (pao->strides[0]*a)+
                  (pao->strides[1]*b)+
-                 (pao->strides[2]*c)));
+                 (pao->strides[2]*c))));
 #else
               dens = 0.0;
 #endif

@@ -108,11 +108,11 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   float alpha;
   int t_mode;
   alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency);
-  alpha=1.0-alpha;
+  alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
-    alpha=1.0;
+    alpha=1.0F;
   if(ray) {
-    ray->fTransparentf(ray,1.0-alpha);
+    ray->fTransparentf(ray,1.0F-alpha);
 	 c=I->NT;
     if(I->oneColorFlag) {
       col=ColorGet(I->oneColor);
@@ -618,7 +618,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   }
 }
 
-#define solv_tole 0.02
+#define solv_tole 0.02F
 
 int RepSurfaceSameVis(RepSurface *I,CoordSet *cs)
 {
@@ -766,7 +766,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                    ((!cullByFlag)||
                     (!(ai2->flags&cAtomFlag_ignore))))  
                   {
-                    dist = diff3f(v0,cs->Coord+j*3)-ai2->vdw;
+                    dist = (float)diff3f(v0,cs->Coord+j*3)-ai2->vdw;
                     if(dist<minDist)
                       {
                         i0=j;
@@ -1336,7 +1336,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
   I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot);
   ErrChkPtr(I->Dot);
 
-  probe_radius_plus = probe_radius * 1.5;
+  probe_radius_plus = probe_radius * 1.5F;
 
   I->NDot=0;
   map=MapNewFlagged(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);

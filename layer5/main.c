@@ -92,7 +92,7 @@ typedef struct {
   int DirtyFlag;
   int IdleMode;
   int SwapFlag;
-  float IdleTime;
+  double IdleTime;
   int IdleCount;
   int ReshapeFlag;
 } CMain;
@@ -499,7 +499,7 @@ static void MainInit(void)
 
   I->DirtyFlag=true;
   I->IdleMode=2;
-  I->IdleTime=UtilGetSeconds();
+  I->IdleTime=(float)UtilGetSeconds();
   I->IdleCount = 0;
   I->ReshapeFlag=false;
   if(PMGUI) {

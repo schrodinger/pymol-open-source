@@ -171,7 +171,7 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
   I->TTT[7]+=I->TTT[13];
   I->TTT[11]+=I->TTT[14];
 
-  scale3f(origin,-1.0,I->TTT+12); /* set new origin */
+  scale3f(origin,-1.0F,I->TTT+12); /* set new origin */
 
   I->TTT[3]+=origin[0]; /* add new origin into overall translation */
   I->TTT[7]+=origin[1];

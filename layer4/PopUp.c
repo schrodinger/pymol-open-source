@@ -396,7 +396,7 @@ void PopUpDraw(Block *block)
                   glColor3fv(I->Block->TextColor);          
                 c+=4;
               } else {
-                glColor3f((*(c+1)-'0')/9.0,(*(c+2)-'0')/9.0,(*(c+3)-'0')/9.0);
+                glColor3f((*(c+1)-'0')/9.0F,(*(c+2)-'0')/9.0F,(*(c+3)-'0')/9.0F);
                 c+=4;
               }
             }

@@ -159,17 +159,17 @@ Rep *RepDistDashNew(DistSet *ds)
 
       subtract3f(v2,v1,d);
 
-      l = length3f(d);
+      l = (float)length3f(d);
       
       l -= dash_gap;
       
-      ph = dash_sum-fmod((l+dash_gap)/2.0,dash_sum);
+      ph = dash_sum-(float)fmod((l+dash_gap)/2.0,dash_sum);
       if(l>R_SMALL4) {
 
         copy3f(v1,d1);
         normalize3f(d);
         scale3f(d,dash_gap,d2);        
-        scale3f(d2,0.5,d2);
+        scale3f(d2,0.5F,d2);
         add3f(d1,d2,d1);
 
         while(l>0.0) {

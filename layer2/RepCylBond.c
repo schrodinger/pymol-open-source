@@ -64,11 +64,11 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
   Pickable *p;
   float alpha;
   alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_stick_transparency);
-  alpha=1.0-alpha;
+  alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
-    alpha=1.0;
+    alpha=1.0F;
   if(ray) {
-    ray->fTransparentf(ray,1.0-alpha);    
+    ray->fTransparentf(ray,1.0F-alpha);    
     PRINTFD(FB_RepCylBond)
       " RepCylBondRender: rendering raytracable...\n"
       ENDFD;
@@ -628,8 +628,8 @@ static void subdivide( int n, float *x, float *y)
   if(n<3) {n=3;}
   for(a=0;a<=n;a++)
 	 {
-		x[a]=cos(a*2*PI/n);
-		y[a]=sin(a*2*PI/n);
+		x[a]=(float)cos(a*2*PI/n);
+		y[a]=(float)sin(a*2*PI/n);
 	 }
 }
 
@@ -643,7 +643,7 @@ float *RepCylinderBox(float *v,float *v1,float *v2,CoordSet *cs,ObjectMolecule *
   float nub;
 
   tube_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius)
-    *0.7;
+    *0.7F;
 
   overlap = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
   nub = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_nub);

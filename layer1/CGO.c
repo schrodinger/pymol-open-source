@@ -244,7 +244,7 @@ static int CGOArrayFromPyListInPlace(PyObject *list,CGO *I)
       }
       
       for(a=0;a<sz;a++) {
-        *(pc++)=PyFloat_AsDouble(PyList_GetItem(list,cc++));
+        *(pc++)=(float)PyFloat_AsDouble(PyList_GetItem(list,cc++));
         c--;
       }
     }
@@ -1243,8 +1243,8 @@ static void subdivide( int n, float *x, float *y)
   if(n<3) {n=3;}
   for(a=0;a<=n;a++)
 	 {
-		x[a]=cos(a*2*PI/n);
-		y[a]=sin(a*2*PI/n);
+		x[a]=(float)cos(a*2*PI/n);
+		y[a]=(float)sin(a*2*PI/n);
 	 }
 }
 

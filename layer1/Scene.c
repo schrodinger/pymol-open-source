@@ -82,7 +82,7 @@ typedef struct {
   float H;
   float Front,Back,FrontSafe;
   float TextColor[3];
-  float RockTime;
+  double RockTime;
   int DirtyFlag;
   int ChangedFlag;
   int CopyFlag,CopyNextFlag;
@@ -93,7 +93,7 @@ typedef struct {
   int MovieFrameFlag;
   unsigned ImageBufferSize;
   double LastRender,RenderTime,LastFrameTime;
-  float LastRock,LastRockTime;
+  double LastRock,LastRockTime;
   Pickable LastPicked;
   int StereoMode;
   OrthoLineType vendor,renderer,version;
@@ -389,8 +389,8 @@ void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back
     } else {
       sele = NULL;
     }
-    avg = (I->Front+I->Back)/2.0;
-    movement/=2.0;
+    avg = (I->Front+I->Back)/2.0F;
+    movement/=2.0F;
     if(sele) {
       avg = -I->Pos[2]-offset[2];
     }
@@ -677,8 +677,8 @@ void SceneMakeMovieImage(void) {
 void SceneIdle(void)
 {
   CScene *I=&Scene;
-  float renderTime;
-  float minTime;
+  double renderTime;
+  double minTime;
   int frameFlag = false;
   int rockFlag = false;
   float ang_cur,disp,diff;
@@ -704,12 +704,12 @@ void SceneIdle(void)
   if(Control.Rocking&&rockFlag) {
 
 
-	 I->RockTime+=I->RenderTime;
-    ang_cur = (I->RockTime*SettingGet(cSetting_sweep_speed));
+	I->RockTime+=I->RenderTime;
+    ang_cur = (float)(I->RockTime*SettingGet(cSetting_sweep_speed));
     
-    disp = SettingGet(cSetting_sweep_angle)*(3.1415/180.0)*sin(ang_cur)/2;
-    diff = disp-I->LastRock;
-    SceneRotate(180*diff/3.1415,0.0,1.0,0.0);
+    disp = (float)(SettingGet(cSetting_sweep_angle)*(3.1415/180.0)*sin(ang_cur)/2);
+    diff = (float)(disp-I->LastRock);
+    SceneRotate((float)(180*diff/cPI),0.0F,1.0F,0.0F);
     I->LastRock = disp;
   }
   if(MoviePlaying()&&frameFlag)
@@ -741,12 +741,12 @@ void SceneWindowSphere(float *location,float radius)
   if(aspRat<1.0)
     fov *= aspRat;
 
-  dist = radius/tan((fov/2.0)*cPI/180.0);
+  dist = (float)(radius/tan((fov/2.0)*cPI/180.0));
 
   I->Pos[2]-=dist;
-  I->Front=(-I->Pos[2]-radius*1.2);
+  I->Front=(-I->Pos[2]-radius*1.2F);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+radius*1.55);
+  I->Back=(-I->Pos[2]+radius*1.55F);
 
   SceneRovingDirty();
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
@@ -772,9 +772,9 @@ void SceneRelocate(float *location)
   MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
 
   I->Pos[2]=dist;
-  I->Front=(-I->Pos[2]-(slab_width*0.45));
+  I->Front=(-I->Pos[2]-(slab_width*0.45F));
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+(slab_width*0.55));
+  I->Back=(-I->Pos[2]+(slab_width*0.55F));
   SceneRovingDirty();
 
 }
@@ -936,7 +936,7 @@ void SceneDraw(Block *block)
           I->RenderTime = -I->LastRender;
           I->LastRender = UtilGetSeconds();
           I->RenderTime += I->LastRender;
-          ButModeSetRate(I->RenderTime);
+          ButModeSetRate((float)I->RenderTime);
         }
     
     glColor3f(1.0,1.0,1.0);
@@ -1512,15 +1512,15 @@ float SceneGetScreenVertexScale(float *v1)
   p2[0]=p2[0]/p2[3];
   p2[1]=p2[1]/p2[3];
   p2[2]=0.0;
-  p1[0]=(p1[0]+1.0)*(I->Width/2.0); /* viewport transformation */
-  p1[1]=(p1[1]+1.0)*(I->Height/2.0);
-  p2[0]=(p2[0]+1.0)*(I->Width/2.0);
-  p2[1]=(p2[1]+1.0)*(I->Height/2.0);
-  vl=diff3f(p1,p2);
+  p1[0]=(p1[0]+1.0F)*(I->Width/2.0F); /* viewport transformation */
+  p1[1]=(p1[1]+1.0F)*(I->Height/2.0F);
+  p2[0]=(p2[0]+1.0F)*(I->Width/2.0F);
+  p2[1]=(p2[1]+1.0F)*(I->Height/2.0F);
+  vl=(float)diff3f(p1,p2);
   if(vl<R_SMALL4)
-    vl=100.0;
+    vl=100.0F;
   
-  return(1.0/vl);
+  return(1.0F/vl);
 }
 
 void SceneRovingChanged(void)
@@ -1612,7 +1612,7 @@ void SceneRovingUpdate(void)
     if(sticks!=0.0F) {
       if(sticks<0.0F) {
         p1=not;
-        sticks=fabs(sticks);
+        sticks=(float)fabs(sticks);
       } else {
         p1=empty;
       }
@@ -1627,7 +1627,7 @@ void SceneRovingUpdate(void)
     if(lines!=0.0F) {
       if(lines<0.0F) {
         p1=not;
-        lines=fabs(lines);
+        lines=(float)fabs(lines);
       } else {
         p1=empty;
       }
@@ -1642,7 +1642,7 @@ void SceneRovingUpdate(void)
     if(labels!=0.0F) {
       if(labels<0.0F) {
         p1=not;
-        labels=fabs(labels);
+        labels=(float)fabs(labels);
       } else {
         p1=empty;
       }
@@ -1657,7 +1657,7 @@ void SceneRovingUpdate(void)
     if(spheres!=0.0F) {
       if(spheres<0.0F) {
         p1=not;
-        spheres=fabs(spheres);
+        spheres=(float)fabs(spheres);
       } else {
         p1=empty;
       }
@@ -1672,7 +1672,7 @@ void SceneRovingUpdate(void)
     if(cartoon!=0.0F) {
       if(cartoon<0.0F) {
         p1=not;
-        cartoon=fabs(cartoon);
+        cartoon=(float)fabs(cartoon);
       } else {
         p1=empty;
       }
@@ -1687,7 +1687,7 @@ void SceneRovingUpdate(void)
     if(ribbon!=0.0F) {
       if(ribbon<0.0F) {
         p1=not;
-        ribbon=fabs(ribbon);
+        ribbon=(float)fabs(ribbon);
       } else {
         p1=empty;
       }
@@ -1705,13 +1705,13 @@ void SceneRovingUpdate(void)
       int label_flag=0;
       if(polar_contacts<0.0F) {
         p1=not;
-        polar_contacts=fabs(polar_contacts);
+        polar_contacts=(float)fabs(polar_contacts);
       } else {
         p1=empty;
       }
       if(polar_cutoff<0.0F) {
         label_flag=true;
-        polar_cutoff=fabs(polar_cutoff);
+        polar_cutoff=(float)fabs(polar_cutoff);
       }
       sprintf(buffer,
 "cmd.dist('rov_pc','%s & (elem n+o) & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=1,labels=%d,quiet=2)",
@@ -1725,7 +1725,7 @@ void SceneRovingUpdate(void)
     if(nonbonded!=0.0F) {
       if(nonbonded<0.0F) {
         p1=not;
-        nonbonded=fabs(nonbonded);
+        nonbonded=(float)fabs(nonbonded);
       } else {
         p1=empty;
       }
@@ -1740,7 +1740,7 @@ void SceneRovingUpdate(void)
     if(nb_spheres!=0.0F) {
       if(nb_spheres<0.0F) {
         p1=not;
-        nb_spheres=fabs(nb_spheres);
+        nb_spheres=(float)fabs(nb_spheres);
       } else {
         p1=empty;
       }
@@ -2033,29 +2033,29 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 v2[0] = (float)(eff_width/2) - I->LastX;
 	 v2[1] = (float)(I->Height/2) - I->LastY;
 	 
-	 r1 = sqrt1f(v1[0]*v1[0] + v1[1]*v1[1]);
-	 r2 = sqrt1f(v2[0]*v2[0] + v2[1]*v2[1]);
+	 r1 = (float)sqrt1f(v1[0]*v1[0] + v1[1]*v1[1]);
+	 r2 = (float)sqrt1f(v2[0]*v2[0] + v2[1]*v2[1]);
 	 
 	 if(r1<scale) {
-		v1[2] = sqrt1f(scale*scale - r1*r1);
+		v1[2] = (float)sqrt1f(scale*scale - r1*r1);
 	 } else {
 		v1[2] = 0.0;
 	 }
 
 	 if(r2<scale) {
-		v2[2] = sqrt1f(scale*scale - r2*r2);
+		v2[2] = (float)sqrt1f(scale*scale - r2*r2);
 	 } else {
 		v2[2] = 0.0;
 	 }
 	 normalize23f(v1,n1);
 	 normalize23f(v2,n2);
 	 cross_product3f(n1,n2,cp);
-	 theta = SettingGet_f(NULL,NULL,cSetting_mouse_scale)*
-      2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
+	 theta = (float)(SettingGet_f(NULL,NULL,cSetting_mouse_scale)*
+      2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/cPI);
 
     dx = (v1[0]-v2[0]);
     dy = (v1[1]-v2[1]);
-    dt = SettingGet_f(NULL,NULL,cSetting_mouse_limit)*sqrt1f(dx*dx+dy*dy)/scale;
+    dt = (float)(SettingGet_f(NULL,NULL,cSetting_mouse_limit)*sqrt1f(dx*dx+dy*dy)/scale);
     
     if(theta>dt)
       theta = dt;
@@ -2067,7 +2067,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 normalize23f(v1,n1);
 	 normalize23f(v2,n2);
 	 cross_product3f(n1,n2,cp);
-    omega = 2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
+    omega = (float)(2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/cPI);
 	 normalize23f(cp,axis2);	 
     old_z = (I->Back + I->FrontSafe )/ 2.0F;
     moved_flag=false;
@@ -2421,7 +2421,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   if(angle) {
     float temp[16];
     MatrixLoadIdentity44f(temp);
-    MatrixRotate44f3f(temp,-PI*angle/180,0.0F,1.0F,0.0F);
+    MatrixRotate44f3f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
     MatrixMultiply44f(I->RotMatrix,temp);
     MatrixMultiply44f(temp,rayView);
   } else {
@@ -2443,7 +2443,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   }
   /* define the viewing volume */
 
-  height  = fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
+  height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 
   width = height*aspRat;
 
   OrthoBusyFast(0,20);
@@ -2745,7 +2745,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   float normal[4] = { 0.0, 0.0, 1.0, 0.0 };
   float aspRat = ((float) I->Width) / ((float) I->Height);
   float height,width;
-  float start_time=0;
+  double start_time=0.0;
   int view_save[4];
   Pickable *pickVLA,*pik;
   int lastIndex=0;
@@ -2838,7 +2838,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     if(SettingGet(cSetting_ortho)==0.0) {
       gluPerspective(fov,aspRat,I->FrontSafe,I->Back);
     } else {
-      height  = fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
+      height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 
       width = height*aspRat;
 	
       glOrtho(-width,width,-height,height,
@@ -3296,7 +3296,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     I->RenderTime = -I->LastRender;
     I->LastRender = UtilGetSeconds();
     I->RenderTime += I->LastRender;
-    ButModeSetRate(I->RenderTime);
+    ButModeSetRate((float)I->RenderTime);
     if(I->CopyNextFlag) {
       start_time = I->LastRender - start_time;
       if((start_time>0.10)||(MainSavingUnderWhileIdle()))
@@ -3351,9 +3351,9 @@ void ScenePrepareMatrix(int mode)
     stShift = SettingGet(cSetting_stereo_shift);
 
 
-    stShift = stShift*fabs(I->Pos[2])/100.0;
+    stShift = (float)(stShift*fabs(I->Pos[2])/100.0);
 
-    stAng = stAng*atan(stShift/fabs(I->Pos[2]))*90.0/PI;
+    stAng = (float)(stAng*atan(stShift/fabs(I->Pos[2]))*90.0/cPI);
 
 
     if(mode==2) { /* left hand */
@@ -3385,7 +3385,7 @@ void SceneRotate(float angle,float x,float y,float z)
   CScene *I=&Scene;
   float temp[16];
   int a;
-  angle = -PI*angle/180;
+  angle = (float)(-PI*angle/180.0);
   MatrixLoadIdentity44f(temp);
   MatrixRotate44f3f(temp,angle,x,y,z);
   MatrixMultiply44f(I->RotMatrix,temp);
