@@ -399,13 +399,12 @@ static WordKeyValue Keyword[] =
   {  "beyond",   SELE_BEY_ },
   {  "be.",      SELE_BEY_ },
 
-  {  "peptide",  SELE_PEPs },
-  {  "pep.",     SELE_PEPs },
-  {  "p.",       SELE_PEPs },
+  {  "pepseq",   SELE_PEPs },
+  {  "ps.",      SELE_PEPs },
  
   /*
-  {  "nucleic",  SELE_NUCs },
-  {  "nuc.",      SELE_NUCs },
+  {  "nucseq",  SELE_NUCs },
+  {  "ns.",      SELE_NUCs },
   */
 
   {  "polymer",  SELE_POLz },
