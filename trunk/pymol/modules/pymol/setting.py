@@ -297,6 +297,9 @@ if __name__=='pymol.setting':
       use_display_lists     = 263
       cache_memory          = 264
       simplify_display_lists= 265
+      retain_order          = 266
+      pdb_hetatm_sort       = 267
+      pdb_use_ter_records   = 268
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -299,7 +299,7 @@ Rep *RepRibbonNew(CoordSet *cs)
         a=cs->AtmToIdx[a1];
 		if(a>=0)
 		  if(obj->AtomInfo[a1].visRep[cRepRibbon])
-			 if(!obj->AtomInfo[a1].hetatm)
+			 if(obj->AtomInfo[a1].protons==cAN_C)
 				if(trace||(WordMatch("CA",obj->AtomInfo[a1].name,1)<0))
 				  {
                 PRINTFD(FB_RepRibbon)

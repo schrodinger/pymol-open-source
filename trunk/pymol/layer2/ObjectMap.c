@@ -1071,6 +1071,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   /* PHI named from their docs */
   int map_endian = 0;
   int map_dim;
+  int map_bytes;
 
   ObjectMapState *ms;
 
@@ -1092,7 +1093,13 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   mind = FLT_MAX;
   p=PHIStr;
 
+  if(*p)  /* use FORMATTED IO record to determine map endiness */
+    map_endian = 1;
+  else
+    map_endian = 0;
+
   p+=4;
+
   ParseNCopy(cc,p,20);
   PRINTFB(FB_ObjectMap,FB_Details)
     " PHIMapToStr: %s\n",cc
@@ -1113,9 +1120,30 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   p+=60;
   p+=4;
 
-  p+=4;
+  rev = (char*)&dens_rev;
 
-  map_dim = 65;
+  if(little_endian!=map_endian) {
+    rev[0]=p[3];
+    rev[1]=p[2];
+    rev[2]=p[1];
+    rev[3]=p[0];
+  } else {
+    rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+    rev[1]=p[1];
+    rev[2]=p[2];
+    rev[3]=p[3];
+  }
+
+  map_bytes = *((int*)rev);
+
+  map_dim = (int)(pow((map_bytes/4.0),1/3.0)+0.5);
+
+  if((4*map_dim*map_dim*map_dim)!=map_bytes) /* consistency check */
+    map_dim = 65;
+
+  printf(" PHIMapToStr: Map Size %d x %d x %d\n",map_dim,map_dim,map_dim);
+
+  p+=4;
 
   ms->FDim[0] = map_dim;
   ms->FDim[1] = map_dim;
@@ -1136,7 +1164,6 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   ms->MapSource = cMapSourcePHI;
   ms->Field->save_points=false;
 
-  rev = (char*)&dens_rev;
 
   for(c=0;c<ms->FDim[2];c++) { /* z y x ordering into c b a  so that x = a, etc. */
     for(b=0;b<ms->FDim[1];b++) {

@@ -32,6 +32,9 @@ static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 /*========================================================================*/
 
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
+int AtomInfoInOrigOrder(AtomInfoType *atom,int atom1,int atom2);
+int AtomInfoInOrderIgnoreHet(AtomInfoType *atom,int atom1,int atom2);
+int AtomNameCompare(char *name1,char *name2);
 
 /*========================================================================*/
 PyObject *AtomInfoAsPyList(AtomInfoType *I)
@@ -565,7 +568,13 @@ int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex)
   (*outdex)=Alloc(int,n+1);
   ErrChkPtr(*outdex);
 
-  UtilSortIndex(n,rec,index,(UtilOrderFn*)AtomInfoInOrder);
+  if((int)SettingGet(cSetting_retain_order)) {
+    UtilSortIndex(n,rec,index,(UtilOrderFn*)AtomInfoInOrigOrder);
+  } else if((int)SettingGet(cSetting_pdb_hetatm_sort)) {
+    UtilSortIndex(n,rec,index,(UtilOrderFn*)AtomInfoInOrder);    
+  } else {
+    UtilSortIndex(n,rec,index,(UtilOrderFn*)AtomInfoInOrderIgnoreHet);    
+  }
 
   for(a=0;a<n;a++)
 	(*outdex)[index[a]]=a;
@@ -576,6 +585,26 @@ void AtomInfoFreeSortedIndexes(int *index,int *outdex)
 {
   FreeP(index);
   FreeP(outdex);
+}
+
+int AtomNameCompare(char *name1,char *name2)
+{
+  char *n1,*n2;
+  int cmp;
+
+  if((name1[0]>='0')&&(name1[0]<='9'))
+    n1=name1+1;
+  else
+    n1=name1;
+  if((name2[0]>='0')&&(name2[0]<='9'))
+    n2=name2+1;
+  else
+    n2=name2;
+  cmp = WordCompare(n1,n2,true);
+  if(cmp) 
+    return cmp;
+  return WordCompare(name1,name2,true);
+ 
 }
 
 int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
@@ -602,7 +631,7 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
             if(!wc) {
               if(at1->alt[0]==at2->alt[0]) {
                 if(at1->priority==at2->priority) {
-                  result=WordCompare(at1->name,at2->name,true);
+                  result=AtomNameCompare(at1->name,at2->name);
                 } else if(at1->priority<at2->priority) {
                   result=-1;
                 } else {
@@ -640,12 +669,76 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
   return(result);
 }
 
+
+int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2)
+{
+  int result;
+  int wc;
+  /* order by segment, chain, residue value, residue id, residue name, priority,
+	 and lastly by name */
+
+  /*  printf(":%s:%s:%d:%s:%s:%i:%s =? ",
+	  at1->segi,at1->chain,at1->resv,at1->resi,at1->resn,at1->priority,at1->name);
+	  printf(":%s:%s:%d:%s:%s:%i:%s\n",
+	  at2->segi,at2->chain,at2->resv,at2->resi,at2->resn,at2->priority,at2->name);
+  */
+
+  wc=WordCompare(at1->segi,at2->segi,true);
+  if(!wc) {
+	 if(at1->chain[0]==at2->chain[0]) {
+      /*      if(at1->hetatm==at2->hetatm) {*/
+      if(at1->resv==at2->resv) {
+        wc=WordCompare(at1->resi,at2->resi,true);
+        if(!wc) {
+          wc=WordCompare(at1->resn,at2->resn,true);
+          if(!wc) {
+            if(at1->alt[0]==at2->alt[0]) {
+              if(at1->priority==at2->priority) {
+                result=AtomNameCompare(at1->name,at2->name);
+              } else if(at1->priority<at2->priority) {
+                result=-1;
+              } else {
+                result=1;
+              }
+            } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+              result=-1;
+            } else {
+              result=1;
+            }
+          } else {
+            result=wc;
+          }
+        } else {
+          result=wc;
+        }
+      } else if(at1->resv<at2->resv) {
+        result=-1;
+      } else {
+        result=1;
+      }
+      /*
+        } else if(at2->hetatm) {
+        result=-1;
+        } else {
+        result=1;
+        }*/
+    } else if((!at2->chain[0])||(at1->chain[0]&&((at1->chain[0]<at2->chain[0])))) {
+      result=-1;
+    } else {
+      result=1;
+    }
+  } else {
+	 result=wc;
+  }
+  return(result);
+}
+
 int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2) 
 {
   int result;
   if(at1->alt[0]==at2->alt[0]) {
     if(at1->priority==at2->priority) {
-      result=WordCompare(at1->name,at2->name,true);
+      result=AtomNameCompare(at1->name,at2->name);
     } else if(at1->priority<at2->priority) {
       result=-1;
     } else {
@@ -662,6 +755,19 @@ int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2)
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2)
 {
   return(AtomInfoCompare(atom+atom1,atom+atom2)<=0);
+}
+
+int AtomInfoInOrderIgnoreHet(AtomInfoType *atom,int atom1,int atom2)
+{
+  return(AtomInfoCompareIgnoreHet(atom+atom1,atom+atom2)<=0);
+}
+
+int AtomInfoInOrigOrder(AtomInfoType *atom,int atom1,int atom2)
+{
+  if(atom[atom1].id!=atom[atom2].id)
+    return (atom[atom1].id<atom[atom2].id);
+  else
+    return(AtomInfoCompare(atom+atom1,atom+atom2)<=0);
 }
 
 int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2)
@@ -834,7 +940,9 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   I->hydrogen=(((*I->elem)=='H')&&(!(*(I->elem+1))));
   n = I->name;
   while((*n>='0')&&(*n<='0')&&(*(n+1))) n++;
-  if(SettingGet(cSetting_pdb_standard_order)) {
+  if(toupper(*n)!=I->elem[0]) {
+    pri=1000; /* unconventional atom name -- make no assignments */
+  } else if((int)SettingGet(cSetting_pdb_standard_order)) {
     switch ( *n )
       {
         

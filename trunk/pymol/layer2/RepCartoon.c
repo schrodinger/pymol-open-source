@@ -285,187 +285,189 @@ ENDFD;
         a=cs->AtmToIdx[a1];
 		if(a>=0)
 		  if(obj->AtomInfo[a1].visRep[cRepCartoon])
-			 if(!obj->AtomInfo[a1].hetatm)
-            if((!obj->AtomInfo[a1].alt[0])||
-               (obj->AtomInfo[a1].alt[0]=='A')) {
-              if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
-                {
-                  PRINTFD(FB_RepCartoon)
-                    " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
-                    ENDFD;
-                  if(a2>=0) {
-                    /*
-                      if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-                      (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-                      (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
-                    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
-                      a2=-1;
-                    
+          /*			 if(!obj->AtomInfo[a1].hetatm)*/
+          if((!obj->AtomInfo[a1].alt[0])||
+             (obj->AtomInfo[a1].alt[0]=='A')) {
+            if((obj->AtomInfo[a1].protons==cAN_C)&&
+               (WordMatch("CA",obj->AtomInfo[a1].name,1)<0))
+              {
+                PRINTFD(FB_RepCartoon)
+                  " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  ENDFD;
+                if(a2>=0) {
+                  /*
+                    if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
+                    (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+                    (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+                  if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+                    a2=-1;
+                  
+                }
+                PRINTFD(FB_RepCartoon)
+                  " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  ENDFD;
+                
+                
+                if(a2<0)
+                  nSeg++;
+                *(s++) = nSeg;
+                nAt++;
+                *(i++)=a;
+                cur_car = obj->AtomInfo[a1].cartoon;
+                switch (obj->AtomInfo[a1].ssType[0]) {
+                case 'H':
+                case 'h':
+                  if (cur_car==cCartoon_auto) {
+                    if(cylindrical_helices) 
+                      cur_car = cCartoon_skip_helix;
+                    else if(fancy_helices)
+                      cur_car = cCartoon_dumbbell;
+                    else
+                      cur_car = cCartoon_oval;
                   }
-                  PRINTFD(FB_RepCartoon)
-                    " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
-                    ENDFD;
-                  
-                  
-                  if(a2<0)
-                    nSeg++;
-                  *(s++) = nSeg;
-                  nAt++;
-                  *(i++)=a;
-                  cur_car = obj->AtomInfo[a1].cartoon;
-                  switch (obj->AtomInfo[a1].ssType[0]) {
-                  case 'H':
-                  case 'h':
-                    if (cur_car==cCartoon_auto) {
-                      if(cylindrical_helices) 
-                        cur_car = cCartoon_skip_helix;
-                      else if(fancy_helices)
-                        cur_car = cCartoon_dumbbell;
-                      else
-                        cur_car = cCartoon_oval;
-                    }
-                    *ss=1; /* helix */
-                    break;
-                  case 'S':
-                  case 's':
-                    if (cur_car==cCartoon_auto) {
-                      if(fancy_sheets)
-                        cur_car = cCartoon_arrow;
-                      else
-                        cur_car = cCartoon_rect;
-                    }
-                    *ss=2;
-                    parity = !parity;
-                    break;
-                  default: /* 'L', 'T', 0, etc. */
-                    if (cur_car==cCartoon_auto) {
-                      cur_car = cCartoon_loop;
-                    }
-                    *ss=0;
-                    break;
+                  *ss=1; /* helix */
+                  break;
+                case 'S':
+                case 's':
+                  if (cur_car==cCartoon_auto) {
+                    if(fancy_sheets)
+                      cur_car = cCartoon_arrow;
+                    else
+                      cur_car = cCartoon_rect;
                   }
-                  *(cc++)=cur_car;
-                  v1 = cs->Coord+3*a;
-                  v_ca = v1;
-                  *(v++)=*(v1++);
-                  *(v++)=*(v1++);
-                  *(v++)=*(v1++);
-                  a2=a1;
+                  *ss=2;
+                  parity = !parity;
+                  break;
+                default: /* 'L', 'T', 0, etc. */
+                  if (cur_car==cCartoon_auto) {
+                    cur_car = cCartoon_loop;
+                  }
+                  *ss=0;
+                  break;
+                }
+                *(cc++)=cur_car;
+                v1 = cs->Coord+3*a;
+                v_ca = v1;
+                *(v++)=*(v1++);
+                *(v++)=*(v1++);
+                *(v++)=*(v1++);
+                a2=a1;
                   
-                  ss++;
+                ss++;
 
-                  v_c = NULL;
-                  v_n = NULL;
-                  v_o = NULL;
+                v_c = NULL;
+                v_n = NULL;
+                v_o = NULL;
                   
-                  AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+                AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
                   
-                  for(a3=st;a3<=nd;a3++) {
+                for(a3=st;a3<=nd;a3++) {
                     
-                    if(obj->DiscreteFlag) {
-                      if(cs==obj->DiscreteCSet[a3]) 
-                        a4=obj->DiscreteAtmToIdx[a3];
-                      else 
-                        a4=-1;
-                    } else 
-                      a4=cs->AtmToIdx[a3];
-                    if(a4>=0) {
-                      if(WordMatch("C",obj->AtomInfo[a3].name,1)<0) {
-                        v_c = cs->Coord+3*a4;		
-                      } else if(WordMatch("N",obj->AtomInfo[a3].name,1)<0) {
-                        v_n = cs->Coord+3*a4;
-                      } else if(WordMatch("O",obj->AtomInfo[a3].name,1)<0) {
-                        v_o = cs->Coord+3*a4;
-                      }
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[a3]) 
+                      a4=obj->DiscreteAtmToIdx[a3];
+                    else 
+                      a4=-1;
+                  } else 
+                    a4=cs->AtmToIdx[a3];
+                  if(a4>=0) {
+                    if(WordMatch("C",obj->AtomInfo[a3].name,1)<0) {
+                      v_c = cs->Coord+3*a4;		
+                    } else if(WordMatch("N",obj->AtomInfo[a3].name,1)<0) {
+                      v_n = cs->Coord+3*a4;
+                    } else if(WordMatch("O",obj->AtomInfo[a3].name,1)<0) {
+                      v_o = cs->Coord+3*a4;
                     }
-                  }
-                  if(!(v_c&&v_n&&v_o)) {
-                    vo[0]=0.0;
-                    vo[1]=0.0;
-                    vo[2]=0.0;
-                    vo+=3;
-                  } else {
-                    /* generate orientation vectors...*/
-
-                    subtract3f(v_n,v_c,t0);
-                    normalize3f(t0);
-                    subtract3f(v_n,v_o,t1);
-                    normalize3f(t1);
-                    cross_product3f(t0,t1,vo);
-                    normalize3f(vo);
-                    if(parity) {
-                      invert3f(vo);
-                    }
-                    vo+=3;
-                  }
-                } else if(WordMatch("P",obj->AtomInfo[a1].name,1)<0) {
-                  if(a2>=0) {
-                    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
-                      a2=-1;
-                  }
-                  if(a2<0)
-                    nSeg++;
-                  *(s++) = nSeg;
-                  nAt++;
-                  *(i++)=a;
-                  cur_car = obj->AtomInfo[a1].cartoon;
-                  if(cur_car == cCartoon_auto)
-                    cur_car = cCartoon_tube;
-                  *ss=3; /* DNA/RNA */
-
-                  *(cc++)=cur_car;
-                  v1 = cs->Coord+3*a;
-                  v_ca = v1;
-                  *(v++)=*(v1++);
-                  *(v++)=*(v1++);
-                  *(v++)=*(v1++);
-                  a2=a1;
-                  
-                  ss++;
-
-                  v_c = NULL;
-                  v_n = NULL;
-                  v_o = NULL;
-                  
-                  AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
-                  
-                  for(a3=st;a3<=nd;a3++) {
-                    
-                    if(obj->DiscreteFlag) {
-                      if(cs==obj->DiscreteCSet[a3]) 
-                        a4=obj->DiscreteAtmToIdx[a3];
-                      else 
-                        a4=-1;
-                    } else 
-                      a4=cs->AtmToIdx[a3];
-                    if(a4>=0) {
-                      
-                      /* need to figure out how to generate a how to do right for DNA...
-                         then we can use oval or rectangle */
-                      
-                      if(WordMatch("P",obj->AtomInfo[a3].name,1)<0) {
-                        v_c = cs->Coord+3*a4;		
-                      } else if(WordMatch("C2",obj->AtomInfo[a3].name,1)<0) {
-                        v_o = cs->Coord+3*a4;
-                      }
-                    }
-                  }
-                  if(!(v_c&&v_o)) {
-                    vo[0]=0.0;
-                    vo[1]=0.0;
-                    vo[2]=0.0;
-                    vo+=3;
-                  } else {
-                    /* generate orientation vectors...*/
-                    
-                    cross_product3f(v_c,v_o,vo);
-                    normalize3f(vo);
-                    
-                    vo+=3;
                   }
                 }
+                if(!(v_c&&v_n&&v_o)) {
+                  vo[0]=0.0;
+                  vo[1]=0.0;
+                  vo[2]=0.0;
+                  vo+=3;
+                } else {
+                  /* generate orientation vectors...*/
+
+                  subtract3f(v_n,v_c,t0);
+                  normalize3f(t0);
+                  subtract3f(v_n,v_o,t1);
+                  normalize3f(t1);
+                  cross_product3f(t0,t1,vo);
+                  normalize3f(vo);
+                  if(parity) {
+                    invert3f(vo);
+                  }
+                  vo+=3;
+                }
+              } else if((obj->AtomInfo[a1].protons==cAN_P)&&
+                        (WordMatch("P",obj->AtomInfo[a1].name,1)<0)) {
+                if(a2>=0) {
+                  if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
+                    a2=-1;
+                }
+                if(a2<0)
+                  nSeg++;
+                *(s++) = nSeg;
+                nAt++;
+                *(i++)=a;
+                cur_car = obj->AtomInfo[a1].cartoon;
+                if(cur_car == cCartoon_auto)
+                  cur_car = cCartoon_tube;
+                *ss=3; /* DNA/RNA */
+
+                *(cc++)=cur_car;
+                v1 = cs->Coord+3*a;
+                v_ca = v1;
+                *(v++)=*(v1++);
+                *(v++)=*(v1++);
+                *(v++)=*(v1++);
+                a2=a1;
+                  
+                ss++;
+
+                v_c = NULL;
+                v_n = NULL;
+                v_o = NULL;
+                  
+                AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+                  
+                for(a3=st;a3<=nd;a3++) {
+                    
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[a3]) 
+                      a4=obj->DiscreteAtmToIdx[a3];
+                    else 
+                      a4=-1;
+                  } else 
+                    a4=cs->AtmToIdx[a3];
+                  if(a4>=0) {
+                      
+                    /* need to figure out how to generate a how to do right for DNA...
+                       then we can use oval or rectangle */
+                      
+                    if(WordMatch("P",obj->AtomInfo[a3].name,1)<0) {
+                      v_c = cs->Coord+3*a4;		
+                    } else if(WordMatch("C2",obj->AtomInfo[a3].name,1)<0) {
+                      v_o = cs->Coord+3*a4;
+                    }
+                  }
+                }
+                if(!(v_c&&v_o)) {
+                  vo[0]=0.0;
+                  vo[1]=0.0;
+                  vo[2]=0.0;
+                  vo+=3;
+                } else {
+                  /* generate orientation vectors...*/
+                    
+                  cross_product3f(v_c,v_o,vo);
+                  normalize3f(vo);
+                    
+                  vo+=3;
+                }
+              }
              
-            }
+          }
 
 	 }
 
