@@ -109,6 +109,8 @@ Changes up to 0.69
 
    * First generation PovRay interface...whoopee!
 
+   * Tweaked util.ray_shadow and added some new settings
+
 Changes up to 0.68
 
    * HETATMS are no longer surfaced by default.  Clear the "ignore" flag or

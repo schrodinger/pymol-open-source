@@ -488,10 +488,10 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
   base = I->Basis+1;
 
   if(!SettingGet(cSetting_ortho)) {
-    sprintf(buffer,"camera {location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> angle %12.10f}\n",
-            front,fov*0.78);
+    sprintf(buffer,"camera {location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> angle %12.10f right %12.10f*x up y }\n",
+            front,fov*0.78,I->Range[0]/I->Range[1]);
   } else {
-    sprintf(buffer,"camera {orthographic location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> right -%12.10f*x up %12.10f*y}\n",
+    sprintf(buffer,"camera {orthographic location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> right %12.10f*x up %12.10f*y}\n",
             front,I->Range[0],I->Range[1]);
   }
   UtilConcatVLA(&headerVLA,&hc,buffer);
@@ -505,15 +505,14 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
 
   light = SettingGet_fv(NULL,NULL,cSetting_light);
   sprintf(buffer,"light_source{<%6.4f,%6.4f,%6.4f>  rgb<1.0,1.0,1.0>}\n",
-          light[0]*10000.0F,
+          -light[0]*10000.0F,
           -light[1]*10000.0F,
           -light[2]*10000.0F-front
           );
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
 
-  sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,
-          bkrd[0],bkrd[1],bkrd[2]);
+  sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,bkrd[0],bkrd[1],bkrd[2]);
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
   for(a=0;a<I->NPrimitive;a++) {
@@ -527,14 +526,14 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
           mesh_obj=true;
         }
     } else if(mesh_obj) {
-      sprintf(buffer,"}");
+      sprintf(buffer," pigment{color rgb <1,1,1>}}");
       UtilConcatVLA(&charVLA,&cc,buffer);     
       mesh_obj=false;
     }
     switch(prim->type) {
 	 case cPrimSphere:
       sprintf(buffer,"sphere{<%12.10f,%12.10f,%12.10f>, %12.10f\n",
-             -vert[0],vert[1],vert[2],prim->r1);
+             vert[0],vert[1],vert[2],prim->r1);
       UtilConcatVLA(&charVLA,&cc,buffer);      
       sprintf(buffer,"pigment{color rgb<%6.4f,%6.4f,%6.4f>}}\n",
               prim->c1[0],prim->c1[1],prim->c1[2]);
@@ -545,8 +544,8 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
       scale3f(d,prim->l1,vert2);
       add3f(vert,vert2,vert2);
       sprintf(buffer,"cylinder{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n %12.10f\nopen\n",
-              -vert[0],vert[1],vert[2],
-              -vert2[0],vert2[1],vert2[2],
+              vert[0],vert[1],vert[2],
+              vert2[0],vert2[1],vert2[2],
               prim->r1);
       UtilConcatVLA(&charVLA,&cc,buffer);
       sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
@@ -556,14 +555,14 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
       UtilConcatVLA(&charVLA,&cc,buffer);
 
       sprintf(buffer,"sphere{<%12.10f,%12.10f,%12.10f>, %12.10f\n",
-             -vert[0],vert[1],vert[2],prim->r1);
+             vert[0],vert[1],vert[2],prim->r1);
       UtilConcatVLA(&charVLA,&cc,buffer);      
       sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
               prim->c1[0],prim->c1[1],prim->c1[2]);
       UtilConcatVLA(&charVLA,&cc,buffer);
 
       sprintf(buffer,"sphere{<%12.10f,%12.10f,%12.10f>, %12.10f\n",
-             -vert2[0],vert2[1],vert2[2],prim->r1);
+             vert2[0],vert2[1],vert2[2],prim->r1);
       UtilConcatVLA(&charVLA,&cc,buffer);      
       sprintf(buffer,"pigment{color rgb<%6.4f1,%6.4f,%6.4f>}}\n",
               prim->c2[0],prim->c2[1],prim->c2[2]);
@@ -578,25 +577,25 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
 
         if(smooth_color_triangle) {
           sprintf(buffer,"smooth_color_triangle{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%6.4f1,%6.4f,%6.4f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%6.4f1,%6.4f,%6.4f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%6.4f1,%6.4f,%6.4f> }\n",
-                  -vert[0],vert[1],vert[2],
-                  -norm[0],norm[1],norm[2],
+                  vert[0],vert[1],vert[2],
+                  norm[0],norm[1],norm[2],
                   prim->c1[0],prim->c1[1],prim->c1[2],
-                  -vert[3],vert[4],vert[5],
-                  -norm[3],norm[4],norm[5],
+                  vert[3],vert[4],vert[5],
+                  norm[3],norm[4],norm[5],
                   prim->c2[0],prim->c2[1],prim->c2[2],
-                  -vert[6],vert[7],vert[8],
-                  -norm[6],norm[7],norm[8],
+                  vert[6],vert[7],vert[8],
+                  norm[6],norm[7],norm[8],
                   prim->c3[0],prim->c3[1],prim->c3[2]
                   );
           UtilConcatVLA(&charVLA,&cc,buffer);
         } else {
           sprintf(buffer,"smooth_triangle{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>\n",
-                  -vert[0],vert[1],vert[2],
-                  -norm[0],norm[1],norm[2],
-                  -vert[3],vert[4],vert[5],
-                  -norm[3],norm[4],norm[5],
-                  -vert[6],vert[7],vert[8],
-                  -norm[6],norm[7],norm[8]
+                  vert[0],vert[1],vert[2],
+                  norm[0],norm[1],norm[2],
+                  vert[3],vert[4],vert[5],
+                  norm[3],norm[4],norm[5],
+                  vert[6],vert[7],vert[8],
+                  norm[6],norm[7],norm[8]
                   );
           UtilConcatVLA(&charVLA,&cc,buffer);
           if(prim->trans>R_SMALL4) 
@@ -623,7 +622,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
   }
   
   if(mesh_obj) {
-    sprintf(buffer,"}");
+    sprintf(buffer," pigment{color rgb <1,1,1>}}");
     UtilConcatVLA(&charVLA,&cc,buffer);     
     mesh_obj=false;
   }

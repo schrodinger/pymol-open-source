@@ -231,6 +231,7 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args);
 static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
 static PyObject *CmdLoadCoords(PyObject *self, PyObject *args);
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args);
+static PyObject *CmdLoadPNG(PyObject *self, PyObject *args);
 static PyObject *CmdMapSetBorder(PyObject *self, 	PyObject *args);
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args);
 static PyObject *CmdMDo(PyObject *self, 	PyObject *args);
@@ -370,6 +371,7 @@ static PyMethodDef Cmd_methods[] = {
    {"label",                 CmdLabel,                METH_VARARGS },
 	{"load",	                 CmdLoad,                 METH_VARARGS },
 	{"load_coords",           CmdLoadCoords,           METH_VARARGS },
+	{"load_png",              CmdLoadPNG,              METH_VARARGS },
 	{"load_object",           CmdLoadObject,           METH_VARARGS },
    {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
 	{"mask",	                 CmdMask,                 METH_VARARGS },
@@ -560,6 +562,19 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
         ENDFB;
       ok=false;
     }
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
+{
+  char *str1;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"s",&str1);
+  if(ok) {
+    APIEntry();
+    ok = SceneLoadPNG(str1,true);
+    APIExit();
   }
   return(APIStatus(ok));
 }
