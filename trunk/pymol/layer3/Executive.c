@@ -2402,6 +2402,8 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectDist:
                 case cObjectMap:
                 case cObjectMesh:
+                case cObjectCGO:
+                case cObjectCallback:
                   MenuActivate(x,y,"simple_action",rec->obj->Name);
                   break;
                 }

@@ -166,7 +166,6 @@ def mol_action(s):
            [ 1, 'Deprotect'  ,'cmd.deprotect("'+s+'")'        ],           
            ]
 
-
 def simple_action(s):
    return [[ 2, 'Actions:'     , ''                       ],
            [ 1, 'Origin'       , 'cmd.origin("'+s+'")'    ],
@@ -174,7 +173,6 @@ def simple_action(s):
            [ 0, ''             , ''                       ],
            [ 1, 'Delete'       , 'cmd.delete("'+s+'")'    ],
            ]
-
 
 def all_action(s):
    return [[ 2, 'Actions:'     , ''                      ],     
