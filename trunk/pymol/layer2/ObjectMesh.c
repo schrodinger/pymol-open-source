@@ -354,7 +354,9 @@ void ObjectMeshStateInit(ObjectMeshState *ms)
   }
   if(!ms->N) {
     ms->N = VLAlloc(int,10000);
-
+  }
+  if(ms->AtomVertex) {
+    VLAFreeP(ms->AtomVertex);
   }
   ms->N[0]=0;
   ms->Active=true;

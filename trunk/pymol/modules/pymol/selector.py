@@ -71,9 +71,9 @@ def process(sele): # expand slash notation into a standard atom selection
             if not len(alt):
                alt="''"
             if len(name):
-               lst.append("n;"+string.replace(name,'+',','))
+               lst.append("n;"+name)
          else:
-            lst.append("n;"+string.replace(name,'+',','))
+            lst.append("n;"+name)
       if alt!='': lst.append("alt "+string.replace(alt,'+',','))      
       if not len(lst):
          st = "*"

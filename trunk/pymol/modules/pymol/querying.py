@@ -615,7 +615,7 @@ PYMOL API
    r = None
    try:
       lock()
-      r = _cmd.get_min_max("("+str(selection)+")",int(state)-1)
+      r = _cmd.get_min_max(str(selection),int(state)-1)
    finally:
       unlock()
    if not r:

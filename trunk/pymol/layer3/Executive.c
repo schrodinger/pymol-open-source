@@ -3205,6 +3205,7 @@ int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive)
     if(inclusive) {
       if(!ExecutiveGetMaxDistance(name,center,&radius,true,state))
         radius=0.0;
+      radius+=buffer;
     } else {
       radius = df[0];
       if(radius<df[1]) radius=df[1];
