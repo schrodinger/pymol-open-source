@@ -81,11 +81,13 @@ def simple_hide(s):
 
 def mesh_show(s):
    return [[ 2, 'Show:'       , ''                             ],
+           [ 1, 'mesh'        , 'cmd.show("mesh","'+s+'")'     ],           
            [ 1, 'cell'        , 'cmd.show("cell","'+s+'")'     ],
            [ 1, 'everything'  , 'cmd.enable("'+s+'")'          ]]
 
 def mesh_hide(s):
    return [[ 2, 'Hide:'       , ''                             ],
+           [ 1, 'mesh'        , 'cmd.hide("mesh","'+s+'")'     ],                      
            [ 1, 'cell'        , 'cmd.hide("cell","'+s+'")'      ],           
            [ 1, 'everything'  , 'cmd.disable("'+s+'")'          ]]
 

@@ -3962,6 +3962,8 @@ SEE ALSO
       mode = 2
    elif type=='all':
       mode = 0
+   elif type=='public':
+      mode = 3
    try:
       lock()
       r = _cmd.get_names(int(mode))
@@ -5993,6 +5995,7 @@ ctrl = {
    'Z' : [ undo                   , () , {} ],   
    }
 
+selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
 auto_arg =[
    {
    'set' : [ setting.setting_sc, 'settings', '=' ],
@@ -6003,10 +6006,21 @@ auto_arg =[
    'clip' : [ clip_action_sc , 'clipping actions',', ' ],
    'feedback' : [ fb_action_sc , 'actions',', ' ],
    'button' : [ button_sc , 'buttons',', ' ],
+   'zoom' : [ selection_sc , 'selections','' ],
+   'origin' : [ selection_sc , 'selections','' ],
+   'protect' : [ selection_sc , 'selections','' ],
+   'deprotect' : [ selection_sc , 'selections','' ],   
+   'mask' : [ selection_sc , 'selections','' ],
+   'unmask' : [ selection_sc , 'selections','' ],
+   'delete' : [ selection_sc , 'selections','' ],   
    },
    {
    'feedback' : [ fb_module_sc , 'modules',', ' ],
    'button' : [ but_mod_sc , 'modifiers',', ' ],
+   'show' : [ selection_sc , 'selections','' ],
+   'hide' : [ selection_sc , 'selections','' ],
+   'color' : [ selection_sc , 'selections','' ],
+   'select' : [ selection_sc , 'selections','' ],      
    },
    {
    'feedback' : [ fb_mask_sc , 'mask','' ],

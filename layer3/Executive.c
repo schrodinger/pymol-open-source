@@ -682,13 +682,15 @@ char *ExecutiveGetNames(int mode)
 
   while(ListIterate(I->Spec,rec,next)) {
     if(
-       (rec->type==cExecObject&&((!mode)||(mode==1)))||
-       (rec->type==cExecSelection&&((!mode)||(mode==2))))
-    {
-      stlen = strlen(rec->name);
-      VLACheck(result,char,size+stlen+1);
-      strcpy(result+size,rec->name);
-      size+=stlen+1;
+       (rec->type==cExecObject&&((!mode)||(mode==1)||(mode==3)))||
+       (rec->type==cExecSelection&&((!mode)||(mode==2)||(mode==3))))
+      {
+        if((mode!=3)||(rec->name[0]!='_')) {
+          stlen = strlen(rec->name);
+          VLACheck(result,char,size+stlen+1);
+          strcpy(result+size,rec->name);
+          size+=stlen+1;
+        }
     }
   }
   VLASize(result,char,size);
@@ -2304,21 +2306,31 @@ void ExecutiveSetAllVisib(int state)
   while(ListIterate(I->Spec,rec,next)) {
 	 if(rec->type==cExecObject)
 		{
-		  if(rec->obj->type==cObjectMolecule)
-			 {
-				obj=(ObjectMolecule*)rec->obj;
-				sele = SelectorIndexByName(obj->Obj.Name);
-            for(rep=0;rep<cRepCnt;rep++) 
-              rec->repOn[rep]=state;
-            op.code=OMOP_VISI;
-            op.i1=-1;
-            op.i2=state;
-            ObjectMoleculeSeleOp(obj,sele,&op);
-            op.code=OMOP_INVA;
-            op.i1=-1;
-            op.i2=cRepInvVisib;
-            ObjectMoleculeSeleOp(obj,sele,&op);				
-			 }
+        switch(rec->obj->type) {
+        case cObjectMolecule:
+          obj=(ObjectMolecule*)rec->obj;
+          sele = SelectorIndexByName(obj->Obj.Name);
+          for(rep=0;rep<cRepCnt;rep++) 
+            rec->repOn[rep]=state;
+          op.code=OMOP_VISI;
+          op.i1=-1;
+          op.i2=state;
+          ObjectMoleculeSeleOp(obj,sele,&op);
+          op.code=OMOP_INVA;
+          op.i1=-1;
+          op.i2=cRepInvVisib;
+          ObjectMoleculeSeleOp(obj,sele,&op);				
+          break;
+        case cObjectDist:
+        case cObjectMesh:
+          for(rep=0;rep<cRepCnt;rep++) {
+            ObjectSetRepVis(rec->obj,rep,state);
+            if(rec->obj->fInvalidate)
+              rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,state);
+          }
+          SceneDirty();
+          break;
+        }
 		}
   }
 }
@@ -2382,6 +2394,7 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
   int a;
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
+
   while(ListIterate(I->Spec,rec,next)) {
 	 if(rec->type==cExecObject)
 		{
@@ -2410,9 +2423,17 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
             break;
           case cObjectDist:
           case cObjectMesh:
-            ObjectSetRepVis(rec->obj,rep,state);
-            if(rec->obj->fInvalidate)
-              rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,state);
+            if(rep>=0) {
+              ObjectSetRepVis(rec->obj,rep,state);
+              if(rec->obj->fInvalidate)
+                rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,state);
+            } else {
+              for(a=0;a<cRepCnt;a++) {
+                ObjectSetRepVis(rec->obj,a,state);
+                if(rec->obj->fInvalidate)
+                  rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,state);
+              }
+            }
             SceneDirty();
             break;
           }
@@ -2997,8 +3018,8 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                   }
                   rec->visible=true; 
                 } else if(mod&cOrthoSHIFT) {
-                  if(rec->sele_color<0)
-                    rec->sele_color=7;
+                  if(rec->sele_color<7)
+                    rec->sele_color=15;
                   else {
                     rec->sele_color--;
                     if(rec->sele_color<7)
