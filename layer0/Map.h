@@ -52,6 +52,8 @@ MapType *MapNewCached(PyMOLGlobals *G,float range,float *vert,int nVert,float *e
 
 MapType *MapNewFlagged(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent,int *flag);
 void MapSetupExpress(MapType *I);
+void MapSetupExpressPerp(MapType *I, float *vert, float front);
+
 void MapFree(MapType *I);
 
 #define MapFirst(m,a,b,c) (m->Head + ((a) * m->D1D2) + ((b)*m->Dim[2]) + (c))

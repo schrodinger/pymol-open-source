@@ -2407,7 +2407,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_animation, 1);
   SettingSet_f(I,cSetting_animation_duration, 0.75F);
   SettingSet_i(I,cSetting_scene_animation,-1);
-  SettingSet_b(I,cSetting_line_stick_helper, 0);
+  SettingSet_b(I,cSetting_line_stick_helper, 1);
   SettingSet_i(I,cSetting_ray_orthoscopic, -1);
 }
 

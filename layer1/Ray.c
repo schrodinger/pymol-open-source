@@ -82,6 +82,7 @@ struct _CRayThreadInfo {
    unsigned int background;
    unsigned int bytes;
    int perspective;
+   float front;
    int phase;
    CRay *ray;
  };
@@ -1093,7 +1094,8 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
 
 int RayHashThread(CRayHashThreadInfo *T)
 {
-  BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox,T->phase,cCache_ray_map,T->perspective);
+  BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox,T->phase,
+               cCache_ray_map,T->perspective,T->front);
 
   /* utilize a little extra wasted CPU time in thread 0 which computes the smaller map... */
 
@@ -2432,6 +2434,7 @@ int opaque_back=0;
   int mag=1;
   int oversample_cutoff;
   int perspective = SettingGetGlobal_i(I->G,cSetting_ray_orthoscopic);
+  const float _0 = 0.0F;
   if(perspective<0)
     perspective = SettingGetGlobal_b(I->G,cSetting_ortho);
   perspective = !perspective;
@@ -2581,7 +2584,7 @@ int opaque_back=0;
       thread_info[0].phase = 0;
       thread_info[0].ray = I; /* for compute box */
       thread_info[0].perspective = perspective;
-      
+      thread_info[0].front = front;
       /* shadow map */
 
       thread_info[1].basis = I->Basis+2;
@@ -2595,9 +2598,12 @@ int opaque_back=0;
     } else
 #endif
       { /* serial execution */
-        BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume,0,cCache_ray_map,perspective);
+        BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,
+                     I->Volume,0,cCache_ray_map,
+                     perspective,front);
         if(shadows) {
-          BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL,1,cCache_ray_map,false);
+          BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,
+                       NULL,1,cCache_ray_map,false,_0);
         }
 
       /* serial tasks which RayHashThread does in parallel mode */
