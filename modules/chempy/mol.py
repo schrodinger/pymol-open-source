@@ -80,8 +80,8 @@ class MOL(Storage):
 
          # write bond records
       for b in model.bond:
-         molList.append("%3d%3d%3d  0  0  0  0\n" % (b.index[0]+1, 
-            b.index[1]+1, b.order))
+         molList.append("%3d%3d%3d%3d  0  0  0\n" % (b.index[0]+1, 
+            b.index[1]+1, b.order,b.stereo))
 
          # if necessary, write M  CHG records for charged atoms
       charge_atoms = []
@@ -96,3 +96,5 @@ class MOL(Storage):
          molList.append(tline + "\n")
       molList.append("M  END\n")
       return(molList)
+
+
