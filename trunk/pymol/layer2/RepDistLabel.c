@@ -66,7 +66,7 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
     glDisable(GL_DEPTH_TEST);	 
 #endif
     glDisable(GL_LIGHTING);
-	 SceneResetNormal(true);
+    /*	 SceneResetNormal(true);*/
 	 while(c--) {
       glRasterPos4f(v[0],v[1],v[2],1.0);
       cc = l[n];
