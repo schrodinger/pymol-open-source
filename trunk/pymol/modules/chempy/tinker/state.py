@@ -172,7 +172,7 @@ class State:
       if not temperature:
          temperature = self.default['temperature']
       if not interval:
-         interval = timestep/steps
+         interval = (timestep*steps)/1000.0
       else:
          interval = interval/1000.0
       tinker.do('dynamic',

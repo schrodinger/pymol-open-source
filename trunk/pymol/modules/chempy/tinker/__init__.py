@@ -17,7 +17,8 @@ def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
       for a in tokens:
          print " "+str(__name__)+': input %d = %s' % (c,a)
          c = c + 1
-      sys.stdout.flush()
+      if hasattr(sys.stdout,"flush"):
+         sys.stdout.flush()
    for a in glob.glob(run_prefix+".*"):
       os.unlink(a)
    for a in glob.glob(out_prefix+".*"):
@@ -65,7 +66,8 @@ def run(command,in_prefix,out_prefix,tokens,capture=None):
       for a in tokens:
          print " "+str(__name__)+': input %d = %s' % (c,a)
          c = c + 1
-      sys.stdout.flush()
+      if hasattr(sys.stdout,"flush"):
+         sys.stdout.flush()
    for a in glob.glob(prefix+".*"):
       os.unlink(a)
    for a in glob.glob(out_prefix+".*"):
