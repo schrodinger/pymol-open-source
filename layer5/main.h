@@ -28,7 +28,8 @@ void MainFlush(void);
 int MainSavingUnderWhileIdle(void);
 int MainFromPyList(PyObject *list);
 PyObject *MainAsPyList(void);
-
+int MainCheckRedundantOpen(char *file);
+  
 extern int PyMOLReady;
 extern int PyMOLTerminating; /* flag to help prevent crashes on shutdown with Windows */
 
@@ -56,7 +57,6 @@ typedef struct PyMOLOptionRec {
 
 extern PyMOLOptionRec *PyMOLOption;
 
-  
 #ifdef _PYMOL_MODULE
 int was_main(void);
 #endif

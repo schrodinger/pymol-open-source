@@ -322,6 +322,14 @@ if __name__=='pymol.cmd':
       else:
          return 0
 
+   def check_redundant_open(file):
+      found = 0
+      for a in pymol.invocation.options.deferred:
+         if a == file:
+            found = 1
+            break
+      return found
+
    #--------------------------------------------------------------------
    # Feedback
 

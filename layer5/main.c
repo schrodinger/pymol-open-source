@@ -887,6 +887,14 @@ SetConsoleCtrlHandler(
   }
 }
 
+int MainCheckRedundantOpen(char *file)
+{
+  int result = false;
+  PBlock();
+  result = PTruthCallStr(P_cmd,"check_redundant_open",file);
+  PUnblock();
+  return result;
+}
 
 /*========================================================================*/
 #ifndef _PYMOL_MODULE

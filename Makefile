@@ -167,6 +167,7 @@ compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
 
 OSXPROD=products/PyMOL.app
+OSXDEMO=products/Demos
 OSXPYMOL=$(OSXPROD)/pymol
 OSXEXE=$(OSXPROD)/Contents/MacOS/PyMOL
 OSXPY=$(OSXPROD)/py23
@@ -214,3 +215,15 @@ osx-standalone: osx-unwrap osx-python-standalone osx-product
 	/bin/rm -rf $(OSXPY)
 	install -d $(OSXPY)/lib
 	cp -R ext/lib/python2.3 $(OSXPY)/lib/
+
+osx-wrap-demos:
+	/usr/local/bin/tar -czvf layerOSX/applescript.hfstar $(OSXDEMO)
+
+osx-unwrap-demos:
+	/usr/local/bin/tar -xzvf layerOSX/applescript.hfstar
+
+osx-demo-data:
+	install -d $(OSXPYMOL)/data/demo
+	cp -R demo_data/* $(OSXPYMOL)/data/demo/
+
+osx-demo: osx-standalone osx-demo-data osx-unwrap-demo 
