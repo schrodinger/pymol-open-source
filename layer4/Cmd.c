@@ -3933,8 +3933,14 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry();
     origObj=ExecutiveFindObjectByName(TempPyMOLGlobals,oname);
-    if(origObj) 
+    if(origObj) {
+      if(origObj->type==cObjectMolecule) {
+        ObjectMoleculeUpdateIDNumbers((ObjectMolecule*)origObj);
+        ObjectMoleculeUpdateNonbonded((ObjectMolecule*)origObj);
+        ObjectMoleculeInvalidate((ObjectMolecule*)origObj,cRepAll,cRepInvAll);
+      }
       ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj); /* TODO STATUS */
+    }
     else
       ok=false;
     APIExit();
@@ -4357,7 +4363,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypeMOLStr:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: reading MOLStr\n" ENDFD;
-      obj=(CObject*)ObjectMoleculeReadMOLStr(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,discrete);
+      obj=(CObject*)ObjectMoleculeReadMOLStr(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,discrete,finish);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
@@ -4368,8 +4374,12 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                   oname);		  
         }
       } else if(origObj) {
-        if(finish)
+        if(finish) {
+          ObjectMoleculeInvalidate((ObjectMolecule*)origObj,cRepAll,cRepInvAll);
+          ObjectMoleculeUpdateIDNumbers((ObjectMolecule*)origObj);
+          ObjectMoleculeUpdateNonbonded((ObjectMolecule*)origObj);
           ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj);
+        }
         if(frame<0)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: MOL-string appended into object \"%s\", state %d.\n",
