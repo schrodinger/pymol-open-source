@@ -12,7 +12,7 @@ all: sglite.so
 	$(CC) $(CFLAGS) -c $*.c -DPythonTypes
 
 sglite.so: $(OBJ) 
-	$(CC) $(CCOPT1) -shared *.o -o sglite.so
+	$(CC) $(CCOPT1) $(BUILD) *.o -o sglite.so
 
 clean:
 	touch .no_fail

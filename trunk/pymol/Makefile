@@ -57,7 +57,7 @@ contrib: .contrib
 
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
-	cc $(BUILD) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)
+	cc $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)
 
 windows: .includes .depends .update 
 	echo "EXPORTS" > _cmd.def
@@ -101,3 +101,7 @@ pmw:
 
 compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
+
+osx: 
+	cd layerOSX; $(MAKE)
+	$(MAKE) |& grep -v Precomp

@@ -42,8 +42,13 @@
 #define GLUCALLBACK
 #endif
 
+#ifndef _PYMOL_OSX
 #include <GL/gl.h>
 #include <GL/glu.h>
+#else
+#include <gl.h>
+#include <glu.h>
+#endif
 
 
 static PyObject *py_gl_Error;

@@ -2,7 +2,7 @@ include ../../Rules.make
 
 CFLAGS = $(C_FLAGS) -DHAVE_ARRAYOBJECT_H
 
-GLLIBS = $(LIB_DIRS) -lglut -lGL -lGLU -lXmu -lXi
+GLLIBS = $(LIB_DIRS) $(PYOGL_LIB)
 all: \
 _glu_nummodule.so \
 _glumodule.so \
@@ -16,25 +16,25 @@ openglutil_num.so
 	$(CC) $(CFLAGS) -c $*.c -DPythonTypes
 
 _glu_nummodule.so: _glu_nummodule.o
-	$(CC) $(CCOPT1) -shared _glu_nummodule.o -o _glu_nummodule.so $(GLLIBS)
+	$(CC) $(CCOPT1) $(BUILD) _glu_nummodule.o -o _glu_nummodule.so $(GLLIBS)
 
 _glumodule.so: _glumodule.o
-	$(CC) $(CCOPT1) -shared _glumodule.o -o _glumodule.so $(GLLIBS)
+	$(CC) $(CCOPT1) $(BUILD) _glumodule.o -o _glumodule.so $(GLLIBS)
 
 _glutmodule.so: _glutmodule.o
-	$(CC) $(CCOPT1) -shared _glutmodule.o -o _glutmodule.so $(GLLIBS) 
+	$(CC) $(CCOPT1) $(BUILD) _glutmodule.o -o _glutmodule.so $(GLLIBS) 
 
 _opengl_nummodule.so: _opengl_nummodule.o
-	$(CC) $(CCOPT1) -shared _opengl_nummodule.o -o _opengl_nummodule.so $(GLLIBS)
+	$(CC) $(CCOPT1) $(BUILD) _opengl_nummodule.o -o _opengl_nummodule.so $(GLLIBS)
 
 _openglmodule.so: _openglmodule.o
-	$(CC) $(CCOPT1) -shared _openglmodule.o -o _openglmodule.so $(GLLIBS)
+	$(CC) $(CCOPT1) $(BUILD) _openglmodule.o -o _openglmodule.so $(GLLIBS)
 
 openglutil.so: openglutil.o
-	$(CC) $(CCOPT1) -shared openglutil.o -o openglutil.so $(GLLIBS)
+	$(CC) $(CCOPT1) $(BUILD) openglutil.o -o openglutil.so $(GLLIBS)
 
 openglutil_num.so: openglutil_num.o
-	$(CC) $(CCOPT1) -shared openglutil_num.o -o openglutil_num.so $(GLLIBS)      
+	$(CC) $(CCOPT1) $(BUILD) openglutil_num.o -o openglutil_num.so $(GLLIBS)      
                                                           
 clean:
 	touch .no_fail

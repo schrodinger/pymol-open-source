@@ -60,7 +60,12 @@
    See glut.h for flag descriptions.
  */
 
+#ifndef _PYMOL_OSX
 #include "GL/glut.h"
+#else
+#include <glut.h>
+#endif
+
 /* #include "GL/glutint.h" */
 
 static PyObject *glut_Error;

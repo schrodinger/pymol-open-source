@@ -549,6 +549,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
   else switch(k)
 	 {
     case 127: /* delete */     
+#ifndef _PYMOL_OSX
       if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible()) {
         OrthoKeyControl(4+64);
       } else {
@@ -576,6 +577,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       } 
       break;
 	 case 8: /* backspace */
+#endif
 		if(I->CurChar>I->PromptChar)
 		  {
           curLine=I->CurLine&OrthoSaveLines;
