@@ -1213,7 +1213,7 @@ static int getBestCBMx(const T_SgOps *SgOps, int SgNumber,
   int      nAddlG, iAddlG;
   T_RTMx    AddlG[3];
   T_SgOps  NormSgOps[1];
-  int      iLTr, iInv, iSMx, icmp, det, r00, r22, f;
+  int      iInv, iSMx, icmp, det, r00, r22, f;
   T_RTMx   SMx[1], LISMx[2], TrialCBMx[2], M[2], M_TrialCBMx[2], BestCBMx[2];
 
       nAddlG = GetRefSetNormAddlG(SgNumber, 1, 1, 1, AddlG);
@@ -1231,11 +1231,10 @@ static int getBestCBMx(const T_SgOps *SgOps, int SgNumber,
   if (deterRotMx(CBMx[0].s.R) < deterRotMx(CBMx[1].s.R))
     icmp = 1;
 
-  range1(iLTr, NormSgOps->nLTr) /* XXX do we need this loop? */
   range1(iInv, NormSgOps->fInv)
   range1(iSMx, NormSgOps->nSMx)
   {
-    SetLISMx(NormSgOps, iLTr, iInv, iSMx, &LISMx[0]);
+    SetLISMx(NormSgOps, 0, iInv, iSMx, &LISMx[0]);
 
         det = deterRotMx(LISMx[0].s.R);
     if (det == 0) return IE(-1);
