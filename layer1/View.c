@@ -71,7 +71,7 @@ PyObject *ViewElemAsPyList(CViewElem *view)
     
     PyList_SetItem(result,11,PyInt_FromLong(view->view_mode));
     
-    PyList_SetItem(result,12,PyInt_FromLong(view->specified_flag));
+    PyList_SetItem(result,12,PyInt_FromLong(view->specification_level));
   }
 
   return PConvAutoNone(result);
@@ -105,7 +105,7 @@ int ViewElemFromPyList(PyObject *list, CViewElem *view)
   if(ok&&view->ortho_flag) ok= PConvPyIntToInt(PyList_GetItem(list,10),&view->ortho_flag);
 
   if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,11),&view->view_mode);
-  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,12),&view->specified_flag);
+  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,12),&view->specification_level);
 
   return ok;
 }

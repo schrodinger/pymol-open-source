@@ -1293,6 +1293,7 @@ SEE ALSO
         publication
 
    #--------------------------------------------------------------------
+   import moving
    from moving import \
         madd,              \
         mset,              \
@@ -1897,6 +1898,7 @@ SEE ALSO
       'protect'        : [ selection_sc           , 'selection'       , ''   ],
       'deprotect'      : [ selection_sc           , 'selection'       , ''   ],   
       'mask'           : [ selection_sc           , 'selection'       , ''   ],
+      'mview'          : [ moving.mview_action_sc , 'action'          , ''   ],
       'unmask'         : [ selection_sc           , 'selection'       , ''   ],
       'delete'         : [ selection_sc           , 'selection'       , ''   ],
       'alter'          : [ selection_sc           , 'selection'       , ''   ],

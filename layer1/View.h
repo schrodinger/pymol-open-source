@@ -42,7 +42,7 @@ typedef struct CViewElem {
 
   int view_mode; /* 0 = relative/subordinate, 1 = absolute/top-level */
 
-  int specified_flag;
+  int specification_level;
 
 } CViewElem;
 
