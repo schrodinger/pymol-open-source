@@ -1607,7 +1607,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       }
       nBond=nReal;
       /* now, find atoms we're looking for */
-      maxAt=0;
+      maxAt=nAtom;
       ii1=bond;
       for(a=0;a<nBond;a++) {
         if(ii1[0]>maxAt) maxAt=ii1[0];
@@ -1617,7 +1617,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       for(a=0;a<nAtom;a++) 
         if(maxAt<atInfo[a].tmpID) maxAt=atInfo[a].tmpID;
       /* build index */
-      idx = Alloc(int,maxAt);
+      idx = Alloc(int,maxAt+1);
       for(a=0;a<maxAt;a++) idx[a]=-1;
       for(a=0;a<nAtom;a++)
         idx[atInfo[a].tmpID]=a;
