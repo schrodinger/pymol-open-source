@@ -4,28 +4,27 @@ http://www.pymol.org  EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 INSTALLATION AND COMPILATION GUIDE
 
-WARNING: You'll need some basic knowledge of Makefiles, compilation
+WARNING: You will need some basic knowledge of Makefiles, compilation
 flags, libraries, python, environment variables, and paths in order to
 compile PyMOL.  If you don't have this experience, save yourself
-frustration and wait until binaries are available for download.  
+frustration and wait until binaries are available for download.
 
 The following instructions assume you are installing PyMOL in your
-home directory.  You can of course put it anywhere, but you'll
-need to replace "$HOME" with an appropriate path.
+home directory.  You can of course put it anywhere, but you will need
+to replace "$HOME" with an appropriate path.
 
 STEP (1) A compiled copy of the external dependencies package ("ext")
 is required, but only needs to be downloaded once (approx 19 MB).
-This package contains everything you'll need to run PyMOL all in one
-place so that you won't have to hunt down the individual components
-yourself.  Some precompiled binaries are available on SourceForge in
-the "ext" section of the PyMOL file releases, and they are highly
-recommended.
+This package contains everything you will need to run PyMOL all in one
+place so that you won't have to hunt down the individual components.
+Some precompiled binaries are available on SourceForge in the "ext"
+section of the PyMOL file releases, and they are highly recommended.
 
 http://sourceforge.net/project/showfiles.php?group_id=4546
 
-If "ext" binaries are not available for you system, then you will
-unforunately need to compile them from the sources (currently in the
-file "ext-0.50-src.tgz") Be warned that this may take over an hour and
+If "ext" binaries are not available for your system, then you will
+need to compile them from the sources (currently in the file
+"ext-0.50-src.tgz").  Be warned that this may take over an hour and
 cause you some grief.  The old "pymol-ext" CVS tree is now defunct, so
 just download the tgz file (tar-gzip).
 
@@ -42,7 +41,7 @@ in the pymol directory.
    cd $HOME/pymol
    ln -s <relative-path-to-ext> ext
 
-STEP (3) After you've obtained the external dependencies, copy
+STEP (3) After you have set up the external dependencies, copy
 Rules.<platform> to Rules.make and choose options appropriate for your
 configuration (here is where experience counts).  Unless you're
 planning on doing heavy PyMOL development under Linux, you should
