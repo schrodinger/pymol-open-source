@@ -249,6 +249,66 @@ void ColorInit(void)
   I->Color[I->NColor].Color[2]=0.15;
   I->NColor++;
 
+  strcpy(I->Color[I->NColor].Name,"br0");
+  I->Color[I->NColor].Color[0]=0.1;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=1.0;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br1");
+  I->Color[I->NColor].Color[0]=0.2;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.9;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br2");
+  I->Color[I->NColor].Color[0]=0.3;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.8;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br3");
+  I->Color[I->NColor].Color[0]=0.4;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.7;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br4");
+  I->Color[I->NColor].Color[0]=0.5;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.6;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br5");
+  I->Color[I->NColor].Color[0]=0.6;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.5;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br6");
+  I->Color[I->NColor].Color[0]=0.7;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.4;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br7");
+  I->Color[I->NColor].Color[0]=0.8;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.3;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br8");
+  I->Color[I->NColor].Color[0]=0.9;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.2;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"br9");
+  I->Color[I->NColor].Color[0]=1.0;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.1;
+  I->NColor++;
+
 }
 
 /*========================================================================*/

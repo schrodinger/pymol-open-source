@@ -147,6 +147,7 @@ static void MainDrag(int x,int y)
 static void MainDraw(void)
 {
   CMain *I = &Main;
+  int was_dirty;
 #ifndef _PYMOL_MODULE
   int a,l;
   char *p;
@@ -155,8 +156,9 @@ static void MainDraw(void)
 
   PLock(cLockAPI,&_save);
 
+  was_dirty = I->DirtyFlag;
   if(I->DirtyFlag) I->DirtyFlag=false;
-
+  
   OrthoBusyPrime();
   ExecutiveDrawNow();
   if(FinalInitFlag)
@@ -201,7 +203,7 @@ static void MainDraw(void)
 		OrthoRestorePrompt();
 		Py_UNBLOCK_THREADS;
 	 }
-
+  if(!was_dirty) SceneCopy(0);
   if(I->SwapFlag)
 	 {
 		glutSwapBuffers();

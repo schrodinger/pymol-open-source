@@ -62,11 +62,6 @@ static int BondCompare(int *a,int *b);
 #define MAXLINELEN 255
 
 /*========================================================================*/
-char *ObjectMoleculeCoordSetToPDBStr(ObjectMolecule *I,int state)
-{
-  return 0;
-}
-/*========================================================================*/
 static int BondInOrder(int *a,int b1,int b2)
 {
   return(BondCompare(a+b1,a+b2)<=0);
@@ -610,6 +605,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 sscanf(p+46,"%f",coord+a+2);
 			 *(p+54) = t;
 			 
+			 t = *(p+60);
+			 *(p+60) = 0;
+			 sscanf(p+54,"%f",&dummy[0]);
+			 if(atInfo)
+				atInfo[atomCount].q=dummy[0];
+			 *(p+60) = t;
+
 			 t = *(p+66);
 			 *(p+66) = 0;
 			 sscanf(p+60,"%f",&dummy[0]);
@@ -1319,7 +1321,9 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
 										
 										dst -= ((ai[a1].vdw+ai[a2].vdw)/2);
 										
-										if( dst <= cutoff ) 
+										if( (dst <= cutoff)&&(
+                                                    !((ai[a1].name[0]=='H') && 
+                                                      (ai[a2].name[0]=='H'))))
 										  {
 											 VLACheck((*bond),int,nBond*2+1);
 											 (*bond)[nBond*2  ] = a1;

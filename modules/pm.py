@@ -29,6 +29,21 @@ import __main__
 def ready():
    return _pm.ready()
 
+def _alter_do(at,expr):
+   type = at[0]
+   name = at[1]
+   resn = at[2]
+   chain= at[3]
+   resi = at[4]
+   x = at[5]
+   y = at[6]
+   z = at[7]
+   q = at[8]
+   b = at[9]
+   segi = at[10]
+   eval(expr)
+   return [type,name,resn,chain,resi,x,y,z,q,b,segi]
+
 def setup_global_locks():
    __main__.lock_api = _pm.get_globals()['lock_api']
    
@@ -289,7 +304,7 @@ def save(*arg):
       if f:
          f.write(_pm.get_pdb(sele,int(state)))
          f.close()
-      
+         print " save: wrote ",fname
    unlock()
 
 def get_feedback():
@@ -357,7 +372,7 @@ def color(*args):
    if len(args)==2:
       _pm.color(args[0],args[1],0)
    else:
-      _pm.color(args[0],args[1],1)   
+      _pm.color(args[0],"(all)",0)   
    unlock()
    
 
@@ -450,7 +465,7 @@ keyword = {
    'backward'    : [backward     , 0 , 0 , ',' , 0 ],
    'beginning'   : [beginning    , 0 , 0 , ',' , 0 ],
    'clip'        : [clip         , 2 , 2 , ',' , 0 ],
-   'color'       : [color        , 2 , 3 , ',' , 0 ],
+   'color'       : [color        , 1 , 2 , ',' , 0 ],
    'disable'     : [disable      , 1 , 1 , ',' , 0 ],
    'delete'      : [delete       , 1 , 1 , ',' , 0 ],
    'enable'      : [enable       , 1 , 1 , ',' , 0 ],

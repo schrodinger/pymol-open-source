@@ -63,8 +63,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
 CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
 
-char *ObjectMoleculeCoordSetToPDBStr(ObjectMolecule *I,int state);
-
 #endif
 
 

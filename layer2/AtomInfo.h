@@ -43,7 +43,7 @@ typedef struct AtomInfoType {
   int customType;
   int customFlag;
   int priority;
-  float b,vdw;
+  float b,q,vdw;
   int model; /* remaining items only used during selection */
   int atom; 
   int selEntry;

@@ -68,7 +68,7 @@ int SelectorUpdateTable(void);
 int SelectorModulate1(EvalElem *base);
 int SelectorSelect0(EvalElem *base);
 int SelectorSelect1(EvalElem *base);
-int SelectorSelect3(EvalElem *base);
+int SelectorSelect2(EvalElem *base);
 int SelectorLogic1(EvalElem *base);
 int SelectorLogic2(EvalElem *base);
 int *SelectorEvaluate(WordType *word);
@@ -80,9 +80,10 @@ void SelectorPurgeMembers(int sele);
 #define SELE_OPR2 2
 #define SELE_SEL0 3
 #define SELE_SEL1 4
-#define SELE_SEL3 5
+#define SELE_SEL2 5
 #define SELE_LIST 6
 #define SELE_PRP1 7
+#define SELE_SEL3 8
 #define SELE_PVAL 0
 
 static WordType Keyword[] = 
@@ -104,9 +105,19 @@ static WordType Keyword[] =
   "index",    "IDXs",
   "resn",     "RSNs",
   "%",        "SELs",
-  "attrib",   "VALx", /* 3 operand selection operator */ 
+  "b",        "BVLx", /* 2 operand selection operator */ 
   ""
 };
+
+static WordType AtOper[] = 
+{
+  ">",      "GTHN",
+  "<",      "LTHN",
+  "in",     "RANG",
+  "=",      "EQAL",
+  ""
+};
+
 /*========================================================================*/
 int SelectorMatch(int ref,int sele)
 {
@@ -191,6 +202,7 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj)
   int ok=true;
   int newFlag=false;
   int flag;
+  char buffer[255];
 
   if(sname[0]=='%')
 	 strcpy(name,&sname[1]);
@@ -259,8 +271,10 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj)
   FreeP(I->Table);
   FreeP(I->Obj);
   I->NAtom=0;
-  if(c) 
-    printf(" Selector: %s created with %d atoms.\n",name,c);
+  if(c&&name[0]!='_') {
+    sprintf(buffer," Selector: %s created with %d atoms.\n",name,c);
+    OrthoAddOutput(buffer);
+  }
 }
 /*========================================================================*/
 int SelectorUpdateTable(void)
@@ -603,10 +617,96 @@ int SelectorSelect1(EvalElem *base)
   return(ok);
 }
 /*========================================================================*/
-int SelectorSelect3(EvalElem *base)
+int SelectorSelect2(EvalElem *base)
 {
+  int a,model,sele,s;
+  int c=0;
+  int ok=true;
+  int oper;
+  float comp1,comp2;
+  AtomInfoType *at1;
+  char *p;
+  SelectorType *I=&Selector;
+  ObjectMolecule *obj;
   base->type=SELE_LIST;
-  return(1);
+  base->sele=Alloc(int,I->NAtom);
+  ErrChkPtr(base->sele);
+  for(a=0;a<I->NAtom;a++) {
+    base->sele[a]=0;
+  }
+  switch(base->code)
+	 {
+	 case 'BVLx':
+      oper=WordChoose(AtOper,base[1].text,4,I->IgnoreCase);
+      if(!oper)
+        ok=ErrMessage("Selector","Invalid Operator.");
+      if(ok) {
+        switch(oper) {
+        case 'GTHN':
+        case 'LTHN':
+        case 'EQAL':
+          if (sscanf(base[2].text,"%f",&comp1)!=1) 
+            ok=ErrMessage("Selector","Invalid Number");
+          break;
+        }
+        if(ok) {
+          switch(oper) {
+          case 'GTHN':
+            switch(base->code) {
+            case 'BVLx':
+              for(a=0;a<I->NAtom;a++) {
+                at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+                if(at1->b>comp1) {
+                  base[0].sele[a]=true;
+                  c++;
+                } else {
+                  base[0].sele[a]=false;
+                }
+              }
+              break;
+            }
+            break;
+          case 'LTHN':
+            switch(base->code) {
+            case 'BVLx':
+              for(a=0;a<I->NAtom;a++) {
+                at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+                if(at1->b<comp1) {
+                  base[0].sele[a]=true;
+                  c++;
+                } else {
+                  base[0].sele[a]=false;
+                }
+              }
+              break;
+            }
+            break;
+          case 'EQAL':
+            switch(base->code) {
+            case 'BVLx':
+              for(a=0;a<I->NAtom;a++) {
+                at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+                if(fabs(at1->b-comp1)<0.0001) {
+                  base[0].sele[a]=true;
+                  c++;
+                } else {
+                  base[0].sele[a]=false;
+                }
+              }
+              break;
+            }
+            break;
+          }
+          break;
+        }
+      }
+    }
+  
+  if(DebugSelector&DebugState)
+	 printf("SelectorSelect2: %c%c%c%c %s: %d atoms selected.\n",
+			  base[0].code>>24,base[0].code>>16,
+			  base[0].code>>8,base[0].code&0xFF,base[1].text,c);
+  return(ok);
 }
 /*========================================================================*/
 int SelectorLogic1(EvalElem *base)
@@ -779,8 +879,8 @@ int *SelectorEvaluate(WordType *word)
 							 valueFlag=1;
 							 break;
 						  case 'x':
-							 e->type=SELE_SEL3;
-							 valueFlag=3;
+							 e->type=SELE_SEL2;
+							 valueFlag=2;
 							 break;
 						  case '1':
 							 e->type=SELE_OPR1;
@@ -794,7 +894,6 @@ int *SelectorEvaluate(WordType *word)
 							 break;
                     }
 					 } else if(SelectorIndexByName(word[c])>=0) {
-                  printf("here\n");
 						depth++;
 						e=Stack+depth;
 						e->level=level;
@@ -857,6 +956,13 @@ int *SelectorEvaluate(WordType *word)
 								ok=SelectorModulate1(&Stack[depth-2]);
 								depth-=2;
 							 }
+						  if(ok&&(!opFlag)&&(Stack[depth-2].type==SELE_SEL2)
+							  &&(Stack[depth-1].type==SELE_VALU)
+							  &&(Stack[depth].type==SELE_VALU))
+							 { /* 2 argument value operator */
+								ok=SelectorSelect2(&Stack[depth-2]);
+								depth-=2;
+							 }
 						}
 				if(ok)
 				  if(depth>3)
@@ -869,7 +975,7 @@ int *SelectorEvaluate(WordType *word)
 							  &&(Stack[depth-1].type==SELE_VALU)
 							  &&(Stack[depth-2].type==SELE_VALU))
 							 { /* 2 argument logical operator */
-								ok=SelectorSelect3(&Stack[depth-3]);
+                        /*								ok=SelectorSelect3(&Stack[depth-3]);*/
 								depth-=3;
 							 }
 						}
@@ -906,7 +1012,6 @@ int *SelectorEvaluate(WordType *word)
 		OrthoAddOutput(line);
 		OrthoRestorePrompt();
 	 }
-		  
   return(result);
 }
 
@@ -934,6 +1039,9 @@ WordType *SelectorParse(char *s) {
 				  break;
 				case '(': /* single word terminators */ 
 				case ')':
+				case '>': 
+				case '<':
+            case '=':
 				case '%':
 				  *q=0;
 				  q=r[c];
@@ -954,6 +1062,9 @@ WordType *SelectorParse(char *s) {
 				{
 				case '(': /* single word terminators */
 				case ')':
+				case '>': 
+				case '<':
+            case '=':
 			   case '%':
 				  q=r[c];
 				  *q++=(*p);
