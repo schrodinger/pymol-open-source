@@ -11,13 +11,6 @@ def process(sele): # expand slash notation into a standard atom selection
    sele = str(sele)
    if string.find(sele,'/')<0:
       return sele
-#      ss = string.strip(sele)
-#      if ss[0:1]=='(':
-#         return sele
-#      elif sele_re.search(string.strip(sele))==None:
-#         return sele
-#      else:
-#         return "("+sele+")"
    while 1:
       mo = pat_re.search(sele)
       if mo == None:
