@@ -442,6 +442,7 @@ if __name__=='pymol.setting':
       dihedral_label_position   = (408, '')
       defer_builds_mode         = (409, '')
       seq_view_discrete_by_state = (410, '')
+      scene_animation_duration =  (411, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
