@@ -1223,6 +1223,11 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_debug:
   case cSetting_cartoon_highlight_color:
   case cSetting_cartoon_discrete_colors:
+  case cSetting_cartoon_smooth_first:
+  case cSetting_cartoon_smooth_last:
+  case cSetting_cartoon_smooth_cycles:
+  case cSetting_cartoon_flat_cycles:
+
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
     SceneChanged();
     break;
@@ -2039,6 +2044,12 @@ void SettingInitGlobal(int alloc)
   SettingSet_f(I,cSetting_gaussian_lambda, 0.5F );
 
   SettingSet_b(I,cSetting_pdb_standard_order, 0);
+
+  SettingSet_i(I,cSetting_cartoon_smooth_first, 1);
+  SettingSet_i(I,cSetting_cartoon_smooth_last, 1);
+  SettingSet_i(I,cSetting_cartoon_smooth_cycles,2);
+  SettingSet_i(I,cSetting_cartoon_flat_cycles,4);
+
 }
 
 

@@ -145,6 +145,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   float helix_radius;
   float *h_start=NULL,*h_end=NULL;
   float *stmp;
+  int smooth_first,smooth_last,smooth_cycles,flat_cycles;
+  
 
   /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -216,6 +218,11 @@ ENDFD;
   round_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices);
   smooth_loops = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops);
   helix_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_helix_radius);
+
+  smooth_first = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_first);
+  smooth_last = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_last);
+  smooth_cycles = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_cycles);
+  flat_cycles = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_cycles);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -721,32 +728,29 @@ ENDFD;
                 end_flag=1;
             }
             if(end_flag) {
-              
-              for(f=1;f<2;f++) {
-                for(c=0;c<3;c++) {
-                  for(b=first+f;b<=last-f;b++) { /* iterative averaging */
-                    zero3f(t0);
-                    for(e=-f;e<=f;e++) {
-                      add3f(pv+3*(b+e),t0,t0);
-                    }
-                    scale3f(t0,1.0/(f*2+1),tmp+b*3);
+              f=1;
+              for(c=0;c<flat_cycles;c++) {
+                for(b=first+f;b<=last-f;b++) { /* iterative averaging */
+                  zero3f(t0);
+                  for(e=-f;e<=f;e++) {
+                    add3f(pv+3*(b+e),t0,t0);
                   }
-                  for(b=first+f;b<=last-f;b++) {
-                    copy3f(tmp+b*3,pv+b*3);
-                  }
-                  for(b=first+f;b<=last-f;b++) { 
-                    zero3f(t0);
-                    for(e=-f;e<=f;e++) {
-                      add3f(pvo+3*(b+e),t0,t0);
-                    }
-                    scale3f(t0,1.0/(f*2+1),tmp+b*3);
-                  }
-                  for(b=first+f;b<=last-f;b++) {
-                    copy3f(tmp+b*3,pvo+b*3);
-                    normalize3f(pvo+b*3);
-                  }
+                  scale3f(t0,1.0/(f*2+1),tmp+b*3);
                 }
-
+                for(b=first+f;b<=last-f;b++) {
+                  copy3f(tmp+b*3,pv+b*3);
+                }
+                for(b=first+f;b<=last-f;b++) { 
+                  zero3f(t0);
+                  for(e=-f;e<=f;e++) {
+                    add3f(pvo+3*(b+e),t0,t0);
+                  }
+                  scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                }
+                for(b=first+f;b<=last-f;b++) {
+                  copy3f(tmp+b*3,pvo+b*3);
+                  normalize3f(pvo+b*3);
+                }
               }
               first = -1;
               last = -1;
@@ -801,8 +805,8 @@ ENDFD;
                   if(last<(nAt-1)) 
                     last++;
 
-              for(f=1;f<2;f++) {
-                for(c=0;c<3;c++) {
+              for(f=smooth_first;f<=smooth_last;f++) {
+                for(c=0;c<smooth_cycles;c++) {
                   for(b=first+f;b<=last-f;b++) { /* iterative averaging */
                     zero3f(t0);
                     for(e=-f;e<=f;e++) {

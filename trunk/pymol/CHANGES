@@ -166,6 +166,8 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * reinit command
+
    * Moved demo code into a Wizard
 
    * Fixed an ancient memory trasher bug in Isosurface, thank God for
