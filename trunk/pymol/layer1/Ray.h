@@ -57,7 +57,8 @@ typedef struct {
   int r;
 } G3dPrimitive;
 
-G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,float front, float back, float fov);
+G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,float front,
+                           float back, float fov,int quiet);
 
 struct _CRay {
   void (*fSphere3fv)( CRay *ray,float *v,float r);

@@ -3686,35 +3686,37 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
     break;
   case 3: /* mode 3 is for Jmol */
     {
-      G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->Back,fov);
-      int cnt = VLAGetSize(jp);
-      int a;
-      for(a=0;a<cnt;a++) {
-        switch(jp[a].op) {
-        case 1:
-          printf("g3d.fillSphereCentered(gray,%d,%d,%d,%d);\n",jp[a].r,jp[a].x1,jp[a].y1,jp[a].z1);
-          break;
-        case 2:
-          printf("triangle(%d,%d,%d,%d,%d,%d,%d,%d,%d);\n",
-                 jp[a].x1,jp[a].y1,jp[a].z1,
-                 jp[a].x2,jp[a].y2,jp[a].z2,
-                 jp[a].x3,jp[a].y3,jp[a].z3
-                 );
-          break;
-        case 3:
-          printf("g3d.fillCylinder(gray,gray,(byte)3,%d,%d,%d,%d,%d,%d,%d);\n",
-                 jp[a].r,
-                 jp[a].x1,jp[a].y1,jp[a].z1,
-                 jp[a].x2,jp[a].y2,jp[a].z2
-                 );          
-          break;
+      G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->Back,fov,quiet);
+      if(0) {
+        int cnt = VLAGetSize(jp);
+        int a;
+        for(a=0;a<cnt;a++) {
+          switch(jp[a].op) {
+          case 1:
+            printf("g3d.fillSphereCentered(gray,%d,%d,%d,%d);\n",jp[a].r,jp[a].x1,jp[a].y1,jp[a].z1);
+            break;
+          case 2:
+            printf("triangle(%d,%d,%d,%d,%d,%d,%d,%d,%d);\n",
+                   jp[a].x1,jp[a].y1,jp[a].z1,
+                   jp[a].x2,jp[a].y2,jp[a].z2,
+                   jp[a].x3,jp[a].y3,jp[a].z3
+                   );
+            break;
+          case 3:
+            printf("g3d.fillCylinder(gray,gray,(byte)3,%d,%d,%d,%d,%d,%d,%d);\n",
+                   jp[a].r,
+                   jp[a].x1,jp[a].y1,jp[a].z1,
+                   jp[a].x2,jp[a].y2,jp[a].z2
+                   );          
+            break;
+          }
         }
       }
-      if(g3d) {
-        *g3d = jp;
-      } else {
-        VLAFreeP(jp);
-      }
+        if(g3d) {
+          *g3d = jp;
+        } else {
+          VLAFreeP(jp);
+        }
     }
     break;
   }
@@ -3730,7 +3732,8 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
       ENDFB(G);
    }
   }
-  OrthoDirty(G);
+  if(mode!=3)
+    OrthoDirty(G);
   RayFree(ray);
 }
 /*========================================================================*/

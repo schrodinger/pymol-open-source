@@ -142,7 +142,7 @@ int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr)
   int *return_vla = ExecutiveGetG3d(I->G);
   int result = OVstatus_FAILURE;
   if(return_vla) {
-    result = VLAGetSize(return_vla);
+    result = VLAGetSize(return_vla)*(sizeof(G3dPrimitive)/sizeof(int));
   }
   if(array_ptr)
     *array_ptr = return_vla;
@@ -474,7 +474,6 @@ struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I)
 void PyMOL_Draw(CPyMOL *I)
 {
   PyMOLGlobals *G = I->G;
-
   if(G->HaveGUI) {
 
     PyMOL_PushValidContext(I);
@@ -503,7 +502,6 @@ void PyMOL_Draw(CPyMOL *I)
     glDisable(GL_NORMALIZE);
     glDisable(GL_POLYGON_SMOOTH);
 
- 
   } 
 
   I->RedisplayFlag = false;
@@ -511,8 +509,6 @@ void PyMOL_Draw(CPyMOL *I)
   ExecutiveDrawNow(G);
 
   if(G->HaveGUI) PyMOL_PopValidContext(I);
-
-
 }
 
 void PyMOL_Key(CPyMOL *I,unsigned char k, int x, int y, int modifiers)

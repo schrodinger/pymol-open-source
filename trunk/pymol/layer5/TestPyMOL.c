@@ -296,17 +296,18 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
       VFontLoad(G,1,0,0,true); 
       PUnblock();
       break;
-    case 2: {
-      CObject *obj = NULL;
-      float pos[3] = {0.0,0.0,0.0};
-      PBlock();
-      obj = (CObject*)ObjectCGONewVFontTest(G,"hello",pos);
-      PUnblock();
-      if(obj) {
-        ObjectSetName(obj,"hello");
-        ExecutiveManageObject(G,obj,true,false);
+    case 2: 
+      {
+        CObject *obj = NULL;
+        float pos[3] = {0.0,0.0,0.0};
+        PBlock();
+        obj = (CObject*)ObjectCGONewVFontTest(G,"hello",pos);
+        PUnblock();
+        if(obj) {
+          ObjectSetName(obj,"hello");
+          ExecutiveManageObject(G,obj,true,false);
+        }
       }
-    }
       break;
     case 3: 
       {
@@ -317,7 +318,17 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
           ExecutiveManageObject(G,obj,true,false);
         }
       }
+      break;
+    case 4:
+      {
+        /* try to match G3D */
+
+        SettingSetGlobal_b(G,cSetting_ortho,1);
+        SettingSet_3f(G->Setting,cSetting_light, 1.0F, -1.0F, -2.5F);;
+      }
+      break;
     }
+    break;
   case 1: 
     /* set up for test usage as a simple viewer */
     
