@@ -1,0 +1,10 @@
+PyMOL>def foo(moo=2): print moo
+PyMOL>cmd.extend('foo',foo)
+PyMOL>foo
+2
+PyMOL>foo 3
+3
+PyMOL>foo moo=5
+5
+PyMOL>foo ?
+Usage: foo [ moo ]

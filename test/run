@@ -77,7 +77,7 @@ for test in tests:
       
       print " run_tests: "+tst+"..."
 
-      syscmd = cmd+" "+opt+" "+ifil+" | "+python_exe+" trim.py > "+cmp+"/"+tst+".log 2>&1"
+      syscmd = cmd+" "+opt+" "+ifil+" 2>&1 | "+python_exe+" trim.py > "+cmp+"/"+tst+".log 2>&1"
 
       os.system(syscmd)
       # check log file and any other output files
