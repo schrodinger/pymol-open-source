@@ -214,20 +214,20 @@ PyMOL>ray
 PyMOL>disable
 PyMOL>enable 3al1
 PyMOL>ray
- RayRenderTest: obtained 1262 graphics primitives.
+ RayRenderTest: obtained 1273 graphics primitives.
 PyMOL>disable
 PyMOL>enable
 PyMOL>ray
- RayRenderTest: obtained 1428 graphics primitives.
+ RayRenderTest: obtained 1439 graphics primitives.
 PyMOL>disable
 PyMOL>enable all
 PyMOL>ray
- RayRenderTest: obtained 1428 graphics primitives.
+ RayRenderTest: obtained 1439 graphics primitives.
 PyMOL>disable
 PyMOL>enable 3al1
 PyMOL>enable pept
 PyMOL>ray
- RayRenderTest: obtained 1428 graphics primitives.
+ RayRenderTest: obtained 1439 graphics primitives.
 PyMOL>del all
 PyMOL>reset
 PyMOL>cmd._dump_floats(cmd.get_view(0))
@@ -262,9 +262,9 @@ PyMOL>ray
 PyMOL>show surface,(not name n)
 PyMOL>hide (name o)
 PyMOL>ray
- RepSurface: 2171 surface points.
- RepSurface: 2558 triangles.
- RayRenderTest: obtained 2367 graphics primitives.
+ RepSurface: 2208 surface points.
+ RepSurface: 2634 triangles.
+ RayRenderTest: obtained 2409 graphics primitives.
 PyMOL>hide surf
 PyMOL>ray
  RayRenderTest: obtained 153 graphics primitives.
@@ -323,8 +323,8 @@ PyMOL>orient
  Eigensolve:                 0.000    0.000    0.000
 PyMOL>orient (none)
 PyMOL>orient (name ca)
- Eigensolve: eigenvectors    0.568   -0.823    0.076
- Eigensolve:                 0.821    0.567    0.010
+ Eigensolve: eigenvectors   -0.568    0.823   -0.076
+ Eigensolve:                -0.821   -0.567   -0.010
  Eigensolve:                -0.051    0.056    0.996
  Eigensolve: eigenvalues    93.821  482.357  448.979
  Eigensolve:                 0.000    0.000    0.000
@@ -355,12 +355,12 @@ PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>show dots
 PyMOL>ray
- RayRenderTest: obtained 6164 graphics primitives.
+ RayRenderTest: obtained 6837 graphics primitives.
 PyMOL>alter (all),vdw=5.0
  Alter: modified 107 atoms.
 PyMOL>refresh
 PyMOL>ray
- RayRenderTest: obtained 6164 graphics primitives.
+ RayRenderTest: obtained 6837 graphics primitives.
 PyMOL>rebuild
 PyMOL>ray
  RayRenderTest: obtained 1960 graphics primitives.

@@ -920,11 +920,11 @@ USAGE
       unlock()
    return r
 
-def load_png(filename):
+def load_png(filename,movie=1,quiet=0):
    r=None
    try:
       lock()   
-      r = _cmd.load_png(str(filename))
+      r = _cmd.load_png(str(filename),int(movie),int(quiet))
    finally:
       unlock()
    return r

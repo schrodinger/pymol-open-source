@@ -73,11 +73,11 @@ PyMOL>load dat/pept.pdb
 PyMOL>get_area (none)
  cmd.get_area: 0.000 Angstroms^2.
 PyMOL>get_area
- cmd.get_area: 1388.036 Angstroms^2.
+ cmd.get_area: 1381.186 Angstroms^2.
 PyMOL>get_area state=2
 Area-Error: Invalid state.
 PyMOL>get_area name ca
- cmd.get_area: 100.463 Angstroms^2.
+ cmd.get_area: 112.133 Angstroms^2.
 PyMOL>load dat/3al1.pdb
  ObjectMolecule: read HELIX A 102 A 110
  ObjectMolecule: read HELIX B 202 B 210
@@ -198,7 +198,7 @@ PyMOL>index name ca
  cmd.index: (pept`95)
  cmd.index: (pept`101)
 PyMOL>overlap pept,pept
- cmd.overlap: 644.478 Angstroms.
+ cmd.overlap: 549.083 Angstroms.
 PyMOL>alter (all),vdw=0.0
  Alter: modified 107 atoms.
 PyMOL>overlap pept,pept

@@ -349,17 +349,17 @@ float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
     if((a1->geom==cAtomInfoPlaner)&&
        (a2->geom==cAtomInfoPlaner))
       switch(a2->protons) {
-      case cAN_N:  result = 1.25; break;
-      case cAN_O:  result = 1.21; break;
-      case cAN_S:  result = 1.53; break; /* interpolated */
-      default: result = 1.25; break;
+      case cAN_N:  result = 1.25F; break;
+      case cAN_O:  result = 1.21F; break;
+      case cAN_S:  result = 1.53F; break; /* interpolated */
+      default: result = 1.25F; break;
       }
     else {
       switch(a2->protons) {
-      case cAN_N:  result = 1.45; break;
-      case cAN_O:  result = 1.40; break;
-      case cAN_S:  result = 1.75; break; /* interpolated */
-      default: result = 1.45; break;
+      case cAN_N:  result = 1.45F; break;
+      case cAN_O:  result = 1.40F; break;
+      case cAN_S:  result = 1.75F; break; /* interpolated */
+      default: result = 1.45F; break;
       }
     }
     break;
@@ -370,21 +370,21 @@ float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
     if((a1->geom==cAtomInfoPlaner)&&
        (a2->geom==cAtomInfoPlaner))
       switch(a2->protons) {
-      case cAN_O:  result = 1.35; break; /* guess */
-      case cAN_S:  result = 1.44; break; /* macromodel */
-      default: result = 1.35; break;
+      case cAN_O:  result = 1.35F; break; /* guess */
+      case cAN_S:  result = 1.44F; break; /* macromodel */
+      default: result = 1.35F; break;
       }
     else if(a1->geom==cAtomInfoPlaner) {
       switch(a2->protons) {
-      case cAN_O:  result = 1.35; break; /* guess */
-      case cAN_S:  result = 1.44; break; /* macromodel */
-      default: result = 1.35; break;
+      case cAN_O:  result = 1.35F; break; /* guess */
+      case cAN_S:  result = 1.44F; break; /* macromodel */
+      default: result = 1.35F; break;
       }
     } else {
       switch(a2->protons) {
-      case cAN_O:  result = 1.40; break;
-      case cAN_S:  result = 1.75; break; /* interpolated */
-      default: result = 1.45; break;
+      case cAN_O:  result = 1.40F; break;
+      case cAN_S:  result = 1.75F; break; /* interpolated */
+      default: result = 1.45F; break;
       }
     }
     break;
@@ -393,8 +393,8 @@ float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
 
   case cAN_S:
     switch(a2->protons) {
-    case cAN_S:  result = 2.05; break; /* interpolated */
-    default: result = 1.82; break;
+    case cAN_S:  result = 2.05F; break; /* interpolated */
+    default: result = 1.82F; break;
     }
     break;
     
@@ -821,16 +821,16 @@ void AtomInfoAssignParameters(AtomInfoType *I)
       break;
     }
   if(SettingGet(cSetting_legacy_vdw_radii)) { /* ver<0.75, old, incorrect VDW */
-    if(!strcmp(e,"N")) vdw=1.8; /* slow but compact */
-    if(!strcmp(e,"C")) vdw=1.8;
-    if(!strcmp(e,"Cl")) vdw=1.8;
-    if(!strcmp(e,"O")) vdw=1.5;
-    if(!strcmp(e,"Br")) vdw=1.9;
-    if(!strcmp(e,"I")) vdw=2.15;
-    if(!strcmp(e,"S")) vdw=1.9;
-    if(!strcmp(e,"P")) vdw=1.9;
-    if(!strcmp(e,"F")) vdw=1.35;
-    if(!strcmp(e,"H")) vdw=1.1;
+    if(!strcmp(e,"N")) vdw=1.8F; /* slow but compact */
+    if(!strcmp(e,"C")) vdw=1.8F;
+    if(!strcmp(e,"Cl")) vdw=1.8F;
+    if(!strcmp(e,"O")) vdw=1.5F;
+    if(!strcmp(e,"Br")) vdw=1.9F;
+    if(!strcmp(e,"I")) vdw=2.15F;
+    if(!strcmp(e,"S")) vdw=1.9F;
+    if(!strcmp(e,"P")) vdw=1.9F;
+    if(!strcmp(e,"F")) vdw=1.35F;
+    if(!strcmp(e,"H")) vdw=1.1F;
   }
   e = I->elem;
   if(!e[1]) { /* single letter */

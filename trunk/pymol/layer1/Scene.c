@@ -628,7 +628,7 @@ void SceneObjectDel(Object *obj)
   SceneDirty();
 }
 /*========================================================================*/
-int SceneLoadPNG(char *fname,int movie_flag) 
+int SceneLoadPNG(char *fname,int movie_flag,int quiet) 
 {
   CScene *I=&Scene;
   int ok=false;
@@ -641,22 +641,30 @@ int SceneLoadPNG(char *fname,int movie_flag)
 	 }
   }
   if(MyPNGRead(fname,(unsigned char**)&I->ImageBuffer,&I->ImageBufferWidth,&I->ImageBufferHeight)) {
-    PRINTFB(FB_Scene,FB_Details)
-      " Scene: loaded image from '%s'.\n",fname
-      ENDFB;
+    if(!quiet) {
+      PRINTFB(FB_Scene,FB_Details)
+        " Scene: loaded image from '%s'.\n",fname
+        ENDFB;
+    }
     I->CopyFlag=true;
+    OrthoRemoveSplash();
+    SettingSet(cSetting_text,0.0);
     if(movie_flag&&I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
       MovieSetImage(MovieFrameToImage(I->Frame),I->ImageBuffer);
       I->MovieOwnsImageFlag=true;
+      I->MovieFrameFlag=true;
     } else {
       I->MovieOwnsImageFlag=false;
+      I->DirtyFlag=false; /* make sure we don't overwrite image */
     }
     OrthoDirty();
     ok=true;
   } else {
-    PRINTFB(FB_Scene,FB_Errors)
-      " Scene: unable to load image from '%s'.\n",fname
-      ENDFB;
+    if(!quiet) {
+      PRINTFB(FB_Scene,FB_Errors)
+        " Scene: unable to load image from '%s'.\n",fname
+        ENDFB;
+    }
   }
   return(ok);
 }
@@ -1394,7 +1402,6 @@ void SceneInit(void)
   I->LastPicked.ptr = NULL;
 
   I->CopyNextFlag=true;
-
   I->vendor[0]=0;
   I->renderer[0]=0;
   I->version[0]=0;
@@ -1569,7 +1576,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
     RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,I->FrontSafe,I->Back,fov);
     if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
       if(PPovrayRender(headerVLA,charVLA,"tmp_pymol",ray_width,ray_height,SettingGet(cSetting_antialias))) {
-        SceneLoadPNG("tmp_pymol.png",false);
+        SceneLoadPNG("tmp_pymol.png",false,false);
         I->DirtyFlag=false;
       }
       VLAFreeP(charVLA);

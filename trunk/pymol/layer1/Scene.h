@@ -91,7 +91,7 @@ int SceneMultipick(Multipick *smp);
 
 void SceneSetCardInfo(char *vendor,char *renderer,char *version);
 void SceneGetCardInfo(char **vendor,char **renderer,char **version);
-int SceneLoadPNG(char *fname,int movie_flag);
+int SceneLoadPNG(char *fname,int movie_flag,int quiet);
 
 void SceneSetDefaultView(void);
 

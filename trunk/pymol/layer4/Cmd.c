@@ -664,10 +664,12 @@ static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
 {
   char *str1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  int quiet;
+  int movie;
+  ok = PyArg_ParseTuple(args,"sii",&str1,&movie,&quiet);
   if(ok) {
     APIEntry();
-    ok = SceneLoadPNG(str1,true);
+    ok = SceneLoadPNG(str1,movie,quiet);
     APIExit();
   }
   return(APIStatus(ok));
