@@ -184,8 +184,8 @@ int CB_SgOps(const T_SgOps *SgOps,
 
 typedef struct
   {
-    const int    Sym;
-    const int    nLTr;
+    int          Sym;
+    int          nLTr;
     const T_LTr  *LTr;
   }
   T_ConvCType;
