@@ -352,7 +352,7 @@ zoom m1,state=-5000
 zoom (none),state=5
 zoom (all),state=-1
 zoom (all),state=0
-cmd._dump_floats(cmd.get_view(0))
+cmd._dump_ufloats(cmd.get_view(0))
 
 
 /print "END-LOG"
