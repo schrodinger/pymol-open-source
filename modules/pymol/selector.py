@@ -30,6 +30,7 @@ def process(sele): # expand slash notation into a standard atom selection
       chain = ''
       residue = ''
       name = ''
+      alt = ''
       # interpret
       if mat[0]=="/": # preceeding slash, interpret left to right
          if la>1: model = arg[1]
@@ -64,7 +65,16 @@ def process(sele): # expand slash notation into a standard atom selection
                lst.append(residue)
             else:
                lst.append("i;"+residue)                        
-      if name!='': lst.append("n;"+string.replace(name,'+',','))
+      if name!='':
+         if(string.find(name,'`')>=0): # alternate conformations present
+            (name,alt) = string.split(name,'`')
+            if not len(alt):
+               alt="''"
+            if len(name):
+               lst.append("n;"+string.replace(name,'+',','))
+         else:
+            lst.append("n;"+string.replace(name,'+',','))
+      if alt!='': lst.append("alt "+string.replace(alt,'+',','))      
       if not len(lst):
          st = "*"
       else:

@@ -105,6 +105,41 @@ void SceneDraw(Block *block);
 int SceneClick(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
+
+void SceneGetPos(float *pos)
+{
+  CScene *I=&Scene;  
+  
+  PRINTFD(FB_Scene)
+    " SceneGetPos: origin of rotation"
+    ENDFD3f(I->Origin);
+  /* take origin into camera coords */
+
+  MatrixTransform3f(I->RotMatrix,I->Origin,pos); 
+
+  PRINTFD(FB_Scene)
+    " SceneGetPos: origin in camera  "
+    ENDFD3f(pos);
+
+  /* find offset in camera coordinates */
+
+  pos[0]=pos[0]-I->Pos[0]; 
+  pos[1]=pos[1]-I->Pos[1];
+
+  PRINTFD(FB_Scene)
+    " SceneGetPos: center in camera  "
+    ENDFD3f(pos);
+
+  /* convert back to real coordinates */
+
+  MatrixInvTransform3f(I->RotMatrix,pos,pos);
+
+  PRINTFD(FB_Scene)
+    " SceneGetPos: center            "
+    ENDFD3f(pos);
+
+}
+
 /*========================================================================*/
 int SceneGetNFrame(void)
 {
@@ -479,7 +514,7 @@ void SceneWindowSphere(float *location,float radius)
   subtract3f(I->Origin,location,v0); 
   /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 
-  MatrixTransform3f(v0,I->RotMatrix,I->Pos); /* convert to view-space */
+  MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
   dist = radius/tan((SceneFOV/2.0)*cPI/180.0);
 
   I->Pos[2]-=dist;
@@ -503,7 +538,7 @@ void SceneOriginSet(float *origin,int preserve)
   if(preserve) /* preserve current viewing location */
 	 {
 		subtract3f(origin,I->Origin,v0); /* model-space translation */
-		MatrixTransform3f(v0,I->RotMatrix,v1); /* convert to view-space */
+		MatrixTransform3f(I->RotMatrix,v0,v1); /* convert to view-space */
 		add3f(I->Pos,v1,I->Pos); /* offset view to compensate */
 	 }
   I->Origin[0]=origin[0]; /* move origin */
@@ -668,12 +703,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           if(SettingGet(cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
             ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buffer);
-            sprintf(buf2,"cmd.edit('%s',pkresi=1)",buffer);
+            sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
             PLog(buf2,cPLog_pym);
           }
           OrthoRestorePrompt();
         }
-
         sprintf(buffer,"%s`%d",
                 obj->Name,I->LastPicked.index+1);    
         SelectorCreate(cEditorSele1,buffer,NULL,true);
@@ -728,7 +762,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             objMol = (ObjectMolecule*)obj;            
             ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
             ObjectMoleculeGetAtomSele(objMol,atIndex,buf2);
-            sprintf(buffer,"cmd.edit('%s','%s')",buf1,buf2);
+            sprintf(buffer,"cmd.edit(\"%s\",\"%s\")",buf1,buf2);
             PLog(buffer,cPLog_pym);
           }
           sprintf(buffer,"%s`%d",
@@ -807,6 +841,17 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cButModeOrigAt:
         sprintf(buf2,"origin (%s)",buffer);        
         OrthoCommandIn(buf2);
+        if(obj->type==cObjectMolecule) {
+          if(SettingGet(cSetting_logging)) {
+            objMol = (ObjectMolecule*)obj;            
+            ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
+            sprintf(buffer,"cmd.origin(\"%s\")",buf1);
+            PLog(buffer,cPLog_pym);
+          }
+        }
+        PRINTFB(FB_Scene,FB_Actions) 
+          " Scene: Origin set.\n"
+          ENDFB;
         break;
       }
       switch(mode) {
@@ -818,6 +863,14 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           ExecutiveHideSelections();
         if(SettingGet(cSetting_auto_show_selections))
           ExecutiveSetObjVisib(selName,1);
+        if(obj->type==cObjectMolecule) {
+          if(SettingGet(cSetting_logging)) {
+            objMol = (ObjectMolecule*)obj;            
+            ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
+            sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf1);
+            PLog(buffer,cPLog_pym);
+          }
+        }
         break;
       case cButModeAddToPk1:
       case cButModeAddToPk2:
@@ -826,8 +879,27 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
                   selName,buffer,buffer,selName);
           SelectorCreate(selName,buf2,NULL,false);
-        } else 
+          if(obj->type==cObjectMolecule) {
+            if(SettingGet(cSetting_logging)) {
+              objMol = (ObjectMolecule*)obj;            
+              ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buffer);
+              sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
+                      selName,buffer,buffer,selName);
+              sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf2);
+              PLog(buffer,cPLog_pym);
+            }
+          }
+        } else {
           SelectorCreate(selName,buffer,NULL,false);
+          if(obj->type==cObjectMolecule) {
+            if(SettingGet(cSetting_logging)) {
+              objMol = (ObjectMolecule*)obj;            
+              ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
+              sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf1);
+              PLog(buffer,cPLog_pym);
+            }
+          }
+        }
         if(SettingGet(cSetting_auto_hide_selections))
           ExecutiveHideSelections();
         if(SettingGet(cSetting_auto_show_selections))
@@ -908,7 +980,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
           v2[1] = (y-I->LastY)*vScale;
           v2[2] = 0;
           /* transform into model coodinate space */
-          MatrixInvRotate44f3f(I->RotMatrix,v2,v2); 
+          MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
           EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,I->StateIndex,v1,v2);
         }
       }
@@ -1560,7 +1632,7 @@ void SceneRender(Pickable *pick,int x,int y)
 
         copy3f(SettingGetGlobal_fv(cSetting_light),vv);
         normalize3f(vv);
-        MatrixInvRotate44f3f(I->RotMatrix,vv,vv); 
+        MatrixInvTransform44fAs33f3f(I->RotMatrix,vv,vv); 
         invert3f(vv);
         vv[3]=0.0;
         glLightfv(GL_LIGHT1,GL_POSITION,vv);

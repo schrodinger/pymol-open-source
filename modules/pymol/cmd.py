@@ -42,6 +42,7 @@ import parsing
 import sys
 import copy
 import selector
+import operator
 
 from shortcut import Shortcut
 
@@ -736,7 +737,11 @@ USAGE
       unlock()
    return r
 
-def fragment(name,object=None):
+def _adjust_coord(a,i,x):
+   a.coord[i]=a.coord[i]+x
+   return None
+
+def fragment(name,object=None,origin=1,zoom=0):
    '''
 DESCRIPTION
  
@@ -749,9 +754,29 @@ USAGE
 
 '''
    try:
-      if object==None:
-         object=name
-      load_model(fragments.get(str(name)),str(object))
+      save=get_setting_legacy('auto_zoom')
+      set('auto_zoom',zoom,quiet=1)
+      try:
+         if object==None:
+            object=name
+         model = fragments.get(str(name))
+         la = len(model.atom)
+         if la:
+            mean = map(lambda x,la=la:x/la,[
+               reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
+               reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
+               reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
+            position = get_position()
+            for c in range(0,3):
+               mean[c]=position[c]-mean[c]
+               map(lambda a,x=mean[c],c=c:_adjust_coord(a,c,x),model.atom)
+            mean = map(lambda x,la=la:x/la,[
+               reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
+               reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
+               reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
+         load_model(model,str(object))
+      finally:
+         set('auto_zoom',save,quiet=1)
    except:
       print "Error: unable to load fragment %s" % name
 
@@ -804,6 +829,15 @@ def get_phipsi(sele1="(name ca)",state=-1):
       unlock()
    return r
 
+def get_position():
+   r = None
+   try:
+      lock()
+      r = _cmd.get_position()
+   finally:
+      unlock()
+   return r
+   
 def get_dihedral(atom1,atom2,atom3,atom4,state=1):
    # preprocess selections
    atom1 = selector.process(atom1)
@@ -4561,7 +4595,7 @@ NOTES
       unlock()
    return r
    
-def select(name,selection="",quiet=0):
+def select(name,selection="",quiet=0,show=0):
    '''
 DESCRIPTION
   
@@ -4601,6 +4635,8 @@ NOTES
       selection = selector.process(selection)
       #            
       r = _cmd.select(str(name),str(selection),int(quiet))
+      if r and show:
+         r = _cmd.onoff(str(name),1);
    finally:
       unlock()
    return r

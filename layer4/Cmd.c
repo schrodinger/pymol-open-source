@@ -184,6 +184,7 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args);
@@ -303,6 +304,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_model",	           CmdGetModel,             METH_VARARGS },
 	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
+	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
    {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
@@ -396,6 +398,17 @@ static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
   Py_INCREF(Py_None);
   return(Py_None);
 
+}
+
+static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args)
+{
+  PyObject *result;
+  float v[3];
+  APIEntry();
+  SceneGetPos(v);
+  APIExit();
+  result=PConvFloatArrayToPyList(v,3);
+  return(result);
 }
 
 static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
@@ -2219,7 +2232,7 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
   PyArg_ParseTuple(args,"ssi",&sname,&sele,&quiet);
   APIEntry();
   cnt = SelectorCreate(sname,sele,NULL,quiet);
-  OrthoDirty();
+  SceneDirty();
   APIExit();
   return PyInt_FromLong(cnt);
 }

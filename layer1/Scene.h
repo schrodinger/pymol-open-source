@@ -85,6 +85,7 @@ void SceneGetViewNormal(float *v);
 void SceneClipSet(float front,float back);
 void SceneGetView(SceneViewType view);
 void SceneSetView(SceneViewType view);
+void SceneGetPos(float *pos);
 
 #endif
 

@@ -82,7 +82,7 @@ Changes up to 0.64
      of session-like behavior.  This makes a huge difference in PyMOL
      user-friendliness.
 
-   * autocompletion bug fixed, autocompletion added for the set command
+   * autocompletion bug fixed, generalized autocompletion added
 
    * mesh_radius cut in half, for better default density figures
 

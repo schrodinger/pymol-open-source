@@ -46,7 +46,7 @@ void MatrixDump44f(float *m,char *prefix);
 
 void MatrixTransform44f3f(float *m, float *q,float *p);
 void MatrixTransform44f4f(float *m, float *q,float *p);
-void MatrixInvRotate44f3f(float *m, float *q,float *p);
+void MatrixInvTransform44fAs33f3f(float *m, float *q,float *p);
 
 void MatrixTransform44fAs33f3f(float *p, float *m, float *q);
 void MatrixTransform44fn( unsigned int n, float *q, const float m[16], float *p);
@@ -58,7 +58,7 @@ void MatrixRotate44f3f( float *m, const float angle, const float x,const float y
 void MatrixMultiply44f( const float *mat, float *product );
 int  MatrixInvert44f( const float *m, float *out );
 
-#define MatrixInvTransform3f MatrixInvRotate44f3f
+#define MatrixInvTransform3f MatrixInvTransform44fAs33f3f
 #define MatrixTransform3f MatrixTransform44fAs33f3f
 
 /* WARNING - routines below use a "non-conventional" 4x4 

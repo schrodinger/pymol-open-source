@@ -264,6 +264,7 @@ def complete_sc(st,sc,type_name,postfix):
 def complete(st):
    result = None
    pre = ''
+   flag = 0
    if (string.find(st,' ')<0) and (string.find(st,'@'))<0:
       try:
          result = complete_sc(st,cmd.kwhash,'commands',' ')
@@ -274,19 +275,18 @@ def complete(st):
       count = string.count(st,',') # which argument are we on
       if count<len(cmd.auto_arg):      
          if cmd.auto_arg[count].has_key(full): # autocomplete arguments
+            flag = 1
             try:
                pre = re.sub("^[^ ]* ",' ',st,count=1) # trim command
-               print "pre1 '%s'"%pre
                pre = re.sub("[\, ][^\, ]*$","",pre,count=1) # trim 1 arg
                pre = re.sub("^ *",'',pre)
                if len(pre): pre = pre + ' ' # courtesy space
                pre = full+' '+pre
                pat = re.sub(r".*[\, ]",'',st)
                result = apply(complete_sc,tuple([pat]+cmd.auto_arg[count][full]),{})
-               print "count %d,pre '%s' pat '%s'"%(count,pre,pat)
             except:
                traceback.print_exc()
-      else: # otherwise fallback onto filename completion
+      if not flag: # otherwise fallback onto filename completion
          if(st[:1]=='@'):
             st=st[1:]
             pre = '@'
