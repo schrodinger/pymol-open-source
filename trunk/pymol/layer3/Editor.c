@@ -574,12 +574,18 @@ void EditorRender(int state)
   float tube_size2=0.07;
   float tube_size3=0.45;
 
+
   if(I->Obj&&(state!=I->ActiveState))
     {
       EditorSetActiveObject(NULL,0);
     }
   
   if(I->Obj) {
+
+    PRINTFD(FB_Editor)
+      " EditorRender-Debug: rendering...\n"
+      ENDFD;
+
     if(PMGUI) {
 
       nEdge = SettingGet(cSetting_stick_quality)*2;
@@ -760,6 +766,11 @@ void EditorRender(int state)
 void EditorInactive(void)
 {
   CEditor *I = &Editor;
+
+  PRINTFD(FB_Editor)
+    " EditorInactive-Debug: callend.\n"
+    ENDFD;
+
   I->Obj=NULL;
   SelectorDeletePrefixSet(cEditorFragPref);
   SelectorDeletePrefixSet(cEditorBasePref);
@@ -814,6 +825,11 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   int i0,i1;
   CEditor *I = &Editor;
   int log_trans = SettingGet(cSetting_log_conformations);
+
+  PRINTFD(FB_Editor)
+    " EditorPrepareDrag-Debug: entered. obj %p index %d",obj,index
+    ENDFD;
+
   if(!I->Obj) { /* non-anchored */
     /* need to modify this code to move a complete covalent structure */
 
@@ -929,6 +945,12 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   if(I->DragObject)
     ObjectMoleculeSaveUndo(I->DragObject,state,log_trans);
   if(log_trans) PLogFlush();
+
+  PRINTFD(FB_Editor)
+    " EditorPrepDrag-Debug: leaving Index %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d seleFlag %d\n",
+    I->DragIndex,I->DragSelection,I->DragObject,I->DragHaveAxis,I->DragHaveBase,
+    I->DragBondFlag,I->DragSlowFlag,seleFlag
+    ENDFD;
 }
 /*========================================================================*/
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float *mov)
@@ -940,7 +962,13 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
   float m[16];
   int log_trans = SettingGet(cSetting_log_conformations);
 
-  if((index=I->DragIndex)&&(obj=I->DragObject)) {
+  PRINTFD(FB_Editor)
+    " EditorDrag-Debug: entered. obj %p index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", obj,index,mode,
+    I->DragIndex,I->DragSelection,I->DragObject,I->DragHaveAxis,I->DragHaveBase,
+    I->DragBondFlag,I->DragSlowFlag
+    ENDFD;
+
+  if((index==I->DragIndex)&&(obj==I->DragObject)) {
     if(obj!=I->Obj) {
       /* non-achored actions */
       switch(mode) {
@@ -1059,6 +1087,11 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
       }
     }
   }
+
+  PRINTFD(FB_Editor)
+    " EditorDrag-Debug: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 void EditorInit(void)

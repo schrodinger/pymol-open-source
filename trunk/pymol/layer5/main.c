@@ -279,7 +279,6 @@ void MainDoReshape(int width, int height) /* called internally */
     p_glutReshapeWindow(width,height);
     glViewport(0, 0, (GLint) width, (GLint) height);
   }
-  printf("height %d width %d\n",height,width);
   OrthoReshape(width,height);
 }
 /*========================================================================*/
