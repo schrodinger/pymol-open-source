@@ -4440,7 +4440,7 @@ SEE ALSO
    try:
       lock()
       if (representation=="") and (selection==""):
-         r = _cmd.showhide("(all)",0,1); # show lines by default       
+         r = _cmd.showhide("(all)",repres['lines'],1); # show lines by default       
       elif (representation!="") and (selection!=""):
          rep = representation
          if rephash.has_key(rep):
@@ -4451,9 +4451,9 @@ SEE ALSO
          else:
             print "Error: unrecognized or ambiguous representation"
       elif representation=='all':
-         r = _cmd.showhide("(all)",0,1); # show lines by default 
+         r = _cmd.showhide("(all)",repres['lines'],1); # show lines by default 
       elif representation[0:1]=='(':
-         r = _cmd.showhide(str(representation),0,1);
+         r = _cmd.showhide(str(representation),repres['lines'],1);
       else: # selection==""
          rep = representation
          if rephash.has_key(rep):
@@ -5339,8 +5339,8 @@ repres = {
    'surface'       : 2,
    'labels'        : 3,
    'nb_spheres'    : 4,
-   'lines'         : 5,
-   'ribbon'        : 6,
+   'ribbon'        : 5,
+   'lines'         : 6,
    'mesh'          : 7,
    'dots'          : 8,
    'dashes'        : 9,
