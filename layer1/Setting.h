@@ -448,10 +448,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_defer_updates              304
 #define cSetting_normalize_o_maps           305
 #define cSetting_swap_dsn6_bytes            306
+#define cSetting_pdb_insertions_go_first    307
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        307
+#define cSetting_INIT                        308
 
 #endif
 

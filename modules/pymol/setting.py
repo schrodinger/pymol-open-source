@@ -344,6 +344,7 @@ if __name__=='pymol.setting':
       defer_updates         = 304
       normalize_o_maps      = 305
       swap_dsn6_bytes       = 306
+      pdb_insertions_go_first = 307
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -1077,6 +1077,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_retain_order:
   case cSetting_pdb_hetatm_sort:
+  case cSetting_pdb_insertions_go_first:
     ExecutiveSort(cKeywordAll);
     break;
   case cSetting_roving_lines:
@@ -2148,5 +2149,5 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_defer_updates,0);
   SettingSet_b(I,cSetting_normalize_o_maps,1);
   SettingSet_b(I,cSetting_swap_dsn6_bytes,1);
-
+  SettingSet_b(I,cSetting_pdb_insertions_go_first,0);
 }

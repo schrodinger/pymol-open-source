@@ -650,7 +650,20 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
               result=wc;
             }
           } else {
-            result=wc;
+            /* NOTE: don't forget to synchronize with below */
+            if(SettingGet(cSetting_pdb_insertions_go_first)) {
+              int sl1,sl2;
+              sl1 = strlen(at1->resi);
+              sl2 = strlen(at2->resi);
+              if(sl1==sl2)
+                result = wc;
+              else if(sl1<sl2) /* sort residue 188A before 188, etc. */
+                result = 1;
+              else 
+                result = -1;
+            } else {
+              result=wc;
+            }
           }
         } else if(at1->resv<at2->resv) {
           result=-1;
@@ -713,7 +726,21 @@ int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2)
             result=wc;
           }
         } else {
-          result=wc;
+          /* NOTE: don't forget to synchronize with above */
+
+            if(SettingGet(cSetting_pdb_insertions_go_first)) {
+              int sl1,sl2;
+              sl1 = strlen(at1->resi);
+              sl2 = strlen(at2->resi);
+              if(sl1==sl2)
+                result = wc;
+              else if(sl1<sl2) /* sort residue 188A before 188, etc. */
+                result = 1;
+              else 
+                result = -1;
+            } else {
+              result=wc;
+            }
         }
       } else if(at1->resv<at2->resv) {
         result=-1;

@@ -179,7 +179,11 @@ CHANGE LOG
 
 Changes up to 0.94
 
-   * Added support for older, binary-header O/DSN6 maps.
+   * pdb_insertions_go_first setting for handling structures where
+     inserted residues come before, not after, the numbered residue.
+     
+   * Added support for older, binary-header O/DSN6 maps, including
+     swap_dsn6_bytes setting (for unlikely scenarios).
 
 Changes up to 0.93
 

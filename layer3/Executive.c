@@ -2690,6 +2690,8 @@ void ExecutiveSort(char *name)
         all_obj=true;
     } else if(os->type!=cObjectMolecule)
       ErrMessage(" Executive","bad object type.");
+  } else {
+    all_obj = true;
   }
   
   if(os||all_obj) { /* sort one or all */
