@@ -1767,6 +1767,7 @@ SEE ALSO
       108      : [ 'insert'    , rock                   , () , {} ]   
    }
 
+   
    ctrl = {
       'A' : [ redo                   , () , {}],
       'B' : [ replace                , ('Br',1,1), {} ],
@@ -1785,10 +1786,10 @@ SEE ALSO
       'Q' : [ None                   , () , {}],   
       'R' : [ h_fill                 , () , {} ],   
       'S' : [ replace                , ('S',4,2) , {}],
-      'T' : [ bond                   , ('pk1','pk2') , {} ],   
+      'T' : [ lambda a,b,c=bond,u=unpick: (c(a,b),u()) , ('pk1','pk2') , {} ],   
       'U' : [ alter                  , ('pk1','formal_charge =0.0') , {}],
       'W' : [ cycle_valence          , () , {}],
-      'X' : [ dist                   , (None,'pk1','pk2') , {} ],   
+      'X' : [ lambda a,b,c,d=dist,u=unpick:(d(a,b,c),u()), (None,'pk1','pk2') , {} ],   
       'Y' : [ attach                 , ('H',1,1) , {} ],
       'Z' : [ undo                   , () , {} ],   
       }
