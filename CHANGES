@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   -- beta 11
+
+   * updated color handling for sequence viewer
+
    * new settings: auto_classify_atoms, selection operators:
      polymer, solvent, organic, inorganic
 
