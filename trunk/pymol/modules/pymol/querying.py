@@ -411,7 +411,84 @@ SEE ALSO
          print " cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2])
       return r
 
-   def get_dihedral(atom1,atom2,atom3,atom4,state=0,quiet=1):
+   def get_distance(atom1="pk1",atom2="pk2",state=0,quiet=1):
+      '''
+DESCRIPTION
+
+   "get_distance" returns the distance between two atoms.  By default, the
+   coordinates used are from the current state, however an alternate
+   state identifier can be provided.
+
+USAGE
+
+   get_distance atom1, atom2, [,state ]
+
+EXAMPLES
+
+   get_distance 4/n,4/c
+   get_distance 4/n,4/c,state=4
+   
+PYMOL API
+
+   cmd.get_distance(atom1="pk1",atom2="pk2",state=0)
+
+      '''
+      # preprocess selections
+      atom1 = selector.process(atom1)
+      atom2 = selector.process(atom2)
+      #   
+      r = None
+      try:
+         lock()
+         r = _cmd.get_distance(str(atom1),str(atom2),int(state)-1)
+      finally:
+         unlock()
+      if r==None:
+         if cmd._raising(): raise QuietException
+      elif not quiet:
+         print " cmd.get_distance: %5.3f Angstroms."%r
+      return r
+
+   def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=0,quiet=1):
+      '''
+DESCRIPTION
+
+   "get_angle" returns the angle between three atoms.  By default, the
+   coordinates used are from the current state, however an alternate
+   state identifier can be provided.
+
+USAGE
+
+   get_angle atom1, atom2, atom3, [,state ]
+
+EXAMPLES
+
+   get_angle 4/n,4/c,4/ca
+   get_angle 4/n,4/c,4/ca,state=4
+
+PYMOL API
+
+   cmd.get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=0)
+
+      '''
+      # preprocess selections
+      atom1 = selector.process(atom1)
+      atom2 = selector.process(atom2)
+      atom3 = selector.process(atom3)
+      #   
+      r = None
+      try:
+         lock()
+         r = _cmd.get_angle(str(atom1),str(atom2),str(atom3),int(state)-1)
+      finally:
+         unlock()
+      if r==None:
+         if cmd._raising(): raise QuietException
+      elif not quiet:
+         print " cmd.get_angle: %5.3f degrees."%r
+      return r
+      
+   def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=0,quiet=1):
       '''
 DESCRIPTION
 

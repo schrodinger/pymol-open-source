@@ -3,6 +3,8 @@ CHANGE LOG
 =========================================================================
 
 Changes up to 0.96
+
+   * get_angle, get_distance commands
  
    * fixed pasting to OpenGL window under X11
 
