@@ -248,6 +248,7 @@ PYMOL API
             r = _cmd.do("_cmd.quit()")
          finally:
             unlock()
+         thread.exit()
       return r
 
    def delete(name):
