@@ -49,6 +49,9 @@ PyObject *P_parse = NULL;
 PyObject *P_lock = NULL;
 PyObject *P_unlock = NULL;
 
+PyObject *P_time = NULL;
+PyObject *P_sleep = NULL;
+
 PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 PyThreadState *P_api_thread_state; /* this is the thread state for an alternate thread */
 
@@ -82,13 +85,17 @@ void PSleep(int usec)
 { /* can only be called by the master process */
 #ifndef WIN32
 	struct timeval tv;
- PUnlockAPIAsGlut();
-
-  tv.tv_sec=0;
-  tv.tv_usec=usec; 
-  select(0,NULL,NULL,NULL,&tv);
-    PLockAPIAsGlut();
-
+   PUnlockAPIAsGlut();
+   tv.tv_sec=0;
+   tv.tv_usec=usec; 
+   select(0,NULL,NULL,NULL,&tv);
+   PLockAPIAsGlut();
+#else
+   PUnlockAPIAsGlut();
+   PBlock();
+   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
+   PUnblock();
+   PLockAPIAsGlut();
 #endif
 
 }
@@ -437,6 +444,15 @@ void PInit(void)
   PRunString("import xray\n");  
   P_xray = PyDict_GetItemString(P_globals,"xray");
   if(!P_xray) ErrFatal("PyMOL","can't find module 'xray'");
+#endif
+
+#ifdef WIN32
+  PRunString("import time\n");  
+  P_time = PyDict_GetItemString(P_globals,"time");
+  if(!P_time) ErrFatal("PyMOL","can't find module 'time'");
+
+  P_sleep = PyObject_GetAttrString(P_time,"sleep");
+  if(!P_sleep) ErrFatal("PyMOL","can't find 'time.sleep()'");
 #endif
 
   PRunString("import parser\n");  
