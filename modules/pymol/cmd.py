@@ -625,11 +625,11 @@ def get_setting_updates():
       unlock()
    return r
 
-def align(name,selection1,selection2):
+def align(source,target):
    r = None
    try:
       lock()
-      r = _cmd.align(str(name),str(selection1),str(selection2))
+      r = _cmd.align(str(source),str(target))
    finally:
       unlock()
    return r

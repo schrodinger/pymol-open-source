@@ -239,7 +239,119 @@ static int BondCompare(int *a,int *b);
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 
+/*========================================================================*/
+int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
+                              int *vla2,char *name1,char *name2)
+{
+  SelectorType *I=&Selector;
+  int *flag1=NULL,*flag2=NULL;
+  int *p;
+  int a,i,np;
+  int cnt; 
+  int mod1,mod2; /* model indexes */
+  int at1,at2,at1a,at2a; /* atoms indexes */
+  int vi1,vi2; /* vla indexes */
+  int index1,index2; /* indices in the selection array */
+  AtomInfoType *ai1,*ai2,*ai1a,*ai2a; /* atom information pointers */
+  ObjectMolecule *obj1,*obj2;
+  int cmp;
+  PRINTFD(FB_Selector) 
+    " SelectorCreateAlignments-DEBUG: entry.\n"
+    ENDFD
+  cnt = 0;
+  np = VLAGetSize(pair)/2;
+  if(np) {
+    SelectorUpdateTable();
+    flag1=Alloc(int,I->NAtom);
+    flag2=Alloc(int,I->NAtom);
+    for(a=0;a<I->NAtom;a++)
+      {
+        flag1[a]=0;
+        flag2[a]=0;
+      }
 
+    /* we need to create two selection arrays: for the matched 
+     * atoms in the original selections */
+    p = pair;
+    for(i=0;i<np;i++) { /* iterate through all pairs of matched residues */
+      vi1 = *(p++);
+      vi2 = *(p++);
+
+      /* find positions in the selection arrays */
+
+      mod1 = vla1[vi1*3];
+      at1 = vla1[vi1*3+1];
+      
+      mod2 = vla2[vi2*3];
+      at2 = vla2[vi2*3+1];
+
+      PRINTFD(FB_Selector) 
+        " S.C.A.-DEBUG: mod1 %d at1 %d mod2 %d at2 %d\n",mod1,at1,mod2,at2
+        ENDFD
+
+      obj1 = I->Obj[mod1];
+      obj2 = I->Obj[mod2];
+
+      ai1 = obj1->AtomInfo+at1;
+      ai2 = obj2->AtomInfo+at2;
+      at1a = at1;
+      at2a = at2;
+      ai1a = obj1->AtomInfo+at1a;
+      ai2a = obj2->AtomInfo+at2a;
+      while(1) { /* match up all atoms in each residue */
+        cmp = AtomInfoNameOrder(ai1a,ai2a);
+        if(cmp==0) { /* atoms match */
+          index1 = obj1->SeleBase + at1a;
+          index2 = obj2->SeleBase + at2a;
+        PRINTFD(FB_Selector) 
+          " S.C.A.-DEBUG: compare %s %s %d\n",ai1a->name,ai2a->name,cmp
+          ENDFD
+
+        PRINTFD(FB_Selector) 
+          " S.C.A.-DEBUG: entry %d %d\n",
+          ai1a->selEntry,ai2a->selEntry
+          ENDFD
+
+          if(SelectorIsMember(ai1a->selEntry,sele1)&&
+             SelectorIsMember(ai2a->selEntry,sele2)) {
+            if(strcmp(ai1a->resn,ai2a->resn)==0) {
+              flag1[index1] = true;
+              flag2[index2] = true; 
+              cnt++;
+            }
+          }
+          at1a++;
+          at2a++;
+        } else if(cmp<0) { /* 1 is before 2 */
+          at1a++;
+        } else if(cmp>0) { /* 1 is after 2 */
+          at2a++;
+        }
+        if(at1a>=obj1->NAtom) /* make sure we're still in the same residue */
+          break;
+        if(at2a>=obj2->NAtom)
+          break;
+        ai1a = obj1->AtomInfo+at1a;
+        ai2a = obj2->AtomInfo+at2a;
+        if(!AtomInfoSameResidue(ai1a,ai1))
+          break;
+        if(!AtomInfoSameResidue(ai2a,ai2))
+          break;
+      }
+    }
+    if(cnt) {
+      SelectorEmbedSelection(flag1,name1,NULL);
+      SelectorEmbedSelection(flag2,name2,NULL);
+    }
+    FreeP(flag1);
+    FreeP(flag2);
+  }
+  PRINTFD(FB_Selector) 
+    " SelectorCreateAlignments-DEBUG: exit, cnt = %d.\n",cnt
+    ENDFD
+
+  return cnt;
+}
 /*========================================================================*/
 int *SelectorGetResidueVLA(int sele)
 {

@@ -334,6 +334,25 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
   return(result);
 }
 
+int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2) 
+{
+  int result;
+  if(at1->alt[0]==at2->alt[0]) {
+    if(at1->priority==at2->priority) {
+      result=WordCompare(at1->name,at2->name,true);
+    } else if(at1->priority<at2->priority) {
+      result=-1;
+    } else {
+      result=1;
+    }
+  } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+    result=-1;
+  } else {
+    result=1;
+  }
+  return(result);
+}
+
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2)
 {
   return(AtomInfoCompare(atom+atom1,atom+atom2)<=0);

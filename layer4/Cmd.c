@@ -375,21 +375,21 @@ static PyMethodDef Cmd_methods[] = {
 };
 
 static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
-  char *str1,*str2,*str3;
+  char *str2,*str3;
   OrthoLineType s2="",s3="";
   float result = 0.0;
 
 
-  PyArg_ParseTuple(args,"sss",&str1,&str2,&str3);
+  PyArg_ParseTuple(args,"ss",&str2,&str3);
   PRINTFD(FB_CCmd)
-    "CmdAlign-DEBUG %s %s %s\n",
-    str1,str2,str3
+    "CmdAlign-DEBUG %s %s\n",
+    str2,str3
     ENDFD;
 
   APIEntry();
   SelectorGetTmp(str2,s2);
   SelectorGetTmp(str3,s3);
-  result = ExecutiveAlign(str1,s2,s3);
+  result = ExecutiveAlign(s2,s3);
   SelectorFreeTmp(s2);
   SelectorFreeTmp(s3);
   APIExit();
@@ -1325,7 +1325,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
   APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  tmp_result=ExecutiveRMS(s1,s2,mode);
+  tmp_result=ExecutiveRMS(s1,s2,mode,0.0);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
   APIExit();

@@ -174,7 +174,36 @@ int MatrixInvert44f( const float *m, float *out )
 #undef SWAP_ROWS
 }
 
+/*========================================================================*/
+int MatrixCutoff(float refine,int nv,float *v1,float *v2)
+{
+  float center1[3],center2[3];
+  int a;
+  float *vv1,*vv2;
 
+  copy3f(v1,center1);
+  copy3f(v2,center2);
+  for(a=1;a<nv;a++) {
+    vv1 = v1+3*a;
+    vv2 = v2+3*a;
+    add3f(v1,center1,center1);
+    add3f(v2,center2,center2);
+  }
+  scale3f(center1,1.0/nv,center1);
+  scale3f(center2,1.0/nv,center2);
+  a = 0;
+  while((a<nv)&&(nv>0)) {
+    vv1 = v1+3*a;
+    vv2 = v2+3*a;
+    if((diff3f(center1,vv1)-diff3f(center2,vv2))>refine) {
+      copy3f(v1+(3*(nv-1)),vv1);
+      copy3f(v2+(3*(nv-1)),vv2);
+      nv--;
+    } else 
+      a++;
+  }
+  return nv;
+}
 
 /*========================================================================*/
 void MatrixDump44f(float *m,char *prefix)
