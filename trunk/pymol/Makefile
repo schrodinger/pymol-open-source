@@ -178,9 +178,8 @@ pmw:
 compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
 
-# Everything below here is for the MacPyMOL Incentive Product, which is
-# not currently Open-Source (though that may change in the future).
-# Compilation of MacPyMOL requires layerOSX.
+# Everything below here is for the MacPyMOL Incentive Product
+# Compilation of MacPyMOL requires layerOSX source code (closed source)
 
 OSXPROD=products/MacPyMOL.app
 OSXVIEWER=products/PyMOLViewer.app
@@ -211,7 +210,7 @@ $(PYTHON_INC_DIR) -Lext/lib -Lext/lib/python2.3/config -lpython2.3 \
 -framework CoreFoundation -lc -Wno-long-double -D_PYMOL_OSX_PYTHONHOME
 
 osx: 
-	cd layerOSX; $(MAKE)
+	cd layerOSX/src; $(MAKE)
 	$(MAKE) 
 
 osx-dev: osx

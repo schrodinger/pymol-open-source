@@ -788,9 +788,10 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
           );
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
-  sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,bkrd[0],bkrd[1],bkrd[2]);
-  UtilConcatVLA(&headerVLA,&hc,buffer);
-
+  if(SettingGetGlobal_i(I->G,cSetting_ray_opaque_background)) { /* drop a plane into the background for the background color */
+    sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,bkrd[0],bkrd[1],bkrd[2]);
+    UtilConcatVLA(&headerVLA,&hc,buffer);
+  } 
   
   for(a=0;a<I->NPrimitive;a++) {
     prim = I->Primitive+a;
