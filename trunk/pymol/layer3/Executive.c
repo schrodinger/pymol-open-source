@@ -4251,6 +4251,69 @@ float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mo
   return(result);
 }
 
+
+float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
+                        int labels,int reset,int zoom,int quiet)
+{
+  float result = 0.0F;
+  #if 0
+  int sele1,sele2,sele3,sele4;
+  ObjectDist *obj;
+  CObject *anyObj = NULL;
+  sele1=SelectorIndexByName(G,s1);
+
+  if(!WordMatch(G,s2,cKeywordSame,true))
+    sele2=SelectorIndexByName(G,s2);
+  else {
+    sele2 = sele1;
+  }
+  if(!WordMatch(G,s3,cKeywordSame,true))
+    sele3=SelectorIndexByName(G,s3);
+  else {
+    sele3 = sele2;  
+  }
+  if(!WordMatch(G,s4,cKeywordSame,true))
+    sele4=SelectorIndexByName(G,s4);
+  else {
+    sele4 = sele3;  
+  }
+  
+  if((sele1>=0)&&(sele2>=0)&&(sele3>=0)&&(sele4>=0)) {
+    anyObj = ExecutiveFindObjectByName(G,nam);
+    if(anyObj) {
+      if(anyObj->type!=cObjectDist) {
+        ExecutiveDelete(G,nam);
+        anyObj=NULL;
+      }
+    }
+
+    obj = ObjectDistNewFromDihdedralSele(G,(ObjectDist*)anyObj,
+                                         sele1,sele2,sele3,sele4,
+                                         mode,labels,&result,reset);
+    if(!obj) {
+      ErrMessage(G,"ExecutiveDihedral","No angles found.");
+    } else {
+      if(!anyObj) {
+        ObjectSetName((CObject*)obj,nam);
+        ExecutiveManageObject(G,(CObject*)obj,zoom,quiet);
+        ExecutiveSetRepVisib(G,nam,cRepLine,1);
+        if(!labels)
+          ExecutiveSetRepVisib(G,nam,cRepLabel,0);        
+      }
+    }
+  } else if(sele1<0) {
+    ErrMessage(G,"ExecutiveDistance","The first selection contains no atoms.");
+  } else if(sele2<0) {
+    ErrMessage(G,"ExecutiveDistance","The second selection contains no atoms.");
+  } else if(sele3<0) {
+    ErrMessage(G,"ExecutiveDistance","The third selection contains no atoms.");
+  } else if(sele4<0) {
+    ErrMessage(G,"ExecutiveDistance","The fourth selection contains no atoms.");
+  }
+  #endif
+  return(result);
+}
+
 float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float cutoff,
                     int labels,int quiet)
 {

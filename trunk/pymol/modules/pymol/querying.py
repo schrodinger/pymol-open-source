@@ -170,6 +170,69 @@ PYMOL API
          finally:
             unlock()
       return r
+
+   def dihedral(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)",selection4="(pk4)",
+                mode=None,labels=1,reset=0,zoom=0,quiet=1):
+      r = 1
+      if selection1=="(pk1)":
+         if "pk1" not in cmd.get_names('selections'):
+            if _feedback(fb_module.cmd,fb_mask.errors):
+               print "cmd-Error: The 'pk1' selection is undefined."
+            r = 0
+      if selection2=="(pk2)":
+         if "pk2" not in cmd.get_names('selections'):
+            if _feedback(fb_module.cmd,fb_mask.errors):         
+               print "cmd-Error: The 'pk2' selection is undefined."
+            r = 0
+      if selection3=="(pk3)":
+         if "pk3" not in cmd.get_names('selections'):
+            if _feedback(fb_module.cmd,fb_mask.errors):         
+               print "cmd-Error: The 'pk3' selection is undefined."
+            r = 0
+      if selection3=="(pk4)":
+         if "pk4" not in cmd.get_names('selections'):
+            if _feedback(fb_module.cmd,fb_mask.errors):         
+               print "cmd-Error: The 'pk4' selection is undefined."
+            r = 0
+      if r:         
+         # if unlabeled, then get next name in series
+
+         if name!=None:
+            nam=name
+         else:
+            try:
+               lock()
+               cnt = _cmd.get("dist_counter") + 1.0
+               _cmd.legacy_set("dist_counter","%1.0f" % cnt)
+               nam = "dihedral%02.0f" % cnt
+            finally:
+               unlock()
+
+         # defaults
+         if mode == None:
+            mode = 0
+         # preprocess selections
+         selection1 = selector.process(selection1)
+         selection2 = selector.process(selection2)
+         selection3 = selector.process(selection3)
+         selection4 = selector.process(selection4)
+         # now do the deed
+         try:
+            lock()
+            if selection2!="same":
+               selection2 = "("+selection2+")"
+            if selection3!="same":
+               selection3 = "("+selection3+")"
+            if selection4!="same":
+               selection4 = "("+selection4+")"
+            r = _cmd.angle(str(nam),"("+str(selection1)+")",
+                           str(selection2),
+                           str(selection3),
+                           str(selection4),
+                           int(mode),int(labels),int(reset),int(zoom),int(quiet))
+         finally:
+            unlock()
+      return r
       
    def distance(name=None,selection1="(pk1)",selection2="(pk2)",cutoff=None,
                 mode=None,zoom=0,width=None,length=None,gap=None,labels=1,quiet=1):
