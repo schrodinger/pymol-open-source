@@ -415,6 +415,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int visFlag;
   int surface_quality;
   SphereRec *sp = Sphere0;
+  SphereRec *ssp = Sphere0;
   AtomInfoType *ai1,*ai2;
   OOAlloc(RepSurface);
 
@@ -435,15 +436,30 @@ Rep *RepSurfaceNew(CoordSet *cs)
   RepInit(&I->R);
 
   surface_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
-  if(surface_quality>=1) {
+  if(surface_quality>=2) { /* nearly perfect */
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best);
+    sp=Sphere3;
+    ssp=Sphere3;
+  } else if(surface_quality>=1) { /* good */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best);
     sp=Sphere2;
-  } else if(!surface_quality) {
+    ssp=Sphere3;
+  } else if(!surface_quality) { /* 0 - normal */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_normal);
     sp=Sphere1;
-  } else { /* surface quality < 0 */
+    ssp=Sphere2;
+  } else if(surface_quality==-1) { /* -1 */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
     sp=Sphere1;
+    ssp=Sphere2;
+  } else if(surface_quality==-2) { /* -2 god awful*/
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
+    sp=Sphere1;
+    ssp=Sphere1;
+  } else { /* -3 miserable */
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_miserable);
+    sp=Sphere0;
+    ssp=Sphere1;
   }
 
   cullByFlag =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_trim_dots);
@@ -490,7 +506,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
     vn=I->VN;
 
 	 OrthoBusyFast(0,1);
-	 RepSurfaceGetSolventDots(I,cs,probe_radius,Sphere2,extent);
+	 RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent);
 	 solv_map=MapNew(probe_radius,I->Dot,I->NDot,extent);
 	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,extent);
 
