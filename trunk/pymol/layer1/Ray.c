@@ -129,6 +129,10 @@ void RayApplyContextToNormal(CRay *I,float *v)
     break;
   }
 }
+int RayGetNPrimitives(CRay *I)    
+{
+  return(I->NPrimitive);
+}
 /*========================================================================*/
 #ifdef _PYMOL_INLINE
 __inline__
@@ -380,6 +384,75 @@ void RayExpandPrimitives(CRay *I)
 		printf("NPrimit  %d nvert %d\n",I->NPrimitive,nVert);*/
 }
 /*========================================================================*/
+static void RayComputeBox(CRay *I,float *mn,float *mx)
+{
+
+#define minmax(v,r) { \
+  xp = v[0] + r;\
+  xm = v[0] - r;\
+  yp = v[1] + r;\
+  ym = v[1] - r;\
+  if(xmin>xm) xmin = xm;\
+  if(xmax<xp) xmax = xp;\
+  if(ymin>ym) ymin = ym;\
+  if(ymax<yp) ymax = yp;\
+}
+
+  CPrimitive *prm;
+  CBasis *basis1;
+  basis1 = I->Basis+1;
+
+  float xmin=0.0F,ymin=0.0F,xmax=0.0F,ymax=0.0F;
+  float xp,xm,yp,ym;
+
+  float *v,r;
+  float vt[3];
+  const float _0 = 0.0F;
+  int a;
+
+  if(basis1->NVertex) {
+    xmin = xmax = basis1->Vertex[0];
+    ymin = ymax = basis1->Vertex[1];
+    
+    for(a=0;a<I->NPrimitive;a++) {
+      prm=I->Primitive+a;
+      
+      switch(prm->type) 
+      {
+      case cPrimTriangle:
+        r = _0;
+        v = basis1->Vertex + prm->vert*3;
+        minmax(v,r);
+        v = basis1->Vertex + prm->vert*3+3;
+        minmax(v,r);
+        v = basis1->Vertex + prm->vert*3+6;
+        minmax(v,r);
+        break;
+      case cPrimSphere:
+        r = prm->r1;
+        v = basis1->Vertex + prm->vert*3;
+        minmax(v,r);
+        break;
+      case cPrimCylinder:
+      case cPrimSausage:
+        r = prm->r1;
+        v = basis1->Vertex + prm->vert*3;
+        minmax(v,r);
+        v = basis1->Normal+basis1->Vert2Normal[prm->vert]*3;
+        scale3f(v,prm->l1,vt);
+        v = basis1->Vertex + prm->vert*3;
+        add3f(v,vt,vt);
+        minmax(vt,r);
+        break;
+      }	/* end of switch */
+	 }
+  }
+  mn[0] = xmin;
+  mn[1] = ymin;
+  mx[0] = xmax;
+  mx[1] = ymax;
+}
+
 void RayTransformFirst(CRay *I)
 {
   CBasis *basis0,*basis1;
@@ -413,7 +486,6 @@ void RayTransformFirst(CRay *I)
 		basis1->Radius2[a]=basis0->Radius2[a];
 		basis1->Vert2Normal[a]=basis0->Vert2Normal[a];
 	 }
-
   basis1->MaxRadius=basis0->MaxRadius;
   basis1->MinVoxel=basis0->MinVoxel;
   basis1->NVertex=basis0->NVertex;
@@ -559,7 +631,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
 
   RayExpandPrimitives(I);
   RayTransformFirst(I);
-  
+
   PRINTFB(FB_Ray,FB_Details)
     " RayRenderPovRay: processed %i graphics primitives.\n",I->NPrimitive 
     ENDFB;
@@ -776,7 +848,7 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
   blocked = PAutoBlock();
 
   PRINTFB(FB_Ray,FB_Details)
-    " Ray: Filling voxels with %d threads...\n",n_thread
+    " Ray: filling voxels with %d threads...\n",n_thread
   ENDFB;
   info_list = PyList_New(n_thread);
   for(a=0;a<n_thread;a++) {
@@ -801,7 +873,7 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   blocked = PAutoBlock();
 
   PRINTFB(FB_Ray,FB_Details)
-    " Ray: Rendering with %d threads...\n",n_thread
+    " Ray: rendering with %d threads...\n",n_thread
   ENDFB;
   info_list = PyList_New(n_thread);
   for(a=0;a<n_thread;a++) {
@@ -895,9 +967,9 @@ int RayTraceThread(CRayThreadInfo *T)
 	register float       invWdthRange,vol0;
 	float       vol2;
 	CBasis      *bp1,*bp2;
-	
+	int render_height;
 	int offset=0;
-	
+
 	_0		= 0.0F;
 	_1		= 1.0F;
 	_p5		= 0.5F;
@@ -979,28 +1051,30 @@ int RayTraceThread(CRayThreadInfo *T)
 	bp1  = I->Basis + 1;
 	bp2  = I->Basis + 2;
 	
-   if(T->height) {
-     offset = (T->phase * T->height/T->n_thread);
+   render_height = T->y_stop - T->y_start;
+
+   if(render_height) {
+     offset = (T->phase * render_height/T->n_thread);
      offset = offset - (offset % T->n_thread) + T->phase;
    }
      
 	r1.base[2]	= _0;
 		
-	for(yy = 0; (yy < T->height); yy++)
+	for(yy = T->y_start; (yy < T->y_stop); yy++)
 	{
 		
-      y = (yy + offset) % ( T->height); /* make sure threads write to different pages */
+      y = T->y_start + ((yy-T->y_start) + offset) % ( render_height); /* make sure threads write to different pages */
 
 		if((!T->phase)&&!(yy & 0xF))
 			OrthoBusyFast(y,T->height); /* don't slow down rendering too much */
 				
-		pixel = T->image + (T->width * y);
+		pixel = T->image + (T->width * y) + T->x_start;
 	
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
 		{	
 			r1.base[1]	= (y * invHgtRange) + vol2;
 			
-			for(x = 0; (x < T->width); x++)
+			for(x = T->x_start; (x < T->x_stop); x++)
 			{
 				exclude		= -1;
 				
@@ -1254,10 +1328,6 @@ int RayTraceThread(CRayThreadInfo *T)
 								*pixel = (cc3<<24)|(cc2<<16)|(cc1<<8)|cc0;
 						}
 					}
-					else
-					{
-						*pixel = T->background;
-					}
 	
 					if(pass)	/* average all four channels */
 					{	
@@ -1300,7 +1370,6 @@ int RayTraceThread(CRayThreadInfo *T)
 					
 					if( i < 0 )	/* nothing hit */
 					{
-						*pixel = T->background;
 						break;
 					}
 					else 
@@ -1434,6 +1503,48 @@ static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
  }
 
 
+
+static void fill(unsigned int *buffer, unsigned int value,unsigned int cnt)
+{
+  while(cnt&0xFFFFFFF80) {
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    cnt-=0x20;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+  }
+  while(cnt--) {
+    *(buffer++) = value;
+  }
+}
 /*========================================================================*/
 void RayRender(CRay *I,int width,int height,unsigned int *image,
                float front,float back,
@@ -1455,6 +1566,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int shadows;
   float spec_vector[3];
   int n_thread;
+  float min_box[2],max_box[2];
 
   n_thread  = (int)SettingGet(cSetting_max_threads);
   if(n_thread<1)
@@ -1515,10 +1627,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     
     RayExpandPrimitives(I);
     RayTransformFirst(I);
+    RayComputeBox(I,min_box,max_box);
     
     now = UtilGetSeconds()-timing;
 
-	 PRINTFB(FB_Ray,FB_Details)
+	 PRINTFB(FB_Ray,FB_Blather)
       " Ray: processed %i graphics primitives in %4.2f sec.\n",I->NPrimitive,now
       ENDFB;
 
@@ -1620,17 +1733,34 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     /* IMAGING */
  
  
-	memset( image, 0, width * height * sizeof(unsigned int) );
+    fill(image,background,width * (unsigned int)height);
         
     {
 		/* now spawn threads as needed */
 		CRayThreadInfo rt[MAX_RAY_THREADS];
+      int x_start,y_start;
+      int x_stop,y_stop;
+
+      x_start = (int)((width * (min_box[0] - I->Volume[0]))/I->Range[0]) - 1;
+      x_stop  = (int)((width * (max_box[0] - I->Volume[0]))/I->Range[0]) + 2;
+      
+      y_stop = (int)((height * (max_box[1] - I->Volume[2]))/I->Range[1]) + 2;
+      y_start  = (int)((height * (min_box[1] - I->Volume[2]))/I->Range[1]) - 1;
+                      
+      if(x_start<0) x_start = 0;
+      if(y_start<0) y_start = 0;
+      if(x_stop>width) x_stop = width;
+      if(y_stop>height) y_stop = height;
 
 		for(a=0;a<n_thread;a++) 
 		{
 			rt[a].ray = I;
 			rt[a].width = width;
 			rt[a].height = height;
+         rt[a].x_start = x_start;
+         rt[a].x_stop = x_stop;
+         rt[a].y_start = y_start;
+         rt[a].y_stop = y_stop;
 			rt[a].image = image;
 			  
 			rt[a].front = front;
@@ -1643,13 +1773,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 			copy3f(spec_vector,rt[a].spec_vector);
 			}
 		
-		if(n_thread==1)
-			RayTraceThread(rt);
+		if(n_thread<=1)
+        RayTraceThread(rt);
 		else 
-		{
-			RayTraceSpawn(rt,n_thread);
-		}
-	}
+        RayTraceSpawn(rt,n_thread);
+    }
   }
   PRINTFD(FB_Ray)
     " RayRender: n_hit %d\n",n_hit
