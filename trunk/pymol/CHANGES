@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * support for residue names and identifiers in mol2 files
+
    * dynamic grid for slice module
 
    * rank attribute for atoms ( = rank/row from input file)

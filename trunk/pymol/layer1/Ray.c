@@ -1008,8 +1008,8 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   int blocked;
   PyObject *info_list;
   int a;
-  blocked = PAutoBlock();
   CRay *I=Thread->ray;
+  blocked = PAutoBlock();
 
   PRINTFB(I->G,FB_Ray,FB_Blather)
     " Ray: rendering with %d threads...\n",n_thread
