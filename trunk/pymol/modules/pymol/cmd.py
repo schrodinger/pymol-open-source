@@ -1716,6 +1716,7 @@ SEE ALSO
       'bg'             : [ _get_color_sc          , 'color'           , ''   ],      
       'color'          : [ _get_color_sc          , 'color'           , ', ' ],
       'cartoon'        : [ viewing.cartoon_sc     , 'cartoon'         , ', ' ],
+      'count_atoms'    : [ selection_sc           , 'selection'       , ''   ],
       'space'          : [ space_sc               , 'space'           , ''   ],      
       'set'            : [ setting.setting_sc     , 'setting'         , ','  ],
       'get'            : [ setting.setting_sc     , 'setting'         , ','  ],      

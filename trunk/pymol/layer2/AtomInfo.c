@@ -909,7 +909,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
     switch ( *e ) {
     case 'C':
       if(*(e+1)=='A') {
-        if(!(WordMatch("CA",I->resn,true)<0))
+        if(!(WordMatch("CA",I->resn,true)<0)&&(!(WordMatch("CA+",I->resn,true)<0)))
           *(e+1)=0; 
       } else if(!(
            (*(e+1)=='a')||/* CA intpreted as carbon, not calcium */

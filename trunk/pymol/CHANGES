@@ -179,9 +179,16 @@ CHANGE LOG
 
 Changes up to 0.92
 
+   * fixed Calcium detection for "CA+" residues
+
+   * cmd.do updated to take multiple commands as a string or list of strings
+
+   * increase the word length limit in the selector so that long lists
+     of residues can be supplied.
+
    * new test case for PDB file IO (C0700odd).
 
-   * WARNING: select API argument reordering may break existing code
+   * WARNING: cmd.select API argument reordering may break existing code
 
    * adjusted behavior of "set" and "unset" to enable more concise
      changes of global settings: "set setting-name" "unset setting-name"
@@ -190,7 +197,7 @@ Changes up to 0.92
 
    * pdb_retain_ids setting
 
-   * Deuterium atom support
+   * Deuterium atom support, including DOD
 
    * split_states command
 
@@ -207,7 +214,7 @@ Changes up to 0.92
    * movie_loop setting
 
    * changed behavior of movie controls in the internal gui so that
-     the movie commands will run consistently
+     the movie commands will run more consistently
 
 Changes up to 0.91
 
