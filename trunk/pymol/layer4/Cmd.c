@@ -3749,12 +3749,13 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   OrthoLineType s1;
   float buffer;
   int state;
+  int inclusive;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sfi",&str1,&buffer,&state);
+  ok = PyArg_ParseTuple(args,"sfii",&str1,&buffer,&state,&inclusive);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ok = ExecutiveWindowZoom(s1,buffer,state); /* TODO STATUS */
+    ok = ExecutiveWindowZoom(s1,buffer,state,inclusive); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }

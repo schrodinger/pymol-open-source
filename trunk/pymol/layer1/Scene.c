@@ -574,12 +574,19 @@ void SceneWindowSphere(float *location,float radius)
   CScene *I=&Scene;
   float v0[3];
   float dist;
+  float aspRat = ((float) I->Width) / ((float) I->Height);
+  float fov;
+
   /* find where this point is in relationship to the origin */
   subtract3f(I->Origin,location,v0); 
   /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 
   MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
-  dist = radius/tan((SettingGet(cSetting_field_of_view)/2.0)*cPI/180.0);
+  fov = SettingGet(cSetting_field_of_view);
+  if(aspRat<1.0)
+    fov *= aspRat;
+
+  dist = radius/tan((fov/2.0)*cPI/180.0);
 
   I->Pos[2]-=dist;
   I->Front=(-I->Pos[2]-radius*1.4);

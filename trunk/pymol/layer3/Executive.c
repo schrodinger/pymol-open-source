@@ -85,6 +85,7 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod);
 int ExecutiveDrag(Block *block,int x,int y,int mod);
 void ExecutiveDraw(Block *block);
 void ExecutiveReshape(Block *block,int width,int height);
+int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int state);
 
 #define ExecLineHeight 14
 #define ExecTopMargin 0
@@ -2093,7 +2094,7 @@ void ExecutiveOrient(char *sele,Matrix33d mi,int state)
     }
     /* X < Y < Z  - do nothing - that's what we want */
 
-    ExecutiveWindowZoom(sele,0.0,state);
+    ExecutiveWindowZoom(sele,0.0,state,0);
 
   }
 }
@@ -2588,7 +2589,7 @@ int ExecutiveReset(int cmd,char *name)
   CObject *obj;
   if(!name[0]) {
     SceneResetMatrix();
-    ExecutiveWindowZoom(cKeywordAll,0.0,-1); /* reset does all states */
+    ExecutiveWindowZoom(cKeywordAll,0.0,-1,0); /* reset does all states */
   } else {
     obj = ExecutiveFindObjectByName(name);
     if(!obj)
@@ -3069,10 +3070,124 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
   return(flag);  
 }
 /*========================================================================*/
-int ExecutiveWindowZoom(char *name,float buffer,int state)
+int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int state)
+{
+  int sele;
+  ObjectMoleculeOpRec op,op2;
+  CExecutive *I=&Executive;
+  CObject *obj;
+  int flag = false;
+  int all_flag = false;
+  SpecRec *rec = NULL;
+  WordType all = "_all";
+  float f1,fmx=0.0F;
+
+  if(state==-2) state=SceneGetState();
+
+  PRINTFD(FB_Executive)
+    " ExecutiveGetExtent: name %s state %d\n",name,state
+    ENDFD;
+  
+  op2.i1 = 0;
+  op2.v1[0]=-1.0;
+  op2.v1[1]=-1.0;
+  op2.v1[2]=-1.0;
+  op2.v2[0]=1.0;
+  op2.v2[1]=1.0;
+  op2.v2[2]=1.0;
+  
+  if(WordMatch(cKeywordAll,name,true)<0) {
+    name=all;
+    all_flag=true;
+    SelectorCreate(all,"(all)",NULL,true,NULL);
+  }
+  sele=SelectorIndexByName(name);
+
+  if(sele>=0) {
+    if(state<0) {
+      op.code = OMOP_MaxDistToPt;
+    } else {
+      op.code = OMOP_CSetMaxDistToPt;
+      op.cs1 = state;
+    }
+	 op.v1[0]=pos[0];
+	 op.v1[1]=pos[1];
+	 op.v1[2]=pos[2];
+    op.i1 = 0;
+    op.f1 = 0.0F;
+    op.i2 = transformed;
+    ExecutiveObjMolSeleOp(sele,&op);
+    fmx = op.f1;
+
+    if(op.i1)
+      flag = true;
+    if(all_flag) {
+      while(ListIterate(I->Spec,rec,next)) {
+        if(rec->type==cExecObject) {
+          obj=rec->obj;
+          if(obj->ExtentFlag) 
+            switch(obj->type) {
+            case cObjectMolecule:
+              break;
+            default:
+              f1 = diff3f(obj->ExtentMin,pos);
+              if(fmx<f1) fmx = f1;
+              f1 = diff3f(obj->ExtentMax,pos);
+              if(fmx<f1) fmx = f1;
+              flag = true;
+              break;
+            }
+        }
+      }
+    }
+  } else {
+    obj = ExecutiveFindObjectByName(name);
+    if(obj) {
+      switch(obj->type) {
+      case cObjectMolecule:
+        break;
+      default:
+        if(obj->ExtentFlag) {
+          f1 = diff3f(obj->ExtentMin,pos);
+          if(fmx<f1) fmx = f1;
+          f1 = diff3f(obj->ExtentMax,pos);
+          if(fmx<f1) fmx = f1;
+          flag = true;
+          break;
+        }
+      }
+    } else if(all_flag) {
+      rec=NULL;
+      while(ListIterate(I->Spec,rec,next)) {
+        if(rec->type==cExecObject) {
+          obj=rec->obj;
+          switch(rec->obj->type) {
+          case cObjectMolecule:
+            break;
+          default:
+            if(obj->ExtentFlag) {
+              f1 = diff3f(obj->ExtentMin,pos);
+              if(fmx<f1) fmx = f1;
+              f1 = diff3f(obj->ExtentMax,pos);
+              if(fmx<f1) fmx = f1;
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+  if(all_flag) {
+    ExecutiveDelete(all);
+  }
+  *dev = fmx;
+  return(flag);  
+}
+/*========================================================================*/
+int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive)
 {
   float center[3],radius;
-  float mn[3],mx[3];
+  float mn[3],mx[3],df[3];
   int sele0;
   int ok=true;
   if(ExecutiveGetExtent(name,mn,mx,true,state)) {
@@ -3085,10 +3200,18 @@ int ExecutiveWindowZoom(char *name,float buffer,int state)
       mn[1]-=buffer;
       mn[2]-=buffer;
     }
-    radius = diff3f(mn,mx)/3.0;
+    subtract3f(mx,mn,df);
     average3f(mn,mx,center);
-    if(radius<MAX_VDW)
-      radius=MAX_VDW;
+    if(inclusive) {
+      if(!ExecutiveGetMaxDistance(name,center,&radius,true,state))
+        radius=0.0;
+    } else {
+      radius = df[0];
+      if(radius<df[1]) radius=df[1];
+      if(radius<df[2]) radius=df[2];
+      radius=radius/2.0;
+    }
+    if(radius<MAX_VDW) radius=MAX_VDW;
     PRINTFD(FB_Executive)
       " ExecutiveWindowZoom: zooming with radius %8.3f...state %d\n",radius,state
       ENDFD;
@@ -3798,7 +3921,7 @@ void ExecutiveManageObject(CObject *obj,int allow_zoom)
   if(allow_zoom)
     if(!exists) 
       if(SettingGet(cSetting_auto_zoom)) {
-        ExecutiveWindowZoom(obj->Name,0.0,-1); /* auto zoom (all states) */
+        ExecutiveWindowZoom(obj->Name,0.0,-1,0); /* auto zoom (all states) */
       }
 
 }

@@ -30,28 +30,47 @@ view_dict = {}
 view_sc = Shortcut(['store','recall'])
 view_dict_sc = Shortcut([])
 
-def zoom(selection="all",buffer=0.0,state=0):
+def zoom(selection="all",buffer=0.0,state=0,safe=0):
    '''
 DESCRIPTION
   
    "zoom" scales and translates the window and the origin to cover the
    atom selection.
-      
+
+   
 USAGE
  
-   zoom object-or-selection [,buffer [, state]]
-   zoom (selection) [,buffer [, state]]
- 
+   zoom [ selection [,buffer [, state [, safe ]]]]
+
+EXAMPLES
+
+   zoom
+   zoom safe=1
+   zoom (chain A)
+   zoom 142/
+   
 PYMOL API
 
-   cmd.zoom( string object-or-selection [,float buffer=0.0 [, int state=0 ]] )
+   cmd.zoom( string selection, float buffer=0.0,
+             int state=0, int safe=0 )
 
 NOTES
 
    state = 0 (default) use all coordinate states
    state = -1 use only coordinates for the current state
    state > 0  use coordinates for a specific state
-   
+
+   safe = 0 or 1:
+      Normally the zoom command tries to guess an optimal zoom level
+   for visualization, balancing closeness against occasional clipping
+   of atoms out of the field of view.  You can change this behavior by
+   setting the safe option to 1, which will guarantee that the atom
+   positions for the entire selection will fit in the field of an
+   orthoscopic view.  To absolutely prevent clipping, you may also
+   need to add a buffer to account for the perpective transformation
+   and for graphical representations which extend beyond the atom
+   coordinates.
+
 SEE ALSO
 
    origin, orient
@@ -61,7 +80,7 @@ SEE ALSO
    #   
    try:
       lock()   
-      r = _cmd.zoom(str(selection),float(buffer),int(state)-1)
+      r = _cmd.zoom(str(selection),float(buffer),int(state)-1,int(safe))
    finally:
       unlock()
    return r
