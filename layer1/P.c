@@ -1,4 +1,3 @@
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -21,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include<Python.h>
 
+
 #include"MemoryDebug.h"
 #include"Base.h"
 #include"Err.h"
@@ -31,6 +31,9 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"AtomInfo.h"
 #include"CoordSet.h"
+
+
+#define _PYMOL_XRAY
 
 PyObject *P_globals = NULL;
 
@@ -78,11 +81,14 @@ void PXDecRef(PyObject *obj)
 
 void PSleep(int usec)
 { /* assumes threads have already been unblocked */
-  struct timeval tv;
+#ifndef WIN32
+	struct timeval tv;
 
   tv.tv_sec=0;
   tv.tv_usec=usec; 
   select(0,NULL,NULL,NULL,&tv);
+#endif
+
 }
 
 static PyObject *PCatchWrite(PyObject *self, 	PyObject *args);
@@ -405,9 +411,11 @@ void PInit(void)
   P_menu = PyDict_GetItemString(P_globals,"menu");
   if(!P_menu) ErrFatal("PyMOL","can't find module 'menu'");
 
+#ifdef PYMOL_XRAY
   PRunString("import xray\n");  
   P_xray = PyDict_GetItemString(P_globals,"xray");
   if(!P_xray) ErrFatal("PyMOL","can't find module 'xray'");
+#endif
 
   PRunString("import parser\n");  
   P_parser = PyDict_GetItemString(P_globals,"parser");
@@ -425,7 +433,9 @@ void PInit(void)
   if(!P_models) ErrFatal("PyMOL","can't find 'chempy.models'");
 
   PRunString("import util\n");  
+#ifdef PYMOL_XRAY
   PRunString("import sglite\n"); 
+#endif
   PRunString("import string\n"); 
   PRunString("import traceback\n"); 
 
@@ -436,7 +446,7 @@ void PInit(void)
 
   PRunString("glutThread = thread.get_ident()");
 
-#ifndef _WIN32
+#ifndef WIN32
   signal(SIGINT,my_interrupt);
 #endif
 

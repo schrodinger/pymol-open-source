@@ -90,6 +90,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 	 if(n) {
+	   glDisable(GL_LIGHTING);
 		if(I->oneColorFlag) {
 		  while(*n)
 			 {
@@ -117,10 +118,12 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 				glEnd();
 			 }
 
+		
 		}
+	   glEnable(GL_LIGHTING);
 	 }
+     }
   }
-}
 
 
 void RepMeshColor(RepMesh *I,CoordSet *cs)

@@ -17,7 +17,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
-#include <unistd.h>
 
 #include"main.h"
 #include"Version.h"
@@ -271,8 +270,8 @@ void OrthoBusyDraw(int force)
   if(force||(busyTime>cBusyUpdate)) {
 
 	 OrthoPushMatrix();
-
-    if(PMGUI) {
+	 
+      if(PMGUI) {
       glDrawBuffer(GL_FRONT);
       glClear(GL_DEPTH_BUFFER_BIT);
       
@@ -703,7 +702,7 @@ void OrthoDoDraw()
         showLines=I->ShowLines;
       else
         showLines=1;
-        
+
       glColor3fv(I->TextColor);
       while(l>=0)
         {
@@ -949,12 +948,23 @@ void OrthoPushMatrix(void)
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
-  glOrtho(0,I->ViewPort[2],0,I->ViewPort[3],-1,1);
+  glOrtho(0,I->ViewPort[2],0,I->ViewPort[3],-100,100);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
+  
   glDisable(GL_LIGHTING);
+  glDisable(GL_FOG);
+  glDisable(GL_NORMALIZE);
   glDisable(GL_DEPTH_TEST);
+  glDisable(GL_COLOR_MATERIAL);
+  glDisable(GL_LINE_SMOOTH);
+  glDisable(GL_DITHER);
+  glDisable(GL_BLEND);
+  /*  glDisable(GL_ALPHA_TEST);
+  glDisable(GL_CULL_FACE);
+  glDisable(GL_POINT_SMOOTH);*/
+  
 }
 /*========================================================================*/
 void OrthoPopMatrix(void)

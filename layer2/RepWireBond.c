@@ -69,7 +69,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 v=I->VP;
 	 c=I->NP;
 	 p=I->R.P;
-	 
+
 	 glBegin(GL_LINES);
 	 
 	 while(c--) {
@@ -99,7 +99,6 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 
 	 }
 	 glEnd();
-
 	 (*pick)[0].index = i;
   } else if(PMGUI) {
 
@@ -107,6 +106,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 v=I->V;
 	 c=I->N;
 
+    	 glDisable(GL_LIGHTING); 
 	 glBegin(GL_LINES);	 
 	 SceneResetNormal(true);
 	 while(c--) {
@@ -118,6 +118,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 		v+=3;
 	 }
 	 glEnd();
+     glEnable(GL_LIGHTING);
   }
 }
 

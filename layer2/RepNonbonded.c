@@ -114,32 +114,34 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 
 	 v=I->V;
 	 c=I->N;
-
-	 glBegin(GL_LINES);	 
-	 SceneResetNormal(true);
-	 while(c--) {
-
-		glColor3fv(v);
-		v+=3;
-
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-
-
-	 }
-	 glEnd();
+    if(c) {
+      glDisable(GL_LIGHTING);
+      glBegin(GL_LINES);	 
+      SceneResetNormal(true);
+      while(c--) {
+        
+        glColor3fv(v);
+        v+=3;
+        
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+        
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+        
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+        
+      }
+      glEnd();
+      glEnable(GL_LIGHTING);
+    }
   }
 }
 
