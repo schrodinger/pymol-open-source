@@ -358,6 +358,7 @@ def spheroid(*arg):
 EXPERIMENTAL
 '''
    try:
+      print "Warning: 'spheroid' is experimental, incomplete, and unstable."
       lock()
       if len(arg)==0:
          r = _cmd.spheroid("")
@@ -3003,7 +3004,8 @@ keyword = {
    'set_key'       : [set_key      , 2 , 1 , ',' , 0 ], # API only
    'show'          : [show         , 0 , 2 , ',' , 0 ],
    'sort'          : [sort         , 0 , 1 , ',' , 0 ],
-   'splash'       : [splash       , 0 , 0 , ',' , 0 ],
+   'spheroid'      : [spheroid     , 0 , 1 , ',' , 0 ],
+   'splash'        : [splash       , 0 , 0 , ',' , 0 ],
    '_special'      : [_special     , 3 , 3 , ',' , 0 ],
    'stereo'        : [stereo       , 1 , 1 , ',' , 0 ],
    'symexp'        : [symexp       , 2 , 2 , '=' , 0 ],

@@ -555,14 +555,14 @@ void SettingInit(void)
 			"ray_trace_fog_start");
 
   I->NSetting++;
-  I->Setting[cSetting_spheroid_smooth].Value[0] = 1.50;
+  I->Setting[cSetting_spheroid_smooth].Value[0] = 1.1;
   strcpy(I->Setting[cSetting_spheroid_smooth].Name,
 			"spheroid_smooth");
 
   I->NSetting++;
-  I->Setting[cSetting_spheroid_ratio].Value[0] = 0.20;
-  strcpy(I->Setting[cSetting_spheroid_ratio].Name,
-			"spheroid_ratio");
+  I->Setting[cSetting_spheroid_fill].Value[0] = 1.30;
+  strcpy(I->Setting[cSetting_spheroid_fill].Name,
+			"spheroid_fill");
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS

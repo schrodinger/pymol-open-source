@@ -84,7 +84,10 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   int t0,t1,t2,bt0,bt1,bt2;
   float dp,l,*fsum = NULL;
   float *norm = NULL;
-  float spheroid_smooth,spheroid_ratio;
+  float spheroid_smooth;
+  float spheroid_fill;
+  float spheroid_ratio=0.1; /* minimum ratio of width over length */
+  float spheroid_minimum = 0.02; /* minimum size - to insure valid normals */
   int row,*count=NULL,base;
   int nRow;
   sp=Sphere1;
@@ -99,7 +102,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   spl=spheroid;
 
   spheroid_smooth=SettingGet(cSetting_spheroid_smooth);
-  spheroid_ratio=SettingGet(cSetting_spheroid_ratio);
+  spheroid_fill=SettingGet(cSetting_spheroid_fill);
   /* first compute average coordinate */
 
   v=center;
@@ -170,8 +173,8 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
             if(dp>=0.0) {
               ang = acos(dp);
               ang=(ang/spheroid_smooth)*(cPI/2.0); 
-              if(ang>1.25)
-                ang=1.25;
+              if(ang>spheroid_fill)
+                ang=spheroid_fill;
               /* take envelop to zero over that angle */
               if(ang<=(cPI/2.0)) {
                 dp = cos(ang);
@@ -190,14 +193,16 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   s=spheroid;
   for(a=0;a<I->NAtom;a++) {
     min_dist = spheroid_ratio*sqrt(max_sq[a]);
+    if(min_dist<spheroid_minimum)
+      min_dist=spheroid_minimum;
     for(b=0;b<sp->nDot;b++) {
       if(*f>R_SMALL4) {
         (*s)=sqrt((*s)/(*(f++))); /* we put the "rm" in "rms" */
       } else {
         f++;
       }
-      /*      if(*s<min_dist)
-       *s=min_dist;*/
+      if(*s<min_dist)
+        *s=min_dist;
       s++;
     }
   }

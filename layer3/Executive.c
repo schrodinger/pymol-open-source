@@ -510,7 +510,7 @@ void ExecutiveCopy(char *src,char *dst)
           for(a=0;a<cRepCnt;a++)
             rec2->repOn[a]=rec1->repOn[a];
         }
-        PRINTF " Executive: object %s created.",oDst->Obj.Name ENDF
+        PRINTF " Executive: object %s created.\n",oDst->Obj.Name ENDF
       }
     }
   SceneChanged();
