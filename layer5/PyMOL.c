@@ -55,6 +55,7 @@ Z* -------------------------------------------------------------------
 #include "Seq.h"
 #include "Seeker.h"
 #include "Texture.h"
+#include "TestPyMOL.h"
 
 #include "PyMOL.h"
 #include "PyMOLGlobals.h"
@@ -74,9 +75,21 @@ typedef struct _CPyMOL {
 
 const static CPyMOLOptions Defaults = {
   true, /* pmgui */
+#ifndef _PYMOL_NOPY
   true, /* internal_gui*/
+#else
+  false, 
+#endif
+#ifndef _PYMOL_NOPY
   true, /* show_splash */
+#else
+  false,
+#endif
+#ifndef _PYMOL_NOPY
   1,   /* internal_feedback */
+#else
+  0, 
+#endif
   true, /* security */
   false, /* game mode */
   0, /* force_stereo */
@@ -138,6 +151,12 @@ static CPyMOL *_PyMOL_New(void)
   return result;
 }
 
+static void _PyMOL_Config(CPyMOL *I)
+{
+    I->G->HaveGUI = I->G->Option->pmgui;
+    I->G->Security = I->G->Option->security;
+}
+
 CPyMOL *PyMOL_New(void)
 {
   CPyMOL *result = _PyMOL_New();
@@ -145,6 +164,7 @@ CPyMOL *PyMOL_New(void)
     result->G->Option = Calloc(CPyMOLOptions,1);
     if(result->G->Option)
       (*result->G->Option) = Defaults;
+    _PyMOL_Config(result);
   }
   return result;
 }
@@ -156,6 +176,7 @@ CPyMOL *PyMOL_NewWithOptions(CPyMOLOptions *option)
     result->G->Option = Calloc(CPyMOLOptions,1);
     if(result->G->Option)
       *(result->G->Option) = *option;
+    _PyMOL_Config(result);
   }
   return result;
 }
@@ -428,4 +449,9 @@ void PyMOL_SwapBuffers(CPyMOL *I)
   } else {
     I->SwapFlag = true;
   }
+}
+
+void PyMOL_RunTest(CPyMOL *I, int group, int test)
+{
+  TestPyMOLRun(I->G, group, test);
 }

@@ -4729,7 +4729,6 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
   int ok=true;
   int code;
   int group;
-  CTestPyMOL tst;
 
   ok = PyArg_ParseTuple(args,"ii",&group,&code);
   if(ok) {
@@ -4737,7 +4736,7 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
     PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Details)
       " Cmd: initiating test %d-%d.\n",group,code
       ENDFB(TempPyMOLGlobals);
-    ok = TestPyMOLRun(TempPyMOLGlobals,&tst,group,code);
+    ok = TestPyMOLRun(TempPyMOLGlobals,group,code);
     PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Details)
       " Cmd: concluding test %d-%d.\n",group,code
       ENDFB(TempPyMOLGlobals);

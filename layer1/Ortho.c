@@ -438,11 +438,11 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
         
         glFlush();
         glDrawBuffer(GL_BACK);
-       }
+      }
       OrthoPopMatrix(G);
       OrthoDirty(G);/* switched from SceneDirty */
-    I->BusyLast=now;
-    }    
+      I->BusyLast=now;
+    }
   }
   PRINTFD(G,FB_Ortho)
     " OrthoBusyDraw: leaving...\n"
@@ -710,6 +710,7 @@ void OrthoParseCurrentLine(PyMOLGlobals *G)
   curLine=I->CurLine&OrthoSaveLines;
   I->Line[curLine][I->CurChar]=0;
   strcpy(buffer,I->Line[curLine]+I->PromptChar);
+#ifndef _PYMOL_NOPY
   if(buffer[0])
     {
       strcpy(I->History[I->HistoryLine],buffer);
@@ -720,23 +721,10 @@ void OrthoParseCurrentLine(PyMOLGlobals *G)
         PLog(buffer,cPLog_pml);
       OrthoNewLine(G,NULL,true);
       ExecutiveDrawNow(G);
-#ifndef _PYMOL_NOPY
       PParse(buffer);
-#else
- {
-   OrthoLineType buf="";
-
-   ExecutiveProcessPDBFile(G,NULL,"test/dat/pept.pdb","pept",0,0,1,buf,NULL,0);
-   ButModeSet(G,0,cButModeRotXYZ);
-   ButModeSet(G,1,cButModeTransXY);
-   ButModeSet(G,2,cButModeTransZ);
-   ButModeSet(G,12,cButModeScaleSlab);
-   ButModeSet(G,13,cButModeMoveSlab);
-
- }
-#endif
       OrthoRestorePrompt(G);
     }
+#endif
   I->CursorChar=-1;
 }
 /*========================================================================*/
@@ -974,7 +962,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
     if(overlay||(!text)) 
       if(!SceneRenderCached(G))
         render=true;
-
+    
     if((SceneGetStereo(G)==1)||double_pump) {
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1006,6 +994,8 @@ void OrthoDoDraw(PyMOLGlobals *G)
           glDrawBuffer(GL_BACK);
         break;
       }
+
+
       OrthoPushMatrix(G);
       
       x = I->X;
@@ -1022,6 +1012,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
         glVertex2i(0,cOrthoBottomSceneMargin-1);
         glEnd();
       }
+
       
       PRINTFD(G,FB_Ortho)
         " OrthoDoDraw: drawing blocks...\n"
@@ -1321,6 +1312,8 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
 
   if(SettingGet(G,cSetting_internal_gui)) {
 
+
+#ifndef _PYMOL_NOPY
     block=ExecutiveGetBlock(G);
     block->active=true;
     BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
@@ -1330,6 +1323,18 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
     block=ButModeGetBlock(G);
     BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
     block->active=true;
+#else
+    block=ExecutiveGetBlock(G);
+    block->active=true;
+    BlockSetMargin(block,0,width-internal_gui_width,ButModeMargin,0);
+    block=WizardGetBlock(G);
+    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
+    block->active=false;
+    block=ButModeGetBlock(G);
+    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
+    block->active=false;
+#endif
+
     block=ControlGetBlock(G);
     BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
     block->active=true;

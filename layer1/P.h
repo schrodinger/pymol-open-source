@@ -63,7 +63,7 @@ Z* -------------------------------------------------------------------
 #define PSleep(a)
 
 #define PFree()
-#define PInit(PyMOLGlobals *G)
+#define PInit(G)
 #define PInitEmbedded(a,b)
 #define PGetOptions(a)
 

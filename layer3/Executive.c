@@ -726,12 +726,14 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
           ExecutiveManageObject(G,obj,true,true);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
-          if(!is_string)
-            sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
-                    fname,oname);
-          else
-            sprintf(buf," CmdLoad: PDB-string loaded into object \"%s\", state %d.\n",
-                    oname,eff_frame+1);
+          if(buf) {
+            if(!is_string)
+              sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
+                      fname,oname);
+            else
+              sprintf(buf," CmdLoad: PDB-string loaded into object \"%s\", state %d.\n",
+                      oname,eff_frame+1);
+          }
             
         }
       }
@@ -743,12 +745,14 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
         ExecutiveUpdateObjectSelection(G,origObj);
       if(eff_frame<0)
         eff_frame = ((ObjectMolecule*)origObj)->NCSet-1;
-      if(!is_string) 
-        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname,oname,eff_frame+1);
-      else
-        sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
-                oname,eff_frame+1);
+      if(buf) {
+        if(!is_string) 
+          sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+                  fname,oname,eff_frame+1);
+        else
+          sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
+                  oname,eff_frame+1);
+      }
       obj = origObj;
     }
 
@@ -7534,24 +7538,21 @@ static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, 
 
 }
 
+#ifndef _PYMOL_NOPY
 static void draw_button_char(PyMOLGlobals *G,int x2,int y2,char ch)
 {
   TextSetColor3f(G,0.0F,0.0F,0.0F);
   TextSetPos2i(G,x2+ExecToggleTextShift,y2);
   TextDrawChar(G,ch);
 }
+#endif
 
 /*========================================================================*/
 static void ExecutiveDraw(Block *block)
 {
   PyMOLGlobals *G=block->G;
-  int a,x,y,xx,x2,y2;
+  int x,y,xx,x2,y2;
   char *c=NULL;
-  float toggleColor[3] = { 0.5F, 0.5F, 1.0F };
-  float toggleColor2[3] = { 0.4F, 0.4F, 0.6F };
-  float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
-  float toggleDarkEdge[3] = { 0.3F, 0.3F, 0.5F};
-  float toggleLightEdge[3] = { 0.7F, 0.7F, 0.9F};
   float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
   float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
   float disabledColor[3] = { 0.3F, 0.3F, 0.3F };
@@ -7630,7 +7631,12 @@ static void ExecutiveDraw(Block *block)
     x = I->Block->rect.left+ExecLeftMargin;
     y = (I->Block->rect.top-ExecLineHeight)-ExecTopMargin;
     /*    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+ExecOpCnt);*/
+#ifndef _PYMOL_NOPY
     xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(ExecOpCnt);
+#else
+    xx = I->Block->rect.right-ExecRightMargin;
+#endif
+
     if(I->ScrollBarActive) {
       x+=ExecScrollBarWidth+ExecScrollBarMargin;
     }
@@ -7649,61 +7655,71 @@ static void ExecutiveDraw(Block *block)
             if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
               x2 = x+10;
             }
-            glColor3fv(toggleColor);
-            for(a=0;a<ExecOpCnt;a++)
-              {
-                switch(a) {
-                case 0:
-                  /*
-                  glColor3fv(toggleColor);
-                  glBegin(GL_POLYGON);
-                  glVertex2i(x2,y2+(ExecToggleSize)/2);
-                  glVertex2i(x2+(ExecToggleSize)/2,y2);
-                  glVertex2i(x2+ExecToggleSize,y2+(ExecToggleSize)/2);
-                  glVertex2i(x2+(ExecToggleSize)/2,y2+ExecToggleSize);
-                  glEnd();
-                  */
-
-                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
-                              toggleLightEdge,
-                              toggleDarkEdge,
-                              toggleColor);
-
-                  draw_button_char(G,x2,y2+text_lift,'A');
-                  break;
-                case 1:
-                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
-                              toggleLightEdge,
-                              toggleDarkEdge,
-                              toggleColor3);
-
-                  draw_button_char(G,x2,y2+text_lift,'S');
-                  break;
-                case 2:
-                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
-                              toggleLightEdge,
-                              toggleDarkEdge,
-                              toggleColor2);
-                  draw_button_char(G,x2,y2+text_lift,'H');
-                  break;
-                case 3:
-                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
-                              toggleLightEdge,
-                              toggleDarkEdge,
-                              toggleColor);
-                  draw_button_char(G,x2,y2+text_lift,'L');
-                  break;
-                case 4:
-                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
-                              toggleLightEdge,
-                              toggleDarkEdge,
-                              NULL);
-                  draw_button_char(G,x2,y2+text_lift,'C');
-                  break;
+#ifndef _PYMOL_NOPY
+            {
+              int a;
+              float toggleColor[3] = { 0.5F, 0.5F, 1.0F };
+              float toggleColor2[3] = { 0.4F, 0.4F, 0.6F };
+              float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
+              float toggleDarkEdge[3] = { 0.3F, 0.3F, 0.5F};
+              float toggleLightEdge[3] = { 0.7F, 0.7F, 0.9F};
+              
+              glColor3fv(toggleColor);
+              for(a=0;a<ExecOpCnt;a++)
+                {
+                  switch(a) {
+                  case 0:
+                    /*
+                      glColor3fv(toggleColor);
+                      glBegin(GL_POLYGON);
+                      glVertex2i(x2,y2+(ExecToggleSize)/2);
+                      glVertex2i(x2+(ExecToggleSize)/2,y2);
+                      glVertex2i(x2+ExecToggleSize,y2+(ExecToggleSize)/2);
+                      glVertex2i(x2+(ExecToggleSize)/2,y2+ExecToggleSize);
+                      glEnd();
+                    */
+                    
+                    draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
+                                toggleLightEdge,
+                                toggleDarkEdge,
+                                toggleColor);
+                    
+                    draw_button_char(G,x2,y2+text_lift,'A');
+                    break;
+                  case 1:
+                    draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
+                                toggleLightEdge,
+                                toggleDarkEdge,
+                                toggleColor3);
+                    
+                    draw_button_char(G,x2,y2+text_lift,'S');
+                    break;
+                  case 2:
+                    draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
+                                toggleLightEdge,
+                                toggleDarkEdge,
+                                toggleColor2);
+                    draw_button_char(G,x2,y2+text_lift,'H');
+                    break;
+                  case 3:
+                    draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
+                                toggleLightEdge,
+                                toggleDarkEdge,
+                                toggleColor);
+                    draw_button_char(G,x2,y2+text_lift,'L');
+                    break;
+                  case 4:
+                    draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
+                                toggleLightEdge,
+                                toggleDarkEdge,
+                                NULL);
+                    draw_button_char(G,x2,y2+text_lift,'C');
+                    break;
+                  }
+                  x2+=ExecToggleWidth;
                 }
-                x2+=ExecToggleWidth;
-              }
-        
+            }
+#endif
             TextSetColor(G,I->Block->TextColor);
             TextSetPos2i(G,x+2,y2+text_lift);
             if((rec->type==cExecObject)||(rec->type==cExecAll)||
