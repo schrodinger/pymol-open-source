@@ -469,9 +469,9 @@ Rep *RepWireBondNew(CoordSet *cs)
   int maxBond = 0;
   float tmpColor[3];
   int valence_flag = false;
-
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
+  int cartoon_side_chain_helper = 0;
   OOAlloc(G,RepWireBond);
   obj = cs->Obj;
 
@@ -501,6 +501,8 @@ Rep *RepWireBondNew(CoordSet *cs)
   if(valence==1.0F) /* backwards compatibility... */
     valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence_size);
   valence_flag = (valence!=0.0F);
+  cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
+                                         cSetting_cartoon_side_chain_helper);
 
   half_bonds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
 
@@ -607,6 +609,78 @@ Rep *RepWireBondNew(CoordSet *cs)
 					 v1 = cs->Coord+3*a1;
 					 v2 = cs->Coord+3*a2;
 					 
+
+                if(cartoon_side_chain_helper) {
+                  register AtomInfoType *ati1=obj->AtomInfo+b1;
+                  register AtomInfoType *ati2=obj->AtomInfo+b2;
+                  if(ati1->visRep[cRepCartoon]&&
+                     ati2->visRep[cRepCartoon]&&
+                     (!ati1->hetatm)&&(!ati2->hetatm)) {
+                    register char *name1=ati1->name;
+                    register int prot1=ati1->protons;
+                    register char *name2=ati2->name;
+                    register int prot2=ati2->protons;
+
+                    if(prot1 == cAN_C) { 
+                      if((name1[1]=='A')&&(name1[0]=='C')&&(!name1[2])) { /* CA */
+                        if(prot2 == cAN_C) { 
+                          if((name2[1]=='B')&&(name2[0]=='C')&&(!name2[2]))
+                            c1 = c2;  /* CA-CB */
+                          else if((!name2[1])&&(name2[0]=='C'))
+                            s1 = s2 = 0; /* suppress CA-C */
+                        } else if(prot2 == cAN_H) 
+                          s1 = s2 = 0; /* suppress all CA-hydrogens */
+                      }
+                    } else if(prot1 == cAN_N) { 
+                      if((!name1[1])&&(name1[0]=='N')) { /* N */
+                        if(prot2 == cAN_C) {
+                          if((name2[1]=='D')&&(name2[0]=='C')&&(!name2[2])) 
+                            c1 = c2; /* N->CD in PRO */
+                          else if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2]))
+                            s1 = s2 = 0; /* suppress N-CA */
+                          else if((!name2[1])&&(name2[0]=='C'))
+                            s1 = s2 = 0; /* suppress N-C */
+                        } else if(prot2 == cAN_H)
+                          s1 = s2 = 0; /* suppress all N-hydrogens */
+                      }
+                    } else if((prot1 == cAN_O)&&(prot2 == cAN_C)) { 
+                      if((!name2[1])&&(name2[0]=='C')&&
+                         (((!name1[1])&&(name1[0]=='O'))||
+                          ((name1[3]==0)&&(name1[2]=='T')&&(name1[1]=='X')&&(name1[0]=='O'))))
+                        s1 = s2 = 0; /* suppress C-O,OXT */
+                    }
+                    
+                    if(prot2 == cAN_C) {
+                      if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])) { /* CA */
+                        if(prot1 == cAN_C) { 
+                          if((name1[1]=='B')&&(name1[0]=='C')&&(!name1[2]))
+                            c2 = c1; /* CA-CB */
+                          else if((!name1[1])&&(name1[0]=='C'))
+                            s1 = s2 = 0; /* suppress CA-C */
+                        } else if(prot1 == cAN_H) 
+                          s1 = s2 = 0; /* suppress all CA-hydrogens */
+                      }
+                    } else if(prot2 == cAN_N) {
+                      if((!name2[1])&&(name2[0]=='N')) { /* N */
+                        if(prot1 == cAN_C) { 
+                          if((name1[1]=='D')&&(name1[0]=='C')&&(!name1[2]))
+                            c2 = c1; /* N->CD in PRO */
+                          else if((name1[1]=='A')&&(name1[0]=='C')&&(!name1[2]))
+                            s1 = s2 = 0; /* suppress N-CA */
+                          else if((!name1[1])&&(name1[0]=='C'))
+                            s1 = s2 = 0; /* suppress N-C */
+                        } else if(prot1 == cAN_H)
+                          s1 = s2 = 0; /* suppress all N-hydrogens */
+                      }
+                    } else if((prot2 == cAN_O)&&(prot1 == cAN_C)) {
+                      if((!name1[1])&&(name1[0]=='C')&&
+                         (((!name2[1])&&(name2[0]=='O'))||
+                          ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O'))))
+                        s1 = s2 = 0; /* suppress C-O,OXT */
+                    }
+                  }
+                }
+
 					 if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
 						
 
