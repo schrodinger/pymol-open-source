@@ -68,6 +68,20 @@ undocumented.
       unlock()
    return r
 
+def smooth(cycles,selection,first,last,window):
+   '''
+undocumented
+   '''
+   r = 0
+   selection = selector.process(selection)   
+   try:
+      lock()
+      r = _cmd.smooth(str(selection),int(cycles),
+                      int(first)-1,int(last)-1,int(window))
+   finally:
+      unlock()
+   return r
+   
 def set_geometry(selection,geometry,valence):
    '''
 DESCRIPTION

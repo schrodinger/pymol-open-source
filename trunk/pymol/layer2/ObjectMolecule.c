@@ -4358,6 +4358,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   int ok = true;
   int cnt;
   int match_flag=false;
+  int offset;
   CoordSet *cs;
   AtomInfoType *ai,*ai0,*ai_option;
   
@@ -4753,7 +4754,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      break;
    case OMOP_SingleStateVertices: /* same as OMOP_VERT for a single state */
      ai=I->AtomInfo;
-     if(I->NCSet<op->cs1) {
+     if(op->cs1<I->NCSet) {
        if(I->CSet[op->cs1]) {
          b = op->cs1;
          for(a=0;a<I->NAtom;a++)
@@ -4761,7 +4762,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              s=ai->selEntry;
              if(SelectorIsMember(s,sele))
                {
-                 ai->deleteFlag=true;
+                 ai->deleteFlag=true; /* ?????? */
                  op->i1++;
 
                  if(I->DiscreteFlag) {
@@ -4785,6 +4786,76 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      }
+     break;
+   case OMOP_CSetIdxGetAndFlag:
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {         
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             for(b=op->cs1;b<=op->cs2;b++) {
+               offset = b-op->cs1;
+               if(b<I->NCSet) {
+                 if(I->CSet[b]) {
+                   if(I->DiscreteFlag) {
+                     if(I->CSet[b]==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=I->CSet[b]->AtmToIdx[a];
+                   if(a1>=0) {
+                     op->ii1[op->i1*offset+op->i2] = 1; /* presence flag */
+                     vv1=op->vv1+3*(op->i1*offset+op->i2); /* atom-based offset */
+                     vv2=I->CSet[b]->Coord+(3*a1);
+                     *(vv1++)=*(vv2++);
+                     *(vv1++)=*(vv2++);
+                     *(vv1++)=*(vv2++);
+                     op->nvv1++;
+                   }
+                 }
+               }
+             }
+             op->i2++; /* atom index field for atoms within selection...*/
+           }
+         ai++;
+       }
+     break;
+   case OMOP_CSetIdxSetFlagged:
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {         
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             for(b=op->cs1;b<=op->cs2;b++) {
+               offset = op->cs1-b;
+               if(b<I->NCSet) {
+                 if(I->CSet[b]) {
+                   if(I->DiscreteFlag) {
+                     if(I->CSet[b]==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=I->CSet[b]->AtmToIdx[a];
+                   if(a1>=0) {
+                     if(op->ii1[op->i1*offset+op->i2]); /* copy flag */
+                     vv1=op->vv1+3*(op->i1*offset+op->i2); /* atom-based offset */
+                     vv2=I->CSet[b]->Coord+(3*a1);
+                     *(vv2++)=*(vv1++);
+                     *(vv2++)=*(vv1++);
+                     *(vv2++)=*(vv1++);
+                     op->nvv1++;
+                   }
+                 }
+               }
+             }
+             op->i2++; /* atom index field for atoms within selection...*/
+           }
+         ai++;
+       }
      break;
    default:
      for(a=0;a<I->NAtom;a++)

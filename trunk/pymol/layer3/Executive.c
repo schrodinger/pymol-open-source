@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"Match.h"
 #include"ObjectCGO.h"
+#include"Util.h"
 
 #include"Menu.h"
 #include"Map.h"
@@ -98,6 +99,115 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
+{
+  int sele = -1;
+  ObjectMoleculeOpRec op;
+  int all_flag=false;
+  int state;
+  int n_state;
+  float *coord0=NULL,*coord1=NULL;
+  int *flag0=NULL,*flag1=NULL;
+  int a;
+  int n_atom;
+  int ok=true;
+  WordType all = "_all";
+
+  PRINTFD(FB_Executive)
+    " ExecutiveSmooth: entered %s\n",name
+    ENDFD;
+
+  if(WordMatch(cKeywordAll,name,true)<0) {
+    name=all;
+    all_flag=true;
+    SelectorCreate(all,"(all)",NULL,true,NULL);
+  }
+  sele=SelectorIndexByName(name);
+
+  if(sele>=0) {
+    if(last<0) 
+      last = ExecutiveCountStates(name);
+    if(first<0)
+      first = 1;
+    if(last<first) {
+      state=last;last=first;first=state;
+    }
+    n_state=last-first+1;
+    
+    PRINTFD(FB_Executive)
+      " ExecutiveSmooth: n_state %d\n",n_state
+      ENDFD;
+
+    if(n_state>2) {
+      
+      /* determine storage req */
+      op.code = OMOP_CountAtoms;
+      op.i1=0;
+      ExecutiveObjMolSeleOp(sele,&op);
+      n_atom=op.i1;
+      if(n_atom) {
+        /* allocate storage */
+        coord0 = Alloc(float,3*n_atom*n_state);
+        coord1 = Alloc(float,3*n_atom*n_state);
+        flag0 = Alloc(int,n_atom*n_state);
+        flag1 = Alloc(int,n_atom*n_state);
+        
+        for(a=0;a<cycles;a++) {      
+          /* clear the arrays */
+          
+          UtilZeroMem(coord0,sizeof(float)*3*n_atom*n_state);
+          UtilZeroMem(flag0,sizeof(int)*n_atom*n_state);
+          
+          /* get the data */
+          
+          op.code = OMOP_CSetIdxGetAndFlag;
+          op.i1 = n_atom; 
+          op.i2 = 0;
+          op.cs1 = first;
+          op.cs2 = last;
+          op.vv1 = coord0;
+          op.ii1 = flag0;
+          op.nvv1 = 0;          
+          ExecutiveObjMolSeleOp(sele,&op);      
+          printf(" ExecutiveSmooth: %d %d\n",op.i2,op.nvv1);
+        }
+
+
+        for(a=0;a<cycles;a++) {      
+          /* clear the arrays */
+          
+          UtilZeroMem(coord0,sizeof(float)*3*n_atom*n_state);
+          UtilZeroMem(flag0,sizeof(int)*n_atom*n_state);
+          
+          /* get the data */
+          
+          op.code = OMOP_CSetIdxSetFlagged;
+          op.i1 = n_atom; 
+          op.i2 = 0;
+          op.cs1 = first+1;
+          op.cs2 = last-1;
+          op.vv1 = coord1;
+          op.ii1 = flag1;
+          op.nvv1 = 0;
+          
+          ExecutiveObjMolSeleOp(sele,&op);      
+          printf(" ExecutiveSmooth: %d %d\n",op.i2,op.nvv1);
+        }
+
+
+        FreeP(coord0);
+        FreeP(coord1);
+        FreeP(flag0);
+        FreeP(flag1);
+      }
+    }
+  }
+  if(all_flag) {
+    ExecutiveDelete(all);
+  }
+  return(ok);
+}
+/*========================================================================*/
 int ExecutiveDebug(char *name)
 {
   ObjectMolecule *obj;
