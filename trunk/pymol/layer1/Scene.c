@@ -130,10 +130,6 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer);
 unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer);
 
 void SceneDraw(Block *block);
-int SceneClick(Block *block,int button,int x,int y,int mod);
-int SceneRelease(Block *block,int button,int x,int y,int mod);
-
-int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
 
 void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height);
@@ -518,7 +514,7 @@ static unsigned char *SceneImagePrepare(void)
       ENDFB;
   }
   if(reset_alpha&&image) {
-    char *p = image;
+    unsigned char *p = (unsigned char*)image;
     int x,y;
     for(y=0;y<I->Height;y++) {
       for(x=0;x<I->Width;x++) {
@@ -548,7 +544,7 @@ int  SceneCopyExternal(int width, int height,int rowbytes,unsigned char *dest)
     for (i=0; i< height; i++)
       {
         unsigned char *dst = dest + i * (rowbytes);
-        unsigned char *src = ((char*)image) + ((height-1)-i) * width*4;
+        unsigned char *src = ((unsigned char*)image) + ((height-1)-i) * width*4;
         for (j = 0; j < width; j++)
           {
             *dst++ = ((unsigned int)src[0]*src[3])/255; /* premultiply alpha */
@@ -1041,9 +1037,9 @@ void SceneDraw(Block *block)
             
             if((width<I->Width)||(height<I->Height)) {
               glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
-                            (int)((I->Height-height)/2+I->Block->rect.bottom),0);
+                            (int)((I->Height-height)/2+I->Block->rect.bottom),-10);
             } else {
-              glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
+              glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,-10);
             }
             if(I->ImageBuffer) {
 #if 1
@@ -3200,7 +3196,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
   PRINTFD(FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
-    pick,x,y,smp
+    (void*)pick,x,y,(void*)smp
     ENDFD;
 
   double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);

@@ -1361,7 +1361,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
     }
   }
   PRINTFB(FB_ObjectMolecule,FB_Blather)
-   " PDBStr2CoordSet: Read %d bonds from CONECT records (%p).\n",nBond,bond
+   " PDBStr2CoordSet: Read %d bonds from CONECT records (%p).\n",nBond,
+    (void*)bond
     ENDFB;
   cset = CoordSetNew();
   cset->NIndex=nAtom;

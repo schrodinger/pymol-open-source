@@ -1414,7 +1414,8 @@ Rep *RepCylBondNew(CoordSet *cs)
       I->VP = ReallocForSure(I->VP,float,(v-I->VP));
 
       PRINTFD(FB_RepCylBond)
-        " RepCylBondNew: I->NP: %d I->VP: %p\n",I->NP,I->VP
+        " RepCylBondNew: I->NP: %d I->VP: %p\n",I->NP,
+        (void*)I->VP
         ENDFD;
 	 }
   }

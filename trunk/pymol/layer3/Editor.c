@@ -1208,7 +1208,8 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   int log_trans = (int)SettingGet(cSetting_log_conformations);
   int drag_sele = -1;
   PRINTFD(FB_Editor)
-    " EditorPrepareDrag-Debug: entered. obj %p index %d",obj,index
+    " EditorPrepareDrag-Debug: entered. obj %p index %d",
+    (void*)obj,index
     ENDFD;
 
   state = EditorGetEffectiveState(obj,state);
@@ -1408,7 +1409,8 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
 
   PRINTFD(FB_Editor)
     " EditorPrepDrag-Debug: leaving Index %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d seleFlag %d\n",
-    I->DragIndex,I->DragSelection,I->DragObject,I->DragHaveAxis,I->DragHaveBase,
+    I->DragIndex,I->DragSelection,(void*)I->DragObject,
+    I->DragHaveAxis,I->DragHaveBase,
     I->DragBondFlag,I->DragSlowFlag,seleFlag
     ENDFD;
 }
@@ -1425,8 +1427,10 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
 
 
   PRINTFD(FB_Editor)
-    " EditorDrag-Debug: entered. obj %p state %d index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", obj,state,index,mode,
-    I->DragIndex,I->DragSelection,I->DragObject,I->DragHaveAxis,I->DragHaveBase,
+    " EditorDrag-Debug: entered. obj %p state %d index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", 
+    (void*)obj,state,index,mode,
+    I->DragIndex,I->DragSelection,(void*)I->DragObject,
+    I->DragHaveAxis,I->DragHaveBase,
     I->DragBondFlag,I->DragSlowFlag
     ENDFD;
 

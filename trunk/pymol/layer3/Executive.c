@@ -76,7 +76,7 @@ ListVarDeclare(SpecList,SpecRec);
 typedef struct Executive {
   Block *Block;
   SpecRec *Spec;
-  int Width,Height;
+  int Width,Height,HowFarDown;
   int ScrollBarActive;
   int NSkip;
   struct CScrollBar *ScrollBar;
@@ -3081,7 +3081,7 @@ void ExecutiveUndo(int dir)
 
   o = ExecutiveGetLastObjectEdited();
   PRINTFB(FB_Executive,FB_Debugging)
-    " ExecutiveUndo: last object %p\n",o
+    " ExecutiveUndo: last object %p\n",(void*)o
     ENDFB;
   if(o)
     if(o->type==cObjectMolecule)
@@ -6144,6 +6144,10 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   int skip;
   int ExecLineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
 
+  if(y<I->HowFarDown) {
+    if(SettingGetGlobal_b(cSetting_internal_gui_mode)==1) 
+      return SceneClick(SceneGetBlock(),button,x,y,mod);
+  }
   n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
   a=n;
   if(I->ScrollBarActive) {
@@ -6153,160 +6157,161 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
     }
   } 
   skip = I->NSkip;
-  if(!pass)   while(ListIterate(I->Spec,rec,next))
-    if(rec->name[0]!='_')
-      {
-        if(skip) {
-          skip--;
-        } else {
-          if(!a) {
-            t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-            if(t<ExecOpCnt) {
-              int my = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight)-3;
-              int mx = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
-              t = (ExecOpCnt-t)-1;
-              switch(t) {
-              case 0:
-                switch(rec->type) {
-                case cExecAll:
-                  MenuActivate(mx,my,x,y,"all_action",rec->name);
-                  break;
-                case cExecSelection:
-                  MenuActivate(mx,my,x,y,"sele_action",rec->name);
-                  break;
-                case cExecObject:
-                  switch(rec->obj->type) {
-                  case cObjectMolecule:
-                    MenuActivate(mx,my,x,y,"mol_action",rec->obj->Name);
+  if(!pass)   
+    while(ListIterate(I->Spec,rec,next))
+      if(rec->name[0]!='_')
+        {
+          if(skip) {
+            skip--;
+          } else {
+            if(!a) {
+              t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
+              if(t<ExecOpCnt) {
+                int my = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight)-3;
+                int mx = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
+                t = (ExecOpCnt-t)-1;
+                switch(t) {
+                case 0:
+                  switch(rec->type) {
+                  case cExecAll:
+                    MenuActivate(mx,my,x,y,"all_action",rec->name);
                     break;
-                  case cObjectSurface:
-                  case cObjectMesh:
-                  case cObjectDist:
-                  case cObjectMap:
-                  case cObjectCGO:
-                  case cObjectCallback:
-                    MenuActivate(mx,my,x,y,"simple_action",rec->obj->Name);
+                  case cExecSelection:
+                    MenuActivate(mx,my,x,y,"sele_action",rec->name);
+                    break;
+                  case cExecObject:
+                    switch(rec->obj->type) {
+                    case cObjectMolecule:
+                      MenuActivate(mx,my,x,y,"mol_action",rec->obj->Name);
+                      break;
+                    case cObjectSurface:
+                    case cObjectMesh:
+                    case cObjectDist:
+                    case cObjectMap:
+                    case cObjectCGO:
+                    case cObjectCallback:
+                      MenuActivate(mx,my,x,y,"simple_action",rec->obj->Name);
+                      break;
+                    }
+                    break;
+                  }
+                  break;
+                case 1:
+                  switch(rec->type) {
+                  case cExecAll:
+                    MenuActivate(mx,my,x,y,"mol_show",cKeywordAll);
+                    break;
+                  case cExecSelection:
+                    MenuActivate(mx,my,x,y,"mol_show",rec->name);
+                    break;
+                  case cExecObject:
+                    switch(rec->obj->type) {
+                    case cObjectMolecule:
+                      MenuActivate(mx,my,x,y,"mol_show",rec->obj->Name);
+                      break;
+                    case cObjectCGO:
+                      MenuActivate(mx,my,x,y,"cgo_show",rec->obj->Name);
+                      break;
+                    case cObjectDist:
+                      MenuActivate(mx,my,x,y,"dist_show",rec->obj->Name);
+                      break;
+                    case cObjectMap:
+                      MenuActivate(mx,my,x,y,"simple_show",rec->obj->Name);
+                      break;
+                    case cObjectSurface:
+                    case cObjectMesh:
+                      MenuActivate(mx,my,x,y,"mesh_show",rec->obj->Name);
+                      break;
+                    }
+                    break;
+                  }
+                  break;
+                case 2:
+                  switch(rec->type) {
+                  case cExecAll:
+                    MenuActivate(mx,my,x,y,"mol_hide",cKeywordAll);
+                    break;
+                  case cExecSelection:
+                    MenuActivate(mx,my,x,y,"mol_hide",rec->name);
+                    break;
+                  case cExecObject:
+                    switch(rec->obj->type) {
+                    case cObjectMolecule:
+                      MenuActivate(mx,my,x,y,"mol_hide",rec->obj->Name);
+                      break;
+                    case cObjectCGO:
+                      MenuActivate(mx,my,x,y,"cgo_hide",rec->obj->Name);
+                      break;
+                    case cObjectDist:
+                      MenuActivate(mx,my,x,y,"dist_hide",rec->obj->Name);
+                      break;
+                    case cObjectMap:
+                      MenuActivate(mx,my,x,y,"simple_hide",rec->obj->Name);
+                      break;
+                    case cObjectSurface:
+                    case cObjectMesh:
+                      MenuActivate(mx,my,x,y,"mesh_hide",rec->obj->Name);
+                      break;
+                    }
+                    break;
+                  }
+                  break;
+                case 3:
+                  switch(rec->type) {
+                  case cExecAll:
+                    MenuActivate(mx,my,x,y,"mol_labels","(all)");
+                    break;
+                  case cExecSelection:
+                    MenuActivate(mx,my,x,y,"mol_labels",rec->name);
+                    break;
+                  case cExecObject:
+                    switch(rec->obj->type) {
+                    case cObjectMolecule:
+                      MenuActivate(mx,my,x,y,"mol_labels",rec->obj->Name);
+                      break;
+                    case cObjectDist:
+                      break;
+                    case cObjectMap:
+                    case cObjectSurface:
+                    case cObjectMesh:
+                      break;
+                    }
+                    break;
+                  }
+                  break;
+                case 4:
+                  switch(rec->type) {
+                  case cExecAll:
+                  case cExecSelection:
+                    MenuActivate(mx,my,x,y,"mol_color",rec->name);
+                    break;
+                  case cExecObject:
+                    switch(rec->obj->type) {
+                    case cObjectMolecule:
+                      MenuActivate(mx,my,x,y,"mol_color",rec->obj->Name);
+                      break;
+                    case cObjectDist:
+                    case cObjectMap:
+                    case cObjectSurface:
+                    case cObjectCGO:
+                    case cObjectMesh:
+                      MenuActivate(mx,my,x,y,"general_color",rec->obj->Name);
+                      break;
+                    }
                     break;
                   }
                   break;
                 }
-                break;
-              case 1:
-                switch(rec->type) {
-                case cExecAll:
-                  MenuActivate(mx,my,x,y,"mol_show",cKeywordAll);
-                  break;
-                case cExecSelection:
-                  MenuActivate(mx,my,x,y,"mol_show",rec->name);
-                  break;
-                case cExecObject:
-                  switch(rec->obj->type) {
-                  case cObjectMolecule:
-                    MenuActivate(mx,my,x,y,"mol_show",rec->obj->Name);
-                    break;
-                  case cObjectCGO:
-                    MenuActivate(mx,my,x,y,"cgo_show",rec->obj->Name);
-                    break;
-                  case cObjectDist:
-                    MenuActivate(mx,my,x,y,"dist_show",rec->obj->Name);
-                    break;
-                  case cObjectMap:
-                    MenuActivate(mx,my,x,y,"simple_show",rec->obj->Name);
-                    break;
-                  case cObjectSurface:
-                  case cObjectMesh:
-                    MenuActivate(mx,my,x,y,"mesh_show",rec->obj->Name);
-                    break;
-                  }
-                  break;
-                }
-                break;
-              case 2:
-                switch(rec->type) {
-                case cExecAll:
-                  MenuActivate(mx,my,x,y,"mol_hide",cKeywordAll);
-                  break;
-                case cExecSelection:
-                  MenuActivate(mx,my,x,y,"mol_hide",rec->name);
-                  break;
-                case cExecObject:
-                  switch(rec->obj->type) {
-                  case cObjectMolecule:
-                    MenuActivate(mx,my,x,y,"mol_hide",rec->obj->Name);
-                    break;
-                  case cObjectCGO:
-                    MenuActivate(mx,my,x,y,"cgo_hide",rec->obj->Name);
-                    break;
-                  case cObjectDist:
-                    MenuActivate(mx,my,x,y,"dist_hide",rec->obj->Name);
-                    break;
-                  case cObjectMap:
-                    MenuActivate(mx,my,x,y,"simple_hide",rec->obj->Name);
-                    break;
-                  case cObjectSurface:
-                  case cObjectMesh:
-                    MenuActivate(mx,my,x,y,"mesh_hide",rec->obj->Name);
-                    break;
-                  }
-                  break;
-                }
-                break;
-              case 3:
-                switch(rec->type) {
-                case cExecAll:
-                  MenuActivate(mx,my,x,y,"mol_labels","(all)");
-                  break;
-                case cExecSelection:
-                  MenuActivate(mx,my,x,y,"mol_labels",rec->name);
-                  break;
-                case cExecObject:
-                  switch(rec->obj->type) {
-                  case cObjectMolecule:
-                    MenuActivate(mx,my,x,y,"mol_labels",rec->obj->Name);
-                    break;
-                  case cObjectDist:
-                    break;
-                  case cObjectMap:
-                  case cObjectSurface:
-                  case cObjectMesh:
-                    break;
-                  }
-                  break;
-                }
-                break;
-              case 4:
-                switch(rec->type) {
-                case cExecAll:
-                case cExecSelection:
-                  MenuActivate(mx,my,x,y,"mol_color",rec->name);
-                  break;
-                case cExecObject:
-                  switch(rec->obj->type) {
-                  case cObjectMolecule:
-                    MenuActivate(mx,my,x,y,"mol_color",rec->obj->Name);
-                    break;
-                  case cObjectDist:
-                  case cObjectMap:
-                  case cObjectSurface:
-                  case cObjectCGO:
-                  case cObjectMesh:
-                    MenuActivate(mx,my,x,y,"general_color",rec->obj->Name);
-                    break;
-                  }
-                  break;
-                }
-                break;
+              } else {
+                I->Pressed = n;
+                I->Active = n;
+                OrthoGrab(I->Block);
+                OrthoDirty();
               }
-            } else {
-              I->Pressed = n;
-              I->Active = n;
-              OrthoGrab(I->Block);
-              OrthoDirty();
             }
+            a--;
           }
-          a--;
         }
-      }
   MainDirty();
   
   return(1);
@@ -6323,6 +6328,11 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   int skip;
 
   int ExecLineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+
+  if(y<I->HowFarDown) {
+    if(SettingGetGlobal_b(cSetting_internal_gui_mode)==1) 
+      return SceneRelease(SceneGetBlock(),button,x,y,mod);
+  }
 
   n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
 
@@ -6451,6 +6461,12 @@ int ExecutiveDrag(Block *block,int x,int y,int mod)
   CExecutive *I = &Executive;
   int xx,t;
   int ExecLineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+
+  if(y<I->HowFarDown) {
+    if(SettingGetGlobal_b(cSetting_internal_gui_mode)==1) 
+      return SceneDrag(SceneGetBlock(),x,y,mod);
+  }
+
   xx = (x-I->Block->rect.left);
   t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
   
@@ -6589,8 +6605,10 @@ void ExecutiveDraw(Block *block)
     }      
     max_char/=8;
 
-    glColor3fv(I->Block->BackColor);
-    BlockFill(I->Block);
+    if(SettingGetGlobal_b(cSetting_internal_gui_mode)==0) {
+      glColor3fv(I->Block->BackColor);
+      BlockFill(I->Block);
+    }
 
     if(I->ScrollBarActive) {
       ScrollBarSetBox(I->ScrollBar,I->Block->rect.top-ExecScrollBarMargin,
@@ -6729,6 +6747,7 @@ void ExecutiveDraw(Block *block)
               break;
           }
         }
+    I->HowFarDown = y;
   }
 }
 /*========================================================================*/
@@ -6834,6 +6853,7 @@ void ExecutiveInit(void)
   I->Active = -1;
   I->LastEdited=NULL;
   I->NSkip=0;
+  I->HowFarDown=0;
   ListElemAlloc(rec,SpecRec);
   strcpy(rec->name,"(all)");
   rec->type=cExecAll;

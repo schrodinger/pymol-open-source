@@ -388,7 +388,7 @@ Rep *RepMeshNew(CoordSet *cs)
   OOAlloc(RepMesh);
 
   PRINTFD(FB_RepMesh)
-	 " RepMeshNew-DEBUG: entered with coord-set %p\n",cs
+	 " RepMeshNew-DEBUG: entered with coord-set %p\n",(void*)cs
 	 ENDFD;
   obj = cs->Obj;
 

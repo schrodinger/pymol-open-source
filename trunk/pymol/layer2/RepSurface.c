@@ -100,7 +100,6 @@ static int ZRevOrderFn(float *array,int l,int r)
 
 static int check_and_add(int *cache, int spacing, int t0,int t1) {
   int *rec;
-  int result = false;
   int cnt;
   t0++;
   t1++;

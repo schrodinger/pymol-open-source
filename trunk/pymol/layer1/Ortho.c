@@ -928,7 +928,18 @@ void OrthoDoDraw()
     if(Feedback(FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("OrthoDoDraw checkpoint 0");
 
-    rightSceneMargin=(int)SettingGet(cSetting_internal_gui_width);
+    if(SettingGetGlobal_b(cSetting_internal_gui)) {
+      switch(SettingGetGlobal_i(cSetting_internal_gui_mode)) {
+      case 0:
+        rightSceneMargin=(int)SettingGet(cSetting_internal_gui_width);
+        break;
+      case 1:
+        break;
+      }
+    } else {
+      rightSceneMargin=0;
+    }
+
     internal_feedback=(int)SettingGet(cSetting_internal_feedback);
 
     v=SettingGetfv(cSetting_bg_rgb);
@@ -1228,11 +1239,18 @@ void OrthoReshape(int width, int height)
     sceneBottom = 0;
     
   internal_gui_width = (int)SettingGet(cSetting_internal_gui_width);
-  if(SettingGet(cSetting_internal_gui)>0.0) {
-    sceneRight = internal_gui_width;
-  } else {
-    sceneRight = 0;
-    internal_gui_width=0;
+  if(!SettingGetGlobal_b(cSetting_internal_gui))
+    internal_gui_width = 0;
+  else {
+    switch(SettingGetGlobal_i(cSetting_internal_gui_mode)) {
+    case 1:
+      sceneRight = 0;
+      break;
+    default:
+    case 0:
+      sceneRight = internal_gui_width;
+      break;
+    }
   }
 
   if(SettingGet(cSetting_internal_gui)) {
@@ -1540,8 +1558,6 @@ void OrthoInit(int showSplash)
   /*printf("orthoNewLine: CC: %d CL:%d PC: %d IF:L %d\n",I->CurChar,I->CurLine,
 	 I->PromptChar,I->InputFlag);*/
   
-  ButModeInit();
-  ControlInit();
   SeqInit();
   PopInit();
   for(a=0;a<=OrthoHistoryLines;a++)
@@ -1555,8 +1571,6 @@ void OrthoFree(void)
   VLAFreeP(I->WizardPromptVLA);
   PopFree();
   SeqFree();
-  ButModeFree();
-  ControlFree();
   QueueFree(I->cmds);
   I->cmds=NULL;
   QueueFree(I->feedback);
