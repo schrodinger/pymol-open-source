@@ -260,7 +260,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(ObjectMolecule *obj,char *molstr,int f
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,
                                          int frame,int discrete,
                                          M4XAnnoType *m4x,char *pdb_name,
-                                         char **next_pdb,PDBInfoRec *pdb_info);
+                                         char **next_pdb,PDBInfoRec *pdb_info,int quiet);
 
 ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int frame,int discrete);

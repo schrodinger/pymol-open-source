@@ -148,6 +148,7 @@ static PyMOLOptionRec PyMOLOptionGlobal = {
   "", /* after_load_script */
   0, /* multisample */
   1, /* window_visible */
+  0, /* read_stdin */
 };
 
 struct PyMOLOptionRec *PyMOLOption = &PyMOLOptionGlobal;
@@ -981,7 +982,7 @@ void MainBusyIdle(void)
   }
   if(!PMGUI) {
     if(!OrthoCommandWaiting()) {
-      if(!PyMOLOption->keep_thread_alive) {
+      if((!PyMOLOption->keep_thread_alive)&&(!PyMOLOption->read_stdin)) {
         I->IdleCount++;
         if(I->IdleCount==10) {
           PLockAPIAsGlut();

@@ -189,8 +189,11 @@ if pymol_launch != 3: # if this isn't a dry run
       import sys
       from pymol import cmd
       while 1:
-         cmd.do(sys.stdin.readline())
-
+         l = sys.stdin.readline()
+         if l!="":
+            cmd.do(l)
+         else:
+            cmd.quit()
 
    def exec_deferred():
       try:
