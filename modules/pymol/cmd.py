@@ -43,6 +43,22 @@
 #     and should return truth for success or None for failure
 #     (if no exception was raised)
 #
+#
+# NOTE: Output tweaking via the "quiet" parameter of API functions.
+#
+# Many PyMOL API functions have a "quiet" parameter which is used to
+# customize output depending on when and where the routine was called.
+#
+# As defined, quiet should be 1.  Called from an external module, output
+# to the console should be minimal.
+#
+# However, when a command is run through the parser (often manually) the
+# user expects a little more feedback.  The parser will automatically
+# set "quiet" to zero
+#
+# In rare cases, certain nonserious error or warning output should
+# also be suppressed.  Set "quiet" to 2 for this behavior.
+
 
 if __name__=='pymol.cmd':
    

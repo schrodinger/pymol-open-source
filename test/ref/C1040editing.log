@@ -89,7 +89,7 @@ PyMOL>h_add
 PyMOL>set valence=0.05
  Setting: valence set to 0.05000.
 PyMOL>ray
- RayRenderTest: obtained 59 graphics primitives.
+ RayRenderTest: obtained 43 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
@@ -148,7 +148,7 @@ Editor-Error: Invalid selections. Requires two bonded atoms in the same moilecul
 PyMOL>dele m1
 PyMOL>zoom
 PyMOL>ray
- RayRenderTest: obtained 121 graphics primitives.
+ RayRenderTest: obtained 122 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol,m1
  Executive: object "m1" created.
@@ -162,7 +162,7 @@ Editor-Error: Invalid selections. Requires two bonded atoms in the same moilecul
 PyMOL>dele m1
 PyMOL>zoom
 PyMOL>ray
- RayRenderTest: obtained 121 graphics primitives.
+ RayRenderTest: obtained 122 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
@@ -170,7 +170,6 @@ PyMOL>edit id 2
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>invert id 6,id 5
 PyMOL>print "%8.3f"%cmd.dist("id 28","id 17")
- Executive: object "dist01" created.
    1.957
 PyMOL>dele all
 PyMOL>load dat/pept.pdb

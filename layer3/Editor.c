@@ -480,10 +480,12 @@ void EditorAttach(char *elem,int geom,int valence,char *name)
           if(name[0])
             UtilNCopy(ai->name,name,sizeof(AtomName));
           ObjectMoleculeAttach(I->Obj,i0,ai); /* will free ai */
+          ai = NULL;
         }
       }
     }
   }
+  VLAFreeP(ai); /* safety */
 }
 /*========================================================================*/
 void EditorRemove(int hydrogen)

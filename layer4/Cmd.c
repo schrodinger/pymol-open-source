@@ -1980,7 +1980,7 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
           " Distance-ERR: selection 1 contains no atoms.\n"
           ENDFB;
       } 
-      if((!quiet)&&(!c2)) {
+      if((quiet!=2)&&(!c2)) {
         PRINTFB(FB_Executive,FB_Errors)
           " Distance-ERR: selection 2 contains no atoms.\n"
           ENDFB;

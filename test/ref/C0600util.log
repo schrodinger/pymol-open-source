@@ -64,13 +64,13 @@ PyMOL>util.cbas
  Executive: Colored 1415 atoms.
  Executive: Colored 922 atoms.
 PyMOL>util.cbc
-7,(chain A)
+ util.cbc: color 7,(chain A)
  Executive: Colored 279 atoms.
-8,(chain B)
+ util.cbc: color 8,(chain B)
  Executive: Colored 310 atoms.
-9,(chain E)
+ util.cbc: color 9,(chain E)
  Executive: Colored 107 atoms.
-10,(chain '')
+ util.cbc: color 10,(chain '')
  Executive: Colored 2174 atoms.
 PyMOL>hide
 PyMOL>show car

@@ -3498,6 +3498,7 @@ int SelectorSelect0(EvalElem *base)
           if(flag)
             c++;
 		  }
+      break;
 	 case SELE_ENAz:
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
