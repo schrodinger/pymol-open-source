@@ -947,8 +947,8 @@ int SelectorAssignSS(int target,int present,int state_value,int preserve,int qui
       SSResi *r;
       int a;
 
-      int helix_psi_delta, helix_phi_delta;
-      int strand_psi_delta, strand_phi_delta;
+      float helix_psi_delta, helix_phi_delta;
+      float strand_psi_delta, strand_phi_delta;
 
       float helix_psi_target = SettingGet_f(NULL,NULL,cSetting_ss_helix_psi_target);
       float helix_psi_include = SettingGet_f(NULL,NULL,cSetting_ss_helix_psi_include);
