@@ -13,8 +13,8 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_Object
-#define _H_Object
+#ifndef _H_PyMOLObject
+#define _H_PyMOLObject
 
 /* literally a 3-D object...also an object object */
 

@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
-#include"Object.h"
+#include"PyMOLObject.h"
 #include"ObjectMolecule.h"
 #include"Ortho.h"
 #include"Word.h"

@@ -35,7 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Ortho.h"
 #include"Scene.h"
-#include"Object.h"
+#include"PyMOLObject.h"
 #include"P.h"
 #include"Executive.h"
 #include"Word.h"

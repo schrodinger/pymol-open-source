@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Vector.h"
 #include"Setting.h"
-#include"Object.h"
+#include"PyMOLObject.h"
 
 typedef char DistLabel[6];
 

@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
-#include"Object.h"
+#include"PyMOLObject.h"
 
 typedef struct {
   PyObject *PObj;

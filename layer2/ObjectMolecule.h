@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
-#include"Object.h"
+#include"PyMOLObject.h"
 #include"AtomInfo.h"
 #include"Vector.h"
 #include"Color.h"
