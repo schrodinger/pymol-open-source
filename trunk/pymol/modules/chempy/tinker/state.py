@@ -25,6 +25,7 @@ class State:
       self.echo = 0
       self.model = None
       self.reset_fragile()
+      self.counter = 0
 
    def reset_fragile(self):
       self.restart = None
@@ -89,6 +90,7 @@ class State:
       if feedback['actions']:
          print ' '+str(self.__class__)+': starting minimization run...'
       io.xyz.toFile(self.model,self.prefix+"_inp.xyz")
+      self.counter = self.counter + max_iter
       kw_list = [ "parameters "+self.params+"\n" ]
       for a in self.keywords.keys():
          kw_list.append("%s %s\n" % ( a,str(self.keywords[a])))
@@ -151,6 +153,7 @@ class State:
       if feedback['actions']:
          print ' '+str(self.__class__)+': starting dynamics run...'
       io.xyz.toFile(self.model,self.prefix+"_inp.xyz")
+      self.counter = self.counter + steps * timestep
 # if restart is available, then use it.
       if self.restart:
          f = open(self.prefix+"_inp.dyn","w")
