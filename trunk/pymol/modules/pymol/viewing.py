@@ -792,7 +792,7 @@ SEE ALSO
                   if str(wiz.__class__) == 'pymol.wizard.message.Message':
                      if hasattr(wiz,'from_scene'):
                         replace_flag = 1
-               mass_flag = 0
+               mess_flag = 0
                if message!=None:
                   if is_string(message):
                      if len(message):
