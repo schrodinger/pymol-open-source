@@ -13,6 +13,11 @@ from chempy.cpv import *
 MAX_BOND_LEN = 2.2
 PEPT_CUTOFF = 1.7
 
+N_TERMINAL_ATOMS = ('HT','HT1','HT2','HT3','H1','H2','H3',
+                    '1H','2H','3H','1HT','2HT','3HT')
+
+C_TERMINAL_ATOMS = ('OXT','O2','OT1','OT2')
+
 #---------------------------------------------------------------------------------
 def generate(model, forcefield = protein_amber, histidine = 'HIE',skip_sort=None ):
 
@@ -55,6 +60,10 @@ but does not add any bonds!
                   for c in range(a[0],a[1]): # this residue
                      model.atom[c].resn = histidine
                   resn = histidine
+               if resn == 'N-M': # N-methyl from Insight II, 
+                  for c in range(a[0],a[1]): # this residue
+                     model.atom[c].resn = 'NME'
+                  resn = 'NME'
                # find out if this is n or c terminal residue
                names = []
                for b in range(a[0],a[1]):
@@ -62,13 +71,13 @@ but does not add any bonds!
                tmpl = protein_residues.normal
                if forcefield:
                   ffld = forcefield.normal
-               for b in ('HT','HT1','HT2','HT3','H1','H2','H3'):
+               for b in N_TERMINAL_ATOMS:
                   if b in names:
                      tmpl = protein_residues.n_terminal
                      if forcefield:
                         ffld = forcefield.n_terminal
                      break
-               for b in ('OXT','O2','OT1','OT2'):
+               for b in C_TERMINAL_ATOMS:
                   if b in names:
                      tmpl = protein_residues.c_terminal
                      if forcefield:
@@ -149,6 +158,10 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                   for c in range(a[0],a[1]): # this residue
                      model.atom[c].resn = histidine
                   resn = histidine
+               if resn == 'N-M': # N-methyl from Insight II, 
+                  for c in range(a[0],a[1]): # this residue
+                     model.atom[c].resn = 'NME'
+                  resn = 'NME'
                # find out if this is n or c terminal residue
                names = []
                for b in range(a[0],a[1]):
@@ -156,13 +169,13 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                tmpl = protein_residues.normal
                if forcefield:
                   ffld = forcefield.normal
-               for b in ('HT','HT1','HT2','HT3','H1','H2','H3'):
+               for b in N_TERMINAL_ATOMS:
                   if b in names:
                      tmpl = protein_residues.n_terminal
                      if forcefield:
                         ffld = forcefield.n_terminal
                      break
-               for b in ('OXT','O2','OT1','OT2'):
+               for b in C_TERMINAL_ATOMS:
                   if b in names:
                      tmpl = protein_residues.c_terminal
                      if forcefield:
@@ -267,13 +280,13 @@ def add_hydrogens(model,forcefield=protein_amber,skip_sort=None):
                tmpl = protein_residues.normal
                if forcefield:
                   ffld = forcefield.normal
-               for b in ('HT','HT1','HT2','HT3','H1','H2','H3'):
+               for b in N_TERMINAL_ATOMS:
                   if b in names:
                      tmpl = protein_residues.n_terminal
                      if forcefield:
                         ffld = forcefield.n_terminal
                      break
-               for b in ('OXT','O2','OT1','OT2'):
+               for b in C_TERMINAL_ATOMS:
                   if b in names:
                      tmpl = protein_residues.c_terminal
                      if forcefield:

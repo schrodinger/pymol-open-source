@@ -128,3 +128,18 @@ def color_chains():
       cmd.color("%d"%c,"(chain %s)"%a)
       c = c + 1
 
+def sum_charge(*arg):
+   result = None
+   try:
+      obj = "all"
+      if len(arg):
+         obj = arg
+
+      pymol.stored._sum_charge = 0.0
+      cmd.iterate("(%s)"%obj,
+                  "stored._sum_charge=stored._sum_charge+partial_charge")
+      result = pymol.stored._sum_charge
+      print " sum_charge: %6.4f"%result
+   except:
+      print " sum_charge: an error occurred."
+   return result

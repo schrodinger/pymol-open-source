@@ -380,10 +380,11 @@ normal = {
       ( 'CA'  , '3HA'  ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
-      'HA2'  : 'HA'   ,
       'HN'   : 'H'    ,
       '1HA'  : '3HA'  ,
+      '2HA'  : 'HA'  ,
       'HA1'  : '3HA'  ,
+      'HA2'  : 'HA'   ,
       'HA3'  : '3HA'  ,
       } ,
    } ,
@@ -489,6 +490,7 @@ normal = {
       'HE2'  : '2HE'  ,
       'HE1'  : '1HE'  ,
       'HD2'  : '2HD'  ,
+      'HD1'  : '2HD'  ,
       '1HB'  : '3HB'  ,
       } ,
    } ,
@@ -1283,9 +1285,13 @@ normal = {
       'CA'   : 'CH3'  ,
       'N01'  : 'N'    ,
       'H01'  : 'H'    ,
+      'HN'   : 'H'    ,      
       'H02'  : '1HH3' ,      
       'H03'  : '2HH3' ,
       'H04'  : '3HH3' ,
+      '1HA'  : '1HH3' ,      
+      '2HA'  : '2HH3' ,
+      '3HA'  : '3HH3' ,
       } ,
    } ,
 'ACE': {
@@ -1308,6 +1314,11 @@ normal = {
       'HH32' : '2HH3' ,
       'HH33' : '3HH3' ,
       'HH31' : '1HH3' ,
+      'CA'   : 'CH3'  ,
+      '1HA'  : '2HH3' ,
+      '2HA'  : '3HH3' ,
+      '3HA'  : '1HH3' ,
+      'CA'   : 'CH3'  ,
       } ,
    } ,
 }
@@ -1341,6 +1352,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1383,6 +1397,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1425,6 +1442,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1470,6 +1490,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1517,6 +1540,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1568,6 +1594,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1625,6 +1654,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1691,6 +1723,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1730,6 +1765,9 @@ n_terminal = {
       ( 'CA'  , '3HA'  ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1737,7 +1775,9 @@ n_terminal = {
       'H3'   : '3HT'  ,
       'H2'   : '2HT'  ,
       '1HA'  : '3HA'  ,
+      '2HA'  : 'HA'   ,
       'HA1'  : '3HA'  ,
+      'HA2'  : 'HA'   ,      
       'HA3'  : '3HA'  ,
       } ,
    } ,
@@ -1787,6 +1827,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1847,6 +1890,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1858,6 +1904,7 @@ n_terminal = {
       'HB1'  : '3HB'  ,
       'HE2'  : '2HE'  ,
       'HE1'  : '1HE'  ,
+      'HD1'  : '2HD'  ,
       'HD2'  : '2HD'  ,
       '1HB'  : '3HB'  ,
       } ,
@@ -1906,6 +1953,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -1968,6 +2018,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2043,6 +2096,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2117,6 +2173,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2178,6 +2237,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2234,6 +2296,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2286,6 +2351,9 @@ n_terminal = {
       ( 'N'   , 'CD'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '3H'  ,
+      '2H'   : '2H'  ,
+      '3H'   : '3H'  ,      
       'H3'   : '3H'   ,
       'H2'   : '2H'   ,
       'HB2'  : '2HB'  ,
@@ -2345,6 +2413,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2420,6 +2491,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2475,6 +2549,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2525,6 +2602,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2578,6 +2658,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2651,6 +2734,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2722,6 +2808,9 @@ n_terminal = {
       ( 'CA'  , 'CB'   ) : { 'order' : 1 , } ,
       } ,
    'aliases' : {
+      '1H'   : '1HT'  ,
+      '2H'   : '2HT'  ,
+      '3H'   : '3HT'  ,      
       'HT1'  : '1HT'  ,
       'HT2'  : '2HT'  ,
       'HT3'  : '3HT'  ,
@@ -2739,6 +2828,7 @@ n_terminal = {
       } ,
    } ,
 }
+
 c_terminal = {
 'ALA': {
    'atoms' : {
@@ -3147,7 +3237,9 @@ c_terminal = {
       'OT2'  : 'OXT'  ,
       'OT1'  : 'O'    ,
       '1HA'  : '3HA'  ,
+      '2HA'  : 'HA'   ,
       'HA1'  : '3HA'  ,
+      'HA2'  : 'HA'   ,
       'HA3'  : '3HA'  ,
       } ,
    } ,
