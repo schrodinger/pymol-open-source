@@ -529,6 +529,7 @@ int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,floa
   } else {
     ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1);
   }
+  SceneDirty();
   return(ok);
 }
 
