@@ -16,14 +16,15 @@ def get_restrain_positions(model,flag,f_cnst):
    list = []
    n = 0
    c = 1
+   mask = 1<<flag
    for a in model.atom:
-      if (a.flags&flag):
+      if (a.flags&mask):
          list.append("RESTRAIN-POSITION %5d %8.3f %8.3f %8.3f %8.3f\n" %
                      (c,a.coord[0],a.coord[1],a.coord[2],f_cnst))
          n = n + 1
       c = c + 1
    if chempy.feedback['actions']:
-      print ' '+str(__name__)+': %d atoms restrained...' % n
+      print ' '+str(__name__)+': %d atoms restrained using flag %d ...' % (n,flag)
       
    return list
 
@@ -31,12 +32,13 @@ def get_inactive(model,flag):
    list = []
    n = 0
    c = 1
+   mask = 1<<flag
    for a in model.atom:
-      if (a.flags&flag):
+      if (a.flags&mask):
          list.append("INACTIVE %d\n" % (c))
          n = n + 1
       c = c + 1
    if chempy.feedback['actions']:
-      print ' '+str(__name__)+': %d atoms fixed...' % n
+      print ' '+str(__name__)+': %d atoms fixed using flag %d ...' % (n,flag)
    return list
 

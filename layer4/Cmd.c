@@ -109,9 +109,10 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
+static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
-static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
 static PyObject *CmdLabel(PyObject *self,   PyObject *args);
@@ -180,6 +181,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get",	        CmdGet,          METH_VARARGS },
 	{"get_feedback", CmdGetFeedback,  METH_VARARGS },
 	{"get_matrix",	  CmdGetMatrix,    METH_VARARGS },
+	{"get_min_max",  CmdGetMinMax,    METH_VARARGS },
 	{"get_model",	  CmdGetModel,     METH_VARARGS },
 	{"get_moment",	  CmdGetMoment,    METH_VARARGS },
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
@@ -901,6 +903,33 @@ static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
+}
+
+static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
+{
+  float mn[3],mx[3];
+  char *str1;
+  int state;
+  OrthoLineType s1;
+  PyObject *result;
+  int flag;
+
+  PyArg_ParseTuple(args,"si",&str1,&state); /* state currently ignored */
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  flag = ExecutiveGetExtent(s1,mn,mx);
+  SelectorFreeTmp(s1);
+  if(flag) 
+    result = Py_BuildValue("[[fff],[fff]]", 
+                           mn[0],mn[1],mn[2],
+                           mx[0],mx[1],mx[2]);
+  else 
+    result = Py_BuildValue("[[fff],[fff]]", 
+                           -0.5,-0.5,-0.5,
+                           0.5,0.5,0.5);
+
+  APIExit();
+  return result;
 }
 
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args)
