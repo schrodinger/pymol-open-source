@@ -3244,7 +3244,7 @@ SEE ALSO
       unlock()
    return r
 
-def translate(selection="all",vector=[0.0,0.0,0.0],state=0,camera=1):
+def translate(vector=[0.0,0.0,0.0],selection="all",state=0,camera=1,object=None):
    # INCOMPLETE:
    # needs to be modified so that selection can be something other
    # than an object name -- some work needs to be done on the
@@ -3264,14 +3264,24 @@ def translate(selection="all",vector=[0.0,0.0,0.0],state=0,camera=1):
          shift = cpv.transform(mat,vector)
       else:
          shift = vector
-      ttt = [1.0,0.0,0.0,0.0,
-             0.0,1.0,0.0,0.0,
-             0.0,0.0,1.0,0.0,
-             shift[0],shift[1],shift[2],1.0]
-      r=transform_object(selection,ttt)
+      if object==None:
+         ttt = [1.0,0.0,0.0,0.0,
+                0.0,1.0,0.0,0.0,
+                0.0,0.0,1.0,0.0,
+                shift[0],shift[1],shift[2],1.0]
+         r=transform_object(selection,ttt)
+      else:
+         lock()
+         ttt = [1.0, 0.0, 0.0, shift[0],
+                0.0, 1.0, 0.0, shift[1],
+                0.0, 0.0, 1.0, shift[2],
+                0.0, 0.0, 0.0, 1.0]
+         r=_cmd.combine_object_ttt(str(object),ttt)
+         unlock()
+         
    return r
 
-def rotate(selection="all",axis='x',angle=0.0,state=0,camera=1):
+def rotate(axis='x',angle=0.0,selection="all",state=0,camera=1,object=None):
    # INCOMPLETE:
    # needs to be modified so that selection can be something other
    # than an object name -- some work needs to be done on the
@@ -3296,11 +3306,20 @@ def rotate(selection="all",axis='x',angle=0.0,state=0,camera=1):
          vmat = [ view[0:3],view[3:6],view[6:9] ]
          axis = cpv.transform(vmat,axis)
       mat = cpv.rotation_matrix(angle,axis)
-      ttt = [mat[0][0],mat[1][0],mat[2][0],-view[12],
-             mat[0][1],mat[1][1],mat[2][1],-view[13],
-             mat[0][2],mat[1][2],mat[2][2],-view[14],
-             view[12],view[13],view[14],view[15]]
-      r=transform_object(selection,ttt)
+      if object==None:
+         ttt = [mat[0][0],mat[1][0],mat[2][0],-view[12],
+                mat[0][1],mat[1][1],mat[2][1],-view[13],
+                mat[0][2],mat[1][2],mat[2][2],-view[14],
+                view[12],view[13],view[14],view[15]]
+         r=transform_object(selection,ttt)
+      else:
+         lock()
+         ttt = [mat[0][0],mat[1][0],mat[2][0], 0.0,
+                mat[0][1],mat[1][1],mat[2][1], 0.0,
+                mat[0][2],mat[1][2],mat[2][2], 0.0,
+                0.0      ,0.0      ,0.0      , 1.0]
+         r=_cmd.combine_object_ttt(str(object),ttt)
+         unlock()
    return r
    
 def move(axis,distance):
@@ -3368,7 +3387,7 @@ SEE ALSO
       unlock()
    return r
 
-def origin(selection="(all)"):
+def origin(selection="(all)",object=None):
    '''
 DESCRIPTION
   
@@ -3391,8 +3410,9 @@ SEE ALSO
    selection = selector.process(selection)
    #   
    try:
-      lock()   
-      r = _cmd.origin(selection)
+      lock()
+      if object==None: object=''
+      r = _cmd.origin(selection,str(object))
    finally:
       unlock()
    return r
@@ -3555,7 +3575,7 @@ NOTES
          unlock()
    return r
 
-def reset():
+def reset(object=''):
    '''
 DESCRIPTION
   
@@ -3573,7 +3593,7 @@ PYMOL API
    '''
    try:
       lock()   
-      r = _cmd.reset(0)
+      r = _cmd.reset(0,str(object))
    finally:
       unlock()
    return r

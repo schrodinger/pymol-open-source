@@ -4159,7 +4159,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   int a,b,c,s,d;
   int a1,ind;
   float r,rms;
-  float v1[3],v2,*vv1,*vv2;
+  float v1[3],v2,*vv1,*vv2,*coord;
   int inv_flag;
   int hit_flag = false;
   int ok = true;
@@ -4627,127 +4627,138 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 		   default: /* coord-set based properties, iterating as all coordsets within atoms */
 			 for(b=0;b<I->NCSet;b++)
 			   if(I->CSet[b])
-				 {
-				   inv_flag=false;
-				   s=I->AtomInfo[a].selEntry;
-					   if(SelectorIsMember(s,sele))
-						 {
-						   switch(op->code) {
-						   case OMOP_SUMC:
-                       if(I->DiscreteFlag) {
-                         if(I->CSet[b]==I->DiscreteCSet[a])
-                           a1=I->DiscreteAtmToIdx[a];
-                         else
-                           a1=-1;
-                       } else 
-                         a1=I->CSet[b]->AtmToIdx[a];
+              {
+                cs=I->CSet[b];
+                inv_flag=false;
+                s=I->AtomInfo[a].selEntry;
+                if(SelectorIsMember(s,sele))
+                  {
+                    switch(op->code) {
+                    case OMOP_SUMC:
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a];
 							 if(a1>=0)
 							   {
-								 add3f(op->v1,I->CSet[b]->Coord+(3*a1),op->v1);
-								 op->i1++;
+                          coord = cs->Coord+3*a1;
+                          if(op->i2) /* do we want object-transformed coordinates? */
+                            if(I->Obj.TTTFlag) {
+                              transformTTT44f3f(I->Obj.TTT,coord,v1);
+                              coord=v1;
+                            }
+                          add3f(op->v1,coord,op->v1);
+                          op->i1++;
 							   }
 							 break;
-						   case OMOP_MNMX:
-                       if(I->DiscreteFlag) {
-                         if(I->CSet[b]==I->DiscreteCSet[a])
-                           a1=I->DiscreteAtmToIdx[a];
-                         else
-                           a1=-1;
-                       } else 
-                         a1=I->CSet[b]->AtmToIdx[a];
+                    case OMOP_MNMX:
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a];
 							 if(a1>=0)
 							   {
+                          coord = cs->Coord+3*a1;
+                          if(op->i2) /* do we want object-transformed coordinates? */
+                            if(I->Obj.TTTFlag) {
+                              transformTTT44f3f(I->Obj.TTT,coord,v1);
+                              coord=v1;
+                            }
                           if(op->i1) {
                             for(c=0;c<3;c++) {
-                              if(*(op->v1+c)>*(I->CSet[b]->Coord+(3*a1+c)))
-                                *(op->v1+c)=*(I->CSet[b]->Coord+(3*a1+c));
-                              if(*(op->v2+c)<*(I->CSet[b]->Coord+(3*a1+c)))
-                                *(op->v2+c)=*(I->CSet[b]->Coord+(3*a1+c));
+                              if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
+                              if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
                             }
                           } else {
                             for(c=0;c<3;c++) {
-                              *(op->v1+c)=*(I->CSet[b]->Coord+(3*a1+c));
-                              *(op->v2+c)=*(I->CSet[b]->Coord+(3*a1+c));
+                              *(op->v1+c)=*(coord+c);
+                              *(op->v2+c)=*(coord+c);
                               op->i1=1;
                             }
                           }
 							   }
 							 break;
-						   case OMOP_MDST: 
-                       if(I->DiscreteFlag) {
-                         if(I->CSet[b]==I->DiscreteCSet[a])
-                           a1=I->DiscreteAtmToIdx[a];
-                         else
-                           a1=-1;
-                       } else 
-                         a1=I->CSet[b]->AtmToIdx[a];
+                    case OMOP_MDST: 
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a];
 							 if(a1>=0)
 							   {
-								 r=diff3f(op->v1,I->CSet[b]->Coord+(3*a1));
-								 if(r>op->f1)
-								   op->f1=r;
+                          r=diff3f(op->v1,cs->Coord+(3*a1));
+                          if(r>op->f1)
+                            op->f1=r;
 							   }
 							 break;
-						   case OMOP_INVA:
-                       if(I->DiscreteFlag) {
-                         if(I->CSet[b]==I->DiscreteCSet[a])
-                           a1=I->DiscreteAtmToIdx[a];
-                         else
-                           a1=-1;
-                       } else 
-                         a1=I->CSet[b]->AtmToIdx[a]; 
-                       if(a1>=0)                     /* selection touches this coordinate set */ 
-                         inv_flag=true;              /* so set the invalidation flag */
-                       break;
-						   case OMOP_VERT: 
-                       if(I->DiscreteFlag) {
-                         if(I->CSet[b]==I->DiscreteCSet[a])
-                           a1=I->DiscreteAtmToIdx[a];
-                         else
-                           a1=-1;
-                       } else 
-                         a1=I->CSet[b]->AtmToIdx[a];
-                       if(a1>=0) {
-                         VLACheck(op->vv1,float,(op->nvv1*3)+2);
-                         vv2=I->CSet[b]->Coord+(3*a1);
-                         vv1=op->vv1+(op->nvv1*3);
-                         *(vv1++)=*(vv2++);
-                         *(vv1++)=*(vv2++);
-                         *(vv1++)=*(vv2++);
-                         op->nvv1++;
-                       }
+                    case OMOP_INVA:
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a]; 
+                      if(a1>=0)                     /* selection touches this coordinate set */ 
+                        inv_flag=true;              /* so set the invalidation flag */
+                      break;
+                    case OMOP_VERT: 
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a];
+                      if(a1>=0) {
+                        VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                        vv2=cs->Coord+(3*a1);
+                        vv1=op->vv1+(op->nvv1*3);
+                        *(vv1++)=*(vv2++);
+                        *(vv1++)=*(vv2++);
+                        *(vv1++)=*(vv2++);
+                        op->nvv1++;
+                      }
 							 break;	
-						   case OMOP_SVRT:  /* gives us only vertices for a specific coordinate set */
-                       if(b==op->i1) {
-                         if(I->DiscreteFlag) {
-                           if(I->CSet[b]==I->DiscreteCSet[a])
-                             a1=I->DiscreteAtmToIdx[a];
-                           else
-                             a1=-1;
-                         } else 
-                           a1=I->CSet[b]->AtmToIdx[a];
-                         if(a1>=0) {
-                           VLACheck(op->vv1,float,(op->nvv1*3)+2);
-                           vv2=I->CSet[b]->Coord+(3*a1);
-                           vv1=op->vv1+(op->nvv1*3);
-                           *(vv1++)=*(vv2++);
-                           *(vv1++)=*(vv2++);
-                           *(vv1++)=*(vv2++);
-                           op->nvv1++;
-                         }
-                       }
+                    case OMOP_SVRT:  /* gives us only vertices for a specific coordinate set */
+                      if(b==op->i1) {
+                        if(I->DiscreteFlag) {
+                          if(cs==I->DiscreteCSet[a])
+                            a1=I->DiscreteAtmToIdx[a];
+                          else
+                            a1=-1;
+                        } else 
+                          a1=cs->AtmToIdx[a];
+                        if(a1>=0) {
+                          VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                          vv2=cs->Coord+(3*a1);
+                          vv1=op->vv1+(op->nvv1*3);
+                          *(vv1++)=*(vv2++);
+                          *(vv1++)=*(vv2++);
+                          *(vv1++)=*(vv2++);
+                          op->nvv1++;
+                        }
+                      }
 							 break;	
- /* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
-						   case OMOP_MOME: 
-                       if(I->DiscreteFlag) {
-                         if(I->CSet[b]==I->DiscreteCSet[a])
-                           a1=I->DiscreteAtmToIdx[a];
-                         else
-                           a1=-1;
-                       } else 
-                         a1=I->CSet[b]->AtmToIdx[a];
+                      /* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
+                    case OMOP_MOME: 
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a];
 							 if(a1>=0) {
-							   subtract3f(I->CSet[b]->Coord+(3*a1),op->v1,v1);
+							   subtract3f(cs->Coord+(3*a1),op->v1,v1);
 							   v2=v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]; 
 							   op->d[0][0] += v2 - v1[0] * v1[0];
 							   op->d[0][1] +=    - v1[0] * v1[1];
@@ -4760,28 +4771,28 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 							   op->d[2][2] += v2 - v1[2] * v1[2];
 							 }
 							 break;
-						   }
-						 }
-				   switch(op->code) { /* full coord-set based */
-				   case OMOP_INVA:
-                 if(inv_flag) {
-                   if(op->i1<0) {
-                     /* invalidate all representations */
-                     for(d=0;d<cRepCnt;d++) {
-                       if(I->CSet[b]->fInvalidateRep)
-                         I->CSet[b]->fInvalidateRep(I->CSet[b],d,op->i2);
-                     }
-                   } else if(I->CSet[b]->fInvalidateRep) 
-                     /* invalidate only that particular representation */
-                     I->CSet[b]->fInvalidateRep(I->CSet[b],op->i1,op->i2);
-                 }
-               break;
-             }
+                    }
+                  }
+                switch(op->code) { /* full coord-set based */
+                case OMOP_INVA:
+                  if(inv_flag) {
+                    if(op->i1<0) {
+                      /* invalidate all representations */
+                      for(d=0;d<cRepCnt;d++) {
+                        if(cs->fInvalidateRep)
+                          cs->fInvalidateRep(cs,d,op->i2);
+                      }
+                    } else if(cs->fInvalidateRep) 
+                      /* invalidate only that particular representation */
+                      cs->fInvalidateRep(cs,op->i1,op->i2);
+                  }
+                  break;
+                }
+              } /* end coordset section */
+          break;
          }
-         break;
-       }
 		 }
-	   break;
+     break;
 	}
 	if(hit_flag) {
 	  switch(op->code) {
@@ -5058,6 +5069,8 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
   PRINTFD(FB_ObjectMolecule)
     " ObjectMolecule: rendering %s...\n",I->Obj.Name
     ENDFD;
+
+  ObjectPrepareContext(&I->Obj,ray);
 
   if(I->UnitCellCGO&&(I->Obj.RepVis[cRepCell])) {
     if(ray) {

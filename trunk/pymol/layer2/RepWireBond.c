@@ -166,7 +166,6 @@ Rep *RepWireBondNew(CoordSet *cs)
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepWireBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
-
   I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
   I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_radius);
 

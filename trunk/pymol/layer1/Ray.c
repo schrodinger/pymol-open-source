@@ -1270,6 +1270,11 @@ void RaySphere3fv(CRay *I,float *v,float r)
   (*vv++)=(*v++);
   (*vv++)=(*v++);
   (*vv++)=(*v++);
+
+  if(I->TTTFlag) {
+    transformTTT44f3f(I->TTT,p->v1,p->v1);
+  }
+
   I->NPrimitive++;
 }
 /*========================================================================*/
@@ -1296,6 +1301,11 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   (*vv++)=(*v2++);
   (*vv++)=(*v2++);
   (*vv++)=(*v2++);
+
+  if(I->TTTFlag) {
+    transformTTT44f3f(I->TTT,p->v1,p->v1);
+    transformTTT44f3f(I->TTT,p->v2,p->v2);
+  }
 
   vv=p->c1;
   (*vv++)=(*c1++);
@@ -1412,6 +1422,17 @@ void RayTriangle3fv(CRay *I,
   (*vv++)=(*n3++);
   (*vv++)=(*n3++);
 
+
+  if(I->TTTFlag) {
+    transformTTT44f3f(I->TTT,p->v1,p->v1);
+    transformTTT44f3f(I->TTT,p->v2,p->v2);
+    transformTTT44f3f(I->TTT,p->v3,p->v3);
+    transform_normalTTT44f3f(I->TTT,p->n0,p->n0);
+    transform_normalTTT44f3f(I->TTT,p->n1,p->n1);
+    transform_normalTTT44f3f(I->TTT,p->n2,p->n2);
+    transform_normalTTT44f3f(I->TTT,p->n3,p->n3);
+  }
+
   I->NPrimitive++;
 
 }
@@ -1478,6 +1499,15 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,float v3,float v4,float v5,fl
 
   for(a=0;a<16;a++)
     I->ModelView[a]=mat[a];
+}
+/*========================================================================*/
+
+void RaySetTTT(CRay *I,int flag,float *ttt)
+{
+  I->TTTFlag=flag;
+  if(flag) {
+    UtilCopyMem(I->TTT,ttt,sizeof(float)*16);
+  }
 }
 
 /*========================================================================*/

@@ -70,6 +70,7 @@ void max3f ( float *v1, float *v2, float *v3 );
 
 void dump3f( float *v, char *prefix );
 void dump33f( float *m, char *prefix );
+void dump44f( float *m, char *prefix );
 
 void copy44f( float *src,float *dst);
 
@@ -103,9 +104,10 @@ void matrix_multiply33d33d ( Matrix33d m1,Matrix33d m2,Matrix33d m3);
    (2) and a post-translation stored in forth column, first three rows.
    There are certain cases where this representation is more convenient.
  */
-
+void combineTTT44f44f( float *m1, float *m2, float *m3);
 void transformTTT44f3f ( float *m1, float *m2, float *m3 );
-
+void transform_normalTTT44f3f ( float *m1, float *m2, float *m3 );
+void initializeTTT44f ( float *m );
 /* end revised matrix routines */
 
 /*------------------------------------------------------------------------*/

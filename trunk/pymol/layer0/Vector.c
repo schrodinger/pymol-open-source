@@ -63,6 +63,14 @@ void dump33f( float *m, char *prefix ) /* for debugging */
   printf("%s:2 %8.3f %8.3f %8.3f\n",prefix,m[6],m[7],m[8]);
 }
 
+void dump44f( float *m, char *prefix ) /* for debugging */
+{
+  printf("%s:0 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2],m[3]);
+  printf("%s:1 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[4],m[5],m[6],m[7]);
+  printf("%s:2 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[8],m[9],m[10],m[11]);
+  printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
+}
+
 void get_divergent3f(float *src,float *dst)
 {
   if(src[0]!=0.0) {
@@ -339,6 +347,56 @@ void transform44f4f (float *m1, float *m2, float *m3)
   m3[3] = m1[12] * m2r0 + m1[13] * m2r1 + m1[14] * m2r2 + m1[15] * m2r3; 
 }
 
+
+
+void initializeTTT44f ( float *m )
+{
+  int a;
+  for(a=0;a<16;a++)
+    m[a]=0.0F;
+  for(a=0;a<4;a++)
+    m[4*a+a]=1.0F;
+}
+
+void combineTTT44f44f( float *m1, float *m2, float *m3) 
+   /* NOTE: this is NOT equivalent to 4x4 matrix multiplication.
+      TTTs are designed for easily creating movies of rotating 
+      bodies! */
+{
+
+  /*  dump44f(m1,"m1");
+      dump44f(m2,"m2");*/
+  /* pre-translation */
+
+  m3[12] = m1[12] + m2[12];
+  m3[13] = m1[13] + m2[13];
+  m3[14] = m1[14] + m2[14];
+
+  /* unused... */
+
+  m3[15] = m1[15] * m2[15];
+
+  /* transformation */
+
+  m3[ 0] = m1[ 0] * m2[ 0] + m1[ 1]  * m2[ 4] + m1[ 2] * m2[ 8];
+  m3[ 4] = m1[ 4] * m2[ 0] + m1[ 5]  * m2[ 4] + m1[ 6] * m2[ 8];
+  m3[ 8] = m1[ 8] * m2[ 0] + m1[ 9]  * m2[ 4] + m1[10] * m2[ 8];
+  m3[ 1] = m1[ 0] * m2[ 1] + m1[ 1]  * m2[ 5] + m1[ 2] * m2[ 9];
+  m3[ 5] = m1[ 4] * m2[ 1] + m1[ 5]  * m2[ 5] + m1[ 6] * m2[ 9];
+  m3[ 9] = m1[ 8] * m2[ 1] + m1[ 9]  * m2[ 5] + m1[10] * m2[ 9];
+  m3[ 2] = m1[ 0] * m2[ 2] + m1[ 1]  * m2[ 6] + m1[ 2] * m2[10];
+  m3[ 6] = m1[ 4] * m2[ 2] + m1[ 5]  * m2[ 6] + m1[ 6] * m2[10];
+  m3[10] = m1[ 8] * m2[ 2] + m1[ 9]  * m2[ 6] + m1[10] * m2[10];
+
+  /* post-translation */
+
+  m3[ 3] = m1[ 3] + m2[ 3];
+  m3[ 7] = m1[ 7] + m2[ 7];
+  m3[11] = m1[11] + m2[11];
+
+  /*  dump44f(m3,"m3");*/
+}
+
 void transformTTT44f3f (float *m1, float *m2, float *m3)
 {
   float m2r0 = m2[0] + m1[12];
@@ -347,6 +405,16 @@ void transformTTT44f3f (float *m1, float *m2, float *m3)
   m3[0] = m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2 + m1[3];
   m3[1] = m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2 + m1[7];
   m3[2] = m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2 + m1[11];
+}
+
+void transform_normalTTT44f3f (float *m1, float *m2, float *m3)
+{
+  float m2r0 = m2[0];
+  float m2r1 = m2[1];
+  float m2r2 = m2[2];
+  m3[0] = m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2 ;
+  m3[1] = m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2 ;
+  m3[2] = m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2 ;
 }
 
 void multiply33f33f ( float *m1,float *m2,float *m3) /* m2 and m3 can be the same matrix */
