@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"main.h"
-#include"Object.h"
+#include"PyMOLObject.h"
 #include"Color.h"
 #include"Ortho.h"
 #include"Scene.h"

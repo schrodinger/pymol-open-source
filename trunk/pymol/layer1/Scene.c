@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Matrix.h"
 #include"ListMacros.h"
-#include"Object.h"
+#include"PyMOLObject.h"
 #include"Scene.h"
 #include"Ortho.h"
 #include"Vector.h"

@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectDist
 #define _H_ObjectDist
 
-#include"Object.h"
+#include"PyMOLObject.h"
 #include"AtomInfo.h"
 #include"Vector.h"
 #include"Color.h"

@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #define _H_Scene
 
 #include"Base.h"
-#include"Object.h"
+#include"PyMOLObject.h"
 #include"Ortho.h"
 
 
