@@ -76,6 +76,7 @@ unix-mindep: semistatic
 	cp -r test $(MDP)
 	cp -r data $(MDP)	
 	cp -r examples $(MDP)
+	cp -r scripts $(MDP)
 	cp -r pymol.exe $(MDP)
 	cp -r ext/lib/python2.2 $(MDP)/ext/lib
 	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
@@ -86,8 +87,9 @@ unix-mindep: semistatic
 	cp README $(MDP)
 	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
 	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
-	cd $(MINDEP);chown -R nobody.nobody pymol
-	cd $(MINDEP);tar -zcvf ../pymol-0_xx-bin-xxxxx-mindep.tgz pymol
+	cd $(MINDEP);chown -R nobody pymol
+	cd $(MINDEP);chgrp -R nobody pymol
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
 irix-mindep: semistatic
 	$(PYTHON_EXE) modules/compile_pymol.py
