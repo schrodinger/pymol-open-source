@@ -561,15 +561,19 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_defer_builds_mode          409
 #define cSetting_seq_view_discrete_by_state 410
 #define cSetting_scene_animation_duration   411
+#define cSetting_wildcard                   412
+#define cSetting_atom_name_wildcard         413
+#define cSetting_ignore_case                414
+
 /* when you add a new settingg also remember:
    layer1/Setting.c
    modules/pymol/setting.py
-   layer5/PyMOL.c 
+  layer5/PyMOL.c 
 */
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       412
+#define cSetting_INIT                       415
 
 #endif
 

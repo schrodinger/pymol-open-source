@@ -109,3 +109,42 @@ PyMOL>select tst,present and vis
 PyMOL>frame 1
 PyMOL>select tst,present and vis
  Selector: selection "tst" defined with 13 atoms.
+PyMOL>dele all
+PyMOL>load dat/pept.pdb
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
+PyMOL>indicate name ca
+PyMOL>count_atoms indicate
+ count_atoms: 13 atoms
+PyMOL>indicate name *c*
+PyMOL>count_atoms indicate
+ count_atoms: 69 atoms
+PyMOL>indicate (name *c*,*n*)
+PyMOL>count_atoms indicate
+ count_atoms: 86 atoms
+PyMOL>indicate (name *c*+*n*)
+PyMOL>count_atoms indicate
+ count_atoms: 86 atoms
+PyMOL>indicate name *G
+PyMOL>count_atoms indicate
+ count_atoms: 9 atoms
+PyMOL>indicate */*G
+PyMOL>count_atoms indicate
+ count_atoms: 9 atoms
+PyMOL>indicate rank -3+5+10-23+7+40-
+PyMOL>count_atoms indicate
+ count_atoms: 87 atoms
+PyMOL>indicate id -3+5+10-23+7+40-
+PyMOL>count_atoms indicate
+ count_atoms: 87 atoms
+PyMOL>indicate index -3+5+10-23+7+40-
+PyMOL>count_atoms indicate
+ count_atoms: 87 atoms
+PyMOL>dele all
+PyMOL>load dat/1tii.pdb
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 6 symmetry operators.
+ CmdLoad: "dat/1tii.pdb" loaded as "1tii".
+PyMOL>indicate A-C+F/10+90+100-/ca+c+n*
+PyMOL>count_atoms indicate
+ count_atoms: 435 atoms

@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * wildcards for the main selection operations (alt, name, resi, resn,
+     chain, segi, text_type) 
+
+   * wildcard, atom_name_wildcard, ignore_case settings
+
+   * pushed selection property list and range handling down into C
+     (selections should now run much faster)
+
    * defer_builds_mode setting for improved performance with long
      trajectories -- now possible to work with files containing 
      thousands of states, and to render impossibly long movies piecewise.

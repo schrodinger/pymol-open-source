@@ -25,8 +25,436 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 
 struct _CWord {
-  char Wildcard;
+  int no_state_at_present;
 };
+
+typedef struct {
+  int match_mode; 
+  int continued;
+  int literal1, literal2; /* offsets into charVLA */
+  int numeric1, numeric2;
+  int has1, has2;
+} MatchNode;
+
+struct _CWordMatcher {
+  PyMOLGlobals *G;
+  MatchNode *node;
+  int n_node;
+  char *charVLA;
+  int n_char;
+  int ignore_case;
+};
+
+#define cMatchLiteral  0
+#define cMatchNumericRange  cWordMatchOptionNumericRanges
+#define cMatchAlphaRange  cWordMatchOptionAlphaRanges
+#define cMatchWildcard 3
+
+static void WordMatcherDump(CWordMatcher *I)
+{
+  MatchNode *cur_node = I->node;
+  register int n_node = I->n_node;
+  while(n_node--) {
+    printf("match_mode %d\n",cur_node->match_mode);
+    printf("literal1 '%s' %d literal2 '%s' %d\n",
+           I->charVLA+cur_node->literal1,
+           cur_node->has1,
+           I->charVLA+cur_node->literal2,
+           cur_node->has2
+           );
+    cur_node++;
+  }
+}
+
+
+void WordMatchOptionsConfigInteger(CWordMatchOptions *I)
+{
+  I->range_mode = cWordMatchOptionNumericRanges;  
+  I->lists = true;
+  I->ignore_case = true;
+  I->wildcard = 0; /* no wildcard for numbers */
+}
+
+void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore_case)
+{
+  I->range_mode = cWordMatchOptionAlphaRanges;
+  I->lists = true;
+  I->ignore_case = ignore_case;
+  I->wildcard = wildcard;
+}
+
+void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore_case )
+{
+  I->range_mode = cWordMatchOptionNumericRanges;  
+  I->lists = true;
+  I->ignore_case = ignore_case;
+  I->wildcard = wildcard; /* no wildcard for numbers */
+}
+
+CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *option,int force)
+{
+  
+  CWordMatcher *result = NULL;
+  int needed=force;
+  char wildcard = option->wildcard;
+
+  if(!st) 
+    return NULL;
+  { /* first determine if we need to incur the overhead of the matcher */
+    int escape=false;
+    char *p = st;
+    while((*p)&&(!needed)) {
+      if(!escape) {
+        switch(*p) {
+        case '\\':
+          escape=true;
+          needed=true;
+          break;
+        case ',': /* list operators */
+        case '+':
+          if(option->lists)
+            needed=true;
+          break;
+        case '-': /* range operators */
+        case ':':
+          if(option->range_mode)
+            needed=true;
+          break;
+        default:
+          if(*p == wildcard)
+            needed=true;
+          break;
+        }
+      } else
+        escape=false;
+      p++;
+    }
+  }
+
+  if(needed) { /* if so, then convert the expression into a match tree */
+    register int n_char = 0;
+    register int n_node = 0;
+    OOCalloc(G,CWordMatcher);
+    I->charVLA = VLACalloc(char,10); /* auto_zeroing...*/
+    I->node = VLACalloc(MatchNode,10);
+    I->ignore_case = option->ignore_case;
+    I->G = G;
+    /* build up the matcher structure... */
+    {
+      char *p = st,c,*q;
+      int escape = false;
+      int token_active = false;
+      int node_active = false;
+      int char_handled = false;
+      int cur_node = 0;
+      int expectation = 1;
+
+      while(1) {
+        c = *p;
+        char_handled = false;
+        if(!escape) {
+          switch(c) {
+          case '\\':
+            escape=true;
+            char_handled = true;
+            break;
+          case 0:
+            if(option->lists) {
+              char_handled = true;
+              node_active = false;
+              token_active = false;
+            }
+            break;
+          case '+':
+          case ',': /* list operators */
+            if(option->lists) {
+              if(n_node<expectation) { /* create empty node */
+                VLACheck(I->node, MatchNode, n_node);  
+                n_node++;
+              } else {
+                expectation = n_node+1;
+              }
+              char_handled = true;
+              node_active = false;
+              token_active = false;
+            }
+            break;
+          case '-': /* range operators */
+          case ':':
+            if(option->range_mode) {
+              if(!node_active) {
+                cur_node = n_node;
+                VLACheck(I->node, MatchNode, cur_node);
+                node_active = true;
+                n_node++;
+              }
+              I->node[cur_node].match_mode = option->range_mode;
+              token_active = false;
+              char_handled = true;  
+            }
+            break;
+          default:
+            if(c == wildcard) {
+              if(node_active) {
+                I->node[cur_node].continued = true;
+              }
+              VLACheck(I->node, MatchNode, n_node);                
+              cur_node = n_node;
+              I->node[cur_node].match_mode = cMatchWildcard;
+              n_node++;
+              node_active = true;
+              token_active = false;
+              char_handled = true;
+            }
+            break;
+          }
+        } else 
+          escape = false;
+        if(!char_handled) {
+          if(!token_active) {
+            n_char++;
+            VLACheck(I->charVLA, char, n_char);
+            token_active = true;
+            
+            if( (!node_active) || (I->node[cur_node].match_mode == cMatchWildcard) ) {
+              if(node_active) /* must be extending after a wildcard */
+                I->node[cur_node].continued = true;
+              else
+                node_active = true;
+              VLACheck(I->node, MatchNode, n_node);
+              cur_node = n_node;
+              I->node[cur_node].literal1 = n_char; /* the first literal */
+              n_node++;
+            } else {
+              I->node[cur_node].literal2 = n_char; /* must be the second literal */
+            }
+          }
+               
+          /* copy character into auto-terminated string */
+          VLACheck(I->charVLA, char, n_char+1);
+          q = I->charVLA + n_char;
+          (*q++)=c;
+          n_char++;
+        }
+        if(c) 
+          p++;
+        else
+          break;
+      }
+      if(n_node<expectation) { /* create empty node */
+        VLACheck(I->node, MatchNode, n_node);  
+        n_node++;
+      }
+        
+    }
+    
+    {
+      int a;
+      int tmp;
+      MatchNode *node = I->node;
+      for(a=0;a<n_node;a++) {
+        switch(node->match_mode) {
+        case cMatchLiteral:
+          if(option->range_mode == cWordMatchOptionNumericRanges ) {
+            if(node->literal1) {
+              if(sscanf(I->charVLA+node->literal1,"%d",&tmp)==1) {
+                node->numeric1 = tmp;
+                node->has1=true;
+              }
+            }
+          }
+          break;
+        case cMatchAlphaRange:
+          if(node->literal1)
+            node->has1=true;
+          if(node->literal2)
+            node->has2=true;
+
+          break;
+        case cMatchNumericRange:
+          if(node->literal1) {
+            if(sscanf(I->charVLA+node->literal1,"%d",&tmp)==1) {
+              node->numeric1 = tmp;
+              node->has1=true;
+            }
+          }
+          if(node->literal2) {
+            if(sscanf(I->charVLA+node->literal2,"%d",&tmp)==1) {
+              node->numeric2 = tmp;
+              node->has2=true;
+            }
+          }
+          break;
+        }
+        node++;
+      }
+    }
+    I->n_char = n_char;
+    I->n_node = n_node;
+    /*        WordMatcherDump(I);*/
+    result = I;
+  }
+  return result;
+}
+
+static int recursive_match(CWordMatcher *I, MatchNode *cur_node, char *text, int *value_ptr)
+{
+  int ignore_case = I->ignore_case;
+  switch(cur_node->match_mode) {
+  case cMatchLiteral:
+    {
+      char *q = I->charVLA + cur_node->literal1;
+      char *p = text;
+      while((*p)&&(*q))
+        {
+          if(*p!=*q)
+            {
+              if(!ignore_case)
+                return false;
+              else if(tolower(*p)!=tolower(*q))
+                return false;
+            }
+          p++;
+          q++;
+        }
+      if((!(*q))&&(!(*p)))
+        return true;
+
+      if((*p)&&(!*q)&&cur_node->continued)
+        return recursive_match(I, cur_node+1, p, value_ptr);
+      if((*p)!=(*q))
+        return false;
+    }
+    break;
+  case cMatchWildcard:
+    { 
+      char *p;
+      p = text;
+      if(!cur_node->continued)
+        return true;
+      else {
+        while(*p) {
+          if(recursive_match(I, cur_node+1, p, value_ptr))
+            return 1;
+          p++;
+        }
+      }
+    }
+    break;
+  case cMatchAlphaRange:
+    {
+      char *l1 = I->charVLA + cur_node->literal1;
+      char *l2 = I->charVLA + cur_node->literal2;
+      if(((!cur_node->has1) ||
+          (WordCompare(I->G,l1,text,ignore_case)<=0)) &&
+         ((!cur_node->has2) ||
+          (WordCompare(I->G,l2,text,ignore_case)>=0)))
+        return true;
+      else
+        return false;
+    }
+    break;
+  case cMatchNumericRange:
+    if(value_ptr) {
+      int value = *value_ptr;
+      
+      if(((!cur_node->has1) ||
+          (cur_node->numeric1<= value)) &&
+         ((!cur_node->has2) ||
+          (cur_node->numeric2>= value)))
+        return true;
+    } else {
+      int value;
+      if(sscanf(text,"%d",&value)==1)
+        if(((!cur_node->has1) ||
+            (cur_node->numeric1 <= value)) &&
+           ((!cur_node->has2) ||
+            (cur_node->numeric2 >= value)))
+          return true;
+    }
+    break;
+  }
+  return false;
+}
+
+
+int WordMatcherMatchAlpha(CWordMatcher *I, char *text)
+{
+  register MatchNode *cur_node = I->node;
+  register int n_node = I->n_node;
+  
+  while(n_node--) {
+    if(recursive_match(I, cur_node, text, NULL))
+      return true;
+    else {
+      while(cur_node->continued)
+        cur_node++;
+      cur_node++;
+    }
+  }
+  return false;
+}
+
+int WordMatcherMatchMixed(CWordMatcher *I, char *text,int value)
+{
+  register MatchNode *cur_node = I->node;
+  register int n_node = I->n_node;
+  
+  while(n_node--) {
+    if(recursive_match(I, cur_node, text, &value))
+      return true;
+    else {
+      while(cur_node->continued)
+        cur_node++;
+      cur_node++;
+    }
+  }
+  return false;
+}
+
+static int integer_match(CWordMatcher *I, MatchNode *cur_node,int value)
+{
+  switch(cur_node->match_mode) {
+  case cMatchLiteral:
+    if((cur_node->has1) && (cur_node->numeric1==value))
+      return true;
+    break;
+  case cMatchNumericRange:
+    if(((!cur_node->has1) ||
+        (cur_node->numeric1<= value)) &&
+       ((!cur_node->has2) ||
+        (cur_node->numeric2>= value)))
+      return true;
+    break;
+  }
+  return false;
+}
+
+int WordMatcherMatchInteger(CWordMatcher *I,int value)
+{
+  register MatchNode *cur_node = I->node;
+  register int n_node = I->n_node;
+  
+  while(n_node--) {
+    if(integer_match(I, cur_node, value))
+      return true;
+    else {
+      while(cur_node->continued)
+        cur_node++;
+      cur_node++;
+    }
+  }
+  return false;
+}
+
+void WordMatcherFree(CWordMatcher *I)
+{
+  if(I) {
+    VLAFreeP(I->node);
+    VLAFreeP(I->charVLA);
+  }
+  OOFreeP(I);
+}
 
 CWordList *WordListNew(PyMOLGlobals *G,char *st)
 {
@@ -119,7 +547,6 @@ int WordInit(PyMOLGlobals *G)
   
   I = (G->Word = Calloc(CWord,1));
   if(I) {
-    I->Wildcard='*';
     return 1;
   } else 
     return 0;
@@ -131,12 +558,6 @@ void WordFree(PyMOLGlobals *G)
   FreeP(G->Word);
 }
 
-void WordSetWildcard(PyMOLGlobals *G,char wc)
-{
-  register CWord *I = G->Word;
-  
-  I->Wildcard=wc;
-}
 
 void WordPrimeCommaMatch(PyMOLGlobals *G,char *p)
 { /* replace '+' with ',' */
@@ -183,7 +604,7 @@ negative = perfect/wildcard match  */
 
 {
   int i=1;
-  register char WILDCARD = G->Word->Wildcard;
+  register char WILDCARD = '*';
   while((*p)&&(*q))
 	 {
 		if(*p!=*q)
@@ -227,7 +648,7 @@ int WordMatchComma(PyMOLGlobals *G,char *pp,char *qq,int ignCase)
 {
   register char *p=pp, *q=qq;
   register int i=0;
-  register char WILDCARD = G->Word->Wildcard;
+  register char WILDCARD = '*';
   register char pc,qc;
   register int ic = ignCase;
   int best_i=0;
