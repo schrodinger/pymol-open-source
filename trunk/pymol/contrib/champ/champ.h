@@ -261,6 +261,7 @@ typedef struct {
   ListScope *Scope;
   ListMatch *Match;
   char *Str;
+  int ActivePatList;
 } CChamp; /* champ class */
 
 /* prototypes */

@@ -163,7 +163,24 @@ int   ListElemGetInt(ListInt *list,int elem,int *value)
   return(elem);
 }
 
-
+int   ListElemPurgeInt(ListInt *list,int start,int value)
+{
+  int last = 0;
+  int result = start;
+  while(start) {
+    if(list[start].value==value) {
+      if(!last) {
+        result = list[start].link;
+      } else {
+        list[last].link = list[start].link;
+      }
+      ListElemFree(list,start);
+      break;
+    }
+    start = list[start].link;
+  }
+  return(result);
+}
 
 int ListElemNew(void *list_ptr_ptr)
 {
