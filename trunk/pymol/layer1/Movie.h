@@ -74,7 +74,7 @@ int MovieFrameToIndex(int frame);
 int MovieLocked(void);
 void MovieSetLock(int);
 int MovieDefined(void);
-int MovieView(int action,int first,int last);
+int MovieView(int action,int first,int last,float power);
 
 #define cMovieMatrixClear  0
 #define cMovieMatrixStore  1

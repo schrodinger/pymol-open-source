@@ -549,7 +549,7 @@ void MovieSetCommand(int frame,char *command)
   }
 }
 
-static int interpolate_view(CViewElem *first,CViewElem *last)
+static int interpolate_view(CViewElem *first,CViewElem *last,float power)
 {
   float first3x3[9];
   float last3x3[9];
@@ -642,7 +642,19 @@ static int interpolate_view(CViewElem *first,CViewElem *last)
   
   for(a=0;a<n;a++) {
     float fxn = ((float)a+1)/(n+1);
-    float fxn_1 = 1.0F - fxn;
+    float fxn_1;
+    
+    if(power!=1.0F) {
+      if(fxn<0.5F) {
+        fxn = (float)pow(fxn*2.0F,power)*0.5F;
+      } else if(fxn>0.5F) {
+        fxn = 1.0F - fxn;
+        fxn = (float)pow(fxn*2.0F,power)*0.5F;
+        fxn = 1.0F - fxn;
+      }
+    }
+    fxn_1 = 1.0F - fxn;
+
     *current = *first;
     matrix_interpolate(imat,rot,pivot,rot_axis,angle,tAngle,false,tLinear,fxn);
     current->matrix_flag = true;
@@ -678,7 +690,7 @@ static int interpolate_view(CViewElem *first,CViewElem *last)
   return 1;
 }
 /*========================================================================*/
-int MovieView(int action,int first,int last)
+int MovieView(int action,int first,int last,float power)
 {
   CMovie *I=&Movie;
   int frame;
@@ -736,7 +748,7 @@ int MovieView(int action,int first,int last)
           } else {
             if(I->ViewElem[frame].specified) {
               last_view = I->ViewElem + frame;
-              interpolate_view(first_view,last_view);
+              interpolate_view(first_view,last_view,power);
               first_view = last_view;
               last_view = NULL;
             }

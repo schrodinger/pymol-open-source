@@ -35,6 +35,9 @@ typedef struct CViewElem {
   int ortho_flag;
   int ortho;
 
+  int state_flag; /* only applies to object views */
+  int state;
+
   int view_mode; /* 0 = relative/subordinate, 1 = absolute/top-level */
   int specified;
 } CViewElem;
