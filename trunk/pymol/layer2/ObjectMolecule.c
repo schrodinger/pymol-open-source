@@ -3928,8 +3928,43 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            ai++;
          }
      break;
-	default:
-	   for(a=0;a<I->NAtom;a++)
+   case OMOP_SingleStateVertices: /* same as OMOP_VERT for a single state */
+     ai=I->AtomInfo;
+     if(I->NCSet<op->cs1) {
+       if(I->CSet[op->cs1]) {
+         b = op->cs1;
+         for(a=0;a<I->NAtom;a++)
+           {         
+             s=ai->selEntry;
+             if(SelectorIsMember(s,sele))
+               {
+                 ai->deleteFlag=true;
+                 op->i1++;
+
+                 if(I->DiscreteFlag) {
+                   if(I->CSet[b]==I->DiscreteCSet[a])
+                     a1=I->DiscreteAtmToIdx[a];
+                   else
+                     a1=-1;
+                 } else 
+                   a1=I->CSet[b]->AtmToIdx[a];
+                 if(a1>=0) {
+                   VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                   vv2=I->CSet[b]->Coord+(3*a1);
+                   vv1=op->vv1+(op->nvv1*3);
+                   *(vv1++)=*(vv2++);
+                   *(vv1++)=*(vv2++);
+                   *(vv1++)=*(vv2++);
+                   op->nvv1++;
+                 }
+               }
+             ai++;
+           }
+       }
+     }
+     break;
+   default:
+     for(a=0;a<I->NAtom;a++)
 		 {
 		   switch(op->code) { 
          case OMOP_Flag: 

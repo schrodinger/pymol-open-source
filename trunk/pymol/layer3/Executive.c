@@ -221,6 +221,33 @@ int ExecutiveCartoon(int type,char *s1)
   return(op1.i2);
 }
 /*========================================================================*/
+float *ExecutiveGetVertexVLA(char *s1,int state)
+{
+  /* returns NULL if none found */
+
+  float *result = NULL;
+  ObjectMoleculeOpRec op1;
+  int sele1;
+  sele1 = SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op1.nvv1 = 0;
+    op1.vv1=VLAlloc(float,1000);
+    if(state>=0) {
+      op1.cs1 = state;
+      op1.code=OMOP_SingleStateVertices;
+    } else {
+      op1.code=OMOP_VERT;
+    }
+    ExecutiveObjMolSeleOp(sele1,&op1);
+    if(op1.nvv1) {
+      VLASize(op1.vv1,float,op1.nvv1*3);
+      result = op1.vv1;
+    } else 
+      VLAFreeP(op1.vv1);
+  }
+  return(result);
+}
+/*========================================================================*/
 PyObject *ExecutiveGetSettingText(int index,char *object,int state)
 {
   PyObject *result;

@@ -1,20 +1,30 @@
 Changes Under Consideration
 
+NOTE: Some of these are mutually exclusive, and many of them
+will never be carried out.
+
    * Transparency support in rendering (on a per-primitive basis)
 
    * Generic volume data object (to supplement bricks and maps)
 
+   * support mapping of additional dimensions into volume data sets
+     for use in coloring all PyMOL geometries according to electrostatic
+     potential and the like.
+
    * Log file generation capability so that you can automatically 
      redo everything you've done just like in Grasp.
 
-   * "Builder" wizard, tied into the fragments subsystem.
+   * "Fragment" wizard, tied into the fragments subsystem. 
 
-   * "Tinker" wizard 
+   * "Tinker" wizard ?
+
+   * "Batchmin" wizard ?
 
    * Real Edit Menu in Tk
 
-   * making commas optional in PyMOL command arguments -- this would be
-     not be the default, but it could be an option
+   * make commas optional in PyMOL command arguments -- this would be
+     not be the default, but it could be an option.  The syntatic compilications
+     are hard to fathom.
 
    * adopt standardized conventions for reading user-specific startup
      scripts and initializing external GUI modules.
@@ -24,9 +34,29 @@ Changes Under Consideration
 
    * support anisotropic B-factor renditions (ellipsoids)
 
+   * support reading and writing of XPLOR PSF/PDB files to enable direct
+     use of NAMD with PyMOL.  Note that this will require integration of
+     basic force-field structures into PyMOL...not a lightweight task, but
+     something I think should be done in a general way to facilitate
+     use of PyMOL as a molecular modeling tool...
+
+   * support direct reading of DCD, Amber, and/or Gromacs trajectory files
+
+   * support output of Amber input files so that we can bypass xleap altogether
+
+   * support MOL2 and multi-MOL2 file formats
+
+   * fold MMTK into the main PyMOL distribution, and merge the two programs in a way
+     which allow the user to "see" into MMTK's internal data structures using
+     PyMOL while calculations are being performed.
+
+   * create a VRML->CGO converter so that VRML can be displayed inside of PyMOL
+
+
 Current and Ongoing Goals
 
-   * make an ActiveX control which contains core PyMOL for use in web browsers.
+   * make an ActiveX control which contains the core PyMOL viewer for 
+     use in web browsers and many other crazy contexts.
 
    * fill-out object and coord. set specific settings
 
