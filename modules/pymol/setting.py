@@ -434,6 +434,8 @@ if __name__=='pymol.setting':
       scene_loop                = (400, '')
       sweep_mode                = (401, '')
       sweep_phase               = (402, '')
+      scene_restart_movie_delay = (403, '')
+      mouse_restart_movie_delay = (404, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

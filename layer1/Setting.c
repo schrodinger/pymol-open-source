@@ -1289,6 +1289,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepNonbonded,cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_scene_current_name:
+    SceneRestartTimers(G);
+    break;
   case cSetting_mesh_width: 
   case cSetting_mesh_color: 
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
@@ -2437,7 +2440,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_scene_loop,0);
   SettingSet_i(I,cSetting_sweep_mode,0);
   SettingSet_f(I,cSetting_sweep_phase,0.0F);
-  
+  SettingSet_b(I,cSetting_scene_restart_movie_delay,1);
+  SettingSet_b(I,cSetting_mouse_restart_movie_delay,0);
 }
 
 

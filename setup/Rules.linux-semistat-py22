@@ -44,7 +44,7 @@ PYOGL_LIB =
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT1 = -O3 -funroll-loops -fomit-frame-pointer
+CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Debugging

@@ -53,7 +53,11 @@ Z* -------------------------------------------------------------------
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
 
+#ifdef _PYMOL_SHARP3D
 #define cSliceMin 0.1F
+#else
+#define cSliceMin 1.0F
+#endif
 
 #define SceneLineHeight 127
 #define SceneTopMargin 0
@@ -101,7 +105,7 @@ struct _CScene {
   float ViewNormal[3],LinesNormal[3];
   float Pos[3],Origin[3];
   float H;
-  float Front,Back,FrontSafe;
+  float Front,Back,FrontSafe,BackSafe;
   float TextColor[3];
   double RockTime;
   int DirtyFlag;
@@ -232,11 +236,22 @@ int SceneLoopRelease(Block *block,int button,int x,int y,int mod)
 
 static float GetFrontSafe(float front,float back)
 {
-  if(front<0.1F)
-    front = 0.1F;
-  if(back/front>100.0F)
-    front = back/100.0F;
+  if(front>R_SMALL4) {
+    if((back/front)>100.0F)
+      front = back/100.0F;
+  }
+  if(front>back)
+    front = back;
+  if(front<cSliceMin)
+    front = cSliceMin;
   return front;
+}
+
+static float GetBackSafe(float front_safe, float back)
+{
+  if((back-front_safe)<cSliceMin)
+    back=front_safe+cSliceMin;
+  return back;
 }
 
 #define SELE_MODE_MAX 7
@@ -667,6 +682,7 @@ void SceneTranslate(PyMOLGlobals *G,float x,float y, float z)
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
+  I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
   SceneDirty(G);
 }
 /*========================================================================*/
@@ -678,6 +694,7 @@ void SceneClipSet(PyMOLGlobals *G,float front,float back)
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
+  I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
   SceneDirty(G);
 }
 /*========================================================================*/
@@ -1239,7 +1256,7 @@ void SceneWindowSphere(PyMOLGlobals *G,float *location,float radius)
   I->Front=(-I->Pos[2]-radius*1.2F);
   I->Back=(-I->Pos[2]+radius*1.2F);
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
-
+  I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
   SceneRovingDirty(G);
 }
 /*========================================================================*/
@@ -1266,6 +1283,7 @@ void SceneRelocate(PyMOLGlobals *G,float *location)
   I->Front=(-I->Pos[2]-(slab_width*0.50F));
   I->Back=(-I->Pos[2]+(slab_width*0.50F));
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
+  I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
   SceneRovingDirty(G);
 
 }
@@ -1782,6 +1800,18 @@ static int SceneDoXYPick(PyMOLGlobals *G, int x, int y)
   return (I->LastPicked.ptr!=NULL);
   /* did we pick something? */
 }
+
+static void SceneNoteMouseInteraction(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  if(I->cur_ani_elem < I->n_ani_elem ) { /* allow user to override animation */
+    I->cur_ani_elem = I->n_ani_elem;
+  }
+  if(SettingGet_b(G,NULL,NULL,cSetting_mouse_restart_movie_delay)) {
+    SceneRestartTimers(G);
+  }
+}
+
 /*========================================================================*/
 static int SceneClick(Block *block,int button,int x,int y,
                       int mod,double when)
@@ -1839,12 +1869,15 @@ static int SceneClick(Block *block,int button,int x,int y,
   I->SculptingSave = 0;
   switch(mode) {
   case cButModeScaleSlabExpand:
+    SceneNoteMouseInteraction(G);
     SceneClip(G,5,1.2F,NULL,0);
     break;
   case cButModeScaleSlabShrink:
+    SceneNoteMouseInteraction(G);
     SceneClip(G,5,0.8F,NULL,0);
     break;
   case cButModeMoveSlabForward:
+    SceneNoteMouseInteraction(G);
     {
       float old_front = I->Front;
       float old_back = I->Back;
@@ -1854,6 +1887,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     }
     break;
   case cButModeMoveSlabBackward:
+    SceneNoteMouseInteraction(G);
     {
       float old_front = I->Front;
       float old_back = I->Back;
@@ -1864,28 +1898,33 @@ static int SceneClick(Block *block,int button,int x,int y,
     }
     break;
   case cButModeZoomForward:
+    SceneNoteMouseInteraction(G);
     {
-      float factor = -((I->FrontSafe+I->Back)/2)*0.1F;
+      float factor = -((I->FrontSafe+I->BackSafe)/2)*0.1F;
       if(factor<=0.0F) {
         I->Pos[2]+=factor;
         I->Front-=factor;
         I->Back-=factor;
         I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+        I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
       }
     }
     break;
   case cButModeZoomBackward:
+    SceneNoteMouseInteraction(G);
     {
-      float factor = ((I->FrontSafe+I->Back)/2)*0.1F;
+      float factor = ((I->FrontSafe+I->BackSafe)/2)*0.1F;
       if(factor>=0.0F) {
         I->Pos[2]+=factor;
         I->Front-=factor;
         I->Back-=factor;
         I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+        I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
       }
     }
     break;
   case cButModeMoveSlabAndZoomForward:
+    SceneNoteMouseInteraction(G);
     {
       float old_front = I->Front;
       float old_back = I->Back;
@@ -1895,6 +1934,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     }
     break;
   case cButModeMoveSlabAndZoomBackward:
+    SceneNoteMouseInteraction(G);
     {
       float old_front = I->Front;
       float old_back = I->Back;
@@ -1917,6 +1957,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeClipN:    
   case cButModeClipF:    
   case cButModeRotZ:
+    SceneNoteMouseInteraction(G);
     SceneDontCopyNext(G);
 
     y=y-I->Block->margin.bottom;
@@ -2238,6 +2279,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           break;
           
         case cButModeOrigAt:
+          SceneNoteMouseInteraction(G);
 #if 1
           {
             float v1[3];
@@ -2272,6 +2314,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             ENDFB(G);
           break;
         case cButModeCent:
+          SceneNoteMouseInteraction(G);
 #if 1
           {
             float v1[3];
@@ -2987,6 +3030,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     break;
   case cButModeTransXY:
 
+    SceneNoteMouseInteraction(G);
+
     vScale = SceneGetScreenVertexScale(G,I->Origin);
     if(I->StereoMode>1) {
       x = x % (I->Width/2);
@@ -3028,9 +3073,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   case cButModeClipN:    
   case cButModeClipF:    
     
-    if(I->cur_ani_elem < I->n_ani_elem ) { /* allow user to interrupt animation */
-      I->cur_ani_elem = I->n_ani_elem;
-    }
+    SceneNoteMouseInteraction(G);
 
     eff_width = I->Width;
     if(I->StereoMode>1) {
@@ -3133,13 +3176,14 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 		if(I->LastY!=y)
 		  {
           float factor;
-          factor = 200/((I->FrontSafe+I->Back)/2);
+          factor = 200/((I->FrontSafe+I->BackSafe)/2);
           if(factor>=0.0F) {
             factor = (((float)y)-I->LastY)/factor;
             I->Pos[2]+=factor;
             I->Front-=factor;
             I->Back-=factor;
             I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+            I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
           }
           I->LastY=y;
           SceneDirty(G);
@@ -3162,6 +3206,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+          I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
 			 I->LastY=y;
 			 SceneDirty(G);
           moved_flag=true;
@@ -3174,6 +3219,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+          I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
 			 I->LastX=x;
 			 SceneDirty(G);
           moved_flag=true;
@@ -3184,6 +3230,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+          I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
 			 I->LastY=y;
 			 SceneDirty(G);
           moved_flag=true;
@@ -3361,6 +3408,7 @@ void SceneSetDefaultView(PyMOLGlobals *G) {
   I->Front=40.0F;
   I->Back=100.0F;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
+  I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
   
   I->Scale = 1.0F;
   
@@ -3667,7 +3715,7 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
     }
     if(ortho) {
       RayPrepare(ray,-width,width,-height,height,
-                 I->FrontSafe,I->Back,rayView,I->RotMatrix,aspRat,ray_pixel_width);
+                 I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,ray_pixel_width);
     } else {
       float back_ratio;
       float back_height;
@@ -3677,7 +3725,7 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
       back_height = back_ratio*height;
       back_width = aspRat * back_height;
       RayPrepare(ray,-back_width, back_width, -back_height, back_height,
-                 I->FrontSafe,I->Back,rayView,I->RotMatrix,aspRat,ray_pixel_width);
+                 I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,ray_pixel_width);
     }
   }
 
@@ -3706,7 +3754,7 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
     buffer=(GLvoid*)Alloc(char,buffer_size);
     ErrChkPtr(G,buffer);
     
-    RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->Back,timing,angle,
+    RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->BackSafe,timing,angle,
               fov,I->Pos);
     SceneApplyImageGamma(G,buffer,ray_width,ray_height);
 
@@ -3735,7 +3783,7 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
     charVLA=VLAlloc(char,100000); 
     headerVLA=VLAlloc(char,2000);
     RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
-                 I->FrontSafe,I->Back,fov,angle);
+                 I->FrontSafe,I->BackSafe,fov,angle);
     if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
       strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
       if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
@@ -3752,11 +3800,11 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
     }
     break;
   case 2: /* mode 2 is for testing of geometries */
-    RayRenderTest(ray,ray_width,ray_height,I->FrontSafe,I->Back,fov);
+    RayRenderTest(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov);
     break;
   case 3: /* mode 3 is for Jmol */
     {
-      G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->Back,fov,quiet);
+      G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov,quiet);
       if(0) {
         int cnt = VLAGetSize(jp);
         int a;
@@ -4165,13 +4213,13 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     }
 
     if(!SettingGetGlobal_b(G,cSetting_ortho)) {
-      gluPerspective(fov,aspRat,I->FrontSafe,I->Back);
+      gluPerspective(fov,aspRat,I->FrontSafe,I->BackSafe);
     } else {
       height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 
       width = height*aspRat;
 	
       glOrtho(-width,width,-height,height,
-              I->FrontSafe,I->Back);
+              I->FrontSafe,I->BackSafe);
 
     }
 
