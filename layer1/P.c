@@ -79,13 +79,16 @@ void PXDecRef(PyObject *obj)
 }
 
 void PSleep(int usec)
-{ /* assumes threads have already been unblocked */
+{ /* can only be called by the master process */
 #ifndef WIN32
 	struct timeval tv;
+ PUnlockAPIAsGlut();
 
   tv.tv_sec=0;
   tv.tv_usec=usec; 
   select(0,NULL,NULL,NULL,&tv);
+    PLockAPIAsGlut();
+
 #endif
 
 }
@@ -330,6 +333,11 @@ void PLockAPIAsGlut(void)
   P_glut_thread_active = 1; /* if we come in on a glut event - then it is the active thread */
 }
 
+#ifdef _PYMOL_MONOLITHIC
+void	initExtensionClass();
+void	initsglite();
+#endif
+
 void PInitEmbedded(int argc,char **argv)
 {
   /* This routine is called if we are running with an embedded Python interpreter */
@@ -340,6 +348,11 @@ void PInitEmbedded(int argc,char **argv)
   PyEval_InitThreads();
 
   init_cmd();
+
+#ifdef _PYMOL_MONOLITHIC
+	initExtensionClass();
+	initsglite();
+#endif
 
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");

@@ -69,7 +69,6 @@ void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
   I->NAtIndex = nAtom;
   I->AtmToIdx = Realloc(I->AtmToIdx,int,nAtom);
   for(a=0;a<I->NIndex;a++) { 
-    fflush(stdout);
     I->IdxToAtm[a] = lookup[I->IdxToAtm[a]];
   }
 }

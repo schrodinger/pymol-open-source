@@ -570,11 +570,16 @@ void SettingInit(void)
 			"autoshow_nonbonded");
 
   I->NSetting++;
-#ifdef _PYMOL_WINDOWS
-  I->Setting[cSetting_normal_workaround].Value[0] = 1;
+#ifdef WIN32
+  I->Setting[cSetting_cache_display].Value[0] = 0.0;
 #else
-  I->Setting[cSetting_normal_workaround].Value[0] = 0;
+  I->Setting[cSetting_cache_display].Value[0] = 1.0;
 #endif
+  strcpy(I->Setting[cSetting_cache_display].Name,
+			"cache_display");
+
+  I->NSetting++;
+  I->Setting[cSetting_normal_workaround].Value[0] = 0;
   strcpy(I->Setting[cSetting_normal_workaround].Name,
 			"normal_workaround");
 

@@ -1008,9 +1008,12 @@ void ExecutiveDrawNow(void)
 
   SceneUpdate();
 
+
   OrthoDoDraw();
 
+
   MainSwapBuffers();
+
 
 }
 /*========================================================================*/
