@@ -72,12 +72,14 @@ Current and Ongoing Goals
    * make an ActiveX control which contains the core PyMOL viewer for 
      use in web browsers and many other crazy contexts.
 
-   * clean up return values in the API, and qualify exceptions, include the source
-     source module for error messages, and provide proper feedback conditionals
+   * clean up return values in the API and qualify exceptions.  Include the source
+     module name in messages, and provide proper feedback conditionals
 
-   * update expand and attach to take an atom name as well as an element symbol
+   * update 'expand' and 'attach' to take an atom name as well as an element symbol
 
    * complete first-round test-cases.
+
+   * complete matrix-based object translation and rotation
 
    * place feedback conditionals around all error output.
 
@@ -103,8 +105,6 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer atoms, etc).
      sometimes it just fails period
   
-   * superposition flaky when fitting against multiple conformations...
-
    * intra_fit broken?
 
 Changes up to 0.75
@@ -119,6 +119,12 @@ Changes up to 0.75
 
    * gutted cmd.py, and created a bunch of sub-modules which contain the
      code previously in cmd.py.  
+   
+   * superposition bugs fixed with multi-state objects
+
+Changes up to 0.74
+
+   * very minor bug/doc fixes
 
 Changes up to 0.73
 
