@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"OOMac.h"
 #include"Setting.h"
+#include"Feedback.h"
 
 void ExtrudeInit(CExtrude *I);
 
@@ -44,6 +45,9 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
   int a;
   float *v,*vn;
 
+  PRINTFD(FB_Extrude)
+    " ExtrudeCircle-DEBUG: entered.\n"
+    ENDFD;
   if(n>20) n=20;
   
   FreeP(I->sv);
@@ -69,12 +73,21 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
       *(v++) = cos(a*2*PI/n)*size;
       *(v++) = sin(a*2*PI/n)*size;
 	 }
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeCircle-DEBUG: exiting...\n"
+    ENDFD;
+
 }
 
 void ExtrudeOval(CExtrude *I, int n,float width,float length)
 {
   int a;
   float *v,*vn;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeOval-DEBUG: entered.\n"
+    ENDFD;
 
   if(n>20) n=20;
   
@@ -101,11 +114,20 @@ void ExtrudeOval(CExtrude *I, int n,float width,float length)
       *(v++) = cos(a*2*PI/n)*width;
       *(v++) = sin(a*2*PI/n)*length;
 	 }
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeOval-DEBUG: exiting...\n"
+    ENDFD;
+
 }
 
 void ExtrudeRectangle(CExtrude *I,float width,float length)
 {
   float *v,*vn;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeRectangle-DEBUG: entered...\n"
+    ENDFD;
 
   I->Ns = 8;
 
@@ -174,6 +196,9 @@ void ExtrudeRectangle(CExtrude *I,float width,float length)
   *(v++) = cos(PI/4)*width;
   *(v++) = -sin(PI/4)*length;
 
+  PRINTFD(FB_Extrude)
+    " ExtrudeRectangle-DEBUG: exiting...\n"
+    ENDFD;
 
 }
 
@@ -188,6 +213,11 @@ void ExtrudeBuildNormals1f(CExtrude *I)
 {
   int a;
   float *v;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeBuildNormals1f-DEBUG: entered.\n"
+    ENDFD;
+
   if(I->N) {
     get_system1f3f(I->n,I->n+3,I->n+6); /* first is arbitrary */
     v = I->n+9;
@@ -198,12 +228,21 @@ void ExtrudeBuildNormals1f(CExtrude *I)
         v+=9;
       }
   }
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeBuildNormals1f-DEBUG: exiting...\n"
+    ENDFD;
+
 }
 
 void ExtrudeBuildNormals2f(CExtrude *I)
 {
   int a;
   float *v;
+  PRINTFD(FB_Extrude)
+    " ExtrudeBuildNormals2f-DEBUG: entered.\n"
+    ENDFD;
+
   if(I->N) {
     v = I->n;
     for(a=0;a<I->N;a++)
@@ -212,6 +251,11 @@ void ExtrudeBuildNormals2f(CExtrude *I)
         v+=9;
       }
   }
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeBuildNormals2f-DEBUG: entering...\n"
+    ENDFD;
+
 }
 
 void ExtrudeCGOTraceAxes(CExtrude *I,CGO *cgo)
@@ -264,8 +308,12 @@ void ExtrudeCGOTrace(CExtrude *I,CGO *cgo)
 void ExtrudeComputeTangents(CExtrude *I)
 {
   float *nv,*v1,*v;
-
   int a;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeComputeTangents-DEBUG: entered.\n"
+    ENDFD;
+
   nv = Alloc(float,I->N*3);
 
   v=nv;
@@ -303,6 +351,10 @@ void ExtrudeComputeTangents(CExtrude *I)
   *(v1++)=*(v-1);
 
   FreeP(nv);
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeComputeTangents-DEBUG: exiting...\n"
+    ENDFD;
 
 }
 
@@ -358,6 +410,11 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
   float *c;
   float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN;
   float v0[3];
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeCGOSurfaceTube-DEBUG: entered.\n"
+    ENDFD;
+
   
   if(I->N&&I->Ns) {
 
@@ -487,6 +544,10 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap)
     FreeP(TN);
   }
   
+  PRINTFD(FB_Extrude)
+    " ExtrudeCGOSurfaceTube-DEBUG: exiting...\n"
+    ENDFD;
+
 }
 
 
@@ -498,7 +559,12 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
   float *c;
   float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN;
   float v0[3];
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeCGOSurfacePolygon-DEBUG: entered.\n"
+    ENDFD;
   
+
   if(I->N&&I->Ns) {
 
     TV=Alloc(float,3*(I->Ns+1)*I->N);
@@ -629,12 +695,17 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
     FreeP(TN);
   }
   
+  PRINTFD(FB_Extrude)
+    " ExtrudeCGOSurfacePolygon-DEBUG: exiting...\n"
+    ENDFD;
+
 }
 
 
 
 void ExtrudeTruncate(CExtrude *I,int n)
 {
+
   I->N = n;
   /* should free RAM here... */
 }

@@ -359,7 +359,7 @@ Rep *RepRibbonNew(CoordSet *cs)
             angle = acos(dot);
             
             if(angle>0.001) {
-              ratio=angle/sqrt((pow(1-cos(angle),2)+pow(sin(angle),2)));
+              ratio=angle/sqrt1f((pow(1-cos(angle),2)+pow(sin(angle),2)));
             } else {
               ratio=1.0;
             }
