@@ -38,6 +38,7 @@ int DistSetFromPyList(PyObject *list,DistSet **cs)
 {
   DistSet *I = NULL;
   int ok = true;
+  int ll;
   if(*cs) {
     DistSetFree(*cs);
     *cs=NULL;
@@ -49,6 +50,11 @@ int DistSetFromPyList(PyObject *list,DistSet **cs)
   
     if(ok) I=DistSetNew();
     if(ok) ok = (I!=NULL);
+    if(ok) ok = (list!=NULL);
+    if(ok) ok = PyList_Check(list);
+    if(ok) ll = PyList_Size(list);
+    /* TO SUPPORT BACKWARDS COMPATIBILITY...
+     Always check ll when adding new PyList_GetItem's */
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->NIndex);
     if(ok) ok = PConvPyListToFloatVLA(PyList_GetItem(list,1),&I->Coord);
     if(!ok) {

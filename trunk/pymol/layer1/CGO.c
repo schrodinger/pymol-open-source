@@ -264,10 +264,14 @@ PyObject *CGOAsPyList(CGO *I)
 CGO *CGONewFromPyList(PyObject *list)
 {
   int ok=true;
+  int ll;
   OOAlloc(CGO);
   I->op=NULL;
-  if(ok) ok=(list!=Py_None);
+  if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
+  if(ok) ll = PyList_Size(list);
+  /* TO ENABLE BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->c);
   if(ok) ok=((I->op=VLAlloc(float,I->c+1))!=NULL);
   if(ok) ok=CGOArrayFromPyListInPlace(PyList_GetItem(list,1),I);

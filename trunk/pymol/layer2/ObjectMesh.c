@@ -110,6 +110,7 @@ static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh *I)
 static int ObjectMeshStateFromPyList(ObjectMeshState *I,PyObject *list)
 {
   int ok=true;
+  int ll;
   PyObject *tmp;
   if(ok) ok=(list!=NULL);
   if(ok) {
@@ -117,7 +118,12 @@ static int ObjectMeshStateFromPyList(ObjectMeshState *I,PyObject *list)
       I->Active=false;
     else {
       ObjectMeshStateInit(I);
+      if(ok) ok=(list!=NULL);
       if(ok) ok=PyList_Check(list);
+      if(ok) ll = PyList_Size(list);
+      /* TO SUPPORT BACKWARDS COMPATIBILITY...
+         Always check ll when adding new PyList_GetItem's */
+      
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
       if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
@@ -165,15 +171,19 @@ static int ObjectMeshAllStatesFromPyList(ObjectMesh *I,PyObject *list)
 int ObjectMeshNewFromPyList(PyObject *list,ObjectMesh **result)
 {
   int ok = true;
+  int ll;
   ObjectMesh *I=NULL;
   (*result) = NULL;
   
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
+  if(ok) ll = PyList_Size(list);
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+     Always check ll when adding new PyList_GetItem's */
 
   I=ObjectMeshNew();
   if(ok) ok = (I!=NULL);
-
+  
   if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
   if(ok) ok = ObjectMeshAllStatesFromPyList(I,PyList_GetItem(list,2));

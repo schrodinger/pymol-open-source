@@ -292,6 +292,7 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
     }
   }
   ok = ok && (obj=ObjectGadgetRampMapNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
+  if(ok) ExecutiveDelete(name); 
   if(ok) ObjectSetName((CObject*)obj,name);
   if(ok) ColorRegisterExt(name,(void*)obj,cColorGadgetRamp);
   if(ok) ExecutiveManageObject((CObject*)obj,false,false);

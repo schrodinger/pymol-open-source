@@ -67,16 +67,21 @@ CField *FieldNewFromPyList(PyObject *list)
 {
   int ok=true;
   unsigned int n_elem;
+  int ll;
   OOAlloc(CField);
 
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
+  if(ok) ll = PyList_Size(list);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->type);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&I->n_dim);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,2),(int*)&I->base_size);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,3),(int*)&I->size);
   if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,4),(int**)&I->dim);
   if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,5),(int**)&I->stride);
+  
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
 
   if(ok) {
     n_elem = I->size/I->base_size;

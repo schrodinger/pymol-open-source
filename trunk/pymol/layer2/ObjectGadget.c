@@ -293,8 +293,12 @@ static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list)
 int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I)
 {
   int ok = true;
+  int ll;
   if(ok) ok = (I!=NULL)&&(list!=NULL);
   if(ok) ok = PyList_Check(list);
+  if(ok) ll = PyList_Size(list);
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
   if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->GadgetType);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NGSet);

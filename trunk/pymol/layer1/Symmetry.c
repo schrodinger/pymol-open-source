@@ -49,14 +49,20 @@ PyObject *SymmetryAsPyList(CSymmetry *I)
 int SymmetryFromPyList(CSymmetry *I,PyObject *list)
 {
   int ok=true;
+  int ll;
+
   if(ok) ok = (I!=NULL);
   if(ok) SymmetryReset(I);
+  if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
+  if(ok) ll = PyList_Size(list);
   if(ok) ok = CrystalFromPyList(I->Crystal,PyList_GetItem(list,0));
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->SpaceGroup,sizeof(WordType));
    if(ok) {
     ok = SymmetryAttemptGeneration(I,true,true);
   }
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
  return(ok);
 }
 

@@ -80,6 +80,7 @@ int ObjectFromPyList(PyObject *list,CObject *I)
   int ok=true;
   int ll;
 
+  if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
   if(ok) ll=PyList_Size(list);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->type);
@@ -91,8 +92,10 @@ int ObjectFromPyList(PyObject *list,CObject *I)
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,6),&I->ExtentFlag);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->TTTFlag);
   if(ok) I->Setting=SettingNewFromPyList(PyList_GetItem(list,8));
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->Enabled);
+  if(ok&&(ll>9)) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->Enabled);
   if(ok&&(ll>10)) ok = PConvPyIntToInt(PyList_GetItem(list,10),&I->Context);
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
   
   return(ok);
 }

@@ -170,6 +170,7 @@ int GadgetSetFetchNormal(GadgetSet *I,float *inp,float *out)
 int GadgetSetFromPyList(PyObject *list,GadgetSet **gs)
 {
   int ok = true;
+  int ll;
   GadgetSet *I = NULL;
   PyObject *tmp = NULL;
 
@@ -184,6 +185,12 @@ int GadgetSetFromPyList(PyObject *list,GadgetSet **gs)
   
     if(ok) I=GadgetSetNew();
     if(ok) ok = (I!=NULL);
+    if(ok) ok = (list!=NULL);
+    if(ok) ok = PyList_Check(list);
+    if(ok) ll = PyList_Size(list);
+    /* TO SUPPORT BACKWARDS COMPATIBILITY...
+     Always check ll when adding new PyList_GetItem's */
+
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->NCoord);
     if(ok&&I->NCoord) ok = PConvPyListToFloatVLA(PyList_GetItem(list,1),&I->Coord);
 
