@@ -439,7 +439,7 @@ PyMOL>view rest
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   0.866   0.500   0.000  -0.500   0.866
  10.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
-PyMOL>view rest,delete
+PyMOL>view rest,clear
  view: 'rest' deleted.
 PyMOL>view rest
 Error: unknown view: 'rest'. Choices:

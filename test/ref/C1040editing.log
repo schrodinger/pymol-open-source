@@ -59,8 +59,6 @@ PyMOL>remove hydro
  Remove: eliminated 22 atoms in model "small01".
 PyMOL>bond id 1,id 2
  AddBond: 1 bonds added to model "small01".
- Selector: selection "pk1" defined with 1 atoms.
- Selector: selection "pk2" defined with 1 atoms.
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 36 atoms
@@ -83,8 +81,6 @@ PyMOL>count_atoms
 PyMOL>remove_picked
 PyMOL>bond id 6,id 10,2
  AddBond: 1 bonds added to model "small01".
- Selector: selection "pk1" defined with 1 atoms.
- Selector: selection "pk2" defined with 1 atoms.
 PyMOL>h_add
 PyMOL>set valence=0.05
  Setting: valence set to 0.05000.
@@ -348,8 +344,6 @@ PyMOL>get_extent
  cmd.extent: min: [  -5.188, -20.331,  13.157]
  cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>set_dihedral 1/n,1/ca,1/c,1/o,180
- Selector: selection "pk1" defined with 1 atoms.
- Selector: selection "pk2" defined with 1 atoms.
  SetDihedral: adjusted to 180.000
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
  cmd.get_dihedral: 180.000 degrees.
@@ -403,10 +397,8 @@ PyMOL>get_extent
  cmd.extent: min: [  -5.188, -20.331,  13.157]
  cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>cmd.edit("(pept`95)",pkresi=1)
- Selector: selection "pk1" defined with 1 atoms.
 PyMOL>cmd.push_undo("pept",1)
 PyMOL>cmd.edit("(pept`10)",pkresi=1)
- Selector: selection "pk1" defined with 1 atoms.
 PyMOL>cmd.push_undo("pept",1)
 PyMOL>get_extent
  cmd.extent: min: [  -5.188, -16.674,  13.157]
@@ -415,7 +407,6 @@ PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>cmd.edit("(small01`3)",pkresi=1)
- Selector: selection "pk1" defined with 1 atoms.
 PyMOL>cmd.edit_mode()
  mouse: three_button_editing
 PyMOL>cmd.push_undo("small01",1)

@@ -281,7 +281,7 @@ SEE ALSO
          lock()
          r = _cmd.bond(atom1,atom2,int(order),1)
          if r and edit:
-            _cmd.edit(str(atom1),str(atom2),'','',0)
+            _cmd.edit(str(atom1),str(atom2),'','',0,1)
       finally:
          unlock()
       return r
