@@ -37,7 +37,7 @@ typedef struct RepWireBond {
 
 void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick);
 void RepWireBondFree(RepWireBond *I);
-void RepValence(float *v,float *v1,float *v2,int *other,int a1,
+static void RepValence(float *v,float *v1,float *v2,int *other,int a1,
                 int a2,float *coord,float *color,int ord,float tube_size);
 
 void RepWireBondFree(RepWireBond *I)
@@ -231,47 +231,6 @@ Rep *RepWireBondNew(CoordSet *cs)
   half_bonds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
   valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
 
-  if(valence!=0.0) /* build list of up to 2 connected atoms for each atom */
-    {
-      other=Alloc(int,2*obj->NAtom);
-      o=other;
-      for(a=0;a<obj->NAtom;a++) {
-        *(o++)=-1;
-        *(o++)=-1;
-      }
-      b=obj->Bond;
-      for(a=0;a<obj->NBond;a++)
-        {
-          b1 = b->index[0];
-          b2 = b->index[1];
-          b++;
-          if(obj->DiscreteFlag) {
-            if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-              a1=obj->DiscreteAtmToIdx[b1];
-              a2=obj->DiscreteAtmToIdx[b2];
-            } else {
-              a1=-1;
-              a2=-1;
-            }
-          } else {
-            a1=cs->AtmToIdx[b1];
-            a2=cs->AtmToIdx[b2];
-          }
-          if((a1>=0)&&(a2>=0))
-            {
-              o=other+2*a1;
-              if(*o!=a2) {
-                if(*o>=0) o++;
-                *o=a2;
-              }
-              o=other+2*a2;              
-              if(*o!=a1) {
-                if(*o>=0) o++;
-                *o=a1;
-              }
-            }
-        }
-    }
 
   I->N=0;
   I->NP=0;
@@ -281,6 +240,50 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->R.fRecolor=NULL;
 
   if(obj->NBond) {
+
+    if(valence!=0.0) /* build list of up to 2 connected atoms for each atom */
+      {
+        other=Alloc(int,2*obj->NAtom);
+        o=other;
+        for(a=0;a<obj->NAtom;a++) {
+          *(o++)=-1;
+          *(o++)=-1;
+        }
+        b=obj->Bond;
+        for(a=0;a<obj->NBond;a++)
+          {
+            b1 = b->index[0];
+            b2 = b->index[1];
+            b++;
+            if(obj->DiscreteFlag) {
+              if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+                a1=obj->DiscreteAtmToIdx[b1];
+                a2=obj->DiscreteAtmToIdx[b2];
+              } else {
+                a1=-1;
+                a2=-1;
+              }
+            } else {
+              a1=cs->AtmToIdx[b1];
+              a2=cs->AtmToIdx[b2];
+            }
+            if((a1>=0)&&(a2>=0))
+              {
+                o=other+2*a1;
+                if(*o!=a2) {
+                  if(*o>=0) o++;
+                  *o=a2;
+                }
+                o=other+2*a2;              
+                if(*o!=a1) {
+                  if(*o>=0) o++;
+                  *o=a1;
+                }
+              }
+          }
+      }
+    
+    
 	 I->V=(float*)mmalloc(sizeof(float)*maxBond*54);
 	 ErrChkPtr(I->V);
 	 	 
@@ -520,10 +523,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   return((void*)(struct Rep*)I);
 }
 
-
-
-
-void RepValence(float *v,float *v1,float *v2,int *other,
+static void RepValence(float *v,float *v1,float *v2,int *other,
                 int a1,int a2,float *coord,float *color,int ord,
                 float tube_size)
 {

@@ -484,7 +484,7 @@ static int get_i(CSetting *I,int index)
     break;
   default:
     PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type read mismatch (int)\n"
+      "Setting-Error: type read mismatch (int) %d\n",index
       ENDFB;
     result = 0;
     break;
@@ -1110,6 +1110,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SceneDirty();
     break;
   case cSetting_stick_radius:
+  case cSetting_stick_ball:
+  case cSetting_stick_ball_ratio:
+  case cSetting_stick_fixed_radius:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
     ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
@@ -1155,6 +1158,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SceneChanged();
     break;
   case cSetting_sphere_quality:
+    ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
     ExecutiveInvalidateRep(inv_sele,cRepNonbondedSphere,cRepInvRep);
     ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvRep);
     SceneChanged();
@@ -2087,6 +2091,12 @@ void SettingInitGlobal(int alloc)
   SettingSet_f(I,cSetting_sculpt_tors_weight,0.05F);
 
   SettingSet_f(I,cSetting_sculpt_tors_tolerance,0.05F);
+
+  SettingSet_b(I,cSetting_stick_ball, false);
+
+  SettingSet_f(I,cSetting_stick_ball_ratio, 1.0F);
+
+  SettingSet_b(I,cSetting_stick_fixed_radius, false);
 
 }
 

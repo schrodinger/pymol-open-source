@@ -307,6 +307,9 @@ if __name__=='pymol.setting':
       sculpt_nb_interval    = 273
       sculpt_tors_weight    = 274
       sculpt_tors_tolerance = 275
+      stick_ball            = 276
+      stick_ball_ratio      = 277
+      stick_fixed_radius    = 278
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

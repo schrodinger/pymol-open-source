@@ -179,6 +179,13 @@ CHANGE LOG
 
 Changes up to 0.91
 
+
+   * stick_ball, and stick_ball_ratio can be used to quikly generate ball
+     and stick representation without messing around with spheres...
+   
+   * NEW: display of valences for sticks (controlled by valence setting).
+     stick_fixed_radius determines whether they are inscribed or not
+
    * pdb HETATMS are no longer sorted by default
 
    * Torsional term added to sculpting engine...not perfect, but it's 
