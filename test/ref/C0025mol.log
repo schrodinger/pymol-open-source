@@ -1,0 +1,7 @@
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>print cmd.get_names()
+['small01']
+PyMOL>print cmd.select("(all)")
+ Selector: selection "sel01" defined with 36 atoms.
+36

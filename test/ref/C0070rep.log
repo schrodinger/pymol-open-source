@@ -1,0 +1,17 @@
+PyMOL>load dat/tiny.pdb
+ Executive: object "tiny" created.
+PyMOL>print cmd.get_names()
+['tiny']
+PyMOL>show sticks
+PyMOL>refresh
+PyMOL>show spheres
+PyMOL>refresh
+PyMOL>show dots
+PyMOL>refresh
+PyMOL>show surface
+PyMOL>refresh
+ RepSurface: 759 surface points.
+ RepSurface: 860 triangles.
+PyMOL>show mesh
+PyMOL>refresh
+ IsosurfVolume: Surface generated using 2515 lines.

@@ -134,18 +134,14 @@ def sele_action(s):
            [ 0, ''          ,''                           ],
            [ 1, 'Delete'       ,'cmd.delete("'+s+'")'     ],
            [ 0, ''          ,''                           ],
-           [ 1, 'Duplicate'    ,'cmd.select("('+s+')")'   ],
-           [ 0, ''          ,''                           ],
            [ 1, 'Complete Residues' ,'cmd.select("'+s+'","(byres '+s+')")'                   ],
-           [ 1, 'Residues within 3 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 3))")'  ],
-           [ 1, 'Residues within 7 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 7))")'  ],
-           [ 1, 'Residues within 10 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 10))")'],
            [ 0, ''          ,''                                              ],
-           [ 1, 'Expand by 3 A'  ,'cmd.select("'+s+'","('+s+' expand 3)")'   ],
-           [ 1, 'Expand by 7 A'  ,'cmd.select("'+s+'","('+s+' expand 7)")'   ],
-           [ 1, 'Expand by 10 A'  ,'cmd.select("'+s+'","('+s+' expand 10)")' ],
+           [ 1, 'Expand by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)")'   ],
+           [ 1, 'Expand by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)")'   ],
            [ 0, ''          ,''                                              ],
            [ 1, 'Invert'  ,'cmd.select("'+s+'","(not '+s+')")'               ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'Remove Atoms'  ,'cmd.remove("'+s+'")'        ],
            ]
 
 def mol_action(s):

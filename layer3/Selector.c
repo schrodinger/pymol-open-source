@@ -1454,7 +1454,9 @@ void SelectorPurgeMembers(int sele)
 }
 /*========================================================================*/
 void SelectorDelete(char *sele) 
-     /* should (only) be called by Executive or by Selector */
+     /* should (only) be called by Executive or by Selector, unless the
+        named selection has never been registered with the executive 
+        (i.e., temporary on-the-fly selection) */
 {
   SelectorType *I=&Selector;
   int n;

@@ -1,0 +1,8 @@
+PyMOL>load dat/pept.pkl
+ Executive: object "pept" created.
+PyMOL>load dat/il2.pdb
+ Executive: object "il2" created.
+PyMOL>load dat/tiny.pdb
+ Executive: object "tiny" created.
+PyMOL>load dat/water.pdb
+ Executive: object "water" created.

@@ -368,19 +368,20 @@ MOUSE CONTROLS
                  X motion moves the far one
       Clip-N   = Motion affects only the near clipping plane
       Clip-F   = Motion affects only the far clipping plane
- 
+      Orig     = Move origin to selected atom
+      
 ATOM SELECTIONS (These only work on the "lines" representation!)
  
-   (normal mode - when not editing)
+   CTRL-SHIFT-left mouse click    Pick atom and store as selection (lb).
+   CTRL-SHIFT-right mouse click   Pick atom and store as selection (rb).
 
-   CTRL-left mouse click    Pick atom and store as selection (lb).
-   CTRL-middle mouse click  Pick atom and store as selection (mb).
-   CTRL-right mouse click   Pick atom and store as selection (rb).
+   (normal mode - when not editing)
  
-   CTRL-SHIFT-left mouse click    Pick atom and add to selection (lb).
-   CTRL-SHIFT-middle mouse click  Pick atom and add to selection (mb).
-   CTRL-SHIFT-right mouse click   Pick atom and add to selection (rb).
-   '''
+   CTRL-left mouse click    Pick atom and add to selection (lb).
+   CTRL-middle mouse click  Pick atom and add to selection (mb).
+   CTRL-right mouse click   Pick atom and add to selection (rb).
+
+'''
    help('mouse')
 
 def examples():
@@ -704,12 +705,12 @@ TO DOCUMENT
          button('l','shft','rotz')
          button('m','shft','move')
          button('r','shft','clip')                  
-         button('l','ctrl','lb')
-         button('m','ctrl','mb')
-         button('r','ctrl','rb')                  
-         button('l','ctsh','+lb')
+         button('l','ctrl','+lb')
+         button('m','ctrl','pkat')
+         button('r','ctrl','pkbd')                  
+         button('l','ctsh','lb')
          button('m','ctsh','orig')
-         button('r','ctsh','+rb')
+         button('r','ctsh','rb')
          if not quiet:
             print " Mouse: configured for visualization."
       else:
@@ -1769,31 +1770,38 @@ EXAMPLES
       unlock()
    return r
 
-def remove_picked():
+def remove_picked(*arg):
    '''
 DESCRIPTION
   
    "remove_picked" removes the atom or bond currently
-   picked for editing.
+   picked for editing. 
       
 USAGE
  
-   remove_picked
+   remove_picked [,hydrogen-flag]
  
 PYMOL API
   
-   cmd.remove_picked()
+   cmd.remove_picked([integer hydrogen-flag])
 
 NOTES
 
    This function is usually connected to the
    DELETE key and "CTRL-D".
+   
+   By default, attached hydrogens will also be deleted unless
+   hydrogen-flag is zero.
+   
     
 '''
+   hydro=1
+   if len(arg):
+      hydro=int(arg[0])
    r = 1
    try:
       lock()   
-      r = _cmd.remove_picked()
+      r = _cmd.remove_picked(hydro)
    finally:
       unlock()
    return r
@@ -2854,11 +2862,11 @@ DESCRIPTION
  
 USAGE
  
-   save filename [,(selection) [,state] ]
+   save filename [,(selection) [,state [,format]] ]
  
 PYMOL API
   
-   cmd.save(filename, selection, state)
+   cmd.save(filename, selection, state, format)
    '''
    r = 1
    fname = 'save.pdb'
@@ -2899,8 +2907,11 @@ PYMOL API
             f.close()
          r = None
          print " Save: wrote \""+fname+"\"."
-   elif format=='pkl':
+   elif format=='pkl': # default binary
       io.pkl.toFile(get_model(sele),fname)
+      print " Save: wrote \""+fname+"\"."
+   elif format=='pkla': # ascii override
+      io.pkl.toFile(get_model(sele),fname,bin=0)
       print " Save: wrote \""+fname+"\"."
    return r
 

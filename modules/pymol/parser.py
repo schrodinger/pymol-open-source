@@ -158,9 +158,14 @@ def parse(s):
                         nest=nest+1
                         cont[nest]=''
                         while 1:
-                           com0[nest] = script[nest-1].readline()
+                           com0[nest]  = script[nest-1].readline()
                            if not com0[nest]: break
-                           parse(com0[nest])
+                           inp_cmd = com0[nest]
+                           tmp_cmd = string.strip(inp_cmd)
+                           if len(tmp_cmd):
+                              if tmp_cmd[0] not in ['#','_','/']: # suppress comments, internals, python
+                                 print "PyMOL>"+tmp_cmd
+                           parse(inp_cmd)
                         nest=nest-1
                         script[nest].close()
                      else: # nothing found, try literal python

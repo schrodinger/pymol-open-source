@@ -1,0 +1,84 @@
+PyMOL>load dat/tiny.pdb
+ Executive: object "tiny" created.
+PyMOL>load dat/il2.pdb
+ Executive: object "il2" created.
+PyMOL>print cmd.get_names()
+['tiny', 'il2']
+PyMOL>select tst = (all)
+ Selector: selection "tst" defined with 2121 atoms.
+PyMOL>select tst = (none)
+ Selector: no atoms selected.
+PyMOL>select tst = (name c)
+ Selector: selection "tst" defined with 129 atoms.
+PyMOL>del tst
+PyMOL>select tst = (segi e)
+ Selector: selection "tst" defined with 9 atoms.
+PyMOL>select tst = (all)
+ Selector: selection "tst" defined with 2121 atoms.
+PyMOL>select (segi '')
+ Selector: selection "sel01" defined with 2112 atoms.
+PyMOL>select (name ca,c,n,o)
+ Selector: selection "sel02" defined with 515 atoms.
+PyMOL>select (n;ca,c)
+ Selector: selection "sel03" defined with 257 atoms.
+PyMOL>select (resn pro)
+ Selector: selection "sel04" defined with 56 atoms.
+PyMOL>select (r;pro)
+ Selector: selection "sel05" defined with 56 atoms.
+PyMOL>select (chain c,e)
+ Selector: selection "sel06" defined with 36 atoms.
+PyMOL>select (c;c,e)
+ Selector: selection "sel07" defined with 36 atoms.
+PyMOL>select (resi 100)
+ Selector: selection "sel08" defined with 15 atoms.
+PyMOL>select (i;100)
+ Selector: selection "sel09" defined with 15 atoms.
+PyMOL>select (id 50)
+ Selector: selection "sel10" defined with 1 atoms.
+PyMOL>select (byres id 50)
+ Selector: selection "sel11" defined with 22 atoms.
+PyMOL>select (alt '')
+ Selector: selection "sel12" defined with 2121 atoms.
+PyMOL>select (tiny)
+ Selector: selection "sel13" defined with 37 atoms.
+PyMOL>select (tiny or il2)
+ Selector: selection "sel14" defined with 2121 atoms.
+PyMOL>select (tiny | il2)
+ Selector: selection "sel15" defined with 2121 atoms.
+PyMOL>select (vis)
+ Selector: selection "sel16" defined with 2121 atoms.
+PyMOL>hide (tiny)
+PyMOL>select (vis)
+ Selector: selection "sel17" defined with 2084 atoms.
+PyMOL>print cmd.get_names('all')
+['tiny', 'il2', 'tst', 'sel01', 'sel02', 'sel03', 'sel04', 'sel05', 'sel06', 'se
+l07', 'sel08', 'sel09', 'sel10', 'sel11', 'sel12', 'sel13', 'sel14', 'sel15', 'se
+l16', 'sel17']
+PyMOL>delete sel*
+PyMOL>print cmd.get_names('all')
+['tiny', 'il2', 'tst']
+PyMOL>select foo = (name c)
+ Selector: selection "foo" defined with 129 atoms.
+PyMOL>select fie = (name n,c)
+ Selector: selection "fie" defined with 257 atoms.
+PyMOL>select (foo and not fie)
+ Selector: no atoms selected.
+PyMOL>select (fie &! foo)
+ Selector: selection "sel19" defined with 128 atoms.
+PyMOL>select foe = (tiny a; 30)
+ Selector: selection "foe" defined with 105 atoms.
+PyMOL>select fum = (il2 and not foe)
+ Selector: selection "fum" defined with 1979 atoms.
+PyMOL>select (hydro)
+ Selector: selection "sel20" defined with 1075 atoms.
+PyMOL>select (b<30 and b>0.1)
+ Selector: selection "sel21" defined with 362 atoms.
+PyMOL>select (q=0.0)
+ Selector: selection "sel22" defined with 9 atoms.
+PyMOL>select (q=1.0)
+ Selector: selection "sel23" defined with 2112 atoms.
+PyMOL>select (b=0.0)
+ Selector: selection "sel24" defined with 1080 atoms.
+PyMOL>print cmd.select("(none)")
+ Selector: no atoms selected.
+0

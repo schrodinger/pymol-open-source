@@ -2116,28 +2116,29 @@ int ExecutiveRelease(Block *block,int x,int y,int mod)
   n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
 
   while(ListIterate(I->Spec,rec,next,SpecList))
-	 {
-		if(!n)
-		  {
-			 t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-          if(t<ExecOpCnt) {
-            /* nothing to do anymore now that we have menus! */
-          } else if(rec->type==cExecObject)
-				{
-				  if(rec->visible)
-					 SceneObjectDel(rec->obj);				
-				  else 
-					 SceneObjectAdd(rec->obj);
-				  rec->visible=!rec->visible;
-              SceneChanged();
-				}
-          else if(rec->type==cExecAll)
-            {
-              ExecutiveSetObjVisib("all",!rec->visible);
-            }
-        }
-		n--;
-	 }
+    if(rec->name[0]!='_')
+      {
+        if(!n)
+          {
+            t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
+            if(t<ExecOpCnt) {
+              /* nothing to do anymore now that we have menus! */
+            } else if(rec->type==cExecObject)
+              {
+                if(rec->visible)
+                  SceneObjectDel(rec->obj);				
+                else 
+                  SceneObjectAdd(rec->obj);
+                rec->visible=!rec->visible;
+                SceneChanged();
+              }
+            else if(rec->type==cExecAll)
+              {
+                ExecutiveSetObjVisib("all",!rec->visible);
+              }
+          }
+        n--;
+      }
   MainDirty();
   return(1);
 }
