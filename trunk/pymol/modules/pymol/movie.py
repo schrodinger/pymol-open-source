@@ -7,7 +7,7 @@
 #G* Please see the accompanying LICENSE file for further information. 
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* Peter Haebel
+#-* Peter Haebel, Byron DeLaBarre
 #-* 
 #-*
 #Z* -------------------------------------------------------------------
@@ -72,6 +72,53 @@ def roll(first,last,loop=1,axis='y'):
       cmd.mdo("%d" % (first+a), "turn %s,%8.3f" % (axis,deg))
       a = a + 1
 
+def tdroll(first,rangex,rangey,rangez,skip=1):
+   '''
+AUTHOR
+
+   Byron DeLaBarre
+
+USAGE
+
+   movie.tdroll(rangx,rangey,rangez,skip=1,mset=0)
+   
+   rangex/y/z = rotation range on respective axis
+   enter 0 for no rotation.
+
+   skip is angle increment in each frame
+   
+   Use skip to reduce final movie size or to speed up rotation.
+   
+EXAMPLE
+
+   movie.tdroll 360,360,360,5
+   
+'''
+   rangex = float(rangex)
+   rangey = float(rangey)
+   rangez = float(rangez)
+   skip = int(skip)
+   axis=['x','y','z']
+   rangel=[rangex,rangey,rangez]
+   axpos=0
+   frpos=1
+   for ax in axis:
+      range = int(rangel[axpos])
+      if range:
+         leftover = divmod(range,skip)
+         print leftover[1]
+         if leftover[1]:
+           range = range + int(leftover[1])
+         a = 0
+         while a<range:
+            cmd.mdo("%d" % (first+frpos-1), "turn %s,%8.3f" % (ax,skip))
+            a = a + skip
+            frpos = frpos + 1
+         axpos = axpos + 1
+      else:
+         axpos = axpos + 1
+   print (" tdroll: defined rotations for", frpos - 1,
+          "frames, starting at frame %d"%first)
 
 def zoom(first,last,step=1,loop=1,axis='z'):
    # Author: Peter Haebel

@@ -1181,6 +1181,8 @@ keyword = {
    'movie.load'    : [ movie.load        , 0 , 0 , ''  , parsing.STRICT ],
    'movie.zoom'    : [ movie.zoom        , 0 , 0 , ''  , parsing.STRICT ],
    'movie.screw'   : [ movie.screw       , 0 , 0 , ''  , parsing.STRICT ],
+   'movie.nutate'  : [ movie.nutate      , 0 , 0 , ''  , parsing.STRICT ],
+   'movie.tdroll'  : [ movie.tdroll      , 0 , 0 , ''  , parsing.STRICT ],
    }
 
 kwhash = Shortcut(keyword.keys())
