@@ -1548,6 +1548,11 @@ void SelectorUpdateCmd(int sele0,int sele1,int sta0, int sta1)
   int ci0,ci1;
   int ccc = 0;
 
+
+  PRINTFD(FB_Selector)
+    " SelectorUpdateCmd-Debug: entered sta0 %d sta1 %d",sta0,sta1
+    ENDFD;
+
   SelectorUpdateTable();
 
   vla0 = SelectorGetIndexVLA(sele0);

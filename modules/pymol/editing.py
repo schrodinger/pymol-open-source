@@ -998,7 +998,7 @@ def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0):
       unlock()
    return r
 
-def update(target,source):
+def update(target,source,target_state=0,source_state=0):
    '''
 DESCRIPTION
   
@@ -1031,7 +1031,7 @@ SEE ALSO
    if b[0]!='(': b="("+str(b)+")"   
    try:
       lock()   
-      r = _cmd.update(str(a),str(b),-1,-1)
+      r = _cmd.update(str(a),str(b),int(target_state)-1,int(source_state)-1)
    finally:
       unlock()
    return r

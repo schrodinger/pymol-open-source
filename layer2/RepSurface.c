@@ -49,8 +49,6 @@ typedef struct RepSurface {
   int solidFlag;
   int oneColorFlag,oneColor;
   int allVisibleFlag;
-  Object *Obj;
-  CoordSet *cs;
   int *LastVisib;
   int *LastColor;
 } RepSurface;
@@ -89,7 +87,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   int *vi=I->Vis;
   float *col;
   float alpha;
-  alpha = SettingGet_f(I->cs->Setting,I->Obj->Setting,cSetting_transparency);
+  alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency);
   alpha=1.0-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0;
@@ -633,8 +631,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->R.fFree=(void (*)(struct Rep *))RepSurfaceFree;
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSurfaceSameVis;
-  I->Obj = (Object*)(cs->Obj);
-  I->cs = cs;
+  I->R.obj = (Object*)(cs->Obj);
+  I->R.cs = cs;
   I->Dot=NULL;
   I->allVisibleFlag=true;
 

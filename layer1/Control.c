@@ -347,7 +347,7 @@ void ControlDraw(Block *block)
       glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
       glVertex2i(x+cControlBoxSize-1,y);
       glEnd();
-      glBegin(GL_LINE_LOOP);
+      glBegin(GL_LINE_STRIP);
       glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
                  y-cControlInnerMargin+1);
       glVertex2i(x+cControlInnerMargin,

@@ -566,7 +566,14 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
                 if(!pass) r->fRender(r,ray,pick);                
                 break;
               case cRepSurface:
-                if(pass==-1) r->fRender(r,ray,pick);              
+                /*                if(pass==-1) r->fRender(r,ray,pick);              */
+                if(SettingGet_f(r->cs->Setting,
+                                r->obj->Setting,
+                                cSetting_transparency)>0.0001) {
+                  if(pass==-1)
+                    r->fRender(r,ray,pick);                                
+                } else if(pass==1)
+                  r->fRender(r,ray,pick);
                 break;
               case cRepSphere: /* render spheres differently depending on transparency */
                 if(SettingGet_f(r->cs->Setting,
