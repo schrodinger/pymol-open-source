@@ -415,13 +415,15 @@ void ExecutiveLabel(char *s1,char *expr)
   int sele1;
   char buffer[255];
   ObjectMoleculeOpRec op1;
-  
+  int cnt;
+
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
     op1.code = OMOP_LABL;
     op1.s1 = expr;
     op1.i1 = 0;
     ExecutiveObjMolSeleOp(sele1,&op1);
+    cnt = op1.i1;
     op1.code=OMOP_VISI;
     op1.i1=cRepLabel;
     op1.i2=1;
@@ -431,7 +433,7 @@ void ExecutiveLabel(char *s1,char *expr)
     op1.i2=cRepInvVisib;
     ExecutiveObjMolSeleOp(sele1,&op1);
 
-    sprintf(buffer,"labelled %i atoms.",op1.i1);
+    sprintf(buffer,"labelled %i atoms.",cnt);
     ErrOk(" Label",buffer);
   } else {
     ErrMessage("ExecutiveLabel","No atoms selected.");
