@@ -1004,7 +1004,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_normalize_ccp4_maps, 1.0);  
 
-  SettingSet_f(I,cSetting_surface_poor, 0.85);  
+  SettingSet_f(I,cSetting_surface_poor, 0.89);  
 
 }
 
