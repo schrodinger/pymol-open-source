@@ -1,190 +1,17 @@
-'''
-
-See below for changes implemented in specific releases
-------------------------------------------------------
-
-PyMOL Architecture and Development Status
-
-   OpenGL Core ( _cmd.so/.a/.dll/.lib and modules/pymol )
-
-      Currently, deployed only in glutPyMOL (a.k.a. standard "PyMOL").
-
-   Syndicated Application Ideas...
-
-      glutPyMOL (PyMOL in GLUT window with an external GUI)
-       
-         Deployed -- the current standard, in use globally.
-
-      ePyMOL Lite (EasyPyMOL, free version, win32 only)
-
-         Planned for mid 2003
-
-      ePyMOL Pro (EasyPyMOL, professional version, win32 only)
-   
-         Planned for mid 2003
-
-      axPyMOL (PyMOL inside of an ActiveX Control)
-
-         Working prototype partially completed
-
-      wxPyMOL (PyMOL inside of a wxPython Widget)
-
-         Working prototype near completion.
-
-      MacPyMOL (fully Aqua-based native version of PyMOL)
-
-         Planned for late 2003
-
-      tkPyMOL (PyMOL inside of a Tcl/Tk TOGL widget)
-
-         Planned for late 2003.
-
-      qtPyMOL (PyMOL inside of a Qt/PyQt Widget)
-
-         Planned late 2003 or 2004. 
-
-      perlMOL (PyMOL wrapped into a Perl module)
-
-         Under consideration.
-
-      jPyMOL (PyMOL wrapped inside a Java class as an external C module)
-
-         Under consideration.  
-
-   External GUIs for glutPyMOL
-
-      Default PyMOL Tcl/Tk GUI
-
-         Deployed -- the current standard, in use globally.
-
-      Tcl/Tk GUI for GAMESS-UK (CCP1)
-
-         In development, under direction of Paul Sherwood.
-
-      Stanford Java Teaching GUI (iRoom, etc.)
-
-         In development by team of Stanford students.
-
-      UT Southwestern Bioinformatics Project
-
-         In development, under direction of Rama Ragnanathan.
-         
-      PHENIX 
-
-         In development, under direction of Paul Adams.
-
-OpenGL Core
-
-   Changes planned
-
-      * Add support for HKEY_USERS entries into PyMOLWin
-         
-      * IO routine for a generic volume data object (to supplement bricks and maps)
-   
-      * Real Edit Menu in Tk (with normal cut/paste, etc)
-
-      * support anisotropic B-factor renditions (ellipsoids)
-
-      * support MOL2 and multi-MOL2 file formats
-
-      * add an interactive tutorial
-
-      * finish abstracting GLUT away from PyMOL
-
-      * Solid clipped spheres and surfaces (how?)
-
-      * Completely black/opaque underside of surfaces
-
-      * Finish 3D label support
-
-      * Enable specific xyz positioning of labels (w/ mouse)
-   
-      * Cutting of images to the MS Window's clipboard for easy
-        pasting into Powerpoint
-
-      * clean up return values in the API and qualify exceptions.
-        Include the source module name in messages, and provide proper
-        feedback conditionals
-
-      * add thorough test suite
-
-      * matrix-based object translation and rotation
-
-      * place feedback conditionals around all output.
-
-      * create alter_state_atom command (combine PAlter and
-        PAlterState into one function)
-
-   Changes Under Consideration
-
-      NOTE: Some of these are mutually exclusive, and many of them will
-      never be carried out -- they are listed here so that we don't
-      forget about them and so that you can see ways in which core PyMOL
-      might evolve.
-
-      * Allow multiple, parallel transformation matrices for each object 
-
-      * Create a Rasmol translator in Python
-
-      * Support mapping of additional dimensions into volume data sets
-
-      * "Fragment" wizard, tied into the fragments subsystem. 
-      
-      * CTRL and CTRL/SHIFT numbers should add aromatic and aliphatic
-        ring systems in the builder 
-
-      * support reading and writing of XPLOR PSF/PDB files to enable
-        direct use of NAMD with PyMOL.  Note that this will require
-        integration of basic force-field structures into PyMOL...not a
-        lightweight task, but something I think should be done in a
-        general way to facilitate use of PyMOL as a molecular modeling
-        tool...
-
-      * support direct reading of DCD, and/or Gromacs trajectory files
-
-      * fold MMTK into the main PyMOL distribution, and merge the two
-        programs in a way which allow the user to "see" into MMTK's
-        internal data structures using PyMOL while calculations are
-        being performed.
-      
-      * create a VRML->CGO converter so that VRML can be displayed
-        inside of PyMOL
-
-      * create a VRML writer to facilitate export of PyMOL geometries.
-
-      * support CML via some "swallowable" python XML parser
- 
-      * make PyMOL a compliant extension for the Chimera environment
-
-      * statistics module, applicable to maps
-
-Main Goals for 1.0 Release
-
-   * MOL2 and CML file formats
-
-   * Generalized volumetric rendering: (1) mesh (2) solid (3) colormaps
-
-   * Integrated tutorial/demonstration system
-
-   * Fully consistent API (defined and correct return values)
-
-Current Bugs to Fix
-
-   * superposition system fails with degenerate sets (planer systems,
-     etc).  sometimes it just fails period
-
 =========================================================================
 CHANGE LOG
 =========================================================================
 
 Changes up to 0.95
 
+   * surface_type setting:  0 = solid, 1 = dot, 2 = mesh
+
    * fixed off-center behavior of center command with respect to clipping planes
 
    * fixed label representation memory (on/off only) in scenes
 
-   * added support for explicit RESN and RESI specification in 
-     selection macros: ///RESN`RESI/ vs ///RESN/ or ///RESI/
+   * added support for explicit RESN and RESI specification in selection 
+     macros: RESN`RESI/, RESN`/, `RESI/ vs semi-ambiguous RESN/ or RESI/
 
    * fixed nonbonded detection problem with discrete objects
 
@@ -1283,3 +1110,177 @@ Important Changes 0.42-0.48
 
    * Wizard feature, for grabbing mouse input -- still needs flushing out.
 
+====================================
+
+See below for changes implemented in specific releases
+------------------------------------------------------
+
+PyMOL Architecture and Development Status
+
+   OpenGL Core ( _cmd.so/.a/.dll/.lib and modules/pymol )
+
+      Currently, deployed only in glutPyMOL (a.k.a. standard "PyMOL").
+
+   Syndicated Application Ideas...
+
+      glutPyMOL (PyMOL in GLUT window with an external GUI)
+       
+         Deployed -- the current standard, in use globally.
+
+      ePyMOL Lite (EasyPyMOL, free version, win32 only)
+
+         Planned for mid 2003
+
+      ePyMOL Pro (EasyPyMOL, professional version, win32 only)
+   
+         Planned for mid 2003
+
+      axPyMOL (PyMOL inside of an ActiveX Control)
+
+         Working prototype partially completed
+
+      wxPyMOL (PyMOL inside of a wxPython Widget)
+
+         Working prototype near completion.
+
+      MacPyMOL (fully Aqua-based native version of PyMOL)
+
+         Planned for late 2003
+
+      tkPyMOL (PyMOL inside of a Tcl/Tk TOGL widget)
+
+         Planned for late 2003.
+
+      qtPyMOL (PyMOL inside of a Qt/PyQt Widget)
+
+         Planned late 2003 or 2004. 
+
+      perlMOL (PyMOL wrapped into a Perl module)
+
+         Under consideration.
+
+      jPyMOL (PyMOL wrapped inside a Java class as an external C module)
+
+         Under consideration.  
+
+   External GUIs for glutPyMOL
+
+      Default PyMOL Tcl/Tk GUI
+
+         Deployed -- the current standard, in use globally.
+
+      Tcl/Tk GUI for GAMESS-UK (CCP1)
+
+         In development, under direction of Paul Sherwood.
+
+      Stanford Java Teaching GUI (iRoom, etc.)
+
+         In development by team of Stanford students.
+
+      UT Southwestern Bioinformatics Project
+
+         In development, under direction of Rama Ragnanathan.
+         
+      PHENIX 
+
+         In development, under direction of Paul Adams.
+
+OpenGL Core
+
+   Changes planned
+
+      * Add support for HKEY_USERS entries into PyMOLWin
+         
+      * IO routine for a generic volume data object (to supplement bricks and maps)
+   
+      * Real Edit Menu in Tk (with normal cut/paste, etc)
+
+      * support anisotropic B-factor renditions (ellipsoids)
+
+      * support MOL2 and multi-MOL2 file formats
+
+      * add an interactive tutorial
+
+      * finish abstracting GLUT away from PyMOL
+
+      * Solid clipped spheres and surfaces (how?)
+
+      * Completely black/opaque underside of surfaces
+
+      * Finish 3D label support
+
+      * Enable specific xyz positioning of labels (w/ mouse)
+   
+      * Cutting of images to the MS Window's clipboard for easy
+        pasting into Powerpoint
+
+      * clean up return values in the API and qualify exceptions.
+        Include the source module name in messages, and provide proper
+        feedback conditionals
+
+      * add thorough test suite
+
+      * matrix-based object translation and rotation
+
+      * place feedback conditionals around all output.
+
+      * create alter_state_atom command (combine PAlter and
+        PAlterState into one function)
+
+   Changes Under Consideration
+
+      NOTE: Some of these are mutually exclusive, and many of them will
+      never be carried out -- they are listed here so that we don't
+      forget about them and so that you can see ways in which core PyMOL
+      might evolve.
+
+      * Allow multiple, parallel transformation matrices for each object 
+
+      * Create a Rasmol translator in Python
+
+      * Support mapping of additional dimensions into volume data sets
+
+      * "Fragment" wizard, tied into the fragments subsystem. 
+      
+      * CTRL and CTRL/SHIFT numbers should add aromatic and aliphatic
+        ring systems in the builder 
+
+      * support reading and writing of XPLOR PSF/PDB files to enable
+        direct use of NAMD with PyMOL.  Note that this will require
+        integration of basic force-field structures into PyMOL...not a
+        lightweight task, but something I think should be done in a
+        general way to facilitate use of PyMOL as a molecular modeling
+        tool...
+
+      * support direct reading of DCD, and/or Gromacs trajectory files
+
+      * fold MMTK into the main PyMOL distribution, and merge the two
+        programs in a way which allow the user to "see" into MMTK's
+        internal data structures using PyMOL while calculations are
+        being performed.
+      
+      * create a VRML->CGO converter so that VRML can be displayed
+        inside of PyMOL
+
+      * create a VRML writer to facilitate export of PyMOL geometries.
+
+      * support CML via some "swallowable" python XML parser
+ 
+      * make PyMOL a compliant extension for the Chimera environment
+
+      * statistics module, applicable to maps
+
+Main Goals for 1.0 Release
+
+   * MOL2 and CML file formats
+
+   * Generalized volumetric rendering: (1) mesh (2) solid (3) colormaps
+
+   * Integrated tutorial/demonstration system
+
+   * Fully consistent API (defined and correct return values)
+
+Current Bugs to Fix
+
+   * superposition system fails with degenerate sets (planer systems,
+     etc).  sometimes it just fails period
