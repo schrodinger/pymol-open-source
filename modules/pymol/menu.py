@@ -229,7 +229,11 @@ def mol_labels(s):
            [ 1, 'clear'          , 'cmd.label("'+s+'","\'\'")'         ],
            [ 1, 'residues'       ,
   'cmd.label("(name ca and (byres('+s+')))","\'%s-%s\'%(resn,resi)")'  ],
-           [ 1, 'atoms'          , 'cmd.label("'+s+'","name")'         ],
+           [ 1, 'name'          , 'cmd.label("'+s+'","name")'         ],
+           [ 1, 'residue i.d.'    , 'cmd.label("'+s+'","resi")'         ],
+           [ 1, 'residue name'  , 'cmd.label("'+s+'","resn")'         ],
+           [ 1, 'chain'         , 'cmd.label("'+s+'","chain")'         ],
+           [ 1, 'segment i.d.'       , 'cmd.label("'+s+'","segi")'         ],           
            [ 0, ''               , ''                                  ],
            [ 1, 'b-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],
            [ 1, 'partial charge' , 
@@ -240,7 +244,7 @@ def mol_labels(s):
            [ 1, 'text type'      , 'cmd.label("'+s+'","text_type")'    ],
            [ 1, 'numeric type'   , 'cmd.label("'+s+'","numeric_type")' ],
            [ 0, ''               , ''                                  ],      
-           [ 1, 'ID'             , 'cmd.label("'+s+'","id")' ],
-           [ 1, 'ID+1'           , 'cmd.label("'+s+'","id+1")' ],
+           [ 1, 'atom i.d.'             , 'cmd.label("'+s+'","id")' ],
+           [ 1, 'atom i.d.(+1)'           , 'cmd.label("'+s+'","id+1")' ],
            ]
 

@@ -478,7 +478,11 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
   OrthoObject *I=&Ortho;
   char buffer[OrthoLineLength];
   int curLine;
-  
+
+  PRINTFD(FB_Ortho)
+    " Ortho: %c (%d), x %d y %d, mod %d\n",k,k,x,y,mod
+    ENDFD;
+    
   if(!I->InputFlag) 
 	 {
 	 if(I->Saved[0]) 

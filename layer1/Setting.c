@@ -1069,7 +1069,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_ribbon_width, 1.0F);
 
-  SettingSet_f(I,cSetting_dash_width, 1.0F);
+  SettingSet_f(I,cSetting_dash_width, 4.0F);
 
   SettingSet_f(I,cSetting_dash_radius, 0.14F);
 
