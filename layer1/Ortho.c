@@ -1653,7 +1653,7 @@ void OrthoPushMatrix(PyMOLGlobals *G)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    glTranslatef(0.0F,0.0F,0.0F);
+    glTranslatef(0.33F,0.33F,0.0F); /* this generates better rasterization on macs */
 
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
