@@ -2756,9 +2756,10 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                 }
               }
             }
-          } else {
+          } else if(strcmp(rec->obj->Name,sele)==0) {
             if(rec->obj->fGetSettingHandle) {
               handle = rec->obj->fGetSettingHandle(rec->obj,state);
+              printf("handle %p %p\n",handle,rec->obj);
               if(handle) {
                 SettingCheckHandle(handle);
                 ok = SettingSetTuple(*handle,index,tuple);
