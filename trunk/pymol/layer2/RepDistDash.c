@@ -46,7 +46,6 @@ void RepDistDashFree(RepDistDash *I)
   OOFreeP(I);
 }
 
-int flip;
 
 void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 {
