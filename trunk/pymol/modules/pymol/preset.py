@@ -76,9 +76,15 @@ def simple(selection="(all)"):
    util.cbc(s)
    cmd.show("ribbon",s)
    cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
-   cmd.show("sticks","("+lig_sele+" and ("+s+"))")
-   util.cnc("("+lig_and_solv_sele+" and ("+s+"))")
+   # try to show what covalent ligands are connected to...
+   cmd.show("sticks","("+lig_sele+" and ("+s+")) extend 2")
+   cmd.show("sticks","byres (("+lig_sele+" and ("+s+")) extend 1)")
+   cmd.hide("sticks","("+s+") and ((not rep sticks) extend 1)")
+   cmd.show("sticks","("+lig_sele+" and ("+s+")) extend 2")
+   # color by atom if lines or sticks are shown
+   util.cnc("(( rep lines or rep sticks or ("+lig_and_solv_sele+")) and ("+s+"))")
    cmd.show("nonbonded","("+lig_and_solv_sele+" and ("+s+"))")
+   cmd.show("lines","("+lig_and_solv_sele+" and ("+s+"))")
    if cmd.count_atoms(s):
       cmd.zoom(s)
    cmd.delete(s)
