@@ -189,9 +189,9 @@ def sele_action(s):
    return [[ 2, 'Actions:'       ,''                        ],     
            [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
            [ 0, ''               ,''                             ],
-           [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
            [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
            [ 1, 'center'         ,'cmd.center("'+s+'")'            ],           
+           [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
            [ 1, 'orient'         ,'cmd.orient("'+s+'")'          ],
            [ 0, ''               ,''                             ],
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'")'          ],
@@ -219,9 +219,9 @@ def sele_action(s):
 
 def mol_action(s):
    return [[ 2, 'Actions:'     , ''                       ],     
-           [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'      ],
            [ 1, 'center'         ,'cmd.center("'+s+'")'            ],
+           [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 1, 'orient'       , 'cmd.orient("'+s+'")'    ],
            [ 0, ''          ,''                                              ],
            [ 1, 'assign S.S.'  ,'util.ss("'+s+'")'        ],

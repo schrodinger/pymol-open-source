@@ -722,7 +722,6 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   float BETA;
   float BOX1,BOX2,BOX3;
 
-  AtomInfoPrimeColors();
   cset = CoordSetNew();  
 
   p=buffer;
@@ -1514,6 +1513,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int fram
 		atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
 		isNew = false;
 	 }
+    if(isNew) AtomInfoPrimeColors();
 	 cset=ObjectMoleculeTOPStr2CoordSet(TOPStr,&atInfo);	 
 	 nAtom=cset->NIndex;
   }
@@ -1691,7 +1691,6 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
   int version;
   auto_show_lines = SettingGet(cSetting_auto_show_lines);
   auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
-  AtomInfoPrimeColors();
 
   *restart=false;
   nAtom=0;
@@ -1906,7 +1905,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *I,CRaw *pmo,int frame,int 
         atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
         isNew = false;
       }
-
+      if(isNew) AtomInfoPrimeColors();
       cset = ObjectMoleculePMO2CoordSet(pmo,&atInfo,&restart);
 
       if(isNew) {		
@@ -2360,8 +2359,6 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   BondType *ii;
 
 
-  AtomInfoPrimeColors();
-
   p=buffer;
   nAtom=0;
   atInfo = *atInfoPtr;
@@ -2505,6 +2502,8 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
 		atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
 		isNew = false;
 	 }
+    if(isNew) AtomInfoPrimeColors();
+
 	 cset=ObjectMoleculeXYZStr2CoordSet(PDBStr,&atInfo);	 
 	 nAtom=cset->NIndex;
   }
@@ -4651,7 +4650,6 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   PyObject *tmp = NULL;
   auto_show_lines = SettingGet(cSetting_auto_show_lines);
   auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
-  AtomInfoPrimeColors();
 
   ignore_ids=!(int)SettingGet(cSetting_preserve_chempy_ids);
 
@@ -5053,6 +5051,9 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
 		atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
 		isNew = false;
 	 }
+
+    if(isNew) AtomInfoPrimeColors();
+
 	 cset=ObjectMoleculeChemPyModel2CoordSet(model,&atInfo);	 
 
     mol = PyObject_GetAttrString(model,"molecule");
@@ -5244,7 +5245,6 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 
   auto_show_lines = SettingGet(cSetting_auto_show_lines);
   auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
-  AtomInfoPrimeColors();
 
   p=buffer;
   nAtom=0;
@@ -5435,6 +5435,8 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
     atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
     isNew = false;
   }
+
+  if(isNew) AtomInfoPrimeColors();
 
   cset=ObjectMoleculeMOLStr2CoordSet(MOLStr,&atInfo);
   
@@ -5748,6 +5750,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
         atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
         isNew = false;
       }
+      if(isNew) AtomInfoPrimeColors();
+
       cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart,segi_override);	 
       nAtom=cset->NIndex;
     }
@@ -7642,6 +7646,8 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
     atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   }
   
+  if(isNew) AtomInfoPrimeColors();
+
   cset=ObjectMoleculeMMDStr2CoordSet(MMDStr,&atInfo);  
 
   if(!cset) 
@@ -7785,7 +7791,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int ssi = 0;
 
   ignore_pdb_segi = SettingGet(cSetting_ignore_pdb_segi);
-  AtomInfoPrimeColors();
 
   p=buffer;
   nAtom=0;
@@ -8327,7 +8332,6 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int ok=true;
   int auto_show_lines = SettingGet(cSetting_auto_show_lines);
   int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
-  AtomInfoPrimeColors();
 
   p=buffer;
   nAtom=0;

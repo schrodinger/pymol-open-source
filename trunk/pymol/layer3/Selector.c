@@ -170,6 +170,7 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_WIT_ ( 0x2600 | STYP_OP22 | 0x20 ) 
 #define SELE_ORIz ( 0x2700 | STYP_SEL0 | 0x80 )
 #define SELE_CENz ( 0x2800 | STYP_SEL0 | 0x80 )
+#define SELE_ENAz ( 0x2900 | STYP_SEL0 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -224,6 +225,7 @@ static WordKeyValue Keyword[] =
   {  "elem",     SELE_ELEs },
   {  "e;",       SELE_ELEs },/* deprecated */
   {  "e.",       SELE_ELEs },
+  {  "enabled",  SELE_ENAz },
   {  "resi",     SELE_RSIs },
   {  "resid",    SELE_RSIs },
   {  "residue",  SELE_RSIs },
@@ -3496,6 +3498,14 @@ int SelectorSelect0(EvalElem *base)
           if(flag)
             c++;
 		  }
+	 case SELE_ENAz:
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+		  {
+          flag = (I->Obj[I->Table[a].model]->Obj.Enabled);
+          base[0].sele[a]=flag;
+          if(flag)
+            c++;
+        }
 		break;
 	 }
   PRINTFD(FB_Selector)

@@ -50,6 +50,7 @@ typedef struct  {
 void ColorInit(void);
 void ColorFree(void);
 
+int ColorGetNext(void);
 int ColorGetIndex(char *name);
 float *ColorGet(int index); /* pointer maybe invalid after creating a new color */
 float *ColorGetNamed(char *name);

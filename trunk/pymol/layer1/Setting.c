@@ -1946,6 +1946,10 @@ void SettingInitGlobal(void)
   SettingSet_color(I,cSetting_cartoon_color,"-1"); /* use atom colors by default */
 
   SettingSet_i(I,cSetting_ribbon_smooth,-1);
+
+  SettingSet_b(I,cSetting_auto_color,1);
+
+  SettingSet_i(I,cSetting_auto_color_next,0);
 }
 
 

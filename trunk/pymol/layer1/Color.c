@@ -30,9 +30,26 @@ Z* -------------------------------------------------------------------
 #include"MyPNG.h"
 #include"Scene.h"
 
+#define cAutoColorMask 0x7
+static int AutoColor[] = { 26, 5, 154, 6, 9, 29, 11, 30 };
+
 CColor Color;
 
 #define cColorExtCutoff (-10)
+
+int ColorGetNext(void) 
+{
+  int result;
+  int next;
+  next = (int)SettingGet(cSetting_auto_color_next);
+
+  next = (next&cAutoColorMask);
+  result = AutoColor[next];
+  next++;
+  next = (next&cAutoColorMask);
+  SettingSet(cSetting_auto_color_next,(float)next);
+  return(result);
+}
 
 int ColorCheckRamped(int index)
 {
@@ -798,8 +815,8 @@ void ColorReset(void)
 
   strcpy(I->Color[I->NColor].Name,"lightmagenta");
   I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.0F;
-  I->Color[I->NColor].Color[2]=0.7F;
+  I->Color[I->NColor].Color[1]=0.2F;
+  I->Color[I->NColor].Color[2]=0.8F;
   I->NColor++;
 
   #define A_DIV 83.333333333F
