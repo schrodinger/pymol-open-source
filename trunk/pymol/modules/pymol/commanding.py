@@ -237,15 +237,11 @@ PYMOL API
    cmd.quit()
       '''
       if thread.get_ident() == pymol.glutThread:
-         try: 
-            lock()
-            r = _cmd.quit()
-         finally:
-            unlock()
+         cmd._quit()
       else:
          try:
             lock()
-            _cmd.do("_ time.sleep(0.100);_cmd.quit()") # allow time for a graceful exit from the calling thread
+            _cmd.do("_ time.sleep(0.100);cmd._quit()") # allow time for a graceful exit from the calling thread
             thread.exit()
          finally:
             unlock()
