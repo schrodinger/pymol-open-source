@@ -514,7 +514,7 @@ static void MainInit(void)
 
   FeedbackInit();
   UtilInit();
-  SettingInitGlobal();  
+  SettingInitGlobal(true);  
   SettingSet(cSetting_internal_gui,InternalGUI);
   SettingSet(cSetting_internal_feedback,InternalFeedback);
   SphereInit();

@@ -82,7 +82,7 @@ int ColorGetRamped(int index,float *vertex,float *color)
   return(ok);
 }
 
-static int ColorFindExtByName(char *name) 
+static int ColorFindExtByName(char *name,int null_okay) 
 {
   CColor *I=&Color;
   int result = -1;
@@ -94,11 +94,15 @@ static int ColorFindExtByName(char *name)
     {
       wm = WordMatch(name,I->Ext[a].Name,true);
       if(wm<0) {
-        result=a;
-        break;
+        if(null_okay||(!I->Ext[a].Ptr)) {
+          result=a;
+          break;
+        }
       } else if ((wm>0)&&(best<wm)) {
-        result=a;
-        best=wm;
+        if(null_okay||(!I->Ext[a].Ptr)) {
+          result=a;
+          best=wm;
+        }
       }
     }
   return(result);
@@ -108,7 +112,7 @@ void ColorRegisterExt(char *name,void *ptr,int type)
 {
   CColor *I=&Color;
   int a;
-  a=ColorFindExtByName(name);
+  a=ColorFindExtByName(name,true);
   if(a<0) {
     VLACheck(I->Ext,ExtRec,I->NExt);
     a = I->NExt;
@@ -125,7 +129,7 @@ void ColorForgetExt(char *name)
 {
   CColor *I=&Color;
   int a;
-  a=ColorFindExtByName(name);
+  a=ColorFindExtByName(name,true);
 
   /* this won't work! */
 
@@ -333,7 +337,7 @@ int ColorGetIndex(char *name)
       }
 	 }
   if(color<0) {
-    color = ColorFindExtByName(name);
+    color = ColorFindExtByName(name,false);
     if(color>=0)
       color = -10-color; /* indicates external */
   }
@@ -885,6 +889,8 @@ void ColorReset(void)
     /* mark all current colors non-custom so that they don't get saved in session files */
     I->Color[a].Custom=false;
   }
+
+  I->NExt = 0;
 
 }
 

@@ -31,7 +31,7 @@ if __name__=='pymol.importing':
    from chempy.sdf import SDF,SDFRec
    from chempy import io
    import pymol
-
+   
    class loadable:
       pdb = 0
       mol = 1

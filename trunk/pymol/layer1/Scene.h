@@ -88,7 +88,7 @@ void ScenePrepareExit(void);
 void SceneGetViewNormal(float *v);
 void SceneClipSet(float front,float back);
 void SceneGetView(SceneViewType view);
-void SceneSetView(SceneViewType view);
+void SceneSetView(SceneViewType view,int quiet);
 void SceneGetPos(float *pos);
 
 int SceneMultipick(Multipick *smp);
@@ -105,6 +105,7 @@ void SceneRovingUpdate(void);
 void SceneRovingChanged(void);
 void SceneRovingPostpone(void);
 void SceneCleanupStereo(void);
+int SceneReinitialize(void);
 
 #endif
 

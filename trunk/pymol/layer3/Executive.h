@@ -98,7 +98,7 @@ void ExecutiveAddHydrogens(char *s1);
 void ExecutiveFuse(char *s0,char *s1,int mode);
 void ExecutiveRenameObjectAtoms(char *name,int force);
 int ExecutiveInvert(char *s0,char *s1,int mode);
-char *ExecutiveGetNames(int mode);
+char *ExecutiveGetNames(int mode,int enabled_only);
 int ExecutiveGetType(char *name,WordType type);
 float ExecutiveGetArea(char *s0,int sta0,int load_b);
 void ExecutiveRenderSelections(int curState);
@@ -155,6 +155,8 @@ int ExecutiveValidateObjectPtr(CObject *ptr,int object_type);
 
 int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last,
                       char *prefix,int digits,int byres,int quiet,float *min_ret,float *max_ret);
+
+int ExecutiveReinitialize(void);
 #endif
 
 

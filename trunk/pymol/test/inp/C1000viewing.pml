@@ -266,6 +266,20 @@ cmd._dump_floats(cmd.get_view(0))
 view 2,rec
 cmd._dump_floats(cmd.get_view(0))
 
+turn x,10
+view test,store
+turn x,20
+view rest,store
+view test
+cmd._dump_floats(cmd.get_view(0))
+view rest
+cmd._dump_floats(cmd.get_view(0))
+view rest,delete
+view rest
+cmd._dump_floats(cmd.get_view(0))
+view test
+cmd._dump_floats(cmd.get_view(0))
+
 # viewport
 
 viewport

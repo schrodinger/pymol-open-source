@@ -205,7 +205,7 @@ void MovieMatrix(int action)
 	 break;
   case cMovieMatrixRecall:
 	 if(I->MatrixFlag) 
-		SceneSetView(I->Matrix);
+		SceneSetView(I->Matrix,true);
 	 break;
   }
 }

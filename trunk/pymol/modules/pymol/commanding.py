@@ -126,6 +126,24 @@ USAGE
             unlock()
       return r
 
+   def reinitialize():
+      '''
+DESCRIPTION
+
+   "reinitialize" reinitializes PyMOL
+
+USAGE
+
+   reinitialize
+      '''
+      try:
+         lock()
+         r = _cmd.reinitialize()
+      finally:
+         unlock()
+      return r
+
+
    def sync(timeout=1.0,poll=0.05):
       '''
 DESCRIPTION
