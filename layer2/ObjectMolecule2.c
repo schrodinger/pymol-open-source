@@ -2613,8 +2613,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                        alternate conformations */
                                   } else if(ai1->alt[0]&&ai2->alt[0])
                                     if(!AtomInfoSameResidue(ai1,ai2))
-                                      flag=false; /* don't connect non-NULL, alt conformations in 
-                                                     different residues */
+                                      if(ai1->alt[0]!=ai2->alt[0])
+                                        flag=false; /* don't connect different, non-NULL 
+                                                       alt conformations in 
+                                                       different residues */
                                   if(ai1->alt[0]||ai2->alt[0]) 
                                     if(water_flag) /* hack to clean up water bonds */
                                       if(!AtomInfoSameResidue(ai1,ai2))
