@@ -736,9 +736,26 @@ def dummy(*arg):
 DESCRIPTION
 
    This is a dummy function which simply returns None.
-   Don't you wish your life was so easy?
    '''
    #'
+   return None
+
+def dummy_python(*arg):
+   '''
+DESCRIPTION
+
+   This is a Python keyword which is available from within the PyMOL
+   command language.  Note that
+
+EXAMPLES
+
+   a=1
+   while a<10: \
+      print a \
+      a=a+1
+      
+   
+   '''
    return None
 
 #####################################################################
@@ -1029,24 +1046,24 @@ keyword = {
    'align'         : [ align             , 0 , 0 , ''  , parsing.STRICT ],
    'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ],
    'alter_state'   : [ alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ],
-   'assert'        : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ], 
+   'assert'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ], 
    'attach'        : [ attach            , 0 , 0 , ''  , parsing.LITERAL2 ],
    'backward'      : [ backward          , 0 , 0 , ''  , parsing.STRICT ],
    'bg_color'      : [ bg_color          , 0 , 0 , ''  , parsing.STRICT ],
    'bond'          : [ bond              , 0 , 0 , ''  , parsing.STRICT ],
-   'break'         : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],   
+   'break'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
    'button'        : [ button            , 0 , 0 , ''  , parsing.STRICT ],
    'cartoon'       : [ cartoon           , 0 , 0 , ''  , parsing.STRICT ],
    'cd'            : [ cd                , 0 , 0 , ''  , parsing.STRICT ],
    'center'        : [ center            , 0 , 0 , ''  , parsing.STRICT ],     
    'check'         : [ check             , 0 , 0 , ''  , parsing.STRICT ],
-   'class'         : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ], 
+   'class'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ], 
    'clip'          : [ clip              , 0 , 0 , ''  , parsing.STRICT ],
    'cls'           : [ cls               , 0 , 0 , ''  , parsing.STRICT ],
    'color'         : [ color             , 0 , 0 , ''  , parsing.STRICT ],
    'commands'      : [ helping.commands  , 0 , 0 , ''  , parsing.STRICT ],
    'config_mouse'  : [ config_mouse      , 0 , 0 , ''  , parsing.STRICT ],
-   'continue'      : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
+   'continue'      : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
    'copy'          : [ copy              , 0 , 0 , ''  , parsing.LEGACY ],
    'count_atoms'   : [ count_atoms       , 0 , 0 , ''  , parsing.STRICT ],
    'count_frames'  : [ count_frames      , 0 , 0 , ''  , parsing.STRICT ],   
@@ -1054,31 +1071,31 @@ keyword = {
    'cycle_valence' : [ cycle_valence     , 0 , 0 , ''  , parsing.STRICT ],
    'create'        : [ create            , 0 , 0 , ''  , parsing.LEGACY ],   
    'delete'        : [ delete            , 0 , 0 , ''  , parsing.STRICT ],
-   'def'           : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],   
-   'del'           : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
+   'def'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
+   'del'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
    'deprotect'     : [ deprotect         , 0 , 0 , ''  , parsing.STRICT ],
    'deselect'      : [ deselect          , 0 , 0 , ''  , parsing.STRICT ],
    'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],  
    'disable'       : [ disable           , 0 , 0 , ''  , parsing.STRICT ],
    'distance'      : [ distance          , 0 , 0 , ''  , parsing.LEGACY ],   
    'dump'          : [ dump              , 0 , 0 , ''  , parsing.STRICT ],
-   'dummy'         : [ dummy             , 0 , 0 , ''  , parsing.STRICT ],   
+   'dummy'         : [ dummy_python      , 0 , 0 , ''  , parsing.STRICT ],   
    'edit'          : [ edit              , 0 , 0 , ''  , parsing.STRICT ],
    'edit_mode'     : [ edit_mode         , 0 , 0 , ''  , parsing.STRICT ],
-   'elif'          : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
-   'else'          : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
+   'elif'          : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+   'else'          : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
    'enable'        : [ enable            , 0 , 0 , ''  , parsing.STRICT ],
    'ending'        : [ ending            , 0 , 0 , ''  , parsing.STRICT ],
-   'except'        : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],      
-   'exec'          : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],   
+   'except'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],      
+   'exec'          : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
    'export_dots'   : [ export_dots       , 0 , 0 , ''  , parsing.STRICT ],
    'extend'        : [ extend            , 0 , 0 , ''  , parsing.STRICT ],
    'fast_minimize' : [ fast_minimize     , 1,  4 , ',' , parsing.SIMPLE ], # TO REMOVE
    'feedback'      : [ feedback          , 0,  0 , ''  , parsing.STRICT ],
    'fit'           : [ fit               , 0 , 0 , ''  , parsing.STRICT ],
-   'finally'       : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
+   'finally'       : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
    'flag'          : [ flag              , 0 , 0 , ''  , parsing.LEGACY ],
-   'for'           : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
+   'for'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
    'fork'          : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],
    'forward'       : [ forward           , 0 , 0 , ''  , parsing.STRICT ],
    'fragment'      : [ fragment          , 0 , 0 , ''  , parsing.STRICT ],
@@ -1092,15 +1109,15 @@ keyword = {
    'get_title'     : [ get_title         , 0 , 0 , ''  , parsing.STRICT ],   
    'get_type'      : [ get_type          , 0 , 0 , ''  , parsing.STRICT ],
    'get_view'      : [ get_view          , 0 , 0 , ''  , parsing.STRICT ],
-   'global'        : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],   
+   'global'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
    'h_add'         : [ h_add             , 0 , 0 , ''  , parsing.STRICT ],
    'h_fill'        : [ h_fill            , 0 , 0 , ''  , parsing.STRICT ],
    'help'          : [ help              , 0 , 0 , ''  , parsing.STRICT ],
    'hide'          : [ hide              , 0 , 0 , ''  , parsing.STRICT ],
    'id_atom'       : [ id_atom           , 0 , 0 , ''  , parsing.STRICT ],
    'identify'      : [ identify          , 0 , 0 , ''  , parsing.STRICT ],
-   'if'            : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
-   'import'        : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],   
+   'if'            : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+   'import'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
    'index'         : [ index             , 0 , 0 , ''  , parsing.STRICT ],
    'indicate'      : [ indicate          , 0 , 0 , ''  , parsing.STRICT ],   
    'intra_fit'     : [ intra_fit         , 0 , 0 , ''  , parsing.STRICT ],
@@ -1143,12 +1160,12 @@ keyword = {
    'orient'        : [ orient            , 0 , 0 , ''  , parsing.STRICT ],
    'overlap'       : [ overlap           , 0 , 0 , ''  , parsing.STRICT ],
    'pair_fit'      : [ pair_fit          , 2 ,98 , ',' , parsing.SIMPLE ],
-   'pass'          : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
+   'pass'          : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
    'phi_psi'       : [ phi_psi           , 0 , 0 , ''  , parsing.STRICT ],
    'protect'       : [ protect           , 0 , 0 , ''  , parsing.STRICT ],
    'push_undo'     : [ push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
    'pwd'           : [ pwd               , 0 , 0 , ''  , parsing.STRICT ],
-   'raise'         : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
+   'raise'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
    'ray'           : [ ray               , 0 , 0 , ''  , parsing.STRICT ],
    'rebuild'       : [ rebuild           , 0 , 0 , ''  , parsing.STRICT ],
    'recolor'       : [ recolor           , 0 , 0 , ''  , parsing.STRICT ],   
@@ -1160,7 +1177,7 @@ keyword = {
    'replace'       : [ replace           , 0 , 0 , ''  , parsing.STRICT ],
    'reset'         : [ reset             , 0 , 0 , ''  , parsing.STRICT ],
    'resume'        : [ resume            , 0 , 0 , ''  , parsing.STRICT ],
-   'return'        : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],   
+   'return'        : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
    'rewind'        : [ rewind            , 0 , 0 , ''  , parsing.STRICT ],
    'rock'          : [ rock              , 0 , 0 , ''  , parsing.STRICT ],
    'rotate'        : [ rotate            , 0 , 0 , ''  , parsing.STRICT ],   
@@ -1194,7 +1211,7 @@ keyword = {
    'test'          : [ test              , 0 , 0 , ''  , parsing.STRICT ],
    'torsion'       : [ torsion           , 0 , 0 , ''  , parsing.STRICT ],
    'translate'     : [ translate         , 0 , 0 , ''  , parsing.STRICT ],
-   'try'           : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],
+   'try'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
    'turn'          : [ turn              , 0 , 0 , ''  , parsing.STRICT ],
    'quit'          : [ quit              , 0 , 0 , ''  , parsing.STRICT ],
    '_quit'         : [ _quit             , 0 , 0 , ''  , parsing.STRICT ],
@@ -1208,7 +1225,7 @@ keyword = {
    'update'        : [ update            , 0 , 0 , ''  , parsing.STRICT ],
    'view'          : [ view              , 0 , 0 , ''  , parsing.STRICT ],   
    'viewport'      : [ viewport          , 0 , 0 , ''  , parsing.STRICT ],
-   'while'         : [ dummy             , 0 , 0 , ''  , parsing.PYTHON ],   
+   'while'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
    'wizard'        : [ wizard            , 0 , 0 , ''  , parsing.STRICT ],
    'zoom'          : [ zoom              , 0 , 0 , ''  , parsing.STRICT ],
 # utility programs

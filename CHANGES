@@ -106,6 +106,15 @@ In Progress
 
 Changes up to 0.86
 
+   * reorganized tcltk menu structure
+
+   * 
+   * minimal texture options exposed in menu (slow!)
+
+   * better support for Python in PyMOL command scripts ('\' works for multiline exprs).
+
+   * freeze state and thaw state added to mol_action menu
+
    * added xmlrpc01.py demonstration program to examples/devel
 
    * ribbon_trace can be used to view CA-only models

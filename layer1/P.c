@@ -1164,12 +1164,37 @@ void PLogFlush(void)
     }
 }
 
+static void PDeleteAll(void *p)
+{ /* assumes blocked and unlocked API */
+  if(!PyMOLTerminating)
+    PyObject_CallMethod(P_cmd,"delete","s","all");
+}
+
+void PMaintainObjectAll(void) 
+/* legacy exception for "del all", which is broken by version 0.86
+   "del all" now means what it should in Python: delete an object
+   referenced by "all".  In order to support old scripts, we create an
+   "all" object and then catch its destruction event...(yes, I know
+   this is weak, but its is the most compatible solution...).  */
+{
+  PyObject *all;
+
+  all = PyDict_GetItemString(P_globals,"all");
+  if(all==NULL) {
+    all = PyCObject_FromVoidPtr(NULL,PDeleteAll);
+    PyDict_SetItemString(P_globals,"all",all);
+    Py_DECREF(all);
+  }
+}
+
+
 void PFlush(void) {  
   /* NOTE: ASSUMES unblocked Python threads and a locked API */
   PyObject *err;
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(buffer)) {
     PBlockAndUnlockAPI();
+    PMaintainObjectAll();
     PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
     err = PyErr_Occurred();
     if(err) {
@@ -1187,6 +1212,7 @@ void PFlushFast(void) {
   PyObject *err;
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(buffer)) {
+    PMaintainObjectAll();
     PRINTFD(FB_Threads)
       " PFlushFast-DEBUG: executing '%s'\n",buffer
       ENDFD;

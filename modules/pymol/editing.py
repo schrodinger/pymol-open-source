@@ -647,7 +647,7 @@ NOTES
 
 SEE ALSO
 
-   edit, cycle_valences, h_add
+   edit, cycle_valence, h_add
 '''
    r = 1
    try:

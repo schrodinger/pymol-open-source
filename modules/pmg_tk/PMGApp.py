@@ -888,12 +888,45 @@ class PMGApp(AbstractApp):
                                label='Parallel Beta Sheet',
                                command = lambda: cmd.do("_ set secondary_structure,3"))
 
-      
       self.menuBar.addmenu('Movie', 'Movie Control')
+
+      
+      self.menuBar.addcascademenu('Movie', 'Speed', 'Playback Speed',
+                                  label=self.pad+'Speed')
+
+      self.menuBar.addmenuitem('Speed', 'command', 'Maximum',
+                               label=self.pad+'Maximum',
+                               command = lambda: cmd.set("movie_delay","0",log=1))
+
+      self.menuBar.addmenuitem('Speed', 'command', '30 FPS',
+                               label=self.pad+'30 FPS',
+                               command = lambda: cmd.set("movie_delay","33",log=1))
+
+      self.menuBar.addmenuitem('Speed', 'command', '15 FPS',
+                               label=self.pad+'15 FPS',
+                               command = lambda: cmd.set("movie_delay","66",log=1))
+
+      self.menuBar.addmenuitem('Speed', 'command', '5 FPS',
+                               label=self.pad+'5 FPS',
+                               command = lambda: cmd.set("movie_delay","200",log=1))
+
+      self.menuBar.addmenuitem('Speed', 'command', '1 FPS',
+                               label=self.pad+'1 FPS',
+                               command = lambda: cmd.set("movie_delay","1000",log=1))
+
+      self.menuBar.addmenuitem('Speed', 'command', '0.3 FPS',
+                               label=self.pad+'0.3 FPS',
+                               command = lambda: cmd.set("movie_delay","3000",log=1))
+
+      self.menuBar.addmenuitem('Movie', 'command', 'Reset Meter',
+                               label=self.pad+'Reset Meter',
+                               command = lambda: cmd.do("_ meter_reset"))
+
+      self.menuBar.addmenuitem('Movie', 'separator', '')
 
       self.menuBar.addmenuitem('Movie', 'checkbutton',
                          'Photorealistic images.',
-                         label=self.pad+'Ray Trace Frames',
+                         label=self.pad+'Render Frames',
                         variable = self.setting.ray_trace_frames,
                         command = lambda s=self: s.setting.update('ray_trace_frames'))
 
@@ -903,15 +936,15 @@ class PMGApp(AbstractApp):
                         variable = self.setting.cache_frames,
                         command = lambda s=self: s.setting.update('cache_frames'))
 
-      self.menuBar.addmenuitem('Movie', 'command', 'Flush Image Cache',
-                               label=self.pad+'Flush Image Cache',
+      self.menuBar.addmenuitem('Movie', 'command', 'Flush Cache',
+                               label=self.pad+'Flush Cache',
                                command = lambda: cmd.mclear())
 
       self.menuBar.addmenuitem('Movie', 'separator', '')
 
       self.menuBar.addmenuitem('Movie', 'checkbutton',
-                         'Static Singleton Objects.',
-                         label=self.pad+'Static Singleton Objects',
+                         'Static Singletons Objects',
+                         label=self.pad+'Static Singletons',
                         variable = self.setting.static_singletons,
                         command = lambda s=self: s.setting.update('static_singletons'))
 
@@ -921,54 +954,84 @@ class PMGApp(AbstractApp):
                         variable = self.setting.all_states,
                         command = lambda s=self: s.setting.update('all_states'))
 
-      self.menuBar.addmenuitem('Movie', 'separator', '')
+
+      self.menuBar.addmenu('Rendering', 'Rendering Control')
+
+      self.menuBar.addmenuitem('Rendering', 'checkbutton',
+                         'Smooth raytracing.',
+                         label=self.pad+'Antialias',
+                        variable = self.setting.antialias,
+                        command = lambda s=self: s.setting.update('antialias'))
+
+      self.menuBar.addmenuitem('Rendering', 'separator', '')
       
-      self.menuBar.addmenuitem('Movie', 'command', 'Maximum Speed',
-                               label=self.pad+'Maximum Speed',
-                               command = lambda: cmd.set("movie_delay","0",log=1))
+      self.menuBar.addcascademenu('Rendering', 'Shadows', 'Shadows',
+                               label=self.pad+'Shadows')
 
-      self.menuBar.addmenuitem('Movie', 'command', '30 FPS',
-                               label=self.pad+'30 FPS',
-                               command = lambda: cmd.set("movie_delay","33",log=1))
+      self.menuBar.addmenuitem('Shadows', 'command', 'None',
+                               label='None',
+                               command = lambda : cmd.do("_ util.ray_shadows('none')"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '15 FPS',
-                               label=self.pad+'15 FPS',
-                               command = lambda: cmd.set("movie_delay","66",log=1))
+      self.menuBar.addmenuitem('Shadows', 'command', 'Light',
+                               label='Light',
+                               command = lambda : cmd.do("_ util.ray_shadows('light')"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '5 FPS',
-                               label=self.pad+'5 FPS',
-                               command = lambda: cmd.set("movie_delay","200",log=1))
+      self.menuBar.addmenuitem('Shadows', 'command', 'Matte',
+                               label='Matte',
+                               command = lambda : cmd.do("_ util.ray_shadows('matte')"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '1 FPS',
-                               label=self.pad+'1 FPS',
-                               command = lambda: cmd.set("movie_delay","1000",log=1))
+      self.menuBar.addmenuitem('Shadows', 'command', 'Medium',
+                               label='Medium',
+                               command = lambda : cmd.do("_ util.ray_shadows('medium')"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '0.3 FPS',
-                               label=self.pad+'0.3 FPS',
-                               command = lambda: cmd.set("movie_delay","3000",log=1))
+      self.menuBar.addmenuitem('Shadows', 'command', 'Heavy',
+                               label='Heavy',
+                               command = lambda : cmd.do("_ util.ray_shadows('heavy')"))
 
-      self.menuBar.addmenuitem('Movie', 'separator', '')
+      self.menuBar.addmenuitem('Shadows', 'command', 'Black',
+                               label='Black',
+                               command = lambda : cmd.do("_ util.ray_shadows('black')"))
 
-      self.menuBar.addmenuitem('Movie', 'command', 'Reset Meter',
-                               label=self.pad+'Reset Meter',
-                               command = lambda: cmd.do("_ meter_reset"))
+      self.menuBar.addcascademenu('Rendering', 'Texture', 'Texture',
+                               label=self.pad+'Texture')
+
+      self.menuBar.addmenuitem('Texture', 'command', 'None',
+                               label='None',
+                               command = lambda : cmd.do("_ cmd.set('ray_texture',0)"))
+
+      self.menuBar.addmenuitem('Texture', 'command', 'Matte 1',
+                               label='Matte 1',
+                               command = lambda : cmd.do("_ cmd.set('ray_texture',1)"))
+
+      self.menuBar.addmenuitem('Texture', 'command', 'Matte 2',
+                               label='Matte 2',
+                               command = lambda : cmd.do("_ cmd.set('ray_texture',4)"))
+
+      self.menuBar.addmenuitem('Texture', 'command', 'Swirl 1',
+                               label='Swirl 1',
+                               command = lambda : cmd.do("_ cmd.set('ray_texture',2)"))
+
+      self.menuBar.addmenuitem('Texture', 'command', 'Swirl 2',
+                               label='Swirl 2',
+                               command = lambda : cmd.do("_ cmd.set('ray_texture',3)"))
+
+      self.menuBar.addmenuitem('Texture', 'command', 'Fiber',
+                               label='Fiber',
+                               command = lambda : cmd.do("_ cmd.set('ray_texture',5)"))
+
+
+
+      self.menuBar.addmenuitem('Rendering', 'separator', '')
+
+      self.menuBar.addmenuitem('Rendering', 'checkbutton',
+                         'Cull Backfaces when Rendering',
+                         label=self.pad+'Cull Backfaces',
+                        variable = self.setting.backface_cull,
+                        command = lambda s=self: s.setting.update('backface_cull'))
 
       self.menuBar.addmenu('Display', 'Display Control')
 
 
-      self.menuBar.addmenuitem('Display', 'command', 'Clear Text Output',
-                               label='Clear Text',
-                               command = lambda: cmd.do("_ cls"))
-
-      self.menuBar.addmenuitem('Display', 'command', 'Hide Text Output',
-                               label='Hide Text',
-                               command = lambda: cmd.set("text","0",log=1))
-
-      self.menuBar.addmenuitem('Display', 'command', 'Show Text Output',
-                               label='Show Text',
-                               command = lambda: cmd.set("text","1",log=1))
-
-      self.menuBar.addmenuitem('Display', 'separator', '')
       
       self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
                                label='Stereo On',
@@ -997,55 +1060,86 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Display', 'separator', '')
 
-      self.menuBar.addmenuitem('Display', 'command', 'Maximum Performance',
+      self.menuBar.addcascademenu('Display', 'Performance', 'Performance',
+                                  label='Performance')
+
+      self.menuBar.addmenuitem('Performance', 'command', 'Maximum Performance',
                                label='Maximum Performance',
                                command = lambda : cmd.do("_ util.performance(100)"))
 
-      self.menuBar.addmenuitem('Display', 'command', 'Reasonable Performance',
+      self.menuBar.addmenuitem('Performance', 'command', 'Reasonable Performance',
                                label='Reasonable Performance',
                                command = lambda : cmd.do("_ util.performance(66)"))
       
-      self.menuBar.addmenuitem('Display', 'command', 'Reasonable Quality',
+      self.menuBar.addmenuitem('Performance', 'command', 'Reasonable Quality',
                                label='Reasonable Quality',
                                command = lambda : cmd.do("_ util.performance(33)"))
 
-      self.menuBar.addmenuitem('Display', 'command', 'Maximum Quality',
+      self.menuBar.addmenuitem('Performance', 'command', 'Maximum Quality',
                                label='Maximum Quality',
                                command = lambda : cmd.do("_ util.performance(0)"))
 
-      self.menuBar.addmenuitem('Display', 'separator', '')
+      self.menuBar.addcascademenu('Display', 'Background', 'Background',
+                                  label='Background')
 
-      self.menuBar.addmenuitem('Display', 'command', 'Light Shadows',
-                               label='Light Shadows',
-                               command = lambda : cmd.do("_ util.ray_shadows('light')"))
-
-      self.menuBar.addmenuitem('Display', 'command', 'Matte Shadows',
-                               label='Matte Shadows',
-                               command = lambda : cmd.do("_ util.ray_shadows('matte')"))
-
-      self.menuBar.addmenuitem('Display', 'command', 'Medium Shadows',
-                               label='Medium Shadows',
-                               command = lambda : cmd.do("_ util.ray_shadows('medium')"))
-
-      self.menuBar.addmenuitem('Display', 'command', 'Heavy Shadows',
-                               label='Heavy Shadows',
-                               command = lambda : cmd.do("_ util.ray_shadows('heavy')"))
-
-      self.menuBar.addmenuitem('Display', 'command', 'Black Shadows',
-                               label='Black Shadows',
-                               command = lambda : cmd.do("_ util.ray_shadows('black')"))
-
-      self.menuBar.addmenuitem('Display', 'separator', '')
-
-      self.menuBar.addmenuitem('Display', 'command', 'White Background',
-                               label='White Background',
+      self.menuBar.addmenuitem('Background', 'command', 'White Background',
+                               label='White',
                                command = lambda : cmd.do("_ cmd.bg_color('white')"))
 
-      self.menuBar.addmenuitem('Display', 'command', 'Black Background',
-                               label='Black Background',
+      self.menuBar.addmenuitem('Background', 'command', 'Light Grey',
+                               label='Light Grey',
+                               command = lambda : cmd.do("_ cmd.bg_color('grey80')"))
+
+      self.menuBar.addmenuitem('Background', 'command', 'Grey',
+                               label='Grey',
+                               command = lambda : cmd.do("_ cmd.bg_color('grey50')"))
+
+
+      self.menuBar.addmenuitem('Background', 'command', 'Black Background',
+                               label='Black',
                                command = lambda : cmd.do("_ cmd.bg_color('black')"))
 
+      self.menuBar.addmenuitem('Display', 'separator', '')
       
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Disable perspective.',
+                         label=self.pad+'Orthoscopic View',
+                        variable = self.setting.ortho,
+                        command = lambda s=self: s.setting.update('ortho'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Show Valences.',
+                         label=self.pad+'Show Valences',
+                        variable = self.setting.valence,
+                        command = lambda s=self: s.setting.update('valence'))
+
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Smooth Lines.',
+                         label=self.pad+'Smooth Lines',
+                        variable = self.setting.line_smooth,
+                        command = lambda s=self: s.setting.update('line_smooth'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Depth Cue Fog.',
+                         label=self.pad+'Depth Cue & Fog',
+                        variable = self.setting.depth_cue,
+                        command = lambda s=self: s.setting.update('depth_cue'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Two Sided Lighting.',
+                         label=self.pad+'Two Sided Lighting',
+                        variable = self.setting.two_sided_lighting,
+                        command = lambda s=self: s.setting.update('two_sided_lighting'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Specular Reflections.',
+                         label=self.pad+'Specular Reflections',
+                        variable = self.setting.specular,
+                        command = lambda s=self: s.setting.update('specular'))
+
+
+
       self.menuBar.addmenu('Setting', 'Configuration Control')
 
       self.menuBar.addmenuitem('Setting', 'command',
@@ -1058,65 +1152,9 @@ class PMGApp(AbstractApp):
                          label=self.pad+'Colors...',
                                command = lambda s=self: ColorEditor(s))
 
-      self.menuBar.addmenuitem('Setting', 'separator', '')
-      
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Show Valences.',
-                         label=self.pad+'Show Valences',
-                        variable = self.setting.valence,
-                        command = lambda s=self: s.setting.update('valence'))
-
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Disable perspective.',
-                         label=self.pad+'Orthoscopic View',
-                        variable = self.setting.ortho,
-                        command = lambda s=self: s.setting.update('ortho'))
-
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Smooth Lines.',
-                         label=self.pad+'Smooth Lines',
-                        variable = self.setting.line_smooth,
-                        command = lambda s=self: s.setting.update('line_smooth'))
-
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Depth Cue Fog.',
-                         label=self.pad+'Depth Cue & Ray Trace Fog',
-                        variable = self.setting.depth_cue,
-                        command = lambda s=self: s.setting.update('depth_cue'))
-
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Two Sided Lighting.',
-                         label=self.pad+'Two Sided Lighting',
-                        variable = self.setting.two_sided_lighting,
-                        command = lambda s=self: s.setting.update('two_sided_lighting'))
-
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Specular Reflections.',
-                         label=self.pad+'Specular Reflections',
-                        variable = self.setting.specular,
-                        command = lambda s=self: s.setting.update('specular'))
-
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Overlay',
-                         label=self.pad+'Overlay Text on Graphics',
-                        variable = self.setting.overlay,
-                        command = lambda s=self: s.setting.update('overlay'))
 
       self.menuBar.addmenuitem('Setting', 'separator', '')
       
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Smooth raytracing.',
-                         label=self.pad+'Antialiased Rendering',
-                        variable = self.setting.antialias,
-                        command = lambda s=self: s.setting.update('antialias'))
-
-      self.menuBar.addmenuitem('Setting', 'checkbutton',
-                         'Cull Backfaces when Rendering',
-                         label=self.pad+'Cull Backfaces when Rendering',
-                        variable = self.setting.backface_cull,
-                        command = lambda s=self: s.setting.update('backface_cull'))
-
-      self.menuBar.addmenuitem('Setting', 'separator', '')
 
       self.menuBar.addmenuitem('Setting', 'checkbutton',
                                'Ignore PDB segi.',
@@ -1148,18 +1186,35 @@ class PMGApp(AbstractApp):
                         variable = self.setting.auto_remove_hydrogens,
                         command = lambda s=self: s.setting.update('auto_remove_hydrogens'))
 
+      self.menuBar.addmenuitem('Setting', 'separator', '')
+
+
+      self.menuBar.addmenuitem('Setting', 'command', 'Show Text Output',
+                               label='Show Text',
+                               command = lambda: cmd.set("text","1",log=1))
+
+      self.menuBar.addmenuitem('Setting', 'command', 'Hide Text Output',
+                               label='Hide Text',
+                               command = lambda: cmd.set("text","0",log=1))
+
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
+                         'Overlay Text Output on Graphics',
+                         label=self.pad+'Overlay Text',
+                        variable = self.setting.overlay,
+                        command = lambda s=self: s.setting.update('overlay'))
+
       
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
-      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Cycle',
-                               label='3 Button Cycle',
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Universal Cycle',
+                               label='3 Button Universal Cycle',
                                command = lambda: cmd.config_mouse('three_button'))
 
       self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Cycle',
                                label='2 Button Viewing Cycle',
                                command = lambda: cmd.config_mouse('two_button'))
 
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing Cycle',
+      self.menuBar.addmenuitem('Mouse', 'command', 'Setup 2 Button Editing Cycle',
                                label='2 Button Editing Cycle',
                                command = lambda: cmd.config_mouse('two_button_editing'))
 

@@ -104,8 +104,8 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
 #define ExecToggleSize 13
 
 #define ExecOpCnt 5
-#define ExecColorVisible 0.45,0.45,0.45
-#define ExecColorHidden 0.3,0.3,0.3
+#define ExecGreyVisible 0.45
+#define ExecGreyHidden 0.3
 
 static int ExecutiveCountNames(void)
 {
@@ -4932,9 +4932,9 @@ void ExecutiveDraw(Block *block)
               {
                 y2=y-ExecToggleMargin;
                 if(rec->visible)
-                  glColor3f(ExecColorVisible);
+                  glColor3f(ExecGreyVisible,ExecGreyVisible,ExecGreyVisible);
                 else
-                  glColor3f(ExecColorHidden);
+                  glColor3f(ExecGreyHidden,ExecGreyHidden,ExecGreyHidden);
                 x2 = xx;
                 if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
                   x2 = x+10;
