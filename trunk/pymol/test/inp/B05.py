@@ -32,6 +32,8 @@ def load():
             cmd.refresh()
             sys.__stdout__.write(".")
             sys.__stdout__.flush()
+         sys.__stdout__.write("("+str(cmd.count_atoms())+")")
+         sys.__stdout__.flush()         
          cmd.dss()
          cmd.delete('all')
    except:
