@@ -99,6 +99,9 @@ class SettingIndex:
    fog                  =88
    isomesh_auto_state   =89
    mesh_width           =90
+   cartoon_sampling     =91
+   cartoon_loop_radius  =92
+   cartoon_loop_quality =93
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -43,6 +43,7 @@ Changes up to 0.58
 
        model/segment/chain/residue/name
                                  */name
+                           residue/
                            residue/name
                      chain/       /     
                      chain/residue/

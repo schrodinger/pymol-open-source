@@ -480,6 +480,7 @@ void CGORenderRay(CGO *I,CRay *ray)
         if(vc>1)
           ray->fTriangle3fv(ray,v0,v1,v2,n0,n1,n2,c0,c1,c2);
         else if(!vc) {
+          n2=n0;
           v2=v0;
           c2=c0;
         }

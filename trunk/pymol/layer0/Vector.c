@@ -248,6 +248,7 @@ void copy44f ( float *src, float *dst )
   *(dst++)=*(src++);
   *(dst++)=*(src++);
 }
+
 void transform33f3f (float *m1, float *m2, float *m3) 
 {
   float m2r0=m2[0];
@@ -256,6 +257,16 @@ void transform33f3f (float *m1, float *m2, float *m3)
   m3[0] = m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2;
   m3[1] = m1[ 3] * m2r0 + m1[ 4] * m2r1 + m1[ 5] * m2r2;
   m3[2] = m1[ 6] * m2r0 + m1[ 7] * m2r1 + m1[ 8] * m2r2;
+}
+
+void transform33Tf3f (float *m1, float *m2, float *m3) 
+{
+  float m2r0=m2[0];
+  float m2r1=m2[1];
+  float m2r2=m2[2];
+  m3[0] = m1[ 0] * m2r0 + m1[ 3] * m2r1 + m1[ 6] * m2r2;
+  m3[1] = m1[ 1] * m2r0 + m1[ 4] * m2r1 + m1[ 7] * m2r2;
+  m3[2] = m1[ 2] * m2r0 + m1[ 5] * m2r1 + m1[ 8] * m2r2;
 }
 
 void transform44f3f (float *m1, float *m2, float *m3)

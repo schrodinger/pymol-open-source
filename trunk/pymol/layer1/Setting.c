@@ -491,6 +491,22 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_ribbon_power:
+  case cSetting_ribbon_power_b:
+    ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
+    break;
+  case cSetting_ribbon_sampling:
+  case cSetting_ribbon_radius:
+    ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_cartoon_sampling:
+  case cSetting_cartoon_loop_quality:
+  case cSetting_cartoon_loop_radius:
+    ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
+    SceneChanged();
+    break;
   case cSetting_dot_width:
   case cSetting_line_smooth:
   case cSetting_ortho:
@@ -870,6 +886,14 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_isomesh_auto_state, 1.0);
 
   SettingSet_f(I,cSetting_mesh_width, 1.0);
+
+  SettingSet_f(I,cSetting_cartoon_sampling, 7);
+
+  SettingSet_f(I,cSetting_cartoon_loop_radius, 0.5);
+
+  SettingSet_f(I,cSetting_cartoon_loop_quality, 6);
+
+  
 }
 
 

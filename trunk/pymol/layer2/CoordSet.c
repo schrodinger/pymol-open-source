@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"RepMesh.h"
 #include"RepSphere.h"
 #include"RepRibbon.h"
+#include"RepCartoon.h"
 #include"RepSurface.h"
 #include"RepLabel.h"
 #include"RepNonbonded.h"
@@ -475,6 +476,7 @@ void CoordSetUpdate(CoordSet *I)
   RepUpdateMacro(I, cRepMesh,            RepMeshNew            );
   RepUpdateMacro(I, cRepSphere,          RepSphereNew          );
   RepUpdateMacro(I, cRepRibbon,          RepRibbonNew          );
+  RepUpdateMacro(I, cRepCartoon,         RepCartoonNew         );
   RepUpdateMacro(I, cRepSurface,         RepSurfaceNew         );
   RepUpdateMacro(I, cRepLabel,           RepLabelNew           );
   RepUpdateMacro(I, cRepNonbonded,       RepNonbondedNew       );
