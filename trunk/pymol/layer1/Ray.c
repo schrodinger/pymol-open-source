@@ -674,6 +674,8 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
     gamma=1.0F;
 
   fog = SettingGet(cSetting_ray_trace_fog);
+  if(fog<0.0F)
+    fog = SettingGet(cSetting_depth_cue);
   if(fog!=0.0F) {
     fogFlag=true;
     fog_start = SettingGet(cSetting_ray_trace_fog_start);
@@ -1134,8 +1136,12 @@ int RayTraceThread(CRayThreadInfo *T)
 	settingPower		= SettingGet(cSetting_power);
 	settingReflectPower	= SettingGet(cSetting_reflect_power);
 	settingSpecPower	= SettingGet(cSetting_spec_power);
-	settingSpecReflect	= SettingGet(cSetting_spec_reflect);	
-	
+
+	settingSpecReflect	= SettingGet(cSetting_spec_reflect);
+   if(settingSpecReflect>1.0F) settingSpecReflect = 1.0F;
+	if(SettingGet(cSetting_specular)<R_SMALL4) {
+     settingSpecReflect = 0.0F;
+   }
     
 	if((interior_color>=0)||(two_sided_lighting))
 		backface_cull	= 0;
@@ -1151,7 +1157,8 @@ int RayTraceThread(CRayThreadInfo *T)
 	inv1minusFogStart	= _1;
 	
 	fog = SettingGet(cSetting_ray_trace_fog);
-
+   if(fog<0.0F)
+     fog = SettingGet(cSetting_depth_cue);
 	if(fog != _0) 
 	{
 		fogFlag	= true;
@@ -1592,15 +1599,40 @@ int RayTraceThread(CRayThreadInfo *T)
                       fc[2]	= (0xFF&((*pixel)>>8))  * persist + (0xFF&(last_pixel>>8))*persist_inv;
                       fc[3]	= (0xFF&((*pixel)))     * persist + (0xFF&(last_pixel))*persist_inv;
                       
-                      if((i<0)&&(!opaque_back)) {
-                        if(I->BigEndian) {
-                          fc[3]	= (float)(0xFF&(last_pixel));
-                        } else {
-                          fc[0]	= (float)(0xFF&(last_pixel>>24));
+                      if(!opaque_back) {
+                        if(i<0) { // hit nothing -- so don't blend alpha
+                          fc[0] = (0xFF&(last_pixel>>24));
+                          fc[1] = (0xFF&(last_pixel>>16));
+                          fc[2] = (0xFF&(last_pixel>>8));
+                          fc[3] = (0xFF&(last_pixel));
+                        } else { // hit something -- so keep blend and compute cumulative alpha
+                          if(i>=0) { // make sure opaque objects get opaque alpha
+                            float o1,o2;
+                            float m;
+                            
+                            if(I->BigEndian) {
+                              o1 = (float)(0xFF&(last_pixel))/255.0F;
+                              o2 = (float)(0xFF&(*pixel))/255.0F;
+                            } else {
+                              o1 = (float)(0xFF&(last_pixel>>24))/255.0F;
+                              o2 = (float)(0xFF&((*pixel)>>24))/255.0F;
+                            }
+                            
+                            if(o1<o2) { // make sure o1 is largest opacity
+                              m = o1;
+                              o1 = o2;
+                              o2 = m;
+                            }
+                            m = o1 + (1.0F - o1) * o2;
+                            if(I->BigEndian) {
+                              fc[3]	= m*255.0F + 0.49F;
+                            } else {
+                              fc[0]	= m*255.0F + 0.49F;
+                            }
+                          }
                         }
                       }
-                      
-                      
+
                       cc0		= (uint)(fc[0]);
                       cc1		= (uint)(fc[1]);
                       cc2		= (uint)(fc[2]);

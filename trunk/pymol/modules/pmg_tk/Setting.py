@@ -178,8 +178,7 @@ class Setting:
          'depth_cue'       :
          (lambda s,a: s.depth_cue_set()),
          'specular'       :
-         (lambda s,a:s.specular_set()),
-#         (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8)),log=1))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get())),log=1))),
 
          'cartoon_round_helices'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_round_helices.get())),log=1))),
@@ -340,11 +339,8 @@ class Setting:
 
    def depth_cue_set(self):
       cmd.set("depth_cue",("%1.0f" % self.depth_cue.get()),log=1)
-      cmd.set("ray_trace_fog",("%1.0f" % self.depth_cue.get()),log=1)
-
-   def specular_set(self):
-      cmd.set("specular",("%0.3f" % (self.specular.get()*0.8)),log=1,quiet=0) # hardcoded workaround
-      cmd.set("spec_reflect",("%0.3f" % (self.specular.get()*0.500)),log=1,quiet=0) # workaround 
+      if pymol.setting.get_setting("ray_trace_fog")>=0:
+         cmd.set("ray_trace_fog",("%1.0f" % self.depth_cue.get()),log=1) 
 
    def ray_interior_color_set(self):
       if(self.ray_interior_color.get()):

@@ -179,6 +179,22 @@ CHANGE LOG
 
 Changes up to 0.94
 
+   * fixed yet another ray-tracing alpha channel bug with mixed 
+     transparent/opaque objects.
+
+   * new setting overlay_lines, overlay becomes a boolean toggle
+
+   * specular now acts as a binary veto over spec_reflect and
+     specular_intensity holds the OpenGL spec. intensity
+
+   * ray_trace_fog deprecated (subservient to depth_cue)
+
+   * Mac OSX native port completed as "MacPyMOL" Incentive Product
+      - support for additional file extensions
+      - GUI remembers last open location
+      - QuickTime movie export
+      - Cut and Paste image export
+
    * fixed bug in SelectorCountStates
 
    * default roving_polar_cutoff increased to 3.31 in order to show 

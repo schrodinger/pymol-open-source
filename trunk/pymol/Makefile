@@ -168,7 +168,12 @@ pmw:
 compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
 
-OSXPROD=products/PyMOL.app
+# Everything below here is for the MacPyMOL Incentive Product, which is
+# not currently Open-Source (though that may change in the future).
+# Compilation of MacPyMOL requires layerOSX.
+
+OSXPROD=products/MacPyMOL.app
+OSXFREE=products/PyMOL.app
 OSXDEMO=products/PyMOL\ Demos
 OSXPYMOL=$(OSXPROD)/pymol
 OSXEXE=$(OSXPROD)/Contents/MacOS/PyMOL
@@ -229,3 +234,14 @@ osx-demo-data:
 	cp -R demo_data/* $(OSXPYMOL)/data/demo/
 
 osx-demo: osx-standalone osx-demo-data osx-unwrap-demos 
+
+osx-free: osx-standalone
+	/bin/rm -rf $(OSXFREE)
+	/bin/cp -R $(OSXPROD) $(OSXFREE)
+	/bin/cp layerOSX/bundle/splash.png $(OSXPYMOL)/data/pymol/
+	/bin/rm -r $(OSXFREE)/Contents/Resources/English.lproj/MainMenu.nib
+	/bin/rm -r $(OSXFREE)/Contents/Resources/English.lproj/MainMenu~.nib
+
+mac: osx-standalone
+	/bin/cp layerOSX/bundle/splash.png $(OSXPYMOL)/data/pymol/
+

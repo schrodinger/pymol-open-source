@@ -60,7 +60,9 @@ void SceneRay(int width,int height,int mode,
               float angle,float shift,int quiet);
 void SceneMakeMovieImage(void);
 
-void ScenePNG(char *png);
+void ScenePNG(char *png,int quiet);
+int SceneCopyExternal(int width, int height,int rowbytes,unsigned char *dest);
+
 void SceneResetMatrix(void);
 
 void SceneRestartTimers(void);
@@ -92,7 +94,7 @@ void SceneClipSet(float front,float back);
 void SceneGetView(SceneViewType view);
 void SceneSetView(SceneViewType view,int quiet);
 void SceneGetPos(float *pos);
-
+void SceneGetWidthHeight(int *width,int *height);
 int SceneMultipick(Multipick *smp);
 
 void SceneSetCardInfo(char *vendor,char *renderer,char *version);

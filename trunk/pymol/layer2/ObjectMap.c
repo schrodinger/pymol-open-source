@@ -1685,8 +1685,6 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
   maxd = FLT_MIN;
   mind = FLT_MAX;
 
-
-    
   p = PHIStr;
 
   while((*p)&&(!(
@@ -1828,6 +1826,8 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
      got_nspace&&
      got_data) {
 
+    int pass = 0;
+
     ms->Origin = Alloc(float,3);
     ms->Range = Alloc(float,3);
     ms->Grid = Alloc(float,3);
@@ -1855,39 +1855,63 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     ms->MapSource = cMapSourceFLD;
     ms->Field->save_points=false;
 
-    p=PHIStr;
-
-    while(*p) { /* ^L^L sentinel */
-      if((p[0]==12)&&(p[1]==12)) {
-        p+=2;
-        break;
+    
+    while(1) {
+      maxd = FLT_MIN;
+      mind = FLT_MAX;
+      p=PHIStr;
+      
+      while(*p) { /* ^L^L sentinel */
+        if((p[0]==12)&&(p[1]==12)) {
+          p+=2;
+          break;
+        }
+        p++;
       }
-      p++;
-    }
-
-    rev = (char*)&dens_rev;
-    for(c=0;c<ms->FDim[2];c++) { /* z y x ordering into c b a  so that x = a, etc. */
-      for(b=0;b<ms->FDim[1];b++) {
-        for(a=0;a<ms->FDim[0];a++) {
-          
-          if(little_endian!=map_endian) {
-            rev[0]=p[3];
-            rev[1]=p[2];
-            rev[2]=p[1];
-            rev[3]=p[0];
-          } else {
-            rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
-            rev[1]=p[1];
-            rev[2]=p[2];
-            rev[3]=p[3];
+      
+      rev = (char*)&dens_rev;
+      for(c=0;c<ms->FDim[2];c++) { /* z y x ordering into c b a  so that x = a, etc. */
+        for(b=0;b<ms->FDim[1];b++) {
+          for(a=0;a<ms->FDim[0];a++) {
+            
+            if(little_endian!=map_endian) {
+              rev[0]=p[3];
+              rev[1]=p[2];
+              rev[2]=p[1];
+              rev[3]=p[0];
+            } else {
+              rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+              rev[1]=p[1];
+              rev[2]=p[2];
+              rev[3]=p[3];
+            }
+            dens = *((float*)rev);
+            F3(ms->Field->data,a,b,c) = dens;
+            if(maxd<dens) maxd = dens;
+            if(mind>dens) mind = dens;
+            p+=4;
           }
-          dens = *((float*)rev);
-          F3(ms->Field->data,a,b,c) = dens;
-          if(maxd<dens) maxd = dens;
-          if(mind>dens) mind = dens;
-          p+=4;
         }
       }
+
+      // There's no way to determine the original handedness of input
+      // field files.  So instead, we simplymake an educated guess about
+      // whether we're byte-swapped based on the range of the density
+      // values obtained.
+      
+      if(((maxd/FLT_MAX)>0.1F)&&((mind/(-FLT_MAX))>0.1F)) {
+        if(pass==0) {
+          map_endian = (!map_endian); // okay, try again swapped
+        } else if(pass==1) {
+          // didn't help, so resort to original order
+          map_endian = (!map_endian); 
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+      pass++;
     }
     
     for(c=0;c<ms->FDim[2];c++) {

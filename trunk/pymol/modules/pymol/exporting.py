@@ -72,7 +72,7 @@ NOTES
                print "Error: The resulting session file may be incomplete."
       return session
 
-   def png(filename):
+   def png(filename,quiet=1):
       '''
 DESCRIPTION
 
@@ -87,7 +87,7 @@ PYMOL API
    cmd.png( string file )
       '''
       if thread.get_ident() ==pymol.glutThread:
-         r = cmd._png(str(filename))
+         r = cmd._png(str(filename),int(quiet))
       else:
          r = _cmd.do("cmd._png('"+str(filename)+"')")
       return r
@@ -197,6 +197,6 @@ SEE ALSO
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='png':
-         cmd.png(filename)
+         cmd.png(filename,quiet=quiet)
       return r
 

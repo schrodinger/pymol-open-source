@@ -2888,7 +2888,7 @@ static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"i",&cmd);
   if (ok) {
     APIEntry();
-    MovieMatrix(cmd);
+    ok = MovieMatrix(cmd);
     APIExit();
   }
   return(APIStatus(ok));
@@ -2923,11 +2923,12 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
 {
   char *str1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  int quiet;
+  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
   if (ok) {
     APIEntry();
     ExecutiveDrawNow();		 /* TODO STATUS */
-    ScenePNG(str1);
+    ScenePNG(str1,quiet);
     APIExit();
   }
   return(APIStatus(ok));

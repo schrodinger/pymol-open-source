@@ -34,6 +34,7 @@ typedef struct  {
   SceneViewType Matrix;
   int Playing;
   int Locked;
+  int CacheSave;
 } CMovie;
 
 int MovieFromPyList(PyObject *list,int *warning);
@@ -49,6 +50,10 @@ void MovieSetCommand(int frame,char *command);
 void MovieAppendCommand(int frame,char *command);
 
 void MovieDoFrameCommand(int frame);
+
+void MovieCopyPrepare(int *width,int *height,int *length);
+int MovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr);
+void MovieCopyFinish(void);
 
 #define cMovieStop 0
 #define cMoviePlay 1
@@ -66,11 +71,13 @@ int MovieFrameToImage(int frame);
 int MovieFrameToIndex(int frame);
 int MovieLocked(void);
 void MovieSetLock(int);
+
 #define cMovieMatrixClear  0
 #define cMovieMatrixStore  1
 #define cMovieMatrixRecall 2
+#define cMovieMatrixCheck  3
 
-void MovieMatrix(int action); /* 0 clear, 1 remember, 2 recall */
+int MovieMatrix(int action); /* 0 clear, 1 remember, 2 recall */
 
 /*void MovieSave(char *fname);
   void MovieLoad(char *fname);*/

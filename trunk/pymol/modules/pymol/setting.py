@@ -347,7 +347,9 @@ if __name__=='pymol.setting':
       pdb_insertions_go_first = 307
       roving_origin_z         = 308
       roving_origin_z_cushion = 309
-      
+      specular_intensity    = 310
+      overlay_lines         = 31
+
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

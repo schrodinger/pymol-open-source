@@ -33,6 +33,107 @@ Z* -------------------------------------------------------------------
 
 CMovie Movie;
 
+void MovieCopyPrepare(int *width,int *height,int *length)
+{
+  /* assumed locked api, blocked threads, and master thread on entry */
+
+  /* writes the current movie sequence to a set of PNG files 
+  * this routine can take a LOT of time -- 
+  * TODO: develop an interrupt mechanism */
+
+  int start,stop;
+  CMovie *I=&Movie;
+  int a;
+  int i;
+  char fname[255];
+  int nFrame;
+
+  I->CacheSave = (int)SettingGet(cSetting_cache_frames); 
+  if(!I->CacheSave)
+    MovieClearImages();
+  SettingSet(cSetting_cache_frames,1.0);
+  nFrame = I->NFrame;
+  if(!nFrame) {
+	 nFrame=SceneGetNFrame();
+  }
+  start=0;
+  stop=nFrame;
+  if((start!=0)||(stop!=(nFrame+1)))
+    SceneSetFrame(0,0);
+  MoviePlay(cMoviePlay);
+  VLACheck(I->Image,ImageType,nFrame);
+  SceneGetWidthHeight(width,height);
+  *length = nFrame;
+}
+
+int MovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
+{
+  CMovie *I=&Movie;
+  int result=false;
+  int nFrame;
+  int cur_frame;
+  
+  nFrame = I->NFrame;
+  if(!nFrame) {
+    nFrame=SceneGetNFrame();
+  }
+  
+  if((width==I->Width)&&(height==I->Height)&&(frame<nFrame)&&(ptr)) {
+    int a = frame;
+    int i;
+    SceneSetFrame(0,a);
+    MovieDoFrameCommand(a);
+    PFlush();
+    i=MovieFrameToImage(a);
+    VLACheck(I->Image,ImageType,i);
+    if(!I->Image[i]) {
+      SceneMakeMovieImage();
+    }
+    if(!I->Image[i]) {
+      PRINTFB(FB_Movie,FB_Errors) 
+        "MoviePNG-Error: Missing rendered image.\n"
+        ENDFB;
+    } else {
+      {
+        unsigned char *srcImage = (unsigned char*)I->Image[i];
+        int i,j;
+        for (i=0; i< height; i++)
+          {
+            unsigned char *dst = ((unsigned char*)ptr) + i * rowbytes;
+            unsigned char *src = srcImage + ((height-1)-i) * width*4;
+            for (j = 0; j < width; j++)
+              {
+                *dst++ = src[3];
+                *dst++ = src[0];
+                *dst++ = src[1];
+                *dst++ = src[2];
+                src+=4;
+              }
+          }
+        result = true;
+      }
+      ExecutiveDrawNow();
+      if(PMGUI) p_glutSwapBuffers();
+    }
+    if(!I->CacheSave) {
+      if(I->Image[i])
+        mfree(I->Image[i]);
+      I->Image[i]=NULL;
+    }
+  }
+  return result;
+}
+
+void MovieCopyFinish(void) 
+{
+  CMovie *I=&Movie;
+  SceneDirty(); /* important */
+  SettingSet(cSetting_cache_frames,(float)I->CacheSave);
+  MoviePlay(cMovieStop);
+  // MovieClearImages();
+  // SceneSuppressMovieFrame();  
+}
+
 int MovieLocked(void)
 {
   CMovie *I=&Movie;
@@ -199,23 +300,31 @@ void MoviePlay(int cmd)
   SceneRestartTimers();
 }
 /*========================================================================*/
-void MovieMatrix(int action)
+int  MovieMatrix(int action)
 {
   CMovie *I=&Movie;
-
+  int result = false;
   switch(action) {
   case cMovieMatrixClear:
 	 I->MatrixFlag=false;
+    result = 1;
 	 break;
   case cMovieMatrixStore:
     SceneGetView(I->Matrix);
 	 I->MatrixFlag=true;
+    result = 1;
 	 break;
   case cMovieMatrixRecall:
 	 if(I->MatrixFlag) 
 		SceneSetView(I->Matrix,true);
+    else
+      result = 0;
 	 break;
+  case cMovieMatrixCheck:
+    result = I->MatrixFlag;
+    break;
   }
+  return result;
 }
 /*========================================================================*/
 void MovieSetSize(unsigned int width,unsigned int height)
@@ -534,5 +643,7 @@ void MovieInit(void)
     I->Matrix[a]=0.0F;
   I->MatrixFlag=false;
 }
+
+
 
 

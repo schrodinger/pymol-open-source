@@ -25,11 +25,26 @@ void MainResetIdle(void);
 void MainSwapBuffers(void);
 void MainRefreshNow(void);
 void MainFlush(void);
+void MainFlushAsync(void);
 int MainSavingUnderWhileIdle(void);
 int MainFromPyList(PyObject *list);
 PyObject *MainAsPyList(void);
 int MainCheckRedundantOpen(char *file);
   
+#ifdef _PYMOL_OSX
+
+void MainRunString(char *str);
+PyObject *MainGetStringResult(char *str);
+void MainRunCommand(char *str1);
+void MainMoviePrepareCopy(int *width,int *height,int *length);
+int MainMovieCopy(int frame,int width,int height,int rowbytes,void *ptr);
+void MainMovieCopyPrepare(int *width,int *height,int *length);
+int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr);
+void MainMovieCopyFinish(void);
+void MainSceneGetSize(int *width,int *height);
+int MainSceneCopy(int width,int height,int rowbytes,void *ptr);
+#endif
+
 extern int PyMOLReady;
 extern int PyMOLTerminating; /* flag to help prevent crashes on shutdown with Windows */
 
@@ -51,7 +66,8 @@ typedef struct PyMOLOptionRec {
     internal_feedback, security, game_mode,
     force_stereo, winX, winY, blue_line,
     winPX, winPY, external_gui, siginthand,
-    reuse_helper, auto_reinitialize, keep_thread_alive, quiet;
+    reuse_helper, auto_reinitialize, keep_thread_alive, 
+    quiet, incentive_product;
   char after_load_script[PYMOL_MAX_OPT_STR];
 } PyMOLOptionRec;
 
