@@ -2638,6 +2638,67 @@ PYMOL API
       unlock()
    return r
 
+def get_names(*arg):
+   '''
+DESCRIPTION
+  
+   "get_names" returns a list of object and/or selection names.
+ 
+PYMOL API
+ 
+   cmd.get_names( [string: "objects"|"selections"|"all"] )
+ 
+NOTES
+ 
+   The default behavior is to return only object names.
+   
+   '''
+   la = len(arg)
+   mode = 1
+   if la:
+      if arg[0]=='objects':
+         mode = 1
+      elif arg[0]=='selections':
+         mode = 2
+      elif arg[0]=='all':
+         mode = 0
+   try:
+      lock()
+      r = _cmd.get_names(mode)
+   finally:
+      unlock()
+   return r
+
+def get_type(name):
+   '''
+DESCRIPTION
+  
+   "get_type" returns a string describing the named object or
+    selection or the string "nonexistent" if the name in unknown.
+ 
+PYMOL API
+ 
+   cmd.get_type(string object-name)
+ 
+NOTES
+
+   Possible return values are
+   
+   "object:molecule"
+   "object:map"
+   "object:mesh"
+   "object:distance"
+   "selction"
+   
+   '''
+   try:
+      lock()
+      r = _cmd.get_type(name)
+   finally:
+      unlock()
+   return r
+   
+   
 def id_atom(*arg):
    r = -1
    la = len(arg)
@@ -3720,7 +3781,7 @@ keyword = {
    'zoom'          : [zoom         , 0 , 1 , ',' , 0 ],
    }
 
-help_only = {
+help_only = {  # for API-only features
    'selections'    : [selections   , 0 , 0 , ',' , 0 ],
    'keyboard'      : [keyboard     , 0 , 0 , ',' , 0 ],
    'mouse'         : [mouse        , 0 , 0 , ',' , 0 ],
@@ -3728,7 +3789,9 @@ help_only = {
    'launching'     : [launching    , 0 , 0 , ',' , 0 ],
    'movies'        : [movies       , 0 , 0 , ',' , 0 ],
    'editing'       : [editing      , 0 , 0 , ',' , 0 ],  
-   'edit_keys'     : [edit_keys    , 0 , 0 , ',' , 0 ],  
+   'edit_keys'     : [edit_keys    , 0 , 0 , ',' , 0 ],
+   'get_names'     : [get_names    , 0 , 0 , ',' , 0 ],
+   'get_type'      : [get_type     , 0 , 0 , ',' , 0 ],  
    '@'             : [at_sign      , 0 , 0 , ',' , 0 ],  
 }
 

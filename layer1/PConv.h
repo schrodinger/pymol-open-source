@@ -57,6 +57,7 @@ int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln);
 int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln);
 
 PyObject *PConvStringListToPyList(int l,char **str);
+PyObject *PConvStringVLAToPyList(char *str);
 
 void PConv44PyListTo44f(PyObject *src,float *dest); /* note loss of precision */
 

@@ -44,7 +44,7 @@ void ExecutiveSort(char *name);
 void ExecutiveSetSetting(char *sname,char *value);
 void ExecutiveRay(void);
 float ExecutiveRMS(char *sele1,char *sele2,int mode);
-float ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
+void ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
 float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(char *s1,int target,int mode);
 int *ExecutiveIdentify(char *s1,int mode);
@@ -78,6 +78,8 @@ void ExecutiveAddHydrogens(char *s1);
 void ExecutiveFuse(char *s0,char *s1);
 void ExecutiveRenameObjectAtoms(char *name,int force);
 void ExecutiveInvert(char *s0,char *s1,int mode);
+char *ExecutiveGetNames(int mode);
+void ExecutiveGetType(char *name,WordType type);
 
 #endif
 
