@@ -1,0 +1,8 @@
+CHAMP: CHemical Atom Matching with Patterns
+
+Copyright (C) 2002 Warren L. DeLano
+
+This module is part of the PyMOL molecular graphics system, but the
+code is built separately to enable usage of this module outside of the
+PyMOL interpreter.
+
