@@ -33,6 +33,11 @@ typedef struct {
   int id;
 } BondType;
 
+typedef struct ObjectMoleculeBPRec {
+  int *dist;
+  int *list;
+  int n_atom;
+} ObjectMoleculeBPRec;
 
 typedef struct ObjectMolecule {
   CObject Obj;
@@ -197,6 +202,11 @@ void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I);
 void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state);
 void ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle);
 void ObjectMoleculeSculptClear(ObjectMolecule *I);
+int ObjectMoleculeGetBondPaths(ObjectMolecule *I,int atom, int max, ObjectMoleculeBPRec *bp);
+int ObjectMoleculeInitBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp);
+int ObjectMoleculePurgeBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp);
+int ObjectMoleculeGetBondPath(ObjectMolecule *I,int atom,int max,ObjectMoleculeBPRec *bp);
+int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,int *dim);
 
 /* legacy binary file suppoort */
 
@@ -206,13 +216,6 @@ typedef struct {
 } BondType068;
 
 #endif
-
-
-
-
-
-
-
 
 
 

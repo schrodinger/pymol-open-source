@@ -5248,6 +5248,110 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
   return(result);
 }
 /*========================================================================*/
+int ObjectMoleculeInitBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp )
+{
+  int a;
+  bp->dist = Alloc(int,I->NAtom);
+  bp->list = Alloc(int,I->NAtom);
+  for(a=0;a<I->NAtom;a++)
+    bp->dist[a]=-1;
+  bp->n_atom = 0;
+  return 1;
+}
+/*========================================================================*/
+int ObjectMoleculePurgeBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp )
+{
+  FreeP(bp->dist);
+  FreeP(bp->list);
+  return 1;
+}
+/*========================================================================*/
+int ObjectMoleculeGetBondPaths(ObjectMolecule *I,int atom,
+                               int max,ObjectMoleculeBPRec *bp)
+{
+  /* returns list of bond counts from atom to all others 
+     dist and list must be vla array pointers or NULL */
+
+  int a,a1,a2,n;
+  int cur;
+  int n_cur;
+  int b_cnt = 0;
+
+  ObjectMoleculeUpdateNeighbors(I);
+  
+  /* reinitialize dist array (if we've done at least one pass) */
+
+  for(a=0;a<bp->n_atom;a++)
+    bp->dist[bp->list[a]]=-1;
+
+  bp->n_atom = 0;
+  bp->dist[atom] = 0;
+  bp->list[bp->n_atom] = atom;
+  bp->n_atom++;
+  
+  cur = 0;
+  while(1) {
+    b_cnt++;
+    if(b_cnt>max) break;
+
+    n_cur = bp->n_atom-cur;
+
+    /* iterate through all current atoms */
+
+    if(!n_cur) break;
+    while(n_cur--) {
+      a1 = bp->list[cur++];
+      n=I->Neighbor[a1]; 
+      n++; /* skip cnt */
+      while(1) {
+        a2=I->Neighbor[n];
+        n+=2;
+        if(a2<0) break;
+        if(bp->dist[a2]<0) { /* for each atom not yet sampled... */
+          bp->dist[a2]=b_cnt;
+          bp->list[bp->n_atom]=a2;
+          bp->n_atom++;
+        }
+      }
+    }
+  }
+  return(bp->n_atom);
+}
+/*========================================================================*/
+int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,int *dim)
+{
+  int a,b,i,c;
+  int at1,at2;
+  int ***result=NULL;
+  ObjectMoleculeBPRec bp;
+
+  dim[0]=max_type+1;
+  dim[1]=max_type+1;
+  dim[2]=max_bond+1;
+  
+  result=(int***)UtilArrayMalloc(dim,3,sizeof(int));
+  UtilZeroMem(**result,dim[0]*dim[1]*dim[2]*sizeof(int));
+  
+  ObjectMoleculeInitBondPath(I,&bp);
+  for(a=0;a<I->NAtom;a++) {
+    at1 = I->AtomInfo[a].customType;
+    if((at1>=0)&&(at1<=max_type)) {
+      ObjectMoleculeGetBondPaths(I,a,max_bond,&bp);    
+      for(b=0;b<bp.n_atom;b++)
+        {
+          i = bp.list[b];
+          at2 = I->AtomInfo[i].customType;
+          if((at2>=0)&&(at2<=max_type)) {
+            c=bp.dist[i];
+            result[at1][at2][c]++;
+          }
+        }
+    }
+  }
+  ObjectMoleculePurgeBondPath(I,&bp);
+  return(result);
+}
+/*========================================================================*/
 float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float *v)
      /* computes average hydrogen bonding vector for an atom */
 {

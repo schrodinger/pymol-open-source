@@ -17,6 +17,14 @@ from cmd import _cmd,lock,unlock,Shortcut,QuietException
 import cmd
 import threading
 
+def get_bond_print(obj,max_bond,max_type):
+   try:
+      lock()
+      r = _cmd.get_bond_print(str(obj),int(max_bond),int(max_type))
+   finally:
+      unlock()
+   return r
+
 def expfit(a,b): # Huh?
    try:
       lock()   
