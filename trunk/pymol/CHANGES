@@ -110,6 +110,9 @@ Current Bugs to Fix
      sometimes it just fails period
 
 Changes up to 0.85
+   
+   * worked over the PyMOL launch routine.  It should now be possible
+     to launch pymol simply with an "import pymol" statement : )!
 
    * fixed get_dihedral to use current state index
 
