@@ -106,6 +106,7 @@ class SDFRec:
       self.data[kee] = copy.deepcopy(data)
 
    def delete(self,kee):
+      self.kees.remove(kee)
       del self.data[kee]
 
 class SDF:
