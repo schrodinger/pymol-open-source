@@ -1038,16 +1038,16 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
   if(w<1) w=1;
   if(h<1) h=1;
   if(PMGUI) { /*just in case*/
-
- 
-	glGetIntegerv(GL_RED_BITS,&rb);
-	glGetIntegerv(GL_RED_BITS,&gb);
-	glGetIntegerv(GL_RED_BITS,&bb);
-
-	if((rb>=8)&&(gb>=8)&&(bb>=8))
+    
+    
+    glGetIntegerv(GL_RED_BITS,&rb);
+    glGetIntegerv(GL_RED_BITS,&gb);
+    glGetIntegerv(GL_RED_BITS,&bb);
+    
+    if((rb>=8)&&(gb>=8)&&(bb>=8))
 		strict = true;
-	  
-  buffer=Alloc(pix,w*h);
+    
+    buffer=Alloc(pix,w*h);
     result = VLAlloc(unsigned int,w*h);
     glReadBuffer(gl_buffer);
     glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
@@ -1057,12 +1057,12 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
         {
           c = &buffer[a+b*w][0];
           if((c[3]==0xFF)&&
-				((c[1]&0x8)&&
-				 ((!strict)||
-				  (((c[1]&0xF)==8)&&
-				   ((c[0]&0xF)==0)&&
-				   ((c[2]&0xF)==0)
-					)))) { /* only consider intact, saturated pixels */
+             ((c[1]&0x8)&&
+              ((!strict)||
+               (((c[1]&0xF)==8)&&
+                ((c[0]&0xF)==0)&&
+                ((c[2]&0xF)==0)
+                )))) { /* only consider intact, saturated pixels */
             VLACheck(result,unsigned int,cc+1);
             result[cc] =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
             result[cc+1] = b+a*h;
@@ -1301,6 +1301,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeAddToPk2:
   case cButModeAddToPk3:
   case cButModeOrigAt:
+  case cButModeCent:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
       SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
@@ -1350,6 +1351,21 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           }
           PRINTFB(FB_Scene,FB_Actions) 
             " Scene: Origin set.\n"
+            ENDFB;
+          break;
+        case cButModeCent:
+          sprintf(buf2,"center (%s)",buffer);        
+          OrthoCommandIn(buf2);
+          if(obj->type==cObjectMolecule) {
+            if(SettingGet(cSetting_logging)) {
+              objMol = (ObjectMolecule*)obj;            
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
+              sprintf(buffer,"cmd.center(\"%s\")",buf1);
+              PLog(buffer,cPLog_pym);
+            }
+          }
+          PRINTFB(FB_Scene,FB_Actions) 
+            " Scene: Centered.\n"
             ENDFB;
           break;
         }

@@ -58,6 +58,7 @@ if __name__=='pymol.controlling':
       '-lbx' : 20 ,
       'lbbx' : 21 ,
       'none' : 22 ,
+      'cent' : 23 ,
       }
    but_act_sc = Shortcut(but_act_code.keys())
 
@@ -98,7 +99,7 @@ if __name__=='pymol.controlling':
                                  ('m','ctrl','pkat'),
                                  ('r','ctrl','pkbd'),                 
                                  ('l','ctsh','lb'),
-                                 ('m','ctsh','orig'),
+                                 ('m','ctsh','cent'),
                                  ('r','ctsh','rb')
                                  ],
 
@@ -112,7 +113,7 @@ if __name__=='pymol.controlling':
                                 ('m','ctrl','pkat'),
                                 ('r','ctrl','pkbd'),                  
                                 ('l','ctsh','lb'),
-                                ('m','ctsh','orig'),
+                                ('m','ctsh','cent'),
                                 ('r','ctsh','rb'),
                                 ],
 
@@ -127,7 +128,7 @@ if __name__=='pymol.controlling':
                                ('r','ctrl','pkbd'),                 
                                ('l','ctsh','lb'),
                                ('m','ctsh','none'),
-                               ('r','ctsh','orig')
+                               ('r','ctsh','cent')
                                ],
       'two_button_selecting' : [ ('l','none','rota'),
                                  ('m','none','none'),
@@ -308,7 +309,7 @@ NOTES
    modifers:    None, Shft, Ctrl, CtSh
    actions:     Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
                 lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
-                PkAt, PkBd, RotF, TorF, MovF, Orig
+                PkAt, PkBd, RotF, TorF, MovF, Orig, Cent
 
    '''
       r=1

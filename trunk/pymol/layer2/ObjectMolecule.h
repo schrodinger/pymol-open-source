@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 
 #define cKeywordAll "all"
 #define cKeywordSame "same"
+#define cKeywordCenter "center"
 
 #define cUndoMask 0x7
 

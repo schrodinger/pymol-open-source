@@ -1438,7 +1438,8 @@ int ExecutiveValidName(char *name)
   if(!ExecutiveFindSpec(name)) {
     if(!WordMatch(name,cKeywordAll,true))
       if(!WordMatch(name,cKeywordSame,true))
-        result=false;
+        if(!WordMatch(name,cKeywordCenter,true))
+          result=false;
   }
   return result;
 }
@@ -3744,6 +3745,11 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state,
   float f1,f2,fmx;
   int a;
 
+  if(WordMatch(cKeywordCenter,name,1)) {
+    SceneGetPos(mn);
+    copy3f(mn,mx);
+    return 1;
+  }
   if(state==-2) state=SceneGetState();
 
   PRINTFD(FB_Executive)

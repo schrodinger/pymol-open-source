@@ -141,130 +141,133 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 
         if(t_mode) {
 
-        float **t_buf=NULL,**tb;
-        float *z_value=NULL,*zv;
-        int *ix=NULL;
-        int n_tri = 0;
-        float sum[3];
-        float matrix[16];
+          float **t_buf=NULL,**tb;
+          float *z_value=NULL,*zv;
+          int *ix=NULL;
+          int n_tri = 0;
+          float sum[3];
+          float matrix[16];
 
-        glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
+          glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
 
-        t_buf = Alloc(float*,I->NT*9);
+          t_buf = Alloc(float*,I->NT*9);
 
-        z_value = Alloc(float,I->NT);
-        ix = Alloc(int,I->NT);
+          z_value = Alloc(float,I->NT);
+          ix = Alloc(int,I->NT);
 
-        zv = z_value;
-        tb = t_buf;
-        c = I->NT;
-        if(I->oneColorFlag) {
-          while(c--) {       
-            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+          zv = z_value;
+          tb = t_buf;
+          c = I->NT;
+          if(I->oneColorFlag) {
+            while(c--) {       
+              if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
 
-              *(tb++) = vn+(*t)*3;
-              *(tb++) = v+(*t)*3;
-              *(tb++) = vn+(*(t+1))*3;
-              *(tb++) = v+(*(t+1))*3;
-              *(tb++) = vn+(*(t+2))*3;
-              *(tb++) = v+(*(t+2))*3;
-              
-              add3f(tb[-1],tb[-3],sum);
-              add3f(sum,tb[-5],sum);
-
-              *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
-              n_tri++;
-            }
-            t+=3;
-
-          }
-        } else {
-          while(c--) {
-            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
-              if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))) {
-                
-                *(tb++) = vc+(*t)*3;
                 *(tb++) = vn+(*t)*3;
                 *(tb++) = v+(*t)*3;
-
-                *(tb++) = vc+(*(t+1))*3;
                 *(tb++) = vn+(*(t+1))*3;
                 *(tb++) = v+(*(t+1))*3;
-
-                *(tb++) = vc+(*(t+2))*3;
                 *(tb++) = vn+(*(t+2))*3;
                 *(tb++) = v+(*(t+2))*3;
-                
-                add3f(tb[-1],tb[-4],sum);
-                add3f(sum,tb[-7],sum);
+              
+                add3f(tb[-1],tb[-3],sum);
+                add3f(sum,tb[-5],sum);
 
                 *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
                 n_tri++;
               }
-            t+=3;
-          }
-        }
+              t+=3;
+            
+            }
+          } else {
+            while(c--) {
+              if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
+                if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))) {
+                
+                  *(tb++) = vc+(*t)*3;
+                  *(tb++) = vn+(*t)*3;
+                  *(tb++) = v+(*t)*3;
 
-        switch(t_mode) {
-        case 1:
-          UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);
-          break;
-        default:
-          UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
-          break;
-        }
+                  *(tb++) = vc+(*(t+1))*3;
+                  *(tb++) = vn+(*(t+1))*3;
+                  *(tb++) = v+(*(t+1))*3;
 
-        c=n_tri;
-        if(I->oneColorFlag) {
-          col=ColorGet(I->oneColor);
-          
-          glColor4f(col[0],col[1],col[2],alpha);
-          glBegin(GL_TRIANGLES);
-          for(c=0;c<n_tri;c++) {
-            
-            tb = t_buf+6*ix[c];
-            
-            glNormal3fv(*(tb++));
-            glVertex3fv(*(tb++));
-            glNormal3fv(*(tb++));
-            glVertex3fv(*(tb++));
-            glNormal3fv(*(tb++));
-            glVertex3fv(*(tb++));
+                  *(tb++) = vc+(*(t+2))*3;
+                  *(tb++) = vn+(*(t+2))*3;
+                  *(tb++) = v+(*(t+2))*3;
+                
+                  add3f(tb[-1],tb[-4],sum);
+                  add3f(sum,tb[-7],sum);
+
+                  *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
+                  n_tri++;
+                }
+              t+=3;
+            }
           }
-          glEnd();
-        } else {
-          glBegin(GL_TRIANGLES);
-          for(c=0;c<n_tri;c++) {
-            float *vv;
-            
-            tb = t_buf+9*ix[c];
-            
-            vv = *(tb++);
-            
-            glColor4f(vv[0],vv[1],vv[2],alpha);
-            glNormal3fv(*(tb++));
-            glVertex3fv(*(tb++));
-            
-            vv = *(tb++);
-            glColor4f(vv[0],vv[1],vv[2],alpha);
-            glNormal3fv(*(tb++));
-            glVertex3fv(*(tb++));
-            
-            vv = *(tb++);
-            glColor4f(vv[0],vv[1],vv[2],alpha);
-            glNormal3fv(*(tb++));
-            glVertex3fv(*(tb++));
-            
-          }
-          glEnd();
-        }
         
-        FreeP(ix);
-        FreeP(z_value);
-        FreeP(t_buf);
-        } else {
+          switch(t_mode) {
+          case 1:
+            UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);
+            break;
+          default:
+            UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
+            break;
+          }
+
+          c=n_tri;
+          if(I->oneColorFlag) {
+            col=ColorGet(I->oneColor);
+          
+            glColor4f(col[0],col[1],col[2],alpha);
+            glBegin(GL_TRIANGLES);
+            for(c=0;c<n_tri;c++) {
+            
+              tb = t_buf+6*ix[c];
+            
+              glNormal3fv(*(tb++));
+              glVertex3fv(*(tb++));
+              glNormal3fv(*(tb++));
+              glVertex3fv(*(tb++));
+              glNormal3fv(*(tb++));
+              glVertex3fv(*(tb++));
+            }
+            glEnd();
+          } else {
+            glBegin(GL_TRIANGLES);
+            for(c=0;c<n_tri;c++) {
+              float *vv;
+            
+              tb = t_buf+9*ix[c];
+            
+              vv = *(tb++);
+            
+              glColor4f(vv[0],vv[1],vv[2],alpha);
+              glNormal3fv(*(tb++));
+              glVertex3fv(*(tb++));
+            
+              vv = *(tb++);
+              glColor4f(vv[0],vv[1],vv[2],alpha);
+              glNormal3fv(*(tb++));
+              glVertex3fv(*(tb++));
+            
+              vv = *(tb++);
+              glColor4f(vv[0],vv[1],vv[2],alpha);
+              glNormal3fv(*(tb++));
+              glVertex3fv(*(tb++));
+            
+            }
+            glEnd();
+          }
+        
+          FreeP(ix);
+          FreeP(z_value);
+          FreeP(t_buf);
+        } else { /* fast and ugly */
+          glCullFace(GL_BACK);
+          glEnable(GL_CULL_FACE);
+          glDepthMask(GL_FALSE);
           if(I->allVisibleFlag) {
             if(I->oneColorFlag) {
               col = ColorGet(I->oneColor);
@@ -369,6 +372,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               glEnd();
             }
           }
+          glDisable(GL_CULL_FACE);
+          glDepthMask(GL_TRUE);
         }
       } else { /* opaque */
         if(I->allVisibleFlag) {
