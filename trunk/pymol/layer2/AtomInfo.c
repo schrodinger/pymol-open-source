@@ -819,7 +819,18 @@ void AtomInfoAssignParameters(AtomInfoType *I)
       vdw=1.8F;
       break;
     }
-
+  if(SettingGet(cSetting_legacy_vdw_radii)) { /* ver<0.75, old, incorrect VDW */
+    if(!strcmp(e,"N")) vdw=1.8; /* slow but compact */
+    if(!strcmp(e,"C")) vdw=1.8;
+    if(!strcmp(e,"Cl")) vdw=1.8;
+    if(!strcmp(e,"O")) vdw=1.5;
+    if(!strcmp(e,"Br")) vdw=1.9;
+    if(!strcmp(e,"I")) vdw=2.15;
+    if(!strcmp(e,"S")) vdw=1.9;
+    if(!strcmp(e,"P")) vdw=1.9;
+    if(!strcmp(e,"F")) vdw=1.35;
+    if(!strcmp(e,"H")) vdw=1.1;
+  }
   e = I->elem;
   if(!e[1]) { /* single letter */
     switch(e[0]) {

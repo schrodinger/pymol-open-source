@@ -1213,6 +1213,10 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_sculpt_field_mask, (float)0x3F );  
 
   SettingSet_f(I,cSetting_sculpt_hb_overlap, 1.0F);
+
   SettingSet_f(I,cSetting_sculpt_hb_overlap_base, 0.35F);
+
+  SettingSet_f(I,cSetting_legacy_vdw_radii, 0.0F);  
+
 
 }
