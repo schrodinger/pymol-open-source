@@ -102,7 +102,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
     }
 
     ray->fTransparentf(ray,0.0);
-  } else if(pick&&PMGUI) {
+  } else if(pick&&I->R.G->HaveGUI) {
 
   PRINTFD(I->R.G,FB_RepCylBond)
     " RepCylBondRender: rendering pickable...\n"
@@ -178,7 +178,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 	 }
 	 (*pick)[0].index = i; /* pass the count */
 
-  } else if(PMGUI) {
+  } else if(I->R.G->HaveGUI) {
     
     int use_dlst;
     use_dlst = (int)SettingGet(I->R.G,cSetting_use_display_lists);

@@ -86,8 +86,8 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
       c-=2;
 	 }
 
-  } else if(pick&&PMGUI) {
-  } else if(PMGUI) {
+  } else if(pick&&G->HaveGUI) {
+  } else if(G->HaveGUI) {
 	 
     int use_dlst;
     use_dlst = (int)SettingGet(G,cSetting_use_display_lists);

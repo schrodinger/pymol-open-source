@@ -517,7 +517,7 @@ void PopUpDraw(Block *block)
   char *c;
 
   
-  if(PMGUI) {
+  if(G->HaveGUI) {
 
   if((I->Child)&&(I->Selected!=I->ChildLine))
     MainDragDirty();
@@ -645,9 +645,9 @@ void PopUpDraw(Block *block)
     for(a=0;a<I->NLine;a++)
       {
         if(a==I->Selected)
-          glColor3fv(I->Block->BackColor);
+          TextSetColor(G,I->Block->BackColor);
         else
-          glColor3fv(I->Block->TextColor);          
+          TextSetColor(G,I->Block->TextColor);          
         if(I->Code[a]) {
           c=I->Text[a];
           xx=x;
@@ -655,20 +655,21 @@ void PopUpDraw(Block *block)
             if(*c=='\\') if(*(c+1)) if(*(c+2)) if(*(c+3)) {
               if(*(c+1)=='-') {
                 if(a==I->Selected)
-                  glColor3fv(I->Block->BackColor);
+                  TextSetColor(G,I->Block->BackColor);
                 else
-                  glColor3fv(I->Block->TextColor);          
+                  TextSetColor(G,I->Block->TextColor);          
                 c+=4;
               } else if(*(c+1)=='+') {
                 c+=4;                
-                glColor3fv(ColorGetNamed(G,c));
+                TextSetColor(G,ColorGetNamed(G,c));
               }else {
-                glColor3f((*(c+1)-'0')/9.0F,(*(c+2)-'0')/9.0F,(*(c+3)-'0')/9.0F);
+                TextSetColor3f(G,(*(c+1)-'0')/9.0F,(*(c+2)-'0')/9.0F,(*(c+3)-'0')/9.0F);
                 c+=4;
               }
             }
-            glRasterPos4d((double)(xx),(double)(y+cPopUpCharLift),0.0,1.0);
-            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+
+            TextSetPos2i(G,xx,y+cPopUpCharLift);
+            TextDrawChar(G,*(c++));
             xx = xx + 8;
           }
 

@@ -38,7 +38,7 @@ struct _CText {
   ActiveRec *Active;
   float Pos[4];
   float Color[4];
-
+  int Default_ID;
 };
 
 void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color)
@@ -49,10 +49,45 @@ void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color)
   I->Pos[3]=1.0F;
   I->Color[3]=1.0F;
 }
+void TextAdvance(PyMOLGlobals *G,float advance)
+{
+  G->Text->Pos[0]+=advance;
+}
+
 void TextSetPos(PyMOLGlobals *G,float *pos)
 {
   register CText *I=G->Text;
   copy3f(pos,I->Pos);
+  I->Pos[3]=1.0F;
+}
+
+void TextDrawSubStrFast(PyMOLGlobals *G,char *c,int x,int y,int start,int n)
+{
+  c+=start;
+  TextSetPos2i(G,x,y);
+  if(n)
+    while(*c) {
+      n--;
+      TextDrawChar(G,*(c++));
+      if(n<=0) break;
+    }
+}
+
+void TextSetPos2i(PyMOLGlobals *G,int x,int y)
+{
+  register CText *I=G->Text;
+  I->Pos[0]=(float)x;
+  I->Pos[1]=(float)y;
+  I->Pos[2]=0.0F;
+  I->Pos[3]=1.0F;
+}
+
+static void TextSetPos3f(PyMOLGlobals *G,float x,float y, float z)
+{
+  register CText *I=G->Text;
+  I->Pos[0]=x;
+  I->Pos[1]=y;
+  I->Pos[2]=z;
   I->Pos[3]=1.0F;
 }
 void TextSetColor(PyMOLGlobals *G,float *color)
@@ -62,6 +97,14 @@ void TextSetColor(PyMOLGlobals *G,float *color)
   I->Color[3]=1.0F;
 }
 
+void TextSetColor3f(PyMOLGlobals *G,float red, float green, float blue)
+{
+  register CText *I=G->Text;
+  I->Color[0]=red;
+  I->Color[1]=green;
+  I->Color[2]=blue;
+  I->Color[3]=1.0F;
+}
 float *TextGetPos(PyMOLGlobals *G)
 {
   register CText *I=G->Text;
@@ -107,6 +150,27 @@ char *TextRenderOpenGL(PyMOLGlobals *G,int text_id,char *st)
   return st;
 }
 
+void TextDrawStrAt(PyMOLGlobals *G,char *st, int x, int y)
+{
+  register CText *I=G->Text;
+  TextSetPos3f(G, (float)x, (float)y, 0.0F);
+  TextRenderOpenGL(G,I->Default_ID,st);
+}
+
+void TextDrawStr(PyMOLGlobals *G,char *st)
+{
+  register CText *I=G->Text;
+  TextRenderOpenGL(G,I->Default_ID,st);
+}
+
+void TextDrawChar(PyMOLGlobals *G,char ch)
+{
+  char st[2] = { ch , 0 };
+  register CText *I=G->Text;
+  TextRenderOpenGL(G,I->Default_ID,st);
+}
+
+
 char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st)
 {
   register CText *I=G->Text;
@@ -134,7 +198,8 @@ int TextInit(PyMOLGlobals *G)
 
     I->NActive = 0;
     I->Active = VLACalloc(ActiveRec,10);
-  
+    I->Default_ID = 0;
+
     /* font 0 is old reliable GLUT 8x13 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);

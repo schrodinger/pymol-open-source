@@ -65,12 +65,12 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
     else if(I->std)
       CGORenderRay(I->std,ray,NULL,I->R.cs->Setting,
                    I->R.obj->Setting);    
-  } else if(pick&&PMGUI) {
+  } else if(pick&&I->R.G->HaveGUI) {
     if(I->std) {
       CGORenderGLPickable(I->std,pick,I->R.obj,
                           I->R.cs->Setting,I->R.obj->Setting);
     }
-  } else if(PMGUI) {
+  } else if(I->R.G->HaveGUI) {
     
     int use_dlst;
     use_dlst = (int)SettingGet(I->R.G,cSetting_use_display_lists);

@@ -88,6 +88,8 @@ struct _PyMOLGlobals {
   CTexture  *Texture;
   OVContext *Context;
 
+  int     HaveGUI;
+
 };
 
 /* the following transitional global will disappear once we've

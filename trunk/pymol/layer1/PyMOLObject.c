@@ -183,7 +183,7 @@ void ObjectPrepareContext(CObject *I,CRay *ray)
   if(ray) {
     RaySetTTT(ray,I->TTTFlag,I->TTT);
   } else {
-    if(PMGUI) {
+    if(I->G->HaveGUI) {
       if(I->TTTFlag) {
         /* form standard 4x4 GL matrix with TTT rotation and 2nd translation */
         ttt=I->TTT;
@@ -291,7 +291,7 @@ int ObjectGetNFrames(CObject *I)
 /*========================================================================*/
 void ObjectUseColor(CObject *I)
 {
-  if(PMGUI) glColor3fv(ColorGet(I->G,I->Color));
+  if(I->G->HaveGUI) glColor3fv(ColorGet(I->G,I->Color));
 }
 /*========================================================================*/
 static void ObjectInvalidate(CObject *this,int rep,int level,int state)
@@ -330,7 +330,7 @@ void ObjectInit(PyMOLGlobals *G,CObject *I)
 void ObjectRenderUnitBox(CObject *this,int frame,
                          CRay *ray,Pickable **pick,int pass)
 {
-  if(PMGUI) {
+  if(this->G->HaveGUI) {
     glBegin(GL_LINE_LOOP);
     glVertex3i(-1,-1,-1);
     glVertex3i(-1,-1, 1);

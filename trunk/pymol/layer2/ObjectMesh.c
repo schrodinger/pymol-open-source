@@ -228,7 +228,7 @@ PyObject *ObjectMeshAsPyList(ObjectMesh *I)
 
 static void ObjectMeshStateFree(ObjectMeshState *ms)
 {
-  if(PMGUI) {
+  if(ms->G->HaveGUI) {
     if(ms->displayList) {
       if(PIsGlutThread()) {
         glDeleteLists(ms->displayList,1);
@@ -501,6 +501,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
 
 static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,int pass)
 {
+  PyMOLGlobals *G = I->Obj.G;
   float *v = NULL;
   float *vc;
   float radius;
@@ -583,8 +584,8 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
                 }
             }
           }
-        } else if(pick&&PMGUI) {
-        } else if(PMGUI) {
+        } else if(pick&&G->HaveGUI) {
+        } else if(G->HaveGUI) {
           if(!pass) {
 
             int use_dlst;
@@ -672,6 +673,7 @@ ObjectMesh *ObjectMeshNew(PyMOLGlobals *G)
 /*========================================================================*/
 void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
 {
+  ms->G = G;
   if(!ms->V) {
     ms->V = VLAlloc(float,10000);
   }

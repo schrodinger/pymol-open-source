@@ -1117,9 +1117,11 @@ static void draw_string(float *v,char *l)
     glColor3f(1.0,0.0,0.5);
     glRasterPos4f(v[0],v[1],v[2],1.0);
   }
+  
   while(*l) {
-    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(l++));
+    p_glutBi tmapChar acter(P_GLUT_BITMAP_8_BY_13,*(l++));
   }
+
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);	 
 }
@@ -1142,7 +1144,7 @@ void EditorRender(PyMOLGlobals *G,int state)
       " EditorRender-Debug: rendering...\n"
       ENDFD;
 
-    if(PMGUI) {
+    if(G->HaveGUI) {
       
       sele1 = SelectorIndexByName(G,cEditorSele1);
       sele2 = SelectorIndexByName(G,cEditorSele2);

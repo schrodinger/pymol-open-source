@@ -605,21 +605,21 @@ static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, 
 
 }
 
-static void draw_text(char *c,int xx,int yy,float *color)
+static void draw_text(PyMOLGlobals *G,char *c,int xx,int yy,float *color)
 {
-  glColor3fv(color);
+  TextSetColor(G,color);
   while(*c) {
     if(*c=='\\') if(*(c+1)) if(*(c+2)) if(*(c+3)) {
       if(*(c+1)=='-') {
-        glColor3fv(color);
+        TextSetColor(G,color);
         c+=4;
       } else {
-        glColor3f((*(c+1)-'0')/9.0F,(*(c+2)-'0')/9.0F,(*(c+3)-'0')/9.0F);
+        TextSetColor3f(G,(*(c+1)-'0')/9.0F,(*(c+2)-'0')/9.0F,(*(c+3)-'0')/9.0F);
         c+=4;
       }
     }
-    glRasterPos4d((double)(xx),(double)(yy),0.0,1.0);
-    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+    TextSetPos2i(G,xx,yy);
+    TextDrawChar(G,*(c++));
     xx = xx + 8;
   }
 }
@@ -653,7 +653,7 @@ static void WizardDraw(Block *block)
 
   text_color = menuColor;
 
-  if(PMGUI) {
+  if(G->HaveGUI) {
     glColor3fv(I->Block->BackColor);
     BlockFill(I->Block);
     
@@ -705,7 +705,7 @@ static void WizardDraw(Block *block)
           break;
         }
       }
-      draw_text(I->Line[a].text,x+1,y+text_lift,text_color);
+      draw_text(G,I->Line[a].text,x+1,y+text_lift,text_color);
       /*GrapDrawStr(I->Line[a].text,x+1,y+text_lift);*/
       y-=LineHeight;
     }

@@ -265,8 +265,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       FreeP(cache);
     }
     ray->fTransparentf(ray,0.0);
-  } else if(pick&&PMGUI) {
-  } else if(PMGUI) {
+  } else if(pick&&G->HaveGUI) {
+  } else if(G->HaveGUI) {
     
     if(I->debug)
       CGORenderGL(I->debug,NULL,NULL,NULL);
@@ -1237,7 +1237,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     I->oneColorFlag=true;
     I->oneColor=surface_color;
   }
-  if(PMGUI) {
+  if(G->HaveGUI) {
     if(I->R.displayList) {
       if(PIsGlutThread()) {
         glDeleteLists(I->R.displayList,1);

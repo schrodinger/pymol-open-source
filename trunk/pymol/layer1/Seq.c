@@ -22,9 +22,9 @@ Z* -------------------------------------------------------------------
 #include "main.h"
 #include "ScrollBar.h"
 #include "MemoryDebug.h"
-#include "Grap.h"
 #include "PyMOLObject.h"
 #include "Scene.h"
+#include "Text.h"
 
 #include "Seeker.h"
 
@@ -297,7 +297,7 @@ static void SeqDraw(Block *block)
   PyMOLGlobals *G=block->G;
   register CSeq *I=G->Seq;
   
-  if(PMGUI) {
+  if(block->G->HaveGUI) {
     int x = I->Block->rect.left;
     int y = I->Block->rect.bottom+I->ScrollBarMargin+1;
     float *bg_color,overlay_color[3] = {1.0F,1.0F,1.0F};
@@ -351,7 +351,7 @@ static void SeqDraw(Block *block)
       /* draw titles */
 
       cur_color = overlay_color;
-      glColor3fv(cur_color);
+      TextSetColor(G,cur_color);
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
         yy=y1-2;
@@ -363,7 +363,7 @@ static void SeqDraw(Block *block)
           pix_wid = I->CharWidth * ch_wid;
           tot_len = col->offset+ch_wid-I->NSkip;
           if(tot_len<=vis_size) {
-            GrapDrawSubStrFast(row->txt,xx,y1,
+            TextDrawSubStrFast(G,row->txt,xx,y1,
                                col->start,ch_wid);
           }
         }
@@ -396,10 +396,16 @@ static void SeqDraw(Block *block)
             pix_wid = I->CharWidth * ch_wid;
             tot_len = col->offset+ch_wid-I->NSkip;
             if(tot_len<=vis_size) {
-              if(row->label_flag)
+              if(row->label_flag) {
+                TextSetColor(G,cur_color);
                 glColor3fv(cur_color);
-              else 
-                glColor3fv(ColorGet(G,col->color));
+
+              }
+              else {
+                float *v = ColorGet(G,col->color);
+                TextSetColor(G,v);
+                glColor3fv(v);
+              }
               if(col->inverse) {
                 glBegin(GL_POLYGON);
                 glVertex2i(xx,yy);
@@ -407,13 +413,11 @@ static void SeqDraw(Block *block)
                 glVertex2i(xx+pix_wid,yy+I->LineHeight-1);
                 glVertex2i(xx+pix_wid,yy);
                 glEnd();
-                glColor3fv(black);
-                GrapDrawSubStrFast(row->txt,xx,y1,
-                                   col->start,ch_wid);
-              } else {
-                GrapDrawSubStrFast(row->txt,xx,y1,
-                                   col->start,ch_wid);
+                TextSetColor(G,black);
               }
+              TextDrawSubStrFast(G,row->txt,xx,y1,
+                                 col->start,ch_wid);
+              
             }
           }
         }
@@ -593,7 +597,7 @@ int SeqInit(PyMOLGlobals *G)
   I->LineHeight = 13;
   I->CharMargin = 2;
   I->LastRow=-1;
-  I->CharWidth = GrapMeasureStr(" ");
+  I->CharWidth = 8;
   return 1;
   }
   else 

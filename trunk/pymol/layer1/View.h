@@ -53,6 +53,7 @@ int ViewElemVLAFromPyList(PyObject *list, CViewElem **vla, int nFrame);
 PyObject *ViewElemVLAAsPyList(CViewElem *vla, int nFrame);
 
 typedef struct CView {
+  PyMOLGlobals *G;
   int NView;
   CViewElem *View;
 

@@ -58,7 +58,6 @@ extern int PyMOLTerminating; /* flag to help prevent crashes on shutdown with Wi
    PyMOLOption global -- they exist here as independent globals only
    because changes haven't yet been made throughout code */
 
-extern int PMGUI;
 extern int StereoCapable;
 extern int Security;
 extern int ExternalGUI;

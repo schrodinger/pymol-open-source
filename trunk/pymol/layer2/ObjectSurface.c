@@ -221,7 +221,7 @@ PyObject *ObjectSurfaceAsPyList(ObjectSurface *I)
 
 static void ObjectSurfaceStateFree(ObjectSurfaceState *ms)
 {
-  if(PMGUI) {
+  if(ms->G->HaveGUI) {
     if(ms->displayList) {
       if(PIsGlutThread()) {
         glDeleteLists(ms->displayList,1);
@@ -401,6 +401,7 @@ static int ZRevOrderFn(float *array,int l,int r)
 
 static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **pick,int pass)
 {
+  PyMOLGlobals *G = I->Obj.G;
   float *v = NULL;
   float *vc;
   float *col;
@@ -412,7 +413,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
 
   ObjectPrepareContext(&I->Obj,ray);
 
-  alpha = SettingGet_f(I->Obj.G,NULL,I->Obj.Setting,cSetting_transparency);
+  alpha = SettingGet_f(G,NULL,I->Obj.Setting,cSetting_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
@@ -428,7 +429,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
     } else {
       if(!ms) {
         if(I->NState&&
-           ((SettingGet(I->Obj.G,cSetting_static_singletons)&&(I->NState==1))))
+           ((SettingGet(G,cSetting_static_singletons)&&(I->NState==1))))
           ms=I->State;
       }
     }
@@ -438,14 +439,14 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
         n=ms->N;
         if(ray) {
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.G,I->Obj.Color),
+            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(G,I->Obj.Color),
                          I->Obj.Setting,NULL);
 
 
           ray->fTransparentf(ray,1.0F-alpha);       
-          ms->Radius=SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_radius);
+          ms->Radius=SettingGet_f(G,I->Obj.Setting,NULL,cSetting_mesh_radius);
           if(n&&v&&I->Obj.RepVis[cRepSurface]) {
-            vc = ColorGet(I->Obj.G,I->Obj.Color);
+            vc = ColorGet(G,I->Obj.Color);
             while(*n)
               {
                 c=*(n++);
@@ -485,8 +486,8 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
             
           }
           ray->fTransparentf(ray,0.0);
-        } else if(pick&&PMGUI) {
-        } else if(PMGUI) {
+        } else if(pick&&G->HaveGUI) {
+        } else if(G->HaveGUI) {
 
           int render_now = false;
           if(alpha>0.0001) {
@@ -497,14 +498,14 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
             int use_dlst;
 
             if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-              CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
+              CGORenderGL(ms->UnitCellCGO,ColorGet(G,I->Obj.Color),
                           I->Obj.Setting,NULL);
 
-            SceneResetNormal(I->Obj.G,false);
-            col = ColorGet(I->Obj.G,I->Obj.Color);
+            SceneResetNormal(G,false);
+            col = ColorGet(G,I->Obj.Color);
             glColor4f(col[0],col[1],col[2],alpha);
 
-            use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
+            use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
             if(use_dlst&&ms->displayList) {
               glCallList(ms->displayList);
             } else { 
@@ -525,7 +526,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                 
                   int t_mode;
 
-                  t_mode  = SettingGet_i(I->Obj.G,NULL,I->Obj.Setting,cSetting_transparency_mode);
+                  t_mode  = SettingGet_i(G,NULL,I->Obj.Setting,cSetting_transparency_mode);
                 
                   if(t_mode) { /* high quality (sorted) transparency? */
                   
@@ -593,7 +594,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                     
                     c=n_tri;
                     
-                    col=ColorGet(I->Obj.G,I->Obj.Color);
+                    col=ColorGet(G,I->Obj.Color);
                     
                     glColor4f(col[0],col[1],col[2],alpha);
                     glBegin(GL_TRIANGLES);
@@ -630,7 +631,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                       }
                   }
                 } else {
-                  glLineWidth(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width));
+                  glLineWidth(SettingGet_f(G,I->Obj.Setting,NULL,cSetting_mesh_width));
                   while(*n)
                     {
                       c=*(n++);
@@ -715,6 +716,7 @@ ObjectSurface *ObjectSurfaceNew(PyMOLGlobals *G)
 /*========================================================================*/
 void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms)
 {
+  ms->G = G;
   if(!ms->V) {
     ms->V = VLAlloc(float,10000);
   }

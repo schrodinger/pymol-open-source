@@ -58,6 +58,7 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
   int first,last;
   FontGLUTBitmapCharRec const *ch;
   int textured = SettingGetGlobal_b(G,cSetting_texture_fonts);
+  int pushed = OrthoGetPushed(G);
   if(st&&(*st)) {
     
     if(!textured) {
@@ -69,7 +70,9 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
     first = font_info->first;
     last = first + font_info->num_chars;
     
-    if(textured) {
+
+
+    if(textured && !pushed) {
       float *v = TextGetPos(G);
       float zero[3]= {0.0F,0.0F,0.0F};
       ScenePushRasterMatrix(G,v);
@@ -86,6 +89,7 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
               glBitmap(ch->width, ch->height, 
                      ch->xorig, ch->yorig,
                        ch->advance, 0, ch->bitmap);
+              TextAdvance(G,ch->advance);
             } else {
               CharFngrprnt fprnt;
               unsigned char *rgba;
@@ -99,19 +103,21 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
                 if(!id) {
                   id = CharacterNewFromBitmap(G,ch->width, 
                                               ch->height, 
-                                              ch->advance,
                                               (unsigned char*)ch->bitmap,
                                               &fprnt);
                 }
                 if(id) {
-                  CharacterRenderOpenGL(G,id);
+                  CharacterRenderOpenGL(G,id,
+                                        (float)ch->xorig,
+                                        (float)ch->yorig,
+                                        (float)ch->advance); /* handles advance */
                 }
               }
             }
           }
         }
     }
-    if(textured) {
+    if(textured && !pushed) {
       ScenePopRasterMatrix(G);
     }
     if(!textured) {
@@ -148,15 +154,14 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
               int id = CharacterFind(I->Font.G,&fprnt);
               if(!id) {
                 id = CharacterNewFromBitmap(I->Font.G,ch->width, 
-                                          ch->height, 
-                                            ch->advance,
-                                          (unsigned char*)ch->bitmap,
-                                          &fprnt);
+                                            ch->height, 
+                                            (unsigned char*)ch->bitmap,
+                                            &fprnt);
               }
                ray->fCharacter(ray,id,
                             (float)ch->xorig,
                             (float)ch->yorig,
-                            (float)ch->advance);
+                               (float)ch->advance); /* handles advance */
             }
           }
         }

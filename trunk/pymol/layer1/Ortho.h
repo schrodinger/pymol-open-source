@@ -48,6 +48,7 @@ void OrthoDoDraw(PyMOLGlobals *G);
 
 void OrthoPushMatrix(PyMOLGlobals *G);
 void OrthoPopMatrix(PyMOLGlobals *G);
+int OrthoGetPushed(PyMOLGlobals *G);
 
 int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod);
 
@@ -88,6 +89,7 @@ int  OrthoCommandWaiting(PyMOLGlobals *G);
 
 int OrthoTextVisible(PyMOLGlobals *G);
 void OrthoReshapeWizard(PyMOLGlobals *G,int height);
+
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 
