@@ -2349,7 +2349,7 @@ void ExecutiveWindowZoom(char *name,float buffer)
   }
 }
 /*========================================================================*/
-int ExecutiveCenter(char *name,int preserve,char *oname)
+int ExecutiveCenter(char *name,int preserve,char *oname,float *pos)
 {
   float center[3];
   float mn[3],mx[3];
@@ -2360,13 +2360,27 @@ int ExecutiveCenter(char *name,int preserve,char *oname)
     if(!obj)
       ok=false;
   }
-  if(ok) 
-    ok = ExecutiveGetExtent(name,mn,mx,(oname[0]==0));
   if(ok) {
-    average3f(mn,mx,center);
+    if(name[0]) {
+      ok = ExecutiveGetExtent(name,mn,mx,(oname[0]==0));
+      if(ok) 
+        average3f(mn,mx,center);
+    } else {
+      copy3f(pos,center)
+    }
+  }
+  if(ok) {
     if(obj) {
       ObjectSetTTTOrigin(obj,center);
+      PRINTFB(FB_Executive,FB_Blather)
+        " ExecutiveCenter: origin for %s set to %8.3f %8.3f %8.3f\n",
+        oname,center[0],center[1],center[2]
+        ENDFB;
     } else {
+      PRINTFB(FB_Executive,FB_Blather)
+        " ExecutiveCenter: scene origin set to %8.3f %8.3f %8.3f\n",
+        center[0],center[1],center[2]
+        ENDFB;
       SceneOriginSet(center,preserve);
     }
     SceneDirty();
