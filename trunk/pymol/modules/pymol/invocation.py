@@ -97,6 +97,8 @@ def parse_args(argv):
             options.external_gui=0
          if "s" in a:
             pass # stereo now autodetected
+         if "2" in a:
+            options.deferred.append("_do__ config_mouse two_button")
          if "q" in a:
             options.show_splash = 0
          if "i" in a:

@@ -19,6 +19,7 @@ from AbstractApp import AbstractApp
 from Setting import Setting
 from SetEditor import SetEditor
 from ColorEditor import ColorEditor
+from Demo import Demo
 
 import Pmw
 import sys, string
@@ -46,7 +47,7 @@ def complete(event,str,widget,self):
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.75'
+   appversion     = '0.77'
    appname       = 'PyMOL Molecular Graphics System'
    copyright      = 'Copyright (C) 1998-2001 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
@@ -368,6 +369,10 @@ class PMGApp(AbstractApp):
                   cmd.log("save %s,(%s)\n"%(sfile,sels[0]),
                           "cmd.save('%s','(%s)')\n"%(sfile,sels[0]))
                   cmd.save(sfile,"(%s)"%sels[0])
+
+   def hide_sele(self):
+      cmd.log("util.hide_sele()\n","util.hide_sele()\n")
+      util.hide_sele()
          
    def file_run(self):
       ofile = askopenfilename(initialdir = os.getcwd(),
@@ -407,117 +412,6 @@ class PMGApp(AbstractApp):
          self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
          cmd.log("mpng %s\n"%sfile,"cmd.mpng('%s')\n"%sfile)         
          cmd.mpng(sfile)
-
-   def demo1(self):
-      cmd.set("suspend_updates",1,quiet=1)
-      cmd.disable()
-      cmd.do("cd $PYMOL_PATH")
-      cmd.delete("pept")
-      cmd.delete("pept_dist")
-      cmd.load("test/dat/pept.pdb")
-      cmd.show("sticks","(pept and not i;5:7)")
-      cmd.show("surface","(pept and i;5,6)")
-      cmd.show("mesh","(pept and i;1,11,12,13)")
-      cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
-      cmd.show("dots","(i;8)")
-      cmd.dist("pept_dist","(pept and i;1&n;OD2)","(pept and i;13&n;OG1)")
-      cmd.set("dot_width","2");
-      cmd.set("suspend_updates",0,quiet=1)
-      
-   def demo2(self):
-      cmd.disable()
-      cmd.do("cd $PYMOL_PATH")
-      cmd.delete("cgo1")
-      cmd.delete("cgo2")
-      cmd.do("cd $PYMOL_PATH")
-      cmd.load("test/dat/pept.r3d","cgo1")
-      cmd.load("test/dat/3al1.r3d","cgo2")
-      cmd.zoom()
-
-   def demo3(self):
-      cmd.disable()
-      cmd.do("cd $PYMOL_PATH")
-      cmd.do("run examples/devel/cgo03.py")
-
-   def demo4(self):
-      cmd.disable()
-      cmd.delete("arg")
-      cmd.fragment("arg")
-      cmd.zoom("arg",2)
-      cmd.show("sticks","arg")
-      cmd.feedback('dis','sel','res')
-      for a in xrange(1,181):
-         cmd.set("suspend_updates",1,quiet=1)
-         cmd.edit("(arg and n;cd)","(arg and n;cg)")
-         cmd.torsion("6")
-         cmd.unpick()
-         cmd.edit("(arg and n;cb)","(arg and n;ca)")
-         cmd.torsion("2")
-         cmd.unpick()
-         cmd.set("suspend_updates",0,quiet=1)         
-         cmd.refresh()
-      cmd.feedback('ena','sel','res')
-
-   def demo5(self):
-      cmd.set("suspend_updates",1,quiet=1)
-      cmd.disable()
-      cmd.delete("1tii")      
-      cmd.load("$PYMOL_PATH/test/dat/1tii.pdb")
-      cmd.hide("(1tii)")
-      cmd.show("cartoon","1tii")
-      cmd.zoom("1tii")
-      util.color_chains("1tii")
-      cmd.set("suspend_updates",0,quiet=1)
-      cmd.refresh()
-
-   def demo6(self):
-      cmd.set("suspend_updates",1,quiet=1)
-      cmd.disable()
-      cmd.delete("trans")
-      cmd.load("$PYMOL_PATH/test/dat/pept.pdb","trans")
-      cmd.hide("(tran)")
-      cmd.show("surface","trans")
-      cmd.show("sticks","trans")
-      cmd.set("surface_color","white","trans")
-      cmd.set("transparency",0.5,"trans")
-      cmd.zoom("trans")
-      cmd.set("suspend_updates",0,quiet=1)
-      cmd.refresh()
-
-   def demo7(self):
-      cmd.set("suspend_updates",1,quiet=1)
-      cmd.disable()
-      cmd.delete("ray")
-      cmd.load("$PYMOL_PATH/test/dat/il2.pdb","ray")
-      cmd.remove("(ray and hydro)")
-      cmd.hide("lines","ray")
-      cmd.show("spheres","ray")
-      cmd.orient("ray")
-      cmd.turn("x",90)
-      util.ray_shadows('heavy')
-      cmd.set("suspend_updates",0,quiet=1)
-      cmd.refresh()
-      cmd.do("ray")
-
-   def demo8(self):
-      cmd.set("suspend_updates",1,quiet=1)
-      cmd.disable()
-      cmd.delete("sculpt")
-      cmd.load("$PYMOL_PATH/test/dat/pept.pdb","sculpt")
-      cmd.show("spheres","sculpt")
-      cmd.set("sphere_scale","0.5","sculpt")
-      cmd.set("sphere_transparency","0.5","sculpt")
-      cmd.set("sphere_color","grey","sculpt")
-      cmd.sculpt_activate("sculpt")
-      cmd.set("sculpting","1")
-      cmd.do("edit_mode")
-      cmd.set("valence","0.05")
-      cmd.set("suspend_updates",0,quiet=0)
-
-   def hide_sele(self):
-      cmd.log("util.hide_sele()\n","util.hide_sele()\n")
-      util.hide_sele()
-
    
    def createMenuBar(self):
       self.menuBar.addmenuitem('Help', 'command',
@@ -1184,13 +1078,39 @@ class PMGApp(AbstractApp):
       
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
-      self.menuBar.addmenuitem('Mouse', 'command', 'Visualization',
-                               label='Visualization',
-                               command = lambda: cmd.edit_mode("off"))
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button',
+                               label='3 Button',
+                               command = lambda: cmd.config_mouse('three_button'))
 
-      self.menuBar.addmenuitem('Mouse', 'command', 'Editing',
-                               label='Editing',
-                               command = lambda: cmd.edit_mode("on"))
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button',
+                               label='2 Button',
+                               command = lambda: cmd.config_mouse('two_button'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing',
+                               label='2 Button Editing',
+                               command = lambda: cmd.config_mouse('two_button_editing'))
+
+      self.menuBar.addmenuitem('Mouse', 'separator', '')
+
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Viewing',
+                               label='3 Button Viewing',
+                               command = lambda: cmd.mouse('three_button_viewing'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing',
+                               label='3 Button Editing',
+                               command = lambda: cmd.mouse('three_button_editing'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing',
+                               label='2 Button Viewing',
+                               command = lambda: cmd.mouse('two_button_viewing'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Selecting',
+                               label='2 Button Selecting',
+                               command = lambda: cmd.mouse('two_button_selecting'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing',
+                               label='2 Button Editing',
+                               command = lambda: cmd.mouse('two_button_editing'))
 
       self.menuBar.addmenu('Cartoon', 'Cartoon Properties')
 
@@ -1342,39 +1262,36 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenu('Demo', 'Demonstrations')
 
+      self.demo = Demo()
+      
       self.menuBar.addmenuitem('Demo', 'command', 'Representations',
                                label='Representations',
-                               command = self.demo1)
+                               command = lambda s=self:s.demo('rep'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Cartoon Ribbons',
                                label='Cartoon Ribbons',
-                               command = self.demo5)
+                               command = lambda s=self:s.demo('cartoon'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Transparency',
                                label='Transparency',
-                               command = self.demo6)
+                               command = lambda s=self:s.demo('trans'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Ray Tracing',
                                label='Ray Tracing',
-                               command = self.demo7)
+                               command = lambda s=self:s.demo('ray'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Sculpting',
                                label='Sculpting',
-                               command = self.demo8)
+                               command = lambda s=self:s.demo('sculpt'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Scripted Animation',
                                label='Scripted Animation',
-                               command = self.demo4)
+                               command = lambda s=self:s.demo('anime'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Molscript/Raster3D Input',
                                label='Molscript/Raster3D Input',
-                               command = self.demo2)
+                               command = lambda s=self:s.demo('raster3d'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Compiled Graphics Objects',
                                label='Compiled Graphics Objects',
-                               command = self.demo3)
-
-
-
-
-
+                               command = lambda s=self:s.demo('cgo'))

@@ -168,7 +168,7 @@ int PopUpConvertY(CPopUp *I,int value,int mode)
   } else {
     result = 0;
     flag=false;
-    /* line to height */
+    /* height to line */
     for(a=0;a<I->NLine;a++)
       {
         switch(I->Code[a]) {
@@ -187,6 +187,8 @@ int PopUpConvertY(CPopUp *I,int value,int mode)
         if(flag) break;
         result++;
       }
+    if(result&&!I->Code[result])
+      result--;
     /* height to line */
   }
   return(result);

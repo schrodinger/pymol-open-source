@@ -41,8 +41,9 @@ Z* -------------------------------------------------------------------
 #define cButModeRectAdd  19
 #define cButModeRectSub  20
 #define cButModeRect     21
+#define cButModeNone     22
 
-#define cButModeCount    22
+#define cButModeCount    23
 
 typedef char CodeType[25];
 

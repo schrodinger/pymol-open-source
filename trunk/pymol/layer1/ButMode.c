@@ -108,21 +108,6 @@ void ButModeInit(void)
   I->Rate=0.0;
   I->Samples = 0.0;
 
-  /* Outdated code below:  Mouse configuration now handled completely from Python
-     I->Mode[0]=cButModeRotXYZ;
-     I->Mode[1]=cButModeTransXY;
-     I->Mode[2]=cButModeTransZ;
-     I->Mode[3]=cButModeRotZ;
-     I->Mode[4]=cButModeTransXY;
-     I->Mode[5]=cButModeClipNF;
-     I->Mode[6]=cButModePk1;
-     I->Mode[7]=cButModePk2;
-     I->Mode[8]=cButModePk3;
-     I->Mode[9]=cButModeAddToPk1;
-     I->Mode[10]=cButModeOrigAt;
-     I->Mode[11]=cButModeAddToPk3;
-  */
-
   I->Caption[0] = 0;
 
   I->NCode = cButModeCount;
@@ -131,7 +116,7 @@ void ButModeInit(void)
   for(a=0;a<I->NBut;a++) {
     I->Mode[a]=-1;
   }
-    
+
   strcpy(I->Code[cButModeRotXYZ],  "Rota ");
   strcpy(I->Code[cButModeRotZ],    "RotZ ");  
   strcpy(I->Code[cButModeTransXY], "Move ");
@@ -154,6 +139,7 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeRectAdd], "+lBx ");
   strcpy(I->Code[cButModeRectSub], "-lBx ");
   strcpy(I->Code[cButModeRect],    "lbBx ");
+  strcpy(I->Code[cButModeNone],    "  -  ");
 
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ButModeClick;
@@ -210,13 +196,15 @@ int ButModeTranslate(int button, int mod)
 /*========================================================================*/
 int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
-  WordType buf1,buf2;
-  sprintf(buf1,"%1.4f",SettingGet(cSetting_valence_default));
-  SettingSetNamed("valence",buf1);
-  sprintf(buf2,"cmd.set('valence','%s')",buf1);
-  PLog(buf2,cPLog_pym);
-  PLog("cmd.edit_mode()",cPLog_pym);
-  OrthoCommandIn("edit_mode");
+  switch(mod) {
+  case cOrthoSHIFT:
+    PLog("cmd.mouse('backward')",cPLog_pym);
+    OrthoCommandIn("mouse backward");
+    break;
+  default:
+    PLog("cmd.mouse('forward')",cPLog_pym);
+    OrthoCommandIn("mouse forward");
+  }
   return(1);
 }
 /*========================================================================*/
