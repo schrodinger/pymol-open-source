@@ -87,8 +87,6 @@ Current and Ongoing Goals
 
 Main Goals for 1.0 Release
 
-   * Side-by-side stereo support: cross-eye and wall-eye
-
    * MOL2 and CML file formats
 
    * Generalized volumetric rendering: (1) mesh (2) solid (3) colormaps
@@ -97,17 +95,16 @@ Main Goals for 1.0 Release
 
    * Fully consistent API (defined and correct return values)
 
-   * Complete GLUT independence (internal character sets)
-
-   * Basic building support for biological polymers & small molecules
-     with and w/o hydrogens
-
 Current Bugs to Fix
 
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
 
 Changes up to 0.85
+   
+   * added automatic scroll bar for when you get too many objects/selections
+
+   * added handle to manually adjust internal gui width
 
    * updated OpenGL depth_cue setting to more closely match those of raytracer
 
