@@ -58,6 +58,7 @@ while 1:
    h.write(l)
 
 for l in [
+'H -N -DJ    50.0      120.00    WLD from C -N -H ',   
 'A -J3-C     50.0      120.00    WLD from C -N -H ',
 'C -J3-D4    50.0      121.90    WLD from C -N -CT',
 'CT-S -T2    68.0      103.70    WLD from CT-S -S ',
@@ -67,12 +68,8 @@ for l in [
 'D4-DJ-N     70.0      116.60    WLD from CT-C -N ',
 'DJ-N -CT    50.0      121.90    WLD from C -N -CT',
 'J3-C -O     80.0      122.90    WLD from N -C -O ',
-'N  DJ-Q1    80.0      122.90    WLD from N -C -O ',
-
-
-
-
-
+'N -DJ-Q1    80.0      122.90    WLD from N -C -O ',
+'N -DJ-DJ    70.0      120.00    WLD from CA-C -OH',
 ]:
    h.write(l+"\n")
 h.write("\n")
