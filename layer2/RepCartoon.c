@@ -1448,7 +1448,7 @@ ENDFD;
               c = refine;
               cross_product3f(vn+3-(sampling*9),vn+3-9,t0);
 
-              cross_product3f(vo-3,vo,t0);
+              cross_product3f(vo,vo+3,t0);
               if((sampling>1)&&length3f(t0)>R_SMALL4) {
 
                 normalize3f(t0);
