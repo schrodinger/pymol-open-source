@@ -688,9 +688,8 @@ Rep *RepWireBondNew(CoordSet *cs)
                           ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O'))))
                         s1 = s2 = 0; /* suppress C-O,OXT */
                     }
-                  }
                 }
-
+                
                 if(line_stick_helper) {
                   if(ati1->visRep[cRepCyl] && 
                      ati2->visRep[cRepCyl])
@@ -791,10 +790,11 @@ Rep *RepWireBondNew(CoordSet *cs)
                       
 						  }
 					 }
+              }
           }
       }
-
-	 I->V = ReallocForSure(I->V,float,(v-I->V));
+    
+    I->V = ReallocForSure(I->V,float,(v-I->V));
 
 	 /* now create pickable verson */
 
