@@ -776,7 +776,7 @@ def ss(selection="(name ca and alt '',A)",state=1): # NOT THREAD SAFE
 
    del pymol._ss # IMPORTANT
    cmd.delete(sss1)
-   
+   cmd.rebuild(selection,'cartoon')
    #
 #   print conn_hash.keys()
    print " util.ss: assignment complete."

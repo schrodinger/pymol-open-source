@@ -4894,29 +4894,32 @@ EXAMPLES
          unlock()
    return r
 
-def rebuild():
+def rebuild(selection='all',representation='everything'):
    '''
 DESCRIPTION
 
-   "rebuild" forces PyMOL to recreate all geometric objects in
+   "rebuild" forces PyMOL to recreate geometric objects in
    case any of them have gone out of sync.
 
 USAGE
    
-   rebuild
-
+   rebuild [selection [, representation ]]
+   
 PYMOL API
 
-   cmd.rebuild()
+   cmd.rebuild(string selection = 'all', string representation = 'everything')
 
 SEE ALSO
 
    refresh
 '''
    r = 1
+   selection = selector.process(selection)
+   representation = repres_sc.auto_err(representation,'representation')
+   repn = repres[representation];
    try:
       lock()
-      r = _cmd.rebuild()
+      r = _cmd.rebuild(selection,repn)
    finally:
       unlock()
 

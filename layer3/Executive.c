@@ -886,6 +886,9 @@ void ExecutiveRebuildAll(void)
 {
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
+  PRINTFD(FB_Executive)
+    " ExecutiveRebuildAll: entered.\n"
+    ENDFD;
   while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecObject) {
       if(rec->obj->type==cObjectMolecule) {
