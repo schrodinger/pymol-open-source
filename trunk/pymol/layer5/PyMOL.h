@@ -77,5 +77,6 @@ int PyMOL_GetSwap(CPyMOL *I, int reset);
 /* developer/transient privates */
 
 struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I);
+void PyMOL_RunTest(CPyMOL *I, int group, int test);
 
 #endif

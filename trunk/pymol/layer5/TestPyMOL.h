@@ -18,11 +18,6 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 
-typedef struct {
-  PyMOLGlobals *G;
-  int i;
-} CTestPyMOL;
-
-int TestPyMOLRun(PyMOLGlobals *G,CTestPyMOL *I,int group,int test);
+int TestPyMOLRun(PyMOLGlobals *G,int group,int test);
 
 #endif

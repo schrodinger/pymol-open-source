@@ -907,9 +907,6 @@ static void launch(CPyMOLOptions *options)
   PyMOLInstance = PyMOL_NewWithOptions(options);
   G = PyMOL_GetGlobals(PyMOLInstance);
 
-  G->HaveGUI = G->Option->pmgui;
-  G->Security = G->Option->security;
-
 #ifdef _PYMOL_OSX
   MacPyMOLOption = G->Option;
   MacPyMOLReady = &G->Ready;

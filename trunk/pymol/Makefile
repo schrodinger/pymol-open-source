@@ -65,6 +65,10 @@ ov:
 
 contrib: .contrib
 
+lib:  .includes .depends .update 
+	/bin/rm -f .update .includes
+	ar crv libPyMOL.a */*.o ov/src/*.o 
+
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
