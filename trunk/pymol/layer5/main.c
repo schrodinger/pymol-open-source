@@ -150,7 +150,6 @@ static void MainDraw(void)
   CMain *I = &Main;
 
   PLockAPIAsGlut();
-
   if(I->DirtyFlag) {
     I->DirtyFlag=false;
   }
