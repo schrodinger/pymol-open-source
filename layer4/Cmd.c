@@ -2346,7 +2346,7 @@ static PyObject *CmdExportDots(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&int1);
   if (ok) {
     APIEntry();
-    obj = ExportDots(str1,int1-1);
+    obj = ExportDots(str1,int1);
     APIExit();
     if(obj) 
       {
