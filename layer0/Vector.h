@@ -153,6 +153,7 @@ void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
 								int linear,int tLinear,float fxn);
 
 void transform3d3f ( oMatrix3d m1,float *v1,float *v2);
+void transform33d3f ( Matrix33d m1,float *v1,float *v2);
 void transform5f3f ( oMatrix5f m, float *v1, float *v2 );
 
 /* macros */

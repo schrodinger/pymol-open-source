@@ -15,7 +15,7 @@ Z* -------------------------------------------------------------------
 */
 #include"os_std.h"
 
-#include"err.h"
+#include"err2.h"
 
 void err_fatal(const char *where,const char *what)
 {
