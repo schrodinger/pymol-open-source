@@ -112,6 +112,10 @@ Changes up to 0.84
 
    * fixed bug with dumping of dot surfaces...
 
+   * fixed bug reading element identifer from PDB files
+
+   * fixed bug with alternate conformations
+
 Changes up to 0.83
 
    * various tweaks to the semistatic minimal dependencies build...

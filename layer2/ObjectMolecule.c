@@ -5948,10 +5948,14 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                 {
                                   flag=true;
                                   if(ai1->alt[0]!=ai2->alt[0]) { /* handle alternate conformers */
-                                    if(ai1->alt[0]&&ai2->alt)
-                                      if(AtomInfoAltMatch(ai1,ai2))
-                                        flag=false;
-                                  }
+                                    if(ai1->alt[0]&&ai2->alt[0])
+                                        flag=false; /* don't connect atoms with different, non-NULL
+                                                       alternate conformations */
+                                  } else if(ai1->alt[0]&&ai2->alt[0])
+                                    if(!AtomInfoSameResidue(ai1,ai2))
+                                      flag=false; /* don't connect non-NULL, alt conformations in 
+                                                     different residues */
+                                  if(ai1->alt[0]||ai2->alt[0]) 
                                   if(water_flag) /* hack to clean up water bonds */
                                     if(!AtomInfoSameResidue(ai1,ai2))
                                       flag=false;
@@ -6733,8 +6737,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                   ai->segi[0]=0;
                 else {
                   cc_saved=cc[3];
-                  p=ncopy(cc,p,4); 
-                  if((cc_saved=='1')&& /* atom ID overflow?...*/
+                  ncopy(cc,p,4); 
+                  if((cc_saved=='1')&& /* atom ID overflow? (nonstandard use...)...*/
                      (cc[0]=='0')&& 
                      (cc[1]=='0')&&
                      (cc[2]=='0')&&
@@ -6754,7 +6758,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           p=ncopy(cc,p,2);
           if(!sscanf(cc,"%s",ai->elem)) 
             ai->elem[0]=0;          
-          else if(!(((ai->elem[0]>='a')&&(ai->elem[0]<='z'))||
+          else if(!(((ai->elem[0]>='a')&&(ai->elem[0]<='z'))|| /* don't get confused by PDB misuse */
                     ((ai->elem[0]>='A')&&(ai->elem[0]<='Z'))))
             ai->elem[0]=0;                      
 
