@@ -149,6 +149,7 @@ int *SelectorApplyMultipick(Multipick *mp);
 #define SELE_QVLx ( 0x2200 | STYP_SEL2 | 0x70 )
 #define SELE_BYO1 ( 0x2300 | STYP_OPR1 | 0x10 )
 #define SELE_SSTs ( 0x2400 | STYP_SEL1 | 0x70 )
+#define SELE_STAs ( 0x2500 | STYP_SEL1 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -229,6 +230,7 @@ static WordKeyValue Keyword[] =
   {  "s;",       SELE_SEGs },
   {  "s.",       SELE_SEGs },
   {  "ss",       SELE_SSTs },
+  {  "state",    SELE_STAs },
   {  "model",    SELE_MODs },
   {  "m;",       SELE_MODs },
   {  "m.",       SELE_MODs },
@@ -2527,16 +2529,17 @@ int SelectorSelect0(EvalElem *base)
 /*========================================================================*/
 int SelectorSelect1(EvalElem *base)
 {
-  int a,model,sele,s;
+  int a,model,sele,s,at_idx;
   int c=0;
   int ok=true;
-  int rmin,rmax,rtest,index,numeric;
+  int rmin,rmax,rtest,index,numeric,state;
   int flag;
   char *p;
   char *np;
-
   SelectorType *I=&Selector;
-  ObjectMolecule *obj;
+  ObjectMolecule *obj,*cur_obj = NULL;
+  CoordSet *cs=NULL;
+
   base->type=STYP_LIST;
   base->sele=Alloc(int,I->NAtom);
   PRINTFD(FB_Selector)
@@ -2624,7 +2627,8 @@ int SelectorSelect1(EvalElem *base)
       WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
-			 if(WordMatchComma(base[1].text,I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].segi,I->IgnoreCase)<0)
+			 if(WordMatchComma(base[1].text,
+              I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].segi,I->IgnoreCase)<0)
 				{
 				  base[0].sele[a]=true;
 				  c++;
@@ -2662,6 +2666,48 @@ int SelectorSelect1(EvalElem *base)
 			 else
 				base[0].sele[a]=false;
         }
+		break;
+	 case SELE_STAs:
+      sscanf(base[1].text,"%d",&state);
+      state = state - 1;
+      obj = NULL;
+      
+      if(state<0) {
+        for(a=0;a<I->NAtom;a++)
+          base[0].sele[a]=false;
+      } else {
+        for(a=0;a<I->NAtom;a++)
+          {
+            base[0].sele[a]=false;
+            obj = I->Obj[I->Table[a].model];
+            if(obj!=cur_obj) { /* different object */
+              if(state>=obj->NCSet)
+                flag=false;
+              if(!obj->CSet[state]) 
+                flag=false;
+              else {
+                cs = obj->CSet[state];
+                flag=true; /* valid state */
+              }
+              cur_obj = obj;
+            }
+            if(flag) {
+              at_idx = I->Table[a].atom;
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[at_idx]) {
+                  if(obj->DiscreteAtmToIdx[at_idx]>=0) {
+                    base[0].sele[a]=true;
+                    c++;
+                  }
+                }
+              } else {
+              } if(cs->AtmToIdx[at_idx]>=0) {
+                base[0].sele[a]=true;
+                c++;
+              }
+            }
+          }
+      }
 		break;
 	 case SELE_ALTs:
       WordPrimeCommaMatch(base[1].text);
