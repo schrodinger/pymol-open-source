@@ -1,0 +1,40 @@
+
+PyMOL Developer Notice
+======================
+
+There are three ways in which you can contribute to the 
+PyMOL Molecular Graphics Project as a developer.
+
+(1) Work on the main source tree.  As a simple matter of practicality,
+you must also transfer copyright of such changes to DeLano Scientific
+and attach no conditions to your work beyond those specified in the
+PyMOL LICENSE file.  Essentially you are giving everyone the right to
+use your code for all purposes without restriction.  This is core to
+the PyMOL open-source philosophy, and no exceptions will be made. 
+
+(2) Develop self-contained functionality that can become part of the
+contrib directory.  Here you can retain your own copyright to your
+code, but you must still make the donation under the "Python" license
+or an equivalent.  Again, you must give everyone the right to use your
+code for all purposes without restriction, and there will be no
+exceptions.
+
+(3) Develop independent functionality which makes use of the PyMOL
+Python API.  Here your code need not become part of the PyMOL
+distribution, and you can attach whatever restrictions you would like
+to usage of your code.  However, if you want your code to become part
+of the official PyMOL distribution, you will need to release it under
+the "Python" license or an equivalent.
+
+These are draft rules.  I'd appreciate any feedback and comments
+(email to warren@delanoscientific.com).  However, I am absolutely
+opposed to restricting PyMOL to GPL, so don't even ask.  Contrary to
+Richard Stallman and the "Free" Software Foundation
+(http://www.fsf.org), I believe that the open-source movement will
+benefit from source code with fewer restrictions, not more!
+
+PyMOL, like Python, is truly free and open-source.  
+
+
+
+
