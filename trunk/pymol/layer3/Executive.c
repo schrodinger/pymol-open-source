@@ -5850,7 +5850,8 @@ int ExecutiveGetCameraExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int 
 }
 
 /*========================================================================*/
-int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state,int weighted)
+int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
+                       int transformed,int state,int weighted)
 {
   int sele;
   ObjectMoleculeOpRec op,op2;
@@ -5872,7 +5873,6 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transf
     copy3f(mn,mx);
     return 1;
   }
-  if(state==-2) state=SceneGetState(G);
 
   PRINTFD(G,FB_Executive)
     " ExecutiveGetExtent: name %s state %d\n",name,state
@@ -5880,6 +5880,13 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transf
 
   ObjectMoleculeOpRecInit(&op);
   ObjectMoleculeOpRecInit(&op2);  
+
+  if(state==-2) { /* we want the currently displayed state */
+    state=SceneGetState(G);
+    op.include_static_singletons = true; /* make sure we get the static singletons too */
+    op2.include_static_singletons = true;
+  }
+
   op2.i1 = 0;
   op2.v1[0]=-1.0;
   op2.v1[1]=-1.0;
@@ -6206,16 +6213,18 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
 }
 /*========================================================================*/
 int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
-                    int origin,int animate)
+                    int origin,int animate, float *pos)
 {
   float center[3];
   float mn[3],mx[3],df[3];
   int sele0;
   int ok=true;
-
-  if(ExecutiveGetExtent(G,name,mn,mx,true,state,true)) {
+  int have_center = false;
+  
+  if(name && ExecutiveGetExtent(G,name,mn,mx,true,state,true)) {
     subtract3f(mx,mn,df);
     average3f(mn,mx,center);
+    have_center = true;
     PRINTFD(G,FB_Executive)
       " ExecutiveCenter: centering state %d\n",state
       ENDFD;
@@ -6223,10 +6232,14 @@ int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
       " ExecutiveCenter: on center %8.3f %8.3f %8.3f...\n",center[0],
       center[1],center[2]
       ENDFD;
-
+  } else if(pos) {
+    have_center = true;
+    copy3f(pos,center);
+  }
+  if(have_center) {
     if(animate<0)
       animate=SettingGetGlobal_b(G,cSetting_animation);
-
+    
     if(animate)
       ScenePrimeAnimation(G);
     if(origin) 
@@ -6257,21 +6270,25 @@ int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *p
   float mn[3],mx[3];
   int ok=true;
   CObject *obj = NULL;
-  if(oname[0]) {
+  int have_center = false;
+  if(oname && oname[0]) {
     obj = ExecutiveFindObjectByName(G,oname);
     if(!obj)
       ok=false;
   }
   if(ok) {
-    if(name[0]) {
+    if(name && name[0]) {
       ok = ExecutiveGetExtent(G,name,mn,mx,(oname[0]==0),state,true);
-      if(ok) 
+      if(ok) {
         average3f(mn,mx,center);
-    } else {
-      copy3f(pos,center)
-        }
+        have_center = true;
+      }
+    } else if(pos) {
+      copy3f(pos,center);
+      have_center = true;
+    }
   }
-  if(ok) {
+  if(ok && have_center) {
     if(obj) {
       ObjectSetTTTOrigin(obj,center);
       PRINTFB(G,FB_Executive,FB_Blather)
@@ -7442,7 +7459,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   if(mod&cOrthoCTRL) {
                     ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,SettingGetGlobal_b(G,cSetting_animation));
                   } else {
-                    ExecutiveCenter(G,rec->name,-1,true,SettingGetGlobal_b(G,cSetting_animation));
+                    ExecutiveCenter(G,rec->name,-1,true,SettingGetGlobal_b(G,cSetting_animation),NULL);
                   }
                   if(!rec->visible) {
                     ExecutiveSpecSetVisibility(G,rec,!rec->visible,mod);
