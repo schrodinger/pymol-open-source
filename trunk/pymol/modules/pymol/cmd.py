@@ -1415,11 +1415,7 @@ USAGE
    '''
    if get_setting_legacy("internal_feedback")>0.1:
       set("text","1",quiet=1)
-   cmd = command
-   if kwhash.has_key(cmd):
-      cc = kwhash[cmd]
-      if cc:
-         cmd=cc
+   cmd = help_sc.auto_err(command,'topics')   
    if keyword.has_key(cmd):
       doc = keyword[cmd][0].__doc__
       if doc:
@@ -5988,6 +5984,8 @@ help_only = {  # for API-only features
    '@'             : [at_sign      , 0 , 0 , ',' , 0 ],  
 }
 
+help_sc = Shortcut(keyword.keys()+help_only.keys())
+
 repres = {
    'everything'    : -1,
    'sticks'        : 0,
@@ -6139,7 +6137,8 @@ auto_arg =[
    'delete' : [ selection_sc , 'selections','' ],
    'alter' : [ selection_sc , 'selections','' ],
    'iterate' : [ selection_sc , 'selections','' ],
-   'iterate_state' : [ selection_sc , 'selections','' ],      
+   'iterate_state' : [ selection_sc , 'selections','' ],
+   'help' : [ help_sc , 'selections','' ],         
    },
    {
    'feedback' : [ fb_module_sc , 'modules',', ' ],
