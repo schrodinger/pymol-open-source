@@ -179,10 +179,25 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * So long as they are zero, mesh_radius, line_radius, ribbon_radius, 
+     dot_radius, and dash_radius are now subordinated to mesh_width, 
+     line_width, ribbon_width, dot_width, and dash_width. If set to a 
+     non-zero value, they will take priority.
+
+     This behavior provides better WYSIWYG for raytracing, but will break
+     some scripts.
+
+   * fixed map_new ...,gaussian,... command and added options
+         gaussian_resolution
+         gaussian_b_adjust
+         gaussion_b_floor
+      default "map_new name" now creates a 2 A electron density map using
+      current atomic Q and B for direct comparison with experimental density
+
    * updated ray tracer to support edge oversampling -- Antialiased rendering
-     is now significantly faster for simple scenes and is enabled by
+     is now SIGNIFICANTLY FASTER for simple scenes and is now enabled by
      default. Full scene supersampling is no longer necessary in most cases, but
-     if activated, it will provide superior image quality over previous releases.
+     if activated, it will provide even better image quality.
 
      Antialias setting can now have values of 0-4:
        antialias 0: no antialiasing
@@ -190,7 +205,6 @@ Changes up to 0.91
        antialias 2: 2X full scene supersample plus edge oversampling
        antialias 3: 3X full scene supersample plus edge oversampling
        antialias 4: 4X full scene supersample plus edge oversampling
- 
 
    * restored CRLFs on Windows versions of PyMOL so that
      python code can be viewed/edited with Notepad, etc.

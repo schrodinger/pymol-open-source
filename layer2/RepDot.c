@@ -54,6 +54,14 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   int cc=0;
 
   if(ray) {
+    float radius;
+    
+    if(I->dotSize==0.0F) {
+      radius = ray->PixelRadius*I->Width;
+    } else {
+        radius = I->dotSize;
+    }
+
 	 while(c--)
 		{
 		  if(!cc) /* load up the current vertex color */
@@ -63,7 +71,7 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 				v+=3;
 			 }
 		  v+=3;
-		  ray->fSphere3fv(ray,v,I->dotSize);
+		  ray->fSphere3fv(ray,v,radius);
 		  v+=3;
 		  cc--;
 		}

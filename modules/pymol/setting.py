@@ -286,7 +286,7 @@ if __name__=='pymol.setting':
       roving_isomesh        = 252
       roving_isosurface     = 253
       scenes_changed        = 254
-      gaussian_lambda       = 255
+      gaussian_b_adjust     = 255
       pdb_standard_order    = 256
       cartoon_smooth_first  = 257
       cartoon_smooth_last   = 258
@@ -302,7 +302,9 @@ if __name__=='pymol.setting':
       pdb_use_ter_records   = 268
       cartoon_trace         = 269
       ray_oversample_cutoff = 270
-      
+      gaussian_resolution   = 271
+      gaussian_b_floor      = 272
+
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

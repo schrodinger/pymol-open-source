@@ -389,7 +389,7 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_roving_isosurface           253
 #define cSetting_scenes_changed              254
 
-#define cSetting_gaussian_lambda             255
+#define cSetting_gaussian_b_adjust           255
 #define cSetting_pdb_standard_order          256
 
 #define cSetting_cartoon_smooth_first        257
@@ -407,10 +407,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_pdb_use_ter_records         268
 #define cSetting_cartoon_trace               269
 #define cSetting_ray_oversample_cutoff       270
+#define cSetting_gaussian_resolution         271
+#define cSetting_gaussian_b_floor            272
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        271
+#define cSetting_INIT                        273
 
 #endif
 

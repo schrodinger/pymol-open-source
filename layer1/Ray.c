@@ -1097,7 +1097,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float border_offset;
    int edge_sampling = false;
    unsigned int edge_avg[4];
-   int edge_cnt;
+   int edge_cnt=0;
    float base[2];
    float edge_width = 0.35356F;
    float edge_height = 0.35356F;

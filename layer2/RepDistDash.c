@@ -33,6 +33,7 @@ typedef struct RepDistDash {
   float *V;
   int N;
   CObject *Obj;
+  DistSet *ds;
   float linewidth,radius;
 } RepDistDash;
 
@@ -55,7 +56,18 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
   int c=I->N;
   float *vc;
 
+  I->linewidth = SettingGet_f(I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_width);
+  I->radius = SettingGet_f(I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_radius);
+
   if(ray) {
+
+    float radius;
+
+    if(I->radius==0.0F) {
+      radius = ray->PixelRadius*I->linewidth/2.0F;
+    } else {
+      radius = I->radius;
+    }
 
     vc = ColorGet(I->Obj->Color);
 	 v=I->V;
@@ -63,7 +75,7 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 	 
 	 while(c>0) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
-		ray->fSausage3fv(ray,v,v+3,I->radius,vc,vc);
+		ray->fSausage3fv(ray,v,v+3,radius,vc,vc);
 		v+=6;
       c-=2;
 	 }
@@ -141,14 +153,13 @@ Rep *RepDistDashNew(DistSet *ds)
   dash_sum = dash_len+dash_gap;
   if(dash_sum<R_SMALL4) dash_sum=0.5;
 
-  I->linewidth = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_width);
-  I->radius = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_radius);
 
   I->N=0;
   I->V=NULL;
   I->R.P=NULL;
   I->Obj = (CObject*)ds->Obj;
-  
+  I->ds = ds;
+
   n=0;
   if(ds->NIndex) {
 	 I->V=VLAlloc(float,ds->NIndex*10);

@@ -30,7 +30,7 @@ if __name__=='pymol.creating':
 
    map_type_sc = Shortcut(map_type_dict.keys())
 
-   def map_new(name,type,grid=None,selection="(all)",buffer=0.0,box=None,state=0):
+   def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,box=None,state=0):
       '''
       state > 0: do indicated state
       state = 0: independent states in independent extents
@@ -52,6 +52,10 @@ if __name__=='pymol.creating':
                 float(box[1][2]))
       else:
          box = (0.0,0.0,0.0,1.0,1.0,1.0)
+      if grid==None:
+         grid = cmd.get_setting_legacy('gaussian_resolution')/3.0
+      if buffer==None:
+         buffer = cmd.get_setting_legacy('gaussian_resolution')
       grid = float(grid) # for now, uniform xyz; later (x,y,z)
       type = map_type_dict[map_type_sc.auto_err(str(type),'map type')]
       try:
