@@ -5736,18 +5736,32 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     
                               dst -= ((ai1->vdw+ai2->vdw)/2);
 
-                              /* workaround for waters, which usually don't have CONECT records */
-
+                              /* quick hack for water detection.  
+                                 they don't usually don't have CONECT records 
+                                 and may not be HETATMs though they are supposed to be... */
+                              
                               water_flag=false;
-                              if(ai1->hetatm&&ai1->hydrogen) {
-                                if((WordMatch("WAT",ai1->resn,true)<0)||
-                                   (WordMatch("HOH",ai1->resn,true)<0))
-                                  water_flag=true;
-                              } else if (ai2->hetatm&&ai2->hydrogen) {
-                                if((WordMatch("WAT",ai2->resn,true)<0)||
-                                   (WordMatch("HOH",ai2->resn,true)<0))
-                                  water_flag=true;
-                              }
+                              if((ai1->resn[0]=='W')&&
+                                 (ai1->resn[1]=='A')&&
+                                 (ai1->resn[2]=='T')&&
+                                 (!ai1->resn[3]))
+                                water_flag=true;
+                              else if((ai1->resn[0]=='H')&&
+                                      (ai1->resn[1]=='O')&&
+                                      (ai1->resn[2]=='H')&&
+                                      (!ai1->resn[3]))
+                                water_flag=true;
+                              if((ai2->resn[0]=='W')&&
+                                 (ai2->resn[1]=='A')&&
+                                 (ai2->resn[2]=='T')&&
+                                 (!ai2->resn[3]))
+                                water_flag=true;
+                              else if((ai2->resn[0]=='H')&&
+                                      (ai2->resn[1]=='O')&&
+                                      (ai2->resn[2]=='H')&&
+                                      (!ai2->resn[3]))
+                                water_flag=true;
+                              
                               cutoff = cutoff_h;
                               
                               /* workaround for hydrogens and sulfurs... */
@@ -5769,6 +5783,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                       if(AtomInfoAltMatch(ai1,ai2))
                                         flag=false;
                                   }
+                                  if(water_flag) /* hack to clean up water bonds */
+                                    if(!AtomInfoSameResidue(ai1,ai2))
+                                      flag=false;
+                                      
                                   if(flag) {
                                     ai1->bonded=true;
                                     ai2->bonded=true;
@@ -6287,10 +6305,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
           if(!sscanf(cc,"%s",ss_resi2)) ss_valid=false;
           if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
-
-
-          if(ss_chain1==' ') ss_chain1=0;
-          if(ss_chain2==' ') ss_chain2=0;          
     
           if(ss_valid) {
             PRINTFB(FB_ObjectMolecule,FB_Details)
@@ -6299,6 +6313,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               ENDFB;
             SSCode='H';
           }
+
+          if(ss_chain1==' ') ss_chain1=0;
+          if(ss_chain2==' ') ss_chain2=0;          
+
         }
 		else if((*p == 'S')&&(*(p+1)=='H')&&(*(p+2)=='E')&&(*(p+3)=='E')&&(*(p+4)=='T'))
         {
@@ -6315,9 +6333,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           p=ncopy(cc,p,4);
           if(!sscanf(cc,"%s",ss_resi2)) ss_valid=false;
           if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
-
-          if(ss_chain1==' ') ss_chain1=0;
-          if(ss_chain2==' ') ss_chain2=0;   
        
           if(ss_valid) {
             PRINTFB(FB_ObjectMolecule,FB_Details)
@@ -6326,6 +6341,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               ENDFB;
             SSCode = 'S';
           }
+
+          if(ss_chain1==' ') ss_chain1=0;
+          if(ss_chain2==' ') ss_chain2=0;   
+
         }
 		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
          (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart))

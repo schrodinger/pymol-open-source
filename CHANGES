@@ -107,6 +107,8 @@ Current Bugs to Fix
 
 Changes up to 0.82
 
+   * improved water handling for "non-canonical" situations (i.e. real life muck)
+
    * moved configuration files to a subdirectory "setup"
 
    * mpng now can support a range in order to enable coarse-grained parallelism
