@@ -4267,7 +4267,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              strcpy(ai->chain,ai0->chain);
              strcpy(ai->alt,ai0->alt);
              strcpy(ai->segi,ai0->segi);
-             if(op->i2==1) { /* mode 1, merge residue information */
+             if(op->i1==1) { /* mode 1, merge residue information */
                strcpy(ai->resi,ai0->resi);
                ai->resv=ai0->resv;
                strcpy(ai->resn,ai0->resn);    
@@ -4279,7 +4279,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              for(b=0;b<cRepCnt;b++)
                ai->visRep[b]=ai0->visRep[b];
              ai->id=-1;
-             op->i1++;
+             op->i2++;
            }
        }
      break;
