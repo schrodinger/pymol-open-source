@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 #include"OOMac.h"
 #include"Setting.h"
 #include"Ortho.h"
-
+#include"Util.h"
 #include"Ray.h"
 
 #ifndef RAY_SMALL
@@ -45,7 +45,7 @@ void RayRelease(CRay *I);
 void RaySetup(CRay *I);
 void RayColor3fv(CRay *I,float *v);
 void RaySphere3fv(CRay *I,float *v,float r);
-void RayCylinder3fv(CRay *I,float *v1,float *v2,float r);
+void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 
 void RayTriangle3fv(CRay *I,
 						  float *v1,float *v2,float *v3,
@@ -319,16 +319,19 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   unsigned int *p;
   float excess=0.0;
   float dotgle;
-  float bright,direct_cmp,reflect_cmp,*v;
-  float ambient,direct,lreflect;
+  float bright,direct_cmp,reflect_cmp,*v,fc[3];
+  float ambient,direct,lreflect,ft;
   unsigned int c[3],aa;
   unsigned int *image_copy = NULL;
-  int i,pi;
+  int i;
   unsigned int background,buffer_size,z[12],tot;
   int antialias;
   RayInfo r1,r2;
-
+  double timing;
+  
   /* SETUP */
+  
+  timing = UtilGetSeconds();
 
   antialias = (int)SettingGet(cSetting_antialias);
   if(antialias>0) {
@@ -367,8 +370,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     RayExpandPrimitives(I);
     RayTransformFirst(I);
     
+	 printf(" Ray: %i primitives\n",I->NPrimitive);
     BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
-    
+
     I->NBasis=3; /* light source */
     BasisInit(I->Basis+2);
     
@@ -382,6 +386,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     BasisSetupMatrix(I->Basis+2);
     RayTransformBasis(I,I->Basis+2);
     BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
+
+    printf(" Ray: hash spacing: %4.2f/%4.2f\n",
+			  I->Basis[1].Map->Div,I->Basis[2].Map->Div);
     
     /* IMAGING */
     
@@ -411,14 +418,21 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
             
             if(i>=0) {
 
-				  pi = I->Vert2Prim[i];
-
-              if(r1.type==cPrimTriangle) {
-					 BasisReflectTriangle(I->Basis+1,&r1,i);
+              if(r1.prim->type==cPrimTriangle) {
+					 BasisReflectTriangle(I->Basis+1,&r1,i,fc);
 				  } else {
 					 RayReflectSphere(I,&r1);/*,zRay,sphere,dist,surf,impact,reflect,&dotgle);*/
+					 if(r1.prim->type==cPrimCylinder) {
+						ft = r1.tri1;
+						fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
+						fc[1]=(r1.prim->c1[1]*(1-ft))+(r1.prim->c2[1]*ft);
+						fc[2]=(r1.prim->c1[2]*(1-ft))+(r1.prim->c2[2]*ft);
+					 } else {
+						fc[0]=r1.prim->c1[0];
+						fc[1]=r1.prim->c1[1];
+						fc[2]=r1.prim->c1[2];
+					 }
 				  }
-				  
 
               dotgle=-r1.dotgle;
               direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
@@ -443,9 +457,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               
               if(bright>1.0) bright=1.0;
               if(bright<0.0) bright=0.0;
-              c[0]=(bright*I->Primitive[pi].c1[0]+excess)*255.0;
-              c[1]=(bright*I->Primitive[pi].c1[1]+excess)*255.0;
-              c[2]=(bright*I->Primitive[pi].c1[2]+excess)*255.0;
+				  
+				  
+				  c[0]=(bright*fc[0]+excess)*255.0;
+				  c[1]=(bright*fc[1]+excess)*255.0;
+				  c[2]=(bright*fc[2]+excess)*255.0;
+
               if(c[0]>255.0) c[0]=255.0;
               if(c[1]>255.0) c[1]=255.0;
               if(c[2]>255.0) c[2]=255.0;
@@ -624,6 +641,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 	 FreeP(image);
 	 image=image_copy;
   }
+
+  timing = UtilGetSeconds()-timing;
+  printf(" Ray: rendering time %4.2f sec. (%3.1f fph).\n",
+			timing,3600/timing);
+
 }
 /*========================================================================*/
 void RayColor3fv(CRay *I,float *v)
@@ -657,7 +679,7 @@ void RaySphere3fv(CRay *I,float *v,float r)
   I->NPrimitive++;
 }
 /*========================================================================*/
-void RayCylinder3fv(CRay *I,float *v1,float *v2,float r)
+void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 {
   CPrimitive *p;
 
@@ -677,13 +699,17 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r)
   (*vv++)=(*v2++);
   (*vv++)=(*v2++);
   (*vv++)=(*v2++);
-  vv=p->c1;
-  v1=I->CurColor;
-  (*vv++)=(*v1++);
-  (*vv++)=(*v1++);
-  (*vv++)=(*v1++);
-  I->NPrimitive++;
 
+  vv=p->c1;
+  (*vv++)=(*c1++);
+  (*vv++)=(*c1++);
+  (*vv++)=(*c1++);
+  vv=p->c2;
+  (*vv++)=(*c2++);
+  (*vv++)=(*c2++);
+  (*vv++)=(*c2++);
+
+  I->NPrimitive++;
 }
 /*========================================================================*/
 void RayTriangle3fv(CRay *I,
@@ -712,7 +738,7 @@ void RayTriangle3fv(CRay *I,
   if((fabs(n0[0])<RAY_SMALL)&&
 	  (fabs(n0[1])<RAY_SMALL)&&
 	  (fabs(n0[2])<RAY_SMALL))
-	 copy3f(nx,n0); /* fall-back */
+	 {copy3f(nx,n0);} /* fall-back */
   else if(dot_product3f(n0,nx)<0)
 	 invert3f(n0);
   normalize3f(n0);

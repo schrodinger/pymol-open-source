@@ -42,35 +42,10 @@ void rotation_matrix( float angle, float x, float y, float z,
 
 #define cPI            3.14159265358979323846  /* pi */
 
+#ifndef USE_VECTOR_MACROS
 float dot_product3f ( float *v1, float *v2 )
 {
   return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
-}
-
-double dot_product3d ( double *v1, double *v2 )
-{
-  return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
-}
-
-void multiply3d3d ( Matrix33d m1,Matrix33d m2,Matrix33d m3)
-{
-  int a,b;
-  for(a=0;a<3;a++)
-	 for(b=0;b<3;b++)
-		  m3[b][a] = m1[b][0]*m2[0][a] +
-			 m1[b][1]*m2[1][a] + m1[b][2]*m2[2][a];
-}
-
-float project3f ( float *v1, float *v2, float *proj )
-{
-   float dot;
-
-	dot = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
-	proj[0] = v2[0] * dot;
-	proj[1] = v2[1] * dot;
-	proj[2] = v2[2] * dot;
-	
-	return(dot);
 }
 
 void invert3f (float *v)
@@ -106,6 +81,63 @@ void subtract3f ( float *v1, float *v2, float *v3 )
   v3[0]=v1[0]-v2[0];
   v3[1]=v1[1]-v2[1];
   v3[2]=v1[2]-v2[2];
+}
+
+void cross_product3f ( float *v1, float *v2, float *cross )
+{
+  cross[0] = (v1[1]*v2[2]) - (v1[2]*v2[1]);
+  cross[1] = (v1[2]*v2[0]) - (v1[0]*v2[2]);
+  cross[2] = (v1[0]*v2[1]) - (v1[1]*v2[0]);
+}
+
+float lengthsq3f ( float *v1 )
+{
+  return((v1[0]*v1[0]) + 
+					 (v1[1]*v1[1]) + 
+					 (v1[2]*v1[2]));
+} 
+
+float length3f ( float *v1 )
+{
+  return(sqrt((v1[0]*v1[0]) + 
+					 (v1[1]*v1[1]) + 
+					 (v1[2]*v1[2])));
+} 
+
+void average3f ( float *v1, float *v2, float *avg )
+{
+  avg[0] = (v1[0]+v2[0])/2;
+  avg[1] = (v1[1]+v2[1])/2;
+  avg[2] = (v1[2]+v2[2])/2;
+}
+
+#endif
+
+
+float project3f ( float *v1, float *v2, float *proj )
+{
+   float dot;
+
+	dot = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+	proj[0] = v2[0] * dot;
+	proj[1] = v2[1] * dot;
+	proj[2] = v2[2] * dot;
+	
+	return(dot);
+}
+
+double dot_product3d ( double *v1, double *v2 )
+{
+  return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
+}
+
+void multiply3d3d ( Matrix33d m1,Matrix33d m2,Matrix33d m3)
+{
+  int a,b;
+  for(a=0;a<3;a++)
+	 for(b=0;b<3;b++)
+		  m3[b][a] = m1[b][0]*m2[0][a] +
+			 m1[b][1]*m2[1][a] + m1[b][2]*m2[2][a];
 }
 
 float deg_to_rad(float angle)
@@ -229,20 +261,6 @@ void normalize3d( double *v1 )
 	 }
 } 
 
-void cross_product3f ( float *v1, float *v2, float *cross )
-{
-  cross[0] = (v1[1]*v2[2]) - (v1[2]*v2[1]);
-  cross[1] = (v1[2]*v2[0]) - (v1[0]*v2[2]);
-  cross[2] = (v1[0]*v2[1]) - (v1[1]*v2[0]);
-}
-
-
-float length3f ( float *v1 )
-{
-  return(sqrt((v1[0]*v1[0]) + 
-					 (v1[1]*v1[1]) + 
-					 (v1[2]*v1[2])));
-} 
 
 double length3d ( double *v1 )
 {
@@ -251,18 +269,13 @@ double length3d ( double *v1 )
 					 (v1[2]*v1[2])));
 } 
 
-float lengthsq3f ( float *v1 )
+double diff3f ( float *v1, float *v2 )
 {
-  return((v1[0]*v1[0]) + 
-					 (v1[1]*v1[1]) + 
-					 (v1[2]*v1[2]));
-} 
-
-void average3f ( float *v1, float *v2, float *avg )
-{
-  avg[0] = (v1[0]+v2[0])/2;
-  avg[1] = (v1[1]+v2[1])/2;
-  avg[2] = (v1[2]+v2[2])/2;
+  register float dx,dy,dz;
+  dx = (v1[0]-v2[0]);
+  dy = (v1[1]-v2[1]);
+  dz = (v1[2]-v2[2]);
+  return(sqrt(dx*dx + dy*dy + dz*dz));
 }
 
 double diffsq3f ( float *v1, float *v2 )
@@ -276,14 +289,6 @@ double diffsq3f ( float *v1, float *v2 )
 
 }
 
-double diff3f ( float *v1, float *v2 )
-{
-  register float dx,dy,dz;
-  dx = (v1[0]-v2[0]);
-  dy = (v1[1]-v2[1]);
-  dz = (v1[2]-v2[2]);
-  return(sqrt(dx*dx + dy*dy + dz*dz));
-}
 
 int within3f(float *v1,float *v2,float dist)
 {

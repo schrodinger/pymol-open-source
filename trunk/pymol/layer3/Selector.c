@@ -332,6 +332,7 @@ int SelectorModulate1(EvalElem *base)
   int c=0;
   float dist;
   float *v;
+  CoordSet *cs1,*cs2;
   int ok=true;
   SelectorType *I=&Selector;
   base[1].sele=base[0].sele;
@@ -352,13 +353,15 @@ int SelectorModulate1(EvalElem *base)
 				  for(e=0;e<I->Obj[I->Table[a].model]->NCSet;e++)
                 if(I->Obj[I->Table[a].model]->CSet[e])
                   {
-                    v=I->Obj[I->Table[a].model]->CSet[e]->Coord+(3*I->Table[a].atom);
+						  cs1 = I->Obj[I->Table[a].model]->CSet[e];
+                    v=cs1->Coord+(3*cs1->AtmToIdx[I->Table[a].atom]);
                     for(b=0;b<I->NAtom;b++)
                       if((!base[0].sele[b])&&((base[1].code=='EXP_')||(!base[1].sele[b]))) /*exclude current selection */
                         {
                           for(d=0;d<I->Obj[I->Table[b].model]->NCSet;d++)
                             {
-                              if(diff3f(I->Obj[I->Table[b].model]->CSet[d]->Coord+(3*I->Table[b].atom),v)<dist)
+										cs2 = I->Obj[I->Table[b].model]->CSet[e];
+                              if(diff3f(cs2->Coord+(3*cs2->AtmToIdx[I->Table[b].atom]),v)<dist)
                                 {
                                   base[0].sele[b]=true;
                                   c++;

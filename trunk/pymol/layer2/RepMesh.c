@@ -30,9 +30,11 @@ Z* -------------------------------------------------------------------
 typedef struct RepMesh {
   Rep R;
   int *N;
-  float *V;
+  int NTot;
+  float *V,*VC;
   int NDot;
   float *Dot;
+  int oneColorFlag;
   Object *Obj;
 } RepMesh;
 
@@ -40,6 +42,7 @@ typedef struct RepMesh {
 
 void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick);
 void RepMeshFree(RepMesh *I);
+void RepMeshColor(RepMesh *I,CoordSet *cs);
 
 void RepMeshInit(void)
 {
@@ -48,6 +51,7 @@ void RepMeshInit(void)
 
 void RepMeshFree(RepMesh *I)
 {
+  FreeP(I->VC);
   VLAFreeP(I->V);
   VLAFreeP(I->N);
   OOFreeP(I);
@@ -58,6 +62,7 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
 void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 {
   float *v=I->V;
+  float *vc=I->VC;
   int *n=I->N;
   int c;
 
@@ -69,11 +74,13 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 			 c=*(n++);
 			 if(c--)
 				{
+				  vc+=3;
 				  v+=3;
 				  while(c--)
 					 {
-						ray->fCylinder3fv(ray,v-3,v,0.05);
+						ray->fCylinder3fv(ray,v-3,v,0.05,vc-3,vc);
 						v+=3;
+						vc+=3;
 					 }
 				}
 		  }
@@ -81,31 +88,117 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
   } else if(pick) {
   } else {
 	 if(n) {
-		
-		while(*n)
-		  {
-			 /*		glColor3fv(v);
-						v+=3;*/
-			 c=*(n++);
-			 
-			 glBegin(GL_LINE_STRIP);
-			 while(c--) {
-				/*		  glNormal3fv(v);
-						  v+=3;*/
-				glVertex3fv(v);
-				v+=3;
+		if(I->oneColorFlag) {
+		  while(*n)
+			 {
+				c=*(n++);
+				glBegin(GL_LINE_STRIP);
+				while(c--) {
+				  glVertex3fv(v);
+				  v+=3;
+				}
+				glEnd();
 			 }
-			 glEnd();
-		  }
+		} else {
+		  while(*n)
+			 {
+				c=*(n++);
+				glBegin(GL_LINE_STRIP);
+				while(c--) {
+				  glColor3fv(vc);
+				  vc+=3;
+				  glVertex3fv(v);
+				  v+=3;
+				}
+				glEnd();
+			 }
+
+		}
 	 }
   }
+}
+
+
+void RepMeshColor(RepMesh *I,CoordSet *cs)
+{
+  MapType *map;
+  int a,a2,i0,i,j,h,k,l,c1;
+  float *v0,*vc,*c0;
+  int first_color;
+  ObjectMolecule *obj;
+  float probe_radius;
+  float dist,minDist;
+  int inclH;
+  int cullByFlag;
+
+  cullByFlag = SettingGet(cSetting_trim_dots);
+  inclH = SettingGet(cSetting_dot_hydrogens);
+
+  probe_radius = SettingGet(cSetting_solvent_radius);
+
+  if(I->NTot) {
+	 obj=cs->Obj;
+	 I->oneColorFlag=true;
+	 first_color=-1;
+	 if(!I->VC) I->VC = Alloc(float,3*I->NTot);
+	 vc=I->VC;
+	 /* now, assign colors to each point */
+	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,NULL);
+	 if(map)
+		{
+		  MapSetupExpress(map);
+		  for(a=0;a<I->NTot;a++)
+			 {
+				c1=1;
+				minDist=MAXFLOAT;
+				i0=-1;
+				v0 = I->V+3*a;
+				MapLocus(map,v0,&h,&k,&l);
+				
+				i=*(MapEStart(map,h,k,l));
+				if(i) {
+				  j=map->EList[i++];
+				  while(j>=0) {
+					 a2 = cs->IdxToAtm[j];
+					 if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
+						 ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
+						/* ignore if the "2" bit is set */
+						{
+						  dist = diff3f(v0,cs->Coord+j*3);
+						  if(dist<minDist)
+							 {
+								i0=j;
+								minDist=dist;
+							 }
+						}
+					 j=map->EList[i++];
+				  }
+				}
+				if(i0>=0) {
+				  c1=*(cs->Color+i0);
+				  if(I->oneColorFlag) {
+					 if(first_color>=0) {
+						if(first_color!=c1)
+						  I->oneColorFlag=false;
+					 } else first_color=c1;
+				  }
+				}
+				c0 = ColorGet(c1);
+				*(vc++) = *(c0++);
+				*(vc++) = *(c0++);
+				*(vc++) = *(c0++);
+			 }
+		  MapFree(map);
+		}
+  } 
+  
 }
 
 Rep *RepMeshNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
   CoordSet *ccs;
-  int a,b,c,d,h,k,l;
+  int a,b,c,d,h,k,l,*n;
   MapType *map,*smap;
   /* grid */
   Vector3f minE,maxE,sizeE;
@@ -124,15 +217,20 @@ Rep *RepMeshNew(CoordSet *cs)
   float min_spacing;
   OOAlloc(RepMesh);
 
+  RepInit(&I->R);
+
   probe_radius = SettingGet(cSetting_solvent_radius);
   probe_radius2 = probe_radius*probe_radius;
   min_spacing = SettingGet(cSetting_min_mesh_spacing);
 
   I->N=NULL;
+  I->NTot=0;
   I->V=NULL;
+  I->VC=NULL;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepMeshRender;
   I->R.fFree=(void (*)(struct Rep *))RepMeshFree;
   I->Obj = (Object*)(cs->Obj);
+  I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepMeshColor;
 
   obj = cs->Obj;
 
@@ -287,8 +385,12 @@ Rep *RepMeshNew(CoordSet *cs)
 	 FreeP(I->Dot);	 
 	 OrthoBusyFast(2,3);
 	 IsosurfVolume(field,1.0,&I->N,&I->V,NULL,NULL);
-	 OrthoBusyFast(3,4);
 	 IsosurfFieldFree(field);
+	 n=I->N;
+	 I->NTot=0;
+	 while(*n) I->NTot+=*(n++);
+	 RepMeshColor(I,cs);
+	 OrthoBusyFast(3,4);
   }
   OrthoBusyFast(4,4);
   return((void*)(struct Rep*)I);

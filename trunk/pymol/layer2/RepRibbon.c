@@ -57,10 +57,8 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
 	 c=I->NC-1;
 	 if(c>0)
 		while(c--) {
-		  ray->fColor3fv(ray,v);
-		  v+=3;
-		  ray->fCylinder3fv(ray,v+1,v+4,*v);
-		  v+=7;
+		  ray->fCylinder3fv(ray,v+4,v+7,*(v+3),v,v);
+		  v+=10;
 		}
   } else if(pick) {
   } else {
@@ -97,7 +95,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   float power_b = 5;
   float radius;
   OOAlloc(RepRibbon);
-
+  RepInit(&I->R);
   power_a=SettingGet(cSetting_ribbon_power);
   power_b=SettingGet(cSetting_ribbon_power_b);
 
@@ -107,7 +105,8 @@ Rep *RepRibbonNew(CoordSet *cs)
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
-  
+  I->R.fRecolor=NULL;
+
   /* find all of the CA points */
 
   at = Alloc(int,cs->NIndex);

@@ -28,14 +28,16 @@ void BasisInit(CBasis *I);
 void BasisFinish(CBasis *I);
 
 float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff);
-int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,float *sphere);
+
+int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
+						float *sphere,float *asum);
 
 static int intersect_triangle(float orig[3], float *pre,float vert0[3], float vert2[3],
 										float *u, float *v, float *d);
 
 /*========================================================================*/
 int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
-						float *sphere)
+						float *sphere,float *asum)
 {
   /* Strategy - find an imaginary sphere that lies at the correct point on
 	  the line segment, then treat as a sphere reflection */
@@ -167,6 +169,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   sphere[1]=dir[1]*axial_sum+point[1];
   sphere[2]=dir[2]*axial_sum+point[2];
 
+  *asum = axial_sum;
   /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
   return(1);
 
@@ -246,7 +249,7 @@ void BasisSetupMatrix(CBasis *I)
 
 
 /*========================================================================*/
-void BasisReflectTriangle(CBasis *I,RayInfo *r,int i) 
+void BasisReflectTriangle(CBasis *I,RayInfo *r,int i,float *fc) 
 {
   float *n0,w2;
   float vt1[3];
@@ -260,6 +263,11 @@ void BasisReflectTriangle(CBasis *I,RayInfo *r,int i)
   n0 = I->Normal+3*ni+3; /* skip triangle normal */
   w2 = 1.0-(r->tri1+r->tri2);
   /*  printf("%8.3f %8.3f\n",r->tri[1],r->tri[2]);*/
+
+  fc[0]=(r->prim->c2[0]*r->tri1)+(r->prim->c3[0]*r->tri2)+(r->prim->c1[0]*w2);
+  fc[1]=(r->prim->c2[1]*r->tri1)+(r->prim->c3[1]*r->tri2)+(r->prim->c1[1]*w2);
+  fc[2]=(r->prim->c2[2]*r->tri1)+(r->prim->c3[2]*r->tri2)+(r->prim->c1[2]*w2);
+
   scale3f(n0+3,r->tri1,r->surfnormal);
   scale3f(n0+6,r->tri2,vt1);
   add3f(vt1,r->surfnormal,r->surfnormal);
@@ -343,7 +351,9 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 						  }
 						break;
 					 case cPrimCylinder:
-						  if(ZLineToSphere(r->base,I->Vertex+i*3,I->Normal+I->Vert2Normal[i]*3,I->Radius[i],prm->l1,sph))
+						  if(ZLineToSphere(r->base,I->Vertex+i*3,
+												 I->Normal+I->Vert2Normal[i]*3,I->Radius[i],
+												 prm->l1,sph,&tri1))
 						  {
 							 oppSq = ZLineClipPoint(r->base,sph,&dist,I->Radius[i]);
 							 if(oppSq<=I->Radius2[i])
@@ -355,7 +365,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 								  } else {
 									 if(dist<r->dist)
 										if((dist>=front)&&(dist<=back)) {
-										  
+										  r->tri1=tri1;
 										  r->sphere[0]=sph[0];
 										  r->sphere[1]=sph[1];										
 										  r->sphere[2]=sph[2];
@@ -384,8 +394,8 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 		}
 	 }
   if(minIndex>=0) {
-	 r->type=prim[vert2prim[minIndex]].type;
-	 switch(r->type) {
+	 r->prim = prim+vert2prim[minIndex];
+	 switch(r->prim->type) {
 	 case cPrimSphere:
 		
 		vv=I->Vertex+minIndex*3;

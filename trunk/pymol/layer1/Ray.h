@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct CRay {
   void (*fSphere3fv)(struct CRay *ray,float *v,float r);
-  void (*fCylinder3fv)(struct CRay *ray,float *v1,float *v2,float r);
+  void (*fCylinder3fv)(struct CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);
   void (*fColor3fv)(struct CRay *ray,float *c);
   void (*fTriangle3fv)(struct CRay *ray,
 							  float *v1,float *v2,float *v3,

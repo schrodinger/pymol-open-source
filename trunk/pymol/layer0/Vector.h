@@ -31,25 +31,9 @@ float rad_to_deg(float angle);
 
 void normalize3f( float *v1 );
 void normalize3d( double *v1 );
-void copy3f( float *v1 , float *v2);
-void add3f ( float *v1, float *v2, float *v3 );
-void subtract3f ( float *v1, float *v2, float *v3 );
-
-void average3f ( float *v1, float *v2, float *avg );
-void scale3f ( float *v1, float v0, float *v2);
-
-float length3f ( float *v1 );
-void invert3f ( float *v );
-
-double length3d ( double *v1 );
-float lengthsq3f ( float *v1 );
-float get_angle3f( float *v1, float *v2 );
-double diffsq3f ( float *v1, float *v2 );
-double diff3f ( float *v1, float *v2 );
 
 
-void cross_product3f ( float *v1, float *v2, float *cross );
-float dot_product3f ( float *v1, float *v2 );
+
 double dot_product3d ( double *v1, double *v2 );
 float project3f ( float *v1, float *v2, float *proj );
 void remove_component3f ( float *v1, float *unit, float *result);
@@ -57,6 +41,8 @@ void remove_component3f ( float *v1, float *unit, float *result);
 float distance_line2point3f(float *base,float *normal,float *point,float *alongNormalSq);
 float distance_halfline2point3f(float *base,float *normal,float *point,float *alongNormalSq);
 
+double diffsq3f ( float *v1, float *v2 );
+double diff3f ( float *v1, float *v2 );
 int within3f(float *v1,float *v2,float dist);
 
 /* REVISED Matrix Routines */
@@ -64,6 +50,9 @@ int within3f(float *v1,float *v2,float dist);
 void transform33f3f ( Matrix33f m1,float *v1,float *v2);
 void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat);
 void multiply3d3d ( Matrix33d m1,Matrix33d m2,Matrix33d m3);
+
+float get_angle3f( float *v1, float *v2 );
+double length3d ( double *v1 );
 
 /* OLD MATRIX STUFF NEEDS REWORKING */
 
@@ -85,10 +74,48 @@ void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
 								float *axis,float angle,float tAngle,
 								int linear,int tLinear,float fxn);
 
-
 void transform3d3f ( oMatrix3d m1,float *v1,float *v2);
 void transform5f3f ( oMatrix5f m, float *v1, float *v2 );
 
+/* macros */
+
+#define USE_VECTOR_MACROS
+
+#ifndef USE_VECTOR_MACROS
+
+float dot_product3f ( float *v1, float *v2 );
+void  invert3f ( float *v );
+void  scale3f ( float *v1, float v0, float *v2);
+void  copy3f( float *v1 , float *v2);
+void  add3f ( float *v1, float *v2, float *v3 );
+void  subtract3f ( float *v1, float *v2, float *v3 );
+float lengthsq3f ( float *v1 );
+float length3f ( float *v1 );
+void  cross_product3f ( float *v1, float *v2, float *cross );
+void  average3f ( float *v1, float *v2, float *avg );
+
+#else
+
+#define dot_product3f(v1,v2) ((v1)[0]*(v2)[0] + (v1)[1]*(v2)[1] + (v1)[2]*(v2)[2])
+#define invert3f(v) {(v)[0]=-(v)[0]; (v)[1]=-(v)[1]; (v)[2]=-(v)[2];}
+#define scale3f(v1,v0,v2) {(v2)[0]=(v1)[0]*(v0); (v2)[1]=(v1)[1]*(v0); (v2)[2]=(v1)[2]*(v0);}
+#define copy3f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
+#define add3f(v1,v2,v3) {(v3)[0]=(v1)[0]+(v2)[0]; (v3)[1]=(v1)[1]+(v2)[1]; (v3)[2]=(v1)[2]+(v2)[2];}
+#define subtract3f(v1,v2,v3) {(v3)[0]=(v1)[0]-(v2)[0]; (v3)[1]=(v1)[1]-(v2)[1]; (v3)[2]=(v1)[2]-(v2)[2];}
+#define lengthsq3f(v1) (((v1)[0]*(v1)[0]) + ((v1)[1]*(v1)[1]) + ((v1)[2]*(v1)[2]))
+#define length3f(v1) (sqrt(((v1)[0]*(v1)[0]) + ((v1)[1]*(v1)[1]) + ((v1)[2]*(v1)[2])))
+#define average3f(v1,v2,avg) { \
+  (avg)[0] = ((v1)[0]+(v2)[0])/2; \
+  (avg)[1] = ((v1)[1]+(v2)[1])/2; \
+  (avg)[2] = ((v1)[2]+(v2)[2])/2; \
+}
+#define cross_product3f(v1,v2,cross) { \
+  (cross)[0] = ((v1)[1]*(v2)[2]) - ((v1)[2]*(v2)[1]); \
+  (cross)[1] = ((v1)[2]*(v2)[0]) - ((v1)[0]*(v2)[2]); \
+  (cross)[2] = ((v1)[0]*(v2)[1]) - ((v1)[1]*(v2)[0]); \
+}
+
+#endif
 
 
 #endif

@@ -23,10 +23,27 @@ Z* -------------------------------------------------------------------
 void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick);
 
 /*========================================================================*/
+void RepUpdate(struct Rep *I,struct CoordSet *cs)
+{
+  if(I->MaxInvalid>=cRepInvColor) {
+	 if(I->fRecolor)
+		I->fRecolor(I,cs);
+  }
+  I->MaxInvalid=0;
+}
+/*========================================================================*/
+void RepInvalidate(struct Rep *I,int level)
+{
+  if(level>I->MaxInvalid) I->MaxInvalid=level;
+}
+/*========================================================================*/
 void RepInit(Rep *I)
 {
+  I->fInvalidate = RepInvalidate;
+  I->fUpdate = RepUpdate;
   I->fRender = RepRenderBox;
   I->P=NULL;
+  I->MaxInvalid = 0;
 }
 /*========================================================================*/
 void RepFree(Rep *I)
@@ -61,3 +78,8 @@ void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick)
   glEnd();
 
 }
+
+
+
+
+
