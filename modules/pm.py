@@ -78,34 +78,34 @@ def distance(*args):
    unlock()
 
 def _alter_do(at):
-   type = at[1]
-   name = at[2]
-   resn = at[3]
-   chain= at[4]
-   resi = at[5]
-   x = at[6]
-   y = at[7]
-   z = at[8]
-   q = at[9]
-   b = at[10]
-   segi = at[11]
-   exec(at[0])
-   type = string.upper(string.strip(type))
+   ns = {'type': at[1],
+         'name': at[2],
+         'resn': at[3],
+         'chain': at[4],
+         'resi': at[5],
+         'x': at[6],
+         'y': at[7],
+         'z': at[8],
+         'q': at[9],
+         'b': at[10],
+         'segi': at[11]}
+   exec at[0] in _pm.get_globals(),ns
+   type = string.upper(string.strip(ns['type']))
    type = type[:6]
-   name = string.upper(string.strip(name))
+   name = string.upper(string.strip(ns['name']))
    name = name[:4]
-   resn = string.upper(string.strip(resn))
+   resn = string.upper(string.strip(ns['resn']))
    resn = resn[:3]
-   chain = string.upper(string.strip(chain))
+   chain = string.upper(string.strip(ns['chain']))
    chain = chain[:1]
-   resi = string.upper(string.strip(str(resi)))
+   resi = string.upper(string.strip(str(ns['resi'])))
    resi = resi[:4]
-   x = float(x)
-   y = float(y)
-   z = float(z)
-   b = float(b)
-   q = float(q)
-   segi = string.strip(segi)
+   x = float(ns['x'])
+   y = float(ns['y'])
+   z = float(ns['z'])
+   b = float(ns['b'])
+   q = float(ns['q'])
+   segi = string.strip(ns['segi'])
    segi = segi[:4]
    return [type,name,resn,chain,resi,x,y,z,q,b,segi]
 

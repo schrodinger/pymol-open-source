@@ -108,7 +108,7 @@ int PAlterAtom(AtomInfoType *at,char *expr)
     strcpy(at->name,name);
     strcpy(at->resi,resi);
     strcpy(at->chain,chain);
-    strcpy(at->resn,resi);
+    strcpy(at->resn,resn);
     at->b = b;
     at->q = q;
     strcpy(at->segi,segi);
