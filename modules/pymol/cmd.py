@@ -867,6 +867,7 @@ from editing import \
      set_dihedral,       \
      set_geometry,       \
      set_title,          \
+     smooth,             \
      sort,               \
      torsion,            \
      transform_object,   \
@@ -1144,6 +1145,7 @@ keyword = {
    'set_key'       : [ set_key           , 0 , 0 , ''  , parsing.STRICT ], # API only
    'set_view'      : [ set_view          , 0 , 0 , ''  , parsing.STRICT ],   
    'show'          : [ show              , 0 , 0 , ''  , parsing.STRICT ],
+   'smooth'        : [ smooth            , 0 , 0 , ''  , parsing.STRICT ],
    'sort'          : [ sort              , 0 , 0 , ''  , parsing.STRICT ],
    'spawn'         : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],
    'spheroid'      : [ spheroid          , 0 , 0 , ''  , parsing.STRICT ],

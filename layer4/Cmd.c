@@ -299,6 +299,7 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
+static PyObject *CmdSmooth(PyObject *self,PyObject *args);
 static PyObject *CmdSort(PyObject *dummy, PyObject *args);
 static PyObject *CmdSplash(PyObject *dummy, PyObject *args);
 static PyObject *CmdSpheroid(PyObject *dummy, PyObject *args);
@@ -461,6 +462,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"setframe",	           CmdSetFrame,             METH_VARARGS },
 	{"showhide",              CmdShowHide,             METH_VARARGS },
 	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
+	{"smooth",	              CmdSmooth,               METH_VARARGS },
 	{"sort",                  CmdSort,                 METH_VARARGS },
    {"spheroid",              CmdSpheroid,             METH_VARARGS },
 	{"splash",                CmdSplash,               METH_VARARGS },
@@ -479,6 +481,23 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+
+static PyObject *CmdSmooth(PyObject *self,PyObject *args)
+{
+  int ok=true;
+  char *str1;
+  OrthoLineType s1;
+  int int1,int2,int3,int4;
+  ok = PyArg_ParseTuple(args,"siiii",&str1,&int1,&int2,&int3,&int4);
+  if(ok) {
+    SelectorGetTmp(str1,s1);
+    APIEntry();
+    ok = ExecutiveSmooth(s1,int1,int2,int3,int4);
+    APIExit();
+    SelectorFreeTmp(s1);
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdGetSession(PyObject *self, PyObject *args)
 {

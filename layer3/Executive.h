@@ -121,6 +121,7 @@ int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***
 int ExecutiveCombineObjectTTT(char *name,float *ttt);
 int ExecutiveSetGeometry(char *s1,int geom,int valence);
 int ExecutiveSculptIterateAll(void);
+int ExecutiveSmooth(char *sele,int cycles,int first,int last,int window);
 int ExecutiveSculptDeactivate(char *name);
 int ExecutiveSculptActivate(char *name,int state);
 int ExecutiveSculptIterate(char *name,int state,int n_cycle);
