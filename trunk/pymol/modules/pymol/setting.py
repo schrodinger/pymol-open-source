@@ -339,6 +339,8 @@ if __name__=='pymol.setting':
       movie_loop            = 299
       pdb_retain_ids        = 300
       pdb_no_end_record     = 301
+      cgo_dot_width         = 302
+      cgo_dot_radius        = 303
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

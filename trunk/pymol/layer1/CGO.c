@@ -893,7 +893,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   int vc=0;
   float linewidth=1.0F;
   float widthscale=0.15F;
-  float primwidth;
+  float lineradius,dotradius,dotwidth;
   float white[] = {1.0,1.0,1.0};
   float zee[] = {0.0,0.0,1.0};
 
@@ -905,13 +905,17 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   widthscale = SettingGet_f(set1,set2,cSetting_cgo_ray_width_scale);
 
   /*  printf("debug %8.9f\n",SceneGetScreenVertexScale(zee));*/
-  linewidth = SettingGet_f(set1,set2,cSetting_line_width);
-  primwidth = SettingGet_f(set1,set2,cSetting_cgo_line_radius);
-
-  if(primwidth<0.0F) 
-    primwidth = ray->PixelRadius;
+  linewidth = SettingGet_f(set1,set2,cSetting_cgo_line_width);
+  if(linewidth<0.0F) linewidth = 1.0F;
+  lineradius = SettingGet_f(set1,set2,cSetting_cgo_line_radius);
+  dotwidth = SettingGet_f(set1,set2,cSetting_cgo_dot_width);
+  dotradius = SettingGet_f(set1,set2,cSetting_cgo_dot_radius);
+  if(lineradius<0.0F) 
+    lineradius = linewidth * ray->PixelRadius/2.0;
+  if(dotradius<0.0F) 
+    dotradius = dotwidth * ray->PixelRadius/2.0;
   if(widthscale<0.0F)
-    widthscale = ray->PixelRadius;
+    widthscale = ray->PixelRadius/2.0;
 
   if(color)
     c0=color;
@@ -928,18 +932,23 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
     case CGO_END:
       switch(mode) {
       case GL_LINE_LOOP:
-        if(vc>1) ray->fSausage3fv(ray,v0,v2,primwidth,c0,c2);
+        if(vc>1) ray->fSausage3fv(ray,v0,v2,lineradius,c0,c2);
         break;
       }
       mode=-1;
       break;
     case CGO_WIDTHSCALE:
       widthscale=*pc;
-      primwidth=widthscale*linewidth;
+      lineradius=widthscale*linewidth;
+      dotradius=widthscale*dotwidth;
+      break;
+    case CGO_DOTWIDTH:
+      dotwidth=*pc;
+      dotradius=widthscale*dotwidth;
       break;
     case CGO_LINEWIDTH:
       linewidth=*pc;
-      primwidth=widthscale*linewidth;
+      lineradius=widthscale*linewidth;
       break;
     case CGO_NORMAL:
       n0=pc;
@@ -956,21 +965,21 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
       v0=pc;
       switch(mode) {
       case GL_POINTS:
-        ray->fSphere3fv(ray,v0,primwidth);
+        ray->fSphere3fv(ray,v0,dotradius);
         break;
       case GL_LINES:
-        if(vc&0x1) ray->fSausage3fv(ray,v0,v1,primwidth,c0,c1);
+        if(vc&0x1) ray->fSausage3fv(ray,v0,v1,lineradius,c0,c1);
         v1=v0;
         c1=c0;
         break;
       case GL_LINE_STRIP:
-        if(vc) ray->fSausage3fv(ray,v0,v1,primwidth,c0,c1);
+        if(vc) ray->fSausage3fv(ray,v0,v1,lineradius,c0,c1);
         v1=v0;
         c1=c0;
         break;
       case GL_LINE_LOOP:
         if(vc) 
-          ray->fSausage3fv(ray,v0,v1,primwidth,c0,c1);
+          ray->fSausage3fv(ray,v0,v1,lineradius,c0,c1);
         else {
           v2=v0;
           c2=c0;
@@ -1205,7 +1214,6 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
 {
   register float *pc = I->op;
   register int op;
-
   global_alpha = 1.0F;
 
   if(I->c) {
@@ -1214,7 +1222,7 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
     else
       glColor3f(1.0,1.0,1.0);
     glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
-    glPointSize(SettingGet_f(set1,set2,cSetting_dot_width));
+    glPointSize(SettingGet_f(set1,set2,cSetting_cgo_dot_width));
 
     while((op=(CGO_MASK&CGO_read_int(pc)))) {
       /*      printf("%d\n",op);
