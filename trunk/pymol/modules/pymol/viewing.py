@@ -786,24 +786,29 @@ SEE ALSO
                   for rep_name in rep_list:
                      name = "_scene_"+key+"_"+rep_name
                      cmd.show(rep_name,name)
-               mess_flag = 0
+               replace_flag = 0
+               wiz = cmd.get_wizard()
+               if wiz!=None:
+                  if str(wiz.__class__) == 'pymol.wizard.message.Message':
+                     if hasattr(wiz,'from_scene'):
+                        replace_flag = 1
                if message!=None:
                   if is_string(message):
                      if len(message):
-                        cmd.wizard("message",message)
+                        if(replace_flag):
+                           cmd.replace_wizard("message",message)
+                        else:
+                           cmd.wizard("message",message)
                         cmd.get_wizard().from_scene = 1
                         mess_flag = 1
                   if is_list(message):
                      if len(message):
-                        cmd.wizard("message",*message)
+                        if(replace_flag):
+                           cmd.replace_wizard("message",*message)
+                        else:
+                           cmd.wizard("message",*message)
                         cmd.get_wizard().from_scene = 1
                         mess_flag = 1
-               if not mess_flag:
-                  wiz = cmd.get_wizard()
-                  if wiz!=None:
-                     if str(wiz.__class__) == 'message.Message':
-                        if hasattr(wiz,'from_scene'):
-                           cmd.set_wizard()
                if _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
             elif action=='store':

@@ -1625,7 +1625,7 @@ if __name__=='pymol.cmd':
       'symexp'         : [ object_sc              , 'object'          , ', ' ],   
       'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
       'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
-      'scene'          : [ viewing.view_sc        , 'scene action'    , ''   ],                  
+      'scene'          : [ viewing.view_sc        , 'scene action'    , ','   ],                  
       'unset'          : [ selection_sc           , 'selection'        , ','  ],   
       },
       {
