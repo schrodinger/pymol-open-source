@@ -101,36 +101,25 @@ t.start()
 def carts():
    while 1:
       try:
+
          resi = int(whrandom.random()*150)
+         cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('sticks',"(resi %d)"%resi)
          time.sleep(whrandom.random()*0.03)
 
          resi = int(whrandom.random()*150)
-         cmd.hide('sticks',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
-
-         resi = int(whrandom.random()*150)
+         cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('spheres',"(resi %d)"%resi)
          time.sleep(whrandom.random()*0.03)
 
          resi = int(whrandom.random()*150)
-         cmd.hide('spheres',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
-
-         resi = int(whrandom.random()*150)
+         cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('cartoon',"(resi %d)"%resi)
          time.sleep(whrandom.random()*0.03)
 
          resi = int(whrandom.random()*150)
-         cmd.hide('cartoon',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
-
-         resi = int(whrandom.random()*150)
+         cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('lines',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
-
-         resi = int(whrandom.random()*150)
-         cmd.hide('lines',"(resi %d)"%resi)
          time.sleep(whrandom.random()*0.03)
 
    #      resi = int(whrandom.random()*150)
@@ -142,28 +131,20 @@ def carts():
    #      time.sleep(whrandom.random()*0.03)
 
          resi = int(whrandom.random()*150)
+         cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('ribbon',"(resi %d)"%resi)
          time.sleep(whrandom.random()*0.03)
 
          resi = int(whrandom.random()*150)
-         cmd.hide('ribbon',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
-
-         resi = int(whrandom.random()*150)
+         cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('nonbonded',"(resi %d)"%resi)
          time.sleep(whrandom.random()*0.03)
 
          resi = int(whrandom.random()*150)
-         cmd.hide('nonbonded',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
-
-         resi = int(whrandom.random()*150)
+         cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('nb_spheres',"(resi %d)"%resi)
          time.sleep(whrandom.random()*0.03)
 
-         resi = int(whrandom.random()*150)
-         cmd.hide('nb_spheres',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
       except:
          print "exception"
 
