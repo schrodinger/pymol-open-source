@@ -89,6 +89,7 @@ setup ( # Distribution meta-data
    "layer0/Raw.c",
    "layer0/Sphere.c",
    "layer0/Tetsurf.c",
+   "layer0/Texture.c",
    "layer0/Triangle.c",
    "layer0/Util.c",
    "layer0/Vector.c",
