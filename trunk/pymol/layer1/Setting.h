@@ -456,10 +456,16 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_ray_transparency_spec_cut  312
 #define cSetting_internal_prompt            313
 #define cSetting_normalize_grd_maps         314
+#define cSetting_ray_blend_colors           315
+#define cSetting_ray_blend_red              316
+#define cSetting_ray_blend_green            317
+#define cSetting_ray_blend_blue             318
+#define cSetting_png_screen_gamma           319
+#define cSetting_png_file_gamma             320
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        315
+#define cSetting_INIT                        321
 
 #endif
 

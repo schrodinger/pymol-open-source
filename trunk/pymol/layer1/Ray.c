@@ -1105,6 +1105,11 @@ int RayTraceThread(CRayThreadInfo *T)
    float edge_height = 0.35356F;
    float trans_spec_cut,trans_spec_scale;
 
+   float red_blend=0.0F;
+   float blue_blend=0.0F;
+   float green_blend=0.0F;
+   int blend_colors;
+
 	_0		= 0.0F;
 	_1		= 1.0F;
 	_p5		= 0.5F;
@@ -1133,6 +1138,12 @@ int RayTraceThread(CRayThreadInfo *T)
 	lreflect			= SettingGet(cSetting_reflect);
 	direct				= SettingGet(cSetting_direct);
    trans_spec_cut = SettingGet(cSetting_ray_transparency_spec_cut);
+   blend_colors    = (int)SettingGet(cSetting_ray_blend_colors);
+   if(blend_colors) {
+     red_blend = SettingGet(cSetting_ray_blend_red);
+     green_blend = SettingGet(cSetting_ray_blend_green);
+     blue_blend = SettingGet(cSetting_ray_blend_blue);
+   }
 
    if(trans_spec_cut<_1)
      trans_spec_scale = _1/(_1-trans_spec_cut);
@@ -1684,13 +1695,61 @@ int RayTraceThread(CRayThreadInfo *T)
                     }
                   else 
                     {
+
                       last_pixel	= *pixel;
                       exclude		= i;
                       pass++;
                     }
                   
                 } /* end of ray while */
-          
+              
+              if(blend_colors) {
+                
+                float red_min = _0;
+                float green_min = _0;
+                float blue_min = _0;
+                float red_part;
+                float green_part;
+                float blue_part;
+
+                if(I->BigEndian) {
+                  fc[0] = (0xFF&(*pixel>>24));
+                  fc[1] = (0xFF&(*pixel>>16));
+                  fc[2] = (0xFF&(*pixel>>8));
+                  cc3   = (0xFF&(*pixel));
+                } else {
+                  cc3   = (0xFF&(*pixel>>24));
+                  fc[2] = (0xFF&(*pixel>>16));
+                  fc[1] = (0xFF&(*pixel>>8));
+                  fc[0] = (0xFF&(*pixel));
+                }
+
+                red_part = red_blend * fc[0];
+                green_part = green_blend * fc[1];
+                blue_part = blue_blend * fc[2];
+                
+                red_min = (green_part>blue_part) ? green_part : blue_part;
+                green_min = (red_part>blue_part) ? red_part : blue_part;
+                blue_min = (green_part>red_part) ? green_part : red_part;
+                
+                if(fc[0]<red_min) fc[0] = red_min;
+                if(fc[1]<green_min) fc[1] = green_min;
+                if(fc[2]<blue_min) fc[2] = blue_min;
+
+                cc0 = (uint)(fc[0]);
+                cc1 = (uint)(fc[1]);
+                cc2 = (uint)(fc[2]);
+                
+                if(cc0 > 255) cc0 = 255;
+                if(cc1 > 255) cc1 = 255;
+                if(cc2 > 255) cc2 = 255;
+                
+                if(I->BigEndian) 
+                  *pixel = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
+                else
+                  *pixel = (cc3<<24)|(cc2<<16)|(cc1<<8)|cc0;
+              }
+            
               if(!T->edging) break;
               /* if here, then we're edging...
                  so accumulate averages */
