@@ -349,7 +349,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
       obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
                                              start_at,eff_frame,discrete,
                                              &current->m4x,pdb_name,
-                                             &next_pdb,pdb_info);
+                                             &next_pdb,pdb_info,quiet);
 
       if(obj) {
         if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
@@ -407,7 +407,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
     } else {
       ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
                                start_at,eff_frame,discrete,&current->m4x,
-                               pdb_name,&next_pdb,pdb_info);
+                               pdb_name,&next_pdb,pdb_info,quiet);
       if(finish)
         ExecutiveUpdateObjectSelection(origObj);
       if(eff_frame<0)

@@ -75,7 +75,7 @@ typedef struct PyMOLOptionRec {
     reuse_helper, auto_reinitialize, keep_thread_alive, 
     quiet, incentive_product;
   char after_load_script[PYMOL_MAX_OPT_STR];
-  int multisample,window_visible;
+  int multisample,window_visible, read_stdin;
 } PyMOLOptionRec;
 
 extern PyMOLOptionRec *PyMOLOption;

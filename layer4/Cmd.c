@@ -3988,7 +3988,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDBStr\n" ENDFD;
       obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
                                              fname,frame,discrete,
-                                             NULL,NULL,NULL,NULL);
+                                             NULL,NULL,NULL,NULL,quiet);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);

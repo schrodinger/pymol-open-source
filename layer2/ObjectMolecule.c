@@ -8556,7 +8556,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int frame,
                                          int discrete,M4XAnnoType *m4x,char *pdb_name,
-                                         char **next_pdb,PDBInfoRec *pdb_info)
+                                         char **next_pdb,PDBInfoRec *pdb_info,int quiet)
 {
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
@@ -8636,7 +8636,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
-        SymmetryAttemptGeneration(I->Symmetry,false,false);
+        SymmetryAttemptGeneration(I->Symmetry,false,quiet);
       }
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
