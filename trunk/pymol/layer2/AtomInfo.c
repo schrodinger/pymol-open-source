@@ -431,6 +431,10 @@ void AtomInfoAssignParameters(AtomInfoType *I)
         if(!(((*(e+1))=='A')&&(I->hetatm)))
           *(e+1)=0;
       break;
+    case 'B':
+      if(!((*(e+1)=='r')))
+        *(e+1)=0;
+      break;
     default:
       *(e+1)=0;
       break;
