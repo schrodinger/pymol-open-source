@@ -714,7 +714,7 @@ int SettingSet_color(CSetting *I,int index, char *value)
   if(I) {
     PyMOLGlobals *G=I->G;
     color_index=ColorGetIndex(G,value);
-    if((color_index==-1)&&(strcmp(value,"-1"))) {
+    if((color_index==-1)&&(strcmp(value,"-1")&&strcmp(value,"default"))) {
       PRINTFB(G,FB_Setting,FB_Errors)
         "Setting-Error: unknown color '%s'\n",value
         ENDFB(G);
@@ -1250,6 +1250,8 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_dash_gap:
   case cSetting_dash_radius:
   case cSetting_dash_width:
+  case cSetting_angle_size:
+  case cSetting_angle_label_position:
     ExecutiveRebuildAllObjectDist(G);
     SceneChanged(G);
     break;
@@ -2451,6 +2453,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_sweep_phase,0.0F);
   SettingSet_b(I,cSetting_scene_restart_movie_delay,1);
   SettingSet_b(I,cSetting_mouse_restart_movie_delay,0);
+  SettingSet_f(I,cSetting_angle_size, 0.6666F);
+  SettingSet_f(I,cSetting_angle_label_position, 0.5);
 }
 
 

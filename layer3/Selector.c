@@ -3473,6 +3473,9 @@ static int SelectorWalkTreeDepth(PyMOLGlobals *G,int *atom,int *comp,int *toDo,i
 }
 
 /*========================================================================*/
+
+
+
 int SelectorIsAtomBondedToSele(PyMOLGlobals *G,ObjectMolecule *obj,int sele1atom,int sele2)
 {
   int a0,a2,s,ss;
@@ -9085,7 +9088,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
     }
   }
 
-  if(mode!=0) { /* fill in all the neighbor tables if we're just looking for bonded angles */
+  { /* fill in neighbor tables */
     int a, s, at;
     ObjectMolecule *obj,*lastObj = NULL;
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
@@ -9097,8 +9100,6 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
            SelectorIsMember(G,s,sele2)||
            SelectorIsMember(G,s,sele3)) {
           ObjectMoleculeUpdateNeighbors(obj);
-          /*          if(mode==2)
-                      ObjectMoleculeVerifyChemistry(obj);*/
           lastObj = obj;
         }
       }
@@ -9114,6 +9115,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
     int n1 = 0;
     int n2 = 0;
     int n3 = 0;
+    int bonded12, bonded23;
 
     /* now generate three lists of atoms, one for each selection set */
 
@@ -9148,7 +9150,6 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
         ObjectMolecule *obj1,*obj2,*obj3;
         
         int idx1,idx2,idx3;
-        int a_keeper = true;
         float angle;
         float d1[3],d2[3];
         float *v1,*v2,*v3, *vv0;
@@ -9196,12 +9197,14 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
                     
                       if(idx2>=0) 
                         
+                        bonded12 = ObjectMoleculeAreAtomsBonded2(obj1,at1,obj2,at2); 
+
                         for(i3=0;i3<n3;i3++) {
                           a3 = list3[i3];
                           
                           if((a1!=a2) && (a2!=a3) && (a1!=a3)) {
-                            if((!((coverage[a1]==3)&&(coverage[a2]==3)&&(coverage[a2]==3))) 
-                               ||((a1<a2)&&(a2<a3))) { /* eliminate alternate-order duplicates */
+                            if((!((coverage[a1]==3)&&(coverage[a2]==3)&&(coverage[a3]==3))) 
+                               ||(a1<a3)) { /* eliminate alternate-order duplicates */
                               
                               at3=I->Table[a3].atom;
                               obj3=I->Obj[I->Table[a3].model];
@@ -9223,13 +9226,13 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
                                   
                                   if(idx3>=0) {
                                     
-                                    /* check here to see if atoms are bonded a1-a2-a3, then set a_keeper */
+                                    bonded23 = ObjectMoleculeAreAtomsBonded2(obj2,at2,obj3,at3); 
                                     
-                                    if(a_keeper) { /* store the 3 coordinates */
+                                    if(!mode || ((mode==1)&&(bonded12&&bonded23))) { /* store the 3 coordinates */
                                       
-                                      v1 = cs1->Coord+idx1;
-                                      v2 = cs1->Coord+idx2;
-                                      v3 = cs3->Coord+idx3;
+                                      v1 = cs1->Coord+3*idx1;
+                                      v2 = cs2->Coord+3*idx2;
+                                      v3 = cs3->Coord+3*idx3;
                                       
                                       subtract3f(v1,v2,d1);
                                       subtract3f(v3,v2,d2);
@@ -9239,8 +9242,7 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
                                       (*angle_sum)+=angle;
                                       (*angle_cnt)++;
                                       
-                                      printf("here\n");
-                                      VLACheck(vv,float,(nv*3)+8);
+                                      VLACheck(vv,float,(nv*3)+14);
                                       vv0 = vv+ (nv*3);
                                       *(vv0++) = *(v1++);
                                       *(vv0++) = *(v1++);
@@ -9251,7 +9253,14 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
                                       *(vv0++) = *(v3++);
                                       *(vv0++) = *(v3++);
                                       *(vv0++) = *(v3++);
-                                      nv+=3;
+                                      *(vv0++) = (float)!bonded12;
+                                      /* show line 1 flag*/
+                                      *(vv0++) = (float)!bonded23;
+                                      *(vv0++) = 0.0F; 
+                                      *(vv0++) = 0.0F; /* label x relative to v2 */
+                                      *(vv0++) = 0.0F; /* label y relative to v2 */
+                                      *(vv0++) = 0.0F; /* label z relative to v2 */
+                                      nv+=5;
                                     }
                                   }
                                 }
@@ -9279,6 +9288,294 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
   ds->AngleCoord = vv;
   return(ds);
 }
+
+
+#if 0
+DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
+                                int sele1,int state1,
+                                int sele2,int state2,
+                                int sele3,int state3,
+                                int sele4,int state4,
+                                int mode, float *angle_sum,
+                                int *angle_cnt)
+{
+  register CSelector *I=G->Selector;
+  float *vv = NULL;
+  int nv = 0;
+  int *coverage=NULL;
+
+  if(!ds) {
+    ds = DistSetNew(G);
+    vv = VLAlloc(float,10);
+  } else {
+    vv = ds->AngleCoord;
+    nv = ds->NAngleIndex;
+  }
+
+  SelectorUpdateTable(G); 
+
+  /* which atoms are involved? */
+
+  {
+    int a, s, at;
+    ObjectMolecule *obj;
+
+    coverage=Calloc(int,I->NAtom);
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      at=I->Table[a].atom;
+      obj=I->Obj[I->Table[a].model];
+      s=obj->AtomInfo[at].selEntry;
+      if(SelectorIsMember(G,s,sele1))
+        coverage[a]++;
+      if(SelectorIsMember(G,s,sele2))
+        coverage[a]++;
+      if(SelectorIsMember(G,s,sele3))
+        coverage[a]++;
+      if(SelectorIsMember(G,s,sele4))
+        coverage[a]++;
+    }
+  }
+
+  { /* fill in neighbor tables */
+    int a, s, at;
+    ObjectMolecule *obj,*lastObj = NULL;
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      at=I->Table[a].atom;
+      obj=I->Obj[I->Table[a].model];
+      s=obj->AtomInfo[at].selEntry;
+      if(obj!=lastObj) {
+        if(SelectorIsMember(G,s,sele1)||
+           SelectorIsMember(G,s,sele2)||
+           SelectorIsMember(G,s,sele3)||
+           SelectorIsMember(G,s,sele4)
+           ) {
+          ObjectMoleculeUpdateNeighbors(obj);
+          lastObj = obj;
+        }
+      }
+    }
+  }
+
+  {
+    int a, s, at;
+    ObjectMolecule *obj;
+    int *list1 = VLAlloc(int,1000);
+    int *list2 = VLAlloc(int,1000);
+    int *list3 = VLAlloc(int,1000);
+    int *list4 = VLAlloc(int,1000);
+    int n1 = 0;
+    int n2 = 0;
+    int n3 = 0;
+    int n4 = 0;
+    int bonded12, bonded23, bonded34;
+
+    /* now generate three lists of atoms, one for each selection set */
+
+    if(list1&&list2&&list3) {
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        at=I->Table[a].atom;
+        obj=I->Obj[I->Table[a].model];
+        s=obj->AtomInfo[at].selEntry;
+        if(SelectorIsMember(G,s,sele1)) {
+          VLACheck(list1,int,n1);
+          list1[n1++] = a;
+        }
+        if(SelectorIsMember(G,s,sele2)) {
+          VLACheck(list2,int,n2);
+          list2[n2++] = a;
+        }
+        if(SelectorIsMember(G,s,sele3)) {
+          VLACheck(list3,int,n3);
+          list3[n3++] = a;
+        }
+        if(SelectorIsMember(G,s,sele4)) {
+          VLACheck(list4,int,n3);
+          list4[n4++] = a;
+        }
+      }
+      
+      /* for each set of 3 atoms in each selection... */
+      
+      {
+        int i1,i2,i3,i4;
+        int a1,a2,a3,a4;
+        int at1,at2,at3,at4;
+        
+        /*        AtomInfoType *ai1,*ai2,ai3;*/
+        CoordSet *cs1,*cs2,*cs3,*cs4;
+        ObjectMolecule *obj1,*obj2,*obj3,*obj4;
+        
+        int idx1,idx2,idx3,idx4;
+        int a_keeper = true;
+        float angle;
+        float d1[3],d2[3],d3[3];
+        float *v1,*v2,*v3,*v4, *vv0;
+
+        for(i1=0;i1<n1;i1++) {
+          a1 = list1[i1];
+          at1=I->Table[a1].atom;
+          obj1=I->Obj[I->Table[a1].model];
+
+          if(state1<obj1->NCSet) {
+            cs1=obj1->CSet[state1];
+
+            if(cs1) {
+              if(obj1->DiscreteFlag) {
+                if(cs1==obj1->DiscreteCSet[at1]) {
+                  idx1=obj1->DiscreteAtmToIdx[at1];
+                } else {
+                  idx1=-1;
+                }
+              } else {
+                idx1=cs1->AtmToIdx[at1];
+              }
+              
+              if(idx1>=0) 
+                
+                for(i2=0;i2<n2;i2++) {
+                  a2 = list2[i2];
+                  at2=I->Table[a2].atom;
+                  obj2=I->Obj[I->Table[a2].model];
+                  
+                  if(state2<obj2->NCSet) {
+                    
+                    cs2=obj2->CSet[state2];
+                    
+                    if(cs2) {
+                      if(obj2->DiscreteFlag) {
+                        if(cs2==obj2->DiscreteCSet[at2]) {
+                          idx2=obj2->DiscreteAtmToIdx[at2];
+                        } else {
+                          idx2=-1;
+                        }
+                      } else {
+                        idx2=cs2->AtmToIdx[at2];
+                      }
+                    
+                      if(idx2>=0) 
+                        
+                        bonded12 = ObjectMoleculeAreAtomsBonded2(obj1,at1,obj2,at2); 
+
+                      for(i3=0;i3<n3;i3++) {
+                        a3 = list3[i3];
+                        at3=I->Table[a3].atom;
+                        obj3=I->Obj[I->Table[a3].model];
+                  
+                        if(state3<obj3->NCSet) {
+                    
+                          cs3=obj3->CSet[state3];
+                    
+                          if(cs3) {
+                            if(obj3->DiscreteFlag) {
+                              if(cs3==obj3->DiscreteCSet[at3]) {
+                                idx3=obj3->DiscreteAtmToIdx[at3];
+                              } else {
+                                idx3=-1;
+                              }
+                            } else {
+                              idx3=cs3->AtmToIdx[at3];
+                            }
+                    
+                            if(idx3>=0) 
+                        
+                              bonded23 = ObjectMoleculeAreAtomsBonded2(obj2,at2,obj3,at3); 
+
+                            for(i4=0;i4<n4;i4++) {
+                              a4 = list4[i4];
+                          
+                              if((a1!=a2) && (a1!=a3) && (a1!=a4) && (a2!=a3) && && (a2!=a4) && (a3!=a4)) {
+                                if((!((coverage[a1]==4)&&(coverage[a2]==4)&&(coverage[a3]==4)&&(coverage[a4]==4))) 
+                                   ||(a1<a4)) { /* eliminate alternate-order duplicates */
+                              
+                                  at4=I->Table[a4].atom;
+                                  obj4=I->Obj[I->Table[a4].model];
+                              
+                                  if(state4<obj4->NCSet) {
+                                
+                                    cs4=obj4->CSet[state4];
+                                
+                                    if(cs4) { 
+                                      if(obj4->DiscreteFlag) {
+                                        if(cs4==obj4->DiscreteCSet[at4]) {
+                                          idx4=obj4->DiscreteAtmToIdx[at4];
+                                        } else {
+                                          idx4=-1;
+                                        }
+                                      } else {
+                                        idx4=cs3->AtmToIdx[at4];
+                                      }
+                                  
+                                      if(idx4>=0) {
+                                    
+                                        bonded34 = ObjectMoleculeAreAtomsBonded2(obj3,at3,obj4,at4); 
+                                        /* check here to see if atoms are bonded a1-a2-a3, then set a_keeper */
+                                    
+                                        if(a_keeper) { /* store the 3 coordinates */
+                                      
+                                          v1 = cs1->Coord+3*idx1;
+                                          v2 = cs2->Coord+3*idx2;
+                                          v3 = cs3->Coord+3*idx3;
+                                          v4 = cs4->Coord+4*idx3;
+                                      
+                                          subtract3f(v1,v2,d1);
+                                          subtract3f(v3,v2,d2);
+                                          subtract3f(v3,v2,d3);
+                                      
+                                          angle = get_angle3f(d1,d2);
+                                      
+                                          (*angle_sum)+=angle;
+                                          (*angle_cnt)++;
+                                      
+                                          VLACheck(vv,float,(nv*3)+14);
+                                          vv0 = vv+ (nv*3);
+                                          *(vv0++) = *(v1++);
+                                          *(vv0++) = *(v1++);
+                                          *(vv0++) = *(v1++);
+                                          *(vv0++) = *(v2++);
+                                          *(vv0++) = *(v2++);
+                                          *(vv0++) = *(v2++);
+                                          *(vv0++) = *(v3++);
+                                          *(vv0++) = *(v3++);
+                                          *(vv0++) = *(v3++);
+                                          *(vv0++) = (float)!bonded12;
+                                          /* show line 1 flag*/
+                                          *(vv0++) = (float)!bonded23;
+                                          *(vv0++) = 0.0F; /* label positioning */
+                                          *(vv0++) = 0.0F; /* label x relative to v2 */
+                                          *(vv0++) = 0.0F; /* label y relative to v2 */
+                                          *(vv0++) = 0.0F; /* label z relative to v2 */
+                                          nv+=5;
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+            }
+          }
+        }
+      }
+    }
+    VLAFreeP(list1);
+    VLAFreeP(list2);
+    VLAFreeP(list3);
+  }
+
+  FreeP(coverage);
+  if(vv)
+    VLASize(vv,float,(nv+1)*3);
+  ds->NAngleIndex = nv;
+  ds->AngleCoord = vv;
+  return(ds);
+}
+#endif
 
 /*========================================================================*/
 

@@ -429,6 +429,8 @@ if __name__=='pymol.cmd':
          objectgadget              =37
          objectslice               =38
 
+         repangle                  =43
+         repdihederal              =44
          repwirebond               =45
          repcylbond                =46
          replabel                  =47
@@ -1891,6 +1893,19 @@ SEE ALSO
          108      : [ 'insert'    , rock                   , () , {} ]   
       }
 
+      def auto_measure():
+         lst = get_names("selections")
+         if "pk1" in lst:
+            if "pk2" in lst:
+               if "pk3" in lst:
+                  if "pk4" in lst:
+                     pass # measure dihedral
+                  else:
+                     angle()
+               else:
+                  distance()
+         unpick()   
+         
 
       ctrl = {
          'A' : [ redo                   , () , {}],
@@ -1913,7 +1928,8 @@ SEE ALSO
          'T' : [ lambda a,b,c=bond,u=unpick: (c(a,b),u()) , ('pk1','pk2') , {} ],   
          'U' : [ alter                  , ('pk1','formal_charge =0.0') , {}],
          'W' : [ cycle_valence          , () , {}],
-         'X' : [ lambda a,b,c,d=dist,u=unpick:(d(a,b,c),u()), (None,'pk1','pk2') , {} ],   
+#         'X' : [ lambda a,b,c,d=dist,u=unpick:(d(a,b,c),u()), (None,'pk1','pk2') , {} ],
+         'X' : [ auto_measure           , () , {} ],   
          'Y' : [ attach                 , ('H',1,1) , {} ],
          'Z' : [ undo                   , () , {} ],   
          }

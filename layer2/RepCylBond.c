@@ -1780,7 +1780,7 @@ Rep *RepCylBondNew(CoordSet *cs)
       /*      printf("%d\n",(v-I->V)/( (9+6+6) * (nEdge+1) + 3 ));*/
     }
 	 PRINTFD(G,FB_RepCylBond)
-      " RepCylBond-DEBUG: %d triplets\n",(v-I->V)/3
+      " RepCylBond-DEBUG: %d triplets\n",(int)(v-I->V)/3
       ENDFD;
 
     if((signed)v_size<(v-I->V))

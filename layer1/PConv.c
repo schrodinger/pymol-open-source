@@ -407,6 +407,36 @@ int PConvPyListToFloatArray(PyObject *obj,float **f)
   return(ok);
 }
 
+int PConvPyListToFloatVLANoneOkay(PyObject *obj,float **f)
+{
+  int a,l;
+  float *ff;
+  int ok=true;
+  if(!obj) {
+    *f=NULL;
+    ok=false;
+  } else if(obj==Py_None) {
+    *f=NULL;
+    ok=true;
+  } else if(!PyList_Check(obj)) {
+    *f=NULL;
+    ok=false;
+  } else {
+    l=PyList_Size(obj);
+    if(!l)
+      ok=-1;
+    else 
+      ok=l;
+    (*f) = VLAlloc(float,l);
+    ff = (*f);
+    for(a=0;a<l;a++)
+      *(ff++) = (float)PyFloat_AsDouble(PyList_GetItem(obj,a));
+    VLASize((*f),float,l);
+  }
+  return(ok);
+
+}
+
 int PConvPyListToFloatVLA(PyObject *obj,float **f)
 {
   int a,l;
@@ -674,6 +704,20 @@ PyObject *PConvFloatArrayToPyList(float *f,int l)
   result=PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++)));
+  return(result);
+}
+
+PyObject *PConvFloatArrayToPyListNullOkay(float *f,int l)
+{
+  int a;
+  PyObject *result = Py_None;
+  if(!f) {
+    result = PConvAutoNone(NULL);
+  } else {
+    result=PyList_New(l);
+    for(a=0;a<l;a++) 
+      PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++)));
+  }
   return(result);
 }
 

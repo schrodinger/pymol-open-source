@@ -552,10 +552,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_sweep_phase                402
 #define cSetting_scene_restart_movie_delay  403
 #define cSetting_mouse_restart_movie_delay  404
-
+#define cSetting_angle_size                 405
+#define cSetting_angle_label_position       406
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       405
+#define cSetting_INIT                       407
 
 #endif
 

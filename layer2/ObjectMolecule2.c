@@ -300,6 +300,31 @@ int ObjectMoleculeIsAtomBondedToName(ObjectMolecule *obj,int a0,char *name)
   return bonded;
 }
 
+int ObjectMoleculeAreAtomsBonded2(ObjectMolecule *obj0,int a0, ObjectMolecule *obj1,int a1)
+{
+  /* assumes neighbor list is current */
+
+  if(obj0!=obj1)
+    return false;
+  else {
+    int a2,s;
+    
+    if(a0>=0) { 
+      s=obj0->Neighbor[a0]; 
+      s++; /* skip count */
+      while(1) {
+        a2 = obj0->Neighbor[s];
+        if(a2<0)
+          break;
+        if(a1==a2)
+          return true;
+        s+=2;
+      }
+    }
+  }
+  return false;
+}
+
 int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele)
 {
   int result = false;

@@ -3525,7 +3525,8 @@ CRay *RayNew(PyMOLGlobals *G)
 /*========================================================================*/
 void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,
-                float *mat,float *rotMat,float aspRat,int ray_width)
+                float *mat,float *rotMat,float aspRat,
+                int ray_width,int ortho,float pixel_ratio)
 	  /*prepare for vertex calls */
 {
   int a;
@@ -3557,9 +3558,13 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   if(rotMat)  
     for(a=0;a<16;a++)
       I->Rotation[a]=rotMat[a];
-  if(ray_width)
-    I->PixelRadius = ((float)I->Range[0])/ray_width;
-  else
+  if(ray_width) {
+    if(ortho) 
+      I->PixelRadius = ((float)I->Range[0])/ray_width;
+    else {
+      I->PixelRadius = (((float)I->Range[0])/ray_width)/pixel_ratio;
+    }
+  } else
     I->PixelRadius = 0.15F;
 }
 /*========================================================================*/

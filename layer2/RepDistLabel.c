@@ -45,8 +45,8 @@ void RepDistLabelFree(RepDistLabel *I);
 
 void RepDistLabelFree(RepDistLabel *I)
 {
-  FreeP(I->V);
-  FreeP(I->L);
+  VLAFreeP(I->V);
+  VLAFreeP(I->L);
   RepPurge(&I->R);
   OOFreeP(I);
 }
@@ -110,14 +110,13 @@ Rep *RepDistLabelNew(DistSet *ds)
 {
   PyMOLGlobals *G=ds->G;
   int a;
-  int n;
-  float *v,*v1,*v2,d[3],di;
+  int n = 0;
+  float *v,*v1,*v2,*v3,d[3],di;
   char buffer[255];
 
-  DistLabel *l;
   OOAlloc(G,RepDistLabel);
 
-  if(!ds->NIndex) {
+  if(!(ds->NIndex||ds->NAngleIndex||ds->NDihedralIndex)) {
     OOFreeP(I);
     return(NULL); 
   }
@@ -133,26 +132,84 @@ Rep *RepDistLabelNew(DistSet *ds)
   I->R.P=NULL;
   I->Obj = (CObject*)ds->Obj;
 
-  n=0;
-  if(ds->NIndex) {
-	 I->V=Alloc(float,3*(ds->NIndex/2+1));
-    I->L=Alloc(DistLabel,(ds->NIndex/2)+1);
-    v = I->V;
-    l = I->L;
-	 for(a=0;a<ds->NIndex;a=a+2) {
-      v1 = ds->Coord+3*a;
-      v2 = ds->Coord+3*(a+1);
-      average3f(v2,v1,d);
-      di = (float)diff3f(v1,v2);
-      sprintf(buffer,"%1.2f",di);
-      buffer[5]=0;
-      strcpy(l[n],buffer);
-      copy3f(d,v);
-      v+=3;
-      n++;
+  if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
+	 I->V=VLAlloc(float,3*(ds->NIndex/2+ds->NAngleIndex/5)+1);
+    I->L=VLAlloc(DistLabel,(ds->NIndex/2+ds->NAngleIndex/5)+1);
+    
+    n=0;
+    if(ds->NIndex) {
+      for(a=0;a<ds->NIndex;a=a+2) {
+        v1 = ds->Coord+3*a;
+        v2 = ds->Coord+3*(a+1);
+        average3f(v2,v1,d);
+        di = (float)diff3f(v1,v2);
+        sprintf(buffer,"%1.2f",di);
+        buffer[5]=0;
+        
+        VLACheck(I->V,float,3*n+2);
+        VLACheck(I->L,DistLabel, n);
+        v = I->V + 3 * n;
+        strcpy(I->L[n],buffer);
+        copy3f(d,v);
+        
+        n++;
+      }
     }
-    I->N=n;
+
+    if(ds->NAngleIndex) {
+      float d1[3],d2[3];
+      float avg[3];
+
+      float l1,l2;
+      float radius;
+
+
+      for(a=0;a<ds->NAngleIndex;a=a+5) {
+        v1 = ds->AngleCoord+3*a;
+        v2 = ds->AngleCoord+3*(a+1);
+        v3 = ds->AngleCoord+3*(a+2);
+        subtract3f(v1,v2,d1);
+        subtract3f(v3,v2,d2);
+        average3f(v1,v3,avg);
+        subtract3f(avg,v2,avg);
+        
+        l1 = (float)length3f(d1);
+        l2 = (float)length3f(d2);
+        
+        if(l1>l2)
+          radius = l2;
+        else
+          radius = l1;
+        radius *= SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_angle_size) *
+          SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_angle_label_position);
+          
+
+        normalize3f(avg);
+        if((avg[0]==0.0F) && (avg[1]==0.0F) && (avg[2]==0.0F))
+          avg[0]=1.0F;
+        
+        scale3f(avg,radius,avg);
+        add3f(v2,avg,avg);
+
+        di = 180.0F * get_angle3f(d1,d2)/PI;
+        sprintf(buffer,"%1.2f",di);
+        buffer[5]=0;
+        
+        VLACheck(I->V,float,3*n+2);
+        VLACheck(I->L,DistLabel, n);
+        v = I->V + 3 * n;
+        strcpy(I->L[n],buffer);
+        copy3f(avg,v);
+        
+        n++;
+      }
+    }
+
+    
   }
+  
+  I->N=n;
+
   return((void*)(struct Rep*)I);
 }
 
