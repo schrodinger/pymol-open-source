@@ -64,9 +64,30 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,
 void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
+void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
 
 CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
 
+/*========================================================================*/
+void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I)
+{
+  int a,*b;
+  AtomInfoType *ai;
+
+  ai=I->AtomInfo;
+
+  for(a=0;a<I->NAtom;a++)
+    (ai++)->bonded = false;
+
+  b=I->Bond;
+  ai=I->AtomInfo;
+  for(a=0;a<I->NBond;a++)
+    {
+      ai[*(b++)].bonded=true;
+      ai[*(b++)].bonded=true;
+      b++;
+    }
+}
 /*========================================================================*/
 CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr)
 {
@@ -438,6 +459,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     SceneCountFrames();
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeSort(I);
+    ObjectMoleculeUpdateNonbonded(I);
   }
   return(I);
 }
@@ -821,7 +843,8 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
       if(I->CSet[frame]->fInvalidateRep)
         I->CSet[frame]->fInvalidateRep(I->CSet[frame],-1,0);
 		SceneCountFrames();
-		ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeUpdateNonbonded(I);
 	 }
   return(I);
 }
@@ -1076,6 +1099,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     SceneCountFrames();
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeSort(I);
+    ObjectMoleculeUpdateNonbonded(I);
   }
   return(I);
 }
@@ -1844,6 +1868,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);
+      ObjectMoleculeUpdateNonbonded(I);
 	 }
   return(I);
 }

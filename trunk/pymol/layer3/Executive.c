@@ -313,7 +313,7 @@ void ExecutiveCopy(char *src,char *dst)
           for(a=0;a<cRepCnt;a++)
             rec2->repOn[a]=rec1->repOn[a];
         }
-        ErrOk(" Executive","object created.");
+        PRINTF " Executive: object %s created.",oDst->Obj.Name ENDF
       }
     }
   SceneChanged();
@@ -1316,8 +1316,7 @@ void ExecutiveManageObject(Object *obj)
       }
     else 
       {
-        sprintf(buffer," Executive: object \"%s\" created.\n",obj->Name);
-        OrthoAddOutput(buffer);
+        PRINTF " Executive: object \"%s\" created.\n",obj->Name ENDF
       }
     if(!rec)
       ListElemAlloc(rec,SpecRec);

@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"RepRibbon.h"
 #include"RepSurface.h"
 #include"RepLabel.h"
+#include"RepNonbonded.h"
 
 void CoordSetUpdate(CoordSet *I);
 
@@ -302,6 +303,22 @@ void CoordSetUpdate(CoordSet *I)
     I->Rep[cRepLabel]->fUpdate(I->Rep[cRepLabel],I);
     SceneDirty();
   }
+  OrthoBusyFast(9,I->NRep);
+  if(!I->Rep[cRepNonbonded]) {
+    I->Rep[cRepNonbonded]=RepNonbondedNew(I);
+    SceneDirty();
+  } else {
+    I->Rep[cRepNonbonded]->fUpdate(I->Rep[cRepNonbonded],I);
+    SceneDirty();
+  }
+  OrthoBusyFast(10,I->NRep);
+  if(!I->Rep[cRepNonbondedSphere]) {
+    I->Rep[cRepNonbondedSphere]=RepNonbondedSphereNew(I);
+    SceneDirty();
+  } else {
+    I->Rep[cRepNonbondedSphere]->fUpdate(I->Rep[cRepNonbondedSphere],I);
+    SceneDirty();
+    }
   OrthoBusyFast(1,1);
 }
 /*========================================================================*/

@@ -19,19 +19,20 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Ray.h"
 
-#define cRepAll    -1
-#define cRepLine    0
-#define cRepCyl     1
-#define cRepDot     2
-#define cRepMesh    3
-#define cRepSphere  4
-#define cRepRibbon  5
-#define cRepSurface 6
-#define cRepDash    7
-#define cRepLabel   8
+#define cRepAll       -1
+#define cRepLine       0
+#define cRepCyl        1
+#define cRepDot        2
+#define cRepMesh       3
+#define cRepSphere     4
+#define cRepRibbon     5
+#define cRepSurface    6
+#define cRepDash       7
+#define cRepLabel      8
+#define cRepNonbonded  9
+#define cRepNonbondedSphere 10
 
-#define cRepCnt      9
-
+#define cRepCnt       11
 
 #define cRepInvVisib 10
 #define cRepInvColor 20
