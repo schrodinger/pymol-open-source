@@ -1,14 +1,18 @@
 ----------------------------------------------------------------------
-PyMOL (C) 1998-2001 by Warren L. DeLano of DeLano Scientific.
+PyMOL (C) 1998-2002 by Warren L. DeLano of DeLano Scientific.
 http://www.pymol.org       EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 INSTALLATION AND COMPILATION GUIDE
 
-NOTE: These are the general installation instructions (and somewhat
-dated) If you are on a common platform such as RedHat Linux, look for
-a INSTALL file which covers your platform.
+NOTE: 
 
-WARNING: You will need some basic knowledge of Makefiles, compilation
+   These are the general installation instructions.  If you are on a
+   commmon platform such as RedHat Linux, look for a INSTALL file which
+   covers your platform (for example, "INSTALL.linux-rh7x")
+
+WARNING:
+
+   You will need some basic knowledge of Makefiles, compilation
    flags, libraries, python, environment variables, and paths in order
    to compile PyMOL.  If you don't feel comfortable with this, then try
    out the MS-Window's version, which you can download from the WEB
@@ -23,18 +27,21 @@ STEP (1)
 A compiled copy of the external dependencies package ("ext") is
 required, but only needs to be downloaded once (10 MB).  This package
 contains everything you will need to run PyMOL all in one place so
-that you won't have to hunt down the individual components.  (NOTE: If
-you already have all of the components installed elsewhere on your
-system, then feel free to bypass this step, but note that you will
-probably need to edit some configuration files in order to get that to
-work).
+that you won't have to hunt down the individual components.  
+
+NOTE: 
+
+   If you already have all of the components installed elsewhere on your
+   system, then feel free to bypass this step, but note that you will
+   probably need to edit some configuration files in order to get that
+   to work.
 
 You will need to compile the external dependencies from the sources
-(currently in the file "ext-0.51-req-src.tgz"), unless you already
-have all of the required components.  See the ext package release
-notes for more information.
+(currently in the file "ext-0.51-req-src.tgz"). See the ext package
+release notes for more information.
 
 http://sourceforge.net/project/showfiles.php?group_id=4546
+
 
 The external dependencies can be installed in an "ext" subdirectory
 within the main pymol directory.
@@ -42,6 +49,7 @@ within the main pymol directory.
    cd $HOME/pymol
    gunzip < ext-0.51-req-src.tgz | tar -xvf -
    cd ext
+
   **READ INSTALL in that directory for "ext" building instructions.**
 
 Alternatively, you can put the external dependencies into a different
@@ -69,10 +77,6 @@ standalone application.
    cp Rules.<platform> Rules.make
 	vi Rules.make
 
-Under Linux, if you don't have a 3DFX card, get rid of the
--D_PYMOL_3DFX work-around flag.  The nVidia drivers work great, so I
-suggest getting a GeForce2 MX ($100) or GTS ($200) video card.
-
 STEP (3) 
 
 "make" to compile.
@@ -82,8 +86,7 @@ STEP (3)
 
 STEP (4) 
   
-Assuming that you chose to build PyMOL as a Python module, copy
-"pymol.com.template" to "pymol.com".
+Copy "pymol.com.template" to "pymol.com".
 
 Next, edit pymol.com so that PYMOL_PATH points to the correct location
 on your system.
@@ -98,6 +101,8 @@ Now you should be all set to run pymol.
 
  I suggest putting a link to this file into a your bin directory, if
 you have one.
+
+   ln -s $HOME/pymol/pymol.com /usr/local/bin
 
 =======
 

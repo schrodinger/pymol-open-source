@@ -10,7 +10,7 @@ you must transfer copyright of such improvements to DeLano Scientific
 and attach no conditions to your work beyond those specified in the
 PyMOL LICENSE file.  Essentially you are giving everyone the right to
 use your code for all purposes without restriction.  This is core to
-the PyMOL open-source philosophy, so please don't ask for exceptions.
+the PyMOL open-source philosophy, so don't ask for exceptions.
 
 (2) Develop self-contained functionality that can be integrated into
 PyMOL as part of the "contrib" directory.  With this approach, you
