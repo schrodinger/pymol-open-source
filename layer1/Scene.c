@@ -724,52 +724,66 @@ unsigned int SceneFindTriplet(int x,int y)
 {
   int result = 0;
   pix buffer[cRange*2+1][cRange*2+1];
-  int a,b,d,e,flag;
+  int a,b,d,flag;
+  int debug = false;
   unsigned char *c;
   
   if(PMGUI) { /*just in case*/
+    
+    if(Feedback(FB_Scene,FB_Debugging)) debug=true;
+    
     glReadBuffer(GL_BACK);
     glReadPixels(x-cRange,y-cRange,cRange*2+1,cRange*2+1,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0][0]);
     
-    /*  for(a=0;a<=(cRange*2);a++)
+    if(debug) {
+      for(a=0;a<=(cRange*2);a++)
         {
-        for(b=0;b<=(cRange*2);b++)
-		  printf("%2x ",(buffer[a][b][0]+buffer[a][b][1]+buffer[a][b][2])&0xFF);
-        printf("\n");
+          for(b=0;b<=(cRange*2);b++)
+            printf("%2x ",(buffer[a][b][0]+buffer[a][b][1]+buffer[a][b][2])&0xFF);
+          printf("\n");
         }
-        printf("\n");	 
-    */
+      printf("\n");	 
+      for(a=0;a<=(cRange*2);a++)
+        {
+          for(b=0;b<=(cRange*2);b++)
+            printf("%02x ",(buffer[a][b][3])&0xFF);
+          printf("\n");
+        }
+      printf("\n");	 
+    }
+    
     flag=true;
     for(d=0;flag&&(d<cRange);d++)
       for(a=-d;flag&&(a<=d);a++)
-        for(b=-d;flag&&(b<=d);b++)
-          {
-            for(e=0;e<3;e++)
-              if(buffer[a+cRange][b+cRange][e]) {
+		  for(b=-d;flag&&(b<=d);b++) {
+			c = &buffer[a+cRange][b+cRange][0];
+			if((c[3]==0xFF)&&
+				((c[0]&0xF)==0)&&
+				((c[1]&0xF)==8)&&
+				((c[2]&0xF)==0))	{ /* only consider intact, saturated pixels */
                 flag = false;
-                c=&buffer[a+cRange][b+cRange][0];
                 result =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
-                /*printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result);*/
-
-                break;
-              }
-          }
+                if(debug) {
+                  printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result);
+                }
+         }
+        }
   }
   return(result);
 }
 /*========================================================================*/
 unsigned int *SceneReadTriplets(int x,int y,int w,int h)
-{
-  unsigned int *result=NULL;
+{ 
+  unsigned int *result = NULL;
   pix *buffer=NULL;
-  int a,b,e;
+  int a,b;
   unsigned char *c;
   int cc = 0;
   int dim[3];
 
   dim[0]=w;
   dim[1]=h;
-
+  
   if(w<1) w=1;
   if(h<1) h=1;
   if(PMGUI) { /*just in case*/
@@ -781,19 +795,20 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
     for(a=0;a<w;a++)
       for(b=0;b<h;b++)
         {
-          for(e=0;e<3;e++)
-            if(buffer[a+b*w][e]) {
-              c=&buffer[a+b*w][0];
-              VLACheck(result,unsigned int,cc);
-              result[cc] =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
-              /*printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result[cc]);*/
-              
-              cc++;
-              break;
-            }
+          c = &buffer[a+b*w][0];
+          if((c[3]==0xFF)&&
+             ((c[0]&0xF)==0)&&
+             ((c[1]&0xF)==8)&&
+             ((c[2]&0xF)==0))	{ /* only consider intact, saturated pixels */
+            VLACheck(result,unsigned int,cc+1);
+            result[cc] =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
+            result[cc+1] = b+a*h;
+            /*printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result[cc]);*/
+            cc+=2;
+          }
         }
-  FreeP(buffer);
-  VLASize(result,unsigned int,cc);
+    FreeP(buffer);
+    VLASize(result,unsigned int,cc);
   }
   return(result);
 
@@ -1750,6 +1765,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   float *v,vv[4],f;
   unsigned int lowBits,highBits;
   unsigned int *lowBitVLA=NULL,*highBitVLA=NULL;
+  int high,low;
   static float white[4] =
   {1.0, 1.0, 1.0, 1.0};
   float zero[4] = {0.0,0.0,0.0,0.0};
@@ -1764,8 +1780,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   void *lastPtr=NULL;
   int index;
   int curState;
-  int nPick,nBits;
-  int a;
+  int nPick,nHighBits,nLowBits;
   int pass;
   float fov;
 
@@ -1958,19 +1973,26 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     if(pick) {
       /* atom picking HACK - obfuscative coding */
 	
+      glClearColor(0.0,0.0,0.0,0.0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
+
       pickVLA=VLAlloc(Pickable,5000);
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
       while(ListIterate(I->Obj,rec,next))
         {
+		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
             rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
           glPopMatrix();
         }
-	
+
+	  
+	 /* p_glutSwapBuffers();
+	  PSleep(5000000);*/
+
       lowBits = SceneFindTriplet(x,y);
 	
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1980,14 +2002,21 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 	
       while(ListIterate(I->Obj,rec,next))
         {
+		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
             rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
           glPopMatrix();
         }
-      highBits = SceneFindTriplet(x,y);
+
+      
+	  highBits = SceneFindTriplet(x,y);
       index = lowBits+(highBits<<12);
-	
+
+	  /*
+	  p_glutSwapBuffers();
+	  PSleep(5000000);*/
+
       if(index&&(index<=pickVLA[0].index)) {
         *pick = pickVLA[index]; /* return object info */
       } else {
@@ -1998,6 +2027,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     } else if(smp) {
       /* multiple atom picking HACK - even more obfuscative coding */
 
+      glClearColor(0.0,0.0,0.0,0.0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
       pickVLA=VLAlloc(Pickable,5000);
@@ -2005,6 +2035,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       pickVLA[0].ptr=NULL;
       while(ListIterate(I->Obj,rec,next))
         {
+		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
 			 if(rec->obj->fRender)
 			   rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
@@ -2013,7 +2044,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
 	
       lowBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h);
-	
+
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
       pickVLA[0].index=0;
@@ -2021,6 +2052,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 	
       while(ListIterate(I->Obj,rec,next))
         {
+		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
             rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
@@ -2029,28 +2061,36 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       
       highBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h);
       
-      nBits = VLAGetSize(lowBitVLA);
+      nLowBits = VLAGetSize(lowBitVLA);
+      nHighBits = VLAGetSize(highBitVLA);
       nPick=0;
-      if(nBits==VLAGetSize(highBitVLA)) { /* should always be true */
-        for(a=0;a<nBits;a++) {
-          index = lowBitVLA[a]+(highBitVLA[a]<<12);
-          if(index&&(index<=pickVLA[0].index)) {          
-            pik = pickVLA+index; /* just using as a tmp */
-            if((pik->index!=lastIndex)||(pik->ptr!=lastPtr))
-              {
-                nPick++; /* start from 1 */
-                VLACheck(smp->picked,Pickable,nPick);
-                lastIndex=pik->index;                
-                lastPtr=pik->ptr;
-                smp->picked[nPick] = *pik; /* return atom/object info -- will be redundant */
-              }
-          }
+      if(nLowBits&&nHighBits) {
+		  low = 0;
+		  high = 0;
+		  while((low<nLowBits)&&(high<nHighBits)) {
+          
+          if(lowBitVLA[low+1]==highBitVLA[high+1]) {
+            index = lowBitVLA[low]+(highBitVLA[high]<<12);
+            if(index&&(index<=pickVLA[0].index)) {          
+              pik = pickVLA+index; /* just using as a tmp */
+              if((pik->index!=lastIndex)||(pik->ptr!=lastPtr))
+                {
+                  nPick++; /* start from 1 */
+                  VLACheck(smp->picked,Pickable,nPick);
+                  lastIndex=pik->index;                
+                  lastPtr=pik->ptr;
+                  smp->picked[nPick] = *pik; /* return atom/object info -- will be redundant */
+                }
+            }
+            low+=2;
+            high+=2;
+          } else if(lowBitVLA[low+1]<highBitVLA[high+1])
+            low+=2;
+          else 
+            high+=2;
         }
-      } else {
-        PRINTFB(FB_Scene,FB_Errors)
-          "Error: pixel count mismatch %d!=%d\n",nBits,VLAGetSize(highBitVLA)
-          ENDFB;
       }
+
       smp->picked[0].index=nPick;
 
 		VLAFree(pickVLA);
