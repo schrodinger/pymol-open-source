@@ -625,6 +625,15 @@ def get_setting_updates():
       unlock()
    return r
 
+def align(name,selection1,selection2):
+   r = None
+   try:
+      lock()
+      r = _cmd.align(str(name),str(selection1),str(selection2))
+   finally:
+      unlock()
+   return r
+
 def get_setting_tuple(name,object='',state=0):
    r = None
    if is_string(name):
@@ -4639,6 +4648,7 @@ class fb_module:
    matrix                    =3
    mypng                     =4
    triangle                  =5
+   match                     =6
    
    feedback                  =12
    scene                     =13
@@ -4870,7 +4880,8 @@ keyword = {
    #       which make much better use of built-in python features.
    
    'abort'         : [dummy        , 0 , 0 , ',' , parsing.ABORT  ],
-   'alias'         : [alias        , 0 , 0 , ',' , parsing.LITERAL1 ],   
+   'alias'         : [alias        , 0 , 0 , ',' , parsing.LITERAL1 ],
+   'align'         : [align        , 0 , 0 , ''  , parsing.STRICT ],
    'alter'         : [alter        , 2 , 2 , ',' , parsing.SIMPLE ],
    'alter_state'   : [alter_state  , 3 , 3 , ',' , parsing.SIMPLE ],
    'api'           : [api          , 0 , 0 , ',' , parsing.STRICT ],

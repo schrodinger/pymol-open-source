@@ -127,6 +127,7 @@ static void APIExit(void) /* assumes API is locked */
     ENDFD;
 }
 
+static PyObject *CmdAlign(PyObject *self,   PyObject *args);
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
 static PyObject *CmdAttach(PyObject *self, 	PyObject *args);
@@ -249,6 +250,7 @@ static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
 static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args);
 
 static PyMethodDef Cmd_methods[] = {
+	{"align",	              CmdAlign,                METH_VARARGS },
 	{"alter",	              CmdAlter,                METH_VARARGS },
 	{"alter_state",           CmdAlterState,           METH_VARARGS },
 	{"attach",                CmdAttach,               METH_VARARGS },
@@ -371,6 +373,29 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
+  char *str1,*str2,*str3;
+  OrthoLineType s2="",s3="";
+  float result = 0.0;
+
+
+  PyArg_ParseTuple(args,"sss",&str1,&str2,&str3);
+  PRINTFD(FB_CCmd)
+    "CmdAlign-DEBUG %s %s %s\n",
+    str1,str2,str3
+    ENDFD;
+
+  APIEntry();
+  SelectorGetTmp(str2,s2);
+  SelectorGetTmp(str3,s3);
+  result = ExecutiveAlign(str1,s2,s3);
+  SelectorFreeTmp(s2);
+  SelectorFreeTmp(s3);
+  APIExit();
+
+  return Py_BuildValue("f",result);
+}
 
 static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args)
 {

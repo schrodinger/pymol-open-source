@@ -48,5 +48,5 @@ void SelectorDeletePrefixSet(char *pref);
 void SelectorUpdateCmd(int sele0,int sele1,int sta0,int sta1);
 int SelectorGetSingleAtomVertex(int sele,int state,float *v);
 int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index);
-
+int *SelectorGetResidueVLA(int sele0);
 #endif

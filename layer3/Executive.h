@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Ortho.h"
 #include"Word.h"
-
+float ExecutiveAlign(char *name,char *sele1,char *sele2);
 float ExecutiveDistance(char *sele1,char *sele2);
 float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
 void ExecutiveBond(char *s1,char *s2,int order,int add);

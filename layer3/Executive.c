@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"P.h"
 #include"PConv.h"
+#include"Match.h"
 
 #include"Menu.h"
 #include"Map.h"
@@ -90,10 +91,61 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
+float ExecutiveAlign(char *name,char *s1,char *s2)
+{
+  int sele1=SelectorIndexByName(s1);
+  int sele2=SelectorIndexByName(s2);
+  int *vla1=NULL;
+  int *vla2=NULL;
+  int na,nb;
+  int a,b,c;
+  int *r;
+  float result = 0.0;
+  CMatch *match = NULL;
+
+  if((sele1>=0)&&(sele2>=0)) {
+    vla1=SelectorGetResidueVLA(sele1);
+    vla2=SelectorGetResidueVLA(sele2);
+    if(vla1&&vla2) {
+      na = VLAGetSize(vla1)/3;
+      nb = VLAGetSize(vla2)/3;
+      if(na&&nb) {
+        match = MatchNew(na,nb);
+        r = vla1;
+        for(a=0;a<na;a++) {
+          for(b=0;b<nb;b++) {
+            if(vla1[a*3+2] == vla2[b*3+2])
+              match->mat[a][b] = 1.0;
+            else
+              match->mat[a][b] = -0.1;
+          }
+        }
+        result = MatchAlign(match,-0.2,-0.05,10);
+        if(match->pair) { /* alignment was successful */
+          r = match->pair;
+          c = VLAGetSize(match->pair)/2;
+          for(a=0;a<c;a++) {
+            printf("%d %d\n",r[0],r[1]);
+            r+=2;
+          }
+          
+        }
+        if(match) 
+          MatchFree(match);
+      }
+    }
+  }
+  VLAFreeP(vla1);
+  VLAFreeP(vla2);
+  return 1.0;
+}
+
 void ExecutiveFocus(void)
 { /* unfortunately, this doesn't achieve the desired effect */
-  glutPopWindow();
-  glutShowWindow();
+  if(PMGUI) {
+    glutPopWindow();
+    glutShowWindow();
+  }
 }
 
 PyObject *ExecutiveGetSettingText(int index,char *object,int state)

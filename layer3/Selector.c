@@ -239,6 +239,88 @@ static int BondCompare(int *a,int *b);
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 
+
+/*========================================================================*/
+int *SelectorGetResidueVLA(int sele)
+{
+  /* returns a VLA containing atom indices followed by residue integers
+   (residue names packed as characters into integers)
+   The indices are the first and last residue in the selection...
+  */
+  SelectorType *I=&Selector;
+  int *result = NULL,*r;
+  int a;
+  int c;
+  AtomInfoType *ai1 = NULL,*ai2;
+  int at1,at2;
+  unsigned int rcode;
+  ResName rn;
+  int mod1;
+  ObjectMolecule *obj;
+
+  SelectorUpdateTable();
+
+  result = VLAlloc(int,I->NAtom*3);
+
+  r = result;
+  PRINTFD(FB_Selector)
+    " SelectorGetResidueVLA-DEBUG: entry, sele = %d\n",sele
+    ENDFD;
+
+  if(I->NAtom) {
+    for(a=0;a<I->NAtom;a++)
+      {
+        fflush(stdout);
+        obj=I->Obj[I->Table[a].model];
+        at2=I->Table[a].atom;
+        if(!ai1) {
+          mod1 = I->Table[a].model;
+          at1 = at2;
+          ai1=obj->AtomInfo+at1;
+        }
+        if(SelectorIsMember(obj->AtomInfo[at2].selEntry,sele)) {
+          ai2=obj->AtomInfo+at2;
+          if(!AtomInfoSameResidue(ai1,ai2)) {
+            if(ai1) {
+              *(r++)=mod1;
+              *(r++)=at1;
+              for(c=0;c<sizeof(ResName);c++)
+                rn[c]=0;
+              strcpy(rn,ai1->resn); /* store residue code as a number */
+              rcode = 0;
+              for(c=0;c<3;c++) {
+                rcode = (rcode<<8) | rn[c];
+              }
+              *(r++) = rcode;
+              at1 = at2;
+              ai1 = ai2;
+              mod1 = I->Table[a].model;
+            }
+          }
+        }
+      }
+    if(ai1) { /* handle last residue */
+      *(r++)=mod1;
+      *(r++)=at1;
+      for(c=0;c<sizeof(ResName);c++)
+        rn[c]=0;
+      strcpy(rn,ai1->resn); /* store residue code as a number */
+      rcode = 0;
+      for(c=0;c<3;c++) {
+        rcode = (rcode<<8) | rn[c];
+      }
+      *(r++) = rcode;
+    }
+  }
+  if(result) {
+    VLASize(result,int,(r-result));
+  }
+  PRINTFD(FB_Selector)
+    " SelectorGetResidueVLA-DEBUG: exit, result = %p, size = %d\n",result,VLAGetSize(result)
+    ENDFD;
+  
+  return(result);
+}
 /*========================================================================*/
 int *SelectorGetIndexVLA(int sele) /* assumes updated tables */
 {
