@@ -108,7 +108,10 @@ int PConvPyListToFloatArray(PyObject *obj,float **f);
 int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll);
 int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,int ll);
 
+int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,int ll);
+
 PyObject *PConvFloatArrayToPyList(float *f,int l);
+PyObject *PConvDoubleArrayToPyList(double *f,int l);
 
 int PConvPyListToIntArray(PyObject *obj,int **f);
 int PConvPyListToIntArrayInPlace(PyObject *obj,int *ff,int ll);

@@ -508,10 +508,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_seq_view_color             362
 #define cSetting_seq_view_label_mode        363
 #define cSetting_surface_ramp_above_mode    364
+#define cSetting_stereo                     365
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       365
+#define cSetting_INIT                       366
 
 #endif
 

@@ -22,6 +22,131 @@ Z* -------------------------------------------------------------------
 #include"View.h"
 #include"Ray.h"
 #include"Setting.h"
+#include"PConv.h"
+
+
+PyObject *ViewElemAsPyList(CViewElem *view)
+{
+  PyObject *result = NULL;
+
+  result=PyList_New(13);
+
+  if(result) {
+    PyList_SetItem(result,0,PyInt_FromLong(view->matrix_flag));
+    if(view->matrix_flag) {
+      PyList_SetItem(result,1,PConvDoubleArrayToPyList(view->matrix,16));
+    } else {
+      PyList_SetItem(result,1,PConvAutoNone(NULL));
+    }
+    
+    PyList_SetItem(result,2,PyInt_FromLong(view->pre_flag));
+    if(view->pre_flag) {
+      PyList_SetItem(result,3,PConvDoubleArrayToPyList(view->pre,3));
+    } else {
+      PyList_SetItem(result,3,PConvAutoNone(NULL));
+    }
+    
+    PyList_SetItem(result,4,PyInt_FromLong(view->post_flag));
+    if(view->post_flag) {
+      PyList_SetItem(result,5,PConvDoubleArrayToPyList(view->post,3));
+    } else {
+      PyList_SetItem(result,5,PConvAutoNone(NULL));
+    }
+    
+    PyList_SetItem(result,6,PyInt_FromLong(view->clip_flag));
+    if(view->post_flag) {
+      PyList_SetItem(result,7,PyFloat_FromDouble((double)view->front));
+      PyList_SetItem(result,8,PyFloat_FromDouble((double)view->back));
+    } else {
+      PyList_SetItem(result,7,PConvAutoNone(NULL));
+      PyList_SetItem(result,8,PConvAutoNone(NULL));
+    }
+    
+    PyList_SetItem(result,9,PyInt_FromLong(view->ortho_flag));
+    if(view->ortho_flag) {
+      PyList_SetItem(result,10,PyInt_FromLong(view->ortho));
+    } else {
+      PyList_SetItem(result,10,PConvAutoNone(NULL));
+    }
+    
+    PyList_SetItem(result,11,PyInt_FromLong(view->view_mode));
+    
+    PyList_SetItem(result,12,PyInt_FromLong(view->specified_flag));
+  }
+
+  return PConvAutoNone(result);
+}
+
+int ViewElemFromPyList(PyObject *list, CViewElem *view)
+{
+  int ok=true;
+  int ll=0;
+
+  if(ok) ok= (list!=NULL);
+  if(ok) ok= PyList_Check(list);
+  if(ok) ok= ((ll=PyList_Size(list))>11);
+
+  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,0),&view->matrix_flag);
+  if(ok&&view->matrix_flag) ok= PConvPyListToDoubleArrayInPlace(PyList_GetItem(list,1),view->matrix,16);
+  
+  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,2),&view->pre_flag);
+  if(ok&&view->pre_flag) ok= PConvPyListToDoubleArrayInPlace(PyList_GetItem(list,3),view->pre,3);
+
+  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,4),&view->post_flag);
+  if(ok&&view->post_flag) ok= PConvPyListToDoubleArrayInPlace(PyList_GetItem(list,5),view->post,3);
+  
+  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,6),&view->clip_flag);
+  if(view->post_flag) {
+    if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,7),&view->front);
+    if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,8),&view->back);
+  }
+
+  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,9),&view->ortho_flag);
+  if(ok&&view->ortho_flag) ok= PConvPyIntToInt(PyList_GetItem(list,10),&view->ortho_flag);
+
+  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,11),&view->view_mode);
+  if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,12),&view->specified_flag);
+
+  return ok;
+}
+
+int ViewElemVLAFromPyList(PyObject *list, CViewElem **vla_ptr, int nFrame)
+{
+  int ok=true;
+
+  CViewElem *vla = NULL;
+
+
+  if(ok) ok= (list!=NULL);
+  if(ok) ok= PyList_Check(list);
+  if(ok) ok= (PyList_Size(list)==nFrame);
+  if(ok) ok= ((vla=VLACalloc(CViewElem,nFrame))!=NULL);
+  if(ok) {
+    int a;
+    for(a=0;a<nFrame;a++) {
+      if(ok) 
+        ok=ViewElemFromPyList(PyList_GetItem(list,a),vla+a);
+      else
+        break;
+    }
+  }
+  if(!ok) {
+    VLAFreeP(vla);
+  } else
+    *vla_ptr = vla;
+  return ok;
+}
+
+PyObject *ViewElemVLAAsPyList(CViewElem *vla,int nFrame)
+{
+  PyObject *result = NULL;
+  int a;
+  result = PyList_New(nFrame);
+  for(a=0;a<nFrame;a++) {
+    PyList_SetItem(result,a,ViewElemAsPyList(vla+a));
+  }
+  return(PConvAutoNone(result));
+}
 
 CView *ViewNew(void)
 {

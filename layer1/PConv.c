@@ -518,6 +518,31 @@ int PConvPyListToIntVLA(PyObject *obj,int **f)
   return(ok);
 }
 
+int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,int ll)
+{
+  int ok = true;
+  int a,l;
+  if(!obj) { 
+    ok=false;
+  } else if(!PyList_Check(obj)) {
+    ok=false;
+  } else {
+    l=PyList_Size(obj);
+    if (l!=ll) 
+      ok=false;
+    else {
+      if(!l)
+        ok=-1;
+      else
+        ok=l;
+      for(a=0;a<l;a++)
+        *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+    }
+    /* NOTE ASSUMPTION! */
+  }
+  return(ok);
+}
+
 int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll)
 {
   int ok = true;
@@ -647,6 +672,16 @@ PyObject *PConvFloatArrayToPyList(float *f,int l)
   result=PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++)));
+  return(result);
+}
+
+PyObject *PConvDoubleArrayToPyList(double *f,int l)
+{
+  int a;
+  PyObject *result = Py_None;
+  result=PyList_New(l);
+  for(a=0;a<l;a++) 
+    PyList_SetItem(result,a,PyFloat_FromDouble(*(f++)));
   return(result);
 }
 

@@ -256,7 +256,8 @@ int ExecutiveSetName(char *old_name, char *new_name)
               ExecutiveUpdateObjectSelection(rec->obj);
             */
             SelectorSetName(new_name, old_name);
-            OrthoDirty();
+            SceneDirty();
+            SeqChanged();
             found = true;
           }
         }
@@ -266,6 +267,7 @@ int ExecutiveSetName(char *old_name, char *new_name)
           if(SelectorSetName(new_name, old_name)) {
             UtilNCopy(rec->name,new_name,ObjNameMax);
             found = true;
+            OrthoDirty();
           }
         }
         break;
@@ -1248,6 +1250,16 @@ int ExecutiveGetSession(PyObject *dict)
   tmp = MainAsPyList();
   PyDict_SetItemString(dict,"main",tmp);
   Py_XDECREF(tmp);
+
+  if(Feedback(FB_Executive,FB_Errors)) {
+    if(PyErr_Occurred()) {
+      PRINTF
+        " ExecutiveGetSession: a Python error occured during creation of the session object:\n"
+        ENDF;
+      PyErr_Print();
+    }
+  }
+
   return(ok);
 }
 

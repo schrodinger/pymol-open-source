@@ -106,11 +106,19 @@ SEE ALSO
 
    mview_action_sc = Shortcut(mview_action_dict.keys())
 
-   def mview(action='store',first=0,last=0,power=1.4):
+   def mview(action='store',first=0,last=0,power=1.4,bias=1.0):
+      first = int(first)
+      last = int(last)
+      if first<0:
+         first = cmd.count_frames() + first + 1
+         if last == 0:
+            last = cmd.count_frames()
+      if last<0:
+         last = cmd.count_frames() + last + 1
       action = mview_action_dict[mview_action_sc.auto_err(action,'action')]
       try:
          lock()   
-         r = _cmd.mview(int(action),int(first)-1,int(last)-1,float(power))
+         r = _cmd.mview(int(action),int(first)-1,int(last)-1,float(power),float(bias))
       finally:
          unlock()
       return r
@@ -300,7 +308,10 @@ SEE ALSO
          unlock()
       return r
 
-   def mset(specification=""):
+   def madd(specification=""):
+      mset(specification,0)
+      
+   def mset(specification="",frame=1):
       '''
 DESCRIPTION
 
@@ -310,11 +321,11 @@ DESCRIPTION
 
 USAGE
 
-   mset specification
+   mset specification [ ,frame ]
 
 PYMOL API
 
-   cmd.mset( string specification )
+   cmd.mset( string specification [, int frame] )
 
 EXAMPLES
 
@@ -331,15 +342,20 @@ SEE ALSO
 
    mdo, mplay, mclear
       '''
+      cur_state = cmd.get_state()-1 # use the current state 
       try:
          lock()
          output=[]
          input = string.split(string.strip(specification))
-         last = 0
+         last = -1
          for x in input:
             if x[0]>"9" or x[0]<"0":
                if x[0]=="x":
-                  cnt = int(x[1:])-1
+                  if last<0:
+                     last = cur_state
+                     cnt = int(x[1:])                     
+                  else:
+                     cnt = int(x[1:])-1
                   while cnt>0:
                      output.append(str(last))
                      cnt=cnt-1
@@ -356,7 +372,7 @@ SEE ALSO
                val = int(x) - 1
                output.append(str(val))
                last=val
-         r = _cmd.mset(string.join(output," "))
+         r = _cmd.mset(string.join(output," "),int(frame)-1)
       finally:
          unlock()
       return r

@@ -2669,7 +2669,7 @@ static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
   char *str1,*str2,*str3;
   float result;
   int int1;
-  OrthoLineType s1,s2,s3;
+  OrthoLineType s1,s2;
   int ok=false;
   ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&str3,&int1);
   
@@ -3133,10 +3133,11 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
 {
   char *str1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  int start_from;
+  ok = PyArg_ParseTuple(args,"si",&str1,&start_from);
   if (ok) {
     APIEntry();
-    MovieSequence(str1);
+    MovieAppendSequence(str1,start_from);
     SceneCountFrames();
     APIExit();
   }
@@ -3147,11 +3148,11 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
 {
   int ok=false;
   int action,first,last;
-  float power;
-  ok = PyArg_ParseTuple(args,"iiif",&action,&first,&last,&power);
+  float power,bias;
+  ok = PyArg_ParseTuple(args,"iiiff",&action,&first,&last,&power,&bias);
   if (ok) {
     APIEntry();
-    ok = MovieView(action,first,last,power);
+    ok = MovieView(action,first,last,power,bias);
     APIExit();
   }
   return(APIStatus(ok));

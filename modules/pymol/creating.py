@@ -208,7 +208,7 @@ SEE ALSO
       return r
 
    def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
-              carve=0,source=0):
+              carve=None,source=0):
       '''
 DESCRIPTION
 
@@ -243,6 +243,8 @@ SEE ALSO
       if selection not in [ 'center', 'origin' ]:
          selection = "("+selection+")"
       #
+      if carve==None:
+         carve=-1.0
       try:
          lock()
          r = _cmd.isomesh(str(name),0,str(map),int(mopt),

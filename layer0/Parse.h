@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 char *ParseNextLine(char *p);
 char *ParseWordCopy(char *dst,char *src,int n);
+char *ParseWord(char *dst,char *src,int n);
 char *ParseNCopy(char *dst,char *src,int n);
 char *ParseNTrim(char *q,char *p,int n);
 char *ParseNSkip(char *p,int n);

@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"PConv.h"
 #include"Util.h"
-
+#include"Parse.h"
 
 CMovie Movie;
 
@@ -183,6 +183,7 @@ static int MovieCmdFromPyList(PyObject *list,int *warning)
   int a;
   int warn=false;
 
+  if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
   
   for(a=0;a<I->NFrame;a++) {
@@ -210,13 +211,21 @@ int MovieFromPyList(PyObject *list,int *warning)
     ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,2),I->Matrix,cSceneViewSize);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,3),&I->Playing);
   if(ok&&I->NFrame) {
-    I->Sequence=Alloc(int,I->NFrame+1);
-    I->Cmd=Alloc(MovieCmdType,I->NFrame+1);
+    I->Sequence=VLACalloc(int,I->NFrame);
+    I->Cmd=VLACalloc(MovieCmdType,I->NFrame);
     if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,4),I->Sequence,I->NFrame);
     if(ok) ok=MovieCmdFromPyList(PyList_GetItem(list,5),warning);
     if((*warning)&&Security) {
       MovieSetLock(true);
     }
+  }
+  if(ok&&(ll>6)) {
+    PyObject *tmp;
+    VLAFreeP(I->ViewElem);
+    I->ViewElem = NULL;
+    tmp = PyList_GetItem(list,6);
+    if(tmp && !(tmp == Py_None))
+      ok = ViewElemVLAFromPyList(tmp,&I->ViewElem,I->NFrame);
   }
   if(!ok) {
     MovieReset();
@@ -231,9 +240,10 @@ static PyObject *MovieCmdAsPyList(void)
   int a;
 
   result = PyList_New(I->NFrame);
-  for(a=0;a<I->NFrame;a++) {
-    PyList_SetItem(result,a,PyString_FromString(I->Cmd[a]));
-  }
+  if(result) 
+    for(a=0;a<I->NFrame;a++) {
+      PyList_SetItem(result,a,PyString_FromString(I->Cmd[a]));
+    }
   return(PConvAutoNone(result));
 }
 
@@ -243,7 +253,7 @@ PyObject *MovieAsPyList(void)
   CMovie *I=&Movie;
   PyObject *result = NULL;
 
-  result = PyList_New(6);
+  result = PyList_New(7);
   PyList_SetItem(result,0,PyInt_FromLong(I->NFrame));
   PyList_SetItem(result,1,PyInt_FromLong(I->MatrixFlag));
   PyList_SetItem(result,2,PConvFloatArrayToPyList(I->Matrix,cSceneViewSize));
@@ -258,6 +268,12 @@ PyObject *MovieAsPyList(void)
   } else {
     PyList_SetItem(result,5,PConvAutoNone(NULL));
   }
+  if(I->ViewElem) {
+    PyList_SetItem(result,6,ViewElemVLAAsPyList(I->ViewElem,I->NFrame));
+  } else {
+    PyList_SetItem(result,6,PConvAutoNone(NULL));
+  }
+
 /*   ImageType *Image;
   int *Sequence;
   MovieCmdType *Cmd;
@@ -418,13 +434,17 @@ int MoviePNG(char *prefix,int save,int start,int stop)
   return(true);
 }
 /*========================================================================*/
-void MovieSequence(char *str)
+void MovieAppendSequence(char *str,int start_from)
 {
   CMovie *I=&Movie;
   int c=0;
   int i;
-  char *s;
-  c=0;
+  char *s,number[20];
+ 
+  if(start_from<0)
+    start_from = I->NFrame;
+
+  c=start_from;
 
   PRINTFB(FB_Movie,FB_Debugging)
     " MovieSequence: entered. str:%s\n",str
@@ -432,40 +452,54 @@ void MovieSequence(char *str)
 
   s=str;
   while(*s) {
-	 if(sscanf(s,"%i",&i)) {
+    s=ParseWord(number,s,20);
+	 if(sscanf(number,"%i",&i)) { /* slow */
 		c++;
 	 }
-	 s++;
-	 while(*s) {
-		if(*s==' ') break;
-		s++;
-	 }
   }
-  FreeP(I->Sequence);
-  FreeP(I->Cmd);
-  VLAFreeP(I->ViewElem);
-  I->NFrame=0;
-  if(str[0]) { /* not just a reset */
-    I->Sequence=Alloc(int,c+1);
-    I->Cmd=Alloc(MovieCmdType,c+1);
-    I->ViewElem=VLACalloc(CViewElem,c+1);
-    for(i=0;i<c;i++)
+
+  if(!c) {
+    VLAFreeP(I->Sequence); 
+    VLAFreeP(I->Cmd);
+    VLAFreeP(I->ViewElem);
+    I->NFrame=0;
+  } else {
+    if(!I->Sequence) {
+      I->Sequence = VLACalloc(int,c);
+    } else {
+      VLASize(I->Sequence, int, start_from); /* to clear */
+      VLASize(I->Sequence, int, c);
+    }
+    if(!I->Cmd) {
+      I->Cmd = VLACalloc(MovieCmdType, c);
+    } else {
+      VLASize(I->Cmd, MovieCmdType, start_from);      
+      VLASize(I->Cmd, MovieCmdType, c);
+    }
+    if(!I->ViewElem) {
+      I->ViewElem = VLACalloc(CViewElem, c);    
+    } else {
+      VLASize(I->ViewElem, CViewElem, start_from);
+      VLASize(I->ViewElem, CViewElem, c);
+    }
+  }
+
+  if(c&&str[0]) { /* not just a reset */
+    for(i=start_from;i<c;i++)
       I->Cmd[i][0]=0;
-    c=0;
+    c=start_from;
     s=str;
     while(*s) {
-      if(sscanf(s,"%i",&I->Sequence[c])) {
+      s=ParseWord(number,s,20);
+      if(sscanf(number,"%i",&I->Sequence[c])) {
         c++;
       }
-      s++;
-      while(*s) {
-        if(*s==' ') break;
-        s++;
-      }
     }
-    I->Sequence[c]=-1;
     I->NFrame=c;
+  } else if(!str[0]) {
+    I->NFrame=start_from;
   }
+           
   VLACheck(I->Image,ImageType,I->NFrame);
   PRINTFB(FB_Movie,FB_Debugging)
     " MovieSequence: leaving... I->NFrame%d\n",I->NFrame
@@ -549,7 +583,7 @@ void MovieSetCommand(int frame,char *command)
   }
 }
 
-static int interpolate_view(CViewElem *first,CViewElem *last,float power)
+static int interpolate_view(CViewElem *first,CViewElem *last,float power,float bias)
 {
   float first3x3[9];
   float last3x3[9];
@@ -568,7 +602,14 @@ static int interpolate_view(CViewElem *first,CViewElem *last,float power)
   float tAngle=0.0F;
   float tLinear = true; /* always do linear for now... */
   float pivot[3];
+  const float _1 = 1.0F, _p5 = 0.5F;
+  int parabolic = true;
 
+  if(power<0.0F) {
+    parabolic = false;
+    power = -power;
+  }
+  
   /* I have no clue whether we're column or row major at this
      point...but it hardly matters!  */
 
@@ -643,16 +684,29 @@ static int interpolate_view(CViewElem *first,CViewElem *last,float power)
   for(a=0;a<n;a++) {
     float fxn = ((float)a+1)/(n+1);
     float fxn_1;
-    
+
+    /*    printf("Fxn: %8.3f ",fxn);*/
+    if(bias!=1.0F) {
+      fxn = 1-pow(1-pow(fxn,bias),_1/bias);
+    }
+    /*    printf("%8.3f bias %8.3f\n",fxn,bias);*/
+
     if(power!=1.0F) {
       if(fxn<0.5F) {
-        fxn = (float)pow(fxn*2.0F,power)*0.5F;
+        if(parabolic) 
+          fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
+        else
+          fxn = (_1-pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
       } else if(fxn>0.5F) {
-        fxn = 1.0F - fxn;
-        fxn = (float)pow(fxn*2.0F,power)*0.5F;
-        fxn = 1.0F - fxn;
+        fxn = _1 - fxn;
+        if(parabolic) 
+          fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
+        else
+          fxn = (_1-pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
+        fxn = _1 - fxn;
       }
     }
+
     fxn_1 = 1.0F - fxn;
 
     *current = *first;
@@ -683,14 +737,14 @@ static int interpolate_view(CViewElem *first,CViewElem *last,float power)
     } else {
       current->post_flag=false;
     }
-    current->specified = false;
+    current->specified_flag = false;
     current++;
   }
 
   return 1;
 }
 /*========================================================================*/
-int MovieView(int action,int first,int last,float power)
+int MovieView(int action,int first,int last,float power,float bias)
 {
   CMovie *I=&Movie;
   int frame;
@@ -708,7 +762,7 @@ int MovieView(int action,int first,int last,float power)
             " MovieView: Setting frame %d.\n",frame+1
             ENDFB;
           SceneToViewElem(I->ViewElem+frame);          
-          I->ViewElem[frame].specified = true;
+          I->ViewElem[frame].specified_flag = true;
         }
       }
     }
@@ -742,13 +796,13 @@ int MovieView(int action,int first,int last,float power)
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<I->NFrame)) {
           if(!first_view) {
-            if(I->ViewElem[frame].specified) {
+            if(I->ViewElem[frame].specified_flag) {
               first_view = I->ViewElem + frame;
             }
           } else {
-            if(I->ViewElem[frame].specified) {
+            if(I->ViewElem[frame].specified_flag) {
               last_view = I->ViewElem + frame;
-              interpolate_view(first_view,last_view,power);
+              interpolate_view(first_view,last_view,power,bias);
               first_view = last_view;
               last_view = NULL;
             }
@@ -833,8 +887,11 @@ void MovieClearImages(void)
 void MovieReset(void) {
   CMovie *I=&Movie;
   MovieClearImages();
-  FreeP(I->Cmd);
-  FreeP(I->Sequence);
+
+  VLAFreeP(I->Cmd);  
+  VLAFreeP(I->Sequence);  
+  VLAFreeP(I->ViewElem);  
+
   I->NFrame=0;
   I->MatrixFlag=false;
   I->Locked=false;
@@ -847,8 +904,8 @@ void MovieFree(void)
   MovieClearImages();
   VLAFree(I->Image);
   VLAFreeP(I->ViewElem);
-  FreeP(I->Cmd);
-  FreeP(I->Sequence);
+  VLAFreeP(I->Cmd);
+  VLAFreeP(I->Sequence);
 }
 /*========================================================================*/
 void MovieInit(void)

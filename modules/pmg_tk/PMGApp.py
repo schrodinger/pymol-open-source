@@ -1263,11 +1263,6 @@ class PMGApp(AbstractApp):
                                label='Swap Sides',
                                command = lambda: cmd.do("_ stereo swap"))
 
-      self.menuBar.addmenuitem('Stereo', 'command', 'Swap Sides',
-                               label='Swap Sides',
-                               command = lambda: cmd.do("_ stereo swap"))
-
-
       self.menuBar.addmenuitem('Display', 'separator', '')
       
       self.menuBar.addcascademenu('Display', 'Zoom', 'Zoom',

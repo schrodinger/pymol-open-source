@@ -262,7 +262,7 @@ class Mutagenesis(Wizard):
                   cmd.set_title(obj_name,state,"%1.1f%%"%(a[b]*100))
             state = state + 1
          cmd.delete(tmp_name)
-         cmd.set("sequence_viewer",0,obj_name,quiet=1)
+         cmd.set("seq_view",0,obj_name,quiet=1)
 
          print " Mutagenesis: %d conformations loaded."%len(self.library[res_type])
       else:
