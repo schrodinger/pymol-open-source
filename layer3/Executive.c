@@ -90,7 +90,10 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
-
+void ExecutiveFocus(void)
+{
+  glutPopWindow();
+}
 /*========================================================================*/
 void ExecutiveSetLastObjectEdited(Object *o)
 {

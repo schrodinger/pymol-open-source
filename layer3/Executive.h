@@ -93,6 +93,7 @@ int ExecutiveSaveUndo(char *s1,int state);
 void ExecutiveSetLastObjectEdited(Object *o);
 Object *ExecutiveGetLastObjectEdited(void);
 void ExecutiveFullScreen(int flag);
+void ExecutiveFocus(void);
 
 #endif
 
