@@ -1080,7 +1080,6 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
            idx = tt->p[b]->Link;
            while(idx>0) {
              add3f(Tri[PtLink[idx].tri].n,v,v);
-             c++;
              idx = PtLink[idx].link;
            }
            normalize23f(v,tt->p[b]->Normal);
