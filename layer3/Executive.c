@@ -96,15 +96,14 @@ void ExecutiveReshape(Block *block,int width,int height);
 int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int state);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
-#define ExecLineHeight 18
-#define ExecTopMargin (-3)
+/* #define ExecLineHeight 18 */
+#define ExecClickMargin 2
+#define ExecTopMargin 0
 #define ExecToggleMargin 2
 #define ExecLeftMargin 1
 #define ExecRightMargin 0
 #define ExecToggleWidth 17
-#define ExecToggleHeight 17
 #define ExecToggleSize 16
-#define ExecToggleTextLift 4
 #define ExecToggleTextShift 4
 
 #define ExecOpCnt 5
@@ -396,7 +395,6 @@ int  ExecutiveAssignSS(char *target,int state,char *context,int preserve,int qui
     } else {
       sele1 = SelectorIndexByName(context);
     }
-
     if(sele1>=0) {
       ok =  SelectorAssignSS(sele0,sele1,state,preserve,quiet);
     }
@@ -5793,6 +5791,16 @@ void ExecutiveManageObject(CObject *obj,int allow_zoom,int quiet)
   if(obj->type==cObjectMolecule) {
 	 ExecutiveUpdateObjectSelection(obj);
   }
+
+  if(SettingGet(cSetting_auto_dss)) {
+    if(obj->type==cObjectMolecule) {
+      ObjectMolecule *objMol = (ObjectMolecule*)obj;
+      if(objMol->NCSet==1) {
+        ExecutiveAssignSS(obj->Name,0,"",1,1);
+      }
+    }
+  }
+
   if(allow_zoom)
     if(!exists) {
       switch(SettingGetGlobal_i(cSetting_auto_zoom)) {
@@ -5851,7 +5859,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   int t;
   int pass = false;
   int skip;
-  n=(I->Block->rect.top-(y+1))/ExecLineHeight;
+  int ExecLineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+
+  n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
   a=n;
   if(I->ScrollBarActive) {
     if((x-I->Block->rect.left)<(ExecScrollBarWidth+ExecScrollBarMargin+ExecToggleMargin)) {
@@ -5869,22 +5879,22 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
           if(!a) {
             t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
             if(t<ExecOpCnt) {
-              y = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight) - 5;
-              x = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
+              int my = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight)-3;
+              int mx = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
               t = (ExecOpCnt-t)-1;
               switch(t) {
               case 0:
                 switch(rec->type) {
                 case cExecAll:
-                  MenuActivate(x,y,"all_action",rec->name);
+                  MenuActivate(mx,my,x,y,"all_action",rec->name);
                   break;
                 case cExecSelection:
-                  MenuActivate(x,y,"sele_action",rec->name);
+                  MenuActivate(mx,my,x,y,"sele_action",rec->name);
                   break;
                 case cExecObject:
                   switch(rec->obj->type) {
                   case cObjectMolecule:
-                    MenuActivate(x,y,"mol_action",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"mol_action",rec->obj->Name);
                     break;
                   case cObjectSurface:
                   case cObjectMesh:
@@ -5892,7 +5902,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   case cObjectMap:
                   case cObjectCGO:
                   case cObjectCallback:
-                    MenuActivate(x,y,"simple_action",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"simple_action",rec->obj->Name);
                     break;
                   }
                   break;
@@ -5901,28 +5911,28 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
               case 1:
                 switch(rec->type) {
                 case cExecAll:
-                  MenuActivate(x,y,"mol_show",cKeywordAll);
+                  MenuActivate(mx,my,x,y,"mol_show",cKeywordAll);
                   break;
                 case cExecSelection:
-                  MenuActivate(x,y,"mol_show",rec->name);
+                  MenuActivate(mx,my,x,y,"mol_show",rec->name);
                   break;
                 case cExecObject:
                   switch(rec->obj->type) {
                   case cObjectMolecule:
-                    MenuActivate(x,y,"mol_show",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"mol_show",rec->obj->Name);
                     break;
                   case cObjectCGO:
-                    MenuActivate(x,y,"cgo_show",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"cgo_show",rec->obj->Name);
                     break;
                   case cObjectDist:
-                    MenuActivate(x,y,"dist_show",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"dist_show",rec->obj->Name);
                     break;
                   case cObjectMap:
-                    MenuActivate(x,y,"simple_show",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"simple_show",rec->obj->Name);
                     break;
                   case cObjectSurface:
                   case cObjectMesh:
-                    MenuActivate(x,y,"mesh_show",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"mesh_show",rec->obj->Name);
                     break;
                   }
                   break;
@@ -5931,28 +5941,28 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
               case 2:
                 switch(rec->type) {
                 case cExecAll:
-                  MenuActivate(x,y,"mol_hide",cKeywordAll);
+                  MenuActivate(mx,my,x,y,"mol_hide",cKeywordAll);
                   break;
                 case cExecSelection:
-                  MenuActivate(x,y,"mol_hide",rec->name);
+                  MenuActivate(mx,my,x,y,"mol_hide",rec->name);
                   break;
                 case cExecObject:
                   switch(rec->obj->type) {
                   case cObjectMolecule:
-                    MenuActivate(x,y,"mol_hide",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"mol_hide",rec->obj->Name);
                     break;
                   case cObjectCGO:
-                    MenuActivate(x,y,"cgo_hide",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"cgo_hide",rec->obj->Name);
                     break;
                   case cObjectDist:
-                    MenuActivate(x,y,"dist_hide",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"dist_hide",rec->obj->Name);
                     break;
                   case cObjectMap:
-                    MenuActivate(x,y,"simple_hide",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"simple_hide",rec->obj->Name);
                     break;
                   case cObjectSurface:
                   case cObjectMesh:
-                    MenuActivate(x,y,"mesh_hide",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"mesh_hide",rec->obj->Name);
                     break;
                   }
                   break;
@@ -5961,15 +5971,15 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
               case 3:
                 switch(rec->type) {
                 case cExecAll:
-                  MenuActivate(x,y,"mol_labels","(all)");
+                  MenuActivate(mx,my,x,y,"mol_labels","(all)");
                   break;
                 case cExecSelection:
-                  MenuActivate(x,y,"mol_labels",rec->name);
+                  MenuActivate(mx,my,x,y,"mol_labels",rec->name);
                   break;
                 case cExecObject:
                   switch(rec->obj->type) {
                   case cObjectMolecule:
-                    MenuActivate(x,y,"mol_labels",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"mol_labels",rec->obj->Name);
                     break;
                   case cObjectDist:
                     break;
@@ -5985,19 +5995,19 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 switch(rec->type) {
                 case cExecAll:
                 case cExecSelection:
-                  MenuActivate(x,y,"mol_color",rec->name);
+                  MenuActivate(mx,my,x,y,"mol_color",rec->name);
                   break;
                 case cExecObject:
                   switch(rec->obj->type) {
                   case cObjectMolecule:
-                    MenuActivate(x,y,"mol_color",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"mol_color",rec->obj->Name);
                     break;
                   case cObjectDist:
                   case cObjectMap:
                   case cObjectSurface:
                   case cObjectCGO:
                   case cObjectMesh:
-                    MenuActivate(x,y,"general_color",rec->obj->Name);
+                    MenuActivate(mx,my,x,y,"general_color",rec->obj->Name);
                     break;
                   }
                   break;
@@ -6029,7 +6039,9 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   int pass = false;
   int skip;
 
-  n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
+  int ExecLineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+
+  n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
 
   if(I->ScrollBarActive) {
     if((x-I->Block->rect.left)<(ExecScrollBarWidth+ExecScrollBarMargin+ExecToggleMargin)) {
@@ -6052,7 +6064,6 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
       xx -= (ExecScrollBarWidth+ExecScrollBarMargin);
       }
       if((xx>=0)&&(t>=ExecOpCnt)) {
-        int n=(I->Block->rect.top-(y+1))/ExecLineHeight;
         if(n!=I->Pressed)
         I->Active = -1;
         else
@@ -6156,7 +6167,7 @@ int ExecutiveDrag(Block *block,int x,int y,int mod)
 {
   CExecutive *I = &Executive;
   int xx,t;
-
+  int ExecLineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
   xx = (x-I->Block->rect.left);
   t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
   
@@ -6164,7 +6175,7 @@ int ExecutiveDrag(Block *block,int x,int y,int mod)
     xx -= (ExecScrollBarWidth+ExecScrollBarMargin);
   }
   if((xx>=0)&&(t>=ExecOpCnt)) {
-    int n=(I->Block->rect.top-(y+1))/ExecLineHeight;
+    int n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
     if(n!=I->Pressed)
       I->Active = -1;
     else
@@ -6220,7 +6231,7 @@ static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, 
 static void draw_button_char(int x2,int y2,char ch)
 {
   glColor3f(0.0,0.0,0.0);
-  glRasterPos4d((double)(x2+ExecToggleTextShift),(double)(y2+ExecToggleTextLift),0.0,1.0);
+  glRasterPos4d((double)(x2+ExecToggleTextShift),(double)(y2),0.0,1.0);
   p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,ch);              
 }
 
@@ -6245,6 +6256,9 @@ void ExecutiveDraw(Block *block)
   int n_disp;
   int skip=0;
   int row = -1;
+  int ExecLineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+  int text_lift = (ExecLineHeight/2)-5;
+
   if(PMGUI) {
     int max_char;
 
@@ -6258,7 +6272,7 @@ void ExecutiveDraw(Block *block)
         n_ent++;
     }
 
-    n_disp = ((I->Block->rect.top-I->Block->rect.bottom)-(2+ExecTopMargin))/ExecLineHeight;
+    n_disp = ((I->Block->rect.top-I->Block->rect.bottom)-(ExecTopMargin))/ExecLineHeight;
     if(n_disp<1) n_disp=1;
       
     if(n_ent>n_disp) {
@@ -6319,7 +6333,7 @@ void ExecutiveDraw(Block *block)
           } else {
             row++;
             x2=xx;
-            y2=y-ExecToggleMargin;
+            y2=y;
             nChar = max_char;
 
             if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
@@ -6340,70 +6354,62 @@ void ExecutiveDraw(Block *block)
                   glEnd();
                   */
 
-                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
                               toggleLightEdge,
                               toggleDarkEdge,
                               toggleColor);
 
-                  draw_button_char(x2,y2,'A');
+                  draw_button_char(x2,y2+text_lift,'A');
                   break;
                 case 1:
-                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
                               toggleLightEdge,
                               toggleDarkEdge,
                               toggleColor3);
 
-                  draw_button_char(x2,y2,'S');
+                  draw_button_char(x2,y2+text_lift,'S');
                   break;
                 case 2:
-                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
                               toggleLightEdge,
                               toggleDarkEdge,
                               toggleColor2);
-                  draw_button_char(x2,y2,'H');
+                  draw_button_char(x2,y2+text_lift,'H');
                   break;
                 case 3:
-                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
                               toggleLightEdge,
                               toggleDarkEdge,
                               toggleColor);
-                  draw_button_char(x2,y2,'L');
+                  draw_button_char(x2,y2+text_lift,'L');
                   break;
                 case 4:
-                  draw_button(x2,y2,ExecToggleSize,ExecToggleHeight,
+                  draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
                               toggleLightEdge,
                               toggleDarkEdge,
                               NULL);
-                  draw_button_char(x2,y2,'C');
+                  draw_button_char(x2,y2+text_lift,'C');
                   break;
                 }
                 x2+=ExecToggleWidth;
               }
         
             glColor3fv(I->Block->TextColor);
-            glRasterPos4d((double)(x)+2,(double)(y)+2,0.0,1.0);
+            glRasterPos4d((double)(x)+2,(double)(y2)+text_lift,0.0,1.0);
             if((rec->type==cExecObject)||(rec->type==cExecAll)||(rec->type==cExecSelection))
               {
-                y2=y-ExecToggleMargin;
+                y2=y;
                 x2 = xx;
                 if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
                   x2 = x+10;
                 }
                 if(row==I->Active) {
-                  draw_button(x,y2,(x2-x)-1,ExecToggleHeight,lightEdge,darkEdge,pressedColor);
+                  draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,pressedColor);
                 } else if(rec->visible) {
-                  draw_button(x,y2,(x2-x)-1,ExecToggleHeight,lightEdge,darkEdge,enabledColor);
+                  draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,enabledColor);
                 } else {
-                  draw_button(x,y2,(x2-x)-1,ExecToggleHeight,lightEdge,darkEdge,disabledColor);
+                  draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,disabledColor);
                 }
-
-
-                /*                glBegin(GL_POLYGON);
-                glVertex2i(x-ExecToggleMargin,y2);
-                glVertex2i(x2-ExecToggleMargin,y2);
-                glVertex2i(x2-ExecToggleMargin,y2+ExecToggleSize);
-                glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
-                glEnd();*/
 
                 glColor3fv(I->Block->TextColor);
 
@@ -6436,7 +6442,7 @@ void ExecutiveDraw(Block *block)
               }
 
             y-=ExecLineHeight;
-            if(y<(I->Block->rect.bottom+2))
+            if(y<(I->Block->rect.bottom))
               break;
           }
         }

@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"main.h"
 #include"PConv.h"
+#include"Wizard.h"
 
 CSetting Setting;
 
@@ -1062,6 +1063,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_dash_round_ends:
 	 SceneDirty();
 	 break;
+  case cSetting_internal_gui_control_size:
+    WizardRefresh();
+    OrthoDirty();
+    break;
   case cSetting_min_mesh_spacing:
   case cSetting_mesh_mode:
   case cSetting_mesh_solvent:
@@ -1539,7 +1544,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_ribbon_power_b, 0.5F);
 
-  SettingSet_i(I,cSetting_ribbon_sampling, 16);
+  SettingSet_i(I,cSetting_ribbon_sampling, 1);
 
   SettingSet_f(I,cSetting_ribbon_radius, 0.0F);
 
@@ -1741,7 +1746,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   
   SettingSet_b(I,cSetting_cartoon_flat_sheets, 1);
 
-  SettingSet_b(I,cSetting_cartoon_smooth_loops, 1);
+  SettingSet_b(I,cSetting_cartoon_smooth_loops, 0);
 
   SettingSet_f(I,cSetting_cartoon_dumbbell_length, 1.60F);
 
@@ -2169,6 +2174,9 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_f(I,cSetting_png_screen_gamma,2.4F);
   SettingSet_f(I,cSetting_png_file_gamma,1.0F);
   SettingSet_b(I,cSetting_editor_label_fragments,0);
+  SettingSet_i(I,cSetting_internal_gui_control_size, 18);
+  SettingSet_b(I,cSetting_auto_dss,1);
 
 }
+
 

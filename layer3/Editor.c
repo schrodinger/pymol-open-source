@@ -54,6 +54,15 @@ typedef struct {
 
 CEditor Editor;
 
+int EditorGetNFrag(void)
+{
+  CEditor *I = &Editor;
+  if(EditorActive()) {
+    return I->NFrag;
+  }
+  return 0;
+}
+
 void EditorDefineExtraPks(void)
 {
   WordType name;

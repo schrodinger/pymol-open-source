@@ -33,6 +33,10 @@ Z* -------------------------------------------------------------------
 
 #define P_GLUT_BUTTON_SCROLL_FORWARD  3
 #define P_GLUT_BUTTON_SCROLL_BACKWARD 4
+#define P_GLUT_DOUBLE_LEFT 5
+#define P_GLUT_DOUBLE_MIDDLE 6
+#define P_GLUT_DOUBLE_RIGHT 7
+
 
 /* determine whether or not we have a real GLUT */
 

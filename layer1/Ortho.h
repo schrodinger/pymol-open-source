@@ -66,7 +66,7 @@ void OrthoRestorePrompt(void);
 void OrthoDirty(void);
 void OrthoWorking(void);
 void OrthoClear(void);
-
+void OrthoFakeDrag(void);
 void OrthoBusyDraw(int force);
 void OrthoBusyMessage(char *message);
 void OrthoBusySlow(int progress,int total);

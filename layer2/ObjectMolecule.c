@@ -7233,6 +7233,7 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index, char *buffer)
     else
   sprintf(buffer,"%s: /%s/%s/%s/%s/%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name);
 }
+
 /*========================================================================*/
 void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer) 
 {

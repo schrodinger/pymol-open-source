@@ -1417,6 +1417,45 @@ class PMGApp(AbstractApp):
                                command = lambda s=self:
                                s.text.configure(font=(s.font,12)))
 
+
+      self.menuBar.addcascademenu('Setting', 'Control', 'Control Size',
+                                  label=self.pad+'Control Size')
+
+      self.menuBar.addmenuitem('Control', 'command', '12',
+                               label='12',
+                               command = lambda :
+                               cmd.do("_ set internal_gui_control_size,12,quiet=1"))
+
+      self.menuBar.addmenuitem('Control', 'command', '14',
+                               label='14',
+                               command = lambda :
+                               cmd.do("_ set internal_gui_control_size,14,quiet=1"))
+
+      self.menuBar.addmenuitem('Control', 'command', '16',
+                               label='16',
+                               command = lambda :
+                               cmd.do("_ set internal_gui_control_size,16,quiet=1"))
+
+      self.menuBar.addmenuitem('Control', 'command', '18',
+                               label='18 (default)',
+                               command = lambda :
+                               cmd.do("_ set internal_gui_control_size,18,quiet=1"))
+
+      self.menuBar.addmenuitem('Control', 'command', '20',
+                               label='20',
+                               command = lambda :
+                               cmd.do("_ set internal_gui_control_size,20,quiet=1"))
+
+      self.menuBar.addmenuitem('Control', 'command', '24',
+                               label='24',
+                               command = lambda :
+                               cmd.do("_ set internal_gui_control_size,24,quiet=1"))
+
+      self.menuBar.addmenuitem('Control', 'command', '30',
+                               label='30',
+                               command = lambda :
+                               cmd.do("_ set internal_gui_control_size,30,quiet=1"))
+
       self.menuBar.addmenuitem('Setting', 'separator', '')
       
 

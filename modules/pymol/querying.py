@@ -498,7 +498,7 @@ PYMOL API
       finally:
          unlock()
       if r==None:
-         if cmd._raising(): raise QuietException
+         return []
       elif not quiet: print " cmd.get_chains: ",str(r)
       return r
 

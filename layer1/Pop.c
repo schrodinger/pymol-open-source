@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include "Pop.h"
 
-#define cPopMargin 4
+#define cPopMargin 3
 
 typedef struct {
   Block *Block;
@@ -71,29 +71,52 @@ void PopFitBlock(Block *block)
   CPop *I=&Pop;
   int delta;
 
-  if((block->rect.bottom - cPopMargin)< I->Block->rect.bottom) {
+  if((block->rect.bottom - cPopMargin)< (I->Block->rect.bottom)) {
     delta=(I->Block->rect.bottom - block->rect.bottom) + cPopMargin;
     block->rect.top+=delta;
     block->rect.bottom+=delta;
   }
 
-  if((block->rect.right+cPopMargin) > I->Block->rect.right) {
-    delta=(block->rect.right - I->Block->rect.right)  + cPopMargin;
+  if((block->rect.right+cPopMargin) > (I->Block->rect.right)) {
+    delta=(block->rect.right - (I->Block->rect.right))  + cPopMargin;
     block->rect.left-=delta;
     block->rect.right-=delta;
   }
 
-  if((block->rect.left-cPopMargin) < I->Block->rect.left) {
+  if((block->rect.left-cPopMargin) < (I->Block->rect.left)) {
     delta=(I->Block->rect.left - block->rect.left) + cPopMargin;
     block->rect.right+=delta;
     block->rect.left+=delta;
   }
 
-  if((block->rect.top+cPopMargin) > I->Block->rect.top) {
-    delta=(block->rect.top - I->Block->rect.top)  + cPopMargin;
+  if((block->rect.top+cPopMargin) > (I->Block->rect.top)) {
+    delta=(block->rect.top - (I->Block->rect.top))  + cPopMargin;
     block->rect.top-=delta;
     block->rect.bottom-=delta;
   }
-
 }
+/*========================================================================*/
+void PopPlaceChild(Block *block,int left_x,int right_x,int row_y)
+{
+  /* first, try on the right */
+  int width = block->rect.right - block->rect.left;  
+  int height = block->rect.top - block->rect.bottom;
 
+  int target_x;
+  
+  block->rect.top = row_y;
+  block->rect.bottom = row_y - height;
+
+  target_x = right_x;
+  block->rect.left = target_x;
+  block->rect.right = target_x + width;
+  
+  PopFitBlock(block);
+  if( block->rect.left != target_x ) {
+    target_x = left_x - width;
+    block->rect.left = target_x;
+    block->rect.right = target_x + width;
+    PopFitBlock(block);
+  }
+  
+}

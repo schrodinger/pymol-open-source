@@ -210,6 +210,10 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_HBDs ( 0x3200 | STYP_SEL0 | 0x70 )
 #define SELE_HBAs ( 0x3300 | STYP_SEL0 | 0x70 )
 #define SELE_BYC1 ( 0x3400 | STYP_OPR1 | 0x10 )
+#define SELE_BYS1 ( 0x3500 | STYP_OPR1 | 0x10 )
+#define SELE_BYM1 ( 0x3600 | STYP_OPR1 | 0x10 )
+#define SELE_BYF1 ( 0x3700 | STYP_OPR1 | 0x10 )
+#define SELE_EXT_ ( 0x3800 | STYP_PRP1 | 0x20 )
 
 #define SEL_PREMAX 0x8
 
@@ -217,110 +221,165 @@ static WordKeyValue Keyword[] =
 {
   {  "not",      SELE_NOT1 },
   {  "!",        SELE_NOT1 },
+
   {  "neighbor", SELE_NGH1 },
   {  "nbr;",     SELE_NGH1 }, /* deprecated */
   {  "nbr.",     SELE_NGH1 },
+
+  {  "byfragment",SELE_BYF1 },
+  {  "byfrag"   ,SELE_BYF1 },
+  {  "bf."      ,SELE_BYF1 },
+
   {  "byresidue",SELE_BYR1 },
-  {  "byresi",   SELE_BYR1 },
+  {  "byresi",   SELE_BYR1 }, /* unofficial */
   {  "byres",    SELE_BYR1 },
   {  "br;",      SELE_BYR1 },/* deprecated */
   {  "br.",      SELE_BYR1 },
   {  "b;",       SELE_BYR1 }, /* deprecated */
+
   {  "bychain",  SELE_BYC1 },
   {  "bc.",      SELE_BYC1 },
-  {  "byobj",    SELE_BYO1 },
+
   {  "byobject", SELE_BYO1 },
+  {  "byobj",    SELE_BYO1 },
   {  "bo;",      SELE_BYO1 },/* deprecated */
   {  "bo.",      SELE_BYO1 },
+
+  { "bymolecule",SELE_BYM1 },
+  {  "bymol",    SELE_BYM1 },
+  {  "bm.",      SELE_BYM1 },
+
+  {  "bysegment",SELE_BYS1 },
+  {  "byseg",    SELE_BYS1 }, 
+  {  "bysegi",   SELE_BYS1 }, /* unofficial */
+  {  "bs.",      SELE_BYS1 },
+
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
   {  "or",       SELE_OR_2 },
   {  "|",        SELE_OR_2 },
   {  "in",       SELE_IN_2 },
+
   {  "like",     SELE_LIK2 },
   {  "l;",       SELE_LIK2 },
   {  "l.",       SELE_LIK2 },
+
   {  "all",      SELE_ALLz }, /* 0 parameter */
-  /*  {  "+",        SELE_ALLz },*/ /* 0 parameter */
+
   {  "none",     SELE_NONz }, /* 0 parameter */
   {  "hetatm",   SELE_HETz }, /* 0 parameter */
   {  "het",      SELE_HETz }, /* 0 parameter */
-  {  "hydro",    SELE_HYDz }, /* 0 parameter */
+
   {  "hydrogens",SELE_HYDz }, /* 0 parameter */
+  {  "hydro",    SELE_HYDz }, /* 0 parameter */
   {  "h;",       SELE_HYDz }, /* deprecated */
   {  "h.",       SELE_HYDz }, /* 0 parameter */
+
   {  "hba",      SELE_HBAs },
   {  "hbd",      SELE_HBDs },
+
   {  "visible",  SELE_VISz }, /* 0 parameter */
   {  "v;",       SELE_VISz }, /* 0 parameter */
   {  "v.",       SELE_VISz }, /* 0 parameter */
+
   {  "around",   SELE_ARD_ }, /* 1 parameter */
   {  "a;",       SELE_ARD_ }, /* deprecated */
   {  "a.",       SELE_ARD_ }, /* 1 parameter */
+
   {  "expand",   SELE_EXP_ }, /* 1 parameter */
   {  "x;",       SELE_EXP_ }, /* 1 parameter */
   {  "x.",       SELE_EXP_ }, /* 1 parameter */
+
+  {  "extend",   SELE_EXT_ }, /* 1 parameter */
+  {  "xt.",      SELE_EXT_ }, /* 1 parameter */
+
   {  "name",     SELE_NAMs },
   {  "n;",       SELE_NAMs },/* deprecated */
   {  "n.",       SELE_NAMs },
+
   {  "symbol",   SELE_ELEs },
   {  "element",  SELE_ELEs },
   {  "elem",     SELE_ELEs },
   {  "e;",       SELE_ELEs },/* deprecated */
   {  "e.",       SELE_ELEs },
+
   {  "enabled",  SELE_ENAz },
+
+  {  "residue",  SELE_RSIs },
   {  "resi",     SELE_RSIs },
   {  "resid",    SELE_RSIs },
-  {  "residue",  SELE_RSIs },
-  {  "rep",      SELE_REPs },
-  {  "color",    SELE_COLs },
   {  "i;",       SELE_RSIs },/* deprecated */
   {  "i.",       SELE_RSIs },
+
+  {  "rep",      SELE_REPs },
+
+  {  "color",    SELE_COLs },
+
   {  "alt",      SELE_ALTs },
+
   {  "flag",     SELE_FLGs },
   {  "f;",       SELE_FLGs },/* deprecated */
   {  "f.",       SELE_FLGs },
+
   {  "gap",      SELE_GAP_ },
+
   {  "partial_charge",SELE_PCHx },
   {  "pc;",      SELE_PCHx },/* deprecated */
   {  "pc.",      SELE_PCHx },
+
   {  "formal_charge", SELE_FCHx },
   {  "fc;",      SELE_FCHx },/* deprecated */
   {  "fc.",      SELE_FCHx },
+
   {  "numeric_type",SELE_NTYs },
   {  "nt;",      SELE_NTYs },/* deprecated */
   {  "nt.",      SELE_NTYs },
+
   {  "text_type",SELE_TTYs },
   {  "tt;",      SELE_TTYs },/* deprecated */
   {  "tt.",      SELE_TTYs },
+
   {  "chain",    SELE_CHNs },
   {  "c;",       SELE_CHNs },/* deprecated */
   {  "c.",       SELE_CHNs },
+
   {  "center",   SELE_CENz },
   {  "bonded",   SELE_BNDz },
-  {  "segi",     SELE_SEGs },
+
   {  "segid",    SELE_SEGs },
+  {  "segi",     SELE_SEGs },
   {  "s;",       SELE_SEGs },/* deprecated */
   {  "s.",       SELE_SEGs },
+
   {  "ss",       SELE_SSTs },
+
   {  "state",    SELE_STAs },
+
   {  "object",   SELE_MODs },
   {  "o.",       SELE_MODs },
+
   {  "origin",   SELE_ORIz },
+
   {  "model",    SELE_MODs },
   {  "m;",       SELE_MODs },/* deprecated */
   {  "m.",       SELE_MODs },
+
   {  "index",    SELE_IDXs },
   {  "idx.",     SELE_IDXs },
+
   {  "id",       SELE_ID_s },
+
   {  "within",   SELE_WIT_ },
+  {  "w.",       SELE_WIT_ },
+
   {  "present",  SELE_PREz },
   {  "pr.",      SELE_PREz },
-  {  "w.",       SELE_WIT_ },
-  {  "resn",     SELE_RSNs },
+
   {  "resname",  SELE_RSNs },
+  {  "resn",     SELE_RSNs },
   {  "r;",       SELE_RSNs },/* deprecated */
   {  "r.",       SELE_RSNs },
+
   {  "%",        SELE_SELs },
   {  "b",        SELE_BVLx, }, /* 2 operand selection operator */ 
   {  "q",        SELE_QVLx, }, /* 2 operand selection operator */ 
@@ -5486,6 +5545,7 @@ int SelectorModulate1(EvalElem *base)
   int a,d,e;
   int c=0;
   float dist;
+  int nbond;
   float *v2;
   CoordSet *cs;
   int ok=true;
@@ -5495,7 +5555,7 @@ int SelectorModulate1(EvalElem *base)
   int n1,at,idx;
   ObjectMolecule *obj;
 
-  base[1].sele=base[0].sele;
+  base[1].sele=base[0].sele; /* base1 has the mask */
   base->sele=Calloc(int,I->NAtom);
   for(a=0;a<I->NAtom;a++) base[0].sele[a]=false;
   ErrChkPtr(base->sele);
@@ -5583,6 +5643,43 @@ int SelectorModulate1(EvalElem *base)
 				}
 		  }
 		break;
+
+	 case SELE_EXT_:
+		if(sscanf(base[2].text,"%d",&nbond)!=1)
+		  ok=ErrMessage("Selector","Invalid bond count.");
+		if(ok)
+		  {
+          ObjectMolecule *lastObj = NULL;
+          int a,n,a0,a1,a2;
+          base[0].sele= Alloc(int,I->NAtom);
+          UtilCopyMem(base[0].sele,base[1].sele,sizeof(int)*I->NAtom);
+          while((nbond--)>0) {
+            int *tmp = base[1].sele;
+            base[1].sele=base[0].sele;
+            base[0].sele=tmp;
+            for(a=cNDummyAtoms;a<I->NAtom;a++) {
+              if(base[1].sele[a]) {
+                if(I->Obj[I->Table[a].model]!=lastObj) {
+                  lastObj = I->Obj[I->Table[a].model];
+                  ObjectMoleculeUpdateNeighbors(lastObj);
+                }
+                a0= I->Table[a].atom;
+                n=lastObj->Neighbor[a0];
+                n++;
+                while(1) {
+                  a1=lastObj->Neighbor[n];
+                  if(a1<0) break;
+                  a2 = a1+lastObj->SeleBase;
+                  base[0].sele[a2] =1;
+                  n+=2;
+                }
+              }
+            }
+          }
+          FreeP(base[1].sele);
+        }
+      break;
+
 	 case SELE_GAP_:
 		if(!sscanf(base[2].text,"%f",&dist))
 		  ok=ErrMessage("Selector","Invalid distance.");
@@ -6660,7 +6757,160 @@ int SelectorLogic1(EvalElem *base)
 			   }
 		  }
 		break;
+	 case SELE_BYS1: /* ASSUMES atoms are sorted by segi */
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+		  {
+			 if(base[0].sele[a]) 
+			   {
+              at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+              b = a-1;
+              while(b>=0) {
+                if(!base[0].sele[b]) {
+                  flag = false;
+                  if(I->Table[a].model==I->Table[b].model)
+                    {
+                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                        base[0].sele[b]=true;
+                        c++;
+                        flag=1;
+                      }
+                    }
+                  if(!flag)
+                    break;
+                }
+                b--;
+              }
+              b = a + 1;
+              while(b<I->NAtom) {
+                if(!base[0].sele[b]) {
+                  flag=false;
+                  if(I->Table[a].model==I->Table[b].model)
+                    {
+                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                        base[0].sele[b]=true;
+                        c++;
+                        flag=1;
+                      }
+                    }
+                  if(!flag)
+                    break;
+                }
+                b++;
+              }
+			   }
+		  }
+		break;
+    case SELE_BYF1: /* first, identify all atom by fragment selection */
+      {
+        int n_frag = EditorGetNFrag();
 
+        base[1].sele=base[0].sele;
+        base[0].sele=Calloc(int,I->NAtom);
+        
+        if(n_frag) {
+          int a,f,at,s;
+          int *fsele;
+          WordType name;
+          ObjectMolecule *obj;
+
+          fsele = Alloc(int,n_frag+1);
+          
+          for(f=0;f<n_frag;f++) {
+            sprintf(name,"%s%1d",cEditorFragPref,f+1);
+            printf("%s\n",name);
+            fsele[f] = SelectorIndexByName(name);
+          }
+          
+          /* mark atoms by fragment */
+          for(a=0;a<I->NAtom;a++) {
+            at=I->Table[a].atom;
+            obj=I->Obj[I->Table[a].model];
+            s=obj->AtomInfo[at].selEntry;
+            for(f=0;f<n_frag;f++) {
+              if(SelectorIsMember(s,fsele[f])) {
+                base[0].sele[a] = f+1;
+              }
+            }
+          }
+
+          /* mark fragments we keep */
+          for(f=0;f<=n_frag;f++) {
+            fsele[f] = 0;
+          }
+          for(a=0;a<I->NAtom;a++) { 
+            int f = base[0].sele[a];
+            if(base[1].sele[a]&&f)
+              fsele[f] = 1;
+          }
+          
+          /* now set flags */
+          for(a=0;a<I->NAtom;a++) {
+            c+= (base[0].sele[a] = fsele[base[0].sele[a]]);
+          }
+
+          FreeP(fsele);
+        }
+        FreeP(base[1].sele);
+      }
+      break;
+    case SELE_BYM1:
+      {
+        int s;
+        int c = 0;
+        int a,at,a1,aa;
+        AtomInfoType *ai;
+        ObjectMolecule *obj,*lastObj=NULL;
+        int *stk;
+        int stkDepth = 0;
+        base[1].sele=base[0].sele;
+        base[0].sele=Calloc(int,I->NAtom);
+        
+        stk = VLAlloc(int,50);
+        
+        for(a=0;a<I->NAtom;a++) {
+          if(base[1].sele[a]&&(!base[0].sele[a])) {
+            VLACheck(stk,int,stkDepth);
+            stk[stkDepth]=a;
+            stkDepth++;
+
+            obj=I->Obj[I->Table[a].model];
+            if(obj!=lastObj) {
+              lastObj = obj;
+              ObjectMoleculeUpdateNeighbors(obj);
+            }
+            
+            while(stkDepth) { /* this will explore a tree */
+              stkDepth--;
+              a=stk[stkDepth];
+              base[0].sele[a]=1;
+              c++;
+              at=I->Table[a].atom; /* start walk from this location */
+              ai=obj->AtomInfo+at;
+
+              s=obj->Neighbor[at]; /* add neighbors onto the stack */
+              s++; /* skip count */              
+              while(1) {
+                a1 = obj->Neighbor[s];
+                if(a1>=0) {
+                  aa = obj->SeleBase + a1;
+                  if(!base[0].sele[aa]) {
+                    VLACheck(stk,int,stkDepth);
+                    stk[stkDepth]=aa; /* add index in selector space */
+                    stkDepth++;
+                  }
+                } else 
+                  break;
+                s+=2;
+              }
+            }
+          }
+        }
+        FreeP(base[1].sele);
+        VLAFreeP(stk);
+      }
+      break;
 	 }
   PRINTFD(FB_Selector)
 	 " SelectorLogic1: %d atoms selected.\n",c
@@ -7464,13 +7714,22 @@ static void SelectorInit2(void)
   I->NCSet=0;
   I->IgnoreCase=true;
 
-  {  /* create placeholder "all" selection, which is selection 0 */
+  {  /* create placeholder "all" selection, which is selection 0
+      and "none" selection, which is selection 1 */
     int n;
 
     n=I->NActive;
     VLACheck(I->Name,SelectorWordType,n+1);
     VLACheck(I->ID,int,n+1);
     strcpy(I->Name[n],cKeywordAll); /* "all" selection */
+    I->Name[n+1][0]=0;
+    I->ID[n] = I->NSelection++;
+    I->NActive++;
+
+    n=I->NActive;
+    VLACheck(I->Name,SelectorWordType,n+1);
+    VLACheck(I->ID,int,n+1);
+    strcpy(I->Name[n],cKeywordNone); /* "none" selection */
     I->Name[n+1][0]=0;
     I->ID[n] = I->NSelection++;
     I->NActive++;

@@ -266,6 +266,12 @@ static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args)
   return(APIStatus(MovieLocked()));
 }
 
+static PyObject *CmdFakeDrag(PyObject *self, 	PyObject *args)
+{
+  MainDragDirty();
+  return(APIStatus(true));
+}
+
 static PyObject *CmdDelColorection(PyObject *dummy, PyObject *args)
 {
   int ok=true;
@@ -4390,6 +4396,7 @@ static PyMethodDef Cmd_methods[] = {
    {"debug",                 CmdDebug,                METH_VARARGS },
    {"decline",               CmdDecline,              METH_VARARGS },
    {"del_colorection",       CmdDelColorection,       METH_VARARGS },   
+   {"fake_drag",             CmdFakeDrag,             METH_VARARGS },   
    {"gl_delete_lists",       CmdGLDeleteLists,        METH_VARARGS },
 	{"delete",                CmdDelete,               METH_VARARGS },
 	{"dirty",                 CmdDirty,                METH_VARARGS },

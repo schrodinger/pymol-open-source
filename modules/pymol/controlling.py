@@ -24,6 +24,9 @@ if __name__=='pymol.controlling':
       'middle' : 1,
       'right' : 2,
       'scroll' : 3,
+      'double_left' : 4,
+      'double_middle' : 5,
+      'double_right' : 6,
       }
    button_sc = Shortcut(button_code.keys())
 
@@ -63,8 +66,10 @@ if __name__=='pymol.controlling':
       'pktb' : 24 ,
       'slab' : 25 ,
       'movs' : 26 ,
-      'pka1' : 27 ,
+      
+      'pk1'  : 27 ,
       'mova' : 28 ,
+      'menu' : 29 ,
       }
    but_act_sc = Shortcut(but_act_code.keys())
 
@@ -110,6 +115,9 @@ if __name__=='pymol.controlling':
                                  ('s','shft','movs'),
                                  ('s','ctrl','none'),
                                  ('s','ctsh','none'),
+                                 ('double_left','none','menu'),
+                                 ('double_middle','none','cent'),
+                                 ('double_right','none', 'none'),
                                  ],
 
       'three_button_editing': [ ('l','none','rota'),
@@ -123,7 +131,7 @@ if __name__=='pymol.controlling':
                                 ('r','ctrl','pktb'),                  
                                 ('l','ctsh','mova'),
                                 ('m','ctsh','cent'),
-                                ('r','ctsh','none'),
+                                ('r','ctsh','menu'),
                                 ('s','none','slab'),
                                 ('s','shft','movs'),
                                 ('s','ctrl','none'),
@@ -376,10 +384,13 @@ NOTES
          modifier = but_mod_sc.auto_err(modifier,'modifier')
          action = string.lower(action)
          action = but_act_sc.auto_err(action,'action')
-         if button_code[button]<3:
-            but_code = button_code[button] + 3*but_mod_code[modifier]
-         else:
+         button_num = button_code[button]
+         if button_num<3:
+            but_code = button_num + 3*but_mod_code[modifier]
+         elif button_num<4:
             but_code = 12 + but_mod_code[modifier]
+         else:
+            but_code = 15 + button_num - 3
          act_code = but_act_code[action]
          r = _cmd.button(but_code,act_code)
       finally:

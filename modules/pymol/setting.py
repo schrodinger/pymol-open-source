@@ -359,6 +359,7 @@ if __name__=='pymol.setting':
       png_screen_gamma      = 319
       png_file_gamma        = 320
       editor_label_fragments = 321
+      internal_gui_control_size = 322
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
