@@ -77,6 +77,9 @@ Bugs to Fix
 
 Changes up to 0.64
 
+   * stage 1 API enhancements -- consistent return conventions adopted
+     (many will not follow conventions until stage 2 though)
+
    * more surface_qualities: -3 to 2, surface_quality=1 is now even better
 
    * click-and-drag a box to select atoms

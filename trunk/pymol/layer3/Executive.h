@@ -43,7 +43,7 @@ void ExecutiveDelete(char *name);
 void ExecutiveDump(char *fname,char *obj);
 void ExecutiveSetControlsOff(char *name);
 void ExecutiveSort(char *name);
-void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,
+int ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,
                          int quiet,int updates);
 void ExecutiveRay(int width,int height);
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
@@ -85,9 +85,9 @@ void ExecutiveSpheroid(char *name);
 void ExecutiveAddHydrogens(char *s1);
 void ExecutiveFuse(char *s0,char *s1);
 void ExecutiveRenameObjectAtoms(char *name,int force);
-void ExecutiveInvert(char *s0,char *s1,int mode);
+int ExecutiveInvert(char *s0,char *s1,int mode);
 char *ExecutiveGetNames(int mode);
-void ExecutiveGetType(char *name,WordType type);
+int ExecutiveGetType(char *name,WordType type);
 float ExecutiveGetArea(char *s0,int sta0,int load_b);
 void ExecutiveRenderSelections(int curState);
 void ExecutiveHideSelections(void);
@@ -110,7 +110,7 @@ int ExecutiveValidName(char *name);
 int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt);
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
 void ExecutiveSelectRect(BlockRect *rect,int mode);
+int ExecutiveMapSetBorder(char *name,float level);
 #endif
-
 
 

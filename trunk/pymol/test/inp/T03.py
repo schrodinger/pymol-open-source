@@ -47,6 +47,16 @@ def sets():
       else:
          value=0
       cmd.set('cartoon_round_helices',str(value))
+      if whrandom.random()>0.5:
+         value=1
+      else:
+         value=0
+      cmd.set('cartoon_smooth_loops',str(value))
+      if whrandom.random()>0.5:
+         value=1
+      else:
+         value=0
+      cmd.set('cartoon_flat_sheets',str(value))
 
 t = threading.Thread(target=sets)
 t.setDaemon(1)

@@ -24,9 +24,25 @@
 # symbols will be mapped into this namespace even after the code modules
 # are separated.
 
-# Return conventions: In general, functions should return "None" for
-# error conditions or something else if they succeed.  As of
-# 2/07/2001, return codes are a bit of a mess...  #
+# NEW CALL RETURN CONVENTIONS for _cmd.so C-layer
+#
+# (1) Calls into C (_cmd) should return results/status and print errors
+#     and feedback (according to mask) BUT NEVER RAISE EXCEPTIONS.
+#
+# (2) In the absence of an expected return value, truth applies:
+#        Success is 1, true 
+#        Failure is 0, false. None, NULL
+#
+#     NOTE: if you need more informative failure, then code and
+#           document an exception to this rule for your functions!
+#
+# (3) If _cmd produces a specific return result, be sure to include an
+#     error result as one of the possibilities outside the range of the
+#     expected return value.  For example, a negative distance or count
+#
+# (4) cmd.py API wrappers can then raise exceptions based on truth
+#     and should return truth for success or None for failure
+#
 
 import re
 import _cmd
@@ -1442,6 +1458,31 @@ SEE ALSO
    try:
       lock()
       r = _cmd.symexp(str(prefix),str(object),str(selection),float(cutoff))
+   finally:
+      unlock()
+   return r
+
+def map_set_border(name,level=0.0):
+   '''
+DESCRIPTION
+ 
+   "map_set_border" is a function (reqd by PDA) which allows you to set the
+   level on the edge points of a map
+
+USAGE
+
+   map_set_border <name>,<level>
+
+NOTES
+
+   unsupported.
+SEE ALSO
+
+   load
+   '''
+   try:
+      lock()
+      r = _cmd.map_set_border(str(name),float(level))
    finally:
       unlock()
    return r
