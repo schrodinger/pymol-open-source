@@ -262,7 +262,7 @@ def greens(s):
       [1,'\\292tv_green','cmd.color(33,"'+s+'")'],
       [1,'\\490chartreuse','cmd.color(14,"'+s+'")'],
       [1,'\\570splitpea','cmd.color(5267,"'+s+'")'],
-      [1,'\\564smudge','cmd.color(5\270,"'+s+'")'],
+      [1,'\\564smudge','cmd.color(5270,"'+s+'")'],
       [1,'\\686palegreen','cmd.color(5259,"'+s+'")'],
       [1,'\\094limegreen','cmd.color(15,"'+s+'")'],
       [1,'\\494lime','cmd.color(10,"'+s+'")'],
