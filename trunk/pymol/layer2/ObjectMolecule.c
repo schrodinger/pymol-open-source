@@ -4042,6 +4042,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     
     /* include coordinate set */
     if(ok) {
+
       cset->Obj = I;
       cset->fEnumIndices(cset);
       if(cset->fInvalidateRep)
@@ -5266,6 +5267,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   BondType *ii1,*ii2;
   int flag;
 
+  /*  FeedbackMask[FB_ObjectMolecule]=0xFF;*/
   nBond = 0;
   maxBond = cs->NIndex * 8;
   (*bond) = VLAlloc(BondType,maxBond);
@@ -5753,7 +5755,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               ErrMessage("PDBStrToCoordSet","Error reading CRYST1 record\n");
               SymmetryFree(symmetry);
               symmetry=NULL;
-            } 
+            }
           }
         }
 		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
@@ -5908,7 +5910,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 		  }
       p=nextline(p);
 	 }
-  
   if(conectFlag) {
     UtilSortInPlace(bond,nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);              
     if(nBond) {
@@ -5933,6 +5934,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
       nBond=nReal;
       /* now, find atoms we're looking for */
+
+      /* determine ranges */
       maxAt=nAtom;
       ii1=bond;
       for(a=0;a<nBond;a++) {
@@ -5943,8 +5946,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       for(a=0;a<nAtom;a++) 
         if(maxAt<atInfo[a].id) maxAt=atInfo[a].id;
       /* build index */
+      maxAt++;
       idx = Alloc(int,maxAt+1);
-      for(a=0;a<maxAt;a++) idx[a]=-1;
+      for(a=0;a<maxAt;a++) {
+        idx[a]=-1;
+      }
       for(a=0;a<nAtom;a++)
         idx[atInfo[a].id]=a;
       /* convert indices to bonds */
@@ -5952,21 +5958,22 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       ii2=bond;
       nReal=0;
       for(a=0;a<nBond;a++) {
-        if((idx[ii1->index[0]]>=0)&&(idx[ii1->index[1]]>0)) { /* in case PDB file has bad bonds */
-          ii2->index[0]=idx[ii1->index[0]];
-          ii2->index[1]=idx[ii1->index[1]];
-          if((ii2->index[0]>=0)&&(ii2->index[1]>=0)) {
-            if(ii1->order<=2) ii2->order=1;
-            else if(ii1->order<=4) ii2->order=2;
-            else ii2->order=3;
-            nReal++;
-            ii2++;
+        if((ii1->index[0]>=0)&&((ii1->index[1])>=0)) {
+          if((idx[ii1->index[0]]>=0)&&(idx[ii1->index[1]]>=0)) { /* in case PDB file has bad bonds */
+            ii2->index[0]=idx[ii1->index[0]];
+            ii2->index[1]=idx[ii1->index[1]];
+            if((ii2->index[0]>=0)&&(ii2->index[1]>=0)) {
+              if(ii1->order<=2) ii2->order=1;
+              else if(ii1->order<=4) ii2->order=2;
+              else ii2->order=3;
+              nReal++;
+              ii2++;
+            }
           }
         }
         ii1++;
       }
       nBond=nReal;
-    /* first, count and eliminate duplicates */
       FreeP(idx);
     }
   }
@@ -6010,7 +6017,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       VLAFreeP(ss[a]);
     }
   }
-
   return(cset);
 }
 
