@@ -1936,11 +1936,14 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glNormal3fv(normal);
       
     } else {
-      /* picking mode: we want flat, unshaded colors */
+      /* picking mode: we want flat, unshaded, unblended, unsmooth colors */
 
+      glDisable(GL_FOG);
       glDisable(GL_COLOR_MATERIAL);
       glDisable(GL_LIGHTING);
       glDisable(GL_DITHER);
+      glDisable(GL_BLEND);
+      glDisable(GL_LINE_SMOOTH);
     }
 
     PRINTFD(FB_Scene)
