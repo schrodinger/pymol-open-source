@@ -1231,18 +1231,23 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
   /*int before_check[100];
   int *int_ptr;
 */
-  pix buffer[cRange*2+1][cRange*2+1];
+  pix *buffer = NULL;
+  pix *extra_safe_buffer = NULL;
+
  /*int after_check[100];*/
   /* pix_array *array_ptr;
   char *safe_place;
 */
   int a,b,d,flag;
+  int h = (cRange*2+1), w = (cRange*2+1);
+
   int debug = false;
   unsigned char *c;
   int strict = false;
   GLint rb,gb,bb;
   int bkrd_alpha = 0xFF;
   int check_alpha = false;
+
 
   if(PMGUI) { /*just in case*/
   
@@ -1257,59 +1262,30 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
     
     glReadBuffer(gl_buffer);
 
-/*	safe_place = (char*)malloc(1000000);
-	array_ptr = (pix_array*)(safe_place+500000);*/
+    extra_safe_buffer=Alloc(pix,w*h*21); 
+    buffer=extra_safe_buffer+(w*h*10);
 
-    /*int_ptr = before_check;
-    for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
-    int_ptr = after_check;
-    for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
-*/
-/*printf("%d %d %d %d %p %p\n",x-cRange,y-cRange,cRange*2+1,cRange*2+1,buffer,&buffer[0][0][0]);*/
-    PyMOLReadPixels(x-cRange,y-cRange,cRange*2+1,cRange*2+1,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0][0]);
-
-/*	{
-	for(a=0;a<=(cRange*2);a++)
-       for(b=0;b<=(cRange*2);b++)
-		  for(d=0;d<4;d++)
-            buffer[a][b][d]=(*array_ptr)[a][b][d];
-		 
-         
-    }
-	free(safe_place);*/
-
-      /*int_ptr = before_check;
-    for(a=0;a<100;a++) {
-      if(*(int_ptr++)!=0x12345678) {
-        printf(" SceneFindTriplet-WARNING: OpenGL glReadPixels may have damaged stack\n");
-      }
-    }
-    int_ptr = after_check;
-    for(a=0;a<100;a++) {
-      if(*(int_ptr++)!=0x12345678) {
-        printf(" SceneFindTriplet-WARNING: OpenGL glReadPixels may have damaged stack\n");
-      }
-    }*/
+    PyMOLReadPixels(x-cRange,y-cRange,cRange*2+1,cRange*2+1,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
 
 	  if(debug) {
       for(a=0;a<=(cRange*2);a++)
         {
           for(b=0;b<=(cRange*2);b++)
-            printf("%2x ",(buffer[a][b][0]+buffer[a][b][1]+buffer[a][b][2])&0xFF);
+            printf("%2x ",(buffer[a+b*w][0]+buffer[a+b*w][1]+buffer[a+b*w][2])&0xFF);
           printf("\n");
         }
       printf("\n");	 
       for(a=0;a<=(cRange*2);a++)
         {
           for(b=0;b<=(cRange*2);b++)
-            printf("%02x ",(buffer[a][b][3])&0xFF);
+            printf("%02x ",(buffer[a+b*w][3])&0xFF);
           printf("\n");
         }
       printf("\n");	 
        for(a=0;a<=(cRange*2);a++)
         {
           for(b=0;b<=(cRange*2);b++)
-            printf("%02x%02x%02x ",(buffer[a][b][0])&0xFF,(buffer[a][b][1])&0xFF,(buffer[a][b][2])&0xFF);
+            printf("%02x%02x%02x ",(buffer[a+b*w][0])&0xFF,(buffer[a+b*w][1])&0xFF,(buffer[a+b*w][2])&0xFF);
           printf("\n");
         }
        printf("\n");	 
@@ -1322,7 +1298,7 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
      for(d=0;flag&&(d<cRange);d++)
        for(a=-d;flag&&(a<=d);a++)
          for(b=-d;flag&&(b<=d);b++) {
-           c = &buffer[a+cRange][b+cRange][0];
+           c = &buffer[(a+cRange)+(b+cRange)*w][0];
            if(c[3]==bkrd_alpha) {
              check_alpha = true;
              flag=false;
@@ -1335,7 +1311,7 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
      for(d=0;flag&&(d<cRange);d++)
        for(a=-d;flag&&(a<=d);a++)
          for(b=-d;flag&&(b<=d);b++) {
-           c = &buffer[a+cRange][b+cRange][0];
+           c = &buffer[(a+cRange)+(b+cRange)*w][0];
            if(((c[3]==bkrd_alpha)||(!check_alpha))&&
               ((c[1]&0x8)&&
                ((!strict)||
@@ -1350,6 +1326,7 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
              }
            }
          }
+     FreeP(extra_safe_buffer);
   }
   return(result);
 }
@@ -1358,6 +1335,7 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
 { 
   unsigned int *result = NULL;
   pix *buffer=NULL;
+  pix *extra_safe_buffer=NULL;
   int a,b;
   unsigned char *c;
   int cc = 0;
@@ -1365,7 +1343,7 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
   int strict = false;
   int bkrd_alpha = 0xFF;
   int check_alpha = false;
-
+ 
   GLint rb,gb,bb;
 
   dim[0]=w;
@@ -1375,7 +1353,6 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
   if(h<1) h=1;
   if(PMGUI) { /*just in case*/
     
-    
     glGetIntegerv(GL_RED_BITS,&rb);
     glGetIntegerv(GL_RED_BITS,&gb);
     glGetIntegerv(GL_RED_BITS,&bb);
@@ -1383,7 +1360,13 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
     if((rb>=8)&&(gb>=8)&&(bb>=8))
 		strict = true;
     
-    buffer=Alloc(pix,w*h);
+    /* create some safe RAM on either side of the read buffer -- buggy
+       ReadPixels implementations tend to trash RAM surrounding the
+       target block */
+
+    extra_safe_buffer=Alloc(pix,w*h*11); 
+    buffer=extra_safe_buffer+(w*h*5);
+    
     result = VLAlloc(unsigned int,w*h);
     glReadBuffer(gl_buffer);
     PyMOLReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
@@ -1420,7 +1403,7 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
             cc+=2;
           }
         }
-    FreeP(buffer);
+    FreeP(extra_safe_buffer);
     VLASize(result,unsigned int,cc);
   }
   return(result);
