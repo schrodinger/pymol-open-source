@@ -2046,13 +2046,18 @@ int ExecutiveMapNew(char *name,int type,float *grid,
                 SelectorMapMaskVDW(sele0,ms,0.0F,state);
                 break;
               case 1: /* coulomb */
-                SelectorMapCoulomb(sele0,ms,SettingGetGlobal_f(cSetting_coulomb_cutoff),state,false);
-                break;
-              case 3: /* coulomb_neutral */
-                SelectorMapCoulomb(sele0,ms,SettingGetGlobal_f(cSetting_coulomb_cutoff),state,true);
+                SelectorMapCoulomb(sele0,ms,0.0F,state,false,
+                                   false,1.0F);
                 break;
               case 2: /* gaussian */
                 SelectorMapGaussian(sele0,ms,0.0F,state);
+                break;
+              case 3: /* coulomb_neutral */
+                SelectorMapCoulomb(sele0,ms,0.0F,state,true, false,1.0F);
+                break;
+              case 4: /* coulomb_local */
+                SelectorMapCoulomb(sele0,ms,SettingGetGlobal_f(cSetting_coulomb_cutoff),state,false,
+                                   true, 2.0F);
                 break;
               }
               if(!ms->Active)
