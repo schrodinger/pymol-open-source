@@ -115,8 +115,8 @@ void ControlInit(void)
   I->Block->fReshape = ControlReshape;
   I->Block->active = true;
   I->Block->TextColor[0]=1.0;
-  I->Block->TextColor[1]=0.5;
-  I->Block->TextColor[2]=0.5;
+  I->Block->TextColor[1]=0.75;
+  I->Block->TextColor[2]=0.75;
   I->ButtonColor[0]=0.5;
   I->ButtonColor[1]=0.5;
   I->ButtonColor[2]=0.5;
