@@ -5907,15 +5907,15 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 }
 
 /*========================================================================*/
-CoordSet *ObjectMoleculeMOL2Str2CoordSet(char *buffer,AtomInfoType **atInfoPtr,char **next_mol)
+static CoordSet *ObjectMoleculeMOL2Str2CoordSet(char *buffer,AtomInfoType **atInfoPtr,char **next_mol)
 {
   char *p;
   int nAtom,nBond;
-  int a,c,cnt,atm,chg;
+  int a,c;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL;
-  char cc[MAXLINELEN],cc1[MAXLINELEN],resn[MAXLINELEN] = "UNK";
+  char cc[MAXLINELEN],resn[MAXLINELEN] = "UNK";
   float *f;
   char *last_p;
   BondType *ii;
@@ -6014,7 +6014,7 @@ CoordSet *ObjectMoleculeMOL2Str2CoordSet(char *buffer,AtomInfoType **atInfoPtr,c
               }
               *el=0;
               if(el[2])
-                el[0];
+                el[0] = 0;
             }
           }
           if(ok) {
