@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 
 static unsigned int UtilStartSec;
 
+
 void UtilInit(void) {
   struct timeval tv;
   gettimeofday(&tv,NULL);

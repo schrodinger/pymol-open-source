@@ -82,7 +82,6 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
-void ExecutiveInvalidateRep(char *name,int rep,int level);
 
 void ExecutiveSort(char *name)
 {
@@ -995,12 +994,22 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
 {
   int sele = -1;
   ObjectMoleculeOpRec op;
+  WordType all = "_all";
+  int all_flag=false;
+  if(WordMatch("all",name,true)<0) {
+    name=all;
+    all_flag=true;
+    SelectorCreate(all,"(all)",NULL,true);
+  }
   sele=SelectorIndexByName(name);
   if(sele>=0) {
 	 op.code = OMOP_INVA;
 	 op.i1=rep;
 	 op.i2=level;
 	 ExecutiveObjMolSeleOp(sele,&op);
+  }
+  if(all_flag) {
+    ExecutiveDelete(all);
   }
 }
 /*========================================================================*/

@@ -47,6 +47,7 @@ void PConvIntToPyDictItem(PyObject *dict,char *key,int i);
 int PConvPyObjectToFloat(PyObject *object,float *value);
 int PConvPyObjectToInt(PyObject *object,int *value);
 int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln);
+int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln);
 
 PyObject *PConvStringListToPyList(int l,char **str);
 

@@ -54,11 +54,11 @@ int PConvPyObjectToInt(PyObject *object,int *value)
   int result = true;
   PyObject *tmp;
   if(PyInt_Check(object)) {
-    (*value) = PyInt_AsLong(object);
+    (*value) = (int)PyInt_AsLong(object);
   } else {
     tmp = PyNumber_Int(object);
     if(tmp) {
-      (*value) = PyInt_AsLong(tmp);
+      (*value) = (int)PyInt_AsLong(tmp);
       Py_DECREF(tmp);
     } else 
       result=false;
@@ -85,7 +85,29 @@ int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
     } else
       result=0;
   }
-  
+  return(result);
+}
+
+int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
+{
+  char *st;
+  PyObject *tmp;
+  int result=true;
+  if(PyString_Check(object)) {
+    st = PyString_AsString(object);
+    strncpy(value,st,ln);
+    value[ln]=0;
+  } else {
+    tmp = PyObject_Str(object);
+    if(tmp) {
+      st = PyString_AsString(tmp);
+      strncpy(value,st,ln);
+      value[ln]=0;
+      Py_DECREF(tmp);
+    } else
+      result=0;
+  }
+  UtilCleanStr(value);
   return(result);
 }
 

@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Scene.h"
 #include"ButMode.h"
+#include"Executive.h"
 
 CSetting Setting;
 
@@ -59,6 +60,28 @@ void SettingSetfv(int index,float *v)
 	 I->Setting[index].Value[2]=v[2];
 	 SceneDirty();
 	 break;
+  case cSetting_valence:
+    ExecutiveInvalidateRep("all",cRepLine,cRepInvAll);
+    I->Setting[index].Value[0]=v[0];
+    SceneChanged();
+    break;
+  case cSetting_dash_length:
+  case cSetting_dash_gap:
+    ExecutiveInvalidateRep("all",cRepDash,cRepInvAll);
+    I->Setting[index].Value[0]=v[0];
+    SceneChanged();
+    break;
+  case cSetting_stick_radius:
+  case cSetting_stick_quality:
+  case cSetting_stick_overlap:
+    ExecutiveInvalidateRep("all",cRepCyl,cRepInvAll);
+    I->Setting[index].Value[0]=v[0];
+    SceneChanged();
+    break;
+  case cSetting_all_states:
+	 I->Setting[index].Value[0]=v[0];
+    SceneChanged();
+    break;
   case cSetting_dot_density:
 	 I->Setting[index].Value[0]=v[0];
 	 break;
@@ -123,6 +146,7 @@ void SettingSetNamed(char *name,char *value)
 	 case cSetting_text:
 	 case cSetting_overlay:
 	 case cSetting_sel_counter:
+    case cSetting_dist_counter:
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
 		break;
@@ -502,6 +526,11 @@ void SettingInit(void)
   I->Setting[cSetting_button_mode].Value[0] = 0.0;
   strcpy(I->Setting[cSetting_button_mode].Name,
 			"button_mode");
+
+  I->NSetting++;
+  I->Setting[cSetting_valence].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_valence].Name,
+			"valence");
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS

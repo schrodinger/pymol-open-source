@@ -36,9 +36,9 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"Scene.h"
 #include"P.h"
+#include"PConv.h"
 #include"Executive.h"
 #include"Setting.h"
-
 
 #define wcopy ParseWordCopy
 #define nextline ParseNextLine
@@ -62,9 +62,289 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
 int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,int searchFlag);
 void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
-
 static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
+
+CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
+
+/*========================================================================*/
+CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr)
+{
+  int nAtom,nBond;
+  int a,c;
+  float *coord = NULL;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL,*ai;
+  float *f;
+  int *ii,*bond=NULL;
+  int ok=true;
+  int autoshow_lines;
+  int hetatm;
+
+  PyObject *atomList = NULL;
+  PyObject *bondList = NULL;
+  PyObject *atom = NULL;
+  PyObject *bnd = NULL;
+  PyObject *index = NULL;
+  PyObject *crd = NULL;
+  PyObject *tmp = NULL;
+  autoshow_lines = SettingGet(cSetting_autoshow_lines);
+  AtomInfoPrimeColors();
+
+  nAtom=0;
+  nBond=0;
+  if(atInfoPtr)
+	 atInfo = *atInfoPtr;
+
+  atomList = PyObject_GetAttrString(model,"atom");
+  if(atomList) 
+    nAtom = PyList_Size(atomList);
+  else 
+    ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get atom list");
+
+
+  if(ok) {
+	 coord=VLAlloc(float,3*nAtom);
+	 if(atInfo)
+		VLACheck(atInfo,AtomInfoType,nAtom);	 
+  }
+
+  if(ok) { 
+    
+	 f=coord;
+	 for(a=0;a<nAtom;a++)
+		{
+        atom = PyList_GetItem(atomList,a);
+        if(!atom) 
+          ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get atom");
+        crd = PyObject_GetAttrString(atom,"coord");
+        if(!crd) 
+          ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get coordinates");
+        else {
+          for(c=0;c<3;c++) {
+            tmp = PyList_GetItem(crd,c);
+            if (tmp) 
+              ok = PConvPyObjectToFloat(tmp,f++);
+            if(!ok) {
+              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read coordinates");
+              break;
+            }
+          }
+        }
+        Py_XDECREF(crd);
+        
+        ai = atInfo+a;
+        
+        if(ok) {
+          tmp = PyObject_GetAttrString(atom,"name");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,ai->name,sizeof(AtomName)-1);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read coordinates");
+          Py_XDECREF(tmp);
+        }
+        
+        if(ok) {
+          tmp = PyObject_GetAttrString(atom,"resn");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,ai->resn,sizeof(ResName)-1);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read resn");
+          Py_XDECREF(tmp);
+        }
+        
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"resi");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,ai->resi,sizeof(ResIdent)-1);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read resi");
+          else
+            sscanf(ai->resi,"%d",&ai->resv);
+          Py_XDECREF(tmp);
+        }
+        
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"segi");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,ai->segi,sizeof(SegIdent)-1);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read segi");
+          Py_XDECREF(tmp);
+        }
+        
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"chain");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,ai->chain,sizeof(Chain)-1);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read chain");
+          Py_XDECREF(tmp);
+        }
+        
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"hetatm");
+          if (tmp)
+            ok = PConvPyObjectToInt(tmp,&hetatm);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read hetatm");
+          else
+            ai->hetatm = hetatm;
+          Py_XDECREF(tmp);
+        }
+        
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"alt");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,ai->alt,sizeof(Chain)-1);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read chain");
+          Py_XDECREF(tmp);
+        }
+
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"symbol");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,ai->elem,sizeof(AtomName)-1);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read symbol");
+          Py_XDECREF(tmp);
+        }
+        
+        atInfo[a].visRep[0] = autoshow_lines; /* show lines by default */
+        for(c=1;c<cRepCnt;c++) {
+          atInfo[a].visRep[c] = false;
+		  }
+
+		  if(ok&&atInfo) {
+			 AtomInfoAssignParameters(ai);
+			 atInfo[a].color=AtomInfoGetColor(ai);
+		  }
+
+		  if(!ok)
+			 break;
+		}
+  }
+
+  bondList = PyObject_GetAttrString(model,"bond");
+  if(bondList) 
+    nBond = PyList_Size(bondList);
+  else
+    ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get bond list");
+
+  if(ok) {
+	 bond=VLAlloc(int,3*nBond);
+    ii=bond;
+	 for(a=0;a<nBond;a++)
+		{
+        bnd = PyList_GetItem(bondList,a);
+        if(!bnd) 
+          ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get bond");
+        index = PyObject_GetAttrString(bnd,"index");
+        if(!index) 
+          ok=ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't get bond indices");
+        else {
+          for(c=0;c<2;c++) {
+            tmp = PyList_GetItem(index,c);
+            if (tmp) 
+              ok = PConvPyObjectToInt(tmp,ii++);
+            if(!ok) {
+              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read coordinates");
+              break;
+            }
+          }
+        }
+        if(ok) {
+          tmp = PyObject_GetAttrString(bnd,"order");
+          if (tmp)
+            ok = PConvPyObjectToInt(tmp,ii++);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read bond order");
+          Py_XDECREF(tmp);
+        }
+        Py_XDECREF(index);
+      }
+  }
+
+  Py_XDECREF(atomList);
+  Py_XDECREF(bondList);
+
+  if(ok) {
+	 cset = CoordSetNew();
+	 cset->NIndex=nAtom;
+	 cset->Coord=coord;
+	 cset->NTmpBond=nBond;
+	 cset->TmpBond=bond;
+  } else {
+	 VLAFreeP(bond);
+	 VLAFreeP(coord);
+  }
+  if(atInfoPtr)
+	 *atInfoPtr = atInfo;
+
+  if(PyErr_Occurred())
+    PyErr_Print();
+  return(cset);
+}
+
+
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeLoadChempyModel(ObjectMolecule *I,PyObject *model,int frame)
+{
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo;
+  int ok=true;
+  int isNew = true;
+  unsigned int nAtom = 0;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+
+  if(ok) {
+
+	 if(isNew) {
+		I=(ObjectMolecule*)ObjectMoleculeNew();
+		atInfo = I->AtomInfo;
+		isNew = true;
+	 } else {
+		atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+		isNew = false;
+	 }
+	 cset=ObjectMoleculeChempyModel2CoordSet(model,&atInfo);	 
+	 nAtom=cset->NIndex;
+  }
+
+  /* include coordinate set */
+  if(ok) {
+    cset->fEnumIndices(cset);
+    if(cset->fInvalidateRep)
+      cset->fInvalidateRep(cset,-1,0);
+    if(isNew) {		
+      I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+    } else {
+      ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+    }
+    cset->Obj = I;
+    if(isNew) I->NAtom=nAtom;
+    if(frame<0) frame=I->NCSet;
+    VLACheck(I->CSet,CoordSet*,frame);
+    if(I->NCSet<=frame) I->NCSet=frame+1;
+    if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+    I->CSet[frame] = cset;
+    if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2,false);
+    if(cset->TmpSymmetry&&(!I->Symmetry)) {
+      I->Symmetry=cset->TmpSymmetry;
+      cset->TmpSymmetry=NULL;
+      SymmetryAttemptGeneration(I->Symmetry);
+    }
+    SceneCountFrames();
+    ObjectMoleculeExtendIndices(I);
+    ObjectMoleculeSort(I);
+  }
+  return(I);
+}
 
 /*========================================================================*/
 static int BondInOrder(int *a,int b1,int b2)

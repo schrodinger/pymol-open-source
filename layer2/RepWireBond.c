@@ -35,6 +35,7 @@ typedef struct RepWireBond {
 
 void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick);
 void RepWireBondFree(RepWireBond *I);
+void RepValence(float *v,float *v1,float *v2,int *other,int a1,int a2,float *coord,float *color,int ord);
 
 void RepWireBondFree(RepWireBond *I)
 {
@@ -58,7 +59,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 
 	 while(c--) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
-		ray->fCylinder3fv(ray,v+3,v+6,0.15,v,v);
+      ray->fCylinder3fv(ray,v+3,v+6,0.15,v,v);
 		v+=9;
 	 }
 
@@ -106,7 +107,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 
 	 v=I->V;
 	 c=I->N;
-	 
+
 	 glBegin(GL_LINES);	 
 	 SceneResetNormal(true);
 	 while(c--) {
@@ -124,12 +125,11 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 Rep *RepWireBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,a1,a2,*b,c1,c2,s1,s2,b1,b2;
-  int half_bonds;
+  int a,a1,a2,*b,c1,c2,s1,s2,b1,b2,ord,*o;
+  int half_bonds,valence,*other=NULL;
   float *v,*v0,*v1,*v2,h[3];
   int visFlag;
   OOAlloc(RepWireBond);
-  
   obj = cs->Obj;
 
   visFlag=false;
@@ -156,6 +156,39 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
 
   half_bonds = SettingGet(cSetting_half_bonds);
+  valence = (SettingGet(cSetting_valence)!=0.0);
+
+  if(valence) /* build list of up to 2 connected atoms for each atom */
+    {
+      other=Alloc(int,2*obj->NAtom);
+      o=other;
+      for(a=0;a<obj->NAtom;a++) {
+        *(o++)=-1;
+        *(o++)=-1;
+      }
+      b=obj->Bond;
+      for(a=0;a<obj->NBond;a++)
+        {
+          b1 = *(b++);
+          b2 = *(b++);
+          b++;
+          a1=cs->AtmToIdx[b1];
+          a2=cs->AtmToIdx[b2];
+          if((a1>=0)&&(a2>=0))
+            {
+              o=other+2*a1;
+              if(*o!=a2) {
+                if(*o>=0) o++;
+                *o=a2;
+              }
+              o=other+2*a2;              
+              if(*o!=a1) {
+                if(*o>=0) o++;
+                *o=a1;
+              }
+            }
+        }
+    }
 
   I->N=0;
   I->NP=0;
@@ -165,20 +198,18 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->R.fRecolor=NULL;
 
   if(obj->NBond) {
-	 I->V=(float*)mmalloc(sizeof(float)*obj->NBond*9*3);
+	 I->V=(float*)mmalloc(sizeof(float)*obj->NBond*54);
 	 ErrChkPtr(I->V);
-	 
-	 
+	 	 
 	 v=I->V;
 	 b=obj->Bond;
 	 for(a=0;a<obj->NBond;a++)
 		{
 		  b1 = *(b++);
 		  b2 = *(b++);
-        b++;
+        ord = (*(b++));
 		  a1=cs->AtmToIdx[b1];
 		  a2=cs->AtmToIdx[b2];
-		  
 		  if((a1>=0)&&(a2>=0))
 			 {
 				s1=obj->AtomInfo[b1].visRep[cRepLine];
@@ -200,23 +231,28 @@ Rep *RepWireBondNew(CoordSet *cs)
 					 
 					 if((c1==c2)&&s1&&s2) {
 						
-						I->N++;
-						
+
 						v0 = ColorGet(c1);
-						
-						*(v++)=*(v0++);
-						*(v++)=*(v0++);
-						*(v++)=*(v0++);
-						
-						*(v++)=*(v1++);
-						*(v++)=*(v1++);
-						*(v++)=*(v1++);
-						
-						*(v++)=*(v2++);
-						*(v++)=*(v2++);
-						*(v++)=*(v2++);
-						
-					 } else {
+
+                  if(valence&&(ord>1)) {
+                    RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord);
+                    v+=ord*9;
+                    I->N+=ord;
+                  } else {
+                    I->N++;
+                    *(v++)=*(v0++);
+                    *(v++)=*(v0++);
+                    *(v++)=*(v0++);
+                    
+                    *(v++)=*(v1++);
+                    *(v++)=*(v1++);
+                    *(v++)=*(v1++);
+                    
+                    *(v++)=*(v2++);
+                    *(v++)=*(v2++);
+                    *(v++)=*(v2++);
+                  }
+                } else {
 						
 						h[0]=(v1[0]+v2[0])/2;
 						h[1]=(v1[1]+v2[1])/2;
@@ -224,10 +260,17 @@ Rep *RepWireBondNew(CoordSet *cs)
 						
 						if(s1)
 						  {
-							 I->N++;
-							 
+
 							 v0 = ColorGet(c1);
-							 
+
+
+                      if(valence&&(ord>1)) {
+                        RepValence(v,v1,h,other,a1,a2,cs->Coord,v0,ord);
+                        v+=ord*9;
+                        I->N+=ord;
+							 } else {
+
+							 I->N++;
 							 *(v++)=*(v0++);
 							 *(v++)=*(v0++);
 							 *(v++)=*(v0++);
@@ -239,23 +282,32 @@ Rep *RepWireBondNew(CoordSet *cs)
 							 *(v++)=h[0];
 							 *(v++)=h[1];
 							 *(v++)=h[2];
-						  }
+                      }
+                    }
 						if(s2)
 						  {
-							 I->N++;
+                      
 							 v0 = ColorGet(c2);
 							 
-							 *(v++)=*(v0++);
-							 *(v++)=*(v0++);
-							 *(v++)=*(v0++);
-							 
-							 *(v++)=h[0];
-							 *(v++)=h[1];
-							 *(v++)=h[2];
-							 
-							 *(v++)=*(v2++);
-							 *(v++)=*(v2++);
-							 *(v++)=*(v2++);
+                      if(valence&&(ord>1)) {
+                        RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord);
+                        v+=ord*9;
+                        I->N+=ord;
+                      } else {
+                        I->N++;
+                        *(v++)=*(v0++);
+                        *(v++)=*(v0++);
+                        *(v++)=*(v0++);
+                        
+                        *(v++)=h[0];
+                        *(v++)=h[1];
+                        *(v++)=h[2];
+                        
+                        *(v++)=*(v2++);
+                        *(v++)=*(v2++);
+                        *(v++)=*(v2++);
+                      }
+                      
 						  }
 					 }
 				  }
@@ -335,7 +387,156 @@ Rep *RepWireBondNew(CoordSet *cs)
 		I->VP = Realloc(I->VP,float,I->NP*9);
 	 }
   }
+  FreeP(other);
   return((void*)(struct Rep*)I);
 }
 
+
+
+
+void RepValence(float *v,float *v1,float *v2,int *other,int a1,int a2,float *coord,float *color,int ord)
+{
+
+  float d[3],t[3],p0[3],p1[3],p2[3],*vv;
+  float tube_size;
+  int a3,ck;
+
+  tube_size = SettingGet(cSetting_valence);
+
+  v[0] = color[0];
+  v[1] = color[1];
+  v[2] = color[2];
+
+  v[9] = color[0];
+  v[10] = color[1];
+  v[11] = color[2];
+
+  /* direction vector */
+
+  p0[0] = (v2[0] - v1[0]);
+  p0[1] = (v2[1] - v1[1]);
+  p0[2] = (v2[2] - v1[2]);
+  
+  copy3f(p0,d);
+  normalize3f(p0);
+  
+  /* need a third atom to get planarity*/
+
+  a3 = -1;
+  ck = other[a1*2];
+  if((ck>=0)&&(ck!=a2))
+    a3=ck;
+  else {
+    ck = other[a1*2+1];
+    if((ck>=0)&&(ck!=a2))
+      a3=ck;
+    else {
+      ck = other[a2*2];
+      if((ck>=0)&&(ck!=a1))
+        a3=ck;
+      else {
+        ck = other[a2*2+1];
+        if((ck>=0)&&(ck!=a1))
+          a3=ck;
+        }
+      }
+  }
+
+  if(a3<0) {    
+    t[0] = p0[0];
+    t[1] = p0[1];
+    t[2] = -p0[2];
+  } else {
+    vv= coord+3*a3;
+    t[0] = *(vv++)-v1[0];
+    t[1] = *(vv++)-v1[1];
+    t[2] = *(vv++)-v1[2];
+    normalize3f(t);
+  }
+  
+  cross_product3f(d,t,p1);
+  
+  normalize3f(p1);
+  
+  cross_product3f(d,p1,p2);
+  
+  normalize3f(p2);
+  
+  /* now we have a coordinate system*/
+  
+  t[0] = p2[0]*tube_size;
+  t[1] = p2[1]*tube_size;
+  t[2] = p2[2]*tube_size;
+
+  switch(ord) {
+  case 2:
+    v[0] = color[0];
+    v[1] = color[1];
+    v[2] = color[2];
+
+    v[3] = v1[0] - t[0];
+    v[4] = v1[1] - t[1];
+    v[5] = v1[2] - t[2];
+    
+    v[6] = v2[0] - t[0];
+    v[7] = v2[1] - t[1];
+    v[8] = v2[2] - t[2];
+
+    v[9] = color[0];
+    v[10] = color[1];
+    v[11] = color[2];
+    
+    v[12] = v1[0] + t[0];
+    v[13] = v1[1] + t[1];
+    v[14] = v1[2] + t[2];
+    
+    v[15] = v2[0] + t[0];
+    v[16] = v2[1] + t[1];
+    v[17] = v2[2] + t[2];
+    break;
+  case 3:
+    t[0]=t[0]*2;
+    t[1]=t[1]*2;
+    t[2]=t[2]*2;
+
+    v[0] = color[0];
+    v[1] = color[1];
+    v[2] = color[2];
+
+    v[3] = v1[0] - t[0];
+    v[4] = v1[1] - t[1];
+    v[5] = v1[2] - t[2];
+    
+    v[6] = v2[0] - t[0];
+    v[7] = v2[1] - t[1];
+    v[8] = v2[2] - t[2];
+
+    v[9] = color[0];
+    v[10] = color[1];
+    v[11] = color[2];
+    
+    v[12] = v1[0] + t[0];
+    v[13] = v1[1] + t[1];
+    v[14] = v1[2] + t[2];
+    
+    v[15] = v2[0] + t[0];
+    v[16] = v2[1] + t[1];
+    v[17] = v2[2] + t[2];
+
+
+    v[18] = color[0];
+    v[19] = color[1];
+    v[20] = color[2];
+    
+    v[21] = v1[0];
+    v[22] = v1[1];
+    v[23] = v1[2];
+    
+    v[24] = v2[0];
+    v[25] = v2[1];
+    v[26] = v2[2];
+
+    break;
+  }
+}
 
