@@ -778,7 +778,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int n_hit=0;
   int two_sided_lighting;
   float fog;
-  float *bkrd,*inter;
+  float *bkrd,*inter=NULL;
   float fog_start=0.0F;
   float gamma,inp,sig=1.0F;
   double now;

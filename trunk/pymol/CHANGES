@@ -166,7 +166,11 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
-   * update demonstrations
+   * calibrated CGO line widths to produce consistent results
+
+   * added color support to scenes
+
+   * updated demonstrations
 
    * fixed suspend_updates setting
 
