@@ -84,6 +84,16 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
 /*========================================================================*/
+int ExecutiveGetDihe(char *s1,char *s2,char *s3,char *s4,float *value,int state)
+{
+  return 0;
+}
+/*========================================================================*/
+int ExecutiveSetDihe(char *s1,char *s2,char *s3,char *s4,float value,int state)
+{
+  return 0;
+}
+/*========================================================================*/
 float ExecutiveGetArea(char *s0,int sta0,int load_b)
 {
   ObjectMolecule *obj0;

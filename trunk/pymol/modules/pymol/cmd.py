@@ -18,6 +18,13 @@
 # **This is the only module which should be/need be imported by 
 # ** PyMol API Based Programs
 
+#
+# Return conventions:
+#   In general, functions should return "None" for error conditions
+#   or something else if they succeed.  As of 2/07/2001, return codes
+#   are a bit of a mess...
+#
+
 import re
 import _cmd
 import string
@@ -531,6 +538,7 @@ EXPERIMENTAL
    return r
 
 def cls():
+   r = None
    try:
       lock()
       r = _cmd.cls()
@@ -543,7 +551,24 @@ def fragment(name):
       load_model(fragments.get(name),name)
    except:
       print "Error: unable to load fragment %s" % name
-   
+
+def get_dihedral(s1,s2,s3,s4):
+   r = None
+   try:
+      lock()
+      r = _cmd.get_dihe(str(s1),str(s2),str(s3),str(s4),0)
+   finally:
+      unlock()
+   return r
+
+def set_dihedral(s1,s2,s3,s4,deg):
+   try:
+      lock()
+      r = _cmd.set_dihe(str(s1),str(s2),str(s3),str(s4),float(deg),0)
+   finally:
+      unlock()
+   return r
+
 def mem():
    '''
 DESCRIPTION
