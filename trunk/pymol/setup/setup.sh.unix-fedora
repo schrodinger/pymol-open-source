@@ -1,14 +1,11 @@
 #!/bin/sh
 echo ' '
 echo '============================================'
-echo 'Creating "pymol.com" startup script with '
-echo "PYMOL_PATH=$PWD"
+echo 'Creating "./pymol.com" startup script with '
+echo "PYMOL_PATH=`pwd`"
 echo '============================================'
-echo 'If you need to move PyMOL in the future,'
-echo 'then re-run "setup.sh" after moving.'
-echo '============================================'
-echo 'You may now want to copy or link "pymol.com"'
-echo 'to something like "/usr/local/bin/pymol"'
+echo 'If you must move FedoraPyMOL in the future,'
+echo 'then re-run "./setup.sh" again afterwards.'
 echo '============================================'
 echo 'Enjoy!'
 echo ' '
