@@ -113,8 +113,9 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
 int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele);
 void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float *TTT);
 
-void ObjectMoleculeInferChemistry(ObjectMolecule *I,int state);
-void ObjectMoleculeInferAmidesAcids(ObjectMolecule *I,int state);
+void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state);
+void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state);
+void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state);
 
 #endif
 

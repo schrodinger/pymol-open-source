@@ -121,16 +121,25 @@ int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at)
   return(result);
 }
 /*========================================================================*/
-void ObjectMoleculeInferAmidesAcids(ObjectMolecule *I,int state)
+void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
 {
-  /* realistically, this will only work on proteins.  */
+
+  /* infers chemical relations from assumptions about
+   * proteins.  
+
+   NOTE: this routine needs an all-atom model (with hydrogens!)
+   and it will make mistakes on non-proteins 
+
+  */
 
   int a,n,a0,a1,nn;
-  int changedFlag;
+  int changedFlag = true;
   
   AtomInfoType *ai,*ai0,*ai1;
   
   ObjectMoleculeUpdateNeighbors(I);
+
+  /* first, try to find all amids and acids */
   while(changedFlag) {
     changedFlag=false;
     for(a=0;a<I->NAtom;a++) {
@@ -164,7 +173,7 @@ void ObjectMoleculeInferAmidesAcids(ObjectMolecule *I,int state)
                         if(!ai0->elem[1]) {
                           if(ai0->elem[0]=='O') {
                             if(!ai0->chemFlag) {
-                              ai0->chemFlag=true;
+                              ai0->chemFlag=true; /* acid */
                               ai0->geom=cAtomInfoPlaner;
                               ai0->valence=1;
                               ai1->chemFlag=true;
@@ -174,17 +183,17 @@ void ObjectMoleculeInferAmidesAcids(ObjectMolecule *I,int state)
                               break;
                             }
                           } else if(ai0->elem[0]=='N') {
-                            if(!ai0->chemFlag) {
-                              ai0->chemFlag=true;
+                            if(!ai0->chemFlag) { 
+                              ai0->chemFlag=true; /* amide N */ 
                               ai0->geom=cAtomInfoPlaner;                            
                               ai0->valence=3;
-                              ai1->chemFlag=true;
+                              ai1->chemFlag=true; /* amide =O */ 
                               ai1->geom=cAtomInfoPlaner;
                               ai1->valence=1;
                               changedFlag=true;
                               break;
                             } else if(ai0->geom==cAtomInfoPlaner) {
-                              ai1->chemFlag=true;
+                              ai1->chemFlag=true; /* amide =O */
                               ai1->geom=cAtomInfoPlaner;
                               ai1->valence=1;
                               changedFlag=true;
@@ -200,10 +209,50 @@ void ObjectMoleculeInferAmidesAcids(ObjectMolecule *I,int state)
       }
     }
   }
+  /* then handle aldehydes and amines (both missing a valence) */
+  
+  changedFlag=true;
+  while(changedFlag) {
+    changedFlag=false;
+    for(a=0;a<I->NAtom;a++) {
+      ai=I->AtomInfo+a;
+      if(!ai->chemFlag) {
+        if(ai->geom==cAtomInfoPlaner)
+          if(ai->elem[0]=='C')
+            if(!ai->elem[1]) /* found planer carbon */
+              {
+                n = I->Neighbor[a];
+                nn = I->Neighbor[n++];
+                if(nn>1) {
+                  a1 = -1;
+                  while(1) {
+                    a0 = I->Neighbor[n++];
+                    if(a0<0) break;
+                    ai0 = I->AtomInfo+a0;
+                    if((ai0->elem[0]=='O')&&(!ai0->elem[1])&&(!ai0->chemFlag)) {
+                      ai->chemFlag=true; 
+                      ai->geom=cAtomInfoPlaner;
+                      ai->valence=3;
+                      ai0->chemFlag=true;
+                      ai0->geom=cAtomInfoPlaner;
+                      ai0->valence=1;
+                      changedFlag=true;
+                      break;
+                    }
+                  }
+                }
+              }
+      }
+    }
+  }
+
 }
 /*========================================================================*/
-void ObjectMoleculeInferChemistry(ObjectMolecule *I,int state)
+void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
 {
+  /* infers chemical relations from neighbors and geometry 
+  * NOTE: very limited in scope */
+
   int a,n,a0,nn;
   int changedFlag;
   int geom;
@@ -335,6 +384,11 @@ void ObjectMoleculeInferChemistry(ObjectMolecule *I,int state)
       }
     }
   }
+}
+/*========================================================================*/
+void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
+{
+  
 }
 /*========================================================================*/
 void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float *TTT) 
