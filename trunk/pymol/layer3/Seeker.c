@@ -792,6 +792,7 @@ void SeekerUpdate(void)
   int nRow = 0;
   int label_flag = true;
   int codes = 0;
+  int max_row = 50;
 
   CSeqRow *row_vla,*row,*lab=NULL;
   row_vla = VLACalloc(CSeqRow,10);
@@ -813,6 +814,9 @@ void SeekerUpdate(void)
       int min_pad = -1;
       CSeqCol *r1 = NULL,*l1=NULL;/* *col */
 
+      if(nRow>=max_row)
+        break;
+
       codes = SettingGet_i(obj->Obj.Setting,NULL,cSetting_seq_view_format);
       /* allocate a row for labels, if present
          the text for the labels and the residues will line up exactly 
@@ -832,6 +836,7 @@ void SeekerUpdate(void)
       VLACheck(row_vla,CSeqRow,nRow);
 
       row = row_vla+nRow;
+      if(lab) lab = row-1; /* critical! */
       row->txt = VLAlloc(char,est_char);
       row->col = VLACalloc(CSeqCol,est_col);
       row->atom_lists = VLACalloc(int,obj->NAtom+est_col+1);
@@ -852,8 +857,8 @@ void SeekerUpdate(void)
         VLACheck(lab->col,CSeqCol,nCol);
         l1 = lab->col + nCol;
         l1->start = lab->len;
-        strcpy(lab->txt+lab->len,"/"); lab->len++;
-        strcpy(lab->txt+lab->len,obj->Obj.Name); lab->len+=strlen(obj->Obj.Name);
+        UtilConcatVLA(&lab->txt,&lab->len,"/");
+        UtilConcatVLA(&lab->txt,&lab->len,obj->Obj.Name);
         l1->stop = lab->len;
         st_len = l1->stop - l1->start;
 
@@ -861,9 +866,8 @@ void SeekerUpdate(void)
         VLACheck(row->col,CSeqCol,nCol);
         r1 = row->col + nCol;
         r1->start = row->len;
-        row->len += st_len;
+        UtilFillVLA(&row->txt,&row->len,' ',st_len);
         r1->stop = row->len;
-        memset(row->txt+r1->start,32,st_len);
         r1->spacer = true;
         nCol++;
       }
@@ -876,11 +880,11 @@ void SeekerUpdate(void)
         VLACheck(lab->col,CSeqCol,nCol);
         l1 = lab->col + nCol;
         l1->start = lab->len;
-        strcpy(lab->txt+lab->len,"/"); lab->len++;
-        strcpy(lab->txt+lab->len,ai->segi); lab->len+=strlen(ai->segi);
-        strcpy(lab->txt+lab->len,"/"); lab->len++;
-        strcpy(lab->txt+lab->len,ai->chain); lab->len+=strlen(ai->chain);
-        strcpy(lab->txt+lab->len,"/"); lab->len++;
+        UtilConcatVLA(&lab->txt,&lab->len,"/");
+        UtilConcatVLA(&lab->txt,&lab->len,ai->segi);
+        UtilConcatVLA(&lab->txt,&lab->len,"/");
+        UtilConcatVLA(&lab->txt,&lab->len,ai->chain);
+        UtilConcatVLA(&lab->txt,&lab->len,"/");
         l1->stop = lab->len;
         st_len = l1->stop - l1->start;
 
@@ -890,9 +894,8 @@ void SeekerUpdate(void)
         VLACheck(row->col,CSeqCol,nCol);
         r1 = row->col + nCol;
         r1->start = row->len;
-        row->len += st_len;
+        UtilFillVLA(&row->txt,&row->len,' ',st_len);
         r1->stop = row->len;
-        memset(row->txt+r1->start,32,st_len);
         r1->spacer = true;
         nCol++;
       }
@@ -914,11 +917,11 @@ void SeekerUpdate(void)
           VLACheck(lab->col,CSeqCol,nCol);
           l1 = lab->col + nCol;
           l1->start = lab->len;
-          strcpy(lab->txt+lab->len,"/"); lab->len++;
-          strcpy(lab->txt+lab->len,ai->segi); lab->len+=strlen(ai->segi);
-          strcpy(lab->txt+lab->len,"/"); lab->len++;
-          strcpy(lab->txt+lab->len,ai->chain); lab->len+=strlen(ai->chain);
-          strcpy(lab->txt+lab->len,"/"); lab->len++;
+          UtilConcatVLA(&lab->txt,&lab->len,"/");
+          UtilConcatVLA(&lab->txt,&lab->len,ai->segi);
+          UtilConcatVLA(&lab->txt,&lab->len,"/");
+          UtilConcatVLA(&lab->txt,&lab->len,ai->chain);
+          UtilConcatVLA(&lab->txt,&lab->len,"/");
           l1->stop = lab->len;
           st_len = l1->stop - l1->start;
 
@@ -926,9 +929,8 @@ void SeekerUpdate(void)
           VLACheck(row->col,CSeqCol,nCol);
           r1 = row->col + nCol;
           r1->start = row->len;
-          row->len += st_len;
+          UtilFillVLA(&row->txt,&row->len,' ',st_len);
           r1->stop = row->len;
-          memset(row->txt+r1->start,32,st_len);
           r1->spacer = true;
           nCol++;
           
@@ -951,9 +953,9 @@ void SeekerUpdate(void)
           VLACheck(lab->col,CSeqCol,nCol);
           l1 = lab->col + nCol;
           l1->start = lab->len;
-          strcpy(lab->txt+lab->len,"/"); lab->len++;
-          strcpy(lab->txt+lab->len,ai->chain); lab->len+=strlen(ai->chain);
-          strcpy(lab->txt+lab->len,"/"); lab->len++;
+          UtilConcatVLA(&lab->txt,&lab->len,"/");
+          UtilConcatVLA(&lab->txt,&lab->len,ai->chain);
+          UtilConcatVLA(&lab->txt,&lab->len,"/");
           l1->stop = lab->len;
           st_len = l1->stop - l1->start;
           
@@ -961,9 +963,8 @@ void SeekerUpdate(void)
           VLACheck(row->col,CSeqCol,nCol);
           r1 = row->col + nCol;
           r1->start = row->len;
-          row->len += st_len;
+          UtilFillVLA(&row->txt,&row->len,' ',st_len);
           r1->stop = row->len;
-          memset(row->txt+r1->start,32,st_len);
           r1->spacer = true;
           nCol++;
           
@@ -1139,15 +1140,21 @@ void SeekerUpdate(void)
       }
 
       if(lab) {
-        lab->txt = VLASetSize(lab->txt,row->len+1);
-        lab->txt[row->len] = 0;
-
+        if(lab->len<row->len) {
+          lab->len = row->len;
+        }
+        VLASize(lab->txt,char,lab->len+1);
+        lab->txt[lab->len] = 0;
         VLACheck(lab->col,CSeqCol,nCol); /* make sure we've got column records for labels too */
         lab->nCol = nCol;
+
+        if(row->len<lab->len) {
+          row->len = lab->len;
+        }
       }
 
-      row->txt = VLASetSize(row->txt,row->len+1);
-      row->txt[row->len] = 0;
+      VLASize(row->txt,char,row->len+1);
+      row->txt[row->len]=0;
 
       row->nCol = nCol;
 
@@ -1245,6 +1252,7 @@ void SeekerUpdate(void)
     int nCol;
     for(a=0;a<nRow;a++) {
       lab = row_vla + a;
+
       if(lab->label_flag) {
         int next_open = 0;
         int *atom_list;
@@ -1253,12 +1261,12 @@ void SeekerUpdate(void)
         int draw_it;
         int n_skipped = 0;
         int last_resv = -1;
+        AtomInfoType *last_ai = NULL;
         ObjectMolecule *obj;
         AtomInfoType *ai;
         row = lab+1;
         nCol = row->nCol;
         obj = row->obj;
-
         div = SettingGet_i(obj->Obj.Setting,NULL,cSetting_seq_view_label_spacing);
         sub = SettingGet_i(obj->Obj.Setting,NULL,cSetting_seq_view_label_start);
         for(b=0;b<nCol;b++) {
@@ -1268,15 +1276,13 @@ void SeekerUpdate(void)
           ai = NULL;
           if(r1->atom_at) {
             atom_list = row->atom_lists + r1->atom_at;
-            
             if(*atom_list>=0)
               ai = obj->AtomInfo + (*atom_list); /* get first atom in list */
           }
           if(l1->stop) {/* if label is already present, just line it up */
             l1->offset = r1->offset;
-          } else if((r1->offset >= next_open)) {
-            
-            if(div>1) {
+          } else if((r1->offset >= next_open)&&ai) {
+            if((div>1)&&(codes!=2)) {
               if(! ((ai->resv-sub) % div))
                 draw_it = true;
               else
@@ -1286,20 +1292,21 @@ void SeekerUpdate(void)
             }
             if(ai->resv!=(last_resv+1)) /* gap in sequence?  then draw label ASAP */
               draw_it = true;
-
             if(n_skipped >= (div+div)) /* don't skip too many without a label! */
               draw_it = true;
 
+            if(AtomInfoSameResidueP(last_ai,ai)) /* don't ever draw a residue label twice */
+              draw_it = false;
+
             if(draw_it) {
               n_skipped = 0;
-              st_len = strlen(ai->resi);
-              VLACheck(lab->txt,char,lab->len+st_len+1);
-              strcpy(lab->txt+lab->len, ai->resi); /* copy the residue identifier */
+              last_ai = ai;
               l1->start = lab->len;
-              lab->len += st_len;
+              UtilConcatVLA(&lab->txt,&lab->len,ai->resi);
               l1->stop = lab->len;
+              st_len = l1->stop - l1->start + 1;
               l1->offset = r1->offset;
-              next_open = r1->offset + st_len + 1;
+              next_open = r1->offset + st_len;
               
               /* make sure this label doesn't conflict with a fixed label */
               

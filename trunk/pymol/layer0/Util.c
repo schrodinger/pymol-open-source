@@ -81,6 +81,17 @@ void UtilConcatVLA(char **vla,int *cc,char *str)
   *where=0;
   *(cc)+=len;
 }
+void UtilFillVLA(char **vla,int *cc,char what,int len)
+{
+  char *where;
+
+  VLACheck((*vla),char,len+*cc+1); 
+  where = (*cc)+(*vla);
+  *(cc)+=len;
+  while((len--)>0)
+    *(where++)=what;
+  *where=0;
+}
 
 
 void UtilNConcat(char *dst,char *src,int n) { /* copies up to N-1 chars */
