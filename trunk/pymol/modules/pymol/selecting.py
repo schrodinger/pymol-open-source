@@ -40,7 +40,7 @@ PYMOL API
       for a in arg:
          cmd.disable(a)
 
-   def select(name,selection="",show=0,quiet=1):
+   def select(name,selection="",show=-1,quiet=1):
       '''
 DESCRIPTION
 
@@ -79,10 +79,47 @@ NOTES
          selection = selector.process(selection)
          #
          r = _cmd.select(str(name),str(selection),int(quiet))
-         if r and show:
-            r = _cmd.onoff(str(name),1);
+         show = int(show)
+         if r and show>0:
+            _cmd.onoff(str(name),1);
+         elif show == 0:
+            _cmd.onoff(str(name),0)
       finally:
          unlock()
+      return r
+
+   def pop(name,source,show=-1,quiet=1):
+      try:
+         lock()
+         r = _cmd.pop(str(name),str(source),int(quiet))
+         if r<0:
+            raise QuietException
+         show = int(show)
+         if r and show>0:
+            _cmd.onoff(str(name),1);
+         elif show == 0:
+            _cmd.onoff(str(name),0)
+      finally:
+         unlock()
+      return r      
+   
+   def select_list(name,object,id_list,show=-1,quiet=1):
+      '''
+DESCRIPTION
+   "select_list" is currently in development
+   
+      '''
+      #
+      try:
+         lock()
+         r = _cmd.select_list(str(name),str(object),list(id_list),int(quiet))
+         show = int(show)
+         if r and show>0:
+            r = _cmd.onoff(str(name),1);
+         elif show == 0:
+            r = _cmd.onoff(str(name),0)
+      finally:
+         unlock()   
       return r
 
    def indicate(selection="(all)"):

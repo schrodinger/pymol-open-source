@@ -114,6 +114,47 @@ typedef struct {
   ObjectMolecule *obj;
 } ProcPDBRec;
 
+int ExecutivePop(char *target,char *source,int quiet)
+{
+  int ok = true;
+  int src;
+  int result = 0;
+
+  ExecutiveDelete(target);
+  if(ExecutiveFindObjectMoleculeByName(source)) {
+    ok=false;
+    PRINTFB(FB_Executive,FB_Errors)
+      " Pop-Error: source selection '%s' can't be an object.\n",source
+      ENDFB;
+    
+  } else {
+    src = SelectorIndexByName(source);
+    if(src<0)
+      ok=false;
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        " Pop-Error: invalid source selection name '%s'\n",source
+        ENDFB;
+    } else {
+      ObjectMoleculeOpRec op;
+      
+      ObjectMoleculeOpRecInit(&op);
+      op.code = OMOP_Pop;
+      SelectorCreateEmpty(target);
+      op.i1 = SelectorIndexByName(target);
+      op.i2 = 1;
+      op.i3 = 0;
+      ExecutiveObjMolSeleOp(src,&op);
+      result = op.i3;
+    }
+  }
+  if(!result) ExecutiveDelete(target);
+  if(!ok)
+    return -1;
+  else
+    return result;
+}
+
 int ExecutiveGetActiveSele(void)
 {
 
@@ -3860,12 +3901,77 @@ int ExecutiveIterate(char *s1,char *expr,int read_only,int quiet)
   return(op1.i1);
 }
 /*========================================================================*/
+int ExecutiveSelectList(char *sele_name,char *s1,PyObject *list,int quiet)
+{/* assumes a blocked Python interpreter */
+  int ok=true;
+  int n_eval=0;
+  int sele0 = SelectorIndexByName(s1);
+  int n_sele = 0;
+  ObjectMolecule *obj = NULL;
+  if(sele0>=0) obj = SelectorGetSingleObjectMolecule(sele0);
+  if(obj) {
+    int n_atom = obj->NAtom;
+    int list_len = 0;
+    int a;
+    int index = 0;
+    int *idx_list = NULL;
+    if(ok) ok=PyList_Check(list);
+    if(ok) {
+      list_len = PyList_Size(list);
+      idx_list = Alloc(int,list_len);
+      ok = (idx_list!=NULL);
+    }
+    if(ok) {
+      if(list_len) {
+        for(a=0;a<list_len;a++) {
+          if(ok) 
+            ok = PConvPyIntToInt(PyList_GetItem(list,a),&index);
+          else
+            break;
+          if((index<1)||(index>n_atom))
+            ok=false;
+          else
+            idx_list[a]=index-1;
+        }
+        if(ok) 
+          n_sele = SelectorCreateOrderedFromObjectIndices(sele_name,obj,idx_list,list_len);
+      } else
+        SelectorCreateEmpty(sele_name);
+    }
+    FreeP(idx_list);
+  } else {
+    PRINTFB(FB_Executive,FB_Errors)
+      " SelectList-Error: selection cannot span more than one object.\n"
+      ENDFB;
+  }
+  if(ok) {
+    if(!quiet) {
+      PRINTFB(FB_Executive,FB_Actions)
+        " SelectList: modified %i atoms.\n",n_eval
+        ENDFB;
+    }
+  } else {
+    if(!quiet) {
+      PRINTFB(FB_Executive,FB_Warnings)
+        "ExecutiveIterateList: An error occurred.\n"
+        ENDFB;
+    }
+  }
+  if(!ok)
+    return -1;
+  else
+    return n_sele;
+}
+
+
+/*========================================================================*/
 int ExecutiveIterateList(char *name,PyObject *list,int read_only,int quiet)
 {
   int ok=true;
   int n_eval=0;
-  
-  ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(name);
+  int sele0 = SelectorIndexByName(name);
+  ObjectMolecule *obj = NULL;
+  if(sele0>=0) obj = SelectorGetSingleObjectMolecule(sele0);
   PyObject *entry;
   if(obj) {
     int n_atom = obj->NAtom;
@@ -3882,11 +3988,15 @@ int ExecutiveIterateList(char *name,PyObject *list,int read_only,int quiet)
         if(ok) ok = (PyList_Size(entry)==2);
         if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry,0),&index);
         if(ok) ok = PConvPyStrToStrPtr(PyList_GetItem(entry,1),&expr);
-        if(ok) ok = (index<=n_atom);
+        if(ok) ok = ((index<=n_atom) && (index>0));
         if(ok) ok = PAlterAtom(obj->AtomInfo+index-1,expr,read_only,name,index-1);
         if(ok) n_eval++;
       }
     }
+  } else {
+    PRINTFB(FB_Executive,FB_Errors)
+      " AlterList-Error: selection cannot span more than one object.\n"
+      ENDFB;
   }
   if(ok) {
     if(!quiet) {

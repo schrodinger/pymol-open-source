@@ -29,10 +29,9 @@ void SelectorInit(void);
 int *SelectorSelect(char *sele);
 int SelectorCreate(char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
 int SelectorCreateSimple(char *name, char *sele);
-
 int SelectorCreateOrderedFromObjectIndices(char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
 /* if n_idx is negative, then looks for negative *idx as the sentinel */
-
+int SelectorMoveMember(int s,int sele_old,int sele_new);
 int SelectorCreateEmpty(char *name);
 void SelectorToggle(int rep,char *name);
 void SelectorCylinder(char *sele,char *onoff);

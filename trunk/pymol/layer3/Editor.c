@@ -631,7 +631,8 @@ void EditorCycleValence(int quiet)
 }
 
 /*========================================================================*/
-void EditorAttach(char *elem,int geom,int valence,char *name,int quiet)
+void EditorAttach(char *elem,int geom,int valence,
+                  char *name,int quiet)
 {
   int i0;
   int sele0,sele1;

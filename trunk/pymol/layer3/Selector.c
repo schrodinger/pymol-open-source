@@ -2987,6 +2987,50 @@ int SelectorIsMember(int s,int sele)
   return false;
 }
 /*========================================================================*/
+#if 0
+int SelectorPurgeMember(AtomInfoType *ai,int sele)
+{/* never tested...*/
+  SelectorType *I=&Selector;
+  int s=ai->selEntry;
+  int l=-1;
+  int result = 0;
+  int nxt;
+  while(s)
+    {
+      nxt = I->Member[s].next;
+      if(I->Member[s].selection==sele)
+        {
+          if(l>0)
+            I->Member[l].next=I->Member[s].next;
+          else
+            ai->selEntry=I->Member[s].next;
+          I->Member[s].next = I->FreeMember; 
+          I->FreeMember=s;
+          result=true;
+        }
+      l=s;
+      s=nxt;
+    }
+  return result;
+}
+#endif
+/*========================================================================*/
+int SelectorMoveMember(int s,int sele_old,int sele_new)
+{
+  SelectorType *I=&Selector;
+  int result = false;
+  while(s)
+    {
+      if(I->Member[s].selection==sele_old) {
+        I->Member[s].selection=sele_new;
+        result = true;
+      }
+      s=I->Member[s].next;
+    }
+  return result;
+}
+
+/*========================================================================*/
 static int SelectorIndexByID(int id)
 {
  SelectorType *I=&Selector;
