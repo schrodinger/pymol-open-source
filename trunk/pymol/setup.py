@@ -65,6 +65,7 @@ setup ( # Distribution meta-data
    "layer1/Ray.c",
    "layer1/Rep.c",
    "layer1/Scene.c",
+   "layer1/ScrollBar.c",
    "layer1/Setting.c",
    "layer1/Shaker.c",
    "layer1/Symmetry.c",
