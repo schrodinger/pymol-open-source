@@ -448,9 +448,9 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
 
   if(!I->Lex) { /* populate the dictionary */
 
+    OVreturn_word result;
     I->Lex = OVLexicon_New(G->Context->heap);
     I->Idx = OVOneToOne_New(G->Context->heap);
-    OVreturn_word result;
 
     for(a=0;a<I->NColor;a++) {
       if(OVreturn_IS_OK(result = OVLexicon_GetFromCString(I->Lex,I->Color[a].Name)))
