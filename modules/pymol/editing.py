@@ -90,7 +90,7 @@ if __name__=='pymol.editing':
          unlock()
       return r
 
-   def smooth(selection="all",passes=1,window=5,first=1,last=0,ends=0):
+   def smooth(selection="all",passes=1,window=5,first=1,last=0,ends=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -126,7 +126,7 @@ NOTES
       try:
          lock()
          r = _cmd.smooth(str(selection),int(passes),int(window),
-                         int(first)-1,int(last)-1,int(ends))
+                         int(first)-1,int(last)-1,int(ends),int(quiet))
 
       finally:
          unlock()

@@ -4517,7 +4517,7 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state)
 }
 
 /*========================================================================*/
-int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
+int SelectorGetPDB(char **charVLA,int cLen,int sele,int state,int conectFlag)
 {
   SelectorType *I=&Selector;
 
@@ -4525,7 +4525,6 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   BondType *ii1;
   BondType *bond=NULL;
   int nBond=0;
-  int cLen =0;
   int newline;
   int use_ter = (int)SettingGet(cSetting_pdb_use_ter_records);
   int retain_ids = (int)SettingGet(cSetting_pdb_retain_ids);
@@ -4536,7 +4535,6 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   AtomInfoType *atInfo,*ai,*last = NULL;
   SelectorUpdateTable();
   c=0;
-
     /*  if(SettingGet(cSetting_save_pdb_ss)) {
   SSEntry *ss = NULL;
   int n_ss = 0;

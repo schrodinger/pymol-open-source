@@ -66,7 +66,6 @@ char *UtilConcat(char *where,char *what)
   return(where);
 }
 
-
 void UtilConcatVLA(char **vla,int *cc,char *str)
 {
   char *what;
