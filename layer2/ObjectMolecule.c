@@ -2828,7 +2828,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
 
 
 /*========================================================================*/
-void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode)
+void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode,int move_flag)
 {
   int a,b;
   AtomInfoType *ai0,*ai1,*nai;
@@ -3013,13 +3013,17 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
         f0=backup;
         f1=cs->Coord;
         for(b=0;b<cs->NIndex;b++) { /* brute force transformation */
-          subtract3f(f0,va1,t);
-          scale3f(x0,dot_product3f(t,x1),x);
-          scale3f(y0,dot_product3f(t,y1),y);
-          scale3f(z0,dot_product3f(t,z1),z);
-          add3f(x,y,y);
-          add3f(y,z,f1);
-          add3f(t2,f1,f1);
+          if(move_flag) {
+            subtract3f(f0,va1,t);
+            scale3f(x0,dot_product3f(t,x1),x);
+            scale3f(y0,dot_product3f(t,y1),y);
+            scale3f(z0,dot_product3f(t,z1),z);
+            add3f(x,y,y);
+            add3f(y,z,f1);
+            add3f(t2,f1,f1);
+          } else {
+            copy3f(f0,f1);
+          }
           f0+=3;
           f1+=3;
         }

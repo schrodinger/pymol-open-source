@@ -5040,12 +5040,13 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
   OrthoLineType s1,s2;
   int recolor;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&mode,&recolor);
+  int move_flag;
+  ok = PyArg_ParseTuple(args,"ssiii",&str1,&str2,&mode,&recolor,&move_flag);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    ExecutiveFuse(TempPyMOLGlobals,s1,s2,mode,recolor);  /* TODO STATUS */
+    ExecutiveFuse(TempPyMOLGlobals,s1,s2,mode,recolor,move_flag);  /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();

@@ -3717,7 +3717,7 @@ int  ExecutiveInvert(PyMOLGlobals *G,int quiet)
   return(ok);
 }
 /*========================================================================*/
-void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor)
+void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor,int move_flag)
 {
   int i0=-1;
   int i1=-1;
@@ -3759,10 +3759,10 @@ void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor)
 
         if((obj0->AtomInfo[i0].protons==1)&&
            (obj1->AtomInfo[i1].protons==1))
-          ObjectMoleculeFuse(obj1,i1,obj0,i0,0);
+          ObjectMoleculeFuse(obj1,i1,obj0,i0,0,move_flag);
         else if((obj0->AtomInfo[i0].protons!=1)&&
                 (obj1->AtomInfo[i1].protons!=1))
-          ObjectMoleculeFuse(obj1,i1,obj0,i0,1);
+          ObjectMoleculeFuse(obj1,i1,obj0,i0,1,move_flag);
         else 
           ErrMessage(G,"Fuse","Can't fuse between a hydrogen and a non-hydrogen");
       }

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * new "move" option for the fuse command
+
    * url support for pdb, mol, mol2, sdf, xplor, ccp4, pkl, and pse files.
 
    beta29
