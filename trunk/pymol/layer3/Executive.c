@@ -2560,6 +2560,9 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
   ObjectMoleculeOpRec op;
   WordType all = "_all";
   int all_flag=false;
+  PRINTFD(FB_Executive)
+    "ExecInvRep-Debug: %s %d %d\n",name,rep,level
+    ENDFD;
   if(WordMatch(cKeywordAll,name,true)<0) {
     name=all;
     all_flag=true;

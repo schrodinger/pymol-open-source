@@ -72,12 +72,9 @@ struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
     if(I->MaxInvalid<=cRepInvColor) {
       if(I->fRecolor) {
         I->fRecolor(I,cs);
-      } else if(I->fSameVis) {
-        if(!I->fSameVis(I,cs)) {
-          I=I->fRebuild(I,cs,rep);
-        }
-      } else 
+      } else {
         I=I->fRebuild(I,cs,rep);
+      }
     } else if(I->MaxInvalid<=cRepInvVisib) {
       if(I->fSameVis) {
         if(!I->fSameVis(I,cs))
