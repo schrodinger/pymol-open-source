@@ -1688,10 +1688,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index) 
 {
   char buffer[1024];
-  sprintf(buffer," Pick: Selected %s:%s:%s:%s:%s:%s",
-			 I->Obj.Name,I->AtomInfo[index].segi,I->AtomInfo[index].chain,
-			 I->AtomInfo[index].resi,I->AtomInfo[index].resn,I->AtomInfo[index].name
-			 );
+  AtomInfoType *ai;
+
+  ai=I->AtomInfo+index;
+  sprintf(buffer," Pick: %s:%s:%s:%s:%s:%s (%d:%s:%s:%d)",
+			 I->Obj.Name,ai.segi,ai->chain,
+			 ai->resi,ai->resn,ai->name,ai->id,ai->elem,
+          ai->text_type,ai->customType);
   OrthoAddOutput(buffer);
   OrthoNewLine(NULL);
   OrthoRestorePrompt();

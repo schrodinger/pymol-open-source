@@ -99,7 +99,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 
 	 }
 	 glEnd();
-	 (*pick)[0].index = i;
+	 (*pick)[0].index = i; /* pass the count */
   } else if(PMGUI) {
 
 	 
@@ -129,6 +129,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   int half_bonds,valence,*other=NULL;
   float *v,*v0,*v1,*v2,h[3];
   int visFlag;
+  Pickable *rp;
   OOAlloc(RepWireBond);
   obj = cs->Obj;
 
@@ -345,7 +346,8 @@ Rep *RepWireBondNew(CoordSet *cs)
 		
 		I->R.P=Alloc(Pickable,2*obj->NBond+1);
 		ErrChkPtr(I->R.P);
-		
+		rp = I->R.P + 1; /* skip first record! */
+
 		v=I->VP;
 		b=obj->Bond;
 		for(a=0;a<obj->NBond;a++)
@@ -382,10 +384,11 @@ Rep *RepWireBondNew(CoordSet *cs)
 						if(s1)
 						  {
 							 I->NP++;
-							 
-							 I->R.P[I->NP].ptr = (void*)obj;
-							 I->R.P[I->NP].index = b1;
-							 
+                      rp->.ptr = (void*)obj;
+							 rp->index = b1;
+                      rp->bond = a;
+                      rp++;
+
 							 *(v++)=*(v1++);
 							 *(v++)=*(v1++);
 							 *(v++)=*(v1++);
@@ -397,10 +400,11 @@ Rep *RepWireBondNew(CoordSet *cs)
 						if(s2)
 						  {
 							 I->NP++;
-							 I->R.P[I->NP].ptr = (void*)obj;
-							 I->R.P[I->NP].index = b2;
-							 
-							 
+                      rp->.ptr = (void*)obj;
+							 rp->index = b2;
+                      rp->bond = a;
+                      rp++;
+							 							 
 							 *(v++)=h[0];
 							 *(v++)=h[1];
 							 *(v++)=h[2];
