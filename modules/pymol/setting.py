@@ -296,6 +296,7 @@ if __name__=='pymol.setting':
       show_progress         = 262
       use_display_lists     = 263
       cache_memory          = 264
+      simplify_display_lists= 265
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

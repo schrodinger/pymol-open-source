@@ -127,6 +127,9 @@ class Setting:
       self.cartoon_highlight_color = IntVar()
       self.cartoon_highlight_color.set(int(cmd.get_setting_legacy('ray_interior_color')!=-1))
 
+      self.use_display_lists = IntVar()
+      self.use_display_lists.set(int(cmd.get_setting_legacy('use_display_lists')!=-1))
+
       self.F=[ None,
                IntVar(),
                IntVar(),
@@ -219,6 +222,8 @@ class Setting:
          (lambda s,a: (s.ray_interior_color_set())),
          'cartoon_highlight_color'        :
          (lambda s,a: (s.cartoon_highlight_color_set())),
+         'use_display_lists'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.use_display_lists.get())),log=1))),
          }
 
       self.update_code = {
@@ -288,6 +293,8 @@ class Setting:
          (lambda s,t: (s.cartoon_highlight_color.set(t[1][0]!=-1))),
          'scenes_changed' :
          (lambda s,t: (s.update_scenes())),
+         'use_display_lists':
+         (lambda s,t: (s.use_display_lists.set(t[1][0]!=0))),
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -323,7 +330,8 @@ class Setting:
          pymol.setting._get_index("roving_detail"),                           
          pymol.setting._get_index("ray_interior_color"),
          pymol.setting._get_index("cartoon_highlight_color"),
-         pymol.setting._get_index("scenes_changed")
+         pymol.setting._get_index("scenes_changed"),
+         pymol.setting._get_index("use_display_lists")
          ]
 
       self.active_dict = {}
