@@ -156,7 +156,7 @@ int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
       result=0;
   }
   if(ln>0)
-    value[ln-1]=0;
+    value[ln]=0;
   else
     value[0]=0;
   return(result);
@@ -182,7 +182,7 @@ int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
       result=0;
   }
   if(ln>0)
-    value[ln-1]=0;
+    value[ln]=0;
   else
     value[0]=0;
   UtilCleanStr(value);
