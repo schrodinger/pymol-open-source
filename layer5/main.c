@@ -843,6 +843,11 @@ void MainBusyIdle(void)
         #endif*/
 
         PRunString("adapt_to_hardware()");
+
+        if(PyMOLOption->incentive_product) { /* perform incentive product initialization (if any) */
+          PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
+        }
+
         PRunString("exec_deferred()");
 #ifdef _PYMOL_SHARP3D
 PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");
