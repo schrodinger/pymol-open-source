@@ -622,9 +622,12 @@ void OrthoNewLine(char *prompt)
 		I->PromptChar,I->InputFlag);*/
   /*  if(I->CurChar)
 	 {*/
-	   OrthoFeedbackIn(I->Line[I->CurLine&OrthoSaveLines]);
-	   printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
-	   fflush(stdout);
+  if(I->CurChar)
+    OrthoFeedbackIn(I->Line[I->CurLine&OrthoSaveLines]);
+  else
+    OrthoFeedbackIn(" ");
+  printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
+  fflush(stdout);
       /*	 }*/
 
       /*  if(I->Line[I->CurLine&OrthoSaveLines][0])*/
@@ -932,16 +935,16 @@ void OrthoSplash(void)
 
   OrthoAddOutput(" NOTICE - PLEASE READ - NOTICE - PLEASE READ - NOTICE - PLEASE READ - NOTICE\n \n");
 
-  OrthoAddOutput("    PyMOL is now ready for users who prefer keyword commands and scripts,\n");
-  OrthoAddOutput("    and for Python developers who want to integrate PyMOL's visualization\n");
-  OrthoAddOutput("    and molecular editing capabilities into large modular systems.\n \n");
+  OrthoAddOutput("    This release of PyMOL is only appropriate for those who prefer to use \n");
+  OrthoAddOutput("    commands and scripts, and for developers who want to integrate PyMOL's\n");
+  OrthoAddOutput("    visualization and molecular editing capabilities with their own programs.\n \n");
 
-  OrthoAddOutput("    This early release includes a diverse command language, a powerful\n");
-  OrthoAddOutput("    application programmers interface (API), and a variety of mouse and\n");
-  OrthoAddOutput("    keyboard driven functionality (such as molecular editing).\n \n");
+  OrthoAddOutput("    This release includes a diverse command language, a powerful application\n");
+  OrthoAddOutput("    programmers interface (API), and a variety of mouse and keyboard driven\n");
+  OrthoAddOutput("    functionality for viewing, animation, rendering, and molecular editing.\n\n");
 
   OrthoAddOutput("    However, this release of PyMOL does NOT include an adequate graphical\n");
-  OrthoAddOutput("    user interface, menu bar, manual, test suite, or help system.\n \n");
+  OrthoAddOutput("    user interface, menu bar, manual, test suite, or a complete help system.\n \n");
 
   OrthoAddOutput("    The Tkinter based window (above) and the OpenGL \"developers\" GUI (right)\n");
   OrthoAddOutput("    are place-holders for a modern full-scale GUI to be built using wxPython.\n \n");
