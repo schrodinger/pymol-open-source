@@ -1429,6 +1429,10 @@ void SceneRender(Pickable *pick,int x,int y)
               rec->obj->fRender(rec->obj,curState,NULL,NULL);
             glPopMatrix();
           }
+        glPushMatrix();
+        glNormal3fv(normal);
+        EditorRender(curState);
+        glPopMatrix();
         glPopMatrix();
         
         glDrawBuffer(GL_BACK_RIGHT);
