@@ -1132,7 +1132,6 @@ void ChampCountBondsEtc(CChamp *I,int index)
 
 void ChampCheckCharge(CChamp *I,int index)
 {
-
   ListPat *pat;
   ListAtom *at;
   int ai;
@@ -3056,6 +3055,132 @@ char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
   /* trim memory usage */
   vla_set_size(result,char,strlen(result)+1);
   return result;
+}
+
+void ChampOrientBonds(CChamp *I,int index)
+{
+  /* do a prepatory walk through the molecule to figure out how to minimize 
+     explicit connections */
+
+  int n_atom;
+  int cur_scope = 0;
+  int cur_atom = 0;
+  int cur_bond = 0;
+  int a,tmp;
+  int i;
+  int left_to_do = 0;
+  int start_atom = 0;
+  ListAtom *at1;
+  ListBond *bd1;
+  ListScope *scp1,*scp2;
+
+  cur_atom=I->Pat[index].atom;
+  n_atom=0;
+  while(cur_atom) {
+    n_atom++;
+    at1 = I->Atom + cur_atom;
+    at1->mark_tmpl = 0;
+    cur_atom = at1->link;
+  }
+
+  cur_bond=I->Pat[index].bond; /* clear markings... */
+  while(cur_bond) {
+    bd1 = I->Bond + cur_bond;
+    bd1->mark_tmpl = 0;
+    cur_bond = bd1->link;
+  }
+  
+  start_atom = I->Pat[index].atom;
+  while(start_atom) {
+    if(!I->Atom[start_atom].mark_tmpl) {
+      cur_scope = ListElemNewZero(&I->Scope);
+      I->Scope[cur_scope].atom = start_atom;
+      I->Scope[cur_scope].bond = -1; /* signals start in new scope */
+      while(cur_scope) {
+        scp1 = I->Scope + cur_scope;
+        cur_atom = scp1->atom;
+        at1=I->Atom + cur_atom;
+        
+        if(scp1->bond<0) { /* starting new scope, so print atom and continue */
+          
+          /* mark atom */
+          at1->mark_tmpl = 1;
+          
+          /* reorder atom's bonds (if necessary) */
+          
+          for(a=0;a<MAX_BOND;a++) {
+            cur_bond = at1->bond[a];
+            if(!cur_bond) break;
+            bd1 = I->Bond+cur_bond;
+            
+            if(!bd1->mark_tmpl) { /* is this the first time we've seen this bond? */
+              bd1->mark_tmpl=1;
+              if(bd1->atom[0]!=cur_atom) { /* reorient bond to mimize explicit cycles... */
+                tmp=bd1->atom[0];
+                bd1->atom[0]=bd1->atom[1];
+                bd1->atom[1]=tmp;
+              }
+            } else { /* hmmm...not the first time...so how did we get here? */
+              if(bd1->atom[0]!=scp1->base_atom) { /* not this route so... */
+                tmp=bd1->atom[0];  /* reorient bond to capture explicit cycle */
+                bd1->atom[0]=bd1->atom[1];
+                bd1->atom[1]=tmp;
+              }
+            }
+          }
+        }
+        
+        /* increment bond index index counter */
+        
+        scp1->bond++;
+        
+        /* now determine whether or not we need to create a new scope, 
+           and figure out which bond to work on */
+        
+        i = scp1->bond;
+        left_to_do = 0;
+        cur_bond = 0;
+        while(i<MAX_BOND) {
+          if(!at1->bond[i]) break;
+          bd1 = I->Bond + at1->bond[i];
+          
+          if(!bd1->mark_tmpl) { /* is this the first time we've seen this bond? */
+            bd1->mark_tmpl=1;
+            if(bd1->atom[0]!=cur_atom) { /* reorient bond to mimize explicit cycles... */
+              tmp=bd1->atom[0];
+              bd1->atom[0]=bd1->atom[1];
+              bd1->atom[1]=tmp;
+            }
+          }
+          
+          if(bd1->atom[0]==cur_atom) {
+            if(!I->Atom[bd1->atom[1]].mark_tmpl) { /* not yet complete */ 
+              if(!cur_bond) cur_bond = at1->bond[i];
+              left_to_do++;
+            }
+          }
+          i++;
+        }
+        
+        if(left_to_do>1) { /* yes, we need a new scope */
+          cur_scope = ListElemPush(&I->Scope,cur_scope);
+          scp2 = I->Scope + cur_scope;
+          scp2->base_bond = cur_bond;
+          scp2->atom = I->Bond[cur_bond].atom[1];
+          scp2->base_atom = cur_atom;
+          scp2->bond = -1;
+        } else if(left_to_do) { /* no we do not, so just extend current scope */
+          scp1->atom = I->Bond[cur_bond].atom[1];
+          scp1->base_bond = cur_bond;
+          scp1->base_atom = cur_atom;
+          scp1->bond = -1;
+        } else { /* nothing attached, so just close scope */
+          cur_scope = ListElemPop(I->Scope,cur_scope);
+        }
+      }
+    }
+    start_atom = I->Atom[start_atom].link;
+  }
 }
 
 void ChampAtomDump(CChamp *I,int index)
