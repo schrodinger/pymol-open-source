@@ -365,6 +365,8 @@ class PMGApp(AbstractApp):
                                          ("All Readable","*.brix"),
                                          ("All Readable","*.dx"),
                                          ("All Readable","*.pqr"),
+                                         ("All Readable","*.p5m"),
+                                         ("All Readable","*.p1m"),
                                          ("PDB File","*.pdb"),
                                          ("All Files","*.*"),
                                          ("All Files","*"),                                         
