@@ -2059,19 +2059,17 @@ int SelectorSelect1(EvalElem *base)
 		}
 		break;
 	 case SELE_ID_s:
-      if(sscanf(base[1].text,"%i",&index)!=1)
-        ok=ErrMessage("Selector","Invalid Numeric Type.");
-      if(ok)
-        for(a=0;a<I->NAtom;a++)
-          {
-            if(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].id ==
-               index) {
+      for(a=0;a<I->NAtom;a++)
+        {
+          if(WordMatchCommaInt(base[1].text,
+                               I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].id)<0)
+            {
               base[0].sele[a]=true;
               c++;
             } else {
               base[0].sele[a]=false;
             }
-          }
+        }
       break;
 	 case SELE_NAMs:
 		for(a=0;a<I->NAtom;a++)
