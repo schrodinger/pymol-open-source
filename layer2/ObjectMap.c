@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #define cMapSourceXPLOR 1
 #define cMapSourceCCP4 2
 #define cMapSourcePHI 3
+#define cMapSourceDesc 4
 
 #ifdef _PYMOL_NUMPY
 typedef struct {
@@ -58,8 +59,6 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int n
   if(state<I->NState)
     if(I->State[state].Active)
       ok = ObjectMapStateInterpolate(&I->State[state],array,result,n);
-  if(!ok)
-    (*result)=0.0F;
   return(ok);
 }
 
@@ -75,6 +74,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
   
   switch(ms->MapSource) {
   case cMapSourcePHI:
+  case cMapSourceDesc:
     while(n--) {
 
       x = (inp[0] - ms->Origin[0])/ms->Grid[0];
@@ -92,25 +92,31 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
       if(a<ms->Min[0]) {
         x=0.0F;
         a=ms->Min[0];
+        ok=false;
       } else if(a>=ms->Max[0]) {
         x=1.0F;
         a=ms->Max[0]-1;
+        ok=false;
       }
 
       if(b<ms->Min[1]) {
         y=0.0F;
         b=ms->Min[1];
+        ok=false;
       } else if(b>=ms->Max[1]) {
         y=1.0F;
         b=ms->Min[1];
+        ok=false;
       }
 
       if(c<ms->Min[2]) {
         z=0.0F;
         c=ms->Min[2];
+        ok=false;
       } else if(c>=ms->Max[2]) {
         z=1.0F;
         c=ms->Max[2]-1;
+        ok=false;
       }
       /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z);*/
       *(result++)=FieldInterpolatef(ms->Field->data,
@@ -409,6 +415,9 @@ void ObjectMapUpdateExtents(ObjectMap *I)
         }
       }
   }
+  PRINTFD(FB_ObjectMap)
+    " ObjectMapUpdateExtents-DEBUG: ExtentFlag %d\n",I->Obj.ExtentFlag
+    ENDFD;
 }
 
 int ObjectMapStateSetBorder(ObjectMapState *I,float level)
@@ -602,6 +611,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
     ms->Range=Alloc(float,3);
     ms->Dim=Alloc(int,3);
     ms->Grid=Alloc(float,3);
+    ms->MapSource=cMapSourceDesc;
   }
   switch(md->mode) {
   case cObjectMap_OrthoMinMaxGrid: /* Orthorhombic: min, max, spacing, centered over range  */
@@ -631,6 +641,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
     /* now populate the map data structure */
 
     copy3f(md->MinCorner,ms->Origin);
+    copy3f(md->Grid,ms->Grid);
     for(a=0;a<3;a++) ms->Range[a] = md->Grid[a] * md->Dim[a];
 
     /* these maps start at zero */
