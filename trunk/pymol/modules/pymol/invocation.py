@@ -48,6 +48,10 @@ if __name__=='pymol.invocation':
    options.win_x = 640
    options.win_y = 480
    options.win_px = 0 # signal to use platform-dependent default
+   options.sigint_handler = 1 # terminate on Ctrl-C?
+   options.reuse_helper = 0
+   options.auto_reinitialize = 0
+   options.after_load_script = ""
    if sys.platform != 'win32':
       options.win_py = 200
    else:
@@ -117,7 +121,18 @@ if __name__=='pymol.invocation':
          a = re.sub(r'''^"|"$|^'|'$''','',a) # strip extra quotes
          if a[0:1]=='-':
             if a[1:2]=='-':
-               break # double hypen signal end of PyMOL arguments
+               break # double hypen signals end of PyMOL arguments
+            if ("A" in a) or ("a" in a): # application configuration
+               new_args = []
+               # ====== A5 - FEDORA: Protein Viewing ======
+               if a[2:3] == "5": 
+                  new_args = ["-qxiICUF",
+                     "-X","68",
+                     "-Y","100",
+                     "-L","$PYMOL_PATH/scripts/metaphorics/fedora.pml"]
+               # ==========================================
+               new_args.reverse()
+               av = av + new_args
             if "c" in a:
                options.no_gui=1
                options.external_gui=0
@@ -129,6 +144,8 @@ if __name__=='pymol.invocation':
                options.internal_gui = 0
             if "f" in a:
                options.internal_feedback = int(av.pop())
+            if "F" in a:
+               options.internal_feedback = 0
             if "B" in a:
                options.blue_line = 1
             if "W" in a:
@@ -150,7 +167,8 @@ if __name__=='pymol.invocation':
             if "w" in a:
                options.gui = 'pmg_wx'
             if "d" in a:
-               options.deferred.append("_do_%s"%string.replace(av.pop(),'%',' '))
+               options.deferred.append(
+                  "_do_%s"%string.replace(av.pop(),'%',' '))
             if "e" in a:
                options.deferred.append("_do__ full_screen on")
             if "G" in a: # Game mode (reqd for Mac stereo)
@@ -161,7 +179,8 @@ if __name__=='pymol.invocation':
                options.force_stereo = 1
                options.deferred.append("_do__ stereo on")
                if sys.platform=='darwin': 
-                  options.deferred.append("_do__ set stereo_double_pump_mono,1,quiet=1")
+                  options.deferred.append(
+                    "_do__ set stereo_double_pump_mono,1,quiet=1")
             if "M" in a: # Force mono on stereo hardware (all)
                options.force_stereo = -1
             if "l" in a:
@@ -180,7 +199,16 @@ if __name__=='pymol.invocation':
                options.rpcServer = 1
             if "g" in a:
                options.deferred.append("_do_png %s"%av.pop())
-
+            if "C" in a:
+               options.sigint_handler = 0
+            if "U" in a:
+               options.reuse_helper = 1
+            if "I" in a:
+               options.auto_reinitialize = 1
+            if "L" in a:
+               options.after_load_script = av.pop()
+            if "H" in a: # reserved for activation of helper mode
+               pass
          else:
             options.deferred.append(a)
       if options.show_splash and not options.no_gui:

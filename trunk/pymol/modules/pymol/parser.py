@@ -221,7 +221,8 @@ if __name__=='pymol.parser':
    #
                      elif len(input[nest][0]):
                         if input[nest][0][0]=='@':
-                           script[nest] = open(string.strip(com2[nest][1:]),'r')
+                           script[nest] = open(os.path.expanduser(
+                  os.path.expandvars(string.strip(com2[nest][1:]))),'r')
                            nest=nest+1
                            cont[nest]=''
                            while 1:

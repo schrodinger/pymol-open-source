@@ -1761,7 +1761,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_surface_poor, 0.89F);  
 
-  SettingSet_i(I,cSetting_internal_feedback, 1);  /* this has no effect - set by invocation.py */
+  SettingSet_i(I,cSetting_internal_feedback, PyMOLOption->internal_feedback);
 
   SettingSet_f(I,cSetting_cgo_line_width, -1.00F);
 

@@ -172,7 +172,7 @@ OSXEXE=$(OSXPROD)/Contents/MacOS/PyMOL
 OSXPY=$(OSXPROD)/py23
 
 osx-wrap:
-	/bin/rm -rf $(OSXPYMOL) $(OSXEXE)
+	/bin/rm -rf $(OSXPYMOL) $(OSXEXE) $(OSXPY)
 	/usr/local/bin/tar -czvf layerOSX/bundle/app.hfstar $(OSXPROD)
 
 osx-unwrap:
@@ -186,7 +186,7 @@ $(PYTHON_INC_DIR) \
 
 osx-python-standalone:
 	cc layerOSX/bundle/python.c -o $(OSXEXE) \
-$(PYTHON_INC_DIR) -Lext/lib -lpython2.3\
+$(PYTHON_INC_DIR) -Lext/lib -lpython2.3 \
 -framework CoreFoundation -lc -Wno-long-double -D_PYMOL_OSX_PYTHONHOME
 
 osx: 
@@ -203,6 +203,7 @@ osx-product: osx
 	cp -R modules $(OSXPYMOL)/
 	cp -R test $(OSXPYMOL)/
 	cp -R data $(OSXPYMOL)/	
+	cp -R scripts $(OSXPYMOL)/	
 	cp -R examples $(OSXPYMOL)/
 	cp LICENSE $(OSXPYMOL)/
 	cp README $(OSXPYMOL)/

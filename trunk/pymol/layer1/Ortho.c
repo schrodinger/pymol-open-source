@@ -242,9 +242,11 @@ void  OrthoRemoveSplash(void)
 int  OrthoCommandOut(char *buffer)
 {
   OrthoObject *I=&Ortho;
-  if(I->cmds)
-	return(QueueStrOut(I->cmds,buffer));
-  else
+  if(I->cmds) {
+    int result;
+    result = QueueStrOut(I->cmds,buffer);
+    return(result);
+  } else
 	return(0);
 }
 /*========================================================================*/

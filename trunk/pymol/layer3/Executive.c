@@ -5904,6 +5904,7 @@ int ExecutiveReinitialize(void)
   int ok=true;
   int blocked = false;
   /* reinitialize PyMOL */
+
   ExecutiveDelete(cKeywordAll);
   ColorReset();
   SettingInitGlobal(false);
@@ -5918,6 +5919,7 @@ int ExecutiveReinitialize(void)
   SculptCachePurge();
   SceneReinitialize();
   SelectorReinit();
+
   return(ok);
 }
 /*========================================================================*/
