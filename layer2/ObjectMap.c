@@ -2367,7 +2367,6 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
 
     ms->FDim[3]=3;
 
-    printf("%d %d %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]);
     CrystalUpdate(ms->Crystal);
     ms->Field=IsosurfFieldAlloc(ms->FDim);
     ms->MapSource = cMapSourceGRD;
@@ -2400,7 +2399,6 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
             }
           }
         }
-      printf("left over '%s'\n",p);
       break;
     }
 
