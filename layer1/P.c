@@ -189,6 +189,9 @@ int PAlterAtom(AtomInfoType *at,char *expr)
       strcpy(at->name,name);
       strcpy(at->chain,chain);
       strcpy(at->resn,resn);
+      if(strcmp(at->resi,resi)!=0)
+        if(!sscanf(resi,"%i",&at->resv))
+          at->resv=1;
       strcpy(at->resi,resi);
       strcpy(at->segi,segi);
       strcpy(at->chain,chain);
