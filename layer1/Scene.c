@@ -3318,6 +3318,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glShadeModel(GL_SMOOTH);
       glEnable(GL_COLOR_MATERIAL);
       glEnable(GL_DITHER);
+      if(PyMOLOption->multisample)
+        glEnable(0x809D); /* GL_MULTISAMPLE_ARB */
 
       f=SettingGet(cSetting_gl_ambient);
       vv[0]=f;
@@ -3412,6 +3414,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glDisable(GL_BLEND);
       glDisable(GL_LINE_SMOOTH);
       glDisable(GL_POLYGON_SMOOTH);
+      if(PyMOLOption->multisample)    
+        glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
       glShadeModel(GL_FLAT);
 
     }
@@ -3758,6 +3762,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     glDisable(GL_BLEND);
     glDisable(GL_NORMALIZE);
     glDisable(GL_DEPTH_TEST);
+    if(PyMOLOption->multisample)    
+      glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
 
     if(Feedback(FB_OpenGL,FB_Debugging))
