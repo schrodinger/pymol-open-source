@@ -7072,6 +7072,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        ObjectMoleculeInvalidate(I,cRepLabel,cRepInvText);
        break;
      case OMOP_AlterState: /* overly coarse - doing all states, could do just 1 */
+       if(!op->i3) { /* not read_only? */
+         ObjectMoleculeInvalidate(I,-1,cRepInvRep);
+         SceneChanged();
+       }
+       break;
      case OMOP_CSetIdxSetFlagged:
        ObjectMoleculeInvalidate(I,-1,cRepInvRep);
        SceneChanged();

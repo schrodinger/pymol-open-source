@@ -798,7 +798,7 @@ SEE ALSO
          unlock()
       return r
 
-   def alter(selection,expression):
+   def alter(selection,expression,quiet=1):
       '''
 DESCRIPTION
 
@@ -837,13 +837,13 @@ SEE ALSO
       #
       try:
          lock()
-         r = _cmd.alter("("+str(selection)+")",str(expression),0)
+         r = _cmd.alter("("+str(selection)+")",str(expression),0,int(quiet))
       finally:
          unlock()   
       return r
 
 
-   def iterate(selection,expression):
+   def iterate(selection,expression,quiet=1):
       '''
 DESCRIPTION
 
@@ -887,12 +887,12 @@ SEE ALSO
       #
       try:
          lock()
-         r = _cmd.alter("("+str(selection)+")",str(expression),1)
+         r = _cmd.alter("("+str(selection)+")",str(expression),1,int(quiet))
       finally:
          unlock()   
       return r
 
-   def alter_state(state,selection,expression):
+   def alter_state(state,selection,expression,quiet=1):
       '''
 DESCRIPTION
 
@@ -926,12 +926,12 @@ SEE ALSO
       try:
          lock()
          r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),
-                              0,int(atomic_props))
+                              0,int(atomic_props),int(quiet))
       finally:
          unlock()   
       return r
 
-   def iterate_state(state,selection,expression):
+   def iterate_state(state,selection,expression,quiet=1):
       '''
 DESCRIPTION
 
@@ -962,7 +962,7 @@ SEE ALSO
       try:
          lock()
          r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",
-                              str(expression),1,int(atomic_props))
+                              str(expression),1,int(atomic_props),int(quiet))
       finally:
          unlock()   
       return r

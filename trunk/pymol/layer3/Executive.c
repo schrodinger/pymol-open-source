@@ -3193,7 +3193,7 @@ void ExecutiveLabel(char *s1,char *expr,int quiet)
   }
 }
 /*========================================================================*/
-int ExecutiveIterate(char *s1,char *expr,int read_only)
+int ExecutiveIterate(char *s1,char *expr,int read_only,int quiet)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -3206,24 +3206,29 @@ int ExecutiveIterate(char *s1,char *expr,int read_only)
     op1.i1 = 0;
     op1.i2 = read_only;
     ExecutiveObjMolSeleOp(sele1,&op1);
-    if(!read_only) {
-      PRINTFB(FB_Executive,FB_Actions)
-        " Alter: modified %i atoms.\n",op1.i1
-        ENDFB;
-    } else {
-      PRINTFB(FB_Executive,FB_Actions)
-        " Iterate: iterated over %i atoms.\n",op1.i1
-        ENDFB;
+    if(!quiet) {
+      if(!read_only) {
+        PRINTFB(FB_Executive,FB_Actions)
+          " Alter: modified %i atoms.\n",op1.i1
+          ENDFB;
+      } else {
+        PRINTFB(FB_Executive,FB_Actions)
+          " Iterate: iterated over %i atoms.\n",op1.i1
+          ENDFB;
+      }
     }
   } else {
-    PRINTFB(FB_Executive,FB_Warnings)
-      "ExecutiveIterate: No atoms selected.\n"
-      ENDFB;
+    if(!quiet) {
+      PRINTFB(FB_Executive,FB_Warnings)
+        "ExecutiveIterate: No atoms selected.\n"
+        ENDFB;
+    }
   }
   return(op1.i1);
 }
 /*========================================================================*/
-void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,int atomic_props)
+void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,
+                           int atomic_props,int quiet)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -3237,19 +3242,23 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,int atomi
     op1.i3 = read_only;
     op1.i4 = atomic_props;
     ExecutiveObjMolSeleOp(sele1,&op1);
-    if(!read_only) {
-      PRINTFB(FB_Executive,FB_Actions)
-        " AlterState: modified %i atom states.\n",op1.i1
-        ENDFB;
-    } else {
-      PRINTFB(FB_Executive,FB_Actions)
+    if(!quiet) {
+      if(!read_only) {
+        PRINTFB(FB_Executive,FB_Actions)
+          " AlterState: modified %i atom states.\n",op1.i1
+          ENDFB;
+      } else {
+        PRINTFB(FB_Executive,FB_Actions)
         " IterateState: iterated over %i atom states.\n",op1.i1
-        ENDFB;
+          ENDFB;
+      }
     }
   } else {
-    PRINTFB(FB_Executive,FB_Warnings)
-      "ExecutiveIterateState: No atoms selected.\n"
-      ENDFB;
+    if(!quiet) {
+      PRINTFB(FB_Executive,FB_Warnings)
+        "ExecutiveIterateState: No atoms selected.\n"
+        ENDFB;
+    }
   }
 }
 /*========================================================================*/

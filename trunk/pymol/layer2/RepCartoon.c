@@ -1176,7 +1176,7 @@ ENDFD;
             contigFlag=false;
         }
         
-        if(n_p) {
+        if(n_p>1) {
           c1=*(cs->Color+*(atp-1));
 
           if(cartoon_color>=0) {
