@@ -103,6 +103,7 @@ float SettingGetNamed(char *name);
 #define cSetting_overlay              61
 #define cSetting_text                 62
 #define cSetting_button_mode          63
+#define cSetting_valence              64
 
 #endif
 

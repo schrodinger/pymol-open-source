@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectMolecule
 #define _H_ObjectMolecule
 
+#include<Python.h>
+
 #include"Object.h"
 #include"AtomInfo.h"
 #include"Vector.h"
@@ -82,11 +84,11 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
 ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
                                           int frame,char *sepPrefix);
+ObjectMolecule *ObjectMoleculeLoadChempyModel(ObjectMolecule *I,PyObject *model,int frame);
 
 ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame);
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame);
 ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame);
-
 void ObjectMoleculeExtendIndices(ObjectMolecule *I);
 
 void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep);

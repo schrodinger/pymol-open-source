@@ -58,6 +58,16 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"Control.h"
 
+#define cLoadTypePDB 0
+#define cLoadTypeMOL 1
+#define cLoadTypeSDF 2
+#define cLoadTypeMOLStr 3
+#define cLoadTypeMMD 4
+#define cLoadTypeMMDSeparate 5
+#define cLoadTypeMMDStr 6
+#define cLoadTypeXPLORMap 7
+#define cLoadTypeChempyModel 8
+
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
 #define tmpSele2 "_tmp2"
@@ -102,6 +112,7 @@ static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
 static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
+static PyObject *CmdLoadObject(PyObject *self, PyObject *args);
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args);
 static PyObject *CmdMDo(PyObject *self, 	PyObject *args);
 static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args);
@@ -166,6 +177,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
 	{"isomesh",	     CmdIsomesh,      METH_VARARGS },
 	{"load",	        CmdLoad,         METH_VARARGS },
+	{"load_object",  CmdLoadObject,   METH_VARARGS },
 	{"mclear",	     CmdMClear,       METH_VARARGS },
 	{"mdo",	        CmdMDo,          METH_VARARGS },
 	{"mem",	        CmdMem,          METH_VARARGS },
@@ -1112,6 +1124,49 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
   return Py_None;
 }
 
+static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
+{
+  char *oname;
+  PyObject *model;
+  Object *origObj = NULL,*obj;
+  OrthoLineType buf;
+  int frame,type;
+
+  buf[0]=0;
+
+  PyArg_ParseTuple(args,"sOii",&oname,&model,&frame,&type);
+
+  APIEntry();
+  origObj=ExecutiveFindObjectByName(oname);
+  
+      /* TODO check for existing object of wrong type */
+  
+  switch(type) {
+  case cLoadTypeChempyModel:
+    PBlockAndUnlockAPI();
+	 obj=(Object*)ObjectMoleculeLoadChempyModel((ObjectMolecule*)origObj,model,frame);
+    PLockAPIAndUnblock();
+	 if(!origObj) {
+	   if(obj) {
+		 ObjectSetName(obj,oname);
+		 ExecutiveManageObject(obj);
+		 sprintf(buf," CmdLoad: Chempy-model loaded into object \"%s\".\n",oname);		  
+	   }
+	 } else if(origObj) {
+		ExecutiveUpdateObjectSelection(origObj);
+		sprintf(buf," CmdLoad: Chempy-model appended into object \"%s\".\n",oname);
+	 }
+	 break;
+  }
+  if(origObj) {
+	 OrthoAddOutput(buf);
+	 OrthoRestorePrompt();
+  }
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static PyObject *CmdLoad(PyObject *self, PyObject *args)
 {
   char *fname,*oname;
@@ -1120,14 +1175,6 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   int frame,type;
 
   buf[0]=0;
-  #define cLoadTypePDB 0
-  #define cLoadTypeMOL 1
-  #define cLoadTypeSDF 2
-  #define cLoadTypeMOLStr 3
-  #define cLoadTypeMMD 4
-  #define cLoadTypeMMDSeparate 5
-  #define cLoadTypeMMDStr 6
-  #define cLoadTypeXPLORMap 7
 
   PyArg_ParseTuple(args,"ssii",&oname,&fname,&frame,&type);
 
@@ -1287,3 +1334,4 @@ void init_cmd(void)
   PyImport_AddModule("_cmd");
   Py_InitModule("_cmd", Cmd_methods);
 }
+

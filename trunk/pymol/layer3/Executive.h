@@ -59,6 +59,7 @@ int ExecutiveCountStates(char *s1);
 void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
 int ExecutiveGetExtent(char *name,float *mn,float *mx);
 void ExecutiveSeleToObject(char *name,char *s1,int source,int target);
+void ExecutiveInvalidateRep(char *name,int rep,int level);
 
 #endif
 

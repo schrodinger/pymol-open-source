@@ -20,6 +20,7 @@ void UtilZeroMem(void *ptr,unsigned int howMuch);
 void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size);
 char *UtilConcat(char *where,char *what);
 void UtilCleanStr(char *s);
+
 double UtilGetSeconds(void);
 void UtilInit(void);
 typedef int UtilOrderFn(void *array,int l,int r);
