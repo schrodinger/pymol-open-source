@@ -134,7 +134,8 @@ ABCD
 LMN
 XYZ
  Iterate: iterated over 13 atoms.
-PyMOL>set pdb_reformat_names,mode,0
+PyMOL>set pdb_reformat_names_mode,0
+ Setting: pdb_reformat_names_mode set to 0.
 PyMOL>save cmp/C0700odd.9.pdb
  Save: wrote "cmp/C0700odd.9.pdb".
 PyMOL>set pdb_reformat_names_mode,1
@@ -181,3 +182,97 @@ ABCD
 LMN
 XYZ
  Iterate: iterated over 13 atoms.
+PyMOL>reinit
+PyMOL>load dat/small02.pdb
+ Executive: object "small02" created.
+PyMOL>save cmp/C0700odd.C.pdb
+ Save: wrote "cmp/C0700odd.C.pdb".
+PyMOL>reinit
+PyMOL>set pdb_reformat_names_mode, 1
+ Setting: pdb_reformat_names_mode set to 1.
+PyMOL>load dat/small02.pdb
+ Executive: object "small02" created.
+PyMOL>iterate all, print name
+CL16
+C1
+C4
+C6
+C9
+N12
+C13
+C17
+C19
+C20
+C22
+C25
+C28
+C29
+C30
+N32
+C33
+C35
+C39
+C40
+C41
+C42
+C43
+C46
+C49
+C51
+N54
+C55
+N56
+O57
+C58
+C61
+O64
+C65
+BR37
+BR38
+ Iterate: iterated over 36 atoms.
+PyMOL>save cmp/C0700odd.D.pdb
+ Save: wrote "cmp/C0700odd.D.pdb".
+PyMOL>set pdb_reformat_names_mode, 2
+ Setting: pdb_reformat_names_mode set to 2.
+PyMOL>load dat/small02.pdb
+ CmdLoad: "dat/small02.pdb" appended into object "small02", state 2.
+PyMOL>iterate all, print name
+CL16
+C1
+C4
+C6
+C9
+N12
+C13
+C17
+C19
+C20
+C22
+C25
+C28
+C29
+C30
+N32
+C33
+C35
+C39
+C40
+C41
+C42
+C43
+C46
+C49
+C51
+N54
+C55
+N56
+O57
+C58
+C61
+O64
+C65
+BR37
+BR38
+ Iterate: iterated over 36 atoms.
+PyMOL>save cmp/C0700odd.E.pdb
+ Save: wrote "cmp/C0700odd.E.pdb".
