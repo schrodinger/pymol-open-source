@@ -7398,6 +7398,66 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
     ENDFD;
 }
 /*========================================================================*/
+void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode)
+{
+  switch(mode) {
+  case cObjectMoleculeDummyOrigin:
+    SceneOriginGet(I->CSet[0]->Coord);
+    break;
+  case cObjectMoleculeDummyCenter:
+    SceneGetPos(I->CSet[0]->Coord);
+    break;
+  }
+}
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeDummyNew(int type)
+{
+  ObjectMolecule *I= NULL;
+  I=ObjectMoleculeNew(false);
+
+  int nAtom;
+  float *coord = NULL;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL;
+  int frame=-1;
+
+  nAtom=1;
+  coord=VLAlloc(float,3*nAtom);
+  zero3f(coord);
+  
+  atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+  
+  cset = CoordSetNew();
+  cset->NIndex=nAtom;
+  cset->Coord=coord;
+  cset->TmpBond=NULL;
+  cset->NTmpBond=0;
+  strcpy(cset->Name,"_origin");
+  
+  cset->Obj = I;
+  cset->fEnumIndices(cset);
+  
+  ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_IDMask); /* NOTE: will release atInfo */
+  
+  if(frame<0) frame=I->NCSet;
+  VLACheck(I->CSet,CoordSet*,frame);
+  if(I->NCSet<=frame) I->NCSet=frame+1;
+  if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+  I->CSet[frame] = cset;
+
+  I->NBond = 0;
+  I->Bond = VLAlloc(BondType,0);
+  
+  ObjectMoleculeExtendIndices(I);
+  ObjectMoleculeSort(I);
+  ObjectMoleculeUpdateIDNumbers(I);
+  ObjectMoleculeUpdateNonbonded(I);
+
+  return(I);
+}
+
+/*========================================================================*/
+
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
 {
   int a;

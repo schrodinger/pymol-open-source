@@ -90,6 +90,7 @@ void SceneClipSet(float front,float back);
 void SceneGetView(SceneViewType view);
 void SceneSetView(SceneViewType view);
 void SceneGetPos(float *pos);
+
 int SceneMultipick(Multipick *smp);
 
 void SceneSetCardInfo(char *vendor,char *renderer,char *version);

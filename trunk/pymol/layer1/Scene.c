@@ -215,7 +215,7 @@ void SceneGetPos(float *pos)
 
   pos[0]=pos[0]-I->Pos[0]; 
   pos[1]=pos[1]-I->Pos[1];
-
+  /*  pos[2]=pos[2]+I->Pos[2]; +(I->FrontSafe+I->Back)/2; */
   PRINTFD(FB_Scene)
     " SceneGetPos: center in camera  "
     ENDFD3f(pos);
@@ -229,7 +229,6 @@ void SceneGetPos(float *pos)
     ENDFD3f(pos);
 
 }
-
 /*========================================================================*/
 void SceneApplyRotMatrix(float *src,float *dst)
 {
@@ -1425,6 +1424,75 @@ float SceneGetScreenVertexScale(float *v1)
   return(1.0/vl);
 }
 
+static double last = 0.0;
+static void do_update(void)
+{
+  char buffer[1024];
+  float sticks,lines,spheres,labels;
+  char byres[10] = "byres";
+  char empty[1] = "";
+  char *p;
+  if((UtilGetSeconds()-last)>SettingGet(cSetting_roving_delay)) {
+
+    sticks = SettingGet(cSetting_roving_sticks);
+    lines = SettingGet(cSetting_roving_lines);
+    labels = SettingGet(cSetting_roving_labels);
+    spheres = SettingGet(cSetting_roving_spheres);
+
+    if(sticks!=0.0F) {
+      if(sticks<0.0F) {
+        p=byres;
+        sticks=fabs(sticks);
+      } else {
+        p=empty;
+      }
+      sprintf(buffer,
+              "cmd.hide('sticks');cmd.show('sticks','%s(center expand %8.1f)');cmd.refresh()",
+              p,sticks);
+      PParse(buffer);
+    }
+    if(lines!=0.0F) {
+      if(lines<0.0F) {
+        p=byres;
+        lines=fabs(lines);
+      } else {
+        p=empty;
+      }
+      sprintf(buffer,
+              "cmd.hide('lines');cmd.show('lines','%s(center expand %8.1f)');cmd.refresh()",
+              p,lines);
+      PParse(buffer);
+    }
+    if(labels!=0.0F) {
+      if(labels<0.0F) {
+        p=byres;
+        labels=fabs(labels);
+      } else {
+        p=empty;
+      }
+      sprintf(buffer,
+              "cmd.hide('labels');cmd.show('labels','%s(center expand %8.1f)');cmd.refresh()",
+              p,labels);
+      PParse(buffer);
+    }
+    if(spheres!=0.0F) {
+      if(spheres<0.0F) {
+        p=byres;
+        spheres=fabs(spheres);
+      } else {
+        p=empty;
+      }
+      sprintf(buffer,
+              "cmd.hide('spheres');cmd.show('spheres','%s(center expand %8.1f)');cmd.refresh()",
+              p,spheres);
+      PParse(buffer);
+    }
+
+
+    PFlush();
+    last=UtilGetSeconds();
+  }
+}
 /*========================================================================*/
 int SceneDrag(Block *block,int x,int y,int mod)
 {
@@ -1432,9 +1500,10 @@ int SceneDrag(Block *block,int x,int y,int mod)
   float scale,vScale;
   float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
   float dx,dy,dt;
-  float axis[3],axis2[3],theta,omega;
+  float axis[3],axis2[3],theta,omega,old_z;
   int mode;
   int eff_width;
+  int moved_flag;
   CObject *obj;
 
   mode = ButModeTranslate(I->Button,mod);
@@ -1539,20 +1608,30 @@ int SceneDrag(Block *block,int x,int y,int mod)
 
     v2[0] = (x-I->LastX)*vScale;
     v2[1] = (y-I->LastY)*vScale;
-    v2[2] = 0;
+    v2[2] = 0.0F;
     
+    moved_flag=false;
     if(I->LastX!=x)
       {
         I->Pos[0]+=v2[0];
         I->LastX=x;
         SceneDirty();
+        moved_flag=true;
       }
     if(I->LastY!=y)
       {
         I->Pos[1]+=v2[1];
         I->LastY=y;
         SceneDirty();
+        moved_flag=true;
       }
+    
+    if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
+      SceneGetPos(v2);
+      SceneOriginSet(v2,true);
+      
+      do_update();
+    }
     break;
   case cButModeRotXYZ:
   case cButModeRotZ:
@@ -1609,7 +1688,8 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 cross_product3f(n1,n2,cp);
     omega = 2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
 	 normalize23f(cp,axis2);	 
-
+    old_z = (I->Back + I->FrontSafe )/ 2.0F;
+    moved_flag=false;
 	 switch(mode) {
 	 case cButModeRotXYZ:
 		if(I->LastX!=x)
@@ -1654,6 +1734,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 				I->Back=I->Front+cSliceMin;
 			 I->LastX=x;
 			 SceneDirty();
+          moved_flag=true;
 		  }
 		if(I->LastY!=y)
 		  {
@@ -1664,6 +1745,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
 			 I->LastY=y;
 			 SceneDirty();
+          moved_flag=true;
 		  }
 		break;
 	 case cButModeClipN:
@@ -1676,6 +1758,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
 			 I->LastX=x;
 			 SceneDirty();
+          moved_flag=true;
 		  }
 		if(I->LastY!=y)
 		  {
@@ -1686,6 +1769,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
 			 I->LastY=y;
 			 SceneDirty();
+          moved_flag=true;
 		  }
 		break;
 	 case cButModeClipF:
@@ -1696,6 +1780,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 				I->Back=I->Front+cSliceMin;
 			 I->LastX=x;
 			 SceneDirty();
+          moved_flag=true;
 		  }
 		if(I->LastY!=y)
 		  {
@@ -1704,8 +1789,20 @@ int SceneDrag(Block *block,int x,int y,int mod)
 				I->Back=I->Front+cSliceMin;
 			 I->LastY=y;
 			 SceneDirty();
+          moved_flag=true;
 		  }
 		break;
+    }
+    if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
+      v2[0] = 0.0F;
+      v2[1] = 0.0F;
+      v2[2] = (I->Back + I->FrontSafe)/2.0F - old_z;
+
+      MatrixInvTransform3f(I->RotMatrix,v2,v2);
+      subtract3f(I->Origin,v2,v2);
+      SceneOriginSet(v2,true);
+
+      do_update();
     }
   }
   return(1);

@@ -1132,6 +1132,9 @@ EXAMPLES
          if _raising(): raise QuietException
       return r
 
+   palette_dict = {
+      'rainbow' : ('s',3,0,999)
+      }
    def spectrum(expression,selection="(all)",
                 minimum=None,maximum=None,
                 palette='blue_red',byres=0):
@@ -1147,10 +1150,9 @@ PYMOL API
 EXAMPLES 
 
       '''
-      prefix="r"
-      digits="3"
-      first=0
-      last=999
+
+      (prefix,digits,first,last) = palette_dict['rainbow']
+
       if (maximum==None) or (mininum==None):
          minimum = -9999
          maximum = -10000

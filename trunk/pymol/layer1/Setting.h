@@ -349,10 +349,16 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_pymol_space_max_green       216
 #define cSetting_pymol_space_max_blue        217
 #define cSetting_pymol_space_min_factor      218
+#define cSetting_roving_origin               219
+#define cSetting_roving_lines                220
+#define cSetting_roving_sticks               221
+#define cSetting_roving_spheres              222
+#define cSetting_roving_labels               223
+#define cSetting_roving_delay                224
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        219
+#define cSetting_INIT                        225
 
 #endif
 

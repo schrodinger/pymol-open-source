@@ -42,6 +42,12 @@ Z* -------------------------------------------------------------------
 
 #define cSelectorTmpPrefix "_sel_tmp_"
 
+#define cNDummyModels 2
+#define cNDummyAtoms 2
+
+#define cDummyOrigin 0
+#define cDummyCenter 1
+
 typedef struct {
   int selection;
   int next;
@@ -79,6 +85,8 @@ typedef struct {
   int NModel;
   int NCSet;
   int IgnoreCase;
+  ObjectMolecule *Origin,*Center;
+  
 } SelectorType;
 
 SelectorType Selector;
@@ -97,8 +105,8 @@ int SelectorOperator22(EvalElem *base);
 int *SelectorEvaluate(WordType *word);
 WordType *SelectorParse(char *s);
 void SelectorPurgeMembers(int sele);
-int SelectorUpdateTableSingleObject(ObjectMolecule *obj);
-int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj);
+int SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies);
+int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_dummies);
 void SelectorClean(void);
 void SelectorDeletePrefixSet(char *s);
 int *SelectorGetIndexVLA(int sele);
@@ -157,6 +165,8 @@ int *SelectorApplyMultipick(Multipick *mp);
 #define SELE_STAs ( 0x2500 | STYP_SEL1 | 0x70 )
 #define SELE_PREz ( 0x2500 | STYP_SEL0 | 0x70 )
 #define SELE_WIT_ ( 0x2600 | STYP_OP22 | 0x20 ) 
+#define SELE_ORIz ( 0x2700 | STYP_SEL0 | 0x80 )
+#define SELE_CENz ( 0x2800 | STYP_SEL0 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -236,6 +246,7 @@ static WordKeyValue Keyword[] =
   {  "chain",    SELE_CHNs },
   {  "c;",       SELE_CHNs },/* deprecated */
   {  "c.",       SELE_CHNs },
+  {  "center",   SELE_CENz },
   {  "bonded",   SELE_BNDz },
   {  "segi",     SELE_SEGs },
   {  "segid",    SELE_SEGs },
@@ -245,6 +256,7 @@ static WordKeyValue Keyword[] =
   {  "state",    SELE_STAs },
   {  "object",   SELE_MODs },
   {  "o.",       SELE_MODs },
+  {  "origin",   SELE_ORIz },
   {  "model",    SELE_MODs },
   {  "m;",       SELE_MODs },/* deprecated */
   {  "m.",       SELE_MODs },
@@ -305,7 +317,7 @@ PyObject *SelectorAsPyList(int sele1)
 
   SelectorUpdateTable();
   n_idx = 0;
-  for(a=0;a<I->NAtom;a++) {
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
     at=I->Table[a].atom;
     obj=I->Obj[I->Table[a].model];
     s=obj->AtomInfo[at].selEntry;
@@ -545,7 +557,7 @@ int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
   SelectorType *I=&Selector;
   int *flag1=NULL,*flag2=NULL;
   int *p;
-  int a,i,np;
+  int i,np;
   int cnt; 
   int mod1,mod2; /* model indexes */
   int at1,at2,at1a,at2a; /* atoms indexes */
@@ -561,13 +573,8 @@ int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
   np = VLAGetSize(pair)/2;
   if(np) {
     SelectorUpdateTable();
-    flag1=Alloc(int,I->NAtom);
-    flag2=Alloc(int,I->NAtom);
-    for(a=0;a<I->NAtom;a++)
-      {
-        flag1[a]=0;
-        flag2[a]=0;
-      }
+    flag1=Calloc(int,I->NAtom);
+    flag2=Calloc(int,I->NAtom);
 
     /* we need to create two selection arrays: for the matched 
      * atoms in the original selections */
@@ -639,8 +646,8 @@ int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
       }
     }
     if(cnt) {
-      SelectorEmbedSelection(flag1,name1,NULL);
-      SelectorEmbedSelection(flag2,name2,NULL);
+      SelectorEmbedSelection(flag1,name1,NULL,false);
+      SelectorEmbedSelection(flag2,name2,NULL,false);
     }
     FreeP(flag1);
     FreeP(flag2);
@@ -679,7 +686,7 @@ int *SelectorGetResidueVLA(int sele)
     ENDFD;
 
   if(I->NAtom) {
-    for(a=0;a<I->NAtom;a++)
+    for(a=cNDummyAtoms;a<I->NAtom;a++)
       {
         obj=I->Obj[I->Table[a].model];
         at2=I->Table[a].atom;
@@ -741,7 +748,7 @@ int *SelectorGetIndexVLA(int sele) /* assumes updated tables */
   int at1;
 
   result = VLAlloc(int,(I->NAtom/10)+1);
-  for(a=0;a<I->NAtom;a++) {
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
     obj=I->Obj[I->Table[a].model];
     at1=I->Table[a].atom;
     if(SelectorIsMember(obj->AtomInfo[at1].selEntry,sele)) {
@@ -781,7 +788,7 @@ void SelectorLogSele(char *name)
     sele = SelectorIndexByName(name);
     if(sele>=0) {
       SelectorUpdateTable();
-      for(a=0;a<I->NAtom;a++)
+      for(a=cNDummyAtoms;a<I->NAtom;a++)
         {
           obj=I->Obj[I->Table[a].model];
           at1=I->Table[a].atom;
@@ -906,7 +913,7 @@ ObjectMolecule **SelectorGetObjectMoleculeVLA(int sele)
   SelectorUpdateTable();
 
   result = VLAlloc(ObjectMolecule*,10);
-  for(a=0;a<I->NAtom;a++)
+  for(a=cNDummyAtoms;a<I->NAtom;a++)
     {
       obj=I->Obj[I->Table[a].model];
       at1=I->Table[a].atom;
@@ -1053,7 +1060,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
   /* delete any existing matches */
   if(obj) {
     ObjectMoleculeUpdateNeighbors(obj);
-    SelectorUpdateTableSingleObject(obj);
+    SelectorUpdateTableSingleObject(obj,true);
     nAtom=obj->NAtom;
     if(nAtom) {
       comp = Alloc(int,nAtom);
@@ -1091,7 +1098,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
           atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
           comp[a0] = 1;
           sprintf(name,"%s%1d",fragPref,nFrag+1);
-          SelectorEmbedSelection(atom,name,NULL);
+          SelectorEmbedSelection(atom,name,NULL,true);
           c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
           sprintf(name,"%s%1d",pref,nFrag+1);
 
@@ -1138,7 +1145,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
             }
           }
-          SelectorEmbedSelection(atom,name,NULL);
+          SelectorEmbedSelection(atom,name,NULL,true);
           nFrag++;
         }
         
@@ -1167,10 +1174,10 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
             atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
             comp[a0] = 1;
             sprintf(name,"%s%1d",fragPref,nFrag+1);
-            SelectorEmbedSelection(atom,name,NULL);
+            SelectorEmbedSelection(atom,name,NULL,true);
             c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
             sprintf(name,"%s%1d",pref,nFrag+1);
-            SelectorEmbedSelection(atom,name,NULL);
+            SelectorEmbedSelection(atom,name,NULL,true);
             nFrag++;
           }
 
@@ -1194,12 +1201,12 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
             atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
             comp[a1] = 1;
             sprintf(name,"%s%1d",fragPref,nFrag+1);
-            SelectorEmbedSelection(atom,name,NULL);
+            SelectorEmbedSelection(atom,name,NULL,true);
             atom[a1] = 0;
             c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,-1);
             if(c) {
               sprintf(name,"%s%1d",pref,nFrag+1);
-              SelectorEmbedSelection(atom,name,NULL);
+              SelectorEmbedSelection(atom,name,NULL,true);
               nFrag++;
             }
           }
@@ -1207,7 +1214,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
         }
       }}
       if(nFrag) {
-        SelectorEmbedSelection(comp,compName,NULL);        
+        SelectorEmbedSelection(comp,compName,NULL,true);        
       }
       FreeP(toDo);
       FreeP(atom);
@@ -1230,7 +1237,7 @@ int SelectorGetSeleNCSet(int sele)
   int a,s,at;
   ObjectMolecule *obj;
   int result=0;
-  for(a=0;a<I->NAtom;a++) {
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
     obj=I->Obj[I->Table[a].model];
     at=I->Table[a].atom;
     s=obj->AtomInfo[at].selEntry;
@@ -1247,7 +1254,7 @@ int SelectorGetArrayNCSet(int *array)
   ObjectMolecule *obj;
   int result=0;
 
-  for(a=0;a<I->NAtom;a++) 
+  for(a=cNDummyAtoms;a<I->NAtom;a++) 
 	 if(*(array++)) {
 		obj=I->Obj[I->Table[a].model];
 		if(result<obj->NCSet) result=obj->NCSet;
@@ -1362,7 +1369,7 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
 	 map=MapNewFlagged(-cutoff,I->Vertex,I->NAtom,NULL,I->Flag1);
 	 if(map) {
 		MapSetupExpress(map);
-		for(a=0;a<I->NAtom;a++) {
+		for(a=cNDummyAtoms;a<I->NAtom;a++) {
 		  at=I->Table[a].atom;
 		  obj=I->Obj[I->Table[a].model];
 		  s=obj->AtomInfo[at].selEntry;
@@ -1876,7 +1883,7 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff)
   n1=0;
   SelectorUpdateTable();
 
-  for(a=0;a<I->NAtom;a++) {
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
 	 I->Flag1[a]=false;
     at=I->Table[a].atom;
     obj=I->Obj[I->Table[a].model];
@@ -2008,7 +2015,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   }
     */
 
-  for(a=0;a<I->NAtom;a++) {
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
     at=I->Table[a].atom;
     I->Table[a].index=0;
     obj=I->Obj[I->Table[a].model];
@@ -2048,7 +2055,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   if(conectFlag) {
     nBond = 0;
     bond = VLAlloc(BondType,1000);
-    for(a=0;a<I->NModel;a++) {
+    for(a=cNDummyModels;a<I->NModel;a++) {
       obj=I->Obj[a];
       ii1=obj->Bond;
       if(state<obj->NCSet) 
@@ -2154,7 +2161,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
     ok = ErrMessage("CoordSetAtomToChemPyAtom","can't create model");  
   if(ok) {    
     c=0;
-    for(a=0;a<I->NAtom;a++) {
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
       at=I->Table[a].atom;
       I->Table[a].index=0;
       obj=I->Obj[I->Table[a].model];
@@ -2184,7 +2191,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
       atom_list = PyList_New(c);
       PyObject_SetAttrString(model,"atom",atom_list);
       c=0;
-      for(a=0;a<I->NAtom;a++) {
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
         if(I->Table[a].index) {
           at=I->Table[a].atom;
           obj=I->Obj[I->Table[a].model];
@@ -2228,7 +2235,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
 
       nBond = 0;
       bond = VLAlloc(BondType,1000);
-      for(a=0;a<I->NModel;a++) {
+      for(a=cNDummyModels;a<I->NModel;a++) {
         obj=I->Obj[a];
         ii1=obj->Bond;
         if(state<obj->NCSet) 
@@ -2433,7 +2440,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   
   c=0;
   SelectorUpdateTable();
-  for(a=0;a<I->NAtom;a++) {
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
     at=I->Table[a].atom;
     I->Table[a].index=-1;
     obj=I->Obj[I->Table[a].model];
@@ -2452,7 +2459,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
 
   nBond = 0;
   bond = VLAlloc(BondType,nAtom*4);
-  for(a=0;a<I->NModel;a++) { /* find bonds wholly contained in the selection */
+  for(a=cNDummyModels;a<I->NModel;a++) { /* find bonds wholly contained in the selection */
     obj=I->Obj[a];
     ii1=obj->Bond;
     for(b=0;b<obj->NBond;b++) {
@@ -2473,7 +2480,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   atInfo = VLAlloc(AtomInfoType,nAtom); 
   /* copy the atom info records and create new zero-based IDs */
   c=0;
-  for(a=0;a<I->NAtom;a++) {
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
     if(I->Table[a].index>=0) {
       obj=I->Obj[I->Table[a].model];
       at=I->Table[a].atom;
@@ -2502,7 +2509,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     SelectorUpdateTable(); 
     
     c=0;
-    for(a=0;a<I->NAtom;a++) {
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
       at=I->Table[a].atom;
       I->Table[a].index=-1;
       obj=I->Obj[I->Table[a].model];
@@ -2519,7 +2526,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   
   /* get maximum state index */
   nCSet = 0;
-  for(a=0;a<I->NModel;a++) { 
+  for(a=cNDummyModels;a<I->NModel;a++) { 
     if(nCSet<I->Obj[a]->NCSet)
       nCSet=I->Obj[a]->NCSet;
   }
@@ -2560,7 +2567,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
           cs2->AtmToIdx[a]=-1;
         cs2->NAtIndex = targ->NAtom;
         cs2->IdxToAtm = Alloc(int,nAtom);
-        for(a=0;a<I->NAtom;a++)  /* any selected atoms in this state? */
+        for(a=cNDummyAtoms;a<I->NAtom;a++)  /* any selected atoms in this state? */
           if(I->Table[a].index>=0) {
             at=I->Table[a].atom;
             obj=I->Obj[I->Table[a].model];
@@ -2752,7 +2759,7 @@ void SelectorFreeTmp(char *name)
   }
 }
 /*========================================================================*/
-int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
+int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_dummies)
 {
   /* either atom or obj should be NULL, not both and not neither */
 
@@ -2761,6 +2768,7 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
   int newFlag=true;
   int n,a,m,sele;
   int c=0;
+  int start=0;
   AtomInfoType *ai;
   n=WordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
   if(n==0) /* don't allow redefinition of "all" */
@@ -2777,7 +2785,12 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
   sele = I->NSelection++;
   I->ID[n] = sele;
   I->NActive++;
-  for(a=0;a<I->NAtom;a++)
+  if(no_dummies) {
+    start = 0;
+  } else {
+    start = cNDummyAtoms;
+  }
+  for(a=start;a<I->NAtom;a++)
     {
       flag=false;
       if(atom) {
@@ -2869,13 +2882,13 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipic
 		 atom=SelectorSelect(sele);
 		 if(!atom) ok=false;
 	   } else if(obj) { /* optimized full-object selection */
-        SelectorUpdateTableSingleObject(obj);
+        SelectorUpdateTableSingleObject(obj,false);
 	   } else if(mp) {
         atom=SelectorApplyMultipick(mp);
       } else
         ok=false;
 	 }
-  if(ok)	c=SelectorEmbedSelection(atom,name,obj);
+  if(ok)	c=SelectorEmbedSelection(atom,name,obj,false);
   FreeP(atom);
   SelectorClean();
   I->NAtom=0;
@@ -2908,7 +2921,7 @@ void SelectorClean(void)
   FreeP(I->Flag2);
 }
 /*========================================================================*/
-int SelectorUpdateTableSingleObject(ObjectMolecule *obj)
+int SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies)
 {
   int a=0;
   int c=0;
@@ -2924,7 +2937,13 @@ int SelectorUpdateTableSingleObject(ObjectMolecule *obj)
   SelectorClean();
 
   I->NCSet = 0;
-  modelCnt=0;
+  if(no_dummies) {
+    modelCnt = 0;
+    c = 0;
+  } else {
+    modelCnt=cNDummyModels;
+    c=cNDummyAtoms;
+  }
   c+=obj->NAtom;
   if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
   modelCnt++;
@@ -2932,8 +2951,13 @@ int SelectorUpdateTableSingleObject(ObjectMolecule *obj)
   ErrChkPtr(I->Table);
   I->Obj=Alloc(ObjectMolecule*,modelCnt);
   ErrChkPtr(I->Obj);
-  c=0;
-  modelCnt=0;
+  if(no_dummies) {
+    modelCnt = 0;
+    c = 0;
+  } else {
+    c=cNDummyAtoms;
+    modelCnt=cNDummyModels;
+  }
   I->Obj[modelCnt]=NULL;
   I->Obj[modelCnt]=obj;
   obj->SeleBase=c; 
@@ -2970,9 +2994,18 @@ int SelectorUpdateTable(void)
   ObjectMolecule *obj;
 
   SelectorType *I=&Selector;
+
+  if(!I->Origin)
+    I->Origin=ObjectMoleculeDummyNew(cObjectMoleculeDummyOrigin);
+
+  if(!I->Center)
+    I->Center=ObjectMoleculeDummyNew(cObjectMoleculeDummyCenter);
+
   SelectorClean();
-  I->NCSet = 0;
-  modelCnt=0;
+  I->NCSet = 0; 
+
+  modelCnt=cNDummyModels;
+  c=cNDummyAtoms;
   while(ExecutiveIterateObject(&o,&hidden))
 	 {
 		if(o->type==cObjectMolecule)
@@ -2985,15 +3018,42 @@ int SelectorUpdateTable(void)
 	 }
   I->Table=Alloc(TableRec,c);
   ErrChkPtr(I->Table);
-  I->Obj=Alloc(ObjectMolecule*,modelCnt);
+  I->Obj=Calloc(ObjectMolecule*,modelCnt);
   ErrChkPtr(I->Obj);
+  
   c=0;
-  modelCnt=0;
+  modelCnt=0;;
+
+  obj=I->Origin;
+  if(obj) {
+    I->Obj[modelCnt] = I->Origin;
+    obj->SeleBase=c; /* make note of where this object starts */
+    for(a=0;a<obj->NAtom;a++)
+      {
+        I->Table[c].model=modelCnt;
+        I->Table[c].atom=a;
+        c++;
+      }
+    modelCnt++;
+  }
+
+  obj=I->Center;
+  if(obj) {
+    I->Obj[modelCnt] = I->Center;
+    obj->SeleBase=c; /* make note of where this object starts */
+    for(a=0;a<obj->NAtom;a++)
+      {
+        I->Table[c].model=modelCnt;
+        I->Table[c].atom=a;
+        c++;
+      }
+    modelCnt++;
+  }
+
   while(ExecutiveIterateObject(&o,&hidden))
 	 {
 		if(o->type==cObjectMolecule)
 		  {
-          I->Obj[modelCnt]=NULL;
 			 obj=(ObjectMolecule*)o;
 			 I->Obj[modelCnt]=obj;
           obj->SeleBase=c; /* make note of where this object starts */
@@ -3061,7 +3121,7 @@ int SelectorModulate1(EvalElem *base)
   ObjectMolecule *obj;
 
   base[1].sele=base[0].sele;
-  base->sele=Alloc(int,I->NAtom);
+  base->sele=Calloc(int,I->NAtom);
   for(a=0;a<I->NAtom;a++) base[0].sele[a]=false;
   ErrChkPtr(base->sele);
   switch(base[1].code)
@@ -3250,7 +3310,7 @@ int SelectorModulate1(EvalElem *base)
   FreeP(base[1].sele);
   if(Feedback(FB_Selector,FB_Debugging)) {
 	 c=0;
-	 for(a=0;a<I->NAtom;a++)
+	 for(a=cNDummyAtoms;a<I->NAtom;a++)
 		if(base[0].sele[a]) c++;
 	 fprintf(stderr,"SelectorModulate0: %d atoms selected.\n",c);
   }
@@ -3270,25 +3330,25 @@ int SelectorSelect0(EvalElem *base)
   CoordSet *cs;
   int at_idx;
   base->type=STYP_LIST;
-  base->sele=Alloc(int,I->NAtom);
+  base->sele=Calloc(int,I->NAtom);
   ErrChkPtr(base->sele);
 
   switch(base->code)
 	 {
 	 case SELE_NONz:
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  base[0].sele[a]=false;
 		break;
 	 case SELE_BNDz:
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
         base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].bonded;
 		break;
 	 case SELE_HETz:
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
         base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hetatm;
 		break;
 	 case SELE_HYDz:
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
         base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hydrogen;
 		break;
     case SELE_PREz:
@@ -3296,7 +3356,7 @@ int SelectorSelect0(EvalElem *base)
       static_singletons = (int)SettingGet(cSetting_static_singletons);
       flag=false;
       cs = NULL;
-      for(a=0;a<I->NAtom;a++)
+      for(a=cNDummyAtoms;a<I->NAtom;a++)
         {
           base[0].sele[a]=false;
           obj = I->Obj[I->Table[a].model];
@@ -3335,14 +3395,34 @@ int SelectorSelect0(EvalElem *base)
         }
       break;
 	 case SELE_ALLz:
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 base[0].sele[a]=true;
 			 c++;
 		  }
       break;
-	 case SELE_VISz:
+	 case SELE_ORIz:
 		for(a=0;a<I->NAtom;a++)
+		  {
+			 base[0].sele[a]=false;
+			 c++;
+		  }
+      if(I->Origin)
+        ObjectMoleculeDummyUpdate(I->Origin,cObjectMoleculeDummyOrigin);
+      base[0].sele[cDummyOrigin]=true; 
+      break;
+	 case SELE_CENz:
+		for(a=0;a<I->NAtom;a++)
+		  {
+			 base[0].sele[a]=false;
+			 c++;
+		  }
+      if(I->Center)
+        ObjectMoleculeDummyUpdate(I->Center,cObjectMoleculeDummyCenter);
+      base[0].sele[cDummyCenter]=true; 
+      break;
+	 case SELE_VISz:
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
           flag = false;
           if(I->Obj[I->Table[a].model]->Obj.Enabled) {
@@ -3382,7 +3462,7 @@ int SelectorSelect1(EvalElem *base)
   CoordSet *cs=NULL;
 
   base->type=STYP_LIST;
-  base->sele=Alloc(int,I->NAtom);
+  base->sele=Calloc(int,I->NAtom);
   PRINTFD(FB_Selector)
     " SelectorSelect1: base: %p sele: %p\n",base,base->sele
   ENDFD;
@@ -3394,7 +3474,7 @@ int SelectorSelect1(EvalElem *base)
 		  ok=ErrMessage("Selector","Invalid Index.");
 		if(ok) {
         index--;
-		  for(a=0;a<I->NAtom;a++)
+		  for(a=cNDummyAtoms;a<I->NAtom;a++)
 			 {
 				if(I->Table[a].atom==index) {
               c++;
@@ -3407,7 +3487,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case SELE_ID_s:
       WordPrimeCommaMatch(base[1].text);
-      for(a=0;a<I->NAtom;a++)
+      for(a=cNDummyAtoms;a<I->NAtom;a++)
         {
           if(WordMatchCommaInt(base[1].text,
                                I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].id)<0)
@@ -3421,7 +3501,7 @@ int SelectorSelect1(EvalElem *base)
       break;
 	 case SELE_NAMs:
       WordPrimeCommaMatch(base[1].text);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(WordMatchCommaExact(base[1].text,
                        I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].name,
@@ -3436,7 +3516,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case SELE_TTYs:
       WordPrimeCommaMatch(base[1].text);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
                             I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].textType,
@@ -3451,7 +3531,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case SELE_ELEs:
       WordPrimeCommaMatch(base[1].text);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
                        I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].elem,
@@ -3466,7 +3546,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case SELE_SEGs:
       WordPrimeCommaMatch(base[1].text);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
               I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].segi,I->IgnoreCase)<0)
@@ -3480,7 +3560,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case SELE_CHNs:
       WordPrimeCommaMatch(base[1].text);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
                             I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].chain,
@@ -3495,7 +3575,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case SELE_SSTs:
       WordPrimeCommaMatch(base[1].text);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
                             I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].ssType,
@@ -3514,10 +3594,10 @@ int SelectorSelect1(EvalElem *base)
       obj = NULL;
       
       if(state<0) {
-        for(a=0;a<I->NAtom;a++)
+        for(a=cNDummyAtoms;a<I->NAtom;a++)
           base[0].sele[a]=false;
       } else {
-        for(a=0;a<I->NAtom;a++)
+        for(a=cNDummyAtoms;a<I->NAtom;a++)
           {
             base[0].sele[a]=false;
             obj = I->Obj[I->Table[a].model];
@@ -3552,7 +3632,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case SELE_ALTs:
       WordPrimeCommaMatch(base[1].text);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
                             I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].alt,
@@ -3568,7 +3648,7 @@ int SelectorSelect1(EvalElem *base)
 	 case SELE_FLGs:
       sscanf(base[1].text,"%d",&flag);
       flag = (1<<flag);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].flags&flag)
 				{
@@ -3583,7 +3663,7 @@ int SelectorSelect1(EvalElem *base)
       if(sscanf(base[1].text,"%i",&numeric)!=1)
         ok=ErrMessage("Selector","Invalid Numeric Type.");
       if(ok)
-        for(a=0;a<I->NAtom;a++)
+        for(a=cNDummyAtoms;a<I->NAtom;a++)
           {
             if(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].customType ==
                numeric) {
@@ -3600,7 +3680,7 @@ int SelectorSelect1(EvalElem *base)
 			 if(sscanf(base[1].text,"%i%i",&rmin,&rmax)!=2)
 				ok=ErrMessage("Selector","Invalid Range.");
 			 if(ok)
-				for(a=0;a<I->NAtom;a++)
+				for(a=cNDummyAtoms;a<I->NAtom;a++)
 				  {
 					 if(sscanf(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resi,
 								  "%i",&rtest))
@@ -3617,7 +3697,7 @@ int SelectorSelect1(EvalElem *base)
 		  }
 		else /* not a range */ {
         WordPrimeCommaMatch(base[1].text);
-		  for(a=0;a<I->NAtom;a++)
+		  for(a=cNDummyAtoms;a<I->NAtom;a++)
 			 {
 				if(WordMatchComma(base[1].text,
                          I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resi,
@@ -3633,7 +3713,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case SELE_RSNs:
       WordPrimeCommaMatch(base[1].text);
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
                             I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resn,
@@ -3651,7 +3731,7 @@ int SelectorSelect1(EvalElem *base)
 		if(sele>=0)
 		  {
           sele=I->ID[sele];
-			 for(a=0;a<I->NAtom;a++)
+			 for(a=cNDummyAtoms;a<I->NAtom;a++)
 				{
 				  base[0].sele[a]=false;
 				  s=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].selEntry;
@@ -3666,7 +3746,7 @@ int SelectorSelect1(EvalElem *base)
 					 }
 				}
 		  } else {
-			 for(a=0;a<I->NAtom;a++)
+			 for(a=cNDummyAtoms;a<I->NAtom;a++)
             base[0].sele[a]=false;
           ok=ErrMessage("Selector","Invalid Selection Name.");          
         }
@@ -3684,7 +3764,7 @@ int SelectorSelect1(EvalElem *base)
       obj=(ObjectMolecule*)ExecutiveFindObjectByName(base[1].text);
       if(obj)
         {
-          for(a=0;a<I->NModel;a++)
+          for(a=cNDummyModels;a<I->NModel;a++)
             if(I->Obj[a]==obj)
               {
                 model=a+1;
@@ -3705,7 +3785,7 @@ int SelectorSelect1(EvalElem *base)
 		  {
 			 model--;
           if(index>=0) {
-            for(a=0;a<I->NAtom;a++)
+            for(a=cNDummyAtoms;a<I->NAtom;a++)
               {
                 if(I->Table[a].model==model)
                   if(I->Table[a].atom==index)
@@ -3720,7 +3800,7 @@ int SelectorSelect1(EvalElem *base)
                   base[0].sele[a]=false;
               }
           } else {
-            for(a=0;a<I->NAtom;a++)
+            for(a=cNDummyAtoms;a<I->NAtom;a++)
               {
                 if(I->Table[a].model==model)
                   {
@@ -3757,11 +3837,8 @@ int SelectorSelect2(EvalElem *base)
   AtomInfoType *at1;
   SelectorType *I=&Selector;
   base->type=STYP_LIST;
-  base->sele=Alloc(int,I->NAtom);
+  base->sele=Calloc(int,I->NAtom);
   ErrChkPtr(base->sele);
-  for(a=0;a<I->NAtom;a++) {
-    base->sele[a]=0;
-  }
   switch(base->code)
 	 {
 	 case SELE_PCHx:
@@ -3785,7 +3862,7 @@ int SelectorSelect2(EvalElem *base)
           case SCMP_GTHN:
             switch(base->code) {
             case SELE_BVLx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->b>comp1) {
                   base[0].sele[a]=true;
@@ -3796,7 +3873,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;
             case SELE_QVLx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->q>comp1) {
                   base[0].sele[a]=true;
@@ -3807,7 +3884,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;
             case SELE_PCHx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->partialCharge>comp1) {
                   base[0].sele[a]=true;
@@ -3818,7 +3895,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;
             case SELE_FCHx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->formalCharge>comp1) {
                   base[0].sele[a]=true;
@@ -3833,7 +3910,7 @@ int SelectorSelect2(EvalElem *base)
           case SCMP_LTHN:
             switch(base->code) {
             case SELE_BVLx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->b<comp1) {
                   base[0].sele[a]=true;
@@ -3844,7 +3921,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;               
             case SELE_QVLx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->q<comp1) {
                   base[0].sele[a]=true;
@@ -3855,7 +3932,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;               
             case SELE_PCHx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->partialCharge<comp1) {
                   base[0].sele[a]=true;
@@ -3866,7 +3943,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;
             case SELE_FCHx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->formalCharge<comp1) {
                   base[0].sele[a]=true;
@@ -3881,7 +3958,7 @@ int SelectorSelect2(EvalElem *base)
           case SCMP_EQAL:
             switch(base->code) {
             case SELE_BVLx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(fabs(at1->b-comp1)<R_SMALL4) {
                   base[0].sele[a]=true;
@@ -3892,7 +3969,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;
             case SELE_QVLx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(fabs(at1->q-comp1)<R_SMALL4) {
                   base[0].sele[a]=true;
@@ -3903,7 +3980,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;
             case SELE_PCHx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(fabs(at1->partialCharge-comp1)<R_SMALL4) {
                   base[0].sele[a]=true;
@@ -3914,7 +3991,7 @@ int SelectorSelect2(EvalElem *base)
               }
               break;
             case SELE_FCHx:
-              for(a=0;a<I->NAtom;a++) {
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(fabs(at1->formalCharge-comp1)<R_SMALL4) {
                   base[0].sele[a]=true;
@@ -3963,11 +4040,8 @@ int SelectorLogic1(EvalElem *base)
 		break;
     case SELE_NGH1:
       base[1].sele=base[0].sele;
-      base[0].sele=Alloc(int,I->NAtom);
-      for(a=0;a<I->NAtom;a++) {
-        base->sele[a]=0;
-      }
-      for(a=0;a<I->NAtom;a++) {
+      base[0].sele=Calloc(int,I->NAtom);
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
         if(base[1].sele[a]) {
           if(I->Obj[I->Table[a].model]!=lastObj) {
             lastObj = I->Obj[I->Table[a].model];
@@ -3990,11 +4064,8 @@ int SelectorLogic1(EvalElem *base)
       break;
     case SELE_BYO1: 
       base[1].sele=base[0].sele;
-      base[0].sele=Alloc(int,I->NAtom);
-      for(a=0;a<I->NAtom;a++) {
-        base->sele[a]=0;
-      }
-      for(a=0;a<I->NAtom;a++) {
+      base[0].sele=Calloc(int,I->NAtom);
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
         if(base[1].sele[a]) {
           if(I->Obj[I->Table[a].model]!=lastObj) {
             lastObj = I->Obj[I->Table[a].model];
@@ -4018,7 +4089,7 @@ int SelectorLogic1(EvalElem *base)
       FreeP(base[1].sele);
       break;      
 	 case SELE_BYR1: /* ASSUMES atoms are sorted by residue */
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			 if(base[0].sele[a]) 
 			   {
@@ -4123,7 +4194,7 @@ int SelectorLogic2(EvalElem *base)
 		  }
 		break;
 	 case SELE_IN_2:
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
 			if(base[0].sele[a]) {
 			  at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
@@ -4147,7 +4218,7 @@ int SelectorLogic2(EvalElem *base)
       s0  = base[0].sele;
       tr0  = I->Table;
       obj = I->Obj;
-		for(a=0;a<I->NAtom;a++)
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
           if(*s0) {
             at1=&obj[tr0->model]->AtomInfo[tr0->atom];
@@ -4282,7 +4353,7 @@ int SelectorOperator22(EvalElem *base)
 					 }
 				  }
             }
-          for(a=0;a<I->NAtom;a++)
+          for(a=cNDummyAtoms;a<I->NAtom;a++)
             if(base[0].sele[a]) c++;
         }
       break;
@@ -4839,6 +4910,12 @@ void SelectorFree(void)
 {
   SelectorType *I = &Selector;
   SelectorClean();
+  if(I->Origin)
+    if(I->Origin->Obj.fFree)
+      I->Origin->Obj.fFree((CObject*)I->Origin);
+  if(I->Center)
+    if(I->Center->Obj.fFree)
+      I->Center->Obj.fFree((CObject*)I->Center);
   VLAFreeP(I->Member);
   VLAFreeP(I->Name);
   VLAFreeP(I->ID);
@@ -4863,6 +4940,7 @@ void SelectorInit(void)
   I->Flag1=NULL;
   I->Flag2=NULL;
   I->Vertex=NULL;
+  I->Origin=NULL;
 
   {  /* create placeholder "all" selection, which is selection 0 */
     int n;

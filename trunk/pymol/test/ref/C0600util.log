@@ -64,15 +64,14 @@ PyMOL>util.cbas
  Executive: Colored 1415 atoms.
  Executive: Colored 922 atoms.
 PyMOL>util.cbc
- Iterate: iterated over 2870 atoms.
-7,(chain '')
- Executive: Colored 2174 atoms.
-8,(chain A)
+7,(chain A)
  Executive: Colored 279 atoms.
-9,(chain B)
+8,(chain B)
  Executive: Colored 310 atoms.
-10,(chain E)
+9,(chain E)
  Executive: Colored 107 atoms.
+10,(chain '')
+ Executive: Colored 2174 atoms.
 PyMOL>hide
 PyMOL>show car
 PyMOL>zoom
