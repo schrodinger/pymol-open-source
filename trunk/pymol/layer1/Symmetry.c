@@ -40,10 +40,9 @@ void SymmetryAttemptGeneration(CSymmetry *I)
   if(!I->SpaceGroup[0]) {
     ErrMessage("Symmetry","Missing space group symbol");
   } else {
-    
     PBlock();
     mats = PyObject_CallMethod(P_xray,"sg_sym_to_mat_list","s",I->SpaceGroup);
-    if(mats) {
+    if(mats&&(mats!=Py_None)) {
       l = PyList_Size(mats);
       VLACheck(I->SymMatVLA,float,16*l);
       for(a=0;a<l;a++) {
