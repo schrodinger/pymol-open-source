@@ -104,8 +104,16 @@ class SettingIndex:
    cartoon_loop_quality =93
    cartoon_power        =94
    cartoon_power_b      =95
-   cartoon_rect_width   =96
-   cartoon_rect_thickness =97
+   cartoon_rect_length  =96
+   cartoon_rect_width   =97
+   internal_gui_width   =98
+   internal_gui         =99
+   cartoon_oval_length  =100
+   cartoon_oval_width   =101
+   cartoon_oval_quality =102
+   cartoon_tube_radius  =103
+   cartoon_tube_quality =104
+   cartoon_debug        =105
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

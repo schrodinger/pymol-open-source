@@ -35,11 +35,16 @@ Ongoing Goals
 
 Changes up to 0.58
 
+   * fixed selector memory leak on errors
+
+   * added first-generation cartoon riboons 
+     (higher-quality to come later)
+
    * more work on settings change side effects 
 
    * fix bugs with saving pkl files for state > 1
 
-   * added a concise notation to the selection language 
+   * added a concise notation into the selection language 
 
        model/segment/chain/residue/name
                                  */name

@@ -140,6 +140,24 @@ float ExecutiveAlign(char *s1,char *s2)
   return 1.0;
 }
 
+int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
+                         int mode,float cutoff,float h_angle,
+                         int **indexVLA, ObjectMolecule ***objVLA)
+{
+  int result = 0;
+  int sele1,sele2;
+
+  sele1 = SelectorIndexByName(s1);
+  sele2 = SelectorIndexByName(s2);
+  if((sele1>=0)&&(sele2>=0)) {
+    result=SelectorGetPairIndices(sele1,state1,sele2,state2,
+                                  mode,cutoff,h_angle,indexVLA,objVLA);
+  } else {
+    ErrMessage("ExecutivePairIndices","One or more bad selections.");
+  }
+  return(result);
+}
+
 void ExecutiveFocus(void)
 { /* unfortunately, this doesn't achieve the desired effect */
   if(PMGUI) {
@@ -148,6 +166,28 @@ void ExecutiveFocus(void)
   }
 }
 
+int ExecutiveCartoon(int type,char *s1)
+{
+  int sele1;
+  ObjectMoleculeOpRec op1;
+
+  sele1=SelectorIndexByName(s1);
+  op1.i2=0;
+  if(sele1>=0) {
+    op1.code=OMOP_INVA;
+    op1.i1=cRepCartoon; 
+    op1.i2=cRepInvRep;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+    op1.code = OMOP_Cartoon;
+    op1.i1 = type;
+    op1.i2 = 0;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+  } else {
+    ErrMessage("Cartoon","Invalid selection.");
+  }
+  return(op1.i2);
+}
+/*========================================================================*/
 PyObject *ExecutiveGetSettingText(int index,char *object,int state)
 {
   PyObject *result;
@@ -1367,6 +1407,25 @@ int *ExecutiveIdentify(char *s1,int mode)
   return(result);
 }
 /*========================================================================*/
+int ExecutiveIndex(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA)
+{
+  int sele1;
+  ObjectMoleculeOpRec op2;
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op2.code=OMOP_Index;
+    op2.obj1VLA=VLAlloc(ObjectMolecule*,1000);
+    op2.i1VLA=VLAlloc(int,1000);
+    op2.i1=0;
+    ExecutiveObjMolSeleOp(sele1,&op2);
+    VLASize(op2.i1VLA,int,op2.i1);
+    VLASize(op2.obj1VLA,ObjectMolecule*,op2.i1);
+    (*indexVLA) = op2.i1VLA;
+    (*objVLA) = op2.obj1VLA;
+  } 
+  return(op2.i1);
+}
+/*========================================================================*/
 float *ExecutiveRMSStates(char *s1,int target,int mode)
 {
   int sele1;
@@ -1982,7 +2041,7 @@ void ExecutiveFullScreen(int flag)
     if(flag) {
       glutFullScreen();
     } else {
-      glutReshapeWindow(640+cOrthoRightSceneMargin,
+      glutReshapeWindow(640+SettingGet(cSetting_internal_gui_width),
                         480+cOrthoBottomSceneMargin);
     }
   }

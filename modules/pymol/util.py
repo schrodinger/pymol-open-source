@@ -139,7 +139,7 @@ def mload(*args):
       for a in fils:
          cmd.load(a,nam)
    
-def cbc(selection='(all)'):
+def cbc(selection='(all)'): # NOT THREAD SAFE
    '''
    Color all chains a different color
    '''
@@ -154,7 +154,7 @@ def cbc(selection='(all)'):
 
 color_chains = cbc
 
-def sum_charge(*arg):
+def sum_charge(*arg): # NOT THREAD SAFE
    result = None
    try:
       obj = "all"
@@ -171,7 +171,7 @@ def sum_charge(*arg):
    return result
 
 
-def ff_copy(src,dst):
+def ff_copy(src,dst): # NOT THREAD SAFE
    pymol._rcopy = pymol.Scratch_Storage()
    pymol._rcopy.pc={}
    pymol._rcopy.tt={}
@@ -190,4 +190,72 @@ def b2vdw(*arg):
    # rms = sqrt(b/(8*(PI^2)))
    cmd.alter("(%s)"%sele,"vdw=math.sqrt(b/78.9568352087)")
    
+def phipsi(selection="(pk1)"): # NOT THREAD SAFE
+   n_sele =   "((byres (%s)) & name n)"%selection
+   c_sele =   "((byres (%s)) & name c)"%selection
+   ca_sele =  "((byres (%s)) & name ca)"%selection
+   cm_sele = "((neighbor (%s)) and not (byres (%s)))"%(n_sele,n_sele)
+   np_sele = "((neighbor (%s)) and not (byres (%s)))"%(c_sele,c_sele)
+   cmd.feedback("push")
+   cmd.feedback("disable","selector","everythin")
+   cm_cnt = cmd.select("pp_cm",cm_sele)
+   n_cnt = cmd.select("pp_n",n_sele)
+   c_cnt = cmd.select("pp_c",c_sele)
+   ca_cnt = cmd.select("pp_ca",ca_sele)
+   np_cnt = cmd.select("pp_np",np_sele)
+   if(cm_cnt and n_cnt and ca_cnt and c_cnt):
+      phi = cmd.get_dihedral("pp_c","pp_ca","pp_n","pp_cm")
+   else:
+      phi = None
+   if(n_cnt and ca_cnt and c_cnt and np_cnt):
+      psi = cmd.get_dihedral("pp_np","pp_c","pp_ca","pp_n")
+   else:
+      psi = None
+   cmd.feedback("pop")
+   return (phi,psi)
    
+def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
+
+   ss_pref = "sss"
+   sss1 = ss_pref+"1"
+   cnt = cmd.select(sss1,"((byres ("+selection+")) and name ca and not het)")
+   print " util.ss: initiating secondary structure assignment on %d residues."%cnt
+   pymol._ss = pymol.Scratch_Storage()
+   cas = cmd.index(sss1)
+   if not len(cas):
+      return
+
+   print " util.ss: examining phi/psi angles..."
+   
+   cmd.feedback("push")
+   cmd.feedback("disable","executive","actions")
+
+   # intialize all residues to loop
+
+   cmd.alter(sss1,"ss ='L'")
+
+   for a in cas:
+      (phi,psi) = phipsi("(%s & index %d)"%(a[0],a[1]))
+      if (phi!=None) and (psi!=None):
+         if ((phi<-45) and (phi>-160) and (psi>90)): # beta?
+            cmd.alter("(%s & index %d)"%(a[0],a[1]),"ss='S'")
+         elif ((phi<-45) and (phi>-160) and
+               (psi>-80) and (psi<-30)): # helix?
+            cmd.alter("(%s & index %d)"%(a[0],a[1]),"ss='H'")
+
+   cmd.feedback("pop")
+   
+   # find all pairwise hydrogen bonds and make note of them in hash
+#   hb = cmd.find_pairs("((byres "+sss1+") and n;n)",
+#                       "((byres "+sss1+") and n;o)",mode=1)
+#   conn_hash = {}
+#   for a in hb:
+#      cmd.iterate('(%s & index %d)'%(a[0],a[1]),'_ss.r1 = (segi,chain,resi)')
+#      cmd.iterate('(%s & index %d)'%(a[2],a[3]),'_ss.r2 = (segi,chain,resi)')
+#      conn_hash[(pymol._ss.r1,pymol._ss.r2)]=1
+#      conn_hash[(pymol._ss.r2,pymol._ss.r1)]=1
+
+   #
+#   print conn_hash.keys()
+
+

@@ -53,8 +53,10 @@ void ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
 float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(char *s1,int target,int mode);
 int *ExecutiveIdentify(char *s1,int mode);
+int ExecutiveIndex(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 void ExecutiveReset(int cmd);
 void ExecutiveDrawNow(void);
+int ExecutiveCartoon(int type,char *sele);
 void ExecutiveSetAllVisib(int state);
 void ExecutiveSetRepVisib(char *name,int rep,int state);
 void ExecutiveSetAllRepVisib(char *name,int rep,int state);
@@ -97,6 +99,9 @@ void ExecutiveFullScreen(int flag);
 void ExecutiveFocus(void);
 PyObject *ExecutiveGetSettingTuple(int index,char *object,int state);
 PyObject *ExecutiveGetSettingText(int index,char *object,int state);
+int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
+                         int mode,float cutoff,float h_angle,
+                         int **indexVLA, ObjectMolecule ***objVLA);
 
 #endif
 

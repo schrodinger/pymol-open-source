@@ -49,7 +49,7 @@ Z* -------------------------------------------------------------------
 #define cAN_I  53
 
 typedef char Chain[2];
-
+typedef char SSType[2];
 typedef char SegIdent[cSegiLen+1];
 typedef char ResIdent[cResiLen+1];
 typedef char ResName[cResnLen+1];
@@ -70,6 +70,7 @@ typedef struct AtomInfoType {
   AtomName elem;
   TextType textType;
   LabelType label;
+  SSType ssType; /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
   int hydrogen;
   int customType;
   int priority;
@@ -82,6 +83,7 @@ typedef struct AtomInfoType {
   short int visRep[cRepCnt];
   int color;
   int id; 
+  int cartoon; /* 0 = default which is auto (use ssType) */
   unsigned int flags;
   signed char bonded; /* be careful not to write at these as (int*) */
   signed char chemFlag;

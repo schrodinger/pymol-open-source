@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"DistSet.h"
 #include"Word.h"
 #include"Scene.h"
+#include"CGO.h"
 
 #define SelectorMaxDepth 100
 
@@ -238,6 +239,123 @@ static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
+
+/*========================================================================*/
+
+int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
+                           int mode,float cutoff, float h_angle,
+                           int **indexVLA, ObjectMolecule ***objVLA)
+{
+  SelectorType *I=&Selector;
+  int *vla=NULL;
+  int c;
+  float dist;
+  int a1,a2;
+  AtomInfoType *ai1,*ai2;
+  int at1,at2;
+  CoordSet *cs1,*cs2;
+  ObjectMolecule *obj1,*obj2;
+  int idx1,idx2;
+  int a;
+  int dist_cnt = 0;
+  float dir[3];
+  float v1[3],v2[3];
+  int flag;
+  float angle_cutoff;
+
+  if(mode==1) {
+    angle_cutoff = cos(PI*h_angle/180.8);
+  }
+  SelectorUpdateTable();
+  if(cutoff<0) cutoff = 1000.0;
+  c=SelectorGetInterstateVLA(sele1,state1,sele2,state2,cutoff,&vla);
+  (*indexVLA)=VLAlloc(int,1000);
+  (*objVLA)=VLAlloc(ObjectMolecule*,1000);
+
+  CGOReset(DebugCGO);
+
+  for(a=0;a<c;a++) {
+    a1=vla[a*2];
+    a2=vla[a*2+1];
+
+    if(a1!=a2) {
+      at1=I->Table[a1].atom;
+      at2=I->Table[a2].atom;
+      
+      obj1=I->Obj[I->Table[a1].model];
+      obj2=I->Obj[I->Table[a2].model];
+
+      if(state1<obj1->NCSet&&state2<obj2->NCSet) {
+        cs1=obj1->CSet[state1];
+        cs2=obj2->CSet[state2];
+        if(cs1&&cs2) { 
+    
+          ai1=obj1->AtomInfo+at1;
+          ai2=obj2->AtomInfo+at2;
+
+          if(obj1->DiscreteFlag) {
+            if(cs1==obj1->DiscreteCSet[at1]) {
+              idx1=obj1->DiscreteAtmToIdx[at1];
+            } else {
+              idx1=-1;
+            }
+          } else {
+            idx1=cs1->AtmToIdx[at1];
+          }
+          
+          if(obj2->DiscreteFlag) {
+            if(cs2==obj2->DiscreteCSet[at2]) {
+              idx2=obj2->DiscreteAtmToIdx[at2];
+            } else {
+              idx2=-1;
+            }
+            
+          } else {
+            idx2=cs2->AtmToIdx[at2];
+          }
+            
+          if((idx1>=0)&&(idx2>=0)) {
+            subtract3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2,dir);
+            dist=length3f(dir);
+            if(dist>R_SMALL4) 
+              scale3f(dir,1.0/dist,dir);
+            if(dist<cutoff) {
+              if(mode==1) { /* coarse hydrogen bonding assessment */
+                flag=false;
+                if(ObjectMoleculeGetAvgHBondVector(obj1,at1,state1,v1)>0.3)
+                  if(dot_product3f(v1,dir)<-angle_cutoff) 
+                    flag=true;
+                if(ObjectMoleculeGetAvgHBondVector(obj2,at2,state2,v2)>0.3)
+                  if(dot_product3f(v2,dir)>angle_cutoff)
+                    flag=true;
+              } else 
+                flag=true;
+
+              if(flag) {
+                VLACheck((*objVLA),ObjectMolecule*,dist_cnt+1);
+                VLACheck((*indexVLA),int,dist_cnt+1);
+                (*objVLA)[dist_cnt]=obj1;
+                (*indexVLA)[dist_cnt]=at1;
+                dist_cnt++;
+                (*objVLA)[dist_cnt]=obj2;
+                (*indexVLA)[dist_cnt]=at2;              
+                dist_cnt++;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  CGOStop(DebugCGO);
+  
+  VLASize((*objVLA),ObjectMolecule*,dist_cnt);
+  VLASize((*indexVLA),int,dist_cnt);
+  VLAFreeP(vla);
+  dist_cnt = dist_cnt / 2;
+  return(dist_cnt);
+}
 
 /*========================================================================*/
 int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
@@ -2216,7 +2334,7 @@ int SelectorSelect0(EvalElem *base)
 		break;
 	 }
   PRINTFD(FB_Selector)
-	 "SelectorSelect0: %d atoms selected.\n",c
+	 " SelectorSelect0: %d atoms selected.\n",c
     ENDFD;
 
   return(1);
@@ -2235,6 +2353,9 @@ int SelectorSelect1(EvalElem *base)
   ObjectMolecule *obj;
   base->type=STYP_LIST;
   base->sele=Alloc(int,I->NAtom);
+  PRINTFD(FB_Selector)
+    " SelectorSelect1: base: %p sele: %p\n",base,base->sele
+  ENDFD;
   ErrChkPtr(base->sele);
   switch(base->code)
 	 {
@@ -2242,9 +2363,10 @@ int SelectorSelect1(EvalElem *base)
 		if(sscanf(base[1].text,"%i",&index)!=1)		
 		  ok=ErrMessage("Selector","Invalid Index.");
 		if(ok) {
+        index--;
 		  for(a=0;a<I->NAtom;a++)
 			 {
-				if(I->Table[a].atom==(index-1)) {
+				if(I->Table[a].atom==index) {
               c++;
 				  base[0].sele[a]=true;
             } else {
@@ -2491,7 +2613,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 }
   PRINTFD(FB_Selector)
-	 "SelectorSelect1:  %d atoms selected.\n",c
+	 " SelectorSelect1:  %d atoms selected.\n",c
     ENDFD;
   return(ok);
 }
@@ -2503,6 +2625,7 @@ int SelectorSelect2(EvalElem *base)
   int ok=true;
   int oper;
   float comp1;
+  int exact;
   AtomInfoType *at1;
   SelectorType *I=&Selector;
   base->type=STYP_LIST;
@@ -2517,7 +2640,7 @@ int SelectorSelect2(EvalElem *base)
 	 case SELE_FCHx:
 	 case SELE_BVLx:
 	 case SELE_QVLx:
-      oper=WordKey(AtOper,base[1].text,4,I->IgnoreCase);
+      oper=WordKey(AtOper,base[1].text,4,I->IgnoreCase,&exact);
       if(!oper)
         ok=ErrMessage("Selector","Invalid Operator.");
       if(ok) {
@@ -2682,7 +2805,7 @@ int SelectorSelect2(EvalElem *base)
     }
   
   PRINTFD(FB_Selector)
-	 "SelectorSelect2: %d atoms selected.\n",c
+	 " SelectorSelect2: %d atoms selected.\n",c
     ENDFD;
   return(ok);
 }
@@ -2841,7 +2964,7 @@ int SelectorLogic1(EvalElem *base)
 		break;
 	 }
   PRINTFD(FB_Selector)
-	 "SelectorLogic1: %d atoms selected.\n",c
+	 " SelectorLogic1: %d atoms selected.\n",c
     ENDFD;
   return(1);
 }
@@ -2923,7 +3046,7 @@ int SelectorLogic2(EvalElem *base)
 	 }
   FreeP(base[2].sele);
   PRINTFD(FB_Selector)
-	 "SelectorLogic2: %d atoms selected.\n",c
+	 " SelectorLogic2: %d atoms selected.\n",c
     ENDFD;
   return(1);
 }
@@ -2940,6 +3063,7 @@ int *SelectorEvaluate(WordType *word)
   int opFlag,opFlag2,maxLevel;
   char *q,*cc1,*cc2;
   int totDepth;
+  int exact;
   OrthoLineType line;
   EvalElem *Stack=NULL,*e;
   SelectorType *I=&Selector;
@@ -2948,6 +3072,8 @@ int *SelectorEvaluate(WordType *word)
 
   Stack[0].sele=NULL;
   Stack[0].type=0;
+  Stack[0].level=0;
+
   /* converts all keywords into code, adds them into a operation list */
   while(ok&&word[c][0])
 	 {
@@ -2998,20 +3124,20 @@ int *SelectorEvaluate(WordType *word)
 				} 
 			 else
 				{
-              code=WordKey(Keyword,word[c],4,I->IgnoreCase);
+              code=WordKey(Keyword,word[c],4,I->IgnoreCase,&exact);
               if(!code) {
                 b=strlen(word[c])-1;
                 if((b>2)&&(word[c][b]==';')) {
                   /* kludge to accomodate unnec. ';' usage */
                   word[c][b]=0;
-                  code=WordKey(Keyword,word[c],4,I->IgnoreCase);
+                  code=WordKey(Keyword,word[c],4,I->IgnoreCase,&exact);
                 }
                   
               }
               PRINTFD(FB_Selector)
-                "code %x\n",code
+                " Selector: code %x\n",code
                 ENDFD;
-              if(code>0)  
+              if((code>0)&&(!exact))  
                 if(SelectorIndexByName(word[c])>=0)
                   code=0; /* favor selections over partial keyword matches */
 				  if(code) 
@@ -3067,7 +3193,8 @@ int *SelectorEvaluate(WordType *word)
       maxLevel=-1;
       for(a=1;a<=totDepth;a++) {
         PRINTFD(FB_Selector)
-          "%x\n",Stack[a].code
+          " Selector initial stack %d-%p lv: %x co: %d type: %x sele %p\n",
+          a,Stack+a,Stack[a].level,Stack[a].code,Stack[a].type,Stack[a].sele
           ENDFD;
                  
         if(Stack[a].level>maxLevel) 
@@ -3075,17 +3202,20 @@ int *SelectorEvaluate(WordType *word)
       }
       level=maxLevel;
       PRINTFD(FB_Selector)
-        "maxLevel %d %d\n",maxLevel,totDepth
+        " Selector: maxLevel %d %d\n",maxLevel,totDepth
         ENDFD;
       if(level>=0) 
         while(ok) { /* loop until all ops at all levels have been tried */
+          PRINTFD(FB_Selector)
+            " Selector: new cycle...\n"
+            ENDFD;
           depth = 1;
           opFlag=true;
           while(ok&&opFlag) { /* loop through all entries looking for ops at the current level */
             PRINTFD(FB_Selector)
-              "level lv: %d slv:%d de:%d co: %x typ %x td: %d\n",
-              level,Stack[depth].level,depth,Stack[depth].code,
-              Stack[depth].type,totDepth
+              " Selector: lvl: %d de:%d-%p slv:%d co: %x typ %x sele %p td: %d\n",
+              level,depth,Stack+depth,Stack[depth].level,Stack[depth].code,
+              Stack[depth].type,Stack[depth].sele,totDepth
               ENDFD;
           
             opFlag=false;
@@ -3202,8 +3332,9 @@ int *SelectorEvaluate(WordType *word)
 	 }
   if(ok)
 	 {
-      if(depth!=1)
+      if(depth!=1){
         ok=ErrMessage("Selector","Malformed selection.");
+      }
       else if(Stack[depth].type!=STYP_LIST)
         ok=ErrMessage("Selector","Invalid selection.");
       else
@@ -3211,9 +3342,13 @@ int *SelectorEvaluate(WordType *word)
 	 }
   if(!ok)
 	 {
-		for(a=0;a<depth;a++)
+		for(a=1;a<=depth;a++) {
+        PRINTFD(FB_Selector)
+          " Selector: releasing %d %x %p\n",a,Stack[a].type,Stack[a].sele
+          ENDFD;
 		  if(Stack[a].type==STYP_LIST)
 			 FreeP(Stack[a].sele);
+      }
 		depth=0;
 		q=line;
 		*q=0;

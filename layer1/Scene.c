@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 #include"Editor.h"
 #include"Executive.h"
 #include"Wizard.h"
+#include"CGO.h"
 
 #define cFrontMin 0.1
 #define cSliceMin 0.1
@@ -1009,6 +1010,8 @@ void SceneFree(void)
   if(I->StereoMode) {
     PStereoOff();
   }
+
+  CGOFree(DebugCGO);
 }
 /*========================================================================*/
 void SceneResetMatrix(void)
@@ -1020,6 +1023,8 @@ void SceneResetMatrix(void)
 void SceneInit(void)
 {
   CScene *I=&Scene;
+
+  DebugCGO = CGONew();
 
   ListInit(I->Obj);
 
@@ -1557,6 +1562,11 @@ void SceneRender(Pickable *pick,int x,int y)
           }
         glPushMatrix();
         glNormal3fv(normal);
+        CGORenderGL(DebugCGO);
+        glPopMatrix();
+
+        glPushMatrix();
+        glNormal3fv(normal);
         ExecutiveRenderSelections(curState);
         EditorRender(curState);
         glPopMatrix();
@@ -1576,6 +1586,12 @@ void SceneRender(Pickable *pick,int x,int y)
               rec->obj->fRender(rec->obj,curState,NULL,NULL);
             glPopMatrix();
           }
+
+        glPushMatrix();
+        glNormal3fv(normal);
+        CGORenderGL(DebugCGO);
+        glPopMatrix();
+
         glPushMatrix();
         glNormal3fv(normal);
         ExecutiveRenderSelections(curState);
@@ -1597,6 +1613,12 @@ void SceneRender(Pickable *pick,int x,int y)
               rec->obj->fRender(rec->obj,curState,NULL,NULL);
             glPopMatrix();
           }
+
+        glPushMatrix();
+        glNormal3fv(normal);
+        CGORenderGL(DebugCGO);
+        glPopMatrix();
+
         glPushMatrix();
         glNormal3fv(normal);
         ExecutiveRenderSelections(curState);

@@ -19,6 +19,13 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Ray.h"
 
+#define cCartoon_skip -1
+#define cCartoon_auto 0
+#define cCartoon_loop 1
+#define cCartoon_rect 2
+#define cCartoon_oval 3
+#define cCartoon_tube 4
+
 #define cRepAll       -1
 
 #define cRepCyl        0

@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Editor.h"
 #include"P.h"
 #include"Util.h"
+#include"main.h"
 
 CSetting Setting;
 
@@ -429,6 +430,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
 {
   char all[] = "all";
   char *inv_sele;
+  OrthoLineType command;
   if(!sele) {
     inv_sele = all;
   } else if(sele[0]==0) {
@@ -504,10 +506,16 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
   case cSetting_cartoon_loop_radius:
+  case cSetting_cartoon_tube_quality:
+  case cSetting_cartoon_tube_radius:
   case cSetting_cartoon_power:
   case cSetting_cartoon_power_b:
+  case cSetting_cartoon_rect_length:
   case cSetting_cartoon_rect_width:
-  case cSetting_cartoon_rect_thickness:
+  case cSetting_cartoon_oval_length:
+  case cSetting_cartoon_oval_width:
+  case cSetting_cartoon_oval_quality:
+  case cSetting_cartoon_debug:
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
     SceneChanged();
     break;
@@ -522,6 +530,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_overlay:
   case cSetting_text:
     OrthoDirty();
+  case cSetting_internal_gui_width:
+  case cSetting_internal_gui:
+    sprintf(command,"viewport");
+    OrthoCommandIn(command);
   default:
 	 break;
   }
@@ -593,6 +605,7 @@ void SettingSetfv(int index,float *v)
   case cSetting_ortho:
   case cSetting_ambient:
 	 SceneDirty();
+    break;
   case cSetting_overlay:
   case cSetting_text:
     OrthoDirty();
@@ -850,7 +863,7 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_autoshow_nonbonded, 1.0);
 
   SettingSet_f(I,cSetting_mesh_radius, 0.05);
-
+ 
 #ifdef WIN32
   SettingSet_f(I,cSetting_cache_display, 0.0);
 #else
@@ -893,7 +906,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_sampling, 7);
 
-  SettingSet_f(I,cSetting_cartoon_loop_radius, 0.5);
+  SettingSet_f(I,cSetting_cartoon_loop_radius, 0.2);
 
   SettingSet_f(I,cSetting_cartoon_loop_quality, 6);
 
@@ -901,10 +914,25 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_power_b, 0.45);
 
-  SettingSet_f(I,cSetting_cartoon_rect_width, 1.20);
+  SettingSet_f(I,cSetting_cartoon_rect_length, 1.40);
 
-  SettingSet_f(I,cSetting_cartoon_rect_thickness, 0.4);
+  SettingSet_f(I,cSetting_cartoon_rect_width, 0.4);
+
+  SettingSet_f(I,cSetting_internal_gui_width, 160);
+
+  SettingSet_f(I,cSetting_internal_gui, 1.0);
+
+  SettingSet_f(I,cSetting_cartoon_oval_length, 1.50);
+
+  SettingSet_f(I,cSetting_cartoon_oval_width, 0.25);
+
+  SettingSet_f(I,cSetting_cartoon_oval_quality, 10);
+
+  SettingSet_f(I,cSetting_cartoon_tube_radius, 0.9);
+
+  SettingSet_f(I,cSetting_cartoon_tube_quality, 9);
+
+  SettingSet_f(I,cSetting_cartoon_debug, 0);
   
 }
-
 

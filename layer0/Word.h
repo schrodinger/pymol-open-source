@@ -33,5 +33,5 @@ int WordMatchCommaInt(char *p,int number);
 
 int WordCompare(char *p,char *q,int ignCase);
 int WordIndex(WordType *list,char *word,int minMatch,int ignCase);
-int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase);
+int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase,int *exact);
 #endif

@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_std.h"
 
+#include"Base.h"
 #include"Word.h"
 #include"Parse.h"
 
@@ -63,7 +64,7 @@ negative = perfect match  */
 	 if((*p)&&(!*q))
 		i=0;
   }
-  if(i&&((!*p)&&(!*q))) /*exact match*/
+  if(i&&((!*p)&&(!*q))) /*exact match gives negative value */
 	 i=-i;
   return(i);
 }
@@ -138,7 +139,6 @@ int WordMatchComma(char *p,char *q,int ignCase)
 
 int WordMatchCommaInt(char *p,int number) 
 {
-  int result = 0;
   WordType buffer;
   sprintf(buffer,"%d",number);
   return(WordMatchComma(p,buffer,1));
@@ -213,16 +213,17 @@ int WordIndex(WordType *list,char *word,int minMatch,int ignCase)
 
 }
 
-int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase)
+int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase,int *exact)
 {
   int c,i,mi,mc;
   int result = 0;
   c=0;
   mc=-1;
   mi=-1;
+  *exact = false;
   while(list[c].word[0])
-	 {
-		i=WordMatch(word,list[c].word,ignCase);
+    {
+      i=WordMatch(word,list[c].word,ignCase);
 		if(i>0)
 		  {
 			 if(mi<i)
@@ -230,19 +231,21 @@ int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase)
 				  mi=i;
 				  mc=list[c].value;
 				}
-		  }
-		else if(i<0)
+        }
+      else if(i<0)
 		  {
-			 if((-i)<=minMatch)
-				mi=minMatch+1; /*exact match always matches */
-			 else
-				mi=(-i);
-			 mc=list[c].value;
+          *exact = true;
+			 if((-i)<=minMatch) {
+            mi=minMatch+1; /*exact match always matches */
+          }
+          else
+            mi=(-i);
+          mc=list[c].value;
 		  }
 		c++;
 	 }
   if((mi>=minMatch))
-	 result=mc;
+    result=mc;
   return(result);  
 }
 
