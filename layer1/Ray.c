@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Ray.h"
 #include"Triangle.h"
+#include"Color.h"
 
 #ifndef RAY_SMALL
 #define RAY_SMALL 0.00001
@@ -136,7 +137,8 @@ void RayGetSphereNormal(CRay *I,RayInfo *r)
 /*========================================================================*/
 void RayReflectAndTexture(CRay *I,RayInfo *r)
 {
-  
+  r->flat_dotgle = r->surfnormal[2];
+
   if(r->prim->texture)
     switch(r->prim->texture) {
     case 1:
@@ -371,6 +373,10 @@ void RayTransformFirst(CRay *I)
   int backface_cull;
 
   backface_cull = (int)SettingGet(cSetting_backface_cull);
+  
+  if(SettingGet(cSetting_two_sided_lighting)||
+     SettingGet(cSetting_ray_interior_color)>=0)
+    backface_cull=0;
 
   basis0 = I->Basis;
   basis1 = I->Basis+1;
@@ -752,7 +758,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   unsigned int *image_copy = NULL;
   int i;
   unsigned int back_mask,fore_mask=0;
-  unsigned int background,buffer_size,z[16],zm[16],tot;
+  unsigned int background,buffer_size,z[16],zm[16],tot,interior=0;
   int antialias;
   RayInfo r1,r2;
   int fogFlag=false;
@@ -761,7 +767,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int n_hit=0;
   int two_sided_lighting;
   float fog;
-  float *bkrd;
+  float *bkrd,*inter;
   float fog_start=0.0F;
   float gamma,inp,sig=1.0F;
   double now;
@@ -781,8 +787,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int pixel_flag;
   float ray_trans_spec;
   float fudge,shadow_fudge;
+  int interior_color;
+  int interior_flag;
+  int dummy;
 
-
+  interior_color = SettingGet(cSetting_ray_interior_color);
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
   shadows = (int)SettingGet(cSetting_ray_shadows);
   trans_shadows = (int)SettingGet(cSetting_ray_transparency_shadows);
@@ -790,6 +799,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   two_sided_lighting = (int)SettingGet(cSetting_two_sided_lighting);
   ray_trans_spec = SettingGet(cSetting_ray_transparency_specular);
+
+  if((interior_color>=0)||(two_sided_lighting))
+    backface_cull=0;
 
   fudge = SettingGet(cSetting_ray_triangle_fudge);
   shadow_fudge = SettingGet(cSetting_ray_shadow_fudge);
@@ -848,6 +860,21 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
       ((0xFF& ((unsigned int)(bkrd[1]*255))) <<8)|
       ((0xFF& ((unsigned int)(bkrd[0]*255))) );
   }
+  if(interior_color>=0) {
+    inter = ColorGet(interior_color);
+    if(I->BigEndian) {
+      interior = 0x000000FF|
+        ((0xFF& ((unsigned int)(inter[0]*255))) <<24)|
+        ((0xFF& ((unsigned int)(inter[1]*255))) <<16)|
+        ((0xFF& ((unsigned int)(inter[2]*255))) <<8 );
+    } else {
+      interior = 0xFF000000|
+        ((0xFF& ((unsigned int)(inter[2]*255))) <<16)|
+        ((0xFF& ((unsigned int)(inter[1]*255))) <<8)|
+        ((0xFF& ((unsigned int)(inter[0]*255))) );
+    }
+  }
+
 
   PRINTFB(FB_Ray,FB_Blather) 
     " RayNew: Background = %x %d %d %d\n",background,(int)(bkrd[0]*255),
@@ -964,8 +991,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
             new_front=front;
             while((persist>0.0001F)&&(pass<25)) {
               pixel_flag=false;
+              interior_flag=(interior_color>=0);
               i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,
-                         new_front,back,excl_trans,trans_shadows,fudge);
+                         new_front,back,excl_trans,trans_shadows,fudge,&interior_flag);
+              if(interior_flag) {
+                *(pixel) = interior;
+                break;
+              }
               if(i>=0) {
                 pixel_flag=true;
                 n_hit++;
@@ -977,6 +1009,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                                      I->Basis[1].Normal+I->Basis[1].Vert2Normal[i]*3+3,
                                      project_triangle);
                   RayReflectAndTexture(I,&r1);
+                  BasisGetTriangleFlatDotgle(I->Basis+1,&r1,i);
                 } else {
                   RayGetSphereNormal(I,&r1);
                   RayReflectAndTexture(I,&r1);
@@ -994,87 +1027,93 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 }
                 dotgle=-r1.dotgle;
                               
-                if(dotgle<0.0F) {
+                if(r1.flat_dotgle<0.0F) {
                   if(two_sided_lighting) {
                     dotgle=-dotgle;
                     invert3f(r1.surfnormal);
+                  } else if(interior_color>=0) {
+                    interior_flag = true;
                   } else 
                     dotgle=0.0F;
                 }
-                direct_cmp=(float)((dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0);
-                
-                if(shadows) {
-                  matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
-                  r2.base[2]-=shadow_fudge;
-                  if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,
-                              true,0.0F,0.0F,0.0F,trans_shadows,fudge)>=0) {
-                    lit=(float)(pow(r2.prim->trans,0.5));
+                if(interior_flag) {
+                  *(pixel) = interior;
+                  break;
+                } else {
+                  direct_cmp=(float)((dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0);
+                  
+                  if(shadows) {
+                    matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
+                    r2.base[2]-=shadow_fudge;
+                    if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,
+                                true,0.0F,0.0F,0.0F,trans_shadows,fudge,&dummy)>=0) {
+                      lit=(float)(pow(r2.prim->trans,0.5));
+                    } else {
+                      lit=1.0F;
+                    }
                   } else {
                     lit=1.0F;
                   }
-                } else {
-                  lit=1.0F;
-                }
-                          
-                if(lit>0.0F) {
-                  dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
-                  if(dotgle<0.0F) dotgle=0.0F;
-                  reflect_cmp=(float)(lit*(dotgle+(pow(dotgle,SettingGet(cSetting_reflect_power))))/2.0);
-                  dotgle=-dot_product3f(r1.surfnormal,spec_vector);
-                  if(dotgle<0.0F) dotgle=0.0F;
-                  excess=(float)( pow(dotgle,SettingGet(cSetting_spec_power))*
-                                  SettingGet(cSetting_spec_reflect)*lit);
-                } else {
-                  excess=0.0F;
-                  reflect_cmp=0.0F;
-                }
-                
-                bright=ambient+(1.0F-ambient)*(direct*direct_cmp+
-                                              (1.0F-direct)*direct_cmp*lreflect*reflect_cmp);
-                
-                if(bright>1.0F) bright=1.0F;
-                if(bright<0.0F) bright=0.0F;
-                
-                fc[0] = (bright*fc[0]+excess);
-                fc[1] = (bright*fc[1]+excess);
-                fc[2] = (bright*fc[2]+excess);
-                
-                if (fogFlag) {
-                  ffact = fog*(front-r1.dist)/(front-back);
-                  if(fogRangeFlag) {
-                    ffact = (ffact-fog_start)/(1.0F-fog_start);
-                  }
-                  if(ffact<0.0F)
-                    ffact=0.0F;
-                  if(ffact>1.0F)
-                    ffact=0.0F;
-                  ffact1m = 1.0F-ffact;
-                  if(opaque_back) {
-                    fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
-                    fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
-                    fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
+                  
+                  if(lit>0.0F) {
+                    dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
+                    if(dotgle<0.0F) dotgle=0.0F;
+                    reflect_cmp=(float)(lit*(dotgle+(pow(dotgle,SettingGet(cSetting_reflect_power))))/2.0);
+                    dotgle=-dot_product3f(r1.surfnormal,spec_vector);
+                    if(dotgle<0.0F) dotgle=0.0F;
+                    excess=(float)( pow(dotgle,SettingGet(cSetting_spec_power))*
+                                    SettingGet(cSetting_spec_reflect)*lit);
                   } else {
-                    fc[3]=ffact1m;
+                    excess=0.0F;
+                    reflect_cmp=0.0F;
                   }
-                  if(!pass)
-                    first_excess = excess*ffact1m*ray_trans_spec;
-                  else {
-                    fc[0]+=first_excess;
-                    fc[1]+=first_excess;
-                    fc[2]+=first_excess;
+                  
+                  bright=ambient+(1.0F-ambient)*(direct*direct_cmp+
+                                                 (1.0F-direct)*direct_cmp*lreflect*reflect_cmp);
+                  
+                  if(bright>1.0F) bright=1.0F;
+                  if(bright<0.0F) bright=0.0F;
+                  
+                  fc[0] = (bright*fc[0]+excess);
+                  fc[1] = (bright*fc[1]+excess);
+                  fc[2] = (bright*fc[2]+excess);
+                  
+                  if (fogFlag) {
+                    ffact = fog*(front-r1.dist)/(front-back);
+                    if(fogRangeFlag) {
+                      ffact = (ffact-fog_start)/(1.0F-fog_start);
+                    }
+                    if(ffact<0.0F)
+                      ffact=0.0F;
+                    if(ffact>1.0F)
+                      ffact=0.0F;
+                    ffact1m = 1.0F-ffact;
+                    if(opaque_back) {
+                      fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
+                      fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
+                      fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
+                    } else {
+                      fc[3]=ffact1m;
+                    }
+                    if(!pass)
+                      first_excess = excess*ffact1m*ray_trans_spec;
+                    else {
+                      fc[0]+=first_excess;
+                      fc[1]+=first_excess;
+                      fc[2]+=first_excess;
+                    }
+                  } else {
+                    if(!pass)
+                      first_excess = excess*ray_trans_spec;
+                    else {
+                      fc[0]+=first_excess;
+                      fc[1]+=first_excess;
+                      fc[2]+=first_excess;
+                    }
+                    fc[3]=1.0F;
                   }
-                } else {
-                  if(!pass)
-                    first_excess = excess*ray_trans_spec;
-                  else {
-                    fc[0]+=first_excess;
-                    fc[1]+=first_excess;
-                    fc[2]+=first_excess;
-                  }
-                  fc[3]=1.0F;
-                }
-
-
+                } 
+                  
                 pixel_flag=true;
               } else if(pass) { 
                 /* hit nothing, and we're on on second or greater pass */
@@ -1084,8 +1123,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 fc[3] = 1.0F;
                 pixel_flag=true;
               }
-              
-              if(pixel_flag) {
+
+                if(pixel_flag) {
                 inp=(fc[0]+fc[1]+fc[2])/3.0F;
                 if(inp<R_SMALL4) 
                   sig=1.0F;

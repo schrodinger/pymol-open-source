@@ -698,11 +698,12 @@ if __name__=='pymol.cmd':
 
    def _sgi_stereo(flag): # SGI-SPECIFIC - bad bad bad
 
-      if os.path.exists("/usr/gfx/setmon"):
-         if flag:
-            os.system("/usr/gfx/setmon -n 1024x768_96s")
-         else:
-            os.system("/usr/gfx/setmon -n 72hz")
+      if sys.platform[0:4]=='irix':
+         if os.path.exists("/usr/gfx/setmon"):
+            if flag:
+               os.system("/usr/gfx/setmon -n 1024x768_96s")
+            else:
+               os.system("/usr/gfx/setmon -n 72hz")
 
    # color alias interpretation
 

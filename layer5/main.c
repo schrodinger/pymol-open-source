@@ -536,7 +536,8 @@ static void MainInit(void)
 void MainFree(void)
 {
   PyMOLTerminating=true;
-
+  
+  SceneCleanupStereo();
   EditorFree();
   ExecutiveFree();
   VFontFree();

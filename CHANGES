@@ -66,8 +66,7 @@ OpenGL Core
    Changes planned
 
       * Add support for HKEY_USERS entries into PyMOLWin
-      
-   
+         
       * IO routine for a generic volume data object (to supplement bricks and maps)
    
       * Real Edit Menu in Tk (with normal cut/paste, etc)
@@ -164,6 +163,8 @@ Current Bugs to Fix
 CHANGE LOG
 =========================================================================
 Changes up to 0.88
+
+   * ray_interior_color can enable solid interiors in the ray tracer!
 
    * fixed truncation error in view matrix composition
 

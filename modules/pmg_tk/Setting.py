@@ -153,7 +153,8 @@ class Setting:
          'depth_cue'       :
          (lambda s,a: s.depth_cue_set(a)),
          'specular'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8)),log=1))),
+         (lambda s,a:s.specular_set(a)),
+#         (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8)),log=1))),
 
          'cartoon_round_helices'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_round_helices.get())),log=1))),
@@ -294,10 +295,14 @@ class Setting:
       for a in self.active_list:
          self.active_dict[a] = pymol.setting._get_name(a)
 
-   def depth_cue_set(self,sttng):
-      cmd.set(sttng,("%1.0f" % self.depth_cue.get()),log=1)
+   def depth_cue_set(self):
+      cmd.set("depth_cue",("%1.0f" % self.depth_cue.get()),log=1)
       cmd.set("ray_trace_fog",("%1.0f" % self.depth_cue.get()),log=1)
-                         
+
+   def specular_set(self,sttng):
+      cmd.set("specular",("%0.3f" % (self.specular.get()*0.8)),log=1,quiet=0) # hardcoded workaround
+      cmd.set("spec_reflect",("%0.3f" % (self.specular.get()*0.500)),log=1,quiet=0) # workaround 
+      
    def update(self,sttng):
       set_fn = self.xref[sttng]
       set_fn(self,sttng)

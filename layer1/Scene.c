@@ -142,6 +142,13 @@ static int SceneGetObjState(CObject *obj,int state)
 }
 #endif
 
+void SceneCleanupStereo(void)
+{
+  CScene *I=&Scene;  
+  if(I->StereoMode==1)
+    PSGIStereo(0);
+}
+
 void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height)
 {
   float tw = 1.0F;
@@ -2040,9 +2047,6 @@ void SceneFree(void)
   if(!I->MovieOwnsImageFlag)
 	 FreeP(I->ImageBuffer);
   
-  if(I->StereoMode==1) {
-    PSGIStereo(0);
-  }
 
   CGOFree(DebugCGO);
 }

@@ -60,7 +60,7 @@ typedef struct {
   float sphere[3]; /* sphere location if reflecting off of one */
   float surfnormal[3]; /* normal of reflecting surface */
   float dist;
-  float dotgle;
+  float dotgle,flat_dotgle;
   float reflect[3];
 } RayInfo;
 
@@ -75,7 +75,9 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 				 int *vert2prim,CPrimitive *prim,
 				 int shadow,float front,float back,
              float excl_trans,int trans_shadows,
-             float fudge);
+             float fudge,int *interior_flag);
+
+void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i);
 
 #endif
 
