@@ -276,6 +276,7 @@ static PyObject *CmdGetState(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetVis(PyObject *self, 	PyObject *args);
 static PyObject *CmdMask(PyObject *self, PyObject *args);
 static PyObject *CmdMDump(PyObject *self, PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
@@ -343,6 +344,7 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdSetCrystal(PyObject *self, PyObject *args);
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
+static PyObject *CmdSetVis(PyObject *self, 	PyObject *args);
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
 static PyObject *CmdSmooth(PyObject *self,PyObject *args);
 static PyObject *CmdSort(PyObject *dummy, PyObject *args);
@@ -437,6 +439,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_title",             CmdGetTitle,             METH_VARARGS },
 	{"get_type",              CmdGetType,              METH_VARARGS },
    {"get_view",              CmdGetView,              METH_VARARGS },
+   {"get_vis",               CmdGetVis,               METH_VARARGS },
    {"get_wizard",            CmdGetWizard,            METH_VARARGS },
 	{"h_add",                 CmdHAdd,                 METH_VARARGS },
 	{"h_fill",                CmdHFill,                METH_VARARGS },
@@ -517,6 +520,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
 	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
    {"set_view",              CmdSetView,              METH_VARARGS },
+   {"set_vis",               CmdSetVis,               METH_VARARGS },
 	{"setframe",	           CmdSetFrame,             METH_VARARGS },
 	{"showhide",              CmdShowHide,             METH_VARARGS },
 	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
@@ -542,6 +546,30 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+static PyObject *CmdGetVis(PyObject *dummy, PyObject *args)
+{
+  PyObject *result;
+  int ok=true;
+  if (ok) {
+    APIEnterBlocked();
+    result = ExecutiveGetVisAsPyDict();
+    APIExitBlocked();
+  }
+  return(APIAutoNone(result));
+}
+
+static PyObject *CmdSetVis(PyObject *dummy, PyObject *args)
+{
+  int ok=true;
+  PyObject *visDict;
+  ok = PyArg_ParseTuple(args,"O",&visDict);
+  if (ok) {
+    APIEnterBlocked();
+    ok = ExecutiveSetVisFromPyDict(visDict);
+    APIExitBlocked();
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args)
 {

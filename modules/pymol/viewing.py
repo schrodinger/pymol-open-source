@@ -269,6 +269,7 @@ SEE ALSO
       return r
 
 
+
    def move(axis,distance):
       '''
 DESCRIPTION
@@ -646,6 +647,22 @@ SEE ALSO
                   print " view: '%s' deleted."%key
 
 
+   def get_vis():
+      try:
+         lock()
+         r = _cmd.get_vis()
+      finally:
+         unlock()
+      return r
+
+   def set_vis(dict):
+      try:
+         lock()         
+         r = _cmd.set_vis(dict)
+      finally:
+         unlock()
+      return r
+     
    def scene(key,action='recall'):
       '''
 DESCRIPTION
@@ -694,8 +711,7 @@ SEE ALSO
             set_view(scene_dict[key][0])
             cmd.hide()
             cmd.disable()
-            for a in scene_dict[key][1]:
-               cmd.enable(a)
+            cmd.set_vis(scene_dict[key][1])
             cmd.frame(scene_dict[key][2])
             for rep in rep_list:
                name = "_scene_"+key+"_"+rep
@@ -705,7 +721,7 @@ SEE ALSO
          elif action=='store':
             scene_dict_sc.append(key)
             scene_dict[key]=[cmd.get_view(0),
-                             cmd.get_names("all",1),
+                             cmd.get_vis(),
                              cmd.get_frame()]
             for rep in rep_list:
                name = "_scene_"+key+"_"+rep

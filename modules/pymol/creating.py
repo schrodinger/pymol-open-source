@@ -131,7 +131,6 @@ SEE ALSO
          mopt = 0 # render the whole map
       # preprocess selection
       selection = selector.process(selection)
-      print selection
       if selection not in [ 'center', 'origin' ]:
          selection = "("+selection+")"
       #

@@ -159,6 +159,8 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
 
 int ExecutiveReinitialize(void);
 char *ExecutiveFindBestNameMatch(char *name);
+int ExecutiveSetVisFromPyDict(PyObject *dict);
+     PyObject *ExecutiveGetVisAsPyDict(void);
 
 #endif
 
