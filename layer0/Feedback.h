@@ -184,7 +184,7 @@ void FeedbackEnable(unsigned int sysmod,unsigned char mask);
 
 #define Feedback(sysmod,mask) (FeedbackMask[sysmod]&mask) 
 
-#define FEEDBACK_MAX_OUTPUT 65535  
+#define FEEDBACK_MAX_OUTPUT 1024
 typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
 
 /* Print Feedback Macros -- this the most flexible and cross-OS
