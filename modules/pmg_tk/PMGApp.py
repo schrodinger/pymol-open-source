@@ -555,7 +555,7 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Depth Cue.',
-                         label='Cepth Cue',
+                         label='Depth Cue',
                         variable = self.setting.depth_cue,
                         command = lambda s=self: s.setting.update('depth_cue'))
 
