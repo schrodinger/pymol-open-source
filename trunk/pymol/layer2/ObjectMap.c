@@ -549,7 +549,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
 		isNew = false;
 	 }
 
-    if(!PConvAttrToStrMaxLen(Map,"format",format,sizeof(WordType)))
+    if(!PConvAttrToStrMaxLen(Map,"format",format,sizeof(WordType)-1))
       ok=ErrMessage("LoadChemPyMap","bad 'format' parameter.");
     else if(!PConvAttrToFloatArrayInPlace(Map,"cell_dim",I->Crystal->Dim,3))
       ok=ErrMessage("LoadChemPyMap","bad 'cell_dim' parameter.");

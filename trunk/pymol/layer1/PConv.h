@@ -40,7 +40,11 @@ Z* -------------------------------------------------------------------
 
 /* == error-checking routines: true = success, false = failure */
 
+/* NOTE: the string routines will write strings up to the specified
+ * length, PLUS a NULL...so watch out for array overruns */
+
 int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll);
+
 int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *ff,int ll);
 int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *ff,int ll);
 int PConvAttrToPtr(PyObject *obj,char *name,void **cobj);
@@ -70,6 +74,10 @@ void PConvStringToPyObjAttr(PyObject *obj,char *attr,char *f);
 
 int PConvPyObjectToFloat(PyObject *object,float *value);
 int PConvPyObjectToInt(PyObject *object,int *value);
+
+/* NOTE: the string routines will write strings up to the specified
+ * length, PLUS a NULL...so watch out for array overruns */
+
 int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln);
 int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln);
 
