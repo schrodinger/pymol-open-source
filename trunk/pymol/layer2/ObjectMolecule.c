@@ -463,6 +463,54 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
   return(I);
 }
 
+
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int frame)
+{
+  CoordSet *cset = NULL;
+  int ok=true;
+  int a,l;
+  PyObject *v;
+  float *f;
+  a=0;
+  while(a<I->NCSet) {
+    if(I->CSet[a]) {
+      cset=I->CSet[a];
+      break;
+    }
+    a++;
+  }
+  
+  if(!PyList_Check(coords)) 
+    ErrMessage("LoadsCoords","passed argument is not a list");
+  else {
+    l = PyList_Size(coords);
+    if (l==cset->NIndex) {
+      cset=CoordSetCopy(cset);
+      f=cset->Coord;
+      for(a=0;a<l;a++) {
+        v=PyList_GetItem(coords,a);
+        *(f++)=PyFloat_AsDouble(PyList_GetItem(v,0)); /* no error checking */
+        *(f++)=PyFloat_AsDouble(PyList_GetItem(v,1));
+        *(f++)=PyFloat_AsDouble(PyList_GetItem(v,2));
+      }
+    }
+  }
+  /* include coordinate set */
+  if(ok) {
+    if(cset->fInvalidateRep)
+      cset->fInvalidateRep(cset,-1,0);
+
+    if(frame<0) frame=I->NCSet;
+    VLACheck(I->CSet,CoordSet*,frame);
+    if(I->NCSet<=frame) I->NCSet=frame+1;
+    if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+    I->CSet[frame] = cset;
+    SceneCountFrames();
+  }
+  return(I);
+}
+
 /*========================================================================*/
 static int BondInOrder(int *a,int b1,int b2)
 {
