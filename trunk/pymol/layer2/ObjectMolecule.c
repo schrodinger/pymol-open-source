@@ -503,7 +503,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
             }
           } else {
             PRINTFB(FB_Errors,FB_ObjectMolecule)
-              " ObjMolLoadTRJFile: atom/coordinate mismatch.\n"
+              " ObjMolLoadTRJFile-Error: Failed to read an expected coordinate value.\n    This trajectory does not match the loaded parameter/topology file.\n    Likely cause: either the atom count or the periodic box settings\n    are inconsistent between the two files.\n"
               ENDFB;
             break;
           }
