@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * fixed ray-tracing bug with infinite loops on tranparent surfaces
+
+   * fixed logging for new molecular editing features
+
    * pdb1 extension support
 
    * fixed unintentional default OpenGL bug reporting 
