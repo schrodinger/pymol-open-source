@@ -6088,7 +6088,10 @@ auto_arg =[
    'deprotect' : [ selection_sc , 'selections','' ],   
    'mask' : [ selection_sc , 'selections','' ],
    'unmask' : [ selection_sc , 'selections','' ],
-   'delete' : [ selection_sc , 'selections','' ],   
+   'delete' : [ selection_sc , 'selections','' ],
+   'alter' : [ selection_sc , 'selections','' ],
+   'iterate' : [ selection_sc , 'selections','' ],
+   'iterate_state' : [ selection_sc , 'selections','' ],      
    },
    {
    'feedback' : [ fb_module_sc , 'modules',', ' ],
@@ -6100,7 +6103,8 @@ auto_arg =[
    'save' : [ selection_sc , 'selections',', ' ],
    'load' : [ selection_sc , 'selections',', ' ],
    'create' : [ selection_sc , 'selections',', ' ],
-   'isomesh' : [ map_sc , 'objects',', ' ],            
+   'symexp' : [ object_sc , 'objects',', ' ],   
+   'isomesh' : [ map_sc , 'map objects',', ' ],            
    },
    {
    'feedback' : [ fb_mask_sc , 'mask','' ],
