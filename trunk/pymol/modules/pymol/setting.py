@@ -385,6 +385,8 @@ if __name__=='pymol.setting':
       surface_clear_selection = 345
       surface_clear_state   = 346
       surface_clear_cutoff  = 347
+      surface_trim_cutoff   = 348
+      surface_trim_factor   = 349
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

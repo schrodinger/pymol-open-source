@@ -124,7 +124,39 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2)
                     order=2;
                   break;
                 }
+              case 0:
+                if(ai1->resn[1]==0) {
+                  if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
+                     ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
+                          ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
+                    order=2;
+                  
+                  else if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"N1")))||
+                          ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"N1")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
+                          ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
+                    order=2;
+                }
+                break;
               }
+              break;
+            case 'C':
+              if(ai1->resn[1]==0) {
+                if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
+                   ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
+                  order=2;
+                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"N3")))||
+                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"N3")))) 
+                  order=2;
+                
+                else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
+                        ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
+                  order=2;
+              }
+              break;
             case 'G':
               switch(ai1->resn[1]) {
               case 'L': 
@@ -143,6 +175,21 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2)
                     order=2;
                   break;
                 }
+                break;
+              case 0:
+                if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"O6")))||
+                   ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"O6")))) 
+                  order=2;
+                else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
+                        ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
+                  order=2;
+                else if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
+                        ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
+                  order=2;
+                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
+                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"c5")))) 
+                  order=2;
+                break;
               }
               break;
             case 'H':
@@ -239,9 +286,35 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2)
                     order=2;
                   break; 
                 }
+                break;
+              case 0:
+                if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
+                   ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
+                  order=2;
+                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
+                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
+                  order=2;
                 
+                else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
+                        ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
+                  order=2;
                 break;
               }
+              break;
+            case 'U':
+              if(ai1->resn[1]==0) {
+                if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
+                   ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
+                  order=2;
+                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
+                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
+                  order=2;
+                
+                else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
+                        ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
+                  order=2;
+              }
+              break;
               
             }
           }
@@ -2252,7 +2325,41 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                   order=2;
                                                 break;
                                               }
+                                              break;
+                                            case 0:
+                                              if(ai1->resn[1]==0) {
+                                                if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
+                                                   ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
+                                                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
+                                                  order=2;
+                                                
+                                                else if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"N1")))||
+                                                        ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"N1")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
+                                                        ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
+                                                  order=2;
+                                              }
+                                              break;
                                             }
+                                            break;
+                                          case 'C':
+                                            if(ai1->resn[1]==0) {
+                                              if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
+                                                 ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
+                                                order=2;
+                                              else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"N3")))||
+                                                      ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"N3")))) 
+                                                order=2;
+                                              
+                                              else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
+                                                      ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
+                                                order=2;
+                                            }
+                                            break;
+                                            
                                           case 'G':
                                             switch(ai1->resn[1]) {
                                             case 'L': 
@@ -2268,6 +2375,20 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                   order=2;
                                                 break;
                                               }
+                                            case 0:
+                                              if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"O6")))||
+                                                 ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"O6")))) 
+                                                order=2;
+                                              else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
+                                                      ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
+                                                order=2;
+                                              else if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
+                                                      ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
+                                                order=2;
+                                              else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
+                                                      ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"c5")))) 
+                                                order=2;
+                                              break;
                                             }
                                             break;
                                           case 'H':
@@ -2358,10 +2479,35 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                   order=2;
                                                 break; 
                                               }
-
+                                              break;
+                                            case 0:
+                                              if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
+                                                 ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
+                                                order=2;
+                                              else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
+                                                      ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
+                                                order=2;
+                                              
+                                              else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
+                                                      ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
+                                                order=2;
                                               break;
                                             }
-                                            
+                                            break;
+                                          case 'U':
+                                            if(ai1->resn[1]==0) {
+                                              if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
+                                                 ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
+                                                order=2;
+                                              else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
+                                                      ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
+                                                order=2;
+                                              
+                                              else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
+                                                      ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
+                                                order=2;
+                                            }
+                                            break;
                                           }
                                         }
                                       }

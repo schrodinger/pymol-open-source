@@ -4,6 +4,11 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * added surface_trim_factor and surface_trim_factor settings
+     in order to hard-to-tesselate peaks on the surface
+
+   * taught PyMOL bond valences for G,A,T,C,U residues
+
    * greatly improved quality of the surface rendering algorithm for
      surface_quality = 2, 3, 4, etc.
 
