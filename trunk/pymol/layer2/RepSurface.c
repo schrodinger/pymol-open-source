@@ -856,20 +856,27 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       }
     }
     if(SettingGet(cSetting_surface_debug)) {
-      
+      t=I->T;
       c=I->NT;
       if(c) {
         glBegin(GL_TRIANGLES);
         while(c--) {
-          glNormal3fv(vn+(*t)*3);
-          glVertex3fv(v+(*t)*3);
-          t++;
-          glNormal3fv(vn+(*t)*3);
-          glVertex3fv(v+(*t)*3);
-          t++;
-          glNormal3fv(vn+(*t)*3);
-          glVertex3fv(v+(*t)*3);
-          t++;
+
+          if(I->allVisibleFlag||((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                                 ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))) {
+            
+            glNormal3fv(vn+(*t)*3);
+            glVertex3fv(v+(*t)*3);
+            t++;
+            glNormal3fv(vn+(*t)*3);
+            glVertex3fv(v+(*t)*3);
+            t++;
+            glNormal3fv(vn+(*t)*3);
+            glVertex3fv(v+(*t)*3);
+            t++;
+          } else {
+            t+=3;
+          }
         }
         glEnd();
       }
@@ -883,15 +890,22 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           {
             glBegin(GL_LINE_STRIP);
             
-            glNormal3fv(vn+(*t)*3);
-            glVertex3fv(v+(*t)*3);
-            t++;
-            glNormal3fv(vn+(*t)*3);
-            glVertex3fv(v+(*t)*3);
-            t++;
-            glNormal3fv(vn+(*t)*3);
-            glVertex3fv(v+(*t)*3);
-            t++;
+            if(I->allVisibleFlag||((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))) {
+              
+              
+              glNormal3fv(vn+(*t)*3);
+              glVertex3fv(v+(*t)*3);
+              t++;
+              glNormal3fv(vn+(*t)*3);
+              glVertex3fv(v+(*t)*3);
+              t++;
+              glNormal3fv(vn+(*t)*3);
+              glVertex3fv(v+(*t)*3);
+              t++;
+            } else {
+              t+=3;
+            }
             glEnd();
           }
       }
