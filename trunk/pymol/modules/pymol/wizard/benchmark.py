@@ -230,7 +230,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('BLITS',cnt/elapsed)
+      report('BLITS',2*cnt/elapsed)
 
    def surface_calculation(self):
       cmd.load("test/dat/il2.pdb")
