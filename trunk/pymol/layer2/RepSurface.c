@@ -862,6 +862,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   SphereRec *sp = Sphere0;
   SphereRec *ssp = Sphere0;
   AtomInfoType *ai1,*ai2;
+  int n_present = 0;
   #if 0
   int c1;
   float v1[3];
@@ -970,6 +971,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
       
 	 OrthoBusyFast(0,1);
 
+    n_present = cs->NIndex;
+
     if(1&&!I->allVisibleFlag) {
       /* optimize the space over which we calculate a surface */
       
@@ -1018,11 +1021,21 @@ Rep *RepSurfaceNew(CoordSet *cs)
           }
       MapFree(map);
       map = NULL;
+
+      /* now count how many atoms we actually need to think about */
+
+      n_present = 0;
+      for(a=0;a<cs->NIndex;a++)
+        if(present[a]) {
+          n_present++;
+        }
     }
     
-	 I->V=Alloc(float,cs->NIndex*3*sp->nDot*9);
+    if(n_present<1) n_present=1; /* safety */
+
+	 I->V=Alloc(float,n_present*3*sp->nDot*9);
     ErrChkPtr(I->V);
-	 I->VN=Alloc(float,cs->NIndex*3*sp->nDot*9);
+	 I->VN=Alloc(float,n_present*3*sp->nDot*9);
     ErrChkPtr(I->VN);
 	 I->N=0;
     v=I->V;
