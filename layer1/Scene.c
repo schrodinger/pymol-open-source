@@ -118,6 +118,11 @@ void SceneSetCardInfo(char *vendor,char *renderer,char *version){
   UtilNCopy(I->version,version,sizeof(OrthoLineType)-1);
 }
 
+int SceneGetStereo(void)
+{
+  CScene *I=&Scene;  
+  return(I->StereoMode);
+}
 void SceneGetCardInfo(char **vendor,char **renderer,char **version)
 {
   CScene *I=&Scene;  
@@ -162,10 +167,13 @@ void SceneGetPos(float *pos)
 /*========================================================================*/
 int SceneMultipick(Multipick *smp)
 {
-
+  CScene *I=&Scene;
   if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
     SceneRender(NULL,0,0,NULL); /* remove overlay if present */
   SceneDontCopyNext();
+  if(I->StereoMode>1) {
+    smp->x = smp->x % (I->Width/2);
+  }
   SceneRender(NULL,0,0,smp);
   SceneDirty();
   return(1);
@@ -229,9 +237,11 @@ void SceneDontCopyNext(void)
 void SceneSetStereo(int flag)
 {
   CScene *I=&Scene;
-  I->StereoMode=flag;
+  if(flag) 
+    I->StereoMode=(int)SettingGet(cSetting_stereo_mode);
+  else
+    I->StereoMode=false;
   SceneDirty();
-
 }
 /*========================================================================*/
 void SceneTranslate(float x,float y, float z)
@@ -888,14 +898,21 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeRotZ:
     SceneDontCopyNext();
 
-	 y=y-I->Block->margin.bottom;
-	 x=x-I->Block->margin.left;
+    y=y-I->Block->margin.bottom;
+    x=x-I->Block->margin.left;
+    
+    if(I->StereoMode>1)
+      x = x % (I->Width/2);
 
-	 I->LastX=x;
-	 I->LastY=y;	 
-	 SceneDirty();
+    I->LastX=x;
+    I->LastY=y;	 
+
+    SceneDirty();
     break;
   case cButModePickAtom:
+    if(I->StereoMode>1)
+      x = x % (I->Width/2);
+
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
       SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
@@ -937,6 +954,10 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     SceneDirty();
     break;
   case cButModePickBond:
+
+    if(I->StereoMode>1)
+      x = x % (I->Width/2);
+
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
       SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
@@ -991,9 +1012,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeMovFrag:
   case cButModeTorFrag:
   case cButModeRotFrag:
+
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
       SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
+    if(I->StereoMode>1)
+      x = x % (I->Width/2);
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
       obj=(CObject*)I->LastPicked.ptr;
@@ -1007,6 +1031,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       EditorPrepareDrag(objMol,I->LastPicked.index,I->StateIndex);
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
+
+
       I->LastX=x;
       I->LastY=y;	
       I->SculptingFlag = 1;
@@ -1028,6 +1054,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
       SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
+
+    if(I->StereoMode>1)
+      x = x % (I->Width/2);
 
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
@@ -1169,6 +1198,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
   float axis[3],axis2[3],theta,omega;
   int mode;
+  int eff_width;
   CObject *obj;
 
   mode = ButModeTranslate(I->Button,mod);
@@ -1184,6 +1214,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   case cButModeMovFrag:
   case cButModeTorFrag:
   case cButModeRotFrag:
+
     obj=(CObject*)I->LastPicked.ptr;
     if(obj)
       if(obj->type==cObjectMolecule) {
@@ -1191,6 +1222,11 @@ int SceneDrag(Block *block,int x,int y,int mod)
                                        I->LastPicked.index,v1)) {
           /* scale properly given the current projection matrix */
           vScale = SceneGetScreenVertexScale(v1);
+          if(I->StereoMode>1) {
+            x = x % (I->Width/2);
+            vScale*=2;
+          }
+
           v2[0] = (x-I->LastX)*vScale;
           v2[1] = (y-I->LastY)*vScale;
           v2[2] = 0;
@@ -1205,6 +1241,10 @@ int SceneDrag(Block *block,int x,int y,int mod)
   case cButModeTransXY:
 
     vScale = SceneGetScreenVertexScale(I->Origin);
+    if(I->StereoMode>1) {
+      x = x % (I->Width/2);
+      vScale*=2;
+    }
 
     v2[0] = (x-I->LastX)*vScale;
     v2[1] = (y-I->LastY)*vScale;
@@ -1229,11 +1269,17 @@ int SceneDrag(Block *block,int x,int y,int mod)
   case cButModeClipNF:
   case cButModeClipN:    
   case cButModeClipF:    
+    
+    eff_width = I->Width;
+    if(I->StereoMode>1) {
+      eff_width = I->Width/2;
+      x = x % eff_width;
+    }
 
-    v1[0] = (I->Width/2) - x;
+    v1[0] = (eff_width/2) - x;
     v1[1] = (I->Height/2) - y;
     
-	 v2[0] = (I->Width/2) - I->LastX;
+	 v2[0] = (eff_width/2) - I->LastX;
 	 v2[1] = (I->Height/2) - I->LastY;
 	 
 	 r1 = sqrt1f(v1[0]*v1[0] + v1[1]*v1[1]);
@@ -1375,8 +1421,8 @@ void SceneFree(void)
   if(!I->MovieOwnsImageFlag)
 	 FreeP(I->ImageBuffer);
   
-  if(I->StereoMode) {
-    PStereoOff();
+  if(I->StereoMode==1) {
+    PSGIStereo(0);
   }
 
   CGOFree(DebugCGO);
@@ -1544,6 +1590,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
 
   fov=SettingGet(cSetting_field_of_view);
   aspRat = ((float) ray_width) / ((float) ray_height);
+
 
   if(SettingGet(cSetting_all_states)) {
     curState=-1;
@@ -1822,6 +1869,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     pick,x,y,smp
     ENDFD;
 
+  if(I->StereoMode>1)
+    aspRat=aspRat/2;
+
   fov=SettingGet(cSetting_field_of_view);
   if(PMGUI) {
     glDrawBuffer(GL_BACK);
@@ -2005,6 +2055,12 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     /* 1. render all objects */
     if(pick) {
       /* atom picking HACK - obfuscative coding */
+
+      switch(I->StereoMode) {
+      case 2:
+        glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+        break;
+      }
 	
       glClearColor(0.0,0.0,0.0,0.0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2058,6 +2114,13 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		VLAFree(pickVLA);
 		
     } else if(smp) {
+
+      switch(I->StereoMode) {
+      case 2:
+        glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+        break;
+      }
+
       /* multiple atom picking HACK - even more obfuscative coding */
 
       glClearColor(0.0,0.0,0.0,0.0);
@@ -2138,8 +2201,15 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       start_time = UtilGetSeconds();
       if(I->StereoMode) {
         /*stereo*/
-
         
+        switch(I->StereoMode) {
+        case 2:
+          glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+          break;
+        }
+          
+        /* render left side */
+
         glDrawBuffer(GL_BACK_LEFT);
         glPushMatrix();
         ScenePrepareMatrix(1);
@@ -2175,10 +2245,16 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               rec->obj->fRender(rec->obj,curState,NULL,NULL,-1);
             glPopMatrix();
           }
-        
-
         glPopMatrix();
         
+        switch(I->StereoMode) {
+        case 2:
+          glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+          break;
+        }
+
+        /* render right side */
+
         glDrawBuffer(GL_BACK_RIGHT);
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix();

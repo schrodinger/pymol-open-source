@@ -923,10 +923,13 @@ int PPovrayRender(char *header,char *inp,char *file,int width,int height,int ant
   return(ok);
 }
 
-void PStereoOff(void) 
+void PSGIStereo(int flag) 
 {
   PBlock();
-  PRunString("pm._stereo(0)");
+  if(flag) 
+    PRunString("cmd._sgi_stereo(1)");
+  else
+    PRunString("cmd._sgi_stereo(0)");
   PUnblock();
 }
 

@@ -2466,13 +2466,11 @@ static PyObject *CmdStereo(PyObject *self, PyObject *args)
   int i1;
   int ok=false;
   
-  if(StereoCapable) {
-    ok = PyArg_ParseTuple(args,"i",&i1);
-    if (ok) {
-      APIEntry();
-      ExecutiveStereo(i1); /* TODO STATUS */
-      APIExit();
-    }
+  ok = PyArg_ParseTuple(args,"i",&i1);
+  if (ok) {
+    APIEntry();
+    ok = ExecutiveStereo(i1); 
+    APIExit();
   }
   return APIStatus(ok);
 }

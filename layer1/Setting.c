@@ -572,6 +572,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_light:
 	 SceneDirty();
 	 break;
+  case cSetting_stereo_shift:
+  case cSetting_stereo_angle:
+	 SceneDirty();
+	 break;
   case cSetting_min_mesh_spacing:
   case cSetting_mesh_mode:
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvRep);
@@ -1287,6 +1291,12 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_fit_iterations, 1000.0F);
 
   SettingSet_f(I,cSetting_fit_tolerance, 0.00001F);
+
+  if(StereoCapable) {
+    SettingSet_f(I,cSetting_stereo_mode, 1.0F); 
+  } else {
+    SettingSet_f(I,cSetting_stereo_mode, 2.0F);
+  }
 
   SettingSet_s(I,cSetting_batch_prefix,"tmp_pymol");
 

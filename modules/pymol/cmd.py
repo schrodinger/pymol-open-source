@@ -89,6 +89,9 @@ QuietException = parsing.QuietException
 toggle_dict = {'on':1,'off':0,'1':1,'0':0}
 toggle_sc = Shortcut(toggle_dict.keys())
 
+stereo_dict = {'on':1,'off':0,'1':1,'0':0,'swap':-1,'crosseye':2} #,'walleye':3}
+stereo_sc = Shortcut(stereo_dict.keys())
+
 repres = {
    'everything'    : -1,
    'sticks'        : 0,
@@ -545,13 +548,14 @@ def _refresh(swap_buffers=1):  # Only call with GLUT thread!
 
 # stereo (platform dependent )
 
-def _stereo(flag): # SGI-SPECIFIC - bad bad bad
+def _sgi_stereo(flag): # SGI-SPECIFIC - bad bad bad
    
-   if flag:
-      os.system("/usr/gfx/setmon -n 1024x768_96s")
-   else:
-      os.system("/usr/gfx/setmon -n 72hz")
-
+   if os.path.exists("/usr/gfx/setmon"):
+      if flag:
+         os.system("/usr/gfx/setmon -n 1024x768_96s")
+      else:
+         os.system("/usr/gfx/setmon -n 72hz")
+      
 # color alias interpretation
 
 def _interpret_color(color):
@@ -733,6 +737,7 @@ DESCRIPTION
 #####################################################################
 # Here is where the PyMOL Command Language and API are built.
 #####################################################################
+
 
 # first we need to import a set of symbols into this module's local
 # namespace
@@ -1320,7 +1325,7 @@ auto_arg =[
    'flag'           : [ editing.flag_sc        , 'flag'            , ', ' ],
    'show'           : [ repres_sc              , 'representation'  , ', ' ],
    'hide'           : [ repres_sc              , 'representation'  , ', ' ],
-   'stereo'         : [ toggle_sc              , 'option'          , ''   ],
+   'stereo'         : [ stereo_sc              , 'option'          , ''   ],
    'full_screen'    : [ toggle_sc              , 'option'          , ''   ],
    'clip'           : [ viewing.clip_action_sc , 'clipping action' , ', ' ],
    'feedback'       : [ fb_action_sc           , 'action'          , ', ' ],

@@ -23,7 +23,7 @@ import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
      _feedback,fb_module,fb_mask, \
      repres,repres_sc, \
-     toggle_dict,toggle_sc
+     toggle_dict,toggle_sc,stereo_dict,stereo_sc
 
 
 view_dict = {}
@@ -560,31 +560,26 @@ USAGE
  
    stereo on
    stereo off
-
+   stereo swap
+   stereo crosseye 
+   
 PYMOL API
 
    cmd.stereo(string state="on")
    '''
-   state = toggle_dict[toggle_sc.auto_err(str(state),'toggle')]
+   state = stereo_dict[stereo_sc.auto_err(str(state),'state')]
    r = None
-   if state:
-      try:
-         lock()
-         if _cmd.stereo(1):
-            r = cmd._stereo(1)
-         else:
-            print "Error: stereo not available"
-      finally:
-         unlock();
-   else:
-      try:
-         lock()
-         if _cmd.stereo(0):
-            r = cmd._stereo(0)
-         else:
-            print "Error: stereo not available"
-      finally:
-         unlock();
+   try:
+      lock()
+      if state>1:
+         if state==2: # cross-eye
+            cmd.set("stereo_mode","2",quiet=1)
+         state=1
+      if not _cmd.stereo(state):
+         print "Error: Selected stereo mode is not available."
+         if _raising(): raise QuietException
+   finally:
+      unlock();
    return r
 
 
