@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Util.h"
 #include"Executive.h"
+#include"P.h"
 
 typedef struct {
   ObjectMolecule *Obj;
@@ -320,11 +321,11 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi)
   if(obj0&&s0&&(!s1)) { /* single atom mode */
     if(i0>=0) {
       ObjectMoleculeVerifyChemistry(obj0);
-      SelectorCreate(cEditorSele1,s0,NULL,false); /* wasteful but who cares */
+      SelectorCreate(cEditorSele1,s0,NULL,false,NULL); /* wasteful but who cares */
       ExecutiveDelete(cEditorSele2);
       EditorSetActiveObject(obj0,SceneGetState());
       if(pkresi) {
-        SelectorCreate(cEditorRes,"(byres pk1)",NULL,true);
+        SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
         if(SettingGet(cSetting_auto_hide_selections))
           ExecutiveHideSelections();
       }
@@ -343,8 +344,8 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi)
       }
     }
     if((i0>=0)&&(i1>=0)) {
-      SelectorCreate(cEditorSele1,s0,NULL,false);
-      SelectorCreate(cEditorSele2,s1,NULL,false);
+      SelectorCreate(cEditorSele1,s0,NULL,false,NULL);
+      SelectorCreate(cEditorSele2,s1,NULL,false,NULL);
       EditorSetActiveObject(obj0,SceneGetState());
       SceneDirty();
       result=true;
@@ -457,7 +458,7 @@ void EditorRemove(int hydrogen)
 
         if(hydrogen) {
           sprintf(buf,"((neighbor %s) and hydro)",cEditorSele1);          
-          h_flag = SelectorCreate(cEditorRemoveSele,buf,NULL,false);
+          h_flag = SelectorCreate(cEditorRemoveSele,buf,NULL,false,NULL);
         }
 
         /* atom mode */
@@ -816,7 +817,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   int seleFlag= false;
   int i0,i1;
   CEditor *I = &Editor;
-
+  int log_trans = SettingGet(cSetting_log_transformations);
   if(!I->Obj) { /* non-anchored */
     /* need to modify this code to move a complete covalent structure */
 
@@ -930,7 +931,8 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     }
   }
   if(I->DragObject)
-    ObjectMoleculeSaveUndo(I->DragObject,state,true);
+    ObjectMoleculeSaveUndo(I->DragObject,state,log_trans);
+  if(log_trans) PLogFlush();
 }
 /*========================================================================*/
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float *mov)
@@ -940,6 +942,8 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
   float d0[3],d1[3],d2[3],n0[3],n1[3],n2[3];
   float opp,adj,theta;
   float m[16];
+  int log_trans = SettingGet(cSetting_log_transformations);
+
   if((index=I->DragIndex)&&(obj=I->DragObject)) {
     if(obj!=I->Obj) {
       /* non-achored actions */
@@ -963,17 +967,17 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
         m[12] =  v3[0];
         m[13] =  v3[1];
         m[14] =  v3[2];
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
         SceneDirty();
         break;
       case cButModeTorFrag:
-        ObjectMoleculeMoveAtom(obj,state,index,mov,1,true);
+        ObjectMoleculeMoveAtom(obj,state,index,mov,1,log_trans);
         SceneDirty();
         break;
       case cButModeMovFrag:
         MatrixLoadIdentity44f(m);
         copy3f(mov,m+12);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
         SceneDirty();
         break;
       }
@@ -1010,7 +1014,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
         m[12] =  v3[0];
         m[13] =  v3[1];
         m[14] =  v3[2];
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
         SceneDirty();
         break;
       case cButModeTorFrag:
@@ -1045,7 +1049,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
             m[12] =  v1[0];
             m[13] =  v1[1];
             m[14] =  v1[2];
-            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
+            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
           }
         }
         SceneDirty();
@@ -1053,7 +1057,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
       case cButModeMovFrag:
         MatrixLoadIdentity44f(m);
         copy3f(mov,m+12);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
         SceneDirty();
         break;
       }

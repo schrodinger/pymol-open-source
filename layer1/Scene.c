@@ -101,8 +101,12 @@ typedef struct {
 CScene Scene;
 
 unsigned int SceneFindTriplet(int x,int y);
+unsigned int *SceneReadTriplets(int x,int y,int w,int h);
+
 void SceneDraw(Block *block);
 int SceneClick(Block *block,int button,int x,int y,int mod);
+int SceneRelease(Block *block,int button,int x,int y,int mod);
+
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
 
@@ -139,7 +143,17 @@ void SceneGetPos(float *pos)
     ENDFD3f(pos);
 
 }
+/*========================================================================*/
+int SceneMultipick(Multipick *smp)
+{
 
+  if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
+    SceneRender(NULL,0,0,NULL); /* remove overlay if present */
+  SceneDontCopyNext();
+  SceneRender(NULL,0,0,smp);
+  SceneDirty();
+  return(1);
+}
 /*========================================================================*/
 int SceneGetNFrame(void)
 {
@@ -184,7 +198,7 @@ void SceneSetView(SceneViewType view)
   p+=2;
   SettingSet(cSetting_ortho,*(p++));
   PRINTFB(FB_Scene,FB_Actions)
-    " Scene: view updated."
+    " Scene: view updated.\n"
     ENDFB;
 
 }
@@ -445,7 +459,7 @@ void SceneMakeMovieImage(void) {
       glClearColor(v[0],v[1],v[2],1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
-      SceneRender(NULL,0,0);
+      SceneRender(NULL,0,0,NULL);
       SceneCopy(0);
     }
   }
@@ -649,13 +663,52 @@ unsigned int SceneFindTriplet(int x,int y)
               if(buffer[a+cRange][b+cRange][e]) {
                 flag = false;
                 c=&buffer[a+cRange][b+cRange][0];
-                /*  printf("%2x %2x %2x\n",c[0],c[1],c[2]);*/
                 result =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
+                /*printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result);*/
+
                 break;
               }
           }
   }
   return(result);
+}
+/*========================================================================*/
+unsigned int *SceneReadTriplets(int x,int y,int w,int h)
+{
+  unsigned int *result=NULL;
+  pix buffer[w][h];
+  int a,b,e;
+  unsigned char *c;
+  int cc = 0;
+
+  if(PMGUI) { /*just in case*/
+    result = VLAlloc(unsigned int,w*h);
+    glReadBuffer(GL_BACK);
+    glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0][0]);
+    
+    for(a=0;a<w;a++)
+      for(b=0;b<h;b++)
+        {
+          for(e=0;e<3;e++)
+            if(buffer[a][b][e]) {
+              c=&buffer[a][b][0];
+              VLACheck(result,unsigned int,cc);
+              result[cc] =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
+              /*printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result[cc]);*/
+
+              cc++;
+              break;
+            }
+        }
+  VLASize(result,unsigned int,cc);
+  }
+  return(result);
+
+}
+/*========================================================================*/
+int SceneRelease(Block *block,int button,int x,int y,int mod) 
+{
+  return(1);
 }
 /*========================================================================*/
 int SceneClick(Block *block,int button,int x,int y,int mod)
@@ -671,6 +724,10 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   I->Button=button;    
 
   switch(mode) {
+  case cButModeRectAdd:
+  case cButModeRectSub:
+    return(0);
+    break;
   case cButModeRotXYZ:
   case cButModeTransXY:
   case cButModeTransZ:
@@ -689,10 +746,10 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     break;
   case cButModePickAtom:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0); /* remove overlay if present */
+      SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
     I->LastPicked.ptr = NULL;
-	 SceneRender(&I->LastPicked,x,y);
+	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
       if(obj->type==cObjectMolecule) {
@@ -710,11 +767,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         }
         sprintf(buffer,"%s`%d",
                 obj->Name,I->LastPicked.index+1);    
-        SelectorCreate(cEditorSele1,buffer,NULL,true);
+        SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
         ExecutiveDelete(cEditorSele2);
         EditorSetActiveObject((ObjectMolecule*)obj,I->StateIndex);
         if(EditorActive()) {
-          SelectorCreate(cEditorRes,"(byres pk1)",NULL,true);
+          SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
           if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
         }
@@ -730,10 +787,10 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     break;
   case cButModePickBond:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0); /* remove overlay if present */
+      SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
     I->LastPicked.ptr = NULL;
-	 SceneRender(&I->LastPicked,x,y);
+	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
       if(obj->type==cObjectMolecule) {
@@ -745,7 +802,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         }
 		  sprintf(buffer,"%s`%d",
 					 obj->Name,I->LastPicked.index+1);    
-        SelectorCreate(cEditorSele1,buffer,NULL,true);
+        SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
         objMol = (ObjectMolecule*)obj;
         if(I->LastPicked.bond>=0) {
           atIndex = objMol->Bond[I->LastPicked.bond*3];
@@ -767,7 +824,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           }
           sprintf(buffer,"%s`%d",
                   obj->Name,atIndex+1);    
-          SelectorCreate(cEditorSele2,buffer,NULL,true);
+          SelectorCreate(cEditorSele2,buffer,NULL,true,NULL);
           EditorSetActiveObject(objMol,I->StateIndex);
           WizardDoPick(1);
 
@@ -784,9 +841,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeTorFrag:
   case cButModeRotFrag:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0); /* remove overlay if present */
+      SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
-	 SceneRender(&I->LastPicked,x,y);
+	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
       obj=(Object*)I->LastPicked.ptr;
       if(Feedback(FB_ObjectMolecule,FB_Results)) {
@@ -811,10 +868,10 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeAddToPk3:
   case cButModeOrigAt:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0); /* remove overlay if present */
+      SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
 
-	 SceneRender(&I->LastPicked,x,y);
+	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
       if(Feedback(FB_ObjectMolecule,FB_Results)) {
@@ -858,7 +915,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cButModePk1:
       case cButModePk2:
       case cButModePk3:
-        SelectorCreate(selName,buffer,NULL,false);
+        SelectorCreate(selName,buffer,NULL,false,NULL);
         if(SettingGet(cSetting_auto_hide_selections))
           ExecutiveHideSelections();
         if(SettingGet(cSetting_auto_show_selections))
@@ -878,7 +935,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         if(SelectorIndexByName(selName)>=0) {
           sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
                   selName,buffer,buffer,selName);
-          SelectorCreate(selName,buf2,NULL,false);
+          SelectorCreate(selName,buf2,NULL,false,NULL);
           if(obj->type==cObjectMolecule) {
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
@@ -890,7 +947,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             }
           }
         } else {
-          SelectorCreate(selName,buffer,NULL,false);
+          SelectorCreate(selName,buffer,NULL,false,NULL);
           if(obj->type==cObjectMolecule) {
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
@@ -1199,6 +1256,7 @@ void SceneInit(void)
   
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick   = SceneClick;
+  I->Block->fRelease = SceneRelease;
   I->Block->fDrag    = SceneDrag;
   I->Block->fDraw    = SceneDraw;
   I->Block->fReshape = SceneReshape;
@@ -1503,7 +1561,7 @@ int SceneRenderCached(void)
   return(renderedFlag);
 }
 /*========================================================================*/
-void SceneRender(Pickable *pick,int x,int y)
+void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 {
   /* think in terms of the camera's world */
   CScene *I=&Scene;
@@ -1511,6 +1569,7 @@ void SceneRender(Pickable *pick,int x,int y)
   float fog[4];
   float *v,vv[4],f;
   unsigned int lowBits,highBits;
+  unsigned int *lowBitVLA=NULL,*highBitVLA=NULL;
   static float white[4] =
   {1.0, 1.0, 1.0, 1.0};
   float zero[4] = {0.0,0.0,0.0,0.0};
@@ -1520,9 +1579,13 @@ void SceneRender(Pickable *pick,int x,int y)
   float height,width;
   float start_time=0;
   int view_save[4];
-  Pickable *pickVLA;
+  Pickable *pickVLA,*pik;
+  int lastIndex=0;
+  void *lastPtr=NULL;
   int index;
   int curState;
+  int nPick,nBits;
+  int a;
 
   if(PMGUI) {
     glDrawBuffer(GL_BACK);
@@ -1578,7 +1641,7 @@ void SceneRender(Pickable *pick,int x,int y)
     }
 
     if(SettingGet(cSetting_line_smooth)) {
-      if(!pick) {
+      if(!(pick||smp)) {
         glEnable(GL_LINE_SMOOTH);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -1595,7 +1658,7 @@ void SceneRender(Pickable *pick,int x,int y)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
     
-    if(!pick) {
+    if(!(pick||smp)) {
 
       glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
@@ -1692,7 +1755,7 @@ void SceneRender(Pickable *pick,int x,int y)
 	
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-      pickVLA=VLAlloc(Pickable,1000);
+      pickVLA=VLAlloc(Pickable,5000);
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
       while(ListIterate(I->Obj,rec,next))
@@ -1727,6 +1790,67 @@ void SceneRender(Pickable *pick,int x,int y)
       }
 		VLAFree(pickVLA);
 		
+    } else if(smp) {
+      /* multiple atom picking HACK - even more obfuscative coding */
+
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+      pickVLA=VLAlloc(Pickable,5000);
+      pickVLA[0].index=0;
+      pickVLA[0].ptr=NULL;
+      while(ListIterate(I->Obj,rec,next))
+        {
+          glPushMatrix();
+			 if(rec->obj->fRender)
+			   rec->obj->fRender(rec->obj,curState,NULL,&pickVLA);
+			 glPopMatrix();
+        }
+
+	
+      lowBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h);
+	
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+      pickVLA[0].index=0;
+      pickVLA[0].ptr=(void*)smp; /* this is just a flag */
+	
+      while(ListIterate(I->Obj,rec,next))
+        {
+          glPushMatrix();
+          if(rec->obj->fRender)
+            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA);
+          glPopMatrix();
+        }
+      
+      highBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h);
+      
+      nBits = VLAGetSize(lowBitVLA);
+      nPick=0;
+      if(nBits==VLAGetSize(highBitVLA)) { /* should always be true */
+        for(a=0;a<nBits;a++) {
+          index = lowBitVLA[a]+(highBitVLA[a]<<12);
+          if(index&&(index<=pickVLA[0].index)) {          
+            pik = pickVLA+index; /* just using as a tmp */
+            if((pik->index!=lastIndex)||(pik->ptr!=lastPtr))
+              {
+                nPick++; /* start from 1 */
+                VLACheck(smp->picked,Pickable,nPick);
+                lastIndex=pik->index;                
+                lastPtr=pik->ptr;
+                smp->picked[nPick] = *pik; /* return atom/object info -- will be redundant */
+              }
+          }
+        }
+      } else {
+        PRINTFB(FB_Scene,FB_Errors)
+          "Error: pixel count mismatch %d!=%d\n",nBits,VLAGetSize(highBitVLA)
+          ENDFB;
+      }
+      smp->picked[0].index=nPick;
+
+		VLAFree(pickVLA);
+      VLAFreeP(lowBitVLA);
+      VLAFreeP(highBitVLA);
     } else {
       ButModeCaptionReset(); /* reset the frame caption if any */
       /* rendering for visualization */
@@ -1815,7 +1939,7 @@ void SceneRender(Pickable *pick,int x,int y)
       }
     }
   
-    if(!pick) {
+    if(!(pick||smp)) {
       glDisable(GL_FOG);
       glDisable(GL_LIGHTING);
       glDisable(GL_LIGHT1);
@@ -1828,8 +1952,8 @@ void SceneRender(Pickable *pick,int x,int y)
     glDisable(GL_NORMALIZE);
     glDisable(GL_DEPTH_TEST);
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
-  }
-  if(!pick) {
+}
+  if(!(pick||smp)) {
     I->RenderTime = -I->LastRender;
     I->LastRender = UtilGetSeconds();
     I->RenderTime += I->LastRender;

@@ -168,6 +168,7 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
 int ObjectMoleculeCheckBondSep(ObjectMolecule *I,int a0,int a1,int dist);
 int ObjectMoleculeGetPhiPsi(ObjectMolecule *I,int ca,float *phi,float *psi,int state);
 void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer);
+void ObjectMoleculeGetAtomSeleFast(ObjectMolecule *I,int index, char *buffer);
 
 #endif
 

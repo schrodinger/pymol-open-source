@@ -949,8 +949,8 @@ def config_mouse(quiet=0): # INTERNAL
          button('l','','rota')
          button('m','','move')
          button('r','','movz')
-         button('l','shft','rotz')
-         button('m','shft','move')
+         button('l','shft','+lbx')
+         button('m','shft','-lbx')
          button('r','shft','clip')                  
          button('l','ctrl','+lb')
          button('m','ctrl','pkat')
@@ -1092,13 +1092,13 @@ API USAGE
    if len(r):
       if get_setting_legacy("logging")!=0.0:
          print " get_view: matrix written to log file."
-         log("set_view (\\\n","cmd.set_view((\\\n")
-         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
-         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
-         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] , "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11])
-         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19], "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
-         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22], "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22]) 
-         log("  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
+         log("_ set_view (\\\n","cmd.set_view((\\\n")
+         log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
+         log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
+         log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] , "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11])
+         log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19], "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
+         log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22], "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22]) 
+         log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
          if output<2: # suppress if we have a log file open
             output=0
       if output:
@@ -4644,7 +4644,6 @@ NOTES
    'help selections' for more information about selections.
    '''   
    try:
-      quiet=0
       lock()
       if selection=="":
          sel_cnt = _cmd.get("sel_counter") + 1.0
@@ -4655,7 +4654,7 @@ NOTES
          name = name
       # preprocess selection (note: inside TRY)
       selection = selector.process(selection)
-      #            
+      #
       r = _cmd.select(str(name),str(selection),int(quiet))
       if r and show:
          r = _cmd.onoff(str(name),1);
@@ -5078,7 +5077,7 @@ NOTES
    button:      L, M, R
    modifers:    None, Shft, Ctrl, CtSh
    actions:     Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
-                lb,   mb,   rb,   +lb,  +mb,  +rb,
+                lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
                 PkAt, PkBd, RotF, TorF, MovF, Orig
 
    Switching from visualization to editing mode will redefine the
@@ -5090,19 +5089,14 @@ NOTES
    try:
       lock()
       button = string.lower(button)
-      button = button[0]
+      button = button_sc.auto_err(button,'button')
       modifier = string.lower(modifier)
+      modifier = but_mod_sc.auto_err(modifier,'modifier')
       action = string.lower(action)
-      if not button_code.has_key(button):
-         print "Error: unrecognized button name '%s'." % button
-      elif not but_mod_code.has_key(modifier):
-         print "Error: unrecognized button modifier '%s'." % modifier
-      elif not but_act_code.has_key(action):
-         print "Error: unrecognized button action '%s'." % action
-      else:
-         but_code = button_code[button] + 3*but_mod_code[modifier]
-         act_code = but_act_code[action]
-         r = _cmd.button(but_code,act_code)
+      action = but_act_sc.auto_err(action,'action')
+      but_code = button_code[button] + 3*but_mod_code[modifier]
+      act_code = but_act_code[action]
+      r = _cmd.button(but_code,act_code)
    finally:
       unlock()
    return r
@@ -5894,10 +5888,12 @@ repres = {
 rephash = Shortcut(repres.keys())
 
 button_code = {
-   'l' : 0,
-   'm' : 1,
-   'r' : 2,
+   'left' : 0,
+   'middle' : 1,
+   'right' : 2,
    }
+
+button_sc = Shortcut(button_code.keys())
 
 but_mod_code = {
    ''      : 0,
@@ -5906,6 +5902,8 @@ but_mod_code = {
    'ctrl'  : 2,
    'ctsh'  : 3
    }
+
+but_mod_sc = Shortcut(but_mod_code.keys())
 
 but_act_code = {
    'rota' :  0 ,
@@ -5927,8 +5925,12 @@ but_act_code = {
    'torf' : 16 ,
    'movf' : 17 ,
    'orig' : 18 ,
-   'loop' : 19 ,
+   '+lbx' : 19 ,
+   '-lbx' : 20 ,
+   'lbbx' : 21 ,
    }
+
+but_act_sc = Shortcut(but_act_code.keys())
 
 special = {
    1        : [ 'F1'        , None                   , () , {} ],
@@ -5989,12 +5991,15 @@ auto_arg =[
    'full_screen' : [ toggle_sc , 'options','' ],
    'clip' : [ clip_action_sc , 'clipping actions',', ' ],
    'feedback' : [ fb_action_sc , 'actions',', ' ],
+   'button' : [ button_sc , 'buttons',', ' ],
    },
    {
-   'feedback' : [ fb_module_sc , 'modules',', ' ],   
+   'feedback' : [ fb_module_sc , 'modules',', ' ],
+   'button' : [ but_mod_sc , 'modifiers',', ' ],
    },
    {
-   'feedback' : [ fb_mask_sc , 'mask','' ],   
+   'feedback' : [ fb_mask_sc , 'mask','' ],
+   'button' : [ but_act_sc , 'button actions',', ' ],
    }
    ]
    

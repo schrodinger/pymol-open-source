@@ -45,6 +45,8 @@ Z* -------------------------------------------------------------------
 #define cExecAll 2
 
 #define cKeywordAll "all"
+#define cTempRectSele "_rect"
+#define cLeftButSele "lb"
 
 typedef struct SpecRec {
   int type;
@@ -91,6 +93,71 @@ void ExecutiveReshape(Block *block,int width,int height);
 #define ExecColorHidden 0.3,0.3,0.3
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
+
+void ExecutiveSelectRect(BlockRect *rect,int add)
+{
+  Multipick smp;
+  OrthoLineType buffer,buf2;
+  char prefix[3]="";
+  int log_box = 0;
+  int logging;
+  logging =SettingGet(cSetting_logging);
+  if(logging)
+    log_box=SettingGet(cSetting_log_box_selections);
+  if(logging==cPLog_pml)
+    strcpy(prefix,"_ ");
+  smp.picked=VLAlloc(Pickable,1000);
+  smp.x=rect->left;
+  smp.y=rect->bottom;
+  smp.w=rect->right-rect->left;
+  smp.h=rect->top-rect->bottom;
+  SceneMultipick(&smp);
+  if(smp.picked[0].index) {
+  SelectorCreate(cTempRectSele,NULL,NULL,1,&smp);
+  if(log_box) SelectorLogSele(cTempRectSele);
+  if(SelectorIndexByName(cLeftButSele)>=0) {
+    if(add) {
+      sprintf(buffer,"(%s or %s)",cLeftButSele,cTempRectSele);
+      SelectorCreate(cLeftButSele,buffer,NULL,1,NULL);
+      if(log_box) {
+        sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,buffer);
+        PLog(buf2,cPLog_no_flush);
+      }
+    } else {
+      sprintf(buffer,"(%s and not %s)",cLeftButSele,cTempRectSele);
+      SelectorCreate(cLeftButSele,buffer,NULL,1,NULL);
+      if(log_box) {
+        sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,buffer);
+        PLog(buf2,cPLog_no_flush);
+      }
+    }
+  } else {
+    if(add) {
+      SelectorCreate(cLeftButSele,cTempRectSele,NULL,1,NULL);
+      if(log_box) {
+        sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
+        PLog(buf2,cPLog_no_flush);
+      }
+    } else {
+      SelectorCreate(cLeftButSele,"(none)",NULL,1,NULL);
+      if(log_box) {
+        sprintf(buf2,"%scmd.select(\"%s\",\"(none)\",quiet=1)\n",prefix,cLeftButSele);
+        PLog(buf2,cPLog_no_flush);
+      }
+    }
+  }
+  if(SettingGet(cSetting_auto_show_selections)) {
+    ExecutiveSetObjVisib(cLeftButSele,true);
+  }
+  if(log_box) {
+    sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempRectSele);
+    PLog(buf2,cPLog_no_flush);
+  }
+  ExecutiveDelete(cTempRectSele);
+  }
+  VLAFreeP(smp.picked);
+
+}
 
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log)
 {
@@ -897,7 +964,7 @@ void ExecutiveRemoveAtoms(char *s1)
   if(sele<0) {
     if(WordMatch(cKeywordAll,s1,true)<0) {
       all_flag=true;
-      SelectorCreate(all,"(all)",NULL,true);
+      SelectorCreate(all,"(all)",NULL,true,NULL);
     }
     sele=SelectorIndexByName(all);
   }
@@ -1974,7 +2041,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   if(WordMatch(cKeywordAll,name,true)<0) {
     name=all;
     all_flag=true;
-    SelectorCreate(all,"(all)",NULL,true);
+    SelectorCreate(all,"(all)",NULL,true,NULL);
   }
   sele=SelectorIndexByName(name);
 
@@ -2356,7 +2423,7 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
   if(WordMatch(cKeywordAll,name,true)<0) {
     name=all;
     all_flag=true;
-    SelectorCreate(all,"(all)",NULL,true);
+    SelectorCreate(all,"(all)",NULL,true,NULL);
   }
   sele=SelectorIndexByName(name);
   if(sele>=0) {
@@ -2575,6 +2642,8 @@ void ExecutiveDelete(char *name)
 
 			 if(all_flag||(WordMatch(name_copy,rec->name,true)<0))
 				{
+              if(all_flag||rec->visible)
+                SceneChanged();
 				  SelectorDelete(rec->name);
 				  ListDelete(I->Spec,rec,next,SpecList);
 				  rec=NULL;

@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Object.h"
 #include"Ortho.h"
 
+
 typedef float SceneViewType[25]; 
 /* all information required to define the geometry of a particular view,
    for shipping to and from python as a list of floats
@@ -36,7 +37,7 @@ void SceneInit(void);
 void SceneDone(void);
 void SceneUpdate(void);
 int SceneRenderCached(void);
-void SceneRender(Pickable *pick,int x,int y);
+void SceneRender(Pickable *pick,int x,int y,Multipick *smp);
 void SceneSetFrame(int mode,int frame);
 int SceneGetFrame(void);
 int SceneGetState(void);
@@ -86,6 +87,7 @@ void SceneClipSet(float front,float back);
 void SceneGetView(SceneViewType view);
 void SceneSetView(SceneViewType view);
 void SceneGetPos(float *pos);
+int SceneMultipick(Multipick *smp);
 
 #endif
 

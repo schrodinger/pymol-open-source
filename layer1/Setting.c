@@ -555,6 +555,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_depth_cue:
   case cSetting_specular:
   case cSetting_cgo_line_width:
+  case cSetting_selection_width:
     SceneDirty();
     break;
   case cSetting_overlay:
@@ -911,7 +912,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_auto_hide_selections, 1.0);
 
-  SettingSet_f(I,cSetting_selection_width, 5.0);
+  SettingSet_f(I,cSetting_selection_width, 4.0);
 
   SettingSet_f(I,cSetting_selection_overlay, 1.0);
 
@@ -1014,5 +1015,14 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_cgo_line_radius, 0.15);
 
   SettingSet_f(I,cSetting_logging, 0.0);
+
+  SettingSet_f(I,cSetting_robust_logs, 0.0);
+
+  SettingSet_f(I,cSetting_log_box_selections, 0.0);
+
+  SettingSet_f(I,cSetting_log_transformations, 1.0);
+
+  SettingSet_f(I,cSetting_valence_default, 0.05);
+
 }
 

@@ -228,7 +228,11 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_cgo_line_width              129
 #define cSetting_cgo_line_radius             130
 #define cSetting_logging                     131
-#define cSetting_INIT                        132
+#define cSetting_robust_logs                 132
+#define cSetting_log_box_selections          133
+#define cSetting_log_transformations         134
+#define cSetting_valence_default             135
+#define cSetting_INIT                        136
 
 #endif
 
