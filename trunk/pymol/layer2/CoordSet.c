@@ -659,6 +659,18 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 
   /*  printf("inv %d %d \n",type,level);fflush(stdout);*/
 
+  if(level==cRepInvVisib) {
+    if(SettingGet_b(I->G,I->Setting,I->Obj->Obj.Setting,
+                 cSetting_cartoon_side_chain_helper)) {
+      if((type==cRepCyl)||(type==cRepLine))
+        CoordSetInvalidateRep(I,cRepCartoon,cRepInvVisib2);
+      else if(type==cRepCartoon) {
+        CoordSetInvalidateRep(I,cRepLine,cRepInvVisib2);
+        CoordSetInvalidateRep(I,cRepCyl,cRepInvVisib2);
+      }
+    }
+  }
+
   if(I->Spheroid)
     if(I->NSpheroid!=I->NAtIndex*I->SpheroidSphereSize) {
       FreeP(I->Spheroid);

@@ -70,6 +70,7 @@ Z* -------------------------------------------------------------------
 #define cRepInvPick   19
 /* invalidate visible atoms */
 #define cRepInvVisib  20
+#define cRepInvVisib2 21
 /* invalidate atomic properties */
 #define cRepInvProp   22
 /* invalidate coordinates */

@@ -1131,6 +1131,11 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_stereo:
     SceneUpdateStereo(G);
     break;
+  case cSetting_pickable:
+    ExecutiveInvalidateRep(G,inv_sele,cRepAll,cRepInvAll);
+    SceneChanged(G);
+    
+    break;
   case cSetting_seq_view:
   case cSetting_seq_view_label_spacing:
   case cSetting_seq_view_label_mode:
@@ -1236,6 +1241,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     break;
   case cSetting_stick_radius:
   case cSetting_stick_ball:
+  case cSetting_stick_nub:
   case cSetting_stick_ball_ratio:
   case cSetting_stick_fixed_radius:
   case cSetting_stick_quality:
@@ -1344,6 +1350,12 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_cartoon_side_chain_helper:
+    ExecutiveInvalidateRep(G,inv_sele,cRepCartoon,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    SceneChanged(G);
+    break;
   case cSetting_cartoon_transparency:
   case cSetting_cartoon_trace:
   case cSetting_cartoon_refine:
@@ -1395,6 +1407,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_dot_mode:
   case cSetting_dot_solvent:
   case cSetting_dot_hydrogens:
+  case cSetting_trim_dots:
     ExecutiveInvalidateRep(G,inv_sele,cRepDot,cRepInvRep);
     SceneChanged(G);
     break;
@@ -2380,6 +2393,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_cartoon_putty_scale_max, 4.0F);
   SettingSet_f(I,cSetting_cartoon_putty_scale_power, 1.5F);
   SettingSet_f(I,cSetting_cartoon_putty_range, 2.0F);
+  SettingSet_b(I,cSetting_cartoon_side_chain_helper, 0);
 
 }
 

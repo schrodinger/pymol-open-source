@@ -165,6 +165,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int cylindrical_helices;
   int last_color,uniform_color;
   int cartoon_color,highlight_color;
+  int cartoon_side_chain_helper;
   int round_helices;
   int smooth_loops;
   int na_mode;
@@ -235,6 +236,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   if(putty_quality<3) putty_quality=3;
 
   cartoon_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
+  cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
+                                         cSetting_cartoon_side_chain_helper);
 
   highlight_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_highlight_color);
 
@@ -348,6 +351,11 @@ Rep *RepCartoonNew(CoordSet *cs)
 
                 *fp = ai->flags; /* store atom flags */
 
+                if(cartoon_side_chain_helper) {
+                  if(ai->visRep[cRepLine]||ai->visRep[cRepCyl])
+                    *fp |= cAtomFlag_no_smooth;
+                }
+                
                 switch (ai->ssType[0]) {
                 case 'H':
                 case 'h':

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * cartoon_side_chain_helper setting
+
    * putty, and associated selections (thanks in part to Cameron Mura)
 
    * selection dots no longer fogged
