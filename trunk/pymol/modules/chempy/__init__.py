@@ -1,6 +1,7 @@
 
 import string
 import os
+import copy
 
 #
 # Basic chempy types
@@ -38,7 +39,7 @@ class Atom:
    
    def __getattr__(self,attr):
       if Atom.defaults.has_key(attr):
-         return Atom.defaults[attr]
+         return copy.deepcopy(Atom.defaults[attr])
       else:
          raise AttributeError(attr)
 
