@@ -291,7 +291,7 @@ def rainbow(selection="(name ca and alt '',A)",reverse=0): # NOT THREAD SAFE
 
    cmd.feedback("pop")
    
-def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
+def ss(selection="(name ca and alt '',A)",state=1): # NOT THREAD SAFE
 
    print ' util.ss: WARNING: This is not a "correct" secondary structure'
    print ' util.ss: assignment algorithm!  Please use only as a last resort.'
@@ -383,7 +383,7 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
 
    for a in cas:
       ss[a] = 'L' # default
-   phipsi = cmd.get_phipsi(sss1)
+   phipsi = cmd.get_phipsi(sss1,state)
    for a in phipsi.keys():
       (phi,psi) = phipsi[a]
 #      print scr_dict[a],(phi,psi)
@@ -400,7 +400,10 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    # find all pairwise hydrogen bonds and make note of them in dict
 
    hb = cmd.find_pairs("((byres "+sss1+") and n;n)",
-                       "((byres "+sss1+") and n;o)",mode=1,cutoff=3.7,angle=55)
+                       "((byres "+sss1+") and n;o)",mode=1,
+                       cutoff=3.7,angle=55,
+                       state1=state,state2=state)
+   
    hb_dict = {}  # [((N-atom) (O-atom))] = 1
    n_hb_dict = {} # [(N-atom)] = [(O-atom),...]
    o_hb_dict = {} # [(O-atom)] = [(N-atom),...]
