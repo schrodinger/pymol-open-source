@@ -498,7 +498,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
 
   sprintf(buffer,"#default { finish{phong %8.3f ambient %8.3f diffuse %8.3f phong_size %8.6f}}\n",
           SettingGet(cSetting_spec_reflect),
-          SettingGet(cSetting_ambient)*1.2,
+          SettingGet(cSetting_ambient),
           SettingGet(cSetting_reflect)*1.2,
           SettingGet(cSetting_spec_power)/4.0);
   UtilConcatVLA(&headerVLA,&hc,buffer);

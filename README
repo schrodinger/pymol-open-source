@@ -21,7 +21,7 @@ Specific Acknowledgments:
 space group and symmetry handling module.
 
 * Thanks to the scientists and management of Sunesis Pharmaceuticals 
-for encouraging PyMOL development since its early days.
+for supporting PyMOL development since its inception.
 
 * Thanks to the Computational Crystallography Initiative developers
 for their encouragement, ideas, and support. 
@@ -30,7 +30,7 @@ for their encouragement, ideas, and support.
 of Mesa/DRI which greatly assisted in the early development of PyMOL.
 
 * Thanks to Michael Love for the first major outside port of PyMOL
-(to GNU/Darwin and Mac OSX) and for believing in the cause.
+(to GNU-Darwin/OSX) and for believing in the cause.
 
 * Thanks for Paul Sherwood for making a concerted effort to develop 
 using PyMOL long before the software and vision had matured.

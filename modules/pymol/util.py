@@ -210,22 +210,22 @@ def ray_shadows(mode):
       cmd.set('gamma',1.3) 
    elif mode=='heavy':
       cmd.set('reflect_power',1.0)
-      cmd.set('spec_reflect',0.53)
+      cmd.set('spec_reflect',0.60) # was 0.53
       cmd.set('spec_power',90) # was 60
       cmd.set('ambient',0.08)
       cmd.set('reflect',0.75) # was 0.65
       cmd.set('direct',0.06)
       cmd.set('power',0.3)
       cmd.set('gamma',1.43) # was 1.5
-   elif mode=='black':
+   elif mode=='black': # best for light backgrounds
       cmd.set('power',0.3)
-      cmd.set('spec_reflect',0.6)
-      cmd.set('spec_power',90) # was 60
+      cmd.set('spec_reflect',1.2)
+      cmd.set('spec_power',90) 
       cmd.set('ambient',0.00)
-      cmd.set('reflect',0.75) # was 0.75         
+      cmd.set('reflect',0.8)
       cmd.set('direct',0.00)
-      cmd.set('reflect_power',1.0)
-      cmd.set('gamma',1.55) # was 1.5
+      cmd.set('reflect_power',1.7)
+      cmd.set('gamma',1.55) 
 
       
 def ff_copy(src,dst): # NOT THREAD SAFE
