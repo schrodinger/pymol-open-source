@@ -89,6 +89,30 @@ unix-mindep: semistatic
 	cd $(MINDEP);chown -R nobody.nobody pymol
 	cd $(MINDEP);tar -zcvf ../pymol-0_xx-bin-xxxxx-mindep.tgz pymol
 
+irix-mindep: semistatic
+	$(PYTHON_EXE) modules/compile_pymol.py
+	/bin/rm -rf $(MINDEP)
+	mkdir products/unix-mindep
+	mkdir products/unix-mindep/pymol
+	mkdir products/unix-mindep/pymol/ext
+	mkdir products/unix-mindep/pymol/ext/lib
+	cp -r modules $(MDP)
+	cp -r test $(MDP)
+	cp -r data $(MDP)	
+	cp -r examples $(MDP)
+	cp -r pymol.exe $(MDP)
+	cp -r ext/lib/python2.2 $(MDP)/ext/lib
+	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
+	cp -r ext/lib/tk8.4 $(MDP)/ext/lib
+	/bin/rm -f $(MDP)/ext/lib/python2.2/config/libpython2.2.a
+	/bin/rm -rf $(MDP)/ext/lib/python2.2/test
+	cp LICENSE $(MDP)
+	cp README $(MDP)
+	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
+	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
+	cd $(MINDEP);chown -R nobody.nobody pymol
+	cd $(MINDEP);tar -cvf - pymol |gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
+
 windows: .includes .depends .update 
 	echo "EXPORTS" > _cmd.def
 	nm --demangle --defined-only */*.o | grep ' T ' | sed 's/.* T //' >> _cmd.def 

@@ -18,12 +18,12 @@ Z* -------------------------------------------------------------------
 #ifdef WIN32
 #include<windows.h>
 #endif
+#include"os_python.h"
 
 #include"os_std.h"
 #include"os_time.h"
 #include"os_unix.h"
 
-#include"os_python.h"
 
 
 #include"MemoryDebug.h"
@@ -763,9 +763,9 @@ void PInitEmbedded(int argc,char **argv)
   /* used by semistatic PyMOL */
 {
   char line[5000];
-  static line1[5000];
-  static line2[5000];
-  static line3[5000];
+  static char line1[5000];
+  static char line2[5000];
+  static char line3[5000];
   char *pymol_path;
 
   if(!getenv("PYMOL_PATH")) {
@@ -811,9 +811,9 @@ putenv(line3);
 #ifdef _PYMOL_SETUP_PY22
   /* used by semistatic PyMOL */
 {
-static line1[5000];
-static line2[5000];
-static line3[5000];
+static char line1[5000];
+static char line2[5000];
+static char line3[5000];
   char *pymol_path;
 
   if(!getenv("PYMOL_PATH")) {
