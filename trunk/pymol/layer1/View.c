@@ -395,8 +395,10 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
 
     copy33f44d(inter3x3,current->matrix);
 
+
     if(first->pre_flag && last->pre_flag) {
       copy3f(&imat[4][0],current->pre);
+
       current->pre_flag=true;
     } else {
       current->pre_flag=false;
@@ -412,6 +414,7 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
 
     if(first->post_flag && last->post_flag) {
       mix3d(first->post,last->post,(double)fxn,current->post);
+
       current->post_flag=true;
     } else {
       current->post_flag=false;

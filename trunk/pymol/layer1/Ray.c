@@ -1556,6 +1556,15 @@ int RayTraceThread(CRayThreadInfo *T)
                   start[2] = r1.base[2];
                 }
                 normalize3f(r1.dir);
+
+                {
+                  register float scale = I->max_box[2]/r1.base[2];
+                  
+                  r1.skip[0] = r1.base[0]*scale;
+                  r1.skip[1] = r1.base[1]*scale;
+                  r1.skip[2] = I->max_box[2];
+                }
+
               }
 
               while((persist > _persistLimit) && (pass <= max_pass))
@@ -1566,7 +1575,10 @@ int RayTraceThread(CRayThreadInfo *T)
                   SceneCall.excl_trans = excl_trans;
                   SceneCall.interior_flag = false;
 
+
                   if(perspective) {
+                    SceneCall.pass = pass;
+                    SceneCall.back_dist = -(T->back+r1.base[2])/r1.dir[2];
                     if(pass)
                       copy3f(r1.impact, r1.base);
                     i = BasisHitPerspective( &SceneCall );
@@ -1744,7 +1756,7 @@ int RayTraceThread(CRayThreadInfo *T)
                       if(fogFlag) 
                         {
                           if(perspective) {
-                            ffact = fog*(-r1.dist) * invFrontMinusBack;
+                            ffact = fog*(T->front + r1.impact[2]) * invFrontMinusBack;
                           } else {
                             ffact = fog*(T->front - r1.dist) * invFrontMinusBack;
                           }
@@ -2682,28 +2694,29 @@ int opaque_back=0;
 
       if(perspective) {
         int c;
-        if(I->min_box[2]<front)
-          I->min_box[2] = front;
-        if(I->max_box[2]<front)
-          I->max_box[2] = front;
 
-        for(c=0;c<3;c++) {
+        if(I->min_box[2]>-front)
+          I->min_box[2] = -front;
+        if(I->max_box[2]>-front)
+          I->max_box[2] = -front;
+
+        for(c=0;c<4;c++) {
           switch(c) {
           case 0:
-            x_test = (I->min_box[0])/I->min_box[2];
-            y_test = (I->min_box[1])/I->min_box[2];
+            x_test = -I->min_box[0]/I->min_box[2];
+            y_test = -I->min_box[1]/I->min_box[2];
             break;
           case 1:
-            x_test = (I->min_box[0])/I->max_box[2];
-            y_test = (I->min_box[1])/I->max_box[2];
+            x_test = -I->min_box[0]/I->max_box[2];
+            y_test = -I->min_box[1]/I->max_box[2];
             break;
           case 2:
-            x_test = (I->max_box[0])/I->min_box[2];
-            y_test = (I->max_box[1])/I->min_box[2];
+            x_test = -I->max_box[0]/I->min_box[2];
+            y_test = -I->max_box[1]/I->min_box[2];
             break;
           case 3:
-            x_test = (I->max_box[0])/I->max_box[2];
-            y_test = (I->max_box[1])/I->max_box[2];
+            x_test = -I->max_box[0]/I->max_box[2];
+            y_test = -I->max_box[1]/I->max_box[2];
             break;
           }
 
@@ -2728,6 +2741,12 @@ int opaque_back=0;
         x_stop +=2;
         y_start -=2;
         y_stop +=2;
+
+        /*
+          x_start = 0; 
+          y_start = 0;
+          x_stop = width;
+          y_stop = height;*/
 
       } else {
         x_start = (int)((width * (I->min_box[0] - I->Volume[0]))/I->Range[0]) - 2;

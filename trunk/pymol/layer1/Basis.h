@@ -68,6 +68,7 @@ typedef struct {
   float reflect[3];
   float trans;
   float dir[3]; /* what is the direction of this light ray? */
+  float skip[3];
 } RayInfo;
 
 typedef struct {
@@ -86,6 +87,8 @@ typedef struct {
   float fudge0,fudge1;
   /* returns */
   int interior_flag; 
+  int pass;
+  float back_dist;
 } BasisCallRec; 
 
 
