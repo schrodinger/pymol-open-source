@@ -50,7 +50,9 @@ CSculpt *SculptNew(void)
   I->NBHash = Alloc(int,NB_HASH_SIZE);
   I->EXList = VLAlloc(int,100000);
   I->EXHash = Alloc(int,EX_HASH_SIZE);
-
+  I->Don = VLAlloc(int,1000);
+  I->Acc = VLAlloc(int,1000);
+ 
   return(I);
 }
 
@@ -65,8 +67,9 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   int nex = 1;
   int *j,*k,xhash;
   int ex_type;
-  AtomInfoType *ai;
+  AtomInfoType *ai,*ai1,*ai2;
   int xoffset;
+
 
   PRINTFD(FB_Sculpt)
     " SculptMeasureObject-Debug: entered.\n"
@@ -80,6 +83,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   if(state<obj->NCSet)
     if(obj->CSet[state])
       {
+        VLACheck(I->Don,int,obj->NAtom);
+        VLACheck(I->Acc,int,obj->NAtom);
+        for(a=0;a<obj->NAtom;a++) {
+          I->Don[a]=false;
+          I->Acc[a]=false;
+        }
+        
         ObjectMoleculeVerifyChemistry(obj);
         ObjectMoleculeUpdateNeighbors(obj);
 
@@ -99,6 +109,75 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
             {
               b1 = b->index[0];
               b2 = b->index[1];
+              
+              /* brain-dead donor/acceptor assignment
+               * REPLACE later on with pattern-based system */
+
+              ai1=obj->AtomInfo+b1;
+              ai2=obj->AtomInfo+b2;
+                            
+              if(ai1->protons==cAN_H) {
+
+                /* donors: any H attached to O, N */
+                switch(ai2->protons) {
+                case cAN_O: 
+                  I->Don[b1]=true; 
+                  I->Don[b2]=true; /* mark heavy atom too... */
+                  break;
+                case cAN_N: 
+                  I->Don[b1]=true; 
+                  I->Don[b2]=true;
+                  break;
+                }
+              } else if(ai2->protons==cAN_H) {
+                switch(ai1->protons) {
+                case cAN_O: 
+                  I->Don[b1]=true; 
+                  I->Don[b2]=true; /* mark heavy atom too... */
+                  break;
+                case cAN_N: I->Don[b2]=true; break;
+                  I->Don[b1]=true; 
+                  I->Don[b2]=true; /* mark heavy atom too... */
+                }
+              } else {
+                
+                /* assume O is always an acceptor...*/
+
+                if(ai1->protons==cAN_O) I->Acc[b1]=true;
+                if(ai2->protons==cAN_O) I->Acc[b2]=true;
+
+                /* nitrogens with lone pairs are acceptors */
+
+                if(b->order==2) {
+                  if(ai1->protons==cAN_N) {
+                    if(b->order==2) {
+                      n1 = obj->Neighbor[b1];
+                      if(obj->Neighbor[n1]<3) { /* N with L.P. */
+                        I->Acc[b1]=true;
+                      }
+                    }
+                  }
+                }
+                if(ai2->protons==cAN_N) {
+                  if(b->order==2) {
+                    n2 = obj->Neighbor[b2];
+                    if(obj->Neighbor[n2]<3) { /* N with L.P. */
+                      I->Acc[b2]=true;
+                    }
+                  }
+                }
+              }
+
+              /*              if(Feedback(FB_Sculpt,FB_Debugging)) {
+                              for(a=0;a<obj->NAtom;a++) {
+                              I->Don[a]=false;
+                              I->Acc[a]=false;
+                              }
+                              
+                              }*/
+
+
+              /* exclusions */
 
               xhash = ( (b2>b1) ? ex_hash(b1,b2) : ex_hash(b2,b1));
               VLACheck(I->EXList,int,nex+3);
@@ -447,8 +526,9 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   float pyra_wt;
   float plan_wt;
   int active_flag=false;
+  float hb_overlap,hb_overlap_base;
 
-  AtomInfoType *ai0;
+  AtomInfoType *ai0,*ai1;
 
   PRINTFD(FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
@@ -476,7 +556,9 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         angl_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_angl_weight);
         pyra_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
         plan_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
-        mask =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
+        mask = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
+        hb_overlap = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
+        hb_overlap_base = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
 
         ai0=obj->AtomInfo;
         for(a=0;a<obj->NAtom;a++) {
@@ -677,12 +759,26 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                                 xoffset = (*j);
                               }
                               if(ex>3) {
-                                cutoff = ai0->vdw+obj->AtomInfo[b1].vdw;
-                                if(ex==4) {
+                                ai1=obj->AtomInfo+b1;
+                                cutoff = ai0->vdw+ai1->vdw;
+                                if(ex==4) { /* 1-4 interation */
                                   cutoff*=vdw14;
                                   wt = vdw_wt14;
                                   eval_flag = cSculptVDW14 & mask;
-                                } else {
+                                } else { /* standard interaction */
+                                  if(I->Don[b0]&&I->Acc[b1]) { /* h-bond */
+                                    if(ai0->protons==cAN_H) {
+                                      cutoff-=hb_overlap;
+                                    } else {
+                                      cutoff-=hb_overlap_base;
+                                    }
+                                  } else if(I->Acc[b0]&&I->Don[b1]) { /* h-bond */
+                                    if(ai1->protons==cAN_H) {
+                                      cutoff-=hb_overlap;
+                                    } else {
+                                      cutoff-=hb_overlap_base;
+                                    } 
+                                  }
                                   cutoff=cutoff*vdw;
                                   wt = vdw_wt;
                                   eval_flag = cSculptVDW & mask;
@@ -691,7 +787,8 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                                   a1 = atm2idx[b1];
                                   v1 = cs->Coord+3*a1;
                                   if(SculptCheckBump(v0,v1,diff,&len,cutoff))
-                                    if(SculptDoBump(cutoff,len,diff,disp+b0*3,disp+b1*3,wt)) {
+                                    if(SculptDoBump(cutoff,len,diff,
+                                                    disp+b0*3,disp+b1*3,wt)) {
                                       cnt[b0]++;
                                       cnt[b1]++;
                                     }
@@ -731,8 +828,6 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           
             ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);
           
-          
-          
           }
         }
         FreeP(cnt);
@@ -748,6 +843,8 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
 
 void SculptFree(CSculpt *I)
 {
+  VLAFreeP(I->Don);
+  VLAFreeP(I->Acc);
   VLAFreeP(I->NBList);
   VLAFreeP(I->EXList);
   FreeP(I->NBHash);

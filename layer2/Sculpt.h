@@ -33,6 +33,8 @@ typedef struct CSculpt {
   int *NBList;
   int *EXHash;
   int *EXList;
+  int *Don;
+  int *Acc;
 } CSculpt;
 
 CSculpt *SculptNew(void);

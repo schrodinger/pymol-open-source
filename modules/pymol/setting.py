@@ -189,6 +189,8 @@ class SettingIndex:
    sphere_transparency   =172
    sphere_color          =173
    sculpt_field_mask     =174
+   sculpt_hb_overlap     =175
+   sculpt_hb_overlap_base=176
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
