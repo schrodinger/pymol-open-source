@@ -104,6 +104,9 @@ for l in [
 'X -C -J3-X    4   10.00        180.0             2.         WLD from X -C -N -X',
 'X -DJ-N -X    4   10.00        180.0             2.         WLD from X -C -N -X',
 
+'DA-DJ-DJ-Q1   4    0.00        180.0             2.         WLD on benzamide',
+'DJ-DJ-DJ-Q1   4    0.00        180.0             2.         WLD on benzamide',
+
 'D4-T2-S -CT   1    3.50          0.0            -2.         WLD from CT-S-S-CT',
 'D4-T2-S -CT   1    0.60          0.0             3.         WLD from CT-S-S-CT',
 
