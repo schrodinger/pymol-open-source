@@ -62,6 +62,14 @@ def molauto(*arg):
       rr = RenderReader(stdout)
       cmd.load_cgo(rr.obj,name)
 
+def from_r3d(fname):
+   result = None
+   input = open(fname)
+   if input:
+      rr = RenderReader(input)
+      result = rr.obj
+   return result
+
 class RenderReader:
 
    def append_last(self):
@@ -195,6 +203,17 @@ class RenderReader:
          self.c_colr_t = [float(s[8]),float(s[9]),float(s[10])]
          self.c_colr = [self.c_colr_t,self.c_colr_t]
 
+   def sphere(self,f):
+      self.append_last()
+      l = f.readline()
+      if l:
+         s = string.split(l)
+         self.obj.append(COLOR)
+         self.obj.extend([float(s[4]),float(s[5]),float(s[6])])
+         self.obj.append(SPHERE)
+         self.obj.extend([float(s[0]),float(s[1]),float(s[2]),float(s[3])])
+
+
    def __init__(self,input):
       self.app_fn = None
       self.l_vert = None
@@ -211,7 +230,7 @@ class RenderReader:
       dispatch = [
          None,
          self.tri,
-         None,
+         self.sphere,
          self.cyl,
          None,
          None,
