@@ -711,7 +711,7 @@ void PInitEmbedded(int argc,char **argv)
 
 
 #ifdef _PYMOL_SETUP_PY21 
-/* where and when is this used? (if at all?) */
+  /* used by semistatic PyMOL */
 {
   char line[5000];
   char *pymol_path;
@@ -748,6 +748,46 @@ void PInitEmbedded(int argc,char **argv)
   }
 }
 #endif
+
+#ifdef _PYMOL_SETUP_PY22
+  /* used by semistatic PyMOL */
+{
+  char line[5000];
+  char *pymol_path;
+
+  if(!getenv("PYMOL_PATH")) {
+    if(getenv("PWD")) {
+      setenv("PYMOL_PATH",getenv("PWD"),1);
+    }
+  }
+
+  if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
+    if(getenv("PYMOL_PATH")) {
+      strcpy(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.2:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.2/plat-linux2:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.2/lib-tk:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.2/lib-dynload");
+      setenv("PYTHONPATH",line,1);
+    }
+  } else { /* preempt existing PYTHONPATH */
+      strcpy(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.2:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.2/plat-linux2:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.2/lib-tk:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.2/lib-dynload:");
+      strcat(line,getenv("PYTHONPATH"));
+      setenv("PYTHONPATH",line,1);
+  }
+}
+#endif
+
 
 
 #ifndef PYMOL_ACTIVEX
@@ -799,14 +839,28 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 #endif
 
 #ifdef _PYMOL_SETUP_TCLTK83
+/* used by semistatic pymol */
   PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'\n");
   PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.3'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.3'\n");
 #endif
 
-#ifdef _PYMOL_SETUP_PY21
-/* where and when is this used? (if at all?) */
+#ifdef _PYMOL_SETUP_TCLTK84
+/* used by semistatic pymol */
+  PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.4'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.4'\n");
+  PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'\n");
+#endif
+
+
+#ifdef _PYMOL_SETUP_PY21 
+/* used by semistatic pymol */
   PyRun_SimpleString("import string");
   PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext-static')<0,sys.path)"); /* clean bogus entries in sys.path */
+#endif
+
+#ifdef _PYMOL_SETUP_PY22
+/* used by semistatic pymol */
+  PyRun_SimpleString("import string");
+  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
 #endif
 
 #ifdef WIN32
@@ -821,12 +875,14 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 
   /* copy arguments to __main__.pymol_argv */
   PyObject_SetAttrString(P_main,"pymol_argv",args);
+  
+  PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n"); /* needed for semistatic pymol */
 
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 
   pymol = PyImport_AddModule("pymol"); /* get it */
   if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
-
+printf("and not here\n");
 
 }
 
