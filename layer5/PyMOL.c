@@ -137,6 +137,25 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
  return_OVstatus_SUCCESS;
 }
 
+int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr)
+{
+  int *return_vla = ExecutiveGetG3d(I->G);
+  int result = OVstatus_FAILURE;
+  if(return_vla) {
+    result = VLAGetSize(return_vla);
+  }
+  if(array_ptr)
+    *array_ptr = return_vla;
+  return result;
+}
+
+int PyMOL_DelG3DStream(CPyMOL *I,int *array_ptr)
+{
+  VLAFreeP(array_ptr);
+  return OVstatus_SUCCESS;
+}
+
+
 static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
 {
   OVOneToOne_DEL_AUTO_NULL(I->Rep);

@@ -139,6 +139,9 @@ int PyMOL_GetSwap(CPyMOL *I, int reset);
 struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I);
 void PyMOL_RunTest(CPyMOL *I, int group, int test);
 
+int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr);
+int PyMOL_DelG3DStream(CPyMOL *I,int *array_ptr);
+
 /* Command API */
 
 int PyMOL_Reinitialize(CPyMOL *I);
@@ -156,5 +159,6 @@ int PyMOL_Show(CPyMOL *I,char *representation, char *selection);
 int PyMOL_Hide(CPyMOL *I,char *representation, char *selection);
 
 int PyMOL_Delete(CPyMOL *I,char *name);
+
 
 #endif

@@ -48,6 +48,17 @@ int RayGetNPrimitives(CRay *I);
 int RayHashThread(CRayHashThreadInfo *T);
 int RayAntiThread(CRayAntiThreadInfo *T);
 
+typedef struct {
+  int op;
+  int x1,y1,z1;
+  int x2,y2,z2;
+  int x3,y3,z3;
+  int c;
+  int r;
+} G3dPrimitive;
+
+G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,float front, float back, float fov);
+
 struct _CRay {
   void (*fSphere3fv)( CRay *ray,float *v,float r);
   void (*fCylinder3fv)( CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);

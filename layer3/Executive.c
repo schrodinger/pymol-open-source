@@ -5354,7 +5354,14 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
 /*========================================================================*/
 void ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,float angle,float shift,int quiet)
 {
-  SceneRay(G,width,height,mode,NULL,NULL,angle,shift,quiet);
+  SceneRay(G,width,height,mode,NULL,NULL,angle,shift,quiet,NULL);
+}
+/*========================================================================*/
+int *ExecutiveGetG3d(PyMOLGlobals *G)
+{
+  int *result = NULL;
+  SceneRay(G,0,0,3,NULL,NULL,0.0F,0.0F,true,&result);
+  return result;
 }
 /*========================================================================*/
 int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,

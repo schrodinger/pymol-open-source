@@ -1535,7 +1535,7 @@ static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *header=NULL,*geom=NULL;
   APIEntry();
-  SceneRay(TempPyMOLGlobals,0,0,1,&header,&geom,0.0F,0.0F,false);
+  SceneRay(TempPyMOLGlobals,0,0,1,&header,&geom,0.0F,0.0F,false,NULL);
   if(header&&geom) {
     result = Py_BuildValue("(ss)",header,geom);
   }

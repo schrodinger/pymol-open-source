@@ -58,7 +58,8 @@ void SceneIdle(PyMOLGlobals *G);
 void SceneFree(PyMOLGlobals *G);
 void SceneRay(PyMOLGlobals *G,int width,int height,int mode,
               char **headerVLA,char **charVLA,
-              float angle,float shift,int quiet);
+              float angle,float shift,int quiet,
+              G3dPrimitive **g3d);
 void SceneMakeMovieImage(PyMOLGlobals *G);
 
 void ScenePNG(PyMOLGlobals *G,char *png,int quiet);
