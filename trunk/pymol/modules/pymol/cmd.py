@@ -186,13 +186,14 @@ class fb_module:
 # This first set represents internal C systems
 
    all                       =0
-   isosurf                   =1
+   isomesh                   =1
    map                       =2
    matrix                    =3
    mypng                     =4
    triangle                  =5
    match                     =6
    raw                       =7
+   isosurface                =8
    
    feedback                  =12
    scene                     =13
@@ -217,7 +218,8 @@ class fb_module:
    objectdist                =33 
    objectcgo                 =34
    objectcallback            =35
-
+   objectsurface             =36
+   
    repwirebond               =45
    repcylbond                =46
    replabel                  =47
@@ -756,6 +758,7 @@ from creating import \
      fragment,           \
      isodot,             \
      isomesh,            \
+     isosurface,         \
      symexp,             \
      map_new
 
@@ -1064,6 +1067,7 @@ keyword = {
    'invert'        : [ invert            , 0 , 0 , ''  , parsing.STRICT ],
    'isodot'        : [ isodot            , 0 , 0 , ''  , parsing.LEGACY ],   
    'isomesh'       : [ isomesh           , 0 , 0 , ''  , parsing.LEGACY ],
+   'isosurface'    : [ isosurface        , 0 , 0 , ''  , parsing.LEGACY ],   
    'iterate'       : [ iterate           , 0 , 0 , ''  , parsing.LITERAL1 ],
    'iterate_state' : [ iterate_state     , 0 , 0 , ''  , parsing.LITERAL2 ],
    'label'         : [ label             , 0 , 0 , ''  , parsing.LITERAL1 ],

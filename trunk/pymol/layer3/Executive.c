@@ -988,6 +988,8 @@ int ExecutiveGetType(char *name,WordType type)
         strcat(type,"map");
       else if(rec->obj->type==cObjectMesh)
         strcat(type,"mesh");
+      else if(rec->obj->type==cObjectSurface)
+        strcat(type,"surface");
       else if(rec->obj->type==cObjectDist)
         strcat(type,"distance");
     } else if(rec->type==cExecSelection) {
@@ -3418,7 +3420,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectMolecule:
                   MenuActivate(x,y,"mol_action",rec->obj->Name);
                   break;
-
+                case cObjectSurface:
                 case cObjectMesh:
                 case cObjectDist:
                 case cObjectMap:
@@ -3449,6 +3451,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectMap:
                   MenuActivate(x,y,"simple_show",rec->obj->Name);
                   break;
+                case cObjectSurface:
                 case cObjectMesh:
                   MenuActivate(x,y,"mesh_show",rec->obj->Name);
                   break;
@@ -3475,6 +3478,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectMap:
                   MenuActivate(x,y,"simple_hide",rec->obj->Name);
                   break;
+                case cObjectSurface:
                 case cObjectMesh:
                   MenuActivate(x,y,"mesh_hide",rec->obj->Name);
                   break;
@@ -3498,6 +3502,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectDist:
                   break;
                 case cObjectMap:
+                case cObjectSurface:
                 case cObjectMesh:
                   break;
                 }
@@ -3517,6 +3522,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   break;
                 case cObjectDist:
                 case cObjectMap:
+                case cObjectSurface:
                 case cObjectMesh:
                   MenuActivate(x,y,"general_color",rec->obj->Name);
                   break;

@@ -105,6 +105,58 @@ SEE ALSO
       unlock()
    return r
 
+def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=0,carve=None):
+   '''
+DESCRIPTION
+ 
+   "isosurface" creates a new surface object from a map object.
+ 
+USAGE
+ 
+   isosurface name, map, level [,(selection) [,buffer [,state [,carve ]]]]
+
+   "name" is the name for the new mesh isosurface object.
+   
+   "map" is the name of the map object to use for computing the mesh.
+   
+   "level" is the contour level.
+
+   "selection" is an atom selection about which to display the mesh with
+      an additional "buffer" (if provided).
+
+   "state" is the state into which the object should be loaded.
+
+   "carve" is a radius about each atom in the selection for which to
+      include density. If "carve" is not provided, then the whole
+      brick is displayed.
+
+NOTES
+
+   If the surface object already exists, then the new surface will be
+   appended onto the object as a new state (unless you indicate a state).
+
+SEE ALSO
+
+   isodot, isomesh, load
+   '''
+   if selection!='':
+      mopt = 1 # about a selection
+   else:
+      mopt = 0 # render the whole map
+   # preprocess selection
+   selection = selector.process(selection)
+   #
+   if carve==None:
+      carve=-1.0
+   try:
+      lock()
+      r = _cmd.isosurface(str(name),0,str(map),int(mopt),
+                       "("+str(selection)+")",float(buffer),
+                       float(level),0,int(state)-1,float(carve))
+   finally:
+      unlock()
+   return r
+
 def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,carve=0):
    '''
 DESCRIPTION

@@ -51,6 +51,8 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Editor.h"
 #include"SculptCache.h"
+#include"Isosurf.h"
+#include"Tetsurf.h"
 
 void MainFree(void);
 void MainTest(void);
@@ -339,7 +341,8 @@ static void MainInit(void)
   SceneInit();
   SculptCacheInit();
   ExecutiveInit();
-  RepMeshInit();
+  IsosurfInit();
+  TetsurfInit();
   EditorInit();  
 
 }

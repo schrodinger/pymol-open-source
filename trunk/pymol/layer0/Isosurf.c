@@ -177,7 +177,7 @@ int	IsosurfInit(void)
 	Point=NULL;
 	Line=NULL;
 	
-	for(c=0;c<255;c++)
+	for(c=0;c<256;c++)
 	  Code[c]=-1;
 		
 /*___  
@@ -372,7 +372,7 @@ int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
    
    Num[NSeg]=0;  /* important - must terminate the segment list */
    
-   if(Feedback(FB_Isosurf,FB_Actions)) { 
+   if(Feedback(FB_Isomesh,FB_Actions)) { 
      if(mode)
        printf(" IsosurfVolume: Surface generated using %d dots.\n",NLine); 
      else

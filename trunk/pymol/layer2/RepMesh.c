@@ -54,7 +54,6 @@ int RepMeshSameVis(RepMesh *I,CoordSet *cs);
 
 void RepMeshInit(void)
 {
-  IsosurfInit();
 }
 
 void RepMeshFree(RepMesh *I)

@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #define cObjectDist         4
 #define cObjectCallback     5
 #define cObjectCGO          6
+#define cObjectSurface      7
 
 /* 
    the object base class is in the process of being converted to support
