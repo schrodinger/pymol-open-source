@@ -23,6 +23,7 @@ import _pm
 import string
 import traceback
 import thread
+import types
 import __main__
 import os
 
@@ -47,7 +48,7 @@ COMMANDS
    SETTINGS      set
    ATOMS         alter
    FITTING       fit      rms      rms_cur  intra_fit    
-   COLORS        color    colordef
+   COLORS        color    set_color
    HELP          help     commands
    DISTANCES     dist      
    STEREO        stereo
@@ -277,18 +278,22 @@ def sort(*arg):
    '''
 UNSUPPORTED - LIKELY TO BE REMOVED
 '''
-   lock()
-   if len(arg)==0:
-      r = _pm.sort("")
-   else:
-      r = _pm.sort(arg[0])
-   unlock()
+   try:
+      lock()
+      if len(arg)==0:
+         r = _pm.sort("")
+      else:
+         r = _pm.sort(arg[0])
+   finally:
+      unlock()
    return r
 
 def cls():
-   lock()
-   r = _pm.cls()
-   unlock()
+   try:
+      lock()
+      r = _pm.cls()
+   finally:
+      unlock()
    return r
    
 def mem():
@@ -299,9 +304,11 @@ DESCRIPTION
 debugging feature, not an official part of the API.
 
 '''
-   lock()
-   r = _pm.mem()
-   unlock()
+   try:
+      lock()
+      r = _pm.mem()
+   finally:
+      unlock()
    return r
 
 def dist(*arg):
@@ -335,11 +342,13 @@ NOTES
 '''
    la = len(arg)
    if la<2:
-      lock()
-      cnt = _pm.get("dist_counter") + 1.0
-      _pm.set("dist_counter","%1.0f" % cnt)
-      nam = "dist%02.0f" % cnt
-      unlock()
+      try:
+         lock()
+         cnt = _pm.get("dist_counter") + 1.0
+         _pm.set("dist_counter","%1.0f" % cnt)
+         nam = "dist%02.0f" % cnt
+      finally:
+         unlock()
       if la==0:
          argst = "(pk1),(pk3)"
       else:
@@ -359,9 +368,11 @@ NOTES
       optarg2=0
       if(la>2):
          optarg1 = float(arg[2])
-      lock()
-      r = _pm.dist(nam,sel1,sel2,optarg2,optarg1)
-      unlock()
+      try:
+         lock()
+         r = _pm.dist(nam,sel1,sel2,optarg2,optarg1)
+      finally:
+         unlock()
    return r
 
 def show_help(cmd):
@@ -436,9 +447,11 @@ PYMOL API
       obj=arg[0]
       sele=arg[1]
       dist=arg[2]
-      lock()
-      r = _pm.symexp(nam,obj,sele,float(dist))
-      unlock()
+      try:
+         lock()
+         r = _pm.symexp(nam,obj,sele,float(dist))
+      finally:
+         unlock()
    return r
 
 def isomesh(nam,argst):
@@ -470,9 +483,11 @@ USAGE
             optarg1=arg[2]
       if la>3:
          optarg2 = arg[3]
-      lock()
-      r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,0)
-      unlock()
+      try:
+         lock()
+         r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,0)
+      finally:
+         unlock()
    return r
 
 def isodot(nam,argst):
@@ -504,9 +519,11 @@ USAGE
             optarg1=arg[2]
       if la>3:
          optarg2 = arg[3]
-      lock()
-      r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,1)
-      unlock()
+      try:
+         lock()
+         r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,1)
+      finally:
+         unlock()
    return r
 
 def ready():
@@ -522,9 +539,11 @@ DESCRIPTION
 "splash" shows the splash screen information.
    '''
    set("text","1")
-   lock()
-   r = _pm.splash()
-   unlock()
+   try:
+      lock()
+      r = _pm.splash()
+   finally:
+      unlock()
    return r
 
 def copy(dst,src):
@@ -542,9 +561,11 @@ PYMOL API
  
    pm.copy(new-object-name,object)
    '''
-   lock()
-   r = _pm.copy(src,dst)
-   unlock()
+   try:
+      lock()
+      r = _pm.copy(src,dst)
+   finally:
+      unlock()
    return r
 
 def alter(sele,expr):
@@ -570,9 +591,11 @@ EXAMPLES
    alter (chain A),chain='B'
    alter (all),resi=str(int(resi)+100)
    '''
-   lock()
-   r = _pm.alter(sele,expr)
-   unlock()   
+   try:
+      lock()
+      r = _pm.alter(sele,expr)
+   finally:
+      unlock()   
    return r
 
 def _stereo(flag):
@@ -597,17 +620,21 @@ USAGE
    '''
    r = None
    if a=="on":
-      lock()
-      if _pm.stereo(1):
-         r = _stereo(1)
-      else:
-         print " error: stereo not available"
-      unlock();
+      try:
+         lock()
+         if _pm.stereo(1):
+            r = _stereo(1)
+         else:
+            print " error: stereo not available"
+      finally:
+         unlock();
    else:
-      lock()
-      if _pm.stereo(0):
-         r = _stereo(0)
-      unlock();
+      try:
+         lock()
+         if _pm.stereo(0):
+            r = _stereo(0)
+      finally:
+         unlock();
    return r
    
 def overlap(*arg):
@@ -619,9 +646,11 @@ UNSUPPORTED FEATURE - LIKELY TO CHANGE
       if state[0]<1: state[0]=1;
       state[1]=int(arg[2][1])
       if state[1]<1: state[1]=1
-   lock()
-   r = _pm.overlap(arg[0],arg[1],state[0]-1,state[1]-1)
-   unlock()
+   try:
+      lock()
+      r = _pm.overlap(arg[0],arg[1],state[0]-1,state[1]-1)
+   finally:
+      unlock()
    return r
 
 def distance(*arg):
@@ -640,9 +669,11 @@ OBSOLETE - TO BE REMOVED
       b=arg[1]
    if a[0]!='(': a="(%"+a+")"
    if b[0]!='(': b="(%"+b+")"
-   lock()   
-   r = _pm.distance(a,b)
-   unlock()
+   try:
+      lock()   
+      r = _pm.distance(a,b)
+   finally:
+      unlock()
    return r
 
 def _alter_do(at):
@@ -712,22 +743,26 @@ def export_dots(a,b):
    '''
 UNSUPPORTED - WILL BE REMOVED
    '''
-   lock()
-   r = _pm.export_dots(a,int(b))
-   unlock()
+   try:
+      lock()
+      r = _pm.export_dots(a,int(b))
+   finally:
+      unlock()
    return r
 
 def count_states(*arg):
    '''
 UNDOCUMENTED
    '''
-   lock()
-   if not len(arg):
-      a = "(all)"
-   else:
-      a=arg[0]
-   r = _pm.count_states(a)
-   unlock()
+   try:
+      lock()
+      if not len(arg):
+         a = "(all)"
+      else:
+         a=arg[0]
+      r = _pm.count_states(a)
+   finally:
+      unlock()
    return r
 
 def do(a):
@@ -746,9 +781,11 @@ USAGE (PYTHON)
    import pm
    pm.do("load file.pdb")
    '''
-   lock()
-   r = _pm.do(a);
-   unlock()
+   try:
+      lock()
+      r = _pm.do(a);
+   finally:
+      unlock()
    return r
 
 def turn(a,b):
@@ -770,9 +807,11 @@ PYMOL API
  
    pm.turn( string axis, float angle )
    '''
-   lock()
-   r = _pm.turn(a,float(b))
-   unlock()
+   try:
+      lock()
+      r = _pm.turn(a,float(b))
+   finally:
+      unlock()
    return r
 
 def ray():
@@ -791,9 +830,11 @@ PYMOL API
    pm.ray()
    
    '''
-   lock()   
-   r = _pm.render()
-   unlock()
+   try:
+      lock()   
+      r = _pm.render()
+   finally:
+      unlock()
    return r
 
 def real_system(a):
@@ -834,13 +875,15 @@ PYTHON EXAMPLE
    import pm
    rms = pm.intra_fit("(name ca)",1)
    '''
-   lock()
    if len(arg)<2:
       b=-1
    else:
       b=int(arg[1])-1
-   r = _pm.intrafit(arg[0],b,2)
-   unlock()
+   try:
+      lock()
+      r = _pm.intrafit(arg[0],b,2)
+   finally:
+      unlock()
    return r
 
 def intra_rms(*arg):
@@ -861,13 +904,15 @@ PYTHON EXAMPLE
    import pm
    rms = pm.intra_rms("(name ca)",1)
    '''
-   lock()
    if len(arg)<2:
       b=-1
    else:
       b=int(arg[1])-1
-   r = _pm.intrafit(arg[0],b,1)
-   unlock()
+   try:
+      lock()
+      r = _pm.intrafit(arg[0],b,1)
+   finally:
+      unlock()
    return r
 
 def intra_rms_cur(*arg):
@@ -888,13 +933,15 @@ PYTHON EXAMPLE
    import pm
    rms = pm.intra_rms_cur("(name ca)",1)
    '''
-   lock()
    if len(arg)<2:
       b=-1
    else:
       b=int(arg[1])-1
-   r = _pm.intrafit(arg[0],b,0)
-   unlock()
+   try:
+      lock()
+      r = _pm.intrafit(arg[0],b,0)
+   finally:
+      unlock()
    return r
 
 def fit(a,b):
@@ -915,10 +962,12 @@ EXAMPLES
    '''
    if a[0]!='(': a="(%"+a+")"
    if b[0]!='(': b="(%"+b+")"
-   lock()   
-   r = _pm.fit("(%s in %s)" % (a,b),
-         "(%s in %s)" % (b,a),2)
-   unlock()
+   try:
+      lock()   
+      r = _pm.fit("(%s in %s)" % (a,b),
+                  "(%s in %s)" % (b,a),2)
+   finally:
+      unlock()
    return r
 
 def rms(a,b):
@@ -938,10 +987,12 @@ EXAMPLES
    '''
    if a[0]!='(': a="(%"+a+")"
    if b[0]!='(': b="(%"+b+")"
-   lock()   
-   r = _pm.fit("(%s in %s)" % (a,b),
-         "(%s in %s)" % (b,a),0)
-   unlock()
+   try:
+      lock()   
+      r = _pm.fit("(%s in %s)" % (a,b),
+                  "(%s in %s)" % (b,a),0)
+   finally:
+      unlock()
    return r
 
 def rms_cur(a,b):
@@ -957,10 +1008,12 @@ USAGE
    '''
    if a[0]!='(': a="(%"+a+")"
    if b[0]!='(': b="(%"+b+")"
-   lock()   
-   r = _pm.fit("(%s in %s)" % (a,b),
-         "(%s in %s)" % (b,a),1)
-   unlock()
+   try:
+      lock()   
+      r = _pm.fit("(%s in %s)" % (a,b),
+                  "(%s in %s)" % (b,a),1)
+   finally:
+      unlock()
    return r
 
 def pairfit(*arg):
@@ -976,18 +1029,22 @@ USAGE
  
    fit_pairs (selection), (selection) [ (selection), (selection) [ ...] ]
    '''
-   lock()   
-   r = _pm.fit_pairs(arg)
-   unlock()
+   try:
+      lock()   
+      r = _pm.fit_pairs(arg)
+   finally:
+      unlock()
    return r
 
 def expfit(a,b):
    '''
    ??? OBSOLETE
    '''
-   lock()   
-   r = _pm.fit(a,b,2)
-   unlock()
+   try:
+      lock()   
+      r = _pm.fit(a,b,2)
+   finally:
+      unlock()
    return r
    
 def zoom(a):
@@ -1006,9 +1063,11 @@ PYMOL API
  
    pm.orient( string object-or-selection )
    '''
-   lock()   
-   r = _pm.zoom(a)
-   unlock()
+   try:
+      lock()   
+      r = _pm.zoom(a)
+   finally:
+      unlock()
    return r
    
 def frame(a):
@@ -1029,9 +1088,11 @@ NOTES
  
    Frame numbers are 1-based 
    '''
-   lock()   
-   r = _pm.frame(int(a))
-   unlock()
+   try:
+      lock()   
+      r = _pm.frame(int(a))
+   finally:
+      unlock()
    return r
 
 def move(a,b):
@@ -1053,9 +1114,11 @@ PYMOL API
  
    pm.move( string axis, float distance )
    '''
-   lock()   
-   r = _pm.move(a,float(b))
-   unlock()
+   try:
+      lock()   
+      r = _pm.move(a,float(b))
+   finally:
+      unlock()
    return r
 
 def clip(a,b):
@@ -1077,9 +1140,11 @@ PYMOL API
  
    pm.clip( string plane, float distance )
    '''
-   lock()   
-   r = _pm.clip(a,float(b))
-   unlock()
+   try:
+      lock()   
+      r = _pm.clip(a,float(b))
+   finally:
+      unlock()
    return r
 
 def origin(a):
@@ -1097,9 +1162,11 @@ PYMOL API
  
    pm.origin( string object-or-selection )
    '''
-   lock()   
-   r = _pm.origin(a)
-   unlock()
+   try:
+      lock()   
+      r = _pm.origin(a)
+   finally:
+      unlock()
    return r
 
 def orient(*arg):
@@ -1119,13 +1186,15 @@ PYMOL API
  
    pm.orient( string object-or-selection )
    '''
-   lock()
-   if len(arg)<1:
-      a = "(all)"
-   else:
-      a = arg[0]
-   r = _pm.orient(a)
-   unlock()
+   try:
+      lock()
+      if len(arg)<1:
+         a = "(all)"
+      else:
+         a = arg[0]
+      r = _pm.orient(a)
+   finally:
+      unlock()
    return r
 
 def is_glut_thread():
@@ -1141,21 +1210,25 @@ def refresh():
    '''
 INTERNAL
    '''
-   lock()
-   if thread.get_ident() == __main__.glutThread:
-      r = _pm.refresh_now()
-   else:
-      r = _pm.refresh()
-   unlock()
+   try:
+      lock()
+      if thread.get_ident() == __main__.glutThread:
+         r = _pm.refresh_now()
+      else:
+         r = _pm.refresh()
+   finally:
+      unlock()
    return r
 
 def dirty():
    '''
 INTERNAL
    '''
-   lock()   
-   r = _pm.dirty()
-   unlock()
+   try:
+      lock()   
+      r = _pm.dirty()
+   finally:
+      unlock()
    return r
 
 def set(a,b):
@@ -1172,9 +1245,11 @@ PYMOL API
  
    pm.set ( string variable, string value )
    '''
-   lock()   
-   r = _pm.set(a,b)
-   unlock()
+   try:
+      lock()   
+      r = _pm.set(a,b)
+   finally:
+      unlock()
    return r
 
 def reset():
@@ -1193,18 +1268,22 @@ PYMOL API
  
    pm.reset ( )
    '''
-   lock()   
-   r = _pm.reset(0)
-   unlock()
+   try:
+      lock()   
+      r = _pm.reset(0)
+   finally:
+      unlock()
    return r
 
 def meter_reset():
    '''
 UNDOCUMENTED
    '''
-   lock()   
-   r = _pm.reset_rate()
-   unlock()
+   try:
+      lock()   
+      r = _pm.reset_rate()
+   finally:
+      unlock()
    return r
 
 def delete(a):
@@ -1222,15 +1301,19 @@ PYMOL API
  
    pm.delete ( string object-or-selection-name )
    '''
-   lock()   
-   r = _pm.delete(a)
-   unlock()
+   try:
+      lock()   
+      r = _pm.delete(a)
+   finally:
+      unlock()
    return r
 
 def _quit():
-   lock()
-   r = _pm.quit()
-   unlock()
+   try:
+      lock()
+      r = _pm.quit()
+   finally:
+      unlock()
    return r
 
 def quit():
@@ -1276,12 +1359,14 @@ PYMOL API
    return r
 
 def _png(a):
-   lock()   
-   fname = a
-   if not re.search("\.png$",fname):
-      fname = fname +".png"
-   r = _pm.png(fname)
-   unlock()
+   try:
+      lock()   
+      fname = a
+      if not re.search("\.png$",fname):
+         fname = fname +".png"
+      r = _pm.png(fname)
+   finally:
+      unlock()
    return r
 
 def mclear():
@@ -1298,9 +1383,11 @@ PYMOL API
  
    pm.mclear()
    '''
-   lock()   
-   r = _pm.mclear()
-   unlock()
+   try:
+      lock()   
+      r = _pm.mclear()
+   finally:
+      unlock()
    return r
 
 def _special(k,x,y):
@@ -1366,9 +1453,11 @@ PYMOL API
  
    pm.mstop()
    '''
-   lock()   
-   r = _pm.mplay(0)
-   unlock()
+   try:
+      lock()   
+      r = _pm.mplay(0)
+   finally:
+      unlock()
    return r
 
 def mplay():
@@ -1385,18 +1474,22 @@ PYMOL API
  
    pm.mplay()
    '''
-   lock()   
-   r = _pm.mplay(1)
-   unlock()
+   try:
+      lock()   
+      r = _pm.mplay(1)
+   finally:
+      unlock()
    return r
 
 def mray():
    '''
 DEPRECATED
    '''
-   lock()   
-   r = _pm.mplay(2)
-   unlock()
+   try:
+      lock()   
+      r = _pm.mplay(2)
+   finally:
+      unlock()
    return r
 
 def viewport(a,b):
@@ -1448,18 +1541,21 @@ NOTES
    "mdo" statements will have any effect.  Redefinition of the movie
    clears any existing mdo statements.
    '''
-   lock()   
-   r = _pm.mdo(int(a)-1,b)
-   unlock()
+   try:
+      lock()   
+      r = _pm.mdo(int(a)-1,b)
+   finally:
+      unlock()
    return r
 
 def dummy(*arg):
    '''
 DEBUGGING
    '''
-   lock()   
-   pass
-   unlock()
+   try:
+      lock()   
+   finally:
+      unlock()
    return None
 
 def rock():
@@ -1476,9 +1572,11 @@ PYMOL API
   
    pm.rock()
    '''
-   lock()   
-   r = _pm.rock()
-   unlock()
+   try:
+      lock()   
+      r = _pm.rock()
+   finally:
+      unlock()
    return r
 
 def forward():
@@ -1495,9 +1593,11 @@ PYMOL API
   
    pm.forward()
    '''
-   lock()   
-   r = _pm.setframe(5,1)
-   unlock()
+   try:
+      lock()   
+      r = _pm.setframe(5,1)
+   finally:
+      unlock()
    return r
 
 def backward():
@@ -1514,9 +1614,11 @@ PYMOL API
   
    pm.backward()
    '''
-   lock()   
-   r = _pm.setframe(5,-1)
-   unlock()
+   try:
+      lock()   
+      r = _pm.setframe(5,-1)
+   finally:
+      unlock()
    return r
 
 
@@ -1534,9 +1636,11 @@ PYMOL API
   
    pm.rewind()
    '''
-   lock()   
-   r = _pm.setframe(0,0)
-   unlock()
+   try:
+      lock()   
+      r = _pm.setframe(0,0)
+   finally:
+      unlock()
    return r
 
 def ending():
@@ -1553,9 +1657,11 @@ PYMOL API
   
    pm.ending()
    '''
-   lock()   
-   r=_pm.setframe(2,0)
-   unlock()
+   try:
+      lock()   
+      r=_pm.setframe(2,0)
+   finally:
+      unlock()
    return r
 
 def middle():
@@ -1572,27 +1678,33 @@ PYMOL API
   
    pm.middle()
    '''
-   lock()   
-   r = _pm.setframe(3,0)
-   unlock()
+   try:
+      lock()   
+      r = _pm.setframe(3,0)
+   finally:
+      unlock()
    return r
 
 def test(): # generic test routine for development
    '''
 DEBUGGING
    '''
-   lock()   
-   r=_pm.test()
-   unlock()
+   try:
+      lock()   
+      r=_pm.test()
+   finally:
+      unlock()
    return r
 
 def dump(fnam,obj):
    '''
 DEBUGGING
    '''
-   lock()
-   r = _pm.dump(fnam,obj)
-   unlock()
+   try:
+      lock()
+      r = _pm.dump(fnam,obj)
+   finally:
+      unlock()
    return r
 
 def save(*arg):
@@ -1610,50 +1722,54 @@ PYMOL API
    pm.save(filename, selection, state)
    '''
    r = 1
-   lock()
-   fname = 'save.pdb'
-   sele = '( all )'
-   state = -1
-   format = 'pdb'
-   if len(arg)==1:
-      fname = arg[0]
-   elif len(arg)==2:
-      fname = arg[0]
-      sele = arg[1]
-   elif len(arg)==3:
-      fname = arg[0]
-      sele = arg[1]
-      state = arg[2]
-   elif len(arg)==4:
-      fname = arg[0]
-      sele = arg[1]
-      state = arg[2]
-      format = arg[3]
-   if (len(arg)>0) and (len(arg)<4):
-      if re.search("\.pdb$",fname):
-         format = 'pdb'
-      elif re.search("\.mol$",fname):
-         formet = 'mol'
-      elif re.search("\.sdf$",fname):
-         formet = 'sdf'
-   if format=='pdb':
-      f=open(fname,"w")
-      if f:
-         f.write(_pm.get_pdb(sele,int(state)-1))
-         f.close()
-         r = None
-         print " Save: wrote \""+fname+"\"."
-   unlock()
+   try:
+      lock()
+      fname = 'save.pdb'
+      sele = '( all )'
+      state = -1
+      format = 'pdb'
+      if len(arg)==1:
+         fname = arg[0]
+      elif len(arg)==2:
+         fname = arg[0]
+         sele = arg[1]
+      elif len(arg)==3:
+         fname = arg[0]
+         sele = arg[1]
+         state = arg[2]
+      elif len(arg)==4:
+         fname = arg[0]
+         sele = arg[1]
+         state = arg[2]
+         format = arg[3]
+      if (len(arg)>0) and (len(arg)<4):
+         if re.search("\.pdb$",fname):
+            format = 'pdb'
+         elif re.search("\.mol$",fname):
+            formet = 'mol'
+         elif re.search("\.sdf$",fname):
+            formet = 'sdf'
+      if format=='pdb':
+         f=open(fname,"w")
+         if f:
+            f.write(_pm.get_pdb(sele,int(state)-1))
+            f.close()
+            r = None
+            print " Save: wrote \""+fname+"\"."
+   finally:
+      unlock()
    return r
 
 def get_feedback():
    l = []
-   lock()
-   unlock()
-   r = _pm.get_feedback()
-   while r:
-      l.append(r)
+   try:
+      lock()
       r = _pm.get_feedback()
+      while r:
+         l.append(r)
+         r = _pm.get_feedback()
+   finally:
+      unlock()
    return l
 
 def load(*arg):
@@ -1678,69 +1794,75 @@ PYMOL API
    pm.load( filename [,object [,state]] )
    '''
    r = 1
-   lock()   
-   ftype = 0
-   state = -1
-   if re.search("\.pdb$",arg[0]):
+   try:
+      lock()   
       ftype = 0
-   elif re.search("\.mol$",arg[0]):
-      ftype = 1
-   elif re.search("\.mmod$",arg[0]):
-      ftype = 4
-   elif re.search("\.xplor$",arg[0]):
-      ftype = 7
-   if len(arg)==1:
-      oname = re.sub("[^/]*\/","",arg[0])
-      oname = re.sub("\.pdb|\.mol|\.mmod|\.xplor","",oname)
-      r = _pm.load(oname,arg[0],state,ftype)
-   elif len(arg)==2:
-      oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],state,ftype)
-   elif len(arg)==3:
-      oname = string.strip(arg[1])
-      state = int(arg[2])-1
-      r = _pm.load(oname,arg[0],state,ftype)
-   elif len(arg)==4:
-      if loadable.has_key(arg[3]):
-         ftype = loadable[arg[3]]
+      state = -1
+      if re.search("\.pdb$",arg[0]):
+         ftype = 0
+      elif re.search("\.mol$",arg[0]):
+         ftype = 1
+      elif re.search("\.mmod$",arg[0]):
+         ftype = 4
+      elif re.search("\.xplor$",arg[0]):
+         ftype = 7
+      if len(arg)==1:
+         oname = re.sub("[^/]*\/","",arg[0])
+         oname = re.sub("\.pdb|\.mol|\.mmod|\.xplor","",oname)
+         r = _pm.load(oname,arg[0],state,ftype)
+      elif len(arg)==2:
+         oname = string.strip(arg[1])
+         r = _pm.load(oname,arg[0],state,ftype)
+      elif len(arg)==3:
+         oname = string.strip(arg[1])
+         state = int(arg[2])-1
+         r = _pm.load(oname,arg[0],state,ftype)
+      elif len(arg)==4:
+         if loadable.has_key(arg[3]):
+            ftype = loadable[arg[3]]
+         else:
+            ftype = int(arg[3])
+         state = int(arg[2])-1
+         oname = string.strip(arg[1])
+         r = _pm.load(oname,arg[0],state,ftype)
       else:
-         ftype = int(arg[3])
-      state = int(arg[2])-1
-      oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],state,ftype)
-   else:
-      print "argument error."
-   unlock()
+         print "argument error."
+   finally:
+      unlock()
    return r
 
 def read_molstr(*arg):
    r = 1
-   lock()   
-   ftype = 3
-   if len(arg)==2:
-      oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],-1,ftype)
-   elif len(arg)==3:
-      oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
-   else:
-      print "argument error."
-   unlock()
+   try:
+      lock()
+      ftype = 3
+      if len(arg)==2:
+         oname = string.strip(arg[1])
+         r = _pm.load(oname,arg[0],-1,ftype)
+      elif len(arg)==3:
+         oname = string.strip(arg[1])
+         r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
+      else:
+         print "argument error."
+   finally:
+      unlock()
    return r
 
 def read_mmodstr(*arg):
    r = 1
-   lock()   
-   ftype = 6
-   if len(arg)==2:
-      oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],-1,ftype)
-   elif len(arg)==3:
-      oname = string.strip(arg[1])
-      r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
-   else:
-      print "argument error."
-   unlock()
+   try:
+      lock()   
+      ftype = 6
+      if len(arg)==2:
+         oname = string.strip(arg[1])
+         r = _pm.load(oname,arg[0],-1,ftype)
+      elif len(arg)==3:
+         oname = string.strip(arg[1])
+         r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
+      else:
+         print "argument error."
+   finally:
+      unlock()
    return r
    
 def select(*arg):
@@ -1763,17 +1885,19 @@ EXAMPLES
    select near = (pk1 expand 8)
    select bb = (name ca,n,c,o )
    '''
-   lock()   
-   if len(arg)==1:
-      sel_cnt = _pm.get("sel_counter") + 1.0
-      _pm.set("sel_counter","%1.0f" % sel_cnt)
-      sel_name = "sel%02.0f" % sel_cnt
-      sel = arg[0]
-   else:
-      sel_name = arg[0]
-      sel = arg[1]
-   r = _pm.select(sel_name,sel)
-   unlock()
+   try:
+      lock()   
+      if len(arg)==1:
+         sel_cnt = _pm.get("sel_counter") + 1.0
+         _pm.set("sel_counter","%1.0f" % sel_cnt)
+         sel_name = "sel%02.0f" % sel_cnt
+         sel = arg[0]
+      else:
+         sel_name = arg[0]
+         sel = arg[1]
+      r = _pm.select(sel_name,sel)
+   finally:
+      unlock()
    return r
 
 def color(*arg):
@@ -1796,42 +1920,51 @@ EXAMPLES
  
    color yellow, (name C*)
    '''
-   lock()   
-   if len(arg)==2:
-      r = _pm.color(arg[0],arg[1],0)
-   else:
-      r = _pm.color(arg[0],"(all)",0)   
-   unlock()
+   try:
+      lock()   
+      if len(arg)==2:
+         r = _pm.color(arg[0],arg[1],0)
+      else:
+         r = _pm.color(arg[0],"(all)",0)   
+   finally:
+      unlock()
    return r
 
-def colordef(nam,col):
+def set_color(nam,col):
    '''
-WARNING - THIS FUNCTION WILL BE SOON OBSOLETED
-
 DESCRIPTION
   
-   "colordef" defines a new color with color indices (0.0-1.0)
+   "set_color" defines a new color with color indices (0.0-1.0)
    
 USAGE
  
-   colordef color, red-float green-float blue-float
+   set_color color-name = [ red-float, green-float, blue-float ]
  
 PYMOL API
   
-   pm.colordef( string color, string color-components )
+   pm.set_color( string color, float-list color-components )
  
 EXAMPLES 
  
-   colordef red, 1.0 0.0 0.0 
+   set_color red = [ 1.0, 0.0, 0.0 ]
    '''
    r = 1
-   lock()
-   c = string.split(col)
-   if len(c)==3:
-      r = _pm.colordef(nam,float(c[0]),float(c[1]),float(c[2]))
+   if isinstance(col,types.StringType):
+      col = eval(col)
+   if not (isinstance(col,types.ListType) or isinstance(col,types.TupleType)):
+      print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
+   elif len(col)!=3:
+      print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
    else:
-      print "Error: invalid color vector."
-   unlock()
+      try:
+         lock()
+
+         if len(col)==3:
+            r = _pm.colordef(nam,float(col[0]),float(col[1]),float(col[2]))
+         else:
+            print "Error: invalid color."
+      finally:
+         unlock()
    return r
 
 def mpng(a):
@@ -1861,12 +1994,14 @@ PYMOL API
    return r
 
 def _mpng(*arg):
-   lock()   
-   fname = arg[0]
-   if re.search("\.png$",fname):
-      fname = re.sub("\.png$","",fname)
-   r = _pm.mpng_(fname)
-   unlock()
+   try:
+      lock()   
+      fname = arg[0]
+      if re.search("\.png$",fname):
+         fname = re.sub("\.png$","",fname)
+      r = _pm.mpng_(fname)
+   finally:
+      unlock()
    return r
 
 def show(*arg):
@@ -1900,33 +2035,35 @@ NOTES
    "show" alone will turn on lines for all bonds.
    '''
    r=1
-   lock()
-   l = len(arg)
-   if not l:
-      r = _pm.showhide("(all)",0,1); # show lines by default       
-   elif l==2:
-      rep = arg[0]
-      if rephash.has_key(rep):
-         rep = rephash[rep]
-      if repres.has_key(rep):      
-         repn = repres[rep];
-         r = _pm.showhide(arg[1],repn,1);
+   try:
+      lock()
+      l = len(arg)
+      if not l:
+         r = _pm.showhide("(all)",0,1); # show lines by default       
+      elif l==2:
+         rep = arg[0]
+         if rephash.has_key(rep):
+            rep = rephash[rep]
+         if repres.has_key(rep):      
+            repn = repres[rep];
+            r = _pm.showhide(arg[1],repn,1);
+         else:
+            print "Error: unrecognized or ambiguous representation"
+      elif arg[0]=='all':
+         r = _pm.showhide("(all)",0,1); # show lines by default 
+      elif arg[0][0]=='(':
+         r = _pm.showhide(arg[0],0,1);
       else:
-         print "Error: unrecognized or ambiguous representation"
-   elif arg[0]=='all':
-      r = _pm.showhide("(all)",0,1); # show lines by default 
-   elif arg[0][0]=='(':
-      r = _pm.showhide(arg[0],0,1);
-   else:
-      rep = arg[0]
-      if rephash.has_key(rep):
-         rep = rephash[rep]
-      if repres.has_key(rep):      
-         repn = repres[rep];
-         r = _pm.showhide("(all)",repn,1);
-      else:
-         print "Error: unrecognized or ambiguous representation"
-   unlock()
+         rep = arg[0]
+         if rephash.has_key(rep):
+            rep = rephash[rep]
+         if repres.has_key(rep):      
+            repn = repres[rep];
+            r = _pm.showhide("(all)",repn,1);
+         else:
+            print "Error: unrecognized or ambiguous representation"
+   finally:
+      unlock()
    return r
 
 def hide(*arg):
@@ -1956,32 +2093,34 @@ EXAMPLES
    '''
    r = 1
    l = len(arg)
-   lock()
-   if not l:
-      r = _pm.showhide("!",0,0);      
-   elif l==2:
-      rep = arg[0]
-      if rephash.has_key(rep):
-         rep = rephash[rep]
-      if repres.has_key(rep):      
-         repn = repres[rep];
-         r = _pm.showhide(arg[1],repn,0);
+   try:
+      lock()
+      if not l:
+         r = _pm.showhide("!",0,0);      
+      elif l==2:
+         rep = arg[0]
+         if rephash.has_key(rep):
+            rep = rephash[rep]
+         if repres.has_key(rep):      
+            repn = repres[rep];
+            r = _pm.showhide(arg[1],repn,0);
+         else:
+            print "Error: unrecognized or ambiguous representation"
+      elif arg[0]=='all':
+         r = _pm.showhide("!",0,0);
+      elif arg[0][0]=='(':
+         r = _pm.showhide(arg[0],-1,0);
       else:
-         print "Error: unrecognized or ambiguous representation"
-   elif arg[0]=='all':
-      r = _pm.showhide("!",0,0);
-   elif arg[0][0]=='(':
-      r = _pm.showhide(arg[0],-1,0);
-   else:
-      rep = arg[0]
-      if rephash.has_key(rep):
-         rep = rephash[rep]
-      if repres.has_key(rep):
-         repn = repres[rep];
-         r = _pm.showhide("(all)",repn,0);
-      else:
-         print "Error: unrecognized or ambiguous representation"
-   unlock()
+         rep = arg[0]
+         if rephash.has_key(rep):
+            rep = rephash[rep]
+         if repres.has_key(rep):
+            repn = repres[rep];
+            r = _pm.showhide("(all)",repn,0);
+         else:
+            print "Error: unrecognized or ambiguous representation"
+   finally:
+      unlock()
    return r
 
 def mmatrix(a):
@@ -2003,17 +2142,19 @@ EXAMPLES
    mmatrix store
    '''
    r = 1
-   lock()   
-   if a=="clear":
-      r = _pm.mmatrix(0)
-   elif a=="store":
-      r = _pm.mmatrix(1)
-   elif a=="recall":
-      r = _pm.mmatrix(2)
-   unlock()
+   try:
+      lock()   
+      if a=="clear":
+         r = _pm.mmatrix(0)
+      elif a=="store":
+         r = _pm.mmatrix(1)
+      elif a=="recall":
+         r = _pm.mmatrix(2)
+   finally:
+      unlock()
    return r
 
-def enable(nam):
+def enable(*arg):
    '''
 DESCRIPTION
   
@@ -2032,12 +2173,18 @@ EXAMPLE
  
    enable my_object
    '''
-   lock()   
-   r = _pm.onoff(nam,1);
-   unlock()
+   if len(arg):
+      nam = arg[0]
+   else:
+      nam = 'all'
+   try:
+      lock()   
+      r = _pm.onoff(nam,1);
+   finally:
+      unlock()
    return r
 
-def disable(nam):
+def disable(*arg):
    '''
 DESCRIPTION
   
@@ -2056,9 +2203,15 @@ EXAMPLE
  
    disable my_object
    '''
-   lock()   
-   r = _pm.onoff(nam,0);
-   unlock()
+   if len(arg):
+      nam = arg[0]
+   else:
+      nam = 'all'
+   try:
+      lock()   
+      r = _pm.onoff(nam,0);
+   finally:
+      unlock()
    return r
 
 def mset(seq):
@@ -2088,32 +2241,34 @@ EXAMPLES
      // the next 30 frames are of state 15
      // the next 15 frames iterate back to state 1
    '''
-   lock()   
-   output=[]
-   input = string.split(seq," ")
-   last = 0
-   for x in input:
-      if x[0]>"9" or x[0]<"0":
-         if x[0]=="x":
-            cnt = int(x[1:])-1
-            while cnt>0:
-               output.append(str(last))
-               cnt=cnt-1
-         elif x[0]=="-":
-            dir=1
-            cnt=last
-            last = int(x[1:])-1
-            if last<cnt:
-               dir=-1
-            while cnt!=last:
-               cnt=cnt+dir
-               output.append(str(cnt))
-      else:
-         val = int(x) - 1
-         output.append(str(val))
-         last=val
-   r = _pm.mset(string.join(output," "))
-   unlock()
+   try:
+      lock()
+      output=[]
+      input = string.split(seq," ")
+      last = 0
+      for x in input:
+         if x[0]>"9" or x[0]<"0":
+            if x[0]=="x":
+               cnt = int(x[1:])-1
+               while cnt>0:
+                  output.append(str(last))
+                  cnt=cnt-1
+            elif x[0]=="-":
+               dir=1
+               cnt=last
+               last = int(x[1:])-1
+               if last<cnt:
+                  dir=-1
+               while cnt!=last:
+                  cnt=cnt+dir
+                  output.append(str(cnt))
+         else:
+            val = int(x) - 1
+            output.append(str(val))
+            last=val
+      r = _pm.mset(string.join(output," "))
+   finally:
+      unlock()
    return r
 
 def null():
@@ -2126,16 +2281,15 @@ keyword = {
    'clip'          : [clip         , 2 , 2 , ',' , 0 ],
    'cls'           : [cls          , 0 , 0 , ',' , 0 ],
    'color'         : [color        , 1 , 2 , ',' , 0 ],
-   'colordef'      : [colordef     , 2 , 2 , ',' , 0 ],
    'commands'      : [commands     , 0 , 0 , ',' , 0 ],
    'copy'          : [copy         , 2 , 2 , '=' , 0 ],
    'count_states'  : [count_states , 0 , 1 , ',' , 0 ],   
    'delete'        : [delete       , 1 , 1 , ',' , 0 ],
-   'disable'       : [disable      , 1 , 1 , ',' , 0 ],
+   'disable'       : [disable      , 0 , 1 , ',' , 0 ],
    'dist'          : [dist         , 0 , 2 , '=' , 0 ],
    'distance'      : [distance     , 0 , 2 , '=' , 0 ],
    'dump'          : [dump         , 2 , 2 , ',' , 0 ],
-   'enable'        : [enable       , 1 , 1 , ',' , 0 ],
+   'enable'        : [enable       , 0 , 1 , ',' , 0 ],
    'ending'        : [ending       , 0 , 0 , ',' , 0 ],
    'export_dots'   : [export_dots  , 2 , 2 , ',' , 0 ],
    'fit'           : [fit          , 2 , 2 , ',' , 0 ],
@@ -2177,6 +2331,7 @@ keyword = {
    'save'          : [save         , 0 , 4 , ',' , 0 ],
    'select'        : [select       , 1 , 2 , '=' , 0 ],
    'set'           : [set          , 2 , 2 , '=' , 0 ],
+   'set_color'     : [set_color    , 2 , 2 , '=' , 0 ],
    'set_key'       : [set_key      , 2 , 1 , ',' , 0 ], # API only
    'show'          : [show         , 0 , 2 , ',' , 0 ],
    'sort'          : [sort         , 0 , 1 , ',' , 0 ],

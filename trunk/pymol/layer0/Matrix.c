@@ -688,12 +688,12 @@ int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v)
      IS that because we're actually solving the transpose?
   */
 
-  printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);
-  printf("%8.3f %8.3f %8.3f\n",v[3],v[4],v[5]);
-  printf("%8.3f %8.3f %8.3f\n",v[6],v[7],v[8]);
+  printf(" Eigensolve: eigenvectors\n%8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);
+  printf(" Eigensolve: %8.3f %8.3f %8.3f\n",v[3],v[4],v[5]);
+  printf(" Eigensolve: %8.3f %8.3f %8.3f\n",v[6],v[7],v[8]);
   
-  printf("eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
-  printf("%8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
+  printf(" Eigensolve: eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
+  printf(" Eigensolve: %8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
   return(ierr);
 }
 

@@ -217,8 +217,14 @@ static void MainDraw(void)
 static void MainKey(unsigned char k, int x, int y)
 {
   /*  CMain *I = &Main;*/
+  int glMod;
 
   PLockAPIAsGlut();
+
+  glMod = glutGetModifiers();
+  Modifiers = ((glMod&GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
+	 ((glMod&GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
+	 ((glMod&GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
   switch (k) 
 	 {
@@ -229,7 +235,7 @@ static void MainKey(unsigned char k, int x, int y)
       PUnlockAPIAsGlut();
 		break;
 	 default:
-		OrthoKey(k,x,y);
+		OrthoKey(k,x,y,glMod);
 		break;
 	 }
 

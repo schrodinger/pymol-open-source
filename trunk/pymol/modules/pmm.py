@@ -1,4 +1,4 @@
-#A* -------------------------------------------------------------------
+7#A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
 #C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
 #D* -------------------------------------------------------------------
@@ -60,6 +60,7 @@ def mol_color(s):
            [ 1, '`292C`777H`229N`922O`950S`905*'     ,'pmu.cbag("'+s+'")'],
            [ 1, '`099C`777H`229N`922O`950S`905*'     ,'pmu.cbac("'+s+'")'],
            [ 1, '`990C`777H`229N`922O`950S`905*'     ,'pmu.cbay("'+s+'")'],
+           [ 1, '`955C`777H`229N`922O`950S`905*'     ,'pmu.cbas("'+s+'")'],
            [ 1, '`777C`777H`229N`922O`950S`905*'     ,'pmu.cbaw("'+s+'")'],
            [ 0, ''          ,''                         ],
            [ 1, '`900red'         ,'pm.color("red","'+s+'")'  ],
@@ -68,11 +69,16 @@ def mol_color(s):
            [ 1, '`990yellow'      ,'pm.color("yellow","'+s+'")'  ],
            [ 1, '`909violet'  ,'pm.color("violet","'+s+'")'  ],
            [ 1, '`099cyan'  ,'pm.color("cyan","'+s+'")'  ],           
-           [ 1, '`950orange'      ,'pm.color("orange","'+s+'")'  ],
+           [ 1, '`955salmon'      ,'pm.color("salmon","'+s+'")'  ],
+           [ 1, '`595lime' ,'pm.color("lime","'+s+'")'  ],
+           [ 1, '`559slate'  ,'pm.color("slate","'+s+'")'  ],
            [ 1, '`905magenta' ,'pm.color("magenta","'+s+'")'  ],
-           [ 1, '`505purple'  ,'pm.color("purple","'+s+'")'  ],
-           [ 1, '`055teal'  ,'pm.color("teal","'+s+'")'  ],
-           [ 1, '`550olive'   ,'pm.color("olive","'+s+'")'  ],
+           [ 1, '`950orange'      ,'pm.color("orange","'+s+'")'  ],
+           [ 1, '`059marine'      ,'pm.color("marine","'+s+'")'  ],
+           [ 1, '`551olive'   ,'pm.color("olive","'+s+'")'  ],
+           [ 1, '`515purple'  ,'pm.color("purple","'+s+'")'  ],
+           [ 1, '`155teal'  ,'pm.color("teal","'+s+'")'  ],
+           [ 1, '`151forest'  ,'pm.color("forest","'+s+'")'  ],
            [ 1, '`999white'       ,'pm.color("white","'+s+'")'  ],
            [ 1, '`555grey'    ,'pm.color("grey","'+s+'")'  ]
            ]

@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"OOMac.h"
 #include"MemoryDebug.h"
+#include"Ortho.h"
 
 #include"Color.h"
 
@@ -48,7 +49,8 @@ void ColorDef(char *name,float *v)
   I->Color[color].Color[0]=v[0];
   I->Color[color].Color[1]=v[1];
   I->Color[color].Color[2]=v[2];
-  
+  PRINTF " Color: \"%s\" defined as [ %3.1f, %3.1f, %3.1f ].\n",name,v[0],v[1],v[2] ENDF
+
 }
 /*========================================================================*/
 int ColorGetIndex(char *name)
@@ -141,6 +143,24 @@ void ColorInit(void)
   I->Color[I->NColor].Color[2]=1.0;
   I->NColor++;
 
+  strcpy(I->Color[I->NColor].Name,"salmon");
+  I->Color[I->NColor].Color[0]=1.0;
+  I->Color[I->NColor].Color[1]=0.6;
+  I->Color[I->NColor].Color[2]=0.6;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"lime");
+  I->Color[I->NColor].Color[0]=0.5;
+  I->Color[I->NColor].Color[1]=1.0;
+  I->Color[I->NColor].Color[2]=0.5;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"slate");
+  I->Color[I->NColor].Color[0]=0.5;
+  I->Color[I->NColor].Color[1]=0.5;
+  I->Color[I->NColor].Color[2]=1.0;
+  I->NColor++;
+
   strcpy(I->Color[I->NColor].Name,"magenta");
   I->Color[I->NColor].Color[0]=1.0;
   I->Color[I->NColor].Color[1]=0.0;
@@ -153,21 +173,63 @@ void ColorInit(void)
   I->Color[I->NColor].Color[2]=0.0;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"olive");
+  strcpy(I->Color[I->NColor].Name,"yellowgreen");
   I->Color[I->NColor].Color[0]=0.5;
-  I->Color[I->NColor].Color[1]=0.5;
+  I->Color[I->NColor].Color[1]=1.0;
   I->Color[I->NColor].Color[2]=0.0;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"purple");
-  I->Color[I->NColor].Color[0]=0.5;
-  I->Color[I->NColor].Color[1]=0.0;
+  strcpy(I->Color[I->NColor].Name,"bluegreen");
+  I->Color[I->NColor].Color[0]=0.0;
+  I->Color[I->NColor].Color[1]=1.0;
   I->Color[I->NColor].Color[2]=0.5;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"teal");
+  strcpy(I->Color[I->NColor].Name,"blueviolet");
+  I->Color[I->NColor].Color[0]=0.5;
+  I->Color[I->NColor].Color[1]=0.0;
+  I->Color[I->NColor].Color[2]=1.0;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"marine");
   I->Color[I->NColor].Color[0]=0.0;
   I->Color[I->NColor].Color[1]=0.5;
+  I->Color[I->NColor].Color[2]=1.0;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"olive");
+  I->Color[I->NColor].Color[0]=0.5;
+  I->Color[I->NColor].Color[1]=0.5;
+  I->Color[I->NColor].Color[2]=0.1;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"purple");
+  I->Color[I->NColor].Color[0]=0.6;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.6;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"teal");
+  I->Color[I->NColor].Color[0]=0.1;
+  I->Color[I->NColor].Color[1]=0.5;
+  I->Color[I->NColor].Color[2]=0.5;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"ruby");
+  I->Color[I->NColor].Color[0]=0.5;
+  I->Color[I->NColor].Color[1]=0.1;
+  I->Color[I->NColor].Color[2]=0.1;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"forest");
+  I->Color[I->NColor].Color[0]=0.1;
+  I->Color[I->NColor].Color[1]=0.5;
+  I->Color[I->NColor].Color[2]=0.1;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"deep");
+  I->Color[I->NColor].Color[0]=0.1;
+  I->Color[I->NColor].Color[1]=0.1;
   I->Color[I->NColor].Color[2]=0.5;
   I->NColor++;
 
