@@ -214,9 +214,9 @@ class State:
       if len(nrg_list):
          a = nrg_list.pop()
          l = list[a]
-         self.model.energy = float(string.strip(l[38:58]))
+         self.model.molecule.energy = float(string.strip(l[38:58]))
          if feedback['gamess']:
-            print " "+str(__name__)+': energy updated %12.6f.' % self.model.energy
+            print " "+str(__name__)+': energy updated %12.6f.' % self.model.molecule.energy
          
    def read_punch_list(self,list):
       ll = len(list)
