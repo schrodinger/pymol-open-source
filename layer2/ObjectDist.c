@@ -159,8 +159,6 @@ ObjectDist *ObjectDistNewFromM4XHBond(ObjectDist *oldObj,
                                       struct M4XHBondType *hbond,int n_hbond)
 {
   int a;
-  float dist_sum=0.0,dist;
-  int dist_cnt = 0;
   ObjectDist *I;
   int n_state;
   if(!oldObj)
@@ -183,8 +181,6 @@ ObjectDist *ObjectDistNewFromM4XHBond(ObjectDist *oldObj,
       I->DSet[a] = ObjectDistGetDistSetFromM4xHBond(objMol,hbond,n_hbond,a);
       
       if(I->DSet[a]) {
-        dist_sum+=dist;
-        dist_cnt++;
         I->DSet[a]->Obj = I;
         I->NDSet=a+1;
       }

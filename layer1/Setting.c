@@ -1628,7 +1628,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_button_mode, 0);
 
-  SettingSet_b(I,cSetting_valence, 0.0F);
+  SettingSet_b(I,cSetting_valence, 0);
 
   SettingSet_f(I,cSetting_nonbonded_size, 0.25F);
 
