@@ -1142,7 +1142,7 @@ SEE ALSO
 def show_help(cmd): # INTERNAL
    print "PyMOL>help %s" % cmd
    help(cmd)
-   if cmd.get_setting_legacy("internal_feedback")>0.1:
+   if get_setting_legacy("internal_feedback")>0.1:
       print "(Hit ESC to hide)"
 
 def set_wizard(*arg): # INTERNAL
@@ -1258,7 +1258,7 @@ USAGE
  
    help command
    '''
-   if cmd.get_setting_legacy("internal_feedback")>0.1:
+   if get_setting_legacy("internal_feedback")>0.1:
       set("text","1",quiet=1)
    cmd = command
    if kwhash.has_key(cmd):
@@ -1418,7 +1418,7 @@ USAGE
 
    splash
    '''
-   if cmd.get_setting_legacy("internal_feedback")>0.1:
+   if get_setting_legacy("internal_feedback")>0.1:
       set("text","1",quiet=1)
    print
    try:
