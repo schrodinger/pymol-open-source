@@ -108,9 +108,9 @@ float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3)
 {
   float d0[3],cp[3],d2[3],d3[3];
   subtract3f(v2,v1,d2);
-  normalize3f(d2);
+  /*  normalize3f(d2);*/
   subtract3f(v3,v1,d3);
-  normalize3f(d3);
+  /* normalize3f(d3);*/
   cross_product3f(d2,d3,cp);
   normalize3f(cp);
   subtract3f(v1,v0,d0);
@@ -123,12 +123,12 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
   float d0[3],cp[3],d2[3],d3[3],push[3];
   float cur,dev,sc,result;
   subtract3f(v2,v1,d2);
-  normalize3f(d2);
+  /*  normalize3f(d2);*/
   subtract3f(v3,v1,d3);
-  normalize3f(d3);
+  /*  normalize3f(d3);*/
   cross_product3f(d2,d3,cp); 
-  normalize3f(cp); /* this is our axis */
   subtract3f(v1,v0,d0);
+  normalize3f(cp); /* this is our axis */
   cur = dot_product3f(d0,cp);
 
   dev = cur-target;
@@ -156,8 +156,8 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
   float dev,sc,lcp,result;
 
   subtract3f(v2,v1,d2);
-  normalize3f(d2);
   subtract3f(v0,v1,d1);
+  normalize3f(d2);
   normalize23f(d1,d0);
 
   cross_product3f(d2,d0,cp); 
