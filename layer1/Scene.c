@@ -76,6 +76,8 @@ typedef struct {
   int mode_override;
 } DeferredMouse;
 
+#define MAX_ANI_ELEM 45
+
 struct _CScene {
   Block *Block;
   ObjRec *Obj;
@@ -125,6 +127,9 @@ struct _CScene {
   int LoopFlag;
   int LoopMod;
   BlockRect LoopRect;
+  CViewElem ani_elem[MAX_ANI_ELEM+1];
+  int cur_ani_elem, n_ani_elem;
+
 };
 
 typedef struct {
@@ -136,6 +141,33 @@ int SceneLoopDrag(Block *block,int x,int y,int mod);
 int SceneLoopRelease(Block *block,int button,int x,int y,int mod);
 
 int SceneLoopClick(Block *block,int button, int x,int y,int mod);
+
+void ScenePrimeAnimation(PyMOLGlobals *G)
+{
+  CScene *I=G->Scene;
+  SceneToViewElem(G,I->ani_elem);
+  I->ani_elem[0].specification_level = 2;
+  I->n_ani_elem = 0;
+}
+
+void SceneLoadAnimation(PyMOLGlobals *G, double duration)
+{
+  double now;
+  int target = MAX_ANI_ELEM;
+
+  CScene *I=G->Scene;
+  SceneToViewElem(G,I->ani_elem + target);
+  I->ani_elem[MAX_ANI_ELEM].specification_level = 2;
+  now = UtilGetSeconds(G);
+  I->ani_elem[0].timing_flag = true;
+  I->ani_elem[0].timing = now + 0.01;
+  I->ani_elem[target].timing_flag = true;
+  I->ani_elem[target].timing = now + duration;
+  ViewElemInterpolate(I->ani_elem, I->ani_elem + target, 2.0F, 1.0F);
+  SceneFromViewElem(G,I->ani_elem);
+  I->cur_ani_elem = 0;
+  I->n_ani_elem = target;
+}
 
 int SceneLoopClick(Block *block,int button, int x,int y,int mod)
 {
@@ -3216,6 +3248,9 @@ int  SceneInit(PyMOLGlobals *G)
     I->Width = 400; /* sensible defaults */
     I->Height = 300;
 
+    I->n_ani_elem = 0;
+    I->cur_ani_elem = 0;
+
     return 1;
   } else 
     return 0;
@@ -3769,6 +3804,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
   int must_render_stereo = false;
   int stereo_as_mono = false;
   int debug_pick = 0;
+  double now;
   GLenum render_buffer = GL_BACK;
   SceneUnitContext context;
   
@@ -3776,6 +3812,24 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
     ENDFD;
+
+  if(I->cur_ani_elem < I->n_ani_elem ) { /* play motion animation */
+    int cur = I->cur_ani_elem;
+
+    now = UtilGetSeconds(G);
+
+    while(I->ani_elem[cur].timing<now) {
+      cur++;
+      if(cur >= I->n_ani_elem) {
+        cur = I->n_ani_elem-1;
+        break;
+      }
+    }
+
+    SceneFromViewElem(G,I->ani_elem+cur);
+
+    I->cur_ani_elem = cur+1;
+  }
 
   double_pump=SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono);
   

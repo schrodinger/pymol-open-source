@@ -534,10 +534,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_surface_optimize_subsets   384
 #define cSetting_multiplex                  385
 #define cSetting_texture_fonts              386
+#define cSetting_pqr_no_chain_id            387
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       387
+#define cSetting_INIT                       388
 
 #endif
 

@@ -234,3 +234,177 @@ int ViewIterate(CView *I,CViewIterator *iter,CRay *ray,int at_least_once)
   return result;
 }
 
+int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
+{
+  float first3x3[9];
+  float last3x3[9];
+  float inverse3x3[9];
+  float inter3x3[9];
+  float rot_axis[3],trans[3]={0.0F,0.0F,0.0F};
+  float angle;
+  CViewElem *current;
+  int n = (last-first)-1;
+  Matrix53f rot,imat;
+  int a;
+  float tVector[3],tCenter[3],tDir[3];
+  float tLen;
+  float pLen;
+  float v1[3],v2[3],sProj[3];
+  float tAngle=0.0F;
+  float tLinear = true; /* always do linear for now... */
+  float pivot[3];
+  const float _1 = 1.0F, _p5 = 0.5F;
+  int parabolic = true;
+  int timing_flag;
+  double timing = 0.0F;
+
+  if(power<0.0F) {
+    parabolic = false;
+    power = -power;
+  }
+  
+  /* I have no clue whether we're column or row major at this
+     point...but it hardly matters!  */
+
+  copy44d33f(first->matrix,first3x3);
+  copy44d33f(last->matrix,last3x3);
+  transpose33f33f(first3x3,inverse3x3);
+
+  copy3f(first->pre,&rot[3][0]);
+  copy3f(last->pre,&rot[4][0]);
+  multiply33f33f(inverse3x3,last3x3,&rot[0][0]);
+
+  matrix_to_rotation(rot,rot_axis,&angle);
+
+  if(!tLinear) {
+    subtract3f(last->pre,first->pre,tVector);
+    normalize23f(tVector,tDir);
+    tLen = length3f(tVector); 
+    
+    average3f(last->pre,first->pre,tCenter); /* center of translation */
+    
+    pLen = dot_product3f(tDir,rot_axis); /* project translation vector onto rotation axis */
+    
+    trans[0] -= tDir[0] * pLen; /* subtract component of translation from rotation axis*/
+    trans[1] -= tDir[1] * pLen; /* why??? */
+    trans[2] -= tDir[2] * pLen;
+    normalize3f(trans);
+    
+    /* rotation axis must be perpendicular to the direction of translation */
+    
+    cross_product3f(tDir,trans,v1);
+    
+    normalize3f(v1);
+    
+    transform33f3f(&rot[0][0],v1,v2);
+
+    project3f(v2,trans,sProj);  /* project vector onto plane _|_ to axis */
+    subtract3f(v2,sProj,v2); 
+    normalize3f(v2);
+  
+    tAngle = acos(dot_product3f(v1,v2));
+    
+    if(fabs(tAngle)>fabs(angle))
+      tAngle = fabs(angle)*(tAngle/fabs(angle));
+    
+    /* if translation angle > rotation angle then sets translation angle 
+     * to same as rotation angle, with proper sign of course */
+    
+    if (tAngle>0.0001) 
+      {
+        pLen = tan(tAngle/2); 
+        if(fabs(pLen)>0.0000001)
+          pLen = (tLen/2)/pLen;
+        else
+          {
+            pLen = 1000.0;
+            tLinear = true;
+          }
+      }
+    else
+      {
+        pLen = 1000.0;
+        tLinear = true;
+      }
+  
+    pivot[0] = tCenter[0] - pLen * v1[0];
+    pivot[1] = tCenter[1] - pLen * v1[1];
+    pivot[2] = tCenter[2] - pLen * v1[2];
+  }
+
+  timing_flag = first->timing_flag && last->timing_flag;
+
+  current = first+1;
+  
+  for(a=0;a<n;a++) {
+    float fxn = ((float)a+1)/(n+1);
+    float fxn_1;
+
+    if(timing_flag) {
+      timing = (first->timing * (1.0F - fxn) + (last->timing * fxn));
+    }
+
+    /*    printf("Fxn: %8.3f ",fxn);*/
+    if(bias!=1.0F) {
+      fxn = 1-pow(1-pow(fxn,bias),_1/bias);
+    }
+    /*    printf("%8.3f bias %8.3f\n",fxn,bias);*/
+
+    if(power!=1.0F) {
+      if(fxn<0.5F) {
+        if(parabolic) 
+          fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
+        else
+          fxn = (_1-pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
+      } else if(fxn>0.5F) {
+        fxn = _1 - fxn;
+        if(parabolic) 
+          fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
+        else
+          fxn = (_1-pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
+        fxn = _1 - fxn;
+      }
+    }
+
+    fxn_1 = 1.0F - fxn;
+
+    *current = *first;
+    matrix_interpolate(imat,rot,pivot,rot_axis,angle,tAngle,false,tLinear,fxn);
+    current->matrix_flag = true;
+    multiply33f33f(first3x3,&imat[0][0],inter3x3);
+
+    copy33f44d(inter3x3,current->matrix);
+
+    if(first->pre_flag && last->pre_flag) {
+      copy3f(&imat[4][0],current->pre);
+      current->pre_flag=true;
+    } else {
+      current->pre_flag=false;
+    }
+
+    if(first->clip_flag && last->clip_flag) {
+      current->front = first->front * fxn_1 + last->front * fxn;
+      current->back = first->back * fxn_1 + last->back * fxn;
+      current->clip_flag = true;
+    } else {
+      current->clip_flag = false;
+    }
+
+    if(first->post_flag && last->post_flag) {
+      mix3d(first->post,last->post,(double)fxn,current->post);
+      current->post_flag=true;
+    } else {
+      current->post_flag=false;
+    }
+    current->specification_level = 1;
+
+    if(timing_flag) {
+      current->timing_flag = true;
+      current->timing = timing;
+    }
+
+    current++;
+  }
+
+  return 1;
+}

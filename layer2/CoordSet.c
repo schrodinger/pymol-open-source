@@ -429,6 +429,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   AtomName name;
   ResIdent resi; 
   ResName resn;
+  Chain chain;
   int rl;
   int literal = (int)SettingGet(G,cSetting_pdb_literal_names);
   int reformat = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
@@ -574,15 +575,23 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   }
   if(cnt>99998)
     cnt=99998;
+
   if((!pdb_info)||(!pdb_info->is_pqr_file)) { /* relying upon short-circuit */
 
     (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
                   aType,cnt+1,name,ai->alt,resn,
                   ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);
   } else {
+    if(pdb_info->pqr_no_chain_id) {
+      chain[0]=0;
+    } else {
+      chain[0] = ai->chain[0];
+      chain[1] = 0;
+    }
+      
     (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f %7.3f %7.3f\n",
                   aType,cnt+1,name,ai->alt,resn,
-                  ai->chain,resi,*v,*(v+1),*(v+2),ai->partialCharge,ai->bohr_radius);
+                  chain,resi,*v,*(v+1),*(v+2),ai->partialCharge,ai->bohr_radius);
   }
   
 }

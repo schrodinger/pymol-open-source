@@ -1397,6 +1397,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
   PyObject *cur;
   SpecRec *rec = NULL;
   int extra_int;
+  int incomplete = false;
 
   if(ok) ok = (names!=NULL);
   if(ok) ok = PyList_Check(names);
@@ -1479,8 +1480,12 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
       }
     }
     a++;
+    if(!ok) {
+      incomplete=true;
+      ok=true;
+    }
   }
-  return(ok);
+  return(!incomplete);
 }
 
 static int ExecutiveSetSelections(PyMOLGlobals *G,PyObject *names)
@@ -1492,6 +1497,7 @@ static int ExecutiveSetSelections(PyMOLGlobals *G,PyObject *names)
   PyObject *cur;
   SpecRec *rec = NULL;
   int extra;
+  int incomplete = false;
 
   if(ok) ok = (names!=NULL);
   if(ok) ok = PyList_Check(names);
@@ -1518,8 +1524,12 @@ static int ExecutiveSetSelections(PyMOLGlobals *G,PyObject *names)
       ListElemFree(rec);
     }
     a++;
+    if(!ok) {
+      incomplete=true;
+      ok=true;
+    }
   }
-  return(ok);
+  return(!incomplete);
 }
 
 static PyObject *ExecutiveGetExecSelePyList(PyMOLGlobals *G,SpecRec *rec)
@@ -1689,6 +1699,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
   return 0;
 #else
   int ok=true;
+  int incomplete = false;
   PyObject *tmp;
   SceneViewType sv;
   int version=-1;
@@ -1745,6 +1756,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
         "ExectiveSetSession-Error: after colors.\n"
         ENDFB(G);
     }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
+    }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"color_ext");
@@ -1761,6 +1776,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
         "ExectiveSetSession-Error: after color_ext.\n"
         ENDFB(G);
     }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
+    }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"settings");
@@ -1776,6 +1795,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
       PRINTFB(G,FB_Executive,FB_Errors)
         "ExectiveSetSession-Error: after settings.\n"
         ENDFB(G);
+    }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
     }
   }
   if(ok) {
@@ -1794,6 +1817,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
         "ExectiveSetSession-Error: after names.\n"
         ENDFB(G);
     }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
+    }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"selector_secrets");
@@ -1809,6 +1836,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
       PRINTFB(G,FB_Executive,FB_Errors)
         "ExectiveSetSession-Error: after selector secrets.\n"
         ENDFB(G);
+    }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
     }
   }  
   if(ok) {
@@ -1829,8 +1860,11 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
         "ExectiveSetSession-Error: after view.\n"
         ENDFB(G);
     }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
+    }
   }
-  
   if(ok) {
     int warning;
     tmp = PyDict_GetItemString(session,"movie");
@@ -1848,6 +1882,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
         "ExectiveSetSession-Error: after movie.\n"
         ENDFB(G);
     }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
+    }
   }
   
   if(ok) {
@@ -1864,6 +1902,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
       PRINTFB(G,FB_Executive,FB_Errors)
         "ExectiveSetSession-Error: after editor.\n"
         ENDFB(G);
+    }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
     }
   }
   if(ok) { /* update mouse in GUI */
@@ -1885,6 +1927,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
         "ExectiveSetSession-Error: after main.\n"
         ENDFB(G);
     }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
+    }
   }
 #endif
   if(ok&&migrate_sessions) { /* migrate sessions */
@@ -1900,7 +1946,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
     if(have_active)
       ExecutiveSetObjVisib(G,active,true);      
   }
-  if(!ok) {
+  if(incomplete) {
     PRINTFB(G,FB_Executive,FB_Warnings)
       "ExectiveSetSession-Warning: restore may be incomplete.\n"
       ENDFB(G);
@@ -5956,8 +6002,10 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,int state,int in
       " ExecutiveWindowZoom: on center %8.3f %8.3f %8.3f...\n",center[0],
       center[1],center[2]
       ENDFD;
+    ScenePrimeAnimation(G);
     SceneOriginSet(G,center,false);
     SceneWindowSphere(G,center,radius);
+    SceneLoadAnimation(G,0.75);
     SceneDirty(G);
   } else {
 
@@ -5996,10 +6044,13 @@ int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int origin)
       " ExecutiveCenter: on center %8.3f %8.3f %8.3f...\n",center[0],
       center[1],center[2]
       ENDFD;
+
+    ScenePrimeAnimation(G);
     if(origin) 
       SceneOriginSet(G,center,false);
     SceneRelocate(G,center);
     SceneDirty(G);
+    SceneLoadAnimation(G,0.75);
   } else {
     sele0 = SelectorIndexByName(G,name);
     if(sele0>=0) { /* any valid selection except "all" */

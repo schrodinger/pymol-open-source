@@ -44,6 +44,9 @@ typedef struct CViewElem {
 
   int specification_level;
 
+  int timing_flag;
+  double timing;
+
 } CViewElem;
 
 PyObject *ViewElemAsPyList(CViewElem *view);
@@ -67,6 +70,7 @@ void ViewFree(CView *I);
 CViewIterator ViewGetIterator(CView *I);
 int ViewIterate(CView *I,CViewIterator *iter,CRay *ray,int at_least_once);
 
+int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias);
 
 #endif
 
