@@ -71,6 +71,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeChemPyModel 8
 #define cLoadTypePDBStr 9
 #define cLoadTypeChemPyBrick 10
+#define cLoadTypeChemPyMap 11
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -1683,13 +1684,30 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 	   if(obj) {
 		 ObjectSetName(obj,oname);
 		 ExecutiveManageObject(obj);
-		 sprintf(buf," CmdLoad: ChemPy-brick loaded into object \"%s\"\n",
+		 sprintf(buf," CmdLoad: chempy.brick loaded into object \"%s\"\n",
                oname);		  
 	   }
 	 } else if(origObj) {
-		sprintf(buf," CmdLoad: ChemPy-brick appended into object \"%s\"\n",
+		sprintf(buf," CmdLoad: chempy.brick appended into object \"%s\"\n",
               oname);
 	 }
+    break;
+  case cLoadTypeChemPyMap:
+    PBlockAndUnlockAPI();
+	 obj=(Object*)ObjectMapLoadChemPyMap((ObjectMap*)origObj,model,frame,discrete);
+    PLockAPIAndUnblock();
+	 if(!origObj) {
+	   if(obj) {
+		 ObjectSetName(obj,oname);
+		 ExecutiveManageObject(obj);
+		 sprintf(buf," CmdLoad: chempy.map loaded into object \"%s\"\n",
+               oname);		  
+	   }
+	 } else if(origObj) {
+		sprintf(buf," CmdLoad: chempy.map appended into object \"%s\"\n",
+              oname);
+	 }
+    break;
   }
   if(origObj) {
 	 OrthoAddOutput(buf);

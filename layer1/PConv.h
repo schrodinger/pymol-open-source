@@ -38,6 +38,23 @@ Z* -------------------------------------------------------------------
 
 */
 
+/* == error-checking routines: true = success, false = failure */
+
+int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll);
+int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *ff,int ll);
+int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *ff,int ll);
+int PConvAttrToPtr(PyObject *obj,char *name,void **cobj);
+
+int PConvCObjectToPtr(PyObject *obj,void **ptr);
+
+/* === end === */
+
+/* === optimized, non-error checking routines === */
+
+/* === end === */
+
+/* categories below... */
+
 PyObject *PConvFloatVLAToPyList(float *f);
 PyObject *PConvIntVLAToPyList(int *f);
 
@@ -62,9 +79,12 @@ PyObject *PConvStringVLAToPyList(char *str);
 void PConv44PyListTo44f(PyObject *src,float *dest); /* note loss of precision */
 
 int PConvPyListToFloatArray(PyObject *obj,float **f);
+int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll);
+
 PyObject *PConvFloatArrayToPyList(float *f,int l);
 
 int PConvPyListToIntArray(PyObject *obj,int **f);
+int PConvPyListToIntArrayInPlace(PyObject *obj,int *ff,int ll);
 
 #endif
 

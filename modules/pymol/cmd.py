@@ -3203,6 +3203,15 @@ TO DOCUMENT
    lst.extend(list(arg))
    return apply(load_object,lst)
 
+def load_map(*arg):
+   '''
+TO DOCUMENT
+'''
+   
+   lst = [loadable.map]
+   lst.extend(list(arg))
+   return apply(load_object,lst)
+
 def load_model(*arg):
    '''
 DESCRIPTION
@@ -4359,6 +4368,7 @@ class loadable:
    model = 8
    pdbstr = 9
    brick = 10
+   map = 11
    
 # build shortcuts list
 

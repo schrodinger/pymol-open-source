@@ -623,8 +623,6 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
 
 static PyObject *PCatchFlush(PyObject *self, 	PyObject *args)
 {
-  char *str;
-  
   fflush(stdout);
   fflush(stderr);
   Py_INCREF(Py_None);
