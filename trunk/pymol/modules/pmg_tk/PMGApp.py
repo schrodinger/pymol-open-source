@@ -1316,6 +1316,12 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('ortho'))
 
       self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Use Display Lists.',
+                         label=self.pad+'Use Display Lists',
+                        variable = self.setting.ortho,
+                        command = lambda s=self: s.setting.update('use_display_lists'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
                          'Show Valences.',
                          label=self.pad+'Show Valences',
                         variable = self.setting.valence,

@@ -401,10 +401,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_show_progress               262
 #define cSetting_use_display_lists           263
 #define cSetting_cache_memory                264
+#define cSetting_simplify_display_lists      265
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        265
+#define cSetting_INIT                        266
 
 #endif
 
