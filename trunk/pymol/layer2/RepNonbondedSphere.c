@@ -167,6 +167,12 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   for(a=0;a<cs->NIndex;a++) {
     ai = obj->AtomInfo+cs->IdxToAtm[a];
     active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbondedSphere ]);
+	if(active[a]) {
+		if(ai->masked)
+			active[a]=-1;
+		else
+			active[a]=1;
+	}
     if(active[a]) nSphere++;
   }
   if(!nSphere) {
@@ -302,7 +308,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
     v=I->VP;
     
     for(a=0;a<cs->NIndex;a++) 
-      if(active[a]) {
+      if(active[a]>0) {
         
         I->NP++;
 
