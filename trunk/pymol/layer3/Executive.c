@@ -91,7 +91,7 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
-float ExecutiveAlign(char *name,char *s1,char *s2)
+float ExecutiveAlign(char *s1,char *s2)
 {
   int sele1=SelectorIndexByName(s1);
   int sele2=SelectorIndexByName(s2);
@@ -99,7 +99,6 @@ float ExecutiveAlign(char *name,char *s1,char *s2)
   int *vla2=NULL;
   int na,nb;
   int a,b,c;
-  int *r;
   float result = 0.0;
   CMatch *match = NULL;
 
@@ -111,7 +110,6 @@ float ExecutiveAlign(char *name,char *s1,char *s2)
       nb = VLAGetSize(vla2)/3;
       if(na&&nb) {
         match = MatchNew(na,nb);
-        r = vla1;
         for(a=0;a<na;a++) {
           for(b=0;b<nb;b++) {
             if(vla1[a*3+2] == vla2[b*3+2])
@@ -120,15 +118,17 @@ float ExecutiveAlign(char *name,char *s1,char *s2)
               match->mat[a][b] = -0.1;
           }
         }
-        result = MatchAlign(match,-0.2,-0.05,10);
+        result = MatchAlign(match,-0.2,-0.1,10);
         if(match->pair) { /* alignment was successful */
-          r = match->pair;
-          c = VLAGetSize(match->pair)/2;
-          for(a=0;a<c;a++) {
-            printf("%d %d\n",r[0],r[1]);
-            r+=2;
+          c = SelectorCreateAlignments(match->pair,
+                                       sele1,vla1,sele2,vla2,
+                                       "align1","align2");
+          if(c) {
+            PRINTFB(FB_Executive,FB_Actions)
+              " ExecutiveAlign: %d atoms aligned.\n",c
+              ENDFB;
+              ExecutiveRMS("align1","align2",2,5.0);
           }
-          
         }
         if(match) 
           MatchFree(match);
@@ -1217,7 +1217,7 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
   }
 }
 /*========================================================================*/
-float ExecutiveRMS(char *s1,char *s2,int mode)
+float ExecutiveRMS(char *s1,char *s2,int mode,float refine)
 {
   int sele1,sele2;
   float rms = -1.0;
@@ -1240,7 +1240,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
     ExecutiveObjMolSeleOp(sele1,&op1);
     for(a=0;a<op1.nvv1;a++)
       {
-        inv=op1.vc1[a];
+        inv=op1.vc1[a]; /* average over coordinate sets */
         if(inv)
           {
             f=op1.vv1+(a*3);
@@ -1261,7 +1261,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
     ExecutiveObjMolSeleOp(sele2,&op2);
     for(a=0;a<op2.nvv1;a++)
       {
-        inv=op2.vc1[a];
+        inv=op2.vc1[a]; /* average over coordinate sets */
         if(inv)
           {
             f=op2.vv1+(a*3);
@@ -1272,6 +1272,22 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
           }
       }
   }
+  if(op1.vv1&&op2.vv1) {
+    if(op1.nvv1==op2.nvv1) {
+      if(refine>R_SMALL4) {
+        op1.nvv1 = MatrixCutoff(refine,op1.nvv1,op1.vv1,op2.vv1);
+
+        if(op2.nvv1!=op1.nvv1) {
+          PRINTFB(FB_Executive,FB_Actions)
+            " ExecutiveRMS: %d atoms thrown out..\n",op2.nvv1-op1.nvv1
+            ENDFB;
+          }
+
+        op2.nvv1 = op1.nvv1;
+      }
+    }
+  }
+
   if(op1.vv1&&op2.vv1) {
     if(op1.nvv1!=op2.nvv1) {
       sprintf(buffer,"Atom counts between selections don't match (%d vs %d)\n",

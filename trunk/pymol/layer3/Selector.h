@@ -49,4 +49,6 @@ void SelectorUpdateCmd(int sele0,int sele1,int sta0,int sta1);
 int SelectorGetSingleAtomVertex(int sele,int state,float *v);
 int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index);
 int *SelectorGetResidueVLA(int sele0);
+int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
+                              int *vla2,char *name1,char *name2);
 #endif

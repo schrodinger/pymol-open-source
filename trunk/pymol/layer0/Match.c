@@ -60,8 +60,13 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
   int *p;
   int cnt;
 
+
   nf = I->na+2;
   ng = I->nb+2;
+
+  PRINTFB(FB_Match,FB_Actions)
+    " MatchAlign: aligning residues (%d vs %d)...\n",I->na,I->nb
+    ENDFB;
 
   dim[0]=nf;
   dim[1]=ng;
@@ -151,7 +156,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
     }
   }
 
-  if(1||Feedback(FB_Match,FB_Debugging)) {
+  if(Feedback(FB_Match,FB_Debugging)) {
     for(b=0;b<I->nb;b++) {
       for(a=0;a<I->na;a++) {
         printf("%4.1f(%2d,%2d)",score[a][b],point[a][b][0],point[a][b][1]);
@@ -189,7 +194,9 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
     b=g;
     cnt++;
   }
-  printf("%8.3f %d %d %d\n",mxv,mxa,mxb,cnt);
+  PRINTFD(FB_Match)
+    " MatchAlign-DEBUG: best entry %8.3f %d %d %d\n",mxv,mxa,mxb,cnt
+    ENDFD;
   if(cnt)
     mxv = mxv/cnt;
   VLASize(I->pair,int,(p-I->pair));

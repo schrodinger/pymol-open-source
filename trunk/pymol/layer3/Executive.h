@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Ortho.h"
 #include"Word.h"
-float ExecutiveAlign(char *name,char *sele1,char *sele2);
+float ExecutiveAlign(char *sele1,char *sele2);
 float ExecutiveDistance(char *sele1,char *sele2);
 float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
 void ExecutiveBond(char *s1,char *s2,int order,int add);
@@ -48,7 +48,7 @@ void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,
 void ExecutiveRay(void);
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
 int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state);
-float ExecutiveRMS(char *sele1,char *sele2,int mode);
+float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine);
 void ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
 float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(char *s1,int target,int mode);
