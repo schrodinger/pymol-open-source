@@ -415,6 +415,47 @@ void ColorFree(void)
 /*========================================================================*/
 void ColorReset(void)
 {
+/* PyMOL core color names
+
+  1   1   1   white
+ .5  .5  .5   grey/gray
+  0   0   0   black 
+
+  1   0   0   red
+  0   1   0   green
+  0   0   1   blue
+
+  1   1   0   yellow
+  1   0   1   magenta
+  0   1   1   cyan
+
+  1   1  .5   paleyellow  .
+  1  .5   1   violet      .
+ .5   1   1   aquamarine  .
+
+  1  .5  .5   deepsalmon  .
+ .5   1  .5   palegreen   .
+ .5  .5   1   slate       .
+
+ .75 .75  0   olive       .
+ .75  0  .75  purple      .
+  0  .75 .75  teal        .
+
+ .5  .5   0   deepolive   .
+ .5   0  .5   deeppurple  .
+  0  .5  .5   deepteal    .
+
+  1  .5   0   orange      .
+  1   0  .5   hotpink     .
+ .5   1   0   chartreuse  .
+  0   1  .5   limegreen   .
+  0  .5   1   marine      .
+ .5   0   1   purpleblue  .
+
+
+
+*/
+
   CColor *I=&Color;
   int a;
   int set1;
@@ -439,14 +480,14 @@ void ColorReset(void)
 
   float spectrumR[13][3] = { 
     { 1.0, 1.0, 0.0 }, /* yellow - 0 */
-    { 0.5, 1.0, 0.0 }, /* yellowgreen */
+    { 0.5, 1.0, 0.0 }, /* chartreuse */
     { 0.0, 1.0, 0.0 }, /* green - 166.66 */
-    { 0.0, 1.0, 0.5 }, /* lime */
+    { 0.0, 1.0, 0.5 }, /* limegreen */
     { 0.0, 1.0, 1.0 }, /* cyan - 333.33 */
 
     { 0.0, 0.5, 1.0 }, /* marine */
     { 0.0, 0.0, 1.0 }, /* blue - 500 */
-    { 0.5, 0.0, 1.0 }, /* blueviolet */
+    { 0.5, 0.0, 1.0 }, /* purpleblue */
     { 1.0, 0.0, 1.0 }, /* magenta - 666.66 */
     { 1.0, 0.0, 0.5 }, /* hotpink */
 
@@ -503,6 +544,52 @@ void ColorReset(void)
     { 1.0, 0.0, 0.0 }, /* red - 916.67*/
     { 1.0, 1.0, 1.0 }, /* white */
     { 0.0, 1.0, 1.0 }, /* cyan - 999 */
+  };
+
+  float spectrumO[29][3] = { /* a rainbow with perceptive color balancing and extra blue/red at the ends */
+    { 1.0, 0.0,  1.0 }, /* violet */
+    { 0.8, 0.0,  1.0 }, 
+
+    { 0.5, 0.0,  1.0 }, /* blend */
+
+    { 0.0, 0.0,  1.0 }, /* blue */
+    { 0.0, 0.0,  1.0 }, /* blue */
+    { 0.0, 0.2,  1.0 }, 
+
+    { 0.0, 0.5,  1.0 }, /* blend */
+
+    { 0.0, 0.8,  1.0 }, 
+    { 0.0, 1.0,  1.0 }, /* cyan */
+    { 0.0, 1.0,  0.8 }, 
+
+    { 0.0, 1.0,  0.5 }, /* blend */
+
+    { 0.0, 1.0,  0.2 },  
+    { 0.0, 1.0,  0.0 },  /* green */
+    { 0.2, 1.0,  0.0 },  
+
+    { 0.5, 1.0,  0.0 },  /* blend */
+
+    { 0.8, 1.0,  0.0 },  
+    { 1.0, 1.0,  0.0 },  /* yellow */
+    { 1.0, 0.9,  0.0 },  
+
+    { 1.0, 0.75, 0.0 },  /* blend */
+
+    { 1.0, 0.6,  0.0 },  
+    { 1.0, 0.5,  0.0 },  /* orange */
+    { 1.0, 0.4,  0.0 },  
+
+    { 1.0, 0.3, 0.0 }, /* blend */
+
+    { 1.0, 0.2,  0.0 },  
+    { 1.0, 0.0,  0.0 },  /* red */
+    { 1.0, 0.0,  0.0 },  /* red */
+
+    { 1.0, 0.0,  0.5 },  /* blend */
+
+    { 1.0, 0.0,  0.8 },  /* violet */
+    { 1.0, 0.0,  1.0 },  /* violet */
   };
 
   /* BLUE->VIOLET->RED r546 to r909 */
@@ -601,13 +688,13 @@ void ColorReset(void)
   I->Color[I->NColor].Color[2]=0.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"bluegreen");
+  strcpy(I->Color[I->NColor].Name,"bluegreen"); /* legacy name */
   I->Color[I->NColor].Color[0]=0.0F;
   I->Color[I->NColor].Color[1]=1.0F;
   I->Color[I->NColor].Color[2]=0.5F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"blueviolet");
+  strcpy(I->Color[I->NColor].Name,"blueviolet"); /* legacy name */
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=0.0F;
   I->Color[I->NColor].Color[2]=1.0F;
@@ -620,36 +707,36 @@ void ColorReset(void)
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"olive");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.1F;
+  I->Color[I->NColor].Color[0]=0.75F;
+  I->Color[I->NColor].Color[1]=0.75F;
+  I->Color[I->NColor].Color[2]=0.00F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"purple");
-  I->Color[I->NColor].Color[0]=0.7F;
-  I->Color[I->NColor].Color[1]=0.2F;
-  I->Color[I->NColor].Color[2]=0.7F;
+  I->Color[I->NColor].Color[0]=0.75F;
+  I->Color[I->NColor].Color[1]=0.00F;
+  I->Color[I->NColor].Color[2]=0.75F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"teal");
-  I->Color[I->NColor].Color[0]=0.2F;
-  I->Color[I->NColor].Color[1]=0.6F;
-  I->Color[I->NColor].Color[2]=0.6F;
+  I->Color[I->NColor].Color[0]=0.00F;
+  I->Color[I->NColor].Color[1]=0.75F;
+  I->Color[I->NColor].Color[2]=0.75F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"ruby");
+  strcpy(I->Color[I->NColor].Name,"ruby"); /* deprecate! */
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=0.1F;
   I->Color[I->NColor].Color[2]=0.1F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"forest");
+  strcpy(I->Color[I->NColor].Name,"forest"); /* deprecate! */
   I->Color[I->NColor].Color[0]=0.1F;
   I->Color[I->NColor].Color[1]=0.5F;
   I->Color[I->NColor].Color[2]=0.1F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"deep");
+  strcpy(I->Color[I->NColor].Name,"deep"); /* deprecate! */
   I->Color[I->NColor].Color[0]=0.1F;
   I->Color[I->NColor].Color[1]=0.1F;
   I->Color[I->NColor].Color[2]=0.5F;
@@ -918,7 +1005,82 @@ void ColorReset(void)
     I->NColor++;
   }
 
+  /* original full spectrum, with extra blue and red at the ends (o000-o999) */
+
+  #define B_DIV 35.7143F
+
+  for(a=0;a<1000;a=a+1) {
+    set1=(int)(a/B_DIV);
+    sprintf(I->Color[I->NColor].Name,"o%03d",a);
+    f = 1.0F-(a-(set1*B_DIV))/B_DIV;
+    I->Color[I->NColor].Color[0]=f*spectrumO[set1][0]+(1.0F-f)*spectrumO[set1+1][0];
+    I->Color[I->NColor].Color[1]=f*spectrumO[set1][1]+(1.0F-f)*spectrumO[set1+1][1];
+    I->Color[I->NColor].Color[2]=f*spectrumO[set1][2]+(1.0F-f)*spectrumO[set1+1][2];
+    I->NColor++;
+  }
+
+  strcpy(I->Color[I->NColor].Name,"paleyellow");
+  I->Color[I->NColor].Color[0]=1.0F;
+  I->Color[I->NColor].Color[1]=1.0F;
+  I->Color[I->NColor].Color[2]=0.5F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"aquamarine");
+  I->Color[I->NColor].Color[0]=0.5F;
+  I->Color[I->NColor].Color[1]=1.0F;
+  I->Color[I->NColor].Color[2]=1.0F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"deepsalmon");
+  I->Color[I->NColor].Color[0]=1.0F;
+  I->Color[I->NColor].Color[1]=0.5F;
+  I->Color[I->NColor].Color[2]=0.5F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"palegreen");
+  I->Color[I->NColor].Color[0]=0.5F;
+  I->Color[I->NColor].Color[1]=1.0F;
+  I->Color[I->NColor].Color[2]=0.5F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"deepolive");
+  I->Color[I->NColor].Color[0]=0.5F;
+  I->Color[I->NColor].Color[1]=0.5F;
+  I->Color[I->NColor].Color[2]=0.0F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"deeppurple");
+  I->Color[I->NColor].Color[0]=0.5F;
+  I->Color[I->NColor].Color[1]=0.0F;
+  I->Color[I->NColor].Color[2]=0.5F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"deepteal");
+  I->Color[I->NColor].Color[0]=0.0F;
+  I->Color[I->NColor].Color[1]=0.5F;
+  I->Color[I->NColor].Color[2]=0.5F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"chartreuse");
+  I->Color[I->NColor].Color[0]=0.5F;
+  I->Color[I->NColor].Color[1]=1.0F;
+  I->Color[I->NColor].Color[2]=0.0F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"limegreen"); 
+  I->Color[I->NColor].Color[0]=0.0F;
+  I->Color[I->NColor].Color[1]=1.0F;
+  I->Color[I->NColor].Color[2]=0.5F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"purpleblue"); 
+  I->Color[I->NColor].Color[0]=0.5F;
+  I->Color[I->NColor].Color[1]=0.0F;
+  I->Color[I->NColor].Color[2]=1.0F;
+  I->NColor++;
+
   /* if any more colors need to be added, add them here at the end so that existing files won't have their colors changed */
+
 
   for(a=0;a<I->NColor;a++) { 
     /* mark all current colors non-custom so that they don't get saved in session files */
@@ -1238,7 +1400,7 @@ void ColorInit(void)
   testPtr = (unsigned char*)&test;
   I->BigEndian = (*testPtr)&&1;
 
-  I->Color=VLAMalloc(4300,sizeof(ColorRec),5,true);
+  I->Color=VLAMalloc(5300,sizeof(ColorRec),5,true);
   I->NColor=0;
   ColorReset();
   I->NExt=0;

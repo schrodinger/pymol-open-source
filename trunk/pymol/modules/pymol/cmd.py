@@ -149,11 +149,13 @@ if __name__=='pymol.cmd':
 
 
    palette_dict = {
-      'rainbow_cycle'           : ('s',3,0  ,999),
-      'rainbow_cycle_rev'       : ('s',3,999,  0),      
-      'rainbow'                 : ('s',3,167,833),
-      'rainbow_rev'             : ('s',3,833,167),
-
+      'rainbow_cycle'           : ('o',3,0  ,999), # perceptive rainbow
+      'rainbow_cycle_rev'       : ('o',3,999,  0),      
+      'rainbow'                 : ('o',3,107,893),
+      'rainbow_rev'             : ('o',3,893,107),
+      'rainbow2'                : ('s',3,167, 833), # cartesian rainbow 
+      'rainbow2_rev'            : ('s',3,833,167),
+      
       'gcbmry' : ('r',3,166,999),
       'yrmbcg' : ('r',3,999,166),
       
@@ -199,41 +201,41 @@ if __name__=='pymol.cmd':
       'red_white_cyan'          : ('w',3,916,999),
       'cyan_white_red'          : ('w',3,999,916),      
 
-      'yellow_blue'       : ('w',3,  0, 83),
-      'blue_yellow'       : ('w',3, 83,  0),      
+      'yellow_blue'       : ('c',3,  0, 83),
+      'blue_yellow'       : ('c',3, 83,  0),      
       
-      'blue_red'          : ('w',3, 83,167),
-      'red_blue'          : ('w',3,167, 83),
+      'blue_red'          : ('c',3, 83,167),
+      'red_blue'          : ('c',3,167, 83),
       
-      'red_green'         : ('w',3,167,250),
-      'green_red'         : ('w',3,250,167),
+      'red_green'         : ('c',3,167,250),
+      'green_red'         : ('c',3,250,167),
       
-      'green_magenta'     : ('w',3,250,333),
-      'magenta_green'     : ('w',3,333,250),      
+      'green_magenta'     : ('c',3,250,333),
+      'magenta_green'     : ('c',3,333,250),      
       
-      'magenta_cyan'      : ('w',3,333,417),
-      'cyan_magenta'      : ('w',3,417,333),
+      'magenta_cyan'      : ('c',3,333,417),
+      'cyan_magenta'      : ('c',3,417,333),
       
-      'cyan_yellow'       : ('w',3,417,500),
-      'yellow_cyan'       : ('w',3,500,417),
+      'cyan_yellow'       : ('c',3,417,500),
+      'yellow_cyan'       : ('c',3,500,417),
       
-      'yellow_green'      : ('w',3,500,583),
-      'green_yellow'      : ('w',3,583,500),
+      'yellow_green'      : ('c',3,500,583),
+      'green_yellow'      : ('c',3,583,500),
       
-      'green_blue'        : ('w',3,583,667),
-      'blue_green'        : ('w',3,667,583),      
+      'green_blue'        : ('c',3,583,667),
+      'blue_green'        : ('c',3,667,583),      
       
-      'blue_magenta'      : ('w',3,667,750),
-      'magenta_blue'      : ('w',3,750,667),
+      'blue_magenta'      : ('c',3,667,750),
+      'magenta_blue'      : ('c',3,750,667),
       
-      'magenta_yellow'    : ('w',3,750,833),
-      'yellow_magenta'    : ('w',3,833,750),
+      'magenta_yellow'    : ('c',3,750,833),
+      'yellow_magenta'    : ('c',3,833,750),
       
-      'yellow_red'        : ('w',3,833,917),
-      'red_yellow'        : ('w',3,817,833),
+      'yellow_red'        : ('c',3,833,917),
+      'red_yellow'        : ('c',3,817,833),
       
-      'red_cyan'          : ('w',3,916,999),
-      'cyan_red'          : ('w',3,999,916),      
+      'red_cyan'          : ('c',3,916,999),
+      'cyan_red'          : ('c',3,999,916),      
       }
 
    palette_sc = Shortcut(palette_dict.keys())
