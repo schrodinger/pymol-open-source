@@ -1140,17 +1140,17 @@ void SeekerUpdate(void)
       }
 
       if(lab) {
-        if(lab->len<row->len) {
+        /*        if(lab->len<row->len) {
           lab->len = row->len;
-        }
+          }*/
         VLASize(lab->txt,char,lab->len+1);
         lab->txt[lab->len] = 0;
         VLACheck(lab->col,CSeqCol,nCol); /* make sure we've got column records for labels too */
         lab->nCol = nCol;
 
-        if(row->len<lab->len) {
+        /*if(row->len<lab->len) {
           row->len = lab->len;
-        }
+          }*/
       }
 
       VLASize(row->txt,char,row->len+1);
