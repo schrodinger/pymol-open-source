@@ -344,7 +344,7 @@ ENDFD;
                   cur_car = obj->AtomInfo[a1].cartoon;
                   if(cur_car == cCartoon_auto)
                     cur_car = cCartoon_tube;
-                  *ss=0;
+                  *ss=3; /* DNA/RNA */
 
                   *(cc++)=cur_car;
                   v1 = cs->Coord+3*a;
