@@ -2,7 +2,13 @@
 #
 # PyMOL startup script
 #
-setenv PYMOL_PATH ${WLD_MTK}/pkg/pymol
+# ==============================================================
+# Set PYMOL_PATH to point at the correct location on your system
+#
+setenv PYMOL_PATH ${HOME}/pymol
+#
+# ==============================================================
+# (no changes usually required below here)
 #
 setenv PYMOL_EXTLIBPATH ${PYMOL_PATH}/ext/lib
 #
