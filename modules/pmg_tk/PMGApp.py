@@ -691,8 +691,12 @@ class PMGApp(AbstractApp):
                                label='Make (pk1) Neutral',
                                command = lambda: cmd.do("_ alter pk1,formal_charge=-0.0"))
 
+      self.menuBar.addmenu('Build', 'Build')
 
-      self.menuBar.addmenu('Fragment', 'Fragment')
+      self.menuBar.addcascademenu('Build', 'Fragment', 'Fragment',
+                                  label='Fragment')
+      
+#      self.menuBar.addmenu('Fragment', 'Fragment')
 
       self.menuBar.addmenuitem('Fragment', 'command', 'Acetylene',
                                label='Acetylene [Alt-J]',
@@ -790,8 +794,12 @@ class PMGApp(AbstractApp):
                                label='Phosphorus [Ctrl-P]',
                                command = lambda: cmd.do("_ replace P,4,3"))
 
-      self.menuBar.addmenu('Residue', 'Residue')
+#      self.menuBar.addmenu('Residue', 'Residue')
 
+      self.menuBar.addcascademenu('Build', 'Residue', 'Residue',
+                                  label='Residue')
+
+ 
       self.menuBar.addmenuitem('Residue', 'command', 'Acetyl',
                                label='Acetyl [Alt-B]',
                                command = lambda: cmd.do(
@@ -983,7 +991,81 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('all_states'))
 
 
-      self.menuBar.addmenu('Rendering', 'Rendering Control')
+
+      self.menuBar.addmenu('Display', 'Display Control')
+
+
+      
+      self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
+                               label='Stereo On',
+                               command = lambda: cmd.do("_ stereo on"))
+
+      self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
+                               label='Stereo Off',
+                               command = lambda: cmd.do("_ stereo off"))
+
+      self.menuBar.addcascademenu('Display', 'Stereo', 'Stereo',
+                               label='Stereo')
+
+      self.menuBar.addmenuitem('Stereo', 'command', 'Cross-Eye Stereo',
+                               label='Cross-Eye Stereo',
+                               command = lambda: cmd.do("_ stereo crosseye"))
+
+      self.menuBar.addmenuitem('Stereo', 'command', 'Quad-Buffered Stereo',
+                               label='Quad-Buffered Stereo',
+                               command = lambda: cmd.do("_ stereo quadbuffer"))
+
+      self.menuBar.addmenuitem('Stereo', 'separator', '')
+
+      self.menuBar.addmenuitem('Stereo', 'command', 'Swap Sides',
+                               label='Swap Sides',
+                               command = lambda: cmd.do("_ stereo swap"))
+
+      self.menuBar.addmenuitem('Display', 'separator', '')
+
+      self.menuBar.addcascademenu('Display', 'Background', 'Background',
+                                  label='Background')
+
+      self.menuBar.addmenuitem('Background', 'command', 'White Background',
+                               label='White',
+                               command = lambda : cmd.do("_ cmd.bg_color('white')"))
+
+      self.menuBar.addmenuitem('Background', 'command', 'Light Grey',
+                               label='Light Grey',
+                               command = lambda : cmd.do("_ cmd.bg_color('grey80')"))
+
+      self.menuBar.addmenuitem('Background', 'command', 'Grey',
+                               label='Grey',
+                               command = lambda : cmd.do("_ cmd.bg_color('grey50')"))
+
+
+      self.menuBar.addmenuitem('Background', 'command', 'Black Background',
+                               label='Black',
+                               command = lambda : cmd.do("_ cmd.bg_color('black')"))
+
+      self.menuBar.addcascademenu('Display', 'Performance', 'Performance',
+                                  label='Performance')
+
+      self.menuBar.addmenuitem('Performance', 'command', 'Maximum Performance',
+                               label='Maximum Performance',
+                               command = lambda : cmd.do("_ util.performance(100)"))
+
+      self.menuBar.addmenuitem('Performance', 'command', 'Reasonable Performance',
+                               label='Reasonable Performance',
+                               command = lambda : cmd.do("_ util.performance(66)"))
+      
+      self.menuBar.addmenuitem('Performance', 'command', 'Reasonable Quality',
+                               label='Reasonable Quality',
+                               command = lambda : cmd.do("_ util.performance(33)"))
+
+      self.menuBar.addmenuitem('Performance', 'command', 'Maximum Quality',
+                               label='Maximum Quality',
+                               command = lambda : cmd.do("_ util.performance(0)"))
+
+      self.menuBar.addcascademenu('Display', 'Rendering', 'Rendering',
+                                  label='Rendering')
+
+#     self.menuBar.addmenu('Rendering', 'Rendering Control')
 
       self.menuBar.addmenuitem('Rendering', 'checkbutton',
                          'Smooth raytracing.',
@@ -1047,8 +1129,6 @@ class PMGApp(AbstractApp):
                                label='Fiber',
                                command = lambda : cmd.do("_ cmd.set('ray_texture',5)"))
 
-
-
       self.menuBar.addmenuitem('Rendering', 'separator', '')
 
       self.menuBar.addmenuitem('Rendering', 'checkbutton',
@@ -1057,75 +1137,6 @@ class PMGApp(AbstractApp):
                         variable = self.setting.backface_cull,
                         command = lambda s=self: s.setting.update('backface_cull'))
 
-      self.menuBar.addmenu('Display', 'Display Control')
-
-
-      
-      self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
-                               label='Stereo On',
-                               command = lambda: cmd.do("_ stereo on"))
-
-      self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
-                               label='Stereo Off',
-                               command = lambda: cmd.do("_ stereo off"))
-
-      self.menuBar.addcascademenu('Display', 'Stereo', 'Stereo',
-                               label='Stereo')
-
-      self.menuBar.addmenuitem('Stereo', 'command', 'Cross-Eye Stereo',
-                               label='Cross-Eye Stereo',
-                               command = lambda: cmd.do("_ stereo crosseye"))
-
-      self.menuBar.addmenuitem('Stereo', 'command', 'Quad-Buffered Stereo',
-                               label='Quad-Buffered Stereo',
-                               command = lambda: cmd.do("_ stereo quadbuffer"))
-
-      self.menuBar.addmenuitem('Stereo', 'separator', '')
-
-      self.menuBar.addmenuitem('Stereo', 'command', 'Swap Sides',
-                               label='Swap Sides',
-                               command = lambda: cmd.do("_ stereo swap"))
-
-      self.menuBar.addmenuitem('Display', 'separator', '')
-
-      self.menuBar.addcascademenu('Display', 'Performance', 'Performance',
-                                  label='Performance')
-
-      self.menuBar.addmenuitem('Performance', 'command', 'Maximum Performance',
-                               label='Maximum Performance',
-                               command = lambda : cmd.do("_ util.performance(100)"))
-
-      self.menuBar.addmenuitem('Performance', 'command', 'Reasonable Performance',
-                               label='Reasonable Performance',
-                               command = lambda : cmd.do("_ util.performance(66)"))
-      
-      self.menuBar.addmenuitem('Performance', 'command', 'Reasonable Quality',
-                               label='Reasonable Quality',
-                               command = lambda : cmd.do("_ util.performance(33)"))
-
-      self.menuBar.addmenuitem('Performance', 'command', 'Maximum Quality',
-                               label='Maximum Quality',
-                               command = lambda : cmd.do("_ util.performance(0)"))
-
-      self.menuBar.addcascademenu('Display', 'Background', 'Background',
-                                  label='Background')
-
-      self.menuBar.addmenuitem('Background', 'command', 'White Background',
-                               label='White',
-                               command = lambda : cmd.do("_ cmd.bg_color('white')"))
-
-      self.menuBar.addmenuitem('Background', 'command', 'Light Grey',
-                               label='Light Grey',
-                               command = lambda : cmd.do("_ cmd.bg_color('grey80')"))
-
-      self.menuBar.addmenuitem('Background', 'command', 'Grey',
-                               label='Grey',
-                               command = lambda : cmd.do("_ cmd.bg_color('grey50')"))
-
-
-      self.menuBar.addmenuitem('Background', 'command', 'Black Background',
-                               label='Black',
-                               command = lambda : cmd.do("_ cmd.bg_color('black')"))
 
       self.menuBar.addmenuitem('Display', 'separator', '')
       
