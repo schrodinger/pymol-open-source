@@ -2069,10 +2069,13 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdRock(PyObject *self, PyObject *args)
 {
+  int int1;
+  int ok=true;
+  ok = PyArg_ParseTuple(args,"i",&int1);
   APIEntry();
-  ControlRock(-1);
+  ControlRock(int1);
   APIExit();
-  return APISuccess();
+  return(APIStatus(ok));
 }
 
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args)

@@ -1304,21 +1304,21 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Sculpt', 'separator', '')
 
-      self.menuBar.addmenuitem('Sculpt', 'command', '1 Cycle/Refresh',
-                               label='1 Cycle/Refresh',
+      self.menuBar.addmenuitem('Sculpt', 'command', '1 Cycle/Update',
+                               label='1 Cycle per Update',
                                command = lambda: cmd.do("_ set sculpting_cycles=1"))
 
-      self.menuBar.addmenuitem('Sculpt', 'command', '3 Cycles/Refresh',
-                               label='3 Cycles/Refresh',
+      self.menuBar.addmenuitem('Sculpt', 'command', '3 Cycles/Update',
+                               label='3 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=3"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', '10 Cycles/Update',
+                               label='10 Cycles per Update',
                                command = lambda: cmd.do("_ set sculpting_cycles=10"))
 
-      self.menuBar.addmenuitem('Sculpt', 'command', '10 Cycles/Refresh',
-                               label='10 Cycles/Refresh',
-                               command = lambda: cmd.do("_ set sculpting_cycles=10"))
-
-      self.menuBar.addmenuitem('Sculpt', 'command', '30 Cycles/Refresh',
-                               label='35 Cycles/Refresh',
-                               command = lambda: cmd.do("_ set sculpting_cycles=100"))
+      self.menuBar.addmenuitem('Sculpt', 'command', '30 Cycles/Update',
+                               label='30 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=30"))
       
       self.menuBar.addmenu('Demo', 'Demonstrations')
 

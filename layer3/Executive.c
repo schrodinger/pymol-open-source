@@ -47,7 +47,7 @@ Z* -------------------------------------------------------------------
 #define cKeywordAll "all"
 #define cTempRectSele "_rect"
 #define cLeftButSele "lb"
-#define cIndicateSele "_indicate"
+#define cIndicateSele "indicate"
 
 typedef struct SpecRec {
   int type;
