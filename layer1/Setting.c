@@ -1564,7 +1564,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_nonbonded_size, 0.25F);
 
-  SettingSet_i(I,cSetting_label_color, -1);
+  SettingSet_color(I,cSetting_label_color, "-1");
 
   SettingSet_b(I,cSetting_ray_trace_fog, 1);
 
@@ -1884,6 +1884,17 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_pymol_space_min_factor,0.15F);
 
+  SettingSet_i(I,cSetting_roving_origin,1);
+
+  SettingSet_f(I,cSetting_roving_sticks,0.0F);
+
+  SettingSet_f(I,cSetting_roving_lines,0.0F);
+
+  SettingSet_f(I,cSetting_roving_spheres,0.0F);
+
+  SettingSet_f(I,cSetting_roving_labels,0.0F);
+
+  SettingSet_f(I,cSetting_roving_delay,0.1F);
 }
 
 

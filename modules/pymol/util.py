@@ -173,7 +173,7 @@ def cbc(selection='(all)',first_color=7): # NOT THREAD SAFE
    '''
    Color all chains a different color
    '''
-   pymol.stored.chain = {}
+#   pymol.stored.chain = {}
 #   cmd.iterate("(%s)"%selection,"stored.chain[chain]=1")
    c = first_color
 #   for a in pymol.stored.chain.keys():
@@ -186,6 +186,16 @@ def cbc(selection='(all)',first_color=7): # NOT THREAD SAFE
          print ("%d,(chain '')"%(c))
          cmd.color("%d"%c,"(chain '')")
          c = c + 1
+
+def chainbow(selection='(all)',first_color=7): # NOT THREAD SAFE
+   '''
+   Color all chains in rainbow
+   '''
+   for a in cmd.get_chains(selection):
+      if len(a):
+         cmd.spectrum('rainbow',"(chain %s)"%a,byres=1)
+      else:
+         cmd.spectrum('rainbow',"(chain '')",byres=1)
          
 color_chains = cbc
 

@@ -98,9 +98,11 @@ Current Bugs to Fix
 
 Changes up to 0.88
 
+   * roving feature
+
    * overhauled color menu, improved performance of rainbow and color by chain
 
-   * added Transparency and Color Space menus
+   * added color space menu
 
    * added color space clamping to better enable CMYK color matching as well
      as improve rendering quality

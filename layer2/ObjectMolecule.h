@@ -239,6 +239,12 @@ int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,in
 int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,struct CoordSet *cs,int searchFlag);
 float ObjectMoleculeGetMaxVDW(ObjectMolecule *I);
 
+#define cObjectMoleculeDummyOrigin 1
+#define cObjectMoleculeDummyCenter 2
+
+ObjectMolecule *ObjectMoleculeDummyNew(int mode);
+void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode);
+
 /* legacy binary file suppoort */
 
 typedef struct {

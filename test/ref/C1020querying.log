@@ -96,7 +96,7 @@ PyMOL>get_area
 Area-Error: Selection must be within a single object.
 PyMOL>dele all
 PyMOL>print lst
-[('white', 0), ('black', 1), ('blue', 2), ('green', 3), ('red', 4), ('cyan', 5), ('yellow', 6), ('dash', 7), ('violet', 8), ('salmon', 9)]
+[('white', 0), ('black', 1), ('blue', 2), ('green', 3), ('red', 4), ('cyan', 5), ('yellow', 6), ('dash', 7), ('magenta', 8), ('salmon', 9)]
 PyMOL>print cmd.get_color_tuple("red")
 (1.0, 0.0, 0.0)
 PyMOL>print cmd.get_color_tuple("blue")

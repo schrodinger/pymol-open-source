@@ -120,7 +120,9 @@ def mol_color(s):
            [ 0, ''                                , ''                 ],
            [ 1, '`900r`950a`990i`090n`099b`059o`009w', 'cmd.spectrum("","'+s+'",byres=1)'],
            [ 1, '`900r`950a`990i`090n`099b`059o`009w`999(*/ca)', 'cmd.spectrum("","('+s+')&*/ca")'],
-           [ 1, '`900b`950y `990c`090h`099a`059i`009n', 'util.color_chains("('+s+')")'],                      
+           [ 1, '`900b`950y `990c`090h`099a`059i`009n', 'util.color_chains("('+s+')")'],
+
+           [ 1, '`900c`950h`990a`090i`099n`059b`009o`999w', 'util.chainbow("('+s+')")'],                                 
            [ 0, ''                                , ''                 ],           
            [ 1, '`900red'         , 'cmd.color("red","'+s+'")'     ],
            [ 1, '`090green'       , 'cmd.color("green","'+s+'")'   ],

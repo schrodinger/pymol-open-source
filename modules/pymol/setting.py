@@ -248,6 +248,12 @@ if __name__=='pymol.setting':
       pymol_space_max_green = 216
       pymol_space_max_blue  = 217
       pymol_space_min_factor= 218
+      roving_origin         = 219
+      roving_lines          = 220
+      roving_sticks         = 221
+      roving_spheres        = 222
+      roving_labels         = 223
+      roving_delay          = 224
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
