@@ -231,6 +231,7 @@ def pretty_solv(selection="(all)"):
    cmd.select(s,selection)
    cmd.dss(s,preserve=1)
    cmd.hide("everything",s)
+   cmd.cartoon("auto",s)
    cmd.show("cartoon",s)
    cmd.show("sticks","("+lig_sele+" and ("+s+"))")
    cmd.show("nb_spheres","(("+lig_sele+"|resn hoh+wat+h2o) and ("+s+"))")
@@ -240,6 +241,7 @@ def pretty_solv(selection="(all)"):
    cmd.set("cartoon_highlight_color",-1,s)
    cmd.set("cartoon_fancy_helices",0,s)
    cmd.set("cartoon_smooth_loops",0,s)
+   cmd.set("cartoon_flat_sheets",1,s)
    if polar_contacts in cmd.get_names():
       cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
@@ -260,6 +262,7 @@ def pub_solv(selection="(all)"):
    cmd.set("cartoon_smooth_loops",1,s)
    cmd.set("cartoon_highlight_color","grey50",s)
    cmd.set("cartoon_fancy_helices",1,s)
+   cmd.set("cartoon_flat_sheets",1,s)
    if polar_contacts in cmd.get_names():
       cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
@@ -276,6 +279,7 @@ pub_no_solv = publication
 def default(selection="(all)"):
    s = tmp_sele
    cmd.select(s,selection)
+   cmd.cartoon("auto",s)
    cmd.hide("everything",s)
    cmd.show("lines",s)
    cmd.show("nonbonded",s)
@@ -288,6 +292,7 @@ def default(selection="(all)"):
    cmd.unset("sphere_scale",s)
    cmd.unset("stick_radius",s)
    cmd.unset("stick_color",s)
+   cmd.unset("cartoon_flat_sheets",s)
    if polar_contacts in cmd.get_names():
       cmd.disable(polar_contacts)
    color=cmd.get_object_color_index(selection)
