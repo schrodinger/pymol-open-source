@@ -1577,7 +1577,7 @@ SEE ALSO
       'system'        : [ system            , 0 , 0 , ''  , parsing.LITERAL ],
       'test'          : [ test              , 0 , 0 , ''  , parsing.STRICT ],
       'toggle'        : [ toggle            , 0 , 0 , ''  , parsing.STRICT ],      
-      'torsion'       : [ toggle            , 0 , 0 , ''  , parsing.STRICT ], # vs toggle_object
+      'torsion'       : [ torsion           , 0 , 0 , ''  , parsing.STRICT ], # vs toggle_object
       'translate'     : [ translate         , 0 , 0 , ''  , parsing.STRICT ],
       'try'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'turn'          : [ turn              , 0 , 0 , ''  , parsing.STRICT ],

@@ -401,6 +401,7 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
   ResIdent resi; 
   int rl;
   int literal = (int)SettingGet(cSetting_pdb_literal_names);
+  int reformat = (int)SettingGet(cSetting_pdb_reformat_names_mode);
 
   if(ai->hetatm)
 	aType=sHETATM;
@@ -417,43 +418,84 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
   VLACheck(*charVLA,char,(*c)+1000);  
   
   if(!ai->name[0]) {
-    sprintf(name," %s",ai->elem);
-  }
-  else if(!literal) {
-    if(strlen(ai->name)<4) {
-      if((!((ai->name[0]>='0')&&(ai->name[0])<='9')) &&
-         (((toupper(ai->elem[0])==toupper(ai->name[0])))||
-          (((toupper(ai->elem[0])!=toupper(ai->name[0]))&&
-           (toupper(ai->elem[0])!=toupper(ai->name[1])))))) {
-        name[0]=' ';	
-        strcpy(name+1,ai->name);
-      } else {
-        strcpy(name,ai->name);
+    if(!ai->elem[1])
+      sprintf(name," %s",ai->elem);
+    else
+      sprintf(name,"%s",ai->elem);
+  } else if(!literal) {
+    if(strlen(ai->name)<4) { /* atom name less than length 4 */
+      if(!((ai->name[0]>='0')&&(ai->name[0])<='9')) { /* doesn't start with a number */
+        if((toupper(ai->elem[0])==toupper(ai->name[0]))&&
+           ((!ai->elem[1]) || /* symbol len = 1 */
+            (toupper(ai->elem[1])==toupper(ai->name[1])))) { /* matched len 2 */
+          /* starts with corrent atomic symbol, so */
+          if(strlen(ai->elem)>1) { /* if atom symbol is length 2 */
+            strcpy(name,ai->name); /* then start in column 0 */
+          } else { /* otherwise, start in column 1 */
+            name[0]=' ';	
+            strcpy(name+1,ai->name);
+          }
+        } else { /* name doesn't start with atomic symbol */
+          /* then just place it in column 1 as usual */
+          name[0]=' ';	
+          strcpy(name+1,ai->name);
+        }
+      } else { /* name starts with a number */
+        strcpy(name,ai->name); 
+      } /* just stick it in column 0 and hope for the best */
+    } else { /* if name is length 4 */
+      if((ai->elem[0]==ai->name[0]) &&
+         ((!ai->elem[1]) || /* symbol len = 1 */
+          (toupper(ai->elem[1])==toupper(ai->name[1])))) { /* matched len 2 */
+        /* name starts with the atomic symbol */
+        if(!ai->elem[1]) { /* but if atomic symbol is only length 1 */
+          if((ai->name[3]>='0')&&(ai->name[3]<='9')) { /* and last character is a number */
+            if(reformat==1) { /* PDB compliance mode */
+              /* rotate the name to place atom symbol in column 1 to comply with PDB format */
+              name[0]=ai->name[3];
+              name[1]=ai->name[0];
+              name[2]=ai->name[1];
+              name[3]=ai->name[2];
+              name[4]=0;
+            } else {
+              strcpy(name,ai->name);
+            }
+          } else {
+            strcpy(name,ai->name);
+          }
+        } else {
+          strcpy(name,ai->name);
+        }
+      } else { /* name does not start with symbol... */
+        if(reformat==2) { /* AMBER compliance mode */
+          if((ai->name[0]>='0')&&(ai->name[0]<='9')) {
+            if((ai->elem[0]==ai->name[1]) &&
+               ((!(ai->elem[1])) || 
+                (toupper(ai->elem[1])==toupper(ai->name[2])))) {
+              /* rotate the name to place atom symbol in column 0 to comply with Amber PDB format */
+              name[0]=ai->name[1];
+              name[1]=ai->name[2];
+              name[2]=ai->name[3];
+              name[3]=ai->name[0];
+              name[4]=0;
+            } else {
+              strcpy(name,ai->name);
+            }
+          } else {
+            strcpy(name,ai->name);
+          }
+        } else {
+          strcpy(name,ai->name);
+        }
       }
-    } else {
-      strcpy(name,ai->name);
     }
-  } else {
-    if(strlen(ai->name)==4) {
-      if((!((ai->name[0]>='0')&&(ai->name[0]<='9')))
-         &&((ai->name[3]>='0')&&(ai->name[3]<='9'))) {       
-        name[0]=ai->name[3];
-        name[1]=ai->name[0];
-        name[2]=ai->name[1];
-        name[3]=ai->name[2];
-        name[4]=0;
-      }
-      else {
-        strcpy(name,ai->name);
-      }
-    }  else if((!((ai->name[0]>='0')&&(ai->name[0])<='9')) &&
-               (((toupper(ai->elem[0])==toupper(ai->name[0])))||
-                ((toupper(ai->elem[0])!=toupper(ai->name[0]))&&
-                 (toupper(ai->elem[0])!=toupper(ai->name[1]))))) {
-      name[0]=' ';	
-      strcpy(name+1,ai->name);
+  } else { /* preserve what was in the original PDB as best PyMOL can 
+            this should enable people to open and save amber pdb files without issues */
+    if(strlen(ai->name)<4) { /* under length 4? */
+      name[0] = ' ';
+      strcpy(name+1,ai->name); /* stick in the second column */
     } else {
-      strcpy(name,ai->name);
+      strcpy(name,ai->name); /* otherwise, stick in the first */
     }
   }
   if((int)SettingGet(cSetting_pdb_retain_ids)) {
@@ -511,7 +553,8 @@ void CoordSetAtomToTERStrVLA(char **charVLA,int *c,AtomInfoType *ai,int cnt)
 {
   ResIdent resi; 
   int rl;
-
+  int retain_ids = (int)SettingGet(cSetting_pdb_retain_ids);
+  int ter_id;
   strcpy(resi,ai->resi);
   rl = strlen(resi)-1;
   if(rl>=0)
@@ -521,9 +564,15 @@ void CoordSetAtomToTERStrVLA(char **charVLA,int *c,AtomInfoType *ai,int cnt)
     }
   VLACheck(*charVLA,char,(*c)+1000);  
 
+  if(retain_ids) {
+    ter_id = ai->id+1;
+  } else {
+    ter_id = cnt+1;
+  }
+
   (*c)+=sprintf((*charVLA)+(*c),
                 "%3s   %5i      %3s %1s%5s\n",
-                 "TER",cnt+1,ai->resn,ai->chain,resi);
+                 "TER",ter_id,ai->resn,ai->chain,resi);
   
 }
 
