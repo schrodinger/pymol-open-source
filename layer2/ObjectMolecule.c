@@ -5933,7 +5933,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
                                                 AtomInfoType **atInfoPtr,char **next_mol)
 {
   char *p;
-  int nAtom,nBond;
+  int nAtom,nBond,nSubst;
   int a,c;
   float *coord = NULL;
   CoordSet *cset = NULL;
@@ -5962,7 +5962,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
     last_p = p;
     /* top level -- looking for an RTI, assuming p points to the beginning of a line */
     p=ParseWordCopy(cc,p,MAXLINELEN);
-
     if(cc[0]=='@') {
       if(WordMatchExact(G,cc,"@<TRIPOS>MOLECULE",true)||WordMatchExact(G,cc,"@MOLECULE",true)) {
         if(have_molecule) {
@@ -5980,10 +5979,15 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
           if(atInfo)
             VLACheck(atInfo,AtomInfoType,nAtom);	 
           
-          p=ParseNCopy(cc,p,MAXLINELEN);
+          p=ParseWordCopy(cc,p,MAXLINELEN);
           if(sscanf(cc,"%d",&nBond)!=1) {
             nBond = 0;
           }
+          p=ParseWordCopy(cc,p,MAXLINELEN);
+          if(sscanf(cc,"%d",&nSubst)!=1) {
+            nSubst = 0;
+          }
+
         }
         p=ParseNextLine(p);
         p=ParseNextLine(p);
@@ -6051,7 +6055,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
               ai->resv = AtomResvFromResi(cc);
               p=ParseWordCopy(cc,p,MAXLINELEN); 
               if(cc[0]) { /* subst_name is residue name */
-                cc[3] = 0; /* enforce 3-letter residue names */
                 UtilNCopy(ai->resn,cc,cResnLen);
                 p=ParseWordCopy(cc,p,MAXLINELEN);        
                 if(cc[0]) {
@@ -6081,7 +6084,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
         }
       } else if(WordMatchExact(G,cc,"@<TRIPOS>BOND",true)||WordMatchExact(G,cc,"@BOND",true)) {
         if(!have_molecule) {
-          ok=ErrMessage(G,"ReadMOL2File","@ATOM before @MOLECULE!");
+          ok=ErrMessage(G,"ReadMOL2File","@BOND before @MOLECULE!");
           break;
         }
         p=ParseNextLine(p);
@@ -6147,6 +6150,174 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
             ii->index[1]--;
             ii++;
           }
+        }
+      } else if(WordMatchExact(G,cc,"@<TRIPOS>SUBSTRUCTURE",true)||WordMatchExact(G,cc,"@SUBSTRUCTURE",true)) {
+        if(!have_molecule) {
+          ok=ErrMessage(G,"ReadMOL2File","@SUBSTSRUCTURE before @MOLECULE!");
+          break;
+        }
+        p=ParseNextLine(p);
+        if(ok) {
+          WordType subst_name;
+          SegIdent segment; /* what MOL2 calls chain */
+          Chain chain;
+          WordType subst_type;
+          ResIdent resi;
+          ResName resn;
+          int id, dict_type, root, resv;
+          int end_line, seg_flag, subst_flag, resi_flag;
+          int chain_flag, resn_flag, resv_flag;
+          for(a=0;a<nSubst;a++)
+            {
+              segment[0]=0;
+              subst_name[0]=0;
+              chain[0]=0;
+              resn[0]=0;
+              resi[0]=0;
+              end_line=false;
+              seg_flag=false;
+              subst_flag=false;
+
+              resi_flag=false;
+              chain_flag=false;
+              resn_flag=false;
+              resv_flag=false;
+
+              if(ok) {
+                p=ParseWordCopy(cc,p,20);
+                if(sscanf(cc,"%d",&id)!=1)
+                  ok=ErrMessage(G,"ReadMOL2File","bad substructure id");
+              }
+              if(ok) {
+                p=ParseWordCopy(cc,p,sizeof(WordType)-1);
+                if(sscanf(cc,"%s",subst_name)!=1)
+                  ok=ErrMessage(G,"ReadMOL2File","bad substructure name");
+              }
+              if(ok) {
+                p=ParseWordCopy(cc,p,20);
+                if(sscanf(cc,"%d",&root)!=1)
+                  ok=ErrMessage(G,"ReadMOL2File","bad target root atom id");
+                else
+                  root--;
+              }
+
+              /* optional data */
+              if(ok&&(!end_line)) {
+                p=ParseWordCopy(cc,p,sizeof(WordType)-1);
+                if(sscanf(cc,"%s",subst_type)!=1) {
+                  end_line=true;
+                  subst_type[0]=0;
+                } else {
+                  subst_flag=1;
+                }
+              }
+
+              if(ok&&(!end_line)) {
+                p=ParseWordCopy(cc,p,20);
+                if(sscanf(cc,"%d",&dict_type)!=1)
+                  end_line=true;
+              }
+
+              if(ok&&(!end_line)) {
+                p=ParseWordCopy(cc,p,sizeof(WordType)-1);
+                cc[cSegiLen]=0;
+                if(sscanf(cc,"%s",segment)!=1) {
+                  end_line=true;
+                  segment[0]=0;
+                } else {
+                  seg_flag=true; 
+                  if(!segment[1]) { /* if segment is single letter, then also assign to chain field */
+                    chain[0]=segment[0];
+                    chain[1]=0;
+                    chain_flag=true;
+                  }
+                }
+              }
+              
+              if(ok&&(!end_line)) {
+                p=ParseWordCopy(cc,p,sizeof(WordType)-1);
+                cc[cResnLen]=0;
+                if(sscanf(cc,"%s",resn)!=1) {
+                  end_line=true;
+                  resn[0]=0;
+                } else {
+                  resn_flag=true;
+                }
+              }
+              
+              if(ok&&(root>=0)&&(root<nAtom)) {
+                
+
+                if(!subst_flag) {
+                  
+                  /* Merck stuffs the chain ID and the residue ID in the
+                     subst_name field, so handle that case first */
+                  
+                  /* get the residue value */
+                  
+                  ParseIntCopy(cc,subst_name,20);
+                  if(sscanf(cc,"%d",&resv)==1) {
+                    /* we have the resv, so now get the chain if there is one */
+                    char *pp = subst_name;
+                    if(!((pp[0]>='0')&&(pp[0]<='9'))) {
+                      chain[0]=pp[0];
+                      chain_flag=true;
+                      pp++;
+                    }
+                    UtilNCopy(resi,pp,cResiLen); /* now get the textual residue identifier */
+                    
+                    if(resi[0]) { 
+                      resi_flag=true;
+                      resv_flag=true;
+                    }
+                  }
+                } else { /* normal mode: assume that the substructure ID is a vanilla residue identifier */
+
+                  ParseIntCopy(cc,subst_name,20);
+                  if(sscanf(cc,"%d",&resv)==1) {
+                    UtilNCopy(resi,subst_name,cResiLen); 
+                    if(resi[0]) { 
+                      resi_flag=true;
+                      resv_flag=true;
+                    }
+                  }
+                }
+                
+                /* for now, assume that atom ids are 1-based and sequential */
+
+                if(ok) {
+                  if(resi_flag||chain_flag||resn_flag||seg_flag) {
+                    int b;
+                    ResIdent start_resi;
+                    AtomInfoType *ai0 = atInfo + root;
+                    
+                    strcpy(start_resi,ai0->resi);
+
+                    b=root;
+                    while(b<nAtom) {
+                      AtomInfoType *ai = atInfo + b;
+                      if(strcmp(ai->resi,start_resi)!=0) 
+                        /* only act on atoms in this residue, assuming that
+                           residues are grouped together */
+                        break;
+                      if(resi_flag)
+                        UtilNCopy(ai->resi,resi,cResiLen);                        
+                      if(chain_flag) {
+                        ai->chain[0]=chain[0];
+                      }
+                      if(resn_flag)
+                        UtilNCopy(ai->resn,resn,cResnLen);                                                
+                      if(seg_flag)
+                        UtilNCopy(ai->segi,segment,cSegiLen);
+                      b++;
+                    }
+                  }
+                }
+              }
+              if(!ok)
+                break;
+              p=ParseNextLine(p);
+            }
         }
       } else       
         p=ParseNextLine(p);

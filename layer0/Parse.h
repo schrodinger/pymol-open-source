@@ -24,4 +24,6 @@ char *ParseNTrim(char *q,char *p,int n);
 char *ParseNSkip(char *p,int n);
 char *ParseCommaCopy(char *q,char *p,int n);
 char *ParseSkipEquals(char *p);
+char *ParseIntCopy(char *q,char *p,int n);
+char *ParseAlphaCopy(char *q,char *p,int n);
 #endif

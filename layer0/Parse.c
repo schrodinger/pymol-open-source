@@ -56,6 +56,60 @@ char *ParseNextLine(char *p) {
   return p;
 }
 /*========================================================================*/
+char *ParseIntCopy(char *q,char *p,int n) { /* integer copy */
+  while(*p) {
+	 if((*p==0xD)||(*p==0xA)) /* don't skip end of lines */
+      break;
+	 if(*p<=32||!((*p>='0')&&(*p<='9')))
+		p++;
+	 else
+		break;
+  }
+  while(*p) {
+	 if(*p<=32)
+		break;
+	 if(!n)
+		break;
+	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
+		break;
+    if(!((*p>='0')&&(*p<='9')))
+      break;
+    *(q++)=*(p++);
+    n--;
+  }
+  *q=0;
+  return p;
+}
+/*========================================================================*/
+char *ParseAlphaCopy(char *q,char *p,int n) { /* integer copy */
+  while(*p) {
+	 if((*p==0xD)||(*p==0xA)) /* don't skip end of lines */
+      break;
+	 if(*p<=32||!(
+                 ((*p>='A')&&(*p<='Z'))||
+                 ((*p>='a')&&(*p<='z'))))
+		p++;
+	 else
+		break;
+  }
+  while(*p) {
+	 if(*p<=32)
+		break;
+	 if(!n)
+		break;
+	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
+		break;
+    if(!( ((*p>='A')&&(*p<='Z'))||
+          ((*p>='a')&&(*p<='z'))))
+      break;
+    *(q++)=*(p++);
+    n--;
+  }
+  *q=0;
+  return p;
+}
+
+/*========================================================================*/
 char *ParseWordCopy(char *q,char *p,int n) { /* word copy */
   while(*p) {
 	 if((*p==0xD)||(*p==0xA)) /* don't skip end of lines */

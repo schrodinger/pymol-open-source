@@ -428,9 +428,13 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   char *aType;
   AtomName name;
   ResIdent resi; 
+  ResName resn;
   int rl;
   int literal = (int)SettingGet(G,cSetting_pdb_literal_names);
   int reformat = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
+
+  strcpy(resn,ai->resn); /* enforce 3-letter residue name in PDB files */
+  resn[3]=0;
 
   if(ai->hetatm)
 	aType=sHETATM;
@@ -469,7 +473,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
             case 1: /* pdb with internal pdb */
             case 3: /* pdb with internal iupac */
               if((ai->elem[0]=='H')&&(!ai->elem[1])&&(ai->name[2])) {
-                AtomInfoGetPDB3LetHydroName(G,ai->resn,ai->name,name);
+                AtomInfoGetPDB3LetHydroName(G,resn,ai->name,name);
               } else {
                 name[0]=' ';	
                 strcpy(name+1,ai->name);
@@ -573,11 +577,11 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   if((!pdb_info)||(!pdb_info->is_pqr_file)) { /* relying upon short-circuit */
 
     (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
-                  aType,cnt+1,name,ai->alt,ai->resn,
+                  aType,cnt+1,name,ai->alt,resn,
                   ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);
   } else {
     (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f %7.3f %7.3f\n",
-                  aType,cnt+1,name,ai->alt,ai->resn,
+                  aType,cnt+1,name,ai->alt,resn,
                   ai->chain,resi,*v,*(v+1),*(v+2),ai->partialCharge,ai->bohr_radius);
   }
   
@@ -631,9 +635,14 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int
 void CoordSetAtomToTERStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType *ai,int cnt)
 {
   ResIdent resi; 
+  ResName resn;
   int rl;
   int retain_ids = (int)SettingGet(G,cSetting_pdb_retain_ids);
   int ter_id;
+
+  strcpy(resn,ai->resn); /* enforce 3-letter residue name in PDB files */
+  resn[3]=0;
+
   strcpy(resi,ai->resi);
   rl = strlen(resi)-1;
   if(rl>=0)
@@ -651,7 +660,7 @@ void CoordSetAtomToTERStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
 
   (*c)+=sprintf((*charVLA)+(*c),
                 "%3s   %5i      %3s %1s%5s\n",
-                 "TER",ter_id,ai->resn,ai->chain,resi);
+                 "TER",ter_id,resn,ai->chain,resi);
   
 }
 

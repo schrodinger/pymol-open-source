@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * increased compatibility for variant MOL2 usage
+
    * various performance enhancements, esp. to MOL2 and SDF loads
 
    * fixed quiet setting for align function

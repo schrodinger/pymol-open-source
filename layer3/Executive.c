@@ -3953,11 +3953,21 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
   int n_state = 1;
   int a;
   char model_record[50];
+  int count=0,*counter=NULL;
   PDBInfoRec pdb_info;
+  ObjectMolecule *obj = NULL;
+
 
   UtilZeroMem((void*)&pdb_info,sizeof(PDBInfoRec));
   ObjectMoleculeOpRecInit(&op1);
   sele1=SelectorIndexByName(G,s1);
+  if(sele1>=0) {
+    obj = SelectorGetSingleObjectMolecule(G,sele1);
+    if(obj)
+      if(obj->DiscreteFlag) {
+        counter=&count; /* discrete objects need atom counters between states */
+      }
+  }
   op1.i2 = 0;
   op1.charVLA=VLAlloc(char,10000);
   if(state==-2) { /* multimodel PDB */
@@ -3985,7 +3995,7 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
     
     if(conectFlag) {
       op1.i2=SelectorGetPDB(G,&op1.charVLA,op1.i2,sele1,
-                            actual_state,conectFlag,&pdb_info);
+                            actual_state,conectFlag,&pdb_info,counter);
     } else {
       op1.i3 = 0; /* atIndex */
       if(sele1>=0) {
