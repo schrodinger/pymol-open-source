@@ -69,6 +69,8 @@ typedef struct Executive {
 } CExecutive;
 
 CExecutive Executive;
+SpecRec *ExecutiveFindSpec(char *name);
+
 
 int ExecutiveClick(Block *block,int button,int x,int y,int mod);
 int ExecutiveRelease(Block *block,int button,int x,int y,int mod);
@@ -89,7 +91,16 @@ void ExecutiveReshape(Block *block,int width,int height);
 #define ExecColorHidden 0.3,0.3,0.3
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
-SpecRec *ExecutiveFindSpec(char *name);
+
+int ExecutiveValidName(char *name)
+{
+  int result=true;
+  if(!ExecutiveFindSpec(name)) {
+    if(!WordMatch(name,cKeywordAll,true))
+      result=false;
+  }
+  return result;
+}
 
 int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,float **psiVLA,int state) 
 {
@@ -821,9 +832,18 @@ void ExecutiveRemoveAtoms(char *s1)
   ObjectMolecule *obj = NULL;
   ObjectMoleculeOpRec op;
   int flag = false;
-
+  int all_flag=false;
+  WordType all = "_all";
 
   sele=SelectorIndexByName(s1);
+  if(sele<0) {
+    if(WordMatch(cKeywordAll,s1,true)<0) {
+      all_flag=true;
+      SelectorCreate(all,"(all)",NULL,true);
+    }
+    sele=SelectorIndexByName(all);
+  }
+
   if(sele>=0)
 	 {
 		while(ListIterate(I->Spec,rec,next))
@@ -853,6 +873,9 @@ void ExecutiveRemoveAtoms(char *s1)
 				}
 		  }
 	 }
+  if(all_flag) {
+    ExecutiveDelete(all);
+  }
   if(!flag) {
     ErrMessage("Remove","no atoms removed.");
   }

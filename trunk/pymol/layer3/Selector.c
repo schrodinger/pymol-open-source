@@ -1805,12 +1805,22 @@ void SelectorGetTmp(char *input,char *store)
 {
   SelectorType *I=&Selector;
   WordType name;
+  OrthoLineType buffer;
   if(input[0]=='(') {
     sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
 	 SelectorCreate(name,input,NULL,false);
 	 strcpy(store,name);
   } else {
-    strcpy(store,input);
+    if(ExecutiveValidName(input))
+      strcpy(store,input);
+    else {
+      strcpy(buffer,"(");
+      strcat(buffer,input);
+      strcat(buffer,")");
+      sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);      
+      SelectorCreate(name,buffer,NULL,false);
+      strcpy(store,name);
+    }
   }
 }
 /*========================================================================*/
