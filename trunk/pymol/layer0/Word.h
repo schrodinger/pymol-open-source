@@ -26,6 +26,18 @@ typedef struct {
   WordType word;
   int value;
 } WordKeyValue;
+
+typedef struct {
+  char *word;
+  char **start;
+  int n_word;
+} CWordList;
+
+CWordList *WordListNew(PyMOLGlobals *G,char *st);
+void WordListFreeP(CWordList *I);
+void WordListDump(CWordList *I,char *prefix);
+int WordListMatch(PyMOLGlobals *G,CWordList *I,char *name, int ignore_case);
+
 int WordInit(PyMOLGlobals *G);
 void WordFree(PyMOLGlobals *G);
 
@@ -42,4 +54,6 @@ int WordMatchCommaExact(PyMOLGlobals *G,char *p,char *q,int ignCase);
 int WordCompare(PyMOLGlobals *G,char *p,char *q,int ignCase);
 int WordIndex(PyMOLGlobals *G,WordType *list,char *word,int minMatch,int ignCase);
 int WordKey(PyMOLGlobals *G,WordKeyValue *list,char *word,int minMatch,int ignCase,int *exact);
+
+
 #endif

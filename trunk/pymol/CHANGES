@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * order command for managing entries in the control panel
+
    * P1M script format with embedded data & extra security
 
    * increased compatibility for variant MOL2 usage

@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"Base.h"
+#include"OOMac.h"
 #include"Word.h"
 #include"Parse.h"
 #include"PyMOLObject.h"
@@ -27,6 +28,90 @@ struct _CWord {
   char Wildcard;
 };
 
+CWordList *WordListNew(PyMOLGlobals *G,char *st)
+{
+  int n_word = 0;
+  char *p;
+  int len = 0;
+  OOCalloc(G,CWordList);
+
+  if(I) {
+    p=st;
+    /* first, count how many words we have */
+    while(*p) {
+      if(*p>32) {
+        n_word++;
+        while((*p)>32) {
+          len++;
+          p++;
+        }
+        len++;
+      } else
+        p++;
+    }
+    /* allocate the storage we'll need to hold the words */
+    {
+      I->word = Alloc(char,len);
+      I->start = Alloc(char*,n_word);
+      
+      /* and copy the words */
+      
+      if(I->word && I->start) {
+        char *q = I->word;
+        char **q_ptr = I->start;
+        p = st;
+        while(*p) {
+          if(*p>32) {
+            *(q_ptr++) = q;
+            while((*p)>32) {
+              *(q++) = *(p++);
+            }
+            *(q++) = 0;
+            len++;
+          } else 
+            p++;
+        }
+        I->n_word = n_word;
+      }
+    }
+  }
+  return I;
+}
+
+void WordListFreeP(CWordList *I)
+{
+  if(I) {
+    FreeP(I->word);
+    FreeP(I->start);
+    FreeP(I);
+  }
+}
+
+void WordListDump(CWordList *I,char *prefix)
+{
+  if(I) {
+    int a;
+    printf(" %s: n_word %d\n",prefix,I->n_word);
+    for(a=0;a<I->n_word;a++) {
+      printf(" %s: word %d=[%s]\n",prefix,a,I->start[a]);
+    }
+  }
+}
+
+int WordListMatch(PyMOLGlobals *G,CWordList *I,char *name, int ignore_case)
+{
+  int result = -1;
+  if(I) {
+    int a;
+    for(a=0;a<I->n_word;a++) {
+      if(WordMatch(G,I->start[a],name,ignore_case)) {
+        result = a;
+        break;
+      }
+    }
+  }
+  return result;
+}
 
 int WordInit(PyMOLGlobals *G)
 {

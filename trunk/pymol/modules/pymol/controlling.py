@@ -17,7 +17,15 @@ if __name__=='pymol.controlling':
    import string
    import selector
    import cmd
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException
+   from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_string
+   from cmd import boolean_dict, boolean_sc
+
+   location_code = {
+      'top' : -1,
+      'current' : 0,
+      'bottom' : 1
+   }
+   location_sc = Shortcut(location_code.keys())
 
    button_code = {
       'left' : 0,
@@ -219,6 +227,49 @@ if __name__=='pymol.controlling':
                                
                                ],
       }
+
+   def order(names,sort=0,location='current'):
+      '''
+DESCRIPTION
+
+   "order" allows you to change ordering of names in the control panel
+
+USAGE
+
+   order names-list, sort, location
+
+EXAMPLES
+
+   order 1dn2 1fgh 1rnd  # sets the order of these three objects
+   order *,yes           # sorts all names
+   order 1dn2_*, yes     # sorts all names beginning with 1dn2_
+   order 1frg, location=top   # puts 1frg at the top of the list
+
+PYMOL API
+
+   cmd.order(string names-list, string sort, string location)
+
+NOTES
+
+   names-list: a space separated list of names
+   sort: yes or no
+   location: top, current, or bottom
+
+SEE ALSO
+
+   set_name
+      '''
+
+      r = 1
+      location=location_code[location_sc.auto_err(location,'location')]
+      if is_string(sort):
+         sort=boolean_dict[boolean_sc.auto_err(sort,'sort option')]
+      try:
+         lock()
+         _cmd.order(str(names),int(sort),int(location))
+      finally:
+         unlock()
+      return r
 
    def mouse(action=None,quiet=1):# INTERNAL
       # NOTE: PyMOL automatically runs this routine upon start-up
