@@ -175,9 +175,9 @@ PYMOL API
    cmd.mpng( string prefix, int first=0, int last=0 )
    '''
    if thread.get_ident() ==pymol.glutThread:
-      r = cmd._mpng(prefix,int(start)-1,int(stop)-1)
+      r = cmd._mpng(prefix,int(first)-1,int(last)-1)
    else:
-      r = _cmd.do("cmd._mpng('"+prefix+","+str(start)+","+str(stop)+"')")
+      r = _cmd.do("cmd._mpng('"+prefix+","+str(first)+","+str(last)+"')")
    return r
 
 def mclear():
