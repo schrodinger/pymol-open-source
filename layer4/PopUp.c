@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include "Util.h"
 #include "P.h"
 #include "Util.h"
+#include "Color.h"
 
 #define cPopUpLineHeight 17
 #define cPopUpTitleHeight 19
@@ -511,6 +512,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
 void PopUpDraw(Block *block)
 {
   CPopUp *I = (CPopUp*)block->reference;
+  PyMOLGlobals *G=block->G;
   int x,y,a,xx;
   char *c;
 
@@ -657,7 +659,10 @@ void PopUpDraw(Block *block)
                 else
                   glColor3fv(I->Block->TextColor);          
                 c+=4;
-              } else {
+              } else if(*(c+1)=='+') {
+                c+=4;                
+                glColor3fv(ColorGetNamed(G,c));
+              }else {
                 glColor3f((*(c+1)-'0')/9.0F,(*(c+2)-'0')/9.0F,(*(c+3)-'0')/9.0F);
                 c+=4;
               }

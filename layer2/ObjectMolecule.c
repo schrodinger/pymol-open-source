@@ -1517,7 +1517,7 @@ was at the end of the file. Maybe that's good enough.
       ai->id = a+1; /* assign 1-based identifiers */
       ai->rank = a; 
       AtomInfoAssignParameters(G,ai);
-      ai->color=AtomInfoGetColor(G,ai);
+      AtomInfoAssignColors(G,ai);
       for(c=0;c<cRepCnt;c++) {
         ai->visRep[c] = false;
       }
@@ -1565,8 +1565,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals *G,ObjectMolecule *I,char 
 		isNew = false;
 	 }
     if(isNew) {
-      AtomInfoPrimeColors(G);
-      I->Obj.Color = AtomInfoGetCarbColor(G);
+      I->Obj.Color = AtomInfoUpdateAutoColor(G);
     }
 
 	 cset=ObjectMoleculeTOPStr2CoordSet(G,TOPStr,&atInfo);	 
@@ -1980,8 +1979,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *I,CRaw *pm
         isNew = false;
       }
       if(isNew) {
-        AtomInfoPrimeColors(G);
-        I->Obj.Color = AtomInfoGetCarbColor(G);
+        I->Obj.Color = AtomInfoUpdateAutoColor(G);
       }
 
       cset = ObjectMoleculePMO2CoordSet(G,pmo,&atInfo,&restart);
@@ -2519,7 +2517,7 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
       ai->hetatm=1;
       
       AtomInfoAssignParameters(G,ai);
-      ai->color=AtomInfoGetColor(G,ai);
+      AtomInfoAssignColors(G,ai);
       
       b1 = atomCount;
       for(c=0;c<6;c++) {
@@ -2592,8 +2590,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char 
 		isNew = false;
 	 }
     if(isNew) {
-      AtomInfoPrimeColors(G);
-      I->Obj.Color = AtomInfoGetCarbColor(G);
+      I->Obj.Color = AtomInfoUpdateAutoColor(G);
     }
     
 	 cset=ObjectMoleculeXYZStr2CoordSet(G,PDBStr,&atInfo);	 
@@ -3716,14 +3713,13 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
     strcpy(ai->alt,ai0->alt);
     strcpy(ai->resi,ai0->resi);
     strcpy(ai->segi,ai0->segi);
-    strcpy(ai->resn,ai0->resn);    
+    strcpy(ai->resn,ai0->resn);  
+    AtomInfoAssignColors(I->Obj.G,ai);
     if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
       ai->color=ai0->color;
     else if((ai->elem[0]=='C')&&(ai->elem[1]==0)) 
       /* carbons are always colored according to the object color */
       ai->color=I->Obj.Color;
-    else
-      ai->color=AtomInfoGetColor(I->Obj.G,ai);
     for(a=0;a<cRepCnt;a++)
       ai->visRep[a]=ai0->visRep[a];
     ai->id=-1;
@@ -5295,7 +5291,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
 
 		  if(ok&&atInfo) {
 			 AtomInfoAssignParameters(G,ai);
-			 atInfo[a].color=AtomInfoGetColor(G,ai);
+			 AtomInfoAssignColors(G,ai);
 		  }
 
 
@@ -5424,8 +5420,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,ObjectMolecule *I,
 	 }
 
     if(isNew) {
-      AtomInfoPrimeColors(G);
-      I->Obj.Color = AtomInfoGetCarbColor(G);
+      I->Obj.Color = AtomInfoUpdateAutoColor(G);
     }
 
 	 cset=ObjectMoleculeChemPyModel2CoordSet(G,model,&atInfo);	 
@@ -5717,7 +5712,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,Atom
 			 strcpy(atInfo[a].resn,resn);
 			 atInfo[a].hetatm=true;
 			 AtomInfoAssignParameters(G,atInfo+a);
-			 atInfo[a].color=AtomInfoGetColor(G,atInfo+a);
+          AtomInfoAssignColors(G,atInfo+a);
           atInfo[a].alt[0]=0;
           atInfo[a].segi[0]=0;
           atInfo[a].resi[0]=0;
@@ -5830,8 +5825,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,
   }
 
   if(isNew) {
-    AtomInfoPrimeColors(G);
-    I->Obj.Color = AtomInfoGetCarbColor(G);
+      I->Obj.Color = AtomInfoUpdateAutoColor(G);
   }
 
   cset=ObjectMoleculeMOLStr2CoordSet(G,MOLStr,&atInfo);
@@ -6077,7 +6071,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
           ai->rank = a;
           ai->hetatm=true;
           AtomInfoAssignParameters(G,atInfo+a);
-          ai->color=AtomInfoGetColor(G,atInfo+a);
+          AtomInfoAssignColors(G,atInfo+a);
           ai->alt[0]=0;
           ai->segi[0]=0;
 
@@ -6379,8 +6373,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
     }
 
     if(isNew) {
-      AtomInfoPrimeColors(G);
-      I->Obj.Color = AtomInfoGetCarbColor(G);
+      I->Obj.Color = AtomInfoUpdateAutoColor(G);
     }
 
     restart=NULL;
@@ -6872,10 +6865,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                ai->resv=ai0->resv;
                strcpy(ai->resn,ai0->resn);    
              }
+             AtomInfoAssignColors(G,ai);
              if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
                ai->color=ai0->color;
-             else
-               ai->color=AtomInfoGetColor(G,ai);
              for(b=0;b<cRepCnt;b++)
                ai->visRep[b]=ai0->visRep[b];
              ai->id=-1;
@@ -7541,7 +7533,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                 }
                 break;
               case OMOP_COLR:
-                ai->color=op->i1;
+                if(op->i1==cColorAtomic)
+                  ai->color=ai->atomic_color;
+                else
+                  ai->color=op->i1;
                 op->i2++;
                 break;
               case OMOP_TTTF:
@@ -8662,8 +8657,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals *G,ObjectMolecule *I,char 
   }
   
   if(isNew) {
-    AtomInfoPrimeColors(G);
-    I->Obj.Color = AtomInfoGetCarbColor(G);
+      I->Obj.Color = AtomInfoUpdateAutoColor(G);
   }
 
   cset=ObjectMoleculeMMDStr2CoordSet(G,MMDStr,&atInfo);  
@@ -8812,8 +8806,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
         isNew = false;
       }
       if(isNew) {
-        AtomInfoPrimeColors(G);
-        I->Obj.Color = AtomInfoGetCarbColor(G);
+        I->Obj.Color = AtomInfoUpdateAutoColor(G);
       }
 
       cset=ObjectMoleculePDBStr2CoordSet(G,start,&atInfo,&restart,
@@ -9076,7 +9069,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
         }
         if(ok) {
           AtomInfoAssignParameters(G,ai);
-          ai->color = AtomInfoGetColor(G,ai);
+          AtomInfoAssignColors(G,ai);
         }
         if(!ok)
           break;

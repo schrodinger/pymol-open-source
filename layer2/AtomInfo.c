@@ -26,13 +26,20 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 
 struct _CAtomInfo {
-  int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
+  int NColor,CColor,DColor,HColor,OColor,SColor;
+  int BrColor, ClColor, FColor, IColor;
+  int PColor, MgColor, MnColor, NaColor, KColor, CaColor;
+  int CuColor, FeColor, ZnColor;
+  int SeColor;
+  int DefaultColor;
+  
 };
 
 int AtomInfoInit(PyMOLGlobals *G)
 {
   register CAtomInfo *I=NULL;
   if( (I=(G->AtomInfo=Calloc(CAtomInfo,1)))) {
+    AtomInfoPrimeColors(G);
     return 1;
   } else
     return 0;
@@ -603,7 +610,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
 #else
   PyObject *result = NULL;
 
-  result = PyList_New(39);
+  result = PyList_New(40);
   PyList_SetItem(result, 0,PyInt_FromLong(I->resv));
   PyList_SetItem(result, 1,PyString_FromString(I->chain));
   PyList_SetItem(result, 2,PyString_FromString(I->alt));
@@ -643,6 +650,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,36,PyInt_FromLong(I->rank));
   PyList_SetItem(result,37,PyInt_FromLong((int)I->hb_donor));
   PyList_SetItem(result,38,PyInt_FromLong((int)I->hb_acceptor));
+  PyList_SetItem(result,39,PyInt_FromLong((int)I->atomic_color));
   return(PConvAutoNone(result));
 #endif
 }
@@ -697,6 +705,11 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok&&(ll>36)) ok = PConvPyIntToInt(PyList_GetItem(list,36),&I->rank);
   if(ok&&(ll>37)) ok = PConvPyIntToChar(PyList_GetItem(list,37),(char*)&I->hb_donor);
   if(ok&&(ll>38)) ok = PConvPyIntToChar(PyList_GetItem(list,38),(char*)&I->hb_acceptor);
+  if(ok&&(ll>39)) 
+    ok = PConvPyIntToChar(PyList_GetItem(list,39),(char*)&I->atomic_color);
+  else {
+    I->atomic_color = AtomInfoGetColor(G,I);
+  }
   return(ok);
 #endif
 }
@@ -872,26 +885,48 @@ void AtomInfoBracketResidueFast(PyMOLGlobals *G,AtomInfoType *ai0,int n0,int cur
   }
 }
 /*========================================================================*/
-int AtomInfoGetCarbColor(PyMOLGlobals *G)
+int AtomInfoUpdateAutoColor(PyMOLGlobals *G)
 {
   CAtomInfo *I=G->AtomInfo;
-  return I->CarbColor;
+  if(SettingGet(G,cSetting_auto_color))
+    I->CColor = ColorGetNext(G);
+  else
+    I->CColor = ColorGetIndex(G,"carbon");
+  return I->CColor;
 }
+    
 /*========================================================================*/
 void AtomInfoPrimeColors(PyMOLGlobals *G)
 {
   CAtomInfo *I=G->AtomInfo;
 
   I->NColor=ColorGetIndex(G,"nitrogen");
-  if(SettingGet(G,cSetting_auto_color))
-    I->CarbColor=ColorGetNext(G);
-  else
-    I->CarbColor=ColorGetIndex(G,"carbon");
+  I->CColor=ColorGetIndex(G,"carbon");
+
   I->HColor=ColorGetIndex(G,"hydrogen");
   I->OColor=ColorGetIndex(G,"oxygen");
   I->SColor=ColorGetIndex(G,"sulfur");
-  I->MColor=ColorGetIndex(G,"magenta");
-  I->IColor=ColorGetIndex(G,"yellow");
+
+  I->ClColor=ColorGetIndex(G,"chlorine");
+  I->BrColor=ColorGetIndex(G,"bromine");
+  I->FColor=ColorGetIndex(G,"fluorine");
+  I->IColor=ColorGetIndex(G,"iodine");
+
+  I->PColor=ColorGetIndex(G,"phosporus");
+
+  I->MgColor=ColorGetIndex(G,"magnesium");
+  I->MnColor=ColorGetIndex(G,"manganese");
+
+  I->NaColor=ColorGetIndex(G,"sodium");
+  I->KColor=ColorGetIndex(G,"potassium");
+  I->CaColor=ColorGetIndex(G,"calcium");
+
+  I->CuColor=ColorGetIndex(G,"copper");
+  I->FeColor=ColorGetIndex(G,"iron");
+  I->ZnColor=ColorGetIndex(G,"zinc");
+
+  I->SeColor=ColorGetIndex(G,"selenium");
+  I->DColor=ColorGetIndex(G,"deuterium");
 }
 /*========================================================================*/
 float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
@@ -1103,49 +1138,187 @@ float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
   return(result);
 }
 
+void AtomInfoAssignColors(PyMOLGlobals *G,AtomInfoType *at1)
+{
+  at1->atomic_color = (at1->color = AtomInfoGetColor(G,at1));
+}
+
 int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1)
 {
   CAtomInfo *I=G->AtomInfo;
   char *n=at1->elem;
-  int color = 0;
+  int color = I->DefaultColor;
 
-  while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;
-  switch ( (*n) )
-    {
-    case 'N' : color = I->NColor; break;
-    case 'C' : 
+  if(!n[0]) {
+    n=at1->name;
+    while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) 
       n++;
-      switch(*(n)) {
-      case 'A':
-      case 'a':
-        if(at1->hetatm) 
-          color = I->IColor;
-        else
-          color = I-> CarbColor;
-        break;
-      case 0:
-      case 32:
-        color = I->CarbColor; 
-        break;
-      case 'l':
-      case 'L':
-      default:
-        color = I->MColor; break;
-      }
-      break;
-    case 'O' : color = I->OColor; break;
-    case 'I' : color = I->MColor; break;
-    case 'P' : color = I->MColor; break;
-    case 'B' : color = I->MColor; break;
-    case 'S' : color = I->SColor; break;
-    case 'F' : color = I->MColor; break;
-    case 'H' :
-    case 'D' :
-      color=I->HColor; 
-      break;
-    default  : color=I->MColor; break;
+  }
+  {
+    register char c1=n[0], c2=n[1];
+    c2 = tolower(c2);
+    if(c2<=32) c2=0;
+    switch(c1) {
+    case 'A': switch(c2) {
+      case 'c': color=ColorGetIndex(G,"actinium"); break;
+      case 'g': color=ColorGetIndex(G,"silver"); break;
+      case 'l': color=ColorGetIndex(G,"aluminum"); break;
+      case 'm': color=ColorGetIndex(G,"americium"); break;
+      case 'r': color=ColorGetIndex(G,"argon"); break;
+      case 's': color=ColorGetIndex(G,"arsenic"); break;
+      case 't': color=ColorGetIndex(G,"astatine"); break;
+      case 'u': color=ColorGetIndex(G,"gold"); break;
+      } break;
+    case 'B': switch(c2) {
+      case 0:    color=ColorGetIndex(G,"boron"); break;
+      case 'a': color=ColorGetIndex(G,"barium"); break;
+      case 'e': color=ColorGetIndex(G,"beryllium"); break;
+      case 'h': color=ColorGetIndex(G,"bohrium"); break;
+      case 'i': color=ColorGetIndex(G,"bismuth"); break;
+      case 'k': color=ColorGetIndex(G,"berkelium"); break;
+      case 'r': color=I->BrColor; break;
+      } break;
+    case 'C': switch(c2) {
+      case 0:  color=I->CColor; break;
+      case 'a': color=ColorGetIndex(G,"calcium"); break;
+      case 'd': color=ColorGetIndex(G,"cadmium"); break;
+      case 'e': color=ColorGetIndex(G,"cerium"); break;
+      case 'f': color=ColorGetIndex(G,"californium"); break;
+      case 'l': color=I->ClColor; break;
+      case 'm': color=ColorGetIndex(G,"curium"); break;
+      case 'o': color=ColorGetIndex(G,"cobalt"); break;
+      case 'r': color=ColorGetIndex(G,"chromium"); break;
+      case 's': color=ColorGetIndex(G,"cesium"); break;
+      case 'u': color=I->CuColor; break;
+      } break;
+    case 'D': switch(c2) {
+      case 0: color=I->DColor; break;
+      case 'b': color=ColorGetIndex(G,"dubnium"); break;
+      case 'y': color=ColorGetIndex(G,"dysprosium"); break;
+      } break;
+    case 'E': switch(c2) {
+      case 'r': color=ColorGetIndex(G,"erbium"); break;
+      case 's': color=ColorGetIndex(G,"einsteinium"); break;
+      case 'u': color=ColorGetIndex(G,"europium"); break;
+      } break;
+    case 'F': switch(c2) {
+      case 0:   color=I->FColor; break;
+      case 'e': color=I->FeColor; break;
+      case 'm': color=ColorGetIndex(G,"fermium"); break;
+      case 'r': color=ColorGetIndex(G,"francium"); break;
+      } break;
+    case 'G': switch(c2) {
+      case 'a': color=ColorGetIndex(G,"gallium"); break;
+      case 'd': color=ColorGetIndex(G,"gadolinium"); break;
+      case 'e': color=ColorGetIndex(G,"germanium"); break;
+      } break;
+    case 'H': switch(c2) {
+      case 0:   color=I->HColor; break;
+      case 'e': color=ColorGetIndex(G,"helium"); break;
+      case 'f': color=ColorGetIndex(G,"hafnium"); break;
+      case 'g': color=ColorGetIndex(G,"mercury"); break;
+      case 'o': color=ColorGetIndex(G,"holmium"); break;
+      case 's': color=ColorGetIndex(G,"hassium"); break;
+      } break;
+    case 'I': switch(c2) {
+      case 0:    color=I->IColor; break;
+      case 'n': color=ColorGetIndex(G,"indium"); break;
+      case 'r': color=ColorGetIndex(G,"iridium"); break;
+      } break;
+    case 'K': switch(c2) {
+      case 0:    color=ColorGetIndex(G,"potassium"); break;
+      case 'r': color=ColorGetIndex(G,"krypton"); break;
+      } break;
+    case 'L': switch(c2) {
+      case 'a': color=ColorGetIndex(G,"lanthanum"); break;
+      case 'i': color=ColorGetIndex(G,"lithium"); break;
+      case 'r': color=ColorGetIndex(G,"lawrencium"); break;
+      case 'u': color=ColorGetIndex(G,"lutetium"); break;
+      } break;
+    case 'M': switch(c2) {
+      case 'd': color=ColorGetIndex(G,"mendelevium"); break;
+      case 'g': color=I->MgColor; break;
+      case 'n': color=I->MnColor; break;
+      case 'o': color=ColorGetIndex(G,"molybdenum"); break;
+      case 't': color=ColorGetIndex(G,"meitnerium"); break;
+      } break;
+    case 'N': switch(c2) {
+      case 0:   color=I->NColor; break;
+      case 'a': color=I->NaColor; break;
+      case 'b': color=ColorGetIndex(G,"niobium"); break;
+      case 'd': color=ColorGetIndex(G,"neodymium"); break;
+      case 'e': color=ColorGetIndex(G,"neon"); break;
+      case 'i': color=ColorGetIndex(G,"nickel"); break;
+      case 'o': color=ColorGetIndex(G,"nobelium"); break;
+      case 'p': color=ColorGetIndex(G,"neptunium"); break;
+      } break;
+    case 'O': switch(c2) {
+      case 0:    color=I->OColor; break;
+      case 's': color=ColorGetIndex(G,"osmium"); break;
+      } break;
+    case 'P': switch(c2) {
+      case 0:    color=I->PColor; break;
+      case 'a': color=ColorGetIndex(G,"protactinium"); break;
+      case 'b': color=ColorGetIndex(G,"lead"); break;
+      case 'd': color=ColorGetIndex(G,"palladium"); break;
+      case 'm': color=ColorGetIndex(G,"promethium"); break;
+      case 'o': color=ColorGetIndex(G,"polonium"); break;
+      case 'r': color=ColorGetIndex(G,"praseodymium"); break;
+      case 't': color=ColorGetIndex(G,"platinum"); break;
+      case 'u': color=ColorGetIndex(G,"plutonium"); break;
+      } break;
+    case 'R': switch(c2) {
+      case 'a': color=ColorGetIndex(G,"radium"); break;
+      case 'b': color=ColorGetIndex(G,"rubidium"); break;
+      case 'e': color=ColorGetIndex(G,"rhenium"); break;
+      case 'f': color=ColorGetIndex(G,"rutherfordium"); break;
+      case 'h': color=ColorGetIndex(G,"rhodium"); break;
+      case 'n': color=ColorGetIndex(G,"radon"); break;
+      case 'u': color=ColorGetIndex(G,"ruthenium"); break;
+      } break;
+    case 'S': switch(c2) {
+      case 0:    color=I->SColor; break;
+      case 'b': color=ColorGetIndex(G,"antimony"); break;
+      case 'c': color=ColorGetIndex(G,"scandium"); break;
+      case 'e': color=I->SeColor; break;
+      case 'g': color=ColorGetIndex(G,"seaborgium"); break;
+      case 'i': color=ColorGetIndex(G,"silicon"); break;
+      case 'm': color=ColorGetIndex(G,"samarium"); break;
+      case 'n': color=ColorGetIndex(G,"tin"); break;
+      case 'r': color=ColorGetIndex(G,"strontium"); break;
+      } break;
+    case 'T': switch(c2) {
+      case 'a': color=ColorGetIndex(G,"tantalum"); break;
+      case 'b': color=ColorGetIndex(G,"terbium"); break;
+      case 'c': color=ColorGetIndex(G,"technetium"); break;
+      case 'e': color=ColorGetIndex(G,"tellurium"); break;
+      case 'h': color=ColorGetIndex(G,"thorium"); break;
+      case 'i': color=ColorGetIndex(G,"titanium"); break;
+      case 'l': color=ColorGetIndex(G,"thallium"); break;
+      case 'm': color=ColorGetIndex(G,"thulium"); break;
+      } break;
+    case 'U': switch(c2) {
+      case 0:    color=ColorGetIndex(G,"uranium"); break;
+      } break;
+    case 'V': switch(c2) {
+      case 0:    color=ColorGetIndex(G,"vanadium"); break;
+      } break;
+    case 'W': switch(c2) {
+      case 0:    color=ColorGetIndex(G,"tungsten"); break;
+      } break;
+    case 'X': switch(c2) {
+      case 'e': color=ColorGetIndex(G,"xenon"); break;
+      } break;
+    case 'Y': switch(c2) {
+      case 0:    color=ColorGetIndex(G,"yttrium"); break;
+      case 'b': color=ColorGetIndex(G,"ytterbium"); break;
+      } break;
+    case 'Z': switch(c2) {
+      case 'n': color=I->ZnColor; break;
+      case 'r': color=ColorGetIndex(G,"zirconium"); break;
+      } break;
     }
-
+  }
   return(color);
 }
 
@@ -1986,15 +2159,4 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
 
   /*  printf("I->name %s I->priority %d\n",I->name,I->priority);*/
 }
-
-
-
-
-
-
-
-
-
-
-
 

@@ -156,6 +156,7 @@ typedef struct AtomInfoType {
   int discrete_state; /* state+1 for atoms in discrete objects */
   float bohr_radius;
   int rank;
+  int atomic_color; /* what color was this atom originally assigned? */
 } AtomInfoType;
 
 void AtomInfoFree(PyMOLGlobals *G);
@@ -166,6 +167,7 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex
 void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I);
 void AtomInfoFreeSortedIndexes(PyMOLGlobals *G,int *index,int *outdex);
 void AtomInfoPrimeColors(PyMOLGlobals *G);
+void AtomInfoAssignColors(PyMOLGlobals *G,AtomInfoType *at1);
 int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1);
 int AtomInfoGetExpectedValence(PyMOLGlobals *G,AtomInfoType *I);
 PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *at);
@@ -211,6 +213,7 @@ void AtomInfoGetPDB3LetHydroName(PyMOLGlobals *G,char *resn, char *iname, char *
 
 void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mask);
 int AtomInfoNameOrder(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoUpdateAutoColor(PyMOLGlobals *G);
 
 typedef struct  {
   int resv1,resv2;
