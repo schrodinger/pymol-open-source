@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 
 #define SelectorMaxDepth 100
 
+#define cSelectorTmpPrefix "_sel_tmp_"
 
 typedef struct {
   int selection;
@@ -144,6 +145,7 @@ int *SelectorGetIndexVLA(int sele);
 #define SELE_LIK2 ( 0x2000 | STYP_OPR2 | 0x30 )
 #define SELE_NGH1 ( 0x2100 | STYP_OPR1 | 0x10 )
 #define SELE_QVLx ( 0x2200 | STYP_SEL2 | 0x70 )
+#define SELE_BYO1 ( 0x2300 | STYP_OPR1 | 0x10 )
 
 #define SEL_PREMAX 0x8
 
@@ -152,9 +154,12 @@ static WordKeyValue Keyword[] =
   {  "not",      SELE_NOT1 },
   {  "!",        SELE_NOT1 },
   {  "neighbor", SELE_NGH1 },
-  {  "nbr;",      SELE_NGH1 },
+  {  "nbr;",     SELE_NGH1 },
   {  "byresi",   SELE_BYR1 },
   {  "byres",    SELE_BYR1 },
+  {  "byobj",    SELE_BYO1 },
+  {  "byobject", SELE_BYO1 },
+  {  "bo;",      SELE_BYO1 },
   {  "b;",       SELE_BYR1 },
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
@@ -179,6 +184,7 @@ static WordKeyValue Keyword[] =
   {  "name",     SELE_NAMs },
   {  "n;",       SELE_NAMs },
   {  "symbol",   SELE_ELEs },
+  {  "element",  SELE_ELEs },
   {  "elem",     SELE_ELEs },
   {  "e;",       SELE_ELEs },
   {  "resi",     SELE_RSIs },
@@ -1479,7 +1485,7 @@ void SelectorGetTmp(char *input,char *store)
   SelectorType *I=&Selector;
   WordType name;
   if(input[0]=='(') {
-    sprintf(name,"_%d",I->TmpCounter++);
+    sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
 	 SelectorCreate(name,input,NULL,false);
 	 strcpy(store,name);
   } else {
@@ -1489,7 +1495,9 @@ void SelectorGetTmp(char *input,char *store)
 /*========================================================================*/
 void SelectorFreeTmp(char *name)
 {
-  if(name[0]=='_') ExecutiveDelete(name);
+  if(strncmp(name,cSelectorTmpPrefix,strlen(cSelectorTmpPrefix))==0) {
+    ExecutiveDelete(name);
+  }
 }
 /*========================================================================*/
 int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
@@ -2509,6 +2517,35 @@ int SelectorLogic1(EvalElem *base)
       }
       FreeP(base[1].sele);
       break;
+    case SELE_BYO1: 
+      base[1].sele=base[0].sele;
+      base[0].sele=Alloc(int,I->NAtom);
+      for(a=0;a<I->NAtom;a++) {
+        base->sele[a]=0;
+      }
+      for(a=0;a<I->NAtom;a++) {
+        if(base[1].sele[a]) {
+          if(I->Obj[I->Table[a].model]!=lastObj) {
+            lastObj = I->Obj[I->Table[a].model];
+            b = a;
+            while(b>=0) {
+              if(I->Obj[I->Table[b].model]!=lastObj) 
+                break;
+              base[0].sele[b]=1;
+              b--;
+            }
+            b=a+1;
+            while(b<I->NAtom) {
+              if(I->Obj[I->Table[b].model]!=lastObj) 
+                break;
+              base[0].sele[b]=1;
+              b++;
+            }
+          }
+        }
+      }
+      FreeP(base[1].sele);
+      break;      
 	 case SELE_BYR1: /* ASSUMES atoms are sorted by residue */
 		for(a=0;a<I->NAtom;a++)
 		  {

@@ -444,7 +444,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 
 }
 
-void PGetOptions(int *pmgui,int *internal_gui,int *stereo_capable,int *show_splash)
+void PGetOptions(int *pmgui,int *internal_gui,int *show_splash)
 {
   PyObject *pymol,*invocation,*options;
 
@@ -459,7 +459,6 @@ void PGetOptions(int *pmgui,int *internal_gui,int *stereo_capable,int *show_spla
 
   (*pmgui) = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
   (*internal_gui) = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
-  (*stereo_capable) = PyInt_AsLong(PyObject_GetAttrString(options,"stereo_capable"));
   (*show_splash) = PyInt_AsLong(PyObject_GetAttrString(options,"show_splash"));
   
 }

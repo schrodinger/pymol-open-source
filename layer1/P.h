@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 
 void PInit(void);
 void PInitEmbedded(int argc,char **argv);
-void PGetOptions(int *pmgui,int *internal_gui,int *stereo_capable,int *show_splash);
+void PGetOptions(int *pmgui,int *internal_gui,int *show_splash);
 
 void PFree(void);
 void PExit(int code);

@@ -416,12 +416,11 @@ PyMOL COMMAND LINE OPTIONS
    pymol.com [-ciqstwx] <file.xxx> [-p <file.py> ] ...
  
    -c   Command line mode, no GUI.  For batch opeations.
-   -s   Enable stereo mode (not currently autodetected).
    -i   Disable the internal OpenGL GUI (object list, menus, etc.)
    -x   Disable the external GUI module.
    -t   Use Tcl/Tk based external GUI module (pmg_tk).
    -w   Use wxPython based external GUI module (pmg_wx).
-	-q   Quiet launch. Suppress splash screen.
+   -q   Quiet launch. Suppress splash screen.
    -p   Listen for commands on standard input.
 
    -r <file.py>[,global|local|module] Run a python program in on startup.
@@ -516,6 +515,7 @@ DESCRIPTION
       not                         !
    Modifiers                        
       byres <selection>           b;<selection>
+      byobj <selection>           bo;<selection>
       around <distance>           a;<distance>
       expand <distance>           e;<distance>
       gap <distance>              -
@@ -871,11 +871,25 @@ def undo():
    '''
 TO DOCUMENT
 '''
+   r = None
    try:
       lock()
-      _cmd.undo(-1)
+      r = _cmd.undo(-1)
    finally:
       unlock()
+   return r
+
+def push_undo(selection,state=0):
+   '''
+TO DOCUMENT
+'''
+   r = None
+   try:
+      lock()
+      r = _cmd.push_undo(str(selection),int(state)-1)
+   finally:
+      unlock()
+   return r
 
 def redo():
    '''
@@ -3511,6 +3525,31 @@ EXAMPLES
       unlock()
    return r
 
+def count_atoms(selection="(all)",quiet=0):
+   '''
+DESCRIPTION
+  
+   "count_atoms" returns a count of atoms in a selection.
+ 
+USAGE
+ 
+   count (selection)
+ 
+PYMOL API
+  
+   cmd.count(string selection)
+ 
+   '''
+   try:
+      lock()   
+      r = _cmd.select("_count_tmp",str(selection),1)
+      _cmd.delete("_count_tmp")
+   finally:
+      unlock()
+   if not int(quiet):
+      print " count_atoms: %d atoms"%r
+   return r
+   
 def color(color,selection="(all)"):
    '''
 DESCRIPTION
@@ -4262,6 +4301,7 @@ keyword = {
    'color'         : [color        , 1 , 2 , ',' , parsing.STRICT ],
    'commands'      : [commands     , 0 , 0 , ',' , parsing.STRICT ],
    'copy'          : [copy         , 2 , 2 , '=' , parsing.LEGACY ],
+   'count_atoms'   : [count_atoms  , 0 , 1 , ',' , parsing.STRICT ],
    'count_states'  : [count_states , 0 , 1 , ',' , parsing.STRICT ],
    'cycle_valence' : [cycle_valence, 0 , 0 , ',' , parsing.STRICT ],
    'create'        : [create       , 2 , 2 , '=' , parsing.LEGACY ],   

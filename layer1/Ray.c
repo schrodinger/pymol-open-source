@@ -398,7 +398,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     RayExpandPrimitives(I);
     RayTransformFirst(I);
     
-	 PRINTF " Ray: %i primitives\n",I->NPrimitive ENDF;
+	 PRINTF " Ray: processed %i graphics primitives.\n",I->NPrimitive ENDF;
     BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
     
     I->NBasis=3; /* light source */
@@ -415,7 +415,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     RayTransformBasis(I,I->Basis+2);
     BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
 
-    PRINTF " Ray: voxel spacing: camera %4.2f, light %4.2f\n",
+    PRINTF " Ray: voxel spacing: %4.2f (camera), %4.2f (shadow).\n",
       I->Basis[1].Map->Div,I->Basis[2].Map->Div ENDF;
     
     /* IMAGING */
@@ -712,7 +712,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   }
   
   timing = UtilGetSeconds()-timing;
-  PRINTF  " Ray: rendering time %4.2f sec. (%3.1f fph).\n", 
+  PRINTF  " Ray: rendering time: %4.2f sec. (%3.1f fph).\n", 
     timing,3600/timing ENDF;
 
 }

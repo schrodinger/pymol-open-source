@@ -1239,6 +1239,7 @@ void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state)
     I->UndoNIndex[I->UndoIter] = cs->NIndex;
   }
   I->UndoIter=cUndoMask&(I->UndoIter+1);
+  ExecutiveSetLastObjectEdited((Object*)I);
 }
 /*========================================================================*/
 void ObjectMoleculeUndo(ObjectMolecule *I,int dir)
@@ -3540,6 +3541,17 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      }
      VLASetSize(op->f1VLA,I->NCSet);  /* NOTE this action is object-specific! */
      break;
+	case OMOP_SaveUndo: /* save undo */
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             hit_flag=true;
+             break;
+           }
+       }
+     break;
 	case OMOP_Identify: /* identify atoms */
      for(a=0;a<I->NAtom;a++)
        {
@@ -3879,6 +3891,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      case OMOP_AlterState: /* overly coarse - doing all states, could do just 1 */
        ObjectMoleculeInvalidate(I,-1,cRepInvRep);
        SceneChanged();
+       break;
+     case OMOP_SaveUndo:
+       op->i2=true;
+       ObjectMoleculeSaveUndo(I,op->i1);
        break;
 	  }
 	}

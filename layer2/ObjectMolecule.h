@@ -91,6 +91,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_Mask 22
 #define OMOP_AddHydrogens 23
 #define OMOP_SetB 24
+#define OMOP_SaveUndo 25
 
 #include"CoordSet.h"
 

@@ -31,7 +31,6 @@ void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick);
 void ObjectDistFree(ObjectDist *I);
 void ObjectDistUpdate(ObjectDist *I);
 int ObjectDistGetNFrames(ObjectDist *I);
-void ObjectDistSetRepVis(ObjectDist *I,int rep);
 
 /*========================================================================*/
 int ObjectDistGetNFrames(ObjectDist *I)
@@ -53,16 +52,6 @@ void ObjectDistUpdate(ObjectDist *I)
 }
 /*========================================================================*/
 void ObjectDistInvalidateRep(ObjectDist *I,int rep)
-{
-  int a;
-  for(a=0;a<I->NDSet;a++) 
-	 if(I->DSet[a]) {	 
-      if(I->DSet[a]->fInvalidateRep)
-        I->DSet[a]->fInvalidateRep(I->DSet[a],rep,0);
-	 }
-}
-/*========================================================================*/
-void ObjectDistSetRepVis(ObjectDist *I,int rep)
 {
   int a;
   for(a=0;a<I->NDSet;a++) 

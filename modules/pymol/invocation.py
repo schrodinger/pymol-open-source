@@ -47,7 +47,7 @@ def parse_args(argv):
             options.no_gui=1
             options.external_gui=0
          if "s" in a:
-            options.stereo_capable = 2
+            pass # stereo now autodetected
          if "q" in a:
             options.show_splash = 0
          if "i" in a:
