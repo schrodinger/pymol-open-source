@@ -29,12 +29,141 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Util.h"
 #include"main.h"
+#include"PConv.h"
 
 CSetting Setting;
 
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
+int SettingSetGlobalsFromPyList(PyObject *list)
+{
+  int ok=true;
+  CSetting *I=&Setting;
+  if(list)
+    if(PyList_Check(list)) 
+      ok = SettingSetPyList(I,list);
+  return(ok);
+}
 
+PyObject *SettingGetGlobalsPyList(void)
+{
+  PyObject *result = NULL;
+  CSetting *I=&Setting;
+  result = SettingGetPyList(I);
+  return(PConvAutoNone(result));
+}
+
+static PyObject *get_list(CSetting *I,int index)
+{
+  PyObject *result = NULL;
+  int setting_type = I->info[index].type;
+  switch(setting_type) {
+
+  case cSetting_boolean:
+  case cSetting_int:
+  case cSetting_color:
+    result = PyList_New(3);
+    PyList_SetItem(result,0,PyInt_FromLong(index));
+    PyList_SetItem(result,1,PyInt_FromLong(setting_type));
+    PyList_SetItem(result,2,PyInt_FromLong(*((int*)(I->data+I->info[index].offset))));
+    break;
+  case cSetting_float:
+    result = PyList_New(3);
+    PyList_SetItem(result,0,PyInt_FromLong(index));
+    PyList_SetItem(result,1,PyInt_FromLong(setting_type));
+    PyList_SetItem(result,2,PyFloat_FromDouble(*((float*)(I->data+I->info[index].offset))));
+    break;
+  case cSetting_float3:
+    result = PyList_New(3);
+    PyList_SetItem(result,0,PyInt_FromLong(index));
+    PyList_SetItem(result,1,PyInt_FromLong(setting_type));
+    PyList_SetItem(result,2,PConvFloatArrayToPyList(((float*)(I->data+I->info[index].offset)),3));
+    break;
+  case cSetting_string:
+    result = PyList_New(3);
+    PyList_SetItem(result,0,PyInt_FromLong(index));
+    PyList_SetItem(result,1,PyInt_FromLong(setting_type));
+    PyList_SetItem(result,2,PyString_FromString(((char*)(I->data+I->info[index].offset))));
+    break;
+  }
+  return(PConvAutoNone(result));
+}
+
+PyObject *SettingGetPyList(CSetting *I)
+{
+  PyObject *result = NULL;
+  int cnt = 0;
+  int a;
+
+  if(I) {
+    for(a=0;a<cSetting_INIT;a++) {
+      if(I->info[a].defined)
+        cnt++;
+    }
+    result = PyList_New(cnt);
+    cnt=0;
+    for(a=0;a<cSetting_INIT;a++) {
+      if(I->info[a].defined) {
+        PyList_SetItem(result,cnt,get_list(I,a));
+        cnt++;
+      }
+    }
+  }
+  return(PConvAutoNone(result));
+}
+/*========================================================================*/
+static int set_list(CSetting *I,PyObject *list)
+{
+  int ok=true;
+  int index;
+  int setting_type;
+  char *str;
+  if(list!=Py_None) {
+    if(ok) ok=PyList_Check(list);
+    if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&index);
+    if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&setting_type);
+    if(ok) switch(setting_type) {
+    case cSetting_boolean:
+    case cSetting_int:
+    case cSetting_color:
+      ok = PConvPyIntToInt(PyList_GetItem(list,2),
+                           (int*)SettingPtr(I,index,sizeof(int)));
+      break;
+    case cSetting_float:
+      ok = PConvPyFloatToFloat(PyList_GetItem(list,2),
+                           (float*)SettingPtr(I,index,sizeof(float)));
+      break;
+    case cSetting_float3:
+      ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,2),
+                           (float*)SettingPtr(I,index,3*sizeof(float)),3);
+      break;
+    case cSetting_string:
+      ok = PConvPyStrToStrPtr(PyList_GetItem(list,2),&str);
+      if(ok) {
+        strcpy(((char*)SettingPtr(I,index,strlen(str)+1)),str);
+      }
+      break;
+    }
+    if(ok) I->info[index].type=setting_type;
+  }
+  return(ok);
+}
+/*========================================================================*/
+int SettingSetPyList(CSetting *I,PyObject *list)
+{
+  int ok=true;
+  int size;
+  int a;
+  if(ok) ok=(I!=NULL);
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    size=PyList_Size(list);
+    for(a=0;a<size;a++) {
+      if(ok) ok=set_list(I,PyList_GetItem(list,a));
+    }
+  }
+  return(ok);
+}
 /*========================================================================*/
 PyObject *SettingGetUpdateList(CSetting *I)
 {
@@ -76,9 +205,9 @@ int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer)
   switch(type) {
   case cSetting_boolean:
     if(SettingGet_b(set1,set2,index))
-      sprintf(buffer,"on.");
+      sprintf(buffer,"on");
     else
-      sprintf(buffer,"off.");      
+      sprintf(buffer,"off");      
     break;
   case cSetting_int:
     sprintf(buffer,"%d",SettingGet_i(set1,set2,index));
@@ -87,7 +216,7 @@ int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer)
     sprintf(buffer,"%1.5f",SettingGet_f(set1,set2,index));
     break;
   case cSetting_float3:
-    ptr = SettingGet_fv(set1,set2,index);
+    ptr = SettingGet_3fv(set1,set2,index);
     sprintf(buffer,"[ %1.5f, %1.5f, %1.5f ]",
             ptr[0],ptr[1],ptr[2]);
     break;
@@ -172,7 +301,7 @@ PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
                            SettingGet_f(set1,set2,index));
     break;
   case cSetting_float3:
-    ptr =  SettingGet_fv(set1,set2,index);
+    ptr =  SettingGet_3fv(set1,set2,index);
     result = Py_BuildValue("(i(fff))",type,
                            ptr[0],ptr[1],ptr[2]);
     break;
@@ -248,19 +377,135 @@ int SettingGetType(int index)
   CSetting *I=&Setting;
   return(I->info[index].type);
 }
+
+/*========================================================================*/
+static int get_i(CSetting *I,int index)
+{
+  int result;
+  switch(I->info[index].type) {
+  case cSetting_boolean:
+  case cSetting_int:
+  case cSetting_color:
+    result = (*((int*)(I->data+I->info[index].offset)));
+    break;
+  case cSetting_float:
+    result = (int)(*((float*)(I->data+I->info[index].offset)));
+    break;
+  default:
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type read mismatch (int)\n"
+      ENDFB;
+    result = 0;
+    break;
+  }
+  return(result);
+}
+/*========================================================================*/
+static int get_b(CSetting *I,int index)
+{
+  int result;
+  switch(I->info[index].type) {
+  case cSetting_boolean:
+  case cSetting_int:
+  case cSetting_color:
+    result = (*((int*)(I->data+I->info[index].offset)));
+    break;
+  case cSetting_float:
+    result = (int)(*((float*)(I->data+I->info[index].offset)));
+    break;
+  default:
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type read mismatch (boolean)\n"
+      ENDFB;
+    result = 0;
+  }
+  return(result);
+}
+/*========================================================================*/
+static int get_color(CSetting *I,int index)
+{
+  int result;
+  switch(I->info[index].type) {
+  case cSetting_boolean:
+  case cSetting_int:
+  case cSetting_color:
+    result = (*((int*)(I->data+I->info[index].offset)));
+    break;
+  case cSetting_float:
+    result = (int)(*((float*)(I->data+I->info[index].offset)));
+    break;
+  default:
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type read mismatch (color)\n"
+      ENDFB;
+    result = 0;
+  }
+  return(result);
+}
+/*========================================================================*/
+static float get_f(CSetting *I,int index)
+{
+  float result;
+  switch(I->info[index].type) {
+  case cSetting_boolean:
+  case cSetting_int:
+  case cSetting_color:
+    result = (float)(*((int*)(I->data+I->info[index].offset)));
+    break;
+  case cSetting_float:
+    result = (*((float*)(I->data+I->info[index].offset)));
+    break;
+  default:
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type read mismatch (float)\n"
+      ENDFB;
+    result = 0.0F;
+  }
+  return(result);
+}
+/*========================================================================*/
+static char *get_s(CSetting *I,int index)
+{
+  char *result;
+  switch(I->info[index].type) {
+  case cSetting_string:
+    result = ((char*)(I->data+I->info[index].offset));
+    break;
+  default:
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type read mismatch (string)\n"
+      ENDFB;
+    result = NULL;
+  }
+  return(result);
+}
 /*========================================================================*/
 int SettingSet_b(CSetting *I,int index, int value)
 {
   int ok=true;
-  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_boolean)) {
-    PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type mismatch (boolean)\n"
-      ENDFB
-      ok=false;
+  if(I) {
+    int setting_type = I->info[index].type;
+    switch(setting_type) {
+    case cSetting_blank:
+    case cSetting_boolean:
+    case cSetting_int:
+    case cSetting_color:
+      VLACheck(I->info,SettingRec,index);
+      *((int*)SettingPtr(I,index,sizeof(int))) = value;
+      break;
+    case cSetting_float:
+      *((float*)SettingPtr(I,index,sizeof(float))) = value;
+      break;
+    default:
+      PRINTFB(FB_Setting,FB_Errors)
+        "Setting-Error: type set mismatch (boolean)\n"
+        ENDFB
+        ok=false;
+    }
+    if(setting_type==cSetting_blank)
+      I->info[index].type = cSetting_boolean;
   } else {
-    VLACheck(I->info,SettingRec,index);
-    *((int*)SettingPtr(I,index,sizeof(int))) = value;
-    I->info[index].type = cSetting_boolean;
+    ok=false;
   }
   return(ok);
 }
@@ -268,15 +513,29 @@ int SettingSet_b(CSetting *I,int index, int value)
 int SettingSet_i(CSetting *I,int index, int value)
 {
   int ok=true;
-  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_int)) {
-    PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type mismatch (int)\n"
-      ENDFB
-      ok=false;
+  if(I) {
+    int setting_type = I->info[index].type;
+    switch(setting_type) {
+    case cSetting_blank:
+    case cSetting_boolean:
+    case cSetting_int:
+    case cSetting_color:
+      VLACheck(I->info,SettingRec,index);
+      *((int*)SettingPtr(I,index,sizeof(int))) = value;
+      break;
+    case cSetting_float:
+      *((float*)SettingPtr(I,index,sizeof(float))) = value;
+      break;
+    default:
+      PRINTFB(FB_Setting,FB_Errors)
+        "Setting-Error: type set mismatch (integer)\n"
+        ENDFB
+        ok=false;
+    }
+    if(setting_type==cSetting_blank)
+      I->info[index].type = cSetting_int;
   } else {
-    VLACheck(I->info,SettingRec,index);
-    *((int*)SettingPtr(I,index,sizeof(int))) = value;
-    I->info[index].type = cSetting_int;
+    ok=false;
   }
   return(ok);
 }
@@ -285,25 +544,43 @@ int SettingSet_color(CSetting *I,int index, char *value)
 {
   int ok=true;
   int color_index;
-
-  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_color)) {
+  color_index=ColorGetIndex(value);
+  if((color_index<0)&&(strcmp(value,"-1"))) {
     PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type mismatch (color)\n"
+      "Setting-Error: unknown color '%s'\n",value
       ENDFB
       ok=false;
+    
   } else {
-    color_index=ColorGetIndex(value);
-    if((color_index<0)&&(strcmp(value,"-1"))) {
-      PRINTFB(FB_Setting,FB_Errors)
-        "Setting-Error: unknown color '%s'\n",value
-        ENDFB
-        ok=false;
-      
+    
+    if(I) {
+      int setting_type = I->info[index].type;
+      switch(setting_type) {
+      case cSetting_blank:
+      case cSetting_boolean:
+      case cSetting_int:
+      case cSetting_color:
+        VLACheck(I->info,SettingRec,index);
+        *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
+        break;
+      case cSetting_float:
+        *((float*)SettingPtr(I,index,sizeof(float))) = color_index;
+        break;
+      default:
+        PRINTFB(FB_Setting,FB_Errors)
+          "Setting-Error: type set mismatch (color)\n"
+          ENDFB
+          ok=false;
+      }
+      if(setting_type==cSetting_blank)
+        I->info[index].type = cSetting_color;
     } else {
-      VLACheck(I->info,SettingRec,index);
-      *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
-      I->info[index].type = cSetting_color;
+      ok=false;
     }
+    
+    VLACheck(I->info,SettingRec,index);
+    *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
+    I->info[index].type = cSetting_color;
   }
   return(ok);
 }
@@ -311,15 +588,29 @@ int SettingSet_color(CSetting *I,int index, char *value)
 int SettingSet_f(CSetting *I,int index, float value)
 {
   int ok=true;
-  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_float)) {
-    PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type mismatch (float)\n"
-      ENDFB
-      ok=false;
+  if(I) {
+    int setting_type = I->info[index].type;
+    switch(setting_type) {
+    case cSetting_boolean:
+    case cSetting_int:
+    case cSetting_color:
+      VLACheck(I->info,SettingRec,index);
+      *((int*)SettingPtr(I,index,sizeof(int))) = (int)value;
+      break;
+    case cSetting_blank:
+    case cSetting_float:
+      *((float*)SettingPtr(I,index,sizeof(float))) = value;
+      break;
+    default:
+      PRINTFB(FB_Setting,FB_Errors)
+        "Setting-Error: type set mismatch (float)\n"
+        ENDFB
+        ok=false;
+    }
+    if(setting_type==cSetting_blank)
+      I->info[index].type = cSetting_float;
   } else {
-    VLACheck(I->info,SettingRec,index);
-    *((float*)SettingPtr(I,index,sizeof(float)))=value;
-    I->info[index].type = cSetting_float;
+    ok=false;
   }
   return(ok);
 }
@@ -327,35 +618,54 @@ int SettingSet_f(CSetting *I,int index, float value)
 int SettingSet_s(CSetting *I,int index, char *value)
 {
   int ok=true;
-  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_string)) {
-    PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type mismatch (string)\n"
-      ENDFB
-      ok=false;
+  if(I) {
+    int setting_type = I->info[index].type;
+    switch(setting_type) {
+    case cSetting_blank:
+    case cSetting_string:
+      VLACheck(I->info,SettingRec,index);
+      strcpy(((char*)SettingPtr(I,index,strlen(value)+1)),value);
+      I->info[index].type = cSetting_string;
+      break;
+    default:
+      PRINTFB(FB_Setting,FB_Errors)
+        "Setting-Error: type set mismatch (string)\n"
+        ENDFB
+        ok=false;
+    }
+    if(setting_type==cSetting_blank)
+      I->info[index].type = cSetting_string;
   } else {
-    VLACheck(I->info,SettingRec,index);
-    strcpy(((char*)SettingPtr(I,index,strlen(value)+1)),value);
-    I->info[index].type = cSetting_string;
+    ok=false;
   }
   return(ok);
 }
 /*========================================================================*/
 int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
 {
+  int ok=false;
   float *ptr;
-  int ok=true;
-  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_float3)) {
-    PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: type mismatch (float3)\n"
-      ENDFB
-      ok=false;
+  if(I) {
+    int setting_type = I->info[index].type;
+    switch(setting_type) {
+    case cSetting_blank:
+    case cSetting_float3:
+      VLACheck(I->info,SettingRec,index);
+      ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
+      ptr[0]=value1;
+      ptr[1]=value2;
+      ptr[2]=value3;
+      break;
+    default:
+      PRINTFB(FB_Setting,FB_Errors)
+        "Setting-Error: type set mismatch (float3)\n"
+        ENDFB
+        ok=false;
+    }
+    if(setting_type==cSetting_blank)
+      I->info[index].type = cSetting_float3;
   } else {
-    VLACheck(I->info,SettingRec,index);
-    ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
-    ptr[0]=value1;
-    ptr[1]=value2;
-    ptr[2]=value3;
-    I->info[index].type = cSetting_float3;
+    ok=false;
   }
   return(ok);
 }
@@ -373,25 +683,25 @@ int SettingSet_3fv(CSetting *I,int index, float *vector)
 int   SettingGetGlobal_b(int index) 
 {
   CSetting *I=&Setting;
-  return(*((int*)(I->data+I->info[index].offset)));
+  return(get_b(I,index));
 }
 /*========================================================================*/
 int   SettingGetGlobal_i(int index) 
 {
   CSetting *I=&Setting;
-  return(*((int*)(I->data+I->info[index].offset)));
+  return(get_i(I,index));
 }
 /*========================================================================*/
 float SettingGetGlobal_f(int index)
 {
   CSetting *I=&Setting;
-  return(*((float*)(I->data+I->info[index].offset)));
+  return(get_f(I,index));
 }
 /*========================================================================*/
 char *SettingGetGlobal_s(int index)
 {
   CSetting *I=&Setting;
-  return((char*)(I->data+I->info[index].offset));
+  return(get_s(I,index));
 }
 /*========================================================================*/
 void  SettingGetGlobal_3f(int index,float *value)
@@ -402,7 +712,7 @@ void  SettingGetGlobal_3f(int index,float *value)
   copy3f(ptr,value);
 }
 /*========================================================================*/
-float *SettingGetGlobal_fv(int index)
+float *SettingGetGlobal_3fv(int index)
 {
   CSetting *I=&Setting;
   return (float*)(I->data+I->info[index].offset);
@@ -412,12 +722,12 @@ int   SettingGet_b  (CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
-      return(*((int*)(set1->data+set1->info[index].offset)));
+      return(get_b(set1,index));
     }
   }
   if(set2) { 
     if(set2->info[index].defined) {
-      return(*((int*)(set2->data+set2->info[index].offset)));      
+      return(get_b(set2,index));
     }
   }
   return(SettingGetGlobal_i(index));
@@ -427,12 +737,12 @@ int   SettingGet_i  (CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
-      return(*((int*)(set1->data+set1->info[index].offset)));
+      return(get_i(set1,index));
     }
   }
   if(set2) { 
     if(set2->info[index].defined) {
-      return(*((int*)(set2->data+set2->info[index].offset)));      
+      return(get_i(set2,index));
     }
   }
   return(SettingGetGlobal_i(index));
@@ -442,12 +752,12 @@ int   SettingGet_color(CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
-      return(*((int*)(set1->data+set1->info[index].offset)));
+      return(get_color(set1,index));
     }
   }
   if(set2) { 
     if(set2->info[index].defined) {
-      return(*((int*)(set2->data+set2->info[index].offset)));      
+      return(get_color(set2,index));
     }
   }
   return(SettingGetGlobal_i(index));
@@ -457,12 +767,12 @@ float SettingGet_f  (CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
-      return(*((float*)(set1->data+set1->info[index].offset)));
+      return(get_f(set1,index));
     }
   }
   if(set2) {
     if(set2->info[index].defined) {
-      return(*((float*)(set2->data+set2->info[index].offset)));      
+      return(get_f(set2,index));
     }
   }
   return(SettingGetGlobal_f(index));
@@ -472,12 +782,12 @@ char *SettingGet_s(CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
-      return((char*)(set1->data+set1->info[index].offset));
+      return(get_s(set1,index));
     }
   }
   if(set2) {
     if(set2->info[index].defined) {
-      return((char*)(set2->data+set2->info[index].offset));      
+      return(get_s(set2,index));
     }
   }
   return(SettingGetGlobal_s(index));
@@ -503,7 +813,7 @@ void  SettingGet_3f(CSetting *set1,CSetting *set2,int index,float *value)
   SettingGetGlobal_3f(index,value);
 }
 /*========================================================================*/
-float *SettingGet_fv(CSetting *set1,CSetting *set2,int index)
+float *SettingGet_3fv(CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
@@ -515,7 +825,7 @@ float *SettingGet_fv(CSetting *set1,CSetting *set2,int index)
       return (float*)(set2->data+set2->info[index].offset);
     }
   }
-  return(SettingGetGlobal_fv(index));
+  return(SettingGetGlobal_3fv(index));
 }
 
 /*========================================================================*/
@@ -904,7 +1214,7 @@ float SettingGet(int index)
 /*========================================================================*/
 float *SettingGetfv(int index)
 {
-  return(SettingGetGlobal_fv(index));
+  return(SettingGetGlobal_3fv(index));
 }
 /*========================================================================*/
 void SettingFreeGlobal(void)
@@ -923,13 +1233,13 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_min_mesh_spacing, 0.6F);
 
-  SettingSet_f(I,cSetting_dot_density, 2.0F);
+  SettingSet_i(I,cSetting_dot_density, 2);
 
-  SettingSet_f(I,cSetting_dot_mode, 0.0F);
+  SettingSet_i(I,cSetting_dot_mode, 0);
 
   SettingSet_f(I,cSetting_solvent_radius, 1.4F);
 
-  SettingSet_f(I,cSetting_sel_counter, 0.0F);
+  SettingSet_i(I,cSetting_sel_counter, 0);
 
   SettingSet_3f(I,cSetting_bg_rgb, 0.0F, 0.0F, 0.0F);
 
@@ -941,13 +1251,13 @@ void SettingInitGlobal(void)
 
   SettingSet_3f(I,cSetting_light, -0.4F, -0.4F, -1.0F);
 
-  SettingSet_f(I,cSetting_antialias, 0.0F);
+  SettingSet_b(I,cSetting_antialias, 0);
 
-  SettingSet_f(I,cSetting_cavity_cull, 10.0F);
+  SettingSet_i(I,cSetting_cavity_cull, 10);
 
   SettingSet_f(I,cSetting_gl_ambient,  0.12F);
 
-  SettingSet_f(I,cSetting_single_image, 0.0F);
+  SettingSet_b(I,cSetting_single_image, 0);
 
   SettingSet_f(I,cSetting_movie_delay, 30.0F);
 
@@ -955,15 +1265,15 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_ribbon_power_b, 0.5F);
 
-  SettingSet_f(I,cSetting_ribbon_sampling, 16.0F);
+  SettingSet_i(I,cSetting_ribbon_sampling, 16);
 
   SettingSet_f(I,cSetting_ribbon_radius, 0.4F);
 
   SettingSet_f(I,cSetting_stick_radius, 0.25F);
 
-  SettingSet_f(I,cSetting_hash_max, 100.0F);
+  SettingSet_i(I,cSetting_hash_max, 100);
 
-  SettingSet_f(I,cSetting_ortho, 0.0F);
+  SettingSet_b(I,cSetting_ortho, 0);
 
   SettingSet_f(I,cSetting_power, 1.0F);
 
@@ -975,17 +1285,17 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_sweep_speed, 0.5F);
 
-  SettingSet_f(I,cSetting_dot_hydrogens, 1.0F);
+  SettingSet_b(I,cSetting_dot_hydrogens, 1);
 
   SettingSet_f(I,cSetting_dot_radius, 0.20F);
 
-  SettingSet_f(I,cSetting_ray_trace_frames, 0.0F);
+  SettingSet_b(I,cSetting_ray_trace_frames, 0);
 
-  SettingSet_f(I,cSetting_cache_frames, 0.0F);
+  SettingSet_b(I,cSetting_cache_frames, 0);
 
-  SettingSet_f(I,cSetting_trim_dots, 1.0F);
+  SettingSet_b(I,cSetting_trim_dots, 1);
 
-  SettingSet_f(I,cSetting_cull_spheres, 1.0F);
+  SettingSet_b(I,cSetting_cull_spheres, 1);
 
   SettingSet_f(I,cSetting_test1, 1.0F);
 
@@ -995,31 +1305,31 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_surface_normal, 0.5F);
 
-  SettingSet_f(I,cSetting_surface_quality, 0.0F);
+  SettingSet_i(I,cSetting_surface_quality, 0);
 
-  SettingSet_f(I,cSetting_surface_proximity, 1.0F);
+  SettingSet_b(I,cSetting_surface_proximity, 1);
 
   SettingSet_f(I,cSetting_stereo_angle, 2.1F);
 
   SettingSet_f(I,cSetting_stereo_shift, 2.0F);
 
-  SettingSet_f(I,cSetting_line_smooth, 1.0F);
+  SettingSet_b(I,cSetting_line_smooth, 1);
 
   SettingSet_f(I,cSetting_line_width, 1.0F);
 
-  SettingSet_f(I,cSetting_half_bonds, 0.0F);
+  SettingSet_b(I,cSetting_half_bonds, 0);
 
-  SettingSet_f(I,cSetting_stick_quality, 8.0F);
+  SettingSet_i(I,cSetting_stick_quality, 8.0F);
 
   SettingSet_f(I,cSetting_stick_overlap, 0.2F);
 
   SettingSet_f(I,cSetting_stick_nub, 0.7F);
 
-  SettingSet_f(I,cSetting_all_states, 0.0F);
+  SettingSet_b(I,cSetting_all_states, 0);
 
-  SettingSet_f(I,cSetting_pickable, 1.0F);
+  SettingSet_b(I,cSetting_pickable, 1);
 
-  SettingSet_f(I,cSetting_auto_show_lines, 1.0F);
+  SettingSet_b(I,cSetting_auto_show_lines, 1);
 
   SettingSet_f(I,cSetting_fast_idle, 20000.0F);
 
@@ -1035,27 +1345,27 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_rock_delay, 30.0F);
 
-  SettingSet_f(I,cSetting_dist_counter, 0.0F);
+  SettingSet_i(I,cSetting_dist_counter, 0);
 
   SettingSet_f(I,cSetting_dash_length, 0.15F);
 
   SettingSet_f(I,cSetting_dash_gap, 0.35F);
 
-  SettingSet_f(I,cSetting_auto_zoom, 1.0F);
+  SettingSet_b(I,cSetting_auto_zoom, 1);
 
-  SettingSet_f(I,cSetting_overlay, 0.0F);
+  SettingSet_i(I,cSetting_overlay, 0);
 
-  SettingSet_f(I,cSetting_text, 0.0F);
+  SettingSet_i(I,cSetting_text, 0);
 
-  SettingSet_f(I,cSetting_button_mode, 0.0F);
+  SettingSet_i(I,cSetting_button_mode, 0);
 
   SettingSet_f(I,cSetting_valence, 0.0F);
 
   SettingSet_f(I,cSetting_nonbonded_size, 0.25F);
 
-  SettingSet_f(I,cSetting_label_color, -1.0F);
+  SettingSet_i(I,cSetting_label_color, -1);
 
-  SettingSet_f(I,cSetting_ray_trace_fog, 1.0F);
+  SettingSet_b(I,cSetting_ray_trace_fog, 1);
 
   SettingSet_f(I,cSetting_spheroid_scale, 1.0F);
 
@@ -1065,35 +1375,35 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_spheroid_fill, 1.30F);
 
-  SettingSet_f(I,cSetting_auto_show_nonbonded, 1.0F);
+  SettingSet_b(I,cSetting_auto_show_nonbonded, 1);
 
   SettingSet_f(I,cSetting_mesh_radius, 0.025F);
  
 #ifdef WIN32
-  SettingSet_f(I,cSetting_cache_display, 0.0F);
+  SettingSet_b(I,cSetting_cache_display, 0);
 #else
-  SettingSet_f(I,cSetting_cache_display, 1.0F);
+  SettingSet_b(I,cSetting_cache_display, 1);
 #endif
 
-  SettingSet_f(I,cSetting_normal_workaround, 0.0F);
+  SettingSet_b(I,cSetting_normal_workaround, 0);
 
-  SettingSet_f(I,cSetting_backface_cull, 1.0F);
+  SettingSet_b(I,cSetting_backface_cull, 1);
 
   SettingSet_f(I,cSetting_gamma, 1.3F);
 
   SettingSet_f(I,cSetting_dot_width, 2.0F);
 
-  SettingSet_f(I,cSetting_auto_show_selections, 1.0F);
+  SettingSet_b(I,cSetting_auto_show_selections, 1);
 
-  SettingSet_f(I,cSetting_auto_hide_selections, 1.0F);
+  SettingSet_b(I,cSetting_auto_hide_selections, 1);
 
   SettingSet_f(I,cSetting_selection_width, 4.0F);
 
   SettingSet_f(I,cSetting_selection_overlay, 1.0F);
 
-  SettingSet_f(I,cSetting_static_singletons, 1.0F);
+  SettingSet_b(I,cSetting_static_singletons, 1);
 
-  SettingSet_f(I,cSetting_max_triangles, 1000000.0F);
+  SettingSet_i(I,cSetting_max_triangles, 1000000);
 
   SettingSet_f(I,cSetting_depth_cue, 1.0F);
 
@@ -1101,15 +1411,15 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_shininess, 40.0F);
 
-  SettingSet_f(I,cSetting_sphere_quality, 1.0F);
+  SettingSet_i(I,cSetting_sphere_quality, 1);
 
   SettingSet_f(I,cSetting_fog, 1.0F);
 
-  SettingSet_f(I,cSetting_isomesh_auto_state, 0.0F); /* no longer necessary? */
+  SettingSet_b(I,cSetting_isomesh_auto_state, 0); /* no longer necessary? */
 
   SettingSet_f(I,cSetting_mesh_width, 1.0F);
 
-  SettingSet_f(I,cSetting_cartoon_sampling, 7.0F);
+  SettingSet_i(I,cSetting_cartoon_sampling, 7);
 
   SettingSet_f(I,cSetting_cartoon_loop_radius, 0.2F);
 
@@ -1123,9 +1433,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_rect_width, 0.4F);
 
-  SettingSet_f(I,cSetting_internal_gui_width, cOrthoRightSceneMargin);
+  SettingSet_i(I,cSetting_internal_gui_width, cOrthoRightSceneMargin);
 
-  SettingSet_f(I,cSetting_internal_gui, 1.0F);
+  SettingSet_b(I,cSetting_internal_gui, 1);
 
   SettingSet_f(I,cSetting_cartoon_oval_length, 1.35F);
 
@@ -1137,7 +1447,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_tube_quality, 9.0F);
 
-  SettingSet_f(I,cSetting_cartoon_debug, 0.0F);
+  SettingSet_i(I,cSetting_cartoon_debug, 0);
 
   SettingSet_f(I,cSetting_ribbon_width, 1.0F);
 
@@ -1149,13 +1459,13 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_line_radius, 0.15F);
 
-  SettingSet_f(I,cSetting_cartoon_round_helices, 1.0F);
+  SettingSet_b(I,cSetting_cartoon_round_helices, 1);
 
-  SettingSet_f(I,cSetting_cartoon_refine_normals, 1.0F);
+  SettingSet_b(I,cSetting_cartoon_refine_normals, 1);
   
-  SettingSet_f(I,cSetting_cartoon_flat_sheets, 1.0F);
+  SettingSet_b(I,cSetting_cartoon_flat_sheets, 1);
 
-  SettingSet_f(I,cSetting_cartoon_smooth_loops, 1.0F);
+  SettingSet_b(I,cSetting_cartoon_smooth_loops, 1);
 
   SettingSet_f(I,cSetting_cartoon_dumbbell_length, 1.60F);
 
@@ -1163,95 +1473,95 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_dumbbell_radius, 0.16F);
 
-  SettingSet_f(I,cSetting_cartoon_fancy_helices, 0.0F);  
+  SettingSet_b(I,cSetting_cartoon_fancy_helices, 0);  
 
-  SettingSet_f(I,cSetting_cartoon_fancy_sheets, 1.0F);  
+  SettingSet_b(I,cSetting_cartoon_fancy_sheets, 1);  
 
-  SettingSet_f(I,cSetting_ignore_pdb_segi, 0.0F);  
+  SettingSet_b(I,cSetting_ignore_pdb_segi, 0);  
 
   SettingSet_f(I,cSetting_ribbon_throw, 1.35F);  
 
   SettingSet_f(I,cSetting_cartoon_throw, 1.35F);  
 
-  SettingSet_f(I,cSetting_cartoon_refine, 5.0F);  
+  SettingSet_i(I,cSetting_cartoon_refine, 5);  
 
-  SettingSet_f(I,cSetting_cartoon_refine_tips, 10.0F);  
+  SettingSet_i(I,cSetting_cartoon_refine_tips, 10);  
 
-  SettingSet_f(I,cSetting_cartoon_discrete_colors, 0.0F);  
+  SettingSet_b(I,cSetting_cartoon_discrete_colors, 0);  
 
-  SettingSet_f(I,cSetting_normalize_ccp4_maps, 1.0F);  
+  SettingSet_b(I,cSetting_normalize_ccp4_maps, 1);  
 
   SettingSet_f(I,cSetting_surface_poor, 0.89F);  
 
-  SettingSet_f(I,cSetting_internal_feedback, 1.00F);  /* this has no effect - set by invocation.py */
+  SettingSet_b(I,cSetting_internal_feedback, 1);  /* this has no effect - set by invocation.py */
 
   SettingSet_f(I,cSetting_cgo_line_width, 1.00F);
 
   SettingSet_f(I,cSetting_cgo_line_radius, 0.15F);
 
-  SettingSet_f(I,cSetting_logging, 0.0F);
+  SettingSet_b(I,cSetting_logging, 0);
 
-  SettingSet_f(I,cSetting_robust_logs, 0.0F);
+  SettingSet_b(I,cSetting_robust_logs, 0);
 
-  SettingSet_f(I,cSetting_log_box_selections, 1.0F);
+  SettingSet_b(I,cSetting_log_box_selections, 1);
 
-  SettingSet_f(I,cSetting_log_conformations, 1.0F);
+  SettingSet_b(I,cSetting_log_conformations, 1);
 
   SettingSet_f(I,cSetting_valence_default, 0.05F);
 
   SettingSet_f(I,cSetting_surface_miserable, 0.8F);
 
-  SettingSet_f(I,cSetting_ray_opaque_background, 1.0F);
+  SettingSet_b(I,cSetting_ray_opaque_background, 1);
 
   SettingSet_f(I,cSetting_transparency, 0.0F);
 
-  SettingSet_f(I,cSetting_ray_texture, 0.0F);
+  SettingSet_b(I,cSetting_ray_texture, 0);
 
   SettingSet_3f(I,cSetting_ray_texture_settings, 0.1F, 5.0F, 1.0F);
 
-  SettingSet_f(I,cSetting_suspend_updates, 0.0F);
+  SettingSet_b(I,cSetting_suspend_updates, 0);
 
-  SettingSet_f(I,cSetting_full_screen, 0.0F);
+  SettingSet_b(I,cSetting_full_screen, 0);
 
-  SettingSet_f(I,cSetting_surface_mode, 0.0F); /* by flag is the default */
+  SettingSet_i(I,cSetting_surface_mode, 0); /* by flag is the default */
 
   SettingSet_color(I,cSetting_surface_color,"-1"); /* use atom colors by default */
 
-  SettingSet_f(I,cSetting_mesh_mode,0.0F); /* by flag is the default */
+  SettingSet_i(I,cSetting_mesh_mode,0); /* by flag is the default */
 
   SettingSet_color(I,cSetting_mesh_color,"-1"); /* use atom colors by default */
 
-  SettingSet_f(I,cSetting_auto_indicate_flags,0.0F); 
+  SettingSet_b(I,cSetting_auto_indicate_flags,0); 
 
-  SettingSet_f(I,cSetting_surface_debug,0.0F);
+  SettingSet_i(I,cSetting_surface_debug,0.0F);
 
   SettingSet_f(I,cSetting_ray_improve_shadows,0.1F);
 
-  SettingSet_f(I,cSetting_smooth_color_triangle,0.0F);
+  SettingSet_b(I,cSetting_smooth_color_triangle,0);
 
-  SettingSet_f(I,cSetting_ray_default_renderer,0.0F);
+  SettingSet_i(I,cSetting_ray_default_renderer,0);
 
   SettingSet_f(I,cSetting_field_of_view,20.0F);
 
   SettingSet_f(I,cSetting_reflect_power, 1.0F);
 
-  SettingSet_f(I,cSetting_preserve_chempy_ids, 0.0F);
+  SettingSet_b(I,cSetting_preserve_chempy_ids, 0);
 
   SettingSet_f(I,cSetting_sphere_scale, 1.0F);
 
-  SettingSet_f(I,cSetting_two_sided_lighting, 0.0F);
+  SettingSet_b(I,cSetting_two_sided_lighting, 0);
 
-  SettingSet_f(I,cSetting_secondary_structure, 2.0F);
+  SettingSet_f(I,cSetting_secondary_structure, 2.0F); /* unused? */
 
-  SettingSet_f(I,cSetting_auto_remove_hydrogens, 0.0F);
+  SettingSet_b(I,cSetting_auto_remove_hydrogens, 0);
 
-  SettingSet_f(I,cSetting_raise_exceptions, 1.0F);
+  SettingSet_b(I,cSetting_raise_exceptions, 1);
 
-  SettingSet_f(I,cSetting_stop_on_exceptions, 0.0F);  
+  SettingSet_b(I,cSetting_stop_on_exceptions, 0);  
 
-  SettingSet_f(I,cSetting_sculpting, 0.0F);  
+  SettingSet_b(I,cSetting_sculpting, 0);  
 
-  SettingSet_f(I,cSetting_auto_sculpt, 0.0F);  
+  SettingSet_b(I,cSetting_auto_sculpt, 0);  
 
   SettingSet_f(I,cSetting_sculpt_vdw_scale, 0.97F);  
 
@@ -1269,7 +1579,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_sculpt_plan_weight, 1.0F);  
 
-  SettingSet_f(I,cSetting_sculpting_cycles, 5.0F);  
+  SettingSet_i(I,cSetting_sculpting_cycles, 5);  
 
   SettingSet_f(I,cSetting_sphere_transparency, 0.0F);
 
@@ -1281,39 +1591,39 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_sculpt_hb_overlap_base, 0.35F);
 
-  SettingSet_f(I,cSetting_legacy_vdw_radii, 0.0F);  
+  SettingSet_b(I,cSetting_legacy_vdw_radii, 0);  
 
-  SettingSet_f(I,cSetting_sculpt_memory, 1.0F);
+  SettingSet_b(I,cSetting_sculpt_memory, 1);
   
-  SettingSet_f(I,cSetting_connect_mode, 0.0F);
+  SettingSet_i(I,cSetting_connect_mode, 0);
 
-  SettingSet_f(I,cSetting_cartoon_cylindrical_helices, 0.0F);
+  SettingSet_b(I,cSetting_cartoon_cylindrical_helices, 0);
 
   SettingSet_f(I,cSetting_cartoon_helix_radius, 2.25F);
 
   SettingSet_f(I,cSetting_connect_cutoff, 0.35F);
 
-  SettingSet_f(I,cSetting_save_pdb_ss, 0.0F);
+  SettingSet_b(I,cSetting_save_pdb_ss, 0);
 
   SettingSet_f(I,cSetting_sculpt_line_weight, 1.0F);
 
-  SettingSet_f(I,cSetting_fit_iterations, 1000.0F);
+  SettingSet_i(I,cSetting_fit_iterations, 1000);
 
   SettingSet_f(I,cSetting_fit_tolerance, 0.00001F);
 
   SettingSet_s(I,cSetting_batch_prefix,"tmp_pymol");
 
   if(StereoCapable) {
-    SettingSet_f(I,cSetting_stereo_mode, 1.0F); 
+    SettingSet_i(I,cSetting_stereo_mode, 1); 
   } else {
-    SettingSet_f(I,cSetting_stereo_mode, 2.0F);
+    SettingSet_i(I,cSetting_stereo_mode, 2);
   }
 
-  SettingSet_f(I,cSetting_cgo_sphere_quality, 1.0F);
+  SettingSet_i(I,cSetting_cgo_sphere_quality, 1);
 
-  SettingSet_f(I,cSetting_pdb_literal_names, 0.0);
+  SettingSet_b(I,cSetting_pdb_literal_names, 0);
 
-  SettingSet_f(I,cSetting_wrap_output, 0.0);
+  SettingSet_b(I,cSetting_wrap_output, 0);
 
   SettingSet_f(I,cSetting_fog_start, 0.30F);
 

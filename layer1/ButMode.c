@@ -230,7 +230,7 @@ void ButModeDraw(Block *block)
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
 
-    GrapDrawStr("Mouse:",x,y);
+    GrapDrawStr("Mouse:",x+1,y);
     glColor3fv(I->TextColor1);
     GrapDrawStr("  L    M    R",x+40,y);
 

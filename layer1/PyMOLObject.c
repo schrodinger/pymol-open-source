@@ -25,12 +25,48 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"Util.h"
 #include"Ray.h"
+#include"PConv.h"
 
 int ObjectGetNFrames(CObject *I);
 
 void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
 CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
 
+PyObject *ObjectGetPyList(CObject *I)
+{
+  PyObject *result = NULL;
+  result = PyList_New(10);
+  PyList_SetItem(result,0,PyInt_FromLong(I->type));
+  PyList_SetItem(result,1,PyString_FromString(I->Name));
+  PyList_SetItem(result,2,PyInt_FromLong(I->Color));
+  PyList_SetItem(result,3,PConvIntArrayToPyList(I->RepVis,cRepCnt));
+  PyList_SetItem(result,4,PConvFloatArrayToPyList(I->ExtentMin,3));
+  PyList_SetItem(result,5,PConvFloatArrayToPyList(I->ExtentMax,3));
+  PyList_SetItem(result,6,PyInt_FromLong(I->ExtentFlag));
+  PyList_SetItem(result,7,PyInt_FromLong(I->TTTFlag));
+  PyList_SetItem(result,8,Py_None); /* TO DO setting */
+  PyList_SetItem(result,9,PyInt_FromLong(I->Enabled));
+
+  return(PConvAutoNone(result));
+}
+
+int ObjectSetPyList(PyObject *list,CObject *I)
+{
+  int ok=true;
+  if(ok) ok = PyList_Check(list);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->type);
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->Name,ObjNameMax);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->Color);
+  if(ok) ok = PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(list,3),I->RepVis,cRepCnt);
+  if(ok) ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,4),I->ExtentMin,3);
+  if(ok) ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,5),I->ExtentMax,3);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,6),&I->ExtentFlag);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->TTTFlag);
+  /* TODO setting */
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->Enabled);
+  
+  return(ok);
+}
 /*========================================================================*/
 void ObjectCombineTTT(CObject *I,float *ttt)
 {
@@ -181,6 +217,8 @@ void ObjectInit(CObject *I)
   I->Setting=NULL;
   I->TTTFlag=false;
   I->Enabled=false;
+  zero3f(I->ExtentMin);
+  zero3f(I->ExtentMax);
   OrthoRemoveSplash();
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
   I->RepVis[cRepCell]=false;

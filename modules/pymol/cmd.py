@@ -761,7 +761,8 @@ from importing import \
      read_mmodstr,       \
      read_molstr,        \
      read_pdbstr,        \
-     loadable    
+     loadable,           \
+     set_session
 
 #--------------------------------------------------------------------
 import creating
@@ -839,6 +840,7 @@ from exporting import \
      png,                \
      export_coords,      \
      multisave,          \
+     get_session,        \
      save               
 
 #--------------------------------------------------------------------

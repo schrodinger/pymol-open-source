@@ -108,7 +108,7 @@ void MainRunCommand(char *str1)
     if(strncmp(str1,"cmd._",5)) {
       OrthoAddOutput("PyMOL>");
       OrthoAddOutput(str1);
-      OrthoNewLine(NULL);
+      OrthoNewLine(NULL,true);
       if(WordMatch(str1,"quit",true)==0) /* don't log quit */
         PLog(str1,cPLog_pml);
     }

@@ -23,6 +23,18 @@ from cmd import _cmd,lock,unlock,Shortcut,QuietException
 from chempy import io
 from cmd import _feedback,fb_module,fb_mask
 
+def get_session():
+   '''
+NOT YET IMPLEMENTED
+'''
+   r = None
+   try:
+      lock()   
+      r = _cmd.get_session(1)
+   finally:
+      unlock()
+   return r
+
 def png(filename):
    '''
 DESCRIPTION

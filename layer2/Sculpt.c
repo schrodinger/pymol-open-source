@@ -106,7 +106,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 
         cs = obj->CSet[state];
 
-        use_cache = (int) SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_memory);
+        use_cache = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sculpt_memory);
         if(obj->NBond) {
 
           planer=Alloc(int,obj->NAtom);

@@ -529,12 +529,35 @@ static PyObject *CmdSmooth(PyObject *self,PyObject *args)
 
 static PyObject *CmdGetSession(PyObject *self, PyObject *args)
 {
-  return(APIFailure());
+  int ok=true;
+  PyObject *result = NULL;
+  int int1;
+
+  ok = PyArg_ParseTuple(args,"i",&int1);
+  if(ok) {
+    APIEntry();
+    PBlock();
+    result = ExecutiveGetSession();
+    PUnblock();
+    APIExit();
+  }
+  return(APIAutoNone(result));
 }
 
 static PyObject *CmdSetSession(PyObject *self, PyObject *args)
 {
-  return(APIFailure());
+  int ok=true;
+  PyObject *obj;
+
+  ok = PyArg_ParseTuple(args,"O",&obj);
+  if(ok) {
+    APIEntry();
+    PBlock();
+    ok = ExecutiveSetSession(obj);
+    PUnblock();
+    APIExit();
+  }
+  return(APIStatus(ok));
 }
 
 static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
@@ -662,7 +685,7 @@ static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
   int ok = false;
   ok = PyArg_ParseTuple(args,"sO",&name,&m);
   if(ok) {
-    if(PConvPyListToFloatArrayInPlace(m,ttt,16)) {
+    if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
       APIEntry();
       ok = ExecutiveCombineObjectTTT(name,ttt);
       APIExit();
@@ -816,7 +839,7 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
   int ok = false;
   ok = PyArg_ParseTuple(args,"siOis",&name,&state,&m,&log,&sele);
   if(ok) {
-    if(PConvPyListToFloatArrayInPlace(m,ttt,16)) {
+    if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
       APIEntry();
       ok = ExecutiveTransformObjectSelection(name,state,sele,log,ttt);
       APIExit();
@@ -2434,7 +2457,7 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
       if(strncmp(str1,"cmd._",5)) {
         OrthoAddOutput("PyMOL>");
         OrthoAddOutput(str1);
-        OrthoNewLine(NULL);
+        OrthoNewLine(NULL,true);
         if(WordMatch(str1,"quit",true)==0) /* don't log quit */
           PLog(str1,cPLog_pml);
       }

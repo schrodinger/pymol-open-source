@@ -302,7 +302,7 @@ Rep *RepSphereNew(CoordSet *cs)
   }
 
   RepInit(&I->R);
-  ds = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
+  ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
   if(ds<0) ds=0;
   switch(ds) {
   case 0: sp=Sphere0; break;
@@ -311,7 +311,7 @@ Rep *RepSphereNew(CoordSet *cs)
   default: sp=Sphere3; break;
   }
 
-  one_color=(int)SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
+  one_color=SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
 
   spheroid_scale=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_spheroid_scale);
   if(spheroid_scale&&cs->Spheroid) 

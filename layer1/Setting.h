@@ -34,6 +34,7 @@ typedef struct {
   SettingRec *info;
 } CSetting;
 
+#define cSetting_blank       0
 #define cSetting_boolean     1
 #define cSetting_int         2
 #define cSetting_float       3
@@ -75,7 +76,7 @@ int   SettingGetGlobal_i(int index); /* always succeed */
 float SettingGetGlobal_f(int index); /* always succeed */
 char *SettingGetGlobal_s(int index); /* always succeeds */
 void  SettingGetGlobal_3f(int index,float *value); /* always succeeds */
-float *SettingGetGlobal_fv(int index); /* always succeed */
+float *SettingGetGlobal_3fv(int index); /* always succeed */
 int SettingSet_color(CSetting *I,int index, char *value);
 
 int   SettingGet_b  (CSetting *set1,CSetting *set2,int index);
@@ -83,7 +84,7 @@ int   SettingGet_i  (CSetting *set1,CSetting *set2,int index);
 float SettingGet_f  (CSetting *set1,CSetting *set2,int index);
 char  *SettingGet_s  (CSetting *set1,CSetting *set2,int index);
 void  SettingGet_3f (CSetting *set1,CSetting *set2,int index,float *value);
-float *SettingGet_fv (CSetting *set1,CSetting *set2,int index);
+float *SettingGet_3fv (CSetting *set1,CSetting *set2,int index);
 int   SettingGet_color(CSetting *set1,CSetting *set2,int index);
 
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
@@ -101,6 +102,14 @@ float *SettingGetfv(int index);
 int SettingSetNamed(char *name,char *value);
 float SettingGetNamed(char *name);
 int SettingGetName(int index,SettingName name);
+
+PyObject *SettingGetPyList(CSetting *I);
+int SettingSetPyList(CSetting *I,PyObject *list);
+int SettingSetGlobalsFromPyList(PyObject *list);
+PyObject *SettingGetGlobalsPyList(void);
+
+/* WARNING: do not delete or change indices
+   since they are used in session objects */
 
 #define cSetting_bonding_vdw_cutoff            0
 #define cSetting_min_mesh_spacing              1
@@ -295,6 +304,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_pdb_literal_names           190
 #define cSetting_wrap_output                 191
 #define cSetting_fog_start                   192
+
+/* cSetting_INIT must always be last setting_index +1 */
+
 #define cSetting_INIT                        193
 
 #endif

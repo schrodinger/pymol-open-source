@@ -107,8 +107,8 @@ typedef struct AtomInfoType {
   float b,q,vdw,partialCharge;
   int formalCharge;
   signed char hetatm;
-  short int model; 
-  int atom;
+  short int model; /* obsolete?? */
+  int atom;       /* obsolete?? */
   int selEntry;
   short int visRep[cRepCnt];
   int color;
@@ -136,7 +136,8 @@ void AtomInfoFreeSortedIndexes(int *index,int *outdex);
 void AtomInfoPrimeColors(void);
 int AtomInfoGetColor(AtomInfoType *at1);
 int AtomInfoGetExpectedValence(AtomInfoType *I);
-
+PyObject *AtomInfoGetPyList(AtomInfoType *at);
+int AtomInfoSetPyList(AtomInfoType *at,PyObject *list);
 int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);

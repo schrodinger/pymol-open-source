@@ -64,6 +64,9 @@ static int ControlDrag(Block *block,int x,int y,int mod)
   if(I->DragFlag) {
     if(delta) {
       gui_width = SettingGet(cSetting_internal_gui_width)-delta;
+      if(gui_width<3)
+        gui_width = 3;
+      delta = SettingGet(cSetting_internal_gui_width)-gui_width;
       width = OrthoGetWidth()+delta;
     I->LastPos = x;
     SettingSet(cSetting_internal_gui_width,(float)gui_width);
@@ -111,9 +114,9 @@ void ControlInit(void)
   I->Block->fRelease = ControlRelease;
   I->Block->fReshape = ControlReshape;
   I->Block->active = true;
-  I->Block->TextColor[0]=0.9;
-  I->Block->TextColor[1]=0.9;
-  I->Block->TextColor[2]=0.9;
+  I->Block->TextColor[0]=1.0;
+  I->Block->TextColor[1]=0.5;
+  I->Block->TextColor[2]=0.5;
   I->ButtonColor[0]=0.5;
   I->ButtonColor[1]=0.5;
   I->ButtonColor[2]=0.5;
@@ -166,7 +169,7 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
   I->LastPos =x;
   x -= I->Block->rect.left+cControlLeftMargin;
   y -= I->Block->rect.top-cControlTopMargin;
-  if(x<0) {
+  if(x<2) {
     OrthoGrab(block);
     I->DragFlag=true;
   }
@@ -376,6 +379,7 @@ void ControlDraw(Block *block)
     x+=cControlBoxSize+cControlSpacing+gap(c++);
 
     if(MoviePlaying()) {
+      glColor3fv(I->ActiveColor);
       glBegin(GL_TRIANGLE_STRIP);
       glVertex2i(x,y+1);
       glVertex2i(x,y-(cControlBoxSize-1));

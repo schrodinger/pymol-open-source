@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"Vector.h"
 #include"CGO.h"
+#include"os_python.h"
 
 typedef struct { 
   float Dim[3];
@@ -36,6 +37,9 @@ CCrystal *CrystalCopy(CCrystal *I);
 void CrystalUpdate(CCrystal *I);
 void CrystalDump(CCrystal *I);
 CGO *CrystalGetUnitCellCGO(CCrystal *I);
+CCrystal *CrystalNewFromPyList(PyObject *list);
+int CrystalSetPyList(CCrystal *I,PyObject *list);
+PyObject *CrystalGetPyList(CCrystal *I);
 
 #endif
 

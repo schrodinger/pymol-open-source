@@ -715,7 +715,7 @@ void CGOSimpleSphere(CGO *I,float *v,float vdw)
   int b,c;
   int ds;
 
-  ds = (int)SettingGet_f(NULL,NULL,cSetting_cgo_sphere_quality);
+  ds = SettingGet_i(NULL,NULL,cSetting_cgo_sphere_quality);
   if(ds<0) ds=0;
   switch(ds) {
   case 0: sp=Sphere0; break;

@@ -53,8 +53,6 @@ typedef struct ObjectMolecule {
   int *DiscreteAtmToIdx;
   struct CoordSet **DiscreteCSet;
   int CurCSet;
-  char Color[3];
-  float FractionExposed;
   int SeleBase; /* for internal usage by  selector & only valid during selection process */
   CSymmetry *Symmetry;
   int *Neighbor;
@@ -134,6 +132,8 @@ typedef struct ObjectMoleculeOpRec {
 
 #include"CoordSet.h"
 
+int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result);
+PyObject *ObjectMoleculeGetPyList(ObjectMolecule *I);
 int ObjectMoleculeGetSerial(ObjectMolecule *I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state);

@@ -33,7 +33,7 @@ typedef struct CoordSet {
   void (*fInvalidateRep)(struct CoordSet *I,int type,int level);
   ObjectMolecule *Obj;
   float *Coord;
-  int *Color;
+  int *Color; 
   int *IdxToAtm;
   int *AtmToIdx;
   int NIndex,NAtIndex;
@@ -54,11 +54,15 @@ typedef struct CoordSet {
   /* for periodic MD boxes -- may be merge into symmetry lattice later... */
   CCrystal *PeriodicBox;
   int PeriodicBoxType;
+  int tmp_index; /* for saving */
 } CoordSet;
 
 #define cCSet_NoPeriodicity 0
 #define cCSet_Orthogonal 1
 #define cCSet_Octahedral 2
+
+PyObject *CoordSetGetPyList(CoordSet *I);
+int CoordSetSetPyList(PyObject *list,CoordSet **cs);
 
 CoordSet *CoordSetNew(void);
 void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt);

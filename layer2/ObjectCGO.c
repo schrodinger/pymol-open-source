@@ -168,6 +168,7 @@ CGO *ObjectCGOPyListFloatToCGO(PyObject *list)
   float *raw=NULL;
   if(PyList_Check(list)) {
     len = PConvPyListToFloatArray(list,&raw);
+    if(len<0) len = 0;
     if(raw) {
       if(ok) {
         cgo=CGONewSized(len);

@@ -438,12 +438,12 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   AtomInfoType *ai2;
 
   obj=cs->Obj;
-  surface_mode = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+  surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
   surface_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_surface_color);
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
-  I->proximity = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
+  I->proximity = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
 
   cutoff = MAX_VDW+probe_radius;
 
@@ -564,7 +564,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   obj = cs->Obj;
 
-  surface_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+  surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
 
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
@@ -588,7 +588,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   RepInit(&I->R);
 
-  surface_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
+  surface_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
   if(surface_quality>=2) { /* nearly perfect */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best);
     sp=Sphere3;
@@ -928,7 +928,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,Sphe
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
 
-  cavity_cull = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
+  cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 
   I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot);
   ErrChkPtr(I->Dot);

@@ -82,7 +82,7 @@ PyMOL>load dat/3al1.pdb
  Crystal:   20.54400   -9.81199   -3.18885
  Crystal:    0.00000   18.40714   -7.41448
  Crystal:    0.00000    0.00000   24.77337
- Crystal: Unit Cell Volume 9368.204
+ Crystal: Unit Cell Volume 9368.203
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000

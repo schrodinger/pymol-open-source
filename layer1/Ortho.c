@@ -260,7 +260,7 @@ void OrthoClear(void)
   OrthoObject *I=&Ortho;
   for(a=0;a<=OrthoSaveLines;a++)
     I->Line[a][0]=0;
-  OrthoNewLine(NULL);
+  OrthoNewLine(NULL,true);
   OrthoRestorePrompt();
   OrthoDirty();
 }
@@ -441,7 +441,7 @@ void OrthoRestorePrompt(void)
 	 if(I->Saved[0]) 
 		{
 		  if(I->CurChar) {
-			 OrthoNewLine(NULL);
+			 OrthoNewLine(NULL,true);
 		  }
 		  curLine = I->CurLine&OrthoSaveLines;
 		  strcpy(I->Line[curLine],I->Saved);
@@ -452,7 +452,7 @@ void OrthoRestorePrompt(void)
 	 else 
 		{
 		  if(I->CurChar) 
-			 OrthoNewLine(I->Prompt);
+			 OrthoNewLine(I->Prompt,true);
 		  else
 			 {
 				curLine = I->CurLine&OrthoSaveLines;
@@ -513,7 +513,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 	 if(I->Saved[0]) 
 		{
 		  if(I->CurChar) {
-			 OrthoNewLine(NULL);
+			 OrthoNewLine(NULL,true);
 		  }
 		  curLine = I->CurLine&OrthoSaveLines;
 		  strcpy(I->Line[curLine],I->Saved);
@@ -524,7 +524,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 	 else 
 		{
 		  if(I->CurChar) 
-			 OrthoNewLine(I->Prompt);
+			 OrthoNewLine(I->Prompt,true);
 		  else
 			 {
 				curLine = I->CurLine&OrthoSaveLines;
@@ -707,7 +707,7 @@ void OrthoParseCurrentLine(void)
       I->HistoryView=I->HistoryLine;
       if(WordMatch(buffer,"quit",true)==0) /* don't log quit */
         PLog(buffer,cPLog_pml);
-      OrthoNewLine(NULL);
+      OrthoNewLine(NULL,true);
       ExecutiveDrawNow();
       PParse(buffer);
       OrthoRestorePrompt();
@@ -749,11 +749,19 @@ void OrthoAddOutput(char *str)
               {
                 *q=0;
                 I->CurChar = cc;
-                OrthoNewLine(NULL);
+                OrthoNewLine(NULL,true);
                 cc=0;
                 q=I->Line[I->CurLine&OrthoSaveLines];
                 curLine = I->CurLine&OrthoSaveLines;
               }
+          } 
+          if(cc>=OrthoLineLength-6) { /* fail safe */
+            *q=0;
+            I->CurChar = cc;
+            OrthoNewLine(NULL,false);
+            cc=0;
+            q=I->Line[I->CurLine&OrthoSaveLines];
+            curLine = I->CurLine&OrthoSaveLines;
           }
 			 *q++=*p++;
 		  }
@@ -761,7 +769,7 @@ void OrthoAddOutput(char *str)
 		  {
 			 *q=0;
 			 I->CurChar = cc;
-			 OrthoNewLine(NULL);
+			 OrthoNewLine(NULL,true);
 			 q=I->Line[I->CurLine&OrthoSaveLines];
 			 curLine = I->CurLine&OrthoSaveLines;
 			 p++;
@@ -776,7 +784,7 @@ void OrthoAddOutput(char *str)
     OrthoDirty();
 }
 /*========================================================================*/
-void OrthoNewLine(char *prompt)
+void OrthoNewLine(char *prompt,int crlf)
 {
   int curLine;
   OrthoObject *I=&Ortho;
@@ -790,7 +798,11 @@ void OrthoNewLine(char *prompt)
   else
     OrthoFeedbackIn(" ");
   if(Feedback(FB_Ortho,FB_Details)) {
-    printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
+    if(crlf) {
+      printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
+    } else {
+      printf("%s",I->Line[I->CurLine&OrthoSaveLines]);
+    }
     fflush(stdout);
   }
       /*	 }*/
@@ -872,7 +884,7 @@ void OrthoDoDraw()
   
   float *bg_color;
 
-  bg_color=SettingGet_fv(NULL,NULL,cSetting_bg_rgb);
+  bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
 
   I->OverlayColor[0]=1.0-bg_color[0];
   I->OverlayColor[1]=1.0-bg_color[1];
@@ -1286,7 +1298,7 @@ int OrthoDrag(int x, int y,int mod)
 /*========================================================================*/
 void OrthoSplash(void) 
 {
-  OrthoNewLine(NULL);
+  OrthoNewLine(NULL,true);
   PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF;
   PRINTF _PyMOL_VERSION ENDF;
   PRINTF ".\n" ENDF;

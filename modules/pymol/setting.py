@@ -227,9 +227,12 @@ boolean_dict = {
    "off"  : 0,
    "1"    : 1,
    "0"    : 0,
+   "1.0"  : 1,
+   "0.0"  : 0,
    }
-   
-boolean_sc = Shortcut(name_list)
+
+boolean_sc = Shortcut(boolean_dict.keys())
+
   
 def _get_index(name):
    # this may be called from C, so don't raise any exceptions...

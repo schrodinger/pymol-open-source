@@ -132,6 +132,12 @@ int ExecutiveMapNew(char *name,int type,float *grid,char *sele,
 int ***ExecutiveGetBondPrint(char *name,int max_bond,int max_type,int *dim);
 int ExecutiveSetCrystal(char *sele,float a,float b,float c,
                          float alpha,float beta,float gamma,char *sgroup);
+PyObject *ExecutiveGetSession(void);
+int ExecutiveSetSession(PyObject *session);
+
+
+
+
 #endif
 
 

@@ -276,6 +276,142 @@ static int BondCompare(BondType *a,BondType *b);
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 
+
+PyObject *SelectorGetPyList(int sele1)
+{
+  SelectorType *I=&Selector;
+  int a,b;
+  int at;
+  int s;
+  int **vla_list = NULL;
+  int n_obj = 0;
+  int n_idx = 0;
+  int cur = -1;
+  ObjectMolecule **obj_list = NULL;
+  ObjectMolecule *obj,*cur_obj = NULL;
+  PyObject *result = NULL;
+  PyObject *obj_pyobj;
+  PyObject *idx_pyobj;
+
+  vla_list = VLAMalloc(10,sizeof(int*),5,true);
+  obj_list = VLAlloc(ObjectMolecule*,10);
+
+  SelectorUpdateTable();
+  n_idx = 0;
+  for(a=0;a<I->NAtom;a++) {
+    at=I->Table[a].atom;
+    obj=I->Obj[I->Table[a].model];
+    s=obj->AtomInfo[at].selEntry;
+    if(SelectorIsMember(s,sele1))
+      {
+        if(cur_obj!=obj) {
+          if(n_idx) {
+            VLASize(vla_list[cur],int,n_idx);
+          }
+          cur++;
+          VLACheck(vla_list,int*,n_obj);
+          vla_list[cur] = VLAlloc(int,1000);
+          VLACheck(obj_list,ObjectMolecule*,n_obj);
+          obj_list[cur] = obj;
+          cur_obj = obj;
+          n_obj++;
+          n_idx=0;
+        }
+        VLACheck(vla_list[cur],int,n_idx);
+        vla_list[cur][n_idx]=at;
+        n_idx++;
+      }
+  }
+  if(cur_obj) {
+    if(n_idx) {
+      VLASize(vla_list[cur],int,n_idx);
+    }
+  }
+  if(n_obj) {
+    result = PyList_New(n_obj);
+    for(a=0;a<n_obj;a++) {
+      obj_pyobj= PyList_New(2);
+      n_idx = VLAGetSize(vla_list[a]);
+      idx_pyobj = PyList_New(n_idx);
+      for(b=0;b<n_idx;b++) {
+        PyList_SetItem(idx_pyobj,b,PyInt_FromLong(vla_list[a][b]));
+      }
+      VLAFreeP(vla_list[a]);
+      PyList_SetItem(obj_pyobj,0,PyString_FromString(obj_list[a]->Obj.Name));
+      PyList_SetItem(obj_pyobj,1,idx_pyobj);
+      PyList_SetItem(result,a,obj_pyobj);
+    }
+  } else {
+    result = PyList_New(0);
+  }
+  VLAFreeP(vla_list);
+  VLAFreeP(obj_list);
+
+  return(result);
+}
+
+
+int SelectorSetPyList(char *name,PyObject *list)
+{
+  int ok=true;
+  SelectorType *I=&Selector;
+  int n,a,b,m,sele;
+  PyObject *obj_list;
+  PyObject *idx_list;
+  int n_obj,n_idx,idx;
+  char *oname;
+  ObjectMolecule *obj;
+
+  AtomInfoType *ai;
+  if(ok) ok=PyList_Check(list);
+  if(ok) n_obj = PyList_Size(list);
+    
+  n=WordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
+  if(n>=0) /* get rid of existing selection*/ {
+    SelectorDelete(I->Name[n]);
+  }
+
+  n=I->NActive;
+  VLACheck(I->Name,WordType,n+1);
+  VLACheck(I->ID,int,n+1);
+  strcpy(I->Name[n],name);
+  I->Name[n+1][0]=0;
+  sele = I->NSelection++;
+  I->ID[n] = sele;
+  I->NActive++;
+  if(ok) 
+    for(a=0;a<n_obj;a++) {
+      if(ok) obj_list = PyList_GetItem(list,a);
+      if(ok) ok = PyList_Check(obj_list);
+      if(ok) ok = PConvPyStrToStrPtr(PyList_GetItem(obj_list,0),&oname);
+      obj=NULL;
+      if(ok) obj = ExecutiveFindObjectMoleculeByName(oname);
+      if(ok&&obj) {
+        if(ok) idx_list = PyList_GetItem(obj_list,1);
+        if(ok) ok = PyList_Check(idx_list);
+        if(ok) n_idx = PyList_Size(idx_list);
+        for(b=0;b<n_idx;b++) {
+          if(ok) ok = PConvPyIntToInt(PyList_GetItem(idx_list,b),&idx);
+          if(ok&&(idx<obj->NAtom)) {
+            ai=obj->AtomInfo+idx;
+            if(I->FreeMember>=0) {
+              m=I->FreeMember;
+              I->FreeMember=I->Member[m].next;
+            } else {
+              I->NMember++;
+              m=I->NMember;
+              VLACheck(I->Member,MemberType,m);
+            }
+            I->Member[m].selection=sele;
+            I->Member[m].next = ai->selEntry;
+            ai->selEntry = m;
+          }
+        }
+      }
+    }
+  return(ok);
+}
+
 /*========================================================================*/
 
 int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
@@ -536,7 +672,6 @@ int *SelectorGetResidueVLA(int sele)
   if(I->NAtom) {
     for(a=0;a<I->NAtom;a++)
       {
-        fflush(stdout);
         obj=I->Obj[I->Table[a].model];
         at2=I->Table[a].atom;
         if(!ai1) {
@@ -2622,7 +2757,6 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
   sele = I->NSelection++;
   I->ID[n] = sele;
   I->NActive++;
-  fflush(stdout);
   for(a=0;a<I->NAtom;a++)
     {
       flag=false;

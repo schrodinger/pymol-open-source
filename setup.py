@@ -78,6 +78,7 @@ setup ( # Distribution meta-data
    "layer2/ObjectMap.c",
    "layer2/ObjectMesh.c",
    "layer2/ObjectMolecule.c",
+   "layer2/ObjectMolecule2.c",
    "layer2/ObjectSurface.c",
    "layer2/RepCartoon.c",
    "layer2/RepCylBond.c",

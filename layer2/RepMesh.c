@@ -536,9 +536,9 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   AtomInfoType *ai1,*ai2;
   obj = cs->Obj;
 
-  cavity_cull = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
+  cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 
-  mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  mesh_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
 

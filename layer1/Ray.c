@@ -518,7 +518,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
           SettingGet(cSetting_spec_power)/4.0);
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
-  light = SettingGet_fv(NULL,NULL,cSetting_light);
+  light = SettingGet_3fv(NULL,NULL,cSetting_light);
   sprintf(buffer,"light_source{<%6.4f,%6.4f,%6.4f>  rgb<1.0,1.0,1.0>}\n",
           -light[0]*10000.0F,
           -light[1]*10000.0F,

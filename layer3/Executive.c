@@ -105,9 +105,231 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
 #define ExecColorVisible 0.45,0.45,0.45
 #define ExecColorHidden 0.3,0.3,0.3
 
+static int ExecutiveCountNames(void)
+{
+  int count=0;
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec,rec,next))
+	 count++;
+  
+  return(count);
+}
+
+static PyObject *ExecutiveGetExecObject(SpecRec *rec)
+{
+  PyObject *result = NULL;
+  result = PyList_New(6);
+  PyList_SetItem(result,0,PyString_FromString(rec->obj->Name));
+  PyList_SetItem(result,1,PyInt_FromLong(cExecObject));
+  PyList_SetItem(result,2,PyInt_FromLong(rec->visible));
+  PyList_SetItem(result,3,PConvIntArrayToPyList(rec->repOn,cRepCnt));
+  PyList_SetItem(result,4,PyInt_FromLong(rec->obj->type));
+  switch(rec->obj->type) {
+  case cObjectMolecule:
+    PyList_SetItem(result,5,ObjectMoleculeGetPyList((ObjectMolecule*)rec->obj));
+    break;
+  default: 
+    PyList_SetItem(result,5,PConvAutoNone(NULL));
+    break;
+  }
+  return(result);  
+}
+
+static int ExecutiveSetNamedEntries(PyObject *names)
+{
+  CExecutive *I = &Executive;  
+  int ok=true;
+  int a=0,l;
+  PyObject *cur;
+  SpecRec *rec = NULL;
+  int extra_int;
+
+  if(ok) ok = (names!=NULL);
+  if(ok) ok = PyList_Check(names);
+  if(ok) l = PyList_Size(names);
+  while(ok&&(a<l)) {
+    cur = PyList_GetItem(names,a);
+    if(cur!=Py_None) { /* skip over None w/o aborting */
+      rec=NULL;
+      ListElemAlloc(rec,SpecRec); 
+      rec->next=NULL;
+
+      if(ok) ok = PyList_Check(cur);
+      if(ok) ok = PConvPyStrToStr(PyList_GetItem(cur,0),rec->name,sizeof(WordType));
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,1),&rec->type);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,2),&rec->visible);
+      if(ok) ok = PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(cur,3),
+                                                      rec->repOn,cRepCnt);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,4),&extra_int); 
+      printf("reading %s %d\n",rec->name,ok);
+      switch(rec->type) {
+      case cExecObject:
+        switch(extra_int) {
+        case cObjectMolecule:
+          if(ok) ok = ObjectMoleculeNewFromPyList(PyList_GetItem(cur,5),(ObjectMolecule**)&rec->obj);
+          printf("obj mol ok %d\n",ok);
+          break;
+        }
+        break;
+      case cExecSelection: /* on the first past, just create an entry in the rec list */
+        rec->sele_color=extra_int;
+        break;
+      }
+      if(ok) {
+        switch(rec->type) {
+        case cExecObject:        
+          if(rec->visible) {
+            SceneObjectAdd(rec->obj);
+          }
+          ExecutiveUpdateObjectSelection(rec->obj);
+          break;
+        }
+        ListAppend(I->Spec,rec,next,SpecList);
+      } else {
+        ListElemFree(rec);
+      }
+    }
+    a++;
+  }
+  return(ok);
+}
+
+static int ExecutiveSetSelections(PyObject *names)
+{
+  /* must already have objects loaded at this point... */
+
+  int ok=true;
+  int a=0,l;
+  PyObject *cur;
+  SpecRec *rec = NULL;
+  int extra;
+  if(ok) ok = (names!=NULL);
+  if(ok) ok = PyList_Check(names);
+  if(ok) l = PyList_Size(names);
+  while(ok&&(a<l)) {
+    cur = PyList_GetItem(names,a);
+    if(cur!=Py_None) { /* skip over None w/o aborting */
+      rec=NULL;
+      ListElemAlloc(rec,SpecRec); 
+      rec->next=NULL;
+
+      if(ok) ok = PyList_Check(cur);
+      if(ok) ok = PConvPyStrToStr(PyList_GetItem(cur,0),rec->name,sizeof(WordType));
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,1),&rec->type);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,2),&rec->visible);
+      if(ok) ok = PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(cur,3),
+                                                      rec->repOn,cRepCnt);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,4),&extra);
+      switch(rec->type) {
+      case cExecSelection:
+        ok = SelectorSetPyList(rec->name,PyList_GetItem(cur,5));
+        break;
+      }
+      ListElemFree(rec);
+    }
+    a++;
+  }
+  return(ok);
+}
+
+static PyObject *ExecutiveGetExecSelePyList(SpecRec *rec)
+{
+  PyObject *result = NULL;
+  int sele;
+
+  sele = SelectorIndexByName(rec->name);
+  if(sele>=0) {
+    result = PyList_New(6);
+    PyList_SetItem(result,0,PyString_FromString(rec->name));
+    PyList_SetItem(result,1,PyInt_FromLong(cExecSelection));
+    PyList_SetItem(result,2,PyInt_FromLong(rec->visible));
+    PyList_SetItem(result,3,PConvIntArrayToPyList(rec->repOn,cRepCnt));
+    PyList_SetItem(result,4,PyInt_FromLong(-1));
+    PyList_SetItem(result,5,SelectorGetPyList(sele));
+  }
+  return(PConvAutoNone(result));
+}
+
+static PyObject *ExecutiveGetNamedEntries(void)
+{
+  CExecutive *I = &Executive;  
+  PyObject *result = NULL;
+  int count;
+  SpecRec *rec = NULL;
+
+  count = ExecutiveCountNames();
+  result = PyList_New(count);
+
+  count=0;
+  while(ListIterate(I->Spec,rec,next))
+	 {
+      switch(rec->type) {
+      case cExecObject:
+        PyList_SetItem(result,count,
+                       ExecutiveGetExecObject(rec));
+        break;
+      case cExecSelection:
+        PyList_SetItem(result,count,
+                       ExecutiveGetExecSelePyList(rec));
+        break;
+      default:
+        PyList_SetItem(result,count,PConvAutoNone(NULL));
+        break;
+      }
+      count++;
+    }
+  return(PConvAutoNone(result));
+}
+
+PyObject *ExecutiveGetSession(void)
+{
+  PyObject *result = NULL;
+
+  SceneViewType sv;
+
+  result = PyDict_New();
+  PyDict_SetItemString(result,"names",ExecutiveGetNamedEntries());
+  PyDict_SetItemString(result,"settings",SettingGetGlobalsPyList());
+  SceneGetView(sv);
+  PyDict_SetItemString(result,"view",PConvFloatArrayToPyList(sv,cSceneViewSize));
+  return(result);
+}
+
+
+int ExecutiveSetSession(PyObject *session)
+{
+  int ok=true;
+  PyObject *tmp;
+  SceneViewType sv;
+
+  ExecutiveDelete("all");
+  if(ok) ok = PyDict_Check(session);
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"names");
+    if(tmp) {
+      if(ok) ok=ExecutiveSetNamedEntries(tmp);
+      if(ok) ok=ExecutiveSetSelections(tmp);
+        
+    }
+  }
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"settings");
+    if(tmp) 
+      ok = SettingSetGlobalsFromPyList(tmp);
+  }
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"view");
+    if(tmp) 
+      ok = PConvPyListToFloatArrayInPlace(tmp,sv,cSceneViewSize);
+    if(ok) SceneSetView(sv);
+        
+  }
+  return(ok);
+}
+
 #define ExecScrollBarMargin 2
 #define ExecScrollBarWidth 13
-
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 CObject **ExecutiveSeleToObjectVLA(char *s1);
@@ -187,7 +409,7 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
           symmetry->Crystal->Angle[1]=beta;
           symmetry->Crystal->Angle[2]=gamma;
           UtilNCopy(symmetry->SpaceGroup,sgroup,sizeof(WordType));
-          SymmetryAttemptGeneration(symmetry);
+          SymmetryAttemptGeneration(symmetry,false,false);
         }
         objMol = (ObjectMolecule*)obj;
         if(symmetry) {
@@ -386,12 +608,14 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
         if(ends) {
           op.cs1 = first;
           op.cs2 = last;
+          op.vv1 = coord1;
+          op.ii1 = flag1;
         } else {
           op.cs1 = first+backward;
           op.cs2 = last-forward;
+          op.vv1 = coord1+(backward*3*n_atom);
+          op.ii1 = flag1+(backward*n_atom);
         }
-        op.vv1 = coord1+(backward*3*n_atom);
-        op.ii1 = flag1+(backward*n_atom);
         op.nvv1 = 0;
         
         ExecutiveObjMolSeleOp(sele,&op);      
@@ -3686,6 +3910,8 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
     ExecutiveDelete(all);
   }
 }
+
+
 /*========================================================================*/
 CObject *ExecutiveFindObjectByName(char *name)
 {
@@ -4393,6 +4619,9 @@ void ExecutiveDraw(Block *block)
             x2=xx;
             y2=y-ExecToggleMargin;
 
+            if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
+              x2 = x+10;
+            }
             glColor3fv(toggleColor);
             for(a=0;a<ExecOpCnt;a++)
               {
@@ -4498,10 +4727,14 @@ void ExecutiveDraw(Block *block)
                   glColor3f(ExecColorVisible);
                 else
                   glColor3f(ExecColorHidden);
+                x2 = xx;
+                if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
+                  x2 = x+10;
+                }
                 glBegin(GL_POLYGON);
                 glVertex2i(x-ExecToggleMargin,y2);
-                glVertex2i(xx-ExecToggleMargin,y2);
-                glVertex2i(xx-ExecToggleMargin,y2+ExecToggleSize);
+                glVertex2i(x2-ExecToggleMargin,y2);
+                glVertex2i(x2-ExecToggleMargin,y2+ExecToggleSize);
                 glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
                 glEnd();
                 glColor3fv(I->Block->TextColor);

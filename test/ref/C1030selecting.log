@@ -49,6 +49,6 @@ PyMOL>hide lines,cc
 PyMOL>hide lines,bb
 PyMOL>show (bb)
 PyMOL>set ray_default_renderer=2
- Setting: ray_default_renderer set to 2.00000.
+ Setting: ray_default_renderer set to 2.
 PyMOL>ray
  RayRenderTest: obtained 63 graphics primitives.

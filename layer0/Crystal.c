@@ -25,6 +25,44 @@ Z* -------------------------------------------------------------------
 #include"Crystal.h"
 #include"Feedback.h"
 #include"Util.h"
+#include"PConv.h"
+
+CCrystal *CrystalNewFromPyList(PyObject *list)
+{
+  CCrystal *I=NULL;
+  I=CrystalNew();
+  if(I) {
+    if(!CrystalSetPyList(I,list)) {
+      CrystalFree(I);
+      I=NULL;
+    }
+  }
+  return(I);
+}
+
+PyObject *CrystalGetPyList(CCrystal *I)
+{
+  
+  PyObject *result = NULL;
+
+  if(I) {
+    result = PyList_New(2);
+    PyList_SetItem(result,0,PConvFloatArrayToPyList(I->Dim,3));
+    PyList_SetItem(result,1,PConvFloatArrayToPyList(I->Angle,3));
+  }
+  return(PConvAutoNone(result));
+}
+
+int CrystalSetPyList(CCrystal *I,PyObject *list)
+{
+  int ok=true;
+  if(ok) ok = (I!=NULL);
+  if(ok) ok = PyList_Check(list);
+  if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,0),I->Dim,3);
+  if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,1),I->Angle,3);
+  if(ok) CrystalUpdate(I);
+  return(ok);
+}
 
 void CrystalFree(CCrystal *I)
 {

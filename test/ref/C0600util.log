@@ -16,7 +16,7 @@ PyMOL>load dat/3al1.pdb
  Crystal:   20.54400   -9.81199   -3.18885
  Crystal:    0.00000   18.40714   -7.41448
  Crystal:    0.00000    0.00000   24.77337
- Crystal: Unit Cell Volume 9368.204
+ Crystal: Unit Cell Volume 9368.203
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -77,7 +77,7 @@ PyMOL>hide
 PyMOL>show car
 PyMOL>zoom
 PyMOL>set ray_default_renderer=2
- Setting: ray_default_renderer set to 2.00000.
+ Setting: ray_default_renderer set to 2.
 PyMOL>ray
  RayRenderTest: obtained 19492 graphics primitives.
 PyMOL>util.rainbow("pept")
