@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * ray tracer now supports perspective by default.  Unfortunately, 
+     this significantly slows down raytracing...
+
    * single-click actions
 
    * continued elimination of global state information

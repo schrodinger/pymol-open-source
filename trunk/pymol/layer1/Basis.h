@@ -95,14 +95,16 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                   int group_id,int block_base,int perspective);
 
 void BasisSetupMatrix(CBasis *I);
-void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc);
+void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc,int perspective);
 void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
+void BasisTrianglePrecomputePerspective(float *v1,float *v2,float *v3,float *pre);
 
 int BasisHitPerspective(BasisCallRec *BC);
 int BasisHitNoShadow(BasisCallRec *BC);
 int BasisHitShadow(BasisCallRec *BC);
 
 void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i);
+void BasisGetTriangleFlatDotglePerspective(CBasis *I,RayInfo *r,int i);
 
 void BasisCylinderSausagePrecompute(float *dir,float *pre);
 

@@ -117,14 +117,12 @@ void RayApplyMatrixInverse33( unsigned int n, float3 *q, const float m[16],
                               float3 *p );
 
 void RayExpandPrimitives(CRay *I);
-void RayTransformFirst(CRay *I);
 void RayTransformBasis(CRay *I,CBasis *B,int group_id);
 
 int PrimitiveSphereHit(CRay *I,float *v,float *n,float *minDist,int except);
 
 void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
 void RayTransformInverseNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
-void RayReflectAndTexture(CRay *I,RayInfo *r);
 void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,float scale);
 void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
                           float *c1,float *c2,int cap1,int cap2);
@@ -252,9 +250,8 @@ static void fill(unsigned int *buffer, unsigned int value,unsigned int cnt)
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-void RayReflectAndTexture(CRay *I,RayInfo *r)
+static void RayReflectAndTexture(CRay *I,RayInfo *r,int perspective)
 {
-  r->flat_dotgle = r->surfnormal[2];
 
   if(r->prim->wobble)
     switch(r->prim->wobble) {
@@ -344,12 +341,21 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
       }
       break;
     }
+  if(perspective) {
+    r->dotgle = dot_product3f(r->dir, r->surfnormal);
+    r->flat_dotgle = -r->dotgle;
   
-  r->dotgle = -r->surfnormal[2]; 
-  
-  r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
-  r->reflect[1]= - ( 2 * r->dotgle * r->surfnormal[1] );
-  r->reflect[2]= -1.0F - ( 2 * r->dotgle * r->surfnormal[2] );
+    r->reflect[0]= r->dir[0] - ( 2 * r->dotgle * r->surfnormal[0] );
+    r->reflect[1]= r->dir[1] - ( 2 * r->dotgle * r->surfnormal[1] );
+    r->reflect[2]= r->dir[2] - ( 2 * r->dotgle * r->surfnormal[2] );
+  } else {
+    r->dotgle = -r->surfnormal[2]; 
+    r->flat_dotgle = r->surfnormal[2];
+    
+    r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
+    r->reflect[1]= - ( 2 * r->dotgle * r->surfnormal[1] );
+    r->reflect[2]= -1.0F - ( 2 * r->dotgle * r->surfnormal[2] );
+  }
 }
 /*========================================================================*/
 void RayExpandPrimitives(CRay *I)
@@ -561,7 +567,7 @@ static void RayComputeBox(CRay *I)
   I->max_box[1] = ymax;
 }
 
-void RayTransformFirst(CRay *I)
+static void RayTransformFirst(CRay *I,int perspective)
 {
   CBasis *basis0,*basis1;
   CPrimitive *prm;
@@ -604,12 +610,29 @@ void RayTransformFirst(CRay *I)
   
   basis1->NNormal=basis0->NNormal;
 
-  for(a=0;a<I->NPrimitive;a++) {
-	 prm=I->Primitive+a;
-    switch(prm->type) {
-    case cPrimTriangle:
-	 case cPrimCharacter:
-
+  if(perspective) {
+    for(a=0;a<I->NPrimitive;a++) {
+      prm=I->Primitive+a;
+      
+      prm=I->Primitive+a;
+      switch(prm->type) {
+      case cPrimTriangle:
+      case cPrimCharacter:
+        BasisTrianglePrecomputePerspective(
+                                           basis1->Vertex+prm->vert*3,
+                                           basis1->Vertex+prm->vert*3+3,
+                                           basis1->Vertex+prm->vert*3+6,
+                                           basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
+        break;
+      }
+    }
+  } else {
+    for(a=0;a<I->NPrimitive;a++) {
+      prm=I->Primitive+a;
+      switch(prm->type) {
+      case cPrimTriangle:
+      case cPrimCharacter:
+        
         BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
                                 basis1->Vertex+prm->vert*3+3,
                                 basis1->Vertex+prm->vert*3+6,
@@ -617,13 +640,14 @@ void RayTransformFirst(CRay *I)
         v0 = basis1->Normal + (basis1->Vert2Normal[prm->vert]*3 + 3);
         prm->cull = backface_cull&&((v0[2]<0.0F)&&(v0[5]<0.0F)&&(v0[8]<0.0F));
         break;
-    case cPrimSausage:
-    case cPrimCylinder:
-      BasisCylinderSausagePrecompute(basis1->Normal + basis1->Vert2Normal[prm->vert]*3,
-                                     basis1->Precomp + basis1->Vert2Normal[prm->vert]*3);
-      break;
-      
-	 }
+      case cPrimSausage:
+      case cPrimCylinder:
+        BasisCylinderSausagePrecompute(basis1->Normal + basis1->Vert2Normal[prm->vert]*3,
+                                       basis1->Precomp + basis1->Vert2Normal[prm->vert]*3);
+        break;
+        
+      }
+    }
   }
 }
 /*========================================================================*/
@@ -759,7 +783,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   bkrd=SettingGetfv(I->G,cSetting_bg_rgb);
 
   RayExpandPrimitives(I);
-  RayTransformFirst(I);
+  RayTransformFirst(I,0);
 
   PRINTFB(I->G,FB_Ray,FB_Details)
     " RayRenderPovRay: processed %i graphics primitives.\n",I->NPrimitive 
@@ -1213,6 +1237,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float eye[3];
    float half_height, front_ratio;
    float height_range, width_range;
+   float start[3];
 
 	I = T->ray;
 
@@ -1519,6 +1544,11 @@ int RayTraceThread(CRayThreadInfo *T)
 
               if(perspective) {
                 r1.base[2] = -T->front;
+                if(interior_color>=0) {
+                  start[0] = r1.base[0];
+                  start[1] = r1.base[1];
+                  start[2] = r1.base[2];
+                }
                 r1.dir[0] = (r1.base[0] - eye[0]);
                 r1.dir[1] = (r1.base[1] - eye[1]);
                 r1.dir[2] = (r1.base[2] - eye[2]);
@@ -1548,19 +1578,23 @@ int RayTraceThread(CRayThreadInfo *T)
                         {
                           copy3f(interior_normal,r1.surfnormal);
                           copy3f(r1.base,r1.impact);
-                          r1.impact[2]	-= T->front;
+                          if(perspective) {
+                            copy3f(start,r1.impact);
+                          } else {
+                            r1.impact[2]	-= T->front; 
+                          }
                           
                           if(interior_wobble >= 0) 
                             {
                               wobble_save		= r1.prim->wobble; /* This is a no-no for multithreading! */
                               r1.prim->wobble	= interior_wobble;
                               
-                              RayReflectAndTexture(I,&r1);
+                              RayReflectAndTexture(I,&r1,perspective);
                               
-                                r1.prim->wobble	= wobble_save;
+                              r1.prim->wobble	= wobble_save;
                             }
                           else
-                            RayReflectAndTexture(I,&r1);
+                            RayReflectAndTexture(I,&r1,perspective);
                           
                           dotgle = -r1.dotgle;
                           copy3f(inter,fc);
@@ -1571,32 +1605,36 @@ int RayTraceThread(CRayThreadInfo *T)
                           
                           if(r1.prim->type==cPrimTriangle)
                             {
-                              BasisGetTriangleNormal(bp1,&r1,i,fc);
+                              BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
                               
                               RayProjectTriangle(I, &r1, bp2->LightNormal,
                                                  bp1->Vertex+i*3,
                                                  bp1->Normal+bp1->Vert2Normal[i]*3+3,
                                                  project_triangle);
                               
-                              RayReflectAndTexture(I,&r1);
-                              BasisGetTriangleFlatDotgle(bp1,&r1,i);
+                              RayReflectAndTexture(I,&r1,perspective);
+                              if(perspective) {
+                                BasisGetTriangleFlatDotglePerspective(bp1,&r1,i);
+                              } else {
+                                BasisGetTriangleFlatDotgle(bp1,&r1,i);
+                              }
                             }
                           else if(r1.prim->type==cPrimCharacter) {
-                            BasisGetTriangleNormal(bp1,&r1,i,fc);
+                            BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
                             
                             r1.trans = CharacterInterpolate(I->G,r1.prim->char_id,fc);
                             
-                            RayReflectAndTexture(I,&r1);
+                            RayReflectAndTexture(I,&r1,perspective);
                             BasisGetTriangleFlatDotgle(bp1,&r1,i);
                             
                           } else {
-
+                            
                             if(perspective) {
                               RayGetSphereNormalPerspective(I,&r1);
-                              RayReflectAndTexture(I,&r1);
+                              RayReflectAndTexture(I,&r1,perspective);
                             } else {
                               RayGetSphereNormal(I,&r1);
-                              RayReflectAndTexture(I,&r1);
+                              RayReflectAndTexture(I,&r1,perspective);
                             }
                             
                             if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) 
@@ -1622,18 +1660,23 @@ int RayTraceThread(CRayThreadInfo *T)
                                   interior_flag		= true;
                                   copy3f(interior_normal,r1.surfnormal);
                                   copy3f(r1.base,r1.impact);
-                                  r1.impact[2]		-= T->front;
-                                  r1.dist				= T->front;
+                                  if(perspective) {
+                                    copy3f(start,r1.impact);                                    
+                                    r1.dist = _0;
+                                  } else {
+                                    r1.impact[2]		-= T->front; /* FIX THIS */
+                                    r1.dist				= T->front;
+                                  }
                                   
                                   if(interior_wobble >= 0)
                                     {
                                       wobble_save		= r1.prim->wobble;
                                       r1.prim->wobble	= interior_wobble;
-                                      RayReflectAndTexture(I,&r1);
+                                      RayReflectAndTexture(I,&r1,perspective);
                                       r1.prim->wobble	= wobble_save;
                                     }
                                   else
-                                    RayReflectAndTexture(I,&r1);
+                                    RayReflectAndTexture(I,&r1,perspective);
                                   
                                   dotgle	= -r1.dotgle;
                                   copy3f(inter,fc);
@@ -2489,7 +2532,7 @@ int opaque_back=0;
   } else {
     
     RayExpandPrimitives(I);
-    RayTransformFirst(I);
+    RayTransformFirst(I,perspective);
 
     now = UtilGetSeconds(I->G)-timing;
 
