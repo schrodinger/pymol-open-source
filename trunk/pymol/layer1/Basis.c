@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Basis.h"
 #include"Err.h"
+#include"Feedback.h"
 
 #ifndef R_SMALL4
 #define R_SMALL4 0.0001
@@ -453,6 +454,9 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   float l1,l2;
   float bh,ch;
 
+  PRINTFD(FB_Ray)
+    " BasisMakeMap: I->NVertex %d\n",I->NVertex
+    ENDFD;
   sep = I->MinVoxel;
   if(sep==0.0)
     {
@@ -492,11 +496,17 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
       min[2]=(-volume[5]);
     if(max[2]<(-volume[4]))
 		max[2]=(-volume[4]);
+
+    if(Feedback(FB_Ray,FB_Debugging)) {
+      dump3f(volume," BasisMakeMap: volume");
+      dump3f(volume+3," BasisMakeMap: volume+3");
+    }
   }
+
+
   sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
                                                  * estimate of the actual value */
 
-  /*  printf("sep %f\n",sep);*/
   /* here we have to carry out a complicated work-around in order to
 	* efficiently encode our lines into the map in a way that doesn't
    * require expanding the map cutoff to the size of the largest object*/

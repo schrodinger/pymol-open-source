@@ -1459,6 +1459,7 @@ CRay *RayNew(void)
   I->BigEndian = *testPtr&&1;
   I->Trans=0.0;
   I->Texture=0;
+  I->TTTFlag=false;
   zero3f(I->TextureParam);
 
   PRINTFB(FB_Ray,FB_Blather) 

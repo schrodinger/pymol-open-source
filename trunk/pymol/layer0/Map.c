@@ -265,6 +265,15 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
   if(subDiv>maxSize ) subDiv = maxSize; /* keep it reasonable - we're talking N^3 here... */
   if(subDiv<1.0) subDiv = 1.0;
 
+  if(Feedback(FB_Map,FB_Debugging)) {
+    PRINTF
+      " MapGetSeparation: range %8.3f maxSize %8.3f subDiv %8.3f size %8.3f",range,maxSize,subDiv,size
+      ENDF;
+    dump3f(mx,"mx");
+    dump3f(mn,"mn");
+    dump3f(diagonal,"diagonal");
+  }
+
   return(size/subDiv);
 }
 

@@ -139,7 +139,7 @@ int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int 
 int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr)
 {
 
-  FILE *png_file;
+  FILE *png_file=NULL;
   png_struct    *png_ptr = NULL;
   png_info	*info_ptr = NULL;
   png_byte      buf[8];
@@ -293,7 +293,9 @@ int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsi
    if(png_ptr) {
      png_destroy_read_struct (&png_ptr, &info_ptr, (png_infopp) NULL);
    }
-   
+   if(png_file)
+     fclose(png_file);
+
    return(ok);
 #else
    return (false);
