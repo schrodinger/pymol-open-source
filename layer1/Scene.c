@@ -1019,11 +1019,16 @@ void SceneRender(Pickable *pick,int x,int y)
       I->LinesNormal[2]=I->ViewNormal[2];
     }
 
-    glLineWidth(SettingGet(cSetting_line_width));
-    if(SettingGet(cSetting_line_smooth)) 
+    if(SettingGet(cSetting_line_smooth)) {
       glEnable(GL_LINE_SMOOTH);
-    else
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+      glHint(GL_LINE_SMOOTH_HINT,GL_DONT_CARE);
+      glLineWidth(0.0);
+    } else {
+      glLineWidth(SettingGet(cSetting_line_width));
       glDisable(GL_LINE_SMOOTH);
+    }
     
     if(!pick) {
 	
@@ -1059,8 +1064,6 @@ void SceneRender(Pickable *pick,int x,int y)
         glDisable(GL_FOG);
       }
 #endif
-
-
 
       glNormal3fv(normal);
 	
@@ -1178,6 +1181,7 @@ void SceneRender(Pickable *pick,int x,int y)
     }
     glLineWidth(1.0);
     glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_BLEND);
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
   }
   if(!pick) {

@@ -443,7 +443,7 @@ void was_main(int flags)
     glutInit(&argc, argv);
 
     if(StereoCapable) {
-      glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
+      glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
     } else {
       glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );      
     }
