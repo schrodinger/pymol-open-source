@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include "Ortho.h"
 #include "Setting.h"
 #include "P.h"
+#include "Text.h"
 
 #define cButModeLineHeight 12
 #define cButModeLeftMargin 2

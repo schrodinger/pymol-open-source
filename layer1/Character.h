@@ -81,7 +81,7 @@ int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt);
 float CharacterInterpolate(PyMOLGlobals *G,int id,float *v);
 void CharacterSetRetention(PyMOLGlobals *G,int retail_all);
 unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals *G,int id);
-int CharacterRenderOpenGL(PyMOLGlobals *G,int id, float x_orig, float y_orig, float advance);
+void CharacterRenderOpenGL(PyMOLGlobals *G,int id, float x_orig, float y_orig, float advance);
 
 #endif
 

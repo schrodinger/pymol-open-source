@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include "Ray.h"
 #include "Character.h"
 #include "Scene.h"
+#include "Util.h"
 
 static void FontGLUTSave(CFontGLUT *I)
 {
