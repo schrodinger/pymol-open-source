@@ -743,25 +743,14 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
 
   register float scale_x,scale_y,scale_z;
   int shift_x,shift_y;
-  float *bkrd;
-  float fog_start=0.0F;
-  float gamma;
   float *d;
   CBasis *base;
   CPrimitive *prim;
-  OrthoLineType buffer;
-  float *vert,*norm;
+  float *vert;
   float vert2[3];
-  float light[3],*lightv;
-  int cc,hc;
   int a;
-  int smooth_color_triangle;
-  int mesh_obj = false;
-  char *charVLA,*headerVLA;
-  char transmit[64];
   G3dPrimitive *jprim = VLAlloc(G3dPrimitive,10000),*jp;
   int n_jp = 0;
-  float z_range = back-front;
 
 #define convert_r(r) 2*(int)(r*scale_x);
 #define convert_x(x) shift_x + (int)(x*scale_x);

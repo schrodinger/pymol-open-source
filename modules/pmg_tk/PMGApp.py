@@ -1516,6 +1516,12 @@ class PMGApp(AbstractApp):
                                   label=self.pad+'Cartoon')
 
       self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Side Chain Helper',
+                         label=self.pad+'Side Chain Helper',
+                        variable = self.setting.cartoon_side_chain_helper,
+                        command = lambda s=self: s.setting.update('cartoon_side_chain_helper'))
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Round Helices',
                          label=self.pad+'Round Helices',
                         variable = self.setting.cartoon_round_helices,

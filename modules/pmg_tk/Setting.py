@@ -94,6 +94,9 @@ class Setting:
       self.cartoon_cylindrical_helices = IntVar()
       self.cartoon_cylindrical_helices.set(int(cmd.get_setting_legacy('cartoon_cylindrical_helices')))
 
+      self.cartoon_side_chain_helper = IntVar()
+      self.cartoon_side_chain_helper.set(int(cmd.get_setting_legacy('cartoon_side_chain_helper')))
+
       self.ignore_pdb_segi = IntVar()
       self.ignore_pdb_segi.set(int(cmd.get_setting_legacy('ignore_pdb_segi')))
 
@@ -223,6 +226,9 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_smooth_loops.get())),log=1))),
          'cartoon_cylindrical_helices'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_cylindrical_helices.get())),log=1))),
+         'cartoon_side_chain_helper'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_side_chain_helper.get())),log=1))),
+
 
          'ignore_pdb_segi'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.ignore_pdb_segi.get())),log=1))),
@@ -309,6 +315,8 @@ class Setting:
          (lambda s,t: (s.cartoon_smooth_loops.set(t[1][0]!=0))),
          'cartoon_cylindrical_helices':
          (lambda s,t: (s.cartoon_cylindrical_helices.set(t[1][0]!=0))),
+         'cartoon_side_chain_helper':
+         (lambda s,t: (s.cartoon_side_chain_helper.set(t[1][0]!=0))),
          'ignore_pdb_segi':
          (lambda s,t: (s.ignore_pdb_segi.set(t[1][0]!=0))),
          'log_box_selections':
@@ -368,7 +376,8 @@ class Setting:
          pymol.setting._get_index("cartoon_fancy_sheets"),
          pymol.setting._get_index("cartoon_discrete_colors"),
          pymol.setting._get_index("cartoon_smooth_loops"),
-         pymol.setting._get_index("cartoon_cylindrical_helices"),                  
+         pymol.setting._get_index("cartoon_cylindrical_helices"),
+         pymol.setting._get_index("cartoon_side_chain_helper"),                  
          pymol.setting._get_index("ignore_pdb_segi"),         
          pymol.setting._get_index("log_box_selections"),
          pymol.setting._get_index("log_conformations"),

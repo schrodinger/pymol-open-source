@@ -207,7 +207,7 @@ def performance(mode):
       cmd.set('sphere_quality',2)
       cmd.set('cartoon_sampling',14)
       cmd.set('ribbon_sampling',10)
-      cmd.set('transparency_mode',1)
+      cmd.set('transparency_mode',2)
       cmd.set('stick_ball',1)
       cmd.do("rebuild")
    elif mode==33:
@@ -218,7 +218,8 @@ def performance(mode):
       cmd.set('stick_quality',8)
       cmd.set('sphere_quality',1)
       cmd.set('cartoon_sampling',7)
-      cmd.set('transparency_mode',1)
+      cmd.set('ribbon_sampling',1)
+      cmd.set('transparency_mode',2)
       cmd.set('stick_ball',0)
       cmd.do("rebuild")
    elif mode==66: # good perfomance
@@ -229,6 +230,7 @@ def performance(mode):
       cmd.set('stick_quality',8)
       cmd.set('sphere_quality',1)
       cmd.set('cartoon_sampling',6)
+      cmd.set('ribbon_sampling',1)
       cmd.set('transparency_mode',2)
       cmd.set('stick_ball',0.0)
       cmd.do("rebuild")         
@@ -239,6 +241,7 @@ def performance(mode):
       cmd.set('surface_quality',-1) # new
       cmd.set('stick_quality',5)
       cmd.set('sphere_quality',0)
+      cmd.set('ribbon_sampling',1)
       cmd.set('cartoon_sampling',3)
       cmd.set('transparency_mode',0)
       cmd.set('stick_ball',0.0)
