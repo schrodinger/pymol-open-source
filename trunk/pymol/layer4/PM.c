@@ -250,7 +250,7 @@ static PyObject *PMCountStates(PyObject *dummy, PyObject *args)
 {
   char *str1;
   OrthoLineType s1;
-  int result;
+  PyObject *result;
   PyArg_ParseTuple(args,"s",&str1);
   SelectorGetTmp(str1,s1);
   result = Py_BuildValue("i",ExecutiveCountStates(s1));

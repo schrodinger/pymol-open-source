@@ -21,5 +21,7 @@ else
 setenv PYTHONPATH ${PYMOL_EXTLIBPATH}/python1.5
 endif
 #
-$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/pymol.py $*
+#
+dbx $PYMOL_PATH/ext/bin/python 
+#$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/pymol.py $*
 
