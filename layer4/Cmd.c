@@ -680,12 +680,13 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
 static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
+  int i1;
   OrthoLineType s1;
 
-  PyArg_ParseTuple(args,"ss",&str1,&str2);
+  PyArg_ParseTuple(args,"ssi",&str1,&str2,&i1);
   APIEntry();
   SelectorGetTmp(str1,s1);
-  ExecutiveAlter(s1,str2);
+  ExecutiveIterate(s1,str2,i1);
   SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);
@@ -696,13 +697,13 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
-  int i1;
+  int i1,i2;
   OrthoLineType s1;
 
-  PyArg_ParseTuple(args,"iss",&i1,&str1,&str2);
+  PyArg_ParseTuple(args,"issi",&i1,&str1,&str2,&i2);
   APIEntry();
   SelectorGetTmp(str1,s1);
-  ExecutiveAlterState(i1,s1,str2);
+  ExecutiveIterateState(i1,s1,str2,i2);
   SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);

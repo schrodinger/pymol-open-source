@@ -116,7 +116,7 @@ void PDumpTraceback(PyObject *err)
   }
 }
 
-int PAlterAtomState(float *v,char *expr)
+int PAlterAtomState(float *v,char *expr,int read_only)
 {
   PyObject *dict; /* TODO: this function badly need error checking code */
   int result;
@@ -132,7 +132,7 @@ int PAlterAtomState(float *v,char *expr)
   if(PyErr_Occurred()) {
     PyErr_Print();
     result=false;
-  } else {
+  } else if(!read_only) {
     f[0]=PyFloat_AsDouble(PyDict_GetItemString(dict,"x"));
     f[1]=PyFloat_AsDouble(PyDict_GetItemString(dict,"y"));
     f[2]=PyFloat_AsDouble(PyDict_GetItemString(dict,"z"));
@@ -146,13 +146,13 @@ int PAlterAtomState(float *v,char *expr)
       v[2]=f[2];
       result=true;
     }
-  } 
+  }
   Py_DECREF(dict);
   PLockAPIAndUnblock();
   return result;
 }
 
-int PAlterAtom(AtomInfoType *at,char *expr)
+int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
 {
   AtomName name;
   ResName resn;
@@ -194,7 +194,7 @@ int PAlterAtom(AtomInfoType *at,char *expr)
   if(PyErr_Occurred()) {
     PyErr_Print();
     result=false;
-  } else {
+  } else if(!read_only) {
     result=true;
     if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"type"),atype,6)) 
       result=false;

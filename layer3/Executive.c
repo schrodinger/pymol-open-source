@@ -852,7 +852,7 @@ void ExecutiveLabel(char *s1,char *expr)
   }
 }
 /*========================================================================*/
-void ExecutiveAlter(char *s1,char *expr)
+void ExecutiveIterate(char *s1,char *expr,int read_only)
 {
   int sele1;
   char buffer[255];
@@ -863,15 +863,21 @@ void ExecutiveAlter(char *s1,char *expr)
     op1.code = OMOP_ALTR;
     op1.s1 = expr;
     op1.i1 = 0;
+    op1.i2 = read_only;
     ExecutiveObjMolSeleOp(sele1,&op1);
-    sprintf(buffer,"modified %i atoms.",op1.i1);
-    ErrOk(" Alter",buffer);
+    if(!read_only) {
+      sprintf(buffer,"modified %i atoms.",op1.i1);
+      ErrOk(" Alter",buffer);
+    } else {
+      sprintf(buffer,"iterated over %i atoms.",op1.i1);
+      ErrOk(" Iterate",buffer);
+    }
   } else {
-    ErrMessage("ExecutiveAlter","No atoms selected.");
+    ErrMessage("ExecutiveIterate","No atoms selected.");
   }
 }
 /*========================================================================*/
-void ExecutiveAlterState(int state,char *s1,char *expr)
+void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
 {
   int sele1;
   char buffer[255];
@@ -883,6 +889,7 @@ void ExecutiveAlterState(int state,char *s1,char *expr)
     op1.s1 = expr;
     op1.i1 = 0;
     op1.i2 = state;
+    op1.i3 = read_only;
     ExecutiveObjMolSeleOp(sele1,&op1);
     sprintf(buffer,"modified %i atoms.",op1.i1);
     ErrOk(" Alter",buffer);
