@@ -62,13 +62,18 @@
 #include"Seq.h"
 #include"Seeker.h"
 
+#include"PyMOLGlobals.h"
+#include"ClassPyMOL.h"
+
 void MainFree(void);
 void MainTest(void);
 void MainBusyIdle(void);
-static void MainInit(void);
+static void MainInit(PyMOLGlobals *G);
 void MainReshape(int width, int height);
 static void MainDrawLocked(void);
 static void MainDrag(int x,int y);
+
+static  ClassPyMOL *PyMOLInstance; /* eliminate */
 
 GLuint obj;
 
@@ -700,17 +705,15 @@ void MainDoReshape(int width, int height) /* called internally */
 
 }
 /*========================================================================*/
-static void MainInit(void) 
+static void MainInit(PyMOLGlobals *G) 
 {
   /*  GLfloat one[4] = { 1,1,1,1 }; 
       GLfloat low[4] = { 0.20,0.20,0.20,1 };*/
 
   CMain *I = &Main;
 
-  
   I->DirtyFlag=true;
   I->IdleMode=2;
-  I->IdleTime=(float)UtilGetSeconds();
   I->IdleCount = 0;
   I->ReshapeFlag = false;
   I->DragDirtyFlag=0;
@@ -731,15 +734,20 @@ static void MainInit(void)
     glDisable(GL_BLEND);
   }
 
-  MemoryCacheInit();
+  MemoryCacheInit(); 
   FeedbackInit(PyMOLOption->quiet);
-  UtilInit();
+  UtilInit(G);
+
+  I->IdleTime=(float)UtilGetSeconds(TempPyMOLGlobals);
+
+
+
   SettingInitGlobal(true,true);  
   SettingSet(cSetting_internal_gui,(float)InternalGUI);
   SettingSet(cSetting_internal_feedback,(float)InternalFeedback);
   TextInit();
   CharacterInit();
-  SphereInit();
+  SphereInit(G);
   ColorInit();
   OrthoInit(ShowSplash);
   WizardInit(); /* must come after ortho */
@@ -753,8 +761,8 @@ static void MainInit(void)
   SculptCacheInit();
   VFontInit();
   ExecutiveInit();
-  IsosurfInit();
-  TetsurfInit();
+  IsosurfInit(G);
+  TetsurfInit(G);
   EditorInit();  
 }
 
@@ -764,8 +772,11 @@ static void MainInit(void)
 /*========================================================================*/
 void MainFree(void)
 {
-  PyMOLTerminating=true;
+  PyMOLGlobals *G = ClassPyMOLGetGlobals(PyMOLInstance);
 
+  PyMOLTerminating=true;
+  TetsurfFree(G);
+  IsosurfFree(G);
   WizardFree();
   SceneCleanupStereo();
   EditorFree();
@@ -784,15 +795,20 @@ void MainFree(void)
   ColorFree();
   CharacterFree();
   TextFree();
-  SphereDone();
+  SphereFree(G);
   PFree();
+  UtilFree(G);
   FeedbackFree();
   MemoryCacheDone();
+                     
+  ClassPyMOLFree(PyMOLInstance);
+
   if(ShowSplash) {
     MemoryDebugDump();
     printf(" PyMOL: normal program termination.\n");
   }
   
+
 #ifdef WIN32
   if(PMGUI) p_glutDestroyWindow(TheWindow);
   TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
@@ -909,7 +925,7 @@ void MainBusyIdle(void)
 	 I->IdleMode=0;
   } else {
     if(!I->IdleMode) {
-      I->IdleTime=UtilGetSeconds();
+      I->IdleTime=UtilGetSeconds(TempPyMOLGlobals);
       I->IdleMode=1;
     }
   }
@@ -940,7 +956,7 @@ void MainBusyIdle(void)
 
   if(I->IdleMode) { /* avoid racing the CPU */
     if(I->IdleMode==1) {
-      if(UtilGetSeconds()-I->IdleTime>SettingGet(cSetting_idle_delay)) { 
+      if(UtilGetSeconds(TempPyMOLGlobals)-I->IdleTime>SettingGet(cSetting_idle_delay)) { 
         I->IdleMode=2;
         if(PMGUI)
           if(SettingGet(cSetting_cache_display))
@@ -1044,6 +1060,7 @@ void sharp3d_prepare_context(void);
 void launch(void)
 {
   int multisample_mask = 0;
+  PyMOLInstance = ClassPyMOLNew();
 
   if(PyMOLOption->multisample)
     multisample_mask = P_GLUT_MULTISAMPLE;
@@ -1149,9 +1166,9 @@ SetConsoleCtrlHandler(
 	glDepthFunc(GL_LESS);
 #endif
 
-  MainInit();
-  PInit();
-
+   MainInit(ClassPyMOLGetGlobals(PyMOLInstance));
+   PInit();
+  
 #ifdef _PYMOL_SHARP3D
   SettingSetGlobal_b(cSetting_overlay,1);
   SettingSetGlobal_b(cSetting_overlay_lines,1);

@@ -15,8 +15,12 @@ Z* -------------------------------------------------------------------
 */
 
 #include"MemoryCache.h"
+
+#ifdef _MemoryCache_ON
+
 #include"MemoryDebug.h"
 #include"Setting.h"
+
 
 typedef struct {
   int *ptr;
@@ -122,3 +126,4 @@ void MemoryCacheDone(void)
     }
   }
 }
+#endif

@@ -937,7 +937,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           /* first, create coordinate -> vertex mapping */
           /* and count number of constraints */
 
-          task_time = UtilGetSeconds();
+          task_time = UtilGetSeconds(TempPyMOLGlobals);
           vdw_magnify = 1.0F;
           nb_skip_count = n_cycle - nb_skip * (n_cycle/nb_skip);
           if(!nb_skip_count) nb_skip_count = nb_skip;
@@ -1325,7 +1325,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           
           }
           
-          task_time = UtilGetSeconds() - task_time;
+          task_time = UtilGetSeconds(TempPyMOLGlobals) - task_time;
           PRINTFB(FB_Sculpt,FB_Blather)
             " Sculpt: %2.5f seconds %8.3f %d %8.3f\n",task_time,total_strain,total_count,
             100*total_strain/total_count

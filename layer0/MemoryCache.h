@@ -16,6 +16,13 @@ Z* -------------------------------------------------------------------
 #ifndef _H_MemoryCache
 #define _H_MemoryCache
 
+#define _MemoryCache_OFF
+
+/* NOTE: at the present time, MemoryCaching is not compatible with a
+   running PyMOL free of global state -- it's basically just a
+   performace hack for systems with slow memory management.
+*/
+
 
 /* cacheable memory blocks (really just for the ray-tracer)  */
 
@@ -62,6 +69,8 @@ Z* -------------------------------------------------------------------
 #define cMemoryCache_max_block 100
 #define cMemoryCache_max_group 16
 
+#ifdef _MemoryCache_ON
+
 void MemoryCacheInit(void);
 void *MemoryCacheMalloc(unsigned int size,int group_id,int block_id);
 void *MemoryCacheCalloc(unsigned int number, unsigned int size,int group_id,int block_id);
@@ -69,9 +78,21 @@ void *MemoryCacheRealloc(void *ptr, unsigned int size,int group_id, int block_id
 void MemoryCacheFree(void *ptr,int group_id, int block_id,int force);
 void MemoryCacheDone(void);
 
-#define CacheAlloc(type,size,thread,id) (type*)MemoryCacheMalloc(sizeof(type)*(size),thread,id);
-#define CacheCalloc(type,size,thread,id) (type*)MemoryCacheCalloc(sizeof(type),size,thread,id);
-#define CacheRealloc(ptr,type,size,thread,id) (type*)MemoryCacheRealloc(ptr,sizeof(type)*(size),thread,id);
+#else
+/* memory cache off */
+
+#define MemoryCacheInit(x)
+#define MemoryCacheMalloc(size,group_id,block_id) mmalloc(size)
+#define MemoryCacheCalloc(number, size,group_id,block_id) mcalloc(number,size)
+#define MemoryCacheRealloc(ptr,size,group_id,block_id) mrealloc(ptr,size)
+#define MemoryCacheFree(ptr,group_id, block_id,force) mfree(ptr)
+#define MemoryCacheDone()
+
+#endif
+
+#define CacheAlloc(type,size,thread,id) (type*)MemoryCacheMalloc(sizeof(type)*(size),thread,id)
+#define CacheCalloc(type,size,thread,id) (type*)MemoryCacheCalloc(sizeof(type),size,thread,id)
+#define CacheRealloc(ptr,type,size,thread,id) (type*)MemoryCacheRealloc(ptr,sizeof(type)*(size),thread,id)
 #define CacheFreeP(ptr,thread,id,force) {if(ptr) {MemoryCacheFree(ptr,thread,id,force);ptr=NULL;}}
 
 #endif

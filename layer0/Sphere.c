@@ -24,14 +24,11 @@ Z* -------------------------------------------------------------------
 
 #include"MemoryDebug.h"
 
-float SphericalAngle(int d0,int d1,int d2);
-void MakeVertex(int d1,int d2);
-
 /* Twelve vertices of icosahedron on unit sphere */
 #define tau 0.8506508084F      /* t=(1+sqrt(5))/2, tau=t/sqrt(1+t^2)  */
 #define one 0.5257311121F      /* one=1/sqrt(1+t^2) , unit sphere     */
 
-static float start_points[13][3] = {
+const static float start_points[13][3] = {
 {  tau,  one,    0 },
 { -tau,  one,    0 },
 { -tau, -one,    0 },
@@ -45,7 +42,7 @@ static float start_points[13][3] = {
 {   0 , -tau, -one },
 {   0 ,  tau, -one }};
 
-static int icosahedron[21][3] = {
+const static int icosahedron[21][3] = {
     { 4, 8, 7 },
     { 4, 7, 9 },
     { 5, 6, 11  },
@@ -68,7 +65,7 @@ static int icosahedron[21][3] = {
     { 6, 10, 2 }
 };
 
-int mesh[30][2] = {
+const static int mesh[30][2] = {
 { 0 , 3 },
 { 0 , 4 },
 { 0 , 5 },
@@ -101,25 +98,6 @@ int mesh[30][2] = {
 { 9 , 10 }                                                                        
 };
 
-#define MAXDOT 2600
-#define MAXTRI 6200
-
-typedef int EdgeCol[MAXDOT]; /* should move these into dynamic storage to save 3MB  mem */
-typedef EdgeCol EdgeArray[MAXDOT]; 
-
-typedef int Triangle[3];
-
-static float *Dot;
-static EdgeArray *EdgeRef;
-static Triangle *Tri;
-
-static int NDot,NTri;
-
-SphereRec *Sphere0;
-SphereRec *Sphere1;
-SphereRec *Sphere2;
-SphereRec *Sphere3;
-SphereRec *Sphere4;
 
 #define FAST_SPHERE_INIT
 
@@ -127,8 +105,9 @@ SphereRec *Sphere4;
 #ifdef FAST_SPHERE_INIT
 #include"SphereData.h"
 
-SphereRec sSphere0,sSphere1,sSphere2,sSphere3,sSphere4,sSphere5;
+#else
 
+static SphereRec *MakeDotSphere(int level);
 
 #endif
 
@@ -198,91 +177,94 @@ static void SphereDumpAll(void)
 {
   FILE *f;
   f = fopen("SphereData.h","w");
-  SphereDump(f,"Sphere0",Sphere0);
-  SphereDump(f,"Sphere1",Sphere1);
-  SphereDump(f,"Sphere2",Sphere2);
-  SphereDump(f,"Sphere3",Sphere3);
-  SphereDump(f,"Sphere4",Sphere4);
+  SphereDump(f,"Sphere0",I->Sphere[0]);
+  SphereDump(f,"Sphere1",I->Sphere[1]);
+  SphereDump(f,"Sphere2",I->Sphere[2]);
+  SphereDump(f,"Sphere3",I->Sphere[3]);
+  SphereDump(f,"Sphere4",I->Sphere[4]);
   fclose(f);
 }
 #endif
 
 
-void SphereInit(void)
+void SphereInit(PyMOLGlobals *G)
 {
-  
+  register CSphere *I = (G->Sphere = Calloc(CSphere,1));
+
 #ifdef FAST_SPHERE_INIT
-  sSphere0.area = Sphere0_area;
-  sSphere0.dot = Sphere0_dot;
-  sSphere0.StripLen = Sphere0_StripLen;
-  sSphere0.Sequence = Sphere0_Sequence;
-  sSphere0.NStrip = Sphere0_NStrip;
-  sSphere0.NVertTot = Sphere0_NVertTot;
-  sSphere0.nDot = Sphere0_nDot;
-  sSphere0.Tri = Sphere0_Tri;
-  sSphere0.NTri = Sphere0_NTri;
-  sSphere0.Mesh = (int*)mesh;
-  sSphere0.NMesh = 30;
+  I->Array = Alloc(SphereRec,5);
 
-  sSphere1.area = Sphere1_area;
-  sSphere1.dot = Sphere1_dot;
-  sSphere1.StripLen = Sphere1_StripLen;
-  sSphere1.Sequence = Sphere1_Sequence;
-  sSphere1.NStrip = Sphere1_NStrip;
-  sSphere1.NVertTot = Sphere1_NVertTot;
-  sSphere1.nDot = Sphere1_nDot;
-  sSphere1.Tri = Sphere1_Tri;
-  sSphere1.NTri = Sphere1_NTri;
-  sSphere1.Mesh = NULL;
-  sSphere1.NMesh = 0;
+  I->Array[0].area = Sphere0_area;
+  I->Array[0].dot = Sphere0_dot;
+  I->Array[0].StripLen = Sphere0_StripLen;
+  I->Array[0].Sequence = Sphere0_Sequence;
+  I->Array[0].NStrip = Sphere0_NStrip;
+  I->Array[0].NVertTot = Sphere0_NVertTot;
+  I->Array[0].nDot = Sphere0_nDot;
+  I->Array[0].Tri = Sphere0_Tri;
+  I->Array[0].NTri = Sphere0_NTri;
+  I->Array[0].Mesh = (int*)mesh;
+  I->Array[0].NMesh = 30;
 
-  sSphere2.area = Sphere2_area;
-  sSphere2.dot = Sphere2_dot;
-  sSphere2.StripLen = Sphere2_StripLen;
-  sSphere2.Sequence = Sphere2_Sequence;
-  sSphere2.NStrip = Sphere2_NStrip;
-  sSphere2.NVertTot = Sphere2_NVertTot;
-  sSphere2.nDot = Sphere2_nDot;
-  sSphere2.Tri = Sphere2_Tri;
-  sSphere2.NTri = Sphere2_NTri;
-  sSphere2.Mesh = NULL;
-  sSphere2.NMesh = 0;
+  I->Array[1].area = Sphere1_area;
+  I->Array[1].dot = Sphere1_dot;
+  I->Array[1].StripLen = Sphere1_StripLen;
+  I->Array[1].Sequence = Sphere1_Sequence;
+  I->Array[1].NStrip = Sphere1_NStrip;
+  I->Array[1].NVertTot = Sphere1_NVertTot;
+  I->Array[1].nDot = Sphere1_nDot;
+  I->Array[1].Tri = Sphere1_Tri;
+  I->Array[1].NTri = Sphere1_NTri;
+  I->Array[1].Mesh = NULL;
+  I->Array[1].NMesh = 0;
 
-  sSphere3.area = Sphere3_area;
-  sSphere3.dot = Sphere3_dot;
-  sSphere3.StripLen = Sphere3_StripLen;
-  sSphere3.Sequence = Sphere3_Sequence;
-  sSphere3.NStrip = Sphere3_NStrip;
-  sSphere3.NVertTot = Sphere3_NVertTot;
-  sSphere3.nDot = Sphere3_nDot;
-  sSphere3.Tri = Sphere3_Tri;
-  sSphere3.NTri = Sphere3_NTri;
-  sSphere3.Mesh = NULL;
-  sSphere3.NMesh = 0;
+  I->Array[2].area = Sphere2_area;
+  I->Array[2].dot = Sphere2_dot;
+  I->Array[2].StripLen = Sphere2_StripLen;
+  I->Array[2].Sequence = Sphere2_Sequence;
+  I->Array[2].NStrip = Sphere2_NStrip;
+  I->Array[2].NVertTot = Sphere2_NVertTot;
+  I->Array[2].nDot = Sphere2_nDot;
+  I->Array[2].Tri = Sphere2_Tri;
+  I->Array[2].NTri = Sphere2_NTri;
+  I->Array[2].Mesh = NULL;
+  I->Array[2].NMesh = 0;
 
-  sSphere4.area = Sphere4_area;
-  sSphere4.dot = Sphere4_dot;
-  sSphere4.StripLen = Sphere4_StripLen;
-  sSphere4.Sequence = Sphere4_Sequence;
-  sSphere4.NStrip = Sphere4_NStrip;
-  sSphere4.NVertTot = Sphere4_NVertTot;
-  sSphere4.nDot = Sphere4_nDot;
-  sSphere4.Tri = Sphere4_Tri;
-  sSphere4.NTri = Sphere4_NTri;
-  sSphere4.Mesh = NULL;
-  sSphere4.NMesh = 0;
+  I->Array[3].area = Sphere3_area;
+  I->Array[3].dot = Sphere3_dot;
+  I->Array[3].StripLen = Sphere3_StripLen;
+  I->Array[3].Sequence = Sphere3_Sequence;
+  I->Array[3].NStrip = Sphere3_NStrip;
+  I->Array[3].NVertTot = Sphere3_NVertTot;
+  I->Array[3].nDot = Sphere3_nDot;
+  I->Array[3].Tri = Sphere3_Tri;
+  I->Array[3].NTri = Sphere3_NTri;
+  I->Array[3].Mesh = NULL;
+  I->Array[3].NMesh = 0;
 
-  Sphere0 = &sSphere0;
-  Sphere1 = &sSphere1;
-  Sphere2 = &sSphere2;
-  Sphere3 = &sSphere3;
-  Sphere4 = &sSphere4;
+  I->Array[4].area = Sphere4_area;
+  I->Array[4].dot = Sphere4_dot;
+  I->Array[4].StripLen = Sphere4_StripLen;
+  I->Array[4].Sequence = Sphere4_Sequence;
+  I->Array[4].NStrip = Sphere4_NStrip;
+  I->Array[4].NVertTot = Sphere4_NVertTot;
+  I->Array[4].nDot = Sphere4_nDot;
+  I->Array[4].Tri = Sphere4_Tri;
+  I->Array[4].NTri = Sphere4_NTri;
+  I->Array[4].Mesh = NULL;
+  I->Array[4].NMesh = 0;
+
+  I->Sphere[0] = &I->Array[0];
+  I->Sphere[1] = &I->Array[1];
+  I->Sphere[2] = &I->Array[2];
+  I->Sphere[3] = &I->Array[3];
+  I->Sphere[4] = &I->Array[4];
 #else
-  Sphere0 = MakeDotSphere(0);
-  Sphere1 = MakeDotSphere(1);
-  Sphere2 = MakeDotSphere(2);
-  Sphere3 = MakeDotSphere(3);
-  Sphere4 = MakeDotSphere(4);
+  I->Sphere[0] = MakeDotSphere(0);
+  I->Sphere[1] = MakeDotSphere(1);
+  I->Sphere[2] = MakeDotSphere(2);
+  I->Sphere[3] = MakeDotSphere(3);
+  I->Sphere[4] = MakeDotSphere(4);
   /*
   SphereDumpAll();
   */
@@ -292,45 +274,85 @@ void SphereInit(void)
 
 }
 
-void SphereDone(void)
-{
 #ifndef FAST_SPHERE_INIT
-  SphereFree(Sphere0);
-  SphereFree(Sphere1);
-  SphereFree(Sphere2);
-  SphereFree(Sphere3);
-  SphereFree(Sphere4);
+static void SpherePurge(SphereRec *I)
+{
+  /* NOTE: S->Mesh is not currently a pointer*/
+  mfree(I->dot);
+  mfree(I->area);
+  mfree(I->StripLen);
+  mfree(I->Sequence);
+  mfree(I->Tri);
+  FreeP(I);
+}
 #endif
 
+
+void SphereFree(PyMOLGlobals *G)
+{
+  register CSphere *I = G->Sphere;
+
+#ifndef FAST_SPHERE_INIT
+  SpherePurge(I->Sphere[0]);
+  SpherePurge(I->Sphere[1]);
+  SpherePurge(I->Sphere[2]);
+  SpherePurge(I->Sphere[3]);
+  SpherePurge(I->Sphere[4]);
+#else
+  FreeP(I->Array);
+#endif
+  FreeP(I);
 }
 
-void MakeVertex(int d1,int d2)
+/* private stuff */
+
+#ifndef FAST_SPHERE_INIT
+
+#define MAXDOT 2600
+#define MAXTRI 6200
+
+typedef int EdgeCol[MAXDOT]; /* should move these into dynamic storage to save 3MB  mem */
+typedef EdgeCol EdgeArray[MAXDOT]; 
+
+typedef int Triangle[3];
+
+typedef struct {
+
+  float *Dot;
+  EdgeArray *EdgeRef;
+  Triangle *Tri;
+  int NDot,NTri;
+  
+} SphereBuilderRec;
+
+
+static void MakeVertex(SphereBuilderRec *S,int d1,int d2)
 {
-  if((*EdgeRef)[d1][d2]<0)
+  if((*S->EdgeRef)[d1][d2]<0)
 	 {
-		average3f(Dot+(3*d1),Dot+(3*d2),Dot+(3*NDot));
-		(*EdgeRef)[d1][d2]=NDot;
-		(*EdgeRef)[d2][d1]=NDot;
-		normalize3f(Dot+(3*NDot));
-		NDot++;
+		average3f(S->Dot+(3*d1),S->Dot+(3*d2),S->Dot+(3*S->NDot));
+		(*S->EdgeRef)[d1][d2]=S->NDot;
+		(*S->EdgeRef)[d2][d1]=S->NDot;
+		normalize3f(S->Dot+(3*S->NDot));
+		S->NDot++;
 	 }
 }
 
-float SphericalAngle(int d0,int d1,int d2)
+static float SphericalAngle(SphereBuilderRec *S,int d0,int d1,int d2)
 {
   Vector3f v1,v2,s1,s2;
 
   /* map vector onto surface of sphere and measure angle */
-  subtract3f(Dot+(3*d1),Dot+(3*d0),v1);
-  subtract3f(Dot+(3*d2),Dot+(3*d0),v2);
+  subtract3f(S->Dot+(3*d1),S->Dot+(3*d0),v1);
+  subtract3f(S->Dot+(3*d2),S->Dot+(3*d0),v2);
   
-  remove_component3f(v1,Dot+(3*d0),s1);
-  remove_component3f(v2,Dot+(3*d0),s2);
+  remove_component3f(v1,S->Dot+(3*d0),s1);
+  remove_component3f(v2,S->Dot+(3*d0),s2);
   return(get_angle3f(s1,s2));
   
 }
 
-SphereRec *MakeDotSphere(int level)
+static SphereRec *MakeDotSphere(int level)
 {
   SphereRec *result;
   int *TriFlag;
@@ -340,32 +362,34 @@ SphereRec *MakeDotSphere(int level)
   int nVertTot;
   int flag;
   float vt1[3],vt2[3],vt[3];
+  SphereBuilderRec SBuild,*S;
+  S = &SBuild;
 
-  Dot=(float*)mmalloc(sizeof(float)*3*MAXDOT);
-  ErrChkPtr(Dot);
-  EdgeRef=(EdgeArray*)mmalloc(sizeof(EdgeArray));
-  ErrChkPtr(EdgeRef);
-  Tri=Alloc(Triangle,MAXTRI);
-  ErrChkPtr(Tri);
+  S->Dot=(float*)mmalloc(sizeof(float)*3*MAXDOT);
+  ErrChkPtr(S->Dot);
+  S->EdgeRef=(EdgeArray*)mmalloc(sizeof(EdgeArray));
+  ErrChkPtr(S->EdgeRef);
+  S->Tri=Alloc(Triangle,MAXTRI);
+  ErrChkPtr(S->Tri);
   TriFlag=Alloc(int,MAXTRI);
   ErrChkPtr(TriFlag);
   
-  NDot = 12;
-  for(a=0;a<NDot;a++)
+  S->NDot = 12;
+  for(a=0;a<S->NDot;a++)
 	 {
 		for(c=0;c<3;c++)
-		  Dot[3*a+c]=start_points[a][c];
-		normalize3f(Dot+(3*a));
+		  S->Dot[3*a+c]=start_points[a][c];
+		normalize3f(S->Dot+(3*a));
 	 }
 
-  NTri = 20;
-  for(a=0;a<NTri;a++)
+  S->NTri = 20;
+  for(a=0;a<S->NTri;a++)
 	 for(c=0;c<3;c++)
-		Tri[a][c]=icosahedron[a][c];
+		S->Tri[a][c]=icosahedron[a][c];
 
   for(a=0;a<MAXDOT;a++)
 	 for(b=0;b<MAXDOT;b++)
-		(*EdgeRef)[a][b]=-1;
+		(*S->EdgeRef)[a][b]=-1;
 
   if(level>4)
 	 level=4;
@@ -373,82 +397,82 @@ SphereRec *MakeDotSphere(int level)
   for(c=0;c<level;c++)
 	 {
 		/* create new vertices */
-		for(a=0;a<NTri;a++)
+		for(a=0;a<S->NTri;a++)
 		  {
-			 MakeVertex(Tri[a][0],Tri[a][1]);
-			 MakeVertex(Tri[a][1],Tri[a][2]);
-			 MakeVertex(Tri[a][0],Tri[a][2]);
+			 MakeVertex(S,S->Tri[a][0],S->Tri[a][1]);
+			 MakeVertex(S,S->Tri[a][1],S->Tri[a][2]);
+			 MakeVertex(S,S->Tri[a][0],S->Tri[a][2]);
 		  }		
 		/* create new triangles */
-		curTri=NTri;
+		curTri=S->NTri;
 		for(a=0;a<curTri;a++)
 		  {
-			 h=Tri[a][0];
-			 k=Tri[a][1];
-			 l=Tri[a][2];
+			 h=S->Tri[a][0];
+			 k=S->Tri[a][1];
+			 l=S->Tri[a][2];
 
-			 Tri[a][0]=h;
-			 Tri[a][1]=(*EdgeRef)[h][k];
-			 Tri[a][2]=(*EdgeRef)[h][l];
+			 S->Tri[a][0]=h;
+			 S->Tri[a][1]=(*S->EdgeRef)[h][k];
+			 S->Tri[a][2]=(*S->EdgeRef)[h][l];
 			 
-			 Tri[NTri][0]=k;
-			 Tri[NTri][1]=(*EdgeRef)[k][h];
-			 Tri[NTri][2]=(*EdgeRef)[k][l];
-			 NTri++;
+			 S->Tri[S->NTri][0]=k;
+			 S->Tri[S->NTri][1]=(*S->EdgeRef)[k][h];
+			 S->Tri[S->NTri][2]=(*S->EdgeRef)[k][l];
+			 S->NTri++;
 			 
-			 Tri[NTri][0]=l;
-			 Tri[NTri][1]=(*EdgeRef)[l][h];
-			 Tri[NTri][2]=(*EdgeRef)[l][k];
-			 NTri++;
+			 S->Tri[S->NTri][0]=l;
+			 S->Tri[S->NTri][1]=(*S->EdgeRef)[l][h];
+			 S->Tri[S->NTri][2]=(*S->EdgeRef)[l][k];
+			 S->NTri++;
 			 
-			 Tri[NTri][0]=(*EdgeRef)[h][k];
-			 Tri[NTri][1]=(*EdgeRef)[k][l];
-			 Tri[NTri][2]=(*EdgeRef)[l][h];
-			 NTri++;		
+			 S->Tri[S->NTri][0]=(*S->EdgeRef)[h][k];
+			 S->Tri[S->NTri][1]=(*S->EdgeRef)[k][l];
+			 S->Tri[S->NTri][2]=(*S->EdgeRef)[l][h];
+			 S->NTri++;		
 		}
-		/*		printf( "MakeDotSphere: Level: %i  NTri: %i\n",c, NTri); */
+		/*		printf( "MakeDotSphere: Level: %i  S->NTri: %i\n",c, S->NTri); */
 	 }
-  /*  printf(" MakeDotSphere: NDot %i NTri %i\n",NDot,NTri);*/
+  /*  printf(" MakeDotSphere: NDot %i S->NTri %i\n",NDot,S->NTri);*/
   result= Alloc(SphereRec,1);
   ErrChkPtr(result);
-  result->dot = Alloc(Vector3f,NDot);
+  result->dot = Alloc(Vector3f,S->NDot);
   ErrChkPtr(result->dot);
-  result->area = Alloc(float,NDot);
+  result->area = Alloc(float,S->NDot);
   ErrChkPtr(result->area);
-  result->StripLen = Alloc(int,NTri*3);
+  result->StripLen = Alloc(int,S->NTri*3);
   ErrChkPtr(result->StripLen);
-  result->Sequence = Alloc(int,NTri*3);
+  result->Sequence = Alloc(int,S->NTri*3);
   ErrChkPtr(result->Sequence);
 
-  for(a=0;a<NDot;a++)
+  for(a=0;a<S->NDot;a++)
 	 {
 		for(c=0;c<3;c++)
-		  result->dot[a][c]=*(Dot+(3*a+c));
+		  result->dot[a][c]=*(S->Dot+(3*a+c));
 		result->area[a] = 0.0;
 	 }
 
   /* fix normals so that v1-v0 x v2-v0 is the correct normal */
 
-  for(a=0;a<NTri;a++) {
-    subtract3f(result->dot[Tri[a][1]],result->dot[Tri[a][0]],vt1);
-    subtract3f(result->dot[Tri[a][2]],result->dot[Tri[a][0]],vt2);
+  for(a=0;a<S->NTri;a++) {
+    subtract3f(result->dot[S->Tri[a][1]],result->dot[S->Tri[a][0]],vt1);
+    subtract3f(result->dot[S->Tri[a][2]],result->dot[S->Tri[a][0]],vt2);
     cross_product3f(vt1,vt2,vt);
-    if(dot_product3f(vt,result->dot[Tri[a][0]])<0.0) { /* if wrong, then interchange */
-      it=Tri[a][2]; Tri[a][2]=Tri[a][1]; Tri[a][1]=it;
+    if(dot_product3f(vt,result->dot[S->Tri[a][0]])<0.0) { /* if wrong, then interchange */
+      it=S->Tri[a][2]; S->Tri[a][2]=S->Tri[a][1]; S->Tri[a][1]=it;
 	 }
   }    
 
-  for(a=0;a<NTri;a++)
+  for(a=0;a<S->NTri;a++)
 	 {
-		area = (float)(SphericalAngle(Tri[a][0],Tri[a][1],Tri[a][2]) +
-		  SphericalAngle(Tri[a][1],Tri[a][0],Tri[a][2]) +
-				  SphericalAngle(Tri[a][2],Tri[a][0],Tri[a][1]) - cPI);
+		area = (float)(SphericalAngle(S,S->Tri[a][0],S->Tri[a][1],S->Tri[a][2]) +
+		  SphericalAngle(S,S->Tri[a][1],S->Tri[a][0],S->Tri[a][2]) +
+				  SphericalAngle(S,S->Tri[a][2],S->Tri[a][0],S->Tri[a][1]) - cPI);
 		/* multiply by r^2 to get area */
 		sumArea+=area;
 		area/=3.0;
-		result->area[Tri[a][0]] += area;
-		result->area[Tri[a][1]] += area;
-		result->area[Tri[a][2]] += area;
+		result->area[S->Tri[a][0]] += area;
+		result->area[S->Tri[a][1]] += area;
+		result->area[S->Tri[a][2]] += area;
 	 }
 
   if(fabs(sumArea - (4*cPI))>0.001) {
@@ -457,7 +481,7 @@ SphereRec *MakeDotSphere(int level)
   }
 
   
-  for(a=0;a<NTri;a++)
+  for(a=0;a<S->NTri;a++)
 	 TriFlag[a]=false;
 
   nStrip=0;
@@ -471,36 +495,36 @@ SphereRec *MakeDotSphere(int level)
   while(flag) {
 	 flag=false;
 	 a=0;
-	 while(a<NTri)
+	 while(a<S->NTri)
 		{
 		  if(!TriFlag[a]) {
 			 flag=true;
 			 
 			 TriFlag[a]=true;
-			 *(q++)=Tri[a][0];
-			 *(q++)=Tri[a][1];
-			 *(q++)=Tri[a][2];
+			 *(q++)=S->Tri[a][0];
+			 *(q++)=S->Tri[a][1];
+			 *(q++)=S->Tri[a][2];
 			 n=3;
 			 
 			 b=0;
-			 while(b<NTri)
+			 while(b<S->NTri)
 				{
 				  if(!TriFlag[b]) {
-					 if(((Tri[b][0]==q[-2])&&(Tri[b][1]==q[-1]))||
-						 ((Tri[b][0]==q[-1])&&(Tri[b][1]==q[-2]))) {
-						*(q++)=Tri[b][2];
+					 if(((S->Tri[b][0]==q[-2])&&(S->Tri[b][1]==q[-1]))||
+						 ((S->Tri[b][0]==q[-1])&&(S->Tri[b][1]==q[-2]))) {
+						*(q++)=S->Tri[b][2];
 						TriFlag[b]=true;
 						b=0;
 						n++;
-					 } else if(((Tri[b][0]==q[-2])&&(Tri[b][2]==q[-1]))||
-						 ((Tri[b][0]==q[-1])&&(Tri[b][2]==q[-2]))) {
-						*(q++)=Tri[b][1];
+					 } else if(((S->Tri[b][0]==q[-2])&&(S->Tri[b][2]==q[-1]))||
+						 ((S->Tri[b][0]==q[-1])&&(S->Tri[b][2]==q[-2]))) {
+						*(q++)=S->Tri[b][1];
 						TriFlag[b]=true;
 						b=0;
 						n++;
-					 } else if(((Tri[b][2]==q[-2])&&(Tri[b][1]==q[-1]))||
-						 ((Tri[b][2]==q[-1])&&(Tri[b][1]==q[-2]))) {
-						*(q++)=Tri[b][0];
+					 } else if(((S->Tri[b][2]==q[-2])&&(S->Tri[b][1]==q[-1]))||
+						 ((S->Tri[b][2]==q[-1])&&(S->Tri[b][1]==q[-2]))) {
+						*(q++)=S->Tri[b][0];
 						TriFlag[b]=true;
 						b=0;
 						n++;
@@ -509,29 +533,29 @@ SphereRec *MakeDotSphere(int level)
 				  b++;
 				}
 			 if(n==3) {
-				q[-3]=Tri[a][1];
-				q[-2]=Tri[a][2];
-				q[-1]=Tri[a][0];
+				q[-3]=S->Tri[a][1];
+				q[-2]=S->Tri[a][2];
+				q[-1]=S->Tri[a][0];
 				
 				b=0;
-				while(b<NTri)
+				while(b<S->NTri)
 				  {
 					 if(!TriFlag[b]) {
-						if(((Tri[b][0]==q[-2])&&(Tri[b][1]==q[-1]))||
-							((Tri[b][0]==q[-1])&&(Tri[b][1]==q[-2]))) {
-						  *(q++)=Tri[b][2];
+						if(((S->Tri[b][0]==q[-2])&&(S->Tri[b][1]==q[-1]))||
+							((S->Tri[b][0]==q[-1])&&(S->Tri[b][1]==q[-2]))) {
+						  *(q++)=S->Tri[b][2];
 						  TriFlag[b]=true;
 						  b=0;
 						  n++;
-						} else if(((Tri[b][0]==q[-2])&&(Tri[b][2]==q[-1]))||
-									 ((Tri[b][0]==q[-1])&&(Tri[b][2]==q[-2]))) {
-						  *(q++)=Tri[b][1];
+						} else if(((S->Tri[b][0]==q[-2])&&(S->Tri[b][2]==q[-1]))||
+									 ((S->Tri[b][0]==q[-1])&&(S->Tri[b][2]==q[-2]))) {
+						  *(q++)=S->Tri[b][1];
 						  TriFlag[b]=true;
 						  b=0;
 						  n++;
-						} else if(((Tri[b][2]==q[-2])&&(Tri[b][1]==q[-1]))||
-									 ((Tri[b][2]==q[-1])&&(Tri[b][1]==q[-2]))) {
-						  *(q++)=Tri[b][0];
+						} else if(((S->Tri[b][2]==q[-2])&&(S->Tri[b][1]==q[-1]))||
+									 ((S->Tri[b][2]==q[-1])&&(S->Tri[b][1]==q[-2]))) {
+						  *(q++)=S->Tri[b][0];
 						  TriFlag[b]=true;
 						  b=0;
 						  n++;
@@ -541,28 +565,28 @@ SphereRec *MakeDotSphere(int level)
 				  }
 			 }
 			 if(n==3) {
-				q[-3]=Tri[a][2];
-				q[-2]=Tri[a][0];
-				q[-1]=Tri[a][1];
+				q[-3]=S->Tri[a][2];
+				q[-2]=S->Tri[a][0];
+				q[-1]=S->Tri[a][1];
 				b=0;
-				while(b<NTri)
+				while(b<S->NTri)
 				  {
 					 if(!TriFlag[b]) {
-						if(((Tri[b][0]==q[-2])&&(Tri[b][1]==q[-1]))||
-							((Tri[b][0]==q[-1])&&(Tri[b][1]==q[-2]))) {
-						  *(q++)=Tri[b][2];
+						if(((S->Tri[b][0]==q[-2])&&(S->Tri[b][1]==q[-1]))||
+							((S->Tri[b][0]==q[-1])&&(S->Tri[b][1]==q[-2]))) {
+						  *(q++)=S->Tri[b][2];
 						  TriFlag[b]=true;
 						  b=0;
 						  n++;
-						} else if(((Tri[b][0]==q[-2])&&(Tri[b][2]==q[-1]))||
-									 ((Tri[b][0]==q[-1])&&(Tri[b][2]==q[-2]))) {
-						  *(q++)=Tri[b][1];
+						} else if(((S->Tri[b][0]==q[-2])&&(S->Tri[b][2]==q[-1]))||
+									 ((S->Tri[b][0]==q[-1])&&(S->Tri[b][2]==q[-2]))) {
+						  *(q++)=S->Tri[b][1];
 						  TriFlag[b]=true;
 						  b=0;
 						  n++;
-						} else if(((Tri[b][2]==q[-2])&&(Tri[b][1]==q[-1]))||
-									 ((Tri[b][2]==q[-1])&&(Tri[b][1]==q[-2]))) {
-						  *(q++)=Tri[b][0];
+						} else if(((S->Tri[b][2]==q[-2])&&(S->Tri[b][1]==q[-1]))||
+									 ((S->Tri[b][2]==q[-1])&&(S->Tri[b][1]==q[-2]))) {
+						  *(q++)=S->Tri[b][0];
 						  TriFlag[b]=true;
 						  b=0;
 						  n++;
@@ -578,22 +602,22 @@ SphereRec *MakeDotSphere(int level)
 		  a++;
 		}
   }
-  mfree(Dot);
-  mfree(EdgeRef);
+  mfree(S->Dot);
+  mfree(S->EdgeRef);
   mfree(TriFlag);
-  result->Tri = (int*)Tri;
-  result->Tri = Realloc(result->Tri,int,NTri*3);
-  result->NTri = NTri;
+  result->Tri = (int*)S->Tri;
+  result->Tri = Realloc(result->Tri,int,S->NTri*3);
+  result->NTri = S->NTri;
   result->StripLen = Realloc(result->StripLen,int,nStrip);
   result->Sequence = Realloc(result->Sequence,int,nVertTot);
-  result->dot = Realloc(result->dot,Vector3f,NDot);
-  result->area = Realloc(result->area,float,NDot);
-  result->nDot = NDot;
+  result->dot = Realloc(result->dot,Vector3f,S->NDot);
+  result->area = Realloc(result->area,float,S->NDot);
+  result->nDot = S->NDot;
   result->NStrip = nStrip;
   result->NVertTot = nVertTot;
   result->Mesh = NULL;
   result->NMesh = 0;
-  if (!level) { /* provide mesh for Sphere0 only...rest, to do.*/
+  if (!level) { /* provide mesh for S->Sphere[0] only...rest, to do.*/
     result->Mesh=(int*)mesh;
     result->NMesh=30;
   }
@@ -613,16 +637,4 @@ SphereRec *MakeDotSphere(int level)
   return(result);
 }
 
-void SphereFree(SphereRec *I)
-{
-  /* NOTE: I->Mesh is not currently a pointer*/
-  mfree(I->dot);
-  mfree(I->area);
-  mfree(I->StripLen);
-  mfree(I->Sequence);
-  mfree(I->Tri);
-  FreeP(I);
-}
-
-
-
+#endif

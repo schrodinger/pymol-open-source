@@ -883,7 +883,7 @@ void SceneRovingPostpone(void)
   if(SettingGet(cSetting_roving_detail)) {
     delay = SettingGet(cSetting_roving_delay);
     if(delay<0.0F) {
-      I->RovingLastUpdate = UtilGetSeconds(); /* put off delay */
+      I->RovingLastUpdate = UtilGetSeconds(TempPyMOLGlobals); /* put off delay */
     }
   }
 }
@@ -957,7 +957,7 @@ void SceneIdle(void)
 
   if(MoviePlaying())
     {
-		renderTime = -I->LastFrameTime + UtilGetSeconds();
+		renderTime = -I->LastFrameTime + UtilGetSeconds(TempPyMOLGlobals);
 		minTime=SettingGet(cSetting_movie_delay)/1000.0;
 		if(renderTime>=minTime) {
         frameFlag=true;
@@ -966,11 +966,11 @@ void SceneIdle(void)
     }
   if(Control.Rocking&&(!rockFlag))
     {
-		renderTime = -I->LastRockTime + UtilGetSeconds();
+		renderTime = -I->LastRockTime + UtilGetSeconds(TempPyMOLGlobals);
 		minTime=SettingGet(cSetting_rock_delay)/1000.0;
 		if(renderTime>=minTime) {
         rockFlag=true;
-        I->LastRockTime=UtilGetSeconds();
+        I->LastRockTime=UtilGetSeconds(TempPyMOLGlobals);
       }
     }
   if(Control.Rocking&&rockFlag) {
@@ -986,7 +986,7 @@ void SceneIdle(void)
   }
   if(MoviePlaying()&&frameFlag)
 	 {
-      I->LastFrameTime = UtilGetSeconds();
+      I->LastFrameTime = UtilGetSeconds(TempPyMOLGlobals);
       if((SettingGetGlobal_i(cSetting_frame)-1)==(I->NFrame-1)) {
         if((int)SettingGet(cSetting_movie_loop)) {
           SceneSetFrame(7,0);
@@ -1210,7 +1210,7 @@ void SceneDraw(Block *block)
 
           }
           I->RenderTime = -I->LastRender;
-          I->LastRender = UtilGetSeconds();
+          I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
           I->RenderTime += I->LastRender;
           ButModeSetRate((float)I->RenderTime);
         }
@@ -1530,7 +1530,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   char *sel_mode_kw = empty_string;
   static int mode = 0; /* static declaration works around compiler bug in VC6 */
   
-  if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(UtilGetSeconds()-I->LastClickTime)<cDoubleTime)
+  if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(UtilGetSeconds(TempPyMOLGlobals)-I->LastClickTime)<cDoubleTime)
     {
       int dx,dy;
       dx = abs(I->LastWinX - x);
@@ -1552,7 +1552,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     
   I->LastWinX = x;
   I->LastWinY = y;
-  I->LastClickTime = UtilGetSeconds();
+  I->LastClickTime = UtilGetSeconds(TempPyMOLGlobals);
   I->LastButton = button;
   I->Threshold = 0;
 
@@ -2135,7 +2135,7 @@ void SceneRovingUpdate(void)
   float level;
   float isosurface,isomesh;
   if(I->RovingDirtyFlag&&(
-                          (UtilGetSeconds()-I->RovingLastUpdate)>
+                          (UtilGetSeconds(TempPyMOLGlobals)-I->RovingLastUpdate)>
                           fabs(SettingGet(cSetting_roving_delay)))) {
     
     if(I->RovingCleanupFlag)
@@ -2414,7 +2414,7 @@ void SceneRovingUpdate(void)
       PFlush();
     }
 
-    I->RovingLastUpdate=UtilGetSeconds();
+    I->RovingLastUpdate=UtilGetSeconds(TempPyMOLGlobals);
     I->RovingDirtyFlag=false;
   } 
 }
@@ -2869,7 +2869,7 @@ void SceneInit(void)
   I->TextColor[2]=0.2F;
   I->SculptingSave=0;
   
-  I->LastClickTime = UtilGetSeconds();
+  I->LastClickTime = UtilGetSeconds(TempPyMOLGlobals);
   I->LastWinX = 0;
   I->LastWinY = 0;
   I->Threshold = 0;
@@ -2898,9 +2898,9 @@ void SceneInit(void)
   I->MovieOwnsImageFlag = false;
   I->MovieFrameFlag = false;
   I->RenderTime = 0;
-  I->LastRender = UtilGetSeconds();
-  I->LastFrameTime = UtilGetSeconds();
-  I->LastRockTime = UtilGetSeconds();
+  I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
+  I->LastFrameTime = UtilGetSeconds(TempPyMOLGlobals);
+  I->LastRockTime = UtilGetSeconds(TempPyMOLGlobals);
   I->LastPicked.ptr = NULL;
 
   I->CopyNextFlag=true;
@@ -3067,7 +3067,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
 
   SceneUpdate();
 
-  timing = UtilGetSeconds(); /* start timing the process */
+  timing = UtilGetSeconds(TempPyMOLGlobals); /* start timing the process */
   
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
   MatrixLoadIdentity44f(rayView);
@@ -3202,7 +3202,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
     break;
   }
 
-  timing = UtilGetSeconds()-timing;
+  timing = UtilGetSeconds(TempPyMOLGlobals)-timing;
   if(mode!=2) { /* don't show timings for tests */
 	accumTiming += timing; 
 
@@ -3343,7 +3343,7 @@ int SceneRenderCached(void)
   }
   /*  if(renderedFlag) {
 	I->RenderTime = -I->LastRender;
-	I->LastRender = UtilGetSeconds();
+	I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
 	I->RenderTime += I->LastRender;
 	ButModeSetRate(I->RenderTime);
    }*/
@@ -3842,7 +3842,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         I->StereoMode, must_render_stereo, stereo_as_mono, StereoCapable
         ENDFD;
 
-      start_time = UtilGetSeconds();
+      start_time = UtilGetSeconds(TempPyMOLGlobals);
       if(must_render_stereo) {
         /*stereo*/
 
@@ -4049,7 +4049,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   
   if(!(pick||smp)) { /* update frames per second field */
     I->RenderTime = -I->LastRender;
-    I->LastRender = UtilGetSeconds();
+    I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
     I->RenderTime += I->LastRender;
     ButModeSetRate((float)I->RenderTime);
     if(I->CopyNextFlag) {
@@ -4072,8 +4072,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 void SceneRestartTimers(void)
 {
   CScene *I=&Scene;
-  I->LastRender = UtilGetSeconds();
-  I->LastFrameTime = UtilGetSeconds();
+  I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
+  I->LastFrameTime = UtilGetSeconds(TempPyMOLGlobals);
   I->RenderTime = 0;
 }
 /*========================================================================*/

@@ -1117,12 +1117,12 @@ integer a_dim1, a_offset, i__1, i__2;
 doublereal d__1;
 
 /* Local variables */
-static integer iexc;
-static doublereal c__, f, g;
-static integer i__, j, k, l, m;
-static doublereal r__, s, radix, b2;
-static integer jj;
-static logical noconv;
+ integer iexc;
+ doublereal c__, f, g;
+ integer i__, j, k, l, m;
+ doublereal r__, s, radix, b2;
+ integer jj;
+ logical noconv;
 
 
 
@@ -1376,9 +1376,9 @@ doublereal *z__;
 integer z_dim1, z_offset, i__1, i__2;
 
 /* Local variables */
-static integer i__, j, k;
-static doublereal s;
-static integer ii;
+ integer i__, j, k;
+ doublereal s;
+ integer ii;
 
 
 
@@ -1490,7 +1490,7 @@ doublereal *ar, *ai, *br, *bi, *cr, *ci;
 doublereal d__1, d__2;
 
 /* Local variables */
-static doublereal s, ais, bis, ars, brs;
+doublereal s, ais, bis, ars, brs;
 
 
 /*     complex division, (cr,ci) = (ar,ai)/(br,bi) */
@@ -1520,9 +1520,9 @@ integer a_dim1, a_offset, i__1, i__2, i__3;
 doublereal d__1;
 
 /* Local variables */
-static integer i__, j, m;
-static doublereal x, y;
-static integer la, mm1, kp1, mp1;
+integer i__, j, m;
+doublereal x, y;
+integer la, mm1, kp1, mp1;
 
 
 
@@ -1668,7 +1668,7 @@ doublereal *z__;
     integer a_dim1, a_offset, z_dim1, z_offset, i__1, i__2;
 
     /* Local variables */
-    static integer i__, j, kl, mm, mp, mp1;
+     integer i__, j, kl, mm, mp, mp1;
 
 
 
@@ -1786,14 +1786,14 @@ integer *ierr;
     doublereal d__1, d__2;
 
     /* Local variables */
-    static doublereal norm;
-    static integer i__, j, k, l, m;
-    static doublereal p, q, r__, s, t, w, x, y;
-    static integer na, en, ll, mm;
-    static doublereal zz;
-    static logical notlas;
-    static integer mp2, itn, its, enm2;
-    static doublereal tst1, tst2;
+     doublereal norm;
+     integer i__, j, k, l, m;
+     doublereal p, q, r__, s, t, w, x, y;
+     integer na, en, ll, mm;
+     doublereal zz;
+     logical notlas;
+     integer mp2, itn, its, enm2;
+     doublereal tst1, tst2;
 
 /*  RESTORED CORRECT INDICES OF LOOPS (200,210,230,240). (9/29/89 BSG) */
 
@@ -2140,16 +2140,16 @@ integer *ierr;
 
 
     /* Local variables */
-    static doublereal norm;
-    static integer i__, j, k, l, m;
-    static doublereal p, q, r__, s, t, w, x, y;
-    static integer na, ii, en, jj;
-    static doublereal ra, sa;
-    static integer ll, mm, nn;
-    static doublereal vi, vr, zz;
-    static logical notlas;
-    static integer mp2, itn, its, enm2;
-    static doublereal tst1, tst2;
+     doublereal norm;
+     integer i__, j, k, l, m;
+     doublereal p, q, r__, s, t, w, x, y;
+     integer na, ii, en, jj;
+     doublereal ra, sa;
+     integer ll, mm, nn;
+     doublereal vi, vr, zz;
+     logical notlas;
+     integer mp2, itn, its, enm2;
+     doublereal tst1, tst2;
 
 
 
@@ -2835,7 +2835,7 @@ integer *ierr;
     integer a_dim1, a_offset, z_dim1, z_offset;
 
     /* Local variables */
-    static integer is1, is2;
+     integer is1, is2;
 
 /*     this subroutine calls the recommended sequence of */
 /*     subroutines from the eigensystem subroutine package (eispack) */

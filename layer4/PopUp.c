@@ -114,8 +114,8 @@ Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
   I->Selected = -1;
   I->StartX = (I->LastX = last_x);
   I->StartY = (I->LastY = last_y);
-  I->ChildDelay = UtilGetSeconds() + cChildDelay*2.5;
-  I->PassiveDelay = UtilGetSeconds() + cPassiveDelay;
+  I->ChildDelay = UtilGetSeconds(TempPyMOLGlobals) + cChildDelay*2.5;
+  I->PassiveDelay = UtilGetSeconds(TempPyMOLGlobals) + cPassiveDelay;
   I->DirtyDelay = false;
   I->DirtyDelayFlag = false;
   I->NeverDragged = true;
@@ -340,9 +340,9 @@ int PopUpRelease(Block *block,int button,int x,int y,int mod)
   int gone_passive = false;
 
   if(I->NeverDragged) {
-    if(I->PassiveDelay>UtilGetSeconds()) {    
+    if(I->PassiveDelay>UtilGetSeconds(TempPyMOLGlobals)) {    
       gone_passive = true;
-      I->PassiveDelay = UtilGetSeconds(); /* kill any further delay */
+      I->PassiveDelay = UtilGetSeconds(TempPyMOLGlobals); /* kill any further delay */
     }
   } 
   if(!gone_passive) {
@@ -422,7 +422,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
     else {
       if(I->Code[a]==1) {
         if((I->Child)&&(I->ChildLine!=a)) {
-          if(I->ChildDelay<UtilGetSeconds()) {
+          if(I->ChildDelay<UtilGetSeconds(TempPyMOLGlobals)) {
             PopUpDetachRecursiveChild(I->Child);
             PopUpFreeRecursiveChild(I->Child);
             I->Child=NULL;
@@ -441,7 +441,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
         /* activate submenu */
         if(!I->Child) {
           I->ChildLine = a;
-          if(I->ChildDelay>UtilGetSeconds()) {
+          if(I->ChildDelay>UtilGetSeconds(TempPyMOLGlobals)) {
             MainDragDirty(); /* keep coming back here... */
           } else {
             I->Child = PopUpNew(I->LastX-300,I->LastY,I->LastX,I->LastY,I->Sub[a],I->Block);
@@ -455,11 +455,11 @@ int PopUpDrag(Block *block,int x,int y,int mod)
             }
                           
             OrthoGrab(I->Block);
-            I->ChildDelay = UtilGetSeconds() + cChildDelay; /* leave child up for a while */
+            I->ChildDelay = UtilGetSeconds(TempPyMOLGlobals) + cChildDelay; /* leave child up for a while */
           }
           MainDragDirty(); /* keep coming back here... */
         } else if(I->ChildLine==a) { /* on correct line */
-          I->ChildDelay = UtilGetSeconds() + cChildDelay; /* keep child here for a while */
+          I->ChildDelay = UtilGetSeconds(TempPyMOLGlobals) + cChildDelay; /* keep child here for a while */
         }
         I->Selected=a;
       } else 
@@ -477,18 +477,18 @@ int PopUpDrag(Block *block,int x,int y,int mod)
     I->NeverDragged = false;
     if(!I->Child) {
       /* we moved, so renew the child delay */
-      I->ChildDelay = UtilGetSeconds() + cChildDelay;
+      I->ChildDelay = UtilGetSeconds(TempPyMOLGlobals) + cChildDelay;
       MainDragDirty();
     }
 
     if((I->Child)&&(I->Selected!=I->ChildLine)) {
       I->DirtyDelayFlag = true;
-      I->DirtyDelay = UtilGetSeconds() + cDirtyDelay;
+      I->DirtyDelay = UtilGetSeconds(TempPyMOLGlobals) + cDirtyDelay;
     }
     if(!I->DirtyDelayFlag)
       OrthoDirty();
   }
-  if(I->DirtyDelayFlag && (I->DirtyDelay<UtilGetSeconds())) {
+  if(I->DirtyDelayFlag && (I->DirtyDelay<UtilGetSeconds(TempPyMOLGlobals))) {
     I->DirtyDelayFlag = false;
     OrthoDirty();
   }

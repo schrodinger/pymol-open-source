@@ -151,7 +151,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   float *v,*v0,*vc;
   float nonbonded_size;
   int *q, *s;
-  SphereRec *sp = Sphere0; 
+  SphereRec *sp = TempPyMOLGlobals->Sphere->Sphere[0];
   int ds;
   int *active=NULL;
   AtomInfoType *ai;
@@ -187,12 +187,8 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_density);
   ds=1;
   if(ds<0) ds=0;
-  switch(ds) {
-  case 0: sp=Sphere0; break;
-  case 1: sp=Sphere1; break;
-  case 2: sp=Sphere2; break;
-  default: sp=Sphere3; break;
-  }
+  if(ds>3) ds=3;
+  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
 
   RepInit(&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepNonbondedSphereRender;

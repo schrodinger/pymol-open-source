@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Crystal.h"
 #include"Field.h"
 #include"os_python.h"
+#include"PyMOLGlobals.h"
 
 typedef struct {
   int dimensions[3];
@@ -36,16 +37,18 @@ typedef struct {
 #define F4(field,P1,P2,P3,P4) Ffloat4(field,P1,P2,P3,P4)
 #define F4Ptr(field,P1,P2,P3,P4) Ffloat4p(field,P1,P2,P3,P4)
 
-Isofield *IsosurfFieldAlloc(int *dims);
-void IsosurfFieldFree(Isofield *field);
+Isofield *IsosurfFieldAlloc(PyMOLGlobals *G,int *dims);
+void IsosurfFieldFree(PyMOLGlobals *G,Isofield *field);
 
-int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,int mode);
+int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **vert,int *range,int mode);
 void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
+int	IsosurfInit(PyMOLGlobals *G);
+void  IsosurfFree(PyMOLGlobals *G);
+
+/* isofield operations -- not part of Isosurf */
+
 void IsofieldComputeGradients(Isofield *field);
-
-int	IsosurfInit(void);
-
 PyObject *IsosurfAsPyList(Isofield *I);
 Isofield *IsosurfNewFromPyList(PyObject *list);
 

@@ -3453,7 +3453,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
   int current;
   int cscount;
   int n_state=0;
-  sp=Sphere1;
+  sp = TempPyMOLGlobals->Sphere->Sphere[1];
   
   nRow = I->NAtom*sp->nDot;
 

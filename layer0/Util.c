@@ -22,12 +22,20 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Err.h"
 
+struct _CUtil {
+  double StartSec;
+};
 
-static unsigned int UtilStartSec;
+int UtilInit(PyMOLGlobals *G) 
+{
+  G->Util = Calloc(CUtil,1);
+  G->Util->StartSec = UtilGetSeconds(G);
+  return 1;
+}
 
-
-void UtilInit(void) {
-  UtilStartSec = (int)UtilGetSeconds();
+void UtilFree(PyMOLGlobals *G) 
+{
+  FreeP(G->Util);
 }
 
 int UtilCountStringVLA(char *vla)
@@ -45,16 +53,16 @@ int UtilCountStringVLA(char *vla)
   return(result);
 }
 
-double UtilGetSeconds(void)
+double UtilGetSeconds(PyMOLGlobals *G)
 {
 #ifndef WIN32
   struct timeval tv;
   gettimeofday(&tv,NULL);
-  return((tv.tv_sec-UtilStartSec)+(tv.tv_usec/((double)1000000.0)));
+  return((tv.tv_sec+(tv.tv_usec/((double)1000000.0)))-G->Util->StartSec);
 #else
    struct _timeb timebuffer;
    _ftime( &timebuffer );
-   return((timebuffer.time-UtilStartSec)+(timebuffer.millitm/((double)1000.0)));
+   return((timebuffer.time+(timebuffer.millitm/((double)1000.0)))-G->Util->StartSec);
 #endif
 }
 

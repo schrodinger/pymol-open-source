@@ -373,7 +373,7 @@ Rep *RepSphereNew(CoordSet *cs)
   float restart;
   int *q, *s,q0,q1,q2;
   int *lv,*lc,*cc;
-  SphereRec *sp = Sphere0; 
+  SphereRec *sp = TempPyMOLGlobals->Sphere->Sphere[0];
   int ds,*nt,flag;
   int *visFlag = NULL;
   MapType *map = NULL;
@@ -411,13 +411,8 @@ Rep *RepSphereNew(CoordSet *cs)
   RepInit(&I->R);
   ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
   if(ds<0) ds=0;
-  switch(ds) {
-  case 0: sp=Sphere0; break;
-  case 1: sp=Sphere1; break;
-  case 2: sp=Sphere2; break;
-  case 3: sp=Sphere3; break;
-  default: sp=Sphere4; break;
-  }
+  if(ds>4) ds=4;
+  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
 
   one_color=SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
 

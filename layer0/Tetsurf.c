@@ -71,42 +71,37 @@ typedef struct {
   int tri;
 } PointLinkType;
 
-static TriangleType *Tri = NULL;
-static PointLinkType *PtLink = NULL;
 
 #define EdgePtPtr(field,P2,P3,P4,P5) ((PointType*)Fvoid4p(field,P2,P3,P4,P5))
 
 #define EdgePt(field,P2,P3,P4,P5) (*((PointType*)Fvoid4p(field,P2,P3,P4,P5)))
 
-static	CField	*VertexCodes;
-static	CField	*ActiveEdges;
-static	CField   *Point;
+struct _CTetsurf {
+  TriangleType *Tri;
+  PointLinkType *PtLink;
+  
+  CField	*VertexCodes;
+  CField	*ActiveEdges;
+  CField   *Point;
+  
+	int	AbsDim[3],CurDim[3],CurOff[3];
+  int	Max[3];
+	CField *Coord,*Data,*Grad;
+  float	Level;
+  int   Edge[6020]; /* 6017 */
+  int   EdgeStart[256];
+  int   TotPrim;
+};
 
-static	int	AbsDim[3],CurDim[3],CurOff[3];
-static	int	Max[3];
-static	CField *Coord,*Data,*Grad;
-static	float	Level;
-static   int   Edge[6020]; /* 6017 */
-static   int   EdgeStart[256];
-static   int   TotPrim;
 
-int	TetsurfInit(void);
-int	TetsurfAlloc(void);
-void	TetsurfFree(void);
-int	TetsurfCodeVertices(void);
-void	TetsurfInterpolate2(float *pt,float *v0,float l0,float *v1,float l1);
-void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v1,float l1
-                          ,float l2,float l3);
-void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
-                          float l2,float l3,float l4,
-                          float l5,float l6,float l7);
+static int	TetsurfAlloc(CTetsurf *II);
+static void	TetsurfPurge(CTetsurf *II);
+static int	TetsurfCodeVertices(CTetsurf *II);
 
-int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
+static int	TetsurfFindActiveBoxes(CTetsurf *II,int mode,int *n_strip,int n_vert,
                              int **strip_l,float **vert,
                              MapType *voxelmap,float *a_vert,
                              float carvebuffer,int side);
-void	TetsurfCode(char *bits1,char *bits2);
-int	TetsurfPoints(void);
 
 #define TetsurfSubSize		50
 
@@ -222,8 +217,9 @@ static int ProcessTetrahedron(int *edge,int nv,int v0,int v1,int v2,int v3,
   return nv;
 }
 /*===========================================================================*/
-int	TetsurfInit(void)
+int	TetsurfInit(PyMOLGlobals *G)
 {
+
    /* there are six tetrahedrons in each cube, and there are 
       sixteen different types of tetrahedrons*/
    
@@ -317,15 +313,21 @@ int	TetsurfInit(void)
 #define cM_101_111 0x20000
 #define cM_110_111 0x40000
 
+   register CTetsurf *I;
+   I = (G->Tetsurf = Calloc(CTetsurf,1));
+
+   I->Tri = NULL;
+   I->PtLink = NULL;
+
 	int	ok=true;
 	int	c;
    int   nv=1;
    int   last_nv;
    int v000,v100,v010,v110,v001,v101,v011,v111;
 
-	VertexCodes=NULL;
-	ActiveEdges=NULL;
-	Point=NULL;
+	I->VertexCodes=NULL;
+	I->ActiveEdges=NULL;
+	I->Point=NULL;
 	
    last_nv = nv;
       
@@ -341,7 +343,7 @@ int	TetsurfInit(void)
      v111=(c&0x80) ? 1 : 0;
 
      /* tetrahedron 0: 000, 001, 011, 111 */
-     nv=ProcessTetrahedron(Edge,nv,v000,v001,v011,v111,
+     nv=ProcessTetrahedron(I->Edge,nv,v000,v001,v011,v111,
                         cE_000_001,
                         cE_000_011,
                         cE_000_111,
@@ -349,7 +351,7 @@ int	TetsurfInit(void)
                         cE_001_111,
                         cE_011_111,0);
      /* tetrahedron 1: 000, 001, 101, 111 */
-     nv=ProcessTetrahedron(Edge,nv,v000,v001,v101,v111,
+     nv=ProcessTetrahedron(I->Edge,nv,v000,v001,v101,v111,
                         cE_000_001,
                         cE_000_101,
                         cE_000_111,
@@ -358,7 +360,7 @@ int	TetsurfInit(void)
                         cE_101_111,1);
 
      /* tetrahedron 2: 000, 010, 011, 111 */
-     nv=ProcessTetrahedron(Edge,nv,v000,v010,v011,v111,
+     nv=ProcessTetrahedron(I->Edge,nv,v000,v010,v011,v111,
                         cE_000_010,
                         cE_000_011,
                         cE_000_111,
@@ -366,7 +368,7 @@ int	TetsurfInit(void)
                         cE_010_111,
                         cE_011_111,1);
      /* tetrahedron 3: 000, 010, 110, 111 */
-     nv=ProcessTetrahedron(Edge,nv,v000,v010,v110,v111,
+     nv=ProcessTetrahedron(I->Edge,nv,v000,v010,v110,v111,
                         cE_000_010,
                         cE_000_110,
                         cE_000_111,
@@ -375,7 +377,7 @@ int	TetsurfInit(void)
                         cE_110_111,0);
 
      /* tetrahedron 4: 000, 100, 101, 111 */
-     nv=ProcessTetrahedron(Edge,nv,v000,v100,v101,v111,
+     nv=ProcessTetrahedron(I->Edge,nv,v000,v100,v101,v111,
                         cE_000_100,
                         cE_000_101,
                         cE_000_111,
@@ -384,7 +386,7 @@ int	TetsurfInit(void)
                         cE_101_111,0);
 
      /* tetrahedron 5: 000, 100, 110, 111 */
-     nv=ProcessTetrahedron(Edge,nv,v000,v100,v110,v111,
+     nv=ProcessTetrahedron(I->Edge,nv,v000,v100,v110,v111,
                         cE_000_100,
                         cE_000_110,
                         cE_000_111,
@@ -392,8 +394,8 @@ int	TetsurfInit(void)
                         cE_100_111,
                         cE_110_111,1);
 
-     Edge[nv++]=(-1); /* sentinel */
-     EdgeStart[c] = last_nv;
+     I->Edge[nv++]=(-1); /* sentinel */
+     I->EdgeStart[c] = last_nv;
      last_nv = nv;
    }
    /*   printf("%d\n",nv);
@@ -406,6 +408,12 @@ int	TetsurfInit(void)
         }
    */
 	return(ok);
+}
+
+/*===========================================================================*/
+void  TetsurfFree(PyMOLGlobals *G)
+{
+  FreeP(G->Tetsurf);
 }
 
 /*===========================================================================*/
@@ -437,10 +445,11 @@ void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   }
 }
   /*===========================================================================*/
-int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
+int	TetsurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **vert,
                     int *range,int mode,MapType *voxelmap,float *a_vert,
                     float carvebuffer, int side)
 {
+  register CTetsurf *I=G->Tetsurf;
 	int	ok=true;
 	int	Steps[3];
 	int	c,i,j,k;
@@ -451,12 +460,12 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
    if(mode==3) 
      IsofieldComputeGradients(field);
 
-   TotPrim=0;
+   I->TotPrim=0;
    if(range) {
      for(c=0;c<3;c++)
        {
-         AbsDim[c]=field->dimensions[c];
-         CurDim[c]=TetsurfSubSize+1;
+         I->AbsDim[c]=field->dimensions[c];
+         I->CurDim[c]=TetsurfSubSize+1;
          Steps[c]=1+((range[3+c]-range[c])-1)/TetsurfSubSize;
        }     
    } else {
@@ -465,9 +474,9 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
        {
          range[c]=0;
          range[3+c]=field->dimensions[c];
-         AbsDim[c]=field->dimensions[c];
-         CurDim[c]=TetsurfSubSize+1;
-         Steps[c]=1+(AbsDim[c]-1)/TetsurfSubSize;
+         I->AbsDim[c]=field->dimensions[c];
+         I->CurDim[c]=TetsurfSubSize+1;
+         Steps[c]=1+(I->AbsDim[c]-1)/TetsurfSubSize;
        }
    }
    
@@ -477,11 +486,11 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
         }
    */
      
-	Coord=field->points;
-	Grad=field->gradients;
-	Data=field->data;
-	Level=level;
-	if(ok) ok=TetsurfAlloc();
+	I->Coord=field->points;
+	I->Grad=field->gradients;
+	I->Data=field->data;
+	I->Level=level;
+	if(ok) ok=TetsurfAlloc(I);
 
 	if(ok)
 		{
@@ -490,38 +499,38 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
 		for(j=0;j<Steps[1];j++)
 		for(k=0;k<Steps[2];k++)
 			{
-			CurOff[0]=TetsurfSubSize*i;
-			CurOff[1]=TetsurfSubSize*j;
-			CurOff[2]=TetsurfSubSize*k;
+			I->CurOff[0]=TetsurfSubSize*i;
+			I->CurOff[1]=TetsurfSubSize*j;
+			I->CurOff[2]=TetsurfSubSize*k;
          for(c=0;c<3;c++)
-           CurOff[c]+=range[c];
+           I->CurOff[c]+=range[c];
 			for(c=0;c<3;c++)
            {
-             Max[c]=(range[3+c]-CurOff[c]);
-             if(Max[c]>(TetsurfSubSize+1))
-               Max[c]=(TetsurfSubSize+1);
+             I->Max[c]=(range[3+c]-I->CurOff[c]);
+             if(I->Max[c]>(TetsurfSubSize+1))
+               I->Max[c]=(TetsurfSubSize+1);
            }
          /*         
          for(c=0;c<3;c++)
-           printf(" TetsurfVolume: c: %i CurOff[c]: %i Max[c] %i\n",c,CurOff[c],Max[c]); 
+           printf(" TetsurfVolume: c: %i I->CurOff[c]: %i I->Max[c] %i\n",c,I->CurOff[c],I->Max[c]); 
          */
 
 			if(ok) 
            {
-             if(TetsurfCodeVertices())
-               n_vert=TetsurfFindActiveBoxes(mode,&n_strip,n_vert,num,vert,
+             if(TetsurfCodeVertices(I))
+               n_vert=TetsurfFindActiveBoxes(I,mode,&n_strip,n_vert,num,vert,
                                              voxelmap,a_vert,carvebuffer,
                                              side);
            }
          }
-      TetsurfFree();
+      TetsurfPurge(I);
       }
    
    if(Feedback(FB_Isosurface,FB_Actions)) { 
      if(mode<2) {
        printf(" TetsurfVolume: Surface generated using %d vertices.\n",n_vert); 
      } else {
-       printf(" TetsurfVolume: Surface generated using %d triangles.\n",TotPrim); 
+       printf(" TetsurfVolume: Surface generated using %d triangles.\n",I->TotPrim); 
      }
    }
 
@@ -536,35 +545,36 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
    VLASize(*vert,float,n_vert*3);
    VLASize(*num,int,n_strip);
 
-	return(TotPrim);
+	return(I->TotPrim);
 }
 /*===========================================================================*/
-int	TetsurfAlloc(void)
+static int	TetsurfAlloc(CTetsurf *II)
 {
+  register CTetsurf *I=II;
 	int	ok=true;
 	int dim4[4];
    int a;
    for(a=0;a<3;a++)
-     dim4[a]=CurDim[a];
+     dim4[a]=I->CurDim[a];
    dim4[3]=3;
    
-	VertexCodes=FieldNew(CurDim,3,sizeof(int),cFieldInt);
-	ErrChkPtr(VertexCodes);
-	ActiveEdges=FieldNew(CurDim,3,sizeof(int),cFieldInt);
-	ErrChkPtr(ActiveEdges);
+	I->VertexCodes=FieldNew(I->CurDim,3,sizeof(int),cFieldInt);
+	ErrChkPtr(I->VertexCodes);
+	I->ActiveEdges=FieldNew(I->CurDim,3,sizeof(int),cFieldInt);
+	ErrChkPtr(I->ActiveEdges);
 
 
    
    dim4[3]=7; /* seven different ways now... */
-	Point=FieldNew(dim4,4,sizeof(PointType),cFieldOther);
-	ErrChkPtr(Point);
+	I->Point=FieldNew(dim4,4,sizeof(PointType),cFieldOther);
+	ErrChkPtr(I->Point);
 
-   Tri = VLAlloc(TriangleType,50000);
-   PtLink = VLAlloc(PointLinkType,50000);
+   I->Tri = VLAlloc(TriangleType,50000);
+   I->PtLink = VLAlloc(PointLinkType,50000);
 
-	if(!(VertexCodes&&ActiveEdges&&Point))
+	if(!(I->VertexCodes&&I->ActiveEdges&&I->Point))
 		{
-		TetsurfFree();
+		TetsurfPurge(I);
 		ok=false;
 		}
 #ifdef Trace
@@ -573,59 +583,60 @@ int	TetsurfAlloc(void)
 	return(ok);
 }
 /*===========================================================================*/
-void	TetsurfFree(void)
+static void	TetsurfPurge(CTetsurf *II)
 {
-  if(Tri)
+  register CTetsurf *I=II;
+  if(I->Tri)
     {
-      VLAFreeP(Tri);
+      VLAFreeP(I->Tri);
     }
-  if(PtLink);
+  if(I->PtLink);
     {
-      VLAFreeP(PtLink);
+      VLAFreeP(I->PtLink);
     }
-  if(VertexCodes) 
+  if(I->VertexCodes) 
     {
-      FieldFree(VertexCodes);
-      VertexCodes=NULL;
+      FieldFree(I->VertexCodes);
+      I->VertexCodes=NULL;
     }
-  if(ActiveEdges)
+  if(I->ActiveEdges)
     {
-      FieldFree(ActiveEdges);
-      ActiveEdges=NULL;
+      FieldFree(I->ActiveEdges);
+      I->ActiveEdges=NULL;
     }
-  if(Point)
+  if(I->Point)
     {
-      FieldFree(Point);
-      Point=NULL;
+      FieldFree(I->Point);
+      I->Point=NULL;
     }
 }
 /*===========================================================================*/
-void	TetsurfInterpolate2(float *pt,float *v0,float l0,float *v1,float l1)
+__inline__ static void	TetsurfInterpolate2(float *pt,float *v0,float l0,float *v1,float l1,float level)
 {
   float	ratio;
-  ratio=(Level-l0)/(l1-l0);
+  ratio=(level-l0)/(l1-l0);
   pt[0]=v0[0]+(v1[0]-v0[0])*ratio;
   pt[1]=v0[1]+(v1[1]-v0[1])*ratio;
   pt[2]=v0[2]+(v1[2]-v0[2])*ratio;
 }
 
 /*===========================================================================*/
-void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v1,float l1
-                          ,float l2,float l3)
+__inline__ static void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v1,float l1
+                          ,float l2,float l3,float level)
 
 {
   float	ratio;
   float  v[3],l;
   average3f(v0,v1,v);
   l = (l0+l1+l2+l3)*0.25F;
-  if(((l> Level)&&(l1>Level))||
-     ((l<=Level)&&(l0>Level))) { /* l0 vs l */
-    ratio=(Level-l0)/(l-l0);      
+  if(((l> level)&&(l1>level))||
+     ((l<=level)&&(l0>level))) { /* l0 vs l */
+    ratio=(level-l0)/(l-l0);      
     pt[0]=v0[0]+(v[0]-v0[0])*ratio;
     pt[1]=v0[1]+(v[1]-v0[1])*ratio;
     pt[2]=v0[2]+(v[2]-v0[2])*ratio;
   } else {
-    ratio=(Level-l1)/(l-l1);      
+    ratio=(level-l1)/(l-l1);      
     pt[0]=v1[0]+(v[0]-v1[0])*ratio;
     pt[1]=v1[1]+(v[1]-v1[1])*ratio;
     pt[2]=v1[2]+(v[2]-v1[2])*ratio;
@@ -633,33 +644,34 @@ void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v1,float l1
 }
 
 /*===========================================================================*/
-void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
+__inline__  static void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
                           float l2,float l3,float l4,
-                          float l5,float l6,float l7)
+                          float l5,float l6,float l7,float level)
 {
   float	ratio;
   float  v[3],l;
   average3f(v0,v1,v);
   l = (l0+l1+l2+l3+l4+l5+l6+l7)*0.125F;
-  if(((l> Level)&&(l1>Level))||
-     ((l<=Level)&&(l0>Level))) { /* l0 vs l */
-    ratio=(Level-l0)/(l-l0);      
+  if(((l> level)&&(l1>level))||
+     ((l<=level)&&(l0>level))) { /* l0 vs l */
+    ratio=(level-l0)/(l-l0);      
     pt[0]=v0[0]+(v[0]-v0[0])*ratio;
     pt[1]=v0[1]+(v[1]-v0[1])*ratio;
     pt[2]=v0[2]+(v[2]-v0[2])*ratio;
   } else {
-    ratio=(Level-l1)/(l-l1);      
+    ratio=(level-l1)/(l-l1);      
     pt[0]=v1[0]+(v[0]-v1[0])*ratio;
     pt[1]=v1[1]+(v[1]-v1[1])*ratio;
     pt[2]=v1[2]+(v[2]-v1[2])*ratio;
   }
 }
 /*===========================================================================*/
-int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
+static int	TetsurfFindActiveBoxes(CTetsurf *II,int mode,int *n_strip,int n_vert,
                              int **strip_l,float **vert,
                              MapType *voxelmap,float *a_vert,
                              float carvebuffer,int side)
 {
+  register CTetsurf *I=II;
   int	a,b,c,i,j,k,h,l;
 #ifdef Trace
 	int	ECount=0;
@@ -687,23 +699,23 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
    }
   
      
-   FieldZero(Point); /* sets initial links to zero */
-   FieldZero(ActiveEdges);
+   FieldZero(I->Point); /* sets initial links to zero */
+   FieldZero(I->ActiveEdges);
    n_start = n_vert;
-	for(i=0;i<(Max[0]-1);i++)
-	for(j=0;j<(Max[1]-1);j++)
-	for(k=0;k<(Max[2]-1);k++)
+	for(i=0;i<(I->Max[0]-1);i++)
+	for(j=0;j<(I->Max[1]-1);j++)
+	for(k=0;k<(I->Max[2]-1);k++)
      {		
        active=0;
 
-       i000=I3(VertexCodes,i  ,j  ,k  );
-       i001=I3(VertexCodes,i  ,j  ,k+1);
-       i010=I3(VertexCodes,i  ,j+1,k  );
-       i011=I3(VertexCodes,i  ,j+1,k+1);
-       i100=I3(VertexCodes,i+1,j  ,k  );
-       i101=I3(VertexCodes,i+1,j  ,k+1);
-       i110=I3(VertexCodes,i+1,j+1,k  );
-       i111=I3(VertexCodes,i+1,j+1,k+1);
+       i000=I3(I->VertexCodes,i  ,j  ,k  );
+       i001=I3(I->VertexCodes,i  ,j  ,k+1);
+       i010=I3(I->VertexCodes,i  ,j+1,k  );
+       i011=I3(I->VertexCodes,i  ,j+1,k+1);
+       i100=I3(I->VertexCodes,i+1,j  ,k  );
+       i101=I3(I->VertexCodes,i+1,j  ,k+1);
+       i110=I3(I->VertexCodes,i+1,j+1,k  );
+       i111=I3(I->VertexCodes,i+1,j+1,k+1);
 
        if((i000!=i001)||
           (i001!=i010)||
@@ -713,237 +725,237 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
           (i101!=i110)||
           (i110!=i111)) { /* this is an active box */
 
-         c000=O4Ptr(Coord,i  ,j  ,k  ,0,CurOff);
-         c001=O4Ptr(Coord,i  ,j  ,k+1,0,CurOff);
-         c010=O4Ptr(Coord,i  ,j+1,k  ,0,CurOff);
-         c011=O4Ptr(Coord,i  ,j+1,k+1,0,CurOff);
-         c100=O4Ptr(Coord,i+1,j  ,k  ,0,CurOff);
-         c101=O4Ptr(Coord,i+1,j  ,k+1,0,CurOff);
-         c110=O4Ptr(Coord,i+1,j+1,k  ,0,CurOff);
-         c111=O4Ptr(Coord,i+1,j+1,k+1,0,CurOff);
+         c000=O4Ptr(I->Coord,i  ,j  ,k  ,0,I->CurOff);
+         c001=O4Ptr(I->Coord,i  ,j  ,k+1,0,I->CurOff);
+         c010=O4Ptr(I->Coord,i  ,j+1,k  ,0,I->CurOff);
+         c011=O4Ptr(I->Coord,i  ,j+1,k+1,0,I->CurOff);
+         c100=O4Ptr(I->Coord,i+1,j  ,k  ,0,I->CurOff);
+         c101=O4Ptr(I->Coord,i+1,j  ,k+1,0,I->CurOff);
+         c110=O4Ptr(I->Coord,i+1,j+1,k  ,0,I->CurOff);
+         c111=O4Ptr(I->Coord,i+1,j+1,k+1,0,I->CurOff);
 
          if(mode==3) {
            
-           g000=O4Ptr(Grad,i  ,j  ,k  ,0,CurOff);
-           g001=O4Ptr(Grad,i  ,j  ,k+1,0,CurOff);
-           g010=O4Ptr(Grad,i  ,j+1,k  ,0,CurOff);
-           g011=O4Ptr(Grad,i  ,j+1,k+1,0,CurOff);
-           g100=O4Ptr(Grad,i+1,j  ,k  ,0,CurOff);
-           g101=O4Ptr(Grad,i+1,j  ,k+1,0,CurOff);
-           g110=O4Ptr(Grad,i+1,j+1,k  ,0,CurOff);
-           g111=O4Ptr(Grad,i+1,j+1,k+1,0,CurOff);
+           g000=O4Ptr(I->Grad,i  ,j  ,k  ,0,I->CurOff);
+           g001=O4Ptr(I->Grad,i  ,j  ,k+1,0,I->CurOff);
+           g010=O4Ptr(I->Grad,i  ,j+1,k  ,0,I->CurOff);
+           g011=O4Ptr(I->Grad,i  ,j+1,k+1,0,I->CurOff);
+           g100=O4Ptr(I->Grad,i+1,j  ,k  ,0,I->CurOff);
+           g101=O4Ptr(I->Grad,i+1,j  ,k+1,0,I->CurOff);
+           g110=O4Ptr(I->Grad,i+1,j+1,k  ,0,I->CurOff);
+           g111=O4Ptr(I->Grad,i+1,j+1,k+1,0,I->CurOff);
          }
 
-         d000=O3(Data ,i  ,j  ,k  ,CurOff);
-         d001=O3(Data ,i  ,j  ,k+1,CurOff);
-         d010=O3(Data ,i  ,j+1,k  ,CurOff);
-         d011=O3(Data ,i  ,j+1,k+1,CurOff);
-         d100=O3(Data ,i+1,j  ,k  ,CurOff);
-         d101=O3(Data ,i+1,j  ,k+1,CurOff);
-         d110=O3(Data ,i+1,j+1,k  ,CurOff);
-         d111=O3(Data ,i+1,j+1,k+1,CurOff);
+         d000=O3(I->Data ,i  ,j  ,k  ,I->CurOff);
+         d001=O3(I->Data ,i  ,j  ,k+1,I->CurOff);
+         d010=O3(I->Data ,i  ,j+1,k  ,I->CurOff);
+         d011=O3(I->Data ,i  ,j+1,k+1,I->CurOff);
+         d100=O3(I->Data ,i+1,j  ,k  ,I->CurOff);
+         d101=O3(I->Data ,i+1,j  ,k+1,I->CurOff);
+         d110=O3(I->Data ,i+1,j+1,k  ,I->CurOff);
+         d111=O3(I->Data ,i+1,j+1,k+1,I->CurOff);
          
-         e[cE_000_001]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_001);
-         e[cE_000_010]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_010);
-         e[cE_000_011]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_011);
-         e[cE_000_100]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_100);
-         e[cE_000_101]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_101);
+         e[cE_000_001]=EdgePtPtr(I->Point,i  ,j  ,k  ,cE_000_001);
+         e[cE_000_010]=EdgePtPtr(I->Point,i  ,j  ,k  ,cE_000_010);
+         e[cE_000_011]=EdgePtPtr(I->Point,i  ,j  ,k  ,cE_000_011);
+         e[cE_000_100]=EdgePtPtr(I->Point,i  ,j  ,k  ,cE_000_100);
+         e[cE_000_101]=EdgePtPtr(I->Point,i  ,j  ,k  ,cE_000_101);
 
-         e[cE_000_110]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_110);
-         e[cE_000_111]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_111);
-         e[cE_001_011]=EdgePtPtr(Point,i  ,j  ,k+1,cE_000_010);
-         e[cE_001_101]=EdgePtPtr(Point,i  ,j  ,k+1,cE_000_100);
-         e[cE_001_111]=EdgePtPtr(Point,i  ,j  ,k+1,cE_000_110);
+         e[cE_000_110]=EdgePtPtr(I->Point,i  ,j  ,k  ,cE_000_110);
+         e[cE_000_111]=EdgePtPtr(I->Point,i  ,j  ,k  ,cE_000_111);
+         e[cE_001_011]=EdgePtPtr(I->Point,i  ,j  ,k+1,cE_000_010);
+         e[cE_001_101]=EdgePtPtr(I->Point,i  ,j  ,k+1,cE_000_100);
+         e[cE_001_111]=EdgePtPtr(I->Point,i  ,j  ,k+1,cE_000_110);
 
-         e[cE_010_011]=EdgePtPtr(Point,i  ,j+1,k  ,cE_000_001);
-         e[cE_010_110]=EdgePtPtr(Point,i  ,j+1,k  ,cE_000_100);
-         e[cE_010_111]=EdgePtPtr(Point,i  ,j+1,k  ,cE_000_101);
-         e[cE_100_101]=EdgePtPtr(Point,i+1,j  ,k  ,cE_000_001);
-         e[cE_100_110]=EdgePtPtr(Point,i+1,j  ,k  ,cE_000_010);
+         e[cE_010_011]=EdgePtPtr(I->Point,i  ,j+1,k  ,cE_000_001);
+         e[cE_010_110]=EdgePtPtr(I->Point,i  ,j+1,k  ,cE_000_100);
+         e[cE_010_111]=EdgePtPtr(I->Point,i  ,j+1,k  ,cE_000_101);
+         e[cE_100_101]=EdgePtPtr(I->Point,i+1,j  ,k  ,cE_000_001);
+         e[cE_100_110]=EdgePtPtr(I->Point,i+1,j  ,k  ,cE_000_010);
 
-         e[cE_100_111]=EdgePtPtr(Point,i+1,j  ,k  ,cE_000_011);
-         e[cE_011_111]=EdgePtPtr(Point,i  ,j+1,k+1,cE_000_100);
-         e[cE_101_111]=EdgePtPtr(Point,i+1,j  ,k+1,cE_000_010);
-         e[cE_110_111]=EdgePtPtr(Point,i+1,j+1,k  ,cE_000_001);
+         e[cE_100_111]=EdgePtPtr(I->Point,i+1,j  ,k  ,cE_000_011);
+         e[cE_011_111]=EdgePtPtr(I->Point,i  ,j+1,k+1,cE_000_100);
+         e[cE_101_111]=EdgePtPtr(I->Point,i+1,j  ,k+1,cE_000_010);
+         e[cE_110_111]=EdgePtPtr(I->Point,i+1,j+1,k  ,cE_000_001);
 
          /* Generate interpolated coordinates for all active edges */
          
          if(i000!=i001) {
-           if(!(I3(ActiveEdges,i,j,k)&cM_000_001)) {
-             I3(ActiveEdges,i,j,k)|=cM_000_001;
-             TetsurfInterpolate2(e[cE_000_001]->Point,c000,d000,c001,d001);
+           if(!(I3(I->ActiveEdges,i,j,k)&cM_000_001)) {
+             I3(I->ActiveEdges,i,j,k)|=cM_000_001;
+             TetsurfInterpolate2(e[cE_000_001]->Point,c000,d000,c001,d001,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_000_001]->Normal,g000,d000,g001,d001);
+               TetsurfInterpolate2(e[cE_000_001]->Normal,g000,d000,g001,d001,I->Level);
            }
            active|=cM_000_001;
          }
          if(i000!=i010) {
-           if(!(I3(ActiveEdges,i,j,k)&cM_000_010)) {
-             I3(ActiveEdges,i,j,k)|=cM_000_010;
-             TetsurfInterpolate2(e[cE_000_010]->Point,c000,d000,c010,d010);
+           if(!(I3(I->ActiveEdges,i,j,k)&cM_000_010)) {
+             I3(I->ActiveEdges,i,j,k)|=cM_000_010;
+             TetsurfInterpolate2(e[cE_000_010]->Point,c000,d000,c010,d010,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_000_010]->Normal,g000,d000,g010,d010);
+               TetsurfInterpolate2(e[cE_000_010]->Normal,g000,d000,g010,d010,I->Level);
              
            }
            active|=cM_000_010;
          }
          if(i000!=i011) {
-           if(!(I3(ActiveEdges,i,j,k)&cM_000_011)) {
-             I3(ActiveEdges,i,j,k)|=cM_000_011;
-             TetsurfInterpolate4(e[cE_000_011]->Point,c000,d000,c011,d011,d001,d010);
+           if(!(I3(I->ActiveEdges,i,j,k)&cM_000_011)) {
+             I3(I->ActiveEdges,i,j,k)|=cM_000_011;
+             TetsurfInterpolate4(e[cE_000_011]->Point,c000,d000,c011,d011,d001,d010,I->Level);
              if(mode==3) 
-               TetsurfInterpolate4(e[cE_000_011]->Normal,g000,d000,g011,d011,d001,d010);
+               TetsurfInterpolate4(e[cE_000_011]->Normal,g000,d000,g011,d011,d001,d010,I->Level);
            }
            active|=cM_000_011;
          }
          if(i000!=i100) {
-           if(!(I3(ActiveEdges,i,j,k)&cM_000_100)) {
-             I3(ActiveEdges,i,j,k)|=cM_000_100;
-             TetsurfInterpolate2(e[cE_000_100]->Point,c000,d000,c100,d100);
+           if(!(I3(I->ActiveEdges,i,j,k)&cM_000_100)) {
+             I3(I->ActiveEdges,i,j,k)|=cM_000_100;
+             TetsurfInterpolate2(e[cE_000_100]->Point,c000,d000,c100,d100,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_000_100]->Normal,g000,d000,g100,d100);
+               TetsurfInterpolate2(e[cE_000_100]->Normal,g000,d000,g100,d100,I->Level);
              
            }
            active|=cM_000_100;
          }
          if(i000!=i101) {
-           if(!(I3(ActiveEdges,i,j,k)&cM_000_101)) {
-             I3(ActiveEdges,i,j,k)|=cM_000_101;
-             TetsurfInterpolate4(e[cE_000_101]->Point,c000,d000,c101,d101,d100,d001);
+           if(!(I3(I->ActiveEdges,i,j,k)&cM_000_101)) {
+             I3(I->ActiveEdges,i,j,k)|=cM_000_101;
+             TetsurfInterpolate4(e[cE_000_101]->Point,c000,d000,c101,d101,d100,d001,I->Level);
              if(mode==3) 
-               TetsurfInterpolate4(e[cE_000_101]->Normal,g000,d000,g101,d101,d100,d001);
+               TetsurfInterpolate4(e[cE_000_101]->Normal,g000,d000,g101,d101,d100,d001,I->Level);
            }
            active|=cM_000_101;
          }
          if(i000!=i110) {
-           if(!(I3(ActiveEdges,i,j,k)&cM_000_110)) {
-             I3(ActiveEdges,i,j,k)|=cM_000_110;
-             TetsurfInterpolate4(e[cE_000_110]->Point,c000,d000,c110,d110,d100,d010);
+           if(!(I3(I->ActiveEdges,i,j,k)&cM_000_110)) {
+             I3(I->ActiveEdges,i,j,k)|=cM_000_110;
+             TetsurfInterpolate4(e[cE_000_110]->Point,c000,d000,c110,d110,d100,d010,I->Level);
              if(mode==3) 
-               TetsurfInterpolate4(e[cE_000_110]->Normal,g000,d000,g110,d110,d100,d010);
+               TetsurfInterpolate4(e[cE_000_110]->Normal,g000,d000,g110,d110,d100,d010,I->Level);
            }
            active|=cM_000_110;
          }
          if(i000!=i111) {
-           if(!(I3(ActiveEdges,i,j,k)&cM_000_111)) {
-             I3(ActiveEdges,i,j,k)|=cM_000_111;
+           if(!(I3(I->ActiveEdges,i,j,k)&cM_000_111)) {
+             I3(I->ActiveEdges,i,j,k)|=cM_000_111;
              TetsurfInterpolate8(e[cE_000_111]->Point,
                                  c000,d000,c111,d111,
                                  d001,d010,d011,d100,
-                                 d101,d110);
+                                 d101,d110,I->Level);
              if(mode==3) 
                TetsurfInterpolate8(e[cE_000_111]->Normal,
                                  g000,d000,g111,d111,
                                  d001,d010,d011,d100,
-                                 d101,d110);
+                                 d101,d110,I->Level);
            }
            active|=cM_000_111;
          }
          if(i001!=i011) {
-           if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_010)) {
-             I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_010;
-             TetsurfInterpolate2(e[cE_001_011]->Point,c001,d001,c011,d011);
+           if(!(I3(I->ActiveEdges,i  ,j  ,k+1)&cM_000_010)) {
+             I3(I->ActiveEdges,i  ,j  ,k+1)|=cM_000_010;
+             TetsurfInterpolate2(e[cE_001_011]->Point,c001,d001,c011,d011,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_001_011]->Normal,g001,d001,g011,d011);
+               TetsurfInterpolate2(e[cE_001_011]->Normal,g001,d001,g011,d011,I->Level);
            }
            active|=cM_001_011;
          }
          if(i001!=i101) {
-           if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_100)) {
-             I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_100;
-             TetsurfInterpolate2(e[cE_001_101]->Point,c001,d001,c101,d101);
+           if(!(I3(I->ActiveEdges,i  ,j  ,k+1)&cM_000_100)) {
+             I3(I->ActiveEdges,i  ,j  ,k+1)|=cM_000_100;
+             TetsurfInterpolate2(e[cE_001_101]->Point,c001,d001,c101,d101,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_001_101]->Normal,g001,d001,g101,d101);
+               TetsurfInterpolate2(e[cE_001_101]->Normal,g001,d001,g101,d101,I->Level);
            }
            active|=cM_001_101;
          }
          if(i001!=i111) {
-           if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_110)) {
-             I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_110;
-             TetsurfInterpolate4(e[cE_001_111]->Point,c001,d001,c111,d111,d101,d011);
+           if(!(I3(I->ActiveEdges,i  ,j  ,k+1)&cM_000_110)) {
+             I3(I->ActiveEdges,i  ,j  ,k+1)|=cM_000_110;
+             TetsurfInterpolate4(e[cE_001_111]->Point,c001,d001,c111,d111,d101,d011,I->Level);
              if(mode==3) 
-               TetsurfInterpolate4(e[cE_001_111]->Normal,g001,d001,g111,d111,d101,d011);
+               TetsurfInterpolate4(e[cE_001_111]->Normal,g001,d001,g111,d111,d101,d011,I->Level);
            }
            active|=cM_001_111;
          }
          if(i010!=i011) {
-           if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_001)) {
-             I3(ActiveEdges,i  ,j+1,k  )|=cM_000_001;
-             TetsurfInterpolate2(e[cE_010_011]->Point,c010,d010,c011,d011);
+           if(!(I3(I->ActiveEdges,i  ,j+1,k  )&cM_000_001)) {
+             I3(I->ActiveEdges,i  ,j+1,k  )|=cM_000_001;
+             TetsurfInterpolate2(e[cE_010_011]->Point,c010,d010,c011,d011,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_010_011]->Normal,g010,d010,g011,d011);
+               TetsurfInterpolate2(e[cE_010_011]->Normal,g010,d010,g011,d011,I->Level);
            }
            active|=cM_010_011;
          }
          if(i010!=i110) {
-           if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_100)) {
-             I3(ActiveEdges,i  ,j+1,k  )|=cM_000_100;
-             TetsurfInterpolate2(e[cE_010_110]->Point,c010,d010,c110,d110);
+           if(!(I3(I->ActiveEdges,i  ,j+1,k  )&cM_000_100)) {
+             I3(I->ActiveEdges,i  ,j+1,k  )|=cM_000_100;
+             TetsurfInterpolate2(e[cE_010_110]->Point,c010,d010,c110,d110,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_010_110]->Normal,g010,d010,g110,d110);
+               TetsurfInterpolate2(e[cE_010_110]->Normal,g010,d010,g110,d110,I->Level);
            }
            active|=cM_010_110;
          }
          if(i010!=i111) {
-           if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_101)) {
-             I3(ActiveEdges,i  ,j+1,k  )|=cM_000_101;
-             TetsurfInterpolate4(e[cE_010_111]->Point,c010,d010,c111,d111,d110,d011);
+           if(!(I3(I->ActiveEdges,i  ,j+1,k  )&cM_000_101)) {
+             I3(I->ActiveEdges,i  ,j+1,k  )|=cM_000_101;
+             TetsurfInterpolate4(e[cE_010_111]->Point,c010,d010,c111,d111,d110,d011,I->Level);
              if(mode==3) 
-               TetsurfInterpolate4(e[cE_010_111]->Normal,g010,d010,g111,d111,d110,d011);
+               TetsurfInterpolate4(e[cE_010_111]->Normal,g010,d010,g111,d111,d110,d011,I->Level);
            }
            active|=cM_010_111;
          }
          if(i100!=i101) {
-           if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_001)) {
-             I3(ActiveEdges,i+1,j  ,k  )|=cM_000_001;
-             TetsurfInterpolate2(e[cE_100_101]->Point,c100,d100,c101,d101);
+           if(!(I3(I->ActiveEdges,i+1,j  ,k  )&cM_000_001)) {
+             I3(I->ActiveEdges,i+1,j  ,k  )|=cM_000_001;
+             TetsurfInterpolate2(e[cE_100_101]->Point,c100,d100,c101,d101,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_100_101]->Normal,g100,d100,g101,d101);
+               TetsurfInterpolate2(e[cE_100_101]->Normal,g100,d100,g101,d101,I->Level);
            }
            active|=cM_100_101;
          }
          if(i100!=i110) {
-           if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_010)) {
-             I3(ActiveEdges,i+1,j  ,k  )|=cM_000_010;
-             TetsurfInterpolate2(e[cE_100_110]->Point,c100,d100,c110,d110);
+           if(!(I3(I->ActiveEdges,i+1,j  ,k  )&cM_000_010)) {
+             I3(I->ActiveEdges,i+1,j  ,k  )|=cM_000_010;
+             TetsurfInterpolate2(e[cE_100_110]->Point,c100,d100,c110,d110,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_100_110]->Normal,g100,d100,g110,d110);
+               TetsurfInterpolate2(e[cE_100_110]->Normal,g100,d100,g110,d110,I->Level);
            }
            active|=cM_100_110;
          }
          if(i100!=i111) {
-           if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_011)) {
-             I3(ActiveEdges,i+1,j  ,k  )|=cM_000_011;
-             TetsurfInterpolate4(e[cE_100_111]->Point,c100,d100,c111,d111,d101,d110);
+           if(!(I3(I->ActiveEdges,i+1,j  ,k  )&cM_000_011)) {
+             I3(I->ActiveEdges,i+1,j  ,k  )|=cM_000_011;
+             TetsurfInterpolate4(e[cE_100_111]->Point,c100,d100,c111,d111,d101,d110,I->Level);
              if(mode==3) 
-               TetsurfInterpolate4(e[cE_100_111]->Normal,g100,d100,g111,d111,d101,d110);
+               TetsurfInterpolate4(e[cE_100_111]->Normal,g100,d100,g111,d111,d101,d110,I->Level);
            }
            active|=cM_100_111;
          }
          if(i011!=i111) {
-           if(!(I3(ActiveEdges,i  ,j+1,k+1)&cM_000_100)) {
-             I3(ActiveEdges,i  ,j+1,k+1)|=cM_000_100;
-             TetsurfInterpolate2(e[cE_011_111]->Point,c011,d011,c111,d111);
+           if(!(I3(I->ActiveEdges,i  ,j+1,k+1)&cM_000_100)) {
+             I3(I->ActiveEdges,i  ,j+1,k+1)|=cM_000_100;
+             TetsurfInterpolate2(e[cE_011_111]->Point,c011,d011,c111,d111,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_011_111]->Normal,g011,d011,g111,d111);
+               TetsurfInterpolate2(e[cE_011_111]->Normal,g011,d011,g111,d111,I->Level);
            }
            active|=cM_011_111;
          }
          if(i101!=i111) {
-           if(!(I3(ActiveEdges,i+1,j  ,k+1)&cM_000_010)) {
-             I3(ActiveEdges,i+1,j  ,k+1)|=cM_000_010;
-             TetsurfInterpolate2(e[cE_101_111]->Point,c101,d101,c111,d111);
+           if(!(I3(I->ActiveEdges,i+1,j  ,k+1)&cM_000_010)) {
+             I3(I->ActiveEdges,i+1,j  ,k+1)|=cM_000_010;
+             TetsurfInterpolate2(e[cE_101_111]->Point,c101,d101,c111,d111,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_101_111]->Normal,g101,d101,g111,d111);
+               TetsurfInterpolate2(e[cE_101_111]->Normal,g101,d101,g111,d111,I->Level);
            }
            active|=cM_101_111;
          }
          if(i110!=i111) {
-           if(!(I3(ActiveEdges,i+1,j+1,k  )&cM_000_001)) {
-             I3(ActiveEdges,i+1,j+1,k  )|=cM_000_001;
-             TetsurfInterpolate2(e[cE_110_111]->Point,c110,d110,c111,d111);
+           if(!(I3(I->ActiveEdges,i+1,j+1,k  )&cM_000_001)) {
+             I3(I->ActiveEdges,i+1,j+1,k  )|=cM_000_001;
+             TetsurfInterpolate2(e[cE_110_111]->Point,c110,d110,c111,d111,I->Level);
              if(mode==3) 
-               TetsurfInterpolate2(e[cE_110_111]->Normal,g110,d110,g111,d111);
+               TetsurfInterpolate2(e[cE_110_111]->Normal,g110,d110,g111,d111,I->Level);
            }
            active|=cM_110_111;
          }
@@ -961,35 +973,35 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
                (i101 ? 0x20 : 0)|
                (i110 ? 0x40 : 0)|
                (i111 ? 0x80 : 0);
-             eidx=EdgeStart[code];
+             eidx=I->EdgeStart[code];
              while(1) {
-               idx=Edge[eidx];
+               idx=I->Edge[eidx];
                if(idx<0) break;
 
                /* assemble a triangle from these three points */
 
-               VLACheck(Tri,TriangleType,n_tri);
-               tt = Tri + n_tri;
+               VLACheck(I->Tri,TriangleType,n_tri);
+               tt = I->Tri + n_tri;
                tt->p[0] = e[idx];
-               tt->p[1] = e[Edge[eidx+1]];
-               tt->p[2] = e[Edge[eidx+2]];
+               tt->p[1] = e[I->Edge[eidx+1]];
+               tt->p[2] = e[I->Edge[eidx+2]];
 
-               VLACheck(PtLink,PointLinkType,n_link+3);
+               VLACheck(I->PtLink,PointLinkType,n_link+3);
 
                /* link this triangle into the points */
 
-               PtLink[n_link].tri = n_tri;
-               PtLink[n_link].link = tt->p[0]->Link;
+               I->PtLink[n_link].tri = n_tri;
+               I->PtLink[n_link].link = tt->p[0]->Link;
                tt->p[0]->Link=n_link;
                n_link++;
 
-               PtLink[n_link].tri = n_tri;
-               PtLink[n_link].link = tt->p[1]->Link;
+               I->PtLink[n_link].tri = n_tri;
+               I->PtLink[n_link].link = tt->p[1]->Link;
                tt->p[1]->Link=n_link;
                n_link++;
 
-               PtLink[n_link].tri = n_tri;
-               PtLink[n_link].link = tt->p[2]->Link;
+               I->PtLink[n_link].tri = n_tri;
+               I->PtLink[n_link].link = tt->p[2]->Link;
                tt->p[2]->Link=n_link;
                n_link++;
                n_tri++;
@@ -1008,19 +1020,19 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
                (i101 ? 0x20 : 0)|
                (i110 ? 0x40 : 0)|
                (i111 ? 0x80 : 0);
-             eidx=EdgeStart[code];
+             eidx=I->EdgeStart[code];
              while(1) {
-               idx=Edge[eidx];
+               idx=I->Edge[eidx];
                if(idx<0) break;
                copy3fn(e[idx]->Point,(*vert)+(n_vert*3));                                
                n_vert++;
-               copy3fn(e[Edge[eidx+1]]->Point,(*vert)+(n_vert*3));                                
+               copy3fn(e[I->Edge[eidx+1]]->Point,(*vert)+(n_vert*3));                                
                n_vert++;
-               copy3fn(e[Edge[eidx+1]]->Point,(*vert)+(n_vert*3));                                
+               copy3fn(e[I->Edge[eidx+1]]->Point,(*vert)+(n_vert*3));                                
                n_vert++;
-               copy3fn(e[Edge[eidx+2]]->Point,(*vert)+(n_vert*3));               
+               copy3fn(e[I->Edge[eidx+2]]->Point,(*vert)+(n_vert*3));               
                n_vert++;
-               copy3fn(e[Edge[eidx+2]]->Point,(*vert)+(n_vert*3));               
+               copy3fn(e[I->Edge[eidx+2]]->Point,(*vert)+(n_vert*3));               
                n_vert++;
                copy3fn(e[idx]->Point,(*vert)+(n_vert*3));                                
                n_vert++;
@@ -1127,7 +1139,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
        float *v0,*v1,*v2;
        float vt1[3],vt2[3];
 
-       tt = Tri + a;
+       tt = I->Tri + a;
        v0 = tt->p[0]->Point;
        v1 = tt->p[1]->Point;
        v2 = tt->p[2]->Point;
@@ -1145,14 +1157,14 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
      for(a=0;a<n_tri;a++) {
        float v[3];
        float dp;
-       tt = Tri + a;
+       tt = I->Tri + a;
        for(b=0;b<3;b++) {
          if(!tt->p[b]->NormalFlag) {
            zero3f(v);
            idx = tt->p[b]->Link;
            while(idx>0) {
-             add3f(Tri[PtLink[idx].tri].n,v,v);
-             idx = PtLink[idx].link;
+             add3f(I->Tri[I->PtLink[idx].tri].n,v,v);
+             idx = I->PtLink[idx].link;
            }
            if(mode==3) { /* gradient-based normals */
              dp = dot_product3f(v,tt->p[b]->Normal);
@@ -1175,7 +1187,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
        /* if we're using triangle normals, then 
           do an additional averaging cycle with no weighting */
        for(a=0;a<n_tri;a++) {
-         tt = Tri + a;
+         tt = I->Tri + a;
          add3f(tt->p[0]->Normal,tt->p[1]->Normal,tt->n);
          add3f(tt->p[2]->Normal,tt->n,tt->n);
          normalize3f(tt->n);
@@ -1186,14 +1198,14 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
        /* compute normals at active points */
        for(a=0;a<n_tri;a++) {
          float v[3];
-         tt = Tri + a;
+         tt = I->Tri + a;
          for(b=0;b<3;b++) {
            if(!tt->p[b]->NormalFlag) {
              zero3f(v);
              idx = tt->p[b]->Link;
              while(idx>0) {
-               add3f(Tri[PtLink[idx].tri].n,v,v);
-               idx = PtLink[idx].link;
+               add3f(I->Tri[I->PtLink[idx].tri].n,v,v);
+               idx = I->PtLink[idx].link;
              }
              normalize23f(v,tt->p[b]->Normal);
              tt->p[b]->NormalFlag=true;
@@ -1205,7 +1217,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
      if(voxelmap) {
        for(a=0;a<n_tri;a++) {
          float *v;
-         tt = Tri + a;
+         tt = I->Tri + a;
          c=0;
          for(b=0;b<3;b++) {
            v=tt->p[b]->Point;
@@ -1235,7 +1247,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
 
      /* now create triangle strips (not yet optimal) */
      for(a=0;a<n_tri;a++) {
-       tt = Tri + a;
+       tt = I->Tri + a;
        n_start = n_vert;
        if(!tt->done) {
 
@@ -1291,7 +1303,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
            p2 = NULL;
            idx = p1->Link;
            while(idx>0) {
-             tt=Tri+PtLink[idx].tri;
+             tt=I->Tri+I->PtLink[idx].tri;
 
              if(!tt->done) {
                if((tt->p[0]==p0)&&(tt->p[1]==p1)) {
@@ -1324,7 +1336,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
                  break;
                }
              }
-             idx = PtLink[idx].link;
+             idx = I->PtLink[idx].link;
            }
 
            if(!p2) break;
@@ -1344,7 +1356,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
          (*n_strip)++;
        }
      }
-     TotPrim+=n_tri;
+     I->TotPrim+=n_tri;
      break;
      
    case 1:
@@ -1372,26 +1384,27 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
 	return(n_vert);
 }
 /*===========================================================================*/
-int	TetsurfCodeVertices(void)
+static int	TetsurfCodeVertices(CTetsurf *II)
 {
+  register CTetsurf *I=II;
 	int	i,j,k;
    int b0,b1;
    int flag1=false;
    int flag2=false;
    b0=1;
-   if(Level<0.0F)
+   if(I->Level<0.0F)
      b0=0;
    b1=1-b0;
    
-	for(i=0;i<Max[0];i++)
-	for(j=0;j<Max[1];j++)
-	for(k=0;k<Max[2];k++)
+	for(i=0;i<I->Max[0];i++)
+	for(j=0;j<I->Max[1];j++)
+	for(k=0;k<I->Max[2];k++)
 		{
-        if((O3(Data,i,j,k,CurOff)>Level)) {
-          I3(VertexCodes,i,j,k)=b0;
+        if((O3(I->Data,i,j,k,I->CurOff)>I->Level)) {
+          I3(I->VertexCodes,i,j,k)=b0;
           flag1=true;
         } else {
-          I3(VertexCodes,i,j,k)=b1;
+          I3(I->VertexCodes,i,j,k)=b1;
           flag2=true;
         }
 		}
