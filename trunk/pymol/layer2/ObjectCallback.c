@@ -34,12 +34,14 @@ static void ObjectCallbackFree(ObjectCallback *I);
 static void ObjectCallbackFree(ObjectCallback *I) {
 
   int a;
+  PBlock();
   for(a=0;a<I->NState;a++) {
     if(I->State[a].PObj) {
       Py_DECREF(I->State[a].PObj);
       I->State[a].PObj=NULL;
     }
   }
+  PUnblock();
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
   OOFreeP(I);
