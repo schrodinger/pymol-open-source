@@ -14,7 +14,8 @@ print names
 bfct = []
 
 iterate (resn pro),bfct.append(b)
-print bfct
+for a in bfct:
+   print "%8.5f"%a
 
 # the following should have no effect
 iterate (all),resn = 'NON'
@@ -22,6 +23,7 @@ iterate (all),b = b + 10
 
 bfct = []
 iterate (resn pro),bfct.append(b)
-print bfct
+for a in bfct:
+   print "%8.5f"%a
 
 /print "END-LOG"
