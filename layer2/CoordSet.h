@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_CoordSet
 #define _H_CoordSet
 
-#include<Python.h>
+#include"os_python.h"
 #include"Rep.h"
 #include"Symmetry.h"
 #include"Word.h"

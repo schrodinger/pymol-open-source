@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_std.h"
 #include"os_gl.h"
+#include"os_python.h"
 
 #include"Util.h"
 
@@ -37,7 +38,6 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Movie.h"
 #include"MyPNG.h"
-#include"Python.h"
 #include"P.h"
 #include"Editor.h"
 #include"Executive.h"

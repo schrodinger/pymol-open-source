@@ -40,7 +40,7 @@ Z* -------------------------------------------------------------------
  * python calls, especially, PyArg_ParseTuple()
  */
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"os_std.h"
 

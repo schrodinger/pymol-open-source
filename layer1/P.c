@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 #include"os_time.h"
 #include"os_unix.h"
 
-#include<Python.h>
+#include"os_python.h"
 
 
 #include"MemoryDebug.h"

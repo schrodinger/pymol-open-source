@@ -13,26 +13,12 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_ObjectCallback
-#define _H_ObjectCallback
+#ifndef _H_os_python
+#define _H_os_python
 
-#include"os_python.h"
-
-#include"Object.h"
-
-typedef struct {
-  PyObject *PObj;
-} ObjectCallbackState;
-
-typedef struct ObjectCallback {
-  Object Obj;
-  ObjectCallbackState *State;
-  int NState;
-} ObjectCallback;
-
-ObjectCallback *ObjectCallbackNew(void);
-ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *PObj,int state);
-void ObjectCallbackRecomputeExtent(ObjectCallback *I);
+#include"Python.h"
 
 #endif
+
+
 

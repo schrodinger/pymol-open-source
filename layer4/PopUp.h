@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_PopUp
 #define _H_PopUp
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"Block.h"
 

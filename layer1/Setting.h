@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Setting
 #define _H_Setting
 
-#include<Python.h>
+#include"os_python.h"
 
 typedef char SettingName[255];
 

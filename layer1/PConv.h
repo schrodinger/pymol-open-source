@@ -16,8 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_PConv
 #define _H_PConv
 
-#include<Python.h>
-
+#include"os_python.h"
 
 /* Convenient conversion routines for C<->Python data interchange
    

@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ObjectMolecule
 #define _H_ObjectMolecule
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"Object.h"
 #include"AtomInfo.h"

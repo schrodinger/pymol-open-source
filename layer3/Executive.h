@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Executive
 #define _H_Executive
 
-#include<Python.h>
+#include"os_python.h"
 
 #include"Object.h"
 #include"ObjectMolecule.h"

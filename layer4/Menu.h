@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Menu
 #define _H_Menu
 
-#include<Python.h>
+#include"os_python.h"
 
 void MenuActivate(int x,int y,char *name,char *sele);
 
