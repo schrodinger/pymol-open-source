@@ -15,7 +15,6 @@ Z* -------------------------------------------------------------------
 */
 #include<GL/gl.h>
 #include<math.h>
-#include<values.h>
 
 #include"Base.h"
 #include"MemoryDebug.h"

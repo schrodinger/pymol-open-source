@@ -14,8 +14,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 #include<GL/gl.h>
-#include<values.h>
 #include<math.h>
+
 #include"Base.h"
 #include"MemoryDebug.h"
 #include"OOMac.h"
@@ -203,7 +203,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   if(c) {
 	 glColor3f(1.0,0.0,0.0);
 	 glBegin(GL_LINES);
-	 SceneResetNormal();
+	 SceneResetNormal(true);
 	 while(c--)
 		{
 		  glVertex3fv(v);

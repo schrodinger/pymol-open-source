@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Util.h"
 #include"PM.h"
+#include"ButMode.h"
 #include"Ortho.h"
 #include"ObjectMolecule.h"
 #include"Executive.h"

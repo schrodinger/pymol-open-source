@@ -13,7 +13,6 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<values.h>
 #include<ctype.h>
 
 #include"Word.h"

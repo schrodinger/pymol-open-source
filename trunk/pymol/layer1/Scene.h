@@ -56,7 +56,7 @@ void SceneTranslate(float x,float y, float z);
 void SceneClip(int plane,float movement);
 
 void SceneScale(float scale);
-void SceneResetNormal(void);
+void SceneResetNormal(int lines);
 
 void SceneObjectAdd(Object *obj);
 void SceneObjectDel(Object *obj);

@@ -415,10 +415,10 @@ typedef struct Namelist Namelist;
 
 #define abs(x) ((x) >= 0 ? (x) : -(x))
 #define dabs(x) (doublereal)abs(x)
-#define min(a,b) ((a) <= (b) ? (a) : (b))
-#define max(a,b) ((a) >= (b) ? (a) : (b))
-#define dmin(a,b) (doublereal)min(a,b)
-#define dmax(a,b) (doublereal)max(a,b)
+#define mymin(a,b) ((a) <= (b) ? (a) : (b))
+#define mymax(a,b) ((a) >= (b) ? (a) : (b))
+#define dmymin(a,b) (doublereal)mymin(a,b)
+#define dmymax(a,b) (doublereal)mymax(a,b)
 #define bit_test(a,b)	((a) >> (b) & 1)
 #define bit_clear(a,b)	((a) & ~((uinteger)1 << (b)))
 #define bit_set(a,b)	((a) |  ((uinteger)1 << (b)))
@@ -1527,7 +1527,7 @@ L190:
 
 /* Computing MIN */
 	i__2 = en, i__3 = k + 3;
-	j = min(i__2,i__3);
+	j = mymin(i__2,i__3);
 /*     .......... column modification .......... */
 	i__2 = j;
 	for (i__ = l; i__ <= i__2; ++i__) {
@@ -1551,7 +1551,7 @@ L225:
 
 /* Computing MIN */
 	i__2 = en, i__3 = k + 3;
-	j = min(i__2,i__3);
+	j = mymin(i__2,i__3);
 /*     .......... column modification .......... */
 	i__2 = j;
 	for (i__ = l; i__ <= i__2; ++i__) {
@@ -1902,7 +1902,7 @@ L190:
 
 /* Computing MIN */
 	i__2 = en, i__3 = k + 3;
-	j = min(i__2,i__3);
+	j = mymin(i__2,i__3);
 /*     .......... column modification .......... */
 	i__2 = j;
 	for (i__ = 1; i__ <= i__2; ++i__) {
@@ -1934,7 +1934,7 @@ L225:
 
 /* Computing MIN */
 	i__2 = en, i__3 = k + 3;
-	j = min(i__2,i__3);
+	j = mymin(i__2,i__3);
 /*     .......... column modification .......... */
 	i__2 = j;
 	for (i__ = 1; i__ <= i__2; ++i__) {
@@ -2232,7 +2232,7 @@ L790:
 /* Computing MAX */
 	    d__3 = (d__1 = h__[i__ + na * h_dim1], abs(d__1)), d__4 = (d__2 = 
 		    h__[i__ + en * h_dim1], abs(d__2));
-	    t = max(d__3,d__4);
+	    t = mymax(d__3,d__4);
 	    if (t == 0.) {
 		goto L795;
 	    }
@@ -2278,7 +2278,7 @@ L840:
     i__1 = *n;
     for (jj = *low; jj <= i__1; ++jj) {
 	j = *n + *low - jj;
-	m = min(j,*igh);
+	m = mymin(j,*igh);
 
 	i__2 = *igh;
 	for (i__ = *low; i__ <= i__2; ++i__) {

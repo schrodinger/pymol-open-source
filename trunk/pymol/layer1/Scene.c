@@ -65,7 +65,7 @@ typedef struct {
   int Width,Height;
   int Button;
   int LastX,LastY;
-  GLfloat ViewNormal[3];
+  GLfloat ViewNormal[3],LinesNormal[3];
   GLfloat Pos[3],Origin[3];
   float H;
   float Front,Back,FrontSafe;
@@ -734,10 +734,13 @@ void SceneDone(void)
 	 OrthoFreeBlock(I->Block);
 }
 /*========================================================================*/
-void SceneResetNormal(void)
+void SceneResetNormal(int lines)
 {
   CScene *I=&Scene;
-  glNormal3fv(I->ViewNormal);
+  if(lines)
+	 glNormal3fv(I->LinesNormal);
+  else
+	 glNormal3fv(I->ViewNormal);
 }
 
 /*========================================================================*/
@@ -985,9 +988,25 @@ void SceneRender(Pickable *pick,int x,int y)
   glTranslatef(-I->Origin[0],-I->Origin[1],-I->Origin[2]);
   
   /* determine the direction in which we are looking relative*/
-  MatrixInvTransform3f(zAxis,I->RotMatrix,normal); 
-  
+
   /* 2. set the normals to reflect light back at the camera */
+
+  MatrixInvTransform3f(zAxis,I->RotMatrix,normal); 
+  I->ViewNormal[0]=normal[0];
+  I->ViewNormal[1]=normal[1];
+  I->ViewNormal[2]=normal[2];	 
+  
+  if(SettingGet(cSetting_normal_workaround)) {
+	 I->LinesNormal[0]=0.0;	
+	 I->LinesNormal[1]=0.0;	 
+	 I->LinesNormal[2]=1.0;
+	 /* for versions of GL that don't transform GL_LINES normals */
+  } else {
+	 I->LinesNormal[0]=I->ViewNormal[0];
+	 I->LinesNormal[1]=I->ViewNormal[1];
+	 I->LinesNormal[2]=I->ViewNormal[2];
+  }
+
   
   if(!pick) {
 	
@@ -1018,9 +1037,6 @@ void SceneRender(Pickable *pick,int x,int y)
 	
 	glNormal3fv(normal);
 	
-	I->ViewNormal[0]=normal[0];
-	I->ViewNormal[1]=normal[1];
-	I->ViewNormal[2]=normal[2];	 
 	
 	glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);

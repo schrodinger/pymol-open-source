@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include<math.h>
 #include<stdio.h>
 #include<string.h>
+#include<GL/glut.h>
 
 #include"Base.h"
 #include"OOMac.h"

@@ -401,7 +401,7 @@ void MainBusyIdle(void)
 	if(false&&I->IdleFlag) { /* select to avoid racing the CPU */
 
 	  PUnlock(cLockAPI,&_save);
-	  PSleep(2000);
+	  PSleep(10000);
 	  PLock(cLockAPI,&_save);
 	  
 
@@ -431,9 +431,10 @@ int main(int argc, char *argv[])
 #else
 void was_main(void) 
 {
-  int argc = 0;
-  char *argv[1],argvv[2] = "\0";
+  int argc = 1;
+  char *argv[2],argvv[1024] = "pymol";
   argv[0]=argvv;
+  argv[1]=NULL;
 
 #ifdef _DRI_WORKAROUND
   dlopen("libGL.so.1",RTLD_LAZY|RTLD_GLOBAL);
@@ -443,9 +444,9 @@ void was_main(void)
 	  
   myArgc=argc;
   myArgv=argv;
-  
+
   glutInit(&argc, argv);
-  
+
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
   
   glutInitWindowPosition(0, 175);
@@ -471,6 +472,11 @@ void was_main(void)
   Py_UNBLOCK_THREADS;
   
   PyMOLReady = true;
+
+  printf(" GL_VENDOR: %s\n",glGetString(GL_VENDOR));
+  printf(" GL_RENDERER: %s\n",glGetString(GL_RENDERER));
+  printf(" GL_VERSION: %s\n",glGetString(GL_VERSION));
+  printf(" GL_EXTENSIONS: %s\n",glGetString(GL_EXTENSIONS));
 
   glutMainLoop();
 

@@ -15,8 +15,8 @@ Z* -------------------------------------------------------------------
 */
 #include<stdio.h>
 #include<math.h>
-#include<values.h>
 
+#include"Base.h"
 #include"Vector.h"
 
 #ifndef R_SMALL
