@@ -33,7 +33,7 @@ PRIME = ls *.c | sed 's/.c$$/.o/'| awk 'BEGIN{printf("OBJS=")}{printf("%s ",$$1)
 
 pymol: .includes .depends .update 
 	/bin/rm -f .update .includes
-	cc */*.o $(CFLAGS) -o pymol $(LIB_DIRS) $(LIBS)
+	cc $(BUILD) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)
 
 fast: .update
 	/bin/rm -f .update 
@@ -47,7 +47,7 @@ clean:
 	/bin/rm -f *.log core */core game.* log.* layer*/*.o layer*/*.p .update layer*/.files layer*/.depends layer*/.includes 
 
 distclean: clean
-	/bin/rm -f pymol modules/*.pyc 
+	/bin/rm -f modules/*.pyc modules/_pm.so
 	/bin/rm -f modules/Pmw/*.pyc modules/Pmw/*/*.pyc modules/Pmw/*/*/*.pyc
 
 dist: distclean

@@ -1,5 +1,6 @@
 #!/bin/csh 
-# CSH Setup script for Unix 
+#
+# PyMOL startup script
 #
 setenv PYMOL_PATH $HOME/pymol
 setenv PYMOL_EXTLIBPATH $HOME/pymol-ext/lib
@@ -20,4 +21,5 @@ else
 setenv PYTHONPATH ${PYMOL_EXTLIBPATH}/python1.5
 endif
 #
+$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/pymol.py $*
 

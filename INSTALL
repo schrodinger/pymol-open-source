@@ -35,27 +35,44 @@ configuration (here is where experience counts)
 	cd $HOME/pymol
 	vi ./Rules.make
 
-4. "make" to compile.  A "pymol" binary will be created in this directory.
+4. "make" to compile.  
 	cd $HOME/pymol
 	make
 
-5. Edit "pymol.csh" to point to appropriate locations on your system
+5. VERSION 1:
+
+ If you opted to make pymol as a standalone application...
+
+ Edit "pymol.csh" to point to appropriate locations on your system
 	cd $HOME/pymol
 	vi ./pymol.csh
 
-6. source "pymol.csh" from a csh command line in order to set the
-appropriate environment variables.  If you're going to use pymol a lot,
-add this file to your .cshrc login script
+ source "pymol.csh" from a csh command line in order to set the
+ appropriate environment variables.  If you're going to use pymol a lot,
+ add this file to your .cshrc login script
 	cd $HOME/pymol
 	source pymol.csh
 
-7. You should be all set to run pymol.
-	pymol
+ You should be all set to run pymol.
+	pymol.exe
+
+5. VERSION 2:
+  
+ If you are making pymol as a Python module, edit pymol.com to
+ point to appropriate locations on your system...
+	cd $HOME/pymol
+	vi ./pymol.com
+	
+ You should be all set to run pymol.
+	pymol.com
 
 
 NOTE: If you ever want to clean up the tree
 	"make clean" gets rid of all intermediate objects, etc.
-	"make realclean" restores the tree to "distribution" quality
+	"make distclean" restores the tree to "distribution" quality
+
+NOTE: To change from module to standalone, you need to do a
+	"make distclean"
 
 
 
