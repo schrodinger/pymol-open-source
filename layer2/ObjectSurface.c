@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"PConv.h"
 #include"P.h"
+#include"Util.h"
 
 ObjectSurface *ObjectSurfaceNew(void);
 
@@ -287,8 +288,15 @@ void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state)
 static void ObjectSurfaceInvalidate(ObjectSurface *I,int rep,int level,int state)
 {
   int a;
+  int once_flag=true;
   for(a=0;a<I->NState;a++) {
-    I->State[a].RefreshFlag=true;
+    if(state<0) once_flag=false;
+    if(!once_flag) state=a;
+    I->State[state].RefreshFlag=true;
+    if(level>=cRepInvAll) {
+      I->State[state].ResurfaceFlag=true;      
+    }
+    if(once_flag) break;
   }
 }
 
@@ -344,7 +352,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                 MapSetupExpress(voxelmap);  
             }
 
-            TetsurfVolume(oms->Field,
+            ms->NT=TetsurfVolume(oms->Field,
                           ms->Level,
                           &ms->N,&ms->V,
                           ms->Range,
@@ -361,6 +369,16 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
     }
   }
   SceneDirty();
+}
+
+static int ZOrderFn(float *array,int l,int r)
+{
+  return (array[l]<=array[r]);
+}
+
+static int ZRevOrderFn(float *array,int l,int r)
+{
+  return (array[l]>=array[r]);
 }
 
 static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **pick,int pass)
@@ -401,10 +419,12 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
         v=ms->V;
         n=ms->N;
         if(ray) {
-          ray->fTransparentf(ray,1.0F-alpha);       
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
                          I->Obj.Setting,NULL);
+
+
+          ray->fTransparentf(ray,1.0F-alpha);       
           ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
           if(n&&v&&I->Obj.RepVis[cRepSurface]) {
             vc = ColorGet(I->Obj.Color);
@@ -417,13 +437,6 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                   v+=12;
                   c-=4;
                   while(c>0) {
-                    /*                  dump3f(v-12,"v-12 ");
-                                        dump3f(v-9 ,"v-9  ");
-                                        dump3f(v-6, "v-6  ");
-                                        dump3f(v-3, "v-3  ");
-                                        dump3f(v,   "v    ");
-                                        dump3f(v+3, "v+3  ");
-                    */
                     
                     ray->fTriangle3fv(ray,v-9,v-3,v+3,
                                       v-12,v-6,v,
@@ -456,8 +469,13 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
           ray->fTransparentf(ray,0.0);
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
-          if(!pass) {
 
+          int render_now = false;
+          if(alpha>0.0001) {
+            render_now = (pass==-1);
+          } else 
+            render_now = (!pass);
+          if(render_now) {
             int use_dlst;
 
             if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
@@ -483,49 +501,159 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
               }
 
             
-            if(n&&v&&I->Obj.RepVis[cRepSurface]) {
+              if(n&&v&&I->Obj.RepVis[cRepSurface]) {
 
-              glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
-              while(*n)
-                {
-                  c=*(n++);
-                  switch(ms->Mode) {
-                  case 3:
-                  case 2:
-                    glBegin(GL_TRIANGLE_STRIP);
-                    while(c>0) {
-                      glNormal3fv(v);
-                      v+=3;
-                      glVertex3fv(v);
-                      v+=3;
-                      c-=2;
+                if((ms->Mode>1)&&(alpha!=1.0)) { /* transparent */
+                
+                  int t_mode;
+
+                  t_mode  = SettingGet_i(NULL,I->Obj.Setting,cSetting_transparency_mode);
+                
+                  if(t_mode) { /* high quality (sorted) transparency? */
+                  
+                    float **t_buf=NULL,**tb;
+                    float *z_value=NULL,*zv;
+                    int *ix=NULL;
+                    int n_tri = 0;
+                    float sum[3];
+                    float matrix[16];
+                    int parity;
+                    glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
+                  
+                    t_buf = Alloc(float*,ms->NT*9);
+                  
+                    z_value = Alloc(float,ms->NT);
+                    ix = Alloc(int,ms->NT);
+                  
+                    zv = z_value;
+                    tb = t_buf;
+
+                    while(*n)
+                      {
+                        parity=true;
+                        c=*(n++);
+                        v+=12;
+                        c-=4;
+                        while(c>0) {
+
+                          if(parity) {
+                            *(tb++) = v-12;
+                            *(tb++) = v-9;
+                            *(tb++) = v-6;
+                            *(tb++) = v-3;
+                            *(tb++) = v;
+                            *(tb++) = v+3;
+                          } else {
+                            *(tb++) = v-12;
+                            *(tb++) = v-9;
+                            *(tb++) = v;
+                            *(tb++) = v+3;
+                            *(tb++) = v-6;
+                            *(tb++) = v-3;
+                          }
+                        
+                          parity=!parity;
+
+                          add3f(tb[-1],tb[-3],sum);
+                          add3f(sum,tb[-5],sum);
+                        
+                          *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
+                          n_tri++;
+                        
+                          v+=6;
+                          c-=2;
+                        }
+                      }
+                    switch(t_mode) {
+                    case 1:
+                      UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);
+                      break;
+                    default:
+                      UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
+                      break;
+                    }
+                    
+                    c=n_tri;
+                    
+                    col=ColorGet(I->Obj.Color);
+                    
+                    glColor4f(col[0],col[1],col[2],alpha);
+                    glBegin(GL_TRIANGLES);
+                    for(c=0;c<n_tri;c++) {
+                      
+                      tb = t_buf+6*ix[c];
+                      
+                      glNormal3fv(*(tb++));
+                      glVertex3fv(*(tb++));
+                      glNormal3fv(*(tb++));
+                      glVertex3fv(*(tb++));
+                      glNormal3fv(*(tb++));
+                      glVertex3fv(*(tb++));
                     }
                     glEnd();
-                    break;
-                  case 1:
-                    glBegin(GL_LINES);
-                    while(c>0) {
-                      glVertex3fv(v);
-                      v+=3;
-                      c--;
-                    }
-                    glEnd();
-                    break;
-                  case 0:
-                  default:
-                    glBegin(GL_POINTS);
-                    while(c>0) {
-                      glVertex3fv(v);
-                      v+=3;
-                      c--;
-                    }
-                    glEnd();
-                    break;
+                    
+                    FreeP(ix);
+                    FreeP(z_value);
+                    FreeP(t_buf);
+                  } else { 
+                    while(*n)
+                      {
+                        c=*(n++);
+                    
+                        glBegin(GL_TRIANGLE_STRIP);
+                        while(c>0) {
+                          glNormal3fv(v);
+                          v+=3;
+                          glVertex3fv(v);
+                          v+=3;
+                          c-=2;
+                        }
+                        glEnd();
+                      }
                   }
+                } else {
+                  glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
+                  while(*n)
+                    {
+                      c=*(n++);
+                      switch(ms->Mode) {
+                      case 3:
+                      case 2:
+                        glBegin(GL_TRIANGLE_STRIP);
+                        while(c>0) {
+                          glNormal3fv(v);
+                          v+=3;
+                          glVertex3fv(v);
+                          v+=3;
+                          c-=2;
+                        }
+                        glEnd();
+                        break;
+                      case 1:
+                        glBegin(GL_LINES);
+                        while(c>0) {
+                          glVertex3fv(v);
+                          v+=3;
+                          c--;
+                        }
+                        glEnd();
+                        break;
+                      case 0:
+                      default:
+                        glBegin(GL_POINTS);
+                        while(c>0) {
+                          glVertex3fv(v);
+                          v+=3;
+                          c--;
+                        }
+                        glEnd();
+                        break;
+                      }
+                    }
                 }
+              }
             }
-            }
-
+            
             if(use_dlst&&ms->displayList) {
               glEndList();
             }
@@ -580,6 +708,7 @@ void ObjectSurfaceStateInit(ObjectSurfaceState *ms)
   }
 
   ms->N[0]=0;
+  ms->NT=0;
   ms->Active=true;
   ms->ResurfaceFlag=true;
   ms->ExtentFlag=false;

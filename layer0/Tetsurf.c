@@ -536,7 +536,7 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
    VLASize(*vert,float,n_vert*3);
    VLASize(*num,int,n_strip);
 
-	return(ok);
+	return(TotPrim);
 }
 /*===========================================================================*/
 int	TetsurfAlloc(void)
@@ -661,7 +661,6 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
                              float carvebuffer,int side)
 {
   int	a,b,c,i,j,k,h,l;
-  int avg_c;
 #ifdef Trace
 	int	ECount=0;
 #endif

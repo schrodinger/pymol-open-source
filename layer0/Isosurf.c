@@ -147,6 +147,7 @@ Isofield *IsosurfNewFromPyList(PyObject *list)
       result=NULL;
     }
   }
+  result->gradients = NULL;
   return(result);
 }
 
@@ -228,6 +229,8 @@ Isofield *IsosurfFieldAlloc(int *dims)
   for(a=0;a<3;a++)
     dim4[a]=dims[a];
   dim4[3] = 3;
+
+  /* Warning: ...FromPyList also allocs and inits from the heap */
 
   result=mmalloc(sizeof(Isofield));
   ErrChkPtr(result);
