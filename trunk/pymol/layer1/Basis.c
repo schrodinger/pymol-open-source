@@ -1802,7 +1802,7 @@ int BasisHitShadow(BasisCallRec *BC)
       
       register float r_tri1=_0, r_tri2=_0, r_dist;  /* zero inits to suppress compiler warnings */
       register float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
-      register r_trans = _0;
+      register float r_trans = _0;
       CPrimitive *r_prim = NULL;
       
       check_interior_flag   = BC->check_interior;

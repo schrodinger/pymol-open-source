@@ -1,3 +1,5 @@
+import sys
+import time
 import os
 from pymol.wizard import Wizard
 from pymol import cmd
@@ -11,7 +13,7 @@ redo_object = "_w_cleanup_redo"
 def auto_configure():
    result = -1
    
-   SZYBKI_EXE = None
+   global SZYBKI_EXE
    OE_DIR = os.environ.get("OE_DIR",None)
    if OE_DIR == None:
       OE_DIR = os.environ.get("OEDIR",None)
@@ -20,8 +22,15 @@ def auto_configure():
       if os.path.exists(SZYBKI_EXE):
          result = 1
       else:
+         SZYBKI_EXE = SZYBKI_EXE + ".exe"
+         print SZYBKI_EXE
          if os.path.exists(SZYBKI_EXE):
-            SZYBKI_EXE = SZYBKI_EXE + ".exe"
+            result=1
+      if result<0:
+         SZYBKI_EXE = os.path.join(OE_DIR,"arch/microsoft-win32-i586/bin/szybki-1.0b7.exe")
+         if os.path.exists(SZYBKI_EXE):
+             result = 1
+	
    return result
 
 class Cleanup(Wizard):
@@ -88,8 +97,8 @@ class Cleanup(Wizard):
                time.sleep(0.05)
             else:
                break;
-         cmd.system("$OE_DIR/bin/szybki -i ligand_inp.mol -o ligand_out.mol")
-         while 1:
+         cmd.system(exe+" -i ligand_inp.mol -o ligand_out.mol")
+         for a in range(1,20):
             if not os.path.exists(out):
                time.sleep(0.05)
             else:

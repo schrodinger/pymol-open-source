@@ -1185,7 +1185,7 @@ void find_axis( Matrix33d a, float *axis)
   axis[2]=0.0F;
 
   {
-    float max_real = 0.0F;
+    double max_real = 0.0F;
 
     for(x=0;x<3;x++) { /* looking for an eigvalue of (1,0) */
       /*      printf("wr %8.3f wi %8.3f\n",wr[x],wi[x]);
