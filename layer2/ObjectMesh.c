@@ -113,8 +113,6 @@ static void ObjectMeshUpdate(ObjectMesh *I)
         if(ms->CarveFlag&&ms->AtomVertex&&
            VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
           /* cull my friend, cull */
-          for(c=0;c<VLAGetSize(ms->AtomVertex)/3;c++)
-            dump3f(ms->AtomVertex+3*c," atomvertex");
           voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
           if(voxelmap) {
             
@@ -171,8 +169,6 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                   n_cur=0;
                 }
               }
-            printf(" nseg %d nline %d\n",n_seg,n_line);
-            fflush(stdout);
             ms->N[n_seg]=0;
             VLAFreeP(old_n);
             VLAFreeP(old_v);
