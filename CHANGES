@@ -36,18 +36,19 @@ Changes up to 0.50
 
    * "Pair Fit" wizard (internal gui; replace with external version later)
 
-   * Mesh objects now have states, and new meshes are appended onto the object.
+   * Mesh objects now have states, and new meshes are appended.
 
-   * Modified raytrace antialiasing transfer function improve contrast.
+   * Modified raytrace antialiasing transfer function to improve contrast.
 
-   * Created alias and extend commands for the parser.
+   * Created alias and extend commands so that python scripts can extend the
+   pymol language on the fly.
 
    * Additional test cases.
 
    * Parser improved with a new argument parsing subsystem which has a
    better mapping to standard Python arguments.  This has significant
    potential to break existing code if there are any bugs, but I am
-   the goal is 100% backwards compatibility. 
+   shooting for 100% backwards compatibility. 
 
 Changes up to 0.49
 
