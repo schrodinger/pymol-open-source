@@ -565,7 +565,7 @@ static int interpolate_view(CViewElem *first,CViewElem *last)
   float tLen;
   float pLen;
   float v1[3],v2[3],sProj[3];
-  float tAngle;
+  float tAngle=0.0F;
   float tLinear = true; /* always do linear for now... */
   float pivot[3];
 

@@ -379,17 +379,16 @@ int	IsosurfInit(void)
 /*===========================================================================*/
 void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range)
 {
-  float fmn[3],fmx[3];
   float rmn[3],rmx[3];
   float imn[3],imx[3];
-  int a;
+  float mix[24],imix[24];
+
+  int a,b;
   PRINTFD(FB_Isosurface)
     " IsosurfGetRange: entered mn: %4.2f %4.2f %4.2f mx: %4.2f %4.2f %4.2f\n",
     mn[0],mn[1],mn[2],mx[0],mx[1],mx[2]
     ENDFD;
 
-  transform33f3f(cryst->RealToFrac,mn,fmn);
-  transform33f3f(cryst->RealToFrac,mx,fmx);
   for(a=0;a<3;a++) {
     rmn[a] = F4(field->points,0,0,0,a);
     rmx[a] = F4(field->points,field->dimensions[0]-1,field->dimensions[1]-1,
@@ -399,11 +398,65 @@ void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   transform33f3f(cryst->RealToFrac,rmn,imn);
   transform33f3f(cryst->RealToFrac,rmx,imx);
 
+  mix[ 0]=mn[0];
+  mix[ 1]=mn[1];
+  mix[ 2]=mn[2];
+
+  mix[ 3]=mx[0];
+  mix[ 4]=mn[1];
+  mix[ 5]=mn[2];
+
+  mix[ 6]=mn[0];
+  mix[ 7]=mx[1];
+  mix[ 8]=mn[2];
+
+  mix[ 9]=mn[0];
+  mix[10]=mn[1];
+  mix[11]=mx[2];
+
+  mix[12]=mx[0];
+  mix[13]=mx[1];
+  mix[14]=mn[2];
+
+  mix[15]=mx[0];
+  mix[16]=mn[1];
+  mix[17]=mx[2];
+
+  mix[18]=mn[0];
+  mix[19]=mx[1];
+  mix[20]=mx[2];
+
+  mix[21]=mx[0];
+  mix[22]=mx[1];
+  mix[23]=mx[2];
+
+  for(b=0;b<8;b++) {
+    transform33f3f(cryst->RealToFrac,mix+3*b,imix+3*b);
+  }
+
   for(a=0;a<3;a++) {
     if(imx[a]!=imn[a]) {
-      range[a] = (int)((field->dimensions[a]*(fmn[a]-imn[a])/(imx[a]-imn[a])));
+      int b;
+      float mini,maxi,cur;
+
+      for(b=0;b<8;b++) {
+        cur = ((field->dimensions[a]*(imix[a+3*b]-imn[a])/(imx[a]-imn[a])));
+        
+        if(!b) {
+          mini=cur;
+          maxi=cur;
+        } else {
+          if(mini>cur)
+            mini=cur;
+          if(maxi<cur)
+            maxi=cur;
+        }
+      }
+
+      range[a] = (int)(mini-0.5F);
       if(range[a]<0) range[a]=0;
-      range[a+3] = (int)((field->dimensions[a]*(fmx[a]-imn[a])/(imx[a]-imn[a]))+0.999);
+      range[a+3] = (int)(maxi+1.5F);
+      if(range[a+3]<0) range[a+3]=0;
     } else {
       range[a]=1;
       range[a+3]=1;
