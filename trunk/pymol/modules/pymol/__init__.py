@@ -62,8 +62,10 @@ if pymol_launch != 3: # if this isn't a dry run
             # first, see if we've got "site-packages/pymol/pymol_path"
             # which would the case from a DISTUTILS install
             if (pymol_file[0:1] not in [ '\\', '/' ]) and pymol_file[1:2]!=':': 
-               pymol_file = os.getcwd()+"/"+pymol_path # make path absolute
+               pymol_file = os.getcwd()+"/"+pymol_file # make path absolute
+
             pymol_path = re.sub(r"[\/\\][^\/\\]*$","/pymol_path",pymol_file)
+
             if os.path.isdir(pymol_path):
                os.environ['PYMOL_PATH'] = pymol_path
             # that didn't work, so check ther reverse situation "/modules/pymol/__init__.py"
@@ -87,8 +89,18 @@ if pymol_launch != 3: # if this isn't a dry run
 
       pymol_launch = -1 # non-threaded launch import flag
 
-      import pymol
+      try_again = 0
 
+      try:
+         import pymol
+      except ImportError:
+         try_again = 1
+
+      if try_again:
+         sys.exc_clear()
+         sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+         import pymol
+      
       pymol_launch = 1
    
    elif pymol_launch==-1:
@@ -115,58 +127,194 @@ if pymol_launch != 3: # if this isn't a dry run
 
    # PyMOL __init__.py
 
-   # Create a temporary object "stored" in the PyMOL global namespace
-   # for usage with evaluate based-commands such as alter
-
-   class Scratch_Storage:
-      pass
-
-   stored = Scratch_Storage()
-
-   # Create a permanent object in the PyMOL global namespace
-   # that will be picked and unpickled along with the session
-   
-   class Session_Storage:
-      pass
-
-   session = Session_Storage()
-   
-   # This global will be non-None if logging is active
-   # (global variable used for efficiency)
-
-   _log_file = None
-
-   # This global will be non-None if an external gui
-   # exists. It mainly exists so that events which occur
-   # in the Python thread can be handed off to the
-   # external GUI thread through one or more FIFO Queues
-   # (global variable used for efficiency)
-
-   _ext_gui = None
-
-   # lists of functions to call when saving and restoring pymol session objects
-   # The entry 'None' represents the PyMOL C-API function call
-   
-   _session_save_tasks = [ None ]
-   _session_restore_tasks = [ None ]
-   
-   # special handling for win32
-
-   if sys.platform=='win32':
-      # include modules directory (if it isn't already and it exists)
-      loc2 = os.environ['PYMOL_PATH']+'/modules'
-      if os.path.exists(loc2):
-         if loc2 not in sys.path:
-            sys.path.append(loc2)
-      # include installed numpy
-      loc1 = os.environ['PYMOL_PATH']+'/modules/numeric'
-      if os.path.exists(loc1):
-         sys.path.append(loc1)
+   if __name__=='pymol':
       
-   sys.setcheckinterval(1) # maximize responsiveness
+      # Create a temporary object "stored" in the PyMOL global namespace
+      # for usage with evaluate based-commands such as alter
 
-   lock_api = threading.RLock() # mutex for API 
-   lock_api_c = threading.RLock() # mutex for C management of python threads
+      class Scratch_Storage:
+         pass
+
+      stored = Scratch_Storage()
+
+      # Create a permanent object in the PyMOL global namespace
+      # that will be picked and unpickled along with the session
+
+      class Session_Storage:
+         pass
+
+      session = Session_Storage()
+
+      # This global will be non-None if logging is active
+      # (global variable used for efficiency)
+
+      _log_file = None
+
+      # This global will be non-None if an external gui
+      # exists. It mainly exists so that events which occur
+      # in the Python thread can be handed off to the
+      # external GUI thread through one or more FIFO Queues
+      # (global variable used for efficiency)
+
+      _ext_gui = None
+
+      # lists of functions to call when saving and restoring pymol session objects
+      # The entry 'None' represents the PyMOL C-API function call
+
+      _session_save_tasks = [ None ]
+      _session_restore_tasks = [ None ]
+
+      # special handling for win32
+
+      if sys.platform=='win32':
+         # include modules directory (if it isn't already and it exists)
+         loc2 = os.environ['PYMOL_PATH']+'/modules'
+         if os.path.exists(loc2):
+            if loc2 not in sys.path:
+               sys.path.append(loc2)
+         # include installed numpy
+         loc1 = os.environ['PYMOL_PATH']+'/modules/numeric'
+         if os.path.exists(loc1):
+            sys.path.append(loc1)
+
+
+      if '' not in sys.path: # make sure cwd is in path like normal Python
+         sys.path.insert(0,'') 
+   
+      sys.setcheckinterval(1) # maximize responsiveness
+
+      lock_api = threading.RLock() # mutex for API 
+      lock_api_c = threading.RLock() # mutex for C management of python threads
+
+
+      def exec_str(s):
+         try:
+            exec s in globals(),globals()
+         except StandardError:
+            traceback.print_exc()
+         return None
+
+      def stdin_reader(): # dedicated thread for reading standard input
+         import sys
+         from pymol import cmd
+         while 1:
+            l = sys.stdin.readline()
+            if l!="":
+               cmd.do(l)
+            else:
+               cmd.quit()
+
+      def exec_deferred():
+         try:
+            cmd.config_mouse(quiet=1)
+            for a in invocation.options.deferred:
+               if a[0:4]=="_do_":
+                  cmd.do(a[4:])
+               elif re.search(r"pymol\.py$",a):
+                  pass
+               elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
+                  cmd.do("_ run %s" % a)
+               elif cmd.file_ext_re.search(a):
+                  cmd.load(a,quiet=0)
+               elif re.search(r"\.pml$",a,re.I):
+                  cmd.do("_ @%s" % a)
+               else:
+                  cmd.load(a,quiet=0)
+         except:
+            traceback.print_exc()
+         if invocation.options.read_stdin:
+            t = threading.Thread(target=stdin_reader)
+            t.setDaemon(1)
+            t.start()
+
+      def adapt_to_hardware():
+         (vendor,renderer,version) = cmd.get_renderer()
+         if vendor[0:6]=='NVIDIA':
+            cmd.set('ribbon_smooth',0,quiet=1)
+            if renderer[0:7]=='GeForce':
+               if invocation.options.show_splash:
+                  print " Adapting to GeForce hardware..."
+               cmd.set('line_width','2',quiet=1)
+            elif renderer=='NVIDIA GPU OpenGL Engine':
+               if sys.platform=='darwin':
+                  if invocation.options.show_splash:
+                     print " Adapting to NVIDIA hardware on Mac..."
+                     cmd.set('line_smooth',0,quiet=1)
+                     cmd.set('fog',0.9,quiet=1)
+            elif renderer=='NVIDIA GeForce4 GPU OpenGL Engine':
+               if sys.platform=='darwin':
+                  if invocation.options.show_splash:
+                     cmd.set('stereo_double_pump_mono',1,quiet=1)
+
+            elif renderer[0:6]=='Quadro':
+               if invocation.options.show_splash:
+                  print " Adapting to Quadro hardware..."
+               cmd.set("stereo_double_pump_mono","1",quiet=1)
+               cmd.set("line_width",1.4,quiet=1)
+
+         if vendor[0:4]=='Mesa':
+            if renderer[0:18]=='Mesa GLX Indirect':
+               cmd.set('ribbon_smooth',0,quiet=1)
+
+         if vendor[0:3]=='ATI':
+            cmd.set('ribbon_smooth',0,quiet=1)
+            if renderer[0:17]=='FireGL2 / FireGL3':
+               if invocation.options.show_splash:
+                  print " Adapting to FireGL hardware..."
+               cmd.set('line_width','2',quiet=1)            
+
+         # find out how many processors we have, and adjust hash
+         # table size to reflect available RAM
+
+         try:
+            ncpu = 1
+            if sys.platform=='darwin':
+               if os.path.exists("/usr/sbin/sysctl"):
+                  f=os.popen("/usr/sbin/sysctl hw.ncpu hw.physmem")
+                  l=f.readlines()
+                  f.close()
+                  if len(l):
+                     for ll in l:
+                        ll = string.split(string.strip(ll))
+                        if ll[0][0:7]=='hw.ncpu':
+                           ncpu = int(ll[-1:][0])
+                        elif ll[0][0:10]=='hw.physmem':
+                           mem = int(ll[-1:][0])
+                           if mem>1000000000: # Gig or more
+                              cmd.set("hash_max",160)
+                           elif mem>500000000:
+                              cmd.set("hash_max",120)
+                           elif mem<256000000:
+                              cmd.set("hash_max",80)
+            elif sys.platform[0:5]=='linux':
+               f=os.popen("egrep -c '^processor[^A-Za-z0-9:]*: [0-9]' /proc/cpuinfo")
+               l=f.readlines()
+               f.close()
+               ncpu = int(l[0][0])
+            elif sys.platform[0:4]=='irix':
+               f=os.popen("hinv | grep IP | grep Processor | grep HZ")
+               l=f.readlines()
+               f.close()
+               ncpu=int(l[0][0])
+            if ncpu>1:
+                cmd.set("max_threads",ncpu)
+                if invocation.options.show_splash:  
+                    print " Detected %d CPUs."%ncpu,
+                    print " Enabled multithreaded rendering."
+         except:
+            pass
+
+      # NEED SOME CONTRIBUTIONS HERE!
+
+      def launch_gui():
+         if invocation.options.external_gui==1:
+            __import__(invocation.options.gui)
+
+      # -- Greg Landrum's RPC stuff
+         if invocation.options.rpcServer:
+            import rpc
+            rpc.launch_XMLRPC()
+      # --
 
    def prime_pymol():
       global glutThread
@@ -177,134 +325,6 @@ if pymol_launch != 3: # if this isn't a dry run
       prime_pymol()
       _cmd.runpymol() # only returns if we are running pretend GLUT
 #      from pymol.embed import wxpymol # never returns
-   
-   def exec_str(s):
-      try:
-         exec s in globals(),globals()
-      except StandardError:
-         traceback.print_exc()
-      return None
-
-   def stdin_reader(): # dedicated thread for reading standard input
-      import sys
-      from pymol import cmd
-      while 1:
-         l = sys.stdin.readline()
-         if l!="":
-            cmd.do(l)
-         else:
-            cmd.quit()
-
-   def exec_deferred():
-      try:
-         cmd.config_mouse(quiet=1)
-         for a in invocation.options.deferred:
-            if a[0:4]=="_do_":
-               cmd.do(a[4:])
-            elif re.search(r"pymol\.py$",a):
-               pass
-            elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
-               cmd.do("_ run %s" % a)
-            elif cmd.file_ext_re.search(a):
-               cmd.load(a,quiet=0)
-            elif re.search(r"\.pml$",a,re.I):
-               cmd.do("_ @%s" % a)
-            else:
-               cmd.load(a,quiet=0)
-      except:
-         traceback.print_exc()
-      if invocation.options.read_stdin:
-         t = threading.Thread(target=stdin_reader)
-         t.setDaemon(1)
-         t.start()
-
-   def adapt_to_hardware():
-      (vendor,renderer,version) = cmd.get_renderer()
-      if vendor[0:6]=='NVIDIA':
-         cmd.set('ribbon_smooth',0,quiet=1)
-         if renderer[0:7]=='GeForce':
-            if invocation.options.show_splash:
-               print " Adapting to GeForce hardware..."
-            cmd.set('line_width','2',quiet=1)
-         elif renderer=='NVIDIA GPU OpenGL Engine':
-            if sys.platform=='darwin':
-               if invocation.options.show_splash:
-                  print " Adapting to NVIDIA hardware on Mac..."
-                  cmd.set('line_smooth',0,quiet=1)
-                  cmd.set('fog',0.9,quiet=1)
-         elif renderer=='NVIDIA GeForce4 GPU OpenGL Engine':
-            if sys.platform=='darwin':
-               if invocation.options.show_splash:
-                  cmd.set('stereo_double_pump_mono',1,quiet=1)
-
-         elif renderer[0:6]=='Quadro':
-            print " Adapting to Quadro hardware..."
-            cmd.set("stereo_double_pump_mono","1",quiet=1)
-            cmd.set("line_width",1.4,quiet=1)
-
-      if vendor[0:4]=='Mesa':
-         if renderer[0:18]=='Mesa GLX Indirect':
-            cmd.set('ribbon_smooth',0,quiet=1)
-         
-      if vendor[0:3]=='ATI':
-         cmd.set('ribbon_smooth',0,quiet=1)
-         if renderer[0:17]=='FireGL2 / FireGL3':
-            if invocation.options.show_splash:
-               print " Adapting to FireGL hardware..."
-            cmd.set('line_width','2',quiet=1)            
-
-      # find out how many processors we have, and adjust hash
-      # table size to reflect available RAM
-
-      try:
-         ncpu = 1
-         if sys.platform=='darwin':
-            if os.path.exists("/usr/sbin/sysctl"):
-               f=os.popen("/usr/sbin/sysctl hw.ncpu hw.physmem")
-               l=f.readlines()
-               f.close()
-               if len(l):
-                  for ll in l:
-                     ll = string.split(string.strip(ll))
-                     if ll[0][0:7]=='hw.ncpu':
-                        ncpu = int(ll[-1:][0])
-                     elif ll[0][0:10]=='hw.physmem':
-                        mem = int(ll[-1:][0])
-                        if mem>1000000000: # Gig or more
-                           cmd.set("hash_max",160)
-                        elif mem>500000000:
-                           cmd.set("hash_max",120)
-                        elif mem<256000000:
-                           cmd.set("hash_max",80)
-         elif sys.platform[0:5]=='linux':
-            f=os.popen("egrep -c '^processor[^A-Za-z0-9:]*: [0-9]' /proc/cpuinfo")
-            l=f.readlines()
-            f.close()
-            ncpu = int(l[0][0])
-         elif sys.platform[0:4]=='irix':
-            f=os.popen("hinv | grep IP | grep Processor | grep HZ")
-            l=f.readlines()
-            f.close()
-            ncpu=int(l[0][0])
-         if ncpu>1:
-             cmd.set("max_threads",ncpu)
-             if invocation.options.show_splash:  
-                 print " Detected %d CPUs."%ncpu,
-                 print " Enabled multithreaded rendering."
-      except:
-         pass
-                     
-   # NEED SOME CONTRIBUTIONS HERE!
-
-   def launch_gui():
-      if invocation.options.external_gui==1:
-         __import__(invocation.options.gui)
-
-   # -- Greg Landrum's RPC stuff
-      if invocation.options.rpcServer:
-         import rpc
-         rpc.launch_XMLRPC()
-   # --
 
    import _cmd
    import cmd
@@ -329,12 +349,12 @@ if pymol_launch != 3: # if this isn't a dry run
         args=(pymol_argv+["-K"],)) # keep PyMOL thread alive
                                    # even w/o GUI
       glutThreadObject.start()
-      
+
    elif pymol_launch==4: # monolithic (embedded) launch
       invocation.parse_args(pymol_argv)
       prime_pymol()
       # count on host process to actually start PyMOL
-   
+
    if os.environ.has_key('DISPLAY'):
       from xwin import *
 

@@ -1258,10 +1258,16 @@ int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet)
 
   } else {
     if(strlen(fname)) {
+      
+      unsigned int u_width=(unsigned int)width,u_height = (unsigned int)height;
+      unsigned char *u_table = (unsigned char*)table;
       if(MyPNGRead(fname,
-                   (unsigned char**)&table,
-                   (unsigned int*)&width,
-                   (unsigned int*)&height)) {
+                   &u_table,
+                   &u_width,
+                   &u_height)) {
+        table = (unsigned int*)u_table;
+        width = (signed int)u_width;
+        height = (signed int)u_height;
         if((width==512)&&(height==512)) {
           FreeP(I->ColorTable);
           I->ColorTable = table;

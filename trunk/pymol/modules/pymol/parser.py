@@ -90,6 +90,7 @@ if __name__=='pymol.parser':
    # report any uncaught errors...
       if sys.exc_info()!=(None,None,None):
          traceback.print_exc()
+         sys.exc_clear()
       if embed_sentinel[nest]!=None:
          if string.strip(s)==embed_sentinel[nest]:
             print " Embed: read %d lines."%(len(embed_list[nest]))
