@@ -28,6 +28,7 @@ void SelectorToggle(int rep,char *name);
 void SelectorCylinder(char *sele,char *onoff);
 int SelectorUpdateTable(void);
 int SelectorIndexByName(char *sele);
+char *SelectorGetName(int index);
 int SelectorIsMember(int start,int sele);
 void SelectorFree(void);
 void SelectorDelete(char *sele);
