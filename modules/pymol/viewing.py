@@ -890,15 +890,15 @@ SEE ALSO
       'F7' : 'F07',
       'F8' : 'F08',
       'F9' : 'F09',
-#      'SHFT-F1' : 'SHFT-F01',
-#      'SHFT-F2' : 'SHFT-F02',
-#      'SHFT-F3' : 'SHFT-F03',
-#      'SHFT-F4' : 'SHFT-F04',
-#      'SHFT-F5' : 'SHFT-F05',
-#      'SHFT-F6' : 'SHFT-F06',
-#      'SHFT-F7' : 'SHFT-F07',
-#      'SHFT-F8' : 'SHFT-F08',
-#      'SHFT-F9' : 'SHFT-F09',
+      'SHFT-F1' : 'SHFT-F01',
+      'SHFT-F2' : 'SHFT-F02',
+      'SHFT-F3' : 'SHFT-F03',
+      'SHFT-F4' : 'SHFT-F04',
+      'SHFT-F5' : 'SHFT-F05',
+      'SHFT-F6' : 'SHFT-F06',
+      'SHFT-F7' : 'SHFT-F07',
+      'SHFT-F8' : 'SHFT-F08',
+      'SHFT-F9' : 'SHFT-F09',
       }
 
    def _scene_get_unique_key():
@@ -921,7 +921,10 @@ SEE ALSO
          if scene_dict.has_key(a):
             new_list.append(a)
             new_dict[a] = 1
-      for a in scene_dict.keys():
+      lst = map(lambda x:(scene_sort_dict.get(x,x),x), scene_dict.keys())
+      lst.sort()
+      lst = map(lambda x:x[1],lst)
+      for a in lst:
          if not new_dict.has_key(a):
             new_list.append(a)
       scene_order = new_list
@@ -1231,10 +1234,12 @@ DEVELOPMENT TO DO
    def session_restore_scenes(session):
       global scene_dict,scene_dict_sc,scene_order
       if session.has_key('scene_dict'):
-         scene_dict=copy.deepcopy(session['scene_dict'])
+         scene_dict = copy.deepcopy(session['scene_dict'])
          scene_dict_sc = Shortcut(scene_dict.keys())
       if session.has_key('scene_order'):
-         scene_order=copy.deepcopy(session['scene_order'])
+         scene_order = copy.deepcopy(session['scene_order'])
+      else:
+         scene_order = []
       return 1
 
    if session_restore_scenes not in pymol._session_restore_tasks:
