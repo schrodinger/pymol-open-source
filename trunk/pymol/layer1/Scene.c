@@ -326,17 +326,22 @@ void SceneSetFrame(int mode,int frame)
   case 5:
 	 I->Frame+=frame;
 	 break;
+  case 6: /* movie/frame override - go to this state absolutely! */
+    I->StateIndex = frame;
+    break;
   }
   SceneCountFrames();
-  if(I->Frame>=I->NFrame) I->Frame=I->NFrame-1;
-  if(I->Frame<0) I->Frame=0;
-  I->StateIndex = MovieFrameToIndex(I->Frame);
-  if(mode&4) 
-	MovieDoFrameCommand(I->Frame);
-  if(I->Frame==0)
-	MovieMatrix(cMovieMatrixRecall);
-  if(SettingGet(cSetting_cache_frames))
-	 I->MovieFrameFlag=true;
+  if (mode<6) { 
+    if(I->Frame>=I->NFrame) I->Frame=I->NFrame-1;
+    if(I->Frame<0) I->Frame=0;
+    I->StateIndex = MovieFrameToIndex(I->Frame);
+    if(mode&4) 
+      MovieDoFrameCommand(I->Frame);
+    if(I->Frame==0)
+      MovieMatrix(cMovieMatrixRecall);
+    if(SettingGet(cSetting_cache_frames))
+      I->MovieFrameFlag=true;
+  }
   SceneDirty();
 
 }
