@@ -709,7 +709,8 @@ void PInitEmbedded(int argc,char **argv)
 #endif
 
 
-#ifdef _PYMOL_SETUP_PY21
+#ifdef _PYMOL_SETUP_PY21 
+/* where and when is this used? (if at all?) */
 {
   char line[5000];
   char *pymol_path;
@@ -801,11 +802,15 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 #endif
 
 #ifdef _PYMOL_SETUP_PY21
+/* where and when is this used? (if at all?) */
   PyRun_SimpleString("import string");
   PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext-static')<0,sys.path)"); /* clean bogus entries in sys.path */
 #endif
-  
+
+#ifdef WIN32
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
+#endif
+
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 
   pymol = PyImport_AddModule("pymol"); /* get it */

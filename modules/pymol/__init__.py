@@ -35,210 +35,216 @@
 # in the "pymol" modules directory which points to the main
 # pymol directory
 
-import thread 
-import threading 
-import os
-import sys
-import re
-import string 
-import time
-import invocation
-import traceback
-import math
-import threading
 import __main__
 
+if __name__!='__main__':
+   import invocation
+   
 # Global variable "__main__.pymol_launch" tracks how we're launching PyMOL:
 #
 # 0: old way, now obsolete (e.g. "python launch_pymol.py")
 # 1: new way, spawn thread on import: (e.g. from "import pymol")
 # 2: new way, consume main thread: (e.g. from "python pymol/__init__.py")
+# 3: dry run -- just get PyMOL environment information
 
 if hasattr(__main__,'pymol_launch'):
    pymol_launch = __main__.pymol_launch
 else:
    pymol_launch = 2 
 
-# try to set PYMOL_PATH if unset...
+if pymol_launch != 3: # if this isn't a dry run
 
-if not os.environ.has_key("PYMOL_PATH"):
-   try:
-      pymol_path = re.sub(r"\/[^\/]*$","/pymol_path",__file__)
-      if pymol_path[0:1]!='/': 
-         pymol_path = os.getcwd()+"/"+pymol_path # make path absolute
-      if os.path.isdir(pymol_path):
-         os.environ['PYMOL_PATH'] = pymol_path
-   except NameError:
+   import thread 
+   import threading 
+   import os
+   import sys
+   import re
+   import string 
+   import time
+   import traceback
+   import math
+
+   # try to set PYMOL_PATH if unset...
+
+   if __name__!='__main__':
+      if not os.environ.has_key("PYMOL_PATH"):
+         try:
+            pymol_path = re.sub(r"\/[^\/]*$","/pymol_path",__file__)
+            if pymol_path[0:1]!='/': 
+               pymol_path = os.getcwd()+"/"+pymol_path # make path absolute
+            if os.path.isdir(pymol_path):
+               os.environ['PYMOL_PATH'] = pymol_path
+         except NameError:
+            pass
+
+   # now start the launch process...
+
+   if __name__=='__main__':
+
+      # PyMOL launched as "python pymol/__init__.py"
+      # or via execfile(".../pymol/__init__.py",...) from main
+
+      if not hasattr(__main__,"pymol_argv"):
+         __main__.pymol_argv = sys.argv
+
+      pymol_launch = -1 # non-threaded launch import flag
+
+      import pymol
+
+      pymol_launch = 1
+
+   elif pymol_launch==-1:
+
+      if hasattr(__main__,"pymol_argv"):
+         pymol_argv = __main__.pymol_argv
+      else:
+         pymol_argv = [ "pymol", "-q" ]
+
+   elif pymol_launch==2:
+
+      if hasattr(__main__,"pymol_argv"):
+         pymol_argv = __main__.pymol_argv
+      else:
+         # suppresses startup messages with "import pymol"      
+         pymol_argv = [ "pymol", "-q" ] 
+
+   # PyMOL __init__.py
+
+   # Create a temporary object "stored" in the PyMOL global namespace
+   # for usage with evaluate based-commands such as alter
+
+   class Scratch_Storage:
       pass
 
-# now start the launch process...
+   stored = Scratch_Storage()
 
-if __name__=='__main__':
+   # This global will be non-None if logging is active
+   # (global variable used for efficiency)
 
-   # PyMOL launched as "python pymol/__init__.py"
-   # or via execfile(".../pymol/__init__.py",...) from main
-   
-   if not hasattr(__main__,"pymol_argv"):
-      __main__.pymol_argv = sys.argv
+   _log_file = None
 
-   pymol_launch = -1 # non-threaded launch import flag
-   
-   import pymol
+   # This global will be non-None if an external gui
+   # exists. It mainly exists so that events which occur
+   # in the Python thread can be handed off to the
+   # external GUI thread through one or more FIFO Queues
+   # (global variable used for efficiency)
 
-   pymol_launch = 1
-   
-elif pymol_launch==-1:
+   _ext_gui = None
 
-   if hasattr(__main__,"pymol_argv"):
-      pymol_argv = __main__.pymol_argv
-   else:
-      pymol_argv = [ "pymol", "-q" ]
-      
-elif pymol_launch==2:
+   # include installed numpy on win32 
 
-   if hasattr(__main__,"pymol_argv"):
-      pymol_argv = __main__.pymol_argv
-   else:
-      # suppresses startup messages with "import pymol"      
-      pymol_argv = [ "pymol", "-q" ] 
+   if sys.platform=='win32':
+      sys.path.append(os.environ['PYMOL_PATH']+'/modules/numeric')
 
-# PyMOL __init__.py
+   sys.setcheckinterval(1) # maximize responsiveness
 
-# Create a temporary object "stored" in the PyMOL global namespace
-# for usage with evaluate based-commands such as alter
+   lock_api = threading.RLock() # mutex for API 
+   lock_api_c = threading.RLock() # mutex for C management of python threads
 
-class Scratch_Storage:
-   pass
+   def start_pymol():
+      global glutThread
+      glutThread = thread.get_ident()
+      pymol_launch = 0 # never do this again : )
+      _cmd.runpymol() # only returns if we are running pretend GLUT
+      from pymol.embed import wxpymol # never returns
 
-stored = Scratch_Storage()
+   def exec_str(s):
+      try:
+         exec s in globals(),globals()
+      except StandardError:
+         traceback.print_exc()
+      return None
 
-# This global will be non-None if logging is active
-# (global variable used for efficiency)
-
-_log_file = None
-
-# This global will be non-None if an external gui
-# exists. It mainly exists so that events which occur
-# in the Python thread can be handed off to the
-# external GUI thread through one or more FIFO Queues
-# (global variable used for efficiency)
-
-_ext_gui = None
-
-# include installed numpy on win32 
-
-if sys.platform=='win32':
-   sys.path.append(os.environ['PYMOL_PATH']+'/modules/numeric')
-
-sys.setcheckinterval(1) # maximize responsiveness
-
-lock_api = threading.RLock() # mutex for API 
-lock_api_c = threading.RLock() # mutex for C management of python threads
-
-def start_pymol():
-   global glutThread
-   glutThread = thread.get_ident()
-   pymol_launch = 0 # never do this again : )
-   _cmd.runpymol() # only returns if we are running pretend GLUT
-   from pymol.embed import wxpymol # never returns
-
-def exec_str(s):
-   try:
-      exec s in globals(),globals()
-   except StandardError:
-      traceback.print_exc()
-   return None
-
-def stdin_reader(): # dedicated thread for reading standard input
-   import sys
-   from pymol import cmd
-   while 1:
-      cmd.do(sys.stdin.readline())
+   def stdin_reader(): # dedicated thread for reading standard input
+      import sys
+      from pymol import cmd
+      while 1:
+         cmd.do(sys.stdin.readline())
 
 
-def exec_deferred():
+   def exec_deferred():
+      try:
+         cmd.config_mouse(quiet=1)
+         for a in invocation.options.deferred:
+            if a[0:4]=="_do_":
+               cmd.do(a[4:])
+            elif re.search(r"pymol\.py$",a):
+               pass
+            elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
+               cmd.do("_ run %s" % a)
+            elif cmd.file_ext_re.search(a):
+               cmd.load(a)
+            elif re.search(r"\.pml$",a,re.I):
+               cmd.do("_ @%s" % a)
+            else:
+               cmd.load(a)
+      except:
+         traceback.print_exc()
+      if invocation.options.read_stdin:
+         t = threading.Thread(target=stdin_reader)
+         t.setDaemon(1)
+         t.start()
 
-   try:
-      cmd.config_mouse(quiet=1)
-      for a in invocation.options.deferred:
-         if a[0:4]=="_do_":
-            cmd.do(a[4:])
-         elif re.search(r"pymol\.py$",a):
-            pass
-         elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
-            cmd.do("_ run %s" % a)
-         elif cmd.file_ext_re.search(a):
-            cmd.load(a)
-         elif re.search(r"\.pml$",a,re.I):
-            cmd.do("_ @%s" % a)
-         else:
-            cmd.load(a)
-   except:
-      traceback.print_exc()
-   if invocation.options.read_stdin:
-      t = threading.Thread(target=stdin_reader)
-      t.setDaemon(1)
-      t.start()
-
-def adapt_to_hardware():
-   (vendor,renderer,version) = cmd.get_renderer()
-   if vendor[0:6]=='NVIDIA':
-      if renderer[0:7]=='GeForce':
-         if invocation.options.show_splash:
-            print " Adapting to GeForce hardware..."
-         cmd.set('line_width','2',quiet=1)
-      elif renderer=='NVIDIA GPU OpenGL Engine':
-         if sys.platform=='darwin':
+   def adapt_to_hardware():
+      (vendor,renderer,version) = cmd.get_renderer()
+      if vendor[0:6]=='NVIDIA':
+         if renderer[0:7]=='GeForce':
             if invocation.options.show_splash:
-               print " Adapting to NVIDIA hardware on Mac..."
-               cmd.set('line_smooth',0,quiet=1)
-               cmd.set('fog',0.9,quiet=1)
-   if vendor[0:3]=='ATI':
-      if renderer[0:17]=='FireGL2 / FireGL3':
-         if invocation.options.show_splash:
-            print " Adapting to FireGL hardware..."
-         cmd.set('line_width','2',quiet=1)            
+               print " Adapting to GeForce hardware..."
+            cmd.set('line_width','2',quiet=1)
+         elif renderer=='NVIDIA GPU OpenGL Engine':
+            if sys.platform=='darwin':
+               if invocation.options.show_splash:
+                  print " Adapting to NVIDIA hardware on Mac..."
+                  cmd.set('line_smooth',0,quiet=1)
+                  cmd.set('fog',0.9,quiet=1)
+      if vendor[0:3]=='ATI':
+         if renderer[0:17]=='FireGL2 / FireGL3':
+            if invocation.options.show_splash:
+               print " Adapting to FireGL hardware..."
+            cmd.set('line_width','2',quiet=1)            
 
-# NEED SOME CONTRIBUTIONS HERE!
+   # NEED SOME CONTRIBUTIONS HERE!
 
-def launch_gui():
-   if invocation.options.external_gui:
+   def launch_gui():
+      if invocation.options.external_gui:
+         __import__(invocation.options.gui)
 
-      __import__(invocation.options.gui)
-   
-# -- Greg Landrum's RPC stuff
-   if invocation.options.rpcServer:
-      import rpc
-      rpc.launch_XMLRPC()
-# --
+   # -- Greg Landrum's RPC stuff
+      if invocation.options.rpcServer:
+         import rpc
+         rpc.launch_XMLRPC()
+   # --
 
-import _cmd
-import cmd
+   import _cmd
+   import cmd
 
-def thread_launch(pa):
-   invocation.parse_args(pa)
-   start_pymol()
-   
-if pymol_launch==1: # standard launch (absorb main thread)
+   def thread_launch(pa):
+      from pymol import invocation
+      invocation.parse_args(pa)
+      start_pymol()
 
-   invocation.parse_args(pymol_argv)
+   if pymol_launch==1: # standard launch (absorb main thread)
 
-   start_pymol()
+      from pymol import invocation
+      invocation.parse_args(pymol_argv)
 
-elif pymol_launch==2: # threaded launch (create new thread)
+      start_pymol()
 
-   global glutThreadObject
-   glutThreadObject = threading.Thread(target=thread_launch,
-     args=(pymol_argv,))
-   glutThreadObject.start()
+   elif pymol_launch==2: # threaded launch (create new thread)
 
-if os.environ.has_key('DISPLAY'):
-   from xwin import *
+      global glutThreadObject
+      glutThreadObject = threading.Thread(target=thread_launch,
+        args=(pymol_argv,))
+      glutThreadObject.start()
 
-def finish_launching():
-   e=threading.Event()
-   while not hasattr(__main__,'pymol'):
-      e.wait(0.01)
-   while not _cmd.ready():
-      e.wait(0.01)
-   
+   if os.environ.has_key('DISPLAY'):
+      from xwin import *
+
+   def finish_launching():
+      e=threading.Event()
+      while not hasattr(__main__,'pymol'):
+         e.wait(0.01)
+      while not _cmd.ready():
+         e.wait(0.01)
+

@@ -140,10 +140,4 @@ def parse_args(argv):
       else:
          options.deferred.append(a)
    if options.show_splash and not options.no_gui:
-      png_path = os.path.expandvars("$PYMOL_PATH/modules/pymol/splash.png")
-      if os.path.exists(png_path):
-         options.deferred.insert(0,"_do__ cmd.load_png('%s',0,quiet=1)"%png_path)
-
-
-
-
+      options.deferred.insert(0,"_do__ cmd.splash(1)")

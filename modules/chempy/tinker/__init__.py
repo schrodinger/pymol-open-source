@@ -134,7 +134,7 @@ else:
 
 if os.environ.has_key('PYMOL_PATH'):
    pymol_path = os.environ['PYMOL_PATH']
-   test_path = pymol_path + '/modules/chempy/tinker/'
+   test_path = pymol_path + '/data/chempy/tinker/'
    if os.path.exists(test_path):
       params_path = test_path
 

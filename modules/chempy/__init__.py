@@ -186,7 +186,7 @@ feedback = { 'warnings': 1,
 if os.environ.has_key('CHEMPY_PATH'):
    path = os.environ['CHEMPY_PATH'] + '/'
 elif os.environ.has_key('PYMOL_PATH'):
-   path = os.environ['PYMOL_PATH'] + '/modules/chempy/'
+   path = os.environ['PYMOL_PATH'] + '/data/chempy/'
 elif os.environ.has_key('FREEMOL_MODULES'):
    path = os.environ['FREEMOL_MODULES'] + '/chempy/'
 else:

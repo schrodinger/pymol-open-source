@@ -96,7 +96,7 @@ USAGE
       unlock()
    return r
 
-def splash():
+def splash(mode=0):
    '''
 DESCRIPTION
  
@@ -106,14 +106,22 @@ USAGE
 
    splash
    '''
-   if cmd.get_setting_legacy("internal_feedback")>0.1:
-      cmd.set("text","1",quiet=1)
-   print
-   try:
-      lock()
-      r = _cmd.splash()
-   finally:
-      unlock()
+   r = None
+   mode = int(mode)
+   if mode == 1: # just show PNG
+      png_path = os.path.expandvars("$PYMOL_PATH/data/pymol/splash.png")
+      if os.path.exists(png_path):
+         cmd.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
+         r = 1
+   else:
+      if cmd.get_setting_legacy("internal_feedback")>0.1:
+         cmd.set("text","1",quiet=1)
+      print
+      try:
+         lock()
+         r = _cmd.splash()
+      finally:
+         unlock()
    return r
 
 def sync(timeout=1.0,poll=0.05):

@@ -715,6 +715,7 @@ void OrthoAddOutput(char *str)
   int curLine;
   char *p,*q;
   int cc;
+  int wrap;
   curLine = I->CurLine&OrthoSaveLines;
   if(I->InputFlag)
 	 {
@@ -735,15 +736,19 @@ void OrthoAddOutput(char *str)
 		if(*p>=32)
 		  {
 			 cc++;
-			 if(cc>78)
-				{
-				  *q=0;
-				  I->CurChar = cc;
-				  OrthoNewLine(NULL);
-				  cc=0;
-				  q=I->Line[I->CurLine&OrthoSaveLines];
-				  curLine = I->CurLine&OrthoSaveLines;
-				}
+          wrap = (int)SettingGet(cSetting_wrap_output);
+
+          if(wrap>0) {
+            if(cc>wrap)
+              {
+                *q=0;
+                I->CurChar = cc;
+                OrthoNewLine(NULL);
+                cc=0;
+                q=I->Line[I->CurLine&OrthoSaveLines];
+                curLine = I->CurLine&OrthoSaveLines;
+              }
+          }
 			 *q++=*p++;
 		  }
 		else if((*p==13)||(*p==10))
