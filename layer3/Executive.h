@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
+int ExecutiveFixChemistry(char *s1,char *s2,int quiet);
 int ExecutiveGetAtomVertex(char *s1,int state,int index,float *v);
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf);
@@ -98,7 +99,7 @@ PyObject *ExecutiveSeleToChemPyModel(char *s1,int state);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
 void ExecutiveFlag(int flag,char *s1,int action,int quiet);
 void ExecutiveRemoveAtoms(char *s1);
-void ExecutiveProtect(char *s1,int mode);
+void ExecutiveProtect(char *s1,int mode,int quiet);
 void ExecutiveMask(char *s1,int mode);
 void ExecutiveUndo(int dir);
 void ExecutiveRebuildAll(void);
@@ -106,7 +107,7 @@ void ExecutiveSpheroid(char *name,int average);
 void ExecutiveAddHydrogens(char *s1);
 void ExecutiveFuse(char *s0,char *s1,int mode);
 void ExecutiveRenameObjectAtoms(char *name,int force);
-int ExecutiveInvert(char *s0,char *s1,int mode);
+int ExecutiveInvert(int quiet);
 char *ExecutiveGetNames(int mode,int enabled_only);
 int ExecutiveGetType(char *name,WordType type);
 float ExecutiveGetArea(char *s0,int sta0,int load_b);

@@ -101,7 +101,7 @@ PYMOL API
          unlock()
       return r
 
-   def distance(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,
+   def distance(name=None,selection1="(pk1)",selection2="(pk2)",cutoff=None,
                 mode=None,zoom=0,width=None,length=None,gap=None,labels=1,quiet=1):
       '''
 DESCRIPTION
@@ -131,10 +131,8 @@ NOTES
    The distance wizard makes measuring distances easier than using
    the "dist" command for real-time operations.
 
-   "dist" alone will show distances between selections (lb) and (rb)
-   created by left and right button atom picks.  CTRL-SHIFT/left-click
-   on the first atom,  CTRL-SHIFT/right-click on the second, then run
-   "dist".
+   "dist" alone will show distances between selections (pk1) and (pk1),
+   which can be set using the PkAt mouse action (usually CTRL-middle-click).
 
    '''
       # handle unnamed distance 

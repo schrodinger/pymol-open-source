@@ -309,40 +309,32 @@ SEE ALSO
          unlock()
       return r
 
-   def invert(selection1="(lb)",selection2="(rb)"):
+   def invert(quiet=1):
       '''
 DESCRIPTION
 
-   "invert" inverts the stereo-chemistry of the atom currently picked
-   for editing (pk1).  Two additional atom selections must be provided
-   in order to indicate which atoms remain stationary during the
-   inversion process.
+   "invert" inverts the stereo-chemistry of atom (pk1), holding attached atoms
+   (pk2) and (pk3) immobile.
 
 USAGE
 
-   invert (selection1),(selection2)
+   invert 
 
 PYMOL API
 
-   cmd.api( string selection1="(lb)", string selection2="(lb)" )
+   cmd.invert( )
 
 NOTE
 
-   The invert function is usually bound to CTRL-E in editing mode.
+   The invert function is usually bound to CTRL-X in editing mode.
 
-   The default selections are (lb) and (rb), meaning that you can pick
-   the atom to invert with CTRL-middle click and then pick the
-   stationary atoms with CTRL-SHIFT/left-click and CTRL-SHIFT/right-
-   click, then hit CTRL-E to invert the atom.
 
    '''
       # preprocess selections
-      selection1 = selector.process(selection1)
-      selection2 = selector.process(selection2)
       #
       try:
          lock()
-         r = _cmd.invert(str(selection1),str(selection2),0)
+         r = _cmd.invert(int(quiet))
       finally:
          unlock()
       return r
@@ -1390,7 +1382,7 @@ USAGE
       return r
       
    
-   def protect(selection="(all)"):
+   def protect(selection="(all)",quiet=1):
       '''
 DESCRIPTION
 
@@ -1416,7 +1408,7 @@ SEE ALSO
       #   
       try:
          lock()   
-         r = _cmd.protect("("+str(selection)+")",1)
+         r = _cmd.protect("("+str(selection)+")",1,int(quiet))
       finally:
          unlock()
       return r
@@ -1472,7 +1464,16 @@ SEE ALSO
 
    flag_action_sc = Shortcut(flag_action_dict.keys())
 
-
+   def fix_chemistry(selection1 = "all",selection2 = "all", quiet=1):
+      selection1 = selector.process(selection1)
+      selection2 = selector.process(selection2)
+      try:
+         lock()   
+         r = _cmd.fix_chemistry("("+str(selection1)+")","("+str(selection2)+")",int(quiet))
+      finally:
+         unlock()
+      return r
+   
    def flag(flag,selection,action="reset",quiet=1):
       '''
 DESCRIPTION

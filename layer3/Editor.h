@@ -54,7 +54,7 @@ void EditorUpdateState(void);
 ObjectMolecule *EditorGetActiveObject(void);
 int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int quiet);
 int EditorTorsion(float angle);
-int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode);
+int EditorInvert(int quiet);
 
 PyObject *EditorAsPyList(void);
 int EditorFromPyList(PyObject *list);

@@ -57,7 +57,7 @@ void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick,
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 
-
+int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele);
 
 CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *restart);
 
