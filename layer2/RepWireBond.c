@@ -302,7 +302,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 							 I->NP++;
 							 
 							 I->R.P[I->NP].ptr = (void*)obj;
-							 I->R.P[I->NP].index = *(b-3);
+							 I->R.P[I->NP].index = b1;
 							 
 							 *(v++)=*(v1++);
 							 *(v++)=*(v1++);
@@ -316,7 +316,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						  {
 							 I->NP++;
 							 I->R.P[I->NP].ptr = (void*)obj;
-							 I->R.P[I->NP].index = *(b-2);
+							 I->R.P[I->NP].index = b2;
 							 
 							 
 							 *(v++)=h[0];
