@@ -1126,8 +1126,9 @@ static void OrthoDrawWizardPrompt(void)
   int nChar,c,ll;
   int maxLen;
   BlockRect rect;
+  int prompt_mode = SettingGetGlobal_i(cSetting_wizard_prompt_mode);
 
-  if(I->WizardPromptVLA) {
+  if(I->WizardPromptVLA && prompt_mode) {
     vla = I->WizardPromptVLA;
     
     nLine = UtilCountStringVLA(vla);
@@ -1160,25 +1161,34 @@ static void OrthoDrawWizardPrompt(void)
         }
       }
       
-      rect.top = I->Height-cWizardTopMargin;
-
+      rect.top = I->Height;
       if(I->HaveSeqViewer)
         if(!SettingGetGlobal_b(cSetting_seq_view_location)) {
           rect.top -= SeqGetHeight();
         }
+
+      if(prompt_mode!=3) {
+        rect.top -= cWizardTopMargin;
+        rect.left = cWizardLeftMargin;
+      } else {
+        rect.top -= 1;
+        rect.left = 1;
+      }
+
       rect.bottom = rect.top-(nLine*cOrthoLineHeight+2*cWizardBorder)-2;
-      rect.left = cWizardLeftMargin;
       rect.right = rect.left + cOrthoCharWidth*maxLen + 2*cWizardBorder+1;
       
-      glColor3fv(I->WizardBackColor);
+      if(prompt_mode==1) {
+        glColor3fv(I->WizardBackColor);
+        
+        glBegin(GL_POLYGON);
+        glVertex2i(rect.right,rect.top);
+        glVertex2i(rect.right,rect.bottom);
+        glVertex2i(rect.left,rect.bottom);
+        glVertex2i(rect.left,rect.top);
+        glEnd();
+      }
 
-      glBegin(GL_POLYGON);
-      glVertex2i(rect.right,rect.top);
-      glVertex2i(rect.right,rect.bottom);
-      glVertex2i(rect.left,rect.bottom);
-      glVertex2i(rect.left,rect.top);
-      glEnd();
-      
       glColor3fv(I->WizardTextColor);
       
       x = rect.left+cWizardBorder;

@@ -22,7 +22,8 @@ if __name__=='pymol.wizarding':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
         _feedback,fb_module,fb_mask
    import cPickle
-
+   import traceback
+   
    def _wizard(name,arg,kwd,replace):
       import wizard
       try:
@@ -44,7 +45,7 @@ if __name__=='pymol.wizarding':
             print "Error: Sorry, couldn't import the '"+name+"' wizard."         
       except ImportError:
          print "Error: Sorry, couldn't import the '"+name+"' wizard."
-      
+
    def wizard(name=None,*arg,**kwd):
       '''
 DESCRIPTION
@@ -102,6 +103,18 @@ EXAMPLE
       try:
          lock()
          r = _cmd.refresh_wizard()
+      finally:
+         unlock()
+      return r
+
+   def dirty_wizard(*arg): # INTERNAL
+      r = None
+      wiz = None
+      if len(arg):
+         wiz=arg[0]
+      try:
+         lock()
+         r = _cmd.dirty_wizard()
       finally:
          unlock()
       return r

@@ -18,7 +18,8 @@ if __name__=='pymol.exporting':
    import selector
    import string
    import re
-
+   import copy
+   
    import pymol
    import cmd
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
@@ -63,6 +64,10 @@ NOTES
                r = _cmd.get_session(session)
             finally:
                unlock()
+            try:
+               session['session'] = copy.deepcopy(pymol.session)
+            except:
+               traceback.print_exc()
          else:
             try:
                r = apply(a,(session,))

@@ -675,7 +675,7 @@ DEVELOPMENT TO DO
 
    # loading
 
-   def _load(oname,finfo,state,ftype,finish,discrete,quiet):
+   def _load(oname,finfo,state,ftype,finish,discrete,quiet=1):
       # WARNING: internal routine, subject to change
       # caller must already hold API lock
       # NOTE: state index assumes 1-based state
@@ -1095,6 +1095,7 @@ SEE ALSO
 
    #--------------------------------------------------------------------
    from importing import \
+        finish_object,      \
         load,               \
         load_brick,         \
         load_callback,      \
@@ -1272,6 +1273,7 @@ SEE ALSO
         replace_wizard,     \
         set_wizard,         \
         set_wizard_stack,   \
+        dirty_wizard,       \
         wizard
 
    #--------------------------------------------------------------------

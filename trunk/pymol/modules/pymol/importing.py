@@ -31,6 +31,8 @@ if __name__=='pymol.importing':
    from chempy.sdf import SDF,SDFRec
    from chempy import io
    import pymol
+   import copy
+   import traceback
    
    class loadable:
       pdb = 0
@@ -76,6 +78,13 @@ if __name__=='pymol.importing':
                r = _cmd.set_session(session)
             finally:
                unlock()
+            try:
+               if session.has_key('session'):
+                  pymol.session = copy.deepcopy(session['session'])
+               else:
+                  pymol.session = pymol.Session_Storage()
+            except:
+               traceback.print_exc()
          else:
             r = apply(a,(session,))
          if not r: break
@@ -502,7 +511,7 @@ SEE ALSO
          unlock()
       return r
 
-   def read_molstr(molstr,name,state=0,finish=1,discrete=1):
+   def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1):
       '''
 DESCRIPTION
 
@@ -529,12 +538,12 @@ NOTES
       try:
          lock()
          r = _cmd.load(str(name),str(molstr),int(state)-1,
-                       loadable.molstr,int(finish),int(discrete))
+                       loadable.molstr,int(finish),int(discrete),int(quiet))
       finally:
          unlock()
       return r
 
-   def read_mmodstr(*arg):
+   def read_mmodstr(*arg,**kw):
       '''
 DESCRIPTION
 
@@ -546,19 +555,23 @@ DESCRIPTION
       try:
          lock()   
          ftype = 6
+         if kw.has_key('quiet'):
+            quiet = int(kw['quiet'])
+         else:
+            quiet = 1
          if len(arg)==2:
             oname = string.strip(arg[1])
-            r = _cmd.load(str(oname),arg[0],-1,int(ftype),1,1)
+            r = _cmd.load(str(oname),arg[0],-1,int(ftype),1,1,quiet)
          elif len(arg)==3:
             oname = string.strip(arg[1])
-            r = _cmd.load(str(oname),arg[0],int(arg[2])-1,int(ftype),1,1)
+            r = _cmd.load(str(oname),arg[0],int(arg[2])-1,int(ftype),1,1,quiet)
          else:
             print "argument error."
       finally:
          unlock()
       return r
 
-   def read_pdbstr(pdb,name,state=0,finish=1,discrete=0):
+   def read_pdbstr(pdb,name,state=0,finish=1,discrete=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -589,12 +602,12 @@ NOTES
          ftype = loadable.pdbstr
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),pdb,int(state)-1,int(ftype),
-                          int(finish),int(discrete))
+                          int(finish),int(discrete),int(quiet))
       finally:
          unlock()
       return r
 
-   def read_xplorstr(xplor,name,state=0,finish=1,discrete=0):
+   def read_xplorstr(xplor,name,state=0,finish=1,discrete=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -618,7 +631,7 @@ NOTES
          ftype = loadable.xplorstr
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),xplor,int(state)-1,int(ftype),
-                          int(finish),int(discrete))
+                          int(finish),int(discrete),int(quiet))
       finally:
          unlock()
       return r

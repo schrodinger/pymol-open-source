@@ -774,7 +774,7 @@ void SceneCountFrames()
 void SceneSetFrame(int mode,int frame)
 {
   CScene *I=&Scene;
-  int newFrame=0;
+  int newFrame;
   int newState=0;
   int movieCommand = false;
   newFrame = SettingGetGlobal_i(cSetting_frame) -1;
@@ -839,6 +839,7 @@ void SceneSetFrame(int mode,int frame)
   }
   SettingSetGlobal_i(cSetting_frame,newFrame+1);
   SettingSetGlobal_i(cSetting_state,newState+1);
+
   SceneDirty();
   PRINTFD(FB_Scene)
     " SceneSetFrame: leaving...\n"
@@ -3262,7 +3263,9 @@ void SceneUpdate(void)
          SettingGetGlobal_i(cSetting_state))
         SettingSetGlobal_i(cSetting_frame,SettingGetGlobal_i(cSetting_state));
     }
+    WizardDoScene();
   }
+
   PRINTFD(FB_Scene)
     " SceneUpdate: leaving...\n"
     ENDFD;

@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * annotation wizard (e.g. for SD-files -- experimental)
+
+   -- beta 14
+
    * additional support for weird concatenated PDB files such as those
      output by MOE
 

@@ -7,7 +7,10 @@ class Wizard:
    event_mask_select  = 2
    event_mask_key     = 4
    event_mask_special = 8
-
+   event_mask_scene   = 16
+   event_mask_state   = 32
+   event_mask_frame   = 64
+   
    def __init__(self):
       self.menu = {}
       self.prompt = None
@@ -21,7 +24,16 @@ class Wizard:
 
    def get_event_mask(self):
       return Wizard.event_mask_pick + Wizard.event_mask_select
-      
+
+   def do_scene(self):
+      return None
+
+   def do_state(self,state):
+      return None
+
+   def do_frame(self,frame):
+      return None
+   
    def do_pick(self,bondFlag):
       return None
 

@@ -22,7 +22,6 @@ void WizardInit(void);
 int WizardActive(void);
 void WizardSet(PyObject *wiz,int replace);
 PyObject *WizardGet(void);
-void WizardUpdate(void);
 void WizardFree(void);
 Block *WizardGetBlock(void);
 void WizardRefresh(void);
@@ -33,5 +32,11 @@ PyObject *WizardGetStack(void);
 int WizardSetStack(PyObject *wiz);
 int WizardDoKey(unsigned char k, int x, int y, int mod);
 int WizardDoSpecial(int k, int x, int y, int mod);
+int WizardDoScene(void);
+int WizardDoState(void);
+int WizardDoFrame(void);
+
+void WizardDirty(void);
+int WizardUpdate(void);
 
 #endif

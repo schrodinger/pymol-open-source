@@ -41,6 +41,9 @@ Z* -------------------------------------------------------------------
 #define cWizEventSelect  2
 #define cWizEventKey     4
 #define cWizEventSpecial 8
+#define cWizEventScene   16
+#define cWizEventState   32
+#define cWizEventFrame   64
 
 typedef struct {
   int type;
@@ -56,6 +59,10 @@ typedef struct {
   int Stack;
   int Pressed;
   int EventMask;
+  int Dirty;
+  int LastUpdatedState;
+  int LastUpdatedFrame;
+  
 }  CWizard;
 
 CWizard Wizard;
@@ -63,6 +70,40 @@ CWizard Wizard;
 #define cWizardLeftMargin 2
 #define cWizardTopMargin 0
 #define cWizardClickOffset 2
+
+void WizardDirty(void)
+{
+  CWizard *I=&Wizard;
+  I->Dirty=true;
+  OrthoDirty();
+}
+
+int WizardUpdate(void)
+{
+  CWizard *I=&Wizard;
+  int result = false;
+
+  {
+    int frame = SettingGetGlobal_i(cSetting_frame);
+    int state = SettingGetGlobal_i(cSetting_state);
+    if(frame!=I->LastUpdatedFrame) {
+      I->LastUpdatedFrame = frame;
+      WizardDoFrame();
+    }
+    if(state!=I->LastUpdatedState) {
+      I->LastUpdatedState = state;
+      WizardDoState();
+    }
+  }
+
+  if(I->Dirty) {
+    WizardRefresh();
+    I->Dirty=false;
+    result = true;
+  }
+
+  return result;
+}
 
 void WizardPurgeStack(void)
 {
@@ -268,6 +309,79 @@ int WizardDoKey(unsigned char k, int x, int y, int mod)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_key")) {
               result = PTruthCallStr4i(I->Wiz[I->Stack],"do_key",k,x,y,mod);
+              if(PyErr_Occurred()) PyErr_Print();
+            }
+          }
+        PUnblock();
+      }
+  return result;
+}
+
+int WizardDoScene(void)
+{
+  CWizard *I=&Wizard;
+  int result=false;
+  if(I->EventMask & cWizEventScene) 
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        OrthoLineType buffer;
+        sprintf(buffer,"cmd.get_wizard().do_scene()");
+        PLog(buffer,cPLog_pym);
+        PBlock(); 
+        if(I->Stack>=0)
+          if(I->Wiz[I->Stack]) {
+            if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_scene")) {
+              result = PTruthCallStr0(I->Wiz[I->Stack],"do_scene");
+              if(PyErr_Occurred()) PyErr_Print();
+            }
+          }
+        PUnblock();
+      }
+  return result;
+}
+
+
+int WizardDoState(void)
+{
+  CWizard *I=&Wizard;
+  int result=false;
+  if(I->EventMask & cWizEventState) 
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        OrthoLineType buffer;
+        int state = SettingGetGlobal_i(cSetting_state) + 1;
+        sprintf(buffer,"cmd.get_wizard().do_state(%d)",state);
+        PLog(buffer,cPLog_pym);
+        PBlock(); 
+        if(I->Stack>=0)
+          if(I->Wiz[I->Stack]) {
+            if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_state")) {
+              result = PTruthCallStr1i(I->Wiz[I->Stack],"do_state",state);
+              if(PyErr_Occurred()) PyErr_Print();
+            }
+          }
+        PUnblock();
+      }
+  return result;
+}
+
+
+int WizardDoFrame(void)
+{
+  CWizard *I=&Wizard;
+  int result=false;
+  if(I->EventMask & cWizEventFrame) 
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        OrthoLineType buffer;
+        int frame = SettingGetGlobal_i(cSetting_frame) + 1;
+        sprintf(buffer,"cmd.get_wizard().do_frame(%d)",frame);
+        PLog(buffer,cPLog_pym);
+        PBlock(); 
+        if(I->Stack>=0)
+          if(I->Wiz[I->Stack]) {
+            if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_frame")) {
+              result = PTruthCallStr1i(I->Wiz[I->Stack],"do_frame",frame);
               if(PyErr_Occurred()) PyErr_Print();
             }
           }
@@ -494,7 +608,8 @@ static void WizardDraw(Block *block)
     BlockFill(I->Block);
     
     glColor3fv(I->Block->TextColor);
-
+    
+    
     x = I->Block->rect.left+cWizardLeftMargin;
     y = (I->Block->rect.top-LineHeight)-cWizardTopMargin;
 
@@ -614,6 +729,9 @@ void WizardInit(void)
   I->Block->TextColor[0]=0.2F;
   I->Block->TextColor[1]=1.0F;
   I->Block->TextColor[2]=0.2F;
+
+  I->LastUpdatedState = -1;
+  I->LastUpdatedFrame = -1;
 
   OrthoAttach(I->Block,cOrthoTool);
 

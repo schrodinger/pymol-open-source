@@ -144,6 +144,19 @@ int PComplete(char *str,int buf_size)
   return(ret);
 }
 
+int PTruthCallStr0(PyObject *object,char *method)
+{
+  int result = false;
+  PyObject *tmp;
+  tmp = PyObject_CallMethod(object,method,"");
+  if(tmp) {
+    if(PyObject_IsTrue(tmp))
+      result = 1;
+    Py_DECREF(tmp);
+  }
+  return(result);
+}
+
 
 int PTruthCallStr(PyObject *object,char *method,char *argument)
 {
@@ -1293,6 +1306,13 @@ void PExit(int code)
   ExecutiveDelete("all");
   PBlock();
   MainFree();
+
+  /* we're having trouble with threading errors after calling Py_Exit,
+     so for the time being, let's just take the process down at this
+     point, instead of allowing PyExit to be called. */
+
+  exit(EXIT_SUCCESS);                        
+
   Py_Exit(code);
 }
 
