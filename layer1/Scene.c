@@ -641,7 +641,7 @@ int SceneLoadPNG(char *fname,int movie_flag,int quiet)
 		FreeP(I->ImageBuffer);
 	 }
   }
-  if(MyPNGRead(fname,(unsigned char**)&I->ImageBuffer,&I->ImageBufferWidth,&I->ImageBufferHeight)) {
+  if(MyPNGRead(fname,(unsigned char**)&I->ImageBuffer,(unsigned int*)&I->ImageBufferWidth,(unsigned int*)&I->ImageBufferHeight)) {
     if(!quiet) {
       PRINTFB(FB_Scene,FB_Details)
         " Scene: loaded image from '%s'.\n",fname
