@@ -25,6 +25,17 @@ import _cmd
 
 # PyMOL __init__.py
 
+
+# Create a temporary object "stored" in the PyMOL global namespace
+# for usage with evaluate based-commands such as alter
+
+class Scratch_Storage:
+   pass
+
+stored = Scratch_Storage()
+
+#
+
 sys.path.append(os.environ['PYMOL_PATH']+'/modules')
 
 sys.setcheckinterval(1)

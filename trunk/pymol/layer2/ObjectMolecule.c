@@ -3364,7 +3364,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                 break;
               case OMOP_ALTR:
                 if (ok) {
-                  if(PAlterAtom(&I->AtomInfo[a],op->s1))
+                  if(PAlterAtom(&I->AtomInfo[a],op->s1,op->i2))
                     op->i1++;
                   else
                     ok=false;
@@ -3383,7 +3383,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                       } else 
                         a1=cs->AtmToIdx[a];
                       if(a1>=0) {
-                        if(PAlterAtomState(cs->Coord+(a1*3),op->s1)) {
+                        if(PAlterAtomState(cs->Coord+(a1*3),op->s1,op->i3)) {
                           op->i1++;
                           hit_flag=true;
                         } else

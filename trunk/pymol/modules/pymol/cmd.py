@@ -55,9 +55,9 @@ COMMANDS
    RAY TRACING   ray      
    MAPS          isomesh   isodot
    DISPLAY       cls       viewport  splash    
-   SELECTIONS    select    mask
+   SELECTIONS    select    mask   
    SETTINGS      set       button
-   ATOMS         alter     alter_state
+   ATOMS         alter     alter_state 
    EDITING       create    replace   remove    h_fill   remove_picked
                  edit      bond      unbond    h_add    fuse       
                  undo      redo      protect   cycle_valence  
@@ -1017,9 +1017,11 @@ DESCRIPTION
 the python evaluator with a separate name space for each atom.  The
 symbols defined in the name space are:
  
-   name, resn, resi, chain,
-   q, b, segi, and type (ATOM,HETATM) 
- 
+   name, resn, resi, chain, alt,
+   q, b, segi, and type (ATOM,HETATM),
+   partial_charge, formal_charge,
+   text_type, numeric_type
+   
 All strings in the expression must be explicitly quoted.  This
 operation typically takes several seconds per thousand atoms altered.
  
@@ -1034,7 +1036,50 @@ EXAMPLES
    '''
    try:
       lock()
-      r = _cmd.alter(sele,expr)
+      r = _cmd.alter(sele,expr,0)
+   finally:
+      unlock()   
+   return r
+
+
+def iterate(sele,expr):
+   '''
+DESCRIPTION
+ 
+"iterate" iterates over an expression with a separate name space
+for each atom.  However, unlike the "alter" command, atomic properties
+can not be altered.  Thus, "iterate" is more efficient than "alter".
+
+It can be used to perform operations and aggregations using
+atomic selections, and store the results in any global object,
+such as the predefined "stored" object.
+
+The local namespace for "iterate" contains the following names
+
+   name, resn, resi, chain, alt,
+   q, b, segi, and type (ATOM,HETATM),
+   partial_charge, formal_charge,
+   text_type, numeric_type
+ 
+All strings in the expression must be explicitly quoted.  This
+operation typically takes a second per thousand atoms.
+ 
+USAGE
+ 
+   iterate (selection),expression
+ 
+EXAMPLES
+
+   stored.net_charge = 0
+   iterate (all),stored.net_charge = stored.net_charge + partial_charge
+
+   stored.names = []
+   iterate (all),stored.names.append(name)
+   
+   '''
+   try:
+      lock()
+      r = _cmd.alter(sele,expr,1)
    finally:
       unlock()   
    return r
@@ -1059,7 +1104,31 @@ EXAMPLES
    '''
    try:
       lock()
-      r = _cmd.alter_state(int(state)-1,sele,expr)
+      r = _cmd.alter_state(int(state)-1,sele,expr,0)
+   finally:
+      unlock()   
+   return r
+
+
+
+def iterate_state(state,sele,expr):
+   '''
+DESCRIPTION
+ 
+"iterate_state" is to "alter_state" as "iterate" is to "alter"
+ 
+USAGE
+ 
+   iterate_state state,(selection),expression
+ 
+EXAMPLES
+
+   stored.sum_x = 0.0
+   iterate 1,(all),stored.sum_x = stored.sum_x + x
+   '''
+   try:
+      lock()
+      r = _cmd.alter_state(int(state)-1,sele,expr,1)
    finally:
       unlock()   
    return r
@@ -2755,7 +2824,7 @@ def id_atom(*arg):
    else:
       r = l[0]
    return r
-   
+
 def identify(*arg):
    '''
 DESCRIPTION
@@ -3753,6 +3822,8 @@ keyword = {
    'invert'        : [invert       , 0 , 2 , ',' , 0 ],
    'isodot'        : [isodot       , 2 , 2 , '=' , 0 ],   
    'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],
+   'iterate'       : [iterate      , 2 , 2 , ',' , 0 ],
+   'iterate_state' : [iterate_state, 3 , 3 , ',' , 0 ],
    'label'         : [label        , 1 , 2 , ',' , 0 ],
    'load'          : [load         , 1 , 6 , ',' , 0 ],
    'mask'          : [mask         , 0 , 1 , ',' , 0 ],

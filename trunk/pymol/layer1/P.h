@@ -32,9 +32,9 @@ void PParse(char *str);
 #define cLockInbox 2
 #define cLockOutbox 3
 
-int PAlterAtom(AtomInfoType *at,char *expr);
+int PAlterAtom(AtomInfoType *at,char *expr,int read_only);
 int PLabelAtom(AtomInfoType *at,char *expr);
-int PAlterAtomState(float *v,char *expr);
+int PAlterAtomState(float *v,char *expr,int read_only);
 
 void PSleep(int usec);
 
