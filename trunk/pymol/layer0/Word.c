@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"Word.h"
+#include"Parse.h"
 
 int WordMatch(char *p,char *q,int ignCase) 
 /* allows for terminal wildcard (*) in p
@@ -133,6 +134,14 @@ int WordMatchComma(char *p,char *q,int ignCase)
     }
   }
   return(best_i);
+}
+
+int WordMatchCommaInt(char *p,int number) 
+{
+  int result = 0;
+  WordType buffer;
+  sprintf(buffer,"%d",number);
+  return(WordMatchComma(p,buffer,1));
 }
 
 int WordCompare(char *p,char *q,int ignCase) 

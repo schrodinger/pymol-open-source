@@ -70,6 +70,21 @@ char *ParseNCopy(char *q,char *p,int n) {  /* n character copy */
   return p;
 }
 /*========================================================================*/
+char *ParseCommaCopy(char *q,char *p,int n) {  /* n character copy up to comma */
+  while(*p) {
+	 if(!n)
+		break;
+	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
+		break;
+    if(*p==',')
+      break;
+	 *(q++)=*(p++);
+	 n--;
+  }
+  *q=0;
+  return p;
+}
+/*========================================================================*/
 char *ParseNSkip(char *p,int n) {  /* n character skip */
   while(*p) {
 	 if(!n)

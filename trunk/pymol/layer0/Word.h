@@ -27,6 +27,8 @@ typedef struct {
 
 int WordMatch(char *p,char *q,int ignCase); 
 int WordMatchComma(char *p,char *q,int ignCase); 
+int WordMatchCommaInt(char *p,int number);
+
 /* (<0) exact match, (>0) inexact match, =0 no match */
 
 int WordCompare(char *p,char *q,int ignCase);
