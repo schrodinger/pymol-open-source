@@ -23,6 +23,10 @@ import pymol.setting
 import string
 import copy
 
+def test(x):
+   print "hello"
+   print x
+   
 class SingleEdit:
    def __init__(self,app,name,parent):
       self.app = app
@@ -44,10 +48,14 @@ class SingleEdit:
       txt = cmd.get_setting_text(name)
       self.entryfield.setentry(txt)
       self.entry.selection_range(0,len(txt))
+      self.dialog.protocol('WM_DELETE_WINDOW',self.cancel)
 
       app.my_activate(self.dialog,focus=self.entry)
 
-   def command(self,result):
+   def cancel(self,event=None):
+      self.command(result='Done')
+
+   def command(self,result=None):
       if result=='Set':
          st = string.strip(self.entry.get())
          if len(st):
@@ -81,9 +89,12 @@ class SetEditor:
       self.dialog.geometry("500x400")
       self.listbox = self.dialog.component('scrolledlist')
       self.listbox.component('listbox').configure(font=app.my_fw_font)
-      
+      self.dialog.protocol('WM_DELETE_WINDOW',self.cancel)
       app.my_show(self.dialog)
 
+   def cancel(self,event=None):
+      self.command(result='Done')
+      
    def update(self,name):
       if self.index.has_key(name):
          idx = self.index[name]
