@@ -98,13 +98,18 @@ class MOL(Storage):
       for a in model.atom:
          if a.formal_charge != 0:
             charge_atoms.append(a)
-      while len(charge_atoms) != 0:
-         chg_set = charge_atoms[0:8]
-         charge_atoms = charge_atoms[8:]
-         tline = "M  CHG%3d" % (len(chg_set))
-         for i in chg_set:
-            tline = tline + "%4d%4d" % (i.index+1,i.formal_charge)
-         molList.append(tline + "\n")
+      if len(charge_atoms):
+         c = 0
+         for a in model.atom:
+            a.index = c
+            c = c + 1
+         while len(charge_atoms) != 0:
+            chg_set = charge_atoms[0:8]
+            charge_atoms = charge_atoms[8:]
+            tline = "M  CHG%3d" % (len(chg_set))
+            for i in chg_set:
+               tline = tline + "%4d%4d" % (i.index+1,i.formal_charge)
+            molList.append(tline + "\n")
       molList.append("M  END\n")
       return(molList)
 
