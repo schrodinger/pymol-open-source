@@ -413,6 +413,7 @@ if __name__=='pymol.setting':
       cartoon_putty_scale_min = (379, '', '')
       cartoon_putty_scale_max = (380, '', '')
       cartoon_putty_scale_power = (381, '', '')
+      cartoon_putty_range = (382, '', '')      
 
    
    setting_sc = Shortcut(SettingIndex.__dict__.keys())

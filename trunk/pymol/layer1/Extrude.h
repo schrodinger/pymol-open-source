@@ -29,7 +29,7 @@ typedef struct {
   float *n; /* normals (3x3f) at each point*/
   float *c; /* colors */
   int   *i; /* atom indices */
-  int 	*z; /* SAUSAGE: index of nearest atom to extrusion point 'p' */
+
   float *sf; /* scale factors for variable-width extrusions (single point)*/
 
   float *sv,*tv;
@@ -56,7 +56,7 @@ void ExtrudeOval(CExtrude *I,int n,float width,float length);
 
 
 void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field,
-                                float mean, float stdev, float power,
+                                float mean, float stdev, float power, float range,
                                 float min_scale, float max_scale,
                                 int smooth_window);
 

@@ -529,10 +529,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_cartoon_putty_scale_min    379
 #define cSetting_cartoon_putty_scale_max    380
 #define cSetting_cartoon_putty_scale_power  381
+#define cSetting_cartoon_putty_range        382
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       382
+#define cSetting_INIT                       383
 
 #endif
 
