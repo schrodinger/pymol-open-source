@@ -80,6 +80,7 @@ void RepSurfaceFree(RepSurface *I)
   CGOFree(I->debug);
   VLAFreeP(I->T);
   VLAFreeP(I->S);
+  RepFree(&I->R); /* unnecessary, but a good idea */
   /*  VLAFreeP(I->N);*/
   OOFreeP(I);
 }
@@ -1563,11 +1564,26 @@ Rep *RepSurfaceNew(CoordSet *cs)
     
     if(n_present<1) n_present=1; /* safety */
 
-    MaxN = n_present*sp->nDot*10;
+    if(sp->nDot<ssp->nDot)
+      MaxN = n_present*ssp->nDot;
+    else
+      MaxN = n_present*sp->nDot;
 	 I->V=Alloc(float,(MaxN+1)*3);
-    ErrChkPtr(I->V);
 	 I->VN=Alloc(float,(MaxN+1)*3);
-    ErrChkPtr(I->VN);
+
+    if(!(I->V&&I->VN)) { /* bail out point -- try to reduce crashes */
+      PRINTFB(FB_RepSurface,FB_Errors)
+        "Error-RepSurface: insufficient memory to calculate surface at this quality.\n"
+        ENDFB;
+      FreeP(I->V);
+      FreeP(I->VN);
+      FreeP(present);
+      if(carve_map)
+        MapFree(carve_map);
+      VLAFreeP(carve_vla);
+      OOFreeP(I);
+      return NULL;
+    }
 	 I->N=0;
     v=I->V;
     vn=I->VN;

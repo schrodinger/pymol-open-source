@@ -126,7 +126,10 @@ if __name__=='pymol.cmd':
    stereo_sc = Shortcut(stereo_dict.keys())
 
    space_sc = Shortcut(['cmyk','rgb','pymol'])
-   
+
+   window_dict = { 'show' : 1, 'hide' : 0 }
+   window_sc = Shortcut(window_dict.keys())
+      
    repres = {
       'everything'    : -1,
       'sticks'        : 0,
@@ -1367,6 +1370,7 @@ SEE ALSO
         turn,               \
         view,               \
         viewport,           \
+        window,             \
         zoom
 
    #--------------------------------------------------------------------
@@ -1631,6 +1635,7 @@ SEE ALSO
       'update'        : [ update            , 0 , 0 , ''  , parsing.STRICT ],
       'view'          : [ view              , 0 , 0 , ''  , parsing.STRICT ],   
       'viewport'      : [ viewport          , 0 , 0 , ''  , parsing.STRICT ],
+      'window'        : [ window            , 0 , 0 , ''  , parsing.STRICT ],         
       'while'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'wizard'        : [ wizard            , 0 , 0 , ''  , parsing.STRICT ],
       'zoom'          : [ zoom              , 0 , 0 , ''  , parsing.STRICT ],
@@ -1912,6 +1917,7 @@ SEE ALSO
       'view'           : [ viewing.view_dict_sc   , 'view'            , ''   ],                              
       'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],
       'ramp_new'       : [ object_sc              , 'ramp'            , ''   ],
+      'window'         : [ window_sc              , 'action'          , ''   ],      
       },
 # 2nd
       {

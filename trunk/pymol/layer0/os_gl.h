@@ -120,6 +120,7 @@ void PyMOLCheckOpenGLErr(char *pos);
 #define p_glutCreateWindow         glutCreateWindow
 #define p_glutPopWindow            glutPopWindow
 #define p_glutShowWindow           glutShowWindow
+#define p_glutHideWindow           glutHideWindow
 #define p_glutReshapeWindow        glutReshapeWindow
 #define p_glutDestroyWindow        glutDestroyWindow
 

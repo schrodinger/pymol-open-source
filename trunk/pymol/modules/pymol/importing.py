@@ -489,7 +489,8 @@ SEE ALSO
                r = _load(oname,string.join(rec.get('MOL'),''),state,ftype,0,1,quiet)
             del sdf
             _cmd.finish_object(str(oname))
-            _cmd.do("zoom (%s)"%oname,0)
+            if _cmd.get_setting("auto_zoom")==1.0:
+               _cmd.do("zoom (%s)"%oname,0)
             _cmd.do("set seq_view_format,4,"+oname,0)
             ftype = -1
 

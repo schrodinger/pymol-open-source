@@ -29,7 +29,7 @@ if __name__=='pymol.viewing':
         _feedback,fb_module,fb_mask, \
         repres,repres_sc, is_string, is_list, \
         toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
-        palette_dict ,palette_sc
+        palette_dict ,palette_sc, window_dict, window_sc
 
    rep_list = [ "lines","sticks","spheres",
                 "dots","surface","mesh",
@@ -1131,7 +1131,7 @@ SEE ALSO
       '''
 DESCRIPTION
 
-   "full_screen" enables or disables PyMOL's full screen mode.  This
+   "full_screen" enables or disables PyMOL\'s full screen mode.  This
    does not work well on all platforms.  
 
 USAGE
@@ -1218,7 +1218,34 @@ EXAMPLES
          unlock()   
       return r
 
+   def window(action='show'):
+      '''
+DESCRIPTION
 
+   "window" controls the visibility of PyMOL\'s output window
+
+USAGE
+
+   window action
+
+PYMOL API
+
+   cmd.window(string action)
+
+   action = \'show\' or \'hide\'
+   
+      '''
+      action = window_sc.auto_err(action,'action')
+      action = window_dict[str(action)]
+
+      r=1
+      try:
+         lock()
+         r = _cmd.window(action)
+      finally:
+         unlock()
+      return r
+      
    def viewport(width=-1,height=-1):
       '''
 DESCRIPTION
