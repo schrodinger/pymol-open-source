@@ -604,7 +604,7 @@ int SelectorGetArrayNCSet(int *array)
   return(result);
 }
 /*========================================================================*/
-float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2)
+float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2,float adjust)
 {
   SelectorType *I=&Selector;
   int *vla=NULL;
@@ -620,7 +620,7 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2)
   int a;
 
   SelectorUpdateTable();
-  c=SelectorGetInterstateVLA(sele1,state1,sele2,state2,2*MAX_VDW,&vla);
+  c=SelectorGetInterstateVLA(sele1,state1,sele2,state2,2*MAX_VDW+adjust,&vla);
   for(a=0;a<c;a++) {
     a1=vla[a*2];
     a2=vla[a*2+1];
@@ -642,9 +642,9 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2)
         idx1=cs1->AtmToIdx[at1]; /* these are also pre-validated */
         idx2=cs2->AtmToIdx[at2];
         
-        sumVDW=ai1->vdw+ai2->vdw;
+        sumVDW=ai1->vdw+ai2->vdw+adjust;
         dist=diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
-
+        
         if(dist<sumVDW) {
           result+=((sumVDW-dist)/2.0);
         }

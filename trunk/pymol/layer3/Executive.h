@@ -60,7 +60,7 @@ void ExecutiveOrient(char *sele,Matrix33d mi);
 char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag);
 void ExecutiveStereo(int flag);
 void ExecutiveCopy(char *src,char *dst);
-float ExecutiveOverlap(char *s1,int state1,char *s2,int state2);
+float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust);
 int ExecutiveCountStates(char *s1);
 void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
 int ExecutiveGetExtent(char *name,float *mn,float *mx);
