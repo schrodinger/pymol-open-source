@@ -124,7 +124,7 @@ void SelectorPurgeMembers(int sele);
 #define SELE_IDXs ( 0x1300 | STYP_SEL1 )
 #define SELE_RSNs ( 0x1400 | STYP_SEL1 )
 #define SELE_SELs ( 0x1500 | STYP_SEL1 )
-#define SELE_BVLx ( 0x1606 | STYP_SEL2 )
+#define SELE_BVLx ( 0x1600 | STYP_SEL2 )
 #define SELE_ALTs ( 0x1700 | STYP_SEL1 )
 #define SELE_FLGs ( 0x1800 | STYP_SEL1 )
 

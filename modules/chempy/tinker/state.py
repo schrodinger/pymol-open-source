@@ -21,6 +21,7 @@ class State:
       self.keywords['cutoff'] = 8.0      
       self.keywords['randomseed'] = 1234567890
 
+      self.mapping = None
       self.echo = 0
       self.model = None
       self.reset_fragile()
@@ -37,7 +38,8 @@ class State:
    def energy(self,kw=None,summary=1):
       if feedback['actions']:
          print ' '+str(self.__class__)+': starting energy run...'
-      io.xyz.toFile(self.model,self.prefix+"_inp.xyz")
+      io.xyz.toFile(self.model,self.prefix+"_inp.xyz",
+                    mapping = self.mapping)
       kw_list = [ "parameters "+self.params+"\n" ]
       for a in self.keywords.keys():
          kw_list.append("%s %s\n" % ( a,str(self.keywords[a])))
@@ -69,8 +71,7 @@ class State:
             else:
                tok = string.split(string.strip(lin))
                if len(tok):
-                  if tok[0] in ('Bond','Angle','Improper','1-4',
-                                'Other','Charge-Charge'):
+                  if(tok[0]!='Energy'):
                      self.summary.append([
                         string.strip(lin[0:23]),
                         float(lin[25:49]),

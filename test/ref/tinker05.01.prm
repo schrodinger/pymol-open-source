@@ -1,0 +1,301 @@
+
+forcefield              AMBER95
+vdwtype                 LENNARD-JONES
+radiusrule              ARITHMETIC
+radiustype              R-MIN
+radiussize              RADIUS
+epsilonrule             GEOMETRIC
+vdw-14-use
+vdw-scale               2.0
+chg-14-use
+chg-scale               1.2
+dielectric              1.0
+atom      C      C    C       "sp2 C carbonyl group"      6     12.010     3
+atom     C*     C*    C*      "sp2 arom. 5 memb.ring w"   6     12.010     3
+atom     CA     CA    CA      "sp2 C pure aromatic (be"   6     12.010     3
+atom     CB     CB    CB      "sp2 aromatic C, 5&6 mem"   6     12.010     3
+atom     CC     CC    CC      "sp2 aromatic C, 5 memb."   6     12.010     3
+atom     CN     CN    CN      "sp2 C aromatic 5&6 memb"   6     12.010     3
+atom     CR     CR    CR      "sp2 arom as CQ but in H"   6     12.010     3
+atom     CT     CT    CT      "sp3 aliphatic C"           6     12.010     4
+atom     CW     CW    CW      "sp2 arom. 5 memb.ring w"   6     12.010     3
+atom      H      H    H       "H bonded to nitrogen at"   1      1.008     1
+atom     H1     H1    H1      "H aliph. bond. to C wit"   1      1.008     1
+atom     H4     H4    H4      "H arom. bond. to C with"   1      1.008     1
+atom     H5     H5    H5      "H arom. bond. to C with"   1      1.008     1
+atom     HA     HA    HA      "H arom. bond. to C with"   1      1.008     1
+atom     HC     HC    HC      "H aliph. bond. to C wit"   1      1.008     1
+atom     HO     HO    HO      "hydroxyl group"            1      1.008     1
+atom      N      N    N       "sp2 nitrogen in amide g"   7     14.010     3
+atom     NA     NA    NA      "sp2 N in 5 memb.ring w/"   7     14.010     3
+atom     NB     NB    NB      "sp2 N in 5 memb.ring w/"   7     14.010     2
+atom      O      O    O       "carbonyl group oxygen"     8     16.000     1
+atom     O2     O2    O2      "carboxyl and phosphate "   8     16.000     1
+atom     OH     OH    OH      "oxygen in hydroxyl grou"   8     16.000     2
+atom      S      S    S       "sulphur in disulfide li"  16     32.060     2
+vdw          C              1.9080     0.0860
+vdw         C*              1.9080     0.0860
+vdw         CA              1.9080     0.0860
+vdw         CB              1.9080     0.0860
+vdw         CC              1.9080     0.0860
+vdw         CN              1.9080     0.0860
+vdw         CR              1.9080     0.0860
+vdw         CT              1.9080     0.1094
+vdw         CW              1.9080     0.0860
+vdw          H              0.6000     0.0157
+vdw         H1              1.3870     0.0157
+vdw         H4              1.4090     0.0150
+vdw         H5              1.3590     0.0150
+vdw         HA              1.4590     0.0150
+vdw         HC              1.4870     0.0157
+vdw         HO              0.0000     0.0000
+vdw          N              1.8240     0.1700
+vdw         NA              1.8240     0.1700
+vdw         NB              1.8240     0.1700
+vdw          O              1.6612     0.2100
+vdw         O2              1.6612     0.2100
+vdw         OH              1.7210     0.2104
+vdw          S              2.0000     0.2500
+bond         C   CT          317.0     1.5220
+bond         C    N          490.0     1.3350
+bond         C    O          570.0     1.2290
+bond         C   O2          656.0     1.2500
+bond        CA   CA          469.0     1.4000
+bond        CA   HA          367.0     1.0800
+bond        CB   C*          388.0     1.4590
+bond        CB   CA          469.0     1.4040
+bond        CB   CN          447.0     1.4190
+bond        CC   NB          410.0     1.3940
+bond        CN   CA          469.0     1.4000
+bond        CN   NA          428.0     1.3800
+bond        CR   H5          367.0     1.0800
+bond        CR   NA          477.0     1.3430
+bond        CR   NB          488.0     1.3350
+bond        CT    C          317.0     1.5220
+bond        CT   C*          317.0     1.4950
+bond        CT   CC          317.0     1.5040
+bond        CT   CT          310.0     1.5260
+bond        CT   H1          340.0     1.0900
+bond        CT   HC          340.0     1.0900
+bond        CT    N          337.0     1.4490
+bond        CT   OH          320.0     1.4100
+bond        CT    S          227.0     1.8100
+bond        CW   C*          546.0     1.3520
+bond        CW   CC          518.0     1.3710
+bond        CW   H4          367.0     1.0800
+bond        CW   NA          427.0     1.3810
+bond         H    N          434.0     1.0100
+bond         H   NA          434.0     1.0100
+bond        HO   OH          553.0     0.9600
+bond         S    S          166.0     2.0380
+angle        C   CT   CT    63.00      111.10
+angle        C   CT   H1    50.00      109.50
+angle        C   CT   HC    50.00      109.50
+angle        C   CT    N    63.00      110.10
+angle        C    N   CT    50.00      121.90
+angle        C    N    H    30.00      120.00
+angle       C*   CT   HC    50.00      109.50
+angle       C*   CW   H4    35.00      120.00
+angle       C*   CW   NA    70.00      108.70
+angle       CA   CA   CA    63.00      120.00
+angle       CA   CA   HA    35.00      120.00
+angle       CA   CB   C*    63.00      134.90
+angle       CA   CN   NA    70.00      132.80
+angle       CB   CA   CA    63.00      120.00
+angle       CB   CA   HA    35.00      120.00
+angle       CB   CN   CA    63.00      122.70
+angle       CB   CN   NA    70.00      104.40
+angle       CC   CT   HC    50.00      109.50
+angle       CC   CW   H4    35.00      120.00
+angle       CC   CW   NA    70.00      120.00
+angle       CN   CA   CA    63.00      120.00
+angle       CN   CA   HA    35.00      120.00
+angle       CN   CB   C*    63.00      108.80
+angle       CN   CB   CA    63.00      116.20
+angle       CN   NA    H    30.00      123.10
+angle       CR   NA    H    30.00      120.00
+angle       CR   NB   CC    70.00      117.00
+angle       CT    C    N    70.00      116.60
+angle       CT    C    O    80.00      120.40
+angle       CT    C   O2    70.00      117.00
+angle       CT   C*   CB    70.00      128.60
+angle       CT   C*   CW    70.00      125.00
+angle       CT   CC   CW    70.00      120.00
+angle       CT   CC   NB    70.00      120.00
+angle       CT   CT    C    63.00      111.10
+angle       CT   CT   C*    63.00      115.60
+angle       CT   CT   CC    63.00      113.10
+angle       CT   CT   CT    40.00      109.50
+angle       CT   CT   H1    50.00      109.50
+angle       CT   CT   HC    50.00      109.50
+angle       CT   CT    N    80.00      109.70
+angle       CT   CT   OH    50.00      109.50
+angle       CT   CT    S    50.00      114.70
+angle       CT    N    H    30.00      118.04
+angle       CT   OH   HO    55.00      108.50
+angle       CT    S    S    68.00      103.70
+angle       CW   C*   CB    63.00      106.40
+angle       CW   CC   NB    70.00      120.00
+angle       CW   NA   CN    70.00      111.60
+angle       CW   NA   CR    70.00      120.00
+angle       CW   NA    H    30.00      120.00
+angle       H1   CT   H1    35.00      109.50
+angle       H1   CT    N    50.00      109.50
+angle       H1   CT   OH    50.00      109.50
+angle       H1   CT    S    50.00      109.50
+angle       H4   CW   NA    35.00      120.00
+angle       H5   CR   NA    35.00      120.00
+angle       H5   CR   NB    35.00      120.00
+angle       HC   CT   HC    35.00      109.50
+angle       NB   CR   NA    70.00      120.00
+angle        O    C    N    80.00      122.90
+angle       O2    C   O2    80.00      126.00
+angle        S    S   CT    68.00      103.70
+imptors      C   CT    N    H          1.000  180.0  2
+imptors     C*   NA   CW   H4          1.100  180.0  2
+imptors     CA   CA   CA   HA          1.100  180.0  2
+imptors     CB   CA   CA   HA          1.100  180.0  2
+imptors     CC   NA   CW   H4          1.100  180.0  2
+imptors     CN   CA   CA   HA          1.100  180.0  2
+imptors     CT    N    C    O         10.500  180.0  2
+imptors     CT   O2    C   O2         10.500  180.0  2
+imptors     CW   CB   C*   CT          1.100  180.0  2
+imptors     CW   CN   NA    H          1.000  180.0  2
+imptors     CW   CR   NA    H          1.000  180.0  2
+imptors     NB   CW   CC   CT          1.100  180.0  2
+imptors     NB   NA   CR   H5          1.100  180.0  2
+torsion      C   CT   CT    C          0.156    0.0  3  
+torsion      C   CT   CT   C*          0.156    0.0  3  
+torsion      C   CT   CT   CC          0.156    0.0  3  
+torsion      C   CT   CT   CT          0.156    0.0  3  
+torsion      C   CT   CT   H1          0.156    0.0  3  
+torsion      C   CT   CT   HC          0.156    0.0  3  
+torsion      C   CT   CT    N          0.156    0.0  3  
+torsion      C   CT   CT   OH          0.156    0.0  3  
+torsion      C   CT   CT    S          0.156    0.0  3  
+torsion      C   CT    N    H          0.000    0.0  2  
+torsion      C    N   CT    C          0.300  180.0  2       0.850    0.0  1  
+torsion     C*   CB   CN   CA          3.000  180.0  2  
+torsion     C*   CB   CN   NA          3.000  180.0  2  
+torsion     C*   CT   CT   H1          0.156    0.0  3  
+torsion     C*   CT   CT    N          0.156    0.0  3  
+torsion     C*   CW   NA   CN          1.500  180.0  2  
+torsion     C*   CW   NA    H          1.500  180.0  2  
+torsion     CA   CA   CA   CA          3.625  180.0  2  
+torsion     CA   CA   CA   HA          3.625  180.0  2  
+torsion     CA   CA   CB   C*          3.500  180.0  2  
+torsion     CA   CA   CB   CN          3.500  180.0  2  
+torsion     CA   CA   CN   CB          3.625  180.0  2  
+torsion     CA   CA   CN   NA          3.625  180.0  2  
+torsion     CA   CB   CN   CA          3.000  180.0  2  
+torsion     CA   CB   CN   NA          3.000  180.0  2  
+torsion     CA   CN   NA   CW          1.525  180.0  2  
+torsion     CA   CN   NA    H          1.525  180.0  2  
+torsion     CB   C*   CT   CT          0.000    0.0  2  
+torsion     CB   C*   CT   HC          0.000    0.0  2  
+torsion     CB   C*   CW   H4          6.525  180.0  2  
+torsion     CB   C*   CW   NA          6.525  180.0  2  
+torsion     CB   CA   CA   CA          3.625  180.0  2  
+torsion     CB   CA   CA   HA          3.625  180.0  2  
+torsion     CB   CN   NA   CW          1.525  180.0  2  
+torsion     CB   CN   NA    H          1.525  180.0  2  
+torsion     CC   CT   CT   H1          0.156    0.0  3  
+torsion     CC   CT   CT    N          0.156    0.0  3  
+torsion     CC   CW   NA   CR          1.500  180.0  2  
+torsion     CC   CW   NA    H          1.500  180.0  2  
+torsion     CN   CA   CA   CA          3.625  180.0  2  
+torsion     CN   CA   CA   HA          3.625  180.0  2  
+torsion     CT    C    N   CT          2.500  180.0  2  
+torsion     CT    C    N    H          2.500  180.0  2  
+torsion     CT   C*   CB   CA          1.675  180.0  2  
+torsion     CT   C*   CB   CN          1.675  180.0  2  
+torsion     CT   C*   CW   H4          6.525  180.0  2  
+torsion     CT   C*   CW   NA          6.525  180.0  2  
+torsion     CT   CC   CW   H4          5.375  180.0  2  
+torsion     CT   CC   CW   NA          5.375  180.0  2  
+torsion     CT   CC   NB   CR          2.400  180.0  2  
+torsion     CT   CT    C    N          0.100    0.0  4       0.070    0.0  2  
+torsion     CT   CT   CT    C          0.156    0.0  3  
+torsion     CT   CT   CT   CT          0.156    0.0  3  
+torsion     CT   CT   CT   H1          0.156    0.0  3  
+torsion     CT   CT   CT   HC          0.156    0.0  3  
+torsion     CT   CT   CT    N          0.156    0.0  3  
+torsion   CT  CT  N  C     0.500 180.0 4    0.150 180.0 3    0.530  0.0 1 
+torsion     CT   CT    N    H          0.000    0.0  2  
+torsion     CT   CT   OH   HO          0.167    0.0  3  
+torsion     CT   CT    S    S          0.333    0.0  3  
+torsion     CT    S    S   CT          3.500    0.0  2       0.600    0.0  3  
+torsion     CW   C*   CB   CA          1.675  180.0  2  
+torsion     CW   C*   CB   CN          1.675  180.0  2  
+torsion     CW   C*   CT   CT          0.000    0.0  2  
+torsion     CW   C*   CT   HC          0.000    0.0  2  
+torsion     CW   CC   CT   CT          0.000    0.0  2  
+torsion     CW   CC   CT   HC          0.000    0.0  2  
+torsion     CW   CC   NB   CR          2.400  180.0  2  
+torsion      H    N    C    O          2.500  180.0  2       2.000    0.0  1  
+torsion     H1   CT   CT   H1          0.156    0.0  3  
+torsion     H1   CT   CT   HC          0.156    0.0  3  
+torsion     H1   CT   CT    N          0.156    0.0  3  
+torsion     H1   CT   CT   OH          0.156    0.0  3  
+torsion     H1   CT   CT    S          0.156    0.0  3  
+torsion     H1   CT    N    C          0.000    0.0  2  
+torsion     H1   CT    N    H          0.000    0.0  2  
+torsion     H1   CT   OH   HO          0.167    0.0  3  
+torsion     H1   CT    S    S          0.333    0.0  3  
+torsion     H4   CW   NA   CN          1.500  180.0  2  
+torsion     H4   CW   NA   CR          1.500  180.0  2  
+torsion     H4   CW   NA    H          1.500  180.0  2  
+torsion     H5   CR   NA   CW          2.325  180.0  2  
+torsion     H5   CR   NA    H          2.325  180.0  2  
+torsion     H5   CR   NB   CC          5.000  180.0  2  
+torsion     HA   CA   CA   HA          3.625  180.0  2  
+torsion     HA   CA   CB   C*          3.500  180.0  2  
+torsion     HA   CA   CB   CN          3.500  180.0  2  
+torsion     HA   CA   CN   CB          3.625  180.0  2  
+torsion     HA   CA   CN   NA          3.625  180.0  2  
+torsion     HC   CT   CT   H1          0.156    0.0  3  
+torsion     HC   CT   CT   HC          0.156    0.0  3  
+torsion     HC   CT   CT    N          0.156    0.0  3  
+torsion     HC   CT   CT   OH          0.156    0.0  3  
+torsion      N    C   CT   H1          0.000    0.0  2  
+torsion      N   CT    C    N          0.300  180.0  2       0.850    0.0  1  
+torsion      N   CT   CT   OH          0.156    0.0  3  
+torsion      N   CT   CT    S          0.156    0.0  3  
+torsion     NA   CR   NB   CC          5.000  180.0  2  
+torsion     NB   CC   CT   CT          0.000    0.0  2  
+torsion     NB   CC   CT   HC          0.000    0.0  2  
+torsion     NB   CC   CW   H4          5.375  180.0  2  
+torsion     NB   CC   CW   NA          5.375  180.0  2  
+torsion     NB   CR   NA   CW          2.325  180.0  2  
+torsion     NB   CR   NA    H          2.325  180.0  2  
+torsion      O    C   CT   CT          0.000    0.0  2  
+torsion      O    C   CT   H1          0.000    0.0  2  
+torsion      O    C   CT    N          0.000    0.0  2  
+torsion      O    C    N   CT          2.500  180.0  2  
+torsion     O2    C   CT   CT          0.000    0.0  2  
+torsion     O2    C   CT   H1          0.000    0.0  2  
+torsion     O2    C   CT   HC          0.000    0.0  2  
+torsion     O2    C   CT    N          0.000    0.0  2  
+charge       C        0.0000
+charge      C*        0.0000
+charge      CA        0.0000
+charge      CB        0.0000
+charge      CC        0.0000
+charge      CN        0.0000
+charge      CR        0.0000
+charge      CT        0.0000
+charge      CW        0.0000
+charge       H        0.0000
+charge      H1        0.0000
+charge      H4        0.0000
+charge      H5        0.0000
+charge      HA        0.0000
+charge      HC        0.0000
+charge      HO        0.0000
+charge       N        0.0000
+charge      NA        0.0000
+charge      NB        0.0000
+charge       O        0.0000
+charge      O2        0.0000
+charge      OH        0.0000
+charge       S        0.0000
