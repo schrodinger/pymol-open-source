@@ -542,8 +542,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
         rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
       else
         rms = MatrixGetRMS(op1.nvv1,op1.vv1,op2.vv1,NULL);
-      printf(" Executive: RMS = %8.3f (%d to %d atoms)\n",
-             rms,op1.nvv1,op2.nvv1);
+      PRINTF " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,op1.nvv1,op2.nvv1 ENDF
       if(mode==2) {
         op2.code = OMOP_TTTF;
         ExecutiveObjMolSeleOp(sele1,&op2);
