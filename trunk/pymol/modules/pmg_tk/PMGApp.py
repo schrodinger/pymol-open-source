@@ -46,9 +46,9 @@ def complete(event,str,widget,self):
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.91'
+   appversion     = '0.95'
    appname       = 'PyMOL Tcl/Tk GUI'
-   copyright      = 'Copyright (C) 1998-2003 by Warren DeLano of\nDeLano Scientific LLC. All rights reserved.'
+   copyright      = 'Copyright (C) 1998-2005 by Warren DeLano and \n DeLano Scientific LLC. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
    contactemail   = 'warren@delanoscientific.com'
 
