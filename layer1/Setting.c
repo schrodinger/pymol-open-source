@@ -2081,6 +2081,8 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_gaussian_b_floor,0.0F);
 
+  SettingSet_i(I,cSetting_sculpt_nb_skip,17);
+
 }
 
 
