@@ -179,6 +179,11 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * much-improved support for raytracing of large structures;
+     various bugs fixed
+
+   * fixed memory management issues on OS-X
+
    * endianness check for .phi files 
 
    * test cases updated to reflect new molecular editing behavior
