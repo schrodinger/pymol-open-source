@@ -105,7 +105,7 @@ partial:
 	touch layer5/main.c
 	touch layer1/P.c
 	touch layer4/Cmd.c
-	/bin/rm -f modules/_cmd.so pymol.exe
+	/bin/rm -f modules/pymol/_cmd.so pymol.exe
 	$(MAKE)
 
 clean: 
@@ -117,8 +117,10 @@ clean:
 
 distclean: clean
 	touch .no_fail
-	/bin/rm -f modules/*.pyc modules/*.so modules/pymol/*.so pymol.exe \
+	/bin/rm -f modules/*.pyc modules/*.so modules/*/*.so modules/*/*.so \
+	modules/*/*/*/*.so pymol.exe \
 	modules/*/*.pyc modules/*/*/*.pyc modules/*/*/*/*.pyc .no_fail* test/cmp/*
+	/bin/rm -rf build
 	cd contrib;$(MAKE) distclean
 
 dist: distclean
