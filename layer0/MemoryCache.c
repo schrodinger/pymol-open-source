@@ -98,7 +98,7 @@ void MemoryCacheFree(void *ptr,int group_id, int block_id,int force)
 {
   MemoryCacheRec *rec = &MemoryCache[group_id][block_id];
   if((group_id<0)||(!(int)SettingGet(cSetting_cache_memory)))
-    return(mfree(ptr));
+    mfree(ptr);
   if(rec->ptr&&(ptr!=rec->ptr))
     printf("Error: Memory Cache Mismatch 2 %d %d\n",group_id,block_id);
   if(force) {
