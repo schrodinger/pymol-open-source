@@ -229,7 +229,6 @@ static int CGOArrayFromPyListInPlace(PyObject *list,CGO *I)
     
     while(c>0) {
       op = (int)PyFloat_AsDouble(PyList_GetItem(list,cc++));
-      printf("operand %d %d\n",op,op&CGO_MASK);
       op = op&CGO_MASK;
       c--;
       sz = CGO_sz[op];
@@ -264,7 +263,7 @@ PyObject *CGOAsPyList(CGO *I)
   return(result);
 }
 
-CGO *CGONewFromPyList(PyObject *list)
+CGO *CGONewFromPyList(PyObject *list,int version)
 {
   int ok=true;
   int ll;
@@ -277,7 +276,12 @@ CGO *CGONewFromPyList(PyObject *list)
    Always check ll when adding new PyList_GetItem's */
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->c);
   if(ok) ok=((I->op=VLAlloc(float,I->c+1))!=NULL);
-  if(ok) ok=CGOArrayFromPyListInPlace(PyList_GetItem(list,1),I);
+  if((version>0)&&(version<=86)) {
+    if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,1),I->op,I->c);    
+  } else {
+    if(ok) ok=CGOArrayFromPyListInPlace(PyList_GetItem(list,1),I);
+  }
+  
   if(!ok) {
     CGOFree(I);
     I=NULL;

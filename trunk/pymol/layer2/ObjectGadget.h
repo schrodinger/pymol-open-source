@@ -49,8 +49,8 @@ PyObject *ObjectGadgetAsPyList(ObjectGadget *I);
 PyObject *ObjectGadgetAsPyList(ObjectGadget *I);
 PyObject *ObjectGadgetPlainAsPyList(ObjectGadget *I);
 
-int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result);
-int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I);
+int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result,int version);
+int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I,int version);
 
 ObjectGadget *ObjectGadgetTest(void);
 int ObjectGadgetGetVertex(ObjectGadget *I,int index,int base, float *v); /* in current state */

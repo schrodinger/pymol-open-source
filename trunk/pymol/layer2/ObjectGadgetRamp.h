@@ -69,7 +69,7 @@ int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color);
 int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color);
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I);
-int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result);
+int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result,int version);
 
 void ObjectGadgetRampUpdate(ObjectGadgetRamp *I);
 void ObjectGadgetRampFree(ObjectGadgetRamp *I);

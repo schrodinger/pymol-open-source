@@ -38,7 +38,7 @@ ObjectCGO *ObjectCGOFromCGO(ObjectCGO *obj,CGO *cgo,int state);
 void ObjectCGORecomputeExtent(ObjectCGO *I);
 
 PyObject *ObjectCGOAsPyList(ObjectCGO *I);
-int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result);
+int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result,int version);
 ObjectCGO *ObjectCGONewVFontTest(char *text,float *pos);
 
 #endif

@@ -275,7 +275,7 @@ static PyObject *ObjectGadgetGSetAsPyList(ObjectGadget *I)
   return(PConvAutoNone(result));
 }
 
-static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list)
+static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list,int version)
 {
   int ok=true;
   int a;
@@ -283,14 +283,14 @@ static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list)
   if(ok) {
     VLACheck(I->GSet,GadgetSet*,I->NGSet);
     for(a=0;a<I->NGSet;a++) {
-      if(ok) ok = GadgetSetFromPyList(PyList_GetItem(list,a),&I->GSet[a]);
+      if(ok) ok = GadgetSetFromPyList(PyList_GetItem(list,a),&I->GSet[a],version);
       if(ok&&I->GSet[a]) I->GSet[a]->Obj = I;
     }
   }
   return(ok);
 }
 
-int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I)
+int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I,int version)
 {
   int ok = true;
   int ll;
@@ -302,7 +302,7 @@ int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I)
   if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->GadgetType);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NGSet);
-  if(ok) ok = ObjectGadgetGSetFromPyList(I,PyList_GetItem(list,3));
+  if(ok) ok = ObjectGadgetGSetFromPyList(I,PyList_GetItem(list,3),version);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,4),&I->CurGSet);
   
   /*  ObjectGadgetInvalidateRep(I,cRepAll);*/
@@ -315,7 +315,7 @@ int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I)
   return(ok);
 }
 
-int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result)
+int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result,int version)
 {
   int ok = true;
   ObjectGadget *I=NULL;
@@ -328,12 +328,12 @@ int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result)
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&gadget_type);
   if(ok) switch(gadget_type) { /* call the right routine to restore the gadget! */
   case cGadgetRamp:
-    ok = ObjectGadgetRampNewFromPyList(list,(ObjectGadgetRamp**)result);
+    ok = ObjectGadgetRampNewFromPyList(list,(ObjectGadgetRamp**)result,version);
     break;
   case cGadgetPlain:
     I=ObjectGadgetNew();
     if(ok) ok = (I!=NULL);
-    if(ok) ok = ObjectGadgetInitFromPyList(list,I);
+    if(ok) ok = ObjectGadgetInitFromPyList(list,I,version);
     if(ok) (*result) = I;
     break;
   default:
