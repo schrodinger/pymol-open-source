@@ -1,0 +1,221 @@
+PyMOL>feedback
+ feedback: possible actions: 
+set, enable, disable
+ feedback: Please specify module names:
+    all
+    cmd
+    objectmap
+    feedback
+    repcylbond
+    distset
+    executive
+    parser
+    extrude
+    raw
+    symmetry
+    api
+    export
+    repribbon
+    isosurface
+    ray
+    objectgadget
+    vfont
+    coordset
+    objectcgo
+    movie
+    rep
+    mypng
+    setting
+    editor
+    main
+    repnonbondedsphere
+    objectmolecule
+    repdistlabel
+    objectcallback
+    repcartoon
+    map
+    shaker
+    repsphere
+    triangle
+    cgo
+    objectdist
+    python
+    replabel
+    object
+    scene
+    threads
+    repsurface
+    repdot
+    selector
+    gadgetset
+    matrix
+    repwirebond
+    isomesh
+    objectmesh
+    repdistdash
+    repnonbonded
+    sculpt
+    objectsurface
+    ortho
+    match
+    ccmd
+    repmesh
+ feedback: Please specify masks:
+    debugging
+    errors
+    blather
+    warnings
+    results
+    actions
+    everything
+    details
+    output
+PyMOL>feedback ?
+Usage: feedback [ action [, module [, mask ]]]
+PyMOL>feedback enable
+ feedback: Please specify module names:
+    all
+    cmd
+    objectmap
+    feedback
+    repcylbond
+    distset
+    executive
+    parser
+    extrude
+    raw
+    symmetry
+    api
+    export
+    repribbon
+    isosurface
+    ray
+    objectgadget
+    vfont
+    coordset
+    objectcgo
+    movie
+    rep
+    mypng
+    setting
+    editor
+    main
+    repnonbondedsphere
+    objectmolecule
+    repdistlabel
+    objectcallback
+    repcartoon
+    map
+    shaker
+    repsphere
+    triangle
+    cgo
+    objectdist
+    python
+    replabel
+    object
+    scene
+    threads
+    repsurface
+    repdot
+    selector
+    gadgetset
+    matrix
+    repwirebond
+    isomesh
+    objectmesh
+    repdistdash
+    repnonbonded
+    sculpt
+    objectsurface
+    ortho
+    match
+    ccmd
+    repmesh
+ feedback: Please specify masks:
+    debugging
+    errors
+    blather
+    warnings
+    results
+    actions
+    everything
+    details
+    output
+PyMOL>feedback enable, selector
+ feedback: Please specify masks:
+    debugging
+    errors
+    blather
+    warnings
+    results
+    actions
+    everything
+    details
+    output
+PyMOL>feedback enable, selector, everything
+PyMOL>feedback enable, repcartoon extrude, everything
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+SelectorCreate-Debug: entered...
+SelectorUpdateTableSingleObject-Debug: entered..
+SelectorUpdateTableSingleObject-Debug: leaving...
+ Selector: Embedded pept, 107 atoms.
+ SelectorCreate: "pept" created with 107 atoms.
+PyMOL>show cartoon
+ SelectorGetTmp-Debug: entered with "all".
+ SelectorGetTmp-Debug: leaving with "all".
+PyMOL>refresh
+ RepCartoonNew-Debug: entered.
+ RepCartoon: found CA in 1; a2 -1
+ RepCartoon: found CA in 1; a2 -1
+ RepCartoon: found CA in 2; a2 1
+ RepCartoon: found CA in 2; a2 1
+ RepCartoon: found CA in 3; a2 9
+ RepCartoon: found CA in 3; a2 9
+ RepCartoon: found CA in 4; a2 15
+ RepCartoon: found CA in 4; a2 15
+ RepCartoon: found CA in 5; a2 20
+ RepCartoon: found CA in 5; a2 20
+ RepCartoon: found CA in 6; a2 34
+ RepCartoon: found CA in 6; a2 34
+ RepCartoon: found CA in 7; a2 44
+ RepCartoon: found CA in 7; a2 44
+ RepCartoon: found CA in 8; a2 52
+ RepCartoon: found CA in 8; a2 52
+ RepCartoon: found CA in 9; a2 56
+ RepCartoon: found CA in 9; a2 56
+ RepCartoon: found CA in 10; a2 65
+ RepCartoon: found CA in 10; a2 65
+ RepCartoon: found CA in 11; a2 73
+ RepCartoon: found CA in 11; a2 73
+ RepCartoon: found CA in 12; a2 80
+ RepCartoon: found CA in 12; a2 80
+ RepCartoon: found CA in 13; a2 94
+ RepCartoon: found CA in 13; a2 94
+ RepCartoon-Debug: path outlined, interpolating...
+ RepCartoon: seg 0 *s 1 , *(s+1) 1
+ RepCartoon: seg 1 *s 1 , *(s+1) 1
+ RepCartoon: seg 2 *s 1 , *(s+1) 1
+ RepCartoon: seg 3 *s 1 , *(s+1) 1
+ RepCartoon: seg 4 *s 1 , *(s+1) 1
+ RepCartoon: seg 5 *s 1 , *(s+1) 1
+ RepCartoon: seg 6 *s 1 , *(s+1) 1
+ RepCartoon: seg 7 *s 1 , *(s+1) 1
+ RepCartoon: seg 8 *s 1 , *(s+1) 1
+ RepCartoon: seg 9 *s 1 , *(s+1) 1
+ RepCartoon: seg 10 *s 1 , *(s+1) 1
+ RepCartoon: seg 11 *s 1 , *(s+1) 1
+ RepCartoon-Debug: generating coordinate systems...
+ RepCartoon-Debug: creating 3D scaffold...
+ ExtrudeComputeTangents-DEBUG: entered.
+ ExtrudeComputeTangents-DEBUG: exiting...
+ ExtrudeCircle-DEBUG: entered.
+ ExtrudeCircle-DEBUG: exiting...
+ ExtrudeBuildNormals1f-DEBUG: entered.
+ ExtrudeBuildNormals1f-DEBUG: exiting...
+ ExtrudeCGOSurfaceTube-DEBUG: entered.
+ ExtrudeCGOSurfaceTube-DEBUG: exiting...
+PyMOL>feedback disable, repcartoon extrude, everything
+PyMOL>rebuild
+PyMOL>refresh
