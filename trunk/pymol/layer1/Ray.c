@@ -1067,7 +1067,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	float excess=0.0F;
 	float dotgle;
 	float bright,direct_cmp,reflect_cmp,fc[4];
-	float ambient,direct,lreflect,ft,ffact,ffact1m;
+	float ambient,direct,lreflect,ft,ffact=0.0F,ffact1m;
 	unsigned int cc0,cc1,cc2,cc3;
 	int i;
 	RayInfo r1,r2;
