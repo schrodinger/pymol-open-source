@@ -6559,7 +6559,7 @@ ctrl = {
    'I' : [ replace                , ('I',1,1), {} ],
    'J' : [ alter                  , ('pk1','formal_charge=-1.0'), {} ],
    'K' : [ alter                  , ('pk1','formal_charge =1.0'), {} ],
-   'L' : [ replace                , ('Cl',1,1) , {}],   
+   'L' : [ replace                , ('Cl',1,1) , {}],
    'N' : [ replace                , ('N',4,3) , {}],
    'O' : [ replace                , ('O',4,2) , {}],   
    'P' : [ replace                , ('P',4,1) , {}],
