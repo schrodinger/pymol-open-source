@@ -146,7 +146,7 @@ PYMOL API
    return apply(load_object,lst,kw)
 
 def load_traj(filename,object='',state=0,format='',interval=1,
-              average=1,start=1,stop=-1,max=-1,selection='all'):
+              average=1,start=1,stop=-1,max=-1,selection='all',image=1):
    '''
 DESCRIPTION
   
@@ -156,12 +156,12 @@ DESCRIPTION
 USAGE
  
    load_traj filename [,object [,state [,format [,interval [,average ]
-                      [,start [, stop [, selection ]]]]]]]
+                      [,start [, stop [, selection [, image ]]]]]]]]
  
 PYMOL API
   
    cmd.load_traj( filename [,object [,state [,format [,interval [,average ]
-                      [,start [, stop [, max [, selection]]]]]]]]
+                      [,start [, stop [, max [, selection [, image]]]]]]]]]
 
 SEE ALSO
 
@@ -178,6 +178,7 @@ SEE ALSO
       start = int(start)
       stop = int(stop)
       max = int(max)
+      image = int(image)
       # preprocess selection
       selection = selector.process(selection)
       #   
@@ -218,7 +219,8 @@ SEE ALSO
       if ftype>=0:
          r = _cmd.load_traj(str(oname),fname,int(state)-1,int(ftype),
                             int(interval),int(average),int(start),
-                            int(stop),int(max),str(selection))
+                            int(stop),int(max),str(selection),
+                            int(image))
    finally:
       unlock()
    return r

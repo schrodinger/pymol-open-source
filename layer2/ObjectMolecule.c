@@ -138,17 +138,21 @@ static char *skip_fortran(int num,int per_line,char *p)
 
 ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int frame,
                                           int interval,int average,int start,
-                                          int stop,int max,char *sele)
+                                          int stop,int max,char *sele,int image)
 {
   int ok=true;
   FILE *f;
-  char *buffer,*p;
+  char *buffer,*p,*p_save;
   char cc[MAXLINELEN];  
   int n_read;
   int to_go;
   int skip_first_line = true;
   int periodic=false;
   float f0,f1,f2,f3,*fp;
+  float box[3],add[3];
+  float r_cent[3],r_trans[3];
+  int r_act,r_val,r_cnt;
+  float *r_fp_start,*r_fp_stop;
   int a,b,c,i;
   int *to;
   int zoom_flag=false;
@@ -251,116 +255,213 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
           if(sscanf(cc,"%f",&f2)==1) {
             if((++c)==3) {
               c=0;
-              periodic=false;
-              if(!a) {/* is this a periodic box? */
-                ncopy(cc,p,8);
-                if(sscanf(cc,"%f",&f3)<1) { /* yes */
+              if((cnt+1)>=start) {
+                if(icnt<=1) {
+                  if(xref) { 
+                    if(xref[a]>=0)
+                      fp=cs->Coord+3*xref[a];
+                    else 
+                      fp=NULL;
+                  } else {
+                    fp=cs->Coord+3*a;
+                  }
+                  if(fp) {
+                    if(n_avg) {
+                      *(fp++)+=f0;
+                      *(fp++)+=f1;
+                      *(fp++)+=f2;
+                    } else {
+                      *(fp++)=f0;
+                      *(fp++)=f1;
+                      *(fp++)=f2;
+                    }
+                  }
+                }
+              }
+              if((++a)==I->NAtom) {
+                
+                cnt++;
+                a=0;
+                if(b) p=nextline(p);
+                b=0;
+                
+                c=0;
+                periodic=true;
+                p_save=p;
+                p = ncopy(cc,p,8);
+                if(sscanf(cc,"%f",&box[0])!=1) 
+                  periodic=false;
+                p = ncopy(cc,p,8);
+                if(sscanf(cc,"%f",&box[1])!=1)
+                  periodic=false;
+                p = ncopy(cc,p,8);
+                if(sscanf(cc,"%f",&box[2])!=1)
+                  periodic=false;
+                p = ncopy(cc,p,8);
+                if(sscanf(cc,"%f",&f3)==1) { /* not a periodic box record */
+                  periodic=false;
+                  p=p_save;
+                } else {
                   periodic = true;
+                  add[0]=box[0]*1000.0;
+                  add[1]=box[1]*1000.0;
+                  add[2]=box[2]*1000.0;
                   p=nextline(p);
                   b=0;
                 }
-              }
-              if(!periodic) {
-                if((cnt+1)>=start) {
-                  if(icnt<=1) {
-                    if(xref) { 
-                      if(xref[a]>=0)
-                        fp=cs->Coord+3*xref[a];
-                      else 
-                        fp=NULL;
-                    } else {
-                      fp=cs->Coord+3*a;
-                    }
-                    if(fp) {
-                      if(n_avg) {
-                        *(fp++)+=f0;
-                        *(fp++)+=f1;
-                        *(fp++)+=f2;
-                      } else {
-                        *(fp++)=f0;
-                        *(fp++)=f1;
-                        *(fp++)=f2;
-                      }
-                    }
-                  }
-                }
-                if((++a)==I->NAtom) {
-                  cnt++;
-                  a=0;
-                  if(b) p=nextline(p);
-                  b=0;
-
-                  if((stop>0)&&(cnt>=stop))
-                    break;
-                  if(cnt>=start) {
-                    icnt--;                      
-                    if(icnt>0) {
-                      PRINTFB(FB_Details,FB_ObjectMolecule)
-                        " ObjectMolecule: skipping set %d...\n",cnt
-                        ENDFB;
-                    } else {
-                      icnt=interval;
-                      n_avg++;
-                    }
-                    
-                    if(icnt==interval) {
-                      if(n_avg<average) {
-                        PRINTFB(FB_Details,FB_ObjectMolecule)
-                          " ObjectMolecule: averaging set %d...\n",cnt
-                          ENDFB;
-                      } else {
-                        
-                        /* compute average */
-                        
-                        if(n_avg>1) {
-                          fp=cs->Coord;
-                          for(i=0;i<cs->NIndex;i++) {
-                            *(fp++)/=n_avg;
-                            *(fp++)/=n_avg;
-                            *(fp++)/=n_avg;
-                          }
-                        }
-                        
-                        /* add new coord set */
-                        if(cs->fInvalidateRep)
-                          cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
-                        if(frame<0) frame=I->NCSet;
-                        if(!I->NCSet) {
-                          zoom_flag=true;
-                        }
-                        
-                        VLACheck(I->CSet,CoordSet*,frame);
-                        if(I->NCSet<=frame) I->NCSet=frame+1;
-                        if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
-                        I->CSet[frame] = cs;
-                        ncnt++;
-                        
-                        if(average<2) {
-                          PRINTFB(FB_Details,FB_ObjectMolecule)
-                            " ObjectMolecule: read set %d into state %d...\n",cnt,frame+1
-                            ENDFB;
-                        } else {
-                          PRINTFB(FB_Details,FB_ObjectMolecule)
-                            " ObjectMolecule: averaging set %d...\n",cnt
-                            ENDFB;
-                          PRINTFB(FB_Details,FB_ObjectMolecule)
-                            " ObjectMolecule: average loaded into state %d...\n",frame+1
-                            ENDFB;
-                        }
-                        frame++;
-                        cs = CoordSetCopy(cs);
-                        n_avg=0;
-                        if((stop>0)&&(cnt>=stop))
-                          break;
-                        if((max>0)&&(ncnt>=max))
-                          break;
-                      }
-                    }
-                  } else {
+                
+                if((stop>0)&&(cnt>=stop))
+                  break;
+                if(cnt>=start) {
+                  icnt--;                      
+                  if(icnt>0) {
                     PRINTFB(FB_Details,FB_ObjectMolecule)
                       " ObjectMolecule: skipping set %d...\n",cnt
                       ENDFB;
+                  } else {
+                    icnt=interval;
+                    n_avg++;
                   }
+                  
+                  if(icnt==interval) {
+                    if(n_avg<average) {
+                      PRINTFB(FB_Details,FB_ObjectMolecule)
+                        " ObjectMolecule: averaging set %d...\n",cnt
+                        ENDFB;
+                    } else {
+                      
+                      /* compute average */
+                      
+                      if(n_avg>1) {
+                        fp=cs->Coord;
+                        for(i=0;i<cs->NIndex;i++) {
+                          *(fp++)/=n_avg;
+                          *(fp++)/=n_avg;
+                          *(fp++)/=n_avg;
+                        }
+                      }
+                      if(periodic&&image) { /* Perform residue-based period image transformation */
+                        i = 0;
+                        r_cnt = 0;
+                        r_act = 0; /* 0 unspec, 1=load, 2=image, 3=leave*/
+                        r_val = -1;
+                        while(r_act!=3) {
+                          if(i>=cs->NIndex) {
+                            if(r_cnt)
+                              r_act = 2; 
+                            else
+                              r_act = 3;
+                          }
+                          if(r_act==0) {
+                            /* start new residue */
+                            r_cnt = 0;
+                            r_act = 1; /* now load */
+                          }
+                          if(r_act==1) {
+                            if(i<cs->NIndex) {
+                              
+                              /* is there a coordinate for atom? */
+                              if(xref) { 
+                                if(xref[i]>=0)
+                                  fp=cs->Coord+3*xref[i];
+                                else 
+                                  fp=NULL;
+                              } else {
+                                fp=cs->Coord+3*i;
+                              }
+                              if(fp) { /* yes there is... */
+                                if(r_cnt) {
+                                  if(r_val!=I->AtomInfo[cs->IdxToAtm[i]].resv) {
+                                    r_act=2; /* end of residue-> time to image */
+                                  } else {
+                                    r_cnt++;
+                                    r_cent[0]+=*(fp++);
+                                    r_cent[1]+=*(fp++);
+                                    r_cent[2]+=*(fp++);
+                                    r_fp_stop = fp; /* stop here */
+                                    i++;
+                                  }
+                                } else {
+                                  r_val = I->AtomInfo[cs->IdxToAtm[i]].resv;
+                                  r_cnt++;
+                                  r_fp_start = fp; /* start here */
+                                  r_cent[0]=*(fp++);
+                                  r_cent[1]=*(fp++);
+                                  r_cent[2]=*(fp++);
+                                  r_fp_stop = fp; /* stop here */
+                                  i++;
+                                }
+                              } else {
+                                i++;
+                              }
+                            } else {
+                              r_act=2; /* image */
+                            }
+                          }
+
+                          if(r_act==2) { /* time to image */
+                            if(r_cnt) {
+                              r_cent[0]/=r_cnt;
+                              r_cent[1]/=r_cnt;
+                              r_cent[2]/=r_cnt;
+                              r_trans[0]=fmod(add[0]+r_cent[0],box[0]);
+                              r_trans[1]=fmod(add[1]+r_cent[1],box[1]);
+                              r_trans[2]=fmod(add[2]+r_cent[2],box[2]);
+                              r_trans[0]-=r_cent[0];
+                              r_trans[1]-=r_cent[1];
+                              r_trans[2]-=r_cent[2];
+                              fp=r_fp_start;
+                              while(fp<r_fp_stop) {
+                                *(fp++)+=r_trans[0];
+                                *(fp++)+=r_trans[1];
+                                *(fp++)+=r_trans[2];
+                              }
+                            }
+                            r_act=0; /* reset */ 
+                            r_cnt=0;
+                          }
+                        }
+                      }
+
+                      /* add new coord set */
+                      if(cs->fInvalidateRep)
+                        cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
+                      if(frame<0) frame=I->NCSet;
+                      if(!I->NCSet) {
+                        zoom_flag=true;
+                      }
+                      
+                      VLACheck(I->CSet,CoordSet*,frame);
+                      if(I->NCSet<=frame) I->NCSet=frame+1;
+                      if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+                      I->CSet[frame] = cs;
+                      ncnt++;
+                      
+                      if(average<2) {
+                        PRINTFB(FB_Details,FB_ObjectMolecule)
+                          " ObjectMolecule: read set %d into state %d...\n",cnt,frame+1
+                          ENDFB;
+                      } else {
+                        PRINTFB(FB_Details,FB_ObjectMolecule)
+                          " ObjectMolecule: averaging set %d...\n",cnt
+                          ENDFB;
+                        PRINTFB(FB_Details,FB_ObjectMolecule)
+                          " ObjectMolecule: average loaded into state %d...\n",frame+1
+                          ENDFB;
+                      }
+                      frame++;
+                      cs = CoordSetCopy(cs);
+                      n_avg=0;
+                      if((stop>0)&&(cnt>=stop))
+                        break;
+                      if((max>0)&&(ncnt>=max))
+                        break;
+                    }
+                  }
+                } else {
+                  PRINTFB(FB_Details,FB_ObjectMolecule)
+                    " ObjectMolecule: skipping set %d...\n",cnt
+                    ENDFB;
                 }
               }
             }
