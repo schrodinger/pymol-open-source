@@ -1,5 +1,18 @@
-# 
-# Author: Scott Dixon, Metaphorics, LLC
+#A* -------------------------------------------------------------------
+#B* This file contains source code for the PyMOL computer program
+#C* copyright 1998-2003 by Warren Lyford Delano of DeLano Scientific. 
+#D* -------------------------------------------------------------------
+#E* It is unlawful to modify or remove this copyright notice.
+#F* -------------------------------------------------------------------
+#G* Please see the accompanying LICENSE file for further information. 
+#H* -------------------------------------------------------------------
+#I* Additional authors of this source file include:
+#-* Scott Dixon, Metaphorics LLC
+#-* 
+#-*
+#Z* -------------------------------------------------------------------
+
+# For code contributed by Scott Dixon, the following notice applies:
 # This source code is contributed to the public domain and may be freely
 # copied and distributed for research, profit, fun or any other reason,
 # with these restrictions: (1) unmodified or functionally equivalent code
@@ -12,13 +25,14 @@ from cmd import _cmd
 
 from chempy import Storage,Atom,Bond
 from chempy.models import Indexed
+from pymol import util
 
 import string
 
 from chempy import cex
 CEX=cex
 
-class CEXpyParser(CEX.CEXsmilesParser):
+class CEXpyParser(CEX.CEXsmilesParser): # Author: Scott Dixon
     def __init__(self):
         self.model = Indexed()
         self.atomN = 0
@@ -43,7 +57,7 @@ class CEXpyParser(CEX.CEXsmilesParser):
 
    
 #---------------------------------------------------------------------------------
-def readcex(file,*args):  
+def readcex(file,*args):  # Author: Scott Dixon
     import os.path
 
       
@@ -125,8 +139,8 @@ def readcex(file,*args):
             pass
     _cmd.finish_object(modelname)
     f.close()
-
-def colorbyB(selection="spheres",first=7,last=3):
+ 
+def colorbyB(selection="spheres",first=7,last=3): # Author: Scott Dixon
     cols = [(0.,0.,1.),(.5,.5,1.),(.8,.8,1.),(1.,1.,1.),
             (1.,.9,.9),(1.,.6,.6),(1.,0.,0.)]
     nbins = len(cols)
@@ -137,6 +151,69 @@ def colorbyB(selection="spheres",first=7,last=3):
         b = first - i*incr
         cmd.color(cname,"((%s) and not(b > %f) and b > %f)"%(selection,b,b-incr))
 
-def metaphorics():
+def metaphorics(): 
     cmd.extend("readcex",readcex)
     cmd.extend("colorbyB",colorbyB)
+
+def get_context_info():  # Author: Warren DeLano
+    context_dict= {}
+    context_list= []
+    for a in cmd.get_names("all"):
+       context = None   
+       if a[-6:]=='_water': 
+          context = a[:-6] 
+       if a[-7:]=='_ligand':  
+          context = a[:-7] 
+       if a[-5:]=='_site':  
+          context = a[:-5] 
+       if a[-6:]=='_hbond':  
+          context = a[:-6]
+       if context!=None:
+           if not context_dict.has_key(context):
+               context_list.append(context)
+               context_dict[context] = [a]
+           else:
+               context_dict[context].append(a)
+    return (context_list,context_dict)
+
+def setup_contexts(context_info):   # Author: Warren DeLano
+    (list,dict) = context_info[0:2]
+    key_list = ['F2','F3','F4','F5','F6','F7','F8','F9']
+    doc_list = ["Key  Zoom","F1   All"]
+    cmd.set_key('F1',lambda :(cmd.zoom(),cmd.hide("labels")))
+    zoom_context = 1
+    for a in list:
+        water = a+"_water"
+        ligand = a+"_ligand"
+        site = a+"_site"
+        hbond = a+"_hbond"
+        name_list = dict[a]
+        if water in name_list:
+            cmd.show("nonbonded",water)
+            util.cbac(water)
+        if ligand in name_list:
+            cmd.show("sticks",ligand)
+            util.cbag(ligand)
+        if site in name_list:
+            if zoom_context:
+                cmd.zoom(site)
+                zoom_context = 0
+            cmd.show("sticks",site)
+            util.cbac(site)
+            if len(key_list):
+                key = key_list.pop(0)
+                cmd.set_key(key,lambda x=site:(cmd.zoom(site),cmd.show("labels")))
+                doc_list.append(key+"   "+a)
+            # replace cartoon with explicit atoms for "site" atoms
+            cmd.hide("cartoon",site)
+            cmd.show("sticks","(byres (neighbor ("+site+" and name c))) and name n+ca")
+            cmd.show("sticks","(byres (neighbor ("+site+" and name n))) and name c+ca+o")
+                
+        if hbond in name_list:
+            cmd.show("dashes",hbond)
+            cmd.show("labels",hbond)
+    cmd.wizard("message",doc_list)
+
+        
+
+    

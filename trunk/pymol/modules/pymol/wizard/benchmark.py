@@ -84,7 +84,7 @@ class Benchmark(Wizard):
       report('UPDATES',(cnt/elapsed)/100)
 
    def smooth_lines(self):
-      cmd.load("test/dat/1tii.pdb")
+      cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.show("mesh")
       cmd.zoom(complete=1)
       elapsed = 0.0
@@ -101,7 +101,7 @@ class Benchmark(Wizard):
       report('SMOOTH_LINES',cnt/elapsed)
       
    def jagged_lines(self):
-      cmd.load("test/dat/1tii.pdb")
+      cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.show("mesh")
       cmd.set("line_smooth",0)
       cmd.zoom(complete=1)
@@ -119,7 +119,7 @@ class Benchmark(Wizard):
       report('JAGGED_LINES',cnt/elapsed)
 
    def dots(self):
-      cmd.load("test/dat/1tii.pdb")
+      cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.hide()
       cmd.show("dots")
       cmd.zoom(complete=1)
@@ -137,7 +137,7 @@ class Benchmark(Wizard):
       report('DOTS',cnt/elapsed)
 
    def sticks(self):
-      cmd.load("test/dat/1tii.pdb")
+      cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.hide()
       cmd.show("sticks")
       cmd.zoom(complete=1)
@@ -155,7 +155,7 @@ class Benchmark(Wizard):
       report('STICKS',cnt/elapsed)
 
    def surface(self):
-      cmd.load("test/dat/1tii.pdb")
+      cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.hide()
       cmd.show("surface")
       cmd.zoom(complete=1)
@@ -173,7 +173,7 @@ class Benchmark(Wizard):
       report('SURFACE',cnt/elapsed)
 
    def spheres(self):
-      cmd.load("test/dat/1tii.pdb")
+      cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.hide()
       cmd.show("spheres")
       cmd.zoom(complete=1)
@@ -191,7 +191,7 @@ class Benchmark(Wizard):
       report('SPHERES',cnt/elapsed)
 
    def cartoon(self):
-      cmd.load("test/dat/1tii.pdb")
+      cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.hide()
       cmd.show("cartoon")
       cmd.spectrum("count",selection="name ca")
@@ -210,7 +210,7 @@ class Benchmark(Wizard):
       report('CARTOON',cnt/elapsed)
 
    def blits(self):
-      cmd.load("test/dat/pept.pdb")
+      cmd.load("$PYMOL_DATA/demo/pept.pdb")
       cmd.mset("1 x2")
       cmd.set('cache_frames',1)
       cmd.rewind()
@@ -233,7 +233,7 @@ class Benchmark(Wizard):
       report('BLITS',2*cnt/elapsed)
 
    def surface_calculation(self):
-      cmd.load("test/dat/il2.pdb")
+      cmd.load("$PYMOL_DATA/demo/il2.pdb")
       cmd.zoom(complete=1)
       cmd.hide()
       cmd.show("surface")
@@ -250,7 +250,7 @@ class Benchmark(Wizard):
       report('SURFACE_CALCULATION',60*cnt/elapsed)
 
    def mesh_calculation(self):
-      cmd.load("test/dat/il2.pdb")
+      cmd.load("$PYMOL_DATA/demo/il2.pdb")
       cmd.zoom(complete=1)
       cmd.hide()
       cmd.show("mesh")
@@ -267,7 +267,7 @@ class Benchmark(Wizard):
       report('MESH_CALCULATION',60*cnt/elapsed)
 
    def ray_tracing(self):
-      cmd.load("test/dat/1tii.pdb")
+      cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.zoom(complete=1)
       cmd.hide()
       cmd.show("spheres","11-20/")
@@ -279,13 +279,13 @@ class Benchmark(Wizard):
       cmd.show("cartoon","71-110/")
       cmd.turn('x',25)
       cmd.turn('y',25)
-      cmd.set('hash_max','50') # make sure we don't use too much RAM
+      cmd.set('hash_max','70') # make sure we don't use too much RAM
       cnt = 0
       elapsed = 0.0
       cmd.refresh()
       start = time.time()
       while elapsed<self.long_cpu:
-         cmd.ray()
+         cmd.ray(320,240)
          cnt = cnt + 1
          elapsed = time.time()-start
       report('RAY_TRACING',60*cnt/elapsed)
@@ -321,7 +321,7 @@ class Benchmark(Wizard):
          [ 2, 'Blits', 'cmd.get_wizard().delay_launch("blits")'],                                    
          [ 2, 'Surface Calculation', 'cmd.get_wizard().delay_launch("surface_calculation")'],
          [ 2, 'Mesh Calculation', 'cmd.get_wizard().delay_launch("surface_calculation")'],
-         [ 2, 'Ray Tracing', 'cmd.get_wizard().delay_launch("ray_tracing")'],         
+         [ 2, 'Ray Tracing', 'cmd.get_wizard().delay_launch("ray_tracing")'],
          [ 2, 'End Demonstration', 'cmd.set_wizard()' ]
          ]
 

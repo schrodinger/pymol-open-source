@@ -1,0 +1,74 @@
+*********************
+PyMOL Packaging Guide
+*********************
+
+===========================
+PyMOL environment variables
+===========================
+
+PyMOL is designed to run under two types of environments.  They are:
+
+(1) Single-directory self-contained install. (Windows, Mac, Unix Standalone)
+
+(2) Package-managed with files spread all over the OS. (RedHat, Debian)
+
+Environment (1)
+---------------
+
+Environment variable PYMOL_PATH serves as the root directory
+and tells PyMOL where to find everything, including its code.
+
+Required: PYMOL_PATH
+
+Environment (2)
+---------------
+
+PyMOL code is installed in the system Python namespace, so no explicit
+environment variable is required to access it.  The root python
+modules defined in site-packages are "pymol", "pmg_tk", and "chempy".
+
+Required: PYMOL_DATA, PYMOL_SCRIPTS
+
+PYMOL_DATA is usually /usr/share/pymol/data
+PYMOL_SCRIPTS is usually /usr/share/pymol/scripts
+
+Mechanism
+---------
+
+PYMOL_DATA and PYMOL_SCRIPTS dominate if provided.  Otherwise, if
+PYMOL_PATH is defined, PYMOL_DATA becomes $PYMOL_PATH/data, and
+PYMOL_SCRIPTS becomes $PYMOL_PATH/scripts. 
+
+if $PYMOL_PATH is defined and $PYMOL_PATH/modules exists, then
+$PYMOL_PATH/modules is added to the Python module search path.
+
+Under MacOS X, PYMOL_PATH is self-defining.  Under Windows, this
+environment variable is stored in the registry during installation.
+Under Unix, PYMOL_PATH needs to be defined prior to startup, usually
+by "pymol.com".
+
+=======================================================
+Suggested File Locations (for package managed installs)
+=======================================================
+
+== pymol package ==
+
+modules/pymol  -> /usr/lib/pythonX.X/site-packages/pymol
+modules/chempy -> /usr/lib/pythonX.X/site-packages/chempy
+modules/pmg_tk -> /usr/lib/pythonX.X/site-packages/pmg_tk
+
+scripts     -> /usr/share/pymol/scripts (RUNTIME REQUIREMENT)
+data        -> /usr/share/pymol/data (RUNTIME REQUIREMENT)
+
+examples    -> /usr/share/doc/pymol/examples
+doc         -> /usr/share/doc/pymol/doc
+LICENSE     -> /usr/share/doc/pymol/LICENSE
+CHANGES     -> /usr/share/doc/pymol/CHANGES
+README      -> /usr/share/doc/pymol/README
+
+== pymol-devel package ==
+
+test        -> /usr/share/pymol/test (TESTING RUNTIME REQUIREMENT)
+
+DEVELOPERS  -> /usr/share/doc/pymol/DEVELOPERS
+PACKAGING   -> /usr/share/doc/pymol/PACKAGING

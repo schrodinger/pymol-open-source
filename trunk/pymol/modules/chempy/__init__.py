@@ -198,10 +198,12 @@ feedback = { 'warnings': 1,
              'bmin'    : 1,
              }
 
-if os.environ.has_key('CHEMPY_PATH'):
-   path = os.environ['CHEMPY_PATH'] + '/'
+if os.environ.has_key('CHEMPY_DATA'):  # 
+   path = os.environ['CHEMPY_DATA'] + '/'
+elif os.environ.has_key('PYMOL_DATA'):
+   path = os.environ['PYMOL_DATA'] + '/chempy/'
 elif os.environ.has_key('PYMOL_PATH'):
-   path = os.environ['PYMOL_PATH'] + '/data/chempy/'
+   path = os.environ['PYMOL_PATH'] + '/data/chempy/'   
 elif os.environ.has_key('FREEMOL_MODULES'):
    path = os.environ['FREEMOL_MODULES'] + '/chempy/'
 else:

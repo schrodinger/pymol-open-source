@@ -29,6 +29,8 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"AtomInfo.h"
 #include"Selector.h"
+#include"ObjectDist.h"
+#include"Executive.h"
 
 void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x)
 {
@@ -60,6 +62,21 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x)
         UtilNConcat(name,cont->name,sizeof(WordType));
         UtilNConcat(name,"_water",sizeof(WordType));
         SelectorSelectByID(name,I,cont->water,cont->n_water);
+      }
+      if(cont->hbond) {
+        ObjectDist *distObj;
+        UtilNCopy(name,I->Obj.Name,sizeof(WordType));
+        UtilNConcat(name,"_",sizeof(WordType));
+        UtilNConcat(name,cont->name,sizeof(WordType));
+        UtilNConcat(name,"_hbond",sizeof(WordType));
+        ExecutiveDelete(name);
+        distObj = ObjectDistNewFromM4XHBond(NULL,
+                                            I,
+                                            cont->hbond,
+                                            cont->n_hbond);
+        ObjectSetName((CObject*)distObj,name);
+        if(distObj)
+          ExecutiveManageObject((CObject*)distObj,false,true);
       }
     }
   }
