@@ -2737,8 +2737,10 @@ int *SelectorEvaluate(WordType *word)
   char *q,*cc1,*cc2;
   int totDepth;
   OrthoLineType line;
-  EvalElem Stack[SelectorMaxDepth],*e;
+  EvalElem *Stack=NULL,*e;
   SelectorType *I=&Selector;
+  
+  Stack = Alloc(EvalElem,SelectorMaxDepth);
 
   Stack[0].sele=NULL;
   Stack[0].type=0;
@@ -3014,6 +3016,7 @@ int *SelectorEvaluate(WordType *word)
 		OrthoAddOutput(line);
 		OrthoRestorePrompt();
 	 }
+  FreeP(Stack);
   return(result);
 }
 
