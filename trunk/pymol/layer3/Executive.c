@@ -1170,7 +1170,7 @@ int ExecutiveSetSession(PyObject *session)
   PyObject *tmp;
   SceneViewType sv;
   int version=-1;
-  int migrate_sessions = SettingGetGlobal_b(cSetting_migrate_sessions);
+  int migrate_sessions = SettingGetGlobal_b(cSetting_session_migration);
 
   ExecutiveDelete("all");
   ColorReset();

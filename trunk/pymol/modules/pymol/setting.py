@@ -370,6 +370,7 @@ if __name__=='pymol.setting':
       button_mode_name      = 330
       surface_type          = 331
       dot_normals           = 332
+      session_migration     = 333
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
