@@ -687,7 +687,7 @@ void PInitEmbedded(int argc,char **argv)
   /* This routine is called if we are running with an embedded Python interpreter */
   
   PyObject *args,*pymol,*sys,*invocation;
-
+  OrthoLineType *line;
 
 #ifdef WIN32
   OrthoLineType path_buffer,command;
@@ -695,6 +695,16 @@ void PInitEmbedded(int argc,char **argv)
   int lpcbData;
   int lpType = REG_SZ;
   int r1,r2;
+#endif
+
+#ifdef _PYMOL_SETUP_PY21
+  if(!getenv("PYTHONPATH")) {
+    if(getenv("PYMOL_PATH")) {
+      strcpy(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.1");
+      setenv("PYTHONPATH",line,1);
+    }
+  }
 #endif
 
 #ifndef PYMOL_ACTIVEX
