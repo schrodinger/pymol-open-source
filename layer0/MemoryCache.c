@@ -63,10 +63,10 @@ void *MemoryCacheCalloc(unsigned int number, unsigned int size,int group_id,int 
   } else if(rec->size<true_size) {
     rec->size = true_size;
     rec->ptr = mrealloc(rec->ptr,true_size);
-    MemoryZero((void*)rec->ptr,((char*)rec->ptr)+true_size);
+    memset(rec->ptr,0,true_size);
   } else {
-    MemoryZero((void*)rec->ptr,((char*)rec->ptr)+true_size);
-  }
+    memset(rec->ptr,0,true_size);
+    }
   return(rec->ptr);
 }
 
