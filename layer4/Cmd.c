@@ -2402,12 +2402,13 @@ static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
   int quiet;
   int result=0;
   int ok=false;
+  int id_type;
   PyObject *list;
-  ok = PyArg_ParseTuple(args,"ssOi",&sele_name,&str1,&list,&quiet);
+  ok = PyArg_ParseTuple(args,"ssOii",&sele_name,&str1,&list,&quiet,&id_type);
   if (ok) { 
     APIEnterBlocked(); 
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    result=ExecutiveSelectList(TempPyMOLGlobals,sele_name,s1,list,quiet); 
+    result=ExecutiveSelectList(TempPyMOLGlobals,sele_name,s1,list,quiet,id_type); 
     SceneDirty(TempPyMOLGlobals);
     SeqDirty(TempPyMOLGlobals);
     APIExitBlocked();

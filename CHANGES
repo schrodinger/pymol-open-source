@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * fixed bugs with import pymol launch approach
+
+   * fixed bug with TRJCONV multimodel PDB files
+
    * order command for managing entries in the control panel
 
    * P1M script format with embedded data & extra security

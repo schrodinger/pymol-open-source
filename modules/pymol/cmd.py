@@ -294,7 +294,7 @@ if __name__=='pymol.cmd':
    def unlock_c():
       # WARNING: internal routine, subject to change      
       lock_api_c.release()
-
+      
    def lock(): # INTERNAL
 #      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
       if not lock_api.acquire(0):
@@ -311,11 +311,8 @@ if __name__=='pymol.cmd':
 #      print "lock: acquired by 0x%x"%thread.get_ident()
       
    def lock_attempt(): # INTERNAL
-#       print " lock: attempting as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
-       result = lock_api.acquire(blocking=0)
-#       if result:
-#          print "lock: acquired by 0x%x"%thread.get_ident()
-       return result
+      result = lock_api.acquire(blocking=0)
+      return result
 
    def unlock(): # INTERNAL
       if (thread.get_ident() == pymol.glutThread):

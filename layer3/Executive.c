@@ -4381,7 +4381,8 @@ int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet
   return(op1.i1);
 }
 /*========================================================================*/
-int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,PyObject *list,int quiet)
+int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,
+                        char *s1,PyObject *list,int quiet,int id_type)
 {/* assumes a blocked Python interpreter */
 #ifdef _PYMOL_NOPY
   return -1;

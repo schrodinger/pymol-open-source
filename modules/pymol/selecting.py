@@ -102,17 +102,26 @@ NOTES
       finally:
          unlock()
       return r      
+
+   id_type_dict = {
+      'index' : 0,
+      'id'    : 1,
+      'rank'  : 2,
+      }
    
-   def select_list(name,object,id_list,show=-1,quiet=1):
+   id_type_sc = Shortcut(id_type_dict.keys())
+   
+   def select_list(name,object,id_list,id_type='index',show=-1,quiet=1):
       '''
 DESCRIPTION
    "select_list" is currently in development
    
       '''
       #
+      id_type = id_type_dict[id_type_sc.auto_err(id_type,'identifier type')]
       try:
          lock()
-         r = _cmd.select_list(str(name),str(object),list(id_list),int(quiet))
+         r = _cmd.select_list(str(name),str(object),list(id_list),int(quiet),int(id_type))
          show = int(show)
          if r and show>0:
             r = _cmd.onoff(str(name),1);
