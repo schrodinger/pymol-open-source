@@ -640,7 +640,7 @@ Rep *RepMeshNew(CoordSet *cs)
 void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float probe_radius)
 {
   PyMOLGlobals *G=cs->G;
-  ObjectMolecule *obj;
+  ObjectMolecule *obj=cs->Obj;
   int a,b,c,a1,a2,flag,i,h,k,l,j;
   float *v,*v0,vdw;
   MapType *map;
@@ -652,7 +652,6 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   int cnt;
   int inclH,mesh_mode,cullByFlag;
   AtomInfoType *ai1,*ai2;
-  obj = cs->Obj;
   int ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_quality);
 
   if(ds<0) ds = 0;

@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 
 void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,char *sele)
 {
-
+#ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(); 
@@ -40,11 +40,13 @@ void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,c
     Py_DECREF(list);
   }
   PUnblock();
+#endif
+
 }
 
 void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,char *sele1,char *sele2)
 {
-
+#ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(); 
@@ -56,11 +58,12 @@ void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *na
     Py_DECREF(list);
   }
   PUnblock();
+#endif
 }
 
 void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name)
 {
-
+#ifndef _PYMOL_NOPY
   PyObject *list;
 
   PBlock(); 
@@ -72,5 +75,6 @@ void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *na
     Py_DECREF(list);
   }
   PUnblock();
+#endif
 }
 

@@ -44,12 +44,9 @@ ClassPyMOL *ClassPyMOLNew(void)
     } else {
       FreeP(result);
     }
-
   }
-
   return result;
 }
-
 
 void ClassPyMOLFree(ClassPyMOL *I)
 {
@@ -59,7 +56,6 @@ void ClassPyMOLFree(ClassPyMOL *I)
   FreeP(I);
 
 }
-
 
 struct _PyMOLGlobals *ClassPyMOLGetGlobals(ClassPyMOL *I)
 {

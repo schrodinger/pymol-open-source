@@ -25,6 +25,8 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Util.h"
 
+#ifndef _PYMOL_NOPY
+
 PyObject *PConvAutoNone(PyObject *result) /* automatically own Py_None */
 {
   if(result==Py_None)
@@ -846,5 +848,8 @@ void PConv44PyListTo44f(PyObject *src,float *dest) /* note lost of precision */
   }
 }
 
+#else
+typedef int this_file_is_no_longer_empty;
+#endif
 
 

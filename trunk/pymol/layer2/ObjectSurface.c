@@ -43,7 +43,7 @@ static void ObjectSurfaceFree(ObjectSurface *I);
 void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms);
 void ObjectSurfaceRecomputeExtent(ObjectSurface *I);
 
-
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState *I)
 {
   PyObject *result = NULL;
@@ -172,9 +172,13 @@ static int ObjectSurfaceAllStatesFromPyList(ObjectSurface *I,PyObject *list)
   }
   return(ok);
 }
+#endif
 
 int ObjectSurfaceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSurface **result)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok = true;
   ObjectSurface *I=NULL;
   (*result) = NULL;
@@ -195,10 +199,14 @@ int ObjectSurfaceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSurface **re
     /* cleanup? */
   }
   return(ok);
+#endif
 }
 
 PyObject *ObjectSurfaceAsPyList(ObjectSurface *I)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   
   PyObject *result=NULL;
 
@@ -208,6 +216,7 @@ PyObject *ObjectSurfaceAsPyList(ObjectSurface *I)
   PyList_SetItem(result,2,ObjectSurfaceAllStatesAsPyList(I));
 
   return(PConvAutoNone(result));  
+#endif
 }
 
 static void ObjectSurfaceStateFree(ObjectSurfaceState *ms)

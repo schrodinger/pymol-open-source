@@ -83,6 +83,9 @@ static Block *PopUpRecursiveFind(Block *block,int x, int y)
 /*========================================================================*/
 Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   /* assumes blocked threads (calls the Python C API) */
 
   int mx,a,l,cl,cmx;
@@ -190,6 +193,8 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,PyObject *list
   OrthoGrab(G,I->Block);
   OrthoDirty(G);
   return I->Block;
+#endif
+
 }
 /*========================================================================*/
 int PopUpConvertY(CPopUp *I,int value,int mode)
@@ -295,16 +300,16 @@ static void PopUpFree(Block *block)
   PyMOLGlobals *G=block->G;
   CPopUp *I = (CPopUp*)block->reference;
 
-
-
+#ifndef _PYMOL_NOPY
   { /* purge code */
     int a;
     for(a=0;a<I->NLine;a++)
       if(I->Sub[a]) {
         Py_DECREF(I->Sub[a]);
       }
-
   }
+#endif
+
   OrthoDetach(G,I->Block);
   OrthoFreeBlock(G,I->Block);
   FreeP(I->Sub);

@@ -598,6 +598,9 @@ int AtomResvFromResi(char *resi)
 /*========================================================================*/
 PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
 
   result = PyList_New(37);
@@ -639,10 +642,14 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,35,PyFloat_FromDouble(I->bohr_radius));
   PyList_SetItem(result,36,PyInt_FromLong(I->rank));
   return(PConvAutoNone(result));
+#endif
 }
 
 int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok=true;
   int hetatm;
   int ll = 0;
@@ -687,6 +694,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok&&(ll>35)) ok = PConvPyFloatToFloat(PyList_GetItem(list,35),&I->bohr_radius);
   if(ok&&(ll>36)) ok = PConvPyIntToInt(PyList_GetItem(list,36),&I->rank);
   return(ok);
+#endif
 }
 
 /*========================================================================*/

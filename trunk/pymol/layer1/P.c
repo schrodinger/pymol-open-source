@@ -14,6 +14,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#ifndef _PYMOL_NOPY
+
 #include"os_predef.h"
 #ifdef WIN32
 #include<windows.h>
@@ -23,8 +25,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_time.h"
 #include"os_unix.h"
-
-
 
 #include"MemoryDebug.h"
 #include"Base.h"
@@ -1668,5 +1668,8 @@ void PCatchInit(void)
 	PyImport_AddModule("pcatch");
 	Py_InitModule("pcatch", PCatch_methods);
 }
+#else
+typedef int this_source_file_is_not_empty;
+#endif
 
 

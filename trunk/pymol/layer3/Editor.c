@@ -143,6 +143,9 @@ int EditorIsBondMode(PyMOLGlobals *G)
 
 PyObject *EditorAsPyList(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
   register CEditor *I = G->Editor;
 
@@ -155,10 +158,15 @@ PyObject *EditorAsPyList(PyMOLGlobals *G)
     PyList_SetItem(result,2,PyInt_FromLong(I->BondMode));
   }
   return(PConvAutoNone(result));
+#endif
 }
 
 int EditorFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   int active_flag = false;
   int active_state;
@@ -189,6 +197,7 @@ int EditorFromPyList(PyMOLGlobals *G,PyObject *list)
     EditorInactivate(G);
   }
   return(ok);
+#endif
 }
 
 int EditorActive(PyMOLGlobals *G) {

@@ -27,6 +27,9 @@ Z* -------------------------------------------------------------------
 
 PyObject *ViewElemAsPyList(CViewElem *view)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
 
   result=PyList_New(13);
@@ -75,10 +78,15 @@ PyObject *ViewElemAsPyList(CViewElem *view)
   }
 
   return PConvAutoNone(result);
+#endif
 }
 
 int ViewElemFromPyList(PyObject *list, CViewElem *view)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   int ll=0;
 
@@ -108,10 +116,15 @@ int ViewElemFromPyList(PyObject *list, CViewElem *view)
   if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,12),&view->specification_level);
 
   return ok;
+#endif
 }
 
 int ViewElemVLAFromPyList(PyObject *list, CViewElem **vla_ptr, int nFrame)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
 
   CViewElem *vla = NULL;
@@ -135,10 +148,15 @@ int ViewElemVLAFromPyList(PyObject *list, CViewElem **vla_ptr, int nFrame)
   } else
     *vla_ptr = vla;
   return ok;
+#endif
 }
 
 PyObject *ViewElemVLAAsPyList(CViewElem *vla,int nFrame)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
   int a;
   result = PyList_New(nFrame);
@@ -146,6 +164,7 @@ PyObject *ViewElemVLAAsPyList(CViewElem *vla,int nFrame)
     PyList_SetItem(result,a,ViewElemAsPyList(vla+a));
   }
   return(PConvAutoNone(result));
+#endif
 }
 
 CView *ViewNew(PyMOLGlobals *G)

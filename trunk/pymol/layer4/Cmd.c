@@ -39,6 +39,8 @@ Z* -------------------------------------------------------------------
  * python calls, especially, PyArg_ParseTuple()
  */
 
+#ifndef _PYMOL_NOPY
+
 #include"os_predef.h"
 #include"os_python.h"
 #include"os_gl.h"
@@ -5205,3 +5207,6 @@ void init_cmd(void)
   Py_InitModule("_cmd", Cmd_methods);
 }
 
+#else
+typedef int this_file_is_no_longer_empty;
+#endif

@@ -33,7 +33,7 @@ static void ObjectCallbackFree(ObjectCallback *I);
 /*========================================================================*/
 
 static void ObjectCallbackFree(ObjectCallback *I) {
-
+#ifndef _PYMOL_NOPY
   int a;
   PBlock();
   for(a=0;a<I->NState;a++) {
@@ -43,6 +43,7 @@ static void ObjectCallbackFree(ObjectCallback *I) {
     }
   }
   PUnblock();
+#endif 
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
   OOFreeP(I);
@@ -58,6 +59,7 @@ static void ObjectCallbackUpdate(ObjectCallback *I) {
 
 static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable **pick,int pass)
 {
+#ifndef _PYMOL_NOPY
   ObjectCallbackState *sobj = NULL;
   int a;
 
@@ -110,6 +112,7 @@ static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable 
       }
     }
   }
+#endif
 }
 
 /*========================================================================*/
@@ -139,6 +142,9 @@ ObjectCallback *ObjectCallbackNew(PyMOLGlobals *G)
 /*========================================================================*/
 ObjectCallback *ObjectCallbackDefine(PyMOLGlobals *G,ObjectCallback *obj,PyObject *pobj,int state)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   ObjectCallback *I = NULL;
 
   if(!obj) {
@@ -167,13 +173,16 @@ ObjectCallback *ObjectCallbackDefine(PyMOLGlobals *G,ObjectCallback *obj,PyObjec
   SceneChanged(G);
   SceneCountFrames(G);
   return(I);
+#endif
 }
 /*========================================================================*/
 
 void ObjectCallbackRecomputeExtent(ObjectCallback *I)
 {
-  float mx[3],mn[3];
   int extent_flag = false;
+
+#ifndef _PYMOL_NOPY
+  float mx[3],mn[3];
   int a;
   PyObject *py_ext;
 
@@ -198,6 +207,7 @@ void ObjectCallbackRecomputeExtent(ObjectCallback *I)
         }
       }
     }
-
+#endif
   I->Obj.ExtentFlag=extent_flag;
+
 }

@@ -192,8 +192,11 @@ CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
   return(result);
 }
 
+#ifndef _PYMOL_NOPY
+
 static PyObject *CGOArrayAsPyList(CGO *I)
 {
+
   register float *pc = I->op;
   register int op;
   int i;
@@ -226,6 +229,9 @@ static PyObject *CGOArrayAsPyList(CGO *I)
   }
   return(result);
 }
+#endif
+
+#ifndef _PYMOL_NOPY
 
 static int CGOArrayFromPyListInPlace(PyObject *list,CGO *I)
 {
@@ -274,18 +280,26 @@ static int CGOArrayFromPyListInPlace(PyObject *list,CGO *I)
   }
   return(ok);
 }
+#endif
 
 PyObject *CGOAsPyList(CGO *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result;
   result = PyList_New(2);
   PyList_SetItem(result,0,PyInt_FromLong(I->c));
   PyList_SetItem(result,1,CGOArrayAsPyList(I));
   return(result);
+#endif
 }
 
 CGO *CGONewFromPyList(PyMOLGlobals *G,PyObject *list,int version)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   int ok=true;
   int ll;
   OOAlloc(G,CGO);
@@ -309,6 +323,7 @@ CGO *CGONewFromPyList(PyMOLGlobals *G,PyObject *list,int version)
     I=NULL;
   }
   return(I);
+#endif
 }
 
 CGO *CGONew(PyMOLGlobals *G)

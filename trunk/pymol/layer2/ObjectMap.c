@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 #define cMapSourceBRIX 6
 #define cMapSourceGRD 7
 
+#ifndef _PYMOL_NOPY
 #ifdef _PYMOL_NUMPY
 typedef struct {
   PyObject_HEAD
@@ -53,6 +54,7 @@ typedef struct {
   void *descr;
   int flags;
 } MyArrayObject;
+#endif
 #endif
 
 int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla, float beyond,float within, float *level)
@@ -487,6 +489,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
 
 int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *I,PyObject *ary);
 
+#ifndef _PYMOL_NOPY
 static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
 {
   int a,b,c,e;
@@ -528,7 +531,9 @@ static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
     break;
   }
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectMapStateAsPyList(ObjectMapState *I)
 {
   PyObject *result = NULL;
@@ -586,7 +591,8 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState *I)
 
   return(PConvAutoNone(result));  
 }
-
+#endif
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectMapAllStatesAsPyList(ObjectMap *I)
 {
   PyObject *result=NULL;
@@ -600,8 +606,10 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap *I)
     }
   }
   return(PConvAutoNone(result));  
-}
 
+}
+#endif
+#ifndef _PYMOL_NOPY
 static int ObjectMapStateFromPyList(PyMOLGlobals *G,ObjectMapState *I,PyObject *list)
 {
   int ok=true;
@@ -667,7 +675,8 @@ static int ObjectMapStateFromPyList(PyMOLGlobals *G,ObjectMapState *I,PyObject *
   }
   return(ok);
 }
-
+#endif
+#ifndef _PYMOL_NOPY
 static int ObjectMapAllStatesFromPyList(ObjectMap *I,PyObject *list)
 {
   int ok=true;
@@ -682,10 +691,14 @@ static int ObjectMapAllStatesFromPyList(ObjectMap *I,PyObject *list)
   }
   return(ok);
 }
-
+#endif
 
 PyObject *ObjectMapAsPyList(ObjectMap *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
 
   result = PyList_New(3);
@@ -694,10 +707,15 @@ PyObject *ObjectMapAsPyList(ObjectMap *I)
   PyList_SetItem(result,2,ObjectMapAllStatesAsPyList(I));
 
   return(PConvAutoNone(result));  
+#endif
 }
 
 int ObjectMapNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMap **result)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok = true;
   int ll;
   ObjectMap *I=NULL;
@@ -722,6 +740,7 @@ int ObjectMapNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMap **result)
   }
 
   return(ok);
+#endif
 }
 
 
@@ -3634,6 +3653,10 @@ int ObjectMapSetBorder(ObjectMap *I,float level)
 }
 /*========================================================================*/
 int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *ary) {
+
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   
   int a,b,c,d,e;
   float v[3],dens,maxd,mind;
@@ -3711,11 +3734,16 @@ int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *a
     }
   }
   return(ok);
+#endif
 }
 /*========================================================================*/
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                            int state,int discrete)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   int ok=true;
   int isNew = true;
   PyObject *tmp;
@@ -3793,13 +3821,16 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
     }
   }
   return(I);
+#endif
 }
 
 /*========================================================================*/
 ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                   int state,int discrete)
 {
-
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   int ok=true;
   int isNew = true;
   float *cobj;
@@ -3955,5 +3986,6 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
     }
   }
   return(I);
+#endif
 }
 

@@ -54,10 +54,12 @@ void ObjectGadgetRampFree(ObjectGadgetRamp *I) {
 #define ShapeColor(cgo,a,b) CGONormal(cgo,(float)a,(float)b,0.0F)
 #define LKP 2.0F
 
-static void ObjectGadgetRampBuild(ObjectGadgetRamp *I);
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
 
   PyObject *result = NULL;
 
@@ -82,11 +84,15 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
   PyList_SetItem(result,8,PyInt_FromLong(I->CalcMode));
 
   return(PConvAutoNone(result));  
+#endif
 }
 
 int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRamp **result,int version)
 {
-  
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   ObjectGadgetRamp *I = NULL;
   int ok = true;
   int ll;
@@ -119,6 +125,7 @@ int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRam
   if(ok) ObjectGadgetUpdateExtents(&I->Gadget);
   if(ok) (*result)=I;
   return(ok);
+#endif
 }
 
 int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
@@ -476,6 +483,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   gs->PickShapeCGO = cgo;
 }
 
+#ifndef _PYMOL_NOPY
 static void ObjectGadgetRampBuild(ObjectGadgetRamp *I)
 {
   GadgetSet *gs = NULL;
@@ -544,6 +552,7 @@ VV(    I->width+I->border,I->text_border-(I->border+I->height), I->border+I->tex
   gs->fUpdate(gs);
   
 }
+#endif
 
 /*========================================================================*/
 void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
@@ -579,6 +588,10 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map
                                                   float *vert_vla,float beyond,float within,
                                                   float sigma,int zero)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   ObjectGadgetRamp *I;
   int ok = true;
 
@@ -646,6 +659,7 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map
 
   PUnblock();
   return(I);
+#endif
 }
 
 /*========================================================================*/

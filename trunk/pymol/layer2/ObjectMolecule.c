@@ -4976,6 +4976,7 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
   }
 }
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *model,AtomInfoType **atInfoPtr)
 {
   int nAtom,nBond;
@@ -5386,11 +5387,14 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
     PyErr_Print();
   return(cset);
 }
-
+#endif
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,ObjectMolecule *I,PyObject *model,int frame,int discrete)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
   int ok=true;
@@ -5492,12 +5496,16 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,ObjectMolecule *I,
     ObjectMoleculeUpdateNonbonded(I);
   }
   return(I);
+#endif
 }
 
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals *G,ObjectMolecule *I,PyObject *coords,int frame)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   CoordSet *cset = NULL;
   int ok=true;
   int a,l;
@@ -5541,6 +5549,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals *G,ObjectMolecule *I,PyObj
     SceneCountFrames(G);
   }
   return(I);
+#endif
 }
 
 /*========================================================================*/

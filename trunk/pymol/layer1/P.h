@@ -17,9 +17,61 @@ Z* -------------------------------------------------------------------
 #define _H_P
 
 #include"os_python.h"
-
-
 #include"AtomInfo.h"
+
+#define cLockAPI 1
+#define cLockInbox 2
+#define cLockOutbox 3
+
+#define cPLog_pml_lf    0
+#define cPLog_pml       1
+#define cPLog_pym       2
+#define cPLog_no_flush  3
+
+#ifdef _PYMOL_NOPY
+
+#define PRunString(x)
+
+#define PAutoBlock() 1
+#define PAutoUnblock(a)
+
+#define PBlock()
+#define PUnblock()
+
+#define PLockAPIAsGlut()
+#define PUnlockAPIAsGlut()
+
+#define PBlockAndUnlockAPI()
+#define PLockAPIAndUnblock()
+
+#define PFlush()
+#define PFlushFast()
+#define PParse(s)
+#define PDo(s)
+
+#define PLog(a,b)
+#define PLogFlush()
+
+#define PIsGlutThread() 1
+#define PComplete(a,b) 0
+
+#define PSGIStereo(a)
+#define PPovrayRender(a,b,c,d,e,f) 0
+
+#define PTruthCallStr(a,b,c)
+
+#define PSleep(a)
+
+#define PFree()
+#define PInit()
+#define PInitEmbedded(a,b)
+#define PGetOptions(a)
+
+#define PAlterAtom(a,b,c,d,e) 0
+#define PLabelAtom(a,b,c) 0
+#define PAlterAtomState(a,b,c,d,e,f) 0
+
+#else
 
 void PInit(void);
 void PInitEmbedded(int argc,char **argv);
@@ -33,18 +85,11 @@ void PExit(int code);
 void PParse(char *str); /* only accepts one command */
 void PDo(char *str); /* accepts multple commands seperated by newlines */
 
-#define cLockAPI 1
-#define cLockInbox 2
-#define cLockOutbox 3
 
 int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index);
 int PLabelAtom(AtomInfoType *at,char *expr,int index);
 int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *model, int index);
 
-#define cPLog_pml_lf    0
-#define cPLog_pml       1
-#define cPLog_pym       2
-#define cPLog_no_flush  3
 
 void PLog(char *str,int lf);
 void PLogFlush(void);
@@ -86,21 +131,21 @@ int PIsGlutThread(void);
 PyObject *PGetFontDict(float size,int face,int style);
 PyObject *GetBondsDict(void);
 
-extern PyObject *P_globals;
+extern PyObject *P_globals; /* used by main */
 
-extern PyObject *P_cmd;
-extern PyObject *P_menu;
-extern PyObject *P_xray;
-extern PyObject *P_chempy;
-extern PyObject *P_models;
-extern PyObject *P_setting;
+extern PyObject *P_cmd; /* used by Ray and main */
+extern PyObject *P_menu; /* used by Menu */
+extern PyObject *P_xray; /* used by Symmetry */
+extern PyObject *P_chempy; /* used by CoordSet and Selector for construction of models */
+extern PyObject *P_models; /* used by Selector for construction of models */
+extern PyObject *P_setting; /* used by Setting.c */
 extern PyObject *P_embed; /* not set by PyMOL -- must be set by host context */
 
 extern int P_glut_thread_keep_out;
 extern unsigned int P_glut_thread_id;
 
 #endif
-
+#endif
 
 
 

@@ -609,6 +609,9 @@ int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int 
 
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result=NULL,*list,*repList;
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -665,10 +668,15 @@ PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals *G)
     }
   }
   return(result);
+#endif
 }
 
 int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   WordType name;
   PyObject *key,*list,*col;
@@ -747,6 +755,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict)
     }
   }
   return ok;
+#endif
 }
 
 int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state)
@@ -984,6 +993,7 @@ int ExecutiveRampMapNew(PyMOLGlobals *G,char *name,char *map_name,PyObject *rang
   return(ok);
 }
 
+#ifndef _PYMOL_NOPY
 static int ExecutiveCountNames(PyMOLGlobals *G)
 {
   int count=0;
@@ -994,9 +1004,12 @@ static int ExecutiveCountNames(PyMOLGlobals *G)
   
   return(count);
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static PyObject *ExecutiveGetExecObject(PyMOLGlobals *G,SpecRec *rec)
 {
+
   PyObject *result = NULL;
   result = PyList_New(6);
   PyList_SetItem(result,0,PyString_FromString(rec->obj->Name));
@@ -1220,9 +1233,13 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G)
     }
   return(PConvAutoNone(result));
 }
+#endif
 
 int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok=true;
   SceneViewType sv;
   PyObject *tmp;
@@ -1278,8 +1295,11 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
   }
 
   return(ok);
+#endif
+
 }
 
+#ifndef _PYMOL_NOPY
 static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
 {
   if(session_version<96) {
@@ -1320,9 +1340,13 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
     }
   }
 }
+#endif
 
 int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok=true;
   PyObject *tmp;
   SceneViewType sv;
@@ -1532,6 +1556,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
       ENDFB(G);
   }
   return(ok);
+#endif
 }
 
 #define ExecScrollBarMargin 1
@@ -2641,7 +2666,11 @@ float *ExecutiveGetVertexVLA(PyMOLGlobals *G,char *s1,int state)
 }
 /*========================================================================*/
 PyObject *ExecutiveGetSettingText(PyMOLGlobals *G,int index,char *object,int state)
-{ /* Assumes blocked Python interpreter */
+{ 
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  /* Assumes blocked Python interpreter */
   PyObject *result = NULL;
   OrthoLineType buffer = "";
   CObject *obj = NULL;
@@ -2681,10 +2710,15 @@ PyObject *ExecutiveGetSettingText(PyMOLGlobals *G,int index,char *object,int sta
   } 
   
   return(result);
+#endif
+
 }
 /*========================================================================*/
 PyObject *ExecutiveGetSettingTuple(PyMOLGlobals *G,int index,char *object,int state)
 { /* Assumes blocked Python interpreter */
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
   CSetting **handle = NULL;
   CObject *obj=NULL;
@@ -2717,6 +2751,7 @@ PyObject *ExecutiveGetSettingTuple(PyMOLGlobals *G,int index,char *object,int st
     result = Py_None;
   }
   return(result);
+#endif
 }
 /*========================================================================*/
 void ExecutiveSetLastObjectEdited(PyMOLGlobals *G,CObject *o)
@@ -3791,6 +3826,9 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
 /*========================================================================*/
 PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result;
   int sele1;
   sele1=SelectorIndexByName(G,s1);
@@ -3800,6 +3838,7 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state)
   if(PyErr_Occurred()) PyErr_Print();
   PUnblock(); /* PLockAPIAndUnblock();*/
   return(result);
+#endif
 }
 /*========================================================================*/
 void ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,int source,int target,int discrete)
@@ -3991,6 +4030,9 @@ int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet
 /*========================================================================*/
 int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,PyObject *list,int quiet)
 {/* assumes a blocked Python interpreter */
+#ifdef _PYMOL_NOPY
+  return -1;
+#else
   int ok=true;
   int n_eval=0;
   int sele0 = SelectorIndexByName(G,s1);
@@ -4049,12 +4091,16 @@ int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,PyObject *list,
     return -1;
   else
     return n_sele;
+#endif
 }
 
 
 /*========================================================================*/
 int ExecutiveIterateList(PyMOLGlobals *G,char *name,PyObject *list,int read_only,int quiet)
 {
+#ifdef _PYMOL_NOPY
+  return -1;
+#else
   int ok=true;
   int n_eval=0;
   int sele0 = SelectorIndexByName(G,name);
@@ -4109,6 +4155,7 @@ int ExecutiveIterateList(PyMOLGlobals *G,char *name,PyObject *list,int read_only
     return -1;
   else
     return n_eval;
+#endif
 }
 /*========================================================================*/
 void ExecutiveIterateState(PyMOLGlobals *G,int state,char *s1,char *expr,int read_only,
@@ -4734,6 +4781,10 @@ void ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,float angle,floa
 int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
                          int state,int quiet,int updates)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   register CExecutive *I=G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
@@ -4885,6 +4936,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
   }
   PAutoUnblock(unblock);
   return(ok);
+#endif
 }
 /*========================================================================*/
 int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,

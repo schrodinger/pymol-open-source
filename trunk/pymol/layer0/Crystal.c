@@ -29,6 +29,10 @@ Z* -------------------------------------------------------------------
 
 CCrystal *CrystalNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   CCrystal *I=NULL;
   I=CrystalNew(G);
   if(I) {
@@ -38,11 +42,15 @@ CCrystal *CrystalNewFromPyList(PyMOLGlobals *G,PyObject *list)
     }
   }
   return(I);
+#endif
+
 }
 
 PyObject *CrystalAsPyList(CCrystal *I)
 {
-  
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
 
   if(I) {
@@ -51,10 +59,14 @@ PyObject *CrystalAsPyList(CCrystal *I)
     PyList_SetItem(result,1,PConvFloatArrayToPyList(I->Angle,3));
   }
   return(PConvAutoNone(result));
+#endif
 }
 
 int CrystalFromPyList(CCrystal *I,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok=true;
   int ll=0;
   if(ok) ok = (I!=NULL);
@@ -68,6 +80,8 @@ int CrystalFromPyList(CCrystal *I,PyObject *list)
    Always check ll when adding new PyList_GetItem's */
 
   return(ok);
+#endif
+
 }
 
 void CrystalFree(CCrystal *I)

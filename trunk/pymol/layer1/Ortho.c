@@ -489,11 +489,6 @@ void OrthoKeyControl(PyMOLGlobals *G,unsigned char k) {
   PParse(buffer);
   PFlush();
 
-  /*  PBlockAndUnlockAPI();
-      sprintf(buffer,"cmd._ctrl('%c')",k+64);
-      PRunString(buffer);
-      PLockAPIAndUnblock(); */
-
 }
 /*========================================================================*/
 void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k) {
@@ -643,8 +638,8 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
         curLine=I->CurLine&OrthoSaveLines;
         if(I->PromptChar) {
           strcpy(buffer,I->Line[curLine]);
-          PComplete(buffer+I->PromptChar,
-                    sizeof(OrthoLineType)-I->PromptChar); /* just print, don't complete */
+          if(PComplete(buffer+I->PromptChar,
+                    sizeof(OrthoLineType)-I->PromptChar)); /* just print, don't complete */
         }
       }
       break;
@@ -722,7 +717,21 @@ void OrthoParseCurrentLine(PyMOLGlobals *G)
         PLog(buffer,cPLog_pml);
       OrthoNewLine(G,NULL,true);
       ExecutiveDrawNow(G);
+#ifndef _PYMOL_NOPY
       PParse(buffer);
+#else
+ {
+   OrthoLineType buf="";
+
+   ExecutiveProcessPDBFile(G,NULL,"test/dat/pept.pdb","pept",0,0,1,buf,NULL,0);
+   ButModeSet(G,0,cButModeRotXYZ);
+   ButModeSet(G,1,cButModeTransXY);
+   ButModeSet(G,2,cButModeTransZ);
+   ButModeSet(G,12,cButModeScaleSlab);
+   ButModeSet(G,13,cButModeMoveSlab);
+
+ }
+#endif
       OrthoRestorePrompt(G);
     }
   I->CursorChar=-1;

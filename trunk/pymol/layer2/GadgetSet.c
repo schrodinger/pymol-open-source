@@ -169,6 +169,10 @@ int GadgetSetFetchNormal(GadgetSet *I,float *inp,float *out)
 
 int GadgetSetFromPyList(PyMOLGlobals *G,PyObject *list,GadgetSet **gs,int version)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok = true;
   int ll;
   GadgetSet *I = NULL;
@@ -219,10 +223,14 @@ int GadgetSetFromPyList(PyMOLGlobals *G,PyObject *list,GadgetSet **gs,int versio
   }
 
   return(ok);
+#endif
 }
 
 PyObject *GadgetSetAsPyList(GadgetSet *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
 
   if(I) {
@@ -266,6 +274,7 @@ PyObject *GadgetSetAsPyList(GadgetSet *I)
 
   }
   return(PConvAutoNone(result));
+#endif
 }
 
 /*========================================================================*/

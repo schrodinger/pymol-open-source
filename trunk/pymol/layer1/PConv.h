@@ -18,6 +18,8 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
+#ifndef _PYMOL_NOPY
+
 /* Convenient conversion routines for C<->Python data interchange
    
    Note that all of these routines assume that we have the global
@@ -124,6 +126,7 @@ PyObject *PConv3DIntArrayTo3DPyList(int ***array,int *dim);
 
 PyObject *PConvAutoNone(PyObject *result); /* automatically own Py_None */
 
+#endif
 #endif
 
 

@@ -49,6 +49,9 @@ int SettingSetSmart_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index, i
 
 int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok=true;
   register CSetting *I=G->Setting;
   if(list)
@@ -57,16 +60,23 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_i(I,cSetting_security,Security); /* always override Security setting with global variable */
   SettingSet_b(I,cSetting_stereo,0); /* don't start in stereo mode */
   return(ok);
+#endif
 }
 
 PyObject *SettingGetGlobalsPyList(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
   register CSetting *I=G->Setting;
   result = SettingAsPyList(I);
   return(PConvAutoNone(result));
+#endif
 }
 
+
+#ifndef _PYMOL_NOPY
 static PyObject *get_list(CSetting *I,int index)
 {
   PyObject *result = NULL;
@@ -102,9 +112,14 @@ static PyObject *get_list(CSetting *I,int index)
   }
   return(PConvAutoNone(result));
 }
+#endif
 
 PyObject *SettingAsPyList(CSetting *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
   int cnt = 0;
   int a;
@@ -124,8 +139,10 @@ PyObject *SettingAsPyList(CSetting *I)
     }
   }
   return(PConvAutoNone(result));
+#endif
 }
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 static int set_list(CSetting *I,PyObject *list)
 {
   int ok=true;
@@ -174,9 +191,14 @@ static int set_list(CSetting *I,PyObject *list)
   }
   return(ok);
 }
+#endif
 /*========================================================================*/
 CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   int ok=true;
   int size;
   int a;
@@ -191,10 +213,15 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list)
     }
   }
   return(I);
+#endif
 }
 /*========================================================================*/
 int SettingFromPyList(CSetting *I,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   int size;
   int a;
@@ -207,10 +234,15 @@ int SettingFromPyList(CSetting *I,PyObject *list)
     }
   }
   return(ok);
+#endif
 }
+
+
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 PyObject *SettingGetUpdateList(PyMOLGlobals *G,CSetting *I)
 { /* assumes blocked interpreter */
+
   int a;
   int n;
   PyObject *result;
@@ -225,9 +257,11 @@ PyObject *SettingGetUpdateList(PyMOLGlobals *G,CSetting *I)
       PyList_Append(result,PyInt_FromLong(a));
     }
   }
-
   return(result);
+
 }
+#endif
+
 /*========================================================================*/
 void SettingCheckHandle(PyMOLGlobals *G,CSetting **handle)
 {
@@ -279,6 +313,7 @@ int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,
 }
 
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple) 
      /* must have interpret locked to make this call */
 {
@@ -321,7 +356,9 @@ int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple)
   }
   return(ok);
 }
+#endif
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 {  /* assumes blocked python interpeter */
   PyObject *result = NULL;
@@ -361,7 +398,9 @@ PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int inde
   }
   return result;
 }
+#endif
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index)
 {  /* Assumes blocked Python interpreter */
   PyObject *result = NULL;
@@ -413,6 +452,7 @@ PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index)
   }
   return result;
 }
+#endif
 
 /*========================================================================*/
 CSetting *SettingNew(PyMOLGlobals *G)
@@ -1020,6 +1060,10 @@ float *SettingGet_3fv(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 /*========================================================================*/
 int SettingGetIndex(PyMOLGlobals *G,char *name) /* can be called from any thread state */
 {
+#ifdef _PYMOL_NOPY
+  /* we're going to need a C-based dictionary and settings name list for this situation */
+  return 0;
+#else
   PyObject *tmp;
   int unblock;
   int index=-1; 
@@ -1036,10 +1080,16 @@ int SettingGetIndex(PyMOLGlobals *G,char *name) /* can be called from any thread
   PAutoUnblock(unblock);
 
   return(index);
+#endif
 }
 /*========================================================================*/
 int SettingGetName(PyMOLGlobals *G,int index,SettingName name) /* can be called from any thread state */
 {
+#ifdef _PYMOL_NOPY
+  /* we're going to need a C-based dictionary and settings name list for this situation */
+  name[0]=0;
+  return 0;
+#else
   PyObject *tmp;
   int unblock;
   name[0]=0;
@@ -1054,6 +1104,7 @@ int SettingGetName(PyMOLGlobals *G,int index,SettingName name) /* can be called 
   }
   PAutoUnblock(unblock);
   return(name[0]!=0);
+#endif
 }
 
 /*========================================================================*/

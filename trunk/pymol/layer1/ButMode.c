@@ -144,6 +144,8 @@ static void ButModeDraw(Block *block)
   int mode;
   int nf;
 
+#define BLANK_STR "     "
+
   if(PMGUI) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==0) {
       glColor3fv(I->Block->BackColor);
@@ -180,13 +182,13 @@ static void ButModeDraw(Block *block)
     for(a=0;a<3;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr("    ");
+        GrapContStr(BLANK_STR);
       else
         GrapContStr(I->Code[mode]);
     }
     mode = I->Mode[12];
     if(mode<0)
-      GrapContStr("    ");
+      GrapContStr(BLANK_STR);
     else 
       GrapContStr(I->Code[mode]);
 
@@ -202,13 +204,13 @@ static void ButModeDraw(Block *block)
     for(a=3;a<6;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr("    ");
+        GrapContStr(BLANK_STR);
       else 
         GrapContStr(I->Code[mode]);
     }
     mode = I->Mode[13];
     if(mode<0)
-      GrapContStr("    ");
+      GrapContStr(BLANK_STR);
     else 
       GrapContStr(I->Code[mode]);
 
@@ -222,13 +224,13 @@ static void ButModeDraw(Block *block)
     for(a=6;a<9;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr("    ");
+        GrapContStr(BLANK_STR);
       else
         GrapContStr(I->Code[mode]);
     }
     mode = I->Mode[14];
     if(mode<0)
-      GrapContStr("    ");
+      GrapContStr(BLANK_STR);
     else 
       GrapContStr(I->Code[mode]);
     y-=cButModeLineHeight;
@@ -244,13 +246,13 @@ static void ButModeDraw(Block *block)
     for(a=9;a<12;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr("    ");
+        GrapContStr(BLANK_STR);
       else
         GrapContStr(I->Code[mode]);
     }
     mode = I->Mode[15];
     if(mode<0)
-      GrapContStr("    ");
+      GrapContStr(BLANK_STR);
     else 
       GrapContStr(I->Code[mode]);
 
@@ -265,7 +267,7 @@ static void ButModeDraw(Block *block)
     for(a=16;a<19;a++) {
       mode = I->Mode[a];
       if(mode<0)
-        GrapContStr("    ");
+        GrapContStr(BLANK_STR);
       else
         GrapContStr(I->Code[mode]);
     }
