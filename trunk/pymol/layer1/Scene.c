@@ -687,8 +687,8 @@ void SceneDraw(Block *block)
             height = I->ImageBufferHeight;
             
             if((width<I->Width)||(height<I->Height)) {
-              glRasterPos3i((int)((I->Block->rect.right-width)/2),
-                            (int)((I->Block->rect.top-height)/2),0);
+              glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
+                            (int)((I->Height-height)/2+I->Block->rect.bottom),0);
             } else {
               glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
             }

@@ -38,7 +38,7 @@ PYMOL API
    cmd.png( string file )
    '''
    if thread.get_ident() ==pymol.glutThread:
-      r = _png(str(filename))
+      r = cmd._png(str(filename))
    else:
       r = _cmd.do("cmd._png('"+str(filename)+"')")
    return r
