@@ -160,7 +160,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
   alpha=1.0-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0;
-
+  
   if(state<I->NState) {
     if(I->State[state].Active)
       if(I->State[state].V&&I->State[state].N)
@@ -180,15 +180,13 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
         v=ms->V;
         n=ms->N;
         if(ray) {
-          ray->fTransparentf(ray,1.0-alpha);          
+          ray->fTransparentf(ray,1.0-alpha);       
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
                          I->Obj.Setting,NULL);
           ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
           if(n&&v&&I->Obj.RepVis[cRepSurface]) {
             vc = ColorGet(I->Obj.Color);
-            
-            /*            glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));*/
             while(*n)
               {
                 c=*(n++);
@@ -197,6 +195,14 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                   v+=12;
                   c-=4;
                   while(c>0) {
+                    /*                  dump3f(v-12,"v-12 ");
+                                        dump3f(v-9 ,"v-9  ");
+                                        dump3f(v-6, "v-6  ");
+                                        dump3f(v-3, "v-3  ");
+                                        dump3f(v,   "v    ");
+                                        dump3f(v+3, "v+3  ");
+                    */
+                    
                     ray->fTriangle3fv(ray,v-9,v-3,v+3,
                                       v-12,v-6,v,
                                       vc,vc,vc);
@@ -280,7 +286,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
         }
       }
     }
-    if(state<0) break;
+    if(state>=0) break; /* only rendering one state */
     a = a + 1;
     if(a>=I->NState) break;
   }

@@ -155,7 +155,7 @@ int ExecutiveMapNew(char *name,int type,float *grid,
         SelectorMapMaskVDW(sele0,objMap,0.0F);
         break;
       case 1: /* coulomb */
-        SelectorMapCoulomb(sele0,objMap,12.0F);
+        SelectorMapCoulomb(sele0,objMap,20.0F);
         break;
       }
 

@@ -1149,13 +1149,15 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
 
          VLACheck(*vert,float,(n_vert*3)+200); 
 
-         copy3fn(tt->p[0]->Normal,(*vert)+(n_vert*3));
-         n_vert++;
-         copy3fn(tt->p[0]->Point,(*vert)+(n_vert*3));
-         n_vert++;
+         /* switch order around to get "correct" triangles */
          copy3fn(tt->p[1]->Normal,(*vert)+(n_vert*3));
          n_vert++;
          copy3fn(tt->p[1]->Point,(*vert)+(n_vert*3));
+         n_vert++;
+
+         copy3fn(tt->p[0]->Normal,(*vert)+(n_vert*3));
+         n_vert++;
+         copy3fn(tt->p[0]->Point,(*vert)+(n_vert*3));
          n_vert++;
          
          copy3fn(tt->p[2]->Normal,(*vert)+(n_vert*3));
@@ -1165,7 +1167,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
          
          tt->done = true;
 
-         p0 = tt->p[1];
+         p0 = tt->p[0];
          p1 = tt->p[2];
          
          while(1) {
@@ -1256,28 +1258,25 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
 int	TetsurfCodeVertices(void)
 {
 	int	i,j,k;
-	int	VCount=0;
    int b0,b1;
-
+   int flag1=false;
+   int flag2=false;
    b0=1;
    if(Level<0.0F)
      b0=0;
    b1=1-b0;
+   
 	for(i=0;i<Max[0];i++)
 	for(j=0;j<Max[1];j++)
 	for(k=0;k<Max[2];k++)
 		{
-		if((O3(Data,i,j,k,CurOff)>Level))
-			{
-			I3(VertexCodes,i,j,k)=b0;
-			VCount++;
-			}
-		else
-			I3(VertexCodes,i,j,k)=b1;
+        if((O3(Data,i,j,k,CurOff)>Level)) {
+          I3(VertexCodes,i,j,k)=b0;
+          flag1=true;
+        } else {
+          I3(VertexCodes,i,j,k)=b1;
+          flag2=true;
+        }
 		}
-#ifdef Trace
-printf(" TetsurfCodeVertices: %i of %i vertices above level\n",VCount,
-CurDim[0]*CurDim[1]*CurDim[2]);
-#endif
-	return(VCount);
+	return(flag1&&flag2);
 }
