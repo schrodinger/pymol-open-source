@@ -71,6 +71,7 @@ int TheWindow;
 
 typedef struct {
   int DirtyFlag;
+  int WasDirty;
   int IdleFlag;
   int SwapFlag;
 } CMain;
@@ -115,12 +116,6 @@ static void MainButton(int button,int state,int x,int y)
   if(!OrthoButton(button,state,x,y,Modifiers))
     {
     }
-  if(I->SwapFlag)
-	 {
-		glutSwapBuffers();
-		I->SwapFlag=false;
-	 }
-
   PUnlock(cLockAPI,&_save);
 
 }
@@ -136,12 +131,6 @@ static void MainDrag(int x,int y)
     {
 	 }
 
-  if(I->SwapFlag)
-	 {
-		glutSwapBuffers();
-		I->SwapFlag=false;
-	 }
-
    PUnlock(cLockAPI,&_save);
 
 }
@@ -150,7 +139,6 @@ static void MainDrag(int x,int y)
 static void MainDraw(void)
 {
   CMain *I = &Main;
-  int was_dirty;
 #ifndef _PYMOL_MODULE
   int a,l;
   char *p;
@@ -159,11 +147,14 @@ static void MainDraw(void)
 
   PLock(cLockAPI,&_save);
 
-  was_dirty = I->DirtyFlag;
-  if(I->DirtyFlag) I->DirtyFlag=false;
+  if(I->DirtyFlag) {
+    I->WasDirty = true;
+    I->DirtyFlag=false;
+  }
   
   OrthoBusyPrime();
   ExecutiveDrawNow();
+
   if(FinalInitFlag)
 	 {
 		Py_BLOCK_THREADS;
@@ -208,9 +199,10 @@ static void MainDraw(void)
 	 }
   else if(I->SwapFlag)
     {
-      if(PMGUI&&(!was_dirty)&&I->IdleFlag) SceneCopy(0);
+      if(PMGUI&&(!I->WasDirty)&&I->IdleFlag) SceneCopy(0);
       if(PMGUI) glutSwapBuffers();
       I->SwapFlag=false;
+      I->WasDirty=false;
     }
   PUnlock(cLockAPI,&_save);
 }
@@ -232,12 +224,6 @@ static void MainKey(unsigned char k, int x, int y)
 		break;
 	 }
 
-  if(I->SwapFlag)
-	 {
-		glutSwapBuffers();
-		I->SwapFlag=false;
-	 }
-
   PUnlock(cLockAPI,&_save);
   
 }
@@ -253,11 +239,6 @@ static void MainSpecial(int k, int x, int y)
 	 {
 	 default:
 		break;
-	 }
-  if(I->SwapFlag)
-	 {
-		glutSwapBuffers();
-		I->SwapFlag=false;
 	 }
 
   PUnlock(cLockAPI,&_save);
@@ -358,6 +339,7 @@ void MainRefreshNow(void)
       else
         MainDraw();
       I->DirtyFlag=false;
+      I->WasDirty=true;
     }
 }
 /*========================================================================*/
@@ -371,7 +353,6 @@ void MainBusyIdle(void)
 
 
   CMain *I = &Main;
-  int wasDirty = false;
 
   /* flush command and output queues */
 
@@ -391,7 +372,7 @@ void MainBusyIdle(void)
     I->SwapFlag=false;
   }
   if(I->DirtyFlag) {
-    wasDirty=true;
+    I->WasDirty=true;
     if(PMGUI) 
       glutPostRedisplay();
     else
@@ -399,24 +380,13 @@ void MainBusyIdle(void)
     I->DirtyFlag=false;
   }
   
-  if(!wasDirty) {
+  if(!I->WasDirty) {
     if(I->IdleFlag) { /* select to avoid racing the CPU */
       
       PUnlock(cLockAPI,&_save);
       PSleep(20000);
       PLock(cLockAPI,&_save);
 
-      if(I->SwapFlag) {
-        if(PMGUI) glutSwapBuffers();
-        I->SwapFlag=false;
-      }
-      if(I->DirtyFlag) {
-        if(PMGUI) 
-          glutPostRedisplay();
-        else
-          MainDraw();
-        I->DirtyFlag=false;
-      }
     }
   }
   
@@ -498,7 +468,7 @@ void was_main(void)
     printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
     printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
     printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
-    printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));
+    /*    printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));*/
     glutMainLoop();
   } else {
     printf(" No graphics front end.\n");
