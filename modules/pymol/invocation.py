@@ -51,12 +51,12 @@ if __name__=='pymol.invocation':
    if sys.platform != 'win32':
       options.win_py = 200
    else:
-      options.win_py = 175 
+      options.win_py = 183 
    options.ext_y = 120 # external gui height (eg. for Tcl/Tk top bar)
 
    if sys.platform[:5] == 'linux':
       options.ext_y = options.ext_y + 48
-   
+      
    options.blue_line = 0
    # Greg Landrum
    options.rpcServer = 0
