@@ -4830,7 +4830,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          if(SelectorIsMember(s,sele))
            {
              for(b=op->cs1;b<=op->cs2;b++) {
-               offset = op->cs1-b;
+               offset = b-op->cs1;
                if(b<I->NCSet) {
                  if(I->CSet[b]) {
                    if(I->DiscreteFlag) {
@@ -4841,13 +4841,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                    } else 
                      a1=I->CSet[b]->AtmToIdx[a];
                    if(a1>=0) {
-                     if(op->ii1[op->i1*offset+op->i2]); /* copy flag */
-                     vv1=op->vv1+3*(op->i1*offset+op->i2); /* atom-based offset */
-                     vv2=I->CSet[b]->Coord+(3*a1);
-                     *(vv2++)=*(vv1++);
-                     *(vv2++)=*(vv1++);
-                     *(vv2++)=*(vv1++);
-                     op->nvv1++;
+                     if(op->ii1[op->i1*offset+op->i2]) { /* copy flag */
+		       vv1=op->vv1+3*(op->i1*offset+op->i2); /* atom-based offset */
+		       vv2=I->CSet[b]->Coord+(3*a1);
+		       *(vv2++)=*(vv1++);
+		       *(vv2++)=*(vv1++);
+		       *(vv2++)=*(vv1++);
+		       op->nvv1++;
+		     }
                    }
                  }
                }

@@ -108,9 +108,14 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
   int n_state;
   float *coord0=NULL,*coord1=NULL;
   int *flag0=NULL,*flag1=NULL;
-  int a;
+  int a,b,c,d,cnt;
+  float i_cnt;
   int n_atom;
   int ok=true;
+  int half;
+  int range;
+  float *v0,*v1;
+  float sum[3];
   WordType all = "_all";
 
   PRINTFD(FB_Executive)
@@ -124,6 +129,7 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
   }
   sele=SelectorIndexByName(name);
 
+
   if(sele>=0) {
     if(last<0) 
       last = ExecutiveCountStates(name);
@@ -133,12 +139,16 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
       state=last;last=first;first=state;
     }
     n_state=last-first+1;
+
+    half=window/2;
+    range = (last-half)-(first+half)+1;
     
     PRINTFD(FB_Executive)
-      " ExecutiveSmooth: n_state %d\n",n_state
+      " ExecutiveSmooth: first %d last %d n_state %d half %d range %d\n",
+      first,last,n_state,half,range
       ENDFD;
 
-    if(n_state>2) {
+    if(n_state>=window) {
       
       /* determine storage req */
       op.code = OMOP_CountAtoms;
@@ -152,50 +162,79 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
         flag0 = Alloc(int,n_atom*n_state);
         flag1 = Alloc(int,n_atom*n_state);
         
-        for(a=0;a<cycles;a++) {      
-          /* clear the arrays */
-          
-          UtilZeroMem(coord0,sizeof(float)*3*n_atom*n_state);
-          UtilZeroMem(flag0,sizeof(int)*n_atom*n_state);
-          
-          /* get the data */
-          
-          op.code = OMOP_CSetIdxGetAndFlag;
-          op.i1 = n_atom; 
-          op.i2 = 0;
-          op.cs1 = first;
-          op.cs2 = last;
-          op.vv1 = coord0;
-          op.ii1 = flag0;
-          op.nvv1 = 0;          
-          ExecutiveObjMolSeleOp(sele,&op);      
-          printf(" ExecutiveSmooth: %d %d\n",op.i2,op.nvv1);
-        }
+	
+	/* clear the arrays */
+	
+	UtilZeroMem(coord0,sizeof(float)*3*n_atom*n_state);
+	UtilZeroMem(flag0,sizeof(int)*n_atom*n_state);
+	
+	/* get the data */
+	
+	op.code = OMOP_CSetIdxGetAndFlag;
+	op.i1 = n_atom; 
+	op.i2 = 0;
+	op.cs1 = first;
+	op.cs2 = last;
+	op.vv1 = coord0;
+	op.ii1 = flag0;
+	op.nvv1 = 0;          
+	ExecutiveObjMolSeleOp(sele,&op);    
 
-
-        for(a=0;a<cycles;a++) {      
-          /* clear the arrays */
-          
-          UtilZeroMem(coord0,sizeof(float)*3*n_atom*n_state);
-          UtilZeroMem(flag0,sizeof(int)*n_atom*n_state);
-          
-          /* get the data */
-          
-          op.code = OMOP_CSetIdxSetFlagged;
-          op.i1 = n_atom; 
-          op.i2 = 0;
-          op.cs1 = first+1;
-          op.cs2 = last-1;
-          op.vv1 = coord1;
-          op.ii1 = flag1;
-          op.nvv1 = 0;
-          
-          ExecutiveObjMolSeleOp(sele,&op);      
-          printf(" ExecutiveSmooth: %d %d\n",op.i2,op.nvv1);
-        }
-
-
-        FreeP(coord0);
+	PRINTFD(FB_Executive)  
+	  " ExecutiveSmooth: got %d %d\n",op.i2,op.nvv1
+	  ENDFD;
+	
+	UtilZeroMem(coord1,sizeof(float)*3*n_atom*n_state);
+	UtilZeroMem(flag1,sizeof(int)*n_atom*n_state);
+	
+	for(a=0;a<cycles;a++) {                
+	  for(b=0;b<range;b++) {
+	    for(c=0;c<n_atom;c++) {
+	      
+	      zero3f(sum);
+	      cnt = 0;
+	      for(d=0;d<window;d++) {
+		cnt+=flag0[(n_atom*(b+d))+c];
+		v0 = coord0 + 3*(n_atom*(b+d)+c);
+		add3f(sum,v0,sum);
+	      }
+	      if(cnt) {
+		flag1[(n_atom*b)+c] = 1;
+		i_cnt = 1.0/cnt;
+		v1 = coord1 + 3*((n_atom*b)+c);
+		scale3f(sum,i_cnt,v1);
+	      }
+	    }
+	  }
+	  for(b=0;b<range;b++) {
+	    for(c=0;c<n_atom;c++) {
+	      if(flag1[(n_atom*b)+c]) {
+		v0 = coord0 + 3*((n_atom*(b+half)+c));
+		v1 = coord1 + 3*((n_atom*b)+c);
+		copy3f(v1,v0);
+	      }
+	    }
+	  }
+	}
+	  
+	/* set the new coordinates */
+	
+	op.code = OMOP_CSetIdxSetFlagged;
+	op.i1 = n_atom; 
+	op.i2 = 0;
+	op.cs1 = first+half;
+	op.cs2 = last-half;
+	op.vv1 = coord1;
+	op.ii1 = flag1;
+	op.nvv1 = 0;
+	
+	ExecutiveObjMolSeleOp(sele,&op);      
+	PRINTFD(FB_Executive)  
+	  " ExecutiveSmooth: put %d %d\n",op.i2,op.nvv1
+	  ENDFD;
+	
+	
+	FreeP(coord0);
         FreeP(coord1);
         FreeP(flag0);
         FreeP(flag1);
