@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include"PConv.h"
 #include"ObjectMolecule.h"
+#include"Feedback.h"
 
 void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectDistFree(ObjectDist *I);

@@ -134,13 +134,16 @@ Rep *RepAngleNew(DistSet *ds)
 {
   PyMOLGlobals *G=ds->G;
   int a;
-  int n;
-  float *v,*v1,*v2,*v3,d1[3],d2[3],d3[3],n1[3],n3[3],l1,l2,x[3],y[3];
+  int n = 0;
+  float *v,*v1,*v2,*v3,*v4,d1[3],d2[3],d3[3],n1[3],n3[3],l1,l2,x[3],y[3];
   float length,radius,angle,pos,phase;
   float dash_len,dash_gap,dash_sum;
 
   OOAlloc(G,RepAngle);
 
+  PRINTFD(G,FB_RepAngle)
+    "RepAngleNew: entered.\n"
+    ENDFD;
   if(!ds->NAngleIndex) {
     OOFreeP(I);
     return(NULL); 
@@ -165,14 +168,14 @@ Rep *RepAngleNew(DistSet *ds)
   I->ds = ds;
 
   n=0;
-  if(ds->NIndex) {
+  if(ds->NAngleIndex) {
 	 I->V=VLAlloc(float,ds->NAngleIndex*10);
 
-	 for(a=0;a<ds->NAngleIndex;a=a+2) {
-      v1 = ds->Coord+3*a;
-      v2 = ds->Coord+3*(a+1);
-      v3 = ds->Coord+3*(a+2);
-
+	 for(a=0;a<ds->NAngleIndex;a=a+5) {
+      v1 = ds->AngleCoord+3*a;
+      v2 = ds->AngleCoord+3*(a+1);
+      v3 = ds->AngleCoord+3*(a+2);
+      v4 = ds->AngleCoord+3*(a+3);
       subtract3f(v1,v2,d1);
       subtract3f(v3,v2,d2);
 
@@ -183,7 +186,7 @@ Rep *RepAngleNew(DistSet *ds)
         radius = l2;
       else
         radius = l1;
-      radius *= 0.66666667F;
+      radius *= SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_angle_size);
       
       angle = get_angle3f(d1,d2);
 
@@ -202,6 +205,26 @@ Rep *RepAngleNew(DistSet *ds)
       scale3f(n1,radius,x);
       scale3f(n3,radius,y);
 
+      if(v4[0]!=0.0F) { /* line 1 flag */
+        
+        VLACheck(I->V,float,(n*3)+5);
+        v=I->V+n*3;
+        copy3f(v1,v);
+        v+=3;
+        copy3f(v2,v);
+        n+=2;
+      }
+
+      if(v4[1]!=0.0F) { /* line 2 flag */
+
+        VLACheck(I->V,float,(n*3)+5);
+        v=I->V+n*3;
+        copy3f(v3,v);
+        v+=3;
+        copy3f(v2,v);
+        n+=2;
+      }
+
       /* now we have a relevant orthogonal axes */
 
       length = (float)(angle * radius * 2); 
@@ -216,41 +239,39 @@ Rep *RepAngleNew(DistSet *ds)
         float mod_pos;
         float vx[3],vy[3];
         float cur_angle;
-        float cons_pos;
+        float cons_pos1, cons_pos2;
 
         while(pos<length) {
 
           mod_pos = fmod(pos + phase, dash_sum);
 
-          if(mod_pos<dash_len) {
-            VLACheck(I->V,float,(n*3)+5);
-
-            cons_pos = pos;
-            if(cons_pos<0.0F) cons_pos = 0.0F;
-
-            cur_angle = angle * cons_pos/length;
-
+          VLACheck(I->V,float,(n*3)+5);
+          
+          cons_pos1 = pos;
+          if(cons_pos1<0.0F) cons_pos1 = 0.0F;
+          cons_pos2 = pos + dash_len;
+          if(cons_pos2>length) cons_pos2 = length;
+          
+          if(cons_pos1<cons_pos2) {
+            cur_angle = angle * cons_pos1/length;
+            
             v=I->V+n*3;
             scale3f(x,cos(cur_angle),vx);
-            scale3f(y,cos(cur_angle),vy);
+            scale3f(y,sin(cur_angle),vy);
             add3f(vx,vy,v);
             add3f(v2,v,v);
-
             
-            cons_pos = ( pos+=dash_len );
-            if(cons_pos>length) cons_pos = length;
-            cur_angle = angle * cons_pos/length;
-
+            cur_angle = angle * cons_pos2/length;
+            
             v+=3;
             scale3f(x,cos(cur_angle),vx);
-            scale3f(y,cos(cur_angle),vy);
+            scale3f(y,sin(cur_angle),vy);
             add3f(vx,vy,v);
             add3f(v2,v,v);
             
             n+=2;
-          } else {
-            pos += dash_gap;
           }
+          pos+=dash_sum;
         }
       }
     }

@@ -105,6 +105,7 @@ PyObject *PConvStringVLAToPyList(char *str);
 void PConv44PyListTo44f(PyObject *src,float *dest); /* note loss of precision */
 
 int PConvPyListToFloatVLA(PyObject *obj,float **f);
+int PConvPyListToFloatVLANoneOkay(PyObject *obj,float **f);
 int PConvPyList3ToFloatVLA(PyObject *obj,float **f);
 int PConvPyListToFloatArray(PyObject *obj,float **f);
 int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll);
@@ -113,6 +114,7 @@ int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,int ll);
 int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,int ll);
 
 PyObject *PConvFloatArrayToPyList(float *f,int l);
+PyObject *PConvFloatArrayToPyListNullOkay(float *f,int l);
 PyObject *PConvDoubleArrayToPyList(double *f,int l);
 
 int PConvPyListToIntArray(PyObject *obj,int **f);

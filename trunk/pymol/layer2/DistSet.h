@@ -31,7 +31,9 @@ typedef struct DistSet {
   Rep **Rep; /* an array of pointers to representations */
   int NRep;
   CSetting *Setting;
-  /* extended for angles and torsions */
+  /* extended for mobile distance labels */
+  float *LabelCoord;
+  /* extended for angles and torsions, with labels embedded with coordinates */
   float *AngleCoord;
   int NAngleIndex;
   float *DihedralCoord;

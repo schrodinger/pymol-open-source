@@ -141,6 +141,8 @@ function name.
 #define FB_ObjectGadget              37
 #define FB_ObjectSlice               38
 
+#define FB_RepAngle                  43
+#define FB_RepDihedral               44
 #define FB_RepWireBond               45
 #define FB_RepCylBond                46
 

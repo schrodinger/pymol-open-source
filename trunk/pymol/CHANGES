@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * angle visualization
+
    * fixed control-panel click bug
 
    * reorganized the Tcl/Tk modules to better enable customized

@@ -335,6 +335,7 @@ SEE ALSO
             if not quiet:
                print " mouse: %s"%mode
             if mode[-7:]!='editing': cmd.unpick()
+            if mode[-7:]=='editing': cmd.deselect()
       finally:
          unlock()
 
