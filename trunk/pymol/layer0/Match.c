@@ -58,7 +58,7 @@ CMatch *MatchNew(unsigned int na,unsigned int nb)
 
 int MatchResidueToCode(CMatch *I,int *vla,int n)
 {
-#define cNRES 20
+#define cNRES 30
   int ok=true;
   int a,b,c;
   int found;
