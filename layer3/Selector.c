@@ -2765,7 +2765,7 @@ int SelectorSelect1(EvalElem *base)
       WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
-			 if(WordMatchComma(base[1].text,
+			 if(WordMatchCommaExact(base[1].text,
                        I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].name,
                        I->IgnoreCase)<0)
 				{
