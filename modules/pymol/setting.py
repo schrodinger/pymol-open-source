@@ -335,6 +335,7 @@ if __name__=='pymol.setting':
       ss_strand_phi_target  = 296
       ss_strand_phi_include = 297
       ss_strand_phi_exclude = 298
+      movie_loop            = 299
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

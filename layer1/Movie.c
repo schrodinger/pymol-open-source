@@ -185,9 +185,16 @@ void MoviePlay(int cmd)
 	 I->Playing=false;
 	 break;
   case cMoviePlay:
+    if(!(int)SettingGet(cSetting_movie_loop)) { 
+      /* if not looping, and at end of movie, then automatically rewind */
+      if((SettingGetGlobal_i(cSetting_frame))==(SceneGetNFrame())) {
+        SceneSetFrame(4,0);
+      }
+    }
 	 I->Playing=true;
 	 break;
   }
+  OrthoDirty();
   SceneRestartTimers();
 }
 /*========================================================================*/
@@ -413,6 +420,11 @@ void MovieSetCommand(int frame,char *command)
 		  I->Cmd[frame][a]=command[a];
 		I->Cmd[frame][len]=0;
 	 }
+  else {
+    PRINTFB(FB_Movie,FB_Errors)
+      " Movie-Error: frame %d does not exist.  Use 'mset' to define movie first.\n",frame+1
+      ENDFB;
+  }
 }
 /*========================================================================*/
 void MovieAppendCommand(int frame,char *command)
@@ -429,6 +441,12 @@ void MovieAppendCommand(int frame,char *command)
         I->Cmd[frame][cur_len+a]=command[a];
 		I->Cmd[frame][cur_len+len]=0;
 	 }
+  else {
+    PRINTFB(FB_Movie,FB_Errors)
+      " Movie-Error: frame %d does not exist.  Use 'mset' to define movie first.\n",frame+1
+      ENDFB;
+  }
+  printf("here\n");
 }
 /*========================================================================*/
 ImageType MovieGetImage(int index)

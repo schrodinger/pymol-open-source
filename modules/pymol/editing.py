@@ -94,10 +94,12 @@ NOTES
 
    This function is not memory efficient.  For reasons of flexibility,
    it uses two additional copies of every atomic coordinate for the
-   calculation.  So, if you are memory-constrained in visualizing MD
-   trajectories, you may want to use an external tool such as Amber\'s ptraj
-   to perform smoothing before loading coordinates into PyMOL.
+   calculation.  If you are memory-constrained in visualizing MD
+   trajectories, then you may want to use an external tool such as
+   Amber\'s ptraj to perform smoothing before loading coordinates into
+   PyMOL.
    '''
+      
       r = 0
       selection = selector.process(selection)   
       try:
@@ -967,7 +969,7 @@ USAGE
 
 EXAMPLES
 
-   alter 1,(all),x=x+5
+   alter_state 1,(all),x=x+5
 
 SEE ALSO
 

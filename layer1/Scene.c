@@ -534,43 +534,54 @@ void SceneSetFrame(int mode,int frame)
   CScene *I=&Scene;
   int newFrame=0;
   int newState=0;
-
+  int movieCommand = false;
+  int oldFrame=0;
   newFrame = SettingGetGlobal_i(cSetting_frame) -1;
+  oldFrame = newFrame;
   PRINTFD(FB_Scene)
     " SceneSetFrame: entered.\n"
     ENDFD;
   switch(mode) {
-  case 0:
+  case 0: /* absolute */
     newFrame=frame; 
 	 break;
-  case 1:
+  case 1: /* relative */
     newFrame+=frame; 
 	 break;
-  case 2:
+  case 2: /* end */
     newFrame=I->NFrame-1; 
 	 break;
-  case 3:
+  case 3: /* middle with movie command */
 	 newFrame=I->NFrame/2;
+    movieCommand = true;
 	 break;
-  case 4:
+  case 4: /* absolute with movie command */
 	 newFrame=frame;
+    movieCommand = true;
 	 break;
-  case 5:
+  case 5: /* relative with movie command */
 	 newFrame+=frame;
+    movieCommand = true;
 	 break;
-  case 6: /* movie/frame override - go to this state absolutely! */
+  case 6: /* end with frame command */
+    newFrame=I->NFrame-1; 
+    movieCommand = true;
+    break;
+  case 7: /* movie/frame override - go to this state absolutely! */
     newState = frame;
     break;
   }
   SceneCountFrames();
-  if (mode<6) { 
+  if (mode<7) { 
     if(newFrame>=I->NFrame) newFrame=I->NFrame-1;
     if(newFrame<0) newFrame=0;
     newState = MovieFrameToIndex(newFrame);
-    if(mode&4) 
+    if(movieCommand&&(newFrame!=oldFrame)) {
       MovieDoFrameCommand(newFrame);
-    if(newFrame==0)
+    }
+    if(newFrame==0) {
       MovieMatrix(cMovieMatrixRecall);
+    }
     if(SettingGet(cSetting_cache_frames))
       I->MovieFrameFlag=true;
   }
@@ -715,9 +726,12 @@ void SceneIdle(void)
   if(MoviePlaying()&&frameFlag)
 	 {
       I->LastFrameTime = UtilGetSeconds();
-      if((SettingGetGlobal_i(cSetting_frame)-1)==(I->NFrame-1))
-        SceneSetFrame(4,0);
-      else
+      if((SettingGetGlobal_i(cSetting_frame)-1)==(I->NFrame-1)) {
+        if((int)SettingGet(cSetting_movie_loop))
+          SceneSetFrame(4,0);
+        else
+          MoviePlay(cMovieStop);
+      } else 
         SceneSetFrame(5,1);
 	 }
 }
@@ -3355,6 +3369,7 @@ void SceneRestartTimers(void)
 {
   CScene *I=&Scene;
   I->LastRender = UtilGetSeconds();
+  I->LastFrameTime = UtilGetSeconds();
   I->RenderTime = 0;
 }
 /*========================================================================*/
