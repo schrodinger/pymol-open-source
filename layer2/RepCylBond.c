@@ -803,7 +803,6 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
         t[2] = p2[2]*3*radius;
       }
       
-
       overlap_r = radius*overlap;
       nub_r = radius*nub;
       overlap_r2 = radius2*overlap;
@@ -1064,7 +1063,6 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
           vr+=3;
           nr++;
 
-
           subtract3f(v1,t,v1t);
           subtract3f(v2,t,v2t);
           
@@ -1245,7 +1243,7 @@ Rep *RepCylBondNew(CoordSet *cs)
               maxCyl+=6;
               break;
             case 4:
-              maxCyl+=12;  
+              maxCyl+=6;
               break;
             }
           } else
@@ -1257,7 +1255,6 @@ Rep *RepCylBondNew(CoordSet *cs)
   nEdge = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
   radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
   half_bonds = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
-
 
   RepInit(G,&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
@@ -1293,10 +1290,10 @@ Rep *RepCylBondNew(CoordSet *cs)
     /* OpenGL */
 
     v_size = maxCyl * ( (9+6+6) * (nEdge+1) + 3 );
-    /* each double-sided cylinder is 9+6+6+3= 21*(nEdge+1) + 3 floats for coordinates
-       plus up to 18 more floats for color fields */
+    /* each cylinder is 9+6+6+3= 21*(nEdge+1) floats for coordinates
+       plus 3 more floats for color */
 
-    printf("debug maxCyl: %d nEdge: %d v_size: %d\n",maxCyl,nEdge,v_size);
+    /*    printf("debug maxCyl: %d nEdge: %d v_size: %d\n",maxCyl,nEdge,v_size);*/
     fflush(stdout);
 	 I->V = Alloc(float,v_size);
 	 ErrChkPtr(G,I->V);
@@ -1696,6 +1693,7 @@ Rep *RepCylBondNew(CoordSet *cs)
               }
             }
         }
+      /*      printf("%d\n",(v-I->V)/( (9+6+6) * (nEdge+1) + 3 ));*/
     }
 	 PRINTFD(G,FB_RepCylBond)
       " RepCylBond-DEBUG: %d triplets\n",(v-I->V)/3
