@@ -4,7 +4,7 @@ CHANGE LOG
 
 Changes up to 0.98
 
-   * various performance enhancements
+   * various performance enhancements, esp. to MOL2 and SDF loads
 
    * fixed quiet setting for align function
 

@@ -5805,7 +5805,9 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,Atom
 
 /*========================================================================*/
 
-ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,char *MOLStr,int frame,int discrete)
+ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,
+                                         char *MOLStr,int frame,
+                                         int discrete,int finish)
 {
   int ok = true;
   CoordSet *cset=NULL;
@@ -5867,7 +5869,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       if(isNew) {		
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
-        ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_MOLMask,true); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_MOLMask,finish); /* NOTE: will release atInfo */
       }
 
       if(isNew) I->NAtom=nAtom;
@@ -5882,8 +5884,10 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       SceneCountFrames(G);
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);
-      ObjectMoleculeUpdateIDNumbers(I);
-      ObjectMoleculeUpdateNonbonded(I);
+      if(finish) {
+        ObjectMoleculeUpdateIDNumbers(I);
+        ObjectMoleculeUpdateNonbonded(I);
+      }
 	 }
   return(I);
 }
@@ -5916,7 +5920,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
 		fread(p,size,1,f);
 		p[size]=0;
 		fclose(f);
-		I=ObjectMoleculeReadMOLStr(G,obj,buffer,frame,discrete);
+		I=ObjectMoleculeReadMOLStr(G,obj,buffer,frame,discrete,true);
 		mfree(buffer);
 	 }
 

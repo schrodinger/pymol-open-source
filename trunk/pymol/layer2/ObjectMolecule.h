@@ -266,7 +266,8 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals *G,ObjectMolecule *I,PyObj
 
 ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
 
-ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,
+                                         int frame,int discrete,int finish);
 ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
                                           char *MOLStr,int frame,int discrete,
                                           int quiet,int multiplex, char *new_name,
