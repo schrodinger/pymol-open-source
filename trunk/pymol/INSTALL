@@ -22,7 +22,7 @@ the INSTALL file.
 Hopefully we can soon replace the pymol-ext source code with a set of
 precompiled binary libraries for various platforms.  
 
-2. You must create a symbolic link from the required pymol-ext
+2. You must create a symbolic link from the pymol-ext
 directory to the "ext" directory in pymol.  "pymol-ext" should not be
 installed within the pymol directory tree if you plan up performing CVS
 updates of pymol in the future (which I hope you do).
@@ -31,7 +31,7 @@ updates of pymol in the future (which I hope you do).
 
 3. After you've compiled all of the needed external dependencies, you
 need to edit Rules.make and choose options appropriate for your
-configuration (here's where knowledge experience is crucial)
+configuration (here is where experience counts)
 	cd $HOME/pymol
 	vi ./Rules.make
 
