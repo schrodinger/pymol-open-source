@@ -10,6 +10,7 @@
 
 import math
 import whrandom
+import copy
 
 RSMALL4 = 0.0001
 
@@ -90,6 +91,22 @@ def multiply(m1,m2): # HAVEN'T YET VERIFIED THAT THIS CONFORMS TO STANDARD DEFT
            [m1[0][0]*m2[0][2] + m1[0][1]*m2[1][2] + m1[0][2]*m2[2][2],
             m1[1][0]*m2[0][2] + m1[1][1]*m2[1][2] + m1[1][2]*m2[2][2],
             m1[2][0]*m2[0][2] + m1[2][1]*m2[1][2] + m1[2][2]*m2[2][2]]]
+
+#------------------------------------------------------------------------------
+def get_system2(x,y):
+   z = cross_product(x,y)
+   z = normalize(z)
+   y = cross_product(z,x);
+   y = normalize(y);
+   x = normalize(x);
+   return [x,y,z]
+
+#------------------------------------------------------------------------------
+def scale_system(s,factor):
+   r = []
+   for a in s:
+      r.append([a[0]*factor,a[1]*factor,a[2]*factor])
+   return r
 
 #------------------------------------------------------------------------------
 def transpose(m):

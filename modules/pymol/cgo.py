@@ -70,14 +70,13 @@ def molauto(*arg):
 #      rr = RenderReader(stdout)
 #      cmd.load_cgo(rr.obj,name)
 
-def measure_text(cgo,font,text,
+def measure_text(font,text,
                  axes=[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]):
    w = 0
    x = axes[0]
-   y = axes[1]
    for char in text:
       if font.has_key(char):
-         w = w + fc[0]
+         w = w + font[char][0]*x[0]
    return w
 
 def wire_text(cgo,font,pos,text,
@@ -106,8 +105,8 @@ def wire_text(cgo,font,pos,text,
             cgo.append(pos[2]+x[2]*ax+y[2]*ay)         
             c = c + 3
          pos[0] = pos[0] + w*x[0]
-         pos[0] = pos[0] + w*x[1]
-         pos[0] = pos[0] + w*x[2]
+         pos[1] = pos[1] + w*x[1]
+         pos[2] = pos[2] + w*x[2]
          if stroke: cgo.append(END)
 
 
