@@ -867,16 +867,18 @@ typedef unsigned char pix[4];
 unsigned int SceneFindTriplet(int x,int y) 
 {
   int result = 0;
-  /*int before_check[100];*/
+  /*int before_check[100];
+  int *int_ptr;
+*/
   pix buffer[cRange*2+1][cRange*2+1];
  /*int after_check[100];*/
   /* pix_array *array_ptr;
-  char *safe_place;*/
+  char *safe_place;
+*/
   int a,b,d,flag;
   int debug = false;
   unsigned char *c;
   int strict = false;
-  int *int_ptr;
   GLint rb,gb,bb;
 
   if(PMGUI) { /*just in case*/

@@ -1048,7 +1048,6 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   char *p;
   float dens,dens_rev;
   int a,b,c,d,e;
-  unsigned int *u;
   float v[3],maxd,mind;
   int ok = true;
   int little_endian = 1;
