@@ -83,9 +83,11 @@ typedef struct {
 } BasisCallRec; 
 
 
-void BasisInit(CBasis *I);
-void BasisFinish(CBasis *I);
-void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *clipBox);
+void BasisInit(CBasis *I,int group_id);
+void BasisFinish(CBasis *I,int group_id);
+void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
+                  int group_id,int block_base);
+
 void BasisSetupMatrix(CBasis *I);
 void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc);
 void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);

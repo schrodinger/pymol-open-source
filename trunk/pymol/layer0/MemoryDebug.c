@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #endif
 
 #include"MemoryDebug.h"
+#include"MemoryCache.h"
 
 #define GDB_ENTRY
 
@@ -113,6 +114,34 @@ void *VLAExpand(void *ptr,unsigned int rec)
   return((void*)&(vla[1]));
 }
 
+
+void *VLACacheExpand(void *ptr,unsigned int rec,int thread_index,int block_id)
+{
+  VLARec *vla;
+  char *start,*stop;
+  unsigned int soffset=0;
+  vla = &(((VLARec*)ptr)[-1]);
+  if(rec>=vla->nAlloc)
+	 {
+		if(vla->autoZero)
+		  soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+		vla->nAlloc = (rec*(vla->growFactor+10)/10)+1;
+		vla=(void*)MemoryCacheRealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec),thread_index,block_id);
+		if(!vla)
+		  {
+			 printf("VLAExpand-ERR: realloc failed.\n");
+          DieOutOfMemory();
+		  }
+		if(vla->autoZero)
+		  {
+			 start = ((char*)vla) + soffset;
+			 stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+			 MemoryZero(start,stop);
+		  }
+	 }
+  return((void*)&(vla[1]));
+}
+
 #ifndef _MemoryDebug_ON
 void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero)
 #else
@@ -145,6 +174,38 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int re
   return((void*)&(vla[1]));
 }
 
+
+
+#ifndef _MemoryDebug_ON
+void *VLACacheMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero,int thread,int id)
+#else
+void *_VLACacheMalloc(const char *file,int line,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero,int thread,int id)
+#endif
+{
+  VLARec *vla;
+  char *start,*stop;
+
+  vla=(void*)MemoryCacheMalloc((initSize*recSize)+sizeof(VLARec),thread,id);
+
+  if(!vla)
+	 {
+		printf("VLAMalloc-ERR: realloc failed\n");
+      DieOutOfMemory();
+	 }
+  vla->nAlloc=initSize;
+  vla->recSize=recSize;
+  vla->growFactor=growFactor;
+  vla->autoZero=autoZero;
+  if(vla->autoZero)
+	 {
+		start = ((char*)vla)+sizeof(VLARec);
+		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+		MemoryZero(start,stop);
+	 }
+  return((void*)&(vla[1]));
+}
+
+
 void VLAFree(void *ptr)
 {
   VLARec *vla;
@@ -155,6 +216,18 @@ void VLAFree(void *ptr)
 	 }
   vla = &(((VLARec*)ptr)[-1]);
   mfree(vla);
+}
+
+void VLACacheFree(void *ptr,int thread,int id,int force)
+{
+  VLARec *vla;
+  if(!ptr)
+	 {
+		printf("VLAFree-ERR: tried to free NULL pointer!\n");
+		exit(EXIT_FAILURE);
+	 }
+  vla = &(((VLARec*)ptr)[-1]);
+  MemoryCacheFree(vla,thread,id,force);
 }
 
 unsigned int VLAGetSize(void *ptr)
@@ -182,6 +255,35 @@ void *VLANewCopy(void *ptr)
     }
   return((void*)&(new_vla[1]));
 }
+
+void *VLACacheSetSize(void *ptr,unsigned int newSize,int group_id,int block_id)
+{
+  VLARec *vla;
+  char *start=NULL;
+  char *stop;
+  unsigned int soffset=0;
+  vla = &((VLARec*)ptr)[-1];
+  if(vla->autoZero) {
+	 soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  }
+  vla->nAlloc = newSize;
+  vla=(void*)MemoryCacheRealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec),group_id,block_id);
+  if(!vla)
+	 {
+		printf("VLASetSize-ERR: realloc failed.\n");
+      DieOutOfMemory();
+	 }
+  if(vla->autoZero)
+	 {
+      start = ((char*)vla)+soffset;
+		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+		if(start<stop)
+		  MemoryZero(start,stop);
+	 }
+  return((void*)&(vla[1]));
+}
+
+
 
 void *VLASetSize(void *ptr,unsigned int newSize)
 {

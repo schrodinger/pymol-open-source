@@ -31,15 +31,23 @@ typedef struct {
   int NVert;
   int NEElem;
   Vector3f Max,Min;
+  int group_id;
+  int block_base;
 } MapType;
+
 
 typedef struct {
   int *Cache,*CacheLink,CacheStart;
+  int group_id;
+  int block_base;
+  
 } MapCache;
 
 #define MapBorder 2
 
 MapType *MapNew(float range,float *vert,int nVert,float *extent);
+MapType *MapNewCached(float range,float *vert,int nVert,float *extent,int group_id,int block_id);
+
 MapType *MapNewFlagged(float range,float *vert,int nVert,float *extent,int *flag);
 void MapSetupExpress(MapType *I);
 void MapFree(MapType *I);

@@ -562,7 +562,7 @@ void MainFree(void)
   SphereDone();
   PFree();
   FeedbackFree();
-  CacheFree();
+  MemoryCacheDone();
   if(ShowSplash) {
     MemoryDebugDump();
     printf(" PyMOL: normal program termination.\n");

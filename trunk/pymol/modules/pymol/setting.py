@@ -295,6 +295,7 @@ if __name__=='pymol.setting':
       max_threads           = 261
       show_progress         = 262
       use_display_lists     = 263
+      cache_memory          = 264
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
