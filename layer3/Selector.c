@@ -617,8 +617,8 @@ void SelectorLogSele(char *name)
   int sele;
   int logging;
   int robust;
-  logging = SettingGet(cSetting_logging);
-  robust = SettingGet(cSetting_robust_logs);
+  logging = (int)SettingGet(cSetting_logging);
+  robust = (int)SettingGet(cSetting_robust_logs);
   if(logging) {
     sele = SelectorIndexByName(name);
     if(sele>=0) {

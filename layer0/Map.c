@@ -70,11 +70,11 @@ void MapCacheReset(MapType *I)
   I->CacheStart=-1;
 }
 
-#define MapSafety 0.01
+#define MapSafety 0.01F
 
 int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for ray-tracing */
 {
-  *a=((v[0]-I->Min[0])/I->Div)+MapBorder;
+  *a=(int)(((v[0]-I->Min[0])/I->Div)+MapBorder);
   if(*a<I->iMin[0]) { 
 	 if((I->iMin[0]-*a)>1) 
 		return(false);
@@ -86,7 +86,7 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 	 else 
 		*a=I->iMax[0]; 
   }
-  *b=((v[1]-I->Min[1])/I->Div)+MapBorder;
+  *b=(int)(((v[1]-I->Min[1])/I->Div)+MapBorder);
   if(*b<I->iMin[1]) { 
 	 if((I->iMin[1]-*b)>1) 
 		return(false);
@@ -98,7 +98,7 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 	 else 
 		*b=I->iMax[1];
   }
-  *c=((v[2]-I->Min[2])/I->Div)+MapBorder+1;
+  *c=(int)(((v[2]-I->Min[2])/I->Div)+MapBorder+1);
   if(*c<I->iMin[2]) *c=I->iMin[2];
   else if(*c>I->iMax[2]) *c=I->iMax[2];
 
@@ -197,9 +197,9 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 
 void MapLocus(MapType *I,float *v,int *a,int *b,int *c)
 {
-  *a=((v[0]-I->Min[0])/I->Div)+MapBorder;
-  *b=((v[1]-I->Min[1])/I->Div)+MapBorder;
-  *c=((v[2]-I->Min[2])/I->Div)+MapBorder;
+  *a=(int)((v[0]-I->Min[0])/I->Div)+MapBorder;
+  *b=(int)((v[1]-I->Min[1])/I->Div)+MapBorder;
+  *c=(int)((v[2]-I->Min[2])/I->Div)+MapBorder;
   /* range checking...*/
   if(*a<I->iMin[0]) *a=I->iMin[0];
   else if(*a>I->iMax[0]) *a=I->iMax[0];
@@ -211,13 +211,13 @@ void MapLocus(MapType *I,float *v,int *a,int *b,int *c)
 
 int MapExclLocus(MapType *I,float *v,int *a,int *b,int *c)
 {
-  *a=((v[0]-I->Min[0])/I->Div)+MapBorder;
+  *a=(int)((v[0]-I->Min[0])/I->Div)+MapBorder;
   if(*a<I->iMin[0]) return(0);
   else if(*a>I->iMax[0]) return(0);
-  *b=((v[1]-I->Min[1])/I->Div)+MapBorder;
+  *b=(int)((v[1]-I->Min[1])/I->Div)+MapBorder;
   if(*b<I->iMin[1]) return(0);
   else if(*b>I->iMax[1]) return(0);
-  *c=((v[2]-I->Min[2])/I->Div)+MapBorder;
+  *c=(int)((v[2]-I->Min[2])/I->Div)+MapBorder;
   if(*c<I->iMin[2]) return(0);
   else if(*c>I->iMax[2]) return(0);
   return(1);
@@ -228,7 +228,7 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
   int maxSize;
   float size,subDiv;
 
-  maxSize = SettingGet(cSetting_hash_max);
+  maxSize = (int)SettingGet(cSetting_hash_max);
 
   /* find longest axis */
 
@@ -244,8 +244,8 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
     size = 1.0;
   }
   /* compute maximum number of subdivisions */
-  subDiv = (int)(size/(range+MapSafety)); 
-  if(subDiv>maxSize ) subDiv = maxSize; /* keep it reasonable - we're talking N^3 here... */
+  subDiv = (float)(size/(range+MapSafety)); 
+  if(subDiv>maxSize ) subDiv = (float)maxSize; /* keep it reasonable - we're talking N^3 here... */
   if(subDiv<1.0) subDiv = 1.0;
 
   return(size/subDiv);
@@ -385,9 +385,9 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   I->Div = MapGetSeparation(range,I->Max,I->Min,diagonal);
 
   /* add borders to avoid special edge cases */
-  I->Dim[0]=(diagonal[0]/I->Div)+1+(2*MapBorder); 
-  I->Dim[1]=(diagonal[1]/I->Div)+1+(2*MapBorder);
-  I->Dim[2]=(diagonal[2]/I->Div)+1+(2*MapBorder);
+  I->Dim[0]=(int)(diagonal[0]/I->Div)+1+(2*MapBorder); 
+  I->Dim[1]=(int)(diagonal[1]/I->Div)+1+(2*MapBorder);
+  I->Dim[2]=(int)(diagonal[2]/I->Div)+1+(2*MapBorder);
 
   if(Feedback(FB_Map,FB_Debugging)) {
     printf(" MapSetup: nVert: %d\n",nVert);

@@ -846,7 +846,7 @@ void PLog(char *str,int format) /* general log routine can write PML or PYM comm
   int a;
   PyObject *log;
   OrthoLineType buffer="";
-  mode = SettingGet(cSetting_logging);
+  mode = (int)SettingGet(cSetting_logging);
   if(mode)
     {
       PBlock();
@@ -886,7 +886,6 @@ void PLog(char *str,int format) /* general log routine can write PML or PYM comm
               strcpy(buffer,str);
               strcat(buffer,"\n");
               break;
-            case cPLog_no_flush:
             }
           }
           PyObject_CallMethod(log,"write","s",buffer);        
@@ -902,7 +901,7 @@ void PLogFlush(void)
   int mode;
   PyObject *log;
   
-  mode = SettingGet(cSetting_logging);
+  mode = (int)SettingGet(cSetting_logging);
   if(mode)
     {
       PBlock();

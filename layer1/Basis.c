@@ -482,16 +482,16 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 			 if(a==prm->vert) { /* only do this calculation for one of the three vertices */
 				l1=length3f(I->Precomp+I->Vert2Normal[a]*3);
 				l2=length3f(I->Precomp+I->Vert2Normal[a]*3+3);
-				b = ceil(l1/sep)+1;
-				c = ceil(l2/sep)+1;
+				b = (int)ceil(l1/sep)+1;
+				c = (int)ceil(l2/sep)+1;
 				extra_vert += b*c;
 			 }
 			 break;
 		  case cPrimCylinder:
-          extra_vert+= (ceil(prm->l1/sep)+1);
+          extra_vert+= (int)(ceil(prm->l1/sep)+1);
 			 break;
 		  case cPrimSphere:
-          b = 2*floor(prm->r1/sep)+1;
+          b = (int)(2*floor(prm->r1/sep)+1);
           extra_vert+= (b*b*b);
 			 break;
         } 
@@ -529,11 +529,11 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 				vv=I->Vertex+a*3;
 				l1=length3f(d1);
 				l2=length3f(d2);
-				b = floor(l1/sep)+1;
-				c = floor(l2/sep)+1;
+				b = (int)floor(l1/sep)+1;
+				c = (int)floor(l2/sep)+1;
 				extra_vert += b*c;
-				bh=(b/2)+1;
-				ch=(c/2)+1;
+				bh=(float)(b/2)+1;
+				ch=(float)(c/2)+1;
 				
 				for(x=0;x<bh;x++)
 				  for(y=0;y<ch;y++) 
@@ -593,7 +593,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 			 }
 			 break;
 		  case cPrimSphere:
-          q = floor(prm->r1/sep);
+          q = (int)floor(prm->r1/sep);
           vv=I->Vertex+a*3;
           
           for(x=-q;x<=q;x++)

@@ -573,8 +573,8 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 	t2[a]=0.0;
   }
 
-  sumwt = 0.0;
-  tol = 0.001;
+  sumwt = 0.0F;
+  tol = 0.001F;
   maxiter = 1000;
 
   /* Calculate center-of-mass vectors */

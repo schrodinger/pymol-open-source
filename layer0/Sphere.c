@@ -27,8 +27,8 @@ float SphericalAngle(int d0,int d1,int d2);
 void MakeVertex(int d1,int d2);
 
 /* Twelve vertices of icosahedron on unit sphere */
-#define tau 0.8506508084      /* t=(1+sqrt(5))/2, tau=t/sqrt(1+t^2)  */
-#define one 0.5257311121      /* one=1/sqrt(1+t^2) , unit sphere     */
+#define tau 0.8506508084F      /* t=(1+sqrt(5))/2, tau=t/sqrt(1+t^2)  */
+#define one 0.5257311121F      /* one=1/sqrt(1+t^2) , unit sphere     */
 
 static float start_points[13][3] = {
 {  tau,  one,    0 },
