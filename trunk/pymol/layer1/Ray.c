@@ -495,6 +495,9 @@ void RayExpandPrimitives(CRay *I)
 		break;
 	 }
   }
+  if(nVert>basis->NVertex) {
+    fprintf(stderr,"Error: basis->NVertex exceeded\n");
+  }
   /*
     printf("minvoxel  %8.3f\n",basis->MinVoxel);
 		printf("NPrimit  %d nvert %d\n",I->NPrimitive,nVert);*/

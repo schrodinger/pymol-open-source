@@ -91,6 +91,11 @@ void dump3f( float *v, char *prefix ) /* for debugging */
   printf("%s %8.3f %8.3f %8.3f\n",prefix,v[0],v[1],v[2]);
 }
 
+void dump4f( float *v, char *prefix ) /* for debugging */
+{
+  printf("%s %8.3f %8.3f %8.3f %8.3f\n",prefix,v[0],v[1],v[2],v[3]);
+}
+
 void dump33f( float *m, char *prefix ) /* for debugging */
 {
   printf("%s:0 %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2]);
