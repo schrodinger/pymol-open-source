@@ -71,6 +71,7 @@ setup ( # Distribution meta-data
    "layer0/Block.c",
    "layer0/Crystal.c",
    "layer0/Debug.c",
+   "layer0/Deferred.c",
    "layer0/Err.c",
    "layer0/Feedback.c",
    "layer0/Field.c",
