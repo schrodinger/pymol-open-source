@@ -1,4 +1,4 @@
-PARM99 for DNA,RNA,AA, organic molecules, TIP3P wat. Polariz.& LP incl.02/04/99
+PARM99 with a bunch of bogus hacks for ramming small molecules into Amber (WATCHOUT)
 C  12.01         0.616  !            sp2 C carbonyl group 
 CA 12.01         0.360               sp2 C pure aromatic (benzene)
 CB 12.01         0.360               sp2 aromatic C, 5&6 membered ring junction
@@ -212,6 +212,10 @@ CA-OS  450.0    1.364       WLD from CA-OH
 CN-NC  428.0    1.380       WLD from CN-NA
 CA-CC  469.0    1.404       WLD from CA-CB
 CC-NC  410.0    1.394       WLD from CC-NB
+CW-N2  481.0    1.340       WLD from CA-N2
+CV-NC  410.0    1.394       WLD from CV-NB
+CC-N2  481.0    1.340       WLD from CA-N2
+CV-CW  518.0    1.371       WLD from CC-CW
 A -A   553.0    1.5136      TIP3P water
 A -D2  400.0    1.056       Howard et al JDJ,16,243,1995
 A -D3  367.0    1.080       combination of 4
@@ -625,6 +629,23 @@ CC-NC-CN    70.0      111.00    WLD from CB-NC-CQ
 CA-CA-CC    63.0      120.00    WLD from CA-CA-CB
 CT-CC-NC    70.0      120.00    WLD from CT-CC-NA
 CA-CB-CA    63.0      117.30    WLD from CA-CB-CB
+CC-NC-CV    70.0      111.00    WLD from CB-NC-CQ 
+CW-CV-H4    50.0      120.00    WLD from CC-CV-H4
+CC-CT-H1    50.0      109.50    WLD from C -CT-H1
+NC-CC-N2    70.0      120.00    WLD from CW-CC-NB
+CC-N2-CT    50.0      123.20    WLD from CA-N2-CT
+CV-CW-N2    70.0      120.00    WLD from CC-CW-NA
+CC-N2-CT    50.0      123.20    WLD from CA-N2-CT
+CT-CC-N2    70.0      120.00    WLD from CT-CC-NA
+N2-CW-H4    50.0      120.00    WLD from CC-CW-H4
+CV-CW-H4    50.0      120.00    WLD from CC-CW-H4
+CW-N2-H     50.0      120.00    WLD from CA-N2-H
+CW-CV-NC    70.0      120.00    WLD from CC-CV-NB
+CW-N2-CT    50.0      123.20    WLD from CA-N2-CT
+NC-CV-H4    50.0      120.00    WLD from CC-CV-H4 
+CC-CT-N2    63.0      113.10    WLD from CC-CT-CT
+CC-CT-CY    63.0      110.00    WLD from CT-CT-CY
+N2-CT-CY    63.0      110.00    WLD from CT-CT-CY
 A -A -Q2      0.      127.74    (found in crystallographic water with 3 bonds)
 A -D2-D2    50.0      180.00    Junmei et al, 1999
 A -D3-A     35.0      119.50    combination of 2
@@ -828,16 +849,18 @@ A -DA-D4    50.0      120.00    WLD from A -D3-D4
 A -DA-TA    35.0      122.60    WLD from A -DA-T2
 A -D4-T4    30.0      115.43    WLD from A- J4-T4
 A -T2-DJ    62.0       98.90    WLD from D4-T2-D4
+A -T2-T2    68.0      103.70    WLD from D4-T2-T2
 A -Q2-JA    50.0      109.50    WLD gross estimate
 A -Q2-T4    50.0      113.00    WLD from A -Q2-DJ
 A -Q2-J3    50.0      109.50    WLD gross estimate
 A -DA-D3    46.2      120.76    WLD from A -DA-J3
 A -T2-D2    43.0       96.00    WLD from A -T2-D4
+D2-D4-J3    40.0      111.00    WLD from D2-D4-DA
+D2-D4-DJ    40.0      111.00    WLD from D2-D4-DA
 D2-DJ-DA    70.0      126.55    WLD from D2-DA-DA
 D2-DJ-JA    70.0      126.55    WLD from D2-DA-DA
 D2-DJ-DJ    70.0      126.55    WLD from D2-DA-DA
 D2-J3-DJ    70.0      126.55    WLD from D2-DA-DA
-D2-D4-DJ    40.0      111.00    WLD from D2-D4-DA
 D2-T2-D4    62.0      103.00    WLD gross estimate
 D3-D4-J3    50.0      109.50    WLD from J3-D4-J3
 D3-DJ-DJ    63.0      120.70    WLD from D3-D3-DJ
@@ -1048,6 +1071,11 @@ X -CA-OS-X    2    2.40        180.0             4.         WLD gross est.
 X -CC-CA-X    4   20.60        180.0             2.         WLD from X -CC-CV-X
 X -CC-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
 X -CN-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
+X -CV-CW-X    4   21.50        180.0             2.         WLD From X -CC-CW-X
+X -C -NC-X    2    8.00        180.0             2.         WLD from X -C -NC-X
+X -CV-NC-X    2    4.80        180.0             2.         WLD from X -CV-NB-X
+X -CC-N2-X    2    4.80        180.0             2.         WLD from X -CC-NB-X
+X -CW-N2-X    4    6.00        180.0             2.         WLD from X -CW-NA-X
 N -CT-C -N    1    2.000       180.000           2.
 C -N -CT-C    1    0.850       180.000          -2.
 C -N -CT-C    1    0.800         0.000           1.
@@ -1248,6 +1276,8 @@ A -D4-D4-D4   1    0.16          0.0             3.         Junmei et al, 1999
 A -D4-D4-A    1    0.15          0.0             3.         Junmei et al, 1999
 A -D4-D3-D3   1    0.38        180.0            -3.         Junmei et al, 1999
 A -D4-D3-D3   1    1.15          0.0             1.         Junmei et al, 1999
+A -T2-T2-D4   1    3.50          0.0            -2.         WLD from D4-T2-T2-D4
+A -T2-T2-D4   1    0.60          0.0             3.         WLD from D4-T2-T2-D4
 
 X -X -C -O          10.5         180.          2.           JCC,7,(1986),230
 X -O2-C -O2         10.5         180.          2.           JCC,7,(1986),230

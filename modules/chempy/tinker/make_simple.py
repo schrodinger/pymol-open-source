@@ -230,16 +230,19 @@ l = [
 'A -DA-TA    35.0      122.60    WLD from A -DA-T2',
 'A -D4-T4    30.0      115.43    WLD from A- J4-T4',
 'A -T2-DJ    62.0       98.90    WLD from D4-T2-D4',
+'A -T2-T2    68.0      103.70    WLD from D4-T2-T2',
+
 'A -Q2-JA    50.0      109.50    WLD gross estimate',
 'A -Q2-T4    50.0      113.00    WLD from A -Q2-DJ',
 'A -Q2-J3    50.0      109.50    WLD gross estimate',
 'A -DA-D3    46.2      120.76    WLD from A -DA-J3',
 'A -T2-D2    43.0       96.00    WLD from A -T2-D4',
+'D2-D4-J3    40.0      111.00    WLD from D2-D4-DA',
+'D2-D4-DJ    40.0      111.00    WLD from D2-D4-DA',
 'D2-DJ-DA    70.0      126.55    WLD from D2-DA-DA',
 'D2-DJ-JA    70.0      126.55    WLD from D2-DA-DA',
 'D2-DJ-DJ    70.0      126.55    WLD from D2-DA-DA',
 'D2-J3-DJ    70.0      126.55    WLD from D2-DA-DA',
-'D2-D4-DJ    40.0      111.00    WLD from D2-D4-DA',
 'D2-T2-D4    62.0      103.00    WLD gross estimate',
 
 'D3-D4-J3    50.0      109.50    WLD from J3-D4-J3',
@@ -484,6 +487,8 @@ for a in kees:
                   print " %-1s%s" %(a,b[0])
 # missing specific torsions
 l = [
+'A -T2-T2-D4   1    3.50          0.0            -2.         WLD from D4-T2-T2-D4',
+'A -T2-T2-D4   1    0.60          0.0             3.         WLD from D4-T2-T2-D4',
 ]
 for a in l:
    print a 
