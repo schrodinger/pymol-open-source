@@ -269,6 +269,8 @@ static int *TriangleMakeStripVLA(float *v,float *vn,int n)
 }
 
 
+
+
 static void TriangleAdjustNormals(float *v,float *vn,int n)
 {
   TriangleSurfaceRec *I=&TriangleSurface;
