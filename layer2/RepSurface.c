@@ -519,7 +519,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                   if(ai2->visRep[cRepSurface])
                     if((inclH||(!ai2->hydrogen))&&
                        ((!cullByFlag)||
-                        (!(ai2->flags&(cAtomFlag_ignore|cAtomFlag_exclude)))))
+                        (!(ai2->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
                       {
                         dist = diff3f(v0,cs->Coord+j*3);
                         if(dist<(ai2->vdw+proximity)) {
@@ -583,7 +583,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
      if(ai1->visRep[cRepSurface]&&
         (inclH||(!ai1->hydrogen))&&
         ((!cullByFlag)|
-         (!(ai1->flags&(cAtomFlag_exclude|cAtomFlag_ignore)))))
+         (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore)))))
        {
          visFlag=true;
          break;
@@ -652,7 +652,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
     ai1=obj->AtomInfo+cs->IdxToAtm[a];
 	 if(ai1->visRep[cRepSurface]&&
        ((!cullByFlag)|
-        (!(ai1->flags&(cAtomFlag_exclude)))))
+        (!(ai1->flags&(cAtomFlag_exfoliate)))))
       SurfaceFlag=true;
     else
       I->allVisibleFlag=false;
@@ -683,7 +683,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
             ai1 = obj->AtomInfo+cs->IdxToAtm[a];
             if((inclH||(!ai1->hydrogen))&&
                ((!cullByFlag)||
-                (!(ai1->flags&(cAtomFlag_exclude|cAtomFlag_ignore))))) {
+                (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore))))) {
               c1=*(cs->Color+a);
               v0 = cs->Coord+3*a;
               vdw = ai1->vdw;

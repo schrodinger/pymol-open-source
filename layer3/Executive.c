@@ -47,6 +47,7 @@ Z* -------------------------------------------------------------------
 #define cKeywordAll "all"
 #define cTempRectSele "_rect"
 #define cLeftButSele "lb"
+#define cIndicateSele "_indicate"
 
 typedef struct SpecRec {
   int type;
@@ -1072,26 +1073,52 @@ void ExecutiveAddHydrogens(char *s1)
   }
 }
 /*========================================================================*/
-void ExecutiveFlag(int flag,char *s1)
+void ExecutiveFlag(int flag,char *s1,int action)
 {
   int sele1;
+  OrthoLineType buffer;
   ObjectMoleculeOpRec op;
   
   sele1 = SelectorIndexByName(s1);
   if(sele1>=0) {
-    op.code = OMOP_Flag;
+    switch(action) {
+    case 0: op.code = OMOP_Flag; break;
+    case 1: op.code = OMOP_FlagSet; break;
+    case 2: op.code = OMOP_FlagClear; break;
+    default:
+      op.code = OMOP_Flag;
+      break;
+    }
     op.i1 = (((unsigned int)1)<<flag);
     op.i2 = ((unsigned int)0xFFFFFFFF - (((unsigned int)1)<<flag));
     op.i3 = 0;
+    op.i4 = 0;
     ExecutiveObjMolSeleOp(sele1,&op);    
     if(Feedback(FB_Executive,FB_Actions)) {
-      if(op.i3) {
+      switch(action) {
+      case 0:
+        if(op.i3) {
+          PRINTF " Flag: flag %d is set in %d of %d atoms.\n", flag, op.i3, op.i4 ENDF;
+        } else {
+          PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF;
+        }
+        break;
+      case 1:
         PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF;
-      } else {
-        PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF;
+        break;
+      case 2:
+        PRINTF " Flag: flag %d cleared on %d atoms.\n", flag, op.i3 ENDF;
+        break;
       }
     }
+    if((int)SettingGet(cSetting_auto_indicate_flags)) {
+      sprintf(buffer,"(flag %d)",flag);
+      SelectorCreate(cIndicateSele,buffer,NULL,true,NULL);
+      ExecutiveSetObjVisib(cIndicateSele,true);
+      SceneDirty();
+    }
   }
+
 }
 /*========================================================================*/
 float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust)

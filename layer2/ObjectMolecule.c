@@ -4400,7 +4400,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 		   switch(op->code) { 
          case OMOP_Flag: 
            I->AtomInfo[a].flags &= op->i2; /* clear flag using mask */
-           /* no break here - intentional  */
+           op->i4++;
+           /* no break here is intentional!  */
+         case OMOP_FlagSet:
+         case OMOP_FlagClear:
 		   case OMOP_COLR: /* normal atom based loops */
 		   case OMOP_VISI:
 		   case OMOP_TTTF:
@@ -4413,6 +4416,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
               switch(op->code) {
               case OMOP_Flag:
                 I->AtomInfo[a].flags |= op->i1; /* set flag */
+                op->i3++;
+                break;
+              case OMOP_FlagSet:
+                I->AtomInfo[a].flags |= op->i1; /* set flag */
+                op->i3++;
+                break;
+              case OMOP_FlagClear:
+                I->AtomInfo[a].flags &= op->i2; /* clear flag */
                 op->i3++;
                 break;
               case OMOP_VISI:
