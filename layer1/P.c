@@ -25,22 +25,42 @@ Z* -------------------------------------------------------------------
 
 #include"MemoryDebug.h"
 #include"Base.h"
-#include"PUtils.h"
+#include"Err.h"
+#include"P.h"
+#include"PConv.h"
 #include"Ortho.h"
-#include"PM.h"
+#include"Cmd.h"
 #include"main.h"
 #include"AtomInfo.h"
 #include"CoordSet.h"
 
-PyObject *P_pm = NULL;
-PyObject *P_pmm = NULL;
-PyObject *P_pmx = NULL;
+PyObject *P_globals = NULL;
+
+PyObject *P_cmd = NULL;
+PyObject *P_menu = NULL;
+PyObject *P_xray = NULL;
+PyObject *P_parser = NULL;
+
+PyObject *P_exec = NULL;
+PyObject *P_parse = NULL;
+PyObject *P_lock = NULL;
+PyObject *P_unlock = NULL;
 
 PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 PyThreadState *P_api_thread_state; /* this is the thread state for an alternate thread */
+
 int P_glut_thread_active = 1;
 int P_glut_thread_keep_out = 0; /* enables us to keep glut out if by chance it grabs the API
-                                        * in the middle of a nested API based operation */
+                                 * in the middle of a nested API based operation */
+
+void PCatchInit(void);
+void my_interrupt(int a);
+char *getprogramname(void);
+                                       
+void PXDecRef(PyObject *obj)
+{
+  Py_XDECREF(obj);
+}
 
 void PSleep(int usec)
 { /* assumes threads have already been unblocked */
@@ -52,12 +72,6 @@ void PSleep(int usec)
 }
 
 static PyObject *PCatchWrite(PyObject *self, 	PyObject *args);
-void PCatchInit(void);
-void PMInit(void);
-void PMQuit(void);
-void my_interrupt(int a);
-
-char *getprogramname(void);
 
 void my_interrupt(int a)
 {
@@ -77,7 +91,7 @@ int PAlterAtom(AtomInfoType *at,char *expr)
   else
     strcpy(atype,"ATOM");
   PBlockAndUnlockAPI();
-  output = PyObject_CallMethod(P_pm,"_alter_do","[ssssssfffffs]",
+  output = PyObject_CallMethod(P_cmd,"_alter_do","[ssssssfffffs]",
                                expr,
                                atype,
                                at->name,
@@ -119,89 +133,143 @@ int PAlterAtom(AtomInfoType *at,char *expr)
 void PUnlockAPIAsGlut(void)
 {
   PyEval_RestoreThread(P_glut_thread_state); /* grab python */
-  PyRun_SimpleString("pm.unlock()\n");
+  PXDecRef(PyObject_CallFunction(P_unlock,NULL));
   P_glut_thread_state = PyEval_SaveThread(); /* release python */
 }
 
 void PLockAPIAsGlut(void)
 {
   PyEval_RestoreThread(P_glut_thread_state); /* grab python */
-  PyRun_SimpleString("pm.lock()");
+  PXDecRef(PyObject_CallFunction(P_lock,NULL));
   while(P_glut_thread_keep_out) { /* IMPORTANT: keeps the glut thread out of an API operation... */
-	 PyRun_SimpleString("pm.unlock()");
+    PXDecRef(PyObject_CallFunction(P_unlock,NULL));
     P_glut_thread_state = PyEval_SaveThread(); /* release python */
     PSleep(50000); /* wait 50 msec */
     PyEval_RestoreThread(P_glut_thread_state); /* grab python */
-	 PyRun_SimpleString("pm.lock()");    
+    PXDecRef(PyObject_CallFunction(P_lock,NULL));
   }
   P_glut_thread_state = PyEval_SaveThread(); /* release python */
   P_glut_thread_active = 1; /* if we come in on a glut event - then it is the active thread */
 }
 
-void PInit(void)
+void PInitEmbedded(int argc,char **argv)
 {
-  /* Initialize the Python interpreter.  Required. */
+  /* This routine is called if we are running with an embedded Python interpreter */
+  
+  PyObject *args,*pymol,*invocation;
 
-#ifndef _PYMOL_MODULE
   Py_Initialize();
   PyEval_InitThreads();
-#endif
 
-  /* Add a static module */
-  PCatchInit();
-  PMInit();
+  init_cmd();
 
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
   PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
-  /* redirect output to our catch routine*/
-  PyRun_SimpleString("import _pm\n"); /* the API */
-  PyRun_SimpleString("import pcatch\n");
+  PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
+
+  pymol = PyImport_AddModule("pymol"); /* get it */
+
+  if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
+
+  invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
+  if(!pymol) ErrFatal("PyMOL","can't find module 'invocation'");
+
+  args = PConvStringListToPyList(argc,argv); /* prepare our argument list */
+  if(!pymol) ErrFatal("PyMOL","can't process arguments.");
+
+  PXDecRef(PyObject_CallMethod(invocation,"parse_args","O",args)); /* parse the arguments */
+
+}
+
+void PGetOptions(int *pmgui,int *internal_gui,int *stereo_capable)
+{
+  PyObject *pymol,*invocation,*options;
+
+  pymol = PyImport_AddModule("pymol"); /* get it */
+  if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
+
+  invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
+  if(!pymol) ErrFatal("PyMOL","can't find module 'invocation'");
+
+  options = PyObject_GetAttrString(invocation,"options");
+  if(!pymol) ErrFatal("PyMOL","can't get 'invocation.options'.");
+
+  (*pmgui) = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
+  (*internal_gui) = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
+  (*stereo_capable) = PyInt_AsLong(PyObject_GetAttrString(options,"stereo_capable"));
   
-  PyRun_SimpleString("sys.stdout = pcatch\n");
-  PyRun_SimpleString("sys.stderr = pcatch\n");
-  
-  PyRun_SimpleString("_pm.set_globals(globals())");
-  
-  PyRun_SimpleString("import pm\n"); 
-  P_pm = PyDict_GetItemString(PM_Globals,"pm");
+}
 
-  PyRun_SimpleString("import pmm\n");  
-  P_pmm = PyDict_GetItemString(PM_Globals,"pmm");
+void PRunString(char *str) /* runs a string in the global PyMOL module namespace */
+{
+  PXDecRef(PyObject_CallFunction(P_exec,"s",str));
+}
 
-  PyRun_SimpleString("import pmx\n");  
-  P_pmx = PyDict_GetItemString(PM_Globals,"pmx");
+void PInit(void) 
+{
+  PyObject *pymol,*sys,*pcatch;
 
-  PyRun_SimpleString("import pmu\n");  
-  PyRun_SimpleString("import sglite\n"); 
-  PyRun_SimpleString("import string\n"); 
-  
+  PCatchInit();   /* setup standard-output catch routine */
 
-#ifndef _PYMOL_MODULE
-  PyRun_SimpleString("import thread\n"); 
-  PyRun_SimpleString("import threading\n"); 
-  PyRun_SimpleString("lock_oq = threading.RLock()");
-  PyRun_SimpleString("lock_iq = threading.RLock()");
-  PyRun_SimpleString("lock_api = threading.RLock()");
-  PyRun_SimpleString("glutThread = thread.get_ident()");
-#endif
+/* assumes that pymol module has been loaded */
 
-  PyRun_SimpleString("from pmp import *\n");
+  pymol = PyImport_AddModule("pymol"); /* get it */
+  if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
+  P_globals = PyModule_GetDict(pymol);
+  if(!P_globals) ErrFatal("PyMOL","can't find globals for 'pymol'");
+  P_exec = PyDict_GetItemString(P_globals,"exec_str");
+  if(!P_exec) ErrFatal("PyMOL","can't find 'pymol.exec_str()'");
 
-#ifndef _PYMOL_MODULE
-  PyRun_SimpleString("pm.setup_global_locks()");
-  if(PMGUI) {
-    PyRun_SimpleString("sys.argv=['pymol']\n");
-    PyRun_SimpleString("_t=threading.Thread(target=execfile,args=(os.environ['PYMOL_PATH']+'/modules/pmg.py',globals(),locals()))\n_t.setDaemon(1)\n_t.start()"); 
-  }
-#endif
+  sys = PyDict_GetItemString(P_globals,"sys");
+  if(!sys) ErrFatal("PyMOL","can't find 'pymol.sys'");
+  pcatch = PyImport_AddModule("pcatch"); 
+  if(!pcatch) ErrFatal("PyMOL","can't find module 'pcatch'");
+  PyObject_SetAttrString(sys,"stdout",pcatch);
+  PyObject_SetAttrString(sys,"stderr",pcatch);
+
+  PRunString("import cmd\n");  
+  P_cmd = PyDict_GetItemString(P_globals,"cmd");
+  if(!P_cmd) ErrFatal("PyMOL","can't find 'cmd'");
+
+  P_lock = PyObject_GetAttrString(P_cmd,"lock");
+  if(!P_lock) ErrFatal("PyMOL","can't find 'pm.lock()'");
+
+  P_unlock = PyObject_GetAttrString(P_cmd,"unlock");
+  if(!P_unlock) ErrFatal("PyMOL","can't find 'pm.unlock()'");
+
+  PRunString("import menu\n");  
+  P_menu = PyDict_GetItemString(P_globals,"menu");
+  if(!P_menu) ErrFatal("PyMOL","can't find module 'menu'");
+
+  PRunString("import xray\n");  
+  P_xray = PyDict_GetItemString(P_globals,"xray");
+  if(!P_xray) ErrFatal("PyMOL","can't find module 'xray'");
+
+  PRunString("import parser\n");  
+  P_parser = PyDict_GetItemString(P_globals,"parser");
+  if(!P_parser) ErrFatal("PyMOL","can't find module 'parser'");
+
+  P_parse = PyObject_GetAttrString(P_parser,"parse");
+  if(!P_parse) ErrFatal("PyMOL","can't find 'parser.parse()'");
+
+  PRunString("import util\n");  
+  PRunString("import sglite\n"); 
+  PRunString("import string\n"); 
+
+  /* backwards compatibility */
+
+  PRunString("pm = cmd\n");  
+  PRunString("pmu = util\n");  
+
+  PRunString("glutThread = thread.get_ident()");
 
   signal(SIGINT,my_interrupt);
 }
 
 void PStereoOff(void) 
 {
-  PyRun_SimpleString("pm._stereo(0)");
+  PRunString("pm._stereo(0)");
 }
 
 void PFree(void)
@@ -224,13 +292,8 @@ void PFlush(void) {
   /* NOTE: ASSUMES we current have unblocked Python threads and a locked API */
   char buffer[OrthoLineLength+1];
   if(OrthoCommandOut(buffer)) {
-
    PBlockAndUnlockAPI();
-
-	PyDict_SetItemString(PM_Globals,"pymol_cmd",PyString_FromString(buffer));
-	PyRun_SimpleString("pmp_cmd[pmp_nest] = pymol_cmd");
-	PyRun_SimpleString("exec(pymol,globals(),globals())");
-
+   PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
    PLockAPIAndUnblock();
   }
 }
@@ -249,12 +312,12 @@ void PBlock(void)
 void PBlockAndUnlockAPI(void)
 {
   PBlock();
-  PyRun_SimpleString("pm.unlock()");
+  PXDecRef(PyObject_CallFunction(P_unlock,NULL));
 }
 
 void PLockAPIAndUnblock(void)
 {
-  PyRun_SimpleString("pm.lock()");
+  PXDecRef(PyObject_CallFunction(P_lock,NULL));
   PUnblock();
 }
 
@@ -266,7 +329,7 @@ void PUnblock(void)
 
   /* P_glut_thread_active will not change as long as lock holds */
 
-  is_glut = PyObject_CallMethod(P_pm,"is_glut_thread","");
+  is_glut = PyObject_CallMethod(P_cmd,"is_glut_thread","");
   P_glut_thread_active = PyInt_AsLong(is_glut);
   Py_DECREF(is_glut);
 
@@ -282,7 +345,7 @@ void PDefineFloat(char *name,float value) {
   char buffer[OrthoLineLength];
   sprintf(buffer,"%s = %f\n",name,value);
   PBlock();
-  PyRun_SimpleString(buffer);
+  PRunString(buffer);
   PUnblock();
 }
 
@@ -310,7 +373,6 @@ static PyMethodDef PCatch_methods[] = {
 	{"write",	  PCatchWrite,   METH_VARARGS},
 	{NULL,		NULL}		/* sentinel */
 };
-
 
 void PCatchInit(void)
 {

@@ -33,8 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Scene.h"
 #include"Object.h"
-#include"PUtils.h"
-#include"PM.h"
+#include"P.h"
 #include"Executive.h"
 #include"Word.h"
 #include"RepMesh.h"
@@ -61,7 +60,7 @@ static GLint WinX = 640+cOrthoRightSceneMargin;
 static GLint WinY = 480+cOrthoBottomSceneMargin;
 static GLint Modifiers = 0;
 
-static char **myArgv;
+static char **myArgv,*myArgvv[2],myArgvvv[1024];
 static int myArgc;
 
 static int FinalInitFlag=1;
@@ -79,6 +78,9 @@ static CMain Main;
 int PyMOLReady = false;
 int PMGUI = true;
 int StereoCapable=false;
+int InternalGUI=true;
+
+void launch(void);
 
 /*========================================================================*/
 int MainSavingUnderWhileIdle(void)
@@ -146,11 +148,6 @@ static void MainDrag(int x,int y)
 static void MainDraw(void)
 {
   CMain *I = &Main;
-#ifndef _PYMOL_MODULE
-  int a,l;
-  char *p;
-  char buffer[300];
-#endif
 
   PLockAPIAsGlut();
 
@@ -161,57 +158,21 @@ static void MainDraw(void)
   OrthoBusyPrime();
   ExecutiveDrawNow();
 
-  if(FinalInitFlag)
-	 {
-		FinalInitFlag=0;
-
-#ifndef _PYMOL_MODULE
-		for(a=1;a<myArgc;a++)
-		  {
-			 l=strlen(myArgv[a]);
-			 if(l&&(l<255))
-				if(myArgv[a][0]!='-') 
-				  {
-					 p=strstr(myArgv[a],".py");
-					 if(p) {
-						sprintf(buffer,"run %s",myArgv[a]);
-						PParse(buffer);
-					 } else {
-						p=strstr(myArgv[a],".pdb");
-						if(p) {
-						  sprintf(buffer,"load %s",myArgv[a]);
-						  PParse(buffer);
-						} else {
-						  p=strstr(myArgv[a],".mol");
-						  if(p) {
-							 sprintf(buffer,"load %s",myArgv[a]);
-							 PParse(buffer);
-						  } else {
-                      p=strstr(myArgv[a],".mmod");
-                      if(p) {
-                        sprintf(buffer,"load %s",myArgv[a]);
-                        PParse(buffer);
-                      } else {
-                        p=strstr(myArgv[a],".pml");
-                        if(p) {
-                          sprintf(buffer,"@%s",myArgv[a]);
-                          PParse(buffer);
-                        }
-                      }
-						  }
-						}
-					 }
-				  }
-		  }
-#endif
-		OrthoRestorePrompt();
-	 }
-  else if(I->SwapFlag)
+  if(I->SwapFlag)
     {
       if(PMGUI) glutSwapBuffers();
       I->SwapFlag=false;
     }
+  if(FinalInitFlag)
+	 {
+		FinalInitFlag=0;
+      PBlockAndUnlockAPI();
+      PRunString("launch_gui()");
+      PRunString("exec_deferred()");
+      PLockAPIAndUnblock();
+    }
   PUnlockAPIAsGlut();
+
 }
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
@@ -415,47 +376,11 @@ void MainBusyIdle(void)
 
 /*========================================================================*/
 
-#ifndef _PYMOL_MODULE
-int main(int argc, char *argv[])
+void launch(void)
 {
-  int flags=-1;
-  myArgc=argc;
-  myArgv=argv;
-#else
-void was_main(int flags) 
-{
-  int argc = 1;
-  char *argv[2],argvv[1024] = "pymol";
-  argv[0]=argvv;
-  argv[1]=NULL;
-
-#ifdef _DRI_WORKAROUND
-  dlopen("libGL.so.1",RTLD_LAZY|RTLD_GLOBAL);
-#endif
-
-#endif  
-
-  myArgc=argc;
-  myArgv=argv;
-
-  if(myArgc>1)
-    {
-      if(strcmp(myArgv[1],"-c")==0)
-		  PMGUI=false;
-      if(strcmp(myArgv[1],"-s")==0)
-		  StereoCapable=true;
-    }
-
-  if (flags>=0) { /* started as a python module, flags passed in as args */
-	 if(!(flags&0x1)) 
-      PMGUI=false;
-    if(flags&0x2)
-      StereoCapable=true;
-  }
-
   if(PMGUI) {
     
-    glutInit(&argc, argv);
+    glutInit(&myArgc, myArgv);
 
     if(StereoCapable) {
       glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
@@ -507,10 +432,38 @@ void was_main(int flags)
       MainBusyIdle();
     }
   }
+}
 
+/*========================================================================*/
 #ifndef _PYMOL_MODULE
-  return 0;
+int main(int argc, char *argv[])
+{
+  int flags=-1;
+  myArgc=argc;
+  myArgv=argv;
+
+  PInitEmbedded(argc,argv);
+
+#else
+int was_main(void)
+{
+  myArgc=1;
+  strcpy(myArgvvv,"pymol");
+  myArgvv[0]=myArgvvv;
+  myArgvv[1]=NULL;
+  myArgv=myArgvv;
+
+#ifdef _DRI_WORKAROUND
+  dlopen("libGL.so.1",RTLD_LAZY|RTLD_GLOBAL);
 #endif
+
+#endif  
+
+  PGetOptions(&PMGUI,&InternalGUI,&StereoCapable);
+
+  launch();
+
+  return 0;
 
 }
 

@@ -39,8 +39,9 @@ Z* -------------------------------------------------------------------
 */
 
 PyObject *PConvFloatVLAToPyList(float *f);
+PyObject *PConvStringListToPyList(int l,char **str);
 
-void PConvPy44fTo44f(PyObject *src,float *dest); /* note lost of precision */
+void PConv44PyListTo44f(PyObject *src,float *dest); /* note loss of precision */
 
 #endif
 

@@ -24,10 +24,10 @@ Z* -------------------------------------------------------------------
    the main GLUT thread (with some exceptions, such as the simple
    drawing operations which seem to be thread safe).
 
-   Thus, pm.py needs to guard against direct invocation of certain _pm
-   (API) calls from outside threads [Examples: _pm.png(..),
-   _pmmpng(..) ].  Instead, it needs to hand them over to the main
-   thread by way of a pm.mdo(...)  statement.
+   Thus, pm.py needs to guard against direct invocation of certain _cmd
+   (API) calls from outside threads [Examples: _cmd.png(..),
+   _cmd.mpng(..) ].  Instead, it needs to hand them over to the main
+   thread by way of a cmd.mdo(...)  statement.
 
    Note that current, most glut operations have been pushed into the
    main event and redraw loops to avoid these kinds of problems - so
@@ -41,7 +41,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Err.h"
 #include"Util.h"
-#include"PM.h"
+#include"Cmd.h"
 #include"ButMode.h"
 #include"Ortho.h"
 #include"ObjectMolecule.h"
@@ -54,15 +54,13 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Movie.h"
 #include"Export.h"
-#include"PUtils.h"
+#include"P.h"
 #include"PConv.h"
 #include"Control.h"
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
 #define tmpSele2 "_tmp2"
-
-PyObject *PM_Globals = NULL;
 
 static void APIEntry(void)
 {
@@ -76,138 +74,134 @@ static void APIExit(void)
   PBlock();
 }
 
-static PyObject *PMAlter(PyObject *self,   PyObject *args);
-static PyObject *PMClip(PyObject *self, 	PyObject *args);
-static PyObject *PMCls(PyObject *self, 	PyObject *args);
-static PyObject *PMColor(PyObject *self, PyObject *args);
-static PyObject *PMColorDef(PyObject *self, 	PyObject *args);
-static PyObject *PMCopy(PyObject *self, PyObject *args);
-static PyObject *PMCountStates(PyObject *self, PyObject *args);
-static PyObject *PMDelete(PyObject *self, PyObject *args);
-static PyObject *PMDirty(PyObject *self, 	PyObject *args);
-static PyObject *PMDist(PyObject *dummy, PyObject *args);
-static PyObject *PMDistance(PyObject *dummy, PyObject *args);
-static PyObject *PMDo(PyObject *self, 	PyObject *args);
-static PyObject *PMDump(PyObject *self, 	PyObject *args);
-static PyObject *PMExportDots(PyObject *self, PyObject *args);
-static PyObject *PMFit(PyObject *dummy, PyObject *args);
-static PyObject *PMFitPairs(PyObject *dummy, PyObject *args);
-static PyObject *PMIntraFit(PyObject *dummy, PyObject *args);
-static PyObject *PMIsomesh(PyObject *self, 	PyObject *args);
-static PyObject *PMFrame(PyObject *self, PyObject *args);
-static PyObject *PMGet(PyObject *self, 	PyObject *args);
-static PyObject *PMGetPDB(PyObject *dummy, PyObject *args);
-static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args);
-static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args);
-static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args);
-static PyObject *PMGetMoment(PyObject *self, 	PyObject *args);
-static PyObject *PMMem(PyObject *self, 	PyObject *args);
-static PyObject *PMLoad(PyObject *self, 	PyObject *args);
-static PyObject *PMMClear(PyObject *self, 	PyObject *args);
-static PyObject *PMMDo(PyObject *self, 	PyObject *args);
-static PyObject *PMMMatrix(PyObject *self, 	PyObject *args);
-static PyObject *PMMove(PyObject *self, 	PyObject *args);
-static PyObject *PMMPlay(PyObject *self, 	PyObject *args);
-static PyObject *PMMPNG(PyObject *self, 	PyObject *args);
-static PyObject *PMMSet(PyObject *self, 	PyObject *args);
-static PyObject *PMOrigin(PyObject *self, PyObject *args);
-static PyObject *PMOnOff(PyObject *self, 	PyObject *args);
-static PyObject *PMOrient(PyObject *dummy, PyObject *args);
-static PyObject *PMOverlap(PyObject *self, 	PyObject *args);
-static PyObject *PMPNG(PyObject *self, 	PyObject *args);
-static PyObject *PMQuit(PyObject *self, 	PyObject *args);
-static PyObject *PMReset(PyObject *self, PyObject *args);
-static PyObject *PMRay(PyObject *self, 	PyObject *args);
-static PyObject *PMResetRate(PyObject *dummy, PyObject *args);
-static PyObject *PMRefresh(PyObject *self, 	PyObject *args);
-static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args);
-static PyObject *PMReady(PyObject *dummy, PyObject *args);
-static PyObject *PMRock(PyObject *self, PyObject *args);
-static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args);
-static PyObject *PMSelect(PyObject *self, PyObject *args);
-static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args);
-static PyObject *PMSet(PyObject *self, 	PyObject *args);
-static PyObject *PMSetFrame(PyObject *self, PyObject *args);
-static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args);
-static PyObject *PMShowHide(PyObject *self, 	PyObject *args);
-static PyObject *PMSort(PyObject *dummy, PyObject *args);
-static PyObject *PMSplash(PyObject *dummy, PyObject *args);
-static PyObject *PMStereo(PyObject *self, PyObject *args);
-static PyObject *PMSystem(PyObject *dummy, PyObject *args);
-static PyObject *PMSymExp(PyObject *dummy, PyObject *args);
-static PyObject *PMTest(PyObject *self, 	PyObject *args);
-static PyObject *PMTurn(PyObject *self, 	PyObject *args);
-static PyObject *PMViewport(PyObject *self, 	PyObject *args);
-static PyObject *PMZoom(PyObject *self, PyObject *args);
+static PyObject *CmdAlter(PyObject *self,   PyObject *args);
+static PyObject *CmdClip(PyObject *self, 	PyObject *args);
+static PyObject *CmdCls(PyObject *self, 	PyObject *args);
+static PyObject *CmdColor(PyObject *self, PyObject *args);
+static PyObject *CmdColorDef(PyObject *self, 	PyObject *args);
+static PyObject *CmdCopy(PyObject *self, PyObject *args);
+static PyObject *CmdCountStates(PyObject *self, PyObject *args);
+static PyObject *CmdDelete(PyObject *self, PyObject *args);
+static PyObject *CmdDirty(PyObject *self, 	PyObject *args);
+static PyObject *CmdDist(PyObject *dummy, PyObject *args);
+static PyObject *CmdDistance(PyObject *dummy, PyObject *args);
+static PyObject *CmdDo(PyObject *self, 	PyObject *args);
+static PyObject *CmdDump(PyObject *self, 	PyObject *args);
+static PyObject *CmdExportDots(PyObject *self, PyObject *args);
+static PyObject *CmdFit(PyObject *dummy, PyObject *args);
+static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
+static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
+static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
+static PyObject *CmdFrame(PyObject *self, PyObject *args);
+static PyObject *CmdGet(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
+static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
+static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *CmdMem(PyObject *self, 	PyObject *args);
+static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
+static PyObject *CmdMClear(PyObject *self, 	PyObject *args);
+static PyObject *CmdMDo(PyObject *self, 	PyObject *args);
+static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args);
+static PyObject *CmdMove(PyObject *self, 	PyObject *args);
+static PyObject *CmdMPlay(PyObject *self, 	PyObject *args);
+static PyObject *CmdMPNG(PyObject *self, 	PyObject *args);
+static PyObject *CmdMSet(PyObject *self, 	PyObject *args);
+static PyObject *CmdOrigin(PyObject *self, PyObject *args);
+static PyObject *CmdOnOff(PyObject *self, 	PyObject *args);
+static PyObject *CmdOrient(PyObject *dummy, PyObject *args);
+static PyObject *CmdOverlap(PyObject *self, 	PyObject *args);
+static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
+static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
+static PyObject *CmdReset(PyObject *self, PyObject *args);
+static PyObject *CmdRay(PyObject *self, 	PyObject *args);
+static PyObject *CmdResetRate(PyObject *dummy, PyObject *args);
+static PyObject *CmdRefresh(PyObject *self, 	PyObject *args);
+static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args);
+static PyObject *CmdReady(PyObject *dummy, PyObject *args);
+static PyObject *CmdRock(PyObject *self, PyObject *args);
+static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args);
+static PyObject *CmdSelect(PyObject *self, PyObject *args);
+static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
+static PyObject *CmdSet(PyObject *self, 	PyObject *args);
+static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
+static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
+static PyObject *CmdSort(PyObject *dummy, PyObject *args);
+static PyObject *CmdSplash(PyObject *dummy, PyObject *args);
+static PyObject *CmdStereo(PyObject *self, PyObject *args);
+static PyObject *CmdSystem(PyObject *dummy, PyObject *args);
+static PyObject *CmdSymExp(PyObject *dummy, PyObject *args);
+static PyObject *CmdTest(PyObject *self, 	PyObject *args);
+static PyObject *CmdTurn(PyObject *self, 	PyObject *args);
+static PyObject *CmdViewport(PyObject *self, 	PyObject *args);
+static PyObject *CmdZoom(PyObject *self, PyObject *args);
 
-static PyMethodDef PM_methods[] = {
-	{"alter",	     PMAlter,        METH_VARARGS },
-	{"clip",	        PMClip,         METH_VARARGS },
-	{"cls",	        PMCls,          METH_VARARGS },
-	{"color",	     PMColor,        METH_VARARGS },
-	{"colordef",	  PMColorDef,     METH_VARARGS },
-	{"copy",         PMCopy,         METH_VARARGS },
-	{"count_states", PMCountStates,  METH_VARARGS },
-	{"delete",       PMDelete,       METH_VARARGS },
-	{"dirty",        PMDirty,        METH_VARARGS },
-	{"distance",	  PMDistance,     METH_VARARGS },
-	{"dist",    	  PMDist,         METH_VARARGS },
-	{"do",	        PMDo,           METH_VARARGS },
-	{"dump",	        PMDump,         METH_VARARGS },
-	{"export_dots",  PMExportDots,   METH_VARARGS },
-	{"fit",          PMFit,          METH_VARARGS },
-	{"fit_pairs",    PMFitPairs,     METH_VARARGS },
-	{"frame",	     PMFrame,        METH_VARARGS },
-	{"get",	        PMGet,          METH_VARARGS },
-	{"get_feedback", PMGetFeedback,  METH_VARARGS },
-	{"get_globals",  PMGetGlobals,   METH_VARARGS },
-	{"get_matrix",	  PMGetMatrix,    METH_VARARGS },
-	{"get_moment",	  PMGetMoment,    METH_VARARGS },
-	{"get_pdb",	     PMGetPDB,       METH_VARARGS },
-	{"intrafit",     PMIntraFit,     METH_VARARGS },
-	{"isomesh",	     PMIsomesh,      METH_VARARGS },
-	{"load",	        PMLoad,         METH_VARARGS },
-	{"mclear",	     PMMClear,       METH_VARARGS },
-	{"mdo",	        PMMDo,          METH_VARARGS },
-	{"mem",	        PMMem,          METH_VARARGS },
-	{"move",	        PMMove,         METH_VARARGS },
-	{"mset",	        PMMSet,         METH_VARARGS },
-	{"mplay",	     PMMPlay,        METH_VARARGS },
-	{"mpng_",	     PMMPNG,         METH_VARARGS },
-	{"mmatrix",	     PMMMatrix,      METH_VARARGS },
-	{"origin",	     PMOrigin,       METH_VARARGS },
-	{"orient",	     PMOrient,       METH_VARARGS },
-	{"onoff",        PMOnOff,        METH_VARARGS },
-	{"overlap",      PMOverlap,      METH_VARARGS },
-	{"png",	        PMPNG,          METH_VARARGS },
-	{"quit",	        PMQuit,         METH_VARARGS },
-	{"ready",        PMReady,        METH_VARARGS },
-	{"refresh",      PMRefresh,      METH_VARARGS },
-	{"refresh_now",  PMRefreshNow,   METH_VARARGS },
-	{"render",	     PMRay,          METH_VARARGS },
-	{"reset",        PMReset,        METH_VARARGS },
-	{"reset_rate",	  PMResetRate,    METH_VARARGS },
-	{"rock",	        PMRock,         METH_VARARGS },
-	{"runpymol",	  PMRunPyMOL,     METH_VARARGS },
-	{"select",       PMSelect,       METH_VARARGS },
-	{"set",	        PMSet,          METH_VARARGS },
-	{"setframe",	  PMSetFrame,     METH_VARARGS },
-	{"showhide",     PMShowHide,     METH_VARARGS },
-	{"set_globals",  PMSetGlobals,   METH_VARARGS },
-	{"set_matrix",	  PMSetMatrix,    METH_VARARGS },
-	{"sort",         PMSort,         METH_VARARGS },
-	{"splash",       PMSplash,       METH_VARARGS },
-	{"stereo",	     PMStereo,       METH_VARARGS },
-	{"system",	     PMSystem,       METH_VARARGS },
-	{"symexp",	     PMSymExp,       METH_VARARGS },
-	{"test",	        PMTest,         METH_VARARGS },
-	{"turn",	        PMTurn,         METH_VARARGS },
-	{"viewport",     PMViewport,     METH_VARARGS },
-	{"zoom",	        PMZoom,         METH_VARARGS },
+static PyMethodDef Cmd_methods[] = {
+	{"alter",	     CmdAlter,        METH_VARARGS },
+	{"clip",	        CmdClip,         METH_VARARGS },
+	{"cls",	        CmdCls,          METH_VARARGS },
+	{"color",	     CmdColor,        METH_VARARGS },
+	{"colordef",	  CmdColorDef,     METH_VARARGS },
+	{"copy",         CmdCopy,         METH_VARARGS },
+	{"count_states", CmdCountStates,  METH_VARARGS },
+	{"delete",       CmdDelete,       METH_VARARGS },
+	{"dirty",        CmdDirty,        METH_VARARGS },
+	{"distance",	  CmdDistance,     METH_VARARGS },
+	{"dist",    	  CmdDist,         METH_VARARGS },
+	{"do",	        CmdDo,           METH_VARARGS },
+	{"dump",	        CmdDump,         METH_VARARGS },
+	{"export_dots",  CmdExportDots,   METH_VARARGS },
+	{"fit",          CmdFit,          METH_VARARGS },
+	{"fit_pairs",    CmdFitPairs,     METH_VARARGS },
+	{"frame",	     CmdFrame,        METH_VARARGS },
+	{"get",	        CmdGet,          METH_VARARGS },
+	{"get_feedback", CmdGetFeedback,  METH_VARARGS },
+	{"get_matrix",	  CmdGetMatrix,    METH_VARARGS },
+	{"get_moment",	  CmdGetMoment,    METH_VARARGS },
+	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
+	{"intrafit",     CmdIntraFit,     METH_VARARGS },
+	{"isomesh",	     CmdIsomesh,      METH_VARARGS },
+	{"load",	        CmdLoad,         METH_VARARGS },
+	{"mclear",	     CmdMClear,       METH_VARARGS },
+	{"mdo",	        CmdMDo,          METH_VARARGS },
+	{"mem",	        CmdMem,          METH_VARARGS },
+	{"move",	        CmdMove,         METH_VARARGS },
+	{"mset",	        CmdMSet,         METH_VARARGS },
+	{"mplay",	     CmdMPlay,        METH_VARARGS },
+	{"mpng_",	     CmdMPNG,         METH_VARARGS },
+	{"mmatrix",	     CmdMMatrix,      METH_VARARGS },
+	{"origin",	     CmdOrigin,       METH_VARARGS },
+	{"orient",	     CmdOrient,       METH_VARARGS },
+	{"onoff",        CmdOnOff,        METH_VARARGS },
+	{"overlap",      CmdOverlap,      METH_VARARGS },
+	{"png",	        CmdPNG,          METH_VARARGS },
+	{"quit",	        CmdQuit,         METH_VARARGS },
+	{"ready",        CmdReady,        METH_VARARGS },
+	{"refresh",      CmdRefresh,      METH_VARARGS },
+	{"refresh_now",  CmdRefreshNow,   METH_VARARGS },
+	{"render",	     CmdRay,          METH_VARARGS },
+	{"reset",        CmdReset,        METH_VARARGS },
+	{"reset_rate",	  CmdResetRate,    METH_VARARGS },
+	{"rock",	        CmdRock,         METH_VARARGS },
+	{"runpymol",	  CmdRunPyMOL,     METH_VARARGS },
+	{"select",       CmdSelect,       METH_VARARGS },
+	{"set",	        CmdSet,          METH_VARARGS },
+	{"setframe",	  CmdSetFrame,     METH_VARARGS },
+	{"showhide",     CmdShowHide,     METH_VARARGS },
+	{"set_matrix",	  CmdSetMatrix,    METH_VARARGS },
+	{"sort",         CmdSort,         METH_VARARGS },
+	{"splash",       CmdSplash,       METH_VARARGS },
+	{"stereo",	     CmdStereo,       METH_VARARGS },
+	{"system",	     CmdSystem,       METH_VARARGS },
+	{"symexp",	     CmdSymExp,       METH_VARARGS },
+	{"test",	        CmdTest,         METH_VARARGS },
+	{"turn",	        CmdTurn,         METH_VARARGS },
+	{"viewport",     CmdViewport,     METH_VARARGS },
+	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
 
-static PyObject *PMSplash(PyObject *dummy, PyObject *args)
+static PyObject *CmdSplash(PyObject *dummy, PyObject *args)
 {
   APIEntry();
   OrthoSplash();
@@ -216,7 +210,7 @@ static PyObject *PMSplash(PyObject *dummy, PyObject *args)
   return Py_None;  
 }
 
-static PyObject *PMCls(PyObject *dummy, PyObject *args)
+static PyObject *CmdCls(PyObject *dummy, PyObject *args)
 {
   APIEntry();
   OrthoClear();
@@ -225,7 +219,7 @@ static PyObject *PMCls(PyObject *dummy, PyObject *args)
   return Py_None;  
 }
 
-static PyObject *PMDump(PyObject *dummy, PyObject *args)
+static PyObject *CmdDump(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   PyArg_ParseTuple(args,"ss",&str1,&str2);
@@ -236,7 +230,7 @@ static PyObject *PMDump(PyObject *dummy, PyObject *args)
   return Py_None;  
 }
 
-static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
+static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   char *str1,*str2,*str3,*str4;
   float lvl,fbuf;
   int dotFlag;
@@ -300,7 +294,7 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
   return Py_None;  
 }
 
-static PyObject *PMSymExp(PyObject *self, 	PyObject *args) {
+static PyObject *CmdSymExp(PyObject *self, 	PyObject *args) {
   char *str1,*str2,*str3;
   OrthoLineType s1;
   float cutoff;
@@ -327,7 +321,7 @@ static PyObject *PMSymExp(PyObject *self, 	PyObject *args) {
 
 
 
-static PyObject *PMOverlap(PyObject *dummy, PyObject *args)
+static PyObject *CmdOverlap(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   int state1,state2;
@@ -346,7 +340,7 @@ static PyObject *PMOverlap(PyObject *dummy, PyObject *args)
   return result;
 }
 
-static PyObject *PMDist(PyObject *dummy, PyObject *args)
+static PyObject *CmdDist(PyObject *dummy, PyObject *args)
 {
   char *name,*str1,*str2;
   float cutoff;
@@ -364,7 +358,7 @@ static PyObject *PMDist(PyObject *dummy, PyObject *args)
   return Py_None;  
 }
 
-static PyObject *PMDistance(PyObject *dummy, PyObject *args)
+static PyObject *CmdDistance(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   OrthoLineType s1,s2;
@@ -382,7 +376,7 @@ static PyObject *PMDistance(PyObject *dummy, PyObject *args)
   return result;
 }
 
-static PyObject *PMAlter(PyObject *self,   PyObject *args)
+static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
   OrthoLineType s1;
@@ -398,7 +392,7 @@ static PyObject *PMAlter(PyObject *self,   PyObject *args)
 
 }
 
-static PyObject *PMCopy(PyObject *self,   PyObject *args)
+static PyObject *CmdCopy(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
   PyArg_ParseTuple(args,"ss",&str1,&str2);
@@ -409,7 +403,7 @@ static PyObject *PMCopy(PyObject *self,   PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMResetRate(PyObject *dummy, PyObject *args)
+static PyObject *CmdResetRate(PyObject *dummy, PyObject *args)
 {
   PyObject *result = NULL;
   result=Py_None;
@@ -420,14 +414,14 @@ static PyObject *PMResetRate(PyObject *dummy, PyObject *args)
   return(result);
 }
 
-static PyObject *PMReady(PyObject *dummy, PyObject *args)
+static PyObject *CmdReady(PyObject *dummy, PyObject *args)
 {
   PyObject *result = NULL;
   result = Py_BuildValue("i",PyMOLReady);
   return(result);
 }
 
-static PyObject *PMMem(PyObject *dummy, PyObject *args)
+static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 {
   PyObject *result = NULL;
   MemoryDebugDump();
@@ -436,18 +430,16 @@ static PyObject *PMMem(PyObject *dummy, PyObject *args)
   return(result);
 }
 
-static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args)
+static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
 {
-  int gui;
-  PyArg_ParseTuple(args,"i",&gui);
 #ifdef _PYMOL_MODULE
-  was_main(gui);
+  was_main();
 #endif
   Py_INCREF(Py_None);
   return Py_None;
 }
 
-static PyObject *PMCountStates(PyObject *dummy, PyObject *args)
+static PyObject *CmdCountStates(PyObject *dummy, PyObject *args)
 {
   char *str1;
   OrthoLineType s1;
@@ -464,7 +456,7 @@ static PyObject *PMCountStates(PyObject *dummy, PyObject *args)
   return(result);
 }
 
-static PyObject *PMSystem(PyObject *dummy, PyObject *args)
+static PyObject *CmdSystem(PyObject *dummy, PyObject *args)
 {
   char *str1;
   PyObject *result = NULL;
@@ -478,7 +470,7 @@ static PyObject *PMSystem(PyObject *dummy, PyObject *args)
   return(result);
 }
 
-static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args)
+static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
 {
   OrthoLineType buffer;
   PyObject *result = NULL;
@@ -495,7 +487,7 @@ static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args)
 }
 
 
-static PyObject *PMGetPDB(PyObject *dummy, PyObject *args)
+static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
 {
   char *str1;
   char *pdb = NULL;
@@ -521,7 +513,7 @@ static PyObject *PMGetPDB(PyObject *dummy, PyObject *args)
 }
 
 
-static PyObject *PMOrient(PyObject *dummy, PyObject *args)
+static PyObject *CmdOrient(PyObject *dummy, PyObject *args)
 {
   Matrix33d m;
   char *str1;
@@ -538,7 +530,7 @@ static PyObject *PMOrient(PyObject *dummy, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
+static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args)
 {
   PyObject *list;
   WordType *word = NULL;
@@ -577,7 +569,7 @@ static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
   return result;
 }
 
-static PyObject *PMIntraFit(PyObject *dummy, PyObject *args)
+static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args)
 {
   char *str1;
   int state;
@@ -600,7 +592,7 @@ static PyObject *PMIntraFit(PyObject *dummy, PyObject *args)
   return result;
 }
 
-static PyObject *PMFit(PyObject *dummy, PyObject *args)
+static PyObject *CmdFit(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   int mode;
@@ -617,7 +609,7 @@ static PyObject *PMFit(PyObject *dummy, PyObject *args)
   return result;
 }
 
-static PyObject *PMDirty(PyObject *self, 	PyObject *args)
+static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
 {
   APIEntry();
   OrthoDirty();
@@ -626,7 +618,7 @@ static PyObject *PMDirty(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMDo(PyObject *self, 	PyObject *args)
+static PyObject *CmdDo(PyObject *self, 	PyObject *args)
 {
   char *str1;
 
@@ -643,7 +635,7 @@ static PyObject *PMDo(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMRock(PyObject *self, PyObject *args)
+static PyObject *CmdRock(PyObject *self, PyObject *args)
 {
   APIEntry();
   ControlRock(-1);
@@ -651,7 +643,7 @@ static PyObject *PMRock(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMGetMoment(PyObject *self, 	PyObject *args)
+static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args)
 {
   Matrix33d m;
   PyObject *result;
@@ -668,7 +660,7 @@ static PyObject *PMGetMoment(PyObject *self, 	PyObject *args)
   return result;
 }
 
-static PyObject *PMExportDots(PyObject *self, 	PyObject *args)
+static PyObject *CmdExportDots(PyObject *self, 	PyObject *args)
 {
   PyObject *result=NULL;
   PyObject *cObj;
@@ -696,7 +688,7 @@ static PyObject *PMExportDots(PyObject *self, 	PyObject *args)
   return result;
 }
 
-static PyObject *PMSetFrame(PyObject *self, PyObject *args)
+static PyObject *CmdSetFrame(PyObject *self, PyObject *args)
 {
   int mode,frm;
   PyArg_ParseTuple(args,"ii",&mode,&frm);
@@ -707,7 +699,7 @@ static PyObject *PMSetFrame(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMFrame(PyObject *self, PyObject *args)
+static PyObject *CmdFrame(PyObject *self, PyObject *args)
 {
   int frm;
   PyArg_ParseTuple(args,"i",&frm);
@@ -720,7 +712,7 @@ static PyObject *PMFrame(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMStereo(PyObject *self, PyObject *args)
+static PyObject *CmdStereo(PyObject *self, PyObject *args)
 {
   PyObject *result;
   int i1;
@@ -736,7 +728,7 @@ static PyObject *PMStereo(PyObject *self, PyObject *args)
   return result;
 }
 
-static PyObject *PMReset(PyObject *self, PyObject *args)
+static PyObject *CmdReset(PyObject *self, PyObject *args)
 {
   int cmd;
   PyArg_ParseTuple(args,"i",&cmd);
@@ -747,7 +739,7 @@ static PyObject *PMReset(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args)
+static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
 {
   float m[16];
   PyArg_ParseTuple(args,"ffffffffffffffff",
@@ -762,7 +754,7 @@ static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args)
+static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args)
 {
   float *f;
   PyObject *result;
@@ -779,7 +771,7 @@ static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args)
   return result;
 }
 
-static PyObject *PMMDo(PyObject *self, 	PyObject *args)
+static PyObject *CmdMDo(PyObject *self, 	PyObject *args)
 {
   char *cmd;
   int frame;
@@ -791,7 +783,7 @@ static PyObject *PMMDo(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMMPlay(PyObject *self, 	PyObject *args)
+static PyObject *CmdMPlay(PyObject *self, 	PyObject *args)
 {
   int cmd;
   PyArg_ParseTuple(args,"i",&cmd);
@@ -802,7 +794,7 @@ static PyObject *PMMPlay(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMMMatrix(PyObject *self, 	PyObject *args)
+static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
 {
   int cmd;
   PyArg_ParseTuple(args,"i",&cmd);
@@ -813,28 +805,7 @@ static PyObject *PMMMatrix(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args)
-{
-  PyObject *result = NULL;
-  PyObject *globals;
-  
-  PyArg_ParseTuple(args, "O", &globals);
-  if(globals) {
-	 PM_Globals = globals;
-  }
-  result = Py_None;
-  Py_INCREF(result);
-  return result;
-}
-
-static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args)
-{
-  PyObject *result = PM_Globals;
-  Py_INCREF(result);
-  return result;
-}
-
-static PyObject *PMMClear(PyObject *self, 	PyObject *args)
+static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
 {
   APIEntry();
   MovieClearImages();
@@ -843,7 +814,7 @@ static PyObject *PMMClear(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMRefresh(PyObject *self, 	PyObject *args)
+static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
 {
   APIEntry();
   ExecutiveDrawNow();
@@ -852,7 +823,7 @@ static PyObject *PMRefresh(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args)
+static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
 {
   APIEntry();
   ExecutiveDrawNow();
@@ -862,7 +833,7 @@ static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMPNG(PyObject *self, 	PyObject *args)
+static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
 {
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
@@ -874,7 +845,7 @@ static PyObject *PMPNG(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMMPNG(PyObject *self, 	PyObject *args)
+static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
 {
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
@@ -885,7 +856,7 @@ static PyObject *PMMPNG(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMMSet(PyObject *self, 	PyObject *args)
+static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
 {
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
@@ -897,7 +868,7 @@ static PyObject *PMMSet(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMViewport(PyObject *self, 	PyObject *args)
+static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
 {
   int w,h;
   PyArg_ParseTuple(args,"ii",&w,&h);
@@ -913,7 +884,7 @@ static PyObject *PMViewport(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMColor(PyObject *self, 	PyObject *args)
+static PyObject *CmdColor(PyObject *self, 	PyObject *args)
 {
   char *str1,*color;
   int flags;
@@ -928,7 +899,7 @@ static PyObject *PMColor(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMColorDef(PyObject *self, 	PyObject *args)
+static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
 {
   char *color;
   float v[3];
@@ -940,7 +911,7 @@ static PyObject *PMColorDef(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMRay(PyObject *self, 	PyObject *args)
+static PyObject *CmdRay(PyObject *self, 	PyObject *args)
 {
   APIEntry();
   ExecutiveRay();
@@ -949,7 +920,7 @@ static PyObject *PMRay(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMClip(PyObject *self, 	PyObject *args)
+static PyObject *CmdClip(PyObject *self, 	PyObject *args)
 {
   char *sname;
   float dist;
@@ -969,7 +940,7 @@ static PyObject *PMClip(PyObject *self, 	PyObject *args)
 
 }
 
-static PyObject *PMMove(PyObject *self, 	PyObject *args)
+static PyObject *CmdMove(PyObject *self, 	PyObject *args)
 {
   char *sname;
   float dist;
@@ -991,7 +962,7 @@ static PyObject *PMMove(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMTurn(PyObject *self, 	PyObject *args)
+static PyObject *CmdTurn(PyObject *self, 	PyObject *args)
 {
   char *sname;
   float angle;
@@ -1013,7 +984,7 @@ static PyObject *PMTurn(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMSet(PyObject *self, 	PyObject *args)
+static PyObject *CmdSet(PyObject *self, 	PyObject *args)
 {
   char *sname,*value;
   PyArg_ParseTuple(args,"ss",&sname,&value);
@@ -1024,7 +995,7 @@ static PyObject *PMSet(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMGet(PyObject *self, 	PyObject *args)
+static PyObject *CmdGet(PyObject *self, 	PyObject *args)
 {
   float f;
   char *sname;
@@ -1038,7 +1009,7 @@ static PyObject *PMGet(PyObject *self, 	PyObject *args)
   return result;
 }
 
-static PyObject *PMDelete(PyObject *self, 	PyObject *args)
+static PyObject *CmdDelete(PyObject *self, 	PyObject *args)
 {
   char *sname;
 
@@ -1050,7 +1021,7 @@ static PyObject *PMDelete(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMShowHide(PyObject *self, 	PyObject *args)
+static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
 {
   char *sname;
   int rep;
@@ -1070,7 +1041,7 @@ static PyObject *PMShowHide(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMOnOff(PyObject *self, 	PyObject *args)
+static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
 {
   char *name;
   int state;
@@ -1082,14 +1053,14 @@ static PyObject *PMOnOff(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMQuit(PyObject *self, 	PyObject *args)
+static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 {
   PExit(EXIT_SUCCESS);
   Py_INCREF(Py_None);
   return Py_None;
 }
 
-static PyObject *PMSelect(PyObject *self, PyObject *args)
+static PyObject *CmdSelect(PyObject *self, PyObject *args)
 {
   char *sname,*sele;
 
@@ -1102,7 +1073,7 @@ static PyObject *PMSelect(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMLoad(PyObject *self, PyObject *args)
+static PyObject *CmdLoad(PyObject *self, PyObject *args)
 {
   char *fname,*oname;
   Object *origObj = NULL,*obj;
@@ -1133,12 +1104,12 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 		if(obj) {
 		  ObjectSetName(obj,oname);
 		  ExecutiveManageObject(obj);
-		  sprintf(buf," PMLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
+		  sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
 		}
 	 } else {
 		ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame);
 		ExecutiveUpdateObjectSelection(origObj);
-		sprintf(buf," PMLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
+		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
 	 break;
   case cLoadTypeMOL:
@@ -1147,11 +1118,11 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 	   if(obj) {
 		 ObjectSetName(obj,oname);
 		 ExecutiveManageObject(obj);
-		 sprintf(buf," PMLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);		  
+		 sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);		  
 	   }
 	 } else if(origObj) {
 		ExecutiveUpdateObjectSelection(origObj);
-		sprintf(buf," PMLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
+		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
 	 break;
   case cLoadTypeMOLStr:
@@ -1160,11 +1131,11 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 	   if(obj) {
 		 ObjectSetName(obj,oname);
 		 ExecutiveManageObject(obj);
-		 sprintf(buf," PMLoad: MOL-string loaded into object \"%s\".\n",oname);		  
+		 sprintf(buf," CmdLoad: MOL-string loaded into object \"%s\".\n",oname);		  
 	   }
 	 } else if(origObj) {
 		ExecutiveUpdateObjectSelection(origObj);
-		sprintf(buf," PMLoad: MOL-string appended into object \"%s\".\n",oname);
+		sprintf(buf," CmdLoad: MOL-string appended into object \"%s\".\n",oname);
 	 }
 	 break;
   case cLoadTypeMMD:
@@ -1173,11 +1144,11 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 	   if(obj) {
         ObjectSetName(obj,oname);
         ExecutiveManageObject(obj);
-        sprintf(buf," PMLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);		  
+        sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);		  
 	   }
 	 } else if(origObj) {
 		ExecutiveUpdateObjectSelection(origObj);
-		sprintf(buf," PMLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
+		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
     break;
   case cLoadTypeMMDSeparate:
@@ -1189,11 +1160,11 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 	   if(obj) {
 		 ObjectSetName(obj,oname);
 		 ExecutiveManageObject(obj);
-		 sprintf(buf," PMLoad: MMD-string loaded into object \"%s\".\n",oname);		  
+		 sprintf(buf," CmdLoad: MMD-string loaded into object \"%s\".\n",oname);		  
 	   }
 	 } else if(origObj) {
 		ExecutiveUpdateObjectSelection(origObj);
-		sprintf(buf," PMLoad: MMD-string appended into object \"%s\".\n",oname);
+		sprintf(buf," CmdLoad: MMD-string appended into object \"%s\".\n",oname);
 	 }
 	 break;
   case cLoadTypeXPLORMap:
@@ -1202,11 +1173,11 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 		if(obj) {
 		  ObjectSetName(obj,oname);
 		  ExecutiveManageObject((Object*)obj);
-		  sprintf(buf," PMLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
+		  sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
 		}
 	 } else {
 		ObjectMapLoadXPLORFile((ObjectMap*)origObj,fname,frame);
-		sprintf(buf," PMLoad: \"%s\" appended into object \"%s\".\n",
+		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
 				  fname,oname);
 	 }
 	 break;
@@ -1220,7 +1191,7 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMOrigin(PyObject *self, PyObject *args)
+static PyObject *CmdOrigin(PyObject *self, PyObject *args)
 {
   char *str1;
   OrthoLineType s1;
@@ -1235,7 +1206,7 @@ static PyObject *PMOrigin(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMSort(PyObject *self, PyObject *args)
+static PyObject *CmdSort(PyObject *self, PyObject *args)
 {
   char *name;
   PyArg_ParseTuple(args,"s",&name);
@@ -1246,7 +1217,7 @@ static PyObject *PMSort(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMTest(PyObject *self, PyObject *args)
+static PyObject *CmdTest(PyObject *self, PyObject *args)
 {
   Object *obj;
   APIEntry();
@@ -1257,7 +1228,7 @@ static PyObject *PMTest(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *PMZoom(PyObject *self, PyObject *args)
+static PyObject *CmdZoom(PyObject *self, PyObject *args)
 {
   char *str1;
   OrthoLineType s1;
@@ -1272,14 +1243,8 @@ static PyObject *PMZoom(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-#ifdef _PYMOL_MODULE
-void PMInit(void) {}
-void init_pm(void);
-void init_pm(void)
-#else
-void PMInit(void)
-#endif
+void init_cmd(void)
 {
-  PyImport_AddModule("_pm");
-  Py_InitModule("_pm", PM_methods);
+  PyImport_AddModule("_cmd");
+  Py_InitModule("_cmd", Cmd_methods);
 }

@@ -7,7 +7,7 @@
 XLIB_DIR = -L/usr/X11R6/lib
 LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
 DEFS = -D_PYMOL_3DFX -D_PYMOL_MODULE
-BUILD = -shared -o modules/_pm.so
+BUILD = -shared -o modules/_cmd.so
 #--- Build for LINUX with embedded Python (not recommended)
 #XLIB_DIR = -L/usr/X11R6/lib 
 #LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
@@ -17,13 +17,13 @@ BUILD = -shared -o modules/_pm.so
 #XLIB_DIR = -L/usr/X11R6/lib
 #LIBS = -lpython1.5 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
 #DEFS = -D_PYMOL_MODULE 
-#BUILD = -shared -o modules/_pm.so
+#BUILD = -shared -o modules/_cmd.so
 #--- Build for Windows as an importable module
 #  - NOTE: windows port doesn't yet include contrib
 #XLIB_DIR = 
 #LIBS = -lpython15 -lopengl32 -lglu32 -lglut32 -lpng -lz
 #DEFS = -D_PYMOL_MODULE
-#BUILD = -o modules/_pm.pyd
+#BUILD = -o modules/_cmd.pyd
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------

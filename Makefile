@@ -42,9 +42,9 @@ unix: .includes .depends .update
 	cc $(BUILD) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)
 
 windows: .includes .depends .update 
-	echo "EXPORTS" > _pm.def
-	nm --demangle --defined-only */*.o | grep ' T ' | sed 's/.* T //' >> _pm.def 
-	dllwrap --dllname _pm.pyd --driver-name gcc $(BUILD) --def _pm.def -s  */*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
+	echo "EXPORTS" > _cmd.def
+	nm --demangle --defined-only */*.o | grep ' T ' | sed 's/.* T //' >> _cmd.def 
+	dllwrap --dllname _cmd.pyd --driver-name gcc $(BUILD) --def _cmd.def -s  */*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
 	/bin/rm -f .update .includes
 
 fast: .update
@@ -55,17 +55,22 @@ depends:
 	/bin/rm -f */*.p
 	$(MAKE) .depends
 
+pytouch:
+	touch layer5/main.c
+	touch layer1/P.c
+	touch layer4/Cmd.c
+
 clean: 
 	touch .no_fail
 	/bin/rm -f layer*/*.o layer*/*.p \
 	layer*/.files layer*/.depends layer*/.includes \
-	*.log core */core game.* log.* _pm.def .update .contrib .no_fail*
+	*.log core */core game.* log.* _cmd.def .update .contrib .no_fail*
 	cd contrib;$(MAKE) clean
 
 distclean: clean
 	touch .no_fail
 	/bin/rm -f modules/*.pyc modules/*.so pymol.exe \
-	modules/Pmw/*.pyc modules/Pmw/*/*.pyc modules/Pmw/*/*/*.pyc .no_fail*
+	modules/pymol/*.pyc modules/pmg_tk/*.pyc .no_fail*
 	cd contrib;$(MAKE) distclean
 
 dist: distclean

@@ -12,20 +12,22 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-# pm.py 
+# cmd.py 
 # Python interface module for PyMol
 #
 # **This is the only module which should be/need be imported by 
 # ** PyMol API Based Programs
 
 import re
-import _pm
+import _cmd
 import string
 import traceback
 import thread
 import types
-import __main__
+import pymol
 import os
+
+lock_api = pymol.lock_api
 
 def commands():
    '''
@@ -72,8 +74,8 @@ functions have an equivalent API method with the same name.
  
 USAGE
  
-   import pm
-   <result> = pm.<methods>( <args> ) 
+   from pymol import cmd
+   <result> = cmd.<methods>( <args> ) 
     
 API-ONLY METHODS
  
@@ -202,19 +204,19 @@ load frame002.pdb,mov
  
    will create a two frame movie.  So will the following program:
    
-import pm
+from pymol import cmd
    
 for a in ( "frame001.pdb","frame002.pdb" ):
-   pm.load(a,"mov")
+   cmd.load(a,"mov")
  
    which can be executed at the command line using the "run" command.
    
-   Python's built-it glob module can be useful for loading movies.
- 
-import pm
+   Python built-it glob module can be useful for loading movies.
+
+from pymol import cmd
 import glob
 for a in ( glob.glob("frame*.pdb") ):
-   pm.load(a,"mov")
+   cmd.load(a,"mov")
  
 NOTE
  
@@ -321,9 +323,9 @@ UNSUPPORTED - LIKELY TO BE REMOVED
    try:
       lock()
       if len(arg)==0:
-         r = _pm.sort("")
+         r = _cmd.sort("")
       else:
-         r = _pm.sort(arg[0])
+         r = _cmd.sort(arg[0])
    finally:
       unlock()
    return r
@@ -331,7 +333,7 @@ UNSUPPORTED - LIKELY TO BE REMOVED
 def cls():
    try:
       lock()
-      r = _pm.cls()
+      r = _cmd.cls()
    finally:
       unlock()
    return r
@@ -346,7 +348,7 @@ debugging feature, not an official part of the API.
 '''
    try:
       lock()
-      r = _pm.mem()
+      r = _cmd.mem()
    finally:
       unlock()
    return r
@@ -371,7 +373,7 @@ USAGE
  
 PYMOL API
  
-   pm.dist( string name, string selection1, string selection2,
+   cmd.dist( string name, string selection1, string selection2,
           string cutoff, string mode )
    returns None
  
@@ -384,8 +386,8 @@ NOTES
    if la<2:
       try:
          lock()
-         cnt = _pm.get("dist_counter") + 1.0
-         _pm.set("dist_counter","%1.0f" % cnt)
+         cnt = _cmd.get("dist_counter") + 1.0
+         _cmd.set("dist_counter","%1.0f" % cnt)
          nam = "dist%02.0f" % cnt
       finally:
          unlock()
@@ -410,7 +412,7 @@ NOTES
          optarg1 = float(arg[2])
       try:
          lock()
-         r = _pm.dist(nam,sel1,sel2,optarg2,optarg1)
+         r = _cmd.dist(nam,sel1,sel2,optarg2,optarg1)
       finally:
          unlock()
    return r
@@ -465,7 +467,7 @@ USAGE
  
 PYMOL API
  
-   pm.symexp( string prefix, string object, string selection,
+   cmd.symexp( string prefix, string object, string selection,
            string cutoff) 
 
    '''
@@ -489,7 +491,7 @@ PYMOL API
       dist=arg[2]
       try:
          lock()
-         r = _pm.symexp(nam,obj,sele,float(dist))
+         r = _cmd.symexp(nam,obj,sele,float(dist))
       finally:
          unlock()
    return r
@@ -525,7 +527,7 @@ USAGE
          optarg2 = arg[3]
       try:
          lock()
-         r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,0)
+         r = _cmd.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,0)
       finally:
          unlock()
    return r
@@ -561,7 +563,7 @@ USAGE
          optarg2 = arg[3]
       try:
          lock()
-         r = _pm.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,1)
+         r = _cmd.isomesh(nam,0,map,mopt,optarg1,optarg2,lvl,1)
       finally:
          unlock()
    return r
@@ -570,7 +572,7 @@ def ready():
    '''
 INTERNAL USAGE
    '''
-   return _pm.ready()
+   return _cmd.ready()
 
 def splash():
    '''
@@ -581,7 +583,7 @@ DESCRIPTION
    set("text","1")
    try:
       lock()
-      r = _pm.splash()
+      r = _cmd.splash()
    finally:
       unlock()
    return r
@@ -599,11 +601,11 @@ USAGE
  
 PYMOL API
  
-   pm.copy(new-object-name,object)
+   cmd.copy(new-object-name,object)
    '''
    try:
       lock()
-      r = _pm.copy(src,dst)
+      r = _cmd.copy(src,dst)
    finally:
       unlock()
    return r
@@ -633,7 +635,7 @@ EXAMPLES
    '''
    try:
       lock()
-      r = _pm.alter(sele,expr)
+      r = _cmd.alter(sele,expr)
    finally:
       unlock()   
    return r
@@ -662,7 +664,7 @@ USAGE
    if a=="on":
       try:
          lock()
-         if _pm.stereo(1):
+         if _cmd.stereo(1):
             r = _stereo(1)
          else:
             print " error: stereo not available"
@@ -671,7 +673,7 @@ USAGE
    else:
       try:
          lock()
-         if _pm.stereo(0):
+         if _cmd.stereo(0):
             r = _stereo(0)
       finally:
          unlock();
@@ -688,7 +690,7 @@ UNSUPPORTED FEATURE - LIKELY TO CHANGE
       if state[1]<1: state[1]=1
    try:
       lock()
-      r = _pm.overlap(arg[0],arg[1],state[0]-1,state[1]-1)
+      r = _cmd.overlap(arg[0],arg[1],state[0]-1,state[1]-1)
    finally:
       unlock()
    return r
@@ -711,7 +713,7 @@ OBSOLETE - TO BE REMOVED
    if b[0]!='(': b="(%"+b+")"
    try:
       lock()   
-      r = _pm.distance(a,b)
+      r = _cmd.distance(a,b)
    finally:
       unlock()
    return r
@@ -731,7 +733,7 @@ INTERNAL
          'q': at[9],
          'b': at[10],
          'segi': at[11]}
-   exec at[0] in _pm.get_globals(),ns
+   exec at[0] in _cmd.get_globals(),ns
    type = string.upper(string.strip(ns['type']))
    type = type[:6]
    name = string.upper(string.strip(ns['name']))
@@ -755,29 +757,31 @@ def setup_global_locks():
    '''
 INTERNAL
    '''
-   __main__.lock_api = _pm.get_globals()['lock_api']
+   pass
+#   pymol.lock_api = _cmd.get_globals()['lock_api']
+
    
 def lock():
    '''
 INTERNAL
    '''
-   __main__.lock_api.acquire(1)
+   lock_api.acquire(1)
 
 def lock_attempt():
    '''
 INTERNAL
    '''
-   res = __main__.lock_api.acquire(blocking=0)
+   res = lock_api.acquire(blocking=0)
    if res:
-      _pm.get_globals()['lock_state'] = 1;
+      pymol.lock_state = 1;
    else:
-      _pm.get_globals()['lock_state'] = None;
+      pymol.lock_state = None;
 
 def unlock():
    '''
 INTERNAL
    '''
-   __main__.lock_api.release()
+   lock_api.release()
 
 def export_dots(a,b):
    '''
@@ -785,7 +789,7 @@ UNSUPPORTED - WILL BE REMOVED
    '''
    try:
       lock()
-      r = _pm.export_dots(a,int(b))
+      r = _cmd.export_dots(a,int(b))
    finally:
       unlock()
    return r
@@ -800,7 +804,7 @@ UNDOCUMENTED
          a = "(all)"
       else:
          a=arg[0]
-      r = _pm.count_states(a)
+      r = _cmd.count_states(a)
    finally:
       unlock()
    return r
@@ -814,16 +818,16 @@ DESCRIPTION
     
 PYMOL API
  
-   pm.do( command )
+   cmd.do( command )
  
 USAGE (PYTHON)
  
-   import pm
-   pm.do("load file.pdb")
+   from pymol import cmd
+   cmd.do("load file.pdb")
    '''
    try:
       lock()
-      r = _pm.do(a);
+      r = _cmd.do(a);
    finally:
       unlock()
    return r
@@ -845,11 +849,11 @@ EXAMPLES
     
 PYMOL API
  
-   pm.turn( string axis, float angle )
+   cmd.turn( string axis, float angle )
    '''
    try:
       lock()
-      r = _pm.turn(a,float(b))
+      r = _cmd.turn(a,float(b))
    finally:
       unlock()
    return r
@@ -867,12 +871,12 @@ USAGE
  
 PYMOL API
   
-   pm.ray()
+   cmd.ray()
    
    '''
    try:
       lock()   
-      r = _pm.render()
+      r = _cmd.render()
    finally:
       unlock()
    return r
@@ -881,7 +885,7 @@ def real_system(a):
    '''
 UNSUPPORTED
    '''
-   r = _pm.system(a)
+   r = _cmd.system(a)
    return r
 
 def system(a):
@@ -904,7 +908,7 @@ USAGE
  
 PYMOL API
   
-   pm.intra_fit( string selection, int state )
+   cmd.intra_fit( string selection, int state )
     
 EXAMPLES
  
@@ -912,8 +916,8 @@ EXAMPLES
    
 PYTHON EXAMPLE
  
-   import pm
-   rms = pm.intra_fit("(name ca)",1)
+   from pymol import cmd
+   rms = cmd.intra_fit("(name ca)",1)
    '''
    if len(arg)<2:
       b=-1
@@ -921,7 +925,7 @@ PYTHON EXAMPLE
       b=int(arg[1])-1
    try:
       lock()
-      r = _pm.intrafit(arg[0],b,2)
+      r = _cmd.intrafit(arg[0],b,2)
    finally:
       unlock()
    return r
@@ -937,12 +941,12 @@ DESCRIPTION
       
 PYMOL API
  
-   pm.intra_rms( string selection, int state)
+   cmd.intra_rms( string selection, int state)
  
 PYTHON EXAMPLE
  
-   import pm
-   rms = pm.intra_rms("(name ca)",1)
+   from pymol import cmd
+   rms = cmd.intra_rms("(name ca)",1)
    '''
    if len(arg)<2:
       b=-1
@@ -950,7 +954,7 @@ PYTHON EXAMPLE
       b=int(arg[1])-1
    try:
       lock()
-      r = _pm.intrafit(arg[0],b,1)
+      r = _cmd.intrafit(arg[0],b,1)
    finally:
       unlock()
    return r
@@ -966,12 +970,12 @@ DESCRIPTION
       
 PYMOL API
  
-   pm.intra_rms_cur( string selection, int state)
+   cmd.intra_rms_cur( string selection, int state)
  
 PYTHON EXAMPLE
  
-   import pm
-   rms = pm.intra_rms_cur("(name ca)",1)
+   from pymol import cmd
+   rms = cmd.intra_rms_cur("(name ca)",1)
    '''
    if len(arg)<2:
       b=-1
@@ -979,7 +983,7 @@ PYTHON EXAMPLE
       b=int(arg[1])-1
    try:
       lock()
-      r = _pm.intrafit(arg[0],b,0)
+      r = _cmd.intrafit(arg[0],b,0)
    finally:
       unlock()
    return r
@@ -1004,7 +1008,7 @@ EXAMPLES
    if b[0]!='(': b="(%"+b+")"
    try:
       lock()   
-      r = _pm.fit("(%s in %s)" % (a,b),
+      r = _cmd.fit("(%s in %s)" % (a,b),
                   "(%s in %s)" % (b,a),2)
    finally:
       unlock()
@@ -1029,7 +1033,7 @@ EXAMPLES
    if b[0]!='(': b="(%"+b+")"
    try:
       lock()   
-      r = _pm.fit("(%s in %s)" % (a,b),
+      r = _cmd.fit("(%s in %s)" % (a,b),
                   "(%s in %s)" % (b,a),0)
    finally:
       unlock()
@@ -1050,7 +1054,7 @@ USAGE
    if b[0]!='(': b="(%"+b+")"
    try:
       lock()   
-      r = _pm.fit("(%s in %s)" % (a,b),
+      r = _cmd.fit("(%s in %s)" % (a,b),
                   "(%s in %s)" % (b,a),1)
    finally:
       unlock()
@@ -1071,7 +1075,7 @@ USAGE
    '''
    try:
       lock()   
-      r = _pm.fit_pairs(arg)
+      r = _cmd.fit_pairs(arg)
    finally:
       unlock()
    return r
@@ -1082,7 +1086,7 @@ def expfit(a,b):
    '''
    try:
       lock()   
-      r = _pm.fit(a,b,2)
+      r = _cmd.fit(a,b,2)
    finally:
       unlock()
    return r
@@ -1101,7 +1105,7 @@ USAGE
  
 PYMOL API
 
-   pm.orient( string object-or-selection )
+   cmd.orient( string object-or-selection )
    '''
    if len(arg):
       a=arg[0]
@@ -1109,7 +1113,7 @@ PYMOL API
       a="all"
    try:
       lock()   
-      r = _pm.zoom(a)
+      r = _cmd.zoom(a)
    finally:
       unlock()
    return r
@@ -1126,7 +1130,7 @@ USAGE
  
 PYMOL API
  
-   pm.frame( int frame_number )
+   cmd.frame( int frame_number )
  
 NOTES
  
@@ -1134,7 +1138,7 @@ NOTES
    '''
    try:
       lock()   
-      r = _pm.frame(int(a))
+      r = _cmd.frame(int(a))
    finally:
       unlock()
    return r
@@ -1156,11 +1160,11 @@ EXAMPLES
     
 PYMOL API
  
-   pm.move( string axis, float distance )
+   cmd.move( string axis, float distance )
    '''
    try:
       lock()   
-      r = _pm.move(a,float(b))
+      r = _cmd.move(a,float(b))
    finally:
       unlock()
    return r
@@ -1182,11 +1186,11 @@ EXAMPLES
     
 PYMOL API
  
-   pm.clip( string plane, float distance )
+   cmd.clip( string plane, float distance )
    '''
    try:
       lock()   
-      r = _pm.clip(a,float(b))
+      r = _cmd.clip(a,float(b))
    finally:
       unlock()
    return r
@@ -1204,11 +1208,11 @@ USAGE
  
 PYMOL API
  
-   pm.origin( string object-or-selection )
+   cmd.origin( string object-or-selection )
    '''
    try:
       lock()   
-      r = _pm.origin(a)
+      r = _cmd.origin(a)
    finally:
       unlock()
    return r
@@ -1228,7 +1232,7 @@ USAGE
  
 PYMOL API
  
-   pm.orient( string object-or-selection )
+   cmd.orient( string object-or-selection )
    '''
    try:
       lock()
@@ -1236,7 +1240,7 @@ PYMOL API
          a = "(all)"
       else:
          a = arg[0]
-      r = _pm.orient(a)
+      r = _cmd.orient(a)
    finally:
       unlock()
    return r
@@ -1245,7 +1249,7 @@ def is_glut_thread():
    '''
 INTERNAL
    '''
-   if thread.get_ident() == __main__.glutThread:
+   if thread.get_ident() == pymol.glutThread:
       return 1
    else:
       return 0
@@ -1256,10 +1260,10 @@ INTERNAL
    '''
    try:
       lock()
-      if thread.get_ident() == __main__.glutThread:
-         r = _pm.refresh_now()
+      if thread.get_ident() == pymol.glutThread:
+         r = _cmd.refresh_now()
       else:
-         r = _pm.refresh()
+         r = _cmd.refresh()
    finally:
       unlock()
    return r
@@ -1270,7 +1274,7 @@ INTERNAL
    '''
    try:
       lock()   
-      r = _pm.dirty()
+      r = _cmd.dirty()
    finally:
       unlock()
    return r
@@ -1287,11 +1291,11 @@ USAGE
  
 PYMOL API
  
-   pm.set ( string variable, string value )
+   cmd.set ( string variable, string value )
    '''
    try:
       lock()   
-      r = _pm.set(a,b)
+      r = _cmd.set(a,b)
    finally:
       unlock()
    return r
@@ -1310,11 +1314,11 @@ USAGE
  
 PYMOL API
  
-   pm.reset ( )
+   cmd.reset ( )
    '''
    try:
       lock()   
-      r = _pm.reset(0)
+      r = _cmd.reset(0)
    finally:
       unlock()
    return r
@@ -1325,7 +1329,7 @@ UNDOCUMENTED
    '''
    try:
       lock()   
-      r = _pm.reset_rate()
+      r = _cmd.reset_rate()
    finally:
       unlock()
    return r
@@ -1343,11 +1347,11 @@ USAGE
  
 PYMOL API
  
-   pm.delete ( string object-or-selection-name )
+   cmd.delete ( string object-or-selection-name )
    '''
    try:
       lock()   
-      r = _pm.delete(a)
+      r = _cmd.delete(a)
    finally:
       unlock()
    return r
@@ -1355,7 +1359,7 @@ PYMOL API
 def _quit():
    try:
       lock()
-      r = _pm.quit()
+      r = _cmd.quit()
    finally:
       unlock()
    return r
@@ -1372,13 +1376,13 @@ USAGE
  
 PYMOL API
  
-   pm.quit()
+   cmd.quit()
    '''
-   if thread.get_ident() ==__main__.glutThread:
+   if thread.get_ident() ==pymol.glutThread:
       lock()
-      r = _pm.do("_quit")
+      r = _cmd.do("_quit")
    else:
-      r = _pm.do("_quit")
+      r = _cmd.do("_quit")
       thread.exit()
    return r
 
@@ -1394,12 +1398,12 @@ USAGE
  
 PYMOL API
  
-   pm.png( string filename )
+   cmd.png( string filename )
    '''
-   if thread.get_ident() ==__main__.glutThread:
+   if thread.get_ident() ==pymol.glutThread:
       r = _png(a)
    else:
-      r = _pm.do("pm._png('"+a+"')")
+      r = _cmd.do("cmd._png('"+a+"')")
    return r
 
 def _png(a):
@@ -1410,7 +1414,7 @@ def _png(a):
          fname = fname +".png"
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)         
-      r = _pm.png(fname)
+      r = _cmd.png(fname)
    finally:
       unlock()
    return r
@@ -1427,11 +1431,11 @@ USAGE
  
 PYMOL API
  
-   pm.mclear()
+   cmd.mclear()
    '''
    try:
       lock()   
-      r = _pm.mclear()
+      r = _cmd.mclear()
    finally:
       unlock()
    return r
@@ -1454,17 +1458,17 @@ DESCRIPTION
    
 PYMOL API
  
-   pm.set_key( string key, function fn, tuple arguments)
+   cmd.set_key( string key, function fn, tuple arguments)
  
 PYTHON EXAMPLE
  
-   import pm
+   from pymol import cmd
  
    def color_blue(object):
-      pm.color("blue",object)
+      cmd.color("blue",object)
     
-   pm.set_key( 'F1' , make_it_blue, ( "object1" ) )
-   pm.set_key( 'F2' , make_it_blue, ( "object2" ) )
+   cmd.set_key( 'F1' , make_it_blue, ( "object1" ) )
+   cmd.set_key( 'F2' , make_it_blue, ( "object2" ) )
  
    // would turn object1 blue when the F1 key is pressed and
    // would turn object2 blue when the F2 key is pressed.
@@ -1497,11 +1501,11 @@ USAGE
  
 PYMOL API
  
-   pm.mstop()
+   cmd.mstop()
    '''
    try:
       lock()   
-      r = _pm.mplay(0)
+      r = _cmd.mplay(0)
    finally:
       unlock()
    return r
@@ -1518,11 +1522,11 @@ USAGE
  
 PYMOL API
  
-   pm.mplay()
+   cmd.mplay()
    '''
    try:
       lock()   
-      r = _pm.mplay(1)
+      r = _cmd.mplay(1)
    finally:
       unlock()
    return r
@@ -1533,7 +1537,7 @@ DEPRECATED
    '''
    try:
       lock()   
-      r = _pm.mplay(2)
+      r = _cmd.mplay(2)
    finally:
       unlock()
    return r
@@ -1551,9 +1555,9 @@ USAGE
  
 PYMOL API
   
-   pm.viewport(int width, int height)
+   cmd.viewport(int width, int height)
    '''
-   r = _pm.viewport(int(a),int(b))
+   r = _cmd.viewport(int(a),int(b))
    
 def mdo(a,b):
    '''
@@ -1570,7 +1574,7 @@ USAGE
  
 PYMOL API
   
-   pm.mdo( int frame, string command )
+   cmd.mdo( int frame, string command )
  
 EXAMPLE
  
@@ -1589,7 +1593,7 @@ NOTES
    '''
    try:
       lock()   
-      r = _pm.mdo(int(a)-1,b)
+      r = _cmd.mdo(int(a)-1,b)
    finally:
       unlock()
    return r
@@ -1616,11 +1620,11 @@ USAGE
  
 PYMOL API
   
-   pm.rock()
+   cmd.rock()
    '''
    try:
       lock()   
-      r = _pm.rock()
+      r = _cmd.rock()
    finally:
       unlock()
    return r
@@ -1637,11 +1641,11 @@ USAGE
  
 PYMOL API
   
-   pm.forward()
+   cmd.forward()
    '''
    try:
       lock()   
-      r = _pm.setframe(5,1)
+      r = _cmd.setframe(5,1)
    finally:
       unlock()
    return r
@@ -1658,11 +1662,11 @@ USAGE
  
 PYMOL API
   
-   pm.backward()
+   cmd.backward()
    '''
    try:
       lock()   
-      r = _pm.setframe(5,-1)
+      r = _cmd.setframe(5,-1)
    finally:
       unlock()
    return r
@@ -1680,11 +1684,11 @@ USAGE
  
 PYMOL API
   
-   pm.rewind()
+   cmd.rewind()
    '''
    try:
       lock()   
-      r = _pm.setframe(0,0)
+      r = _cmd.setframe(0,0)
    finally:
       unlock()
    return r
@@ -1701,11 +1705,11 @@ USAGE
  
 PYMOL API
   
-   pm.ending()
+   cmd.ending()
    '''
    try:
       lock()   
-      r=_pm.setframe(2,0)
+      r=_cmd.setframe(2,0)
    finally:
       unlock()
    return r
@@ -1722,11 +1726,11 @@ USAGE
  
 PYMOL API
   
-   pm.middle()
+   cmd.middle()
    '''
    try:
       lock()   
-      r = _pm.setframe(3,0)
+      r = _cmd.setframe(3,0)
    finally:
       unlock()
    return r
@@ -1737,7 +1741,7 @@ DEBUGGING
    '''
    try:
       lock()   
-      r=_pm.test()
+      r=_cmd.test()
    finally:
       unlock()
    return r
@@ -1748,7 +1752,7 @@ DEBUGGING
    '''
    try:
       lock()
-      r = _pm.dump(fnam,obj)
+      r = _cmd.dump(fnam,obj)
    finally:
       unlock()
    return r
@@ -1765,7 +1769,7 @@ USAGE
  
 PYMOL API
   
-   pm.save(filename, selection, state)
+   cmd.save(filename, selection, state)
    '''
    r = 1
    try:
@@ -1800,7 +1804,7 @@ PYMOL API
          fname = os.path.expandvars(fname)
          f=open(fname,"w")
          if f:
-            f.write(_pm.get_pdb(sele,int(state)-1))
+            f.write(_cmd.get_pdb(sele,int(state)-1))
             f.close()
             r = None
             print " Save: wrote \""+fname+"\"."
@@ -1812,10 +1816,10 @@ def get_feedback():
    l = []
    try:
       lock()
-      r = _pm.get_feedback()
+      r = _cmd.get_feedback()
       while r:
          l.append(r)
-         r = _pm.get_feedback()
+         r = _cmd.get_feedback()
    finally:
       unlock()
    return l
@@ -1839,7 +1843,7 @@ USAGE
  
 PYMOL API
   
-   pm.load( filename [,object [,state]] )
+   cmd.load( filename [,object [,state]] )
    '''
    r = 1
    try:
@@ -1860,14 +1864,14 @@ PYMOL API
       if len(arg)==1:
          oname = re.sub("[^/]*\/","",arg[0])
          oname = re.sub("\.pdb|\.mol|\.mmod|\.xplor","",oname)
-         r = _pm.load(oname,fname,state,ftype)
+         r = _cmd.load(oname,fname,state,ftype)
       elif len(arg)==2:
          oname = string.strip(arg[1])
-         r = _pm.load(oname,fname,state,ftype)
+         r = _cmd.load(oname,fname,state,ftype)
       elif len(arg)==3:
          oname = string.strip(arg[1])
          state = int(arg[2])-1
-         r = _pm.load(oname,fname,state,ftype)
+         r = _cmd.load(oname,fname,state,ftype)
       elif len(arg)==4:
          if loadable.has_key(arg[3]):
             ftype = loadable[arg[3]]
@@ -1875,7 +1879,7 @@ PYMOL API
             ftype = int(arg[3])
          state = int(arg[2])-1
          oname = string.strip(arg[1])
-         r = _pm.load(oname,fname,state,ftype)
+         r = _cmd.load(oname,fname,state,ftype)
       else:
          print "argument error."
    finally:
@@ -1889,10 +1893,10 @@ def read_molstr(*arg):
       ftype = 3
       if len(arg)==2:
          oname = string.strip(arg[1])
-         r = _pm.load(oname,arg[0],-1,ftype)
+         r = _cmd.load(oname,arg[0],-1,ftype)
       elif len(arg)==3:
          oname = string.strip(arg[1])
-         r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
+         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype)
       else:
          print "argument error."
    finally:
@@ -1906,10 +1910,10 @@ def read_mmodstr(*arg):
       ftype = 6
       if len(arg)==2:
          oname = string.strip(arg[1])
-         r = _pm.load(oname,arg[0],-1,ftype)
+         r = _cmd.load(oname,arg[0],-1,ftype)
       elif len(arg)==3:
          oname = string.strip(arg[1])
-         r = _pm.load(oname,arg[0],int(arg[2])-1,ftype)
+         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype)
       else:
          print "argument error."
    finally:
@@ -1929,7 +1933,7 @@ USAGE
  
 PYMOL API
   
-   pm.select(string selection-name, string selection)
+   cmd.select(string selection-name, string selection)
  
 EXAMPLES 
  
@@ -1939,14 +1943,14 @@ EXAMPLES
    try:
       lock()   
       if len(arg)==1:
-         sel_cnt = _pm.get("sel_counter") + 1.0
-         _pm.set("sel_counter","%1.0f" % sel_cnt)
+         sel_cnt = _cmd.get("sel_counter") + 1.0
+         _cmd.set("sel_counter","%1.0f" % sel_cnt)
          sel_name = "sel%02.0f" % sel_cnt
          sel = arg[0]
       else:
          sel_name = arg[0]
          sel = arg[1]
-      r = _pm.select(sel_name,sel)
+      r = _cmd.select(sel_name,sel)
    finally:
       unlock()
    return r
@@ -1965,7 +1969,7 @@ USAGE
  
 PYMOL API
   
-   pm.color( string color, string color-name )
+   cmd.color( string color, string color-name )
  
 EXAMPLES 
  
@@ -1974,9 +1978,9 @@ EXAMPLES
    try:
       lock()   
       if len(arg)==2:
-         r = _pm.color(arg[0],arg[1],0)
+         r = _cmd.color(arg[0],arg[1],0)
       else:
-         r = _pm.color(arg[0],"(all)",0)   
+         r = _cmd.color(arg[0],"(all)",0)   
    finally:
       unlock()
    return r
@@ -1993,7 +1997,7 @@ USAGE
  
 PYMOL API
   
-   pm.set_color( string color, float-list color-components )
+   cmd.set_color( string color, float-list color-components )
  
 EXAMPLES 
  
@@ -2011,7 +2015,7 @@ EXAMPLES
          lock()
 
          if len(col)==3:
-            r = _pm.colordef(nam,float(col[0]),float(col[1]),float(col[2]))
+            r = _cmd.colordef(nam,float(col[0]),float(col[1]),float(col[2]))
          else:
             print "Error: invalid color."
       finally:
@@ -2036,12 +2040,12 @@ USAGE
  
 PYMOL API
  
-   pm.mpng( string prefix )
+   cmd.mpng( string prefix )
    '''
-   if thread.get_ident() ==__main__.glutThread:
+   if thread.get_ident() ==pymol.glutThread:
       r = _mpng(a)
    else:
-      r = _pm.do("pm._mpng('"+a+"')")
+      r = _cmd.do("cmd._mpng('"+a+"')")
    return r
 
 def _mpng(*arg):
@@ -2052,7 +2056,7 @@ def _mpng(*arg):
          fname = re.sub("\.png$","",fname)
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)
-      r = _pm.mpng_(fname)
+      r = _cmd.mpng_(fname)
    finally:
       unlock()
    return r
@@ -2076,7 +2080,7 @@ USAGE
  
 PYMOL API
  
-   pm.show( string representation, string object-or-selection )
+   cmd.show( string representation, string object-or-selection )
  
 EXAMPLES
  
@@ -2092,27 +2096,27 @@ NOTES
       lock()
       l = len(arg)
       if not l:
-         r = _pm.showhide("(all)",0,1); # show lines by default       
+         r = _cmd.showhide("(all)",0,1); # show lines by default       
       elif l==2:
          rep = arg[0]
          if rephash.has_key(rep):
             rep = rephash[rep]
          if repres.has_key(rep):      
             repn = repres[rep];
-            r = _pm.showhide(arg[1],repn,1);
+            r = _cmd.showhide(arg[1],repn,1);
          else:
             print "Error: unrecognized or ambiguous representation"
       elif arg[0]=='all':
-         r = _pm.showhide("(all)",0,1); # show lines by default 
+         r = _cmd.showhide("(all)",0,1); # show lines by default 
       elif arg[0][0]=='(':
-         r = _pm.showhide(arg[0],0,1);
+         r = _cmd.showhide(arg[0],0,1);
       else:
          rep = arg[0]
          if rephash.has_key(rep):
             rep = rephash[rep]
          if repres.has_key(rep):      
             repn = repres[rep];
-            r = _pm.showhide("(all)",repn,1);
+            r = _cmd.showhide("(all)",repn,1);
          else:
             print "Error: unrecognized or ambiguous representation"
    finally:
@@ -2137,7 +2141,7 @@ USAGE
  
 PYMOL API
  
-   pm.hide( string representation, string object-or-selection )
+   cmd.hide( string representation, string object-or-selection )
  
 EXAMPLES
  
@@ -2149,27 +2153,27 @@ EXAMPLES
    try:
       lock()
       if not l:
-         r = _pm.showhide("!",0,0);      
+         r = _cmd.showhide("!",0,0);      
       elif l==2:
          rep = arg[0]
          if rephash.has_key(rep):
             rep = rephash[rep]
          if repres.has_key(rep):      
             repn = repres[rep];
-            r = _pm.showhide(arg[1],repn,0);
+            r = _cmd.showhide(arg[1],repn,0);
          else:
             print "Error: unrecognized or ambiguous representation"
       elif arg[0]=='all':
-         r = _pm.showhide("!",0,0);
+         r = _cmd.showhide("!",0,0);
       elif arg[0][0]=='(':
-         r = _pm.showhide(arg[0],-1,0);
+         r = _cmd.showhide(arg[0],-1,0);
       else:
          rep = arg[0]
          if rephash.has_key(rep):
             rep = rephash[rep]
          if repres.has_key(rep):
             repn = repres[rep];
-            r = _pm.showhide("(all)",repn,0);
+            r = _cmd.showhide("(all)",repn,0);
          else:
             print "Error: unrecognized or ambiguous representation"
    finally:
@@ -2188,7 +2192,7 @@ USAGE
  
 PYMOL API
  
-   pm.mmatrix( string action )
+   cmd.mmatrix( string action )
  
 EXAMPLES
  
@@ -2198,11 +2202,11 @@ EXAMPLES
    try:
       lock()   
       if a=="clear":
-         r = _pm.mmatrix(0)
+         r = _cmd.mmatrix(0)
       elif a=="store":
-         r = _pm.mmatrix(1)
+         r = _cmd.mmatrix(1)
       elif a=="recall":
-         r = _pm.mmatrix(2)
+         r = _cmd.mmatrix(2)
    finally:
       unlock()
    return r
@@ -2220,7 +2224,7 @@ USAGE
    
 PYMOL API
  
-   pm.enable( string object-name )
+   cmd.enable( string object-name )
  
 EXAMPLE
  
@@ -2232,7 +2236,7 @@ EXAMPLE
       nam = 'all'
    try:
       lock()   
-      r = _pm.onoff(nam,1);
+      r = _cmd.onoff(nam,1);
    finally:
       unlock()
    return r
@@ -2250,7 +2254,7 @@ USAGE
  
 PYMOL API
  
-   pm.disable( string object-name )
+   cmd.disable( string object-name )
  
 EXAMPLE
  
@@ -2262,7 +2266,7 @@ EXAMPLE
       nam = 'all'
    try:
       lock()   
-      r = _pm.onoff(nam,0);
+      r = _cmd.onoff(nam,0);
    finally:
       unlock()
    return r
@@ -2281,7 +2285,7 @@ USAGE
  
 PYMOL API
  
-   pm.mset( string specification )
+   cmd.mset( string specification )
  
 EXAMPLES
 
@@ -2319,7 +2323,7 @@ EXAMPLES
             val = int(x) - 1
             output.append(str(val))
             last=val
-      r = _pm.mset(string.join(output," "))
+      r = _cmd.mset(string.join(output," "))
    finally:
       unlock()
    return r

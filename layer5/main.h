@@ -26,9 +26,10 @@ int MainSavingUnderWhileIdle(void);
 extern int PyMOLReady;
 extern int PMGUI;
 extern int StereoCapable;
+extern int InternalGUI;
 
 #ifdef _PYMOL_MODULE
-void was_main(int gui);
+int was_main(void);
 #endif
 
 

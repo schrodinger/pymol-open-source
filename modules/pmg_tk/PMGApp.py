@@ -20,10 +20,12 @@ from Setting import Setting
 
 import Pmw
 import sys, string
-import pm
+from pymol import cmd
 import re
 import thread
 import threading
+
+pm = cmd
 
 class PMGApp(AbstractApp):
 

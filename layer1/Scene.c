@@ -40,7 +40,7 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include"MyPNG.h"
 #include"Python.h"
-#include"PUtils.h"
+#include"P.h"
 
 
 #define cFrontMin 0.1
@@ -1286,7 +1286,7 @@ void SceneRender(Pickable *pick,int x,int y)
     ButModeSetRate(I->RenderTime);
     if(I->CopyNextFlag) {
       start_time = I->LastRender - start_time;
-      if((start_time>0.25)||(MainSavingUnderWhileIdle()))
+      if((start_time>0.10)||(MainSavingUnderWhileIdle()))
         if(!(ControlIdling()))
           SceneCopy(0);
     } else {

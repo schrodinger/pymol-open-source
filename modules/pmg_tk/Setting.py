@@ -14,7 +14,9 @@
 
 from Tkinter import *
 import Pmw
-import pm
+from pymol import cmd
+
+pm = cmd
 
 class Setting:
 

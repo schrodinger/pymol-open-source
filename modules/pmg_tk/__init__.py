@@ -12,7 +12,7 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-# pmg.py 
+# pmgui_tk 
 # TKinter based gui for PyMol
 # NOTE: must have treads support compiled into python to use this module
 #
@@ -20,9 +20,17 @@
 # **PyMol Programs
 
 from PMGApp import *
+import sys
 
-sys.argv=["pymol"]
-PMGApp(balloon_state='both').run()
+def run():
+   if not hasattr(sys,"argv"):
+      sys.argv=["pymol"]
+   PMGApp(balloon_state='both').run()
+
+t = threading.Thread(target=run,args=())
+t.setDaemon(1)
+t.start()
+
 
 
 
