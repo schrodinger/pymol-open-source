@@ -97,6 +97,7 @@ class SetEditor:
          self.listbox.delete(idx,idx)
          self.listbox.insert(idx,"%-30s %s"%(name,
                     cmd.get_setting_text(pymol.setting._get_index(name))))
+         self.listbox.selection_clear()
          self.listbox.selection_set(idx)
          
    def command(self,result):

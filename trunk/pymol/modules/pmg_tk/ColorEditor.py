@@ -115,8 +115,14 @@ class ColorEditor:
    def update(self,name):
       if not self.index.has_key(name):
          self.listbox.insert(0,"%s"%name)
+         self.listbox.selection_clear()         
          self.listbox.selection_set(0)
+         for a in self.index.keys():
+            self.index[a]=self.index[a]+1
          self.index[name]=0
+      else:
+         self.listbox.selection_clear()         
+         self.listbox.selection_set(self.index[name])
          
    def command(self,result):
       if result=='Done':
