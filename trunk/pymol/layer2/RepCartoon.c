@@ -87,7 +87,7 @@ static float smooth(float x,float power)
 Rep *RepCartoonNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,b,c,f,e,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4,*car,*cc,*sstype;
+  int a,b,c,f,e,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4=0,*car,*cc,*sstype;
   float *v,*v0,*v1,*v2,*v3,*v4,*v5,*vo,*vn,*va;
   float *p0,*p1,*p2;
   float *pv=NULL;
@@ -297,8 +297,8 @@ ENDFD;
                   for(a3=st;a3<=nd;a3++) {
                     
                     if(obj->DiscreteFlag) {
-                      if(cs==obj->DiscreteCSet[a4]) 
-                        a4=obj->DiscreteAtmToIdx[a4];
+                      if(cs==obj->DiscreteCSet[a3]) 
+                        a4=obj->DiscreteAtmToIdx[a3];
                       else 
                         a4=-1;
                     } else 

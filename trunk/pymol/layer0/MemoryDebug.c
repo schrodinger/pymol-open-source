@@ -151,7 +151,7 @@ void *VLASetSize(void *ptr,unsigned int newSize)
   VLARec *vla;
   char *start=NULL;
   char *stop;
-  unsigned int soffset;
+  unsigned int soffset=0;
   vla = &((VLARec*)ptr)[-1];
   if(vla->autoZero) {
 	 soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);

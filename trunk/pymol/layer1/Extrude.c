@@ -913,8 +913,9 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling)
           if(a>=subN) {
             f = ((I->N-a-1)/((float)sampling));
           } else if(a<sampling) {
-            f= (a/((float)sampling));
-          }
+            f = (a/((float)sampling));
+          } else 
+            f = 1.0; 
           f=smooth(f,2);
           s0[2]*=f;
 
