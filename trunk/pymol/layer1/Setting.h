@@ -110,7 +110,7 @@ float SettingGetNamed(char *name);
 #define cSetting_spheroid_scale       68
 #define cSetting_ray_trace_fog_start  69
 #define cSetting_spheroid_smooth      70
-#define cSetting_spheroid_ratio       71
+#define cSetting_spheroid_fill        71
 
 
 #endif
