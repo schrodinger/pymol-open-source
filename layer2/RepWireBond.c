@@ -384,7 +384,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						if(s1)
 						  {
 							 I->NP++;
-                      rp->.ptr = (void*)obj;
+                      rp->ptr = (void*)obj;
 							 rp->index = b1;
                       rp->bond = a;
                       rp++;
@@ -400,7 +400,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						if(s2)
 						  {
 							 I->NP++;
-                      rp->.ptr = (void*)obj;
+                      rp->ptr = (void*)obj;
 							 rp->index = b2;
                       rp->bond = a;
                       rp++;
