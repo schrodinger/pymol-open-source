@@ -248,24 +248,30 @@ def rainbow(selection="(name ca and alt '',A)",reverse=0): # NOT THREAD SAFE
 
    # your basic rainbow...
    
-   list = [(0,0,255),
-           (0,128,255),
-           (0,255,255),
-           (0,255,0),
-           (255,255,0),
-           (255,128,0),
-           (255,0,0)]
+   list = [
+      (0,0,255),      
+      (0,0,255),
+      (0,128,255),
+      (0,255,255),
+      (0,255,128),           
+      (0,255,0),
+      (128,255,0),
+      (255,255,0),
+      (255,128,0),
+      (255,0,0),
+      (255,0,0)      
+      ]
    if reverse:
       list.reverse()
    #
    last = list.pop(0)
-   cmd.set_color("rainbow000",[last[0]/255.0,last[1]/255.0,last[2]/255.0])
+   cmd.set_color("_000",[last[0]/255.0,last[1]/255.0,last[2]/255.0])
    c = 1
    for a in list:
       for b in range(1,21):
          b0 = b/20.0
          b1 = 1.0-b0
-         cname = "rainbow%03d"%c
+         cname = "_%03d"%c
          r = last[0]*b1+a[0]*b0
          g = last[1]*b1+a[1]*b0
          b = last[2]*b1+a[2]*b0
@@ -279,8 +285,8 @@ def rainbow(selection="(name ca and alt '',A)",reverse=0): # NOT THREAD SAFE
       return
    c = 0
    for a in cas:
-      col = int((120*c)/l)
-      cmd.color("rainbow%03d"%col,"((%s) and (byres %s`%d))"%(selection,a[0],a[1]))
+      col = int((200*c)/l)
+      cmd.color("_%03d"%col,"((%s) and (byres %s`%d))"%(selection,a[0],a[1]))
       c = c + 1
 
    cmd.feedback("pop")

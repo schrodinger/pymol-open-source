@@ -221,8 +221,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_cartoon_throw               122
 #define cSetting_cartoon_refine              123
 #define cSetting_cartoon_refine_tips         124
+#define cSetting_cartoon_discrete_colors     125
 
-#define cSetting_INIT                        125
+#define cSetting_INIT                        128
 
 #endif
 

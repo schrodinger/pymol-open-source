@@ -84,6 +84,9 @@ class Setting:
       self.cartoon_fancy_sheets = IntVar()
       self.cartoon_fancy_sheets.set(int(cmd.get_setting_legacy('cartoon_fancy_sheets')))
 
+      self.cartoon_discrete_colors = IntVar()
+      self.cartoon_discrete_colors.set(int(cmd.get_setting_legacy('cartoon_discrete_colors')))
+
       self.cartoon_smooth_loops = IntVar()
       self.cartoon_smooth_loops.set(int(cmd.get_setting_legacy('cartoon_smooth_loops')))
 
@@ -120,7 +123,7 @@ class Setting:
          'backface_cull'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.backface_cull.get())))),
          'depth_cue'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.depth_cue.get())))),
+         (lambda s,a: s.depth_cue_set(a)),
          'specular'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8))))),
 
@@ -132,6 +135,8 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_flat_sheets.get()))))),
          'cartoon_fancy_sheets'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_fancy_sheets.get()))))),
+         'cartoon_discrete_colors'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_discrete_colors.get()))))),
          'cartoon_smooth_loops'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_smooth_loops.get()))))),
 
@@ -166,7 +171,7 @@ class Setting:
          'backface_cull':
          (lambda s,t: (s.backface_cull.set(int(t[1][0])))), 
          'depth_cue'       :
-         (lambda s,t: (s.depth_cue.set(int(t[1][0])))), 
+         (lambda s,t: (s.depth_cue.set(int(t[1][0])))),
          'specular'       :
          (lambda s,t: (s.specular.set(t[1][0]>0.0))), 
          'cartoon_round_helices':
@@ -177,6 +182,8 @@ class Setting:
          (lambda s,t: (s.cartoon_flat_sheets.set(t[1][0]!=0))),
          'cartoon_fancy_sheets':
          (lambda s,t: (s.cartoon_fancy_sheets.set(t[1][0]!=0))),
+         'cartoon_discrete_colors':
+         (lambda s,t: (s.cartoon_discrete_colors.set(t[1][0]!=0))),
          'cartoon_smooth_loops':
          (lambda s,t: (s.cartoon_smooth_loops.set(t[1][0]!=0))),
          'ignore_pdb_segi':
@@ -202,14 +209,19 @@ class Setting:
          pymol.setting._get_index("cartoon_fancy_helices"),
          pymol.setting._get_index("cartoon_flat_sheets"),
          pymol.setting._get_index("cartoon_fancy_sheets"),
-         pymol.setting._get_index("cartoon_smooth_loops"),
+         pymol.setting._get_index("cartoon_discrete_colors"),
+         pymol.setting._get_index("cartoon_smooth_loops"),         
          pymol.setting._get_index("ignore_pdb_segi"),         
          ]
 
       self.active_dict = {}
       for a in self.active_list:
          self.active_dict[a] = pymol.setting._get_name(a)
-         
+
+   def depth_cue_set(self,sttng):
+      cmd.set(sttng,("%1.0f" % self.depth_cue.get()))
+      cmd.set("ray_trace_fog",("%1.0f" % self.depth_cue.get()))
+                         
    def update(self,sttng):
       set_fn = self.xref[sttng]
       set_fn(self,sttng)

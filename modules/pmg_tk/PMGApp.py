@@ -331,7 +331,7 @@ class PMGApp(AbstractApp):
       arg = cmd.get_names("selections")
       for a in arg:
          cmd.disable(a)
-      
+
    def performance(self,mode):
       if mode==0: # maximum quality
          cmd.set('line_smooth',1)
@@ -641,8 +641,8 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('line_smooth'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
-                         'Depth Cue.',
-                         label='Depth Cue',
+                         'Depth Cue Fog.',
+                         label='Depth Cue & Ray Trace Fog',
                         variable = self.setting.depth_cue,
                         command = lambda s=self: s.setting.update('depth_cue'))
 
@@ -743,6 +743,12 @@ class PMGApp(AbstractApp):
                          label='Smooth Loops',
                         variable = self.setting.cartoon_smooth_loops,
                         command = lambda s=self: s.setting.update('cartoon_smooth_loops'))
+
+      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+                         'Discrete Colors',
+                         label='Discrete Colors',
+                        variable = self.setting.cartoon_discrete_colors,
+                        command = lambda s=self: s.setting.update('cartoon_discrete_colors'))
 
 
       self.menuBar.addmenu('Wizards', 'Task Wizards')

@@ -147,6 +147,7 @@ int *SelectorGetIndexVLA(int sele);
 #define SELE_NGH1 ( 0x2100 | STYP_OPR1 | 0x10 )
 #define SELE_QVLx ( 0x2200 | STYP_SEL2 | 0x70 )
 #define SELE_BYO1 ( 0x2300 | STYP_OPR1 | 0x10 )
+#define SELE_SSTs ( 0x2400 | STYP_SEL1 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -209,6 +210,7 @@ static WordKeyValue Keyword[] =
   {  "bonded",   SELE_BNDz },
   {  "segi",     SELE_SEGs },
   {  "s;",       SELE_SEGs },
+  {  "ss",       SELE_SSTs },
   {  "model",    SELE_MODs },
   {  "m;",       SELE_MODs },
   {  "index",    SELE_IDXs },
@@ -2465,6 +2467,20 @@ int SelectorSelect1(EvalElem *base)
 		  {
 			 if(WordMatchComma(base[1].text,
                             I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].chain,
+                            I->IgnoreCase)<0)
+				{
+				  base[0].sele[a]=true;
+				  c++;
+				}
+			 else
+				base[0].sele[a]=false;
+        }
+		break;
+	 case SELE_SSTs:
+		for(a=0;a<I->NAtom;a++)
+		  {
+			 if(WordMatchComma(base[1].text,
+                            I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].ssType,
                             I->IgnoreCase)<0)
 				{
 				  base[0].sele[a]=true;

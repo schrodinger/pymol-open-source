@@ -537,6 +537,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_refine_tips:
   case cSetting_cartoon_throw:
   case cSetting_cartoon_debug:
+  case cSetting_cartoon_discrete_colors:
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
     SceneChanged();
     break;
@@ -998,6 +999,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_cartoon_refine, 5);  
 
   SettingSet_f(I,cSetting_cartoon_refine_tips, 10);  
+
+  SettingSet_f(I,cSetting_cartoon_discrete_colors, 0.0);  
 
 
 }
