@@ -53,6 +53,8 @@ double length3d ( double *v1 );
 
 void identity44f ( float *m1 );
 
+void copy44f44f ( float *src, float *dst );
+
 /* in the following matrix multiplies and transformations:
    the last two matrices can be the same matrix! */
 

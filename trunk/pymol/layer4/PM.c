@@ -55,6 +55,7 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include"Export.h"
 #include"PUtils.h"
+#include"PConv.h"
 #include"Control.h"
 
 #define tmpSele "_tmp"
@@ -113,9 +114,6 @@ static PyObject *PMOnOff(PyObject *self, 	PyObject *args);
 static PyObject *PMOrient(PyObject *dummy, PyObject *args);
 static PyObject *PMOverlap(PyObject *self, 	PyObject *args);
 static PyObject *PMPNG(PyObject *self, 	PyObject *args);
-static PyObject *PMSelect(PyObject *self, PyObject *args);
-static PyObject *PMShowHide(PyObject *self, 	PyObject *args);
-static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *PMQuit(PyObject *self, 	PyObject *args);
 static PyObject *PMReset(PyObject *self, PyObject *args);
 static PyObject *PMRay(PyObject *self, 	PyObject *args);
@@ -125,12 +123,17 @@ static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args);
 static PyObject *PMReady(PyObject *dummy, PyObject *args);
 static PyObject *PMRock(PyObject *self, PyObject *args);
 static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args);
-static PyObject *PMSystem(PyObject *dummy, PyObject *args);
+static PyObject *PMSelect(PyObject *self, PyObject *args);
+static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *PMSet(PyObject *self, 	PyObject *args);
 static PyObject *PMSetFrame(PyObject *self, PyObject *args);
 static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args);
+static PyObject *PMShowHide(PyObject *self, 	PyObject *args);
 static PyObject *PMSort(PyObject *dummy, PyObject *args);
 static PyObject *PMStereo(PyObject *self, PyObject *args);
+static PyObject *PMSystem(PyObject *dummy, PyObject *args);
+static PyObject *PMSymExp(PyObject *dummy, PyObject *args);
+static PyObject *PMTest(PyObject *self, 	PyObject *args);
 static PyObject *PMTurn(PyObject *self, 	PyObject *args);
 static PyObject *PMViewport(PyObject *self, 	PyObject *args);
 static PyObject *PMZoom(PyObject *self, PyObject *args);
@@ -192,6 +195,8 @@ static PyMethodDef PM_methods[] = {
 	{"sort",         PMSort,         METH_VARARGS },
 	{"stereo",	     PMStereo,       METH_VARARGS },
 	{"system",	     PMSystem,       METH_VARARGS },
+	{"symexp",	     PMSymExp,       METH_VARARGS },
+	{"test",	        PMTest,         METH_VARARGS },
 	{"turn",	        PMTurn,         METH_VARARGS },
 	{"viewport",     PMViewport,     METH_VARARGS },
 	{"zoom",	        PMZoom,         METH_VARARGS },
@@ -267,6 +272,32 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
   Py_INCREF(Py_None);
   return Py_None;  
 }
+
+static PyObject *PMSymExp(PyObject *self, 	PyObject *args) {
+  char *str1,*str2,*str3;
+  OrthoLineType s1;
+  float cutoff;
+  Object *mObj;
+  /* oper 0 = all, 1 = sele + buffer, 2 = vector */
+
+  PyArg_ParseTuple(args,"sssf",&str1,&str2,&str3,&cutoff);
+  APIEntry();
+  mObj=ExecutiveFindObjectByName(str2);  
+  if(mObj) {
+    if(mObj->type!=cObjectMolecule) {
+      mObj=NULL;
+    }
+  }
+  if(mObj) {
+    SelectorGetTmp(str3,s1);
+    ExecutiveSymExp(str1,str2,s1,cutoff);
+    SelectorFreeTmp(s1);
+  }
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
 
 
 static PyObject *PMOverlap(PyObject *dummy, PyObject *args)
@@ -1183,6 +1214,17 @@ static PyObject *PMSort(PyObject *self, PyObject *args)
   PyArg_ParseTuple(args,"s",&name);
   APIEntry();
   ExecutiveSort(name);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *PMTest(PyObject *self, PyObject *args)
+{
+  Object *obj;
+  APIEntry();
+  obj=ExecutiveFindObjectByName("test");
+  if(obj) ObjectMoleculeBlindSymMovie((ObjectMolecule*)obj);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

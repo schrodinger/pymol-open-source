@@ -95,16 +95,44 @@ static int BondCompare(int *a,int *b)
 /*========================================================================*/
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I)
 {
-/*
   CoordSet *frac;
+  int a,c;
+  int x,y,z;
+  float m[16];
+
   if(I->NCSet!=1) {
     ErrMessage("ObjectMolecule:","SymMovie only works on objects with a single state.");
+  } else if(!I->Symmetry) {
+    ErrMessage("ObjectMolecule:","No symmetry loaded!");
+  } else if(!I->Symmetry->NSymMat) {
+    ErrMessage("ObjectMolecule:","No symmetry matrices!");    
   } else if(I->CSet[0]) {
+    fflush(stdout);
     frac = CoordSetCopy(I->CSet[0]);
-    CoordSetOrthogonalize(I->CSet[0],I->Symmetry->Crystal);
+    CoordSetRealToFrac(frac,I->Symmetry->Crystal);
+    for(x=-1;x<2;x++)
+      for(y=-1;y<2;y++)
+        for(z=-1;z<2;z++)
+          for(a=0;a<I->Symmetry->NSymMat;a++) {
+            if(!((!a)&&(!x)&&(!y)&&(!z))) {
+              c = I->NCSet;
+              VLACheck(I->CSet,CoordSet*,c);
+              I->CSet[c] = CoordSetCopy(frac);
+              CoordSetTransform44f(I->CSet[c],I->Symmetry->SymMatVLA+(a*16));
+              identity44f(m);
+              m[3] = x;
+              m[7] = y;
+              m[11] = z;
+              CoordSetTransform44f(I->CSet[c],m);
+              CoordSetFracToReal(I->CSet[c],I->Symmetry->Crystal);
+              I->NCSet++;
+            }
+          }
+    frac->fFree(frac);
   }
-*/
+  SceneChanged();
 }
+
 /*========================================================================*/
 void ObjectMoleculeExtendIndices(ObjectMolecule *I)
 {
@@ -1024,7 +1052,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                          op->nvv1++;
                        }
 							 break;	
-						   case 'SVRT': 
+						   case 'SVRT':  /* gives us only vertices for a specific coordinate set */
                        if(b==op->i1) {
                          a1=I->CSet[b]->AtmToIdx[a];
                          if(a1>=0) {
@@ -1176,6 +1204,8 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
   AtomInfoType *a0,*a1;
   OOAlloc(ObjectMolecule);
   (*I)=(*obj);
+  I->Symmetry=NULL; /* TODO: add  copy */
+
   I->CSet=VLAMalloc(I->NCSet,sizeof(CoordSet*),5,true); /* auto-zero */
   for(a=0;a<I->NCSet;a++) {
     I->CSet[a]=CoordSetCopy(obj->CSet[a]);
@@ -1197,11 +1227,9 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
     *(a0++)=*(a1++);
 
   for(a=0;a<I->NAtom;a++) {
-    for(b=0;b<I->NAtom;b++) {
-      
-    }
     I->AtomInfo[a].selEntry=0;
   }
+  
   return(I);
 
 }
@@ -1217,6 +1245,7 @@ void ObjectMoleculeFree(ObjectMolecule *I)
         I->CSet[a]->fFree(I->CSet[a]);
 		I->CSet[a]=NULL;
 	 }
+  if(I->Symmetry) SymmetryFree(I->Symmetry);
   VLAFreeP(I->CSet);
   VLAFreeP(I->AtomInfo);
   VLAFreeP(I->Bond);

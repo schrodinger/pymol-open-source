@@ -472,6 +472,11 @@ void SettingInit(void)
 			"dash_gap");
 
   I->NSetting++;
+  I->Setting[cSetting_auto_zoom].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_auto_zoom].Name,
+			"auto_zoom");
+
+  I->NSetting++;
 #ifdef _PYMOL_WINDOWS
   I->Setting[cSetting_normal_workaround].Value[0] = 1;
 #else

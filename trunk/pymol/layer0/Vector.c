@@ -134,6 +134,25 @@ void identity44f ( float *m1 )
   for(a=0;a<16;a=a+5) m1[a]=1.0;
 }
 
+void copy44f44f ( float *src, float *dst )
+{
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+}
 void transform33f3f (float *m1, float *m2, float *m3) 
 {
   float m2r0=m2[0];

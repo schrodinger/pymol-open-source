@@ -61,15 +61,13 @@ void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst)
 /*========================================================================*/
 void CoordSetTransform44f(CoordSet *I,float *mat)
 {
-/*
   int a;
   float *v;
   v=I->Coord;
   for(a=0;a<I->NIndex;a++) {
-    MatrixTransform44f3f(mat,v,v);
+    transform44f3f(mat,v,v);
     v+=3;
   }  
-*/
 }
 /*========================================================================*/
 void CoordSetFracToReal(CoordSet *I,CCrystal *cryst)

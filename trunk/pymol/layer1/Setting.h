@@ -99,6 +99,7 @@ float SettingGetNamed(char *name);
 #define cSetting_dist_counter         57
 #define cSetting_dash_length          58
 #define cSetting_dash_gap             59
+#define cSetting_auto_zoom            60
 
 #endif
 
