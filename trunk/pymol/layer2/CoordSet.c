@@ -529,11 +529,21 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
           if(!ray) {
             ObjectUseColor((Object*)I->Obj);
           } else {
+            if(I->Obj) 
+              ray->fTexture(ray,
+                            SettingGet_f(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
+                            SettingGet_fv(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
+            else
+              ray->fTexture(ray,
+                            SettingGet_f(I->Setting,NULL,cSetting_ray_texture),
+                            SettingGet_fv(I->Setting,NULL,cSetting_ray_texture_settings));
             ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
-          }			 
+          }
           if(I->Rep[a]->fRender) {
             I->Rep[a]->fRender(I->Rep[a],ray,pick);
           }
+          if(ray)
+            ray->fTexture(ray,0,NULL);
         }
 
   PRINTFD(FB_CoordSet)

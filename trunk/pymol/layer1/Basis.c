@@ -270,6 +270,16 @@ void BasisReflectTriangle(CBasis *I,RayInfo *r,int i,float *fc)
   add3f(vt1,r->surfnormal,r->surfnormal);
 
   normalize3f(r->surfnormal);
+
+  if(r->prim->texture)
+    switch(r->prim->texture) {
+    case 1:
+      scatter3f(r->surfnormal,r->prim->texture_param[0]);
+      break;
+    case 2:
+      wiggle3f(r->surfnormal,r->impact,r->prim->texture_param);
+      break;
+    }
   r->dotgle = -r->surfnormal[2]; 
   
   r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
@@ -313,11 +323,20 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 													 I->Vertex+prm->vert*3,&tri1,&tri2,&dist)) 
 						  {
 							 if(shadow) {
-								if((dist>(-R_SMALL4))&&(dist<r->dist))
-								  return(1);
+                        if(prm->trans==0.0) { /* opaque? return immed. */
+                          if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+                            r->prim = prm;
+                            return(1);
+                          }
+                        } else {
+                          if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+									 minIndex=i;
+									 r->tri1=tri1;
+									 r->tri2=tri2;
+									 r->dist=dist;
+								  }
+                        }
 							 } else {
-
-
 								if(dist<r->dist)
 								  if((dist>=front)&&(dist<=back)) {
 									 minIndex=i;
@@ -334,8 +353,17 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 						  {
 							 dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
 							 if(shadow) {
-								if((dist>(-R_SMALL4))&&(dist<r->dist))
-								  return(1);
+                        if(prm->trans==0) {
+                          if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+                            r->prim = prm;
+                            return(1);
+                          }
+                        } else {
+                          if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+									 minIndex=i;
+                            r->dist=dist;
+                          }
+                        }
 							 } else {
 								if(dist<r->dist)
 								  if((dist>=front)&&(dist<=back)) {
@@ -355,8 +383,22 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 								{
 								  dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
 								  if(shadow) {
-									 if((dist>(-R_SMALL4))&&(dist<r->dist))
-										return(1);
+                            if(prm->trans==0.0) {
+                              if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+                                r->prim = prm;
+                                return(1);
+                              }
+                            } else {
+                              if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+                                if(prm->l1>R_SMALL4)
+                                  r->tri1=tri1/prm->l1;
+										  r->sphere[0]=sph[0];
+										  r->sphere[1]=sph[1];										
+										  r->sphere[2]=sph[2];
+										  minIndex=i;
+										  r->dist=dist;
+                              }
+                            }
 								  } else {
 									 if(dist<r->dist)
 										if((dist>=front)&&(dist<=back)) {

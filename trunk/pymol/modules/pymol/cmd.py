@@ -1734,7 +1734,7 @@ SEE ALSO
    #
    try:
       lock()
-      r = _cmd.alter(str(selection),str(expression),0)
+      r = _cmd.alter("("+str(selection)+")",str(expression),0)
    finally:
       unlock()   
    return r
@@ -1784,7 +1784,7 @@ SEE ALSO
    #
    try:
       lock()
-      r = _cmd.alter(str(selection),str(expression),1)
+      r = _cmd.alter("("+str(selection)+")",str(expression),1)
    finally:
       unlock()   
    return r
@@ -1816,7 +1816,7 @@ SEE ALSO
    #
    try:
       lock()
-      r = _cmd.alter_state(int(state)-1,str(selection),str(expression),0)
+      r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),0)
    finally:
       unlock()   
    return r

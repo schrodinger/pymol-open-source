@@ -145,7 +145,10 @@ class SettingIndex:
    log_conformations     =134
    valence_default       =135
    surface_miserable     =136
-   ray_opaque_background = 137
+   ray_opaque_background =137
+   transparent           =138
+   ray_texture           =139
+   ray_texture_settings  =140
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
