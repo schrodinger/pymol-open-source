@@ -38,6 +38,7 @@ typedef struct {
   int DotFlag;
   CGO *UnitCellCGO;
   int Side;
+  int displayList;
 } ObjectSurfaceState;
 
 typedef struct ObjectSurface {

@@ -209,6 +209,14 @@ PyObject *ObjectSurfaceAsPyList(ObjectSurface *I)
 
 static void ObjectSurfaceStateFree(ObjectSurfaceState *ms)
 {
+  if(PMGUI) {
+    if(ms->displayList) {
+      glDeleteLists(ms->displayList,1);
+      ms->displayList = 0;
+    }
+  }
+  
+  
   VLAFreeP(ms->N);
   VLAFreeP(ms->V);
   VLAFreeP(ms->AtomVertex);
@@ -440,9 +448,29 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
           if(!pass) {
+
+            int use_dlst;
+
             if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
               CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
                           I->Obj.Setting,NULL);
+
+            SceneResetNormal(false);
+            use_dlst = (int)SettingGet(cSetting_use_display_lists);
+            if(use_dlst&&ms->displayList) {
+              glCallList(ms->displayList);
+            } else { 
+              
+              if(use_dlst) {
+                if(!ms->displayList) {
+                  ms->displayList = glGenLists(1);
+                  if(ms->displayList) {
+                    glNewList(ms->displayList,GL_COMPILE_AND_EXECUTE);
+                  }
+                }
+              }
+
+            
             if(n&&v&&I->Obj.RepVis[cRepSurface]) {
               col = ColorGet(I->Obj.Color);
               glColor4f(col[0],col[1],col[2],alpha);
@@ -465,7 +493,6 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                     break;
                   case 1:
                     glBegin(GL_LINES);
-                    SceneResetNormal(false);
                     while(c>0) {
                       glVertex3fv(v);
                       v+=3;
@@ -476,7 +503,6 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                   case 0:
                   default:
                     glBegin(GL_POINTS);
-                    SceneResetNormal(false);
                     while(c>0) {
                       glVertex3fv(v);
                       v+=3;
@@ -486,6 +512,11 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                     break;
                   }
                 }
+            }
+            }
+
+            if(use_dlst&&ms->displayList) {
+              glEndList();
             }
           }
         }
@@ -545,7 +576,7 @@ void ObjectSurfaceStateInit(ObjectSurfaceState *ms)
   ms->AtomVertex=NULL;
   ms->UnitCellCGO=NULL;
   ms->Side = 0;
-
+  ms->displayList = 0;
 }
 
 /*========================================================================*/

@@ -36,6 +36,7 @@ typedef struct {
   float CarveBuffer;
   int DotFlag;
   CGO *UnitCellCGO;
+  int displayList;
 } ObjectMeshState;
 
 typedef struct ObjectMesh {

@@ -115,6 +115,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
+      SceneResetNormal(false);
 
       if(use_dlst) {
         if(!I->R.displayList) {
@@ -134,7 +135,6 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
               glColor3fv(ColorGet(I->oneColor));
               c=*(n++);
               glBegin(GL_LINE_STRIP);
-              SceneResetNormal(false);
               while(c--) {
                 glVertex3fv(v);
                 v+=3;
@@ -146,7 +146,6 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
             {
               c=*(n++);
               glBegin(GL_LINE_STRIP);
-              SceneResetNormal(false);
               while(c--) {
                 glColor3fv(vc);
                 vc+=3;
