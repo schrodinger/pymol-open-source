@@ -36,6 +36,10 @@ Goals for 0.52 release:
 
 Changes up to 0.51
 
+   * Tcl/Tk GUI now contains a save molecule option
+
+   * Tcl/Tk GUI help improved 
+
    * performance/quality options in the display menu
 
    * sphere quality setting
