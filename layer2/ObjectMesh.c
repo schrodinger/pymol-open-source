@@ -288,8 +288,11 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
     I->State[state].RefreshFlag=true;
     if(level>=cRepInvAll) {
       I->State[state].ResurfaceFlag=true;      
-      printf("here\n");
+      SceneChanged();
+    } else {
+      SceneDirty();
     }
+
     if(once_flag) break;
   }
 }

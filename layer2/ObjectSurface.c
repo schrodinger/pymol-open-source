@@ -294,7 +294,10 @@ static void ObjectSurfaceInvalidate(ObjectSurface *I,int rep,int level,int state
     if(!once_flag) state=a;
     I->State[state].RefreshFlag=true;
     if(level>=cRepInvAll) {
-      I->State[state].ResurfaceFlag=true;      
+      I->State[state].ResurfaceFlag=true;     
+      SceneChanged();
+    } else {
+      SceneDirty();
     }
     if(once_flag) break;
   }

@@ -177,43 +177,33 @@ void IsofieldComputeGradients(Isofield *I)
       }
     }
 
-#if 1
-    /* temporary handling of edges */
-
     for(a=0;a<dim[0];a+=dim[0]-1) {
       for(b=0;b<dim[1];b+=dim[1]-1) {
         for(c=0;c<dim[2];c+=dim[2]-1) {
           F4(gradients,a,b,c,0) = 0.0F;
           F4(gradients,a,b,c,1) = 0.0F;
           F4(gradients,a,b,c,2) = 0.0F;
+
+          if(!a) {
+            F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a,b,c));
+          } else {
+            F4(gradients,a,b,c,0) = (F3(data,a,b,c) - F3(data,a-1,b,c));
+          }
+
+          if(!b) {
+            F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b,c));
+          } else {
+            F4(gradients,a,b,c,1) = (F3(data,a,b,c) - F3(data,a,b-1,c));
+          }
+
+          if(!c) {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c));
+          } else {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c) - F3(data,a,b,c-1));
+          }
         }
       }
     }
-#else
-    /* still need to do faces, edges, and corners */
-
-    /* left face */
-
-    a=0;
-    for(b=1;a<(dim[1]-1);a++) {
-      for(c=1;a<(dim[2]-1);a++) {
-        F4(gradient,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a,b,c));
-        F4(gradient,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;
-        F4(gradient,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
-      }
-    }
-
-    /* right face */
-
-    a=dim[0]-1;
-    for(b=1;a<(dim[1]-1);a++) {
-      for(c=1;a<(dim[2]-1);a++) {
-        F4(gradient,a,b,c,0) = (F3(data,a,b,c) - F3(data,a-1,b,c));
-        F4(gradient,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;
-        F4(gradient,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
-      }
-    }
-#endif
   }
 
 }
