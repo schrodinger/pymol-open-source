@@ -1852,6 +1852,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
       glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+      glShadeModel(GL_SMOOTH);
       glEnable(GL_COLOR_MATERIAL);
       glEnable(GL_DITHER);
 
@@ -1944,6 +1945,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glDisable(GL_DITHER);
       glDisable(GL_BLEND);
       glDisable(GL_LINE_SMOOTH);
+      glDisable(GL_POLYGON_SMOOTH);
+      glShadeModel(GL_FLAT);
+
     }
 
     PRINTFD(FB_Scene)
