@@ -95,7 +95,8 @@ def mini(total_steps=500,
          object='rt',
          fix_flag=None,
          rest_flag=None,
-         solvation=None):
+         solvation=None,
+         finish=None):
 
    global state
    if not state:
@@ -113,6 +114,8 @@ def mini(total_steps=500,
             cmd.delete(object)
             cmd.load_model(state.model,object,1)
             cmd.refresh()
+            if finish!=None:
+               apply(finish[0],finish[1],finish[2])
       except:
          cmd.load_model(state.model,'ref')
          traceback.print_exc()

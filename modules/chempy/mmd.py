@@ -77,6 +77,11 @@ class MMD(Storage):
 #---------------------------------------------------------------------------------
    def updateFromList(self,model,list): # updates charges and coordinates
       nAtom = int(list[0][1:6])
+      try:
+         model.molecule.energy = float(list[0][58:68])/4.184 # convert to kcal
+      except:
+         if hasattr(model.molecule.energy,'energy'):
+            del model.molecule.energy
       if nAtom!=model.nAtom:
          raise RuntimeError(" mmd: atom count mismatch")
       c = 0
@@ -86,7 +91,7 @@ class MMD(Storage):
             float(a[65:76]), float(a[77:88])]
          mac.partial_charge = float(a[100:109])         
          c = c + 1
-
+         
 #---------------------------------------------------------------------------------
    def toList(self,model,no_blank_names=1):
 
