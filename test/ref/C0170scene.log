@@ -112,3 +112,137 @@ PyMOL>scene *
  scene: stored scenes:
 PyMOL>scene 1
 Error: unknown scene: '1'. Choices:
+PyMOL>hide
+PyMOL>show lines
+PyMOL>color red
+ Executive: Colored 107 atoms.
+PyMOL>scene 1, store
+ scene: scene stored as "1".
+PyMOL>count_atoms color red
+ count_atoms: 107 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 0 atoms
+PyMOL>ray
+ RayRenderTest: obtained 112 graphics primitives.
+PyMOL>hide
+PyMOL>show sticks
+PyMOL>color blue
+ Executive: Colored 107 atoms.
+PyMOL>scene 2, store
+ scene: scene stored as "2".
+PyMOL>count_atoms color red
+ count_atoms: 0 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 107 atoms
+PyMOL>ray
+ RayRenderTest: obtained 112 graphics primitives.
+PyMOL>scene 1
+ Scene: view updated.
+ scene: "1" recalled.
+PyMOL>count_atoms color red
+ count_atoms: 107 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 0 atoms
+PyMOL>ray
+ RayRenderTest: obtained 112 graphics primitives.
+PyMOL>scene 2
+ Scene: view updated.
+ scene: "2" recalled.
+PyMOL>count_atoms color red
+ count_atoms: 0 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 107 atoms
+PyMOL>ray
+ RayRenderTest: obtained 112 graphics primitives.
+PyMOL>scene 2,rename,new_key=3
+ scene: '2' renamed to '3'.
+PyMOL>scene 1
+ Scene: view updated.
+ scene: "1" recalled.
+PyMOL>count_atoms rep lines
+ count_atoms: 107 atoms
+PyMOL>count_atoms color red
+ count_atoms: 107 atoms
+PyMOL>count_atoms rep sticks
+ count_atoms: 0 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 0 atoms
+PyMOL>ray
+ RayRenderTest: obtained 112 graphics primitives.
+PyMOL>scene 3
+ Scene: view updated.
+ scene: "3" recalled.
+PyMOL>count_atoms rep lines
+ count_atoms: 0 atoms
+PyMOL>count_atoms color red
+ count_atoms: 0 atoms
+PyMOL>count_atoms rep sticks
+ count_atoms: 107 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 107 atoms
+PyMOL>ray
+ RayRenderTest: obtained 112 graphics primitives.
+PyMOL>scene 2
+Error: unknown scene: '2'. Choices:
+  1  3
+PyMOL>count_atoms rep lines
+ count_atoms: 0 atoms
+PyMOL>count_atoms color red
+ count_atoms: 0 atoms
+PyMOL>count_atoms rep sticks
+ count_atoms: 107 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 107 atoms
+PyMOL>ray
+ RayRenderTest: obtained 112 graphics primitives.
+PyMOL>scene 3
+ Scene: view updated.
+ scene: "3" recalled.
+PyMOL>hide
+PyMOL>color green
+ Executive: Colored 107 atoms.
+PyMOL>show spheres
+PyMOL>scene auto, update
+ scene: scene stored as "3".
+PyMOL>count_atoms rep spheres
+ count_atoms: 107 atoms
+PyMOL>count_atoms color green
+ count_atoms: 107 atoms
+PyMOL>count_atoms rep lines
+ count_atoms: 0 atoms
+PyMOL>count_atoms color red
+ count_atoms: 0 atoms
+PyMOL>count_atoms rep sticks
+ count_atoms: 0 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 0 atoms
+PyMOL>scene 1
+ Scene: view updated.
+ scene: "1" recalled.
+PyMOL>count_atoms rep spheres
+ count_atoms: 0 atoms
+PyMOL>count_atoms color green
+ count_atoms: 0 atoms
+PyMOL>count_atoms rep lines
+ count_atoms: 107 atoms
+PyMOL>count_atoms color red
+ count_atoms: 107 atoms
+PyMOL>count_atoms rep sticks
+ count_atoms: 0 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 0 atoms
+PyMOL>scene 3
+ Scene: view updated.
+ scene: "3" recalled.
+PyMOL>count_atoms rep spheres
+ count_atoms: 107 atoms
+PyMOL>count_atoms color green
+ count_atoms: 107 atoms
+PyMOL>count_atoms rep lines
+ count_atoms: 0 atoms
+PyMOL>count_atoms color red
+ count_atoms: 0 atoms
+PyMOL>count_atoms rep sticks
+ count_atoms: 0 atoms
+PyMOL>count_atoms color blue
+ count_atoms: 0 atoms

@@ -1837,7 +1837,7 @@ class Normal(PMGSkin):
 
       self.menuBar.addmenuitem('Scene', 'command', 'Update',
                                label=self.pad+'Update',
-                               command = lambda s=self: s.cmd.scene('auto','store'))
+                               command = lambda s=self: s.cmd.scene('auto','update'))
 
 #      self.menuBar.addmenuitem('Scene', 'command', 'Annotate',
 #                               label=self.pad+'Append',

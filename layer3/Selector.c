@@ -2262,6 +2262,37 @@ int SelectorColorectionApply(PyMOLGlobals *G,PyObject *list,char *prefix)
 #endif
 }
 
+int SelectorColorectionSetName(PyMOLGlobals *G,PyObject *list,char *prefix,char *new_prefix)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
+  int ok=true;
+  ColorectionRec *used=NULL;
+  int n_used=0;
+  int b;
+  SelectorWordType name;
+  SelectorWordType new_name;
+
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+  if(ok) n_used = PyList_Size(list)/2;
+  if(ok) ok=((used=VLAlloc(ColorectionRec,n_used))!=NULL);
+  if(ok) ok=PConvPyListToIntArrayInPlace(list,(int*)used,n_used*2);
+  if(ok) {
+    for(b=0;b<n_used;b++) { /* update selection indices */
+      sprintf(name,cColorectionFormat,prefix,used[b].color);      
+      sprintf(new_name,cColorectionFormat,new_prefix,used[b].color);      
+      SelectorSetName(G,new_name,name);
+    }
+  }
+  VLAFreeP(used);
+  return(ok);
+#endif
+
+}
+
 int SelectorColorectionFree(PyMOLGlobals *G,PyObject *list,char *prefix)
 {
 #ifdef _PYMOL_NOPY

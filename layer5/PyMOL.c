@@ -517,7 +517,7 @@ typedef struct _CPyMOL {
   ov_word lex_atom_name_wildcard;
   ov_word lex_ignore_case;
   ov_word lex_presentation_auto_quit;
-  ov_word lex_editor_auto_dihedral 
+  ov_word lex_editor_auto_dihedral;
 
 } _CPyMOL;
 

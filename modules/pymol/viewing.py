@@ -37,7 +37,8 @@ if __name__=='pymol.viewing':
                 "nonbonded", "nb_spheres",
                 "cartoon","ribbon","labels","slice"]
 
-   view_sc = Shortcut(['store','recall','clear','insert_before','insert_after','next','previous'])
+   view_sc = Shortcut(['store','recall','clear','insert_before',
+                       'insert_after','next','previous','update','rename'])
    view_dict = {}
    view_dict_sc = Shortcut([])
 
@@ -819,7 +820,7 @@ SEE ALSO
             set_view(view_dict[key],animate=-1)
             if _feedback(fb_module.scene,fb_mask.actions): # redundant
                print " view: \"%s\" recalled."%key
-         elif action=='store':
+         elif (action=='store') or (action=='update'):
             view_dict_sc.append(key)
             view_dict[key]=cmd.get_view(0)
             if _feedback(fb_module.scene,fb_mask.actions):
@@ -861,6 +862,14 @@ SEE ALSO
       try:
          lock()         
          r = _cmd.set_colorection(dict,key)
+      finally:
+         unlock()
+      return r
+
+   def set_colorection_name(dict,key,new_key):
+      try:
+         lock()         
+         r = _cmd.set_colorection_name(dict,key,new_key)
       finally:
          unlock()
       return r
@@ -933,7 +942,7 @@ SEE ALSO
 
    def scene(key,action='recall',message=None,
              view=1,color=1,active=1,rep=1,frame=1,animate=-1,
-             quiet=1):
+             new_key=None, quiet=1):
       '''
 DESCRIPTION
 
@@ -944,11 +953,18 @@ DESCRIPTION
 
 USAGE
 
-   scene key [,action [,message [ ,view [,color [,active [,rep [,frame]]]]]]]
+   scene key [,action [,message [ ,view [,color [,active [,rep [,frame
+             [, animate, [, new_key ]]]]]]]]]
    scene *
 
-   key can be any string
-   action should be 'store' or 'recall' (default: 'recall')
+   key can be any string, or
+      'new' for an automatically numbered new scene, or
+      'auto' for the current scene (if one exists), or
+      '*' for all scenes ('clear' and 'recall' actions only)
+      
+   action should be 'store', 'recall', 'insert_after', 'insert_before',
+                    'next',  'previous', 'update', 'rename', or 'clear'
+                    (default: 'recall')
 
    view: 1 or 0 controls whether the view is stored
    color: 1 or 0 controls whether colors are stored
@@ -959,7 +975,8 @@ USAGE
 PYMOL API
 
    cmd.scene(string key,string action,string-or-list message,int view,
-             int color, int active, int rep, int frame)
+             int color, int active, int rep, int frame, int animate,
+             string new_key)
 
 EXAMPLES
 
@@ -968,6 +985,8 @@ EXAMPLES
 
    scene F1
    scene F2
+
+   scene F3, rename, new_key=F5
 
 NOTES
 
@@ -1034,6 +1053,30 @@ DEVELOPMENT TO DO
                   ix = 0
                scene_order.insert(ix,key)
                action='store'
+            elif action=='rename':
+               if not scene_dict.has_key(key):
+                  print "Error: scene '%s' not found."%key
+               elif new_key==None:
+                  print "Error: must provide the 'new_key' argument"
+               else:
+                  new_scene_order = []
+                  for a in scene_order:
+                     if a==key:
+                        new_scene_order.append(new_key)
+                     else:
+                        new_scene_order.append(a)
+                  scene_order=new_scene_order
+                  scene_dict[new_key] = scene_dict[key]
+                  del scene_dict[key]
+                  for rep_name in rep_list:
+                     name = "_scene_"+key+"_"+rep_name
+                     new_name = "_scene_"+new_key+"_"+rep_name
+                     cmd.set_name(name,new_name)
+                  list = scene_dict[new_key]
+                  if len(list)>3:
+                     cmd.set_colorection_name(list[3],key,new_key)
+                  print" scene: '%s' renamed to '%s'."%(key,new_key)
+                  scene_dict_sc = Shortcut(scene_dict.keys())                  
             elif action=='insert_after':
                key = _scene_get_unique_key()            
                cur_scene = setting.get("scene_current_name")
@@ -1053,6 +1096,7 @@ DEVELOPMENT TO DO
                if (ll>1) and (active):
                   if list[1]!=None:
                      cmd.disable()
+                     cmd.deselect()
                      cmd.set_vis(list[1])
                if (ll>2) and (frame):
                   if list[2]!=None:
@@ -1103,7 +1147,7 @@ DEVELOPMENT TO DO
                      set_view(list[0],quiet,animate)
                if not quiet and _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
-            elif action=='store':
+            elif (action=='store') or (action=='update'):
                if key =='new':
                   key=_scene_get_unique_key()               
                if key =='auto':
@@ -1114,6 +1158,8 @@ DEVELOPMENT TO DO
                   scene_dict_sc.append(key)
                else: # get rid of existing one (if exists)
                   list = scene_dict[key]
+                  if (action=='update') and (message==None) and len(list)>5:
+                     message = scene_dict[key][5]
                   if len(list)>3:
                      colorection = list[3]
                      if colorection!=None:
