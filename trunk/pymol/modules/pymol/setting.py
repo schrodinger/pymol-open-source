@@ -351,6 +351,8 @@ if __name__=='pymol.setting':
       overlay_lines         = 311
       ray_transparency_spec_cut = 312
       internal_prompt       = 313
+      normalize_grd_maps    = 314
+      
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

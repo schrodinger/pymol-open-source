@@ -1043,6 +1043,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     return(0);
   }
 
+
   if(n_pts>1) {
     f = (float*)(p+(sizeof(int)*256)+n_skip);
     c = n_pts;
@@ -1103,7 +1104,14 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   ms->FDim[maps] = ns;
   ms->Min[maps] = nsstart;
   ms->Max[maps] = ns+nsstart;
-  
+
+  if(Feedback(FB_ObjectMap,FB_Blather)) {
+    dump3i(ms->Div,"ms->Div");
+    dump3i(ms->Min,"ms->Min");
+    dump3i(ms->Max,"ms->Max");
+    dump3i(ms->FDim,"ms->FDim");
+  }
+
   ms->Crystal->Dim[0] = xlen;
   ms->Crystal->Dim[1] = ylen;
   ms->Crystal->Dim[2] = zlen;
@@ -1165,6 +1173,10 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
         }
       }
   }
+
+  PRINTFB(FB_Details,FB_ObjectMap) 
+    " ObjectMapCCP4: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+    ENDFB;
   
   if(ok) {
     v[2]=(ms->Min[2])/((float)ms->Div[2]);
@@ -2411,7 +2423,12 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
   int got_brick=false;
   int fast_axis=1;
   int got_ranges=false;
-
+  int normalize = false;
+  float mean,stdev;
+  double sum = 0.0;
+  double sumsq = 0.0;
+  int n_pts = 0;
+  
   if(state<0) state=I->NState;
   if(I->NState<=state) {
     VLACheck(I->State,ObjectMapState,state);
@@ -2419,7 +2436,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
   }
   ms=&I->State[state];
   ObjectMapStateInit(ms);
-
+  normalize=(int)SettingGet(cSetting_normalize_grd_maps);
   maxd = FLT_MIN;
   mind = FLT_MAX;
   
@@ -2517,16 +2534,22 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
   
   if(ok) {
 
-    
-    ms->Div[0]= ms->Div[0] - ms->Min[0] + 1;
-    ms->Div[1]= ms->Div[1] - ms->Min[1] + 1;
-    ms->Div[2]= ms->Div[2] - ms->Min[2] + 1;
+    ms->Div[0]= ms->Div[0] - ms->Min[0];
+    ms->Div[1]= ms->Div[1] - ms->Min[1];
+    ms->Div[2]= ms->Div[2] - ms->Min[2];
 
-    ms->Max[0]=ms->Min[0]+ms->FDim[0]-1;
-    ms->Max[1]=ms->Min[1]+ms->FDim[1]-1;
-    ms->Max[2]=ms->Min[2]+ms->FDim[2]-1;
+    ms->Max[0]=ms->Min[0]+ms->FDim[0];
+    ms->Max[1]=ms->Min[1]+ms->FDim[1];
+    ms->Max[2]=ms->Min[2]+ms->FDim[2];
 
     ms->FDim[3]=3;
+
+    if(Feedback(FB_ObjectMap,FB_Blather)) {
+      dump3i(ms->Div,"ms->Div");
+      dump3i(ms->Min,"ms->Min");
+      dump3i(ms->Max,"ms->Max");
+      dump3i(ms->FDim,"ms->FDim");
+    }
 
     CrystalUpdate(ms->Crystal);
     ms->Field=IsosurfFieldAlloc(ms->FDim);
@@ -2549,6 +2572,9 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
               if(sscanf(cc,"%f",&dens)!=1) {
                 ok=false;
               } else {
+                sumsq+=dens*dens;
+                sum+=dens;
+                n_pts++;
                 F3(ms->Field->data,a,b,c) = dens;
                 if(maxd<dens) maxd = dens;
                 if(mind>dens) mind = dens;
@@ -2562,8 +2588,34 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
         }
       break;
     }
-
   }   
+
+  if(n_pts>1) {
+    mean = (float)(sum/n_pts);
+    stdev = (float)sqrt1d((sumsq - (sum*sum/n_pts))/(n_pts-1));
+
+    if(normalize) {
+      PRINTFB(FB_ObjectMap,FB_Details)
+        " ObjectMapGRDStrToMap: Normalizing: mean = %8.6f and stdev = %8.6f.\n",
+        mean,stdev
+        ENDFB;
+      if(stdev<R_SMALL8)
+        stdev = 1.0F;
+      for(c=0;c<ms->FDim[2];c++)
+        for(b=0;b<ms->FDim[1];b++) {
+          for(a=0;a<ms->FDim[0];a++) {
+            dens = F3(ms->Field->data,a,b,c);
+            F3(ms->Field->data,a,b,c) = (dens-mean)/stdev;
+          }
+        }
+    } else {
+      PRINTFB(FB_ObjectMap,FB_Details)
+        " ObjectMapGRDStrToMap: Mean = %8.6f and stdev = %8.6f.\n",
+        mean,stdev
+        ENDFB;
+    }
+  }
+
   if(ok) {
     d = 0;
     for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1))

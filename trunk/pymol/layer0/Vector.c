@@ -65,6 +65,10 @@ double slow_sqrt1d(double f) { /* no good as a macro because f is used twice */
   else
 	 return _d0;
 }
+void dump3i( int *v, char *prefix ) /* for debugging */
+{
+  printf("%s %8i %8i %8i\n",prefix,v[0],v[1],v[2]);
+}
 
 void dump3f( float *v, char *prefix ) /* for debugging */
 {
