@@ -38,8 +38,9 @@ typedef struct ObjectMolecule {
   int CurCSet;
   char Color[3];
   float FractionExposed;
-  int SeleBase;
+  int SeleBase; /* for internal usage by  selector & only valid during selection process */
   CSymmetry *Symmetry;
+  int *Neighbor;
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {
@@ -106,6 +107,11 @@ CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I);
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
+void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I);
+int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode);
+int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
+int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele);
+void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float *TTT);
 
 #endif
 

@@ -51,8 +51,9 @@ int QueueStrOut(CQueue *I,char *c)
 	 while(1) {
 		*c=*(I->ptr+I->out);
 		I->out=(I->out+1)&I->mask;
-		if(!*(c++))
+		if(!*(c++)) {
 		  return 1;
+      }
 	 }
   }
   return 0;

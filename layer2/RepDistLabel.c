@@ -65,6 +65,7 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
 #ifdef _DRI_WORKAROUND
     glDisable(GL_DEPTH_TEST);	 
 #endif
+    glDisable(GL_LIGHTING);
 	 SceneResetNormal(true);
 	 while(c--) {
       glRasterPos4f(v[0],v[1],v[2],1.0);
@@ -75,6 +76,7 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
       }
       n++;
 	 }
+    glEnable(GL_LIGHTING);
 #ifdef _DRI_WORKAROUND
     glEnable(GL_DEPTH_TEST);
 #endif

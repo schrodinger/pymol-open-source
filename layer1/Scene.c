@@ -39,7 +39,8 @@ Z* -------------------------------------------------------------------
 #include"MyPNG.h"
 #include"Python.h"
 #include"P.h"
-
+#include"Editor.h"
+#include"Executive.h"
 
 #define cFrontMin 0.1
 #define cSliceMin 0.1
@@ -56,12 +57,18 @@ typedef struct ObjRec {
   struct ObjRec *next;
 } ObjRec;
 
+float SceneGetScreenVertexScale(float *v1);
+
 ListVarDeclare(ObjList,ObjRec);
 
 typedef struct {
   Block *Block;
   ObjRec *Obj;
   float RotMatrix[16];
+  float InvMatrix[16];
+  float ModMatrix[16];
+  float VewMatrix[16];
+  float ProMatrix[16];
   float Scale;
   int Width,Height;
   int Button;
@@ -370,7 +377,13 @@ void SceneWindowSphere(float *location,float radius)
   I->Front=(-I->Pos[2]-radius*1.5);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
   I->Back=(-I->Pos[2]+radius*1.5);
-  /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
+  /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
+}
+/*========================================================================*/
+void SceneOriginGet(float *origin)
+{
+  CScene *I=&Scene;
+  copy3f(I->Origin,origin);
 }
 /*========================================================================*/
 void SceneOriginSet(float *origin,int preserve)
@@ -489,10 +502,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 {
   CScene *I=&Scene;
   Object *obj;
+  ObjectMolecule *objMol;
   char buffer[OrthoLineLength],buf2[OrthoLineLength];
   WordType selName = "";
   int mode;
-
+  int atIndex;
   mode = ButModeTranslate(button,mod);
   I->Button=button;    
 
@@ -513,14 +527,99 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 I->LastY=y;	 
 	 SceneDirty();
     break;
+  case cButModePickAtom:
+    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
+      SceneRender(NULL,0,0); /* remove overlay if present */
+    SceneDontCopyNext();
+    I->LastPicked.ptr = NULL;
+	 SceneRender(&I->LastPicked,x,y);
+	 if(I->LastPicked.ptr) {
+		obj=(Object*)I->LastPicked.ptr;
+      if(obj->type==cObjectMolecule) {
+        if(obj->fDescribeElement)
+          obj->fDescribeElement(obj,I->LastPicked.index);
+        sprintf(buffer,"model %s and index %i",
+                obj->Name,I->LastPicked.index+1);    
+        SelectorCreate(cEditorSele1,buffer,NULL,false);
+        ExecutiveDelete(cEditorSele2);
+        EditorSetActiveObject((ObjectMolecule*)obj);
+      } else {
+      EditorSetActiveObject(NULL);
+      ExecutiveDelete(cEditorSele1);      
+      ExecutiveDelete(cEditorSele2);      
+      }
+    } else {
+      EditorSetActiveObject(NULL);
+      ExecutiveDelete(cEditorSele1);      
+      ExecutiveDelete(cEditorSele2);      
+    }
+    SceneDirty();
+    break;
+  case cButModePickBond:
+    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
+      SceneRender(NULL,0,0); /* remove overlay if present */
+    SceneDontCopyNext();
+    I->LastPicked.ptr = NULL;
+	 SceneRender(&I->LastPicked,x,y);
+	 if(I->LastPicked.ptr) {
+		obj=(Object*)I->LastPicked.ptr;
+      if(obj->type==cObjectMolecule) {
+        if(obj->fDescribeElement) 
+          obj->fDescribeElement(obj,I->LastPicked.index);
+		  sprintf(buffer,"model %s and index %i",
+					 obj->Name,I->LastPicked.index+1);    
+        SelectorCreate(cEditorSele1,buffer,NULL,false);
+        objMol = (ObjectMolecule*)obj;
+        if(I->LastPicked.bond>=0) {
+          atIndex = objMol->Bond[I->LastPicked.bond*3];
+          if(atIndex == I->LastPicked.index)
+            atIndex = objMol->Bond[I->LastPicked.bond*3+1];              
+          obj->fDescribeElement(obj,atIndex);
+          sprintf(buffer,"model %s and index %i",
+                  obj->Name,atIndex+1);    
+          SelectorCreate(cEditorSele2,buffer,NULL,false);
+          EditorSetActiveObject(objMol);
+        }
+      } else {
+        EditorSetActiveObject(NULL);
+        ExecutiveDelete(cEditorSele1);      
+        ExecutiveDelete(cEditorSele2);      
+      }
+    } else {
+      EditorSetActiveObject(NULL);
+      ExecutiveDelete(cEditorSele1);      
+      ExecutiveDelete(cEditorSele2);      
+    }
+    SceneDirty();
+    break;
+  case cButModeMovFrag:
+  case cButModeTorFrag:
+  case cButModeRotFrag:
+    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
+      SceneRender(NULL,0,0); /* remove overlay if present */
+    SceneDontCopyNext();
+	 SceneRender(&I->LastPicked,x,y);
+	 if(I->LastPicked.ptr) {
+      obj=(Object*)I->LastPicked.ptr;
+      if(obj->fDescribeElement) 
+        obj->fDescribeElement(obj,I->LastPicked.index);
+      EditorPrepareDrag((ObjectMolecule*)obj,I->LastPicked.index,I->StateIndex);
+      y=y-I->Block->margin.bottom;
+      x=x-I->Block->margin.left;
+      I->LastX=x;
+      I->LastY=y;	
+    }
+    break;
+ 
   case cButModePk1:
   case cButModePk2:
   case cButModePk3:
   case cButModeAddToPk1:
   case cButModeAddToPk2:
   case cButModeAddToPk3:
+  case cButModeOrigAt:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0);
+      SceneRender(NULL,0,0); /* remove overlay if present */
     SceneDontCopyNext();
 
 	 SceneRender(&I->LastPicked,x,y);
@@ -543,6 +642,10 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cButModeAddToPk3:
         strcpy(selName,"%pk3");
 		  break;
+      case cButModeOrigAt:
+        sprintf(buf2,"origin (%s)",buffer);        
+        OrthoCommandIn(buf2);
+        break;
       }
       switch(mode) {
       case cButModePk1:
@@ -569,13 +672,45 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 /*========================================================================*/
+float SceneGetScreenVertexScale(float *v1)
+{
+  /* get conversion factor from screen point to atomic coodinate */
+  CScene *I=&Scene;
+  float vl,p1[4],p2[4];
+  /* now, scale properly given the current projection matrix */
+  copy3f(v1,p1);
+  p1[3] = 1.0;
+  MatrixTransform44f4f(I->ModMatrix,p1,p2); /* modelview transformation */
+  copy4f(p2,p1);
+  p2[0]+=1.0;
+  MatrixTransform44f4f(I->ProMatrix,p1,p1); /* projection transformation */
+  MatrixTransform44f4f(I->ProMatrix,p2,p2);
+  p1[0]=p1[0]/p1[3];/* perspective vision */
+  p1[1]=p1[1]/p1[3];
+  p1[2]=0.0;
+  p2[0]=p2[0]/p2[3];
+  p2[1]=p2[1]/p2[3];
+  p2[2]=0.0;
+  p1[0]=(p1[0]+1.0)*(I->Width/2.0); /* viewport transformation */
+  p1[1]=(p1[1]+1.0)*(I->Height/2.0);
+  p2[0]=(p2[0]+1.0)*(I->Width/2.0);
+  p2[1]=(p2[1]+1.0)*(I->Height/2.0);
+  vl=diff3f(p1,p2);
+  if(vl<R_SMALL4)
+    vl=100.0;
+  
+  return(1.0/vl);
+}
+
+/*========================================================================*/
 int SceneDrag(Block *block,int x,int y,int mod)
 {
   CScene *I=&Scene;
-  float scale;
+  float scale,vScale;
   float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
   float axis[3],axis2[3],theta,omega;
   int mode;
+  Object *obj;
 
   mode = ButModeTranslate(I->Button,mod);
   
@@ -587,6 +722,27 @@ int SceneDrag(Block *block,int x,int y,int mod)
 
   SceneDontCopyNext();
   switch(mode) {
+  case cButModeMovFrag:
+  case cButModeTorFrag:
+  case cButModeRotFrag:
+    obj=(Object*)I->LastPicked.ptr;
+    if(obj)
+      if(obj->type==cObjectMolecule) {
+        if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,I->StateIndex,
+                                       I->LastPicked.index,v1)) {
+          /* scale properly given the current projection matrix */
+          vScale = SceneGetScreenVertexScale(v1);
+          v2[0] = (x-I->LastX)*vScale;
+          v2[1] = (y-I->LastY)*vScale;
+          v2[2] = 0;
+          /* transform into model coodinate space */
+          MatrixInvRotate44f3f(I->RotMatrix,v2,v2); 
+          EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,I->StateIndex,v1,v2);
+        }
+      }
+    I->LastX=x;
+    I->LastY=y;
+    break;
   case cButModeRotXYZ:
   case cButModeRotZ:
   case cButModeTransXY:
@@ -1106,6 +1262,12 @@ void SceneRender(Pickable *pick,int x,int y)
 
     glMatrixMode(GL_MODELVIEW);
     ScenePrepareMatrix(0);
+
+    /* Save these for editing operations */
+
+    glGetFloatv(GL_MODELVIEW_MATRIX,I->ModMatrix);
+    glGetFloatv(GL_PROJECTION_MATRIX,I->ProMatrix);
+    glGetFloatv(GL_PROJECTION_MATRIX,I->ProMatrix);
   
     /* determine the direction in which we are looking relative*/
 
@@ -1282,6 +1444,11 @@ void SceneRender(Pickable *pick,int x,int y)
               rec->obj->fRender(rec->obj,curState,NULL,NULL);
             glPopMatrix();
           }
+        glPushMatrix();
+        glNormal3fv(normal);
+        EditorRender(curState);
+        glPopMatrix();
+
         glPopMatrix();        glDrawBuffer(GL_BACK);
       } else {
         
@@ -1295,6 +1462,11 @@ void SceneRender(Pickable *pick,int x,int y)
               rec->obj->fRender(rec->obj,curState,NULL,NULL);
             glPopMatrix();
           }
+        glPushMatrix();
+        glNormal3fv(normal);
+        EditorRender(curState);
+        glPopMatrix();
+
       }
     }
   

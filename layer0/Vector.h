@@ -37,6 +37,10 @@ void normalize3f( float *v1 );
 void normalize23f( float *v1 , float *v2);
 void normalize3d( double *v1 );
 
+void get_divergent3f(float *src,float *dst);
+void get_system1f3f(float *x,float *y,float *z); /* make system in direction of x */
+void get_system2f3f(float *x,float *y,float *z); /* make system in direction of x, perp to x,y */
+
 double dot_product3d ( double *v1, double *v2 );
 float project3f ( float *v1, float *v2, float *proj );
 void remove_component3f ( float *v1, float *unit, float *result);
@@ -56,6 +60,8 @@ void max3f ( float *v1, float *v2, float *v3 );
 
 void dump3f( float *v, char *prefix );
 void dump33f( float *m, char *prefix );
+
+void copy44f( float *src,float *dst);
 
 /* REVISED Matrix Routines using  float pointers */
 
@@ -126,6 +132,7 @@ float dot_product3f ( float *v1, float *v2 );
 void  invert3f ( float *v );
 void  scale3f ( float *v1, float v0, float *v2);
 void  copy3f( float *src , float *dst);
+void  copy4f( float *src , float *dst);
 void  add3f ( float *v1, float *v2, float *sum );
 void  subtract3f ( float *v1, float *v2, float *v3 );
 float lengthsq3f ( float *v1 );
@@ -139,6 +146,7 @@ void  average3f ( float *v1, float *v2, float *avg );
 #define invert3f(v) {(v)[0]=-(v)[0]; (v)[1]=-(v)[1]; (v)[2]=-(v)[2];}
 #define scale3f(v1,v0,v2) {(v2)[0]=(v1)[0]*(v0); (v2)[1]=(v1)[1]*(v0); (v2)[2]=(v1)[2]*(v0);}
 #define copy3f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
+#define copy4f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2]; (v2)[3]=(v1)[3];}
 #define add3f(v1,v2,v3) {(v3)[0]=(v1)[0]+(v2)[0]; (v3)[1]=(v1)[1]+(v2)[1]; (v3)[2]=(v1)[2]+(v2)[2];}
 #define subtract3f(v1,v2,v3) {(v3)[0]=(v1)[0]-(v2)[0]; (v3)[1]=(v1)[1]-(v2)[1]; (v3)[2]=(v1)[2]-(v2)[2];}
 #define lengthsq3f(v1) (((v1)[0]*(v1)[0]) + ((v1)[1]*(v1)[1]) + ((v1)[2]*(v1)[2]))

@@ -1410,6 +1410,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   a=n;
 
   while(ListIterate(I->Spec,rec,next,SpecList))
+    if(rec->name[0]!='_')
 	 {
 		if(!a)
 		  {
@@ -1595,6 +1596,7 @@ void ExecutiveDraw(Block *block)
     xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(ExecOpCnt);
     
     while(ListIterate(I->Spec,rec,next,SpecList))
+      if(rec->name[0]!='_')
       {
         x2=xx;
         y2=y-ExecToggleMargin;

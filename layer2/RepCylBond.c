@@ -331,9 +331,6 @@ Rep *RepCylBondNew(CoordSet *cs)
   return((void*)(struct Rep*)I);
 }
 
-
-
-
 void subdivide( int n, float *x, float *y)
 {
   int a;
@@ -359,8 +356,10 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap)
   overlap = tube_size*SettingGet(cSetting_stick_overlap);
   nub = tube_size*SettingGet(cSetting_stick_nub);
 
+  if(nEdge>50)
+    nEdge=50;
  subdivide(nEdge,x,y);
-
+ 
   /* direction vector */
   
   p0[0] = (v2[0] - v1[0]);

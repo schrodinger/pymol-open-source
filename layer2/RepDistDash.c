@@ -72,6 +72,7 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 	 v=I->V;
 	 c=I->N;
 	 
+    glDisable(GL_LIGHTING);
 	 glBegin(GL_LINES);	 
 	 SceneResetNormal(true);
 	 while(c>0) {
@@ -82,6 +83,7 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
       c-=2;
 	 }
 	 glEnd();
+    glEnable(GL_LIGHTING);
   }
 }
 

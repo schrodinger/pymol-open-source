@@ -25,6 +25,6 @@ try:
    io.pdb.toFile(m2,"cmp/fast02.01.pdb")
    
 except ImportError:
-   print ' error: this test requires the Numerical Python package'
+   print 'Error: this test requires the Numerical Python package'
 
 

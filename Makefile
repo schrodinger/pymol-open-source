@@ -22,6 +22,24 @@ PRIME = ls *.c | sed 's/.c$$/.o/'| awk 'BEGIN{printf("OBJS=")}{printf("%s ",$$1)
 	cd layer5;$(MAKE)
 	touch .update
 
+0:
+	cd layer0;$(MAKE)
+
+1:
+	cd layer1;$(MAKE)
+
+2:
+	cd layer2;$(MAKE)
+
+3:
+	cd layer3;$(MAKE)
+
+4:
+	cd layer4;$(MAKE)
+
+5:
+	cd layer5;$(MAKE)
+
 .depends: 
 	/bin/rm -f .includes
 	cd layer0;$(MAKE) depends

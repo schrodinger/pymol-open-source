@@ -46,7 +46,7 @@ void ObjectDistUpdate(ObjectDist *I)
   for(a=0;a<I->NDSet;a++)
 	 if(I->DSet[a]) {	
 	   OrthoBusySlow(a,I->NDSet);
-	   printf(" ObjectDist: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);
+      /*	   printf(" ObjectDist: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);*/
       if(I->DSet[a]->fUpdate)
         I->DSet[a]->fUpdate(I->DSet[a]);
 	 }
