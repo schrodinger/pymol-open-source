@@ -2582,36 +2582,11 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                  and may not be HETATMs though they are supposed to be... */
                               
                               water_flag=false;
-                              if((ai1->resn[0]=='W')&&
-                                 (ai1->resn[1]=='A')&&
-                                 (ai1->resn[2]=='T')&&
-                                 (!ai1->resn[3]))
+                              if(AtomInfoKnownWaterResName(ai1->resn))
                                 water_flag=true;
-                              else if((ai1->resn[0]=='H')&&
-                                      (ai1->resn[1]=='O')&&
-                                      (ai1->resn[2]=='H')&&
-                                      (!ai1->resn[3]))
+                              else if(AtomInfoKnownWaterResName(ai2->resn))
                                 water_flag=true;
-                              else if((ai1->resn[0]=='D')&&
-                                      (ai1->resn[1]=='O')&&
-                                      (ai1->resn[2]=='D')&&
-                                      (!ai1->resn[3]))
-                                water_flag=true;
-                              if((ai2->resn[0]=='W')&&
-                                 (ai2->resn[1]=='A')&&
-                                 (ai2->resn[2]=='T')&&
-                                 (!ai2->resn[3]))
-                                water_flag=true;
-                              else if((ai2->resn[0]=='H')&&
-                                      (ai2->resn[1]=='O')&&
-                                      (ai2->resn[2]=='H')&&
-                                      (!ai2->resn[3]))
-                                water_flag=true;
-                              else if((ai2->resn[0]=='D')&&
-                                      (ai2->resn[1]=='O')&&
-                                      (ai2->resn[2]=='D')&&
-                                      (!ai1->resn[3]))
-                                water_flag=true;
+
                               cutoff = cutoff_h;
                               
                               /* workaround for hydrogens and sulfurs... */
