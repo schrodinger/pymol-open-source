@@ -866,18 +866,21 @@ typedef unsigned char pix[4];
 unsigned int SceneFindTriplet(int x,int y) 
 {
   int result = 0;
+  int before_check[100];
   pix buffer[cRange*2+1][cRange*2+1];
+  int after_check[100];
   int a,b,d,flag;
   int debug = false;
   unsigned char *c;
   int strict = false;
+  int *int_ptr;
   GLint rb,gb,bb;
 
   if(PMGUI) { /*just in case*/
   
 	glGetIntegerv(GL_RED_BITS,&rb);
-	glGetIntegerv(GL_RED_BITS,&gb);
-	glGetIntegerv(GL_RED_BITS,&bb);
+	glGetIntegerv(GL_GREEN_BITS,&gb);
+	glGetIntegerv(GL_BLUE_BITS,&bb);
 
 	if((rb>=8)&&(gb>=8)&&(bb>=8))
 		strict = true;
@@ -885,8 +888,27 @@ unsigned int SceneFindTriplet(int x,int y)
     if(Feedback(FB_Scene,FB_Debugging)) debug=true;
     
     glReadBuffer(GL_BACK);
+
+    int_ptr = before_check;
+    for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
+    int_ptr = after_check;
+    for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
+
     glReadPixels(x-cRange,y-cRange,cRange*2+1,cRange*2+1,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0][0]);
-    
+
+    int_ptr = before_check;
+    for(a=0;a<100;a++) {
+      if(*(int_ptr++)!=0x12345678) {
+        printf(" SceneFindTriplet-WARNING: OpenGL glReadPixels may have damaged stack\n");
+      }
+    }
+    int_ptr = after_check;
+    for(a=0;a<100;a++) {
+      if(*(int_ptr++)!=0x12345678) {
+        printf(" SceneFindTriplet-WARNING: OpenGL glReadPixels may have damaged stack\n");
+      }
+    }
+    for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
     if(debug) {
       for(a=0;a<=(cRange*2);a++)
         {
