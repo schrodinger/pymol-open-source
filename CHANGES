@@ -30,6 +30,9 @@ Ongoing Goals
    * draw all solid representations before drawing lines
      in order to improve antialiasing.
 
+Changes up to 0.58
+
+   * fix bugs with saving pkl files for state > 1
 
 Changes up to 0.57
 
