@@ -45,6 +45,7 @@ Z* -------------------------------------------------------------------
 #include"Wizard.h"
 #include"CGO.h"
 #include"Grap.h"
+#include"ObjectGadget.h"
 
 #define cFrontMin 0.1
 #define cSliceMin 0.1
@@ -71,6 +72,7 @@ typedef struct {
   float ModMatrix[16];
   float VewMatrix[16];
   float ProMatrix[16];
+  float UnitMatrix[16];
   float Scale;
   int Width,Height;
   int Button;
@@ -100,6 +102,9 @@ typedef struct {
 
 CScene Scene;
 
+typedef struct {
+  float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
+} SceneUnitContext;
 
 unsigned int SceneFindTriplet(int x,int y);
 unsigned int *SceneReadTriplets(int x,int y,int w,int h);
@@ -111,6 +116,7 @@ int SceneRelease(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
 
+void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height);
 
 #if 0
 static int SceneGetObjState(CObject *obj,int state)
@@ -130,6 +136,43 @@ static int SceneGetObjState(CObject *obj,int state)
   return(state);
 }
 #endif
+
+void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height)
+{
+  float tw = 1.0F;
+  float th = 1.0F;
+  float aspRat;
+
+  if(height) {
+    aspRat = width/(float)height;
+  } else {
+    aspRat = 1.0F;
+  }
+
+  if(aspRat>1.0F) {
+    tw = aspRat;
+  } else {
+    th = 1.0F/aspRat;
+  }
+
+  context->unit_left = (1.0F-tw)/2;
+  context->unit_right = (tw+1.0F)/2;
+  context->unit_top = (1.0F-th)/2;
+  context->unit_bottom = (th+1.0F)/2;
+  context->unit_front = -0.5F;
+  context->unit_back = 0.5F;
+
+  PRINTFD(FB_Scene)
+    "ScenePrepareUnitContext:%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
+    context->unit_left,
+    context->unit_right,
+    context->unit_top, 
+    context->unit_bottom,
+    context->unit_front,
+    context->unit_back
+    ENDFD;
+
+}
 
 void SceneSetCardInfo(char *vendor,char *renderer,char *version){
   CScene *I=&Scene;  
@@ -1008,9 +1051,14 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     SceneDontCopyNext();
     I->LastPicked.ptr = NULL;
 	 SceneRender(&I->LastPicked,x,y,NULL);
-	 if(I->LastPicked.ptr) {
+	 if(I->LastPicked.ptr) { /* did we pick something? */
 		obj=(CObject*)I->LastPicked.ptr;
-      if(obj->type==cObjectMolecule) {
+      y=y-I->Block->margin.bottom;
+      x=x-I->Block->margin.left;
+      I->LastX=x;
+      I->LastY=y;	
+      switch(obj->type) {
+      case cObjectMolecule:
         if(Feedback(FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement)
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
@@ -1034,10 +1082,14 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
         }
-
+        
         WizardDoPick(0);
-      } else {
-      EditorSetActiveObject(NULL,0);
+        break;
+      case cObjectGadget:
+        break;
+      default:
+        EditorSetActiveObject(NULL,0);
+        break;
       }
     } else {
       EditorSetActiveObject(NULL,0);
@@ -1056,7 +1108,13 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
 		obj=(CObject*)I->LastPicked.ptr;
-      if(obj->type==cObjectMolecule) {
+      y=y-I->Block->margin.bottom;
+      x=x-I->Block->margin.left;
+      I->LastX=x;
+      I->LastY=y;	
+
+      switch(obj->type) {
+      case cObjectMolecule:
         if(Feedback(FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement)
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
@@ -1077,7 +1135,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             PRINTF " You clicked %s -> (%s)",buffer,cEditorSele2 ENDF;
             OrthoRestorePrompt();
           }
-
+          
           if(SettingGet(cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
             ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
@@ -1091,10 +1149,14 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           EditorSetActiveObject(objMol,
                                 SettingGetGlobal_i(cSetting_state)-1);
           WizardDoPick(1);
-
+          
         }
-      } else {
+        break;
+      case cObjectGadget:
+        break;
+      default:
         EditorSetActiveObject(NULL,0);
+        break;
       }
     } else {
       EditorSetActiveObject(NULL,0);
@@ -1113,24 +1175,32 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
       obj=(CObject*)I->LastPicked.ptr;
-      if(Feedback(FB_ObjectMolecule,FB_Results)) {
-        if(obj->fDescribeElement) 
-          obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-        PRINTF " You clicked %s",buffer ENDF;        
-        OrthoRestorePrompt();
-      }
-      objMol = (ObjectMolecule*)obj;
-      EditorPrepareDrag(objMol,I->LastPicked.index,
-                        SettingGetGlobal_i(cSetting_state)-1);
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
-
-
       I->LastX=x;
       I->LastY=y;	
-      I->SculptingFlag = 1;
-      I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protected;
-      objMol->AtomInfo[I->LastPicked.index].protected=2;
+      switch(obj->type) {
+      case cObjectMolecule:
+        
+        if(Feedback(FB_ObjectMolecule,FB_Results)) {
+          if(obj->fDescribeElement) 
+            obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+          PRINTF " You clicked %s",buffer ENDF;        
+          OrthoRestorePrompt();
+        }
+        objMol = (ObjectMolecule*)obj;
+        EditorPrepareDrag(objMol,I->LastPicked.index,
+                          SettingGetGlobal_i(cSetting_state)-1);
+        I->SculptingFlag = 1;
+        I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protected;
+        objMol->AtomInfo[I->LastPicked.index].protected=2;
+        break;
+      case cObjectGadget:
+        break;
+      default:
+        EditorSetActiveObject(NULL,0);
+        break;
+      }
       /*
         (int)SettingGet(cSetting_sculpting);
             SettingSet(cSetting_sculpting,0);*/
@@ -1154,81 +1224,57 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 SceneRender(&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
 		obj=(CObject*)I->LastPicked.ptr;
-      if(Feedback(FB_ObjectMolecule,FB_Results)) {
-        if(obj->fDescribeElement) 
-          obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-        PRINTF " You clicked %s",buffer ENDF;        
-        OrthoRestorePrompt();
-      }
-      sprintf(buffer,"%s`%d",
-              obj->Name,I->LastPicked.index+1);
-		switch(mode) {
-      case cButModePk1:
-      case cButModeAddToPk1:
-        strcpy(selName,"lb");
-		  break;
-      case cButModePk2:
-      case cButModeAddToPk2:
-        strcpy(selName,"mb");
-		  break;
-      case cButModePk3:
-      case cButModeAddToPk3:
-        strcpy(selName,"rb");
-		  break;
-      case cButModeOrigAt:
-        sprintf(buf2,"origin (%s)",buffer);        
-        OrthoCommandIn(buf2);
-        if(obj->type==cObjectMolecule) {
-          if(SettingGet(cSetting_logging)) {
-            objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
-            sprintf(buffer,"cmd.origin(\"%s\")",buf1);
-            PLog(buffer,cPLog_pym);
-          }
+
+      switch(obj->type) {
+      case cObjectMolecule:
+
+        
+        if(Feedback(FB_ObjectMolecule,FB_Results)) {
+          if(obj->fDescribeElement) 
+            obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+          PRINTF " You clicked %s",buffer ENDF;        
+          OrthoRestorePrompt();
         }
-        PRINTFB(FB_Scene,FB_Actions) 
-          " Scene: Origin set.\n"
-          ENDFB;
-        break;
-      }
-      switch(mode) {
-      case cButModePk1:
-      case cButModePk2:
-      case cButModePk3:
-        SelectorCreate(selName,buffer,NULL,false,NULL);
-        if(SettingGet(cSetting_auto_hide_selections))
-          ExecutiveHideSelections();
-        if(SettingGet(cSetting_auto_show_selections))
-          ExecutiveSetObjVisib(selName,1);
-        if(obj->type==cObjectMolecule) {
-          if(SettingGet(cSetting_logging)) {
-            objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
-            sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf1);
-            PLog(buffer,cPLog_pym);
-          }
-        }
-        WizardDoSelect(selName);
-        break;
-      case cButModeAddToPk1:
-      case cButModeAddToPk2:
-      case cButModeAddToPk3:
-        if(SelectorIndexByName(selName)>=0) {
-          sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
-                  selName,buffer,buffer,selName);
-          SelectorCreate(selName,buf2,NULL,false,NULL);
+        sprintf(buffer,"%s`%d",
+                obj->Name,I->LastPicked.index+1);
+        switch(mode) {
+        case cButModePk1:
+        case cButModeAddToPk1:
+          strcpy(selName,"lb");
+          break;
+        case cButModePk2:
+        case cButModeAddToPk2:
+          strcpy(selName,"mb");
+          break;
+        case cButModePk3:
+        case cButModeAddToPk3:
+          strcpy(selName,"rb");
+          break;
+        case cButModeOrigAt:
+          sprintf(buf2,"origin (%s)",buffer);        
+          OrthoCommandIn(buf2);
           if(obj->type==cObjectMolecule) {
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
-              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
-              sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
-                      selName,buffer,buffer,selName);
-              sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf2);
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
+              sprintf(buffer,"cmd.origin(\"%s\")",buf1);
               PLog(buffer,cPLog_pym);
             }
           }
-        } else {
+          PRINTFB(FB_Scene,FB_Actions) 
+            " Scene: Origin set.\n"
+            ENDFB;
+          break;
+        }
+        switch(mode) {
+        case cButModePk1:
+        case cButModePk2:
+        case cButModePk3:
           SelectorCreate(selName,buffer,NULL,false,NULL);
+          if(SettingGet(cSetting_auto_hide_selections))
+            ExecutiveHideSelections();
+          if(SettingGet(cSetting_auto_show_selections))
+            ExecutiveSetObjVisib(selName,1);
           if(obj->type==cObjectMolecule) {
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
@@ -1237,12 +1283,47 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               PLog(buffer,cPLog_pym);
             }
           }
+          WizardDoSelect(selName);
+          break;
+        case cButModeAddToPk1:
+        case cButModeAddToPk2:
+        case cButModeAddToPk3:
+          if(SelectorIndexByName(selName)>=0) {
+            sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
+                    selName,buffer,buffer,selName);
+            SelectorCreate(selName,buf2,NULL,false,NULL);
+            if(obj->type==cObjectMolecule) {
+              if(SettingGet(cSetting_logging)) {
+                objMol = (ObjectMolecule*)obj;            
+                ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
+                sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
+                        selName,buffer,buffer,selName);
+                sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf2);
+                PLog(buffer,cPLog_pym);
+              }
+            }
+          } else {
+            SelectorCreate(selName,buffer,NULL,false,NULL);
+            if(obj->type==cObjectMolecule) {
+              if(SettingGet(cSetting_logging)) {
+                objMol = (ObjectMolecule*)obj;            
+                ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
+                sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf1);
+                PLog(buffer,cPLog_pym);
+              }
+            }
+          }
+          if(SettingGet(cSetting_auto_hide_selections))
+            ExecutiveHideSelections();
+          if(SettingGet(cSetting_auto_show_selections))
+            ExecutiveSetObjVisib(selName,1);
+          WizardDoSelect(selName);
+          break;
         }
-        if(SettingGet(cSetting_auto_hide_selections))
-          ExecutiveHideSelections();
-        if(SettingGet(cSetting_auto_show_selections))
-          ExecutiveSetObjVisib(selName,1);
-        WizardDoSelect(selName);
+      case cObjectGadget:
+        break;
+      default:
+        EditorSetActiveObject(NULL,0);
         break;
       }
 	 } else {
@@ -1306,13 +1387,63 @@ int SceneDrag(Block *block,int x,int y,int mod)
 
   SceneDontCopyNext();
   switch(mode) {
+  case cButModePickAtom:
+    obj=(CObject*)I->LastPicked.ptr;
+    if(obj)
+      switch(obj->type) {
+      case cObjectGadget: {
+        ObjectGadget *gad;
+        
+        gad = (ObjectGadget*)obj;
+
+        ObjectGadgetGetVertex(gad,I->LastPicked.index,I->LastPicked.bond,v1);
+
+        vScale = SceneGetScreenVertexScale(v1);
+        if(I->StereoMode>1) {
+          x = x % (I->Width/2);
+          vScale*=2;
+        }
+        
+        /* transform into model coodinate space */
+        switch(obj->Context) {
+        case 0:
+          v2[0] = (x-I->LastX)*vScale;
+          v2[1] = (y-I->LastY)*vScale;
+          v2[2] = 0;
+          MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
+          break;
+        case 1:
+          {
+            float divisor;
+            divisor = I->Width;
+            if(I->Height<I->Width)
+              divisor = I->Height;
+            v2[0] = (x-I->LastX)/divisor;
+            v2[1] = (y-I->LastY)/divisor;
+            v2[2] = 0;
+          }
+          break;
+        }
+        add3f(v1,v2,v2);
+        ObjectGadgetSetVertex(gad,I->LastPicked.index,I->LastPicked.bond,v2);
+        if(gad->Obj.fUpdate)
+          gad->Obj.fUpdate((CObject*)gad);
+        SceneChanged();
+        /*        printf("dragging gadget\n");*/
+      }
+      break;
+      }
+    I->LastX=x;
+    I->LastY=y;
+    break;
   case cButModeMovFrag:
   case cButModeTorFrag:
   case cButModeRotFrag:
-
+    
     obj=(CObject*)I->LastPicked.ptr;
     if(obj)
-      if(obj->type==cObjectMolecule) {
+      switch(obj->type) {
+      case cObjectMolecule:
         if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
                                        SettingGetGlobal_i(cSetting_state)-1,
                                        I->LastPicked.index,v1)) {
@@ -1322,7 +1453,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
             x = x % (I->Width/2);
             vScale*=2;
           }
-
+          
           v2[0] = (x-I->LastX)*vScale;
           v2[1] = (y-I->LastY)*vScale;
           v2[2] = 0;
@@ -1331,6 +1462,9 @@ int SceneDrag(Block *block,int x,int y,int mod)
           EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
                      SettingGetGlobal_i(cSetting_state)-1,v1,v2);
         }
+        break;
+      default:
+        break;
       }
     I->LastX=x;
     I->LastY=y;
@@ -1675,6 +1809,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   char *headerVLA = NULL;
   float fov;
   OrthoLineType prefix = "";
+  SceneUnitContext context;
 
   if((!ray_width)||(!ray_height)) {
     ray_width=I->Width;
@@ -1684,7 +1819,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   fov=SettingGet(cSetting_field_of_view);
   aspRat = ((float) ray_width) / ((float) ray_height);
 
-
+  ScenePrepareUnitContext(&context,ray_width,ray_height);
   if(SettingGet(cSetting_all_states)) {
     curState=-1;
   } else {
@@ -1728,17 +1863,18 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   height  = abs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
   width = height*aspRat;
 
-  RayPrepare(ray,-width,width,-height,height,I->FrontSafe,I->Back,rayView);
+  RayPrepare(ray,-width,width,-height,height,I->FrontSafe,I->Back,rayView,aspRat);
 
   while(ListIterate(I->Obj,rec,next))
 	 {
 		if(rec->obj->fRender) {
+        RaySetContext(ray,rec->obj->Context);
 		  ray->fColor3fv(ray,white);
 		  rec->obj->fRender(rec->obj,
                           ObjectGetCurrentState(rec->obj,false),ray,NULL,0);
 		}
 	 }
-
+             
   if(mode!=2) { /* don't show pixel count for tests */
     PRINTFB(FB_Ray,FB_Details)
       " Ray: tracing %dx%d = %d rays...\n",ray_width,ray_height,
@@ -1929,6 +2065,69 @@ int SceneRenderCached(void)
 
   return(renderedFlag);
 }
+
+
+/*========================================================================*/
+static void SceneRenderAll(SceneUnitContext *context,float *normal,Pickable **pickVLA,int pass,int fat)
+{
+  CScene *I=&Scene;
+  ObjRec *rec=NULL;
+  float vv[4];
+
+  while(ListIterate(I->Obj,rec,next))
+    {
+      glPushMatrix();
+      if(fat)
+        glLineWidth(3.0);
+      if(rec->obj->fRender)
+        switch(rec->obj->Context) {
+        case 0:
+          if(normal) 
+            glNormal3fv(normal);
+          rec->obj->fRender(rec->obj,
+                            ObjectGetCurrentState(rec->obj,false),NULL,pickVLA,pass);
+          break;
+        case 1:
+          glMatrixMode(GL_PROJECTION);
+          glPushMatrix();
+          glLoadIdentity();
+          glMatrixMode(GL_MODELVIEW);
+          glPushMatrix();
+          glLoadIdentity();
+          vv[0]=0.0;
+          vv[1]=0.0;
+          vv[2]=-1.0;
+          vv[3]=0.0;
+          glLightfv(GL_LIGHT0,GL_POSITION,vv);
+
+          glOrtho(context->unit_left,
+                  context->unit_right,
+                  context->unit_top,
+                  context->unit_bottom,
+                  context->unit_front,
+                  context->unit_back);
+          
+          glNormal3f(0.0F,0.0F,1.0F);
+          rec->obj->fRender(rec->obj,
+                            ObjectGetCurrentState(rec->obj,false),NULL,pickVLA,pass);
+
+          glMatrixMode(GL_MODELVIEW);
+          glLoadIdentity();
+          vv[0]=0.0;
+          vv[1]=0.0;
+          vv[2]=1.0;
+          vv[3]=0.0;
+          glLightfv(GL_LIGHT0,GL_POSITION,vv);
+
+          glPopMatrix();
+          glMatrixMode(GL_PROJECTION);
+          glPopMatrix();
+          break;
+        }
+      glPopMatrix();
+    }
+}
+
 /*========================================================================*/
 void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 {
@@ -1961,6 +2160,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   int double_pump = false;
   int must_render_stereo = false;
   int stereo_as_mono = false;
+  int debug_pick = 0;
+
+  SceneUnitContext context;
 
   PRINTFD(FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
@@ -1979,6 +2181,35 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
     glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
     
+    debug_pick = SettingGet(cSetting_debug_pick);
+
+    if(SettingGet(cSetting_line_smooth)) {
+      if(!(pick||smp)) {
+        glEnable(GL_LINE_SMOOTH);
+        glHint(GL_LINE_SMOOTH_HINT,GL_DONT_CARE);
+      }
+      glLineWidth(0.0);
+    } else {
+      glLineWidth(SettingGet(cSetting_line_width));
+      glDisable(GL_LINE_SMOOTH);
+    }
+
+    glPointSize(SettingGet(cSetting_dot_width));
+
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_DEPTH_TEST);
+
+    /* get matrixes for unit objects */
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    ScenePrepareUnitContext(&context,I->Width,I->Height);
+
+    /* do standard 3D objects */
+
     /* Set up the clipping planes */
     
     glMatrixMode(GL_PROJECTION);
@@ -1998,6 +2229,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 	
       glOrtho(-width,width,-height,height,
               I->FrontSafe,I->Back);
+
     }
 
     glMatrixMode(GL_MODELVIEW);
@@ -2030,22 +2262,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     }  
-    if(SettingGet(cSetting_line_smooth)) {
-      if(!(pick||smp)) {
-        glEnable(GL_LINE_SMOOTH);
-        glHint(GL_LINE_SMOOTH_HINT,GL_DONT_CARE);
-      }
-      glLineWidth(0.0);
-    } else {
-      glLineWidth(SettingGet(cSetting_line_width));
-      glDisable(GL_LINE_SMOOTH);
-    }
 
-    glPointSize(SettingGet(cSetting_dot_width));
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_NORMALIZE);
-    
     if(!(pick||smp)) {
 
       glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
@@ -2169,20 +2386,15 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       pickVLA=VLAlloc(Pickable,5000);
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
-      while(ListIterate(I->Obj,rec,next))
-        {
-		  glLineWidth(3.0); /* insure some 100% pixels */
-          glPushMatrix();
-          if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,
-                              ObjectGetCurrentState(rec->obj,false),NULL,&pickVLA,0);
-          glPopMatrix();
-        }
 
+      SceneRenderAll(&context,NULL,&pickVLA,0,true);
 	  
-	 /* p_glutSwapBuffers();
-	  PSleep(5000000);*/
 
+      if(debug_pick) {
+        p_glutSwapBuffers();
+        PSleep(1000000*debug_pick/4);
+        p_glutSwapBuffers();
+      }
       lowBits = SceneFindTriplet(x,y);
 	
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2190,23 +2402,16 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)pick; /* this is just a flag */
 	
-      while(ListIterate(I->Obj,rec,next))
-        {
-		  glLineWidth(3.0); /* insure some 100% pixels */
-          glPushMatrix();
-          if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,
-                              ObjectGetCurrentState(rec->obj,false),NULL,&pickVLA,0);
-          glPopMatrix();
-        }
+      SceneRenderAll(&context,NULL,&pickVLA,0,true);
 
-      
-	  highBits = SceneFindTriplet(x,y);
+      if(debug_pick) {
+        p_glutSwapBuffers();
+        PSleep(1000000*debug_pick/4);
+        p_glutSwapBuffers();
+      }
+
+      highBits = SceneFindTriplet(x,y);
       index = lowBits+(highBits<<12);
-
-	  /*
-	  p_glutSwapBuffers();
-	  PSleep(5000000);*/
 
       if(index&&(index<=pickVLA[0].index)) {
         *pick = pickVLA[index]; /* return object info */
@@ -2231,17 +2436,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       pickVLA=VLAlloc(Pickable,5000);
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
-      while(ListIterate(I->Obj,rec,next))
-        {
-		  glLineWidth(3.0); /* insure some 100% pixels */
-          glPushMatrix();
-			 if(rec->obj->fRender)
-			   rec->obj->fRender(rec->obj,
-                              ObjectGetCurrentState(rec->obj,false),NULL,&pickVLA,0);
-			 glPopMatrix();
-        }
-
-	
+      
+      SceneRenderAll(&context,NULL,&pickVLA,0,true);
+      
       lowBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h);
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2249,16 +2446,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)smp; /* this is just a flag */
 	
-      while(ListIterate(I->Obj,rec,next))
-        {
-		  glLineWidth(3.0); /* insure some 100% pixels */
-          glPushMatrix();
-          if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,
-                              ObjectGetCurrentState(rec->obj,false),NULL,&pickVLA,0);
-          glPopMatrix();
-        }
-      
+      SceneRenderAll(&context,NULL,&pickVLA,0,true);
+
       highBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h);
       
       nLowBits = VLAGetSize(lowBitVLA);
@@ -2275,11 +2464,13 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               pik = pickVLA+index; /* just using as a tmp */
               if((pik->index!=lastIndex)||(pik->ptr!=lastPtr))
                 {
-                  nPick++; /* start from 1 */
-                  VLACheck(smp->picked,Pickable,nPick);
+                  if(((CObject*)pik->ptr)->type==cObjectMolecule) {
+                    nPick++; /* start from 1 */
+                    VLACheck(smp->picked,Pickable,nPick);
+                    smp->picked[nPick] = *pik; /* return atom/object info -- will be redundant */
+                  }
                   lastIndex=pik->index;                
                   lastPtr=pik->ptr;
-                  smp->picked[nPick] = *pik; /* return atom/object info -- will be redundant */
                 }
             }
             low+=2;
@@ -2298,6 +2489,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       VLAFreeP(highBitVLA);
     } else {
       
+      /* STANDARD RENDERING */
 
       ButModeCaptionReset(); /* reset the frame caption if any */
       /* rendering for visualization */
@@ -2313,7 +2505,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       if(I->StereoMode) {
         /*stereo*/
         
-        /* render left side */
+        /* LEFT HAND STEREO */
 
         if(stereo_as_mono) {
           glDrawBuffer(GL_BACK_LEFT);
@@ -2330,15 +2522,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         ScenePrepareMatrix(stereo_as_mono ? 0 : 1);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
           rec=NULL;
-          while(ListIterate(I->Obj,rec,next))
-            {
-              glPushMatrix();
-              glNormal3fv(normal);
-              if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,
-                                  ObjectGetCurrentState(rec->obj,false),NULL,NULL,pass);
-              glPopMatrix();
-            }
+
+          SceneRenderAll(&context,normal,NULL,pass,false);
+
         }
         glPushMatrix();
         glNormal3fv(normal);
@@ -2352,19 +2538,11 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         EditorRender(curState);
         glPopMatrix();
 
-        rec=NULL;
-        while(ListIterate(I->Obj,rec,next)) /* render transparent */
-          {
-            glPushMatrix();
-            glNormal3fv(normal);
-            if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,
-                                ObjectGetCurrentState(rec->obj,false),NULL,NULL,-1);
-            glPopMatrix();
-          }
-        glPopMatrix();
-        
-        /* render right side */
+        /* render transparent */
+
+        SceneRenderAll(&context,normal,NULL,-1,false);
+          
+        /* RIGHT HAND STEREO */
 
         if(stereo_as_mono) {
           glDrawBuffer(GL_BACK_RIGHT);
@@ -2376,46 +2554,33 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
-
+        
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix();
         ScenePrepareMatrix(stereo_as_mono ? 0 : 2);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
-          rec=NULL;
-          while(ListIterate(I->Obj,rec,next))
-            {
-              glPushMatrix();
-              glNormal3fv(normal);
-              if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,
-                                  ObjectGetCurrentState(rec->obj,false),NULL,NULL,pass);
-              glPopMatrix();
-            }
+          
+          SceneRenderAll(&context,normal,NULL,pass,false);
+          
         }
-
+        
         glPushMatrix();
         glNormal3fv(normal);
         CGORenderGL(DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
-
+        
         glPushMatrix();
         glNormal3fv(normal);
         ExecutiveRenderSelections(curState);
         EditorRender(curState);
         glPopMatrix();
-
-        rec=NULL;
-        while(ListIterate(I->Obj,rec,next)) /* render transparent */
-          {
-            glPushMatrix();
-            glNormal3fv(normal);
-            if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,
-                                ObjectGetCurrentState(rec->obj,false),NULL,NULL,-1);
-            glPopMatrix();
-          }
-
+        
+        /* render transparent */
+        SceneRenderAll(&context,normal,NULL,-1,false);
+        
         glPopMatrix();        
+
+        /* restore draw buffer */
 
         if(must_render_stereo) {
           glDrawBuffer(GL_BACK);
@@ -2428,22 +2593,14 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
       } else {
 
+        /* mono rendering */
+
         PRINTFD(FB_Scene)
           " SceneRender: rendering opaque and antialiased...\n"
           ENDFD;
         
-        /* mono */
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
-          rec=NULL;
-          while(ListIterate(I->Obj,rec,next))
-            {
-              glPushMatrix();
-              glNormal3fv(normal);
-              if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,
-                                  ObjectGetCurrentState(rec->obj,false),NULL,NULL,pass);
-              glPopMatrix();
-            }
+          SceneRenderAll(&context,normal,NULL,pass,false);
         }
 
         PRINTFD(FB_Scene)
@@ -2473,17 +2630,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           " SceneRender: rendering transparent objects...\n"
           ENDFD;
 
-        rec=NULL;
-        while(ListIterate(I->Obj,rec,next))/* render transparent */
-          {
-            glPushMatrix();
-            glNormal3fv(normal);
-            if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,
-                                ObjectGetCurrentState(rec->obj,false),NULL,NULL,pass); 
-            glPopMatrix();
-          }
-
+        /* render transparent */
+        SceneRenderAll(&context,normal,NULL,-1,false);
         glPopMatrix();
 
       }
@@ -2508,7 +2656,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     " SceneRender: rendering complete.\n"
     ENDFD;
   
-  if(!(pick||smp)) {
+  if(!(pick||smp)) { /* update frames per second field */
     I->RenderTime = -I->LastRender;
     I->LastRender = UtilGetSeconds();
     I->RenderTime += I->LastRender;

@@ -227,6 +227,23 @@ void MapLocus(MapType *I,float *v,int *a,int *b,int *c)
   else if(*c>I->iMax[2]) *c=I->iMax[2];
 }
 
+int *MapLocusEStart(MapType *I,float *v)
+{
+  register int a,b,c;
+
+  a=(int)(((v[0]-I->Min[0])/I->Div)+MapBorder);
+  b=(int)(((v[1]-I->Min[1])/I->Div)+MapBorder);
+  c=(int)(((v[2]-I->Min[2])/I->Div)+MapBorder);
+  if(a<I->iMin[0]) a=I->iMin[0];
+  else if(a>I->iMax[0]) a=I->iMax[0];
+  if(b<I->iMin[1]) b=I->iMin[1];
+  else if(b>I->iMax[1]) b=I->iMax[1];
+  if(c<I->iMin[2]) c=I->iMin[2];
+  else if(c>I->iMax[2]) c=I->iMax[2];
+  return (I->EHead + ((a) * I->D1D2) + ((b)*I->Dim[2]) + (c));
+
+}
+
 int MapExclLocus(MapType *I,float *v,int *a,int *b,int *c)
 {
   *a=(int)(((v[0]-I->Min[0])/I->Div)+MapBorder);
@@ -268,7 +285,7 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
 
   if(Feedback(FB_Map,FB_Debugging)) {
     PRINTF
-      " MapGetSeparation: range %8.3f maxSize %8.3f subDiv %8.3f size %8.3f",range,maxSize,subDiv,size
+      " MapGetSeparation: range %8.3f maxSize %8.3f subDiv %8.3f size %8.3f\n",range,maxSize,subDiv,size
       ENDF;
     dump3f(mx,"mx");
     dump3f(mn,"mn");
@@ -361,24 +378,26 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 				v+=3;
 			 }
 		} else {
-		  v=vert;
-		  for(c=0;c<3;c++)
-			 {
-				I->Min[c] = v[c];
-				I->Max[c] = v[c];
-			 }
-		  v+=3;
-		  for(a=1;a<nVert;a++)
-			 {
-				for(c=0;c<3;c++)
-				  {
-					 if(I->Min[c]>v[c])
-						I->Min[c]=v[c];
-					 if(I->Max[c]<v[c])
-						I->Max[c]=v[c];
-				  }
-				v+=3;
-			 }
+        if(nVert) {
+          v=vert;
+          for(c=0;c<3;c++)
+            {
+              I->Min[c] = v[c];
+              I->Max[c] = v[c];
+            }
+          v+=3;
+          for(a=1;a<nVert;a++)
+            {
+              for(c=0;c<3;c++)
+                {
+                  if(I->Min[c]>v[c])
+                    I->Min[c]=v[c];
+                  if(I->Max[c]<v[c])
+                    I->Max[c]=v[c];
+                }
+              v+=3;
+            }
+        }
 		}
 	 }
 

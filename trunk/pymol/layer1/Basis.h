@@ -73,7 +73,9 @@ void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
 
 int BasisHit(CBasis *I,RayInfo *r,int except,
 				 int *vert2prim,CPrimitive *prim,
-				 int shadow,float front,float back,float excl_trans,int trans_shadows);
+				 int shadow,float front,float back,
+             float excl_trans,int trans_shadows,
+             float fudge);
 
 #endif
 

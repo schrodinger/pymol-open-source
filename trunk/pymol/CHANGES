@@ -98,7 +98,16 @@ Current Bugs to Fix
 
 Changes up to 0.87
 
+   * improved launch speed by hard-coding sphere definitions
+
+   * improved surfacing algorithm performance by about 12% 
+
+   * dot_solvent, mesh_solvent, and sphere_solvent settings
+
+   * simplified and improved mesh quality, added mesh_quality setting
+
    * fixed session restore crash with objects having multiple states.
+
    * improved specular reflection on transparent surfaces
      (ray_transparency_specular=0) will restore original behavior.
 

@@ -101,8 +101,8 @@ int mesh[30][2] = {
 { 9 , 10 }                                                                        
 };
 
-#define MAXDOT 650
-#define MAXTRI 1300
+#define MAXDOT 2600
+#define MAXTRI 6200
 
 typedef int EdgeCol[MAXDOT]; /* should move these into dynamic storage to save 3MB  mem */
 typedef EdgeCol EdgeArray[MAXDOT]; 
@@ -119,21 +119,188 @@ SphereRec *Sphere0;
 SphereRec *Sphere1;
 SphereRec *Sphere2;
 SphereRec *Sphere3;
+SphereRec *Sphere4;
+
+#define FAST_SPHERE_INIT
+
+
+#ifdef FAST_SPHERE_INIT
+#include"SphereData.h"
+
+SphereRec sSphere0,sSphere1,sSphere2,sSphere3,sSphere4,sSphere5;
+
+
+#endif
+
+
+static void SphereDump(FILE *f,char *prefix,SphereRec *sp)
+{
+  int a;
+  int c;
+  fprintf(f,"static int %s_NTri = %d;\n",prefix,sp->NTri);
+  fprintf(f,"static int %s_NStrip = %d;\n",prefix,sp->NStrip);
+  fprintf(f,"static int %s_NVertTot = %d;\n",prefix,sp->NVertTot);
+  fprintf(f,"static int %s_nDot = %d;\n",prefix,sp->nDot);
+  fprintf(f,"static float %s_dot[][3] = {\n",prefix);
+  for(a=0;a<sp->nDot;a++) {
+    fprintf(f,"{ %15.12fF, %15.12fF, %15.12fF },\n",
+            sp->dot[a][0],
+            sp->dot[a][1],
+            sp->dot[a][2]);
+  }
+  fprintf(f,"};\n");
+  
+  fprintf(f,"static float %s_area[] = {\n",prefix);
+
+  c = 0;
+  for(a=0;a<sp->nDot;a++) {
+    fprintf(f,"%15.12fF,",
+            sp->area[a]);
+    c = (c+1)%4;
+    if(!c) fprintf(f,"\n");
+  }
+  fprintf(f,"};\n");
+
+  fprintf(f,"static int %s_StripLen[] = {\n",prefix);
+  c = 0;
+  for(a=0;a<sp->NStrip;a++) {
+    fprintf(f,"%6d,",
+            sp->StripLen[a]);
+    c = (c+1)%10;
+    if(!c) fprintf(f,"\n");
+  }
+  fprintf(f,"};\n");
+
+  fprintf(f,"static int %s_Sequence[] = {\n",prefix);
+  c = 0;
+  for(a=0;a<sp->NVertTot;a++) {
+    fprintf(f,"%6d,",
+            sp->Sequence[a]);
+    c = (c+1)%10;
+    if(!c) fprintf(f,"\n");
+  }
+  fprintf(f,"};\n");
+
+  fprintf(f,"static int %s_Tri[] = {\n",prefix);
+  c = 0;
+  for(a=0;a<3*sp->NTri;a++) {
+    fprintf(f,"%6d,",
+            sp->Tri[a]);
+    c = (c+1)%10;
+    if(!c) fprintf(f,"\n");
+  }
+  fprintf(f,"};\n");
+
+
+}
+
+static void SphereDumpAll()
+{
+  FILE *f;
+  f = fopen("SphereData.h","w");
+  SphereDump(f,"Sphere0",Sphere0);
+  SphereDump(f,"Sphere1",Sphere1);
+  SphereDump(f,"Sphere2",Sphere2);
+  SphereDump(f,"Sphere3",Sphere3);
+  SphereDump(f,"Sphere4",Sphere4);
+  fclose(f);
+}
+
 
 void SphereInit(void)
 {
+  
+#ifdef FAST_SPHERE_INIT
+  sSphere0.area = Sphere0_area;
+  sSphere0.dot = Sphere0_dot;
+  sSphere0.StripLen = Sphere0_StripLen;
+  sSphere0.Sequence = Sphere0_Sequence;
+  sSphere0.NStrip = Sphere0_NStrip;
+  sSphere0.NVertTot = Sphere0_NVertTot;
+  sSphere0.nDot = Sphere0_nDot;
+  sSphere0.Tri = Sphere0_Tri;
+  sSphere0.NTri = Sphere0_NTri;
+  sSphere0.Mesh = (int*)mesh;
+  sSphere0.NMesh = 30;
+
+  sSphere1.area = Sphere1_area;
+  sSphere1.dot = Sphere1_dot;
+  sSphere1.StripLen = Sphere1_StripLen;
+  sSphere1.Sequence = Sphere1_Sequence;
+  sSphere1.NStrip = Sphere1_NStrip;
+  sSphere1.NVertTot = Sphere1_NVertTot;
+  sSphere1.nDot = Sphere1_nDot;
+  sSphere1.Tri = Sphere1_Tri;
+  sSphere1.NTri = Sphere1_NTri;
+  sSphere1.Mesh = NULL;
+  sSphere1.NMesh = 0;
+
+  sSphere2.area = Sphere2_area;
+  sSphere2.dot = Sphere2_dot;
+  sSphere2.StripLen = Sphere2_StripLen;
+  sSphere2.Sequence = Sphere2_Sequence;
+  sSphere2.NStrip = Sphere2_NStrip;
+  sSphere2.NVertTot = Sphere2_NVertTot;
+  sSphere2.nDot = Sphere2_nDot;
+  sSphere2.Tri = Sphere2_Tri;
+  sSphere2.NTri = Sphere2_NTri;
+  sSphere2.Mesh = NULL;
+  sSphere2.NMesh = 0;
+
+  sSphere3.area = Sphere3_area;
+  sSphere3.dot = Sphere3_dot;
+  sSphere3.StripLen = Sphere3_StripLen;
+  sSphere3.Sequence = Sphere3_Sequence;
+  sSphere3.NStrip = Sphere3_NStrip;
+  sSphere3.NVertTot = Sphere3_NVertTot;
+  sSphere3.nDot = Sphere3_nDot;
+  sSphere3.Tri = Sphere3_Tri;
+  sSphere3.NTri = Sphere3_NTri;
+  sSphere3.Mesh = NULL;
+  sSphere3.NMesh = 0;
+
+  sSphere4.area = Sphere4_area;
+  sSphere4.dot = Sphere4_dot;
+  sSphere4.StripLen = Sphere4_StripLen;
+  sSphere4.Sequence = Sphere4_Sequence;
+  sSphere4.NStrip = Sphere4_NStrip;
+  sSphere4.NVertTot = Sphere4_NVertTot;
+  sSphere4.nDot = Sphere4_nDot;
+  sSphere4.Tri = Sphere4_Tri;
+  sSphere4.NTri = Sphere4_NTri;
+  sSphere4.Mesh = NULL;
+  sSphere4.NMesh = 0;
+
+  Sphere0 = &sSphere0;
+  Sphere1 = &sSphere1;
+  Sphere2 = &sSphere2;
+  Sphere3 = &sSphere3;
+  Sphere4 = &sSphere4;
+#else
   Sphere0 = MakeDotSphere(0);
   Sphere1 = MakeDotSphere(1);
   Sphere2 = MakeDotSphere(2);
   Sphere3 = MakeDotSphere(3);
+  Sphere4 = MakeDotSphere(4);
+  /*
+  SphereDumpAll();
+  */
+  
+#endif
+
+
 }
 
 void SphereDone(void)
 {
+#ifndef FAST_SPHERE_INIT
   SphereFree(Sphere0);
   SphereFree(Sphere1);
   SphereFree(Sphere2);
   SphereFree(Sphere3);
+  SphereFree(Sphere4);
+#endif
+
 }
 
 void MakeVertex(int d1,int d2)
@@ -199,8 +366,8 @@ SphereRec *MakeDotSphere(int level)
 	 for(b=0;b<MAXDOT;b++)
 		(*EdgeRef)[a][b]=-1;
 
-  if(level>3)
-	 level=3;
+  if(level>4)
+	 level=4;
   
   for(c=0;c<level;c++)
 	 {
@@ -243,8 +410,10 @@ SphereRec *MakeDotSphere(int level)
   /*  printf(" MakeDotSphere: NDot %i NTri %i\n",NDot,NTri);*/
   result= Alloc(SphereRec,1);
   ErrChkPtr(result);
-  result->dot = Alloc(DotRec,NDot);
+  result->dot = Alloc(Vector3f,NDot);
   ErrChkPtr(result->dot);
+  result->area = Alloc(float,NDot);
+  ErrChkPtr(result->area);
   result->StripLen = Alloc(int,NTri*3);
   ErrChkPtr(result->StripLen);
   result->Sequence = Alloc(int,NTri*3);
@@ -253,17 +422,17 @@ SphereRec *MakeDotSphere(int level)
   for(a=0;a<NDot;a++)
 	 {
 		for(c=0;c<3;c++)
-		  result->dot[a].v[c]=*(Dot+(3*a+c));
-		result->dot[a].area = 0.0;
+		  result->dot[a][c]=*(Dot+(3*a+c));
+		result->area[a] = 0.0;
 	 }
 
   /* fix normals so that v1-v0 x v2-v0 is the correct normal */
 
   for(a=0;a<NTri;a++) {
-    subtract3f(result->dot[Tri[a][1]].v,result->dot[Tri[a][0]].v,vt1);
-    subtract3f(result->dot[Tri[a][2]].v,result->dot[Tri[a][0]].v,vt2);
+    subtract3f(result->dot[Tri[a][1]],result->dot[Tri[a][0]],vt1);
+    subtract3f(result->dot[Tri[a][2]],result->dot[Tri[a][0]],vt2);
     cross_product3f(vt1,vt2,vt);
-    if(dot_product3f(vt,result->dot[Tri[a][0]].v)<0.0) { /* if wrong, then interchange */
+    if(dot_product3f(vt,result->dot[Tri[a][0]])<0.0) { /* if wrong, then interchange */
       it=Tri[a][2]; Tri[a][2]=Tri[a][1]; Tri[a][1]=it;
 	 }
   }    
@@ -276,14 +445,15 @@ SphereRec *MakeDotSphere(int level)
 		/* multiply by r^2 to get area */
 		sumArea+=area;
 		area/=3.0;
-		result->dot[Tri[a][0]].area += area;
-		result->dot[Tri[a][1]].area += area;
-		result->dot[Tri[a][2]].area += area;
+		result->area[Tri[a][0]] += area;
+		result->area[Tri[a][1]] += area;
+		result->area[Tri[a][2]] += area;
 	 }
 
-  if(fabs(sumArea - (4*cPI))>0.0001)
+  if(fabs(sumArea - (4*cPI))>0.001) {
+    printf(" MakeDotSphere: sumArea: %8.6f which is %8.6f Pi\n",sumArea,sumArea/cPI);
 	 ErrFatal("MakeDotSphere","Area of sphere does not sum to 4*pi!\n");
-  /*  printf(" MakeDotSphere: sumArea: %8.3f which is %8.3f Pi\n",sumArea,sumArea/cPI);*/
+  }
 
   
   for(a=0;a<NTri;a++)
@@ -407,7 +577,6 @@ SphereRec *MakeDotSphere(int level)
 		  a++;
 		}
   }
-  
   mfree(Dot);
   mfree(EdgeRef);
   mfree(TriFlag);
@@ -416,6 +585,8 @@ SphereRec *MakeDotSphere(int level)
   result->NTri = NTri;
   result->StripLen = Realloc(result->StripLen,int,nStrip);
   result->Sequence = Realloc(result->Sequence,int,nVertTot);
+  result->dot = Realloc(result->dot,Vector3f,NDot);
+  result->area = Realloc(result->area,float,NDot);
   result->nDot = NDot;
   result->NStrip = nStrip;
   result->NVertTot = nVertTot;
@@ -445,6 +616,7 @@ void SphereFree(SphereRec *I)
 {
   /* NOTE: I->Mesh is not currently a pointer*/
   mfree(I->dot);
+  mfree(I->area);
   mfree(I->StripLen);
   mfree(I->Sequence);
   mfree(I->Tri);

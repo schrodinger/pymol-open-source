@@ -158,6 +158,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   int nSphere = 0;
   int a1;
   float *v1;
+  float tmpColor[3];
   OOAlloc(RepNonbondedSphere);
   obj = cs->Obj;
 
@@ -214,11 +215,16 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 		  {
 			 I->NC++;
 			 c1=*(cs->Color+a);
-			 vc = ColorGet(c1); /* save new color */
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
 			 v0 = cs->Coord+3*a;			 
+          if(ColorCheckRamped(c1)) {
+            ColorGetRamped(c1,v0,tmpColor);
+            vc = tmpColor;
+          } else {
+            vc = ColorGet(c1);
+          }
+			 *(v++)=*(vc++);
+			 *(v++)=*(vc++);
+			 *(v++)=*(vc++);
 			 *(v++)=*(v0++);
 			 *(v++)=*(v0++);
 			 *(v++)=*(v0++);
@@ -247,6 +253,14 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 			 c1=*(cs->Color+a);
 			 v0 = cs->Coord+3*a;
 			 vc = ColorGet(c1);
+
+          if(ColorCheckRamped(c1)) {
+            ColorGetRamped(c1,v0,tmpColor);
+            vc = tmpColor;
+          } else {
+            vc = ColorGet(c1);
+          }
+
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
@@ -258,12 +272,12 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
             {
               for(c=0;c<(*s);c++)
                 {
-                  *(v++)=sp->dot[*q].v[0]; /* normal */
-                  *(v++)=sp->dot[*q].v[1];
-                  *(v++)=sp->dot[*q].v[2];
-                  *(v++)=v0[0]+nonbonded_size*sp->dot[*q].v[0]; /* point */
-                  *(v++)=v0[1]+nonbonded_size*sp->dot[*q].v[1];
-                  *(v++)=v0[2]+nonbonded_size*sp->dot[*q].v[2];
+                  *(v++)=sp->dot[*q][0]; /* normal */
+                  *(v++)=sp->dot[*q][1];
+                  *(v++)=sp->dot[*q][2];
+                  *(v++)=v0[0]+nonbonded_size*sp->dot[*q][0]; /* point */
+                  *(v++)=v0[1]+nonbonded_size*sp->dot[*q][1];
+                  *(v++)=v0[2]+nonbonded_size*sp->dot[*q][2];
                   q++;
                 }
               s++;

@@ -400,6 +400,7 @@ int PConvPyListToFloatArray(PyObject *obj,float **f)
     ff = (*f);
     for(a=0;a<l;a++)
       *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+    
   }
   return(ok);
 }
@@ -425,6 +426,44 @@ int PConvPyListToFloatVLA(PyObject *obj,float **f)
     ff = (*f);
     for(a=0;a<l;a++)
       *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+    VLASize((*f),float,l);
+  }
+  return(ok);
+}
+
+int PConvPyList3ToFloatVLA(PyObject *obj,float **f)
+{
+  int a,b,l;
+  float *ff;
+  PyObject *triple;
+  int ok=true;
+  if(!obj) {
+    *f=NULL;
+    ok=false;
+  } else if(!PyList_Check(obj)) {
+    *f=NULL;
+    ok=false;
+  } else {
+    l=PyList_Size(obj);
+    if(!l)
+      ok=-1;
+    else 
+      ok=l;
+    (*f) = VLAlloc(float,l*3);
+    ff = (*f);
+    for(a=0;a<l;a++) {
+      triple = PyList_GetItem(obj,a);
+      ok = PyList_Check(triple);
+      if(ok) ok = (PyList_Size(triple)==3);
+      if(ok) {
+        for(b=0;b<3;b++)
+          *(ff++) = PyFloat_AsDouble(PyList_GetItem(triple,b));
+      } else {
+        ok=false;
+        break;
+      }
+    }
+    VLASize((*f),float,l*3);
   }
   return(ok);
 }

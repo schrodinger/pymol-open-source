@@ -65,6 +65,7 @@ PyObject *P_unlock_c = NULL;
 PyObject *P_time = NULL;
 PyObject *P_sleep = NULL;
 PyObject *P_main = NULL;
+PyObject *P_vfont = NULL;
 
 #define P_log_file_str "_log_file"
 
@@ -95,6 +96,25 @@ PyObject *GetBondsDict(void)
   result = PyObject_GetAttrString(P_chempy,"bonds");
   if(!result) ErrMessage("PyMOL","can't find 'chempy.bonds.bonds'");
   return(result);
+}
+
+PyObject *PGetFontDict(float size,int face,int style)
+{ /* assumes we have a valid interpreter lock */
+  PyObject *result = NULL; 
+
+  if(!P_vfont) {
+    PRunString("import vfont\n");  
+    P_vfont = PyDict_GetItemString(P_globals,"vfont");
+  }
+  if(!P_vfont) {
+    PRINTFB(FB_Python,FB_Errors)
+      " PyMOL-Error: can't find module 'vfont'"
+      ENDFB;
+  }
+  else {
+    result = PyObject_CallMethod(P_vfont,"get_font","fii",size,face,style);
+  }
+  return(PConvAutoNone(result));
 }
 
 int PComplete(char *str,int buf_size)

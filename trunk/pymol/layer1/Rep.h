@@ -50,12 +50,13 @@ Z* -------------------------------------------------------------------
 
 #define cRepCnt        16
 
-
 /* Hierarchical invalidation scheme - 
  * each higher level event implies all of the lower levels 
  * These used to be used just for graphics, but are now
  * used by the molecular editor as well */
 
+/* invalidate external atom colors */
+#define cRepInvExtColor  10
 /* invalidate atom colors */
 #define cRepInvColor  15
 /* invalidate label text */

@@ -66,6 +66,7 @@ static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState *I)
   }
   PyList_SetItem(result,13,PyInt_FromLong(I->DotFlag));
   PyList_SetItem(result,14,PyInt_FromLong(I->Mode));
+  PyList_SetItem(result,15,PyInt_FromLong(I->Side));
 
 #if 0
   char MapName[ObjNameMax];
@@ -111,6 +112,7 @@ static PyObject *ObjectSurfaceAllStatesAsPyList(ObjectSurface *I)
 static int ObjectSurfaceStateFromPyList(ObjectSurfaceState *I,PyObject *list)
 {
   int ok=true;
+  int list_size=0;
   PyObject *tmp;
   if(ok) ok=(list!=NULL);
   if(ok) {
@@ -119,6 +121,7 @@ static int ObjectSurfaceStateFromPyList(ObjectSurfaceState *I,PyObject *list)
     else {
       ObjectSurfaceStateInit(I);
       if(ok) ok=PyList_Check(list);
+      if(ok) list_size=PyList_Size(list);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
       if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
@@ -140,6 +143,9 @@ static int ObjectSurfaceStateFromPyList(ObjectSurfaceState *I,PyObject *list)
       }
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->DotFlag);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,14),&I->Mode);
+
+      if(ok&&(list_size>15)) PConvPyIntToInt(PyList_GetItem(list,15),&I->Side);
+
       if(ok) {
         I->RefreshFlag=true;
         I->ResurfaceFlag=true;
@@ -314,7 +320,8 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                           ms->Mode,
                           voxelmap,
                           ms->AtomVertex,
-                          ms->CarveBuffer); 
+                          ms->CarveBuffer,
+                          ms->Side); 
             if(voxelmap)
               MapFree(voxelmap);
           }
@@ -521,13 +528,15 @@ void ObjectSurfaceStateInit(ObjectSurfaceState *ms)
   ms->CarveFlag=false;
   ms->AtomVertex=NULL;
   ms->UnitCellCGO=NULL;
+  ms->Side = 0;
+
 }
 
 /*========================================================================*/
 ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMap *map,
                                     int map_state,
 int state,float *mn,float *mx,float level,int mode,
-float carve,float *vert_vla)
+float carve,float *vert_vla,int side)
 {
   ObjectSurface *I;
   ObjectSurfaceState *ms;
@@ -555,6 +564,7 @@ float carve,float *vert_vla)
 
   ms->Level = level;
   ms->Mode = mode;
+  ms->Side = side;
   if(oms) {
     TetsurfGetRange(oms->Field,oms->Crystal,mn,mx,ms->Range);
     copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */

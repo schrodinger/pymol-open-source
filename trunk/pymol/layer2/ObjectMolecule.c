@@ -3341,7 +3341,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
               if(l>0.0) {
                 scale3f(d0,1.0/sqrt(l),n0);
                 for(c=0;c<sp->nDot;c++) { /* average over spokes */
-                  dp=dot_product3f(sp->dot[c].v,n0);
+                  dp=dot_product3f(sp->dot[c],n0);
                   row = base + c;
                   if(dp>=0.0) {
                     ang = acos(dp);
@@ -3408,9 +3408,9 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
             bt0 = base + t0;
             bt1 = base + t1;
             bt2 = base + t2;
-            copy3f(sp->dot[t0].v,p0);
-            copy3f(sp->dot[t1].v,p1);
-            copy3f(sp->dot[t2].v,p2);
+            copy3f(sp->dot[t0],p0);
+            copy3f(sp->dot[t1],p1);
+            copy3f(sp->dot[t2],p2);
             /*      scale3f(sp->dot[t0].v,spheroid[bt0],p0);
                     scale3f(sp->dot[t1].v,spheroid[bt1],p1);
                     scale3f(sp->dot[t2].v,spheroid[bt2],p2);*/

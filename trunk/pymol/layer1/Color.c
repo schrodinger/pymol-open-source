@@ -24,10 +24,86 @@ Z* -------------------------------------------------------------------
 
 #include"Color.h"
 #include"PConv.h"
+#include"ObjectGadgetRamp.h"
+#include"Util.h"
 
 CColor Color;
 
+#define cColorExtCutoff -10
 
+int ColorCheckRamped(int index)
+{
+  return(index<=(cColorExtCutoff));
+}
+
+int ColorGetRamped(int index,float *vertex,float *color)
+{
+  CColor *I=&Color;
+  int ok=false;
+  if(index<=(-10)) {
+    index = -10 - index;
+    if(index<I->NExt) {
+      ok = ObjectGadgetRampInterVertex(
+                                       (ObjectGadgetRamp*)I->Ext[index].Ptr,
+                                       vertex,color);
+    }
+  
+  }
+  return(ok);
+}
+
+static int ColorFindExtByName(char *name) 
+{
+  CColor *I=&Color;
+  int result = -1;
+  int wm;
+  int best;
+  int a;
+  best = 0;
+  for(a=0;a<I->NExt;a++)
+    {
+      wm = WordMatch(name,I->Ext[a].Name,true);
+      if(wm<0) {
+        result=a;
+        break;
+      } else if ((wm>0)&&(best<wm)) {
+        result=a;
+        best=wm;
+      }
+    }
+  return(result);
+}
+
+void ColorRegisterExt(char *name,void *ptr,int type)
+{
+  CColor *I=&Color;
+  int a;
+  a=ColorFindExtByName(name);
+  if(a<0) {
+    VLACheck(I->Ext,ExtRec,I->NExt);
+    a = I->NExt;
+    I->NExt++;
+  }
+  if(a>=0) {
+    UtilNCopy(I->Ext[a].Name,name,sizeof(ColorName));
+    I->Ext[a].Ptr = ptr;
+    I->Ext[a].Type = type;
+  }
+}
+
+void ColorForgetExt(char *name)
+{
+  CColor *I=&Color;
+  int a;
+  a=ColorFindExtByName(name);
+
+  if(a>=0) {
+    I->NExt--;
+    if(I->NExt) {
+      I->Ext[a] = I->Ext[I->NExt];
+    }
+  }
+}
 
 /*========================================================================*/
 PyObject *ColorAsPyList()
@@ -158,11 +234,17 @@ int ColorGetIndex(char *name)
         best=wm;
       }
 	 }
+  if(color<0) {
+    color = ColorFindExtByName(name);
+    if(color>=0)
+      color = -10-color; /* indicates external */
+  }
   return(color);
 }
 /*========================================================================*/
 float *ColorGetNamed(char *name)
 {
+  
   return(ColorGet(ColorGetIndex(name)));
 }
 /*========================================================================*/
@@ -204,6 +286,7 @@ void ColorFree(void)
 {
   CColor *I=&Color;
   VLAFreeP(I->Color);
+  VLAFreeP(I->Ext);
 }
 
 /*========================================================================*/
@@ -593,7 +676,8 @@ void ColorInit(void)
   I->Color=VLAMalloc(2500,sizeof(ColorRec),5,true);
   I->NColor=0;
   ColorReset();
-
+  I->NExt=0;
+  I->Ext=VLAMalloc(10,sizeof(ExtRec),5,true);
 }
 
 /*========================================================================*/
@@ -603,6 +687,6 @@ float *ColorGet(int index)
   if((index>=0)&&(index<I->NColor))
 	 return(I->Color[index].Color);
   else
-	 return(I->Color[1].Color);
+	 return(I->Color[0].Color);
 }
 

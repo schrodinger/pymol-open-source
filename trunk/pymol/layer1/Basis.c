@@ -26,6 +26,9 @@ Z* -------------------------------------------------------------------
 #define R_SMALL4 0.0001
 #endif
 
+static float BasisFudge0;
+static float BasisFudge1;
+
 void BasisInit(CBasis *I);
 void BasisFinish(CBasis *I);
 
@@ -481,7 +484,8 @@ void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc)
 int BasisHit(CBasis *I,RayInfo *r,int except,
 				 int *vert2prim,CPrimitive *prim,
 				 int shadow,float front,float back,
-             float excl_trans,int trans_shadows)
+             float excl_trans,int trans_shadows,
+             float fudge)
 {
   float oppSq,dist,sph[3],*vv,vt[3],tri1,tri2;
   int minIndex;
@@ -493,6 +497,8 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
   minIndex = -1;
   vt[0]=r->base[0];
   vt[1]=r->base[1];
+  BasisFudge0 = 0.0F-fudge;
+  BasisFudge1 = 1.0F+fudge;
   if(except>=0) except=vert2prim[except];
   excl_trans_flag = (excl_trans!=0.0F);
   if(MapInsideXY(I->Map,r->base,&a,&b,&c))
@@ -1133,7 +1139,7 @@ static int intersect_triangle(float orig[3], float *pre,float vert0[3],
 	/*   *u = DOT(tvec, pvec) * inv_det;*/
 	/*	*u = (tvec[0]*edge2[1] - tvec[1]*edge2[0]) * inv_det;*/
 	*u = (tvec0*pre[4] - tvec1*pre[3]) * pre[7];
-   if ((*u < 0.0) || (*u > 1.0)) return 0;
+   if ((*u < BasisFudge0) || (*u > BasisFudge1)) return 0;
 
    /* prepare to test V parameter */
 	/*   CROSS(qvec, tvec, edge1);*/
@@ -1147,7 +1153,7 @@ static int intersect_triangle(float orig[3], float *pre,float vert0[3],
 
    *v = -qvec2 * pre[7];
 	
-   if ((*v < 0.0) || ((*u + *v) > 1.0)) return 0;
+   if ((*v < BasisFudge0 ) || ((*u + *v) > BasisFudge1)) return 0;
 
    /* calculate t, ray intersects triangle */
 	/*   *t = DOT(edge2, qvec) * inv_det;*/

@@ -100,6 +100,7 @@ function name.
 
 /* layer 1 */
 
+#define FB_CGO                       11
 #define FB_Feedback                  12
 #define FB_Scene                     13
 #define FB_Threads                   14  /* part of P.c */
@@ -118,6 +119,7 @@ function name.
 
 #define FB_CoordSet                  25
 #define FB_DistSet                   26
+#define FB_GadgetSet                 27
 
 #define FB_ObjectMolecule            30
 #define FB_ObjectMap                 31
@@ -126,6 +128,7 @@ function name.
 #define FB_ObjectCGO                 34
 #define FB_ObjectCallback            35
 #define FB_ObjectSurface             36
+#define FB_ObjectGadget              37
 
 #define FB_RepWireBond               45
 #define FB_RepCylBond                46
@@ -142,6 +145,7 @@ function name.
 #define FB_RepRibbon                 57
 #define FB_RepCartoon                58
 #define FB_Sculpt                    59
+#define FB_VFont                     60
 
 /* layer 3 */
 

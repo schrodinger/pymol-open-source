@@ -29,7 +29,21 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"AtomInfo.h"
 
-
+float ObjectMoleculeGetMaxVDW(ObjectMolecule *I)
+{
+  float max_vdw = 0.0F;
+  int a;
+  AtomInfoType *ai;
+  if(I->NAtom) {
+    ai=I->AtomInfo;
+    for(a=0;a<I->NAtom;a++) {
+      if(max_vdw<ai->vdw)
+        max_vdw = ai->vdw;
+      ai++;
+    }
+  }
+  return(max_vdw);
+}
 /*========================================================================*/
 static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule *I)
 {

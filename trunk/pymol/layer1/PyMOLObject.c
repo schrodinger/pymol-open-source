@@ -246,6 +246,7 @@ void ObjectInit(CObject *I)
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
   I->RepVis[cRepCell]=false;
   I->RepVis[cRepExtent]=false;
+  I->Context=0;
 }
 /*========================================================================*/
 void ObjectRenderUnitBox(CObject *this,int frame,

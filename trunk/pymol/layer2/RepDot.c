@@ -78,6 +78,8 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
+
+    glPointSize(I->Width);
 	 glBegin(GL_POINTS);
 	 while(c--)
 		{
@@ -129,7 +131,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   int visFlag;
   int atm,*ati=NULL;
   AtomInfoType *ai1,*ai2;
-
+  int dot_color;
   OOAlloc(RepDot);
 
   obj = cs->Obj;
@@ -164,9 +166,12 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->Atom=NULL;
   I->R.fRecolor=NULL;
 
+  I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_width);
   cullByFlag = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_trim_dots); /* are we using flags 24 & 25 */
+
+  dot_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_dot_color); /* are we using flags 24 & 25 */
   inclH = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
-  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_mode)>0.0) { /* are we generating a solvent surface? */
+  if(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_solvent)) { /* are we generating a solvent surface? */
     solv_rad = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
   }
 
@@ -180,7 +185,8 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   case 0: sp=Sphere0; break;
   case 1: sp=Sphere1; break;
   case 2: sp=Sphere2; break;
-  default: sp=Sphere3; break;
+  case 3: sp=Sphere3; break;
+  default: sp=Sphere4; break;
   }
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDotRender;
@@ -225,17 +231,21 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
               /* If we are culling, flag 24 controls which atoms 
                  will have dot surfaces generated for them.
               */
-              if(cs->Color)
-                c1=*(cs->Color+a);
-              else
-                c1 = 0;
+              if(dot_color==-1) {
+                if(cs->Color)
+                  c1=*(cs->Color+a);
+                else
+                  c1 = 0;
+              } else {
+                c1 = dot_color;
+              }
 				  v0 = cs->Coord+3*a;
 				  vdw = ai1->vdw+solv_rad;
 				  for(b=0;b<sp->nDot;b++)
 					 {
-						v1[0]=v0[0]+vdw*sp->dot[b].v[0];
-						v1[1]=v0[1]+vdw*sp->dot[b].v[1];
-						v1[2]=v0[2]+vdw*sp->dot[b].v[2];
+						v1[0]=v0[0]+vdw*sp->dot[b][0];
+						v1[1]=v0[1]+vdw*sp->dot[b][1];
+						v1[2]=v0[2]+vdw*sp->dot[b][2];
 						
 						MapLocus(map,v1,&h,&k,&l);
 
@@ -265,7 +275,8 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 						  {
 							 switch(mode) {
 							 case cRepDotNormal:
-								if(lastColor!=c1) /* new color */
+                        
+								if((lastColor!=c1)||ColorCheckRamped(c1)) /* new color */
 								  {
 									 if(countPtr) /* after first pass */
 										*countPtr=(float)colorCnt; /* save count */
@@ -273,15 +284,20 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 									 countPtr=v++;
 									 vc = ColorGet(c1); /* save new color */
 									 lastColor=c1;
-									 *(v++)=*(vc++);
-									 *(v++)=*(vc++);
-									 *(v++)=*(vc++);
+                            if(ColorCheckRamped(c1)) {
+                              ColorGetRamped(c1,v1,v);
+                              v+=3;
+                            } else {
+                              *(v++)=*(vc++);
+                              *(v++)=*(vc++);
+                              *(v++)=*(vc++);
+                            }
 								  }
 								else 
 								  colorCnt++;
-								*(v++)=sp->dot[b].v[0];
-								*(v++)=sp->dot[b].v[1];
-								*(v++)=sp->dot[b].v[2];
+								*(v++)=sp->dot[b][0];
+								*(v++)=sp->dot[b][1];
+								*(v++)=sp->dot[b][2];
 								*(v++)=v1[0];
 								*(v++)=v1[1];
 								*(v++)=v1[2];
@@ -291,12 +307,12 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 								*(v++)=v1[0];
 								*(v++)=v1[1];
 								*(v++)=v1[2];
-								*(aa++)=vdw*vdw*sp->dot[b].area; /* area */
+								*(aa++)=vdw*vdw*sp->area[b]; /* area */
 								*(tp++)=ai1->customType; /* numeric type */
 								*(tf++)=ai1->flags; /* flags */
-								*(vn++)=sp->dot[b].v[0];
-								*(vn++)=sp->dot[b].v[1];
-								*(vn++)=sp->dot[b].v[2];
+								*(vn++)=sp->dot[b][0];
+								*(vn++)=sp->dot[b][1];
+								*(vn++)=sp->dot[b][2];
                         *(ati++)=atm;
 								I->N++;
 								break;

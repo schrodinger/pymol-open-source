@@ -77,6 +77,7 @@ int PTruthCallStr(PyObject *object,char *method,char *argument);
 int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias);
 int PIsGlutThread(void);
 
+PyObject *PGetFontDict(float size,int face,int style);
 PyObject *GetBondsDict(void);
 
 extern PyObject *P_globals;

@@ -66,6 +66,8 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int state);
 int ObjectMapCCP4StrToMap(ObjectMap *I,char *XPLORStr,int bytes,int state);
 
+ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state);
+
 ObjectMap *ObjectMapLoad(ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
                                     int state,int discrete);
@@ -77,6 +79,7 @@ int ObjectMapSetBorder(ObjectMap *I,float level);
 int ObjectMapStateSetBorder(ObjectMapState *I,float level);
 void ObjectMapStateInit(ObjectMapState *I);
 void ObjectMapStatePurge(ObjectMapState *I);
+int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int n);
 ObjectMapState *ObjectMapStatePrime(ObjectMap *I,int state);
 ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state);
 int ObjectMapGetNStates(ObjectMap *I);
@@ -85,6 +88,8 @@ ObjectMapState *ObjectMapGetState(ObjectMap *I,int state);
 
 PyObject *ObjectMapAsPyList(ObjectMap *I);
 int ObjectMapNewFromPyList(PyObject *list,ObjectMap **result);
+
+int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int n);
 
 #endif
 

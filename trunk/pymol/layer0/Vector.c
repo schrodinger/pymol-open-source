@@ -601,6 +601,16 @@ void normalize23f( float *v1 , float *v2)
 	 }
 }
 
+void clamp3f(float *v1)
+{
+  if(v1[0]<0.0F) v1[0]= 0.0F;
+  if(v1[0]>1.0F) v1[0]= 1.0F;
+  if(v1[1]<0.0F) v1[1]= 0.0F;
+  if(v1[1]>1.0F) v1[1]= 1.0F;
+  if(v1[2]<0.0F) v1[2]= 0.0F;
+  if(v1[2]>1.0F) v1[2]= 1.0F;
+}
+
 void normalize3f( float *v1 )
 {
   float vlen;
@@ -676,6 +686,18 @@ int within3f(float *v1,float *v2,float dist)
   dz = (v1[2]-v2[2]);
   if(fabs(dz)>dist) return(false);
   return((dx*dx + dy*dy + dz*dz)<=(dist*dist));
+}
+
+int within3fsq(float *v1,float *v2,float dist,float dist2)
+{
+  register float dx,dy,dz;
+  dx = (v1[0]-v2[0]);
+  if(fabs(dx)>dist) return(false);
+  dy = (v1[1]-v2[1]);
+  if(fabs(dy)>dist) return(false);
+  dz = (v1[2]-v2[2]);
+  if(fabs(dz)>dist) return(false);
+  return((dx*dx + dy*dy + dz*dz)<=(dist2));
 }
 
 

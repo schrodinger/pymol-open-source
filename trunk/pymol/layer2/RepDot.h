@@ -33,6 +33,7 @@ typedef struct RepDot {
   int *F; /* flags */
   int N,NC;
   int *Atom; /* atom */
+  float Width;
 } RepDot;
 
 Rep *RepDotNew(CoordSet *cset);

@@ -629,7 +629,7 @@ int SettingSet_color(CSetting *I,int index, char *value)
   int ok=true;
   int color_index;
   color_index=ColorGetIndex(value);
-  if((color_index<0)&&(strcmp(value,"-1"))) {
+  if((color_index==-1)&&(strcmp(value,"-1"))) {
     PRINTFB(FB_Setting,FB_Errors)
       "Setting-Error: unknown color '%s'\n",value
       ENDFB
@@ -1049,6 +1049,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
 	 break;
   case cSetting_min_mesh_spacing:
   case cSetting_mesh_mode:
+  case cSetting_mesh_solvent:
+  case cSetting_mesh_quality:
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvRep);
     SceneChanged();
     break;
@@ -1094,6 +1096,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_cull_spheres:
   case cSetting_sphere_scale:
+  case cSetting_sphere_solvent:
     ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvRep);
     SceneChanged();
     break;
@@ -1115,6 +1118,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvColor);
     SceneChanged();
     break;
+  case cSetting_dot_color:
+    ExecutiveInvalidateRep(inv_sele,cRepDot,cRepInvColor);
+    SceneChanged();
+    break;
   case cSetting_sphere_color:
     ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvColor);
     SceneChanged();
@@ -1123,6 +1130,12 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_surface_mode:
   case cSetting_surface_proximity:
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_solvent_radius:
+    ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepDot,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_ribbon_power:
@@ -1170,6 +1183,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_dot_radius:
   case cSetting_dot_density:
   case cSetting_dot_mode:
+  case cSetting_dot_solvent:
   case cSetting_dot_hydrogens:
     ExecutiveInvalidateRep(inv_sele,cRepDot,cRepInvRep);
     SceneChanged();
@@ -1681,7 +1695,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cgo_line_width, 1.00F);
 
-  SettingSet_f(I,cSetting_cgo_line_radius, 0.15F);
+  SettingSet_f(I,cSetting_cgo_line_radius, 0.05F);
 
   SettingSet_b(I,cSetting_logging, 0);
 
@@ -1834,6 +1848,22 @@ void SettingInitGlobal(void)
 #else
   SettingSet_b(I,cSetting_stereo_double_pump_mono,0);
 #endif
+
+  SettingSet_i(I,cSetting_sphere_solvent,0);
+
+  SettingSet_i(I,cSetting_mesh_quality,2);
+
+  SettingSet_i(I,cSetting_mesh_solvent,0);
+  
+  SettingSet_i(I,cSetting_dot_solvent,0);
+
+  SettingSet_f(I,cSetting_ray_shadow_fudge,0.001F);
+
+  SettingSet_f(I,cSetting_ray_triangle_fudge,0.0000001F);
+
+  SettingSet_i(I,cSetting_debug_pick,0);
+
+  SettingSet_color(I,cSetting_dot_color,"-1"); /* use atom colors by default */
 
 }
 

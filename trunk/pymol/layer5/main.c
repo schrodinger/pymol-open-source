@@ -54,6 +54,7 @@
 #include"Isosurf.h"
 #include"Tetsurf.h"
 #include"PConv.h"
+#include"VFont.h"
 
 void MainFree(void);
 void MainTest(void);
@@ -222,7 +223,6 @@ void MainRunString(char *str)
 PyObject *MainRunStringBlocked(char *str)
 {
   PyObject *result;
-  printf("input string %s\n",str);
   result = PyRun_String(str,Py_eval_input,P_globals,P_globals);
   return(result);
 }
@@ -488,19 +488,6 @@ static void MainInit(void)
     glDisable(GL_POLYGON_SMOOTH);
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
-    /*    glDisable(GL_ALPHA_TEST);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_POINT_SMOOTH);*/
-    
-
-/*    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT,low);
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_NORMALIZE);*/
   }
 
   FeedbackInit();
@@ -515,6 +502,7 @@ static void MainInit(void)
   MovieInit();
   SceneInit();
   SculptCacheInit();
+  VFontInit();
   ExecutiveInit();
   IsosurfInit();
   TetsurfInit();
@@ -529,6 +517,7 @@ void MainFree(void)
 
   EditorFree();
   ExecutiveFree();
+  VFontFree();
   SculptCacheFree();
   SceneFree();
   MovieFree();

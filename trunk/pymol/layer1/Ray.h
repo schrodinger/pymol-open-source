@@ -50,17 +50,28 @@ typedef struct CRay {
   float Random[256];
   int TTTFlag;
   float TTT[16];
+  int Context;
+  float AspRatio;
 } CRay;
 
 CRay *RayNew(void);
 void RayFree(CRay *I);
-void RayPrepare(CRay *I,float v0,float v1,float v2,float v3,float v4,float v5,float *mat);
+void RayPrepare(CRay *I,float v0,float v1,float v2,
+                float v3,float v4,float v5,float *mat,float aspRat);
 void RayRender(CRay *I,int width,int height,unsigned int *image,float front,float back,double timing);
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,char **charVLA,float front,float back,float fov);
 void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov);
 void RaySetTTT(CRay *I,int flag,float *ttt);
-
+void RaySetContext(CRay *I,int context);
+void RayApplyContexToNormal(CRay *I,float *v);
+void RayApplyContextToVertex(CRay *I,float *v);
 #endif
+
+
+
+
+
+
 
 
 

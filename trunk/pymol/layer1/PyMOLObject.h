@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #define cObjectCallback     5
 #define cObjectCGO          6
 #define cObjectSurface      7
-#define cObjectRamp         8
+#define cObjectGadget       8
 #define cObjectCalculator   9
 
 /* 
@@ -57,6 +57,7 @@ typedef struct CObject {
   float TTT[16]; /* translate, transform, translate matrix */
   CSetting *Setting;
   int Enabled; /* read-only... maintained by Scene */
+  int Context; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
 } CObject;
 
 void ObjectInit(CObject *I);

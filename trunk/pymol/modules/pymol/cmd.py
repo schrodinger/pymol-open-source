@@ -85,7 +85,8 @@ if __name__=='pymol.cmd':
       r"\.trj$|\.TRJ$|", # AMBER Trajectory
       r"\.crd$|\.CRD$|", # AMBER coordinate file
       r"\.rst$|\.RST$|", # AMBER restart
-      r"\.cex$|\.CEX$", # CEX format (used by metaphorics)
+      r"\.cex$|\.CEX$|", # CEX format (used by metaphorics)
+      r"\.phi$|\.PHI$", # PHI format (delphi)
       ],''))
 
    safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
@@ -208,6 +209,7 @@ if __name__=='pymol.cmd':
       raw                       =7
       isosurface                =8
 
+      cgo                       =11
       feedback                  =12
       scene                     =13
       threads                   =14  
@@ -224,7 +226,8 @@ if __name__=='pymol.cmd':
 
       coordset                  =25
       distset                   =26
-
+      gadgetset                 =27
+      
       objectmolecule            =30
       objectmap                 =31
       objectmesh                =32
@@ -232,7 +235,8 @@ if __name__=='pymol.cmd':
       objectcgo                 =34
       objectcallback            =35
       objectsurface             =36
-
+      objectgadget              =37
+      
       repwirebond               =45
       repcylbond                =46
       replabel                  =47
@@ -247,7 +251,8 @@ if __name__=='pymol.cmd':
       repribbon                 =57
       repcartoon                =58
       sculpt                    =59
-
+      vfont                     =60
+      
       executive                 =70
       selector                  =71
       editor                    =72
@@ -801,7 +806,8 @@ if __name__=='pymol.cmd':
         isomesh,            \
         isosurface,         \
         symexp,             \
-        map_new
+        map_new,            \
+        ramp_new
 
    #--------------------------------------------------------------------
    from commanding import \
@@ -1182,6 +1188,7 @@ if __name__=='pymol.cmd':
       'push_undo'     : [ push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
       'pwd'           : [ pwd               , 0 , 0 , ''  , parsing.STRICT ],
       'raise'         : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
+      'ramp_new'      : [ ramp_new          , 0 , 0 , ''  , parsing.STRICT ],      
       'ray'           : [ ray               , 0 , 0 , ''  , parsing.STRICT ],
       'rebuild'       : [ rebuild           , 0 , 0 , ''  , parsing.STRICT ],
       'recolor'       : [ recolor           , 0 , 0 , ''  , parsing.STRICT ],   

@@ -333,10 +333,18 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_session_version_check       200
 #define cSetting_ray_transparency_specular   201
 #define cSetting_stereo_double_pump_mono     202
+#define cSetting_sphere_solvent              203
+#define cSetting_mesh_quality                204
+#define cSetting_mesh_solvent                205
+#define cSetting_dot_solvent                 206
+#define cSetting_ray_shadow_fudge            207
+#define cSetting_ray_triangle_fudge          208
+#define cSetting_debug_pick                  209
+#define cSetting_dot_color                   210
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        203
+#define cSetting_INIT                        211
 
 #endif
 

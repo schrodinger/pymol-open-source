@@ -57,6 +57,7 @@ if __name__=='pymol.importing':
       rst = 24      # AMBER restart
       pse = 25      # PyMOL session
       xplorstr = 26 # XPLOR map as string
+      phi = 27      # Delphi/Grasp
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -364,6 +365,8 @@ SEE ALSO
                ftype = loadable.crd
             elif re.search("\.pse$",filename,re.I):
                ftype = loadable.pse
+            elif re.search("\.phi$",filename,re.I):
+               ftype = loadable.phi
             else:
                ftype = loadable.pdb # default is PDB
          elif cmd.is_string(type):

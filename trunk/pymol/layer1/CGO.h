@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_CGO
 #define _H_CGO
 
+#include"Base.h"
 #include"Ray.h"
 #include"Setting.h"
 
@@ -85,18 +86,40 @@ extern CGO *DebugCGO; /* for programming... initialized in Scene.c */
 #define CGO_SAUSAGE_SZ           13
 #define CGO_CUSTOM_CYLINDER      0x0F
 #define CGO_CUSTOM_CYLINDER_SZ   15
-#define CGO_MASK                 0x0F
-               
+#define CGO_DOTWIDTH             0x10
+#define CGO_DOTWIDTH_SZ          1
+
+#define CGO_FONT                 0x13
+#define CGO_FONT_SZ              3   /*  size, face, style */
+#define CGO_FONT_SCALE           0x14 
+#define CGO_FONT_SCALE_SZ        2 
+#define CGO_FONT_VERTEX          0x15 
+#define CGO_FONT_VERTEX_SZ       3   /*  principle axes (zeros -> use camera x y or z */
+#define CGO_FONT_AXES            0x16 
+#define CGO_FONT_AXES_SZ         9   /*  principle axes (zeros -> use camera x y or z */
+#define CGO_CHAR                 0x17
+#define CGO_CHAR_SZ              1
+#define CGO_INDENT               0x18
+#define CGO_INDENT_SZ            2
+#define CGO_PICK_COLOR           0x1F
+#define CGO_PICK_COLOR_SZ        2
+#define CGO_MASK                 0x1F
+
 CGO *CGONew(void);
 CGO *CGONewSized(int size);
 int CGOGetExtent(CGO *I,float *mn,float *mx);
 
 void CGOFree(CGO *I);
+CGO *CGODrawText(CGO *I,int est,float *camera);
+
 CGO *CGOSimplify(CGO *I,int est);
 
 void CGOReserve(CGO *ptr,int est);
 
 int CGOCheckComplex(CGO *I);
+int CGOPreloadFonts(CGO *I);
+
+int CGOCheckForText(CGO *I);
 
 int CGOFromFloatArray(CGO *I,float *src,int len);
 
@@ -110,6 +133,18 @@ void CGOColorv(CGO *I,float *v);
 void CGONormal(CGO *I,float v1,float v2,float v3);
 void CGONormalv(CGO *I,float *v);
 void CGOLinewidth(CGO *I,float v);
+void CGODotwidth(CGO *I,float v);
+void CGOChar(CGO *I,char c);
+void CGOFontVertex(CGO *I,float x,float y,float z);
+void CGOFontVertexv(CGO *I,float *v);
+void CGOFontScale(CGO *I,float v1,float v2);
+void CGOChar(CGO *I,char c);
+void CGOIndent(CGO *I,char c,float dir);
+void CGOWrite(CGO *I,char *str);
+void CGOWriteLeft(CGO *I,char *str);
+
+/*void CGOFontScale(CGO *I,float v);
+  void CGOFont(CGO *I,float size,int face,int style);*/
 
 void CGOEnable(CGO *I,int mode);
 void CGODisable(CGO *I,int mode);
@@ -120,11 +155,15 @@ void CGOCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2);
 void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
                         float cap1,float cap2);
 
+struct GadgetSet;
+CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result);
+void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSetting *set2);
 void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2);
 void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);
 void CGOReset(CGO *I);
 
 PyObject *CGOAsPyList(CGO *I);
 CGO *CGONewFromPyList(PyObject *list);
+void CGOPickColor(CGO *I,int index,int bond);
 
 #endif

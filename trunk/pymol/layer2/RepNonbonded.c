@@ -156,6 +156,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
   int *active;
   AtomInfoType *ai;
   int nAtom = 0;
+  float tmpColor[3];
   OOAlloc(RepNonbonded);
   obj = cs->Obj;
 
@@ -191,8 +192,16 @@ Rep *RepNonbondedNew(CoordSet *cs)
   for(a=0;a<cs->NIndex;a++) 
     if(active[a]) {
       c1=*(cs->Color+a);
-      v0 = ColorGet(c1);
+
       v1 = cs->Coord+3*a;
+
+      if(ColorCheckRamped(c1)) {
+        ColorGetRamped(c1,v1,tmpColor);
+        v0 = tmpColor;
+      } else {
+        v0 = ColorGet(c1);
+      }
+
       *(v++)=*(v0++);
       *(v++)=*(v0++);
       *(v++)=*(v0++);
