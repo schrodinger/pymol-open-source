@@ -30,7 +30,9 @@ int MainSavingUnderWhileIdle(void);
 int MainFromPyList(PyObject *list);
 PyObject *MainAsPyList(void);
 int MainCheckRedundantOpen(char *file);
-void MainDragDirty(void);  
+void MainDragDirty(void); 
+void MainRepositionWindowDefault(void);
+
 #ifdef _PYMOL_OSX
 
 void MainRunString(char *str);

@@ -454,6 +454,7 @@ static void MainDraw(void)
     " MainDraw: called.\n"
     ENDFD;
   PLockAPIAsGlut();
+
   MainDrawLocked();
   PUnlockAPIAsGlut();
   PRINTFD(FB_Main)
@@ -834,7 +835,11 @@ PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white
     ENDFD;
 
 }
-
+void MainRepositionWindowDefault(void)
+{
+  p_glutPositionWindow(WinPX,WinPY);
+  p_glutReshapeWindow(WinX,WinY);
+}
 /*========================================================================*/
 
 #ifdef WIN32

@@ -110,6 +110,7 @@ Z* -------------------------------------------------------------------
 #define p_glutInitDisplayMode      glutInitDisplayMode
 #define p_glutInitWindowPosition   glutInitWindowPosition
 #define p_glutInitWindowSize       glutInitWindowSize
+#define p_glutPositionWindow       glutPositionWindow
 
 #define p_glutGet                  glutGet
 #define p_glutGetModifiers         glutGetModifiers
