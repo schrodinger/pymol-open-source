@@ -1058,27 +1058,33 @@ void ExecutiveColor(char *name,char *color,int flags)
   SpecRec *rec = NULL;
   int sele;
   ObjectMoleculeOpRec op;
-  
-  /* per atom */
-  if(!(flags&0x1)) {
-	 sele=SelectorIndexByName(name);
-	 if(sele>=0) {
-		op.code = OMOP_COLR;
-		op.i1=ColorGetIndex(color);
-		ExecutiveObjMolSeleOp(sele,&op);
-		op.code=OMOP_INVA;
-		op.i1=cRepAll; 
-		op.i2=cRepInvColor;
-		ExecutiveObjMolSeleOp(sele,&op);
+  int col_ind;
+
+  col_ind = ColorGetIndex(color);
+  if(col_ind<0) {
+    ErrMessage("Color","unknown color.");
+  } else {
+    /* per atom */
+    if(!(flags&0x1)) {
+      sele=SelectorIndexByName(name);
+      if(sele>=0) {
+        op.code = OMOP_COLR;
+        op.i1= col_ind;
+        ExecutiveObjMolSeleOp(sele,&op);
+        op.code=OMOP_INVA;
+        op.i1=cRepAll; 
+        op.i2=cRepInvColor;
+        ExecutiveObjMolSeleOp(sele,&op);
+      }
     }
-  }
-  /* per object */
-  rec=ExecutiveFindSpec(name);
-  if(rec) {
-	 if(rec->type==cExecObject) {
-		rec->obj->Color=ColorGetIndex(color);
-		SceneDirty();
-	 }
+    /* per object */
+    rec=ExecutiveFindSpec(name);
+    if(rec) {
+      if(rec->type==cExecObject) {
+        rec->obj->Color=col_ind;
+        SceneDirty();
+      }
+    }
   }
 }
 /*========================================================================*/

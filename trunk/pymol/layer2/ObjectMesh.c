@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"main.h"
 #include"Scene.h"
+#include"Setting.h"
 
 ObjectMesh *ObjectMeshNew(void);
 
@@ -84,6 +85,7 @@ static void ObjectMeshRender(ObjectMesh *I,int frame,CRay *ray,Pickable **pick)
   int c;
 
   if(ray) {
+    I->Radius=SettingGet(cSetting_mesh_radius);
 	 if(n) {
       vc = ColorGet(I->Obj.Color);
       if(I->DotFlag) {
@@ -96,7 +98,7 @@ static void ObjectMeshRender(ObjectMesh *I,int frame,CRay *ray,Pickable **pick)
 				  v+=3;
 				  while(c--)
 					 {
-						ray->fSphere3fv(ray,v,0.05);
+						ray->fSphere3fv(ray,v,I->Radius);
 						v+=3;
 					 }
 				}
@@ -110,7 +112,7 @@ static void ObjectMeshRender(ObjectMesh *I,int frame,CRay *ray,Pickable **pick)
                 v+=3;
                 while(c--)
                   {
-                    ray->fCylinder3fv(ray,v-3,v,0.05,vc,vc);
+                    ray->fCylinder3fv(ray,v-3,v,I->Radius,vc,vc);
                     v+=3;
                   }
               }

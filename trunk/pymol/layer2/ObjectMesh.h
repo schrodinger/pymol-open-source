@@ -24,7 +24,7 @@ typedef struct ObjectMesh {
   int *N;
   float *V;
   int Range[6];
-  float Level;
+  float Level,Radius;
   int ResurfaceFlag;
   int DotFlag;
 } ObjectMesh;

@@ -575,6 +575,11 @@ void SettingInit(void)
 			"autoshow_nonbonded");
 
   I->NSetting++;
+  I->Setting[cSetting_mesh_radius].Value[0] = 0.05;
+  strcpy(I->Setting[cSetting_mesh_radius].Name,
+			"mesh_radius");
+
+  I->NSetting++;
 #ifdef WIN32
   I->Setting[cSetting_cache_display].Value[0] = 0.0;
 #else
