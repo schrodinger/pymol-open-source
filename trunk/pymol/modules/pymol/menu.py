@@ -89,11 +89,11 @@ def cgo_hide(s):
 
 def simple_show(s):
    return [[ 2, 'Show:'       , ''                             ],
-           [ 1, 'everything'  , 'cmd.enable("'+s+'")'          ]]
+           [ 1, 'everything'  , 'cmd.show("everything","'+s+'")'          ]]
 
 def simple_hide(s):
    return [[ 2, 'Hide:'     ,''                                ],
-           [ 1, 'everything'    ,'cmd.disable("'+s+'")'        ]]
+           [ 1, 'everything'    ,'cmd.hide("everything","'+s+'")'        ]]
 
 def mesh_show(s):
    return [[ 2, 'Show:'       , ''                             ],

@@ -134,7 +134,7 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
   if(map_obj) {
     if(map_obj->type!=cObjectMap) {
       PRINTFB(FB_Executive,FB_Errors)
-        "ExecutiveRampNew: Error: map not found.\n"
+        "ExecutiveRampMapNew: Error: map not found.\n"
         ENDFB;
       ok=false;
     }
@@ -142,7 +142,7 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
   ok = ok && (obj=ObjectGadgetRampMapNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
   if(ok) ObjectSetName((CObject*)obj,name);
   if(ok) ColorRegisterExt(name,(void*)obj,cColorGadgetRamp);
-  if(ok) ExecutiveManageObject((CObject*)obj,true);
+  if(ok) ExecutiveManageObject((CObject*)obj,false);
   return(ok);
 }
 
@@ -909,6 +909,7 @@ int ExecutiveMapNew(char *name,int type,float *grid,
       }
 
       ObjectSetName((CObject*)objMap,name);
+      ObjectMapUpdateExtents(objMap);
       ExecutiveManageObject((CObject*)objMap,true);
       SceneDirty();
     }
@@ -3844,6 +3845,9 @@ int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive)
   float mn[3],mx[3],df[3];
   int sele0;
   int ok=true;
+  PRINTFD(FB_Executive)
+    " ExecutiveWindowZoom-DEBUG: entered\n"
+    ENDFD;
   if(ExecutiveGetExtent(name,mn,mx,true,state,true)) {
     if(buffer!=0.0) {
       buffer = buffer;
@@ -3878,11 +3882,15 @@ int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive)
     SceneWindowSphere(center,radius);
     SceneDirty();
   } else {
+
     sele0 = SelectorIndexByName(name);
     if(sele0>0) { /* any valid selection except "all" */
       ErrMessage("ExecutiveWindowZoom","selection doesn't specify any coordinates.");
       ok=false;
     } else if(ExecutiveValidName(name)) {
+      PRINTFD(FB_Executive)
+        " ExecutiveWindowZoom-DEBUG: name valid, but no extents -- using default view\n"
+        ENDFD;
       SceneSetDefaultView();
       SceneDirty();
     } else {
