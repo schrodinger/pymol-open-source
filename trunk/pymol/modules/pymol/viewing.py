@@ -810,7 +810,7 @@ SEE ALSO
                            cmd.wizard("message",*message)
                         cmd.get_wizard().from_scene = 1
                         mess_flag = 1
-               if replace and not mess_flag:
+               if replace_flag and not mess_flag:
                   cmd.wizard()
                if _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
