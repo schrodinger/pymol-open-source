@@ -19,6 +19,11 @@
 
 import copy
 import re
+import os
+import glob
+
+pattern = '.pymolrc*'
+
 
 class generic:
    pass
@@ -35,12 +40,35 @@ options.gui = 'pmg_tk'
 options.show_splash = 1
 options.read_stdin = 0
 
+py_re = re.compile(r"\.py$|\.pym$\.PY$|\.PYM$")
+
+def get_user_config():
+   lst = glob.glob(pattern)
+   if not len(lst):
+      if os.environ.has_key("HOME"):
+         lst = glob.glob(os.environ['HOME']+"/"+pattern)
+   if not len(lst):
+      if os.environ.has_key("PYMOL_PATH"):
+         lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern)
+   first = []
+   second = []
+   for a in lst:
+      if py_re.search(a):
+         first.append("_do__ run "+a)
+      else:
+         second.append("_do__ @"+a)
+   first.sort()
+   second.sort()
+   return first+second
+
 def parse_args(argv):
    av = copy.deepcopy(argv)
    av = av[1:] # throw out the executable path
    av.reverse()
    global options
    options.deferred = []
+   # append user settings file as an option
+   options.deferred.extend(get_user_config())
    while 1:
       if not len(av):
          break
