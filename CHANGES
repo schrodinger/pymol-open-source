@@ -107,6 +107,9 @@ Current Bugs to Fix
 
 Changes up to 0.82
 
+   * complicated workaround for mouse atom selections with Radeon 8500 and WinXP
+     PyMOL may now be somewhat resistant to broken OpenGL ReadPixels implementations 
+
    * improved water handling for "non-canonical" situations (i.e. real life muck)
 
    * moved configuration files to a subdirectory "setup"
