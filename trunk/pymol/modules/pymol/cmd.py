@@ -464,6 +464,7 @@ PyMOL COMMAND LINE OPTIONS
  
    -c   Command line mode, no GUI.  For batch opeations.
    -i   Disable the internal OpenGL GUI (object list, menus, etc.)
+   -j   Disable the internal command line prompt.
    -x   Disable the external GUI module.
    -t   Use Tcl/Tk based external GUI module (pmg_tk).
    -w   Use wxPython based external GUI module (pmg_wx).

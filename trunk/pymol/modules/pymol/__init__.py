@@ -63,20 +63,23 @@ def stdin_reader(): # dedicated thread for reading standard input
 		cmd.do(sys.stdin.readline())
 			   
 def exec_deferred():
-   cmd.config_mouse(quiet=1)
-   for a in invocation.options.deferred:
-      if a[0:4]=="_do_":
-         cmd.do(a[4:])
-      elif re.search(r"pymol\.py$",a):
-         pass
-      elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
-         cmd.do("run %s" % a)
-      elif cmd.file_ext_re.search(a):
-         cmd.load(a)
-      elif re.search(r"\.pml$",a,re.I):
-         cmd.do("@%s" % a)
-      else:
-         cmd.load(a)
+   try:
+      cmd.config_mouse(quiet=1)
+      for a in invocation.options.deferred:
+         if a[0:4]=="_do_":
+            cmd.do(a[4:])
+         elif re.search(r"pymol\.py$",a):
+            pass
+         elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
+            cmd.do("run %s" % a)
+         elif cmd.file_ext_re.search(a):
+            cmd.load(a)
+         elif re.search(r"\.pml$",a,re.I):
+            cmd.do("@%s" % a)
+         else:
+            cmd.load(a)
+   except:
+      traceback.print_exc()
    if invocation.options.read_stdin:
       t = threading.Thread(target=stdin_reader)
       t.setDaemon(1)

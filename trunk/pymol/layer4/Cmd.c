@@ -1933,7 +1933,9 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
     if(h<10) h=10;
     if(SettingGet(cSetting_internal_gui)) 
       w+=SettingGet(cSetting_internal_gui_width);
-    h+=cOrthoBottomSceneMargin;
+    if(SettingGet(cSetting_internal_feedback))
+      h+=(SettingGet(cSetting_internal_feedback)-1)*cOrthoLineHeight +
+        cOrthoBottomSceneMargin;
   } else {
     w=-1;
     h=-1;

@@ -48,7 +48,6 @@ ListVarDeclare(BlockList,Block);
 #define OrthoSaveLines 0xFF
 #define OrthoHistoryLines 0xFF
 
-#define cOrthoLineHeight 12
 #define cOrthoCharWidth 8
 #define cOrthoLeftMargin 8
 #define cOrthoBottomMargin 10
@@ -767,12 +766,16 @@ void OrthoDoDraw()
   char *str;
   float *v;
   int showLines;
+  int height;
   int overlay,text;
   int rightSceneMargin;
-  
+  int internal_feedback;
+
   if(PMGUI) {
 
     rightSceneMargin=SettingGet(cSetting_internal_gui_width);
+    internal_feedback=SettingGet(cSetting_internal_feedback);
+
     v=SettingGetfv(cSetting_bg_rgb);
     overlay = SettingGet(cSetting_overlay);
     text = SettingGet(cSetting_text);
@@ -794,10 +797,12 @@ void OrthoDoDraw()
     x = I->X;
     y = I->Y;
 
-    if(I->DrawText) { /* moved to avoid conflict with menus */
+
+    if(I->DrawText&&internal_feedback) { /* moved to avoid conflict with menus */
       glColor3f(0.0,0.0,0.0);
       glBegin(GL_POLYGON);
-      glVertex2i(I->Width-rightSceneMargin,cOrthoBottomSceneMargin-1);
+      height=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
+      glVertex2i(I->Width-rightSceneMargin,height-1);
       glVertex2i(I->Width-rightSceneMargin,0);
       glVertex2i(0,0);
       glVertex2i(0,cOrthoBottomSceneMargin-1);
@@ -820,7 +825,7 @@ void OrthoDoDraw()
       if((int)SettingGet(cSetting_text)||I->SplashFlag)
         showLines=I->ShowLines;
       else
-        showLines=1+(int)SettingGet(cSetting_overlay);
+        showLines=internal_feedback+(int)SettingGet(cSetting_overlay);
 
       glColor3fv(I->TextColor);
       while(l>=0)
@@ -939,6 +944,7 @@ void OrthoReshape(int width, int height)
   Block *block = NULL;
   int sceneBottom,sceneRight;
   int internal_gui_width;
+  int internal_feedback;
 
   if(width<0) width=I->Width;
   if(height<0) height=I->Height;
@@ -946,8 +952,12 @@ void OrthoReshape(int width, int height)
   I->Height=height;
   I->Width=width;
   I->ShowLines = height/cOrthoLineHeight;
-
-  sceneBottom = cOrthoBottomSceneMargin;
+  
+  internal_feedback = SettingGet(cSetting_internal_feedback);
+  if(internal_feedback)
+    sceneBottom = (internal_feedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
+  else
+    sceneBottom = 0;
     
   internal_gui_width = SettingGet(cSetting_internal_gui_width);
   if(SettingGet(cSetting_internal_gui)>0.0) {
@@ -975,9 +985,15 @@ void OrthoReshape(int width, int height)
   } else {
     block=ExecutiveGetBlock();
     block->active=false;
+    BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
+    block=WizardGetBlock();
+    BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,WizardMargin,0);
+    block->active=false;
     block=ButModeGetBlock();
+    BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,ButModeMargin,0);
     block->active=false;
     block=ControlGetBlock();
+    BlockSetMargin(block,height-ButModeMargin,width-internal_gui_width,ControlMargin,0);
     block->active=false;
   }
 
