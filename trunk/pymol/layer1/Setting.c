@@ -831,9 +831,13 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_depth_cue, 1.0);
 
-  SettingSet_f(I,cSetting_specular, 0.0);
+  SettingSet_f(I,cSetting_specular, 0.8);
 
   SettingSet_f(I,cSetting_shininess, 40.0);
+
+  SettingSet_f(I,cSetting_sphere_quality, 1.0);
+
+  SettingSet_f(I,cSetting_fog, 0.75);
 
 }
 

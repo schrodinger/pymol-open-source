@@ -95,6 +95,8 @@ class SettingIndex:
    depth_cue            =84
    specular             =85
    shininess            =86
+   sphere_quality       =87
+   fog                  =88
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -1430,7 +1430,7 @@ void SceneRender(Pickable *pick,int x,int y)
         glLightfv(GL_LIGHT1,GL_SPECULAR,vv);
         glLightfv(GL_LIGHT1,GL_DIFFUSE,zero);
         glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
-        vv[0]=50;
+        vv[0]=SettingGet(cSetting_shininess);
         glMaterialfv(GL_FRONT,GL_SHININESS,vv);
 
         copy3f(SettingGetGlobal_fv(cSetting_light),vv);
@@ -1443,7 +1443,7 @@ void SceneRender(Pickable *pick,int x,int y)
       } else {
         glMaterialfv(GL_FRONT,GL_SPECULAR,zero); 
       }
-      if(SettingGet(cSetting_depth_cue)) {
+      if(SettingGet(cSetting_depth_cue)&&SettingGet(cSetting_fog)) {
 #ifdef _PYMOL_3DFX
         if(SettingGet(cSetting_ortho)==0.0) {
 #endif
@@ -1452,7 +1452,6 @@ void SceneRender(Pickable *pick,int x,int y)
           glFogf(GL_FOG_MODE, GL_LINEAR);
           glHint(GL_FOG_HINT,GL_NICEST);
           glFogf(GL_FOG_START, I->FrontSafe);
-          glFogf(GL_FOG_END, I->Back);
 #ifdef _PYMOL_3DFX
           if(I->Back>(I->FrontSafe*4.0))
             glFogf(GL_FOG_END, I->Back);
@@ -1462,8 +1461,8 @@ void SceneRender(Pickable *pick,int x,int y)
           if(fog_val>1.0) fog_val=0.99999;
           glFogf(GL_FOG_DENSITY, fog_val);
 #else
-          glFogf(GL_FOG_END,I->Back);
-          glFogf(GL_FOG_DENSITY, 1.0);
+          glFogf(GL_FOG_END, I->FrontSafe+(I->Back-I->FrontSafe)/SettingGet(cSetting_fog));
+          glFogf(GL_FOG_DENSITY, fog_val);
 #endif
           v=SettingGetfv(cSetting_bg_rgb);
           fog[0]=v[0];
