@@ -4,21 +4,23 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * fixed bug with scene coloring
+
    * adjusted clipping plane bounds to eliminate shingle effect from
      excessive depth ranges.
 
    * mesh_normals setting for surface_type 2
 
    * launch option: -P # enables multisampling on Macs & Windows.
-     NOTE: on windows, only "-P 4" works, and only tested on ATI cards.
+     NOTE: on Windows, only "-P 4" works, and only tested on ATI cards.
 
    * session_migration setting
 
    * fixed problem with view matrix exploding on some proteins -- now
-     allow front clipping plane to go negative with suitable protections.
+     allow front clipping plane to go negative with suitable safeguards
 
-   * fixed bug with raytracing transparent surfaces using 
-     intermediate backgrounds
+   * fixed bug with raytracing transparent surfaces using intermediate 
+     backgrounds
 
    * surface code now tolerates superimposed identical atoms more gracefully
 

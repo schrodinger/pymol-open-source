@@ -4622,6 +4622,7 @@ static PyMethodDef Cmd_methods[] = {
 
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
+	{"set_name",              CmdSetName,              METH_VARARGS },
    {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
    {"set_session",           CmdSetSession,           METH_VARARGS },
    {"set_symmetry",          CmdSetCrystal,           METH_VARARGS },
