@@ -4325,12 +4325,29 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer)
             ai->name);   
 }
 /*========================================================================*/
+void ObjectMoleculeGetAtomSeleLog(ObjectMolecule *I,int index, char *buffer) 
+{
+  AtomInfoType *ai;
+  if(SettingGet(cSetting_robust_logs)) {
+    ai=I->AtomInfo+index;
+    
+    if(ai->alt[0]) 
+      sprintf(buffer,"/%s/%s/%s/%s/%s`%s",I->Obj.Name,ai->segi,ai->chain,ai->resi,
+              ai->name,ai->alt);
+    else
+      sprintf(buffer,"/%s/%s/%s/%s/%s`",I->Obj.Name,ai->segi,ai->chain,ai->resi,
+              ai->name);   
+  } else {
+    sprintf(buffer,"(%s`%d)",I->Obj.Name,index+1);
+  }
+}
+
 void ObjectMoleculeGetAtomSeleFast(ObjectMolecule *I,int index, char *buffer) 
 {
   AtomInfoType *ai;
   WordType segi,chain,resi,name,alt;
   ai=I->AtomInfo+index;
-
+  
   if(ai->segi[0]) {
     strcpy(segi,"s;");
     strcat(segi,ai->segi);
@@ -4363,6 +4380,7 @@ void ObjectMoleculeGetAtomSeleFast(ObjectMolecule *I,int index, char *buffer)
   }
   sprintf(buffer,"(%s&%s&%s&%s&%s&%s)",I->Obj.Name,segi,chain,resi,name,alt);
 }
+
 /*========================================================================*/
 int ObjectMoleculeGetNFrames(ObjectMolecule *I)
 {
