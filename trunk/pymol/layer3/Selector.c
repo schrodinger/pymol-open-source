@@ -269,6 +269,7 @@ int SelectorWalkTree(int *atom,int *toDo,int **stk,
     if(!seleFlag) {
       atom[a]=1; /* mark this atom into the selection */
       s=obj->Neighbor[a]; /* add neighbors onto the stack */
+      s++; /* skip count */
       while(1) {
         a1 = obj->Neighbor[s];
         if(a1>=0) {
@@ -319,6 +320,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
         if(a0>=0) {
           stkDepth=0;
           s=obj->Neighbor[a0]; /* add neighbors onto the stack */
+          s++; /* skip count */
           while(1) {
             a1 = obj->Neighbor[s];
             if(a1>=0) {
@@ -347,6 +349,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
         if(a0>=0) {
           stkDepth=0;
           s=obj->Neighbor[a0]; /* add neighbors onto the stack */
+          s++; /* skip count */
           while(1) {
             a1 = obj->Neighbor[s];
             if(a1>=0) {
@@ -375,6 +378,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
       } else if(sele1>=0) { /* atom mode */
         a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
         n=obj->Neighbor[a0];
+        n++; /* skip count */
         while(1) {
           a1 = obj->Neighbor[n];
           if(a1<0) break;
@@ -395,7 +399,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
               nFrag++;
             }
           }
-          n =n + 1;
+          n++;
         }
       }
       FreeP(toDo);

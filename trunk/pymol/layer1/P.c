@@ -270,6 +270,8 @@ int PLabelAtom(AtomInfoType *at,char *expr)
   PConvStringToPyDictItem(dict,"segi",at->segi);
   PConvStringToPyDictItem(dict,"text_type",at->textType);
   PConvStringToPyDictItem(dict,"elem",at->elem);
+  PConvIntToPyDictItem(dict,"geom",at->geom);
+  PConvIntToPyDictItem(dict,"valence",at->valence);
   if(at->flags) {
     sprintf(buffer,"%X",at->flags);
     PConvStringToPyDictItem(dict,"flags",buffer);

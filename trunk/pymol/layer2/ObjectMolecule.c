@@ -64,6 +64,278 @@ static int BondCompare(int *a,int *b);
 
 CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
 
+int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
+
+/*========================================================================*/
+
+int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at)
+{
+  /* this determines hybridization from coordinates in those few cases
+   * where it is unambiguous */
+
+  int result = -1;
+  int n,nn;
+  float v0[3],v1[3],v2[3],v3[3];
+  float d1[3],d2[3],d3[3];
+  float cp1[3],cp2[3],cp3[3];
+  float avg;
+  float dp;
+  n  = I->Neighbor[at];
+  nn = I->Neighbor[n++]; /* get count */
+  if(nn==4) 
+    result = cAtomInfoTetrahedral; 
+  else if(nn==3) {
+    /* check cross products */
+    ObjectMoleculeGetAtomVertex(I,state,at,v0);    
+    ObjectMoleculeGetAtomVertex(I,state,I->Neighbor[n++],v1);
+    ObjectMoleculeGetAtomVertex(I,state,I->Neighbor[n++],v2);
+    ObjectMoleculeGetAtomVertex(I,state,I->Neighbor[n++],v3);
+    subtract3f(v1,v0,d1);
+    subtract3f(v2,v0,d2);
+    subtract3f(v3,v0,d3);
+    cross_product3f(d1,d2,cp1);
+    cross_product3f(d2,d3,cp2);
+    cross_product3f(d3,d1,cp3);
+    normalize3f(cp1);
+    normalize3f(cp2);
+    normalize3f(cp3);
+    avg=(dot_product3f(cp1,cp2)+
+         dot_product3f(cp2,cp3)+
+         dot_product3f(cp3,cp1))/3.0;
+    if(avg>0.75)
+      result=cAtomInfoPlaner;
+    else
+      result=cAtomInfoTetrahedral;
+  } else if(nn==2) {
+    ObjectMoleculeGetAtomVertex(I,state,at,v0);    
+    ObjectMoleculeGetAtomVertex(I,state,I->Neighbor[n++],v1);
+    ObjectMoleculeGetAtomVertex(I,state,I->Neighbor[n++],v2);
+    subtract3f(v1,v0,d1);
+    subtract3f(v2,v0,d2);
+    normalize3f(d1);
+    normalize3f(d2);
+    dp = dot_product3f(d1,d2);
+    if(dp<-0.75)
+      result=cAtomInfoLinear;
+  }
+  return(result);
+}
+/*========================================================================*/
+void ObjectMoleculeInferAmidesAcids(ObjectMolecule *I,int state)
+{
+  /* realistically, this will only work on proteins.  */
+
+  int a,n,a0,a1,nn;
+  int changedFlag;
+  
+  AtomInfoType *ai,*ai0,*ai1;
+  
+  ObjectMoleculeUpdateNeighbors(I);
+  while(changedFlag) {
+    changedFlag=false;
+    for(a=0;a<I->NAtom;a++) {
+      ai=I->AtomInfo+a;
+      if(ai->chemFlag) {
+        if(ai->geom==cAtomInfoPlaner)
+          if(ai->elem[0]=='C')
+            if(!ai->elem[1]) /* found planer carbon */
+              {
+                n = I->Neighbor[a];
+                nn = I->Neighbor[n++];
+                if(nn>1) {
+                  a1 = -1;
+                  while(1) {
+                    a0 = I->Neighbor[n++];
+                    if(a0<0) break;
+                    ai0 = I->AtomInfo+a0;
+                    if((ai0->elem[0]=='O')&&(!ai0->elem[1])&&(!ai0->chemFlag)) {
+                      a1=a0;
+                      ai1=ai0; /* found candidate carbonyl */
+                      break;
+                    }
+                  }
+                  if(a1>0) {
+                    n = I->Neighbor[a]+1;
+                    while(1) {
+                      a0 = I->Neighbor[n++];
+                      if(a0<0) break;
+                      if(a0!=a1) {
+                        ai0 = I->AtomInfo+a0;
+                        if(!ai0->elem[1]) {
+                          if(ai0->elem[0]=='O') {
+                            if(!ai0->chemFlag) {
+                              ai0->chemFlag=true;
+                              ai0->geom=cAtomInfoPlaner;
+                              ai0->valence=1;
+                              ai1->chemFlag=true;
+                              ai1->geom=cAtomInfoPlaner;
+                              ai1->valence=1;
+                              changedFlag=true;
+                              break;
+                            }
+                          } else if(ai0->elem[0]=='N') {
+                            if(!ai0->chemFlag) {
+                              ai0->chemFlag=true;
+                              ai0->geom=cAtomInfoPlaner;                            
+                              ai0->valence=3;
+                              ai1->chemFlag=true;
+                              ai1->geom=cAtomInfoPlaner;
+                              ai1->valence=1;
+                              changedFlag=true;
+                              break;
+                            } else if(ai0->geom==cAtomInfoPlaner) {
+                              ai1->chemFlag=true;
+                              ai1->geom=cAtomInfoPlaner;
+                              ai1->valence=1;
+                              changedFlag=true;
+                              break;
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+      }
+    }
+  }
+}
+/*========================================================================*/
+void ObjectMoleculeInferChemistry(ObjectMolecule *I,int state)
+{
+  int a,n,a0,nn;
+  int changedFlag;
+  int geom;
+  int carbonVal[10];
+  
+  AtomInfoType *ai,*ai2;
+
+  carbonVal[cAtomInfoTetrahedral] = 4;
+  carbonVal[cAtomInfoPlaner] = 3;
+  carbonVal[cAtomInfoLinear] = 2;
+  
+  ObjectMoleculeUpdateNeighbors(I);
+  while(changedFlag) {
+    changedFlag=false;
+    for(a=0;a<I->NAtom;a++) {
+      ai=I->AtomInfo+a;
+      if(!ai->chemFlag) {
+        geom=ObjectMoleculeGetAtomGeometry(I,state,a);
+        if(!ai->chemFlag) {
+          if(!ai->elem[1]) {
+            switch(ai->elem[0]) {
+            case 'K':
+              ai->chemFlag=1;
+              ai->geom=cAtomInfoNone;
+              ai->valence=0;
+              break;
+            case 'H':
+            case 'F':
+            case 'I':
+              ai->chemFlag=1;
+              ai->geom=cAtomInfoSingle;
+              ai->valence=1;
+              break;
+            case 'O':
+              nn = I->Neighbor[I->Neighbor[a]];
+              if(nn!=1) { /* water, hydroxy, ether */
+                ai->chemFlag=1;
+                ai->geom=cAtomInfoTetrahedral;
+                ai->valence=2;
+              } else { /* hydroxy or carbonyl? check carbon geometry */
+                a0 = I->Neighbor[nn+1];
+                ai2=I->AtomInfo+a0;
+                if(ai2->chemFlag) {
+                  if((ai2->geom==cAtomInfoTetrahedral)||
+                     (ai2->geom==cAtomInfoLinear)) {
+                    ai->chemFlag=1; /* hydroxy */
+                    ai->geom=cAtomInfoTetrahedral;
+                    ai->valence=2;
+                  }
+                }
+              }
+              
+              break;
+            case 'C':
+              if(geom>=0) {
+                ai->geom = geom;
+                ai->valence = carbonVal[geom];
+                ai->chemFlag=true;
+              } else {
+                n = I->Neighbor[a];
+                nn = I->Neighbor[n++];
+                if(nn==1) { /* only one neighbor */
+                  ai2=I->AtomInfo+I->Neighbor[n];
+                  if(ai2->chemFlag&&(ai2->geom==cAtomInfoTetrahedral)) {
+                    ai->chemFlag=true; /* singleton carbon bonded to tetC must be tetC */
+                    ai->geom=cAtomInfoTetrahedral;
+                    ai->valence=4;
+                  }
+                }
+              }
+              break;
+            case 'N':
+              n = I->Neighbor[a];
+              nn = I->Neighbor[n++];
+              if(geom==cAtomInfoPlaner) {
+                ai->chemFlag=true;
+                ai->geom=cAtomInfoPlaner;
+                ai->valence=3;
+              }
+              break;
+            case 'S':
+              n = I->Neighbor[a];
+              nn = I->Neighbor[n++];
+              if(nn==4) { /* sulfone */
+                ai->chemFlag=true;
+                ai->geom=cAtomInfoTetrahedral;
+                ai->valence=4;
+              } else if(nn==3) { /* suloxide */
+                ai->chemFlag=true;
+                ai->geom=cAtomInfoTetrahedral;
+                ai->valence=3;
+              } else if(nn==2) { /* thioether */
+                ai->chemFlag=true;
+                ai->geom=cAtomInfoTetrahedral;
+                ai->valence=2;
+              }
+              break;
+            }
+          } else {
+            switch(ai->elem[0]) {
+            case 'B':
+              switch(ai->elem[1]) {
+              case 'R':
+              case 'r':
+                ai->chemFlag=1;
+                ai->geom=cAtomInfoSingle;
+                ai->valence=1;
+                break;
+              }
+            case 'C':
+              switch(ai->elem[1]) {
+              case 'l':
+              case 'L':
+                ai->chemFlag=1;
+                if(ai->formalCharge==0.0) {
+                  ai->geom=cAtomInfoSingle;
+                  ai->valence=1;
+                } else {
+                  ai->geom=cAtomInfoNone;
+                  ai->valence=0;
+                }
+                break;
+              }
+            }
+          }
+        if(ai->chemFlag)
+          changedFlag=true;
+        }
+      }
+    }
+  }
+}
 /*========================================================================*/
 void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float *TTT) 
 {
@@ -145,23 +417,27 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
 {
   /* neighbor storage structure:
      
-     0       list offset for atom 0
-     1       list offset for atom 1
+     0       list offset for atom 0 = n
+     1       list offset for atom 1 = n + m + 1
      ...
      n-1     list offset for atom n-1
-     n       neighbor of atom 0
-     n+1     neighbor ot atom 1
+
+     n       count for atom 0 
+     n+1     neighbor of atom 0
+     n+2     neighbor ot atom 1
      ...
      n+m     -1
-     n+m+1   neighbor of atom 1
+
+     n+m+1   count for atom 1
      n+m+2   neighbor of atom 1
+     n+m+3   neighbor of atom 1
      etc.
  */
 
   int size;
   int a,b,c,d,*l,l0,l1;
   if(!I->Neighbor) {
-    size = (I->NAtom*2)+(I->NBond*2); 
+    size = (I->NAtom*3)+(I->NBond*2); 
     if(I->Neighbor) {
       VLACheck(I->Neighbor,int,size);
     } else {
@@ -185,9 +461,10 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
     c = I-> NAtom;
     for(a=0;a<I->NAtom;a++) {
       d = I->Neighbor[a];
-      I->Neighbor[a]+=c;
-      I->Neighbor[I->Neighbor[a]]=-1;
-      c = c + d + 1;
+      I->Neighbor[c]=d; /* store neighbor count */
+      I->Neighbor[a]+=c+1; /* set initial position to end of list, we'll fill backwards */
+      I->Neighbor[I->Neighbor[a]]=-1; /* store terminator */
+      c = c + d + 2;
     }
     
     /* now load neighbors in a sequential list for each atom (reverse order) */
@@ -201,6 +478,10 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
       
       I->Neighbor[l1]--;
       I->Neighbor[I->Neighbor[l1]]=l0;
+    }
+    for(a=0;a<I->NAtom;a++) { /* adjust down to point to the count, not the first entry */
+      if(I->Neighbor[a]>=0)
+        I->Neighbor[a]--;
     }
     l=I->Neighbor;
   }
