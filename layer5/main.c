@@ -119,6 +119,8 @@ int BlueLine = false;
 
 static int InternalGUI = true;
 static int InternalFeedback = true;
+static int WindowIsVisible = false;
+
 int ShowSplash=true;
 int PyMOLRegisterSigIntHandler = true;
 int PyMOLMultisample = 0;
@@ -145,6 +147,7 @@ static PyMOLOptionRec PyMOLOptionGlobal = {
   false, /* incentive product */
   "", /* after_load_script */
   0, /* multisample */
+  1, /* window_visible */
 };
 
 struct PyMOLOptionRec *PyMOLOption = &PyMOLOptionGlobal;
@@ -400,6 +403,11 @@ void MainSetPassiveDrag(int onOrOff)
   I->DragPassive = onOrOff;
 }
 /*========================================================================*/
+void MainSetWindowVisibility(int mode)
+{
+  PyMOLOption->window_visible = mode;
+}
+/*========================================================================*/
 void MainTest(void)
 {
 }
@@ -495,7 +503,7 @@ static void MainDrawLocked(void)
   if(I->DirtyFlag) {
     I->DirtyFlag=false;
   }
-
+  
   OrthoBusyPrime();
   ExecutiveDrawNow();
 
@@ -860,6 +868,17 @@ void MainBusyIdle(void)
     ENDFD;*/
   PLockAPIAsGlut();
 
+  if(PMGUI) {
+    if(WindowIsVisible!=PyMOLOption->window_visible) {
+      WindowIsVisible = PyMOLOption->window_visible;
+      if(WindowIsVisible)
+        p_glutShowWindow();
+      else {
+        p_glutHideWindow();
+      }
+    }
+  }
+
   PRINTFD(FB_Main)
     " MainBusyIdle: got lock.\n"
     ENDFD;
@@ -1095,6 +1114,12 @@ SetConsoleCtrlHandler(
       p_glutInitWindowSize(WinX, WinY);
  
       TheWindow = p_glutCreateWindow("PyMOL Viewer");
+      if(WindowIsVisible) {
+        p_glutShowWindow();
+      } else {
+        p_glutHideWindow();
+      }
+        
     } else {
       char str[255];
       sprintf(str,"%dx%d:32@120",WinX,WinY);
@@ -1149,6 +1174,8 @@ SetConsoleCtrlHandler(
         printf(" Hardware stereo not present (unable to force).\n");
       }
     } 
+    if(!WindowIsVisible)
+      MainReshape(WinX,WinY);
     p_glutMainLoop();
     PBlock(); /* if we've gotten here, then we're heading back to Python... */
   } else {
@@ -1216,6 +1243,7 @@ int was_main(void)
   WinPY = PyMOLOption->winPY;
   ExternalGUI = PyMOLOption->external_gui;
   PyMOLMultisample = PyMOLOption->multisample; /* currently only used by MacOSX */
+  WindowIsVisible = PyMOLOption->window_visible;
 
 #ifdef _PYMOL_SHARP3D
   //  InternalGUI = 0;

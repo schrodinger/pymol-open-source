@@ -3473,7 +3473,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
     glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
-   
+
     debug_pick = (int)SettingGet(cSetting_debug_pick);
 
     if(SettingGet(cSetting_line_smooth)) {

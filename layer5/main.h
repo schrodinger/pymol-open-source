@@ -34,6 +34,8 @@ void MainDragDirty(void);
 void MainRepositionWindowDefault(void);
 void MainSetPassiveDrag(int onOrOff);
 
+void MainSetWindowVisibility(int mode);
+
 #ifdef _PYMOL_OSX
 
 void MainRunString(char *str);
@@ -73,7 +75,7 @@ typedef struct PyMOLOptionRec {
     reuse_helper, auto_reinitialize, keep_thread_alive, 
     quiet, incentive_product;
   char after_load_script[PYMOL_MAX_OPT_STR];
-  int multisample;
+  int multisample,window_visible;
 } PyMOLOptionRec;
 
 extern PyMOLOptionRec *PyMOLOption;

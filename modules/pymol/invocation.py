@@ -56,6 +56,7 @@ if __name__=='pymol.invocation':
    options.quiet = 0
    options.multisample = 0
    options.incentive_product = 0
+   options.window_visible = 1
    if sys.platform != 'win32':
       options.win_py = 200
    else:
@@ -207,6 +208,8 @@ if __name__=='pymol.invocation':
                options.gui = 'pmg_tk'
             if "w" in a:
                options.gui = 'pmg_wx'
+            if "z" in a:
+               options.window_visible = 0
             if "d" in a:
                options.deferred.append(
                   "_do_%s"%string.replace(av.pop(),'%',' '))

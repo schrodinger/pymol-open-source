@@ -4680,6 +4680,20 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   return(APIStatus(ok));  
 }
 
+static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
+{
+  int int1;
+
+  int ok=true;
+  ok = PyArg_ParseTuple(args,"i",&int1);
+  if (ok) {
+    APIEntry();
+    MainSetWindowVisibility(int1);
+    APIExit();
+  }
+  return(APIStatus(ok));  
+}
+
 static PyMethodDef Cmd_methods[] = {
 	{"accept",	              CmdAccept,               METH_VARARGS },
 	{"align",	              CmdAlign,                METH_VARARGS },
@@ -4882,6 +4896,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"unpick",                CmdUnpick,               METH_VARARGS },
 	{"unset",                 CmdUnset,                METH_VARARGS },
 	{"update",                CmdUpdate,               METH_VARARGS },
+	{"window",                CmdWindow,               METH_VARARGS },
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };

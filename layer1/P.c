@@ -1093,6 +1093,7 @@ void PGetOptions(PyMOLOptionRec *rec)
   rec->quiet = PyInt_AsLong(PyObject_GetAttrString(options,"quiet"));
   rec->incentive_product = PyInt_AsLong(PyObject_GetAttrString(options,"incentive_product"));
   rec->multisample = PyInt_AsLong(PyObject_GetAttrString(options,"multisample"));
+  rec->window_visible = PyInt_AsLong(PyObject_GetAttrString(options,"window_visible"));
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
 
   if(load_str) {

@@ -148,6 +148,8 @@ void     p_glutSwapBuffers(void){}
 
 void     p_glutPopWindow(void){}
 void     p_glutShowWindow(void){}
+void     p_glutHideWindow(void){}
+
 void     p_glutDestroyWindow(int theWindow) {}
 
 void     p_glutReshapeWindow(int width, int height){ WinX=width;WinY=height;}
@@ -270,6 +272,7 @@ void     p_glutSwapBuffers(void){PBlock();PyRun_SimpleString("pymol._swap_buffer
 
 void     p_glutPopWindow(void){}
 void     p_glutShowWindow(void){}
+void     p_glutHideWindow(void){}
 void     p_glutDestroyWindow(int theWindow) {}
 
 void     p_glutReshapeWindow(int width, int height){ WinX=width;WinY=height;}
