@@ -794,10 +794,11 @@ int *SelectorEvaluate(WordType *word)
 							 break;
                     }
 					 } else if(SelectorIndexByName(word[c])>=0) {
+                  printf("here\n");
 						depth++;
 						e=Stack+depth;
 						e->level=level;
-						e->code=code;
+						e->code='SELs';
                   e->type=SELE_SEL1;
                   valueFlag=1;
                   c--;
