@@ -107,8 +107,11 @@ struct _PyMOLGlobals {
   CPyMOL    *PyMOL; /* the instance */
   /* global variables */
 
-  int HaveGUI; /* do we have an OpenGL graphics window/context?
-                    * or are will command-only? */
+  int HaveGUI; /* do we have an OpenGL graphics window
+                * or are will command-only? */
+
+  int ValidContext; /* are we guaranteed to have a valid OpenGL context 
+                     * at this very moment? */
 
   int Ready; /* is the program fully initialized and ready to
                    * receive messages? */
