@@ -104,8 +104,12 @@ Rep *RepCartoonNew(CoordSet *cs)
   float length,width;
   int cur_car;
   int contFlag,extrudeFlag;
-
   OOAlloc(RepCartoon);
+
+PRINTFD(FB_RepCartoon)
+" RepCartoonNew-Debug: entered.\n"
+ENDFD;
+	
 
   obj = cs->Obj;
   visFlag=false;
@@ -269,6 +273,9 @@ Rep *RepCartoonNew(CoordSet *cs)
                 }
 	 }
 
+PRINTFD(FB_RepCartoon)
+" RepCartoon-Debug: path outlined, interpolating...\n"
+ENDFD;
 
   if(nAt)
 	 {
@@ -289,8 +296,18 @@ Rep *RepCartoonNew(CoordSet *cs)
 				{
 				  subtract3f(v+3,v,v1);
 				  *d = length3f(v1);
-				  scale3f(v1,1.0/(*d),v2);
+              if(*d>R_SMALL4) {
+                scale3f(v1,1.0/(*d),v2);
+} else if(a)  {
+	copy3f(v2-3,v2); 
+} else {
+zero3f(v2);
+	}
 				}
+	else {
+zero3f(v2);	
+	}
+	
 			 d++;
 			 v+=3;
 			 v1+=3;
@@ -339,7 +356,9 @@ Rep *RepCartoonNew(CoordSet *cs)
 		*(v1++)=*(v-2);
 		*(v1++)=*(v-1);
 
-
+PRINTFD(FB_RepCartoon)
+" RepCartoon-Debug: generating coordinate systems...\n"
+ENDFD;
       /* generate new orientation vectors which are perpendicular to both the tangent 
          original orientation vector */
       
@@ -389,16 +408,12 @@ Rep *RepCartoonNew(CoordSet *cs)
       for(a=1;a<nAt;a++) {
 
         v1 = va+6; /* orientation vectors for next CA */
-        
-        for(b=0;b<4;b++) {
-          remove_component3f(vo  ,v,o0);
-          normalize3f(o0);
-          remove_component3f(v1  ,v,o1  ); 
-          remove_component3f(v1+3,v,o1+3);
-          normalize3f(o1);
-          normalize3f(o1+3);
-        }
-        
+        remove_component3f(vo  ,v,o0);
+       normalize3f(o0);
+       remove_component3f(v1  ,v,o1  ); 
+       remove_component3f(v1+3,v,o1+3);
+        normalize3f(o1);
+        normalize3f(o1+3);
         max_dot = dot_product3f(o0,o1);
         v0 = v1;
 
@@ -415,7 +430,9 @@ Rep *RepCartoonNew(CoordSet *cs)
         v+=3; /* normal */
       }
     }
-
+PRINTFD(FB_RepCartoon)
+" RepCartoon-Debug: creating 3D scaffold...\n"
+ENDFD;
    
   /* okay, we now have enough info to generate smooth interpolations */
 
@@ -479,7 +496,7 @@ Rep *RepCartoonNew(CoordSet *cs)
             angle = acos(dot);
             
             if(angle>0.001) {
-              ratio=angle/sqrt((pow(1-cos(angle),2)+pow(sin(angle),2)));
+              ratio=angle/sqrt1f((pow(1-cos(angle),2)+pow(sin(angle),2)));
             } else {
               ratio=1.0;
             }

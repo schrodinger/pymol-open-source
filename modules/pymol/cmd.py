@@ -5218,7 +5218,8 @@ class fb_module:
    ortho                     =19
    movie                     =20
    python                    =21
-   
+   extrude                   =22
+
    coordset                  =25
    distset                   =26
 

@@ -108,6 +108,7 @@ function name.
 #define FB_Ortho                     19
 #define FB_Movie                     20
 #define FB_Python                    21 /* part of P.c */
+#define FB_Extrude                   22
 
 /* layer 2 */
 
@@ -135,6 +136,7 @@ function name.
 #define FB_RepDistLabel              56
 #define FB_RepRibbon                 57
 #define FB_RepCartoon                58
+
 /* layer 3 */
 
 #define FB_Executive                 70
