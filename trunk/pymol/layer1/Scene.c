@@ -1504,7 +1504,7 @@ void SceneRovingUpdate(void)
   char *p1;
   char *p2;
   char *s;
-  int refresh_flag;
+  int refresh_flag=false;
 
   if(I->RovingDirtyFlag&&(
                           (UtilGetSeconds()-I->RovingLastUpdate)>
