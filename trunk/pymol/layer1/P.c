@@ -82,20 +82,18 @@ void PXDecRef(PyObject *obj)
 }
 
 void PSleep(int usec)
-{ /* can only be called by the master process */
+{ /* can only be called by the glut process */
 #ifndef WIN32
-	struct timeval tv;
-   PUnlockAPIAsGlut();
-   tv.tv_sec=0;
-   tv.tv_usec=usec; 
-   select(0,NULL,NULL,NULL,&tv);
-   PLockAPIAsGlut();
+  struct timeval tv;
+  PUnlockAPIAsGlut();
+  tv.tv_sec=0;
+  tv.tv_usec=usec; 
+  select(0,NULL,NULL,NULL,&tv);
+  PLockAPIAsGlut();
 #else
-   PUnlockAPIAsGlut();
-   PBlock();
-   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
-   PUnblock();
-   PLockAPIAsGlut();
+  PBlockAndUnlockAPI();
+  PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
+  PLockAPIAndUnblock();
 #endif
 
 }
@@ -331,9 +329,18 @@ void PLockAPIAsGlut(void)
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
   while(P_glut_thread_keep_out) { /* IMPORTANT: keeps the glut thread out of an API operation... */
     PXDecRef(PyObject_CallFunction(P_unlock,NULL));
-    P_glut_thread_state = PyEval_SaveThread(); /* release python */
-    PSleep(50000); /* wait 50 msec */
-    PyEval_RestoreThread(P_glut_thread_state); /* grab python */
+#ifndef WIN32
+    { 
+      struct timeval tv;
+      P_glut_thread_state = PyEval_SaveThread(); /* release python */
+      tv.tv_sec=0;
+      tv.tv_usec=50000; 
+      select(0,NULL,NULL,NULL,&tv);
+      PyEval_RestoreThread(P_glut_thread_state); /* grab python */
+    } 
+#else
+    PXDecRef(PyObject_CallFunction(P_sleep,"f",0.050));
+#endif
     PXDecRef(PyObject_CallFunction(P_lock,NULL));
   }
   P_glut_thread_state = PyEval_SaveThread(); /* release python */
@@ -363,7 +370,13 @@ void PInitEmbedded(int argc,char **argv)
 
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
+#ifdef WIN32
+  PyRun_SimpleString("os.environ['PYMOL_PATH']=os.getcwd()\n");
+  PyRun_SimpleString("os.environ['PYTHONPATH']=os.getcwd()+'/modules'\n");
+  PyRun_SimpleString("sys.path.append(os.getcwd()+'/modules')\n");
+#else
   PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
+#endif
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 
   pymol = PyImport_AddModule("pymol"); /* get it */

@@ -169,7 +169,6 @@ void SettingSetNamed(char *name,char *value)
   }
   if(buffer[0]) {
 	 OrthoAddOutput(buffer);
-	 OrthoNewLine(NULL);
   }
 }
 /*========================================================================*/
