@@ -268,7 +268,7 @@ if pymol_launch != 3: # if this isn't a dry run
                         elif mem<256000000:
                            cmd.set("hash_max",80)
          elif sys.platform[0:5]=='linux':
-            f=os.popen("grep -c processor /proc/cpuinfo")
+            f=os.popen("grep -c 'processor       :' /proc/cpuinfo")
             l=f.readlines()
             f.close()
             ncpu=int(l[0][0])
