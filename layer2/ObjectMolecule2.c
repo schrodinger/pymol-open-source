@@ -2243,6 +2243,7 @@ float ObjectMoleculeGetMaxVDW(ObjectMolecule *I)
   return(max_vdw);
 }
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule *I)
 {
   PyObject *result = NULL;
@@ -2258,6 +2259,7 @@ static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule *I)
   }
   return(PConvAutoNone(result));
 }
+#endif
 
 /*static PyObject *ObjectMoleculeDiscreteCSetAsPyList(ObjectMolecule *I)
   {
@@ -2266,6 +2268,7 @@ static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule *I)
   }*/
 
 
+#ifndef _PYMOL_NOPY
 static int ObjectMoleculeCSetFromPyList(ObjectMolecule *I,PyObject *list)
 {
   int ok=true;
@@ -2283,7 +2286,9 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule *I,PyObject *list)
   }
   return(ok);
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule *I)
 {
   PyObject *result = NULL;
@@ -2306,7 +2311,9 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule *I)
 
   return(PConvAutoNone(result));
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list) 
 {
   int ok=true;
@@ -2328,7 +2335,9 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list)
   }
   return(ok);
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule *I)
 {
   PyObject *result = NULL;
@@ -2343,7 +2352,9 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule *I)
   }
   return(PConvAutoNone(result));
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static int ObjectMoleculeAtomFromPyList(ObjectMolecule *I,PyObject *list) 
 {
   int ok=true;
@@ -2358,9 +2369,13 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule *I,PyObject *list)
   }
   return(ok);
 }
+#endif
 
 int ObjectMoleculeNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMolecule **result)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok = true;
   ObjectMolecule *I=NULL;
   int discrete_flag;
@@ -2425,12 +2440,16 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMolecule **
   }
 
   return(ok);
+#endif
 }
 
 
 /*========================================================================*/
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
 
 
@@ -2512,6 +2531,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I)
 #endif
 
   return(PConvAutoNone(result));  
+#endif
 }
 
 

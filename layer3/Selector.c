@@ -1016,6 +1016,8 @@ static void SelectorDeleteOffset(PyMOLGlobals *G,int n)
   I->Info[n] = I->Info[I->NActive];
   I->Name[I->NActive][0]=0;
 }
+
+#ifndef _PYMOL_NOPY
 static void SelectorDeleteIndex(PyMOLGlobals *G,int index)
 {
   register CSelector *I=G->Selector;
@@ -1030,6 +1032,7 @@ static void SelectorDeleteIndex(PyMOLGlobals *G,int index)
   if(n) 
     SelectorDeleteOffset(G,n);
 }
+#endif
 
 #define cSSMaxHBond 6
 
@@ -2113,7 +2116,11 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
 
 
 PyObject *SelectorColorectionGet(PyMOLGlobals *G,char *prefix)
+
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   register CSelector *I=G->Selector;
   PyObject *result = NULL;
   int n_used=0;
@@ -2192,10 +2199,15 @@ PyObject *SelectorColorectionGet(PyMOLGlobals *G,char *prefix)
   result = PConvIntVLAToPyList((int*)used);
   VLAFreeP(used);
   return(result);
+#endif
 }
 
 int SelectorColorectionApply(PyMOLGlobals *G,PyObject *list,char *prefix)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   register CSelector *I=G->Selector;
   int ok=true;
   ColorectionRec *used=NULL;
@@ -2237,10 +2249,15 @@ int SelectorColorectionApply(PyMOLGlobals *G,PyObject *list,char *prefix)
   }
   VLAFreeP(used);
   return(ok);
+#endif
 }
 
 int SelectorColorectionFree(PyMOLGlobals *G,PyObject *list,char *prefix)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   ColorectionRec *used=NULL;
   int n_used=0;
@@ -2265,10 +2282,16 @@ int SelectorColorectionFree(PyMOLGlobals *G,PyObject *list,char *prefix)
   }
   VLAFreeP(used);
   return(ok);
+#endif
+
 }
 
 PyObject *SelectorSecretsAsPyList(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   register CSelector *I=G->Selector;
   int n_secret;
   int a;
@@ -2294,10 +2317,14 @@ PyObject *SelectorSecretsAsPyList(PyMOLGlobals *G)
     }
   }    
   return(result);
+#endif
 }
 
 int SelectorSecretsFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok=true;
   int n_secret=0;
   int a;
@@ -2321,11 +2348,15 @@ int SelectorSecretsFromPyList(PyMOLGlobals *G,PyObject *list)
     }
   }
   return(ok);
+#endif
 }
 
 
 PyObject *SelectorAsPyList(PyMOLGlobals *G,int sele1)
 { /* assumes SelectorUpdateTable has been called */
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   register CSelector *I=G->Selector;
   int a,b;
   int at;
@@ -2393,11 +2424,16 @@ PyObject *SelectorAsPyList(PyMOLGlobals *G,int sele1)
   VLAFreeP(vla_list);
   VLAFreeP(obj_list);
   return(result);
+#endif
 }
 
 
 int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   register CSelector *I=G->Selector;
   int n,a,b,m,sele;
@@ -2495,6 +2531,8 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
   }
 
   return(ok);
+#endif
+
 }
 
 
@@ -5116,6 +5154,10 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
 /*========================================================================*/
 PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   register CSelector *I=G->Selector;
   PyObject *model=NULL,*bnd=NULL;
   PyObject *atom_list=NULL,*bond_list=NULL;
@@ -5286,6 +5328,7 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
     }
   }
   return(model);
+#endif
 }
 /*========================================================================*/
 void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1)

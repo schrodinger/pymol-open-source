@@ -188,8 +188,10 @@ void MovieDump(PyMOLGlobals *G)
   }
 }
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 static int MovieCmdFromPyList(PyMOLGlobals *G,PyObject *list,int *warning)
 {
+
   register CMovie *I=G->Movie;
   int ok=true;
   int a;
@@ -204,10 +206,16 @@ static int MovieCmdFromPyList(PyMOLGlobals *G,PyObject *list,int *warning)
   }
   *warning=warn;
   return(ok);
+
 }
+#endif
 /*========================================================================*/
 int MovieFromPyList(PyMOLGlobals *G,PyObject *list,int *warning)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   register CMovie *I=G->Movie;
   int ll = 0;
@@ -243,10 +251,13 @@ int MovieFromPyList(PyMOLGlobals *G,PyObject *list,int *warning)
     MovieReset(G);
   }
   return(ok);
+#endif
 }
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 static PyObject *MovieCmdAsPyList(PyMOLGlobals *G)
 {
+
   register CMovie *I=G->Movie;
   PyObject *result=NULL;
   int a;
@@ -257,11 +268,16 @@ static PyObject *MovieCmdAsPyList(PyMOLGlobals *G)
       PyList_SetItem(result,a,PyString_FromString(I->Cmd[a]));
     }
   return(PConvAutoNone(result));
-}
 
+}
+#endif
 /*========================================================================*/
 PyObject *MovieAsPyList(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   register CMovie *I=G->Movie;
   PyObject *result = NULL;
 
@@ -296,6 +312,7 @@ PyObject *MovieAsPyList(PyMOLGlobals *G)
   int Playing;
 */
   return(PConvAutoNone(result));
+#endif
 }
 /*========================================================================*/
 int MoviePlaying(PyMOLGlobals *G)

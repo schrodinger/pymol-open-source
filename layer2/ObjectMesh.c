@@ -41,7 +41,7 @@ static void ObjectMeshFree(ObjectMesh *I);
 void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms);
 void ObjectMeshRecomputeExtent(ObjectMesh *I);
 
-
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
 {
   PyObject *result = NULL;
@@ -89,11 +89,12 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
 
   return(PConvAutoNone(result));  
 }
+#endif
 
-
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh *I)
 {
-  
+
   PyObject *result=NULL;
   int a;
   result = PyList_New(I->NState);
@@ -105,9 +106,10 @@ static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh *I)
     }
   }
   return(PConvAutoNone(result));  
-
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static int ObjectMeshStateFromPyList(PyMOLGlobals *G,ObjectMeshState *I,PyObject *list)
 {
   int ok=true;
@@ -153,9 +155,12 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals *G,ObjectMeshState *I,PyObject
   }
   return(ok);
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static int ObjectMeshAllStatesFromPyList(ObjectMesh *I,PyObject *list)
 {
+
   int ok=true;
   int a;
   VLACheck(I->State,ObjectMeshState,I->NState);
@@ -168,9 +173,13 @@ static int ObjectMeshAllStatesFromPyList(ObjectMesh *I,PyObject *list)
   }
   return(ok);
 }
+#endif
 
 int ObjectMeshNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMesh **result)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok = true;
   int ll;
   ObjectMesh *I=NULL;
@@ -195,12 +204,16 @@ int ObjectMeshNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMesh **result)
     /* cleanup? */
   }
   return(ok);
+#endif
 }
 
 
 
 PyObject *ObjectMeshAsPyList(ObjectMesh *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   
   PyObject *result=NULL;
 
@@ -210,6 +223,7 @@ PyObject *ObjectMeshAsPyList(ObjectMesh *I)
   PyList_SetItem(result,2,ObjectMeshAllStatesAsPyList(I));
 
   return(PConvAutoNone(result));  
+#endif
 }
 
 static void ObjectMeshStateFree(ObjectMeshState *ms)

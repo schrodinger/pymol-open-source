@@ -54,8 +54,10 @@ static void ObjectSliceFree(ObjectSlice *I);
 void ObjectSliceStateInit(PyMOLGlobals *G,ObjectSliceState *ms);
 void ObjectSliceRecomputeExtent(ObjectSlice *I);
 
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
 {
+
   PyObject *result = NULL;
 
   result = PyList_New(10);
@@ -153,9 +155,13 @@ static int ObjectSliceAllStatesFromPyList(ObjectSlice *I,PyObject *list)
   }
   return(ok);
 }
+#endif
 
 int ObjectSliceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSlice **result)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok = true;
   int ll;
   ObjectSlice *I=NULL;
@@ -180,13 +186,16 @@ int ObjectSliceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSlice **result
     /* cleanup? */
   }
   return(ok);
+#endif
 }
 
 
 
 PyObject *ObjectSliceAsPyList(ObjectSlice *I)
 {
-  
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else  
   PyObject *result=NULL;
 
   result = PyList_New(3);
@@ -195,6 +204,7 @@ PyObject *ObjectSliceAsPyList(ObjectSlice *I)
   PyList_SetItem(result,2,ObjectSliceAllStatesAsPyList(I));
 
   return(PConvAutoNone(result));  
+#endif
 }
 
 static void ObjectSliceStateFree(ObjectSliceState *oss)

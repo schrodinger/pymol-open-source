@@ -946,7 +946,7 @@ void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,floa
       add3f(d3,impact,impact);
   }
 }
-
+#ifndef _PYMOL_NOPY
 static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
 {
   int blocked;
@@ -967,7 +967,9 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
   Py_DECREF(info_list);
   PAutoUnblock(blocked);
 }
+#endif
 
+#ifndef _PYMOL_NOPY
 static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
 {
   int blocked;
@@ -989,6 +991,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
   Py_DECREF(info_list);
   PAutoUnblock(blocked);
 }
+#endif
 
 int RayHashThread(CRayHashThreadInfo *T)
 {
@@ -1002,7 +1005,7 @@ int RayHashThread(CRayHashThreadInfo *T)
   }
   return 1;
 }
-
+#ifndef _PYMOL_NOPY
 static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
 {
   int blocked;
@@ -1023,6 +1026,7 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   PAutoUnblock(blocked);
   
 }
+#endif
 
 static int find_edge(unsigned int *ptr,unsigned int width,int threshold)
 {
@@ -2396,6 +2400,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       RayTransformBasis(I,I->Basis+2,2);
     }
 
+#ifndef _PYMOL_NOPY
     if(shadows&&(n_thread>1)) { /* parallel execution */
 
       CRayHashThreadInfo thread_info[2];
@@ -2417,11 +2422,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       thread_info[1].phase = 1;
       RayHashSpawn(thread_info,2);
       
-    } else { /* serial execution */
-      BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume,0,cCache_ray_map);
-      if(shadows) {
-        BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL,1,cCache_ray_map);
-      }
+    } else
+#endif
+      { /* serial execution */
+        BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume,0,cCache_ray_map);
+        if(shadows) {
+          BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL,1,cCache_ray_map);
+        }
 
       /* serial tasks which RayHashThread does in parallel mode */
 
@@ -2521,10 +2528,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 			copy3f(spec_vector,rt[a].spec_vector);
 			}
 		
-		if(n_thread<=1)
-        RayTraceThread(rt);
-		else 
+#ifndef _PYMOL_NOPY
+		if(n_thread>1)
         RayTraceSpawn(rt,n_thread);
+      else
+#endif
+        RayTraceThread(rt);
 
       if(oversample_cutoff) { /* perform edge oversampling, if requested */
         unsigned int *edging;
@@ -2537,10 +2546,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
           rt[a].edging = edging;
         }
 
-        if(n_thread<=1)
-          RayTraceThread(rt);
-        else 
+#ifndef _PYMOL_NOPY
+        if(n_thread>1)
           RayTraceSpawn(rt,n_thread);
+        else 
+#endif
+          RayTraceThread(rt);
 
         CacheFreeP(I->G,edging,0,cCache_ray_edging_buffer,false);
       }
@@ -2563,10 +2574,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
          rt[a].n_thread = n_thread;
       }
 		
-		if(n_thread<=1)
-        RayAntiThread(rt);
-		else 
+#ifndef _PYMOL_NOPY
+		if(n_thread>1)
         RayAntiSpawn(rt,n_thread);
+		else 
+#endif
+        RayAntiThread(rt);
+
     }
     CacheFreeP(I->G,image,0,cCache_ray_antialias_buffer,false);
     image = image_copy;

@@ -171,6 +171,9 @@ void ColorForgetExt(PyMOLGlobals *G,char *name)
 
 PyObject *ColorExtAsPyList(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   register CColor *I=G->Color;
   PyObject *result,*list;
   ExtRec *ext;
@@ -186,11 +189,15 @@ PyObject *ColorExtAsPyList(PyMOLGlobals *G)
     ext++;
   }
   return(result);
+#endif
 }
 
 /*========================================================================*/
 PyObject *ColorAsPyList(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   register CColor *I=G->Color;
   PyObject *result,*list;
   ColorRec *color;
@@ -220,10 +227,14 @@ PyObject *ColorAsPyList(PyMOLGlobals *G)
     color++;
   }
   return(result);
+#endif
 }
 
 int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int n_ext=0;
   int a;
   int ok=true;
@@ -254,11 +265,16 @@ int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list)
 
   }
   return(ok);
+#endif
 }
 
 /*========================================================================*/
 int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int n_custom=0;
   int a;
   int index=0;
@@ -299,6 +315,7 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
     }
   }
   return(ok);
+#endif
 }
 
 /*========================================================================*/

@@ -102,6 +102,10 @@ void  IsosurfFree(PyMOLGlobals *G)
 /*===========================================================================*/
 PyObject *IsosurfAsPyList(Isofield *field)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result=NULL;
 
   result = PyList_New(4);
@@ -114,6 +118,7 @@ PyObject *IsosurfAsPyList(Isofield *field)
   else
     PyList_SetItem(result,3,PConvAutoNone(NULL));
   return(PConvAutoNone(result));
+#endif
 }
 /*===========================================================================*/
 __inline__ static void	IsosurfInterpolate(CIsosurf *I,float *v1,float *l1,float *v2,float *l2,float *pt)
@@ -127,6 +132,10 @@ __inline__ static void	IsosurfInterpolate(CIsosurf *I,float *v1,float *l1,float 
 /*===========================================================================*/
 Isofield *IsosurfNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   int ok=true;
   int dim4[4];
   int a;
@@ -165,6 +174,7 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals *G,PyObject *list)
   }
   result->gradients = NULL;
   return(result);
+#endif
 }
 /*===========================================================================*/
 void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)

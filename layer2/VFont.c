@@ -39,7 +39,7 @@ struct _CVFont {
   int NFont;
 };
 
-
+#ifndef _PYMOL_NOPY
 static VFontRec *VFontRecNew(PyMOLGlobals *G)
 {
   int a;
@@ -51,6 +51,7 @@ static VFontRec *VFontRecNew(PyMOLGlobals *G)
   I->pen = VLAlloc(float,1000);
   return(I);
 }
+#endif
 
 int VFontWriteToCGO(PyMOLGlobals *G,int font_id,CGO *cgo,char *text,float *pos,float *scale,float *matrix)
 {
@@ -167,9 +168,10 @@ int VFontIndent(PyMOLGlobals *G,int font_id,char *text,float *pos,float *scale,f
 }
 
 
-
+#ifndef _PYMOL_NOPY
 static int VFontRecLoad(PyMOLGlobals *G,VFontRec *I,PyObject *dict)
 { /* assumes blocked Python interpreter */
+
   int used=0;
   int ok=true;
   PyObject *key,*char_list;
@@ -211,6 +213,7 @@ static int VFontRecLoad(PyMOLGlobals *G,VFontRec *I,PyObject *dict)
   }
   return(ok);
 }
+#endif
 
 static void VFontRecFree(PyMOLGlobals *G,VFontRec *I)
 {
@@ -247,9 +250,11 @@ int VFontLoad(PyMOLGlobals *G,float size,int face,int style,int can_load_new)
 { 
   register CVFont *I=G->VFont;
   VFontRec *fr;
-  PyObject *vfont = NULL;
   int a;
   int result = 0;
+#ifndef _PYMOL_NOPY
+  PyObject *vfont = NULL;
+#endif
 
   PRINTFD(G,FB_VFont)
     " VFontLoad-Debug: Entered %f %d %d\n",size,face,style
@@ -264,6 +269,7 @@ int VFontLoad(PyMOLGlobals *G,float size,int face,int style,int can_load_new)
       break;
     }
   }
+#ifndef _PYMOL_NOPY
   if(!result) {
     if(can_load_new) {
       vfont = PGetFontDict(size,face,style);
@@ -286,6 +292,7 @@ int VFontLoad(PyMOLGlobals *G,float size,int face,int style,int can_load_new)
       }
     }
   }
+#endif
   PRINTFD(G,FB_VFont)
     " VFontLoad-Debug: Leaving with result %d  (0 = failure)\n",result
     ENDFD;

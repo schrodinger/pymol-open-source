@@ -107,6 +107,7 @@ int WizardUpdate(PyMOLGlobals *G)
 
 void WizardPurgeStack(PyMOLGlobals *G)
 {
+#ifndef _PYMOL_NOPY
   int blocked;
   int a;
   register CWizard *I=G->Wizard;
@@ -115,10 +116,13 @@ void WizardPurgeStack(PyMOLGlobals *G)
     Py_XDECREF(I->Wiz[a]);
   I->Stack = -1;
   PAutoUnblock(blocked);
-
+#endif
 }
 int WizardDoSelect(PyMOLGlobals *G,char *name)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   OrthoLineType buf;
   register CWizard *I=G->Wizard;
   int result = false;
@@ -136,10 +140,13 @@ int WizardDoSelect(PyMOLGlobals *G,char *name)
         PUnblock();
       }
   return result;
+#endif
 }
 /*========================================================================*/
 void WizardRefresh(PyMOLGlobals *G)
 {
+
+#ifndef _PYMOL_NOPY
   register CWizard *I = G->Wizard;
   char *vla = NULL;
   PyObject *P_list;
@@ -218,10 +225,12 @@ void WizardRefresh(PyMOLGlobals *G)
     OrthoReshapeWizard(G,0);
   }
   PAutoUnblock(blocked);
+#endif
 }
 /*========================================================================*/
 void WizardSet(PyMOLGlobals *G,PyObject *wiz,int replace)
 {
+#ifndef _PYMOL_NOPY
   register CWizard *I = G->Wizard;
   int blocked;
   blocked = PAutoBlock();
@@ -251,6 +260,7 @@ void WizardSet(PyMOLGlobals *G,PyObject *wiz,int replace)
   }
   WizardRefresh(G);
   PAutoUnblock(blocked);
+#endif
 }
 /*========================================================================*/
 int WizardActive(PyMOLGlobals *G)
@@ -271,6 +281,9 @@ Block *WizardGetBlock(PyMOLGlobals *G)
 /*========================================================================*/
 int WizardDoPick(PyMOLGlobals *G,int bondFlag)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventPick) 
@@ -292,10 +305,14 @@ int WizardDoPick(PyMOLGlobals *G,int bondFlag)
         PUnblock();
       }
   return result;
+#endif
 }
 
 int WizardDoKey(PyMOLGlobals *G,unsigned char k, int x, int y, int mod)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventKey) 
@@ -315,10 +332,14 @@ int WizardDoKey(PyMOLGlobals *G,unsigned char k, int x, int y, int mod)
         PUnblock();
       }
   return result;
+#endif
 }
 
 int WizardDoScene(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventScene) 
@@ -338,11 +359,15 @@ int WizardDoScene(PyMOLGlobals *G)
         PUnblock();
       }
   return result;
+#endif
 }
 
 
 int WizardDoState(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventState) 
@@ -363,11 +388,15 @@ int WizardDoState(PyMOLGlobals *G)
         PUnblock();
       }
   return result;
+#endif
 }
 
 
 int WizardDoFrame(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventFrame) 
@@ -388,10 +417,14 @@ int WizardDoFrame(PyMOLGlobals *G)
         PUnblock();
       }
   return result;
+#endif
 }
 
 int WizardDoSpecial(PyMOLGlobals *G,int k, int x, int y, int mod)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   register CWizard *I=G->Wizard;
   int result=false;
 
@@ -412,11 +445,15 @@ int WizardDoSpecial(PyMOLGlobals *G,int k, int x, int y, int mod)
         PUnblock();
       }
   return result;
+#endif
 }
 
 /*========================================================================*/
 static int WizardClick(Block *block,int button,int x,int y,int mod)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   PyMOLGlobals *G=block->G;
   register CWizard *I=G->Wizard;
 
@@ -455,10 +492,15 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
     }
   }
   return(1);
+#endif
 }
 /*========================================================================*/
 static int WizardDrag(Block *block,int x,int y,int mod)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   PyMOLGlobals *G=block->G;
 
   register CWizard *I=G->Wizard;
@@ -487,6 +529,7 @@ static int WizardDrag(Block *block,int x,int y,int mod)
     }
   }
   return(1);
+#endif
 }
 /*========================================================================*/
 static int WizardRelease(Block *block,int button,int x,int y,int mod)
@@ -681,6 +724,9 @@ PyObject *WizardGet(PyMOLGlobals *G)
 /*========================================================================*/
 PyObject *WizardGetStack(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   register CWizard *I=G->Wizard;
   int a;
   PyObject *result;
@@ -693,10 +739,15 @@ PyObject *WizardGetStack(PyMOLGlobals *G)
     }
   }
   return(result);
+#endif
 }
 /*========================================================================*/
 int WizardSetStack(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   register CWizard *I=G->Wizard;
   int a;
   int ok= true;
@@ -719,6 +770,7 @@ int WizardSetStack(PyMOLGlobals *G,PyObject *list)
     if(ok) OrthoDirty(G);
   }
   return(ok);
+#endif
 }
 /*========================================================================*/
 int WizardInit(PyMOLGlobals *G)

@@ -229,7 +229,7 @@ void ObjectDistUpdateExtents(ObjectDist *I)
 }
 
 
-
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectDistDSetAsPyList(ObjectDist *I)
 {
   PyObject *result = NULL;
@@ -245,7 +245,8 @@ static PyObject *ObjectDistDSetAsPyList(ObjectDist *I)
   }
   return(PConvAutoNone(result));
 }
-
+#endif
+#ifndef _PYMOL_NOPY
 static int ObjectDistDSetFromPyList(ObjectDist *I,PyObject *list)
 {
   int ok=true;
@@ -260,9 +261,14 @@ static int ObjectDistDSetFromPyList(ObjectDist *I,PyObject *list)
   }
   return(ok);
 }
+#endif
 /*========================================================================*/
 PyObject *ObjectDistAsPyList(ObjectDist *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
 
   /* first, dump the atoms */
@@ -283,10 +289,15 @@ PyObject *ObjectDistAsPyList(ObjectDist *I)
 #endif
 
   return(PConvAutoNone(result));  
+#endif
 }
 
 int ObjectDistNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectDist **result)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok = true;
   ObjectDist *I=NULL;
   (*result) = NULL;
@@ -311,6 +322,7 @@ int ObjectDistNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectDist **result)
   }
 
   return(ok);
+#endif
 }
 
 

@@ -84,6 +84,9 @@ int BondCompare(BondType *a,BondType *b)
 
 int CoordSetFromPyList(PyMOLGlobals *G,PyObject *list,CoordSet **cs)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   CoordSet *I = NULL;
   PyObject *tmp;
   int ok = true;
@@ -124,10 +127,15 @@ int CoordSetFromPyList(PyMOLGlobals *G,PyObject *list,CoordSet **cs)
     }
   }
   return(ok);
+#endif
 }
 
 PyObject *CoordSetAsPyList(CoordSet *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
 
   if(I) {
@@ -146,6 +154,8 @@ PyObject *CoordSetAsPyList(CoordSet *I)
 
   }
   return(PConvAutoNone(result));
+#endif
+
 }
 
 void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
@@ -560,6 +570,9 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
 /*========================================================================*/
 PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int index)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *atom;
   int ok = true;
 
@@ -597,6 +610,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int
   if(PyErr_Occurred())
     PyErr_Print();
   return(atom);
+#endif
 }
 /*========================================================================*/
 void CoordSetAtomToTERStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType *ai,int cnt)

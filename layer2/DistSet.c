@@ -36,6 +36,9 @@ void DistSetInvalidateRep(DistSet *I,int type,int level);
 
 int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   DistSet *I = NULL;
   int ok = true;
   int ll;
@@ -65,10 +68,14 @@ int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs)
     }
   }
   return(ok);
+#endif
 }
 
 PyObject *DistSetAsPyList(DistSet *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   PyObject *result = NULL;
 
   if(I) {
@@ -80,6 +87,7 @@ PyObject *DistSetAsPyList(DistSet *I)
 
   }
   return(PConvAutoNone(result));
+#endif
 }
 
 /*========================================================================*/

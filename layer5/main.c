@@ -642,6 +642,10 @@ void MainReshape(int width, int height) /* called by Glut */
 
 PyObject *MainAsPyList(void) 
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result=NULL;
   int width,height;
   result = PyList_New(2);
@@ -651,10 +655,15 @@ PyObject *MainAsPyList(void)
   PyList_SetItem(result,0,PyInt_FromLong(width));
   PyList_SetItem(result,1,PyInt_FromLong(height));
   return(PConvAutoNone(result));
+#endif
 }
 
 int MainFromPyList(PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   int win_x,win_y;
   int ll=0;
@@ -671,6 +680,7 @@ int MainFromPyList(PyObject *list)
     }
   }
   return(ok);
+#endif
 }
 /*========================================================================*/
 void MainDoReshape(int width, int height) /* called internally */
@@ -983,6 +993,7 @@ void MainBusyIdle(void)
       FinalInitFlag=FinalInitFlag+1;
       if(FinalInitFlag>=10) {
         FinalInitFlag=0;
+#ifndef _PYMOL_NOPY
         PBlock();
         /* restore working directory if asked to */
         PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
@@ -999,6 +1010,7 @@ void MainBusyIdle(void)
 
         PRunString("adapt_to_hardware()");
 
+
         if(PyMOLOption->incentive_product) { /* perform incentive product initialization (if any) */
           PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
         }
@@ -1010,6 +1022,7 @@ void MainBusyIdle(void)
         //PParse("wizard demo,cartoon");
 #endif
         PUnblock();
+#endif
       }
     }
   if(I->ReshapeFlag) {
@@ -1232,9 +1245,11 @@ SetConsoleCtrlHandler(
 int MainCheckRedundantOpen(char *file)
 {
   int result = false;
+#ifndef _PYMOL_NOPY
   PBlock();
   result = PTruthCallStr(P_cmd,"check_redundant_open",file);
   PUnblock();
+#endif
   return result;
 }
 

@@ -32,8 +32,10 @@ Z* -------------------------------------------------------------------
 
 static void ObjectCGOFree(ObjectCGO *I);
 
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectCGOStateAsPyList(ObjectCGOState *I)
 {
+
   PyObject *result = NULL;
 
   result = PyList_New(2);
@@ -46,12 +48,12 @@ static PyObject *ObjectCGOStateAsPyList(ObjectCGOState *I)
   else
     PyList_SetItem(result,1,PConvAutoNone(NULL));
   return(PConvAutoNone(result));  
-}
 
+}
 
 static PyObject *ObjectCGOAllStatesAsPyList(ObjectCGO *I)
 {
-  
+
   PyObject *result=NULL;
   int a;
   result = PyList_New(I->NState);
@@ -102,10 +104,16 @@ static int ObjectCGOAllStatesFromPyList(ObjectCGO *I,PyObject *list,int version)
     }
   }
   return(ok);
+
 }
+#endif
 
 int ObjectCGONewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectCGO **result,int version)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok = true;
   ObjectCGO *I=NULL;
   (*result) = NULL;
@@ -125,6 +133,7 @@ int ObjectCGONewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectCGO **result,int
     /* cleanup? */
   }
   return(ok);
+#endif
 }
 
 
@@ -132,7 +141,10 @@ int ObjectCGONewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectCGO **result,int
 
 PyObject *ObjectCGOAsPyList(ObjectCGO *I)
 {
-  
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result=NULL;
 
   result = PyList_New(3);
@@ -141,6 +153,7 @@ PyObject *ObjectCGOAsPyList(ObjectCGO *I)
   PyList_SetItem(result,2,ObjectCGOAllStatesAsPyList(I));
 
   return(PConvAutoNone(result));  
+#endif
 }
 
 
@@ -270,6 +283,7 @@ ObjectCGO *ObjectCGONew(PyMOLGlobals *G)
   return(I);
 }
 
+#ifndef _PYMOL_NOPY
 /*========================================================================*/
 static CGO *ObjectCGOPyListFloatToCGO(PyMOLGlobals *G,PyObject *list)
 {
@@ -297,6 +311,8 @@ static CGO *ObjectCGOPyListFloatToCGO(PyMOLGlobals *G,PyObject *list)
   }
   return(cgo);
 }
+#endif
+
 /*========================================================================*/
 ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals *G,ObjectCGO *obj,CGO *cgo,int state)
 {
@@ -341,6 +357,7 @@ ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals *G,ObjectCGO *obj,CGO *cgo,int state)
 
 ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals *G,char *text,float *pos)
 {
+
   ObjectCGO *I = NULL;
   int font_id;
   CGO *cgo = NULL;
@@ -358,6 +375,9 @@ ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals *G,char *text,float *pos)
 /*========================================================================*/
 ObjectCGO *ObjectCGODefine(PyMOLGlobals *G,ObjectCGO *obj,PyObject *pycgo,int state)
 { /* assumes blocked interpreter */
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   ObjectCGO *I = NULL;
 
   CGO *cgo,*font_cgo;
@@ -415,4 +435,5 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals *G,ObjectCGO *obj,PyObject *pycgo,int st
   SceneChanged(G);
   SceneCountFrames(G);
   return(I);
+#endif
 }

@@ -315,16 +315,16 @@ int	TetsurfInit(PyMOLGlobals *G)
 #define cM_110_111 0x40000
 
    register CTetsurf *I;
-   I = (G->Tetsurf = Calloc(CTetsurf,1));
-   I->G=G;
-   I->Tri = NULL;
-   I->PtLink = NULL;
-
 	int	ok=true;
 	int	c;
    int   nv=1;
    int   last_nv;
    int v000,v100,v010,v110,v001,v101,v011,v111;
+
+   I = (G->Tetsurf = Calloc(CTetsurf,1));
+   I->G=G;
+   I->Tri = NULL;
+   I->PtLink = NULL;
 
 	I->VertexCodes=NULL;
 	I->ActiveEdges=NULL;

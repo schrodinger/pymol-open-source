@@ -25,6 +25,10 @@ Z* -------------------------------------------------------------------
 
 PyObject *FieldAsPyList(CField *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
  PyObject *result = NULL;
  int n_elem;
 
@@ -61,10 +65,15 @@ PyObject *FieldAsPyList(CField *I)
 #endif
 
   return(PConvAutoNone(result));  
+#endif
+
 }
 
 CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   int ok=true;
   unsigned int n_elem;
   int ll;
@@ -102,6 +111,7 @@ CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list)
     I=NULL;
   }
   return(I);
+#endif
 }
 
 float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)

@@ -67,7 +67,6 @@ int SettingSet_3fv(CSetting *I,int index, float *value);
 
 int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,char *buffer);
 
-int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple);
 int SettingUnset(CSetting *I,int index);
 
 void SettingClear(CSetting *I,int index); /* don't call this for the global list! */
@@ -108,11 +107,14 @@ void  SettingGet_3f(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,floa
 float *SettingGet_3fv(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
 int   SettingGet_color(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
 
+#ifndef _PYMOL_NOPY
+int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple);
 PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
 PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index);
+PyObject *SettingGetUpdateList(PyMOLGlobals *G,CSetting *I);
+#endif
 
 void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state);
-PyObject *SettingGetUpdateList(PyMOLGlobals *G,CSetting *I);
 
 /* Legacy API below */
 

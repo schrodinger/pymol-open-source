@@ -259,6 +259,7 @@ void ObjectGadgetUpdateExtents(ObjectGadget *I)
   }
 }
 
+#ifndef _PYMOL_NOPY
 static PyObject *ObjectGadgetGSetAsPyList(ObjectGadget *I)
 {
   PyObject *result = NULL;
@@ -273,10 +274,13 @@ static PyObject *ObjectGadgetGSetAsPyList(ObjectGadget *I)
     }
   }
   return(PConvAutoNone(result));
-}
 
+}
+#endif
+#ifndef _PYMOL_NOPY
 static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list,int version)
 {
+
   int ok=true;
   int a;
   if(ok) ok=PyList_Check(list);
@@ -289,9 +293,13 @@ static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list,int version
   }
   return(ok);
 }
-
+#endif
 int ObjectGadgetInitFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget *I,int version)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok = true;
   int ll;
   if(ok) ok = (I!=NULL)&&(list!=NULL);
@@ -313,10 +321,15 @@ int ObjectGadgetInitFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget *I,in
     /* cleanup? */
   }
   return(ok);
+#endif
 }
 
 int ObjectGadgetNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget **result,int version)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok = true;
   ObjectGadget *I=NULL;
   int gadget_type = -1;
@@ -341,10 +354,15 @@ int ObjectGadgetNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget **resu
     break;
   } 
   return(ok);
+#endif
 }
 
 PyObject *ObjectGadgetPlainAsPyList(ObjectGadget *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
 
   /* first, dump the atoms */
@@ -356,10 +374,15 @@ PyObject *ObjectGadgetPlainAsPyList(ObjectGadget *I)
   PyList_SetItem(result,3,ObjectGadgetGSetAsPyList(I));
   PyList_SetItem(result,4,PyInt_FromLong(I->CurGSet));
   return(PConvAutoNone(result));  
+#endif
 }
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
 
   /* first, dump the atoms */
@@ -373,6 +396,7 @@ PyObject *ObjectGadgetAsPyList(ObjectGadget *I)
     break;
   } 
   return(PConvAutoNone(result));  
+#endif
 }
 
 void ObjectGadgetPurge(ObjectGadget *I)
@@ -478,6 +502,10 @@ ObjectGadget *ObjectGadgetNew(PyMOLGlobals *G)
 /*========================================================================*/
 CGO *ObjectGadgetPyListFloatToCGO(PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   CGO *cgo=NULL;
   int len;
   int ok = true;
@@ -501,6 +529,7 @@ CGO *ObjectGadgetPyListFloatToCGO(PyObject *list)
     }
   }
   return(cgo);
+#endif
 }
 
 
@@ -548,6 +577,9 @@ ObjectGadget *ObjectGadgetFromCGO(PyMOLGlobals *G,ObjectGadget *obj,CGO *cgo,int
 /*========================================================================*/
 ObjectGadget *ObjectGadgetDefine(PyMOLGlobals *G,ObjectGadget *obj,PyObject *pycgo,int state)
 { /* assumes blocked interpreter */
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
   ObjectGadget *I = NULL;
 
   CGO *cgo,*font_cgo;
@@ -606,5 +638,7 @@ ObjectGadget *ObjectGadgetDefine(PyMOLGlobals *G,ObjectGadget *obj,PyObject *pyc
   SceneChanged(G);
   SceneCountFrames(G);
   return(I);
+#endif
+
 }
 #endif

@@ -57,6 +57,10 @@ int ObjectGetCurrentState(CObject *I,int ignore_all_states)
 
 PyObject *ObjectAsPyList(CObject *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
   result = PyList_New(12);
   PyList_SetItem(result,0,PyInt_FromLong(I->type));
@@ -74,10 +78,15 @@ PyObject *ObjectAsPyList(CObject *I)
   PyList_SetItem(result,11,PConvFloatArrayToPyList(I->TTT,16));
 
   return(PConvAutoNone(result));
+#endif
 }
 
 int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
   int ok=true;
   int ll=0;
   I->G = G;
@@ -103,6 +112,7 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
    Always check ll when adding new PyList_GetItem's */
   
   return(ok);
+#endif
 }
 /*========================================================================*/
 void ObjectCombineTTT(CObject *I,float *ttt)

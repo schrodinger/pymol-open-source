@@ -19,3 +19,4 @@ Z* -------------------------------------------------------------------
 /* OBSOLETE -- USE THE FEEDBACK FACILITY */
 
 
+typedef int this_source_file_is_not_empty;

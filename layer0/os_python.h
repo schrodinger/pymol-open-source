@@ -20,7 +20,11 @@ Z* -------------------------------------------------------------------
 #include"/usr/include/bits/types.h" 
 #endif
 
+#ifdef _PYMOL_NOPY
+typedef int PyObject;
+#else
 #include"Python.h"
+#endif
 
 #endif
 

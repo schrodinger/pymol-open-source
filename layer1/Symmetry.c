@@ -35,6 +35,10 @@ Z* -------------------------------------------------------------------
 
 PyObject *SymmetryAsPyList(CSymmetry *I)
 {
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
   PyObject *result = NULL;
 
   if(I) {
@@ -43,11 +47,15 @@ PyObject *SymmetryAsPyList(CSymmetry *I)
     PyList_SetItem(result,1,PyString_FromString(I->SpaceGroup));
   }
   return(PConvAutoNone(result));
-  
+#endif
+
 }
 
 int SymmetryFromPyList(CSymmetry *I,PyObject *list)
 {
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
   int ok=true;
   int ll;
 
@@ -64,6 +72,7 @@ int SymmetryFromPyList(CSymmetry *I,PyObject *list)
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
  return(ok);
+#endif
 }
 
 CSymmetry *SymmetryNewFromPyList(PyMOLGlobals *G,PyObject *list)
@@ -82,7 +91,7 @@ CSymmetry *SymmetryNewFromPyList(PyMOLGlobals *G,PyObject *list)
 int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
 {
   int ok = false;
-
+#ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
   PyObject *mats;
   int a,l;
@@ -118,6 +127,7 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
     if(!blocked) 
       PUnblock();
   }
+#endif
 #endif
   return(ok);
 }
