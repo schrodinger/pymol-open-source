@@ -364,7 +364,7 @@ void SceneTranslate(float x,float y, float z)
   I->Front-=z;
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
-  if(I->Front<cFrontMin) I->Front=cFrontMin;
+  /*  if(I->Front<cFrontMin) I->Front=cFrontMin;*/
   I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
   SceneDirty();
 }
@@ -2512,13 +2512,16 @@ int SceneDrag(Block *block,int x,int y,int mod)
 		if(I->LastY!=y)
 		  {
           float factor;
-          factor = 200/((I->Front+I->Back)/2);
-			 I->Pos[2]+=(((float)y)-I->LastY)/factor;
-			 I->Front-=(((float)y)-I->LastY)/factor;
-			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
-			 I->Back-=(((float)y)-I->LastY)/factor;
-			 I->LastY=y;
-			 SceneDirty();
+          factor = 200/((I->FrontSafe+I->Back)/2);
+          if(factor>=0.0F) {
+            factor = (((float)y)-I->LastY)/factor;
+            I->Pos[2]+=factor;
+            I->Front-=factor;
+            I->Back-=factor;
+            I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+          }
+          I->LastY=y;
+          SceneDirty();
           adjust_flag=true;
 		  }
 		break;
@@ -2537,7 +2540,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->Front-=(((float)y)-I->LastY)/10;
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
-			 if(I->Front<cFrontMin) I->Front=cFrontMin;
+          /*			 if(I->Front<cFrontMin) I->Front=cFrontMin;*/
 			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
 			 I->LastY=y;
 			 SceneDirty();
@@ -2550,7 +2553,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->Front-=(((float)x)-I->LastX)/10;
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
-			 if(I->Front<cFrontMin) I->Front=cFrontMin;
+			 /* if(I->Front<cFrontMin) I->Front=cFrontMin;*/
 			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
 			 I->LastX=x;
 			 SceneDirty();
@@ -2561,7 +2564,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 I->Front-=(((float)y)-I->LastY)/10;
 			 if(I->Front>I->Back)
 				I->Front=I->Back+cSliceMin;
-			 if(I->Front<cFrontMin) I->Front=cFrontMin;
+			 /*if(I->Front<cFrontMin) I->Front=cFrontMin;*/
 			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
 			 I->LastY=y;
 			 SceneDirty();
@@ -2887,7 +2890,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
     buffer=(GLvoid*)Alloc(char,buffer_size);
     ErrChkPtr(buffer);
     
-    RayRender(ray,ray_width,ray_height,buffer,I->Front,I->Back,timing,angle);
+    RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->Back,timing,angle);
 
     /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
     
