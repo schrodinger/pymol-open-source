@@ -422,10 +422,34 @@ void ButModeDraw(Block *block)
     if(I->Caption[0]) GrapDrawStr(I->Caption,x,y);
     */
 
-    glColor3fv(I->Block->TextColor);
-    GrapDrawStr("Selecting ",x,y);
-    glColor3fv(I->TextColor3);
-    GrapDrawStr("Residues",x+80,y);
+    {
+      glColor3fv(I->Block->TextColor);
+      GrapDrawStr("Selecting ",x,y);
+      glColor3fv(I->TextColor3);
+      switch(SettingGetGlobal_i(cSetting_mouse_selection_mode)) {
+      case 0:
+        GrapDrawStr("Atoms",x+80,y);        
+        break;
+      case 1:
+        GrapDrawStr("Residues",x+80,y);        
+        break;
+      case 2:
+        GrapDrawStr("Chains",x+80,y);        
+        break;
+      case 3:
+        GrapDrawStr("Segments",x+80,y);        
+        break;
+      case 4:
+        GrapDrawStr("Objects",x+80,y);        
+        break;
+      case 5:
+        GrapDrawStr("Molecules",x+80,y);        
+        break;
+      case 6:
+        GrapDrawStr("C-alphas",x+80,y);        
+        break;
+      }
+    }
 
     glColor3fv(I->Block->TextColor);
     y-=cButModeLineHeight;

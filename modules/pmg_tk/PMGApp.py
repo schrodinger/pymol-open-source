@@ -1789,6 +1789,71 @@ class PMGApp(AbstractApp):
          
       self.menuBar.addmenu('Mouse', 'Mouse Configuration',tearoff=TRUE)
 
+      self.menuBar.addcascademenu('Mouse', 'SelectionMode', 'Selection Mode',
+                                  label='Selection Mode')
+
+      self.menuBar.addmenuitem('SelectionMode', 'command', 'Atoms',
+                               label='Atoms',
+                               command = lambda :
+                               cmd.do("_ set mouse_selection_mode,0,quiet=1"))
+
+      self.menuBar.addmenuitem('SelectionMode', 'command', 'Residues',
+                               label='Residues',
+                               command = lambda :
+                               cmd.do("_ set mouse_selection_mode,1,quiet=1"))
+
+      self.menuBar.addmenuitem('SelectionMode', 'command', 'Chains',
+                               label='Chains',
+                               command = lambda :
+                               cmd.do("_ set mouse_selection_mode,2,quiet=1"))
+
+      self.menuBar.addmenuitem('SelectionMode', 'command', 'Segments',
+                               label='Segments',
+                               command = lambda :
+                               cmd.do("_ set mouse_selection_mode,3,quiet=1"))
+
+      self.menuBar.addmenuitem('SelectionMode', 'command', 'Objects',
+                               label='Objects',
+                               command = lambda :
+                               cmd.do("_ set mouse_selection_mode,4,quiet=1"))
+
+      self.menuBar.addmenuitem('SelectionMode', 'separator', '')
+
+      self.menuBar.addmenuitem('SelectionMode', 'command', 'Molecules',
+                               label='Molecules',
+                               command = lambda :
+                               cmd.do("_ set mouse_selection_mode,5,quiet=1"))
+
+      self.menuBar.addmenuitem('SelectionMode', 'separator', '')
+
+      self.menuBar.addmenuitem('SelectionMode', 'command', 'Molecules',
+                               label='C-alphas',
+                               command = lambda :
+                               cmd.do("_ set mouse_selection_mode,6,quiet=1"))
+      
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Viewing Mode',
+                               label='3 Button Viewing Mode',
+                               command = lambda: cmd.mouse('three_button_viewing'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing Mode',
+                               label='3 Button Editing Mode',
+                               command = lambda: cmd.mouse('three_button_editing'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Mode',
+                               label='2 Button Viewing Mode',
+                               command = lambda: cmd.mouse('two_button_viewing'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Selecting Mode',
+                               label='2 Button Selecting Mode',
+                               command = lambda: cmd.mouse('two_button_selecting'))
+
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing Mode',
+                               label='2 Button Editing Mode',
+                               command = lambda: cmd.mouse('two_button_editing'))
+
+
+      self.menuBar.addmenuitem('Mouse', 'separator', '')
+
       self.menuBar.addmenuitem('Mouse', 'checkbutton',
                          'Virtual Trackball.',
                          label=self.pad+'Virtual Trackball',
@@ -1820,29 +1885,6 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Mouse', 'command', 'Setup 2 Button Editing Cycle',
                                label='2 Button Editing Cycle',
                                command = lambda: cmd.config_mouse('two_button_editing'))
-
-      self.menuBar.addmenuitem('Mouse', 'separator', '')
-
-      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Viewing Mode',
-                               label='3 Button Viewing Mode',
-                               command = lambda: cmd.mouse('three_button_viewing'))
-
-      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing Mode',
-                               label='3 Button Editing Mode',
-                               command = lambda: cmd.mouse('three_button_editing'))
-
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Mode',
-                               label='2 Button Viewing Mode',
-                               command = lambda: cmd.mouse('two_button_viewing'))
-
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Selecting Mode',
-                               label='2 Button Selecting Mode',
-                               command = lambda: cmd.mouse('two_button_selecting'))
-
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing Mode',
-                               label='2 Button Editing Mode',
-                               command = lambda: cmd.mouse('two_button_editing'))
-
 
       self.menuBar.addmenu('Wizard', 'Task Wizards',tearoff=TRUE)
 

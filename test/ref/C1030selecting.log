@@ -1,7 +1,7 @@
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>select (resi trp)
- Selector: no atoms selected.
+ Selector: selection "sel01" defined with 0 atoms.
 PyMOL>indicate (name ca)
 PyMOL>deselect
 PyMOL>select 1/o
