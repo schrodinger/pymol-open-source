@@ -521,14 +521,15 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
   float v[3],vr[3],dens,maxd,mind;
   int a,b,c,d,e;
 
+
+  /*  
   double test[1000];
-
   for(a=0;a<1000;a++) {
-    test[a]=rand()/(1.0+INT_MAX);
-  }
-  PyObject_SetAttrString(Map,"c_object",
-                         PyCObject_FromVoidPtr(test,NULL));
-
+      test[a]=rand()/(1.0+INT_MAX);
+      }
+      PyObject_SetAttrString(Map,"c_object",
+      PyCObject_FromVoidPtr(test,NULL));
+  */
   maxd = FLT_MIN;
   mind = FLT_MAX;
 
