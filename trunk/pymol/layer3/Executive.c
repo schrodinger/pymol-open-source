@@ -1451,13 +1451,14 @@ int ExecutiveSculptIterateAll(void)
   return(active);
 }
 /*========================================================================*/
-int ExecutiveSculptIterate(char *name,int state,int n_cycle)
+float ExecutiveSculptIterate(char *name,int state,int n_cycle)
 {
   CObject *obj = ExecutiveFindObjectByName(name);
   CExecutive *I = &Executive;
   int ok=true;
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
+  float total_strain = 0.0F;
 
   if(state<0) state=SceneGetState();
 
@@ -1466,7 +1467,7 @@ int ExecutiveSculptIterate(char *name,int state,int n_cycle)
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          ObjectMoleculeSculptIterate(objMol,state,n_cycle);
+          total_strain+=ObjectMoleculeSculptIterate(objMol,state,n_cycle);
         }
       }
     }
@@ -1481,9 +1482,9 @@ int ExecutiveSculptIterate(char *name,int state,int n_cycle)
       ENDFB;
     ok=false;
   } else {
-    ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle);
+    total_strain=ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle);
   }
-  return(ok);
+  return(total_strain);
 }
 /*========================================================================*/
 int ExecutiveSculptActivate(char *name,int state)

@@ -592,13 +592,14 @@ static PyObject *CmdSculptIterate(PyObject *self, PyObject *args)
   int ok=true;
   int int1,int2;
   char *str1;
+  float total_strain = 0.0F;
   ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
   if(ok) {
     APIEntry();
-    ok = ExecutiveSculptIterate(str1,int1,int2);
+    total_strain = ExecutiveSculptIterate(str1,int1,int2);
     APIExit();
   }
-  return(APIStatus(ok));
+  return(APIIncRef(PyFloat_FromDouble((double)total_strain)));
 }
 
 static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)

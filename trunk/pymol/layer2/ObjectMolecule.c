@@ -1615,14 +1615,15 @@ void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state)
   SculptMeasureObject(I->Sculpt,I,state);
 }
 
-void ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle)
+float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle)
 {
   PRINTFD(FB_ObjectMolecule)
     " ObjectMoleculeIterateSculpt: entered.\n"
     ENDFD;
   if(I->Sculpt) {
-    SculptIterateObject(I->Sculpt,I,state,n_cycle);
-  }
+    return SculptIterateObject(I->Sculpt,I,state,n_cycle);
+  } else
+    return 0.0F;
 }
 
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I)

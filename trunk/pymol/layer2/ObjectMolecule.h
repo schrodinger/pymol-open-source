@@ -235,7 +235,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append);
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I);
 
 void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state);
-void ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle);
+float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle);
 void ObjectMoleculeSculptClear(ObjectMolecule *I);
 int ObjectMoleculeGetBondPaths(ObjectMolecule *I,int atom, int max, ObjectMoleculeBPRec *bp);
 int ObjectMoleculeInitBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp);

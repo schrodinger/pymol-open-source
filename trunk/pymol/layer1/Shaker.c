@@ -46,12 +46,12 @@ void ShakerReset(CShaker *I)
 float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
 {
   float d[3],push[3];
-  float len,dev,dev_2,sc;
+  float len,dev,dev_2,sc,result;
 
   subtract3f(v0,v1,d);
   len = (float)length3f(d);
   dev = target-len;
-  if(fabs(dev)>R_SMALL8) {
+  if((result=fabs(dev))>R_SMALL8) {
     dev_2 = wt*dev/2.0F;
     if(len>R_SMALL8) { /* nonoverlapping */
       sc = dev_2/len;
@@ -63,8 +63,8 @@ float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,fl
       d1to0[0]+=dev_2;
     }
   } else
-    dev = 0.0;
-  return dev;
+    result = 0.0;
+  return result;
 }
 
 float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
@@ -87,8 +87,8 @@ float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1t
       d1to0[0]+=dev_2;
     }
   } else
-    dev = 0.0;
-  return dev;
+    dev = 0.0F;
+  return fabs(dev);
 }
 
 void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type)
@@ -121,7 +121,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3,float wt)
 {
   float d0[3],cp[3],d2[3],d3[3],push[3];
-  float cur,dev,sc;
+  float cur,dev,sc,result;
   subtract3f(v2,v1,d2);
   normalize3f(d2);
   subtract3f(v3,v1,d3);
@@ -132,7 +132,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
   cur = dot_product3f(d0,cp);
 
   dev = cur-target;
-  if(fabs(dev)>R_SMALL8) {
+  if((result = fabs(dev))>R_SMALL8) {
     sc = wt*dev;
     scale3f(cp,sc,push);
     add3f(push,p0,p0);
@@ -142,7 +142,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
     subtract3f(p3,push,p3);
   } else
     dev = 0.0;
-  return dev;
+  return result;
 
 }
 
@@ -153,7 +153,7 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
   /* v0-v1-v2 */
 
   float d0[3],d1[3],cp[3],d2[3],d3[3],d4[3],push[3];
-  float dev,sc,lcp;
+  float dev,sc,lcp,result;
 
   subtract3f(v2,v1,d2);
   normalize3f(d2);
@@ -174,7 +174,7 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
 
     dev = dot_product3f(d1,d4); /* current deviation */
 
-    if(fabs(dev)>R_SMALL8) {
+    if((result = fabs(dev))>R_SMALL8) {
       sc = wt*dev;
       scale3f(d4,sc,push);
       add3f(push,p1,p1);
@@ -182,11 +182,11 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
       subtract3f(p0,push,p0);
       subtract3f(p2,push,p2);
     } else {
-      dev = 0.0;
+      result = 0.0;
     }
   } else
-    dev = 0.0;
-  return dev;
+    result = 0.0;
+  return result;
 
 }
 
@@ -197,7 +197,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
 {
   float vc[3],d0[3],d1[3],d2[3],cp[3];
   float push[3];
-  float cur,dev,sc;
+  float cur,dev,sc,result;
 
   average3f(v0,v3,vc);
 
@@ -214,7 +214,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
   cur = dot_product3f(d0,cp);
 
   dev = (float)fabs(cur);
-  if(fabs(dev)>R_SMALL8) {
+  if((result = fabs(dev))>R_SMALL8) {
 
     sc = -wt*dev/2.0F;
 
@@ -240,8 +240,8 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
 
     
   } else
-    dev = 0.0;
-  return dev;
+    result = 0.0;
+  return result;
 
 }
 
