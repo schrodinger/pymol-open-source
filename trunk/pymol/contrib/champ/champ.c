@@ -924,9 +924,9 @@ int ChampModelToPat(CChamp *I,PyObject *model)
   int nAtom,nBond;
   int a;
   int ok=true;
-  int cur_atom,last_atom = 0;
+  int cur_atom=0,last_atom = 0;
   ListAtom *at;
-  int cur_bond,last_bond = 0;
+  int cur_bond=0,last_bond = 0;
   ListBond *bd;
   int charge,order;
   int result = 0;
@@ -2010,6 +2010,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
   int ok = true;
   ListAtom *at;
   char *c;
+  int done;
 
   c=*c_ptr;
 
@@ -2093,14 +2094,18 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
   /* stage 4 explicit hydrogen count */
 
   /* okay, we've parsed the atom... */
-  while((*c)&&ok&&!done) {
+
+  /*
+    while((*c)&&ok&&!done) {
     if(*c=='[') {
-      done = true;
-      c++;
-      break;
+    done = true;
+    c++;
+    break;
     }
     c++;
-  }
+    }
+  */
+
   *c_ptr = c;
   return ok;
 }
