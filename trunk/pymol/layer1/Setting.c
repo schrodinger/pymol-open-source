@@ -442,6 +442,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_light:
 	 SceneDirty();
 	 break;
+  case cSetting_min_mesh_spacing:
+    ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvRep);
+    SceneChanged();
+    break;
   case cSetting_valence:
     ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
     SceneChanged();

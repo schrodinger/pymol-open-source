@@ -4782,7 +4782,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,ch
          (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart))
         *restart=nextline(p);
 		else if((*p == 'C')&&(*(p+1)=='R')&&(*(p+2)=='Y')&&
-         (*(p+3)=='S')&&(*(p+4)=='T')&&(*(p+5)=='1'))
+              (*(p+3)=='S')&&(*(p+4)=='T')&&(*(p+5)=='1')&&(!*restart))
         {
           if(!symmetry) symmetry=SymmetryNew();          
           if(symmetry) {
