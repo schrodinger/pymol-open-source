@@ -335,7 +335,7 @@ int EditorTorsion(float angle)
 }
 
 /*========================================================================*/
-int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi)
+int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
 {
   int i0=-1;
   int i1=-1;
@@ -376,7 +376,7 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi)
   if(obj0&&s0&&(!s1)) { /* single atom mode */
     if(i0>=0) {
       ObjectMoleculeVerifyChemistry(obj0);
-      SelectorCreate(cEditorSele1,s0,NULL,false,NULL); /* wasteful but who cares */
+      SelectorCreate(cEditorSele1,s0,NULL,quiet,NULL); /* wasteful but who cares */
       ExecutiveDelete(cEditorSele2);
       EditorSetActiveObject(obj0,SceneGetState());
       if(pkresi) {
@@ -399,8 +399,8 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi)
       }
     }
     if((i0>=0)&&(i1>=0)) {
-      SelectorCreate(cEditorSele1,s0,NULL,false,NULL);
-      SelectorCreate(cEditorSele2,s1,NULL,false,NULL);
+      SelectorCreate(cEditorSele1,s0,NULL,quiet,NULL);
+      SelectorCreate(cEditorSele2,s1,NULL,quiet,NULL);
       EditorSetActiveObject(obj0,SceneGetState());
       SceneDirty();
       result=true;

@@ -166,6 +166,10 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * update demonstrations
+
+   * fixed suspend_updates setting
+
    * added map support to roving facility
 
    * enabled distance objects to persist through redefinition

@@ -389,9 +389,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_roving_isosurface           253
 #define cSetting_scenes_changed              254
 
+#define cSetting_gaussian_lambda             255
+
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        255
+#define cSetting_INIT                        256
 
 #endif
 

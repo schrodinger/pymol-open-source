@@ -328,16 +328,17 @@ static void MainDrag(int x,int y)
 static void MainDrawLocked(void)
 {
   CMain *I = &Main;
-
+  
+  
   if(I->DirtyFlag) {
     I->DirtyFlag=false;
   }
-  
+
   OrthoBusyPrime();
   ExecutiveDrawNow();
   if(I->SwapFlag)
     {
-      if(!SettingGet(cSetting_suspend_updates))
+      if(!(int)SettingGet(cSetting_suspend_updates))
         if(PMGUI) {
           DrawBlueLine();
           p_glutSwapBuffers();

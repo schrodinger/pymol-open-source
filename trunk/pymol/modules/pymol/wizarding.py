@@ -21,7 +21,7 @@ if __name__=='pymol.wizarding':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
         _feedback,fb_module,fb_mask
 
-   def wizard(name):
+   def wizard(name,*arg,**kwd):
       '''
 DESCRIPTION
 
@@ -51,7 +51,7 @@ EXAMPLE
          if mod_obj:
             oname = string.capitalize(name)
             if hasattr(mod_obj,oname):
-               wiz = apply(getattr(mod_obj,oname))
+               wiz = apply(getattr(mod_obj,oname),arg,kwd)
                if wiz:
                   set_wizard(wiz)
                   cmd.do("refresh")

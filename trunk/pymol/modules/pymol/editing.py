@@ -559,7 +559,8 @@ SEE ALSO
 
 
 
-   def edit(selection1='',selection2='',selection3='',selection4='',pkresi=0):
+   def edit(selection1='',selection2='',selection3='',
+            selection4='',pkresi=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -593,7 +594,8 @@ SEE ALSO
       try:
          lock()   
          r = _cmd.edit(str(selection1),str(selection2),
-                       str(selection3),str(selection4),int(pkresi))
+                       str(selection3),str(selection4),
+                       int(pkresi),int(quiet))
       finally:
          unlock()
       return r

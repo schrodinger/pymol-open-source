@@ -2124,7 +2124,7 @@ int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
                              * necessary because the editor 
                              * can only work on the current state...this
                              * needs to be changed.*/
-    EditorSelect(s2,s1,NULL,NULL,false);
+    EditorSelect(s2,s1,NULL,NULL,false,true);
     EditorTorsion(change);
     SceneSetFrame(6,save_state);
     PRINTFB(FB_Editor,FB_Actions)
@@ -3560,13 +3560,13 @@ void ExecutiveDrawNow(void)
     /*  glClear( GL_DEPTH_BUFFER_BIT);*/
   }
 
-  SceneUpdate();
-
-
-  OrthoDoDraw();
-
-
-  MainSwapBuffers();
+  if(!SettingGet(cSetting_suspend_updates)) {
+    SceneUpdate();
+    
+    OrthoDoDraw();
+    
+    MainSwapBuffers();
+  }
 
   PRINTFD(FB_Executive)
     " ExecutiveDrawNow: leaving.\n"
