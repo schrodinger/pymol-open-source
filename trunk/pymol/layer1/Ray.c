@@ -1247,12 +1247,12 @@ int RayTraceThread(CRayThreadInfo *T)
 	
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
 		{	
-			r1.base[1]	= ((y+0.5+border_offset) * invHgtRange) + vol2;
+        r1.base[1]	= ((y+0.5F+border_offset) * invHgtRange) + vol2;
 			
 			for(x = T->x_start; (x < T->x_stop); x++)
 			{
 				
-				r1.base[0]	= (((x+0.5+border_offset)) * invWdthRange)  + vol0;
+           r1.base[0]	= (((x+0.5F+border_offset)) * invWdthRange)  + vol0;
 
             while(1) {
               if(T->edging) {
