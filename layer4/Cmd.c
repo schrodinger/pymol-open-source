@@ -609,6 +609,8 @@ static PyObject *CmdIdentify(PyObject *dummy, PyObject *args)
   if(iVLA) {
     result=PConvIntVLAToPyList(iVLA);
     VLAFreeP(iVLA);
+  } else {
+    result = PyList_New(0);
   }
   if(result==Py_None) Py_INCREF(result);
   return(result);
