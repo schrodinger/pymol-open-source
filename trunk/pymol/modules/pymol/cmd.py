@@ -4015,6 +4015,8 @@ help_only = {  # for API-only features
    'keyboard'      : [keyboard     , 0 , 0 , ',' , 0 ],
    'mouse'         : [mouse        , 0 , 0 , ',' , 0 ],
    'examples'      : [examples     , 0 , 0 , ',' , 0 ],
+   'read_molstr'   : [read_molstr  , 0 , 0 , ',' , 0 ],
+   
    'launching'     : [launching    , 0 , 0 , ',' , 0 ],
    'movies'        : [movies       , 0 , 0 , ',' , 0 ],
    'editing'       : [editing      , 0 , 0 , ',' , 0 ],  

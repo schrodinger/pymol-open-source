@@ -24,6 +24,8 @@ def assign(sele,preserve=0):
 
    global state
    global model
+
+   result = 1
    
    state = State()
 
@@ -49,6 +51,7 @@ def assign(sele,preserve=0):
       if (at.text_type == '??') or (not preserve):
          if a=='':
             print " warning: unable to assign atom type to atom %d"%c
+            result = 0
          else:
             cmd.alter("((%s) and (index %s))" % (sele,at.index),
                       "text_type ='%s'" % a)
@@ -63,6 +66,8 @@ def assign(sele,preserve=0):
       sm = sm + a.partial_charge
 
    print " lig: net charge on ligand  is %8.4f\n" % sm
+
+   return result
 
 #   param = Parameters(tinker.params_path+"parm99_wld.dat")
 #   param = Parameters(tinker.params_path+"simple_parm.dat")

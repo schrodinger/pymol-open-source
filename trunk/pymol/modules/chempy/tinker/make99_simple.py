@@ -59,6 +59,18 @@ while 1:
 
 while 1:
    l = f.readline()
+   if not len(string.strip(l)):
+      break
+   h.write(l)
+
+while 1:
+   l = g.readline()
+   h.write(l)
+   if not len(string.strip(l)):
+      break
+
+while 1:
+   l = f.readline()
    h.write(l)
    if l[0:4]=='MOD4':
       break

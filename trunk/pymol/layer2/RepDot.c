@@ -108,7 +108,9 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 {
 
   /* this routine does double duty - generating the dot representation,
-     but also acting as our surface area computation routine */
+     but also acting as our surface area computation routine.
+     Modes: cRepDotNormal,cRepDotAreaType
+  */
 
   ObjectMolecule *obj;
   int a,b,flag,h,k,l,i,j,c1;
@@ -134,7 +136,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 
   obj = cs->Obj;
 
-  if(mode==cRepDotAreaType) {
+  if(mode==cRepDotAreaType) { /* assume all atoms "visible" for area comp. */
     visFlag=true;
   } else {
     visFlag=false;
@@ -164,18 +166,19 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->Atom=NULL;
   I->R.fRecolor=NULL;
 
-  cullByFlag = SettingGet(cSetting_trim_dots);
-  inclH = SettingGet(cSetting_dot_hydrogens);
-  if(SettingGet(cSetting_dot_mode)>0.0) {
-    solv_rad = SettingGet(cSetting_solvent_radius);
+  cullByFlag = SettingGet(cSetting_trim_dots); /* are we using flags 24 & 25 */
+  inclH = SettingGet(cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
+  if(SettingGet(cSetting_dot_mode)>0.0) { /* are we generating a solvent surface? */
+    solv_rad = SettingGet(cSetting_solvent_radius); /* if so, get solvent radius */
   }
+
   /* get current dot sampling */
   ds = (int)SettingGet(cSetting_dot_density);
 
   max_vdw+=solv_rad;
 
   if(ds<0) ds=0;
-  switch(ds) {
+  switch(ds) { /* Note: significantly affects the accuracy of our area comp. */
   case 0: sp=Sphere0; break;
   case 1: sp=Sphere1; break;
   case 2: sp=Sphere2; break;
@@ -188,7 +191,9 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*sp->nDot*10);
   ErrChkPtr(I->V);
 
-  if(mode==cRepDotAreaType) {
+  if(mode==cRepDotAreaType) { /* in area mode, we need to export save addl. info 
+                               * such as the normal vectors, the partial area, 
+                               * the originating atom, etc. */
 	 I->A=Alloc(float,cs->NIndex*sp->nDot);
 	 I->T=Alloc(int,cs->NIndex*sp->nDot);
 	 I->F=Alloc(int,cs->NIndex*sp->nDot);
@@ -219,7 +224,9 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 				if((inclH||(!ai1->hydrogen))&&
                ((!cullByFlag)||
                 (!(ai1->flags&0x1000000)))) {
-              /* don't surface if flag 24 (bit 23) is set */
+              /* If we are culling, flag 24 controls which atoms 
+                 will have dot surfaces generated for them.
+              */
               if(cs->Color)
                 c1=*(cs->Color+a);
               else
@@ -243,7 +250,10 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
                       ai2 = obj->AtomInfo+cs->IdxToAtm[j];
 							 if((inclH||(!(ai2->hydrogen)))&&
 								 ((!cullByFlag)||
-                          (!(ai2->flags&0x2000000))))  /* ignore if flag 25 (bit 24) is set */
+                          (!(ai2->flags&0x2000000))))  
+                        /* If we are cullilng, flag 25 controls which atoms 
+                           are considered "present" in the surface area 
+                           calculation (i.e. able to occlude surface) */
 								if(j!=a)
 								  if(within3f(cs->Coord+3*j,v1,ai2->vdw+solv_rad))
 									 {
