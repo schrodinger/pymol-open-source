@@ -51,7 +51,7 @@ class SingleEdit:
       if result=='Set':
          st = string.strip(self.entry.get())
          if len(st):
-            cmd.set(self.name,st)
+            cmd.set(self.name,st,log=1)
          self.parent.update(self.name)
       self.app.my_deactivate(self.dialog)
             

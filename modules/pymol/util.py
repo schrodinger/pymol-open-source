@@ -95,6 +95,47 @@ def cbab(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("slate","(elem C and "+s+")")
 
+def performance(mode):
+   mode = int(mode)
+   if mode==0: # maximum quality
+      cmd.set('line_smooth',1)
+      cmd.set('depth_cue',1)         
+      cmd.set('specular',1)
+      cmd.set('surface_quality',1)
+      cmd.set('stick_quality',15)
+      cmd.set('sphere_quality',2)
+      cmd.set('cartoon_sampling',14)
+      cmd.set('ribbon_sampling',10)
+      cmd.do("rebuild")
+   elif mode==33:
+      cmd.set('line_smooth',1)         
+      cmd.set('depth_cue',1)         
+      cmd.set('specular',1)
+      cmd.set('surface_quality',0)
+      cmd.set('stick_quality',8)
+      cmd.set('sphere_quality',1)
+      cmd.set('cartoon_sampling',7)
+      cmd.do("rebuild")
+   elif mode==66: # good perfomance
+      cmd.set('line_smooth',0)
+      cmd.set('depth_cue',0)         
+      cmd.set('specular',1)
+      cmd.set('surface_quality',0)
+      cmd.set('stick_quality',8)
+      cmd.set('sphere_quality',1)
+      cmd.set('cartoon_sampling',6)
+      cmd.do("rebuild")         
+   else: # maximum performance
+      cmd.set('line_smooth',0)
+      cmd.set('depth_cue',0)
+      cmd.set('specular',0)
+      cmd.set('surface_quality',-1) # new
+      cmd.set('stick_quality',5)
+      cmd.set('sphere_quality',0)
+      cmd.set('cartoon_sampling',3)
+      cmd.do("rebuild")         
+
+
 def hbond(a,b,cutoff=3.3):
    st = "(%s and (%s around %4.2f) and elem N,O),(%s and (%s around %4.2f) and elem N,O),%4.2f" % (a,b,cutoff,b,a,cutoff,cutoff)
 #   cmd.dist("hbond",st)
@@ -632,6 +673,31 @@ def ss(selection="(name ca and alt '',A)",state=1): # NOT THREAD SAFE
             ss[a1] = 'L'
             ss[a2] = 'L'
       c = c + 1
+
+   # remove totally unreasonable helix and sheet residues
+
+   c = 4
+   cc = len(gap)-5
+   while c<cc:
+      a1 = gap[c]
+      ss_a1 = ss[gap[c]]
+      if ss_a1=='H':
+         if phipsi.has_key(a1):
+            (phi,psi) = phipsi[a1]
+            if (phi>0) and (phi<150):
+               ss[a1] = 'L'
+            elif((psi<-120) or (psi>140)):
+               ss[a1] = 'L'
+      elif ss_a1 in ['S','s']:
+         if phipsi.has_key(a1):
+            (phi,psi) = phipsi[a1]
+            if (phi>45) and (phi<160):
+               ss[a1] = 'L'
+            if (psi<-30) and (psi>-150):
+               ss[a1] = 'L'
+         
+      c = c + 1
+
 
    for x in range(1,3):
       # remove singleton sheet residues

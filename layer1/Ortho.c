@@ -621,6 +621,8 @@ void OrthoParseCurrentLine(void)
       I->HistoryLine = (I->HistoryLine+1)&OrthoHistoryLines;
       I->History[I->HistoryLine][0]=0;
       I->HistoryView=I->HistoryLine;
+      if(WordMatch(buffer,"quit",true)==0) /* don't log quit */
+        PLog(buffer,cPLog_pml);
       OrthoNewLine(NULL);
       ExecutiveDrawNow();
       PParse(buffer);

@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include "Scene.h"
 #include "Executive.h"
 #include "Setting.h"
+#include "P.h"
 
 #include"Movie.h"
 
@@ -122,38 +123,41 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
   if(flag) {
 	 switch(sel) {
 	 case 0:
-		if(mod&cOrthoSHIFT) {
-		  SceneSetFrame(1,-1);
-		} else {
-		  SceneSetFrame(4,0);
-		}
+      SceneSetFrame(4,0);
+      PLog("cmd.rewind()",cPLog_pym);
 		break;
     case 1:
       SceneSetFrame(1,-1);
+      PLog("cmd.back()",cPLog_pym);
       break;
 	 case 2:
 		MoviePlay(cMovieStop);
 		ExecutiveDrawNow();
       OrthoDirty();
+      PLog("cmd.mstop()",cPLog_pym);
 		break;
 	 case 3:
 		if(mod&cOrthoCTRL) {
+        PLog("cmd.rewind()",cPLog_pym);
+        PLog("cmd.mplay()",cPLog_pym);
 		  SceneSetFrame(0,0);		
         MoviePlay(cMoviePlay);
       } else {
+        PLog("cmd.mplay()",cPLog_pym);
         MoviePlay(cMoviePlay);
       }
 		break;
     case 4:
       SceneSetFrame(1,1);
+      PLog("cmd.forward()",cPLog_pym);
       break;
 	 case 5:
-		if(mod&cOrthoSHIFT) {
-		  SceneSetFrame(1,1);
-		} else if(mod&cOrthoCTRL) {
+		if(mod&cOrthoCTRL) {
 		  SceneSetFrame(3,0);
+        PLog("cmd.middle()",cPLog_pym);
 		} else {
 		  SceneSetFrame(2,0);
+        PLog("cmd.ending()",cPLog_pym);
 		}
 		break;
 	 case 6:

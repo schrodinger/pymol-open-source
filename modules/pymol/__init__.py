@@ -36,6 +36,8 @@ class Scratch_Storage:
 
 stored = Scratch_Storage()
 
+_log_file = None
+
 #
 
 sys.path.append(os.environ['PYMOL_PATH']+'/modules')

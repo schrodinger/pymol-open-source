@@ -457,7 +457,7 @@ int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
                              * necessary because the editor 
                              * can only work on the current state...this
                              * needs to be changed.*/
-    EditorSelect(s2,s1,NULL,NULL);
+    EditorSelect(s2,s1,NULL,NULL,false);
     EditorTorsion(change);
     SceneSetFrame(6,save_state);
     PRINTFB(FB_Editor,FB_Actions)
@@ -2796,6 +2796,7 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   int n;  
   SpecRec *rec = NULL;
   int t;
+  OrthoLineType buffer;
 
   n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
 
@@ -2813,11 +2814,25 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                   SceneObjectDel(rec->obj);				
                 else 
                   SceneObjectAdd(rec->obj);
-                rec->visible=!rec->visible;
                 SceneChanged();
+                if(SettingGet(cSetting_logging)) {
+                  if(rec->visible)
+                    sprintf(buffer,"cmd.disable('%s')",rec->obj->Name);
+                  else
+                    sprintf(buffer,"cmd.enable('%s')",rec->obj->Name);
+                  PLog(buffer,cPLog_pym);
+                }
+                rec->visible=!rec->visible;
               }
             else if(rec->type==cExecAll)
               {
+                if(SettingGet(cSetting_logging)) {
+                  if(rec->visible)
+                    sprintf(buffer,"cmd.disable('all')");
+                  else
+                    sprintf(buffer,"cmd.enable('all')");
+                  PLog(buffer,cPLog_pym);
+                }
                 ExecutiveSetObjVisib(cKeywordAll,!rec->visible);
               }
             else if(rec->type==cExecSelection)
@@ -2825,7 +2840,13 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                 if(mod&cOrthoCTRL) {
                   SettingSet(cSetting_selection_overlay,
                              (float)(!((int)SettingGet(cSetting_selection_overlay))));
-                  rec->visible=true;
+                  if(SettingGet(cSetting_logging)) {
+                    sprintf(buffer,"cmd.set('selection_overlay',%d)",(int)SettingGet(cSetting_selection_overlay));
+                    PLog(buffer,cPLog_pym);
+                    sprintf(buffer,"cmd.enable('%s')",rec->name);
+                    PLog(buffer,cPLog_pym);
+                  }
+                  rec->visible=true; 
                 } else if(mod&cOrthoSHIFT) {
                   if(rec->sele_color<0)
                     rec->sele_color=7;
@@ -2834,13 +2855,21 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                     if(rec->sele_color<7)
                       rec->sele_color=15;
                   }
+                  /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
                   rec->visible=true;
                 } else {
+                  if(SettingGet(cSetting_logging)) {
+                    if(rec->visible)
+                      sprintf(buffer,"cmd.disable('%s')",rec->name);
+                    else
+                      sprintf(buffer,"cmd.enable('%s')",rec->name);
+                    PLog(buffer,cPLog_pym);
+                  }
                   rec->visible=!rec->visible; 
                 }
                 SceneChanged();
               }
-
+            
           }
         n--;
       }

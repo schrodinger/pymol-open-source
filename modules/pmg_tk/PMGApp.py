@@ -37,7 +37,7 @@ class PMGApp(AbstractApp):
    copyright      = 'Copyright (C) 1998-2001 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
    contactemail   = 'warren@delanoscientific.com'
-
+   
    def buttonAdd(self,frame,text,cmd):
       newBtn=self.createcomponent('button', (), None,
          Button,frame,text=text,highlightthickness=0,
@@ -50,15 +50,16 @@ class PMGApp(AbstractApp):
       row2 = self.createcomponent('row2', (), None,
          Frame,self.get_commandFrame(),bd=0)
       row2.pack(side=TOP,fill=BOTH,expand=YES)
-      btn_reset = self.buttonAdd(row2,'Reset',cmd.reset)
-      btn_rtrace = self.buttonAdd(row2,'Ray Trace',lambda : cmd.do("ray"))
-      btn_reset = self.buttonAdd(row2,'Rock',cmd.rock)
+      btn_reset = self.buttonAdd(row2,'Reset',lambda: cmd.do("_ reset"))
+      btn_rtrace = self.buttonAdd(row2,'Ray Trace',lambda : cmd.do("_ ray"))
+      btn_reset = self.buttonAdd(row2,'Rock',lambda :cmd.do("_ rock"))
 
       row3 = self.createcomponent('row3', (), None,
          Frame,self.get_commandFrame(),bd=0)
       row3.pack(side=TOP,fill=BOTH,expand=YES)
-      btn_reset = self.buttonAdd(row3,'Unpick',cmd.unpick)
-      btn_rtrace = self.buttonAdd(row3,'Hide Selections',self.hide_selections)
+      btn_unpick = self.buttonAdd(row3,'Unpick',lambda : cmd.do("_ unpick"))
+      btn_hidesele = self.buttonAdd(row3,'Hide Sele',self.hide_selections)
+      btn_getview = self.buttonAdd(row3,'Get View',lambda : cmd.get_view()) # doesn't get logged
 
 #      row3 = self.createcomponent('row3', (), None,
 #         Frame,self.get_commandFrame(),bd=0)
@@ -71,13 +72,13 @@ class PMGApp(AbstractApp):
       row1 = self.createcomponent('row1', (), None,
          Frame,self.get_commandFrame(),bd=0)
       row1.pack(side=TOP,fill=BOTH,expand=YES)
-      btn_rewind = self.buttonAdd(row1,'|<',cmd.rewind)
-      btn_back = self.buttonAdd(row1,'<',cmd.backward)
-      btn_stop = self.buttonAdd(row1,'Stop',cmd.mstop)
-      btn_play = self.buttonAdd(row1,'Play',cmd.mplay)
-      btn_forward = self.buttonAdd(row1,'>',cmd.forward)
-      btn_last = self.buttonAdd(row1,'>|',cmd.ending)
-      btn_ccache = self.buttonAdd(row1,'MClear',cmd.mclear)
+      btn_rewind = self.buttonAdd(row1,'|<',lambda : cmd.do("_ rewind"))
+      btn_back = self.buttonAdd(row1,'<',lambda : cmd.do("_ backward"))
+      btn_stop = self.buttonAdd(row1,'Stop',lambda : cmd.do("_ mstop"))
+      btn_play = self.buttonAdd(row1,'Play',lambda : cmd.do("_ mplay"))
+      btn_forward = self.buttonAdd(row1,'>',lambda : cmd.do("_ forward"))
+      btn_last = self.buttonAdd(row1,'>|',lambda : cmd.do("_ ending"))
+      btn_ccache = self.buttonAdd(row1,'MClear',lambda : cmd.do("_ mclear"))
 
    def my_show(self,win,center=1):
       if sys.platform!='linux2':
@@ -162,7 +163,8 @@ class PMGApp(AbstractApp):
       self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)
       self.bind(self.entry, 'Command Input Area')
       self.initialdir = os.getcwd()
-
+      self.log_file = "log.pml"
+      
    def update_feedback(self):
       for a in cmd.get_feedback():
          self.output.insert(END,"\n")
@@ -195,7 +197,8 @@ class PMGApp(AbstractApp):
                mod.__init__(self)
 
    def quit_app(self):
-      cmd.quit()
+      cmd.log_close()
+      cmd.quit()  # avoid logging this - it is inconvenient...
 
    def file_open(self):
       ofile = askopenfilename(initialdir = self.initialdir,
@@ -214,7 +217,31 @@ class PMGApp(AbstractApp):
                                          ("Tinker XYZ File","*.xyz")
                                          ])
       if len(ofile):
+         cmd.log("load %s\n"%ofile,"cmd.load('%s')\n"%ofile)
          cmd.load(ofile)
+
+   def log_open(self):
+      sfile = asksaveasfilename(initialfile = self.log_file,
+                                initialdir = self.initialdir,
+                                filetypes=[("PyMOL Script","*.pml"),
+                                           ("PyMOL Program","*.pym"),
+                                           ])
+      if len(sfile):
+         self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+         self.log_file = re.sub(r"^.*[^\/\\]","",sfile)
+         cmd.log_open(sfile)
+
+   def log_resume(self):
+      ofile = askopenfilename(initialdir = os.getcwd(),
+                   filetypes=[("PyMOL Script","*.pml"),
+                              ("PyMOL Program","*.pym"),
+                              ("Python Program","*.py")
+                              ])
+      if len(ofile):
+         self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
+         self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
+         cmd.resume(ofile)
+         os.chdir(self.initialdir)	         
 
    def file_save(self):
       lst = cmd.get_names('all')
@@ -251,6 +278,8 @@ class PMGApp(AbstractApp):
                                                     ])
                if len(sfile):
                   self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+                  cmd.log("save %s,(%s)\n"%(sfile,sels[0]),
+                          "cmd.save('%s','(%s)')\n"%(sfile,sels[0]))
                   cmd.save(sfile,"(%s)"%sels[0])
          
    def file_run(self):
@@ -262,9 +291,11 @@ class PMGApp(AbstractApp):
       if len(ofile):
          dir = re.sub(r"[^\/\\]*$","",ofile)
          os.chdir(dir)	
-         if re.search("\.py$",ofile):
+         if re.search("\.pym*$|\.PYM*$",ofile):
+            cmd.log("run %s\n"%ofile)                     
             cmd.do("run "+ofile);      
          else:
+            cmd.log("@%s\n"%ofile)                                 
             cmd.do("@"+ofile);
 
    def file_savepng(self):
@@ -272,6 +303,7 @@ class PMGApp(AbstractApp):
              filetypes=[("PNG File","*.png")])
       if len(sfile):
          self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+         cmd.log("png %s\n"%sfile,"cmd.png('%s')\n"%sfile)
          cmd.png(sfile)
          
       
@@ -279,6 +311,7 @@ class PMGApp(AbstractApp):
       sfile = asksaveasfilename(filetypes=[("Numbered PNG Files","*.png")])
       if len(sfile):
          self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+         cmd.log("mpng %s\n"%sfile,"cmd.mpng('%s')\n"%sfile)         
          cmd.mpng(sfile)
 
    def demo1(self):
@@ -330,110 +363,72 @@ class PMGApp(AbstractApp):
    def hide_selections(self):
       arg = cmd.get_names("selections")
       for a in arg:
+         cmd.log("disable %s\n"%a)
          cmd.disable(a)
-
-   def performance(self,mode):
-      if mode==0: # maximum quality
-         cmd.set('line_smooth',1)
-         cmd.set('depth_cue',1)         
-         cmd.set('specular',1)
-         cmd.set('surface_quality',1)
-         cmd.set('stick_quality',15)
-         cmd.set('sphere_quality',2)
-         cmd.set('cartoon_sampling',14)
-         cmd.set('ribbon_sampling',10)
-         cmd.do("rebuild")
-      elif mode==33:
-         cmd.set('line_smooth',1)         
-         cmd.set('depth_cue',1)         
-         cmd.set('specular',1)
-         cmd.set('surface_quality',0)
-         cmd.set('stick_quality',8)
-         cmd.set('sphere_quality',1)
-         cmd.set('cartoon_sampling',7)
-         cmd.do("rebuild")
-      elif mode==66: # good perfomance
-         cmd.set('line_smooth',0)
-         cmd.set('depth_cue',0)         
-         cmd.set('specular',1)
-         cmd.set('surface_quality',0)
-         cmd.set('stick_quality',8)
-         cmd.set('sphere_quality',1)
-         cmd.set('cartoon_sampling',6)
-         cmd.do("rebuild")         
-      else: # maximum performance
-         cmd.set('line_smooth',0)
-         cmd.set('depth_cue',0)
-         cmd.set('specular',0)
-         cmd.set('surface_quality',-1) # new
-         cmd.set('stick_quality',5)
-         cmd.set('sphere_quality',0)
-         cmd.set('cartoon_sampling',3)
-         cmd.do("rebuild")         
 
    def createMenuBar(self):
       self.menuBar.addmenuitem('Help', 'command',
                                'Get information on application', 
-                               label='About', command = cmd.splash)
+                               label='About', command = lambda : cmd.do("_ splash"))
 
       self.menuBar.addmenuitem('Help', 'command', 'Release Notes',
                                label='Release Notes',
-                               command = lambda: cmd.show_help("release"))      
+                               command = lambda: cmd.do("_ cmd.show_help('release')"))
 
       self.menuBar.addmenuitem('Help', 'separator', '')
       
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Commands',
                                label='Commands',
-                               command = lambda: cmd.show_help("commands"))      
+                               command = lambda: cmd.do("_ cmd.show_help('commands')"))
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Launching',
                                label='Launching',
-                               command = lambda: cmd.show_help("launching"))      
+                               command = lambda: cmd.do("_ cmd.show_help('launching')"))      
 
       self.menuBar.addmenuitem('Help', 'separator', '')
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
                                label='Select Command',
-                               command = lambda: cmd.show_help("select"))      
+                               command = lambda: cmd.do("_ cmd.show_help('select')"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
                                label='Selection Syntax',
-                               command = lambda: cmd.show_help("selections"))      
+                               command = lambda: cmd.do("_ cmd.show_help('selections')"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Example Selections',
                                label='Selection Examples',
-                               command = lambda: cmd.show_help("examples"))      
+                               command = lambda: cmd.do("_ cmd.show_help('examples')"))      
 
       self.menuBar.addmenuitem('Help', 'separator', '')
       
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on the Mouse',
                                label='Mouse',
-                               command = lambda: cmd.show_help("mouse"))      
+                               command = lambda: cmd.do("_ cmd.show_help('mouse')"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on the Keyboard',
                                label='Keyboard',
-                               command = lambda: cmd.show_help("keyboard"))      
+                               command = lambda: cmd.do("_ cmd.show_help('keyboard')"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
                                label='Molecular Editing',
-                               command = lambda: cmd.show_help("editing"))      
+                               command = lambda: cmd.do("_ cmd.show_help('editing')"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
                                label='Molecular Editing Keys',
-                               command = lambda: cmd.show_help("edit_keys"))      
+                               command = lambda: cmd.do("_ cmd.show_help('edit_keys')"))      
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Stereo',
                                label='Stereo',
-                               command = lambda: cmd.show_help("stereo"))      
+                               command = lambda: cmd.do("_ cmd.show_help('stereo')"))      
 
       self.menuBar.addmenuitem('Help', 'separator', '')
       
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on the API',
                                label='API',
-                               command = lambda: cmd.show_help("api"))      
+                               command = lambda: cmd.do("_ cmd.show_help('api')"))      
 
       self.toggleBalloonVar = IntVar()
       self.toggleBalloonVar.set(1)
@@ -469,15 +464,28 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('File', 'separator', '')
       
+      self.menuBar.addmenuitem('File', 'command', 'Open log file.',
+                        label='Log...',
+                        command=self.log_open)
+
+      self.menuBar.addmenuitem('File', 'command', 'Resume log file.',
+                        label='Resume...',
+                        command=self.log_resume)
+
+      self.menuBar.addmenuitem('File', 'command', 'Close log file.',
+                        label='Close Log',
+                        command=cmd.log_close)
+
       self.menuBar.addmenuitem('File', 'command', 'Run program or script.',
                         label='Run...',
                         command=self.file_run)
+
 
       self.menuBar.addmenuitem('File', 'separator', '')
 
       self.menuBar.addmenuitem('File', 'command', 'Quit PyMOL',
                         label='Quit',
-                        command=cmd.quit)
+                        command=self.quit)
 
       self.menuBar.addmenuitem('Edit', 'command',
                          'To Copy: Use Ctrl-C',
@@ -527,97 +535,96 @@ class PMGApp(AbstractApp):
       
       self.menuBar.addmenuitem('Movies', 'command', 'Maximum Speed',
                                label='Maximum Speed',
-                               command = lambda: cmd.set("movie_delay","0"))
+                               command = lambda: cmd.set("movie_delay","0",log=1))
 
       self.menuBar.addmenuitem('Movies', 'command', '30 FPS',
                                label='30 FPS',
-                               command = lambda: cmd.set("movie_delay","33"))
+                               command = lambda: cmd.set("movie_delay","33",log=1))
 
       self.menuBar.addmenuitem('Movies', 'command', '15 FPS',
                                label='15 FPS',
-                               command = lambda: cmd.set("movie_delay","66"))
+                               command = lambda: cmd.set("movie_delay","66",log=1))
 
       self.menuBar.addmenuitem('Movies', 'command', '5 FPS',
                                label='5 FPS',
-                               command = lambda: cmd.set("movie_delay","200"))
+                               command = lambda: cmd.set("movie_delay","200",log=1))
 
       self.menuBar.addmenuitem('Movies', 'command', '1 FPS',
                                label='1 FPS',
-                               command = lambda: cmd.set("movie_delay","1000"))
+                               command = lambda: cmd.set("movie_delay","1000",log=1))
 
       self.menuBar.addmenuitem('Movies', 'command', '0.3 FPS',
                                label='0.3 FPS',
-                               command = lambda: cmd.set("movie_delay","3000"))
+                               command = lambda: cmd.set("movie_delay","3000",log=1))
 
       self.menuBar.addmenuitem('Movies', 'separator', '')
 
       self.menuBar.addmenuitem('Movies', 'command', 'Reset Meter',
                                label='Reset Meter',
-                               command = lambda: cmd.meter_reset())
+                               command = lambda: cmd.do("_ meter_reset"))
 
       self.menuBar.addmenu('Display', 'Display Control')
 
 
       self.menuBar.addmenuitem('Display', 'command', 'Clear Text Output',
                                label='Clear Text',
-                               command = lambda: cmd.cls())
+                               command = lambda: cmd.do("_ cls"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Hide Text Output',
                                label='Hide Text',
-                               command = lambda: cmd.set("text","0"))
+                               command = lambda: cmd.set("text","0",log=1))
 
       self.menuBar.addmenuitem('Display', 'command', 'Show Text Output',
                                label='Show Text',
-                               command = lambda: cmd.set("text","1"))
+                               command = lambda: cmd.set("text","1",log=1))
 
       self.menuBar.addmenuitem('Display', 'separator', '')
       
       self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
                                label='Stereo On',
-                               command = lambda: cmd.stereo("on"))
+                               command = lambda: cmd.do("_ stereo on"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
                                label='Stereo Off',
-                               command = lambda: cmd.stereo("off"))
+                               command = lambda: cmd.do("_ stereo off"))
 
       self.menuBar.addmenuitem('Display', 'separator', '')
 
       self.menuBar.addmenuitem('Display', 'command', 'Maximum Performance',
                                label='Maximum Performance',
-                               command = lambda s=self: s.performance(100))
+                               command = lambda : cmd.do("_ util.performance(100)"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Reasonable Performance',
                                label='Reasonable Performance',
-                               command = lambda s=self: s.performance(66))
-
+                               command = lambda : cmd.do("_ util.performance(66)"))
+      
       self.menuBar.addmenuitem('Display', 'command', 'Reasonable Quality',
                                label='Reasonable Quality',
-                               command = lambda s=self: s.performance(33))
+                               command = lambda : cmd.do("_ util.performance(33)"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Maximum Quality',
                                label='Maximum Quality',
-                               command = lambda s=self: s.performance(0))
+                               command = lambda : cmd.do("_ util.performance(0)"))
 
       self.menuBar.addmenuitem('Display', 'separator', '')
 
       self.menuBar.addmenuitem('Display', 'command', 'Light Shadows',
                                label='Light Shadows',
-                               command = lambda u=util: u.ray_shadows('light'))
+                               command = lambda : cmd.do("_ util.ray_shadows('light')"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Matte Shadows',
                                label='Matte Shadows',
-                               command = lambda u=util: u.ray_shadows('matte'))
+                               command = lambda : cmd.do("_ util.ray_shadows('matte')"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Medium Shadows',
                                label='Medium Shadows',
-                               command = lambda u=util: u.ray_shadows('medium'))
+                               command = lambda : cmd.do("_ util.ray_shadows('medium')"))
 
       self.menuBar.addmenuitem('Display', 'command', 'Heavy Shadows',
                                label='Heavy Shadows',
-                               command = lambda u=util: u.ray_shadows('heavy'))
+                               command = lambda : cmd.do("_ util.ray_shadows('heavy')"))
       
       self.menuBar.addmenu('Settings', 'Configuration Control')
-
 
       self.menuBar.addmenuitem('Settings', 'command',
                          'Edit PyMOL Settings',
@@ -759,23 +766,23 @@ class PMGApp(AbstractApp):
       
       self.menuBar.addmenuitem('Wizards', 'command', 'Density Map',
                                label='Density Map',
-                               command = lambda: cmd.wizard("density"))
+                               command = lambda: cmd.do("wizard density"))
 
       self.menuBar.addmenuitem('Wizards', 'command', 'Distance',
                                label='Distance',
-                               command = lambda: cmd.wizard("distance"))
+                               command = lambda: cmd.do("_ wizard distance"))
 
       self.menuBar.addmenuitem('Wizards', 'command', 'Mutagenesis',
                                label='Mutagenesis',
-                               command = lambda: cmd.wizard("mutagenesis"))
+                               command = lambda: cmd.do("_ wizard mutagenesis"))
 
       self.menuBar.addmenuitem('Wizards', 'command', 'Pair Fitting',
                                label='Pair Fitting',
-                               command = lambda: cmd.wizard("pair_fit"))
+                               command = lambda: cmd.do("_ wizard pair_fit"))
 
       self.menuBar.addmenuitem('Wizards', 'command', 'Charge',
                                label='Charge',
-                               command = lambda: cmd.wizard("charge"))
+                               command = lambda: cmd.do("_ wizard charge"))
 
       self.menuBar.addmenu('Demos', 'Demonstrations')
 
@@ -794,3 +801,8 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Demos', 'command', 'Compiled Graphics Objects',
                                label='Compiled Graphics Objects',
                                command = self.demo3)
+
+
+
+
+

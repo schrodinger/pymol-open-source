@@ -80,6 +80,7 @@ lock_api_c = pymol.lock_api_c
 def is_string(obj):
    return isinstance(obj,types.StringType)
 
+
 def write_html_ref(file):
    lst = globals()
    f=open(file,'w')
@@ -476,7 +477,9 @@ PyMOL COMMAND LINE OPTIONS
    -r <file.py>[,global|local|module] Run a python program on startup.
    -l <file.py>[,global|local|module] Spawn a python program in new thread.
    -d <string> Run pymol command string upon startup.
-
+   -u <script> Load and append to this PyMOL script or program file.
+   -s <script> Save commands to this PyMOL script or program file.
+   
    <file> can have one of the following extensions, and all 
    files provided will be loaded or run after PyMOL starts.
     
@@ -614,6 +617,46 @@ def get_setting_updates(): # INTERNAL
 #      unlock()
    return r
 
+def log_open(fname='log.pml',mode='w'):
+   try:
+      pymol._log_file = open(fname,mode)
+      if _feedback(fb_module.cmd,fb_mask.details): # redundant
+         if mode!='a':
+            print " Cmd: logging to '%s'."%fname
+         else:
+            print " Cmd: appending to '%s'."%fname            
+      if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",fname)):
+         set("logging",2,quiet=1)
+      else:
+         set("logging",1,quiet=1)
+   except:
+      print"Error: unable to open log file '%s'"%fname
+      pymol._log_file = None
+      set("logging",0,quiet=1)
+
+def log(text,alt_text=None):
+   if pymol._log_file!=None:
+      mode = get_setting_legacy("logging")
+      if mode:
+         if mode==1:
+            pymol._log_file.write(text)
+         elif mode==2:
+            if alt_text!=None:
+               pymol._log_file.write(alt_text)
+            else:
+               pymol._log_file.write("cmd.do('''%s''')"%text)
+      pymol._log_file.flush()
+         
+
+_log = log # alias for set command which has local argument "log"
+
+def log_close():
+   if pymol._log_file!=None:
+      pymol._log_file.close()
+      set("logging",0,quiet=1)
+      if _feedback(fb_module.cmd,fb_mask.details): # redundant
+         print " Cmd: log closed."
+      
 def align(source,target): # EXPERIMENTAL, BUGGY
    r = None
    try:
@@ -830,6 +873,11 @@ def get_setting_legacy(name): # INTERNAL, DEPRECATED
    finally:
       unlock()
    return r
+
+def resume(fname):
+   if os.path.exists(fname):
+      do("@%s"%fname)
+   do("log_open %s,a"%fname)
    
 def config_mouse(quiet=0): # INTERNAL
    # NOTE: PyMOL automatically runs this routine upon start-up
@@ -982,16 +1030,29 @@ API USAGE
       r = _cmd.get_view()
    finally:
       unlock()
-   if output and len(r):
-      print "### cut below here and paste into script ###"
-      print "set_view (\\"
-      print "  %14.9f, %14.9f, %14.9f,\\"%r[0:3]
-      print "  %14.9f, %14.9f, %14.9f,\\"%r[4:7]
-      print "  %14.9f, %14.9f, %14.9f,\\"%r[8:11]
-      print "  %14.9f, %14.9f, %14.9f,\\"%r[16:19]
-      print "  %14.9f, %14.9f, %14.9f,\\"%r[19:22]
-      print "  %14.9f, %14.9f, %14.9f )"%r[22:25]
-      print "### cut above here and paste into script ###"
+   if len(r):
+      if get_setting_legacy("logging")!=0.0:
+         print " get_view: matrix written to log file."
+         log("set_view (\\\n","cmd.set_view((\\\n")
+         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
+         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
+         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] , "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11])
+         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19], "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
+         log("  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22], "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22]) 
+         log("  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
+         if output<2: # suppress if we have a log file open
+            output=0
+      if output:
+         print "### cut below here and paste into script ###"
+         print "set_view (\\"
+         print "  %14.9f, %14.9f, %14.9f,\\"%r[0:3]
+         print "  %14.9f, %14.9f, %14.9f,\\"%r[4:7]
+         print "  %14.9f, %14.9f, %14.9f,\\"%r[8:11]
+         print "  %14.9f, %14.9f, %14.9f,\\"%r[16:19]
+         print "  %14.9f, %14.9f, %14.9f,\\"%r[19:22]
+         print "  %14.9f, %14.9f, %14.9f )"%r[22:25]
+         print "### cut above here and paste into script ###"
+      
    r = r[0:3]+r[4:7]+r[8:11]+r[16:25]
    return r
 
@@ -2525,7 +2586,7 @@ SEE ALSO
       unlock()
    return r
    
-def edit(selection1='',selection2='',selection3='',selection4=''):
+def edit(selection1='',selection2='',selection3='',selection4='',pkresi=0):
    '''
 DESCRIPTION
   
@@ -2559,7 +2620,7 @@ SEE ALSO
    try:
       lock()   
       r = _cmd.edit(str(selection1),str(selection2),
-                    str(selection3),str(selection4))
+                    str(selection3),str(selection4),int(pkresi))
    finally:
       unlock()
    return r
@@ -3084,7 +3145,7 @@ def dirty(): # OBSOLETE?
       unlock()
    return r
 
-def set(name,value,selection='',state=0,quiet=0,updates=1):
+def set(name,value,selection='',state=0,quiet=0,updates=1,log=0):
    '''
 DESCRIPTION
   
@@ -3119,6 +3180,8 @@ NOTES
    
    '''
    r = None
+   if log:
+      _log("set %s=%s\n"%(name,value))
    index = setting._get_index(str(name))
    if(index<0):
       print "Error: unknown setting '%s'."%name
@@ -4538,6 +4601,20 @@ NOTES
       unlock()
    return r
 
+def phi_psi(selection="(byres pk1)"):
+   result = get_phipsi(selection)
+   if result!=None:
+      kees = result.keys()
+      kees.sort()
+      feedback('push')
+      feedback('disable','executive','actions')
+      for a in kees:
+         iterate("(%s`%d)"%a,"print ' %-9s "+("( %6.1f, %6.1f )"%result[a])+"'%(resn+'-'+resi+':')")
+      feedback('pop')
+   else:
+      print "Error: can't compute phi_psi"
+   return result
+
 def count_atoms(selection="(all)",quiet=0):
    '''
 DESCRIPTION
@@ -5621,6 +5698,9 @@ keyword = {
    'iterate_state' : [iterate_state, 0 , 0 , ''  , parsing.LITERAL2 ],
    'label'         : [label        , 0 , 0 , ''  , parsing.LITERAL1 ],
    'load'          : [load         , 0 , 0 , ''  , parsing.STRICT ],
+   'log'           : [log          , 0 , 0 , ''  , parsing.STRICT ],
+   'log_close'     : [log_close    , 0 , 0 , ''  , parsing.STRICT ],
+   'log_open'      : [log_open     , 0 , 0 , ''  , parsing.STRICT ],
    'ls'            : [ls           , 0 , 0 , ''  , parsing.STRICT ],  
    'mask'          : [mask         , 0 , 0 , ''  , parsing.STRICT ],
    'mem'           : [mem          , 0 , 0 , ''  , parsing.STRICT ],
@@ -5640,6 +5720,7 @@ keyword = {
    'orient'        : [orient       , 0 , 0 , ''  , parsing.STRICT ],
    'overlap'       : [overlap      , 0 , 0 , ''  , parsing.STRICT ],
    'pair_fit'      : [pair_fit     , 2 ,98 , ',' , parsing.SIMPLE ],
+   'phi_psi'       : [phi_psi      , 0 , 0 , ''  , parsing.STRICT ],
    'protect'       : [protect      , 0 , 0 , ''  , parsing.STRICT ],
    'pwd'           : [pwd          , 0 , 0 , ''  , parsing.STRICT ],
    'ray'           : [ray          , 0 , 0 , ''  , parsing.STRICT ],
@@ -5651,6 +5732,7 @@ keyword = {
    'rename'        : [rename       , 0 , 0 , ''  , parsing.STRICT ],
    'replace'       : [replace      , 0 , 0 , ''  , parsing.STRICT ],
    'reset'         : [reset        , 0 , 0 , ''  , parsing.STRICT ],
+   'resume'        : [resume       , 0 , 0 , ''  , parsing.STRICT ],
    'rewind'        : [rewind       , 0 , 0 , ''  , parsing.STRICT ],
    'rock'          : [rock         , 0 , 0 , ''  , parsing.STRICT ],
    'run'           : [run          , 1 , 2 , ',' , parsing.RUN    ],
