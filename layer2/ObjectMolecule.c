@@ -1691,7 +1691,7 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index)
   AtomInfoType *ai;
 
   ai=I->AtomInfo+index;
-  sprintf(buffer," Pick: %s:%s:%s:%s:%s:%s (#%d:%s:%s:%d)",
+  sprintf(buffer," Pick: %s:%s:%s:%s:%s:%s [#%d:%s:%s:%d]",
 			 I->Obj.Name,ai->segi,ai->chain,
 			 ai->resi,ai->resn,ai->name,ai->id,ai->elem,
           ai->textType,ai->customType);

@@ -438,6 +438,42 @@ NOTES
          unlock()
    return r
 
+def bond(*arg):
+   '''
+DESCRIPTION
+ 
+"bond" creates a new bond between two selections, each of
+which should contain one atom.
+ 
+USAGE
+ 
+ 
+PYMOL API
+ 
+NOTES
+ 
+'''
+   la = len(arg)
+   if la==1:
+      print "Error: invalid arguments for dist command."
+      raise RuntimeError
+   else:
+      if la>1:
+         sel1 = arg[0]
+         sel2 = arg[1]
+      else:
+         sel1 = "(pk1)"
+         sel2 = "(pk3)"
+      order = 1
+      if(la>2):
+         order = int(arg[3])
+      try:
+         lock()
+         r = _cmd.bond(sel1,sel2,order)
+      finally:
+         unlock()
+   return r
+
 def show_help(cmd):
    set("text","1")
    print "PyMOL>help %s\n" % cmd
@@ -2623,6 +2659,7 @@ keyword = {
    'alter_state'   : [alter_state  , 3 , 3 , ',' , 0 ],
    'api'           : [api          , 0 , 0 , ',' , 0 ],
    'backward'      : [backward     , 0 , 0 , ',' , 0 ],
+   'bond'          : [bond         , 0 , 3 , ',' , 0 ],
    'clip'          : [clip         , 2 , 2 , ',' , 0 ],
    'cls'           : [cls          , 0 , 0 , ',' , 0 ],
    'color'         : [color        , 1 , 2 , ',' , 0 ],

@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 
 float ExecutiveDistance(char *sele1,char *sele2);
 void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
+void ExecutiveBond(char *s1,char *s2,int order,int add);
 void ExecutiveAlter(char *s1,char *expr);
 void ExecutiveLabel(char *s1,char *expr);
 void ExecutiveAlterState(int i1,char *s1,char *expr);
