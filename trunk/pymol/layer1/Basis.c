@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Feedback.h"
 #include"Util.h"
+#include"MemoryCache.h"
 
 static const float kR_SMALL4 = 0.0001F;
 
