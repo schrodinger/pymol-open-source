@@ -245,10 +245,10 @@ PYMOL API
       else:
          try:
             lock()
-            r = _cmd.do("_cmd.quit()")
+            r = _cmd.do("_ cmd.quit()")
+            thread.exit()
          finally:
             unlock()
-         thread.exit()
       return r
 
    def delete(name):
