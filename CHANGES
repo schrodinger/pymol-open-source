@@ -106,6 +106,8 @@ In Progress
 
 Changes up to 0.85
 
+   * mmatrix now stores the complex view instead of just the rotation matrix
+
    * unset command
 
    * fixed handling of calcium atoms

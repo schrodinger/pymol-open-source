@@ -48,4 +48,7 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi);
 int EditorTorsion(float angle);
 int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode);
 
+PyObject *EditorAsPyList(void);
+int EditorFromPyList(PyObject *list);
+
 #endif
