@@ -61,12 +61,12 @@ contrib: .contrib
 
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
-	cc $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
+	$(CC) $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
-	cc $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
+	$(CC) $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 unix-mindep-build: semistatic
 	$(PYTHON_EXE) modules/compile_pymol.py
@@ -121,15 +121,19 @@ irix-mindep: semistatic
 	cd $(MINDEP);chown -R nobody.nobody pymol
 	cd $(MINDEP);tar -cvf - pymol |gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
-windows: .includes .depends .update 
-	echo "EXPORTS" > _cmd.def
-	nm --demangle --defined-only */*.o | grep ' T ' | sed 's/.* T //' >> _cmd.def 
-	dllwrap --dllname _cmd.pyd --driver-name gcc $(BUILD) --def _cmd.def -s  */*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
-	/bin/rm -f .update .includes
+#windows: .includes .depends .update 
+#
+#	echo "EXPORTS" > _cmd.def
+#	nm --demangle --defined-only */*.o | grep ' T ' | sed 's/.* T //' >> _cmd.def 
+#	dllwrap --dllname _cmd.pyd --driver-name gcc $(BUILD) --def _cmd.def -o _cmd.pyd */*.o -s --entry _DllMain@12 --target=i386-mingw32 $(LIB_DIRS) $(LIBS) 
+#	/bin/rm -f .update .includes
+
+#cygwin: .includes .depends .update
+#	$(CC) -shared -W1,--enable-auto-image-base */*.o $(LIB_DIRS) $(LIBS) $(DEST)
 
 fast: .update
 	/bin/rm -f .update 
-	cc $(BUILD) */*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
+	$(CC) $(BUILD) */*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
 
 depends: 
 	/bin/rm -f */*.p

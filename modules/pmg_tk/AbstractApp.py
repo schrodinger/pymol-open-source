@@ -52,6 +52,8 @@ class AbstractApp(Pmw.MegaWidget):
          self.frameAdjust = 41
       elif sys.platform=='darwin':
          self.frameAdjust = 51
+      elif sys.platform=='cygwin':
+         self.frameAdjust = 60
       elif sys.platform!='linux':
          self.frameAdjust = 31
       else:
