@@ -26,9 +26,7 @@ Z* -------------------------------------------------------------------
 
 void MenuActivate(int x,int y,char *name,char *sele)
 {
-  /* assumes unblocked python threads (GLUT event), locked API */
 
-  OrthoLineType buffer;
   PyObject *list;
 
   PBlock(); /* pmm doesn't currently call API, so leave it locked */

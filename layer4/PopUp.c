@@ -164,7 +164,6 @@ int PopUpDrag(Block *block,int x,int y,int mod)
   
   int a;
   int was = I->Selected;
-  float near = 
   I->LastX=x;
   I->LastY=y;
 
@@ -240,7 +239,7 @@ void PopUpDraw(Block *block)
           xx=x;
           while(*c) {
             if(*c=='`') if(*(c+1)) if(*(c+2)) if(*(c+3)) {
-              if(*(c+1)=='---') {
+              if(*(c+1)=='-') {
                 if(a==I->Selected)
                   glColor3fv(I->Block->BackColor);
                 else

@@ -13,6 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
 #include<stdio.h>
 #include<GL/gl.h>
 #include<GL/glut.h>
@@ -109,7 +110,7 @@ void ExecutiveSort(char *name)
             ObjectMoleculeSort(obj);
             sele=SelectorIndexByName(rec->obj->Name);
             if(sele>=0) {
-              op.code='INVA';
+              op.code=OMOP_INVA;
               op.i1=cRepAll; 
               op.i2=cRepInvAll;
               ExecutiveObjMolSeleOp(sele,&op);
@@ -178,7 +179,7 @@ float ExecutiveDistance(char *s1,char *s2)
    sele1=SelectorIndexByName(s1);
    op1.i1=0;
    if(sele1>=0) {
-     op1.code = 'SUMC';
+     op1.code = OMOP_SUMC;
      op1.v1[0]=0.0;
      op1.v1[1]=0.0;
      op1.v1[2]=0.0;
@@ -190,7 +191,7 @@ float ExecutiveDistance(char *s1,char *s2)
    sele2=SelectorIndexByName(s2);
    op2.i1=0;
    if(sele2>=0) {
-     op2.code = 'SUMC';
+     op2.code = OMOP_SUMC;
      op2.v1[0]=0.0;
      op2.v1[1]=0.0;
      op2.v1[2]=0.0;
@@ -230,7 +231,7 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
     op1.i2 = 0;
     op1.i3 = 0; /* atIndex */
     if(sele1>=0) {
-      op1.code = 'PDB1';
+      op1.code = OMOP_PDB1;
       op1.i1 = state;
       ExecutiveObjMolSeleOp(sele1,&op1);
     }
@@ -328,7 +329,7 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
     /* there must  be a more elegant to get the PC on X and the SC
      * on Y then what is shown below, but I couldn't get it to work.
      * I tried swapping the eigen-columns around but either that is 
-     * a bogus approach (??) or my code was buggy.  Hence the following...*/
+     * a bogus approach (?) or my code was buggy.  Hence the following...*/
 
     if((egval[0]<egval[2])&&(egval[2]<egval[1])) { /* X < Z < Y */
       SceneRotate(90,1,0,0); /*1<-->2*/
@@ -358,7 +359,7 @@ void ExecutiveAlter(char *s1,char *expr)
   
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
-    op1.code = 'ALTR';
+    op1.code = OMOP_ALTR;
     op1.s1 = expr;
     op1.i1 = 0;
     ExecutiveObjMolSeleOp(sele1,&op1);
@@ -385,7 +386,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
   op2.vv1=NULL;
   op2.vc1=NULL;
   if(sele1>=0) {
-    op1.code = 'AVRT';
+    op1.code = OMOP_AVRT;
     op1.nvv1=0;
     op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
@@ -406,7 +407,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
 
   sele2=SelectorIndexByName(s2);
   if(sele2>=0) {
-    op2.code = 'AVRT';
+    op2.code = OMOP_AVRT;
     op2.nvv1=0;
     op2.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
@@ -437,7 +438,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
       printf(" Executive: RMS = %8.3f (%d to %d atoms)\n",
              rms,op1.nvv1,op2.nvv1);
       if(mode==2) {
-        op2.code = 'TTTF';
+        op2.code = OMOP_TTTF;
         ExecutiveObjMolSeleOp(sele1,&op2);
       }
     } else {
@@ -459,7 +460,7 @@ float *ExecutiveRMSStates(char *s1,int target,int mode)
   float *result = NULL;
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
-    op1.code = 'SVRT';
+    op1.code = OMOP_SVRT;
     op1.nvv1=0;
     op1.i1=target;
     op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
@@ -472,7 +473,7 @@ float *ExecutiveRMSStates(char *s1,int target,int mode)
     op2.f1VLA=VLAlloc(float,10);
     VLASetSize(op2.f1VLA,0); /* failsafe */
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
-    op2.code = 'SFIT';
+    op2.code = OMOP_SFIT;
     op2.nvv1=0;
     ExecutiveObjMolSeleOp(sele1,&op2);
     result=op2.f1VLA;
@@ -496,12 +497,12 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
   op1.nvv1=0;
   op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
   op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1); /* auto-zero */
-  op1.code = 'AVRT';
+  op1.code = OMOP_AVRT;
 
   op2.nvv1=0;
   op2.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
   op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1); /* auto-zero */
-  op2.code = 'AVRT';
+  op2.code = OMOP_AVRT;
 
   strcpy(combi,"(");
   c=0;
@@ -552,7 +553,7 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
         rms = MatrixGetRMS(op1.nvv1,op1.vv1,op2.vv1,NULL);
       printf(" ExecutiveRMS: RMS = %8.3f (%d to %d atoms)\n",
              rms,op1.nvv1,op2.nvv1);
-      op2.code = 'TTTF';
+      op2.code = OMOP_TTTF;
       SelectorGetTmp(combi,s1);
       sele1=SelectorIndexByName(s1);
       ExecutiveObjMolSeleOp(sele1,&op2);
@@ -628,10 +629,10 @@ void ExecutiveColor(char *name,char *color,int flags)
   if(!(flags&0x1)) {
 	 sele=SelectorIndexByName(name);
 	 if(sele>=0) {
-		op.code = 'COLR';
+		op.code = OMOP_COLR;
 		op.i1=ColorGetIndex(color);
 		ExecutiveObjMolSeleOp(sele,&op);
-		op.code='INVA';
+		op.code=OMOP_INVA;
 		op.i1=cRepAll; 
 		op.i2=cRepInvColor;
 		ExecutiveObjMolSeleOp(sele,&op);
@@ -684,13 +685,17 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op)
 int ExecutiveGetExtent(char *name,float *mn,float *mx)
 {
   int sele;
-  ObjectMoleculeOpRec op;
+  ObjectMoleculeOpRec op,op2;
   CExecutive *I=&Executive;
   Object *obj;
   int flag = false;
   int all_flag = false;
   SpecRec *rec = NULL;
   WordType all = "_all";
+  float f1,f2,fmx;
+  int a;
+
+  op2.i1 = 0;
 
   if(WordMatch("all",name,true)<0) {
     name=all;
@@ -699,7 +704,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   }
   sele=SelectorIndexByName(name);
   if(sele>=0) {
-	 op.code = 'MNMX';
+	 op.code = OMOP_MNMX;
 	 op.v1[0]=FLT_MAX;
 	 op.v1[1]=FLT_MAX;
 	 op.v1[2]=FLT_MAX;
@@ -726,6 +731,13 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
         }
       }
     }
+	 op2.code = OMOP_SUMC;
+    ExecutiveObjMolSeleOp(sele,&op2);
+    if(op2.i1) {
+      op2.v1[0]/=op2.i1;
+      op2.v1[1]/=op2.i1;
+      op2.v1[2]/=op2.i1;
+    }
   } else {
     obj = ExecutiveFindObjectByName(name);
     if(obj) {
@@ -743,7 +755,20 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   }
   if(all_flag)
     ExecutiveDelete(all);
-  if(flag) {
+  if(flag) { 
+    if(op2.i1) { 
+      for (a=0;a<3;a++) { /* this puts origin at the weighted center */
+        f1 = op2.v1[a] - op.v1[a];
+        f2 = op.v2[a] - op2.v1[a];
+        if(f1>f2) 
+          fmx = f1;
+        else
+          fmx = f2;
+        printf("%8.3f %8.3f\n",f1,f2);
+        op.v1[a] = op2.v1[a] - fmx;
+        op.v2[a] = op2.v1[a] + fmx;
+      }
+    }
     copy3f(op.v1,mn);
     copy3f(op.v2,mx);
   }
@@ -793,7 +818,7 @@ int ExecutiveGetMoment(char *name,Matrix33d mi)
   
   sele=SelectorIndexByName(name);
   if(sele>=0) {
-	 op.code = 'SUMC';
+	 op.code = OMOP_SUMC;
 	 op.v1[0]=0.0;
 	 op.v1[1]=0.0;
 	 op.v1[2]=0.0;
@@ -804,7 +829,7 @@ int ExecutiveGetMoment(char *name,Matrix33d mi)
 	 if(op.i1) {
 		c+=op.i1;
 		scale3f(op.v1,1.0/op.i1,op.v1);
-		op.code = 'MOME';		
+		op.code = OMOP_MOME;		
 		for(a=0;a<3;a++)
 		  for(b=0;b<3;b++)
 			 op.d[a][b]=0.0;
@@ -867,11 +892,11 @@ void ExecutiveSetAllVisib(int state)
 				sele = SelectorIndexByName(obj->Obj.Name);
 				for(rep=0;rep<cRepCnt;rep++) {
 				  rec->repOn[rep]=state;
-				  op.code='VISI';
+				  op.code=OMOP_VISI;
 				  op.i1=rep;
 				  op.i2=state;
 				  ObjectMoleculeSeleOp(obj,sele,&op);
-				  op.code='INVA';
+				  op.code=OMOP_INVA;
 				  op.i2=cRepInvVisib;
 				  ObjectMoleculeSeleOp(obj,sele,&op);				
 				}
@@ -911,11 +936,11 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
       case cExecObject:
         sele=SelectorIndexByName(name);
         if(sele>=0) {
-          op.code='VISI';
+          op.code=OMOP_VISI;
           op.i1=rep;
           op.i2=state;
           ExecutiveObjMolSeleOp(sele,&op);
-          op.code='INVA';
+          op.code=OMOP_INVA;
           op.i2=cRepInvVisib;
           ExecutiveObjMolSeleOp(sele,&op);
         }
@@ -930,7 +955,7 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
   ObjectMoleculeOpRec op;
   sele=SelectorIndexByName(name);
   if(sele>=0) {
-	 op.code = 'INVA';
+	 op.code = OMOP_INVA;
 	 op.i1=rep;
 	 op.i2=level;
 	 ExecutiveObjMolSeleOp(sele,&op);
@@ -1002,7 +1027,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
     ErrMessage("ExecutiveSymExp","No symmetry matrices!");    
   } else {
     ErrOk(" ExecutiveSymExp","Generating symmetry mates");
-	 op.code = 'SUMC';
+	 op.code = OMOP_SUMC;
 	 op.i1 =0;
     op.v1[0]= 0.0;
     op.v1[1]= 0.0;
@@ -1018,7 +1043,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
     }
     transform33f3f(obj->Symmetry->Crystal->RealToFrac,tc,tc);
 
-	 op.code = 'VERT';
+	 op.code = OMOP_VERT;
 	 op.nvv1 =0;
     op.vv1 = VLAlloc(float,10000);
     ExecutiveObjMolSeleOp(sele,&op);

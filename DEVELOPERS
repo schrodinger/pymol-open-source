@@ -121,13 +121,9 @@ molecular modeling environment based on an interoperative language
 like Python and constructed from components like PyMOL.  This
 environment should be loaded with so much functionality that it
 surpasses everything else and becomes the de facto standard for
-computational modeling.
-
-Such an environment would enable computational chemists and biologists
-to focus more on the science and less on software licensing and
-redundant tool development.  With increasing availability of free
-tools such as Linux, the GNU suite, CACTVS, MMTK, NAMD, VMD, Mesa,
-Python, and PyMOL, we are rapidly moving in that direction.
+computational modeling. Such an environment would enable computational
+chemists and biologists to focus more on the science and less on
+software licensing and redundant tool development.
 
 Warren L. DeLano
 warren@delanoscientific.com

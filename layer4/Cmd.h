@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include<Python.h>
 
-void init_pm(void);
+void init_cmd(void);
 
 extern PyObject *PM_Globals;
 

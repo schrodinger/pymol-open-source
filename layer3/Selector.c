@@ -32,32 +32,10 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"CoordSet.h"
 #include"DistSet.h"
+#include"Word.h"
 
 #define SelectorMaxDepth 100
 
-#define sa_NOT1 0x0101
-#define sa_BYR1 0x0201
-#define sa_AND2 0x0302
-#define sa_OR_2 0x0402
-#define sa_IN_2 0x0502
-#define sa_ALLz 0x0600
-#define sa_NONz 0x0700
-#define sa_HETz 0x0800
-#define sa_HYDz 0x0900
-#define sa_VISz 0x0A00
-#define sa_ARD_ 0x0B04
-#define sa_EXP_ 0x0C04
-#define sa_NAMs 0x0D05
-#define sa_ELEs 0x0E05
-#define sa_RSIs 0x0F05
-#define sa_CHNs 0x1005
-#define sa_SEGs 0x1105
-#define sa_MODs 0x1205 
-#define sa_IDXs 0x1305
-#define sa_RSNs 0x1405
-#define sa_SELs 0x1505
-#define sa_CHNs 0x1605
-#define sa_BVLx 0x1706
 
 typedef struct {
   int selection;
@@ -110,68 +88,96 @@ int *SelectorEvaluate(WordType *word);
 WordType *SelectorParse(char *s);
 void SelectorPurgeMembers(int sele);
 
-#define SELE_VALU 0
-#define SELE_OPR1 1
-#define SELE_OPR2 2
-#define SELE_SEL0 3
-#define SELE_SEL1 4
-#define SELE_SEL2 5
-#define SELE_LIST 6
-#define SELE_PRP1 7
-#define SELE_SEL3 8
-#define SELE_PVAL 0
+#define STYP_VALU 0
+#define STYP_OPR1 1
+#define STYP_OPR2 2
+#define STYP_SEL0 3
+#define STYP_SEL1 4
+#define STYP_SEL2 5
+#define STYP_LIST 6
+#define STYP_PRP1 7
+#define STYP_SEL3 8
+#define STYP_PVAL 0
 
-static WordType Keyword[] = 
+#define SELE_NOT1 ( 0x0100 | STYP_SEL1 )
+#define SELE_BYR1 ( 0x0200 | STYP_SEL1 )
+#define SELE_AND2 ( 0x0300 | STYP_OPR2 )
+#define SELE_OR_2 ( 0x0400 | STYP_OPR2 )
+#define SELE_IN_2 ( 0x0500 | STYP_OPR2 )
+#define SELE_ALLz ( 0x0600 | STYP_SEL0 )
+#define SELE_NONz ( 0x0700 | STYP_SEL0 )
+#define SELE_HETz ( 0x0800 | STYP_SEL0 )
+#define SELE_HYDz ( 0x0900 | STYP_SEL0 )
+#define SELE_VISz ( 0x0A00 | STYP_SEL0 )
+#define SELE_ARD_ ( 0x0B00 | STYP_PRP1 )
+#define SELE_EXP_ ( 0x0C00 | STYP_PRP1 )
+#define SELE_NAMs ( 0x0D00 | STYP_SEL1 )
+#define SELE_ELEs ( 0x0E00 | STYP_SEL1 )
+#define SELE_RSIs ( 0x0F00 | STYP_SEL1 )
+#define SELE_CHNs ( 0x1000 | STYP_SEL1 )
+#define SELE_SEGs ( 0x1100 | STYP_SEL1 )
+#define SELE_MODs ( 0x1200 | STYP_SEL1 ) 
+#define SELE_IDXs ( 0x1300 | STYP_SEL1 )
+#define SELE_RSNs ( 0x1400 | STYP_SEL1 )
+#define SELE_SELs ( 0x1500 | STYP_SEL1 )
+#define SELE_BVLx ( 0x1606 | STYP_SEL2 )
+
+static WordKeyValue Keyword[] = 
 {
-  "not",      "NOT1",
-  "!",        "NOT1",
-  "byresi",   "BYR1",
-  "b;",       "BYR1",
-  "and",      "AND2",
-  "&",        "AND2",
-  "or",       "OR_2",
-  "|",        "OR_2",
-  "in",       "IN_2",
-  "all",      "ALLz", /* 0 parameter */
-  "+",        "ALLz", /* 0 parameter */
-  "none",     "NONz", /* 0 parameter */
-  "hetatm",   "HETz", /* 0 parameter */
-  "het",      "HETz", /* 0 parameter */
-  "hydro",    "HYDz", /* 0 parameter */
-  "h;",       "HYDz", /* 0 parameter */
-  "visi",     "VISz", /* 0 parameter */
-  "v;",       "VISz", /* 0 parameter */
-  "around",   "ARD_", /* 1 parameter */
-  "a;",       "ARD_", /* 1 parameter */
-  "expand",   "EXP_", /* 1 parameter */
-  "x;",       "EXP_", /* 1 parameter */
-  "name",     "NAMs",
-  "n;",       "NAMs",
-  "elem",     "ELEs",
-  "e;",       "ELEs",
-  "resi",     "RSIs",
-  "i;",       "RSIs",
-  "chain",    "CHNs",
-  "c;",       "CHNs",
-  "segi",     "SEGs",
-  "s;",       "SEGs",
-  "model",    "MODs",
-  "m;",       "MODs",
-  "index",    "IDXs",
-  "resn",     "RSNs",
-  "r;",       "RSNs",
-  "%",        "SELs",
-  "b",        "BVLx", /* 2 operand selection operator */ 
-  ""
+  {  "not",      SELE_NOT1 },
+  {  "!",        SELE_NOT1 },
+  {  "byresi",   SELE_BYR1 },
+  {  "b;",       SELE_BYR1 },
+  {  "and",      SELE_AND2 },
+  {  "&",        SELE_AND2 },
+  {  "or",       SELE_OR_2 },
+  {  "|",        SELE_OR_2 },
+  {  "in",       SELE_IN_2 },
+  {  "all",      SELE_ALLz }, /* 0 parameter */
+  {  "+",        SELE_ALLz }, /* 0 parameter */
+  {  "none",     SELE_NONz }, /* 0 parameter */
+  {  "hetatm",   SELE_HETz }, /* 0 parameter */
+  {  "het",      SELE_HETz }, /* 0 parameter */
+  {  "hydro",    SELE_HYDz }, /* 0 parameter */
+  {  "h;",       SELE_HYDz }, /* 0 parameter */
+  {  "visi",     SELE_VISz }, /* 0 parameter */
+  {  "v;",       SELE_VISz }, /* 0 parameter */
+  {  "around",   SELE_ARD_ }, /* 1 parameter */
+  {  "a;",       SELE_ARD_ }, /* 1 parameter */
+  {  "expand",   SELE_EXP_ }, /* 1 parameter */
+  {  "x;",       SELE_EXP_ }, /* 1 parameter */
+  {  "name",     SELE_NAMs },
+  {  "n;",       SELE_NAMs },
+  {  "elem",     SELE_ELEs },
+  {  "e;",       SELE_ELEs },
+  {  "resi",     SELE_RSIs },
+  {  "i;",       SELE_RSIs },
+  {  "chain",    SELE_CHNs },
+  {  "c;",       SELE_CHNs },
+  {  "segi",     SELE_SEGs },
+  {  "s;",       SELE_SEGs },
+  {  "model",    SELE_MODs },
+  {  "m;",       SELE_MODs },
+  {  "index",    SELE_IDXs },
+  {  "resn",     SELE_RSNs },
+  {  "r;",       SELE_RSNs },
+  {  "%",        SELE_SELs },
+  {  "b",        SELE_BVLx, }, /* 2 operand selection operator */ 
+  {  "", 0 }
 };
 
-static WordType AtOper[] = 
+#define SCMP_GTHN 0x01
+#define SCMP_LTHN 0x02
+#define SCMP_RANG 0x03
+#define SCMP_EQAL 0x04
+
+static WordKeyValue AtOper[] = 
 {
-  ">",      "GTHN",
-  "<",      "LTHN",
-  "in",     "RANG",
-  "=",      "EQAL",
-  ""
+ { ">",      SCMP_GTHN },
+ { "<",      SCMP_LTHN },
+ { "in",     SCMP_RANG },
+ { "=",      SCMP_EQAL },
+ { "", 0 }
 };
 
 static int BondInOrder(int *a,int b1,int b2);
@@ -770,8 +776,8 @@ int SelectorModulate1(EvalElem *base)
   ErrChkPtr(base->sele);
   switch(base[1].code)
 	 {
-	 case 'ARD_':
-	 case 'EXP_':
+	 case SELE_ARD_:
+	 case SELE_EXP_:
 		if(!sscanf(base[2].text,"%f",&dist))
 		  ok=ErrMessage("Selector","Invalid distance.");
 		if(ok)
@@ -822,7 +828,7 @@ int SelectorModulate1(EvalElem *base)
 										  j=map->EList[i++];
 										  while(j>=0) {
 											 if((!base[0].sele[j])&&
-												 ((base[1].code=='EXP_')
+												 ((base[1].code==SELE_EXP_)
 												  ||(!base[1].sele[j]))) /*exclude current selection */
 												{
 												  if(within3f(I->Vertex+3*j,v2,dist)) base[0].sele[j]=true;
@@ -847,9 +853,7 @@ int SelectorModulate1(EvalElem *base)
 	 c=0;
 	 for(a=0;a<I->NAtom;a++)
 		if(base[0].sele[a]) c++;
-	 printf("SelectorModulate0: %c%c%c%c : %d atoms selected.\n",
-			  base[1].code>>24,base[1].code>>16,
-			  base[1].code>>8,base[1].code&0xFF,c);
+	 printf("SelectorModulate0: %d atoms selected.\n",c);
   }
   return(ok);
   
@@ -862,31 +866,31 @@ int SelectorSelect0(EvalElem *base)
   int c=0;
   short int *vis;
 
-  base->type=SELE_LIST;
+  base->type=STYP_LIST;
   base->sele=Alloc(int,I->NAtom);
   ErrChkPtr(base->sele);
   switch(base->code)
 	 {
-	 case 'NONz':
+	 case SELE_NONz:
 		for(a=0;a<I->NAtom;a++)
 		  base[0].sele[a]=false;
 		break;
-	 case 'HETz':
+	 case SELE_HETz:
 		for(a=0;a<I->NAtom;a++)
         base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hetatm;
 		break;
-	 case 'HYDz':
+	 case SELE_HYDz:
 		for(a=0;a<I->NAtom;a++)
         base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hydrogen;
 		break;
-	 case 'ALLz':
+	 case SELE_ALLz:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 base[0].sele[a]=true;
 			 c++;
 		  }
       break;
-	 case 'VISz':
+	 case SELE_VISz:
 		for(a=0;a<I->NAtom;a++)
 		  {
           flag = false;
@@ -904,9 +908,7 @@ int SelectorSelect0(EvalElem *base)
 		break;
 	 }
   if(DebugSelector&DebugState)
-	 printf("SelectorSelect0: %c%c%c%c : %d atoms selected.\n",
-			  base[0].code>>24,base[0].code>>16,
-			  base[0].code>>8,base[0].code&0xFF,c);
+	 printf("SelectorSelect0: %d atoms selected.\n",c);
   return(1);
 }
 /*========================================================================*/
@@ -920,12 +922,12 @@ int SelectorSelect1(EvalElem *base)
   
   SelectorType *I=&Selector;
   ObjectMolecule *obj;
-  base->type=SELE_LIST;
+  base->type=STYP_LIST;
   base->sele=Alloc(int,I->NAtom);
   ErrChkPtr(base->sele);
   switch(base->code)
 	 {
-	 case 'IDXs':
+	 case SELE_IDXs:
 		if(sscanf(base[1].text,"%i",&index)!=1)		
 		  ok=ErrMessage("Selector","Invalid Range.");
 		if(ok) {
@@ -940,7 +942,7 @@ int SelectorSelect1(EvalElem *base)
 			 }
 		}
 		break;
-	 case 'NAMs':
+	 case SELE_NAMs:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -954,7 +956,7 @@ int SelectorSelect1(EvalElem *base)
 				base[0].sele[a]=false;
 		  }
 		break;
-	 case 'ELEs':
+	 case SELE_ELEs:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -968,7 +970,7 @@ int SelectorSelect1(EvalElem *base)
 				base[0].sele[a]=false;
 		  }
 		break;
-	 case 'SEGs':
+	 case SELE_SEGs:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].segi,I->IgnoreCase)<0)
@@ -980,7 +982,7 @@ int SelectorSelect1(EvalElem *base)
 				base[0].sele[a]=false;
 		  }
 		break;
-	 case 'CHNs':
+	 case SELE_CHNs:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -994,7 +996,7 @@ int SelectorSelect1(EvalElem *base)
 				base[0].sele[a]=false;
         }
 		break;
-	 case 'RSIs':
+	 case SELE_RSIs:
 		if((p=strstr(base[1].text,":"))) /* range */
 		  {
 			 *p=' ';
@@ -1030,7 +1032,7 @@ int SelectorSelect1(EvalElem *base)
 				  base[0].sele[a]=false;
 			 }
 		break;
-	 case 'RSNs':
+	 case SELE_RSNs:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -1044,7 +1046,7 @@ int SelectorSelect1(EvalElem *base)
 				base[0].sele[a]=false;
 		  }
 		break;
-	 case 'SELs':
+	 case SELE_SELs:
 		sele=WordIndex(I->Name,base[1].text,1,I->IgnoreCase);
 		if(sele>=0)
 		  {
@@ -1068,7 +1070,7 @@ int SelectorSelect1(EvalElem *base)
           ok=ErrMessage("Selector","Invalid Selection Name.");          
         }
 		break;
-	 case 'MODs':
+	 case SELE_MODs:
 		model=0;
       obj=(ObjectMolecule*)ExecutiveFindObjectByName(base[1].text);
       if(obj)
@@ -1109,9 +1111,7 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 }
   if(DebugSelector&DebugState)
-	 printf("SelectorSelect1: %c%c%c%c %s: %d atoms selected.\n",
-			  base[0].code>>24,base[0].code>>16,
-			  base[0].code>>8,base[0].code&0xFF,base[1].text,c);
+	 printf("SelectorSelect1:  %d atoms selected.\n",c);
   return(ok);
 }
 /*========================================================================*/
@@ -1124,7 +1124,7 @@ int SelectorSelect2(EvalElem *base)
   float comp1;
   AtomInfoType *at1;
   SelectorType *I=&Selector;
-  base->type=SELE_LIST;
+  base->type=STYP_LIST;
   base->sele=Alloc(int,I->NAtom);
   ErrChkPtr(base->sele);
   for(a=0;a<I->NAtom;a++) {
@@ -1132,24 +1132,24 @@ int SelectorSelect2(EvalElem *base)
   }
   switch(base->code)
 	 {
-	 case 'BVLx':
-      oper=WordChoose(AtOper,base[1].text,4,I->IgnoreCase);
+	 case SELE_BVLx:
+      oper=WordKey(AtOper,base[1].text,4,I->IgnoreCase);
       if(!oper)
         ok=ErrMessage("Selector","Invalid Operator.");
       if(ok) {
         switch(oper) {
-        case 'GTHN':
-        case 'LTHN':
-        case 'EQAL':
+        case SCMP_GTHN:
+        case SCMP_LTHN:
+        case SCMP_EQAL:
           if (sscanf(base[2].text,"%f",&comp1)!=1) 
             ok=ErrMessage("Selector","Invalid Number");
           break;
         }
         if(ok) {
           switch(oper) {
-          case 'GTHN':
+          case SCMP_GTHN:
             switch(base->code) {
-            case 'BVLx':
+            case SELE_BVLx:
               for(a=0;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->b>comp1) {
@@ -1162,9 +1162,9 @@ int SelectorSelect2(EvalElem *base)
               break;
             }
             break;
-          case 'LTHN':
+          case SCMP_LTHN:
             switch(base->code) {
-            case 'BVLx':
+            case SELE_BVLx:
               for(a=0;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(at1->b<comp1) {
@@ -1177,9 +1177,9 @@ int SelectorSelect2(EvalElem *base)
               break;
             }
             break;
-          case 'EQAL':
+          case SCMP_EQAL:
             switch(base->code) {
-            case 'BVLx':
+            case SELE_BVLx:
               for(a=0;a<I->NAtom;a++) {
                 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
                 if(fabs(at1->b-comp1)<0.0001) {
@@ -1199,9 +1199,7 @@ int SelectorSelect2(EvalElem *base)
     }
   
   if(DebugSelector&DebugState)
-	 printf("SelectorSelect2: %c%c%c%c %s: %d atoms selected.\n",
-			  base[0].code>>24,base[0].code>>16,
-			  base[0].code>>8,base[0].code&0xFF,base[1].text,c);
+	 printf("SelectorSelect2: %d atoms selected.\n",c);
   return(ok);
 }
 /*========================================================================*/
@@ -1213,10 +1211,10 @@ int SelectorLogic1(EvalElem *base)
   SelectorType *I=&Selector;
   base[0].sele=base[1].sele;
   base[1].sele=NULL;
-  base[0].type=SELE_LIST;
+  base[0].type=STYP_LIST;
   switch(base->code)
 	 {
-	 case 'NOT1':
+	 case SELE_NOT1:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 base[0].sele[a] = ! base[0].sele[a];
@@ -1224,7 +1222,7 @@ int SelectorLogic1(EvalElem *base)
 				c++;
 		  }
 		break;
-	 case 'BYR1': /* grossly inefficient */
+	 case SELE_BYR1: /* grossly inefficient */
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(base[0].sele[a]) 
@@ -1246,9 +1244,7 @@ int SelectorLogic1(EvalElem *base)
 		break;
 	 }
   if(DebugSelector&DebugState)
-	 printf("SelectorLogic1: %c%c%c%c: %d atoms selected.\n",
-			  base[0].code>>24,base[0].code>>16,
-			  base[0].code>>8,base[0].code&0xFF,c);
+	 printf("SelectorLogic1: %d atoms selected.\n",c);
   return(1);
 }
 /*========================================================================*/
@@ -1261,21 +1257,21 @@ int SelectorLogic2(EvalElem *base)
 
   switch(base[1].code)
 	 {
-	 case 'OR_2':
+	 case SELE_OR_2:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 base[0].sele[a] = base[0].sele[a] || base[2].sele[a];
 			 if(base[0].sele[a]) c++;
 		  }
 		break;
-	 case 'AND2':
+	 case SELE_AND2:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 base[0].sele[a] = base[0].sele[a] && base[2].sele[a];
 			 if(base[0].sele[a]) c++;
 		  }
 		break;
-	 case 'IN_2':
+	 case SELE_IN_2:
 		for(a=0;a<I->NAtom;a++)
 		  {
 			if(base[0].sele[a]) {
@@ -1298,9 +1294,7 @@ int SelectorLogic2(EvalElem *base)
 	 }
   FreeP(base[2].sele);
   if(DebugSelector&DebugState)
-	 printf("SelectorLogic2: %c%c%c%c: %d atoms selected.\n",
-			  base[1].code>>24,base[1].code>>16,
-			  base[1].code>>8,base[1].code&0xFF,c);
+	 printf("SelectorLogic2: %d atoms selected.\n",c);
   return(1);
 }
 /*========================================================================*/
@@ -1343,7 +1337,7 @@ int *SelectorEvaluate(WordType *word)
 				  depth++;
 				  e=Stack+depth;
 				  e->level=level;
-				  e->type=SELE_VALU;
+				  e->type=STYP_VALU;
 				  strcpy(e->text,word[c]);
               if((e->text[0]==34)||(e->text[0]==39)) { /* remove surrounding quotes if any */
                 strcpy(e->text,word[c]+1);
@@ -1362,41 +1356,40 @@ int *SelectorEvaluate(WordType *word)
 				  depth++;
 				  e=Stack+depth;
 				  e->level=level;
-				  e->type=SELE_PVAL;
+				  e->type=STYP_PVAL;
 				  strcpy(e->text,word[c]);
 				  valueFlag++;
 				} 
 			 else
 				{
-				  code=WordChoose(Keyword,word[c],4,I->IgnoreCase);
+				  code=WordKey(Keyword,word[c],4,I->IgnoreCase);
+              if(DebugState&DebugSelector)
+                printf("code %x\n",code);
 				  if(code) 
 					 { /* this is a known operation */
 						depth++;
 						e=Stack+depth;
 						e->level=level;
 						e->code=code;
-						switch((e->code)&0xFF)
+                  e->type=(e->code&0xF);
+						switch(e->type)
 						  {
-						  case 'z':
-							 e->type=SELE_SEL0;
+						  case STYP_SEL0:
 							 valueFlag=0;
 							 break;
-						  case 's':
-							 e->type=SELE_SEL1;
+						  case STYP_SEL1:
 							 valueFlag=1;
 							 break;
-						  case 'x':
-							 e->type=SELE_SEL2;
+						  case STYP_SEL2:
 							 valueFlag=2;
 							 break;
-						  case '1':
-							 e->type=SELE_OPR1;
+						  case STYP_OPR1:
+							 valueFlag=0;
 							 break;
-						  case '2':
-							 e->type=SELE_OPR2;
+						  case STYP_OPR2:
+							 valueFlag=0;
 							 break;
-						  case '_':
-							 e->type=SELE_PRP1;
+                    case STYP_PRP1: 
 							 valueFlag=-1;
 							 break;
                     }
@@ -1404,8 +1397,8 @@ int *SelectorEvaluate(WordType *word)
 						depth++;
 						e=Stack+depth;
 						e->level=level;
-						e->code='SELs';
-                  e->type=SELE_SEL1;
+						e->code=SELE_SELs;
+                  e->type=STYP_SEL1;
                   valueFlag=1;
                   c--;
                 } else {
@@ -1420,7 +1413,7 @@ int *SelectorEvaluate(WordType *word)
 				opFlag=false;
 				if(ok)
 				  if(depth>0)
-					 if((!opFlag)&&(Stack[depth].type==SELE_SEL0))
+					 if((!opFlag)&&(Stack[depth].type==STYP_SEL0))
 						{
 						  opFlag=true;
 						  ok=SelectorSelect0(&Stack[depth]);
@@ -1429,15 +1422,15 @@ int *SelectorEvaluate(WordType *word)
 				  if(depth>1)
 					 if(Stack[depth].level==Stack[depth-1].level)
 						{
-						  if(ok&&(!opFlag)&&(Stack[depth-1].type==SELE_SEL1)
-							  &&(Stack[depth].type==SELE_VALU))
+						  if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_SEL1)
+							  &&(Stack[depth].type==STYP_VALU))
 							 { /* 1 argument selection operator */
 								opFlag=true;
 								ok=SelectorSelect1(&Stack[depth-1]);
 								depth--;
 							 }
-						  if(ok&&(!opFlag)&&(Stack[depth-1].type==SELE_OPR1)
-							  &&(Stack[depth].type==SELE_LIST))
+						  if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR1)
+							  &&(Stack[depth].type==STYP_LIST))
 							 { /* 1 argument logical operator */
 								opFlag=true;
 								ok=SelectorLogic1(&Stack[depth-1]);
@@ -1449,23 +1442,23 @@ int *SelectorEvaluate(WordType *word)
 					 if((Stack[depth].level==Stack[depth-1].level)&&
 						 (Stack[depth].level==Stack[depth-2].level))
 						{
-						  if(ok&&(!opFlag)&&(Stack[depth-1].type==SELE_OPR2)
-							  &&(Stack[depth].type==SELE_LIST)
-							  &&(Stack[depth-2].type==SELE_LIST))
+						  if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR2)
+							  &&(Stack[depth].type==STYP_LIST)
+							  &&(Stack[depth-2].type==STYP_LIST))
 							 { /* 2 argument logical operator */
 								ok=SelectorLogic2(&Stack[depth-2]);
 								depth-=2;
 							 }
-						  if(ok&&(!opFlag)&&(Stack[depth-1].type==SELE_PRP1)
-							  &&(Stack[depth].type==SELE_PVAL)
-							  &&(Stack[depth-2].type==SELE_LIST))
+						  if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_PRP1)
+							  &&(Stack[depth].type==STYP_PVAL)
+							  &&(Stack[depth-2].type==STYP_LIST))
 							 { /* 2 argument logical operator */
 								ok=SelectorModulate1(&Stack[depth-2]);
 								depth-=2;
 							 }
-						  if(ok&&(!opFlag)&&(Stack[depth-2].type==SELE_SEL2)
-							  &&(Stack[depth-1].type==SELE_VALU)
-							  &&(Stack[depth].type==SELE_VALU))
+						  if(ok&&(!opFlag)&&(Stack[depth-2].type==STYP_SEL2)
+							  &&(Stack[depth-1].type==STYP_VALU)
+							  &&(Stack[depth].type==STYP_VALU))
 							 { /* 2 argument value operator */
 								ok=SelectorSelect2(&Stack[depth-2]);
 								depth-=2;
@@ -1477,10 +1470,10 @@ int *SelectorEvaluate(WordType *word)
 						 (Stack[depth].level==Stack[depth-2].level)&&
 						 (Stack[depth].level==Stack[depth-3].level))
 						{
-						  if(ok&&(!opFlag)&&(Stack[depth-3].type==SELE_SEL3)
-							  &&(Stack[depth].type==SELE_VALU)
-							  &&(Stack[depth-1].type==SELE_VALU)
-							  &&(Stack[depth-2].type==SELE_VALU))
+						  if(ok&&(!opFlag)&&(Stack[depth-3].type==STYP_SEL3)
+							  &&(Stack[depth].type==STYP_VALU)
+							  &&(Stack[depth-1].type==STYP_VALU)
+							  &&(Stack[depth-2].type==STYP_VALU))
 							 { /* 2 argument logical operator */
                         /*								ok=SelectorSelect3(&Stack[depth-3]);*/
 								depth-=3;
@@ -1496,7 +1489,7 @@ int *SelectorEvaluate(WordType *word)
 		ok=ErrMessage("Selector","Malformed selection.");		
       else if(depth!=1)
         ok=ErrMessage("Selector","Malformed selection.");
-      else if(Stack[depth].type!=SELE_LIST)
+      else if(Stack[depth].type!=STYP_LIST)
         ok=ErrMessage("Selector","Invalid selection.");
       else
         result=Stack[depth].sele; /* return the selection list */
@@ -1504,7 +1497,7 @@ int *SelectorEvaluate(WordType *word)
   if(!ok)
 	 {
 		for(a=0;a<depth;a++)
-		  if(Stack[a].type==SELE_LIST)
+		  if(Stack[a].type==STYP_LIST)
 			 FreeP(Stack[a].sele);
 		depth=0;
 		q=line;

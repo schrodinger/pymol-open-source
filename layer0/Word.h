@@ -20,12 +20,16 @@ Z* -------------------------------------------------------------------
 
 typedef char WordType[WordLength];
 
+typedef struct {
+  WordType word;
+  int value;
+} WordKeyValue;
+
 int WordMatch(char *p,char *q,int ignCase); 
 int WordMatchComma(char *p,char *q,int ignCase); 
 /* (<0) exact match, (>0) inexact match, =0 no match */
 
 int WordCompare(char *p,char *q,int ignCase);
-unsigned int WordChoose(WordType *list, char *word,int minMatch,int ignCase);
 int WordIndex(WordType *list,char *word,int minMatch,int ignCase);
-
+int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase);
 #endif
