@@ -268,7 +268,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   int h,k,l;
   int *i;
   int *list;
-  float *v;
+  float *v,tmp_f;
   int firstFlag;
   Vector3f diagonal;
 
@@ -350,6 +350,22 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 			 }
 		}
 	 }
+
+  /* sanity check */
+  for(a=0;a<3;a++) {
+    if(I->Min[a]>I->Max[a]) {
+      tmp_f=I->Min[a];
+      I->Max[a]=I->Min[a];
+      I->Min[a]=tmp_f;
+    }
+  }
+     
+  if(DebugState&DebugMap) {
+    printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
+           I->Min[0],I->Min[1],I->Min[2],
+           I->Max[0],I->Max[1],I->Max[2]);
+  }
+
   for(c=0;c<3;c++)
 	 {
 		I->Min[c]-=MapSafety;
@@ -374,6 +390,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   I->Dim[2]=(diagonal[2]/I->Div)+1+(2*MapBorder);
 
   if(DebugState&DebugMap) {
+    printf(" MapSetup: nVert: %d\n",nVert);
     printf(" MapSetup: I->Div: %8.3f\n",I->Div);
     printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
            I->Min[0],I->Min[1],I->Min[2],

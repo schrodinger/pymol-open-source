@@ -3344,7 +3344,7 @@ PYMOL API
             ok = 0
          if len(arg)==1:
             oname = re.sub("[^/]*\/","",arg[0])
-            oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$",
+            oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.r3d$",
                            "",oname)
          else:
             oname = string.strip(arg[1])
