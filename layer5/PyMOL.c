@@ -366,9 +366,10 @@ int PyMOL_Idle(CPyMOL *I)
 
   if(ControlIdling(G)) {
     ExecutiveSculptIterateAll(G);
-	 SceneIdle(G); 
     did_work = true;
   }
+
+  SceneIdle(G); 
 
   if(SceneRovingCheckDirty(G)) {
     SceneRovingUpdate(G);

@@ -55,7 +55,6 @@ Z* -------------------------------------------------------------------
 #define cButModeSeleAdd  32
 #define cButModeSeleSub  33
 
-
 #define cButModeCount    34
 
 /* remaineder only used in scene... */

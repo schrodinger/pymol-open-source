@@ -26,7 +26,8 @@ Z* -------------------------------------------------------------------
 #include "Ortho.h"
 
 
-void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,char *sele)
+void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
+                  char *name,char *sele)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
@@ -36,7 +37,7 @@ void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,c
   list = PyObject_CallMethod(P_menu,name,"s",sele); 
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
-    PopUpNew(G,x,y,last_x,last_y,list,NULL);
+    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
     Py_DECREF(list);
   }
   PUnblock();
@@ -44,7 +45,8 @@ void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,c
 
 }
 
-void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,char *sele1,char *sele2)
+void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
+                      char *name,char *sele1,char *sele2)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
@@ -54,14 +56,15 @@ void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *na
   list = PyObject_CallMethod(P_menu,name,"ss",sele1,sele2); 
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
-    PopUpNew(G,x,y,last_x,last_y,list,NULL);
+    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
     Py_DECREF(list);
   }
   PUnblock();
 #endif
 }
 
-void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name)
+void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
+                      char *name)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
@@ -71,7 +74,7 @@ void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *na
   list = PyObject_CallMethod(P_menu,name,"");
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
-    PopUpNew(G,x,y,last_x,last_y,list,NULL);
+    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
     Py_DECREF(list);
   }
   PUnblock();

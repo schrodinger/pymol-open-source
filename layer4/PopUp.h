@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Block.h"
 
 
-Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,PyObject *list,Block *parent);
+Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
+                int passive, PyObject *list,Block *parent);
 
 #endif

@@ -7019,15 +7019,15 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case 0:
                   switch(rec->type) {
                   case cExecAll:
-                    MenuActivate(G,mx,my,x,y,"all_action",rec->name);
+                    MenuActivate(G,mx,my,x,y,false,"all_action",rec->name);
                     break;
                   case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,"sele_action",rec->name);
+                    MenuActivate(G,mx,my,x,y,false,"sele_action",rec->name);
                     break;
                   case cExecObject:
                     switch(rec->obj->type) {
                     case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,"mol_action",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"mol_action",rec->obj->Name);
                       break;
                     case cObjectSurface:
                     case cObjectMesh:
@@ -7035,13 +7035,13 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectMap:
                     case cObjectCGO:
                     case cObjectCallback:
-                      MenuActivate(G,mx,my,x,y,"simple_action",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"simple_action",rec->obj->Name);
                       break;
                     case cObjectSlice:
-                      MenuActivate(G,mx,my,x,y,"slice_action",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"slice_action",rec->obj->Name);
                       break;
                     case cObjectGadget:
-                      MenuActivate(G,mx,my,x,y,"ramp_action",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"ramp_action",rec->obj->Name);
                       break;
                     }
                     break;
@@ -7050,31 +7050,31 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case 1:
                   switch(rec->type) {
                   case cExecAll:
-                    MenuActivate(G,mx,my,x,y,"mol_show",cKeywordAll);
+                    MenuActivate(G,mx,my,x,y,false,"mol_show",cKeywordAll);
                     break;
                   case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,"mol_show",rec->name);
+                    MenuActivate(G,mx,my,x,y,false,"mol_show",rec->name);
                     break;
                   case cExecObject:
                     switch(rec->obj->type) {
                     case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,"mol_show",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"mol_show",rec->obj->Name);
                       break;
                     case cObjectCGO:
-                      MenuActivate(G,mx,my,x,y,"cgo_show",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"cgo_show",rec->obj->Name);
                       break;
                     case cObjectDist:
-                      MenuActivate(G,mx,my,x,y,"dist_show",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"dist_show",rec->obj->Name);
                       break;
                     case cObjectMap:
-                      MenuActivate(G,mx,my,x,y,"simple_show",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"simple_show",rec->obj->Name);
                       break;
                     case cObjectSurface:
                     case cObjectMesh:
-                      MenuActivate(G,mx,my,x,y,"mesh_show",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"mesh_show",rec->obj->Name);
                       break;
                     case cObjectSlice:
-                      MenuActivate(G,mx,my,x,y,"slice_show",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"slice_show",rec->obj->Name);
                       break;
 
                     }
@@ -7084,31 +7084,31 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case 2:
                   switch(rec->type) {
                   case cExecAll:
-                    MenuActivate(G,mx,my,x,y,"mol_hide",cKeywordAll);
+                    MenuActivate(G,mx,my,x,y,false,"mol_hide",cKeywordAll);
                     break;
                   case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,"mol_hide",rec->name);
+                    MenuActivate(G,mx,my,x,y,false,"mol_hide",rec->name);
                     break;
                   case cExecObject:
                     switch(rec->obj->type) {
                     case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,"mol_hide",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"mol_hide",rec->obj->Name);
                       break;
                     case cObjectCGO:
-                      MenuActivate(G,mx,my,x,y,"cgo_hide",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"cgo_hide",rec->obj->Name);
                       break;
                     case cObjectDist:
-                      MenuActivate(G,mx,my,x,y,"dist_hide",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"dist_hide",rec->obj->Name);
                       break;
                     case cObjectMap:
-                      MenuActivate(G,mx,my,x,y,"simple_hide",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"simple_hide",rec->obj->Name);
                       break;
                     case cObjectSurface:
                     case cObjectMesh:
-                      MenuActivate(G,mx,my,x,y,"mesh_hide",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"mesh_hide",rec->obj->Name);
                       break;
                     case cObjectSlice:
-                      MenuActivate(G,mx,my,x,y,"slice_hide",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"slice_hide",rec->obj->Name);
                       break;
 
                     }
@@ -7118,15 +7118,15 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case 3:
                   switch(rec->type) {
                   case cExecAll:
-                    MenuActivate(G,mx,my,x,y,"mol_labels","(all)");
+                    MenuActivate(G,mx,my,x,y,false,"mol_labels","(all)");
                     break;
                   case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,"mol_labels",rec->name);
+                    MenuActivate(G,mx,my,x,y,false,"mol_labels",rec->name);
                     break;
                   case cExecObject:
                     switch(rec->obj->type) {
                     case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,"mol_labels",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"mol_labels",rec->obj->Name);
                       break;
                     case cObjectDist:
                       break;
@@ -7143,22 +7143,22 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   switch(rec->type) {
                   case cExecAll:
                   case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,"mol_color",rec->name);
+                    MenuActivate(G,mx,my,x,y,false,"mol_color",rec->name);
                     break;
                   case cExecObject:
                     switch(rec->obj->type) {
                     case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,"mol_color",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"mol_color",rec->obj->Name);
                       break;
                     case cObjectDist:
                     case cObjectMap:
                     case cObjectSurface:
                     case cObjectCGO:
                     case cObjectMesh:
-                      MenuActivate(G,mx,my,x,y,"general_color",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"general_color",rec->obj->Name);
                       break;
                     case cObjectSlice:
-                      MenuActivate(G,mx,my,x,y,"slice_color",rec->obj->Name);
+                      MenuActivate(G,mx,my,x,y,false,"slice_color",rec->obj->Name);
                       break;
                     }
                     break;

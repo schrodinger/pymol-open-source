@@ -367,7 +367,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
         char name[ObjNameMax];
 
         if(ExecutiveGetActiveSeleName(G,name, false) && col->inverse) {
-          MenuActivate2Arg(G,x,y+16,x,y,"pick_option",name,name);
+          MenuActivate2Arg(G,x,y+16,x,y,false,"pick_option",name,name);
         } else if( (obj = ExecutiveFindObjectMoleculeByName(G,row->name) )) {
           OrthoLineType buffer;
           {
@@ -390,7 +390,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
                 SeekerBuildSeleFromAtomList(G,row->name,atom_list,cTempSeekerSele,true);
                 if(logging) SelectorLogSele(G,cTempSeekerSele);
                 
-                MenuActivate2Arg(G,x,y+16,x,y,"seq_option",buffer,cTempSeekerSele); 
+                MenuActivate2Arg(G,x,y+16,x,y,false,"seq_option",buffer,cTempSeekerSele); 
                 
               }
             }

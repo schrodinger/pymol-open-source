@@ -35,6 +35,9 @@ if __name__=='pymol.controlling':
       'double_left' : 4,
       'double_middle' : 5,
       'double_right' : 6,
+      'single_left' : 7,
+      'single_middle' : 8,
+      'single_right' : 9
       }
    button_sc = Shortcut(button_code.keys())
 
@@ -140,6 +143,9 @@ if __name__=='pymol.controlling':
                                  ('double_left','none','menu'),
                                  ('double_middle','none','cent'),
                                  ('double_right','none', 'pkat'),
+                                 ('single_left','none','+/-'),
+                                 ('single_middle','none','cent'),
+                                 ('single_right','none', 'menu'),
                                  ],
 
       'three_button_editing': [ ('l','none','rota'),
@@ -161,6 +167,9 @@ if __name__=='pymol.controlling':
                                 ('double_left','none','menu'),
                                 ('double_middle','none','cent'),
                                 ('double_right','none', 'pkat'),
+                                ('single_left','none','pkat'),
+                                ('single_middle','none','cent'),
+                                ('single_right','none', 'pkbd'),
                                 ],
 
       'two_button_viewing' : [ ('l','none','rota'),
@@ -182,6 +191,9 @@ if __name__=='pymol.controlling':
                                ('double_left','none','menu'),
                                ('double_middle','none','none'),                               
                                ('double_right','none','cent'),
+                               ('single_left','none','pkat'),
+                               ('single_middle','none','none'),
+                               ('single_right','none', 'menu'),
                                
                                ],
       'two_button_selecting' : [ ('l','none','rota'),
@@ -203,6 +215,8 @@ if __name__=='pymol.controlling':
                                ('double_left','none','menu'),
                                ('double_middle','none','none'),                               
                                ('double_right','none','cent'),
+                               ('single_left','none','+/-'),
+                               ('single_right','none', 'menu'),
                                  
                                ],
       'two_button_editing' : [ ('l','none','rota'),
@@ -224,7 +238,9 @@ if __name__=='pymol.controlling':
                                ('double_left','none','menu'),
                                ('double_middle','none','none'),                               
                                ('double_right','none','cent'),
-                               
+                               ('single_left','none','pkat'),
+                               ('single_middle','none','none'),                               
+                               ('single_right','none','menu'),                               
                                ],
       }
 

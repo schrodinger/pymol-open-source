@@ -374,6 +374,8 @@ static void MainButton(int button,int state,int x,int y)
 
   PLockAPIAsGlut();
 
+  I->IdleMode = 0; /* restore responsiveness */
+
   if(PyMOL_GetPassive(PyMOLInstance, true)) {
     MainDrag(x,y);
   } else {
@@ -490,6 +492,8 @@ static void MainKey(unsigned char k, int x, int y)
     " MainKey: %d %d %d\n",k,x,y
     ENDFD;
   PLockAPIAsGlut();
+
+  I->IdleMode = 0; /* restore responsiveness */
 
   I->Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
 	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |

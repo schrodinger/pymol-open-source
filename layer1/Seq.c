@@ -277,7 +277,8 @@ static int SeqClick(Block *block,int button,int x,int y,int mod)
           char name[ObjNameMax];
           
           if(ExecutiveGetActiveSeleName(G,name, false)) {
-            MenuActivate2Arg(G,x,y+20,x,y,"pick_option",name,name);
+            MenuActivate2Arg(G,x,y+20,x,y,false,
+                             "pick_option",name,name);
           }
         }
         break;

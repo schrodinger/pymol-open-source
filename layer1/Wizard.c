@@ -482,7 +482,7 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
       if(menuList&&(menuList!=Py_None)) {
         int my = I->Block->rect.top-(cWizardTopMargin + a*LineHeight) - 2;
         
-        PopUpNew(G,x,my,x,y,menuList,NULL);
+        PopUpNew(G,x,my,x,y,false,menuList,NULL);
       }
       Py_XDECREF(menuList);
       PUnblock();
