@@ -45,7 +45,8 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,
 int SelectorGetSeleNCSet(int sele);
 void SelectorCreateObjectMolecule(int sele,char *name,int target_state,int state);
 int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
-                            char *fragPref,char *compName);
+                            int sele3,int sele4,
+                            char *fragPref,char *compName,int *bondMode);
 ObjectMolecule *SelectorGetSingleObjectMolecule(int sele);
 void SelectorUpdateObjectSele(ObjectMolecule *obj);
 void SelectorDeletePrefixSet(char *pref);
@@ -84,5 +85,7 @@ int SelectorPurgeObjectMembers(ObjectMolecule *obj);
 void SelectorDefragment(void);
 void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id);
 void SelectorGetUniqueTmpName(char *name_buffer);
+int SelectorIsAtomBondedToSele(ObjectMolecule *obj,int sele1atom,int sele2);
+void SelectorComputeFragPos(ObjectMolecule *obj,int state,int n_frag, char *prefix,float **vla);
 
 #endif

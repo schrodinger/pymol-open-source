@@ -22,12 +22,15 @@ Z* -------------------------------------------------------------------
 
 #define cEditorSele1 "pk1"
 #define cEditorSele2 "pk2"
+#define cEditorSele3 "pk3"
+#define cEditorSele4 "pk4"
 #define cEditorFragPref "pkfrag"
 #define cEditorBasePref "_pkbase"
 #define cEditorRes    "pkresi"
 #define cEditorChain  "pkchain"
 #define cEditorObject "pkobject"
 #define cEditorComp   "pkmol"
+#define cEditorLink   "pklink"
 
 void EditorInit(void);
 int EditorActive(void); 
@@ -53,5 +56,9 @@ int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode);
 
 PyObject *EditorAsPyList(void);
 int EditorFromPyList(PyObject *list);
-
+void EditorGetNextMultiatom(char *name);
+int EditorIsObjectNotCurrent(ObjectMolecule *obj);
+int EditorGetSinglePicked(char *name);
+int EditorIsBondMode(void);
+int EditorDeselectIfSelected(int index,int update);
 #endif

@@ -25,6 +25,8 @@ class Mutagenesis(Wizard):
    
    def __init__(self):
 
+      cmd.unpick()
+      
       Wizard.__init__(self)
 
       self.library = io.pkl.fromFile(os.environ['PYMOL_PATH']+

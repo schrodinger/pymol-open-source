@@ -20,6 +20,7 @@ class Distance(Wizard):
    
    def __init__(self):
 
+      cmd.unpick();
       Wizard.__init__(self)
       
       self.status = 0 # 0 no atoms selections, 1 atom selected

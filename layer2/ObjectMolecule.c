@@ -4683,6 +4683,8 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
 int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele)
 {
   int a,s;
+  if(sele<0)
+    return(-1);
   for(a=0;a<I->NAtom;a++) {
     s=I->AtomInfo[a].selEntry;
     if(SelectorIsMember(s,sele))

@@ -37,6 +37,22 @@ typedef struct CScrollBar {
   int StartPos;
 } CScrollBar;
 
+void ScrollBarMaxOut(struct CScrollBar *I)
+{
+  I->Value = I->ValueMax;
+}
+
+int ScrollBarIsMaxed(struct CScrollBar *I)
+{
+  if(I->ValueMax>0.0F) {
+    if(I->Value==I->ValueMax)
+      return true;
+    else
+      return false;
+  } else 
+    return false;
+}
+
 void ScrollBarUpdate(struct CScrollBar *I)
 {
   int range;
@@ -267,7 +283,8 @@ struct CScrollBar *ScrollBarNew(int horizontal)
   I->BarColor[2]=0.5F;
   I->ListSize = 10;
   I->DisplaySize = 7;
-  I->Value = 2.0;
+  I->Value = 0.0F;
+  I->ValueMax = 0.0F;
   return(I);
 }
 

@@ -273,7 +273,7 @@ SEE ALSO
          unlock()
 
 
-   def bond(atom1="(lb)",atom2="(rb)",order=1,edit=1):
+   def bond(atom1="(pk1)",atom2="(pk2)",order=1,edit=1):
       '''
 DESCRIPTION
 
@@ -282,7 +282,7 @@ DESCRIPTION
 
 USAGE
 
-   bond [atom1,atom2 [,order]]
+   bond [atom1, atom2 [,order]]
 
 PYMOL API
 
