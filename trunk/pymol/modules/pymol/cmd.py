@@ -740,7 +740,7 @@ INTERNAL
          'q': at[9],
          'b': at[10],
          'segi': at[11]}
-   exec at[0] in _cmd.get_globals(),ns
+   exec at[0] in pymol.__dict__,ns
    type = string.upper(string.strip(ns['type']))
    type = type[:6]
    name = string.upper(string.strip(ns['name']))
