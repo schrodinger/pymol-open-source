@@ -1504,10 +1504,11 @@ int RayTraceThread(CRayThreadInfo *T)
                               fc[0]	= ffact*T->bkrd[0]+fc[0]*ffact1m;
                               fc[1]	= ffact*T->bkrd[1]+fc[1]*ffact1m;
                               fc[2]	= ffact*T->bkrd[2]+fc[2]*ffact1m;
+
                             }
                           else 
                             {
-                              fc[3]=ffact1m;
+                              fc[3] = ffact1m*(_1 - r1.prim->trans);
                             }
                           
                           if(!pass)
@@ -1529,7 +1530,11 @@ int RayTraceThread(CRayThreadInfo *T)
                               fc[1]	+= first_excess;
                               fc[2]	+= first_excess;
                             }
-                          fc[3]	= _1;
+                          if(opaque_back) {
+                            fc[3]	= _1;
+                          } else {
+                            fc[3] = _1 - r1.prim->trans;
+                          }
                         }
                     }
                   else if(pass) 

@@ -18,7 +18,42 @@ if __name__=='pymol.querying':
 
    import cmd
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
-   from cmd import _feedback,fb_module,fb_mask
+   from cmd import _feedback,fb_module,fb_mask,is_list
+
+   def get_symmetry(selection="(all)",quiet=1):
+      '''
+DESCRIPTION
+
+   "get_symmetry" can be used to obtain the crystal
+   and spacegroup parameters for a molecule
+   (FUTURE - map object - FUTURE)
+
+USAGE
+
+   get_symmetry object-name-or-selection
+
+PYMOL API
+
+   cmd.get_symmetry(string selection)
+
+
+      '''
+      r = 0
+      selection = selector.process(selection)
+      try:
+         lock()
+         r = _cmd.get_symmetry(str(selection))
+         if not quiet:
+            if(is_list(r)):
+               if(len(r)):
+                  print " get_symmetry: A     = %7.3f B    = %7.3f C     = %7.3f"%tuple(r[0:3])
+                  print " get_symmetry: Alpha = %7.3f Beta = %7.3f Gamma = %7.3f"%tuple(r[3:6])
+                  print " get_symmetry: SpaceGroup = %s"%r[6]
+               else:
+                  print " get_symmetry: No symmetry defined."
+      finally:
+         unlock()
+      return r
 
    def get_title(object,state,quiet=1):
       '''

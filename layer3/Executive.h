@@ -167,6 +167,8 @@ int ExecutiveReinitialize(void);
 char *ExecutiveFindBestNameMatch(char *name);
 int ExecutiveSetVisFromPyDict(PyObject *dict);
      PyObject *ExecutiveGetVisAsPyDict(void);
+int ExecutiveGetCrystal(char *sele,float *a,float *b,float *c,
+                        float *alpha,float *beta,float *gamma,char *sgroup,int *defined);
 
 #endif
 

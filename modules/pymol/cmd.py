@@ -1129,6 +1129,7 @@ SEE ALSO
         get_position,       \
         get_povray,         \
         get_renderer,       \
+        get_symmetry,       \
         get_title,          \
         get_type,           \
         id_atom,            \
@@ -1419,8 +1420,8 @@ SEE ALSO
       'get_chains'    : [ get_chains        , 0 , 0 , ''  , parsing.STRICT ],
       'get_dihedral'  : [ get_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
       'get_extent'    : [ get_extent        , 0 , 0 , ''  , parsing.STRICT ],
-      'get_pdbstr'    : [ get_pdbstr        , 0 , 0 , ''  , parsing.STRICT ],      
-      'get_position'  : [ get_position      , 0 , 0 , ''  , parsing.STRICT ],      
+      'get_position'  : [ get_position      , 0 , 0 , ''  , parsing.STRICT ],
+      'get_symmetry'  : [ get_symmetry      , 0 , 0 , ''  , parsing.STRICT ],
       'get_title'     : [ get_title         , 0 , 0 , ''  , parsing.STRICT ],   
       'get_type'      : [ get_type          , 0 , 0 , ''  , parsing.STRICT ],
       'get_view'      : [ get_view          , 0 , 0 , ''  , parsing.STRICT ],
@@ -1586,24 +1587,26 @@ SEE ALSO
 
    help_only = {  
       'api'           : [ helping.api          , 0 , 0 , '' , 0 ],
-      'selections'    : [ helping.selections   , 0 , 0 , '' , 0 ],
-      'keyboard'      : [ helping.keyboard     , 0 , 0 , '' , 0 ],
-      'mouse'         : [ helping.mouse        , 0 , 0 , '' , 0 ],
-      'examples'      : [ helping.examples     , 0 , 0 , '' , 0 ],
-      'read_molstr'   : [ read_molstr           , 0 , 0 , '' , 0 ],
-      'release'       : [ helping.release      , 0 , 0 , '' , 0 ],   
-      'launching'     : [ helping.launching    , 0 , 0 , '' , 0 ],
-      'load_model'    : [ load_model            , 0 , 0 , '' , 0 ],
-      'movies'        : [ helping.movies       , 0 , 0 , '' , 0 ],
       'editing'       : [ helping.editing      , 0 , 0 , '' , 0 ],  
       'edit_keys'     : [ helping.edit_keys    , 0 , 0 , '' , 0 ],
-      'povray'        : [ helping.povray       , 0 , 0 , '' , 0 ],
+      'examples'      : [ helping.examples     , 0 , 0 , '' , 0 ],
+      'faster'        : [ helping.faster       , 0 , 0 , '' , 0 ],
+      'get_pdbstr'    : [ get_pdbstr        , 0 , 0 , ''  , 0 ],
       'get_names'     : [ get_names             , 0 , 0 , '' , 0 ],
       'get_type'      : [ get_type              , 0 , 0 , '' , 0 ],
-      'faster'        : [ helping.faster       , 0 , 0 , '' , 0 ],
+      'keyboard'      : [ helping.keyboard     , 0 , 0 , '' , 0 ],
+      'launching'     : [ helping.launching    , 0 , 0 , '' , 0 ],
+      'load_model'    : [ load_model            , 0 , 0 , '' , 0 ],
+      'mouse'         : [ helping.mouse        , 0 , 0 , '' , 0 ],
+      'movies'        : [ helping.movies       , 0 , 0 , '' , 0 ],
+      'python_help'   : [ python_help          , 0 , 0 , '' , 0 ],        
+      'povray'        : [ helping.povray       , 0 , 0 , '' , 0 ],
+      'read_molstr'   : [ read_molstr           , 0 , 0 , '' , 0 ],
+      'read_pdbstr'   : [ read_pdbstr           , 0 , 0 , '' , 0 ],      
+      'release'       : [ helping.release      , 0 , 0 , '' , 0 ],   
+      'selections'    : [ helping.selections   , 0 , 0 , '' , 0 ],
       'sync'          : [ sync                 , 0 , 0 , '' , 0],
       'transparency'  : [ helping.transparency , 0 , 0 , '' , 0 ],
-      'python_help'   : [ python_help          , 0 , 0 , '' , 0 ],        
       '@'             : [ helping.at_sign      , 0 , 0 , '' , 0 ],  
    }
 

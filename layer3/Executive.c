@@ -1015,6 +1015,44 @@ CObject **ExecutiveSeleToObjectVLA(char *s1)
   return(result);
 }
 
+int ExecutiveGetCrystal(char *sele,float *a,float *b,float *c,
+                         float *alpha,float *beta,float *gamma,
+                        char *sgroup,int *defined)
+{
+  int ok=true;
+
+  ObjectMolecule *objMol;
+  int sele0;
+  sele0 = SelectorIndexByName(sele);
+  *defined = false;
+  if(sele0<0) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "Error: invalid selection.\n"
+      ENDFB;
+    ok=false;
+  } else {
+    objMol = SelectorGetSingleObjectMolecule(sele0);
+    if(!objMol) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "Error: selection must refer to exactly one object.\n"
+        ENDFB;
+    ok=false;
+    } else {
+      if(objMol->Symmetry&&objMol->Symmetry->Crystal) {
+        *a = objMol->Symmetry->Crystal->Dim[0];
+        *b = objMol->Symmetry->Crystal->Dim[1];
+        *c = objMol->Symmetry->Crystal->Dim[2];
+        *alpha = objMol->Symmetry->Crystal->Angle[0];
+        *beta = objMol->Symmetry->Crystal->Angle[1];
+        *gamma = objMol->Symmetry->Crystal->Angle[2];
+        UtilNCopy(sgroup, objMol->Symmetry->SpaceGroup,sizeof(WordType));
+        *defined = true;
+      }
+    }
+  }
+  return(ok);
+}
+
 int ExecutiveSetCrystal(char *sele,float a,float b,float c,
                          float alpha,float beta,float gamma,char *sgroup)
 {
@@ -1084,11 +1122,10 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
       " ExecutiveSetCrystal: no object selected\n"
       ENDFB;
   }
-if(crystal)
-     CrystalFree(crystal);
-     if(symmetry)
+  if(crystal)
+    CrystalFree(crystal);
+  if(symmetry)
     SymmetryFree(symmetry);
-  printf("executivesetsymm '%s' %d\n",sele,VLAGetSize(objVLA));
   VLAFreeP(objVLA);
   return(ok);
 }
