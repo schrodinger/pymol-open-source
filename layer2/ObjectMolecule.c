@@ -4806,7 +4806,7 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
 {
   int a;
   PRINTFD(FB_ObjectMolecule)
-    " ObjectMoleculeInvalidate: entered.\n"
+    " ObjectMoleculeInvalidate: entered. rep: %d level: %d\n",rep,level
     ENDFD;
 
   if(level>=cRepInvBonds) {
