@@ -11,7 +11,7 @@
 #--- Build for LINUX as an importable module
 #XLIB_DIR = -L/usr/X11R6/lib
 #LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
-#DEFS = -D_PYMOL_3DFX
+#DEFS = -D_PYMOL_3DFX -D_PYMOL_MODULE
 #BUILD = -shared -o modules/_pm.so
 #--- Build for unix as an importable module (SGI/IRIX)
 XLIB_DIR = -L/usr/X11R6/lib

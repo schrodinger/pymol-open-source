@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include <sys/time.h>
 #include <unistd.h>
 
+#include"MemoryDebug.h"
 #include"Base.h"
 #include"PUtils.h"
 #include"Ortho.h"
