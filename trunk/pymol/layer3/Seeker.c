@@ -853,7 +853,7 @@ static char SeekerGetAbbr(char *abbr)
     case 'H': 
       switch(abbr[2]) {
       case 'R':
-        return 'R';
+        return 'T';
         break;
       }
       break;
