@@ -234,7 +234,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_valence_default             135
 #define cSetting_surface_miserable           136
 #define cSetting_ray_opaque_background       137
-#define cSetting_transparent                 138
+#define cSetting_transparency                138
 #define cSetting_ray_texture                 139
 #define cSetting_ray_texture_settings        140
 #define cSetting_suspend_updates             141

@@ -146,7 +146,7 @@ class SettingIndex:
    valence_default       =135
    surface_miserable     =136
    ray_opaque_background =137
-   transparent           =138
+   transparency          =138
    ray_texture           =139
    ray_texture_settings  =140
    suspend_updates       =141

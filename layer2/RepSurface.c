@@ -88,7 +88,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   int *vi=I->Vis;
 
   if(ray) {
-    ray->fTransparentf(ray,SettingGet_f(I->cs->Setting,I->Obj->Setting,cSetting_transparent));
+    ray->fTransparentf(ray,SettingGet_f(I->cs->Setting,I->Obj->Setting,cSetting_transparency));
 	 c=I->NT;
     while(c--)
       {
