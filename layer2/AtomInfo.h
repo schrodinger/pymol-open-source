@@ -42,12 +42,20 @@ typedef struct AtomInfoType {
   int ludiType;
   int customType;
   int customFlag;
+  int priority;
   float b,vdw;
   int model; /* remaining items only used during selection */
   int atom; 
   int selEntry;
   int visRep[cRepCnt];
   int color;
+  int hetatm;
 } AtomInfoType;
+
+int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
+void AtomInfoAssignParameters(AtomInfoType *I);
+void AtomInfoFreeSortedIndexes(int *index,int *outdex);
+int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);
 
 #endif

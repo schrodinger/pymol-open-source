@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 void SceneInit(void);
 void SceneDone(void);
 void SceneUpdate(void);
+int SceneRenderCached(void);
 void SceneRender(Pickable *pick,int x,int y);
 void SceneSetFrame(int mode,int frame);
 int SceneGetFrame(void);
@@ -39,8 +40,9 @@ void SceneTest(void);
 void SceneIdle(void);
 void SceneFree(void);
 void SceneRay(void);
-void SceneDoRay(void);
-void SceneCopy(void);
+void SceneMakeMovieImage(void);
+void SceneCopy(int buffer);
+void SceneRay(void);
 
 void ScenePNG(char *png);
 void SceneResetMatrix(void);
@@ -61,6 +63,7 @@ void SceneObjectDel(Object *obj);
 void SceneOriginSet(float *origin,int preserve);
 void SceneWindowSphere(float *location,float radius);
 Block *SceneGetBlock(void);
+void SceneApplyMatrix(float *m);
 
 #endif
 

@@ -28,7 +28,6 @@ typedef struct  {
   unsigned Width,Height;
   int MatrixFlag;
   float Matrix[16];
-  int Rendered;
   int Playing;
 } CMovie;
 
@@ -41,10 +40,8 @@ void MovieDoFrameCommand(int frame);
 
 #define cMovieStop 0
 #define cMoviePlay 1
-#define cMoviePlayRendered 2
 
 void MoviePlay(int cmd);
-int MovieRendered(void);
 int MoviePlaying(void);
 void MovieSetSize(unsigned int width,unsigned int height);
 

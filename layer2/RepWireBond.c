@@ -123,7 +123,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 Rep *RepWireBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,a1,a2,*b,c1,c2,s1,s2;
+  int a,a1,a2,*b,c1,c2,s1,s2,b1,b2;
   float *v,*v0,*v1,*v2,h[3];
   OOAlloc(RepWireBond);
 
@@ -146,13 +146,15 @@ Rep *RepWireBondNew(CoordSet *cs)
 	 b=obj->Bond;
 	 for(a=0;a<obj->NBond;a++)
 		{
-		  a1=cs->AtmToIdx[*(b++)];
-		  a2=cs->AtmToIdx[*(b++)];
+		  b1 = *(b++);
+		  b2 = *(b++);
+		  a1=cs->AtmToIdx[b1];
+		  a2=cs->AtmToIdx[b2];
 		  
 		  if((a1>=0)&&(a2>=00))
 			 {
-				s1=obj->AtomInfo[a1].visRep[cRepLine];
-				s2=obj->AtomInfo[a2].visRep[cRepLine];
+				s1=obj->AtomInfo[b1].visRep[cRepLine];
+				s2=obj->AtomInfo[b2].visRep[cRepLine];
 				
 				if(s1||s2)
 				  {	
@@ -240,13 +242,16 @@ Rep *RepWireBondNew(CoordSet *cs)
 	 b=obj->Bond;
 	 for(a=0;a<obj->NBond;a++)
 		{
-		  a1=cs->AtmToIdx[*(b++)];
-		  a2=cs->AtmToIdx[*(b++)];
+		  b1 = *(b++);
+		  b2 = *(b++);
+
+		  a1=cs->AtmToIdx[b1];
+		  a2=cs->AtmToIdx[b2];
 		  
 		  if((a1>=0)&&(a2>=0))
 			 {
-				s1=obj->AtomInfo[a1].visRep[cRepLine];
-				s2=obj->AtomInfo[a2].visRep[cRepLine];
+				s1=obj->AtomInfo[b1].visRep[cRepLine];
+				s2=obj->AtomInfo[b2].visRep[cRepLine];
 				
 				if(s1||s2)
 				  {	
@@ -262,7 +267,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						  I->NP++;
 						  
 						  I->R.P[I->NP].ptr = (void*)obj;
-						  I->R.P[I->NP].index = a1;
+						  I->R.P[I->NP].index = *(b-2);
 						  
 						  *(v++)=*(v1++);
 						  *(v++)=*(v1++);
@@ -276,7 +281,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						{
 						  I->NP++;
 						  I->R.P[I->NP].ptr = (void*)obj;
-						  I->R.P[I->NP].index = a2;
+						  I->R.P[I->NP].index = *(b-1);
 						  
 						  
 						  *(v++)=h[0];

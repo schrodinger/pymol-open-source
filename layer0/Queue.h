@@ -13,18 +13,20 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_Util
-#define _H_Util
 
-void UtilZeroMem(void *ptr,unsigned int howMuch);
-void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size);
-char *UtilConcat(char *where,char *what);
-void UtilCleanStr(char *s);
-double UtilGetSeconds(void);
-void UtilInit(void);
-typedef int UtilOrderFn(void *array,int l,int r);
+#ifndef _H_Queue
+#define _H_Queue
 
-void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered);
-void UtilSortInPlace(void *array,int nItem,unsigned int itemSize,UtilOrderFn *fOrdered);
+typedef struct {
+  char *ptr;
+  unsigned int inp,out;
+  unsigned int mask,size;
+} CQueue;
+
+CQueue *QueueNew(unsigned int mask);
+void QueueFree(CQueue *I);
+
+void QueueStrIn(CQueue *I,char *c);
+int QueueStrOut(CQueue *I,char *c);
 
 #endif

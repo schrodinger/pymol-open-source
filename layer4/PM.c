@@ -30,8 +30,12 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include"Export.h"
 #include"PUtils.h"
+#include"Control.h"
+#include"MemoryDebug.h"
 
 #define tmpSele "_tmp"
+#define tmpSele1 "_tmp1"
+#define tmpSele2 "_tmp2"
 
 PyObject *PM_Globals = NULL;
 
@@ -51,6 +55,7 @@ static PyObject *PMMove(PyObject *self, 	PyObject *args);
 static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args);
 static PyObject *PMMSet(PyObject *self, 	PyObject *args);
 static PyObject *PMRefresh(PyObject *self, 	PyObject *args);
+static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args);
 static PyObject *PMMClear(PyObject *self, 	PyObject *args);
 static PyObject *PMMDo(PyObject *self, 	PyObject *args);
 static PyObject *PMDo(PyObject *self, 	PyObject *args);
@@ -67,64 +72,220 @@ static PyObject *PMReset(PyObject *self, PyObject *args);
 static PyObject *PMFrame(PyObject *self, PyObject *args);
 static PyObject *PMExportDots(PyObject *self, PyObject *args);
 static PyObject *PMGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *PMDirty(PyObject *self, 	PyObject *args);
+static PyObject *PMSetFrame(PyObject *self, PyObject *args);
+static PyObject *PMRock(PyObject *self, PyObject *args);
+static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args);
+static PyObject *PMFit(PyObject *dummy, PyObject *args);
+static PyObject *PMOrient(PyObject *dummy, PyObject *args);
+static PyObject *PMGetPDB(PyObject *dummy, PyObject *args);
+static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args);
+static PyObject *PMSystem(PyObject *dummy, PyObject *args);
+static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args);
+static PyObject *PMReady(PyObject *dummy, PyObject *args);
 
 static PyMethodDef PM_methods[] = {
-	{"quit",	  PMQuit,   METH_VARARGS },
-	{"load",	  PMLoad,   METH_VARARGS },
-	{"showhide",    PMShowHide,   METH_VARARGS },
-	{"onoff",    PMOnOff,   METH_VARARGS },
-	{"select",    PMSelect,   METH_VARARGS },
-	{"viewport",    PMViewport,   METH_VARARGS },
-	{"refresh",    PMRefresh,   METH_VARARGS },
-	{"delete",    PMDelete,   METH_VARARGS },
-	{"origin",	 PMOrigin,   METH_VARARGS },
-	{"zoom",	 PMZoom,   METH_VARARGS },
-	{"color",	 PMColor,   METH_VARARGS },
-	{"set",	 PMSet,   METH_VARARGS },
-	{"get",	 PMGet,   METH_VARARGS },
-	{"render",	 PMRay,   METH_VARARGS },
-	{"reset",	 PMReset,   METH_VARARGS },
-	{"frame",	 PMFrame,   METH_VARARGS },
-	{"turn",	 PMTurn,   METH_VARARGS },
-	{"clip",	 PMClip,   METH_VARARGS },
-	{"move",	 PMMove,   METH_VARARGS },
+	{"clip",	     PMClip,         METH_VARARGS },
+	{"color",	     PMColor,        METH_VARARGS },
+	{"delete",       PMDelete,       METH_VARARGS },
+	{"dirty",        PMDirty,        METH_VARARGS },
+	{"do",	         PMDo,           METH_VARARGS },
+	{"export_dots",  PMExportDots,   METH_VARARGS },
+	{"fit",          PMFit,          METH_VARARGS },
+	{"frame",	     PMFrame,        METH_VARARGS },
+	{"get",	         PMGet,          METH_VARARGS },
+	{"get_matrix",	 PMGetMatrix,    METH_VARARGS },
+	{"get_moment",	 PMGetMoment,    METH_VARARGS },
+	{"get_globals",	 PMGetGlobals,   METH_VARARGS },
+	{"get_feedback", PMGetFeedback,    METH_VARARGS },
+	{"get_pdb",	     PMGetPDB,       METH_VARARGS },
+	{"load",	     PMLoad,         METH_VARARGS },
+	{"mclear",	     PMMClear,       METH_VARARGS },
+	{"mdo",	         PMMDo,          METH_VARARGS },
+	{"move",	     PMMove,         METH_VARARGS },
+	{"mset",	     PMMSet,         METH_VARARGS },
+	{"mplay",	     PMMPlay,        METH_VARARGS },
+	{"mpng_",	     PMMPNG,         METH_VARARGS },
+	{"mmatrix",	     PMMMatrix,      METH_VARARGS },
+	{"origin",	     PMOrigin,       METH_VARARGS },
+	{"orient",	     PMOrient,       METH_VARARGS },
+	{"onoff",        PMOnOff,        METH_VARARGS },
+	{"png",	         PMPNG,          METH_VARARGS },
+	{"quit",	     PMQuit,         METH_VARARGS },
+	{"ready",        PMReady,        METH_VARARGS },
+	{"refresh",      PMRefresh,      METH_VARARGS },
+	{"refresh_now",  PMRefreshNow,   METH_VARARGS },
+	{"render",	     PMRay,          METH_VARARGS },
+	{"reset",        PMReset,        METH_VARARGS },
+	{"rock",	     PMRock,         METH_VARARGS },
+	{"runpymol",	 PMRunPyMOL,     METH_VARARGS },
+	{"select",       PMSelect,       METH_VARARGS },
+	{"set",	         PMSet,          METH_VARARGS },
+	{"setframe",	 PMSetFrame,     METH_VARARGS },
+	{"showhide",     PMShowHide,     METH_VARARGS },
 	{"set_globals",	 PMSetGlobals,   METH_VARARGS },
-	{"mset",	 PMMSet,   METH_VARARGS },
-	{"mclear",	 PMMClear,   METH_VARARGS },
-	{"mplay",	 PMMPlay,   METH_VARARGS },
-	{"mpng",	 PMMPNG,   METH_VARARGS },
-	{"mdo",	 PMMDo,   METH_VARARGS },
-	{"do",	 PMDo,   METH_VARARGS },
-	{"mmatrix",	 PMMMatrix,   METH_VARARGS },
-	{"png",	 PMPNG,   METH_VARARGS },
-	{"set_matrix",	 PMSetMatrix,   METH_VARARGS },
-	{"get_matrix",	 PMGetMatrix,   METH_VARARGS },
-	{"get_moment",	 PMGetMoment,   METH_VARARGS },
-	{"export_dots", PMExportDots,   METH_VARARGS },
-	{NULL,		NULL}		/* sentinel */
+	{"set_matrix",	 PMSetMatrix,    METH_VARARGS },
+	{"system",	     PMSystem,         METH_VARARGS },
+	{"turn",	     PMTurn,         METH_VARARGS },
+	{"viewport",     PMViewport,     METH_VARARGS },
+	{"zoom",	     PMZoom,         METH_VARARGS },
+	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *PMReady(PyObject *dummy, PyObject *args)
+{
+  PyObject *result = NULL;
+  result = Py_BuildValue("i",PyMOLReady);
+  return(result);
+}
+
+static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args)
+{
+#ifdef _PYMOL_MODULE
+  was_main();
+#endif
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *PMSystem(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  PyObject *result = NULL;
+  PyArg_ParseTuple(args,"s",&str1);
+  result = Py_BuildValue("i",system(str1));
+  return(result);
+}
+
+static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args)
+{
+  OrthoLineType buffer;
+  PyObject *result = NULL;
+
+  if(OrthoFeedbackOut(buffer))
+	result = Py_BuildValue("s",buffer);
+  if(!result) {
+	result=Py_None;
+	Py_INCREF(result);
+  }
+  return(result);
+}
+
+static PyObject *PMGetPDB(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  char *pdb = NULL;
+  int state;
+  PyObject *result = NULL;
+  
+  PyArg_ParseTuple(args,"si",&str1,&state);
+
+  if(str1[0]=='(') {
+	SelectorCreate(tmpSele,str1,NULL);
+	pdb=ExecutiveSeleToPDBStr(tmpSele,state);
+	ExecutiveDelete(tmpSele);
+  } else {
+	pdb=ExecutiveSeleToPDBStr(str1,state);
+  }
+  if(pdb)
+	result = Py_BuildValue("s",pdb);
+  if(!result) {
+	result=Py_None;
+	Py_INCREF(result);
+  }
+  FreeP(pdb);
+  return(result);
+}
+
+static PyObject *PMOrient(PyObject *dummy, PyObject *args)
+{
+  Matrix33d m;
+  char *str1;
+
+  PyArg_ParseTuple(args,"s",&str1);
+
+  if(str1[0]=='(') {
+	 SelectorCreate(tmpSele,str1,NULL);
+	 if(ExecutiveGetMoment(tmpSele,m))
+		ExecutiveOrient(tmpSele,m);
+	 ExecutiveDelete(tmpSele);
+  } else {
+	 if(ExecutiveGetMoment(str1,m))
+		ExecutiveOrient(str1,m);
+  }
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *PMFit(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  OrthoLineType s1,s2;
+  int f1=false;
+  int f2=false;
+
+  PyArg_ParseTuple(args,"ss",&str1,&str2);
+
+  if(str1[0]=='(') {
+	 SelectorCreate(tmpSele1,str1,NULL);
+	 strcpy(s1,tmpSele1);
+	 f1=true;
+  } else {
+	strcpy(s1,str1);
+  }
+
+  if(str2[0]=='(') {
+	 SelectorCreate(tmpSele2,str2,NULL);
+	 strcpy(s2,tmpSele2);
+	 f2=true;
+  } else {
+	strcpy(s2,str2);
+  }
+  ExecutiveFit(s1,s2);
+  if(f1)
+	ExecutiveDelete(s1);
+  if(f2)
+	ExecutiveDelete(s2);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *PMDirty(PyObject *self, 	PyObject *args)
+{
+  OrthoDirty();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 static PyObject *PMDo(PyObject *self, 	PyObject *args)
 {
   char *str1;
+
   PyArg_ParseTuple(args,"s",&str1);
   OrthoAddOutput("PyMOL>");
   OrthoAddOutput(str1);
   PParse(str1);
   OrthoNewLine(NULL);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *PMRock(PyObject *self, PyObject *args)
+{
+  ControlRock(-1);
   return Py_None;
 }
 
 static PyObject *PMGetMoment(PyObject *self, 	PyObject *args)
 {
-  Matrix33f m;
+  Matrix33d m;
   PyObject *result;
 
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
 
   ExecutiveGetMoment(str1,m);
-  result = Py_BuildValue("(fff)(fff)(fff)", 
+  result = Py_BuildValue("(ddd)(ddd)(ddd)", 
 								 m[0][0],m[0][1],m[0][2],
 								 m[1][0],m[1][1],m[1][2],
 								 m[2][0],m[2][1],m[2][2]);
@@ -155,6 +316,15 @@ static PyObject *PMExportDots(PyObject *self, 	PyObject *args)
 		Py_INCREF(result);
 	 }
   return result;
+}
+
+static PyObject *PMSetFrame(PyObject *self, PyObject *args)
+{
+  int mode,frm;
+  PyArg_ParseTuple(args,"ii",&mode,&frm);
+  SceneSetFrame(mode,frm);
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 static PyObject *PMFrame(PyObject *self, PyObject *args)
@@ -248,6 +418,13 @@ static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args)
   return result;
 }
 
+static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args)
+{
+  PyObject *result = PM_Globals;
+  Py_INCREF(result);
+  return result;
+}
+
 static PyObject *PMMClear(PyObject *self, 	PyObject *args)
 {
   MovieClearImages();
@@ -258,6 +435,14 @@ static PyObject *PMMClear(PyObject *self, 	PyObject *args)
 static PyObject *PMRefresh(PyObject *self, 	PyObject *args)
 {
   ExecutiveDrawNow();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args)
+{
+  ExecutiveDrawNow();
+  MainRefreshNow();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -275,9 +460,8 @@ static PyObject *PMPNG(PyObject *self, 	PyObject *args)
 static PyObject *PMMPNG(PyObject *self, 	PyObject *args)
 {
   char *str1;
-  int flag;
-  PyArg_ParseTuple(args,"si",&str1,&flag);
-  MoviePNG(str1,flag);
+  PyArg_ParseTuple(args,"s",&str1);
+  MoviePNG(str1,SettingGet(cSetting_cache_frames));
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -326,7 +510,12 @@ static PyObject *PMRay(PyObject *self, 	PyObject *args)
 {
   /*  PyArg_ParseTuple(args,"ss",&sname,&value);
 		ExecutiveSetSetting(sname,value);*/
+  PyThreadState *_save;
+  Py_UNBLOCK_THREADS;
+
   ExecutiveRay();
+
+  Py_BLOCK_THREADS;
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -462,6 +651,7 @@ static PyObject *PMSelect(PyObject *self, PyObject *args)
 
   PyArg_ParseTuple(args,"ss",&sname,&sele);
   SelectorCreate(sname,sele,NULL);
+  OrthoDirty();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -486,11 +676,11 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
   switch(type) {
   case cLoadTypePDB:
 	 if(!objMol) {
-		objMol=ObjectMoleculeLoadPDBFile(NULL,fname,frame);
+		obj=ObjectMoleculeLoadPDBFile(NULL,fname,frame);
 		fflush(stdout);
-		if(objMol) {
-		  ObjectSetName((Object*)objMol,oname);
-		  ExecutiveManageObject((Object*)objMol);
+		if(obj) {
+		  ObjectSetName((Object*)obj,oname);
+		  ExecutiveManageObject((Object*)obj);
 		  sprintf(buf,"PMLoad: \"%s\" loaded into object \"%s\".\n",
 					 fname,oname);
 		}
@@ -504,10 +694,12 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
   case cLoadTypeMOL:
 	 obj=ObjectMoleculeLoadMOLFile(objMol,fname,frame);
 	 if(!objMol) {
-		ObjectSetName((Object*)obj,oname);
-		ExecutiveManageObject((Object*)obj);
-		sprintf(buf,"PMLoad: \"%s\" loaded into object \"%s\".\n",
-				  fname,oname);		  
+	   if(obj) {
+		 ObjectSetName((Object*)obj,oname);
+		 ExecutiveManageObject((Object*)obj);
+		 sprintf(buf,"PMLoad: \"%s\" loaded into object \"%s\".\n",
+				 fname,oname);		  
+	   }
 	 } else if(objMol) {
 		ExecutiveUpdateObjectSelection((Object*)objMol);
 		sprintf(buf,"PMAppend: \"%s\" appended into object \"%s\".\n",
@@ -517,10 +709,12 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
   case cLoadTypeMOLStr:
 	 obj=ObjectMoleculeReadMOLStr(objMol,fname,frame);
 	 if(!objMol) {
-		ObjectSetName((Object*)obj,oname);
-		ExecutiveManageObject((Object*)obj);
-		sprintf(buf,"PMLoad: MOL-string loaded into object \"%s\".\n",
-				  oname);		  
+	   if(obj) {
+		 ObjectSetName((Object*)obj,oname);
+		 ExecutiveManageObject((Object*)obj);
+		 sprintf(buf,"PMLoad: MOL-string loaded into object \"%s\".\n",
+				 oname);		  
+	   }
 	 } else if(objMol) {
 		ExecutiveUpdateObjectSelection((Object*)objMol);
 		sprintf(buf,"PMAppend: MOL-string appended into object \"%s\".\n",
@@ -557,9 +751,14 @@ static PyObject *PMZoom(PyObject *self, PyObject *args)
   return Py_None;
 }
 
+#ifdef _PYMOL_MODULE
+void PMInit(void) {}
+void init_pm(void);
+void init_pm(void)
+#else
 void PMInit(void)
-
+#endif
 {
-  PyImport_AddModule("pmx");
-  Py_InitModule("pmx", PM_methods);
+  PyImport_AddModule("_pm");
+  Py_InitModule("_pm", PM_methods);
 }

@@ -42,6 +42,36 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level);
 void CoordSetExtendIndices(CoordSet *I,int nAtom);
 void CoordSetAppendIndices(CoordSet *I,int offset);
 
+
+/*========================================================================*/
+static  char sATOM[]="ATOM  ";
+static  char sHETATM[]="HETATM";
+/*========================================================================*/
+void CoordSetAtomToPDBStrVLA(char **charVLA,unsigned int *c,AtomInfoType *ai,float *v,int cnt)
+{
+  char *aType;
+  AtomName name;
+
+  if(ai->hetatm)
+	aType=sHETATM;
+  else
+	aType=sATOM;
+  
+  VLACheck(*charVLA,char,(*c)+1000);  
+
+  if(strlen(ai->name)<4)
+	{
+	  name[0]=' ';	
+	  strcpy(name+1,ai->name);
+	} else {
+	  strcpy(name,ai->name);
+	}
+  (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s %3s %1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s\n",
+				aType,cnt+1,name,ai->resn,
+				ai->chain,ai->resi,*v,*(v+1),*(v+2),1.0,ai->b,ai->segi); /* NEED TO HANDLE OCCUPANCY TOO! */
+  
+}
+
 /*========================================================================*/
 void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 {

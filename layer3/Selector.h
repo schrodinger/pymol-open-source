@@ -28,5 +28,4 @@ int SelectorMatch(int ref,int sele);
 int SelectorNext(int ref);
 void SelectorFree(void);
 void SelectorDelete(char *sele);
-
 #endif

@@ -73,6 +73,11 @@ void SettingSetfv(int index,float *v)
   }
 }
 /*========================================================================*/
+void SettingSet(int index,float v)
+{
+  SettingSetfv(index,&v);
+}
+/*========================================================================*/
 void SettingSetNamed(char *name,char *value)
 {
   CSetting *I=&Setting;
@@ -241,7 +246,7 @@ void SettingInit(void)
 			"ambient_scale");
 
   I->NSetting++;
-  I->Setting[cSetting_single_image].Value[0] = 1.0;
+  I->Setting[cSetting_single_image].Value[0] = 0.0;
   strcpy(I->Setting[cSetting_single_image].Name,
 			"single_image");
 
@@ -320,6 +325,21 @@ void SettingInit(void)
   I->Setting[cSetting_dot_size].Value[0] = 0.06;
   strcpy(I->Setting[cSetting_dot_size].Name,
 			"dot_size");
+
+  I->NSetting++;
+  I->Setting[cSetting_ray_trace_frames].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_ray_trace_frames].Name,
+			"ray_trace_frames");
+
+  I->NSetting++;
+  I->Setting[cSetting_cache_frames].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_cache_frames].Name,
+			"cache_frames");
+
+  I->NSetting++;
+  I->Setting[cSetting_trim_dots].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_trim_dots].Name,
+			"trim_dots");
 
 
 }

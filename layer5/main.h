@@ -18,5 +18,14 @@ Z* -------------------------------------------------------------------
 
 void MainFree(void);
 void MainReshape(int width, int height);
+void MainDirty(void);
+void MainSwapBuffers(void);
+void MainRefreshNow(void);
+
+extern int PyMOLReady;
+
+#ifdef _PYMOL_MODULE
+void was_main(void);
+#endif
 
 #endif

@@ -24,11 +24,13 @@ typedef float Vector3f[3]; /* for local vars only - use float* for parameters */
 typedef int Vector3i[3];
 		  
 typedef float Matrix33f[3][3]; 
+typedef double Matrix33d[3][3]; 
 
 float deg_to_rad(float angle);
 float rad_to_deg(float angle);
 
 void normalize3f( float *v1 );
+void normalize3d( double *v1 );
 void copy3f( float *v1 , float *v2);
 void add3f ( float *v1, float *v2, float *v3 );
 void subtract3f ( float *v1, float *v2, float *v3 );
@@ -38,6 +40,8 @@ void subtract3f ( float *v1, float *v2, float *v3 );
 void average3f ( float *v1, float *v2, float *avg );
 void scale3f ( float *v1, float v0, float *v2);
 float length3f ( float *v1 );
+
+
 double length3d ( double *v1 );
 float lengthsq3f ( float *v1 );
 float get_angle3f( float *v1, float *v2 );
@@ -47,6 +51,7 @@ double diff3f ( float *v1, float *v2 );
 
 void cross_product3f ( float *v1, float *v2, float *cross );
 float dot_product3f ( float *v1, float *v2 );
+double dot_product3d ( double *v1, double *v2 );
 float project3f ( float *v1, float *v2, float *proj );
 void remove_component3f ( float *v1, float *unit, float *result);
 
@@ -59,6 +64,7 @@ int within3f(float *v1,float *v2,float dist);
 
 void transform33f3f ( Matrix33f m1,float *v1,float *v2);
 void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat);
+void multiply3d3d ( Matrix33d m1,Matrix33d m2,Matrix33d m3);
 
 /* OLD MATRIX STUFF NEEDS REWORKING */
 
@@ -69,7 +75,6 @@ typedef float *oMatrix3f[3];
 typedef float *oMatrix3d[3];
 
 double matdiffsq ( float *v1, oMatrix5f m, float *v2 );
-void multiply3d3d ( oMatrix3d m1,oMatrix3d m2,oMatrix3d m3);
 void find_axis( oMatrix3d a, float *axis);
 void matcopy ( oMatrix5f to, oMatrix5f from );
 void mattran ( oMatrix5f nm, oMatrix5f om, int axis, float dist );

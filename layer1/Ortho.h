@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoCTRL 2
 #define cOrthoALT 4
 
-#define cOrthoRightSceneMargin 180
+#define cOrthoRightSceneMargin 160
 #define cOrthoBottomSceneMargin 20
 
 #include"Block.h"
@@ -53,7 +53,6 @@ void OrthoAddOutput(char *str);
 void OrthoNewLine(char *prompt);
 
 int OrthoDrag(int x,int y,int mod);
-int OrthoCursor(int x,int y);
 
 void OrthoGrab(Block *block);
 void OrthoUngrab(void);
@@ -68,9 +67,21 @@ void OrthoBusyMessage(char *message);
 void OrthoBusySlow(int progress,int total);
 void OrthoBusyFast(int progress,int total);
 void OrthoBusyPrime(void);
+void OrthoCommandIn(char *buffer);
+int  OrthoCommandOut(char *buffer);
+void OrthoFeedbackIn(char *buffer);
+int OrthoFeedbackOut(char *buffer);
 
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
+
+/* I hope there is a better way than the following to
+ * wrap output while maintaining cross-platform compatiblity
+ * with old C preprocessors that don't understand 
+ * variable argument macro expansions */
+
+#define PRINTF { OrthoLineType _Ostr; sprintf( _Ostr,
+#define ENDF   ); OrthoAddOutput(_Ostr);}
 
 #endif
 

@@ -62,6 +62,41 @@ int WordMatch(char *p,char *q,int ignCase)
   return(i);
 }
 
+int WordCompare(char *p,char *q,int ignCase) 
+/* all things equal, shorter is smaller */
+{
+  int result=0;
+  while((*p)&&(*q))	{
+	if(*p!=*q) {
+	  if(ignCase) {
+		if(tolower(*p)<tolower(*q)) {
+		  result=-1;
+		  break;
+		}
+		else if(tolower(*p)>tolower(*q)) {
+		  result=1;
+		  break;
+		}
+	  } else {
+		if(*p<*q) {
+		  result=-1;
+		  break;
+		} else if(*p>*q) {
+		  result=1;
+		  break;
+		}
+	  }
+	}
+	p++;
+	q++;
+  }
+  if((!result)&&(!*p)&&(*q))
+	result=-1;
+  else if((!result)&&(*p)&&(!*q))
+	result=1;
+  return(result);
+}
+
 int WordIndex(WordType *list,char *word,int minMatch,int ignCase)
 {
   int c,i,mi,mc;

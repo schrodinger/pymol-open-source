@@ -15,8 +15,9 @@ Z* -------------------------------------------------------------------
 */
 #include<stdio.h>
 #include<GL/gl.h>
-#include <GL/glut.h>
+#include<GL/glut.h>
 
+#include"main.h"
 #include"Base.h"
 #include"OOMac.h"
 #include"Executive.h"
@@ -28,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Color.h"
 #include"Setting.h"
+#include"Matrix.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -75,6 +77,133 @@ SpecRec *ExecutiveFindSpec(char *name);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
 
 /*========================================================================*/
+char *ExecutiveSeleToPDBStr(char *s1,int state)
+{
+  char *result=NULL;
+  ObjectMoleculeOpRec op1;
+  int sele1;
+
+  op1.charVLA=VLAlloc(char,10000);
+  op1.i2 = 0;
+  op1.i3 = 0; /* atIndex */
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+	op1.code = 'PDB1';
+	op1.i1 = state;
+	ExecutiveObjMolSeleOp(sele1,&op1);
+  }
+  op1.charVLA[op1.i2]=0;
+  op1.i2++; /* get trailing null */
+  result=Alloc(char,op1.i2);
+  memcpy(result,op1.charVLA,op1.i2);
+  VLAFreeP(op1.charVLA);
+  return(result);
+}
+
+/*========================================================================*/
+void ExecutiveOrient(char *sele,Matrix33d mi)
+{
+  double egval[3],egvali[3];
+  double evect[3][3];
+  float m[4][4];
+
+  int a,b;
+
+  if(!MatrixEigensolve33d((double*)mi,egval,egvali,(double*)evect)) {
+
+	 normalize3d(evect[0]);
+	 normalize3d(evect[1]);
+	 normalize3d(evect[2]);
+
+
+	 for(a=0;a<3;a++) {
+		for(b=0;b<3;b++) {
+		  m[a][b]=evect[b][a];
+		}
+	 }
+
+	for(a=0;a<3;a++)
+	  {
+		m[3][a]=0;
+		m[a][3]=0;
+	  }
+	m[3][3]=1.0;
+
+	normalize3f(m[0]);
+	normalize3f(m[1]);
+	normalize3f(m[2]);
+
+	SceneSetMatrix(m[0]);
+
+	/* there must  be a more elegant to get the PC on X and the SC
+	 * on Y then what is shown below, but I couldn't get it to work.
+	 * I tried swapping the eigen-columns around but either that is 
+	 * a bogus approach (??) or my code was buggy.  Hence the following...*/
+
+	if((egval[0]<egval[2])&&(egval[2]<egval[1])) { /* X < Z < Y */
+	  SceneRotate(90,1,0,0); /*1<-->2*/
+	} else if((egval[1]<egval[0])&&(egval[0]<egval[2])) { /* Y < X < Z */
+	  SceneRotate(90,0,0,1); /*0<-->1*/
+	} else if((egval[1]<egval[2])&&(egval[2]<egval[0])) { /* Y < Z < X */
+	  SceneRotate(90,0,1,0); /*1<-->2*/
+	  SceneRotate(90,0,0,1); /*0<-->1*/
+	} else if((egval[2]<egval[1])&&(egval[1]<egval[0])) { /* Z < Y < X */
+	  SceneRotate(90,0,1,0); /*0<-->2*/
+	} else if((egval[2]<egval[0])&&(egval[0]<egval[1])) { /* Z < X < Y */
+	  SceneRotate(90,0,1,0); /*0<-->2*/
+	  SceneRotate(90,1,0,0); /*0<-->1*/
+	}
+	/* X < Y < Z  - do nothing - that's what we want */
+
+
+	ExecutiveWindowZoom(sele);
+	ExecutiveCenter(sele,1);
+
+  }
+}
+/*========================================================================*/
+void ExecutiveFit(char *s1,char *s2)
+{
+  int sele1,sele2;
+
+  ObjectMoleculeOpRec op1;
+  ObjectMoleculeOpRec op2;
+  
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+	op1.code = 'VERT';
+	op1.nvv1=0;
+	op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
+	ExecutiveObjMolSeleOp(sele1,&op1);
+  } else {
+	op1.vv1=NULL;
+  }
+
+  sele2=SelectorIndexByName(s2);
+  if(sele2>=0) {
+	op2.code = 'VERT';
+	op2.nvv1=0;
+	op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
+	ExecutiveObjMolSeleOp(sele2,&op2);
+  } else {
+	op2.vv1=NULL;
+  }
+  if(op1.vv1&&op2.vv1) {
+	if(op1.nvv1!=op2.nvv1) {
+	  ErrMessage("ExecutiveFit","Atom counts between selections don't match.");
+	} else if(op1.nvv1) {
+	  printf(" ExecutiveFit: RMS = %8.3f\n",
+			 MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt));
+	  op2.code = 'TTTF';
+	  ExecutiveObjMolSeleOp(sele1,&op2);
+	} else {
+	  ErrMessage("ExecutiveFit","No atoms selected.");
+	}
+  }
+  VLAFreeP(op1.vv1);
+  VLAFreeP(op2.vv1);
+}
+/*========================================================================*/
 void ExecutiveUpdateObjectSelection(struct Object *obj)
 {
   SelectorDelete(obj->Name);  
@@ -98,12 +227,13 @@ void ExecutiveDrawNow(void)
 
   OrthoDoDraw();
 
-  glutSwapBuffers();
+  MainSwapBuffers();
+
 }
 /*========================================================================*/
 void ExecutiveRay(void)
 {
-  SceneDoRay();
+  SceneRay();
 }
 /*========================================================================*/
 void ExecutiveSetSetting(char *sname,char *v)
@@ -191,23 +321,24 @@ void ExecutiveWindowZoom(char *name)
 	 if(op.i1) {
 		scale3f(op.v1,1.0/op.i1,op.v1);
 		op.code = 'MDST';
+		op.f1 = 0.0;
 		op.i1 = 0.0;
 		ExecutiveObjMolSeleOp(sele,&op);			 
 		if(op.f1>0.0)
 		  {
-			 SceneWindowSphere(op.v1,op.f1);						  
-			 SceneDirty();
+			SceneWindowSphere(op.v1,op.f1);						  
+			SceneDirty();
 		  }
 	 }
   } 
 }
 /*========================================================================*/
-void ExecutiveGetMoment(char *name,Matrix33f mi)
+int ExecutiveGetMoment(char *name,Matrix33d mi)
 {
   int sele;
   ObjectMoleculeOpRec op;
   int a,b;
-
+  int c=0;
   for(a=0;a<3;a++)
 	 {
 		for(b=0;b<3;b++)
@@ -226,17 +357,19 @@ void ExecutiveGetMoment(char *name,Matrix33f mi)
 	 ExecutiveObjMolSeleOp(sele,&op);
 	 
 	 if(op.i1) {
+		c+=op.i1;
 		scale3f(op.v1,1.0/op.i1,op.v1);
 		op.code = 'MOME';		
 		for(a=0;a<3;a++)
 		  for(b=0;b<3;b++)
-			 op.m[a][b]=0.0;
+			 op.d[a][b]=0.0;
 		ExecutiveObjMolSeleOp(sele,&op);			 
 		for(a=0;a<3;a++)
 		  for(b=0;b<3;b++)
-			 mi[a][b]=op.m[a][b];
+			 mi[a][b]=op.d[a][b];
 	 }
   } 
+  return(c);
 }
 /*========================================================================*/
 void ExecutiveCenter(char *name,int preserve)
@@ -354,7 +487,6 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
   }
 }
 /*========================================================================*/
-/*========================================================================*/
 Object *ExecutiveFindObjectByName(char *name)
 {
   CExecutive *I = &Executive;
@@ -396,27 +528,27 @@ void ExecutiveDelete(char *name)
 {
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
+  int all_flag=false;
+  if(WordMatch(name,"all",true)<0) all_flag=true;
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
 		if(rec->type==cExecObject)
 		  {
-			 if(WordMatch(rec->obj->Name,name,true)) 
+			 if(all_flag||WordMatch(rec->obj->Name,name,true))
 				{
 				  SelectorDelete(rec->name);
 				  rec->obj->fFree(rec->obj);
 				  rec->obj=NULL;
 				  ListDelete(I->Spec,rec,next,SpecList);
-				  break;
 				}
 		  }
 		else if(rec->type==cExecSelection)
 		  {
 
-			 if(WordMatch(rec->name,name,true))
+			 if(all_flag||WordMatch(rec->name,name,true))
 				{
 				  SelectorDelete(rec->name);
 				  ListDelete(I->Spec,rec,next,SpecList);
-				  break;
 				}
 		  }
 	 }
@@ -519,7 +651,7 @@ int ExecutiveRelease(Block *block,int x,int y,int mod)
 		  }
 		n--;
 	 }
-  glutPostRedisplay();
+  MainDirty();
   return(1);
 }
 /*========================================================================*/
@@ -532,11 +664,12 @@ void ExecutiveDraw(Block *block)
 {
   int a,x,y,xx,x2,y2;
   char *c=NULL;
+  float toggleColor[3] = { 0.4, 0.4, 1.0 };
+
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
   glColor3fv(I->Block->BackColor);
   BlockFill(I->Block);
-  glColor3fv(I->Block->TextColor);
 
   x = I->Block->rect.left+ExecLeftMargin;
   y = (I->Block->rect.top-ExecLineHeight)-ExecTopMargin;
@@ -544,33 +677,9 @@ void ExecutiveDraw(Block *block)
   
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
-		glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-		if(rec->type==cExecObject)
-		  {
-			 y2=y-ExecToggleMargin;
-			 if(rec->visible)
-				glColor3f(ExecColorVisible);
-			 else
-				glColor3f(ExecColorHidden);
-			 glBegin(GL_POLYGON);
-			 glVertex2i(x-ExecToggleMargin,y2);
-			 glVertex2i(xx-ExecToggleMargin,y2);
-			 glVertex2i(xx-ExecToggleMargin,y2+ExecToggleSize);
-			 glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
-			 glEnd();
-			 c=rec->obj->Name;
-			 glColor3fv(I->Block->TextColor);
-		  }
-		else if(rec->type==cExecSelection)
-		  {
-			 glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'%');
-			 c=rec->name;
-		  }
-		if(c)
-		  while(*c) 
-			 glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
 		x2=xx;
 		y2=y-ExecToggleMargin;
+		glColor3fv(toggleColor);
 		for(a=0;a<ExecOpCnt;a++)
 		  {
 			 if(!a) {
@@ -613,6 +722,36 @@ void ExecutiveDraw(Block *block)
 				 glEnd();
 			x2+=ExecToggleWidth;
 		  }
+
+		glColor3fv(I->Block->TextColor);
+		glRasterPos4d((double)(x),(double)(y),0.0,1.0);
+		if(rec->type==cExecObject)
+		  {
+			 y2=y-ExecToggleMargin;
+			 if(rec->visible)
+				glColor3f(ExecColorVisible);
+			 else
+				glColor3f(ExecColorHidden);
+			 glBegin(GL_POLYGON);
+			 glVertex2i(x-ExecToggleMargin,y2);
+			 glVertex2i(xx-ExecToggleMargin,y2);
+			 glVertex2i(xx-ExecToggleMargin,y2+ExecToggleSize);
+			 glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
+			 glEnd();
+			 c=rec->obj->Name;
+			 glColor3fv(I->Block->TextColor);
+		
+		  }
+		else if(rec->type==cExecSelection)
+		  {
+			 glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'%');
+			 c=rec->name;
+		  }
+
+		if(c)
+		  while(*c) 
+			 glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+
 		y-=ExecLineHeight;
 	 }
 }
@@ -680,3 +819,77 @@ void ExecutiveFree(void)
 }
 
 
+	 /*
+
+matrix checking code...
+
+		double mt[3][3],mt2[3][3],pr[3][3],im[3][3],em[3][3];
+	 printf("normalized matrix \n");
+	 for(a=0;a<3;a++) {
+		for(b=0;b<3;b++) {
+		  printf("%12.3f ",evect[a][b]);
+		}
+		printf("\n");
+	 }
+	 printf("\n");
+
+	 printf("tensor \n");
+	 for(a=0;a<3;a++) {
+		for(b=0;b<3;b++) {
+		  printf("%12.3f ",mi[a][b]);
+		}
+		printf("\n");
+	 }
+	 printf("\n");
+
+	  for(a=0;a<3;a++) {
+		 for(b=0;b<3;b++) {
+			mt[a][b]=evect[a][b];
+		 }
+	  }
+
+	 for(a=0;a<3;a++) {
+		for(b=0;b<3;b++) {
+		  mt2[a][b]=evect[b][a];
+		}
+	 }
+
+	 multiply3d3d(mt,mt2,pr);
+	 printf("self product 1 \n");
+	 for(a=0;a<3;a++) {
+		for(b=0;b<3;b++) {
+		  printf("%8.3f ",pr[a][b]);
+		}
+		printf("\n");
+	 }
+	 printf("\n");
+
+	 multiply3d3d(mt,mi,im);
+	 multiply3d3d(im,mt2,pr);
+	 printf("diagonal product 1 \n");
+	 for(a=0;a<3;a++) {
+		for(b=0;b<3;b++) {
+		  printf("%8.3f ",pr[a][b]);
+		}
+		printf("\n");
+	 }
+	 printf("\n");
+
+	 for(a=0;a<3;a++) {
+		for(b=0;b<3;b++) {
+		  em[a][b]=0.0;
+		}
+		em[a][a]=egval[a];
+	 }
+
+	 multiply3d3d(mt2,em,im);
+	 multiply3d3d(im,mt,pr);
+	 printf("diagonal product 4 \n");
+	 for(a=0;a<3;a++) {
+		for(b=0;b<3;b++) {
+		  printf("%8.3f ",pr[a][b]);
+		}
+		printf("\n");
+	 }
+	 printf("\n");
+	 */

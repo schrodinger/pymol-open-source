@@ -91,6 +91,7 @@ static WordType Keyword[] =
   "byresi",   "BYR1",
   "and",      "AND2",
   "or",       "OR_2",
+  "in",       "IN_2",
   "all",      "ALLz", /* 0 parameter */
   "none",     "NONz", /* 0 parameter */
   "around",   "ARD_", /* 1 parameter */
@@ -186,7 +187,7 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj)
   int a,m,n;
   int c=0;
   int *atom=NULL;
- OrthoLineType name;
+  OrthoLineType name;
   int ok=true;
   int newFlag=false;
   int flag;
@@ -206,12 +207,12 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj)
 	 }
   if(ok)
 	 {
-		if(sele) {
-		  atom=SelectorSelect(sele);
-		  if(!atom) ok=false;
-		} else {
-		  SelectorUpdateTable();
-		}
+	   if(sele) {
+		 atom=SelectorSelect(sele);
+		 if(!atom) ok=false;
+	   } else {
+		 SelectorUpdateTable();
+	   }
 	 }
   if(ok)
 	 {
@@ -608,6 +609,7 @@ int SelectorLogic1(EvalElem *base)
 {
   int a,b;
   int c=0;
+  AtomInfoType *at1,*at2;
   SelectorType *I=&Selector;
   base[0].sele=base[1].sele;
   base[1].sele=NULL;
@@ -626,16 +628,19 @@ int SelectorLogic1(EvalElem *base)
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(base[0].sele[a]) 
-				for(b=0;b<I->NAtom;b++)
-				  if(!base[0].sele[b]) 
+			   {
+				 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+				 for(b=0;b<I->NAtom;b++)
+				   if(!base[0].sele[b]) 
 					 if(I->Table[a].model==I->Table[b].model)
-						if((tolower(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].chain[0]))==
-							(tolower(I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom].chain[0])))
-						  if(WordMatch(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resi,
-											I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom].resi,I->IgnoreCase)<0)
-							 if(WordMatch(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].segi,
-											  I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom].segi,I->IgnoreCase)<0)
-								base[0].sele[b]=true;
+					   {
+						 at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+						 if((tolower(at1->chain[0]))==at2->chain[0])
+						   if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+							 if(WordMatch(at1->resi,at2->segi,I->IgnoreCase)<0)
+							   base[0].sele[b]=true;
+					   }
+			   }
 		  }
 		break;
 	 }
@@ -648,9 +653,11 @@ int SelectorLogic1(EvalElem *base)
 /*========================================================================*/
 int SelectorLogic2(EvalElem *base)
 {
-  int a;
+  int a,b;
   int c=0;
   SelectorType *I=&Selector;
+  AtomInfoType *at1,*at2;
+
   switch(base[1].code)
 	 {
 	 case 'OR_2':
@@ -667,7 +674,26 @@ int SelectorLogic2(EvalElem *base)
 			 if(base[0].sele[a]) c++;
 		  }
 		break;
-
+	 case 'IN_2':
+		for(a=0;a<I->NAtom;a++)
+		  {
+			if(base[0].sele[a]) {
+			  at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+			  base[0].sele[a]=0;
+			  for(b=0;b<I->NAtom;b++)
+				if(base[2].sele[b]) {
+				  at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+				  if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
+					if(WordMatch(at1->name,at2->name,I->IgnoreCase)<0)
+					  if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+						if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
+						  if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0)
+							base[0].sele[a]=1;
+				}
+			  if(base[0].sele[a]) c++;
+			}
+		  }
+		break;
 	 }
   FreeP(base[2].sele);
   if(DebugSelector&DebugState)

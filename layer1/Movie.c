@@ -32,12 +32,7 @@ Z* -------------------------------------------------------------------
 
 CMovie Movie;
 
-/*========================================================================*/
-int MovieRendered(void)
-{
-  CMovie *I=&Movie;
-  return(I->Rendered);
-}
+extern PyThreadState *_save;
 /*========================================================================*/
 int MoviePlaying(void)
 {
@@ -51,17 +46,12 @@ void MoviePlay(int cmd)
   switch(cmd) {
   case cMovieStop:
 	 I->Playing=false;
-	 I->Rendered=false;
 	 break;
   case cMoviePlay:
 	 I->Playing=true;
-	 I->Rendered=false;
-	 break;
-  case cMoviePlayRendered:
-	 I->Playing=true;
-	 I->Rendered=true;
 	 break;
   }
+  SceneRestartTimers();
 }
 /*========================================================================*/
 void MovieMatrix(int action)
@@ -96,32 +86,40 @@ void MovieSetSize(unsigned int width,unsigned int height)
 /*========================================================================*/
 void MoviePNG(char *prefix,int save)
 {
+  /* writes the current movie sequence to a set of PNG files 
+  * this routine can take a LOT of time -- 
+  * TODO: develop an interrupt mechanism */
+
   CMovie *I=&Movie;
   int a;
   int i;
   char fname[255];
   char buffer[255];
 
+  save = SettingGet(cSetting_cache_frames);
+  SettingSet(cSetting_cache_frames,1.0);
   OrthoBusyPrime();
   sprintf(buffer,"Creating movie (%d frames)...",I->NFrame);
   OrthoBusyMessage(buffer);
   SceneSetFrame(0,0);
-  MoviePlay(cMoviePlayRendered);
+  MoviePlay(cMoviePlay);
   for(a=0;a<I->NFrame;a++)
 	 {
 		OrthoBusySlow(a,I->NFrame);
 		sprintf(fname,"%s_%04d.png",prefix,a+1);
 		SceneSetFrame(0,a);
 		MovieDoFrameCommand(a);
+		PFlush(&_save);
 		i=MovieFrameToImage(a);
 		if(!I->Image[i]) {
-		  SceneDoRay();
+		  SceneMakeMovieImage();
 		}
 		if(!I->Image[i])
 		  ErrFatal("MoviePNG","Missing rendering movie image!");
-		fflush(stdout);
+		fflush(stdout);		  
 		MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
 		ExecutiveDrawNow();
+		glutSwapBuffers();
 		printf(" MoviePNG: wrote %s\n",fname);
 		if(!save) {
 		  SceneDirty();
@@ -129,6 +127,7 @@ void MoviePNG(char *prefix,int save)
 		  I->Image[i]=NULL;
 		}
 	 }
+  SettingSet(cSetting_cache_frames,save);
   MoviePlay(cMovieStop);
 }
 /*========================================================================*/
@@ -281,7 +280,6 @@ void MovieInit(void)
   CMovie *I=&Movie;
 
   I->Playing=false;
-  I->Rendered=false;
   I->Image=VLAMalloc(10,sizeof(ImageType),5,true); /* auto-zero */
   I->Sequence=NULL;
   I->Cmd=NULL;

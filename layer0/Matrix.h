@@ -16,8 +16,17 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Matrix
 #define _H_Matrix
 
-void MatrixInvTransform3f(GLfloat *vector,GLfloat *matrix,GLfloat *result);
-void MatrixTransform3f(GLfloat *vector,GLfloat *matrix,GLfloat *result);
+void MatrixInvTransform3f(float *vector,float *matrix,float *result);
+void MatrixTransform3f(float *vector,float *matrix,float *result);
+void MatrixTransform44fn( unsigned int n, float *q, const float m[16], float *p);
+int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v);
+
+
+/* WARNING - routines below use a "non-conventional" 4x4 
+  pre-translation - tranformation - and post-translation (TTT) matrix */
+
+void MatrixApplyTTTfn3f(unsigned int n, float *q, const float m[16], float *p );
+float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt);
 
 #endif
 
