@@ -59,6 +59,8 @@ void PDumpTraceback(PyObject *err);
 
 int PTruthCallStr(PyObject *object,char *method,char *argument);
 
+void PBlockForEmergencyShutdown(void);
+
 extern PyObject *P_globals;
 
 extern PyObject *P_cmd;

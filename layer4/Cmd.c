@@ -135,6 +135,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args);
+static PyObject *CmdFullScreen(PyObject *self,PyObject *args);
 static PyObject *CmdFuse(PyObject *self, 	PyObject *args);
 static PyObject *CmdHAdd(PyObject *self, PyObject *args);
 static PyObject *CmdIdentify(PyObject *dummy, PyObject *args);
@@ -250,6 +251,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"flag",                  CmdFlag,         METH_VARARGS },
 	{"frame",	              CmdFrame,        METH_VARARGS },
    {"flush_now",             CmdFlushNow,     METH_VARARGS },
+   {"full_screen",           CmdFullScreen,   METH_VARARGS },
    {"fuse",                  CmdFuse,         METH_VARARGS },
 	{"get",	                 CmdGet,          METH_VARARGS },
 	{"get_area",              CmdGetArea,      METH_VARARGS },
@@ -1766,7 +1768,16 @@ static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
   Py_INCREF(Py_None);
   return Py_None;
 }
-
+static PyObject *CmdFullScreen(PyObject *self,PyObject *args)
+{
+  int flag = 0;
+  PyArg_ParseTuple(args,"i",&flag);
+  APIEntry();
+  ExecutiveFullScreen(flag);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 static PyObject *CmdSelect(PyObject *self, PyObject *args)
 {
   char *sname,*sele;

@@ -1690,6 +1690,18 @@ void ExecutiveSetObjVisib(char *name,int state)
   }
 }
 /*========================================================================*/
+void ExecutiveFullScreen(int flag)
+{
+  if(PMGUI) {
+    if(flag) {
+      glutFullScreen();
+    } else {
+      glutReshapeWindow(640+cOrthoRightSceneMargin,
+                        480+cOrthoBottomSceneMargin);
+    }
+  }
+}
+/*========================================================================*/
 void ExecutiveSetAllVisib(int state)
 {
   ObjectMoleculeOpRec op;
@@ -2689,4 +2701,5 @@ matrix checking code...
 	 }
 	 printf("\n");
 #endif
+
 

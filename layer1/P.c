@@ -57,6 +57,10 @@ PyObject *P_sleep = NULL;
 PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 PyThreadState *P_api_thread_state; /* this is the thread state for an alternate thread */
 
+int P_blocked_interpreter_flag = true; /* this is not reliable and is not used for 
+                                        * any purpose other than trying to avoid
+                                        * a crash/hang when GLUT unilaterally terminates
+                                        * the program */
 int P_glut_thread_active = 1;
 int P_glut_thread_keep_out = 0; /* enables us to keep glut out if by chance it grabs the API
                                  * in the middle of a nested API based operation */
@@ -330,13 +334,16 @@ int PLabelAtom(AtomInfoType *at,char *expr)
 void PUnlockAPIAsGlut(void)
 {
   PyEval_RestoreThread(P_glut_thread_state); /* grab python */
+  P_blocked_interpreter_flag=true;
   PXDecRef(PyObject_CallFunction(P_unlock,NULL));
   P_glut_thread_state = PyEval_SaveThread(); /* release python */
+  P_blocked_interpreter_flag=false;
 }
 
 void PLockAPIAsGlut(void)
 {
   PyEval_RestoreThread(P_glut_thread_state); /* grab python */
+  P_blocked_interpreter_flag=true;
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
   while(P_glut_thread_keep_out) { /* IMPORTANT: keeps the glut thread out of an API operation... */
     /* NOTE: the keep_out variable can only be changed by the thread
@@ -348,18 +355,21 @@ void PLockAPIAsGlut(void)
     { 
       struct timeval tv;
       P_glut_thread_state = PyEval_SaveThread(); /* release python */
+      P_blocked_interpreter_flag=false;
       tv.tv_sec=0;
       tv.tv_usec=50000; 
       select(0,NULL,NULL,NULL,&tv);
       PyEval_RestoreThread(P_glut_thread_state); /* grab python */
+      P_blocked_interpreter_flag=true;
     } 
 #else
     PXDecRef(PyObject_CallFunction(P_sleep,"f",0.050));
 #endif
     PXDecRef(PyObject_CallFunction(P_lock,NULL));
   }
-  P_glut_thread_state = PyEval_SaveThread(); /* release python */
   P_glut_thread_active = 1; /* if we come in on a glut event - then it is the active thread */
+  P_glut_thread_state = PyEval_SaveThread(); /* release python */
+  P_blocked_interpreter_flag = false;
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
@@ -595,6 +605,17 @@ void PFlushFast(void) {
   }
 }
 
+void PBlockForEmergencyShutdown(void) /* synchronize before take-down to avoid crashes */
+{
+  if(!P_blocked_interpreter_flag) {
+    if(P_glut_thread_active)
+      PyEval_RestoreThread(P_glut_thread_state);
+    else 
+      PyEval_RestoreThread(P_api_thread_state);
+    P_blocked_interpreter_flag = true;
+  }
+}
+
 void PBlock(void)
 {
   /* synchronize python */
@@ -603,7 +624,7 @@ void PBlock(void)
     PyEval_RestoreThread(P_glut_thread_state);
   else 
     PyEval_RestoreThread(P_api_thread_state);
-
+  P_blocked_interpreter_flag = true;
 }
 
 void PBlockAndUnlockAPI(void)
@@ -637,6 +658,7 @@ void PUnblock(void)
     P_glut_thread_state = PyEval_SaveThread();
   else
     P_api_thread_state = PyEval_SaveThread();
+  P_blocked_interpreter_flag = false;
 }
 
 void PDefineFloat(char *name,float value) {
