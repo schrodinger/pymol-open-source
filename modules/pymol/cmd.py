@@ -3709,7 +3709,7 @@ EXAMPLE
       unlock()
    return r
 
-def check(obj):
+def check(*arg):
    '''
 UNSUPPORTED
 
@@ -3717,8 +3717,18 @@ This function relies on code that is not currently part of PyMOL/ChemPy
    '''
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
    from chempy.tinker import realtime
-   realtime.assign("("+obj+")")
-   realtime.setup("("+obj+")")
+   la = len(arg)
+   if not la:
+      arg = get_names("objects")
+      arg = arg[0:1]
+      la = len(arg)
+   if la:
+      if la>1:
+         preserve=int(arg[1])
+      else:
+         preserve=0
+      realtime.assign("("+arg[0]+")",preserve)
+      realtime.setup("("+arg[0]+")")
 
 def fast_minimize(*arg):
    '''
@@ -3909,7 +3919,7 @@ keyword = {
    'bond'          : [bond         , 0 , 3 , ',' , 0 ],
    'button'        : [button       , 3 , 3 , ',' , 0 ],
    'cd'            : [cd           , 1 , 1 , ',' , 0 ],  
-   'check'         : [check        , 0 , 1 , ',' , 0 ],
+   'check'         : [check        , 0 , 2 , ',' , 0 ],
    'clip'          : [clip         , 2 , 2 , ',' , 0 ],
    'cls'           : [cls          , 0 , 0 , ',' , 0 ],
    'color'         : [color        , 1 , 2 , ',' , 0 ],
