@@ -3862,9 +3862,9 @@ int ExecutiveIterate(char *s1,char *expr,int read_only,int quiet)
 /*========================================================================*/
 int ExecutiveIterateList(char *name,PyObject *list,int read_only,int quiet)
 {
-  int ok;
+  int ok=true;
   int n_eval=0;
-
+  
   ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(name);
   PyObject *entry;
   if(obj) {
