@@ -3139,6 +3139,9 @@ SEE ALSO
    remove, attach, fuse, bond, unbond
 '''
    r = 1
+   if not "pk1" in get_names("selections"):
+      print " Error: you must first pick an atom to replace."
+      raise QuietException
    try:
       if h_fill: # strip off existing hydrogens
          remove("((neighbor pk1) and elem h)")
