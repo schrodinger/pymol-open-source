@@ -1064,26 +1064,26 @@ static void draw_globe(PyMOLGlobals *G,float *v2,int number)
       glVertex3fv(v);
     }
     glEnd();
-    
+
     glBegin(GL_TRIANGLE_STRIP);
     for(a=0;a<=nEdge;a++) {
       c=a % nEdge;
-      v[0] =  n0[0]*x[c] + n2[0]*y[c];
-      v[1] =  n0[1]*x[c] + n2[1]*y[c];
-      v[2] =  n0[2]*x[c] + n2[2]*y[c];
+      v[0] =  n2[0]*x[c] + n0[0]*y[c];
+      v[1] =  n2[1]*x[c] + n0[1]*y[c];
+      v[2] =  n2[2]*x[c] + n0[2]*y[c];
       normalize3f(v);
       glNormal3fv(v);
-      v[0] = v2[0] + n0[0]*radius*x[c] + n2[0]*radius*y[c]+n1[0]*(offset+width);
-      v[1] = v2[1] + n0[1]*radius*x[c] + n2[1]*radius*y[c]+n1[1]*(offset+width);
-      v[2] = v2[2] + n0[2]*radius*x[c] + n2[2]*radius*y[c]+n1[2]*(offset+width);
+      v[0] = v2[0] + n2[0]*radius*x[c] + n0[0]*radius*y[c]+n1[0]*(offset+width);
+      v[1] = v2[1] + n2[1]*radius*x[c] + n0[1]*radius*y[c]+n1[1]*(offset+width);
+      v[2] = v2[2] + n2[2]*radius*x[c] + n0[2]*radius*y[c]+n1[2]*(offset+width);
       glVertex3fv(v);
-      v[0] = v2[0] + n0[0]*radius*x[c] + n2[0]*radius*y[c]+n1[0]*(offset-width);
-      v[1] = v2[1] + n0[1]*radius*x[c] + n2[1]*radius*y[c]+n1[1]*(offset-width);
-      v[2] = v2[2] + n0[2]*radius*x[c] + n2[2]*radius*y[c]+n1[2]*(offset-width);
+      v[0] = v2[0] + n2[0]*radius*x[c] + n0[0]*radius*y[c]+n1[0]*(offset-width);
+      v[1] = v2[1] + n2[1]*radius*x[c] + n0[1]*radius*y[c]+n1[1]*(offset-width);
+      v[2] = v2[2] + n2[2]*radius*x[c] + n0[2]*radius*y[c]+n1[2]*(offset-width);
       glVertex3fv(v);
     }
     glEnd();
-    
+
     glBegin(GL_TRIANGLE_STRIP);
     for(a=0;a<=nEdge;a++) {
       c=a % nEdge;
