@@ -525,8 +525,15 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_oval_length:
   case cSetting_cartoon_oval_width:
   case cSetting_cartoon_oval_quality:
-  case cSetting_cartoon_flat_helices:
+  case cSetting_cartoon_round_helices:
+  case cSetting_cartoon_flat_sheets:
   case cSetting_cartoon_refine_normals:
+  case cSetting_cartoon_smooth_loops:
+  case cSetting_cartoon_dumbbell_width:
+  case cSetting_cartoon_dumbbell_length:
+  case cSetting_cartoon_dumbbell_radius:
+  case cSetting_cartoon_fancy_helices:
+  case cSetting_cartoon_fancy_sheets:
   case cSetting_cartoon_debug:
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
     SceneChanged();
@@ -956,9 +963,26 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_line_radius, 0.15);
 
-  SettingSet_f(I,cSetting_cartoon_flat_helices, 1.0);
+  SettingSet_f(I,cSetting_cartoon_round_helices, 1.0);
 
   SettingSet_f(I,cSetting_cartoon_refine_normals, 1.0);
   
+  SettingSet_f(I,cSetting_cartoon_flat_sheets, 1.0);
+
+  SettingSet_f(I,cSetting_cartoon_smooth_loops, 1.0);
+
+  SettingSet_f(I,cSetting_cartoon_dumbbell_length, 1.50);
+
+  SettingSet_f(I,cSetting_cartoon_dumbbell_width, 0.15);
+
+  SettingSet_f(I,cSetting_cartoon_dumbbell_radius, 0.15);
+
+  SettingSet_f(I,cSetting_cartoon_dumbbell_radius, 0.15);  
+
+  SettingSet_f(I,cSetting_cartoon_fancy_helices, 0.0);  
+
+  SettingSet_f(I,cSetting_cartoon_fancy_sheets, 1.0);  
+
+
 }
 

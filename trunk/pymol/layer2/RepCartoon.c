@@ -75,7 +75,7 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
 Rep *RepCartoonNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4,*car,*cc,*helix;
+  int a,b,c,f,e,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4,*car,*cc,*sstype;
   float *v,*v0,*v1,*v2,*v3,*v4,*v5,*vo,*vn,*va;
   float *pv=NULL;
   float *pvo=NULL,*pva=NULL;
@@ -83,13 +83,14 @@ Rep *RepCartoonNew(CoordSet *cs)
   float *nv=NULL;
   float *tv=NULL;
   float *vc=NULL;
-  int last;
+  float *tmp=NULL;
+  int last,first,end_flag;
   float f0,f1,f2,f3,len_seg;
   float *d,dp;
   float *dl=NULL;
   int nSeg;
   int sampling;
-  int *hel;
+  int *ss;
   float  power_a = 5;
   float power_b = 5;
   float loop_radius,angle,ratio,dot;
@@ -99,6 +100,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   int n_p;
   int loop_quality;
   float oval_quality,oval_width,oval_length;
+  float dumbbell_radius,dumbbell_width,dumbbell_length;
+
   int st,nd;
   float *v_c,*v_n,*v_o,*v_ca;
   float t0[3],t1[3],t2[3],o0[12],o1[12];
@@ -107,6 +110,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   int cur_car;
   int contFlag,extrudeFlag;
   int cartoon_debug;
+  int fancy_helices;
+  int fancy_sheets;
 
   OOAlloc(RepCartoon);
 
@@ -151,11 +156,17 @@ ENDFD;
   if(tube_quality<3) tube_quality=3;
 
   oval_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_length);
-  if(tube_radius<0.01) tube_radius=0.01;
   oval_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_width);
-  if(tube_radius<0.01) tube_radius=0.01;
   oval_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_quality);
-  if(tube_quality<3) tube_quality=3;
+  if(oval_quality<3) tube_quality=3;
+
+  dumbbell_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_length);
+  dumbbell_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_width);
+  dumbbell_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_radius);
+  if(dumbbell_radius<0.01) dumbbell_radius=0.01;
+
+  fancy_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_helices);
+  fancy_sheets = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_sheets);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -168,18 +179,19 @@ ENDFD;
 
   at = Alloc(int,cs->NAtIndex);
   pv = Alloc(float,cs->NAtIndex*3);
+  tmp = Alloc(float,cs->NAtIndex*3);
   pvo = Alloc(float,cs->NAtIndex*3); /* orientation vector */
   pva = Alloc(float,cs->NAtIndex*6); /* alternative orientation vectors */
   seg = Alloc(int,cs->NAtIndex);
   car = Alloc(int,cs->NAtIndex);
-  helix = Alloc(int,cs->NAtIndex);
+  sstype = Alloc(int,cs->NAtIndex);
 
   i=at;
   v=pv;
   vo=pvo;
   s=seg;
   cc=car;
-  hel=helix;
+  ss=sstype;
   nAt = 0;
   nSeg = 0;
   a2=-1;
@@ -200,12 +212,13 @@ ENDFD;
               if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
                 {
                   if(a2>=0) {
-                    if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-                       (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-                       (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))
-                      {
-							 a2=-1;
-                      }
+                    /*
+                      if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
+                      (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+                      (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+                      if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+                        a2=-1;
+
                   }
                   if(a2<=0)
                     nSeg++;
@@ -217,22 +230,28 @@ ENDFD;
                   case 'H':
                   case 'h':
                     if (cur_car==cCartoon_auto) {
-                      cur_car = cCartoon_oval;
+                      if(fancy_helices)
+                        cur_car = cCartoon_dumbbell;
+                      else
+                        cur_car = cCartoon_oval;
                     }
-                    *hel=true;
+                    *ss=1; /* helix */
                     break;
                   case 'S':
                   case 's':
                     if (cur_car==cCartoon_auto) {
-                      cur_car = cCartoon_rect;
+                      if(fancy_sheets)
+                        cur_car = cCartoon_arrow;
+                      else
+                        cur_car = cCartoon_rect;
                     }
-                    *hel=false;
+                    *ss=2;
                     break;
                   default: /* 'L', 'T', 0, etc. */
                     if (cur_car==cCartoon_auto) {
                       cur_car = cCartoon_loop;
                     }
-                    *hel=false;
+                    *ss=0;
                     break;
                   }
                   *(cc++)=cur_car;
@@ -243,7 +262,7 @@ ENDFD;
                   *(v++)=*(v1++);
                   a2=a1;
                   
-                  hel++;
+                  ss++;
 
                   v_c = NULL;
                   v_n = NULL;
@@ -377,7 +396,7 @@ ENDFD;
         " RepCartoon-Debug: generating coordinate systems...\n"
         ENDFD;
       
-      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_helices)) {
+      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices)) {
         v1 = NULL;
         v2 = NULL;
         v3 = NULL;
@@ -385,7 +404,7 @@ ENDFD;
         v5 = NULL;
         s = seg;
         v = pv;
-        hel = helix;
+        ss = sstype;
         vo = pvo;
         v0 = tv;
         last = 0;
@@ -405,7 +424,7 @@ ENDFD;
             v4 = v3;
             v3 = v2;
             v2 = v1;
-            if(*hel)
+            if(*ss==1)
               v1 = v;
             else {
               if(last<2) {/* not 5+ turn helix, so just average the tangents */
@@ -475,21 +494,21 @@ ENDFD;
               copy3f(t0,t2);
             }
             v+=3;
-            hel++;
+            ss++;
             vo+=3;
             v0+=3;
             s++;
           }
         }
       }
-      
+
       if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals)) {
         /* now generate alternative orientation vectors */
         
         v1 = tv;
         va = pva;
         vo = pvo;
-        hel = helix;
+        ss = sstype;
         for(a=0;a<nAt;a++) { 
           
           /* original */
@@ -498,7 +517,7 @@ ENDFD;
           
           /* inverse */
           copy3f(vo,va);
-          if(!*hel)
+          if(*ss!=1)
             invert3f(va);
           va+=3;
           
@@ -506,7 +525,7 @@ ENDFD;
           
           v1+=3;
           vo+=3;
-          hel++;
+          ss++;
         }
         
         /* now iterate through pairs*/
@@ -539,18 +558,235 @@ ENDFD;
           va+=6; /* candidate orientation vectors */
           v+=3; /* normal */
         }
+
+
+      }
+
+      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
+        s = seg;
+        v = pv;
+        ss = sstype;
+        vo = pvo;
+        v0 = tv;
+        last = 0;
+        first = -1;
+        end_flag=false;
+        if(nAt>1) {
+          for(a=0;a<nAt;a++) {
+
+            if(a) {
+              if(*s!=*(s-1)) { 
+                end_flag=true;
+              } else if(*ss!=2) {
+                end_flag=true;
+              }
+              if(a==(nAt-1))
+                end_flag=1;
+            }
+            if(end_flag) {
+              
+              for(f=1;f<2;f++) {
+                for(c=0;c<3;c++) {
+                  for(b=first+f;b<=last-f;b++) { /* iterative averaging */
+                    zero3f(t0);
+                    for(e=-f;e<=f;e++) {
+                      add3f(pv+3*(b+e),t0,t0);
+                    }
+                    scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                  }
+                  for(b=first+f;b<=last-f;b++) {
+                    copy3f(tmp+b*3,pv+b*3);
+                  }
+                  for(b=first+f;b<=last-f;b++) { 
+                    zero3f(t0);
+                    for(e=-f;e<=f;e++) {
+                      add3f(pvo+3*(b+e),t0,t0);
+                    }
+                    scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                  }
+                  for(b=first+f;b<=last-f;b++) {
+                    copy3f(tmp+b*3,pvo+b*3);
+                    normalize3f(pvo+b*3);
+                  }
+                }
+
+              }
+              first = -1;
+              last = -1;
+              end_flag=false;
+            }
+            if(*ss==2) {
+              if(first<0)
+                first=a;
+              last = a;
+            } 
+            v+=3;
+            ss++;
+            vo+=3;
+            v0+=3;
+            s++;
+          }
+        }
+
+      }
+
+      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)) {
+        s = seg;
+        v = pv;
+        ss = sstype;
+        vo = pvo;
+        v0 = tv;
+        last = 0;
+        first = -1;
+        end_flag=false;
+        if(nAt>1) {
+          for(a=0;a<nAt;a++) {
+
+            if(a) {
+              if(*s!=*(s-1)) { 
+                end_flag=true;
+              } else if(*ss!=0) {
+                end_flag=true;
+              }
+              if(a==(nAt-1))
+                end_flag=1;
+            }
+            if(end_flag) {
+              
+              for(f=1;f<2;f++) {
+                for(c=0;c<3;c++) {
+                  for(b=first+f;b<=last-f;b++) { /* iterative averaging */
+                    zero3f(t0);
+                    for(e=-f;e<=f;e++) {
+                      add3f(pv+3*(b+e),t0,t0);
+                    }
+                    scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                  }
+                  for(b=first+f;b<=last-f;b++) {
+                    copy3f(tmp+b*3,pv+b*3);
+                  }
+                  for(b=first+f;b<=last-f;b++) { 
+                    zero3f(t0);
+                    for(e=-f;e<=f;e++) {
+                      add3f(pvo+3*(b+e),t0,t0);
+                    }
+                    scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                  }
+                  for(b=first+f;b<=last-f;b++) {
+                    copy3f(tmp+b*3,pvo+b*3);
+                    normalize3f(pvo+b*3);
+                  }
+                }
+
+              }
+              first = -1;
+              last = -1;
+              end_flag=false;
+            }
+            if(*ss==0) {
+              if(first<0)
+                first=a;
+              last = a;
+            } 
+            v+=3;
+            ss++;
+            vo+=3;
+            v0+=3;
+            s++;
+          }
+        }
+
+      }
+
+
+      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)||
+         SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)) {
+
+		/* recompute differences and normals */
+
+		s=seg;
+		v=pv;
+		v1=dv;
+		v2=nv;
+		d=dl;
+		for(a=0;a<(nAt-1);a++)
+		  {
+			 if(*s==*(s+1))
+				{
+				  subtract3f(v+3,v,v1);
+				  *d = length3f(v1);
+              if(*d>R_SMALL4) {
+                scale3f(v1,1.0/(*d),v2);
+              } else if(a)  {
+                copy3f(v2-3,v2); 
+              } else {
+                zero3f(v2);
+              }
+				}
+          else {
+            zero3f(v2);	
+          }
+			 d++;
+			 v+=3;
+			 v1+=3;
+			 v2+=3;
+			 s++;
+		  }
+		
+		/* recompute tangents */
+		
+		s=seg;
+		v=nv;
+		
+		v1=tv;
+		
+		*(v1++)=*(v++); /* first segment */
+		*(v1++)=*(v++);
+		*(v1++)=*(v++);
+		s++;
+		
+		for(a=1;a<(nAt-1);a++)
+		  {
+			 if((*s==*(s-1))&&(*s==*(s+1)))
+				{
+				  add3f(v,(v-3),v1);
+				  normalize3f(v1);			 
+				}
+			 else if(*s==*(s-1))
+				{
+				  *(v1)=*(v-3);  /* end a segment */
+				  *(v1+1)=*(v-2); 
+				  *(v1+2)=*(v-1); 
+				}
+			 else if(*s==*(s+1))
+				{
+				  *(v1)=*(v);   /* new segment */
+				  *(v1+1)=*(v+1); 
+				  *(v1+2)=*(v+2); 
+				}
+			 v+=3;
+			 v1+=3;
+			 s++;
+		  }
+		
+		*(v1++)=*(v-3); /* last segment */
+		*(v1++)=*(v-2);
+		*(v1++)=*(v-1);
+
+
       }
     }
 
+
   I->std = CGONew();
 
-  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_helices)) {
+  /* debugging output */
+  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices)) {
     if((cartoon_debug>0.5)&&(cartoon_debug<2.5)) {
       CGOColor(I->std,1.0,1.0,1.0);
       CGODisable(I->std,GL_LIGHTING);
       CGOBegin(I->std,GL_LINE_STRIP);
-      
-      
+            
       v1 = NULL;
       v2 = NULL;
       v3 = NULL;
@@ -815,6 +1051,24 @@ ENDFD;
             ExtrudeBuildNormals2f(ex);
             ExtrudeCGOSurfaceTube(ex,I->std,1);
             break;
+          case cCartoon_arrow:
+            ExtrudeRectangle(ex,width,length);
+            ExtrudeBuildNormals2f(ex);
+            ExtrudeCGOSurfaceStrand(ex,I->std,sampling);
+            break;
+          case cCartoon_dumbbell:
+            ExtrudeDumbbell1(ex,dumbbell_width,dumbbell_length);
+            ExtrudeBuildNormals2f(ex);
+            ExtrudeCGOSurfacePolygon(ex,I->std,1);
+
+            ExtrudeDumbbell2(ex,loop_quality,1,dumbbell_length,dumbbell_radius);
+            ExtrudeBuildNormals2f(ex);
+            ExtrudeCGOSurfaceTube(ex,I->std,1);
+
+            ExtrudeDumbbell2(ex,loop_quality,-1,dumbbell_length,dumbbell_radius);
+            ExtrudeBuildNormals2f(ex);
+            ExtrudeCGOSurfaceTube(ex,I->std,1);
+            break;
           }
         }
         a--; /* undo above... */
@@ -860,7 +1114,8 @@ ENDFD;
   FreeP(pvo);
   FreeP(pva);
   FreeP(car);
-  FreeP(helix);
+  FreeP(tmp);
+  FreeP(sstype);
   return((void*)(struct Rep*)I);
 }
 

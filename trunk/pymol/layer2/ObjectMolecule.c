@@ -79,6 +79,133 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
 
+#define MAX_BOND_DIST 50
+/*========================================================================*/
+int ObjectMoleculeGetPhiPsi(ObjectMolecule *I,int ca,float *phi,float *psi,int state)
+{
+  int np=-1;
+  int cm=-1;
+  int c=-1;
+  int n=-1;
+  int result = false;
+  AtomInfoType *ai;
+  int n0,at;
+  float v_ca[3];
+  float v_n[3];
+  float v_c[3];
+  float v_cm[3];
+  float v_np[3];
+
+  ai=I->AtomInfo;
+
+  if((ai[ca].name[0]=='C')&&(ai[ca].name[1]=='A'))
+    {
+      ObjectMoleculeUpdateNeighbors(I);
+      
+      /* find C */
+      n0 = I->Neighbor[ca]+1;
+      while(I->Neighbor[n0]>=0) {
+        at = I->Neighbor[n0];
+        if((ai[at].name[0]=='C')&&(ai[at].name[1]==0)) {
+          c=at;
+          break;
+        }
+        n0+=2;
+      }
+      
+      /* find N */
+      n0 = I->Neighbor[ca]+1;
+      while(I->Neighbor[n0]>=0) {
+        at = I->Neighbor[n0];
+        if((ai[at].name[0]=='N')&&(ai[at].name[1]==0)) {
+          n=at;
+          break;
+        }
+        n0+=2;
+      }
+      
+      /* find NP */
+      if(c>=0) {
+        n0 = I->Neighbor[c]+1;
+        while(I->Neighbor[n0]>=0) {
+          at = I->Neighbor[n0];
+          if((ai[at].name[0]=='N')&&(ai[at].name[1]==0)) {
+            np=at;
+            break;
+          }
+        n0+=2;
+        }
+      }
+      
+      /* find CM */
+      if(n>=0) {
+        n0 = I->Neighbor[n]+1;
+        while(I->Neighbor[n0]>=0) {
+          at = I->Neighbor[n0];
+          if((ai[at].name[0]=='C')&&(ai[at].name[1]==0)) {
+            cm=at;
+            break;
+          }
+          n0+=2;
+        }
+      }
+      if((ca>=0)&&(np>=0)&&(c>=0)&&(n>=0)&&(cm>=0)) {
+        if(ObjectMoleculeGetAtomVertex(I,state,ca,v_ca)&&
+           ObjectMoleculeGetAtomVertex(I,state,n,v_n)&&
+           ObjectMoleculeGetAtomVertex(I,state,c,v_c)&&
+           ObjectMoleculeGetAtomVertex(I,state,cm,v_cm)&&
+           ObjectMoleculeGetAtomVertex(I,state,np,v_np)) {
+
+          (*phi)=rad_to_deg(get_dihedral3f(v_c,v_ca,v_n,v_cm));
+          (*psi)=rad_to_deg(get_dihedral3f(v_np,v_c,v_ca,v_n));
+          result=true;
+        }
+      }
+    }
+  return(result);
+}
+/*========================================================================*/
+int ObjectMoleculeCheckBondSep(ObjectMolecule *I,int a0,int a1,int dist)
+{
+  int result = false;
+  int n0;
+  int stack[MAX_BOND_DIST+1];
+  int history[MAX_BOND_DIST+1];
+  int depth=0;
+  int distinct;
+  int a;
+  if(dist>MAX_BOND_DIST)
+    return false;
+  
+  ObjectMoleculeUpdateNeighbors(I);
+
+  depth = 1;
+  history[depth]=a0;
+  stack[depth] = I->Neighbor[a0]+1; /* go to first neighbor */
+  while(depth) { /* keep going until we've traversed tree */
+    while(I->Neighbor[stack[depth]]>=0) /* end of branches? go back up one bond */
+      {
+        n0 = I->Neighbor[stack[depth]]; /* get current neighbor index */
+        stack[depth]+=2; /* set up next neighbor */
+        distinct=true; /* check to see if current candidate is distinct from ancestors */
+        for(a=1;a<depth;a++) {
+          if(history[a]==n0)
+            distinct=false;
+        }
+        if(distinct) {
+          if(depth<dist) { /* are not yet at the proper distance? */
+            if(distinct) {
+              depth++; 
+              stack[depth] = I->Neighbor[n0]+1; /* then keep moving outward */
+            }
+          } else if(n0==a1) /* otherwise, see if we have a match */
+            result = true;
+        }
+      }
+    depth--;
+  }
+  return result;
+}
 /*========================================================================*/
 void ObjectGotoState(ObjectMolecule *I,int state)
 {
@@ -1360,6 +1487,8 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
     ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds);
   }
   return(c);    
 }
@@ -1415,6 +1544,8 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int
       ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
       ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
       ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
+      ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds);
+      ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds);
     }
     b0+=3;
   }
@@ -1476,6 +1607,8 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
     ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds);
   }
 
   return(-offset);
@@ -2154,7 +2287,7 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I)
 /*========================================================================*/
 void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
 {
-  /* neighbor storage structure:
+  /* neighbor storage structure: VERY COMPLICATED...
      
      0       list offset for atom 0 = n
      1       list offset for atom 1 = n + m + 1
@@ -2164,10 +2297,10 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
      n       count for atom 0 
      n+1     neighbor of atom 0
      n+2     bond index
-     n+3     neighbor of atom 1
+     n+3     neighbor of atom 0
      n+4     bond index
      ...
-     n+m     -1
+     n+m     -1 terminator for atom 0
 
      n+m+1   count for atom 1
      n+m+2   neighbor of atom 1
@@ -2175,6 +2308,8 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
      n+m+4   neighbor of atom 1
      n+m+5   bond index
      etc.
+
+     NOTE: all atoms have an offset and a terminator whether or not they have any bonds 
  */
 
   int size;
@@ -2217,13 +2352,13 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
       l1 = *(l++);
       l++;
 
-      I->Neighbor[l0]--;
-      I->Neighbor[I->Neighbor[l0]]=b;
+      I->Neighbor[l0]--; 
+      I->Neighbor[I->Neighbor[l0]]=b; /* store bond indices (for I->Bond) */
       I->Neighbor[l1]--;
       I->Neighbor[I->Neighbor[l1]]=b;
 
       I->Neighbor[l0]--;
-      I->Neighbor[I->Neighbor[l0]]=l1;
+      I->Neighbor[I->Neighbor[l0]]=l1; /* store neighbor references (I->AtomInfo, etc.)*/
       I->Neighbor[l1]--;
       I->Neighbor[I->Neighbor[l1]]=l0;
     }
@@ -3703,6 +3838,24 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          if(SelectorIsMember(s,sele))
            op->i1++;
          ai++;
+       }
+     break;
+   case OMOP_PhiPsi:
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele)) {
+           VLACheck(op->i1VLA,int,op->i1);
+           op->i1VLA[op->i1]=a;
+           VLACheck(op->obj1VLA,ObjectMolecule*,op->i1);
+           op->obj1VLA[op->i1]=I;
+           VLACheck(op->f1VLA,float,op->i1);
+           VLACheck(op->f2VLA,float,op->i1);
+           if(ObjectMoleculeGetPhiPsi(I,a,op->f1VLA+op->i1,op->f2VLA+op->i1,op->i2))
+             op->i1++;
+         }
+         ai++; 
        }
      break;
 	case OMOP_Cartoon: /* adjust cartoon type */

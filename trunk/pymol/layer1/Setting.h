@@ -207,8 +207,15 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_dash_radius                 108
 #define cSetting_cgo_ray_width_scale         109
 #define cSetting_line_radius                 110
-#define cSetting_cartoon_flat_helices        111
+#define cSetting_cartoon_round_helices       111
 #define cSetting_cartoon_refine_normals      112
+#define cSetting_cartoon_flat_sheets         113
+#define cSetting_cartoon_smooth_loops        114
+#define cSetting_cartoon_dumbbell_length     115
+#define cSetting_cartoon_dumbbell_width      116
+#define cSetting_cartoon_dumbbell_radius     117
+#define cSetting_cartoon_fancy_helices       118
+#define cSetting_cartoon_fancy_sheets        119
 
 #define cSetting_INIT                        120
 

@@ -119,9 +119,16 @@ class SettingIndex:
    dash_radius          =108
    cgo_ray_width_scale  =109
    line_radius          =110
-   cartoon_flat_helices =111
+   cartoon_round_helices =111
    cartoon_refine_normals = 112
-   
+   cartoon_flat_sheets  =113
+   cartoon_smooth_loops =114
+   cartoon_dumbbell_length   =  115
+   cartoon_dumbbell_width    =  116
+   cartoon_dumbbell_radius   =  117
+   cartoon_fancy_helices    =  118
+   cartoon_fancy_sheets     =  119
+
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
 index_list = []

@@ -315,6 +315,8 @@ class PMGApp(AbstractApp):
          cmd.set('surface_quality',1)
          cmd.set('stick_quality',15)
          cmd.set('sphere_quality',2)
+         cmd.set('cartoon_sampling',14)
+         cmd.set('ribbon_sampling',10)
          cmd.do("rebuild")
       elif mode==33:
          cmd.set('line_smooth',1)         
@@ -323,6 +325,7 @@ class PMGApp(AbstractApp):
          cmd.set('surface_quality',0)
          cmd.set('stick_quality',8)
          cmd.set('sphere_quality',1)
+         cmd.set('cartoon_sampling',7)
          cmd.do("rebuild")
       elif mode==66: # good perfomance
          cmd.set('line_smooth',0)
@@ -331,6 +334,7 @@ class PMGApp(AbstractApp):
          cmd.set('surface_quality',0)
          cmd.set('stick_quality',8)
          cmd.set('sphere_quality',1)
+         cmd.set('cartoon_sampling',6)
          cmd.do("rebuild")         
       else: # maximum performance
          cmd.set('line_smooth',0)
@@ -339,6 +343,7 @@ class PMGApp(AbstractApp):
          cmd.set('surface_quality',0)
          cmd.set('stick_quality',5)
          cmd.set('sphere_quality',0)
+         cmd.set('cartoon_sampling',3)
          cmd.do("rebuild")         
          
    def createMenuBar(self):
@@ -643,6 +648,41 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Mouse', 'command', 'Editing',
                                label='Editing',
                                command = lambda: cmd.edit_mode("on"))
+
+      self.menuBar.addmenu('Cartoons', 'Cartoon Properties')
+
+      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+                         'Round Helices',
+                         label='Round Helices',
+                        variable = self.setting.cartoon_round_helices,
+                        command = lambda s=self: s.setting.update('cartoon_round_helices'))
+
+      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+                         'Fancy Helices',
+                         label='Fancy Helices',
+                        variable = self.setting.cartoon_fancy_helices,
+                        command = lambda s=self: s.setting.update('cartoon_fancy_helices'))
+
+
+      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+                         'Flat Sheets',
+                         label='Flat Sheets',
+                        variable = self.setting.cartoon_flat_sheets,
+                        command = lambda s=self: s.setting.update('cartoon_flat_sheets'))
+
+
+      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+                         'Fancy Sheets',
+                         label='Fancy Sheets',
+                        variable = self.setting.cartoon_fancy_sheets,
+                        command = lambda s=self: s.setting.update('cartoon_fancy_sheets'))
+
+      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+                         'Smooth Loops',
+                         label='Smooth Loops',
+                        variable = self.setting.cartoon_smooth_loops,
+                        command = lambda s=self: s.setting.update('cartoon_smooth_loops'))
+
 
       self.menuBar.addmenu('Wizards', 'Task Wizards')
       

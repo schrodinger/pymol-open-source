@@ -66,6 +66,20 @@ class Setting:
       self.specular = IntVar()
       self.specular.set(int(cmd.get_setting_legacy('specular')))
 
+      self.cartoon_round_helices = IntVar()
+      self.cartoon_round_helices.set(int(cmd.get_setting_legacy('cartoon_round_helices')))
+
+      self.cartoon_fancy_helices = IntVar()
+      self.cartoon_fancy_helices.set(int(cmd.get_setting_legacy('cartoon_fancy_helices')))
+
+      self.cartoon_flat_sheets = IntVar()
+      self.cartoon_flat_sheets.set(int(cmd.get_setting_legacy('cartoon_flat_sheets')))
+
+      self.cartoon_fancy_sheets = IntVar()
+      self.cartoon_fancy_sheets.set(int(cmd.get_setting_legacy('cartoon_fancy_sheets')))
+
+      self.cartoon_smooth_loops = IntVar()
+      self.cartoon_smooth_loops.set(int(cmd.get_setting_legacy('cartoon_smooth_loops')))
 
       self.xref = { 
          'ray_trace_frames':
@@ -96,6 +110,18 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % s.depth_cue.get())))),
          'specular'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8))))),
+
+         'cartoon_round_helices'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_round_helices.get()))))),
+         'cartoon_fancy_helices'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_fancy_helices.get()))))),
+         'cartoon_flat_sheets'         :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_flat_sheets.get()))))),
+         'cartoon_fancy_sheets'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_fancy_sheets.get()))))),
+         'cartoon_smooth_loops'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_smooth_loops.get()))))),
+         
          }
 
       self.update_code = {
@@ -123,6 +149,16 @@ class Setting:
          (lambda s,t: (s.depth_cue.set(int(t[1][0])))), 
          'specular'       :
          (lambda s,t: (s.specular.set(t[1][0]>0.0))), 
+         'cartoon_round_helices':
+         (lambda s,t: (s.cartoon_round_helices.set(t[1][0]!=0))),
+         'cartoon_fancy_helices':
+         (lambda s,t: (s.cartoon_fancy_helices.set(t[1][0]!=0))),
+         'cartoon_flat_sheets':
+         (lambda s,t: (s.cartoon_flat_sheets.set(t[1][0]!=0))),
+         'cartoon_fancy_sheets':
+         (lambda s,t: (s.cartoon_fancy_sheets.set(t[1][0]!=0))),
+         'cartoon_smooth_loops':
+         (lambda s,t: (s.cartoon_smooth_loops.set(t[1][0]!=0))),
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -138,6 +174,11 @@ class Setting:
          pymol.setting._get_index("backface_cull"),
          pymol.setting._get_index("depth_cue"),
          pymol.setting._get_index("specular"),
+         pymol.setting._get_index("cartoon_round_helices"),
+         pymol.setting._get_index("cartoon_fancy_helices"),
+         pymol.setting._get_index("cartoon_flat_sheets"),
+         pymol.setting._get_index("cartoon_fancy_sheets"),
+         pymol.setting._get_index("cartoon_smooth_loops"),         
          ]
 
       self.active_dict = {}
