@@ -917,52 +917,32 @@ USAGE
    else:
       print "Error: unrecognized command"
 
-def symexp(*arg):
+def symexp(prefix,object,selection,cutoff):
    '''
 DESCRIPTION
  
 "symexp" creates all symmetry related objects for the specified object
 that occurs within a cutoff about an atom selection.  The new objects
-are labeled using the prefix provided
+are labeled using the prefix provided along with their crystallographic
+symmetry operation and translation.
  
 USAGE
  
    symexp prefix = object, (selection), cutoff
-   symexp 
  
 PYMOL API
  
-   cmd.symexp( string prefix, string object, string selection,
-           string cutoff) 
+   cmd.symexp( string prefix, string object, string selection, float cutoff) 
 
    '''
-   if len(arg)<2:
-      print "Error: invalid arguments for symexp command."
-      raise QuietException
-   elif len(arg)<3:
-      nam= arg[0]
-      argst = arg[1]
-   else:
-      nam= arg[0]
-      arg = map(str,arg)
-      argst = string.join(arg[1:],',')
-   arg = parsing.split(argst,',')
-   la = len(arg)
-   if la<3:
-      print "Error: invalid arguments for symexp command."
-      raise QuietException
-   else:
-      obj=arg[0]
-      sele=arg[1]
-      dist=arg[2]
-      try:
-         lock()
-         r = _cmd.symexp(str(nam),str(obj),str(sele),float(dist))
-      finally:
-         unlock()
+   try:
+      lock()
+      r = _cmd.symexp(str(prefix),str(object),str(selection),float(cutoff))
+   finally:
+      unlock()
    return r
 
-def isomesh(*arg):
+def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=-1):
    '''
 DESCRIPTION
  
@@ -970,90 +950,42 @@ DESCRIPTION
  
 USAGE
  
-   isomesh name = map-object, level [,(selection) [,buffer] ] 
+   isomesh name = map-object, level [,(selection) [,buffer [,state] ] ] 
    '''
-   if len(arg)<2:
-      print "Error: invalid arguments for isomesh command."
-      raise QuietException
-   elif len(arg)<3:
-      nam= arg[0]
-      argst = arg[1]
+   if selection!='':
+      mopt = 1 # about a selection
    else:
-      nam= arg[0]
-      arg = map(str,arg)
-      argst = string.join(arg[1:],',')   
-   arg = parsing.split(argst,',')
-   la = len(arg)
-   if la<1:
-      print "Error: invalid arguments for isomesh command."
-      raise QuietException
-   else:
-      maap=arg[0]
-      mopt=0
-      optarg1=''
-      optarg2=''
-      lvl = 1.0
-      if la>1:
-         lvl = float(arg[1])
-      if la>2:
-         if arg[2][0] == '(':
-            mopt = 1
-            optarg1=arg[2]
-      if la>3:
-         optarg2 = arg[3]
-      try:
-         lock()
-         r = _cmd.isomesh(str(nam),0,str(maap),int(mopt),
-                          str(optarg1),str(optarg2),float(lvl),0)
-      finally:
-         unlock()
+      mopt = 0 # render the whole map
+   try:
+      lock()
+      r = _cmd.isomesh(str(name),0,str(map),int(mopt),
+                       str(selection),float(buffer),
+                       float(level),0,int(state))
+   finally:
+      unlock()
    return r
 
-def isodot(*arg):
+def isodot(name,map,level=1.0,selection='',buffer=0.0,state=-1):
    '''
 DESCRIPTION
  
-"isomesh" creates a dot isosurface object from a map object.
+"isodot" creates a dot isosurface object from a map object.
  
 USAGE
  
-   isodot name = map-object, level [,(selection) [,buffer] ] 
+   isodot name = map-object, level [,(selection) [,buffer [, state ] ] ] 
    '''
-   if len(arg)<2:
-      print "Error: invalid arguments for isodot command."
-      raise QuietException
-   elif len(arg)<3:
-      nam= arg[0]
-      argst = arg[1]
+   if selection!='':
+      mopt = 1 # about a selection
    else:
-      nam= arg[0]
-      arg = map(str,arg)
-      argst = string.join(arg[1:],',')   
-   arg = parsing.split(argst,',')
-   la = len(arg)
-   if la<1:
-      print "Error: invalid arguments for isodot command."
-      raise QuietException
-   else:
-      maap=arg[0]
-      mopt=0
-      optarg1=''
-      optarg2=''
-      lvl = 1.0
-      if la>1:
-         lvl = float(arg[1])
-      if la>2:
-         if arg[2][0] == '(':
-            mopt = 1
-            optarg1=arg[2]
-      if la>3:
-         optarg2 = arg[3]
-      try:
-         lock()
-         r = _cmd.isomesh(str(nam),0,str(maap),int(mopt),
-                          str(optarg1),str(optarg2),float(lvl),1)
-      finally:
-         unlock()
+      mopt = 0 # render the whole map
+   try:
+      lock()
+      r = _cmd.isomesh(str(name),0,str(map),int(mopt),
+                       str(selection),float(buffer),
+                       float(level),1,int(state))
+   finally:
+      unlock()
    return r
 
 def ready():
@@ -1723,7 +1655,7 @@ def expfit(a,b):
    return r
 
 
-def remove(sele):
+def remove(selection):
    '''
 DESCRIPTION
   
@@ -1745,7 +1677,7 @@ EXAMPLES
    r = 1
    try:
       lock()   
-      r = _cmd.remove(str(sele))
+      r = _cmd.remove(str(selection))
    finally:
       unlock()
    return r
@@ -2061,14 +1993,14 @@ TO DOCUMENT
       unlock()
    return r
 
-def replace(name,geom,valence):
+def replace(name,geometry,valence):
    '''
 TO DOCUMENT
 '''
    r = 1
    try:
       lock()
-      r = _cmd.replace(str(name),int(geom),int(valence))
+      r = _cmd.replace(str(name),int(geometry),int(valence))
    finally:
       unlock()
    return r
@@ -2516,6 +2448,9 @@ PYMOL API
    return r
 
 def _special(k,x,y):
+   '''
+   INTERNAL
+   '''
    k=int(k)
    if special.has_key(k):
       if special[k][1]:
@@ -3911,7 +3846,7 @@ NOTES
       unlock()
    return r
    
-def mmatrix(a):
+def mmatrix(action):
    '''
 DESCRIPTION
   
@@ -3932,11 +3867,11 @@ EXAMPLES
    r = 1
    try:
       lock()   
-      if a=="clear":
+      if action=="clear":
          r = _cmd.mmatrix(0)
-      elif a=="store":
+      elif action=="store":
          r = _cmd.mmatrix(1)
-      elif a=="recall":
+      elif action=="recall":
          r = _cmd.mmatrix(2)
    finally:
       unlock()
@@ -4326,8 +4261,8 @@ keyword = {
    'intra_rms'     : [intra_rms    , 1 , 2 , ',' , parsing.SIMPLE  ],
    'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , parsing.SIMPLE  ],
    'invert'        : [invert       , 0 , 2 , ',' , parsing.STRICT ],
-   'isodot'        : [isodot       , 2 , 2 , '=' , parsing.SIMPLE  ],   
-   'isomesh'       : [isomesh      , 2 , 2 , '=' , parsing.SIMPLE  ],
+   'isodot'        : [isodot       , 2 , 2 , '=' , parsing.LEGACY ],   
+   'isomesh'       : [isomesh      , 2 , 2 , '=' , parsing.LEGACY ],
    'iterate'       : [iterate      , 2 , 2 , ',' , parsing.SIMPLE  ],
    'iterate_state' : [iterate_state, 3 , 3 , ',' , parsing.SIMPLE  ],
    'label'         : [label        , 1 , 2 , ',' , parsing.SIMPLE  ],
@@ -4335,35 +4270,35 @@ keyword = {
    'ls'            : [ls           , 0 , 1 , ',' , parsing.STRICT ],  
    'mask'          : [mask         , 0 , 1 , ',' , parsing.STRICT ],
    'mem'           : [mem          , 0 , 0 , ',' , parsing.STRICT ],
-   'meter_reset'   : [meter_reset  , 0 , 0 , ',' , parsing.SIMPLE  ],
+   'meter_reset'   : [meter_reset  , 0 , 0 , ',' , parsing.STRICT ],
    'move'          : [move         , 2 , 2 , ',' , parsing.STRICT ],
    'mset'          : [mset         , 1 , 1 , ',' , parsing.SIMPLE  ],
    'mdo'           : [mdo          , 2 , 2 , ':' , parsing.SINGLE  ],
    'mpng'          : [mpng         , 1 , 2 , ',' , parsing.SIMPLE  ],
-   'mplay'         : [mplay        , 0 , 0 , ',' , parsing.SIMPLE  ],
-   'mray'          : [mray         , 0 , 0 , ',' , parsing.SIMPLE  ],
-   'mstop'         : [mstop        , 0 , 0 , ',' , parsing.SIMPLE  ],
-   'mclear'        : [mclear       , 0 , 0 , ',' , parsing.SIMPLE  ],
+   'mplay'         : [mplay        , 0 , 0 , ',' , parsing.STRICT ],
+   'mray'          : [mray         , 0 , 0 , ',' , parsing.STRICT ],
+   'mstop'         : [mstop        , 0 , 0 , ',' , parsing.STRICT ],
+   'mclear'        : [mclear       , 0 , 0 , ',' , parsing.STRICT ],
    'middle'        : [middle       , 0 , 0 , ',' , parsing.STRICT ],
    'minimize'      : [minimize     , 0 , 4 , ',' , parsing.SIMPLE  ],
-   'mmatrix'       : [mmatrix      , 1 , 1 , ',' , parsing.SIMPLE  ],
+   'mmatrix'       : [mmatrix      , 1 , 1 , ',' , parsing.STRICT ],
    'origin'        : [origin       , 1 , 1 , ',' , parsing.STRICT ],
    'orient'        : [orient       , 0 , 1 , ',' , parsing.STRICT ],
    'overlap'       : [overlap      , 2 , 3 , ',' , parsing.SIMPLE  ],
    'pair_fit'      : [pair_fit     , 2 ,98 , ',' , parsing.SIMPLE  ],
    'protect'       : [protect      , 0 , 1 , ',' , parsing.STRICT ],
-   'pwd'           : [pwd          , 0 , 0 , ',' , parsing.SIMPLE  ],
-   'ray'           : [ray          , 0 , 0 , ',' , parsing.SIMPLE  ],
-   'rebuild'       : [rebuild      , 0 , 0 , ',' , parsing.SIMPLE  ],
-   'redo'          : [redo         , 0 , 0 , ',' , parsing.SIMPLE  ],
+   'pwd'           : [pwd          , 0 , 0 , ',' , parsing.STRICT ],
+   'ray'           : [ray          , 0 , 0 , ',' , parsing.STRICT ],
+   'rebuild'       : [rebuild      , 0 , 0 , ',' , parsing.STRICT ],
+   'redo'          : [redo         , 0 , 0 , ',' , parsing.STRICT  ],
    'refresh'       : [refresh      , 0 , 0 , ',' , parsing.STRICT ],
-   'remove'        : [remove       , 1 , 1 , ',' , parsing.SIMPLE  ],
+   'remove'        : [remove       , 1 , 1 , ',' , parsing.STRICT  ],
    'remove_picked' : [remove_picked, 0 , 1 , ',' , parsing.SIMPLE  ],
    'rename'        : [rename       , 1 , 2 , ',' , parsing.STRICT ],
-   'replace'       : [replace      , 3 , 3 , ',' , parsing.SIMPLE  ],
+   'replace'       : [replace      , 3 , 3 , ',' , parsing.STRICT ],
    'reset'         : [reset        , 0 , 0 , ',' , parsing.STRICT ],
    'rewind'        : [rewind       , 0 , 0 , ',' , parsing.STRICT ],
-   'rock'          : [rock         , 0 , 0 , ',' , parsing.SIMPLE  ],
+   'rock'          : [rock         , 0 , 0 , ',' , parsing.STRICT ],
    'run'           : [run          , 1 , 2 , ',' , parsing.RUN    ],
    'rms'           : [rms          , 2 , 2 , ',' , parsing.STRICT ],
    'rms_cur'       : [rms_cur      , 2 , 2 , ',' , parsing.STRICT ],
@@ -4376,10 +4311,10 @@ keyword = {
    'sort'          : [sort         , 0 , 1 , ',' , parsing.STRICT ],
    'spawn'         : [spawn        , 1 , 2 , ',' , parsing.SPAWN  ],
    'spheroid'      : [spheroid     , 0 , 1 , ',' , parsing.STRICT ],
-   'splash'        : [splash       , 0 , 0 , ',' , parsing.SIMPLE  ],
-   '_special'      : [_special     , 3 , 3 , ',' , parsing.SIMPLE  ],
-   'stereo'        : [stereo       , 1 , 1 , ',' , parsing.SIMPLE  ],
-   'symexp'        : [symexp       , 2 , 2 , '=' , parsing.SIMPLE  ],
+   'splash'        : [splash       , 0 , 0 , ',' , parsing.STRICT ],
+   '_special'      : [_special     , 3 , 3 , ',' , parsing.SIMPLE ],
+   'stereo'        : [stereo       , 1 , 1 , ',' , parsing.STRICT ],
+   'symexp'        : [symexp       , 2 , 2 , '=' , parsing.LEGACY ],
    'system'        : [system       , 1 , 1 , ',' , parsing.STRICT ],
    'test'          : [test         , 0 , 0 , ',' , parsing.STRICT ],
    'torsion'       : [torsion      , 1 , 1 , ',' , parsing.STRICT ],

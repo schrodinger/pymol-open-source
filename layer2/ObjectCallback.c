@@ -134,7 +134,7 @@ ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *pobj,int stat
     ObjectCallbackRecomputeExtent(I);
   }
   SceneChanged();
-
+  SceneCountFrames();
   return(I);
 }
 /*========================================================================*/
