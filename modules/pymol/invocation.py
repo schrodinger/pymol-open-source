@@ -90,6 +90,8 @@ def parse_args(argv):
       a = av.pop()
       a = re.sub(r'''^"|"$|^'|'$''','',a) # strip extra quotes
       if a[0:1]=='-':
+         if a[1:2]=='-':
+            break # double hypen signal end of PyMOL arguments
          if "c" in a:
             options.no_gui=1
             options.external_gui=0
