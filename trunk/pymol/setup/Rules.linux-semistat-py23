@@ -32,7 +32,7 @@ LIBS = contrib/modules/*.o contrib/pyopengl/*.o contrib/sglite/*.o \
 ext/lib/libtcl8.4.a ext/lib/libtk8.4.a \
 ext/lib/libpng.a $(ZLIB) contrib/champ/*.o
 #--- PyMOL configuration
-DEFS = -D_PYMOL_MONOLITHIC -D_PYMOL_SETUP_TCLTK84 -D_PYMOL_SETUP_PY23
+DEFS = -D_PYMOL_MONOLITHIC -D_PYMOL_SETUP_TCLTK84 -D_PYMOL_SETUP_PY23 -D_PYMOL_INLINE
 #--- How we build shared libraries
 BUILD = 
 #--- What are we trying to build?
@@ -45,7 +45,7 @@ PYOGL_LIB =
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT1 = -O3 -funroll-loops -fomit-frame-pointer
+CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer -finline-limit=10000
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Debugging

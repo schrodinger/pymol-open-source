@@ -78,7 +78,7 @@ unix: .includes .depends .update
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
-	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
+	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
 
 unix-mindep-build: semistatic
 	$(PYTHON_EXE) modules/compile_pymol.py
@@ -90,11 +90,11 @@ unix-mindep-build: semistatic
 	cp -r examples $(MDP)
 	cp -r scripts $(MDP)
 	cp -r pymol.exe $(MDP)
-	cp -r ext/lib/python2.2 $(MDP)/ext/lib
+	cp -r ext/lib/python2.3 $(MDP)/ext/lib
 	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
 	cp -r ext/lib/tk8.4 $(MDP)/ext/lib
-	/bin/rm -f $(MDP)/ext/lib/python2.2/config/libpython2.2.a
-	/bin/rm -rf $(MDP)/ext/lib/python2.2/test
+	/bin/rm -f $(MDP)/ext/lib/python2.3/config/libpython2.3.a
+	/bin/rm -rf $(MDP)/ext/lib/python2.3/test
 	cp LICENSE $(MDP)
 	cp README $(MDP)
 	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
@@ -125,11 +125,11 @@ irix-mindep: semistatic
 	cp -r data $(MDP)	
 	cp -r examples $(MDP)
 	cp -r pymol.exe $(MDP)
-	cp -r ext/lib/python2.2 $(MDP)/ext/lib
+	cp -r ext/lib/python2.3 $(MDP)/ext/lib
 	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
 	cp -r ext/lib/tk8.4 $(MDP)/ext/lib
-	/bin/rm -f $(MDP)/ext/lib/python2.2/config/libpython2.2.a
-	/bin/rm -rf $(MDP)/ext/lib/python2.2/test
+	/bin/rm -f $(MDP)/ext/lib/python2.3/config/libpython2.3.a
+	/bin/rm -rf $(MDP)/ext/lib/python2.3/test
 	cp LICENSE $(MDP)
 	cp README $(MDP)
 	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
@@ -142,6 +142,38 @@ irix-mindep: semistatic
 unix-s3d: .includes .depends .update 
 	cd sharp3d/src; $(MAKE)
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o sharp3d/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS) -Lsharp3d/lib -lsgl.1.3 -lspl.1.2 
+
+unix-s3d-semistatic: .includes .depends .update
+	/bin/rm -f .update .includes
+	cd contrib;$(MAKE) static
+	cd sharp3d/src; $(MAKE)
+	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o sharp3d/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS) -Lsharp3d/lib -lsgl.1.3 -lspl.1.2 
+
+unix-s3d-build: unix-s3d-semistatic
+	$(PYTHON_EXE) modules/compile_pymol.py
+	/bin/rm -rf $(MINDEP)
+	install -d $(MDP)/ext/lib
+	cp -r modules $(MDP)
+	cp -r test $(MDP)
+	cp -r data $(MDP)	
+	cp -r examples $(MDP)
+	cp -r scripts $(MDP)
+	cp -r pymol.exe $(MDP)
+	cp -r ext/lib/python2.3 $(MDP)/ext/lib
+	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
+	cp -r ext/lib/tk8.4 $(MDP)/ext/lib
+	cp sharp3d/lib/* $(MDP)/ext/lib/
+	/bin/rm -f $(MDP)/ext/lib/python2.3/config/libpython2.3.a
+	/bin/rm -rf $(MDP)/ext/lib/python2.3/test
+	cp LICENSE $(MDP)
+	cp README $(MDP)
+	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
+	cp setup/setup.sh.unix-s3d $(MDP)/setup.sh
+	cd $(MINDEP);chown -R nobody pymol
+	cd $(MINDEP);chgrp -R nobody pymol
+
+unix-s3d-product: unix-s3d-build
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-sharp3d.tgz
 
 #windows: .includes .depends .update 
 #

@@ -759,7 +759,8 @@ static void MainBusyIdle(void)
     " MainBusyIdle: called.\n"
     ENDFD;
 
-#ifdef _PYMOL_SHARP3D
+#if 0
+#ifdef  _PYMOL_SHARP3D
   /* keep the window on even coordinates to preserve L/R stereo... */
  {
    int x,y;
@@ -772,6 +773,7 @@ static void MainBusyIdle(void)
      }
    }
  }
+#endif
 #endif
 
   /* flush command and output queues */
@@ -1046,7 +1048,11 @@ SetConsoleCtrlHandler(
       }
       p_glutInitWindowSize(G->Option->winX, G->Option->winY);
  
+#ifdef _PYMOL_SHARP3D
+      theWindow = p_glutCreateWindow("PyMOL Molecular Graphics for Sharp 3D Displays - www.pymol.org - DeLano Scientific LLC");
+#else
       theWindow = p_glutCreateWindow("PyMOL Viewer");
+#endif
       if(G->Option->window_visible) {
         p_glutShowWindow();
       } else {
