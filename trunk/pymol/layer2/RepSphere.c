@@ -384,7 +384,9 @@ Rep *RepSphereNew(CoordSet *cs)
      (SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpting))) 
     /* optimize build-time performance when sculpting */
     I->cullFlag=false;
-
+  if((I->cullFlag<2)&&
+     (SettingGet(cSetting_roving_spheres)!=0.0F))
+    I->cullFlag=false;
   if(I->cullFlag) {
 	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(sp->NVertTot*19));
 	 ErrChkPtr(I->V);
