@@ -214,7 +214,8 @@ class State:
       if len(nrg_list):
          a = nrg_list.pop()
          l = list[a]
-         self.model.molecule.energy = float(string.strip(l[38:58]))
+         # get energy, and convert to kcal/mole
+         self.model.molecule.energy = float(string.strip(l[38:58]))*627.5095
          if feedback['gamess']:
             print " "+str(__name__)+': energy updated %12.6f.' % self.model.molecule.energy
          
@@ -474,6 +475,7 @@ class State:
             zmat_ext.append(comma+"%d,%d,%d,%d,%d\n"%a)
             comma = ","
 
+      cmd.delete("_gamess1") # important
       if len(zmat_ext):
          return zmat_ext
       else:
