@@ -79,7 +79,7 @@ PyObject *ObjectAsPyList(CObject *I)
 int ObjectFromPyList(PyObject *list,CObject *I)
 {
   int ok=true;
-  int ll;
+  int ll=0;
 
   if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);

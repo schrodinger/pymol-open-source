@@ -85,7 +85,7 @@ int CoordSetFromPyList(PyObject *list,CoordSet **cs)
   CoordSet *I = NULL;
   PyObject *tmp;
   int ok = true;
-  int ll;
+  int ll = 0;
 
   if(*cs) {
     CoordSetFree(*cs);

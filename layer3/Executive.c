@@ -180,7 +180,7 @@ int ExecutiveSetVisFromPyDict(PyObject *dict)
   int n_vis;
   int rep;
   int a;
-  int ll;
+  int ll=0;
   if(ok) ok=(dict!=NULL);
   if(ok) ok=PyDict_Check(dict);
   if(ok) {
