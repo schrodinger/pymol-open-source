@@ -82,7 +82,7 @@ LIB_DIRS = -L./ext/lib $(XLIB_DIR)
 
 INC_DIRS = -I../layer0 -I../layer1 -I../layer2 \
 	-I../layer3 -I../layer4 -I../layer5 \
-	-I../ext/include -I../ext/include/python1.5
+	-I../ext/include -I../ext/include/python1.5 -I/usr/X11R6/include
 
 
 
