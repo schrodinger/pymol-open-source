@@ -696,9 +696,6 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
       PBlockAndUnlockAPI();
       PRunString("cmd.paste()");
       PLockAPIAndUnblock();
-      /* PBlockAndUnlockAPI();
-        PRunString("cmd.paste()");
-        PLockAPIAndUnblock(); */
       break;
 	 default:
       OrthoKeyControl(G,(unsigned char)(k+64));
