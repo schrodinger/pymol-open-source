@@ -1002,6 +1002,8 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_discrete_colors, 0.0);  
 
+  SettingSet_f(I,cSetting_normalize_ccp4_maps, 1.0);  
+
 
 }
 

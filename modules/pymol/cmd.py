@@ -53,7 +53,6 @@ from chempy import fragments
 
 import setting
 
-
 file_ext_re= re.compile(string.join([
    "\.pdb$|\.ent$|\.mol$|",
    r"\.PDB$|\.ENT$|\.MOL$|",
@@ -64,7 +63,8 @@ file_ext_re= re.compile(string.join([
    r"\.r3d$|\.xyz$|\.xyz_[0-9]*$|", 
    r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$|",
    r"\.cc1$|\.cc2$|", # ChemDraw 3D
-   r"\.CC1$|\.CC2$",
+   r"\.CC1$|\.CC2$|",
+   r"\.ccp4$|\.CCP4$" # CCP4   
    ],''))
 
 QuietException = parsing.QuietException
@@ -4315,6 +4315,8 @@ SEE ALSO
             ftype = loadable.mmod
          elif re.search("\.xplor$",filename,re.I):
             ftype = loadable.xplor
+         elif re.search("\.ccp4$",filename,re.I):
+            ftype = loadable.ccp4
          elif re.search("\.pkl$",filename,re.I):
             ftype = loadable.model
          elif re.search("\.r3d$",filename,re.I):
@@ -5812,6 +5814,7 @@ class loadable:
    xyz = 15      # xyz, tinker format
    sdf = 16      # sdf, only used within cmd.py
    cc1 = 17      # cc1 and cc2, only used within cmd.py
+   ccp4 = 18     # CCP4 map, under development
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 

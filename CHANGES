@@ -37,6 +37,11 @@ Bugs to Fix
 
    * superpositions system fails with degenerate sets (planer atoms, etc).
 
+Changes up to 0.63
+
+   * first attempt at support for CCP4's binary maps -- it works with my
+     test maps, but will it work with others?
+
 Changes up to 0.62
 
    * tuned up the util.ray_shadows function, added a "matte" mode for better
