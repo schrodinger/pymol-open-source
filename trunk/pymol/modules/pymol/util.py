@@ -219,7 +219,7 @@ def ray_shadows(mode):
       cmd.set('gamma',1.43) # was 1.5
    elif mode=='black': # best for light backgrounds
       cmd.set('power',0.3)
-      cmd.set('spec_reflect',1.2)
+      cmd.set('spec_reflect',1.1)
       cmd.set('spec_power',90) 
       cmd.set('ambient',0.00)
       cmd.set('reflect',0.8)
