@@ -370,10 +370,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_ribbon_smooth               237
 #define cSetting_auto_color                  238
 #define cSetting_auto_color_next             239
+#define cSetting_ray_interior_color          240
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        240
+#define cSetting_INIT                        241
 
 #endif
 

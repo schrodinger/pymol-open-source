@@ -176,6 +176,37 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   return(1);
 
 }
+
+
+static int ZLineFrontToInteriorSphere(float *front,
+                                      float *point,
+                                      float *dir,
+                                      float radius,
+                                      float radius2,
+                                      float maxial)
+{
+  float intra_p[3];
+  float axial;
+  float intra[3],axis[3];
+  float sphere[3];
+
+  subtract3f(point,front,intra);
+  remove_component3f(intra,dir,intra_p);
+  add3f(front,intra_p,intra_p);
+  subtract3f(point,intra_p,axis);
+  axial = -dot_product3f(axis,dir);
+
+  if(axial<0.0F) axial=0.0F;
+  else if(axial>maxial) axial = maxial;
+
+  sphere[0]=axial*dir[0]+point[0];
+  sphere[1]=axial*dir[1]+point[1];
+  sphere[2]=axial*dir[2]+point[2];
+
+  return (diffsq3f(sphere,front)<=radius2);
+}
+
+
 /*========================================================================*/
 int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere,float *asum,int cap1,int cap2)
@@ -297,6 +328,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
 	 axial_sum = axial - radial/tan_acos_dangle;
   else
 	 axial_sum = axial;
+
   /*
 	 printf("radial2 %8.3f \n",radial);*/
 
@@ -321,9 +353,12 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
       break;
     case cCylCapRound:
       axial_sum=0;
-      sphere[0]=dir[0]*axial_sum+point[0];
-      sphere[1]=dir[1]*axial_sum+point[1];
-      sphere[2]=dir[2]*axial_sum+point[2];
+      /*sphere[0]=dir[0]*axial_sum+point[0];
+        sphere[1]=dir[1]*axial_sum+point[1];
+        sphere[2]=dir[2]*axial_sum+point[2];*/
+      sphere[0]=point[0];
+      sphere[1]=point[1];
+      sphere[2]=point[2];
       *asum = axial_sum;
       break;
     case cCylCapNone:
@@ -376,6 +411,41 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
   return(1);
   
 }
+
+
+
+static int ZLineFrontToInteriorSphereCapped(float *front,
+                                            float *point,
+                                            float *dir,
+                                            float radius,
+                                            float radius2,
+                                            float maxial,
+                                            int cap1,
+                                            int cap2)
+{
+  float intra_p[3];
+  float axial;
+  float intra[3],axis[3];
+  float sphere[3];
+
+  subtract3f(point,front,intra);
+  remove_component3f(intra,dir,intra_p);
+  add3f(front,intra_p,intra_p);
+  subtract3f(point,intra_p,axis);
+  axial = -dot_product3f(axis,dir);
+
+  if(axial<0.0F) return 0;
+  else if(axial>maxial) return 0;
+
+  sphere[0]=axial*dir[0]+point[0];
+  sphere[1]=axial*dir[1]+point[1];
+  sphere[2]=axial*dir[2]+point[2];
+
+  return (diffsq3f(sphere,front)<radius2);
+  
+}
+
+
 /*========================================================================*/
 float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff)
 {
@@ -448,7 +518,16 @@ void BasisSetupMatrix(CBasis *I)
   */
 }
 
+/*========================================================================*/
+void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i)
+{
+  float *n0;
+  int ni;
 
+  ni = I->Vert2Normal[i];
+  n0 = I->Normal+3*ni; 
+  r->flat_dotgle = n0[2];
+}
 
 /*========================================================================*/
 void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc) 
@@ -485,14 +564,18 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 				 int *vert2prim,CPrimitive *prim,
 				 int shadow,float front,float back,
              float excl_trans,int trans_shadows,
-             float fudge)
+             float fudge,int *interior_flag)
 {
   float oppSq,dist,sph[3],*vv,vt[3],tri1,tri2;
   int minIndex;
   int a,b,c,h,i,*ip,aa,bb,cc;
   int excl_trans_flag;
   int tmp_flag;
+  int check_interior_flag;
   CPrimitive *prm;
+
+  check_interior_flag=(*interior_flag);
+  (*interior_flag)=false;
   /* assumption: always heading in the negative Z direction with our vector... */
   minIndex = -1;
   vt[0]=r->base[0];
@@ -519,33 +602,33 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 					 switch(prm->type) {
 					 case cPrimTriangle:
                   if(shadow||(!prm->cull))
-						if(intersect_triangle(r->base,I->Precomp+I->Vert2Normal[i]*3,
-													 I->Vertex+prm->vert*3,&tri1,&tri2,&dist)) 
-						  {
-							 if(shadow) {
-                        if(prm->trans==0.0F) { /* opaque? return immed. */
-                          if((dist>(-R_SMALL4))&&(dist<r->dist)) {
-                            r->prim = prm;
-                            return(1);
+                    if(intersect_triangle(r->base,I->Precomp+I->Vert2Normal[i]*3,
+                                          I->Vertex+prm->vert*3,&tri1,&tri2,&dist)) 
+                      {
+                        if(shadow) {
+                          if(prm->trans==0.0F) { /* opaque? return immed. */
+                            if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+                              r->prim = prm;
+                              return(1);
+                            }
+                          } else if(trans_shadows) {
+                            if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+                              minIndex=prm->vert;
+                              r->tri1=tri1;
+                              r->tri2=tri2;
+                              r->dist=dist;
+                            }
                           }
-                        } else if(trans_shadows) {
-                          if((dist>(-R_SMALL4))&&(dist<r->dist)) {
-									 minIndex=prm->vert;
-									 r->tri1=tri1;
-									 r->tri2=tri2;
-									 r->dist=dist;
-								  }
+                        } else {
+                          if(dist<r->dist)
+                            if((dist>=front)&&(dist<=back)) {
+                              minIndex=prm->vert;
+                              r->tri1=tri1;
+                              r->tri2=tri2;
+                              r->dist=dist;
+                            }
                         }
-							 } else {
-								if(dist<r->dist)
-								  if((dist>=front)&&(dist<=back)) {
-									 minIndex=prm->vert;
-									 r->tri1=tri1;
-									 r->tri2=tri2;
-									 r->dist=dist;
-								  }
-							 }
-						  }
+                      }
 						break;
 					 case cPrimSphere:
 						oppSq = ZLineClipPoint(r->base,I->Vertex+i*3,&dist,I->Radius[i]);
@@ -565,11 +648,18 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                           }
                         }
 							 } else {
-								if(dist<r->dist)
+								if(dist<r->dist) {
 								  if((dist>=front)&&(dist<=back)) {
 									 minIndex=prm->vert;
 									 r->dist=dist;
-								  }
+								  } else if(check_interior_flag) {
+                            vt[0]=r->base[0];
+                            vt[1]=r->base[1];
+                            vt[2]=r->base[2]-front;
+                            if(diffsq3f(vt,I->Vertex+i*3)<I->Radius2[i])
+                              (*interior_flag)=true;
+                          }
+                        }
 							 }
 						  }
 						break;
@@ -600,7 +690,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                               }
                             }
 								  } else {
-									 if(dist<r->dist)
+									 if(dist<r->dist) {
 										if((dist>=front)&&(dist<=back)) {
                                 if(prm->l1>R_SMALL4)
                                   r->tri1=tri1/prm->l1;
@@ -609,7 +699,22 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 										  r->sphere[2]=sph[2];
 										  minIndex=prm->vert;
 										  r->dist=dist;
-										}
+										} else if(check_interior_flag){
+                                vt[0]=r->base[0];
+                                vt[1]=r->base[1];
+                                vt[2]=r->base[2]-front;
+                                if(ZLineFrontToInteriorSphereCapped(vt,
+                                                              I->Vertex+i*3,
+                                                              I->Normal+I->Vert2Normal[i]*3,
+                                                              I->Radius[i],
+                                                              I->Radius2[i],
+                                                              prm->l1,
+                                                                    prm->cap1,
+                                                                    prm->cap2)) {
+                                  (*interior_flag)=true;
+                                }
+                              }
+                            }
 								  }
 								}
 						  }
@@ -641,6 +746,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                               }
                             }
 								  } else {
+                            tmp_flag = false;
 									 if(dist<r->dist) {
 										if((dist>=front)&&(dist<=back)) {
                                 tmp_flag = true;
@@ -658,12 +764,24 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                                   minIndex=prm->vert;
                                   r->dist=dist;
                                 }
-										}
+                              } else if(check_interior_flag) {
+                                vt[0]=r->base[0];
+                                vt[1]=r->base[1];
+                                vt[2]=r->base[2]-front;
+                                if(ZLineFrontToInteriorSphere(vt,
+                                                              I->Vertex+i*3,
+                                                              I->Normal+I->Vert2Normal[i]*3,
+                                                              I->Radius[i],
+                                                              I->Radius2[i],
+                                                              prm->l1)) {
+                                  (*interior_flag)=true;
+                                }
+                              }
                             }
-								  }
-								}
-						  }
-						break;
+                          }
+                        }
+                    }
+                    break;
 					 }
 				  }
 				  i=*(ip++);

@@ -1950,6 +1950,9 @@ void SettingInitGlobal(void)
   SettingSet_b(I,cSetting_auto_color,1);
 
   SettingSet_i(I,cSetting_auto_color_next,0);
+
+  SettingSet_color(I,cSetting_ray_interior_color,"-1"); /* no color */
+
 }
 
 

@@ -104,6 +104,7 @@ int SceneRovingCheckDirty(void);
 void SceneRovingUpdate(void);
 void SceneRovingChanged(void);
 void SceneRovingPostpone(void);
+void SceneCleanupStereo(void);
 
 #endif
 

@@ -1161,6 +1161,21 @@ class PMGApp(AbstractApp):
                                label='Fiber',
                                command = lambda : cmd.do("_ cmd.set('ray_texture',5)"))
 
+      self.menuBar.addcascademenu('Rendering', 'Memory', 'Memory',
+                               label=self.pad+'Memory')
+
+      self.menuBar.addmenuitem('Memory', 'command', 'Use Less (slower)',
+                               label='Use Less (slower)',
+                               command = lambda : cmd.do("_ cmd.set('hash_max',70,quiet=0)"))
+
+      self.menuBar.addmenuitem('Memory', 'command', 'Use Standard Amount',
+                               label='Use Standard Amount',
+                               command = lambda : cmd.do("_ cmd.set('hash_max',100,quiet=0)"))
+
+      self.menuBar.addmenuitem('Memory', 'command', 'Use More (faster)',
+                               label='Use More (faster)',
+                               command = lambda : cmd.do("_ cmd.set('hash_max',160,quiet=0)"))
+
       self.menuBar.addmenuitem('Rendering', 'separator', '')
 
       self.menuBar.addmenuitem('Rendering', 'checkbutton',
@@ -1170,6 +1185,9 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('backface_cull'))
 
 
+
+
+      
       self.menuBar.addmenuitem('Display', 'separator', '')
       
       self.menuBar.addmenuitem('Display', 'checkbutton',
@@ -1208,7 +1226,6 @@ class PMGApp(AbstractApp):
                          label=self.pad+'Specular Reflections',
                         variable = self.setting.specular,
                         command = lambda s=self: s.setting.update('specular'))
-
 
       self.menuBar.addmenu('Setting', 'Configuration Control')
 
