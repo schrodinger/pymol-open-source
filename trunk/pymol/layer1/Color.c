@@ -371,45 +371,89 @@ void ColorReset(void)
   int set1;
   float f;
   float spectrumS[13][3] = { 
-    { 1.0, 0.0, 1.0 }, /* magenta */
+    { 1.0, 0.0, 1.0 }, /* magenta - 0 */
     { 0.5, 0.0, 1.0 },
-    { 0.0, 0.0, 1.0 }, /* blue - 181.81  */
+    { 0.0, 0.0, 1.0 }, /* blue - 166.66  */
     { 0.0, 0.5, 1.0 },
-    { 0.0, 1.0, 1.0 }, /* cyan - 363.63 */
+    { 0.0, 1.0, 1.0 }, /* cyan - 333.33 */
+
     { 0.0, 1.0, 0.5 },
-    { 0.0, 1.0, 0.0 }, /* green - 545.45 */
+    { 0.0, 1.0, 0.0 }, /* green - 500 */
     { 0.5, 1.0, 0.0 },
-    { 1.0, 1.0, 0.0 }, /* yellow - 727.27 */
+    { 1.0, 1.0, 0.0 }, /* yellow - 666.66 */
     { 1.0, 0.5, 0.0 },
-    { 1.0, 0.0, 0.0 }, /* red - 909.09 */
+
+    { 1.0, 0.0, 0.0 }, /* red - 833.33 */
     { 1.0, 0.0, 0.5 },
-    { 1.0, 0.0, 1.0 }, /* magenta */
+    { 1.0, 0.0, 1.0 }, /* magenta - 999 */
   };
 
   float spectrumR[13][3] = { 
     { 1.0, 1.0, 0.0 }, /* yellow - 0 */
-    { 0.5, 1.0, 0.0 },
-    { 0.0, 1.0, 0.0 }, /* green - 181.81 */
-    { 0.0, 1.0, 0.5 },
-    { 0.0, 1.0, 1.0 }, /* cyan - 363.63 */
-    { 0.0, 0.5, 1.0 },
-    { 0.0, 0.0, 1.0 }, /* blue - 545.45 */
-    { 0.5, 0.0, 1.0 },
-    { 1.0, 0.0, 1.0 }, /* magenta - 727.27 */
-    { 1.0, 0.0, 0.5 },
-    { 1.0, 0.0, 0.0 }, /* red - 909.09 */
-    { 1.0, 0.5, 0.0 },
-    { 1.0, 1.0, 0.0 }, /* yellow */
+    { 0.5, 1.0, 0.0 }, /* yellowgreen */
+    { 0.0, 1.0, 0.0 }, /* green - 166.66 */
+    { 0.0, 1.0, 0.5 }, /* lime */
+    { 0.0, 1.0, 1.0 }, /* cyan - 333.33 */
+
+    { 0.0, 0.5, 1.0 }, /* marine */
+    { 0.0, 0.0, 1.0 }, /* blue - 500 */
+    { 0.5, 0.0, 1.0 }, /* blueviolet */
+    { 1.0, 0.0, 1.0 }, /* magenta - 666.66 */
+    { 1.0, 0.0, 0.5 }, /* hotpink */
+
+    { 1.0, 0.0, 0.0 }, /* red - 833.33 */
+    { 1.0, 0.5, 0.0 }, /* orange */
+    { 1.0, 1.0, 0.0 }, /* yellow - 999 */
+  };
+
+  float spectrumC[][3] = {
+    { 1.0, 1.0, 0.0 }, /* yellow - 0 */
+    { 0.0, 0.0, 1.0 }, /* blue - 83.333 */
+    { 1.0, 0.0, 0.0 }, /* red - 167.67*/
+    { 0.0, 1.0, 0.0 }, /* green - 250.00 */
+    { 1.0, 0.0, 1.0 }, /* magenta - 333.33 */
+
+    { 0.0, 1.0, 1.0 }, /* cyan - 416.67 */
+    { 1.0, 1.0, 0.0 }, /* yellow - 500.00*/    
+    { 0.0, 1.0, 0.0 }, /* green - 583.33*/    
+    { 0.0, 0.0, 1.0 }, /* blue - 666.67 */    
+    { 1.0, 0.0, 1.0 }, /* magenta - 750.00*/
+
+    { 1.0, 1.0, 0.0 }, /* yellow - 833.33*/    
+    { 1.0, 0.0, 0.0 }, /* red - 916.67*/    
+    { 0.0, 1.0, 1.0 }, /* cyan - 999 */
   };
 
   float spectrumW[][3] = {
-    { 0.0, 0.0, 1.0 }, /* blue - 0 */
+    { 1.0, 1.0, 0.0 }, /* yellow - 0*/
     { 1.0, 1.0, 1.0 }, /* white */
-    { 1.0, 0.0, 0.0 }, /* red */
+    { 0.0, 0.0, 1.0 }, /* blue  - 83.333 */
     { 1.0, 1.0, 1.0 }, /* white */
-    { 0.0, 1.0, 0.0 }, /* green */
+    { 1.0, 0.0, 0.0 }, /* red - 166.67 */
+
     { 1.0, 1.0, 1.0 }, /* white */
-    { 1.0, 0.0, 1.0 }, /* magenta */
+    { 0.0, 1.0, 0.0 }, /* green - 250.00 */
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 1.0, 0.0, 1.0 }, /* magenta - 333.33 */
+    { 1.0, 1.0, 1.0 }, /* white */
+
+    { 0.0, 1.0, 1.0 }, /* cyan - 416.67 */
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 1.0, 1.0, 0.0 }, /* yellow - 500.00*/    
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 0.0, 1.0, 0.0 }, /* green - 583.33*/    
+
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 0.0, 0.0, 1.0 }, /* blue - 666.67 */    
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 1.0, 0.0, 1.0 }, /* magenta - 750.00*/
+    { 1.0, 1.0, 1.0 }, /* white */
+
+    { 1.0, 1.0, 0.0 }, /* yellow - 833.33 */    
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 1.0, 0.0, 0.0 }, /* red - 916.67*/
+    { 1.0, 1.0, 1.0 }, /* white */
+    { 0.0, 1.0, 1.0 }, /* cyan - 999 */
   };
 
   /* BLUE->VIOLET->RED r546 to r909 */
@@ -474,8 +518,8 @@ void ColorReset(void)
 
   strcpy(I->Color[I->NColor].Name,"salmon");
   I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.6F;
-  I->Color[I->NColor].Color[2]=0.6F;
+  I->Color[I->NColor].Color[1]=0.6F; /* was 0.5 */
+  I->Color[I->NColor].Color[2]=0.6F; /* wat 0.5 */
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"lime");
@@ -502,7 +546,7 @@ void ColorReset(void)
   I->Color[I->NColor].Color[2]=0.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"yellowgreen");
+  strcpy(I->Color[I->NColor].Name,"yellowgreen"); /* AKA puke green */
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=1.0F;
   I->Color[I->NColor].Color[2]=0.0F;
@@ -568,7 +612,7 @@ void ColorReset(void)
   I->Color[I->NColor].Color[2]=0.5F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"gray");
+  strcpy(I->Color[I->NColor].Name,"gray"); /* for the poor spellers */
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=0.5F;
   I->Color[I->NColor].Color[2]=0.5F;
@@ -598,10 +642,10 @@ void ColorReset(void)
   I->Color[I->NColor].Color[2]=0.9F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"sulfer"); /* legacy oops */
+  strcpy(I->Color[I->NColor].Name,"brightorange");
   I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.0F;
+  I->Color[I->NColor].Color[1]=0.7F;
+  I->Color[I->NColor].Color[2]=0.2F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"sulfur");
@@ -736,9 +780,9 @@ void ColorReset(void)
   I->Color[I->NColor].Color[2]=0.65F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"grey100"); /* legacy = grey99 */
+  strcpy(I->Color[I->NColor].Name,"violet");
   I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
+  I->Color[I->NColor].Color[1]=0.5F;
   I->Color[I->NColor].Color[2]=1.0F;
   I->NColor++;
 
@@ -752,27 +796,15 @@ void ColorReset(void)
     I->NColor++;
   }
 
-  strcpy(I->Color[I->NColor].Name,"violet");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"brightorange");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.7F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
-
   strcpy(I->Color[I->NColor].Name,"lightmagenta");
   I->Color[I->NColor].Color[0]=1.0F;
   I->Color[I->NColor].Color[1]=0.0F;
   I->Color[I->NColor].Color[2]=0.7F;
   I->NColor++;
 
-  #define A_DIV 90.9091F
+  #define A_DIV 83.333333333F
 
-  /* full spectrum ("S..." colors) */
+  /* full spectrum ("s..." colors) */
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
@@ -784,7 +816,7 @@ void ColorReset(void)
     I->NColor++;
   }
 
-  /* full spectrum ("R..." colors) */
+  /* full spectrum ("r..." colors) */
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
@@ -796,19 +828,32 @@ void ColorReset(void)
     I->NColor++;
   }
 
-#if 0
+  /* complementary ("c..." colors) */
+
+  for(a=0;a<1000;a=a+1) {
+    set1=(int)(a/A_DIV);
+    sprintf(I->Color[I->NColor].Name,"c%03d",a);
+    f = 1.0F-(a-(set1*A_DIV))/A_DIV;
+    I->Color[I->NColor].Color[0]=f*spectrumC[set1][0]+(1.0F-f)*spectrumC[set1+1][0];
+    I->Color[I->NColor].Color[1]=f*spectrumC[set1][1]+(1.0F-f)*spectrumC[set1+1][1];
+    I->Color[I->NColor].Color[2]=f*spectrumC[set1][2]+(1.0F-f)*spectrumC[set1+1][2];
+    I->NColor++;
+  }
+
+
+  #define W_DIV 41.666666667F
+
   /* full spectrum ("W..." colors) */
 
-  for(a=0;a<100;a=a+1) {
+  for(a=0;a<1000;a=a+1) {
     set1=(int)(a/W_DIV);
     sprintf(I->Color[I->NColor].Name,"w%02d",a);
     f = 1.0F-(a-(set1*W_DIV))/W_DIV;
-    I->Color[I->NColor].Color[0]=f*spectrumR[set1][0]+(1.0F-f)*spectrumR[set1+1][0];
-    I->Color[I->NColor].Color[1]=f*spectrumR[set1][1]+(1.0F-f)*spectrumR[set1+1][1];
-    I->Color[I->NColor].Color[2]=f*spectrumR[set1][2]+(1.0F-f)*spectrumR[set1+1][2];
+    I->Color[I->NColor].Color[0]=f*spectrumW[set1][0]+(1.0F-f)*spectrumW[set1+1][0];
+    I->Color[I->NColor].Color[1]=f*spectrumW[set1][1]+(1.0F-f)*spectrumW[set1+1][1];
+    I->Color[I->NColor].Color[2]=f*spectrumW[set1][2]+(1.0F-f)*spectrumW[set1+1][2];
     I->NColor++;
   }
-#endif
 
   for(a=0;a<I->NColor;a++) { 
     /* mark all current colors non-custom so that they don't get saved in session files */
@@ -1127,7 +1172,7 @@ void ColorInit(void)
   testPtr = (unsigned char*)&test;
   I->BigEndian = (*testPtr)&&1;
 
-  I->Color=VLAMalloc(2500,sizeof(ColorRec),5,true);
+  I->Color=VLAMalloc(4300,sizeof(ColorRec),5,true);
   I->NColor=0;
   ColorReset();
   I->NExt=0;

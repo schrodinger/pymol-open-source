@@ -153,7 +153,7 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
 int ExecutiveValidateObjectPtr(CObject *ptr,int object_type);
 
 int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last,
-                      char *prefix,int digits,int byres);
+                      char *prefix,int digits,int byres,int quiet,float *min_ret,float *max_ret);
 #endif
 
 

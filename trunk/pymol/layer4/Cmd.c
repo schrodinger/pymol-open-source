@@ -544,22 +544,29 @@ static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
   OrthoLineType s1;
   float min,max;
   int digits,start,stop, byres;
+  int quiet;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssffiisii",&str1,&expr,
+  float min_ret,max_ret;
+  PyObject *result = Py_None;
+  ok = PyArg_ParseTuple(args,"ssffiisiii",&str1,&expr,
                         &min,&max,&start,&stop,&prefix,
-                        &digits,&byres);
+                        &digits,&byres,&quiet);
   if (ok) {
     APIEntry();
     if(str1[0])
       SelectorGetTmp(str1,s1);
     else
       s1[0]=0; /* no selection */
-    ok = ExecutiveSpectrum(s1,expr,min,max,start,stop,prefix,digits,byres);
+    ok = ExecutiveSpectrum(s1,expr,min,max,start,stop,prefix,digits,byres,quiet,
+                           &min_ret,&max_ret);
     if(str1[0])
       SelectorFreeTmp(s1);
     APIExit();
+    if(ok) {
+      result = Py_BuildValue("ff",min_ret,max_ret);
+    }
   }
-  return(APIStatus(ok));
+  return(APIAutoNone(result));
 }
 
 static PyObject *CmdMDump(PyObject *self, PyObject *args)

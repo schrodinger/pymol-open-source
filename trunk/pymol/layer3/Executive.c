@@ -109,7 +109,8 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 #define ExecGreyHidden 0.3
 
 int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last,
-                      char *prefix,int digits,int byres)
+                      char *prefix,int digits,int byres,int quiet,
+                      float *min_ret,float *max_ret)
 {
   int ok=true;
   int sele1;
@@ -150,9 +151,17 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
       if(n_atom) {
         value = Alloc(float,n_atom);
         
-        for(a=0;a<n_atom;a++) {
-          value[a]=(float)a;
+        if(WordMatch("count",expr,true)) {
+          for(a=0;a<n_atom;a++) {
+            value[a]=(float)a+1;
+          }
+        } else if(WordMatch("b",expr,true)) {
+          op.code = OMOP_GetBFactors;
+          op.i1 = 0;
+          op.ff1 = value;
+          ExecutiveObjMolSeleOp(sele1,&op);
         }
+
         if(max<min) {
           max = value[0];
           min = value[0];
@@ -162,10 +171,17 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
           }
         }
         range = max-min;
-        
+
+        if(!quiet) {
+          PRINTFB(FB_Executive,FB_Actions)
+            " Spectrum: range (%8.5f to %8.5f).\n"
+            ,min,max
+            ENDFB;
+        }
         if(range==0.0F)
           range = 1.0F;
-        
+        *min_ret = min;
+        *max_ret = max;
         op.code = OMOP_Spectrum;
         op.i1 = n_color-1;
         op.i2 = n_atom;

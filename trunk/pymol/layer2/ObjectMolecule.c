@@ -6189,6 +6189,17 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      break;
+	case OMOP_GetBFactors: 
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             op->ff1[op->i1]=I->AtomInfo[a].b;
+             op->i1++;
+           }
+       }
+     break;
 	case OMOP_IdentifyObjects: /* identify atoms */
      for(a=0;a<I->NAtom;a++)
        {
@@ -6356,6 +6367,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                  skip_flag=true;
              if(!skip_flag) {
                c = (int)(0.49999+op->i1*(op->ff1[op->i3] - op->f1)/op->f2);
+               if(c<0) c=0;
+               if(c>=op->i1) c=op->i1;
                ai->color=op->ii1[c];
                
                if(op->i4) { /* byres */

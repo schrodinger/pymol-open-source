@@ -136,6 +136,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_CSetCameraMinMax 45
 #define OMOP_GetChains 46
 #define OMOP_Spectrum 47
+#define OMOP_GetBFactors 48
 
 #include"CoordSet.h"
 

@@ -177,21 +177,18 @@ def hide_sele():
 #            "((%s) and ((%s) around %4.2f) and elem N,O)"%(b,a,cutoff),
 #            cutoff)
 
-def cbc(selection='(all)',first_color=7): # NOT THREAD SAFE
+def cbc(selection='(all)',first_color=7): 
    '''
    Color all chains a different color
    '''
-#   pymol.stored.chain = {}
-#   cmd.iterate("(%s)"%selection,"stored.chain[chain]=1")
    c = first_color
-#   for a in pymol.stored.chain.keys():
    for a in cmd.get_chains(selection):
       if len(a):
-         print ("%d,(chain %s)"%(c,a))
+         print (" util.cbc: color %d,(chain %s)"%(c,a))
          cmd.color("%d"%c,"(chain %s)"%a)
          c = c + 1
       else:
-         print ("%d,(chain '')"%(c))
+         print (" util.cbc: color %d,(chain '')"%(c))
          cmd.color("%d"%c,"(chain '')")
          c = c + 1
 
@@ -201,9 +198,9 @@ def chainbow(selection='(all)',first_color=7): # NOT THREAD SAFE
    '''
    for a in cmd.get_chains(selection):
       if len(a):
-         cmd.spectrum('rainbow',"(chain %s)"%a,byres=1)
+         cmd.spectrum('count',selection="(chain %s)"%a,byres=1)
       else:
-         cmd.spectrum('rainbow',"(chain '')",byres=1)
+         cmd.spectrum('count',selection="(chain '')",byres=1)
          
 color_chains = cbc
 
