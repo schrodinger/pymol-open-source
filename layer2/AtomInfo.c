@@ -586,7 +586,7 @@ PyObject *AtomInfoAsPyList(AtomInfoType *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(36);
+  result = PyList_New(37);
   PyList_SetItem(result, 0,PyInt_FromLong(I->resv));
   PyList_SetItem(result, 1,PyString_FromString(I->chain));
   PyList_SetItem(result, 2,PyString_FromString(I->alt));
@@ -623,6 +623,7 @@ PyObject *AtomInfoAsPyList(AtomInfoType *I)
   PyList_SetItem(result,33,PyInt_FromLong(I->stereo));
   PyList_SetItem(result,34,PyInt_FromLong(I->discrete_state));
   PyList_SetItem(result,35,PyFloat_FromDouble(I->bohr_radius));
+  PyList_SetItem(result,36,PyInt_FromLong(I->rank));
   return(PConvAutoNone(result));
 }
 
@@ -670,6 +671,7 @@ int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,33),&I->stereo);
   if(ok&&(ll>34)) ok = PConvPyIntToInt(PyList_GetItem(list,34),&I->discrete_state);
   if(ok&&(ll>35)) ok = PConvPyFloatToFloat(PyList_GetItem(list,35),&I->bohr_radius);
+  if(ok&&(ll>36)) ok = PConvPyIntToInt(PyList_GetItem(list,36),&I->rank);
   return(ok);
 }
 
@@ -685,6 +687,7 @@ void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask)
   if(mask&cAIC_q) dst->q = src->q;
   if(mask&cAIC_id) dst->id = src->id;
   if(mask&cAIC_state) dst->discrete_state = src->discrete_state;
+  if(mask&cAIC_rank) dst->rank = src->rank;
   dst->temp1 = src->temp1;
   dst->sculpt_id = src->sculpt_id;
   /* keep all existing names, identifiers, etc. */
@@ -1362,8 +1365,8 @@ int AtomInfoInOrderIgnoreHet(AtomInfoType *atom,int atom1,int atom2)
 
 int AtomInfoInOrigOrder(AtomInfoType *atom,int atom1,int atom2)
 {
-  if(atom[atom1].id!=atom[atom2].id)
-    return (atom[atom1].id<atom[atom2].id);
+  if(atom[atom1].rank!=atom[atom2].rank)
+    return (atom[atom1].rank<atom[atom2].rank);
   else
     return(AtomInfoCompare(atom+atom1,atom+atom2)<=0);
 }

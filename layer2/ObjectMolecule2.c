@@ -1470,7 +1470,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           p=nskip(p,6);
           p=ncopy(cc,p,5);
           if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
-
+          ai->rank = atomCount;
 
           p=nskip(p,1);/* to 12 */
           p=ncopy(cc,p,4); 

@@ -154,6 +154,7 @@ typedef struct AtomInfoType {
   int hb_acceptor;
   int discrete_state; /* state+1 for atoms in discrete objects */
   float bohr_radius;
+  int rank;
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
@@ -195,12 +196,12 @@ void AtomInfoGetPDB3LetHydroName(char *resn, char *iname, char *oname);
 #define cAIC_flags     0x0080
 #define cAIC_tt        0x0100
 #define cAIC_state     0x0200
+#define cAIC_rank      0x0400
 
-#define cAIC_IDMask (cAIC_id)
-#define cAIC_NoneMask (cAIC_b|cAIC_q|cAIC_id)
-#define cAIC_PDBMask (cAIC_b|cAIC_q|cAIC_id)
-#define cAIC_MMDMask (cAIC_pc|cAIC_ct|cAIC_id)
-#define cAIC_MOLMask (cAIC_fc|cAIC_id)
+#define cAIC_IDMask (cAIC_id|cAIC_rank)
+#define cAIC_PDBMask (cAIC_b|cAIC_q|cAIC_id|cAIC_rank)
+#define cAIC_MMDMask (cAIC_pc|cAIC_ct|cAIC_id|cAIC_rank)
+#define cAIC_MOLMask (cAIC_fc|cAIC_id|cAIC_rank)
 #define cAIC_AllMask 0xFFFF
 
 void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask);

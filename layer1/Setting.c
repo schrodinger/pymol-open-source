@@ -1117,6 +1117,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_slice_height_scale:
   case cSetting_slice_height_map:
   case cSetting_slice_grid:
+  case cSetting_slice_dynamic_grid:
+  case cSetting_slice_dynamic_grid_resolution:
     ExecutiveInvalidateRep(inv_sele,cRepSlice,cRepInvRep);    
     SceneChanged();
     break;
@@ -2289,6 +2291,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_f(I,cSetting_slice_height_scale, 1.0F);
   SettingSet_b(I,cSetting_slice_height_map, 0);
   SettingSet_f(I,cSetting_slice_grid, 0.3F);
+  SettingSet_b(I,cSetting_slice_dynamic_grid, 0);
+  SettingSet_f(I,cSetting_slice_dynamic_grid_resolution, 3.0F);
 
 }
 

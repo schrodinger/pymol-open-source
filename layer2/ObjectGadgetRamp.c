@@ -136,9 +136,17 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
 
 static void ObjectGadgetRampCalculate(ObjectGadgetRamp *I, float v,float *result)
 {
-  /* from Filipe Maia */
   int i;
+  const float _1 = 1.0F;
+  const float _0 = 0.0F;
+  /* from Filipe Maia */
+  
   /* All of this functions are taken right of the gnuplot manual  */
+  if(v>_1)
+    v=_1;
+  else if(v<_0)
+    v=_0;
+
   switch(I->CalcMode){
   case cRAMP_TRADITIONAL:
     result[0] = sqrt(v);
@@ -189,7 +197,7 @@ static void ObjectGadgetRampCalculate(ObjectGadgetRamp *I, float v,float *result
   for(i = 0;i<3;i++) {
     if(result[i] > 1.0F){
       result[i] = 1.0F;
-    }else if(result[i]<0.0F){
+    } else if(result[i]<0.0F){
       result[i] = 0.0F;
     }
   }
@@ -203,6 +211,8 @@ int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
   int above=0;
   float d,x0,x1;
   int a;
+  const float _0 = 0.0F;
+  const float _1 = 1.0F;
 
   if(I->Level&&I->Color) {
     while(i<I->NLevel) {
@@ -238,10 +248,10 @@ int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
       base=I->Level[0];
       range=I->Level[I->NLevel-1]-base;
       if(fabs(range)<R_SMALL8)
-        range=1.0F;
+        range=_1;
     } else {
-      base = 0.0F;
-      range = 1.0F;
+      base = _0;
+      range = _1;
     }
     level = (level-base)/range;
     ObjectGadgetRampCalculate(I,level,color);

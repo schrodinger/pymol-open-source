@@ -39,6 +39,7 @@ typedef struct {
   int RefreshFlag;
   int min[2],max[2]; /* extents of the arrays */
   int displayList;
+  float last_scale;
 
   /* the data is normalized for easier ploting */
   int n_points;

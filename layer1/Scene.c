@@ -63,7 +63,6 @@ typedef struct ObjRec {
   struct ObjRec *next;
 } ObjRec;
 
-float SceneGetScreenVertexScale(float *v1);
 
 ListVarDeclare(ObjList,ObjRec);
 
