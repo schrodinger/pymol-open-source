@@ -72,6 +72,11 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
 /*========================================================================*/
+void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force)
+{
+    AtomInfoUniquefyNames(NULL,0,I->AtomInfo,I->NAtom);  
+}
+/*========================================================================*/
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
 {
   int a,b;
@@ -99,6 +104,8 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
   if(seleFlag) {
     if(!ObjectMoleculeVerifyChemistry(I)) {
       ErrMessage(" AddHydrogens","missing chemical geometry information.");
+    } else if(I->DiscreteFlag) {
+      ErrMessage(" AddHydrogens","can't modify a discrete object.");
     } else {
 
       repeatFlag=true;
