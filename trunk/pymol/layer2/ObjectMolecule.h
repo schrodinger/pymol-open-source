@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Raw.h"
 
 #define cKeywordAll "all"
+#define cKeywordNone "none"
 #define cKeywordSame "same"
 #define cKeywordCenter "center"
 #define cKeywordOrigin "origin"

@@ -179,6 +179,16 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * new selection operations 
+      byfragment (byfrag, bf.) 
+      bysegment (byseg, bs.)
+      bymolecule (bymol, bm. )
+
+   * added setting internal_gui_control_size so that users can decide how
+     many lines of buttons they'd like to see.
+
+   * revamped GUI, made buttons look like buttons
+
    * added ray_blend_colors setting to provide a simple way of
      reducing oversaturation
 

@@ -93,6 +93,7 @@ typedef struct {
   double IdleTime;
   int IdleCount;
   int ReshapeFlag;
+  int DragDirtyFlag;
 } CMain;
 
 static CMain Main;
@@ -143,6 +144,12 @@ struct PyMOLOptionRec *PyMOLOption = &PyMOLOptionGlobal;
 void launch(void);
 
 void MainOnExit(void);
+
+void MainDragDirty(void)
+{
+  CMain *I = &Main;
+  I->DragDirtyFlag = 1;
+}
 
 static void DrawBlueLine(void)
 {
@@ -391,6 +398,7 @@ static void MainButton(int button,int state,int x,int y)
   if(!OrthoButton(button,state,x,y,Modifiers))
     {
     }
+
   PUnlockAPIAsGlut();
 
 }
@@ -442,6 +450,7 @@ static void MainDrawLocked(void)
 /*========================================================================*/
 static void MainDraw(void)
 {
+  CMain *I = &Main;
   PRINTFD(FB_Main)
     " MainDraw: called.\n"
     ENDFD;
@@ -598,6 +607,7 @@ static void MainInit(void)
   I->IdleTime=(float)UtilGetSeconds();
   I->IdleCount = 0;
   I->ReshapeFlag=false;
+  I->DragDirtyFlag=0;
   if(PMGUI) {
 
     /* get us into a well defined GL state */
@@ -716,6 +726,11 @@ void MainBusyIdle(void)
   PRINTFD(FB_Main)
     " MainBusyIdle: got lock.\n"
     ENDFD;
+
+  if(I->DragDirtyFlag==1) {
+    I->DragDirtyFlag = 0;
+    OrthoFakeDrag();
+  }
 
   if(ControlIdling()) {
     ExecutiveSculptIterateAll();

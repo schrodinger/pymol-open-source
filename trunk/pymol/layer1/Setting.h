@@ -463,10 +463,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_png_screen_gamma           319
 #define cSetting_png_file_gamma             320
 #define cSetting_editor_label_fragments     321
+#define cSetting_internal_gui_control_size  322
+#define cSetting_auto_dss                   323
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        322
+#define cSetting_INIT                        324
 
 #endif
 

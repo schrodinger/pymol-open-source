@@ -26,7 +26,7 @@ Z* -------------------------------------------------------------------
 #include "Ortho.h"
 
 
-void MenuActivate(int x,int y,char *name,char *sele)
+void MenuActivate(int x,int y,int last_x,int last_y,char *name,char *sele)
 {
 
   PyObject *list;
@@ -36,7 +36,7 @@ void MenuActivate(int x,int y,char *name,char *sele)
   list = PyObject_CallMethod(P_menu,name,"s",sele); 
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
-    PopUpNew(x,y,list);
+    PopUpNew(x,y,last_x,last_y,list,NULL);
     Py_DECREF(list);
   }
   PUnblock();

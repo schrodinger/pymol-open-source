@@ -18,6 +18,6 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
-void MenuActivate(int x,int y,char *name,char *sele);
+void MenuActivate(int x,int y,int last_x,int last_y,char *name,char *sele);
 
 #endif

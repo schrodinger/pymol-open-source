@@ -48,7 +48,9 @@ Z* -------------------------------------------------------------------
 #define cButModeMoveSlab  26
 #define cButModePickAtom1 27
 #define cButModeMoveAtom 28
-#define cButModeCount    29
+#define cButModeMenu     29
+
+#define cButModeCount    30
 
 /* remaineder only used in scene... */
 
@@ -63,7 +65,7 @@ typedef struct {
   Block *Block;
   CodeType Code[cButModeCount+1];
   int NCode;
-  int Mode[16];
+  int Mode[20];
   int NBut;
   float Rate;
   float Samples;

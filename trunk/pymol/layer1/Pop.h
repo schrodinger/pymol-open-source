@@ -22,5 +22,6 @@ void PopInit(void);
 void PopFree(void);
 void PopFitBlock(Block *block);
 Block *PopGetBlock(void);
+void PopPlaceChild(Block *block,int left_x,int right_x,int row_y);
 
 #endif

@@ -17,12 +17,25 @@ import math
 import string
 import pymol
 import os
+import traceback
 from pymol import movie
 # legacy mappings, remove in PyMOL 2.0
 
 mload = movie.load
 mrock = movie.rock
 mroll = movie.roll
+
+   
+   
+   
+def cbss(selection="(all)",helix_color="red",sheet_color="yellow",loop_color="green",quiet=1):
+   sel = str(selection)
+   h = str(helix_color)
+   s = str(sheet_color)
+   l = str(loop_color)
+   cmd.color(h,"(ss H and ("+sel+"))",quiet=quiet)
+   cmd.color(s,"(ss S and ("+sel+"))",quiet=quiet)
+   cmd.color(l,"((not (ss S+H)) and ("+sel+"))",quiet=quiet)
 
 def cbag(selection="(all)",quiet=1):
    s = str(selection)
@@ -169,9 +182,8 @@ def performance(mode):
       cmd.set('transparency_mode',0)
       cmd.set('stick_balls',0.0)
       cmd.do("rebuild")         
-
-
-
+   
+   
 def label_chains(sele="all"):
    pymol.stored._cs = []
    last = None

@@ -16,6 +16,7 @@
 # This section contains the menu contents and the associated commands
 #
 
+
 def mol_show(s):
    return [[ 2, 'Show:'      , ''                               ],
            [ 1, 'lines'      , 'cmd.show("lines"     ,"'+s+'")' ],
@@ -108,84 +109,116 @@ def mesh_hide(s):
            [ 1, 'cell'        , 'cmd.hide("cell","'+s+'")'      ],           
            [ 1, 'everything'  , 'cmd.disable("'+s+'")'          ]]
 
+def by_elem(s):
+   return [[ 1, '\\292C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbag("'+s+'")'],
+   [ 1, '\\099C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbac("'+s+'")'],
+   [ 1, '\\909C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbam("'+s+'")'],           
+   [ 1, '\\990C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbay("'+s+'")'],
+   [ 1, '\\955C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbas("'+s+'")'],
+   [ 1, '\\777C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbaw("'+s+'")'],
+   [ 1, '\\559C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbab("'+s+'")'],
+   [ 1, '\\972C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbao("'+s+'")'],
+   [ 1, ' \\777H\\229N\\922O\\950S\\905*'  , 'util.cnc("'+s+'")']]                     
+
+def by_ss(s):
+   return [
+   [ 1, '\\900Helix \\990Sheet \\090Loop'  , 'util.cbss("'+s+'","red","yellow","green")'],
+   [ 1, '\\099Helix \\909Sheet \\955Loop'  , 'util.cbss("'+s+'","cyan","magenta","salmon")'],
+           ]
+
+def spectrum(s):
+   return [
+           [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(e. c)',
+             'cmd.spectrum("count",selection="('+s+')&e. c")'],           
+           [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(*/ca)',
+             'cmd.spectrum("count",selection="('+s+')&*/ca")'],
+           [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
+             'cmd.spectrum("count",selection="'+s+'",byres=1)'],
+           [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
+             'util.chainbow("('+s+')")'],                                 
+           [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n',
+             'util.color_chains("('+s+')")'],
+           ]
+
+
+   
 def mol_color(s):
    return [[ 2, 'Color:'     ,''                               ],
-           [ 1, 'elems `292C`777H`229N`922O`950S`905*'  , 'util.cbag("'+s+'")'],
-           [ 1, 'elems `099C`777H`229N`922O`950S`905*'  , 'util.cbac("'+s+'")'],
-           [ 1, 'elems `909C`777H`229N`922O`950S`905*'  , 'util.cbam("'+s+'")'],           
-           [ 1, 'elems `990C`777H`229N`922O`950S`905*'  , 'util.cbay("'+s+'")'],
-           [ 1, 'elems `955C`777H`229N`922O`950S`905*'  , 'util.cbas("'+s+'")'],
-           [ 1, 'elems `777C`777H`229N`922O`950S`905*'  , 'util.cbaw("'+s+'")'],
-           [ 1, 'elems `559C`777H`229N`922O`950S`905*'  , 'util.cbab("'+s+'")'],
-           [ 1, 'elems `972C`777H`229N`922O`950S`905*'  , 'util.cbao("'+s+'")'],
-           [ 1, 'elems  `777H`229N`922O`950S`905*'  , 'util.cnc("'+s+'")'],                      
-           [ 0, ''                                , ''                 ],
-           [ 1, '`900r`950a`990i`090n`099b`059o`009w`888(e. c)',
-             'cmd.spectrum("count",selection="('+s+')&e. c")'],           
-           [ 1, '`900r`950a`990i`090n`099b`059o`009w`888(*/ca)',
-             'cmd.spectrum("count",selection="('+s+')&*/ca")'],
-           [ 1, '`900r`950a`990i`090n`099b`059o`009w',
-             'cmd.spectrum("count",selection="'+s+'",byres=1)'],
-           [ 1, '`900c`950h`990a`090i`099n`059b`009o`705w`888s',
-             'util.chainbow("('+s+')")'],                                 
-           [ 1, '`900b`950y `090c`099h`059a`009i`705n',
-             'util.color_chains("('+s+')")'],
+           [ 1, 'by elem'  , by_elem(s) ],
+           [ 1, 'by ss  '  , by_ss(s) ],
+           [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(s) ],
            [ 0, ''                                , ''                 ],           
-           [ 1, '`900red'         , 'cmd.color("red","'+s+'")'     ],
-           [ 1, '`090green'       , 'cmd.color("green","'+s+'")'   ],
-           [ 1, '`009blue'        , 'cmd.color("blue","'+s+'")'    ],
-           [ 1, '`990yellow'      , 'cmd.color("yellow","'+s+'")'  ],
-           [ 1, '`909magenta'     , 'cmd.color("magenta","'+s+'")' ],
-           [ 1, '`099cyan'        , 'cmd.color("cyan","'+s+'")'    ],           
-           [ 1, '`955salmon'      , 'cmd.color("salmon","'+s+'")'  ],
-           [ 1, '`595lime'        , 'cmd.color("lime","'+s+'")'    ],
-           [ 1, '`967pink'  ,'cmd.color("pink","'+s+'")'  ],
-           [ 1, '`559slate'       , 'cmd.color("slate","'+s+'")'   ],
-           [ 1, '`949violet'      , 'cmd.color("violet","'+s+'")'  ],
-           [ 1, '`950orange'      , 'cmd.color("orange","'+s+'")'  ],
-           [ 1, '`059marine'      , 'cmd.color("marine","'+s+'")'  ],
-           [ 1, '`905hotpink' ,'cmd.color("hotpink","'+s+'")'  ],
-#           [ 1, '`551olive'       , 'cmd.color("olive","'+s+'")'   ],
-#           [ 1, '`626purple'      , 'cmd.color("purple","'+s+'")'  ],
-#           [ 1, '`266teal'        , 'cmd.color("teal","'+s+'")'    ],
-#           [ 1, '`151forest'      , 'cmd.color("forest","'+s+'")'  ],
-#           [ 1, '`611firebrick'   , 'cmd.color("firebrick","'+s+'")'  ],
-#           [ 1, '`631chocolate'   , 'cmd.color("chocolate","'+s+'")'  ],           
-           [ 1, '`999white'       , 'cmd.color("white","'+s+'")'   ],
-           [ 1, '`987wheat'       , 'cmd.color("wheat","'+s+'")'   ],
-           [ 1, '`555grey'        , 'cmd.color("grey","'+s+'")'    ],
-           [ 1, '`222black'    ,'cmd.color("grey","'+s+'")'  ]
+           [ 1, '\\900red'         , 'cmd.color("red","'+s+'")'     ],
+           [ 1, '\\090green'       , 'cmd.color("green","'+s+'")'   ],
+           [ 1, '\\009blue'        , 'cmd.color("blue","'+s+'")'    ],
+           [ 1, '\\990yellow'      , 'cmd.color("yellow","'+s+'")'  ],
+           [ 1, '\\909magenta'     , 'cmd.color("magenta","'+s+'")' ],
+           [ 1, '\\099cyan'        , 'cmd.color("cyan","'+s+'")'    ],           
+           [ 1, '\\955salmon'      , 'cmd.color("salmon","'+s+'")'  ],
+           [ 1, '\\595lime'        , 'cmd.color("lime","'+s+'")'    ],
+           [ 1, '\\967pink'  ,'cmd.color("pink","'+s+'")'  ],
+           [ 1, '\\559slate'       , 'cmd.color("slate","'+s+'")'   ],
+           [ 1, '\\949violet'      , 'cmd.color("violet","'+s+'")'  ],
+           [ 1, '\\950orange'      , 'cmd.color("orange","'+s+'")'  ],
+           [ 1, '\\059marine'      , 'cmd.color("marine","'+s+'")'  ],
+           [ 1, '\\905hotpink' ,'cmd.color("hotpink","'+s+'")'  ],
+#           [ 1, '\\551olive'       , 'cmd.color("olive","'+s+'")'   ],
+#           [ 1, '\\626purple'      , 'cmd.color("purple","'+s+'")'  ],
+#           [ 1, '\\266teal'        , 'cmd.color("teal","'+s+'")'    ],
+#           [ 1, '\\151forest'      , 'cmd.color("forest","'+s+'")'  ],
+#           [ 1, '\\611firebrick'   , 'cmd.color("firebrick","'+s+'")'  ],
+#           [ 1, '\\631chocolate'   , 'cmd.color("chocolate","'+s+'")'  ],           
+           [ 1, '\\999white'       , 'cmd.color("white","'+s+'")'   ],
+           [ 1, '\\987wheat'       , 'cmd.color("wheat","'+s+'")'   ],
+           [ 1, '\\555grey'        , 'cmd.color("grey","'+s+'")'    ],
+           [ 1, '\\222black'    ,'cmd.color("grey","'+s+'")'  ]
            ]
 
 def general_color(s):
    return [[ 2, 'Color:'     ,''                        ],
-           [ 1, '`900red'         ,'cmd.color("red","'+s+'")'  ],
-           [ 1, '`090green'       ,'cmd.color("green","'+s+'")'  ],
-           [ 1, '`009blue'        ,'cmd.color("blue","'+s+'")'  ],
-           [ 1, '`990yellow'      ,'cmd.color("yellow","'+s+'")'  ],
-           [ 1, '`909magenta' ,'cmd.color("magenta","'+s+'")'  ],
-           [ 1, '`099cyan'  ,'cmd.color("cyan","'+s+'")'  ],           
-           [ 1, '`955salmon'      ,'cmd.color("salmon","'+s+'")'  ],
-           [ 1, '`595lime' ,'cmd.color("lime","'+s+'")'  ],
-           [ 1, '`967pink'  ,'cmd.color("pink","'+s+'")'  ],
-           [ 1, '`559slate'  ,'cmd.color("slate","'+s+'")'  ],
-           [ 1, '`949violet'  ,'cmd.color("violet","'+s+'")'  ],
-           [ 1, '`950orange'      ,'cmd.color("orange","'+s+'")'  ],
-           [ 1, '`059marine'      ,'cmd.color("marine","'+s+'")'  ],
-           [ 1, '`905hotpink' ,'cmd.color("hotpink","'+s+'")'  ],
-#           [ 1, '`551olive'   ,'cmd.color("olive","'+s+'")'  ],
-#           [ 1, '`626purple'  ,'cmd.color("purple","'+s+'")'  ],
-#           [ 1, '`266teal'  ,'cmd.color("teal","'+s+'")'  ],
-#           [ 1, '`151forest'  ,'cmd.color("forest","'+s+'")'  ],
-#           [ 1, '`611firebrick'   , 'cmd.color("firebrick","'+s+'")'  ],
-#           [ 1, '`631chocolate'   , 'cmd.color("chocolate","'+s+'")'  ],
-           [ 1, '`116density'     ,'cmd.color("density","'+s+'")'  ],
-           [ 1, '`999white'       ,'cmd.color("white","'+s+'")'  ],
-           [ 1, '`987wheat'       , 'cmd.color("wheat","'+s+'")'   ],
-           [ 1, '`555grey'    ,'cmd.color("grey","'+s+'")'  ],
-           [ 1, '`222black'    ,'cmd.color("grey","'+s+'")'  ]
+           [ 1, '\\900red'         ,'cmd.color("red","'+s+'")'  ],
+           [ 1, '\\090green'       ,'cmd.color("green","'+s+'")'  ],
+           [ 1, '\\009blue'        ,'cmd.color("blue","'+s+'")'  ],
+           [ 1, '\\990yellow'      ,'cmd.color("yellow","'+s+'")'  ],
+           [ 1, '\\909magenta' ,'cmd.color("magenta","'+s+'")'  ],
+           [ 1, '\\099cyan'  ,'cmd.color("cyan","'+s+'")'  ],           
+           [ 1, '\\955salmon'      ,'cmd.color("salmon","'+s+'")'  ],
+           [ 1, '\\595lime' ,'cmd.color("lime","'+s+'")'  ],
+           [ 1, '\\967pink'  ,'cmd.color("pink","'+s+'")'  ],
+           [ 1, '\\559slate'  ,'cmd.color("slate","'+s+'")'  ],
+           [ 1, '\\949violet'  ,'cmd.color("violet","'+s+'")'  ],
+           [ 1, '\\950orange'      ,'cmd.color("orange","'+s+'")'  ],
+           [ 1, '\\059marine'      ,'cmd.color("marine","'+s+'")'  ],
+           [ 1, '\\905hotpink' ,'cmd.color("hotpink","'+s+'")'  ],
+#           [ 1, '\\551olive'   ,'cmd.color("olive","'+s+'")'  ],
+#           [ 1, '\\626purple'  ,'cmd.color("purple","'+s+'")'  ],
+#           [ 1, '\\266teal'  ,'cmd.color("teal","'+s+'")'  ],
+#           [ 1, '\\151forest'  ,'cmd.color("forest","'+s+'")'  ],
+#           [ 1, '\\611firebrick'   , 'cmd.color("firebrick","'+s+'")'  ],
+#           [ 1, '\\631chocolate'   , 'cmd.color("chocolate","'+s+'")'  ],
+           [ 1, '\\116density'     ,'cmd.color("density","'+s+'")'  ],
+           [ 1, '\\999white'       ,'cmd.color("white","'+s+'")'  ],
+           [ 1, '\\987wheat'       , 'cmd.color("wheat","'+s+'")'   ],
+           [ 1, '\\555grey'    ,'cmd.color("grey","'+s+'")'  ],
+           [ 1, '\\222black'    ,'cmd.color("grey","'+s+'")'  ]
            ]
 
+def presets(s):
+   return [
+           [ 1, 'simple'   ,'preset.simple("'+s+'")'          ],
+           [ 1, 'technical'   , 'preset.technical("'+s+'")'          ],
+           [ 1, 'ligands'   , 'preset.ligands("'+s+'")'          ],
+           [ 1, 'beautiful'   , 'preset.beautiful("'+s+'")'          ],
+           [ 1, 'publishable'   , 'preset.publishable("'+s+'")'          ],
+           ]
+
+def expand(s):
+   return [
+           [ 1, 'full residues'  ,'cmd.select("'+s+'","(byres '+s+')",show=1)'      ],
+           [ 1, 'expand by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",show=1)' ],
+           [ 1, 'expand by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",show=1)' ],
+           ]
+   
 def sele_action(s):
    return [[ 2, 'Actions:'       ,''                        ],     
            [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
@@ -195,15 +228,15 @@ def sele_action(s):
            [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
            [ 1, 'orient'         ,'cmd.orient("'+s+'")'          ],
            [ 0, ''               ,''                             ],
+           [ 1, 'preset'         ,presets(s)         ],
+           [ 0, ''               ,''                             ],
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'")'          ],
            [ 0, ''               ,''                             ],
            [ 1, 'polar contacts'  ,
-             'cmd.dist("'+s+'_pc","'+s+'&elem n+o","same",3.2,quiet=1,mode=1,labels=0)'
+             'cmd.dist("'+s+'_pc","'+s+'&elem n+o","same",quiet=1,mode=2,labels=0)'
              ],                      
            [ 0, ''               ,''                             ],
-           [ 1, 'full residues'  ,'cmd.select("'+s+'","(byres '+s+')",show=1)'      ],
-           [ 1, 'expand by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",show=1)' ],
-           [ 1, 'expand by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",show=1)' ],
+           [ 1, 'expand'         , expand(s)         ],
            [ 0, ''          ,''                                              ],
            [ 1, 'invert'         ,'cmd.select("'+s+'","(not '+s+')",show=1)'    ],
            [ 1, 'duplicate'      ,'cmd.select("'+s+'")'          ],
@@ -218,6 +251,7 @@ def sele_action(s):
            [ 1, 'count atoms'    ,'cmd.count_atoms("'+s+'",quiet=0)'     ],           
            ]
 
+
 def mol_action(s):
    return [[ 2, 'Actions:'     , ''                       ],     
            [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'      ],
@@ -225,6 +259,8 @@ def mol_action(s):
            [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 1, 'orient'       , 'cmd.orient("'+s+'")'    ],
            [ 0, ''          ,''                                              ],
+           [ 1, 'preset'  , presets(s)       ],
+           [ 0, ''               ,''                             ],
            [ 1, 'assign S.S.'  ,'cmd.dss("'+s+'")'        ],
            [ 1, 'polar contacts'  ,
              'cmd.dist("'+s+'_pc","'+s+'&elem n+o","same",3.2,quiet=1,mode=1,labels=0)'
@@ -257,15 +293,27 @@ def simple_action(s):
            [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            ]
 
+def test1(s):
+      return [[ 2, 'Test1:'     , ''                      ],     
+           [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
+           [ 1, 'center'   , 'cmd.center("all")'   ],           
+           [ 1, 'origin'   , 'cmd.origin("all")'   ],
+           ]
+
+def test2(s):
+      return [[ 2, 'Test2:'     , ''                      ],     
+           [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
+           [ 1, 'center'   , 'cmd.center("all")'   ],           
+           [ 1, 'origin'   , 'cmd.origin("all")'   ],
+           ]
+
 def all_action(s):
    return [[ 2, 'Actions:'     , ''                      ],     
            [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
            [ 1, 'center'   , 'cmd.center("all")'   ],           
            [ 1, 'origin'   , 'cmd.origin("all")'   ],
-           [ 0, ''             , ''                      ],
-           [ 1, 'zoom (visible)' , 'cmd.zoom("(visible)")'     ],
-           [ 1, 'center (visible)' , 'cmd.center("(visible)")'     ],
-           [ 1, 'origin (visible)' , 'cmd.origin("(visible)")'     ],
+           [ 0, ''             , ''                      ],           
+           [ 1, 'preset'  , presets(s)     ],           
            [ 0, ''             , ''                      ],           
            [ 1, 'delete everything'  , 'cmd.delete("all")'     ],           
            [ 0, ''          ,''                                              ],
@@ -312,3 +360,90 @@ def mol_labels(s):
            [ 1, 'atom i.d.(+1)'           , 'cmd.label("'+s+'","id+1")' ],
            ]
 
+
+def mol_view(s):
+   return [
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      ]
+
+def all_option(s):
+   return [
+      [ 2, '(all)'      , '' ],
+      [ 1, 'Action'      , all_action(s) ],
+      [ 1, 'Show'      , mol_color(s) ],
+      [ 1, 'Hide'      , mol_color(s) ],
+      [ 1, 'Color'      , mol_color(s) ],
+      ]
+
+def all_option(s):
+   return [
+      [ 2, '(all)'      , '' ],
+      [ 1, 'show'      , mol_show(s) ],
+      [ 1, 'hide'      , mol_hide(s) ],
+      [ 1, 'color'      , mol_color(s) ],
+      [ 1, 'view'      , mol_view(s) ],
+      [ 1, 'preset'      , presets(s) ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'label'      , mol_labels(s) ],
+      ]
+
+def main_menu(s):
+   return [
+      [ 2, 'Main Menu'  , 'cmd.show("lines"     ,"'+s+'")' ],
+      [ 1, 'zoom (vis)'           ,'cmd.zoom("visible")'            ],
+      [ 1, 'orient (vis)'           ,'cmd.orient("visible")'            ],
+      [ 1, 'reset'           ,'cmd.reset()'            ],
+      [ 0, ''             , ''                      ],           
+      [ 1, '(all)'      , all_option("all") ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'ray'           ,'cmd.ray()' ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'delete all'           ,'cmd.delete("all")' ],
+      [ 1, 'reinitialize'           ,'cmd.reinitialize()' ],
+      ]
+
+def pick_option(title,s):
+   return [
+      [ 2, title, '' ],
+      [ 1, 'color'      , mol_color(s) ],
+      [ 1, 'show'      , mol_show(s) ],
+      [ 1, 'hide'      , mol_hide(s) ],
+      [ 1, 'preset'  , presets(s)       ],      
+      [ 0, ''             , ''                      ],
+      [ 1, 'zoom'           ,'cmd.zoom("'+s+'")'            ],
+      [ 1, 'center'           ,'cmd.center("'+s+'")'            ],
+      [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
+      [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
+      [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
+      [ 0, ''             , ''                      ],
+      [ 1, 'labels'      , mol_labels(s) ],      
+      ]
+
+def pick_menu(s):
+   if s[-1]=='`':
+      title = s[0:-1]
+   else:
+      title = s
+   return [[ 2, title     , '' ],
+           [ 1, 'atom'    , pick_option("Atom",s) ],
+           [ 1, 'residue' , pick_option("Residue","(byres ("+s+"))") ],
+           [ 1, 'chain'   , pick_option("Chain","(bychain ("+s+"))") ],
+           [ 1, 'segment' , pick_option("Segment","(byseg ("+s+"))") ],
+           [ 1, 'object'  , pick_option("Object","(byobject ("+s+"))") ],
+           [ 0, ''             , ''                      ],
+           [ 1, 'molecule', pick_option("Molecule","(bymol ("+s+"))") ],
+           [ 0, ''             , ''                      ],
+           [ 1, 'fragments', pick_option("Fragment","(byfrag ("+s+"))") ],
+           [ 1, '""+joints', pick_option("Fragment","((byfrag ("+s+")) extend 1)") ],
+           ]
+      
+
+   

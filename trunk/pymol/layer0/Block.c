@@ -69,10 +69,18 @@ void BlockSetMargin(Block *block,int t,int l,int b,int r)
 /*========================================================================*/
 void BlockReshape(Block *I,int width, int height)
 {
-  I->rect.top = (height-I->margin.top)-1;
+  I->rect.top = (height-I->margin.top);
   I->rect.left = I->margin.left;
   I->rect.bottom = I->margin.bottom;
-  I->rect.right = (width-I->margin.right)-1;
+  I->rect.right = (width-I->margin.right);
+}
+/*========================================================================*/
+void BlockTranslate(Block *I,int dx, int dy)
+{
+  I->rect.top += dy;
+  I->rect.left += dx;
+  I->rect.bottom += dy;
+  I->rect.right += dx;
 }
 /*========================================================================*/
 void BlockRecursiveDraw(Block *block)
@@ -97,10 +105,10 @@ Block *BlockRecursiveFind(Block *block,int x,int y)
   if(block){
 	 if(!block->active)
 		block = BlockRecursiveFind(block->next,x,y);
-	 else if ( ! (( block->rect.top    >=  y ) &&
-					  ( block->rect.bottom < y ) &&
-					  ( block->rect.left   < x ) &&
-					  ( block->rect.right  >=  x )))
+	 else if ( ! (( block->rect.top    >  y ) &&
+					  ( block->rect.bottom <= y ) &&
+					  ( block->rect.left   <= x ) &&
+					  ( block->rect.right  >  x )))
 		block = BlockRecursiveFind(block->next,x,y);
 	 else if(block->inside)
 		if((check = BlockRecursiveFind(block->inside,x,y)))

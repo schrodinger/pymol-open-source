@@ -55,9 +55,9 @@ ListVarDeclare(BlockList,Block);
 #define cOrthoLeftMargin 8
 #define cOrthoBottomMargin 10
 
-#define WizardMargin 119
+#define WizardMargin 128
 
-#define ButModeMargin 26
+#define ButModeMargin 20
 #define ControlMargin 0
 
 typedef struct {
@@ -66,6 +66,7 @@ typedef struct {
   Block LoopBlock;
   GLint ViewPort[4];
   int X,Y,Height,Width;
+  int LastX,LastY,LastModifiers;
   int ActiveButton;
   int DrawText;
   int InputFlag; /* whether or not we have active input on the line */
@@ -119,6 +120,14 @@ int OrthoGetWidth(void)
 {
   OrthoObject *I=&Ortho;
   return(I->Width);
+}
+
+/*========================================================================*/
+void OrthoFakeDrag(void) /* for timing-based events, such as pop-ups */
+{
+  OrthoObject *I=&Ortho;  
+  if(I->GrabbedBy)
+    OrthoDrag(I->LastX,I->LastY,I->LastModifiers);
 }
 /*========================================================================*/
 int OrthoLoopBlockDrag(Block *block,int x,int y,int mod)
@@ -846,6 +855,7 @@ void OrthoUngrab(void)
   OrthoObject *I=&Ortho;
   I->GrabbedBy = NULL;
 }
+
 /*========================================================================*/
 Block *OrthoNewBlock(Block *block)
 {
@@ -871,6 +881,8 @@ void OrthoAttach(Block *block,int type)
 void OrthoDetach(Block *block)
 {
   OrthoObject *I=&Ortho;
+  if(I->GrabbedBy == block)
+    I->GrabbedBy = NULL;
   ListDetach(I->Blocks,block,next,BlockList);
 }
 /*========================================================================*/
@@ -1234,26 +1246,26 @@ void OrthoReshape(int width, int height)
     block->active=true;
     BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
     block=WizardGetBlock();
-    BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,WizardMargin,0);
+    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
     block->active=false;
     block=ButModeGetBlock();
-    BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,ButModeMargin,0);
+    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
     block->active=true;
     block=ControlGetBlock();
-    BlockSetMargin(block,height-ButModeMargin,width-internal_gui_width,ControlMargin,0);
+    BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
     block->active=true;
   } else {
     block=ExecutiveGetBlock();
     block->active=false;
     BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
     block=WizardGetBlock();
-    BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,WizardMargin,0);
+    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
     block->active=false;
     block=ButModeGetBlock();
-    BlockSetMargin(block,height-WizardMargin,width-internal_gui_width,ButModeMargin,0);
+    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
     block->active=false;
     block=ControlGetBlock();
-    BlockSetMargin(block,height-ButModeMargin,width-internal_gui_width,ControlMargin,0);
+    BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
     block->active=false;
   }
 
@@ -1290,7 +1302,10 @@ void OrthoReshapeWizard(int wizHeight)
     internal_gui_width = (int)SettingGet(cSetting_internal_gui_width);
     block=ExecutiveGetBlock();
     if(height) {
-      BlockSetMargin(block,0,width-internal_gui_width,WizardMargin+wizHeight,0);
+      int wh=wizHeight;
+      if(wh) wh++;
+
+      BlockSetMargin(block,0,width-internal_gui_width,WizardMargin+wh,0);
     } else {
       BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
     }
@@ -1325,8 +1340,11 @@ int OrthoButton(int button,int state,int x,int y,int mod)
   int handled = 0; 
 
   OrthoRemoveSplash();
-  I->X=x+1;
+  I->X=x;
   I->Y=y;
+  I->LastX = x;
+  I->LastY = y;
+  I->LastModifiers = mod;
 
   if(state==P_GLUT_DOWN)
 	 {
@@ -1389,6 +1407,10 @@ int OrthoDrag(int x, int y,int mod)
 
   Block *block=NULL;
   int handled = 0;
+
+  I->LastX = x;
+  I->LastY = y;
+  I->LastModifiers = mod;
 
   I->X=x;
   I->Y=y;

@@ -30,7 +30,7 @@ Z* -------------------------------------------------------------------
 
 #define cControlBoxSize 17
 #define cControlLeftMargin 8
-#define cControlTopMargin 5
+#define cControlTopMargin 2
 #define cControlSpacing 2
 #define cControlInnerMargin 4
 #define cControlSpread 6
@@ -295,8 +295,8 @@ static void ControlDraw(Block *block)
       int top,left,bottom,right;
       
       left = I->Block->rect.left+1;
-      bottom = I->Block->rect.bottom+4;
-      top = bottom+cControlBoxSize;
+      bottom = I->Block->rect.bottom+1;
+      top = I->Block->rect.top - (cControlTopMargin-1);
       right=left+5;
       
       glColor3f(0.8F,0.8F,0.8F);

@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include"Block.h"
 
-void PopUpNew(int x,int y,PyObject *list);
+
+Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent);
 
 #endif

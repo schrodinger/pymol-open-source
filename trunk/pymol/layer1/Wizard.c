@@ -54,10 +54,9 @@ typedef struct {
 
 CWizard Wizard;
 
-#define cWizardLineHeight 18
 #define cWizardLeftMargin 2
-#define cWizardTopMargin (-1)
-#define cWizardClickOffset 4
+#define cWizardTopMargin 0
+#define cWizardClickOffset 2
 
 void WizardPurgeStack(void)
 {
@@ -98,7 +97,7 @@ void WizardRefresh(void)
   int a;
   int blocked;
   blocked = PAutoBlock();
-
+  
   /* get the current prompt */
   if(I->Stack>=0)
     if(I->Wiz[I->Stack]) {
@@ -153,7 +152,8 @@ void WizardRefresh(void)
       }
     }
   if(I->NLine) {
-    OrthoReshapeWizard(cWizardLineHeight*I->NLine+4);
+    int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+    OrthoReshapeWizard(LineHeight*I->NLine+4);
   } else {
     OrthoReshapeWizard(0);
   }
@@ -237,8 +237,9 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
 
   int a;
   PyObject *menuList=NULL;
+  int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
 
-  a=((I->Block->rect.top-(y+cWizardClickOffset))-cWizardTopMargin)/cWizardLineHeight;
+  a=((I->Block->rect.top-(y+cWizardClickOffset))-cWizardTopMargin)/LineHeight;
   if((a>=0)&&(a<I->NLine)) {
     switch(I->Line[a].type) {
     case cWizTypeButton:
@@ -258,9 +259,9 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
      
       if(PyErr_Occurred()) PyErr_Print();
       if(menuList&&(menuList!=Py_None)) {
-        y = I->Block->rect.top-(cWizardTopMargin + a*cWizardLineHeight) -2;
+        int my = I->Block->rect.top-(cWizardTopMargin + a*LineHeight) - 2;
         
-        PopUpNew(x,y,menuList);
+        PopUpNew(x,my,x,y,menuList,NULL);
       }
       Py_XDECREF(menuList);
       PUnblock();
@@ -274,10 +275,11 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
 static int WizardDrag(Block *block,int x,int y,int mod)
 {
   CWizard *I=&Wizard;
+  int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
 
   int a;
   a=((I->Block->rect.top-(y+cWizardClickOffset))-
-     cWizardTopMargin)/cWizardLineHeight;
+     cWizardTopMargin)/LineHeight;
 
   if((x<I->Block->rect.left)||(x>I->Block->rect.right))
     a=-1;
@@ -303,10 +305,11 @@ static int WizardDrag(Block *block,int x,int y,int mod)
 static int WizardRelease(Block *block,int button,int x,int y,int mod)
 {
   CWizard *I=&Wizard;
+    int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
 
   int a;
   a=((I->Block->rect.top-(y+cWizardClickOffset))-
-     cWizardTopMargin)/cWizardLineHeight;
+     cWizardTopMargin)/LineHeight;
 
   if(I->Pressed)
     I->Pressed=-1;
@@ -391,6 +394,8 @@ static void WizardDraw(Block *block)
 
   
   float menuColor[3] = { 0.0,0.0,0.0};
+  int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+  int text_lift = (LineHeight/2)-5;
 
   if(PMGUI) {
     glColor3fv(I->Block->BackColor);
@@ -399,13 +404,13 @@ static void WizardDraw(Block *block)
     glColor3fv(I->Block->TextColor);
 
     x = I->Block->rect.left+cWizardLeftMargin;
-    y = (I->Block->rect.top-cWizardLineHeight)-cWizardTopMargin;
+    y = (I->Block->rect.top-LineHeight)-cWizardTopMargin;
 
     for(a=0;a<I->NLine;a++) {
       if(I->Pressed==a) {
-          draw_button(I->Block->rect.left+1,y-2,
+          draw_button(I->Block->rect.left+1,y,
                       (I->Block->rect.right-I->Block->rect.left)-1,
-                      cWizardLineHeight-1,
+                      LineHeight-1,
                       dimLightEdge,
                       dimDarkEdge,
                       buttonActiveColor);
@@ -417,9 +422,9 @@ static void WizardDraw(Block *block)
           glColor3fv(I->Block->TextColor);
           break;
         case cWizTypeButton:
-          draw_button(I->Block->rect.left+1,y-2,
+          draw_button(I->Block->rect.left+1,y,
                       (I->Block->rect.right-I->Block->rect.left)-1,
-                      cWizardLineHeight-1,
+                      LineHeight-1,
                       dimLightEdge,
                       dimDarkEdge,
                       dimColor);
@@ -428,9 +433,9 @@ static void WizardDraw(Block *block)
 
          break;
         case cWizTypePopUp:
-          draw_button(I->Block->rect.left+1,y-2,
+          draw_button(I->Block->rect.left+1,y,
                       (I->Block->rect.right-I->Block->rect.left)-1,
-                      cWizardLineHeight-1,
+                      LineHeight-1,
                       menuLightEdge,
                       menuDarkEdge,
                       menuBGColor);
@@ -440,8 +445,8 @@ static void WizardDraw(Block *block)
           break;
         }
       }
-      GrapDrawStr(I->Line[a].text,x+1,y+2);
-      y-=cWizardLineHeight;
+      GrapDrawStr(I->Line[a].text,x+1,y+text_lift);
+      y-=LineHeight;
     }
   }
 }

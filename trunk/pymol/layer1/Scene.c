@@ -47,6 +47,7 @@ Z* -------------------------------------------------------------------
 #include"Grap.h"
 #include"ObjectGadget.h"
 #include"Seq.h"
+#include"Menu.h"
 
 #define cFrontMin 0.1F
 #define cSliceMin 0.1F
@@ -78,6 +79,10 @@ typedef struct {
   int Width,Height;
   int Button;
   int LastX,LastY;
+  int LastWinX,LastWinY;
+  double LastClickTime;
+  int LastButton;
+
   float ViewNormal[3],LinesNormal[3];
   float Pos[3],Origin[3];
   float H;
@@ -1369,6 +1374,8 @@ static void do_roving(float old_front,float old_back,float old_origin,int adjust
   }
 }
 
+#define cDoubleTime 0.35
+
 /*========================================================================*/
 int SceneClick(Block *block,int button,int x,int y,int mod)
 {
@@ -1379,7 +1386,40 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   WordType selName = "";
   int mode;
   int atIndex;
-  mode = ButModeTranslate(button,mod);
+  int double_click = false;
+  
+  if((UtilGetSeconds()-I->LastClickTime)<cDoubleTime)
+    {
+      int dx,dy;
+      dx = abs(I->LastWinX - x);
+      dy = abs(I->LastWinY - y);
+      if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
+        switch(button) {
+        case P_GLUT_LEFT_BUTTON:
+          button = P_GLUT_DOUBLE_LEFT;
+          break;
+        case P_GLUT_MIDDLE_BUTTON:
+          button = P_GLUT_DOUBLE_MIDDLE;
+          break;
+        case P_GLUT_RIGHT_BUTTON:
+          button = P_GLUT_DOUBLE_RIGHT;
+          break;
+
+      }
+    }
+      
+
+  }
+    
+  I->LastWinX = x;
+  I->LastWinY = y;
+  I->LastClickTime = UtilGetSeconds();
+  I->LastButton = button;
+
+  if(double_click)
+    mode = cButModeMenu;
+  else
+    mode = ButModeTranslate(button,mod);
   I->Button=button;    
   I->SculptingSave = 0;
 
@@ -1436,7 +1476,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     break;
   case cButModePickAtom1:
   case cButModePickAtom:
-    
+  case cButModeMenu:
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
@@ -1455,23 +1495,27 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       I->LastY=y;	
       switch(obj->type) {
       case cObjectMolecule:
-
         switch(mode) {
+        case cButModeMenu:
+          ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.index,buffer);
+          MenuActivate(I->LastWinX,I->LastWinY+20,I->LastWinX,I->LastWinY,"pick_menu",buffer);
+          break;
         case cButModePickAtom1:
           if(Feedback(FB_ObjectMolecule,FB_Results)) {
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,I->LastPicked.index,buffer);
             PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
-            if(SettingGet(cSetting_logging)) {
-              objMol = (ObjectMolecule*)obj;            
-              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
-              sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
-              PLog(buf2,cPLog_pym);
-            }
-            OrthoRestorePrompt();
           }
+          if(SettingGet(cSetting_logging)) {
+            objMol = (ObjectMolecule*)obj;            
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
+            sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
+            PLog(buf2,cPLog_pym);
+          }
+          OrthoRestorePrompt();
           sprintf(buffer,"%s`%d",
                   obj->Name,I->LastPicked.index+1);    
+          EditorInactive();
           SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
           ExecutiveDelete(cEditorSele2);
           EditorSetActiveObject((ObjectMolecule*)obj,
@@ -1521,8 +1565,15 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         EditorSetActiveObject(NULL,0);
         break;
       }
-    } else {
-      EditorSetActiveObject(NULL,0);
+    } else { /* no atom picked */
+      switch(mode) {
+      case cButModeMenu:
+        MenuActivate(I->LastWinX,I->LastWinY,I->LastWinX,I->LastWinY,"main_menu","none");
+        break;
+      default:
+        EditorSetActiveObject(NULL,0);
+        break;
+      }
     }
     SceneDirty();
     break;
@@ -2581,6 +2632,10 @@ void SceneInit(void)
   I->TextColor[2]=0.2F;
   I->SculptingSave=0;
   
+  I->LastClickTime = UtilGetSeconds();
+  I->LastWinX = 0;
+  I->LastWinY = 0;
+
   SceneSetDefaultView();
 
   I->NFrame = 0;

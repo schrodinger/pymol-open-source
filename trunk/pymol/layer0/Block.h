@@ -32,7 +32,8 @@ typedef struct Block {
   int (*fClick)   (struct Block *block,int button,int x,int y,int mod);
   int (*fCursor)  (struct Block *block,int x,int y,int mod);
   int (*fDrag)    (struct Block *block,int x,int y,int mod);
-  int (*fRelease) (struct Block *block,int button,int x,int y,int mod);
+  int (*fRelease)  (struct Block *block,int button,int x,int y,int mod);
+  int (*fTranslate) (struct Block *block,int dx,int dy);
 } Block;
 
 typedef Block **CBlock;
@@ -46,5 +47,6 @@ void BlockFill(Block *I);
 void BlockGetSize(Block *I,int *width,int *height);
 void BlockOutline(Block *I);
 void BlockInit(Block *I);
+void BlockTranslate(Block *I,int dx,int dy);
 
 #endif

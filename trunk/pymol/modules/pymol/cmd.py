@@ -861,6 +861,13 @@ DEVELOPMENT TO DO
       return l
    get_feedback = _get_feedback # for legacy compatibility
 
+   def _fake_drag(): # internal
+      lock()
+      try:
+         _cmd.fake_drag()
+      finally:
+         unlock()
+      return 1
    # testing tools
 
    # for comparing floating point numbers calculated using
@@ -1254,6 +1261,13 @@ SEE ALSO
         intra_rms,         \
         intra_rms_cur,     \
         pair_fit          
+
+   #--------------------------------------------------------------------
+   from preset import \
+        simple,            \
+        technical,         \
+        beautiful,         \
+        publishable
 
    #--------------------------------------------------------------------
    from moving import \
