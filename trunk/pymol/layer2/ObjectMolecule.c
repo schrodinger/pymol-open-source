@@ -51,7 +51,8 @@ Z* -------------------------------------------------------------------
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
-CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,char **restart);
+CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,
+                                        char **restart,char *segi_override);
 CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *cset);
 
@@ -3510,6 +3511,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
   unsigned int nAtom = 0;
   char *start,*restart=NULL;
   int repeatFlag = true;
+  int successCnt = 0;
+  SegIdent segi_override=""; /* saved segi for corrupted NMR pdb files */
 
   start=PDBStr;
   while(repeatFlag) {
@@ -3530,7 +3533,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
         atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
         isNew = false;
       }
-      cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart);	 
+      cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart,segi_override);	 
       nAtom=cset->NIndex;
     }
     
@@ -3561,6 +3564,17 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);
       ObjectMoleculeUpdateNonbonded(I);
+      successCnt++;
+      if(successCnt>1) {
+        if(successCnt==2){
+          PRINTFB(FB_ObjectMolecule,FB_Actions)
+            " ObjectMolReadPDBStr: read MODEL %d\n",1
+            ENDFB;
+            }
+        PRINTFB(FB_ObjectMolecule,FB_Actions)
+          " ObjectMolReadPDBStr: read MODEL %d\n",successCnt
+          ENDFB;
+      }
     }
     if(restart) {
       repeatFlag=true;
@@ -4946,7 +4960,10 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 }
 
 /*========================================================================*/
-CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,char **restart)
+CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
+                                        AtomInfoType **atInfoPtr,
+                                        char **restart,
+                                        char *segi_override)
 {
 
   char *p;
@@ -4971,6 +4988,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,ch
   unsigned char ss_chain1,ss_chain2;
   char *(ss[256]);
   char cc[MAXLINELEN];
+  char cc_saved;
   int index;
   int ignore_pdb_segi = 0;
 
@@ -5262,7 +5280,26 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,ch
           p=nskip(p,6);
           p=ncopy(cc,p,4);
           if(!ignore_pdb_segi) {
-            if(!sscanf(cc,"%s",ai->segi)) ai->segi[0]=0;
+            if(!segi_override[0])
+              {
+                if(!sscanf(cc,"%s",ai->segi)) 
+                  ai->segi[0]=0;
+                else {
+                  cc_saved=cc[3];
+                  p=ncopy(cc,p,4); 
+                  if((cc_saved=='1')&& /* atom ID overflow?...*/
+                     (cc[0]=='0')&& 
+                     (cc[1]=='0')&&
+                     (cc[2]=='0')&&
+                     (cc[3]=='0')&&
+                     atomCount) {
+                    strcpy(segi_override,(ai-1)->segi);
+                    strcpy(ai->segi,(ai-1)->segi);
+                  }
+                }
+              } else {
+                strcpy(ai->segi,segi_override);
+              }
           } else {
             ai->segi[0]=0;
           }
