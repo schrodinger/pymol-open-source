@@ -549,8 +549,9 @@ float ExecutiveAlign(char *s1,char *s2)
   int *vla1=NULL;
   int *vla2=NULL;
   int na,nb;
-  int a,b,c;
+  int c;
   float result = 0.0;
+  int ok=true;
   CMatch *match = NULL;
 
   if((sele1>=0)&&(sele2>=0)) {
@@ -561,15 +562,11 @@ float ExecutiveAlign(char *s1,char *s2)
       nb = VLAGetSize(vla2)/3;
       if(na&&nb) {
         match = MatchNew(na,nb);
-        for(a=0;a<na;a++) {
-          for(b=0;b<nb;b++) {
-            if(vla1[a*3+2] == vla2[b*3+2])
-              match->mat[a][b] = 1.0;
-            else
-              match->mat[a][b] = -0.1;
-          }
-        }
-        result = MatchAlign(match,-0.2,-0.1,10);
+        if (ok) ok = MatchResidueToCode(match,vla1,na);
+        if (ok) ok = MatchResidueToCode(match,vla2,nb);
+        if (ok) ok = MatchMatrixFromFile(match,"/apps/pymol/linux/modules/pymol/blastmat/BLOSUM62");
+        if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb);
+        result = MatchAlign(match,-10.0,-0.5,0);
         if(match->pair) { /* alignment was successful */
           c = SelectorCreateAlignments(match->pair,
                                        sele1,vla1,sele2,vla2,
@@ -578,7 +575,7 @@ float ExecutiveAlign(char *s1,char *s2)
             PRINTFB(FB_Executive,FB_Actions)
               " ExecutiveAlign: %d atoms aligned.\n",c
               ENDFB;
-              ExecutiveRMS("align1","align2",2,1.5,0);
+              ExecutiveRMS("align1","align2",2,2.0,0);
           }
         }
         if(match) 
