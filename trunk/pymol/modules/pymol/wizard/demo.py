@@ -411,9 +411,7 @@ class DemoInfo:
          util.ray_shadows('heavy')
          cmd.set("suspend_updates",0,quiet=1)
          cmd.refresh()
-         cmd.set("antialias",1)
          cmd.do("ray")
-         cmd.set("antialias",0)
       else:
          cmd.delete("ray")
          
