@@ -1163,7 +1163,6 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
       s=obj->AtomInfo[at].selEntry;
       if(SelectorIsMember(s,sele))
         {
-          printf(" debug:state %d\n",state);
           if(state<obj->NCSet) 
             cs=obj->CSet[state];
           else
