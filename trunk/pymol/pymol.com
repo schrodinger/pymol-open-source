@@ -3,7 +3,10 @@
 # PyMOL startup script
 #
 setenv PYMOL_PATH $HOME/pymol
-setenv PYMOL_EXTLIBPATH $HOME/pymol-ext/lib
+setenv PYMOL_EXTLIBPATH $PYMOL_PATH/ext/lib
+#
+# Tcl/Tk path
+setenv TCL_LIBRARY $PYMOL_EXTLIBPATH/tcl8.0
 #
 # dynamic linking
 # 
