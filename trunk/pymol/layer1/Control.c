@@ -25,10 +25,10 @@ Z* -------------------------------------------------------------------
 
 #include"Movie.h"
 
-#define cControlBoxSize 25
+#define cControlBoxSize 21
 #define cControlLeftMargin 4
 #define cControlTopMargin 5
-#define cControlSpacing 5
+#define cControlSpacing 1
 #define cControlInnerMargin 4
 #define cControlSpread 6
 
@@ -122,10 +122,21 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
   if(flag) {
 	 switch(sel) {
 	 case 0:
+		if(mod&cOrthoSHIFT) {
+		  SceneSetFrame(1,-1);
+		} else {
+		  SceneSetFrame(4,0);
+		}
+		break;
+    case 1:
+      SceneSetFrame(1,-1);
+      break;
+	 case 2:
 		MoviePlay(cMovieStop);
 		ExecutiveDrawNow();
+      OrthoDirty();
 		break;
-	 case 1:
+	 case 3:
 		if(mod&cOrthoCTRL) {
 		  SceneSetFrame(0,0);		
         MoviePlay(cMoviePlay);
@@ -133,14 +144,10 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
         MoviePlay(cMoviePlay);
       }
 		break;
-	 case 2:
-		if(mod&cOrthoSHIFT) {
-		  SceneSetFrame(1,-1);
-		} else {
-		  SceneSetFrame(4,0);
-		}
-		break;
-	 case 3:
+    case 4:
+      SceneSetFrame(1,1);
+      break;
+	 case 5:
 		if(mod&cOrthoSHIFT) {
 		  SceneSetFrame(1,1);
 		} else if(mod&cOrthoCTRL) {
@@ -149,9 +156,10 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
 		  SceneSetFrame(2,0);
 		}
 		break;
-	 case 4:
+	 case 6:
 		I->Rocking=!I->Rocking;
 		SceneRestartTimers();
+      OrthoDirty();
 		break;
 	 }
   }
@@ -171,6 +179,39 @@ void ControlDraw(Block *block)
     x = I->Block->rect.left+cControlLeftMargin;
     y = I->Block->rect.top-cControlTopMargin;
     
+    
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x,y);
+    glVertex2i(x,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+               y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
+    glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
+    glEnd();
+    x+=cControlBoxSize+cControlSpacing;
+    
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x,y);
+    glVertex2i(x,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y);
+    glEnd();
+    glBegin(GL_LINE_STRIP);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+               y-(cControlBoxSize-1)+cControlInnerMargin);
+    glEnd();
+    x+=cControlBoxSize+cControlSpacing;
+
+
     glBegin(GL_LINE_LOOP);
     glVertex2i(x,y);
     glVertex2i(x,y-(cControlBoxSize-1));
@@ -185,35 +226,50 @@ void ControlDraw(Block *block)
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
     glEnd();
     x+=cControlBoxSize+cControlSpacing;
-    
+
+    if(MoviePlaying()) {
+      glBegin(GL_TRIANGLE_STRIP);
+      glVertex2i(x,y+1);
+      glVertex2i(x,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize,y+1);
+      glVertex2i(x+cControlBoxSize,y-(cControlBoxSize-1));
+
+      glEnd();
+      glColor3fv(I->Block->BackColor);
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin+1);
+      glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin-1);
+      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
+                 y-(cControlBoxSize/2));  
+      glEnd();
+      glColor3fv(I->Block->TextColor);
+    } else {
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(x,y);
+      glVertex2i(x,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize-1,y);
+      glEnd();
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+      glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+      glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+                 y-(cControlBoxSize/2));  
+      glEnd();
+    }
+    x+=cControlBoxSize+cControlSpacing;
+
     glBegin(GL_LINE_LOOP);
     glVertex2i(x,y);
     glVertex2i(x,y-(cControlBoxSize-1));
     glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
     glVertex2i(x+cControlBoxSize-1,y);
     glEnd();
-    glBegin(GL_LINE_LOOP);
+    glBegin(GL_LINE_STRIP);
     glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
                y-(cControlBoxSize/2));  
-    glEnd();
-    x+=cControlBoxSize+cControlSpacing;
-    
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x,y);
-    glVertex2i(x,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y);
-    glEnd();
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
-    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-               y-(cControlBoxSize-1)+cControlInnerMargin);
-    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
-    glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
     glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
     glEnd();
     x+=cControlBoxSize+cControlSpacing;
     
@@ -235,6 +291,26 @@ void ControlDraw(Block *block)
     glEnd();
     x+=cControlBoxSize+cControlSpacing;
     
+    if(I->Rocking) {
+      
+    glBegin(GL_TRIANGLE_STRIP);
+    glVertex2i(x,y+1);
+    glVertex2i(x,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y+1);
+    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+
+    glEnd();
+      glColor3fv(I->Block->BackColor);
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
+               y-cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize/2),
+               y-(cControlBoxSize)+cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
+               y-cControlInnerMargin);
+    glEnd();
+      glColor3fv(I->Block->TextColor);
+    } else {
     glBegin(GL_LINE_LOOP);
     glVertex2i(x,y);
     glVertex2i(x,y-(cControlBoxSize-1));
@@ -249,7 +325,10 @@ void ControlDraw(Block *block)
     glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
                y-cControlInnerMargin);
     glEnd();
+      
+    }
     x+=cControlBoxSize+cControlSpacing;  
+
   }
 }
 

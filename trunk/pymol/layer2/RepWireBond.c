@@ -26,7 +26,7 @@ Z* -------------------------------------------------------------------
 typedef struct RepWireBond {
   Rep R;
   float *V,*VP;
-  Pickable *P;
+  /*  Pickable *P;*/
   int N,NP;
 } RepWireBond;
 
@@ -79,7 +79,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 		if(!(*pick)[0].ptr) {
 		  /* pass 1 - low order bits */
 
-		  glColor3ub((i&0xF)<<4,(i&0xF0)|0x8,(i&0xF00)>>4); 
+		  glColor3ub((i&0xF)<<4,(i&0xF0)|0x8,(i&0xF00)>>4); /* we're encoding the index into the color */
 		  VLACheck((*pick),Pickable,i);
 		  p++;
 		  (*pick)[i] = *p; /* copy object and atom info */

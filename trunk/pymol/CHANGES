@@ -18,27 +18,37 @@ Changes Under Consideration
 
    * Save dialog for objects/selections
 
-Goals for 0.50 release:
+Goals for 0.51 release:
+
+   * fill-out object/coord set specific settings
+
+   * clean-up return conventions in cmd.py
 
    * Edit Menu in Tk
 
-   * object/coord set specific settings
-   
-   * settings browser
-
-   * clean-up return conventions
-
    * complete first-round test-cases
+   
+   * finish retrofit of the parser
+
+   * feedback conditionals placed around all error output
+
+Goals for 0.50 release:
 
    * provide accurate documentation
 
+Changes up to 0.50
+
+   * can now "pick" C-alphas in the ribbon
+
+   * can now "pick" atoms and bonds in the stick representation 
+
+   * improved clipping plane control command "clip"
+
+   * pym file extension support, for PyMOL-specific .py files
+
    * better windows NT compatibility
 
-   * pym file extension for PyMOL-specific .py files
-
-   * feedback conditionals placed around all output
-
-Changes up to 0.50
+   * settings browser
 
    * view, view_get, view_set commands
 

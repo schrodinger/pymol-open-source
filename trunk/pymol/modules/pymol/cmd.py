@@ -2412,7 +2412,9 @@ PYMOL API
       unlock()
    return r
 
-def clip(plane,offset):
+clip_action_sc = Shortcut([ 'near','far','move','slab' ])
+
+def clip(mode,offset):
    '''
 DESCRIPTION
   
@@ -2420,7 +2422,7 @@ DESCRIPTION
       
 USAGE
   
-   clip {near|far}, distance
+   clip {near|far|move|slab}, distance
  
 EXAMPLES
  
@@ -2428,12 +2430,13 @@ EXAMPLES
    clip far, 10
     
 PYMOL API
- 
-   cmd.clip( string plane, float distance )
+
+   cmd.clip( string mode, float distance )
    '''
+   mode = clip_action_sc.auto_err(str(mode),'mode')
    try:
       lock()   
-      r = _cmd.clip(str(plane),float(offset))
+      r = _cmd.clip(str(mode),float(offset))
    finally:
       unlock()
    return r

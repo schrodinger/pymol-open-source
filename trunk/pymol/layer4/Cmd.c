@@ -1793,6 +1793,12 @@ static PyObject *CmdClip(PyObject *self, 	PyObject *args)
   case 'f':
 	 SceneClip(1,dist);
 	 break;
+  case 'm':
+	 SceneClip(2,dist);
+	 break;
+  case 's':
+	 SceneClip(3,dist);
+	 break;
   }
   APIExit();
   Py_INCREF(Py_None);

@@ -53,10 +53,10 @@ ListVarDeclare(BlockList,Block);
 #define cOrthoLeftMargin 8
 #define cOrthoBottomMargin 10
 
-#define ExecutiveMargin 200
-#define WizardMargin 130
+#define ExecutiveMargin 190
+#define WizardMargin 120
 
-#define ButModeMargin 40
+#define ButModeMargin 30
 #define ControlMargin 0
 
 typedef struct {
