@@ -18,8 +18,8 @@ if __name__=='pymol.creating':
    import traceback
    import operator
    import cmd
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_list
-   from cmd import file_ext_re
+   from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_list,is_string
+   from cmd import file_ext_re, sanitize_list_re
    from chempy import fragments
 
    map_type_dict = {
@@ -31,6 +31,19 @@ if __name__=='pymol.creating':
 
    map_type_sc = Shortcut(map_type_dict.keys())
 
+   ramp_spectrum_dict = {
+      "traditional" : 1,
+      "sludge" : 2,
+      "ocean" : 3,
+      "hot" : 4,
+      "grayable" : 5,
+      "rainbow" : 6,
+      "afmhot" : 7,
+      "grayscale" : 8,
+      }
+   
+   ramp_spectrum_sc = Shortcut(ramp_spectrum_dict.keys())
+   
    def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,box=None,state=0):
       '''
       state > 0: do indicated state
@@ -71,20 +84,28 @@ if __name__=='pymol.creating':
                 map_state=1,selection='',
                 beyond=2.0,within=6.0,
                 sigma=2.0,zero=1):
-      # preprocess selection
-      color = eval(str(color))
+      safe_color = sanitize_list_re.sub(color,"")
+      if(safe_color[0:1]=="["): # looks like a list
+         color = eval(str(safe_color))
+      else: # looks like a literal
+         color = str(color)
       new_color = []
+      # preprocess selection
       if selection!='':
-         selection = selector.process(selection)      
-      for a in color:
-         if not is_list(a):
-            new_color.append(list(cmd.get_color_tuple(a)))
-         else:
-            new_color.append(a)
-         
+         selection = selector.process(selection)
+      if is_list(color):
+         for a in color:
+            if not is_list(a):
+               new_color.append(list(cmd.get_color_tuple(a)))
+            else:
+               new_color.append(a)
+      elif is_string(color):
+         new_color = ramp_spectrum_dict[ramp_spectrum_sc.auto_err(str(color),'ramp color spectrum')]
+      else:
+         new_color=int(color)
       try:
          lock()
-         r = _cmd.ramp_new(str(name),str(map_name),list(eval(str(range))),list(new_color),
+         r = _cmd.ramp_new(str(name),str(map_name),list(eval(str(range))),new_color,
                            int(map_state)-1,str(selection),float(beyond),float(within),
                            float(sigma),int(zero))
       finally:
@@ -156,7 +177,7 @@ SEE ALSO
          unlock()
       return r
 
-   def slice_map(name,map,opacity=1.0,resolution=5,state=1,source_state=0):
+   def slice_new(name,map,grid=0.33,state=1,source_state=0):
       '''
 DESCRIPTION
 
@@ -186,7 +207,7 @@ SEE ALSO
 
       try:
          lock()
-         r = _cmd.slice_map(str(name),str(map),float(opacity),int(resolution),int(state)-1,int(source_state)-1)
+         r = _cmd.slice_new(str(name),str(map),float(grid),int(state)-1,int(source_state)-1)
       finally:
          unlock()
       return r

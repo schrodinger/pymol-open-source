@@ -1114,6 +1114,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_slice_height_scale:
+    ExecutiveInvalidateRep(inv_sele,cRepSlice,cRepInvRep);    
+    SceneChanged();
+    break;
   case cSetting_label_font_id:
     SceneChanged();
     break;
@@ -2279,6 +2283,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_stereo,0);
   SettingSet_i(I,cSetting_wizard_prompt_mode,1);
   SettingSet_f(I,cSetting_coulomb_cutoff,0.0F);
+  SettingSet_b(I,cSetting_slice_track_camera, 0);
+  SettingSet_f(I,cSetting_slice_height_scale, 0.0F);
 
 }
 

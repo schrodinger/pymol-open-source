@@ -33,7 +33,7 @@ typedef struct ObjectGadgetRamp {
 
   int RampType; 
 
-  int NColor;
+  int NLevel;
   float *Level;
   float *Color;
   int var_index;
@@ -42,6 +42,8 @@ typedef struct ObjectGadgetRamp {
 
   char SrcName[ObjNameMax];
   int SrcState;
+
+  int CalcMode;
 
   /* fields below are not saved in session */
   ObjectMap *Map;
@@ -59,6 +61,16 @@ typedef struct ObjectGadgetRamp {
   float x,y;
 
 } ObjectGadgetRamp;
+
+
+#define cRAMP_TRADITIONAL 1
+#define cRAMP_SLUDGE 2
+#define cRAMP_OCEAN 3
+#define cRAMP_HOT 4
+#define cRAMP_GRAYABLE 5
+#define cRAMP_RAINBOW 6
+#define cRAMP_AFMHOT 7
+#define cRAMP_GRAYSCALE 8
 
 ObjectGadgetRamp *ObjectGadgetRampNew(void);
 

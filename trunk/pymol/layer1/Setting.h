@@ -511,10 +511,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_stereo                     365
 #define cSetting_wizard_prompt_mode         366
 #define cSetting_coulomb_cutoff             367
+#define cSetting_slice_track_camera         368
+#define cSetting_slice_height_scale         369
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       368
+#define cSetting_INIT                       370
 
 #endif
 
