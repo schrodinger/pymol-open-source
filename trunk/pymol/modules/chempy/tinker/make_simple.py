@@ -301,6 +301,7 @@ l = [
 'A -Q2-D3    50.0      113.00    WLD from A -Q2-DA',
 'A -T2-DJ    62.0       98.90    WLD from D4-T2-D4',
 'A -T2-T2    68.0      103.70    WLD from D4-T2-T2',
+'A -T2-D3    62.0       98.90    WLD from D4-T2-D4',
 
 'A -Q2-JA    50.0      109.50    WLD gross estimate',
 'A -Q2-T4    50.0      113.00    WLD from A -Q2-DJ',
@@ -587,6 +588,9 @@ l = [
 'Q2-DJ-R4    75.0      120.00    WLD from DA-DJ-Q1',
 'Q2-T4-QN    70.0      109.50    WLD gross estimate',
 'Q2-T4-Q2    70.0      109.50    WLD gross estimate',
+'Q2-DJ-T1    75.0      120.00    WLD from DA-DJ-Q1',
+'Q2-DJ-T2    75.0      120.00    WLD from DA-DJ-Q1',
+'Q2-DJ-TA    75.0      120.00    WLD from DA-DJ-Q1',
 
 'QN-J3-QN    80.0      126.00    WLD from QN-DJ-QN',
 'QN-T4-QN    70.0      109.50    WLD gross estimate',
@@ -595,7 +599,7 @@ l = [
 'T2-D3-T2    70.0      118.00    WLD gross estimate',
 'T1-DJ-T2    70.0      121.00    WLD gross estimate',
 'T2-DJ-T2    70.0      118.00    WLD gross estimate',
-
+'T2-DJ-TA    70.0      118.00    WLD gross estimate',
 
 'T2-DJ-T4    63.0      117.00    WLD from D4-DJ-D4',
 'T2-D4-T2    80.0      111.20    WLD from DJ-J4-T4',
