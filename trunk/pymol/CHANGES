@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * selection dots no longer fogged
+
+   * new actions in the names list
+
    * fixed rare system crash on certain ATI Radeon hardware when
      picking or selecting atoms.
 

@@ -80,12 +80,16 @@ struct _CExecutive {
   int NSkip;
   struct CScrollBar *ScrollBar;
   CObject *LastEdited;
-  int Pressed,Over,OldVisibility,Immediate;
+  int DragMode;
+  int Pressed,Over,OldVisibility,ToggleMode;
+  SpecRec *LastChanged;
 };
 
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
 static int ExecutiveDrag(Block *block,int x,int y,int mod);
-
+static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
+                                       int new_vis,int mod);
+     
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
 /* #define ExecLineHeight 18 */
@@ -2891,6 +2895,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
           glPointSize(width);
           if(no_depth)
             glDisable(GL_DEPTH_TEST);
+          glDisable(GL_FOG);
           glBegin(GL_POINTS);
           while(ListIterate(I->Spec,rec1,next)) {
             if(rec1->type==cExecObject) {
@@ -2902,6 +2907,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
           glEnd();
           if(no_depth)
             glEnable(GL_DEPTH_TEST);
+          glEnable(GL_FOG);
         }
       }
     }
@@ -6828,10 +6834,35 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 }
               } else {
                 rec->hilight=true;
-                I->Pressed = n;
-                I->OldVisibility = rec->visible;
-                I->Over = n;
-                I->Immediate = mod & cOrthoSHIFT;
+                switch(button) {
+                case P_GLUT_LEFT_BUTTON:
+                  
+                  I->Pressed = n;
+                  I->OldVisibility = rec->visible;
+                  I->Over = n;
+                  I->DragMode = 0;
+                  I->ToggleMode=0;
+                  I->LastChanged=NULL;
+                  
+                  if(mod&cOrthoSHIFT) {
+                    ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                    I->ToggleMode=1;
+                  }
+                  if(mod&cOrthoCTRL) {
+                    I->ToggleMode=2;
+                    if(!rec->visible) {
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                    }
+                    I->LastChanged=rec;
+                  } 
+                  break;
+                case P_GLUT_MIDDLE_BUTTON:
+                  I->DragMode = 1; /* reorder */
+                  I->Pressed = n;
+                  I->Over = n;
+                  
+                  break;
+                }
                 OrthoGrab(G,I->Block);
                 OrthoDirty(G);
               }
@@ -6951,7 +6982,10 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   if(!pass)
     {
       ExecutiveDrag(block,x,y,mod); /* incorporate final changes in cursor position */
-      while(ListIterate(I->Spec,rec,next)) {
+      switch(I->DragMode) {
+      case 0:
+        
+        while(ListIterate(I->Spec,rec,next)) {
           if(rec->name[0]!='_')
             {
               if(skip) {
@@ -6961,6 +6995,10 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
               }
             }
         }
+        break;
+      case 1:
+        break;
+      }
     }
   
   {
@@ -7014,27 +7052,82 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
       SpecRec *rec = NULL;
       int skip=I->NSkip;
       int row=0;
-      
-      while(ListIterate(I->Spec,rec,next)) {
-        if(rec->name[0]!='_')
-          {
-            if(skip) {
-              skip--;
-            } else {
-              rec->hilight=false;
-              if( ((row>=I->Over)&&(row<=I->Pressed))||
-                  ((row>=I->Pressed)&&(row<=I->Over))) {
-                if(I->Immediate) {
-                  ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
-                } else {
-                  rec->hilight=true;
+      switch(I->DragMode) {
+      case 0:
+        
+        while(ListIterate(I->Spec,rec,next)) {
+          if(rec->name[0]!='_')
+            {
+              if(skip) {
+                skip--;
+              } else {
+                rec->hilight=false;
+                if( ((row>=I->Over)&&(row<=I->Pressed))||
+                    ((row>=I->Pressed)&&(row<=I->Over))) {
+                  switch(I->ToggleMode) {
+                  case 0:
+                    if(row||(row==I->Pressed))
+                      rec->hilight=true;
+                    break;
+                  case 1:
+                    if(row)
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                    break;
+                  case 2:
+                    if((row==I->Over)&&row) {
+                      if(I->LastChanged!=rec)
+                        ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
+                      if(!rec->visible) {
+                        ExecutiveSpecSetVisibility(G,rec,true,mod);
+                        I->LastChanged=rec;
+                      }
+                    }
+                    break;
+                  }
                 }
+                row++;
               }
-              row++;
+            }
+        }
+        break;
+      case 1:
+        {
+          if(I->Over!=I->Pressed) {
+            SpecRec *last=NULL,*new_parent=NULL,*old_parent=NULL;
+            
+            while(ListIterate(I->Spec,rec,next)) {
+              if(rec->name[0]!='_')
+                {
+                  if(skip) {
+                    skip--;
+                  } else {
+                    if(row==I->Pressed)
+                      old_parent = last;
+                    if(row==I->Over)
+                      new_parent = last;
+                    row++;
+                    last=rec;
+                  }
+                }
+            }
+            if(new_parent&&old_parent&&(new_parent!=old_parent)) {
+              SpecRec *moving = old_parent->next;
+              old_parent->next = moving->next;
+              if(moving!=new_parent) {
+                moving->next = new_parent->next;
+                new_parent->next = moving;
+              } else {
+                moving->next = moving->next->next;
+                old_parent->next->next = moving;
+              }
+              I->Pressed=I->Over;
             }
           }
+        }
+        break;
       }
-    }
+    } else if(I->LastChanged)
+      ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);      
     OrthoDirty(G);
   }
   return(1);
