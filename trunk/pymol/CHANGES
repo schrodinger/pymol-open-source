@@ -63,9 +63,6 @@ Specific Requests from Users
    
    * Cutting of images to the MS Window's clipboard for easy pasting into Powerpoint
 
-   * Enable exfoliation of atoms within an object so that it isn't necessary to
-     split objects before resurfacing.
-
 Current and Ongoing Goals
 
    * make an ActiveX control which contains the core PyMOL viewer for 
@@ -108,13 +105,37 @@ Current Bugs to Fix
 
 Changes up to 0.68
 
-   * Fixed a huge bug in surfacing of subsets...that function was totally whacked
-     (I just hadn't noticed that until now)
+
+   * HETATMS are no longer surfaced by default.  Clear the "ignore" flag or
+     set surface_mode=1 to restore their surfaces.
+
+   * flag command now takes name arguments and can now reset, set, and clear 
+     flags
+
+   * established some standard flag names and conventions
+
+   * Upgrading OpenGL Pop-up menus, since it looks like the internal GUI
+     will be widely used despite its original limited role (oh well...)
+
+   * Fixed element name guessing
+
+   * added ray_improve_shadows setting for improving shadows by
+     projecting outward from triangles.
+
+   * Fixed a major bug in the raytracer which was causing bogus shadows to appear
+     on surfaces
+
+   * Fixed a huge bug in surfacing of subsets. That function was totally whacked,
+     but no one had noticed or complained!!!  Revised the function of the 
+     surface_proximity setting
 
    *  by default, PDB HETATMs are no longer surfaced -- if you want them to be, then
       please "set surface_mode=1"
 
    * "transparent" renamed to "transparency"
+
+   * switched to a three-pass OpenGL rendering model in order to properly display opaque, 
+     transparent, and antialiased objects
 
    * OpenGL transparency now works too! See "help transparency".
 
