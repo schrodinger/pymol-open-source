@@ -1,5 +1,5 @@
 #!/bin/csh 
-# CSH Setup script for Unix (NOT NORMALLY REQUIRED)
+# CSH Setup script for Unix (ONLY REQUIRED WHEN USING DEBUGGER)
 #
 # ==============================================================
 # Set PYMOL_PATH to point at the correct location on your system
