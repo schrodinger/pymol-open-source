@@ -72,6 +72,7 @@ setup ( # Distribution meta-data
    "layer0/Match.c",
    "layer0/Matrix.c",
    "layer0/MemoryDebug.c",
+   "layer0/MemoryCache.c",
    "layer0/MyPNG.c",
    "layer0/Parse.c",
    "layer0/Queue.c",

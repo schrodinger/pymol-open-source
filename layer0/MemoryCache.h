@@ -55,6 +55,8 @@ Z* -------------------------------------------------------------------
 #define cCache_map_cache_offset                          1
 #define cCache_map_cache_link_offset                     2
 
+#define cCache_ray_edging_buffer                         50
+
 /* other constants */
 
 #define cMemoryCache_max_block 100

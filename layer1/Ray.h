@@ -70,6 +70,8 @@ typedef struct {
   float spec_vector[3];
   int x_start,x_stop;
   int y_start,y_stop;
+  unsigned int *edging;
+  unsigned int edging_cutoff;
 } CRayThreadInfo;
 
 typedef struct {

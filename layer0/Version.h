@@ -3,7 +3,7 @@
 #endif
 
 #ifndef _PyMOL_VERSION_int 
-#define _PyMOL_VERSION_int 90
+#define _PyMOL_VERSION_int 91
 #endif
 
 

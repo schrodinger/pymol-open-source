@@ -301,6 +301,7 @@ if __name__=='pymol.setting':
       pdb_hetatm_sort       = 267
       pdb_use_ter_records   = 268
       cartoon_trace         = 269
+      ray_oversample_cutoff = 270
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
