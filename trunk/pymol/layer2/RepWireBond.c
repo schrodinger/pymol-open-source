@@ -680,14 +680,22 @@ Rep *RepWireBondNew(CoordSet *cs)
 				s1=ati1->visRep[cRepLine];
 				s2=ati2->visRep[cRepLine];
 
-				if(!(s1&&s2))
+				if((s1||s2)&&!(s1&&s2))
               if(!half_bonds) {
-                s1 = 0;
-                s2 = 0;
+                if(line_stick_helper && 
+                    ( ( (!s1) && ati1->visRep[cRepCyl] && (!ati2->visRep[cRepCyl])) ||
+                      ( (!s2) && ati2->visRep[cRepCyl] && (!ati1->visRep[cRepCyl]))))
+                  s1 = s2 = 1; /* turn on line when both stick and line are alternately shown */
+                else {
+                  s1 = 0;
+                  s2 = 0;
+                }
               }
 
 				if(s1||s2)
 				  {	
+
+
 					 c1=*(cs->Color+a1);
 					 c2=*(cs->Color+a2);
 					 
