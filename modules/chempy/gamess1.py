@@ -30,8 +30,10 @@ atNum = {
 
 # "do" is the preferred command for running tinker
 
-def do(input,run_prefix='gamess_run',echo=None,
+def do(input,run_prefix=None,echo=None,
        punch=None,output=None):
+   if not run_prefix:
+      run_prefix = 'gamess_run'
    if feedback['gamess']:
       print " "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix)
       print " "+str(__name__)+': launching gamess...' 
@@ -80,7 +82,6 @@ else:
 class State:
 
    def __init__(self):
-      self.prefix = 'gamess_run'
       self.model = None
       self.data = None
       self.vec = None
@@ -107,24 +108,39 @@ class State:
             name = a.symbol + "%02d"%c
          else:
             name = a.name
-         gmsList.append("%4s %5.2f %12.6f %12.6f %12.6f\n" %
+         gmsList.append("%10s %5.1f %18.10f %18.10f %18.10f\n" %
                         (name,atNum[a.symbol],a.coord[0],
                          a.coord[1],a.coord[2]))
          c = c + 1
       gmsList.append(" $END\n")
-
-      gmsList.append(" $ZMAT DLC=.TRUE. AUTO=.TRUE. $END\n")
       return gmsList
 
-   def get_contrl_group(self,runtyp='OPTIMIZE',exetyp='RUN',
-                       coord='UNIQUE',nzvar = -1):
+   def get_ordered_data_group(self): 
+      gmsList = self.data[0:3]
+      flag = 1
+      c = 3
+      for a in self.data[3:]:
+         if flag:
+            flag = 0
+            gmsList.append(a)
+         if string.strip(a)=='':
+            flag = 1
+         c = c + 1
+      return gmsList
+   
+   def get_contrl_group(self,
+                        scftyp='RHF',
+                        runtyp='ENERGY',
+                        exetyp='RUN',
+                        coord='UNIQUE',
+                        nzvar = -1):
       gmsList = []
       model = self.model
       if nzvar:
          if nzvar<0:
             nzvar = (self.model.nAtom*3)-6
-      gmsList.append(" $CONTRL RUNTYP=%s EXETYP=%s\n"
-                     % (runtyp,exetyp) )
+      gmsList.append(" $CONTRL SCFTYP=%s RUNTYP=%s EXETYP=%s\n"
+                     % (scftyp,runtyp,exetyp) )
       if coord:
          gmsList.append("COORD=%s\n"%coord)
       if nzvar:
@@ -210,7 +226,7 @@ class State:
                break
             a = a + 1
          if feedback['gamess']:
-            print " "+str(__name__)+': read new $DATA group.'
+            print " "+str(__name__)+': read $DATA group.'
       if len(vec_list):
          a = vec_list.pop()
          self.vec = []
@@ -224,6 +240,30 @@ class State:
          if feedback['gamess']:
             print " "+str(__name__)+': read new $VEC group.'
 
+   def update_data_coords(self): # update coordinates of ordered atoms in $DATA
+      idx = {}
+      c = 0
+      for a in self.model.atom:
+         idx[a.name]=c
+         c = c + 1
+      if self.data:
+         flag = 1
+         c = 3
+         for a in self.data[3:]:
+            if flag:
+               flag = 0
+               kee = a[0:3]
+               if not idx.has_key(kee):
+                  break
+               i = idx[kee]
+               at = self.model.atom[i]
+               self.data[c]="%-10s%5.1f%18.10f%18.10f%18.10f\n" % (
+                  at.name,atNum[at.symbol],at.coord[0],
+                  at.coord[1],at.coord[2])
+            if string.strip(a)=='':
+               flag = 1
+            c = c + 1
+   
    def read_density_list(self,list,brick,z_step):
       ll = len(list)
       c = 0
@@ -242,7 +282,36 @@ class State:
          if feedback['gamess']:
             print " "+str(__name__)+': read density slice %d of %d.' %(
                z_step+1,brick.dim[2])
-         
+
+   def read_potential_list(self,list,brick,z_step):
+      ll = len(list)
+      c = 0
+      pot_list = []
+      for a in list:
+         if a[0:51] == 'THE ROWS OF THE ELECTROSTATIC POTENTIAL GRID (A.U.)':
+            pot_list.append(c+1)
+         c = c + 1
+      if len(pot_list):
+         lst = 0
+         a = pot_list.pop()
+         for x in xrange(brick.dim[0]):
+            aa = a
+            mat = list[aa][0:3]
+            col = []
+            while 1:
+               if list[aa][0:3]==mat:
+                  col.append(list[aa][5:])
+                  aa = aa + 1
+               else:
+                  break
+            a = aa
+            vst = string.split(string.strip(string.join(col)))
+            for y in xrange(brick.dim[1]):
+               brick.lvl[x][y][z_step] = float(vst[y])
+         if feedback['gamess']:
+            print " "+str(__name__)+': read potential slice %d of %d.' %(
+               z_step+1,brick.dim[2])
+
    def get_basis_group(self,gbasis='N31',ngauss=6,ndfunc=1):
       gmsList = []
       gmsList.append(" $BASIS GBASIS=%s NGAUSS=%d NDFUNC=%d\n" %
@@ -275,8 +344,16 @@ class State:
       gmsList.append("WHERE=GRID OUTPUT=PUNCH\n $END\n")
       return gmsList
 
-   def get_grid_group(self,brick,z_step):
+   def get_elpot_group(self,morb=0):
+      gmsList = []
+      gmsList.append(" $ELPOT IEPOT=1 \n")
+      gmsList.append("WHERE=GRID OUTPUT=PUNCH\n $END\n")
+      return gmsList
 
+   def get_guess_group(self,guess='HUCKEL'):
+      return [" $GUESS GUESS=%s $END\n"%guess]
+   
+   def get_grid_group(self,brick,z_step):
       origin = (
          brick.origin[0],
          brick.origin[1],
@@ -297,18 +374,18 @@ class State:
          " $END\n"
          ]
       return gmsList
-
+   
    def get_scf(dirscf=1):
       gmsList = []
       if dirscf:
          gmsList.append(" $SCF DIRSCF=.TRUE. $END\n")
       return gmsList
-   
+
    def get_optimize_job(self,dirscf=1):
       gmsList = []
-      gmsList.extend(self.get_contrl_group())
+      gmsList.extend(self.get_contrl_group(runtyp='OPTIMIZE'))
       gmsList.extend(self.get_basis_group())
-      gmsList.extend(self.get_scf())
+      gmsList.extend(self.get_scf(dirscf=dirscf))
       gmsList.extend(self.get_data_group())
       gmsList.extend(self.get_zmat_group())
       gmsList.append(" $STATPT NSTEP=50 $END\n")
@@ -325,7 +402,17 @@ class State:
       gmsList.append(" $ELPOT IEPOT=1 WHERE=PDC $END\n")
       gmsList.append(" $PDC PTSEL=GEODESIC CONSTR=CHARGE $END\n")
       return gmsList
-
+   
+   def get_prop_job(self):
+      gmsList = []
+      gmsList.extend(self.get_contrl_group(runtyp = 'PROP',
+                                           nzvar=0))
+      gmsList.extend(self.get_guess_group(guess='MOREAD'))
+      self.update_data_coords()
+      gmsList.extend(self.data)
+      gmsList.extend(self.vec)
+      return gmsList
+      
    def get_energy_job(self):
       gmsList=[]
       gmsList.extend(self.get_contrl_group(
@@ -336,37 +423,61 @@ class State:
       gmsList.extend(self.get_data_group())
       gmsList.extend(self.get_zmat_group())
       return gmsList
-   
-   def get_density_job(self,brick,z_step):
-      gmsList = []
-      gmsList.extend(self.get_contrl_group(
-         runtyp = 'PROP', 
-         coord = None,
-         nzvar = 0
-         ))
-      gmsList.extend(self.get_scf())
-      gmsList.extend(self.data)
-      gmsList.extend(self.vec)
-      gmsList.extend(self.get_eldens_group())
+
+   def get_density_job(self,brick,z_step,morb=0):
+      gmsList = self.get_prop_job()
+      gmsList.extend(self.get_eldens_group(morb=morb))
       gmsList.extend(self.get_grid_group(brick,z_step))
       return gmsList
-   
-   def get_density(self,brick):
+
+   def get_potential_job(self,brick,z_step):
+      gmsList = self.get_prop_job()
+      gmsList.extend(self.get_elpot_group())
+      gmsList.extend(self.get_grid_group(brick,z_step))
+      return gmsList
+
+   def get_prop_charge_job(self):
+      gmsList = self.get_prop_job()
+      gmsList.append(" $ELPOT IEPOT=1 WHERE=PDC $END\n")
+      gmsList.append(" $PDC PTSEL=GEODESIC CONSTR=CHARGE $END\n")
+      return gmsList
+
+   def get_density(self,brick,morb=0,run_prefix=None):
       for a in xrange(brick.dim[2]):
-         gmsList = self.get_density_job(brick,a)
-         result = do(gmsList,punch=1)
+         gmsList = self.get_density_job(brick,a,morb=morb)
+         result = do(gmsList,punch=1,
+                     run_prefix=run_prefix)
          self.read_density_list(result[1],brick,a)
 
-   def get_charges(self):
+   def get_potential(self,brick,run_prefix=None):
+      for a in xrange(brick.dim[2]):
+         gmsList = self.get_potential_job(brick,a)
+         result = do(gmsList,punch=1,
+                     run_prefix=run_prefix)
+         self.read_potential_list(result[1],brick,a)
+
+   def get_charges(self,run_prefix=None):
       gmsList = self.get_energy_job()
-      result = do(gmsList,output=1,punch=1)
+      result = do(gmsList,output=1,punch=1,
+                  run_prefix=run_prefix)
+      self.read_output_list(result[0])
       self.read_punch_list(result[1])
       
-   def get_optimized_charges(self):
+   def get_optimized_charges(self,run_prefix=None):
       gmsList = self.get_optimize_charge_job()
-      result = do(gmsList,output=1,punch=1)
-      self.read_density_list(result[1],brick,a)      
-                   
+      result = do(gmsList,output=1,punch=1,
+                  run_prefix=run_prefix)
+      self.read_output_list(result[0])
+      self.read_punch_list(result[1])
+
+   def get_prop_charges(self,run_prefix=None):
+      gmsList = self.get_prop_charge_job()
+      result = do(gmsList,output=1,punch=1,
+                  run_prefix=run_prefix)
+      self.read_output_list(result[0])
+      self.read_punch_list(result[1])
+
+
 if os.environ.has_key('GAMESS'):
    base = os.environ['GAMESS']
    rungms_path = base + '/rungms'

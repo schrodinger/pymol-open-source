@@ -36,6 +36,7 @@ typedef struct RepMesh {
   float *V,*VC;
   int NDot;
   float *Dot;
+  float Radius;
   int oneColorFlag;
   Object *Obj;
   int *LastVisib;
@@ -85,7 +86,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 				  v+=3;
 				  while(c--)
 					 {
-						ray->fCylinder3fv(ray,v-3,v,0.05,vc-3,vc);
+						ray->fCylinder3fv(ray,v-3,v,I->Radius,vc-3,vc);
 						v+=3;
 						vc+=3;
 					 }
@@ -304,6 +305,7 @@ Rep *RepMeshNew(CoordSet *cs)
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepMeshSameVis;
   I->LastVisib=NULL;
   I->LastColor=NULL;
+  I->Radius=SettingGet(cSetting_mesh_radius);
 
   /* don't waist time computing a mesh unless we need it!! */
   for(a=0;a<cs->NIndex;a++) {

@@ -113,6 +113,7 @@ float SettingGetNamed(char *name);
 #define cSetting_spheroid_fill        71
 #define cSetting_autoshow_nonbonded   72
 #define cSetting_cache_display        73
+#define cSetting_mesh_radius          74
 
 #endif
 

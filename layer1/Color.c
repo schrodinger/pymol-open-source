@@ -53,12 +53,12 @@ void ColorDef(char *name,float *v)
 int ColorGetIndex(char *name)
 {
   CColor *I=&Color;
-  int color=1; /* default for unknown is white */
+  int color=-1; /* default for unknown is white */
   int a;
   int i;
   if((name[0]>='0')&&(name[0]<='9'))
     if(sscanf(name,"%d",&i)) 
-      if(i<I->NColor)
+      if((i<I->NColor)&&(i>=0))
         return(i);
   for(a=0;a<I->NColor;a++)
 	 {
