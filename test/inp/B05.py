@@ -16,6 +16,7 @@ def load():
    try:
       r = 0
       list = glob(ent_dir)
+      list.sort()
 #      list = [ "pdb/dw" ]
       for dir in list:
          sys.__stdout__.write("\n"+dir)
