@@ -5680,6 +5680,7 @@ keyword = {
    'util.cbay'     : [util.cbay    , 0 , 0 , ''  , parsing.STRICT ],
    'util.cbas'     : [util.cbas    , 0 , 0 , ''  , parsing.STRICT ],
    'util.cbap'     : [util.cbap    , 0 , 0 , ''  , parsing.STRICT ],
+   'util.cbak'     : [util.cbak    , 0 , 0 , ''  , parsing.STRICT ],
    'util.cbaw'     : [util.cbaw    , 0 , 0 , ''  , parsing.STRICT ],
    'util.cbab'     : [util.cbab    , 0 , 0 , ''  , parsing.STRICT ],
    'util.cbc'      : [util.cbc     , 0 , 0 , ''  , parsing.STRICT ],
