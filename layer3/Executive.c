@@ -129,6 +129,9 @@ static PyObject *ExecutiveGetExecObject(SpecRec *rec)
   case cObjectMolecule:
     PyList_SetItem(result,5,ObjectMoleculeGetPyList((ObjectMolecule*)rec->obj));
     break;
+  case cObjectDist:
+    PyList_SetItem(result,5,ObjectDistGetPyList((ObjectDist*)rec->obj));
+    break;
   default: 
     PyList_SetItem(result,5,PConvAutoNone(NULL));
     break;
@@ -167,6 +170,9 @@ static int ExecutiveSetNamedEntries(PyObject *names)
         switch(extra_int) {
         case cObjectMolecule:
           if(ok) ok = ObjectMoleculeNewFromPyList(PyList_GetItem(cur,5),(ObjectMolecule**)&rec->obj);
+          break;
+        case cObjectDist:
+          if(ok) ok = ObjectDistNewFromPyList(PyList_GetItem(cur,5),(ObjectDist**)&rec->obj);
           break;
         }
         break;
@@ -2137,7 +2143,7 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
   sele2=SelectorIndexByName(s2);
   
   if((sele1>=0)&&(sele2>=0)) {
-    obj = ObjectDistNew(sele1,sele2,mode,cutoff,&result);
+    obj = ObjectDistNewFromSele(sele1,sele2,mode,cutoff,&result);
     if(!obj) {
       ErrMessage("ExecutiveDistance","No such distances found.");
     } else {

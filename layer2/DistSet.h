@@ -35,7 +35,8 @@ typedef struct DistSet {
 #include"ObjectDist.h"
 
 DistSet *DistSetNew(void);
-
+PyObject *DistSetGetPyList(DistSet *I);
+int DistSetSetPyList(PyObject *list,DistSet **cs);
 int DistSetGetExtent(DistSet *I,float *mn,float *mx);
 
 #endif

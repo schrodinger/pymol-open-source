@@ -25,14 +25,14 @@ typedef struct ObjectDist {
   CObject Obj;
   struct DistSet **DSet;
   int NDSet;
-  AtomInfoType *AtomInfo;
-  int NAtom;
   int CurDSet;
-  char Color[3];
 } ObjectDist;
 
-ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *result);
+ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,float *result);
+ObjectDist *ObjectDistNew(void);
 void ObjectDistInvalidateRep(ObjectDist *I,int rep);
+PyObject *ObjectDistGetPyList(ObjectDist *I);
+int ObjectDistNewFromPyList(PyObject *list,ObjectDist **result);
 
 #endif
 
