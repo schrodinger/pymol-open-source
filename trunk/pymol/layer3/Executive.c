@@ -4362,7 +4362,7 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
   double evect[3][3];
   float m[4][4],mt[4][4];
   float t[3];
-
+  const float _0 = 0.0F;
   int a,b;
 
   if(!MatrixEigensolve33d(G,(double*)mi,egval,egvali,(double*)evect)) {
@@ -4408,32 +4408,57 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
     if(animate)
       ScenePrimeAnimation(G);
 
-    SceneSetMatrix(G,m[0]); /* load matrix */
+    {
+      float old_mat[16];
+      float new_mat[16];
+      copy44f(SceneGetMatrix(G),old_mat);
+      float x,y,z;
+      
+      SceneSetMatrix(G,m[0]); /* load matrix */
+      
+      /* there must  be a more elegant to get the PC on X and the SC
+       * on Y then what is shown below, but I couldn't get it to work.
+       * I tried swapping the eigen-columns around but either that is 
+       * a bogus approach (?) or my code was buggy.  Hence the following...*/
+      
+      if((egval[0]<egval[2])&&(egval[2]<egval[1])) { /* X < Z < Y */
+        SceneRotate(G,90,1,0,0); /*1<-->2*/
+      } else if((egval[1]<egval[0])&&(egval[0]<egval[2])) { /* Y < X < Z */
+        SceneRotate(G,90,0,0,1); /*0<-->1*/
+      } else if((egval[1]<egval[2])&&(egval[2]<egval[0])) { /* Y < Z < X */
+        SceneRotate(G,90,0,1,0); /*1<-->2*/
+        SceneRotate(G,90,0,0,1); /*0<-->1*/
+      } else if((egval[2]<egval[1])&&(egval[1]<egval[0])) { /* Z < Y < X */
+        SceneRotate(G,90,0,1,0); /*0<-->2*/
+      } else if((egval[2]<egval[0])&&(egval[0]<egval[1])) { /* Z < X < Y */
+        SceneRotate(G,90,0,1,0); /*0<-->2*/
+        SceneRotate(G,90,1,0,0); /*0<-->1*/
+      }
+      
+      /* now choose orientation that has the least perturbation from the starting matrix */
 
-    /* there must  be a more elegant to get the PC on X and the SC
-     * on Y then what is shown below, but I couldn't get it to work.
-     * I tried swapping the eigen-columns around but either that is 
-     * a bogus approach (?) or my code was buggy.  Hence the following...*/
+      copy44f(SceneGetMatrix(G),new_mat);
 
-    if((egval[0]<egval[2])&&(egval[2]<egval[1])) { /* X < Z < Y */
-      SceneRotate(G,90,1,0,0); /*1<-->2*/
-    } else if((egval[1]<egval[0])&&(egval[0]<egval[2])) { /* Y < X < Z */
-      SceneRotate(G,90,0,0,1); /*0<-->1*/
-    } else if((egval[1]<egval[2])&&(egval[2]<egval[0])) { /* Y < Z < X */
-      SceneRotate(G,90,0,1,0); /*1<-->2*/
-      SceneRotate(G,90,0,0,1); /*0<-->1*/
-    } else if((egval[2]<egval[1])&&(egval[1]<egval[0])) { /* Z < Y < X */
-      SceneRotate(G,90,0,1,0); /*0<-->2*/
-    } else if((egval[2]<egval[0])&&(egval[0]<egval[1])) { /* Z < X < Y */
-      SceneRotate(G,90,0,1,0); /*0<-->2*/
-      SceneRotate(G,90,1,0,0); /*0<-->1*/
+      x = old_mat[0]*new_mat[0] + old_mat[4]*new_mat[4] + old_mat[ 8]*new_mat[ 8];
+      y = old_mat[1]*new_mat[1] + old_mat[5]*new_mat[5] + old_mat[ 9]*new_mat[ 9];
+      z = old_mat[2]*new_mat[2] + old_mat[6]*new_mat[6] + old_mat[10]*new_mat[10];
+            
+      if((x>_0)&&(y<_0)&&(z<_0)) {
+        SceneRotate(G,180,1,0,0);
+      } else if((x<_0)&&(y>_0)&&(z<_0)) {
+        SceneRotate(G,180,0,1,0);        
+      } else if((x<_0)&&(y<_0)&&(z>_0)) {
+        SceneRotate(G,180,0,0,1);
+      }
     }
+    
+    
     /* X < Y < Z  - do nothing - that's what we want */
-
+    
     ExecutiveWindowZoom(G,sele,0.0,state,0,false);
     if(animate)
       SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
-
+    
   }
 }
 /*========================================================================*/

@@ -1363,6 +1363,7 @@ SEE ALSO
       #--------------------------------------------------------------------
       import viewing
       from viewing import \
+           as,                 \
            bg_color,           \
            bg_colour,          \
            cartoon,            \
@@ -1471,6 +1472,7 @@ SEE ALSO
          'align'         : [ align             , 0 , 0 , ''  , parsing.STRICT ],
          'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
          'alter_state'   : [ alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
+         'as'            : [ as                , 0 , 0 , ''  , parsing.STRICT ],          
          'assert'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
          'attach'        : [ attach            , 0 , 0 , ''  , parsing.STRICT ],
          'backward'      : [ backward          , 0 , 0 , ''  , parsing.STRICT ],

@@ -4,6 +4,11 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * orient command now chooses the least perturbation from the 
+     current view
+
+   * "as" command for more efficient changing of representations
+
    * reorganized color menus and added some new colors
 
    * selections now more visible

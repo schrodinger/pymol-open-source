@@ -461,7 +461,7 @@ EXAMPLES
 NOTES
 
    "selection" can be an object name
-   "show" alone will turn on lines for all bonds.
+   "show" alone will turn on lines and nonbonded for all bonds.
 
 SEE ALSO
 
@@ -471,7 +471,8 @@ SEE ALSO
       try:
          lock()
          if (representation=="") and (selection==""):
-            r = _cmd.showhide("(all)",repres['lines'],1); # show lines by default       
+            if _cmd.showhide("(all)",repres['lines'],1): # show lines by default
+               r = _cmd.showhide("(all)",repres['nonbonded'],2)
          elif (representation!="") and (selection!=""):
             rep = representation
             rep = repres_sc.auto_err(rep,'representation')
@@ -481,17 +482,91 @@ SEE ALSO
             #   
             r = _cmd.showhide(str(selection),int(repn),1);
          elif representation=='all':
-            r = _cmd.showhide("all",repres['lines'],1); # show lines by default 
+            if _cmd.showhide("all",repres['lines'],1): # show lines by default
+               r = _cmd.showhide("all",repres['nonbonded'], 1) # nonbonded
          elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
             # preprocess selection
             selection = selector.process(representation)
             #                  
-            r = _cmd.showhide(str(selection),repres['lines'],1);
+            if _cmd.showhide(str(selection),repres['lines'],1):
+               r = _cmd.showhide(str(selection),repres['nonbonded'],2);
+         else: # selection==""
+            rep = representation
+            rep = repres_sc.auto_err(rep,'representation')
+            repn = repres[rep]
+            r = _cmd.showhide("all",int(repn),1);
+      finally:
+         unlock()
+      return r
+
+   def as(representation="",selection=""):
+      '''
+DESCRIPTION
+
+   "as" turns on and off atom and bond representations.
+
+   The available representations are:
+
+      lines     spheres    mesh      ribbon     cartoon
+      sticks    dots       surface   labels     extent
+      nonbonded nb_spheres slice
+
+USAGE
+
+   as
+   as reprentation [,object]
+   as reprentation [,(selection)]
+   as (selection)
+
+PYMOL API
+
+   cmd.as( string representation="", string selection="" )
+
+EXAMPLES
+
+   as lines,(name ca or name c or name n)
+   as ribbon
+
+NOTES
+
+   "selection" can be an object name
+   "as" alone will turn on lines and nonbonded and hide everything else.
+   
+SEE ALSO
+
+   show, hide, enable, disable
+      '''
+      r=1
+      try:
+         lock()
+         if (representation=="") and (selection==""):
+            if _cmd.showhide(str(selection),-1,0):
+               if _cmd.showhide("(all)",repres['lines'],1):
+                  r = _cmd.showhide("(all)",repres['nonbonded'],1)
+         elif (representation!="") and (selection!=""):
+            rep = representation
+            rep = repres_sc.auto_err(rep,'representation')
+            repn = repres[rep]
+            # preprocess selection 
+            selection = selector.process(selection)
+            #
+            if _cmd.showhide(str(selection),-1,0):
+               r = _cmd.showhide(str(selection),int(repn),1)
+         elif representation=='all':
+            if _cmd.showhide(str(selection),-1,0):            
+               if _cmd.showhide("all",repres['lines'],1): # show lines by default
+                  r = _cmd.showhide("all",repres['nonbonded'],1) # show nonbonded by default
+         elif (representation[0:1]=='(') or (string.find(representation,'/')>=0):
+            # preprocess selection
+            selection = selector.process(representation)
+            if _cmd.showhide(str(selection),-1,0):
+               r = _cmd.showhide(str(selection),repres['lines'],1)
          else: # selection==""
             rep = representation
             rep = repres_sc.auto_err(rep,'representation')
             repn = repres[rep];
-            r = _cmd.showhide("all",int(repn),1);
+            if _cmd.showhide("all",-1,0):
+               r = _cmd.showhide("all",int(repn),1);
       finally:
          unlock()
       return r
