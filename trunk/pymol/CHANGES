@@ -102,6 +102,8 @@ Current Bugs to Fix
 
 Changes up to 0.72
 
+   * fixed some logging issues with dragging pieces
+
    * now possible to create empty objects, fixed mutagenesis wizard in response
  
    * all readable files are shown by default in the Tkinter file dialogs.

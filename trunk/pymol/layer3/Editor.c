@@ -924,6 +924,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
         ENDFB
       I->DragIndex = index;
       I->DragSelection = SelectorIndexByName(cEditorComp);
+      strcpy(I->DragSeleName,cEditorComp);
       I->DragObject = obj;
       I->DragHaveAxis = false;
       I->DragHaveBase = false;
