@@ -187,6 +187,8 @@ osx:
 	cd layerOSX; $(MAKE)
 	$(MAKE) 
 
+osx-devel: osx
+	cp modules/pymol/_cmd.so $(OSXPYMOL)/modules/pymol
 
 osx-product: osx osx-unwrap osx-python
 	$(PYTHON_EXE) modules/compile_pymol.py
