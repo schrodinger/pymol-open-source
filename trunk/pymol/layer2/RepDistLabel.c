@@ -129,7 +129,7 @@ Rep *RepDistLabelNew(DistSet *ds)
       v1 = ds->Coord+3*a;
       v2 = ds->Coord+3*(a+1);
       average3f(v2,v1,d);
-      di = diff3f(v1,v2);
+      di = (float)diff3f(v1,v2);
       sprintf(buffer,"%1.2f",di);
       buffer[5]=0;
       strcpy(l[n],buffer);

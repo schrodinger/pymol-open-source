@@ -104,10 +104,10 @@ static float smooth(float x,float power)
 
   if(x<=0.5) {
     if(x<=0.0) x=0.0;
-    return (0.5*pow(2.0*x,power));    
+    return ((float)(0.5*pow(2.0*x,power)));    
   } else {
     if(x>=1.0) x=1.0;
-    return (1.0-(0.5*pow(2*(1.0-x),power)));
+    return ((float)(1.0-(0.5*pow(2*(1.0-x),power))));
   }
 }
 
@@ -495,9 +495,9 @@ ENDFD;
 			 if(*s==*(s+1))
 				{
 				  subtract3f(v+3,v,v1);
-				  *d = length3f(v1);
+				  *d = (float)length3f(v1);
               if(*d>R_SMALL4) {
-                scale3f(v1,1.0/(*d),v2);
+                scale3f(v1,1.0F/(*d),v2);
               } else if(a)  {
                 copy3f(v2-3,v2); 
               } else {
@@ -635,8 +635,8 @@ ENDFD;
             if(v1&&v2&&v3&&v4) {
               add3f(v1,v4,t0);
               add3f(v2,v3,t1);
-              scale3f(t0,0.2130,t0);
-              scale3f(t1,0.2870,t1);
+              scale3f(t0,0.2130F,t0);
+              scale3f(t1,0.2870F,t1);
 
               add3f(t0,t1,t0);
               if(last) { /* 5th CA or later... */
@@ -755,7 +755,7 @@ ENDFD;
                   for(e=-f;e<=f;e++) {
                     add3f(pv+3*(b+e),t0,t0);
                   }
-                  scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                  scale3f(t0,1.0F/(f*2+1),tmp+b*3);
                 }
                 for(b=first+f;b<=last-f;b++) {
                   copy3f(tmp+b*3,pv+b*3);
@@ -765,7 +765,7 @@ ENDFD;
                   for(e=-f;e<=f;e++) {
                     add3f(pvo+3*(b+e),t0,t0);
                   }
-                  scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                  scale3f(t0,1.0F/(f*2+1),tmp+b*3);
                 }
                 for(b=first+f;b<=last-f;b++) {
                   copy3f(tmp+b*3,pvo+b*3);
@@ -832,7 +832,7 @@ ENDFD;
                     for(e=-f;e<=f;e++) {
                       add3f(pv+3*(b+e),t0,t0);
                     }
-                    scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                    scale3f(t0,1.0F/(f*2+1),tmp+b*3);
                   }
                   for(b=first+f;b<=last-f;b++) {
                     copy3f(tmp+b*3,pv+b*3);
@@ -842,7 +842,7 @@ ENDFD;
                     for(e=-f;e<=f;e++) {
                       add3f(pvo+3*(b+e),t0,t0);
                     }
-                    scale3f(t0,1.0/(f*2+1),tmp+b*3);
+                    scale3f(t0,1.0F/(f*2+1),tmp+b*3);
                   }
                   for(b=first+f;b<=last-f;b++) {
                     copy3f(tmp+b*3,pvo+b*3);
@@ -884,9 +884,9 @@ ENDFD;
             if(*s==*(s+1))
               {
                 subtract3f(v+3,v,v1);
-                *d = length3f(v1);
+                *d = (float)length3f(v1);
                 if(*d>R_SMALL4) {
-                  scale3f(v1,1.0/(*d),v2);
+                  scale3f(v1,1.0F/(*d),v2);
                 } else if(a)  {
                   copy3f(v2-3,v2); 
                 } else {
@@ -1000,8 +1000,8 @@ ENDFD;
             /*            scale3f(t0,0.2024,t0);
                           scale3f(t1,0.2727,t1);*/
 
-            scale3f(t0,0.2130,t0);
-            scale3f(t1,0.2870,t1);
+            scale3f(t0,0.2130F,t0);
+            scale3f(t1,0.2870F,t1);
 
             add3f(t0,t1,t0);
             CGOVertexv(I->ray,t0);
@@ -1183,14 +1183,14 @@ ENDFD;
           } else {
             add3f(ex->p,ex->p+9,t0);
             add3f(ex->p+3,ex->p+6,t1);
-            scale3f(t0,0.2130,t0);
-            scale3f(t1,0.2870,t1);
+            scale3f(t0,0.2130F,t0);
+            scale3f(t1,0.2870F,t1);
             add3f(t0,t1,t3);
 
             add3f(v-3,v-12,t0);
             add3f(v-6,v-9,t1);
-            scale3f(t0,0.2130,t0);
-            scale3f(t1,0.2870,t1);
+            scale3f(t0,0.2130F,t0);
+            scale3f(t1,0.2870F,t1);
             add3f(t0,t1,t4);
 
             /* extend helix to line up with CA */
@@ -1244,12 +1244,12 @@ ENDFD;
             n_pm2=n_p-2;
             for(b=0;b<n_pm1;b++) {
               if(!b) {
-                scale3f(t0,((float)b-0.005)/n_pm1,t1); /* add small overlap */
+                scale3f(t0,((float)b-0.005F)/n_pm1,t1); /* add small overlap */
               } else {
                 scale3f(t0,((float)b)/n_pm1,t1);
               }
               if(b<n_pm2) {
-                scale3f(t0,((float)b+1.005)/n_pm1,t2);
+                scale3f(t0,((float)b+1.005F)/n_pm1,t2);
               } else {
                 scale3f(t0,((float)b+1)/n_pm1,t2);                
               }
@@ -1398,7 +1398,7 @@ ENDFD;
 
                     /* start of line/cylinder */
                   
-                    f1 = 1.0-f0;
+                    f1 = 1.0F-f0;
                     f2 = smooth(f0,power_b);
                     f3 = smooth(f1,power_b);
                     f4 = dev*f2*f3; /* displacement magnitude */
@@ -1437,7 +1437,7 @@ ENDFD;
                 
                   /* end of line/cylinder */
                 
-                  f1=1.0-f0;
+                  f1=1.0F-f0;
                   f2=smooth(f0,power_b);
                   f3=smooth(f1,power_b);
                   f4 = dev*f2*f3; /* displacement magnitude */
@@ -1485,7 +1485,7 @@ ENDFD;
                     f1=dot_product3f(t0,p1);
                     f2=dot_product3f(t0,p2);
                   
-                    f3 = (f2+f0)/2.0;
+                    f3 = (f2+f0)/2.0F;
                     scale3f(t0,f3-f1,t1);
                     p3 = stmp+b*3;
                     add3f(t1,p1,p3);

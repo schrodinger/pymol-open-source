@@ -79,7 +79,7 @@ typedef struct {
   int SavedPC,SavedCC;
   float TextColor[3],OverlayColor[3],WizardBackColor[3],WizardTextColor[3];
   int DirtyFlag;
-  float BusyLast;
+  double BusyLast;
   int BusyStatus[4];
   char BusyMessage[255];
   char *WizardPromptVLA;
@@ -342,8 +342,8 @@ void OrthoBusyDraw(int force)
   float black[3] = {0,0,0};
   float white[3] = {1,1,1};
 
-  float now;
-  float busyTime;
+  double now;
+  double busyTime;
 
   PRINTFD(FB_Ortho)
     " OrthoBusyDraw: entered.\n"
@@ -891,9 +891,9 @@ void OrthoDoDraw()
   double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);
   bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
 
-  I->OverlayColor[0]=1.0-bg_color[0];
-  I->OverlayColor[1]=1.0-bg_color[1];
-  I->OverlayColor[2]=1.0-bg_color[2];
+  I->OverlayColor[0]=1.0F-bg_color[0];
+  I->OverlayColor[1]=1.0F-bg_color[1];
+  I->OverlayColor[2]=1.0F-bg_color[2];
   if(diff3f(I->OverlayColor,bg_color)<0.25)
     zero3f(I->OverlayColor);
 

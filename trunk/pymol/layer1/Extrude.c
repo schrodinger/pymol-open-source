@@ -31,10 +31,10 @@ static float smooth(float x,float power)
 
   if(x<=0.5) {
     if(x<=0.0) x=0.0;
-    return (0.5*pow(2.0*x,power));    
+    return ((float)(0.5F*pow(2.0*x,power)));    
   } else {
     if(x>=1.0) x=1.0;
-    return (1.0-(0.5*pow(2*(1.0-x),power)));
+    return ((float)(1.0F-(0.5*pow(2*(1.0-x),power))));
   }
 }
 
@@ -94,11 +94,11 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
   for(a=0;a<=n;a++)
 	 {
       *(vn++) = 0.0;
-      *(vn++) = cos(a*2*PI/n);
-      *(vn++) = sin(a*2*PI/n);
+      *(vn++) = (float)cos(a*2*PI/n);
+      *(vn++) = (float)sin(a*2*PI/n);
       *(v++) = 0.0;
-      *(v++) = cos(a*2*PI/n)*size;
-      *(v++) = sin(a*2*PI/n)*size;
+      *(v++) = (float)cos(a*2*PI/n)*size;
+      *(v++) = (float)sin(a*2*PI/n)*size;
 	 }
 
   PRINTFD(FB_Extrude)
@@ -135,11 +135,11 @@ void ExtrudeOval(CExtrude *I, int n,float width,float length)
   for(a=0;a<=n;a++)
 	 {
       *(vn++) = 0.0;
-      *(vn++) = cos(a*2*PI/n)*length;
-      *(vn++) = sin(a*2*PI/n)*width;
+      *(vn++) = (float)cos(a*2*PI/n)*length;
+      *(vn++) = (float)sin(a*2*PI/n)*width;
       *(v++) = 0.0;
-      *(v++) = cos(a*2*PI/n)*width;
-      *(v++) = sin(a*2*PI/n)*length;
+      *(v++) = (float)cos(a*2*PI/n)*width;
+      *(v++) = (float)sin(a*2*PI/n)*length;
 	 }
 
   PRINTFD(FB_Extrude)
@@ -186,11 +186,11 @@ void ExtrudeRectangle(CExtrude *I,float width,float length,int mode)
     *(vn++) = 1.0;
     *(vn++) = 0.0;
     *(v++) = 0.0;
-    *(v++) = cos(PI/4)*width;
-    *(v++) = -sin(PI/4)*length;
+    *(v++) = (float)cos(PI/4)*width;
+    *(v++) = (float)-sin(PI/4)*length;
     *(v++) = 0.0;
-    *(v++) = cos(PI/4)*width;
-    *(v++) = sin(PI/4)*length;
+    *(v++) = (float)cos(PI/4)*width;
+    *(v++) = (float)sin(PI/4)*length;
   }
 
   if((!mode)||(mode==2)) {  
@@ -201,11 +201,11 @@ void ExtrudeRectangle(CExtrude *I,float width,float length,int mode)
     *(vn++) = 0.0;
     *(vn++) = 1.0;
     *(v++) = 0.0;
-    *(v++) = cos(PI/4)*width;
-    *(v++) = sin(PI/4)*length;
+    *(v++) = (float)cos(PI/4)*width;
+    *(v++) = (float)sin(PI/4)*length;
     *(v++) = 0.0;
-    *(v++) = -cos(PI/4)*width;
-    *(v++) = sin(PI/4)*length;
+    *(v++) = (float)-cos(PI/4)*width;
+    *(v++) = (float)sin(PI/4)*length;
   }
 
   if((!mode)||(mode==1)) {
@@ -216,11 +216,11 @@ void ExtrudeRectangle(CExtrude *I,float width,float length,int mode)
     *(vn++) = -1.0;
     *(vn++) = 0.0;
     *(v++) = 0.0;
-    *(v++) = -cos(PI/4)*width;
-    *(v++) = sin(PI/4)*length;
+    *(v++) = (float)-cos(PI/4)*width;
+    *(v++) = (float)sin(PI/4)*length;
     *(v++) = 0.0;
-    *(v++) = -cos(PI/4)*width;
-    *(v++) = -sin(PI/4)*length;
+    *(v++) = (float)-cos(PI/4)*width;
+    *(v++) = (float)-sin(PI/4)*length;
   }
 
   if((!mode)||(mode==2)) {  
@@ -232,11 +232,11 @@ void ExtrudeRectangle(CExtrude *I,float width,float length,int mode)
     *(vn++) = 0.0;
     *(vn++) = -1.0;
     *(v++) = 0.0;
-    *(v++) = -cos(PI/4)*width;
-    *(v++) = -sin(PI/4)*length;
+    *(v++) = (float)-cos(PI/4)*width;
+    *(v++) = (float)-sin(PI/4)*length;
     *(v++) = 0.0;
-    *(v++) = cos(PI/4)*width;
-    *(v++) = -sin(PI/4)*length;
+    *(v++) = (float)cos(PI/4)*width;
+    *(v++) = (float)-sin(PI/4)*length;
   }
 
   PRINTFD(FB_Extrude)
@@ -287,11 +287,11 @@ void ExtrudeDumbbell1(CExtrude *I,float width,float length,int mode)
     *(vn++) = 1.0;
     *(vn++) = 0.0;
     *(v++) = 0.0;
-    *(v++) = cos(PI/4)*width;
-    *(v++) = -sin(PI/4)*length;
+    *(v++) = (float)cos(PI/4)*width;
+    *(v++) = (float)-sin(PI/4)*length;
     *(v++) = 0.0;
-    *(v++) = cos(PI/4)*width;
-    *(v++) = sin(PI/4)*length;
+    *(v++) = (float)cos(PI/4)*width;
+    *(v++) = (float)sin(PI/4)*length;
   }
   
   if((!mode)||(mode==2)) { /* bottom */
@@ -302,11 +302,11 @@ void ExtrudeDumbbell1(CExtrude *I,float width,float length,int mode)
     *(vn++) = -1.0;
     *(vn++) = 0.0;
     *(v++) = 0.0;
-    *(v++) = -cos(PI/4)*width;
-    *(v++) = sin(PI/4)*length;
+    *(v++) = (float)-cos(PI/4)*width;
+    *(v++) = (float)sin(PI/4)*length;
     *(v++) = 0.0;
-    *(v++) = -cos(PI/4)*width;
-    *(v++) = -sin(PI/4)*length;
+    *(v++) = (float)-cos(PI/4)*width;
+    *(v++) = (float)-sin(PI/4)*length;
   }
 
   PRINTFD(FB_Extrude)
@@ -325,7 +325,7 @@ void ExtrudeDumbbellEdge(CExtrude *I,int samp,int sign,float length)
   PRINTFD(FB_Extrude)
     " ExtrudeDumbbellEdge-DEBUG: entered.\n"
     ENDFD;
-  disp = (sign*sin(PI/4)*length);
+  disp = (float)(sign*sin(PI/4)*length);
   p=I->p;
   n=I->n;
   for(a=0;a<I->N;a++)
@@ -376,11 +376,11 @@ void ExtrudeDumbbell2(CExtrude *I, int n,int sign,float length,float size)
   for(a=0;a<=n;a++)
 	 {
       *(vn++) = 0.0;
-      *(vn++) = cos(a*2*PI/n);
-      *(vn++) = sin(a*2*PI/n);
+      *(vn++) = (float)cos(a*2*PI/n);
+      *(vn++) = (float)sin(a*2*PI/n);
       *(v++) = 0.0;
-      *(v++) = cos(a*2*PI/n)*size;
-      *(v++) = (sin(a*2*PI/n)*size)+(sign*sin(PI/4)*length);
+      *(v++) = (float)cos(a*2*PI/n)*size;
+      *(v++) = (float)((sin(a*2*PI/n)*size)+(sign*sin(PI/4)*length));
 	 }
 
   PRINTFD(FB_Extrude)
@@ -1068,7 +1068,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
       for(a=0;a<I->N;a++) {
         copy3f(sv,s0);
         if(a==subN) {
-          scale3f(s0,0.50,s0);
+          scale3f(s0,0.50F,s0);
         }
         transform33Tf3f(n,s0,tv);
         add3f(v,tv,tv);
@@ -1175,7 +1175,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
       
       for(a=0;a<I->N;a++) {
         copy3f(sv,s0);
-        s0[2]=s0[2]*((1.5*((I->N-1)-a))/sampling);
+        s0[2]=s0[2]*((1.5F*((I->N-1)-a))/sampling);
         transform33Tf3f(n,s0,tv);
         add3f(v,tv,tv);
         tv+=3;
@@ -1241,7 +1241,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
 
     for(b=0;b<I->Ns;b++) {
       copy3f(sv,s0);
-      s0[2]=s0[2]*1.5;
+      s0[2]=s0[2]*1.5F;
       transform33Tf3f(n,s0,tv);
       add3f(v,tv,tv);
       sv+=3;

@@ -514,7 +514,7 @@ ObjectGadgetRamp *ObjectGadgetRampNew(void)
   I->text_scale_v = 0.02F;
   I->border = 0.018F;
   I->var_index = 0;
-  I->x = (1.0-(I->width+2*I->border))/2.0F;
+  I->x = (1.0F-(I->width+2*I->border))/2.0F;
   I->y = 0.12F;
   I->Map = NULL;
   return(I);

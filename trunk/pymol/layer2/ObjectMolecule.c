@@ -437,9 +437,9 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                               r_cent[1]/=r_cnt;
                               r_cent[2]/=r_cnt;
                               transform33f3f(cs->PeriodicBox->RealToFrac,r_cent,r_cent);
-                              r_trans[0]=fmod(1000.0+shift[0]+r_cent[0],1.0);
-                              r_trans[1]=fmod(1000.0+shift[1]+r_cent[1],1.0);
-                              r_trans[2]=fmod(1000.0+shift[2]+r_cent[2],1.0);
+                              r_trans[0]=(float)fmod(1000.0+shift[0]+r_cent[0],1.0F);
+                              r_trans[1]=(float)fmod(1000.0+shift[1]+r_cent[1],1.0F);
+                              r_trans[2]=(float)fmod(1000.0+shift[2]+r_cent[2],1.0F);
                               r_trans[0]-=r_cent[0];
                               r_trans[1]-=r_cent[1];
                               r_trans[2]-=r_cent[2];
@@ -1321,9 +1321,9 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         cset->PeriodicBox->Dim[2] = BOX3;
         if((BETA > 109.47) && (BETA < 109.48)) {
           cset->PeriodicBoxType=cCSet_Octahedral;
-          cset->PeriodicBox->Angle[0]=2.0*acos(1.0/sqrt(3.0))*180.0/PI;
-          cset->PeriodicBox->Angle[1]=2.0*acos(1.0/sqrt(3.0))*180.0/PI;
-          cset->PeriodicBox->Angle[2]=2.0*acos(1.0/sqrt(3.0))*180.0/PI;
+          cset->PeriodicBox->Angle[0]=(float)(2.0*acos(1.0/sqrt(3.0))*180.0/PI);
+          cset->PeriodicBox->Angle[1]=(float)(2.0*acos(1.0/sqrt(3.0))*180.0/PI);
+          cset->PeriodicBox->Angle[2]=(float)(2.0*acos(1.0/sqrt(3.0))*180.0/PI);
         } else if(BETA==60.0) {
           cset->PeriodicBox->Angle[0]=60.0; /* rhombic dodecahedron (from ptraj.c) */
           cset->PeriodicBox->Angle[1]=90.0;
@@ -2845,7 +2845,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     case 1:
       copy3f(backup+3*anch1,va1);
       ObjectMoleculeFindOpenValenceVector(src,state1,at1,x1);
-      scale3f(x1,-1.0,x1);
+      scale3f(x1,-1.0F,x1);
       get_system1f3f(x1,y1,z1);      
       break;
     }
@@ -3151,18 +3151,18 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
             switch(ai->geom) {
             case cAtomInfoTetrahedral:
               get_system1f3f(occ,y,z);
-              scale3f(occ,-0.334,v);
-              scale3f(z,  0.943,t);
+              scale3f(occ,-0.334F,v);
+              scale3f(z,  0.943F,t);
               add3f(t,v,v);              
               break;
             case cAtomInfoPlaner:
               get_system1f3f(occ,y,z);
-              scale3f(occ,-0.500,v);
-              scale3f(z,      0.866,t);
+              scale3f(occ,-0.500F,v);
+              scale3f(z,      0.866F,t);
               add3f(t,v,v);
               break;
             case cAtomInfoLinear:
-              scale3f(occ,-1.0,v);
+              scale3f(occ,-1.0F,v);
               break;
             default:
               get_random3f(v); /* hypervalent */
@@ -3174,13 +3174,13 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
             case cAtomInfoTetrahedral:
               add3f(occ,occ+3,t);
               get_system2f3f(t,occ,z);
-              scale3f(t,-1.0,v);
-              scale3f(z,1.41,t);
+              scale3f(t,-1.0F,v);
+              scale3f(z,1.41F,t);
               add3f(t,v,v);              
               break;
             case cAtomInfoPlaner:
             add3f(occ,occ+3,t);
-              scale3f(t,-1.0,v);
+              scale3f(t,-1.0F,v);
               break;
             default:
               get_random3f(v); /* hypervalent */
@@ -3192,7 +3192,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
             case cAtomInfoTetrahedral:
               add3f(occ,occ+3,t);
               add3f(occ+6,t,t);
-              scale3f(t,-1.0,v);
+              scale3f(t,-1.0F,v);
               break;
             default:
               get_random3f(v); /* hypervalent */
@@ -3338,18 +3338,18 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
               if(l>max_sq[a0])
                 max_sq[a0]=l;
               if(l>0.0) {
-                scale3f(d0,1.0/sqrt(l),n0);
+				float isq = (float)(1.0/sqrt1d(l));
+                scale3f(d0,isq,n0);
                 for(c=0;c<sp->nDot;c++) { /* average over spokes */
                   dp=dot_product3f(sp->dot[c],n0);
                   row = base + c;
                   if(dp>=0.0) {
-                    ang = acos(dp);
-                    ang=(ang/spheroid_smooth)*(cPI/2.0); 
+					ang = (float)((acos(dp)/spheroid_smooth)*(cPI/2.0)); 
                     if(ang>spheroid_fill)
                       ang=spheroid_fill;
                     /* take envelop to zero over that angle */
                     if(ang<=(cPI/2.0)) {
-                      dp = cos(ang);
+                      dp = (float)cos(ang);
                       fsum[row] += dp*dp;
                       spheroid[row] += l*dp*dp*dp;
                     }
@@ -3364,12 +3364,12 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
         f=fsum;
         s=spheroid;
         for(a=0;a<I->NAtom;a++) {
-          min_dist = spheroid_ratio*sqrt(max_sq[a]);
+          min_dist = (float)(spheroid_ratio*sqrt(max_sq[a]));
           if(min_dist<spheroid_minimum)
             min_dist=spheroid_minimum;
           for(b=0;b<sp->nDot;b++) {
             if(*f>R_SMALL4) {
-              (*s)=sqrt((*s)/(*(f++))); /* we put the "rm" in "rms" */
+              (*s)=(float)(sqrt1d((*s)/(*(f++)))); /* we put the "rm" in "rms" */
             } else {
               f++;
             }
@@ -3550,7 +3550,7 @@ void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,
               }
           }
           if(cnt) {
-            scale3f(sum,1.0/cnt,sum);
+            scale3f(sum,1.0F/cnt,sum);
             copy3f(sum,v0);
             if((cnt>1)&&(ncycle<0))
               ncycle=5;
@@ -3931,7 +3931,7 @@ int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at)
     normalize3f(cp3);
     avg=(dot_product3f(cp1,cp2)+
          dot_product3f(cp2,cp3)+
-         dot_product3f(cp3,cp1))/3.0;
+         dot_product3f(cp3,cp1))/3.0F;
     if(avg>0.75)
       result=cAtomInfoPlaner;
     else
@@ -5147,9 +5147,9 @@ ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int 
       for(a=0;a<l;a++) {
         v=PyList_GetItem(coords,a);
 /* no error checking */
-        *(f++)=PyFloat_AsDouble(PyList_GetItem(v,0)); 
-        *(f++)=PyFloat_AsDouble(PyList_GetItem(v,1));
-        *(f++)=PyFloat_AsDouble(PyList_GetItem(v,2));
+        *(f++)=(float)PyFloat_AsDouble(PyList_GetItem(v,0)); 
+        *(f++)=(float)PyFloat_AsDouble(PyList_GetItem(v,1));
+        *(f++)=(float)PyFloat_AsDouble(PyList_GetItem(v,2));
       }
     }
   }
@@ -6802,7 +6802,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                              transformTTT44f3f(I->Obj.TTT,coord,v1);
                              coord=v1;
                            }
-                         dist = diff3f(op->v1,coord);
+                         dist = (float)diff3f(op->v1,coord);
                          if(dist>op->f1)
                            op->f1=dist;
                          op->i1++;
@@ -6945,7 +6945,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                               transformTTT44f3f(I->Obj.TTT,coord,v1);
                               coord=v1;
                             }
-                          dist = diff3f(coord,op->v1);
+                          dist = (float)diff3f(coord,op->v1);
                           if(dist>op->f1)
                             op->f1=dist;
                           op->i1++;
@@ -6961,7 +6961,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                         a1=cs->AtmToIdx[a];
 							 if(a1>=0)
 							   {
-                          r=diff3f(op->v1,cs->Coord+(3*a1));
+                          r=(float)diff3f(op->v1,cs->Coord+(3*a1));
                           if(r>op->f1)
                             op->f1=r;
 							   }
@@ -7410,7 +7410,7 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
         }
       }
       if(vec_cnt) {
-        result = length3f(v_acc);
+        result = (float)length3f(v_acc);
         result = result/vec_cnt;
         normalize23f(v_acc,v);
       }

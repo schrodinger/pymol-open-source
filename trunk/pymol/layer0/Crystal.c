@@ -122,31 +122,31 @@ void CrystalUpdate(CCrystal *I)
   }
   
   for(i=0;i<3;i++) {
-    cabg[i] = cos(I->Angle[i]*PI/180.0);
-    sabg[i] = sin(I->Angle[i]*PI/180.0);
+    cabg[i] = (float)cos(I->Angle[i]*PI/180.0);
+    sabg[i] = (float)sin(I->Angle[i]*PI/180.0);
   }
   
   cabgs[0] = (cabg[1]*cabg[2]-cabg[0])/(sabg[1]*sabg[2]);
   cabgs[1] = (cabg[2]*cabg[0]-cabg[1])/(sabg[2]*sabg[0]);
   cabgs[2] = (cabg[0]*cabg[1]-cabg[2])/(sabg[0]*sabg[1]);
     
-  I->UnitCellVolume=I->Dim[0]*I->Dim[1]*I->Dim[2]*
-    sqrt1f(1.0+(double)2.0*cabg[0]*cabg[1]*cabg[2]-
-          (double)(cabg[0]*cabg[0]+(double)cabg[1]*cabg[1]+(double)cabg[2]*cabg[2]));
+  I->UnitCellVolume=(float)(I->Dim[0]*I->Dim[1]*I->Dim[2]*
+    sqrt1d(1.0+(double)2.0*cabg[0]*cabg[1]*cabg[2]-
+          (double)(cabg[0]*cabg[0]+(double)cabg[1]*cabg[1]+(double)cabg[2]*cabg[2])));
   
   I->RecipDim[0] = I->Dim[1]*I->Dim[2]*sabg[0]/I->UnitCellVolume;
   I->RecipDim[1] = I->Dim[0]*I->Dim[2]*sabg[1]/I->UnitCellVolume;
   I->RecipDim[2] = I->Dim[0]*I->Dim[1]*sabg[2]/I->UnitCellVolume;
 
-  sabgs1=sqrt1f(1.0-cabgs[0]*cabgs[0]);
+  sabgs1=(float)sqrt1d(1.0-cabgs[0]*cabgs[0]);
 
-  I->RealToFrac[0]=1.0/I->Dim[0];
+  I->RealToFrac[0]=1.0F/I->Dim[0];
   I->RealToFrac[1]=-cabg[2]/(sabg[2]*I->Dim[0]);
   I->RealToFrac[2]=-(cabg[2]*sabg[1]*cabgs[0]+cabg[1]*sabg[2])/
     (sabg[1]*sabgs1*sabg[2]*I->Dim[0]);
-  I->RealToFrac[4]=1.0/(sabg[2]*I->Dim[1]);
+  I->RealToFrac[4]=1.0F/(sabg[2]*I->Dim[1]);
   I->RealToFrac[5]=cabgs[0]/(sabgs1*sabg[2]*I->Dim[1]);
-  I->RealToFrac[8]=1.0/(sabg[1]*sabgs1*I->Dim[2]);
+  I->RealToFrac[8]=1.0F/(sabg[1]*sabgs1*I->Dim[2]);
 
   I->FracToReal[0] = I->Dim[0];
   I->FracToReal[1] = cabg[2]*I->Dim[1];
@@ -155,13 +155,13 @@ void CrystalUpdate(CCrystal *I)
   I->FracToReal[5] = -sabg[1]*cabgs[0]*I->Dim[2];
   I->FracToReal[8] = sabg[1]*sabgs1*I->Dim[2];
 
-  I->Norm[0] = sqrt1f(I->RealToFrac[0]*I->RealToFrac[0] + 
+  I->Norm[0] = (float)sqrt1d(I->RealToFrac[0]*I->RealToFrac[0] + 
                      I->RealToFrac[1]*I->RealToFrac[1] +
                      I->RealToFrac[2]*I->RealToFrac[2]);
-  I->Norm[1] = sqrt1f(I->RealToFrac[3]*I->RealToFrac[3] + 
+  I->Norm[1] = (float)sqrt1d(I->RealToFrac[3]*I->RealToFrac[3] + 
                      I->RealToFrac[4]*I->RealToFrac[4] +
                      I->RealToFrac[5]*I->RealToFrac[5]);
-  I->Norm[2] = sqrt1f(I->RealToFrac[6]*I->RealToFrac[6] + 
+  I->Norm[2] = (float)sqrt1d(I->RealToFrac[6]*I->RealToFrac[6] + 
                      I->RealToFrac[7]*I->RealToFrac[7] +
                      I->RealToFrac[8]*I->RealToFrac[8]);                                        
 

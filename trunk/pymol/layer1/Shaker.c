@@ -49,10 +49,10 @@ float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,fl
   float len,dev,dev_2,sc;
 
   subtract3f(v0,v1,d);
-  len = length3f(d);
+  len = (float)length3f(d);
   dev = target-len;
   if(fabs(dev)>R_SMALL8) {
-    dev_2 = wt*dev/2.0;
+    dev_2 = wt*dev/2.0F;
     if(len>R_SMALL8) { /* nonoverlapping */
       sc = dev_2/len;
       scale3f(d,sc,push);
@@ -112,7 +112,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
     sc = wt*dev;
     scale3f(cp,sc,push);
     add3f(push,p0,p0);
-    scale3f(push,1.0/3,push);
+    scale3f(push,1.0F/3,push);
     subtract3f(p1,push,p1);
     subtract3f(p2,push,p2);
     subtract3f(p3,push,p3);
@@ -137,7 +137,7 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
   normalize23f(d1,d0);
 
   cross_product3f(d2,d0,cp); 
-  lcp = length3f(cp);
+  lcp = (float)length3f(cp);
   if(lcp>R_SMALL4) {
     lcp = 1.0F/lcp;
     scale3f(cp,lcp,cp); /* axis 0 */
@@ -154,7 +154,7 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
       sc = wt*dev;
       scale3f(d4,sc,push);
       add3f(push,p1,p1);
-      scale3f(push,0.5,push);
+      scale3f(push,0.5F,push);
       subtract3f(p0,push,p0);
       subtract3f(p2,push,p2);
     } else {
@@ -189,10 +189,10 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
   subtract3f(v0,vc,d0);
   cur = dot_product3f(d0,cp);
 
-  dev = fabs(cur);
+  dev = (float)fabs(cur);
   if(fabs(dev)>R_SMALL8) {
 
-    sc = -wt*dev/2.0;
+    sc = -wt*dev/2.0F;
 
     subtract3f(v0,v3,d0);
     normalize3f(d0);
@@ -200,7 +200,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
     add3f(push,p0,p0); 
     subtract3f(p3,push,p3);
 
-    sc = -2.0*sc ;
+    sc = -2.0F*sc ;
 
     subtract3f(v0,v2,d0);
     normalize3f(d0);

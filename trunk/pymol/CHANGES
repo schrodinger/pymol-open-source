@@ -165,6 +165,11 @@ Current Bugs to Fix
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.91
+
+   * PyMOL now building warning-free on VC++ warning level 3
+      (catches sloppy precision and conversion handling)
+
 Changes up to 0.90
 
    * Fixed IRIX and Linux minimal dependency Python launch context.

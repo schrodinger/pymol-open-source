@@ -341,8 +341,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   int water_flag;
 
   cutoff_v=SettingGet(cSetting_connect_cutoff);
-  cutoff_s=cutoff_v + 0.2;
-  cutoff_h=cutoff_v - 0.2;
+  cutoff_s=cutoff_v + 0.2F;
+  cutoff_h=cutoff_v - 0.2F;
   max_cutoff = cutoff_s;
 
   /*  FeedbackMask[FB_ObjectMolecule]=0xFF;*/
@@ -372,7 +372,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                           if(i<j)
                             {
                               v2 = cs->Coord + (3*j);
-                              dst = diff3f(v1,v2);										
+                              dst = (float)diff3f(v1,v2);										
                               
                               a1=cs->IdxToAtm[i];
                               a2=cs->IdxToAtm[j];

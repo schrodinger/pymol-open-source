@@ -42,6 +42,9 @@ void     p_glutMainLoop(void) {
 
 }
 
+void     p_glutGameModeString(char *str) {}
+void     p_glutEnterGameMode(void) {}
+
 void     p_glutBitmapCharacter(void *font, int character){}
 void     p_glutSwapBuffers(void){}
 
@@ -109,6 +112,9 @@ int p_glutGetRedisplay(void)
   redisplay=false;
   return(tmp);
 }
+
+void     p_glutGameModeString(char *str) {}
+void     p_glutEnterGameMode(void) {}
 
 void p_glutHandleEvent(p_glut_event *ev) {
   /* NOTE: this function should be called with an unblocked interpreter,

@@ -208,10 +208,10 @@ static float smooth(float x,float power)
 
   if(x<=0.5) {
     if(x<=0.0) x=0.0;
-    return (0.5*pow(2.0*x,power));    
+    return ((float)(0.5*pow(2.0*x,power)));    
   } else {
     if(x>=1.0) x=1.0;
-    return (1.0-(0.5*pow(2*(1.0-x),power)));
+    return ((float)(1.0-(0.5*pow(2*(1.0-x),power))));
   }
 }
 
@@ -357,8 +357,8 @@ Rep *RepRibbonNew(CoordSet *cs)
 			 if(*s==*(s+1))
 				{
 				  subtract3f(v+3,v,v1);
-				  *d = length3f(v1);
-				  scale3f(v1,1.0/(*d),v2);
+				  *d = (float)length3f(v1);
+				  scale3f(v1,1.0F/(*d),v2);
 				}
 			 d++;
 			 v+=3;
@@ -491,7 +491,7 @@ Rep *RepRibbonNew(CoordSet *cs)
 
                 /* start of line/cylinder */
 
-					 f1=1.0-f0;
+					 f1=1.0F-f0;
                 f2=smooth(f0,power_b);
                 f3=smooth(f1,power_b);
                 f4 = dev*f2*f3; /* displacement magnitude */
@@ -528,7 +528,7 @@ Rep *RepRibbonNew(CoordSet *cs)
 
                 /* end of line/cylinder */
 
-					 f1=1.0-f0;
+					 f1=1.0F-f0;
                 f2=smooth(f0,power_b);
                 f3=smooth(f1,power_b);
                 f4 = dev*f2*f3; /* displacement magnitude */

@@ -1213,7 +1213,7 @@ int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int en
                 if((st>=end_skip)&&(st<(n_state-end_skip))) {
                   /* if(c==0) printf("dumping into slot %d\n",st);*/
                   flag1[(n_atom*st)+c] = 1;
-                  i_cnt = 1.0/cnt;
+                  i_cnt = 1.0F/cnt;
                   v1 = coord1 + 3*((n_atom*st)+c);
                   scale3f(sum,i_cnt,v1);
                 }
@@ -2957,9 +2957,9 @@ float ExecutiveDistance(char *s1,char *s2)
   }
   
   if(op1.i1&&op2.i1) {
-    scale3f(op1.v1,1.0/op1.i1,op1.v1);
-    scale3f(op2.v1,1.0/op2.i1,op2.v1);
-    dist = diff3f(op1.v1,op2.v1);
+    scale3f(op1.v1,1.0F/op1.i1,op1.v1);
+    scale3f(op2.v1,1.0F/op2.i1,op2.v1);
+    dist = (float)diff3f(op1.v1,op2.v1);
     PRINTFB(FB_Executive,FB_Results)
       " Distance: %8.3f [%i atom(s) to %i atom(s)]\n",
       dist,op1.i1,op2.i1
@@ -3076,7 +3076,7 @@ void ExecutiveOrient(char *sele,Matrix33d mi,int state)
 
 	 for(a=0;a<3;a++) {
 		for(b=0;b<3;b++) {
-		  m[a][b]=evect[b][a]; /* fill columns */
+		  m[a][b]=(float)evect[b][a]; /* fill columns */
 		}
 	 }
 
@@ -3269,7 +3269,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
         if(inv)
           {
             f=op1.vv1+(a*3);
-            inv=1.0/inv;
+            inv=1.0F/inv;
             *(f++)*=inv;
             *(f++)*=inv;
             *(f++)*=inv;
@@ -3296,7 +3296,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
         if(inv)
           {
             f=op2.vv1+(a*3);
-            inv=1.0/inv;
+            inv=1.0F/inv;
             *(f++)*=inv;
             *(f++)*=inv;
             *(f++)*=inv;
@@ -3576,7 +3576,7 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
       if(inv)
         {
           f=op1.vv1+(a*3);
-          inv=1.0/inv;
+          inv=1.0F/inv;
           *(f++)*=inv;
           *(f++)*=inv;
           *(f++)*=inv;
@@ -3588,7 +3588,7 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
       if(inv)
         {
           f=op2.vv1+(a*3);
-          inv=1.0/inv;
+          inv=1.0F/inv;
           *(f++)*=inv;
           *(f++)*=inv;
           *(f++)*=inv;
@@ -4417,9 +4417,9 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
             case cObjectMolecule:
               break;
             default:
-              f1 = diff3f(obj->ExtentMin,pos);
+              f1 = (float)diff3f(obj->ExtentMin,pos);
               if(fmx<f1) fmx = f1;
-              f1 = diff3f(obj->ExtentMax,pos);
+              f1 = (float)diff3f(obj->ExtentMax,pos);
               if(fmx<f1) fmx = f1;
               flag = true;
               break;
@@ -4435,9 +4435,9 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
         break;
       default:
         if(obj->ExtentFlag) {
-          f1 = diff3f(obj->ExtentMin,pos);
+          f1 = (float)diff3f(obj->ExtentMin,pos);
           if(fmx<f1) fmx = f1;
-          f1 = diff3f(obj->ExtentMax,pos);
+          f1 = (float)diff3f(obj->ExtentMax,pos);
           if(fmx<f1) fmx = f1;
           flag = true;
           break;
@@ -4453,9 +4453,9 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
             break;
           default:
             if(obj->ExtentFlag) {
-              f1 = diff3f(obj->ExtentMin,pos);
+              f1 = (float)diff3f(obj->ExtentMin,pos);
               if(fmx<f1) fmx = f1;
-              f1 = diff3f(obj->ExtentMax,pos);
+              f1 = (float)diff3f(obj->ExtentMax,pos);
               if(fmx<f1) fmx = f1;
             }
             break;
@@ -4497,7 +4497,7 @@ int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive)
       radius = df[0];
       if(radius<df[1]) radius=df[1];
       if(radius<df[2]) radius=df[2];
-      radius=radius/2.0;
+      radius=radius/2.0F;
     }
     if(radius<MAX_VDW) radius=MAX_VDW;
     PRINTFD(FB_Executive)
@@ -4641,7 +4641,7 @@ int ExecutiveGetMoment(char *name,Matrix33d mi,int state)
 	 
 	 if(op.i1) { /* any vertices? */
 		c+=op.i1;
-		scale3f(op.v1,1.0/op.i1,op.v1); /* compute raw average */
+		scale3f(op.v1,1.0F/op.i1,op.v1); /* compute raw average */
       if(state<0) {
         op.code = OMOP_MOME;		
       } else {

@@ -227,7 +227,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                 {
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
-                  d = diff3f(v1,v2);
+                  d = (float)diff3f(v1,v2);
                   if(use_cache) {
                     if(!SculptCacheQuery(cSculptBond,
                                          oai[b1].sculpt_id,
@@ -288,7 +288,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                 if((a0>=0)&&(a1>=0)&&(a2>=0)) {
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
-                  d = diff3f(v1,v2);
+                  d = (float)diff3f(v1,v2);
                   if(use_cache) {
                     if(!SculptCacheQuery(cSculptAngl,
                                          oai[b0].sculpt_id,
@@ -542,7 +542,7 @@ int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff)
   if(fabs(diff[2])>cutoff) return(false);
   d2 = (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
   if(d2<(cutoff*cutoff)) {
-    *dist = sqrt(d2);
+    *dist = (float)sqrt(d2);
     return(true);
   }
   return(false);
@@ -555,7 +555,7 @@ int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,fl
 
   dev = target-actual;
   if(fabs(dev)>R_SMALL8) {
-    dev_2 = wt*dev/2.0;
+    dev_2 = wt*dev/2.0F;
     if(actual>R_SMALL8) { /* nonoverlapping */
       sc = dev_2/actual;
       scale3f(d,sc,push);
@@ -928,7 +928,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
               if(cnt[a]) {
                 if(!obj->AtomInfo[a].protected) {
                   v1 = disp+3*a;
-                  sc = 0.99/cnt[a];
+                  sc = 0.99F/cnt[a];
                   scale3f(v1,sc,v1);
                   v2 = cs->Coord+3*atm2idx[a];
                   add3f(v1,v2,v2);
