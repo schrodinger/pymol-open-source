@@ -36,6 +36,9 @@ subdirectory within the main pymol directory.
    cd ext
    (READ INSTALL in that directory for installation information)
 
+Alternatively, you can put the external dependencies into a different
+directory and then symbolic link it to "ext" in the pymol directory.
+
 STEP(2) 
 
 If this is a binary release, skip to (4). Otherwise, after you have
