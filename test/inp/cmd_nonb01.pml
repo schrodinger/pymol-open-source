@@ -10,4 +10,5 @@ dist (id 597),(bonded),3.2
 create t2 = (!bonded)
 create t3 = (bonded)
 
+refresh
 quit

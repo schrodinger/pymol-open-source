@@ -81,8 +81,8 @@ static void APIEntry(void)
 
 static void APIExit(void)
 {
-  P_glut_thread_keep_out--;
   PBlock();
+  P_glut_thread_keep_out--;
 }
 
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
@@ -107,6 +107,7 @@ static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
+static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
@@ -175,6 +176,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"do",	        CmdDo,           METH_VARARGS },
 	{"dump",	        CmdDump,         METH_VARARGS },
 	{"export_dots",  CmdExportDots,   METH_VARARGS },
+	{"finish_object",CmdFinishObject, METH_VARARGS },
 	{"fit",          CmdFit,          METH_VARARGS },
 	{"fit_pairs",    CmdFitPairs,     METH_VARARGS },
 	{"flag",         CmdFlag,         METH_VARARGS },
@@ -246,14 +248,14 @@ static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
 {
-  while(OrthoCommandWaiting())
-    {
-      PUnblock();
-      PSleep(10000);
-      PBlock();
-    }
-  Py_INCREF(Py_None);
-  return Py_None;  
+  PyObject *result;
+  P_glut_thread_keep_out++;
+  if(OrthoCommandWaiting()) 
+    result = PyInt_FromLong(1);
+  else
+    result = PyInt_FromLong(0);
+  P_glut_thread_keep_out--;
+  return result;
 }
 
 static PyObject *CmdPaste(PyObject *dummy, PyObject *args)
@@ -1269,6 +1271,23 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
   return Py_None;
 }
 
+static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
+{
+  char *oname;
+  Object *origObj = NULL;
+
+  PyArg_ParseTuple(args,"s",&oname);
+
+  APIEntry();
+  origObj=ExecutiveFindObjectByName(oname);
+
+  if(origObj) 
+    ExecutiveUpdateObjectSelection(origObj);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 {
   char *oname;
@@ -1276,10 +1295,11 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   Object *origObj = NULL,*obj;
   OrthoLineType buf;
   int frame,type;
+  int finish,discrete;
 
   buf[0]=0;
 
-  PyArg_ParseTuple(args,"sOii",&oname,&model,&frame,&type);
+  PyArg_ParseTuple(args,"sOiiii",&oname,&model,&frame,&type,&finish,&discrete);
 
   APIEntry();
   origObj=ExecutiveFindObjectByName(oname);
@@ -1289,7 +1309,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   switch(type) {
   case cLoadTypeChemPyModel:
     PBlockAndUnlockAPI();
-	 obj=(Object*)ObjectMoleculeLoadChemPyModel((ObjectMolecule*)origObj,model,frame);
+	 obj=(Object*)ObjectMoleculeLoadChemPyModel((ObjectMolecule*)origObj,model,frame,discrete);
     PLockAPIAndUnblock();
 	 if(!origObj) {
 	   if(obj) {
@@ -1298,7 +1318,8 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 		 sprintf(buf," CmdLoad: ChemPy-model loaded into object \"%s\".\n",oname);		  
 	   }
 	 } else if(origObj) {
-		ExecutiveUpdateObjectSelection(origObj);
+      if(finish)
+      ExecutiveUpdateObjectSelection(origObj);
 		sprintf(buf," CmdLoad: ChemPy-model appended into object \"%s\".\n",oname);
 	 }
 	 break;
@@ -1319,10 +1340,11 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
   Object *origObj = NULL,*obj;
   OrthoLineType buf;
   int frame,type;
+  int finish;
 
   buf[0]=0;
 
-  PyArg_ParseTuple(args,"sOii",&oname,&model,&frame,&type);
+  PyArg_ParseTuple(args,"sOiiii",&oname,&model,&frame,&type,&finish);
 
   APIEntry();
   origObj=ExecutiveFindObjectByName(oname);
@@ -1337,7 +1359,6 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
         PBlockAndUnlockAPI();
         obj=(Object*)ObjectMoleculeLoadCoords((ObjectMolecule*)origObj,model,frame);
         PLockAPIAndUnblock();
-        ExecutiveUpdateObjectSelection(origObj);
         sprintf(buf," CmdLoad: Coordinates appended into object \"%s\".\n",oname);
         break;
       }
@@ -1357,10 +1378,11 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   Object *origObj = NULL,*obj;
   OrthoLineType buf;
   int frame,type;
+  int finish,discrete;
 
   buf[0]=0;
 
-  PyArg_ParseTuple(args,"ssii",&oname,&fname,&frame,&type);
+  PyArg_ParseTuple(args,"ssiiii",&oname,&fname,&frame,&type,&finish,&discrete);
 
   APIEntry();
   origObj=ExecutiveFindObjectByName(oname);
@@ -1370,20 +1392,21 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   switch(type) {
   case cLoadTypePDB:
 	 if(!origObj) {
-		obj=(Object*)ObjectMoleculeLoadPDBFile(NULL,fname,frame);
+		obj=(Object*)ObjectMoleculeLoadPDBFile(NULL,fname,frame,discrete);
 		if(obj) {
 		  ObjectSetName(obj,oname);
 		  ExecutiveManageObject(obj);
 		  sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
 		}
 	 } else {
-		ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame);
-		ExecutiveUpdateObjectSelection(origObj);
+		ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame,discrete);
+      if(finish)
+        ExecutiveUpdateObjectSelection(origObj);
 		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
 	 break;
   case cLoadTypeMOL:
-	 obj=(Object*)ObjectMoleculeLoadMOLFile((ObjectMolecule*)origObj,fname,frame);
+	 obj=(Object*)ObjectMoleculeLoadMOLFile((ObjectMolecule*)origObj,fname,frame,discrete);
 	 if(!origObj) {
 	   if(obj) {
 		 ObjectSetName(obj,oname);
@@ -1391,12 +1414,13 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 		 sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);		  
 	   }
 	 } else if(origObj) {
-		ExecutiveUpdateObjectSelection(origObj);
+      if(finish)
+        ExecutiveUpdateObjectSelection(origObj);
 		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
 	 break;
   case cLoadTypeMOLStr:
-	 obj=(Object*)ObjectMoleculeReadMOLStr((ObjectMolecule*)origObj,fname,frame);
+	 obj=(Object*)ObjectMoleculeReadMOLStr((ObjectMolecule*)origObj,fname,frame,discrete);
 	 if(!origObj) {
 	   if(obj) {
 		 ObjectSetName(obj,oname);
@@ -1404,12 +1428,13 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 		 sprintf(buf," CmdLoad: MOL-string loaded into object \"%s\".\n",oname);		  
 	   }
 	 } else if(origObj) {
-		ExecutiveUpdateObjectSelection(origObj);
+      if(finish)
+        ExecutiveUpdateObjectSelection(origObj);
 		sprintf(buf," CmdLoad: MOL-string appended into object \"%s\".\n",oname);
 	 }
 	 break;
   case cLoadTypeMMD:
-	 obj=(Object*)ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,NULL);
+	 obj=(Object*)ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,NULL,discrete);
 	 if(!origObj) {
 	   if(obj) {
         ObjectSetName(obj,oname);
@@ -1417,15 +1442,16 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);		  
 	   }
 	 } else if(origObj) {
-		ExecutiveUpdateObjectSelection(origObj);
+      if(finish)
+        ExecutiveUpdateObjectSelection(origObj);
 		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",fname,oname);
 	 }
     break;
   case cLoadTypeMMDSeparate:
-	 ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,oname);
+	 ObjectMoleculeLoadMMDFile((ObjectMolecule*)origObj,fname,frame,oname,discrete);
     break;
   case cLoadTypeMMDStr:
-	 obj=(Object*)ObjectMoleculeReadMMDStr((ObjectMolecule*)origObj,fname,frame);
+	 obj=(Object*)ObjectMoleculeReadMMDStr((ObjectMolecule*)origObj,fname,frame,discrete);
 	 if(!origObj) {
 	   if(obj) {
 		 ObjectSetName(obj,oname);
@@ -1433,7 +1459,8 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 		 sprintf(buf," CmdLoad: MMD-string loaded into object \"%s\".\n",oname);		  
 	   }
 	 } else if(origObj) {
-		ExecutiveUpdateObjectSelection(origObj);
+      if(finish)
+        ExecutiveUpdateObjectSelection(origObj);
 		sprintf(buf," CmdLoad: MMD-string appended into object \"%s\".\n",oname);
 	 }
 	 break;

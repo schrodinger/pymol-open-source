@@ -121,7 +121,7 @@ class SDF:
          s = self.file.readline()
          if not s:
             return None
-         elif s[0:4]=='$$$$':
+         elif s[0:4]==r'$$$$':
             return SDFRec(cur)
          else:
             cur.append(s)

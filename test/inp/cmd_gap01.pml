@@ -18,5 +18,5 @@ color red,(t1 &!(t1 in t2))
 hide all
 show lines,(prot | t1)
 save cmp/cmd_gap01.01.pdb,(t3)
-
+refresh
 quit

@@ -29,9 +29,10 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"PConv.h"
 
+
 void SymmetryAttemptGeneration(CSymmetry *I)
 {
-#ifdef PYMOL_XRAY
+#ifdef _PYMOL_XRAY
   PyObject *mats;
   int a,l;
   CrystalUpdate(I->Crystal);

@@ -243,16 +243,27 @@ void CoordSetUpdate(CoordSet *I)
 {
   int a;
   int i;
+  ObjectMolecule *obj;
+  obj=I->Obj;
   if(!I->Color) /* colors invalidated */
 	 {
 		I->Color=VLAlloc(int,I->NIndex);
 		if(I->Color) {
-		  for(a=0;a<I->Obj->NAtom;a++)
-			 {
-				i=I->AtmToIdx[a];
-				if(i>=0) 
-				  I->Color[i]=I->Obj->AtomInfo[a].color;
-			 }
+        if(obj->DiscreteFlag)
+          for(a=0;a<I->Obj->NAtom;a++) {
+            if(obj->DiscreteCSet[a]==I) {
+              i = obj->DiscreteAtmToIdx[a];
+              if(i>=0) 
+                I->Color[i]=obj->AtomInfo[a].color;
+            }
+          }
+        else 
+          for(a=0;a<I->Obj->NAtom;a++)
+            {
+              i=I->AtmToIdx[a];
+              if(i>=0) 
+                I->Color[i]=obj->AtomInfo[a].color;
+            }
 		}
 	 }
   OrthoBusyFast(0,I->NRep);
@@ -368,6 +379,7 @@ CoordSet *CoordSetNew(void)
   I->NRep=cRepCnt;
   I->TmpSymmetry = NULL;
   I->Name[0]=0;
+  I->Obj = NULL;
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   return(I);
@@ -390,13 +402,14 @@ CoordSet *CoordSetCopy(CoordSet *cs)
     *(v0++)=*(v1++);
     *(v0++)=*(v1++);
   }
-
-  nAtom = cs->Obj->NAtom;
-  I->AtmToIdx = Alloc(int,nAtom);
-  i0=I->AtmToIdx;
-  i1=cs->AtmToIdx;
-  for(a=0;a<nAtom;a++)
-    *(i0++)=*(i1++);
+  if(I->AtmToIdx) {
+    nAtom = cs->Obj->NAtom;
+    I->AtmToIdx = Alloc(int,nAtom);
+    i0=I->AtmToIdx;
+    i1=cs->AtmToIdx;
+    for(a=0;a<nAtom;a++)
+      *(i0++)=*(i1++);
+  }
 
   I->IdxToAtm = Alloc(int,I->NIndex);
   i0=I->IdxToAtm;
@@ -416,20 +429,41 @@ CoordSet *CoordSetCopy(CoordSet *cs)
 /*========================================================================*/
 void CoordSetExtendIndices(CoordSet *I,int nAtom)
 {
-  int a;
+  int a,b;
+  ObjectMolecule *obj = I->Obj;
+  if(obj->DiscreteFlag) {
+    if(obj->NDiscrete<nAtom) {
+      VLACheck(obj->DiscreteAtmToIdx,int,nAtom);
+      VLACheck(obj->DiscreteCSet,CoordSet*,nAtom);    
+      for(a=obj->NDiscrete;a<nAtom;a++) {
+        obj->DiscreteAtmToIdx[a]=-1;
+        obj->DiscreteCSet[a]=NULL;
+      }
+      obj->NDiscrete = nAtom;
+    }
+
+    if(I->AtmToIdx) { /* convert to discrete if necessary */
+      FreeP(I->AtmToIdx);
+      for(a=0;a<I->NIndex;a++) { 
+        b = I->IdxToAtm[a];
+        obj->DiscreteAtmToIdx[b] = a;
+        obj->DiscreteCSet[b] = I;
+      }
+    }
+  }
   if(I->NAtIndex<nAtom)
 	 {
 		if(I->AtmToIdx) {
-		  I->AtmToIdx = Realloc(I->AtmToIdx,int,nAtom);
-		  ErrChkPtr(I->AtmToIdx);
-		  for(a=I->NAtIndex;a<nAtom;a++)
-			 I->AtmToIdx[a]=-1;
-		  I->NAtIndex = nAtom;
-		} else {
-		  I->AtmToIdx = Alloc(int,nAtom);
-		  for(a=0;a<nAtom;a++)
-			 I->AtmToIdx[a]=-1;
-		  I->NAtIndex = nAtom;
+        I->AtmToIdx = Realloc(I->AtmToIdx,int,nAtom);
+        ErrChkPtr(I->AtmToIdx);
+        for(a=I->NAtIndex;a<nAtom;a++)
+          I->AtmToIdx[a]=-1;
+        I->NAtIndex = nAtom;
+      } else if(!obj->DiscreteFlag) {
+        I->AtmToIdx = Alloc(int,nAtom);
+        for(a=0;a<nAtom;a++)
+          I->AtmToIdx[a]=-1;
+        I->NAtIndex = nAtom;
 		}
 	 }
 }
@@ -438,16 +472,29 @@ void CoordSetAppendIndices(CoordSet *I,int offset)
 	  /* this is going to get impractical down the road...
 		  we need to revise the index system */
 {
-  int a;
-  I->AtmToIdx = Alloc(int,I->NIndex+offset);
+  int a,b;
+  ObjectMolecule *obj = I->Obj;
+
   I->IdxToAtm = Alloc(int,I->NIndex);
-  ErrChkPtr(I->AtmToIdx);
   ErrChkPtr(I->IdxToAtm);
-  for(a=0;a<offset;a++)
-	 I->AtmToIdx[a]=-1;
-  for(a=0;a<I->NIndex;a++) {
-	 I->AtmToIdx[a+offset]=a;
-	 I->IdxToAtm[a]=a+offset;
+  for(a=0;a<I->NIndex;a++)
+    I->IdxToAtm[a]=a+offset;
+  
+  if(obj->DiscreteFlag) {
+    VLACheck(obj->DiscreteAtmToIdx,int,a+offset);
+    VLACheck(obj->DiscreteCSet,CoordSet*,a+offset);
+    for(a=0;a<I->NIndex;a++) {
+      b=a+offset;
+      obj->DiscreteAtmToIdx[b] = a;
+      obj->DiscreteCSet[b] = I;
+    }
+  } else {
+    I->AtmToIdx = Alloc(int,I->NIndex+offset);
+    ErrChkPtr(I->AtmToIdx);
+    for(a=0;a<offset;a++)
+      I->AtmToIdx[a]=-1;
+    for(a=0;a<I->NIndex;a++) 
+      I->AtmToIdx[a+offset]=a;
   }
   I->NAtIndex = I->NIndex + offset;
 }
@@ -480,21 +527,27 @@ void CoordSetStrip(CoordSet *I)
 void CoordSetFree(CoordSet *I)
 {
   int a;
+  ObjectMolecule *obj;
   for(a=0;a<I->NRep;a++)
 	 if(I->Rep[a])
 		I->Rep[a]->fFree(I->Rep[a]);
-  if(I) 
-	 {
-      
-	 FreeP(I->AtmToIdx);
-	 FreeP(I->IdxToAtm);
-	 VLAFreeP(I->Color);
-	 VLAFreeP(I->Coord);
-	 VLAFreeP(I->Rep);
-	 VLAFreeP(I->TmpBond);
+  if(I)  {
+    obj=I->Obj;
+    if(obj)
+      if(obj->DiscreteFlag) /* remove references to the atoms in discrete objects */
+        for(a=0;a<I->NIndex;a++) {
+          obj->DiscreteAtmToIdx[I->IdxToAtm[a]]=-1;
+          obj->DiscreteCSet[I->IdxToAtm[a]]=NULL;
+        } 
+    FreeP(I->AtmToIdx);
+    FreeP(I->IdxToAtm);
+    VLAFreeP(I->Color);
+    VLAFreeP(I->Coord);
+    VLAFreeP(I->Rep);
+    VLAFreeP(I->TmpBond);
     if(I->TmpSymmetry) SymmetryFree(I->TmpSymmetry);
-	 OOFreeP(I);
-	 }
+    OOFreeP(I);
+  }
 }
 
 

@@ -20,5 +20,5 @@ save cmp/cmd_create01.06.pdb,(t5),2
 save cmp/cmd_create01.07.pdb,(t5),3
 save cmp/cmd_create01.08.pdb,(t5),4
 save cmp/cmd_create01.09.pdb,(t5),5
-
+refresh
 quit

@@ -144,7 +144,13 @@ Rep *RepRibbonNew(CoordSet *cs)
   a2=-1;
   for(a1=0;a1<cs->NAtIndex;a1++)
 	 {
-		a=cs->AtmToIdx[a1];
+      if(obj->DiscreteFlag) {
+        if(cs==obj->DiscreteCSet[a1]) 
+          a=obj->DiscreteAtmToIdx[a1];
+        else 
+          a=-1;
+      } else 
+        a=cs->AtmToIdx[a1];
 		if(a>=0)
 		  if(obj->AtomInfo[a1].visRep[cRepRibbon])
 			 if(!obj->AtomInfo[a1].hetatm)
