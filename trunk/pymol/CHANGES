@@ -177,6 +177,10 @@ Current Bugs to Fix
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.94
+
+   * Added support for older, binary-header O/DSN6 maps.
+
 Changes up to 0.93
 
    * Restored ability to read version 0.86 sessions with CGOs.

@@ -1979,8 +1979,11 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
   float prod=1.0F;
   float plus=0.0F;
   float sigma=0.0F;
+  float calc_sigma=0.0F;
+  float calc_mean=0.0F;
+  int normalize;
 
-
+  normalize=(int)SettingGet(cSetting_normalize_o_maps);
   if(state<0) state=I->NState;
   if(I->NState<=state) {
     VLACheck(I->State,ObjectMapState,state);
@@ -1995,87 +1998,91 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
   p = BRIXStr;
 
   ParseNCopy(cc,p,3);
-  got_smiley = (!strcmp(cc,":-)"));
+  got_smiley = (strcmp(cc,":-)")==0);
 
+  if(got_smiley) {
 
-  while((*p)&&(!(
-                 got_origin&&
-                 got_extent&&
-                 got_grid&&
-                 got_cell&&
-                 got_prod&&
-                 got_plus&&
-                 got_sigma))) {
+    /* ASCII BRIX format header */
 
-    if(!got_origin) {
-      pp=ParseWordCopy(cc,p,6);
-      if(WordMatch("origin",cc,true)<0) {
-        p = ParseWordCopy(cc,pp,50);
-        if(sscanf(cc,"%d",&ms->Min[0])==1) {
-          p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%d",&ms->Min[1])==1) {
+    while((*p)&&(!(
+                   got_origin&&
+                   got_extent&&
+                   got_grid&&
+                   got_cell&&
+                   got_prod&&
+                   got_plus&&
+                   got_sigma))) {
+      
+      if(!got_origin) {
+        pp=ParseWordCopy(cc,p,6);
+        if(WordMatch("origin",cc,true)<0) {
+          p = ParseWordCopy(cc,pp,50);
+          if(sscanf(cc,"%d",&ms->Min[0])==1) {
             p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%d",&ms->Min[2])==1) {
-              got_origin=true;
-            }
-          }
-        }
-      }
-    }
-
-    if(!got_extent) {
-      pp=ParseWordCopy(cc,p,6);
-      if(WordMatch("extent",cc,true)<0) {
-        p = ParseWordCopy(cc,pp,50);
-        if(sscanf(cc,"%d",&ms->Max[0])==1) {
-          p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%d",&ms->Max[1])==1) {
-            p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%d",&ms->Max[2])==1) {
-              got_extent=true;
-              ms->Max[0]+=ms->Min[0]-1;
-              ms->Max[1]+=ms->Min[1]-1;
-              ms->Max[2]+=ms->Min[2]-1;
-            }
-          }
-        }
-      }
-    }
-
-
-    if(!got_grid) {
-      pp=ParseWordCopy(cc,p,4);
-      if(WordMatch("grid",cc,true)<0) {
-        p = ParseWordCopy(cc,pp,50);
-        if(sscanf(cc,"%d",&ms->Div[0])==1) {
-          p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%d",&ms->Div[1])==1) {
-            p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%d",&ms->Div[2])==1) {
-              got_grid=true;
-            }
-          }
-        }
-      }
-    }
-
-    if(!got_cell) {
-      pp = ParseWordCopy(cc,p,4);
-      if(WordMatch("cell",cc,true)<0) {
-        p = ParseWordCopy(cc,pp,50);
-
-        if(sscanf(cc,"%f",&ms->Crystal->Dim[0])==1) {
-          p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%f",&ms->Crystal->Dim[1])==1) {
-            p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%f",&ms->Crystal->Dim[2])==1) {
+            if(sscanf(cc,"%d",&ms->Min[1])==1) {
               p = ParseWordCopy(cc,p,50);
-              if(sscanf(cc,"%f",&ms->Crystal->Angle[0])==1) {
+              if(sscanf(cc,"%d",&ms->Min[2])==1) {
+                got_origin=true;
+              }
+            }
+          }
+        }
+      }
+      
+      if(!got_extent) {
+        pp=ParseWordCopy(cc,p,6);
+        if(WordMatch("extent",cc,true)<0) {
+          p = ParseWordCopy(cc,pp,50);
+          if(sscanf(cc,"%d",&ms->Max[0])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%d",&ms->Max[1])==1) {
+              p = ParseWordCopy(cc,p,50);
+              if(sscanf(cc,"%d",&ms->Max[2])==1) {
+                got_extent=true;
+                ms->Max[0]+=ms->Min[0]-1;
+                ms->Max[1]+=ms->Min[1]-1;
+                ms->Max[2]+=ms->Min[2]-1;
+              }
+            }
+          }
+        }
+      }
+      
+      
+      if(!got_grid) {
+        pp=ParseWordCopy(cc,p,4);
+        if(WordMatch("grid",cc,true)<0) {
+          p = ParseWordCopy(cc,pp,50);
+          if(sscanf(cc,"%d",&ms->Div[0])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%d",&ms->Div[1])==1) {
+              p = ParseWordCopy(cc,p,50);
+              if(sscanf(cc,"%d",&ms->Div[2])==1) {
+                got_grid=true;
+              }
+            }
+          }
+        }
+      }
+      
+      if(!got_cell) {
+        pp = ParseWordCopy(cc,p,4);
+        if(WordMatch("cell",cc,true)<0) {
+          p = ParseWordCopy(cc,pp,50);
+          
+          if(sscanf(cc,"%f",&ms->Crystal->Dim[0])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%f",&ms->Crystal->Dim[1])==1) {
+              p = ParseWordCopy(cc,p,50);
+              if(sscanf(cc,"%f",&ms->Crystal->Dim[2])==1) {
                 p = ParseWordCopy(cc,p,50);
-                if(sscanf(cc,"%f",&ms->Crystal->Angle[1])==1) {
+                if(sscanf(cc,"%f",&ms->Crystal->Angle[0])==1) {
                   p = ParseWordCopy(cc,p,50);
-                  if(sscanf(cc,"%f",&ms->Crystal->Angle[2])==1) {
-                    got_cell=true;
+                  if(sscanf(cc,"%f",&ms->Crystal->Angle[1])==1) {
+                    p = ParseWordCopy(cc,p,50);
+                    if(sscanf(cc,"%f",&ms->Crystal->Angle[2])==1) {
+                      got_cell=true;
+                    }
                   }
                 }
               }
@@ -2083,39 +2090,116 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
           }
         }
       }
-    }
-
-    if(!got_plus) {
-      pp=ParseWordCopy(cc,p,4);
-      if(WordMatch("plus",cc,true)<0) {
-        p = ParseWordCopy(cc,pp,50);
-        if(sscanf(cc,"%f",&plus)==1) {
-          got_plus=true;
+      
+      if(!got_plus) {
+        pp=ParseWordCopy(cc,p,4);
+        if(WordMatch("plus",cc,true)<0) {
+          p = ParseWordCopy(cc,pp,50);
+          if(sscanf(cc,"%f",&plus)==1) {
+            got_plus=true;
+          }
         }
       }
-    }
-
-    if(!got_prod) {
-      pp=ParseWordCopy(cc,p,4);
-      if(WordMatch("prod",cc,true)<0) {
-        p = ParseWordCopy(cc,pp,50);
-        if(sscanf(cc,"%f",&prod)==1) {
-          got_prod=true;
+      
+      if(!got_prod) {
+        pp=ParseWordCopy(cc,p,4);
+        if(WordMatch("prod",cc,true)<0) {
+          p = ParseWordCopy(cc,pp,50);
+          if(sscanf(cc,"%f",&prod)==1) {
+            got_prod=true;
+          }
         }
       }
-    }
-
-    if(!got_sigma) {
-      pp = ParseWordCopy(cc,p,5);
-      if(WordMatch("sigma",cc,true)<0) {
-        p = ParseWordCopy(cc,pp,50);
-        if(sscanf(cc,"%f",&sigma)==1) {
-          got_sigma=true;
+      
+      if(!got_sigma) {
+        pp = ParseWordCopy(cc,p,5);
+        if(WordMatch("sigma",cc,true)<0) {
+          p = ParseWordCopy(cc,pp,50);
+          if(sscanf(cc,"%f",&sigma)==1) {
+            got_sigma=true;
+          }
         }
       }
+      
+      p++;
+    }
+  } else {
+    /* Binary DSN6 format */
+
+    /* first, determine whether or not we need to byte-swap the header... */
+
+    int passed_endian_check = false;
+    short int *shint_ptr;
+    float scale_factor;
+    char tmp_char;
+    int a;
+    int start_swap_at = 0;
+    shint_ptr = (short int*)(p+18*2);
+    if(*shint_ptr==100) {
+      passed_endian_check = true;
+      start_swap_at = 512; /* don't byte-swap header */
+    }
+    
+    p = BRIXStr + start_swap_at;
+    for( a=start_swap_at; a<bytes; a+=2) {
+      tmp_char = *p;
+      *p = *(p+1);
+      *(p+1) = tmp_char;
+      p+=2;
     }
 
-    p++;
+    p = BRIXStr;
+
+    if(*shint_ptr==100) {
+      passed_endian_check = true;
+    }
+    
+    if(!passed_endian_check) {
+      PRINTFB(FB_Errors,FB_ObjectMap) 
+        " Error: This looks like a DSN6 map file, but I can't match endianness.\n"
+        ENDFB;
+    } else {
+      shint_ptr = (short int*)p;
+      
+      ms->Min[0] = *(shint_ptr++);
+      ms->Min[1] = *(shint_ptr++);
+      ms->Min[2] = *(shint_ptr++);
+      got_origin = true;
+      
+      ms->Max[0] = *(shint_ptr++);
+      ms->Max[1] = *(shint_ptr++);
+      ms->Max[2] = *(shint_ptr++);
+      got_extent=true;
+      ms->Max[0]+=ms->Min[0]-1;
+      ms->Max[1]+=ms->Min[1]-1;
+      ms->Max[2]+=ms->Min[2]-1;
+      
+      ms->Div[0] = *(shint_ptr++);
+      ms->Div[1] = *(shint_ptr++);
+      ms->Div[2] = *(shint_ptr++);
+      got_grid = true;
+      
+      ms->Crystal->Dim[0] = (float)(*(shint_ptr++));
+      ms->Crystal->Dim[1] = (float)(*(shint_ptr++));
+      ms->Crystal->Dim[2] = (float)(*(shint_ptr++));
+      ms->Crystal->Angle[0] = (float)(*(shint_ptr++));
+      ms->Crystal->Angle[1] = (float)(*(shint_ptr++));
+      ms->Crystal->Angle[2] = (float)(*(shint_ptr++));
+      got_cell = true;
+      
+      prod = (float)(*(shint_ptr++)) / 100.0F;
+      got_prod = true;
+      
+      plus = (float)(*(shint_ptr++));
+      got_plus = true;
+      
+      scale_factor = (float)(*(shint_ptr++));
+      
+      for(a=0;a<3;a++) {
+        ms->Crystal->Dim[a]/=scale_factor;
+        ms->Crystal->Angle[a]/= scale_factor;
+      }
+    }
   }
   
   if(got_origin&&
@@ -2123,9 +2207,13 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
      got_grid&&
      got_cell&&
      got_plus&&
-     got_prod&&
-     got_sigma) {
+     got_prod) {
+
     
+    PRINTFB(FB_Blather,FB_ObjectMap) 
+      " BRIXMapToStr: Prod = %8.3f, Plus = %8.3f\n",prod,plus
+      ENDFB;
+
     ms->FDim[0]=ms->Max[0]-ms->Min[0]+1;
     ms->FDim[1]=ms->Max[1]-ms->Min[1]+1;
     ms->FDim[2]=ms->Max[2]-ms->Min[2]+1;
@@ -2144,7 +2232,10 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
         int yblocks = ((ms->FDim[1]-1)/block_size)+1;
         int zblocks = ((ms->FDim[2]-1)/block_size)+1;
         int cc,bb,aa,ia,ib,ic,xa,xb,xc;
-        
+        double sum = 0.0;
+        double sumsq = 0.0;
+        int n_pts = 0;
+
         p=BRIXStr + 512;
         for(cc=0;cc<zblocks;cc++) {
           for(bb=0;bb<yblocks;bb++) {
@@ -2165,10 +2256,12 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
                     ia = xa + ms->Min[0];
                     v[0]=ia/((float)ms->Div[0]);
                     
-                    
                     dens = (((float)(*((unsigned char*)(p++)))) - plus) / prod;
                     if((ia<=ms->Max[0])&&(ib<=ms->Max[1])&&(ic<=ms->Max[2])) {
                       F3(ms->Field->data,xa,xb,xc) = dens;
+                      sumsq+=dens*dens;
+                      sum+=dens;
+                      n_pts++;
                       if(maxd<dens) maxd = dens;
                       if(mind>dens) mind = dens;
                       transform33f3f(ms->Crystal->FracToReal,v,vr);
@@ -2183,6 +2276,12 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
             }
           }
         }
+
+        if(n_pts>1) {
+          calc_mean = (float)(sum/n_pts);
+          calc_sigma = (float)sqrt1d((sumsq - (sum*sum/n_pts))/(n_pts-1));
+        }
+        
       }
       
       if(ok) {
@@ -2202,6 +2301,18 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
           }
       }
 
+      if(ok&&normalize) {
+        if(calc_sigma>R_SMALL8) {
+          for(c=0;c<ms->FDim[2];c++) {
+            for(b=0;b<ms->FDim[1];b++) {
+              for(a=0;a<ms->FDim[0];a++) {
+                F3(ms->Field->data,a,b,c) /= calc_sigma;
+              }
+            }
+          }
+        }
+      }
+
       v[2]=(ms->Min[2])/((float)ms->Div[2]);
       v[1]=(ms->Min[1])/((float)ms->Div[1]);
       v[0]=(ms->Min[0])/((float)ms->Div[0]);
@@ -2218,17 +2329,23 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
         " BRIXMapToStr: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
         ENDFB;
 
+      if(got_sigma) {
+        PRINTFB(FB_Details,FB_ObjectMap) 
+          " BRIXMapToStr: Reported Sigma = %8.3f\n",sigma
+          ENDFB;
+      }
+
       PRINTFB(FB_Details,FB_ObjectMap) 
-        " BRIXMapToStr: Sigma = %8.3f\n",sigma
+        " BRIXMapToStr: Calculated Mean = %8.3f, Sigma = %8.3f\n",calc_mean,calc_sigma
         ENDFB;
-      
+
       ms->Active=true;
       ObjectMapUpdateExtents(I);
       printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
     }
   } else {
     PRINTFB(FB_Errors,FB_ObjectMap) 
-      " Error: unable to read BRIX file.\n"
+      " Error: unable to read BRIX/DSN6 file.\n"
       ENDFB;
   }
   

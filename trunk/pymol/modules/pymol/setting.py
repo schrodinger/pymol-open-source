@@ -342,6 +342,7 @@ if __name__=='pymol.setting':
       cgo_dot_width         = 302
       cgo_dot_radius        = 303
       defer_updates         = 304
+      normalize_o_maps      = 305
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

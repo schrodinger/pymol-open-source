@@ -95,6 +95,7 @@ EXAMPLE
    movie.tdroll 360,360,360,5
    
 '''
+   first = int(first)
    rangex = float(rangex)
    rangey = float(rangey)
    rangez = float(rangez)
