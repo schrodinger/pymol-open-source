@@ -1,7 +1,7 @@
 Summary: PyMOL Molecular Graphics System
 Name: pymol
 Version: 0.82
-Release: 1.rh62.py152
+Release: 1.rh70.py152
 Copyright: Python
 Group: Development/Tools
 URL: http://www.pymol.org
@@ -24,8 +24,8 @@ valuable tasks (such as editing PDB files) to assist you in your research.
 %prep
 
 %setup
-cp setup/Rules.linux-rpm-rh62-py152 Rules.make
-cp setup/pymol.com.linux-rpm-rh62-py152 pymol.com
+cp setup/Rules.linux-rpm-rh70-py152 Rules.make
+cp setup/pymol.com.linux-rpm-rh70-py152 pymol.com
 
 %build
 make
