@@ -1,0 +1,3 @@
+#!/bin/csh -f
+tkdiff ref/$1 cmp/$1
+

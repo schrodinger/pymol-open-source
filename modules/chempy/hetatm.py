@@ -20,6 +20,38 @@ def generate(model, topology= None, forcefield = None ):
    return connected.convert_to_indexed()
 
 #---------------------------------------------------------------------------------
+def assign_types(model, topology = None, forcefield = None ):
+   if str(model.__class__) != 'chempy.models.Indexed':
+      raise ValueError('model is not an "Indexed" model object')
+   nAtom = model.nAtom
+   if nAtom:
+      tmpl = topology.normal
+      ffld = forcefield.normal
+      res_list = model.get_residues()
+      if len(res_list):
+         for a in res_list:
+            base = model.atom[a[0]]
+            resn = base.resn
+            if not tmpl.has_key(resn):
+               raise RuntimeError("unknown residue type '"+resn+"'")
+            else:
+               # reassign atom names and build dictionary
+               dict = {}
+               aliases = tmpl[resn]['aliases']
+               for b in range(a[0],a[1]):
+                  at = model.atom[b]
+                  if aliases.has_key(at.name):
+                     at.name = aliases[at.name]
+                  dict[at.name] = b
+                  if forcefield:
+                     k = (resn,at.name)
+                     if ffld.has_key(k):
+                        at.text_type = ffld[k]['type']
+                        at.partial_charge = ffld[k]['charge']
+                     else:
+                        raise RuntimeError("no parameters for '"+str(k)+"'")
+
+#---------------------------------------------------------------------------------
 def add_bonds(model, topology = None, forcefield = None ):
    if str(model.__class__) != 'chempy.models.Indexed':
       raise ValueError('model is not an "Indexed" model object')

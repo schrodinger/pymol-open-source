@@ -27,6 +27,8 @@ import types
 import pymol
 import os
 
+from chempy import io
+
 lock_api = pymol.lock_api
 
 def commands():
@@ -193,6 +195,7 @@ PyMOL COMMAND LINE OPTIONS
       .mmod   Macromodel format to be loaded on startup
       .mol    MDL MOL file to be loaded on startup
       .xplor  X-PLOR Map file to be loaded on startup
+      .pkl    Pickled Indexed Models from Chempy 
    '''
    help('launching')
 
@@ -701,7 +704,7 @@ USAGE
          if _cmd.stereo(1):
             r = _stereo(1)
          else:
-            print " error: stereo not available"
+            print "Error: stereo not available"
       finally:
          unlock();
    else:
@@ -1899,13 +1902,25 @@ def load_model(*arg):
       elif len(arg)==3:
          oname = string.strip(arg[1])
          state = int(arg[2])-1
-         r = _cmd.load(oname,model,state,ftype)
+         r = _cmd.load_object(oname,model,state,ftype)
       else:
          print "Error: invalid arguments."
    finally:
       unlock()
    return r
-   
+
+def _load(oname,finfo,state,ftype):
+   r = 1
+   if ftype!=8:
+      r = _cmd.load(oname,finfo,state,ftype)
+   else:
+      try:
+         x = io.pkl.fromFile(finfo)
+         r = _cmd.load_object(oname,x,state,ftype)            
+      except:
+         print 'Error: can not load file "%s"' % finfo
+   return r
+
 def load(*arg):
    '''
 DESCRIPTION
@@ -1943,17 +1958,19 @@ PYMOL API
          ftype = 4
       elif re.search("\.xplor$",arg[0]):
          ftype = 7
+      elif re.search("\.pkl$",arg[0]):
+         ftype = 8
       if len(arg)==1:
          oname = re.sub("[^/]*\/","",arg[0])
-         oname = re.sub("\.pdb|\.mol|\.mmod|\.xplor","",oname)
-         r = _cmd.load(oname,fname,state,ftype)
+         oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.xplor$|\.pkl$","",oname)
+         r = _load(oname,fname,state,ftype)
       elif len(arg)==2:
          oname = string.strip(arg[1])
-         r = _cmd.load(oname,fname,state,ftype)
+         r = _load(oname,fname,state,ftype)
       elif len(arg)==3:
          oname = string.strip(arg[1])
          state = int(arg[2])-1
-         r = _cmd.load(oname,fname,state,ftype)
+         r = _load(oname,fname,state,ftype)
       elif len(arg)==4:
          if loadable.has_key(arg[3]):
             ftype = loadable[arg[3]]
@@ -1961,9 +1978,9 @@ PYMOL API
             ftype = int(arg[3])
          state = int(arg[2])-1
          oname = string.strip(arg[1])
-         r = _cmd.load(oname,fname,state,ftype)
+         r = _load(oname,fname,state,ftype)
       else:
-         print "argument error."
+         print "Error: invalid arguments."
    finally:
       unlock()
    return r

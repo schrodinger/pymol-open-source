@@ -123,7 +123,6 @@ def parse(s):
                            com0[nest] = script[nest-1].readline()
                            if not com0[nest]: break
                            parse(com0[nest])
-                           exec(pymol,pymol_names,pymol_names)
                         nest=nest-1
                         script[nest].close()
                      else: # nothing found, try literal python
@@ -135,7 +134,6 @@ def parse(s):
                com0[nest] = next[nest-1][1]
                cont[nest]=''
                parse(com0[nest])
-               exec(pymol,pymol_names,pymol_names)
                nest=nest-1
    except RuntimeError,e:
       pass

@@ -24,7 +24,103 @@ def generate(model, forcefield = protein_amber, histidine = 'HIE' ):
    return connected.convert_to_indexed()
 
 #---------------------------------------------------------------------------------
+def assign_types(model, forcefield = protein_amber, histidine = 'HIE' ):
+   '''   
+assigns types: takes HIS -> HID,HIE,HIP and CYS->CYX where appropriate
+but does not add any bonds!
+'''
+   if str(model.__class__) != 'chempy.models.Indexed':
+      raise ValueError('model is not an "Indexed" model object')
+   if model.nAtom:
+      crd = model.get_coord_list()
+      nbr = Neighbor(crd,MAX_BOND_LEN)
+      res_list = model.get_residues()
+      if len(res_list):
+         for a in res_list:
+            base = model.atom[a[0]]
+            if not base.hetatm:
+               resn = base.resn
+               if resn == 'HIS':
+                  for c in range(a[0],a[1]): # this residue
+                     model.atom[c].resn = histidine
+                  resn = histidine
+               # find out if this is n or c terminal residue
+               names = []
+               for b in range(a[0],a[1]):
+                  names.append(model.atom[b].name)
+               tmpl = protein_residues.normal
+               if forcefield:
+                  ffld = forcefield.normal
+               for b in ('HT','HT1','HT2','HT3','H1','H2','H3'):
+                  if b in names:
+                     tmpl = protein_residues.n_terminal
+                     if forcefield:
+                        ffld = forcefield.n_terminal
+                     break
+               for b in ('OXT','O2','OT1','OT2'):
+                  if b in names:
+                     tmpl = protein_residues.c_terminal
+                     if forcefield:
+                        ffld = forcefield.c_terminal
+                     break
+               if not tmpl.has_key(resn):
+                  raise RuntimeError("unknown residue type '"+resn+"'")
+               else:
+                  # reassign atom names and build dictionary
+                  dict = {}
+                  aliases = tmpl[resn]['aliases']
+                  for b in range(a[0],a[1]):
+                     at = model.atom[b]
+                     if aliases.has_key(at.name):
+                        at.name = aliases[at.name]
+                     dict[at.name] = b
+                     if forcefield:
+                        k = (resn,at.name)
+                        if ffld.has_key(k):
+                           at.text_type = ffld[k]['type']
+                           at.partial_charge = ffld[k]['charge']
+                        else:
+                           raise RuntimeError("no parameters for '"+str(k)+"'")
+                  if dict.has_key('SG'): # cysteine
+                     cur = dict['SG']
+                     at = model.atom[cur]
+                     lst = nbr.get_neighbors(at.coord)
+                     for b in lst:
+                        if b>cur: # only do this once (only when b>cur - i.e. this is 1st CYS)
+                           at2 = model.atom[b]
+                           if at2.name=='SG':
+                              if not at2.in_same_residue(at):
+                                 dst = distance(at.coord,at2.coord)
+                                 if dst<=MAX_BOND_LEN:
+                                    if forcefield:
+                                       for c in range(a[0],a[1]): # this residue
+                                          atx = model.atom[c]
+                                          atx.resn = 'CYX'
+                                          resn = atx.resn
+                                          if (c<=b):
+                                             k = ('CYX',atx.name)
+                                             if ffld.has_key(k):
+                                                atx.text_type = ffld[k]['type']
+                                                atx.partial_charge = ffld[k]['charge']
+                                             else:
+                                                raise RuntimeError("no parameters for '"+str(k)+"'")
+                                       for d in res_list: # other residue
+                                          if (b>=d[0]) and (b<d[1]):
+                                             for c in range(d[0],d[1]):
+                                                atx = model.atom[c]
+                                                atx.resn = 'CYX'
+                                                # since b>cur, assume assignment later on
+                                 break
+   
+#---------------------------------------------------------------------------------
 def add_bonds(model, forcefield = protein_amber, histidine = 'HIE' ):
+   '''
+add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
+
+(1) fixes aliases, assigns types, makes HIS into HIE,HID, or HIP
+    and changes cystine to CYX
+(2) adds bonds between existing atoms
+   '''
    if str(model.__class__) != 'chempy.models.Indexed':
       raise ValueError('model is not an "Indexed" model object')
    if model.nAtom:
@@ -106,9 +202,9 @@ def add_bonds(model, forcefield = protein_amber, histidine = 'HIE' ):
                      at = model.atom[cur]
                      lst = nbr.get_neighbors(at.coord)
                      for b in lst:
-                        if b!=cur:
+                        if b>cur: # only do this once (only when b>cur - i.e. this is 1st CYS)
                            at2 = model.atom[b]
-                           if (resn == 'CYS') and (at2.name=='SG'):
+                           if at2.name=='SG':
                               if not at2.in_same_residue(at):
                                  dst = distance(at.coord,at2.coord)
                                  if dst<=MAX_BOND_LEN:
@@ -121,26 +217,18 @@ def add_bonds(model, forcefield = protein_amber, histidine = 'HIE' ):
                                           atx = model.atom[c]
                                           atx.resn = 'CYX'
                                           resn = atx.resn
-                                          if (c<=b):
-                                             k = ('CYX',atx.name)
-                                             if ffld.has_key(k):
-                                                atx.text_type = ffld[k]['type']
-                                                atx.partial_charge = ffld[k]['charge']
-                                             else:
-                                                raise RuntimeError("no parameters for '"+str(k)+"'")
-                                       for d in res_list: # other residue
-                                          if (b>=d[0]) and (b<d[1]):
+                                          k = ('CYX',atx.name)
+                                          if ffld.has_key(k):
+                                             atx.text_type = ffld[k]['type']
+                                             atx.partial_charge = ffld[k]['charge']
+                                          else:
+                                             raise RuntimeError("no parameters for '"+str(k)+"'")
+                                       for d in res_list: 
+                                          if (b>=d[0]) and (b<d[1]): # find other residue
                                              for c in range(d[0],d[1]):
                                                 atx = model.atom[c]
                                                 atx.resn = 'CYX'
-                                                if (d[0]<=a[0]):
-                                                   k = ('CYX',atx.name)
-                                                   if ffld.has_key(k):
-                                                      atx.text_type = ffld[k]['type']
-                                                      atx.partial_charge = ffld[k]['charge']
-                                                   else:
-                                                      raise RuntimeError("no parameters for '"+str(k)+"'")
-                                             
+                                                # since b>cur, assume assignment later on
                                     break
                      
 #---------------------------------------------------------------------------------

@@ -257,7 +257,7 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
   l=strlen(end_str);
   VLACheck(op1.charVLA,char,op1.i2+l+1);
   strcpy(op1.charVLA+op1.i2,end_str);
-  op1.i2+=l;
+  op1.i2+=l+1;
   result=Alloc(char,op1.i2);
   memcpy(result,op1.charVLA,op1.i2);
   VLAFreeP(op1.charVLA);
