@@ -271,112 +271,121 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 		((0xFF& ((unsigned int)(v[1]*255))) <<8)|
 		((0xFF& ((unsigned int)(v[0]*255)) ));
   }
-  ambient=SettingGet(cSetting_ambient);
-  lreflect=SettingGet(cSetting_reflect);
-  direct=SettingGet(cSetting_direct);
 
-  RayExpandPrimitives(I);
-  RayTransformFirst(I);
-
-  BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
-
-  I->NBasis=3; /* light source */
-  BasisInit(I->Basis+2);
-
-  v=SettingGetfv(cSetting_light);
-
-  I->Basis[2].LightNormal[0]=v[0];
-  I->Basis[2].LightNormal[1]=v[1];
-  I->Basis[2].LightNormal[2]=v[2];
-  normalize3f(I->Basis[2].LightNormal);
-  
-  BasisSetupMatrix(I->Basis+2);
-  RayTransformBasis(I,I->Basis+2);
-  BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
-
-  /* IMAGING */
-
-  /* erase buffer */
-  
-  p=(unsigned int*)image; 
-  if(I->BigEndian)
-	 for(a=0;a<height;a++)
-		for(b=0;b<width;b++)
-		  *p++=0x000000FF;  
-  else 
-	 for(a=0;a<height;a++)
-		for(b=0;b<width;b++)
-		  *p++=0xFF000000;  
-
-  /* ray-trace */
-  base[2]=0.0;
-  for(x=0;x<width;x++)
-	 {
-		if(!(x&0xF)) OrthoBusyFast(x,width); /* don't slow down rendering too much */
-		base[0]=(((float)x)/width)*I->Range[0]+I->Volume[0];
-		for(y=0;y<height;y++)
-		  {
-			 base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
-			 
-			 i=BasisHit(I->Basis+1,base,&dist,-1,I->Vert2Prim,I->Primitive,sphere,false,
-							front,back); 
-			 
-			 if(i>=0) {
-
-				RayReflect(I,base,zRay,sphere,dist,surf,impact,reflect,&dotgle);
-				dotgle=-dotgle;
-				direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
-				
-				transform33f3f(I->Basis[2].Matrix,impact,impact2);
-
-				if(BasisHit(I->Basis+2,impact2,&dist2,i,
-								I->Vert2Prim,I->Primitive,sphere,true,0,0)<0) {
+  if(!I->NPrimitive) {
+    p=(unsigned int*)image; 
+    for(x=0;x<width;x++)
+      for(y=0;y<height;y++)
+        *(p++)=background;
+  } else {
+    
+    ambient=SettingGet(cSetting_ambient);
+    lreflect=SettingGet(cSetting_reflect);
+    direct=SettingGet(cSetting_direct);
+    
+    RayExpandPrimitives(I);
+    RayTransformFirst(I);
+    
+    BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
+    
+    I->NBasis=3; /* light source */
+    BasisInit(I->Basis+2);
+    
+    v=SettingGetfv(cSetting_light);
+    
+    I->Basis[2].LightNormal[0]=v[0];
+    I->Basis[2].LightNormal[1]=v[1];
+    I->Basis[2].LightNormal[2]=v[2];
+    normalize3f(I->Basis[2].LightNormal);
+    
+    BasisSetupMatrix(I->Basis+2);
+    RayTransformBasis(I,I->Basis+2);
+    BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
+    
+    /* IMAGING */
+    
+    /* erase buffer */
+    
+    p=(unsigned int*)image; 
+    if(I->BigEndian)
+      for(a=0;a<height;a++)
+        for(b=0;b<width;b++)
+          *p++=0x000000FF;  
+    else 
+      for(a=0;a<height;a++)
+        for(b=0;b<width;b++)
+          *p++=0xFF000000;  
+    
+    /* ray-trace */
+    base[2]=0.0;
+    for(x=0;x<width;x++)
+      {
+        if(!(x&0xF)) OrthoBusyFast(x,width); /* don't slow down rendering too much */
+        base[0]=(((float)x)/width)*I->Range[0]+I->Volume[0];
+        for(y=0;y<height;y++)
+          {
+            base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
+            
+            i=BasisHit(I->Basis+1,base,&dist,-1,I->Vert2Prim,I->Primitive,sphere,false,
+                       front,back); 
+            
+            if(i>=0) {
+              
+              RayReflect(I,base,zRay,sphere,dist,surf,impact,reflect,&dotgle);
+              dotgle=-dotgle;
+              direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
+              
+              transform33f3f(I->Basis[2].Matrix,impact,impact2);
+              
+              if(BasisHit(I->Basis+2,impact2,&dist2,i,
+                          I->Vert2Prim,I->Primitive,sphere,true,0,0)<0) {
+                
+                dotgle=-dot_product3f(surf,I->Basis[2].LightNormal);
+                if(dotgle<0.0) dotgle=0.0;
+                reflect_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
+                excess=pow(dotgle,SettingGet(cSetting_spec_power))*
+                  SettingGet(cSetting_spec_reflect);
+              } else {
+                excess=0.0;
+                reflect_cmp=0.0;
+              }
 				  
-				  dotgle=-dot_product3f(surf,I->Basis[2].LightNormal);
-				  if(dotgle<0.0) dotgle=0.0;
-				  reflect_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
-				  excess=pow(dotgle,SettingGet(cSetting_spec_power))*
-					 SettingGet(cSetting_spec_reflect);
-				} else {
-				  excess=0.0;
-				  reflect_cmp=0.0;
-				}
-				  
-
-				bright=ambient+(1.0-ambient)*(direct*direct_cmp+
-														(1.0-direct)*direct_cmp*lreflect*reflect_cmp);
-
-				if(bright>1.0) bright=1.0;
-				if(bright<0.0) bright=0.0;
-				c[0]=(bright*I->Primitive[i].c1[0]+excess)*255.0;
-				c[1]=(bright*I->Primitive[i].c1[1]+excess)*255.0;
-				c[2]=(bright*I->Primitive[i].c1[2]+excess)*255.0;
-				if(c[0]>255.0) c[0]=255.0;
-				if(c[1]>255.0) c[1]=255.0;
-				if(c[2]>255.0) c[2]=255.0;
-				/*			{ int a1,b1,c1;
-				if(MapInsideXY(I->Basis[1].Map,base,&a1,&b1,&c1))				
-				  {
-					 c[0]=255.0*((float)a1)/I->Basis[1].Map->iMax[0];
-					 c[1]=255.0*((float)b1)/I->Basis[1].Map->iMax[1];
-					 c[2]=0xFF&(c[0]*c[1]);
-				  }}
-				*/
-
-				if(I->BigEndian) {
-				  *(image+((width)*y)+x)=
-					 0x000000FF|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
-				} else {
-				  *(image+((width)*y)+x)=
-					 0xFF000000|(c[2]<<16)|(c[1]<<8)|c[0];
-				}
-			 } else {
-				
-				*(image+((width)*y)+x)=
-				  background;
-			 }
-		  }
-	 }
+              
+              bright=ambient+(1.0-ambient)*(direct*direct_cmp+
+                                            (1.0-direct)*direct_cmp*lreflect*reflect_cmp);
+              
+              if(bright>1.0) bright=1.0;
+              if(bright<0.0) bright=0.0;
+              c[0]=(bright*I->Primitive[i].c1[0]+excess)*255.0;
+              c[1]=(bright*I->Primitive[i].c1[1]+excess)*255.0;
+              c[2]=(bright*I->Primitive[i].c1[2]+excess)*255.0;
+              if(c[0]>255.0) c[0]=255.0;
+              if(c[1]>255.0) c[1]=255.0;
+              if(c[2]>255.0) c[2]=255.0;
+              /*			{ int a1,b1,c1;
+                        if(MapInsideXY(I->Basis[1].Map,base,&a1,&b1,&c1))				
+                        {
+                        c[0]=255.0*((float)a1)/I->Basis[1].Map->iMax[0];
+                        c[1]=255.0*((float)b1)/I->Basis[1].Map->iMax[1];
+                        c[2]=0xFF&(c[0]*c[1]);
+                        }}
+              */
+              
+              if(I->BigEndian) {
+                *(image+((width)*y)+x)=
+                  0x000000FF|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
+              } else {
+                *(image+((width)*y)+x)=
+                  0xFF000000|(c[2]<<16)|(c[1]<<8)|c[0];
+              }
+            } else {
+              
+              *(image+((width)*y)+x)=
+                background;
+            }
+          }
+      }
+  }
 
   if(antialias) {
 	 OrthoBusyFast(9,10);

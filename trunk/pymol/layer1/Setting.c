@@ -209,17 +209,17 @@ void SettingInit(void)
 			"bg_rgb");
 
   I->NSetting++;
-  I->Setting[cSetting_ambient].Value[0] = 0.4;
+  I->Setting[cSetting_ambient].Value[0] = 0.30;
   strcpy(I->Setting[cSetting_ambient].Name,
 			"ambient");
 
   I->NSetting++;
-  I->Setting[cSetting_direct].Value[0] = 0.25;
+  I->Setting[cSetting_direct].Value[0] = 0.35;
   strcpy(I->Setting[cSetting_direct].Name,
 			"direct");
 
   I->NSetting++;
-  I->Setting[cSetting_reflect].Value[0] = 1.1;
+  I->Setting[cSetting_reflect].Value[0] = 1.2;
   strcpy(I->Setting[cSetting_reflect].Name,
 			"reflect");
 
