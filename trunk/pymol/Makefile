@@ -74,6 +74,7 @@ unix: .includes .depends .update
 	/bin/rm -f .update .includes
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
+
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
@@ -135,6 +136,12 @@ irix-mindep: semistatic
 	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
 	cd $(MINDEP);chown -R nobody.nobody pymol
 	cd $(MINDEP);tar -cvf - pymol |gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
+
+# Sharp3D display running under linux
+
+unix-s3d: .includes .depends .update 
+	cd sharp3d/src; $(MAKE)
+	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o sharp3d/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS) -Lsharp3d/lib -lsgl.1.3 -lspl.1.2 
 
 #windows: .includes .depends .update 
 #
@@ -223,6 +230,7 @@ osx-python-standalone:
 	cc layerOSX/bundle/python.c -o $(OSXEXE) $(DEFS)\
 $(PYTHON_INC_DIR) -Lext/lib -Lext/lib/python2.3/config -lpython2.3 \
 -framework CoreFoundation -lc -Wno-long-double -D_PYMOL_OSX_PYTHONHOME
+
 
 osx: 
 	cd layerOSX/src; $(MAKE)

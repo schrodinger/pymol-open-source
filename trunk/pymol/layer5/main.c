@@ -760,7 +760,7 @@ static void MainBusyIdle(void)
     ENDFD;
 
 #ifdef _PYMOL_SHARP3D
-// keep the window on even coordinates to preserve L/R stereo...
+  /* keep the window on even coordinates to preserve L/R stereo... */
  {
    int x,y;
    x = glutGet(GLUT_WINDOW_X);
@@ -880,9 +880,9 @@ static void MainBusyIdle(void)
 
         PRunString("exec_deferred()");
 #ifdef _PYMOL_SHARP3D
-        //PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");
+        /*PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");*/
         PParse("stereo on");
-        //PParse("wizard demo,cartoon");
+        /*PParse("wizard demo,cartoon");*/
 #endif
         PUnblock();
 #endif
@@ -997,8 +997,8 @@ SetConsoleCtrlHandler(
 
     case 0: /* default/autodetect (stereo on win/unix; mono on macs) */
 #ifdef _PYMOL_SHARP3D
-      G->Option->winX = 794+220;
-      G->Option->winY = 547;
+      /*      G->Option->winX = 794+220; */
+      /* G->Option->winY = 547; */
 
       glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_DOUBLE| P_GLUT_STENCIL );
       G->StereoCapable = 1;
@@ -1058,7 +1058,7 @@ SetConsoleCtrlHandler(
   } 
 
 #ifdef _PYMOL_SHARP3D
-  	// Setup OpenGL
+  /* Setup OpenGL */
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 #endif
@@ -1076,6 +1076,7 @@ SetConsoleCtrlHandler(
      
 #ifdef _PYMOL_SHARP3D
      SettingSetGlobal_b(G,cSetting_overlay,1);
+     SettingSetGlobal_f(G,cSetting_stereo_shift,2.5); /* increase strength */
      SettingSetGlobal_b(G,cSetting_overlay_lines,1);
 #endif
      
@@ -1166,7 +1167,7 @@ int was_main(void)
         PyMOLOption global */
      
 #ifdef _PYMOL_SHARP3D
-     //  InternalGUI = 0;
+     /*  InternalGUI = 0; */
      options->internal_feedback = 0;
      options->show_splash = 0;
 #endif
