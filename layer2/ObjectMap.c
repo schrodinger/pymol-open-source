@@ -835,7 +835,7 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int frame)
   char *buffer,*p;
   float mat[9];
 
-  f=fopen(fname,"r");
+  f=fopen(fname,"rb");
   if(!f)
 	 ok=ErrMessage("ObjectMapLoadCCP4File","Unable to open file!");
   else
@@ -880,7 +880,7 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
   char *buffer,*p;
   float mat[9];
 
-  f=fopen(fname,"r");
+  f=fopen(fname,"rb");
   if(!f)
 	 ok=ErrMessage("ObjectMapLoadXPLORFile","Unable to open file!");
   else
