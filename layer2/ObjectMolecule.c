@@ -1836,8 +1836,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         ai->segi[0]=0;
 
         if(ok) {
-          p=nskip(p,3);
-          p=ncopy(ai->name,p,3);
+          p=nskip(p,2);
+          p=ncopy(ai->name,p,4);
           UtilCleanStr(ai->name);
           if(ai->name[0]==0) {
             if(ai->customType<=14) strcpy(ai->name,"C");
