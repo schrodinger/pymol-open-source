@@ -709,6 +709,26 @@ int OrthoDrag(int x, int y,int mod)
   return(handled);
 }
 /*========================================================================*/
+void OrthoSplash(void) 
+{
+  OrthoNewLine(NULL);
+  OrthoAddOutput("PyMOL Molecular Graphics System, Version ");
+  OrthoAddOutput(_PyMOL_VERSION);
+  OrthoAddOutput(".");
+  OrthoNewLine(NULL);
+  OrthoAddOutput("Copyright (C) 1998-2000 by DeLano Scientific.\nAll Rights Reserved.\n \n");
+  OrthoAddOutput("Principle Author:  Warren L. DeLano, Ph.D.\n \n");
+  OrthoAddOutput("Major Authors and Contributors:\n \n");
+  OrthoAddOutput("      Ralf W. Grosse-Kunstleve, Ph.D.\n \n");
+  OrthoAddOutput("This software is open source and freely available.\n");
+  OrthoAddOutput("Updates can be found at \"http://www.pymol.org\".\n \n");
+  OrthoAddOutput("Enter \"help commands\" for a list of commands.\n");
+  OrthoAddOutput("Enter \"help <command-name>\" for information on a specific command.\n \n");
+  OrthoAddOutput("Other help topics include:\n");
+  OrthoAddOutput("    \"keyboard\", \"mouse\", \"selections\", \"api\", and \"examples\".\n \n");
+  OrthoAddOutput("Hit TAB to toggle text; type \"cls\" to clear.\n \n");
+}
+/*========================================================================*/
 void OrthoInit(void)
 {
   OrthoObject *I=&Ortho;
@@ -736,22 +756,7 @@ void OrthoInit(void)
   I->Saved[0]=0;
   I->DirtyFlag = true;
 
-  OrthoNewLine(NULL);
-  OrthoAddOutput("PyMOL Molecular Graphics System, Version ");
-  OrthoAddOutput(_PyMOL_VERSION);
-  OrthoAddOutput(".");
-  OrthoNewLine(NULL);
-  OrthoAddOutput("Copyright (C) 1998-2000 by DeLano Scientific.\nAll Rights Reserved.\n \n");
-  OrthoAddOutput("Principle Author:  Warren L. DeLano, Ph.D.\n \n");
-  OrthoAddOutput("Major Authors and Contributors:\n \n");
-  OrthoAddOutput("      Ralf W. Grosse-Kunstleve, Ph.D.\n \n");
-  OrthoAddOutput("This software is open source and freely available.\n");
-  OrthoAddOutput("Updates can be found at \"http://www.pymol.org\".\n \n");
-  OrthoAddOutput("Enter \"help commands\" for a list of commands.\n");
-  OrthoAddOutput("Enter \"help <command-name>\" for information on a specific command.\n \n");
-  OrthoAddOutput("Other help topics include:\n");
-  OrthoAddOutput("    \"keyboard\", \"mouse\", \"selections\", \"api\", and \"examples\".\n \n");
-  OrthoAddOutput("Hit TAB to toggle text; type \"cls\" to clear.\n \n");
+  OrthoSplash();
   strcpy(I->Prompt,"PyMOL>");
   OrthoNewLine(I->Prompt);
 

@@ -131,6 +131,7 @@ static PyObject *PMSetFrame(PyObject *self, PyObject *args);
 static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args);
 static PyObject *PMShowHide(PyObject *self, 	PyObject *args);
 static PyObject *PMSort(PyObject *dummy, PyObject *args);
+static PyObject *PMSplash(PyObject *dummy, PyObject *args);
 static PyObject *PMStereo(PyObject *self, PyObject *args);
 static PyObject *PMSystem(PyObject *dummy, PyObject *args);
 static PyObject *PMSymExp(PyObject *dummy, PyObject *args);
@@ -195,6 +196,7 @@ static PyMethodDef PM_methods[] = {
 	{"set_globals",  PMSetGlobals,   METH_VARARGS },
 	{"set_matrix",	  PMSetMatrix,    METH_VARARGS },
 	{"sort",         PMSort,         METH_VARARGS },
+	{"splash",       PMSplash,       METH_VARARGS },
 	{"stereo",	     PMStereo,       METH_VARARGS },
 	{"system",	     PMSystem,       METH_VARARGS },
 	{"symexp",	     PMSymExp,       METH_VARARGS },
@@ -204,6 +206,15 @@ static PyMethodDef PM_methods[] = {
 	{"zoom",	        PMZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *PMSplash(PyObject *dummy, PyObject *args)
+{
+  APIEntry();
+  OrthoSplash();
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
 
 static PyObject *PMCls(PyObject *dummy, PyObject *args)
 {

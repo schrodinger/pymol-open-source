@@ -53,8 +53,13 @@ try:\n\
             if pm.kwhash.has_key(pmp_com):\n\
                pmp_com = pm.kwhash[pmp_com]\n\
                if not pmp_com:\n\
-                  print 'Error: ambiguous command.'\n\
-                  raise SyntaxError\n\
+                  print 'Error: ambiguous command: ',\n\
+                  pmp_com = pmp_input[pmp_nest][0]\n\
+                  pmp_lcm = len(pmp_com)\n\
+                  for a in pm.keyword.keys():\n\
+                     if a[0:pmp_lcm] == pmp_com:\n\
+                        print a+' ',\n\
+                  raise RuntimeError\n\
             if pm.keyword.has_key(pmp_com):\n\
                pmp_kw[pmp_nest] = pm.keyword[pmp_com]\n\
                if pmp_kw[pmp_nest][4]==1:\n\
@@ -116,10 +121,8 @@ try:\n\
             pmp_cont[pmp_nest]=''\n\
             exec(pymol,globals(),globals())\n\
             pmp_nest=pmp_nest-1\n\
-except SyntaxError:\n\
-   pass\n\
-except NameError,e:\n\
-   print 'NameError: unrecognized command:',e\n"
+except RuntimeError,e:\n\
+   pass\n"
       
    
 pymol = compile(pymol_str,'PyMOL','exec')

@@ -330,9 +330,8 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
     }
     /* X < Y < Z  - do nothing - that's what we want */
 
-
-    ExecutiveWindowZoom(sele);
     ExecutiveCenter(sele,1);
+    ExecutiveWindowZoom(sele);
 
   }
 }

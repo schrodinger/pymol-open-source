@@ -42,7 +42,7 @@ COMMANDS
    IMAGING       png      mpng
    RAYTRACING    ray      
    MAPS          isomesh  isodot
-   DISPLAY       cls      viewport
+   DISPLAY       cls      viewport splash
    SELECTIONS    select
    SETTINGS      set
    ATOMS         alter
@@ -68,6 +68,7 @@ API COMMANDS
    '''
    help('api')
 
+   
 def keyboard():
    '''
 KEYBOARD COMMANDS and MODIFIERS
@@ -308,7 +309,7 @@ NOTES
    la = len(arg)
    if la<2:
       print "Error: invalid arguments for dist command."
-      raise RunError
+      raise RuntimeError
    else:
       sel1 = arg[0]
       sel2 = arg[1]
@@ -331,7 +332,10 @@ USAGE
       cmd = arg[0]
    else:
       cmd = 'commands'
-   
+   if kwhash.has_key(cmd):
+      cc = kwhash[cmd]
+      if cc:
+         cmd=cc
    if keyword.has_key(cmd):
       doc = keyword[cmd][0].__doc__
       if doc:
@@ -347,7 +351,7 @@ USAGE
    else:
       print "Error: unrecognized command"
 
-def symexp(arg):
+def symexp(*arg):
    '''
 DESCRIPTION
  
@@ -368,7 +372,7 @@ PYMOL API
    '''
    if len(arg)<2:
       print "Error: invalid arguments for symexp command."
-      raise RunError
+      raise RuntimeError
    elif len(arg)<3:
       nam= arg[0]
       argst = arg[1]
@@ -379,7 +383,7 @@ PYMOL API
    la = len(arg)
    if la<3:
       print "Error: invalid arguments for symexp command."
-      raise RunError
+      raise RuntimeError
    else:
       obj=arg[0]
       sele=arg[1]
@@ -403,7 +407,7 @@ USAGE
    la = len(arg)
    if la<1:
       print "Error: invalid arguments for isomesh command."
-      raise RunError
+      raise RuntimeError
    else:
       map=arg[0]
       mopt=0
@@ -437,7 +441,7 @@ USAGE
    la = len(arg)
    if la<1:
       print "Error: invalid arguments for isodot command."
-      raise RunError
+      raise RuntimeError
    else:
       map=arg[0]
       mopt=0
@@ -462,6 +466,17 @@ def ready():
 INTERNAL USAGE
    '''
    return _pm.ready()
+
+def splash():
+   '''
+DESCRIPTION
+ 
+"splash" shows the splash screen information.
+   '''
+   lock()
+   r = _pm.splash()
+   unlock()
+   return r
 
 def copy(dst,src):
    '''
@@ -1042,8 +1057,9 @@ def orient(*arg):
    '''
 DESCRIPTION
   
-   "orient" aligns the principal components of the
-   atoms in the selection with the XYZ axes.
+   "orient" aligns the principal components of the atoms in the
+   selection with the XYZ axes.  The function is similar to the
+   orient command in X-PLOR.
       
 USAGE
  
@@ -1380,7 +1396,8 @@ EXAMPLE
 NOTES
  
    The "mset" command must first be used to define the movie before
-   any "mdo" statements will have any effect.
+   "mdo" statements will have any effect.  Redefinition of the movie
+   clears any existing mdo statements.
    '''
    lock()   
    r = _pm.mdo(int(a)-1,b)
@@ -1695,7 +1712,7 @@ PYMOL API
 EXAMPLES 
  
    select near = (pk1 expand 8)
-   select bb = (name ca,n,o )
+   select bb = (name ca,n,c,o )
    '''
    lock()   
    if len(arg)==1:
@@ -1839,16 +1856,27 @@ NOTES
    if not l:
       r = _pm.showhide("(all)",0,1); # show lines by default       
    elif l==2:
-      if repres.has_key(arg[0]):      
-         repn = repres[arg[0]];
+      rep = arg[0]
+      if rephash.has_key(rep):
+         rep = rephash[rep]
+      if repres.has_key(rep):      
+         repn = repres[rep];
          r = _pm.showhide(arg[1],repn,1);
+      else:
+         print "Error: unrecognized or ambiguous representation"
    elif arg[0]=='all':
       r = _pm.showhide("(all)",0,1); # show lines by default 
    elif arg[0][0]=='(':
       r = _pm.showhide(arg[0],0,1);
-   elif repres.has_key(arg[0]):      
-      repn = repres[arg[0]];
-      r = _pm.showhide("(all)",repn,1);
+   else:
+      rep = arg[0]
+      if rephash.has_key(rep):
+         rep = rephash[rep]
+      if repres.has_key(rep):      
+         repn = repres[rep];
+         r = _pm.showhide("(all)",repn,1);
+      else:
+         print "Error: unrecognized or ambiguous representation"
    unlock()
    return r
 
@@ -1883,16 +1911,27 @@ EXAMPLES
    if not l:
       r = _pm.showhide("!",0,0);      
    elif l==2:
-      if repres.has_key(arg[0]):      
-         repn = repres[arg[0]];
+      rep = arg[0]
+      if rephash.has_key(rep):
+         rep = rephash[rep]
+      if repres.has_key(rep):      
+         repn = repres[rep];
          r = _pm.showhide(arg[1],repn,0);
+      else:
+         print "Error: unrecognized or ambiguous representation"
    elif arg[0]=='all':
       r = _pm.showhide("!",0,0);
    elif arg[0][0]=='(':
       r = _pm.showhide(arg[0],-1,0);
-   elif repres.has_key(arg[0]):      
-      repn = repres[arg[0]];
-      r = _pm.showhide("(all)",repn,0);      
+   else:
+      rep = arg[0]
+      if rephash.has_key(rep):
+         rep = rephash[rep]
+      if repres.has_key(rep):
+         repn = repres[arg[0]];
+         r = _pm.showhide("(all)",repn,0);
+      else:
+         print "Error: unrecognized or ambiguous representation"
    unlock()
    return r
 
@@ -2092,6 +2131,7 @@ keyword = {
    'set_key'       : [set_key      , 2 , 1 , ',' , 0 ], # API only
    'show'          : [show         , 0 , 2 , ',' , 0 ],
    'sort'          : [sort         , 0 , 1 , ',' , 0 ],
+   'splash'       : [splash       , 0 , 0 , ',' , 0 ],
    '_special'      : [_special     , 3 , 3 , ',' , 0 ],
    'stereo'        : [stereo       , 1 , 1 , ',' , 0 ],
    'symexp'        : [symexp       , 2 , 2 , '=' , 0 ],
@@ -2160,7 +2200,7 @@ loadable = {
 kwhash = {}
 
 for a in keyword.keys():
-   for b in range(2,len(a)):
+   for b in range(1,len(a)):
       sub = a[0:b]
       if kwhash.has_key(sub):
          kwhash[sub]=0
@@ -2169,4 +2209,17 @@ for a in keyword.keys():
 
 for a in keyword.keys():
    kwhash[a]=a
+
+rephash = {}
+
+for a in repres.keys():
+   for b in range(1,len(a)):
+      sub = a[0:b]
+      if rephash.has_key(sub):
+         rephash[sub]=0
+      else:
+         rephash[sub]=a
+
+for a in repres.keys():
+   rephash[a]=a
 

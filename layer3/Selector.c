@@ -518,6 +518,7 @@ void SelectorPurgeMembers(int sele)
 								else
 								  obj->AtomInfo[a].selEntry=I->Member[s].next;
 							 }
+                    l=s;
 						  s=I->Member[s].next;
 						}
 				  }

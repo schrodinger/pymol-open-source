@@ -1,13 +1,37 @@
-000603 
+Task list in preparation for the first binary release...
 
-Major progress in the last week! Added solid surfaces to the
-available representations and triangle rendering to the ray tracer.  
+TARGET DATE: 10/1/2000
 
-Current TODO list:
-	
-On selections:
-	1. support attribute selection
-	2. optimize "around and expand"
+Add labels representation
 
-Put up a gallery page on the web site with a dozen images
-and half a dozen movies.
+Add solvent representation
+
+Restore generalized extents functionality for objects
+
+Add display of unit cell
+
+Add action menu for maps
+
+Add color menu for maps
+
+Eliminate the normals bug that occurs on certain hardware
+
+Update the windows port
+
+Fill in options menus will all relevant options
+
+Integrate atom picking into the button mode functionality and find better names for the button modes.
+
+Create a programming guide.
+
+Create a users introduction.
+
+Create examples.
+
+Create a test suite.
+
+Fix TRU64 bugs. (Make sure the code is 64 bit clean).
+
+Have someone with experience go over the GL lighting and materials model.
+
+
