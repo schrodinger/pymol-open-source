@@ -3020,6 +3020,9 @@ PYMOL API
    elif format=='pkla': # ascii override
       io.pkl.toFile(get_model(sele),fname,bin=0)
       print " Save: wrote \""+fname+"\"."
+   elif format=='mol': 
+      io.mol.toFile(get_model(sele),fname)
+      print " Save: wrote \""+fname+"\"."
    return r
 
 def get_model(*arg):
