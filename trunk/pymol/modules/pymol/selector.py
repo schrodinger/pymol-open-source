@@ -1,17 +1,19 @@
 import re
 import string
+import traceback
 
 pat_re = re.compile(r'[^ \(\)\!\&\|]*\/[^ \(\)\!\&\|]*')
 num_re = re.compile(r'1|2|3|4|5|6|7|8|9|0')
 
 def process(sele): # expand slash notation into a standard atom selection
+
    sele = str(sele)
    if string.find(sele,'/')<0:
       return sele
    while 1:
       mo = pat_re.search(sele)
       if mo == None:
-         return sele
+         break
       bef = sele[:mo.start()]
       aft = sele[mo.end():]
       mat = mo.group()
@@ -43,19 +45,28 @@ def process(sele): # expand slash notation into a standard atom selection
          if la>4: model = arg[4]
       # lst
       lst = []
-      if model!='': lst.append(model)
-      if segment!='': lst.append("segi "+segment)
-      if chain!='': lst.append("chain "+chain)
+      if model!='': lst.append("("+string.replace(model,"+","|")+")")
+      if segment!='': lst.append("s;"+string.replace(segment,'+',','))
+      if chain!='': lst.append("c;"+string.replace(chain,'+',','))
       if residue!='':
          if num_re.search(residue)==None:
-            lst.append("resn "+residue)            
+            lst.append("n;"+residue)            
          else:
-            lst.append("resi "+residue)                        
-      if name!='': lst.append("name "+name)
+            residue = string.replace(residue,'+',',')
+            if ((string.find(residue,',')>=0) and # compound residue specification
+                (string.find(residue,':')>=0)):
+               new_list = []
+               for a in string.split(residue,','): # spread it out...
+                  new_list.append("i;"+a)
+               residue = "("+string.join(new_list,'|')+")"
+               lst.append(residue)
+            else:
+               lst.append("i;"+residue)                        
+      if name!='': lst.append("n;"+string.replace(name,'+',','))
       if not len(lst):
-         st = "all"
+         st = "*"
       else:
-         st = reduce(lambda x,y:x+" & "+y,lst)
+         st = reduce(lambda x,y:x+"&"+y,lst)
       sele = bef+"("+st+")"+aft
    return sele
 
