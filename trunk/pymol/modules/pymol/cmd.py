@@ -588,12 +588,17 @@ PYMOL API
    return r
 
 def get_setting_updates(): # INTERNAL
-   r = None
-   try:
-      lock()
-      r = _cmd.get_setting_updates()
-   finally:
-      unlock()
+   r = []
+   if lock_attempt():
+      try:
+         r = _cmd.get_setting_updates()
+      finally:
+         unlock()
+#   try:
+#      lock()
+#      r = _cmd.get_setting_updates()
+#   finally:
+#      unlock()
    return r
 
 def align(source,target): # EXPERIMENTAL, BUGGY
@@ -1668,14 +1673,10 @@ def unlock_c(): # INTERNAL
    lock_api_c.release()
 
 def lock(): # INTERNAL
-   lock_api.acquire(1)
-      
+   lock_api.acquire(1) 
+
 def lock_attempt(): # INTERNAL
-   res = lock_api.acquire(blocking=0)
-   if res:
-      pymol.lock_state = 1;
-   else:
-      pymol.lock_state = None;
+   return lock_api.acquire(blocking=0)
 
 def unlock(): # INTERNAL
    if (thread.get_ident() == pymol.glutThread):
@@ -1683,16 +1684,19 @@ def unlock(): # INTERNAL
       _cmd.flush_now()
    else:
       lock_api.release()
-      c = 0
-      while _cmd.wait_queue(): # wait till our instruction (if any)
-         e = threading.Event() # has been executed before continuing
-         e.wait(0.05)
-         del e
-         c = c + 1
-         if c == 20:
-            if _feedback(fb_module.cmd,fb_mask.debugging):
-               f.write(fb_debug,"Debug: possible recursive lock...\n")
-            break # avoid permanent deadlock
+      if _cmd.wait_queue(): # commands waiting to be executed?
+         w = 0.0025 # NOTE: affects API perf. for "do" and delayed-exec
+         while 1:
+            e = threading.Event() # using this for portable delay
+            e.wait(w)
+            del e
+            if not _cmd.wait_queue():
+               break
+            if w > 0.1: # wait up 0.2 sec max for PyMOL to flush queue
+               if _feedback(fb_module.cmd,fb_mask.debugging):
+                  fb_debug.write("Debug: avoiding possible dead-lock?\n")
+               break
+            w = w * 2 # wait twice as long each time until flushed
 
 def export_dots(object,state):  
 # UNSUPPORTED
@@ -2400,8 +2404,8 @@ DESCRIPTION
 
    "protect" protects a set of atoms from tranformations performed
    using the editing features.  This is most useful when you are
-   modifying an internal portion of a chain or cycle and don't wish to
-   affect the rest of the molecule.
+   modifying an internal portion of a chain or cycle and do not wish
+   to affect the rest of the molecule.
    
 USAGE
 
@@ -3757,14 +3761,22 @@ SEE ALSO
 
 def get_feedback(): # INTERNAL
    l = []
-   try:
-      lock()
-      r = _cmd.get_feedback()
-      while r:
-         l.append(r)
+   if lock_attempt():
+      try:
          r = _cmd.get_feedback()
-   finally:
-      unlock()
+         while r:
+            l.append(r)
+            r = _cmd.get_feedback()
+      finally:
+         unlock()
+#   try:
+#      lock()
+#      r = _cmd.get_feedback()
+#      while r:
+#         l.append(r)
+#         r = _cmd.get_feedback()
+#   finally:
+#      unlock()
    return l
 
 def load_coords(*arg): # UNSUPPORTED
@@ -5322,17 +5334,18 @@ help_only = {  # for API-only features
 }
 
 repres = {
-   'lines'         : 0,
-   'sticks'        : 1,
-   'dots'          : 2,
-   'mesh'          : 3,
-   'spheres'       : 4,
-   'ribbon'        : 5,
-   'surface'       : 6,
-   'dashes'        : 7,
-   'labels'        : 8,
-   'nonbonded'     : 9,
-   'nb_spheres'    : 10,
+   'sticks'        : 0,
+   'spheres'       : 1,
+   'surface'       : 2,
+   'labels'        : 3,
+   'nb_spheres'    : 4,
+   'lines'         : 5,
+   'ribbon'        : 6,
+   'mesh'          : 7,
+   'dots'          : 8,
+   'dashes'        : 9,
+   'nonbonded'     :10,
+   
 }
 
 rephash = Shortcut(repres.keys())

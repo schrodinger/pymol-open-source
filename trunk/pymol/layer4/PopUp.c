@@ -142,9 +142,11 @@ int PopUpRelease(Block *block,int button,int x,int y,int mod)
   OrthoDetach(I->Block);
 
   if(I->Selected>=0) {
-    PBlockAndUnlockAPI();
-    PRunString(I->Command[I->Selected]);
-    PLockAPIAndUnblock();
+    PParse(I->Command[I->Selected]);
+    PFlush();
+    /* PBlockAndUnlockAPI();
+      PRunString(I->Command[I->Selected]);
+      PLockAPIAndUnblock(); */
   }
   
   OrthoFreeBlock(I->Block);

@@ -160,7 +160,10 @@ int PAlterAtomState(float *v,char *expr,int read_only)
   PyObject *dict; /* TODO: this function badly need error checking code */
   int result=false;
   float f[3];
-  PBlockAndUnlockAPI();
+  
+  PBlock();
+  /* PBlockAndUnlockAPI() is not safe.
+   * what if "v" is invalidated by another thread? */
 
   dict = PyDict_New();
 
@@ -189,7 +192,7 @@ int PAlterAtomState(float *v,char *expr,int read_only)
     result=true;
   }
   Py_DECREF(dict);
-  PLockAPIAndUnblock();
+  PUnblock(); /* PLockAPIAndUnblock(); */
   return result;
 }
 
@@ -212,7 +215,9 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
     strcpy(atype,"HETATM");
   else
     strcpy(atype,"ATOM");
-  PBlockAndUnlockAPI();
+  PBlock();
+  /* PBlockAndUnlockAPI() is not safe.
+   * what if "at" is destroyed by another thread? */
 
   dict = PyDict_New();
 
@@ -297,7 +302,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
     }
   } 
   Py_DECREF(dict);
-  PLockAPIAndUnblock();
+  PUnblock(); 
   return(result);
 }
 
@@ -312,8 +317,9 @@ int PLabelAtom(AtomInfoType *at,char *expr)
     strcpy(atype,"HETATM");
   else
     strcpy(atype,"ATOM");
-  PBlockAndUnlockAPI();
-
+  PBlock();
+  /* PBlockAndUnlockAPI() is not safe.
+   * what if "at" is destroyed by another thread? */
   dict = PyDict_New();
 
   PConvStringToPyDictItem(dict,"type",atype);
@@ -360,7 +366,7 @@ int PLabelAtom(AtomInfoType *at,char *expr)
     }
   }
   Py_DECREF(dict);
-  PLockAPIAndUnblock();
+  PUnblock();
   return(result);
 }
 
@@ -650,7 +656,7 @@ void PParse(char *str)
 }
 
 void PFlush(void) {  
-  /* NOTE: ASSUMES we current have unblocked Python threads and a locked API */
+  /* NOTE: ASSUMES unblocked Python threads and a locked API */
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(buffer)) {
     PBlockAndUnlockAPI();
@@ -663,6 +669,9 @@ void PFlushFast(void) {
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */ 
  char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(buffer)) {
+  PRINTFD(FB_Threads)
+    " PFlushFast-DEBUG: executing '%s'\n",buffer
+    ENDFD;
    PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
   }
 }

@@ -188,7 +188,14 @@ void FeedbackEnable(unsigned int sysmod,unsigned char mask);
 
 #define Feedback(sysmod,mask) (FeedbackMask[sysmod]&mask) 
 
-#define FEEDBACK_MAX_OUTPUT 1024
+/* FEEDBACK_MAX_OUTPUT should be as small as is reasonable
+ * since this much space gets consumed on the stack
+ * every time we have a PRINTF macro.  One might consider
+ * rewriting these macros to consume heap space instead.
+*/
+
+
+#define FEEDBACK_MAX_OUTPUT 255
 typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
 
 /* Print Feedback Macros -- this the most flexible and cross-OS

@@ -153,121 +153,68 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 
   } else if(PMGUI) {
 
-    PRINTFD(FB_RepCylBond)
-      " RepCylBondRender: rendering GL...\n"
-      ENDFD;
-
-
-    /*
-    if(SettingGet(cSetting_test1)) {
+    {
       
-      v=I->VP;
-      c=I->NP;
-      i=0;
-      while(c--) {
-        
-        i++;
-        
-		  glColor3ub((i&0xF)<<4,(i&0xF0)|0x8,(i&0xF00)>>4); 
-        
-        glBegin(GL_TRIANGLE_STRIP);
-        
-        glVertex3fv(v+ 0);
-        glVertex3fv(v+ 3);
-        
-        glVertex3fv(v+ 6);
-        glVertex3fv(v+ 9);
-        
-        glVertex3fv(v+12);
-        glVertex3fv(v+15);
-        
-        glVertex3fv(v+18);
-        glVertex3fv(v+21);
-        
-        glVertex3fv(v+ 0);
-        glVertex3fv(v+ 3);
-        
-        glEnd();
-        
-        glBegin(GL_TRIANGLE_STRIP);
-        
-        glVertex3fv(v+ 0);
-        glVertex3fv(v+ 6);
-        
-        glVertex3fv(v+18);
-        glVertex3fv(v+12);
-        
-        glEnd();
-        
-        glBegin(GL_TRIANGLE_STRIP);
-        
-        glVertex3fv(v+ 3);
-        glVertex3fv(v+ 9);
-        
-        glVertex3fv(v+21);
-        glVertex3fv(v+15);
-        
-        glEnd();
-        
-        v+=24;
-      }
-    } else 
-    */
-{
+      v=I->V;
+      c=I->N;
 
-    v=I->V;
-    c=I->N;
-
-	 while(c--)
-		{
-		  
-		  glColor3fv(v);
-		  v+=3;
-		  
-		  glBegin(GL_TRIANGLE_STRIP);
-		  a=I->NEdge+1;
-		  while(a--) {
-			 glNormal3fv(v);
-			 v+=3;
-			 glVertex3fv(v);
-			 v+=3;
-			 glVertex3fv(v);
-			 v+=3;
-		  }
-		  glEnd();
-		  
-		  glBegin(GL_TRIANGLE_FAN);
-		  glNormal3fv(v);
-		  v+=3;
-		  glVertex3fv(v);
-		  v+=3;
-		  a=I->NEdge+1;
-		  while(a--) {
-			 glNormal3fv(v);
-			 v+=3;
-			 glVertex3fv(v);
-			 v+=3;
-		  }
-		  glEnd();
-		  
-		  if(*(v++)) {
-			 
-			 glBegin(GL_TRIANGLE_FAN);
-			 glNormal3fv(v);
-			 v+=3;
-			 glVertex3fv(v);
-			 v+=3;
-			 a=I->NEdge+1;
-			 while(a--) {
-				glNormal3fv(v);
-				v+=3;
-				glVertex3fv(v);
-				v+=3;
-			 }
-			 glEnd();
-		  }
-      }
-		}
+      PRINTFD(FB_RepCylBond)
+        " RepCylBondRender: rendering GL...\n"
+        ENDFD;
+      
+      while(c--)
+        {
+          
+          glColor3fv(v);
+          v+=3;
+          
+          glBegin(GL_TRIANGLE_STRIP);
+          a=I->NEdge+1;
+          while(a--) {
+            glNormal3fv(v);
+            v+=3;
+            glVertex3fv(v);
+            v+=3;
+            glVertex3fv(v);
+            v+=3;
+          }
+          glEnd();
+          
+          glBegin(GL_TRIANGLE_FAN);
+          glNormal3fv(v);
+          v+=3;
+          glVertex3fv(v);
+          v+=3;
+          a=I->NEdge+1;
+          while(a--) {
+            glNormal3fv(v);
+            v+=3;
+            glVertex3fv(v);
+            v+=3;
+          }
+          glEnd();
+          
+          if(*(v++)) {
+            
+            glBegin(GL_TRIANGLE_FAN);
+            glNormal3fv(v);
+            v+=3;
+            glVertex3fv(v);
+            v+=3;
+            a=I->NEdge+1;
+            while(a--) {
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+            }
+            glEnd();
+          }
+        }
+      PRINTFD(FB_RepCylBond)
+        " RepCylBondRender: done.\n"
+        ENDFD;
+    }
   }
 }
 
@@ -281,6 +228,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   int nEdge;
   int half_bonds;
   int visFlag;
+  unsigned int v_size,vr_size,rp_size,vp_size;
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
 
@@ -321,10 +269,13 @@ Rep *RepCylBondNew(CoordSet *cs)
   I->VP = NULL;
 
   if(obj->NBond) {
-	 I->V = (float*)mmalloc(((obj->NBond)*((nEdge+2)*42)+20)*sizeof(float));
+
+    v_size = ((obj->NBond)*((nEdge+2)*42)+32);
+	 I->V = Alloc(float,v_size);
 	 ErrChkPtr(I->V);
 
-	 I->VR=(float*)mmalloc(sizeof(float)*obj->NBond*10*3);
+    vr_size = obj->NBond*10*3;
+    I->VR=Alloc(float,vr_size);
 	 ErrChkPtr(I->VR);
 	 
 	 I->NEdge = nEdge;
@@ -487,6 +438,12 @@ Rep *RepCylBondNew(CoordSet *cs)
 	 PRINTFD(FB_RepCylBond)
       " RepCylBond-DEBUG: %d triplets\n",(v-I->V)/3
       ENDFD;
+
+    if(v_size<(v-I->V))
+      ErrFatal("RepCylBond","V array overrun.");
+    if(vr_size<(vr-I->VR))
+      ErrFatal("RepCylBond","VR array overrun.");
+    
 	 I->V = Realloc(I->V,float,(v-I->V));
 	 I->VR = Realloc(I->VR,float,(vr-I->VR));
 
@@ -499,10 +456,12 @@ Rep *RepCylBondNew(CoordSet *cs)
          vertices: 8 points * 3 = 32  * 2 = 48 floats per bond
       */
 
-		I->VP=(float*)mmalloc(sizeof(float)*obj->NBond*48);
+      vp_size = obj->NBond*48;
+      I->VP=Alloc(float,vp_size);
 		ErrChkPtr(I->VP);
 		
-		I->R.P=Alloc(Pickable,2*obj->NBond+1);
+      rp_size = 2*obj->NBond+1;
+		I->R.P=Alloc(Pickable,rp_size);
 		ErrChkPtr(I->R.P);
 		rp = I->R.P + 1; /* skip first record! */
 
@@ -571,6 +530,12 @@ Rep *RepCylBondNew(CoordSet *cs)
 					 }
 				}
 		  }
+      
+      if(vp_size<(v-I->VP))
+        ErrFatal("RepCylBond","VP array overrun.");
+      if(rp_size<=(I->NP))
+        ErrFatal("RepCylBond","RP array overrun.");
+
 		I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
 		I->R.P[0].index = I->NP;
       I->VP = Realloc(I->VP,float,(v-I->VP));

@@ -999,10 +999,10 @@ PyObject *ExecutiveSeleToChemPyModel(char *s1,int state)
   int sele1;
   sele1=SelectorIndexByName(s1);
   if(state<0) state=0;
-  PBlockAndUnlockAPI();
+  PBlock(); /*   PBlockAndUnlockAPI();*/
   result=SelectorGetChemPyModel(sele1,state);
   if(PyErr_Occurred()) PyErr_Print();
-  PLockAPIAndUnblock();
+  PUnblock(); /* PLockAPIAndUnblock();*/
   return(result);
 }
 /*========================================================================*/
@@ -1485,6 +1485,10 @@ void ExecutiveReset(int cmd)
 /*========================================================================*/
 void ExecutiveDrawNow(void) 
 {
+  PRINTFD(FB_Executive)
+    " ExecutiveDrawNow: entered.\n"
+    ENDFD;
+
   if(PMGUI) {
     glMatrixMode(GL_MODELVIEW);
   /*  glClear( GL_DEPTH_BUFFER_BIT);*/
@@ -1498,6 +1502,9 @@ void ExecutiveDrawNow(void)
 
   MainSwapBuffers();
 
+  PRINTFD(FB_Executive)
+    " ExecutiveDrawNow: leaving.\n"
+    ENDFD;
 
 }
 /*========================================================================*/
