@@ -127,7 +127,7 @@ int VFontWriteToCGO(int font_id,CGO *cgo,char *text,float *pos,float *scale,floa
       }
   } else {
     PRINTFB(FB_VFont,FB_Errors) 
-      "VFontWriteToCGO-Error: invalid font identifier\n"
+      "VFontWriteToCGO-Error: invalid font identifier (%d)\n",font_id
       ENDFB;
     ok=false;
   }
@@ -164,7 +164,7 @@ int VFontIndent(int font_id,char *text,float *pos,float *scale,float *matrix,flo
       }
   } else {
     PRINTFB(FB_VFont,FB_Errors) 
-      "VFontWriteToCGO-Error: invalid font identifier\n"
+      "VFontIndent-Error: invalid font identifier  (%d)\n", font_id
       ENDFB;
     ok=false;
   }

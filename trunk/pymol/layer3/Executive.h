@@ -144,7 +144,8 @@ ObjectMap *ExecutiveFindObjectMapByName(char *name);
 int  ExecutiveUnsetSetting(int index,char *sele,
                            int state,int quiet,int updates);
 
-int ExecutiveRampNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state);
+int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state);
+
 #endif
 
 

@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"VFont.h"
 #include"ObjectMolecule.h"
 #include"Executive.h"
+#include"Util.h"
 
 #include"P.h"
 
@@ -53,12 +54,69 @@ void ObjectGadgetRampFree(ObjectGadgetRamp *I) {
 #define ShapeColor(cgo,a,b) CGONormal(cgo,(float)a,(float)b,0.0F)
 #define LKP 2.0F
 
+static void ObjectGadgetRampBuild(ObjectGadgetRamp *I);
+
+PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
+{
+
+  PyObject *result = NULL;
+
+  result = PyList_New(8);
+
+  PyList_SetItem(result,0,ObjectGadgetPlainAsPyList(&I->Gadget));
+  PyList_SetItem(result,1,PyInt_FromLong(I->RampType));
+  PyList_SetItem(result,2,PyInt_FromLong(I->NColor));
+  if(I->Level&&I->NColor) {
+    PyList_SetItem(result,3,PConvFloatVLAToPyList(I->Level));
+  } else {
+    PyList_SetItem(result,3,PConvAutoNone(NULL));
+  }
+  if(I->Color&&I->NColor) {
+    PyList_SetItem(result,4,PConvFloatVLAToPyList(I->Color));
+  } else {
+    PyList_SetItem(result,4,PConvAutoNone(NULL));
+  }
+  PyList_SetItem(result,5,PyInt_FromLong(I->var_index));
+  PyList_SetItem(result,6,PyString_FromString(I->SrcName));
+  PyList_SetItem(result,7,PyInt_FromLong(I->SrcState));
+
+  return(PConvAutoNone(result));  
+}
+
+int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result)
+{
+  
+  ObjectGadgetRamp *I = NULL;
+  int ok = true;
+
+  if(ok) I=ObjectGadgetRampNew();
+  if(ok) ok = (I!=NULL);
+  if(ok) ok = ObjectGadgetInitFromPyList(PyList_GetItem(list,0),&I->Gadget);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->RampType);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NColor);
+  if(ok&&I->NColor) ok = PConvPyListToFloatVLA(PyList_GetItem(list,3),&I->Level);
+  if(ok&&I->NColor) ok = PConvPyListToFloatVLA(PyList_GetItem(list,4),&I->Color);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->var_index);
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,6),I->SrcName,ObjNameMax);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->SrcState);
+  /*  if(ok) ObjectGadgetRampBuild(I);
+      if(ok) ObjectGadgetRampUpdate(I);*/
+  if(ok) ObjectGadgetUpdateStates(&I->Gadget);
+  if(ok) ObjectGadgetUpdateExtents(&I->Gadget);
+  if(ok) (*result)=I;
+  return(ok);
+}
+
 int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
 {
   float level;
   int ok=true;
-  ok = ObjectMapInterpolate(I->Map,I->MapState,pos,&level,1);
-  ok = ObjectGadgetRampInterpolate(I,level,color);
+  ObjectMap *map = NULL;
+  map = ExecutiveFindObjectMapByName(I->SrcName);
+
+  if(ok) ok = (map!=NULL);
+  if(ok) ok = ObjectMapInterpolate(map,I->SrcState,pos,&level,1);
+  if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
   return(ok);
 }
 
@@ -381,21 +439,24 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
 }
 
 /*========================================================================*/
-ObjectGadgetRamp *ObjectGadgetRampNewAsDefined(ObjectMap *map,PyObject *level,
+ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level,
                                                PyObject *color,int map_state)
 {
   ObjectGadgetRamp *I;
   int ok = true;
   
   I = ObjectGadgetRampNew();
+  I->RampType = cRampMap;
+
   PBlock();
   if(ok) ok = PConvPyListToFloatVLA(level,&I->Level);
   if(ok) ok = PConvPyList3ToFloatVLA(color,&I->Color);
   if(ok) I->NColor=VLAGetSize(I->Level);
   ObjectGadgetRampBuild(I);
-  I->Map=map;
-  I->MapState=map_state;
-  
+  UtilNCopy(I->SrcName,map->Obj.Name,ObjNameMax);
+  I->SrcState=map_state;
+
+
   /* test interpolate 
      { 
     float test[3];
@@ -429,12 +490,15 @@ ObjectGadgetRamp *ObjectGadgetRampNew(void)
   OOAlloc(ObjectGadgetRamp);
 
   ObjectGadgetInit(&I->Gadget);
+  I->Gadget.GadgetType = cGadgetRamp;
+  I->RampType = 0;
   I->NColor = 0;
   I->Level = NULL;
   I->Color = NULL;
+  I->SrcName[0] = 0;
+
   I->Gadget.Obj.fUpdate =(void (*)(struct CObject *)) ObjectGadgetRampUpdate;
   I->Gadget.Obj.fFree =(void (*)(struct CObject *)) ObjectGadgetRampFree;
-
   I->width = 0.9F;
   I->height = 0.06F;
   I->bar_height = 0.03F;
@@ -443,6 +507,7 @@ ObjectGadgetRamp *ObjectGadgetRampNew(void)
   I->text_scale_h = 0.04F;
   I->text_scale_v = 0.02F;
   I->border = 0.018F;
+  I->var_index = 0;
   I->x = (1.0-(I->width+2*I->border))/2.0F;
   I->y = 0.12F;
   return(I);

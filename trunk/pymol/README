@@ -16,72 +16,6 @@ PyMOL has the following external dependencies:
   6. Numerical Python (technically optional)
   7. Python megawidgets (Pmw -- only required for the "external" GUI)
 ----------------------------------------------------------------------
-Specific Acknowledgments:
-
-* Thanks to Aaron Miller (GlaxoSmithKline) for a continuous stream of
-  thoughful opinions and suggestions.
-
-* Thanks to Dave Weininger for being an ordinary friend at just the
-  right time.
-
-* Thanks to Mick Savage for experienced practical advice.
-
-* Thanks to Ian Matthew for outside experience and information.
-
-* Thanks for Jeff Blaney for numerous insightful discussions.
-
-* Thanks to Elizabeth Pehrson for making this a team effort.
-
-* Thanks to Erin Bradley for schooling in focus and vision.
-
-* Thanks to Vera Povolona for catalytic clarity and introspection.
-
-* Thanks to Anthony Nichols for proving that it can be done, yet again.
-
-* Thanks to Thompson Doman for timely Open-Source validation.
-
-* Thanks to Manfred Sippl for making it all seem so simple.
-
-* Thanks to Kristian Rother for all his excellent work building on the
-  PyMOL foundation, and in helping others learn to use the software.
-
-* Thanks to Dave Weininger, Scott Dixon, Roger Sayle, Andrew Dalke, 
-  Anthony Nichols, Dick Cramer, and David Miller, as well as rest of 
-  the Daylight and OpenEye teams for thoughtful discussions on PyMOL
-  and open-source software during my 2002 pilgrimage to Sante Fe, NM.
-
-* Thanks to Ralf Grosse-Kunstleve for his contribution of the "sglite"
-  space group and symmetry handling module.
-
-* Thanks to the scientists and management of Sunesis Pharmaceuticals 
-  for supporting PyMOL development since its inception.
-
-* Thanks to the Computational Crystallography Initiative (LBNL) 
-  developers for their encouragement, ideas, and support. 
-
-* Thanks to Scott Walsh for being the first individual to provide 
-  financial support for PyMOL.  
-
-* Thanks to the anonymous pharmacetical companies who have provided 
-  financial support for hardware and development expenses (you know
-  who you are!).
-
-* Thanks to Brian Paul and the Precision Insight team for development
-  of Mesa/DRI which greatly assisted in the early development of PyMOL.
-
-* Thanks to Michael Love for the first major outside port of PyMOL
-  (to GNU-Darwin/OSX) and for believing in the cause.  
-
-* Thanks for Paul Sherwood for making a concerted effort to develop 
-  using PyMOL long before the software and vision had matured.
-
-* Thanks to Jay Ponder for thoughtful email discussions on Tinker and
-  the role of open-source scientific software.
-
-* Thanks to hundreds of PyMOL users for the many forms of feedback,
-  bug sightings, and encouragement they've provided.
-
-----------------------------------------------------------------------
 The PyMOL Team:
 
    Founder and Principal Author:
@@ -98,7 +32,7 @@ The PyMOL Team:
 
    Other Contributors: These are the people who have gone out of
       their way to help the project with their ideas, actions, 
-      advice, information, support, or code snippets.
+      advice, information, sponsorship, peer support, or code snippets.
       
       Daan van Aalten
       Paul Adams 
@@ -120,6 +54,7 @@ The PyMOL Team:
       Duilio Cascio
       Shawn Christensen
       Scott Classen
+      David Cooper
       Jacob Corn
       Ben Cornett
       Andrew Dalke 
@@ -169,6 +104,7 @@ The PyMOL Team:
       Michael Nilges
       Hoa Nguyen
       Shoichiro Ono
+      Chris Oubridge
       Andre Padilla
       Jay Pandit
       Ezequiel "Zac" Panepucci
@@ -248,6 +184,71 @@ The PyMOL Team:
       ATI
       
 ----------------------------------------------------------------------
+Specific Acknowledgments:
+
+* Thanks to Aaron Miller (GlaxoSmithKline) for a continuous stream of
+  thoughtful opinions and suggestions.
+
+* Thanks to Dave Weininger for being an ordinary friend at just the
+  right time.
+
+* Thanks to Mick Savage for experienced practical advice.
+
+* Thanks to Ian Matthew for outside experience and information.
+
+* Thanks for Jeff Blaney for numerous insightful discussions.
+
+* Thanks to Elizabeth Pehrson for making this a team effort.
+
+* Thanks to Erin Bradley for schooling in focus and vision.
+
+* Thanks to Vera Povolona for catalytic clarity and introspection.
+
+* Thanks to Anthony Nichols for proving that it can be done, yet again.
+
+* Thanks to Thompson Doman for timely Open-Source validation.
+
+* Thanks to Manfred Sippl for making it all seem so simple.
+
+* Thanks to Kristian Rother for all his excellent work building on the
+  PyMOL foundation, and in helping others learn to use the software.
+
+* Thanks to Dave Weininger, Scott Dixon, Roger Sayle, Andrew Dalke, 
+  Anthony Nichols, Dick Cramer, and David Miller, as well as rest of 
+  the Daylight and OpenEye teams for thoughtful discussions on PyMOL
+  and open-source software during my 2002 pilgrimage to Sante Fe, NM.
+
+* Thanks to Ralf Grosse-Kunstleve for his contribution of the "sglite"
+  space group and symmetry handling module.
+
+* Thanks to the scientists and management of Sunesis Pharmaceuticals 
+  for supporting PyMOL development since its inception.
+
+* Thanks to the Computational Crystallography Initiative (LBNL) 
+  developers for their encouragement, ideas, and support. 
+
+* Thanks to Scott Walsh for being the first individual to provide 
+  financial support for PyMOL.  
+
+* Thanks to the anonymous pharmacetical companies who have provided 
+  financial support for hardware and development expenses (you know
+  who you are!).
+
+* Thanks to Brian Paul and the Precision Insight team for development
+  of Mesa/DRI which greatly assisted in the early development of PyMOL.
+
+* Thanks to Michael Love for the first major outside port of PyMOL
+  (to GNU-Darwin/OSX) and for believing in the cause.  
+
+* Thanks for Paul Sherwood for making a concerted effort to develop 
+  using PyMOL long before the software and vision had matured.
+
+* Thanks to Jay Ponder for thoughtful email discussions on Tinker and
+  the role of open-source scientific software.
+
+* Thanks to hundreds of PyMOL users for the many forms of feedback,
+  bug sightings, and encouragement they've provided.
+
       
 
 

@@ -167,51 +167,97 @@ int GadgetSetFetchNormal(GadgetSet *I,float *inp,float *out)
 }
 
 
-int GadgetSetFromPyList(PyObject *list,GadgetSet **cs)
+int GadgetSetFromPyList(PyObject *list,GadgetSet **gs)
 {
   int ok = true;
-  *cs=NULL;
-#if TO_DO
   GadgetSet *I = NULL;
-  if(*cs) {
-    GadgetSetFree(*cs);
-    *cs=NULL;
+  PyObject *tmp = NULL;
+
+  if(*gs) {
+    GadgetSetFree(*gs);
+    *gs=NULL;
   }
 
-  if(list==Py_None) { /* allow None for CSet */
-    *cs = NULL;
+  if(list==Py_None) { /* allow None for GSet */
+    *gs = NULL;
   } else {
   
     if(ok) I=GadgetSetNew();
     if(ok) ok = (I!=NULL);
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->NCoord);
-    if(ok) ok = PConvPyListToFloatVLA(PyList_GetItem(list,1),&I->Coord);
+    if(ok&&I->NCoord) ok = PConvPyListToFloatVLA(PyList_GetItem(list,1),&I->Coord);
+
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NNormal);
+    if(ok&&I->NNormal) ok = PConvPyListToFloatVLA(PyList_GetItem(list,3),&I->Normal);
+
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,4),&I->NColor);
+    if(ok&&I->NColor) ok = PConvPyListToFloatVLA(PyList_GetItem(list,5),&I->Color);
+
+    if(ok) ok = ((tmp = PyList_GetItem(list,6))!=NULL);
+    if(ok&&(tmp!=Py_None)) ok = ((I->ShapeCGO=CGONewFromPyList(tmp))!=NULL);
+
+    if(ok) ok = ((tmp = PyList_GetItem(list,7))!=NULL);
+    if(ok&&(tmp!=Py_None)) ok = ((I->PickShapeCGO=CGONewFromPyList(tmp))!=NULL);
+
+    if(ok&&I->ShapeCGO) if(CGOCheckForText(I->ShapeCGO)) {
+      CGOPreloadFonts(I->ShapeCGO);
+    }
+
     if(!ok) {
       if(I)
         GadgetSetFree(I);
     } else {
-      *cs = I;
+      *gs = I;
     }
   }
-#endif
+
   return(ok);
 }
 
 PyObject *GadgetSetAsPyList(GadgetSet *I)
 {
   PyObject *result = NULL;
-#if TO_DO
 
   if(I) {
-    result = PyList_New(2);
+    result = PyList_New(8);
     
     PyList_SetItem(result,0,PyInt_FromLong(I->NCoord));
-    PyList_SetItem(result,1,PConvFloatArrayToPyList(I->Coord,I->NCoord*3));
-    /* TODO setting ... */
+    
+    if(I->NCoord) {
+      PyList_SetItem(result,1,PConvFloatArrayToPyList(I->Coord,I->NCoord*3));
+    } else {
+      PyList_SetItem(result,1,PConvAutoNone(NULL));
+    }
+
+    PyList_SetItem(result,2,PyInt_FromLong(I->NNormal));
+
+    if(I->NNormal) {
+      PyList_SetItem(result,3,PConvFloatArrayToPyList(I->Normal,I->NNormal*3));
+    } else {
+      PyList_SetItem(result,3,PConvAutoNone(NULL));
+    }
+
+    PyList_SetItem(result,4,PyInt_FromLong(I->NColor));
+
+    if(I->NColor) {
+      PyList_SetItem(result,5,PConvFloatArrayToPyList(I->Color,I->NColor));
+    } else {
+      PyList_SetItem(result,5,PConvAutoNone(NULL));
+    }
+
+    if(I->ShapeCGO) {
+      PyList_SetItem(result,6,CGOAsPyList(I->ShapeCGO));
+    } else {
+      PyList_SetItem(result,6,PConvAutoNone(NULL));
+    }
+
+    if(I->PickShapeCGO) {
+      PyList_SetItem(result,7,CGOAsPyList(I->PickShapeCGO));
+    } else {
+      PyList_SetItem(result,7,PConvAutoNone(NULL));
+    }
 
   }
-  return(PConvAutoNone(result));
-#endif
   return(PConvAutoNone(result));
 }
 

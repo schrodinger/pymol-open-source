@@ -304,7 +304,7 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
-static PyObject *CmdRampNew(PyObject *self, 	PyObject *args);
+static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args);
 static PyObject *CmdRebuild(PyObject *self, PyObject *args);
 static PyObject *CmdRecolor(PyObject *self, PyObject *args);
 static PyObject *CmdHFill(PyObject *self, PyObject *args);
@@ -471,7 +471,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"protect",	              CmdProtect,              METH_VARARGS },
 	{"push_undo",	           CmdPushUndo,             METH_VARARGS },
 	{"quit",	                 CmdQuit,                 METH_VARARGS },
-   {"ramp_new",              CmdRampNew,              METH_VARARGS },
+   {"ramp_new",              CmdRampMapNew,              METH_VARARGS },
 	{"ready",                 CmdReady,                METH_VARARGS },
    {"rebuild",               CmdRebuild,              METH_VARARGS },
    {"recolor",               CmdRecolor,              METH_VARARGS },
@@ -844,7 +844,7 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
-static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
+static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args)
 {
   char *name;
   int ok = false;
@@ -854,7 +854,7 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"ssOOi",&name,&map,&range,&color,&map_state);
   if(ok) {
     APIEntry();
-    ok = ExecutiveRampNew(name,map,range,color,map_state);
+    ok = ExecutiveRampMapNew(name,map,range,color,map_state);
     APIExit();
   }
   return(APIStatus(ok));

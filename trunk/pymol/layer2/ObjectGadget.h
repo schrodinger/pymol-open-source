@@ -34,7 +34,7 @@ typedef struct ObjectGadget {
 } ObjectGadget;
 
 
-#define cGadget     0
+#define cGadgetPlain 0
 #define cGadgetRamp 1
 
 ObjectGadget *ObjectGadgetNew(void);
@@ -46,7 +46,12 @@ ObjectGadget *ObjectGadgetFromCGO(ObjectGadget *obj,CGO *cgo,int state);
 void ObjectGadgetRecomputeExtent(ObjectGadget *I);
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget *I);
+PyObject *ObjectGadgetAsPyList(ObjectGadget *I);
+PyObject *ObjectGadgetPlainAsPyList(ObjectGadget *I);
+
 int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result);
+int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I);
+
 ObjectGadget *ObjectGadgetTest(void);
 int ObjectGadgetGetVertex(ObjectGadget *I,int index,int base, float *v); /* in current state */
 int ObjectGadgetSetVertex(ObjectGadget *I,int index,int base, float *v); /* in current state */
