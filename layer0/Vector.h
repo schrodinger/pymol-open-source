@@ -190,6 +190,14 @@ void  swap1f (float *f, float *g);
 
 #ifdef _PYMOL_INLINE
 
+#ifdef _PYMOL_INLINE
+#ifdef _PYMOL_WIN32
+#define __inline__ __inline
+#else
+#define __inline__ 
+#endif
+#endif
+
 static const float _0f_inline = 0.0F;
 static const double _0d_inline = 0.0;
 static const float _1f_inline = 1.0F;

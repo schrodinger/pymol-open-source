@@ -442,7 +442,6 @@ static void RayComputeBox(CRay *I)
 
   CPrimitive *prm;
   CBasis *basis1;
-  basis1 = I->Basis+1;
 
   float xmin=0.0F,ymin=0.0F,xmax=0.0F,ymax=0.0F;
   float xp,xm,yp,ym;
@@ -452,6 +451,7 @@ static void RayComputeBox(CRay *I)
   const float _0 = 0.0F;
   int a;
 
+  basis1 = I->Basis+1;
   if(basis1->NVertex) {
     xmin = xmax = basis1->Vertex[0];
     ymin = ymax = basis1->Vertex[1];
