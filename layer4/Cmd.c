@@ -79,39 +79,6 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include"OVContext.h"
 
-#define cLoadTypePDB 0
-#define cLoadTypeMOL 1
-#define cLoadTypeSDF 2
-#define cLoadTypeMOLStr 3
-#define cLoadTypeMMD 4
-#define cLoadTypeMMDSeparate 5
-#define cLoadTypeMMDStr 6
-#define cLoadTypeXPLORMap 7
-#define cLoadTypeChemPyModel 8
-#define cLoadTypePDBStr 9
-#define cLoadTypeChemPyBrick 10
-#define cLoadTypeChemPyMap 11
-#define cLoadTypeCallback 12
-#define cLoadTypeCGO 13
-#define cLoadTypeR3D 14
-#define cLoadTypeXYZ 15
-#define cLoadTypeCCP4Map 18
-#define cLoadTypePMO  19
-#define cLoadTypeTOP  21
-#define cLoadTypeTRJ  22
-#define cLoadTypeCRD  23
-#define cLoadTypeRST  24
-#define cLoadTypePSE  25
-#define cLoadTypeXPLORStr 26
-#define cLoadTypePHIMap 27
-#define cLoadTypeFLDMap 28
-#define cLoadTypeBRIXMap 29
-#define cLoadTypeGRDMap 30
-#define cLoadTypePQR 31
-#define cLoadTypeDXMap 32
-#define cLoadTypeMOL2 33
-#define cLoadTypeMOL2Str 34
-#define cLoadTypeP1M 35
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -4210,53 +4177,11 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     }
 
     if(multiplex!=1)
-      origObj=ExecutiveFindObjectByName(TempPyMOLGlobals,oname);
-    /* check for existing object of right type, delete if not */
-    if(origObj) {
-      new_type = -1;
-      switch(type) {
-      case cLoadTypeChemPyModel:
-      case cLoadTypePDB:
-      case cLoadTypeXYZ:
-      case cLoadTypePDBStr:
-      case cLoadTypeMOL:
-      case cLoadTypeMOLStr:
-      case cLoadTypeMMD:
-      case cLoadTypeMMDSeparate:
-      case cLoadTypeMMDStr:
-      case cLoadTypePMO:
-      case cLoadTypeTOP:
-      case cLoadTypeTRJ:
-      case cLoadTypeCRD:
-      case cLoadTypeMOL2:
-      case cLoadTypeMOL2Str:
-        new_type = cObjectMolecule;
-        break;
-      case cLoadTypeChemPyBrick:
-      case cLoadTypeChemPyMap:
-      case cLoadTypeXPLORMap:
-      case cLoadTypeCCP4Map:
-      case cLoadTypeFLDMap:
-      case cLoadTypeGRDMap:
-        new_type = cObjectMap;
-        break;
-      case cLoadTypeCallback:
-        new_type = cObjectCallback;
-        break;
-      case cLoadTypeCGO:
-        new_type = cObjectCGO;
-        break;
-      }
-      if (new_type!=origObj->type) {
-        ExecutiveDelete(TempPyMOLGlobals,origObj->Name);
-        origObj=NULL;
-      }
-    }
-    
+      origObj = ExecutiveGetIfCompatible(PyMOLGlobals *G,char *oname,int new_type);
     
     switch(type) {
     case cLoadTypePDB:
-      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false);
+      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false,multiplex);
       break;
     case cLoadTypePQR:
       {
@@ -4264,7 +4189,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         UtilZeroMem(&pdb_info,sizeof(PDBInfoRec));
 
         pdb_info.is_pqr_file = true;        
-        ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,&pdb_info,quiet,false);
+        ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,&pdb_info,quiet,false,multiplex);
       }
       break;
     case cLoadTypeTOP:
@@ -4373,7 +4298,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       }
       break;
     case cLoadTypePDBStr:
-      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,true);
+      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,true,multiplex);
       break;
     case cLoadTypeMOL:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MOL\n" ENDFD;

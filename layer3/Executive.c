@@ -586,14 +586,61 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
   if((!is_string)&&buffer) {
     mfree(buffer);
   }
-
+  
 }
 
+CObject *ExecutiveGetIfCompatible(PyMOLGlobals *G,char *oname,int type)
+{
+  CObject *origObj = NULL;
+  origObj=ExecutiveFindObjectByName(G,oname);
+  /* check for existing object of right type, delete if not */
+  if(origObj) {
+    int new_type = -1;
+    switch(type) {
+    case cLoadTypeChemPyModel:
+    case cLoadTypePDB:
+    case cLoadTypeXYZ:
+    case cLoadTypePDBStr:
+    case cLoadTypeMOL:
+    case cLoadTypeMOLStr:
+    case cLoadTypeMMD:
+    case cLoadTypeMMDSeparate:
+    case cLoadTypeMMDStr:
+    case cLoadTypePMO:
+    case cLoadTypeTOP:
+    case cLoadTypeTRJ:
+    case cLoadTypeCRD:
+    case cLoadTypeMOL2:
+    case cLoadTypeMOL2Str:
+      new_type = cObjectMolecule;
+      break;
+    case cLoadTypeChemPyBrick:
+    case cLoadTypeChemPyMap:
+    case cLoadTypeXPLORMap:
+    case cLoadTypeCCP4Map:
+    case cLoadTypeFLDMap:
+    case cLoadTypeGRDMap:
+      new_type = cObjectMap;
+      break;
+    case cLoadTypeCallback:
+      new_type = cObjectCallback;
+      break;
+    case cLoadTypeCGO:
+        new_type = cObjectCGO;
+        break;
+    }
+    if (new_type!=origObj->type) {
+      ExecutiveDelete(G,origObj->Name);
+      origObj=NULL;
+    }
+  }
+  return origObj;
+}
 
 void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                              char *oname, int frame, int discrete,int finish,
                              OrthoLineType buf,PDBInfoRec *pdb_info,int quiet,
-                             int is_string)
+                             int is_string, int multiplex)
 {
   int ok=true;
   FILE *f;
@@ -615,7 +662,8 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
     UtilZeroMem(&pdb_info_rec,sizeof(PDBInfoRec));
     pdb_info=&pdb_info_rec;
   }
-
+ 
+  pdb_info->multiplex = multiplex;
   if(is_string) {
     buffer=fname;
   } else {

@@ -103,8 +103,7 @@ static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
 static void PyMOL_Load(CPyMOL *I,char *content, char *content_type, char *format, char *object, 
                 int frame, int discrete, int finish, int quiet)
 {
-  /*
-    ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false);*/
+  ExecutiveProcessPDBFile(I->G,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false);*/
 }
 
 

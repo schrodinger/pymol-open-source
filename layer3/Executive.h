@@ -25,12 +25,47 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
+#define cLoadTypePDB 0
+#define cLoadTypeMOL 1
+#define cLoadTypeSDF 2
+#define cLoadTypeMOLStr 3
+#define cLoadTypeMMD 4
+#define cLoadTypeMMDSeparate 5
+#define cLoadTypeMMDStr 6
+#define cLoadTypeXPLORMap 7
+#define cLoadTypeChemPyModel 8
+#define cLoadTypePDBStr 9
+#define cLoadTypeChemPyBrick 10
+#define cLoadTypeChemPyMap 11
+#define cLoadTypeCallback 12
+#define cLoadTypeCGO 13
+#define cLoadTypeR3D 14
+#define cLoadTypeXYZ 15
+#define cLoadTypeCCP4Map 18
+#define cLoadTypePMO  19
+#define cLoadTypeTOP  21
+#define cLoadTypeTRJ  22
+#define cLoadTypeCRD  23
+#define cLoadTypeRST  24
+#define cLoadTypePSE  25
+#define cLoadTypeXPLORStr 26
+#define cLoadTypePHIMap 27
+#define cLoadTypeFLDMap 28
+#define cLoadTypeBRIXMap 29
+#define cLoadTypeGRDMap 30
+#define cLoadTypePQR 31
+#define cLoadTypeDXMap 32
+#define cLoadTypeMOL2 33
+#define cLoadTypeMOL2Str 34
+#define cLoadTypeP1M 35
+
+
 int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort, int location);
 int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate, int quiet);
 int ExecutiveGetAtomVertex(PyMOLGlobals *G,char *s1,int state,int index,float *v);
 void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf,
-                             PDBInfoRec *pdb_info,int quiet,int is_string);
+                             PDBInfoRec *pdb_info,int quiet,int is_string,int multiplex);
 
 void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
                        char *oname, int frame, int discrete,int finish,
@@ -202,6 +237,7 @@ int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff);
 int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);
 int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);
 int ExecutiveGetActiveSele(PyMOLGlobals *G);
+CObject *ExecutiveGetIfCompatible(PyMOLGlobals *G,char *oname,int type);
 
 #endif
 
