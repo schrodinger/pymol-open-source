@@ -421,12 +421,18 @@ void CGORenderRay(CGO *I,CRay *ray)
   int vc=0;
   float linewidth=1.0;
   float widthscale=0.15;
-  float primwidth=0.15;
+  float primwidth;
   float white[] = {1.0,1.0,1.0};
   float zee[] = {0.0,0.0,1.0};
 
   float *n0=NULL,*n1=NULL,*n2=NULL,*v0=NULL,*v1=NULL,*v2=NULL,*c0=NULL,*c1=NULL,*c2=NULL;
   int mode = -1;
+
+  widthscale = SettingGet(cSetting_cgo_ray_width_scale);
+  linewidth = SettingGet(cSetting_line_width);
+
+  primwidth = linewidth*widthscale;
+
   c0=white;
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
@@ -620,6 +626,10 @@ void CGORenderGL(CGO *I) /* this should be as fast as you can make it...
 {
   register float *pc = I->op;
   register int op;
+  float linewidth;
+
+  glColor3f(1.0,1.0,1.0);
+  glLineWidth(SettingGet(cSetting_line_width));
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     CGO_gl[op](pc);

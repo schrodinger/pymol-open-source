@@ -205,8 +205,10 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_ribbon_width                106
 #define cSetting_dash_width                  107
 #define cSetting_dash_radius                 108
+#define cSetting_cgo_ray_width_scale         109
+#define cSetting_line_radius                 110
 
-#define cSetting_INIT                        110
+#define cSetting_INIT                        120
 
 #endif
 

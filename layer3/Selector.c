@@ -278,7 +278,7 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
     a1=vla[a*2];
     a2=vla[a*2+1];
 
-    if(a1!=a2) {
+    if(a1!=a2) { 
       at1=I->Table[a1].atom;
       at2=I->Table[a2].atom;
       
@@ -900,8 +900,9 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
           n+=2;
         }
       }
-      if(nFrag) 
+      if(nFrag) {
         SelectorEmbedSelection(comp,compName,NULL);        
+      }
       FreeP(toDo);
       FreeP(atom);
       FreeP(comp);

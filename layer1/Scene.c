@@ -629,6 +629,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         SelectorCreate(cEditorSele1,buffer,NULL,false);
         ExecutiveDelete(cEditorSele2);
         EditorSetActiveObject((ObjectMolecule*)obj,I->StateIndex);
+        if(EditorActive()) {
+          SelectorCreate(cEditorRes,"(byres pk1)",NULL,false);
+          if(SettingGet(cSetting_autohide_selections))
+            ExecutiveHideSelections();
+        }
+
         WizardDoPick(0);
       } else {
       EditorSetActiveObject(NULL,0);

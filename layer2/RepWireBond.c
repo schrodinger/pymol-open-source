@@ -28,13 +28,16 @@ typedef struct RepWireBond {
   float *V,*VP;
   /*  Pickable *P;*/
   int N,NP;
+  float Width;
+  float Radius;
 } RepWireBond;
 
 #include"ObjectMolecule.h"
 
 void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick);
 void RepWireBondFree(RepWireBond *I);
-void RepValence(float *v,float *v1,float *v2,int *other,int a1,int a2,float *coord,float *color,int ord);
+void RepValence(float *v,float *v1,float *v2,int *other,int a1,
+                int a2,float *coord,float *color,int ord,float tube_size);
 
 void RepWireBondFree(RepWireBond *I)
 {
@@ -58,7 +61,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 
 	 while(c--) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
-      ray->fCylinder3fv(ray,v+3,v+6,0.15,v,v);
+      ray->fCylinder3fv(ray,v+3,v+6,I->Radius,v,v);
 		v+=9;
 	 }
 
@@ -102,7 +105,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 (*pick)[0].index = i; /* pass the count */
   } else if(PMGUI) {
 
-    glLineWidth(SettingGet(cSetting_line_width));
+    glLineWidth(I->Width);
 	 
 	 v=I->V;
 	 c=I->N;
@@ -135,6 +138,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   OOAlloc(RepWireBond);
   obj = cs->Obj;
 
+
   visFlag=false;
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
@@ -158,8 +162,11 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepWireBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
 
-  half_bonds = SettingGet(cSetting_half_bonds);
-  valence = (SettingGet(cSetting_valence)!=0.0);
+  I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
+  I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_radius);
+
+  half_bonds = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
+  valence = (SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence)!=0.0);
 
   if(valence) /* build list of up to 2 connected atoms for each atom */
     {
@@ -259,7 +266,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						v0 = ColorGet(c1);
 
                   if(valence&&(ord>1)) {
-                    RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord);
+                    RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                     v+=ord*9;
                     I->N+=ord;
                   } else {
@@ -289,7 +296,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 
 
                       if(valence&&(ord>1)) {
-                        RepValence(v,v1,h,other,a1,a2,cs->Coord,v0,ord);
+                        RepValence(v,v1,h,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;
                         I->N+=ord;
 							 } else {
@@ -314,7 +321,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 							 v0 = ColorGet(c2);
 							 
                       if(valence&&(ord>1)) {
-                        RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord);
+                        RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;
                         I->N+=ord;
                       } else {
@@ -439,14 +446,14 @@ Rep *RepWireBondNew(CoordSet *cs)
 
 
 
-void RepValence(float *v,float *v1,float *v2,int *other,int a1,int a2,float *coord,float *color,int ord)
+void RepValence(float *v,float *v1,float *v2,int *other,
+                int a1,int a2,float *coord,float *color,int ord,
+                float tube_size)
 {
 
   float d[3],t[3],p0[3],p1[3],p2[3],*vv;
-  float tube_size;
   int a3,ck;
 
-  tube_size = SettingGet(cSetting_valence);
 
   v[0] = color[0];
   v[1] = color[1];

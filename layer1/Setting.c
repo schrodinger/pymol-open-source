@@ -475,6 +475,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
 	 break;
   case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
     SettingSet(cSetting_line_smooth,0);
+  case cSetting_line_radius:
+    ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_mesh_width: 
@@ -921,7 +923,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_internal_gui, 1.0);
 
-  SettingSet_f(I,cSetting_cartoon_oval_length, 1.50);
+  SettingSet_f(I,cSetting_cartoon_oval_length, 1.35);
 
   SettingSet_f(I,cSetting_cartoon_oval_width, 0.25);
 
@@ -939,6 +941,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_dash_radius, 0.14);
 
+  SettingSet_f(I,cSetting_cgo_ray_width_scale, 0.15);
+
+  SettingSet_f(I,cSetting_line_radius, 0.15);
   
 }
 

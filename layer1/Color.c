@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"OOMac.h"
 #include"MemoryDebug.h"
 #include"Ortho.h"
+#include"Word.h"
 
 #include"Color.h"
 
@@ -29,13 +30,20 @@ void ColorDef(char *name,float *v)
   CColor *I=&Color;
   int color=-1;
   int a;
+  int best;
+  int wm;
+
+  best = 0;
   for(a=0;a<I->NColor;a++)
 	 {
-		if(strcmp(name,I->Color[a].Name)==0) 
-		  {
-			 color=a;
-			 break;
-		  }
+      wm = WordMatch(name,I->Color[a].Name,true);
+      if(wm<0) {
+        color=a;
+        break;
+      } else if ((wm>0)&&(best<wm)) {
+        color=a;
+        best=wm;
+      }
 	 }
   if(color<0) {
     color=I->NColor;
@@ -46,7 +54,9 @@ void ColorDef(char *name,float *v)
   I->Color[color].Color[0]=v[0];
   I->Color[color].Color[1]=v[1];
   I->Color[color].Color[2]=v[2];
-  PRINTF " Color: \"%s\" defined as [ %3.1f, %3.1f, %3.1f ].\n",name,v[0],v[1],v[2] ENDF
+  PRINTFB(FB_Executive,FB_Actions)
+    " Color: \"%s\" defined as [ %3.1f, %3.1f, %3.1f ].\n",name,v[0],v[1],v[2] 
+    ENDFB;
 
 }
 /*========================================================================*/
@@ -56,17 +66,22 @@ int ColorGetIndex(char *name)
   int color=-1; /* default for unknown is white */
   int a;
   int i;
+  int wm,best;
+
   if((name[0]>='0')&&(name[0]<='9'))
     if(sscanf(name,"%d",&i)) 
       if((i<I->NColor)&&(i>=0))
         return(i);
   for(a=0;a<I->NColor;a++)
 	 {
-		if(strcmp(name,I->Color[a].Name)==0) 
-		  {
-			 color=a;
-			 break;
-		  }
+      wm = WordMatch(name,I->Color[a].Name,true);
+      if(wm<0) {
+        color=a;
+        break;
+      } else if ((wm>0)&&(best<wm)) {
+        color=a;
+        best=wm;
+      }
 	 }
   return(color);
 }
@@ -205,15 +220,15 @@ void ColorInit(void)
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"purple");
-  I->Color[I->NColor].Color[0]=0.6;
-  I->Color[I->NColor].Color[1]=0.1;
-  I->Color[I->NColor].Color[2]=0.6;
+  I->Color[I->NColor].Color[0]=0.7;
+  I->Color[I->NColor].Color[1]=0.2;
+  I->Color[I->NColor].Color[2]=0.7;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"teal");
-  I->Color[I->NColor].Color[0]=0.1;
-  I->Color[I->NColor].Color[1]=0.5;
-  I->Color[I->NColor].Color[2]=0.5;
+  I->Color[I->NColor].Color[0]=0.2;
+  I->Color[I->NColor].Color[1]=0.6;
+  I->Color[I->NColor].Color[2]=0.6;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"ruby");
@@ -407,6 +422,36 @@ void ColorInit(void)
   I->Color[I->NColor].Color[0]=1.0;
   I->Color[I->NColor].Color[1]=0.65;
   I->Color[I->NColor].Color[2]=0.85;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"firebrick");
+  I->Color[I->NColor].Color[0]=0.698;
+  I->Color[I->NColor].Color[1]=0.13;
+  I->Color[I->NColor].Color[2]=0.13;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"chocolate");
+  I->Color[I->NColor].Color[0]=0.555;
+  I->Color[I->NColor].Color[1]=0.222;
+  I->Color[I->NColor].Color[2]=0.111;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"chocolate");
+  I->Color[I->NColor].Color[0]=0.555;
+  I->Color[I->NColor].Color[1]=0.222;
+  I->Color[I->NColor].Color[2]=0.111;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"brown");
+  I->Color[I->NColor].Color[0]=0.555;
+  I->Color[I->NColor].Color[1]=0.274;
+  I->Color[I->NColor].Color[2]=0.150;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"wheat");
+  I->Color[I->NColor].Color[0]=0.99;
+  I->Color[I->NColor].Color[1]=0.82;
+  I->Color[I->NColor].Color[2]=0.65;
   I->NColor++;
 
 
