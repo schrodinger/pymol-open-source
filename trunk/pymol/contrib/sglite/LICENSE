@@ -1,12 +1,12 @@
-SGLite Copyright Notice
+SgLite Copyright Notice
 =======================
 
-The SGLite source code is copyrighted, but you can freely use and 
-copy it as part of the PyMOL Molecular Graphics System as long as 
-you don't change or remove the any of the copyright notices.
+The SgLite source code is copyrighted, but you can freely use and
+copy it as part of the PyMOL Molecular Graphics System as long as
+you don't change or remove any of the copyright notices.
 
 ----------------------------------------------------------------------
-SGLite is Copyright 2000 by Ralf W. Grosse-Kunstleve
+SgLite is Copyright 2000 by Ralf W. Grosse-Kunstleve
 
                         All Rights Reserved
 
@@ -27,6 +27,4 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ----------------------------------------------------------------------
-
-
 

@@ -1,8 +1,8 @@
 /* $Id$ */
 
-/* The source code contained in this file is 
- * Copyright (C) 2000 by Ralf W. Grosse-Kunstleve.
- * Please see the LICENSE file for more information. */
+/* The source code contained in this file is            */
+/* Copyright (C) 1994-2000 by Ralf W. Grosse-Kunstleve. */
+/* Please see the LICENSE file for more information.    */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +10,7 @@
 #include <ctype.h>
 
 
+#undef SG_GLOBAL
 #include "sglite.h"
 
 

@@ -1,15 +1,16 @@
 /* $Id$ */
 
-/* The source code contained in this file is 
- * Copyright (C) 2000 by Ralf W. Grosse-Kunstleve.
- * Please see the LICENSE file for more information. */
+/* The source code contained in this file is            */
+/* Copyright (C) 1994-2000 by Ralf W. Grosse-Kunstleve. */
+/* Please see the LICENSE file for more information.    */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
+#include <ctype.h>
 
 
+#undef SG_GLOBAL
 #include "sglite.h"
 #include "sgconst.h"
 #include "sgrefset.h"
@@ -652,7 +653,6 @@ static int StripExtension(char *Symbol)
   int   Ext, l;
   char  *stop, *e;
 
-
   Ext = '\0';
 
       stop = strrchr(Symbol, ':');
@@ -717,7 +717,6 @@ static void RemoveParentheses(char *Symbol)
   const int   RotNumbers[] = { 2, 3, 4, 6 };
   const char  RotSymbols[] = "2346";
   const char  ScrSymbols[] = "012345";
-
 
   strcpy(pat, "r(s)");
 
@@ -831,6 +830,17 @@ static void ShortMonoHM_as_FullMonoHM(int TableID, char *WorkSymbol)
 }
 
 
+static void Reset_HM_as_Hall(T_HM_as_Hall *HM_as_Hall)
+{
+  HM_as_Hall->SgNumber  = 0;
+  HM_as_Hall->Schoenfl  = NULL;
+  HM_as_Hall->Qualif    = NULL;
+  HM_as_Hall->HM        = NULL;
+  HM_as_Hall->Extension = '\0';
+  HM_as_Hall->Hall      = NULL;
+}
+
+
 static int Main_HM_Lookup(int TableID, const char *WorkSymbol, int Extension,
                           T_HM_as_Hall *HM_as_Hall)
 {
@@ -838,7 +848,6 @@ static int Main_HM_Lookup(int TableID, const char *WorkSymbol, int Extension,
   char                  HM[32], *s;
   const char            *Hall, *h;
   int                   i;
-
 
   for (Dict = Main_HM_Dict; Dict->SgNumber; Dict++) {
     RemoveSpaces(Dict->HM, HM);
@@ -886,17 +895,7 @@ static int Main_HM_Lookup(int TableID, const char *WorkSymbol, int Extension,
     }
   }
 
-  if (Hall == NULL) {
-    if (HM_as_Hall) {
-      HM_as_Hall->SgNumber  = 0;
-      HM_as_Hall->Schoenfl  = NULL;
-      HM_as_Hall->Qualif    = NULL;
-      HM_as_Hall->HM        = NULL;
-      HM_as_Hall->Extension = '\0';
-      HM_as_Hall->Hall      = NULL;
-    }
-    return 0;
-  }
+  if (Hall == NULL) return 0;
 
   if (HM_as_Hall) {
     HM_as_Hall->SgNumber  = Dict->SgNumber;
@@ -910,18 +909,39 @@ static int Main_HM_Lookup(int TableID, const char *WorkSymbol, int Extension,
 }
 
 
+static int HallPassThrough(const char *Symbol, T_HM_as_Hall *HM_as_Hall)
+{
+  int         i;
+  const char  *s;
+
+  for (s = Symbol; *s; s++) if (! isspace(*s)) break;
+  for (i = 0; i < 4; i++, s++) {
+    if (tolower(*s) != "hall"[i]) return 0;
+  }
+  if (*s == ':') s++;
+  else if (! isspace(*s)) return 0;
+  for (; *s; s++) if (! isspace(*s)) break;
+  if (HM_as_Hall) HM_as_Hall->Hall = s;
+  return 1;
+}
+
+
 int SgSymbolLookup(int TableID, const char *Symbol, T_HM_as_Hall *HM_as_Hall)
 {
   char  WorkSymbol[64], xtrac;
   int   Extension, SgNumber, n, status;
 
+  if (HM_as_Hall) Reset_HM_as_Hall(HM_as_Hall);
 
   if      (TableID == 'I' || TableID == 'i' || TableID == '1')
     TableID = 'I';
   else if (TableID == 'A' || TableID == 'a')
     TableID = 'A';
-  else
+  else {
     TableID = '\0';
+    if (HallPassThrough(Symbol, HM_as_Hall) != 0)
+      return 0; /* Attention: HM_as_Hall->Hall is a pointer to Symbol! */
+  }
 
   if (PreProcessSymbol(Symbol, WorkSymbol, sizeof WorkSymbol) != 0) return 0;
   Extension = StripExtension(WorkSymbol);
@@ -957,6 +977,7 @@ int MatchTabulatedSettings(const T_SgOps *SgOps, T_HM_as_Hall *HM_as_Hall)
 
   const int Extensions[2][3] = {{'\0', '1', '2'}, {'\0', 'H', 'R'}};
 
+  if (HM_as_Hall) Reset_HM_as_Hall(HM_as_Hall);
 
       SymCType = GetSymCType(SgOps->nLTr, SgOps->LTr);
   if (SymCType != '\0' && SymCType != 'Q')
@@ -995,15 +1016,6 @@ int MatchTabulatedSettings(const T_SgOps *SgOps, T_HM_as_Hall *HM_as_Hall)
         }
       }
     }
-  }
-
-  if (HM_as_Hall) {
-    HM_as_Hall->SgNumber  = 0;
-    HM_as_Hall->Schoenfl  = NULL;
-    HM_as_Hall->Qualif    = NULL;
-    HM_as_Hall->HM        = NULL;
-    HM_as_Hall->Extension = '\0';
-    HM_as_Hall->Hall      = NULL;
   }
 
   return 0;

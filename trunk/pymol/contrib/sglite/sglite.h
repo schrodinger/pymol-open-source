@@ -1,14 +1,14 @@
 /* $Id$ */
 
-/* The source code contained in this file is 
- * Copyright (C) 2000 by Ralf W. Grosse-Kunstleve.
- * Please see the LICENSE file for more information. */
+/* The source code contained in this file is            */
+/* Copyright (C) 1994-2000 by Ralf W. Grosse-Kunstleve. */
+/* Please see the LICENSE file for more information.    */
 
 #ifndef SGLITE_H__
 #define SGLITE_H__
 
 #ifdef PythonTypes
-#include <Python.h>
+#include "Python.h"
 #else
 #define PyObject_HEAD
 #endif
@@ -35,15 +35,14 @@
 
 #define CheckPoint printf("@ %s %d\n", __FILE__, __LINE__); fflush(stdout)
 
-
 #ifndef SG_GLOBAL
 extern
 const char *SgError;
 extern
 char        SgErrorBuffer[128];
 #else
-const char *SgError = NULL;
-char        SgErrorBuffer[128];
+const char  *SgError = NULL;
+char         SgErrorBuffer[128];
 #endif
 
 #define  IE(status) \
@@ -261,6 +260,8 @@ int MatchTabulatedSettings(const T_SgOps *SgOps, T_HM_as_Hall *HM_as_Hall);
 #define PHSymOptPedantic  (1)
 #define PHSymOptNoCType   (2)
 
+int ParseHallSymbolCBMx(const char *HSym, T_SgOps *SgOps, int Options,
+                        T_RTMx CBMx[2], int *HaveCBMx);
 int ParseHallSymbol(const char *HSym, T_SgOps *SgOps, int Options);
 
 
@@ -276,6 +277,9 @@ int BuildEqMIx(const T_SgOps *SgOps, int FriedelSym, const int H[3],
                T_EqMIx *EqMIx);
 int GetCutParamMIx(const T_SgOps *SgOps, int FriedelSym, int CutP[3]);
 int GetMasterMIx(const T_EqMIx *EqMIx, const int CutP[3], int MasterH[3]);
+int GetMasterMIx_and_MateID(const T_SgOps *SgOps,
+                            const int CutP[3], const int MIx[3],
+                            int MasterMIx[3], int *MateID);
 
 
 /* sgmath.c */

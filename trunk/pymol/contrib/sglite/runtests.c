@@ -1,13 +1,15 @@
 /* $Id$ */
 
-/* The source code contained in this file is 
- * Copyright (C) 2000 by Ralf W. Grosse-Kunstleve.
- * Please see the LICENSE file for more information. */
+/* The source code contained in this file is            */
+/* Copyright (C) 1994-2000 by Ralf W. Grosse-Kunstleve. */
+/* Please see the LICENSE file for more information.    */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
+#undef SG_GLOBAL
 #include "sglite.h"
 #include "sgconst.h"
 #include "sgrefset.h"
@@ -397,10 +399,10 @@ static int TestAll(int Range)
 #ifdef JUNK
         if (Test_GetRefSetNormAddlG(SgOps) != 0) {
 #endif
-#ifndef JUNK
+#ifdef JUNK
         if (Test_TidyCBMx(SgOps) != 0) {
 #endif
-#ifdef JUNK
+#ifndef JUNK
         if (Test_BuildHallSymbol(SgOps) != 0) {
 #endif
 #ifdef JUNK
@@ -465,10 +467,10 @@ int RunSgLiteTests(const char *HallSymbol, const char *Mode, int Range)
 #ifdef JUNK
   if (Test_GetRefSetNormAddlG(SgOps) != 0) return IE(-1);
 #endif
-#ifndef JUNK
+#ifdef JUNK
   if (Test_TidyCBMx(SgOps) != 0) return IE(-1);
 #endif
-#ifdef JUNK
+#ifndef JUNK
   if (Test_BuildHallSymbol(SgOps) != 0) return IE(-1);
 #endif
 #ifdef JUNK

@@ -1,21 +1,16 @@
 /* $Id$ */
 
-/* The source code contained in this file is 
- * Copyright (C) 2000 by Ralf W. Grosse-Kunstleve.
- * Please see the LICENSE file for more information. */
+/* The source code contained in this file is            */
+/* Copyright (C) 1994-2000 by Ralf W. Grosse-Kunstleve. */
+/* Please see the LICENSE file for more information.    */
 
-#include "Python.h"
-#include "ExtensionClass.h"
-#include "sglite.h"
-#include "sgconst.h"
 #include <ctype.h>
 
+#include "ExtensionClass.h"
 
-#ifdef JUNK
-#undef Py_FindMethod
-#define Py_ExClFindMethod(M,SELF,NAME) \
-  (PyExtensionClassCAPI->getattrs((SELF),(NAME)))
-#endif
+#undef SG_GLOBAL
+#include "sglite.h"
+#include "sgconst.h"
 
 
 staticforward PyExtensionClass SgOpsType;
@@ -937,8 +932,7 @@ static PyObject *get_MasterMIx_and_MateID(PyObject *self,
 {
   static char    *kwlist[] = { "CutP", "hkl", "testSysAbs", NULL };
   int            CutP[3], MIx[3], testSysAbs;
-  int            MasterMIx[3], MateMasterMIx[3], MateID, i;
-  T_EqMIx        EqMIx[1];
+  int            MasterMIx[3], MateID;
   const T_SgOps  *SgOps;
   T_IntArray     aC[1], aM[1];
 
@@ -959,18 +953,8 @@ static PyObject *get_MasterMIx_and_MateID(PyObject *self,
     return NULL;
   }
 
-  if (BuildEqMIx(SgOps, 0, MIx, EqMIx) == 0) pReturnPySgError();
-  if (GetMasterMIx(EqMIx, CutP, MasterMIx) != 0) pReturnPySgError();
-  MateID = 0;
-  if (SgOps->fInv == 1) {
-    rangei(3) MIx[i] *= -1;
-    if (BuildEqMIx(SgOps, 0, MIx, EqMIx) == 0) pReturnPySgError();
-    if (GetMasterMIx(EqMIx, CutP, MateMasterMIx) != 0) pReturnPySgError();
-    if (CmpEqMIx(MasterMIx, MateMasterMIx) > 0) {
-      rangei(3) MasterMIx[i] = MateMasterMIx[i];
-      MateID = 1;
-    }
-  }
+  if (GetMasterMIx_and_MateID(SgOps, CutP, MIx, MasterMIx, &MateID) != 0)
+    pReturnPySgError();
 
   return Py_BuildValue("(iii)i",
     MasterMIx[0], MasterMIx[1], MasterMIx[2],
@@ -1097,8 +1081,13 @@ static PyObject *w_SgSymbolLookup(PyObject *self,
       status = SgSymbolLookup(TableID, Symbol, HM_as_Hall);
   if (status < 0) pReturnPySgError();
   if (status == 0) {
-    PyErr_SetString(PyExc_ValueError, "space group symbol not recognized");
-    return NULL;
+    if (HM_as_Hall->Hall == NULL) {
+      PyErr_SetString(PyExc_ValueError, "space group symbol not recognized");
+      return NULL;
+    }
+    else {
+      return Py_BuildValue("{s:s}", "Hall", HM_as_Hall->Hall);
+    }
   }
 
   return BuildSymbolDict(HM_as_Hall);
@@ -1273,9 +1262,9 @@ static struct PyMethodDef module_methods[] = {
 
 static char *module_documentation = "sglite - space group library";
 
-void initsglite(void);
 
-void initsglite(void)
+DL_EXPORT(void)
+initsglite(void)
 {
   PyObject  *m, *d, *s;
 
