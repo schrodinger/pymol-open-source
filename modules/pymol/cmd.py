@@ -4028,6 +4028,19 @@ USAGE
 
    '''
    os.chdir(dir)
+
+def pwd():
+   '''
+DESCRIPTION
+
+   Print current working directory.
+
+USAGE
+   
+   pwd
+
+   '''
+   print os.getcwd()
    
 
 def ls(*arg):
@@ -4177,6 +4190,7 @@ keyword = {
    'overlap'       : [overlap      , 2 , 3 , ',' , 0 ],
    'pair_fit'      : [pair_fit     , 2 ,98 , ',' , 0 ],
    'protect'       : [protect      , 0 , 1 , ',' , 0 ],
+   'pwd'           : [pwd          , 0 , 0 , ',' , 0 ],
    'ray'           : [ray          , 0 , 0 , ',' , 0 ],
    'rebuild'       : [rebuild      , 0 , 0 , ',' , 0 ],
    'redo'          : [redo         , 0 , 0 , ',' , 0 ],
