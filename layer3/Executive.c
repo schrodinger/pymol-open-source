@@ -65,6 +65,7 @@ int ExecutiveRelease(Block *block,int x,int y,int mod);
 int ExecutiveDrag(Block *block,int x,int y,int mod);
 void ExecutiveDraw(Block *block);
 void ExecutiveReshape(Block *block,int width,int height);
+int ExecutiveGetExtent(char *name,float *mx,float *mn);
 
 
 #define ExecLineHeight 14
@@ -345,7 +346,6 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
     }
     /* X < Y < Z  - do nothing - that's what we want */
 
-    ExecutiveCenter(sele,1);
     ExecutiveWindowZoom(sele);
 
   }
@@ -580,10 +580,7 @@ void ExecutiveUpdateObjectSelection(struct Object *obj)
 void ExecutiveReset(int cmd)
 {
   SceneResetMatrix();
-  SelectorCreate("_all","all",NULL); /* replace this with a persistent selection? */
-  ExecutiveCenter("_all",1);
-  ExecutiveWindowZoom("_all");
-  ExecutiveDelete("_all"); 
+  ExecutiveWindowZoom("all");
 }
 /*========================================================================*/
 void ExecutiveDrawNow(void) 
@@ -687,38 +684,104 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op)
 		  }
 	 }
 }
+
 /*========================================================================*/
-void ExecutiveWindowZoom(char *name)
+int ExecutiveGetExtent(char *name,float *mx,float *mn)
 {
   int sele;
   ObjectMoleculeOpRec op;
+  CExecutive *I=&Executive;
+  Object *obj;
+  int flag = false;
+  int all_flag = false;
+  SpecRec *rec = NULL;
+  WordType all = "_all";
 
+  if(WordMatch("all",name,true)<0) {
+    name=all;
+    all_flag=true;
+    SelectorCreate(all,"(all)",NULL);
+  }
   sele=SelectorIndexByName(name);
   if(sele>=0) {
-	 op.code = 'SUMC';
-	 op.v1[0]=0.0;
-	 op.v1[1]=0.0;
-	 op.v1[2]=0.0;
-	 op.i1=0;
-	 
-	 ExecutiveObjMolSeleOp(sele,&op);
-	 
-	 if(op.i1) {
-		scale3f(op.v1,1.0/op.i1,op.v1);
-		op.code = 'MDST';
-		op.f1 = 0.0;
-		op.i1 = 0.0;
-		ExecutiveObjMolSeleOp(sele,&op);
-      if(op.f1==0.0)
-        op.f1=MAX_VDW;
-		op.f1 += MAX_VDW;
-		if(op.f1>0.0)
-		  {
-          SceneWindowSphere(op.v1,op.f1);						  
-          SceneDirty();
-		  }
-	 }
-  } 
+	 op.code = 'MNMX';
+	 op.v1[0]=FLT_MAX;
+	 op.v1[1]=FLT_MAX;
+	 op.v1[2]=FLT_MAX;
+    op.v2[0]=FLT_MIN;
+    op.v2[1]=FLT_MIN;
+    op.v2[2]=FLT_MIN;
+    op.i1 = 0;
+    ExecutiveObjMolSeleOp(sele,&op);
+    if(op.i1)
+      flag = true;
+    if(all_flag) {
+      while(ListIterate(I->Spec,rec,next,SpecList)) {
+        if(rec->type==cExecObject) {
+          obj=rec->obj;
+          if(obj->ExtentFlag) 
+            switch(obj->type) {
+            case cObjectMesh:
+            case cObjectMap:
+              min3f(obj->ExtentMin,op.v1,op.v1);
+              max3f(obj->ExtentMax,op.v2,op.v2);
+              flag = true;
+              break;
+            }
+        }
+      }
+    }
+  } else {
+    obj = ExecutiveFindObjectByName(name);
+    if(obj) {
+      switch(obj->type) {
+      case cObjectMesh:
+      case cObjectMap:
+        if(obj->ExtentFlag) {
+          copy3f(obj->ExtentMin,op.v1);
+          copy3f(obj->ExtentMax,op.v2);
+          flag = true;
+        }
+        break;
+      }
+    }
+  }
+  if(all_flag)
+    ExecutiveDelete(all);
+  if(flag) {
+    copy3f(op.v1,mn);
+    copy3f(op.v2,mx);
+  }
+  return(flag);  
+}
+/*========================================================================*/
+void ExecutiveWindowZoom(char *name)
+{
+  float center[3],radius;
+  float mn[3],mx[3];
+
+  if(ExecutiveGetExtent(name,mn,mx)) {
+    radius = diff3f(mn,mx)/2.0;
+    average3f(mn,mx,center);
+    if(radius<MAX_VDW)
+      radius=MAX_VDW;
+    radius+=MAX_VDW;
+    SceneOriginSet(center,false);
+    SceneWindowSphere(center,radius);
+    SceneDirty();
+  }
+}
+/*========================================================================*/
+void ExecutiveCenter(char *name,int preserve)
+{
+  float center[3];
+  float mn[3],mx[3];
+
+  if(ExecutiveGetExtent(name,mn,mx)) {
+    average3f(mn,mx,center);
+    SceneOriginSet(center,preserve);
+    SceneDirty();
+  }
 }
 /*========================================================================*/
 void ExecutiveGetBBox(char *name,float *mn,float *mx)
@@ -786,28 +849,6 @@ int ExecutiveGetMoment(char *name,Matrix33d mi)
 	 }
   } 
   return(c);
-}
-/*========================================================================*/
-void ExecutiveCenter(char *name,int preserve)
-{
-  int sele;
-  ObjectMoleculeOpRec op;
-  sele=SelectorIndexByName(name);
-  if(sele>=0) {
-	 op.code = 'SUMC';
-	 op.v1[0]=0.0;
-	 op.v1[1]=0.0;
-	 op.v1[2]=0.0;
-	 op.i1=0;
-	 
-	 ExecutiveObjMolSeleOp(sele,&op);
-	 
-	 if(op.i1) {
-		scale3f(op.v1,1.0/op.i1,op.v1);
-		SceneOriginSet(op.v1,preserve);
-		SceneDirty();
-	 }
-  }
 }
 /*========================================================================*/
 void ExecutiveSetObjVisib(char *name,int state)
@@ -1195,7 +1236,6 @@ void ExecutiveManageObject(Object *obj)
   if(rec->obj->type==cObjectMolecule)
 	 ExecutiveUpdateObjectSelection(obj);
   if(SettingGet(cSetting_auto_zoom)) {
-    ExecutiveCenter(obj->Name,false);
     ExecutiveWindowZoom(obj->Name);
   }
 }

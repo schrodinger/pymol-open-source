@@ -49,6 +49,9 @@ int within3f(float *v1,float *v2,float dist);
 float get_angle3f( float *v1, float *v2 );
 double length3d ( double *v1 );
 
+void min3f ( float *v1, float *v2, float *v3 );
+void max3f ( float *v1, float *v2, float *v3 );
+
 /* REVISED Matrix Routines using  float pointers */
 
 void identity44f ( float *m1 );

@@ -230,6 +230,21 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
       }
     }
   }
+
+  if(ok) {
+    v[2]=(I->Min[2])/((float)I->Div[2]);
+    v[1]=(I->Min[1])/((float)I->Div[1]);
+    v[0]=(I->Min[0])/((float)I->Div[0]);
+
+    transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMin);
+    
+    v[2]=((I->FDim[2]-1)+I->Min[2])/((float)I->Div[2]);
+    v[1]=((I->FDim[1]-1)+I->Min[1])/((float)I->Div[1]);
+    v[0]=((I->FDim[0]-1)+I->Min[0])/((float)I->Div[0]);
+
+    transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMax);
+    I->Obj.ExtentFlag=true;
+  }
 #ifdef _UNDEFINED
     printf("%d %d %d %d %d %d %d %d %d\n",
            I->Div[0],

@@ -3,11 +3,13 @@ import threading
 import os
 import sys
 import re
-import _pm
 import string 
 import time
 
 sys.path.append(os.environ['PYMOL_PATH']+'/modules')
+
+import _pm
+
 sys.setcheckinterval(1)
 
 lock_oq = threading.RLock()

@@ -207,6 +207,7 @@ DESCRIPTION
    Generic 
       hydro                       h;
       all                         *
+      visible                     v;
    Logical
       and                         &
       or                          |
@@ -1047,7 +1048,7 @@ def expfit(a,b):
       unlock()
    return r
    
-def zoom(a):
+def zoom(*arg):
    '''
 DESCRIPTION
   
@@ -1060,9 +1061,13 @@ USAGE
    zoom (selection)
  
 PYMOL API
- 
+
    pm.orient( string object-or-selection )
    '''
+   if len(arg):
+      a=arg[0]
+   else:
+      a="all"
    try:
       lock()   
       r = _pm.zoom(a)
@@ -2346,7 +2351,7 @@ keyword = {
    '_quit'         : [_quit        , 0 , 0 , ',' , 0 ],
    'png'           : [png          , 1 , 1 , ',' , 0 ],
    'viewport'      : [viewport     , 2 , 2 , ',' , 0 ],
-   'zoom'          : [zoom         , 1 , 1 , ',' , 0 ]
+   'zoom'          : [zoom         , 0 , 1 , ',' , 0 ]
    }
 
 help_only = {
