@@ -38,6 +38,7 @@ try:
       # Copy everything we need into it
       dir_util.copy_tree("data",pymol_path+"/data",1,1,0,1,1,0)
       dir_util.copy_tree("test",pymol_path+"/test",1,1,0,1,1,0)
+      dir_util.copy_tree("scripts",pymol_path+"/scripts",1,1,0,1,1,0)
       dir_util.copy_tree("examples",pymol_path+"/examples",1,1,0,1,1,0)
       file_util.copy_file("LICENSE",pymol_path+"/",1,1,1,None,1,0)      
       

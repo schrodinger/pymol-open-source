@@ -32,7 +32,7 @@ elif sys.platform=='cygwin':
 else:
    inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
    libs=["GL","GLU","glut","png"]
-   pyogl_libs = []
+   pyogl_libs = ["GL","GLU","glut"]
    lib_dirs=["/usr/X11R6/lib"]
    def_macros=[("_PYMOL_MODULE",None),
 #                  ("_PYMOL_NUMPY",None),
