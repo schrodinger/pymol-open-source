@@ -68,7 +68,8 @@ if __name__=='pymol.importing':
       pqr = 31      # PQR file (modified PDB file for APBS)
       dx = 32       # DX file (APBS)
       mol2 = 33     # MOL2 file (TRIPOS)
-      p1m = 34      # P1M file (combined data & secure commands)
+      mol2str = 34  # MOL2 file string (TRIPOS)
+      p1m = 35      # P1M file (combined data & secure commands)
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -558,9 +559,13 @@ SEE ALSO
                print "Error: unknown type '%s'",type
                raise QuietException
          if ftype==loadable.pdb:
-            read_pdbstr(string.join(data,''),name,state=0,finish=1,discrete=0,quiet=1)
+            read_pdbstr(string.join(data,''),name,state,finish,discrete,quiet)
          elif ftype==loadable.mol:
-            read_molstr(string.join(data,''),name,state=0,finish=1,discrete=0,quiet=1)
+            read_molstr(string.join(data,''),name,state,finish,discrete,quiet)
+         elif ftype==loadable.mol2:
+            read_mol2str(string.join(data,''),name,state,finish,discrete,quiet)
+         elif ftype==loadable.xplor:
+            read_xplorstr(string.join(data,''),name,state,finish,discrete,quiet)
          elif ftype==loadable.sdf:
             sdf = SDF(PseudoFile(data),'pf')
             _processSDF(sdf,name,state,quiet)
@@ -657,6 +662,42 @@ NOTES
          ftype = loadable.pdbstr
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),pdb,int(state)-1,int(ftype),
+                          int(finish),int(discrete),int(quiet),0)
+      finally:
+         unlock()
+      return r
+
+   def read_mol2str(mol2,name,state=0,finish=1,discrete=0,quiet=1):
+      '''
+DESCRIPTION
+
+   "read_mol2str" in an API-only function which reads a mol2 file from a
+   Python string.  This feature can be used to load or update
+   structures into PyMOL without involving any temporary files.
+
+PYMOL API ONLY
+
+   cmd.read_mol2str( string mol2-content, string object name 
+      [ ,int state [ ,int finish [ ,int discrete ] ] ] )
+
+NOTES
+
+   "state" is a 1-based state index for the object.
+
+   "finish" is a flag (0 or 1) which can be set to zero to improve
+   performance when loading large numbers of objects, but you must
+   call "finish_object" when you are done.
+
+   "discrete" is a flag (0 or 1) which tells PyMOL that there will be
+   no overlapping atoms in the MOL2 files being loaded.  "discrete"
+   objects save memory but can not be edited.
+   '''
+      r = 1
+      try:
+         lock()   
+         ftype = loadable.mol2str
+         oname = string.strip(str(name))
+         r = _cmd.load(str(oname),mol2,int(state)-1,int(ftype),
                           int(finish),int(discrete),int(quiet),0)
       finally:
          unlock()
