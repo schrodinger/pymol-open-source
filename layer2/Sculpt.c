@@ -303,8 +303,10 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                       v3 = cs->Coord+3*a3;
                     
                       if(fabs(get_dihedral3f(v1,v0,v2,v3))<deg_to_rad(10.0))
-                        if(planer[b0]&&planer[b2])
+                        if(planer[b0]&&planer[b2]) {
                           ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3); 
+
+                        }
                     }
                   }
                   n2+=2;
