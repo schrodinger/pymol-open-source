@@ -138,10 +138,13 @@ class PMGApp(AbstractApp):
                            (self.get_dataArea(),))
 
       text = self.output.component('text')
-      if sys.platform!='win32':
+      if sys.platform=='linux2':
          self.my_fw_font=('Courier',12)
+      elif sys.platform=='win32':
+         self.my_fw_font=('Courier',9)
       else:
          self.my_fw_font=('Courier',9)
+         
       text.configure(font = self.my_fw_font)
       text.configure(width=72)
       self.output.after(1000,self.update_feedback)
