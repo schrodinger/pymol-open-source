@@ -99,14 +99,26 @@ Main Goals for 1.0 Release
    * Basic building support for biological polymers & small molecules
      with and w/o hydrogens
 
-   * 
-
 Current Bugs to Fix
 
    * superposition system fails with degenerate sets (planer atoms, etc).
      sometimes it just fails period
   
    * intra_fit broken?
+
+Changes up to 0.68
+
+   * "transparent" renamed to "transparency"
+
+   * OpenGL transparency now works too! See "help transparency".
+
+   * nonbonded spheres are now pickable
+
+   * surface_color and mesh_color override the default atom colors
+     for uniform surface coloring -- added support for color names
+     into the settings module
+
+   * flags 24 and 25 now work with surfaces and meshes.  See "help flags"
 
 Changes up to 0.67
 

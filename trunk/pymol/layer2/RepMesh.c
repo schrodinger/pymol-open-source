@@ -38,6 +38,7 @@ typedef struct RepMesh {
   float *Dot;
   float Radius,Width;
   int oneColorFlag;
+  int oneColor;
   Object *Obj;
   int *LastVisib;
   int *LastColor;
@@ -73,9 +74,12 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
   float *vc=I->VC;
   int *n=I->N;
   int c;
+  float *col;
 
   if(ray) {
 	 if(n) {
+      if(I->oneColorFlag) 
+        col=ColorGet(I->oneColor);
 		ray->fColor3fv(ray,ColorGet(I->Obj->Color));
 		while(*n)
 		  {
@@ -84,12 +88,21 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 				{
 				  vc+=3;
 				  v+=3;
-				  while(c--)
-					 {
-						ray->fCylinder3fv(ray,v-3,v,I->Radius,vc-3,vc);
-						v+=3;
-						vc+=3;
-					 }
+              if(I->oneColorFlag) {
+                while(c--)
+                  {
+                    ray->fCylinder3fv(ray,v-3,v,I->Radius,col,col);
+                    v+=3;
+                    vc+=3;
+                  }
+              } else {
+                while(c--)
+                  {
+                    ray->fCylinder3fv(ray,v-3,v,I->Radius,vc-3,vc);
+                    v+=3;
+                    vc+=3;
+                  }
+              }
 				}
 		  }
 	 }
@@ -101,7 +114,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 		if(I->oneColorFlag) {
 		  while(*n)
 			 {
-            glColor3fv(vc);
+            glColor3fv(ColorGet(I->oneColor));
 				c=*(n++);
 				glBegin(GL_LINE_STRIP);
 				SceneResetNormal(false);
@@ -172,14 +185,16 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   float dist,minDist;
   int inclH;
   int cullByFlag = false;
+  int mesh_mode;
+  int mesh_color;
   AtomInfoType *ai2;
 
   obj=cs->Obj;
 
-  /*  cullByFlag = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_trim_dots);*/
-  inclH = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens);
-
-  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+  mesh_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_mesh_color);
+  mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  cullByFlag = (mesh_mode==cRepMesh_by_flags);
+  inclH = !(mesh_mode==cRepMesh_heavy_atoms);
 
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
   if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
@@ -222,8 +237,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 					 ai2=obj->AtomInfo+cs->IdxToAtm[j];
 					 if((inclH||(!ai2->hydrogen))&&
 						 ((!cullByFlag)||
-                    (!(ai2->flags&0x2000000))))  
-						/* ignore presence of atom if flag 25 is set BROKEN */
+                    (!(ai2->flags&cAtomFlag_ignore))))  
 						{
 						  dist = diff3f(v0,cs->Coord+j*3) - ai2->vdw;
 						  if(dist<minDist)
@@ -251,7 +265,14 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 			 }
 		  MapFree(map);
 		}
+    if(I->oneColorFlag) {
+      I->oneColor=first_color;
+    }
   } 
+  if(mesh_color>=0) {
+    I->oneColorFlag=1;
+    I->oneColor=mesh_color;
+  }
   
 }
 
@@ -277,15 +298,29 @@ Rep *RepMeshNew(CoordSet *cs)
   float probe_radius,probe_radius2;
   float min_spacing;
   int visFlag;
+  int mesh_mode;
+  int cullByFlag;
+  int inclH;
+  AtomInfoType *ai1;
+
   OOAlloc(RepMesh);
 
   PRINTFD(FB_RepMesh)
 	 " RepMeshNew-DEBUG: entered with coord-set %p\n",cs
 	 ENDFD;
   obj = cs->Obj;
+
+  mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  cullByFlag = (mesh_mode==cRepMesh_by_flags);
+  inclH = !(mesh_mode==cRepMesh_heavy_atoms);
+
   visFlag=false;
   for(a=0;a<cs->NIndex;a++) {
-	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepMesh])
+    ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+	 if(ai1->visRep[cRepMesh]&&
+       (inclH||(!ai1->hydrogen))&&
+       ((!cullByFlag)||
+        (!(ai1->flags&(cAtomFlag_exclude|cAtomFlag_ignore)))))
 		{
 		  visFlag=true;
 		  break;
@@ -316,14 +351,8 @@ Rep *RepMeshNew(CoordSet *cs)
 
   I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
 
-  /* don't waist time computing a mesh unless we need it!! */
-  for(a=0;a<cs->NIndex;a++) {
-	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepMesh])
-		{
-		  meshFlag=true;
-		  break;
-		}
-  }
+  meshFlag=true;
+
   if(meshFlag) {
 
 	 I->V=VLAMalloc(1000,sizeof(float),9,false);
@@ -344,13 +373,18 @@ Rep *RepMeshNew(CoordSet *cs)
 		 ccs=obj->CSet[b];
 		 if(ccs) {
 			for(c=0;c<ccs->NIndex;c++) {
-			  if(obj->AtomInfo[ccs->IdxToAtm[c]].visRep[cRepMesh])
-				 for(d=0;d<3;d++) {
-					if(minE[d]>ccs->Coord[(3*c)+d])
-					  minE[d]=ccs->Coord[(3*c)+d];
-					if(maxE[d]<ccs->Coord[(3*c)+d])
-					  maxE[d]=ccs->Coord[(3*c)+d];
-				 }
+           ai1 = obj->AtomInfo+cs->IdxToAtm[c];
+			  if(ai1->visRep[cRepMesh]&&
+              (inclH||(!ai1->hydrogen))&&
+              ((!cullByFlag)||
+               (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exclude))))) {
+             for(d=0;d<3;d++) {
+               if(minE[d]>ccs->Coord[(3*c)+d])
+                 minE[d]=ccs->Coord[(3*c)+d];
+               if(maxE[d]<ccs->Coord[(3*c)+d])
+                 maxE[d]=ccs->Coord[(3*c)+d];
+             }
+           }
 			}
 		 }
 	  }
@@ -408,12 +442,17 @@ Rep *RepMeshNew(CoordSet *cs)
 						  if(d) {
 							 cur=map->EList[d++];
 							 while(cur>=0) {
-								vLen=diffsq3f(point,cs->Coord+(cur*3));
-								if(vLen<aLen)
-								  {
-									 aLen=vLen;
-									 aNear=cur;
-								  }
+                        ai1 = obj->AtomInfo+cs->IdxToAtm[cur];
+                        if((inclH||(!ai1->hydrogen))&&
+                           ((!cullByFlag)||
+                            (!(ai1->flags&cAtomFlag_ignore)))) {
+                          vLen=diffsq3f(point,cs->Coord+(cur*3));
+                          if(vLen<aLen)
+                            {
+                              aLen=vLen;
+                              aNear=cur;
+                            }
+                        }
 								cur=map->EList[d++];
 							 }
 						  }						
@@ -432,13 +471,15 @@ Rep *RepMeshNew(CoordSet *cs)
 								  if(d) {
 									 cur=smap->EList[d++];
 									 while(cur>=0) {
-										vLen=diffsq3f(point,I->Dot+(cur*3));
-										if(vLen<probe_radius2) {
-										  escFlag=false;
-										  break;
-										} else if(vLen<aLen) {
-										  aLen=vLen;
-										}
+                                
+                              vLen=diffsq3f(point,I->Dot+(cur*3));
+                              if(vLen<probe_radius2) {
+                                escFlag=false;
+                                break;
+                              } else if(vLen<aLen) {
+                                aLen=vLen;
+                              }
+                              
 										cur=smap->EList[d++];
 									 }
 								  }
@@ -490,9 +531,15 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   float probe_radius_plus;
   int dotCnt,maxCnt,maxDot=0;
   int cnt;
+  int inclH,mesh_mode,cullByFlag;
+  AtomInfoType *ai1,*ai2;
   obj = cs->Obj;
 
   cavity_cull = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
+
+  mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  cullByFlag = (mesh_mode==cRepMesh_by_flags);
+  inclH = !(mesh_mode==cRepMesh_heavy_atoms);
 
   I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot);
   ErrChkPtr(I->Dot);
@@ -508,52 +555,63 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
 		v=I->Dot;
 		for(a=0;a<cs->NIndex;a++)
 		  {
-			 OrthoBusyFast(a,cs->NIndex*3);
-			 dotCnt=0;
-			 a1 = cs->IdxToAtm[a];
-			 v0 = cs->Coord+3*a;
-			 vdw = cs->Obj->AtomInfo[a1].vdw+probe_radius;
-			 inFlag=true;
-			 for(c=0;c<3;c++)
-				{
-				  if((min[c]-v0[c])>vdw) { inFlag=false;break;};
-				  if((v0[c]-max[c])>vdw) { inFlag=false;break;};
-				}
-			 if(inFlag)
-				for(b=0;b<sp->nDot;b++)
-				  {
-					 v[0]=v0[0]+vdw*sp->dot[b].v[0];
-					 v[1]=v0[1]+vdw*sp->dot[b].v[1];
-					 v[2]=v0[2]+vdw*sp->dot[b].v[2];
-					 MapLocus(map,v,&h,&k,&l);
-					 flag=true;
-					 i=*(MapEStart(map,h,k,l));
-					 if(i) {
-						j=map->EList[i++];
-						while(j>=0) {
-						  if(j!=a) 
-							 {
-								a2 = cs->IdxToAtm[j];
-								if(within3f(cs->Coord+3*j,v,cs->Obj->AtomInfo[a2].vdw+probe_radius)) {
-								  flag=false;
-								  break;
-								}
-							 }
-						  j=map->EList[i++];
-						}
-					 }
-					 if(flag)
-						{
-						  dotCnt++;
-						  v+=3;
-						  I->NDot++;
-						}
-				  }
-			 if(dotCnt>maxCnt)
-				{
-				  maxCnt=dotCnt;
-				  maxDot=I->NDot-1;
-				}
+
+          ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+          if((inclH||(!ai1->hydrogen))&&
+             ((!cullByFlag)||
+              (!(ai1->flags&(cAtomFlag_ignore))))) {
+            OrthoBusyFast(a,cs->NIndex*3);
+            dotCnt=0;
+            a1 = cs->IdxToAtm[a];
+            v0 = cs->Coord+3*a;
+            vdw = cs->Obj->AtomInfo[a1].vdw+probe_radius;
+            inFlag=true;
+            for(c=0;c<3;c++)
+              {
+                if((min[c]-v0[c])>vdw) { inFlag=false;break;};
+                if((v0[c]-max[c])>vdw) { inFlag=false;break;};
+              }
+            if(inFlag)
+              for(b=0;b<sp->nDot;b++)
+                {
+                  v[0]=v0[0]+vdw*sp->dot[b].v[0];
+                  v[1]=v0[1]+vdw*sp->dot[b].v[1];
+                  v[2]=v0[2]+vdw*sp->dot[b].v[2];
+                  MapLocus(map,v,&h,&k,&l);
+                  flag=true;
+                  i=*(MapEStart(map,h,k,l));
+                  if(i) {
+                    j=map->EList[i++];
+                    while(j>=0) {
+
+                      ai2 = obj->AtomInfo + cs->IdxToAtm[j];
+                      if((inclH||(!ai2->hydrogen))&&
+                         ((!cullByFlag)||
+                          (!(ai2->flags&cAtomFlag_ignore))))
+                        if(j!=a) 
+                          {
+                            a2 = cs->IdxToAtm[j];
+                            if(within3f(cs->Coord+3*j,v,cs->Obj->AtomInfo[a2].vdw+probe_radius)) {
+                              flag=false;
+                              break;
+                            }
+                          }
+                      j=map->EList[i++];
+                    }
+                  }
+                  if(flag)
+                    {
+                      dotCnt++;
+                      v+=3;
+                      I->NDot++;
+                    }
+                }
+            if(dotCnt>maxCnt)
+              {
+                maxCnt=dotCnt;
+                maxDot=I->NDot-1;
+              }
+          }
 		  }
 		MapFree(map);
 	 }

@@ -51,6 +51,7 @@ typedef struct ObjectMolecule {
   CGO *UnitCellCGO;
 } ObjectMolecule;
 
+
 typedef struct ObjectMoleculeOpRec {
   unsigned long code;
   Vector3f v1,v2;

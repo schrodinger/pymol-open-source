@@ -219,7 +219,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 			 if(ai1->visRep[cRepDot]||mode==cRepDotAreaType) 
 				if((inclH||(!ai1->hydrogen))&&
                ((!cullByFlag)||
-                (!(ai1->flags&0x1000000)))) {
+                (!(ai1->flags&cAtomFlag_exclude)))) {
               /* If we are culling, flag 24 controls which atoms 
                  will have dot surfaces generated for them.
               */
@@ -246,7 +246,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
                       ai2 = obj->AtomInfo+cs->IdxToAtm[j];
 							 if((inclH||(!(ai2->hydrogen)))&&
 								 ((!cullByFlag)||
-                          (!(ai2->flags&0x2000000))))  
+                          (!(ai2->flags&cAtomFlag_ignore))))  
                         /* If we are cullilng, flag 25 controls which atoms 
                            are considered "present" in the surface area 
                            calculation (i.e. able to occlude surface) */

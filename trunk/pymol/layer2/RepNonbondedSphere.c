@@ -30,6 +30,10 @@ typedef struct RepNonbondedSphere {
   float *VC;
   SphereRec *SP;
   int N,NC;
+  float *VP;
+  Pickable *P;
+  int NP;
+
 } RepNonbondedSphere;
 
 #include"ObjectMolecule.h"
@@ -43,6 +47,8 @@ void RepNonbondedSphereInit(void)
 
 void RepNonbondedSphereFree(RepNonbondedSphere *I)
 {
+  FreeP(I->VP);
+  RepFree(&I->R);
   FreeP(I->VC);
   FreeP(I->V);
   OOFreeP(I);
@@ -55,6 +61,8 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
   int cc=0;
   int a;
   SphereRec *sp;
+  int i,j;
+  Pickable *p;
 
   if(ray) {
 	 v=I->VC;
@@ -66,6 +74,53 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 		v+=4;
 	 }
   } else if(pick&&PMGUI) {
+
+	 i=(*pick)->index;
+
+	 v=I->VP;
+	 c=I->NP;
+	 p=I->R.P;
+	 
+	 glBegin(GL_LINES);
+	 
+	 while(c--) {
+
+		i++;
+
+		if(!(*pick)[0].ptr) {
+		  /* pass 1 - low order bits */
+
+		  glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+		  VLACheck((*pick),Pickable,i);
+		  p++;
+		  (*pick)[i] = *p; /* copy object and atom info */
+		} else { 
+		  /* pass 2 - high order bits */
+
+		  j=i>>12;
+
+		  glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+
+		}			 
+
+		glVertex3fv(v);
+		v+=3;
+		glVertex3fv(v);
+		v+=3;
+		glVertex3fv(v);
+		v+=3;
+		glVertex3fv(v);
+		v+=3;
+		glVertex3fv(v);
+		v+=3;
+		glVertex3fv(v);
+		v+=3;
+
+	 }
+	 glEnd();
+
+	 (*pick)[0].index = i;
+
   } else if(PMGUI) {
     sp=I->SP;
     while(c--)
@@ -99,6 +154,8 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   int *active=NULL;
   AtomInfoType *ai;
   int nSphere = 0;
+  int a1;
+  float *v1;
   OOAlloc(RepNonbondedSphere);
   obj = cs->Obj;
 
@@ -137,6 +194,9 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   I->V=NULL;
   I->VC=NULL;
   I->SP=NULL;
+  I->NP=0;
+  I->VP=NULL;
+  I->R.P=NULL;
 
   /* raytracing primitives */
 
@@ -214,6 +274,52 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
     I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
   else
     I->V=(float*)mrealloc(I->V,1);
+
+  /* use pickable representation from nonbonded */
+  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
+    I->VP=(float*)mmalloc(sizeof(float)*nSphere*18);
+    ErrChkPtr(I->VP);
+    
+    I->R.P=Alloc(Pickable,cs->NIndex+1);
+    ErrChkPtr(I->R.P);
+    
+    v=I->VP;
+    
+    for(a=0;a<cs->NIndex;a++) 
+      if(active[a]) {
+        
+        I->NP++;
+
+        a1=cs->IdxToAtm[a];
+        
+        I->R.P[I->NP].ptr = (void*)obj;
+        I->R.P[I->NP].index = a1;
+        I->R.P[I->NP].bond = -1;
+        v1 = cs->Coord+3*a;
+        
+        *(v++)=v1[0]-nonbonded_size;
+        *(v++)=v1[1];
+        *(v++)=v1[2];
+        *(v++)=v1[0]+nonbonded_size;
+        *(v++)=v1[1];
+        *(v++)=v1[2];
+        *(v++)=v1[0];
+        *(v++)=v1[1]-nonbonded_size;
+        *(v++)=v1[2];
+        *(v++)=v1[0];
+        *(v++)=v1[1]+nonbonded_size;
+        *(v++)=v1[2];
+        *(v++)=v1[0];
+        *(v++)=v1[1];
+        *(v++)=v1[2]-nonbonded_size;
+        *(v++)=v1[0];
+        *(v++)=v1[1];
+        *(v++)=v1[2]+nonbonded_size;
+      }
+    I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
+    I->R.P[0].index = I->NP;
+    I->VP = Realloc(I->VP,float,I->NP*21);
+  }
 
   FreeP(active);
   return((void*)(struct Rep*)I);

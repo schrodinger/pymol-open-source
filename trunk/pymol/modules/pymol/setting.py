@@ -150,6 +150,11 @@ class SettingIndex:
    ray_texture           =139
    ray_texture_settings  =140
    suspend_updates       =141
+   full_screen           =142
+   surface_mode          =143
+   surface_color         =144
+   mesh_mode             =145
+   mesh_color            =146
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
