@@ -102,11 +102,12 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 (*pick)[0].index = i; /* pass the count */
   } else if(PMGUI) {
 
+    glLineWidth(SettingGet(cSetting_line_width));
 	 
 	 v=I->V;
 	 c=I->N;
-
-    	 glDisable(GL_LIGHTING); 
+    
+    glDisable(GL_LIGHTING); 
 	 glBegin(GL_LINES);	 
 	 SceneResetNormal(true);
 	 while(c--) {

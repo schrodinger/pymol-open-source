@@ -36,7 +36,7 @@ typedef struct RepMesh {
   float *V,*VC;
   int NDot;
   float *Dot;
-  float Radius;
+  float Radius,Width;
   int oneColorFlag;
   Object *Obj;
   int *LastVisib;
@@ -95,7 +95,8 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 	 }
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-	 if(n) {
+    glLineWidth(I->Width);
+    if(n) {
 	   glDisable(GL_LIGHTING);
 		if(I->oneColorFlag) {
 		  while(*n)
@@ -190,6 +191,9 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
       *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepMesh];
       *(lc++) = *(cc++);
     }
+
+  I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_width);
+  I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
 
   if(I->NTot) {
 	 obj=cs->Obj;
@@ -308,7 +312,8 @@ Rep *RepMeshNew(CoordSet *cs)
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepMeshSameVis;
   I->LastVisib=NULL;
   I->LastColor=NULL;
-  I->Radius=SettingGet(cSetting_mesh_radius);
+
+  I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
 
   /* don't waist time computing a mesh unless we need it!! */
   for(a=0;a<cs->NIndex;a++) {

@@ -427,17 +427,26 @@ int SettingGetName(int index,SettingName name) /* can be called from any thread 
 /*========================================================================*/
 void SettingGenerateSideEffects(int index,char *sele,int state)
 {
+  char all[] = "all";
+  char *inv_sele;
+  if(!sele) {
+    inv_sele = all;
+  } else if(sele[0]==0) {
+    inv_sele = all;
+  } else {
+    inv_sele = sele;
+  }
   switch(index) {
   case cSetting_light:
 	 SceneDirty();
 	 break;
   case cSetting_valence:
-    ExecutiveInvalidateRep("all",cRepLine,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_dash_length:
   case cSetting_dash_gap:
-    ExecutiveInvalidateRep("all",cRepDash,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepDash,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_button_mode:
@@ -446,11 +455,11 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_stick_radius:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
-    ExecutiveInvalidateRep("all",cRepCyl,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_label_color:
-    ExecutiveInvalidateRep("all",cRepLabel,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepLabel,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_all_states:
@@ -462,6 +471,24 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
 	 break;
   case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
     SettingSet(cSetting_line_smooth,0);
+    SceneChanged();
+    break;
+  case cSetting_mesh_width: /* auto-disable smooth lines if line width > 1 */
+    ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
+    SettingSet(cSetting_line_smooth,0);
+    SceneChanged();
+    break;
+  case cSetting_nonbonded_size:
+    ExecutiveInvalidateRep(inv_sele,cRepNonbonded,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepNonbondedSphere,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_mesh_radius:
+    ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
+    SceneChanged();
+    break;
+  case cSetting_surface_quality:
+    ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_dot_width:
@@ -605,6 +632,7 @@ void SettingSetNamed(char *name,char *value)
 		SettingSetfv(index,&v);
 		break;
     case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
+    case cSetting_mesh_width:
       sscanf(value,"%f",&v);
       if(v!=1.0)
         SettingSet(cSetting_line_smooth,0);
@@ -841,6 +869,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_isomesh_auto_state, 1.0);
 
+  SettingSet_f(I,cSetting_mesh_width, 1.0);
 }
 
 

@@ -431,7 +431,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   RepInit(&I->R);
 
-  if((int)SettingGet(cSetting_surface_quality)) {
+  if((int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_quality)) {
     minimum_sep = SettingGet(cSetting_surface_best);
     sp=Sphere2;
   } else {

@@ -1,6 +1,6 @@
 Changes Under Consideration
 
-   * Transparency support. 
+   * Transparency support in rendering (on a per-primitive basis)
 
    * Generic volume data object (to supplement bricks and maps)
 
@@ -8,14 +8,17 @@ Changes Under Consideration
 
    * "Builder" wizard, tied into the fragments subsystem.
 
-   * Protein side-chain rotamer wizard.
-
    * "Tinker" wizard 
 
    * Real Edit Menu in Tk
 
    * draw all solid representations before drawing lines
-     in order to improve antialiasing.
+     in order to improve antialiasing overlap.
+
+   * make commas optional in PyMOL command arguments
+
+   * CTRL and CTRL/SHIFT numbers should add aromatic and aliphatic
+     ring systems in the builder respectively.
 
 Ongoing Goals
 
@@ -32,7 +35,42 @@ Ongoing Goals
 
 Changes up to 0.58
 
+   * more work on setting change side effects/object settings
+
    * fix bugs with saving pkl files for state > 1
+
+   * added a concise notation to the selection language 
+
+       model/segment/chain/residue/name
+                                 */name
+                           residue/name
+                     chain/       /     
+                     chain/residue/
+                     chain/       /name
+                     chain/residue/name
+             segment/     /       
+             segment/     /       /name
+             segment/     /residue
+             segment/     /residue/name
+             segment/chain/       /
+             segment/chain/       /name
+             segment/chain/residue/
+             segment/chain/residue/name
+      /model
+      /model/       /     /       /name
+      /model/       /     /residue
+      /model/       /     /residue/name
+      /model/       /chain
+      /model/       /chain/       /name
+      /model/       /chain/residue
+      /model/       /chain/residue/name
+      /model/segment
+      /model/segment/     /       /name
+      /model/segment/     /residue
+      /model/segment/     /residue/name
+      /model/segment/chain
+      /model/segment/chain/       /name
+      /model/segment/chain/residue
 
 Changes up to 0.57
 

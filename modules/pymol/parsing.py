@@ -165,13 +165,22 @@ returns list of tuples of strings: [(None,value),(name,value)...]
                   cc = cc + len(se)
             else:
                # read normal argument value
+               argval = None
                mo = arg_value_re.match(st[cc:])
                if not mo:
                   print "Error: "+st
                   print "Error: "+" "*cc+"^ syntax error."
                   raise QuietException
-               result.append((nam,string.strip(mo.group(0))))
+               argval = mo.group(0)
                cc=cc+mo.end(0)
+               while 1: # pickup unqouted characters after quotes
+                  mo = arg_value_re.match(st[cc:])
+                  if not mo:
+                     break
+                  argval = argval + mo.group(0)
+                  cc=cc+mo.end(0)
+               if argval!=None:
+                  result.append((nam,string.strip(argval)))
          # clean whitespace
          mo = whitesp_re.match(st[cc:])
          if mo:
