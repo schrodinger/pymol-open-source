@@ -111,6 +111,7 @@ void PyMOLCheckOpenGLErr(char *pos);
 
 #define p_glutGameModeString       glutGameModeString
 #define p_glutEnterGameMode        glutEnterGameMode
+#define p_glutLeaveGameMode        glutLeaveGameMode
 
 #define p_glutBitmapCharacter      glutBitmapCharacter
 #define p_glutSwapBuffers          glutSwapBuffers
@@ -214,6 +215,7 @@ int p_glutGetRedisplay(void);
 
 void     p_glutGameModeString(char *str);
 void     p_glutEnterGameMode(void);
+void     p_glutLeaveGameMode(void);
 
 void     p_glutBitmapCharacter(void *font, int character);
 void     p_glutSwapBuffers(void);

@@ -187,7 +187,7 @@ OSXVIEWER=products/PyMOLViewer.app
 OSXHYBRID=products/PyMOLX11Hybrid.app
 OSXHELPER=products/HelperPyMOL.app
 OSXFRWK=products/FrameworkPyMOL.app
-OSXDEMO=products/PyMOL\ Demos
+OSXDEMO=products/MacPyMOL\ Demos
 OSXPYMOL=$(OSXPROD)/pymol
 OSXEXE=$(OSXPROD)/Contents/MacOS/PyMOL
 OSXPY=$(OSXPROD)/py23
@@ -239,17 +239,17 @@ osx-standalone: osx-unwrap osx-python-standalone osx-product
 	install -d $(OSXPY)/lib
 	cp -R ext/lib/python2.3 $(OSXPY)/lib/
 
-osx-wrap-demos:
+mac-wrap-demos:
 	/usr/local/bin/tar -czvf layerOSX/applescript.hfstar $(OSXDEMO)
 
-osx-unwrap-demos:
+mac-unwrap-demos:
 	/usr/local/bin/tar -xzvf layerOSX/applescript.hfstar
 
-osx-demo-data:
+mac-demo-data:
 	install -d $(OSXPYMOL)/data/demo
 	cp -R demo_data/* $(OSXPYMOL)/data/demo/
 
-osx-demo: osx-standalone osx-demo-data osx-unwrap-demos 
+mac-demo: osx-standalone mac-demo-data mac-unwrap-demos 
 
 mac-framework: osx-unwrap osx-python-framework osx-product
 	/bin/rm -rf $(OSXFRWK)
