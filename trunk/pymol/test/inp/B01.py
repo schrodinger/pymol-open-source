@@ -50,12 +50,12 @@ def load():
       try:
          cmd.set("suspend_updates","1")  
          cmd.delete('pdb')
+         print file,last1,last2,c,"of",l
+         last2 = last1
+         last1 = file
          cmd.load(file,'pdb')
          cmd.set_title('pdb',1,os.path.split(file)[-1])
          cmd.rewind()
-         print file,last1,last2
-         last2 = last1
-         last1 = file
 #      cmd.refresh()
 #      cmd.hide()
          cmd.show('cartoon')
