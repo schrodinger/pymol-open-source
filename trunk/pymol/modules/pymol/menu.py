@@ -189,6 +189,7 @@ def mol_color(s):
            [ 1, '\\950orange'      , 'cmd.color("orange","'+s+'")'  ],
            [ 1, '\\059marine'      , 'cmd.color("marine","'+s+'")'  ],
            [ 1, '\\905hotpink' ,'cmd.color("hotpink","'+s+'")'  ],
+           [ 1, '\\599aquamarine' ,'cmd.color("aquamarine","'+s+'")'  ],
 #           [ 1, '\\551olive'       , 'cmd.color("olive","'+s+'")'   ],
 #           [ 1, '\\626purple'      , 'cmd.color("purple","'+s+'")'  ],
 #           [ 1, '\\266teal'        , 'cmd.color("teal","'+s+'")'    ],

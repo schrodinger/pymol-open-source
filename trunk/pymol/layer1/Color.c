@@ -30,8 +30,15 @@ Z* -------------------------------------------------------------------
 #include"MyPNG.h"
 #include"Scene.h"
 
-#define cAutoColorMask 0x7
-static int AutoColor[] = { 26, 5, 154, 6, 9, 29, 11, 30 };
+static int AutoColor[] = { 
+  26, 5, 154, 6, 9, 29, 11, 30,
+  10, 5262, 12, 36, 5271, 124, 17, 18,
+  5270, 20, 5272, 52, 5258, 5274, 5257, 5256,
+  15, 5277, 5279, 5276, 53, 5278, 5275,5269,
+  22, 5266, 5280, 5267, 5268, 104, 23,  51,
+};
+
+static int nAutoColor = 40;
 
 #define cColorExtCutoff (-10)
 
@@ -41,10 +48,10 @@ int ColorGetNext(PyMOLGlobals *G)
   int next;
   next = (int)SettingGet(G,cSetting_auto_color_next);
 
-  next = (next&cAutoColorMask);
+  if(next>=nAutoColor) next = 0;
   result = AutoColor[next];
   next++;
-  next = (next&cAutoColorMask);
+  if(next>=nAutoColor) next = 0;
   SettingSet(G,cSetting_auto_color_next,(float)next);
   return(result);
 }
@@ -54,11 +61,10 @@ int ColorGetCurrent(PyMOLGlobals *G)
   int result;
   int next;
   next = (int)SettingGet(G,cSetting_auto_color_next);
-
-  next = (next&cAutoColorMask);
-  result = AutoColor[next];
   next--;
-  next = (next&cAutoColorMask);
+  if(next<0)
+    next = (nAutoColor-1);
+  result = AutoColor[next];
   return(result);
 }
 
@@ -385,6 +391,8 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
         return(i);
   if(WordMatch(G,name,"default",true))
     return(-1);
+  if(WordMatch(G,name,"auto",true))
+    return(ColorGetNext(G));
   for(a=0;a<I->NColor;a++)
 	 {
       wm = WordMatch(G,name,I->Color[a].Name,true);
@@ -488,9 +496,9 @@ void ColorReset(PyMOLGlobals *G)
  .75  0  .75  purple      .
   0  .75 .75  teal        .
 
- .5  .5   0   deepolive   .
- .5   0  .5   deeppurple  .
-  0  .5  .5   deepteal    .
+ .6  .6  .1   deepolive   .
+ .6  .1  .6   deeppurple  .
+ .1  .6  .6   deepteal    .
 
   1  .5   0   orange      .
   1   0  .5   hotpink     .
@@ -498,8 +506,6 @@ void ColorReset(PyMOLGlobals *G)
   0   1  .5   limegreen   .
   0  .5   1   marine      .
  .5   0   1   purpleblue  .
-
-
 
 */
 
@@ -735,7 +741,7 @@ void ColorReset(PyMOLGlobals *G)
   I->Color[I->NColor].Color[2]=0.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"bluegreen"); /* legacy name */
+  strcpy(I->Color[I->NColor].Name,"bluegreen"); /* legacy name -- same as limegreen */
   I->Color[I->NColor].Color[0]=0.0F;
   I->Color[I->NColor].Color[1]=1.0F;
   I->Color[I->NColor].Color[2]=0.5F;
@@ -754,8 +760,8 @@ void ColorReset(PyMOLGlobals *G)
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"olive");
-  I->Color[I->NColor].Color[0]=0.75F;
-  I->Color[I->NColor].Color[1]=0.75F;
+  I->Color[I->NColor].Color[0]=0.77F;
+  I->Color[I->NColor].Color[1]=0.70F;
   I->Color[I->NColor].Color[2]=0.00F;
   I->NColor++;
 
@@ -771,22 +777,22 @@ void ColorReset(PyMOLGlobals *G)
   I->Color[I->NColor].Color[2]=0.75F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"ruby"); /* deprecate! */
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.1F;
+  strcpy(I->Color[I->NColor].Name,"ruby");
+  I->Color[I->NColor].Color[0]=0.6F;
+  I->Color[I->NColor].Color[1]=0.2F;
+  I->Color[I->NColor].Color[2]=0.2F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"forest"); /* deprecate! */
-  I->Color[I->NColor].Color[0]=0.1F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.1F;
+  strcpy(I->Color[I->NColor].Name,"forest");
+  I->Color[I->NColor].Color[0]=0.2F;
+  I->Color[I->NColor].Color[1]=0.6F;
+  I->Color[I->NColor].Color[2]=0.2F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"deep"); /* deprecate! */
-  I->Color[I->NColor].Color[0]=0.1F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.5F;
+  strcpy(I->Color[I->NColor].Name,"deepblue"); /* was "deep" */
+  I->Color[I->NColor].Color[0]=0.25F;
+  I->Color[I->NColor].Color[1]=0.25F;
+  I->Color[I->NColor].Color[2]=0.65;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"grey"); /* english spelling */
@@ -861,10 +867,10 @@ void ColorReset(PyMOLGlobals *G)
   I->Color[I->NColor].Color[2]=0.2F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"tv_yellow");
+  strcpy(I->Color[I->NColor].Name,"yelloworange");
   I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.1F;
+  I->Color[I->NColor].Color[1]=0.87F;
+  I->Color[I->NColor].Color[2]=0.37F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"tv_orange");
@@ -952,9 +958,9 @@ void ColorReset(PyMOLGlobals *G)
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"brown");
-  I->Color[I->NColor].Color[0]=0.555F;
-  I->Color[I->NColor].Color[1]=0.274F;
-  I->Color[I->NColor].Color[2]=0.150F;
+  I->Color[I->NColor].Color[0]=0.65F;
+  I->Color[I->NColor].Color[1]=0.32F;
+  I->Color[I->NColor].Color[2]=0.17F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"wheat");
@@ -1038,11 +1044,10 @@ void ColorReset(PyMOLGlobals *G)
   }
 
   strcpy(I->Color[I->NColor].Name,"density");
-  I->Color[I->NColor].Color[0]=0.05F;
-  I->Color[I->NColor].Color[1]=0.05F;
-  I->Color[I->NColor].Color[2]=0.5F;
+  I->Color[I->NColor].Color[0]=0.1F;
+  I->Color[I->NColor].Color[1]=0.1F;
+  I->Color[I->NColor].Color[2]=0.6F;
   I->NColor++;
-
 
   for(a=0;a<100;a=a+1) {
     sprintf(I->Color[I->NColor].Name,"gray%02d",a); /* american */
@@ -1085,27 +1090,27 @@ void ColorReset(PyMOLGlobals *G)
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"palegreen");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.5F;
+  I->Color[I->NColor].Color[0]=0.65F;
+  I->Color[I->NColor].Color[1]=0.9F;
+  I->Color[I->NColor].Color[2]=0.65F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"deepolive");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.0F;
+  I->Color[I->NColor].Color[0]=0.6F;
+  I->Color[I->NColor].Color[1]=0.6F;
+  I->Color[I->NColor].Color[2]=0.1F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"deeppurple");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.0F;
-  I->Color[I->NColor].Color[2]=0.5F;
+  I->Color[I->NColor].Color[0]=0.6F;
+  I->Color[I->NColor].Color[1]=0.1F;
+  I->Color[I->NColor].Color[2]=0.6F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"deepteal");
-  I->Color[I->NColor].Color[0]=0.0F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.5F;
+  I->Color[I->NColor].Color[0]=0.1F;
+  I->Color[I->NColor].Color[1]=0.6F;
+  I->Color[I->NColor].Color[2]=0.6F;
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"chartreuse");
@@ -1114,7 +1119,7 @@ void ColorReset(PyMOLGlobals *G)
   I->Color[I->NColor].Color[2]=0.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"limegreen"); 
+  strcpy(I->Color[I->NColor].Name,"limegreen"); /* same as bluegreen */
   I->Color[I->NColor].Color[0]=0.0F;
   I->Color[I->NColor].Color[1]=1.0F;
   I->Color[I->NColor].Color[2]=0.5F;
@@ -1124,6 +1129,98 @@ void ColorReset(PyMOLGlobals *G)
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=0.0F;
   I->Color[I->NColor].Color[2]=1.0F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"lightteal"); 
+  I->Color[I->NColor].Color[0]=0.4F;
+  I->Color[I->NColor].Color[1]=0.7F;
+  I->Color[I->NColor].Color[2]=0.7F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"splitpea"); 
+  I->Color[I->NColor].Color[0]=0.52F;
+  I->Color[I->NColor].Color[1]=0.75F;
+  I->Color[I->NColor].Color[2]=0.00F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"raspberry"); 
+  I->Color[I->NColor].Color[0]=0.70F;
+  I->Color[I->NColor].Color[1]=0.30F;
+  I->Color[I->NColor].Color[2]=0.40F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"sand"); 
+  I->Color[I->NColor].Color[0]=0.72F;
+  I->Color[I->NColor].Color[1]=0.55F;
+  I->Color[I->NColor].Color[2]=0.30F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"smudge"); 
+  I->Color[I->NColor].Color[0]=0.55F;
+  I->Color[I->NColor].Color[1]=0.70F;
+  I->Color[I->NColor].Color[2]=0.40F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"violetpurple");
+  I->Color[I->NColor].Color[0]=0.55F;
+  I->Color[I->NColor].Color[1]=0.25F;
+  I->Color[I->NColor].Color[2]=0.60F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"dirtyviolet");
+  I->Color[I->NColor].Color[0]=0.70F;
+  I->Color[I->NColor].Color[1]=0.50F;
+  I->Color[I->NColor].Color[2]=0.50F;
+  I->NColor++;
+
+
+  strcpy(I->Color[I->NColor].Name,"deepsalmon");
+  I->Color[I->NColor].Color[0]=1.00F;
+  I->Color[I->NColor].Color[1]=0.42F;
+  I->Color[I->NColor].Color[2]=0.42F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"lightpink");
+  I->Color[I->NColor].Color[0]=1.00F;
+  I->Color[I->NColor].Color[1]=0.75F;
+  I->Color[I->NColor].Color[2]=0.87F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"greencyan");
+  I->Color[I->NColor].Color[0]=0.25F;
+  I->Color[I->NColor].Color[1]=1.00F;
+  I->Color[I->NColor].Color[2]=0.75F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"limon");
+  I->Color[I->NColor].Color[0]=0.75F;
+  I->Color[I->NColor].Color[1]=1.00F;
+  I->Color[I->NColor].Color[2]=0.25F;
+  I->NColor++;
+
+
+  strcpy(I->Color[I->NColor].Name,"skyblue");
+  I->Color[I->NColor].Color[0]=0.20F;
+  I->Color[I->NColor].Color[1]=0.50F;
+  I->Color[I->NColor].Color[2]=0.80F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"bluewhite");
+  I->Color[I->NColor].Color[0]=0.85F;
+  I->Color[I->NColor].Color[1]=0.85F;
+  I->Color[I->NColor].Color[2]=1.00F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"warmpink");
+  I->Color[I->NColor].Color[0]=0.85F;
+  I->Color[I->NColor].Color[1]=0.20F;
+  I->Color[I->NColor].Color[2]=0.50F;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"darksalmon");
+  I->Color[I->NColor].Color[0]=0.73F;
+  I->Color[I->NColor].Color[1]=0.55F;
+  I->Color[I->NColor].Color[2]=0.52F;
   I->NColor++;
 
   /* if any more colors need to be added, add them here at the end so that existing files won't have their colors changed */
