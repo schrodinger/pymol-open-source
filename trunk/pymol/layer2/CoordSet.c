@@ -538,7 +538,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
         }
 
   PRINTFD(FB_CoordSet)
-    " CoordSetRender: leaving...\n",I
+    " CoordSetRender: leaving...\n"
     ENDFD;
 
 }

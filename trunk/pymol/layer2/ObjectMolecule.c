@@ -1386,7 +1386,7 @@ void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,
   }
 }
 /*========================================================================*/
-void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state)
+void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state,int log)
 {
   CoordSet *cs;
 
@@ -1404,6 +1404,14 @@ void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state)
   }
   I->UndoIter=cUndoMask&(I->UndoIter+1);
   ExecutiveSetLastObjectEdited((Object*)I);
+  if(log) {
+    OrthoLineType line;
+    if(SettingGet(cSetting_logging)) {
+      sprintf(line,"cmd.push_undo(\"%s\",%d)\n",I->Obj.Name,state+1);
+      PLog(line,cPLog_no_flush);
+    }
+  }
+
 }
 /*========================================================================*/
 void ObjectMoleculeUndo(ObjectMolecule *I,int dir)
@@ -2211,7 +2219,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
 
 }
 /*========================================================================*/
-void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float *TTT) 
+void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
+                                      int sele,float *TTT,int log,char *sname) 
 {
   /* if sele == -1, then the whole object state is transformed */
 
@@ -2219,7 +2228,7 @@ void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float
   int flag=false;
   CoordSet *cs;
   AtomInfoType *ai;
-
+  int logging;
   if(state<0) state=0;
   if(I->NCSet==1) state=0;
   state = state % I->NCSet;
@@ -2248,6 +2257,43 @@ void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float
     }
     if(flag) 
       cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+  }
+  if(log) {
+
+    OrthoLineType line;
+    WordType sele_str = ",'";
+    logging = SettingGet(cSetting_logging);
+    if(sele>=0) {
+      strcat(sele_str,sname);
+      strcat(sele_str,"'");
+    }
+    else
+      sele_str[0]=0;
+    switch(logging) {
+    case cPLog_pml:
+      sprintf(line,
+              "_ cmd.transform_object('%s',[\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f\n_     ],%d,%d%s)\n",
+              I->Obj.Name,
+              TTT[ 0],TTT[ 1],TTT[ 2],TTT[ 3],
+              TTT[ 4],TTT[ 5],TTT[ 6],TTT[ 7],
+              TTT[ 8],TTT[ 9],TTT[10],TTT[11],
+              TTT[12],TTT[13],TTT[14],TTT[15],state+1,log,sele_str);
+      PLog(line,cPLog_no_flush);
+      break;
+    case cPLog_pym:
+      
+      sprintf(line,
+              "cmd.transform_object('%s',[\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n,%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n],%d,%d%s)\n",
+              I->Obj.Name,
+              TTT[ 0],TTT[ 1],TTT[ 2],TTT[ 3],
+              TTT[ 4],TTT[ 5],TTT[ 6],TTT[ 7],
+              TTT[ 8],TTT[ 9],TTT[10],TTT[11],
+              TTT[12],TTT[13],TTT[14],TTT[15],state+1,log,sele_str);
+      PLog(line,cPLog_no_flush);
+      break;
+    default:
+      break;
+    }
   }
 }
 /*========================================================================*/
@@ -4241,7 +4287,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        break;
      case OMOP_SaveUndo:
        op->i2=true;
-       ObjectMoleculeSaveUndo(I,op->i1);
+       ObjectMoleculeSaveUndo(I,op->i1,false);
        break;
 	  }
 	}
@@ -4343,10 +4389,11 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
 
 }
 /*========================================================================*/
-int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode)
+int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode,int log)
 {
   int result = 0;
   CoordSet *cs;
+
   if(!I->AtomInfo[index].protected) {
     if(state<0) state=0;
     if(I->NCSet==1) state=0;
@@ -4355,6 +4402,15 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
     if(cs) {
       result = CoordSetMoveAtom(I->CSet[state],index,v,mode);
       cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+    }
+  }
+  if(log) {
+    OrthoLineType line,buffer;
+    if(SettingGet(cSetting_logging)) {
+      ObjectMoleculeGetAtomSele(I,index,buffer);
+      sprintf(line,"cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
+              buffer,v[0],v[1],v[2],state+1,mode,0);
+      PLog(line,cPLog_no_flush);
     }
   }
   return(result);

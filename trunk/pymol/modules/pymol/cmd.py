@@ -670,6 +670,25 @@ def align(source,target): # EXPERIMENTAL, BUGGY
       unlock()
    return r
 
+def transform_object(name,matrix,state=0,log=0,sele=''):
+   r = None
+   try:
+      lock()
+      r = _cmd.transform_object(str(name),int(state)-1,list(matrix),int(log),str(sele))
+   finally:
+      unlock()
+   return r
+
+def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0):
+   r = None
+   sele1 = selector.process(sele1)
+   try:
+      lock()
+      r = _cmd.translate_atom(str(sele1),float(v0),float(v1),float(v2),int(state)-1,int(mode),int(log))
+   finally:
+      unlock()
+   return r
+
 def get_setting_tuple(name,object='',state=0): # INTERNAL
    r = None
    if is_string(name):
@@ -913,7 +932,10 @@ def get_setting_legacy(name): # INTERNAL, DEPRECATED
 
 def resume(fname):
    if os.path.exists(fname):
-      do("@%s"%fname)
+      if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",fname)):
+         do("run %s"%fname)
+      else:
+         do("@%s"%fname)
    do("log_open %s,a"%fname)
    
 def config_mouse(quiet=0): # INTERNAL
@@ -5905,6 +5927,7 @@ but_act_code = {
    'torf' : 16 ,
    'movf' : 17 ,
    'orig' : 18 ,
+   'loop' : 19 ,
    }
 
 special = {

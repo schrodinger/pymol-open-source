@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct {
   ObjectMolecule *Obj;
+  WordType DragSeleName;
   int ActiveState;
   int DragIndex;
   int DragSelection;
@@ -153,7 +154,7 @@ void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
           else {
 
             state = SceneGetState();                
-            ObjectMoleculeSaveUndo(obj,state);
+            ObjectMoleculeSaveUndo(obj,state,false);
 
             vf  = ObjectMoleculeGetAtomVertex(obj,state,i0,v);
             vf0 = ObjectMoleculeGetAtomVertex(obj,state,ia0,v0);
@@ -182,14 +183,14 @@ void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
                   if((frg!=if0)&(frg!=if1)) {
                     sprintf(name,"%s%1d",cEditorFragPref,frg);
                     sele2=SelectorIndexByName(name);
-                    ObjectMoleculeTransformSelection(obj,state,sele2,m);
+                    ObjectMoleculeTransformSelection(obj,state,sele2,m,false,NULL);
                   }
                   break;
                 case 1:
                   if((frg!=if0)&(frg!=if1)) {
                     sprintf(name,"%s%1d",cEditorFragPref,frg);
                     sele2=SelectorIndexByName(name);
-                    ObjectMoleculeTransformSelection(obj,state,sele2,m);
+                    ObjectMoleculeTransformSelection(obj,state,sele2,m,false,NULL);
                   }
                   break;
                 }
@@ -241,7 +242,7 @@ void EditorTorsion(float angle)
           vf2 = ObjectMoleculeGetAtomVertex(I->Obj,state,i1,I->V1);
           
           if(vf1&&vf2) {
-            ObjectMoleculeSaveUndo(I->Obj,SceneGetState());
+            ObjectMoleculeSaveUndo(I->Obj,SceneGetState(),false);
             
             
             subtract3f(I->V1,I->V0,I->Axis);
@@ -263,7 +264,7 @@ void EditorTorsion(float angle)
             m[12] =  v1[0];
             m[13] =  v1[1];
             m[14] =  v1[2];
-            ObjectMoleculeTransformSelection(I->Obj,state,sele2,m);
+            ObjectMoleculeTransformSelection(I->Obj,state,sele2,m,false,NULL);
             
             SceneDirty();
             
@@ -833,8 +834,10 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
         s=obj->AtomInfo[index].selEntry;
         seleFlag=SelectorIsMember(s,sele0);
       }
-      if(seleFlag)
+      if(seleFlag) {
+        strcpy(I->DragSeleName,name);
         break;
+      }
     }
     if(seleFlag) { /* normal selection */
       
@@ -927,7 +930,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     }
   }
   if(I->DragObject)
-    ObjectMoleculeSaveUndo(I->DragObject,state);
+    ObjectMoleculeSaveUndo(I->DragObject,state,true);
 }
 /*========================================================================*/
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float *mov)
@@ -937,7 +940,6 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
   float d0[3],d1[3],d2[3],n0[3],n1[3],n2[3];
   float opp,adj,theta;
   float m[16];
-
   if((index=I->DragIndex)&&(obj=I->DragObject)) {
     if(obj!=I->Obj) {
       /* non-achored actions */
@@ -961,17 +963,17 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
         m[12] =  v3[0];
         m[13] =  v3[1];
         m[14] =  v3[2];
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
         SceneDirty();
         break;
       case cButModeTorFrag:
-        ObjectMoleculeMoveAtom(obj,state,index,mov,1);
+        ObjectMoleculeMoveAtom(obj,state,index,mov,1,true);
         SceneDirty();
         break;
       case cButModeMovFrag:
         MatrixLoadIdentity44f(m);
         copy3f(mov,m+12);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
         SceneDirty();
         break;
       }
@@ -1008,7 +1010,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
         m[12] =  v3[0];
         m[13] =  v3[1];
         m[14] =  v3[2];
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
         SceneDirty();
         break;
       case cButModeTorFrag:
@@ -1043,7 +1045,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
             m[12] =  v1[0];
             m[13] =  v1[1];
             m[14] =  v1[2];
-            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m);
+            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
           }
         }
         SceneDirty();
@@ -1051,7 +1053,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
       case cButModeMovFrag:
         MatrixLoadIdentity44f(m);
         copy3f(mov,m+12);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,true,I->DragSeleName);
         SceneDirty();
         break;
       }

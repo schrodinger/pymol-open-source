@@ -262,17 +262,6 @@ int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 
 /*========================================================================*/
-char *SelectorGetName(int index)
-{
-  SelectorType *I=&Selector;
-  int a;
-  for(a=0;a<I->NActive;a++)
-    if(I->ID[a]==index)
-      return(I->Name[I->ID[a]-1]);      
-  return(NULL);
-
-}
-/*========================================================================*/
 
 int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
                            int mode,float cutoff, float h_angle,

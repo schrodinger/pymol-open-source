@@ -556,7 +556,7 @@ void SceneObjectAdd(Object *obj)
   rec->obj=obj;
   ListAppend(I->Obj,rec,next,ObjList);
   SceneCountFrames();
-  SceneDirty();
+  SceneChanged();
 }
 /*========================================================================*/
 void SceneObjectDel(Object *obj)

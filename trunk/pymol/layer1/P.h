@@ -39,8 +39,11 @@ int PAlterAtomState(float *v,char *expr,int read_only);
 #define cPLog_pml_lf    0
 #define cPLog_pml       1
 #define cPLog_pym       2
+#define cPLog_no_flush  3
 
 void PLog(char *str,int lf);
+void PLogFlush(void);
+
 void PSleep(int usec);
 
 void PLockAPIAsGlut(void);

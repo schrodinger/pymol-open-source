@@ -247,6 +247,8 @@ static PyObject *CmdStereo(PyObject *self, PyObject *args);
 static PyObject *CmdSystem(PyObject *dummy, PyObject *args);
 static PyObject *CmdSymExp(PyObject *dummy, PyObject *args);
 static PyObject *CmdTest(PyObject *self, 	PyObject *args);
+static PyObject *CmdTransformObject(PyObject *self, 	PyObject *args);
+static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args);
 static PyObject *CmdTurn(PyObject *self, 	PyObject *args);
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args);
 static PyObject *CmdZoom(PyObject *self, PyObject *args);
@@ -378,6 +380,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"system",	              CmdSystem,               METH_VARARGS },
 	{"symexp",	              CmdSymExp,               METH_VARARGS },
 	{"test",	                 CmdTest,                 METH_VARARGS },
+	{"transform_object",      CmdTransformObject,      METH_VARARGS },
+	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },
 	{"turn",	                 CmdTurn,                 METH_VARARGS },
 	{"viewport",              CmdViewport,             METH_VARARGS },
 	{"undo",                  CmdUndo,                 METH_VARARGS },
@@ -387,6 +391,42 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+
+static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
+{
+  char *str1;
+  int state,log,mode;
+  float v[3];
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"sfffiii",&str1,v,v+1,v+2,&state,&mode,&log);
+  SelectorGetTmp(str1,s1);
+  APIEntry();
+  ExecutiveTranslateAtom(s1,v,state,mode,log);
+  APIExit();
+  SelectorFreeTmp(s1);
+  return(Py_None);
+}
+
+static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
+{
+  char *name,*sele;
+  int state,log;
+  PyObject *m;
+  float ttt[16];
+  
+  PyArg_ParseTuple(args,"siOis",&name,&state,&m,&log,&sele);
+  if(PConvPyListToFloatArrayInPlace(m,ttt,16)) {
+    APIEntry();
+    ExecutiveTransformObjectSelection(name,state,sele,log,ttt);
+    APIExit();
+  } else {
+    PRINTFB(FB_CCmd,FB_Errors)
+      "CmdTransformObject-DEBUG: bad matrix\n"
+      ENDFB;
+  }
+  return(Py_None);
+}
 
 static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
 {
