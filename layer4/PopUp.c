@@ -33,7 +33,6 @@ Z* -------------------------------------------------------------------
 #define cPopUpCharMargin 2
 #define cPopUpCharLift 1
 
-extern PyThreadState *_save;
 
 typedef struct {
   Block *Block;
