@@ -466,7 +466,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
           /* compute a "shadow" mask for all vertices */
 
           i=*MapFirst(I,a,b,c);
-          if(i>=0) {
+          while(i>=0) {
             v0 = vert + 3*i;
             perp_factor = premult/v0[2];
             base0 = v0[0] * perp_factor;
@@ -515,8 +515,8 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
 							 VLACacheCheck(G,I->EList,int,n,I->group_id,
                                     I->block_base + cCache_map_elist_offset);
 							 I->EList[n]=i;
+                      i=link[i];
 							 n++;
-							 i=MapNext(I,i);
 						  }
 						}
 					 }
