@@ -718,7 +718,7 @@ void SceneDraw(Block *block)
 /*========================================================================*/
 
 typedef unsigned char pix[4];
-#define cRange 10
+#define cRange 5
 
 unsigned int SceneFindTriplet(int x,int y) 
 {
@@ -727,9 +727,18 @@ unsigned int SceneFindTriplet(int x,int y)
   int a,b,d,flag;
   int debug = false;
   unsigned char *c;
-  
+  int strict = false;
+  int rb,gb,bb;
+
   if(PMGUI) { /*just in case*/
-    
+  
+	glGetIntegerv(GL_RED_BITS,&rb);
+	glGetIntegerv(GL_RED_BITS,&gb);
+	glGetIntegerv(GL_RED_BITS,&bb);
+
+	if((rb>=8)&&(gb>=8)&&(bb>=8))
+		strict = true;
+
     if(Feedback(FB_Scene,FB_Debugging)) debug=true;
     
     glReadBuffer(GL_BACK);
@@ -750,7 +759,14 @@ unsigned int SceneFindTriplet(int x,int y)
           printf("\n");
         }
       printf("\n");	 
-    }
+       for(a=0;a<=(cRange*2);a++)
+        {
+          for(b=0;b<=(cRange*2);b++)
+            printf("%02x%02x%02x ",(buffer[a][b][0])&0xFF,(buffer[a][b][1])&0xFF,(buffer[a][b][2])&0xFF);
+          printf("\n");
+        }
+      printf("\n");	 
+   }
     
     flag=true;
     for(d=0;flag&&(d<cRange);d++)
@@ -758,9 +774,12 @@ unsigned int SceneFindTriplet(int x,int y)
 		  for(b=-d;flag&&(b<=d);b++) {
 			c = &buffer[a+cRange][b+cRange][0];
 			if((c[3]==0xFF)&&
-				((c[0]&0xF)==0)&&
-				((c[1]&0xF)==8)&&
-				((c[2]&0xF)==0))	{ /* only consider intact, saturated pixels */
+				((c[1]&0x8)&&
+				 ((!strict)||
+				  (((c[1]&0xF)==8)&&
+				   ((c[0]&0xF)==0)&&
+				   ((c[2]&0xF)==0)
+					)))) { /* only consider intact, saturated pixels */
                 flag = false;
                 result =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
                 if(debug) {
@@ -780,6 +799,8 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
   unsigned char *c;
   int cc = 0;
   int dim[3];
+  int strict = false;
+  int rb,gb,bb;
 
   dim[0]=w;
   dim[1]=h;
@@ -787,7 +808,16 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
   if(w<1) w=1;
   if(h<1) h=1;
   if(PMGUI) { /*just in case*/
-    buffer=Alloc(pix,w*h);
+
+ 
+	glGetIntegerv(GL_RED_BITS,&rb);
+	glGetIntegerv(GL_RED_BITS,&gb);
+	glGetIntegerv(GL_RED_BITS,&bb);
+
+	if((rb>=8)&&(gb>=8)&&(bb>=8))
+		strict = true;
+	  
+  buffer=Alloc(pix,w*h);
     result = VLAlloc(unsigned int,w*h);
     glReadBuffer(GL_BACK);
     glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
@@ -797,9 +827,12 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
         {
           c = &buffer[a+b*w][0];
           if((c[3]==0xFF)&&
-             ((c[0]&0xF)==0)&&
-             ((c[1]&0xF)==8)&&
-             ((c[2]&0xF)==0))	{ /* only consider intact, saturated pixels */
+				((c[1]&0x8)&&
+				 ((!strict)||
+				  (((c[1]&0xF)==8)&&
+				   ((c[0]&0xF)==0)&&
+				   ((c[2]&0xF)==0)
+					)))) { /* only consider intact, saturated pixels */
             VLACheck(result,unsigned int,cc+1);
             result[cc] =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
             result[cc+1] = b+a*h;
