@@ -294,31 +294,8 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp *I)
   ObjectGadget *og;
   int a;
 
-  float coord[] = {
-
-    I->x ,  I->y , 0.3 ,
-
-    /* outer points */
-
-    0.0 ,  0.0 , 0.0 ,
-    I->width+I->border*2 ,  0.0 , 0.0 ,
-    0.0 , -(I->height+I->border*2) , 0.0 ,
-    I->width+I->border*2 , -(I->height+I->border*2) , 0.0 ,
-
-    I->border, -I->border, I->border,
-    I->width+I->border,-I->border, I->border,
-    I->border,  -(I->height+I->border), I->border,
-    I->width+I->border, -(I->height+I->border), I->border,
-
-    I->border, -(I->border+I->bar_height), I->border,
-    I->width+I->border,-(I->border+I->bar_height), I->border,
-    
-    I->border+I->text_border, I->text_border-(I->border+I->height), I->border+I->text_raise,
-    I->width+I->border,I->text_border-(I->border+I->height), I->border+I->text_raise,
-
-    0.0,0.0,0.0,
-
-  };
+  float coord[100];
+  int ix=0;
 
   float normal[] = {
     1.0, 0.0, 0.0,
@@ -327,6 +304,30 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp *I)
    -1.0, 0.0, 0.0,
     0.0,-1.0, 0.0,
   };
+#define VV(a,b,c) {coord[ix++]=a;coord[ix++]=b;coord[ix++]=c;};
+
+VV(    I->x ,  I->y , 0.3 );
+
+    /* outer points */
+
+VV(    0.0 ,  0.0 , 0.0 );
+    VV(I->width+I->border*2 ,  0.0 , 0.0 );
+VV(    0.0 , -(I->height+I->border*2) , 0.0 );
+VV(    I->width+I->border*2 , -(I->height+I->border*2) , 0.0 );
+
+VV(    I->border, -I->border, I->border);
+VV(    I->width+I->border,-I->border, I->border);
+VV(    I->border,  -(I->height+I->border), I->border);
+VV(    I->width+I->border, -(I->height+I->border), I->border);
+
+VV(    I->border, -(I->border+I->bar_height), I->border);
+VV(    I->width+I->border,-(I->border+I->bar_height), I->border);
+    
+VV(    I->border+I->text_border, I->text_border-(I->border+I->height), I->border+I->text_raise);
+VV(    I->width+I->border,I->text_border-(I->border+I->height), I->border+I->text_raise);
+
+ VV(   0.0,0.0,0.0);
+#undef VV
 
   OrthoBusyPrime();
 

@@ -736,37 +736,47 @@ void PInitEmbedded(int argc,char **argv)
   /* used by semistatic PyMOL */
 {
   char line[5000];
+static line1[5000];
+static line2[5000];
+static line3[5000];
   char *pymol_path;
 
   if(!getenv("PYMOL_PATH")) {
     if(getenv("PWD")) {
-      setenv("PYMOL_PATH",getenv("PWD"),1);
+	strcpy(line1,"PYMOL_PATH=");
+	strcat(line1,getenv("PWD"));
+      putenv(line1);
+	/* setenv("PYMOL_PATH",getenv("PWD"),1); */
     }
   }
 
   if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
     if(getenv("PYMOL_PATH")) {
-      strcpy(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1/plat-linux2:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1/lib-tk:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1/lib-dynload");
-      setenv("PYTHONPATH",line,1);
+	strcpy(line2,"PYTHONPATH=");
+      strcat(line2,getenv("PYMOL_PATH"));
+      strcat(line2,getenv("PYMOL_PATH"));
+      strcat(line2,"/ext/lib/python2.1:");
+      strcat(line2,"/ext/lib/python2.1/plat-linux2:");
+      strcat(line2,getenv("PYMOL_PATH"));
+      strcat(line2,"/ext/lib/python2.1/lib-tk:");
+      strcat(line2,getenv("PYMOL_PATH"));
+      strcat(line2,"/ext/lib/python2.1/lib-dynload");
+putenv(line2);
+      /*setenv("PYTHONPATH",line2,1);*/
     }
   } else { /* preempt existing PYTHONPATH */
-      strcpy(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1/plat-linux2:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1/lib-tk:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1/lib-dynload:");
-      strcat(line,getenv("PYTHONPATH"));
-      setenv("PYTHONPATH",line,1);
+    strcat(line3,"PYTHONPATH=");
+      strcpy(line3,getenv("PYMOL_PATH"));
+      strcat(line3,"/ext/lib/python2.1:");
+      strcat(line3,getenv("PYMOL_PATH"));
+      strcat(line3,"/ext/lib/python2.1/plat-linux2:");
+      strcat(line3,getenv("PYMOL_PATH"));
+      strcat(line3,"/ext/lib/python2.1/lib-tk:");
+      strcat(line3,getenv("PYMOL_PATH"));
+      strcat(line3,"/ext/lib/python2.1/lib-dynload:");
+      strcat(line3,getenv("PYTHONPATH"));
+      /*setenv("PYTHONPATH",line3,1);*/
+putenv(line3);
   }
 }
 #endif
@@ -774,38 +784,49 @@ void PInitEmbedded(int argc,char **argv)
 #ifdef _PYMOL_SETUP_PY22
   /* used by semistatic PyMOL */
 {
-  char line[5000];
+static line1[5000];
+static line2[5000];
+static line3[5000];
   char *pymol_path;
 
   if(!getenv("PYMOL_PATH")) {
     if(getenv("PWD")) {
-      setenv("PYMOL_PATH",getenv("PWD"),1);
+	strcpy(line1,"PYMOL_PATH=");
+	strcat(line1,getenv("PWD"));
+      putenv(line1);
+	/* setenv("PYMOL_PATH",getenv("PWD"),1); */
     }
   }
 
   if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
     if(getenv("PYMOL_PATH")) {
-      strcpy(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2/plat-linux2:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2/lib-tk:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2/lib-dynload");
-      setenv("PYTHONPATH",line,1);
+	strcpy(line2,"PYTHONPATH=");
+	printf("%s\n",getenv("PYMOL_PATH"));
+fflush(stdout);
+      strcat(line2,getenv("PYMOL_PATH"));
+      strcat(line2,"/ext/lib/python2.2:");
+      strcat(line2,getenv("PYMOL_PATH"));
+      strcat(line2,"/ext/lib/python2.2/plat-linux2:");
+      strcat(line2,getenv("PYMOL_PATH"));
+      strcat(line2,"/ext/lib/python2.2/lib-tk:");
+      strcat(line2,getenv("PYMOL_PATH"));
+      strcat(line2,"/ext/lib/python2.2/lib-dynload");
+putenv(line2);
+      /* setenv("PYTHONPATH",line2,1);*/
     }
   } else { /* preempt existing PYTHONPATH */
-      strcpy(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2/plat-linux2:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2/lib-tk:");
-      strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2/lib-dynload");
-      strcat(line,getenv("PYTHONPATH"));
-      setenv("PYTHONPATH",line,1);
+strcpy(line3,"PYTHONPATH=");
+      strcat(line3,getenv("PYMOL_PATH"));
+      strcat(line3,"/ext/lib/python2.2:");
+      strcat(line3,getenv("PYMOL_PATH"));
+      strcat(line3,"/ext/lib/python2.2/plat-linux2:");
+      strcat(line3,getenv("PYMOL_PATH"));
+      strcat(line3,"/ext/lib/python2.2/lib-tk:");
+      strcat(line3,getenv("PYMOL_PATH"));
+      strcat(line3,"/ext/lib/python2.2/lib-dynload");
+      strcat(line3,getenv("PYTHONPATH"));
+putenv(line3);
+      /*setenv("PYTHONPATH",line3,1);*/
   }
 }
 #endif
