@@ -1058,7 +1058,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_ray_opaque_background, 1.0F);
 
-  SettingSet_f(I,cSetting_transparent, 0.0F);
+  SettingSet_f(I,cSetting_transparency, 0.0F);
 
   SettingSet_f(I,cSetting_ray_texture, 0.0F);
 
