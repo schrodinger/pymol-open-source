@@ -57,6 +57,11 @@ CSculpt *SculptNew(void)
   I->EXHash = Alloc(int,EX_HASH_SIZE);
   I->Don = VLAlloc(int,1000);
   I->Acc = VLAlloc(int,1000);
+  { 
+    int a;
+    for(a=1;a<256;a++)
+      I->inverse[a] = 1.0F/a;
+  }
   return(I);
 }
 
@@ -1013,15 +1018,25 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             }
             /* average the displacements */
             
-            for(aa=0;aa<n_active;aa++) {
-              a = active[aa];
-              if(cnt[a]) {
-                if(!obj->AtomInfo[a].protekted) {
-                  v1 = disp+3*a;
-                  sc = 0.99F/cnt[a];
-                  scale3f(v1,sc,v1);
-                  v2 = cs->Coord+3*atm2idx[a];
-                  add3f(v1,v2,v2);
+            {
+              int cnt_a;
+              float _1 = 1.0F;
+              register float inv_cnt;
+              int *a_ptr = active;
+              register float *lookup_inverse = I->inverse;
+              for(aa=0;aa<n_active;aa++) {
+                if(cnt_a = cnt[a = *(a_ptr++)]) {
+                  if(!obj->AtomInfo[a].protekted) {
+                    v1 = disp+3*a;
+                    v2 = cs->Coord+3*atm2idx[a];
+                    if(!(cnt_a&0xFFFFFF00)) /* don't divide -- too slow */
+                      inv_cnt = lookup_inverse[cnt_a];
+                    else
+                      inv_cnt = _1/cnt_a;
+                    *(v2  )+=(*(v1  ))*inv_cnt;
+                    *(v2+1)+=(*(v1+1))*inv_cnt;
+                    *(v2+2)+=(*(v1+2))*inv_cnt;
+                  }
                 }
               }
             }

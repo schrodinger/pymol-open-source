@@ -36,6 +36,7 @@ typedef struct CSculpt {
   int *EXList;
   int *Don;
   int *Acc;
+  float inverse[256];
 } CSculpt;
 
 CSculpt *SculptNew(void);
