@@ -106,6 +106,8 @@ Changes up to 0.71
      to insure that this doesn't break anything, but it is a major change and has
      the potential to create huge problems...
 
+   * empirically synchronized PyMOL and PovRay's perspective transformations...
+
 Changes up to 0.70
 
    * fixed symmetry bug with multiple state objects

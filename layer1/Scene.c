@@ -1514,7 +1514,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   if(mode) { /* mode==1 is povray */
     charVLA=VLAlloc(char,100000); 
     headerVLA=VLAlloc(char,2000);
-    RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,I->Front,I->Back,fov);
+    RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,I->FrontSafe,I->Back,fov);
     if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
       if(PPovrayRender(headerVLA,charVLA,"tmp_pymol",ray_width,ray_height,SettingGet(cSetting_antialias))) {
         SceneLoadPNG("tmp_pymol.png",false);

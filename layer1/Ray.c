@@ -488,8 +488,9 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
   base = I->Basis+1;
 
   if(!SettingGet(cSetting_ortho)) {
-    sprintf(buffer,"camera {location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> angle %12.10f right %12.10f*x up y }\n",
-            front,fov*0.78,I->Range[0]/I->Range[1]);
+    sprintf(buffer,"camera {direction<0.0,0.0,%8.3f>\n location <0.0 , 0.0 , 0.0>\n right %12.10f*x up y \n }\n",
+            -56.6/fov,/* by trial and error */
+            I->Range[0]/I->Range[1]);
   } else {
     sprintf(buffer,"camera {orthographic location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> right %12.10f*x up %12.10f*y}\n",
             front,I->Range[0],I->Range[1]);
