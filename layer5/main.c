@@ -444,6 +444,7 @@ void launch(void)
     glutInitWindowSize(WinX, WinY);
     
     TheWindow = glutCreateWindow("PyMol Viewer");
+
   }
 
   MainInit();

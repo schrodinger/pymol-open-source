@@ -184,6 +184,8 @@ def mol_labels(s):
            [ 1, 'B-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],         
            [ 1, 'Partial Charge' , 
   'cmd.label("'+s+'","\'%1.4f\'%partial_charge")'                      ],
+           [ 1, 'Formal Charge' , 
+  'cmd.label("'+s+'","\'%d\'%formal_charge")'                      ],
            [ 0, ''               , ''                                  ],
            [ 1, 'Text Type'      , 'cmd.label("'+s+'","text_type")'    ],
            [ 1, 'Numeric Type'   , 'cmd.label("'+s+'","numeric_type")' ]
