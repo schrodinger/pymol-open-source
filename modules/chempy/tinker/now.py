@@ -9,7 +9,8 @@ def_params = 'chempy.prm'
 
 def_keywords = [
    "parameters        "+tinker.params_path+def_params+"\n",
-   "lights \n",
+   "lights\n",
+   "verbose\n",
    "randomseed         1234567890\n",
    "cutoff             8.0\n",  # very small
    ]
@@ -32,5 +33,17 @@ def minimize(model,gradient=5.0,maxiter=None,kw=None):
    tinker.run('minimize',inp_prefix,out_prefix,[tinker.prefix,str(gradient)])
    io.xyz.updateFromFile(model,out_prefix+".xyz")
 
+def analyze(model,gradient=5.0,maxiter=None,kw=None):
+   io.xyz.toFile(model,inp_prefix+".xyz")
+   if not kw:
+      kw = []
+      kw.extend(def_keywords)
+   if maxiter:
+      kw.append("maxiter %d\n" % maxiter)
+   kw.append("overwrite\n")
+   kw.extend(keyword.get_partial_charge(model))   
+   _write_keys(kw)
+   tinker.run('analyze',inp_prefix,out_prefix,[tinker.prefix,"E"])
+   io.xyz.updateFromFile(model,out_prefix+".xyz")
 
 
