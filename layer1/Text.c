@@ -166,8 +166,8 @@ void TextDrawStr(PyMOLGlobals *G,char *st)
 void TextDrawChar(PyMOLGlobals *G,char ch)
 {
   char st[2] = { 0 , 0 };
-  st[0] = ch;
   register CText *I=G->Text;
+  st[0] = ch;
   TextRenderOpenGL(G,I->Default_ID,st);
 }
 
