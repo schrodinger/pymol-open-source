@@ -32,16 +32,36 @@ void PParse(char *str);
 int PAlterAtom(AtomInfoType *at,char *expr);
 void PSleep(int usec);
 
-void PLock(int lock,PyThreadState **save);
-void PUnlock(int lock,PyThreadState **save);
+void PLockAPIAsGlut(void);
+void PUnlockAPIAsGlut(void);
 
-void PBlock(PyThreadState **save);
-void PUnblock(PyThreadState **save);
+void PBlock(void);
+void PUnblock(void);
 
-void PFlush(PyThreadState **save);
+void PBlockAndUnlockAPI(void);
+void PLockAPIAndUnblock(void);
+
+void PFlush(void);
 
 void PStereoOff(void);
 void PDefineFloat(char *name,float value);
+
 PyObject *PFloatVLAToPyList(float *f);
 
+extern PyObject *P_pm;
+extern PyObject *P_pmm;
+extern PyObject *P_pmx;
+
+extern PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
+extern PyThreadState *P_api_thread_state; /* this is the thread state for a non-glut API thread */
+extern int P_glut_thread_active; 
+extern int P_glut_thread_keep_out;
+
 #endif
+
+
+
+
+
+
+

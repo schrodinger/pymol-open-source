@@ -168,7 +168,7 @@ void ScenePNG(char *png)
 	 image = (GLvoid*)Alloc(char,buffer_size);
 	 ErrChkPtr(image);
     if(PMGUI) {
-      glReadBuffer(GL_FRONT);
+      glReadBuffer(GL_BACK);
       glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                    GL_RGBA,GL_UNSIGNED_BYTE,image);
     }

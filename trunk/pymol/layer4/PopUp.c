@@ -128,9 +128,9 @@ int PopUpRelease(Block *block,int x,int y,int mod)
   OrthoDetach(I->Block);
 
   if(I->Selected>=0) {
-    PBlock(&_save);
+    PBlockAndUnlockAPI();
     PyRun_SimpleString(I->Command[I->Selected]);
-    PUnblock(&_save);
+    PLockAPIAndUnblock();
   }
   
   OrthoFreeBlock(I->Block);

@@ -56,7 +56,6 @@ void MainReshape(int width, int height);
 GLuint obj;
 
 
- PyThreadState *_save;
 
 static GLint WinX = 640+cOrthoRightSceneMargin;
 static GLint WinY = 480+cOrthoBottomSceneMargin;
@@ -104,7 +103,7 @@ static void MainButton(int button,int state,int x,int y)
   static int glMod;  
   /*  CMain *I = &Main;*/
 
-  PLock(cLockAPI,&_save);
+  PLockAPIAsGlut();
 
   /* stay blocked here because Clicks->SetFrame->PParse */
 
@@ -118,22 +117,22 @@ static void MainButton(int button,int state,int x,int y)
   if(!OrthoButton(button,state,x,y,Modifiers))
     {
     }
-  PUnlock(cLockAPI,&_save);
+  PUnlockAPIAsGlut();
 
 }
 /*========================================================================*/
 static void MainDrag(int x,int y)
 {
   /*  CMain *I = &Main;*/
-
-   PLock(cLockAPI,&_save);
-
+  
+  PLockAPIAsGlut();
+  
   y=WinY-y;
   if(!OrthoDrag(x,y,Modifiers))
     {
 	 }
-
-   PUnlock(cLockAPI,&_save);
+  
+  PUnlockAPIAsGlut();
 
 }
 
@@ -147,7 +146,7 @@ static void MainDraw(void)
   char buffer[300];
 #endif
 
-  PLock(cLockAPI,&_save);
+  PLockAPIAsGlut();
 
   if(I->DirtyFlag) {
     I->DirtyFlag=false;
@@ -158,7 +157,6 @@ static void MainDraw(void)
 
   if(FinalInitFlag)
 	 {
-		Py_BLOCK_THREADS;
 		FinalInitFlag=0;
 
 #ifndef _PYMOL_MODULE
@@ -200,38 +198,36 @@ static void MainDraw(void)
 				  }
 		  }
 #endif
-      
 		OrthoRestorePrompt();
-		Py_UNBLOCK_THREADS;
 	 }
   else if(I->SwapFlag)
     {
       if(PMGUI) glutSwapBuffers();
       I->SwapFlag=false;
     }
-  PUnlock(cLockAPI,&_save);
+  PUnlockAPIAsGlut();
 }
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
 {
   /*  CMain *I = &Main;*/
 
-  PLock(cLockAPI,&_save);
+  PLockAPIAsGlut();
 
   switch (k) 
 	 {
 	 case 27: 
-      PLock(cLockAPI,&_save);
+      PLockAPIAsGlut();
       PParse("_quit");
-      PFlush(&_save);
-      PUnlock(cLockAPI,&_save);
+      PFlush();
+      PUnlockAPIAsGlut();
 		break;
 	 default:
 		OrthoKey(k,x,y);
 		break;
 	 }
 
-  PUnlock(cLockAPI,&_save);
+  PUnlockAPIAsGlut();
   
 }
 
@@ -239,11 +235,11 @@ static void MainKey(unsigned char k, int x, int y)
 static void MainSpecial(int k, int x, int y)
 {
   char buffer[255];
-  PLock(cLockAPI,&_save);
+  PLockAPIAsGlut();
   sprintf(buffer,"_special %d,%d,%d ",k,x,y);
   PParse(buffer);
-  PFlush(&_save);
-  PUnlock(cLockAPI,&_save);
+  PFlush();
+  PUnlockAPIAsGlut();
 }
 
 /* new window size or exposure */
@@ -357,7 +353,7 @@ void MainBusyIdle(void)
 
   /* flush command and output queues */
 
-  PLock(cLockAPI,&_save);
+  PLockAPIAsGlut();
 
   if(ControlIdling()) {
 	 SceneIdle(); 
@@ -369,7 +365,7 @@ void MainBusyIdle(void)
     }
   }
 
-  PFlush(&_save);
+  PFlush();
 
   if(I->SwapFlag) {
     if(PMGUI) glutSwapBuffers();
@@ -391,18 +387,18 @@ void MainBusyIdle(void)
           glutPostRedisplay(); /* trigger caching of the current scene */
       }
     }
-    PUnlock(cLockAPI,&_save);
+    PUnlockAPIAsGlut();
     if(I->IdleMode==1)
       PSleep(SettingGet(cSetting_fast_idle)); /* fast idle - more responsive */
     else
       PSleep(SettingGet(cSetting_slow_idle)); /* slow idle - save CPU cycles */
-    PLock(cLockAPI,&_save);
+    PLockAPIAsGlut();
   } else {
-    PUnlock(cLockAPI,&_save);
+    PUnlockAPIAsGlut();
     PSleep(SettingGet(cSetting_no_idle)); /* give Tcl/Tk a chance to run */
-    PLock(cLockAPI,&_save);
+    PLockAPIAsGlut();
   }
-  PUnlock(cLockAPI,&_save);
+  PUnlockAPIAsGlut();
 }
 
 /*========================================================================*/
@@ -480,8 +476,8 @@ void was_main(int flags)
     if(StereoCapable) SettingSet(cSetting_line_smooth,1.0);
   }
 
-  Py_UNBLOCK_THREADS;
-  
+  PUnblock();
+
   PyMOLReady = true;
 
   if(PMGUI) {
