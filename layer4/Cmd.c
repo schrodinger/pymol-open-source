@@ -100,6 +100,8 @@ static PyObject *Cmd_Failure;
    holding the API lock, therefore this is safe even through increment
    isn't (necessarily) atomic. */
 
+int PyThread_get_thread_ident();
+
 static void APIEntry(void) /* assumes API is locked */
 {
   PRINTFD(FB_API)
@@ -799,7 +801,6 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   ObjectMap *mapObj;
   float mn[3] = { 0,0,0};
   float mx[3] = { 15,15,15};
-  OrthoLineType buf;
 
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
@@ -1863,7 +1864,6 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
   int state;
   int quiet;
   int updates;
-  int unblock;
 
   OrthoLineType s1;
   s1[0]=0;
