@@ -71,6 +71,244 @@ void ObjectMoleculeBracketResidue(ObjectMolecule *I,AtomInfoType *ai,int *st,int
 int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,float *v);
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
+CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
+
+/*========================================================================*/
+CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
+{
+  char *p;
+  int nAtom;
+  int a,c;
+  float *coord = NULL;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL,*ai;
+  char cc[MAXLINELEN];
+  int atomCount;
+  int *bond=NULL;
+  int nBond=0;
+  int b1,b2;
+  WordType tmp_name;
+  int autoshow_lines = SettingGet(cSetting_autoshow_lines);
+  int autoshow_nonbonded = SettingGet(cSetting_autoshow_nonbonded);
+  int *ii;
+
+
+  AtomInfoPrimeColors();
+
+  p=buffer;
+  nAtom=0;
+  atInfo = *atInfoPtr;
+  
+  p=ncopy(cc,p,6);  
+  if(!sscanf(cc,"%d",&nAtom)) nAtom=0;
+  p=nskip(p,2);
+  p=ncopy(tmp_name,p,sizeof(WordType)-1);
+  p=nextline(p);
+      
+  coord=VLAlloc(float,3*nAtom);
+
+  if(atInfo)
+	 VLACheck(atInfo,AtomInfoType,nAtom);
+
+  nBond=0;
+  bond=VLAlloc(int,18*nAtom);  
+  ii=bond;
+
+  if(DebugState & DebugMolecule) {
+	 printf(" ObjectMoleculeReadXYZ: Found %i atoms...\n",nAtom);
+	 fflush(stdout);
+  }
+
+  a=0;
+  atomCount=0;
+  
+  while(*p)
+	 {
+      ai=atInfo+atomCount;
+      
+      p=ncopy(cc,p,6);
+      if(!sscanf(cc,"%d",&ai->id)) break;
+      
+      p=nskip(p,2);/* to 12 */
+      p=ncopy(cc,p,3); 
+      if(!sscanf(cc,"%s",ai->name)) ai->name[0]=0;
+      
+      ai->alt[0]=0;
+      strcpy(ai->resn,"UNK");
+      ai->chain[0] = 0;
+      
+      ai->resv=atomCount+1;
+      sprintf(ai->resi,"%d",ai->resv);
+      
+      p=ncopy(cc,p,12);
+      sscanf(cc,"%f",coord+a);
+      p=ncopy(cc,p,12);
+      sscanf(cc,"%f",coord+(a+1));
+      p=ncopy(cc,p,12);
+      sscanf(cc,"%f",coord+(a+2));
+      
+      ai->q=1.0;
+      ai->b=0.0;
+      
+      ai->segi[0]=0;
+      ai->elem[0]=0; /* let atom info guess/infer atom type */
+      
+      for(c=0;c<cRepCnt;c++) {
+        ai->visRep[c] = false;
+      }
+      ai->visRep[cRepLine] = autoshow_lines; /* show lines by default */
+      ai->visRep[cRepNonbonded] = autoshow_nonbonded; /* show lines by default */
+      
+      p=ncopy(cc,p,6);
+      sscanf(cc,"%d",&ai->customType);
+      
+      /* in the absense of external tinker information, assume hetatm */
+      
+      ai->hetatm=1;
+      
+      AtomInfoAssignParameters(ai);
+      ai->color=AtomInfoGetColor(ai);
+      
+      b1 = atomCount;
+      for(c=0;c<6;c++) {
+        p=ncopy(cc,p,6);
+        if (!cc[0]) 
+          break;
+        if(!sscanf(cc,"%d",&b2))
+          break;
+        if(b1<(b2-1)) {
+          nBond++;
+          *(ii++)=b1;
+          *(ii++)=b2-1;
+          *(ii++)=1; /* missing bond order information */
+        }
+      }
+      
+      if(DebugState&DebugMolecule) {
+        printf("%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
+               ai->name,ai->resn,ai->resi,ai->chain,
+               *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
+               ai->segi);
+        fflush(stdout);
+      }
+      
+      a+=3;
+      atomCount++;
+      if(atomCount>=nAtom)
+        break;
+      p=nextline(p);
+    }
+
+  if(DebugState&DebugMolecule)
+    printf(" XYZStr2CoordSet: Read %d bonds.\n",nBond);
+  cset = CoordSetNew();
+  cset->NIndex=nAtom;
+  cset->Coord=coord;
+  cset->TmpBond=bond;
+  cset->NTmpBond=nBond;
+  strcpy(cset->Name,tmp_name);
+  if(atInfoPtr)
+	 *atInfoPtr = atInfo;
+  return(cset);
+}
+
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int frame,int discrete)
+{
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo;
+  int ok=true;
+  int isNew = true;
+  unsigned int nAtom = 0;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+
+  if(ok) {
+
+	 if(isNew) {
+		I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
+		atInfo = I->AtomInfo;
+		isNew = true;
+	 } else {
+		atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+		isNew = false;
+	 }
+	 cset=ObjectMoleculeXYZStr2CoordSet(PDBStr,&atInfo);	 
+	 nAtom=cset->NIndex;
+  }
+
+  /* include coordinate set */
+  if(ok) {
+    cset->Obj = I;
+    cset->fEnumIndices(cset);
+    if(cset->fInvalidateRep)
+      cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
+    if(isNew) {		
+      I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+    } else {
+      ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+    }
+    if(isNew) I->NAtom=nAtom;
+    if(frame<0) frame=I->NCSet;
+    VLACheck(I->CSet,CoordSet*,frame);
+    if(I->NCSet<=frame) I->NCSet=frame+1;
+    if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+    I->CSet[frame] = cset;
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,true);
+    if(cset->TmpSymmetry&&(!I->Symmetry)) {
+      I->Symmetry=cset->TmpSymmetry;
+      cset->TmpSymmetry=NULL;
+      SymmetryAttemptGeneration(I->Symmetry);
+    }
+    SceneCountFrames();
+    ObjectMoleculeExtendIndices(I);
+    ObjectMoleculeSort(I);
+    ObjectMoleculeUpdateNonbonded(I);
+  }
+  return(I);
+}
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int frame,int discrete)
+{
+  ObjectMolecule *I=NULL;
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer,*p;
+
+  f=fopen(fname,"r");
+  if(!f)
+	 ok=ErrMessage("ObjectMoleculeLoadXYZFile","Unable to open file!");
+  else
+	 {
+		if(DebugState&DebugMolecule)
+		  {
+			printf(" ObjectMoleculeLoadXYZFile: Loading from %s.\n",fname);
+		  }
+		
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size+255);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		p[size]=0;
+		fclose(f);
+
+		I=ObjectMoleculeReadXYZStr(obj,buffer,frame,discrete);
+
+		mfree(buffer);
+	 }
+
+  return(I);
+}
+
 /*========================================================================*/
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1)
 {
@@ -3881,12 +4119,12 @@ int ObjectMoleculeConnect(ObjectMolecule *I,int **bond,AtomInfoType *ai,
           MapFree(map);
         }
       if(DebugState&DebugMolecule) 
-        printf("ObjectMoleculeConnect: Found %d bonds.\n",nBond);
+        printf(" ObjectMoleculeConnect: Found %d bonds.\n",nBond);
     }
 
   if(cs->NTmpBond&&cs->TmpBond) {
     if(DebugState&DebugMolecule) 
-      printf("ObjectMoleculeConnect: incorporating explicit bonds. %d %d\n",
+      printf(" ObjectMoleculeConnect: incorporating explicit bonds. %d %d\n",
              nBond,cs->NTmpBond);
     VLACheck((*bond),int,(nBond+cs->NTmpBond)*3);
     ii1=(*bond)+nBond*3;
@@ -4073,7 +4311,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 {
   char *p;
   int nAtom;
-  int a,c,llen;
+  int a,c;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL,*ai;
@@ -4119,7 +4357,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 
   if(conectFlag) {
     nBond=0;
-    bond=VLAlloc(int,12*nAtom);  
+    bond=VLAlloc(int,18*nAtom);  
   }
   p=buffer;
   if(DebugState & DebugMolecule) {
@@ -4202,11 +4440,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         }
 		if(AFlag)
 		  {
-			 llen=0;
-			 while((*(p+llen))&&((*(p+llen))!=13)&&((*(p+llen))!=10)) {
-				llen++;
-			 }
-
           ai=atInfo+atomCount;
 
           p=nskip(p,6);
