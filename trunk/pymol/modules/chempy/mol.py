@@ -65,7 +65,7 @@ class MOL(Storage):
 
       # write header records
       molList.append(model.molecule.title+"\n")
-      molList.append("  Chempy            %2s                             0\n" %
+      molList.append("  ChemPy            %2s                             0\n" %
              model.molecule.dimcode)
       molList.append(model.molecule.comments+"\n")
       molList.append("%3d%3d  0  0  %1d  0  0  0  0  0  1 V2000\n" %

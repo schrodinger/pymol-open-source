@@ -13,6 +13,7 @@ class Atom:
       'resi_number'         : 1,
       'b'                   : 0.0,
       'q'                   : 1.0,
+      'vdw'                 : 0.0,
       'alt'                 : '',
       'hetatm'              : 1,
       'segi'                : '',
