@@ -417,7 +417,7 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
     char *c;
     c=name;
     while(*c) {
-      if((((*c)<='0')||((*c)>='9'))&&((*c)!='-')) {
+      if((((*c)<'0')||((*c)>'9'))&&((*c)!='-')) {
         is_numeric=false;
         break;
       }
