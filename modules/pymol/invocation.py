@@ -54,6 +54,7 @@ if __name__=='pymol.invocation':
    options.keep_thread_alive = 0
    options.after_load_script = ""
    options.quiet = 0
+   options.incentive_product = 0
    if sys.platform != 'win32':
       options.win_py = 200
    else:
@@ -170,6 +171,8 @@ if __name__=='pymol.invocation':
                options.external_gui = 0
             if "m" in a: # mac external GUI
                options.external_gui = 2
+            if "n" in a:
+               options.incentive_product = 1
             if "t" in a:
                options.gui = 'pmg_tk'
             if "w" in a:

@@ -909,6 +909,8 @@ void OrthoDoDraw()
 
     v=SettingGetfv(cSetting_bg_rgb);
     overlay = (int)SettingGet(cSetting_overlay);
+    if(overlay==1)
+      overlay = (int)SettingGet(cSetting_overlay_lines);
     text = (int)SettingGet(cSetting_text);
 
     if(text) overlay=0;
@@ -1001,9 +1003,13 @@ void OrthoDoDraw()
         
         if((int)SettingGet(cSetting_text)||I->SplashFlag)
           showLines=I->ShowLines;
-        else
-          showLines=internal_feedback+(int)SettingGet(cSetting_overlay);
-        
+        else {
+          int overlay2;
+          overlay2 = (int)SettingGet(cSetting_overlay);
+          if(overlay2==1)
+            overlay2 = (int)SettingGet(cSetting_overlay_lines);
+          showLines=internal_feedback+overlay2;
+        }
         glColor3fv(I->TextColor);
         while(l>=0)
           {
@@ -1334,36 +1340,48 @@ int OrthoDrag(int x, int y,int mod)
 void OrthoSplash(void) 
 {
   OrthoNewLine(NULL,true);
-  PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF;
-  PRINTF _PyMOL_VERSION ENDF;
-  PRINTF ".\n" ENDF;
-  PRINTF " Copyright (C) 1998-2003 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;
+  if(PyMOLOption->incentive_product) {
+    PRINTF " This PyMOL Incentive Product is\n" ENDF;
+    PRINTF " Copyright (C) 1998-2003 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;    
+    PRINTF " Legal usage of this product beyond your free 90 evaluation period requires\n" ENDF;
+    PRINTF " a current PyMOL subscription from DeLano Scientific LLC unless you meet \n" ENDF;
+    PRINTF " the MacPyMOL exemption criteria. \n \n" ENDF;
+    PRINTF " Visit http://www.pymol.org/funding.html for sponsorship information.\n \n"ENDF;
+    PRINTF " Based on the PyMOL(TM) Molecular Graphics System, Version " ENDF;
+    PRINTF _PyMOL_VERSION ENDF;
+    PRINTF ".\n " ENDF;
+  } else {
+    PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF;
+    PRINTF _PyMOL_VERSION ENDF;
+    PRINTF ".\n" ENDF;
+    PRINTF " Copyright (C) 1998-2003 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;
+    
+    PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF;
+    
+    PRINTF "    Other Major Authors and Contributors:\n\n" ENDF;
+    PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF;
+    
+    PRINTF "    PyMOL is user-supported open-source software.  Although most versions\n" ENDF;
+    PRINTF "    are freely available, PyMOL is not in the public domain.\n \n" ENDF;
+    
+    PRINTF "    If PyMOL is helpful in your work or study, then please volunteer \n" ENDF;
+    PRINTF "    support for our ongoing campaign to create open and affordable software \n" ENDF;
+    PRINTF "    for molecular research.\n\n" ENDF;
+    
+    PRINTF "    Updates and other information can be found at \"http://www.pymol.org\".\n \n" ENDF;
+    
+    PRINTF "    Please cite PyMOL in publications and presentations:\n \n" ENDF;
+    PRINTF "       Warren L. DeLano \"The PyMOL Molecular Graphics System.\"\n" ENDF;
+    PRINTF "       DeLano Scientific LLC, San Carlos, CA, USA. http://www.pymol.org\n \n" ENDF;
+    
+    PRINTF "    Enter \"help\" for a list of commands.\n" ENDF;
+    PRINTF 
+      "    Enter \"help <command-name>\" for information on a specific command.\n\n"
+      ENDF;
 
-  PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF;
+    PRINTF " Hit ESC anytime to toggle between text and graphics.\n\n" ENDF;
+  }
 
-  PRINTF "    Other Major Authors and Contributors:\n\n" ENDF;
-  PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF;
-
-  PRINTF "    PyMOL is user-supported open-source software.  Although most versions\n" ENDF;
-  PRINTF "    are freely available, PyMOL is not in the public domain.\n \n" ENDF;
-
-  PRINTF "    If PyMOL is helpful in your work or study, then please volunteer \n" ENDF;
-  PRINTF "    support for our ongoing campaign to create open and affordable software \n" ENDF;
-  PRINTF "    for molecular research.\n\n" ENDF;
-
-  PRINTF "    Updates and other information can be found at \"http://www.pymol.org\".\n \n" ENDF;
-
-  PRINTF "    Please cite PyMOL in publications and presentations:\n \n" ENDF;
-  PRINTF "       Warren L. DeLano \"The PyMOL Molecular Graphics System.\"\n" ENDF;
-  PRINTF "       DeLano Scientific LLC, San Carlos, CA, USA. http://www.pymol.org\n \n" ENDF;
-
-
-  PRINTF "    Enter \"help\" for a list of commands.\n" ENDF;
-  PRINTF 
-    "    Enter \"help <command-name>\" for information on a specific command.\n\n"
-    ENDF;
-  
-  PRINTF " Hit ESC anytime to toggle between text and graphics.\n\n" ENDF;
 }
 /*========================================================================*/
 void OrthoInit(int showSplash)

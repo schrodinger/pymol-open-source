@@ -371,6 +371,8 @@ EXAMPLES
             r = _cmd.mmatrix(1)
          elif action=="recall":
             r = _cmd.mmatrix(2)
+         elif action=="check":
+            r = _cmd.mmatrix(3)
       finally:
          unlock()
       return r

@@ -185,6 +185,12 @@ void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height)
     ENDFD;
 
 }
+void SceneGetWidthHeight(int *width,int *height)
+{
+  CScene *I=&Scene;  
+  *width = I->Width;
+  *height = I->Height;
+}
 
 void SceneSetCardInfo(char *vendor,char *renderer,char *version){
   CScene *I=&Scene;  
@@ -450,7 +456,7 @@ float *SceneGetMatrix()
   return(I->RotMatrix);
 }
 /*========================================================================*/
-void ScenePNG(char *png)
+static unsigned char *SceneImagePrepare(void)
 {
   CScene *I=&Scene;
   unsigned int buffer_size;
@@ -491,20 +497,63 @@ void ScenePNG(char *png)
       }
     }
   }
-  if(MyPNGWrite(png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
-    PRINTFB(FB_Scene,FB_Actions) 
-      " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
-      I->ImageBufferWidth,I->ImageBufferHeight,png
-      ENDFB;
-  } else {
-    PRINTFB(FB_Scene,FB_Errors) 
-      " ScenePNG-Error: error writing \"%s\"! Please check directory...\n",
-      png
-      ENDFB;
-  }
-  
+  return (unsigned char*)image;
+}
+
+static void SceneImageFinish(char *image)
+{
+  CScene *I=&Scene;
+
   if(!I->CopyFlag)
 	 FreeP(image);
+}
+
+int  SceneCopyExternal(int width, int height,int rowbytes,unsigned char *dest)
+{
+  GLvoid *image = SceneImagePrepare();
+  CScene *I=&Scene;
+  int result=false;
+  int i,j;
+  if(image&&(I->ImageBufferWidth==width)&&(I->ImageBufferHeight==height)) {
+    for (i=0; i< height; i++)
+      {
+        unsigned char *dst = dest + i * (rowbytes);
+        unsigned char *src = image + ((height-1)-i) * width*4;
+        for (j = 0; j < width; j++)
+          {
+            *dst++ = ((unsigned int)src[0]*src[3])/255; // premultiply alpha
+            *dst++ = ((unsigned int)src[1]*src[3])/255;
+            *dst++ = ((unsigned int)src[2]*src[3])/255;
+            *dst++ = src[3];
+            src+=4;
+          }
+      }
+    result=true;
+  }
+  SceneImageFinish(image);  
+  return(result);
+}
+
+void ScenePNG(char *png,int quiet)
+{
+  CScene *I=&Scene;
+  GLvoid *image = SceneImagePrepare();
+  if(image) {
+    if(MyPNGWrite(png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
+      if(!quiet) {
+        PRINTFB(FB_Scene,FB_Actions) 
+          " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
+          I->ImageBufferWidth,I->ImageBufferHeight,png
+          ENDFB;
+      }
+    } else {
+      PRINTFB(FB_Scene,FB_Errors) 
+        " ScenePNG-Error: error writing \"%s\"! Please check directory...\n",
+        png
+        ENDFB;
+    }
+  }
+  SceneImageFinish(image);  
 }
 /*========================================================================*/
 void ScenePerspective(int flag)
@@ -1453,8 +1502,6 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 
       switch(obj->type) {
       case cObjectMolecule:
-
-        
         if(Feedback(FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement) 
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
@@ -3068,6 +3115,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       }
 
       f = SettingGet(cSetting_specular);
+      if(f==1.0F) {
+        f=SettingGet(cSetting_specular_intensity);
+      } 
       if(f>R_SMALL4) {
         /*        glEnable(GL_LIGHT1);*/
         /*        glLightfv(GL_LIGHT1,GL_AMBIENT,zero);*/

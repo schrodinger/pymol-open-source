@@ -1267,16 +1267,20 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_ortho:
   case cSetting_gl_ambient:
   case cSetting_bg_rgb:
-  case cSetting_depth_cue:
   case cSetting_specular:
+  case cSetting_specular_intensity:
   case cSetting_cgo_line_width:
   case cSetting_selection_width:
+    SceneDirty();
+    break;
+  case cSetting_depth_cue: 
     SceneDirty();
     break;
   case cSetting_sculpting:
     OrthoDirty();
     break;
   case cSetting_overlay:
+  case cSetting_overlay_lines:
   case cSetting_text:
     OrthoDirty();
     break;
@@ -1635,7 +1639,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_color(I,cSetting_label_color, "-1");
 
-  SettingSet_b(I,cSetting_ray_trace_fog, 1);
+  SettingSet_i(I,cSetting_ray_trace_fog, -1);
 
   SettingSet_f(I,cSetting_spheroid_scale, 1.0F);
 
@@ -1677,7 +1681,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_depth_cue, 1.0F);
 
-  SettingSet_f(I,cSetting_specular, 0.8F);
+  SettingSet_f(I,cSetting_specular, 1.0F);
 
   SettingSet_f(I,cSetting_shininess, 40.0F);
 
@@ -2152,5 +2156,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_pdb_insertions_go_first,0);
   SettingSet_b(I,cSetting_roving_origin_z,1);
   SettingSet_f(I,cSetting_roving_origin_z_cushion,3.0F);
-  
+  SettingSet_f(I,cSetting_specular_intensity,0.8F);
+  SettingSet_i(I,cSetting_overlay_lines,5);
 }
+

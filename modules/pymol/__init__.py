@@ -276,7 +276,7 @@ if pymol_launch != 3: # if this isn't a dry run
          if ncpu>1:
              cmd.set("max_threads",ncpu)
              if invocation.options.show_splash:  
-                 print "  Detected %d CPUs."%ncpu,
+                 print " Detected %d CPUs."%ncpu,
                  print " Enabled multithreaded rendering."
       except:
          pass

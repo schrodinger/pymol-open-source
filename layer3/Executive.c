@@ -5662,7 +5662,8 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                       SettingSet(cSetting_selection_overlay,
                                  (float)(!((int)SettingGet(cSetting_selection_overlay))));
                       if(SettingGet(cSetting_logging)) {
-                        sprintf(buffer,"cmd.set('selection_overlay',%d)",(int)SettingGet(cSetting_selection_overlay));
+                        sprintf(buffer,"cmd.set('selection_overlay',%d)",
+                                (int)SettingGet(cSetting_selection_overlay));
                         PLog(buffer,cPLog_pym);
                         sprintf(buffer,"cmd.enable('%s')",rec->name);
                         PLog(buffer,cPLog_pym);

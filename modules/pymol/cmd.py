@@ -748,7 +748,7 @@ DEVELOPMENT TO DO
 
    # writing PNG files (thread-unsafe)
 
-   def _png(a): # INTERNAL - can only be safely called by GLUT thread 
+   def _png(a,quiet=1): # INTERNAL - can only be safely called by GLUT thread 
       # WARNING: internal routine, subject to change
       try:
          lock()   
@@ -757,7 +757,7 @@ DEVELOPMENT TO DO
             fname = fname +".png"
          fname = os.path.expanduser(fname)
          fname = os.path.expandvars(fname)         
-         r = _cmd.png(str(fname))
+         r = _cmd.png(str(fname),int(quiet))
       finally:
          unlock()
       return r

@@ -134,6 +134,7 @@ static PyMOLOptionRec PyMOLOptionGlobal = {
   false, /* auto reinitialize */
   false, /* keep thread alive */
   false, /* quiet */
+  false, /* incentive product */
   "", /* after_load_script */
 };
 
@@ -228,13 +229,44 @@ static void DrawBlueLine(void)
 
 #ifdef _PYMOL_OSX
 
-void MainRunString(char *str);
-PyObject *MainRunStringBlocked(char *str);
-void MainRunCommand(char *str1);
-
+void MainMovieCopyPrepare(int *width,int *height,int *length)
+{
+  PLockAPIAsGlut();
+  MovieCopyPrepare(width,height,length);
+  PUnlockAPIAsGlut();
+}
+int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
+{
+  int result;
+  PLockAPIAsGlut();
+  result = MovieCopyFrame(frame,width,height,rowbytes,ptr);
+  PUnlockAPIAsGlut();
+  return result;
+}
+void MainMovieCopyFinish(void)
+{
+  PLockAPIAsGlut();
+  MovieCopyFinish();
+  PUnlockAPIAsGlut();
+}
+void MainSceneGetSize(int *width,int *height)
+{
+  PLockAPIAsGlut();
+  SceneGetWidthHeight(width,height);
+  PUnlockAPIAsGlut();
+}
+int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
+{ 
+  int result;
+  PLockAPIAsGlut();
+  result = SceneCopyExternal(width, height,rowbytes,(unsigned char *)ptr);
+  PUnlockAPIAsGlut();
+  return result;
+}
 /*========================================================================*/
 void MainRunCommand(char *str1)
 {
+  PLockAPIAsGlut();
   if(str1[0]!='_') { /* suppress internal call-backs */
     if(strncmp(str1,"cmd._",5)) {
       OrthoAddOutput("PyMOL>");
@@ -251,7 +283,15 @@ void MainRunCommand(char *str1)
   } else {
     PParse(str1);
   }
+  PUnlockAPIAsGlut();
+}
 
+/*========================================================================*/
+void MainFlushAsync(void)
+{
+  PLockAPIAsGlut();
+  PFlush();
+  PUnlockAPIAsGlut();
 }
 /*========================================================================*/
 void MainFlush(void)
@@ -266,7 +306,7 @@ void MainRunString(char *str)
   PUnblock();
 }
 /*========================================================================*/
-PyObject *MainRunStringBlocked(char *str)
+PyObject *MainGetStringResult(char *str)
 {
   PyObject *result;
   result = PyRun_String(str,Py_eval_input,P_globals,P_globals);
@@ -876,7 +916,7 @@ SetConsoleCtrlHandler(
                      (char*)glGetString(GL_VERSION));
     if(ShowSplash) {
       
-      printf(" OpenGL based graphics front end:\n");
+      printf(" OpenGL-based graphics engine:\n");
       printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
       printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
       printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));

@@ -451,10 +451,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_pdb_insertions_go_first    307
 #define cSetting_roving_origin_z            308
 #define cSetting_roving_origin_z_cushion    309
+#define cSetting_specular_intensity         310
+#define cSetting_overlay_lines              311
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        310
+#define cSetting_INIT                        312
 
 #endif
 
