@@ -1020,10 +1020,12 @@ void SceneRender(Pickable *pick,int x,int y)
     }
 
     if(SettingGet(cSetting_line_smooth)) {
-      glEnable(GL_LINE_SMOOTH);
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-      glHint(GL_LINE_SMOOTH_HINT,GL_DONT_CARE);
+      if(!pick) {
+        glEnable(GL_LINE_SMOOTH);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        glHint(GL_LINE_SMOOTH_HINT,GL_DONT_CARE);
+      }
       glLineWidth(0.0);
     } else {
       glLineWidth(SettingGet(cSetting_line_width));
