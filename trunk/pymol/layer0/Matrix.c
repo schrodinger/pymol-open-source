@@ -9,13 +9,13 @@ G* Please see the accompanying LICENSE file for further information.
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
 -* 
--* 
+-* Thomas Malik (matmul derived)
 -* Whoever wrote EISPACK
 Z* -------------------------------------------------------------------
 */
-#include <GL/gl.h>
 
 #include<math.h>
+#include"Vector.h"
 #include"Matrix.h"
 #include"MemoryDebug.h"
 
@@ -39,7 +39,87 @@ void MatrixApplyTTTfn3f( unsigned int n, float *q, const float m[16], float *p )
 	*(q++) = m2 * p0 + m6 * p1 + m10 * p2 + m14;
   }
 }
+/*========================================================================*/
+void MatrixLoadIdentity44f(float *m)
+{
+   m[0]=1.0;
+   m[1]=0.0;
+   m[2]=0.0;
+   m[3]=0.0;
+   
+   m[4]=0.0;   
+   m[5]=1.0;
+   m[6]=0.0;
+   m[7]=0.0;
+   
+   m[8]=0.0;
+   m[9]=0.0;
+   m[10]=1.0;
+   m[11]=0.0;
+   
+   m[12]=0.0;
+   m[13]=0.0;
+   m[14]=0.0;
+   m[15]=1.0;
+}
+/*========================================================================*/
+void MatrixRotate44f3f( float *m, const float angle, const float x,const float y,const float z)
+{
+  float m33[9];
+  float m44[16];
+  rotation_matrix3f(angle,x,y,z,m33);
+  m44[0]=m33[0];
+  m44[1]=m33[1];
+  m44[2]=m33[2];
+  m44[3]=0.0;
+  m44[4]=m33[3];
+  m44[5]=m33[4];
+  m44[6]=m33[5];
+  m44[7]=0.0;
+  m44[8]=m33[6];
+  m44[9]=m33[7];
+  m44[10]=m33[8];
+  m44[11]=0.0;
+  m44[12]=0.0;
+  m44[13]=0.0;
+  m44[14]=0.0;
+  m44[15]=1.0;
+  MatrixMultiply44f(m44,m);
+}
 
+/*========================================================================*/
+void MatrixTranslate44f3f( float *m, const float x,const float y,const float z)
+{
+   m[12] = m[0] * x + m[4] * y + m[8]  * z + m[12];
+   m[13] = m[1] * x + m[5] * y + m[9]  * z + m[13];
+   m[14] = m[2] * x + m[6] * y + m[10] * z + m[14];
+   m[15] = m[3] * x + m[7] * y + m[11] * z + m[15];                                                                    
+}
+
+/*========================================================================*/
+void MatrixMultiply44f( const float *b, float *m )
+{
+  
+   int i;
+ 
+#define A(row,col)  m[(col<<2)+row]
+#define B(row,col)  b[(col<<2)+row]
+#define P(row,col)  m[(col<<2)+row]
+ 
+   /* i-te Zeile */
+   for (i = 0; i < 4; i++) {
+      float ai0=A(i,0),  ai1=A(i,1),  ai2=A(i,2),  ai3=A(i,3);
+      P(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
+      P(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
+      P(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
+      P(i,3) = ai0 * B(0,3) + ai1 * B(1,3) + ai2 * B(2,3) + ai3 * B(3,3);
+   }
+ 
+#undef A
+#undef B
+#undef P
+}
+                                                                                                                             
 /*========================================================================*/
 void MatrixInvTransform3f(float *p, float *m, float *q)
 {
@@ -528,7 +608,7 @@ int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v)
 
 
 /*========================================================================*/
-/* DON'T GO BELOW HERE - JUST DON'T DO IT (Bob Dole) - */
+/* DON'T GO BELOW HERE - JUST DON'T DO IT - */
 /*========================================================================*/
 /*========================================================================*/
 /*========================================================================*/

@@ -51,6 +51,7 @@ void MainFree(void);
 void MainTest(void);
 void MainBusyIdle(void);
 static void MainInit(void);
+void MainReshape(int width, int height);
 
 GLuint obj;
 
@@ -75,6 +76,7 @@ typedef struct {
 
 static CMain Main;
 int PyMOLReady = false;
+int PMGUI = true;
 
 /*========================================================================*/
 void MainDirty(void)
@@ -203,13 +205,13 @@ static void MainDraw(void)
 		OrthoRestorePrompt();
 		Py_UNBLOCK_THREADS;
 	 }
-  if(!was_dirty) SceneCopy(0);
   if(I->SwapFlag)
-	 {
-		glutSwapBuffers();
-		I->SwapFlag=false;
-	 }
-    PUnlock(cLockAPI,&_save);
+    {
+      if(PMGUI&&(!was_dirty)) SceneCopy(0);
+      if(PMGUI) glutSwapBuffers();
+      I->SwapFlag=false;
+    }
+  PUnlock(cLockAPI,&_save);
 }
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
@@ -263,7 +265,7 @@ static void MainSpecial(int k, int x, int y)
 
 /* new window size or exposure */
 /*========================================================================*/
-void MainReshape(int width, int height)
+void MainReshape(int width, int height) /* called by Glut */
 {
   float h;
 
@@ -271,18 +273,22 @@ void MainReshape(int width, int height)
   WinY = height;
 
   h = ((float)height)/width;
-  glViewport(0, 0, (GLint) width, (GLint) height);
-  /*  glMatrixMode(GL_PROJECTION);*/
-  /* glLoadIdentity(); */
-  /*  glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);*/
-  /*  glMatrixMode(GL_MODELVIEW);*/
-  /*  glLoadIdentity();*/
-  /*  glTranslatef(0.0, 0.0, -40.0); */
-  glutReshapeWindow(width, height);
+  if(PMGUI) glViewport(0, 0, (GLint) width, (GLint) height);
+  
+
   OrthoReshape(width,height);
-
 }
+/*========================================================================*/
+void MainDoReshape(int width, int height) /* called internally */
+{
 
+  if(PMGUI) {
+    glutReshapeWindow(width,height);
+    glViewport(0, 0, (GLint) width, (GLint) height);
+  }
+
+  OrthoReshape(width,height);
+}
 /*========================================================================*/
 static void MainInit(void)
 {
@@ -294,35 +300,27 @@ static void MainInit(void)
   I->DirtyFlag=true;
   I->IdleFlag=false;
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glLightModelfv(GL_LIGHT_MODEL_AMBIENT,low);
-  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
+  if(PMGUI) {
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT,low);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_NORMALIZE);
+  }
 
   UtilInit();
   SettingInit();  
   SphereInit();
   ColorInit();
   OrthoInit();
-  /*  MenuInit();*/
   SelectorInit();
   MovieInit();
   SceneInit();
   ExecutiveInit();
-
   RepMeshInit();
-  /*  CPKInit();*/
-
-  /*  MenuAdd(0,"File",NULL);
-  MenuAdd(0,"Quit",MainExit);
-  MenuAdd(1,"Edit",NULL);
-  MenuAdd(1,"Cut",NULL);
-  MenuAdd(1,"Copy",NULL);
-  MenuAdd(1,"Paste",NULL);*/
 
 }
 
@@ -339,7 +337,6 @@ void MainFree(void)
   ColorFree();
   SphereDone();
   PFree();
-  /*  glutDestroyWindow(TheWindow);*/
   
   MemoryDebugDump();
 }
@@ -349,15 +346,18 @@ void MainRefreshNow(void)
 
   CMain *I = &Main;
   if(I->SwapFlag)
-	 {
-	   glutSwapBuffers();
-	   I->SwapFlag=false;
-	 }
+    {
+      if(PMGUI) glutSwapBuffers();
+      I->SwapFlag=false;
+    }
   if(I->DirtyFlag)
-	{
-	  glutPostRedisplay();
-	  I->DirtyFlag=false;
-	}
+    {
+      if(PMGUI) 
+        glutPostRedisplay();
+      else
+        MainDraw();
+      I->DirtyFlag=false;
+    }
 }
 /*========================================================================*/
 
@@ -385,39 +385,40 @@ void MainBusyIdle(void)
 
   PFlush(&_save);
 
-  if(I->SwapFlag)
-	 {
-		glutSwapBuffers();
-		I->SwapFlag=false;
-	 }
-
-  if(I->DirtyFlag)
-	 {
-	   wasDirty=true;
-		glutPostRedisplay();
-		I->DirtyFlag=false;
-	 }
-  if(!wasDirty) {
-	if(false&&I->IdleFlag) { /* select to avoid racing the CPU */
-
-	  PUnlock(cLockAPI,&_save);
-	  PSleep(10000);
-	  PLock(cLockAPI,&_save);
-	  
-
-	  if(I->SwapFlag)
-		{
-		  glutSwapBuffers();
-		  I->SwapFlag=false;
-		}
-	  if(I->DirtyFlag) 
-		{
-		  glutPostRedisplay();
-		  I->DirtyFlag=false;
-		}
-	}
+  if(I->SwapFlag) {
+    if(PMGUI) glutSwapBuffers();
+    I->SwapFlag=false;
   }
+  if(I->DirtyFlag) {
+    wasDirty=true;
+    if(PMGUI) 
+      glutPostRedisplay();
+    else
+      MainDraw();
+    I->DirtyFlag=false;
+  }
+  
+  if(!wasDirty) {
+    if(false&&I->IdleFlag) { /* select to avoid racing the CPU */
+      
+      PUnlock(cLockAPI,&_save);
+      PSleep(10000);
+      PLock(cLockAPI,&_save);
 
+      if(I->SwapFlag) {
+        if(PMGUI) glutSwapBuffers();
+        I->SwapFlag=false;
+      }
+      if(I->DirtyFlag) {
+        if(PMGUI) 
+          glutPostRedisplay();
+        else
+          MainDraw();
+        I->DirtyFlag=false;
+      }
+    }
+  }
+  
   PUnlock(cLockAPI,&_save);
 }
 /*========================================================================*/
@@ -441,44 +442,61 @@ void was_main(void)
 #endif
 
 #endif  
-	  
+
+
   myArgc=argc;
   myArgv=argv;
 
-  glutInit(&argc, argv);
+  if(myArgc>1)
+    if(strcmp(myArgv[1],"-c")==0)
+      PMGUI=false;
+  
+  if(PMGUI) {
+    
+    glutInit(&argc, argv);
+    
+    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
+    
+    glutInitWindowPosition(0, 175);
+    glutInitWindowSize(WinX, WinY);
+    
+    TheWindow = glutCreateWindow("PyMol Viewer");
+  }
 
-  glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-  
-  glutInitWindowPosition(0, 175);
-  glutInitWindowSize(WinX, WinY);
-  
-  TheWindow = glutCreateWindow("PyMol Viewer");
-  
   MainInit();
 
   PInit();
 
-  glutDisplayFunc(         MainDraw );
-  glutReshapeFunc(         MainReshape );
-  glutKeyboardFunc(        MainKey );
-  glutMouseFunc(           MainButton );
-  glutMotionFunc(          MainDrag );
-  /*  glutPassiveMotionFunc(   MainMove );*/
-  glutSpecialFunc(         MainSpecial );
-  glutIdleFunc(         MainBusyIdle );
-
-  glutPostRedisplay();
+  if(PMGUI) {
+    glutDisplayFunc(         MainDraw );
+    glutReshapeFunc(         MainReshape );
+    glutKeyboardFunc(        MainKey );
+    glutMouseFunc(           MainButton );
+    glutMotionFunc(          MainDrag );
+    /*  glutPassiveMotionFunc(   MainMove );*/
+    glutSpecialFunc(         MainSpecial );
+    glutIdleFunc(         MainBusyIdle );
+    
+    glutPostRedisplay();
+  }
 
   Py_UNBLOCK_THREADS;
   
   PyMOLReady = true;
 
-  printf(" GL_VENDOR: %s\n",glGetString(GL_VENDOR));
-  printf(" GL_RENDERER: %s\n",glGetString(GL_RENDERER));
-  printf(" GL_VERSION: %s\n",glGetString(GL_VERSION));
-  printf(" GL_EXTENSIONS: %s\n",glGetString(GL_EXTENSIONS));
-
-  glutMainLoop();
+  if(PMGUI) {
+    printf(" GL based graphics front end:\n");
+    printf("  GL_VENDOR: %s\n",glGetString(GL_VENDOR));
+    printf("  GL_RENDERER: %s\n",glGetString(GL_RENDERER));
+    printf("  GL_VERSION: %s\n",glGetString(GL_VERSION));
+    printf("  GL_EXTENSIONS: %s\n",glGetString(GL_EXTENSIONS));
+    glutMainLoop();
+  } else {
+    printf(" No graphics front end.\n");
+    MainReshape(WinX,WinY);
+    MainDraw(); /* for command line processing */
+    while(1) MainBusyIdle();
+  }
 
 #ifndef _PYMOL_MODULE
   return 0;

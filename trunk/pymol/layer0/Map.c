@@ -346,7 +346,7 @@ MapType *MapNew(float range,float *vert,int nVert,float *extent)
   /* compute size and allocate */
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
   I->Head=Alloc(int,mapSize);
-  /*  printf("%d\n",mapSize);*/
+  /*printf("%d\n",mapSize);*/
   ErrChkPtr(I->Head);
 
   /* initialize */

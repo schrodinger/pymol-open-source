@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"RepCylBond.h"
 #include"Color.h"
 #include"Setting.h"
+#include"main.h"
 
 typedef struct RepCylBond {
   Rep R;
@@ -59,8 +60,8 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 		ray->fCylinder3fv(ray,v+4,v+7,*(v+3),v,v);
 		v+=10;
 	 }
-  } else if(pick) {
-  } else {
+  } else if(pick&&PMGUI) {
+  } else if(PMGUI) {
 	 while(c--)
 		{
 		  

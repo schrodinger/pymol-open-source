@@ -4,15 +4,15 @@
 #
 #- Choose One Set ----------------------------------------------------
 #--- Build for unix as an embedded Python interprete
-#XLIB_DIR = -L/usr/X11R6/lib 
-#LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
-#MODULE = 
-#BUILD = -o pymol.exe
+XLIB_DIR = -L/usr/X11R6/lib 
+LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
+MODULE = 
+BUILD = -o pymol.exe
 #--- Build for unix as an importable module
-XLIB_DIR = -L/usr/X11R6/lib
-LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
-MODULE = -D_PYMOL_MODULE
-BUILD = -shared -o modules/_pm.so
+#XLIB_DIR = -L/usr/X11R6/lib
+#LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
+#MODULE = -D_PYMOL_MODULE
+#BUILD = -shared -o modules/_pm.so
 #--- Build for Windows as an importable module
 #XLIB_DIR = 
 #LIBS = -lpython15 -lopengl32 -lglu32 -lglut32 -lpng -lz

@@ -27,7 +27,7 @@ import pm
 
 while not pm.ready():
 	time.sleep(0.1)
-time.sleep(0.5)
+time.sleep(0.2)
 
 for a in sys.argv:
 	if re.search(r"pymol\.py$",a):

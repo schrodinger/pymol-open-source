@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Sphere.h"
 #include"Map.h"
 #include"Setting.h"
-
+#include"main.h"
 #include"ObjectMolecule.h"
 
 void RepDotRender(RepDot *I,CRay *ray,Pickable **pick);
@@ -77,8 +77,8 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 		v+=4;
 		}*/
 
-  } else if(pick) {
-  } else {
+  } else if(pick&&PMGUI) {
+  } else if(PMGUI) {
 	 glBegin(GL_POINTS);
 	 while(c--)
 		{

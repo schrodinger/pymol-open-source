@@ -29,19 +29,41 @@ import __main__
 def ready():
    return _pm.ready()
 
-def _alter_do(at,expr):
-   type = at[0]
-   name = at[1]
-   resn = at[2]
-   chain= at[3]
-   resi = at[4]
-   x = at[5]
-   y = at[6]
-   z = at[7]
-   q = at[8]
-   b = at[9]
-   segi = at[10]
-   eval(expr)
+def alter(sele,expr):
+   lock()
+   _pm.alter(sele,expr)
+   unlock()   
+
+def _alter_do(at):
+   type = at[1]
+   name = at[2]
+   resn = at[3]
+   chain= at[4]
+   resi = at[5]
+   x = at[6]
+   y = at[7]
+   z = at[8]
+   q = at[9]
+   b = at[10]
+   segi = at[11]
+   exec(at[0])
+   type = string.upper(string.strip(type))
+   type = type[:6]
+   name = string.upper(string.strip(name))
+   name = name[:4]
+   resn = string.upper(string.strip(resn))
+   resn = resn[:3]
+   chain = string.upper(string.strip(chain))
+   chain = chain[:1]
+   resi = string.upper(string.strip(str(resi)))
+   resi = resi[:4]
+   x = float(x)
+   y = float(y)
+   z = float(z)
+   b = float(b)
+   q = float(q)
+   segi = string.strip(segi)
+   segi = segi[:4]
    return [type,name,resn,chain,resi,x,y,z,q,b,segi]
 
 def setup_global_locks():
@@ -179,7 +201,7 @@ def delete(a):
    _pm.delete(a)
    unlock()
 
-def quit_():
+def _quit():
    lock()
    _pm.quit()
    unlock()
@@ -187,9 +209,9 @@ def quit_():
 def quit():
    if thread.get_ident() ==__main__.glutThread:
       lock()
-      _pm.do("quit_")
+      _pm.do("_quit")
    else:
-      _pm.do("quit_")
+      _pm.do("_quit")
       thread.exit()
    
 def png(a):
@@ -304,7 +326,7 @@ def save(*arg):
       if f:
          f.write(_pm.get_pdb(sele,int(state)))
          f.close()
-         print " save: wrote ",fname
+         print " Save: wrote \""+fname+"\"."
    unlock()
 
 def get_feedback():
@@ -377,9 +399,12 @@ def color(*args):
    
 
 def mpng(a):
-   _pm.do("pm.mpng_('"+a+"')")
+   if thread.get_ident() ==__main__.glutThread:
+      _mpng(a)
+   else:
+      _pm.do("pm._mpng('"+a+"')")
 
-def mpng_(*args):
+def _mpng(*args):
    lock()   
    fname = args[0]
    if re.search("\.png$",fname):
@@ -462,6 +487,7 @@ def mset(seq):
    
    
 keyword = { 
+   'alter'       : [alter        , 2 , 2 , ',' , 0 ],
    'backward'    : [backward     , 0 , 0 , ',' , 0 ],
    'beginning'   : [beginning    , 0 , 0 , ',' , 0 ],
    'clip'        : [clip         , 2 , 2 , ',' , 0 ],
@@ -502,7 +528,7 @@ keyword = {
    'system'      : [system       , 1 , 1 , ',' , 0 ],
    'turn'        : [turn         , 2 , 2 , ',' , 0 ],
    'quit'        : [quit         , 0 , 0 , ',' , 0 ],
-   'quit_'       : [quit_        , 0 , 0 , ',' , 0 ],
+   '_quit'       : [_quit        , 0 , 0 , ',' , 0 ],
    'png'         : [png          , 1 , 1 , ',' , 0 ],
    'viewport'    : [viewport     , 2 , 2 , ',' , 0 ],
    'save'        : [save         , 0 , 4 , ',' , 0 ],

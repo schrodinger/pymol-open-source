@@ -21,6 +21,10 @@ void MatrixTransform3f(float *vector,float *matrix,float *result);
 void MatrixTransform44fn( unsigned int n, float *q, const float m[16], float *p);
 int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v);
 
+void MatrixLoadIdentity44f(float *m);
+void MatrixTranslate44f3f( float *m, const float x,const float y,const float z);
+void MatrixRotate44f3f( float *m, const float angle, const float x,const float y,const float z);
+void MatrixMultiply44f( const float *mat, float *product );
 
 /* WARNING - routines below use a "non-conventional" 4x4 
   pre-translation - tranformation - and post-translation (TTT) matrix */

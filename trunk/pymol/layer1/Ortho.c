@@ -107,8 +107,10 @@ int  OrthoCommandOut(char *buffer)
 void OrthoFeedbackIn(char *buffer)
 {
   OrthoObject *I=&Ortho;
-  if(I->feedback)
-	QueueStrIn(I->feedback,buffer);
+  if(PMGUI) {
+    if(I->feedback)
+      QueueStrIn(I->feedback,buffer);
+  }
 }
 /*========================================================================*/
 int OrthoFeedbackOut(char *buffer)
@@ -176,77 +178,79 @@ void OrthoBusyDraw(int force)
   busyTime = (-I->BusyLast) + now;
   if(force||(busyTime>cBusyUpdate)) {
 
-	 glDrawBuffer(GL_FRONT);
-	 glClear(GL_DEPTH_BUFFER_BIT);
 	 OrthoPushMatrix();
-	 
-	 glColor3fv(black);
-	 glBegin(GL_POLYGON);
-	 glVertex2i(0,I->Height);
-	 glVertex2i(cBusyWidth,I->Height);
-	 glVertex2i(cBusyWidth,I->Height-cBusyHeight);
-	 glVertex2i(0,I->Height-cBusyHeight);
-	 glVertex2i(0,I->Height); /* needed on old buggy Mesa */
-	 glEnd();
 
-	 glColor3fv(white);	 
-
-	 y=I->Height-cBusyMargin;
-	 c=I->BusyMessage;
-	 if(*c) {
-		glRasterPos4d(cBusyMargin,y-(cBusySpacing/2),0.0,1.0);
-		while(*c)
-		  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
-		y-=cBusySpacing;
-	 }
-
-	 if(I->BusyStatus[1]) {
-		glBegin(GL_LINE_LOOP);
-		glVertex2i(cBusyMargin,y);
-		glVertex2i(cBusyWidth-cBusyMargin,y);
-		glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
-		glVertex2i(cBusyMargin,y-cBusyBar);
-		glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-		glEnd();
-		glColor3fv(white);	 
-		glBegin(GL_POLYGON);
-		glVertex2i(cBusyMargin,y);
-		x=(I->BusyStatus[0]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[1])+cBusyMargin;
-		glVertex2i(x,y);
-		glVertex2i(x,y-cBusyBar);
-		glVertex2i(cBusyMargin,y-cBusyBar);
-		glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-		glEnd();
-		y-=cBusySpacing;
-	 }
-
-	 if(I->BusyStatus[3]) {
-		glColor3fv(white);	 
-		glBegin(GL_LINE_LOOP);
-		glVertex2i(cBusyMargin,y);
-		glVertex2i(cBusyWidth-cBusyMargin,y);
-		glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
-		glVertex2i(cBusyMargin,y-cBusyBar);
-		glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-		glEnd();
-		x=(I->BusyStatus[2]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[3])+cBusyMargin;
-		glColor3fv(white);	 
-		glBegin(GL_POLYGON);
-		glVertex2i(cBusyMargin,y);
-		glVertex2i(x,y);
-		glVertex2i(x,y-cBusyBar);
-		glVertex2i(cBusyMargin,y-cBusyBar);
-		glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-		glEnd();
-		y-=cBusySpacing;
-	 }
-
+    if(PMGUI) {
+      glDrawBuffer(GL_FRONT);
+      glClear(GL_DEPTH_BUFFER_BIT);
+      
+      glColor3fv(black);
+      glBegin(GL_POLYGON);
+      glVertex2i(0,I->Height);
+      glVertex2i(cBusyWidth,I->Height);
+      glVertex2i(cBusyWidth,I->Height-cBusyHeight);
+      glVertex2i(0,I->Height-cBusyHeight);
+      glVertex2i(0,I->Height); /* needed on old buggy Mesa */
+      glEnd();
+      
+      glColor3fv(white);	 
+      
+      y=I->Height-cBusyMargin;
+      c=I->BusyMessage;
+      if(*c) {
+        glRasterPos4d(cBusyMargin,y-(cBusySpacing/2),0.0,1.0);
+        while(*c)
+          glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+        y-=cBusySpacing;
+      }
+      
+      if(I->BusyStatus[1]) {
+        glBegin(GL_LINE_LOOP);
+        glVertex2i(cBusyMargin,y);
+        glVertex2i(cBusyWidth-cBusyMargin,y);
+        glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+        glEnd();
+        glColor3fv(white);	 
+        glBegin(GL_POLYGON);
+        glVertex2i(cBusyMargin,y);
+        x=(I->BusyStatus[0]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[1])+cBusyMargin;
+        glVertex2i(x,y);
+        glVertex2i(x,y-cBusyBar);
+        glVertex2i(cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+        glEnd();
+        y-=cBusySpacing;
+      }
+      
+      if(I->BusyStatus[3]) {
+        glColor3fv(white);	 
+        glBegin(GL_LINE_LOOP);
+        glVertex2i(cBusyMargin,y);
+        glVertex2i(cBusyWidth-cBusyMargin,y);
+        glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+        glEnd();
+        x=(I->BusyStatus[2]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[3])+cBusyMargin;
+        glColor3fv(white);	 
+        glBegin(GL_POLYGON);
+        glVertex2i(cBusyMargin,y);
+        glVertex2i(x,y);
+        glVertex2i(x,y-cBusyBar);
+        glVertex2i(cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+        glEnd();
+        y-=cBusySpacing;
+      }
+      
+      glDrawBuffer(GL_BACK);
+    }
 	 OrthoPopMatrix();
-	 glDrawBuffer(GL_BACK);
 	 SceneDirty();
 	 I->BusyLast=now;
   }
-  
 }
 /*========================================================================*/
 void OrthoRestorePrompt(void) 
@@ -493,66 +497,69 @@ void OrthoDoDraw()
   float *v;
 
   SceneUpdate();
-
+  
   SceneCopy(1); /* Copy if necessary before clear */
+  
+  if(PMGUI) {
 
-  v=SettingGetfv(cSetting_bg_rgb);
+    v=SettingGetfv(cSetting_bg_rgb);
 
-  glDrawBuffer(GL_BACK);
-  glClearColor(v[0],v[1],v[2],1.0);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  glClearColor(0.0,0.0,0.0,1.0);
-
-  if(!SceneRenderCached())
-	  SceneRender(NULL,0,0);
-
-  OrthoPushMatrix();
+    glDrawBuffer(GL_BACK);
+    glClearColor(v[0],v[1],v[2],1.0);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glClearColor(0.0,0.0,0.0,1.0);
     
-  x = I->X;
-  y = I->Y;
-  
-  
-  BlockRecursiveDraw(I->Blocks);
-  
-  OrthoRestorePrompt();
+    if(!SceneRenderCached())
+      SceneRender(NULL,0,0);
+    
+    OrthoPushMatrix();
+    
+    x = I->X;
+    y = I->Y;
+    
+    BlockRecursiveDraw(I->Blocks);
+    
+    OrthoRestorePrompt();
 
-  if(I->DrawText) {	 
-	 /* now print the text */
+    if(I->DrawText) {	 
+      /* now print the text */
 	 
-	 lcount = 0;
-	 l=(I->CurLine-lcount)&OrthoSaveLines;
-	 x = cOrthoLeftMargin;
-	 y = cOrthoBottomMargin;
+      lcount = 0;
+      l=(I->CurLine-lcount)&OrthoSaveLines;
+      x = cOrthoLeftMargin;
+      y = cOrthoBottomMargin;
 
-	 glColor3f(0.0,0.0,0.0);
-	 glBegin(GL_POLYGON);
-	 glVertex2i(I->Width-cOrthoRightSceneMargin,cOrthoBottomSceneMargin-1);
-	 glVertex2i(I->Width-cOrthoRightSceneMargin,0);
-	 glVertex2i(0,0);
-	 glVertex2i(0,cOrthoBottomSceneMargin-1);
-	 glEnd();
+      glColor3f(0.0,0.0,0.0);
+      glBegin(GL_POLYGON);
+      glVertex2i(I->Width-cOrthoRightSceneMargin,cOrthoBottomSceneMargin-1);
+      glVertex2i(I->Width-cOrthoRightSceneMargin,0);
+      glVertex2i(0,0);
+      glVertex2i(0,cOrthoBottomSceneMargin-1);
+      glEnd();
 
-	 glColor3fv(I->TextColor);
-	 while(l>=0)
-		{
-		  lcount++;
-		  if(lcount>I->ShowLines)
-			 break;
-		  glRasterPos4d((double)x,(double)y,0.0,1.0);
-		  str = I->Line[l&OrthoSaveLines];
-		  if(str)
-			 {
-				while(*str)
-				  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(str++));
-				if((lcount==1)&&(I->InputFlag)) 
-				  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'_');
-			 }
-		  l=(I->CurLine-lcount)&OrthoSaveLines;
-		  y=y+cOrthoLineHeight;
-		}
+      glColor3fv(I->TextColor);
+      while(l>=0)
+        {
+          lcount++;
+          if(lcount>I->ShowLines)
+            break;
+          glRasterPos4d((double)x,(double)y,0.0,1.0);
+          str = I->Line[l&OrthoSaveLines];
+          if(str)
+            {
+              while(*str)
+                glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(str++));
+              if((lcount==1)&&(I->InputFlag)) 
+                glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'_');
+            }
+          l=(I->CurLine-lcount)&OrthoSaveLines;
+          y=y+cOrthoLineHeight;
+        }
+    }
+
+    OrthoPopMatrix();
   }
 
-  OrthoPopMatrix();
   I->DirtyFlag =false;
 }
 /*========================================================================*/
@@ -576,7 +583,6 @@ void OrthoReshape(int width, int height)
 
   glGetIntegerv(GL_VIEWPORT,I->ViewPort);
 
-  /*  printf("%i %i %i %i\n",I->ViewPort[0],I->ViewPort[1],I->ViewPort[2],I->ViewPort[3]);*/
   OrthoPushMatrix();
   block=NULL;
   while(ListIterate(I->Blocks,block,next,BlockList))
@@ -688,7 +694,7 @@ void OrthoInit(void)
   OrthoNewLine(NULL);
   OrthoAddOutput("Copyright (C) 1998-2000 by Warren L. DeLano, Ph.D.\n");
   OrthoAddOutput("This software is open source and freely available.\n");
-  OrthoAddOutput("Updates at http://www.pymol.org\n");
+  OrthoAddOutput("Updates at \"http://www.pymol.org\".\n");
   strcpy(I->Prompt,"PyMOL>");
   OrthoNewLine(I->Prompt);
 

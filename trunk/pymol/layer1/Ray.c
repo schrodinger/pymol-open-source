@@ -13,7 +13,6 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<GL/gl.h>
 #include<math.h>
 
 #include"Base.h"
@@ -36,8 +35,8 @@ Z* -------------------------------------------------------------------
 	2 contains transformed vertices for shadowing 
 */
 
-typedef GLfloat GLfloat3[3];
-typedef GLfloat GLfloat4[4];
+typedef float float3[3];
+typedef float float4[4];
 
 void RayRelease(CRay *I);
 
@@ -51,8 +50,8 @@ void RayTriangle3fv(CRay *I,
 						  float *n1,float *n2,float *n3,
 						  float *c1,float *c2,float *c3);
 
-void RayApplyMatrix33( GLuint n, GLfloat3 *q, const GLfloat m[16],
-							GLfloat3 *p );
+void RayApplyMatrix33( unsigned int n, float3 *q, const float m[16],
+							float3 *p );
 
 void RayExpandPrimitives(CRay *I);
 void RayTransformFirst(CRay *I);
@@ -62,7 +61,7 @@ int PrimitiveSphereHit(CRay *I,float *v,float *n,float *minDist,int except);
 
 void RayReflectSphere(CRay *I,RayInfo *r);
 
-void RayTransformNormals33( GLuint n, GLfloat3 *q, const GLfloat m[16],GLfloat3 *p );
+void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
 
 /*========================================================================*/
 void RayReflectSphere(CRay *I,RayInfo *r)
@@ -227,8 +226,8 @@ void RayTransformFirst(CRay *I)
   VLACheck(basis1->Radius,float,basis0->NVertex);
   VLACheck(basis1->Radius2,float,basis0->NVertex);
   
-  RayApplyMatrix33(basis0->NVertex,(GLfloat3*)basis1->Vertex,
-					  I->ModelView,(GLfloat3*)basis0->Vertex);
+  RayApplyMatrix33(basis0->NVertex,(float3*)basis1->Vertex,
+					  I->ModelView,(float3*)basis0->Vertex);
 
   for(a=0;a<basis0->NVertex;a++)
 	 {
@@ -241,8 +240,8 @@ void RayTransformFirst(CRay *I)
   basis1->MinVoxel=basis0->MinVoxel;
   basis1->NVertex=basis0->NVertex;
 
-  RayTransformNormals33(basis0->NNormal,(GLfloat3*)basis1->Normal,
-					  I->ModelView,(GLfloat3*)basis0->Normal);
+  RayTransformNormals33(basis0->NNormal,(float3*)basis1->Normal,
+					  I->ModelView,(float3*)basis0->Normal);
   
   basis1->NNormal=basis0->NNormal;
 
@@ -338,7 +337,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 	 height=height*2;
 	 image_copy = image;
 	 buffer_size = 4*width*height;
-	 image = (GLvoid*)Alloc(char,buffer_size);
+	 image = (void*)Alloc(char,buffer_size);
 	 ErrChkPtr(image);
   }
 
@@ -832,10 +831,10 @@ CRay *RayNew(void)
   return(I);
 }
 /*========================================================================*/
-void RayPrepare(CRay *I,float v0,float v1,float v2,float v3,float v4,float v5)
+void RayPrepare(CRay *I,float v0,float v1,float v2,float v3,float v4,float v5,float *mat)
 	  /*prepare for vertex calls */
 {
-
+  int a;
   if(!I->Primitive) 
 	 I->Primitive=VLAlloc(CPrimitive,100);  
   if(!I->Vert2Prim) 
@@ -850,7 +849,8 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,float v3,float v4,float v5)
   I->Range[1]=I->Volume[3]-I->Volume[2];
   I->Range[2]=I->Volume[5]-I->Volume[4];
 
-  glGetFloatv(GL_MODELVIEW_MATRIX,I->ModelView);
+  for(a=0;a<16;a++)
+    I->ModelView[a]=mat[a];
 }
 
 /*========================================================================*/
@@ -875,27 +875,27 @@ void RayFree(CRay *I)
 }
 /*========================================================================*/
 
-void RayApplyMatrix33( GLuint n, GLfloat3 *q, const GLfloat m[16],
-                          GLfloat3 *p )
+void RayApplyMatrix33( unsigned int n, float3 *q, const float m[16],
+                          float3 *p )
 {
    {
-      GLuint i;
-      GLfloat m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
-      GLfloat m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
+      unsigned int i;
+      float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
+      float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
       for (i=0;i<n;i++) {
-         GLfloat p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
+         float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
          q[i][0] = m0 * p0 + m4  * p1 + m8 * p2 + m12;
          q[i][1] = m1 * p0 + m5  * p1 + m9 * p2 + m13;
       }
    }
    {
-      GLuint i;
-      GLfloat m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
-      GLfloat m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
+      unsigned int i;
+      float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
+      float m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
       if (m3==0.0F && m7==0.0F && m11==0.0F && m15==1.0F) {
          /* common case */
          for (i=0;i<n;i++) {
-            GLfloat p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
+            float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
             q[i][2] = m2 * p0 + m6 * p1 + m10 * p2 + m14;
 				/*				q[i][3] = 1.0F;*/
          }
@@ -903,7 +903,7 @@ void RayApplyMatrix33( GLuint n, GLfloat3 *q, const GLfloat m[16],
       else {
          /* general case */
          for (i=0;i<n;i++) {
-            GLfloat p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
+            float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
             q[i][2] = m2 * p0 + m6 * p1 + m10 * p2 + m14;
 				/*				q[i][3] = m3 * p0 + m7 * p1 + m11 * p2 + m15; */
          }
@@ -911,39 +911,39 @@ void RayApplyMatrix33( GLuint n, GLfloat3 *q, const GLfloat m[16],
    }
 }
 
-void RayTransformNormals33( GLuint n, GLfloat3 *q, const GLfloat m[16],GLfloat3 *p )
+void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p )
 {
    {
-      GLuint i;
-      GLfloat m0 = m[0],  m4 = m[4],  m8 = m[8];
-      GLfloat m1 = m[1],  m5 = m[5],  m9 = m[9];
+      unsigned int i;
+      float m0 = m[0],  m4 = m[4],  m8 = m[8];
+      float m1 = m[1],  m5 = m[5],  m9 = m[9];
       for (i=0;i<n;i++) {
-         GLfloat p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
+         float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
          q[i][0] = m0 * p0 + m4  * p1 + m8 * p2;
          q[i][1] = m1 * p0 + m5  * p1 + m9 * p2;
       }
    }
    {
-      GLuint i;
-      GLfloat m2 = m[2],  m6 = m[6],  m10 = m[10];
-      GLfloat m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
+      unsigned int i;
+      float m2 = m[2],  m6 = m[6],  m10 = m[10];
+      float m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
       if (m3==0.0F && m7==0.0F && m11==0.0F && m15==1.0F) {
          /* common case */
          for (i=0;i<n;i++) {
-            GLfloat p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
+            float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
             q[i][2] = m2 * p0 + m6 * p1 + m10 * p2;
          }
       }
       else {
          /* general case */
          for (i=0;i<n;i++) {
-            GLfloat p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
+            float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
             q[i][2] = m2 * p0 + m6 * p1 + m10 * p2;
          }
       }
    }
 	{      
-	  GLuint i;
+	  unsigned int i;
 	  for (i=0;i<n;i++) { /* renormalize - can we do this to the matrix instead? */
 		 normalize3f(q[i]);
 	  }

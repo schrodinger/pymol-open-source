@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Sphere.h"
 #include"Setting.h"
 #include"Color.h"
+#include"main.h"
 
 typedef struct RepMesh {
   Rep R;
@@ -85,8 +86,8 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 				}
 		  }
 	 }
-  } else if(pick) {
-  } else {
+  } else if(pick&&PMGUI) {
+  } else if(PMGUI) {
 	 if(n) {
 		if(I->oneColorFlag) {
 		  while(*n)

@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include<Python.h>
 
+#include"AtomInfo.h"
 
 void PInit(void);
 void PFree(void);
@@ -28,6 +29,7 @@ void PParse(char *str);
 #define cLockInbox 2
 #define cLockOutbox 3
 
+int PAlterAtom(AtomInfoType *at,char *expr);
 void PSleep(int usec);
 void PLock(int lock,PyThreadState **save);
 void PUnlock(int lock,PyThreadState **save);

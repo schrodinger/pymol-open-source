@@ -308,7 +308,7 @@ void MemoryDebugDump(void)
 	  cnt++;
 	}
     }
-  printf("Memory Blocks: %d expected, %d found, %d maximum allocated.\n",
+  printf(" Memory Check: %d blocks expected, %d found, %d maximum allocated.\n",
 			Count,cnt,MaxCount);
 }
 

@@ -13,9 +13,10 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include"Block.h"
 #include<GL/gl.h>
 
+#include"Block.h"
+#include"main.h"
 
 void BlockInit(Block *I)
 {
@@ -29,12 +30,14 @@ void BlockInit(Block *I)
 /*========================================================================*/
 void BlockFill(Block *I) 
 {
-  glBegin(GL_POLYGON);
-  glVertex2i(I->rect.right,I->rect.top);
-  glVertex2i(I->rect.right,I->rect.bottom);
-  glVertex2i(I->rect.left,I->rect.bottom);
-  glVertex2i(I->rect.left,I->rect.top);
-  glEnd();
+  if(PMGUI) {
+    glBegin(GL_POLYGON);
+    glVertex2i(I->rect.right,I->rect.top);
+    glVertex2i(I->rect.right,I->rect.bottom);
+    glVertex2i(I->rect.left,I->rect.bottom);
+    glVertex2i(I->rect.left,I->rect.top);
+    glEnd();
+  }
 }
 /*========================================================================*/
 void BlockSetMargin(Block *block,int t,int l,int b,int r)

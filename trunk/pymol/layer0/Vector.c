@@ -36,10 +36,6 @@ Z* -------------------------------------------------------------------
 #endif
 
 
-void rotation_matrix( float angle, float x, float y, float z,
-                         float m[] );
-
-
 #define cPI            3.14159265358979323846  /* pi */
 
 #ifndef USE_VECTOR_MACROS
@@ -151,12 +147,10 @@ float rad_to_deg(float angle)
 
 void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat)
 {
-  rotation_matrix(angle,axis[0],axis[1],axis[2],&mat[0][0]);
+  rotation_matrix3f(angle,axis[0],axis[1],axis[2],&mat[0][0]);
 }
 
-
-void rotation_matrix( float angle, float x, float y, float z,
-                         float m[] )
+void rotation_matrix3f( float angle, float x, float y, float z,float *m )
 {
    /* This function contributed by Erich Boleyn (erich@uruk.org) */
    float mag, s, c;
@@ -479,8 +473,7 @@ void matrot ( oMatrix5f nm, oMatrix5f om, int axis, float angle )
 
 void rotation_to_matrix(oMatrix5f rot,float *axis, float angle)
 {
-  rotation_matrix(angle,axis[0],axis[1],axis[2],&rot[0][0]);
-
+  rotation_matrix3f(angle,axis[0],axis[1],axis[2],&rot[0][0]);
 }
 
 void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
