@@ -244,32 +244,38 @@ Rep *RepNonbondedNew(CoordSet *cs)
       *(v++)=*(v0++);
       *(v++)=*(v0++);
       *(v++)=*(v0++);
+
       *(v++)=v1[0]-nonbonded_size;
       *(v++)=v1[1];
       *(v++)=v1[2];
+
       *(v++)=v1[0]+nonbonded_size;
       *(v++)=v1[1];
       *(v++)=v1[2];
+
       *(v++)=v1[0];
       *(v++)=v1[1]-nonbonded_size;
       *(v++)=v1[2];
+
       *(v++)=v1[0];
       *(v++)=v1[1]+nonbonded_size;
       *(v++)=v1[2];
+
       *(v++)=v1[0];
       *(v++)=v1[1];
       *(v++)=v1[2]-nonbonded_size;
+
       *(v++)=v1[0];
       *(v++)=v1[1];
       *(v++)=v1[2]+nonbonded_size;
       I->N++;
     }
-  I->V = ReallocForSure(I->V,float,I->N*21);
+  I->V = ReallocForSure(I->V,float,(v-I->V));
 
   /* now create pickable verson */
   
   if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
-    I->VP=(float*)mmalloc(sizeof(float)*nAtom*18);
+    I->VP=(float*)mmalloc(sizeof(float)*nAtom*21);
     ErrChkPtr(I->VP);
     
     I->R.P=Alloc(Pickable,cs->NIndex+1);
@@ -292,25 +298,30 @@ Rep *RepNonbondedNew(CoordSet *cs)
         *(v++)=v1[0]-nonbonded_size;
         *(v++)=v1[1];
         *(v++)=v1[2];
+
         *(v++)=v1[0]+nonbonded_size;
         *(v++)=v1[1];
         *(v++)=v1[2];
+
         *(v++)=v1[0];
         *(v++)=v1[1]-nonbonded_size;
         *(v++)=v1[2];
+
         *(v++)=v1[0];
         *(v++)=v1[1]+nonbonded_size;
         *(v++)=v1[2];
+
         *(v++)=v1[0];
         *(v++)=v1[1];
         *(v++)=v1[2]-nonbonded_size;
+
         *(v++)=v1[0];
         *(v++)=v1[1];
         *(v++)=v1[2]+nonbonded_size;
       }
-    I->R.P = ReallocForSure(I->R.P,Pickable,I->NP+1);
+    I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
     I->R.P[0].index = I->NP;
-    I->VP = ReallocForSure(I->VP,float,I->NP*21);
+    I->VP = ReallocForSure(I->VP,float,(v-I->VP));
   }
   FreeP(active);
   return((void*)(struct Rep*)I);

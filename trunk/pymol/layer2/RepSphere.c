@@ -505,7 +505,7 @@ Rep *RepSphereNew(CoordSet *cs)
   else
 	 I->VC=ReallocForSure(I->VC,float,1);
   if(I->R.P) {
-    I->R.P = ReallocForSure(I->R.P,Pickable,I->NP+1);
+    I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
     I->R.P[0].index = I->NP;
   }
 
