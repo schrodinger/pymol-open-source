@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 
 #ifdef _PYMOL_ACTIVEX
 #define _PYMOL_PRETEND_GLUT
+#define _PYMOL_PRETEND_GLUT_FONT
 #endif
 
 #ifdef _PYMOL_MIN_GLUT
@@ -42,6 +43,7 @@ Z* -------------------------------------------------------------------
 
 #ifdef _PYMOL_WX_GLUT
 #define _PYMOL_PRETEND_GLUT
+#define _PYMOL_PRETEND_GLUT_FONT
 #endif
 
 #ifndef _PYMOL_PRETEND_GLUT
@@ -111,6 +113,7 @@ Z* -------------------------------------------------------------------
 #define P_GLUT_RESHAPE_EVENT         2
 #define P_GLUT_MOUSE_EVENT           3
 #define P_GLUT_MOTION_EVENT          4
+#define P_GLUT_CHAR_EVENT            5
 
 typedef struct {
   int event_code;

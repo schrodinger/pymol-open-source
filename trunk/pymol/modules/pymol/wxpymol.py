@@ -12,6 +12,7 @@ P_GLUT_DISPLAY_EVENT       =  1
 P_GLUT_RESHAPE_EVENT       =  2
 P_GLUT_MOUSE_EVENT         =  3
 P_GLUT_MOTION_EVENT        =  4
+P_GLUT_CHAR_EVENT          =  5
 
 P_GLUT_ACTIVE_ALT             =  32
 P_GLUT_ACTIVE_CTRL            =  64
@@ -47,6 +48,7 @@ if 1:
             EVT_RIGHT_UP(self, self.OnMouseUp)
             EVT_MOTION(self, self.OnMouseMotion)
             EVT_IDLE(self,self.OnIdle)
+            EVT_CHAR(self,self.OnChar)
             self.mouse = ''
             self.mod = 0
             
@@ -59,7 +61,17 @@ if 1:
                 self.SetCurrent()
                 glViewport(0, 0, size.width, size.height)
                 _cmd.p_glut_event(P_GLUT_RESHAPE_EVENT,size.width,size.height,0,0,0)
-                
+
+        def OnChar(self, evt):
+            self.mod = 0
+            if evt.ShiftDown():
+                self.mod = self.mod + P_GLUT_ACTIVE_SHIFT
+            if evt.ControlDown():
+                self.mod = self.mod + P_GLUT_ACTIVE_CTRL
+            if evt.MetaDown():
+                self.mod = self.mod + P_GLUT_ACTIVE_ALT
+            _cmd.p_glut_event(P_GLUT_CHAR_EVENT,evt.GetX(),evt.GetY(),evt.GetKeyCode(),0,0)
+                              
         def OnPaint(self, event):
             dc = wxPaintDC(self)
             self.SetCurrent()
@@ -136,7 +148,7 @@ if 1:
 
             _cmd.runwxpymol()
             pymol._swap_buffers = lambda s=self: s.swap()
-            _cmd.p_glut_event(P_GLUT_RESHAPE_EVENT,800,480,0,0,0) # initial reshape event
+            _cmd.p_glut_event(P_GLUT_RESHAPE_EVENT,800,500,0,0,0) # initial reshape event
             self.CheckPyMOL()
 
         def swap(self):
@@ -160,7 +172,7 @@ overview = """\
 
 class MyApp(wxApp):
   def OnInit(self):
-      frame = wxFrame(None, -1, "PyMOL", size=(800,480))
+      frame = wxFrame(None, -1, "PyMOL", size=(800,500))
       canvas = CubeCanvas(frame)
       frame.Show(true)
       self.SetTopWindow(frame)
