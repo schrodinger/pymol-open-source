@@ -139,6 +139,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int last_color,uniform_color;
   int round_helices;
   int smooth_loops;
+  int parity;
   float refine_tips;
   float helix_radius;
   float *h_start=NULL,*h_end=NULL;
@@ -238,6 +239,7 @@ ENDFD;
   nAt = 0;
   nSeg = 0;
   a2=-1;
+  parity = 1;
   for(a1=0;a1<cs->NAtIndex;a1++)
 	 {
       if(obj->DiscreteFlag) {
@@ -254,23 +256,23 @@ ENDFD;
                (obj->AtomInfo[a1].alt[0]=='A')) {
               if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
                 {
-                PRINTFD(FB_RepCartoon)
-                  " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
-                  ENDFD;
+                  PRINTFD(FB_RepCartoon)
+                    " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                    ENDFD;
                   if(a2>=0) {
                     /*
                       if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
                       (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
                       (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
-                      if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
-                        a2=-1;
-
+                    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+                      a2=-1;
+                    
                   }
-                PRINTFD(FB_RepCartoon)
-                  " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
-                  ENDFD;
-
-
+                  PRINTFD(FB_RepCartoon)
+                    " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                    ENDFD;
+                  
+                  
                   if(a2<0)
                     nSeg++;
                   *(s++) = nSeg;
@@ -299,6 +301,7 @@ ENDFD;
                         cur_car = cCartoon_rect;
                     }
                     *ss=2;
+                    parity = !parity;
                     break;
                   default: /* 'L', 'T', 0, etc. */
                     if (cur_car==cCartoon_auto) {
@@ -356,7 +359,9 @@ ENDFD;
                     normalize3f(t1);
                     cross_product3f(t0,t1,vo);
                     normalize3f(vo);
-                    
+                    if(parity) {
+                      invert3f(vo);
+                    }
                     vo+=3;
                   }
                 } else if(WordMatch("P",obj->AtomInfo[a1].name,1)<0) {
