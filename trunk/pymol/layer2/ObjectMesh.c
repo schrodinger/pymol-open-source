@@ -512,6 +512,12 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
                          I->Obj.Setting,NULL);
           ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
+
+
+          if(ms->Radius==0.0F) {
+            ms->Radius = ray->PixelRadius*SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width)/2.0F;
+          } 
+
           if(n&&v&&I->Obj.RepVis[cRepMesh]) {
             vc = ColorGet(I->Obj.Color);
             if(ms->DotFlag) {
