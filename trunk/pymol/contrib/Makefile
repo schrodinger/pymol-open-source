@@ -1,6 +1,6 @@
 include ../Rules.make
 
-all: make-modules make-sglite make-pyopengl
+all: make-modules make-sglite make-pyopengl make-champ
 
 static:
 	cd modules;$(MAKE) -f Makefile.static
@@ -31,15 +31,12 @@ make-pyopengl:
 
 make-champ:
 	cd champ;$(MAKE) 
-	mv champ/*.so ../modules/pymol
+#	mv champ/*.so ../modules/pymol
 
 clean: 
 	cd sglite;$(MAKE) clean
+	cd champ;$(MAKE) clean
 	/bin/rm -f */*.o
 
 distclean: clean
 	cd sglite;$(MAKE) distclean
-
-
-
-
