@@ -31,6 +31,8 @@ Z* -------------------------------------------------------------------
 #define cObjectCallback     5
 #define cObjectCGO          6
 #define cObjectSurface      7
+#define cObjectRamp         8
+#define cObjectCalculator   9
 
 /* 
    the object base class is in the process of being converted to support

@@ -174,11 +174,11 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0;
   
-  if(state<I->NState) {
-    if(I->State[state].Active)
-      if(I->State[state].V&&I->State[state].N)
-        ms=I->State+state;
-  }
+  if(state>=0) 
+    if(state<I->NState) 
+      if(I->State[state].Active)
+        if(I->State[state].V&&I->State[state].N)
+          ms=I->State+state;
   while(1) {
     if(state<0) { /* all_states */
       ms = I->State + a;
@@ -355,7 +355,7 @@ void ObjectSurfaceStateInit(ObjectSurfaceState *ms)
 }
 
 /*========================================================================*/
-ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMap *map,
+ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMapState *map,
 int state,float *mn,float *mx,float level,int mode,
 float carve,float *vert_vla)
 {

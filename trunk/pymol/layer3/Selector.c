@@ -1259,7 +1259,7 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
 
 
 /*========================================================================*/
-int SelectorMapMaskVDW(int sele1,ObjectMap *oMap,float buffer)
+int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer)
 {
   SelectorType *I=&Selector;
   MapType *map;
@@ -1336,6 +1336,7 @@ int SelectorMapMaskVDW(int sele1,ObjectMap *oMap,float buffer)
           }
         }
 		}
+      oMap->Active=true;
 		MapFree(map);
 	 }
   }
@@ -1344,7 +1345,7 @@ int SelectorMapMaskVDW(int sele1,ObjectMap *oMap,float buffer)
 
 
 /*========================================================================*/
-int SelectorMapGaussian(int sele1,ObjectMap *oMap,float buffer)
+int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
 {
   SelectorType *I=&Selector;
   MapType *map;
@@ -1693,6 +1694,7 @@ int SelectorMapGaussian(int sele1,ObjectMap *oMap,float buffer)
           ENDFB;
         
       }
+      oMap->Active=true;
       MapFree(map);
     }
   }
@@ -1703,7 +1705,7 @@ int SelectorMapGaussian(int sele1,ObjectMap *oMap,float buffer)
 
 
 /*========================================================================*/
-int SelectorMapCoulomb(int sele1,ObjectMap *oMap,float cutoff)
+int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff)
 {
   SelectorType *I=&Selector;
   MapType *map;
@@ -1782,6 +1784,7 @@ int SelectorMapCoulomb(int sele1,ObjectMap *oMap,float cutoff)
           }
         }
 		}
+      oMap->Active=true;
 		MapFree(map);
 	 }
   }

@@ -1446,16 +1446,20 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   OrthoLineType s1;
   int oper,frame;
   float carve;
-  CObject *obj,*mObj,*origObj;
+  CObject *obj=NULL,*mObj,*origObj;
   ObjectMap *mapObj;
   float mn[3] = { 0,0,0};
   float mx[3] = { 15,15,15};
   float *vert_vla = NULL;
   int ok = false;
+  int map_state;
+  int multi;
+  ObjectMapState *ms;
+
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"sisisffiif",&str1,&frame,&str2,&oper,
-                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve);
+  ok = PyArg_ParseTuple(args,"sisisffiifi",&str1,&frame,&str2,&oper,
+                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state);
   if (ok) {
     APIEntry();
 
@@ -1474,43 +1478,71 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
     }
     if(mObj) {
       mapObj = (ObjectMap*)mObj;
-      switch(oper) {
-      case 0:
-        for(c=0;c<3;c++) {
-          mn[c] = mapObj->Corner[0][c];
-          mx[c] = mapObj->Corner[7][c];
-        }
-        carve = false; /* impossible */
-        break;
-      case 1:
-        SelectorGetTmp(str3,s1);
-        ExecutiveGetExtent(s1,mn,mx,false,-1); /* TODO state */
-        if(carve>=0.0) {
-          vert_vla = ExecutiveGetVertexVLA(s1,state);
-          if(fbuf<=R_SMALL4)
-            fbuf = carve;
-        }
-        SelectorFreeTmp(s1);
-        for(c=0;c<3;c++) {
-          mn[c]-=fbuf;
-          mx[c]+=fbuf;
-        }
-        break;
+      if(map_state==-2) {
+        map_state=0;
+        multi=true;
+      } else {
+        multi=false;
       }
-      PRINTFB(FB_CCmd,FB_Blather)
-        " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
-        ENDFB;
-      obj=(CObject*)ObjectMeshFromBox((ObjectMesh*)origObj,mapObj,state,mn,mx,lvl,dotFlag,
-                                     carve,vert_vla);
-      if(!origObj) {
-        ObjectSetName(obj,str1);
-        ExecutiveManageObject((CObject*)obj,true);
+      while(1) {
+        if(map_state==-1)
+          map_state=ObjectMapGetNStates(mapObj)-1;
+        ms = ObjectMapStateGetActive(mapObj,map_state);
+        if(ms) {
+          switch(oper) {
+          case 0:
+            for(c=0;c<3;c++) {
+              mn[c] = ms->Corner[0][c];
+              mx[c] = ms->Corner[7][c];
+            }
+            carve = false; /* impossible */
+            break;
+          case 1:
+            SelectorGetTmp(str3,s1);
+            ExecutiveGetExtent(s1,mn,mx,false,-1); /* TODO state */
+            if(carve>=0.0) {
+              vert_vla = ExecutiveGetVertexVLA(s1,state);
+              if(fbuf<=R_SMALL4)
+                fbuf = carve;
+            }
+            SelectorFreeTmp(s1);
+            for(c=0;c<3;c++) {
+              mn[c]-=fbuf;
+              mx[c]+=fbuf;
+            }
+            break;
+          }
+          PRINTFB(FB_CCmd,FB_Blather)
+            " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
+            ENDFB;
+          obj=(CObject*)ObjectMeshFromBox((ObjectMesh*)origObj,ms,state,mn,mx,lvl,dotFlag,
+                                          carve,vert_vla);
+          if(!origObj) {
+            ObjectSetName(obj,str1);
+            ExecutiveManageObject((CObject*)obj,true);
+          }
+          
+          if(SettingGet(cSetting_isomesh_auto_state))
+            if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
+          PRINTFB(FB_ObjectMesh,FB_Actions)
+            " Isomesh: created \"%s\", setting level to %5.3f\n",str1,lvl
+            ENDFB;
+        } else {
+          PRINTFB(FB_ObjectMesh,FB_Errors)
+            " Isomesh: state %d not found in map.\n",map_state
+            ENDFB;
+          ok=false;
+        }
+        if(multi) {
+          origObj = obj;
+          map_state++;
+          state++;
+          if(map_state>=mapObj->NState)
+            break;
+        } else {
+          break;
+        }
       }
-      if(SettingGet(cSetting_isomesh_auto_state))
-        if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
-      PRINTFB(FB_ObjectMesh,FB_Actions)
-        " Isomesh: created \"%s\", setting level to %5.3f\n",str1,lvl
-        ENDFB;
     } else {
       PRINTFB(FB_ObjectMesh,FB_Errors)
         " Isomesh: Map or brick object '%s' not found.\n",str2
@@ -1530,16 +1562,20 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
   OrthoLineType s1;
   int oper,frame;
   float carve;
-  CObject *obj,*mObj,*origObj;
+  CObject *obj=NULL,*mObj,*origObj;
   ObjectMap *mapObj;
   float mn[3] = { 0,0,0};
   float mx[3] = { 15,15,15};
   float *vert_vla = NULL;
   int ok = false;
+  ObjectMapState *ms;
+  int map_state=0;
+  int multi;
+
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"sisisffiif",&str1,&frame,&str2,&oper,
-                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve);
+  ok = PyArg_ParseTuple(args,"sisisffiifi",&str1,&frame,&str2,&oper,
+                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state);
   if (ok) {
     APIEntry();
 
@@ -1558,43 +1594,70 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
     }
     if(mObj) {
       mapObj = (ObjectMap*)mObj;
-      switch(oper) {
-      case 0:
-        for(c=0;c<3;c++) {
-          mn[c] = mapObj->Corner[0][c];
-          mx[c] = mapObj->Corner[7][c];
-        }
-        carve = false; /* impossible */
-        break;
-      case 1:
-        SelectorGetTmp(str3,s1);
-        ExecutiveGetExtent(s1,mn,mx,false,-1); /* TODO state */
-        if(carve>=0.0) {
-          vert_vla = ExecutiveGetVertexVLA(s1,state);
-          if(fbuf<=R_SMALL4)
-            fbuf = carve;
-        }
-        SelectorFreeTmp(s1);
-        for(c=0;c<3;c++) {
-          mn[c]-=fbuf;
-          mx[c]+=fbuf;
-        }
-        break;
+      if(map_state==-2) {
+        map_state=0;
+        multi=true;
+      } else {
+        multi=false;
       }
-      PRINTFB(FB_CCmd,FB_Blather)
-        " Isosurface: buffer %8.3f carve %8.3f\n",fbuf,carve
-        ENDFB;
-      obj=(CObject*)ObjectSurfaceFromBox((ObjectSurface*)origObj,mapObj,state,mn,mx,lvl,dotFlag,
-                                     carve,vert_vla);
-      if(!origObj) {
-        ObjectSetName(obj,str1);
-        ExecutiveManageObject((CObject*)obj,true);
+      while(1) {
+        if(map_state==-1)
+          map_state=ObjectMapGetNStates(mapObj)-1;
+        ms = ObjectMapStateGetActive(mapObj,map_state);
+        if(ms) {
+          switch(oper) {
+          case 0:
+            for(c=0;c<3;c++) {
+              mn[c] = ms->Corner[0][c];
+              mx[c] = ms->Corner[7][c];
+            }
+            carve = false; /* impossible */
+            break;
+          case 1:
+            SelectorGetTmp(str3,s1);
+            ExecutiveGetExtent(s1,mn,mx,false,-1); /* TODO state */
+            if(carve>=0.0) {
+              vert_vla = ExecutiveGetVertexVLA(s1,state);
+              if(fbuf<=R_SMALL4)
+                fbuf = carve;
+            }
+            SelectorFreeTmp(s1);
+            for(c=0;c<3;c++) {
+              mn[c]-=fbuf;
+              mx[c]+=fbuf;
+            }
+            break;
+          }
+          PRINTFB(FB_CCmd,FB_Blather)
+            " Isosurface: buffer %8.3f carve %8.3f\n",fbuf,carve
+            ENDFB;
+          obj=(CObject*)ObjectSurfaceFromBox((ObjectSurface*)origObj,ms,state,mn,mx,lvl,dotFlag,
+                                             carve,vert_vla);
+          if(!origObj) {
+            ObjectSetName(obj,str1);
+            ExecutiveManageObject((CObject*)obj,true);
+          }
+          if(SettingGet(cSetting_isomesh_auto_state))
+            if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
+          PRINTFB(FB_ObjectSurface,FB_Actions)
+            " Isosurface: created \"%s\", setting level to %5.3f\n",str1,lvl
+            ENDFB;
+        } else {
+          PRINTFB(FB_ObjectMesh,FB_Errors)
+            " Isosurface: state %d not found in map.\n",map_state+1
+            ENDFB;
+          ok=false;
+        }
+        if(multi) {
+          origObj = obj;
+          map_state++;
+          state++;
+          if(map_state>=mapObj->NState)
+            break;
+        } else {
+          break;
+        }
       }
-      if(SettingGet(cSetting_isomesh_auto_state))
-        if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
-      PRINTFB(FB_ObjectSurface,FB_Actions)
-        " Isosurface: created \"%s\", setting level to %5.3f\n",str1,lvl
-        ENDFB;
     } else {
       PRINTFB(FB_ObjectSurface,FB_Errors)
         " Isosurface: Map or brick object '%s' not found.\n",str2
@@ -3584,7 +3647,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
           sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
         }
       } else {
-        ObjectMapLoadXPLORFile((ObjectMap*)origObj,fname,frame);
+        ObjectMapLoadCCP4File((ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,oname);
       }

@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMap.h"
 
 typedef struct {
-  ObjectMap *Map;
+  ObjectMapState *Map;
   CCrystal Crystal;
   int Active;
   int *N;
@@ -43,7 +43,7 @@ typedef struct ObjectMesh {
   int NState;
 } ObjectMesh;
 
-ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
+ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMapState *map,
                               int state,float *mn,float *mx,
                               float level,int dotFlag,
                               float carve,float *vert_vla);

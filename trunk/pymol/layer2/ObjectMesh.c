@@ -227,12 +227,13 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
   ObjectMeshState *ms = NULL;
 
   ObjectPrepareContext(&I->Obj,ray);
+  
+  if(state>=0) 
+    if(state<I->NState) 
+      if(I->State[state].Active)
+        if(I->State[state].V&&I->State[state].N)
+          ms=I->State+state;
 
-  if(state<I->NState) {
-    if(I->State[state].Active)
-      if(I->State[state].V&&I->State[state].N)
-        ms=I->State+state;
-  }
   while(1) {
     if(state<0) { /* all_states */
       ms = I->State + a;
@@ -313,7 +314,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
         }
       }
     }
-    if(state<0) break;
+    if(state>=0) break;
     a = a + 1;
     if(a>=I->NState) break;
   }
@@ -368,7 +369,7 @@ void ObjectMeshStateInit(ObjectMeshState *ms)
 }
 
 /*========================================================================*/
-ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
+ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMapState *map,
 int state,float *mn,float *mx,float level,int dotFlag,
 float carve,float *vert_vla)
 {
