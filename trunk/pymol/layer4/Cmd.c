@@ -97,6 +97,8 @@ static PyObject *Cmd_Failure;
 
 static void APIEntry(void)
 {
+  if(PyMOLTerminating) /* hang safely until the thread is dropped (assumes daemonic)*/
+    while(1);
   P_glut_thread_keep_out++; 
   PUnblock();
 }
@@ -216,7 +218,7 @@ static PyObject *CmdUnpick(PyObject *dummy, PyObject *args);
 static PyObject *CmdUpdate(PyObject *dummy, PyObject *args);
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
 static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
-
+static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args);
 
 static PyMethodDef Cmd_methods[] = {
 	{"alter",	              CmdAlter,        METH_VARARGS },
@@ -292,6 +294,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"paste",	              CmdPaste,        METH_VARARGS },
 	{"png",	                 CmdPNG,          METH_VARARGS },
 	{"protect",	              CmdProtect,      METH_VARARGS },
+	{"push_undo",	           CmdPushUndo,     METH_VARARGS },
 	{"quit",	                 CmdQuit,         METH_VARARGS },
 	{"ready",                 CmdReady,        METH_VARARGS },
    {"rebuild",               CmdRebuild,      METH_VARARGS },
@@ -416,6 +419,24 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
   if(s1[0]) SelectorFreeTmp(s1);
   APIExit();
   return(Py_BuildValue("f",result));
+
+}
+
+static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args)
+{
+  char *str0;
+  int result=false;
+  int state;
+  OrthoLineType s0="";
+
+  PyArg_ParseTuple(args,"si",&str0,&state);
+
+  APIEntry();
+  if(str0[0]) SelectorGetTmp(str0,s0);
+  result = ExecutiveSaveUndo(s0,state);
+  if(s0[0]) SelectorFreeTmp(s0);
+  APIExit();
+  return(Py_BuildValue("i",result));
 
 }
 
@@ -976,6 +997,8 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   int code;
 
+  if(PyMOLTerminating) /* hang safely until thread is dropped (assumes daemonic thread) */
+    while(1);
   code = OrthoFeedbackOut(buffer);
   if(code)
     result = Py_BuildValue("s",buffer);

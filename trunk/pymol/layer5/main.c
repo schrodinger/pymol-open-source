@@ -55,8 +55,6 @@ static void MainDrawLocked(void);
 
 GLuint obj;
 
-
-
 static GLint WinX = 640+cOrthoRightSceneMargin;
 static GLint WinY = 480+cOrthoBottomSceneMargin;
 static GLint Modifiers = 0;
@@ -78,6 +76,7 @@ typedef struct {
 
 static CMain Main;
 int PyMOLReady = false;
+int PyMOLTerminating = false;
 int PMGUI = true;
 int StereoCapable=false;
 int InternalGUI=true;
@@ -85,6 +84,19 @@ int ShowSplash=true;
 
 void launch(void);
 
+void MainOnExit(int i,void *v);
+
+void MainOnExit(int i,void *v)
+{ /* here we enternot knowing anything about the thread state,
+     so the best thing we can hope for is to shield PyMOL from
+     against any further API calls by setting a flag.  Otherwise,
+     spontaneous asynchronous calls may cause a crash (particularly
+     under windows ).
+  */
+  if(!PyMOLTerminating) {
+    PyMOLTerminating=true;
+  }
+}
 /*========================================================================*/
 int MainSavingUnderWhileIdle(void)
 {
@@ -311,6 +323,8 @@ static void MainInit(void)
 /*========================================================================*/
 void MainFree(void)
 {
+  PyMOLTerminating=true;
+
   EditorFree();
   ExecutiveFree();
   SceneFree();
@@ -432,12 +446,17 @@ void launch(void)
 {
   if(PMGUI) {
     
+    on_exit(MainOnExit,NULL); /* register callback to help prevent crashes
+                                 when GLUT spontaneously kills us */
+  
     glutInit(&myArgc, myArgv);
 
-    if(StereoCapable) {
-      glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
+    if(!glutGet(GLUT_DISPLAY_MODE_POSSIBLE)) {
+      glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE );            
+      StereoCapable = 0;
     } else {
-      glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE );      
+      StereoCapable = 1;
     }
 
     glutInitWindowPosition(0, 175);
@@ -463,7 +482,7 @@ void launch(void)
 
     glutPostRedisplay();
 
-    if(StereoCapable) SettingSet(cSetting_line_smooth,1.0);
+    SettingSet(cSetting_line_smooth,1.0);
   }
 
   PUnblock();
@@ -475,7 +494,10 @@ void launch(void)
     printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
     printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
     printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
-    /*    printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));*/
+    /*        printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));*/
+    if(StereoCapable) {
+      printf(" Hardware stereo capability detected.\n");
+    } 
     glutMainLoop();
   } else {
     printf(" Command mode. No graphics front end.\n");
@@ -513,7 +535,7 @@ int was_main(void)
 
 #endif  
 
-  PGetOptions(&PMGUI,&InternalGUI,&StereoCapable,&ShowSplash);
+  PGetOptions(&PMGUI,&InternalGUI,&ShowSplash);
 
   launch();
 

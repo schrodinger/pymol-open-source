@@ -765,7 +765,7 @@ void OrthoDoDraw()
       if((int)SettingGet(cSetting_text)||I->SplashFlag)
         showLines=I->ShowLines;
       else
-        showLines=1;
+        showLines=1+(int)SettingGet(cSetting_overlay);
 
       glColor3fv(I->TextColor);
       while(l>=0)

@@ -268,8 +268,12 @@ static void WizardDraw(Block *block)
   int x,y;
   int a;
 
-  float buttonColor[3] = { 0.5, 0.5, 1.0 };
-  float menuColor[3] = { 1.0, 0.2, 0.2 };
+  float buttonTextColor[3] = { 1.0,1.0,1.0 };
+  float buttonActiveColor[3] = { 0.8,0.8,0.8 };
+  
+  float dimColor[3] = {0.3, 0.3,0.3};
+  float menuBGColor[3] = {0.5, 0.5,1.0};
+  float menuColor[3] = { 0.0,0.0,0.0};
 
   if(PMGUI) {
     glColor3fv(I->Block->BackColor);
@@ -282,23 +286,39 @@ static void WizardDraw(Block *block)
 
     for(a=0;a<I->NLine;a++) {
       if(I->Pressed==a) {
-        glColor3fv(buttonColor);
+        glColor3fv(buttonActiveColor);
         glBegin(GL_POLYGON);
-        glVertex2i(I->Block->rect.left,y+cWizardLineHeight-1);
-        glVertex2i(I->Block->rect.right,y+cWizardLineHeight-1);
-        glVertex2i(I->Block->rect.right,y-3);
-        glVertex2i(I->Block->rect.left,y-3);
+        glVertex2i(I->Block->rect.left,y+cWizardLineHeight-3);
+        glVertex2i(I->Block->rect.right,y+cWizardLineHeight-3);
+        glVertex2i(I->Block->rect.right,y-2);
+        glVertex2i(I->Block->rect.left,y-2);
         glEnd();
         glColor3f(0.0,0.0,0.0);
       } else {
         switch(I->Line[a].type) {
         case cWizTypeText:
+
           glColor3fv(I->Block->TextColor);
           break;
         case cWizTypeButton:
-          glColor3fv(buttonColor);
-          break;
+          glColor3fv(dimColor);
+          glBegin(GL_POLYGON);
+          glVertex2i(I->Block->rect.left,y+cWizardLineHeight-3);
+          glVertex2i(I->Block->rect.right,y+cWizardLineHeight-3);
+          glVertex2i(I->Block->rect.right,y-2);
+          glVertex2i(I->Block->rect.left,y-2);
+          glEnd();
+          glColor3fv(buttonTextColor);
+
+         break;
         case cWizTypePopUp:
+          glColor3fv(menuBGColor);
+          glBegin(GL_POLYGON);
+          glVertex2i(I->Block->rect.left,y+cWizardLineHeight-3);
+          glVertex2i(I->Block->rect.right,y+cWizardLineHeight-3);
+          glVertex2i(I->Block->rect.right,y-2);
+          glVertex2i(I->Block->rect.left,y-2);
+          glEnd();
           glColor3fv(menuColor);
           break;
         default:

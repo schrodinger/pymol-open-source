@@ -24,6 +24,7 @@ void MainRefreshNow(void);
 int MainSavingUnderWhileIdle(void);
 
 extern int PyMOLReady;
+extern int PyMOLTerminating; /* flag to help prevent crashes on shutdown with Windows */
 extern int PMGUI;
 extern int StereoCapable;
 extern int InternalGUI;

@@ -43,6 +43,8 @@ Z* -------------------------------------------------------------------
 #define cExecSelection 1
 #define cExecAll 2
 
+#define cKeywordAll "all"
+
 typedef struct SpecRec {
   int type;
   WordType  name; /*only used for selections*/
@@ -62,6 +64,7 @@ typedef struct Executive {
   Block *Block;
   SpecRec *Spec;
   int Width,Height;
+  Object *LastEdited;
 } CExecutive;
 
 CExecutive Executive;
@@ -86,6 +89,36 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
+
+
+/*========================================================================*/
+void ExecutiveSetLastObjectEdited(Object *o)
+{
+  CExecutive *I = &Executive;
+  I->LastEdited = o;
+}
+/*========================================================================*/
+Object *ExecutiveGetLastObjectEdited(void)
+{
+  CExecutive *I = &Executive;
+  return(I->LastEdited);
+}
+/*========================================================================*/
+int ExecutiveSaveUndo(char *s1,int state)
+{
+  int sele1;
+  ObjectMoleculeOpRec op1;
+
+  if(state<0) state = SceneGetState();                
+  sele1=SelectorIndexByName(s1);
+  op1.i2=0;
+  if(sele1>=0) {
+    op1.code = OMOP_SaveUndo;
+    op1.i1 = state;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+  }
+  return(op1.i2);
+}
 
 /*========================================================================*/
 int ExecutiveSetTitle(char *name,int state,char *text)
@@ -496,21 +529,26 @@ void ExecutiveRebuildAll(void)
 void ExecutiveUndo(int dir)
 {
   CExecutive *I = &Executive;
-  ObjectMolecule *obj,*compObj;
+  Object *o;
+  ObjectMolecule *obj=NULL,*compObj;
   SpecRec *rec = NULL;
 
-  obj = EditorDragObject();
-
+  o = ExecutiveGetLastObjectEdited();
+  if(o)
+    if(o->type==cObjectMolecule)
+      obj = (ObjectMolecule*)o;
   /* make sure this is still a real object */
-  while(ListIterate(I->Spec,rec,next)) {
-    if(rec->type==cExecObject)
-      if(rec->obj->type==cObjectMolecule) {
-        compObj=(ObjectMolecule*)rec->obj;
-        if(obj==compObj) {
-          ObjectMoleculeUndo(obj,dir);
-          break;
+  if(obj) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject)
+        if(rec->obj->type==cObjectMolecule) {
+          compObj=(ObjectMolecule*)rec->obj;
+          if(obj==compObj) {
+            ObjectMoleculeUndo(obj,dir);
+            break;
+          }
         }
-      }
+    }
   }
   
 }
@@ -1290,7 +1328,7 @@ void ExecutiveUpdateObjectSelection(struct Object *obj)
 void ExecutiveReset(int cmd)
 {
   SceneResetMatrix();
-  ExecutiveWindowZoom("all",0.0);
+  ExecutiveWindowZoom(cKeywordAll,0.0);
 }
 /*========================================================================*/
 void ExecutiveDrawNow(void) 
@@ -1425,7 +1463,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   op2.v2[1]=1.0;
   op2.v2[2]=1.0;
   
-  if(WordMatch("all",name,true)<0) {
+  if(WordMatch(cKeywordAll,name,true)<0) {
     name=all;
     all_flag=true;
     SelectorCreate(all,"(all)",NULL,true);
@@ -1615,7 +1653,7 @@ void ExecutiveSetObjVisib(char *name,int state)
 {
   CExecutive *I = &Executive;
   SpecRec *tRec;
-  if(strcmp(name,"all")==0) {
+  if(strcmp(name,cKeywordAll)==0) {
     tRec=NULL;
     while(ListIterate(I->Spec,tRec,next)) {
       if(state!=tRec->visible) {
@@ -1643,7 +1681,7 @@ void ExecutiveSetObjVisib(char *name,int state)
           }
       }
       else if(tRec->type==cExecSelection) {
-        if(tRec->visible!=state) {
+        if(!(tRec->visible&&state)) {
           tRec->visible=!tRec->visible;
           SceneChanged();
         }
@@ -1691,6 +1729,9 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
   ObjectMoleculeOpRec op;
 
   tRec = ExecutiveFindSpec(name);
+  if((!tRec)&&(!strcmp(name,cKeywordAll))) {
+    ExecutiveSetAllRepVisib(name,rep,state);
+  }
   if(tRec) {
 	 if(name[0]!='_') {
       /* remember visibility information for real selections */
@@ -1726,13 +1767,56 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
   }
 }
 /*========================================================================*/
+void ExecutiveSetAllRepVisib(char *name,int rep,int state)
+{
+  ObjectMoleculeOpRec op;
+  ObjectMolecule *obj;
+  int sele;
+  int a;
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec,rec,next)) {
+	 if(rec->type==cExecObject)
+		{
+        if(rec->name[0]!='_') {
+          /* remember visibility information for real selections */
+          if(rep>=0) {
+            rec->repOn[rep]=state;
+          } else {
+            for(a=0;a<cRepCnt;a++)
+              rec->repOn[a]=state; 
+          }
+        }   
+        if(rec->type==cExecObject) {
+          if(rec->obj->type==cObjectMolecule)
+            {
+              obj=(ObjectMolecule*)rec->obj;
+              sele = SelectorIndexByName(obj->Obj.Name);
+              rec->repOn[rep]=state;
+              op.code=OMOP_VISI;
+              op.i1=rep;
+              op.i2=state;
+              ObjectMoleculeSeleOp(obj,sele,&op);
+              op.code=OMOP_INVA;
+              op.i2=cRepInvVisib;
+              ObjectMoleculeSeleOp(obj,sele,&op);				
+            }
+          else if(rec->obj->type==cObjectDist) {
+            ObjectSetRepVis(rec->obj,rep,state);
+            SceneDirty();
+          }
+        }
+		}
+  }
+}
+/*========================================================================*/
 void ExecutiveInvalidateRep(char *name,int rep,int level)
 {
   int sele = -1;
   ObjectMoleculeOpRec op;
   WordType all = "_all";
   int all_flag=false;
-  if(WordMatch("all",name,true)<0) {
+  if(WordMatch(cKeywordAll,name,true)<0) {
     name=all;
     all_flag=true;
     SelectorCreate(all,"(all)",NULL,true);
@@ -1926,12 +2010,14 @@ void ExecutiveDelete(char *name)
   int all_flag=false;
   WordType name_copy; /* needed in case the passed string changes */
 
-  if(WordMatch(name,"all",true)<0) all_flag=true;
+  if(WordMatch(name,cKeywordAll,true)<0) all_flag=true;
   strcpy(name_copy,name);
   while(ListIterate(I->Spec,rec,next))
 	 {
 		if(rec->type==cExecObject)
 		  {
+          if(I->LastEdited==cExecObject) 
+            I->LastEdited=NULL;
 			 if(all_flag||(WordMatch(name_copy,rec->obj->Name,true)<0))
 				{
               if(rec->obj==(Object*)EditorGetActiveObject())
@@ -2019,7 +2105,9 @@ void ExecutiveManageObject(Object *obj)
       }
     else 
       {
-        PRINTF " Executive: object \"%s\" created.\n",obj->Name ENDF
+        if(obj->Name[0]!='_') { /* suppress internal objects */
+          PRINTF " Executive: object \"%s\" created.\n",obj->Name ENDF;
+        }
       }
     if(!rec)
       ListElemAlloc(rec,SpecRec);
@@ -2067,6 +2155,7 @@ void ExecutiveManageSelection(char *name)
     rec->type=cExecSelection;
     rec->next=NULL;
     rec->sele_color=-1;
+    rec->visible=true;
     ListAppend(I->Spec,rec,next,SpecList);
   }
   if(rec) {
@@ -2129,6 +2218,8 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
             case 1:
               switch(rec->type) {
               case cExecAll:
+                MenuActivate(x,y,"mol_show",cKeywordAll);
+                break;
               case cExecSelection:
                 MenuActivate(x,y,"mol_show",rec->name);
                 break;
@@ -2151,6 +2242,8 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
             case 2:
               switch(rec->type) {
               case cExecAll:
+                MenuActivate(x,y,"mol_hide",cKeywordAll);
+                break;
               case cExecSelection:
                 MenuActivate(x,y,"mol_hide",rec->name);
                 break;
@@ -2172,7 +2265,6 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
               break;
             case 3:
               switch(rec->type) {
-              case cExecAll:
               case cExecSelection:
                 MenuActivate(x,y,"mol_labels",rec->name);
                 break;
@@ -2248,7 +2340,7 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
               }
             else if(rec->type==cExecAll)
               {
-                ExecutiveSetObjVisib("all",!rec->visible);
+                ExecutiveSetObjVisib(cKeywordAll,!rec->visible);
               }
             else if(rec->type==cExecSelection)
               {
@@ -2496,6 +2588,7 @@ void ExecutiveInit(void)
 
   OrthoAttach(I->Block,cOrthoTool);
 
+  I->LastEdited=NULL;
   ListElemAlloc(rec,SpecRec);
   strcpy(rec->name,"(all)");
   rec->type=cExecAll;

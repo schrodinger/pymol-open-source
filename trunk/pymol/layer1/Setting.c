@@ -155,6 +155,13 @@ void SettingSetNamed(char *name,char *value)
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
 		break;
+    case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
+      sscanf(value,"%f",&v);
+      if(v!=1.0)
+        SettingSet(cSetting_line_smooth,0);
+		SettingSetfv(index,&v);
+		sprintf(buffer," Setting: %s set to %5.3f\n",I->Setting[index].Name,v);
+      break;
 	 default:
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
@@ -502,12 +509,12 @@ void SettingInit(void)
 			"dist_counter");
 
   I->NSetting++;
-  I->Setting[cSetting_dash_length].Value[0] = 0.2;
+  I->Setting[cSetting_dash_length].Value[0] = 0.15;
   strcpy(I->Setting[cSetting_dash_length].Name,
 			"dash_length");
 
   I->NSetting++;
-  I->Setting[cSetting_dash_gap].Value[0] = 0.4;
+  I->Setting[cSetting_dash_gap].Value[0] = 0.35;
   strcpy(I->Setting[cSetting_dash_gap].Name,
 			"dash_gap");
 
@@ -626,7 +633,7 @@ void SettingInit(void)
 			"selection_width");
 
   I->NSetting++;
-  I->Setting[cSetting_selection_overlay].Value[0] = 0.0;
+  I->Setting[cSetting_selection_overlay].Value[0] = 1.0;
   strcpy(I->Setting[cSetting_selection_overlay].Name,
 			"selection_overlay");
 

@@ -122,8 +122,8 @@ void PopUpNew(int x,int y,PyObject *list)
 
   I->Block->rect.top=y;
   I->Block->rect.bottom=y-I->Height;
-  I->Block->rect.left=x;
-  I->Block->rect.right=x+I->Width;  
+  I->Block->rect.left=x-(I->Width)/3;
+  I->Block->rect.right=x+(2*I->Width)/3;
 
   PopFitBlock(I->Block);
 
@@ -166,12 +166,15 @@ int PopUpDrag(Block *block,int x,int y,int mod)
   I->LastY=y;
 
   x-=I->Block->rect.left;
-  y =(I->Block->rect.top -cPopUpCharMargin) -y;
+  y =(I->Block->rect.top -cPopUpCharMargin) -y -1;
 
   if((x<0)||(x>I->Width)) 
     I->Selected=-1;
   else {
     a = y/cPopUpLineHeight;
+    if(I->NLine&&(a==I->NLine))
+      if((y-a*cPopUpLineHeight)<4)
+        a=I->NLine-1;
     if((a<0)||(a>=I->NLine))
       I->Selected=-1;
     else if(I->Code[a]!=1)
