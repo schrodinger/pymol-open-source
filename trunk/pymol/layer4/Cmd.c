@@ -2638,10 +2638,10 @@ static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
   int ok=false;
   ok = PyArg_ParseTuple(args,"s",&str1);
   if (ok) {
-    APIEntry();
+    APIEnterBlocked();
     value=SettingGetNamed(str1);
-    APIExit();
-    result = Py_BuildValue("f", SettingGetNamed(str1));
+    APIExitBlocked();
+    result = Py_BuildValue("f", value);
   }
   return APIAutoNone(result);
 }
@@ -3198,9 +3198,9 @@ static PyObject *CmdGet(PyObject *self, 	PyObject *args)
   int ok=false;
   ok = PyArg_ParseTuple(args,"s",&sname);
   if (ok) {
-    APIEntry();
+    APIEnterBlocked();
     f=SettingGetNamed(sname);
-    APIExit();
+    APIExitBlocked();
     result = Py_BuildValue("f", f);
   }
   return APIAutoNone(result);
