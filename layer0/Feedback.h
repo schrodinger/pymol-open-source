@@ -111,6 +111,7 @@ function name.
 #define FB_Python                    21 /* part of P.c */
 #define FB_Extrude                   22
 #define FB_Rep                       23
+#define FB_Shaker                    24
 
 /* layer 2 */
 
@@ -138,6 +139,7 @@ function name.
 #define FB_RepDistLabel              56
 #define FB_RepRibbon                 57
 #define FB_RepCartoon                58
+#define FB_Sculpt                    59
 
 /* layer 3 */
 

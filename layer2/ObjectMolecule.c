@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 #include"Raw.h"
 #include"Editor.h"
 #include"Selector.h"
+#include"Sculpt.h"
 
 #define cMaxNegResi 100
 
@@ -90,6 +91,28 @@ CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
 void ObjectMoleculeInferAmineGeomFromBonds(ObjectMolecule *I,int state);
 
 #define MAX_BOND_DIST 50
+
+void ObjectMoleculeSculptUpdate(ObjectMolecule *I,int state)
+{
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMoleculeUpdateSculpt: entered.\n"
+    ENDFD;
+
+  if(!I->Sculpt) I->Sculpt = SculptNew();
+  SculptMeasureObject(I->Sculpt,I,state);
+}
+
+void ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle)
+{
+  if(!I->Sculpt) {
+    PRINTFD(FB_ObjectMolecule)
+      " ObjectMoleculeIterateSculpt: entered.\n"
+      ENDFD;
+  } else {
+    if(!I->Sculpt) I->Sculpt = SculptNew();
+    SculptIterateObject(I->Sculpt,I,state,n_cycle);
+  }
+}
 
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I)
 {
@@ -4419,7 +4442,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                      } else 
                        a1=I->CSet[b]->AtmToIdx[a];
                      if(a1>=0) {
-                       /* do we have a matching target vertex? */
+
                        match_flag=false;
                        while(t_i<op->nvv2) {
                          if(op->i1VLA[t_i]==a) {/* same atom? */
@@ -5140,7 +5163,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
 {
   int result = 0;
   CoordSet *cs;
-
+  int protect;
   if(!I->AtomInfo[index].protected) {
     if(state<0) state=0;
     if(I->NCSet==1) state=0;
@@ -5159,6 +5182,12 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
               buffer,v[0],v[1],v[2],state+1,mode,0);
       PLog(line,cPLog_no_flush);
     }
+  }
+  if(I->Sculpt) {
+    protect = I->AtomInfo[index].protected;
+    I->AtomInfo[index].protected=1;
+    SculptIterateObject(I->Sculpt,I,state,10);
+    I->AtomInfo[index].protected=0;
   }
   return(result);
 }
@@ -5294,6 +5323,7 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->BondCounter=-1;
   I->DiscreteFlag=discreteFlag;
   I->UnitCellCGO=NULL;
+  I->Sculpt=NULL;
   if(I->DiscreteFlag) { /* discrete objects don't share atoms between states */
     I->DiscreteAtmToIdx = VLAMalloc(10,sizeof(int),6,false);
     I->DiscreteCSet = VLAMalloc(10,sizeof(CoordSet*),5,false);
@@ -5382,6 +5412,8 @@ void ObjectMoleculeFree(ObjectMolecule *I)
     CGOFree(I->UnitCellCGO);
   for(a=0;a<=cUndoMask;a++)
     FreeP(I->UndoCoord[a]);
+  if(I->Sculpt)
+    SculptFree(I->Sculpt);
   ObjectPurge(&I->Obj);
   OOFreeP(I);
 }

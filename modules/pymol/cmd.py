@@ -205,6 +205,7 @@ class fb_module:
    python                    =21
    extrude                   =22
    rep                       =23
+   shaker                    =24
    
    coordset                  =25
    distset                   =26
@@ -229,6 +230,7 @@ class fb_module:
    repdistlabel              =56
    repribbon                 =57
    repcartoon                =58
+   sculpt                    =59
    
    executive                 =70
    selector                  =71

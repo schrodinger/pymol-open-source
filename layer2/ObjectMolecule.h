@@ -58,6 +58,7 @@ typedef struct ObjectMolecule {
   CGO *UnitCellCGO;
   int BondCounter;
   int AtomCounter;
+  struct CSculpt *Sculpt;
 } ObjectMolecule;
 
 
@@ -192,6 +193,8 @@ void ObjectMoleculeGetAtomSeleFast(ObjectMolecule *I,int index, char *buffer);
 void ObjectMoleculeGetAtomSeleLog(ObjectMolecule *I,int index, char *buffer);
 int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append);
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I);
+void ObjectMoleculeSculptUpdate(ObjectMolecule *I,int state);
+void ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle);
 
 /* legacy binary file suppoort */
 

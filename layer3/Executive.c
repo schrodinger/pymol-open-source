@@ -96,6 +96,50 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
 /*========================================================================*/
+int ExecutiveObjectSculptIterate(char *name,int state,int n_cycle)
+{
+  Object *obj = ExecutiveFindObjectByName(name);
+
+  int ok=true;
+
+  if(!obj) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "Executive-Error: object %s not found.\n",name 
+      ENDFB;
+    ok=false;
+  } else if(obj->type != cObjectMolecule) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "Executive-Error: object %s is not a molecular object.\n",name 
+      ENDFB;
+    ok=false;
+  } else {
+    ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle);
+  }
+  return(ok);
+}
+/*========================================================================*/
+int ExecutiveObjectSculptUpdate(char *name,int state)
+{
+  Object *obj = ExecutiveFindObjectByName(name);
+
+  int ok=true;
+
+  if(!obj) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "Executive-Error: object %s not found.\n",name 
+      ENDFB;
+    ok=false;
+  } else if(obj->type != cObjectMolecule) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "Executive-Error: object %s is not a molecular object.\n",name 
+      ENDFB;
+    ok=false;
+  } else {
+    ObjectMoleculeSculptUpdate((ObjectMolecule*)obj,state);
+  }
+  return(ok);
+}
+/*========================================================================*/
 int ExecutiveSetGeometry(char *s1,int geom,int valence)
 {
   int sele1;
