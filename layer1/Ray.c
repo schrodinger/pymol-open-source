@@ -1080,7 +1080,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	float fog;
 	float *inter=NULL;
 	float fog_start=0.0F;
-	float gamma,inp,sig=1.0F;
+   /*	float gamma,inp,sig=1.0F;*/
 	float persist,persist_inv;
 	float new_front;
 	int pass;
@@ -1183,12 +1183,13 @@ int RayTraceThread(CRayThreadInfo *T)
 
 	shadow_fudge = SettingGet(cSetting_ray_shadow_fudge);
 	
-	gamma = SettingGet(cSetting_gamma);
+   /*	gamma = SettingGet(cSetting_gamma);
 	if(gamma > R_SMALL4)
 		gamma	= _1/gamma;
 	else
 		gamma	= _1;
-	
+   */
+
 	inv1minusFogStart	= _1;
 	
 	fog = SettingGet(cSetting_ray_trace_fog);
@@ -1616,8 +1617,8 @@ int RayTraceThread(CRayThreadInfo *T)
 
                   if(pixel_flag)
                     {
+                      /*
                       inp	= (fc[0]+fc[1]+fc[2]) * _inv3;
-                      
                       if(inp < R_SMALL4) 
                         sig = _1;
                       else
@@ -1626,7 +1627,12 @@ int RayTraceThread(CRayThreadInfo *T)
                       cc0 = (uint)(sig * fc[0] * _255);
                       cc1 = (uint)(sig * fc[1] * _255);
                       cc2 = (uint)(sig * fc[2] * _255);
-                      
+                      */
+
+                      cc0 = (uint)(fc[0] * _255);
+                      cc1 = (uint)(fc[1] * _255);
+                      cc2 = (uint)(fc[2] * _255);
+
                       if(cc0 > 255) cc0 = 255;
                       if(cc1 > 255) cc1 = 255;
                       if(cc2 > 255) cc2 = 255;
@@ -2217,14 +2223,14 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int antialias;
   int opaque_back=0;
   int n_hit=0;
-  float *bkrd;
+  float *bkrd_ptr,bkrd[3];
   double now;
   int shadows;
   float spec_vector[3];
   int n_thread;
   int mag=1;
   int oversample_cutoff;
-
+  
 #ifdef PROFILE_BASIS
   n_cells = 0;
   n_prims = 0;
@@ -2259,7 +2265,26 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   } else {
     buffer_size = width*height;
   }
-  bkrd=SettingGetfv(cSetting_bg_rgb);
+  bkrd_ptr=SettingGetfv(cSetting_bg_rgb);
+  copy3f(bkrd_ptr,bkrd);
+  { /* adjust bkrd to offset the effect of gamma correction */
+    float gamma = SettingGet(cSetting_gamma);
+    register float inp;
+    register float sig;
+
+    inp = (bkrd[0]+bkrd[1]+bkrd[2])/3.0F;
+    if(inp < R_SMALL4) 
+      sig = 1.0F;
+    else
+      sig = (float)(pow(inp,gamma))/inp;
+    bkrd[0] *= sig;
+    bkrd[1] *= sig;
+    bkrd[2] *= sig;
+    if(bkrd[0]>1.0F) bkrd[0] = 1.0F;
+    if(bkrd[1]>1.0F) bkrd[1] = 1.0F;
+    if(bkrd[2]>1.0F) bkrd[2] = 1.0F;
+  }
+
   if(opaque_back) {
     if(I->BigEndian)
       back_mask = 0x000000FF;
@@ -2275,14 +2300,14 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   }
   if(I->BigEndian) {
      background = back_mask|
-      ((0xFF& ((unsigned int)(bkrd[0]*255))) <<24)|
-      ((0xFF& ((unsigned int)(bkrd[1]*255))) <<16)|
-      ((0xFF& ((unsigned int)(bkrd[2]*255))) <<8 );
+      ((0xFF& ((unsigned int)(bkrd[0]*255+0.499))) <<24)|
+      ((0xFF& ((unsigned int)(bkrd[1]*255+0.499))) <<16)|
+      ((0xFF& ((unsigned int)(bkrd[2]*255+0.499))) <<8 );
   } else {
     background = back_mask|
-      ((0xFF& ((unsigned int)(bkrd[2]*255))) <<16)|
-      ((0xFF& ((unsigned int)(bkrd[1]*255))) <<8)|
-      ((0xFF& ((unsigned int)(bkrd[0]*255))) );
+      ((0xFF& ((unsigned int)(bkrd[2]*255+0.499))) <<16)|
+      ((0xFF& ((unsigned int)(bkrd[1]*255+0.499))) <<8)|
+      ((0xFF& ((unsigned int)(bkrd[0]*255+0.499))) );
   }
 
   OrthoBusyFast(3,20);
