@@ -198,7 +198,7 @@ int MovieFromPyList(PyObject *list,int *warning)
 {
   int ok=true;
   CMovie *I=&Movie;
-  int ll;
+  int ll = 0;
 
   MovieReset();
   if(ok) ok=PyList_Check(list);
