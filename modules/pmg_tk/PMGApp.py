@@ -604,6 +604,10 @@ class PMGApp(AbstractApp):
                                label='Light Shadows',
                                command = lambda u=util: u.ray_shadows('light'))
 
+      self.menuBar.addmenuitem('Display', 'command', 'Matte Shadows',
+                               label='Matte Shadows',
+                               command = lambda u=util: u.ray_shadows('matte'))
+
       self.menuBar.addmenuitem('Display', 'command', 'Medium Shadows',
                                label='Medium Shadows',
                                command = lambda u=util: u.ray_shadows('medium'))
