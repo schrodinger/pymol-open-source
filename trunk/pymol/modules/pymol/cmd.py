@@ -3451,17 +3451,20 @@ SEE ALSO
       unlock()
    return r
 
-def origin(selection="(all)",object=None):
+def origin(selection="(all)",object=None,position=None):
    '''
 DESCRIPTION
   
-   "origin" sets the center of rotation about a selection
+   "origin" sets the center of rotation about a selection.
+   If an object name is specified, it can be used to set
+   the center of rotation for the object's TTT matrix.
       
 USAGE
  
-   origin object-or-selection
+   origin selection [, object [,position]]
    origin (selection)
- 
+   origin position=[1.0,2.0,3.0]
+
 PYMOL API
  
    cmd.origin( string object-or-selection )
@@ -3476,7 +3479,15 @@ SEE ALSO
    try:
       lock()
       if object==None: object=''
-      r = _cmd.origin(selection,str(object))
+      if position==None: position=(0.0,0.0,0.0)
+      else:
+         position = eval(position)
+         selection = ''
+      r = _cmd.origin(selection,str(object),
+                      (float(position[0]),
+                       float(position[1]),
+                       float(position[2])
+                       ))
    finally:
       unlock()
    return r

@@ -3125,13 +3125,17 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args)
 {
   char *str1,*obj;
   OrthoLineType s1;
-  
+  float v[3];
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ss",&str1,&obj);
+  ok = PyArg_ParseTuple(args,"ss(fff)",&str1,&obj,v,v+1,v+2);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(str1,s1);
-    ok = ExecutiveCenter(s1,1,obj); /* TODO STATUS */
+    if(str1[0])
+      SelectorGetTmp(str1,s1);
+    else
+      s1[0]=0; /* no selection */
+    ok = ExecutiveCenter(s1,1,obj,v); /* TODO STATUS */
+    if(str1[0])
     SelectorFreeTmp(s1);
     APIExit();
   }
