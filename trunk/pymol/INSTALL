@@ -1,66 +1,68 @@
 ----------------------------------------------------------------------
-PyMOL (C) 1998-2000 by Warren L. DeLano of DeLano Scientific.
-http://www.pymol.org  EMAIL: warren@delanoscientific.com
+PyMOL (C) 1998-2001 by Warren L. DeLano of DeLano Scientific.
+http://www.pymol.org       EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 INSTALLATION AND COMPILATION GUIDE
 
 WARNING: You will need some basic knowledge of Makefiles, compilation
-flags, libraries, python, environment variables, and paths in order to
-compile PyMOL.  If you don't have this experience, save yourself
-frustration and wait until binaries are available for download.
+   flags, libraries, python, environment variables, and paths in order
+   to compile PyMOL.  If you don't feel comfortable with this, then try
+   out the MS-Window's version, which you can download from the WEB
+   site.
 
 The following instructions assume you are installing PyMOL in your
 home directory.  You can of course put it anywhere, but you will need
 to replace "$HOME" with an appropriate path.
 
-STEP (1) A compiled copy of the external dependencies package ("ext")
-is required, but only needs to be downloaded once (approx 19 MB).
-This package contains everything you will need to run PyMOL all in one
-place so that you won't have to hunt down the individual components.
-Some precompiled binaries are available on SourceForge in the "ext"
-section of the PyMOL file releases, and they are highly recommended.
+STEP (1) 
+
+A compiled copy of the external dependencies package ("ext") is
+required, but only needs to be downloaded once (10 MB).  This package
+contains everything you will need to run PyMOL all in one place so
+that you won't have to hunt down the individual components.
+
+You will need to compile the external dependencies from the sources
+(currently in the file "ext-0.51-req-src.tgz"), unless you already
+have all of the required components.  See the ext package release
+notes for more information.
 
 http://sourceforge.net/project/showfiles.php?group_id=4546
 
-If "ext" binaries are not available for your system, then you will
-need to compile them from the sources (currently in the file
-"ext-0.50-src.tgz").  Be warned that this may take over an hour and
-cause you some grief.  The old "pymol-ext" CVS tree is now defunct, so
-just download the tgz file (tar-gzip).
-
-STEP (2) The external dependencies can simply be installed in an "ext"
-subdirectory within the main pymol directory. 
+The external dependencies can be installed in an "ext"
+subdirectory within the main pymol directory.
 
    cd $HOME/pymol
-   gunzip < ext-0.50-bin-linux-i586-libc6.tgz | tar -xvf -
+   gunzip < ext-0.50-req-src.tgz | tar -xvf -
+   cd ext
+   (READ INSTALL in that directory for installation information)
 
-Alternatively, you can create a symbolic link from the external
-dependency directory ("ext") wherever you have installed it, to "ext"
-in the pymol directory.
+STEP(2) 
 
-   cd $HOME/pymol
-   ln -s <relative-path-to-ext> ext
-
-STEP(3) IF THIS IS A BINARY RELEASE, SKIP TO STEP (5).  Otherwise,
-after you have set up the external dependencies, copy
-Rules.<platform> to Rules.make and choose options appropriate for your
-configuration (here is where experience counts).  Unless you're
-planning on doing heavy PyMOL development under Linux, you should
-choose to make PyMOL as a Python module and not as a standalone
-application.
+If this is a binary release, skip to (4). Otherwise, after you have
+set up the external dependencies, copy Rules.<platform> to Rules.make
+and choose options appropriate for your configuration (here is where
+experience counts).  Unless you're planning on doing heavy PyMOL
+development under Linux, you should choose to make PyMOL as a Python
+module and not as a standalone application.
 
 	cd $HOME/pymol
 	vi ./Rules.make
 
-STEP (4) "make" to compile.  
+Also, if you don't have a 3DFX card, get rid of the -D_PYMOL_3DFX
+workaround flag.  The nVidia drivers work great, so go get a GeForce2
+GTS.
+
+STEP (3) 
+
+"make" to compile.
 
 	cd $HOME/pymol
 	make
 
-STEP (5) 
+STEP (4) 
   
- Assuming that you chose to build PyMOL as a Python module, edit
- pymol.com to point to appropriate locations on your system...
+Assuming that you chose to build PyMOL as a Python module, edit
+pymol.com to point to appropriate locations on your system...
 
 	cd $HOME/pymol
 	vi ./pymol.com
@@ -74,7 +76,7 @@ NOTE: If you ever want to clean up the tree
 	"make distclean" restores the tree to near "distribution" quality 
        (NOTE it does not remove Rules.make or the "ext" directory/symlink)
 
-STEP (5) ALTERNATE APPROACH: (only recommended for easier debugging on linux)
+STEP (4) ALTERNATE APPROACH: (only recommended for easier debugging on linux)
 
  If you opted to make pymol as a standalone application...(LINUX ONLY)
 
