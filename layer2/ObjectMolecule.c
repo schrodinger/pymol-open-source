@@ -2249,7 +2249,6 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     
 	 nAtom=cset->NIndex;
   }
-  printf("load chempy model %p %p\n",cset->Spheroid,cset->SpheroidNormal);
   /* include coordinate set */
   if(ok) {
     cset->Obj = I;
