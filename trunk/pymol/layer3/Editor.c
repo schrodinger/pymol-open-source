@@ -278,7 +278,7 @@ void EditorTorsion(float angle)
 }
 
 /*========================================================================*/
-int EditorSelect(char *s0,char *s1,char *s2,char *s3)
+int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi)
 {
   int i0=-1;
   int i1=-1;
@@ -322,6 +322,11 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3)
       SelectorCreate(cEditorSele1,s0,NULL,false); /* wasteful but who cares */
       ExecutiveDelete(cEditorSele2);
       EditorSetActiveObject(obj0,SceneGetState());
+      if(pkresi) {
+        SelectorCreate(cEditorRes,"(byres pk1)",NULL,true);
+        if(SettingGet(cSetting_auto_hide_selections))
+          ExecutiveHideSelections();
+      }
       SceneDirty();
       result=true;
     } else {

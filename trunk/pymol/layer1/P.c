@@ -61,6 +61,8 @@ PyObject *P_unlock_c = NULL;
 PyObject *P_time = NULL;
 PyObject *P_sleep = NULL;
 
+#define P_log_file_str "_log_file"
+
 unsigned int PyThread_get_thread_ident(void); /* critical functionality */
 
 typedef struct {
@@ -200,6 +202,7 @@ int PAlterAtomState(float *v,char *expr,int read_only)
         v[2]=f[2];
       }
     }
+    
   }
   Py_DECREF(dict);
   return result;
@@ -824,6 +827,58 @@ void PParse(char *str)
   OrthoCommandIn(str);
 }
 
+void PLog(char *str,int format) /* general log routine can write PML or PYM commands to appropriate log file */
+{  
+  int mode;
+  int a;
+  PyObject *log;
+  OrthoLineType buffer="";
+  PBlock();
+  mode = SettingGet(cSetting_logging);
+  if(mode)
+    {
+      log = PyDict_GetItemString(P_globals,P_log_file_str);
+      if(log&&(log!=Py_None)) {
+        switch(mode) {
+        case 1: /* .pml file */
+          switch(format) {
+          case cPLog_pml_lf:
+            strcpy(buffer,str);
+            break;
+          case cPLog_pml:
+          case cPLog_pym:
+            strcpy(buffer,str);
+            strcat(buffer,"\n");
+            break;
+          }
+          break;
+        case 2: /* .pym file */
+          switch(format) {
+          case cPLog_pml_lf:
+            a =strlen(str);
+            while(a) { /* trim CR/LF etc. */
+              if(*(str+a)>=32) break;
+              *(str+a)=0;
+              a--;
+            }
+          case cPLog_pml:
+            strcpy(buffer,"cmd.do('''");
+            strcat(buffer,str);
+            strcat(buffer,"''')\n");
+            break;
+          case cPLog_pym:
+            strcpy(buffer,str);
+            strcat(buffer,"\n");
+            break;
+          }
+        }
+        PyObject_CallMethod(log,"write","s",buffer);        
+        PyObject_CallMethod(log,"flush","");
+      }
+    }
+  PUnblock();
+}
+
 void PFlush(void) {  
   /* NOTE: ASSUMES unblocked Python threads and a locked API */
   char buffer[OrthoLineLength+1];
@@ -844,6 +899,7 @@ void PFlushFast(void) {
    PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
   }
 }
+
 
 void PBlock(void)
 {

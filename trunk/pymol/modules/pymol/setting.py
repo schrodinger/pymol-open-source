@@ -139,6 +139,7 @@ class SettingIndex:
    internal_feedback     =128
    cgo_line_width        =129
    cgo_line_radius       =130
+   logging               =131
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

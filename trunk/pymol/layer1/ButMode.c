@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include "Grap.h"
 #include "Ortho.h"
 #include "Setting.h"
+#include "P.h"
 
 #define cButModeLineHeight 12
 #define cButModeLeftMargin 2
@@ -207,6 +208,8 @@ int ButModeTranslate(int button, int mod)
 int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
   SettingSetNamed("valence","0.05");
+  PLog("cmd.set('valence',0.05)",cPLog_pym);
+  PLog("cmd.edit_mode()",cPLog_pym);
   OrthoCommandIn("edit_mode");
   return(1);
 }

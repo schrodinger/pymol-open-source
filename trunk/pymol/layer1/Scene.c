@@ -628,7 +628,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   CScene *I=&Scene;
   Object *obj;
   ObjectMolecule *objMol;
-  char buffer[OrthoLineLength],buf2[OrthoLineLength];
+  OrthoLineType buffer,buf1,buf2;
   WordType selName = "";
   int mode;
   int atIndex;
@@ -665,6 +665,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           if(obj->fDescribeElement)
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
           PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
+          if(SettingGet(cSetting_logging)) {
+            objMol = (ObjectMolecule*)obj;            
+            ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buffer);
+            sprintf(buf2,"cmd.edit('%s',pkresi=1)",buffer);
+            PLog(buf2,cPLog_pym);
+          }
           OrthoRestorePrompt();
         }
 
@@ -716,6 +722,14 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               obj->fDescribeElement(obj,atIndex,buffer);
             PRINTF " You clicked %s -> (%s)",buffer,cEditorSele2 ENDF;
             OrthoRestorePrompt();
+          }
+
+          if(SettingGet(cSetting_logging)) {
+            objMol = (ObjectMolecule*)obj;            
+            ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
+            ObjectMoleculeGetAtomSele(objMol,atIndex,buf2);
+            sprintf(buffer,"cmd.edit('%s','%s')",buf1,buf2);
+            PLog(buffer,cPLog_pym);
           }
           sprintf(buffer,"%s`%d",
                   obj->Name,atIndex+1);    

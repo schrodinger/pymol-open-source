@@ -1619,9 +1619,13 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
       OrthoAddOutput("PyMOL>");
       OrthoAddOutput(str1);
       OrthoNewLine(NULL);
+      if(WordMatch(str1,"quit",true)==0) /* don't log quit */
+        PLog(str1,cPLog_pml);
     }
     PParse(str1);
-  } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command */
+  } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
+    if(WordMatch(str1+2,"quit",true)==0) /* don't log quit */
+      PLog(str1+2,cPLog_pml);
     PParse(str1+2);    
   } else {
     PParse(str1);
@@ -2850,13 +2854,14 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
   OrthoLineType s2 = "";
   OrthoLineType s3 = "";
   int result;
-  PyArg_ParseTuple(args,"ssss",&str0,&str1,&str2,&str3);
+  int pkresi;
+  PyArg_ParseTuple(args,"ssssi",&str0,&str1,&str2,&str3,&pkresi);
   APIEntry();
   if(str0[0]) SelectorGetTmp(str0,s0);
   if(str1[0]) SelectorGetTmp(str1,s1);
   if(str2[0]) SelectorGetTmp(str2,s2);
   if(str3[0]) SelectorGetTmp(str3,s3);
-  result = EditorSelect(s0,s1,s2,s3);
+  result = EditorSelect(s0,s1,s2,s3,pkresi);
   if(s0[0]) SelectorFreeTmp(s0);
   if(s1[0]) SelectorFreeTmp(s1);
   if(s2[0]) SelectorFreeTmp(s2);

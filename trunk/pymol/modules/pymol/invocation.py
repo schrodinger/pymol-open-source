@@ -100,6 +100,10 @@ def parse_args(argv):
             options.deferred.append("_do_spawn %s"%av.pop())
          if "r" in a:
             options.deferred.append("_do_run %s"%av.pop())
+         if "u" in a:
+            options.deferred.append("_do_resume %s"%av.pop())
+         if "s" in a:
+            options.deferred.append("_do_log_open %s"%av.pop())
          if "p" in a:
             options.read_stdin = 1 
       else:

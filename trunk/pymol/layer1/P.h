@@ -36,6 +36,11 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index);
 int PLabelAtom(AtomInfoType *at,char *expr);
 int PAlterAtomState(float *v,char *expr,int read_only);
 
+#define cPLog_pml_lf    0
+#define cPLog_pml       1
+#define cPLog_pym       2
+
+void PLog(char *str,int lf);
 void PSleep(int usec);
 
 void PLockAPIAsGlut(void);

@@ -142,6 +142,7 @@ int PopUpRelease(Block *block,int button,int x,int y,int mod)
   OrthoDetach(I->Block);
 
   if(I->Selected>=0) {
+    PLog(I->Command[I->Selected],cPLog_pym);
     PParse(I->Command[I->Selected]);
     PFlush();
     /* PBlockAndUnlockAPI();

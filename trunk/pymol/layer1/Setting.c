@@ -1012,5 +1012,7 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_cgo_line_width, 1.00);
 
   SettingSet_f(I,cSetting_cgo_line_radius, 0.15);
+
+  SettingSet_f(I,cSetting_logging, 0.0);
 }
 

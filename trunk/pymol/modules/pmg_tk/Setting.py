@@ -95,54 +95,53 @@ class Setting:
 
       self.xref = { 
          'ray_trace_frames':
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get())),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
                        s.cache_frames.set(s.ray_trace_frames.get()),
                        s.update('cache_frames'))),
          'cache_frames'  :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.cache_frames.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.cache_frames.get()),log=1))),
          'ortho'         :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.ortho.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.ortho.get()),log=1))),
          'antialias'     :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.antialias.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.antialias.get()),log=1))),
          'valence'       :
-         (lambda s,a: (cmd.set(a,("%1.2f" % (float(s.valence.get())/20.0))))),
+         (lambda s,a: (cmd.set(a,("%1.2f" % (float(s.valence.get())/20.0)),log=1))),
          'all_states'    :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.all_states.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.all_states.get()),log=1))),
          'line_smooth'    :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.line_smooth.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.line_smooth.get()),log=1))),
          'overlay'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" %( s.overlay.get()*5))))),
+         (lambda s,a: (cmd.set(a,("%1.0f" %( s.overlay.get()*5)),log=1))),
          'auto_zoom'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_zoom.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_zoom.get()),log=1))),
          'auto_show_selections'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_show_selections.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_show_selections.get()),log=1))),
          'auto_hide_selections'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_hide_selections.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_hide_selections.get()),log=1))),
          'static_singletons'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.static_singletons.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.static_singletons.get()),log=1))),
          'backface_cull'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.backface_cull.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.backface_cull.get()),log=1))),
          'depth_cue'       :
          (lambda s,a: s.depth_cue_set(a)),
          'specular'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8))))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8)),log=1))),
 
          'cartoon_round_helices'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_round_helices.get()))))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_round_helices.get())),log=1))),
          'cartoon_fancy_helices'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_fancy_helices.get()))))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_fancy_helices.get())),log=1))),
          'cartoon_flat_sheets'         :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_flat_sheets.get()))))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_flat_sheets.get())),log=1))),
          'cartoon_fancy_sheets'        :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_fancy_sheets.get()))))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_fancy_sheets.get())),log=1))),
          'cartoon_discrete_colors'        :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_discrete_colors.get()))))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_discrete_colors.get())),log=1))),
          'cartoon_smooth_loops'        :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_smooth_loops.get()))))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_smooth_loops.get())),log=1))),
 
          'ignore_pdb_segi'        :
-         (lambda s,a: (cmd.set(a,("%1.0f" % (s.ignore_pdb_segi.get()))))),
-
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.ignore_pdb_segi.get())),log=1))),
          }
 
       self.update_code = {
@@ -219,8 +218,8 @@ class Setting:
          self.active_dict[a] = pymol.setting._get_name(a)
 
    def depth_cue_set(self,sttng):
-      cmd.set(sttng,("%1.0f" % self.depth_cue.get()))
-      cmd.set("ray_trace_fog",("%1.0f" % self.depth_cue.get()))
+      cmd.set(sttng,("%1.0f" % self.depth_cue.get()),log=1)
+      cmd.set("ray_trace_fog",("%1.0f" % self.depth_cue.get()),log=1)
                          
    def update(self,sttng):
       set_fn = self.xref[sttng]
