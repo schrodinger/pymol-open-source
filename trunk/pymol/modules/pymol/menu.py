@@ -167,13 +167,15 @@ def sele_action(s):
            [ 1, 'invert'  ,'cmd.select("'+s+'","(not '+s+')",show=1)'        ],
            [ 1, 'duplicate'       ,'cmd.select("'+s+'")'     ],           
            [ 0, ''          ,''                                              ],
-           [ 1, 'remove Atoms'  ,'cmd.remove("'+s+'")'        ],
+           [ 1, 'remove atoms'  ,'cmd.remove("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
            [ 1, 'mask'  ,'cmd.mask("'+s+'")'        ],
            [ 1, 'unmask'  ,'cmd.unmask("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
            [ 1, 'protect'  ,'cmd.protect("'+s+'")'        ],
-           [ 1, 'deprotect'  ,'cmd.deprotect("'+s+'")'        ],           
+           [ 1, 'deprotect'  ,'cmd.deprotect("'+s+'")'        ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'")'        ],           
            ]
 
 def mol_action(s):
@@ -190,7 +192,9 @@ def mol_action(s):
            [ 1, 'protect'  ,'cmd.protect("'+s+'")'        ],
            [ 1, 'deprotect'  ,'cmd.deprotect("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'assign S.S.'  ,'util.ss("'+s+'")'        ],           
+           [ 1, 'assign S.S.'  ,'util.ss("'+s+'")'        ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'")'        ],           
            ]
 
 def simple_action(s):
