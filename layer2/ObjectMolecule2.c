@@ -735,6 +735,11 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                       (ai1->resn[2]=='H')&&
                                       (!ai1->resn[3]))
                                 water_flag=true;
+                              else if((ai1->resn[0]=='D')&&
+                                      (ai1->resn[1]=='O')&&
+                                      (ai1->resn[2]=='D')&&
+                                      (!ai1->resn[3]))
+                                water_flag=true;
                               if((ai2->resn[0]=='W')&&
                                  (ai2->resn[1]=='A')&&
                                  (ai2->resn[2]=='T')&&
@@ -745,7 +750,11 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                       (ai2->resn[2]=='H')&&
                                       (!ai2->resn[3]))
                                 water_flag=true;
-                              
+                              else if((ai2->resn[0]=='D')&&
+                                      (ai2->resn[1]=='O')&&
+                                      (ai2->resn[2]=='D')&&
+                                      (!ai1->resn[3]))
+                                water_flag=true;
                               cutoff = cutoff_h;
                               
                               /* workaround for hydrogens and sulfurs... */
@@ -762,6 +771,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                   (water_flag||(!cs->TmpBond)||(!(ai1->hetatm&&ai2->hetatm))))
                                 {
                                   flag=true;
+                                  if(water_flag)
+                                    if(!AtomInfoSameResidue(ai1,ai2))
+                                      flag=false;
+
                                   if(ai1->alt[0]!=ai2->alt[0]) { /* handle alternate conformers */
                                     if(ai1->alt[0]&&ai2->alt[0])
                                         flag=false; /* don't connect atoms with different, non-NULL
