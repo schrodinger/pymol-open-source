@@ -52,7 +52,7 @@ Z* -------------------------------------------------------------------
 
 #ifndef _PYMOL_PRETEND_GLUT
 
-/* real GLUT being used... */
+/* ============ REAL GLUT BEING USED ============= */
 
 #ifndef _PYMOL_OSX
 #include<GL/glut.h>
@@ -80,6 +80,9 @@ Z* -------------------------------------------------------------------
 #define P_GLUT_RIGHT_BUTTON             GLUT_RIGHT_BUTTON               
 #define P_GLUT_STEREO                   GLUT_STEREO                     
 #define P_GLUT_UP                       GLUT_UP                           
+
+#define p_glutGameModeString       glutGameModeString
+#define p_glutEnterGameMode        glutEnterGameMode
 
 #define p_glutBitmapCharacter      glutBitmapCharacter
 #define p_glutSwapBuffers          glutSwapBuffers
@@ -111,6 +114,9 @@ Z* -------------------------------------------------------------------
 #define p_glutMainLoop             glutMainLoop
 
 #else
+
+/* ============ GLUT EMULATION MODE ============= */
+
 
 #define P_GLUT_IDLE_EVENT            0
 #define P_GLUT_DISPLAY_EVENT         1
@@ -172,6 +178,8 @@ int p_glutGetRedisplay(void);
 #define P_GLUT_MIDDLE_BUTTON  1
 #define P_GLUT_RIGHT_BUTTON   2
 
+void     p_glutGameModeString(char *str);
+void     p_glutEnterGameMode(void);
 
 void     p_glutBitmapCharacter(void *font, int character);
 void     p_glutSwapBuffers(void);
