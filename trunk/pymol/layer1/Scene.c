@@ -1059,8 +1059,6 @@ void SceneIdle(PyMOLGlobals *G)
       }
     }
   if(ControlRocking(G)&&rockFlag) {
-
-
 	I->RockTime+=I->RenderTime;
     ang_cur = (float)(I->RockTime*SettingGet(G,cSetting_sweep_speed));
     
@@ -1087,14 +1085,19 @@ void SceneWindowSphere(PyMOLGlobals *G,float *location,float radius)
   register CScene *I=G->Scene;
   float v0[3];
   float dist;
-  float aspRat = ((float) I->Width) / ((float) I->Height);
+  float aspRat;
   float fov;
+
+  if(I->Height && I->Width) {
+    aspRat = ((float) I->Width) / ((float) I->Height);
+  } else {
+    aspRat = 1.3333F;
+  }
 
   /* find where this point is in relationship to the origin */
   subtract3f(I->Origin,location,v0); 
 
   dist = I->Pos[2];
-  /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 
   MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
   fov = SettingGet(G,cSetting_field_of_view);
@@ -1109,7 +1112,6 @@ void SceneWindowSphere(PyMOLGlobals *G,float *location,float radius)
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
 
   SceneRovingDirty(G);
-  /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 }
 /*========================================================================*/
 void SceneRelocate(PyMOLGlobals *G,float *location)
@@ -3112,6 +3114,11 @@ int  SceneInit(PyMOLGlobals *G)
     I->vendor[0]=0;
     I->renderer[0]=0;
     I->version[0]=0;
+    SceneRestartTimers(G);
+
+    I->Width = 400; /* sensible defaults */
+    I->Height = 300;
+
     return 1;
   } else 
     return 0;
@@ -3666,9 +3673,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
   int stereo_as_mono = false;
   int debug_pick = 0;
   GLenum render_buffer = GL_BACK;
-
   SceneUnitContext context;
-
+  
   PRINTFD(G,FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp

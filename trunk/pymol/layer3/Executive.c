@@ -5922,6 +5922,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,int state,int in
   float mn[3],mx[3],df[3];
   int sele0;
   int ok=true;
+
   PRINTFD(G,FB_Executive)
     " ExecutiveWindowZoom-DEBUG: entered\n"
     ENDFD;
@@ -5975,6 +5976,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,int state,int in
       ok=false;
     }
   }
+
   return(ok);
 }
 /*========================================================================*/

@@ -217,6 +217,7 @@ void PyMOL_Start(CPyMOL *I)
   EditorInit(G);
 
   I->RedisplayFlag = true;
+  G->Ready = true; 
 
 }
 
@@ -287,6 +288,7 @@ void PyMOL_Draw(CPyMOL *I)
     glDisable(GL_POLYGON_SMOOTH);
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
+
   } 
 
   I->RedisplayFlag = false;
@@ -295,8 +297,6 @@ void PyMOL_Draw(CPyMOL *I)
 
   if(G->HaveGUI) PyMOL_PopValidContext(I);
 
-  /* don't claim to be ready until we've drawn at least once */
-  G->Ready = true; 
 
 }
 
