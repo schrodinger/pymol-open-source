@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #include"Debug.h"
 
 
-unsigned int DebugState=DebugSelector;
+unsigned int DebugState=0;
 
 /* 
 DebugSelector | DebugParser | DebugMolecule | DebugMap

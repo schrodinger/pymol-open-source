@@ -1399,10 +1399,6 @@ int *SelectorEvaluate(WordType *word)
 						{
 						  opFlag=true;
 						  ok=SelectorSelect0(&Stack[depth]);
-						  for(a=0;a<I->NAtom;a++)
-							 {
-								printf("Stack[0][a] %d\n",Stack[depth].sele[a]);
-							 }
 						}
 				if(ok)
 				  if(depth>1)
