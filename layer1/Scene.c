@@ -828,7 +828,7 @@ unsigned int SceneFindTriplet(int x,int y)
   int debug = false;
   unsigned char *c;
   int strict = false;
-  int rb,gb,bb;
+  GLint rb,gb,bb;
 
   if(PMGUI) { /*just in case*/
   
@@ -900,7 +900,7 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
   int cc = 0;
   int dim[3];
   int strict = false;
-  int rb,gb,bb;
+  GLint rb,gb,bb;
 
   dim[0]=w;
   dim[1]=h;
@@ -1958,12 +1958,17 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   int pass;
   float fov;
   float fog_start;
+  int double_pump = false;
+  int must_render_stereo = false;
+  int stereo_as_mono = false;
 
   PRINTFD(FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     pick,x,y,smp
     ENDFD;
 
+  double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);
+  
   if(I->StereoMode>1)
     aspRat=aspRat/2;
 
@@ -2297,23 +2302,32 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       ButModeCaptionReset(); /* reset the frame caption if any */
       /* rendering for visualization */
 
+      must_render_stereo = (I->StereoMode!=0);
+      if(!must_render_stereo) 
+        if(double_pump&&StereoCapable) {            /* force stereo rendering */
+          must_render_stereo=true;
+          stereo_as_mono=true; /* rendering stereo as mono */
+        }
+
       start_time = UtilGetSeconds();
       if(I->StereoMode) {
         /*stereo*/
         
         /* render left side */
 
-        switch(I->StereoMode) {
-        case 1:
+        if(stereo_as_mono) {
+          glDrawBuffer(GL_BACK_LEFT);
+        } else switch(I->StereoMode) {
+        case 1: /* hardware */
           glDrawBuffer(GL_BACK_LEFT);
           break;
         case 2:
           glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
-          
+        
         glPushMatrix();
-        ScenePrepareMatrix(1);
+        ScenePrepareMatrix(stereo_as_mono ? 0 : 1);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
           rec=NULL;
           while(ListIterate(I->Obj,rec,next))
@@ -2352,7 +2366,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         
         /* render right side */
 
-        switch(I->StereoMode) {
+        if(stereo_as_mono) {
+          glDrawBuffer(GL_BACK_RIGHT);
+        } else switch(I->StereoMode) {
         case 1:
           glDrawBuffer(GL_BACK_RIGHT);
           break;
@@ -2363,7 +2379,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix();
-        ScenePrepareMatrix(2);
+        ScenePrepareMatrix(stereo_as_mono ? 0 : 2);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
           rec=NULL;
           while(ListIterate(I->Obj,rec,next))
@@ -2401,7 +2417,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
         glPopMatrix();        
 
-        switch(I->StereoMode) {
+        if(must_render_stereo) {
+          glDrawBuffer(GL_BACK);
+        } else switch(I->StereoMode) {
         case 1:
           glDrawBuffer(GL_BACK);
           break;

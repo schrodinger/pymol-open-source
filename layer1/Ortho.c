@@ -884,9 +884,11 @@ void OrthoDoDraw()
   int overlay,text;
   int rightSceneMargin;
   int internal_feedback;
-  
+  int times=1;
+  int double_pump=false;
   float *bg_color;
 
+  double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);
   bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
 
   I->OverlayColor[0]=1.0-bg_color[0];
@@ -909,108 +911,125 @@ void OrthoDoDraw()
 
     if(text) overlay=0;
     
-    if(SceneGetStereo()) {
-      glClearColor(v[0],v[1],v[2],1.0);
+    glClearColor(v[0],v[1],v[2],1.0);
+
+    if(SceneGetStereo()&&double_pump) {
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glDrawBuffer(GL_BACK_RIGHT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
+      times = 2;
     } else {
       glDrawBuffer(GL_BACK);
       glClearColor(v[0],v[1],v[2],1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
+      times = 1;
+      double_pump=false;
     }    
     if(overlay||(!text)) 
       if(!SceneRenderCached())
         SceneRender(NULL,0,0,NULL);
 
-    
-    OrthoPushMatrix();
-    
-    x = I->X;
-    y = I->Y;
+    while(times--) {
+      switch(times) {
+      case 1:
+          glDrawBuffer(GL_BACK_RIGHT);
+        break;
+      case 0:
+        if(double_pump)
+          glDrawBuffer(GL_BACK_LEFT);
+        else
+          glDrawBuffer(GL_BACK);
+        break;
+      }
 
-
-    if(I->DrawText&&internal_feedback) { /* moved to avoid conflict with menus */
-      glColor3f(0.0,0.0,0.0);
-      glBegin(GL_POLYGON);
-      height=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
-      glVertex2i(I->Width-rightSceneMargin,height-1);
-      glVertex2i(I->Width-rightSceneMargin,0);
-      glVertex2i(0,0);
-      glVertex2i(0,cOrthoBottomSceneMargin-1);
-      glEnd();
+      OrthoPushMatrix();
+      
+      x = I->X;
+      y = I->Y;
+      
+      
+      if(I->DrawText&&internal_feedback) { /* moved to avoid conflict with menus */
+        glColor3f(0.0,0.0,0.0);
+        glBegin(GL_POLYGON);
+        height=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
+        glVertex2i(I->Width-rightSceneMargin,height-1);
+        glVertex2i(I->Width-rightSceneMargin,0);
+        glVertex2i(0,0);
+        glVertex2i(0,cOrthoBottomSceneMargin-1);
+        glEnd();
+      }
+      
+      PRINTFD(FB_Ortho)
+        " OrthoDoDraw: drawing blocks...\n"
+        ENDFD;
+      
+      BlockRecursiveDraw(I->Blocks);
+      
+      PRINTFD(FB_Ortho)
+        " OrthoDoDraw: blocks drawn.\n"
+        ENDFD;
+      
+      if(I->LoopFlag) {
+        glColor3f(1.0,1.0,1.0);
+        glBegin(GL_LINE_LOOP);
+        glVertex2i(I->LoopRect.left,I->LoopRect.top);
+        glVertex2i(I->LoopRect.right,I->LoopRect.top);
+        glVertex2i(I->LoopRect.right,I->LoopRect.bottom);
+        glVertex2i(I->LoopRect.left,I->LoopRect.bottom);
+        glVertex2i(I->LoopRect.left,I->LoopRect.top);
+        glEnd();
+      }
+      
+      OrthoRestorePrompt();
+      
+      if(I->DrawText) {	 
+        /* now print the text */
+        
+        lcount = 0;
+        l=(I->CurLine-lcount)&OrthoSaveLines;
+        x = cOrthoLeftMargin;
+        y = cOrthoBottomMargin;
+        
+        
+        if((int)SettingGet(cSetting_text)||I->SplashFlag)
+          showLines=I->ShowLines;
+        else
+          showLines=internal_feedback+(int)SettingGet(cSetting_overlay);
+        
+        glColor3fv(I->TextColor);
+        while(l>=0)
+          {
+            lcount++;
+            if(lcount>showLines)
+              break;
+            str = I->Line[l&OrthoSaveLines];
+            if(strncmp(str,I->Prompt,6)==0)
+              glColor3fv(I->TextColor);            
+            else
+              glColor3fv(I->OverlayColor);
+            glRasterPos4d((double)x,(double)y,0.0,1.0);
+            if(str)
+              {
+                while(*str)
+                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(str++));
+                if((lcount==1)&&(I->InputFlag)) 
+                  {
+                    if(I->CursorChar>=0)  
+                      glRasterPos4d((double)(x+8*I->CursorChar),(double)y,0.0,1.0);
+                    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'_');
+                  }
+              }
+            l=(I->CurLine-lcount)&OrthoSaveLines;
+            y=y+cOrthoLineHeight;
+          }
+      }
+      
+      OrthoDrawWizardPrompt();
+      OrthoPopMatrix();
     }
-    
-  PRINTFD(FB_Ortho)
-    " OrthoDoDraw: drawing blocks...\n"
-    ENDFD;
-
-    BlockRecursiveDraw(I->Blocks);
-
-  PRINTFD(FB_Ortho)
-    " OrthoDoDraw: blocks drawn.\n"
-    ENDFD;
-
-    if(I->LoopFlag) {
-      glColor3f(1.0,1.0,1.0);
-      glBegin(GL_LINE_LOOP);
-      glVertex2i(I->LoopRect.left,I->LoopRect.top);
-      glVertex2i(I->LoopRect.right,I->LoopRect.top);
-      glVertex2i(I->LoopRect.right,I->LoopRect.bottom);
-      glVertex2i(I->LoopRect.left,I->LoopRect.bottom);
-      glVertex2i(I->LoopRect.left,I->LoopRect.top);
-      glEnd();
-    }
-    
-    OrthoRestorePrompt();
-
-    if(I->DrawText) {	 
-      /* now print the text */
-	 
-      lcount = 0;
-      l=(I->CurLine-lcount)&OrthoSaveLines;
-      x = cOrthoLeftMargin;
-      y = cOrthoBottomMargin;
-
-
-      if((int)SettingGet(cSetting_text)||I->SplashFlag)
-        showLines=I->ShowLines;
-      else
-        showLines=internal_feedback+(int)SettingGet(cSetting_overlay);
-
-      glColor3fv(I->TextColor);
-      while(l>=0)
-        {
-          lcount++;
-          if(lcount>showLines)
-            break;
-          str = I->Line[l&OrthoSaveLines];
-          if(strncmp(str,I->Prompt,6)==0)
-            glColor3fv(I->TextColor);            
-          else
-            glColor3fv(I->OverlayColor);
-          glRasterPos4d((double)x,(double)y,0.0,1.0);
-          if(str)
-            {
-              while(*str)
-                p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(str++));
-              if((lcount==1)&&(I->InputFlag)) 
-                {
-                  if(I->CursorChar>=0)  
-                    glRasterPos4d((double)(x+8*I->CursorChar),(double)y,0.0,1.0);
-                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'_');
-                }
-            }
-          l=(I->CurLine-lcount)&OrthoSaveLines;
-          y=y+cOrthoLineHeight;
-        }
-    }
-
-    OrthoDrawWizardPrompt();
-    OrthoPopMatrix();
   }
 
   I->DirtyFlag =false;

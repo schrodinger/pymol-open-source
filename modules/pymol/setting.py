@@ -231,6 +231,7 @@ if __name__=='pymol.setting':
       ray_transparency_shadows = 199
       session_version_check = 200
       ray_transparency_specular = 201
+      stereo_double_pump_mono = 202
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
@@ -369,8 +370,8 @@ NOTES
             except:
                if(_feedback(fb_module.cmd,fb_mask.debugging)):
                   traceback.print_exc()
-                  raise QuietException
-               print "Error: unable to read setting value."
+                  print "Error: unable to read setting value."
+               raise QuietException
          finally:
             unlock()
       return r

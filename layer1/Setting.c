@@ -1677,7 +1677,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_surface_poor, 0.89F);  
 
-  SettingSet_b(I,cSetting_internal_feedback, 1);  /* this has no effect - set by invocation.py */
+  SettingSet_i(I,cSetting_internal_feedback, 1);  /* this has no effect - set by invocation.py */
 
   SettingSet_f(I,cSetting_cgo_line_width, 1.00F);
 
@@ -1828,6 +1828,12 @@ void SettingInitGlobal(void)
   SettingSet_i(I,cSetting_session_version_check,1);
 
   SettingSet_f(I,cSetting_ray_transparency_specular,0.4F);
+
+#ifdef _PYMOL_OSX
+  SettingSet_b(I,cSetting_stereo_double_pump_mono,1);
+#else
+  SettingSet_b(I,cSetting_stereo_double_pump_mono,0);
+#endif
 
 }
 
