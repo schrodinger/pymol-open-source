@@ -791,9 +791,16 @@ SEE ALSO
    # preprocess selection
    selection = selector.process(selection)
    #
+   state = int(state)
+   if state<0: # hack -- need to replace with "alter_state_atom" command
+      state = -state
+      atomic_props = 1
+   else:
+      atomic_props = 0
    try:
       lock()
-      r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),0)
+      r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),
+                           0,int(atomic_props))
    finally:
       unlock()   
    return r
@@ -819,10 +826,17 @@ SEE ALSO
    '''
    # preprocess selection
    selection = selector.process(selection)
+   state = int(state)
    #
+   if state<0: # hack -- need to replace with "alter_state_atom" command
+      state = -state
+      atomic_props = 1
+   else:
+      atomic_props = 0
    try:
       lock()
-      r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),1)
+      r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",
+                           str(expression),1,int(atomic_props))
    finally:
       unlock()   
    return r

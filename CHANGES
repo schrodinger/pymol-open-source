@@ -83,6 +83,8 @@ Current and Ongoing Goals
 
    * place feedback conditionals around all error output.
 
+   * create alter_state_atom command (combine PAlter and PAlterState into one function)
+
 Main Goals for 1.0 Release
 
    * Side-by-side stereo support: cross-eye and wall-eye

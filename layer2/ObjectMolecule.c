@@ -4236,19 +4236,18 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
 /*========================================================================*/
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 {
-  int a,b,c,s,d;
+  int a,b,c,s,d,t_i;
   int a1,ind;
   float r,rms;
-  float v1[3],v2,*vv1,*vv2,*coord;
+  float v1[3],v2,*vv1,*vv2,*coord,*vt,*vt1,*vt2;
   int inv_flag;
   int hit_flag = false;
   int ok = true;
-  OrthoLineType buffer;
   int cnt;
+  int match_flag=false;
   CoordSet *cs;
-  AtomInfoType *ai,*ai0;
+  AtomInfoType *ai,*ai0,*ai_option;
 
-  
   if(sele>=0) {
 	SelectorUpdateTable();
    /* always run on entry */
@@ -4386,6 +4385,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        }
      break;
 	case OMOP_SFIT: /* state fitting within a single object */
+     vt = Alloc(float,3*op->nvv2);
      cnt = 0;
      for(a=0;a<I->NAtom;a++)
        {
@@ -4397,8 +4397,12 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      if(cnt) { /* only perform action for selected object */
+       
        for(b=0;b<I->NCSet;b++) {
          rms = -1.0;
+         vt1 = vt; /* reset target vertex pointers */
+         vt2 = op->vv2;
+         t_i = 0; /* original target vertex index */
          if(I->CSet[b]&&(b!=op->i2))
            {
              op->nvv1=0;
@@ -4415,30 +4419,51 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                      } else 
                        a1=I->CSet[b]->AtmToIdx[a];
                      if(a1>=0) {
-                       VLACheck(op->vv1,float,(op->nvv1*3)+2);
-                       vv2=I->CSet[b]->Coord+(3*a1);
-                       vv1=op->vv1+(op->nvv1*3);
-                       *(vv1++)=*(vv2++);
-                       *(vv1++)=*(vv2++);
-                       *(vv1++)=*(vv2++);
-                       op->nvv1++;
+                       /* do we have a matching target vertex? */
+                       match_flag=false;
+                       while(t_i<op->nvv2) {
+                         if(op->i1VLA[t_i]==a) {/* same atom? */
+                           match_flag=true;
+                           break;
+                         }
+                         if(op->i1VLA[t_i]<a) { /* catch up? */
+                           t_i++;
+                           vt2+=3;
+                         } else 
+                           break;
+                       }
+                       if(match_flag) {
+                         VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                         vv2=I->CSet[b]->Coord+(3*a1);
+                         vv1=op->vv1+(op->nvv1*3);
+                         *(vv1++)=*(vv2++);
+                         *(vv1++)=*(vv2++);
+                         *(vv1++)=*(vv2++);
+                         *(vt1++)=*(vt2);
+                         *(vt1++)=*(vt2+1);
+                         *(vt1++)=*(vt2+2);
+                         op->nvv1++;
+                       }
                      }
                    }
                }
              if(op->nvv1!=op->nvv2) {
-               sprintf(buffer,"Atom counts in state %d don't match (%d instead of %d).\n",
-                       b+1,op->nvv1,op->nvv2);
-               ErrMessage("ExecutiveFit",buffer);
-               
-             } else if(op->nvv1) {
-               if(op->i1!=0)
-                 rms = MatrixFitRMS(op->nvv1,op->vv1,op->vv2,NULL,op->ttt);
+               PRINTFB(FB_Executive,FB_Warnings)
+                 "Executive-Warning: Missing atoms in state %d (%d instead of %d).\n",
+                 b+1,op->nvv1,op->nvv2
+                 ENDFB;
+             }
+             if(op->nvv1) {
+               if(op->i1!=0) /* fitting flag */
+                 rms = MatrixFitRMS(op->nvv1,op->vv1,vt,NULL,op->ttt);
                else 
-                 rms = MatrixGetRMS(op->nvv1,op->vv1,op->vv2,NULL);
+                 rms = MatrixGetRMS(op->nvv1,op->vv1,vt,NULL);
                if(op->i1==2) 
-               ObjectMoleculeTransformTTTf(I,op->ttt,b);
+                 ObjectMoleculeTransformTTTf(I,op->ttt,b);
              } else {
-               ErrMessage("ExecutiveFit","No atoms selected.");
+               PRINTFB(FB_Executive,FB_Warnings)
+                 "Executive-Warning: No matches found for state %d.\n",b+1
+                 ENDFB;
              }
            }
          VLACheck(op->f1VLA,float,b);
@@ -4446,6 +4471,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        }
        VLASize(op->f1VLA,float,I->NCSet);  /* NOTE this action is object-specific! */
      }
+     FreeP(vt);
      break;
 	case OMOP_SetGeometry: /* save undo */
      for(a=0;a<I->NAtom;a++)
@@ -4730,7 +4756,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                       } else 
                         a1=cs->AtmToIdx[a];
                       if(a1>=0) {
-                        if(PAlterAtomState(cs->Coord+(a1*3),op->s1,op->i3)) {
+                        if(op->i4) 
+                          ai_option = I->AtomInfo + a;
+                        else
+                          ai_option = NULL;
+                        if(PAlterAtomState(cs->Coord+(a1*3),op->s1,op->i3,ai_option)) {
                           op->i1++;
                           hit_flag=true;
                         } else
@@ -4876,6 +4906,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                           a1=cs->AtmToIdx[a];
                         if(a1>=0) {
                           VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                          VLACheck(op->i1VLA,int,op->nvv1);
+                          op->i1VLA[op->nvv1]=a; /* save atom index for later comparisons */
                           vv2=cs->Coord+(3*a1);
                           vv1=op->vv1+(op->nvv1*3);
                           *(vv1++)=*(vv2++);

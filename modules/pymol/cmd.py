@@ -41,6 +41,7 @@
 #
 # (4) cmd.py API wrappers can then raise exceptions based on truth
 #     and should return truth for success or None for failure
+#     (if no exception was raised)
 #
 
 import re

@@ -1608,7 +1608,7 @@ int ExecutiveIterate(char *s1,char *expr,int read_only)
   return(op1.i1);
 }
 /*========================================================================*/
-void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
+void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,int atomic_props)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -1620,6 +1620,7 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
     op1.i1 = 0;
     op1.i2 = state;
     op1.i3 = read_only;
+    op1.i4 = atomic_props;
     ExecutiveObjMolSeleOp(sele1,&op1);
     if(!read_only) {
       PRINTFB(FB_Executive,FB_Actions)
@@ -1860,10 +1861,12 @@ float *ExecutiveRMSStates(char *s1,int target,int mode,int quiet)
     op1.nvv1=0;
     op1.i1=target;
     op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
+    op1.i1VLA = VLAlloc(int,1000);
     ExecutiveObjMolSeleOp(sele1,&op1);
 
     op2.vv2=op1.vv1;
     op2.nvv2=op1.nvv1;
+    op2.i1VLA=op1.i1VLA;
     op2.i2=target;
     op2.i1=mode;
     op2.f1VLA=VLAlloc(float,10);
@@ -1874,6 +1877,7 @@ float *ExecutiveRMSStates(char *s1,int target,int mode,int quiet)
     ExecutiveObjMolSeleOp(sele1,&op2);
     result=op2.f1VLA;
     VLAFreeP(op1.vv1);
+    VLAFreeP(op1.i1VLA);
     VLAFreeP(op2.vv1);
   } 
   return(result);

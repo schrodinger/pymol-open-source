@@ -159,16 +159,44 @@ void PDumpTraceback(PyObject *err)
   }
 }
 
-int PAlterAtomState(float *v,char *expr,int read_only) 
+int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at) 
      /* assumes Blocked python interpreter*/
 {
   PyObject *dict; 
   int result=true;
   float f[3];
-  PyObject *x_id1,*x_id2,*y_id1,*y_id2,*z_id1,*z_id2;
-
+  PyObject *x_id1,*x_id2=NULL,*y_id1,*y_id2=NULL,*z_id1,*z_id2=NULL;
+  char atype[7];
   dict = PyDict_New();
 
+  if(at) {
+    if(at->hetatm)
+      strcpy(atype,"HETATM");
+    else
+      strcpy(atype,"ATOM");
+
+    PConvStringToPyDictItem(dict,"type",atype);
+    PConvStringToPyDictItem(dict,"name",at->name);
+    PConvStringToPyDictItem(dict,"resn",at->resn);
+    PConvStringToPyDictItem(dict,"resi",at->resi);
+    PConvIntToPyDictItem(dict,"resv",at->resv); /* subordinate to resi */
+    PConvStringToPyDictItem(dict,"chain",at->chain);
+    PConvStringToPyDictItem(dict,"alt",at->alt);
+    PConvStringToPyDictItem(dict,"segi",at->segi);
+    PConvStringToPyDictItem(dict,"elem",at->elem);
+    PConvStringToPyDictItem(dict,"ss",at->ssType);
+    PConvStringToPyDictItem(dict,"text_type",at->textType);
+    PConvIntToPyDictItem(dict,"numeric_type",at->customType);
+    PConvFloatToPyDictItem(dict,"q",at->q);
+    PConvFloatToPyDictItem(dict,"b",at->b);
+    PConvFloatToPyDictItem(dict,"vdw",at->vdw);
+    PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
+    PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
+    PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
+    PConvStringToPyDictItem(dict,"label",at->label);
+    PConvIntToPyDictItem(dict,"color",at->color);
+    PConvIntToPyDictItem(dict,"ID",at->id);
+  }
   x_id1 = PConvFloatToPyDictItem(dict,"x",v[0]);
   y_id1 = PConvFloatToPyDictItem(dict,"y",v[1]);
   z_id1 = PConvFloatToPyDictItem(dict,"z",v[2]);
