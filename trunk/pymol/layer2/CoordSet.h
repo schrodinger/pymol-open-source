@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct CoordSet {
   void (*fUpdate)(struct CoordSet *I);
-  void (*fRender)(struct CoordSet *I,CRay *ray,Pickable **pick);
+  void (*fRender)(struct CoordSet *I,CRay *ray,Pickable **pick,int pass);
   void (*fFree)(struct CoordSet *I);
   void (*fEnumIndices)(struct CoordSet *I);
   void (*fAppendIndices)(struct CoordSet *I,int existingAtoms);

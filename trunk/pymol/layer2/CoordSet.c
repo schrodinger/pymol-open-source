@@ -43,7 +43,7 @@ Z* -------------------------------------------------------------------
 void CoordSetUpdate(CoordSet *I);
 
 void CoordSetFree(CoordSet *I);
-void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick);
+void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass);
 void CoordSetEnumIndices(CoordSet *I);
 void CoordSetStrip(CoordSet *I);
 void CoordSetInvalidateRep(CoordSet *I,int type,int level);
@@ -512,7 +512,7 @@ void CoordSetUpdate(CoordSet *I)
   OrthoBusyFast(1,1);
 }
 /*========================================================================*/
-void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
+void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
 {
   int a;
 
@@ -539,13 +539,43 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
                             SettingGet_fv(I->Setting,NULL,cSetting_ray_texture_settings));
             ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
           }
-          if(I->Rep[a]->fRender) {
-            I->Rep[a]->fRender(I->Rep[a],ray,pick);
+        
+          if(I->Rep[a]->fRender) { /* do OpenGL rendering in three passes */
+            if(ray||pick) {
+                  I->Rep[a]->fRender(I->Rep[a],ray,pick);                
+            } else 
+              switch(a) {
+              case cRepCyl:
+              case cRepSphere:
+              case cRepLabel:
+              case cRepNonbondedSphere:
+              case cRepCartoon:
+              case cRepRibbon:
+              case cRepDot:
+              case cRepCGO:
+              case cRepCallback:
+                if(pass==1)
+                  I->Rep[a]->fRender(I->Rep[a],ray,pick);
+                break;
+              case cRepLine:
+              case cRepMesh:
+              case cRepDash:
+              case cRepNonbonded:
+              case cRepCell:
+              case cRepExtent:
+                if(!pass)
+                  I->Rep[a]->fRender(I->Rep[a],ray,pick);                
+                break;
+              case cRepSurface:
+                if(pass==-1)
+                  I->Rep[a]->fRender(I->Rep[a],ray,pick);              
+                break;
+              }
           }
           if(ray)
             ray->fTexture(ray,0,NULL);
         }
-
+  
   PRINTFD(FB_CoordSet)
     " CoordSetRender: leaving...\n"
     ENDFD;

@@ -39,7 +39,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct Object {
   void (*fUpdate)(struct Object *I); /* update representations */
-  void (*fRender)(struct Object *I,int frame,CRay *ray,Pickable **pick);
+  void (*fRender)(struct Object *I,int frame,CRay *ray,Pickable **pick,int pass);
   void (*fFree)(struct Object *I);
   int  (*fGetNFrame)(struct Object *I);
   void (*fDescribeElement)(struct Object *I,int index,char *buffer);

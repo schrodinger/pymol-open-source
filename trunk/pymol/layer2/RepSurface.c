@@ -86,9 +86,14 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   int *s=I->S;
   int c=I->N;
   int *vi=I->Vis;
-
+  float *col;
+  float alpha;
+  alpha = SettingGet_f(I->cs->Setting,I->Obj->Setting,cSetting_transparency);
+  alpha=1.0-alpha;
+  if(fabs(alpha-1.0)<R_SMALL4)
+    alpha=1.0;
   if(ray) {
-    ray->fTransparentf(ray,SettingGet_f(I->cs->Setting,I->Obj->Setting,cSetting_transparency));
+    ray->fTransparentf(ray,1.0-alpha);
 	 c=I->NT;
     while(c--)
       {
@@ -101,78 +106,161 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-
 	 if(I->S) {
-      if(I->allVisibleFlag) {
-        if(I->oneColorFlag) {
-          glColor3fv(ColorGet(I->oneColor));
-          c=*(s++);
-          while(c) {
-            glBegin(GL_TRIANGLE_STRIP);
-            glNormal3fv(vn+(*s)*3);
-            glVertex3fv(v+(*s)*3);
-            s++;
-            glNormal3fv(vn+(*s)*3);
-            glVertex3fv(v+(*s)*3);
-            s++;
-            while(c--)
-              {
-                glNormal3fv(vn+(*s)*3);
-                glVertex3fv(v+(*s)*3);
-                s++;
-              }
-            glEnd();
+      if(alpha!=1.0) {
+
+        if(I->allVisibleFlag) {
+          if(I->oneColorFlag) {
+            col = ColorGet(I->oneColor);
+            glColor4f(col[0],col[1],col[2],alpha);
             c=*(s++);
+            while(c) {
+              glBegin(GL_TRIANGLE_STRIP);
+              glNormal3fv(vn+(*s)*3);
+              glVertex3fv(v+(*s)*3);
+              s++;
+              glNormal3fv(vn+(*s)*3);
+              glVertex3fv(v+(*s)*3);
+              s++;
+              while(c--)
+                {
+                  glNormal3fv(vn+(*s)*3);
+                  glVertex3fv(v+(*s)*3);
+                  s++;
+                }
+              glEnd();
+              c=*(s++);
+            }
+          } else {
+            c=*(s++);
+            while(c) {
+              glBegin(GL_TRIANGLE_STRIP);
+              col = vc+(*s)*3;
+              glColor4f(col[0],col[1],col[2],alpha);            
+              glNormal3fv(vn+(*s)*3);
+              glVertex3fv(v+(*s)*3);
+              s++;
+              col = vc+(*s)*3;
+              glColor4f(col[0],col[1],col[2],alpha);            
+              glNormal3fv(vn+(*s)*3);
+              glVertex3fv(v+(*s)*3);
+              s++;
+              while(c--)
+                {
+                  col = vc+(*s)*3;
+                  glColor4f(col[0],col[1],col[2],alpha);            
+                  glNormal3fv(vn+(*s)*3);
+                  glVertex3fv(v+(*s)*3);
+                  s++;
+                }
+              glEnd();
+              c=*(s++);
+            }
           }
+          
         } else {
-          c=*(s++);
-          while(c) {
-            glBegin(GL_TRIANGLE_STRIP);
-            glColor3fv(vc+(*s)*3);
-            glNormal3fv(vn+(*s)*3);
-            glVertex3fv(v+(*s)*3);
-            s++;
-            glColor3fv(vc+(*s)*3);
-            glNormal3fv(vn+(*s)*3);
-            glVertex3fv(v+(*s)*3);
-            s++;
-            while(c--)
-              {
-                glColor3fv(vc+(*s)*3);
-                glNormal3fv(vn+(*s)*3);
-                glVertex3fv(v+(*s)*3);
-                s++;
-              }
+          /* subsets: not-optimized */
+          c=I->NT;
+          if(c) {
+            glBegin(GL_TRIANGLES);
+            while(c--) {
+              if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))) {
+
+                col = vc+(*t)*3;
+                glColor4f(col[0],col[1],col[2],alpha);            
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                col = vc+(*t)*3;
+                glColor4f(col[0],col[1],col[2],alpha);            
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                col = vc+(*t)*3;
+                glColor4f(col[0],col[1],col[2],alpha);            
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+              } else
+                t+=3;
+            }
             glEnd();
-            c=*(s++);
           }
-        }
-        
-		} else {
-        /* subsets: not-optimized */
-        c=I->NT;
-        if(c) {
-          glBegin(GL_TRIANGLES);
-          while(c--) {
-            if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))) {
-              glColor3fv(vc+(*t)*3);
-              glNormal3fv(vn+(*t)*3);
-              glVertex3fv(v+(*t)*3);
-              t++;
-              glColor3fv(vc+(*t)*3);
-              glNormal3fv(vn+(*t)*3);
-              glVertex3fv(v+(*t)*3);
-              t++;
-              glColor3fv(vc+(*t)*3);
-              glNormal3fv(vn+(*t)*3);
-              glVertex3fv(v+(*t)*3);
-              t++;
-            } else
-              t+=3;
-          }
-          glEnd();
         }
 
+
+
+      } else {
+        if(I->allVisibleFlag) {
+          if(I->oneColorFlag) {
+            glColor3fv(ColorGet(I->oneColor));
+            c=*(s++);
+            while(c) {
+              glBegin(GL_TRIANGLE_STRIP);
+              glNormal3fv(vn+(*s)*3);
+              glVertex3fv(v+(*s)*3);
+              s++;
+              glNormal3fv(vn+(*s)*3);
+              glVertex3fv(v+(*s)*3);
+              s++;
+              while(c--)
+                {
+                  glNormal3fv(vn+(*s)*3);
+                  glVertex3fv(v+(*s)*3);
+                  s++;
+                }
+              glEnd();
+              c=*(s++);
+            }
+          } else {
+            c=*(s++);
+            while(c) {
+              glBegin(GL_TRIANGLE_STRIP);
+              glColor3fv(vc+(*s)*3);
+              glNormal3fv(vn+(*s)*3);
+              glVertex3fv(v+(*s)*3);
+              s++;
+              glColor3fv(vc+(*s)*3);
+              glNormal3fv(vn+(*s)*3);
+              glVertex3fv(v+(*s)*3);
+              s++;
+              while(c--)
+                {
+                  glColor3fv(vc+(*s)*3);
+                  glNormal3fv(vn+(*s)*3);
+                  glVertex3fv(v+(*s)*3);
+                  s++;
+                }
+              glEnd();
+              c=*(s++);
+            }
+          }
+          
+        } else {
+          /* subsets: not-optimized */
+          c=I->NT;
+          if(c) {
+            glBegin(GL_TRIANGLES);
+            while(c--) {
+              if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))) {
+                glColor3fv(vc+(*t)*3);
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glColor3fv(vc+(*t)*3);
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+                glColor3fv(vc+(*t)*3);
+                glNormal3fv(vn+(*t)*3);
+                glVertex3fv(v+(*t)*3);
+                t++;
+              } else
+                t+=3;
+            }
+            glEnd();
+          }
+        }
       }
 	 }
 

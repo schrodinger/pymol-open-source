@@ -208,7 +208,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
   SceneDirty();
 }
 
-static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
+static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,int pass)
 {
   float *v = NULL;
   float *vc;
@@ -327,7 +327,7 @@ ObjectMesh *ObjectMeshNew(void)
   
   I->Obj.fFree = (void (*)(struct Object *))ObjectMeshFree;
   I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMeshUpdate;
-  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMeshRender;
+  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **,int ))ObjectMeshRender;
   I->Obj.fInvalidate =(void (*)(struct Object *,int,int,int))ObjectMeshInvalidate;
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMeshGetNStates;
   return(I);

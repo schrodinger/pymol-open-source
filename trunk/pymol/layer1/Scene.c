@@ -1449,7 +1449,7 @@ void SceneRay(int ray_width,int ray_height)
 	 {
 		if(rec->obj->fRender) {
 		  ray->fColor3fv(ray,white);
-		  rec->obj->fRender(rec->obj,curState,ray,NULL);
+		  rec->obj->fRender(rec->obj,curState,ray,NULL,0);
 		}
 	 }
 
@@ -1645,7 +1645,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   int curState;
   int nPick,nBits;
   int a;
-
+  int pass;
   PRINTFD(FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     pick,x,y,smp
@@ -1705,11 +1705,13 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       I->LinesNormal[2]=I->ViewNormal[2];
     }
 
+    if(!(pick||smp)) {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    }  
     if(SettingGet(cSetting_line_smooth)) {
       if(!(pick||smp)) {
         glEnable(GL_LINE_SMOOTH);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
         glHint(GL_LINE_SMOOTH_HINT,GL_DONT_CARE);
       }
       glLineWidth(0.0);
@@ -1830,9 +1832,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       while(ListIterate(I->Obj,rec,next))
         {
           glPushMatrix();
-			 if(rec->obj->fRender)
-			   rec->obj->fRender(rec->obj,curState,NULL,&pickVLA);
-			 glPopMatrix();
+          if(rec->obj->fRender)
+            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
+          glPopMatrix();
         }
 	
       lowBits = SceneFindTriplet(x,y);
@@ -1846,7 +1848,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         {
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA);
+            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
           glPopMatrix();
         }
       highBits = SceneFindTriplet(x,y);
@@ -1871,7 +1873,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         {
           glPushMatrix();
 			 if(rec->obj->fRender)
-			   rec->obj->fRender(rec->obj,curState,NULL,&pickVLA);
+			   rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
 			 glPopMatrix();
         }
 
@@ -1887,7 +1889,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         {
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA);
+            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
           glPopMatrix();
         }
       
@@ -1930,19 +1932,21 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       if(I->StereoMode) {
         /*stereo*/
 
-
+        
         glDrawBuffer(GL_BACK_LEFT);
         glPushMatrix();
         ScenePrepareMatrix(1);
-        rec=NULL;
-        while(ListIterate(I->Obj,rec,next))
-          {
-            glPushMatrix();
-            glNormal3fv(normal);
-            if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,curState,NULL,NULL);
-            glPopMatrix();
-          }
+        for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
+          rec=NULL;
+          while(ListIterate(I->Obj,rec,next))
+            {
+              glPushMatrix();
+              glNormal3fv(normal);
+              if(rec->obj->fRender)
+                rec->obj->fRender(rec->obj,curState,NULL,NULL,pass);
+              glPopMatrix();
+            }
+        }
         glPushMatrix();
         glNormal3fv(normal);
         CGORenderGL(DebugCGO,NULL,NULL,NULL);
@@ -1954,6 +1958,17 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         ExecutiveRenderSelections(curState);
         EditorRender(curState);
         glPopMatrix();
+
+        rec=NULL;
+        while(ListIterate(I->Obj,rec,next)) /* render transparent */
+          {
+            glPushMatrix();
+            glNormal3fv(normal);
+            if(rec->obj->fRender)
+              rec->obj->fRender(rec->obj,curState,NULL,NULL,-1);
+            glPopMatrix();
+          }
+        
 
         glPopMatrix();
         
@@ -1961,15 +1976,17 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix();
         ScenePrepareMatrix(2);
-        rec=NULL;
-        while(ListIterate(I->Obj,rec,next))
-          {
-            glPushMatrix();
-            glNormal3fv(normal);
-            if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,curState,NULL,NULL);
-            glPopMatrix();
-          }
+        for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
+          rec=NULL;
+          while(ListIterate(I->Obj,rec,next))
+            {
+              glPushMatrix();
+              glNormal3fv(normal);
+              if(rec->obj->fRender)
+                rec->obj->fRender(rec->obj,curState,NULL,NULL,pass);
+              glPopMatrix();
+            }
+        }
 
         glPushMatrix();
         glNormal3fv(normal);
@@ -1982,22 +1999,34 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         EditorRender(curState);
         glPopMatrix();
 
+        rec=NULL;
+        while(ListIterate(I->Obj,rec,next)) /* render transparent */
+          {
+            glPushMatrix();
+            glNormal3fv(normal);
+            if(rec->obj->fRender)
+              rec->obj->fRender(rec->obj,curState,NULL,NULL,-1);
+            glPopMatrix();
+          }
+
         glPopMatrix();        
         glDrawBuffer(GL_BACK);
 
       } else {
         
         /* mono */
-        rec=NULL;
-        while(ListIterate(I->Obj,rec,next))
-          {
-            glPushMatrix();
-            glNormal3fv(normal);
-            if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,curState,NULL,NULL);
-            glPopMatrix();
-          }
-
+        for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
+          rec=NULL;
+          while(ListIterate(I->Obj,rec,next))
+            {
+              glPushMatrix();
+              glNormal3fv(normal);
+              if(rec->obj->fRender)
+                rec->obj->fRender(rec->obj,curState,NULL,NULL,pass);
+              glPopMatrix();
+            }
+        }
+        
         glPushMatrix();
         glNormal3fv(normal);
         CGORenderGL(DebugCGO,NULL,NULL,NULL);
@@ -2016,6 +2045,17 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           ENDFD;
 
         EditorRender(curState);
+
+        rec=NULL;
+        while(ListIterate(I->Obj,rec,next))/* render transparent */
+          {
+            glPushMatrix();
+            glNormal3fv(normal);
+            if(rec->obj->fRender)
+              rec->obj->fRender(rec->obj,curState,NULL,NULL,pass); 
+            glPopMatrix();
+          }
+
         glPopMatrix();
 
       }

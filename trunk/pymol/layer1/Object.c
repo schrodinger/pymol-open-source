@@ -49,7 +49,7 @@ void ObjectSetName(Object *I,char *name)
   strcpy(I->Name,name);
 }
 /*========================================================================*/
-void ObjectRenderUnitBox(struct Object *this,int frame,CRay *ray,Pickable **pick);
+void ObjectRenderUnitBox(struct Object *this,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectUpdate(struct Object *I);
 
 /*========================================================================*/
@@ -105,7 +105,8 @@ void ObjectInit(Object *I)
   I->RepVis[cRepExtent]=false;
 }
 /*========================================================================*/
-void ObjectRenderUnitBox(Object *this,int frame,CRay *ray,Pickable **pick)
+void ObjectRenderUnitBox(Object *this,int frame,
+                         CRay *ray,Pickable **pick,int pass)
 {
   if(PMGUI) {
     glBegin(GL_LINE_LOOP);

@@ -81,7 +81,7 @@ static int ObjectCGOGetNState(ObjectCGO *I) {
 
 /*========================================================================*/
 
-static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick)
+static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int pass)
 {
   ObjectCGOState *sobj = NULL;
   int a;
@@ -142,7 +142,7 @@ ObjectCGO *ObjectCGONew(void)
   I->Obj.type = cObjectCGO;
   I->Obj.fFree = (void (*)(struct Object *))ObjectCGOFree;
   I->Obj.fUpdate =(void (*)(struct Object *)) ObjectCGOUpdate;
-  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectCGORender;
+  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **,int))ObjectCGORender;
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectCGOGetNState;
 
   return(I);

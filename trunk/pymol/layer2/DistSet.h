@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct DistSet {
   void (*fUpdate)(struct DistSet *I);
-  void (*fRender)(struct DistSet *I,CRay *ray,Pickable **pick);
+  void (*fRender)(struct DistSet *I,CRay *ray,Pickable **pick,int pass);
   void (*fFree)(struct DistSet *I);
   void (*fInvalidateRep)(struct DistSet *I,int type,int level);
   struct ObjectDist *Obj;
