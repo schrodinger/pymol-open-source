@@ -16,18 +16,20 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Pixmap
 #define _H_Pixmap
 
+#include"PyMOLGlobals.h"
 
 /* for the sake of simplicity, all pixmaps are 32-bit RGBA */
 
 typedef struct {
+  PyMOLGlobals *G;
   int height,width;
   unsigned char *buffer;
 } CPixmap;
 
-void PixmapInit(CPixmap *I,int width,int height);
+void PixmapInit(PyMOLGlobals *G,CPixmap *I,int width,int height);
 
-CPixmap *PixmapNew(int width,int height);
-void PixmapInitFromBitmap(CPixmap *I,int width, int height,
+CPixmap *PixmapNew(PyMOLGlobals *G,int width,int height);
+void PixmapInitFromBitmap(PyMOLGlobals *G,CPixmap *I,int width, int height,
                              unsigned char *bitmap,
                              unsigned char *rgba);
 void PixmapPurge(CPixmap *I);

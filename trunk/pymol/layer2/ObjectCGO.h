@@ -32,14 +32,14 @@ typedef struct ObjectCGO {
   int NState;
 } ObjectCGO;
 
-ObjectCGO *ObjectCGONew(void);
-ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state);
-ObjectCGO *ObjectCGOFromCGO(ObjectCGO *obj,CGO *cgo,int state);
+ObjectCGO *ObjectCGONew(PyMOLGlobals *G);
+ObjectCGO *ObjectCGODefine(PyMOLGlobals *G,ObjectCGO *obj,PyObject *pycgo,int state);
+ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals *G,ObjectCGO *obj,CGO *cgo,int state);
 void ObjectCGORecomputeExtent(ObjectCGO *I);
 
 PyObject *ObjectCGOAsPyList(ObjectCGO *I);
-int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result,int version);
-ObjectCGO *ObjectCGONewVFontTest(char *text,float *pos);
+int ObjectCGONewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectCGO **result,int version);
+ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals *G,char *text,float *pos);
 
 #endif
 

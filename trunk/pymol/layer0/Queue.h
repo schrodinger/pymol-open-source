@@ -23,7 +23,7 @@ typedef struct {
   unsigned int mask,size;
 } CQueue;
 
-CQueue *QueueNew(unsigned int mask);
+CQueue *QueueNew(PyMOLGlobals *G,unsigned int mask);
 void QueueFree(CQueue *I);
 int QueueStrCheck(CQueue *I);
 

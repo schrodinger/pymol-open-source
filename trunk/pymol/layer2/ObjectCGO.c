@@ -31,9 +31,6 @@ Z* -------------------------------------------------------------------
 #include"VFont.h"
 
 static void ObjectCGOFree(ObjectCGO *I);
-CGO *ObjectCGOPyListFloatToCGO(PyObject *list);
-
-
 
 static PyObject *ObjectCGOStateAsPyList(ObjectCGOState *I)
 {
@@ -65,7 +62,7 @@ static PyObject *ObjectCGOAllStatesAsPyList(ObjectCGO *I)
 
 }
 
-static int ObjectCGOStateFromPyList(ObjectCGOState *I,PyObject *list,int version)
+static int ObjectCGOStateFromPyList(PyMOLGlobals *G,ObjectCGOState *I,PyObject *list,int version)
 {
   int ok=true;
   int ll;
@@ -80,14 +77,14 @@ static int ObjectCGOStateFromPyList(ObjectCGOState *I,PyObject *list,int version
     if(tmp == Py_None)
       I->std = NULL;
     else 
-      ok = ((I->std=CGONewFromPyList(PyList_GetItem(list,0),version))!=NULL);
+      ok = ((I->std=CGONewFromPyList(G,PyList_GetItem(list,0),version))!=NULL);
   }
   if(ok) {
     tmp = PyList_GetItem(list,1);
     if(tmp == Py_None)
       I->ray = NULL;
     else 
-      ok = ((I->ray=CGONewFromPyList(PyList_GetItem(list,1),version))!=NULL);
+      ok = ((I->ray=CGONewFromPyList(G,PyList_GetItem(list,1),version))!=NULL);
   }
   return(ok);
 }
@@ -100,14 +97,14 @@ static int ObjectCGOAllStatesFromPyList(ObjectCGO *I,PyObject *list,int version)
   if(ok) ok=PyList_Check(list);
   if(ok) {
     for(a=0;a<I->NState;a++) {
-      ok = ObjectCGOStateFromPyList(I->State+a,PyList_GetItem(list,a),version);
+      ok = ObjectCGOStateFromPyList(I->Obj.G,I->State+a,PyList_GetItem(list,a),version);
       if(!ok) break;
     }
   }
   return(ok);
 }
 
-int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result,int version)
+int ObjectCGONewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectCGO **result,int version)
 {
   int ok = true;
   ObjectCGO *I=NULL;
@@ -115,10 +112,10 @@ int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result,int version)
   if(ok) ok=(list!=Py_None);
   if(ok) ok=PyList_Check(list);
 
-  I=ObjectCGONew();
+  I=ObjectCGONew(G);
   if(ok) ok = (I!=NULL);
 
-  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(G,PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
   if(ok) ok = ObjectCGOAllStatesFromPyList(I,PyList_GetItem(list,2),version);
   if(ok) {
@@ -187,7 +184,7 @@ void ObjectCGORecomputeExtent(ObjectCGO *I)
 /*========================================================================*/
 static void ObjectCGOUpdate(ObjectCGO *I)
 {
-  SceneDirty();/* needed ?*/
+  SceneDirty(I->Obj.G);/* needed ?*/
 }
 
 /*========================================================================*/
@@ -206,7 +203,7 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
 
   ObjectPrepareContext(&I->Obj,ray);
 
-  color = ColorGet(I->Obj.Color);
+  color = ColorGet(I->Obj.G,I->Obj.Color);
 
   if(!pass) {
     if(I->Obj.RepVis[cRepCGO]) {
@@ -232,7 +229,7 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
         }
       } else {
         if(!sobj) {
-          if(I->NState&&SettingGet(cSetting_static_singletons)) 
+          if(I->NState&&SettingGet(I->Obj.G,cSetting_static_singletons)) 
             sobj = I->State;
         }
         if(ray) {    
@@ -255,11 +252,11 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
 }
 
 /*========================================================================*/
-ObjectCGO *ObjectCGONew(void)
+ObjectCGO *ObjectCGONew(PyMOLGlobals *G)
 {
-  OOAlloc(ObjectCGO);
+  OOAlloc(G,ObjectCGO);
 
-  ObjectInit((CObject*)I);
+  ObjectInit(G,(CObject*)I);
 
   I->State=VLAMalloc(10,sizeof(ObjectCGOState),5,true);
   I->NState=0;
@@ -274,7 +271,7 @@ ObjectCGO *ObjectCGONew(void)
 }
 
 /*========================================================================*/
-CGO *ObjectCGOPyListFloatToCGO(PyObject *list)
+static CGO *ObjectCGOPyListFloatToCGO(PyMOLGlobals *G,PyObject *list)
 {
   CGO *cgo=NULL;
   int len;
@@ -286,11 +283,11 @@ CGO *ObjectCGOPyListFloatToCGO(PyObject *list)
     if(len<0) len = 0;
     if(raw) {
       if(ok) {
-        cgo=CGONewSized(len);
+        cgo=CGONewSized(G,len);
         if(cgo) {
           result = CGOFromFloatArray(cgo,raw,len);
           if(result) {
-            PRINTF " FloatToCGO: error encountered on element %d\n", result ENDF
+            PRINTF " FloatToCGO: error encountered on element %d\n", result ENDF(G);
           }
           CGOStop(cgo);
         }
@@ -301,7 +298,7 @@ CGO *ObjectCGOPyListFloatToCGO(PyObject *list)
   return(cgo);
 }
 /*========================================================================*/
-ObjectCGO *ObjectCGOFromCGO(ObjectCGO *obj,CGO *cgo,int state)
+ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals *G,ObjectCGO *obj,CGO *cgo,int state)
 {
   ObjectCGO *I = NULL;
   int est;
@@ -311,7 +308,7 @@ ObjectCGO *ObjectCGOFromCGO(ObjectCGO *obj,CGO *cgo,int state)
       obj=NULL;
   }
   if(!obj) {
-    I=ObjectCGONew();
+    I=ObjectCGONew(G);
   } else {
     I=obj;
   }
@@ -336,30 +333,30 @@ ObjectCGO *ObjectCGOFromCGO(ObjectCGO *obj,CGO *cgo,int state)
   if(I) {
     ObjectCGORecomputeExtent(I);
   }
-  SceneChanged();
-  SceneCountFrames();
+  SceneChanged(I->Obj.G);
+  SceneCountFrames(I->Obj.G);
   return(I);
 }
 /*========================================================================*/
 
-ObjectCGO *ObjectCGONewVFontTest(char *text,float *pos)
+ObjectCGO *ObjectCGONewVFontTest(PyMOLGlobals *G,char *text,float *pos)
 {
   ObjectCGO *I = NULL;
   int font_id;
   CGO *cgo = NULL;
   float scale[2] = {1.0,1.0};
 
-  font_id = VFontLoad(1,1,1,true);
-  cgo = CGONew();
-  VFontWriteToCGO(font_id,cgo,text,pos,scale,NULL);
-  I = ObjectCGOFromCGO(NULL,cgo,0);
+  font_id = VFontLoad(G,1,1,1,true);
+  cgo = CGONew(G);
+  VFontWriteToCGO(G,font_id,cgo,text,pos,scale,NULL);
+  I = ObjectCGOFromCGO(G,NULL,cgo,0);
 
   return(I);
 }
 
 
 /*========================================================================*/
-ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
+ObjectCGO *ObjectCGODefine(PyMOLGlobals *G,ObjectCGO *obj,PyObject *pycgo,int state)
 { /* assumes blocked interpreter */
   ObjectCGO *I = NULL;
 
@@ -371,7 +368,7 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
       obj=NULL;
   }
   if(!obj) {
-    I=ObjectCGONew();
+    I=ObjectCGONew(G);
   } else {
     I=obj;
   }
@@ -390,7 +387,7 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
   if(PyList_Check(pycgo)) {
     if(PyList_Size(pycgo)) {
       if(PyFloat_Check(PyList_GetItem(pycgo,0))) {
-        cgo=ObjectCGOPyListFloatToCGO(pycgo);
+        cgo=ObjectCGOPyListFloatToCGO(G,pycgo);
         if(cgo) {
           est=CGOCheckForText(cgo);
           if(est) {
@@ -407,7 +404,7 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
             I->State[state].std=cgo;
           
         } else {
-          ErrMessage("ObjectCGO","could not parse CGO List.");
+          ErrMessage(G,"ObjectCGO","could not parse CGO List.");
         }
       }
     }
@@ -415,7 +412,7 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
   if(I) {
     ObjectCGORecomputeExtent(I);
   }
-  SceneChanged();
-  SceneCountFrames();
+  SceneChanged(G);
+  SceneCountFrames(G);
   return(I);
 }

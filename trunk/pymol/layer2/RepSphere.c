@@ -57,12 +57,13 @@ void RepSphereFree(RepSphere *I)
   FreeP(I->NT);
   FreeP(I->LastColor);
   FreeP(I->LastVisib);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   OOFreeP(I);
 }
 
 void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V,*vc;
   int c=I->N;
   int cc=0,*nt=NULL;
@@ -71,7 +72,7 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
   SphereRec *sp;
   float restart;
   float alpha;
-  alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_transparency);
+  alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_transparency);
 
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
@@ -105,7 +106,7 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
     }
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
-    int trans_pick_mode = SettingGet_i(I->R.cs->Setting,
+    int trans_pick_mode = SettingGet_i(G,I->R.cs->Setting,
                                        I->R.obj->Setting,
                                        cSetting_transparency_picking_mode);
     if(I->R.P&&((trans_pick_mode==1)||((trans_pick_mode==2)&&(alpha>0.9F)))) {
@@ -194,7 +195,7 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
     }
   } else if(PMGUI) {
     int use_dlst;
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
 
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
@@ -367,13 +368,14 @@ int RepSphereSameVis(RepSphere *I,CoordSet *cs)
 
 Rep *RepSphereNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,b,c,a1,c1,a2,i,j,k,h,l;
   float *v,*v0,*vc,vdw,v1[3];
   float restart;
   int *q, *s,q0,q1,q2;
   int *lv,*lc,*cc;
-  SphereRec *sp = TempPyMOLGlobals->Sphere->Sphere[0];
+  SphereRec *sp = G->Sphere->Sphere[0];
   int ds,*nt,flag;
   int *visFlag = NULL;
   MapType *map = NULL;
@@ -391,7 +393,7 @@ Rep *RepSphereNew(CoordSet *cs)
   float tn[3],vt1[3],vt2[3],xtn[3],*tn0,*tn1,*tn2;
 #endif
 
-  OOAlloc(RepSphere);
+  OOAlloc(G,RepSphere);
 
   
   obj = cs->Obj;
@@ -408,21 +410,21 @@ Rep *RepSphereNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
 
-  RepInit(&I->R);
-  ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
+  RepInit(G,&I->R);
+  ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
   if(ds<0) ds=0;
   if(ds>4) ds=4;
-  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
+  sp = G->Sphere->Sphere[ds];
 
-  one_color=SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
+  one_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
 
-  spheroid_scale=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_spheroid_scale);
+  spheroid_scale=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_spheroid_scale);
   if(spheroid_scale&&cs->Spheroid) 
     spheroidFlag=1;
   else
     spheroidFlag=0;
 
-  sphere_scale=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sphere_scale);
+  sphere_scale=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_scale);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
@@ -438,7 +440,7 @@ Rep *RepSphereNew(CoordSet *cs)
   
 
   I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
-  ErrChkPtr(I->VC);
+  ErrChkPtr(G,I->VC);
   I->NC=0;
   map_flag = Calloc(int,cs->NIndex);
 
@@ -447,13 +449,13 @@ Rep *RepSphereNew(CoordSet *cs)
   v=I->VC; 
   mf=map_flag;
 
-  if(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
-    sphere_add = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
+  if(SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
+    sphere_add = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
   }
   
-  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
+  if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
     I->R.P=Alloc(Pickable,cs->NIndex+1);
-    ErrChkPtr(I->R.P);
+    ErrChkPtr(G,I->R.P);
   }
 
   I->spheroidFlag=spheroidFlag;
@@ -478,11 +480,11 @@ Rep *RepSphereNew(CoordSet *cs)
           else
             c1=one_color;
           v0 = cs->Coord+3*a;			 
-          if(ColorCheckRamped(c1)) {
-            ColorGetRamped(c1,v0,v);
+          if(ColorCheckRamped(G,c1)) {
+            ColorGetRamped(G,c1,v0,v);
             v+=3;
           } else {
-            vc = ColorGet(c1); /* save new color */
+            vc = ColorGet(G,c1); /* save new color */
             *(v++)=*(vc++);
             *(v++)=*(vc++);
             *(v++)=*(vc++);
@@ -505,30 +507,30 @@ Rep *RepSphereNew(CoordSet *cs)
   }
 
 
-  I->cullFlag = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
+  I->cullFlag = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
   if(spheroidFlag) I->cullFlag=false;
   if((I->cullFlag<2)&&
-     (SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpting))) 
+     (SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpting))) 
     /* optimize build-time performance when sculpting */
     I->cullFlag=false;
   if((I->cullFlag<2)&&
-     (SettingGet(cSetting_roving_spheres)!=0.0F))
+     (SettingGet(G,cSetting_roving_spheres)!=0.0F))
     I->cullFlag=false;
   if(I->cullFlag) {
 	 I->V=(float*)mmalloc(sizeof(float)*I->NC*(sp->NVertTot*30)); /* double check 30 */
-	 ErrChkPtr(I->V);
+	 ErrChkPtr(G,I->V);
 
 	 I->NT=Alloc(int,cs->NIndex);
-	 ErrChkPtr(I->NT);
+	 ErrChkPtr(G,I->NT);
 
 	 visFlag = Alloc(int,sp->nDot);
-	 ErrChkPtr(visFlag);
+	 ErrChkPtr(G,visFlag);
 
-    map=MapNewFlagged(MAX_VDW*sphere_scale+sphere_add,cs->Coord,cs->NIndex,NULL,map_flag);
+    map=MapNewFlagged(G,MAX_VDW*sphere_scale+sphere_add,cs->Coord,cs->NIndex,NULL,map_flag);
     if(map) MapSetupExpress(map);
   } else {
 	 I->V=(float*)mmalloc(sizeof(float)*I->NC*(3+sp->NVertTot*6));
-	 ErrChkPtr(I->V);
+	 ErrChkPtr(G,I->V);
   }
 
   /* rendering primitives */
@@ -549,11 +551,11 @@ Rep *RepSphereNew(CoordSet *cs)
             c1=one_color;
 			 v0 = cs->Coord+3*a;
 			 vdw = cs->Obj->AtomInfo[a1].vdw*sphere_scale+sphere_add;
-          if(ColorCheckRamped(c1)) {
-            ColorGetRamped(c1,v0,v);
+          if(ColorCheckRamped(G,c1)) {
+            ColorGetRamped(G,c1,v0,v);
             v+=3;
           } else {
-            vc = ColorGet(c1);
+            vc = ColorGet(G,c1);
             *(v++)=*(vc++);
             *(v++)=*(vc++);
             *(v++)=*(vc++);

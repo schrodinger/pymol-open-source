@@ -25,9 +25,10 @@ Z* -------------------------------------------------------------------
 
 #include"Shaker.h"
 
-CShaker *ShakerNew(void)
+CShaker *ShakerNew(PyMOLGlobals *G)
 {
-  OOAlloc(CShaker);
+  OOAlloc(G,CShaker);
+  I->G=G;
   I->DistCon = VLAlloc(ShakerDistCon,1000);
   I->PyraCon = VLAlloc(ShakerPyraCon,1000);
   I->PlanCon = VLAlloc(ShakerPlanCon,1000);

@@ -36,7 +36,7 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
 {
   Rep *tmp = NULL;
 
-  PRINTFD(FB_Rep)
+  PRINTFD(I->G,FB_Rep)
     " RepRebuild-Debug: entered: rep %d I->fNew %p\n",rep,(void*)I->fNew
     ENDFD;
 
@@ -57,7 +57,7 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
 struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
 {
 
-  PRINTFD(FB_Rep)
+  PRINTFD(I->G,FB_Rep)
     " RepUpdate-Debug: entered: rep %d I->MaxInvalid %d\n",rep,I->MaxInvalid
     ENDFD;
 
@@ -108,8 +108,9 @@ void RepInvalidate(struct Rep *I,struct CoordSet *cs,int level)
   if(level>I->MaxInvalid) I->MaxInvalid=level;
 }
 /*========================================================================*/
-void RepInit(Rep *I)
+void RepInit(PyMOLGlobals *G,Rep *I)
 {
+  I->G = G;
   I->fInvalidate = RepInvalidate;
   I->fUpdate = RepUpdate;
   I->fRender = RepRenderBox;
@@ -124,7 +125,7 @@ void RepInit(Rep *I)
   I->displayList = 0;
 }
 /*========================================================================*/
-void RepFree(Rep *I)
+void RepPurge(Rep *I)
 {
   if(PMGUI) {
     if(I->displayList) {

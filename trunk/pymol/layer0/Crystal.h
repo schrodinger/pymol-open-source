@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 typedef struct { 
+  PyMOLGlobals *G;
   float Dim[3];
   float Angle[3]; /* stored in degrees for convenience */
   float RealToFrac[9];
@@ -31,13 +32,13 @@ typedef struct {
 } CCrystal;
 
 void CrystalFree(CCrystal *I);
-void CrystalInit(CCrystal *I);
-CCrystal *CrystalNew(void);
+void CrystalInit(PyMOLGlobals *G,CCrystal *I);
+CCrystal *CrystalNew(PyMOLGlobals *G);
 CCrystal *CrystalCopy(CCrystal *I);
 void CrystalUpdate(CCrystal *I);
 void CrystalDump(CCrystal *I);
 CGO *CrystalGetUnitCellCGO(CCrystal *I);
-CCrystal *CrystalNewFromPyList(PyObject *list);
+CCrystal *CrystalNewFromPyList(PyMOLGlobals *G,PyObject *list);
 int CrystalFromPyList(CCrystal *I,PyObject *list);
 PyObject *CrystalAsPyList(CCrystal *I);
 

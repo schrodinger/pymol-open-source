@@ -31,6 +31,7 @@ typedef struct CoordSet {
   void (*fAppendIndices)(struct CoordSet *I,int existingAtoms);
   void (*fExtendIndices)(struct CoordSet *I,int nAtom);
   void (*fInvalidateRep)(struct CoordSet *I,int type,int level);
+  PyMOLGlobals *G;
   ObjectMolecule *Obj;
   float *Coord;
   int *Color; 
@@ -65,19 +66,19 @@ int BondInOrder(BondType *a,int b1,int b2);
 int BondCompare(BondType *a,BondType *b);
 
 PyObject *CoordSetAsPyList(CoordSet *I);
-int CoordSetFromPyList(PyObject *list,CoordSet **cs);
+int CoordSetFromPyList(PyMOLGlobals *G,PyObject *list,CoordSet **cs);
 
-CoordSet *CoordSetNew(void);
-void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
+CoordSet *CoordSetNew(PyMOLGlobals *G);
+void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType *ai,
                              float *v,int cnt,PDBInfoRec *pdb_info);
-void CoordSetAtomToTERStrVLA(char **charVLA,int *c,AtomInfoType *ai,int cnt);
+void CoordSetAtomToTERStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType *ai,int cnt);
 CoordSet *CoordSetCopy(CoordSet *cs);
 
 void CoordSetTransform44f(CoordSet *I,float *mat);
 void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst);
 void CoordSetFracToReal(CoordSet *I,CCrystal *cryst);
 void CoordSetGetAverage(CoordSet *I,float *v0);
-PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v,int index);
+PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int index);
 int CoordSetGetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetSetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode);

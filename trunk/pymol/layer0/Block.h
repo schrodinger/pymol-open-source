@@ -16,11 +16,14 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Block
 #define _H_Block
 
+#include "PyMOLGlobals.h"
+
 typedef struct {
   int top,left,bottom,right;
 } BlockRect;
 
 typedef struct Block {
+  PyMOLGlobals *G;
   struct Block *next,*inside,*parent;
   void *reference;
   BlockRect rect,margin;
@@ -46,7 +49,7 @@ void BlockReshape(Block *block,int width, int height);
 void BlockFill(Block *I);
 void BlockGetSize(Block *I,int *width,int *height);
 void BlockOutline(Block *I);
-void BlockInit(Block *I);
+void BlockInit(PyMOLGlobals *G,Block *I);
 void BlockTranslate(Block *I,int dx,int dy);
 
 #endif

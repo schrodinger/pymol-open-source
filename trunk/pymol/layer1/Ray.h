@@ -16,24 +16,54 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Ray
 #define _H_Ray
 
+#include"Base.h"
 #include"Basis.h"
+#include"PyMOLGlobals.h"
 
 #define cRayMaxBasis 10
 
-typedef struct CRay {
-  void (*fSphere3fv)(struct CRay *ray,float *v,float r);
-  void (*fCylinder3fv)(struct CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);
-  void (*fCustomCylinder3fv)(struct CRay *ray,float *v1,float *v2,float r,float *c1,
+typedef struct _CRayAntiThreadInfo CRayAntiThreadInfo;
+typedef struct _CRayHashThreadInfo CRayHashThreadInfo;
+typedef struct _CRayThreadInfo     CRayThreadInfo;
+
+CRay *RayNew(PyMOLGlobals *G);
+void RayFree(CRay *I);
+void RayPrepare(CRay *I,float v0,float v1,float v2,
+                float v3,float v4,float v5,float *mat,float *rotMat,
+                float aspRat,int ray_width);
+void RayRender(CRay *I,int width,int height,unsigned int *image,
+               float front,float back,double timing,float angle);
+void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,
+                  char **charVLA,float front,float back,float fov,float angle);
+void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov);
+void RaySetTTT(CRay *I,int flag,float *ttt);
+void RaySetContext(CRay *I,int context);
+void RayApplyContexToNormal(CRay *I,float *v);
+void RayApplyContextToVertex(CRay *I,float *v);
+void RayRenderColorTable(CRay *I,int width,int height,int *image);
+int RayTraceThread(CRayThreadInfo *T);
+int RayGetNPrimitives(CRay *I);
+
+int RayHashThread(CRayHashThreadInfo *T);
+int RayAntiThread(CRayAntiThreadInfo *T);
+
+struct _CRay {
+  void (*fSphere3fv)( CRay *ray,float *v,float r);
+  void (*fCylinder3fv)( CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);
+  void (*fCustomCylinder3fv)( CRay *ray,float *v1,float *v2,float r,float *c1,
                              float *c2,int cap1,int cap2);
-  void (*fSausage3fv)(struct CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);
-  void (*fColor3fv)(struct CRay *ray,float *c);
-  void (*fTriangle3fv)(struct CRay *ray,
+  void (*fSausage3fv)( CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);
+  void (*fColor3fv)( CRay *ray,float *c);
+  void (*fTriangle3fv)( CRay *ray,
 							  float *v1,float *v2,float *v3,
 							  float *n1,float *n2,float *n3,
 							  float *c1,float *c2,float *c3);
-  void (*fWobble)(struct CRay *ray,int mode,float *par);
-  void (*fTransparentf)(struct CRay *ray,float t);
-  void (*fCharacter)(struct CRay *ray,int char_id,float xorig,float yorig,float advance);
+  void (*fWobble)( CRay *ray,int mode,float *par);
+  void (*fTransparentf)( CRay *ray,float t);
+  void (*fCharacter)( CRay *ray,int char_id,float xorig,float yorig,float advance);
+
+  /* everything below should be private */
+  PyMOLGlobals *G;
   CPrimitive *Primitive;
   int NPrimitive;
   CBasis *Basis;
@@ -56,66 +86,8 @@ typedef struct CRay {
   float PixelRadius;
   float min_box[2];
   float max_box[2];
-} CRay;
+};
 
-typedef struct {
-  CRay *ray;
-  int width,height;
-  unsigned int *image;
-  float front,back;
-  unsigned int fore_mask;
-  float *bkrd;
-  unsigned int background;
-  int border;
-  int phase, n_thread;
-  float spec_vector[3];
-  int x_start,x_stop;
-  int y_start,y_stop;
-  unsigned int *edging;
-  unsigned int edging_cutoff;
-} CRayThreadInfo;
-
-typedef struct {
-  CBasis *basis;
-  int *vert2prim;
-  CPrimitive *prim;
-  float *clipBox;
-  unsigned int *image;
-  unsigned int background;
-  unsigned int bytes;
-  int phase;
-  CRay *ray;
-} CRayHashThreadInfo;
-
-typedef struct {
-  unsigned int *image;
-  unsigned int *image_copy;
-  unsigned int width,height;
-  int mag;
-  int phase,n_thread;
-  CRay *ray;
-} CRayAntiThreadInfo;
-
-CRay *RayNew(void);
-void RayFree(CRay *I);
-void RayPrepare(CRay *I,float v0,float v1,float v2,
-                float v3,float v4,float v5,float *mat,float *rotMat,
-                float aspRat,int ray_width);
-void RayRender(CRay *I,int width,int height,unsigned int *image,
-               float front,float back,double timing,float angle);
-void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,
-                  char **charVLA,float front,float back,float fov,float angle);
-void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov);
-void RaySetTTT(CRay *I,int flag,float *ttt);
-void RaySetContext(CRay *I,int context);
-void RayApplyContexToNormal(CRay *I,float *v);
-void RayApplyContextToVertex(CRay *I,float *v);
-void RayRenderColorTable(CRay *I,int width,int height,int *image);
-int RayTraceThread(CRayThreadInfo *T);
-int RayGetNPrimitives(CRay *I);
-
-int RayHashThread(CRayHashThreadInfo *T);
-int RayAntiThread(CRayAntiThreadInfo *T);
 
 #endif
 

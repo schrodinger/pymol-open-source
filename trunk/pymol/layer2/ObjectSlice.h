@@ -61,11 +61,11 @@ typedef struct ObjectSlice {
   int NState;
 } ObjectSlice;
 
-ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj, ObjectMap* map,int state,int map_state);
+ObjectSlice *ObjectSliceFromMap(PyMOLGlobals *G,ObjectSlice * obj, ObjectMap* map,int state,int map_state);
 /*void ObjectSliceDump(ObjectSlice *I,char *fname,int state);*/
 
 PyObject *ObjectSliceAsPyList(ObjectSlice *I);
-int ObjectSliceNewFromPyList(PyObject *list,ObjectSlice **result);
+int ObjectSliceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSlice **result);
 
 ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice *I,int state);
 void ObjectSliceStateValue2RGB(ObjectSliceState * s,float normalized_value,float * result);

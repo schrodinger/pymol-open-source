@@ -26,6 +26,6 @@ void ClassPyMOLFree(ClassPyMOL *I);
 
 /* developer/transient privates */
 
-struct PyMOLGlobals *ClassPyMOLGetGlobals(ClassPyMOL *I);
+struct _PyMOLGlobals *ClassPyMOLGetGlobals(ClassPyMOL *I);
 
 #endif

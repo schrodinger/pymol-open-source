@@ -17,6 +17,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Font
 #define _H_Font
 
+#include"PyMOLGlobals.h"
+
 #define cFontNULL        0
 #define cFontGLUT        1
 #define cFontBitmap      2
@@ -28,20 +30,20 @@ Z* -------------------------------------------------------------------
 #define cFontModePixels    0
 #define cFontModeSpacial   1
 
-struct CFont;
-struct CRay;
+typedef struct _CFont CFont;
 
-typedef char *FontRenderOpenGLFn(struct CFont *,char *);
-typedef char *FontRenderRayFn(struct CRay *ray,struct CFont *,char *);
+typedef char *FontRenderOpenGLFn(CFont *,char *);
+typedef char *FontRenderRayFn(CRay *ray,CFont *,char *);
 
-typedef struct CFont {
+struct _CFont {
+  PyMOLGlobals *G;
   int TextID;
-  void (*fFree)(struct CFont *);
+  void (*fFree)(CFont *);
   FontRenderOpenGLFn *fRenderOpenGL;
   FontRenderRayFn *fRenderRay;
-} CFont;
+};
 
-int FontInit(CFont *I);
+int FontInit(PyMOLGlobals *G,CFont *I);
 
 void FontPurge(CFont *I);
 

@@ -58,8 +58,8 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
 
   if(st&&(*st)) {
     
-    glColor3fv(TextGetColor());
-    glRasterPos4fv(TextGetPos());
+    glColor3fv(TextGetColor(I->Font.G));
+    glRasterPos4fv(TextGetPos(I->Font.G));
     FontGLUTSave(I);
     
     first = font_info->first;
@@ -80,10 +80,10 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
               unsigned char *rgba;
               fprnt.u.i.text_id = I->Font.TextID;
               rgba = fprnt.u.i.color;
-              TextGetColorUChar(rgba,rgba+1,rgba+2,rgba+3);
+              TextGetColorUChar(I->Font.G,rgba,rgba+1,rgba+2,rgba+3);
               fprnt.u.i.ch = c;
               {
-                int id = CharacterFind(&fprnt);
+                int id = CharacterFind(I->Font.G,&fprnt);
                 if(!id) {
                   id = CharacterNewFromBitmap(ch->width, 
                                               ch->height, 
@@ -117,7 +117,7 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
     last = first + font_info->num_chars;
     fprnt.u.i.text_id = I->Font.TextID;
     rgba = fprnt.u.i.color;
-    TextGetColorUChar(rgba,rgba+1,rgba+2,rgba+3);
+    TextGetColorUChar(I->Font.G,rgba,rgba+1,rgba+2,rgba+3);
 
     while((c=*(st++))) {
       if ((c >= first) && (c < last))
@@ -126,9 +126,9 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
           if (ch) {
             fprnt.u.i.ch = c;
             {
-              int id = CharacterFind(&fprnt);
+              int id = CharacterFind(I->Font.G,&fprnt);
               if(!id) {
-                id = CharacterNewFromBitmap(ch->width, 
+                id = CharacterNewFromBitmap(I->Font.G,ch->width, 
                                           ch->height, 
                                           (unsigned char*)ch->bitmap,
                                           &fprnt);
@@ -150,10 +150,10 @@ void FontGLUTFree(CFont *I)
   OOFreeP(I);
 }
 
-CFont* FontGLUTNew(int font_code)
+CFont* FontGLUTNew(PyMOLGlobals *G,int font_code)
 {  
-  OOAlloc(CFontGLUT);
-  FontInit(&I->Font);
+  OOAlloc(G,CFontGLUT);
+  FontInit(G,&I->Font);
   I->Font.fRenderOpenGL = (FontRenderOpenGLFn*)FontGLUTRenderOpenGL;
   I->Font.fRenderRay = (FontRenderRayFn*)FontGLUTRenderRay;
   I->Font.fFree = FontGLUTFree;

@@ -80,7 +80,7 @@ void RepSurfaceFree(RepSurface *I)
   CGOFree(I->debug);
   VLAFreeP(I->T);
   VLAFreeP(I->S);
-  RepFree(&I->R); /* unnecessary, but a good idea */
+  RepPurge(&I->R); /* unnecessary, but a good idea */
   /*  VLAFreeP(I->N);*/
   OOFreeP(I);
 }
@@ -135,6 +135,7 @@ static int check_and_add(int *cache, int spacing, int t0,int t1) {
 
 void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   float *vn=I->VN;
   float *vc=I->VC;
@@ -145,7 +146,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   float *col;
   float alpha;
   int t_mode;
-  alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency);
+  alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
@@ -156,16 +157,16 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 
       float radius;
       
-      radius = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_radius);
+      radius = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_radius);
       
       if(radius==0.0F) {
-        radius = ray->PixelRadius*SettingGet_f(I->R.cs->Setting,
+        radius = ray->PixelRadius*SettingGet_f(G,I->R.cs->Setting,
                                                I->R.obj->Setting,
                                                cSetting_dot_width)/1.4142F;
       }
       
       if(I->oneColorFlag) {
-        ray->fColor3fv(ray,ColorGet(I->oneColor));
+        ray->fColor3fv(ray,ColorGet(G,I->oneColor));
       }
       
       if(c) 
@@ -185,7 +186,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       c=I->NT;
 
       if(I->oneColorFlag) {
-        col=ColorGet(I->oneColor);
+        col=ColorGet(G,I->oneColor);
         while(c--)
           {
             if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
@@ -214,17 +215,17 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       int spacing = 10;
       int *cache = Calloc(int,spacing*(I->N+1));
       
-      radius = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_radius);
+      radius = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_radius);
 
       if(radius==0.0F) {
-        radius = ray->PixelRadius*SettingGet_f(I->R.cs->Setting,
+        radius = ray->PixelRadius*SettingGet_f(G,I->R.cs->Setting,
                                                I->R.obj->Setting,
                                                cSetting_mesh_width)/2.0F;
       }
 
       c=I->NT;      
       if(I->oneColorFlag) {
-        col=ColorGet(I->oneColor);
+        col=ColorGet(G,I->oneColor);
         while(c--)
           {
             t0 = (*t);
@@ -272,14 +273,14 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 	 if(I->Type==1) {
       /* no triangle information, so we're rendering dots only */
 
-      int normals = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
-      int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
+      int normals = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
+      int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
       int use_dlst;
       if(!normals)
-        SceneResetNormal(true);
+        SceneResetNormal(G,true);
       if(!lighting)
         glDisable(GL_LIGHTING);
-      use_dlst = (int)SettingGet(cSetting_use_display_lists);
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
@@ -293,14 +294,14 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           }
         }
         
-        glPointSize(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
+        glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
         
         if(c) {
           glColor3f(1.0,0.0,0.0);
           glBegin(GL_POINTS);
-          SceneResetNormal(true);
+          SceneResetNormal(G,true);
           if(I->oneColorFlag) {
-            glColor3fv(ColorGet(I->oneColor));
+            glColor3fv(ColorGet(G,I->oneColor));
           }
           
           while(c--)
@@ -330,21 +331,21 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       }
     } else if(I->Type==2) { /* rendering triangle mesh */
       
-      int normals = SettingGet_b(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
-      int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
+      int normals = SettingGet_b(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
+      int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
       int use_dlst;
       if(!normals)
-        SceneResetNormal(true);
+        SceneResetNormal(G,true);
       if(!lighting)
         glDisable(GL_LIGHTING);
       
-      use_dlst = (int)SettingGet(cSetting_use_display_lists);
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
         
         
-        glLineWidth(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
+        glLineWidth(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
         
         if(use_dlst) {
           if(!I->R.displayList) {
@@ -359,7 +360,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         c=I->NT;
         if(c) {
           if(I->oneColorFlag) {
-            glColor3fv(ColorGet(I->oneColor));
+            glColor3fv(ColorGet(G,I->oneColor));
             while(c--) {
               if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
                  ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
@@ -454,7 +455,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       
       if(alpha!=1.0) {
         
-        t_mode  = SettingGet_i(I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency_mode);
+        t_mode  = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency_mode);
           
         if(t_mode) {
             
@@ -535,7 +536,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 
           c=n_tri;
           if(I->oneColorFlag) {
-            col=ColorGet(I->oneColor);
+            col=ColorGet(G,I->oneColor);
           
             glColor4f(col[0],col[1],col[2],alpha);
             glBegin(GL_TRIANGLES);
@@ -587,7 +588,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
                       glDepthMask(GL_FALSE);*/
           if(I->allVisibleFlag) {
             if(I->oneColorFlag) {
-              col = ColorGet(I->oneColor);
+              col = ColorGet(G,I->oneColor);
               glColor4f(col[0],col[1],col[2],alpha);
               c=*(s++);
               while(c) {
@@ -640,7 +641,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               glBegin(GL_TRIANGLES);
             
               if(I->oneColorFlag) {
-                col = ColorGet(I->oneColor);
+                col = ColorGet(G,I->oneColor);
                 glColor4f(col[0],col[1],col[2],alpha);
                 while(c--) {
 
@@ -695,8 +696,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       } else { /* opaque */
 
         int use_dlst,simplify=0;
-        use_dlst = (int)SettingGet(cSetting_use_display_lists);
-        simplify = (int)SettingGet(cSetting_simplify_display_lists);
+        use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+        simplify = (int)SettingGet(G,cSetting_simplify_display_lists);
         if(use_dlst&&I->R.displayList) {
           glCallList(I->R.displayList);
         } else { 
@@ -713,7 +714,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           if(I->allVisibleFlag) {
             if(I->oneColorFlag) {
               if(use_dlst&&simplify) { /* simplify: try to help display list optimizer */
-                glColor3fv(ColorGet(I->oneColor));
+                glColor3fv(ColorGet(G,I->oneColor));
                 c=*(s++);
                 while(c) {
                   glBegin(GL_TRIANGLES); 
@@ -735,7 +736,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
                   c=*(s++);
                 }
               } else {
-                glColor3fv(ColorGet(I->oneColor));
+                glColor3fv(ColorGet(G,I->oneColor));
                 c=*(s++);
                 while(c) {
                   glBegin(GL_TRIANGLE_STRIP);
@@ -809,7 +810,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
             if(c) {
               glBegin(GL_TRIANGLES);
               if(I->oneColorFlag) {
-                glColor3fv(ColorGet(I->oneColor));
+                glColor3fv(ColorGet(G,I->oneColor));
                 while(c--) {
                   if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
                      ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
@@ -856,7 +857,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         }
       }
     }
-    if(SettingGet(cSetting_surface_debug)) {
+    if(SettingGet(G,cSetting_surface_debug)) {
       t=I->T;
       c=I->NT;
       if(c) {
@@ -914,7 +915,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       if(c) {
         glColor3f(1.0,0.0,0.0);
         glBegin(GL_LINES);
-        SceneResetNormal(true);
+        SceneResetNormal(G,true);
         while(c--)
           {
             glVertex3fv(v);
@@ -960,6 +961,7 @@ int RepSurfaceSameVis(RepSurface *I,CoordSet *cs)
 
 void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   MapType *map;
   int a,i0,i,j,c1;
   float *v0,*vc,*c0;
@@ -996,15 +998,15 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   AtomInfoType *ai2,*ai1;
 
   obj=cs->Obj;
-  surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
-  ramp_above  = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_ramp_above_mode);
-  surface_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_surface_color);
+  surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+  ramp_above  = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_ramp_above_mode);
+  surface_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_surface_color);
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
-  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
-  I->proximity = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
-  carve_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
-  clear_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_clear_cutoff);
+  probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+  I->proximity = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
+  carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
+  clear_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_cutoff);
   cutoff = I->max_vdw+2*probe_radius;
 
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
@@ -1022,10 +1024,11 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   if(I->N) {
 
     if(carve_cutoff>0.0F) {
-      carve_state = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
-      carve_selection = SettingGet_s(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
+      carve_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
+      carve_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
       if(carve_selection) 
-        carve_map = SelectorGetSpacialMapFromSeleCoord(SelectorIndexByName(carve_selection),
+        carve_map = SelectorGetSpacialMapFromSeleCoord(G,
+                                                       SelectorIndexByName(G,carve_selection),
                                                        carve_state,
                                                        carve_cutoff,&carve_vla);
       if(carve_map) 
@@ -1034,10 +1037,11 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     }
 
     if(clear_cutoff>0.0F) {
-      clear_state = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_clear_state) - 1;
-      clear_selection = SettingGet_s(cs->Setting,obj->Obj.Setting,cSetting_surface_clear_selection);
+      clear_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_state) - 1;
+      clear_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_selection);
       if(clear_selection) 
-        clear_map = SelectorGetSpacialMapFromSeleCoord(SelectorIndexByName(clear_selection),
+        clear_map = SelectorGetSpacialMapFromSeleCoord(G,
+                                                       SelectorIndexByName(G,clear_selection),
                                                        clear_state,
                                                        clear_cutoff,&clear_vla);
       if(clear_map) 
@@ -1050,7 +1054,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     if(!I->Vis) I->Vis = Alloc(int,I->N);
     vi=I->Vis;
     
-    if(ColorCheckRamped(surface_color)) {
+    if(ColorCheckRamped(G,surface_color)) {
       I->oneColorFlag=false;
     } else {
       I->oneColorFlag=true;
@@ -1071,7 +1075,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       ap++;
     }
     
-    map=MapNewFlagged(2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present);
+    map=MapNewFlagged(G,2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present);
     MapSetupExpress(map);
     
     for(a=0;a<cs->NIndex;a++)
@@ -1103,7 +1107,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       
     
     /* now, assign colors to each point */
-    map=MapNewFlagged(cutoff,cs->Coord,cs->NIndex,NULL,present);
+    map=MapNewFlagged(G,cutoff,cs->Coord,cs->NIndex,NULL,present);
     if(map)
       {
         MapSetupExpress(map);
@@ -1194,10 +1198,10 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                 }
               }
             }
-            if(ColorCheckRamped(surface_color)) {
+            if(ColorCheckRamped(G,surface_color)) {
               c1 = surface_color;
             }
-            if(ColorCheckRamped(c1)) {
+            if(ColorCheckRamped(G,c1)) {
               I->oneColorFlag=false;
               switch(ramp_above) {
               case 1:
@@ -1210,10 +1214,10 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                 v_pos = v0;
                 break;
               }
-              ColorGetRamped(c1,v_pos,vc);
+              ColorGetRamped(G,c1,v_pos,vc);
               vc+=3;
             } else {
-              c0 = ColorGet(c1);
+              c0 = ColorGet(G,c1);
               
               *(vc++) = *(c0++);
               *(vc++) = *(c0++);
@@ -1256,7 +1260,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 
 Rep *RepSurfaceNew(CoordSet *cs)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,b,i,j,c;
   MapType *map,*solv_map;
@@ -1296,19 +1300,19 @@ Rep *RepSurfaceNew(CoordSet *cs)
   float v1[3];
   float vdw;
 #endif
-  OOAlloc(RepSurface);
+  OOAlloc(G,RepSurface);
 
   obj = cs->Obj;
 
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj);
 
-  surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
-  surface_type = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_type);
-  surface_solvent = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
+  surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+  surface_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_type);
+  surface_solvent = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
   I->Type = surface_type;
 
-  trim_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_trim_cutoff);
-  trim_factor = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_trim_factor);
+  trim_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_trim_cutoff);
+  trim_factor = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_trim_factor);
 
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
@@ -1330,52 +1334,52 @@ Rep *RepSurfaceNew(CoordSet *cs)
     return(NULL); /* skip if no thing visible */
   }
 
-  RepInit(&I->R);
+  RepInit(G,&I->R);
 
-  surface_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
+  surface_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
   if(surface_quality>=4) { /* totally impractical */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
     sp = G->Sphere->Sphere[4];
     ssp = G->Sphere->Sphere[4];
     circumscribe = 120;
   } else if(surface_quality>=3) { /* nearly impractical */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
     sp = G->Sphere->Sphere[4];
     ssp = G->Sphere->Sphere[3];
     circumscribe = 90;
   } else if(surface_quality>=2) { /* nearly perfect */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
     sp = G->Sphere->Sphere[3];
     ssp = G->Sphere->Sphere[3];
     circumscribe = 60;
   } else if(surface_quality>=1) { /* good */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best);
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best);
     sp = G->Sphere->Sphere[2];
     ssp = G->Sphere->Sphere[3];
   } else if(!surface_quality) { /* 0 - normal */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_normal);
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_normal);
     sp = G->Sphere->Sphere[1];
     ssp = G->Sphere->Sphere[2];
   } else if(surface_quality==-1) { /* -1 */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
     sp = G->Sphere->Sphere[1];
     ssp = G->Sphere->Sphere[2];
   } else if(surface_quality==-2) { /* -2 god awful*/
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor)*1.5F;
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_poor)*1.5F;
     sp = G->Sphere->Sphere[1];
     ssp = G->Sphere->Sphere[1];
   } else if(surface_quality==-3) { /* -3 miserable */
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_miserable);
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_miserable);
     sp = G->Sphere->Sphere[1];
     ssp = G->Sphere->Sphere[1];
   } else {
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_miserable)*1.18F;
+    minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_miserable)*1.18F;
     sp = G->Sphere->Sphere[0];
     ssp = G->Sphere->Sphere[1];
   }
 
 
-  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+  probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   if(!surface_solvent) {
     if(probe_radius<(2.5F*minimum_sep)) {
       probe_radius = 2.5F*minimum_sep;
@@ -1439,20 +1443,21 @@ Rep *RepSurfaceNew(CoordSet *cs)
   }
   if(SurfaceFlag) {
       
-	 OrthoBusyFast(0,1);
+	 OrthoBusyFast(G,0,1);
 
     n_present = cs->NIndex;
 
-    carve_selection = SettingGet_s(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
-    carve_cutoff = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
+    carve_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
+    carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
     if((!carve_selection)||(!carve_selection[0]))
        carve_cutoff=0.0F;
     if(carve_cutoff>0.0F) {
-      carve_state = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
+      carve_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
       carve_cutoff += 2*I->max_vdw+probe_radius;
 
       if(carve_selection) 
-        carve_map = SelectorGetSpacialMapFromSeleCoord(SelectorIndexByName(carve_selection),
+        carve_map = SelectorGetSpacialMapFromSeleCoord(G,
+                                                       SelectorIndexByName(G,carve_selection),
                                                        carve_state,
                                                        carve_cutoff,
                                                        &carve_vla);
@@ -1480,7 +1485,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
         ap++;
       }
 
-      map=MapNewFlagged(2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
+      map=MapNewFlagged(G,2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
       MapSetupExpress(map);
       
       for(a=0;a<cs->NIndex;a++)
@@ -1551,9 +1556,9 @@ Rep *RepSurfaceNew(CoordSet *cs)
 	 I->VN=Alloc(float,(MaxN+1)*3);
 
     if(!(I->V&&I->VN)) { /* bail out point -- try to reduce crashes */
-      PRINTFB(FB_RepSurface,FB_Errors)
+      PRINTFB(G,FB_RepSurface,FB_Errors)
         "Error-RepSurface: insufficient memory to calculate surface at this quality.\n"
-        ENDFB;
+        ENDFB(G);
       FreeP(I->V);
       FreeP(I->VN);
       FreeP(present);
@@ -1570,11 +1575,11 @@ Rep *RepSurfaceNew(CoordSet *cs)
     RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present,circumscribe);
 
     if(!surface_solvent) {
-      map=MapNewFlagged(I->max_vdw+probe_rad_more,cs->Coord,cs->NIndex,extent,present);
+      map=MapNewFlagged(G,I->max_vdw+probe_rad_more,cs->Coord,cs->NIndex,extent,present);
       
-      solv_map=MapNew(probe_rad_less,I->Dot,I->NDot,extent);
+      solv_map=MapNew(G,probe_rad_less,I->Dot,I->NDot,extent);
       
-      /*    I->debug=CGONew();
+      /*    I->debug=CGONew(G);
             
       CGOBegin(I->debug,GL_POINTS);
       for(a=0;a<I->NDot;a++)
@@ -1598,7 +1603,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
             
             for(a=0;a<I->NDot;a++)
               {
-                OrthoBusyFast(a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
+                OrthoBusyFast(G,a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
                 for(b=0;b<sp->nDot;b++)
                   {
                     register int ii;
@@ -1719,9 +1724,9 @@ Rep *RepSurfaceNew(CoordSet *cs)
     CGOEnd(I->debug);
     */
 
-    PRINTFB(FB_RepSurface,FB_Details)
+    PRINTFB(G,FB_RepSurface,FB_Details)
       " RepSurface: %i surface points.\n",I->N
-      ENDFB;
+      ENDFB(G);
 
     if(I->N)
       {
@@ -1732,7 +1737,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
           repeat_flag=false;
           
           for(a=0;a<I->N;a++) dot_flag[a]=1;
-          map=MapNew(minimum_sep,I->V,I->N,extent);
+          map=MapNew(G,minimum_sep,I->V,I->N,extent);
           MapSetupExpress(map);		  
           v=I->V;
           vn=I->VN;
@@ -1808,7 +1813,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
           repeat_flag=false;
           
           for(a=0;a<I->N;a++) dot_flag[a]=1;
-          map=MapNew(neighborhood,I->V,I->N,extent);
+          map=MapNew(G,neighborhood,I->V,I->N,extent);
           MapSetupExpress(map);		  
           v=I->V;
           vn=I->VN;
@@ -1884,27 +1889,27 @@ Rep *RepSurfaceNew(CoordSet *cs)
   
 
 
-    PRINTFD(FB_RepSurface)
+    PRINTFD(G,FB_RepSurface)
       " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
       ENDFD;
 
 	 RepSurfaceColor(I,cs);
 
-    PRINTFD(FB_RepSurface)
+    PRINTFD(G,FB_RepSurface)
       " RepSurfaceNew-DEBUG: %i surface points after coloring.\n",I->N
       ENDFD;
 
-	 OrthoBusyFast(3,5);
+	 OrthoBusyFast(G,3,5);
 
     if(I->N) {
       if(surface_type!=1) { /* not a dot surface... */
         float cutoff = minimum_sep*5.0F;
         if((cutoff>probe_radius)&&(!surface_solvent))
           cutoff = probe_radius;
-        I->T=TrianglePointsToSurface(I->V,I->VN,I->N,cutoff,&I->NT,&I->S,extent);
-        PRINTFB(FB_RepSurface,FB_Details)
+        I->T=TrianglePointsToSurface(G,I->V,I->VN,I->N,cutoff,&I->NT,&I->S,extent);
+        PRINTFB(G,FB_RepSurface,FB_Details)
           " RepSurface: %i triangles.\n",I->NT
-          ENDFB;
+          ENDFB(G);
       }
     } else {
       I->V = ReallocForSure(I->V,float,1);
@@ -1917,7 +1922,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   VLAFreeP(carve_vla);
   if(I->debug)
     CGOStop(I->debug);
-  OrthoBusyFast(4,4);
+  OrthoBusyFast(G,4,4);
   FreeP(present);
   return((void*)(struct Rep*)I);
 }
@@ -1927,6 +1932,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                               float *extent,int *present,
                               int circumscribe)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,b,c=0,flag,i,j,ii,jj;
   float *v,*v0,vdw,*v1,*v2;
@@ -1947,23 +1953,23 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
   
   obj = cs->Obj;
 
-  surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+  surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
-  surface_solvent = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
+  surface_solvent = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
 
-  cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
+  cavity_cull = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 
   stopDot = cs->NIndex*sp->nDot+2*circumscribe;
   I->Dot=(float*)mmalloc(sizeof(float)*(stopDot+1)*3);
   I->DotNormal=(float*)mmalloc(sizeof(float)*(stopDot+1)*3);
-  ErrChkPtr(I->Dot);
-  ErrChkPtr(I->DotNormal);
+  ErrChkPtr(G,I->Dot);
+  ErrChkPtr(G,I->DotNormal);
 
   probe_radius_plus = probe_radius * 1.5F;
 
   I->NDot=0;
-  map=MapNewFlagged(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
+  map=MapNewFlagged(G,I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
   if(map)
 	 {
 		MapSetupExpress(map);
@@ -1972,7 +1978,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
       n=I->DotNormal;
 		for(a=0;a<cs->NIndex;a++)
 		  {
-			 OrthoBusyFast(a,cs->NIndex*5);
+			 OrthoBusyFast(G,a,cs->NIndex*5);
 
           ai1 = obj->AtomInfo+cs->IdxToAtm[a];
           if(present)
@@ -2067,7 +2073,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
       /* for each pair of proximal atoms, circumscribe a circle for their intersection */
       
       if(circumscribe&&(!surface_solvent))
-        map2=MapNewFlagged(2*(I->max_vdw+probe_radius),cs->Coord,cs->NIndex,extent,present);
+        map2=MapNewFlagged(G,2*(I->max_vdw+probe_radius),cs->Coord,cs->NIndex,extent,present);
       if(map2)
         {
           MapSetupExpress(map2);
@@ -2221,13 +2227,13 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 
   if((cavity_cull>0)&&(probe_radius>0.75F)&&(!surface_solvent)) {
 	 dot_flag=Alloc(int,I->NDot);
-	 ErrChkPtr(dot_flag);
+	 ErrChkPtr(G,dot_flag);
 	 for(a=0;a<I->NDot;a++) {
 		dot_flag[a]=0;
 	 }
 	 dot_flag[maxDot]=1; /* this guarantees that we have a valid dot */
 
-	 map=MapNew(probe_radius_plus,I->Dot,I->NDot,extent);
+	 map=MapNew(G,probe_radius_plus,I->Dot,I->NDot,extent);
 	 if(map)
 		{
 		  MapSetupExpress(map);		  
@@ -2295,7 +2301,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 	 FreeP(dot_flag);
   }
 
-  PRINTFD(FB_RepSurface)
+  PRINTFD(G,FB_RepSurface)
     " GetSolventDots-DEBUG: %d->%d\n",c,I->NDot
     ENDFD;
            

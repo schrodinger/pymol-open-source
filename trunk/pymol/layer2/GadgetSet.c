@@ -167,7 +167,7 @@ int GadgetSetFetchNormal(GadgetSet *I,float *inp,float *out)
 }
 
 
-int GadgetSetFromPyList(PyObject *list,GadgetSet **gs,int version)
+int GadgetSetFromPyList(PyMOLGlobals *G,PyObject *list,GadgetSet **gs,int version)
 {
   int ok = true;
   int ll;
@@ -183,7 +183,7 @@ int GadgetSetFromPyList(PyObject *list,GadgetSet **gs,int version)
     *gs = NULL;
   } else {
   
-    if(ok) I=GadgetSetNew();
+    if(ok) I=GadgetSetNew(G);
     if(ok) ok = (I!=NULL);
     if(ok) ok = (list!=NULL);
     if(ok) ok = PyList_Check(list);
@@ -201,10 +201,10 @@ int GadgetSetFromPyList(PyObject *list,GadgetSet **gs,int version)
     if(ok&&I->NColor) ok = PConvPyListToFloatVLA(PyList_GetItem(list,5),&I->Color);
 
     if(ok) ok = ((tmp = PyList_GetItem(list,6))!=NULL);
-    if(ok&&(tmp!=Py_None)) ok = ((I->ShapeCGO=CGONewFromPyList(tmp,version))!=NULL);
+    if(ok&&(tmp!=Py_None)) ok = ((I->ShapeCGO=CGONewFromPyList(I->G,tmp,version))!=NULL);
 
     if(ok) ok = ((tmp = PyList_GetItem(list,7))!=NULL);
-    if(ok&&(tmp!=Py_None)) ok = ((I->PickShapeCGO=CGONewFromPyList(tmp,version))!=NULL);
+    if(ok&&(tmp!=Py_None)) ok = ((I->PickShapeCGO=CGONewFromPyList(I->G,tmp,version))!=NULL);
 
     if(ok&&I->ShapeCGO) if(CGOCheckForText(I->ShapeCGO)) {
       CGOPreloadFonts(I->ShapeCGO);
@@ -286,12 +286,12 @@ void GadgetSetInvalidateRep(GadgetSet *I,int type,int level)
 {
 #if TO_DO
   int a;
-  PRINTFD(FB_GadgetSet)
+  PRINTFD(I->G,FB_GadgetSet)
     " GadgetSetInvalidateRep: entered.\n"
     ENDFD;
   if(type>=0) {
 	 if(type<I->NRep)	{
-		SceneChanged();		
+		SceneChanged(I->G);		
 		if(I->Rep[type]) {
 		  I->Rep[type]->fFree(I->Rep[type]);
 		  I->Rep[type] = NULL;
@@ -299,7 +299,7 @@ void GadgetSetInvalidateRep(GadgetSet *I,int type,int level)
 	 }
   } else {
 	 for(a=0;a<I->NRep;a++)	{
-		SceneChanged();
+		SceneChanged(I->G);
 		if(I->Rep[a]) {
 		  switch(level) {
 		  case cRepInvColor:
@@ -368,7 +368,7 @@ void GadgetSetRender(GadgetSet *I,CRay *ray,Pickable **pick,int pass)
 
   float *color;
 
-  color = ColorGet(I->Obj->Obj.Color);
+  color = ColorGet(I->G,I->Obj->Obj.Color);
 
   if(!pass) {
     if(ray) {    
@@ -390,10 +390,10 @@ void GadgetSetRender(GadgetSet *I,CRay *ray,Pickable **pick,int pass)
   }
   }
 /*========================================================================*/
-GadgetSet *GadgetSetNew(void)
+GadgetSet *GadgetSetNew(PyMOLGlobals *G)
 {
-  OOAlloc(GadgetSet);
-
+  OOAlloc(G,GadgetSet);
+  I->G=G;
   I->fFree=GadgetSetFree;
   I->fRender=GadgetSetRender;
   I->fUpdate=GadgetSetUpdate;

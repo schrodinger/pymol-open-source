@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 typedef struct {
+  PyMOLGlobals *G;
   int N;
 
   float *p; /* points */
@@ -33,7 +34,7 @@ typedef struct {
 
 } CExtrude;
 
-CExtrude *ExtrudeNew(void);
+CExtrude *ExtrudeNew(PyMOLGlobals *G);
 
 CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig);
 

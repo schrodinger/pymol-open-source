@@ -63,7 +63,7 @@ int ObjectGadgetSetVertex(ObjectGadget *I,int index,int base, float *v)
 }
 
  /* in current state */
-ObjectGadget *ObjectGadgetTest(void)
+ObjectGadget *ObjectGadgetTest(PyMOLGlobals *G)
 {
   ObjectGadget *I = NULL;
   GadgetSet *gs = NULL;
@@ -94,8 +94,8 @@ ObjectGadget *ObjectGadgetTest(void)
     0.0,-1.0, 0.0,
   };
 
-  I=ObjectGadgetNew();
-  gs = GadgetSetNew();
+  I=ObjectGadgetNew(G);
+  gs = GadgetSetNew(G);
 
   gs->NCoord = 13;
   gs->Coord = VLAlloc(float,gs->NCoord*3);
@@ -109,7 +109,7 @@ ObjectGadget *ObjectGadgetTest(void)
     gs->Normal[a]=normal[a];
   }
 
-  cgo = CGONewSized(100);
+  cgo = CGONewSized(G,100);
   CGOColor(cgo,1.0,1.0,1.0);
 
   /* top */
@@ -185,7 +185,7 @@ ObjectGadget *ObjectGadgetTest(void)
 
   gs->ShapeCGO = cgo;
   
-  cgo = CGONewSized(100);
+  cgo = CGONewSized(G,100);
   CGODotwidth(cgo,5);
 
   CGOPickColor(cgo,0,0);
@@ -283,14 +283,14 @@ static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list,int version
   if(ok) {
     VLACheck(I->GSet,GadgetSet*,I->NGSet);
     for(a=0;a<I->NGSet;a++) {
-      if(ok) ok = GadgetSetFromPyList(PyList_GetItem(list,a),&I->GSet[a],version);
+      if(ok) ok = GadgetSetFromPyList(I->Obj.G,PyList_GetItem(list,a),&I->GSet[a],version);
       if(ok&&I->GSet[a]) I->GSet[a]->Obj = I;
     }
   }
   return(ok);
 }
 
-int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I,int version)
+int ObjectGadgetInitFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget *I,int version)
 {
   int ok = true;
   int ll;
@@ -299,7 +299,7 @@ int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I,int version)
   if(ok) ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
-  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(G,PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->GadgetType);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NGSet);
   if(ok) ok = ObjectGadgetGSetFromPyList(I,PyList_GetItem(list,3),version);
@@ -315,7 +315,7 @@ int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I,int version)
   return(ok);
 }
 
-int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result,int version)
+int ObjectGadgetNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget **result,int version)
 {
   int ok = true;
   ObjectGadget *I=NULL;
@@ -328,12 +328,12 @@ int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result,int version)
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&gadget_type);
   if(ok) switch(gadget_type) { /* call the right routine to restore the gadget! */
   case cGadgetRamp:
-    ok = ObjectGadgetRampNewFromPyList(list,(ObjectGadgetRamp**)result,version);
+    ok = ObjectGadgetRampNewFromPyList(G,list,(ObjectGadgetRamp**)result,version);
     break;
   case cGadgetPlain:
-    I=ObjectGadgetNew();
+    I=ObjectGadgetNew(G);
     if(ok) ok = (I!=NULL);
-    if(ok) ok = ObjectGadgetInitFromPyList(list,I,version);
+    if(ok) ok = ObjectGadgetInitFromPyList(G,list,I,version);
     if(ok) (*result) = I;
     break;
   default:
@@ -379,7 +379,7 @@ void ObjectGadgetPurge(ObjectGadget *I)
 {
   int a;
 
-  SceneObjectDel((CObject*)I);
+  SceneObjectDel(I->Obj.G,(CObject*)I);
   for(a=0;a<I->NGSet;a++)
 	 if(I->GSet[a]) {
       if(I->GSet[a]->fFree)
@@ -398,10 +398,10 @@ void ObjectGadgetFree(ObjectGadget *I) {
 void ObjectGadgetUpdateStates(ObjectGadget *I)
 {
   int a;
-  OrthoBusyPrime();
+  OrthoBusyPrime(I->Obj.G);
   for(a=0;a<I->NGSet;a++)
     if(I->GSet[a]) {	
-      OrthoBusySlow(a,I->NGSet);
+      OrthoBusySlow(I->Obj.G,a,I->NGSet);
       /*	   printf(" ObjectGadget: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);*/
       if(I->GSet[a]->fUpdate)
         I->GSet[a]->fUpdate(I->GSet[a]);
@@ -448,9 +448,9 @@ void ObjectGadgetRender(ObjectGadget *I,int state,CRay *ray,Pickable **pick,int 
 }
 
 /*========================================================================*/
-void ObjectGadgetInit(ObjectGadget *I)
+void ObjectGadgetInit(PyMOLGlobals *G,ObjectGadget *I)
 {
-  ObjectInit((CObject*)I);
+  ObjectInit(G,(CObject*)I);
 
   I->Obj.type=cObjectGadget;
   I->GSet=VLAMalloc(10,sizeof(GadgetSet*),5,true); /* auto-zero */
@@ -465,11 +465,11 @@ void ObjectGadgetInit(ObjectGadget *I)
 }
 
 /*========================================================================*/
-ObjectGadget *ObjectGadgetNew(void)
+ObjectGadget *ObjectGadgetNew(PyMOLGlobals *G)
 {
-  OOAlloc(ObjectGadget);
+  OOAlloc(G,ObjectGadget);
 
-  ObjectGadgetInit(I);
+  ObjectGadgetInit(G,I);
   return(I);
 }
 
@@ -488,11 +488,11 @@ CGO *ObjectGadgetPyListFloatToCGO(PyObject *list)
     if(len<0) len = 0;
     if(raw) {
       if(ok) {
-        cgo=CGONewSized(len);
+        cgo=CGONewSized(G,len);
         if(cgo) {
           result = CGOFromFloatArray(cgo,raw,len);
           if(result) {
-            PRINTF " FloatToCGO: error encountered on element %d\n", result ENDF
+            PRINTF " FloatToCGO: error encountered on element %d\n", result ENDF(G);
           }
           CGOStop(cgo);
         }
@@ -504,7 +504,7 @@ CGO *ObjectGadgetPyListFloatToCGO(PyObject *list)
 }
 
 
-ObjectGadget *ObjectGadgetFromCGO(ObjectGadget *obj,CGO *cgo,int state)
+ObjectGadget *ObjectGadgetFromCGO(PyMOLGlobals *G,ObjectGadget *obj,CGO *cgo,int state)
 {
   ObjectGadget *I = NULL;
   int est;
@@ -514,7 +514,7 @@ ObjectGadget *ObjectGadgetFromCGO(ObjectGadget *obj,CGO *cgo,int state)
       obj=NULL;
   }
   if(!obj) {
-    I=ObjectGadgetNew();
+    I=ObjectGadgetNew(G);
   } else {
     I=obj;
   }
@@ -539,14 +539,14 @@ ObjectGadget *ObjectGadgetFromCGO(ObjectGadget *obj,CGO *cgo,int state)
   if(I) {
     ObjectGadgetRecomputeExtent(I);
   }
-  SceneChanged();
-  SceneCountFrames();
+  SceneChanged(G);
+  SceneCountFrames(G);
   return(I);
 }
 
 
 /*========================================================================*/
-ObjectGadget *ObjectGadgetDefine(ObjectGadget *obj,PyObject *pycgo,int state)
+ObjectGadget *ObjectGadgetDefine(PyMOLGlobals *G,ObjectGadget *obj,PyObject *pycgo,int state)
 { /* assumes blocked interpreter */
   ObjectGadget *I = NULL;
 
@@ -558,7 +558,7 @@ ObjectGadget *ObjectGadgetDefine(ObjectGadget *obj,PyObject *pycgo,int state)
       obj=NULL;
   }
   if(!obj) {
-    I=ObjectGadgetNew();
+    I=ObjectGadgetNew(G);
   } else {
     I=obj;
   }
@@ -595,7 +595,7 @@ ObjectGadget *ObjectGadgetDefine(ObjectGadget *obj,PyObject *pycgo,int state)
             I->State[state].std=cgo;
           
         } else {
-          ErrMessage("ObjectGadget","could not parse CGO List.");
+          ErrMessage(G,"ObjectGadget","could not parse CGO List.");
         }
       }
     }
@@ -603,8 +603,8 @@ ObjectGadget *ObjectGadgetDefine(ObjectGadget *obj,PyObject *pycgo,int state)
   if(I) {
     ObjectGadgetRecomputeExtent(I);
   }
-  SceneChanged();
-  SceneCountFrames();
+  SceneChanged(G);
+  SceneCountFrames(G);
   return(I);
 }
 #endif

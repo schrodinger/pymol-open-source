@@ -44,12 +44,12 @@ typedef struct {
   float *coord;
 } ExportCoords;
 
-ExportCoords *ExportCoordsExport(char *name,int state,int order);
-int ExportCoordsImport(char *name,int state,ExportCoords *io,int order);
-void ExportCoordsFree(ExportCoords *io);
+ExportCoords *ExportCoordsExport(PyMOLGlobals *G,char *name,int state,int order);
+int ExportCoordsImport(PyMOLGlobals *G,char *name,int state,ExportCoords *io,int order);
+void ExportCoordsFree(PyMOLGlobals *G,ExportCoords *io);
 
-void ExportDeleteMDebug(struct Export *ex); /* for mmalloc/mfree blocks */
-ExportDotsObj *ExportDots(char *sele,int coordSet);
+void ExportDeleteMDebug(PyMOLGlobals *G,struct Export *ex); /* for mmalloc/mfree blocks */
+ExportDotsObj *ExportDots(PyMOLGlobals *G,char *sele,int coordSet);
 
 /*--------------------------------------------------------------------- */
 

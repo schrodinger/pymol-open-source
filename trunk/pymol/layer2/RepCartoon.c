@@ -47,14 +47,14 @@ void RepCartoonFree(RepCartoon *I)
     CGOFree(I->ray);
   if(I->std)
     CGOFree(I->std);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   OOFreeP(I);
 }
 
 void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
 {
   if(ray) {
-    PRINTFD(FB_RepCartoon)
+    PRINTFD(I->R.G,FB_RepCartoon)
       " RepCartoonRender: rendering raytracable...\n"
       ENDFD;
     
@@ -73,7 +73,7 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
   } else if(PMGUI) {
     
     int use_dlst;
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(I->R.G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
@@ -87,7 +87,7 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
         }
       }
 
-    PRINTFD(FB_RepCartoon)
+    PRINTFD(I->R.G,FB_RepCartoon)
       " RepCartoonRender: rendering GL...\n"
       ENDFD;
 
@@ -116,6 +116,7 @@ static float smooth(float x,float power)
 
 Rep *RepCartoonNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,b,c,f,e,a1,a2,c1,c2,i0,*i,*s,*at,*seg,nAt,*atp,a3,a4=0,*car,*cc,*sstype;
   float *v,*v0,*v1,*v2,*v3,*v4,*v5,*vo,*vn,*va;
@@ -180,9 +181,9 @@ Rep *RepCartoonNew(CoordSet *cs)
   /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
 
-  OOAlloc(RepCartoon);
+  OOAlloc(G,RepCartoon);
 
-PRINTFD(FB_RepCartoon)
+PRINTFD(G,FB_RepCartoon)
 " RepCartoonNew-Debug: entered.\n"
 ENDFD;
 	
@@ -201,61 +202,61 @@ ENDFD;
     return(NULL); /* skip if no dots are visible */
   }
 
-  RepInit(&I->R);
-  power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_power);
-  power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_power_b);
+  RepInit(G,&I->R);
+  power_a=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_power);
+  power_b=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_power_b);
 
-  cartoon_debug=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_debug);
-  length=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_length);
-  width=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
-  trace=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_trace);
+  cartoon_debug=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_debug);
+  length=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_length);
+  width=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
+  trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_trace);
 
-  alpha=1.0F - SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_transparency);
-  throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_throw);
+  alpha=1.0F - SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_transparency);
+  throw=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_throw);
 
-  sampling = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_sampling);
+  sampling = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_sampling);
   if(sampling<1) sampling=1;
-  loop_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_radius);
+  loop_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_radius);
   if(loop_radius<0.01F) loop_radius=0.01F;
-  loop_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_quality);
+  loop_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_quality);
   if(loop_quality<3) loop_quality=3;
 
-  tube_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_radius);
+  tube_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_radius);
   if(tube_radius<0.01F) tube_radius=0.01F;
-  tube_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_quality);
+  tube_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_quality);
   if(tube_quality<3) tube_quality=3;
 
-  cartoon_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
+  cartoon_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
 
-  highlight_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_cartoon_highlight_color);
+  highlight_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_highlight_color);
 
-  oval_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_length);
-  oval_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_width);
-  oval_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_quality);
+  oval_length = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_length);
+  oval_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_width);
+  oval_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_quality);
   if(oval_quality<3) tube_quality=3;
 
-  dumbbell_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_length);
-  dumbbell_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_width);
-  dumbbell_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_radius);
+  dumbbell_length = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_length);
+  dumbbell_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_width);
+  dumbbell_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_dumbbell_radius);
   if(dumbbell_radius<0.01F) dumbbell_radius=0.01F;
 
-  fancy_helices = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_helices);
-  fancy_sheets = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_sheets);
-  cylindrical_helices = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_cylindrical_helices);
-  refine = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine);
-  refine_tips = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_tips);
+  fancy_helices = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_helices);
+  fancy_sheets = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_sheets);
+  cylindrical_helices = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_cylindrical_helices);
+  refine = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine);
+  refine_tips = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_tips);
 
-  discrete_colors = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_discrete_colors);
-  round_helices = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices);
-  smooth_loops = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops);
-  helix_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_helix_radius);
+  discrete_colors = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_discrete_colors);
+  round_helices = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices);
+  smooth_loops = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops);
+  helix_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_helix_radius);
 
-  smooth_first = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_first);
-  smooth_last = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_last);
-  smooth_cycles = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_cycles);
-  flat_cycles = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_cycles);
+  smooth_first = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_first);
+  smooth_last = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_last);
+  smooth_cycles = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_cycles);
+  flat_cycles = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_cycles);
 
-  na_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
+  na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -306,10 +307,10 @@ ENDFD;
           if((!ai->alt[0])||
              (ai->alt[0]=='A')) {
             if(trace||(((ai->protons==cAN_C)&&
-               (WordMatch("CA",ai->name,1)<0))&&
-                       !AtomInfoSameResidueP(last_ai,ai)))
+               (WordMatch(G,"CA",ai->name,1)<0))&&
+                       !AtomInfoSameResidueP(G,last_ai,ai)))
               {
-                PRINTFD(FB_RepCartoon)
+                PRINTFD(G,FB_RepCartoon)
                   " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
                   ENDFD;
                 if(!trace) 
@@ -317,14 +318,14 @@ ENDFD;
                   /*
                     if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
                     (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-                    (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+                    (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
                   if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
                     a2=-1;
                   
                 }
                 last_ai = ai;
                 
-                PRINTFD(FB_RepCartoon)
+                PRINTFD(G,FB_RepCartoon)
                   " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
                   ENDFD;
                 
@@ -385,7 +386,7 @@ ENDFD;
                 v_n = NULL;
                 v_o = NULL;
                   
-                AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+                AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
 
                 if(obj->DiscreteFlag) {
                   if(cs==obj->DiscreteCSet[nd]) 
@@ -403,11 +404,11 @@ ENDFD;
                   } else 
                     a4=cs->AtmToIdx[a3];
                   if(a4>=0) {
-                    if(WordMatch("C",obj->AtomInfo[a3].name,1)<0) {
+                    if(WordMatch(G,"C",obj->AtomInfo[a3].name,1)<0) {
                       v_c = cs->Coord+3*a4;		
-                    } else if(WordMatch("N",obj->AtomInfo[a3].name,1)<0) {
+                    } else if(WordMatch(G,"N",obj->AtomInfo[a3].name,1)<0) {
                       v_n = cs->Coord+3*a4;
-                    } else if(WordMatch("O",obj->AtomInfo[a3].name,1)<0) {
+                    } else if(WordMatch(G,"O",obj->AtomInfo[a3].name,1)<0) {
                       v_o = cs->Coord+3*a4;
                     }
                   }
@@ -434,12 +435,12 @@ ENDFD;
               } else if(trace|| 
                         ((
                           ((na_mode==0)&&(ai->protons==cAN_P) &&
-                           (WordMatch("P",ai->name,1)<0) ) ||
+                           (WordMatch(G,"P",ai->name,1)<0) ) ||
                           ((na_mode==1)&&(ai->protons==cAN_C) &&
-                           (WordMatchExact("C4*",ai->name,1) ||
-                            WordMatchExact("C4'",ai->name,1)))
+                           (WordMatchExact(G,"C4*",ai->name,1) ||
+                            WordMatchExact(G,"C4'",ai->name,1)))
                           )
-                         && !AtomInfoSameResidueP(last_ai,ai))) {
+                         && !AtomInfoSameResidueP(G,last_ai,ai))) {
                 if(!trace) 
                   if(a2>=0) {
                     if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
@@ -470,7 +471,7 @@ ENDFD;
                 v_n = NULL;
                 v_o = NULL;
                   
-                AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+                AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
                   
                 for(a3=st;a3<=nd;a3++) {
                     
@@ -486,9 +487,9 @@ ENDFD;
                     /* need to figure out how to generate a how to do right for DNA...
                        then we can use oval or rectangle */
                       
-                    if(WordMatch("P",obj->AtomInfo[a3].name,1)<0) {
+                    if(WordMatch(G,"P",obj->AtomInfo[a3].name,1)<0) {
                       v_c = cs->Coord+3*a4;		
-                    } else if(WordMatch("C2",obj->AtomInfo[a3].name,1)<0) {
+                    } else if(WordMatch(G,"C2",obj->AtomInfo[a3].name,1)<0) {
                       v_o = cs->Coord+3*a4;
                     }
                   }
@@ -512,7 +513,7 @@ ENDFD;
       }
 	 }
 
-PRINTFD(FB_RepCartoon)
+PRINTFD(G,FB_RepCartoon)
 " RepCartoon-Debug: path outlined, interpolating...\n"
 ENDFD;
 
@@ -531,7 +532,7 @@ ENDFD;
 		d=dl;
 		for(a=0;a<(nAt-1);a++)
 		  {
-        PRINTFD(FB_RepCartoon)
+        PRINTFD(G,FB_RepCartoon)
           " RepCartoon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
           ENDFD;
 
@@ -601,7 +602,7 @@ ENDFD;
 		*(v1++)=*(v-2);
 		*(v1++)=*(v-1);
 
-      PRINTFD(FB_RepCartoon)
+      PRINTFD(G,FB_RepCartoon)
         " RepCartoon-Debug: generating coordinate systems...\n"
         ENDFD;
       
@@ -717,7 +718,7 @@ ENDFD;
         }
       }
 
-      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals)) {
+      if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals)) {
         /* now generate alternative orientation vectors */
         
         v1 = tv;
@@ -776,7 +777,7 @@ ENDFD;
 
       }
 
-      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
+      if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
         s = seg;
         v = pv;
         ss = sstype;
@@ -930,7 +931,7 @@ ENDFD;
       }
       
       if(smooth_loops ||
-         SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
+         SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
         
         /* recompute differences and normals */
         
@@ -1007,7 +1008,7 @@ ENDFD;
         *(v1++)=*(v-1);
 
         
-        if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
+        if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
           s=seg+1;
           ss = sstype+1;
           v2=tv+3; /* normal */
@@ -1035,7 +1036,7 @@ ENDFD;
     }
 
 
-  I->ray = CGONew();
+  I->ray = CGONew(G);
   
   if(alpha!=1.0F)
     CGOAlpha(I->ray,alpha);
@@ -1078,14 +1079,14 @@ ENDFD;
     }
   }
 
-PRINTFD(FB_RepCartoon)
+PRINTFD(G,FB_RepCartoon)
 " RepCartoon-Debug: creating 3D scaffold...\n"
 ENDFD;
 
 /* okay, we now have enough info to generate smooth interpolations */
 
   if(nAt>1) {
-    ex = ExtrudeNew();
+    ex = ExtrudeNew(G);
     ExtrudeAllocPointsNormalsColors(ex,cs->NIndex*(3*sampling+3));
   }
 
@@ -1192,13 +1193,13 @@ ENDFD;
             }
             last_color=c1;
 
-            v0 = ColorGet(c1);
+            v0 = ColorGet(G,c1);
             *(vc++)=*(v0++);
             *(vc++)=*(v0++);
             *(vc++)=*(v0++);
             *(vi++)=atom_index1;
 
-            v0 = ColorGet(c2); /* kludge */
+            v0 = ColorGet(G,c2); /* kludge */
             *(vc  )=*(v0++);
             *(vc+1)=*(v0++);
             *(vc+2)=*(v0++);
@@ -1463,10 +1464,10 @@ ENDFD;
 
                     f0 = ((float)b)/sampling; /* fraction of completion */
                     if(f0<=0.5) {
-                      v0 = ColorGet(c1);
+                      v0 = ColorGet(G,c1);
                       i0 = atom_index1;
                     } else {
-                      v0 = ColorGet(c2);
+                      v0 = ColorGet(G,c2);
                       i0 = atom_index2;
                     }
                     f0 = smooth(f0,power_a); /* bias sampling towards the center of the curve */
@@ -1503,10 +1504,10 @@ ENDFD;
 
                   f0=((float)b+1)/sampling;
                   if(f0<=0.5) {
-                    v0 = ColorGet(c1);
+                    v0 = ColorGet(G,c1);
                     i0 = atom_index1;
                   } else {
-                    v0 = ColorGet(c2);
+                    v0 = ColorGet(G,c2);
                     i0 = atom_index2;
                   }
                   f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */                
@@ -1660,7 +1661,7 @@ ENDFD;
                 ExtrudeCGOSurfacePolygon(ex,I->ray,0,NULL);
                 ExtrudeRectangle(ex,width,length,2);
                 ExtrudeBuildNormals2f(ex);
-                ExtrudeCGOSurfacePolygon(ex,I->ray,1,ColorGet(highlight_color));
+                ExtrudeCGOSurfacePolygon(ex,I->ray,1,ColorGet(G,highlight_color));
               }
               break;
             case cCartoon_oval:
@@ -1669,7 +1670,7 @@ ENDFD;
               if(highlight_color<0) 
                 ExtrudeCGOSurfaceTube(ex,I->ray,1,NULL);
               else 
-                ExtrudeCGOSurfaceTube(ex,I->ray,1,ColorGet(highlight_color));
+                ExtrudeCGOSurfaceTube(ex,I->ray,1,ColorGet(G,highlight_color));
               break;
             case cCartoon_arrow:
               ExtrudeRectangle(ex,width,length,0);
@@ -1677,7 +1678,7 @@ ENDFD;
               if(highlight_color<0) 
                 ExtrudeCGOSurfaceStrand(ex,I->ray,sampling,NULL);
               else
-                ExtrudeCGOSurfaceStrand(ex,I->ray,sampling,ColorGet(highlight_color));                
+                ExtrudeCGOSurfaceStrand(ex,I->ray,sampling,ColorGet(G,highlight_color));                
               break;
             case cCartoon_dumbbell:
               if(highlight_color<0) {
@@ -1692,7 +1693,7 @@ ENDFD;
 
                 ExtrudeDumbbell1(ex,dumbbell_width,dumbbell_length,2);
                 ExtrudeBuildNormals2f(ex);
-                ExtrudeCGOSurfacePolygonTaper(ex,I->ray,sampling,ColorGet(highlight_color));
+                ExtrudeCGOSurfacePolygonTaper(ex,I->ray,sampling,ColorGet(G,highlight_color));
               }
               /*
                 ExtrudeCGOSurfacePolygonX(ex,I->ray,1);*/

@@ -17,7 +17,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_std.h"
 #include"os_gl.h"
-
+#include"MemoryDebug.h"
 #include "main.h"
 #include "Base.h"
 #include "ButMode.h"
@@ -32,31 +32,40 @@ Z* -------------------------------------------------------------------
 #define cButModeLeftMargin 2
 #define cButModeTopMargin 1
 
-CButMode ButMode;
-
-void ButModeDraw(Block *block);
-int ButModeClick(Block *block,int button,int x,int y,int mod);
+struct _CButMode {
+  Block *Block;
+  CodeType Code[cButModeCount+1];
+  int NCode;
+  int Mode[20];
+  int NBut;
+  float Rate;
+  float Samples;
+  WordType Caption;
+  float TextColor1[3];
+  float TextColor2[3];
+  float TextColor3[3];
+};
 
 /*========================================================================*/
-Block *ButModeGetBlock(void)
+Block *ButModeGetBlock(PyMOLGlobals *G)
 {
-  CButMode *I=&ButMode;
+  register CButMode *I=G->ButMode;
   {return(I->Block);}
 }
 /*========================================================================*/
-void ButModeSet(int button,int action)
+void ButModeSet(PyMOLGlobals *G,int button,int action)
 {
-  CButMode *I=&ButMode;
+  register CButMode *I=G->ButMode;
   if((button>=0)&&(button<I->NBut)&&
      (action>=0)&&(action<I->NCode)) {
     I->Mode[button]=action;
-    OrthoDirty();
+    OrthoDirty(G);
   }
 }
 /*========================================================================*/
-void ButModeCaption(char *text)
+void ButModeCaption(PyMOLGlobals *G,char *text)
 {
-  CButMode *I=&ButMode;
+  register CButMode *I=G->ButMode;
   int l;
   l = strlen(I->Caption);
   if((l>0)&&(l<(sizeof(WordType)-1)))
@@ -65,15 +74,15 @@ void ButModeCaption(char *text)
   UtilNConcat(I->Caption,text,l);
 }
 /*========================================================================*/
-void ButModeCaptionReset(void)
+void ButModeCaptionReset(PyMOLGlobals *G)
 {
-  CButMode *I=&ButMode;
+  register CButMode *I=G->ButMode;
   I->Caption[0]=0;
 }
 /*========================================================================*/
-void ButModeSetRate(float interval)
+void ButModeSetRate(PyMOLGlobals *G,float interval)
 {
-  CButMode *I=&ButMode;
+  register CButMode *I=G->ButMode;
 
   if(interval<0.001)
     interval = 0.001F;
@@ -95,195 +104,40 @@ void ButModeSetRate(float interval)
   
 }
 /*========================================================================*/
-void ButModeResetRate(void)
+void ButModeResetRate(PyMOLGlobals *G)
 {
-  CButMode *I=&ButMode;
+  register CButMode *I=G->ButMode;
   I->Samples=0.0;
   I->Rate=0.0;
 }
 /*========================================================================*/
-void ButModeFree(void)
+void ButModeFree(PyMOLGlobals *G)
 {
-  CButMode *I=&ButMode;
-  OrthoFreeBlock(I->Block);
+  register CButMode *I=G->ButMode;
+  OrthoFreeBlock(G,I->Block);
+  FreeP(G->ButMode);
 }
 /*========================================================================*/
-void ButModeInit(void)
+static int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
-
-  CButMode *I=&ButMode;
-  int a;
-
-  I->Rate=0.0;
-  I->Samples = 0.0;
-
-  I->Caption[0] = 0;
-
-  I->NCode = cButModeCount;
-  I->NBut = 19;
-
-  for(a=0;a<I->NBut;a++) {
-    I->Mode[a]=-1;
-  }
-
-  strcpy(I->Code[cButModeRotXYZ],  "Rota ");
-  strcpy(I->Code[cButModeRotZ],    "RotZ ");  
-  strcpy(I->Code[cButModeTransXY], "Move ");
-  strcpy(I->Code[cButModeTransZ],  "MovZ ");
-  strcpy(I->Code[cButModeClipNF],  "Clip ");
-  strcpy(I->Code[cButModeClipN],   "ClpN ");  
-  strcpy(I->Code[cButModeClipF],   "ClpF ");
-  strcpy(I->Code[cButModePickAtom],"PkAt ");
-  strcpy(I->Code[cButModePickBond],"PkBd ");
-  strcpy(I->Code[cButModeTorFrag], "TorF ");
-  strcpy(I->Code[cButModeRotFrag], "RotF ");
-  strcpy(I->Code[cButModeMovFrag], "MovF ");
-  strcpy(I->Code[cButModeLB],     " lb  ");
-  strcpy(I->Code[cButModeMB],     " mb  ");
-  strcpy(I->Code[cButModeRB],     " rb  ");
-  strcpy(I->Code[cButModeAddToLB],"+lb  ");
-  strcpy(I->Code[cButModeAddToMB],"+mb  ");
-  strcpy(I->Code[cButModeAddToRB],"+rb  ");
-  strcpy(I->Code[cButModeOrigAt],  "Orig ");
-  strcpy(I->Code[cButModeRectAdd], "+lBx ");
-  strcpy(I->Code[cButModeRectSub], "-lBx ");
-  strcpy(I->Code[cButModeRect],    "lbBx ");
-  strcpy(I->Code[cButModeNone],    "  -  ");
-  strcpy(I->Code[cButModeCent],    "Cent ");
-  strcpy(I->Code[cButModePkTorBnd], "PkTB ");
-  strcpy(I->Code[cButModeScaleSlab], "Slab ");
-  strcpy(I->Code[cButModeMoveSlab], "MovS ");
-  strcpy(I->Code[cButModePickAtom1], "Pk1  ");
-  strcpy(I->Code[cButModeMoveAtom], "MovA ");
-  strcpy(I->Code[cButModeMenu], "Menu ");
-  strcpy(I->Code[cButModeSeleSet], "Sele ");
-  strcpy(I->Code[cButModeSeleToggle], "+/-  ");
-  strcpy(I->Code[cButModeSeleAdd], "+Box ");
-  strcpy(I->Code[cButModeSeleSub], "-Box ");  
-
-
-  I->Block = OrthoNewBlock(NULL);
-  I->Block->fClick = ButModeClick;
-  I->Block->fDraw    = ButModeDraw;
-  I->Block->fReshape = BlockReshape;
-  I->Block->active = true;
-
-  I->Block->TextColor[0]=0.2F;
-  I->Block->TextColor[1]=1.0F;
-  I->Block->TextColor[2]=0.2F;
-
-  I->TextColor1[0]=0.5F;
-  I->TextColor1[1]=0.5F;
-  I->TextColor1[2]=1.0F;
-
-  I->TextColor2[0]=0.8F;
-  I->TextColor2[1]=0.8F;
-  I->TextColor2[2]=0.8F;
-
-  I->TextColor3[0]=1.0F;
-  I->TextColor3[1]=0.5F;
-  I->TextColor3[2]=0.5F;
-
-  OrthoAttach(I->Block,cOrthoTool);
-}
-
-
-/*========================================================================*/
-int ButModeTranslate(int button, int mod)
-{
-  int mode = 0;
-  CButMode *I=&ButMode;
-  switch(button) {
-  case P_GLUT_LEFT_BUTTON:
-    mode = 0;
-    break;
-  case P_GLUT_MIDDLE_BUTTON:
-    mode = 1;
-    break;
-  case P_GLUT_RIGHT_BUTTON:
-    mode = 2;
-    break;
-  case P_GLUT_BUTTON_SCROLL_FORWARD:
-  case P_GLUT_BUTTON_SCROLL_BACKWARD:
-    switch(mod) {
-    case 0:
-      mode = 12;
-      break;
-    case cOrthoSHIFT:
-      mode = 13;
-      break;
-    case cOrthoCTRL:
-      mode = 14;
-      break;
-    case (cOrthoCTRL+cOrthoSHIFT):
-      mode = 15;
-    }
-    switch(I->Mode[mode]) {
-    case cButModeScaleSlab:
-      if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
-        return cButModeScaleSlabExpand;
-      } else {
-        return cButModeScaleSlabShrink;
-      }
-      break;
-    case cButModeMoveSlab:
-      if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
-        return cButModeMoveSlabForward;
-      } else {
-        return cButModeMoveSlabBackward;
-      }
-      break;
-    }
-    return -1;
-    break;
-  case P_GLUT_DOUBLE_LEFT:
-    mode = 16;
-    mod = 0;
-    break;
-  case P_GLUT_DOUBLE_MIDDLE:
-    mode = 17;
-    mod = 0;
-    break;
-  case P_GLUT_DOUBLE_RIGHT:
-    mode = 18;
-
-    mod = 0;
-    break;
-  }
-  switch(mod) {
-  case 0:
-    break;
-  case cOrthoSHIFT:
-    mode+=3;
-    break;
-  case cOrthoCTRL:
-    mode+=6;
-    break;
-  case (cOrthoCTRL+cOrthoSHIFT):
-    mode+=9;
-    break;
-  }
-  return(I->Mode[mode]);
-}
-/*========================================================================*/
-int ButModeClick(Block *block,int button,int x,int y,int mod)
-{
-
+  PyMOLGlobals *G = block->G;
+  /*  register CButMode *I=block->G->ButMode; */
   switch(mod) {
   case cOrthoSHIFT:
     PLog("cmd.mouse('backward')",cPLog_pym);
-    OrthoCommandIn("mouse backward");
+    OrthoCommandIn(G,"mouse backward");
     break;
   default:
     PLog("cmd.mouse('forward')",cPLog_pym);
-    OrthoCommandIn("mouse forward");
+    OrthoCommandIn(G,"mouse forward");
   }
   return(1);
 }
 /*========================================================================*/
-void ButModeDraw(Block *block)
+static void ButModeDraw(Block *block)
 {
-  CButMode *I=&ButMode;
+  PyMOLGlobals *G = block->G;
+  register CButMode *I=G->ButMode;
   int x,y,a;
   float rate;
   char rateStr[255];
@@ -291,7 +145,7 @@ void ButModeDraw(Block *block)
   int nf;
 
   if(PMGUI) {
-    if(SettingGetGlobal_b(cSetting_internal_gui_mode)==0) {
+    if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==0) {
       glColor3fv(I->Block->BackColor);
       BlockFill(I->Block);
     }
@@ -303,7 +157,7 @@ void ButModeDraw(Block *block)
     glColor3fv(I->TextColor2);
     GrapDrawStr("Mouse Mode ",x+1,y);
     glColor3fv(I->TextColor3);
-    GrapDrawStr(SettingGetGlobal_s(cSetting_button_mode_name),x+88,y);
+    GrapDrawStr(SettingGetGlobal_s(G,cSetting_button_mode_name),x+88,y);
     /*    GrapDrawStr("2-Bttn Selecting",x+88,y);*/
     y-=cButModeLineHeight;
 
@@ -426,7 +280,7 @@ void ButModeDraw(Block *block)
       glColor3fv(I->Block->TextColor);
       GrapDrawStr("Selecting ",x,y);
       glColor3fv(I->TextColor3);
-      switch(SettingGetGlobal_i(cSetting_mouse_selection_mode)) {
+      switch(SettingGetGlobal_i(G,cSetting_mouse_selection_mode)) {
       case 0:
         GrapDrawStr("Atoms",x+80,y);        
         break;
@@ -457,13 +311,13 @@ void ButModeDraw(Block *block)
       rate = I->Rate/I->Samples;
     else 
       rate = 0;
-    nf = SceneGetNFrame();
+    nf = SceneGetNFrame(G);
     if(nf==0)
       nf=1;
     glColor3fv(I->Block->TextColor);
     GrapDrawStr("Frame ",x,y);
     glColor3fv(I->TextColor2);
-    sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame()+1,
+    sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame(G)+1,
             nf,(int)(rate+0.5F));
     GrapDrawStr(rateStr,x+48,y);
 
@@ -472,3 +326,166 @@ void ButModeDraw(Block *block)
 }
 
 
+
+/*========================================================================*/
+int ButModeInit(PyMOLGlobals *G)
+{
+  register CButMode *I=NULL;
+  if( (I=(G->ButMode=Calloc(CButMode,1)))) {
+
+    int a;
+
+    I->Rate=0.0;
+    I->Samples = 0.0;
+
+    I->Caption[0] = 0;
+
+    I->NCode = cButModeCount;
+    I->NBut = 19;
+
+    for(a=0;a<I->NBut;a++) {
+      I->Mode[a]=-1;
+    }
+
+    strcpy(I->Code[cButModeRotXYZ],  "Rota ");
+    strcpy(I->Code[cButModeRotZ],    "RotZ ");  
+    strcpy(I->Code[cButModeTransXY], "Move ");
+    strcpy(I->Code[cButModeTransZ],  "MovZ ");
+    strcpy(I->Code[cButModeClipNF],  "Clip ");
+    strcpy(I->Code[cButModeClipN],   "ClpN ");  
+    strcpy(I->Code[cButModeClipF],   "ClpF ");
+    strcpy(I->Code[cButModePickAtom],"PkAt ");
+    strcpy(I->Code[cButModePickBond],"PkBd ");
+    strcpy(I->Code[cButModeTorFrag], "TorF ");
+    strcpy(I->Code[cButModeRotFrag], "RotF ");
+    strcpy(I->Code[cButModeMovFrag], "MovF ");
+    strcpy(I->Code[cButModeLB],     " lb  ");
+    strcpy(I->Code[cButModeMB],     " mb  ");
+    strcpy(I->Code[cButModeRB],     " rb  ");
+    strcpy(I->Code[cButModeAddToLB],"+lb  ");
+    strcpy(I->Code[cButModeAddToMB],"+mb  ");
+    strcpy(I->Code[cButModeAddToRB],"+rb  ");
+    strcpy(I->Code[cButModeOrigAt],  "Orig ");
+    strcpy(I->Code[cButModeRectAdd], "+lBx ");
+    strcpy(I->Code[cButModeRectSub], "-lBx ");
+    strcpy(I->Code[cButModeRect],    "lbBx ");
+    strcpy(I->Code[cButModeNone],    "  -  ");
+    strcpy(I->Code[cButModeCent],    "Cent ");
+    strcpy(I->Code[cButModePkTorBnd], "PkTB ");
+    strcpy(I->Code[cButModeScaleSlab], "Slab ");
+    strcpy(I->Code[cButModeMoveSlab], "MovS ");
+    strcpy(I->Code[cButModePickAtom1], "Pk1  ");
+    strcpy(I->Code[cButModeMoveAtom], "MovA ");
+    strcpy(I->Code[cButModeMenu], "Menu ");
+    strcpy(I->Code[cButModeSeleSet], "Sele ");
+    strcpy(I->Code[cButModeSeleToggle], "+/-  ");
+    strcpy(I->Code[cButModeSeleAdd], "+Box ");
+    strcpy(I->Code[cButModeSeleSub], "-Box ");  
+
+
+    I->Block = OrthoNewBlock(G,NULL);
+    I->Block->fClick = ButModeClick;
+    I->Block->fDraw    = ButModeDraw;
+    I->Block->fReshape = BlockReshape;
+    I->Block->active = true;
+
+    I->Block->TextColor[0]=0.2F;
+    I->Block->TextColor[1]=1.0F;
+    I->Block->TextColor[2]=0.2F;
+
+    I->TextColor1[0]=0.5F;
+    I->TextColor1[1]=0.5F;
+    I->TextColor1[2]=1.0F;
+
+    I->TextColor2[0]=0.8F;
+    I->TextColor2[1]=0.8F;
+    I->TextColor2[2]=0.8F;
+
+    I->TextColor3[0]=1.0F;
+    I->TextColor3[1]=0.5F;
+    I->TextColor3[2]=0.5F;
+
+    OrthoAttach(G,I->Block,cOrthoTool);
+    return 1;
+  } else 
+    return 0;
+}
+
+
+/*========================================================================*/
+int ButModeTranslate(PyMOLGlobals *G,int button, int mod)
+{
+  int mode = 0;
+  register CButMode *I=G->ButMode;
+  switch(button) {
+  case P_GLUT_LEFT_BUTTON:
+    mode = 0;
+    break;
+  case P_GLUT_MIDDLE_BUTTON:
+    mode = 1;
+    break;
+  case P_GLUT_RIGHT_BUTTON:
+    mode = 2;
+    break;
+  case P_GLUT_BUTTON_SCROLL_FORWARD:
+  case P_GLUT_BUTTON_SCROLL_BACKWARD:
+    switch(mod) {
+    case 0:
+      mode = 12;
+      break;
+    case cOrthoSHIFT:
+      mode = 13;
+      break;
+    case cOrthoCTRL:
+      mode = 14;
+      break;
+    case (cOrthoCTRL+cOrthoSHIFT):
+      mode = 15;
+    }
+    switch(I->Mode[mode]) {
+    case cButModeScaleSlab:
+      if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
+        return cButModeScaleSlabExpand;
+      } else {
+        return cButModeScaleSlabShrink;
+      }
+      break;
+    case cButModeMoveSlab:
+      if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
+        return cButModeMoveSlabForward;
+      } else {
+        return cButModeMoveSlabBackward;
+      }
+      break;
+    }
+    return -1;
+    break;
+  case P_GLUT_DOUBLE_LEFT:
+    mode = 16;
+    mod = 0;
+    break;
+  case P_GLUT_DOUBLE_MIDDLE:
+    mode = 17;
+    mod = 0;
+    break;
+  case P_GLUT_DOUBLE_RIGHT:
+    mode = 18;
+
+    mod = 0;
+    break;
+  }
+  switch(mod) {
+  case 0:
+    break;
+  case cOrthoSHIFT:
+    mode+=3;
+    break;
+  case cOrthoCTRL:
+    mode+=6;
+    break;
+  case (cOrthoCTRL+cOrthoSHIFT):
+    mode+=9;
+    break;
+  }
+  return(I->Mode[mode]);
+}

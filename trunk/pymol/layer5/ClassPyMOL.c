@@ -61,7 +61,7 @@ void ClassPyMOLFree(ClassPyMOL *I)
 }
 
 
-struct PyMOLGlobals *ClassPyMOLGetGlobals(ClassPyMOL *I)
+struct _PyMOLGlobals *ClassPyMOLGetGlobals(ClassPyMOL *I)
 {
   return I->G;
 }

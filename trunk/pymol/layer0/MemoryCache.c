@@ -28,21 +28,22 @@ typedef struct {
 } MemoryCacheRec;
 
 typedef MemoryCacheRec MemoryCacheThread[cMemoryCache_max_block];
-static MemoryCacheThread MemoryCache[cMemoryCache_max_group];
 
-void MemoryCacheInit(void)
+struct _CMemoryCache {
+  MemoryCacheThread Cache[cMemoryCache_max_group];
+};
+
+void MemoryCacheInit(PyMOLGlobals *G)
 {
-  MemoryZero((void*)MemoryCache, 
-             (void*)(((&MemoryCache[0][0] + 
-                       (cMemoryCache_max_block*cMemoryCache_max_group)))));
-
+  G->MemoryCache=Calloc(CMemoryCache,1);
 }
 
-void *MemoryCacheMalloc(unsigned int size,int group_id,int block_id)
+void *MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id)
 {
-  MemoryCacheRec *rec = &MemoryCache[group_id][block_id];
+  register CMemoryCache *I = G->MemoryCache;
+  register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
   
-  if((group_id<0)||(!SettingGet(cSetting_cache_memory)))
+  if((group_id<0)||(!SettingGet(G,cSetting_cache_memory)))
     return(mmalloc(size));
   if(!rec->ptr) {
     rec->size = size;
@@ -55,14 +56,15 @@ void *MemoryCacheMalloc(unsigned int size,int group_id,int block_id)
   return(rec->ptr);
 }
 
-void *MemoryCacheCalloc(unsigned int number, unsigned int size,int group_id,int block_id)
+void *MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id)
 {
-  MemoryCacheRec *rec = &MemoryCache[group_id][block_id];
+  register CMemoryCache *I = G->MemoryCache;
+  register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
   unsigned int true_size = number * size;
 
   /* interesting result: calloc is faster than cacheing */
 
-  if((group_id<0)||(!(int)SettingGet(cSetting_cache_memory)))
+  if((group_id<0)||(!(int)SettingGet(G,cSetting_cache_memory)))
     return(mcalloc(number,size));
   if(!rec->ptr) {
     rec->size = true_size;
@@ -79,12 +81,13 @@ void *MemoryCacheCalloc(unsigned int number, unsigned int size,int group_id,int 
   return(rec->ptr);
 }
 
-void *MemoryCacheRealloc(void *ptr, unsigned int size,int group_id, int block_id)
+void *MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id)
 {
   /* no checking done */
-  MemoryCacheRec *rec = &MemoryCache[group_id][block_id];
+  register CMemoryCache *I = G->MemoryCache;
+  register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
 
-  if((group_id<0)||(!(int)SettingGet(cSetting_cache_memory)))
+  if((group_id<0)||(!(int)SettingGet(G,cSetting_cache_memory)))
     return(mrealloc(ptr,size));
   if(ptr!=rec->ptr)
     printf("Error: Memory Cache Mismatch 2 %d %d\n",group_id,block_id);
@@ -98,10 +101,11 @@ void *MemoryCacheRealloc(void *ptr, unsigned int size,int group_id, int block_id
   return(rec->ptr);
 }
 
-void MemoryCacheFree(void *ptr,int group_id, int block_id,int force)
+void MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force)
 {
-  MemoryCacheRec *rec = &MemoryCache[group_id][block_id];
-  if((group_id<0)||(!(int)SettingGet(cSetting_cache_memory))) {
+  register CMemoryCache *I = G->MemoryCache;
+  MemoryCacheRec *rec = &I->Cache[group_id][block_id];
+  if((group_id<0)||(!(int)SettingGet(G,cSetting_cache_memory))) {
     mfree(ptr);
     return;
   }
@@ -114,16 +118,17 @@ void MemoryCacheFree(void *ptr,int group_id, int block_id,int force)
   }
 }
 
-void MemoryCacheDone(void)
+void MemoryCacheDone(PyMOLGlobals *G)
 {
   int a,b;
-
+  register CMemoryCache *I = G->MemoryCache;
   for(a=0;a<cMemoryCache_max_group;a++) {
     for(b=0;b<cMemoryCache_max_block;b++) {
-      MemoryCacheRec *rec = &MemoryCache[a][b];
+      MemoryCacheRec *rec = &I->Cache[a][b];
       if(rec->ptr)
         mfree(rec->ptr);
     }
   }
+  FreeP(G->MemoryCache);
 }
 #endif

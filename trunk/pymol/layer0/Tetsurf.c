@@ -77,6 +77,7 @@ typedef struct {
 #define EdgePt(field,P2,P3,P4,P5) (*((PointType*)Fvoid4p(field,P2,P3,P4,P5)))
 
 struct _CTetsurf {
+  PyMOLGlobals *G;
   TriangleType *Tri;
   PointLinkType *PtLink;
   
@@ -315,7 +316,7 @@ int	TetsurfInit(PyMOLGlobals *G)
 
    register CTetsurf *I;
    I = (G->Tetsurf = Calloc(CTetsurf,1));
-
+   I->G=G;
    I->Tri = NULL;
    I->PtLink = NULL;
 
@@ -458,7 +459,7 @@ int	TetsurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **
    int n_vert = 0;
 
    if(mode==3) 
-     IsofieldComputeGradients(field);
+     IsofieldComputeGradients(G,field);
 
    I->TotPrim=0;
    if(range) {
@@ -526,7 +527,7 @@ int	TetsurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **
       TetsurfPurge(I);
       }
    
-   if(Feedback(FB_Isosurface,FB_Actions)) { 
+   if(Feedback(G,FB_Isosurface,FB_Actions)) { 
      if(mode<2) {
        printf(" TetsurfVolume: Surface generated using %d vertices.\n",n_vert); 
      } else {
@@ -549,8 +550,10 @@ int	TetsurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **
 }
 /*===========================================================================*/
 static int	TetsurfAlloc(CTetsurf *II)
-{
+{ 
   register CTetsurf *I=II;
+  PyMOLGlobals *G=I->G;
+
 	int	ok=true;
 	int dim4[4];
    int a;
@@ -558,16 +561,16 @@ static int	TetsurfAlloc(CTetsurf *II)
      dim4[a]=I->CurDim[a];
    dim4[3]=3;
    
-	I->VertexCodes=FieldNew(I->CurDim,3,sizeof(int),cFieldInt);
-	ErrChkPtr(I->VertexCodes);
-	I->ActiveEdges=FieldNew(I->CurDim,3,sizeof(int),cFieldInt);
-	ErrChkPtr(I->ActiveEdges);
+	I->VertexCodes=FieldNew(G,I->CurDim,3,sizeof(int),cFieldInt);
+	ErrChkPtr(G,I->VertexCodes);
+	I->ActiveEdges=FieldNew(G,I->CurDim,3,sizeof(int),cFieldInt);
+	ErrChkPtr(G,I->ActiveEdges);
 
 
    
    dim4[3]=7; /* seven different ways now... */
-	I->Point=FieldNew(dim4,4,sizeof(PointType),cFieldOther);
-	ErrChkPtr(I->Point);
+	I->Point=FieldNew(G,dim4,4,sizeof(PointType),cFieldOther);
+	ErrChkPtr(G,I->Point);
 
    I->Tri = VLAlloc(TriangleType,50000);
    I->PtLink = VLAlloc(PointLinkType,50000);

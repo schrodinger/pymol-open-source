@@ -17,7 +17,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Match
 #define _H_Match
 
+#include "PyMOLGlobals.h"
+
 typedef struct {
+  PyMOLGlobals *G;
   float **smat;
   float **mat;
   int *pair;
@@ -25,7 +28,7 @@ typedef struct {
   int na,nb;
 } CMatch;
 
-CMatch *MatchNew(unsigned int na,unsigned int nb);
+CMatch *MatchNew(PyMOLGlobals *G,unsigned int na,unsigned int nb);
 int MatchResidueToCode(CMatch *I,int *vla,int n);
 int MatchMatrixFromFile(CMatch *I,char *fname);
 int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2);

@@ -16,7 +16,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_MyPNG
 #define _H_MyPNG
 
-int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height);
+#include"PyMOLGlobals.h"
+
+int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,unsigned int width,unsigned int height);
 int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr);
 
 #endif

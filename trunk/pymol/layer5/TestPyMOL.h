@@ -16,10 +16,13 @@ Z* -------------------------------------------------------------------
 #ifndef _H_TestPyMOL
 #define _H_TestPyMOL
 
+#include"PyMOLGlobals.h"
+
 typedef struct {
+  PyMOLGlobals *G;
   int i;
 } CTestPyMOL;
 
-int TestPyMOLRun(CTestPyMOL *I,int group,int test);
+int TestPyMOLRun(PyMOLGlobals *G,CTestPyMOL *I,int group,int test);
 
 #endif

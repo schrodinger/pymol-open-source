@@ -219,6 +219,7 @@ static void ScrollBarReshape(Block *block,int width,int height)
 
 static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
 {
+  PyMOLGlobals *G=block->G;
   CScrollBar *I = (CScrollBar*)block->reference;
 
   if(I->HorV) {
@@ -229,7 +230,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
           I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5;
           if(I->Value > I->ValueMax)
             I->Value = I->ValueMax;
-          OrthoGrab(I->Block);
+          OrthoGrab(G,I->Block);
           I->StartPos = x;
           I->StartValue=I->Value;
         }
@@ -240,7 +241,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
           I->Value = I->ValueMax;
       }
 
-      OrthoDirty();
+      OrthoDirty(G);
     } else if(x<I->BarMin){
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
@@ -248,7 +249,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
           I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5;
           if(I->Value<0.0)
             I->Value=0.0F;
-          OrthoGrab(I->Block);
+          OrthoGrab(G,I->Block);
           I->StartPos = x;
           I->StartValue=I->Value;
         }
@@ -258,12 +259,12 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
         if(I->Value<0.0)
           I->Value=0.0F;
       }
-      OrthoDirty();
+      OrthoDirty(G);
     } else {
-      OrthoGrab(I->Block);
+      OrthoGrab(G,I->Block);
       I->StartPos = x;
       I->StartValue=I->Value;
-      OrthoDirty();
+      OrthoDirty(G);
     } 
   } else {
     if(y>I->BarMin) {
@@ -273,7 +274,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
           I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5;
           if(I->Value<0.0)
             I->Value=0.0F;
-          OrthoGrab(I->Block);
+          OrthoGrab(G,I->Block);
           I->StartPos = y;
           I->StartValue=I->Value;
         }
@@ -283,7 +284,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
         if(I->Value<0.0)
           I->Value=0.0F;
       }
-      OrthoDirty();
+      OrthoDirty(G);
     } else if(y<I->BarMax) {
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
@@ -291,7 +292,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
           I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5;
           if(I->Value > I->ValueMax)
             I->Value = I->ValueMax;
-          OrthoGrab(I->Block);
+          OrthoGrab(G,I->Block);
           I->StartPos = y;
           I->StartValue=I->Value;
         }
@@ -301,12 +302,12 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
         if(I->Value > I->ValueMax)
           I->Value = I->ValueMax;
       }
-      OrthoDirty();
+      OrthoDirty(G);
     } else {
-      OrthoGrab(I->Block);
+      OrthoGrab(G,I->Block);
       I->StartPos = y;
       I->StartValue=I->Value;
-      OrthoDirty();
+      OrthoDirty(G);
     }
   }
   return 0;
@@ -314,6 +315,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
 
 static int ScrollBarDrag(Block *block,int x,int y,int mod)
 {
+  PyMOLGlobals *G=block->G;
   CScrollBar *I = (CScrollBar*)block->reference;
   int displ;
   if(I->HorV) 
@@ -329,12 +331,13 @@ static int ScrollBarDrag(Block *block,int x,int y,int mod)
 
   if(I->Value<0.0) I->Value=0.0;
   if(I->Value>I->ValueMax) I->Value=I->ValueMax;
-  OrthoDirty();
+  OrthoDirty(G);
   return 0;
 }
 static int ScrollBarRelease(Block *block,int button,int x,int y,int mod)
 {
-  OrthoUngrab();
+  PyMOLGlobals *G=block->G;
+  OrthoUngrab(G);
   return 0;
 }
 
@@ -382,11 +385,11 @@ void ScrollBarDoClick(struct CScrollBar *I,int button,int x,int y,int mod)
     I->Block->fClick(I->Block,button,x,y,mod);
 }
 
-struct CScrollBar *ScrollBarNew(int horizontal)
+struct CScrollBar *ScrollBarNew(PyMOLGlobals *G,int horizontal)
 {
-  OOAlloc(CScrollBar)
+  OOAlloc(G,CScrollBar)
 
-  I->Block = OrthoNewBlock(NULL);  
+  I->Block = OrthoNewBlock(G,NULL);  
   I->Block->fRelease = ScrollBarRelease;
   I->Block->fClick   = ScrollBarClick;
   I->Block->fDrag    = ScrollBarDrag;
@@ -410,6 +413,7 @@ struct CScrollBar *ScrollBarNew(int horizontal)
 
 void ScrollBarFree(struct CScrollBar *I)
 {
-  OrthoFreeBlock(I->Block);
+  PyMOLGlobals *G=I->Block->G;
+  OrthoFreeBlock(G,I->Block);
   OOFreeP(I);
 }

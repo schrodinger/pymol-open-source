@@ -30,8 +30,8 @@ typedef struct ObjectCallback {
   int NState;
 } ObjectCallback;
 
-ObjectCallback *ObjectCallbackNew(void);
-ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *PObj,int state);
+ObjectCallback *ObjectCallbackNew(PyMOLGlobals *G);
+ObjectCallback *ObjectCallbackDefine(PyMOLGlobals *G,ObjectCallback *obj,PyObject *PObj,int state);
 void ObjectCallbackRecomputeExtent(ObjectCallback *I);
 
 #endif

@@ -33,26 +33,24 @@ Z* -------------------------------------------------------------------
 #include"Wizard.h"
 #include"Seq.h"
 
-CSetting Setting;
-
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
-int SettingSetSmart_i(CSetting *set1,CSetting *set2,int index, int value)
+int SettingSetSmart_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index, int value)
 {
   int dummy;
-  if(set1 && SettingGetIfDefined_i(set1,index,&dummy)) {
+  if(set1 && SettingGetIfDefined_i(G,set1,index,&dummy)) {
     return SettingSet_i(set1,index,value);
   }
-  if(set2 && SettingGetIfDefined_i(set2,index,&dummy)) {
+  if(set2 && SettingGetIfDefined_i(G,set2,index,&dummy)) {
     return SettingSet_i(set2,index,value);
   }
-  return SettingSetGlobal_i(index,value);
+  return SettingSetGlobal_i(G,index,value);
 }
 
-int SettingSetGlobalsFromPyList(PyObject *list)
+int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
 {
   int ok=true;
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
       ok = SettingFromPyList(I,list);
@@ -61,10 +59,10 @@ int SettingSetGlobalsFromPyList(PyObject *list)
   return(ok);
 }
 
-PyObject *SettingGetGlobalsPyList(void)
+PyObject *SettingGetGlobalsPyList(PyMOLGlobals *G)
 {
   PyObject *result = NULL;
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   result = SettingAsPyList(I);
   return(PConvAutoNone(result));
 }
@@ -177,7 +175,7 @@ static int set_list(CSetting *I,PyObject *list)
   return(ok);
 }
 /*========================================================================*/
-CSetting *SettingNewFromPyList(PyObject *list)
+CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
   int ok=true;
   int size;
@@ -186,7 +184,7 @@ CSetting *SettingNewFromPyList(PyObject *list)
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
   if(ok) {
-    I=SettingNew();
+    I=SettingNew(G);
     size=PyList_Size(list);
     for(a=0;a<size;a++) {
       if(ok) ok=set_list(I,PyList_GetItem(list,a));
@@ -211,13 +209,13 @@ int SettingFromPyList(CSetting *I,PyObject *list)
   return(ok);
 }
 /*========================================================================*/
-PyObject *SettingGetUpdateList(CSetting *I)
+PyObject *SettingGetUpdateList(PyMOLGlobals *G,CSetting *I)
 { /* assumes blocked interpreter */
   int a;
   int n;
   PyObject *result;
 
-  if(!I) I=&Setting; /* fall back on global settings */
+  if(!I) I=G->Setting; /* fall back on global settings */
 
   n=VLAGetSize(I->info);
   result=PyList_New(0);
@@ -231,47 +229,47 @@ PyObject *SettingGetUpdateList(CSetting *I)
   return(result);
 }
 /*========================================================================*/
-void SettingCheckHandle(CSetting **handle)
+void SettingCheckHandle(PyMOLGlobals *G,CSetting **handle)
 {
   if(!*handle)
-    *handle=SettingNew();
+    *handle=SettingNew(G);
 }
 /*========================================================================*/
-int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer) 
+int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,char *buffer) 
 /* not range checked */
 {
   int type;
   int ok=true;
   int tmp1;
   float *ptr;
-  type = SettingGetType(index);
+  type = SettingGetType(G,index);
   switch(type) {
   case cSetting_boolean:
-    if(SettingGet_b(set1,set2,index))
+    if(SettingGet_b(G,set1,set2,index))
       sprintf(buffer,"on");
     else
       sprintf(buffer,"off");      
     break;
   case cSetting_int:
-    sprintf(buffer,"%d",SettingGet_i(set1,set2,index));
+    sprintf(buffer,"%d",SettingGet_i(G,set1,set2,index));
     break;
   case cSetting_float:
-    sprintf(buffer,"%1.5f",SettingGet_f(set1,set2,index));
+    sprintf(buffer,"%1.5f",SettingGet_f(G,set1,set2,index));
     break;
   case cSetting_float3:
-    ptr = SettingGet_3fv(set1,set2,index);
+    ptr = SettingGet_3fv(G,set1,set2,index);
     sprintf(buffer,"[ %1.5f, %1.5f, %1.5f ]",
             ptr[0],ptr[1],ptr[2]);
     break;
   case cSetting_color:
-    tmp1 = SettingGet_color(set1,set2,index);
+    tmp1 = SettingGet_color(G,set1,set2,index);
     if(tmp1<0) 
       strcpy(buffer,"default");
     else
-      strcpy(buffer,ColorGetName(tmp1));
+      strcpy(buffer,ColorGetName(G,tmp1));
     break;
   case cSetting_string:
-    strcpy(buffer,SettingGet_s(set1,set2,index));
+    strcpy(buffer,SettingGet_s(G,set1,set2,index));
     break;
   default:
     ok=false;
@@ -281,13 +279,13 @@ int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer)
 }
 
 /*========================================================================*/
-int SettingSetTuple(CSetting *I,int index,PyObject *tuple) 
+int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple) 
      /* must have interpret locked to make this call */
 {
   PyObject *value;
   int type;
   int ok=true;
-  if(!I) I=&Setting; /* fall back on global settings */
+  if(!I) I=G->Setting; /* fall back on global settings */
 
   /* this data structure has been pre-checked at the python level... */
 
@@ -324,37 +322,37 @@ int SettingSetTuple(CSetting *I,int index,PyObject *tuple)
   return(ok);
 }
 /*========================================================================*/
-PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
+PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 {  /* assumes blocked python interpeter */
   PyObject *result = NULL;
   float *ptr;
-  int type = SettingGetType(index);
+  int type = SettingGetType(G,index);
 
   switch(type) {
   case cSetting_boolean:
     result = Py_BuildValue("(i(i))",type,
-                           SettingGet_b(set1,set2,index));
+                           SettingGet_b(G,set1,set2,index));
     break;
   case cSetting_int:
     result = Py_BuildValue("(i(i))",type,
-                           SettingGet_i(set1,set2,index));
+                           SettingGet_i(G,set1,set2,index));
     break;
   case cSetting_float:
     result = Py_BuildValue("(i(f))",type,
-                           SettingGet_f(set1,set2,index));
+                           SettingGet_f(G,set1,set2,index));
     break;
   case cSetting_float3:
-    ptr =  SettingGet_3fv(set1,set2,index);
+    ptr =  SettingGet_3fv(G,set1,set2,index);
     result = Py_BuildValue("(i(fff))",type,
                            ptr[0],ptr[1],ptr[2]);
     break;
   case cSetting_color:
     result = Py_BuildValue("(i(i))",type,
-                           SettingGet_color(set1,set2,index));
+                           SettingGet_color(G,set1,set2,index));
     break;
   case cSetting_string:
     result = Py_BuildValue("(i(s))",type,
-                           SettingGet_s(set1,set2,index));
+                           SettingGet_s(G,set1,set2,index));
     break;
   default:
     Py_INCREF(Py_None);
@@ -364,42 +362,42 @@ PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
   return result;
 }
 /*========================================================================*/
-PyObject *SettingGetDefinedTuple(CSetting *set1,int index)
+PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index)
 {  /* Assumes blocked Python interpreter */
   PyObject *result = NULL;
   int defined = true;
-  int type = SettingGetType(index);
+  int type = SettingGetType(G,index);
   int int1;
   float float1,*vect1;
   char *str1;
   switch(type) {
   case cSetting_boolean:
-    defined = SettingGetIfDefined_b(set1,index,&int1);
+    defined = SettingGetIfDefined_b(G,set1,index,&int1);
     if(defined) 
       result = Py_BuildValue("(i(i))",type,int1);
     break;
   case cSetting_int:
-    defined = SettingGetIfDefined_i(set1,index,&int1);
+    defined = SettingGetIfDefined_i(G,set1,index,&int1);
     if(defined) 
       result = Py_BuildValue("(i(i))",type,int1);
     break;
   case cSetting_float:
-    defined = SettingGetIfDefined_f(set1,index,&float1);
+    defined = SettingGetIfDefined_f(G,set1,index,&float1);
     if(defined) 
       result = Py_BuildValue("(i(f))",type,float1);
     break;
   case cSetting_float3:
-    defined = SettingGetIfDefined_3fv(set1,index,&vect1);
+    defined = SettingGetIfDefined_3fv(G,set1,index,&vect1);
     result = Py_BuildValue("(i(fff))",type,
                            vect1[0],vect1[1],vect1[2]);
     break;
   case cSetting_color:
-    defined = SettingGetIfDefined_color(set1,index,&int1);
+    defined = SettingGetIfDefined_color(G,set1,index,&int1);
     if(defined) 
       result = Py_BuildValue("(i(i))",type,int1);
     break;
   case cSetting_string:
-    defined = SettingGetIfDefined_s(set1,index,&str1);
+    defined = SettingGetIfDefined_s(G,set1,index,&str1);
     if(defined) 
       result = Py_BuildValue("(i(s))",type,str1);
     break;
@@ -417,10 +415,10 @@ PyObject *SettingGetDefinedTuple(CSetting *set1,int index)
 }
 
 /*========================================================================*/
-CSetting *SettingNew(void)
+CSetting *SettingNew(PyMOLGlobals *G)
 {
-  OOAlloc(CSetting);
-  SettingInit(I);
+  OOAlloc(G,CSetting);
+  SettingInit(G,I);
   return(I);
 }
 /*========================================================================*/
@@ -439,8 +437,9 @@ void SettingFreeP(CSetting *I)
   OOFreeP(I);
 }
 /*========================================================================*/
-void SettingInit(CSetting *I)
+void SettingInit(PyMOLGlobals *G,CSetting *I)
 {
+  I->G=G;
   I->size=sizeof(int); /* insures offset is never zero, except when undef */
   I->data=VLAlloc(char,10);
   I->info=VLAMalloc(cSetting_INIT,sizeof(SettingRec),5,1); /* auto-zero */
@@ -448,7 +447,8 @@ void SettingInit(CSetting *I)
 /*========================================================================*/
 void SettingClear(CSetting *I,int index)
 {
-  I->info[index].defined = false; 
+  if(I)
+    I->info[index].defined = false; 
 }
 /*========================================================================*/
 static void *SettingPtr(CSetting *I,int index,unsigned int size)
@@ -478,15 +478,16 @@ int SettingUnset(CSetting *I,int index)
   return true;
 }
 /*========================================================================*/
-int SettingGetType(int index)
+int SettingGetType(PyMOLGlobals *G,int index)
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   return(I->info[index].type);
 }
 
 /*========================================================================*/
 static int get_i(CSetting *I,int index)
 {
+  PyMOLGlobals *G=I->G;
   int result;
   switch(I->info[index].type) {
   case cSetting_boolean:
@@ -498,9 +499,9 @@ static int get_i(CSetting *I,int index)
     result = (int)(*((float*)(I->data+I->info[index].offset)));
     break;
   default:
-    PRINTFB(FB_Setting,FB_Errors)
+    PRINTFB(G,FB_Setting,FB_Errors)
       "Setting-Error: type read mismatch (int) %d\n",index
-      ENDFB;
+      ENDFB(G);
     result = 0;
     break;
   }
@@ -510,6 +511,7 @@ static int get_i(CSetting *I,int index)
 static int get_b(CSetting *I,int index)
 {
   int result;
+  PyMOLGlobals *G=I->G;
   switch(I->info[index].type) {
   case cSetting_boolean:
   case cSetting_int:
@@ -520,9 +522,9 @@ static int get_b(CSetting *I,int index)
     result = (int)(*((float*)(I->data+I->info[index].offset)));
     break;
   default:
-    PRINTFB(FB_Setting,FB_Errors)
+    PRINTFB(G,FB_Setting,FB_Errors)
       "Setting-Error: type read mismatch (boolean) %d\n",index
-      ENDFB;
+      ENDFB(G);
     result = 0;
   }
   return(result);
@@ -531,6 +533,7 @@ static int get_b(CSetting *I,int index)
 static int get_color(CSetting *I,int index)
 {
   int result;
+  PyMOLGlobals *G=I->G;
   switch(I->info[index].type) {
   case cSetting_boolean:
   case cSetting_int:
@@ -541,9 +544,9 @@ static int get_color(CSetting *I,int index)
     result = (int)(*((float*)(I->data+I->info[index].offset)));
     break;
   default:
-    PRINTFB(FB_Setting,FB_Errors)
+    PRINTFB(G,FB_Setting,FB_Errors)
       "Setting-Error: type read mismatch (color) %d\n",index
-      ENDFB;
+      ENDFB(G);
     result = 0;
   }
   return(result);
@@ -552,6 +555,7 @@ static int get_color(CSetting *I,int index)
 static float get_f(CSetting *I,int index)
 {
   float result;
+  PyMOLGlobals *G=I->G;
   switch(I->info[index].type) {
   case cSetting_boolean:
   case cSetting_int:
@@ -562,9 +566,9 @@ static float get_f(CSetting *I,int index)
     result = (*((float*)(I->data+I->info[index].offset)));
     break;
   default:
-    PRINTFB(FB_Setting,FB_Errors)
+    PRINTFB(G,FB_Setting,FB_Errors)
       "Setting-Error: type read mismatch (float) %d\n",index
-      ENDFB;
+      ENDFB(G);
     result = 0.0F;
   }
   return(result);
@@ -573,14 +577,15 @@ static float get_f(CSetting *I,int index)
 static char *get_s(CSetting *I,int index)
 {
   char *result;
+  PyMOLGlobals *G=I->G;
   switch(I->info[index].type) {
   case cSetting_string:
     result = ((char*)(I->data+I->info[index].offset));
     break;
   default:
-    PRINTFB(FB_Setting,FB_Errors)
+    PRINTFB(G,FB_Setting,FB_Errors)
       "Setting-Error: type read mismatch (string) %d\n",index
-      ENDFB;
+      ENDFB(G);
     result = NULL;
   }
   return(result);
@@ -591,6 +596,7 @@ int SettingSet_b(CSetting *I,int index, int value)
   int ok=true;
   if(I) {
     int setting_type = I->info[index].type;
+    PyMOLGlobals *G=I->G;
     switch(setting_type) {
     case cSetting_blank:
     case cSetting_boolean:
@@ -603,9 +609,9 @@ int SettingSet_b(CSetting *I,int index, int value)
       *((float*)SettingPtr(I,index,sizeof(float))) = (float)value;
       break;
     default:
-      PRINTFB(FB_Setting,FB_Errors)
+      PRINTFB(G,FB_Setting,FB_Errors)
         "Setting-Error: type set mismatch (boolean) %d\n",index
-        ENDFB
+        ENDFB(G);
         ok=false;
     }
     if(setting_type==cSetting_blank)
@@ -620,6 +626,7 @@ int SettingSet_i(CSetting *I,int index, int value)
 {
   int ok=true;
   if(I) {
+    PyMOLGlobals *G=I->G;
     int setting_type = I->info[index].type;
     switch(setting_type) {
     case cSetting_blank:
@@ -633,9 +640,9 @@ int SettingSet_i(CSetting *I,int index, int value)
       *((float*)SettingPtr(I,index,sizeof(float))) = (float)value;
       break;
     default:
-      PRINTFB(FB_Setting,FB_Errors)
+      PRINTFB(G,FB_Setting,FB_Errors)
         "Setting-Error: type set mismatch (integer)\n"
-        ENDFB
+        ENDFB(G);
         ok=false;
     }
     if(setting_type==cSetting_blank)
@@ -650,16 +657,17 @@ int SettingSet_color(CSetting *I,int index, char *value)
 {
   int ok=true;
   int color_index;
-  color_index=ColorGetIndex(value);
-  if((color_index==-1)&&(strcmp(value,"-1"))) {
-    PRINTFB(FB_Setting,FB_Errors)
-      "Setting-Error: unknown color '%s'\n",value
-      ENDFB
+  if(I) {
+    PyMOLGlobals *G=I->G;
+    color_index=ColorGetIndex(G,value);
+    if((color_index==-1)&&(strcmp(value,"-1"))) {
+      PRINTFB(G,FB_Setting,FB_Errors)
+        "Setting-Error: unknown color '%s'\n",value
+        ENDFB(G);
       ok=false;
     
-  } else {
+    } else {
     
-    if(I) {
       int setting_type = I->info[index].type;
       switch(setting_type) {
       case cSetting_blank:
@@ -673,20 +681,19 @@ int SettingSet_color(CSetting *I,int index, char *value)
         *((float*)SettingPtr(I,index,sizeof(float))) = (float)color_index;
         break;
       default:
-        PRINTFB(FB_Setting,FB_Errors)
+        PRINTFB(G,FB_Setting,FB_Errors)
           "Setting-Error: type set mismatch (color)\n"
-          ENDFB
+          ENDFB(G);
           ok=false;
       }
       if(setting_type==cSetting_blank)
         I->info[index].type = cSetting_color;
-    } else {
-      ok=false;
-    }
     
-    VLACheck(I->info,SettingRec,index);
-    *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
-    I->info[index].type = cSetting_color;
+      VLACheck(I->info,SettingRec,index);
+      *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
+      I->info[index].type = cSetting_color;
+
+    }
   }
   return(ok);
 }
@@ -695,6 +702,7 @@ int SettingSet_f(CSetting *I,int index, float value)
 {
   int ok=true;
   if(I) {
+    PyMOLGlobals *G=I->G;
     int setting_type = I->info[index].type;
     switch(setting_type) {
     case cSetting_boolean:
@@ -708,9 +716,9 @@ int SettingSet_f(CSetting *I,int index, float value)
       *((float*)SettingPtr(I,index,sizeof(float))) = value;
       break;
     default:
-      PRINTFB(FB_Setting,FB_Errors)
+      PRINTFB(G,FB_Setting,FB_Errors)
         "Setting-Error: type set mismatch (float)\n"
-        ENDFB
+        ENDFB(G);
         ok=false;
     }
     if(setting_type==cSetting_blank)
@@ -725,6 +733,7 @@ int SettingSet_s(CSetting *I,int index, char *value)
 {
   int ok=true;
   if(I) {
+    PyMOLGlobals *G=I->G;
     int setting_type = I->info[index].type;
     switch(setting_type) {
     case cSetting_blank:
@@ -734,9 +743,9 @@ int SettingSet_s(CSetting *I,int index, char *value)
       I->info[index].type = cSetting_string;
       break;
     default:
-      PRINTFB(FB_Setting,FB_Errors)
+      PRINTFB(G,FB_Setting,FB_Errors)
         "Setting-Error: type set mismatch (string)\n"
-        ENDFB
+        ENDFB(G);
         ok=false;
     }
     if(setting_type==cSetting_blank)
@@ -752,6 +761,7 @@ int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
   int ok=false;
   float *ptr;
   if(I) {
+    PyMOLGlobals *G=I->G;
     int setting_type = I->info[index].type;
     switch(setting_type) {
     case cSetting_blank:
@@ -763,9 +773,9 @@ int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
       ptr[2]=value3;
       break;
     default:
-      PRINTFB(FB_Setting,FB_Errors)
+      PRINTFB(G,FB_Setting,FB_Errors)
         "Setting-Error: type set mismatch (float3)\n"
-        ENDFB
+        ENDFB(G);
         ok=false;
     }
     if(setting_type==cSetting_blank)
@@ -786,45 +796,45 @@ int SettingSet_3fv(CSetting *I,int index, float *vector)
   return(true);
 }
 /*========================================================================*/
-int   SettingGetGlobal_b(int index) 
+int   SettingGetGlobal_b(PyMOLGlobals *G,int index) 
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   return(get_b(I,index));
 }
 /*========================================================================*/
-int   SettingGetGlobal_i(int index) 
+int   SettingGetGlobal_i(PyMOLGlobals *G,int index) 
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   return(get_i(I,index));
 }
 /*========================================================================*/
-float SettingGetGlobal_f(int index)
+float SettingGetGlobal_f(PyMOLGlobals *G,int index)
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   return(get_f(I,index));
 }
 /*========================================================================*/
-char *SettingGetGlobal_s(int index)
+char *SettingGetGlobal_s(PyMOLGlobals *G,int index)
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   return(get_s(I,index));
 }
 /*========================================================================*/
-void  SettingGetGlobal_3f(int index,float *value)
+void  SettingGetGlobal_3f(PyMOLGlobals *G,int index,float *value)
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   float *ptr;
   ptr = (float*)(I->data+I->info[index].offset);
   copy3f(ptr,value);
 }
 /*========================================================================*/
-float *SettingGetGlobal_3fv(int index)
+float *SettingGetGlobal_3fv(PyMOLGlobals *G,int index)
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   return (float*)(I->data+I->info[index].offset);
 }
 /*========================================================================*/
-int   SettingGet_b  (CSetting *set1,CSetting *set2,int index)
+int   SettingGet_b(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
@@ -836,10 +846,10 @@ int   SettingGet_b  (CSetting *set1,CSetting *set2,int index)
       return(get_b(set2,index));
     }
   }
-  return(SettingGetGlobal_i(index));
+  return(SettingGetGlobal_i(G,index));
 }
 /*========================================================================*/
-int SettingGetIfDefined_b(CSetting *set1,int index,int *value)
+int SettingGetIfDefined_b(PyMOLGlobals *G,CSetting *set1,int index,int *value)
 {
   int result=false;
   if(set1) {
@@ -851,7 +861,7 @@ int SettingGetIfDefined_b(CSetting *set1,int index,int *value)
   return(result);
 }
 /*========================================================================*/
-int SettingGetIfDefined_i(CSetting *set1,int index,int *value)
+int SettingGetIfDefined_i(PyMOLGlobals *G,CSetting *set1,int index,int *value)
 {
   int result=false;
   if(set1) {
@@ -863,7 +873,7 @@ int SettingGetIfDefined_i(CSetting *set1,int index,int *value)
   return(result);
 }
 /*========================================================================*/
-int   SettingGetIfDefined_color(CSetting *set1,int index,int *value)
+int   SettingGetIfDefined_color(PyMOLGlobals *G,CSetting *set1,int index,int *value)
 {
   int result=false;
   if(set1) {
@@ -875,7 +885,7 @@ int   SettingGetIfDefined_color(CSetting *set1,int index,int *value)
   return(result);
 }
 /*========================================================================*/
-int   SettingGetIfDefined_f(CSetting *set1,int index,float *value){
+int   SettingGetIfDefined_f(PyMOLGlobals *G,CSetting *set1,int index,float *value){
   int result=false;
   if(set1) {
     if(set1->info[index].defined) {
@@ -886,7 +896,7 @@ int   SettingGetIfDefined_f(CSetting *set1,int index,float *value){
   return(result);
 }
 /*========================================================================*/
-int   SettingGetIfDefined_3fv(CSetting *set1,int index,float **value)
+int   SettingGetIfDefined_3fv(PyMOLGlobals *G,CSetting *set1,int index,float **value)
 {
   int result=false;
   if(set1) {
@@ -898,7 +908,7 @@ int   SettingGetIfDefined_3fv(CSetting *set1,int index,float **value)
   return(result);
 }
 /*========================================================================*/
-int   SettingGetIfDefined_s(CSetting *set1,int index,char **value)
+int   SettingGetIfDefined_s(PyMOLGlobals *G,CSetting *set1,int index,char **value)
 {
   int result=false;
   if(set1) {
@@ -911,7 +921,7 @@ int   SettingGetIfDefined_s(CSetting *set1,int index,char **value)
 }
 
 /*========================================================================*/
-int   SettingGet_i  (CSetting *set1,CSetting *set2,int index)
+int   SettingGet_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
@@ -923,10 +933,10 @@ int   SettingGet_i  (CSetting *set1,CSetting *set2,int index)
       return(get_i(set2,index));
     }
   }
-  return(SettingGetGlobal_i(index));
+  return(SettingGetGlobal_i(G,index));
 }
 /*========================================================================*/
-int   SettingGet_color(CSetting *set1,CSetting *set2,int index)
+int   SettingGet_color(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
@@ -938,10 +948,10 @@ int   SettingGet_color(CSetting *set1,CSetting *set2,int index)
       return(get_color(set2,index));
     }
   }
-  return(SettingGetGlobal_i(index));
+  return(SettingGetGlobal_i(G,index));
 }
 /*========================================================================*/
-float SettingGet_f  (CSetting *set1,CSetting *set2,int index)
+float SettingGet_f(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
@@ -953,10 +963,10 @@ float SettingGet_f  (CSetting *set1,CSetting *set2,int index)
       return(get_f(set2,index));
     }
   }
-  return(SettingGetGlobal_f(index));
+  return(SettingGetGlobal_f(G,index));
 }
 /*========================================================================*/
-char *SettingGet_s(CSetting *set1,CSetting *set2,int index)
+char *SettingGet_s(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
@@ -968,10 +978,10 @@ char *SettingGet_s(CSetting *set1,CSetting *set2,int index)
       return(get_s(set2,index));
     }
   }
-  return(SettingGetGlobal_s(index));
+  return(SettingGetGlobal_s(G,index));
 }
 /*========================================================================*/
-void  SettingGet_3f(CSetting *set1,CSetting *set2,int index,float *value)
+void  SettingGet_3f(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,float *value)
 {
   float *ptr;
   if(set1) {
@@ -988,10 +998,10 @@ void  SettingGet_3f(CSetting *set1,CSetting *set2,int index,float *value)
       return;
     }
   }
-  SettingGetGlobal_3f(index,value);
+  SettingGetGlobal_3f(G,index,value);
 }
 /*========================================================================*/
-float *SettingGet_3fv(CSetting *set1,CSetting *set2,int index)
+float *SettingGet_3fv(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
@@ -1003,12 +1013,12 @@ float *SettingGet_3fv(CSetting *set1,CSetting *set2,int index)
       return (float*)(set2->data+set2->info[index].offset);
     }
   }
-  return(SettingGetGlobal_3fv(index));
+  return(SettingGetGlobal_3fv(G,index));
 }
 
 /*========================================================================*/
 /*========================================================================*/
-int SettingGetIndex(char *name) /* can be called from any thread state */
+int SettingGetIndex(PyMOLGlobals *G,char *name) /* can be called from any thread state */
 {
   PyObject *tmp;
   int unblock;
@@ -1028,7 +1038,7 @@ int SettingGetIndex(char *name) /* can be called from any thread state */
   return(index);
 }
 /*========================================================================*/
-int SettingGetName(int index,SettingName name) /* can be called from any thread state */
+int SettingGetName(PyMOLGlobals *G,int index,SettingName name) /* can be called from any thread state */
 {
   PyObject *tmp;
   int unblock;
@@ -1047,7 +1057,7 @@ int SettingGetName(int index,SettingName name) /* can be called from any thread 
 }
 
 /*========================================================================*/
-void SettingGenerateSideEffects(int index,char *sele,int state)
+void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
 {
   char all[] = "all";
   char *inv_sele;
@@ -1061,7 +1071,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   }
   switch(index) {
   case cSetting_stereo:
-    SceneUpdateStereo();
+    SceneUpdateStereo(G);
     break;
   case cSetting_seq_view:
   case cSetting_seq_view_label_spacing:
@@ -1069,14 +1079,14 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_seq_view_label_start:
   case cSetting_seq_view_format:
   case cSetting_seq_view_color:
-    SeqChanged();
+    SeqChanged(G);
     break;
   case cSetting_seq_view_location:
   case cSetting_seq_view_overlay:
     PParse("cmd.viewport(-1,-1)");
     break;
   case cSetting_stereo_mode:
-    SceneUpdateStereoMode();
+    SceneUpdateStereoMode(G);
     break;
   case cSetting_dot_lighting:
   case cSetting_mesh_lighting:
@@ -1087,48 +1097,48 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_transparency_mode:
   case cSetting_dot_normals:
   case cSetting_mesh_normals:
-	 SceneDirty();
+	 SceneDirty(G);
 	 break;
   case cSetting_stereo_shift:
   case cSetting_stereo_angle:
-	 SceneDirty();
+	 SceneDirty(G);
 	 break;
   case cSetting_dash_round_ends:
-	 SceneDirty();
+	 SceneDirty(G);
 	 break;
   case cSetting_internal_gui_control_size:
-    WizardRefresh();
-    OrthoDirty();
+    WizardRefresh(G);
+    OrthoDirty(G);
     break;
   case cSetting_min_mesh_spacing:
   case cSetting_mesh_mode:
   case cSetting_mesh_type:
   case cSetting_mesh_solvent:
   case cSetting_mesh_quality:
-    ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_valence:
   case cSetting_half_bonds:
-    ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
-    ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_slice_height_scale:
   case cSetting_slice_height_map:
   case cSetting_slice_grid:
   case cSetting_slice_dynamic_grid:
   case cSetting_slice_dynamic_grid_resolution:
-    ExecutiveInvalidateRep(inv_sele,cRepSlice,cRepInvRep);    
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepSlice,cRepInvRep);    
+    SceneChanged(G);
     break;
   case cSetting_label_font_id:
-    SceneChanged();
+    SceneChanged(G);
     break;
   case cSetting_retain_order:
   case cSetting_pdb_hetatm_sort:
   case cSetting_pdb_insertions_go_first:
-    ExecutiveSort(cKeywordAll);
+    ExecutiveSort(G,cKeywordAll);
     break;
   case cSetting_roving_lines:
   case cSetting_roving_sticks:
@@ -1149,21 +1159,21 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_roving_map3_name:
   case cSetting_roving_isosurface:
   case cSetting_roving_isomesh:
-    SceneRovingChanged();
+    SceneRovingChanged(G);
     break;
   case cSetting_roving_byres:
   case cSetting_roving_detail:
-    SceneRovingDirty();
+    SceneRovingDirty(G);
     break;
   case cSetting_dash_length:
   case cSetting_dash_gap:
   case cSetting_dash_radius:
   case cSetting_dash_width:
-    ExecutiveRebuildAllObjectDist();
-    SceneChanged();
+    ExecutiveRebuildAllObjectDist(G);
+    SceneChanged(G);
     break;
   case cSetting_button_mode:
-    SceneDirty();
+    SceneDirty(G);
     break;
   case cSetting_stick_radius:
   case cSetting_stick_ball:
@@ -1171,75 +1181,75 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_stick_fixed_radius:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
-    ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_clamp_colors:
-    ExecutiveInvalidateRep(inv_sele,cRepAll,cRepInvColor);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepAll,cRepInvColor);
+    SceneChanged(G);
     break;
   case cSetting_label_color:
-    ExecutiveInvalidateRep(inv_sele,cRepLabel,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepLabel,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_cartoon_color:
-    ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepCartoon,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_ribbon_color:
-    ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_all_states:
-    SceneChanged();
+    SceneChanged(G);
     break;
   case cSetting_sel_counter:
 	 break;
   case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
-    /*    SettingSet(cSetting_line_smooth,0);  NO LONGER */
+    /*    SettingSet(G,cSetting_line_smooth,0);  NO LONGER */
   case cSetting_line_radius:
-    ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
-    ExecutiveInvalidateRep(inv_sele,cRepNonbonded,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepNonbonded,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_mesh_width: 
   case cSetting_mesh_color: 
-    ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
+    SceneChanged(G);
     break;
   case cSetting_cull_spheres:
   case cSetting_sphere_scale:
   case cSetting_sphere_solvent:
-    ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepSphere,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_sphere_quality:
-    ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
-    ExecutiveInvalidateRep(inv_sele,cRepNonbondedSphere,cRepInvRep);
-    ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepNonbondedSphere,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepSphere,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_nonbonded_size:
-    ExecutiveInvalidateRep(inv_sele,cRepNonbonded,cRepInvRep);
-    ExecutiveInvalidateRep(inv_sele,cRepNonbondedSphere,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepNonbonded,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepNonbondedSphere,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_mesh_radius:
-    ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
+    SceneChanged(G);
     break;
   case cSetting_surface_color:
   case cSetting_surface_ramp_above_mode:
-    ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvColor);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepSurface,cRepInvColor);
+    SceneChanged(G);
     break;
   case cSetting_dot_color:
-    ExecutiveInvalidateRep(inv_sele,cRepDot,cRepInvColor);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepDot,cRepInvColor);
+    SceneChanged(G);
     break;
   case cSetting_sphere_color:
-    ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvColor);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepSphere,cRepInvColor);
+    SceneChanged(G);
     break;
   case cSetting_surface_quality:
   case cSetting_surface_mode:
@@ -1255,14 +1265,14 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_surface_solvent:
   case cSetting_surface_proximity:
   case cSetting_cavity_cull:
-    ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepSurface,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_solvent_radius:
-    ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
-    ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvRep);
-    ExecutiveInvalidateRep(inv_sele,cRepDot,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepSurface,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepDot,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_ribbon_power:
   case cSetting_ribbon_power_b:
@@ -1271,8 +1281,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_ribbon_width:
   case cSetting_ribbon_throw:
   case cSetting_ribbon_trace:
-    ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_cartoon_transparency:
   case cSetting_cartoon_trace:
@@ -1311,8 +1321,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_smooth_cycles:
   case cSetting_cartoon_flat_cycles:
 
-    ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepCartoon,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_dot_width:
   case cSetting_dot_radius:
@@ -1320,8 +1330,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_dot_mode:
   case cSetting_dot_solvent:
   case cSetting_dot_hydrogens:
-    ExecutiveInvalidateRep(inv_sele,cRepDot,cRepInvRep);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,inv_sele,cRepDot,cRepInvRep);
+    SceneChanged(G);
     break;
   case cSetting_line_smooth:
   case cSetting_transparency:
@@ -1334,18 +1344,18 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_specular_intensity:
   case cSetting_cgo_line_width:
   case cSetting_selection_width:
-    SceneDirty();
+    SceneDirty(G);
     break;
   case cSetting_depth_cue: 
-    SceneDirty();
+    SceneDirty(G);
     break;
   case cSetting_sculpting:
-    OrthoDirty();
+    OrthoDirty(G);
     break;
   case cSetting_overlay:
   case cSetting_overlay_lines:
   case cSetting_text:
-    OrthoDirty();
+    OrthoDirty(G);
     break;
   case cSetting_internal_gui_mode:
     break;
@@ -1353,29 +1363,29 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_internal_gui:
   case cSetting_internal_feedback:
     sprintf(command,"viewport");
-    OrthoCommandIn(command);
+    OrthoCommandIn(G,command);
     break;
   case cSetting_suspend_updates:
-    if(!SettingGet(cSetting_suspend_updates))
-      SceneChanged(); /* force big update upon resumption */
+    if(!SettingGet(G,cSetting_suspend_updates))
+      SceneChanged(G); /* force big update upon resumption */
     break;
   case cSetting_security:
-    Security = (int)SettingGet(cSetting_security);
+    Security = (int)SettingGet(G,cSetting_security);
     break;
   case cSetting_state:
   case cSetting_frame:
-    SceneChanged();
+    SceneChanged(G);
     break;
   default:
 	 break;
   }
 }
 /*========================================================================*/
-int SettingSetfv(int index,float *v)
+int SettingSetfv(PyMOLGlobals *G,int index,float *v)
 {
   /* Warren, are these side effects still relevant? */
 
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   int ok=true;
   switch(index) {
   case cSetting_dot_mode:
@@ -1390,41 +1400,41 @@ int SettingSetfv(int index,float *v)
       I->Setting[index].Value[1]=v[1];
       I->Setting[index].Value[2]=v[2];
     */
-	 SceneDirty();
+	 SceneDirty(G);
 	 break;
   case cSetting_valence:
-    ExecutiveInvalidateRep("all",cRepLine,cRepInvRep);
+    ExecutiveInvalidateRep(G,"all",cRepLine,cRepInvRep);
     SettingSet_f(I,index,v[0]);
-    SceneChanged();
+    SceneChanged(G);
     break;
   case cSetting_dash_length:
   case cSetting_dash_gap:
-    ExecutiveInvalidateRep("all",cRepDash,cRepInvRep);
+    ExecutiveInvalidateRep(G,"all",cRepDash,cRepInvRep);
     SettingSet_f(I,index,v[0]);
-    SceneChanged();
+    SceneChanged(G);
     break;
   case cSetting_button_mode:
     SettingSet_f(I,index,v[0]);
-    SceneDirty();
+    SceneDirty(G);
     break;
   case cSetting_stick_radius:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
-    ExecutiveInvalidateRep("all",cRepCyl,cRepInvRep);
+    ExecutiveInvalidateRep(G,"all",cRepCyl,cRepInvRep);
     SettingSet_f(I,index,v[0]);
     /*I->Setting[index].Value[0]=v[0];   */
-    SceneChanged();
+    SceneChanged(G);
     break;
   case cSetting_label_color:
-    ExecutiveInvalidateRep("all",cRepLabel,cRepInvRep);
+    ExecutiveInvalidateRep(G,"all",cRepLabel,cRepInvRep);
     SettingSet_f(I,index,v[0]);
     /* I->Setting[index].Value[0]=v[0]; */
-    SceneChanged();
+    SceneChanged(G);
     break;
   case cSetting_all_states:
     SettingSet_f(I,index,v[0]);
     /* I->Setting[index].Value[0]=v[0];  */
-    SceneChanged();
+    SceneChanged(G);
     break;
   case cSetting_dot_density:
     SettingSet_f(I,index,v[0]);
@@ -1436,11 +1446,11 @@ int SettingSetfv(int index,float *v)
 	 break;
   case cSetting_ortho:
   case cSetting_gl_ambient:
-	 SceneDirty();
+	 SceneDirty(G);
     break;
   case cSetting_overlay:
   case cSetting_text:
-    OrthoDirty();
+    OrthoDirty(G);
   default:
     ok = SettingSet_f(I,index,v[0]);
     /*I->Setting[index].Value[0]=v[0];*/
@@ -1449,61 +1459,61 @@ int SettingSetfv(int index,float *v)
   return(ok);
 }
 /*========================================================================*/
-int   SettingSetGlobal_b(int index,int value) 
+int   SettingSetGlobal_b(PyMOLGlobals *G,int index,int value) 
 {
-  return(SettingSet_b(&Setting,index,value));
+  return(SettingSet_b(G->Setting,index,value));
 }
 /*========================================================================*/
-int   SettingSetGlobal_i(int index,int value) 
+int   SettingSetGlobal_i(PyMOLGlobals *G,int index,int value) 
 {
-  return(SettingSet_i(&Setting,index,value));
+  return(SettingSet_i(G->Setting,index,value));
 }
 /*========================================================================*/
-int   SettingSetGlobal_f(int index,float value) 
+int   SettingSetGlobal_f(PyMOLGlobals *G,int index,float value) 
 {
-  return(SettingSet_f(&Setting,index,value));
+  return(SettingSet_f(G->Setting,index,value));
 }
 /*========================================================================*/
-int SettingSet(int index,float v)
+int SettingSet(PyMOLGlobals *G,int index,float v)
 {
-  return(SettingSetfv(index,&v));
+  return(SettingSetfv(G,index,&v));
 }
 /*========================================================================*/
-int SettingSetNamed(char *name,char *value)
+int SettingSetNamed(PyMOLGlobals *G,char *name,char *value)
 {
   int ok=true;
-  int index = SettingGetIndex(name);
+  int index = SettingGetIndex(G,name);
   float v,vv[3];
   SettingName realName;
   char buffer[1024] = "";
   if(index>=0) {
-    SettingGetName(index,realName);
+    SettingGetName(G,index,realName);
 	 switch(index) {
 	 case cSetting_dot_mode:
 		if(strcmp(value,"molecular")==0) {
 		  v=0.0;
-		  SettingSetfv(index,&v);
+		  SettingSetfv(G,index,&v);
 		  sprintf(buffer," Setting: %s set to %s\n",realName,value);
 		} else if(strcmp(value,"solvent_accessible")==0) {
 		  v=1.0;
-		  SettingSetfv(index,&v);
+		  SettingSetfv(G,index,&v);
 		  sprintf(buffer," Setting: %s set to %s\n",realName,value);
 		} else if(sscanf(value,"%f",&v)==1) {
-		  SettingSetfv(index,&v);
+		  SettingSetfv(G,index,&v);
 		  sprintf(buffer," Setting: %s set to %s\n",realName,value);
       }
 		break;
 	 case cSetting_bg_rgb:
 	 case cSetting_light:
 		if(sscanf(value,"%f%f%f",vv,vv+1,vv+2)==3) {
-		  SettingSetfv(index,vv);
+		  SettingSetfv(G,index,vv);
 		  sprintf(buffer," Setting: %s set to %5.3f %8.3f %8.3f\n",realName,
 					 *vv,*(vv+1),*(vv+2));
 		}
 		break;
 	 case cSetting_dot_density:
 		sscanf(value,"%f",&v);
-		SettingSetfv(index,&v);
+		SettingSetfv(G,index,&v);
 		sprintf(buffer," Setting: %s set to %d\n",realName,(int)v);
 		break;
 	 case cSetting_text:
@@ -1511,62 +1521,65 @@ int SettingSetNamed(char *name,char *value)
 	 case cSetting_sel_counter:
     case cSetting_dist_counter:
 		sscanf(value,"%f",&v);
-		SettingSetfv(index,&v);
+		SettingSetfv(G,index,&v);
 		break;
     case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
     case cSetting_mesh_width:
       sscanf(value,"%f",&v);
-		SettingSetfv(index,&v);
+		SettingSetfv(G,index,&v);
 		sprintf(buffer," Setting: %s set to %5.3f\n",realName,v);
-      SceneDirty();
+      SceneDirty(G);
       break;
 	 default:
 		sscanf(value,"%f",&v);
-		SettingSetfv(index,&v);
+		SettingSetfv(G,index,&v);
 		sprintf(buffer," Setting: %s set to %5.3f\n",realName,v);
 		break;
 	 }
   } else {
-    PRINTFB(FB_Setting,FB_Warnings)
+    PRINTFB(G,FB_Setting,FB_Warnings)
       " Error: Non-Existent Settin\n"
-      ENDFB;
+      ENDFB(G);
     ok=false;
   }
   if(buffer[0]) {
-    PRINTFB(FB_Setting,FB_Actions)
+    PRINTFB(G,FB_Setting,FB_Actions)
       "%s",buffer
-      ENDFB;
+      ENDFB(G);
   }
   return(ok);
 }
 /*========================================================================*/
-float SettingGetNamed(char *name)
+float SettingGetNamed(PyMOLGlobals *G,char *name)
 {
-  return(SettingGet(SettingGetIndex(name)));
+  return(SettingGet(G,SettingGetIndex(G,name)));
 }
 /*========================================================================*/
-float SettingGet(int index)
+float SettingGet(PyMOLGlobals *G,int index)
 {
-  return(SettingGetGlobal_f(index));
+  return(SettingGetGlobal_f(G,index));
 }
 /*========================================================================*/
-float *SettingGetfv(int index)
+float *SettingGetfv(PyMOLGlobals *G,int index)
 {
-  return(SettingGetGlobal_3fv(index));
+  return(SettingGetGlobal_3fv(G,index));
 }
 /*========================================================================*/
-void SettingFreeGlobal(void)
+void SettingFreeGlobal(PyMOLGlobals *G)
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
   SettingPurge(I);
+  FreeP(G->Setting);
 }
 /*========================================================================*/
-void SettingInitGlobal(int alloc,int reset_gui)
+void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 {
-  CSetting *I=&Setting;
+  register CSetting *I=G->Setting;
 
-  if(alloc)
-    SettingInit(I);
+  if(alloc || !I) {
+    I=(G->Setting=Calloc(CSetting,1));
+    SettingInit(G,I);
+  }
 
   SettingSet_f(I,cSetting_bonding_vdw_cutoff, 0.2F);
 

@@ -273,8 +273,45 @@ void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered)
   for(a=0;a<n;a++) x[a]--;
 }
 
+void UtilSortIndexGlobals(PyMOLGlobals *G,int n,void *array,int *x,UtilOrderFnGlobals* fOrdered)
+{
+  int l,a,r,t,i;
 
-void UtilSortInPlace(void *array,int nItem,
+  if(n<1) return;
+  else if(n==1) { x[0]=0; return; }
+  x--;
+  for(a=1;a<=n;a++) x[a]=a;
+  l=(n>>1)+1;
+  r=n;
+  while(1) {
+	if(l>1)
+	  t = x[--l];
+	else {
+	  t = x[r];
+	  x[r] = x[1];
+	  if( --r == 1) {
+		x[1] = t;
+		break;
+	  }
+	}
+	i=l;
+	a=l << 1;
+	while (a <= r) {
+	  if (a < r && (!fOrdered(G,array,x[a+1]-1,x[a]-1))) a++;
+	  if (!fOrdered(G,array,x[a]-1,t-1)) {
+		x[i] = x[a];
+		a += (i=a);
+	  } else
+		a = r + 1;
+	}
+	x[i] = t;
+  }
+  x++;
+  for(a=0;a<n;a++) x[a]--;
+}
+
+
+void UtilSortInPlace(PyMOLGlobals *G,void *array,int nItem,
 					 unsigned int itemSize,
 					 UtilOrderFn *fOrdered)
 
@@ -287,8 +324,8 @@ void UtilSortInPlace(void *array,int nItem,
 	 {
 	   tmp = Alloc(char,(itemSize*nItem));
 	   index = Alloc(int,nItem+1);
-	   ErrChkPtr(tmp);
-	   ErrChkPtr(index);
+	   ErrChkPtr(G,tmp);
+	   ErrChkPtr(G,index);
 	   UtilSortIndex(nItem,array,index,fOrdered);
 	   for(a=0;a<nItem;a++) index[a]++; /* ^tricky index adjustment to avoid flag array */
 	   for(a=0;a<nItem;a++)

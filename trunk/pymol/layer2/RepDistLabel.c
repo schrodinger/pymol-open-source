@@ -47,52 +47,53 @@ void RepDistLabelFree(RepDistLabel *I)
 {
   FreeP(I->V);
   FreeP(I->L);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   OOFreeP(I);
 }
 
 void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
   DistLabel *l = I->L;
   int n = 0;
   int color;
-  int font_id = SettingGet_i(NULL,I->Obj->Setting,cSetting_label_font_id);
+  int font_id = SettingGet_i(G,NULL,I->Obj->Setting,cSetting_label_font_id);
 
   if(ray) {
 
-    color = SettingGet_color(NULL,I->Obj->Setting,cSetting_label_color);
+    color = SettingGet_color(G,NULL,I->Obj->Setting,cSetting_label_color);
     
     if(color>=0)
-      TextSetColor(ColorGet(color));
+      TextSetColor(G,ColorGet(G,color));
     else
-      TextSetColor(ColorGet(I->Obj->Color));
+      TextSetColor(G,ColorGet(G,I->Obj->Color));
 
 	 while(c--) {
-      TextSetPos(v);
-      TextRenderRay(ray,font_id,l[n]);
+      TextSetPos(G,v);
+      TextRenderRay(G,ray,font_id,l[n]);
       v+=3;
       n++;
 	 }
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
     int float_text;
-    float_text = (int)SettingGet(cSetting_float_labels);
+    float_text = (int)SettingGet(G,cSetting_float_labels);
     if(float_text)
       glDisable(GL_DEPTH_TEST);	 
     glDisable(GL_LIGHTING);
     
-    color = SettingGet_color(NULL,I->Obj->Setting,cSetting_label_color);
+    color = SettingGet_color(G,NULL,I->Obj->Setting,cSetting_label_color);
     
     if(color>=0)
-      TextSetColor(ColorGet(color));
+      TextSetColor(G,ColorGet(G,color));
     else
-      TextSetColor(ColorGet(I->Obj->Color));
+      TextSetColor(G,ColorGet(G,I->Obj->Color));
 	 while(c--) {
 
-      TextSetPos(v);
-      TextRenderOpenGL(font_id,l[n]);
+      TextSetPos(G,v);
+      TextRenderOpenGL(G,font_id,l[n]);
       v+=3;
       n++;
 	 }
@@ -104,20 +105,21 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
 
 Rep *RepDistLabelNew(DistSet *ds)
 {
+  PyMOLGlobals *G=ds->G;
   int a;
   int n;
   float *v,*v1,*v2,d[3],di;
   char buffer[255];
 
   DistLabel *l;
-  OOAlloc(RepDistLabel);
+  OOAlloc(G,RepDistLabel);
 
   if(!ds->NIndex) {
     OOFreeP(I);
     return(NULL); 
   }
 
-  RepInit(&I->R);
+  RepInit(G,&I->R);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDistLabelRender;
   I->R.fFree=(void (*)(struct Rep *))RepDistLabelFree;

@@ -66,10 +66,10 @@ int SymmetryFromPyList(CSymmetry *I,PyObject *list)
  return(ok);
 }
 
-CSymmetry *SymmetryNewFromPyList(PyObject *list)
+CSymmetry *SymmetryNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
   CSymmetry *I=NULL;
-  I=SymmetryNew();
+  I=SymmetryNew(G);
   if(I) {
     if(!SymmetryFromPyList(I,list)) {
       SymmetryFree(I);
@@ -88,12 +88,12 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
   int a,l;
   CrystalUpdate(I->Crystal);
   if(!quiet) {
-    if(Feedback(FB_Symmetry,FB_Details)) {
+    if(Feedback(I->G,FB_Symmetry,FB_Details)) {
       CrystalDump(I->Crystal);
     }
   }
   if(!I->SpaceGroup[0]) {
-    ErrMessage("Symmetry","Missing space group symbol");
+    ErrMessage(I->G,"Symmetry","Missing space group symbol");
   } else {
     if(!blocked) 
       PBlock();
@@ -104,8 +104,8 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
       for(a=0;a<l;a++) {
         PConv44PyListTo44f(PyList_GetItem(mats,a),I->SymMatVLA+(a*16));
         if(!quiet) {
-          if(Feedback(FB_Symmetry,FB_Details)) {
-            MatrixDump44f(I->SymMatVLA+(a*16)," Symmetry:");
+          if(Feedback(I->G,FB_Symmetry,FB_Details)) {
+            MatrixDump44f(I->G,I->SymMatVLA+(a*16)," Symmetry:");
           }
         }
       }
@@ -113,7 +113,7 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
       ok = true;
       Py_DECREF(mats);
     } else {
-      ErrMessage("Symmetry","Unable to get matrices from sglite.");
+      ErrMessage(I->G,"Symmetry","Unable to get matrices from sglite.");
     }
     if(!blocked) 
       PUnblock();
@@ -137,11 +137,11 @@ void SymmetryReset(CSymmetry *I)
   I->NSymOp=0;
 }
 
-CSymmetry *SymmetryNew(void)
+CSymmetry *SymmetryNew(PyMOLGlobals *G)
 {
-  OOAlloc(CSymmetry);
-
-  I->Crystal=CrystalNew();
+  OOAlloc(G,CSymmetry);
+  I->G=G;
+  I->Crystal=CrystalNew(G);
   I->SpaceGroup[0]=0;
   I->NSymMat=0;
   I->SymMatVLA=VLAlloc(float,16);
@@ -152,7 +152,7 @@ CSymmetry *SymmetryNew(void)
 
 CSymmetry *SymmetryCopy(CSymmetry *other)
 {
-  OOAlloc(CSymmetry);
+  OOAlloc(other->G,CSymmetry);
   if(!other) {
     OOFreeP(I);
     return NULL;

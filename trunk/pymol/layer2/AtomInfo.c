@@ -25,10 +25,25 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"PConv.h"
 
+struct _CAtomInfo {
+  int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
+};
 
-static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
+int AtomInfoInit(PyMOLGlobals *G)
+{
+  register CAtomInfo *I=NULL;
+  if( (I=(G->AtomInfo=Calloc(CAtomInfo,1)))) {
+    return 1;
+  } else
+    return 0;
+}
+void AtomInfoFree(PyMOLGlobals *G)
+{
+  FreeP(G->AtomInfo);
+}
+
 /*========================================================================*/
-void AtomInfoGetPDB3LetHydroName(char *resn, char *iname, char *oname) 
+void AtomInfoGetPDB3LetHydroName(PyMOLGlobals *G,char *resn, char *iname, char *oname) 
 {
   oname[0]=' ';	
   strcpy(oname+1,iname);
@@ -296,7 +311,7 @@ void AtomInfoGetPDB3LetHydroName(char *resn, char *iname, char *oname)
   }
 }
 
-int AtomInfoKnownWaterResName(char *resn) 
+int AtomInfoKnownWaterResName(PyMOLGlobals *G,char *resn) 
 {
   switch(resn[0]) {
   case 'H':
@@ -364,7 +379,7 @@ int AtomInfoKnownWaterResName(char *resn)
   return false;
 }
 
-int AtomInfoKnownPolymerResName(char *resn) 
+int AtomInfoKnownPolymerResName(PyMOLGlobals *G,char *resn) 
 {
   switch(resn[0]) {
   case 'A':
@@ -562,10 +577,9 @@ int AtomInfoKnownPolymerResName(char *resn)
 
 /*========================================================================*/
 
-int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
-int AtomInfoInOrigOrder(AtomInfoType *atom,int atom1,int atom2);
-int AtomInfoInOrderIgnoreHet(AtomInfoType *atom,int atom1,int atom2);
-int AtomNameCompare(char *name1,char *name2);
+int AtomInfoInOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2);
+int AtomInfoInOrigOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2);
+int AtomInfoInOrderIgnoreHet(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2);
 
 int AtomResvFromResi(char *resi)
 {
@@ -582,7 +596,7 @@ int AtomResvFromResi(char *resi)
 }
 
 /*========================================================================*/
-PyObject *AtomInfoAsPyList(AtomInfoType *I)
+PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
 {
   PyObject *result = NULL;
 
@@ -627,7 +641,7 @@ PyObject *AtomInfoAsPyList(AtomInfoType *I)
   return(PConvAutoNone(result));
 }
 
-int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
+int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
 {
   int ok=true;
   int hetatm;
@@ -676,7 +690,7 @@ int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
 }
 
 /*========================================================================*/
-void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask)
+void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mask)
 {
   if(mask&cAIC_tt) strcpy(dst->textType,src->textType); /* use the new types */
   if(mask&cAIC_ct) dst->customType = src->customType;
@@ -696,7 +710,7 @@ void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask)
 
 }
 /*========================================================================*/
-void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1)
+void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1)
 {
   /* makes sure all names in atInfo1 are unique WRT 0 and 1 */
 
@@ -726,20 +740,20 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
       /* check within object 1 */
       
       if(!lai1) bracketFlag=true;
-      else if(!AtomInfoSameResidue(lai1,ai1))
+      else if(!AtomInfoSameResidue(G,lai1,ai1))
         bracketFlag=true;
       else
         bracketFlag=false;
       if(bracketFlag) {
         c=1;
-        AtomInfoBracketResidue(atInfo1,n1,ai1,&st1,&nd1);
+        AtomInfoBracketResidue(G,atInfo1,n1,ai1,&st1,&nd1);
         lai1=ai1;
       }
       ai0 = atInfo1 + st1;
       for(a=st1;a<=nd1;a++) {
         if(strcmp(ai1->name,ai0->name))
           ai0++;
-        else if(!AtomInfoSameResidue(ai1,ai0))
+        else if(!AtomInfoSameResidue(G,ai1,ai0))
           ai0++;
         else if(ai1!=ai0) {
           matchFlag=true;
@@ -754,19 +768,19 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
         /* check within object 2 */
         
         if(!lai0) bracketFlag=true;
-        else if(!AtomInfoSameResidue(lai0,ai1))
+        else if(!AtomInfoSameResidue(G,lai0,ai1))
           bracketFlag=true;
         else
           bracketFlag=false;
         if(bracketFlag) {
-          AtomInfoBracketResidue(atInfo0,n0,ai1,&st0,&nd0);
+          AtomInfoBracketResidue(G,atInfo0,n0,ai1,&st0,&nd0);
           lai0=ai1;
         }
         ai0 = atInfo0 + st0;
         for(a=st0;a<=nd0;a++) {
           if(strcmp(ai1->name,ai0->name))
             ai0++;
-          else if(!AtomInfoSameResidue(ai1,ai0))
+          else if(!AtomInfoSameResidue(G,ai1,ai0))
             ai0++;
           else if(ai1!=ai0) {
             matchFlag=true;
@@ -797,7 +811,7 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
 }
 
 /*========================================================================*/
-void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd)
+void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd)
 {
   /* inefficient but reliable way to find where residue atoms are located in an object 
    * for purpose of residue-based operations */
@@ -808,21 +822,21 @@ void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,in
   *nd=n0-1;
   ai1=ai0;
   for(a=0;a<n0;a++) {
-    if(!AtomInfoSameResidue(ai,ai1++))
+    if(!AtomInfoSameResidue(G,ai,ai1++))
       *st=a;
     else 
       break;
   }
   ai1=ai0+n0-1;
   for(a=n0-1;a>=0;a--) {
-    if(!AtomInfoSameResidue(ai,ai1--)) {
+    if(!AtomInfoSameResidue(G,ai,ai1--)) {
       *nd=a;
     } else 
       break;
   }
 }
 /*========================================================================*/
-void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd)
+void AtomInfoBracketResidueFast(PyMOLGlobals *G,AtomInfoType *ai0,int n0,int cur,int *st,int *nd)
 {
   /* efficient but unreliable way to find where residue atoms are located in an object 
    * for purpose of residue-based operations */
@@ -834,38 +848,41 @@ void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd
   ai0=ai0+cur;
   ai1=ai0-1;
   for(a=cur-1;a>=0;a--) {
-    if(!AtomInfoSameResidue(ai0,ai1--))
+    if(!AtomInfoSameResidue(G,ai0,ai1--))
       break;
     *st=a;
   }
   ai1=ai0+1;
   for(a=cur+1;a<n0;a++) {
-    if(!AtomInfoSameResidue(ai0,ai1++))
+    if(!AtomInfoSameResidue(G,ai0,ai1++))
       break;
     *nd=a;
   }
 }
 /*========================================================================*/
-int AtomInfoGetCarbColor(void)
+int AtomInfoGetCarbColor(PyMOLGlobals *G)
 {
-  return CarbColor;
+  CAtomInfo *I=G->AtomInfo;
+  return I->CarbColor;
 }
 /*========================================================================*/
-void AtomInfoPrimeColors(void)
+void AtomInfoPrimeColors(PyMOLGlobals *G)
 {
-  NColor=ColorGetIndex("nitrogen");
-  if(SettingGet(cSetting_auto_color))
-    CarbColor=ColorGetNext();
+  CAtomInfo *I=G->AtomInfo;
+
+  I->NColor=ColorGetIndex(G,"nitrogen");
+  if(SettingGet(G,cSetting_auto_color))
+    I->CarbColor=ColorGetNext(G);
   else
-    CarbColor=ColorGetIndex("carbon");
-  HColor=ColorGetIndex("hydrogen");
-  OColor=ColorGetIndex("oxygen");
-  SColor=ColorGetIndex("sulfur");
-  MColor=ColorGetIndex("magenta");
-  IColor=ColorGetIndex("yellow");
+    I->CarbColor=ColorGetIndex(G,"carbon");
+  I->HColor=ColorGetIndex(G,"hydrogen");
+  I->OColor=ColorGetIndex(G,"oxygen");
+  I->SColor=ColorGetIndex(G,"sulfur");
+  I->MColor=ColorGetIndex(G,"magenta");
+  I->IColor=ColorGetIndex(G,"yellow");
 }
 /*========================================================================*/
-float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
+float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
 {
   float result = 1.6F;
   AtomInfoType *a1,*a2;
@@ -1074,67 +1091,68 @@ float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
   return(result);
 }
 
-int AtomInfoGetColor(AtomInfoType *at1)
+int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1)
 {
+  CAtomInfo *I=G->AtomInfo;
   char *n=at1->elem;
   int color = 0;
 
   while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;
   switch ( (*n) )
     {
-    case 'N' : color = NColor; break;
+    case 'N' : color = I->NColor; break;
     case 'C' : 
       n++;
       switch(*(n)) {
       case 'A':
       case 'a':
         if(at1->hetatm) 
-          color = IColor;
+          color = I->IColor;
         else
-          color = CarbColor;
+          color = I-> CarbColor;
         break;
       case 0:
       case 32:
-        color = CarbColor; 
+        color = I->CarbColor; 
         break;
       case 'l':
       case 'L':
       default:
-        color = MColor; break;
+        color = I->MColor; break;
       }
       break;
-    case 'O' : color = OColor; break;
-    case 'I' : color = MColor; break;
-    case 'P' : color = MColor; break;
-    case 'B' : color = MColor; break;
-    case 'S' : color = SColor; break;
-    case 'F' : color = MColor; break;
+    case 'O' : color = I->OColor; break;
+    case 'I' : color = I->MColor; break;
+    case 'P' : color = I->MColor; break;
+    case 'B' : color = I->MColor; break;
+    case 'S' : color = I->SColor; break;
+    case 'F' : color = I->MColor; break;
     case 'H' :
     case 'D' :
-      color=HColor; 
+      color=I->HColor; 
       break;
-    default  : color=MColor; break;
+    default  : color=I->MColor; break;
     }
 
   return(color);
 }
 
 
-int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex)
+int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex)
 {
   int *index;
   int a;
   index = Alloc(int,n+1);
-  ErrChkPtr(index);
+  ErrChkPtr(G,index);
   (*outdex)=Alloc(int,n+1);
-  ErrChkPtr(*outdex);
+  ErrChkPtr(G,*outdex);
 
-  if((int)SettingGet(cSetting_retain_order)) {
-    UtilSortIndex(n,rec,index,(UtilOrderFn*)AtomInfoInOrigOrder);
-  } else if((int)SettingGet(cSetting_pdb_hetatm_sort)) {
-    UtilSortIndex(n,rec,index,(UtilOrderFn*)AtomInfoInOrder);    
+  if((int)SettingGet(G,cSetting_retain_order)) {
+    UtilSortIndexGlobals(G,n,rec,index,(UtilOrderFnGlobals*)AtomInfoInOrigOrder);
+  } else if((int)SettingGet(G,cSetting_pdb_hetatm_sort)) {
+    UtilSortIndexGlobals(G,n,rec,index,(UtilOrderFnGlobals*)AtomInfoInOrder);    
   } else {
-    UtilSortIndex(n,rec,index,(UtilOrderFn*)AtomInfoInOrderIgnoreHet);    
+    UtilSortIndexGlobals(G,n,rec,index,(UtilOrderFnGlobals*)AtomInfoInOrderIgnoreHet);    
   }
 
   for(a=0;a<n;a++)
@@ -1142,13 +1160,13 @@ int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex)
   return(index);
 }
 
-void AtomInfoFreeSortedIndexes(int *index,int *outdex)
+void AtomInfoFreeSortedIndexes(PyMOLGlobals *G,int *index,int *outdex)
 {
   FreeP(index);
   FreeP(outdex);
 }
 
-int AtomNameCompare(char *name1,char *name2)
+static int AtomInfoNameCompare(PyMOLGlobals *G,char *name1,char *name2)
 {
   char *n1,*n2;
   int cmp;
@@ -1161,15 +1179,15 @@ int AtomNameCompare(char *name1,char *name2)
     n2=name2+1;
   else
     n2=name2;
-  cmp = WordCompare(n1,n2,true);
+  cmp = WordCompare(G,n1,n2,true);
 
   if(cmp) 
     return cmp;
-  return WordCompare(name1,name2,true);
+  return WordCompare(G,name1,name2,true);
  
 }
 
-int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
   int result;
   int wc;
@@ -1182,19 +1200,19 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
 	  at2->segi,at2->chain,at2->resv,at2->resi,at2->resn,at2->priority,at2->name);
   */
 
-  wc=WordCompare(at1->segi,at2->segi,true);
+  wc=WordCompare(G,at1->segi,at2->segi,true);
   if(!wc) {
 	 if(at1->chain[0]==at2->chain[0]) {
       if(at1->hetatm==at2->hetatm) {
         if(at1->resv==at2->resv) {
-          wc=WordCompare(at1->resi,at2->resi,true);
+          wc=WordCompare(G,at1->resi,at2->resi,true);
           if(!wc) {
-            wc=WordCompare(at1->resn,at2->resn,true);
+            wc=WordCompare(G,at1->resn,at2->resn,true);
             if(!wc) {
               if(at1->discrete_state==at2->discrete_state) {
                 if(at1->priority==at2->priority) {
                   if(at1->alt[0]==at2->alt[0]) {
-                    result=AtomNameCompare(at1->name,at2->name);
+                    result=AtomInfoNameCompare(G,at1->name,at2->name);
                   } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                     result=-1;
                   } else {
@@ -1215,7 +1233,7 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
             }
           } else {
             /* NOTE: don't forget to synchronize with below */
-            if(SettingGet(cSetting_pdb_insertions_go_first)) {
+            if(SettingGet(G,cSetting_pdb_insertions_go_first)) {
               int sl1,sl2;
               sl1 = strlen(at1->resi);
               sl2 = strlen(at2->resi);
@@ -1251,7 +1269,7 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
 }
 
 
-int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
   int result;
   int wc;
@@ -1264,19 +1282,19 @@ int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2)
 	  at2->segi,at2->chain,at2->resv,at2->resi,at2->resn,at2->priority,at2->name);
   */
 
-  wc=WordCompare(at1->segi,at2->segi,true);
+  wc=WordCompare(G,at1->segi,at2->segi,true);
   if(!wc) {
 	 if(at1->chain[0]==at2->chain[0]) {
       /*      if(at1->hetatm==at2->hetatm) {*/
       if(at1->resv==at2->resv) {
-        wc=WordCompare(at1->resi,at2->resi,true);
+        wc=WordCompare(G,at1->resi,at2->resi,true);
         if(!wc) {
-          wc=WordCompare(at1->resn,at2->resn,true);
+          wc=WordCompare(G,at1->resn,at2->resn,true);
           if(!wc) {
             if(at1->discrete_state==at2->discrete_state) {
               if(at1->priority==at2->priority) {
                 if(at1->alt[0]==at2->alt[0]) {
-                  result=AtomNameCompare(at1->name,at2->name);
+                  result=AtomInfoNameCompare(G,at1->name,at2->name);
                 } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                   result=-1;
                 } else {
@@ -1298,7 +1316,7 @@ int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2)
         } else {
           /* NOTE: don't forget to synchronize with above */
 
-            if(SettingGet(cSetting_pdb_insertions_go_first)) {
+            if(SettingGet(G,cSetting_pdb_insertions_go_first)) {
               int sl1,sl2;
               sl1 = strlen(at1->resi);
               sl2 = strlen(at2->resi);
@@ -1334,12 +1352,12 @@ int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2)
   return(result);
 }
 
-int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2) 
+int AtomInfoNameOrder(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2) 
 {
   int result;
   if(at1->alt[0]==at2->alt[0]) {
     if(at1->priority==at2->priority) {
-      result=AtomNameCompare(at1->name,at2->name);
+      result=AtomInfoNameCompare(G,at1->name,at2->name);
     } else if(at1->priority<at2->priority) {
       result=-1;
     } else {
@@ -1353,75 +1371,76 @@ int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2)
   return(result);
 }
 
-int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2)
+int AtomInfoInOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
 {
-  return(AtomInfoCompare(atom+atom1,atom+atom2)<=0);
+  return(AtomInfoCompare(G,atom+atom1,atom+atom2)<=0);
 }
 
-int AtomInfoInOrderIgnoreHet(AtomInfoType *atom,int atom1,int atom2)
+int AtomInfoInOrderIgnoreHet(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
 {
-  return(AtomInfoCompareIgnoreHet(atom+atom1,atom+atom2)<=0);
+  return(AtomInfoCompareIgnoreHet(G,atom+atom1,atom+atom2)<=0);
 }
 
-int AtomInfoInOrigOrder(AtomInfoType *atom,int atom1,int atom2)
+int AtomInfoInOrigOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
 {
   if(atom[atom1].rank!=atom[atom2].rank)
     return (atom[atom1].rank<atom[atom2].rank);
   else
-    return(AtomInfoCompare(atom+atom1,atom+atom2)<=0);
+    return(AtomInfoCompare(G,atom+atom1,atom+atom2)<=0);
 }
 
-int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoSameResidue(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
   if(at1->hetatm==at2->hetatm)
     if(at1->chain[0]==at2->chain[0])
       if(at1->resv==at2->resv)
+
         if(at1->discrete_state==at2->discrete_state)
-          if(WordMatch(at1->resi,at2->resi,true)<0) 
-            if(WordMatch(at1->segi,at2->segi,true)<0) 
-              if(WordMatch(at1->resn,at2->resn,true)<0) 
+          if(WordMatch(G,at1->resi,at2->resi,true)<0) 
+            if(WordMatch(G,at1->segi,at2->segi,true)<0) 
+              if(WordMatch(G,at1->resn,at2->resn,true)<0) 
                 return 1;
   return 0;
 }
 
-int AtomInfoSameResidueP(AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoSameResidueP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
   if(at1&&at2)
     if(at1->hetatm==at2->hetatm)
       if(at1->chain[0]==at2->chain[0])
         if(at1->resv==at2->resv)
           if(at1->discrete_state==at2->discrete_state)
-            if(WordMatch(at1->resi,at2->resi,true)<0) 
-              if(WordMatch(at1->segi,at2->segi,true)<0) 
-                if(WordMatch(at1->resn,at2->resn,true)<0) 
+            if(WordMatch(G,at1->resi,at2->resi,true)<0) 
+              if(WordMatch(G,at1->segi,at2->segi,true)<0) 
+                if(WordMatch(G,at1->resn,at2->resn,true)<0) 
                   return 1;
   return 0;
 }
 
-int AtomInfoSameChainP(AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoSameChainP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
   if(at1&&at2)
     if(at1->chain[0]==at2->chain[0])
-        if(WordMatch(at1->segi,at2->segi,true)<0) 
+        if(WordMatch(G,at1->segi,at2->segi,true)<0) 
           return 1;
   return 0;
 }
 
-int AtomInfoSameSegmentP(AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoSameSegmentP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
   if(at1&&at2)
-    if(WordMatch(at1->segi,at2->segi,true)<0) 
+    if(WordMatch(G,at1->segi,at2->segi,true)<0) 
       return 1;
   return 0;
 }
 
-int AtomInfoSequential(AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
   char last1=0,last2=0;
   char *p;
   if(at1->hetatm==at2->hetatm)
     if(at1->chain[0]==at2->chain[0]) {
-      if(WordMatch(at1->segi,at2->segi,true)<0) {
+      if(WordMatch(G,at1->segi,at2->segi,true)<0) {
         if(at1->resv==at2->resv) {
           p=at1->resi;
           while(*p) {
@@ -1444,19 +1463,19 @@ int AtomInfoSequential(AtomInfoType *at1,AtomInfoType *at2)
   return 0;
 }
 
-int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
   if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
-	 if(WordMatch(at1->name,at2->name,true)<0)
-		if(WordMatch(at1->resi,at2->resi,true)<0)
-		  if(WordMatch(at1->resn,at2->resn,true)<0)
-			 if(WordMatch(at1->segi,at2->segi,true)<0)
+	 if(WordMatch(G,at1->name,at2->name,true)<0)
+		if(WordMatch(G,at1->resi,at2->resi,true)<0)
+		  if(WordMatch(G,at1->resn,at2->resn,true)<0)
+			 if(WordMatch(G,at1->segi,at2->segi,true)<0)
             if((tolower(at1->alt[0]))==(tolower(at2->alt[0])))
               return 1;
   return 0;
 }
 
-int AtomInfoGetExpectedValence(AtomInfoType *I) {
+int AtomInfoGetExpectedValence(PyMOLGlobals *G,AtomInfoType *I) {
   int result=-1; /* negative indicates minimum expected valence (abs)
                 but it could be higher  */
 
@@ -1509,7 +1528,7 @@ int AtomInfoGetExpectedValence(AtomInfoType *I) {
   }
   return(result);
 }
-void AtomInfoAssignParameters(AtomInfoType *I)
+void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
 {
   char *n,*e;
   int pri;
@@ -1527,7 +1546,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
     switch ( *e ) {
     case 'C':
       if(*(e+1)=='A') {
-        if(!(WordMatch("CA",I->resn,true)<0)&&(!(WordMatch("CA+",I->resn,true)<0)))
+        if(!(WordMatch(G,"CA",I->resn,true)<0)&&(!(WordMatch(G,"CA+",I->resn,true)<0)))
           *(e+1)=0; 
       } else if(!(
            (*(e+1)=='a')||/* CA intpreted as carbon, not calcium */
@@ -1582,7 +1601,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   while((*n>='0')&&(*n<='9')&&(*(n+1))) n++;
   if(toupper(*n)!=I->elem[0]) {
     pri=1000; /* unconventional atom name -- make no assignments */
-  } else if((int)SettingGet(cSetting_pdb_standard_order)) {
+  } else if((int)SettingGet(G,cSetting_pdb_standard_order)) {
     switch ( *n )
       {
         
@@ -1862,7 +1881,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
       vdw=1.8F;
       break;
     }
-  if(SettingGet(cSetting_legacy_vdw_radii)) { /* ver<0.75, old, incorrect VDW */
+  if(SettingGet(G,cSetting_legacy_vdw_radii)) { /* ver<0.75, old, incorrect VDW */
     if(!strcmp(e,"N")) vdw=1.8F; /* slow but compact */
     if(!strcmp(e,"C")) vdw=1.8F;
     if(!strcmp(e,"Cl")) vdw=1.8F;

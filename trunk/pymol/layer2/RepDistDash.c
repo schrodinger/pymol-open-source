@@ -45,20 +45,21 @@ void RepDistDashFree(RepDistDash *I);
 void RepDistDashFree(RepDistDash *I)
 {
   VLAFreeP(I->V);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   OOFreeP(I);
 }
 
 
 void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
   float *vc;
   int round_ends;
-  I->linewidth = SettingGet_f(I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_width);
-  I->radius = SettingGet_f(I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_radius);
-  round_ends = SettingGet_b(I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_round_ends);
+  I->linewidth = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_width);
+  I->radius = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_radius);
+  round_ends = SettingGet_b(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_round_ends);
 
   if(ray) {
 
@@ -70,7 +71,7 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
       radius = I->radius;
     }
 
-    vc = ColorGet(I->Obj->Color);
+    vc = ColorGet(G,I->Obj->Color);
 	 v=I->V;
 	 c=I->N;
 	 
@@ -89,12 +90,12 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
   } else if(PMGUI) {
 	 
     int use_dlst;
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
 
-      SceneResetNormal(true);
+      SceneResetNormal(G,true);
 
       if(use_dlst) {
         if(!I->R.displayList) {
@@ -132,28 +133,29 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 
 Rep *RepDistDashNew(DistSet *ds)
 {
+  PyMOLGlobals *G=ds->G;
   int a;
   int n;
   float *v,*v1,*v2,d[3],d1[3],d2[3];
   float l,ph;
   float dash_len,dash_gap,dash_sum,seg;
 
-  OOAlloc(RepDistDash);
+  OOAlloc(G,RepDistDash);
 
   if(!ds->NIndex) {
     OOFreeP(I);
     return(NULL); 
   }
 
-  RepInit(&I->R);
+  RepInit(G,&I->R);
   
   
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDistDashRender;
   I->R.fFree=(void (*)(struct Rep *))RepDistDashFree;
   I->R.fRecolor=NULL;
 
-  dash_len = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_length);
-  dash_gap = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_gap);
+  dash_len = SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_length);
+  dash_gap = SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_gap);
   dash_sum = dash_len+dash_gap;
   if(dash_sum<R_SMALL4) dash_sum=0.5;
 

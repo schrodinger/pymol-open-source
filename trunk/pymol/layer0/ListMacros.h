@@ -19,90 +19,39 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Err.h"
 
-#define ListVarDeclare(ListType,ElemType) \
-   static struct { ElemType *List,*current,*previous,*copy,*storage; int count,flag; } ListType
-
 #define ListInit(List) List = NULL
 
-#define ListAppend(List,Elem,Link,ListType) \
+#define ListAppend(List,Elem,Link,ElemType) \
 { \
-  ListType.current = (List); \
-  ListType.previous = NULL; \
-  while(ListType.current) \
+  register ElemType *current = (List); \
+  register ElemType *previous = NULL; \
+  while(current) \
 	 { \
-		ListType.previous = ListType.current; \
-		ListType.current = ListType.current->Link; \
+		previous = current; \
+		current = current->Link; \
 	 } \
-  if(ListType.previous) \
-	 ListType.previous->Link = Elem; \
+  if(previous) \
+	 previous->Link = Elem; \
   else \
 	 (List) = Elem; \
   (Elem)->Link = NULL; \
 }
 
-#define ListIndex(List,Elem,c,Link,ListType) \
+#define ListInsert(List,Elem,After,Link,ElemType) \
 { \
-  ListType.current = (List); \
-  ListType.count = (c);\
-  while(ListType.count--) \
-	 { \
-      if(!ListType.current) {break;} \
-		ListType.current = ListType.current->Link; \
-	 } \
-  Elem=ListType.current;\
-}
-
-#define ListSort(List,fOrdered,Link,ListType) \
-{ \
-  ListType.flag = 1; \
-  while(ListType.flag) \
-	 { \
-		ListType.flag = 0; \
-		ListType.current = List; \
-		ListType.previous = NULL; \
-		while(ListType.current) \
-		  { \
-			 if(ListType.current->Link) \
-				{ \
-				  if(!fOrdered(ListType.current,ListType.current->Link)) \
-					 { \
-						ListType.flag = 1; \
-						if(ListType.previous) \
-						  { \
-							 ListType.previous->Link = ListType.current->Link; \
-							 ListType.current->Link = ListType.previous->Link->Link; \
-							 ListType.previous->Link->Link = ListType.current; \
-						  } \
-						else \
-						  { \
-							 (List) = ListType.current->Link; \
-							 ListType.current->Link = (List)->Link; \
-							 (List)->Link->Link = ListType.current; \
-						  } \
-					 } \
-				} \
-			 ListType.previous = ListType.current; \
-			 ListType.current = ListType.current->Link; \
-		  } \
-	 } \
-}
-
-#define ListInsert(List,Elem,After,Link,ListType) \
-{ \
-  ListType.copy = After; \
-  ListType.current = List; \
-  ListType.previous = NULL; \
-  while(ListType.current) \
+  register ElemType *current = List; \
+  register ElemType *previous = NULL; \
+  while(current) \
 		{ \
-		  if(ListType.previous == (After)) \
+		  if(previous == (After)) \
 			 break; \
-   	  ListType.previous = ListType.current; \
-		  ListType.current = ListType.current->Link; \
+   	  previous = current; \
+		  current = current->Link; \
 		} \
-  if(ListType.previous) \
+  if(previous) \
 	 { \
-		(Elem)->Link = ListType.current; \
-		ListType.previous->Link = Elem; \
+		(Elem)->Link = current; \
+		previous->Link = Elem; \
 	 } \
   else \
 	 { \
@@ -111,73 +60,48 @@ Z* -------------------------------------------------------------------
 	 } \
 }
 
-#define ListInsertSorted(List,Elem,fOrdered,Link,ListType) \
+#define ListFree(List,Link,ElemType) \
 { \
-  ListType.current = (List); \
-  ListType.previous = NULL; \
-  while(ListType.current) \
-		{ \
-		  if(fOrdered(Elem,ListType.current)) \
-			 break; \
-   	  ListType.previous = ListType.current; \
-		  ListType.current = ListType.current->Link; \
-		} \
-  if(ListType.previous) \
+  register ElemType *current = List; \
+  register ElemType *previous = NULL; \
+  while(current) \
 	 { \
-		(Elem)->Link = ListType.current; \
-		ListType.previous->Link = Elem; \
+      if(previous) \
+		  mfree(previous); \
+		previous = current; \
+		current = current->Link; \
 	 } \
-  else \
-	 { \
-		(Elem)->Link = List; \
-		(List) = Elem; \
-	 } \
-}
-
-
-#define ListFree(List,Link,ListType) \
-{ \
-  ListType.current = List; \
-  ListType.previous = NULL; \
-  while(ListType.current) \
-	 { \
-      if(ListType.previous) \
-		  mfree(ListType.previous); \
-		ListType.previous = ListType.current; \
-		ListType.current = ListType.current->Link; \
-	 } \
-  if(ListType.previous) \
-	 mfree(ListType.previous); \
+  if(previous) \
+	 mfree(previous); \
   (List) = NULL; \
 }
 
-#define ListDetach(List,Elem,Link,ListType) \
+#define ListDetach(List,Elem,Link,ElemType) \
 { \
-  ListType.current = List; \
-  ListType.previous = NULL; \
-  while(ListType.current) \
+  register ElemType *current = List; \
+  register ElemType *previous = NULL; \
+  while(current) \
 	 { \
-		if(ListType.current == (Elem)) \
+		if(current == (Elem)) \
 		  break; \
-		ListType.previous = ListType.current; \
-		ListType.current = ListType.current->Link; \
+		previous = current; \
+		current = current->Link; \
 	 } \
-  if(ListType.current) \
+  if(current) \
 	 { \
-		if(ListType.previous) \
-		  ListType.previous->Link = ListType.current->Link; \
+		if(previous) \
+		  previous->Link = current->Link; \
         else \
-          (List) = ListType.current->Link; \
+          (List) = current->Link; \
 	  (Elem)->Link = NULL; \
 	 } \
 }
 
-
-#define ListDelete(List,Elem,Link,ListType) \
+#define ListDelete(List,Elem,Link,ElemType) \
 { \
-   ListType.copy = (Elem); \
-   ListDetach(List,ListType.copy,Link,ListType); \
-   mfree(ListType.copy); \
+   register ElemType *copy = (Elem); \
+   ListDetach(List,copy,Link,ElemType); \
+   mfree(copy); \
 }
 
 #define ListIterate(List,Counter,Link) \
@@ -185,12 +109,12 @@ Z* -------------------------------------------------------------------
 
 /* Elem handling routines */
 
-#define ListElemAlloc(Elem,ElemType) \
+#define ListElemAlloc(G,Elem,ElemType) \
 { \
 if(!(Elem)) \
   { \
 	 (Elem) = (ElemType*)mmalloc(sizeof(ElemType)); \
-	 ErrChkPtr(Elem); \
+	 ErrChkPtr(G,Elem); \
   } \
 }
 

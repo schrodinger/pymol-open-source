@@ -16,9 +16,12 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Raw
 #define _H_Raw
 
+#include"PyMOLGlobals.h"
+
 /* interface class for device-independent, raw binary I/O */
 
 typedef struct { 
+  PyMOLGlobals *G;
   int mode; 
   FILE *f;
   char *bufVLA;
@@ -50,9 +53,9 @@ followed by any number of records with the following header...
 
 */
 
-CRaw *RawOpenRead(char *fname);
-CRaw *RawOpenWrite(char *fname);
-CRaw *RawOpenAppend(char *fname);
+CRaw *RawOpenRead(PyMOLGlobals *G,char *fname);
+CRaw *RawOpenWrite(PyMOLGlobals *G,char *fname);
+CRaw *RawOpenAppend(PyMOLGlobals *G,char *fname);
 void RawFree(CRaw *I);
 
 int RawWrite(CRaw *I,int type,unsigned int size,int serial,char *bytes);

@@ -86,6 +86,7 @@ struct CoordSet;
 struct Object;
 
 typedef struct Rep {
+  PyMOLGlobals *G;
   void            (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
   struct Rep     *(*fUpdate)(struct Rep *I,struct CoordSet *cs,int rep);
   void        (*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
@@ -102,7 +103,7 @@ typedef struct Rep {
   int displayList;
 } Rep;
 
-void RepInit(Rep *I);
-void RepFree(Rep *I);
+void RepInit(PyMOLGlobals *G,Rep *I);
+void RepPurge(Rep *I);
 
 #endif

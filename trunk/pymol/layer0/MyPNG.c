@@ -38,7 +38,7 @@ Z* -------------------------------------------------------------------
 #include "Setting.h"
 
 
-int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height)
+int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,unsigned int width,unsigned int height)
 {
 #ifdef _HAVE_LIBPNG
 
@@ -106,8 +106,8 @@ int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int 
    png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, PNG_COLOR_TYPE_RGB_ALPHA,
       PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
-   png_set_gamma(png_ptr, SettingGet(cSetting_png_screen_gamma), 
-                 SettingGet(cSetting_png_file_gamma));
+   png_set_gamma(png_ptr, SettingGet(G,cSetting_png_screen_gamma), 
+                 SettingGet(G,cSetting_png_file_gamma));
 
 
    /* Write the file header information.  REQUIRED */

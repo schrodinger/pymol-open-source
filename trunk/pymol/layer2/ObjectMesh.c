@@ -35,10 +35,10 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"P.h"
 
-ObjectMesh *ObjectMeshNew(void);
+ObjectMesh *ObjectMeshNew(PyMOLGlobals *G);
 
 static void ObjectMeshFree(ObjectMesh *I);
-void ObjectMeshStateInit(ObjectMeshState *ms);
+void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms);
 void ObjectMeshRecomputeExtent(ObjectMesh *I);
 
 
@@ -108,7 +108,7 @@ static PyObject *ObjectMeshAllStatesAsPyList(ObjectMesh *I)
 
 }
 
-static int ObjectMeshStateFromPyList(ObjectMeshState *I,PyObject *list)
+static int ObjectMeshStateFromPyList(PyMOLGlobals *G,ObjectMeshState *I,PyObject *list)
 {
   int ok=true;
   int ll;
@@ -118,7 +118,7 @@ static int ObjectMeshStateFromPyList(ObjectMeshState *I,PyObject *list)
     if(!PyList_Check(list))
       I->Active=false;
     else {
-      ObjectMeshStateInit(I);
+      ObjectMeshStateInit(G,I);
       if(ok) ok=(list!=NULL);
       if(ok) ok=PyList_Check(list);
       if(ok) ll = PyList_Size(list);
@@ -162,14 +162,14 @@ static int ObjectMeshAllStatesFromPyList(ObjectMesh *I,PyObject *list)
   if(ok) ok=PyList_Check(list);
   if(ok) {
     for(a=0;a<I->NState;a++) {
-      ok = ObjectMeshStateFromPyList(I->State+a,PyList_GetItem(list,a));
+      ok = ObjectMeshStateFromPyList(I->Obj.G,I->State+a,PyList_GetItem(list,a));
       if(!ok) break;
     }
   }
   return(ok);
 }
 
-int ObjectMeshNewFromPyList(PyObject *list,ObjectMesh **result)
+int ObjectMeshNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMesh **result)
 {
   int ok = true;
   int ll;
@@ -182,10 +182,10 @@ int ObjectMeshNewFromPyList(PyObject *list,ObjectMesh **result)
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 
-  I=ObjectMeshNew();
+  I=ObjectMeshNew(G);
   if(ok) ok = (I!=NULL);
   
-  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(G,PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
   if(ok) ok = ObjectMeshAllStatesFromPyList(I,PyList_GetItem(list,2));
   if(ok) {
@@ -253,7 +253,7 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
   FILE *f;
   f=fopen(fname,"wb");
   if(!f) 
-    ErrMessage("ObjectMeshDump","can't open file for writing");
+    ErrMessage(I->Obj.G,"ObjectMeshDump","can't open file for writing");
   else {
     if(state<I->NState) {
       n=I->State[state].N;
@@ -272,9 +272,9 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
           }
     }
     fclose(f);
-    PRINTFB(FB_ObjectMesh,FB_Actions)
+    PRINTFB(I->Obj.G,FB_ObjectMesh,FB_Actions)
       " ObjectMeshDump: %s written to %s\n",I->Obj.Name,fname
-      ENDFB;
+      ENDFB(I->Obj.G);
   }
 }
 
@@ -288,9 +288,9 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
     I->State[state].RefreshFlag=true;
     if(level>=cRepInvAll) {
       I->State[state].ResurfaceFlag=true;      
-      SceneChanged();
+      SceneChanged(I->Obj.G);
     } else {
-      SceneDirty();
+      SceneDirty(I->Obj.G);
     }
 
     if(once_flag) break;
@@ -355,12 +355,12 @@ static void ObjectMeshUpdate(ObjectMesh *I)
     ms = I->State+a;
     if(ms->Active) {
       
-      map = ExecutiveFindObjectMapByName(ms->MapName);
+      map = ExecutiveFindObjectMapByName(I->Obj.G,ms->MapName);
       if(!map) {
         ok=false;
-        PRINTFB(FB_ObjectMesh,FB_Errors)
+        PRINTFB(I->Obj.G,FB_ObjectMesh,FB_Errors)
           "ObjectMeshUpdate-Error: map '%s' has been deleted.\n",ms->MapName
-          ENDFB;
+          ENDFB(I->Obj.G);
         ms->ResurfaceFlag=false;
       }
       if(map) {
@@ -382,9 +382,9 @@ static void ObjectMeshUpdate(ObjectMesh *I)
       if(map&&oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag=false;
-          PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF;
+          PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF(I->Obj.G);
           if(oms->Field) {
-            IsosurfGetRange(oms->Field,oms->Crystal,
+            IsosurfGetRange(I->Obj.G,oms->Field,oms->Crystal,
                             ms->ExtentMin,ms->ExtentMax,ms->Range);
             /*          printf("%d %d %d %d %d %d\n",
                    ms->Range[0],
@@ -394,7 +394,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                    ms->Range[4],
                    ms->Range[5]);*/
                 
-            IsosurfVolume(TempPyMOLGlobals,oms->Field,
+            IsosurfVolume(I->Obj.G,oms->Field,
                           ms->Level,
                           &ms->N,&ms->V,
                           ms->Range,
@@ -409,7 +409,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
             }
               
             /* cull my friend, cull */
-            voxelmap=MapNew(-carve_buffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
+            voxelmap=MapNew(I->Obj.G,-carve_buffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
             if(voxelmap) {
               
               MapSetupExpress(voxelmap);  
@@ -481,7 +481,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
         }
       }
     }
-    SceneDirty();
+    SceneDirty(I->Obj.G);
   }
 }
 
@@ -509,7 +509,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
     } else {
       if(!ms) {
         if(I->NState&&
-           ((SettingGet(cSetting_static_singletons)&&(I->NState==1))))
+           ((SettingGet(I->Obj.G,cSetting_static_singletons)&&(I->NState==1))))
           ms=I->State;
       }
     }
@@ -520,24 +520,24 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
         if(ray) {
           
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
+            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.G,I->Obj.Color),
                          I->Obj.Setting,NULL);
           if(!ms->DotFlag) {
-            radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
+            radius=SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_radius);
             
             if(radius==0.0F) {
-              radius = ray->PixelRadius*SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width)/2.0F;
+              radius = ray->PixelRadius*SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width)/2.0F;
             } 
           } else {
-            radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_dot_radius);            
+            radius=SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_radius);            
             if(radius==0.0F) {
-              radius = ray->PixelRadius*SettingGet_f(I->Obj.Setting,NULL,cSetting_dot_width)/1.4142F;
+              radius = ray->PixelRadius*SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_width)/1.4142F;
             } 
           }
                   
 
           if(n&&v&&I->Obj.RepVis[cRepMesh]) {
-            vc = ColorGet(I->Obj.Color);
+            vc = ColorGet(I->Obj.G,I->Obj.Color);
             if(ms->DotFlag) {
               ray->fColor3fv(ray,vc);
               while(*n)
@@ -575,12 +575,12 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
 
             int use_dlst;
             if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-              CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
+              CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
                           I->Obj.Setting,NULL);
 
-            SceneResetNormal(false);
+            SceneResetNormal(I->Obj.G,false);
             ObjectUseColor(&I->Obj);
-            use_dlst = (int)SettingGet(cSetting_use_display_lists);
+            use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
             if(use_dlst&&ms->displayList) {
               glCallList(ms->displayList);
             } else { 
@@ -596,9 +596,9 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
 
             if(n&&v&&I->Obj.RepVis[cRepMesh]) {
               if(ms->DotFlag) 
-                glPointSize(SettingGet_f(I->Obj.Setting,NULL,cSetting_dot_width));
+                glPointSize(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_width));
               else
-                glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
+                glLineWidth(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width));
               while(*n)
                 {
                   c=*(n++);
@@ -636,11 +636,11 @@ static int ObjectMeshGetNStates(ObjectMesh *I)
 }
 
 /*========================================================================*/
-ObjectMesh *ObjectMeshNew(void)
+ObjectMesh *ObjectMeshNew(PyMOLGlobals *G)
 {
-  OOAlloc(ObjectMesh);
+  OOAlloc(G,ObjectMesh);
   
-  ObjectInit((CObject*)I);
+  ObjectInit(G,(CObject*)I);
   
   I->NState = 0;
   I->State=VLAMalloc(10,sizeof(ObjectMeshState),5,true); /* autozero important */
@@ -656,7 +656,7 @@ ObjectMesh *ObjectMeshNew(void)
 }
 
 /*========================================================================*/
-void ObjectMeshStateInit(ObjectMeshState *ms)
+void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
 {
   if(!ms->V) {
     ms->V = VLAlloc(float,10000);
@@ -679,7 +679,7 @@ void ObjectMeshStateInit(ObjectMeshState *ms)
 }
 
 /*========================================================================*/
-ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
+ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
                               int map_state,
                               int state,float *mn,float *mx,
                               float level,int dotFlag,
@@ -690,7 +690,7 @@ ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
   ObjectMapState *oms;
 
   if(!obj) {
-    I=ObjectMeshNew();
+    I=ObjectMeshNew(G);
   } else {
     I=obj;
   }
@@ -702,7 +702,7 @@ ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
   }
 
   ms=I->State+state;
-  ObjectMeshStateInit(ms);
+  ObjectMeshStateInit(G,ms);
 
   strcpy(ms->MapName,map->Obj.Name);
   ms->MapState = map_state;
@@ -713,7 +713,7 @@ ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
   if(oms) {
     copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx,ms->ExtentMax);
-    IsosurfGetRange(oms->Field,oms->Crystal,mn,mx,ms->Range);
+    IsosurfGetRange(G,oms->Field,oms->Crystal,mn,mx,ms->Range);
     ms->ExtentFlag = true;
   }
   if(carve!=0.0) {
@@ -726,8 +726,8 @@ ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
   }
   I->Obj.ExtentFlag=true;
   /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]);*/
-  SceneChanged();
-  SceneCountFrames();
+  SceneChanged(G);
+  SceneCountFrames(G);
   return(I);
 }
 

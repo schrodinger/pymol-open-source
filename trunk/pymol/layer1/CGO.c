@@ -29,12 +29,32 @@ Z* -------------------------------------------------------------------
 #include"VFont.h"
 #include"P.h"
 #include"PyMOLGlobals.h"
+#include"Ray.h"
 
 #define CGO_read_int(p) (*((int*)(p++)))
 #define CGO_get_int(p) (*((int*)(p)))
 #define CGO_write_int(p,i) ((*((int*)(p++)))=(i))
 
-static float global_alpha = 1.0F;
+struct _CCGORenderer {
+  float global_alpha;
+};
+
+int CGORendererInit(PyMOLGlobals *G)
+{
+  register CCGORenderer *I= NULL;
+  
+  I = (G->CGORenderer = Calloc(CCGORenderer,1));
+  if(I) {
+    I->global_alpha = 1.0F;
+    return 1;
+  } else 
+    return 0;
+}
+
+void CGORendererFree(PyMOLGlobals *G)
+{
+  FreeP(G->CGORenderer);
+}
 
 CGO *DebugCGO = NULL; /* initialized in Scene.c */
 
@@ -99,7 +119,7 @@ CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
   int sz;
 
   if(!result)
-    result = CGONew();
+    result = CGONew(I->G);
   CGOReset(result);
   VLACheck(result->op,float,I->c+32);
   
@@ -264,11 +284,12 @@ PyObject *CGOAsPyList(CGO *I)
   return(result);
 }
 
-CGO *CGONewFromPyList(PyObject *list,int version)
+CGO *CGONewFromPyList(PyMOLGlobals *G,PyObject *list,int version)
 {
   int ok=true;
   int ll;
-  OOAlloc(CGO);
+  OOAlloc(G,CGO);
+  I->G=G;
   I->op=NULL;
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
@@ -290,17 +311,19 @@ CGO *CGONewFromPyList(PyObject *list,int version)
   return(I);
 }
 
-CGO *CGONew(void)
+CGO *CGONew(PyMOLGlobals *G)
 {
-  OOAlloc(CGO);
+  OOAlloc(G,CGO);
+  I->G=G;
   I->op=VLAlloc(float,33);
   I->c=0;
   return(I);
 }
 
-CGO *CGONewSized(int size)
+CGO *CGONewSized(PyMOLGlobals *G,int size)
 {
-  OOAlloc(CGO);
+  OOAlloc(G,CGO);
+  I->G=G;
   I->op=VLAlloc(float,size+32);
   I->c=0;
   return(I);
@@ -659,9 +682,9 @@ int CGOCheckComplex(CGO *I)
   int op;
   SphereRec *sp;
   
-  sp = TempPyMOLGlobals->Sphere->Sphere[1];
+  sp = I->G->Sphere->Sphere[1];
 
-  nEdge= (int) SettingGet(cSetting_stick_quality);
+  nEdge= (int) SettingGet(I->G,cSetting_stick_quality);
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
@@ -692,12 +715,12 @@ int CGOPreloadFonts(CGO *I)
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
     case CGO_FONT:
-      ok = ok && (VFontLoad(1.0,1,1,true));
+      ok = ok && (VFontLoad(I->G,1.0,1,1,true));
       font_seen = true;
       break;
     case CGO_CHAR:
       if(!font_seen) {
-        font_id = VFontLoad(1.0,1,1,true);
+        font_id = VFontLoad(I->G,1.0,1,1,true);
         ok = ok && font_id;
         font_seen=true;
       }
@@ -733,7 +756,7 @@ int CGOCheckForText(CGO *I)
     }
     pc+=CGO_sz[op];
   }
-  PRINTFD(FB_CGO)
+  PRINTFD(I->G,FB_CGO)
    " CGOCheckForText-Debug: %d\n",fc
     ENDFD;
 
@@ -758,7 +781,7 @@ CGO *CGODrawText(CGO *I,int est,float *camera)
                 0.0F,0.0F,1.0F};
   float scale[2] = { 1.0,1.0};
 
-  cgo=CGONewSized(I->c+est);
+  cgo=CGONewSized(I->G,I->c+est);
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     save_pc=pc;
@@ -776,14 +799,14 @@ CGO *CGODrawText(CGO *I,int est,float *camera)
       break;
     case CGO_INDENT:
       text[0]=(unsigned char)*pc;
-      VFontIndent(font_id,text,pos,scale,axes,pc[1]);
+      VFontIndent(I->G,font_id,text,pos,scale,axes,pc[1]);
       break;
     case CGO_CHAR:
       if(!font_id) {
-        font_id = VFontLoad(1.0,1,1,false);
+        font_id = VFontLoad(I->G,1.0,1,1,false);
       }
       text[0]=(unsigned char)*pc;
-      VFontWriteToCGO(font_id,cgo,text,pos,scale,axes);
+      VFontWriteToCGO(I->G,font_id,cgo,text,pos,scale,axes);
       break;
     default:
       sz=CGO_sz[op];
@@ -809,7 +832,7 @@ CGO *CGOSimplify(CGO *I,int est)
   float *save_pc;
   int sz;
   
-  cgo=CGONewSized(I->c+est);
+  cgo=CGONewSized(I->G,I->c+est);
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     save_pc=pc;
@@ -907,16 +930,16 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   float *n0=NULL,*n1=NULL,*n2=NULL,*v0=NULL,*v1=NULL,*v2=NULL,*c0=NULL,*c1=NULL,*c2=NULL;
   int mode = -1;
 
-  global_alpha = 1.0F;
+  I->G->CGORenderer->global_alpha = 1.0F;
 
-  widthscale = SettingGet_f(set1,set2,cSetting_cgo_ray_width_scale);
+  widthscale = SettingGet_f(I->G,set1,set2,cSetting_cgo_ray_width_scale);
 
-  /*  printf("debug %8.9f\n",SceneGetScreenVertexScale(zee));*/
-  linewidth = SettingGet_f(set1,set2,cSetting_cgo_line_width);
+  /*  printf("debug %8.9f\n",SceneGetScreenVertexScale(I->G,zee));*/
+  linewidth = SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width);
   if(linewidth<0.0F) linewidth = 1.0F;
-  lineradius = SettingGet_f(set1,set2,cSetting_cgo_line_radius);
-  dotwidth = SettingGet_f(set1,set2,cSetting_cgo_dot_width);
-  dotradius = SettingGet_f(set1,set2,cSetting_cgo_dot_radius);
+  lineradius = SettingGet_f(I->G,set1,set2,cSetting_cgo_line_radius);
+  dotwidth = SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width);
+  dotradius = SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_radius);
   if(lineradius<0.0F) 
     lineradius = linewidth * ray->PixelRadius/2.0;
   if(dotradius<0.0F) 
@@ -965,8 +988,8 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
       ray->fColor3fv(ray,c0);
       break;
     case CGO_ALPHA:
-      global_alpha = *pc;
-      ray->fTransparentf(ray,1.0F - global_alpha);
+      I->G->CGORenderer->global_alpha = *pc;
+      ray->fTransparentf(ray,1.0F - *pc);
       break;
     case CGO_VERTEX:
       v0=pc;
@@ -1089,7 +1112,12 @@ static void CGO_gl_disable(float *pc)
 
 static void CGO_gl_alpha(float *pc)
 {
-  global_alpha = *pc;
+  /*  global_alpha = *pc; *** can't use this global anymore... */ 
+}
+
+static void CGO_gl_alpha_global(float *global_alpha,float *pc)
+{
+  *global_alpha = *pc;
 }
 
 static void CGO_gl_null(float *pc) {
@@ -1113,10 +1141,14 @@ static void CGO_gl_normal(float *v) {
 #endif
 
 static void CGO_gl_color(float *v) {
-  if(global_alpha==1.0F) 
+  glColor3fv(v);
+}
+
+static void CGO_gl_color_global(float *global_alpha,float *v) {
+  if(*global_alpha==1.0F) 
     glColor3fv(v);
   else {
-    glColor4f(v[0],v[1],v[2],global_alpha);
+    glColor4f(v[0],v[1],v[2],*global_alpha);
   }
 }
 
@@ -1178,7 +1210,7 @@ void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSettin
   if(I->c) {
     i=(*pick)->index;
 
-    glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
+    glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width));
 
     while((op=(CGO_MASK&CGO_read_int(pc)))) {
       if(op!=CGO_PICK_COLOR) {
@@ -1222,21 +1254,29 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
 {
   register float *pc = I->op;
   register int op;
-  global_alpha = 1.0F;
+  register float *global_alpha = &I->G->CGORenderer->global_alpha;
+
+  *global_alpha = 1.0F;
 
   if(I->c) {
     if(color) 
       glColor3fv(color);
     else
       glColor3f(1.0,1.0,1.0);
-    glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
-    glPointSize(SettingGet_f(set1,set2,cSetting_cgo_dot_width));
+    glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width));
+    glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width));
 
     while((op=(CGO_MASK&CGO_read_int(pc)))) {
-      /*      printf("%d\n",op);
-      if((op==CGO_VERTEX)||(op==CGO_COLOR))
-      dump3f(pc,"where");*/
-      CGO_gl[op](pc);
+      if((op!=CGO_ALPHA)&&(op!=CGO_COLOR)) {
+        CGO_gl[op](pc);
+      } else switch(op) {
+      case CGO_ALPHA:
+        CGO_gl_alpha_global(global_alpha,pc);
+        break;
+      case CGO_COLOR:
+        CGO_gl_color_global(global_alpha,pc);
+        break;
+      }
       pc+=CGO_sz[op];
     }
   }
@@ -1251,10 +1291,10 @@ void CGOSimpleSphere(CGO *I,float *v,float vdw)
   int b,c;
   int ds;
 
-  ds = SettingGet_i(NULL,NULL,cSetting_cgo_sphere_quality);
+  ds = SettingGet_i(I->G,NULL,NULL,cSetting_cgo_sphere_quality);
   if(ds<0) ds=0;
   if(ds>3) ds=3;
-  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
+  sp = I->G->Sphere->Sphere[ds];
   
   q=sp->Sequence;
 
@@ -1301,9 +1341,9 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
   int c;
 
   v=v_buf;
-  nEdge= (int)SettingGet(cSetting_stick_quality);
-  overlap = tube_size*SettingGet(cSetting_stick_overlap);
-  nub = tube_size*SettingGet(cSetting_stick_nub);
+  nEdge= (int)SettingGet(I->G,cSetting_stick_quality);
+  overlap = tube_size*SettingGet(I->G,cSetting_stick_overlap);
+  nub = tube_size*SettingGet(I->G,cSetting_stick_nub);
 
   if(nEdge>MAX_EDGE)
     nEdge=MAX_EDGE;

@@ -38,16 +38,16 @@ u=*(((char*)(a))+1); \
 *(((char*)(a))+1)=*(((char*)(a))+2); \
 *(((char*)(a))+2)=u; }
 
-CRaw *RawOpenRead(char *fname)
+CRaw *RawOpenRead(PyMOLGlobals *G,char *fname)
 {
   int target = 0x04030201;
   int reverse = 0x01020304;
   int actual;
   int ok=true;
 
-  OOAlloc(CRaw);
+  OOAlloc(G,CRaw);
   I->bufVLA=NULL;
-  
+  I->G=G;
   I->f=fopen(fname,"rb");
   if(!I->f) {
     ok=false;
@@ -61,9 +61,9 @@ CRaw *RawOpenRead(char *fname)
     else if(actual==reverse)
       I->swap=true;
     else {
-      PRINTFB(FB_Raw,FB_Errors)
+      PRINTFB(G,FB_Raw,FB_Errors)
         "Error-RawOpenRead: Unrecognized byte ordering. This may not a PyMOL file.\n"
-        ENDFB;
+        ENDFB(G);
       ok=false;
     }
   }
@@ -71,9 +71,9 @@ CRaw *RawOpenRead(char *fname)
     if(I->f)
       fclose(I->f);
     OOFreeP(I);
-    PRINTFB(FB_Raw,FB_Errors)
+    PRINTFB(G,FB_Raw,FB_Errors)
       "Error-RawOpenRead: Unable to open '%s'.\n",fname
-      ENDFB;
+      ENDFB(G);
     
   } else {
     I->mode=cRaw_file_stream;
@@ -81,12 +81,13 @@ CRaw *RawOpenRead(char *fname)
   return(I);
 }
 
-CRaw *RawOpenWrite(char *fname)
+CRaw *RawOpenWrite(PyMOLGlobals *G,char *fname)
 {
   int target = 0x04030201;
   int ok=true;
-  OOAlloc(CRaw);
+  OOAlloc(G,CRaw);
   I->bufVLA=NULL;
+  I->G=G;
   I->f=fopen(fname,"wb");
   if(!I->f) {
     ok=false;
@@ -103,12 +104,13 @@ CRaw *RawOpenWrite(char *fname)
   return(I);
 }
 
-CRaw *RawOpenAppend(char *fname)
+CRaw *RawOpenAppend(PyMOLGlobals *G,char *fname)
 {
   int target = 0x04030201;
   int ok=true;
-  OOAlloc(CRaw);
+  OOAlloc(G,CRaw);
   I->bufVLA=NULL;
+  I->G=G;
   I->f=fopen(fname,"wba");
   if(!I->f) {
     ok=false;
@@ -120,9 +122,9 @@ CRaw *RawOpenAppend(char *fname)
     if(I->f)
       fclose(I->f);
     OOFreeP(I);
-    PRINTFB(FB_Raw,FB_Errors)
+    PRINTFB(G,FB_Raw,FB_Errors)
       "Error-RawOpenAppend: Unable to open '%s'.\n",fname
-      ENDFB;
+      ENDFB(G);
   } else {
     I->mode=cRaw_file_stream;
   }
@@ -144,13 +146,14 @@ void RawFree(CRaw *I)
 }
 
 int RawGetNext(CRaw *I,int *size,int *version) {
+  PyMOLGlobals *G = I->G;
   int result=cRaw_EOF;
   switch(I->mode) {
   case cRaw_file_stream:
     if(I->f) {
       if(!feof(I->f)) {
         if(fread((char*)I->header,cRaw_header_size,1,I->f)!=1) {
-          PRINTFD(FB_Raw)
+          PRINTFD(G,FB_Raw)
             " RawGetNextType-Debug: Couldn't read header.\n"
             ENDFD;
         } else {
@@ -173,15 +176,16 @@ int RawGetNext(CRaw *I,int *size,int *version) {
 
 int RawReadSkip(CRaw *I)
 {
+  PyMOLGlobals *G = I->G;
   int result=false;
   switch(I->mode) {
   case cRaw_file_stream:
     if(I->f) {
       if(!feof(I->f)) {
         if(fread((char*)I->header,cRaw_header_size,1,I->f)!=1) {
-          PRINTFB(FB_Raw,FB_Errors)
+          PRINTFB(G,FB_Raw,FB_Errors)
             "Error-Raw: Error reading header.\n"
-            ENDFB;
+            ENDFB(G);
         } else {
           if(I->swap) {
             swap_bytes(I->header);
@@ -201,15 +205,16 @@ int RawReadSkip(CRaw *I)
 
 char *RawRead(CRaw *I,int *type,unsigned int *size,int *serial)
 {
+  PyMOLGlobals *G = I->G;
   char *result=NULL;
   switch(I->mode) {
   case cRaw_file_stream:
     if(I->f) {
       if(!feof(I->f)) {
         if(fread((char*)I->header,cRaw_header_size,1,I->f)!=1) {
-          PRINTFB(FB_Raw,FB_Errors)
+          PRINTFB(G,FB_Raw,FB_Errors)
             "Error-Raw: Error reading header.\n"
-            ENDFB;
+            ENDFB(G);
         } else {
           if(I->swap) {
             swap_bytes(I->header);
@@ -224,9 +229,9 @@ char *RawRead(CRaw *I,int *type,unsigned int *size,int *serial)
             *type=I->header[1]; /* record type */
             *serial=I->header[3];
           } else {
-            PRINTFB(FB_Raw,FB_Errors)
+            PRINTFB(G,FB_Raw,FB_Errors)
               "Error-RawRead: Data read error.\n"
-              ENDFB;
+              ENDFB(G);
 
           }
         }
@@ -241,15 +246,16 @@ char *RawRead(CRaw *I,int *type,unsigned int *size,int *serial)
 
 char *RawReadPtr(CRaw *I,int type,int *size)
 {
+  PyMOLGlobals *G = I->G;
   char *result = NULL;
   switch(I->mode) {
   case cRaw_file_stream:
     if(I->f) {
       if(!feof(I->f)) {
         if(fread((char*)I->header,cRaw_header_size,1,I->f)!=1) {
-          PRINTFB(FB_Raw,FB_Errors)
+          PRINTFB(G,FB_Raw,FB_Errors)
             "Error-Raw: Error reading header.\n"
-            ENDFB;
+            ENDFB(G);
         } else {
           if(I->swap) {
             swap_bytes(I->header);
@@ -259,16 +265,16 @@ char *RawReadPtr(CRaw *I,int type,int *size)
           }
           if((I->header[1])!=type) {
             fseek(I->f,-cRaw_header_size,SEEK_CUR);
-            PRINTFD(FB_Raw)
+            PRINTFD(G,FB_Raw)
               " RawReadPtr-Debug: Type mismatch.\n"
               ENDFD;
           } else {
             result=mmalloc(I->header[0]);
             if(fread(result,I->header[0],1,I->f)!=1) {
               FreeP(result);
-              PRINTFB(FB_Raw,FB_Errors)
+              PRINTFB(G,FB_Raw,FB_Errors)
                 "Error-RawReadVLA: Data read error.\n"
-                ENDFB;
+                ENDFB(G);
 
             } else {
               *size = I->header[0];
@@ -284,15 +290,16 @@ char *RawReadPtr(CRaw *I,int type,int *size)
 
 char *RawReadVLA(CRaw *I,int type,unsigned int rec_size,int grow_factor,int auto_zero)
 {
+  PyMOLGlobals *G = I->G;
   char *result=NULL;
   switch(I->mode) {
   case cRaw_file_stream:
     if(I->f) {
       if(!feof(I->f)) {
         if(fread((char*)I->header,cRaw_header_size,1,I->f)!=1) {
-          PRINTFB(FB_Raw,FB_Errors)
+          PRINTFB(G,FB_Raw,FB_Errors)
             "Error-Raw: Error reading header.\n"
-            ENDFB;
+            ENDFB(G);
         } else {
           if(I->swap) {
             swap_bytes(I->header);
@@ -302,7 +309,7 @@ char *RawReadVLA(CRaw *I,int type,unsigned int rec_size,int grow_factor,int auto
           }
           if((I->header[1])!=type) {
             fseek(I->f,-cRaw_header_size,SEEK_CUR);
-            PRINTFD(FB_Raw)
+            PRINTFD(G,FB_Raw)
               " RawReadVLA-Debug: Type mismatch %d != %d.\n",I->header[1],type
               ENDFD;
 
@@ -310,9 +317,9 @@ char *RawReadVLA(CRaw *I,int type,unsigned int rec_size,int grow_factor,int auto
             result=VLAMalloc((I->header[0]/rec_size),rec_size,grow_factor,auto_zero);
             if(fread(result,I->header[0],1,I->f)!=1) {
               VLAFreeP(result);
-              PRINTFB(FB_Raw,FB_Errors)
+              PRINTFB(G,FB_Raw,FB_Errors)
                 "Error-RawReadVLA: Data read error.\n"
-                ENDFB;
+                ENDFB(G);
 
             } else {
               result = (char*)VLASetSize(result,I->header[0]/rec_size);
@@ -329,15 +336,16 @@ char *RawReadVLA(CRaw *I,int type,unsigned int rec_size,int grow_factor,int auto
 
 int RawReadInto(CRaw *I,int type,unsigned int size,char *buffer)
 {
+  PyMOLGlobals *G = I->G;
   int ok=false;
   switch(I->mode) {
   case cRaw_file_stream:
     if(I->f) {
       if(!feof(I->f)) {
         if(fread((char*)I->header,cRaw_header_size,1,I->f)!=1) {
-          PRINTFB(FB_Raw,FB_Errors)
+          PRINTFB(G,FB_Raw,FB_Errors)
             "Error-RawReadInfo: Error reading header.\n"
-            ENDFB;
+            ENDFB(G);
         } else {
           if(I->swap) {
             swap_bytes(I->header);
@@ -347,18 +355,18 @@ int RawReadInto(CRaw *I,int type,unsigned int size,char *buffer)
           }
           if((I->header[1])!=type) {
             fseek(I->f,-cRaw_header_size,SEEK_CUR);
-            PRINTFD(FB_Raw)
+            PRINTFD(G,FB_Raw)
               " RawReadPtr-Debug: Type mismatch.\n"
               ENDFD;
           } else if(I->header[0]!=(signed)size) {
-            PRINTFB(FB_Raw,FB_Errors)
+            PRINTFB(G,FB_Raw,FB_Errors)
               "Error-RawReadInfo: Size mismatch %d!=%d (disk/RAM).\n",I->header[0],size
-              ENDFB;
+              ENDFB(G);
           } else {
             if(fread(buffer,size,1,I->f)!=1) {
-              PRINTFB(FB_Raw,FB_Errors)
+              PRINTFB(G,FB_Raw,FB_Errors)
                 "Error-RawReadInfo: Data read error.\n"
-                ENDFB;
+                ENDFB(G);
             } else {
               ok=true;
             }
@@ -375,9 +383,10 @@ int RawReadInto(CRaw *I,int type,unsigned int size,char *buffer)
 
 int RawWrite(CRaw *I,int type,unsigned int size,int serial,char *bytes)
 {
+  PyMOLGlobals *G = I->G;
   int header[4];
   int ok=false;
-  PRINTFD(FB_Raw)
+  PRINTFD(G,FB_Raw)
     " RawWrite-Debug: type %d size %d %p\n",type,size,bytes
     ENDFD;
   switch(I->mode) {
@@ -388,19 +397,19 @@ int RawWrite(CRaw *I,int type,unsigned int size,int serial,char *bytes)
       header[2]=_PyMOL_VERSION_int;
       header[3]=serial;
       if(fwrite((char*)header,cRaw_header_size,1,I->f)!=1) {
-        PRINTFB(FB_Raw,FB_Errors)
+        PRINTFB(G,FB_Raw,FB_Errors)
           "Error-RawWrite: can't write header.\n"
-          ENDFB;
+          ENDFB(G);
       } else if (fwrite((char*)bytes,size,1,I->f)!=1) {
-        PRINTFB(FB_Raw,FB_Errors)
+        PRINTFB(G,FB_Raw,FB_Errors)
           "Error-RawWrite: can't write data.\n"
-          ENDFB;
+          ENDFB(G);
       } else {
         ok=true;
       }
     }
   }
-  PRINTFD(FB_Raw)
+  PRINTFD(G,FB_Raw)
     " RawWrite-Debug: leaving... %d\n",ok
     ENDFD;
 

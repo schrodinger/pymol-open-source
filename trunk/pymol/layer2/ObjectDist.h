@@ -28,17 +28,17 @@ typedef struct ObjectDist {
   int CurDSet;
 } ObjectDist;
 
-ObjectDist *ObjectDistNewFromSele(ObjectDist *oldObj,int sele1,int sele2,int mode,float cutoff,
+ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,int sele1,int sele2,int mode,float cutoff,
                                   int labels,float *result);
-ObjectDist *ObjectDistNew(void);
+ObjectDist *ObjectDistNew(PyMOLGlobals *G);
 void ObjectDistInvalidateRep(ObjectDist *I,int rep);
 PyObject *ObjectDistAsPyList(ObjectDist *I);
-int ObjectDistNewFromPyList(PyObject *list,ObjectDist **result);
+int ObjectDistNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectDist **result);
 
 struct M4XBondType;
 struct ObjectMolecule;
 
-ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,                                      
+ObjectDist *ObjectDistNewFromM4XBond(PyMOLGlobals *G,ObjectDist *oldObj,                                      
                                       struct ObjectMolecule *objMol,
                                      struct M4XBondType *hbond,int n_hbond,
                                      int nbr_sele);

@@ -25,63 +25,49 @@ Z* -------------------------------------------------------------------
 typedef unsigned char *ImageType;
 typedef char MovieCmdType[OrthoLineLength];
 
-typedef struct  {
-  ImageType *Image;
-  int *Sequence;
-  MovieCmdType *Cmd;
-  int NImage,NFrame;
-  unsigned Width,Height;
-  int MatrixFlag;
-  SceneViewType Matrix;
-  int Playing;
-  int Locked;
-  int CacheSave;
-  CViewElem *ViewElem;
-} CMovie;
+int MovieFromPyList(PyMOLGlobals *G,PyObject *list,int *warning);
+PyObject *MovieAsPyList(PyMOLGlobals *G);
 
-int MovieFromPyList(PyObject *list,int *warning);
-PyObject *MovieAsPyList(void);
+int MovieInit(PyMOLGlobals *G);
+void MovieFree(PyMOLGlobals *G);
+void MovieReset(PyMOLGlobals *G);
+void MovieDump(PyMOLGlobals *G);
+void MovieAppendSequence(PyMOLGlobals *G,char *seq,int start_from);
+int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop);
+void MovieSetCommand(PyMOLGlobals *G,int frame,char *command);
+void MovieAppendCommand(PyMOLGlobals *G,int frame,char *command);
 
-void MovieInit(void);
-void MovieFree(void);
-void MovieReset(void);
-void MovieDump(void);
-void MovieAppendSequence(char *seq,int start_from);
-int MoviePNG(char *prefix,int save,int start,int stop);
-void MovieSetCommand(int frame,char *command);
-void MovieAppendCommand(int frame,char *command);
+void MovieDoFrameCommand(PyMOLGlobals *G,int frame);
 
-void MovieDoFrameCommand(int frame);
-
-void MovieCopyPrepare(int *width,int *height,int *length);
-int MovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr);
-void MovieCopyFinish(void);
+void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length);
+int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,void *ptr);
+void MovieCopyFinish(PyMOLGlobals *G);
 
 #define cMovieStop 0
 #define cMoviePlay 1
 
-void MoviePlay(int cmd);
-int MoviePlaying(void);
-void MovieSetSize(unsigned int width,unsigned int height);
+void MoviePlay(PyMOLGlobals *G,int cmd);
+int MoviePlaying(PyMOLGlobals *G);
+void MovieSetSize(PyMOLGlobals *G,unsigned int width,unsigned int height);
 
-void MovieClearImages(void);
-ImageType MovieGetImage(int image);
-void MovieSetImage(int index,ImageType image);
+void MovieClearImages(PyMOLGlobals *G);
+ImageType MovieGetImage(PyMOLGlobals *G,int image);
+void MovieSetImage(PyMOLGlobals *G,int index,ImageType image);
 
-int MovieGetLength(void);
-int MovieFrameToImage(int frame);
-int MovieFrameToIndex(int frame);
-int MovieLocked(void);
-void MovieSetLock(int);
-int MovieDefined(void);
-int MovieView(int action,int first,int last,float power,float bias);
+int MovieGetLength(PyMOLGlobals *G);
+int MovieFrameToImage(PyMOLGlobals *G,int frame);
+int MovieFrameToIndex(PyMOLGlobals *G,int frame);
+int MovieLocked(PyMOLGlobals *G);
+void MovieSetLock(PyMOLGlobals *G,int);
+int MovieDefined(PyMOLGlobals *G);
+int MovieView(PyMOLGlobals *G,int action,int first,int last,float power,float bias);
 
 #define cMovieMatrixClear  0
 #define cMovieMatrixStore  1
 #define cMovieMatrixRecall 2
 #define cMovieMatrixCheck  3
 
-int MovieMatrix(int action); /* 0 clear, 1 remember, 2 recall */
+int MovieMatrix(PyMOLGlobals *G,int action); /* 0 clear, 1 remember, 2 recall */
 
 /*void MovieSave(char *fname);
   void MovieLoad(char *fname);*/

@@ -63,12 +63,12 @@ PyObject *FieldAsPyList(CField *I)
   return(PConvAutoNone(result));  
 }
 
-CField *FieldNewFromPyList(PyObject *list)
+CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
   int ok=true;
   unsigned int n_elem;
   int ll;
-  OOAlloc(CField);
+  OOAlloc(G,CField);
 
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
@@ -147,12 +147,12 @@ void FieldZero(CField *I)
   MemoryZero(p,q);
 }
 
-CField *FieldNew(int *dim,int n_dim,unsigned int base_size,int type)
+CField *FieldNew(PyMOLGlobals *G,int *dim,int n_dim,unsigned int base_size,int type)
 {
   unsigned int stride;
   int a;
 
-  OOAlloc(CField);
+  OOAlloc(G,CField);
   I->type=type;
   I->base_size=base_size;
   I->stride=(unsigned int*)Alloc(int,n_dim);

@@ -33,29 +33,31 @@ Z* ------------------------------------------------------------------- */
 #define false 0
 #endif
 
-static MapType *_MapNew(float range,float *vert,int nVert,
+static MapType *_MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,
                         float *extent,int *flag,int group_id,int block_id);
 
 void MapFree(MapType *I)
 {
   if(I)
 	 {
-		CacheFreeP(I->Head,I->group_id,I->block_base + cCache_map_head_offset,false);
-		CacheFreeP(I->Link,I->group_id,I->block_base + cCache_map_link_offset,false);
-		CacheFreeP(I->EHead,I->group_id,I->block_base + cCache_map_ehead_offset,false);
-		CacheFreeP(I->EMask,I->group_id,I->block_base + cCache_map_emask_offset,false);
-		VLACacheFreeP(I->EList,I->group_id,I->block_base + cCache_map_elist_offset,false);
+      PyMOLGlobals *G=I->G;
+		CacheFreeP(G,I->Head,I->group_id,I->block_base + cCache_map_head_offset,false);
+		CacheFreeP(G,I->Link,I->group_id,I->block_base + cCache_map_link_offset,false);
+		CacheFreeP(G,I->EHead,I->group_id,I->block_base + cCache_map_ehead_offset,false);
+		CacheFreeP(G,I->EMask,I->group_id,I->block_base + cCache_map_emask_offset,false);
+		VLACacheFreeP(G,I->EList,I->group_id,I->block_base + cCache_map_elist_offset,false);
 	 }
   OOFreeP(I);
 }
 
 void MapCacheInit(MapCache *M,MapType *I,int group_id,int block_base)
 {
+  PyMOLGlobals *G=I->G;
   int a,*p;
-
+  M->G = G;
   M->block_base = I->block_base;
-  M->Cache = CacheAlloc(int,I->NVert,group_id,block_base + cCache_map_cache_offset);
-  M->CacheLink = CacheAlloc(int,I->NVert,group_id,block_base + cCache_map_cache_link_offset);
+  M->Cache = CacheAlloc(G,int,I->NVert,group_id,block_base + cCache_map_cache_offset);
+  M->CacheLink = CacheAlloc(G,int,I->NVert,group_id,block_base + cCache_map_cache_link_offset);
   M->CacheStart = -1;
   p=M->Cache;
   for(a=0;a<I->NVert;a++)
@@ -96,8 +98,9 @@ void MapCacheReset(MapCache *M)
 
 void MapCacheFree(MapCache *M,int group_id,int block_base)
 {
-  CacheFreeP(M->Cache,group_id,block_base + cCache_map_cache_offset,false);
-  CacheFreeP(M->CacheLink,group_id,block_base + cCache_map_cache_link_offset,false);
+  PyMOLGlobals *G = M->G;
+  CacheFreeP(G,M->Cache,group_id,block_base + cCache_map_cache_offset,false);
+  CacheFreeP(G,M->CacheLink,group_id,block_base + cCache_map_cache_link_offset,false);
 }
 
 #define MapSafety 0.01F
@@ -158,22 +161,23 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 
 void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors for each square */
 {
+   PyMOLGlobals *G=I->G;
 	int n, a,b,c,flag;
 	register int d,e,i;
 	unsigned int mapSize;
 	int st, dim2;
 	int n_alloc = n_vert * 15; /* emprical est. */
 
-	PRINTFD(FB_Map)
+	PRINTFD(G,FB_Map)
 	" MapSetupExpressXY-Debug: entered.\n"
 	ENDFD;
 	
 	mapSize		= I->Dim[0]*I->Dim[1]*I->Dim[2];
-	I->EHead	= CacheCalloc(int,mapSize,I->group_id,I->block_base + cCache_map_ehead_offset);
-	I->EMask    = CacheCalloc(int,I->Dim[0]*I->Dim[1],
+	I->EHead	= CacheCalloc(G,int,mapSize,I->group_id,I->block_base + cCache_map_ehead_offset);
+	I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
                              I->group_id,I->block_base + cCache_map_emask_offset);
-	ErrChkPtr(I->EHead);
-	I->EList	= VLACacheMalloc(n_alloc,sizeof(int),5,0,
+	ErrChkPtr(G,I->EHead);
+	I->EList	= VLACacheMalloc(G,n_alloc,sizeof(int),5,0,
                              I->group_id,I->block_base + cCache_map_elist_offset); 
 	
 	n		= 1;
@@ -204,7 +208,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 							flag	= true;
 							while(i >= 0)
 							{
-								VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+								VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 								I->EList[n]	= i;
 								n++;
 								i	= MapNext(I,i);
@@ -221,7 +225,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 				{
 					*(I->EMask + I->Dim[1]*a + b) = true;
 					*(MapEStart(I,a,b,c))=st;
-					VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+					VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 					I->EList[n]=-1;
 					n++;
 				}
@@ -230,8 +234,8 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 	}
 		
 	I->NEElem=n;
-	VLACacheSize(I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
-	PRINTFD(FB_Map)
+	VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+	PRINTFD(G,FB_Map)
 		" MapSetupExpressXY-Debug: leaving...\n"
 	ENDFD;
 }
@@ -240,6 +244,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 
 void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
 {
+   PyMOLGlobals *G=I->G;
 	int		h, n, a,b,c;
 	int		j,k,dim2;
 	int		d,e;
@@ -247,17 +252,17 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 	int		*eBase, *hBase;
 	int      n_alloc = n_vert * 15; /* emprical est. */
 	
-	PRINTFD(FB_Map)
+	PRINTFD(G,FB_Map)
 		" MapSetupExpressXY-Debug: entered.\n"
 	ENDFD;
 	
 	/*mapSize 	= I->Dim[0]*I->Dim[1]*I->Dim[2];*/
-	I->EHead	= CacheCalloc(int, I->Dim[0]*I->Dim[1]*I->Dim[2],
+	I->EHead	= CacheCalloc(G,int, I->Dim[0]*I->Dim[1]*I->Dim[2],
                           I->group_id,I->block_base + cCache_map_ehead_offset);
-	I->EMask    = CacheCalloc(int,I->Dim[0]*I->Dim[1],
+	I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
                              I->group_id,I->block_base + cCache_map_emask_offset);
-	ErrChkPtr(I->EHead);
-	I->EList	= VLACacheMalloc(n_alloc,sizeof(int),5,0,
+	ErrChkPtr(G,I->EHead);
+	I->EList	= VLACacheMalloc(G,n_alloc,sizeof(int),5,0,
                              I->group_id,I->block_base + cCache_map_elist_offset); /* autozero */
 	
 	n		= 1;
@@ -298,7 +303,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 								flag = true;
 								while(i > -1) 
 								{
-									VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+									VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 									I->EList[n]	= i;
 									n++;
 									i = MapNext(I,i);
@@ -315,7 +320,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 					{
 						*(I->EMask + I->Dim[1]*a + b) = true;
 						*(MapEStart(I,a,b,c))	= st;
-						VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+						VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 						I->EList[n] = -1;
 						n++;
 					}
@@ -332,27 +337,28 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 	}
 
 	I->NEElem = n;
-	PRINTFD(FB_Map)
+	PRINTFD(G,FB_Map)
 		" MapSetupExpressXY-Debug: leaving...\n"
 	ENDFD;
 }
 
 void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 {
+   PyMOLGlobals *G=I->G;
   int n=0;
   int a,b,c,d,e,f,i;
   unsigned int mapSize;
   int st,flag;
 
-  PRINTFD(FB_Map)
+  PRINTFD(G,FB_Map)
     " MapSetupExpress-Debug: entered.\n"
     ENDFD;
 
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->EHead=CacheAlloc(int,mapSize,
+  I->EHead=CacheAlloc(G,int,mapSize,
                  I->group_id,I->block_base + cCache_map_ehead_offset);
-  ErrChkPtr(I->EHead);
-  I->EList=VLACacheMalloc(1000,sizeof(int),5,0,
+  ErrChkPtr(G,I->EHead);
+  I->EList=VLACacheMalloc(G,1000,sizeof(int),5,0,
                      I->group_id,I->block_base + cCache_map_elist_offset);
 
   n=1;
@@ -370,7 +376,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 						if(i>=0) {
 						  flag=true;
 						  while(i>=0) {
-							 VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+							 VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 							 I->EList[n]=i;
 							 n++;
 							 i=MapNext(I,i);
@@ -379,7 +385,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 					 }
 			 if(flag) {
 				*(MapEStart(I,a,b,c))=st;
-				VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+				VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 				I->EList[n]=-1;
 				n++;
 			 } else {
@@ -388,7 +394,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 		  }
 
 
-  PRINTFD(FB_Map)
+  PRINTFD(G,FB_Map)
     " MapSetupExpress-Debug: leaving...\n"
     ENDFD;
 
@@ -451,12 +457,12 @@ int MapExclLocus(MapType *I,float *v,int *a,int *b,int *c)
   return(1);
 }
 
-float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
+float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *diagonal)
 {
   float maxSize;
   float size,subDiv;
 
-  maxSize = SettingGet(cSetting_hash_max);
+  maxSize = SettingGet(G,cSetting_hash_max);
 
   /* find longest axis */
 
@@ -476,10 +482,10 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
   if(subDiv>maxSize ) subDiv = maxSize; /* keep it reasonable - we're talking N^3 here... */
   if(subDiv<1.0) subDiv = 1.0;
 
-  if(Feedback(FB_Map,FB_Debugging)) {
+  if(Feedback(G,FB_Map,FB_Debugging)) {
     PRINTF
       " MapGetSeparation: range %8.3f maxSize %8.3f subDiv %8.3f size %8.3f\n",range,maxSize,subDiv,size
-      ENDF;
+      ENDF(G);
     dump3f(mx,"mx");
     dump3f(mn,"mn");
     dump3f(diagonal,"diagonal");
@@ -488,22 +494,22 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
   return(size/subDiv);
 }
 
-MapType *MapNew(float range,float *vert,int nVert,float *extent)
+MapType *MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent)
 {
-  return(_MapNew(range,vert,nVert,extent,NULL,-1,0));
+  return(_MapNew(G,range,vert,nVert,extent,NULL,-1,0));
 }
 
-MapType *MapNewCached(float range,float *vert,int nVert,float *extent,int group_id,int block_id)
+MapType *MapNewCached(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent,int group_id,int block_id)
 {
-  return(_MapNew(range,vert,nVert,extent,NULL,group_id,block_id));
+  return(_MapNew(G,range,vert,nVert,extent,NULL,group_id,block_id));
 }
 
-MapType *MapNewFlagged(float range,float *vert,int nVert,float *extent,int *flag)
+MapType *MapNewFlagged(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent,int *flag)
 {
-  return(_MapNew(range,vert,nVert,extent,flag,-1,0));
+  return(_MapNew(G,range,vert,nVert,extent,flag,-1,0));
 }
 
-static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *flag,
+static MapType *_MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent,int *flag,
                         int group_id,int block_base)
 {
   int a,c;
@@ -514,12 +520,12 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   int firstFlag;
   Vector3f diagonal;
 
-  OOAlloc(MapType);
+  OOAlloc(G,MapType);
 
-  PRINTFD(FB_Map)
+  PRINTFD(G,FB_Map)
     " MapNew-Debug: entered.\n"
     ENDFD;
-
+  I->G=G;
   I->group_id = group_id;
   I->block_base = block_base;
   I->Head = NULL;
@@ -529,8 +535,8 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   I->EMask = NULL;
   I->NEElem=0;
   
-  I->Link=CacheAlloc(int,nVert,group_id,block_base + cCache_map_link_offset);
-  ErrChkPtr(I->Link);
+  I->Link=CacheAlloc(G,int,nVert,group_id,block_base + cCache_map_link_offset);
+  ErrChkPtr(G,I->Link);
 
   for(a=0;a<nVert;a++)
 	 I->Link[a] = -1;
@@ -608,7 +614,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
     }
   }
      
-  if(Feedback(FB_Map,FB_Debugging)) {
+  if(Feedback(G,FB_Map,FB_Debugging)) {
     printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
            I->Min[0],I->Min[1],I->Min[2],
            I->Max[0],I->Max[1],I->Max[2]);
@@ -630,7 +636,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   }
 
   /* compute final box size */
-  I->Div = MapGetSeparation(range,I->Max,I->Min,diagonal);
+  I->Div = MapGetSeparation(G,range,I->Max,I->Min,diagonal);
   I->recipDiv = 1.0F/(I->Div); /* cache this */
 
   /* add borders to avoid special edge cases */
@@ -638,7 +644,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   I->Dim[1]=(int)((diagonal[1]/I->Div)+1+(2*MapBorder));
   I->Dim[2]=(int)((diagonal[2]/I->Div)+1+(2*MapBorder));
 
-  if(Feedback(FB_Map,FB_Debugging)) {
+  if(Feedback(G,FB_Map,FB_Debugging)) {
     printf(" MapSetup: nVert: %d\n",nVert);
     printf(" MapSetup: I->Div: %8.3f\n",I->Div);
     printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
@@ -660,9 +666,9 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 
   /* compute size and allocate */
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->Head=CacheAlloc(int,mapSize,group_id,block_base + cCache_map_head_offset);
+  I->Head=CacheAlloc(G,int,mapSize,group_id,block_base + cCache_map_head_offset);
   /*printf("%d\n",mapSize);*/
-  ErrChkPtr(I->Head);
+  ErrChkPtr(G,I->Head);
 
   /* initialize */
   /*  for(a=0;a<I->Dim[0];a++)
@@ -675,7 +681,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 
   I->NVert = nVert;
 
-  PRINTFD(FB_Map)
+  PRINTFD(G,FB_Map)
     " MapNew-Debug: creating 3D hash...\n"
     ENDFD;
 
@@ -705,7 +711,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 		}
   }
 
-  PRINTFD(FB_Map)
+  PRINTFD(G,FB_Map)
     " MapNew-Debug: leaving...\n"
     ENDFD;
 

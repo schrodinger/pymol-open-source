@@ -26,7 +26,7 @@ Z* -------------------------------------------------------------------
 #include "Ortho.h"
 
 
-void MenuActivate(int x,int y,int last_x,int last_y,char *name,char *sele)
+void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,char *sele)
 {
 
   PyObject *list;
@@ -36,13 +36,13 @@ void MenuActivate(int x,int y,int last_x,int last_y,char *name,char *sele)
   list = PyObject_CallMethod(P_menu,name,"s",sele); 
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
-    PopUpNew(x,y,last_x,last_y,list,NULL);
+    PopUpNew(G,x,y,last_x,last_y,list,NULL);
     Py_DECREF(list);
   }
   PUnblock();
 }
 
-void MenuActivate2Arg(int x,int y,int last_x,int last_y,char *name,char *sele1,char *sele2)
+void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,char *sele1,char *sele2)
 {
 
   PyObject *list;
@@ -52,13 +52,13 @@ void MenuActivate2Arg(int x,int y,int last_x,int last_y,char *name,char *sele1,c
   list = PyObject_CallMethod(P_menu,name,"ss",sele1,sele2); 
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
-    PopUpNew(x,y,last_x,last_y,list,NULL);
+    PopUpNew(G,x,y,last_x,last_y,list,NULL);
     Py_DECREF(list);
   }
   PUnblock();
 }
 
-void MenuActivate0Arg(int x,int y,int last_x,int last_y,char *name)
+void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name)
 {
 
   PyObject *list;
@@ -68,7 +68,7 @@ void MenuActivate0Arg(int x,int y,int last_x,int last_y,char *name)
   list = PyObject_CallMethod(P_menu,name,"");
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
-    PopUpNew(x,y,last_x,last_y,list,NULL);
+    PopUpNew(G,x,y,last_x,last_y,list,NULL);
     Py_DECREF(list);
   }
   PUnblock();

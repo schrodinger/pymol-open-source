@@ -100,7 +100,7 @@ PyObject *GetBondsDict(void)
 {
   PyObject *result = NULL;
   result = PyObject_GetAttrString(P_chempy,"bonds");
-  if(!result) ErrMessage("PyMOL","can't find 'chempy.bonds.bonds'");
+  if(!result) ErrMessage(TempPyMOLGlobals,"PyMOL","can't find 'chempy.bonds.bonds'");
   return(result);
 }
 
@@ -113,9 +113,9 @@ PyObject *PGetFontDict(float size,int face,int style)
     P_vfont = PyDict_GetItemString(P_globals,"vfont");
   }
   if(!P_vfont) {
-    PRINTFB(FB_Python,FB_Errors)
+    PRINTFB(TempPyMOLGlobals,FB_Python,FB_Errors)
       " PyMOL-Error: can't find module 'vfont'"
-      ENDFB;
+      ENDFB(TempPyMOLGlobals);
   }
   else {
     result = PyObject_CallMethod(P_vfont,"get_font","fii",size,face,style);
@@ -206,13 +206,13 @@ void PSleep(int usec)
 #ifndef WIN32
   struct timeval tv;
   PUnlockAPIAsGlut();
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     " PSleep-DEBUG: napping.\n"
   ENDFD;
   tv.tv_sec=0;
   tv.tv_usec=usec; 
   select(0,NULL,NULL,NULL,&tv);
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     " PSleep-DEBUG: nap over.\n"
   ENDFD;
   PLockAPIAsGlut();
@@ -303,7 +303,7 @@ int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *mod
       if(PyErr_Occurred()) {
         PyErr_Print();
         result=false;
-        ErrMessage("AlterState","Aborting on error. Assignment may be incomplete.");
+        ErrMessage(TempPyMOLGlobals,"AlterState","Aborting on error. Assignment may be incomplete.");
       }
     }
     if(result) {
@@ -313,7 +313,7 @@ int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *mod
       if(PyErr_Occurred()) {
         PyErr_Print();
         result=false;
-        ErrMessage("AlterState","Aborting on error. Assignment may be incomplete.");
+        ErrMessage(TempPyMOLGlobals,"AlterState","Aborting on error. Assignment may be incomplete.");
       } else {
         v[0]=f[0];
         v[1]=f[1];
@@ -421,7 +421,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   rank_id1 = PConvIntToPyDictItem(dict,"rank",at->rank);
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
-    ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
+    ErrMessage(TempPyMOLGlobals,"Alter","Aborting on error. Assignment may be incomplete.");
     PyErr_Print();
     result=false;
   } else if(read_only) {
@@ -508,7 +508,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
           result=false;
         else {
           strcpy(at->elem,elem);
-          AtomInfoAssignParameters(at);
+          AtomInfoAssignParameters(TempPyMOLGlobals,at);
         }
       }
       if(resn_id1!=resn_id2) {
@@ -666,7 +666,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
       }
     }
     if(!result) { 
-      ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
+      ErrMessage(TempPyMOLGlobals,"Alter","Aborting on error. Assignment may be incomplete.");
     }
   } 
   Py_DECREF(dict);
@@ -738,7 +738,7 @@ int PLabelAtom(AtomInfoType *at,char *expr,int index)
     if(result) { 
       strcpy(at->label,label);
     } else {
-      ErrMessage("Label","Aborting on error. Labels may be incomplete.");
+      ErrMessage(TempPyMOLGlobals,"Label","Aborting on error. Labels may be incomplete.");
     }
   }
   Py_DECREF(dict);
@@ -748,7 +748,7 @@ int PLabelAtom(AtomInfoType *at,char *expr,int index)
 
 void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
 {
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
   PBlock();
@@ -758,12 +758,12 @@ void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
 
 void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 {
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     "*PLockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
 
   PBlock();
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     "#PLockAPIAsGlut-DEBUG: acquiring lock as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
@@ -772,7 +772,7 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
     /* NOTE: the keep_out variable can only be changed or read by the thread
        holding the API lock, therefore it is safe even through increment
        isn't atomic. */
-    PRINTFD(FB_Threads)
+    PRINTFD(TempPyMOLGlobals,FB_Threads)
       "-PLockAPIAsGlut-DEBUG: glut_thread_keep_out 0x%x\n",PyThread_get_thread_ident()
       ENDFD;
     
@@ -796,7 +796,7 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
   }
   PUnblock(); /* API is now locked, so we can free up Python...*/
 
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     "=PLockAPIAsGlut-DEBUG: acquired\n"
     ENDFD;
 
@@ -964,7 +964,6 @@ putenv(line3);
 #endif
 
 
-
 #ifndef _PYMOL_ACTIVEX
 #ifndef _EPYMOL
   Py_Initialize();
@@ -1056,13 +1055,13 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 #endif
 
   P_main = PyImport_AddModule("__main__");
-  if(!P_main) ErrFatal("PyMOL","can't find '__main__'");
+  if(!P_main) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find '__main__'");
 
   /* inform PyMOL's other half that we're launching embedded-style */
   PyObject_SetAttrString(P_main,"pymol_launch",PyInt_FromLong(4));
 
   args = PConvStringListToPyList(argc,argv); /* prepare our argument list */
-  if(!args) ErrFatal("PyMOL","can't process arguments.");
+  if(!args) ErrFatal(TempPyMOLGlobals,"PyMOL","can't process arguments.");
 
   /* copy arguments to __main__.pymol_argv */
   PyObject_SetAttrString(P_main,"pymol_argv",args);
@@ -1072,7 +1071,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 
   pymol = PyImport_AddModule("pymol"); /* get it */
-  if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
+  if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'pymol'");
 
 }
 
@@ -1082,13 +1081,13 @@ void PGetOptions(PyMOLOptionRec *rec)
   char *load_str;
 
   pymol = PyImport_AddModule("pymol"); /* get it */
-  if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
+  if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'pymol'");
 
   invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
-  if(!pymol) ErrFatal("PyMOL","can't find module 'invocation'");
+  if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'invocation'");
 
   options = PyObject_GetAttrString(invocation,"options");
-  if(!pymol) ErrFatal("PyMOL","can't get 'invocation.options'.");
+  if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't get 'invocation.options'.");
 
   rec->pmgui = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
   rec->internal_gui = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
@@ -1177,88 +1176,88 @@ void PInit(void)
 /* assumes that pymol module has been loaded */
 
   pymol = PyImport_AddModule("pymol"); /* get it */
-  if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
+  if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'pymol'");
   P_globals = PyModule_GetDict(pymol);
-  if(!P_globals) ErrFatal("PyMOL","can't find globals for 'pymol'");
+  if(!P_globals) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find globals for 'pymol'");
   P_exec = PyDict_GetItemString(P_globals,"exec_str");
-  if(!P_exec) ErrFatal("PyMOL","can't find 'pymol.exec_str()'");
+  if(!P_exec) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'pymol.exec_str()'");
 
   sys = PyDict_GetItemString(P_globals,"sys");
-  if(!sys) ErrFatal("PyMOL","can't find 'pymol.sys'");
+  if(!sys) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'pymol.sys'");
   pcatch = PyImport_AddModule("pcatch"); 
-  if(!pcatch) ErrFatal("PyMOL","can't find module 'pcatch'");
+  if(!pcatch) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'pcatch'");
   PyObject_SetAttrString(sys,"stdout",pcatch);
   PyObject_SetAttrString(sys,"stderr",pcatch);
 
   PRunString("import traceback\n");  
   P_traceback = PyDict_GetItemString(P_globals,"traceback");
-  if(!P_traceback) ErrFatal("PyMOL","can't find 'traceback'");
+  if(!P_traceback) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'traceback'");
 
   PRunString("import cmd\n");  
   P_cmd = PyDict_GetItemString(P_globals,"cmd");
-  if(!P_cmd) ErrFatal("PyMOL","can't find 'cmd'");
+  if(!P_cmd) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd'");
 
   P_lock = PyObject_GetAttrString(P_cmd,"lock");
-  if(!P_lock) ErrFatal("PyMOL","can't find 'cmd.lock()'");
+  if(!P_lock) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.lock()'");
 
   P_unlock = PyObject_GetAttrString(P_cmd,"unlock");
-  if(!P_unlock) ErrFatal("PyMOL","can't find 'cmd.unlock()'");
+  if(!P_unlock) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.unlock()'");
 
   P_lock_c = PyObject_GetAttrString(P_cmd,"lock_c");
-  if(!P_lock_c) ErrFatal("PyMOL","can't find 'cmd.lock_c()'");
+  if(!P_lock_c) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.lock_c()'");
 
   P_unlock_c = PyObject_GetAttrString(P_cmd,"unlock_c");
-  if(!P_unlock_c) ErrFatal("PyMOL","can't find 'cmd.unlock_c()'");
+  if(!P_unlock_c) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.unlock_c()'");
 
   P_do = PyObject_GetAttrString(P_cmd,"do");
-  if(!P_do) ErrFatal("PyMOL","can't find 'cmd.do()'");
+  if(!P_do) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.do()'");
 
   PRunString("import menu\n");  
   P_menu = PyDict_GetItemString(P_globals,"menu");
-  if(!P_menu) ErrFatal("PyMOL","can't find module 'menu'");
+  if(!P_menu) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'menu'");
 
   PRunString("import setting\n");  
   P_setting = PyDict_GetItemString(P_globals,"setting");
-  if(!P_setting) ErrFatal("PyMOL","can't find module 'setting'");
+  if(!P_setting) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'setting'");
 
   PRunString("import povray\n");  
   P_povray = PyDict_GetItemString(P_globals,"povray");
-  if(!P_povray) ErrFatal("PyMOL","can't find module 'povray'");
+  if(!P_povray) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'povray'");
 
 #ifdef _PYMOL_XRAY
   PRunString("import xray\n");  
   P_xray = PyDict_GetItemString(P_globals,"xray");
-  if(!P_xray) ErrFatal("PyMOL","can't find module 'xray'");
+  if(!P_xray) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'xray'");
 #endif
 
 #ifdef WIN32
   PRunString("import time\n");  
   P_time = PyDict_GetItemString(P_globals,"time");
-  if(!P_time) ErrFatal("PyMOL","can't find module 'time'");
+  if(!P_time) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'time'");
 
   P_sleep = PyObject_GetAttrString(P_time,"sleep");
-  if(!P_sleep) ErrFatal("PyMOL","can't find 'time.sleep()'");
+  if(!P_sleep) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'time.sleep()'");
 #endif
 
   PRunString("import parser\n");  
   P_parser = PyDict_GetItemString(P_globals,"parser");
-  if(!P_parser) ErrFatal("PyMOL","can't find module 'parser'");
+  if(!P_parser) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'parser'");
 
   P_parse = PyObject_GetAttrString(P_parser,"parse");
-  if(!P_parse) ErrFatal("PyMOL","can't find 'parser.parse()'");
+  if(!P_parse) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'parser.parse()'");
 
   P_complete = PyObject_GetAttrString(P_parser,"complete");
-  if(!P_complete) ErrFatal("PyMOL","can't find 'parser.complete()'");
+  if(!P_complete) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'parser.complete()'");
 
   PRunString("import chempy"); 
   P_chempy = PyDict_GetItemString(P_globals,"chempy");
-  if(!P_chempy) ErrFatal("PyMOL","can't find 'chempy'");
+  if(!P_chempy) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'chempy'");
 
   PRunString("from chempy.bonds import bonds"); /* load bond dictionary */
 
   PRunString("from chempy import models"); 
   P_models = PyDict_GetItemString(P_globals,"models");
-  if(!P_models) ErrFatal("PyMOL","can't find 'chempy.models'");
+  if(!P_models) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'chempy.models'");
 
   PRunString("import util\n");  
   PRunString("import preset\n");  
@@ -1326,7 +1325,7 @@ void PFree(void)
 
 void PExit(int code)
 {
-  ExecutiveDelete("all");
+  ExecutiveDelete(TempPyMOLGlobals,"all");
   PBlock();
   MainFree();
 
@@ -1341,7 +1340,7 @@ void PExit(int code)
 
 void PParse(char *str) 
 {
-  OrthoCommandIn(str);
+  OrthoCommandIn(TempPyMOLGlobals,str);
 }
 
 void PDo(char *str) /* assumes we already hold the re-entrant API lock */
@@ -1361,7 +1360,7 @@ void PLog(char *str,int format)
   int blocked;
   PyObject *log;
   OrthoLineType buffer="";
-  mode = (int)SettingGet(cSetting_logging);
+  mode = (int)SettingGet(TempPyMOLGlobals,cSetting_logging);
   if(mode)
     {
       blocked = PAutoBlock();
@@ -1418,7 +1417,7 @@ void PLogFlush(void)
   int mode;
   PyObject *log;
   int blocked;
-  mode = (int)SettingGet(cSetting_logging);
+  mode = (int)SettingGet(TempPyMOLGlobals,cSetting_logging);
   if(mode)
     {
       blocked = PAutoBlock();
@@ -1434,15 +1433,15 @@ void PFlush(void) {
   /* NOTE: ASSUMES unblocked Python threads and a locked API */
   PyObject *err;
   char buffer[OrthoLineLength+1];
-  while(OrthoCommandOut(buffer)) {
+  while(OrthoCommandOut(TempPyMOLGlobals,buffer)) {
     PBlockAndUnlockAPI();
     PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
     err = PyErr_Occurred();
     if(err) {
       PyErr_Print();
-      PRINTFB(FB_Python,FB_Errors)
+      PRINTFB(TempPyMOLGlobals,FB_Python,FB_Errors)
         " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
-        ENDFB;
+        ENDFB(TempPyMOLGlobals);
     }
     PLockAPIAndUnblock();
   }
@@ -1452,8 +1451,8 @@ void PFlushFast(void) {
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */ 
   PyObject *err;
   char buffer[OrthoLineLength+1];
-  while(OrthoCommandOut(buffer)) {
-    PRINTFD(FB_Threads)
+  while(OrthoCommandOut(TempPyMOLGlobals,buffer)) {
+    PRINTFD(TempPyMOLGlobals,FB_Threads)
       " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n",buffer,
       PyThread_get_thread_ident()
       ENDFD;
@@ -1461,9 +1460,9 @@ void PFlushFast(void) {
     err = PyErr_Occurred();
     if(err) {
       PyErr_Print();
-      PRINTFB(FB_Python,FB_Errors)
+      PRINTFB(TempPyMOLGlobals,FB_Python,FB_Errors)
         " PFlushFast: Uncaught exception.  PyMOL may have a bug.\n"
-        ENDFB;
+        ENDFB(TempPyMOLGlobals);
     }
   }
 }
@@ -1473,7 +1472,7 @@ void PBlock(void)
 {
 
   if(!PAutoBlock()) {
-    ErrFatal("PBlock","Threading error detected.  Terminating...");
+    ErrFatal(TempPyMOLGlobals,"PBlock","Threading error detected.  Terminating...");
   }
 }
 
@@ -1486,7 +1485,7 @@ int PAutoBlock(void)
   /* synchronize python */
 
   id = PyThread_get_thread_ident();
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
 	 " PAutoBlock-DEBUG: search 0x%x (0x%x, 0x%x, 0x%x)\n",id,
 	 SavedThread[MAX_SAVED_THREAD-1].id,
 	 SavedThread[MAX_SAVED_THREAD-2].id,
@@ -1499,7 +1498,7 @@ int PAutoBlock(void)
        * though the ints are equal. Must be some kind of optimizer bug
        * or mis-assumption */
       
-      PRINTFD(FB_Threads)
+      PRINTFD(TempPyMOLGlobals,FB_Threads)
         " PAutoBlock-DEBUG: seeking global lock 0x%x\n",id
       ENDFD;
 
@@ -1507,25 +1506,25 @@ int PAutoBlock(void)
 
       PyEval_AcquireLock();
 
-      PRINTFD(FB_Threads)
+      PRINTFD(TempPyMOLGlobals,FB_Threads)
         " PAutoBlock-DEBUG: restoring 0x%x\n",id
       ENDFD;
       
       PyThreadState_Swap((SavedThread+a)->state);
 
 #else
-      PRINTFD(FB_Threads)
+      PRINTFD(TempPyMOLGlobals,FB_Threads)
         " PAutoBlock-DEBUG: restoring 0x%x\n",id
       ENDFD;
       
       PyEval_RestoreThread((SavedThread+a)->state);
 #endif
       
-      PRINTFD(FB_Threads)
+      PRINTFD(TempPyMOLGlobals,FB_Threads)
         " PAutoBlock-DEBUG: restored 0x%x\n",id
       ENDFD;
 
-      PRINTFD(FB_Threads)
+      PRINTFD(TempPyMOLGlobals,FB_Threads)
         " PAutoBlock-DEBUG: clearing 0x%x\n",id
       ENDFD;
 
@@ -1534,7 +1533,7 @@ int PAutoBlock(void)
       /* this is the only safe time we can change things */
       PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
       
-      PRINTFD(FB_Threads)
+      PRINTFD(TempPyMOLGlobals,FB_Threads)
         " PAutoBlock-DEBUG: blocked 0x%x (0x%x, 0x%x, 0x%x)\n",PyThread_get_thread_ident(),
         SavedThread[MAX_SAVED_THREAD-1].id,
         SavedThread[MAX_SAVED_THREAD-2].id,
@@ -1545,7 +1544,7 @@ int PAutoBlock(void)
     }
     a--;
   }
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     " PAutoBlock-DEBUG: 0x%x not found, thus already blocked.\n",PyThread_get_thread_ident()
     ENDFD;
   return 0;
@@ -1569,7 +1568,7 @@ void PUnblock(void)
   int a;
   /* NOTE: ASSUMES a locked API */
 
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     " PUnblock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
 
@@ -1586,7 +1585,7 @@ void PUnblock(void)
     }
     a--;
   }
-  PRINTFD(FB_Threads)
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
     " PUnblock-DEBUG: 0x%x stored in slot %d\n",(SavedThread+a)->id,a
     ENDFD;
   PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
@@ -1642,8 +1641,8 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
   char *str;
   PyArg_ParseTuple(args,"s",&str);
   if(str[0]) {
-    if(Feedback(FB_Python,FB_Output)) {
-      OrthoAddOutput(str);
+    if(Feedback(TempPyMOLGlobals,FB_Python,FB_Output)) {
+      OrthoAddOutput(TempPyMOLGlobals,str);
     }
   }
   Py_INCREF(Py_None);

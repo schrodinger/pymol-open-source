@@ -35,8 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"P.h"
 
-
-typedef struct {
+struct _CEditor {
   ObjectMolecule *Obj;
   WordType DragSeleName;
   int Active;
@@ -52,100 +51,102 @@ typedef struct {
   float V0[3],V1[3],Axis[3],Center[3],DragBase[3];
   float *PosVLA;
   int ShowFrags;
-}  CEditor;
+} ;
 
-CEditor Editor;
-
-static int EditorGetEffectiveState(ObjectMolecule *obj,int state)
+static int EditorGetEffectiveState(PyMOLGlobals *G,ObjectMolecule *obj,int state)
 {
-  if(!obj) obj = SelectorGetFastSingleObjectMolecule(SelectorIndexByName(cEditorSele1));
-  if(!obj) obj = SelectorGetFastSingleObjectMolecule(SelectorIndexByName(cEditorSele2));
-  if(!obj) obj = SelectorGetFastSingleObjectMolecule(SelectorIndexByName(cEditorSele3));
-  if(!obj) obj = SelectorGetFastSingleObjectMolecule(SelectorIndexByName(cEditorSele4));
+  if(!obj) obj = SelectorGetFastSingleObjectMolecule(G,
+                                                     SelectorIndexByName(G,cEditorSele1));
+  if(!obj) obj = SelectorGetFastSingleObjectMolecule(G,
+                                                     SelectorIndexByName(G,cEditorSele2));
+  if(!obj) obj = SelectorGetFastSingleObjectMolecule(G,
+                                                     SelectorIndexByName(G,cEditorSele3));
+  if(!obj) obj = SelectorGetFastSingleObjectMolecule(G,
+                                                     SelectorIndexByName(G,cEditorSele4));
 
   if(obj) {
     if((obj->NCSet==1)&&(state>0))
-      if(SettingGet_i(NULL,obj->Obj.Setting,cSetting_static_singletons))
+      if(SettingGet_i(G,NULL,obj->Obj.Setting,cSetting_static_singletons))
         return 0;
   }
   return state;
 }
 
-int EditorGetNFrag(void)
+int EditorGetNFrag(PyMOLGlobals *G)
 {
-  CEditor *I = &Editor;
-  if(EditorActive()) {
+  register CEditor *I = G->Editor;
+  if(EditorActive(G)) {
     return I->NFrag;
   }
   return 0;
 }
 
-void EditorDefineExtraPks(void)
+void EditorDefineExtraPks(PyMOLGlobals *G)
 {
   WordType name;
   WordType buffer;
 
-  if(EditorGetSinglePicked(name)) {
+  if(EditorGetSinglePicked(G,name)) {
     sprintf(buffer,"(byres %s)",name);
-    SelectorCreate(cEditorRes,buffer,NULL,true,NULL);
+    SelectorCreate(G,cEditorRes,buffer,NULL,true,NULL);
     sprintf(buffer,"(bychain %s)",name);
-    SelectorCreate(cEditorChain,buffer,NULL,true,NULL);
+    SelectorCreate(G,cEditorChain,buffer,NULL,true,NULL);
     sprintf(buffer,"(byobject %s)",name);
-    SelectorCreate(cEditorObject,buffer,NULL,true,NULL);
+    SelectorCreate(G,cEditorObject,buffer,NULL,true,NULL);
     
-    if(SettingGet(cSetting_auto_hide_selections))
-      ExecutiveHideSelections();
+    if(SettingGet(G,cSetting_auto_hide_selections))
+      ExecutiveHideSelections(G);
   }
 }
 
-int EditorDeselectIfSelected(ObjectMolecule *obj,int index,int update)
+int EditorDeselectIfSelected(PyMOLGlobals *G,ObjectMolecule *obj,int index,int update)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   int result = false;
   int s,sele;
   if(obj) {
     if((index>=0)&&(index<obj->NAtom)) {
       s=obj->AtomInfo[index].selEntry;                  
-      sele = SelectorIndexByName(cEditorSele1);
-      if(SelectorIsMember(s,sele)) {
-        ExecutiveDelete(cEditorSele1);
+      sele = SelectorIndexByName(G,cEditorSele1);
+      if(SelectorIsMember(G,s,sele)) {
+        ExecutiveDelete(G,cEditorSele1);
         result = true;
       }
-      sele = SelectorIndexByName(cEditorSele2);
-      if(SelectorIsMember(s,sele)) {
-        ExecutiveDelete(cEditorSele2);
+      sele = SelectorIndexByName(G,cEditorSele2);
+      if(SelectorIsMember(G,s,sele)) {
+        ExecutiveDelete(G,cEditorSele2);
         result = true;
       }
-      sele = SelectorIndexByName(cEditorSele3);
-      if(SelectorIsMember(s,sele)) {
-        ExecutiveDelete(cEditorSele3);
+      sele = SelectorIndexByName(G,cEditorSele3);
+      if(SelectorIsMember(G,s,sele)) {
+        ExecutiveDelete(G,cEditorSele3);
         result = true;
       }
-      sele = SelectorIndexByName(cEditorSele4);
-      if(SelectorIsMember(s,sele)) {
-        ExecutiveDelete(cEditorSele4);
+      sele = SelectorIndexByName(G,cEditorSele4);
+      if(SelectorIsMember(G,s,sele)) {
+        ExecutiveDelete(G,cEditorSele4);
         result = true;
       }
       if(result&&update)
-        EditorActivate(I->ActiveState,I->BondMode);
+        EditorActivate(G,I->ActiveState,I->BondMode);
     }
   }
   
   return result;
 }
 
-int EditorIsBondMode(void)
+int EditorIsBondMode(PyMOLGlobals *G)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   return(I->BondMode);
 }
 
-PyObject *EditorAsPyList(void)
+PyObject *EditorAsPyList(PyMOLGlobals *G)
 {
   PyObject *result = NULL;
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
 
-  if(!EditorActive()) {
+  if(!EditorActive(G)) {
     result = PyList_New(0); /* not editing? return null list */
   } else {
     result = PyList_New(3);
@@ -156,7 +157,7 @@ PyObject *EditorAsPyList(void)
   return(PConvAutoNone(result));
 }
 
-int EditorFromPyList(PyObject *list)
+int EditorFromPyList(PyMOLGlobals *G,PyObject *list)
 {
   int ok=true;
   int active_flag = false;
@@ -172,82 +173,82 @@ int EditorFromPyList(PyObject *list)
    Always check ll when adding new PyList_GetItem's */
   if(ok) active_flag=(PyList_Size(list)!=0);
   if(!active_flag) {
-    EditorInactivate();
+    EditorInactivate(G);
   } else {
     if(ok) ok=PConvPyStrToStr(PyList_GetItem(list,0),obj_name,sizeof(WordType));
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&active_state);
     if(ok&&(ll>2)) ok=PConvPyIntToInt(PyList_GetItem(list,2),&bond_mode); /* newer session files */
     if(ok) {
-      EditorActivate(active_state,bond_mode);
-      EditorDefineExtraPks();
+      EditorActivate(G,active_state,bond_mode);
+      EditorDefineExtraPks(G);
     } else {
-      EditorInactivate();
+      EditorInactivate(G);
     }
   }
   if(!ok) {
-    EditorInactivate();
+    EditorInactivate(G);
   }
   return(ok);
 }
 
-int EditorActive(void) {
-  CEditor *I = &Editor;
+int EditorActive(PyMOLGlobals *G) {
+  register CEditor *I = G->Editor;
   return(I->Active);
 }
 
-ObjectMolecule *EditorDragObject(void)
+ObjectMolecule *EditorDragObject(PyMOLGlobals *G)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   return(I->DragObject);
 }
 static void subdivide( int n, float *x, float *y);
 
-int EditorGetSinglePicked(char *name)
+int EditorGetSinglePicked(PyMOLGlobals *G,char *name)
 {
   int cnt = 0;
   int sele;
-  if((sele = SelectorIndexByName(cEditorSele1))>=0) {
+  if((sele = SelectorIndexByName(G,cEditorSele1))>=0) {
     cnt++;
     if(name) strcpy(name,cEditorSele1);
   }
-  if((sele = SelectorIndexByName(cEditorSele2))>=0) {
+  if((sele = SelectorIndexByName(G,cEditorSele2))>=0) {
     cnt++;
     if(name) strcpy(name,cEditorSele2);
   }
-  if((sele = SelectorIndexByName(cEditorSele3))>=0) {
+  if((sele = SelectorIndexByName(G,cEditorSele3))>=0) {
     cnt++;
     if(name) strcpy(name,cEditorSele3);
   }
-  if((sele = SelectorIndexByName(cEditorSele4))>=0) {
+  if((sele = SelectorIndexByName(G,cEditorSele4))>=0) {
     cnt++;
     if(name) strcpy(name,cEditorSele4);
   }
   return (cnt==1);
 }
 
-void EditorGetNextMultiatom(char *name)
+void EditorGetNextMultiatom(PyMOLGlobals *G,char *name)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   int sele;
-  sele = SelectorIndexByName(cEditorSele1);
+  sele = SelectorIndexByName(G,cEditorSele1);
   if(sele<0) {
     strcpy(name,cEditorSele1);
     I->NextPickSele=0;
     return;
   }
-  sele = SelectorIndexByName(cEditorSele2);
+  sele = SelectorIndexByName(G,cEditorSele2);
   if(sele<0) {
     strcpy(name,cEditorSele2);
     I->NextPickSele=1;
     return;
   }
-  sele = SelectorIndexByName(cEditorSele3);
+  sele = SelectorIndexByName(G,cEditorSele3);
   if(sele<0) {
     strcpy(name,cEditorSele3);
     I->NextPickSele=2;
     return;
   }
-  sele = SelectorIndexByName(cEditorSele4);
+  sele = SelectorIndexByName(G,cEditorSele4);
   if(sele<0) {
     strcpy(name,cEditorSele4);
     I->NextPickSele=3;
@@ -269,30 +270,30 @@ void EditorGetNextMultiatom(char *name)
 }
 
 /*========================================================================*/
-int EditorLogState(int pkresi)
+int EditorLogState(PyMOLGlobals *G,int pkresi)
 {
-  CEditor *I = &Editor;
-  if(SettingGet(cSetting_logging)) {
+  register CEditor *I = G->Editor;
+  if(SettingGet(G,cSetting_logging)) {
 
     OrthoLineType buffer,buf1="None",buf2="None",buf3="None",buf4="None";
     int pkbond = 1;
     
-    if(!EditorActive()) {
+    if(!EditorActive(G)) {
       PLog("edit",cPLog_pml);
     } else {
       int sele1,sele2,sele3,sele4;
       ObjectMolecule *obj1=NULL,*obj2=NULL,*obj3=NULL,*obj4=NULL;
       int index1,index2,index3,index4;
       
-      sele1 = SelectorIndexByName(cEditorSele1);
-      sele2 = SelectorIndexByName(cEditorSele2);
-      sele3 = SelectorIndexByName(cEditorSele3);
-      sele4 = SelectorIndexByName(cEditorSele4);
+      sele1 = SelectorIndexByName(G,cEditorSele1);
+      sele2 = SelectorIndexByName(G,cEditorSele2);
+      sele3 = SelectorIndexByName(G,cEditorSele3);
+      sele4 = SelectorIndexByName(G,cEditorSele4);
 
-      obj1 = SelectorGetFastSingleAtomObjectIndex(sele1,&index1);
-      obj2 = SelectorGetFastSingleAtomObjectIndex(sele2,&index2);
-      obj3 = SelectorGetFastSingleAtomObjectIndex(sele3,&index3);
-      obj4 = SelectorGetFastSingleAtomObjectIndex(sele4,&index4);
+      obj1 = SelectorGetFastSingleAtomObjectIndex(G,sele1,&index1);
+      obj2 = SelectorGetFastSingleAtomObjectIndex(G,sele2,&index2);
+      obj3 = SelectorGetFastSingleAtomObjectIndex(G,sele3,&index3);
+      obj4 = SelectorGetFastSingleAtomObjectIndex(G,sele4,&index4);
 
       if((sele1>=0) && (sele2>=0) && I->BondMode && obj1 && obj2) {
 
@@ -333,9 +334,9 @@ int EditorLogState(int pkresi)
 }
 /*========================================================================*/
 
-int EditorInvert(int quiet)
+int EditorInvert(PyMOLGlobals *G,int quiet)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   int sele0,sele1,sele2;
   int i0,frg;
   int ia0=-1;
@@ -350,26 +351,26 @@ int EditorInvert(int quiet)
   WordType name;
   ObjectMolecule *obj0,*obj1,*obj2;
 
-  if(!EditorActive()) {
-    ErrMessage("Editor","Must pick an atom to invert.");
+  if(!EditorActive(G)) {
+    ErrMessage(G,"Editor","Must pick an atom to invert.");
   } else {
-    sele0 = SelectorIndexByName(cEditorSele1);
-    sele1 = SelectorIndexByName(cEditorSele2);
-    sele2 = SelectorIndexByName(cEditorSele3);
-    obj0 = SelectorGetFastSingleAtomObjectIndex(sele0,&i0);
-    obj1 = SelectorGetFastSingleAtomObjectIndex(sele1,&ia0);
-    obj2 = SelectorGetFastSingleAtomObjectIndex(sele2,&ia1);
+    sele0 = SelectorIndexByName(G,cEditorSele1);
+    sele1 = SelectorIndexByName(G,cEditorSele2);
+    sele2 = SelectorIndexByName(G,cEditorSele3);
+    obj0 = SelectorGetFastSingleAtomObjectIndex(G,sele0,&i0);
+    obj1 = SelectorGetFastSingleAtomObjectIndex(G,sele1,&ia0);
+    obj2 = SelectorGetFastSingleAtomObjectIndex(G,sele2,&ia1);
     if(sele0<0) {
-      ErrMessage("Editor","Must pick atom to invert as pk1.");        
+      ErrMessage(G,"Editor","Must pick atom to invert as pk1.");        
     } else if(sele1<0) {
-      ErrMessage("Editor","Must pick immobile atom in pk2.");
+      ErrMessage(G,"Editor","Must pick immobile atom in pk2.");
     } else if(sele2<0) {
-      ErrMessage("Editor","Must pick immobile atom in pk3.");
+      ErrMessage(G,"Editor","Must pick immobile atom in pk3.");
     } else if(!(obj0&&(obj0==obj1)&&(obj0=obj2))) {
-      ErrMessage("Editor","Must pick three atoms in the same object.");
+      ErrMessage(G,"Editor","Must pick three atoms in the same object.");
     } else {
 
-        state = SceneGetState();                
+        state = SceneGetState(G);                
         ObjectMoleculeSaveUndo(obj0,state,false);
         
         vf  = ObjectMoleculeGetAtomVertex(obj0,state,i0,v);
@@ -395,7 +396,7 @@ int EditorInvert(int quiet)
           
           for(frg=1;frg<=I->NFrag;frg++) {
             sprintf(name,"%s%1d",cEditorFragPref,frg);
-            sele2=SelectorIndexByName(name);
+            sele2=SelectorIndexByName(G,name);
             
             if(ObjectMoleculeDoesAtomNeighborSele(obj0,i0,sele2) &&
                (!ObjectMoleculeDoesAtomNeighborSele(obj0,ia0,sele2)) &&
@@ -406,17 +407,17 @@ int EditorInvert(int quiet)
           }
           if(found) {
             if(!quiet) {
-              PRINTFB(FB_Editor,FB_Actions) 
+              PRINTFB(G,FB_Editor,FB_Actions) 
                 " Editor: Inverted atom.\n"
-                ENDFB;
+                ENDFB(G);
             }
           } else {
-            PRINTFB(FB_Editor,FB_Errors) 
+            PRINTFB(G,FB_Editor,FB_Errors) 
               " Editor-Error: No free fragments found for inversion.\n"
-              ENDFB;
+              ENDFB(G);
           }
 
-          SceneDirty();
+          SceneDirty(G);
           I->DragIndex=-1;
           I->DragSelection=-1;
           I->DragObject=NULL;
@@ -426,9 +427,9 @@ int EditorInvert(int quiet)
   return(ok);
 }
 /*========================================================================*/
-int EditorTorsion(float angle)
+int EditorTorsion(PyMOLGlobals *G,float angle)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   int sele0,sele1,sele2;
   int i0,i1;
   float v0[3],v1[3];
@@ -441,29 +442,29 @@ int EditorTorsion(float angle)
   WordType sele;
   ObjectMolecule *obj0=NULL,*obj1=NULL,*obj2=NULL;
 
-  if(!EditorActive()) { 
-    ErrMessage("Editor","Must specify a bond first.");
+  if(!EditorActive(G)) { 
+    ErrMessage(G,"Editor","Must specify a bond first.");
   } else {
-    sele0 = SelectorIndexByName(cEditorSele1);
+    sele0 = SelectorIndexByName(G,cEditorSele1);
     if(sele0>=0) {
-      obj0 = SelectorGetFastSingleAtomObjectIndex(sele0,&i0);
-      sele1 = SelectorIndexByName(cEditorSele2);
-      obj1 = SelectorGetFastSingleAtomObjectIndex(sele1,&i1);
+      obj0 = SelectorGetFastSingleAtomObjectIndex(G,sele0,&i0);
+      sele1 = SelectorIndexByName(G,cEditorSele2);
+      obj1 = SelectorGetFastSingleAtomObjectIndex(G,sele1,&i1);
       strcpy(sele,cEditorFragPref);
       strcat(sele,"1");
-      sele2 = SelectorIndexByName(sele);
-      obj2 = SelectorGetFastSingleObjectMolecule(sele2);
+      sele2 = SelectorIndexByName(G,sele);
+      obj2 = SelectorGetFastSingleObjectMolecule(G,sele2);
       if(!((sele0>=0)&&(sele1>=0)&&(sele2>=0)&&(obj0==obj1))) {
-        ErrMessage("Editor","Must specify a bond first.");
+        ErrMessage(G,"Editor","Must specify a bond first.");
       } else {
         if((i0>=0)&&(i1>=0)) {
-          state = SceneGetState();
+          state = SceneGetState(G);
           
           vf1 = ObjectMoleculeGetAtomVertex(obj0,state,i0,I->V0);
           vf2 = ObjectMoleculeGetAtomVertex(obj1,state,i1,I->V1);
           
           if(vf1&&vf2) {
-            ObjectMoleculeSaveUndo(obj0,SceneGetState(),false);
+            ObjectMoleculeSaveUndo(obj0,SceneGetState(G),false);
             
             subtract3f(I->V1,I->V0,I->Axis);
             average3f(I->V1,I->V0,I->Center);
@@ -485,7 +486,7 @@ int EditorTorsion(float angle)
             m[13] =  v1[1];
             m[14] =  v1[2];
             ok = ObjectMoleculeTransformSelection(obj2,state,sele2,m,false,NULL);
-            SceneDirty();
+            SceneDirty(G);
             
             I->DragIndex=-1;
             I->DragSelection=-1;
@@ -499,7 +500,7 @@ int EditorTorsion(float angle)
 }
 
 /*========================================================================*/
-int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int quiet)
+int EditorSelect(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int quiet)
 {
   int i0=-1;
   int i1=-1;
@@ -524,27 +525,27 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int q
       s3=NULL;
 
   if(s0) {
-    sele0 = SelectorIndexByName(s0);
-    obj0 = SelectorGetFastSingleAtomObjectIndex(sele0,&i0);
-    ExecutiveDelete(cEditorSele1);
+    sele0 = SelectorIndexByName(G,s0);
+    obj0 = SelectorGetFastSingleAtomObjectIndex(G,sele0,&i0);
+    ExecutiveDelete(G,cEditorSele1);
   }
  
   if(s1) {
-    sele1 = SelectorIndexByName(s1);
-    obj1 = SelectorGetFastSingleAtomObjectIndex(sele1,&i1);
-    ExecutiveDelete(cEditorSele2);
+    sele1 = SelectorIndexByName(G,s1);
+    obj1 = SelectorGetFastSingleAtomObjectIndex(G,sele1,&i1);
+    ExecutiveDelete(G,cEditorSele2);
   }
 
   if(s2) {
-    sele2 = SelectorIndexByName(s2);
-    obj2 = SelectorGetFastSingleAtomObjectIndex(sele2,&i2);
-    ExecutiveDelete(cEditorSele3);
+    sele2 = SelectorIndexByName(G,s2);
+    obj2 = SelectorGetFastSingleAtomObjectIndex(G,sele2,&i2);
+    ExecutiveDelete(G,cEditorSele3);
   }
 
   if(s3) {
-    sele3 = SelectorIndexByName(s3);
-    obj3 = SelectorGetFastSingleAtomObjectIndex(sele3,&i3);
-    ExecutiveDelete(cEditorSele4);
+    sele3 = SelectorIndexByName(G,s3);
+    obj3 = SelectorGetFastSingleAtomObjectIndex(G,sele3,&i3);
+    ExecutiveDelete(G,cEditorSele4);
   }
 
   if(!(obj0||obj1||obj2||obj3)) 
@@ -560,22 +561,23 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int q
     if(obj3&&(obj3!=obj0)&&(obj3!=obj1)&&(obj3!=obj2))
       ObjectMoleculeVerifyChemistry(obj3);  
 
-    if(i0>=0) SelectorCreate(cEditorSele1,s0,NULL,quiet,NULL);
-    if(i1>=0) SelectorCreate(cEditorSele2,s1,NULL,quiet,NULL);
-    if(i2>=0) SelectorCreate(cEditorSele3,s2,NULL,quiet,NULL);
-    if(i3>=0) SelectorCreate(cEditorSele4,s3,NULL,quiet,NULL);
+    if(i0>=0) SelectorCreate(G,cEditorSele1,s0,NULL,quiet,NULL);
+    if(i1>=0) SelectorCreate(G,cEditorSele2,s1,NULL,quiet,NULL);
+    if(i2>=0) SelectorCreate(G,cEditorSele3,s2,NULL,quiet,NULL);
+    if(i3>=0) SelectorCreate(G,cEditorSele4,s3,NULL,quiet,NULL);
     
-    EditorActivate(SceneGetState(),pkbond);        
+    EditorActivate(G,
+                   SceneGetState(G),pkbond);        
     
     if(pkresi)
-      EditorDefineExtraPks();
+      EditorDefineExtraPks(G);
     
-    SceneDirty();
+    SceneDirty(G);
     result=true;
 
   } else {
-    EditorInactivate();
-    ErrMessage("Editor","Invalid input.");    
+    EditorInactivate(G);
+    ErrMessage(G,"Editor","Invalid input.");    
   }
   return(result);
 }
@@ -592,35 +594,39 @@ static void subdivide( int n, float *x, float *y)
 }
 
 /*========================================================================*/
-int EditorIsAnActiveObject(ObjectMolecule *obj) {
-  if(EditorActive()) {
+int EditorIsAnActiveObject(PyMOLGlobals *G,ObjectMolecule *obj) {
+  if(EditorActive(G)) {
     if(obj) {
-      if(obj == SelectorGetFastSingleObjectMolecule(SelectorIndexByName(cEditorSele1)))
+      if(obj == SelectorGetFastSingleObjectMolecule(G,
+                                                    SelectorIndexByName(G,cEditorSele1)))
         return true;
-      if(obj == SelectorGetFastSingleObjectMolecule(SelectorIndexByName(cEditorSele2)))
+      if(obj == SelectorGetFastSingleObjectMolecule(G,
+                                                    SelectorIndexByName(G,cEditorSele2)))
         return true;
-      if(obj == SelectorGetFastSingleObjectMolecule(SelectorIndexByName(cEditorSele3)))
+      if(obj == SelectorGetFastSingleObjectMolecule(G,
+                                                    SelectorIndexByName(G,cEditorSele3)))
         return true;
-      if(obj == SelectorGetFastSingleObjectMolecule(SelectorIndexByName(cEditorSele4)))
+      if(obj == SelectorGetFastSingleObjectMolecule(G,
+                                                    SelectorIndexByName(G,cEditorSele4)))
         return true;
     }
   }
   return false;
 }
 /*========================================================================*/
-void EditorCycleValence(int quiet)
+void EditorCycleValence(PyMOLGlobals *G,int quiet)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   int sele0,sele1;
 
-  if(EditorActive()) {
+  if(EditorActive(G)) {
     ObjectMolecule *obj0,*obj1;
-    sele0 = SelectorIndexByName(cEditorSele1);
+    sele0 = SelectorIndexByName(G,cEditorSele1);
     if(sele0>=0) {
-      sele1 = SelectorIndexByName(cEditorSele2);
+      sele1 = SelectorIndexByName(G,cEditorSele2);
       if(sele1>=0) {
-        obj0 = SelectorGetFastSingleObjectMolecule(sele0);
-        obj1 = SelectorGetFastSingleObjectMolecule(sele1);
+        obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);
+        obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);
         if((obj0==obj1)&&I->BondMode) {
           ObjectMoleculeVerifyChemistry(obj0);
           ObjectMoleculeAdjustBonds(obj0,sele0,sele1,0,0);
@@ -631,7 +637,7 @@ void EditorCycleValence(int quiet)
 }
 
 /*========================================================================*/
-void EditorAttach(char *elem,int geom,int valence,
+void EditorAttach(PyMOLGlobals *G,char *elem,int geom,int valence,
                   char *name,int quiet)
 {
   int i0;
@@ -641,21 +647,21 @@ void EditorAttach(char *elem,int geom,int valence,
   ObjectMolecule *obj0=NULL,*obj1=NULL;
 
   ai=(AtomInfoType*)VLAMalloc(1,sizeof(AtomInfoType),1,true);
-  if(EditorActive()) {
+  if(EditorActive(G)) {
 
-    sele0 = SelectorIndexByName(cEditorSele1);
+    sele0 = SelectorIndexByName(G,cEditorSele1);
     if(sele0>=0) {
-      sele1 = SelectorIndexByName(cEditorSele2);
-      obj0 = SelectorGetFastSingleObjectMolecule(sele0);
-      obj1 = SelectorGetFastSingleObjectMolecule(sele1);
+      sele1 = SelectorIndexByName(G,cEditorSele2);
+      obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);
+      obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);
 
       if(obj0) {
         ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
-        state = SceneGetState();
+        state = SceneGetState(G);
         if(obj1) {
           if(obj0==obj1) {
             /* bond mode - behave like replace */
-            EditorReplace(elem,geom,valence,name,quiet);
+            EditorReplace(G,elem,geom,valence,name,quiet);
           }
         } else {
           /* atom mode */
@@ -676,7 +682,7 @@ void EditorAttach(char *elem,int geom,int valence,
   VLAFreeP(ai); /* safety */
 }
 /*========================================================================*/
-void EditorRemove(int hydrogen,int quiet)
+void EditorRemove(PyMOLGlobals *G,int hydrogen,int quiet)
 {
   int sele0,sele1;
   int i0;
@@ -686,35 +692,35 @@ void EditorRemove(int hydrogen,int quiet)
 
 #define cEditorRemoveSele "_EditorRemove"
 
-  if(EditorActive()) {
-    sele0 = SelectorIndexByName(cEditorSele1);
-    obj0 = SelectorGetFastSingleObjectMolecule(sele0);
+  if(EditorActive(G)) {
+    sele0 = SelectorIndexByName(G,cEditorSele1);
+    obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);
     ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
     if((sele0>=0)&&obj0) {
-      sele1 = SelectorIndexByName(cEditorSele2);
-      obj1 = SelectorGetFastSingleObjectMolecule(sele1);
+      sele1 = SelectorIndexByName(G,cEditorSele2);
+      obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);
       if((sele1>=0)&&(obj0==obj1)) {
         /* bond mode */
         ObjectMoleculeRemoveBonds(obj0,sele0,sele1);
-        EditorInactivate();
+        EditorInactivate(G);
       } else {
 
         if(hydrogen) {
           sprintf(buf,"((neighbor %s) and hydro)",cEditorSele1);          
-          h_flag = SelectorCreate(cEditorRemoveSele,buf,NULL,false,NULL);
+          h_flag = SelectorCreate(G,cEditorRemoveSele,buf,NULL,false,NULL);
         }
 
-        if(SelectorGetFastSingleAtomObjectIndex(sele0,&i0)) {
+        if(SelectorGetFastSingleAtomObjectIndex(G,sele0,&i0)) {
           /* atom mode */
           if(i0>=0) {
-            ExecutiveRemoveAtoms(cEditorSele1,quiet);
-            EditorInactivate();
+            ExecutiveRemoveAtoms(G,cEditorSele1,quiet);
+            EditorInactivate(G);
           }
         }
 
         if(h_flag) {
-          ExecutiveRemoveAtoms(cEditorRemoveSele,quiet);
-          SelectorDelete(cEditorRemoveSele);
+          ExecutiveRemoveAtoms(G,cEditorRemoveSele,quiet);
+          SelectorDelete(G,cEditorRemoveSele);
         }
 
       }
@@ -723,19 +729,19 @@ void EditorRemove(int hydrogen,int quiet)
 #undef cEditorRemoveSele
 }
 /*========================================================================*/
-void EditorHFill(int quiet)
+void EditorHFill(PyMOLGlobals *G,int quiet)
 {
   int sele0,sele1;
   int i0;
   OrthoLineType buffer,s1;
   ObjectMolecule *obj0=NULL,*obj1=NULL;
 
-  if(EditorActive()) {
-    sele0 = SelectorIndexByName(cEditorSele1);
-    obj0 = SelectorGetFastSingleObjectMolecule(sele0);    
+  if(EditorActive(G)) {
+    sele0 = SelectorIndexByName(G,cEditorSele1);
+    obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);    
     ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
     if(sele0>=0) {
-      sele1 = SelectorIndexByName(cEditorSele2);
+      sele1 = SelectorIndexByName(G,cEditorSele2);
       if(sele0>=0) {
         if(sele1>=0) 
           sprintf(buffer,"((neighbor %s) and (elem h) and not %s)",
@@ -743,35 +749,35 @@ void EditorHFill(int quiet)
         else 
           sprintf(buffer,"((neighbor %s) and (elem h))",
                   cEditorSele1);
-        SelectorGetTmp(buffer,s1);
-        ExecutiveRemoveAtoms(s1,quiet);
-        SelectorFreeTmp(s1);
+        SelectorGetTmp(G,buffer,s1);
+        ExecutiveRemoveAtoms(G,s1,quiet);
+        SelectorFreeTmp(G,s1);
         i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); 
         obj0->AtomInfo[i0].chemFlag=false;
-        ExecutiveAddHydrogens(cEditorSele1,quiet);
+        ExecutiveAddHydrogens(G,cEditorSele1,quiet);
       }
       
       if(sele1>=0) {
-        obj1 = SelectorGetFastSingleObjectMolecule(sele1);    
+        obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);    
         if(sele0>=0) 
           sprintf(buffer,"((neighbor %s) and (elem h) and not %s)",
                   cEditorSele2,cEditorSele1);
         else 
           sprintf(buffer,"((neighbor %s) and (elem h))",
                   cEditorSele2);
-        SelectorGetTmp(buffer,s1);
-        ExecutiveRemoveAtoms(s1,quiet);
-        SelectorFreeTmp(s1);
+        SelectorGetTmp(G,buffer,s1);
+        ExecutiveRemoveAtoms(G,s1,quiet);
+        SelectorFreeTmp(G,s1);
         i0 = ObjectMoleculeGetAtomIndex(obj1,sele1); 
         obj1->AtomInfo[i0].chemFlag=false;
-        ExecutiveAddHydrogens(cEditorSele2,quiet);
+        ExecutiveAddHydrogens(G,cEditorSele2,quiet);
       }
     }
   }
   
 }
 /*========================================================================*/
-void EditorReplace(char *elem,int geom,int valence,char *name,int quiet)
+void EditorReplace(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,int quiet)
 {
   int i0;
   int sele0;
@@ -780,12 +786,12 @@ void EditorReplace(char *elem,int geom,int valence,char *name,int quiet)
   ObjectMolecule *obj0=NULL;
 
   UtilZeroMem(&ai,sizeof(AtomInfoType));
-  if(EditorActive()) {
-    sele0 = SelectorIndexByName(cEditorSele1);
-    obj0 = SelectorGetFastSingleObjectMolecule(sele0);    
+  if(EditorActive(G)) {
+    sele0 = SelectorIndexByName(G,cEditorSele1);
+    obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);    
     ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
 
-    state = SceneGetState();
+    state = SceneGetState(G);
 
     if(sele0>=0) {
       i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); /* slow */
@@ -802,13 +808,13 @@ void EditorReplace(char *elem,int geom,int valence,char *name,int quiet)
         ObjectMoleculeFillOpenValences(obj0,i0);
         ObjectMoleculeSort(obj0);
         ObjectMoleculeUpdateIDNumbers(obj0);
-        EditorInactivate();
+        EditorInactivate(G);
       }
     }
   }
 }
 
-static void draw_bond(float *v0,float *v1)
+static void draw_bond(PyMOLGlobals *G,float *v0,float *v1)
 {
   
   float v[3],v2[3],v3[3];
@@ -819,7 +825,7 @@ static void draw_bond(float *v0,float *v1)
   float tube_size1=0.5F;
   float tube_size3=0.45F;
 
-  nEdge = (int)SettingGet(cSetting_stick_quality)*2;
+  nEdge = (int)SettingGet(G,cSetting_stick_quality)*2;
   if(nEdge>50)
     nEdge=50;
   
@@ -833,7 +839,7 @@ static void draw_bond(float *v0,float *v1)
   copy3f(d0,n0);
   get_system1f3f(n0,n1,n2);
   
-  glColor3fv(ColorGet(0));
+  glColor3fv(ColorGet(G,0));
   glBegin(GL_TRIANGLE_STRIP);
   for(a=0;a<=nEdge;a++) {
     c=a % nEdge;
@@ -889,8 +895,8 @@ static void draw_bond(float *v0,float *v1)
 #if 0
 static void draw_dist(float *v0,float *v1)
 {
-  SceneResetNormal(true);
-  glLineWidth(SettingGet(cSetting_line_width)*2);
+  SceneResetNormal(G,true);
+  glLineWidth(SettingGet(G,cSetting_line_width)*2);
   glBegin(GL_LINES);
   glVertex3fv(v0);
   glVertex3fv(v1);
@@ -899,7 +905,7 @@ static void draw_dist(float *v0,float *v1)
 
 static void draw_arc(float *v0,float *v1,float *v2) 
 {
-  int nEdge = (int)SettingGet(cSetting_stick_quality)/2;
+  int nEdge = (int)SettingGet(G,cSetting_stick_quality)/2;
   if(nEdge>20)
     nEdge=20;
   if(nEdge<3)
@@ -913,8 +919,8 @@ static void draw_arc(float *v0,float *v1,float *v2)
 		y[a]=(float)sin(a*2*PI/n);
 	 }
   */
-  SceneResetNormal(true);
-  glLineWidth(SettingGet(cSetting_line_width)*2);
+  SceneResetNormal(G,true);
+  glLineWidth(SettingGet(G,cSetting_line_width)*2);
   glBegin(GL_LINE_STRIP);
   glVertex3fv(v0);
   glVertex3fv(v1);
@@ -925,7 +931,7 @@ static void draw_arc(float *v0,float *v1,float *v2)
 
 static void draw_torsion(float *v0,float *v1,float *v2,float *v3) 
 {
-  int nEdge = (int)SettingGet(cSetting_stick_quality)/2;
+  int nEdge = (int)SettingGet(G,cSetting_stick_quality)/2;
   if(nEdge>20)
     nEdge=20;
   if(nEdge<3)
@@ -939,8 +945,8 @@ static void draw_torsion(float *v0,float *v1,float *v2,float *v3)
 		y[a]=(float)sin(a*2*PI/n);
 	 }
   */
-  SceneResetNormal(true);
-  glLineWidth(SettingGet(cSetting_line_width)*2);
+  SceneResetNormal(G,true);
+  glLineWidth(SettingGet(G,cSetting_line_width)*2);
   glBegin(GL_LINE_STRIP);
   glVertex3fv(v0);
   glVertex3fv(v1);
@@ -951,7 +957,7 @@ static void draw_torsion(float *v0,float *v1,float *v2,float *v3)
 }
 #endif
 
-static void draw_globe(float *v2,int number)
+static void draw_globe(PyMOLGlobals *G,float *v2,int number)
 {
   float v[3];
   float n0[3],n1[3],n2[3];
@@ -964,7 +970,7 @@ static void draw_globe(float *v2,int number)
   float offset = 0.0F;
   int cycle_counter;
 
-  nEdge = (int)SettingGet(cSetting_stick_quality)*2;
+  nEdge = (int)SettingGet(G,cSetting_stick_quality)*2;
   if(nEdge>50)
     nEdge=50;
   
@@ -975,7 +981,7 @@ static void draw_globe(float *v2,int number)
   n0[2]=0.0;
   get_system1f3f(n0,n1,n2);
   
-  glColor3fv(ColorGet(0));
+  glColor3fv(ColorGet(G,0));
 
   cycle_counter = number;
   while(cycle_counter) {
@@ -1111,9 +1117,9 @@ static void draw_string(float *v,char *l)
 */
 
 /*========================================================================*/
-void EditorRender(int state)
+void EditorRender(PyMOLGlobals *G,int state)
 {
-  CEditor *I=&Editor;
+  register CEditor *I=G->Editor;
   int sele1,sele2,sele3,sele4;
   float v0[3],v1[3];
   float vp[12],*vv;
@@ -1121,23 +1127,23 @@ void EditorRender(int state)
   ObjectMolecule *obj1=NULL,*obj2=NULL,*obj3=NULL,*obj4=NULL;
   int index1,index2,index3,index4;
   
-  if(EditorActive()) {
+  if(EditorActive(G)) {
 
-    PRINTFD(FB_Editor)
+    PRINTFD(G,FB_Editor)
       " EditorRender-Debug: rendering...\n"
       ENDFD;
 
     if(PMGUI) {
       
-      sele1 = SelectorIndexByName(cEditorSele1);
-      sele2 = SelectorIndexByName(cEditorSele2);
-      sele3 = SelectorIndexByName(cEditorSele3);
-      sele4 = SelectorIndexByName(cEditorSele4);
+      sele1 = SelectorIndexByName(G,cEditorSele1);
+      sele2 = SelectorIndexByName(G,cEditorSele2);
+      sele3 = SelectorIndexByName(G,cEditorSele3);
+      sele4 = SelectorIndexByName(G,cEditorSele4);
 
-      obj1 = SelectorGetFastSingleAtomObjectIndex(sele1,&index1);
-      obj2 = SelectorGetFastSingleAtomObjectIndex(sele2,&index2);
-      obj3 = SelectorGetFastSingleAtomObjectIndex(sele3,&index3);
-      obj4 = SelectorGetFastSingleAtomObjectIndex(sele4,&index4);
+      obj1 = SelectorGetFastSingleAtomObjectIndex(G,sele1,&index1);
+      obj2 = SelectorGetFastSingleAtomObjectIndex(G,sele2,&index2);
+      obj3 = SelectorGetFastSingleAtomObjectIndex(G,sele3,&index3);
+      obj4 = SelectorGetFastSingleAtomObjectIndex(G,sele4,&index4);
 
       /*      printf("%d %d %d %d\n",sele1,sele2,sele3,sele4);
       printf("%p %p %p %p\n",obj1,obj2,obj3,obj4);
@@ -1148,7 +1154,7 @@ void EditorRender(int state)
 
         ObjectMoleculeGetAtomVertex(obj1,state,index1,v0);
         ObjectMoleculeGetAtomVertex(obj2,state,index2,v1);
-        draw_bond(v0,v1);
+        draw_bond(G,v0,v1);
         
       } else {
         /* atom mode */
@@ -1157,28 +1163,28 @@ void EditorRender(int state)
 
         if(obj1) {
           if(ObjectMoleculeGetAtomVertex(obj1,state,index1,vv)) {
-            draw_globe(vv,1);
+            draw_globe(G,vv,1);
             vv+=3;
           }
         }
 
         if(obj2) {
           if(ObjectMoleculeGetAtomVertex(obj2,state,index2,vv)) {
-            draw_globe(vv,2);
+            draw_globe(G,vv,2);
             vv+=3;
           }
         }
 
         if(obj3) {
           if(ObjectMoleculeGetAtomVertex(obj3,state,index3,vv)) {
-            draw_globe(vv,3);
+            draw_globe(G,vv,3);
             vv+=3;
           }
         }
 
         if(obj4) {
           if(ObjectMoleculeGetAtomVertex(obj4,state,index4,vv)) {
-            draw_globe(vv,4);
+            draw_globe(G,vv,4);
             vv+=3;
           }
         }
@@ -1214,11 +1220,11 @@ void EditorRender(int state)
   }
 }
 /*========================================================================*/
-void EditorInactivate(void)
+void EditorInactivate(PyMOLGlobals *G)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
 
-  PRINTFD(FB_Editor)
+  PRINTFD(G,FB_Editor)
     " EditorInactivate-Debug: callend.\n"
     ENDFD;
 
@@ -1226,71 +1232,71 @@ void EditorInactivate(void)
   I->ShowFrags = false;
   I->NFrag = 0;
   I->Active = false;
-  SelectorDeletePrefixSet(cEditorFragPref);
-  SelectorDeletePrefixSet(cEditorBasePref);
-  ExecutiveDelete(cEditorSele1);      
-  ExecutiveDelete(cEditorSele2);    
-  ExecutiveDelete(cEditorSele3);    
-  ExecutiveDelete(cEditorSele4);    
-  ExecutiveDelete(cEditorSet);
-  ExecutiveDelete(cEditorRes);
-  ExecutiveDelete(cEditorChain);  
-  ExecutiveDelete(cEditorObject);
-  ExecutiveDelete(cEditorComp);
-  ExecutiveDelete(cEditorLink);
-  /*  if(SettingGet(cSetting_log_conformations)) PLogFlush();
+  SelectorDeletePrefixSet(G,cEditorFragPref);
+  SelectorDeletePrefixSet(G,cEditorBasePref);
+  ExecutiveDelete(G,cEditorSele1);      
+  ExecutiveDelete(G,cEditorSele2);    
+  ExecutiveDelete(G,cEditorSele3);    
+  ExecutiveDelete(G,cEditorSele4);    
+  ExecutiveDelete(G,cEditorSet);
+  ExecutiveDelete(G,cEditorRes);
+  ExecutiveDelete(G,cEditorChain);  
+  ExecutiveDelete(G,cEditorObject);
+  ExecutiveDelete(G,cEditorComp);
+  ExecutiveDelete(G,cEditorLink);
+  /*  if(SettingGet(G,cSetting_log_conformations)) PLogFlush();
       TODO: resolve this problem:
       we can't assume that Python interpreter isn't blocked
   */
-  SceneDirty();
+  SceneDirty(G);
 }
 /*========================================================================*/
-void EditorActivate(int state,int enable_bond)
+void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
 {
   int sele1,sele2,sele3,sele4;
   
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
 
-  sele1 = SelectorIndexByName(cEditorSele1);
-  sele2 = SelectorIndexByName(cEditorSele2);
-  sele3 = SelectorIndexByName(cEditorSele3);
-  sele4 = SelectorIndexByName(cEditorSele4);
+  sele1 = SelectorIndexByName(G,cEditorSele1);
+  sele2 = SelectorIndexByName(G,cEditorSele2);
+  sele3 = SelectorIndexByName(G,cEditorSele3);
+  sele4 = SelectorIndexByName(G,cEditorSele4);
   
   if((sele1>=0)||(sele2>=0)||(sele3>=0)||(sele4>=0)) {
     
     I->Active = true;
-    ExecutiveDelete(cEditorComp);      
-    ExecutiveDelete(cEditorRes);
-    ExecutiveDelete(cEditorChain);
-    ExecutiveDelete(cEditorObject);
+    ExecutiveDelete(G,cEditorComp);      
+    ExecutiveDelete(G,cEditorRes);
+    ExecutiveDelete(G,cEditorChain);
+    ExecutiveDelete(G,cEditorObject);
     
     I->BondMode = enable_bond;
-    I->NFrag = SelectorSubdivide(cEditorFragPref,
+    I->NFrag = SelectorSubdivide(G,cEditorFragPref,
                                        sele1,sele2,
                                        sele3,sele4,
                                        cEditorBasePref,
                                        cEditorComp,
                                        &I->BondMode);
     
-    state = EditorGetEffectiveState(NULL,state);
+    state = EditorGetEffectiveState(G,NULL,state);
     I->ActiveState=state;
     
-    if(0&&(I->NFrag>1)&&((int)SettingGet(cSetting_editor_label_fragments))) {
-      /*      SelectorComputeFragPos(obj,I->ActiveState,I->NFrag,cEditorFragPref,&I->PosVLA);*/
+    if(0&&(I->NFrag>1)&&((int)SettingGet(G,cSetting_editor_label_fragments))) {
+      /*      SelectorComputeFragPos(G,obj,I->ActiveState,I->NFrag,cEditorFragPref,&I->PosVLA);*/
       I->ShowFrags = true;
     } else {
       I->ShowFrags = false;
     }
-    if(SettingGet(cSetting_auto_hide_selections))
-      ExecutiveHideSelections();
+    if(SettingGet(G,cSetting_auto_hide_selections))
+      ExecutiveHideSelections(G);
     
   } else {
-    EditorInactivate();
+    EditorInactivate(G);
   }
 
 }
 /*========================================================================*/
-void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
+void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
 {
   int frg;
   int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
@@ -1298,17 +1304,17 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   WordType name;
   int seleFlag= false;
   int i0,i1,i2,i3;
-  CEditor *I = &Editor;
-  int log_trans = (int)SettingGet(cSetting_log_conformations);
+  register CEditor *I = G->Editor;
+  int log_trans = (int)SettingGet(G,cSetting_log_conformations);
   int drag_sele = -1;
-  PRINTFD(FB_Editor)
+  PRINTFD(G,FB_Editor)
     " EditorPrepareDrag-Debug: entered. obj %p index %d",
     (void*)obj,index
     ENDFD;
 
-  state = EditorGetEffectiveState(obj,state);
+  state = EditorGetEffectiveState(G,obj,state);
 
-  if(!EditorActive()) { /* non-anchored */
+  if(!EditorActive(G)) { /* non-anchored */
     /* need to modify this code to move a complete covalent structure */
 
     I->DragObject=obj;
@@ -1320,10 +1326,10 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     /* anchored */
     for(frg=1;frg<=I->NFrag;frg++) {
       sprintf(name,"%s%1d",cEditorFragPref,frg);
-      drag_sele = SelectorIndexByName(name);
+      drag_sele = SelectorIndexByName(G,name);
       if(drag_sele>=0) {
         s=obj->AtomInfo[index].selEntry;
-        seleFlag=SelectorIsMember(s,drag_sele);
+        seleFlag=SelectorIsMember(G,s,drag_sele);
       }
       if(seleFlag) {
         strcpy(I->DragSeleName,name);
@@ -1332,9 +1338,9 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     }
     if(seleFlag) { /* normal selection */
       
-      PRINTFB(FB_Editor,FB_Blather)
+      PRINTFB(G,FB_Editor,FB_Blather)
         " Editor: grabbing (%s).",name
-        ENDFB;
+        ENDFB(G);
 
       I->DragIndex = index;
       I->DragSelection = drag_sele;
@@ -1345,7 +1351,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       I->DragSlowFlag = false;
       
       sprintf(name,"%s%1d",cEditorBasePref,frg); /* get relevant base vertex of bond */
-      sele1 = SelectorIndexByName(name);
+      sele1 = SelectorIndexByName(G,name);
       if(sele1>=0) {
         i1 = ObjectMoleculeGetAtomIndex(obj,sele1);
         if(i1>=0) {
@@ -1359,26 +1365,26 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       {
         int cnt=0;
 
-        if((sele0 = SelectorIndexByName(cEditorSele1))>=0) {
-          if(SelectorIsAtomBondedToSele(obj,sele0,drag_sele))
+        if((sele0 = SelectorIndexByName(G,cEditorSele1))>=0) {
+          if(SelectorIsAtomBondedToSele(G,obj,sele0,drag_sele))
             cnt++;
           else
             sele0 = -1;
         }
-        if((sele1 = SelectorIndexByName(cEditorSele2))>=0) {
-          if(SelectorIsAtomBondedToSele(obj,sele1,drag_sele))
+        if((sele1 = SelectorIndexByName(G,cEditorSele2))>=0) {
+          if(SelectorIsAtomBondedToSele(G,obj,sele1,drag_sele))
             cnt++;
           else
             sele1 = -1;
         }
-        if((sele2 = SelectorIndexByName(cEditorSele3))>=0) {
-          if(SelectorIsAtomBondedToSele(obj,sele2,drag_sele))
+        if((sele2 = SelectorIndexByName(G,cEditorSele3))>=0) {
+          if(SelectorIsAtomBondedToSele(G,obj,sele2,drag_sele))
             cnt++;
           else
             sele2 = -1;
         }
-        if((sele3 = SelectorIndexByName(cEditorSele4))>=0) {
-          if(SelectorIsAtomBondedToSele(obj,sele3,drag_sele))
+        if((sele3 = SelectorIndexByName(G,cEditorSele4))>=0) {
+          if(SelectorIsAtomBondedToSele(G,obj,sele3,drag_sele))
             cnt++;
           else
             sele3 = -1;
@@ -1453,20 +1459,20 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       }
     } else { /* clicked directly on an anchor atom */
       
-      sele0=SelectorIndexByName(cEditorSele1);
-      if(sele0<0) sele0=SelectorIndexByName(cEditorSele2);
-      if(sele0<0) sele0=SelectorIndexByName(cEditorSele3);
-      if(sele0<0) sele0=SelectorIndexByName(cEditorSele4);
+      sele0=SelectorIndexByName(G,cEditorSele1);
+      if(sele0<0) sele0=SelectorIndexByName(G,cEditorSele2);
+      if(sele0<0) sele0=SelectorIndexByName(G,cEditorSele3);
+      if(sele0<0) sele0=SelectorIndexByName(G,cEditorSele4);
       if(sele0>=0) {
         s=obj->AtomInfo[index].selEntry;
-        seleFlag = SelectorIsMember(s,sele0);
+        seleFlag = SelectorIsMember(G,s,sele0);
       }
 
-      PRINTFB(FB_Editor,FB_Actions)
+      PRINTFB(G,FB_Editor,FB_Actions)
         " Editor: grabbing all fragments." 
-        ENDFB
+        ENDFB(G);
       I->DragIndex = index;
-      I->DragSelection = SelectorIndexByName(cEditorComp);
+      I->DragSelection = SelectorIndexByName(G,cEditorComp);
       strcpy(I->DragSeleName,cEditorComp);
       I->DragObject = obj;
       I->DragHaveAxis = false;
@@ -1493,15 +1499,15 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   if(I->DragObject) {
     I->ShowFrags = false;
     ObjectMoleculeSaveUndo(I->DragObject,state,log_trans);
-    if(SettingGet(cSetting_auto_sculpt)) {
-      SettingSet(cSetting_sculpting,1);
+    if(SettingGet(G,cSetting_auto_sculpt)) {
+      SettingSet(G,cSetting_sculpting,1);
       if(!I->DragObject->Sculpt)
         ObjectMoleculeSculptImprint(I->DragObject,state);
     }
   }
   if(log_trans) PLogFlush();
 
-  PRINTFD(FB_Editor)
+  PRINTFD(G,FB_Editor)
     " EditorPrepDrag-Debug: leaving Index %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d seleFlag %d\n",
     I->DragIndex,I->DragSelection,(void*)I->DragObject,
     I->DragHaveAxis,I->DragHaveBase,
@@ -1509,18 +1515,18 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     ENDFD;
 }
 /*========================================================================*/
-void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
+void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state,
                 float *pt,float *mov,float *z_dir)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   float v0[3],v1[3],v2[3],v3[3],v4[4],cp[3];
   float d0[3],d1[3],d2[3],n0[3],n1[3],n2[3];
   float opp,adj,theta;
   float m[16];
-  int log_trans = (int)SettingGet(cSetting_log_conformations);
+  int log_trans = (int)SettingGet(G,cSetting_log_conformations);
 
 
-  PRINTFD(FB_Editor)
+  PRINTFD(G,FB_Editor)
     " EditorDrag-Debug: entered. obj %p state %d index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", 
     (void*)obj,state,index,mode,
     I->DragIndex,I->DragSelection,(void*)I->DragObject,
@@ -1528,14 +1534,14 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
     I->DragBondFlag,I->DragSlowFlag
     ENDFD;
 
-  state = EditorGetEffectiveState(obj,state);
+  state = EditorGetEffectiveState(G,obj,state);
 
   if((index==I->DragIndex)&&(obj==I->DragObject)) {
-    if(!EditorActive()) {
+    if(!EditorActive(G)) {
       /* non-achored actions */
       switch(mode) {
       case cButModeRotFrag:
-        SceneOriginGet(v3);
+        SceneOriginGet(G,v3);
 
         subtract3f(pt,v3,n0);
         add3f(pt,mov,n1);
@@ -1554,17 +1560,17 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
         m[13] =  v3[1];
         m[14] =  v3[2];
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
-        SceneDirty();
+        SceneDirty(G);
         break;
       case cButModeTorFrag:
         ObjectMoleculeMoveAtom(obj,state,index,mov,1,log_trans);
-        SceneDirty();
+        SceneDirty(G);
         break;
       case cButModeMovFrag:
         MatrixLoadIdentity44f(m);
         copy3f(mov,m+12);
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
-        SceneDirty();
+        SceneDirty(G);
         break;
       }
     } else {
@@ -1576,7 +1582,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
           copy3f(I->V0,v3);
         }
         if(I->DragSlowFlag) {
-          SceneGetViewNormal(v4);
+          SceneGetViewNormal(G,v4);
           scale3f(v4,-1.0F,v4);
           add3f(v3,v4,v4)
           subtract3f(pt,v4,n0);
@@ -1601,7 +1607,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
         m[13] =  v3[1];
         m[14] =  v3[2];
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
-        SceneDirty();
+        SceneDirty(G);
         break;
       case cButModeTorFrag:
       case cButModePkTorBnd:
@@ -1653,42 +1659,48 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
             
           }
         }
-        SceneDirty();
+        SceneDirty(G);
         break;
       case cButModeMovFrag:
         MatrixLoadIdentity44f(m);
         copy3f(mov,m+12);
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
-        SceneDirty();
+        SceneDirty(G);
         break;
       }
     }
   }
 
-  PRINTFD(FB_Editor)
+  PRINTFD(G,FB_Editor)
     " EditorDrag-Debug: leaving...\n"
     ENDFD;
 
 }
 /*========================================================================*/
-void EditorInit(void)
+int EditorInit(PyMOLGlobals *G)
 {
-  CEditor *I = &Editor;
-  I->Obj = NULL;
-  I->NFrag= 0;
-  I->Active = false;
-  I->DragObject=NULL;
-  I->DragIndex=-1;
-  I->DragSelection=-1;
-  I->NextPickSele = 0;
-  I->BondMode = false;
-  I->PosVLA = VLAlloc(float,30);
+  register CEditor *I=NULL;
+  if( (I=(G->Editor=Calloc(CEditor,1)))) {
+    
+    I->Obj = NULL;
+    I->NFrag= 0;
+    I->Active = false;
+    I->DragObject=NULL;
+    I->DragIndex=-1;
+    I->DragSelection=-1;
+    I->NextPickSele = 0;
+    I->BondMode = false;
+    I->PosVLA = VLAlloc(float,30);
+    return 1;
+  } else 
+    return 0;
 }
 /*========================================================================*/
-void EditorFree(void)
+void EditorFree(PyMOLGlobals *G)
 {
-  CEditor *I = &Editor;
+  register CEditor *I = G->Editor;
   VLAFreeP(I->PosVLA);
+  FreeP(G->Editor);
 }
 
 

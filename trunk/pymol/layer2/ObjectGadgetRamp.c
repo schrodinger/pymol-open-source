@@ -37,7 +37,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 
 void ObjectGadgetRampFree(ObjectGadgetRamp *I) {
-  ColorForgetExt(I->Gadget.Obj.Name);
+  ColorForgetExt(I->Gadget.Obj.G,I->Gadget.Obj.Name);
   VLAFreeP(I->Level);
   VLAFreeP(I->Color);
   ObjectGadgetPurge(&I->Gadget);
@@ -84,14 +84,14 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
   return(PConvAutoNone(result));  
 }
 
-int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result,int version)
+int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRamp **result,int version)
 {
   
   ObjectGadgetRamp *I = NULL;
   int ok = true;
   int ll;
 
-  if(ok) I=ObjectGadgetRampNew();
+  if(ok) I=ObjectGadgetRampNew(G);
   if(ok) ok = (I!=NULL);
   if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
@@ -99,7 +99,7 @@ int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result,int v
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
 
-  if(ok) ok = ObjectGadgetInitFromPyList(PyList_GetItem(list,0),&I->Gadget,version);
+  if(ok) ok = ObjectGadgetInitFromPyList(G,PyList_GetItem(list,0),&I->Gadget,version);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->RampType);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NLevel);
   if(ok&&I->NLevel) ok = PConvPyListToFloatVLA(PyList_GetItem(list,3),&I->Level);
@@ -125,8 +125,8 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
 {
   float level;
   int ok=true;
-  if (!ExecutiveValidateObjectPtr((CObject*)I->Map,cObjectMap));
-    I->Map = ExecutiveFindObjectMapByName(I->SrcName);
+  if (!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMap));
+    I->Map = ExecutiveFindObjectMapByName(I->Gadget.Obj.G,I->SrcName);
   if(ok) ok = (I->Map!=NULL);
   if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,NULL,1);
   if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
@@ -267,7 +267,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   float *p;
   char buffer[255];
 
-  cgo = CGONewSized(100);
+  cgo = CGONewSized(I->Gadget.Obj.G,100);
 
   /* behind text */
 
@@ -420,7 +420,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 
   CGOPreloadFonts(gs->ShapeCGO);
   
-  cgo = CGONewSized(100);
+  cgo = CGONewSized(I->Gadget.Obj.G,100);
   CGODotwidth(cgo,5);
 
   CGOPickColor(cgo,0,0);
@@ -517,10 +517,10 @@ VV(    I->width+I->border,I->text_border-(I->border+I->height), I->border+I->tex
  VV(   0.0,0.0,0.0);
 #undef VV
 
-  OrthoBusyPrime();
+  OrthoBusyPrime(I->Gadget.Obj.G);
 
   og = &I->Gadget;
-  gs = GadgetSetNew();
+  gs = GadgetSetNew(I->Gadget.Obj.G);
 
   gs->NCoord = 14;
   I->var_index = gs->NCoord;
@@ -557,11 +557,11 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
     float mean = (I->Level[0]+I->Level[1])/2.0F;
     I->Level[0]=(I->Level[0]-mean)*scale+mean;
     I->Level[2]=(I->Level[1]-mean)*scale+mean;
-    ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);
+    ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
   } else if(I->NLevel==3) {
     I->Level[0]=(I->Level[0]-I->Level[1])*scale+I->Level[1];
     I->Level[2]=(I->Level[2]-I->Level[1])*scale+I->Level[1];
-    ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);
+    ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
   }
   if(I->Gadget.NGSet)
     if(I->Gadget.GSet[0]) {
@@ -569,12 +569,12 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
       ObjectGadgetUpdateStates(&I->Gadget);
     }
   ObjectGadgetUpdateExtents(&I->Gadget);
-  SceneChanged();
+  SceneChanged(I->Gadget.Obj.G);
 }
 
 
 /*========================================================================*/
-ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level,
+ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map,PyObject *level,
                                                   PyObject *color,int map_state,
                                                   float *vert_vla,float beyond,float within,
                                                   float sigma,int zero)
@@ -582,7 +582,7 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level
   ObjectGadgetRamp *I;
   int ok = true;
 
-  I = ObjectGadgetRampNew();
+  I = ObjectGadgetRampNew(G);
   I->RampType = cRampMap;
 
   PBlock();
@@ -598,7 +598,7 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level
     float tmp_level[3];
     if(vert_vla && 
        (ms = ObjectMapGetState(map,map_state)) &&
-       ObjectMapStateGetExcludedStats(ms,vert_vla,beyond,within,tmp_level)) {
+       ObjectMapStateGetExcludedStats(G,ms,vert_vla,beyond,within,tmp_level)) {
       tmp_level[0]=tmp_level[1]+(tmp_level[0]-tmp_level[1])*sigma;
       tmp_level[2]=tmp_level[1]+(tmp_level[2]-tmp_level[1])*sigma;
       if(zero) {
@@ -649,11 +649,11 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level
 }
 
 /*========================================================================*/
-ObjectGadgetRamp *ObjectGadgetRampNew(void)
+ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G)
 {
-  OOAlloc(ObjectGadgetRamp);
+  OOAlloc(G,ObjectGadgetRamp);
 
-  ObjectGadgetInit(&I->Gadget);
+  ObjectGadgetInit(G,&I->Gadget);
   I->Gadget.GadgetType = cGadgetRamp;
   I->RampType = 0;
   I->NLevel = 0;

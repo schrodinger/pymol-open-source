@@ -38,25 +38,37 @@ Z* -------------------------------------------------------------------
 
 #define cControlButtons 7
 
-CControl Control;
+struct _CControl {
+  Block *Block;
+  int Rocking;
+  int DragFlag;
+  int LastPos;
+  int ExtraSpace;
+  float ButtonColor[3];
+  float ActiveColor[3];
+  int Pressed,Active;
+};
 
-int ControlClick(Block *block,int button,int x,int y,int mod);
+int ControlRocking(PyMOLGlobals *G)
+{
+  register CControl *I=G->Control;
+  return I->Rocking;
+}
 
 static void ControlReshape(Block *block,int width, int height)
 {
-  CControl *I=&Control;
+  PyMOLGlobals *G=block->G;
+  register CControl *I=G->Control;
   BlockReshape(block,width,height);
 
   I->ExtraSpace = ((block->rect.right-block->rect.left)-cControlSize);
   if(I->ExtraSpace<0)
-    I->ExtraSpace=0;
-  
+    I->ExtraSpace=0;  
 }
 
-static int which_button(int x,int y)
+static int which_button(CControl *I,int x,int y)
 {
   int result = -1;
-  CControl *I=&Control;
   x -= I->Block->rect.left+cControlLeftMargin;
   y -= I->Block->rect.top-cControlTopMargin;
   if(x>=0) 
@@ -73,96 +85,98 @@ static int ControlDrag(Block *block,int x,int y,int mod)
   int width;
   int delta;
   int gui_width;
-  CControl *I=&Control;
+  PyMOLGlobals *G=block->G;
+  register CControl *I=G->Control;
   delta = x-I->LastPos;
   if(I->DragFlag) {
     if(delta) {
-      gui_width = (int)SettingGet(cSetting_internal_gui_width)-delta;
+      gui_width = (int)SettingGet(G,cSetting_internal_gui_width)-delta;
       if(gui_width<3)
         gui_width = 3;
-      delta = (int)SettingGet(cSetting_internal_gui_width)-gui_width;
-      width = OrthoGetWidth()+delta;
+      delta = (int)SettingGet(G,cSetting_internal_gui_width)-gui_width;
+      width = OrthoGetWidth(G)+delta;
     I->LastPos = x;
-    SettingSet(cSetting_internal_gui_width,(float)gui_width);
-    OrthoReshape(-1,-1,false);
+    SettingSet(G,cSetting_internal_gui_width,(float)gui_width);
+    OrthoReshape(G,-1,-1,false);
     }
   } else {
-    I->Active = which_button(x,y);
+    I->Active = which_button(I,x,y);
     if(I->Active!=I->Pressed)
       I->Active = -1;
-    OrthoDirty();
+    OrthoDirty(G);
   }
   return(1);
 }
 
 static int ControlRelease(Block *block,int button,int x,int y,int mod)
 {
-  CControl *I=&Control;  
+  PyMOLGlobals *G=block->G;
+  register CControl *I=G->Control;  
 
   int sel = 0;
 
   I->LastPos =x;
-  sel = which_button(x,y);
+  sel = which_button(I,x,y);
 
   switch(sel) {
   case 0:
-    SceneSetFrame(4,0);
+    SceneSetFrame(G,4,0);
     PLog("cmd.rewind()",cPLog_pym);
     break;
   case 1:
-    SceneSetFrame(5,-1);
+    SceneSetFrame(G,5,-1);
     PLog("cmd.back()",cPLog_pym);
     break;
   case 2:
-    MoviePlay(cMovieStop);
-    if(SettingGet(cSetting_sculpting)) SettingSet(cSetting_sculpting,0);
+    MoviePlay(G,cMovieStop);
+    if(SettingGet(G,cSetting_sculpting)) SettingSet(G,cSetting_sculpting,0);
     if(I->Rocking) I->Rocking=false;
-    ExecutiveDrawNow();
-    OrthoDirty();
+    ExecutiveDrawNow(G);
+    OrthoDirty(G);
     PLog("cmd.mstop()",cPLog_pym);
     break;
   case 3:
-    if(!MoviePlaying()) {
+    if(!MoviePlaying(G)) {
       if(mod&cOrthoCTRL) {
         PLog("cmd.rewind()",cPLog_pym);
         PLog("cmd.mplay()",cPLog_pym);
-        SceneSetFrame(4,0);		
-        MoviePlay(cMoviePlay);
+        SceneSetFrame(G,4,0);		
+        MoviePlay(G,cMoviePlay);
       } else {
         PLog("cmd.mplay()",cPLog_pym);
-        MoviePlay(cMoviePlay);
+        MoviePlay(G,cMoviePlay);
       }
     } else {
-      MoviePlay(cMovieStop);
-      ExecutiveDrawNow();
-      OrthoDirty();
+      MoviePlay(G,cMovieStop);
+      ExecutiveDrawNow(G);
+      OrthoDirty(G);
       PLog("cmd.mstop()",cPLog_pym);
     }
     break;
   case 4:
-    SceneSetFrame(5,1);
+    SceneSetFrame(G,5,1);
     PLog("cmd.forward()",cPLog_pym);
     break;
   case 5:
     if(mod&cOrthoCTRL) {
-      SceneSetFrame(3,0);
+      SceneSetFrame(G,3,0);
       PLog("cmd.middle()",cPLog_pym);
     } else {
-      SceneSetFrame(6,0);
+      SceneSetFrame(G,6,0);
       PLog("cmd.ending()",cPLog_pym);
     }
     break;
   case 6:
-    if(SettingGetGlobal_b(cSetting_seq_view)) {
-      SettingSetGlobal_b(cSetting_seq_view,0);
-      SeqChanged();
+    if(SettingGetGlobal_b(G,cSetting_seq_view)) {
+      SettingSetGlobal_b(G,cSetting_seq_view,0);
+      SeqChanged(G);
       PLog("cmd.set('seq_view',0)",cPLog_pym);
     } else {
-      SettingSetGlobal_b(cSetting_seq_view,1);
-      SeqChanged();
+      SettingSetGlobal_b(G,cSetting_seq_view,1);
+      SeqChanged(G);
       PLog("cmd.set('seq_view',1)",cPLog_pym);        
     }
-    OrthoDirty();
+    OrthoDirty(G);
     break;
   case 7:
     I->Rocking=!I->Rocking;
@@ -170,12 +184,12 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
       PLog("cmd.set('rocking',1)",cPLog_pym);
     else
       PLog("cmd.set('rocking',0)",cPLog_pym);
-    SceneRestartTimers();
-    OrthoDirty();
+    SceneRestartTimers(G);
+    OrthoDirty(G);
     break;
   }
-  OrthoDirty();
-  OrthoUngrab();
+  OrthoDirty(G);
+  OrthoUngrab(G);
   I->DragFlag=false;
   I->Active = -1;
   I->Pressed = -1;
@@ -183,34 +197,35 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 
-Block *ControlGetBlock(void)
+Block *ControlGetBlock(PyMOLGlobals *G)
 {
-  CControl *I=&Control;
+  register CControl *I=G->Control;
   {return(I->Block);}
 }
 /*========================================================================*/
-int ControlIdling(void)
+int ControlIdling(PyMOLGlobals *G)
 {
-  CControl *I=&Control;
-  return(MoviePlaying()||I->Rocking||SettingGet(cSetting_sculpting));
+  register CControl *I=G->Control;
+  return(MoviePlaying(G)||I->Rocking||SettingGet(G,cSetting_sculpting));
 }
 /*========================================================================*/
-void ControlInterrupt(void)
+void ControlInterrupt(PyMOLGlobals *G)
 {
-  /*  CControl *I=&Control;*/
-  MoviePlay(cMovieStop);
-  ExecutiveDrawNow();
+  /*  register CControl *I=G->Control;*/
+  MoviePlay(G,cMovieStop);
+  ExecutiveDrawNow(G);
 }
 /*========================================================================*/
-void ControlFree(void)
+void ControlFree(PyMOLGlobals *G)
 {
-  CControl *I=&Control;
-  OrthoFreeBlock(I->Block);
+  register CControl *I=G->Control;
+  OrthoFreeBlock(G,I->Block);
+  FreeP(G->Control);
 }
 /*========================================================================*/
-void ControlRock(int mode)
+void ControlRock(PyMOLGlobals *G,int mode)
 {
-  CControl *I=&Control;
+  register CControl *I=G->Control;
   switch(mode) {
   case -1:
 	I->Rocking=!I->Rocking;
@@ -222,28 +237,29 @@ void ControlRock(int mode)
 	I->Rocking=true;
 	break;
   }
-  SceneRestartTimers();
-  OrthoDirty();
+  SceneRestartTimers(G);
+  OrthoDirty(G);
 }
 
 /*========================================================================*/
-int ControlClick(Block *block,int button,int x,int y,int mod)
+static int ControlClick(Block *block,int button,int x,int y,int mod)
 {
-  CControl *I=&Control;
+  PyMOLGlobals *G=block->G;
+  register CControl *I=G->Control;
   
   if(x<(I->Block->rect.left + cControlLeftMargin)) {
     y -= I->Block->rect.top-cControlTopMargin;
     if((y<=0)&&(y>(-cControlBoxSize))) {
       I->LastPos = x;
-      OrthoGrab(block);
+      OrthoGrab(G,block);
       I->DragFlag=true;
     }
   } else {
-    I->Pressed = which_button(x,y);
+    I->Pressed = which_button(I,x,y);
     I->Active = I->Pressed;
     if(I->Pressed)
-      OrthoGrab(block);
-    OrthoDirty();
+      OrthoGrab(G,block);
+    OrthoDirty(G);
   }
   return(1);
 }
@@ -278,7 +294,8 @@ static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, 
 /*========================================================================*/
 static void ControlDraw(Block *block)
 {
-  CControl *I=&Control;
+  PyMOLGlobals *G=block->G;
+  register CControl *I=G->Control;
   int x,y;
   int nButton = 8;
   int but_num;
@@ -346,8 +363,8 @@ static void ControlDraw(Block *block)
       if( ( but_num==I->Active ) ) {
         draw_button(but_left,but_bottom,
                     but_width, but_height, lightEdge,darkEdge,active);
-      } else if(((but_num==6)&&((int)SettingGet(cSetting_seq_view))) ||
-                ((but_num==3)&&(MoviePlaying())) ||
+      } else if(((but_num==6)&&((int)SettingGet(G,cSetting_seq_view))) ||
+                ((but_num==3)&&(MoviePlaying(G))) ||
                 ((but_num==7)&&(I->Rocking))) {
         draw_button(but_left,but_bottom,
                     but_width, but_height, lightEdge,darkEdge,I->ActiveColor);
@@ -451,30 +468,35 @@ static void ControlDraw(Block *block)
 
 
 /*========================================================================*/
-void ControlInit(void)
+int ControlInit(PyMOLGlobals *G)
 {
-  CControl *I=&Control;
+  register CControl *I=NULL;
 
-  I->Block = OrthoNewBlock(NULL);
-  I->Block->fClick = ControlClick;
-  I->Block->fDraw    = ControlDraw;
-  I->Block->fDrag = ControlDrag;
-  I->Block->fRelease = ControlRelease;
-  I->Block->fReshape = ControlReshape;
-  I->Block->active = true;
-  I->Block->TextColor[0]=1.0;
-  I->Block->TextColor[1]=0.75;
-  I->Block->TextColor[2]=0.75;
-  I->ButtonColor[0]=0.5F;
-  I->ButtonColor[1]=0.5F;
-  I->ButtonColor[2]=0.5F;
-  I->ActiveColor[0]=0.7F;
-  I->ActiveColor[1]=0.7F;
-  I->ActiveColor[2]=0.7F;
-  I->Pressed = -1;
-  I->Active = -1;
-  OrthoAttach(I->Block,cOrthoTool);
+  if( (I=(G->Control=Calloc(CControl,1)))) {
 
-  I->Rocking=false;
+    I->Block = OrthoNewBlock(G,NULL);
+    I->Block->fClick = ControlClick;
+    I->Block->fDraw    = ControlDraw;
+    I->Block->fDrag = ControlDrag;
+    I->Block->fRelease = ControlRelease;
+    I->Block->fReshape = ControlReshape;
+    I->Block->active = true;
+    I->Block->TextColor[0]=1.0;
+    I->Block->TextColor[1]=0.75;
+    I->Block->TextColor[2]=0.75;
+    I->ButtonColor[0]=0.5F;
+    I->ButtonColor[1]=0.5F;
+    I->ButtonColor[2]=0.5F;
+    I->ActiveColor[0]=0.7F;
+    I->ActiveColor[1]=0.7F;
+    I->ActiveColor[2]=0.7F;
+    I->Pressed = -1;
+    I->Active = -1;
+    OrthoAttach(G,I->Block,cOrthoTool);
+    
+    I->Rocking=false;
+    return 1;
+  } else 
+    return 0;
 
 }

@@ -19,8 +19,10 @@ Z* -------------------------------------------------------------------
 /* Map - a 3-D hash object for optimizing neighbor searches */
 
 #include"Vector.h"
+#include"PyMOLGlobals.h"
 
 typedef struct { 
+  PyMOLGlobals *G;
   float Div;
   float recipDiv;
   Vector3i Dim;
@@ -37,6 +39,7 @@ typedef struct {
 
 
 typedef struct {
+  PyMOLGlobals *G;
   int *Cache,*CacheLink,CacheStart;
   int block_base;
   
@@ -44,10 +47,10 @@ typedef struct {
 
 #define MapBorder 2
 
-MapType *MapNew(float range,float *vert,int nVert,float *extent);
-MapType *MapNewCached(float range,float *vert,int nVert,float *extent,int group_id,int block_id);
+MapType *MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent);
+MapType *MapNewCached(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent,int group_id,int block_id);
 
-MapType *MapNewFlagged(float range,float *vert,int nVert,float *extent,int *flag);
+MapType *MapNewFlagged(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent,int *flag);
 void MapSetupExpress(MapType *I);
 void MapFree(MapType *I);
 
@@ -67,7 +70,7 @@ void MapCacheInit(MapCache *M,MapType *I,int group_id,int block_base);
 void MapCacheReset(MapCache *M);
 void MapCacheFree(MapCache *M,int group_id,int block_base);
 
-float MapGetSeparation(float range,float *mx,float *mn,float *diagonal);
+float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *diagonal);
 
 /* special routines for raytracing */
 

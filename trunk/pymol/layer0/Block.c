@@ -25,8 +25,9 @@ void BlockGetSize(Block *I,int *width,int *height)
   *height=I->rect.top-I->rect.bottom;
 }
 /*========================================================================*/
-void BlockInit(Block *I)
+void BlockInit(PyMOLGlobals *G,Block *I)
 {
+  I->G = G;
   I->BackColor[0]=0.2F;
   I->BackColor[1]=0.2F;
   I->BackColor[2]=0.2F;

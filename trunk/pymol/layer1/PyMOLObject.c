@@ -37,7 +37,7 @@ int ObjectGetCurrentState(CObject *I,int ignore_all_states)
   int state=-2;
   int objState;
 
-  if(SettingGetIfDefined_i(I->Setting,cSetting_state,&objState)) {
+  if(SettingGetIfDefined_i(I->G,I->Setting,cSetting_state,&objState)) {
     if(objState>0) { /* a specific state */
       state=objState-1;
     } if(objState<0) {
@@ -45,10 +45,10 @@ int ObjectGetCurrentState(CObject *I,int ignore_all_states)
     }
   }
   if(state==-2) { /* default -- use global state */
-    state = SettingGetGlobal_i(cSetting_state)-1;
+    state = SettingGetGlobal_i(I->G,cSetting_state)-1;
   }
   if(!(ignore_all_states)&&(state>=0) )
-    if(SettingGet_i(I->Setting,NULL,cSetting_all_states))
+    if(SettingGet_i(I->G,I->Setting,NULL,cSetting_all_states))
       state=-1;
   if(state<-1)
     state=-1;
@@ -76,11 +76,11 @@ PyObject *ObjectAsPyList(CObject *I)
   return(PConvAutoNone(result));
 }
 
-int ObjectFromPyList(PyObject *list,CObject *I)
+int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
 {
   int ok=true;
   int ll=0;
-
+  I->G = G;
   if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
   if(ok) ll=PyList_Size(list);
@@ -92,7 +92,7 @@ int ObjectFromPyList(PyObject *list,CObject *I)
   if(ok) ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,5),I->ExtentMax,3);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,6),&I->ExtentFlag);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->TTTFlag);
-  if(ok) I->Setting=SettingNewFromPyList(PyList_GetItem(list,8));
+  if(ok) I->Setting=SettingNewFromPyList(G,PyList_GetItem(list,8));
   if(ok&&(ll>9)) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->Enabled);
   if(ok&&(ll>10)) ok = PConvPyIntToInt(PyList_GetItem(list,10),&I->Context);
   if(ok&&(ll>11)) ok = 
@@ -120,7 +120,7 @@ void ObjectCombineTTT(CObject *I,float *ttt)
 void ObjectResetTTT(CObject *I)
 {
   I->TTTFlag=false;
-  SceneDirty();
+  SceneDirty(I->G);
 }
 /*========================================================================*/
 void ObjectPrepareContext(CObject *I,CRay *ray)
@@ -177,7 +177,7 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
   I->TTT[7]+=origin[1];
   I->TTT[11]+=origin[2];
 
-  SceneDirty();
+  SceneDirty(I->G);
 
 }
 /*========================================================================*/
@@ -236,7 +236,7 @@ int ObjectGetNFrames(CObject *I)
 /*========================================================================*/
 void ObjectUseColor(CObject *I)
 {
-  if(PMGUI) glColor3fv(ColorGet(I->Color));
+  if(PMGUI) glColor3fv(ColorGet(I->G,I->Color));
 }
 /*========================================================================*/
 static void ObjectInvalidate(CObject *this,int rep,int level,int state)
@@ -244,9 +244,10 @@ static void ObjectInvalidate(CObject *this,int rep,int level,int state)
   
 }
 /*========================================================================*/
-void ObjectInit(CObject *I)
+void ObjectInit(PyMOLGlobals *G,CObject *I)
 {
   int a;
+  I->G = G;
   I->fFree = ObjectFree;
   I->fRender = ObjectRenderUnitBox;
   I->fUpdate = ObjectUpdate;
@@ -263,7 +264,7 @@ void ObjectInit(CObject *I)
   I->Enabled=false;
   zero3f(I->ExtentMin);
   zero3f(I->ExtentMax);
-  OrthoRemoveSplash();
+  OrthoRemoveSplash(G);
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
   for(a=0;a<16;a++) I->TTT[a]=0.0F;
   I->RepVis[cRepCell]=false;

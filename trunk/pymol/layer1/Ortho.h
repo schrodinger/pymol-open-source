@@ -31,63 +31,63 @@ Z* -------------------------------------------------------------------
 #define cOrthoTool 2
 #define cOrthoHidden 3
 
-void OrthoInit(int showSplash);
-void OrthoFree(void);
+int OrthoInit(PyMOLGlobals *G,int showSplash);
+void OrthoFree(PyMOLGlobals *G);
 
-void OrthoAttach(Block *block,int type);
-void OrthoDetach(Block *block);
+void OrthoAttach(PyMOLGlobals *G,Block *block,int type);
+void OrthoDetach(PyMOLGlobals *G,Block *block);
 
 void OrthoSetMargins(Block *block,int t,int l,int b,int r);
 
-Block *OrthoNewBlock(Block *block);
-void OrthoFreeBlock(Block *block);
+Block *OrthoNewBlock(PyMOLGlobals *G,Block *block);
+void OrthoFreeBlock(PyMOLGlobals *G,Block *block);
 
-void OrthoReshape(int width,int height,int force);
-int OrthoGetWidth(void);
-void OrthoDoDraw(void);
+void OrthoReshape(PyMOLGlobals *G,int width,int height,int force);
+int OrthoGetWidth(PyMOLGlobals *G);
+void OrthoDoDraw(PyMOLGlobals *G);
 
-void OrthoPushMatrix(void);
-void OrthoPopMatrix(void);
+void OrthoPushMatrix(PyMOLGlobals *G);
+void OrthoPopMatrix(PyMOLGlobals *G);
 
-int OrthoButton(int button,int state,int x,int y,int mod);
+int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod);
 
-void OrthoKey(unsigned char k,int x,int y,int mod);
+void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod);
 
-void OrthoAddOutput(char *str);
-void OrthoNewLine(char *prompt,int crlf);
+void OrthoAddOutput(PyMOLGlobals *G,char *str);
+void OrthoNewLine(PyMOLGlobals *G,char *prompt,int crlf);
 
-int OrthoDrag(int x,int y,int mod);
+int OrthoDrag(PyMOLGlobals *G,int x,int y,int mod);
 
-void OrthoGrab(Block *block);
-void OrthoUngrab(void);
+void OrthoGrab(PyMOLGlobals *G,Block *block);
+void OrthoUngrab(PyMOLGlobals *G);
 
-void OrthoRestorePrompt(void);
+void OrthoRestorePrompt(PyMOLGlobals *G);
 
-void OrthoDirty(void);
-void OrthoWorking(void);
-void OrthoClear(void);
-void OrthoFakeDrag(void);
-void OrthoBusyDraw(int force);
-void OrthoBusyMessage(char *message);
-void OrthoBusySlow(int progress,int total);
-void OrthoBusyFast(int progress,int total);
-void OrthoBusyPrime(void);
-void OrthoCommandIn(char *buffer);
-int  OrthoCommandOut(char *buffer);
-void OrthoFeedbackIn(char *buffer);
-int OrthoFeedbackOut(char *buffer);
+void OrthoDirty(PyMOLGlobals *G);
+void OrthoWorking(PyMOLGlobals *G);
+void OrthoClear(PyMOLGlobals *G);
+void OrthoFakeDrag(PyMOLGlobals *G);
+void OrthoBusyDraw(PyMOLGlobals *G,int force);
+void OrthoBusyMessage(PyMOLGlobals *G,char *message);
+void OrthoBusySlow(PyMOLGlobals *G,int progress,int total);
+void OrthoBusyFast(PyMOLGlobals *G,int progress,int total);
+void OrthoBusyPrime(PyMOLGlobals *G);
+void OrthoCommandIn(PyMOLGlobals *G,char *buffer);
+int  OrthoCommandOut(PyMOLGlobals *G,char *buffer);
+void OrthoFeedbackIn(PyMOLGlobals *G,char *buffer);
+int OrthoFeedbackOut(PyMOLGlobals *G,char *buffer);
 
-void OrthoSetWizardPrompt(char *vla);
+void OrthoSetWizardPrompt(PyMOLGlobals *G,char *vla);
 
-void OrthoPasteIn(char *buffer);
-void OrthoRemoveSplash(void);
-void OrthoSplash(void);
-int OrthoArrowsGrabbed(void);
-void OrthoSpecial(int k,int x,int y,int mod);
-int  OrthoCommandWaiting(void);
+void OrthoPasteIn(PyMOLGlobals *G,char *buffer);
+void OrthoRemoveSplash(PyMOLGlobals *G);
+void OrthoSplash(PyMOLGlobals *G);
+int OrthoArrowsGrabbed(PyMOLGlobals *G);
+void OrthoSpecial(PyMOLGlobals *G,int k,int x,int y,int mod);
+int  OrthoCommandWaiting(PyMOLGlobals *G);
 
-int OrthoTextVisible(void);
-void OrthoReshapeWizard(int height);
+int OrthoTextVisible(PyMOLGlobals *G);
+void OrthoReshapeWizard(PyMOLGlobals *G,int height);
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 

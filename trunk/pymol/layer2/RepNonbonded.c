@@ -43,12 +43,13 @@ void RepNonbondedFree(RepNonbonded *I)
 {
   FreeP(I->VP);
   FreeP(I->V);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   OOFreeP(I);
 }
 
 void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
   unsigned int i,j;
@@ -127,7 +128,7 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
     int use_dlst;
     glLineWidth(I->Width);
 
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
@@ -146,7 +147,7 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
     if(c) {
       glDisable(GL_LIGHTING);
       glBegin(GL_LINES);	 
-      SceneResetNormal(true);
+      SceneResetNormal(G,true);
       while(c--) {
         
         glColor3fv(v);
@@ -180,6 +181,7 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 
 Rep *RepNonbondedNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,a1,c1;
   float nonbonded_size;
@@ -188,7 +190,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
   AtomInfoType *ai;
   int nAtom = 0;
   float tmpColor[3];
-  OOAlloc(RepNonbonded);
+  OOAlloc(G,RepNonbonded);
   obj = cs->Obj;
 
   active = Alloc(int,cs->NIndex);
@@ -210,8 +212,8 @@ Rep *RepNonbondedNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
 
-  nonbonded_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_nonbonded_size);
-  RepInit(&I->R);
+  nonbonded_size = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_nonbonded_size);
+  RepInit(G,&I->R);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepNonbondedRender;
   I->R.fFree=(void (*)(struct Rep *))RepNonbondedFree;
@@ -223,10 +225,10 @@ Rep *RepNonbondedNew(CoordSet *cs)
   I->R.P=NULL;
   I->R.fRecolor=NULL;
 
-  I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
-  I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_radius);
+  I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
+  I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_radius);
   I->V=(float*)mmalloc(sizeof(float)*nAtom*21);
-  ErrChkPtr(I->V);
+  ErrChkPtr(G,I->V);
   v=I->V;
   for(a=0;a<cs->NIndex;a++) 
     if(active[a]) {
@@ -234,11 +236,11 @@ Rep *RepNonbondedNew(CoordSet *cs)
 
       v1 = cs->Coord+3*a;
 
-      if(ColorCheckRamped(c1)) {
-        ColorGetRamped(c1,v1,tmpColor);
+      if(ColorCheckRamped(G,c1)) {
+        ColorGetRamped(G,c1,v1,tmpColor);
         v0 = tmpColor;
       } else {
-        v0 = ColorGet(c1);
+        v0 = ColorGet(G,c1);
       }
 
       *(v++)=*(v0++);
@@ -274,12 +276,12 @@ Rep *RepNonbondedNew(CoordSet *cs)
 
   /* now create pickable verson */
   
-  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
+  if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
     I->VP=(float*)mmalloc(sizeof(float)*nAtom*21);
-    ErrChkPtr(I->VP);
+    ErrChkPtr(G,I->VP);
     
     I->R.P=Alloc(Pickable,cs->NIndex+1);
-    ErrChkPtr(I->R.P);
+    ErrChkPtr(G,I->R.P);
     
     v=I->VP;
     

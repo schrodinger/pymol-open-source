@@ -33,29 +33,27 @@ Z* -------------------------------------------------------------------
 #define cAutoColorMask 0x7
 static int AutoColor[] = { 26, 5, 154, 6, 9, 29, 11, 30 };
 
-CColor Color;
-
 #define cColorExtCutoff (-10)
 
-int ColorGetNext(void) 
+int ColorGetNext(PyMOLGlobals *G) 
 {
   int result;
   int next;
-  next = (int)SettingGet(cSetting_auto_color_next);
+  next = (int)SettingGet(G,cSetting_auto_color_next);
 
   next = (next&cAutoColorMask);
   result = AutoColor[next];
   next++;
   next = (next&cAutoColorMask);
-  SettingSet(cSetting_auto_color_next,(float)next);
+  SettingSet(G,cSetting_auto_color_next,(float)next);
   return(result);
 }
 
-int ColorGetCurrent(void)
+int ColorGetCurrent(PyMOLGlobals *G)
 {
   int result;
   int next;
-  next = (int)SettingGet(cSetting_auto_color_next);
+  next = (int)SettingGet(G,cSetting_auto_color_next);
 
   next = (next&cAutoColorMask);
   result = AutoColor[next];
@@ -64,21 +62,21 @@ int ColorGetCurrent(void)
   return(result);
 }
 
-int ColorCheckRamped(int index)
+int ColorCheckRamped(PyMOLGlobals *G,int index)
 {
   return(index<=(cColorExtCutoff));
 }
 
-ObjectGadgetRamp* ColorGetRamp(int index)
+ObjectGadgetRamp* ColorGetRamp(PyMOLGlobals *G,int index)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   ObjectGadgetRamp *result = NULL;
   if(index<=cColorExtCutoff) {
     index = cColorExtCutoff - index;
     if(index<I->NExt) {
       if(!I->Ext[index].Ptr) {
         if(I->Ext[index].Name)
-          I->Ext[index].Ptr = (void*)ExecutiveFindObjectByName(I->Ext[index].Name);
+          I->Ext[index].Ptr = (void*)ExecutiveFindObjectByName(G,I->Ext[index].Name);
       }
       if(I->Ext[index].Ptr) 
         result = (ObjectGadgetRamp*)I->Ext[index].Ptr;
@@ -87,16 +85,16 @@ ObjectGadgetRamp* ColorGetRamp(int index)
   return result;
 }
 
-int ColorGetRamped(int index,float *vertex,float *color)
+int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   int ok=false;
   if(index<=cColorExtCutoff) {
     index = cColorExtCutoff - index;
     if(index<I->NExt) {
       if(!I->Ext[index].Ptr) {
         if(I->Ext[index].Name)
-          I->Ext[index].Ptr = (void*)ExecutiveFindObjectByName(I->Ext[index].Name);
+          I->Ext[index].Ptr = (void*)ExecutiveFindObjectByName(G,I->Ext[index].Name);
       }
       if(I->Ext[index].Ptr) 
         ok = ObjectGadgetRampInterVertex(
@@ -113,9 +111,9 @@ int ColorGetRamped(int index,float *vertex,float *color)
   return(ok);
 }
 
-static int ColorFindExtByName(char *name,int null_okay,int *best) 
+static int ColorFindExtByName(PyMOLGlobals *G,char *name,int null_okay,int *best) 
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   int result = -1;
   int wm;
   int a;
@@ -125,7 +123,7 @@ static int ColorFindExtByName(char *name,int null_okay,int *best)
   *best = 0;
   for(a=0;a<I->NExt;a++)
     {
-      wm = WordMatch(name,I->Ext[a].Name,true);
+      wm = WordMatch(G,name,I->Ext[a].Name,true);
       if(wm<0) {
         if(null_okay||(I->Ext[a].Ptr)) {
           result=a;
@@ -142,12 +140,12 @@ static int ColorFindExtByName(char *name,int null_okay,int *best)
   return(result);
 }
 
-void ColorRegisterExt(char *name,void *ptr,int type)
+void ColorRegisterExt(PyMOLGlobals *G,char *name,void *ptr,int type)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   int a;
 
-  a=ColorFindExtByName(name,true,NULL);
+  a=ColorFindExtByName(G,name,true,NULL);
   if(a<0) {
     VLACheck(I->Ext,ExtRec,I->NExt);
     a = I->NExt;
@@ -160,20 +158,20 @@ void ColorRegisterExt(char *name,void *ptr,int type)
   }
 }
 
-void ColorForgetExt(char *name)
+void ColorForgetExt(PyMOLGlobals *G,char *name)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   int a;
-  a=ColorFindExtByName(name,true,NULL);
+  a=ColorFindExtByName(G,name,true,NULL);
 
   if(a>=0) { /* currently leaks memory TODO fix */
     I->Ext[a].Ptr=NULL;
   }
 }
 
-PyObject *ColorExtAsPyList(void)
+PyObject *ColorExtAsPyList(PyMOLGlobals *G)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   PyObject *result,*list;
   ExtRec *ext;
   int a;
@@ -191,9 +189,9 @@ PyObject *ColorExtAsPyList(void)
 }
 
 /*========================================================================*/
-PyObject *ColorAsPyList()
+PyObject *ColorAsPyList(PyMOLGlobals *G)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   PyObject *result,*list;
   ColorRec *color;
   int n_custom=0;
@@ -224,13 +222,13 @@ PyObject *ColorAsPyList()
   return(result);
 }
 
-int ColorExtFromPyList(PyObject *list)
+int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list)
 {
   int n_ext=0;
   int a;
   int ok=true;
   int ll;
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   PyObject *rec;
   ExtRec *ext;
   if(ok) ok=(list!=NULL);
@@ -259,14 +257,14 @@ int ColorExtFromPyList(PyObject *list)
 }
 
 /*========================================================================*/
-int ColorFromPyList(PyObject *list)
+int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
 {
   int n_custom=0;
   int a;
   int index=0;
   int ok=true;
   int ll;
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   PyObject *rec;
   ColorRec *color;
   if(ok) ok=(list!=NULL);
@@ -304,9 +302,9 @@ int ColorFromPyList(PyObject *list)
 }
 
 /*========================================================================*/
-void ColorDef(char *name,float *v)
+void ColorDef(PyMOLGlobals *G,char *name,float *v)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   int color=-1;
   int a;
   int best;
@@ -315,7 +313,7 @@ void ColorDef(char *name,float *v)
   best = 0;
   for(a=0;a<I->NColor;a++)
 	 {
-      wm = WordMatch(name,I->Color[a].Name,true);
+      wm = WordMatch(G,name,I->Color[a].Name,true);
       if(wm<0) {
         color=a;
         break;
@@ -331,19 +329,19 @@ void ColorDef(char *name,float *v)
   I->Color[color].Color[1]=v[1];
   I->Color[color].Color[2]=v[2];
   I->Color[color].Custom=true;
-  ColorUpdateClamp(color);
+  ColorUpdateClamp(G,color);
 
-  PRINTFB(FB_Executive,FB_Actions)
+  PRINTFB(G,FB_Executive,FB_Actions)
     " Color: \"%s\" defined as [ %3.3f, %3.3f, %3.3f ].\n",name,v[0],v[1],v[2] 
-    ENDFB;
-  PRINTFD(FB_Color) 
+    ENDFB(G);
+  PRINTFD(G,FB_Color) 
     " Color: and assigned number %d.\n",color
     ENDFD;
 }
 /*========================================================================*/
-int ColorGetIndex(char *name)
+int ColorGetIndex(PyMOLGlobals *G,char *name)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   int color=-1; /* default for unknown is white */
   int ext_color;
   int a;
@@ -368,11 +366,11 @@ int ColorGetIndex(char *name)
     if(sscanf(name,"%d",&i)) 
       if((i<I->NColor)&&(i>=0))
         return(i);
-  if(WordMatch(name,"default",true))
+  if(WordMatch(G,name,"default",true))
     return(-1);
   for(a=0;a<I->NColor;a++)
 	 {
-      wm = WordMatch(name,I->Color[a].Name,true);
+      wm = WordMatch(G,name,I->Color[a].Name,true);
       if(wm<0) {
         color=a;
         best=0;
@@ -383,7 +381,7 @@ int ColorGetIndex(char *name)
       }
 	 }
   if(best||(color<0)) {
-    ext_color = ColorFindExtByName(name,false,&ext_best);
+    ext_color = ColorFindExtByName(G,name,false,&ext_best);
     if(ext_color>=0) {
       ext_color = -10-ext_color; /* indicates external */
       if((!ext_best)||(ext_best>best)) /* perfect or better match? */
@@ -393,24 +391,23 @@ int ColorGetIndex(char *name)
   return(color);
 }
 /*========================================================================*/
-float *ColorGetNamed(char *name)
+float *ColorGetNamed(PyMOLGlobals *G,char *name)
 {
-  
-  return(ColorGet(ColorGetIndex(name)));
+  return(ColorGet(G,ColorGetIndex(G,name)));
 }
 /*========================================================================*/
-char *ColorGetName(int index)
+char *ColorGetName(PyMOLGlobals *G,int index)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   if((index>=0)&&(index<I->NColor))
     return(I->Color[index].Name);
   else
     return(NULL);
 }
 /*========================================================================*/
-int ColorGetStatus(int index)
+int ColorGetStatus(PyMOLGlobals *G,int index)
 {
-  CColor *I=&Color; /* return 0 if color is invalid, -1 if hidden; 
+  register CColor *I=G->Color; /* return 0 if color is invalid, -1 if hidden; 
                        1 otherwise */
   char *c;
   int result=0;
@@ -428,24 +425,25 @@ int ColorGetStatus(int index)
   return(result);
 }
 /*========================================================================*/
-int ColorGetNColor(void)
+int ColorGetNColor(PyMOLGlobals *G)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   return(I->NColor);
 }
 /*========================================================================*/
-void ColorFree(void)
+void ColorFree(PyMOLGlobals *G)
 {
-  CColor *I=&Color;
+  register CColor *I = G->Color;
   if(I->ColorTable) {
     FreeP(I->ColorTable);
   }
   VLAFreeP(I->Color);
   VLAFreeP(I->Ext);
+  FreeP(I);
 }
 
 /*========================================================================*/
-void ColorReset(void)
+void ColorReset(PyMOLGlobals *G)
 {
 /* PyMOL core color names
 
@@ -488,7 +486,7 @@ void ColorReset(void)
 
 */
 
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   int a;
   int set1;
   float f;
@@ -1122,19 +1120,19 @@ void ColorReset(void)
 
 }
 
-int ColorTableLoad(char *fname,int quiet)
+int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet)
 {
-  CColor *I=&Color; 
+  register CColor *I=G->Color; 
   int ok=true;
   int width=512,height=512;
   unsigned int *table = NULL;
 
   if(!strcmp(fname,"rgb")) {
     FreeP(I->ColorTable);
-    PRINTFB(FB_Color,FB_Actions)
+    PRINTFB(G,FB_Color,FB_Actions)
       " Color: purged table; restoring RGB colors.\n"
-      ENDFB;
-    ColorUpdateClamp(-1);    
+      ENDFB(G);
+    ColorUpdateClamp(G,-1);    
     
   } else if(!strcmp(fname,"pymol")) {
     
@@ -1150,10 +1148,10 @@ int ColorTableLoad(char *fname,int quiet)
     
     float min_factor=0.15F;
 
-    red_max = SettingGet(cSetting_pymol_space_max_red);
-    green_max = SettingGet(cSetting_pymol_space_max_green);
-    blue_max = SettingGet(cSetting_pymol_space_max_blue);
-    min_factor = SettingGet(cSetting_pymol_space_min_factor);
+    red_max = SettingGet(G,cSetting_pymol_space_max_red);
+    green_max = SettingGet(G,cSetting_pymol_space_max_green);
+    blue_max = SettingGet(G,cSetting_pymol_space_max_blue);
+    min_factor = SettingGet(G,cSetting_pymol_space_min_factor);
 
     FreeP(I->ColorTable);
     if(I->BigEndian)
@@ -1232,14 +1230,14 @@ int ColorTableLoad(char *fname,int quiet)
   
     I->ColorTable = table;
     if(!quiet) {
-      PRINTFB(FB_Color,FB_Actions)
+      PRINTFB(G,FB_Color,FB_Actions)
         " Color: defined table '%s'.\n",fname
-        ENDFB;
+        ENDFB(G);
     }
     
-    ColorUpdateClamp(-1);
-    ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);
-    SceneChanged();
+    ColorUpdateClamp(G,-1);
+    ExecutiveInvalidateRep(G,cKeywordAll,cRepAll,cRepInvColor);
+    SceneChanged(G);
 
   } else {
     if(strlen(fname)) {
@@ -1251,49 +1249,49 @@ int ColorTableLoad(char *fname,int quiet)
           FreeP(I->ColorTable);
           I->ColorTable = table;
           if(!quiet) {
-            PRINTFB(FB_Color,FB_Actions)
+            PRINTFB(G,FB_Color,FB_Actions)
               " Color: loaded table '%s'.\n",fname
-              ENDFB;
+              ENDFB(G);
           }
           
-          ColorUpdateClamp(-1);
+          ColorUpdateClamp(G,-1);
 
         } else {
-          PRINTFB(FB_Color,FB_Errors)
+          PRINTFB(G,FB_Color,FB_Errors)
             " ColorTableLoad-Error: invalid dimensions w x h  = %d x %d; should be 512 x 512.\n",
             width,height
-            ENDFB;
+            ENDFB(G);
           
           ok=false;      
         }
       } else {
-        PRINTFB(FB_Color,FB_Errors)
+        PRINTFB(G,FB_Color,FB_Errors)
           " ColorTableLoad-Error: unable to load '%s'.\n",fname
-          ENDFB;
+          ENDFB(G);
         ok=false;
       }
     } else {
-      PRINTFB(FB_Color,FB_Actions)
+      PRINTFB(G,FB_Color,FB_Actions)
         " Color: purged table; colors unchanged.\n"
-        ENDFB;
+        ENDFB(G);
       FreeP(I->ColorTable);
     }
   }
   if(!ok) {
     FreeP(table);
   } else {
-    ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);
-    SceneChanged();
+    ExecutiveInvalidateRep(G,cKeywordAll,cRepAll,cRepInvColor);
+    SceneChanged(G);
   }
   return(ok);
 }
 
 /*========================================================================*/
-void ColorUpdateClamp(int index)
+void ColorUpdateClamp(PyMOLGlobals *G,int index)
 {
   int i;
   int once=false;
-  CColor *I=&Color; 
+  register CColor *I=G->Color; 
   unsigned int *entry;
   float *color,*new_color;
   unsigned int r,g,b,rr,gr,br;
@@ -1407,7 +1405,7 @@ void ColorUpdateClamp(int index)
         new_color[2] = bct/255.0F;
         if(new_color[2]>1.0F) new_color[2]=1.0F;
 
-        PRINTFD(FB_Color)
+        PRINTFD(G,FB_Color)
           "%5.3f %5.3f %5.3f -> %5.3f %5.3f %5.3f\n",
                color[0],color[1],color[2],
                new_color[0],new_color[1],new_color[2]
@@ -1421,32 +1419,37 @@ void ColorUpdateClamp(int index)
   }
 }
 /*========================================================================*/
-void ColorInit(void)
+int ColorInit(PyMOLGlobals *G)
 {
-  CColor *I=&Color;
-
-  unsigned int test;
-  unsigned char *testPtr;
+  CColor *I=NULL;
   
-  test = 0xFF000000;
-  testPtr = (unsigned char*)&test;
-  I->BigEndian = (*testPtr)&&1;
+  if( (I=(G->Color=Calloc(CColor,1))) ) {
+    unsigned int test;
+    unsigned char *testPtr;
 
-  I->Color=VLAMalloc(5300,sizeof(ColorRec),5,true);
-  I->NColor=0;
-  ColorReset();
-  I->NExt=0;
-  I->Ext=VLAMalloc(10,sizeof(ExtRec),5,true);
-  I->ColorTable=NULL;
+    test = 0xFF000000;
+    testPtr = (unsigned char*)&test;
+    I->BigEndian = (*testPtr)&&1;
+    
+    I->Color=VLAMalloc(5300,sizeof(ColorRec),5,true);
+    I->NColor=0;
+    ColorReset(G);
+    I->NExt=0;
+    I->Ext=VLAMalloc(10,sizeof(ExtRec),5,true);
+    I->ColorTable=NULL;
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 /*========================================================================*/
-float *ColorGet(int index)
+float *ColorGet(PyMOLGlobals *G,int index)
 {
-  CColor *I=&Color;
+  register CColor *I=G->Color;
   float *ptr;
   if((index>=0)&&(index<I->NColor)) {
-    if(I->Color[index].ClampedFlag&&(int)SettingGet(cSetting_clamp_colors))
+    if(I->Color[index].ClampedFlag&&(int)SettingGet(G,cSetting_clamp_colors))
       ptr = I->Color[index].Clamped;
     else
       ptr = I->Color[index].Color;

@@ -36,6 +36,7 @@ int TestPyMOL_00_00(CTestPyMOL *I);
 
 int TestPyMOL_00_00(CTestPyMOL *I) 
 {
+  PyMOLGlobals *G=I->G;
   ObjectMap *obj;
   ObjectMapDesc _md,*md;
   ObjectMapState *ms =NULL;
@@ -53,21 +54,22 @@ int TestPyMOL_00_00(CTestPyMOL *I)
   }
   md->init_mode = -2;
   
-  obj = ObjectMapNew();
+  obj = ObjectMapNew(G);
   if(obj) {
-    ms = ObjectMapNewStateFromDesc(obj,md,0);    
+    ms = ObjectMapNewStateFromDesc(G,obj,md,0);    
     ms->Active=true;
   }
   if(obj) {
     ObjectSetName((CObject*)obj,"00_00");
-    ExecutiveManageObject((CObject*)obj,true,false);
+    ExecutiveManageObject(G,(CObject*)obj,true,false);
   }
   return (obj!=NULL);
 
 }
 
-int TestPyMOLRun(CTestPyMOL *I,int group,int test)
+int TestPyMOLRun(PyMOLGlobals *G,CTestPyMOL *I,int group,int test)
 {
+  I->G=G;
   switch(group) {
   case 0: /* development tests */
     switch(test) {
@@ -76,27 +78,27 @@ int TestPyMOLRun(CTestPyMOL *I,int group,int test)
       
     case 1: 
       PBlock();
-      VFontLoad(1,0,0,true); 
+      VFontLoad(G,1,0,0,true); 
       PUnblock();
       break;
     case 2: {
       CObject *obj = NULL;
       float pos[3] = {0.0,0.0,0.0};
       PBlock();
-      obj = (CObject*)ObjectCGONewVFontTest("hello",pos);
+      obj = (CObject*)ObjectCGONewVFontTest(G,"hello",pos);
       PUnblock();
       if(obj) {
         ObjectSetName(obj,"hello");
-        ExecutiveManageObject(obj,true,false);
+        ExecutiveManageObject(G,obj,true,false);
       }
     }
     break;
     case 3: {
       CObject *obj = NULL;
-      obj = (CObject*)ObjectGadgetTest();
+      obj = (CObject*)ObjectGadgetTest(G);
       if(obj)  {
         ObjectSetName(obj,"gadget");
-        ExecutiveManageObject(obj,true,false);
+        ExecutiveManageObject(G,obj,true,false);
       }
     }
     }

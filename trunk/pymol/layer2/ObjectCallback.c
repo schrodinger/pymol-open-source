@@ -51,7 +51,7 @@ static void ObjectCallbackFree(ObjectCallback *I) {
 /*========================================================================*/
 
 static void ObjectCallbackUpdate(ObjectCallback *I) {
-  SceneDirty();
+  SceneDirty(I->Obj.G);
 }
 
 /*========================================================================*/
@@ -90,7 +90,7 @@ static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable 
         }
       } else {
         if(!sobj) {
-          if(I->NState&&SettingGet(cSetting_static_singletons)) 
+          if(I->NState&&SettingGet(I->Obj.G,cSetting_static_singletons)) 
             sobj = I->State;
         }
         if(ray) {    
@@ -118,12 +118,12 @@ static int ObjectCallbackGetNStates(ObjectCallback *I)
   return(I->NState);
 }
 /*========================================================================*/
-ObjectCallback *ObjectCallbackNew(void)
+ObjectCallback *ObjectCallbackNew(PyMOLGlobals *G)
 {
-  OOAlloc(ObjectCallback);
+  OOAlloc(G,ObjectCallback);
   
-  ObjectInit((CObject*)I);
-  
+  ObjectInit(G,(CObject*)I);
+
   I->State=VLAMalloc(10,sizeof(ObjectCallbackState),5,true); /* autozero */
   I->NState=0;
   
@@ -137,12 +137,12 @@ ObjectCallback *ObjectCallbackNew(void)
   return(I);
 }
 /*========================================================================*/
-ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *pobj,int state)
+ObjectCallback *ObjectCallbackDefine(PyMOLGlobals *G,ObjectCallback *obj,PyObject *pobj,int state)
 {
   ObjectCallback *I = NULL;
 
   if(!obj) {
-    I=ObjectCallbackNew();
+    I=ObjectCallbackNew(G);
   } else {
     I=obj;
   }
@@ -164,8 +164,8 @@ ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *pobj,int stat
   if(I) {
     ObjectCallbackRecomputeExtent(I);
   }
-  SceneChanged();
-  SceneCountFrames();
+  SceneChanged(G);
+  SceneCountFrames(G);
   return(I);
 }
 /*========================================================================*/

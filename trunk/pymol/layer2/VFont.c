@@ -34,21 +34,16 @@ typedef struct {
   float *pen;
 } VFontRec;
 
-typedef struct  {
+struct _CVFont {
   VFontRec **Font;
   int NFont;
-} CVFont;
+};
 
-static CVFont VFont;
 
-VFontRec *VFontRecNew(void);
-int VFontRecLoad(VFontRec *I,PyObject *dict);
-void VFontRecFree(VFontRec *I);
-
-VFontRec *VFontRecNew(void)
+static VFontRec *VFontRecNew(PyMOLGlobals *G)
 {
   int a;
-  OOAlloc(VFontRec);
+  OOAlloc(G,VFontRec);
   for(a=0;a<=VFONT_MASK;a++) {
     I->advance[a]=0.0F;
     I->offset[a]=-1;
@@ -57,9 +52,9 @@ VFontRec *VFontRecNew(void)
   return(I);
 }
 
-int VFontWriteToCGO(int font_id,CGO *cgo,char *text,float *pos,float *scale,float *matrix)
+int VFontWriteToCGO(PyMOLGlobals *G,int font_id,CGO *cgo,char *text,float *pos,float *scale,float *matrix)
 {
-  CVFont *I=&VFont;
+  register CVFont *I=G->VFont;
   VFontRec *fr = NULL;
   int ok=true;
   float base[3],pen[3];
@@ -126,17 +121,17 @@ int VFontWriteToCGO(int font_id,CGO *cgo,char *text,float *pos,float *scale,floa
         }
       }
   } else {
-    PRINTFB(FB_VFont,FB_Errors) 
+    PRINTFB(G,FB_VFont,FB_Errors) 
       "VFontWriteToCGO-Error: invalid font identifier (%d)\n",font_id
-      ENDFB;
+      ENDFB(G);
     ok=false;
   }
   return(ok);
 }
 
-int VFontIndent(int font_id,char *text,float *pos,float *scale,float *matrix,float dir)
+int VFontIndent(PyMOLGlobals *G,int font_id,char *text,float *pos,float *scale,float *matrix,float dir)
 {
-  CVFont *I=&VFont;
+  register CVFont *I=G->VFont;
   VFontRec *fr = NULL;
   int ok=true;
   float base[3],pen[3];
@@ -163,9 +158,9 @@ int VFontIndent(int font_id,char *text,float *pos,float *scale,float *matrix,flo
         }
       }
   } else {
-    PRINTFB(FB_VFont,FB_Errors) 
+    PRINTFB(G,FB_VFont,FB_Errors) 
       "VFontIndent-Error: invalid font identifier  (%d)\n", font_id
-      ENDFB;
+      ENDFB(G);
     ok=false;
   }
   return(ok);
@@ -173,7 +168,7 @@ int VFontIndent(int font_id,char *text,float *pos,float *scale,float *matrix,flo
 
 
 
-int VFontRecLoad(VFontRec *I,PyObject *dict)
+static int VFontRecLoad(PyMOLGlobals *G,VFontRec *I,PyObject *dict)
 { /* assumes blocked Python interpreter */
   int used=0;
   int ok=true;
@@ -185,9 +180,9 @@ int VFontRecLoad(VFontRec *I,PyObject *dict)
   int n_float;
   while (PyDict_Next(dict, &pos, &key, &char_list)) {
     if(!PConvPyStrToStr(key,(char*)code,1)) {
-      PRINTFB(FB_VFont,FB_Errors) 
+      PRINTFB(G,FB_VFont,FB_Errors) 
         "VFont-Error: Bad character code."
-        ENDFB;
+        ENDFB(G);
       ok=false;
     } else {
       if(ok) ok = (char_list!=NULL);
@@ -205,7 +200,7 @@ int VFontRecLoad(VFontRec *I,PyObject *dict)
           I->offset[code[0]] = used;
           I->advance[code[0]] = adv;
           I->pen[used+n_float] = -1.0F; /* sentinel */
-          PRINTFD(FB_VFont)
+          PRINTFD(G,FB_VFont)
             " VFontRecLoad-Debug: Added '%c' adv: %0.3f n_float: %d\n",code[0],adv,n_float
             ENDFD;
           if(ok) used+=n_float+1;
@@ -217,38 +212,46 @@ int VFontRecLoad(VFontRec *I,PyObject *dict)
   return(ok);
 }
 
-void VFontRecFree(VFontRec *I)
+static void VFontRecFree(PyMOLGlobals *G,VFontRec *I)
 {
   VLAFreeP(I->pen);
   OOFreeP(I);
 }
 
-void VFontInit(void)
+int VFontInit(PyMOLGlobals *G)
 {
-  CVFont *I=&VFont;
-  I->Font=VLAlloc(VFontRec*,10);
-  I->NFont = 0;
+  register CVFont *I=NULL;
+  if( (I=(G->VFont=Calloc(CVFont,1)))) {
+    
+    register CVFont *I=G->VFont;
+    I->Font=VLAlloc(VFontRec*,10);
+    I->NFont = 0;
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
-void VFontFree(void)
+void VFontFree(PyMOLGlobals *G)
 {
-  CVFont *I=&VFont;
+  register CVFont *I=G->VFont;
   int a;
   for(a=1;a<=I->NFont;a++) {
-    VFontRecFree(I->Font[a]);
+    VFontRecFree(G,I->Font[a]);
   }
   VLAFreeP(I->Font);
+  FreeP(G->VFont);
 }
 
-int VFontLoad(float size,int face,int style,int can_load_new)
+int VFontLoad(PyMOLGlobals *G,float size,int face,int style,int can_load_new)
 { 
-  CVFont *I=&VFont;
+  register CVFont *I=G->VFont;
   VFontRec *fr;
   PyObject *vfont = NULL;
   int a;
   int result = 0;
 
-  PRINTFD(FB_VFont)
+  PRINTFD(G,FB_VFont)
     " VFontLoad-Debug: Entered %f %d %d\n",size,face,style
     ENDFD;
 
@@ -267,9 +270,9 @@ int VFontLoad(float size,int face,int style,int can_load_new)
       if(vfont) {
         if(PyDict_Check(vfont)) {
           VLACheck(I->Font,VFontRec*,I->NFont+1);
-          fr = VFontRecNew();
-          if(!VFontRecLoad(fr,vfont))
-            VFontRecFree(fr);
+          fr = VFontRecNew(G);
+          if(!VFontRecLoad(G,fr,vfont))
+            VFontRecFree(G,fr);
           else {
             I->NFont++; /* always start at 1 */
             I->Font[I->NFont]=fr;
@@ -283,7 +286,7 @@ int VFontLoad(float size,int face,int style,int can_load_new)
       }
     }
   }
-  PRINTFD(FB_VFont)
+  PRINTFD(G,FB_VFont)
     " VFontLoad-Debug: Leaving with result %d  (0 = failure)\n",result
     ENDFD;
   return(result);

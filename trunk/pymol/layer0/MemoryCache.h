@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_MemoryCache
 #define _H_MemoryCache
 
-#define _MemoryCache_OFF
+#define _MemoryCache_ON
 
 /* NOTE: at the present time, MemoryCaching is not compatible with a
    running PyMOL free of global state -- it's basically just a
@@ -71,28 +71,30 @@ Z* -------------------------------------------------------------------
 
 #ifdef _MemoryCache_ON
 
-void MemoryCacheInit(void);
-void *MemoryCacheMalloc(unsigned int size,int group_id,int block_id);
-void *MemoryCacheCalloc(unsigned int number, unsigned int size,int group_id,int block_id);
-void *MemoryCacheRealloc(void *ptr, unsigned int size,int group_id, int block_id);
-void MemoryCacheFree(void *ptr,int group_id, int block_id,int force);
-void MemoryCacheDone(void);
+#include "PyMOLGlobals.h"
+
+void MemoryCacheInit(PyMOLGlobals *G);
+void *MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id);
+void *MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id);
+void *MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id);
+void MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force);
+void MemoryCacheDone(PyMOLGlobals *G);
 
 #else
 /* memory cache off */
 
 #define MemoryCacheInit(x)
-#define MemoryCacheMalloc(size,group_id,block_id) mmalloc(size)
-#define MemoryCacheCalloc(number, size,group_id,block_id) mcalloc(number,size)
-#define MemoryCacheRealloc(ptr,size,group_id,block_id) mrealloc(ptr,size)
-#define MemoryCacheFree(ptr,group_id, block_id,force) mfree(ptr)
-#define MemoryCacheDone()
+#define MemoryCacheMalloc(G,size,group_id,block_id) mmalloc(size)
+#define MemoryCacheCalloc(G,number, size,group_id,block_id) mcalloc(number,size)
+#define MemoryCacheRealloc(G,ptr,size,group_id,block_id) mrealloc(ptr,size)
+#define MemoryCacheFree(G,ptr,group_id, block_id,force) mfree(ptr)
+#define MemoryCacheDone(x)
 
 #endif
 
-#define CacheAlloc(type,size,thread,id) (type*)MemoryCacheMalloc(sizeof(type)*(size),thread,id)
-#define CacheCalloc(type,size,thread,id) (type*)MemoryCacheCalloc(sizeof(type),size,thread,id)
-#define CacheRealloc(ptr,type,size,thread,id) (type*)MemoryCacheRealloc(ptr,sizeof(type)*(size),thread,id)
-#define CacheFreeP(ptr,thread,id,force) {if(ptr) {MemoryCacheFree(ptr,thread,id,force);ptr=NULL;}}
+#define CacheAlloc(G,type,size,thread,id) (type*)MemoryCacheMalloc(G,sizeof(type)*(size),thread,id)
+#define CacheCalloc(G,type,size,thread,id) (type*)MemoryCacheCalloc(G,sizeof(type),size,thread,id)
+#define CacheRealloc(G,ptr,type,size,thread,id) (type*)MemoryCacheRealloc(G,ptr,sizeof(type)*(size),thread,id)
+#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {MemoryCacheFree(G,ptr,thread,id,force);ptr=NULL;}}
 
 #endif

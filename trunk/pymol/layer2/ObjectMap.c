@@ -55,7 +55,7 @@ typedef struct {
 } MyArrayObject;
 #endif
 
-int ObjectMapStateGetExcludedStats(ObjectMapState *ms,float *vert_vla, float beyond,float within, float *level)
+int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla, float beyond,float within, float *level)
 {
   double sum=0.0,sumsq=0.0;
   float mean,stdev;  
@@ -73,7 +73,7 @@ int ObjectMapStateGetExcludedStats(ObjectMapState *ms,float *vert_vla, float bey
     cutoff = within;
 
   if(list_size) 
-    voxelmap=MapNew(-cutoff,vert_vla,list_size,NULL);
+    voxelmap=MapNew(G,-cutoff,vert_vla,list_size,NULL);
   if(voxelmap||(!list_size)) {
     int a,b,c;
     int h,k,l,i,j;
@@ -152,7 +152,7 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *
   return(ok);
 }
 
-static int ObjectMapStateDouble(ObjectMapState *ms)
+static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
 {
   int div[3];
   int min[3];
@@ -179,7 +179,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
     }
     fdim[3]=3;
 
-    field=IsosurfFieldAlloc(TempPyMOLGlobals,fdim);
+    field=IsosurfFieldAlloc(G,fdim);
 
     for(c=0;c<fdim[2];c++) {
       v[2]=(c+min[2])/((float)div[2]);
@@ -204,7 +204,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
         }
       }
     }
-    IsosurfFieldFree(TempPyMOLGlobals,ms->Field);
+    IsosurfFieldFree(G,ms->Field);
     for(a=0;a<3;a++) {
       ms->Min[a]=min[a];
       ms->Max[a]=max[a];
@@ -226,7 +226,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
     }
     fdim[3]=3;
 
-    field=IsosurfFieldAlloc(TempPyMOLGlobals,fdim);
+    field=IsosurfFieldAlloc(G,fdim);
 
     for(c=0;c<fdim[2];c++) {
       v[2]=ms->Origin[2]+grid[2]*(c+min[2]);
@@ -250,7 +250,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
         }
       }
     }
-    IsosurfFieldFree(TempPyMOLGlobals,ms->Field);
+    IsosurfFieldFree(G,ms->Field);
     for(a=0;a<3;a++) {
       ms->Min[a]=min[a];
       ms->Max[a]=max[a];
@@ -275,14 +275,14 @@ int ObjectMapDouble(ObjectMap *I,int state)
   if(state<0) {
     for(a=0;a<I->NState;a++) {
       if(I->State[a].Active)
-        result = result && ObjectMapStateDouble(&I->State[a]);
+        result = result && ObjectMapStateDouble(I->Obj.G,&I->State[a]);
     }
   } else if((state>=0)&&(state<I->NState)&&(I->State[state].Active)) {
-    ObjectMapStateDouble(&I->State[state]);
+    ObjectMapStateDouble(I->Obj.G,&I->State[state]);
   } else {
-    PRINTFB(FB_ObjectMap,FB_Errors)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
       " ObjectMap-Error: invalidate state.\n"
-      ENDFB;
+      ENDFB(I->Obj.G);
     result=false;
   }
   return(result);
@@ -485,7 +485,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
     return(ok);
   }
 
-int ObjectMapNumPyArrayToMapState(ObjectMapState *I,PyObject *ary);
+int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *I,PyObject *ary);
 
 static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
 {
@@ -602,7 +602,7 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap *I)
   return(PConvAutoNone(result));  
 }
 
-static int ObjectMapStateFromPyList(ObjectMapState *I,PyObject *list)
+static int ObjectMapStateFromPyList(PyMOLGlobals *G,ObjectMapState *I,PyObject *list)
 {
   int ok=true;
   int ll;
@@ -623,7 +623,7 @@ static int ObjectMapStateFromPyList(ObjectMapState *I,PyObject *list)
         if(tmp == Py_None)
           I->Crystal = NULL;
         else 
-          ok = ((I->Crystal=CrystalNewFromPyList(tmp))!=NULL);
+          ok = ((I->Crystal=CrystalNewFromPyList(G,tmp))!=NULL);
       }
       if(ok) {
         tmp = PyList_GetItem(list,2);
@@ -661,7 +661,7 @@ static int ObjectMapStateFromPyList(ObjectMapState *I,PyObject *list)
       if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,11),I->Min,3);
       if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,12),I->Max,3);
       if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,13),I->FDim,4);
-      if(ok) ok = ((I->Field=IsosurfNewFromPyList(PyList_GetItem(list,14)))!=NULL);
+      if(ok) ok = ((I->Field=IsosurfNewFromPyList(G,PyList_GetItem(list,14)))!=NULL);
       if(ok) ObjectMapStateRegeneratePoints(I);
     }
   }
@@ -676,7 +676,7 @@ static int ObjectMapAllStatesFromPyList(ObjectMap *I,PyObject *list)
   if(ok) ok=PyList_Check(list);
   if(ok) {
     for(a=0;a<I->NState;a++) {
-      ok = ObjectMapStateFromPyList(I->State+a,PyList_GetItem(list,a));
+      ok = ObjectMapStateFromPyList(I->Obj.G,I->State+a,PyList_GetItem(list,a));
       if(!ok) break;
     }
   }
@@ -696,7 +696,7 @@ PyObject *ObjectMapAsPyList(ObjectMap *I)
   return(PConvAutoNone(result));  
 }
 
-int ObjectMapNewFromPyList(PyObject *list,ObjectMap **result)
+int ObjectMapNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMap **result)
 {
   int ok = true;
   int ll;
@@ -708,10 +708,10 @@ int ObjectMapNewFromPyList(PyObject *list,ObjectMap **result)
   if(ok) ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
-  I=ObjectMapNew();
+  I=ObjectMapNew(G);
   if(ok) ok = (I!=NULL);
 
-  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(G,PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
   if(ok) ok = ObjectMapAllStatesFromPyList(I,PyList_GetItem(list,2));
   if(ok) {
@@ -744,7 +744,7 @@ ObjectMapState *ObjectMapStatePrime(ObjectMap *I,int state)
     I->NState=state+1;
   }
   ms=&I->State[state];
-  ObjectMapStateInit(ms);
+  ObjectMapStateInit(I->Obj.G,ms);
   return(ms);
 }
 
@@ -779,7 +779,7 @@ void ObjectMapUpdateExtents(ObjectMap *I)
         }
       }
   }
-  PRINTFD(FB_ObjectMap)
+  PRINTFD(I->Obj.G,FB_ObjectMap)
     " ObjectMapUpdateExtents-DEBUG: ExtentFlag %d\n",I->Obj.ExtentFlag
     ENDFD;
 }
@@ -815,10 +815,10 @@ int ObjectMapStateSetBorder(ObjectMapState *I,float level)
   return(result);
 }
 
-void ObjectMapStatePurge(ObjectMapState *I)
+void ObjectMapStatePurge(PyMOLGlobals *G,ObjectMapState *I)
 {
   if(I->Field) {
-    IsosurfFieldFree(TempPyMOLGlobals,I->Field);
+    IsosurfFieldFree(G,I->Field);
     I->Field=NULL;
   }
   FreeP(I->Origin);
@@ -834,7 +834,7 @@ static void ObjectMapFree(ObjectMap *I) {
   int a;
   for(a=0;a<I->NState;a++) {
     if(I->State[a].Active)
-      ObjectMapStatePurge(I->State+a);
+      ObjectMapStatePurge(I->Obj.G,I->State+a);
   }
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
@@ -842,7 +842,7 @@ static void ObjectMapFree(ObjectMap *I) {
 }
 
 static void ObjectMapUpdate(ObjectMap *I) {
-  SceneDirty();
+  SceneDirty(I->Obj.G);
 }
 
 static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int pass)
@@ -859,7 +859,7 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
       if(I->Obj.RepVis[cRepExtent]) {
         if(ray) {
           float *vc;
-          vc = ColorGet(I->Obj.Color);
+          vc = ColorGet(I->Obj.G,I->Obj.Color);
           ray->fColor3fv(ray,vc);
           ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[1],0.20F,vc,vc);
           ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[2],0.20F,vc,vc);
@@ -922,10 +922,10 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
   }
 }
 
-void ObjectMapStateInit(ObjectMapState *I) 
+void ObjectMapStateInit(PyMOLGlobals *G,ObjectMapState *I) 
 {
-  ObjectMapStatePurge(I);
-  I->Crystal = CrystalNew();
+  ObjectMapStatePurge(G,I);
+  I->Crystal = CrystalNew(G);
   I->Field = NULL;
   I->Origin = NULL;
   I->Dim = NULL;
@@ -937,11 +937,11 @@ int ObjectMapGetNStates(ObjectMap *I)
   return(I->NState);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapNew(void)
+ObjectMap *ObjectMapNew(PyMOLGlobals *G)
 {
-  OOAlloc(ObjectMap);
+  OOAlloc(G,ObjectMap);
 
-  ObjectInit((CObject*)I);
+  ObjectInit(G,(CObject*)I);
   I->Obj.type = cObjectMap;
 
   
@@ -958,7 +958,7 @@ ObjectMap *ObjectMapNew(void)
   return(I);
 }
 /*========================================================================*/
-ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int state)
+ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMapDesc *md,int state)
 {
   int ok=true;
   float v[3];
@@ -987,14 +987,14 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
       if((md->Dim[a]*md->Grid[a])<v[a]) md->Dim[a]++;
     }
 
-    PRINTFB(FB_ObjectMap,FB_Blather)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
       " ObjectMap: Dim %d %d %d\n",md->Dim[0],md->Dim[1],md->Dim[2]
-      ENDFB;
+      ENDFB(I->Obj.G);
 
     average3f(md->MaxCorner,md->MinCorner,v);
     for(a=0;a<3;a++) { md->MinCorner[a] = v[a]-0.5F*md->Dim[a]*md->Grid[a]; }
 
-    if(Feedback(FB_ObjectMap,FB_Blather)) {
+    if(Feedback(I->Obj.G,FB_ObjectMap,FB_Blather)) {
       dump3f(md->MinCorner," ObjectMap: MinCorner:");
       dump3f(md->MaxCorner," ObjectMap: MaxCorner:");
       dump3f(md->Grid," ObjectMap: Grid:");
@@ -1033,7 +1033,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
     for(a=0;a<3;a++) ms->FDim[a] = ms->Max[a]-ms->Min[a]+1;
     ms->FDim[3] = 3; 
 
-    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+    ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
     if(!ms->Field) 
       ok=false;
     else {
@@ -1092,13 +1092,13 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
     ObjectMapUpdateExtents(I);
   }
   if(!ok) {
-    ErrMessage("ObjectMap","Unable to create map");
+    ErrMessage(I->Obj.G,"ObjectMap","Unable to create map");
     ObjectMapFree(I);
     I=NULL;
   } else {
-    PRINTFB(FB_ObjectMap,FB_Actions) 
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Actions) 
       " ObjectMap: Map created.\n"
-      ENDFB;
+      ENDFB(I->Obj.G);
   }
   
   return(ms);
@@ -1137,9 +1137,9 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     I->NState=state+1;
   }
   ms=&I->State[state];
-  ObjectMapStateInit(ms);
+  ObjectMapStateInit(I->Obj.G,ms);
 
-  normalize=(int)SettingGet(cSetting_normalize_ccp4_maps);
+  normalize=(int)SettingGet(I->Obj.G,cSetting_normalize_ccp4_maps);
   maxd = FLT_MIN;
   mind = FLT_MAX;
   p=CCP4Str;
@@ -1147,15 +1147,15 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   map_endian = (*p||*(p+1));
 
   if(bytes<256*sizeof(int)) {
-    PRINTFB(FB_ObjectMap,FB_Errors)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
       " ObjectMapCCP4: Map appears to be truncated -- aborting."
-      ENDFB;
+      ENDFB(I->Obj.G);
     return(0);
   }
   if(little_endian!=map_endian) {
-    PRINTFB(FB_ObjectMap,FB_Blather)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
       " ObjectMapCCP4: Map appears to be reverse endian, swapping...\n"
-      ENDFB;
+      ENDFB(I->Obj.G);
     c = bytes;
     u = (unsigned int*)p;
     uc = (unsigned char *)u;
@@ -1177,84 +1177,84 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   nc=*(i++); /* columns */
   nr=*(i++); /* rows */
   ns=*(i++); /* sections */
-  PRINTFB(FB_ObjectMap,FB_Blather)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
     " ObjectMapCCP4: NC %d   NR %d   NS %d\n",
     nc,nr,ns
-    ENDFB;
+    ENDFB(I->Obj.G);
   map_mode = *(i++); /* mode */
 
   
   if(map_mode!=2) {
-    PRINTFB(FB_ObjectMap,FB_Errors)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
       "ObjectMapCCP4-ERR: Only map mode 2 currently supported (this map is mode %d)",map_mode
-      ENDFB;
+      ENDFB(I->Obj.G);
     return(0);
   }
 
-  PRINTFB(FB_ObjectMap,FB_Blather)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
     " ObjectMapCCP4: Map is mode %d.\n",map_mode
-    ENDFB;
+    ENDFB(I->Obj.G);
 
   ncstart = *(i++);
   nrstart = *(i++);
   nsstart = *(i++);
 
-  PRINTFB(FB_ObjectMap,FB_Blather)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
     " ObjectMapCCP4: NCSTART %d   NRSTART %d   NSSTART  %d\n",
     ncstart,nrstart,nsstart
-    ENDFB;
+    ENDFB(I->Obj.G);
 
   nx = *(i++);
   ny = *(i++);
   nz = *(i++);
 
-  PRINTFB(FB_ObjectMap,FB_Blather)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
     " ObjectMapCCP4: NX %d   NY %d   NZ  %d \n",
     nx,ny,nz
-    ENDFB;
+    ENDFB(I->Obj.G);
 
   xlen = *(float*)(i++);
   ylen = *(float*)(i++);
   zlen = *(float*)(i++);
 
-  PRINTFB(FB_ObjectMap,FB_Blather)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
     " ObjectMapCCP4: X %8.3f   Y %8.3f  Z  %8.3f \n",
     xlen,ylen,zlen
-    ENDFB;
+    ENDFB(I->Obj.G);
 
   alpha = *(float*)(i++);
   beta = *(float*)(i++);
   gamma = *(float*)(i++);
 
-  PRINTFB(FB_ObjectMap,FB_Blather)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
     " ObjectMapCCP4: alpha %8.3f   beta %8.3f  gamma %8.3f \n",
     alpha,beta,gamma
-    ENDFB;
+    ENDFB(I->Obj.G);
 
   mapc = *(i++);
   mapr = *(i++);
   maps = *(i++);
 
-  PRINTFB(FB_ObjectMap,FB_Blather)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
     " ObjectMapCCP4: MAPC %d   MAPR %d  MAPS  %d \n",
     mapc,mapr,maps
-    ENDFB;
+    ENDFB(I->Obj.G);
 
   i+=4;
   n_skip = *(i++);
   
   if(*(i++)) {
-    PRINTFB(FB_ObjectMap,FB_Errors)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
       "ObjectMapCCP4-ERR: PyMOL doesn't know how to handle skewed maps. Sorry!\n"
-      ENDFB;
+      ENDFB(I->Obj.G);
     return(0);
   }
 
   n_pts = nc*ns*nr;
   if((unsigned)bytes<(n_skip + sizeof(int)*(256+n_pts))) {
-    PRINTFB(FB_ObjectMap,FB_Errors)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
       " ObjectMapCCP4: Map appears to be truncated -- aborting.\n"
-      ENDFB;
+      ENDFB(I->Obj.G);
     return(0);
   }
 
@@ -1272,15 +1272,15 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     stdev = (float)sqrt1d((sumsq - (sum*sum/n_pts))/(n_pts-1));
 
     if(normalize) {
-      PRINTFB(FB_ObjectMap,FB_Details)
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
         " ObjectMapCCP4: Normalizing with mean = %8.6f and stdev = %8.6f.\n",
         mean,stdev
-        ENDFB;
+        ENDFB(I->Obj.G);
     } else {
-      PRINTFB(FB_ObjectMap,FB_Details)
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
         " ObjectMapCCP4: Map will not be normalized.\n ObjectMapCCP4: Current mean = %8.6f and stdev = %8.6f.\n",
         mean,stdev
-        ENDFB;
+        ENDFB(I->Obj.G);
     }
 
     if(stdev<0.000001)
@@ -1320,7 +1320,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   ms->Min[maps] = nsstart;
   ms->Max[maps] = ns+nsstart-1;
 
-  if(Feedback(FB_ObjectMap,FB_Blather)) {
+  if(Feedback(I->Obj.G,FB_ObjectMap,FB_Blather)) {
     dump3i(ms->Div,"ms->Div");
     dump3i(ms->Min,"ms->Min");
     dump3i(ms->Max,"ms->Max");
@@ -1342,7 +1342,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   else {
     CrystalUpdate(ms->Crystal);
     CrystalDump(ms->Crystal);
-    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+    ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
     ms->MapSource = cMapSourceCCP4;
     ms->Field->save_points=false;
 
@@ -1388,9 +1388,9 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
       }
   }
 
-  PRINTFB(FB_Details,FB_ObjectMap) 
+  PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
     " ObjectMapCCP4: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
-    ENDFB;
+    ENDFB(I->Obj.G);
   
   if(ok) {
     v[2]=(ms->Min[2])/((float)ms->Div[2]);
@@ -1420,7 +1420,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   fflush(stdout);
 #endif
   if(!ok) {
-    ErrMessage("ObjectMap","Error reading map");
+    ErrMessage(I->Obj.G,"ObjectMap","Error reading map");
   } else {
     ms->Active=true;
     ObjectMapUpdateExtents(I);
@@ -1457,7 +1457,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
     I->NState=state+1;
   }
   ms=&I->State[state];
-  ObjectMapStateInit(ms);
+  ObjectMapStateInit(I->Obj.G,ms);
 
   maxd = FLT_MIN;
   mind = FLT_MAX;
@@ -1471,22 +1471,22 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   p+=4;
 
   ParseNCopy(cc,p,20);
-  PRINTFB(FB_ObjectMap,FB_Details)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
     " PHIStrToMap: %s\n",cc
-    ENDFB;
+    ENDFB(I->Obj.G);
   p+=20;
   p+=4;
 
   p+=4;
   ParseNCopy(cc,p,10);
-  PRINTFB(FB_ObjectMap,FB_Details)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
     " PHIStrToMap: %s\n",cc
-    ENDFB;
+    ENDFB(I->Obj.G);
   p+=10;
   ParseNCopy(cc,p,60);
-  PRINTFB(FB_ObjectMap,FB_Details)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
     " PHIStrToMap: %s\n",cc
-    ENDFB;
+    ENDFB(I->Obj.G);
   p+=60;
   p+=4;
 
@@ -1511,9 +1511,9 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   if((4*map_dim*map_dim*map_dim)!=map_bytes) /* consistency check */
     map_dim = 65;
 
-  PRINTFB(FB_Details,FB_ObjectMap) 
+  PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
       " PHIStrToMap: Map Size %d x %d x %d\n",map_dim,map_dim,map_dim
-      ENDFB;
+      ENDFB(I->Obj.G);
   p+=4;
 
   ms->FDim[0] = map_dim;
@@ -1531,7 +1531,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   ms->Max[1] = ms->Div[1];
   ms->Max[2] = ms->Div[2];
 
-  ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+  ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
   ms->MapSource = cMapSourcePHI;
   ms->Field->save_points=false;
 
@@ -1564,9 +1564,9 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
 
   p+=4;
   ParseNCopy(cc,p,16);
-  PRINTFB(FB_ObjectMap,FB_Details)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
     " PHIStrToMap: %s\n",cc
-    ENDFB;
+    ENDFB(I->Obj.G);
   p+=16;
   p+=4;
 
@@ -1696,7 +1696,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   */
 
   if(!ok) {
-    ErrMessage("ObjectMap","Error reading map");
+    ErrMessage(I->Obj.G,"ObjectMap","Error reading map");
   } else {
     ms->Active=true;
     ObjectMapUpdateExtents(I);
@@ -1722,7 +1722,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
   }
 
   ms=&I->State[state];
-  ObjectMapStateInit(ms);
+  ObjectMapStateInit(I->Obj.G,ms);
 
   maxd = FLT_MIN;
   mind = FLT_MAX;
@@ -1781,7 +1781,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
       ok=false;
     else {
       CrystalUpdate(ms->Crystal);
-      ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+      ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
       ms->MapSource = cMapSourceXPLOR;
       ms->Field->save_points=false;
       for(c=0;c<ms->FDim[2];c++)
@@ -1860,7 +1860,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
     fflush(stdout);
 #endif
   if(!ok) {
-    ErrMessage("ObjectMap","Error reading map");
+    ErrMessage(I->Obj.G,"ObjectMap","Error reading map");
   } else {
     ms->Active=true;
     ObjectMapUpdateExtents(I);
@@ -1907,7 +1907,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     I->NState=state+1;
   }
   ms=&I->State[state];
-  ObjectMapStateInit(ms);
+  ObjectMapStateInit(I->Obj.G,ms);
 
   maxd = FLT_MIN;
   mind = FLT_MAX;
@@ -2063,9 +2063,9 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     subtract3f(ms->ExtentMax,ms->ExtentMin,ms->Range);
     ms->FDim[3] = 3;
 
-    PRINTFB(FB_Details,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
       " FLDStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
-      ENDFB;
+      ENDFB(I->Obj.G);
       
     for(a=0;a<3;a++) {
       ms->Min[a] = 0;
@@ -2078,7 +2078,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
         ms->Grid[a]=0.0F;
     }
 
-    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+    ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
     ms->MapSource = cMapSourceFLD;
     ms->Field->save_points=false;
 
@@ -2189,9 +2189,9 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
       
   } else {
-    PRINTFB(FB_Errors,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_Errors,FB_ObjectMap) 
       " Error: unable to read FLD file.\n"
-      ENDFB;
+      ENDFB(I->Obj.G);
             /*  printf(" got_ndim %d\n",got_ndim);
     printf(" got_dim1 %d\n",got_dim1);
     printf(" got_dim2 %d\n",got_dim2);
@@ -2235,15 +2235,15 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
   int normalize;
   int swap_bytes;
 
-  normalize=(int)SettingGet(cSetting_normalize_o_maps);
-  swap_bytes=(int)SettingGet(cSetting_swap_dsn6_bytes);
+  normalize=(int)SettingGet(I->Obj.G,cSetting_normalize_o_maps);
+  swap_bytes=(int)SettingGet(I->Obj.G,cSetting_swap_dsn6_bytes);
   if(state<0) state=I->NState;
   if(I->NState<=state) {
     VLACheck(I->State,ObjectMapState,state);
     I->NState=state+1;
   }
   ms=&I->State[state];
-  ObjectMapStateInit(ms);
+  ObjectMapStateInit(I->Obj.G,ms);
 
   maxd = FLT_MIN;
   mind = FLT_MAX;
@@ -2268,7 +2268,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       if(!got_origin) {
         pp=ParseWordCopy(cc,p,6);
-        if(WordMatch("origin",cc,true)<0) {
+        if(WordMatch(I->Obj.G,"origin",cc,true)<0) {
           p = ParseWordCopy(cc,pp,50);
           if(sscanf(cc,"%d",&ms->Min[0])==1) {
             p = ParseWordCopy(cc,p,50);
@@ -2284,7 +2284,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       if(!got_extent) {
         pp=ParseWordCopy(cc,p,6);
-        if(WordMatch("extent",cc,true)<0) {
+        if(WordMatch(I->Obj.G,"extent",cc,true)<0) {
           p = ParseWordCopy(cc,pp,50);
           if(sscanf(cc,"%d",&ms->Max[0])==1) {
             p = ParseWordCopy(cc,p,50);
@@ -2304,7 +2304,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       if(!got_grid) {
         pp=ParseWordCopy(cc,p,4);
-        if(WordMatch("grid",cc,true)<0) {
+        if(WordMatch(I->Obj.G,"grid",cc,true)<0) {
           p = ParseWordCopy(cc,pp,50);
           if(sscanf(cc,"%d",&ms->Div[0])==1) {
             p = ParseWordCopy(cc,p,50);
@@ -2320,7 +2320,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       if(!got_cell) {
         pp = ParseWordCopy(cc,p,4);
-        if(WordMatch("cell",cc,true)<0) {
+        if(WordMatch(I->Obj.G,"cell",cc,true)<0) {
           p = ParseWordCopy(cc,pp,50);
           
           if(sscanf(cc,"%f",&ms->Crystal->Dim[0])==1) {
@@ -2346,7 +2346,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       if(!got_plus) {
         pp=ParseWordCopy(cc,p,4);
-        if(WordMatch("plus",cc,true)<0) {
+        if(WordMatch(I->Obj.G,"plus",cc,true)<0) {
           p = ParseWordCopy(cc,pp,50);
           if(sscanf(cc,"%f",&plus)==1) {
             got_plus=true;
@@ -2356,7 +2356,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       if(!got_prod) {
         pp=ParseWordCopy(cc,p,4);
-        if(WordMatch("prod",cc,true)<0) {
+        if(WordMatch(I->Obj.G,"prod",cc,true)<0) {
           p = ParseWordCopy(cc,pp,50);
           if(sscanf(cc,"%f",&prod)==1) {
             got_prod=true;
@@ -2366,7 +2366,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       if(!got_sigma) {
         pp = ParseWordCopy(cc,p,5);
-        if(WordMatch("sigma",cc,true)<0) {
+        if(WordMatch(I->Obj.G,"sigma",cc,true)<0) {
           p = ParseWordCopy(cc,pp,50);
           if(sscanf(cc,"%f",&sigma)==1) {
             got_sigma=true;
@@ -2415,9 +2415,9 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
     }
     
     if(!passed_endian_check) {
-      PRINTFB(FB_Errors,FB_ObjectMap) 
+      PRINTFB(I->Obj.G,FB_Errors,FB_ObjectMap) 
         " Error: This looks like a DSN6 map file, but I can't match endianness.\n"
-        ENDFB;
+        ENDFB(I->Obj.G);
     } else {
       shint_ptr = (short int*)p;
       
@@ -2470,9 +2470,9 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
      got_prod) {
 
     
-    PRINTFB(FB_Blather,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_Blather,FB_ObjectMap) 
       " BRIXStrToMap: Prod = %8.3f, Plus = %8.3f\n",prod,plus
-      ENDFB;
+      ENDFB(I->Obj.G);
 
     ms->FDim[0]=ms->Max[0]-ms->Min[0]+1;
     ms->FDim[1]=ms->Max[1]-ms->Min[1]+1;
@@ -2482,7 +2482,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       ok=false;
     else {
       CrystalUpdate(ms->Crystal);
-      ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+      ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
       ms->MapSource = cMapSourceBRIX;
       ms->Field->save_points=false;
       
@@ -2586,28 +2586,28 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
       
-      PRINTFB(FB_Details,FB_ObjectMap) 
+      PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
         " BRIXStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
-        ENDFB;
+        ENDFB(I->Obj.G);
 
       if(got_sigma) {
-        PRINTFB(FB_Details,FB_ObjectMap) 
+        PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
           " BRIXStrToMap: Reported Sigma = %8.3f\n",sigma
-          ENDFB;
+          ENDFB(I->Obj.G);
       }
 
-      PRINTFB(FB_Details,FB_ObjectMap)
+      PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap)
         " BRIXStrToMap: Range = %5.6f to %5.6f\n",mind,maxd
-        ENDFB;
+        ENDFB(I->Obj.G);
 
-      PRINTFB(FB_Details,FB_ObjectMap) 
+      PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
         " BRIXStrToMap: Calculated Mean = %8.3f, Sigma = %8.3f\n",calc_mean,calc_sigma
-        ENDFB;
+        ENDFB(I->Obj.G);
 
       if(normalize) {
-        PRINTFB(FB_Details,FB_ObjectMap) 
+        PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
           " BRIXStrToMap: Normalizing...\n"
-          ENDFB;
+          ENDFB(I->Obj.G);
       }
 
       ms->Active=true;
@@ -2615,9 +2615,9 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
 
     }
   } else {
-    PRINTFB(FB_Errors,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_Errors,FB_ObjectMap) 
       " Error: unable to read BRIX/DSN6 file.\n"
-      ENDFB;
+      ENDFB(I->Obj.G);
   }
   
   
@@ -2650,8 +2650,8 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     I->NState=state+1;
   }
   ms=&I->State[state];
-  ObjectMapStateInit(ms);
-  normalize=(int)SettingGet(cSetting_normalize_grd_maps);
+  ObjectMapStateInit(I->Obj.G,ms);
+  normalize=(int)SettingGet(I->Obj.G,cSetting_normalize_grd_maps);
   maxd = FLT_MIN;
   mind = FLT_MAX;
   
@@ -2661,7 +2661,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
 
   p = ParseNCopy(cc,p,100);
 
-  PRINTFB(FB_ObjectMap,FB_Details)
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
     " ObjectMap: %s\n",cc
     ENDFD;
 
@@ -2759,7 +2759,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
 
     ms->FDim[3]=3;
 
-    if(Feedback(FB_ObjectMap,FB_Blather)) {
+    if(Feedback(I->Obj.G,FB_ObjectMap,FB_Blather)) {
       dump3i(ms->Div,"ms->Div");
       dump3i(ms->Min,"ms->Min");
       dump3i(ms->Max,"ms->Max");
@@ -2767,7 +2767,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     }
 
     CrystalUpdate(ms->Crystal);
-    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+    ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
     ms->MapSource = cMapSourceGRD;
     ms->Field->save_points=false;
 
@@ -2810,10 +2810,10 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     stdev = (float)sqrt1d((sumsq - (sum*sum/n_pts))/(n_pts-1));
 
     if(normalize) {
-      PRINTFB(FB_ObjectMap,FB_Details)
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
         " ObjectMapGRDStrToMap: Normalizing: mean = %8.6f and stdev = %8.6f.\n",
         mean,stdev
-        ENDFB;
+        ENDFB(I->Obj.G);
       if(stdev<R_SMALL8)
         stdev = 1.0F;
       for(c=0;c<ms->FDim[2];c++)
@@ -2824,10 +2824,10 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
           }
         }
     } else {
-      PRINTFB(FB_ObjectMap,FB_Details)
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
         " ObjectMapGRDStrToMap: Mean = %8.6f and stdev = %8.6f.\n",
         mean,stdev
-        ENDFB;
+        ENDFB(I->Obj.G);
     }
   }
 
@@ -2859,25 +2859,25 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     
     transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
     
-    PRINTFB(FB_Details,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
       " GRDXStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
-      ENDFB;
+      ENDFB(I->Obj.G);
     
     ms->Active=true;
     ObjectMapUpdateExtents(I);
     printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
 
   } else {
-    PRINTFB(FB_Errors,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_Errors,FB_ObjectMap) 
       " Error: unable to read GRD file.\n"
-      ENDFB;
+      ENDFB(I->Obj.G);
   }
   
   return(ok);
   
 }
 /*========================================================================*/
-ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state)
+ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int state)
 {
   int ok=true;
   int isNew = true;
@@ -2888,19 +2888,19 @@ ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state)
 	 isNew=false;
   if(ok) {
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
 	 }
     ObjectMapXPLORStrToMap(I,XPLORStr,state);
-    SceneChanged();
-    SceneCountFrames();
+    SceneChanged(I->Obj.G);
+    SceneCountFrames(I->Obj.G);
   }
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int state)
+ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int bytes,int state)
 {
   int ok=true;
   int isNew = true;
@@ -2911,19 +2911,19 @@ ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int state)
 	 isNew=false;
   if(ok) {
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
 	 }
     ObjectMapCCP4StrToMap(I,XPLORStr,bytes,state);
-    SceneChanged();
-    SceneCountFrames();
+    SceneChanged(G);
+    SceneCountFrames(G);
   }
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadCCP4File(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -2934,10 +2934,10 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state)
 
   f=fopen(fname,"rb");
   if(!f)
-	 ok=ErrMessage("ObjectMapLoadCCP4File","Unable to open file!");
+	 ok=ErrMessage(G,"ObjectMapLoadCCP4File","Unable to open file!");
   else
 	 {
-		if(Feedback(FB_ObjectMap,FB_Actions))
+		if(Feedback(G,FB_ObjectMap,FB_Actions))
 		  {
 			printf(" ObjectMapLoadCCP4File: Loading from '%s'.\n",fname);
 		  }
@@ -2947,13 +2947,13 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state)
 		fseek(f,0,SEEK_SET);
 
 		buffer=(char*)mmalloc(size);
-		ErrChkPtr(buffer);
+		ErrChkPtr(G,buffer);
 		p=buffer;
 		fseek(f,0,SEEK_SET);
 		fread(p,size,1,f);
 		fclose(f);
 
-		I=ObjectMapReadCCP4Str(obj,buffer,size,state);
+		I=ObjectMapReadCCP4Str(G,obj,buffer,size,state);
 
 		mfree(buffer);
       if(state<0)
@@ -2977,7 +2977,7 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state)
 
 }
 /*========================================================================*/
-static ObjectMap *ObjectMapReadFLDStr(ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadFLDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
 {
   int ok=true;
   int isNew = true;
@@ -2988,20 +2988,20 @@ static ObjectMap *ObjectMapReadFLDStr(ObjectMap *I,char *MapStr,int bytes,int st
 	 isNew=false;
   if(ok) {
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
 	 }
     ObjectMapFLDStrToMap(I,MapStr,bytes,state);
-    SceneChanged();
-    SceneCountFrames();
+    SceneChanged(G);
+    SceneCountFrames(G);
   }
   return(I);
 }
 
 /*========================================================================*/
-static ObjectMap *ObjectMapReadBRIXStr(ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadBRIXStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
 {
   int ok=true;
   int isNew = true;
@@ -3012,19 +3012,19 @@ static ObjectMap *ObjectMapReadBRIXStr(ObjectMap *I,char *MapStr,int bytes,int s
 	 isNew=false;
   if(ok) {
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
 	 }
     ObjectMapBRIXStrToMap(I,MapStr,bytes,state);
-    SceneChanged();
-    SceneCountFrames();
+    SceneChanged(G);
+    SceneCountFrames(G);
   }
   return(I);
 }
 /*========================================================================*/
-static ObjectMap *ObjectMapReadGRDStr(ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadGRDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
 {
   int ok=true;
   int isNew = true;
@@ -3035,20 +3035,20 @@ static ObjectMap *ObjectMapReadGRDStr(ObjectMap *I,char *MapStr,int bytes,int st
 	 isNew=false;
   if(ok) {
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
 	 }
     ObjectMapGRDStrToMap(I,MapStr,bytes,state);
-    SceneChanged();
-    SceneCountFrames();
+    SceneChanged(G);
+    SceneCountFrames(G);
   }
   return(I);
 }
 
 /*========================================================================*/
-static ObjectMap *ObjectMapReadPHIStr(ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadPHIStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
 {
   int ok=true;
   int isNew = true;
@@ -3059,19 +3059,19 @@ static ObjectMap *ObjectMapReadPHIStr(ObjectMap *I,char *MapStr,int bytes,int st
 	 isNew=false;
   if(ok) {
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
 	 }
     ObjectMapPHIStrToMap(I,MapStr,bytes,state);
-    SceneChanged();
-    SceneCountFrames();
+    SceneChanged(G);
+    SceneCountFrames(G);
   }
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -3082,10 +3082,10 @@ ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state)
 
   f=fopen(fname,"rb");
   if(!f)
-	 ok=ErrMessage("ObjectMapLoadPHIFile","Unable to open file!");
+	 ok=ErrMessage(G,"ObjectMapLoadPHIFile","Unable to open file!");
   else
 	 {
-		if(Feedback(FB_ObjectMap,FB_Actions))
+		if(Feedback(G,FB_ObjectMap,FB_Actions))
 		  {
 			printf(" ObjectMapLoadPHIFile: Loading from '%s'.\n",fname);
 		  }
@@ -3095,13 +3095,13 @@ ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state)
 		fseek(f,0,SEEK_SET);
 
 		buffer=(char*)mmalloc(size);
-		ErrChkPtr(buffer);
+		ErrChkPtr(G,buffer);
 		p=buffer;
 		fseek(f,0,SEEK_SET);
 		fread(p,size,1,f);
 		fclose(f);
 
-		I=ObjectMapReadPHIStr(obj,buffer,size,state);
+		I=ObjectMapReadPHIStr(G,obj,buffer,size,state);
 
 		mfree(buffer);
       if(state<0)
@@ -3142,7 +3142,7 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
     I->NState=state+1;
   }
   ms=&I->State[state];
-  ObjectMapStateInit(ms);
+  ObjectMapStateInit(I->Obj.G,ms);
 
   ms->Origin=Alloc(float,3);
   ms->Grid = Alloc(float,3);
@@ -3173,9 +3173,9 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   }
 
   if(ok&&(stage==1)) {
-    PRINTFB(FB_ObjectMap,FB_Details)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
       " DXStrToMap: Dimensions: %d %d %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
-      ENDFB;
+      ENDFB(I->Obj.G);
   }
 
   /* get the origin */
@@ -3199,9 +3199,9 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   }
 
   if(ok&&(stage==2)) {
-    PRINTFB(FB_ObjectMap,FB_Details)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
       " DXStrToMap: Origin %8.3f %8.3f %8.3f\n",ms->Origin[0],ms->Origin[1],ms->Origin[2]
-      ENDFB;
+      ENDFB(I->Obj.G);
   }
 
 
@@ -3231,9 +3231,9 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   }
 
   if(ok&&(stage==3)) {
-    PRINTFB(FB_ObjectMap,FB_Details)
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
       " DXStrToMap: Grid %8.3f %8.3f %8.3f\n",ms->Grid[0],ms->Grid[1],ms->Grid[2]
-      ENDFB;
+      ENDFB(I->Obj.G);
   }
 
   while(ok&&(*p)&&(stage==3)) {  
@@ -3257,12 +3257,12 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   if(stage == 4) {
 
     if(ok&&(stage==4)) {
-      PRINTFB(FB_ObjectMap,FB_Details)
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
         " DXStrToMap: %d data points.\n",n_items
-        ENDFB;
+        ENDFB(I->Obj.G);
     }
     
-    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+    ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
     ms->MapSource = cMapSourcePHI;
     ms->Field->save_points=false;
     
@@ -3333,7 +3333,7 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
     ok=false;
 
   if(!ok) {
-    ErrMessage("ObjectMap","Error reading map");
+    ErrMessage(I->Obj.G,"ObjectMap","Error reading map");
   } else {
     ms->Active=true;
     ObjectMapUpdateExtents(I);
@@ -3343,7 +3343,7 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
 }
 
 /*========================================================================*/
-static ObjectMap *ObjectMapReadDXStr(ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
 {
   int ok=true;
   int isNew = true;
@@ -3354,20 +3354,20 @@ static ObjectMap *ObjectMapReadDXStr(ObjectMap *I,char *MapStr,int bytes,int sta
 	 isNew=false;
   if(ok) {
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
 	 }
     ObjectMapDXStrToMap(I,MapStr,bytes,state);
-    SceneChanged();
-    SceneCountFrames();
+    SceneChanged(G);
+    SceneCountFrames(G);
   }
   return(I);
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadDXFile(ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -3378,10 +3378,10 @@ ObjectMap *ObjectMapLoadDXFile(ObjectMap *obj,char *fname,int state)
 
   f=fopen(fname,"rb");
   if(!f)
-	 ok=ErrMessage("ObjectMapLoadDXFile","Unable to open file!");
+	 ok=ErrMessage(G,"ObjectMapLoadDXFile","Unable to open file!");
   else
 	 {
-		if(Feedback(FB_ObjectMap,FB_Actions))
+		if(Feedback(G,FB_ObjectMap,FB_Actions))
 		  {
 			printf(" ObjectMapLoadDXFile: Loading from '%s'.\n",fname);
 		  }
@@ -3391,13 +3391,13 @@ ObjectMap *ObjectMapLoadDXFile(ObjectMap *obj,char *fname,int state)
 		fseek(f,0,SEEK_SET);
 
 		buffer=(char*)mmalloc(size);
-		ErrChkPtr(buffer);
+		ErrChkPtr(G,buffer);
 		p=buffer;
 		fseek(f,0,SEEK_SET);
 		fread(p,size,1,f);
 		fclose(f);
 
-		I=ObjectMapReadDXStr(obj,buffer,size,state);
+		I=ObjectMapReadDXStr(G,obj,buffer,size,state);
 
 		mfree(buffer);
       if(state<0)
@@ -3415,7 +3415,7 @@ ObjectMap *ObjectMapLoadDXFile(ObjectMap *obj,char *fname,int state)
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -3426,10 +3426,10 @@ ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state)
 
   f=fopen(fname,"rb");
   if(!f)
-	 ok=ErrMessage("ObjectMapLoadFLDFile","Unable to open file!");
+	 ok=ErrMessage(G,"ObjectMapLoadFLDFile","Unable to open file!");
   else
 	 {
-		if(Feedback(FB_ObjectMap,FB_Actions))
+		if(Feedback(G,FB_ObjectMap,FB_Actions))
 		  {
 			printf(" ObjectMapLoadFLDFile: Loading from '%s'.\n",fname);
 		  }
@@ -3439,13 +3439,13 @@ ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state)
 		fseek(f,0,SEEK_SET);
 
 		buffer=(char*)mmalloc(size);
-		ErrChkPtr(buffer);
+		ErrChkPtr(G,buffer);
 		p=buffer;
 		fseek(f,0,SEEK_SET);
 		fread(p,size,1,f);
 		fclose(f);
 
-		I=ObjectMapReadFLDStr(obj,buffer,size,state);
+		I=ObjectMapReadFLDStr(G,obj,buffer,size,state);
 
 		mfree(buffer);
       if(state<0)
@@ -3463,7 +3463,7 @@ ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state)
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadBRIXFile(ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -3474,10 +3474,10 @@ ObjectMap *ObjectMapLoadBRIXFile(ObjectMap *obj,char *fname,int state)
 
   f=fopen(fname,"rb");
   if(!f)
-    ok=ErrMessage("ObjectMapLoadBRIXFile","Unable to open file!");
+    ok=ErrMessage(G,"ObjectMapLoadBRIXFile","Unable to open file!");
   if(ok)
 	 {
-      if(Feedback(FB_ObjectMap,FB_Actions))
+      if(Feedback(G,FB_ObjectMap,FB_Actions))
         {
           printf(" ObjectMapLoadBRIXFile: Loading from '%s'.\n",fname);
         }
@@ -3487,14 +3487,14 @@ ObjectMap *ObjectMapLoadBRIXFile(ObjectMap *obj,char *fname,int state)
       fseek(f,0,SEEK_SET);
       
       buffer=(char*)mmalloc(size+255);
-      ErrChkPtr(buffer);
+      ErrChkPtr(G,buffer);
       p=buffer;
       fseek(f,0,SEEK_SET);
       fread(p,size,1,f);
       p[size]=0;
       fclose(f);
       
-		I=ObjectMapReadBRIXStr(obj,buffer,size,state);
+		I=ObjectMapReadBRIXStr(G,obj,buffer,size,state);
 
       mfree(buffer);
       if(state<0)
@@ -3512,7 +3512,7 @@ ObjectMap *ObjectMapLoadBRIXFile(ObjectMap *obj,char *fname,int state)
 
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadGRDFile(ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -3523,10 +3523,10 @@ ObjectMap *ObjectMapLoadGRDFile(ObjectMap *obj,char *fname,int state)
 
   f=fopen(fname,"rb");
   if(!f)
-    ok=ErrMessage("ObjectMapLoadGRDFile","Unable to open file!");
+    ok=ErrMessage(G,"ObjectMapLoadGRDFile","Unable to open file!");
   if(ok)
 	 {
-      if(Feedback(FB_ObjectMap,FB_Actions))
+      if(Feedback(G,FB_ObjectMap,FB_Actions))
         {
           printf(" ObjectMapLoadGRDFile: Loading from '%s'.\n",fname);
         }
@@ -3536,14 +3536,14 @@ ObjectMap *ObjectMapLoadGRDFile(ObjectMap *obj,char *fname,int state)
       fseek(f,0,SEEK_SET);
       
       buffer=(char*)mmalloc(size+255);
-      ErrChkPtr(buffer);
+      ErrChkPtr(G,buffer);
       p=buffer;
       fseek(f,0,SEEK_SET);
       fread(p,size,1,f);
       p[size]=0;
       fclose(f);
       
-		I=ObjectMapReadGRDStr(obj,buffer,size,state);
+		I=ObjectMapReadGRDStr(G,obj,buffer,size,state);
 
       mfree(buffer);
       if(state<0)
@@ -3561,7 +3561,7 @@ ObjectMap *ObjectMapLoadGRDFile(ObjectMap *obj,char *fname,int state)
 
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_file)
+ObjectMap *ObjectMapLoadXPLORFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int is_file)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -3573,11 +3573,11 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_fi
   if(is_file) {
     f=fopen(fname,"rb");
     if(!f)
-      ok=ErrMessage("ObjectMapLoadXPLORFile","Unable to open file!");
+      ok=ErrMessage(G,"ObjectMapLoadXPLORFile","Unable to open file!");
   }
   if(ok)
 	 {
-      if(Feedback(FB_ObjectMap,FB_Actions))
+      if(Feedback(G,FB_ObjectMap,FB_Actions))
         {
           if(is_file) {
             printf(" ObjectMapLoadXPLORFile: Loading from '%s'.\n",fname);
@@ -3593,7 +3593,7 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_fi
         fseek(f,0,SEEK_SET);
         
         buffer=(char*)mmalloc(size+255);
-        ErrChkPtr(buffer);
+        ErrChkPtr(G,buffer);
         p=buffer;
         fseek(f,0,SEEK_SET);
         fread(p,size,1,f);
@@ -3603,7 +3603,7 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_fi
         buffer = fname;
       }
       
-		I=ObjectMapReadXPLORStr(obj,buffer,state);
+		I=ObjectMapReadXPLORStr(G,obj,buffer,state);
 
       if(is_file) 
         mfree(buffer);
@@ -3633,7 +3633,7 @@ int ObjectMapSetBorder(ObjectMap *I,float level)
   return(result);
 }
 /*========================================================================*/
-int ObjectMapNumPyArrayToMapState(ObjectMapState *ms,PyObject *ary) {
+int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *ary) {
   
   int a,b,c,d,e;
   float v[3],dens,maxd,mind;
@@ -3657,7 +3657,7 @@ int ObjectMapNumPyArrayToMapState(ObjectMapState *ms,PyObject *ary) {
     if(!(ms->FDim[0]&&ms->FDim[1]&&ms->FDim[2])) 
       ok=false;
     else {
-      ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+      ms->Field=IsosurfFieldAlloc(G,ms->FDim);
       for(c=0;c<ms->FDim[2];c++)
         {
           v[2]=ms->Origin[2]+ms->Grid[2]*c;
@@ -3703,17 +3703,17 @@ int ObjectMapNumPyArrayToMapState(ObjectMapState *ms,PyObject *ary) {
     add3f(ms->Range,ms->ExtentMax,ms->ExtentMax);
   }
   if(!ok) {
-    ErrMessage("ObjectMap","Error reading map");
+    ErrMessage(G,"ObjectMap","Error reading map");
   } else {
     ms->Active=true;
-    if(Feedback(FB_ObjectMap,FB_Actions)) {
+    if(Feedback(G,FB_ObjectMap,FB_Actions)) {
       printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
     }
   }
   return(ok);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
+ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                            int state,int discrete)
 {
   int ok=true;
@@ -3730,7 +3730,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
   if(ok) {
 
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
@@ -3742,7 +3742,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
       I->NState=state+1;
     }
     ms=&I->State[state];
-    ObjectMapStateInit(ms);
+    ObjectMapStateInit(G,ms);
     
     if(PyObject_HasAttrString(Map,"origin")&&
        PyObject_HasAttrString(Map,"dim")&&
@@ -3755,37 +3755,37 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
           PConvPyListToFloatArray(tmp,&ms->Origin);
           Py_DECREF(tmp);
         } else 
-          ok=ErrMessage("ObjectMap","missing brick origin.");
+          ok=ErrMessage(G,"ObjectMap","missing brick origin.");
         tmp = PyObject_GetAttrString(Map,"dim");
         if(tmp) {
           PConvPyListToIntArray(tmp,&ms->Dim);
           Py_DECREF(tmp);
         } else 
-          ok=ErrMessage("ObjectMap","missing brick dimension.");
+          ok=ErrMessage(G,"ObjectMap","missing brick dimension.");
         tmp = PyObject_GetAttrString(Map,"range");
         if(tmp) {
           PConvPyListToFloatArray(tmp,&ms->Range);
           Py_DECREF(tmp);
         } else 
-          ok=ErrMessage("ObjectMap","missing brick range.");
+          ok=ErrMessage(G,"ObjectMap","missing brick range.");
         tmp = PyObject_GetAttrString(Map,"grid");
         if(tmp) {
           PConvPyListToFloatArray(tmp,&ms->Grid);
           Py_DECREF(tmp);
         } else
-          ok=ErrMessage("ObjectMap","missing brick grid.");
+          ok=ErrMessage(G,"ObjectMap","missing brick grid.");
         tmp = PyObject_GetAttrString(Map,"lvl");
         if(tmp) {
 
-          ObjectMapNumPyArrayToMapState(ms,tmp);	 
+          ObjectMapNumPyArrayToMapState(G,ms,tmp);	 
 
           Py_DECREF(tmp);
         } else
-          ok=ErrMessage("ObjectMap","missing brick density.");
+          ok=ErrMessage(G,"ObjectMap","missing brick density.");
 
       }
-    SceneChanged();
-    SceneCountFrames();
+    SceneChanged(G);
+    SceneCountFrames(G);
     if(ok) {
       ms->Active=true;
       ObjectMapUpdateExtents(I);
@@ -3796,7 +3796,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
+ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                   int state,int discrete)
 {
 
@@ -3829,7 +3829,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
   if(ok) {
 
 	 if(isNew) {
-		I=(ObjectMap*)ObjectMapNew();
+		I=(ObjectMap*)ObjectMapNew(G);
 		isNew = true;
 	 } else {
 		isNew = false;
@@ -3841,28 +3841,28 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
       I->NState=state+1;
     }
     ms=&I->State[state];
-    ObjectMapStateInit(ms);
+    ObjectMapStateInit(G,ms);
 
     if(!PConvAttrToStrMaxLen(Map,"format",format,sizeof(WordType)-1))
-      ok=ErrMessage("LoadChemPyMap","bad 'format' parameter.");
+      ok=ErrMessage(G,"LoadChemPyMap","bad 'format' parameter.");
     else if(!PConvAttrToFloatArrayInPlace(Map,"cell_dim",ms->Crystal->Dim,3))
-      ok=ErrMessage("LoadChemPyMap","bad 'cell_dim' parameter.");
+      ok=ErrMessage(G,"LoadChemPyMap","bad 'cell_dim' parameter.");
     else if(!PConvAttrToFloatArrayInPlace(Map,"cell_ang",ms->Crystal->Angle,3))
-      ok=ErrMessage("LoadChemPyMap","bad 'cell_ang' parameter.");
+      ok=ErrMessage(G,"LoadChemPyMap","bad 'cell_ang' parameter.");
     else if(!PConvAttrToIntArrayInPlace(Map,"cell_div",ms->Div,3))
-      ok=ErrMessage("LoadChemPyMap","bad 'cell_div' parameter.");
+      ok=ErrMessage(G,"LoadChemPyMap","bad 'cell_div' parameter.");
     else if(!PConvAttrToIntArrayInPlace(Map,"first",ms->Min,3))
-      ok=ErrMessage("LoadChemPyMap","bad 'first' parameter.");
+      ok=ErrMessage(G,"LoadChemPyMap","bad 'first' parameter.");
     else if(!PConvAttrToIntArrayInPlace(Map,"last",ms->Max,3))
-      ok=ErrMessage("LoadChemPyMap","bad 'last' parameter.");
+      ok=ErrMessage(G,"LoadChemPyMap","bad 'last' parameter.");
 
     if(ok) {
       if (strcmp(format,"CObjectZYXfloat")==0) {
         ok = PConvAttrToPtr(Map,"c_object",(void**)&cobj);
         if(!ok)
-          ErrMessage("LoadChemPyMap","CObject unreadable.");        
+          ErrMessage(G,"LoadChemPyMap","CObject unreadable.");        
       } else {
-        ok=ErrMessage("LoadChemPyMap","unsupported format.");        
+        ok=ErrMessage(G,"LoadChemPyMap","unsupported format.");        
       }
     }
     /* good to go */
@@ -3873,7 +3873,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
         ms->FDim[0]=ms->Max[0]-ms->Min[0]+1;
         ms->FDim[1]=ms->Max[1]-ms->Min[1]+1;
         ms->FDim[2]=ms->Max[2]-ms->Min[2]+1;
-        if(Feedback(FB_ObjectMap,FB_Actions)) {
+        if(Feedback(G,FB_ObjectMap,FB_Actions)) {
           printf(" LoadChemPyMap: CObjectZYXdouble %dx%dx%d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]);        
         }
         ms->FDim[3]=3;
@@ -3881,7 +3881,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
           ok=false;
         else {
           CrystalUpdate(ms->Crystal);
-          ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
+          ms->Field=IsosurfFieldAlloc(G,ms->FDim);
           for(c=0;c<ms->FDim[2];c++)
             {
               v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
@@ -3940,18 +3940,18 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
     }
 
     if(!ok) {
-      ErrMessage("ObjectMap","Error reading map");
+      ErrMessage(G,"ObjectMap","Error reading map");
     } else {
       ms->Active=true;
       ObjectMapUpdateExtents(I);
-		if(Feedback(FB_ObjectMap,FB_Actions)) {
+		if(Feedback(G,FB_ObjectMap,FB_Actions)) {
         printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
       }
     }
 
     if(ok) {
-      SceneChanged();
-      SceneCountFrames();
+      SceneChanged(G);
+      SceneCountFrames(G);
     }
   }
   return(I);

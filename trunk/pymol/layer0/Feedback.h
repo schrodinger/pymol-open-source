@@ -17,6 +17,13 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Feedback
 #define _H_Feedback
 
+#include"PyMOLGlobals.h"
+
+struct _CFeedback {
+  char *Mask;
+  char *Stack;
+  int Depth;
+};
 
 /* 
 
@@ -187,33 +194,30 @@ function name.
 
 #define FB_Everything      0xFF 
 
-extern char *FeedbackMask;
+int FeedbackInit(PyMOLGlobals *G,int quiet);
+void FeedbackFree(PyMOLGlobals *G);
+void FeedbackPush(PyMOLGlobals *G);
+void FeedbackPop(PyMOLGlobals *G);
 
-void FeedbackInit(int quiet);
-void FeedbackFree(void);
-void FeedbackPush(void);
-void FeedbackPop(void);
+void FeedbackAutoAdd(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask,char *str);
+void FeedbackAdd(PyMOLGlobals *G,char *str);
 
-void FeedbackAutoAdd(unsigned int sysmod,unsigned char mask,char *str);
-void FeedbackAdd(char *str);
-
-void FeedbackSetMask(unsigned int sysmod,unsigned char mask);
-void FeedbackDisable(unsigned int sysmod,unsigned char mask);
-void FeedbackEnable(unsigned int sysmod,unsigned char mask);
+void FeedbackSetMask(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask);
+void FeedbackDisable(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask);
+void FeedbackEnable(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask);
 
 /* Mechanism: a high-speed bit test, with no range checking 
  * in order to avoid penalizing performance-senstive code
  * modules which may contain live debugging code.  
  */
 
-#define Feedback(sysmod,mask) (FeedbackMask[sysmod]&mask) 
+#define Feedback(G,sysmod,mask) (G->Feedback->Mask[sysmod]&mask) 
 
 /* FEEDBACK_MAX_OUTPUT should be as small as is reasonable
  * since this much space gets consumed on the stack
  * every time we have a PRINTF macro.  One might consider
  * rewriting these macros to consume heap space instead.
 */
-
 
 #define FEEDBACK_MAX_OUTPUT 255
 typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
@@ -223,15 +227,15 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
  * variable arguments.
 */
 
-#define PRINTFB(sysmod,mask) { FeedbackLineType _FBstr; if(FeedbackMask[sysmod]&mask) {sprintf( _FBstr,
-#define ENDFB );  FeedbackAdd(_FBstr);}}
+#define PRINTFB(G,sysmod,mask) { FeedbackLineType _FBstr; if(Feedback(G,sysmod,mask)) {sprintf( _FBstr,
+#define ENDFB(G) );  FeedbackAdd(G,_FBstr);}}
 
 #define PRINTF { FeedbackLineType _FBstr; sprintf( _FBstr,
-#define ENDF   ); FeedbackAdd(_FBstr);}
+#define ENDF(G)  ); FeedbackAdd(G,_FBstr);}
 
 /* debugging: goes to stderr */
 
-#define PRINTFD(sysmod) {if(Feedback(sysmod,FB_Debugging)) { fprintf(stderr,
+#define PRINTFD(G,sysmod) {if(Feedback(G,sysmod,FB_Debugging)) { fprintf(stderr,
 #define ENDFD   );fflush(stderr);}}
 
 /* convenient vector dumping routine */
