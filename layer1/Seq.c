@@ -298,6 +298,9 @@ static void SeqDraw(Block *block)
   register CSeq *I=G->Seq;
   
   if(block->G->HaveGUI) {
+
+    ASSERT_VALID_CONTEXT(block->G);
+
     int x = I->Block->rect.left;
     int y = I->Block->rect.bottom+I->ScrollBarMargin+1;
     float *bg_color,overlay_color[3] = {1.0F,1.0F,1.0F};

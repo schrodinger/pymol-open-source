@@ -212,8 +212,10 @@ static void ObjectSliceStateFree(ObjectSliceState *oss)
   if(oss->G->HaveGUI) {
     if(oss->displayList) {
       if(PIsGlutThread()) {
-        glDeleteLists(oss->displayList,1);
-        oss->displayList = 0;
+        if(oss->G->ValidContext) {
+          glDeleteLists(oss->displayList,1);
+          oss->displayList = 0;
+        }
       } else {
         char buffer[255]; /* pass this off to the main thread */
         sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",oss->displayList,1);
@@ -1006,6 +1008,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
           ray->fTransparentf(ray,0.0);
         } else if(pick&&G->HaveGUI) {
           
+          ASSERT_VALID_CONTEXT(G);
           int i=(*pick)->index;
           int j;
           Pickable p;
@@ -1080,6 +1083,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
           (*pick)[0].index = i; /* pass the count */
         } else if(G->HaveGUI) {
 
+          ASSERT_VALID_CONTEXT(G);
           int render_now = false;
           if(alpha>0.0001) {
             render_now = (pass==-1);

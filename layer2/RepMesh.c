@@ -120,6 +120,9 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
   } else if(G->HaveGUI) {
     int use_dlst;
     int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
+
+    ASSERT_VALID_CONTEXT(G);
+
     SceneResetNormal(G,true);
     if(!lighting)
       glDisable(GL_LIGHTING);

@@ -73,14 +73,15 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
   Pickable *p;
   float alpha;
   SphereRec *sp;
+  register PyMOLGlobals *G=I->R.G;
 
-  alpha = SettingGet_f(I->R.G,I->R.cs->Setting,I->R.obj->Setting,cSetting_stick_transparency);
+  alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_stick_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
   if(ray) {
     ray->fTransparentf(ray,1.0F-alpha);    
-    PRINTFD(I->R.G,FB_RepCylBond)
+    PRINTFD(G,FB_RepCylBond)
       " RepCylBondRender: rendering raytracable...\n"
       ENDFD;
 
@@ -102,9 +103,9 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
     }
 
     ray->fTransparentf(ray,0.0);
-  } else if(pick&&I->R.G->HaveGUI) {
-
-  PRINTFD(I->R.G,FB_RepCylBond)
+  } else if(pick&&G->HaveGUI) {
+    ASSERT_VALID_CONTEXT(G);
+  PRINTFD(G,FB_RepCylBond)
     " RepCylBondRender: rendering pickable...\n"
     ENDFD;
 
@@ -178,10 +179,11 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 	 }
 	 (*pick)[0].index = i; /* pass the count */
 
-  } else if(I->R.G->HaveGUI) {
-    
-    int use_dlst;
-    use_dlst = (int)SettingGet(I->R.G,cSetting_use_display_lists);
+  } else if(G->HaveGUI) {
+    int use_dlst;    
+    ASSERT_VALID_CONTEXT(G);
+
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
@@ -198,7 +200,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
       v=I->V;
       c=I->N;
       
-      PRINTFD(I->R.G,FB_RepCylBond)
+      PRINTFD(G,FB_RepCylBond)
         " RepCylBondRender: rendering GL...\n"
         ENDFD;
       
@@ -306,7 +308,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
       }
       
 
-      PRINTFD(I->R.G,FB_RepCylBond)
+      PRINTFD(G,FB_RepCylBond)
         " RepCylBondRender: done.\n"
         ENDFD;
       

@@ -1196,6 +1196,8 @@ void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSettin
   int i,j;
   Pickable *p;
 
+  ASSERT_VALID_CONTEXT(I->G);
+
   if(I->c) {
     i=(*pick)->index;
 
@@ -1245,6 +1247,7 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
   register int op;
   register CCGORenderer *R = I->G->CGORenderer;
 
+  ASSERT_VALID_CONTEXT(I->G);
   if(I->c) {
     R->alpha = 1.0F;
     if(color) 

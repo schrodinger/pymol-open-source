@@ -130,8 +130,10 @@ void RepPurge(Rep *I)
   if(I->G->HaveGUI) {
     if(I->displayList) {
       if(PIsGlutThread()) {
-        glDeleteLists(I->displayList,1);
-        I->displayList = 0;
+        if(I->G->ValidContext) {
+          glDeleteLists(I->displayList,1);
+          I->displayList = 0;
+        }
       } else {
         char buffer[255]; /* pass this off to the main thread */
         sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",I->displayList,1);
@@ -145,6 +147,7 @@ void RepPurge(Rep *I)
 void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick)
 {
   if(this->G->HaveGUI) {
+    ASSERT_VALID_CONTEXT(this->G);
     glBegin(GL_LINE_LOOP);
     glVertex3f(-0.5F,-0.5F,-0.5F);
     glVertex3f(-0.5F,-0.5F, 0.5F);

@@ -186,7 +186,9 @@ void MainMovieCopyPrepare(int *width,int *height,int *length)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PLockAPIAsGlut();
+  PyMOL_PushValidContext(G->PyMOL);
   MovieCopyPrepare(G,width,height,length);
+  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
@@ -194,7 +196,9 @@ int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
   PyMOLGlobals *G = TempPyMOLGlobals;
   int result;
   PLockAPIAsGlut();
+  PyMOL_PushValidContext(G->PyMOL);
   result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
+  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
   return result;
 }
@@ -202,14 +206,18 @@ void MainMovieCopyFinish(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PLockAPIAsGlut();
+  PyMOL_PushValidContext(G->PyMOL);
   MovieCopyFinish(G);
+  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 void MainSceneGetSize(int *width,int *height)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PLockAPIAsGlut();
+  PyMOL_PushValidContext(G->PyMOL);
   SceneGetWidthHeight(G,width,height);
+  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
@@ -218,7 +226,9 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 
   int result;
   PLockAPIAsGlut();
+  PyMOL_PushValidContext(G->PyMOL);
   result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr);
+  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
   return result;
 }
@@ -248,6 +258,9 @@ void MainRunCommand(char *str1)
   PyMOLGlobals *G = TempPyMOLGlobals;
 
   PLockAPIAsGlut();
+
+  PyMOL_PushValidContext(G->PyMOL);
+
   if(str1[0]!='_') { /* suppress internal call-backs */
     if(strncmp(str1,"cmd._",5)) {
       OrthoAddOutput(G,"PyMOL>");
@@ -264,33 +277,47 @@ void MainRunCommand(char *str1)
   } else { 
     PParse(str1);
   }
+
+  PyMOL_PushValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 
 /*========================================================================*/
 void MainFlushAsync(void)
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   PLockAPIAsGlut();
+  PyMOL_PushValidContext(G->PyMOL);
   PFlush();
+  PyMOL_PopValidContext(G->PyMOL);
   PUnlockAPIAsGlut();
 }
 /*========================================================================*/
 void MainFlush(void)
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOL_PushValidContext(G->PyMOL);
   PFlush();
+  PyMOL_PopValidContext(G->PyMOL);
 }
 /*========================================================================*/
 void MainRunString(char *str)
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   PBlock();
+  PyMOL_PushValidContext(G->PyMOL);
   PRunString(str);
+  PyMOL_PopValidContext(G->PyMOL);
   PUnblock();
 }
 /*========================================================================*/
 PyObject *MainGetStringResult(char *str)
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   PyObject *result;
+  PyMOL_PushValidContext(G->PyMOL);
   result = PyRun_String(str,Py_eval_input,P_globals,P_globals);
+  PyMOL_PopValidContext(G->PyMOL);
   return(result);
 }
 

@@ -52,9 +52,17 @@ void PyMOL_NeedRedisplay(CPyMOL *I);
 void PyMOL_NeedSwap(CPyMOL *I);
 void PyMOL_SetPassive(CPyMOL *I, int onOff);
 
+/* valid context management */
+
+void PyMOL_PushValidContext(CPyMOL *I);
+void PyMOL_PopValidContext(CPyMOL *I);
+
 /* methods requiring a valid OpenGL context*/
 
 void PyMOL_Draw(CPyMOL *I);
+
+/* methods that do not require a valid OpenGL context */
+
 void PyMOL_Key(CPyMOL *I,unsigned char k, int x, int y, int modifiers);
 void PyMOL_Special(CPyMOL *I,int k, int x, int y, int modifiers);
 void PyMOL_Reshape(CPyMOL *I,int width, int height, int force);

@@ -132,6 +132,13 @@ struct _PyMOLGlobals {
 
 };
 
+
+#if 0
+#define ASSERT_VALID_CONTEXT(G) {if(!(G)->ValidContext) {fprintf(stderr,"Assert-Error: No Valid Context!\n");abort();}}
+#else
+#define ASSERT_VALID_CONTEXT(G)
+#endif
+
 /* the following transitional global will disappear once we've
    completely removed global state from PyMOL's code */
 

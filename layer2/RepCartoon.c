@@ -53,8 +53,9 @@ void RepCartoonFree(RepCartoon *I)
 
 void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
 {
+  register PyMOLGlobals *G=I->R.G;
   if(ray) {
-    PRINTFD(I->R.G,FB_RepCartoon)
+    PRINTFD(G,FB_RepCartoon)
       " RepCartoonRender: rendering raytracable...\n"
       ENDFD;
     
@@ -65,15 +66,17 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
     else if(I->std)
       CGORenderRay(I->std,ray,NULL,I->R.cs->Setting,
                    I->R.obj->Setting);    
-  } else if(pick&&I->R.G->HaveGUI) {
+  } else if(pick&&G->HaveGUI) {
+    ASSERT_VALID_CONTEXT(G);
+
     if(I->std) {
       CGORenderGLPickable(I->std,pick,I->R.obj,
                           I->R.cs->Setting,I->R.obj->Setting);
     }
-  } else if(I->R.G->HaveGUI) {
-    
+  } else if(G->HaveGUI) {
     int use_dlst;
-    use_dlst = (int)SettingGet(I->R.G,cSetting_use_display_lists);
+    ASSERT_VALID_CONTEXT(G);
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
@@ -87,7 +90,7 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
         }
       }
 
-    PRINTFD(I->R.G,FB_RepCartoon)
+    PRINTFD(G,FB_RepCartoon)
       " RepCartoonRender: rendering GL...\n"
       ENDFD;
 

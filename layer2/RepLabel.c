@@ -74,6 +74,7 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
     
   } else if(pick&&G->HaveGUI) {
   } else if(G->HaveGUI) {
+    ASSERT_VALID_CONTEXT(G);
 
     if(c) {
       int float_text;

@@ -331,6 +331,7 @@ void ObjectRenderUnitBox(CObject *this,int frame,
                          CRay *ray,Pickable **pick,int pass)
 {
   if(this->G->HaveGUI) {
+    ASSERT_VALID_CONTEXT(this->G);
     glBegin(GL_LINE_LOOP);
     glVertex3i(-1,-1,-1);
     glVertex3i(-1,-1, 1);

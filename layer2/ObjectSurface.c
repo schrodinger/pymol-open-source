@@ -224,8 +224,10 @@ static void ObjectSurfaceStateFree(ObjectSurfaceState *ms)
   if(ms->G->HaveGUI) {
     if(ms->displayList) {
       if(PIsGlutThread()) {
-        glDeleteLists(ms->displayList,1);
-        ms->displayList = 0;
+        if(ms->G->ValidContext) {
+          glDeleteLists(ms->displayList,1);
+          ms->displayList = 0;
+        }
       } else {
         char buffer[255]; /* pass this off to the main thread */
         sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",ms->displayList,1);
@@ -488,6 +490,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
           ray->fTransparentf(ray,0.0);
         } else if(pick&&G->HaveGUI) {
         } else if(G->HaveGUI) {
+          ASSERT_VALID_CONTEXT(G);
 
           int render_now = false;
           if(alpha>0.0001) {

@@ -77,7 +77,8 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 	 }
 
   } else if(pick&&G->HaveGUI) {
-	 
+    ASSERT_VALID_CONTEXT(G);
+
 	 i=(*pick)->index;
 
 	 v=I->VP;
@@ -126,6 +127,9 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
   } else if(G->HaveGUI) {
 
     int use_dlst;
+
+    ASSERT_VALID_CONTEXT(G);
+
     glLineWidth(I->Width);
 
     use_dlst = (int)SettingGet(G,cSetting_use_display_lists);

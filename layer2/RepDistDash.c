@@ -88,8 +88,8 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 
   } else if(pick&&G->HaveGUI) {
   } else if(G->HaveGUI) {
-	 
     int use_dlst;
+    ASSERT_VALID_CONTEXT(G);
     use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);

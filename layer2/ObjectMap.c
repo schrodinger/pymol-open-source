@@ -895,6 +895,7 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
           ray->fSausage3fv(ray,ms->Corner[5],ms->Corner[7],0.20F,vc,vc);
         } else if(pick&&G->HaveGUI) {
         } else if(G->HaveGUI) {
+          ASSERT_VALID_CONTEXT(G);
           ObjectUseColor(&I->Obj);
           glDisable(GL_LIGHTING); 
           glBegin(GL_LINES);

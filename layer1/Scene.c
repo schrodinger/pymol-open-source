@@ -65,6 +65,15 @@ typedef struct ObjRec {
   struct ObjRec *next;
 } ObjRec;
 
+typedef struct {
+  CDeferred deferred;
+  Block *block;
+  int button;
+  int x;
+  int y;
+  int mod;
+  double when;
+} DeferredMouse;
 
 struct _CScene {
   Block *Block;
@@ -109,12 +118,69 @@ struct _CScene {
   CView *View;
   float LastPickVertex[3];
   int LastPickVertexFlag;
-
+  int LoopFlag;
+  int LoopMod;
+  BlockRect LoopRect;
 };
 
 typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
+
+
+int SceneLoopDrag(Block *block,int x,int y,int mod);
+int SceneLoopRelease(Block *block,int button,int x,int y,int mod);
+
+int SceneLoopClick(Block *block,int button, int x,int y,int mod);
+
+int SceneLoopClick(Block *block,int button, int x,int y,int mod)
+{
+  PyMOLGlobals *G=block->G;
+  register CScene *I=G->Scene;
+  I->LoopRect.left=x;
+  I->LoopRect.top=y;
+  I->LoopRect.right=x;
+  I->LoopRect.bottom=y;
+  I->LoopFlag=true;
+  I->LoopMod = mod;
+  OrthoSetLoopRect(G,true,&I->LoopRect);
+  OrthoGrab(G,block);
+  return 1;
+}
+int SceneLoopDrag(Block *block,int x,int y,int mod)
+{
+  PyMOLGlobals *G=block->G;
+  register CScene *I=G->Scene;
+  I->LoopRect.right=x;
+  I->LoopRect.bottom=y;
+  OrthoSetLoopRect(G,true,&I->LoopRect);
+  return 1;
+}
+int SceneLoopRelease(Block *block,int button,int x,int y,int mod)
+{
+  PyMOLGlobals *G=block->G;
+  register CScene *I=G->Scene;
+  int tmp;
+  int mode;
+  mode = ButModeTranslate(G,button,I->LoopMod);
+
+  if(I->LoopRect.top<I->LoopRect.bottom) {
+    tmp=I->LoopRect.top;
+    I->LoopRect.top=I->LoopRect.bottom;
+    I->LoopRect.bottom=tmp;
+  }
+  if(I->LoopRect.right<I->LoopRect.left) {
+    tmp=I->LoopRect.right;
+    I->LoopRect.right=I->LoopRect.left;
+    I->LoopRect.left=tmp;
+  }
+  OrthoSetLoopRect(G,false,&I->LoopRect);
+  ExecutiveSelectRect(G,&I->LoopRect,mode);
+  I->LoopFlag=false;
+  OrthoUngrab(G);
+  OrthoDirty(G);
+  return 1;
+}
 
 static float GetFrontSafe(float front,float back)
 {
@@ -946,6 +1012,9 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
   } else {
 	 v=SettingGetfv(G,cSetting_bg_rgb);
     if(G->HaveGUI) {
+
+      ASSERT_VALID_CONTEXT(G);
+
       glDrawBuffer(GL_BACK);
       glClearColor(v[0],v[1],v[2],1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -1430,11 +1499,13 @@ unsigned int *SceneReadTriplets(PyMOLGlobals *G,int x,int y,int w,int h,GLenum g
 
 }
 /*========================================================================*/
-int SceneRelease(Block *block,int button,int x,int y,int mod) 
+static int SceneRelease(Block *block,int button,int x,int y,int mod) 
 {
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
   ObjectMolecule *obj;
+  if(I->LoopFlag)
+    return SceneLoopRelease(block,button,x,y,mod);
   if(I->SculptingFlag) {
     /* SettingSet(G,cSetting_sculpting,1); */
     obj=(ObjectMolecule*)I->LastPicked.ptr;
@@ -1444,7 +1515,7 @@ int SceneRelease(Block *block,int button,int x,int y,int mod)
     I->SculptingFlag=0;
   }
   I->LastPickVertexFlag=false;
-  return(1);
+  return 1;
 }
 /*========================================================================*/
 static void SceneDoRoving(PyMOLGlobals *G,float old_front,float old_back,float old_origin,int adjust_flag)
@@ -1539,7 +1610,7 @@ static void SceneDoRoving(PyMOLGlobals *G,float old_front,float old_back,float o
 #define cDoubleTime 0.35
 
 /*========================================================================*/
-int SceneClick(Block *block,int button,int x,int y,int mod)
+static int SceneClick(Block *block,int button,int x,int y,int mod,double when)
 {
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
@@ -1553,7 +1624,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   char empty_string[1] = "";
   char *sel_mode_kw = empty_string;
   
-  if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(UtilGetSeconds(G)-I->LastClickTime)<cDoubleTime)
+  if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(when-I->LastClickTime)<cDoubleTime)
     {
       int dx,dy;
       dx = abs(I->LastWinX - x);
@@ -1575,7 +1646,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     
   I->LastWinX = x;
   I->LastWinY = y;
-  I->LastClickTime = UtilGetSeconds(G);
+  I->LastClickTime = when;
   I->LastButton = button;
   I->Threshold = 0;
 
@@ -1616,7 +1687,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeRect:/* deprecated */
   case cButModeSeleAdd:
   case cButModeSeleSub:
-    return(0);
+    return SceneLoopClick(block,button,x,y,mod);
     break;
   case cButModeRotXYZ:
   case cButModeTransXY:
@@ -2475,7 +2546,7 @@ void SceneRovingUpdate(PyMOLGlobals *G)
 }
 
 /*========================================================================*/
-int SceneDrag(Block *block,int x,int y,int mod)
+static int SceneDrag(Block *block,int x,int y,int mod)
 {
   PyMOLGlobals *G = block->G;
   register CScene *I=G->Scene;
@@ -2489,6 +2560,9 @@ int SceneDrag(Block *block,int x,int y,int mod)
   int moved_flag;
   int adjust_flag;
   CObject *obj;
+
+  if(I->LoopFlag)
+    return SceneLoopDrag(block,x,y,mod);
 
   mode = ButModeTranslate(G,I->Button,mod);
   
@@ -2862,6 +2936,75 @@ int SceneDrag(Block *block,int x,int y,int mod)
   }
   return(1);
 }
+
+static void SceneDeferredClick(DeferredMouse *dm)
+{
+  if(!SceneClick(dm->block, dm->button, dm->x, dm->y, dm->mod, dm->when))
+    {
+      
+    }
+}
+
+int SceneDeferClick(Block *block, int button, int x, int y, int mod)
+{
+  PyMOLGlobals *G=block->G;
+  DeferredMouse *dm = Calloc(DeferredMouse,1);
+  if(dm) {
+    DeferredInit(G,&dm->deferred);
+    dm->block = block;
+    dm->button = button;
+    dm->x = x;
+    dm->y = y;
+    dm->mod = mod;
+    dm->when = UtilGetSeconds(G);
+    dm->deferred.fn = (DeferredFn*)SceneDeferredClick;
+  }
+  OrthoDefer(G,&dm->deferred);
+  return 1;
+}
+
+static void SceneDeferredDrag(DeferredMouse *dm)
+{
+  SceneDrag(dm->block, dm->x, dm->y, dm->mod);
+}
+
+int SceneDeferDrag(Block *block,int x,int y,int mod)
+{
+  PyMOLGlobals *G=block->G;
+  DeferredMouse *dm = Calloc(DeferredMouse,1);
+  if(dm) {
+    DeferredInit(G,&dm->deferred);
+    dm->block = block;
+    dm->x = x;
+    dm->y = y;
+    dm->mod = mod;
+    dm->deferred.fn = (DeferredFn*)SceneDeferredDrag;
+  }
+  OrthoDefer(G,&dm->deferred);
+  return 1;
+}
+
+static void SceneDeferredRelease(DeferredMouse *dm)
+{
+  SceneRelease(dm->block, dm->button, dm->x, dm->y, dm->mod);
+}
+
+int SceneDeferRelease(Block *block,int button,int x,int y,int mod) 
+{
+  PyMOLGlobals *G=block->G;
+  DeferredMouse *dm = Calloc(DeferredMouse,1);
+  if(dm) {
+    DeferredInit(G,&dm->deferred);
+    dm->block = block;
+    dm->button = button;
+    dm->x = x;
+    dm->y = y;
+    dm->mod = mod;
+    dm->deferred.fn = (DeferredFn*)SceneDeferredRelease;
+  }
+  OrthoDefer(G,&dm->deferred);
+  return 1;
+}
 /*========================================================================*/
 void SceneFree(PyMOLGlobals *G)
 {
@@ -2924,6 +3067,7 @@ int  SceneInit(PyMOLGlobals *G)
 
     ListInit(I->Obj);
     
+    I->LoopFlag = false;
     I->RockTime=0;
     I->TextColor[0]=0.2F;
     I->TextColor[1]=1.0F;
@@ -2941,9 +3085,9 @@ int  SceneInit(PyMOLGlobals *G)
     I->NFrame = 0;
     I->Scale = 1.0;
     I->Block = OrthoNewBlock(G,NULL);
-    I->Block->fClick   = SceneClick;
-    I->Block->fRelease = SceneRelease;
-    I->Block->fDrag    = SceneDrag;
+    I->Block->fClick   = SceneDeferClick;
+    I->Block->fRelease = SceneDeferRelease;
+    I->Block->fDrag    = SceneDeferDrag;
     I->Block->fDraw    = SceneDraw;
     I->Block->fReshape = SceneReshape;
     I->Block->active = true;
@@ -3539,7 +3683,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
   fov=SettingGet(G,cSetting_field_of_view);
   if(G->HaveGUI) {
-
+    ASSERT_VALID_CONTEXT(G);
+    
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 0");
 

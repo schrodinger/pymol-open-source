@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 
 #include"Block.h"
 #include"Feedback.h"
+#include"Deferred.h"
 
 #define cOrthoScene 1
 #define cOrthoTool 2
@@ -61,6 +62,7 @@ int OrthoDrag(PyMOLGlobals *G,int x,int y,int mod);
 
 void OrthoGrab(PyMOLGlobals *G,Block *block);
 void OrthoUngrab(PyMOLGlobals *G);
+void OrthoSetLoopRect(PyMOLGlobals *G,int flag, BlockRect *rect);
 
 void OrthoRestorePrompt(PyMOLGlobals *G);
 
@@ -68,7 +70,6 @@ void OrthoDirty(PyMOLGlobals *G);
 void OrthoWorking(PyMOLGlobals *G);
 void OrthoClear(PyMOLGlobals *G);
 void OrthoFakeDrag(PyMOLGlobals *G);
-void OrthoBusyDraw(PyMOLGlobals *G,int force);
 void OrthoBusyMessage(PyMOLGlobals *G,char *message);
 void OrthoBusySlow(PyMOLGlobals *G,int progress,int total);
 void OrthoBusyFast(PyMOLGlobals *G,int progress,int total);
@@ -89,7 +90,9 @@ int  OrthoCommandWaiting(PyMOLGlobals *G);
 
 int OrthoTextVisible(PyMOLGlobals *G);
 void OrthoReshapeWizard(PyMOLGlobals *G,int height);
-
+void OrthoDefer(PyMOLGlobals *G,CDeferred *D);
+void OrthoExecDeferred(PyMOLGlobals *G);
+void OrthoSetLoop(PyMOLGlobals *G,int flag, int l, int r, int t, int b);
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 

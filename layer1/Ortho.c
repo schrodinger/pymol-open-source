@@ -60,10 +60,10 @@ Z* -------------------------------------------------------------------
 #define ButModeMargin 20
 #define ControlMargin 0
 
+
 struct _COrtho {
   Block *Blocks;
   Block *GrabbedBy,*ClickedIn;
-  Block LoopBlock;
   int X,Y,Height,Width;
   int LastX,LastY,LastModifiers;
   int ActiveButton;
@@ -86,14 +86,16 @@ struct _COrtho {
   char BusyMessage[255];
   char *WizardPromptVLA;
   int SplashFlag;
-  int LoopFlag;
-  int LoopMod;
   int HaveSeqViewer;
   BlockRect LoopRect;
+  int LoopFlag;
   CQueue *cmds;
   CQueue *feedback;
   int Pushed;
+  CDeferred *deferred;
 };
+
+static void OrthoBusyDraw(PyMOLGlobals *G,int force);
 
 void OrthoParseCurrentLine(PyMOLGlobals *G);
 static void OrthoDrawWizardPrompt(PyMOLGlobals *G);
@@ -113,8 +115,37 @@ void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k);
 #define cWizardTopMargin 15
 #define cWizardLeftMargin 15
 #define cWizardBorder 7
-int OrthoLoopBlockDrag(Block *block,int x,int y,int mod);
-int OrthoLoopBlockRelease(Block *block,int button,int x,int y,int mod);
+
+void OrthoSetLoopRect(PyMOLGlobals *G,int flag, BlockRect *rect)
+{
+  register COrtho *I=G->Ortho;
+  I->LoopRect = (*rect);
+  I->LoopFlag=flag;
+  OrthoDirty(G);
+}
+
+void OrthoExecDeferred(PyMOLGlobals *G)
+{
+  register COrtho *I=G->Ortho;
+  /* execute all deferred actions that happened to require a
+   * valid OpenGL context (such as atom picks, etc.) */
+
+  I->deferred = DeferredExec(I->deferred); 
+}
+
+void OrthoDefer(PyMOLGlobals *G,CDeferred *D)
+{
+  register COrtho *I=G->Ortho;
+  register CDeferred *d = I->deferred;
+  if(d) {
+    while(d->next)
+      d = d->next;
+    d->next = D; 
+  } else {
+    I->deferred = D;
+  }
+  OrthoDirty(G);
+}
 
 int OrthoGetWidth(PyMOLGlobals *G)
 {
@@ -130,41 +161,8 @@ void OrthoFakeDrag(PyMOLGlobals *G) /* for timing-based events, such as pop-ups 
     OrthoDrag(G,I->LastX,I->LastY,I->LastModifiers);
 }
 /*========================================================================*/
-int OrthoLoopBlockDrag(Block *block,int x,int y,int mod)
-{
-  PyMOLGlobals *G=block->G;
-  register COrtho *I=G->Ortho;  
-  I->LoopRect.right=x;
-  I->LoopRect.bottom=y;
-  OrthoDirty(G);
-  return(1);
-}
-/*========================================================================*/
-int OrthoLoopBlockRelease(Block *block,int button,int x,int y,int mod)
-{
-  PyMOLGlobals *G=block->G;
-  register COrtho *I=G->Ortho;
-  int tmp;
-  int mode;
-  mode = ButModeTranslate(G,button,I->LoopMod);
 
-  if(I->LoopRect.top<I->LoopRect.bottom) {
-    tmp=I->LoopRect.top;
-    I->LoopRect.top=I->LoopRect.bottom;
-    I->LoopRect.bottom=tmp;
-  }
-  if(I->LoopRect.right<I->LoopRect.left) {
-    tmp=I->LoopRect.right;
-    I->LoopRect.right=I->LoopRect.left;
-    I->LoopRect.left=tmp;
-  }
-  ExecutiveSelectRect(G,&I->LoopRect,mode);
-  I->LoopFlag=false;
-  I->GrabbedBy=NULL;
-  OrthoDirty(G);
-  return(1);
-}
-/*========================================================================*/
+
 void OrthoSetWizardPrompt(PyMOLGlobals *G,char *vla)
 {
   register COrtho *I=G->Ortho;
@@ -172,7 +170,6 @@ void OrthoSetWizardPrompt(PyMOLGlobals *G,char *vla)
   I->WizardPromptVLA=vla;
 }
 /*========================================================================*/
-
 void OrthoSpecial(PyMOLGlobals *G,int k,int x,int y,int mod)
 {
   register COrtho *I=G->Ortho;
@@ -349,17 +346,12 @@ void OrthoBusyPrime(PyMOLGlobals *G)
   I->BusyLast = UtilGetSeconds(G);
 }
 /*========================================================================*/
-void OrthoBusyDraw(PyMOLGlobals *G,int force)
+static void OrthoBusyDraw(PyMOLGlobals *G,int force)
 {
   register COrtho *I=G->Ortho;
-  char *c;
-  int x,y;
-  float black[3] = {0,0,0};
-  float white[3] = {1,1,1};
-
   double now;
   double busyTime;
-
+  
   PRINTFD(G,FB_Ortho)
     " OrthoBusyDraw: entered.\n"
     ENDFD;
@@ -367,10 +359,17 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
   busyTime = (-I->BusyLast) + now;
   if(SettingGet(G,cSetting_show_progress)&&(force||(busyTime>cBusyUpdate))) {
     
+    I->BusyLast=now;
     if(PIsGlutThread()) {
-      OrthoPushMatrix(G);
-      
-      if(G->HaveGUI) {
+      if(G->HaveGUI) {      
+        char *c;
+        int x,y;
+        float black[3] = {0,0,0};
+        float white[3] = {1,1,1};
+
+        ASSERT_VALID_CONTEXT(G);
+        OrthoPushMatrix(G);
+        
         glDrawBuffer(GL_FRONT);
         glClear(GL_DEPTH_BUFFER_BIT);
         
@@ -436,13 +435,15 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
         }
         
         glFlush();
+        glFinish();
         glDrawBuffer(GL_BACK);
+        
+        OrthoPopMatrix(G);
+        OrthoDirty(G);/* switched from SceneDirty */
       }
-      OrthoPopMatrix(G);
-      OrthoDirty(G);/* switched from SceneDirty */
-      I->BusyLast=now;
     }
   }
+
   PRINTFD(G,FB_Ortho)
     " OrthoBusyDraw: leaving...\n"
     ENDFD;
@@ -719,7 +720,7 @@ void OrthoParseCurrentLine(PyMOLGlobals *G)
       if(WordMatch(G,buffer,"quit",true)==0) /* don't log quit */
         PLog(buffer,cPLog_pml);
       OrthoNewLine(G,NULL,true);
-      ExecutiveDrawNow(G);
+      OrthoDirty(G); /* this will force a redraw, if necessary */
       PParse(buffer);
       OrthoRestorePrompt(G);
     }
@@ -902,6 +903,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
   int skip_prompt = 0;
   int render = false;
 
+  
   if(SettingGetGlobal_b(G,cSetting_seq_view)) {
     SeqUpdate(G); 
     I->HaveSeqViewer = true;
@@ -1353,9 +1355,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
   }
 
   block=SceneGetBlock(G);
-
   BlockSetMargin(block,sceneTop,0,sceneBottom,sceneRight);
-  BlockSetMargin(&I->LoopBlock,sceneTop,0,sceneBottom,sceneRight);
 
   block=NULL;
   while(ListIterate(I->Blocks,block,next))
@@ -1464,6 +1464,7 @@ int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
 			 I->ClickedIn = NULL;
 		  }
 	 }
+#if 0
   if(block&&!handled) {
     if(SceneGetBlock(G)==block) {
       if(state==P_GLUT_DOWN) {
@@ -1478,6 +1479,7 @@ int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
       } 
     }
   }
+#endif
   return(handled);
 }
 /*========================================================================*/ 
@@ -1568,6 +1570,7 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   I->Pushed = false;
   I->cmds = QueueNew(G,0xFFFF);
   I->feedback = QueueNew(G,0xFFFF);
+  I->deferred = NULL;
 
   I->WizardBackColor[0]=0.2F;
   I->WizardBackColor[1]=0.2F;
@@ -1595,15 +1598,10 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   I->HistoryView=0;
   I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
   I->WizardPromptVLA=NULL;
-  I->LoopFlag=0;
-  I->LoopMod=0;
   I->SplashFlag = false;
   I->ShowLines = 1;
   I->Saved[0]=0;
   I->DirtyFlag = true;
-  BlockInit(G,&I->LoopBlock);
-  I->LoopBlock.fDrag = OrthoLoopBlockDrag;
-  I->LoopBlock.fRelease = OrthoLoopBlockRelease;
   
   if(showSplash) {
 	 OrthoSplash(G);
@@ -1649,6 +1647,7 @@ void OrthoPushMatrix(PyMOLGlobals *G)
   GLint ViewPort[4];
 
   if(G->HaveGUI) {
+    ASSERT_VALID_CONTEXT(G);
     glGetIntegerv(GL_VIEWPORT,ViewPort);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -1681,6 +1680,8 @@ void OrthoPopMatrix(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
   if(G->HaveGUI) {
+
+    ASSERT_VALID_CONTEXT(G);
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
