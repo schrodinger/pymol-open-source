@@ -355,7 +355,7 @@ static void MainButton(int button,int state,int x,int y)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  static int glMod;  
+  int glMod;  
   CMain *I = G->Main;
 
   glMod = p_glutGetModifiers();
@@ -494,7 +494,7 @@ static void MainSpecial(int k, int x, int y)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   CMain *I = G->Main;
-  static int glMod;  
+  int glMod;  
 
   glMod = p_glutGetModifiers();
   PLockAPIAsGlut();

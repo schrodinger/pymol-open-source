@@ -946,7 +946,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           if(!nb_skip_count) nb_skip_count = nb_skip;
           while(n_cycle--) {
             
-            CGOReset(DebugCGO);
+            CGOReset(G->DebugCGO);
 
             total_strain = 0.0F;
             total_count = 0;
@@ -1347,7 +1347,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
     " SculptIterateObject-Debug: leaving...\n"
     ENDFD;
 
-  CGOStop(DebugCGO);
+  CGOStop(G->DebugCGO);
   
 
   return total_strain;

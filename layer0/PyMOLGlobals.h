@@ -50,6 +50,7 @@ typedef struct _CSeeker CSeeker;
 typedef struct _CSelector CSelector;
 typedef struct _CTexture CTexture;
 typedef struct _CMain CMain;
+typedef struct _CGO CGO;
 
 #ifndef CPyMOLOptions_DEFINED
 typedef struct _CPyMOLOptions CPyMOLOptions;
@@ -87,6 +88,7 @@ struct _PyMOLGlobals {
   CCharacter   *Character;
   CPop      *Pop;
   CScene    *Scene;
+  CGO       *DebugCGO; /* for debugging rendering */
   CSeq      *Seq;
   CSetting  *Setting;
   CText     *Text;
@@ -103,7 +105,6 @@ struct _PyMOLGlobals {
   CMain     *Main; /* host/platform-specific "main" code */
   CPyMOLOptions *Option; 
   CPyMOL    *PyMOL; /* the instance */
-  
   /* global variables */
 
   int HaveGUI; /* do we have an OpenGL graphics window/context?
@@ -130,8 +131,10 @@ struct _PyMOLGlobals {
 
 /* the following transitional global will disappear once we've
    completely removed global state from PyMOL's code */
-   
+
+#ifndef _PYMOL_NOPY
 extern PyMOLGlobals *TempPyMOLGlobals;
+#endif
 
 /* not a global, but CRay widely used and Ray.h definitely isn't a
  * lightweight include... */
