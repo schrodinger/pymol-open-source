@@ -9,13 +9,13 @@ from pymol.cgo import *
 # showing. Thus, it is best to zoom the image so that the edges can't
 # be seen and that the plane appears infinite
 #
-# To use this script, setup your molecule and then "run plane.py".
+# To use this script, setup your molecule and then "run cgo_plane.py".
 # This will create a plane in space about 80% of the way to the far
 # clipping plane.  You can then rotate the camera around to get the
 # desired shadowing.
 #
 # If the plane is too close to the molecule, move the rear clipping
-# plane back and then re-run plane.py.  
+# plane back and then re-run cgo_plane.py.  
 #
 # NOTE that once the plane is created, there is no easy way to move it
 # (other than recreating it).  However, you can move you molecule

@@ -511,7 +511,7 @@ PYMOL API
    
    my_view= cmd.get_view()
 
-   output:
+   output control:
    
       0 = output matrix to screen
       1 = don't output matrix to screen
@@ -521,7 +521,20 @@ API USAGE
 
    cmd.get_view(0) # zero option suppresses output (LEGACY approach)
    cmd.get_view(quiet=1) # suppresses output using PyMOL's normal "quiet" parameter.
-   
+
+NOTES
+
+   Contents of the view matrix
+      0  -  8 = 3x3 rotation matrix which transforms model to camera space
+      9  - 11 = camera position (in model space and relative to the origin of rotation)
+      12 - 14 = origin of rotation (in model space)
+      15      = front plane distance from the camera
+      16      = rear plane distance from the camera
+      17      = orthoscopic flag 
+
+SEE ALSO
+
+   set_view
    '''
 
       r = None
@@ -573,6 +586,9 @@ PYMOL API
 
    cmd.set_view(string-or-sequence view)  
 
+SEE ALSO
+
+   get_view
    '''
 
       r = None

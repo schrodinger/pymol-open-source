@@ -123,7 +123,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   char pdb_name[ObjNameMax] = "";
   char *next_pdb = NULL;
   int repeat_flag = true;
-  ProcPDBRec *processed;
+  ProcPDBRec *processed= NULL;
   int n_processed = 0;
   int m4x_mode = 0; /* 0 = annotate, 1 = alignment */
 

@@ -177,6 +177,17 @@ Current Bugs to Fix
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.95
+
+   * cmd.extend now adds help for function (updated test case).
+
+   * various changes here and there for Mac OS/MacPyMOL compatibility
+
+   * extensive work on the metaphorics P5M file format/Fedora stuff
+
+   * massive tinkering with sequence visualization ideas, but nothing
+     to show for it yet : (
+
 Changes up to 0.94
 
    * no_smooth flag to make it easier to combine cartoon and atomistic

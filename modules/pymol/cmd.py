@@ -74,7 +74,7 @@ if __name__=='pymol.cmd':
    import sys
    import __main__
    import time
-   
+
    from shortcut import Shortcut
 
    from chempy import io
@@ -954,7 +954,7 @@ SEE ALSO
       '''
       keyword[name] = [function, 0,0,',',parsing.STRICT]
       kwhash.append(name)
-
+      help_sc.append(name)
 
    # for aliasing compound commands to a single keyword
 

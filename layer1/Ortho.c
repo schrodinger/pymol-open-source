@@ -893,7 +893,8 @@ void OrthoDoDraw()
   
   int render = false;
 
-  /*  SeqUpdate(); */
+  if(!SettingGet(cSetting_test1))
+    SeqUpdate(); 
   double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);
   bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
 

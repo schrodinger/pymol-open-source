@@ -8,3 +8,15 @@ PyMOL>foo moo=5
 5
 PyMOL>foo ?
 Usage: foo [ moo ]
+PyMOL>def fie(moo=3):\
+PyMOL>"help for fie" \
+PyMOL>print moo
+PyMOL>print fie.__doc__
+help for fie
+PyMOL>help fie
+Error: unknown topic: 'fie'.
+PyMOL>cmd.extend('fie',fie)
+PyMOL>help fie
+
+help for fie 
+
