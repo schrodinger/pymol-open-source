@@ -724,15 +724,16 @@ static PyObject *match_1v1_map(PyObject *self,      PyObject *args)
   int mat_start;
   int mat_cnt,pair_cnt;
   int a,b,i,j;
+  int tag;
   ListMatch *mat;
 
   PyObject *O;
   CChamp *I;
-  ok = PyArg_ParseTuple(args,"Oiii",&O,&pat1,&pat2,&limit);
+  ok = PyArg_ParseTuple(args,"Oiiii",&O,&pat1,&pat2,&limit,&tag);
   ok = PyCObject_Check(O);
   if(ok) {
     I = PyCObject_AsVoidPtr(O);
-    mat_start = ChampMatch_1V1_Map(I,pat1,pat2,limit);
+    mat_start = ChampMatch_1V1_Map(I,pat1,pat2,limit,tag);
 
     ChampPatReindex(I,pat1);
     ChampPatReindex(I,pat2);

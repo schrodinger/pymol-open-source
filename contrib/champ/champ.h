@@ -270,7 +270,7 @@ int ChampSmiToPat(CChamp *I,char *c);
 void ChampMemoryDump(CChamp *I);
 int ChampMemoryUsage(CChamp *I);
 int ChampMatch_1V1_B(CChamp *I,int pattern,int target);
-int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit);
+int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit,int tag_flag);
 int ChampMatch_1VN_N(CChamp *I,int pattern,int list);
 int ChampMatch_1V1_N(CChamp *I,int pattern,int target,int limit,int tag_flag);
 

@@ -173,6 +173,8 @@ int WordMatchCommaExact(char *p,char *q,int ignCase)
   int blank;
   int trailing_comma=0;
 
+  /*  printf("match? [%s] [%s] ",p,q);*/
+
   blank = (!*p);
   q_copy=q;
   while(((*p)||(blank))&&(best_i>=0)) {
@@ -232,6 +234,8 @@ int WordMatchCommaExact(char *p,char *q,int ignCase)
       }
     }
   }
+  /*  printf("result: %d\n",best_i);*/
+
   return(best_i);
 }
 

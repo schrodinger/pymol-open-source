@@ -407,9 +407,10 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
       if(elem_id1!=elem_id2) {
         if(!PConvPyObjectToStrMaxLen(elem_id2,elem,sizeof(AtomName)-1)) 
           result=false;
-        else
-      strcpy(at->elem,elem);
-
+        else {
+          strcpy(at->elem,elem);
+          AtomInfoAssignParameters(at);
+        }
       }
       if(resn_id1!=resn_id2) {
         if(!PConvPyObjectToStrMaxLen(resn_id2,resn,sizeof(ResName)-1))

@@ -59,6 +59,10 @@ evolve.
 
 Specific Requests from Users
 
+   * Solid clipped spheres and surfaces (how?)
+
+   * Completely black/opaque underside of surfaces
+
    * Get label support into the raytracer (build a 3D character set)
 
    * Enable specific xyz positioning of labels (w/ mouse?)
