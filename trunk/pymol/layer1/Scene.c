@@ -75,7 +75,7 @@ typedef struct {
   float RockTime;
   int DirtyFlag;
   int ChangedFlag;
-  int CopyFlag;
+  int CopyFlag,CopyNextFlag;
   int StateIndex,Frame,NFrame;
   GLvoid *ImageBuffer;
   int MovieOwnsImageFlag;
@@ -85,7 +85,6 @@ typedef struct {
   float LastRock;
   Pickable LastPicked;
   int StereoMode;
-
 } CScene;
 
 CScene Scene;
@@ -96,6 +95,14 @@ int SceneClick(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
 
+/*========================================================================*/
+void SceneDontCopyNext(void)
+/* disables automatic copying of the image for the next rendering run */
+{
+  CScene *I=&Scene;
+  I->CopyNextFlag=false;
+}
+/*========================================================================*/
 void SceneSetStereo(int flag)
 {
   CScene *I=&Scene;
@@ -248,18 +255,24 @@ void SceneSetFrame(int mode,int frame)
   SceneDirty();
 }
 /*========================================================================*/
-void SceneDirty(void) 
-	  /* This means that the current image on the screen (and/or in the buffer)
-		 needs to be updated */
+void ScenePurgeCopy(void)
 {
   CScene *I=&Scene;
-  I->DirtyFlag=true;
   I->CopyFlag=false;
   if(I->MovieOwnsImageFlag) 
 	 {
 		I->MovieOwnsImageFlag=false;
 		I->ImageBuffer=NULL;
 	 }
+}
+/*========================================================================*/
+void SceneDirty(void) 
+	  /* This means that the current image on the screen (and/or in the buffer)
+		 needs to be updated */
+{
+  CScene *I=&Scene;
+  I->DirtyFlag=true;
+  ScenePurgeCopy();
   OrthoDirty();
 }
 /*========================================================================*/
@@ -470,6 +483,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   Object *obj;
   char buffer[OrthoLineLength],buf2[OrthoLineLength];
   WordType selName;
+
+  SceneDontCopyNext();
   if(mod&cOrthoCTRL) {
 	 SceneCopy(1);
 	 SceneRender(&I->LastPicked,x,y);
@@ -534,6 +549,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 scale = I->Width;
   scale = 0.38 * scale;
 
+  SceneDontCopyNext();
   if(!(mod&cOrthoCTRL)) {
 	 v1[0] = (I->Width/2) - x;
 	 v1[1] = (I->Height/2) - y;
@@ -706,6 +722,8 @@ void SceneInit(void)
   I->LastRender = UtilGetSeconds();
   I->LastFrameTime = UtilGetSeconds();
   I->LastPicked.ptr = NULL;
+
+  I->CopyNextFlag=true;
 }
 /*========================================================================*/
 void SceneReshape(Block *block,int width,int height)
@@ -1187,6 +1205,12 @@ void SceneRender(Pickable *pick,int x,int y)
     I->LastRender = UtilGetSeconds();
     I->RenderTime += I->LastRender;
     ButModeSetRate(I->RenderTime);
+    if(I->CopyNextFlag) {
+      if(!MoviePlaying())
+        SceneCopy(0);
+    } else {
+      I->CopyNextFlag=true;
+    }
   }
 }
 /*========================================================================*/
