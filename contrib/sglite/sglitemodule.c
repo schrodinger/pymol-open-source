@@ -126,7 +126,6 @@ static PyObject *SgOps__init__(PyObject *self,
     if (ParseHallSymbol(HallSymbol, (T_SgOps *) self, PHSymOptPedantic) < 0)
       pReturnPySgError();
   }
-
   Py_INCREF(Py_None);
   return Py_None;
 }

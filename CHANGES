@@ -164,6 +164,19 @@ Current Bugs to Fix
 =========================================================================
 CHANGE LOG
 =========================================================================
+
+Changes up to 0.89
+   
+   * Updated ExtensionClass for improved Python 2.2 and 2.3 compatibility.
+
+   * Improving hash-table construction performance in ray tracer.
+   
+   * Added CPU and RAM autodetection for OSX Mac
+
+   * Added multithreading support to raytracter (set max_threads,n)
+
+   * Fixed various bugs on Mac including TAB-crash in external GUI
+   
 Changes up to 0.88
 
    * fixed numerous bugs
