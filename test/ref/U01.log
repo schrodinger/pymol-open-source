@@ -1,0 +1,31 @@
+PyMOL>cd /
+PyMOL>pwd
+/
+PyMOL>cd $PYMOL_PATH/test
+PyMOL>ls
+  CVS      TODO     dat      ref      show     trim.py  win.py 
+  README   cmp      inp      run      tmp      vdiff  
+PyMOL>ls *.py
+  trim.py  win.py 
+PyMOL>ls no_files
+ ls: Nothing found.  Is that a valid path?
+PyMOL>ls *no_files
+ ls: Nothing found.  Is that a valid path?
+PyMOL>system
+Parsing-Error: missing required argument: command
+PyMOL>system echo "hello"
+hello
+PyMOL>system ls
+cmp
+CVS
+dat
+inp
+README
+ref
+run
+show
+tmp
+TODO
+trim.py
+vdiff
+win.py

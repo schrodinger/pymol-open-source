@@ -283,6 +283,11 @@ def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or exc
             arg.append(a[1])
          else:
             kw[a[0]]=a[1]
+      # set feedback argument (quiet), if extant, results enabled, and not overridden
+      if "quiet" in arg_nam:
+         if not kw.has_key("quiet"):
+            if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
+               kw["quiet"] = 0
    else:
       # error checking enabled
 
@@ -338,6 +343,11 @@ def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or exc
                raise QuietException
       # return all arguments as keyword arguments
       kw = val_dct
+      # set feedback argument (quiet), if extant, results enabled, and not overridden
+      if arg_dct.has_key("quiet"):
+         if not kw.has_key("quiet"):
+            if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
+               kw["quiet"] = 0
    if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
       cmd.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")      
    return (arg,kw)

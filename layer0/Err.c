@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 
 void ErrFatal(const char *where,const char *what)
 {
-  fprintf(stderr,"%s-ERR: %s\n",where,what);
+  fprintf(stderr,"%s-Error: %s\n",where,what);
   fflush(stderr);
   exit(1);
 }
@@ -32,7 +32,7 @@ int ErrMessage(const char *where,const char *what)
 
     /* unclassified errors are assigned to the Executive catch-all */
 
-    sprintf(buffer,"%s-ERR: %s\n",where,what);
+    sprintf(buffer,"%s-Error: %s\n",where,what);
     OrthoAddOutput(buffer);
     OrthoRestorePrompt();
   }
@@ -41,9 +41,9 @@ int ErrMessage(const char *where,const char *what)
 
 void ErrPointer(const char *file,int line)
 {
-  fprintf(stderr,"NULL-POINTER-ERR: in %s line %i\n",file,line);
-  fflush(stderr);
-    while(1);
+  fprintf(stderr,"NULL-POINTER-ERROR: in %s line %i\n",file,line);
+  /*  fflush(stderr);
+      while(1);*/
   exit(1);
 }
 

@@ -10,7 +10,6 @@
 
 /print "BEGIN-LOG"
 
-
 load dat/pept.pdb
 
 # don't change these, they're used later on

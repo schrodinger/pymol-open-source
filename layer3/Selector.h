@@ -32,7 +32,7 @@ int SelectorIsMember(int start,int sele);
 void SelectorFree(void);
 void SelectorDelete(char *sele);
 void SelectorFreeTmp(char *name);
-void SelectorGetTmp(char *input,char *store);
+int SelectorGetTmp(char *input,char *store);
 int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag);
 PyObject *SelectorGetChemPyModel(int sele,int state);
 float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2,float adjust);

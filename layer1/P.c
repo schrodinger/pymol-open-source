@@ -510,7 +510,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   return(result);
 }
 
-int PLabelAtom(AtomInfoType *at,char *expr)
+int PLabelAtom(AtomInfoType *at,char *expr,int index)
 {
   PyObject *dict;
   int result;
@@ -526,6 +526,7 @@ int PLabelAtom(AtomInfoType *at,char *expr)
    * what if "at" is destroyed by another thread? */
   dict = PyDict_New();
 
+  PConvIntToPyDictItem(dict,"index",index+1);
   PConvStringToPyDictItem(dict,"type",atype);
   PConvStringToPyDictItem(dict,"name",at->name);
   PConvStringToPyDictItem(dict,"resn",at->resn);

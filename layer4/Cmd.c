@@ -174,6 +174,7 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args);
 static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args);
 static PyObject *CmdCopy(PyObject *self, PyObject *args);
 static PyObject *CmdCountStates(PyObject *self, PyObject *args);
+static PyObject *CmdCountFrames(PyObject *self, PyObject *args);
 static PyObject *CmdCreate(PyObject *self, PyObject *args);
 static PyObject *CmdCycleValence(PyObject *self, PyObject *args);
 static PyObject *CmdDelete(PyObject *self, PyObject *args);
@@ -316,6 +317,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"copy",                  CmdCopy,                 METH_VARARGS },
 	{"create",                CmdCreate,               METH_VARARGS },
 	{"count_states",          CmdCountStates,          METH_VARARGS },
+	{"count_frames",          CmdCountFrames,          METH_VARARGS },
 	{"cycle_valence",         CmdCycleValence,         METH_VARARGS },
 	{"delete",                CmdDelete,               METH_VARARGS },
 	{"dirty",                 CmdDirty,                METH_VARARGS },
@@ -609,10 +611,16 @@ static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
 {
   char *str1;
   int ok = false;
+  int idx;
   ok = PyArg_ParseTuple(args,"s",&str1);
   if(ok) {
     APIEntry();
-    ok = SettingSetfv(cSetting_bg_rgb,ColorGetNamed(str1));
+    idx = ColorGetIndex(str1);
+    if(idx>=0)
+      ok = SettingSetfv(cSetting_bg_rgb,ColorGet(idx));
+    else
+      ErrMessage("Color","Bad color name.");
+      ok = false; /* bad color */
     APIExit();
   }
   return(APIStatus(ok));
@@ -755,7 +763,7 @@ static PyObject *CmdGetState(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args)
 {
-  return(APIStatus(SceneGetFrame()));
+  return(APIStatus(SceneGetFrame()+1));
 }
 
 static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
@@ -816,11 +824,15 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
   OrthoLineType s1="";
   float result = -1.0;
   int ok=false;
+  int c1;
   ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
   if(ok) {
     APIEntry();
-    if(str1[0]) SelectorGetTmp(str1,s1);
-    result = ExecutiveGetArea(s1,int1,int2);
+    if(str1[0]) c1 = SelectorGetTmp(str1,s1);
+    if(c1)
+      result = ExecutiveGetArea(s1,int1,int2);
+    else
+      result = 0.0; /* empty selection */
     if(s1[0]) SelectorFreeTmp(s1);
     APIExit();
   }
@@ -1306,15 +1318,32 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
   int mode;
   OrthoLineType s1,s2;
   int ok=false;
+  int c1,c2;
   ok = PyArg_ParseTuple(args,"sssif",&name,&str1,&str2,&mode,&cutoff);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(str1,s1);
-    SelectorGetTmp(str2,s2);
-    result = ExecutiveDist(name,s1,s2,mode,cutoff);
+    c1 = SelectorGetTmp(str1,s1);
+    c2 = SelectorGetTmp(str2,s2);
+    if(c1&&c2)
+        result = ExecutiveDist(name,s1,s2,mode,cutoff);
+    else {
+      if(!c1) {
+        PRINTFB(FB_Executive,FB_Errors)
+          " Distance-ERR: selection 1 contains no atoms.\n"
+          ENDFB;
+      } 
+      if(!c2) {
+        PRINTFB(FB_Executive,FB_Errors)
+          " Distance-ERR: selection 2 contains no atoms.\n"
+          ENDFB;
+      }
+      result = -1.0;
+    }
     SelectorFreeTmp(s1);
     SelectorFreeTmp(s2);
     APIExit();
+  } else {
+    result = -1.0;
   }
   return(Py_BuildValue("f",result));
 }
@@ -1434,7 +1463,7 @@ static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
   int rep=-1;
   ok = PyArg_ParseTuple(args,"si",&str1,&rep);
   PRINTFD(FB_CCmd)
-    " CmdRebuild: called with %s.\n",str1
+    " CmdRecolor: called with %s.\n",str1
     ENDFD;
 
   if (ok) {
@@ -1526,6 +1555,16 @@ static PyObject *CmdCountStates(PyObject *dummy, PyObject *args)
     ok = -1; /* special error convention */
   }
   return(APIStatus(ok));
+}
+
+static PyObject *CmdCountFrames(PyObject *dummy, PyObject *args)
+{
+  int result;
+  APIEntry();
+  SceneCountFrames();
+  result=SceneGetNFrame();
+  APIExit();
+  return(APIStatus(result));
 }
 
 static PyObject *CmdIdentify(PyObject *dummy, PyObject *args)
@@ -2365,7 +2404,7 @@ static PyObject *CmdColor(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveColor(s1,color,flags);
+    ok = ExecutiveColor(s1,color,flags);
     SelectorFreeTmp(s1);
     APIExit();
   }

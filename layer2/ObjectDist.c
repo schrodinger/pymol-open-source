@@ -53,10 +53,14 @@ void ObjectDistUpdate(ObjectDist *I)
 void ObjectDistInvalidateRep(ObjectDist *I,int rep)
 {
   int a;
+  PRINTFD(FB_ObjectDist)
+    " ObjectDistInvalidateRep: entered.\n"
+    ENDFD;
+
   for(a=0;a<I->NDSet;a++) 
 	 if(I->DSet[a]) {	 
       if(I->DSet[a]->fInvalidateRep)
-        I->DSet[a]->fInvalidateRep(I->DSet[a],rep,0);
+        I->DSet[a]->fInvalidateRep(I->DSet[a],rep,cRepInvAll);
 	 }
 }
 /*========================================================================*/
@@ -88,6 +92,9 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *resul
   float dist_sum=0.0,dist;
   int dist_cnt = 0;
   int n_state1,n_state2,state1,state2;
+  float maxv[3] = {FLT_MAX,FLT_MAX,FLT_MAX};
+  float minv[3] = {-FLT_MAX,-FLT_MAX,-FLT_MAX};
+  DistSet *ds;
   OOAlloc(ObjectDist);
   ObjectInit((Object*)I);
   *result = 0.0;
@@ -131,6 +138,17 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *resul
   } else {
     VLAFreeP(I->DSet);
     OOFreeP(I);
+  }
+  /* update extents */
+  copy3f(maxv,I->Obj.ExtentMin);
+  copy3f(minv,I->Obj.ExtentMax);
+  I->Obj.ExtentFlag=false;
+  for(a=0;a<I->NDSet;a++) {
+    ds = I->DSet[a];
+    if(ds) {
+      if(DistSetGetExtent(ds,I->Obj.ExtentMin,I->Obj.ExtentMax))
+        I->Obj.ExtentFlag=true;
+    }
   }
   if(dist_cnt)
     (*result) = dist_sum/dist_cnt;

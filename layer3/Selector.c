@@ -1925,18 +1925,19 @@ void SelectorDelete(char *sele)
 	 }
 }
 /*========================================================================*/
-void SelectorGetTmp(char *input,char *store)
+int SelectorGetTmp(char *input,char *store)
 {
   SelectorType *I=&Selector;
   WordType name;
   OrthoLineType buffer;
+  int count = 0;
   PRINTFD(FB_Selector)
     " SelectorGetTmp-Debug: entered with '%s'.\n",input
     ENDFD;
 
   if(input[0]=='(') {
     sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
-	 SelectorCreate(name,input,NULL,false,NULL);
+	 count = SelectorCreate(name,input,NULL,false,NULL);
 	 strcpy(store,name);
   } else {
     if(ExecutiveValidName(input))
@@ -1946,13 +1947,14 @@ void SelectorGetTmp(char *input,char *store)
       strcat(buffer,input);
       strcat(buffer,")");
       sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);      
-      SelectorCreate(name,buffer,NULL,false,NULL);
+      count = SelectorCreate(name,buffer,NULL,false,NULL);
       strcpy(store,name);
     }
   }
   PRINTFD(FB_Selector)
     " SelectorGetTmp-Debug: leaving with '%s'.\n",store
     ENDFD;
+  return count;
 }
 /*========================================================================*/
 void SelectorFreeTmp(char *name)
@@ -3429,7 +3431,7 @@ int *SelectorEvaluate(WordType *word)
                       e->type=STYP_SEL1;
                       valueFlag=1;
                       c--;
-                    } else {
+                    } else { 
                       ok=ErrMessage("Selector","Unknown keyword or selection.");
                     }
                   }

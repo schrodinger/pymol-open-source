@@ -1311,6 +1311,27 @@ void SceneResetMatrix(void)
   MatrixLoadIdentity44f(I->RotMatrix);
 }
 /*========================================================================*/
+void SceneSetDefaultView(void) {
+  CScene *I=&Scene;
+
+  MatrixLoadIdentity44f(I->RotMatrix);
+
+  I->Pos[0] = 0.0;
+  I->Pos[1] = 0.0;
+  I->Pos[2] = -50.0;
+
+  I->Origin[0] = 0.0;
+  I->Origin[1] = 0.0;
+  I->Origin[2] = 0.0;
+
+  I->Front=40;
+  I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+  I->Back=100;
+
+  I->Scale = 1.0;
+  
+}
+/*========================================================================*/
 void SceneInit(void)
 {
   CScene *I=&Scene;
@@ -1324,16 +1345,12 @@ void SceneInit(void)
   I->TextColor[1]=1.0;
   I->TextColor[2]=0.2;
 
-  MatrixLoadIdentity44f(I->RotMatrix);
+  SceneSetDefaultView();
 
   I->NFrame = 0;
   I->Scale = 1.0;
   I->Frame=0;
   I->StateIndex=0;
-  
-  I->Front=40;
-  I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
-  I->Back=100;
   
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick   = SceneClick;
@@ -1342,16 +1359,6 @@ void SceneInit(void)
   I->Block->fDraw    = SceneDraw;
   I->Block->fReshape = SceneReshape;
   I->Block->active = true;
-
-  I->Pos[0] = 0.0;
-  I->Pos[1] = 0.0;
-  I->Pos[2] = -50.0;
-
-  I->Origin[0] = 0.0;
-  I->Origin[1] = 0.0;
-  I->Origin[2] = 0.0;
-
-  I->Scale = 1.0;
 
   OrthoAttach(I->Block,cOrthoScene);
 
@@ -1506,34 +1513,20 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
 		}
 	 }
 
-
-  PRINTFB(FB_Ray,FB_Details)
-    " Ray: tracing %dx%d = %d rays...\n",ray_width,ray_height,
-    ray_width*ray_height
-    ENDFB;
-
-  if(mode) { /* mode==1 is povray */
-    charVLA=VLAlloc(char,100000); 
-    headerVLA=VLAlloc(char,2000);
-    RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,I->FrontSafe,I->Back,fov);
-    if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
-      if(PPovrayRender(headerVLA,charVLA,"tmp_pymol",ray_width,ray_height,SettingGet(cSetting_antialias))) {
-        SceneLoadPNG("tmp_pymol.png",false);
-        I->DirtyFlag=false;
-      }
-      VLAFreeP(charVLA);
-      VLAFreeP(headerVLA);
-    } else { /* get_povray mode */
-      *charVLA_ptr=charVLA;
-      *headerVLA_ptr=headerVLA;
-    }
-  } else { /* mode==0 is built-in */
+  if(mode!=2) { /* don't show pixel count for tests */
+    PRINTFB(FB_Ray,FB_Details)
+      " Ray: tracing %dx%d = %d rays...\n",ray_width,ray_height,
+      ray_width*ray_height
+      ENDFB;
+  }
+  switch(mode) {
+  case 0: /* mode 0 is built-in */
     buffer_size = 4*ray_width*ray_height;
     buffer=(GLvoid*)Alloc(char,buffer_size);
     ErrChkPtr(buffer);
-
+    
     RayRender(ray,ray_width,ray_height,buffer,I->Front,I->Back,timing);
-
+    
     if(I->ImageBuffer) {
       if(I->MovieOwnsImageFlag) {
         I->MovieOwnsImageFlag=false;
@@ -1550,14 +1543,36 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
     I->DirtyFlag=false;
     I->CopyFlag = true;
     I->MovieOwnsImageFlag = false;
+    break;
+
+  case 1: /* mode 1 is povray */
+    charVLA=VLAlloc(char,100000); 
+    headerVLA=VLAlloc(char,2000);
+    RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,I->FrontSafe,I->Back,fov);
+    if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
+      if(PPovrayRender(headerVLA,charVLA,"tmp_pymol",ray_width,ray_height,SettingGet(cSetting_antialias))) {
+        SceneLoadPNG("tmp_pymol.png",false);
+        I->DirtyFlag=false;
+      }
+      VLAFreeP(charVLA);
+      VLAFreeP(headerVLA);
+    } else { /* get_povray mode */
+      *charVLA_ptr=charVLA;
+      *headerVLA_ptr=headerVLA;
+    }
+    break;
+  case 2: /* mode 2 is for testing of geometries */
+    RayRenderTest(ray,ray_width,ray_height,I->FrontSafe,I->Back,fov);
+    break;
   }
 
-
   timing = UtilGetSeconds()-timing;
-  PRINTFB(FB_Ray,FB_Details)
-    " Ray: total rendering time: %4.2f sec. = %3.1f frames per hour.\n", 
-    timing,3600/timing 
-    ENDFB;
+  if(mode!=2) { /* don't show timings for tests */
+    PRINTFB(FB_Ray,FB_Details)
+      " Ray: total rendering time: %4.2f sec. = %3.1f frames per hour.\n", 
+      timing,3600/timing 
+      ENDFB;
+  }
   OrthoDirty();
   RayFree(ray);
 }

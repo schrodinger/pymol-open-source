@@ -175,7 +175,7 @@ void ObjectInit(Object *I)
   I->fGetSettingHandle = ObjectGetSettingHandle;
   I->fInvalidate = ObjectInvalidate;
   I->Name[0]=0;
-  I->Color=0;
+  I->Color=0; /* white */
   I->ExtentFlag=false;
   I->Setting=NULL;
   I->TTTFlag=false;

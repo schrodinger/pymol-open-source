@@ -1,6 +1,6 @@
-import setting
 import pymol
 import cmd
+import setting
 import parsing
 
 QuietException = parsing.QuietException
@@ -25,12 +25,12 @@ def attach_fragment(selection,fragment,hydrogen,anchor):
       cmd.fragment(fragment,tmp_editor)
       if cmd.count_atoms("((%s) and elem h)"%selection,quiet=1):
          cmd.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",1)
-         if cmd.get_setting("auto_remove_hydrogens"):
+         if cmd.get_setting_legacy("auto_remove_hydrogens"):
             cmd.remove("(hydro and pkchain)")            
       else:
          cmd.remove("(%s and id %d)"%(tmp_editor,hydrogen))
          cmd.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",1)
-         if cmd.get_setting("auto_remove_hydrogens"):
+         if cmd.get_setting_legacy("auto_remove_hydrogens"):
             cmd.remove("(hydro and pkchain)")            
       cmd.delete(tmp_editor)
       
@@ -45,7 +45,7 @@ def attach_amino_acid(selection,amino_acid):
       if cmd.count_atoms("((%s) and name c)"%amino_acid,quiet=1):
          cmd.edit("((%s) and name c)"%amino_acid)
    else:
-      ss = int(cmd.get_setting("secondary_structure"))
+      ss = int(cmd.get_setting_legacy("secondary_structure"))
       if ss:
          if ss==1: # helix
             phi=-57.0
@@ -67,7 +67,7 @@ def attach_amino_acid(selection,amino_acid):
          pymol.stored.resi = str(pymol.stored.resv-1)
          cmd.alter(tmp_editor,"resi=stored.resi")
          cmd.fuse("(%s and name C)"%(tmp_editor),"(pk1)",2)
-         if cmd.get_setting("auto_remove_hydrogens"):
+         if cmd.get_setting_legacy("auto_remove_hydrogens"):
             cmd.remove("(pkchain and hydro)")
          cmd.set_dihedral("(name ca and neighbor pk2)","(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
          cmd.set_geometry("pk2",3,3) # make nitrogen planer
@@ -101,7 +101,7 @@ def attach_amino_acid(selection,amino_acid):
          pymol.stored.resi = str(pymol.stored.resv+1)
          cmd.alter(tmp_editor,"resi=stored.resi")
          cmd.fuse("(%s and name N)"%(tmp_editor),"(pk1)",2)
-         if cmd.get_setting("auto_remove_hydrogens"):
+         if cmd.get_setting_legacy("auto_remove_hydrogens"):
             cmd.remove("(pkchain and hydro)")
          cmd.set_dihedral("(name ca and neighbor pk2)","(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
          cmd.set_geometry("pk1",3,3) # make nitrogen planer

@@ -4348,17 +4348,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 		  }
 	  break;
 	case OMOP_AVRT: /* average vertex coordinate */
-     cnt=op->nvv1;
-     maxCnt=cnt;
-	  for(b=0;b<I->NCSet;b++) {
-       if(I->CSet[b])
-         {
-           op->nvv1=cnt;
-           cnt=0;
-           for(a=0;a<I->NAtom;a++)
-             {
-				   s=I->AtomInfo[a].selEntry;
-               if(SelectorIsMember(s,sele))
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             cnt=0;
+             for(b=0;b<I->NCSet;b++) {
+               if(I->CSet[b])
                  {
                    if(I->DiscreteFlag) {
                      if(I->CSet[b]==I->DiscreteCSet[a])
@@ -4368,23 +4365,25 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                    } else 
                      a1=I->CSet[b]->AtmToIdx[a];
                    if(a1>=0) {
-                     if(!cnt) op->i1++;
-                     VLACheck(op->vv1,float,(op->nvv1*3)+2);
-                     VLACheck(op->vc1,int,op->nvv1);
+                     if(!cnt) {
+                       VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                       VLACheck(op->vc1,int,op->nvv1);
+                     }
+                     cnt++;
                      vv2=I->CSet[b]->Coord+(3*a1);
                      vv1=op->vv1+(op->nvv1*3);
                      *(vv1++)+=*(vv2++);
                      *(vv1++)+=*(vv2++);
                      *(vv1++)+=*(vv2++);
-                     op->vc1[op->nvv1]++;
-                     op->nvv1++;
                    }
                  }
              }
-           if(maxCnt<op->nvv1) maxCnt=op->nvv1;
-         }
-     }
-     op->nvv1=maxCnt;
+             op->vc1[op->nvv1]=cnt;
+             if(cnt)
+               op->nvv1++;
+
+           }
+       }
      break;
 	case OMOP_SFIT: /* state fitting within a single object */
 	  for(b=0;b<I->NCSet;b++) {
@@ -4676,6 +4675,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                 break;
               case OMOP_COLR:
                 I->AtomInfo[a].color=op->i1;
+                op->i2++;
                 break;
               case OMOP_TTTF:
                 hit_flag=true;
@@ -4688,7 +4688,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                     I->AtomInfo[a].visRep[cRepLabel]=false;
                     hit_flag=true;
                   }  else {
-                    if(PLabelAtom(&I->AtomInfo[a],op->s1)) {
+                    if(PLabelAtom(&I->AtomInfo[a],op->s1,a)) {
                       op->i1++;
                       I->AtomInfo[a].visRep[cRepLabel]=true;
                       hit_flag=true;

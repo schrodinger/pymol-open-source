@@ -1,0 +1,567 @@
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>alter (elem n,o),vdw=4.0
+ Alter: modified 36 atoms.
+PyMOL>show dots
+PyMOL>ray
+ RayRenderTest: obtained 2016 graphics primitives.
+PyMOL>alter_state 1,(all),x=x+y
+ AlterState: modified 107 atom states.
+PyMOL>hide
+PyMOL>show lines
+PyMOL>ray
+ RayRenderTest: obtained 166 graphics primitives.
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>remove hydro
+ Remove: eliminated 20 atoms in model 'small01'.
+PyMOL>h_add
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>remove id 17
+ Remove: eliminated 1 atoms in model 'small01'.
+PyMOL>count_atoms
+ count_atoms: 35 atoms
+PyMOL>edit id 3
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>attach X,4,2
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>edit elem X
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>remove_picked
+ Remove: eliminated 1 atoms in model 'small01'.
+PyMOL>unpick
+PyMOL>print cmd.get_names()
+['small01']
+PyMOL>count_atoms
+ count_atoms: 35 atoms
+PyMOL>h_add
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>unbond id 1,id 2
+ RemoveBond: 1 bonds removed from model 'small01'.
+PyMOL>h_add
+PyMOL>count_atoms
+ count_atoms: 38 atoms
+PyMOL>remove hydro
+ Remove: eliminated 22 atoms in model 'small01'.
+PyMOL>bond id 1,id 2
+ AddBond: 1 bonds added to model 'small01'.
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
+PyMOL>h_add
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>edit id 6,id 10
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
+PyMOL>cycle_valence
+ Remove: eliminated 2 atoms in model 'small01'.
+ Remove: eliminated 2 atoms in model 'small01'.
+PyMOL>count_atoms
+ count_atoms: 34 atoms
+PyMOL>cycle_valence
+ Remove: eliminated 1 atoms in model 'small01'.
+ Remove: eliminated 1 atoms in model 'small01'.
+PyMOL>count_atoms
+ count_atoms: 32 atoms
+PyMOL>remove_picked
+PyMOL>bond id 6,id 10,2
+ AddBond: 1 bonds added to model 'small01'.
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
+PyMOL>h_add
+PyMOL>set valence=0.05
+ Setting: valence set to 0.05000.
+PyMOL>ray
+ RayRenderTest: obtained 59 graphics primitives.
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>protect resi 1-6
+ Protect: 51 atoms protected from movement.
+PyMOL>edit 2/sg,12/sg
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
+PyMOL>torsion 90
+PyMOL>get_extent
+ cmd.extent: min: [ -10.445, -25.194,  11.965]
+ cmd.extent: max: [   8.417,   0.863,  28.330]
+PyMOL>undo
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>redo
+PyMOL>get_extent
+ cmd.extent: min: [ -10.445, -25.194,  11.965]
+ cmd.extent: max: [   8.417,   0.863,  28.330]
+PyMOL>undo
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>deprotect
+ Protect: 107 atoms deprotected.
+PyMOL>edit 2/sg,12/sg
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
+PyMOL>torsion 90
+PyMOL>get_extent
+ cmd.extent: min: [ -15.562, -23.335,  11.965]
+ cmd.extent: max: [   7.087,  -8.073,  27.252]
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>flag ignore,(!*/ca,c,n,o,cb)
+ Flag: flag 25 is set in 43 of 107 atoms.
+PyMOL>flag exfoliate,(*/cb)
+ Flag: flag 24 is set in 12 of 107 atoms.
+PyMOL>show surf
+PyMOL>ray
+ RepSurface: 1317 surface points.
+ RepSurface: 1764 triangles.
+ RayRenderTest: obtained 1460 graphics primitives.
+PyMOL>del all
+PyMOL>load dat/small01.mol,m1
+ Executive: object "m1" created.
+PyMOL>load dat/small01.mol,m2
+ Executive: object "m2" created.
+PyMOL>fuse m1 and id 31,m2 and id 31
+Editor-Error: Invalid selections. Requires two bonded atoms in the same moilec
+ule
+PyMOL>del m1
+PyMOL>zoom
+PyMOL>ray
+ RayRenderTest: obtained 121 graphics primitives.
+PyMOL>del all
+PyMOL>load dat/small01.mol,m1
+ Executive: object "m1" created.
+PyMOL>load dat/small01.mol,m2
+ Executive: object "m2" created.
+PyMOL>remove id 30
+ Remove: eliminated 1 atoms in model 'm1'.
+ Remove: eliminated 1 atoms in model 'm2'.
+PyMOL>fuse m1 and id 12,m2 and id 12
+Editor-Error: Invalid selections. Requires two bonded atoms in the same moilec
+ule
+PyMOL>del m1
+PyMOL>zoom
+PyMOL>ray
+ RayRenderTest: obtained 121 graphics primitives.
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>edit id 2
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>invert id 6,id 5
+PyMOL>print "%8.3f"%cmd.dist("id 28","id 17")
+ Executive: object "dist01" created.
+   1.957
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>iterate (name n),print resi
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+ Iterate: iterated over 13 atoms.
+PyMOL>iterate_state 1,(name o),print "%8.3f %8.3f %8.3f"%(x,y,z)
+   4.456  -15.889   23.517
+   3.025  -12.039   25.188
+   1.332   -9.867   21.362
+   0.752   -5.592   23.297
+  -2.092   -3.870   19.914
+  -5.181   -3.100   20.933
+  -5.188   -7.669   21.049
+  -1.643   -7.529   19.691
+  -0.699   -9.660   16.692
+   2.708  -11.019   16.296
+   3.449  -13.097   20.534
+   5.278  -17.322   18.998
+   5.962  -19.432   22.570
+ IterateState: iterated over 13 atom states.
+PyMOL>del all
+PyMOL>load dat/il2.pdb
+ Executive: object "il2" created.
+PyMOL>stored.sum = 0
+PyMOL>iterate_state 1,(il2),stored.sum=stored.sum+x
+ IterateState: iterated over 2084 atom states.
+PyMOL>print "%8.3f"%stored.sum
+20809.421
+PyMOL>push_undo (il2)
+PyMOL>alter_state 1,(il2),x=0.0
+ AlterState: modified 2084 atom states.
+PyMOL>rebuild
+PyMOL>stored.sum = 0
+PyMOL>iterate_state 1,(il2),stored.sum=stored.sum+x
+ IterateState: iterated over 2084 atom states.
+PyMOL>print "%8.3f"%stored.sum
+   0.000
+PyMOL>edit il2`1
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>undo
+PyMOL>stored.sum = 0
+PyMOL>iterate_state 1,(il2),stored.sum=stored.sum+x
+ IterateState: iterated over 2084 atom states.
+PyMOL>print "%8.3f"%stored.sum
+20809.421
+PyMOL>rebuild
+PyMOL>show dots
+PyMOL>ray
+ RayRenderTest: obtained 95617 graphics primitives.
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>iterate (all),print name
+C
+C
+C
+C
+C
+C
+C
+C
+C
+C
+C
+C
+C
+C
+O
+O
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+H
+ Iterate: iterated over 36 atoms.
+PyMOL>rename small01
+PyMOL>iterate (all),print name
+C01
+C02
+C03
+C04
+C05
+C06
+C07
+C08
+C09
+C10
+C11
+C12
+C13
+C
+O14
+O
+H15
+H16
+H17
+H18
+H19
+H20
+H21
+H22
+H23
+H24
+H25
+H26
+H27
+H28
+H29
+H30
+H31
+H32
+H33
+H
+ Iterate: iterated over 36 atoms.
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>edit id 3
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>replace N,3,3
+ Remove: eliminated 1 atoms in model 'small01'.
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>origin pept,object=pept
+PyMOL>rotate x,45,object=pept
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>reset
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>rotate x,45,pept
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -18.886,  11.502]
+ cmd.extent: max: [   8.919,  -1.672,  29.588]
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
+ cmd.get_dihedral: -8.586 degrees.
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>set_dihedral 1/n,1/ca,1/c,1/o,180
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
+ SetDihedral: adjusted to 180.000
+PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
+ cmd.get_dihedral: 180.000 degrees.
+PyMOL>get_extent
+ cmd.extent: min: [  -1.282, -20.240,   6.314]
+ cmd.extent: max: [  10.284,  -4.939,  29.777]
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>remove not id 3
+ Remove: eliminated 35 atoms in model 'small01'.
+PyMOL>zoom
+PyMOL>count_atoms
+ count_atoms: 1 atoms
+PyMOL>set_geometry (id 3),4,4
+PyMOL>h_add
+PyMOL>count_atoms
+ count_atoms: 5 atoms
+PyMOL>remove hydro
+ Remove: eliminated 4 atoms in model 'small01'.
+PyMOL>set_geometry (id 3),3,3
+PyMOL>h_add
+PyMOL>count_atoms
+ count_atoms: 4 atoms
+PyMOL>remove hydro
+ Remove: eliminated 3 atoms in model 'small01'.
+PyMOL>set_geometry (id 3),2,2
+PyMOL>h_add
+PyMOL>count_atoms
+ count_atoms: 3 atoms
+PyMOL>remove hydro
+ Remove: eliminated 2 atoms in model 'small01'.
+PyMOL>set_geometry (id 3),4,2
+PyMOL>h_add
+PyMOL>count_atoms
+ count_atoms: 3 atoms
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>alter (all),resi = (999-int(resi)-ID/4)
+ Alter: modified 107 atoms.
+PyMOL>sort
+PyMOL>show sph,(byres id 10)
+PyMOL>ray
+ RayRenderTest: obtained 210 graphics primitives.
+PyMOL>del all
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>cmd.edit("(pept`95)",pkresi=1)
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>cmd.push_undo("pept",1)
+PyMOL>cmd.edit("(pept`10)",pkresi=1)
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>cmd.push_undo("pept",1)
+PyMOL>get_extent
+ cmd.extent: min: [  -5.848, -19.569,  13.157]
+ cmd.extent: max: [   7.284,   0.863,  28.004]
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>cmd.edit("(small01`3)",pkresi=1)
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>cmd.edit_mode()
+ Setting: button_mode set to 1.000
+ Mouse: configured for editing.
+PyMOL>cmd.push_undo("small01",1)
+PyMOL>get_extent
+ cmd.extent: min: [ -15.771,  -2.490,  -3.683]
+ cmd.extent: max: [   2.256,   2.247,   2.875]
+PyMOL>undo
+PyMOL>get_extent
+ cmd.extent: min: [  -9.184,  -2.901,  -4.337]
+ cmd.extent: max: [   2.256,   2.247,   2.911]
+PyMOL>del all
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>get_extent
+ cmd.extent: min: [  -9.184,  -2.901,  -4.337]
+ cmd.extent: max: [   2.256,   2.247,   2.911]
+PyMOL>cmd.set('valence','0.0500')
+PyMOL>cmd.edit_mode()
+ Setting: button_mode set to 0.000
+ Mouse: configured for visualization.
+PyMOL>cmd.push_undo("small01",1)
+PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.060304098,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202733,   -0.120608196,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202755,   -0.160811022,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.060304098,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202733,   -0.120608196,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202755,   -0.160811022,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202733,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.060304098,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.060304098,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202733,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.060304098,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202733,   -0.120608196,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.060304098,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.020101367,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.060304098,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.060304098,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202733,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.040202733,   -0.160810933,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",   -0.020101367,    0.000000000,    
+0.000000000,1,1,0)
+PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,    0.000000000,    
+0.000000000,1,1,0)
+PyMOL>get_extent
+ cmd.extent: min: [  -9.156,  -4.305,  -4.337]
+ cmd.extent: max: [   2.256,   3.464,   2.911]
+PyMOL>undo
+PyMOL>get_extent
+ cmd.extent: min: [  -9.184,  -2.901,  -4.337]
+ cmd.extent: max: [   2.256,   2.247,   2.911]
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>get_extent
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]
+PyMOL>load dat/pept.pdb,sav
+ Executive: object "sav" created.
+PyMOL>alter_state 1,(pept),x=1;y=2;z=3;
+ AlterState: modified 107 atom states.
+PyMOL>rebuild
+PyMOL>get_extent pept
+ cmd.extent: min: [   1.000,   2.000,   3.000]
+ cmd.extent: max: [   1.000,   2.000,   3.000]
+PyMOL>update pept,sav
+ Update: coordinates updated for 107 atoms.
+PyMOL>get_extent pept
+ cmd.extent: min: [  -6.471, -21.421,  13.157]
+ cmd.extent: max: [   8.919,   0.863,  27.934]

@@ -33,7 +33,7 @@ void PParse(char *str);
 #define cLockOutbox 3
 
 int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index);
-int PLabelAtom(AtomInfoType *at,char *expr);
+int PLabelAtom(AtomInfoType *at,char *expr,int index);
 int PAlterAtomState(float *v,char *expr,int read_only);
 
 #define cPLog_pml_lf    0

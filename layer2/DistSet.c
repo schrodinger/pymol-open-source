@@ -31,10 +31,27 @@ void DistSetFree(DistSet *I);
 void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass);
 void DistSetStrip(DistSet *I);
 void DistSetInvalidateRep(DistSet *I,int type,int level);
+
+/*========================================================================*/
+int DistSetGetExtent(DistSet *I,float *mn,float *mx)
+{
+  float *v;
+  int a;
+  v = I->Coord;
+  for(a=0;a<I->NIndex;a++) {
+    min3f(v,mn,mn);
+    max3f(v,mx,mx);
+    v+=3;
+  }
+  return(I->NIndex);
+}
 /*========================================================================*/
 void DistSetInvalidateRep(DistSet *I,int type,int level)
 {
   int a;
+  PRINTFD(FB_DistSet)
+    " DistSetInvalidateRep: entered.\n"
+    ENDFD;
   if(type>=0) {
 	 if(type<I->NRep)	{
 		SceneChanged();		

@@ -1,6 +1,12 @@
 
+import traceback
+import string
 import types
 from shortcut import Shortcut
+import cmd
+from cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
+     _feedback,fb_module,fb_mask 
+from cmd import is_string
 
 boolean_type = 1
 int_type     = 2
@@ -59,7 +65,7 @@ class SettingIndex:
    stick_nub            =48
    all_states           =49
    pickable             =50
-   auto_show_lines       =51
+   auto_show_lines      =51
    idle_delay           =52
    no_idle              =53
    fast_idle            =54
@@ -80,14 +86,14 @@ class SettingIndex:
    ray_trace_fog_start  =69
    spheroid_smooth      =70
    spheroid_fill        =71
-   auto_show_nonbonded   =72
+   auto_show_nonbonded  =72
    cache_display        =73
    mesh_radius          =74
    backface_cull        =75
    gamma                =76
    dot_width            =77
-   auto_show_selections  =78
-   auto_hide_selections  =79
+   auto_show_selections =78
+   auto_hide_selections =79
    selection_width      =80
    selection_overlay    =81
    static_singletons    =82
@@ -119,21 +125,21 @@ class SettingIndex:
    dash_radius          =108
    cgo_ray_width_scale  =109
    line_radius          =110
-   cartoon_round_helices =111
-   cartoon_refine_normals = 112
-   cartoon_flat_sheets  =113
-   cartoon_smooth_loops =114
-   cartoon_dumbbell_length   =  115
-   cartoon_dumbbell_width    =  116
-   cartoon_dumbbell_radius   =  117
-   cartoon_fancy_helices    =  118
-   cartoon_fancy_sheets     =  119
+   cartoon_round_helices     =111
+   cartoon_refine_normals    =112
+   cartoon_flat_sheets       =113
+   cartoon_smooth_loops      =114
+   cartoon_dumbbell_length   =115
+   cartoon_dumbbell_width    =116
+   cartoon_dumbbell_radius   =117
+   cartoon_fancy_helices     =118
+   cartoon_fancy_sheets      =119
    ignore_pdb_segi       =120
    ribbon_throw          =121
    cartoon_throw         =122
    cartoon_refine        =123
    cartoon_refine_tips   =124
-   cartoon_discrete_colors  =125
+   cartoon_discrete_colors   =125
    normalize_ccp4_maps   =126
    surface_poor          =127
    internal_feedback     =128
@@ -158,7 +164,7 @@ class SettingIndex:
    auto_indicate_flags   =147
    surface_debug         =148
    ray_improve_shadows   =149
-   smooth_color_triangle = 150
+   smooth_color_triangle =150
    ray_default_renderer  =151
    field_of_view         =152
    reflect_power         =153
@@ -167,6 +173,8 @@ class SettingIndex:
    two_sided_lighting    =156
    secondary_structure   =157
    auto_remove_hydrogens =158
+   raise_exceptions      =159
+   stop_on_exceptions    =160
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
@@ -214,3 +222,162 @@ def get_index_list():
 
 def get_name_list():
    return name_list
+
+###### API functions
+
+def set(name,value,selection='',state=0,quiet=1,updates=1,log=0):
+   '''
+DESCRIPTION
+  
+   "set" changes one of the PyMOL state variables,
+      
+USAGE
+ 
+   set name, value [,object-or-selection [,state ]]
+
+   set name = value      # (DEPRECATED)
+
+   WARNING: object and state specific settings are not yet fully
+     implemented -- look for them in version 0.51.
+ 
+PYMOL API
+ 
+   cmd.set ( string name, string value,
+             string selection='', int state=0,
+             int quiet=0, int updates=1 )
+
+NOTES
+
+   The default behavior (with a blank selection) changes the global
+   settings database.  If the selection is 'all', then the settings
+   database in all individual objects will be changed.  Likewise, for
+   a given object, if state is zero, then the object database will be
+   modified.  Otherwise, the settings database for the indicated state
+   within the object will be modified.
+
+   If a selection is provided, then all objects in the selection will
+   be affected. 
+   
+   '''
+   r = None
+   if log:
+      cmd.log("set %s=%s\n"%(name,value))
+   index = _get_index(str(name))
+   if(index<0):
+      print "Error: unknown setting '%s'."%name
+      raise QuietException
+   else:
+      success = 0
+      try:
+         lock()
+         type = _cmd.get_setting_tuple(int(index),str(""),int(-1))[0]
+         if type==None:
+            print "Error: unable to get setting type."
+            raise QuietException
+         try:
+            if type==1: # boolean
+               v = (boolean_dict[
+                      boolean_sc.auto_err(
+                         str(value),"boolean")],)
+            elif type==2: # int
+               v = (int(value),)
+            elif type==3: # float
+               v = (float(value),)
+            elif type==4: # float3 - some legacy handling req.
+               if is_string(value):
+                  if not ',' in value:
+                     v = string.split(value)
+                  else:
+                     v = eval(value)
+               else:
+                  v = value
+               v = (float(v[0]),float(v[1]),float(v[2]))
+            elif type==5: # color
+               v = (str(value),)
+               
+            v = (type,v)
+            r = _cmd.set(int(index),v,
+                         string.strip(str(selection)),
+                         int(state)-1,int(quiet),
+                         int(updates))
+         except:
+            if(_feedback(fb_module.cmd,fb_mask.debugging)):
+               traceback.print_exc()
+               raise QuietException
+            print "Error: unable to read setting value."
+      finally:
+         unlock()
+   return r
+
+def get_setting(name,object='',state=0): # INTERNAL
+   r = None
+   if is_string(name):
+      i = _get_index(name)
+   else:
+      i = int(name)
+   if i<0:
+      print "Error: unknown setting"
+      raise QuietException
+   try:
+      lock()
+      r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
+      typ = r[0]
+      if typ<3:
+         r = int(r[1][0])
+      elif typ<4:
+         r = r[1][0]
+      elif typ<5:
+         r = r[1]
+   finally:
+      unlock()
+   return r
+
+def get_setting_tuple(name,object='',state=0): # INTERNAL
+   r = None
+   if is_string(name):      i = _get_index(name)
+   else:
+      i = int(name)
+   if i<0:
+      print "Error: unknown setting"
+      raise QuietException
+   try:
+      lock()
+      r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
+   finally:
+      unlock()
+   return r
+
+def get_setting_text(name,object='',state=0):  # INTERNAL
+   r = None
+   if is_string(name):
+      i = _get_index(name)
+   else:
+      i = int(name)
+   if i<0:
+      print "Error: unknown setting"
+      raise QuietException
+   try:
+      lock()
+      r = _cmd.get_setting_text(i,str(object),int(state)-1)
+   finally:
+      unlock()
+   return r
+
+def get_setting_updates(): # INTERNAL
+   r = []
+   if lock_attempt():
+      try:
+         r = _cmd.get_setting_updates()
+      finally:
+         unlock()
+   return r
+
+
+def get_setting_legacy(name): # INTERNAL, DEPRECATED
+   r = None
+   try:
+      lock()
+      r = _cmd.get_setting(name)
+   finally:
+      unlock()
+   return r
