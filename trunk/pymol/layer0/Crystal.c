@@ -170,7 +170,6 @@ void CrystalUpdate(CCrystal *I)
 void CrystalDump(CCrystal *I) 
 {
   int i;
-  int a;
 
   PRINTF 
     " Crystal: Unit Cell         %8.3f %8.3f %8.3f\n",
