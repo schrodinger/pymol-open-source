@@ -27,8 +27,14 @@ class MOL(Storage):
          at.coord = [float(molList[irec][0:10]), 
             float(molList[irec][10:20]),float(molList[irec][20:30])]
          at.symbol = string.strip(molList[irec][31:33])
-         at.stereo = int(molList[irec][39:42])         
-         chg=int(molList[irec][36:39])
+         try:
+            at.stereo = int(molList[irec][39:42])
+         except:
+            at.stereo = 0
+         try:
+            chg=int(molList[irec][36:39])
+         except:
+            chg=0
          if chg>0: chg=4-chg
          at.formal_charge = chg
          model.atom.append(at)
