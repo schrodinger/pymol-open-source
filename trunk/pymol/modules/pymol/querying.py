@@ -18,6 +18,52 @@ import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 from cmd import _feedback,fb_module,fb_mask
 
+def get_title(object,state,quiet=1):
+   '''
+DESCRIPTION
+
+   "get_title" retrieves a text string to the state of a particular
+   object which will be displayed when the state is active.
+
+USAGE
+   
+   set_title object,state
+
+PYMOL API
+
+   cmd.set_title(string object,int state,string text)
+
+'''
+   r = None
+   try:
+      lock()
+      r = _cmd.get_title(str(object),int(state)-1)
+      if not quiet:
+         if r!=None:
+            print " get_title: %s"%r      
+   finally:
+      unlock()
+   return r
+
+def transform_object(name,matrix,state=0,log=0,sele=''):
+   r = None
+   try:
+      lock()
+      r = _cmd.transform_object(str(name),int(state)-1,list(matrix),int(log),str(sele))
+   finally:
+      unlock()
+   return r
+
+def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0):
+   r = None
+   sele1 = selector.process(sele1)
+   try:
+      lock()
+      r = _cmd.translate_atom(str(sele1),float(v0),float(v1),float(v2),int(state)-1,int(mode),int(log))
+   finally:
+      unlock()
+   return r
+
 def distance(name=None,selection1="(lb)",selection2="(rb)",cutoff=None,
              mode=None,zoom=0,width=None,length=None,gap=None):
    '''

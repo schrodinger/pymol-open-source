@@ -807,6 +807,7 @@ from querying import \
      get_position,       \
      get_povray,         \
      get_renderer,       \
+     get_title,          \
      get_type,           \
      id_atom,            \
      identify,           \
@@ -1052,6 +1053,7 @@ keyword = {
    'get_dihedral'  : [ get_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
    'get_extent'    : [ get_extent        , 0 , 0 , ''  , parsing.STRICT ],   
    'get_position'  : [ get_position      , 0 , 0 , ''  , parsing.STRICT ],
+   'get_title'     : [ get_title         , 0 , 0 , ''  , parsing.STRICT ],   
    'get_type'      : [ get_type          , 0 , 0 , ''  , parsing.STRICT ],
    'get_view'      : [ get_view          , 0 , 0 , ''  , parsing.STRICT ],
    'h_add'         : [ h_add             , 0 , 0 , ''  , parsing.STRICT ],
