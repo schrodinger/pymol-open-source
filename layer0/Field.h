@@ -81,5 +81,7 @@ typedef struct {
 CField *FieldNew(int *dim,int n_dim,unsigned int base_size);
 void FieldZero(CField *I);
 void FieldFree(CField *I);
+float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z);
+
 
 #endif
