@@ -398,6 +398,12 @@ class Topology:
       for b in kees:
          print b
 
+   def get_list(self):
+      return [self.bond.keys(),
+              self.angle.keys(),
+              self.torsion.keys(),
+              self.improper.keys()]
+
 class Subset:
    
    def __init__(self,par,top):
@@ -655,6 +661,24 @@ class Subset:
          return 1
       else:
          return 0
+
+   def assign_types(self):
+      c = 0
+      self.mapping = {}
+      map = self.mapping
+      kees = self.present.keys()
+      label = []
+      type = []
+      kees.sort()
+      for a in kees:
+         c = c + 1
+         st = str(c)
+         label.append(st)
+         type.append(a)
+         map[a] = st
+      # assign numeric types 
+      for a in self.model.atom:
+         a.numeric_type = map[a.text_type]
       
    def write_tinker_prm(self,fname,proofread=None,smooth=None):
       c = 0
@@ -803,4 +827,101 @@ dielectric              1.0
          f.write("charge  %6s    %10.4f\n" % (a,0.0))
       f.close()
 
-         
+
+   def get_list(self):
+      list = []
+      c = 0
+      self.mapping = {}
+      map = self.mapping
+      kees = self.present.keys()
+      label = []
+      type = []
+      kees.sort()
+      for a in kees:
+         c = c + 1
+         st = str(c)
+         type.append(a)
+         map[a] = c
+      # assign numeric types as per the parameter we're writing
+      for a in self.model.atom:
+         a.numeric_type = map[a.text_type]
+      # types
+      typ_list = []
+      for c in range(len(self.present)):
+         at = type[c]
+         typ_list.append((map[at],self.extra[at][0],self.mw[at][0],self.extra[at][1]))
+      list.append(typ_list)
+      # van der waals
+      vdw_list = []
+      for c in range(len(self.present)):
+         at = type[c]
+         vdw_list.append((map[at],self.vdw[at][0],self.vdw[at][1]))
+      list.append(vdw_list)
+      # bonds
+      bnd_list = []
+      bond = {}
+      for a in self.bond.keys():
+         kee = (map[string.strip(a[0:2])],map[string.strip(a[3:5])])
+         bond[kee] = a
+      kees = bond.keys()
+      kees.sort()
+      for a in kees:
+         kee = bond[a]
+         bnd_list.append((a[0],a[1],self.bond[kee][0],self.bond[kee][1]))
+      list.append(bnd_list)
+      # angles
+      ang_list = []
+      angle = {}
+      for a in self.angle.keys():
+         kee = (map[string.strip(a[0:2])],
+                map[string.strip(a[3:5])],
+                map[string.strip(a[6:8])],                
+                )
+         angle[kee] = a
+      kees = angle.keys()
+      kees.sort()
+      for a in kees:
+         kee = angle[a]
+         ang_list.append((a[0],a[1],a[2],self.angle[kee][0],self.angle[kee][1]))
+      list.append(ang_list)
+      # impropers
+      imp_list = []
+      improper = {}
+      for a in self.improper.keys():
+         kee = (map[string.strip(a[0:2])],
+                map[string.strip(a[3:5])],
+                map[string.strip(a[6:8])],
+                map[string.strip(a[9:11])],                                
+                )
+         improper[kee] = a
+      kees = improper.keys()
+      kees.sort()
+      for a in kees:
+         kee = improper[a]
+         imp_list.append((a[0],a[1],a[2],a[3],self.improper[kee][0],
+            self.improper[kee][1],self.improper[kee][2]))
+      list.append(imp_list)
+      # torsions
+      tor_list = []
+      torsion = {}
+      for a in self.torsion.keys():
+         kee = (map[string.strip(a[0:2])],
+                map[string.strip(a[3:5])],
+                map[string.strip(a[6:8])],
+                map[string.strip(a[9:11])],                                
+                )
+         torsion[kee] = a
+      kees = torsion.keys()
+      kees.sort()
+      for a in kees:
+         kee = torsion[a]
+         tor = [ a[0],a[1],a[2],a[3] ]
+         lst = self.torsion[kee]
+         div = lst[0]
+         lst = lst[1:]
+         while len(lst):
+            tor.extend([lst[0]/div,lst[1],lst[2]])
+            lst = lst[5:]
+         tor_list.append(tor)
+      list.append(tor_list)
+      return list
