@@ -374,7 +374,7 @@ Rep *RepMeshNew(CoordSet *cs)
 		 ccs=obj->CSet[b];
 		 if(ccs) {
 			for(c=0;c<ccs->NIndex;c++) {
-           ai1 = obj->AtomInfo+cs->IdxToAtm[c];
+           ai1 = obj->AtomInfo+ccs->IdxToAtm[c]; /* WLD fixed 011218 */
 			  if(ai1->visRep[cRepMesh]&&
               (inclH||(!ai1->hydrogen))&&
               ((!cullByFlag)||

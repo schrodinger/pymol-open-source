@@ -14,8 +14,10 @@ ent_dir = "pdb"
 
 def load():
    list = glob("pdb/*/*")
+   l = len(list)
+   c = 0
    for file in list:
-      print file
+      c = c + 1
       cmd.delete('pdb')
       cmd.load(file,'pdb')
       cmd.refresh()
@@ -32,6 +34,7 @@ def load():
             cmd.refresh()
             cmd.frame(a)
             time.sleep(0.025)
+         sys.__stderr__.write(" %d of %d"%(c,l))
          sys.__stderr__.write("\n")
          sys.__stderr__.flush()
       else:
