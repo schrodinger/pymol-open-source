@@ -157,7 +157,6 @@ PyMOL>ray
  RayRenderTest: obtained 10710 graphics primitives.
 PyMOL>dele all
 PyMOL>dele all
- Executive: object "cgo" created.
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>color

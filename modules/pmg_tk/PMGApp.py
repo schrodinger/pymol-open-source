@@ -65,6 +65,15 @@ class PMGApp(AbstractApp):
                     text=text,highlightthickness=0,
                     command=cmd,padx=0,pady=0)
       newBtn.pack(side=LEFT,fill=BOTH,expand=YES)
+
+   def get_view(self):
+      cmd.get_view(quiet=0)
+      try: 
+         self.root.clipboard_clear()
+         self.root.clipboard_append(cmd.get_view(3,quiet=1))
+         print " PyMOL: view matrix copied to clipboard."
+      except:
+         traceback.print_exc()
       
    def createButtons(self):
       
@@ -81,7 +90,7 @@ class PMGApp(AbstractApp):
       row3.pack(side=TOP,fill=BOTH,expand=YES)
       btn_unpick = self.buttonAdd(row3,'Unpick',lambda : cmd.do("_ unpick"))
       btn_hidesele = self.buttonAdd(row3,'Hide Sele',self.hide_sele)
-      btn_getview = self.buttonAdd(row3,'Get View',lambda : cmd.get_view(quiet=0)) # doesn't get logged
+      btn_getview = self.buttonAdd(row3,'Get View',lambda s=self: s.get_view()) # doesn't get logged
 
 #      row3 = self.createcomponent('row3', (), None,
 #         Frame,self.get_commandFrame(),bd=0)

@@ -20,3 +20,4 @@ def machine_get_clipboard():
    return result
 
                  
+   
