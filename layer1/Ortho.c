@@ -101,7 +101,7 @@ void OrthoKeyControl(unsigned char k);
 #define cBusyBar 10
 #define cBusySpacing 15
 
-#define cBusyUpdate 1.0
+#define cBusyUpdate 0.3
 
 #define cWizardTopMargin 15
 #define cWizardLeftMargin 15
@@ -250,6 +250,9 @@ void OrthoBusyMessage(char *message)
 void OrthoBusySlow(int progress,int total)
 {
   OrthoObject *I=&Ortho;
+  PRINTFD(FB_Ortho)
+    " OrthoBusySlow-DEBUG: progress %d total %d\n",progress,total
+    ENDFD;
   I->BusyStatus[0]=progress;
   I->BusyStatus[1]=total;
   OrthoBusyDraw(false);
@@ -258,6 +261,9 @@ void OrthoBusySlow(int progress,int total)
 void OrthoBusyFast(int progress,int total)
 {
   OrthoObject *I=&Ortho;
+  PRINTFD(FB_Ortho)
+    " OrthoBusyFast-DEBUG: progress %d total %d\n",progress,total
+    ENDFD;
   I->BusyStatus[2]=progress;
   I->BusyStatus[3]=total;
   OrthoBusyDraw(false);
