@@ -48,6 +48,8 @@ class loadable:
    ccp4 = 18     # CCP4 map, under development
    pmo = 19      # pmo, experimental molecular object format
    cex = 20      # cex format
+   top = 21      # AMBER topology
+   trj = 22      # AMBER trajectory
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -219,6 +221,10 @@ SEE ALSO
             ftype = loadable.cex
          elif re.search("\.pmo$",filename,re.I):
             ftype = loadable.pmo
+         elif re.search("\.top$",filename,re.I):
+            ftype = loadable.top
+         elif re.search("\.trj$",filename,re.I):
+            ftype = loadable.trj
          else:
             ftype = loadable.pdb # default is PDB
       elif cmd.is_string(type):
@@ -255,6 +261,10 @@ SEE ALSO
          del sdf
          _cmd.finish_object(str(oname))
          _cmd.do("zoom (%s)"%oname) 
+         ftype = -1
+
+# special handling for AMBER trj failes
+      if ftype == loadable.trj:
          ftype = -1
 
 # special handling of cex files
