@@ -375,6 +375,8 @@ if __name__=='pymol.setting':
       mesh_type             = 335
       dot_lighting          = 336
       mesh_lighting         = 337
+      surface_solvent       = 338
+      triangle_max_passes   = 339
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
