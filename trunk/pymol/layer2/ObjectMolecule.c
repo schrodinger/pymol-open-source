@@ -4892,6 +4892,15 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           Py_XDECREF(tmp);
         }
 
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"ss");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,ai->ssType,sizeof(SSType)-1);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read secondary structure");
+          Py_XDECREF(tmp);
+        }
+
         
         for(c=0;c<cRepCnt;c++) {
           atInfo[a].visRep[c] = false;

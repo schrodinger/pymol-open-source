@@ -423,6 +423,7 @@ PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v,int index)
     PConvStringToPyObjAttr(atom,"symbol",ai->elem);
     PConvStringToPyObjAttr(atom,"resn",ai->resn);
     PConvStringToPyObjAttr(atom,"resi",ai->resi);
+    PConvStringToPyObjAttr(atom,"ss",ai->ssType);
     PConvIntToPyObjAttr(atom,"resi_number",ai->resv);
     PConvIntToPyObjAttr(atom,"stereo",ai->stereo);
     PConvStringToPyObjAttr(atom,"chain",ai->chain);

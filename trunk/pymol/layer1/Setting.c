@@ -1017,6 +1017,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_ribbon_radius:
   case cSetting_ribbon_width:
   case cSetting_ribbon_throw:
+  case cSetting_ribbon_trace:
     ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged();
     break;
@@ -1694,6 +1695,8 @@ void SettingInitGlobal(void)
   SettingSet_i(I,cSetting_state,1);
 
   SettingSet_i(I,cSetting_ray_shadows,1);
+
+  SettingSet_i(I,cSetting_ribbon_trace,0);
 
 }
 

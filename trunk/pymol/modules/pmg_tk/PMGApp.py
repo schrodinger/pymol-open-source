@@ -171,6 +171,13 @@ class PMGApp(AbstractApp):
                       e=self.entry,s=self:
                       complete(event,w,e,s))
 
+#      self.entry.bind('<Up>',lambda event,w=self.command,
+#                      e=self.entry,s=self:cmd.do("print 1"))
+
+#      self.entry.bind('<Down>',lambda event,w=self.command,
+#                      e=self.entry,s=self:
+#                      cmd.do("print 2"))
+
       self.output = self.createcomponent('output', (), None,
                            Pmw.ScrolledText,
                            (self.get_dataArea(),))
@@ -1144,38 +1151,38 @@ class PMGApp(AbstractApp):
       
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
-      self.menuBar.addmenuitem('Mouse', 'command', '3 Button',
-                               label='3 Button',
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Cycle',
+                               label='3 Button Cycle',
                                command = lambda: cmd.config_mouse('three_button'))
 
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button',
-                               label='2 Button',
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Cycle',
+                               label='2 Button Viewing Cycle',
                                command = lambda: cmd.config_mouse('two_button'))
 
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing',
-                               label='2 Button Editing',
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing Cycle',
+                               label='2 Button Editing Cycle',
                                command = lambda: cmd.config_mouse('two_button_editing'))
 
       self.menuBar.addmenuitem('Mouse', 'separator', '')
 
-      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Viewing',
-                               label='3 Button Viewing',
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Viewing Mode',
+                               label='3 Button Viewing Mode',
                                command = lambda: cmd.mouse('three_button_viewing'))
 
-      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing',
-                               label='3 Button Editing',
+      self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing Mode',
+                               label='3 Button Editing Mode',
                                command = lambda: cmd.mouse('three_button_editing'))
 
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing',
-                               label='2 Button Viewing',
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Mode',
+                               label='2 Button Viewing Mode',
                                command = lambda: cmd.mouse('two_button_viewing'))
 
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Selecting',
-                               label='2 Button Selecting',
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Selecting Mode',
+                               label='2 Button Selecting Mode',
                                command = lambda: cmd.mouse('two_button_selecting'))
 
-      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing',
-                               label='2 Button Editing',
+      self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing Mode',
+                               label='2 Button Editing Mode',
                                command = lambda: cmd.mouse('two_button_editing'))
 
       self.menuBar.addmenu('Cartoon', 'Cartoon Properties')
