@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"Executive.h"
 #include"Setting.h"
+#include"Sphere.h"
 
 #define wcopy ParseWordCopy
 #define nextline ParseNextLine
@@ -67,6 +68,175 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
 void ObjectMoleculeBracketResidue(ObjectMolecule *I,AtomInfoType *ai,int *st,int *nd);
 
+/*========================================================================*/
+void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
+{
+  CoordSet *cs;
+  float *spheroid = NULL;
+  int a,b,c,a0;
+  SphereRec *sp;
+  float *spl;
+  float *v,*v0,*s,*f;
+  int *i;
+  float *center = NULL;
+  float d0[3],n0[3],d1[3],d2[3];
+  float p0[3],p1[3],p2[3];
+  int t0,t1,t2,bt0,bt1,bt2;
+  float mx,dp,l,*fsum = NULL;
+  float *norm = NULL;
+  int mxi,row,*count=NULL,base;
+  int nRow;
+  sp=Sphere1;
+  
+  nRow = I->NAtom*sp->nDot;
+  normalize3f(v);
+  spheroid=Alloc(float,nRow);
+  center=Alloc(float,I->NAtom*3);
+  count=Alloc(int,I->NAtom);
+  fsum=Alloc(float,nRow);
+  spl=spheroid;
+  
+  /* first compute average coordinate */
+
+  v=center;
+  i = count;
+  for(a=0;a<I->NAtom;a++) {
+    *(v++)=0.0;
+    *(v++)=0.0;
+    *(v++)=0.0;
+    *(i++)=0;
+  }
+
+  for(b=0;b<I->NCSet;b++) {
+    cs=I->CSet[b];
+    if(cs) {
+      v = cs->Coord;
+      for(a=0;a<cs->NIndex;a++) {
+        a0=cs->IdxToAtm[a];
+        v0 = center+3*a0;
+        add3f(v,v0,v0);
+        (*(count+a0))++;
+        v+=3;
+      }
+    }
+  }
+
+  i=count;
+  v=center;
+  for(a=0;a<I->NAtom;a++) 
+    if(*i) {
+      (*(v++))/=(*i);
+      (*(v++))/=(*i);
+      (*(v++))/=(*i++);
+    } else {
+      v+=3;
+      i++;
+    }
+
+/* now go through and compute radial distances */
+
+  f = fsum;
+  s = spheroid;
+  for(a=0;a<nRow;a++) {
+    *(f++)=0.0;
+    *(s++)=0.0; 
+  }
+
+  for(b=0;b<I->NCSet;b++) {
+    cs=I->CSet[b];
+    if(cs) {
+      v = cs->Coord;
+      for(a=0;a<cs->NIndex;a++) {
+        a0=cs->IdxToAtm[a];
+        base = (a0*sp->nDot);
+        v0 = center+(3*a0);
+        subtract3f(v,v0,d0); /* subtract from average */
+        l = length3f(d0);
+        if(l>0.0) scale3f(d0,1.0/l,n0);
+        mxi = 0;
+        mx = 0.0;
+        for(c=0;c<sp->nDot;c++) { /* find closest spoke */
+          dp=dot_product3f(sp->dot[c].v,n0);
+          if(dp>0.3) {
+            row = base + c;
+            fsum[row] += dp;
+            spheroid[row]+=l*dp;
+          }
+        }
+        v+=3;
+      }
+    }
+  }
+
+  f=fsum;
+  s=spheroid;
+  for(a=0;a<nRow;a++) {
+    if(*f>R_SMALL4) {
+      (*(s++))/=*(f++);
+    } else {
+      *(s++)=0.05; 
+      f++;
+    }
+  }
+
+  /* set frame 0 coordinates to the average */
+
+  for(b=0;b<I->NCSet;b++) {
+    cs=I->CSet[b];
+    if(cs) {
+      v = cs->Coord;
+      for(a=0;a<cs->NIndex;a++) {
+        a0=cs->IdxToAtm[a];
+        v0 = center+3*a0;
+        copy3f(v0,v);
+        v+=3;
+      }
+    }
+  }
+
+  /* now compute surface normals */
+
+  norm = Alloc(float,nRow*3);
+  for(a=0;a<I->NAtom;a++) {
+    base = a*sp->nDot;
+    for(b=0;b<sp->NTri;b++) {
+      t0 = sp->Tri[b*3  ];
+      t1 = sp->Tri[b*3+1];
+      t2 = sp->Tri[b*3+2];
+      bt0 = base + t1;
+      bt1 = base + t1;
+      bt2 = base + t2;
+      scale3f(sp->dot[t0].v,spheroid[bt0],p0);
+      scale3f(sp->dot[t1].v,spheroid[bt1],p1);
+      scale3f(sp->dot[t2].v,spheroid[bt2],p2);
+      subtract3f(p1,p0,d1);
+      subtract3f(p2,p0,d2);
+      cross_product3f(d1,d2,n0);
+      normalize3f(n0);
+      v = norm+bt0*3;
+      add3f(p0,v,v);
+      v = norm+bt1*3;
+      add3f(p1,v,v);
+      v = norm+bt2*3;
+      add3f(p2,v,v);
+
+    }
+  }
+  
+  if(I->CSet[0]) {
+    I->CSet[0]->Spheroid=spheroid;
+    I->CSet[0]->SpheroidNormal=norm;
+    I->CSet[0]->NSpheroid=nRow;
+  } else {
+    FreeP(spheroid);
+    FreeP(norm);
+  }
+  FreeP(center);
+  FreeP(count);
+  FreeP(fsum);
+  I->NCSet=1;
+  ObjectMoleculeInvalidate(I,cRepSphere,cRepInvProp);
+}
 /*========================================================================*/
 void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
 {
@@ -1455,6 +1625,22 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
       }
       Py_DECREF(mol);
     }
+    if(PyObject_HasAttrString(model,"spheroid")&&
+       PyObject_HasAttrString(model,"spheroid_normals"))
+      {
+        tmp = PyObject_GetAttrString(mol,"spheroid");
+        if(tmp) {
+          PConvPyListToFloatArray(tmp,cset->Spheroid);
+          Py_DECREF(tmp);
+        }
+        tmp = PyObject_GetAttrString(mol,"spheroid_normals");
+        if(tmp) {
+          PConvPyListToFloatArray(tmp,cset->SpheroidNormal);
+          Py_DECREF(tmp);
+        }
+      }
+    mol = PyObject_GetAttrString(model,"molecule");
+    
 	 nAtom=cset->NIndex;
   }
 

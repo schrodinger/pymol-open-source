@@ -29,6 +29,8 @@ typedef struct SphereRec {
   int *Sequence;
   int NStrip,NVertTot;
   int nDot;
+  int *Tri;
+  int NTri;
 } SphereRec;
 
 extern SphereRec *Sphere0;
