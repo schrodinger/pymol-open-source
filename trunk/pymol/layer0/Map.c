@@ -111,27 +111,28 @@ void MapCacheFree(MapCache *M,int group_id,int block_base)
 
 int MapInside(MapType *I,float *v,int *a,int *b,int *c) /* special version for ray-tracing */
 {
-	int		atmp, btmp, ctmp;
-	const float	iDiv	= I->recipDiv; 
-		
-	atmp	= (int)((v[0] - I->Min[0]) * iDiv) + MapBorder;
-	btmp	= (int)((v[1] - I->Min[1]) * iDiv) + MapBorder;
-	ctmp	= (int)((v[2] - I->Min[2]) * iDiv) + MapBorder;
+  register int		atmp, btmp, ctmp;
+  register float	iDiv	= I->recipDiv; 
 
-	if(atmp < I->iMin[0])
-	{
+  atmp	= (int)((v[0] - I->Min[0]) * iDiv) + MapBorder;
+  btmp	= (int)((v[1] - I->Min[1]) * iDiv) + MapBorder;
+  ctmp	= (int)((v[2] - I->Min[2]) * iDiv) + MapBorder;
+
+  if(atmp < I->iMin[0])
+    {
 		if((I->iMin[0] - atmp) > 3)
-			return(-1);
+        return(-1);
 		else 
-			atmp = I->iMin[0]; 
-	}
-	else if(atmp > I->iMax[0]) 
-	{ 
+        atmp = I->iMin[0]; 
+    }
+  else if(atmp > I->iMax[0]) 
+    { 
 		if((atmp - I->iMax[0]) > 3) 
-			return(-1);
+        return(-1);
 		else 
-			atmp = I->iMax[0]; 
-	}
+        atmp = I->iMax[0]; 
+    }
+
 
 	if(btmp < I->iMin[1]) 
 	{ 
