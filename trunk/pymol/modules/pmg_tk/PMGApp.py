@@ -204,6 +204,7 @@ class PMGApp(AbstractApp):
       ofile = askopenfilename(initialdir = self.initialdir,
                               filetypes=[("PDB File","*.pdb"),
                                          ("All Files","*.*"),
+                                         ("All Files","*"),                                         
                                          ("CCP4 Map","*.ccp4"),                                         
                                          ("PDB File","*.ent"),
                                          ("Macromodel File","*.dat"),
