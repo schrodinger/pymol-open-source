@@ -793,7 +793,7 @@ PYMOL API
       return r
 
 
-   def get_names(type='objects',enabled_only=0):
+   def get_names(type='public_objects',enabled_only=0):
       '''
 DESCRIPTION
 

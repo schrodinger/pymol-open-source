@@ -182,6 +182,37 @@ void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec *op)
   UtilZeroMem((char*)op,sizeof(ObjectMoleculeOpRec));
 }
 
+int ObjectMoleculeGetTopNeighbor(PyMOLGlobals *G,
+                                 ObjectMolecule *I, 
+                                 int start, int excluded)
+{
+  /* returns the most proton-rich element with the lowest priority value
+   (OG1 before OG2, CG, HB1) */
+
+  int n0, at;
+  AtomInfoType *ai;
+  int highest_at = -1, highest_prot=0, lowest_pri=9999;
+
+  ObjectMoleculeUpdateNeighbors(I);    
+  n0 = I->Neighbor[start]+1;
+  while(I->Neighbor[n0]>=0) {
+    ai = I->AtomInfo + (at = I->Neighbor[n0]);
+    if((highest_at<0)&&(at!=excluded)) {
+      highest_prot = ai->protons;
+      lowest_pri = ai->priority;
+      highest_at = at;
+    } else if(((ai->protons>highest_prot)||
+               ((ai->protons==highest_prot)&&(ai->priority<lowest_pri)))
+              &&(at!=excluded)) {
+      highest_prot = ai->protons;
+      highest_at = at;
+      lowest_pri = ai->priority;
+    }
+    n0+=2;
+  }
+  return highest_at;
+}
+
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals *G,ObjectMolecule *I,char *fname,int frame,
                                           int interval,int average,int start,

@@ -53,6 +53,43 @@ struct _CEditor {
   int ShowFrags;
 } ;
 
+
+static void EditorDrawDihedral(PyMOLGlobals *G)
+{
+
+  if(EditorActive(G)&&EditorIsBondMode(G)) {
+    ObjectMolecule *obj1, *obj2;
+    int at1, at2, at0, at3;
+    int sele1 = SelectorIndexByName(G,cEditorSele1);
+    int sele2 = SelectorIndexByName(G,cEditorSele2);
+    if((sele1>=0) &&(sele2>=0)) {
+      obj1 = SelectorGetFastSingleAtomObjectIndex(G,sele1,&at1);
+      obj2 = SelectorGetFastSingleAtomObjectIndex(G,sele2,&at2);
+      if(obj1 && (obj1 == obj2) ) {
+        
+        at0 = ObjectMoleculeGetTopNeighbor(G,obj1, at1,at2);
+        at3 = ObjectMoleculeGetTopNeighbor(G,obj1, at2,at1);
+        
+        if((at0>=0) &&( at3>=0)) {
+          int sele0, sele3;
+          
+          /* find the highest priority atom attached to index1 */
+          SelectorCreateOrderedFromObjectIndices(G,cEditorDihe1,obj1,&at0,1);
+          SelectorCreateOrderedFromObjectIndices(G,cEditorDihe2,obj2,&at3,1);
+          sele0 = SelectorIndexByName(G,cEditorDihe1);
+          sele3 = SelectorIndexByName(G,cEditorDihe2);
+          
+          ExecutiveDihedral(G,cEditorDihedral,cEditorDihe1,cEditorSele1,cEditorSele2,cEditorDihe2,
+                            0,true,true,false,true);
+          ExecutiveColor(G,cEditorDihedral,"white",1,true);
+          ExecutiveSetSettingFromString(G, cSetting_label_font_id, "4", cEditorDihedral, 0, true, true);
+          ExecutiveSetSettingFromString(G, cSetting_label_color, "30", cEditorDihedral, 0, true, true);
+        }
+      }
+    }
+  }
+}
+
 static int EditorGetEffectiveState(PyMOLGlobals *G,ObjectMolecule *obj,int state)
 {
   if(!obj) obj = SelectorGetFastSingleObjectMolecule(G,
@@ -1256,6 +1293,9 @@ void EditorInactivate(PyMOLGlobals *G)
   ExecutiveDelete(G,cEditorObject);
   ExecutiveDelete(G,cEditorComp);
   ExecutiveDelete(G,cEditorLink);
+  ExecutiveDelete(G,cEditorDihedral);
+  ExecutiveDelete(G,cEditorDihe1);
+  ExecutiveDelete(G,cEditorDihe2);
   /*  if(SettingGet(G,cSetting_log_conformations)) PLogFlush();
       TODO: resolve this problem:
       we can't assume that Python interpreter isn't blocked
@@ -1301,7 +1341,9 @@ void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
     }
     if(SettingGet(G,cSetting_auto_hide_selections))
       ExecutiveHideSelections(G);
-    
+
+    if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral)) 
+      EditorDrawDihedral(G);
   } else {
     EditorInactivate(G);
   }
@@ -1526,7 +1568,7 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
     I->DragBondFlag,I->DragSlowFlag,seleFlag
     ENDFD;
 }
-/*========================================================================*/
+
 void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state,
                 float *pt,float *mov,float *z_dir)
 {
@@ -1670,7 +1712,10 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
             ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
             
           }
+          if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral))
+            EditorDrawDihedral(G);
         }
+
         SceneDirty(G);
         break;
       case cButModeMovFrag:

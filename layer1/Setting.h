@@ -565,6 +565,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_atom_name_wildcard         413
 #define cSetting_ignore_case                414
 #define cSetting_presentation_auto_quit     415
+#define cSetting_editor_auto_dihedral       416
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -574,7 +575,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       416
+#define cSetting_INIT                       417
 
 #endif
 

@@ -228,6 +228,10 @@ void M4XAnnoPurge(M4XAnnoType *m4x);
 void M4XAlignInit(M4XAlignType *align);
 void M4XAlignPurge(M4XAlignType *align);
 
+int ObjectMoleculeGetTopNeighbor(PyMOLGlobals *G,
+                                 ObjectMolecule *I, 
+                                 int start, int excluded);
+
 int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,struct CoordSet *cs);
 int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided);
 

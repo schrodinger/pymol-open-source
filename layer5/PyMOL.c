@@ -517,6 +517,8 @@ typedef struct _CPyMOL {
   ov_word lex_atom_name_wildcard;
   ov_word lex_ignore_case;
   ov_word lex_presentation_auto_quit;
+  ov_word lex_editor_auto_dihedral 
+
 } _CPyMOL;
 
 static int status_ok(int ok) {
@@ -1029,6 +1031,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(atom_name_wildcard,413);
   LEX_SETTING(ignore_case,414);
   LEX_SETTING(presentation_auto_quit,415);
+  LEX_SETTING(editor_auto_dihedral,416);
 
   return_OVstatus_SUCCESS;
 }
