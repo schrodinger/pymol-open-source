@@ -911,14 +911,6 @@ def lock():
    '''
 INTERNAL
    '''
-   thred = thread.get_ident()
-   if (thred == pymol.glutThread):
-      _cmd.flush_now()
-   else:
-      while _cmd.wait_queue():
-         e = threading.Event()
-         e.wait(0.05)
-         del e
    lock_api.acquire(1)
       
 def lock_attempt():
@@ -935,6 +927,14 @@ def unlock():
    '''
 INTERNAL
    '''
+   thred = thread.get_ident()
+   if (thred == pymol.glutThread):
+      _cmd.flush_now()
+   else:
+      while _cmd.wait_queue():
+         e = threading.Event()
+         e.wait(0.05)
+         del e   
    lock_api.release()
 
 def export_dots(a,b):
