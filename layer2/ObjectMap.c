@@ -1220,7 +1220,7 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state)
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_file)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -1229,31 +1229,43 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state)
   char *buffer,*p;
   float mat[9];
 
-  f=fopen(fname,"rb");
-  if(!f)
-	 ok=ErrMessage("ObjectMapLoadXPLORFile","Unable to open file!");
-  else
+  if(is_file) {
+    f=fopen(fname,"rb");
+    if(!f)
+      ok=ErrMessage("ObjectMapLoadXPLORFile","Unable to open file!");
+  }
+  if(ok)
 	 {
-		if(Feedback(FB_ObjectMap,FB_Actions))
-		  {
-			printf(" ObjectMapLoadXPLORFile: Loading from '%s'.\n",fname);
-		  }
-		
-		fseek(f,0,SEEK_END);
-      size=ftell(f);
-		fseek(f,0,SEEK_SET);
-
-		buffer=(char*)mmalloc(size+255);
-		ErrChkPtr(buffer);
-		p=buffer;
-		fseek(f,0,SEEK_SET);
-		fread(p,size,1,f);
-		p[size]=0;
-		fclose(f);
-
+      if(Feedback(FB_ObjectMap,FB_Actions))
+        {
+          if(is_file) {
+            printf(" ObjectMapLoadXPLORFile: Loading from '%s'.\n",fname);
+          } else {
+            printf(" ObjectMapLoadXPLORFile: Loading...\n");
+          }
+          
+        }
+      
+      if(is_file) {
+        fseek(f,0,SEEK_END);
+        size=ftell(f);
+        fseek(f,0,SEEK_SET);
+        
+        buffer=(char*)mmalloc(size+255);
+        ErrChkPtr(buffer);
+        p=buffer;
+        fseek(f,0,SEEK_SET);
+        fread(p,size,1,f);
+        p[size]=0;
+        fclose(f);
+      } else {
+        buffer = fname;
+      }
+      
 		I=ObjectMapReadXPLORStr(obj,buffer,state);
 
-		mfree(buffer);
+      if(is_file) 
+        mfree(buffer);
       if(state<0)
         state=I->NState-1;
       if(state<I->NState) {
@@ -1274,7 +1286,6 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state)
   return(I);
 
 }
-
 /*========================================================================*/
 int ObjectMapSetBorder(ObjectMap *I,float level)
 {

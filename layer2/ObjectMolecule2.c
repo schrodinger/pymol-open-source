@@ -586,7 +586,9 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                     }
             }
           MapFree(map);
-        case 1: /* dictionary-based connectivity */
+        case 1: /* only use explicit connectivity from file (don't do anything) */ 
+          break;
+        case 2:  /* dictionary-based connectivity */
           /* TODO */
           
           break;
