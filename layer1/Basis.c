@@ -533,6 +533,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 			 break;
         } 
 		}
+  /*  printf("sep %8.3f extra_vert %d\n",sep,extra_vert);*/
+
   if(remapMode) {
 	 extra_vert+=I->NVertex;
 	 tempVertex = Alloc(float,extra_vert*3);
