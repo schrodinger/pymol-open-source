@@ -1,0 +1,74 @@
+PyMol Current Command Set
+
+	* currently the inferface is entirely functional-programming oriented
+	* need to work on developing an OO-based interface
+
+	pm_quit()
+
+		Quits Program
+
+	pm_append("<object name>","<file-name>");
+
+	pm_select("<selection name>","<selection specification>")
+	
+		Creates a selection	
+
+	pm_color("<object or selection name>","<color-name");
+
+Atom Selections (Similar to CNS/XPLOR atom selection language)
+
+	logical operators
+
+		<selection> and <selection>
+		<selection> or <selection>
+		not <selection>
+		( )
+	
+	molecule property operators
+
+		model <model-name>
+
+		name <atom-name>
+
+		resi <residue-id-or-range>
+
+		resn <residue-name>
+
+		chain <chain-identifier>
+
+		segm <segment-id>
+
+		index <atom-index>
+
+	selection operators
+
+		%<selection-name> includes atoms in named selection (can be the same as a selection being redefined)
+
+		<selection> around <distance>
+			selects atoms around given selection within <distance> angstroms, excluding selection
+
+		<selection> expand <distance>
+			selects atoms around given selection within <distance> angstroms, including selection
+	
+		all
+
+		none
+
+Proposed
+
+	pm_set_rep("<object or selection name>","<representation-name>","<on/off>");
+
+	pm_origin("<selection or object name>");
+
+	pm_area("<selection-name>","<frame>") returns solvent accessible surface area for a set of atoms in frame
+
+	Selection
+	
+		attrib <attribute conditional value>
+
+		need to add support for wildcards
+
+
+
+
+

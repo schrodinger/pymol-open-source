@@ -1,0 +1,3 @@
+wish
+puts [ selection get ]
+

@@ -1,0 +1,160 @@
+NOTE: Must source pymol.csh before running pymol!
+
+
+Documentation hasn't yet been written, but here is a list of commands:
+
+--- MOUSE COMMANDS ---
+
+Left: Rotation
+Middle: XY Transloation
+Right: Z Scale
+
+Shift-Left: UP<->DOWN Front Plane, LEFT<->RIGHT Rear Plane
+
+--- GENERAL COMMANDS ---
+
+load <pdb-file>[,<molecule-name>[,<scene-number]]
+	Loads PDB File
+
+delete <molecule-or-selection-name>
+	Deletes molecules or selections.
+
+select <selection-name>=<selection-string>
+	Create selection using XPLOR/CNS-like selection strings
+
+color <color-name>,<molecule-or-selection-name>
+
+show <lines|sticks|dots|mesh|sphere|ribbon>,<molecule-or-selection-name>
+hide <lines|sticks|dots|mesh|sphere|ribbon>,<molecule-or-selection-name>
+	Show or hide specific representations.
+
+enable <molecule-name>
+disable <molecule-name>
+
+reset
+	Restore default scene
+
+turn <x|y|z>,<angle-in-degrees>
+	Rotatation.
+
+move <x|y|z>,<distance>
+	Translation.
+
+clip <near|far>,distance
+	Movie near and far clipping planes.
+
+png <png-file>
+	Writes PNG file of current image.
+
+refresh
+	Forces a screen-redraw.
+
+--- MOVIE MAKING ---
+
+NOTE: To render a movie, shift-left click on the play (|>) button.
+
+mset <movie-definition>
+
+	<movie-definition> is repeating list of
+		<scene-number> or
+		x<repeat-count>
+		-<target-scene>
+	Example: "1 x10 1 -30 30 x10 30 -1" does the following:
+		Shows scene 1; repeats a total of 10 times;
+		shows scene 1; runs through scene 2 to 30;
+		shows scene 30; repeats scene 30 a total of 10 times;
+		shows scene 30; runs backwards through scene 29 to 1.
+		At the end, the movie will start over.
+
+mdo <frame-number>,<pymol-command>
+	Sets up a command to be executed every time this frame is shown.
+	NOTE: for this to work with ray-tracing, set single_image = 0
+
+mclear
+	Clears the movie frame cache.
+
+mpng <png-prefix> [,<purge|save>]
+	Writes numbered PNG files for all movie frames.  The purge
+	often helps to save memory when writing very long movies.
+	Generally good to issue "mclear" before "mpng"
+
+mmatrix store
+	Copies current transformation matrix for frame 1 of the movie
+
+--- SETTINGS ---
+
+set <parameter> = <value>
+
+	Sets one of the following parameters:
+		bonding_vdw_cutoff = <number>         
+		min_mesh_spacing   = <number>
+		dot_density        = <0..3>
+		dot_surface        = <number>
+		solvent_radius     = <number>
+		sel_counter        = <number>
+		bg_rgb             = <red:0..1> <green:0..1> <blue:0..1>
+		ambient            = <0 to 1> ambient lighting 
+		direct             = <0 to 1> intensity of surface emission
+		reflect            = <number> intensity of light reflection
+		light              = <vector> color of light
+		power              = <number> numberical power of light reflection
+		antialias          = <0 or 1>
+		cavity_cull        = <number> cleans up pockets in meshes
+		single_image       = <0 or 1> see below
+		ribbon_radius      = <number> 
+		min_delay          = <number> min millisec between frames
+		stick_radius       = <number> thickness of stick bonds
+		ortho              = <0 or 1> orthoscopic projection
+		spec_reflect       = <number> intensity of specular reflection
+		spec_power         = <number> numerical power of the specular ref.
+		sweep_angle        = <number> angle of built-in rocking mechanism
+		sweep_speed        = <number> speed of built-in rocking mechanism
+		
+
+		When single_image is true (1), all frames in the movie will
+		be rendered independently.  When it is false (0), only frames
+		with different molecular structures will be rendered independently.
+		This enables caching of identical images, for example, when you
+		want to hold a molecule in a fixed state for several seconds without
+		changing the image at all.
+
+--- MOVIE MAKING UTILITY MODULE: pmu ---
+
+NOTE: usually it will be necessary to set single_image=1 when
+	using the following commands.
+
+pmu.mroll(<start_frame>,<stop_frame>,<looping>)
+
+	Defines a series of "mdo" commands which will cause the 
+	scene to rotate 360 degress about the Y-axis over the
+	indicated frames.  
+
+	Specifying 1 for <looping> means that the last frame will 
+	line up properly rotated relative to the first frame.
+
+	Specifying 0 for <looping> means that the last frame will 
+	be rotated identical to the first frame (no rotation).
+
+pmu.mrock(<start_frame>,<end_frame>,<angle>,<phase>,<looping>)
+
+	Defines a series of "mdo" commands which will rotate the 
+	molecule back and forth through the indicated angle.
+	
+	<phase> (0/1) indicates whether the molecule is initially at rest
+	or in the middle of the rotation. (Usually specify 1)
+
+	<looping> has the same meaning as above.	
+
+	
+--- SCRIPTS and PYTHON PROGRAMS ---
+
+@<pymol-script-filename>
+	
+	Runs a pymol script (should end in ".pml" extension)
+
+run <python-program>[,global]
+
+	Runs a python program (should end in ".py" extension)
+	If global is specified, then the program is run in the global namespace.
+
+

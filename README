@@ -1,0 +1,35 @@
+----------------------------------------------------------------------
+PyMOL (C) 1998-2000 by Warren L. DeLano of DeLano Scientific.
+http://www.delanoscientific.com  EMAIL: warren@delanoscientific.com
+----------------------------------------------------------------------
+PyMOL is a molecular graphics program designed for rapid and 
+efficient generation of high-quality molecular graphics animations.
+----------------------------------------------------------------------
+NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE 
+** This is an early alpha-test release of the PyMOL that is not
+** intended for widespread usage. Please contact Warren L. DeLano 
+** directly if you would like to use this software or contribute 
+** to its development.
+----------------------------------------------------------------------
+PyMOL Features
+	* multiple structure representations
+	* molecular trajectory display capabilities.
+	* a built-in photorealistic raytracing engine.
+	* a python-based scripting language and a Python API.
+	* image output capabilities (to PNG files).
+	* arbitrary atom display selections.
+----------------------------------------------------------------------
+PyMOL in a OPEN SOURCE program distributed under the "Python" license.
+Please see the LICENSE file for additional information.
+----------------------------------------------------------------------
+PyMOL has the following external dependencies:
+  1. OpenGL
+  2. GLUT library for OpenGL
+  3. Python (v 1.5.2 or better)
+  4. libpng (can compiled without it, but image saves won't work)
+
+
+
+
+
+
