@@ -802,8 +802,8 @@ SetConsoleCtrlHandler(
     } else {
       char str[255];
       sprintf(str,"%dx%d:32@120",WinX,WinY);
-      glutGameModeString(str);
-      glutEnterGameMode(); 
+      p_glutGameModeString(str);
+      p_glutEnterGameMode(); 
     }
   } 
 
