@@ -176,7 +176,7 @@ class PMGApp(AbstractApp):
 
       text = self.output.component('text')
       if sys.platform[:5]=='linux':
-         self.my_fw_font=('lucida console',7)
+         self.my_fw_font=('lucida console',10)
       elif sys.platform[:3]=='win':
          self.my_fw_font=('lucida console',8) # Courier 9
       else:
