@@ -157,6 +157,12 @@ void SceneSetMatrix(float *m)
 	 I->RotMatrix[a]=m[a];
 }
 /*========================================================================*/
+void SceneGetViewNormal(float *v)
+{
+  CScene *I=&Scene;
+  copy3f(I->ViewNormal,v);
+}
+/*========================================================================*/
 int SceneGetState(void)
 {
   CScene *I=&Scene;
@@ -552,13 +558,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         EditorSetActiveObject((ObjectMolecule*)obj,I->StateIndex);
       } else {
       EditorSetActiveObject(NULL,0);
-      ExecutiveDelete(cEditorSele1);      
-      ExecutiveDelete(cEditorSele2);      
       }
     } else {
       EditorSetActiveObject(NULL,0);
-      ExecutiveDelete(cEditorSele1);      
-      ExecutiveDelete(cEditorSele2);      
     }
     SceneDirty();
     break;
@@ -589,13 +591,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         }
       } else {
         EditorSetActiveObject(NULL,0);
-        ExecutiveDelete(cEditorSele1);      
-        ExecutiveDelete(cEditorSele2);      
       }
     } else {
       EditorSetActiveObject(NULL,0);
-      ExecutiveDelete(cEditorSele1);      
-      ExecutiveDelete(cEditorSele2);      
     }
     SceneDirty();
     break;
@@ -1280,10 +1278,8 @@ void SceneRender(Pickable *pick,int x,int y)
 
     /* 2. set the normals to reflect light back at the camera */
 
-    MatrixInvTransform3f(zAxis,I->RotMatrix,normal); 
-    I->ViewNormal[0]=normal[0];
-    I->ViewNormal[1]=normal[1];
-    I->ViewNormal[2]=normal[2];	 
+    MatrixInvTransform3f(I->RotMatrix,zAxis,normal); 
+    copy3f(normal,I->ViewNormal);
   
     if(SettingGet(cSetting_normal_workaround)) {
       I->LinesNormal[0]=0.0;	

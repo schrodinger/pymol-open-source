@@ -40,6 +40,7 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2);
 DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,float cutoff);
 int SelectorGetSeleNCSet(int sele);
 void SelectorCreateObjectMolecule(int sele,char *name,int target_state,int state);
-int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,char *fragPref);
+int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
+                            char *fragPref,char *compName);
 
 #endif

@@ -1314,6 +1314,42 @@ def remove(sele):
       unlock()
    return r
 
+def remove_picked():
+   r = 1
+   try:
+      lock()   
+      r = _cmd.remove_picked()
+   finally:
+      unlock()
+   return r
+
+def cycle_valence():
+   r = 1
+   try:
+      lock()   
+      r = _cmd.cycle_valence()
+   finally:
+      unlock()
+   return r
+
+def attach(name,geom,valence):
+   r = 1
+   try:
+      lock()   
+      r = _cmd.attach(str(name),int(geom),int(valence))
+   finally:
+      unlock()
+   return r
+
+def refill():
+   r = 1
+   try:
+      lock()   
+      r = _cmd.refill()
+   finally:
+      unlock()
+   return r
+
 def h_add(*arg):
    r = 1
    if len(arg):
@@ -3140,27 +3176,25 @@ special = {
 }
 
 ctrl = {
-   'B' : [ None                   , 0 , None ],
+   'B' : [ bond                   , 0 , None ],
    'C' : [ replace                , 1 , ('C',4,4) ],
-   'D' : [ remove                 , 1 , ("_ed1",) ],   
-   'F' : [ h_add                  , 1 , ("_ed1",) ],   
-   'G' : [ None                   , 0 , None ],
-   'H' : [ None                   , 0 , None ],   
+   'D' : [ remove_picked          , 0 , None ],   
+   'F' : [ h_add                  , 1 , ("ed1",) ],   
+   'G' : [ replace                , 1 , ('H',1,1) ],
    'J' : [ None                   , 0 , None ],
    'K' : [ None                   , 0 , None ],   
    'L' : [ None                   , 0 , None ],   
    'N' : [ replace                , 1 , ('N',4,3) ],
    'O' : [ replace                , 1 , ('O',4,2) ],   
-   'P' : [ None                   , 0 , None ],
+   'P' : [ replace                , 0 , ('P',4,1) ],
    'Q' : [ None                   , 0 , None ],   
-   'R' : [ ray                    , 0 , None ],   
-   'S' : [ None                   , 0 , None ],
+   'R' : [ refill                 , 0 , None ],   
+   'S' : [ replace                , 1 , ('S',4,2) ],
    'T' : [ None                   , 0 , None ],   
    'U' : [ None                   , 0 , None ],   
-   'V' : [ None                   , 0 , None ],
-   'W' : [ None                   , 0 , None ],   
+   'W' : [ cycle_valence          , 0 , None ],   
    'X' : [ None                   , 0 , None ],
-   'Y' : [ None                   , 0 , None ],
+   'Y' : [ attach                 , 1 , ('H',1,1) ],
    'Z' : [ None                   , 0 , None ],   
    }
 

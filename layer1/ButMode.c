@@ -205,6 +205,7 @@ int ButModeTranslate(int button, int mod)
 /*========================================================================*/
 int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
+  SettingSetNamed("valence","0.05");
   OrthoCommandIn("edit");
   return(1);
 }

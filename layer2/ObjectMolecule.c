@@ -106,6 +106,47 @@ int ObjectMoleculeVerifyChemistry(ObjectMolecule *I)
   return(result);
 }
 /*========================================================================*/
+void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
+{
+  int a;
+  AtomInfoType *ai;
+  int n,nn;
+  float v[3],v0[3],d;
+  CoordSet *cs;
+
+  ObjectMoleculeUpdateNeighbors(I);
+  ai=I->AtomInfo+index;
+  n = I->Neighbor[index];
+  nn = I->Neighbor[n++];
+  
+  cs = CoordSetNew();
+  cs->Coord = VLAlloc(float,3);
+  cs->NIndex=1;
+  cs->TmpLinkBond = VLAlloc(int,3);
+  cs->NTmpLinkBond = 1;
+  cs->TmpLinkBond[0]=index;
+  cs->TmpLinkBond[1]=0;
+  cs->TmpLinkBond[2]=1;
+  if(cs->fEnumIndices) cs->fEnumIndices(cs);
+  ObjectMoleculePrepareAtom(I,index,nai);
+  d = AtomInfoGetBondLength(ai,nai);
+  ObjectMoleculeMerge(I,nai,cs,false); /* will free nai and cs->TmpLinkBond  */
+  ObjectMoleculeExtendIndices(I);
+  ObjectMoleculeUpdateNeighbors(I);
+  for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
+    if(I->CSet[a]) {
+      ObjectMoleculeGetAtomVertex(I,a,index,v0);
+      ObjectMoleculeFindOpenValenceVector(I,a,index,v);
+      scale3f(v,d,v);
+      add3f(v0,v,cs->Coord);
+      CoordSetMerge(I->CSet[a],cs); 
+    }
+  }
+  if(cs->fFree)
+    cs->fFree(cs);
+  
+}
+/*========================================================================*/
 int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
 {
   int a;
@@ -114,7 +155,6 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
   int result=0;
   int flag = true;
   float v[3],v0[3],d;
-
   CoordSet *cs;
 
   if((index>=0)&&(index<=I->NAtom)) {  
@@ -736,6 +776,9 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
                       bnd[2]=order;
                       I->NBond++;
                       c++;
+                      I->AtomInfo[a1].chemFlag=false;
+                      I->AtomInfo[a2].chemFlag=false;
+        
                       break;
                     }
                   s2=SelectorNext(s2);
@@ -754,6 +797,90 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
     ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
   }
   return(c);    
+}
+/*========================================================================*/
+int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int order)
+{
+  int a0,a1;
+  int offset=0;
+  int *b0;
+  int both;
+  int s;
+  int a;
+
+  offset=0;
+  b0=I->Bond;
+  for(a=0;a<I->NBond;a++) {
+    a0=b0[0];
+    a1=b0[1];
+    
+    both=0;
+    s=I->AtomInfo[a0].selEntry;
+    while(s) 
+      {
+        if(SelectorMatch(s,sele0))
+          {
+            both++;
+            break;
+          }
+        s=SelectorNext(s);
+      }
+    s=I->AtomInfo[a1].selEntry;
+    while(s) 
+      {
+        if(SelectorMatch(s,sele1))
+          {
+            both++;
+            break;
+          }
+        s=SelectorNext(s);
+      }
+    if(both<2) { /* reverse combo */
+      both=0;
+      
+      s=I->AtomInfo[a1].selEntry;
+      while(s) 
+        {
+          if(SelectorMatch(s,sele0))
+            {
+              both++;
+              break;
+            }
+          s=SelectorNext(s);
+        }
+      s=I->AtomInfo[a0].selEntry;
+      while(s) 
+        {
+          if(SelectorMatch(s,sele1))
+            {
+              both++;
+              break;
+            }
+          s=SelectorNext(s);
+        }
+    }
+    if(both==2) {
+      switch(mode) {
+      case 0: /* cycle */
+        b0[2]++;
+        if(b0[2]>3)
+          b0[2]=1;
+        I->AtomInfo[a0].chemFlag=false;
+        I->AtomInfo[a1].chemFlag=false;
+        break;
+      case 1: /* set */
+        b0[2]=order;
+        I->AtomInfo[a0].chemFlag=false;
+        I->AtomInfo[a1].chemFlag=false;
+        break;
+      }
+      ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
+      ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
+      ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
+    }
+    b0+=3;
+  }
+  return(-offset);
 }
 /*========================================================================*/
 int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
@@ -821,6 +948,8 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
     if(both==2) {
       offset--;
       b0+=3;
+      I->AtomInfo[a0].chemFlag=false;
+      I->AtomInfo[a1].chemFlag=false;
     } else if(offset) {
       *(b1++)=*(b0++); /* copy bond info */
       *(b1++)=*(b0++);
@@ -1239,8 +1368,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
     a1 = *(b0++);
     ai0=I->AtomInfo + a0;
     ai1=I->AtomInfo + a1;
-    order = *(b0++);
-    if(!ai0->chemFlag) {
+    order = *(b0++);    if(!ai0->chemFlag) {
       if(order>ai0->geom)
         ai0->geom=order;
       ai0->valence+=order;
@@ -1262,9 +1390,10 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
         expect = -expect; /* for now, just ignore this issue */
       n = I->Neighbor[a];
       nn = I->Neighbor[n++];
-      if(nn==expect) { /* sum of bond orders equals valence */
+      /*      printf("%d %d %d %d\n",ai->geom,ai->valence,nn,expect);*/
+      if(ai->valence==expect) { /* sum of bond orders equals valence */
         ai->chemFlag=true;
-        ai->valence=expect;
+        ai->valence=nn;
         switch(ai->geom) { /* max bond order observed */
         case 0: ai->geom = cAtomInfoNone; break;
         case 2: ai->geom = cAtomInfoPlaner; break;
@@ -1276,9 +1405,9 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
             ai->geom = cAtomInfoTetrahedral; 
           break;            
         }
-      } else if(nn<expect) { /* missing a bond */
+      } else if(ai->valence<expect) { /* missing a bond */
         ai->chemFlag=true;
-        ai->valence=expect;
+        ai->valence=nn+(expect-ai->valence); 
         switch(ai->geom) { 
         case 2: ai->geom = cAtomInfoPlaner; break;
         case 3: ai->geom = cAtomInfoLinear; break;
@@ -1289,9 +1418,9 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
             ai->geom = cAtomInfoTetrahedral; 
           break;
         }
-      } else if(nn>expect) {
+      } else if(ai->valence>expect) {
         ai->chemFlag=true;
-        ai->valence=expect;
+        ai->valence=nn;
         switch(ai->geom) { 
         case 2: ai->geom = cAtomInfoPlaner; break;
         case 3: ai->geom = cAtomInfoLinear; break;
@@ -1328,7 +1457,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
                 ai0 = I->AtomInfo+a0;
                 if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlaner)&&
                    ((ai0->protons==cAN_C)||(ai1->protons==cAN_N))) {
-                  ai->geom=cAtomInfoPlaner; /* found probably delocalization */
+                  ai->geom=cAtomInfoPlaner; /* found probable delocalization */
+                  ai->valence=3; /* just in case...*/
                   changedFlag=true;
                   break;
                 }

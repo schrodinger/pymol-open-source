@@ -140,6 +140,7 @@ void SelectorDeletePrefixSet(char *s);
 #define SELE_ID_s ( 0x1E00 | STYP_SEL1 | 0x70 )
 #define SELE_BNDz ( 0x1F00 | STYP_SEL0 | 0x70 )
 #define SELE_LIK2 ( 0x2000 | STYP_OPR2 | 0x30 )
+#define SELE_NGH1 ( 0x2100 | STYP_OPR1 | 0x10 )
 
 #define SEL_PREMAX 0x8
 
@@ -147,6 +148,8 @@ static WordKeyValue Keyword[] =
 {
   {  "not",      SELE_NOT1 },
   {  "!",        SELE_NOT1 },
+  {  "neighbor", SELE_NGH1 },
+  {  "ng;",      SELE_NGH1 },
   {  "byresi",   SELE_BYR1 },
   {  "byres",    SELE_BYR1 },
   {  "b;",       SELE_BYR1 },
@@ -222,7 +225,7 @@ static WordKeyValue AtOper[] =
 
 static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
-int SelectorWalkTree(int *atom,int *toDo,int **stk,
+int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 void SelectorDeletePrefixSet(char *pref);
 
@@ -240,7 +243,7 @@ void SelectorDeletePrefixSet(char *pref)
   }
 }
 /*========================================================================*/
-int SelectorWalkTree(int *atom,int *toDo,int **stk,
+int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2)
 {
   int s;
@@ -270,8 +273,10 @@ int SelectorWalkTree(int *atom,int *toDo,int **stk,
         s=SelectorNext(s);
       }
     if(!seleFlag) {
-      if(!ai->protected) /* if not explicitly protected...*/
+      if(!ai->protected) { /* if not explicitly protected...*/
         atom[a]=1; /* mark this atom into the selection */
+        comp[a]=1;
+      }
       s=obj->Neighbor[a]; /* add neighbors onto the stack */
       s++; /* skip count */
       while(1) {
@@ -291,12 +296,14 @@ int SelectorWalkTree(int *atom,int *toDo,int **stk,
   }
   return (c);
 }
-
-int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,char *fragPref)
+/*========================================================================*/
+int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
+                            char *fragPref,char *compName)
 {
   int a,a0,a1;
   int *atom=NULL;
   int *toDo=NULL;
+  int *comp=NULL;
   int nAtom;
   int nFrag = 0;
   int *p1;
@@ -312,6 +319,10 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
     SelectorUpdateTableSingleObject(obj);
     nAtom=obj->NAtom;
     if(nAtom) {
+      comp = Alloc(int,nAtom);
+      p1=comp; /* first atom */
+      for(a=0;a<nAtom;a++) 
+        *(p1++)=0;
       atom = Alloc(int,nAtom);
       toDo = Alloc(int,nAtom);
       stk=VLAlloc(int,100);
@@ -341,10 +352,11 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
           for(a=0;a<nAtom;a++) 
             *(p1++)=0;
           atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
-          sprintf(name,"%s%02d",fragPref,nFrag);
+          comp[a0] = 1;
+          sprintf(name,"%s%1d",fragPref,nFrag);
           SelectorEmbedSelection(atom,name,NULL);
-          c = SelectorWalkTree(atom,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
-          sprintf(name,"%s%02d",pref,nFrag);
+          c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
+          sprintf(name,"%s%1d",pref,nFrag);
           SelectorEmbedSelection(atom,name,NULL);
           nFrag++;
         }
@@ -371,16 +383,18 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
           for(a=0;a<nAtom;a++) 
             *(p1++)=0;
           atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
-          sprintf(name,"%s%02d",fragPref,nFrag);
+          comp[a0] = 1;
+          sprintf(name,"%s%1d",fragPref,nFrag);
           SelectorEmbedSelection(atom,name,NULL);
-          c = SelectorWalkTree(atom,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
-          sprintf(name,"%s%02d",pref,nFrag);
+          c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,sele2) + 1;
+          sprintf(name,"%s%1d",pref,nFrag);
           SelectorEmbedSelection(atom,name,NULL);
           nFrag++;
         }
         
       } else if(sele1>=0) { /* atom mode */
         a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
+        comp[a0]=1;
         n=obj->Neighbor[a0];
         n++; /* skip count */
         while(1) {
@@ -393,12 +407,13 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
             for(a=0;a<nAtom;a++) 
               *(p1++)=0;
             atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
-            sprintf(name,"%s%02d",fragPref,nFrag);
+            comp[a1] = 1;
+            sprintf(name,"%s%1d",fragPref,nFrag);
             SelectorEmbedSelection(atom,name,NULL);
             atom[a1] = 0;
-            c = SelectorWalkTree(atom,toDo,&stk,stkDepth,obj,sele1,-1);
+            c = SelectorWalkTree(atom,comp,toDo,&stk,stkDepth,obj,sele1,-1);
             if(c) {
-              sprintf(name,"%s%02d",pref,nFrag);
+              sprintf(name,"%s%1d",pref,nFrag);
               SelectorEmbedSelection(atom,name,NULL);
               nFrag++;
             }
@@ -406,8 +421,11 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
           n+=2;
         }
       }
+      if(nFrag) 
+        SelectorEmbedSelection(comp,compName,NULL);        
       FreeP(toDo);
       FreeP(atom);
+      FreeP(comp);
       VLAFreeP(stk);
       SelectorClean();
     }
@@ -2177,8 +2195,11 @@ int SelectorLogic1(EvalElem *base)
   int a,b;
   int c=0;
   int flag;
+  int n;
+  int a0,a1,a2;
   AtomInfoType *at1,*at2;
   SelectorType *I=&Selector;
+  ObjectMolecule *lastObj = NULL;
   base[0].sele=base[1].sele;
   base[1].sele=NULL;
   base[0].type=STYP_LIST;
@@ -2192,6 +2213,33 @@ int SelectorLogic1(EvalElem *base)
 				c++;
 		  }
 		break;
+    case SELE_NGH1:
+      base[1].sele=base[0].sele;
+      base[0].sele=Alloc(int,I->NAtom);
+      for(a=0;a<I->NAtom;a++) {
+        base->sele[a]=0;
+      }
+      for(a=0;a<I->NAtom;a++) {
+        if(base[1].sele[a]) {
+          if(I->Obj[I->Table[a].model]!=lastObj) {
+            lastObj = I->Obj[I->Table[a].model];
+            ObjectMoleculeUpdateNeighbors(lastObj);
+          }
+          a0= I->Table[a].atom;
+          n=lastObj->Neighbor[a0];
+          n++;
+          while(1) {
+            a1=lastObj->Neighbor[n];
+            if(a1<0) break;
+            a2 = a1+lastObj->SeleBase;
+            if(!base[1].sele[a2])
+              base[0].sele[a2] =1;
+            n+=2;
+          }
+        }
+      }
+      FreeP(base[1].sele);
+      break;
 	 case SELE_BYR1: /* ASSUMES atoms are sorted by residue */
 		for(a=0;a<I->NAtom;a++)
 		  {

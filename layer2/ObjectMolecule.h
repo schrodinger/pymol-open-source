@@ -141,6 +141,8 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
 int ObjectMoleculeVerifyChemistry(ObjectMolecule *I);
 int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index);
+int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int order);
+void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai);
 
 #endif
 
