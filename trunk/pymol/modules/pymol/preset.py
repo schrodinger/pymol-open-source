@@ -31,10 +31,10 @@ lig_and_solv_sele = "("+lig_sele+"|"+solv_sele+")"
 
 def _get_polar_contacts_name(s):
    list = cmd.get_object_list(s)
-   if len(list)==1:
+   if list!=None and (len(list)==1):
       return list[0]+polar_contacts_suffix
    else:
-      return polar_contacts
+      return default_polar_contacts
 
 def _prepare(s,polar_contacts=None):
    # this function should undo everything that is done by any preset function in this module
@@ -120,8 +120,6 @@ def ligands(selection="(all)"):
             cmd.enable(polar_contacts)
             cmd.hide("labels",polar_contacts)
             cmd.show("dashes",polar_contacts)            
-      elif polar_contacts in cmd.get_names():
-         cmd.delete(polar_contacts)
       cmd.show("nonbonded",lig+"|"+host+"|"+near_solvent)
       if cmd.count_atoms(lig):
          cmd.zoom(lig,3)
@@ -200,8 +198,6 @@ def ligand_sites(selection="(all)"):
             cmd.enable(polar_contacts)
             cmd.hide("labels",polar_contacts)
             cmd.show("dashes",polar_contacts)            
-      elif polar_contacts in cmd.get_names():
-         cmd.delete(polar_contacts)
       cmd.show("nb_spheres",lig+"|"+host+"|"+near_solvent)
       if cmd.count_atoms(lig):
          cmd.zoom(lig,3)
@@ -318,8 +314,6 @@ def pub_solv(selection="(all)"):
    cmd.set("cartoon_fancy_helices",1,s)
    cmd.set("cartoon_flat_sheets",1,s)
    cmd.set("cartoon_side_chain_helper",0,s)   
-   if polar_contacts in cmd.get_names():
-      cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
       cmd.zoom(s)
 
@@ -337,8 +331,6 @@ def default(selection="(all)"):
    _prepare(s)
    cmd.show("lines",s)
    cmd.show("nonbonded",s)
-   if polar_contacts in cmd.get_names():
-      cmd.disable(polar_contacts)
    color=cmd.get_object_color_index(selection)
    if color<0:
       util.cbag(selection)
