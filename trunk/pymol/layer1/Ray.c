@@ -1122,11 +1122,11 @@ int RayTraceThread(CRayThreadInfo *T)
 
 	/* ray-trace */
 	
-	invHgt				= _1 / (float) T->height;
+	invHgt				= _1 / (float) (T->height);
 	invFrontMinusBack	= _1 / (T->front - T->back);
-	invWdth             = _1 / (float) T->width;
-	invWdthRange        = invWdth * I->Range[0];
-	invHgtRange         = invHgt * I->Range[1];
+	invWdth             = _1 / (float) (T->width);
+	invWdthRange        = invWdth * I->Range[0]*(T->width/(T->width-2*T->border));
+   invHgtRange         = invHgt * I->Range[1]*(T->height/(T->height-2*T->border));
 	vol0 = I->Volume[0];
 	vol2 = I->Volume[2];
 	bp1  = I->Basis + 1;
@@ -1177,13 +1177,13 @@ int RayTraceThread(CRayThreadInfo *T)
 	
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
 		{	
-			r1.base[1]	= (y * invHgtRange) + vol2;
+			r1.base[1]	= ((y-T->border) * invHgtRange) + vol2;
 			
 			for(x = T->x_start; (x < T->x_stop); x++)
 			{
 				exclude		= -1;
 				
-				r1.base[0]	= (x * invWdthRange)  + vol0;
+				r1.base[0]	= ((x-T->border) * invWdthRange)  + vol0;
 				
 				persist			= _1;
 				first_excess	= _0;
@@ -1519,36 +1519,94 @@ int RayTraceThread(CRayThreadInfo *T)
    accumulates over a single large expression -- the difference is
    huge: over 10% !!! */
 
-#define combine(var,src,mask) { \
-  var = ((src[0] & mask)*5); \
-  var +=((src[1] & mask)*5); \
-  var +=((src[2] & mask)*5); \
-  var +=((src[3] & mask)*5); \
-  var += (src[4] & mask);  \
-  var += (src[5] & mask);  \
-  var += (src[6] & mask);  \
-  var += (src[7] & mask);  \
-  var += (src[8] & mask);  \
-  var += (src[9] & mask);  \
-  var += (src[10] & mask); \
-  var += (src[11] & mask); \
-  var += (src[12] & mask); \
-  var += (src[13] & mask); \
-  var += (src[14] & mask); \
-  var += (src[15] & mask); \
+#define combine4by4(var,src,mask) { \
+  var =  ((src)[0 ] & mask)   ; \
+  var += ((src)[1 ] & mask)   ; \
+  var += ((src)[2 ] & mask)   ; \
+  var += ((src)[3 ] & mask)   ; \
+  var += ((src)[4 ] & mask)   ; \
+  var +=(((src)[5 ] & mask)*5); \
+  var +=(((src)[6 ] & mask)*5); \
+  var += ((src)[7 ] & mask)   ; \
+  var += ((src)[8 ] & mask)   ; \
+  var +=(((src)[9 ] & mask)*5); \
+  var +=(((src)[10] & mask)*5); \
+  var += ((src)[11] & mask)   ; \
+  var += ((src)[12] & mask)   ; \
+  var += ((src)[13] & mask)   ; \
+  var += ((src)[14] & mask)   ; \
+  var += ((src)[15] & mask)   ; \
   var = (var >> 5) & mask; \
  }
 
-/* this is just a simple antialias */
-
-#define edge_combine(var,src,mask) { \
-  var =  (src[0 ] & mask); \
-  var += (src[1 ] & mask); \
-  var += (src[2 ] & mask); \
-  var += (src[3 ] & mask); \
-  var = (var >> 2) & mask; \
+#define combine5by5(var,src,mask) { \
+  var =  ((src)[0 ] & mask)   ; \
+  var += ((src)[1 ] & mask)   ; \
+  var += ((src)[2 ] & mask)   ; \
+  var += ((src)[3 ] & mask)   ; \
+  var += ((src)[4 ] & mask)   ; \
+  var += ((src)[5 ] & mask)   ; \
+  var +=(((src)[6 ] & mask)*5); \
+  var +=(((src)[7 ] & mask)*5); \
+  var +=(((src)[8 ] & mask)*5); \
+  var += ((src)[9 ] & mask)   ; \
+  var += ((src)[10] & mask)   ; \
+  var +=(((src)[11] & mask)*5); \
+  var +=(((src)[12] & mask)*8); \
+  var +=(((src)[13] & mask)*5); \
+  var += ((src)[14] & mask)   ; \
+  var += ((src)[15] & mask)   ; \
+  var +=(((src)[16] & mask)*5); \
+  var +=(((src)[17] & mask)*5); \
+  var +=(((src)[18] & mask)*5); \
+  var += ((src)[19] & mask)   ; \
+  var += ((src)[20] & mask)   ; \
+  var += ((src)[21] & mask)   ; \
+  var += ((src)[22] & mask)   ; \
+  var += ((src)[23] & mask)   ; \
+  var += ((src)[24] & mask)   ; \
+  var = (var >> 6) & mask; \
  }
 
+#define combine6by6(var,src,mask) { \
+  var =  ((src)[0 ] & mask)   ; \
+  var += ((src)[1 ] & mask)   ; \
+  var += ((src)[2 ] & mask)   ; \
+  var += ((src)[3 ] & mask)   ; \
+  var += ((src)[4 ] & mask)   ; \
+  var += ((src)[5 ] & mask)   ; \
+  var += ((src)[6 ] & mask)   ; \
+  var +=(((src)[7 ] & mask)*5); \
+  var +=(((src)[8 ] & mask)*7); \
+  var +=(((src)[9 ] & mask)*7); \
+  var +=(((src)[10] & mask)*5); \
+  var += ((src)[11] & mask)   ; \
+  var += ((src)[12] & mask)   ; \
+  var +=(((src)[13] & mask)*7); \
+  var +=(((src)[14] & mask)*8); \
+  var +=(((src)[15] & mask)*8); \
+  var +=(((src)[16] & mask)*7); \
+  var += ((src)[17] & mask)   ; \
+  var += ((src)[18] & mask)   ; \
+  var +=(((src)[19] & mask)*7); \
+  var +=(((src)[20] & mask)*8); \
+  var +=(((src)[21] & mask)*8); \
+  var +=(((src)[22] & mask)*7); \
+  var += ((src)[23] & mask)   ; \
+  var += ((src)[24] & mask)   ; \
+  var +=(((src)[25] & mask)*5); \
+  var +=(((src)[26] & mask)*7); \
+  var +=(((src)[27] & mask)*7); \
+  var +=(((src)[28] & mask)*5); \
+  var += ((src)[29] & mask)   ; \
+  var += ((src)[30] & mask)   ; \
+  var += ((src)[31] & mask)   ; \
+  var += ((src)[32] & mask)   ; \
+  var += ((src)[33] & mask)   ; \
+  var += ((src)[34] & mask)   ; \
+  var += ((src)[35] & mask)   ; \
+  var = (var >> 7) & mask; \
+ }
 
 #define m00FF 0x00FF
 #define mFF00 0xFF00
@@ -1557,11 +1615,10 @@ int RayTraceThread(CRayThreadInfo *T)
 int RayAntiThread(CRayAntiThreadInfo *T)
 {
 	int a;
-	int		w2;
-	int		wid_1, hgt_1;
+	int		src_row_pixels;
 	register unsigned int part;
 	unsigned int acc;
-	unsigned int z[16],zm[16];
+	unsigned int z[36],zm[36];
 	
 	unsigned int *pSrc;
 	unsigned int *pDst;
@@ -1571,173 +1628,236 @@ int RayAntiThread(CRayAntiThreadInfo *T)
 	int x,y,yy;
 	unsigned int *p;
 	int offset = 0;
-	int y_range;
 	
 	OrthoBusyFast(9,10);
-	width	= T->width/2;
-	height	= T->height/2;
+	width	= (T->width/T->mag) - 2;
+	height = (T->height/T->mag) - 2;
 	
-	w2	= width * 2;
-	hgt_1	= height - 1;
-	wid_1	= width - 1;
-	
-	y_range = hgt_1 - 1;
-	
-	offset = (T->phase * y_range)/T->n_thread;
+	src_row_pixels	= T->width;
+
+	offset = (T->phase * height)/T->n_thread;
 	offset = offset - (offset % T->n_thread) + T->phase;
 
-	for(yy = 0; yy< y_range; yy++ )
+	for(yy = 0; yy< height; yy++ )
 	{
-		y = 1 + (yy + offset) % y_range; /* make sure threads write to different pages */
+		y = (yy + offset) % height; /* make sure threads write to different pages */
 				
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
-		{
-			pSrc	= T->image + w2 * (y*2 - 1);
-			pDst	= T->image_copy + width * y + 1;	/* Add 1 since x-wise inner loop (below) starts at 1 */
-			
-			for(x = 1; x < wid_1; x++)
-			{
-				p	= pSrc + (x * 2);
-				
-				z[12]	= (*(p-1));
-				z[4]	= (*(p));
-				z[5]	= (*(p+1));
-				z[13]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[6]	= (*(p-1));
-				z[0]	= (*(p));
-				z[1]	= (*(p+1));
-				z[7]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[8]	= (*(p-1));
-				z[2]	= (*(p));
-				z[3]	= (*(p+1));
-				z[9]	= (*(p+2));
-				
-				p	+= w2;
-					
-				z[14]	= (*(p-1));
-				z[10]	= (*(p));
-				z[11]	= (*(p+1));
-				z[15]	= (*(p+2));
-				
-				for( a = 0; a < 16; a += 4 ) 
-				{
-					zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
-					zm[a+1 ] = z[a+1] & mFFFF;
-					zm[a+2 ] = z[a+2] & mFFFF;
-					zm[a+3 ] = z[a+3] & mFFFF;
-					
-					z[a   ]	>>= 16; /* keep rest in z */
-					z[a+1 ]	>>= 16;
-					z[a+2 ]	>>= 16;
-					z[a+3 ]	>>= 16;
-				}
-				
-				combine(part,z,m00FF);
-				acc	= (part<<16);
-				combine(part,z,mFF00);
-				acc	+= (part<<16);
-				combine(part,zm,m00FF);
-				acc	+= part;
-				combine(part,zm,mFF00);
+        {
+          pSrc	= T->image + src_row_pixels * (y*T->mag);
+          pDst	= T->image_copy + width * y ;	
+          switch(T->mag) {
+          case 2:
+            for(x = 0; x < width; x++)
+              {
+                p	= pSrc + (x * T->mag);
+                
+                z[0 ]	= (*(p  ));
+                z[1 ]	= (*(p+1));
+                z[2 ]	= (*(p+2));
+                z[3 ]	= (*(p+3));
+                
+                p	+= src_row_pixels;
+                
+                z[4 ]	= (*(p  ));
+                z[5 ]	= (*(p+1));
+                z[6 ]	= (*(p+2));
+                z[7 ]	= (*(p+3));
+                
+                p	+= src_row_pixels;
+                
+                z[8 ]	= (*(p  ));
+                z[9 ]	= (*(p+1));
+                z[10]	= (*(p+2));
+                z[11]	= (*(p+3));
+                
+                p	+= src_row_pixels;
+                
+                z[12]	= (*(p  ));
+                z[13]	= (*(p+1));
+                z[14]	= (*(p+2));
+                z[15]	= (*(p+3));
+                
+                for( a = 0; a < 16; a += 4 ) 
+                  {
+                    zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
+                    zm[a+1 ] = z[a+1] & mFFFF;
+                    zm[a+2 ] = z[a+2] & mFFFF;
+                    zm[a+3 ] = z[a+3] & mFFFF;
+                    
+                    z[a   ]	>>= 16; /* keep rest in z */
+                    z[a+1 ]	>>= 16;
+                    z[a+2 ]	>>= 16;
+                    z[a+3 ]	>>= 16;
+                  }
+                
+                combine4by4(part,z,m00FF);
+                acc	= (part<<16);
+                combine4by4(part,z,mFF00);
+                acc	+= (part<<16);
+                combine4by4(part,zm,m00FF);
+                acc	+= part;
+                combine4by4(part,zm,mFF00);
+                
+                *(pDst++) = (acc + part);
+              }
+            break;
+          case 3:
+            for(x = 0; x < width; x++)
+              {
+                p	= pSrc + (x * T->mag);
+                
+                z[0 ]	= (*(p  ));
+                z[1 ]	= (*(p+1));
+                z[2 ]	= (*(p+2));
+                z[3 ]	= (*(p+3));
+                z[4 ]	= (*(p+4));
+                
+                p	+= src_row_pixels;
+                
+                z[5 ]	= (*(p  ));
+                z[6 ]	= (*(p+1));
+                z[7 ]	= (*(p+2));
+                z[8 ]	= (*(p+3));
+                z[9 ]	= (*(p+4));
+                
+                p	+= src_row_pixels;
+                
+                z[10]	= (*(p  ));
+                z[11]	= (*(p+1));
+                z[12]	= (*(p+2));
+                z[13]	= (*(p+3));
+                z[14]	= (*(p+4));
+                
+                p	+= src_row_pixels;
+                
+                z[15]	= (*(p  ));
+                z[16]	= (*(p+1));
+                z[17]	= (*(p+2));
+                z[18]	= (*(p+3));
+                z[19]	= (*(p+4));      
+          
+                p	+= src_row_pixels;
+                
+                z[20]	= (*(p  ));
+                z[21]	= (*(p+1));
+                z[22]	= (*(p+2));
+                z[23]	= (*(p+3));
+                z[24]	= (*(p+4));                
 
-				*(pDst++) = (acc + part);
-			}
-		}
-	}
-  
-	/* top and bottom edges */		
-	for(y = 0; y < height; y = y + hgt_1)
-	{
-		if((y % T->n_thread) == T->phase)	/* this is my scan line */
-		{
-			pSrc  	= T->image + w2 * (y*2);
-			pDst	= T->image_copy + width * y;
-			
-			for(x = 0; x < width; x++)
-			{
-				p		= pSrc + (x*2);
-				
-				z[0]	= *p;
-				z[1]	= *(p+1);
-				
-				p		+= w2;
-				
-				z[2]	= *(p);
-				z[3]	= *(p+1);
-				
-				zm[0] = z[0] & mFFFF; /* move half to zm */
-				zm[1] = z[1] & mFFFF;
-				zm[2] = z[2] & mFFFF;
-				zm[3] = z[3] & mFFFF;
-				
-				z[0]	>>= 16; /* keep rest in z */
-				z[1]	>>= 16;
-				z[2]	>>= 16;
-				z[3]	>>= 16;
-				
-				edge_combine(part,z,m00FF);
-				acc=(part<<16);
-				edge_combine(part,z,mFF00);
-				acc+=(part<<16);
-				edge_combine(part,zm,m00FF);
-				acc+=part;
-				edge_combine(part,zm,mFF00);
+                for( a = 0; a < 25; a += 5 ) 
+                  {
+                    zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
+                    zm[a+1 ] = z[a+1] & mFFFF;
+                    zm[a+2 ] = z[a+2] & mFFFF;
+                    zm[a+3 ] = z[a+3] & mFFFF;
+                    zm[a+4 ] = z[a+4] & mFFFF;
+                    
+                    z[a   ]	>>= 16; /* keep rest in z */
+                    z[a+1 ]	>>= 16;
+                    z[a+2 ]	>>= 16;
+                    z[a+3 ]	>>= 16;
+                    z[a+4 ]	>>= 16;
+                  }
+                
+                combine5by5(part,z,m00FF);
+                acc	= (part<<16);
+                combine5by5(part,z,mFF00);
+                acc	+= (part<<16);
+                combine5by5(part,zm,m00FF);
+                acc	+= part;
+                combine5by5(part,zm,mFF00);
+                *(pDst++) = (acc + part);
+              }
+            break;
+          case 4:
+            for(x = 0; x < width; x++)
+              {
+                p	= pSrc + (x * T->mag);
+                
+                z[0 ]	= (*(p  ));
+                z[1 ]	= (*(p+1));
+                z[2 ]	= (*(p+2));
+                z[3 ]	= (*(p+3));
+                z[4 ]	= (*(p+4));
+                z[5 ]	= (*(p+5));
+                
+                p	+= src_row_pixels;
+                
+                z[6 ]	= (*(p  ));
+                z[7 ]	= (*(p+1));
+                z[8 ]	= (*(p+2));
+                z[9 ]	= (*(p+3));
+                z[10]	= (*(p+4));
+                z[11]	= (*(p+5));
+                
+                p	+= src_row_pixels;
+                
+                z[12]	= (*(p  ));
+                z[13]	= (*(p+1));
+                z[14]	= (*(p+2));
+                z[15]	= (*(p+3));
+                z[16]	= (*(p+4));
+                z[17]	= (*(p+5));
+                
+                p	+= src_row_pixels;
+                
+                z[18]	= (*(p  ));
+                z[19]	= (*(p+1));
+                z[20]	= (*(p+2));
+                z[21]	= (*(p+3));
+                z[22]	= (*(p+4));      
+                z[23]	= (*(p+5));      
+          
+                p	+= src_row_pixels;
+                
+                z[24]	= (*(p  ));
+                z[25]	= (*(p+1));
+                z[26]	= (*(p+2));
+                z[27]	= (*(p+3));
+                z[28]	= (*(p+4));                
+                z[29]	= (*(p+5));                
 
-				*(pDst++) = (acc + part);
-			}
-		}
-	}
-  
-	/* left and right edges */
-	for(y = 0; y < height; y++)
-	{
-		if((y % T->n_thread) == T->phase)	/* this is my scan line */
-		{
-			pSrc	= T->image + w2 * (y*2);
-			pDst	= T->image_copy + width * y;
-			
-			for(x = 0; x < width; x += wid_1, pDst += wid_1 )
-			{
-				p		= pSrc + (x*2);
-				
-				z[0]	= *p;
-				z[1]	= *(p+1);
-				
-				p	+= w2;
-				
-				z[2]	= *p;
-				z[3]	= *(p+1);
-				
-				zm[0] = z[0] & mFFFF; /* move half to zm */
-				zm[1] = z[1] & mFFFF;
-				zm[2] = z[2] & mFFFF;
-				zm[3] = z[3] & mFFFF;
-				
-				z[0]	>>= 16; /* keep rest in z */
-				z[1]	>>= 16;
-				z[2]	>>= 16;
-				z[3]	>>= 16;
-				
-				edge_combine(part,z,m00FF);
-				acc	= (part<<16);
-				edge_combine(part,z,mFF00);
-				acc	+= (part<<16);
-				edge_combine(part,zm,m00FF);
-				acc	+= part;
-				edge_combine(part,zm,mFF00);
-				
-				*pDst = (acc + part);
-			}
-		}
-	}
-	
-	return 1;
+                p	+= src_row_pixels;
+                
+                z[30]	= (*(p  ));
+                z[31]	= (*(p+1));
+                z[32]	= (*(p+2));
+                z[33]	= (*(p+3));
+                z[34]	= (*(p+4));                
+                z[35]	= (*(p+5));                
+
+                for( a = 0; a < 36; a += 6 ) 
+                  {
+                    zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
+                    zm[a+1 ] = z[a+1] & mFFFF;
+                    zm[a+2 ] = z[a+2] & mFFFF;
+                    zm[a+3 ] = z[a+3] & mFFFF;
+                    zm[a+4 ] = z[a+4] & mFFFF;
+                    zm[a+5 ] = z[a+5] & mFFFF;
+                    
+                    z[a   ]	>>= 16; /* keep rest in z */
+                    z[a+1 ]	>>= 16;
+                    z[a+2 ]	>>= 16;
+                    z[a+3 ]	>>= 16;
+                    z[a+4 ]	>>= 16;
+                    z[a+5 ]	>>= 16;
+                  }
+                
+                combine6by6(part,z,m00FF);
+                acc	= (part<<16);
+                combine6by6(part,z,mFF00);
+                acc	+= (part<<16);
+                combine6by6(part,zm,m00FF);
+                acc	+= part;
+                combine6by6(part,zm,mFF00);
+                *(pDst++) = (acc + part);
+              }
+            break;
+          }
+        }
+   }
+   return 1;
 }
 
 #ifdef PROFILE_BASIS
@@ -1768,6 +1888,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int shadows;
   float spec_vector[3];
   int n_thread;
+  int mag=0;
 
 #ifdef PROFILE_BASIS
   n_cells = 0;
@@ -1788,16 +1909,18 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   BasisSetFudge(SettingGet(cSetting_ray_triangle_fudge));
   shadows = (int)SettingGet(cSetting_ray_shadows);
   antialias = (int)SettingGet(cSetting_antialias);
-  if(antialias>0) {
-	 width=width*2;
-	 height=height*2;
-	 image_copy = image;
-	 buffer_size = 4*width*height;
+  if(antialias<0) antialias=0;
+  if(antialias>3) antialias=3;
+  mag = antialias + 1;
+
+  if(antialias) {
+    width=(width+2)*mag;
+    height=(height+2)*mag;
+    image_copy = image;
+    buffer_size = mag*mag*width*height;
     image = (unsigned int*)CacheAlloc(char,buffer_size,0,cCache_ray_antialias_buffer);
-
-	 ErrChkPtr(image);
+    ErrChkPtr(image);
   }
-
   bkrd=SettingGetfv(cSetting_bg_rgb);
   if(opaque_back) {
     if(I->BigEndian)
@@ -1813,7 +1936,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     }
   }
   if(I->BigEndian) {
-    background = back_mask|
+     background = back_mask|
       ((0xFF& ((unsigned int)(bkrd[0]*255))) <<24)|
       ((0xFF& ((unsigned int)(bkrd[1]*255))) <<16)|
       ((0xFF& ((unsigned int)(bkrd[2]*255))) <<8 );
@@ -1887,7 +2010,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       thread_info[0].bytes = width * (unsigned int)height;
       thread_info[0].phase = 0;
       thread_info[0].ray = I; /* for compute box */
-      
+
       thread_info[1].basis = I->Basis+2;
       thread_info[1].vert2prim = I->Vert2Prim;
       thread_info[1].prim = I->Primitive;
@@ -1981,7 +2104,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
          rt[a].y_start = y_start;
          rt[a].y_stop = y_stop;
 			rt[a].image = image;
-			  
+			rt[a].border = antialias;  
 			rt[a].front = front;
 			rt[a].back = back;
 			rt[a].fore_mask = fore_mask;
@@ -2011,6 +2134,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
          rt[a].image = image;
          rt[a].image_copy = image_copy;
          rt[a].phase = a;
+         rt[a].mag = mag; /* fold magnification */
          rt[a].n_thread = n_thread;
       }
 		

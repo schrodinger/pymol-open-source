@@ -65,6 +65,7 @@ typedef struct {
   unsigned int fore_mask;
   float *bkrd;
   unsigned int background;
+  int border;
   int phase, n_thread;
   float spec_vector[3];
   int x_start,x_stop;
@@ -87,6 +88,7 @@ typedef struct {
   unsigned int *image;
   unsigned int *image_copy;
   unsigned int width,height;
+  int mag;
   int phase,n_thread;
   CRay *ray;
 } CRayAntiThreadInfo;
