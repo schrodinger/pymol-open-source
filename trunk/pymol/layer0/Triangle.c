@@ -1135,6 +1135,7 @@ static void TriangleFill(float *v,float *vn,int n)
   int a,i,j,h,k,l;
   float dif,minDist,*v0;
   int i1,i2=0;
+  int n_pass =0;
   MapType *map;
 
   PRINTFD(FB_Triangle)
@@ -1142,10 +1143,13 @@ static void TriangleFill(float *v,float *vn,int n)
     ENDFD;
   
   map=I->map;
-
+  
   lastTri3=-1;
   while(lastTri3!=I->nTri) {
 	 lastTri3=I->nTri;
+    n_pass++;
+    if(n_pass>(int)SettingGet(cSetting_triangle_max_passes))
+      break;
 
 	 I->nActive=0;
     while((!I->nActive)&&(I->nTri==lastTri3))
@@ -1195,7 +1199,7 @@ static void TriangleFill(float *v,float *vn,int n)
             FollowActives(v,vn,n,0);
           }
         } else break;
-	 }
+      }
     PRINTFD(FB_Triangle)
       " TriangleFill-Debug: Follow actives 1 nTri=%d\n",I->nTri
       ENDFD;
@@ -1207,28 +1211,29 @@ static void TriangleFill(float *v,float *vn,int n)
 			 TriangleActivateEdges(a);
 		FollowActives(v,vn,n,1);
 	 }	 
-	 lastTri2=I->nTri-1;
-	 while(lastTri2!=I->nTri) {
-		lastTri2=I->nTri;
-		for(a=0;a<n;a++) 
-		  if(I->vertActive[a])
-			 {
-				TriangleActivateEdges(a);
-				if(I->nActive) {
+    lastTri2=I->nTri-1;
+    while(lastTri2!=I->nTri) {
+      fflush(stdout);
+      lastTri2=I->nTri;
+      for(a=0;a<n;a++) 
+        if(I->vertActive[a])
+          {
+            TriangleActivateEdges(a);
+            if(I->nActive) {
               PRINTFD(FB_Triangle)
                 " TriangleFill-Debug: build single:     nTri=%d nActive=%d\n",I->nTri,I->nActive
                 ENDFD;
-				  I->nActive--;
-				  i1 = I->activeEdge[I->nActive*2];
-				  i2 = I->activeEdge[I->nActive*2+1];
-				  TriangleBuildSingle(i1,i2,v,vn,n);
+              I->nActive--;
+              i1 = I->activeEdge[I->nActive*2];
+              i2 = I->activeEdge[I->nActive*2+1];
+              TriangleBuildSingle(i1,i2,v,vn,n);
               PRINTFD(FB_Triangle)
                 " TriangleFill-Debug: follow actives 1: nTri=%d nActive=%d\n",I->nTri,I->nActive
                 ENDFD;
-				  FollowActives(v,vn,n,1);
-				}
-			 }
-	 }
+              FollowActives(v,vn,n,1);
+            }
+          }
+    }
     PRINTFD(FB_Triangle)
                 " TriangleFill-Debug: follow actives 2: nTri=%d nActive=%d\n",I->nTri,I->nActive
       ENDFD;

@@ -210,7 +210,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 
   dot_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_dot_color); /* are we using flags 24 & 25 */
   inclH = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
-  if(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_solvent)) { /* are we generating a solvent surface? */
+  if(SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_dot_solvent)) { /* are we generating a solvent surface? */
     solv_rad = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
   }
 

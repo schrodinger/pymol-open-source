@@ -1206,7 +1206,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_surface_quality:
   case cSetting_surface_mode:
   case cSetting_surface_type:
+  case cSetting_surface_solvent:
   case cSetting_surface_proximity:
+  case cSetting_cavity_cull:
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
     SceneChanged();
     break;
@@ -1943,7 +1945,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_mesh_solvent,0);
   
-  SettingSet_i(I,cSetting_dot_solvent,0);
+  SettingSet_b(I,cSetting_dot_solvent,0);
 
   SettingSet_f(I,cSetting_ray_shadow_fudge,0.001F);
 
@@ -2205,7 +2207,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_dot_lighting,1);
   SettingSet_b(I,cSetting_mesh_lighting,0);
-
+  SettingSet_b(I,cSetting_surface_solvent,0);
+  SettingSet_i(I,cSetting_triangle_max_passes,5);
 }
 
 

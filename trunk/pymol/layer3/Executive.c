@@ -44,7 +44,7 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include"ObjectGadgetRamp.h"
 #include"SculptCache.h"
-
+#include"Control.h"
 #include"Menu.h"
 #include"Map.h"
 #include"Editor.h"
