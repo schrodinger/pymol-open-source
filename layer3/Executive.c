@@ -84,14 +84,66 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
 /*========================================================================*/
-int ExecutiveGetDihe(char *s1,char *s2,char *s3,char *s4,float *value,int state)
+int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state)
 {
-  return 0;
+  Vector3f v0,v1,v2,v3;
+  int sele0,sele1,sele2,sele3;
+  int ok=true;
+  
+  if((sele0 = SelectorIndexByName(s0))<0)
+    ok = ErrMessage("GetDihedral","Selection 1 invalid.");    
+  else if((sele1 = SelectorIndexByName(s1))<0)
+    ok = ErrMessage("GetDihedral","Selection 2 invalid.");    
+  else if((sele2 = SelectorIndexByName(s2))<0)
+    ok = ErrMessage("GetDihedral","Selection 3 invalid.");
+  else if((sele3 = SelectorIndexByName(s3))<0)
+    ok = ErrMessage("GetDihedral","Selection 4 invalid.");
+  if(ok) {
+    if (!SelectorGetSingleAtomVertex(sele0,state,v0))
+      ok = ErrMessage("GetDihedral","Selection 1 doesn't contain a single atom/vertex.");          
+    if (!SelectorGetSingleAtomVertex(sele1,state,v1))
+      ok = ErrMessage("GetDihedral","Selection 2 doesn't contain a single atom/vertex.");          
+    if (!SelectorGetSingleAtomVertex(sele2,state,v2))
+      ok = ErrMessage("GetDihedral","Selection 3 doesn't contain a single atom/vertex.");          
+    if (!SelectorGetSingleAtomVertex(sele3,state,v3))
+      ok = ErrMessage("GetDihedral","Selection 4 doesn't contain a single atom/vertex.");          
+  }
+  if(ok) {
+    (*value)=rad_to_deg(get_dihedral3f(v0,v1,v2,v3));
+  }
+  return ok;
 }
 /*========================================================================*/
-int ExecutiveSetDihe(char *s1,char *s2,char *s3,char *s4,float value,int state)
+int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
 {
-  return 0;
+  Vector3f v0,v1,v2,v3;
+  int sele0,sele1,sele2,sele3;
+  int ok=true;
+  float current;
+
+  if((sele0 = SelectorIndexByName(s0))<0)
+    ok = ErrMessage("GetDihedral","Selection 1 invalid.");    
+  else if((sele1 = SelectorIndexByName(s1))<0)
+    ok = ErrMessage("GetDihedral","Selection 2 invalid.");    
+  else if((sele2 = SelectorIndexByName(s2))<0)
+    ok = ErrMessage("GetDihedral","Selection 3 invalid.");
+  else if((sele3 = SelectorIndexByName(s3))<0)
+    ok = ErrMessage("GetDihedral","Selection 4 invalid.");
+  if(ok) {
+    if (!SelectorGetSingleAtomVertex(sele0,state,v0))
+      ok = ErrMessage("GetDihedral","Selection 1 doesn't contain a single atom/vertex.");          
+    if (!SelectorGetSingleAtomVertex(sele1,state,v1))
+      ok = ErrMessage("GetDihedral","Selection 2 doesn't contain a single atom/vertex.");          
+    if (!SelectorGetSingleAtomVertex(sele2,state,v2))
+      ok = ErrMessage("GetDihedral","Selection 3 doesn't contain a single atom/vertex.");          
+    if (!SelectorGetSingleAtomVertex(sele3,state,v3))
+      ok = ErrMessage("GetDihedral","Selection 4 doesn't contain a single atom/vertex.");          
+  }
+  if(ok) {
+    current=rad_to_deg(get_dihedral3f(v0,v1,v2,v3));
+    /* UNFINISHED */
+  }
+  return ok;
 }
 /*========================================================================*/
 float ExecutiveGetArea(char *s0,int sta0,int load_b)
