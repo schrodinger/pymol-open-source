@@ -4976,7 +4976,7 @@ int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cuto
 
 /*========================================================================*/
 int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
-                   int conectFlag,PDBInfoRec *pdb_info)
+                   int conectFlag,PDBInfoRec *pdb_info,int *counter)
 {
   register CSelector *I=G->Selector;
 
@@ -4993,7 +4993,10 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
   AtomInfoType *atInfo,*ai,*last = NULL;
   SelectorUpdateTable(G);
 
-  c=0;
+  if(counter)
+    c=*counter;
+  else
+    c=0;
     /*  if(SettingGet(G,cSetting_save_pdb_ss)) {
   SSEntry *ss = NULL;
   int n_ss = 0;
@@ -5169,7 +5172,8 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
   }
   /*
     VLAFreeP(ss); */
-
+  if(counter)
+    *counter=c;
   return(cLen);
 }
 /*========================================================================*/
