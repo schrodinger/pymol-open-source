@@ -229,6 +229,7 @@ if __name__=='pymol.setting':
       security              =197
       stick_transparency    =198
       ray_transparency_shadows = 199
+      ray_transparency_specular = 200
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

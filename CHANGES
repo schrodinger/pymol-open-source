@@ -98,6 +98,9 @@ Current Bugs to Fix
 
 Changes up to 0.87
 
+   * improved specular reflection on transparent surfaces
+     (ray_transparency_specular=0) will restore original behavior.
+
    * stick_transparency setting
 
    * ray_transparency_shadows setting
