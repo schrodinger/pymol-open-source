@@ -127,7 +127,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
         ms->RefreshFlag=false;
       }
 
-      if(ms->N&&ms->V) {
+      if(ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag=false;
           PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF;
@@ -241,7 +241,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
                          I->Obj.Setting,NULL);
           ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
-          if(n&&v) {
+          if(n&&v&&I->Obj.RepVis[cRepMesh]) {
             vc = ColorGet(I->Obj.Color);
             if(ms->DotFlag) {
               ray->fColor3fv(ray,vc);
@@ -279,7 +279,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
             CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
                         I->Obj.Setting,NULL);
-          if(n&&v) {
+          if(n&&v&&I->Obj.RepVis[cRepMesh]) {
             ObjectUseColor(&I->Obj);
             glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
             while(*n)
@@ -324,7 +324,7 @@ ObjectMesh *ObjectMeshNew(void)
   I->State=VLAMalloc(10,sizeof(ObjectMeshState),5,true); /* autozero important */
 
   I->Obj.type = cObjectMesh;
-
+  
   I->Obj.fFree = (void (*)(struct Object *))ObjectMeshFree;
   I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMeshUpdate;
   I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMeshRender;

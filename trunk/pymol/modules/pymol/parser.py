@@ -233,6 +233,7 @@ def _same_(a,b):
 
 def complete_sc(st,sc,type_name,postfix):
    result = None
+   sc=sc() # invoke lambda functions (if any)
    amb = sc.interpret(st)
    if amb==None:
       print " parser: no matching %s."%type_name
@@ -278,9 +279,11 @@ def complete(st):
             flag = 1
             try:
                pre = re.sub("^[^ ]* ",' ',st,count=1) # trim command
-               pre = re.sub("[\, ][^\, ]*$","",pre,count=1) # trim 1 arg
+               if re.search(",",pre)!=None:
+                  pre = re.sub(",\s*[^\, ]*$",", ",pre,count=1) # trim 1 arg
+               else:
+                  pre = re.sub("[^ ]*$","",pre,count=1) # trim 1 arg               
                pre = re.sub("^ *",'',pre)
-               if len(pre): pre = pre + ' ' # courtesy space
                pre = full+' '+pre
                pat = re.sub(r".*[\, ]",'',st)
                result = apply(complete_sc,tuple([pat]+cmd.auto_arg[count][full]),{})

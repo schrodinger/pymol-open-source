@@ -204,6 +204,7 @@ class PMGApp(AbstractApp):
       ofile = askopenfilename(initialdir = self.initialdir,
                               filetypes=[("PDB File","*.pdb"),
                                          ("All Files","*.*"),
+                                         ("CCP4 Map","*.ccp4"),                                         
                                          ("PDB File","*.ent"),
                                          ("Macromodel File","*.dat"),
                                          ("Macromodel File","*.out"),
@@ -779,8 +780,8 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenu('Wizards', 'Task Wizards')
       
-      self.menuBar.addmenuitem('Wizards', 'command', 'Density Map',
-                               label='Density Map',
+      self.menuBar.addmenuitem('Wizards', 'command', 'Density Map Wizard',
+                               label='Density',
                                command = lambda: cmd.do("wizard density"))
 
       self.menuBar.addmenuitem('Wizards', 'command', 'Distance',

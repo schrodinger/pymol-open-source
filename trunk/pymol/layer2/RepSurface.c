@@ -497,6 +497,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
   }
   if(SurfaceFlag) {
       
+	 OrthoBusyFast(0,1);
+
 	 I->V=Alloc(float,cs->NIndex*3*sp->nDot*2);
     ErrChkPtr(I->V);
 	 I->VN=Alloc(float,cs->NIndex*3*sp->nDot*2);
@@ -505,7 +507,6 @@ Rep *RepSurfaceNew(CoordSet *cs)
     v=I->V;
     vn=I->VN;
 
-	 OrthoBusyFast(0,1);
 	 RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent);
 	 solv_map=MapNew(probe_radius,I->Dot,I->NDot,extent);
 	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,extent);

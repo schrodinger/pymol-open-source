@@ -10,6 +10,9 @@ def is_string(obj):
    return isinstance(obj,types.StringType)
 
 class Shortcut:
+
+   def __call__(self):
+      return self
    
    def __init__(self,list,filter_leading_underscore=1):
       if filter_leading_underscore:
