@@ -1634,6 +1634,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   ObjectMolecule *obj;
   Object *ob;
   ObjectMolecule *targ = NULL;
+  ObjectMolecule *info_src = NULL;
 
   ob=ExecutiveFindObjectByName(name);
   if(ob)
@@ -1658,7 +1659,11 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
       {
         I->Table[a].index=c; /* Mark records  */
         c++;
+        if(!info_src) info_src = obj;
       }
+  }
+  if(isNew&&info_src) {/* copy symmetry information, etc. */
+    targ->Symmetry=SymmetryCopy(info_src->Symmetry);
   }
   nAtom=c;
 

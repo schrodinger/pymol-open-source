@@ -67,6 +67,7 @@ typedef struct VLARec {
 #define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
+#define VLACopy(ptr,type) (type*)VLANewCopy(ptr);
 
 #define Alloc(type,size) (type*)mmalloc(sizeof(type)*(size))
 #define Realloc(ptr,type,size) (type*)mrealloc(ptr,sizeof(type)*(size))
@@ -85,6 +86,7 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int re
 void VLAFree(void *ptr);
 void *VLASetSize(void *ptr,unsigned int newSize);
 unsigned int VLAGetSize(void *ptr);
+void *VLANewCopy(void *ptr);
 
 #ifndef _MemoryDebug_ON
 /* _MemoryDebug_ON not defined */

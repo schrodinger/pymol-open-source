@@ -32,6 +32,7 @@ typedef struct {
 void CrystalFree(CCrystal *I);
 void CrystalInit(CCrystal *I);
 CCrystal *CrystalNew(void);
+CCrystal *CrystalCopy(CCrystal *I);
 void CrystalUpdate(CCrystal *I);
 void CrystalDump(CCrystal *I);
 CGO *CrystalGetUnitCellCGO(CCrystal *I);

@@ -35,6 +35,7 @@ void SymmetryFree(CSymmetry *I);
 CSymmetry *SymmetryNew(void);
 void SymmetryUpdate(CSymmetry *I);
 void SymmetryDump(CSymmetry *I);
+CSymmetry *SymmetryCopy(CSymmetry *other);
 
 #endif
 

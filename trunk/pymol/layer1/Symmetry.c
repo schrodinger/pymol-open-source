@@ -81,6 +81,20 @@ CSymmetry *SymmetryNew(void)
   return(I);
 }
 
+CSymmetry *SymmetryCopy(CSymmetry *other)
+{
+  OOAlloc(CSymmetry);
+  if(!other) {
+    OOFreeP(I);
+    return NULL;
+  }
+  UtilCopyMem(I,other,sizeof(CSymmetry));
+  I->Crystal=CrystalCopy(I->Crystal);
+  I->SymMatVLA=VLACopy(I->SymMatVLA,float);
+  I->SymOpVLA=VLACopy(I->SymOpVLA,WordType);
+  return(I);
+}
+
 void SymmetryUpdate(CSymmetry *I) 
 {
 }

@@ -2667,6 +2667,10 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
   OrthoLineType new_name;
   float auto_save;
 
+  PRINTFD(FB_Executive)
+    " ExecutiveSymExp: entered.\n"
+    ENDFD;
+
   auto_save = SettingGet(cSetting_auto_zoom);
   SettingSet(cSetting_auto_zoom,0);
   sele=SelectorIndexByName(s1);
@@ -2774,6 +2778,9 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
     }
     VLAFreeP(op.vv1);
   }
+  PRINTFD(FB_Executive)
+    " ExecutiveSymExp: leaving...\n"
+    ENDFD;
   SettingSet(cSetting_auto_zoom,auto_save);
 }
 /*========================================================================*/

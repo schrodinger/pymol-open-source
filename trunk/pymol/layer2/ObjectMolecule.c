@@ -275,9 +275,8 @@ ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *I,CRaw *pmo,int frame,int 
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,false);
-      if(cset->TmpSymmetry&&(!I->Symmetry)) {
-        I->Symmetry=cset->TmpSymmetry;
-        cset->TmpSymmetry=NULL;
+      if(cset->Symmetry&&(!I->Symmetry)) {
+        I->Symmetry=SymmetryCopy(cset->Symmetry);
         SymmetryAttemptGeneration(I->Symmetry);
       }
       SceneCountFrames();
@@ -812,9 +811,8 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,false);
-    if(cset->TmpSymmetry&&(!I->Symmetry)) {
-      I->Symmetry=cset->TmpSymmetry;
-      cset->TmpSymmetry=NULL;
+    if(cset->Symmetry&&(!I->Symmetry)) {
+      I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry);
     }
     SceneCountFrames();
@@ -3181,9 +3179,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,false);
-    if(cset->TmpSymmetry&&(!I->Symmetry)) {
-      I->Symmetry=cset->TmpSymmetry;
-      cset->TmpSymmetry=NULL;
+    if(cset->Symmetry&&(!I->Symmetry)) {
+      I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry);
     }
     SceneCountFrames();
@@ -3912,9 +3909,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,true);
-      if(cset->TmpSymmetry&&(!I->Symmetry)) {
-        I->Symmetry=cset->TmpSymmetry;
-        cset->TmpSymmetry=NULL;
+      if(cset->Symmetry&&(!I->Symmetry)) {
+        I->Symmetry=SymmetryCopy(cset->Symmetry);
         SymmetryAttemptGeneration(I->Symmetry);
       }
       SceneCountFrames();
@@ -5026,7 +5022,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
   AtomInfoType *a0,*a1;
   OOAlloc(ObjectMolecule);
   (*I)=(*obj);
-  I->Symmetry=NULL; /* TODO: add  copy */
+  I->Symmetry=SymmetryCopy(I->Symmetry); /* null-safe */
   I->UnitCellCGO=NULL;
   I->Neighbor=NULL;
   for(a=0;a<=cUndoMask;a++)
@@ -5064,6 +5060,7 @@ void ObjectMoleculeFree(ObjectMolecule *I)
 {
   int a;
   SceneObjectDel((Object*)I);
+
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) {
       if(I->CSet[a]->fFree)
@@ -5794,7 +5791,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   cset->Coord=coord;
   cset->TmpBond=bond;
   cset->NTmpBond=nBond;
-  if(symmetry) cset->TmpSymmetry=symmetry;
+  if(symmetry) cset->Symmetry=symmetry;
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
 

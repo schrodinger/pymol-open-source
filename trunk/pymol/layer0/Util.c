@@ -126,12 +126,22 @@ void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 		  }
 	 }
 }
-void UtilZeroMem(void *ptr,unsigned int howMuch )
+void UtilZeroMem(void *ptr,unsigned int howMuch ) /* optimize! */
 {
   char *c;
   c=(char*)ptr;
   while(howMuch--)
 	 *(c++)=0;
+}
+
+void UtilCopyMem(void *dst,void *src,unsigned int howMuch) /* optimize! */
+{
+  /* need to determine the memory is non-overlapping.  If so, then use memcpy. */
+  char *c,*d;
+  c=(char*)dst;
+  d=(char*)src;
+  while(howMuch--)
+	 *(c++)=*(d++);
 }
 
 void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)
