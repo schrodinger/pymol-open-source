@@ -177,13 +177,23 @@ Current Bugs to Fix
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.93
+
+   * Restored ability to read version 0.86 sessions with CGOs.
+
+   * Fixed bug with O/BRIX map reading code.
+
+   * Changed roving_origin behavior with respect to Z axis.
+
+   * P5M file handling for browser helper (for Metaphorics, mostly).
+
 Changes up to 0.92
 
    * added RPM support for "import pymol", fixed several bugs running
      PyMOL in this fashion, with or without a GUI.  
 
    * fixed alpha channel handling for transparent surfaces in ray tracer
-     with a non-opaque background, with fog, and with both togetherset 
+     with a non-opaque background, with fog, and with both together.
 
    * added defer_updates setting to provide a gentler alternative
      to suspend_updates and which can allow a threading applications
