@@ -208,7 +208,7 @@ static void MainDraw(void)
 	 }
   else if(I->SwapFlag)
     {
-      if(PMGUI&&(!was_dirty)) SceneCopy(0);
+      if(PMGUI&&(!was_dirty)&&I->IdleFlag) SceneCopy(0);
       if(PMGUI) glutSwapBuffers();
       I->SwapFlag=false;
     }
@@ -403,7 +403,7 @@ void MainBusyIdle(void)
     if(I->IdleFlag) { /* select to avoid racing the CPU */
       
       PUnlock(cLockAPI,&_save);
-      PSleep(50000);
+      PSleep(20000);
       PLock(cLockAPI,&_save);
 
       if(I->SwapFlag) {
