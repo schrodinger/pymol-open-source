@@ -1944,15 +1944,15 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
 static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
-  int i1;
+  int i1,quiet;
   OrthoLineType s1;
   int result=0;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&i1);
+  ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&i1,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    result=ExecutiveIterate(s1,str2,i1); /* TODO STATUS */
+    result=ExecutiveIterate(s1,str2,i1,quiet); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }
@@ -1963,15 +1963,15 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
-  int i1,i2,i3;
+  int i1,i2,i3,quiet;
   OrthoLineType s1;
 
   int ok=false;
-  ok = PyArg_ParseTuple(args,"issii",&i1,&str1,&str2,&i2,&i3);
+  ok = PyArg_ParseTuple(args,"issiii",&i1,&str1,&str2,&i2,&i3,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveIterateState(i1,s1,str2,i2,i3); /* TODO STATUS */
+    ExecutiveIterateState(i1,s1,str2,i2,i3,quiet); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }

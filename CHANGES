@@ -179,6 +179,10 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * added quiet parameter to alter and iterate commands
+
+   * fixed raytracing bug with one residue cylindrical helices
+
    * fixed raytrace border bug
 
    * fixed isosurface session save bug
