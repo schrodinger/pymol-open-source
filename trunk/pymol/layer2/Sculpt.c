@@ -583,16 +583,16 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
           FreeP(linear);
         }
       }
-  
+
   PRINTFB(FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NDistCon %d\n",I->Shaker->NDistCon
-    ENDFD;
+    ENDFB;
   PRINTFB(FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NPyraCon %d\n",I->Shaker->NPyraCon
-    ENDFD;
+    ENDFB;
   PRINTFB(FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NPlanCon %d\n",I->Shaker->NPlanCon
-    ENDFD;
+    ENDFB;
 
 
  PRINTFD(FB_Sculpt)
@@ -680,6 +680,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   float hb_overlap,hb_overlap_base;
   int *active,n_active;
   AtomInfoType *ai0,*ai1;
+  double task_time;
 
   PRINTFD(FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
@@ -743,6 +744,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           /* first, create coordinate -> vertex mapping */
           /* and count number of constraints */
 
+          task_time = UtilGetSeconds();
           while(n_cycle--) {
 
             /* initialize displacements to zero */
@@ -907,7 +909,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
               }
             }
 
-            if((cSculptVDW||cSculptVDW14)&mask) {
+            if((cSculptVDW|cSculptVDW14)&mask) {
               /* compute non-bonded interations */
             
               /* construct nonbonded hash */
@@ -1030,6 +1032,11 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             }
           
           }
+          
+          task_time = UtilGetSeconds() - task_time;
+          PRINTFB(FB_Sculpt,FB_Blather)
+            " Sculpt: %2.5f seconds\n",task_time
+            ENDFB;
         }
         FreeP(active);
         FreeP(cnt);
