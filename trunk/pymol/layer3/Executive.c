@@ -174,7 +174,7 @@ void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
         ExecutiveDelete(nam);
       ObjectSetName((Object*)obj,nam);
       ExecutiveManageObject((Object*)obj);
-      ExecutiveSetRepVisib(nam,0,1);
+      ExecutiveSetRepVisib(nam,cRepLine,1);
     }
   } else if(sele1<0) {
     ErrMessage("ExecutiveDistance","The first selection contains no atoms.");

@@ -55,7 +55,7 @@ ExportDotsObj *ExportDots(char *name,int csIndex)
   }
 
   if(ok) {
-	 rep = (RepDot*)RepDotNew(cs,cRepDotAreaType);
+	 rep = (RepDot*)RepDotDoNew(cs,cRepDotAreaType);
 	 if(!rep) 
 		ok=ErrMessage("ExportDots","Couldn't get dot representation.");
 	 else {

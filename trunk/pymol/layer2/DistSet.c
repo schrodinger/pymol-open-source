@@ -50,7 +50,7 @@ void DistSetInvalidateRep(DistSet *I,int type,int level)
 		  switch(level) {
 		  case cRepInvColor:
 			 if(I->Rep[a]->fRecolor) {
-				I->Rep[a]->fInvalidate(I->Rep[a],level);
+				I->Rep[a]->fInvalidate(I->Rep[a],(struct CoordSet*)I,level);
 			 } else {
 				I->Rep[a]->fFree(I->Rep[a]);
 				I->Rep[a] = NULL;

@@ -34,21 +34,28 @@ Z* -------------------------------------------------------------------
 
 #define cRepCnt       11
 
-#define cRepInvVisib 15
-#define cRepInvColor 20
-#define cRepInvCoord 30
-#define cRepInvAll 100
+#define cRepInvStatus 10
+#define cRepInvColor  15
+#define cRepInvVisib  20
+#define cRepInvCoord  30
+#define cRepInvBonds  40
+#define cRepInvAtoms  50
+#define cRepInvAll    100
 
 struct CoordSet;
 
 typedef struct Rep {
-  void (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
-  void (*fFree)(struct Rep* I);
-  void (*fUpdate)(struct Rep *I,struct CoordSet *cs);
-  void (*fRecolor)(struct Rep *I,struct CoordSet *cs);
-  void (*fInvalidate)(struct Rep *I,int level);
-  int MaxInvalid;
+  void            (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
+  struct Rep     *(*fUpdate)(struct Rep *I,struct CoordSet *cs,int rep);
+  void       *(*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
+  void              (*fFree)(struct Rep* I);
+  int MaxInvalid,Active;
   Pickable *P;
+  /* private */
+  void        (*fRecolor)(struct Rep *I,struct CoordSet *cs);
+  int         (*fSameVis)(struct Rep *I,struct CoordSet *cs);
+  struct Rep *(*fRebuild)(struct Rep *I,struct CoordSet *cs,int rep);
+  struct Rep *(*fNew)(struct CoordSet *cs);
 } Rep;
 
 void RepInit(Rep *I);

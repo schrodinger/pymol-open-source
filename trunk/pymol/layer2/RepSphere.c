@@ -37,12 +37,15 @@ typedef struct RepSphere {
   int *NT;
   int N,NC;
   int cullFlag;
+  int *LastVisib;
+  int *LastColor;
 } RepSphere;
 
 #include"ObjectMolecule.h"
 
 void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick);
 void RepSphereFree(RepSphere *I);
+int RepSphereSameVis(RepSphere *I,CoordSet *cs);
 
 void RepSphereInit(void)
 {
@@ -53,6 +56,8 @@ void RepSphereFree(RepSphere *I)
   FreeP(I->VC);
   FreeP(I->V);
   FreeP(I->NT);
+  FreeP(I->LastColor);
+  FreeP(I->LastVisib);
   OOFreeP(I);
 }
 
@@ -127,6 +132,34 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
   }
 }
 
+int RepSphereSameVis(RepSphere *I,CoordSet *cs)
+{
+  int same = true;
+  int *lv,*lc,*cc;
+  int a;
+  AtomInfoType *ai;
+
+  ai = cs->Obj->AtomInfo;
+  lv = I->LastVisib;
+  lc = I->LastColor;
+  cc = cs->Color;
+
+  for(a=0;a<cs->NIndex;a++)
+    {
+      if(*(lv++)!=(ai + cs->IdxToAtm[a])->visRep[cRepSphere] ) {
+        same=false;
+        break;
+      }
+      if(*(lc++)!=*(cc++)) {
+        same=false;
+        break;
+      }
+    }
+  return(same);
+}
+
+
+
 Rep *RepSphereNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
@@ -134,11 +167,13 @@ Rep *RepSphereNew(CoordSet *cs)
   float *v,*v0,*vc,vdw,v1[3];
   float cont;
   int *q, *s,q0,q1,q2;
+  int *lv,*lc,*cc;
   SphereRec *sp = Sphere0; 
   int ds,*nt,flag;
   int *visFlag = NULL;
   MapType *map = NULL;
   int vFlag;
+  AtomInfoType *ai2;
   OOAlloc(RepSphere);
 
   obj = cs->Obj;
@@ -170,7 +205,10 @@ Rep *RepSphereNew(CoordSet *cs)
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
+  I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSphereSameVis;
   I->R.fRecolor=NULL;
+  I->LastVisib=NULL;
+  I->LastColor=NULL;
 
   /* raytracing primitives */
   
@@ -404,6 +442,19 @@ Rep *RepSphereNew(CoordSet *cs)
 			 if(nt) nt++;
 		  }
 	 }
+
+  if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
+  if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
+  lv = I->LastVisib;
+  lc = I->LastColor;
+  cc = cs->Color;
+  obj=cs->Obj;
+  ai2=obj->AtomInfo;
+  for(a=0;a<cs->NIndex;a++)
+    {
+      *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSphere];
+      *(lc++) = *(cc++);
+    }
 
   /*TODO: NEED TO SHRINK POINTERS HERE*/
 

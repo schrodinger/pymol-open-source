@@ -460,7 +460,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     cset->Obj = I;
     cset->fEnumIndices(cset);
     if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset,-1,0);
+      cset->fInvalidateRep(cset,cRepAll,cRepInvAll);
     if(isNew) {	
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
@@ -522,7 +522,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int 
   /* include coordinate set */
   if(ok) {
     if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset,-1,0);
+      cset->fInvalidateRep(cset,cRepAll,cRepInvAll);
 
     if(frame<0) frame=I->NCSet;
     VLACheck(I->CSet,CoordSet*,frame);
@@ -853,7 +853,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
       cset->Obj = I;
       cset->fEnumIndices(cset);
       if(cset->fInvalidateRep)
-        cset->fInvalidateRep(cset,-1,0);
+        cset->fInvalidateRep(cset,cRepAll,cRepInvAll);
       if(isNew) {		
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
@@ -1128,7 +1128,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     cset->Obj = I;
     cset->fEnumIndices(cset);
     if(cset->fInvalidateRep)
-      cset->fInvalidateRep(cset,-1,0);
+      cset->fInvalidateRep(cset,cRepAll,cRepInvAll);
     if(isNew) {		
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
@@ -1248,7 +1248,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
        cs=I->CSet[b];
        if(cs) {
          if(cs->fInvalidateRep)
-           cs->fInvalidateRep(I->CSet[b],cRepAll,0);
+           cs->fInvalidateRep(I->CSet[b],cRepAll,cRepInvCoord);
          MatrixApplyTTTfn3f(cs->NIndex,cs->Coord,ttt,cs->Coord);
        }
      }
@@ -1578,9 +1578,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                          else
                            a1=-1;
                        } else 
-                         a1=I->CSet[b]->AtmToIdx[a];
-                       if(a1>=0)
-                         inv_flag=true;
+                         a1=I->CSet[b]->AtmToIdx[a]; 
+                       if(a1>=0)                     /* selection touches this coordinate set */ 
+                         inv_flag=true;              /* so set the invalidation flag */
                        break;
 						   case OMOP_VERT: 
                        if(I->DiscreteFlag) {
@@ -1650,12 +1650,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				   switch(op->code) {
 				   case OMOP_INVA:
                  if(inv_flag) {
-                  if(op->i1<0)
+                   if(op->i1<0) /* invalidate all representations */
                     for(d=0;d<cRepCnt;d++) {
                       if(I->CSet[b]->fInvalidateRep)
                         I->CSet[b]->fInvalidateRep(I->CSet[b],d,op->i2);
                     }
-                  else if(I->CSet[b]->fInvalidateRep)
+                  else if(I->CSet[b]->fInvalidateRep) 
+                    /* invalidate only that particular representation */
                     I->CSet[b]->fInvalidateRep(I->CSet[b],op->i1,op->i2);
                  }
 					 break;
@@ -1985,7 +1986,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
       if(cset->fEnumIndices)
         cset->fEnumIndices(cset);
       if(cset->fInvalidateRep)
-        cset->fInvalidateRep(cset,-1,0);
+        cset->fInvalidateRep(cset,cRepAll,cRepInvAll);
       if(isNew) {		
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
         I->NAtom=nAtom;
