@@ -2070,7 +2070,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_retain_order,0);
 
-  SettingSet_i(I,cSetting_pdb_hetatm_sort,1);
+  SettingSet_i(I,cSetting_pdb_hetatm_sort,0);
 
   SettingSet_i(I,cSetting_pdb_use_ter_records,1);
 
