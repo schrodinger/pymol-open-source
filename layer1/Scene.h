@@ -68,6 +68,9 @@ void SceneApplyMatrix(float *m);
 void SceneSetStereo(int flag);
 void ScenePurgeCopy(void);
 void SceneDontCopyNext(void);
+void ScenePrepareExit(void);
+
+
 #endif
 
 
