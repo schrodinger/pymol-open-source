@@ -127,15 +127,53 @@ double dot_product3d ( double *v1, double *v2 )
   return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
 }
 
-void transform33f3f ( float *m1,float *m2,float *m3) 
+void identity44f ( float *m1 )
 {
-  float m2r0,m2r1,m2r2;
-  m2r0=m2[0];
-  m2r1=m2[1];
-  m2r2=m2[2];
-  m3[0] = m1[0]*m2r0 + m1[1]*m2r1 + m1[2]*m2r2;
-  m3[1] = m1[3]*m2r0 + m1[4]*m2r1 + m1[5]*m2r2;
-  m3[2] = m1[6]*m2r0 + m1[7]*m2r1 + m1[8]*m2r2;
+  int a,b;
+  for(a=0;a<16;a++) m1[a]=0;
+  for(a=0;a<16;a=a+5) m1[a]=1.0;
+}
+
+void transform33f3f (float *m1, float *m2, float *m3) 
+{
+  float m2r0=m2[0];
+  float m2r1=m2[1];
+  float m2r2=m2[2];
+  m3[0] = m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2;
+  m3[1] = m1[ 3] * m2r0 + m1[ 4] * m2r1 + m1[ 5] * m2r2;
+  m3[2] = m1[ 6] * m2r0 + m1[ 7] * m2r1 + m1[ 8] * m2r2;
+}
+
+void transform44f3f (float *m1, float *m2, float *m3)
+{
+  float m2r0 = m2[0];
+  float m2r1 = m2[1];
+  float m2r2 = m2[2];
+  m3[0] = m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2 + m1[ 3];
+  m3[1] = m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2 + m1[ 7];
+  m3[2] = m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2 + m1[11];
+}
+
+void transform44f4f (float *m1, float *m2, float *m3)
+{
+  float m2r0 = m2[0];
+  float m2r1 = m2[1];
+  float m2r2 = m2[2];
+  float m2r3 = m2[3];
+  m3[0] = m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2 + m1[ 3] * m2r3;
+  m3[1] = m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2 + m1[ 7] * m2r3;
+  m3[2] = m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2 + m1[11] * m2r3;
+  m3[3] = m1[12] * m2r0 + m1[13] * m2r1 + m1[14] * m2r2 + m1[15] * m2r3; 
+}
+
+void transformTTT44f3f (float *m1, float *m2, float *m3)
+{
+  float m2r0 = m2[0] + m1[12];
+  float m2r1 = m2[1] + m1[13];
+  float m2r2 = m2[2] + m1[14];
+  m3[0] = m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2 + m1[3];
+  m3[1] = m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2 + m1[7];
+  m3[2] = m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2 + m1[11];
 }
 
 void multiply33f33f ( float *m1,float *m2,float *m3) /* m2 and m3 can be the same matrix */
@@ -724,3 +762,5 @@ void find_axis( oMatrix3d a, float *axis)
 }
 #endif
 #endif
+
+

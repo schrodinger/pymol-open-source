@@ -923,6 +923,7 @@ void SceneUpdate(void)
   ObjRec *rec=NULL;
 
   if(I->ChangedFlag) {
+    SceneCountFrames();
 	 while(ListIterate(I->Obj,rec,next,ObjList))
       if(rec->obj->fUpdate) 
         rec->obj->fUpdate(rec->obj);

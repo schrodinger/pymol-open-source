@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 #include<math.h>
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
+/* NOTE: All matrices are assumed to be column-major in this module */
+
 #define cPI            3.14159265358979323846  /* pi */
 
 typedef float Vector3f[3]; /* for local vars only - use float* for parameters */
@@ -44,27 +46,42 @@ double diffsq3f ( float *v1, float *v2 );
 double diff3f ( float *v1, float *v2 );
 int within3f(float *v1,float *v2,float dist);
 
-/* REVISED Matrix Routines */
+float get_angle3f( float *v1, float *v2 );
+double length3d ( double *v1 );
 
-/* as float pointers */
+/* REVISED Matrix Routines using  float pointers */
 
-/* in matrix multiplies, the last two matrices can be the same matrix! */
+void identity44f ( float *m1 );
 
-void transform33f3f (float *m1, float *v1, float *v2);
-void multiply33f33f ( float *m1, float *m2, float *m3);
-void multiply33d33d ( double *m1, double *m2, double *m3);
+/* in the following matrix multiplies and transformations:
+   the last two matrices can be the same matrix! */
+
+void transform33f3f ( float  *m1, float  *m2,  float  *m3 );
+void transform44f3f ( float  *m1, float  *m2,  float  *m3 );
+void transform44f4f ( float  *m1, float  *m2,  float  *m3 );
+
+void multiply33f33f ( float  *m1, float  *m2,  float  *m3 );
+void multiply33d33d ( double *m1, double *m2, double  *m3 );
 
 /* as matrix types */
 
 void matrix_transform33f3f ( Matrix33f m1,float *v1,float *v2);
-void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat);
+void rotation_to_matrix33f (float *axis, float angle, Matrix33f mat);
 void matrix_multiply33f33f ( Matrix33f m1,Matrix33f m2,Matrix33f m3);
 void matrix_multiply33d33d ( Matrix33d m1,Matrix33d m2,Matrix33d m3);
 
-float get_angle3f( float *v1, float *v2 );
-double length3d ( double *v1 );
+/* A 4x4 TTT matrix is really a 3x3 rotation matrix with two translation vectors:
+   (1) a pre-translation stored in forth row, first three columns.
+   (2) and a post-translation stored in forth column, first three rows.
+   There are certain cases where this representation is more convenient.
+ */
 
-/* OLD MATRIX STUFF NEEDS REWORKING */
+void transformTTT44f3f ( float *m1, float *m2, float *m3 );
+
+/* end revised matrix routines */
+
+/*------------------------------------------------------------------------*/
+/* OLD MATRIX STUFF below NEEDS REWORKING */
 
 void rotation_matrix3f( float angle, float x, float y, float z,float *m );
 
