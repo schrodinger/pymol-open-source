@@ -4121,7 +4121,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         
         /* add half the ambient component (perceptive kludge) */
         
-        f=SettingGet(G,cSetting_ambient) * 0.5;
+        f=SettingGet(G,cSetting_ambient) * 0.5F;
 
         vv[0]=f;
         vv[1]=f;
