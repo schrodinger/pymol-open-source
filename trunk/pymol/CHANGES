@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   beta31
+
+   * dihedral display during dihedral bond torsion editing
+
+   beta30
+
    * presentation mode now auto-quits after blank screen on either end.
 
    * fixed (or rather worked around) two bugs with nVidia on Mac

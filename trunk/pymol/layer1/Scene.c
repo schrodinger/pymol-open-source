@@ -4097,9 +4097,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
   unsigned int lowBits,highBits;
   unsigned int *lowBitVLA=NULL,*highBitVLA=NULL;
   int high,low;
-  static float white[4] =
-  {1.0, 1.0, 1.0, 1.0};
-  float zero[4] = {0.0, 0.0, 0.0, 0.0};
   float zAxis[4] = { 0.0, 0.0, 1.0, 0.0 };
   float normal[4] = { 0.0, 0.0, 1.0, 0.0 };
   float aspRat = ((float) I->Width) / ((float) I->Height);

@@ -32,6 +32,9 @@ Z* -------------------------------------------------------------------
 #define cEditorObject "pkobject"
 #define cEditorComp   "pkmol"
 #define cEditorLink   "pkfrag"
+#define cEditorDihedral "_pkdihe"
+#define cEditorDihe1    "_pkdihe1"
+#define cEditorDihe2    "_pkdihe2"
 
 int EditorInit(PyMOLGlobals *G);
 int EditorActive(PyMOLGlobals *G); 
