@@ -695,7 +695,7 @@ SEE ALSO
          unlock()
       return cpy
    
-   def scene(key,action='recall'):
+   def scene(key,action='recall',view=1,color=1,active=1,rep=1,frame=1):
       '''
 DESCRIPTION
 
@@ -726,6 +726,11 @@ SEE ALSO
       global scene_dict,scene_dict_sc
 
       try:
+         view = int(view)
+         rep = int(rep)
+         color = int(color)
+         active = int(active)
+         frame = int(frame)
          lock() # manipulating global data, so need lock
          
          if key=='*':
@@ -754,18 +759,29 @@ SEE ALSO
                cmd.set("scenes_changed",1,quiet=1);
                key = scene_dict_sc.auto_err(key,'scene')
                list = scene_dict[key]
-               set_view(list[0])
-               cmd.hide()
-               cmd.disable()
-               cmd.set_vis(list[1])
-               cmd.frame(list[2])
-               if len(list)>3:
-                  if(list[3]!=None):
+               ll = len(list)
+               if (ll>0) and (view):
+                  if list[0]!=None:
+                     set_view(list[0])
+               if (ll>1) and (active):
+                  if list[1]!=None:
+                     cmd.disable()
+                     cmd.set_vis(list[1])
+               if (ll>2) and (frame):
+                  if list[2]!=None:
+                     cmd.frame(list[2])
+               if (ll>3) and (color):
+                  if list[3]!=None:
                      cmd.set_colorection(list[3],key)
-                  
-               for rep in rep_list:
-                  name = "_scene_"+key+"_"+rep
-                  cmd.show(rep,name)
+               if (ll>4) and (rep):
+                  if list[4]==None:
+                     rep = 0
+               if rep!=0:
+                  cmd.hide()
+                  for rep_name in rep_list:
+                     print rep_name                     
+                     name = "_scene_"+key+"_"+rep_name
+                     cmd.show(rep_name,name)
                if _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
             elif action=='store':
@@ -779,14 +795,31 @@ SEE ALSO
                         cmd.del_colorection(colorection,key) # important -- free RAM
                   name = "_scene_"+key+"_*"
                   cmd.delete(name)
-               for rep in rep_list:
-                  name = "_scene_"+key+"_"+rep
-                  cmd.select(name,"rep "+rep)
-               scene_dict[key]=[cmd.get_view(0),
-                                cmd.get_vis(),
-                                cmd.get_frame(),
-                                cmd.get_colorection(key)
-                                ]
+               entry = []
+               if view:
+                  entry.append(cmd.get_view(0))
+               else:
+                  entry.append(None);
+               if active:
+                  entry.append(cmd.get_vis())
+               else:
+                  entry.append(None)
+               if frame:
+                  entry.append(cmd.get_frame())
+               else:
+                  entry.append(None)
+               if color:
+                  entry.append(cmd.get_colorection(key))
+               else:
+                  entry.append(None)
+               if rep:
+                  entry.append(1)
+                  for rep_name in rep_list:
+                     name = "_scene_"+key+"_"+rep_name
+                     cmd.select(name,"rep "+rep_name)
+               else:
+                  entry.append(None)                  
+               scene_dict[key]=entry
                if _feedback(fb_module.scene,fb_mask.actions):
                   print " scene: scene stored as \"%s\"."%key
                cmd.set("scenes_changed",1,quiet=1);

@@ -250,16 +250,18 @@ def mol_action(s):
 
 def simple_action(s):
    return [[ 2, 'Actions:'     , ''                       ],
-           [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'      ],
+           [ 1, 'center'       , 'cmd.center("'+s+'")'    ],           
+           [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
            [ 0, ''             , ''                       ],
            [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            ]
 
 def all_action(s):
    return [[ 2, 'Actions:'     , ''                      ],     
-           [ 1, 'origin'   , 'cmd.origin("all")'   ],
            [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
+           [ 1, 'center'   , 'cmd.center("all")'   ],           
+           [ 1, 'origin'   , 'cmd.origin("all")'   ],
            [ 0, ''             , ''                      ],
            [ 1, 'delete everything'  , 'cmd.delete("all")'     ],
            [ 0, ''          ,''                                              ],
