@@ -65,7 +65,6 @@ void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,in
   c=1;
   b=0;
   while(b<n1) {
-    fflush(stdout);
     matchFlag=false;
 
     if(!ai1->name[0])

@@ -711,6 +711,7 @@ void OrthoDoDraw()
     if(overlay||(!text)) 
       if(!SceneRenderCached())
         SceneRender(NULL,0,0);
+
     
     OrthoPushMatrix();
     

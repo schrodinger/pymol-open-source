@@ -149,6 +149,7 @@ static void MainDrag(int x,int y)
 static void MainDrawLocked(void)
 {
   CMain *I = &Main;
+
   if(I->DirtyFlag) {
     I->DirtyFlag=false;
   }
@@ -353,7 +354,6 @@ void MainBusyIdle(void)
 
 
   CMain *I = &Main;
-
   /* flush command and output queues */
 
   PLockAPIAsGlut();
@@ -381,25 +381,22 @@ void MainBusyIdle(void)
       MainDrawLocked();
     I->DirtyFlag=false;
   }
-  
+
   if(I->IdleMode) { /* avoid racing the CPU */
     if(I->IdleMode==1) {
       if(UtilGetSeconds()-I->IdleTime>SettingGet(cSetting_idle_delay)) { 
         I->IdleMode=2;
-        if(PMGUI) 
-          glutPostRedisplay(); /* trigger caching of the current scene */
+        if(PMGUI)
+          if(SettingGet(cSetting_cache_display))
+             glutPostRedisplay(); /* trigger caching of the current scene */
       }
     }
-    PUnlockAPIAsGlut();
     if(I->IdleMode==1)
       PSleep(SettingGet(cSetting_fast_idle)); /* fast idle - more responsive */
     else
       PSleep(SettingGet(cSetting_slow_idle)); /* slow idle - save CPU cycles */
-    PLockAPIAsGlut();
   } else {
-    PUnlockAPIAsGlut();
     PSleep(SettingGet(cSetting_no_idle)); /* give Tcl/Tk a chance to run */
-    PLockAPIAsGlut();
   }
   PUnlockAPIAsGlut();
 
@@ -426,6 +423,7 @@ void MainBusyIdle(void)
     }
       
   }
+
 }
 
 /*========================================================================*/

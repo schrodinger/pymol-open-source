@@ -1126,36 +1126,36 @@ void SceneCopy(int buffer)
   CScene *I=&Scene;
   unsigned int buffer_size;
 
-  if(!I->StereoMode) { /* no copies while in stereo mode */
-   
-  if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
-    buffer_size = 4*I->Width*I->Height;
-    if(buffer_size) {
-      if(I->ImageBuffer)	 {
-        if(I->MovieOwnsImageFlag) {
-          I->MovieOwnsImageFlag=false;
-          I->ImageBuffer=NULL;
-        } else if(I->ImageBufferSize!=buffer_size) {
-          FreeP(I->ImageBuffer);
+    if(!I->StereoMode) { /* no copies while in stereo mode */
+      if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
+        buffer_size = 4*I->Width*I->Height;
+        if(buffer_size) {
+          if(I->ImageBuffer)	 {
+            if(I->MovieOwnsImageFlag) {
+              I->MovieOwnsImageFlag=false;
+              I->ImageBuffer=NULL;
+            } else if(I->ImageBufferSize!=buffer_size) {
+              FreeP(I->ImageBuffer);
+            }
+          }
+          if(!I->ImageBuffer) {
+            I->ImageBuffer=(GLvoid*)Alloc(char,buffer_size);
+            ErrChkPtr(I->ImageBuffer);
+            I->ImageBufferSize = buffer_size;
+          }
+          if(PMGUI) {
+            if(buffer)
+              glReadBuffer(GL_FRONT);
+            else
+              glReadBuffer(GL_BACK);
+            glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
+                         GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
+          }
         }
-      }
-      if(!I->ImageBuffer) {
-        I->ImageBuffer=(GLvoid*)Alloc(char,buffer_size);
-        ErrChkPtr(I->ImageBuffer);
-        I->ImageBufferSize = buffer_size;
-      }
-      if(PMGUI) {
-        if(buffer)
-          glReadBuffer(GL_FRONT);
-        else
-          glReadBuffer(GL_BACK);
-        glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
-                     GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
+        I->CopyFlag = true;
       }
     }
-    I->CopyFlag = true;
-  }
-  }
+
 }
 
 /*========================================================================*/
@@ -1505,7 +1505,8 @@ void SceneRender(Pickable *pick,int x,int y)
       start_time = I->LastRender - start_time;
       if((start_time>0.10)||(MainSavingUnderWhileIdle()))
         if(!(ControlIdling()))
-          SceneCopy(0);
+          if(SettingGet(cSetting_cache_display))
+            SceneCopy(0);
     } else {
       I->CopyNextFlag=true;
     }

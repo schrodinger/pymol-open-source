@@ -2391,7 +2391,6 @@ void ObjectMoleculeBlindSymMovie(ObjectMolecule *I)
   } else if(!I->Symmetry->NSymMat) {
     ErrMessage("ObjectMolecule:","No symmetry matrices!");    
   } else if(I->CSet[0]) {
-    fflush(stdout);
     frac = CoordSetCopy(I->CSet[0]);
     CoordSetRealToFrac(frac,I->Symmetry->Crystal);
     for(x=-1;x<2;x++)
@@ -4106,7 +4105,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 	 printf(" ObjectMoleculeReadPDB: Found %i atoms...\n",nAtom);
 	 fflush(stdout);
   }
-  fflush(stdout);
   a=0;
   atomCount=0;
   

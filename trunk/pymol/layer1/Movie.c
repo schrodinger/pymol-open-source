@@ -96,7 +96,6 @@ void MoviePNG(char *prefix,int save)
   char fname[255];
   char buffer[255];
 
-  fflush(stdout);
   save = SettingGet(cSetting_cache_frames);
   SettingSet(cSetting_cache_frames,1.0);
   OrthoBusyPrime();
@@ -117,7 +116,6 @@ void MoviePNG(char *prefix,int save)
 		}
 		if(!I->Image[i])
 		  ErrFatal("MoviePNG","Missing rendering movie image!");
-		fflush(stdout);		  
 		MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
 		ExecutiveDrawNow();
 		if(PMGUI) glutSwapBuffers();

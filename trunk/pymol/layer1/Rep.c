@@ -33,7 +33,6 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
 {
   Rep *tmp = NULL;
   /*  printf("here1\n");*/
-  fflush(stdout);
   if(I->fNew) {
     tmp = I->fNew(cs);
     if(tmp) {
@@ -53,7 +52,6 @@ struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
 {
   if(I->MaxInvalid) {
     /*  printf("here2 %p\n",I->fRebuild);*/
-  fflush(stdout);
 
     if(I->MaxInvalid<=cRepInvColor) {
       if(I->fRecolor) {

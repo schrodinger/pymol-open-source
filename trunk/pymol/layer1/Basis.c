@@ -488,7 +488,6 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 				l2=length3f(I->Precomp+I->Vert2Normal[a]*3+3);
 				b = ceil(l1/sep)+1;
 				c = ceil(l2/sep)+1;
-            fflush(stdout);
 				extra_vert += b*c;
 			 }
 			 break;
