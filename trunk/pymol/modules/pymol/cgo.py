@@ -70,10 +70,20 @@ def molauto(*arg):
 #      rr = RenderReader(stdout)
 #      cmd.load_cgo(rr.obj,name)
 
+def measure_text(cgo,font,text,
+                 axes=[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]):
+   w = 0
+   x = axes[0]
+   y = axes[1]
+   for char in text:
+      if font.has_key(char):
+         w = w + fc[0]
+   return w
 
-def text(cgo,font,pos,axis,text): # modifies pos
-   x = axis[0]
-   y = axis[1]
+def wire_text(cgo,font,pos,text,
+              axes = [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]): # modifies pos
+   x = axes[0]
+   y = axes[1]
    for char in text:
       if font.has_key(char):
          fc = font[char]

@@ -5602,6 +5602,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   (*bond) = VLAlloc(BondType,maxBond);
   if(cs->NIndex&&bondSearchFlag) /* &&(!I->DiscreteFlag) WLD 010527 */
 	 {
+      switch((int)SettingGet(cSetting_connect_mode)) {
+      case 0:
+        /* distance-based bond location  */
+
       map=MapNew(cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
       if(map)
         {
@@ -5803,7 +5807,12 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                     }
             }
           MapFree(map);
+        case 1: /* dictionary-based connectivity */
+          /* TODO */
+          
+          break;
         }
+      }
       PRINTFB(FB_ObjectMolecule,FB_Blather)
         " ObjectMoleculeConnect: Found %d bonds.\n",nBond
         ENDFB;
