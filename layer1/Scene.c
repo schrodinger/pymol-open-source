@@ -1408,13 +1408,13 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             ENDFB;
           break;
         case cButModeCent:
-          sprintf(buf2,"center (%s)",buffer);        
+          sprintf(buf2,"center (%s),state=-1",buffer);        
           OrthoCommandIn(buf2);
           if(obj->type==cObjectMolecule) {
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
-              sprintf(buffer,"cmd.center(\"%s\")",buf1);
+              sprintf(buffer,"cmd.center(\"%s\",state=-1)",buf1);
               PLog(buffer,cPLog_pym);
             }
           }
@@ -2104,10 +2104,12 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 case cButModeTransZ:
 		if(I->LastY!=y)
 		  {
-			 I->Pos[2]+=(((float)y)-I->LastY)/5;
-			 I->Front-=(((float)y)-I->LastY)/5;
+          float factor;
+          factor = 200/((I->Front+I->Back)/2);
+			 I->Pos[2]+=(((float)y)-I->LastY)/factor;
+			 I->Front-=(((float)y)-I->LastY)/factor;
 			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
-			 I->Back-=(((float)y)-I->LastY)/5;
+			 I->Back-=(((float)y)-I->LastY)/factor;
 			 I->LastY=y;
 			 SceneDirty();
           adjust_flag=true;

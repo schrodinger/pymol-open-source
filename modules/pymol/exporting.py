@@ -128,6 +128,8 @@ SEE ALSO
             format = 'mmod'
          elif re.search("\.pmo$",lc_filename):
             format = 'pmo'
+         elif re.search("\.png$",lc_filename):
+            format = 'png'
          elif re.search("\.pse$",lc_filename):
             format = 'pse'
       else:
@@ -167,5 +169,7 @@ SEE ALSO
          io.mol.toFile(cmd.get_model(selection),filename)
          if not quiet:
             print " Save: wrote \""+filename+"\"."
+      elif format=='png':
+         cmd.png(filename)
       return r
 
