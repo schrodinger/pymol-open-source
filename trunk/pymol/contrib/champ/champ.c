@@ -1371,6 +1371,19 @@ int ChampModelToPat(CChamp *I,PyObject *model)
             err_message("ChampModel2Pat","can't read name");
           Py_XDECREF(tmp);
         }
+
+        if(ok) {
+          if(PTruthCallStr(atom,"has","flags")) {         
+            tmp = PyObject_GetAttrString(atom,"flags");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,(int*)&at->tag);
+            if(!ok) 
+              err_message("ChampModel2Pat","can't read flags");
+            Py_XDECREF(tmp);
+          } else {
+            at->tag = 0;
+          }
+        }
         
         if(ok) {
           if(PTruthCallStr(atom,"has","formal_charge")) { 
@@ -1845,7 +1858,7 @@ int ChampMatch_1V1_N(CChamp *I,int pattern,int target,int limit,int tag_flag)
 
 
 
-int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit)
+int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit,int tag_flag)
 {
   int match_start = 0;
 
@@ -1853,7 +1866,7 @@ int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit)
   ChampPrepareTarget(I,target);
   return(ChampMatch(I,pattern,target,
                     ChampFindUniqueStart(I,pattern,target,NULL),
-                    limit,&match_start,false));
+                    limit,&match_start,tag_flag));
 }
 
 int ChampMatch_1VN_N(CChamp *I,int pattern,int list)
@@ -1942,6 +1955,12 @@ int ChampFindUniqueStart(CChamp *I,int template, int target,int *multiplicity)
         score += I->Int3[unique_targ].value[1];
       unique_targ = I->Int3[unique_targ].link;
     }
+#ifdef MATCHDEBUG
+    if(!score) {
+      printf("unable to match: ");
+      ChampAtomDump(I,tmpl_atom);
+    }
+#endif
     if(!score) return 0; /* no matched atom */
     
     score = score * I->Int3[unique_tmpl].value[1]; /* calculate multiplicity */
@@ -2012,6 +2031,13 @@ int ChampMatch(CChamp *I,int template,int target,int unique_start,
   int tmpl_atom,targ_atom;
   int rep_targ_atom;
   int unique_targ;
+
+#ifdef MATCHDEBUG
+  printf("\n\n ChampMatch: temp %d targ %d uniq %d n_want %d start %p tag %d\n",
+         template,target,unique_start,n_wanted,match_start,tag_flag);
+
+#endif
+
   /* we'll only need to start the search from the represenatative atom for this type
      (it isn't necc. to iterate through the others, since we'll be trying all
      combinations within the target...
@@ -2053,6 +2079,7 @@ int ChampMatch2(CChamp *I,int template,int target,
      two nucleating atoms, which are assumed to be equivalent */
   int n_match = 0;
   int stereo_template = false;
+
 
 #ifdef MATCHDEBUG
   printf("\n\n ChampMatch2: %d %d\n",start_tmpl,start_targ);
@@ -3845,16 +3872,21 @@ void ChampPatDump(CChamp *I,int index)
   while(cur_atom) {
     at = I->Atom+cur_atom;
     ChampAtomToString(I,cur_atom,buf);
-    printf(" atom %d %3s 0x%08x",cur_atom,buf,at->atom);
-    printf(" cy: %x",at->cycle);
-    printf(" cl: %x v: %02x D: %02x ch: %02x st: %d ih: %d hy: %d hf: %d bo: ",
-           at->class,at->valence,at->degree,at->charge,
+    printf(" atom %d %3s 0x%08x nam: %s res: %s sym: %s\n",cur_atom,buf,at->atom,at->name,at->residue,at->symbol);
+    printf("        cy: %x",at->cycle);
+    printf(" cl: %x v: %02x D: %02x ch: %02x cy: %d st: %d ih: %d hy: %d hf: %d bo: ",
+           at->class,at->valence,at->degree,at->charge,at->cycle,
            at->stereo,at->imp_hydro,at->tot_hydro,at->hydro_flag);
     for(a=0;a<MAX_BOND;a++) {
       if(!at->bond[a]) break;
       else printf("%d ",at->bond[a]);
     }
     printf("\n");
+    printf("        pf: %d nf: %d !at %d !ch %d !cy %d !cl %d !D %d !v %d\n",
+           at->pos_flag,at->neg_flag,at->not_atom,
+           at->not_charge,at->not_cycle,at->not_class,
+           at->not_degree,at->not_valence);
+
     cur_atom = I->Atom[cur_atom].link;
   }
   cur_bond = I->Pat[index].bond;

@@ -143,12 +143,12 @@ class Champ:
       if e: raise RuntimeError
       return r
 
-   def match_1v1_map(self,pattern,target,limit): # boolean
+   def match_1v1_map(self,pattern,target,limit,tag=0): # boolean
       '''
       returns mappings (if any) between two patterns
       '''
       (e,r) = _champ.match_1v1_map(self._champ,
-                           int(pattern),int(target),int(limit))
+                           int(pattern),int(target),int(limit),int(tag))
       if e: raise RuntimeError
       return r
 
