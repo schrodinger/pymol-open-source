@@ -9,7 +9,7 @@ PyMOL>bg_color 239283498
 Color-Error: Bad color name.
 PyMOL>bg_color asdfasdf
 Color-Error: Bad color name.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>reset
 PyMOL>clip
 Parsing-Error: missing required argument: mode
@@ -22,7 +22,7 @@ PyMOL>clip far,-3
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -50.000   0.000   0.000   0.000  43.000  93.000   0.000
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/1tii.pdb
  ObjectMolecule: read HELIX D 4 D 10
  ObjectMolecule: read HELIX D 57 D 74
@@ -156,8 +156,8 @@ PyMOL>ray
 PyMOL>cartoon skip,resi 1-100
 PyMOL>ray
  RayRenderTest: obtained 10710 graphics primitives.
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
  Executive: object "cgo" created.
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
@@ -179,8 +179,8 @@ PyMOL>color green,cgo
  Executive: Colored 1 object.
 PyMOL>color red,(all)
  Executive: Colored 107 atoms.
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>load dat/3al1.pdb
@@ -228,7 +228,7 @@ PyMOL>enable 3al1
 PyMOL>enable pept
 PyMOL>ray
  RayRenderTest: obtained 1432 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>reset
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
@@ -274,8 +274,8 @@ PyMOL>ray
 PyMOL>hide sticks
 PyMOL>ray
  RayRenderTest: obtained 0 graphics primitives.
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>label (all),resi
@@ -288,8 +288,8 @@ PyMOL>label (all),''
  Label: labelled 107 atoms.
 PyMOL>label (all)
  Label: labelled 107 atoms.
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>reset
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
@@ -311,8 +311,8 @@ PyMOL>move y,2
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   7.000 -49.000   0.000   0.000   0.000  39.000  99.000   0.000
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>orient
@@ -320,8 +320,8 @@ PyMOL>orient (none)
 PyMOL>orient (name ca)
 PyMOL>orient (resi 10)
 PyMOL>orient (name ca and i. 10)
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>origin
@@ -329,8 +329,8 @@ PyMOL>origin (none)
 PyMOL>origin (name ca)
 PyMOL>origin (resi 10)
 PyMOL>origin (name ca and i. 10)
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>show dots
@@ -344,8 +344,8 @@ PyMOL>ray
 PyMOL>rebuild
 PyMOL>ray
  RayRenderTest: obtained 1960 graphics primitives.
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>color shoot
@@ -359,8 +359,8 @@ PyMOL>set_color shoot,[1.0,0.0,1.0]
  Color: "shoot" defined as [ 1.0, 0.0, 1.0 ].
 PyMOL>recolor
 PyMOL>refresh
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>reset
 PyMOL>cmd._dump_floats(v1)
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
@@ -374,8 +374,8 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>reset
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
@@ -397,8 +397,8 @@ PyMOL>turn y,2
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   0.992   0.002  -0.124  -0.002   1.000  -0.001   0.124   0.001   0.992
   0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>reset
 PyMOL>view
 Parsing-Error: missing required argument: key
@@ -429,7 +429,7 @@ PyMOL>viewport 300
 PyMOL>viewport 100,100
 PyMOL>viewport 300,300
 PyMOL>viewport 640,480
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
@@ -441,7 +441,7 @@ PyMOL>zoom resi 5,5
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -44.770   0.247  -2.740  20.030  36.087  55.822   0.000
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/1tii.pdb,m1
  ObjectMolecule: read HELIX D 4 D 10
  ObjectMolecule: read HELIX D 57 D 74

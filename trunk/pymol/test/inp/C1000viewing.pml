@@ -28,7 +28,7 @@ bg_color asdfasdf
 
 # clip
 
-del all
+dele all
 reset
 clip
 clip near
@@ -40,7 +40,7 @@ cmd._dump_floats(cmd.get_view(0))
 
 # cartoon
 
-del all
+dele all
 load dat/1tii.pdb
 hide
 show cartoon
@@ -64,11 +64,11 @@ cartoon tube,ss s
 ray
 cartoon skip,resi 1-100
 ray
-del all
+dele all
 
 # color
 
-del all
+dele all
 /from pymol.cgo import *
 /cgo_list = [ BEGIN, LINES, VERTEX, 0.0, 0.0, 0.0, VERTEX, 1.2, -10.3, 14.0, END ]
 /cmd.load_cgo(cgo_list,'cgo')
@@ -82,10 +82,10 @@ color 99
 color blue,pept
 color green,cgo
 color red,(all)
-del all
+dele all
 
 # disable & enable
-del all
+dele all
 load dat/pept.pdb
 load dat/3al1.pdb
 disable
@@ -104,7 +104,7 @@ disable
 enable 3al1
 enable pept
 ray
-del all
+dele all
 
 # get_view
 
@@ -139,23 +139,23 @@ hide sph
 ray
 hide sticks
 ray
-del all
+dele all
 
 
 # label
 
-del all
+dele all
 load dat/pept.pdb
 label (all),resi
 label (name ca),"ca"
 label (name n),"%s-%s-%s"%(chain,resi,resn)
 label (all),''
 label (all)
-del all
+dele all
 
 # move
 
-del all
+dele all
 reset
 cmd._dump_floats(cmd.get_view(0))
 move
@@ -169,33 +169,33 @@ move z,-1
 move x,-10
 move y,2
 cmd._dump_floats(cmd.get_view(0))
-del all
+dele all
 
 # orient
 
-del all
+dele all
 load dat/pept.pdb
 orient
 orient (none)
 orient (name ca)
 orient (resi 10)
 orient (name ca and i. 10)
-del all
+dele all
 
 # origin
 
-del all
+dele all
 load dat/pept.pdb
 origin
 origin (none)
 origin (name ca)
 origin (resi 10)
 origin (name ca and i. 10)
-del all
+dele all
 
 # rebuild & refresh
 
-del all
+dele all
 load dat/pept.pdb
 show dots
 ray
@@ -204,11 +204,11 @@ refresh
 ray
 rebuild
 ray
-del all
+dele all
 
 # set_color & recolor
 
-del all
+dele all
 load dat/pept.pdb
 color shoot
 set_color shoot,[1.0,0.9,1.0]
@@ -217,11 +217,11 @@ refresh
 set_color shoot,[1.0,0.0,1.0]
 recolor
 refresh
-del all
+dele all
 
 # set_view
 
-del all
+dele all
 reset
 /v1 = cmd.get_view(0)
 cmd._dump_floats(v1)
@@ -229,11 +229,11 @@ load dat/pept.pdb
 cmd._dump_floats(cmd.get_view(0))
 /cmd.set_view(v1)
 cmd._dump_floats(cmd.get_view(0))
-del all
+dele all
 
 # turn
 
-del all
+dele all
 reset
 cmd._dump_floats(cmd.get_view(0))
 turn
@@ -247,11 +247,11 @@ turn z,-1
 turn x,-10
 turn y,2
 cmd._dump_floats(cmd.get_view(0))
-del all
+dele all
 
 # view
 
-del all
+dele all
 reset
 view
 view 1,store
@@ -276,7 +276,7 @@ viewport 640,480
 
 # zoom
 
-del all
+dele all
 load dat/pept.pdb
 cmd._dump_floats(cmd.get_view(0))
 zoom
@@ -286,7 +286,7 @@ cmd._dump_floats(cmd.get_view(0))
 
 # coordinate set based zoom, orient, origin
 
-del all
+dele all
 load dat/1tii.pdb,m1
 load dat/il2.pdb,m1
 load dat/pept.pdb,m1

@@ -25,6 +25,17 @@ Z* -------------------------------------------------------------------
 
 #define GDB_ENTRY
 
+static void DieOutOfMemory(void) 
+{
+  printf("****************************************************************************\n");
+  printf("*** EEK!  PyMOL just ran out of memory and crashed.  To get around this, ***\n");
+  printf("*** you may need to reduce the quality, size, or complexity of the scene ***\n");
+  printf("*** that you are viewing or rendering.    Sorry for the inconvenience... ***\n");
+  printf("****************************************************************************\n");
+  
+  exit(EXIT_FAILURE);
+}
+
 void MemoryZero(char *p,char *q)
 {
   register unsigned long count;
@@ -89,8 +100,8 @@ void *VLAExpand(void *ptr,unsigned int rec)
 		vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
 		if(!vla)
 		  {
-			 printf("VLAExpand-ERR: realloc failed\n");
-			 exit(EXIT_FAILURE);
+			 printf("VLAExpand-ERR: realloc failed.\n");
+          DieOutOfMemory();
 		  }
 		if(vla->autoZero)
 		  {
@@ -119,7 +130,7 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int re
   if(!vla)
 	 {
 		printf("VLAMalloc-ERR: realloc failed\n");
-		exit(EXIT_FAILURE);
+      DieOutOfMemory();
 	 }
   vla->nAlloc=initSize;
   vla->recSize=recSize;
@@ -186,8 +197,8 @@ void *VLASetSize(void *ptr,unsigned int newSize)
   vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
   if(!vla)
 	 {
-		printf("VLASetSize-ERR: realloc failed\n");
-		exit(EXIT_FAILURE);
+		printf("VLASetSize-ERR: realloc failed.\n");
+      DieOutOfMemory();
 	 }
   if(vla->autoZero)
 	 {
@@ -260,13 +271,13 @@ void MemoryDebugRegister(void *addr,const char *note,
   rec=(DebugRec*)malloc(sizeof(DebugRec)+strlen(note));
   if(!rec)
     {
-      printf("MemoryDebugRegister-ERR: memory allocation failure"); 
+      printf("MemoryDebugRegister-ERR: memory allocation failure\n"); 
 #ifdef GDB_ENTRY
   MemoryDebugDump();
   printf("hit ctrl/c to enter debugger\n");
   while(true);
 #endif
-     exit(EXIT_FAILURE);
+  DieOutOfMemory();
     }
   rec->size=(size_t)addr;
   rec->type=_MDMarker;
@@ -425,8 +436,14 @@ void *MemoryDebugMalloc(size_t size,const char *file,int line,int type)
 
   if(InitFlag) MemoryDebugInit();
   rec=(DebugRec*)malloc(sizeof(DebugRec)+size);
-  if(!rec)
-    return(NULL);
+  if(!rec) {
+    if(!size) 
+      return(NULL);
+    else {
+      printf("MemoryDebugMalloc-ERR: alloc failed.\n");
+      DieOutOfMemory();
+    }
+  }
   strcpy(rec->file,file);
   rec->line=line;
   rec->size=size;
@@ -520,7 +537,7 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 				  printf("hit ctrl/c to enter debugger\n");
 				  while(true);
 #endif
-				  exit(EXIT_FAILURE);
+              DieOutOfMemory();
 				}
 			 else
 				{

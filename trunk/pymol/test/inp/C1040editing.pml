@@ -6,7 +6,7 @@ set ray_default_renderer=2
 
 #     alter,              
 
-del all
+dele all
 load dat/pept.pdb
 alter (elem n,o),vdw=4.0
 show dots
@@ -21,7 +21,7 @@ ray
 
 #     h_add,              
 
-del all
+dele all
 load dat/small01.mol
 remove hydro
 h_add
@@ -29,12 +29,12 @@ count_atoms
 
 #     h_fill,             
 
-del all
+dele all
 load dat/small01.mol
 
 #     attach,             
 
-del all
+dele all
 load dat/small01.mol
 remove id 17
 count_atoms
@@ -51,7 +51,7 @@ count_atoms
 
 #     bond,               
 
-del all
+dele all
 load dat/small01.mol
 unbond id 1,id 2
 h_add
@@ -63,7 +63,7 @@ count_atoms
 
 #     cycle_valence,      
 
-del all
+dele all
 load dat/small01.mol
 edit id 6,id 10
 cycle_valence
@@ -78,7 +78,7 @@ ray
 
 #     deprotect
 
-del all
+dele all
 load dat/pept.pdb
 get_extent
 protect resi 1-6
@@ -97,7 +97,7 @@ torsion 90
 get_extent
 
 #     flag,               
-del all
+dele all
 load dat/pept.pdb
 flag ignore,(!*/ca,c,n,o,cb)
 flag exfoliate,(*/cb)
@@ -105,26 +105,26 @@ show surf
 ray
 
 #     fuse
-del all
+dele all
 
 load dat/small01.mol,m1
 load dat/small01.mol,m2
 fuse m1 and id 31,m2 and id 31
-del m1
+dele m1
 zoom
 ray
-del all
+dele all
 load dat/small01.mol,m1
 load dat/small01.mol,m2
 remove id 30
 fuse m1 and id 12,m2 and id 12
-del m1
+dele m1
 zoom
 ray
 
 #     invert,             
 
-del all
+dele all
 load dat/small01.mol
 edit id 2
 invert id 6,id 5
@@ -133,14 +133,14 @@ print "%8.3f"%cmd.dist("id 28","id 17")
 #     iterate,            
 #     iterate_state,      
 
-del all
+dele all
 load dat/pept.pdb
 iterate (name n),print resi
 iterate_state 1,(name o),print "%8.3f %8.3f %8.3f"%(x,y,z)
 
 #     push_undo
 
-del all
+dele all
 load dat/il2.pdb
 stored.sum = 0
 iterate_state 1,(il2),stored.sum=stored.sum+x
@@ -162,7 +162,7 @@ ray
 
 #     rename
 
-del all
+dele all
 load dat/small01.mol
 iterate (all),print name
 rename small01
@@ -170,14 +170,14 @@ iterate (all),print name
 
 #     replace,            
 
-del all
+dele all
 load dat/small01.mol
 edit id 3
 replace N,3,3
 
 #     rotate,             
 
-del all
+dele all
 load dat/pept.pdb
 get_extent
 
@@ -196,7 +196,7 @@ get_extent
 
 #     set_dihedral,       
 
-del all
+dele all
 load dat/pept.pdb
 get_dihedral 1/n,1/ca,1/c,1/o
 get_extent
@@ -206,7 +206,7 @@ get_extent
 
 #     set_geometry,       
 
-del all
+dele all
 load dat/small01.mol
 remove not id 3
 zoom
@@ -229,18 +229,18 @@ count_atoms
 
 #     sort
 
-del all
+dele all
 load dat/pept.pdb
 alter (all),resi = (999-int(resi)-ID/4)
 sort
 show sph,(byres id 10)
 ray
 
-del all
+dele all
 
 #     transform_object,   
 
-del all
+dele all
 load dat/pept.pdb
 get_extent
 
@@ -823,7 +823,7 @@ get_extent
 
 #     translate,          
 
-del all
+dele all
 load dat/small01.mol
 
 cmd.edit("(small01`3)",pkresi=1)
@@ -1105,7 +1105,7 @@ get_extent
 
 #     translate_atom,     
 
-del all
+dele all
 load dat/small01.mol
 get_extent
 cmd.set('valence','0.0500')
@@ -1166,7 +1166,7 @@ get_extent
 
 # update 
 
-del all
+dele all
 load dat/pept.pdb
 get_extent
 load dat/pept.pdb,sav

@@ -390,6 +390,16 @@ static void *SettingPtr(CSetting *I,int index,unsigned int size)
   return(I->data+sr->offset);
 }
 /*========================================================================*/
+int SettingUnset(CSetting *I,int index)
+{
+  if(I) {
+    SettingRec *sr = I->info+index;
+    sr->defined = false;
+    sr->changed = true;
+  }
+  return true;
+}
+/*========================================================================*/
 int SettingGetType(int index)
 {
   CSetting *I=&Setting;
@@ -751,6 +761,18 @@ int   SettingGet_b  (CSetting *set1,CSetting *set2,int index)
   return(SettingGetGlobal_i(index));
 }
 /*========================================================================*/
+int SettingGetIfDefined_i(CSetting *set1,int index,int *value)
+{
+  int result=false;
+  if(set1) {
+    if(set1->info[index].defined) {
+      *value=get_i(set1,index);
+      result=true;
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
 int   SettingGet_i  (CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
@@ -1060,6 +1082,11 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_suspend_updates:
     if(!SettingGet(cSetting_suspend_updates))
       SceneChanged(); /* force big update upon resumption */
+    break;
+  case cSetting_frame:
+  case cSetting_state:
+    SceneChanged();
+    break;
   default:
 	 break;
   }
@@ -1142,6 +1169,21 @@ int SettingSetfv(int index,float *v)
 	 break;
   }
   return(ok);
+}
+/*========================================================================*/
+int   SettingSetGlobal_b(int index,int value) 
+{
+  return(SettingSet_b(&Setting,index,value));
+}
+/*========================================================================*/
+int   SettingSetGlobal_i(int index,int value) 
+{
+  return(SettingSet_i(&Setting,index,value));
+}
+/*========================================================================*/
+int   SettingSetGlobal_f(int index,float value) 
+{
+  return(SettingSet_f(&Setting,index,value));
 }
 /*========================================================================*/
 int SettingSet(int index,float v)
@@ -1369,7 +1411,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_dash_gap, 0.35F);
 
-  SettingSet_b(I,cSetting_auto_zoom, 1);
+  SettingSet_i(I,cSetting_auto_zoom, 1);
 
   SettingSet_i(I,cSetting_overlay, 0);
 
@@ -1644,6 +1686,10 @@ void SettingInitGlobal(void)
   SettingSet_b(I,cSetting_wrap_output, 0);
 
   SettingSet_f(I,cSetting_fog_start, 0.30F);
+
+  SettingSet_i(I,cSetting_frame,1);
+
+  SettingSet_i(I,cSetting_state,1);
 
 }
 

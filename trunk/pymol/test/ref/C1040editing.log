@@ -1,4 +1,4 @@
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>alter (elem n,o),vdw=4.0
@@ -12,7 +12,7 @@ PyMOL>hide
 PyMOL>show lines
 PyMOL>ray
  RayRenderTest: obtained 166 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>remove hydro
@@ -20,10 +20,10 @@ PyMOL>remove hydro
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 36 atoms
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>remove id 17
@@ -47,7 +47,7 @@ PyMOL>count_atoms
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 36 atoms
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>unbond id 1,id 2
@@ -64,7 +64,7 @@ PyMOL>bond id 1,id 2
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 36 atoms
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>edit id 6,id 10
@@ -90,7 +90,7 @@ PyMOL>set valence=0.05
  Setting: valence set to 0.05000.
 PyMOL>ray
  RayRenderTest: obtained 59 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_extent
@@ -126,7 +126,7 @@ PyMOL>torsion 90
 PyMOL>get_extent
  cmd.extent: min: [ -15.562, -23.335,  11.965]
  cmd.extent: max: [   7.087,  -8.073,  27.252]
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>flag ignore,(!*/ca,c,n,o,cb)
@@ -138,18 +138,18 @@ PyMOL>ray
  RepSurface: 1349 surface points.
  RepSurface: 1840 triangles.
  RayRenderTest: obtained 1530 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol,m1
  Executive: object "m1" created.
 PyMOL>load dat/small01.mol,m2
  Executive: object "m2" created.
 PyMOL>fuse m1 and id 31,m2 and id 31
 Editor-Error: Invalid selections. Requires two bonded atoms in the same moilecule
-PyMOL>del m1
+PyMOL>dele m1
 PyMOL>zoom
 PyMOL>ray
  RayRenderTest: obtained 121 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol,m1
  Executive: object "m1" created.
 PyMOL>load dat/small01.mol,m2
@@ -159,11 +159,11 @@ PyMOL>remove id 30
  Remove: eliminated 1 atoms in model 'm2'.
 PyMOL>fuse m1 and id 12,m2 and id 12
 Editor-Error: Invalid selections. Requires two bonded atoms in the same moilecule
-PyMOL>del m1
+PyMOL>dele m1
 PyMOL>zoom
 PyMOL>ray
  RayRenderTest: obtained 121 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>edit id 2
@@ -172,7 +172,7 @@ PyMOL>invert id 6,id 5
 PyMOL>print "%8.3f"%cmd.dist("id 28","id 17")
  Executive: object "dist01" created.
    1.957
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>iterate (name n),print resi
@@ -205,7 +205,7 @@ PyMOL>iterate_state 1,(name o),print "%8.3f %8.3f %8.3f"%(x,y,z)
    5.278  -17.322   18.998
    5.962  -19.432   22.570
  IterateState: iterated over 13 atom states.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/il2.pdb
  Executive: object "il2" created.
 PyMOL>stored.sum = 0
@@ -234,7 +234,7 @@ PyMOL>rebuild
 PyMOL>show dots
 PyMOL>ray
  RayRenderTest: obtained 111433 graphics primitives.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>iterate (all),print name
@@ -314,14 +314,14 @@ H32
 H33
 H
  Iterate: iterated over 36 atoms.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>edit id 3
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>replace N,3,3
  Remove: eliminated 1 atoms in model 'small01'.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_extent
@@ -340,7 +340,7 @@ PyMOL>rotate x,45,pept
 PyMOL>get_extent
  cmd.extent: min: [  -6.471, -18.886,  11.502]
  cmd.extent: max: [   8.919,  -1.672,  29.588]
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
@@ -357,7 +357,7 @@ PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
 PyMOL>get_extent
  cmd.extent: min: [  -1.282, -20.240,   6.314]
  cmd.extent: max: [  10.284,  -4.939,  29.777]
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>remove not id 3
@@ -387,7 +387,7 @@ PyMOL>set_geometry (id 3),4,2
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 3 atoms
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>alter (all),resi = (999-int(resi)-ID/4)
@@ -396,8 +396,8 @@ PyMOL>sort
 PyMOL>show sph,(byres id 10)
 PyMOL>ray
  RayRenderTest: obtained 210 graphics primitives.
-PyMOL>del all
-PyMOL>del all
+PyMOL>dele all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_extent
@@ -412,7 +412,7 @@ PyMOL>cmd.push_undo("pept",1)
 PyMOL>get_extent
  cmd.extent: min: [  -5.848, -19.569,  13.157]
  cmd.extent: max: [   7.284,   0.863,  28.004]
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>cmd.edit("(small01`3)",pkresi=1)
@@ -427,7 +427,7 @@ PyMOL>undo
 PyMOL>get_extent
  cmd.extent: min: [  -9.184,  -2.901,  -4.337]
  cmd.extent: max: [   2.256,   2.247,   2.911]
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/small01.mol
  Executive: object "small01" created.
 PyMOL>get_extent
@@ -493,7 +493,7 @@ PyMOL>undo
 PyMOL>get_extent
  cmd.extent: min: [  -9.184,  -2.901,  -4.337]
  cmd.extent: max: [   2.256,   2.247,   2.911]
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_extent

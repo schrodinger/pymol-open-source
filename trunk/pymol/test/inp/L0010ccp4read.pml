@@ -14,8 +14,8 @@ load lrg/map.ccp4,map3
 cmd._dump_floats(extent[0])
 cmd._dump_floats(extent[1])
 
-del map
-del map2
+dele map
+dele map2
 
 print cmd.get_names('objects')
 

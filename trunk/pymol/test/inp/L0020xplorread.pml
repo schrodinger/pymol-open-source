@@ -11,7 +11,7 @@ load lrg/map.xplor,map2,format=xplor
 cmd._dump_floats(extent[0])
 cmd._dump_floats(extent[1])
 
-del map
+dele map
 
 print cmd.get_names('objects')
 

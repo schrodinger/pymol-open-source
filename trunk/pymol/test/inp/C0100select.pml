@@ -11,7 +11,7 @@ print cmd.get_names()
 select tst = (all)
 select tst = (none)
 select tst = (name c)
-del tst
+dele tst
 select tst = (segi e)
 select tst = (all)
 
@@ -64,7 +64,7 @@ select tst, pept w. 1 of pept
 
 print cmd.select("(none)")
 
-del all
+dele all
 load dat/pept.pdb,mult
 load dat/il2.pdb,mult
 

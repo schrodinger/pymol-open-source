@@ -7310,7 +7310,6 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
   PRINTFD(FB_ObjectMolecule)
     " ObjectMolecule: CGO's complete...\n"
     ENDFD;
-
   if(state<0) {
     for(a=0;a<I->NCSet;a++)
       if(I->CSet[a])

@@ -106,6 +106,8 @@ In Progress
 
 Changes up to 0.85
 
+   * unset command
+
    * fixed handling of calcium atoms
    
    * added automatic scroll bar for when you get too many objects/selections

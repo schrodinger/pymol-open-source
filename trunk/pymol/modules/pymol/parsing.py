@@ -76,6 +76,7 @@ SINGLE      = 1  # ignore ";", treat entire line as a single command
 RUN         = 2  # run command 
 SPAWN       = 3  # for spawn and fork commands
 ABORT       = 4  # terminates command script
+PYTHON      = 5  # pass entire line to python
 NO_CHECK    = 10 # no error checking 
 STRICT      = 11 # strict name->argument checking
 LEGACY      = 12 # support legacy construct str1=val1,... -> str1,val1,...

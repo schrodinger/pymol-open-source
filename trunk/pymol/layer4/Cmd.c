@@ -319,6 +319,7 @@ static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args);
 static PyObject *CmdTurn(PyObject *self, 	PyObject *args);
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args);
 static PyObject *CmdZoom(PyObject *self, PyObject *args);
+static PyObject *CmdUnset(PyObject *self, 	PyObject *args);
 static PyObject *CmdUnpick(PyObject *dummy, PyObject *args);
 static PyObject *CmdUpdate(PyObject *dummy, PyObject *args);
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
@@ -486,6 +487,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"viewport",              CmdViewport,             METH_VARARGS },
 	{"undo",                  CmdUndo,                 METH_VARARGS },
 	{"unpick",                CmdUnpick,               METH_VARARGS },
+	{"unset",                 CmdUnset,                METH_VARARGS },
 	{"update",                CmdUpdate,               METH_VARARGS },
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
@@ -2991,6 +2993,34 @@ static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry();
     ok = SettingSetNamed(sname,value); 
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
+{
+  int index;
+  int tmpFlag=false;
+  char *str3;
+  int state;
+  int quiet;
+  int updates;
+  OrthoLineType s1;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"isiii",&index,&str3,&state,&quiet,&updates);
+  s1[0]=0;
+  if (ok) {
+    APIEntry();
+    if(!strcmp(str3,"all")) {
+      strcpy(s1,str3);
+    } else if(str3[0]!=0) {
+      tmpFlag=true;
+      SelectorGetTmp(str3,s1);
+    }
+    ok = ExecutiveUnsetSetting(index,s1,state,quiet,updates);
+    if(tmpFlag) 
+      SelectorFreeTmp(s1);
     APIExit();
   }
   return(APIStatus(ok));

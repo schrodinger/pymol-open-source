@@ -16,9 +16,12 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Movie
 #define _H_Movie
 
+#include"os_python.h"
+
+#include"Ortho.h"
 
 typedef unsigned char *ImageType;
-typedef char MovieCmdType[255];
+typedef char MovieCmdType[OrthoLineLength];
 
 typedef struct  {
   ImageType *Image;
@@ -31,8 +34,12 @@ typedef struct  {
   int Playing;
 } CMovie;
 
+int MovieFromPyList(PyObject *list,int *warning);
+PyObject *MovieAsPyList(void);
+
 void MovieInit(void);
 void MovieFree(void);
+void MovieReset(void);
 void MovieSequence(char *seq);
 int MoviePNG(char *prefix,int save,int start,int stop);
 void MovieSetCommand(int frame,char *command);
