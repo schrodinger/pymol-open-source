@@ -107,6 +107,8 @@ Current Bugs to Fix
 
 Changes up to 0.82
 
+   * fixed major bug in "create"
+
    * raytracing bugfix for bond with zero length
 
    * complicated workaround for mouse atom selections with Radeon 8500 and WinXP

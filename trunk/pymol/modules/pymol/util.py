@@ -29,7 +29,7 @@ def cbag(selection="(all)"):
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
-   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("carbon","(elem C and "+s+")")
 
@@ -38,7 +38,7 @@ def cbac(selection="(all)"):
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
-   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("cyan","(elem C and "+s+")")
 
@@ -47,7 +47,7 @@ def cbay(selection="(all)"):
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
-   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("yellow","(elem C and "+s+")")
 
@@ -56,7 +56,7 @@ def cbas(selection="(all)"):
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
-   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("salmon","(elem C and "+s+")")
 
@@ -65,7 +65,7 @@ def cbap(selection="(all)"):
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
-   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("purple","(elem C and "+s+")")
 
@@ -74,7 +74,7 @@ def cbak(selection="(all)"):
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
-   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("pink","(elem C and "+s+")")
 
@@ -83,7 +83,7 @@ def cbaw(selection="(all)"):
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
-   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("hydrogen","(elem C and "+s+")")
 
@@ -92,7 +92,7 @@ def cbab(selection="(all)"):
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
-   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("sulfur","(elem S and "+s+")")
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("slate","(elem C and "+s+")")
 
