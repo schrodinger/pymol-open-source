@@ -1042,6 +1042,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     inv_sele = sele;
   }
   switch(index) {
+  case cSetting_stereo_mode:
+    SceneUpdateStereoMode();
+    break;
   case cSetting_light:
   case cSetting_fog:
   case cSetting_fog_start:
@@ -1586,7 +1589,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_dash_gap, 0.35F);
 
-  SettingSet_i(I,cSetting_auto_zoom, 1);
+  SettingSet_b(I,cSetting_auto_zoom, 1);
 
   SettingSet_i(I,cSetting_overlay, 0);
 
@@ -1963,6 +1966,45 @@ void SettingInitGlobal(int alloc)
   SettingSet_color(I,cSetting_ray_interior_color,"-1"); /* no color */
 
   SettingSet_color(I,cSetting_cartoon_highlight_color,"-1"); /* no color */
+
+  /* In order to get electrostatic potentials in kT from the Coulomb equation... 
+
+  PyMOL charges: Q, in e
+  PyMOL distances: r, in Angstrom
+  Coulomb Constant: K = 8.987552e9 ((J*m)/(C^2))
+  Angstrom Convertor: 1 A = 1e-10 m
+  Coulomb Convertor: 1 e = 1.60217733e-19 C
+  Angstrom Convertor: 1 A = 10e-10 m
+  Dielectric Constant: D (unitless)
+
+  ePot = (KQ)/(Dr) = 
+
+  8.987552e9 J*m     1.6021773e-19 C   1.6021773e-19 C      1 A        Q  
+  ---------------- * --------------- * --------------- * ---------- * --- =
+         C^2              1 e               1 e            1e-10 m     Dr
+
+
+    2.3070795237e-18 J*A      Q
+  = ---------------------- * ---
+            e^2               Dr
+
+  Boltzmann Constant: k = 1.380658e-23 (J/K)
+  Temperature: 300 Kelvin
+
+  kT = 1.380658e-23 * 300 = 4.141974e-21 J
+
+         2.3070795237e-18 J*A         1 kT             Q
+  ePot = --------------------- * ------------------ * ---
+                 e^2              4.141974e-21 J       Dr
+  
+         557.00000 kT*A    Q
+  ePot = -------------- * --- which will give kT/e units when applied
+             e^2           Dr
+  */
+
+  SettingSet_f(I,cSetting_coulomb_units_factor,557.00000F);
+
+  SettingSet_f(I,cSetting_coulomb_dielectric,2.0F);
 
 }
 

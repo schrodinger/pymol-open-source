@@ -268,9 +268,43 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
 static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
 {
   int a;
+  int once_flag=true;
   for(a=0;a<I->NState;a++) {
-    I->State[a].RefreshFlag=true;
+    if(state<0) once_flag=false;
+    if(!once_flag) state=a;
+    I->State[state].RefreshFlag=true;
+    if(once_flag) break;
   }
+}
+
+int ObjectMeshSetLevel(ObjectMesh *I,float level,int state)
+{
+  int a;
+  int ok=true;
+  int once_flag=true;
+  ObjectMeshState *ms;
+  if(state>=I->NState) {
+    ok=false;
+  } else {
+    for(a=0;a<I->NState;a++) {
+      if(state<0) {
+        once_flag=false;
+      }
+      if(!once_flag) {
+        state = a;
+      }
+      ms = I->State + state;
+      if(ms->Active) {
+        ms->ResurfaceFlag=true;
+        ms->RefreshFlag=true;
+        ms->Level = level;
+      }
+      if(once_flag) {
+        break;
+      }
+    }
+  }
+  return(ok);
 }
 
 static void ObjectMeshUpdate(ObjectMesh *I) 
@@ -292,6 +326,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
   int last_flag=0;
   int h,k,l;
   int i,j;
+  int ok=true;
   MapType *voxelmap; /* this has nothing to do with isosurfaces... */
   
   for(a=0;a<I->NState;a++) {
@@ -299,27 +334,50 @@ static void ObjectMeshUpdate(ObjectMesh *I)
     if(ms->Active) {
       
       map = ExecutiveFindObjectMapByName(ms->MapName);
-      if(map)
+      if(!map) {
+        ok=false;
+        PRINTFB(FB_ObjectMesh,FB_Errors)
+          "ObjectMeshUpdate-Error: map '%s' has been deleted.\n",ms->MapName
+          ENDFB;
+        ms->ResurfaceFlag=false;
+      }
+      if(map) {
         oms = ObjectMapGetState(map,ms->MapState);
-      if(ms->RefreshFlag||ms->ResurfaceFlag) {
-        ms->Crystal = *(oms->Crystal);
-        if(I->Obj.RepVis[cRepCell]) {
-          if(ms->UnitCellCGO)
-            CGOFree(ms->UnitCellCGO);
-          ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
-        } 
-        ms->RefreshFlag=false;
+        if(!oms) ok=false;
+      }
+      if(oms) {
+        if(ms->RefreshFlag||ms->ResurfaceFlag) {
+          ms->Crystal = *(oms->Crystal);
+          if(I->Obj.RepVis[cRepCell]) {
+            if(ms->UnitCellCGO)
+              CGOFree(ms->UnitCellCGO);
+            ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
+          } 
+          ms->RefreshFlag=false;
+        }
       }
       
-      if(oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
+      if(map&&oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag=false;
           PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF;
-          if(oms->Field) IsosurfVolume(oms->Field,
-                                       ms->Level,
-                                       &ms->N,&ms->V,
-                                       ms->Range,
-                                       ms->DotFlag); 
+          if(oms->Field) {
+            IsosurfGetRange(oms->Field,oms->Crystal,
+                            ms->ExtentMin,ms->ExtentMax,ms->Range);
+            /*          printf("%d %d %d %d %d %d\n",
+                   ms->Range[0],
+                   ms->Range[1],
+                   ms->Range[2],
+                   ms->Range[3],
+                   ms->Range[4],
+                   ms->Range[5]);*/
+                
+            IsosurfVolume(oms->Field,
+                          ms->Level,
+                          &ms->N,&ms->V,
+                          ms->Range,
+                          ms->DotFlag); 
+          }
           if(ms->CarveFlag&&ms->AtomVertex&&
              VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
             /* cull my friend, cull */
@@ -419,12 +477,13 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
       ms = I->State + a;
     } else {
       if(!ms) {
-        if(I->NState&&I->State[0].V&&I->State[0].N&&SettingGet(cSetting_static_singletons))
+        if(I->NState&&
+           ((SettingGet(cSetting_static_singletons)&&(I->NState==1))))
           ms=I->State;
       }
     }
     if(ms) {
-      if(ms->Active) {
+      if(ms->Active&&ms->V&&ms->N) {
         v=ms->V;
         n=ms->N;
         if(ray) {
@@ -582,9 +641,9 @@ ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
   ms->Level = level;
   ms->DotFlag = dotFlag;
   if(oms) {
-    IsosurfGetRange(oms->Field,oms->Crystal,mn,mx,ms->Range);
     copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx,ms->ExtentMax);
+    IsosurfGetRange(oms->Field,oms->Crystal,mn,mx,ms->Range);
     ms->ExtentFlag = true;
   }
   if(carve>=0.0) {

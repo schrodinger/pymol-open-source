@@ -337,9 +337,14 @@ void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   transform33f3f(cryst->RealToFrac,rmx,imx);
 
   for(a=0;a<3;a++) {
-    range[a] = (int)((field->dimensions[a]*(fmn[a]-imn[a])/(imx[a]-imn[a])));
-    if(range[a]<0) range[a]=0;
-    range[a+3] = (int)((field->dimensions[a]*(fmx[a]-imn[a])/(imx[a]-imn[a]))+0.999);
+    if(imx[a]!=imn[a]) {
+      range[a] = (int)((field->dimensions[a]*(fmn[a]-imn[a])/(imx[a]-imn[a])));
+      if(range[a]<0) range[a]=0;
+      range[a+3] = (int)((field->dimensions[a]*(fmx[a]-imn[a])/(imx[a]-imn[a]))+0.999);
+    } else {
+      range[a]=1;
+      range[a+3]=1;
+    }
     if(range[a]>field->dimensions[a])
       range[a]=field->dimensions[a];
     if(range[a+3]>field->dimensions[a])

@@ -1,0 +1,1854 @@
+HEADER    HYDROLASE (ACID PROTEINASE)             18-NOV-94   1HPV      1HPV   2
+COMPND    HIV-1 PROTEASE (E.C.3.4.23.-) COMPLEXED WITH VX-478           1HPV   3
+COMPND   2 (3(S)-N-(3-TETRAHYDROFURANYLOXYCARBONYL) AMINO-1-            1HPV   4
+COMPND   3 (N,N-ISOBUTYL,4-AMINOBENZENESULFONYL) AMINO-2-(S)-HYDROXY-   1HPV   5
+COMPND   4 4-PHENYLBUTANE)                                              1HPV   6
+SOURCE    HUMAN IMMUNODEFICIENCY VIRUS TYPE 1 RECOMBINANT FORM          1HPV   7
+SOURCE   2 EXPRESSED IN (ESCHERICHIA COLI) VX-478                       1HPV   8
+AUTHOR    E.E.KIM                                                       1HPV   9
+REVDAT   1   31-MAR-95 1HPV    0                                        1HPV  10
+JRNL        AUTH   E.E.KIM,C.T.BAKER,M.D.DWYER,M.A.MURCKO,B.G.RAO,      1HPV  11
+JRNL        AUTH 2 R.D.TUNG,M.A.NAVIA                                   1HPV  12
+JRNL        TITL   CRYSTAL STRUCTURE OF HIV-1 PROTEASE IN COMPLEX WITH  1HPV  13
+JRNL        TITL 2 VX-478, A POTENT AND ORALLY BIOAVAILABLE INHIBITOR   1HPV  14
+JRNL        TITL 3 OF THE ENZYME                                        1HPV  15
+JRNL        REF    J.AM.CHEM.SOC.                V. 117  1181 1995      1HPV  16
+JRNL        REFN   ASTM JACSAT  US ISSN 0002-7863                 0004  1HPV  17
+REMARK   1                                                              1HPV  18
+REMARK   2                                                              1HPV  19
+REMARK   2 RESOLUTION. 1.9  ANGSTROMS.                                  1HPV  20
+REMARK   3                                                              1HPV  21
+REMARK   3 REFINEMENT.                                                  1HPV  22
+REMARK   3   PROGRAM                    X-PLOR                          1HPV  23
+REMARK   3   AUTHORS                    BRUNGER                         1HPV  24
+REMARK   3   R VALUE                    0.192                           1HPV  25
+REMARK   3   RMSD BOND DISTANCES        0.011  ANGSTROMS                1HPV  26
+REMARK   3   RMSD BOND ANGLES           1.95   DEGREES                  1HPV  27
+REMARK   3   RESOLUTION RANGE       8.0 - 1.9  ANGSTROMS                1HPV  28
+REMARK   3                                                              1HPV  29
+REMARK   3  DATA COLLECTION.                                            1HPV  30
+REMARK   3   NUMBER OF UNIQUE REFLECTIONS      11037                    1HPV  31
+REMARK   3                                                              1HPV  32
+REMARK   3  NUMBER OF ATOMS USED IN REFINEMENT.                         1HPV  33
+REMARK   3   NUMBER OF PROTEIN ATOMS                       1516         1HPV  34
+REMARK   3   NUMBER OF NUCLEIC ACID ATOMS                     0         1HPV  35
+REMARK   3   NUMBER OF HETEROGEN ATOMS                       35         1HPV  36
+REMARK   3   NUMBER OF SOLVENT ATOMS                         80         1HPV  37
+REMARK   4                                                              1HPV  38
+REMARK   4 THE TWO PROTEIN MONOMERS HAVE BEEN GIVEN CHAIN IDENTIFIERS   1HPV  39
+REMARK   4 *A* AND *B* WITH RESIDUES NUMBERED 1 - 99 IN EACH CHAIN.     1HPV  40
+REMARK   4 THE INHIBITOR IS NUMBERED 200.  THE WATERS ARE NUMBERED      1HPV  41
+REMARK   4 201 - 280.                                                   1HPV  42
+REMARK   5                                                              1HPV  43
+REMARK   5 ORIGINAL DEPOSITION REVISED PRIOR TO RELEASE                 1HPV  44
+REMARK   5    TRACKING NUMBER: T5585, DATE REVISED: 24-FEB-95           1HPV  45
+REMARK  36                                                              1HPV  46
+REMARK  36 TOPIC: STEREOCHEMISTRY                                       1HPV  47
+REMARK  36                                                              1HPV  48
+REMARK  36 SUBTOPIC: BOND LENGTHS                   (36.1)              1HPV  49
+REMARK  36                                                              1HPV  50
+REMARK  36 STANDARD TEXT:                                               1HPV  51
+REMARK  36                                                              1HPV  52
+REMARK  36  THE STEREOCHEMICAL PARAMETERS OF THE FOLLOWING RESIDUES     1HPV  53
+REMARK  36  HAVE VALUES WHICH DEVIATE FROM EXPECTED VALUES BY MORE      1HPV  54
+REMARK  36  THAN 4*RMSD (M=MODEL NUMBER; RES=RESIDUE NAME; C=CHAIN      1HPV  55
+REMARK  36  IDENTIFIER; SSEQ=SEQUENCE NUMBER; I=INSERTION CODE).        1HPV  56
+REMARK  36                                                              1HPV  57
+REMARK  36 STANDARD TABLE:                                              1HPV  58
+REMARK  36 FORMAT: (10X,I3,1X,A3,1X,A1,I4,A1,A4,3X,A4,16X,F5.1)         1HPV  59
+REMARK  36                                                              1HPV  60
+REMARK  36  EXPECTED VALUES: ENGH AND HUBER, 1991                       1HPV  61
+REMARK  36                                                              1HPV  62
+REMARK  36  M RES CSSEQI ATM1   ATM2       DEVIATION_IN_ANGSTROMS       1HPV  63
+REMARK  36                                                              1HPV  64
+REMARK  36  0 PRO A   1   CB  -  CG                 0.047               1HPV  65
+REMARK  36  0 MET A  46   SD  -  CE                 0.077               1HPV  66
+REMARK  36  0 CYS A  95   CB  -  SG                 0.055               1HPV  67
+REMARK  36  0 PRO B   1   CB  -  CG                 0.056               1HPV  68
+REMARK  36  0 MET B  36   SD  -  CE                 0.059               1HPV  69
+REMARK  36  0 LYS B  70   CB  -  CG                 0.047               1HPV  70
+REMARK  36  0 CYS B  95   CB  -  SG                 0.054               1HPV  71
+REMARK  36                                                              1HPV  72
+REMARK  36 TOPIC: STEREOCHEMISTRY                                       1HPV  73
+REMARK  36                                                              1HPV  74
+REMARK  36 SUBTOPIC: COVALENT BOND ANGLES           (36.2)              1HPV  75
+REMARK  36                                                              1HPV  76
+REMARK  36 STANDARD TEXT:                                               1HPV  77
+REMARK  36                                                              1HPV  78
+REMARK  36  THE STEREOCHEMICAL PARAMETERS OF THE FOLLOWING RESIDUES     1HPV  79
+REMARK  36  HAVE VALUES WHICH DEVIATE FROM EXPECTED VALUES BY MORE      1HPV  80
+REMARK  36  THAN 4*RMSD (M=MODEL NUMBER; RES=RESIDUE NAME; C=CHAIN      1HPV  81
+REMARK  36  IDENTIFIER; SSEQ=SEQUENCE NUMBER; I=INSERTION CODE).        1HPV  82
+REMARK  36                                                              1HPV  83
+REMARK  36 STANDARD TABLE:                                              1HPV  84
+REMARK  36 FORMAT: (10X,I3,1X,A3,1X,A1,I4,A1,3(2X,A4,17X,F5.1)          1HPV  85
+REMARK  36                                                              1HPV  86
+REMARK  36  EXPECTED VALUES: ENGH AND HUBER, 1991                       1HPV  87
+REMARK  36                                                              1HPV  88
+REMARK  36  M RES CSSEQI ATM1   ATM2   ATM3                             1HPV  89
+REMARK  36                                                              1HPV  90
+REMARK  36  0 PRO A   1   CD  -  N   -  CA  ANGL. DEV. =   9.6 DEGREES  1HPV  91
+REMARK  36  0 LEU A   5   N   -  CA  -  C   ANGL. DEV. =  10.7 DEGREES  1HPV  92
+REMARK  36  0 GLU A  21   N   -  CA  -  C   ANGL. DEV. =   7.4 DEGREES  1HPV  93
+REMARK  36  0 LEU A  23   CA  -  CB  -  CG  ANGL. DEV. =   7.2 DEGREES  1HPV  94
+REMARK  36  0 LEU A  24   N   -  CA  -  C   ANGL. DEV. =   7.1 DEGREES  1HPV  95
+REMARK  36  0 MET A  36   CB  -  CG  -  SD  ANGL. DEV. =   8.7 DEGREES  1HPV  96
+REMARK  36  0 LYS A  55   N   -  CA  -  C   ANGL. DEV. =   7.5 DEGREES  1HPV  97
+REMARK  36  0 ILE A  66   N   -  CA  -  C   ANGL. DEV. =   8.5 DEGREES  1HPV  98
+REMARK  36  0 CYS A  67   N   -  CA  -  C   ANGL. DEV. =   7.2 DEGREES  1HPV  99
+REMARK  36  0 PRO A  79   N   -  CA  -  C   ANGL. DEV. =   7.9 DEGREES  1HPV 100
+REMARK  36  0 ASN A  83   N   -  CA  -  C   ANGL. DEV. =   7.5 DEGREES  1HPV 101
+REMARK  36  0 ILE A  85   N   -  CA  -  C   ANGL. DEV. =   9.8 DEGREES  1HPV 102
+REMARK  36  0 PRO B   1   CD  -  N   -  CA  ANGL. DEV. =   9.7 DEGREES  1HPV 103
+REMARK  36  0 LEU B   5   N   -  CA  -  C   ANGL. DEV. =   7.4 DEGREES  1HPV 104
+REMARK  36  0 LEU B  24   N   -  CA  -  C   ANGL. DEV. =   9.2 DEGREES  1HPV 105
+REMARK  36  0 LYS B  55   N   -  CA  -  C   ANGL. DEV. =   9.5 DEGREES  1HPV 106
+REMARK  36  0 LEU B  63   CA  -  CB  -  CG  ANGL. DEV. =  10.5 DEGREES  1HPV 107
+REMARK  36  0 GLU B  65   N   -  CA  -  C   ANGL. DEV. =   7.7 DEGREES  1HPV 108
+REMARK  36  0 ASN B  83   N   -  CA  -  C   ANGL. DEV. =   9.4 DEGREES  1HPV 109
+REMARK  36  0 ILE B  85   N   -  CA  -  C   ANGL. DEV. =   8.4 DEGREES  1HPV 110
+REMARK  36                                                              1HPV 111
+REMARK  36 TOPIC: STEREOCHEMISTRY                                       1HPV 112
+REMARK  36                                                              1HPV 113
+REMARK  36 SUBTOPIC: TORSION ANGLES                 (36.4)              1HPV 114
+REMARK  36                                                              1HPV 115
+REMARK  36 STANDARD TEXT:                                               1HPV 116
+REMARK  36                                                              1HPV 117
+REMARK  36  TORSION ANGLES OUTSIDE THE EXPECTED RAMACHANDRAN REGIONS:   1HPV 118
+REMARK  36  (M=MODEL NUMBER; RES=RESIDUE NAME; C=CHAIN IDENTIFIER;      1HPV 119
+REMARK  36  SSEQ=SEQUENCE NUMBER; I=INSERTION CODE).                    1HPV 120
+REMARK  36                                                              1HPV 121
+REMARK  36 STANDARD TABLE:                                              1HPV 122
+REMARK  36 FORMAT:(10X,I3,1X,A3,1X,A1,I4,A1,4X,F7.2,3X,F7.2)            1HPV 123
+REMARK  36                                                              1HPV 124
+REMARK  36  M RES CSSEQI        PSI       PHI                           1HPV 125
+REMARK  36                                                              1HPV 126
+REMARK  36  0 CYS A  67       63.51   -129.45                           1HPV 127
+REMARK 999                                                              1HPV 128
+REMARK 999 CROSS REFERENCE TO SEQUENCE DATABASE                         1HPV 129
+REMARK 999 SWISS-PROT ENTRY NAME       PDB ENTRY CHAIN NAME             1HPV 130
+REMARK 999    POL_HV1BR                        A                        1HPV 131
+REMARK 999                                                              1HPV 132
+REMARK 999 CROSS REFERENCE TO SEQUENCE DATABASE                         1HPV 133
+REMARK 999 SWISS-PROT ENTRY NAME       PDB ENTRY CHAIN NAME             1HPV 134
+REMARK 999    POL_HV1BR                        B                        1HPV 135
+SEQRES   1 A   99  PRO GLN ILE THR LEU TRP GLN ARG PRO LEU VAL THR ILE  1HPV 136
+SEQRES   2 A   99  LYS ILE GLY GLY GLN LEU LYS GLU ALA LEU LEU ASP THR  1HPV 137
+SEQRES   3 A   99  GLY ALA ASP ASP THR VAL LEU GLU GLU MET SER LEU PRO  1HPV 138
+SEQRES   4 A   99  GLY ARG TRP LYS PRO LYS MET ILE GLY GLY ILE GLY GLY  1HPV 139
+SEQRES   5 A   99  PHE ILE LYS VAL ARG GLN TYR ASP GLN ILE LEU ILE GLU  1HPV 140
+SEQRES   6 A   99  ILE CYS GLY HIS LYS ALA ILE GLY THR VAL LEU VAL GLY  1HPV 141
+SEQRES   7 A   99  PRO THR PRO VAL ASN ILE ILE GLY ARG ASN LEU LEU THR  1HPV 142
+SEQRES   8 A   99  GLN ILE GLY CYS THR LEU ASN PHE                      1HPV 143
+SEQRES   1 B   99  PRO GLN ILE THR LEU TRP GLN ARG PRO LEU VAL THR ILE  1HPV 144
+SEQRES   2 B   99  LYS ILE GLY GLY GLN LEU LYS GLU ALA LEU LEU ASP THR  1HPV 145
+SEQRES   3 B   99  GLY ALA ASP ASP THR VAL LEU GLU GLU MET SER LEU PRO  1HPV 146
+SEQRES   4 B   99  GLY ARG TRP LYS PRO LYS MET ILE GLY GLY ILE GLY GLY  1HPV 147
+SEQRES   5 B   99  PHE ILE LYS VAL ARG GLN TYR ASP GLN ILE LEU ILE GLU  1HPV 148
+SEQRES   6 B   99  ILE CYS GLY HIS LYS ALA ILE GLY THR VAL LEU VAL GLY  1HPV 149
+SEQRES   7 B   99  PRO THR PRO VAL ASN ILE ILE GLY ARG ASN LEU LEU THR  1HPV 150
+SEQRES   8 B   99  GLN ILE GLY CYS THR LEU ASN PHE                      1HPV 151
+FTNOTE   1                                                              1HPV 152
+FTNOTE   1 THE INHIBITOR IS UNAMBIGUOUSLY LOCATED IN ONE SINGLE         1HPV 153
+FTNOTE   1 CONFORMATION.                                                1HPV 154
+HET    478    200      35     VX-478 (SEE COMPND RECORD).               1HPV 155
+FORMUL   3  478    C25 H35 N3 O6 S1                                     1HPV 156
+FORMUL   4  HOH   *80(H2 O1)                                            1HPV 157
+HELIX    1   1 ARG A   87  LEU A   90  1                                1HPV 158
+HELIX    2   2 ARG B   87  LEU B   90  1                                1HPV 159
+SHEET    1   A 3 GLN A   2  THR A   4  0                                1HPV 160
+SHEET    2   A 3 THR B  96  ASN B  98 -1  N  LEU B  97   O  ILE A   3   1HPV 161
+SHEET    3   A 3 THR A  96  ASN A  98 -1  N  ASN A  98   O  THR B  96   1HPV 162
+SHEET    1   B 4 GLN A  18  LEU A  23  0                                1HPV 163
+SHEET    2   B 4 LEU A  10  ILE A  15 -1  N  ILE A  15   O  GLN A  18   1HPV 164
+SHEET    3   B 4 ILE A  62  ILE A  66 -1  N  GLU A  65   O  LYS A  14   1HPV 165
+SHEET    4   B 4 HIS A  69  GLY A  73 -1  N  GLY A  73   O  ILE A  62   1HPV 166
+SHEET    1   C 4 THR A  31  LEU A  33  0                                1HPV 167
+SHEET    2   C 4 VAL A  75  GLY A  78  1  N  LEU A  76   O  THR A  31   1HPV 168
+SHEET    3   C 4 PHE A  53  TYR A  59 -1  N  TYR A  59   O  VAL A  75   1HPV 169
+SHEET    4   C 4 LYS A  43  GLY A  48 -1  N  ILE A  47   O  ILE A  54   1HPV 170
+SHEET    1   D 4 GLN B  18  LEU B  23  0                                1HPV 171
+SHEET    2   D 4 LEU B  10  ILE B  15 -1  N  ILE B  15   O  GLN B  18   1HPV 172
+SHEET    3   D 4 ILE B  62  ILE B  66 -1  N  GLU B  65   O  LYS B  14   1HPV 173
+SHEET    4   D 4 HIS B  69  GLY B  73 -1  N  GLY B  73   O  ILE B  62   1HPV 174
+SHEET    1   E 4 VAL B  32  GLU B  34  0                                1HPV 175
+SHEET    2   E 4 VAL B  75  GLY B  78  1  N  LEU B  76   O  LEU B  33   1HPV 176
+SHEET    3   E 4 GLY B  52  TYR B  59 -1  N  TYR B  59   O  VAL B  75   1HPV 177
+SHEET    4   E 4 LYS B  43  GLY B  49 -1  N  GLY B  49   O  GLY B  52   1HPV 178
+CRYST1   63.400   63.400   83.800  90.00  90.00 120.00 P 61         12  1HPV 179
+ORIGX1      1.000000  0.000000  0.000000        0.00000                 1HPV 180
+ORIGX2      0.000000  1.000000  0.000000        0.00000                 1HPV 181
+ORIGX3      0.000000  0.000000  1.000000        0.00000                 1HPV 182
+SCALE1      0.015773  0.009106  0.000000        0.00000                 1HPV 183
+SCALE2      0.000000  0.018213  0.000000        0.00000                 1HPV 184
+SCALE3      0.000000  0.000000  0.011933        0.00000                 1HPV 185
+ATOM      1  N   PRO A   1      13.120  39.003   5.159  1.00 55.41      1HPV 186
+ATOM      2  CA  PRO A   1      12.941  39.418   6.575  1.00 31.00      1HPV 187
+ATOM      3  C   PRO A   1      13.681  38.470   7.506  1.00 29.68      1HPV 188
+ATOM      4  O   PRO A   1      14.085  37.394   7.087  1.00 45.26      1HPV 189
+ATOM      5  CB  PRO A   1      11.457  39.390   6.893  1.00 33.17      1HPV 190
+ATOM      6  CG  PRO A   1      10.966  38.512   5.856  1.00 42.98      1HPV 191
+ATOM      7  CD  PRO A   1      11.746  39.019   4.650  1.00 22.41      1HPV 192
+ATOM      8  N   GLN A   2      13.878  38.878   8.756  1.00 37.97      1HPV 193
+ATOM      9  CA  GLN A   2      14.536  38.012   9.717  1.00 39.24      1HPV 194
+ATOM     10  C   GLN A   2      13.473  37.365  10.601  1.00 34.63      1HPV 195
+ATOM     11  O   GLN A   2      12.674  38.049  11.246  1.00 31.01      1HPV 196
+ATOM     12  CB  GLN A   2      15.558  38.750  10.578  1.00 33.76      1HPV 197
+ATOM     13  CG  GLN A   2      16.239  37.796  11.545  1.00 45.77      1HPV 198
+ATOM     14  CD  GLN A   2      17.202  38.462  12.487  1.00 62.05      1HPV 199
+ATOM     15  OE1 GLN A   2      16.846  38.807  13.622  1.00 43.48      1HPV 200
+ATOM     16  NE2 GLN A   2      18.450  38.591  12.054  1.00 63.81      1HPV 201
+ATOM     17  N   ILE A   3      13.464  36.040  10.613  1.00 42.92      1HPV 202
+ATOM     18  CA  ILE A   3      12.501  35.280  11.384  1.00 25.25      1HPV 203
+ATOM     19  C   ILE A   3      13.168  34.533  12.528  1.00 32.76      1HPV 204
+ATOM     20  O   ILE A   3      14.063  33.715  12.325  1.00 27.93      1HPV 205
+ATOM     21  CB  ILE A   3      11.738  34.262  10.465  1.00 26.40      1HPV 206
+ATOM     22  CG1 ILE A   3      11.077  34.998   9.297  1.00 41.68      1HPV 207
+ATOM     23  CG2 ILE A   3      10.664  33.520  11.244  1.00 21.64      1HPV 208
+ATOM     24  CD1 ILE A   3      10.153  34.136   8.442  1.00 23.42      1HPV 209
+ATOM     25  N   THR A   4      12.786  34.904  13.740  1.00 25.74      1HPV 210
+ATOM     26  CA  THR A   4      13.268  34.250  14.936  1.00 24.39      1HPV 211
+ATOM     27  C   THR A   4      12.376  32.989  15.076  1.00 25.86      1HPV 212
+ATOM     28  O   THR A   4      11.238  32.964  14.604  1.00 23.18      1HPV 213
+ATOM     29  CB  THR A   4      13.154  35.198  16.150  1.00 23.31      1HPV 214
+ATOM     30  OG1 THR A   4      11.779  35.503  16.392  1.00 60.48      1HPV 215
+ATOM     31  CG2 THR A   4      13.936  36.483  15.912  1.00 20.74      1HPV 216
+ATOM     32  N   LEU A   5      12.870  31.953  15.739  1.00 36.75      1HPV 217
+ATOM     33  CA  LEU A   5      12.126  30.699  15.836  1.00 21.49      1HPV 218
+ATOM     34  C   LEU A   5      11.328  30.325  17.094  1.00 28.85      1HPV 219
+ATOM     35  O   LEU A   5      11.137  29.134  17.371  1.00 21.86      1HPV 220
+ATOM     36  CB  LEU A   5      13.059  29.537  15.438  1.00 20.84      1HPV 221
+ATOM     37  CG  LEU A   5      13.552  29.530  13.983  1.00 16.01      1HPV 222
+ATOM     38  CD1 LEU A   5      14.724  28.569  13.837  1.00 29.14      1HPV 223
+ATOM     39  CD2 LEU A   5      12.398  29.162  13.040  1.00 14.98      1HPV 224
+ATOM     40  N   TRP A   6      10.833  31.317  17.829  1.00 26.92      1HPV 225
+ATOM     41  CA  TRP A   6      10.041  31.041  19.031  1.00 18.79      1HPV 226
+ATOM     42  C   TRP A   6       8.657  30.561  18.654  1.00 18.54      1HPV 227
+ATOM     43  O   TRP A   6       7.959  29.926  19.451  1.00 29.49      1HPV 228
+ATOM     44  CB  TRP A   6       9.964  32.275  19.921  1.00 19.88      1HPV 229
+ATOM     45  CG  TRP A   6      11.305  32.758  20.259  1.00 21.27      1HPV 230
+ATOM     46  CD1 TRP A   6      12.035  33.651  19.559  1.00 19.58      1HPV 231
+ATOM     47  CD2 TRP A   6      12.131  32.315  21.333  1.00 14.79      1HPV 232
+ATOM     48  NE1 TRP A   6      13.278  33.798  20.119  1.00 29.09      1HPV 233
+ATOM     49  CE2 TRP A   6      13.367  32.984  21.213  1.00 33.36      1HPV 234
+ATOM     50  CE3 TRP A   6      11.952  31.416  22.382  1.00 17.77      1HPV 235
+ATOM     51  CZ2 TRP A   6      14.420  32.782  22.104  1.00 24.81      1HPV 236
+ATOM     52  CZ3 TRP A   6      12.993  31.212  23.269  1.00 39.59      1HPV 237
+ATOM     53  CH2 TRP A   6      14.212  31.890  23.125  1.00 34.61      1HPV 238
+ATOM     54  N   GLN A   7       8.248  30.865  17.430  1.00 16.11      1HPV 239
+ATOM     55  CA  GLN A   7       6.954  30.431  16.942  1.00 25.98      1HPV 240
+ATOM     56  C   GLN A   7       7.241  29.727  15.619  1.00 22.52      1HPV 241
+ATOM     57  O   GLN A   7       8.299  29.932  15.028  1.00 19.78      1HPV 242
+ATOM     58  CB  GLN A   7       6.037  31.638  16.715  1.00 42.31      1HPV 243
+ATOM     59  CG  GLN A   7       5.763  32.496  17.959  1.00 64.83      1HPV 244
+ATOM     60  CD  GLN A   7       4.703  31.908  18.891  1.00 75.77      1HPV 245
+ATOM     61  OE1 GLN A   7       3.589  32.428  18.977  1.00 67.42      1HPV 246
+ATOM     62  NE2 GLN A   7       5.054  30.850  19.611  1.00 58.89      1HPV 247
+ATOM     63  N   ARG A   8       6.339  28.858  15.180  1.00 18.94      1HPV 248
+ATOM     64  CA  ARG A   8       6.524  28.182  13.907  1.00 26.34      1HPV 249
+ATOM     65  C   ARG A   8       6.700  29.243  12.832  1.00 25.24      1HPV 250
+ATOM     66  O   ARG A   8       5.946  30.227  12.785  1.00 37.29      1HPV 251
+ATOM     67  CB  ARG A   8       5.323  27.304  13.564  1.00 19.25      1HPV 252
+ATOM     68  CG  ARG A   8       5.348  25.943  14.209  1.00 44.31      1HPV 253
+ATOM     69  CD  ARG A   8       4.243  25.079  13.632  1.00 33.90      1HPV 254
+ATOM     70  NE  ARG A   8       4.398  23.672  13.989  1.00 60.35      1HPV 255
+ATOM     71  CZ  ARG A   8       3.504  22.724  13.718  1.00 80.45      1HPV 256
+ATOM     72  NH1 ARG A   8       2.362  23.019  13.112  1.00100.76      1HPV 257
+ATOM     73  NH2 ARG A   8       3.745  21.474  14.083  1.00101.73      1HPV 258
+ATOM     74  N   PRO A   9       7.695  29.063  11.950  1.00 20.15      1HPV 259
+ATOM     75  CA  PRO A   9       7.914  30.055  10.902  1.00 14.59      1HPV 260
+ATOM     76  C   PRO A   9       6.954  29.893   9.730  1.00 21.09      1HPV 261
+ATOM     77  O   PRO A   9       7.266  29.222   8.747  1.00 22.69      1HPV 262
+ATOM     78  CB  PRO A   9       9.366  29.817  10.520  1.00 17.77      1HPV 263
+ATOM     79  CG  PRO A   9       9.503  28.345  10.677  1.00 22.32      1HPV 264
+ATOM     80  CD  PRO A   9       8.732  28.017  11.931  1.00 16.49      1HPV 265
+ATOM     81  N   LEU A  10       5.775  30.494   9.853  1.00 34.23      1HPV 266
+ATOM     82  CA  LEU A  10       4.740  30.413   8.819  1.00 35.55      1HPV 267
+ATOM     83  C   LEU A  10       4.661  31.642   7.921  1.00 21.86      1HPV 268
+ATOM     84  O   LEU A  10       4.742  32.777   8.395  1.00 48.67      1HPV 269
+ATOM     85  CB  LEU A  10       3.380  30.209   9.467  1.00 14.25      1HPV 270
+ATOM     86  CG  LEU A  10       3.273  29.038  10.432  1.00 21.74      1HPV 271
+ATOM     87  CD1 LEU A  10       2.039  29.245  11.264  1.00 35.22      1HPV 272
+ATOM     88  CD2 LEU A  10       3.211  27.719   9.695  1.00 27.06      1HPV 273
+ATOM     89  N   VAL A  11       4.470  31.418   6.628  1.00 23.11      1HPV 274
+ATOM     90  CA  VAL A  11       4.349  32.506   5.681  1.00 15.57      1HPV 275
+ATOM     91  C   VAL A  11       3.161  32.320   4.775  1.00 18.62      1HPV 276
+ATOM     92  O   VAL A  11       2.663  31.216   4.602  1.00 23.74      1HPV 277
+ATOM     93  CB  VAL A  11       5.586  32.656   4.789  1.00 24.80      1HPV 278
+ATOM     94  CG1 VAL A  11       6.729  33.262   5.584  1.00 20.43      1HPV 279
+ATOM     95  CG2 VAL A  11       5.952  31.329   4.168  1.00 14.96      1HPV 280
+ATOM     96  N   THR A  12       2.700  33.427   4.222  1.00 22.67      1HPV 281
+ATOM     97  CA  THR A  12       1.592  33.429   3.286  1.00 38.18      1HPV 282
+ATOM     98  C   THR A  12       2.115  33.182   1.869  1.00 31.47      1HPV 283
+ATOM     99  O   THR A  12       3.043  33.857   1.407  1.00 26.68      1HPV 284
+ATOM    100  CB  THR A  12       0.843  34.774   3.315  1.00 26.95      1HPV 285
+ATOM    101  OG1 THR A  12       0.303  34.995   4.624  1.00 36.51      1HPV 286
+ATOM    102  CG2 THR A  12      -0.304  34.743   2.327  1.00 58.28      1HPV 287
+ATOM    103  N   ILE A  13       1.523  32.196   1.204  1.00 16.16      1HPV 288
+ATOM    104  CA  ILE A  13       1.899  31.839  -0.149  1.00 20.92      1HPV 289
+ATOM    105  C   ILE A  13       0.675  31.935  -1.059  1.00 28.52      1HPV 290
+ATOM    106  O   ILE A  13      -0.467  31.803  -0.602  1.00 20.74      1HPV 291
+ATOM    107  CB  ILE A  13       2.449  30.387  -0.214  1.00 16.32      1HPV 292
+ATOM    108  CG1 ILE A  13       1.325  29.383   0.142  1.00 13.34      1HPV 293
+ATOM    109  CG2 ILE A  13       3.620  30.253   0.730  1.00 24.71      1HPV 294
+ATOM    110  CD1 ILE A  13       1.602  27.976  -0.238  1.00 15.30      1HPV 295
+ATOM    111  N   LYS A  14       0.915  32.232  -2.329  1.00 29.13      1HPV 296
+ATOM    112  CA  LYS A  14      -0.153  32.292  -3.307  1.00 17.19      1HPV 297
+ATOM    113  C   LYS A  14       0.174  31.261  -4.382  1.00 21.89      1HPV 298
+ATOM    114  O   LYS A  14       1.225  31.315  -5.006  1.00 17.79      1HPV 299
+ATOM    115  CB  LYS A  14      -0.303  33.693  -3.893  1.00 24.50      1HPV 300
+ATOM    116  CG  LYS A  14      -1.514  33.778  -4.804  1.00 27.54      1HPV 301
+ATOM    117  CD  LYS A  14      -1.817  35.170  -5.259  1.00 27.16      1HPV 302
+ATOM    118  CE  LYS A  14      -2.942  35.090  -6.262  1.00 47.81      1HPV 303
+ATOM    119  NZ  LYS A  14      -3.344  36.424  -6.751  1.00 58.27      1HPV 304
+ATOM    120  N   ILE A  15      -0.701  30.280  -4.534  1.00 27.21      1HPV 305
+ATOM    121  CA  ILE A  15      -0.519  29.202  -5.506  1.00 21.58      1HPV 306
+ATOM    122  C   ILE A  15      -1.822  28.865  -6.189  1.00 21.25      1HPV 307
+ATOM    123  O   ILE A  15      -2.830  28.654  -5.538  1.00 23.84      1HPV 308
+ATOM    124  CB  ILE A  15      -0.066  27.864  -4.858  1.00 25.59      1HPV 309
+ATOM    125  CG1 ILE A  15      -0.176  27.913  -3.334  1.00 27.36      1HPV 310
+ATOM    126  CG2 ILE A  15       1.297  27.452  -5.369  1.00 37.89      1HPV 311
+ATOM    127  CD1 ILE A  15      -1.582  27.986  -2.825  1.00 49.52      1HPV 312
+ATOM    128  N   GLY A  16      -1.768  28.732  -7.503  1.00 22.38      1HPV 313
+ATOM    129  CA  GLY A  16      -2.962  28.394  -8.248  1.00 36.02      1HPV 314
+ATOM    130  C   GLY A  16      -4.136  29.304  -7.973  1.00 27.60      1HPV 315
+ATOM    131  O   GLY A  16      -5.285  28.870  -7.995  1.00 27.84      1HPV 316
+ATOM    132  N   GLY A  17      -3.841  30.568  -7.710  1.00 24.23      1HPV 317
+ATOM    133  CA  GLY A  17      -4.872  31.552  -7.463  1.00 19.15      1HPV 318
+ATOM    134  C   GLY A  17      -5.429  31.520  -6.062  1.00 22.88      1HPV 319
+ATOM    135  O   GLY A  17      -6.313  32.300  -5.719  1.00 30.61      1HPV 320
+ATOM    136  N   GLN A  18      -4.900  30.619  -5.249  1.00 20.90      1HPV 321
+ATOM    137  CA  GLN A  18      -5.350  30.473  -3.879  1.00 18.60      1HPV 322
+ATOM    138  C   GLN A  18      -4.304  30.964  -2.895  1.00 19.67      1HPV 323
+ATOM    139  O   GLN A  18      -3.103  30.891  -3.148  1.00 16.74      1HPV 324
+ATOM    140  CB  GLN A  18      -5.667  29.009  -3.579  1.00 20.59      1HPV 325
+ATOM    141  CG  GLN A  18      -6.861  28.459  -4.310  1.00 23.60      1HPV 326
+ATOM    142  CD  GLN A  18      -7.284  27.119  -3.753  1.00 38.00      1HPV 327
+ATOM    143  OE1 GLN A  18      -8.129  27.035  -2.862  1.00 52.03      1HPV 328
+ATOM    144  NE2 GLN A  18      -6.646  26.078  -4.210  1.00 28.99      1HPV 329
+ATOM    145  N   LEU A  19      -4.771  31.411  -1.742  1.00 18.03      1HPV 330
+ATOM    146  CA  LEU A  19      -3.883  31.891  -0.714  1.00 27.26      1HPV 331
+ATOM    147  C   LEU A  19      -3.838  30.818   0.352  1.00 18.86      1HPV 332
+ATOM    148  O   LEU A  19      -4.879  30.288   0.708  1.00 34.19      1HPV 333
+ATOM    149  CB  LEU A  19      -4.418  33.195  -0.127  1.00 15.48      1HPV 334
+ATOM    150  CG  LEU A  19      -4.503  34.402  -1.066  1.00 23.30      1HPV 335
+ATOM    151  CD1 LEU A  19      -5.029  35.582  -0.264  1.00 21.67      1HPV 336
+ATOM    152  CD2 LEU A  19      -3.139  34.726  -1.671  1.00 12.97      1HPV 337
+ATOM    153  N   LYS A  20      -2.636  30.451   0.799  1.00 24.99      1HPV 338
+ATOM    154  CA  LYS A  20      -2.454  29.443   1.850  1.00 23.48      1HPV 339
+ATOM    155  C   LYS A  20      -1.335  29.894   2.794  1.00 22.75      1HPV 340
+ATOM    156  O   LYS A  20      -0.708  30.929   2.556  1.00 19.71      1HPV 341
+ATOM    157  CB  LYS A  20      -2.130  28.072   1.228  1.00 21.76      1HPV 342
+ATOM    158  CG  LYS A  20      -3.333  27.491   0.489  1.00 28.52      1HPV 343
+ATOM    159  CD  LYS A  20      -3.149  26.097  -0.063  1.00 37.21      1HPV 344
+ATOM    160  CE  LYS A  20      -4.456  25.611  -0.700  1.00 23.20      1HPV 345
+ATOM    161  NZ  LYS A  20      -5.587  25.465   0.301  1.00 52.56      1HPV 346
+ATOM    162  N   GLU A  21      -1.182  29.226   3.933  1.00 27.99      1HPV 347
+ATOM    163  CA  GLU A  21      -0.073  29.537   4.841  1.00 26.69      1HPV 348
+ATOM    164  C   GLU A  21       0.828  28.312   4.747  1.00 28.14      1HPV 349
+ATOM    165  O   GLU A  21       0.340  27.187   4.647  1.00 18.19      1HPV 350
+ATOM    166  CB  GLU A  21      -0.514  29.716   6.296  1.00 17.56      1HPV 351
+ATOM    167  CG  GLU A  21      -1.232  31.004   6.564  1.00 31.35      1HPV 352
+ATOM    168  CD  GLU A  21      -1.411  31.273   8.037  1.00 31.74      1HPV 353
+ATOM    169  OE1 GLU A  21      -0.488  31.855   8.636  1.00 50.36      1HPV 354
+ATOM    170  OE2 GLU A  21      -2.475  30.919   8.593  1.00 56.10      1HPV 355
+ATOM    171  N   ALA A  22       2.132  28.514   4.786  1.00 31.21      1HPV 356
+ATOM    172  CA  ALA A  22       3.041  27.391   4.700  1.00 17.07      1HPV 357
+ATOM    173  C   ALA A  22       4.179  27.569   5.695  1.00 17.92      1HPV 358
+ATOM    174  O   ALA A  22       4.477  28.677   6.127  1.00 18.31      1HPV 359
+ATOM    175  CB  ALA A  22       3.557  27.256   3.286  1.00 15.23      1HPV 360
+ATOM    176  N   LEU A  23       4.787  26.466   6.090  1.00 17.38      1HPV 361
+ATOM    177  CA  LEU A  23       5.868  26.497   7.048  1.00 17.51      1HPV 362
+ATOM    178  C   LEU A  23       7.174  26.515   6.274  1.00 20.29      1HPV 363
+ATOM    179  O   LEU A  23       7.287  25.877   5.229  1.00 33.40      1HPV 364
+ATOM    180  CB  LEU A  23       5.774  25.238   7.922  1.00 23.08      1HPV 365
+ATOM    181  CG  LEU A  23       6.689  24.972   9.120  1.00 22.62      1HPV 366
+ATOM    182  CD1 LEU A  23       6.342  25.882  10.257  1.00 29.13      1HPV 367
+ATOM    183  CD2 LEU A  23       6.510  23.536   9.559  1.00 20.84      1HPV 368
+ATOM    184  N   LEU A  24       8.128  27.313   6.721  1.00 19.25      1HPV 369
+ATOM    185  CA  LEU A  24       9.432  27.345   6.075  1.00 23.27      1HPV 370
+ATOM    186  C   LEU A  24      10.202  26.197   6.733  1.00 28.52      1HPV 371
+ATOM    187  O   LEU A  24      10.544  26.261   7.914  1.00 23.91      1HPV 372
+ATOM    188  CB  LEU A  24      10.116  28.678   6.324  1.00 20.26      1HPV 373
+ATOM    189  CG  LEU A  24       9.280  29.866   5.883  1.00 20.83      1HPV 374
+ATOM    190  CD1 LEU A  24       9.980  31.137   6.276  1.00 19.26      1HPV 375
+ATOM    191  CD2 LEU A  24       9.057  29.779   4.387  1.00 21.51      1HPV 376
+ATOM    192  N   ASP A  25      10.510  25.173   5.951  1.00 19.96      1HPV 377
+ATOM    193  CA  ASP A  25      11.148  23.989   6.478  1.00 13.48      1HPV 378
+ATOM    194  C   ASP A  25      12.531  23.682   5.910  1.00 19.09      1HPV 379
+ATOM    195  O   ASP A  25      12.637  23.141   4.828  1.00 17.75      1HPV 380
+ATOM    196  CB  ASP A  25      10.202  22.823   6.203  1.00 14.03      1HPV 381
+ATOM    197  CG  ASP A  25      10.354  21.706   7.182  1.00 13.67      1HPV 382
+ATOM    198  OD1 ASP A  25      11.448  21.502   7.723  1.00 22.92      1HPV 383
+ATOM    199  OD2 ASP A  25       9.350  21.035   7.428  1.00 30.46      1HPV 384
+ATOM    200  N   THR A  26      13.579  23.948   6.682  1.00 16.47      1HPV 385
+ATOM    201  CA  THR A  26      14.935  23.673   6.235  1.00 16.24      1HPV 386
+ATOM    202  C   THR A  26      15.245  22.161   6.271  1.00 19.12      1HPV 387
+ATOM    203  O   THR A  26      16.183  21.683   5.633  1.00 20.97      1HPV 388
+ATOM    204  CB  THR A  26      15.938  24.449   7.087  1.00 17.39      1HPV 389
+ATOM    205  OG1 THR A  26      15.722  24.166   8.484  1.00 16.53      1HPV 390
+ATOM    206  CG2 THR A  26      15.740  25.940   6.862  1.00 22.51      1HPV 391
+ATOM    207  N   GLY A  27      14.440  21.402   7.007  1.00 23.62      1HPV 392
+ATOM    208  CA  GLY A  27      14.640  19.966   7.083  1.00 19.34      1HPV 393
+ATOM    209  C   GLY A  27      13.958  19.186   5.971  1.00 19.18      1HPV 394
+ATOM    210  O   GLY A  27      14.093  17.968   5.912  1.00 23.45      1HPV 395
+ATOM    211  N   ALA A  28      13.219  19.883   5.107  1.00 13.99      1HPV 396
+ATOM    212  CA  ALA A  28      12.506  19.270   3.981  1.00 19.91      1HPV 397
+ATOM    213  C   ALA A  28      13.238  19.546   2.671  1.00 24.35      1HPV 398
+ATOM    214  O   ALA A  28      13.470  20.699   2.321  1.00 17.37      1HPV 399
+ATOM    215  CB  ALA A  28      11.076  19.828   3.899  1.00 26.34      1HPV 400
+ATOM    216  N   ASP A  29      13.562  18.498   1.918  1.00 17.70      1HPV 401
+ATOM    217  CA  ASP A  29      14.260  18.696   0.649  1.00 20.55      1HPV 402
+ATOM    218  C   ASP A  29      13.326  19.277  -0.406  1.00 25.86      1HPV 403
+ATOM    219  O   ASP A  29      13.757  20.073  -1.247  1.00 23.89      1HPV 404
+ATOM    220  CB  ASP A  29      14.852  17.384   0.126  1.00 16.08      1HPV 405
+ATOM    221  CG  ASP A  29      15.867  16.774   1.074  1.00 22.25      1HPV 406
+ATOM    222  OD1 ASP A  29      16.689  17.497   1.675  1.00 34.78      1HPV 407
+ATOM    223  OD2 ASP A  29      15.831  15.544   1.226  1.00 50.19      1HPV 408
+ATOM    224  N   ASP A  30      12.060  18.856  -0.373  1.00 24.86      1HPV 409
+ATOM    225  CA  ASP A  30      11.047  19.304  -1.330  1.00 27.14      1HPV 410
+ATOM    226  C   ASP A  30       9.857  19.993  -0.688  1.00 25.61      1HPV 411
+ATOM    227  O   ASP A  30       9.666  19.934   0.526  1.00 30.69      1HPV 412
+ATOM    228  CB  ASP A  30      10.544  18.130  -2.164  1.00 30.90      1HPV 413
+ATOM    229  CG  ASP A  30      11.533  17.699  -3.215  1.00 31.93      1HPV 414
+ATOM    230  OD1 ASP A  30      11.845  18.493  -4.136  1.00 47.79      1HPV 415
+ATOM    231  OD2 ASP A  30      11.998  16.552  -3.118  1.00 39.23      1HPV 416
+ATOM    232  N   THR A  31       9.066  20.652  -1.525  1.00 26.83      1HPV 417
+ATOM    233  CA  THR A  31       7.876  21.378  -1.101  1.00 14.34      1HPV 418
+ATOM    234  C   THR A  31       6.674  20.427  -1.152  1.00 13.27      1HPV 419
+ATOM    235  O   THR A  31       6.417  19.785  -2.168  1.00 18.89      1HPV 420
+ATOM    236  CB  THR A  31       7.691  22.612  -2.016  1.00 17.76      1HPV 421
+ATOM    237  OG1 THR A  31       8.797  23.504  -1.816  1.00 18.71      1HPV 422
+ATOM    238  CG2 THR A  31       6.417  23.356  -1.708  1.00 10.77      1HPV 423
+ATOM    239  N   VAL A  32       5.971  20.294  -0.036  1.00 19.16      1HPV 424
+ATOM    240  CA  VAL A  32       4.820  19.402   0.031  1.00 24.46      1HPV 425
+ATOM    241  C   VAL A  32       3.619  20.189   0.514  1.00 25.55      1HPV 426
+ATOM    242  O   VAL A  32       3.622  20.760   1.594  1.00 32.67      1HPV 427
+ATOM    243  CB  VAL A  32       5.041  18.217   0.998  1.00 10.51      1HPV 428
+ATOM    244  CG1 VAL A  32       4.030  17.144   0.717  1.00 13.31      1HPV 429
+ATOM    245  CG2 VAL A  32       6.431  17.665   0.842  1.00 17.05      1HPV 430
+ATOM    246  N   LEU A  33       2.595  20.241  -0.310  1.00 22.99      1HPV 431
+ATOM    247  CA  LEU A  33       1.411  20.969   0.038  1.00 21.28      1HPV 432
+ATOM    248  C   LEU A  33       0.233  20.021   0.193  1.00 26.20      1HPV 433
+ATOM    249  O   LEU A  33       0.154  18.974  -0.462  1.00 21.06      1HPV 434
+ATOM    250  CB  LEU A  33       1.142  22.010  -1.053  1.00 32.13      1HPV 435
+ATOM    251  CG  LEU A  33       2.339  22.919  -1.351  1.00 21.39      1HPV 436
+ATOM    252  CD1 LEU A  33       2.065  23.720  -2.587  1.00 20.58      1HPV 437
+ATOM    253  CD2 LEU A  33       2.598  23.832  -0.174  1.00 22.66      1HPV 438
+ATOM    254  N   GLU A  34      -0.654  20.381   1.108  1.00 22.03      1HPV 439
+ATOM    255  CA  GLU A  34      -1.878  19.632   1.354  1.00 24.32      1HPV 440
+ATOM    256  C   GLU A  34      -2.608  19.487   0.005  1.00 36.68      1HPV 441
+ATOM    257  O   GLU A  34      -2.377  20.257  -0.933  1.00 37.46      1HPV 442
+ATOM    258  CB  GLU A  34      -2.749  20.380   2.368  1.00 24.65      1HPV 443
+ATOM    259  CG  GLU A  34      -3.259  21.733   1.877  1.00 46.82      1HPV 444
+ATOM    260  CD  GLU A  34      -3.660  22.671   3.010  1.00 63.79      1HPV 445
+ATOM    261  OE1 GLU A  34      -3.447  22.335   4.200  1.00 43.23      1HPV 446
+ATOM    262  OE2 GLU A  34      -4.185  23.761   2.706  1.00 45.98      1HPV 447
+ATOM    263  N   GLU A  35      -3.481  18.496  -0.093  1.00 38.33      1HPV 448
+ATOM    264  CA  GLU A  35      -4.189  18.243  -1.333  1.00 28.15      1HPV 449
+ATOM    265  C   GLU A  35      -5.045  19.461  -1.735  1.00 40.32      1HPV 450
+ATOM    266  O   GLU A  35      -5.838  19.978  -0.939  1.00 40.14      1HPV 451
+ATOM    267  CB  GLU A  35      -5.003  16.943  -1.203  1.00 49.05      1HPV 452
+ATOM    268  CG  GLU A  35      -5.163  16.122  -2.507  1.00 26.53      1HPV 453
+ATOM    269  CD  GLU A  35      -6.218  16.717  -3.453  1.00 73.86      1HPV 454
+ATOM    270  OE1 GLU A  35      -7.427  16.645  -3.140  1.00 87.59      1HPV 455
+ATOM    271  OE2 GLU A  35      -5.841  17.266  -4.509  1.00 80.94      1HPV 456
+ATOM    272  N   MET A  36      -4.811  19.967  -2.946  1.00 31.51      1HPV 457
+ATOM    273  CA  MET A  36      -5.544  21.121  -3.462  1.00 56.22      1HPV 458
+ATOM    274  C   MET A  36      -5.695  21.082  -4.982  1.00 54.84      1HPV 459
+ATOM    275  O   MET A  36      -4.963  20.357  -5.669  1.00 39.57      1HPV 460
+ATOM    276  CB  MET A  36      -4.818  22.407  -3.090  1.00 49.34      1HPV 461
+ATOM    277  CG  MET A  36      -3.375  22.429  -3.539  1.00 37.59      1HPV 462
+ATOM    278  SD  MET A  36      -2.889  24.119  -3.335  1.00 37.52      1HPV 463
+ATOM    279  CE  MET A  36      -2.579  24.407  -5.074  1.00 56.94      1HPV 464
+ATOM    280  N   SER A  37      -6.622  21.901  -5.487  1.00 61.92      1HPV 465
+ATOM    281  CA  SER A  37      -6.907  22.017  -6.920  1.00 61.91      1HPV 466
+ATOM    282  C   SER A  37      -5.731  22.661  -7.639  1.00 46.61      1HPV 467
+ATOM    283  O   SER A  37      -5.397  23.826  -7.398  1.00 43.81      1HPV 468
+ATOM    284  CB  SER A  37      -8.178  22.843  -7.179  1.00 60.44      1HPV 469
+ATOM    285  OG  SER A  37      -9.356  22.110  -6.876  1.00113.99      1HPV 470
+ATOM    286  N   LEU A  38      -5.116  21.896  -8.531  1.00 42.15      1HPV 471
+ATOM    287  CA  LEU A  38      -3.974  22.369  -9.293  1.00 27.95      1HPV 472
+ATOM    288  C   LEU A  38      -4.066  21.833 -10.719  1.00 43.79      1HPV 473
+ATOM    289  O   LEU A  38      -4.157  20.622 -10.941  1.00 64.45      1HPV 474
+ATOM    290  CB  LEU A  38      -2.687  21.898  -8.622  1.00 37.59      1HPV 475
+ATOM    291  CG  LEU A  38      -1.494  22.850  -8.620  1.00 28.89      1HPV 476
+ATOM    292  CD1 LEU A  38      -1.942  24.267  -8.292  1.00 35.43      1HPV 477
+ATOM    293  CD2 LEU A  38      -0.508  22.364  -7.593  1.00 40.49      1HPV 478
+ATOM    294  N   PRO A  39      -4.079  22.743 -11.704  1.00 42.13      1HPV 479
+ATOM    295  CA  PRO A  39      -4.161  22.405 -13.124  1.00 49.32      1HPV 480
+ATOM    296  C   PRO A  39      -2.854  21.863 -13.702  1.00 45.15      1HPV 481
+ATOM    297  O   PRO A  39      -1.759  22.342 -13.389  1.00 32.88      1HPV 482
+ATOM    298  CB  PRO A  39      -4.515  23.744 -13.753  1.00 32.80      1HPV 483
+ATOM    299  CG  PRO A  39      -3.726  24.692 -12.920  1.00 27.59      1HPV 484
+ATOM    300  CD  PRO A  39      -4.022  24.202 -11.522  1.00 39.70      1HPV 485
+ATOM    301  N   GLY A  40      -2.979  20.874 -14.575  1.00 47.35      1HPV 486
+ATOM    302  CA  GLY A  40      -1.804  20.317 -15.209  1.00 59.69      1HPV 487
+ATOM    303  C   GLY A  40      -1.670  18.827 -15.012  1.00 57.06      1HPV 488
+ATOM    304  O   GLY A  40      -2.501  18.186 -14.343  1.00 55.23      1HPV 489
+ATOM    305  N   ARG A  41      -0.656  18.269 -15.663  1.00 49.29      1HPV 490
+ATOM    306  CA  ARG A  41      -0.368  16.858 -15.557  1.00 40.17      1HPV 491
+ATOM    307  C   ARG A  41       0.617  16.715 -14.416  1.00 31.50      1HPV 492
+ATOM    308  O   ARG A  41       1.396  17.628 -14.135  1.00 42.96      1HPV 493
+ATOM    309  CB  ARG A  41       0.198  16.300 -16.878  1.00 34.78      1HPV 494
+ATOM    310  CG  ARG A  41       1.491  16.928 -17.431  1.00 88.59      1HPV 495
+ATOM    311  CD  ARG A  41       2.755  16.157 -17.034  1.00 81.32      1HPV 496
+ATOM    312  NE  ARG A  41       3.387  16.758 -15.863  1.00 93.12      1HPV 497
+ATOM    313  CZ  ARG A  41       4.509  17.469 -15.891  1.00 85.77      1HPV 498
+ATOM    314  NH1 ARG A  41       5.170  17.639 -17.031  1.00 70.29      1HPV 499
+ATOM    315  NH2 ARG A  41       4.979  17.986 -14.766  1.00 55.95      1HPV 500
+ATOM    316  N   TRP A  42       0.550  15.588 -13.733  1.00 44.06      1HPV 501
+ATOM    317  CA  TRP A  42       1.435  15.334 -12.621  1.00 42.11      1HPV 502
+ATOM    318  C   TRP A  42       1.964  13.912 -12.715  1.00 51.57      1HPV 503
+ATOM    319  O   TRP A  42       1.412  13.088 -13.447  1.00 67.37      1HPV 504
+ATOM    320  CB  TRP A  42       0.668  15.519 -11.320  1.00 44.84      1HPV 505
+ATOM    321  CG  TRP A  42      -0.645  14.841 -11.326  1.00 56.96      1HPV 506
+ATOM    322  CD1 TRP A  42      -1.835  15.375 -11.714  1.00 54.04      1HPV 507
+ATOM    323  CD2 TRP A  42      -0.921  13.502 -10.907  1.00 32.96      1HPV 508
+ATOM    324  NE1 TRP A  42      -2.841  14.458 -11.559  1.00 51.58      1HPV 509
+ATOM    325  CE2 TRP A  42      -2.307  13.298 -11.062  1.00 44.39      1HPV 510
+ATOM    326  CE3 TRP A  42      -0.130  12.460 -10.409  1.00 36.24      1HPV 511
+ATOM    327  CZ2 TRP A  42      -2.927  12.086 -10.737  1.00 60.57      1HPV 512
+ATOM    328  CZ3 TRP A  42      -0.749  11.250 -10.084  1.00 45.71      1HPV 513
+ATOM    329  CH2 TRP A  42      -2.134  11.078 -10.251  1.00 48.56      1HPV 514
+ATOM    330  N   LYS A  43       3.038  13.639 -11.985  1.00 43.72      1HPV 515
+ATOM    331  CA  LYS A  43       3.632  12.314 -11.968  1.00 38.27      1HPV 516
+ATOM    332  C   LYS A  43       3.455  11.734 -10.566  1.00 38.72      1HPV 517
+ATOM    333  O   LYS A  43       3.481  12.473  -9.588  1.00 42.33      1HPV 518
+ATOM    334  CB  LYS A  43       5.130  12.394 -12.297  1.00 36.77      1HPV 519
+ATOM    335  CG  LYS A  43       5.447  13.082 -13.601  1.00 48.59      1HPV 520
+ATOM    336  CD  LYS A  43       6.918  13.483 -13.680  1.00 66.32      1HPV 521
+ATOM    337  CE  LYS A  43       7.179  14.373 -14.900  1.00100.42      1HPV 522
+ATOM    338  NZ  LYS A  43       8.555  14.977 -14.920  1.00119.66      1HPV 523
+ATOM    339  N   PRO A  44       3.170  10.430 -10.452  1.00 52.44      1HPV 524
+ATOM    340  CA  PRO A  44       3.023   9.891  -9.097  1.00 34.53      1HPV 525
+ATOM    341  C   PRO A  44       4.420   9.818  -8.478  1.00 47.88      1HPV 526
+ATOM    342  O   PRO A  44       5.434   9.726  -9.189  1.00 46.02      1HPV 527
+ATOM    343  CB  PRO A  44       2.442   8.497  -9.347  1.00 29.97      1HPV 528
+ATOM    344  CG  PRO A  44       1.650   8.698 -10.629  1.00 47.60      1HPV 529
+ATOM    345  CD  PRO A  44       2.643   9.482 -11.446  1.00 61.46      1HPV 530
+ATOM    346  N   LYS A  45       4.472   9.910  -7.158  1.00 36.15      1HPV 531
+ATOM    347  CA  LYS A  45       5.741   9.866  -6.444  1.00 39.95      1HPV 532
+ATOM    348  C   LYS A  45       5.443   9.580  -4.963  1.00 42.42      1HPV 533
+ATOM    349  O   LYS A  45       4.319   9.786  -4.499  1.00 46.42      1HPV 534
+ATOM    350  CB  LYS A  45       6.464  11.207  -6.612  1.00 31.22      1HPV 535
+ATOM    351  CG  LYS A  45       7.900  11.215  -6.143  1.00 33.32      1HPV 536
+ATOM    352  CD  LYS A  45       8.203  12.530  -5.439  1.00 45.85      1HPV 537
+ATOM    353  CE  LYS A  45       9.705  12.773  -5.261  1.00 65.29      1HPV 538
+ATOM    354  NZ  LYS A  45      10.298  13.425  -6.465  1.00 90.99      1HPV 539
+ATOM    355  N   MET A  46       6.422   9.052  -4.237  1.00 41.53      1HPV 540
+ATOM    356  CA  MET A  46       6.248   8.759  -2.816  1.00 35.81      1HPV 541
+ATOM    357  C   MET A  46       7.333   9.454  -2.023  1.00 41.84      1HPV 542
+ATOM    358  O   MET A  46       8.482   9.529  -2.457  1.00 49.49      1HPV 543
+ATOM    359  CB  MET A  46       6.257   7.259  -2.553  1.00 47.62      1HPV 544
+ATOM    360  CG  MET A  46       4.947   6.615  -2.925  1.00 55.10      1HPV 545
+ATOM    361  SD  MET A  46       5.108   4.867  -3.050  1.00 61.01      1HPV 546
+ATOM    362  CE  MET A  46       5.410   4.706  -4.886  1.00 49.27      1HPV 547
+ATOM    363  N   ILE A  47       6.946   9.977  -0.870  1.00 46.77      1HPV 548
+ATOM    364  CA  ILE A  47       7.838  10.720  -0.008  1.00 36.35      1HPV 549
+ATOM    365  C   ILE A  47       8.052   9.989   1.308  1.00 24.65      1HPV 550
+ATOM    366  O   ILE A  47       7.134   9.362   1.838  1.00 26.72      1HPV 551
+ATOM    367  CB  ILE A  47       7.224  12.132   0.269  1.00 29.43      1HPV 552
+ATOM    368  CG1 ILE A  47       7.155  12.927  -1.037  1.00 45.33      1HPV 553
+ATOM    369  CG2 ILE A  47       8.016  12.898   1.288  1.00 43.15      1HPV 554
+ATOM    370  CD1 ILE A  47       8.469  12.969  -1.801  1.00 55.23      1HPV 555
+ATOM    371  N   GLY A  48       9.264  10.089   1.839  1.00 32.12      1HPV 556
+ATOM    372  CA  GLY A  48       9.565   9.466   3.111  1.00 20.70      1HPV 557
+ATOM    373  C   GLY A  48       9.744  10.529   4.169  1.00 14.07      1HPV 558
+ATOM    374  O   GLY A  48      10.588  11.411   4.038  1.00 26.99      1HPV 559
+ATOM    375  N   GLY A  49       8.941  10.438   5.214  1.00 24.57      1HPV 560
+ATOM    376  CA  GLY A  49       9.004  11.393   6.297  1.00 29.11      1HPV 561
+ATOM    377  C   GLY A  49       9.344  10.675   7.583  1.00 26.41      1HPV 562
+ATOM    378  O   GLY A  49       9.838   9.554   7.555  1.00 44.25      1HPV 563
+ATOM    379  N   ILE A  50       8.981  11.260   8.715  1.00 25.96      1HPV 564
+ATOM    380  CA  ILE A  50       9.301  10.665   9.995  1.00 28.32      1HPV 565
+ATOM    381  C   ILE A  50       8.493   9.441  10.347  1.00 38.81      1HPV 566
+ATOM    382  O   ILE A  50       9.031   8.507  10.942  1.00 56.52      1HPV 567
+ATOM    383  CB  ILE A  50       9.210  11.683  11.143  1.00 36.84      1HPV 568
+ATOM    384  CG1 ILE A  50      10.074  11.213  12.314  1.00 58.79      1HPV 569
+ATOM    385  CG2 ILE A  50       7.769  11.845  11.602  1.00 36.29      1HPV 570
+ATOM    386  CD1 ILE A  50      10.577  12.332  13.195  1.00 44.76      1HPV 571
+ATOM    387  N   GLY A  51       7.220   9.426   9.957  1.00 34.81      1HPV 572
+ATOM    388  CA  GLY A  51       6.362   8.303  10.296  1.00 33.86      1HPV 573
+ATOM    389  C   GLY A  51       6.200   7.237   9.230  1.00 34.13      1HPV 574
+ATOM    390  O   GLY A  51       5.645   6.165   9.478  1.00 34.77      1HPV 575
+ATOM    391  N   GLY A  52       6.674   7.533   8.032  1.00 35.06      1HPV 576
+ATOM    392  CA  GLY A  52       6.538   6.568   6.975  1.00 33.87      1HPV 577
+ATOM    393  C   GLY A  52       6.543   7.235   5.625  1.00 43.67      1HPV 578
+ATOM    394  O   GLY A  52       7.022   8.357   5.477  1.00 35.51      1HPV 579
+ATOM    395  N   PHE A  53       5.910   6.577   4.667  1.00 36.30      1HPV 580
+ATOM    396  CA  PHE A  53       5.877   7.047   3.305  1.00 31.30      1HPV 581
+ATOM    397  C   PHE A  53       4.493   7.429   2.818  1.00 45.05      1HPV 582
+ATOM    398  O   PHE A  53       3.524   6.707   3.059  1.00 68.93      1HPV 583
+ATOM    399  CB  PHE A  53       6.414   5.945   2.389  1.00 19.06      1HPV 584
+ATOM    400  CG  PHE A  53       7.911   5.768   2.435  1.00 46.37      1HPV 585
+ATOM    401  CD1 PHE A  53       8.517   5.118   3.508  1.00 39.06      1HPV 586
+ATOM    402  CD2 PHE A  53       8.712   6.242   1.395  1.00 58.53      1HPV 587
+ATOM    403  CE1 PHE A  53       9.896   4.946   3.545  1.00 40.86      1HPV 588
+ATOM    404  CE2 PHE A  53      10.089   6.075   1.422  1.00 40.76      1HPV 589
+ATOM    405  CZ  PHE A  53      10.682   5.427   2.498  1.00 37.96      1HPV 590
+ATOM    406  N   ILE A  54       4.392   8.581   2.166  1.00 24.64      1HPV 591
+ATOM    407  CA  ILE A  54       3.120   8.983   1.587  1.00 26.78      1HPV 592
+ATOM    408  C   ILE A  54       3.293   9.027   0.066  1.00 35.07      1HPV 593
+ATOM    409  O   ILE A  54       4.405   9.184  -0.448  1.00 21.49      1HPV 594
+ATOM    410  CB  ILE A  54       2.576  10.348   2.112  1.00 19.66      1HPV 595
+ATOM    411  CG1 ILE A  54       3.523  11.511   1.761  1.00 22.02      1HPV 596
+ATOM    412  CG2 ILE A  54       2.294  10.251   3.597  1.00 36.05      1HPV 597
+ATOM    413  CD1 ILE A  54       2.946  12.872   2.059  1.00 26.95      1HPV 598
+ATOM    414  N   LYS A  55       2.195   8.856  -0.649  1.00 33.20      1HPV 599
+ATOM    415  CA  LYS A  55       2.229   8.896  -2.095  1.00 39.75      1HPV 600
+ATOM    416  C   LYS A  55       1.671  10.276  -2.431  1.00 26.07      1HPV 601
+ATOM    417  O   LYS A  55       0.642  10.679  -1.890  1.00 26.15      1HPV 602
+ATOM    418  CB  LYS A  55       1.357   7.778  -2.682  1.00 59.02      1HPV 603
+ATOM    419  CG  LYS A  55       0.504   7.008  -1.645  1.00105.78      1HPV 604
+ATOM    420  CD  LYS A  55       1.366   6.082  -0.780  1.00124.53      1HPV 605
+ATOM    421  CE  LYS A  55       0.659   5.657   0.509  1.00120.15      1HPV 606
+ATOM    422  NZ  LYS A  55       1.650   4.952   1.384  1.00121.60      1HPV 607
+ATOM    423  N   VAL A  56       2.393  11.030  -3.246  1.00 22.91      1HPV 608
+ATOM    424  CA  VAL A  56       1.964  12.373  -3.624  1.00 29.50      1HPV 609
+ATOM    425  C   VAL A  56       1.919  12.521  -5.142  1.00 28.92      1HPV 610
+ATOM    426  O   VAL A  56       2.255  11.593  -5.865  1.00 24.52      1HPV 611
+ATOM    427  CB  VAL A  56       2.947  13.430  -3.055  1.00 26.27      1HPV 612
+ATOM    428  CG1 VAL A  56       2.945  13.385  -1.533  1.00 23.09      1HPV 613
+ATOM    429  CG2 VAL A  56       4.358  13.187  -3.588  1.00 24.03      1HPV 614
+ATOM    430  N   ARG A  57       1.454  13.671  -5.620  1.00 18.69      1HPV 615
+ATOM    431  CA  ARG A  57       1.423  13.945  -7.049  1.00 32.03      1HPV 616
+ATOM    432  C   ARG A  57       2.479  15.028  -7.270  1.00 23.72      1HPV 617
+ATOM    433  O   ARG A  57       2.501  16.029  -6.562  1.00 31.35      1HPV 618
+ATOM    434  CB  ARG A  57       0.060  14.501  -7.483  1.00 31.64      1HPV 619
+ATOM    435  CG  ARG A  57      -1.151  13.786  -6.924  1.00 21.92      1HPV 620
+ATOM    436  CD  ARG A  57      -2.445  14.233  -7.607  1.00 16.23      1HPV 621
+ATOM    437  NE  ARG A  57      -2.747  15.669  -7.487  1.00 61.56      1HPV 622
+ATOM    438  CZ  ARG A  57      -3.603  16.186  -6.608  1.00 78.60      1HPV 623
+ATOM    439  NH1 ARG A  57      -4.179  15.390  -5.721  1.00 57.33      1HPV 624
+ATOM    440  NH2 ARG A  57      -3.838  17.505  -6.578  1.00 39.63      1HPV 625
+ATOM    441  N   GLN A  58       3.365  14.826  -8.231  1.00 17.07      1HPV 626
+ATOM    442  CA  GLN A  58       4.375  15.808  -8.547  1.00 16.81      1HPV 627
+ATOM    443  C   GLN A  58       4.030  16.732  -9.736  1.00 30.21      1HPV 628
+ATOM    444  O   GLN A  58       3.785  16.268 -10.854  1.00 25.16      1HPV 629
+ATOM    445  CB  GLN A  58       5.688  15.113  -8.833  1.00 15.64      1HPV 630
+ATOM    446  CG  GLN A  58       6.775  16.083  -9.272  1.00 30.87      1HPV 631
+ATOM    447  CD  GLN A  58       8.081  15.392  -9.547  1.00 29.77      1HPV 632
+ATOM    448  OE1 GLN A  58       8.252  14.227  -9.213  1.00 36.89      1HPV 633
+ATOM    449  NE2 GLN A  58       9.013  16.103 -10.157  1.00 31.39      1HPV 634
+ATOM    450  N   TYR A  59       4.115  18.038  -9.495  1.00 31.67      1HPV 635
+ATOM    451  CA  TYR A  59       3.858  19.067 -10.501  1.00 20.32      1HPV 636
+ATOM    452  C   TYR A  59       5.158  19.822 -10.732  1.00 19.54      1HPV 637
+ATOM    453  O   TYR A  59       5.808  20.257  -9.774  1.00 30.50      1HPV 638
+ATOM    454  CB  TYR A  59       2.822  20.064  -9.997  1.00 26.10      1HPV 639
+ATOM    455  CG  TYR A  59       1.416  19.545  -9.949  1.00 30.62      1HPV 640
+ATOM    456  CD1 TYR A  59       0.608  19.599 -11.078  1.00 45.94      1HPV 641
+ATOM    457  CD2 TYR A  59       0.887  18.992  -8.780  1.00 28.76      1HPV 642
+ATOM    458  CE1 TYR A  59      -0.699  19.119 -11.051  1.00 40.41      1HPV 643
+ATOM    459  CE2 TYR A  59      -0.412  18.506  -8.741  1.00 28.30      1HPV 644
+ATOM    460  CZ  TYR A  59      -1.194  18.576  -9.886  1.00 30.97      1HPV 645
+ATOM    461  OH  TYR A  59      -2.474  18.104  -9.869  1.00 42.75      1HPV 646
+ATOM    462  N   ASP A  60       5.573  19.949 -11.983  1.00 43.25      1HPV 647
+ATOM    463  CA  ASP A  60       6.800  20.676 -12.293  1.00 42.57      1HPV 648
+ATOM    464  C   ASP A  60       6.422  22.089 -12.706  1.00 27.99      1HPV 649
+ATOM    465  O   ASP A  60       5.254  22.374 -12.980  1.00 29.86      1HPV 650
+ATOM    466  CB  ASP A  60       7.567  20.037 -13.467  1.00 52.98      1HPV 651
+ATOM    467  CG  ASP A  60       7.927  18.572 -13.235  1.00 56.87      1HPV 652
+ATOM    468  OD1 ASP A  60       7.873  18.102 -12.082  1.00 60.76      1HPV 653
+ATOM    469  OD2 ASP A  60       8.276  17.895 -14.234  1.00 79.11      1HPV 654
+ATOM    470  N   GLN A  61       7.435  22.946 -12.785  1.00 21.41      1HPV 655
+ATOM    471  CA  GLN A  61       7.289  24.329 -13.208  1.00 32.09      1HPV 656
+ATOM    472  C   GLN A  61       6.017  25.033 -12.722  1.00 33.63      1HPV 657
+ATOM    473  O   GLN A  61       5.287  25.624 -13.522  1.00 27.63      1HPV 658
+ATOM    474  CB  GLN A  61       7.411  24.408 -14.744  1.00 51.83      1HPV 659
+ATOM    475  CG  GLN A  61       7.865  25.768 -15.320  1.00 72.84      1HPV 660
+ATOM    476  CD  GLN A  61       9.386  25.889 -15.476  1.00 66.89      1HPV 661
+ATOM    477  OE1 GLN A  61      10.118  24.912 -15.319  1.00 82.74      1HPV 662
+ATOM    478  NE2 GLN A  61       9.857  27.090 -15.791  1.00 30.56      1HPV 663
+ATOM    479  N   ILE A  62       5.766  24.982 -11.416  1.00 36.90      1HPV 664
+ATOM    480  CA  ILE A  62       4.604  25.643 -10.830  1.00 23.43      1HPV 665
+ATOM    481  C   ILE A  62       5.015  26.963 -10.182  1.00 14.10      1HPV 666
+ATOM    482  O   ILE A  62       5.983  27.017  -9.440  1.00 22.87      1HPV 667
+ATOM    483  CB  ILE A  62       3.938  24.760  -9.755  1.00 23.86      1HPV 668
+ATOM    484  CG1 ILE A  62       3.499  23.433 -10.367  1.00 23.69      1HPV 669
+ATOM    485  CG2 ILE A  62       2.713  25.483  -9.158  1.00 22.44      1HPV 670
+ATOM    486  CD1 ILE A  62       2.260  23.555 -11.262  1.00 38.97      1HPV 671
+ATOM    487  N   LEU A  63       4.289  28.026 -10.501  1.00 12.52      1HPV 672
+ATOM    488  CA  LEU A  63       4.549  29.333  -9.946  1.00 18.14      1HPV 673
+ATOM    489  C   LEU A  63       3.960  29.461  -8.544  1.00 16.71      1HPV 674
+ATOM    490  O   LEU A  63       2.778  29.205  -8.305  1.00 25.52      1HPV 675
+ATOM    491  CB  LEU A  63       3.954  30.408 -10.834  1.00 16.81      1HPV 676
+ATOM    492  CG  LEU A  63       4.082  31.834 -10.316  1.00 22.21      1HPV 677
+ATOM    493  CD1 LEU A  63       5.515  32.301 -10.409  1.00 19.58      1HPV 678
+ATOM    494  CD2 LEU A  63       3.144  32.734 -11.125  1.00 22.90      1HPV 679
+ATOM    495  N   ILE A  64       4.763  29.972  -7.643  1.00 17.47      1HPV 680
+ATOM    496  CA  ILE A  64       4.339  30.127  -6.286  1.00 15.97      1HPV 681
+ATOM    497  C   ILE A  64       4.945  31.432  -5.797  1.00 20.43      1HPV 682
+ATOM    498  O   ILE A  64       6.012  31.836  -6.251  1.00 23.25      1HPV 683
+ATOM    499  CB  ILE A  64       4.798  28.877  -5.483  1.00 26.97      1HPV 684
+ATOM    500  CG1 ILE A  64       4.520  29.010  -3.998  1.00 20.95      1HPV 685
+ATOM    501  CG2 ILE A  64       6.259  28.563  -5.769  1.00 46.95      1HPV 686
+ATOM    502  CD1 ILE A  64       4.594  27.661  -3.331  1.00 32.38      1HPV 687
+ATOM    503  N   GLU A  65       4.167  32.180  -5.030  1.00 22.09      1HPV 688
+ATOM    504  CA  GLU A  65       4.619  33.438  -4.461  1.00 22.04      1HPV 689
+ATOM    505  C   GLU A  65       4.671  33.326  -2.949  1.00 35.92      1HPV 690
+ATOM    506  O   GLU A  65       3.636  33.187  -2.291  1.00 47.25      1HPV 691
+ATOM    507  CB  GLU A  65       3.680  34.562  -4.852  1.00 27.89      1HPV 692
+ATOM    508  CG  GLU A  65       3.662  34.804  -6.329  1.00 24.05      1HPV 693
+ATOM    509  CD  GLU A  65       2.560  35.740  -6.736  1.00 48.52      1HPV 694
+ATOM    510  OE1 GLU A  65       2.373  36.771  -6.048  1.00 48.68      1HPV 695
+ATOM    511  OE2 GLU A  65       1.880  35.433  -7.742  1.00 38.34      1HPV 696
+ATOM    512  N   ILE A  66       5.882  33.366  -2.408  1.00 36.60      1HPV 697
+ATOM    513  CA  ILE A  66       6.107  33.270  -0.969  1.00 31.04      1HPV 698
+ATOM    514  C   ILE A  66       6.451  34.688  -0.592  1.00 20.36      1HPV 699
+ATOM    515  O   ILE A  66       7.486  35.196  -1.011  1.00 34.27      1HPV 700
+ATOM    516  CB  ILE A  66       7.290  32.343  -0.690  1.00 31.75      1HPV 701
+ATOM    517  CG1 ILE A  66       7.086  31.014  -1.425  1.00 28.22      1HPV 702
+ATOM    518  CG2 ILE A  66       7.451  32.135   0.805  1.00 58.05      1HPV 703
+ATOM    519  CD1 ILE A  66       8.346  30.179  -1.581  1.00 35.31      1HPV 704
+ATOM    520  N   CYS A  67       5.598  35.321   0.205  1.00 43.08      1HPV 705
+ATOM    521  CA  CYS A  67       5.781  36.731   0.555  1.00 66.21      1HPV 706
+ATOM    522  C   CYS A  67       5.653  37.467  -0.790  1.00 54.94      1HPV 707
+ATOM    523  O   CYS A  67       4.711  37.201  -1.535  1.00 77.22      1HPV 708
+ATOM    524  CB  CYS A  67       7.151  36.993   1.214  1.00 71.87      1HPV 709
+ATOM    525  SG  CYS A  67       7.201  36.867   3.023  1.00 59.73      1HPV 710
+ATOM    526  N   GLY A  68       6.596  38.337  -1.137  1.00 50.20      1HPV 711
+ATOM    527  CA  GLY A  68       6.499  39.023  -2.419  1.00 59.25      1HPV 712
+ATOM    528  C   GLY A  68       7.458  38.395  -3.407  1.00 67.23      1HPV 713
+ATOM    529  O   GLY A  68       7.649  38.866  -4.527  1.00 81.34      1HPV 714
+ATOM    530  N   HIS A  69       8.064  37.306  -2.963  1.00 49.46      1HPV 715
+ATOM    531  CA  HIS A  69       9.035  36.577  -3.750  1.00 32.49      1HPV 716
+ATOM    532  C   HIS A  69       8.360  35.536  -4.652  1.00 34.08      1HPV 717
+ATOM    533  O   HIS A  69       7.711  34.604  -4.164  1.00 43.66      1HPV 718
+ATOM    534  CB  HIS A  69      10.025  35.862  -2.820  1.00 30.25      1HPV 719
+ATOM    535  CG  HIS A  69      10.797  36.771  -1.919  1.00 45.05      1HPV 720
+ATOM    536  ND1 HIS A  69      12.172  36.720  -1.821  1.00 82.64      1HPV 721
+ATOM    537  CD2 HIS A  69      10.395  37.731  -1.048  1.00 29.61      1HPV 722
+ATOM    538  CE1 HIS A  69      12.583  37.609  -0.935  1.00 96.02      1HPV 723
+ATOM    539  NE2 HIS A  69      11.527  38.231  -0.448  1.00 59.45      1HPV 724
+ATOM    540  N   LYS A  70       8.505  35.704  -5.960  1.00 31.37      1HPV 725
+ATOM    541  CA  LYS A  70       7.964  34.761  -6.920  1.00 29.64      1HPV 726
+ATOM    542  C   LYS A  70       9.047  33.716  -7.193  1.00 33.30      1HPV 727
+ATOM    543  O   LYS A  70      10.231  34.051  -7.315  1.00 37.05      1HPV 728
+ATOM    544  CB  LYS A  70       7.586  35.481  -8.206  1.00 21.76      1HPV 729
+ATOM    545  CG  LYS A  70       6.556  36.544  -7.997  1.00 42.28      1HPV 730
+ATOM    546  CD  LYS A  70       6.304  37.325  -9.259  1.00 50.21      1HPV 731
+ATOM    547  CE  LYS A  70       5.443  38.523  -8.948  1.00 66.97      1HPV 732
+ATOM    548  NZ  LYS A  70       4.167  38.125  -8.286  1.00111.25      1HPV 733
+ATOM    549  N   ALA A  71       8.636  32.452  -7.248  1.00 20.11      1HPV 734
+ATOM    550  CA  ALA A  71       9.529  31.336  -7.512  1.00 34.79      1HPV 735
+ATOM    551  C   ALA A  71       8.755  30.288  -8.311  1.00 27.00      1HPV 736
+ATOM    552  O   ALA A  71       7.519  30.213  -8.224  1.00 25.55      1HPV 737
+ATOM    553  CB  ALA A  71      10.038  30.738  -6.190  1.00 25.81      1HPV 738
+ATOM    554  N   ILE A  72       9.468  29.569  -9.174  1.00 24.16      1HPV 739
+ATOM    555  CA  ILE A  72       8.886  28.491  -9.976  1.00 36.76      1HPV 740
+ATOM    556  C   ILE A  72       9.682  27.218  -9.704  1.00 33.54      1HPV 741
+ATOM    557  O   ILE A  72      10.918  27.233  -9.649  1.00 22.60      1HPV 742
+ATOM    558  CB  ILE A  72       8.866  28.817 -11.505  1.00 33.83      1HPV 743
+ATOM    559  CG1 ILE A  72       7.750  29.817 -11.793  1.00 48.31      1HPV 744
+ATOM    560  CG2 ILE A  72       8.559  27.578 -12.320  1.00 30.14      1HPV 745
+ATOM    561  CD1 ILE A  72       7.533  30.094 -13.250  1.00 33.15      1HPV 746
+ATOM    562  N   GLY A  73       8.966  26.131  -9.462  1.00 22.80      1HPV 747
+ATOM    563  CA  GLY A  73       9.628  24.880  -9.187  1.00 20.94      1HPV 748
+ATOM    564  C   GLY A  73       8.667  23.730  -9.044  1.00 16.24      1HPV 749
+ATOM    565  O   GLY A  73       7.496  23.818  -9.399  1.00 19.77      1HPV 750
+ATOM    566  N   THR A  74       9.190  22.636  -8.515  1.00 32.47      1HPV 751
+ATOM    567  CA  THR A  74       8.422  21.431  -8.315  1.00 25.09      1HPV 752
+ATOM    568  C   THR A  74       7.708  21.448  -6.986  1.00 21.39      1HPV 753
+ATOM    569  O   THR A  74       8.292  21.782  -5.959  1.00 19.01      1HPV 754
+ATOM    570  CB  THR A  74       9.328  20.196  -8.400  1.00 35.37      1HPV 755
+ATOM    571  OG1 THR A  74       9.983  20.187  -9.675  1.00 30.40      1HPV 756
+ATOM    572  CG2 THR A  74       8.517  18.930  -8.256  1.00 24.84      1HPV 757
+ATOM    573  N   VAL A  75       6.437  21.078  -7.030  1.00 23.81      1HPV 758
+ATOM    574  CA  VAL A  75       5.568  21.032  -5.867  1.00 20.63      1HPV 759
+ATOM    575  C   VAL A  75       4.918  19.645  -5.812  1.00 25.98      1HPV 760
+ATOM    576  O   VAL A  75       4.456  19.119  -6.830  1.00 26.52      1HPV 761
+ATOM    577  CB  VAL A  75       4.452  22.127  -5.988  1.00 34.41      1HPV 762
+ATOM    578  CG1 VAL A  75       3.382  21.931  -4.939  1.00 20.05      1HPV 763
+ATOM    579  CG2 VAL A  75       5.056  23.524  -5.856  1.00 22.43      1HPV 764
+ATOM    580  N   LEU A  76       4.932  19.044  -4.629  1.00 25.29      1HPV 765
+ATOM    581  CA  LEU A  76       4.326  17.743  -4.408  1.00 14.75      1HPV 766
+ATOM    582  C   LEU A  76       3.030  18.010  -3.660  1.00 25.18      1HPV 767
+ATOM    583  O   LEU A  76       3.026  18.730  -2.667  1.00 20.48      1HPV 768
+ATOM    584  CB  LEU A  76       5.247  16.872  -3.552  1.00 13.87      1HPV 769
+ATOM    585  CG  LEU A  76       6.662  16.801  -4.089  1.00  9.75      1HPV 770
+ATOM    586  CD1 LEU A  76       7.536  16.083  -3.090  1.00 19.47      1HPV 771
+ATOM    587  CD2 LEU A  76       6.668  16.137  -5.443  1.00 16.99      1HPV 772
+ATOM    588  N   VAL A  77       1.919  17.501  -4.169  1.00 21.10      1HPV 773
+ATOM    589  CA  VAL A  77       0.641  17.707  -3.497  1.00 30.69      1HPV 774
+ATOM    590  C   VAL A  77       0.149  16.387  -2.955  1.00 27.88      1HPV 775
+ATOM    591  O   VAL A  77       0.076  15.403  -3.679  1.00 31.15      1HPV 776
+ATOM    592  CB  VAL A  77      -0.392  18.297  -4.430  1.00 21.34      1HPV 777
+ATOM    593  CG1 VAL A  77      -1.696  18.464  -3.703  1.00 22.50      1HPV 778
+ATOM    594  CG2 VAL A  77       0.099  19.639  -4.924  1.00 19.40      1HPV 779
+ATOM    595  N   GLY A  78      -0.143  16.348  -1.666  1.00 24.85      1HPV 780
+ATOM    596  CA  GLY A  78      -0.581  15.107  -1.067  1.00 22.63      1HPV 781
+ATOM    597  C   GLY A  78      -0.979  15.242   0.387  1.00 24.34      1HPV 782
+ATOM    598  O   GLY A  78      -1.024  16.342   0.919  1.00 29.10      1HPV 783
+ATOM    599  N   PRO A  79      -1.181  14.115   1.077  1.00 27.98      1HPV 784
+ATOM    600  CA  PRO A  79      -1.585  14.040   2.484  1.00 32.50      1HPV 785
+ATOM    601  C   PRO A  79      -0.629  14.513   3.570  1.00 27.71      1HPV 786
+ATOM    602  O   PRO A  79      -0.447  13.821   4.573  1.00 38.34      1HPV 787
+ATOM    603  CB  PRO A  79      -1.929  12.563   2.643  1.00 38.09      1HPV 788
+ATOM    604  CG  PRO A  79      -0.910  11.909   1.753  1.00 37.35      1HPV 789
+ATOM    605  CD  PRO A  79      -0.945  12.771   0.521  1.00 25.16      1HPV 790
+ATOM    606  N   THR A  80      -0.019  15.678   3.392  1.00 36.25      1HPV 791
+ATOM    607  CA  THR A  80       0.865  16.202   4.422  1.00 34.79      1HPV 792
+ATOM    608  C   THR A  80      -0.011  16.912   5.467  1.00 25.08      1HPV 793
+ATOM    609  O   THR A  80      -1.081  17.415   5.126  1.00 40.14      1HPV 794
+ATOM    610  CB  THR A  80       1.866  17.195   3.842  1.00 17.95      1HPV 795
+ATOM    611  OG1 THR A  80       2.721  17.661   4.886  1.00 25.73      1HPV 796
+ATOM    612  CG2 THR A  80       1.159  18.365   3.239  1.00 19.46      1HPV 797
+ATOM    613  N   PRO A  81       0.421  16.949   6.747  1.00 34.94      1HPV 798
+ATOM    614  CA  PRO A  81      -0.378  17.621   7.786  1.00 40.71      1HPV 799
+ATOM    615  C   PRO A  81      -0.219  19.154   7.832  1.00 45.12      1HPV 800
+ATOM    616  O   PRO A  81      -1.078  19.872   8.364  1.00 29.44      1HPV 801
+ATOM    617  CB  PRO A  81       0.117  16.955   9.071  1.00 28.54      1HPV 802
+ATOM    618  CG  PRO A  81       1.568  16.714   8.782  1.00 37.89      1HPV 803
+ATOM    619  CD  PRO A  81       1.545  16.200   7.347  1.00 32.54      1HPV 804
+ATOM    620  N   VAL A  82       0.888  19.644   7.282  1.00 28.14      1HPV 805
+ATOM    621  CA  VAL A  82       1.189  21.066   7.243  1.00 22.24      1HPV 806
+ATOM    622  C   VAL A  82       1.770  21.327   5.856  1.00 18.24      1HPV 807
+ATOM    623  O   VAL A  82       2.399  20.445   5.286  1.00 26.18      1HPV 808
+ATOM    624  CB  VAL A  82       2.273  21.441   8.320  1.00 21.44      1HPV 809
+ATOM    625  CG1 VAL A  82       2.361  22.942   8.476  1.00 33.09      1HPV 810
+ATOM    626  CG2 VAL A  82       1.963  20.813   9.675  1.00 34.83      1HPV 811
+ATOM    627  N   ASN A  83       1.481  22.481   5.265  1.00 20.68      1HPV 812
+ATOM    628  CA  ASN A  83       2.072  22.820   3.969  1.00 19.07      1HPV 813
+ATOM    629  C   ASN A  83       3.509  23.195   4.315  1.00 20.31      1HPV 814
+ATOM    630  O   ASN A  83       3.732  23.972   5.244  1.00 21.95      1HPV 815
+ATOM    631  CB  ASN A  83       1.396  24.048   3.366  1.00 23.32      1HPV 816
+ATOM    632  CG  ASN A  83      -0.042  23.815   3.039  1.00 26.83      1HPV 817
+ATOM    633  OD1 ASN A  83      -0.367  22.909   2.293  1.00 28.38      1HPV 818
+ATOM    634  ND2 ASN A  83      -0.917  24.626   3.597  1.00 27.62      1HPV 819
+ATOM    635  N   ILE A  84       4.484  22.642   3.602  1.00 26.18      1HPV 820
+ATOM    636  CA  ILE A  84       5.880  22.942   3.884  1.00 18.83      1HPV 821
+ATOM    637  C   ILE A  84       6.646  23.398   2.649  1.00 13.85      1HPV 822
+ATOM    638  O   ILE A  84       6.501  22.829   1.575  1.00 28.50      1HPV 823
+ATOM    639  CB  ILE A  84       6.619  21.733   4.576  1.00 32.99      1HPV 824
+ATOM    640  CG1 ILE A  84       6.379  20.437   3.830  1.00 20.96      1HPV 825
+ATOM    641  CG2 ILE A  84       6.107  21.529   5.986  1.00 23.17      1HPV 826
+ATOM    642  CD1 ILE A  84       6.942  19.259   4.537  1.00 41.41      1HPV 827
+ATOM    643  N   ILE A  85       7.420  24.466   2.788  1.00 14.95      1HPV 828
+ATOM    644  CA  ILE A  85       8.226  24.973   1.685  1.00 18.23      1HPV 829
+ATOM    645  C   ILE A  85       9.585  24.377   2.009  1.00 16.02      1HPV 830
+ATOM    646  O   ILE A  85      10.094  24.611   3.090  1.00 18.14      1HPV 831
+ATOM    647  CB  ILE A  85       8.289  26.522   1.705  1.00 25.84      1HPV 832
+ATOM    648  CG1 ILE A  85       6.874  27.117   1.738  1.00 25.07      1HPV 833
+ATOM    649  CG2 ILE A  85       9.087  27.041   0.512  1.00 16.50      1HPV 834
+ATOM    650  CD1 ILE A  85       6.011  26.745   0.557  1.00 19.04      1HPV 835
+ATOM    651  N   GLY A  86      10.126  23.558   1.112  1.00 15.32      1HPV 836
+ATOM    652  CA  GLY A  86      11.398  22.908   1.361  1.00 11.40      1HPV 837
+ATOM    653  C   GLY A  86      12.547  23.585   0.664  1.00 14.14      1HPV 838
+ATOM    654  O   GLY A  86      12.342  24.578  -0.030  1.00 15.59      1HPV 839
+ATOM    655  N   ARG A  87      13.743  23.007   0.774  1.00 17.41      1HPV 840
+ATOM    656  CA  ARG A  87      14.951  23.606   0.195  1.00 18.10      1HPV 841
+ATOM    657  C   ARG A  87      14.958  23.861  -1.309  1.00 23.60      1HPV 842
+ATOM    658  O   ARG A  87      15.717  24.707  -1.780  1.00 24.50      1HPV 843
+ATOM    659  CB  ARG A  87      16.201  22.837   0.600  1.00 29.64      1HPV 844
+ATOM    660  CG  ARG A  87      16.438  22.750   2.097  1.00 16.83      1HPV 845
+ATOM    661  CD  ARG A  87      17.739  22.008   2.404  1.00  9.50      1HPV 846
+ATOM    662  NE  ARG A  87      17.790  20.686   1.785  1.00 18.37      1HPV 847
+ATOM    663  CZ  ARG A  87      18.525  20.398   0.715  1.00 20.91      1HPV 848
+ATOM    664  NH1 ARG A  87      19.250  21.346   0.142  1.00 22.61      1HPV 849
+ATOM    665  NH2 ARG A  87      18.519  19.183   0.198  1.00 15.53      1HPV 850
+ATOM    666  N   ASN A  88      14.101  23.183  -2.066  1.00 18.61      1HPV 851
+ATOM    667  CA  ASN A  88      14.045  23.430  -3.500  1.00 14.95      1HPV 852
+ATOM    668  C   ASN A  88      13.537  24.843  -3.824  1.00 20.40      1HPV 853
+ATOM    669  O   ASN A  88      13.904  25.423  -4.839  1.00 30.16      1HPV 854
+ATOM    670  CB  ASN A  88      13.186  22.381  -4.211  1.00 14.33      1HPV 855
+ATOM    671  CG  ASN A  88      11.716  22.480  -3.868  1.00 13.39      1HPV 856
+ATOM    672  OD1 ASN A  88      11.344  23.020  -2.839  1.00 24.20      1HPV 857
+ATOM    673  ND2 ASN A  88      10.880  21.874  -4.699  1.00 41.70      1HPV 858
+ATOM    674  N   LEU A  89      12.729  25.407  -2.933  1.00 21.96      1HPV 859
+ATOM    675  CA  LEU A  89      12.183  26.736  -3.130  1.00 14.63      1HPV 860
+ATOM    676  C   LEU A  89      12.849  27.752  -2.209  1.00 12.22      1HPV 861
+ATOM    677  O   LEU A  89      12.958  28.915  -2.553  1.00 24.50      1HPV 862
+ATOM    678  CB  LEU A  89      10.679  26.707  -2.916  1.00 14.80      1HPV 863
+ATOM    679  CG  LEU A  89       9.755  26.839  -4.133  1.00 28.26      1HPV 864
+ATOM    680  CD1 LEU A  89      10.298  26.118  -5.343  1.00 24.03      1HPV 865
+ATOM    681  CD2 LEU A  89       8.392  26.293  -3.757  1.00 15.97      1HPV 866
+ATOM    682  N   LEU A  90      13.311  27.309  -1.045  1.00 17.75      1HPV 867
+ATOM    683  CA  LEU A  90      13.981  28.193  -0.102  1.00 16.59      1HPV 868
+ATOM    684  C   LEU A  90      15.221  28.825  -0.701  1.00 15.37      1HPV 869
+ATOM    685  O   LEU A  90      15.505  29.981  -0.433  1.00 24.17      1HPV 870
+ATOM    686  CB  LEU A  90      14.330  27.452   1.198  1.00 19.04      1HPV 871
+ATOM    687  CG  LEU A  90      13.191  27.005   2.127  1.00 16.77      1HPV 872
+ATOM    688  CD1 LEU A  90      13.779  26.465   3.414  1.00 14.47      1HPV 873
+ATOM    689  CD2 LEU A  90      12.234  28.151   2.422  1.00 17.88      1HPV 874
+ATOM    690  N   THR A  91      15.947  28.075  -1.523  1.00 25.76      1HPV 875
+ATOM    691  CA  THR A  91      17.144  28.598  -2.169  1.00 15.93      1HPV 876
+ATOM    692  C   THR A  91      16.839  29.676  -3.211  1.00 21.16      1HPV 877
+ATOM    693  O   THR A  91      17.693  30.498  -3.539  1.00 34.13      1HPV 878
+ATOM    694  CB  THR A  91      17.924  27.509  -2.896  1.00 15.19      1HPV 879
+ATOM    695  OG1 THR A  91      17.053  26.843  -3.820  1.00 21.42      1HPV 880
+ATOM    696  CG2 THR A  91      18.509  26.530  -1.918  1.00 13.91      1HPV 881
+ATOM    697  N   GLN A  92      15.634  29.657  -3.761  1.00 26.73      1HPV 882
+ATOM    698  CA  GLN A  92      15.256  30.641  -4.771  1.00 24.51      1HPV 883
+ATOM    699  C   GLN A  92      14.882  32.008  -4.199  1.00 22.85      1HPV 884
+ATOM    700  O   GLN A  92      15.139  33.040  -4.826  1.00 38.99      1HPV 885
+ATOM    701  CB  GLN A  92      14.118  30.114  -5.624  1.00 24.22      1HPV 886
+ATOM    702  CG  GLN A  92      14.478  28.917  -6.473  1.00 30.97      1HPV 887
+ATOM    703  CD  GLN A  92      13.416  28.650  -7.518  1.00 54.42      1HPV 888
+ATOM    704  OE1 GLN A  92      13.076  29.533  -8.313  1.00 57.13      1HPV 889
+ATOM    705  NE2 GLN A  92      12.864  27.449  -7.506  1.00 75.93      1HPV 890
+ATOM    706  N   ILE A  93      14.233  32.024  -3.042  1.00 23.21      1HPV 891
+ATOM    707  CA  ILE A  93      13.876  33.289  -2.420  1.00 25.61      1HPV 892
+ATOM    708  C   ILE A  93      15.057  33.796  -1.581  1.00 27.19      1HPV 893
+ATOM    709  O   ILE A  93      14.931  34.781  -0.859  1.00 27.10      1HPV 894
+ATOM    710  CB  ILE A  93      12.576  33.190  -1.555  1.00 22.00      1HPV 895
+ATOM    711  CG1 ILE A  93      12.744  32.244  -0.366  1.00 24.04      1HPV 896
+ATOM    712  CG2 ILE A  93      11.417  32.766  -2.404  1.00 21.50      1HPV 897
+ATOM    713  CD1 ILE A  93      11.510  32.197   0.529  1.00 39.70      1HPV 898
+ATOM    714  N   GLY A  94      16.187  33.086  -1.684  1.00 21.28      1HPV 899
+ATOM    715  CA  GLY A  94      17.408  33.436  -0.981  1.00 13.41      1HPV 900
+ATOM    716  C   GLY A  94      17.404  33.263   0.528  1.00 21.07      1HPV 901
+ATOM    717  O   GLY A  94      18.095  33.984   1.240  1.00 16.95      1HPV 902
+ATOM    718  N   CYS A  95      16.722  32.250   1.023  1.00 24.09      1HPV 903
+ATOM    719  CA  CYS A  95      16.665  32.059   2.463  1.00 19.55      1HPV 904
+ATOM    720  C   CYS A  95      17.907  31.355   3.047  1.00 19.50      1HPV 905
+ATOM    721  O   CYS A  95      18.394  30.382   2.469  1.00 21.02      1HPV 906
+ATOM    722  CB  CYS A  95      15.383  31.304   2.794  1.00 22.89      1HPV 907
+ATOM    723  SG  CYS A  95      15.000  31.197   4.516  1.00 33.96      1HPV 908
+ATOM    724  N   THR A  96      18.421  31.863   4.172  1.00 23.03      1HPV 909
+ATOM    725  CA  THR A  96      19.585  31.280   4.868  1.00 24.45      1HPV 910
+ATOM    726  C   THR A  96      19.353  31.046   6.370  1.00 26.23      1HPV 911
+ATOM    727  O   THR A  96      18.405  31.566   6.973  1.00 29.13      1HPV 912
+ATOM    728  CB  THR A  96      20.883  32.166   4.768  1.00 28.59      1HPV 913
+ATOM    729  OG1 THR A  96      20.614  33.512   5.188  1.00 19.33      1HPV 914
+ATOM    730  CG2 THR A  96      21.466  32.146   3.353  1.00 29.71      1HPV 915
+ATOM    731  N   LEU A  97      20.234  30.262   6.972  1.00 21.92      1HPV 916
+ATOM    732  CA  LEU A  97      20.173  30.015   8.400  1.00 20.99      1HPV 917
+ATOM    733  C   LEU A  97      21.352  30.781   8.986  1.00 23.50      1HPV 918
+ATOM    734  O   LEU A  97      22.376  30.927   8.337  1.00 20.93      1HPV 919
+ATOM    735  CB  LEU A  97      20.317  28.524   8.709  1.00 17.65      1HPV 920
+ATOM    736  CG  LEU A  97      19.016  27.724   8.653  1.00 24.12      1HPV 921
+ATOM    737  CD1 LEU A  97      19.297  26.233   8.608  1.00 22.39      1HPV 922
+ATOM    738  CD2 LEU A  97      18.147  28.079   9.849  1.00 26.59      1HPV 923
+ATOM    739  N   ASN A  98      21.199  31.309  10.188  1.00 34.97      1HPV 924
+ATOM    740  CA  ASN A  98      22.290  32.027  10.814  1.00 20.21      1HPV 925
+ATOM    741  C   ASN A  98      22.242  31.867  12.326  1.00 27.23      1HPV 926
+ATOM    742  O   ASN A  98      21.160  31.853  12.926  1.00 24.24      1HPV 927
+ATOM    743  CB  ASN A  98      22.248  33.509  10.428  1.00 21.81      1HPV 928
+ATOM    744  CG  ASN A  98      22.404  33.719   8.928  1.00 94.58      1HPV 929
+ATOM    745  OD1 ASN A  98      23.471  34.142   8.455  1.00114.69      1HPV 930
+ATOM    746  ND2 ASN A  98      21.345  33.425   8.169  1.00 92.83      1HPV 931
+ATOM    747  N   PHE A  99      23.419  31.703  12.923  1.00 38.68      1HPV 932
+ATOM    748  CA  PHE A  99      23.581  31.553  14.369  1.00 33.67      1HPV 933
+ATOM    749  C   PHE A  99      25.068  31.721  14.724  1.00 48.60      1HPV 934
+ATOM    750  O   PHE A  99      25.809  32.252  13.866  1.00 69.65      1HPV 935
+ATOM    751  CB  PHE A  99      23.025  30.200  14.853  1.00 33.00      1HPV 936
+ATOM    752  CG  PHE A  99      23.844  29.016  14.449  1.00 18.26      1HPV 937
+ATOM    753  CD1 PHE A  99      23.648  28.401  13.224  1.00 36.64      1HPV 938
+ATOM    754  CD2 PHE A  99      24.807  28.500  15.314  1.00 42.74      1HPV 939
+ATOM    755  CE1 PHE A  99      24.395  27.284  12.863  1.00 38.61      1HPV 940
+ATOM    756  CE2 PHE A  99      25.566  27.382  14.967  1.00 23.21      1HPV 941
+ATOM    757  CZ  PHE A  99      25.362  26.769  13.739  1.00 34.69      1HPV 942
+ATOM    758  OXT PHE A  99      25.496  31.333  15.835  1.00 62.41      1HPV 943
+TER     759      PHE A  99                                              1HPV 944
+ATOM    760  N   PRO B   1      27.295  30.788  12.554  1.00 56.05      1HPV 945
+ATOM    761  CA  PRO B   1      27.688  31.018  11.136  1.00 35.13      1HPV 946
+ATOM    762  C   PRO B   1      26.455  31.215  10.241  1.00 45.27      1HPV 947
+ATOM    763  O   PRO B   1      25.327  31.285  10.732  1.00 38.74      1HPV 948
+ATOM    764  CB  PRO B   1      28.485  29.803  10.669  1.00 47.08      1HPV 949
+ATOM    765  CG  PRO B   1      27.884  28.753  11.442  1.00 50.44      1HPV 950
+ATOM    766  CD  PRO B   1      27.787  29.436  12.798  1.00 35.26      1HPV 951
+ATOM    767  N   GLN B   2      26.683  31.378   8.941  1.00 35.91      1HPV 952
+ATOM    768  CA  GLN B   2      25.600  31.527   7.975  1.00 27.26      1HPV 953
+ATOM    769  C   GLN B   2      25.600  30.285   7.075  1.00 39.05      1HPV 954
+ATOM    770  O   GLN B   2      26.632  29.878   6.529  1.00 32.13      1HPV 955
+ATOM    771  CB  GLN B   2      25.758  32.801   7.159  1.00 23.20      1HPV 956
+ATOM    772  CG  GLN B   2      24.683  32.958   6.113  1.00 24.19      1HPV 957
+ATOM    773  CD  GLN B   2      24.794  34.251   5.338  1.00 50.94      1HPV 958
+ATOM    774  OE1 GLN B   2      25.719  34.439   4.548  1.00 61.32      1HPV 959
+ATOM    775  NE2 GLN B   2      23.829  35.141   5.533  1.00 57.09      1HPV 960
+ATOM    776  N   ILE B   3      24.422  29.700   6.915  1.00 34.62      1HPV 961
+ATOM    777  CA  ILE B   3      24.252  28.486   6.140  1.00 29.93      1HPV 962
+ATOM    778  C   ILE B   3      23.243  28.656   4.995  1.00 40.68      1HPV 963
+ATOM    779  O   ILE B   3      22.117  29.104   5.222  1.00 21.56      1HPV 964
+ATOM    780  CB  ILE B   3      23.792  27.356   7.096  1.00 21.04      1HPV 965
+ATOM    781  CG1 ILE B   3      24.739  27.275   8.296  1.00 23.89      1HPV 966
+ATOM    782  CG2 ILE B   3      23.770  26.017   6.401  1.00 21.34      1HPV 967
+ATOM    783  CD1 ILE B   3      24.447  26.148   9.241  1.00 24.73      1HPV 968
+ATOM    784  N   THR B   4      23.681  28.393   3.763  1.00 28.17      1HPV 969
+ATOM    785  CA  THR B   4      22.795  28.465   2.602  1.00 25.15      1HPV 970
+ATOM    786  C   THR B   4      22.110  27.101   2.454  1.00 23.47      1HPV 971
+ATOM    787  O   THR B   4      22.627  26.086   2.921  1.00 23.88      1HPV 972
+ATOM    788  CB  THR B   4      23.528  28.834   1.285  1.00 35.15      1HPV 973
+ATOM    789  OG1 THR B   4      24.611  27.923   1.049  1.00 21.12      1HPV 974
+ATOM    790  CG2 THR B   4      24.015  30.263   1.338  1.00 24.50      1HPV 975
+ATOM    791  N   LEU B   5      20.971  27.065   1.777  1.00 19.75      1HPV 976
+ATOM    792  CA  LEU B   5      20.236  25.824   1.665  1.00 14.09      1HPV 977
+ATOM    793  C   LEU B   5      20.387  24.994   0.385  1.00 20.67      1HPV 978
+ATOM    794  O   LEU B   5      19.506  24.206   0.044  1.00 22.30      1HPV 979
+ATOM    795  CB  LEU B   5      18.758  26.057   2.054  1.00 19.41      1HPV 980
+ATOM    796  CG  LEU B   5      18.317  26.212   3.527  1.00 24.20      1HPV 981
+ATOM    797  CD1 LEU B   5      19.272  25.486   4.460  1.00 17.57      1HPV 982
+ATOM    798  CD2 LEU B   5      18.209  27.641   3.926  1.00 22.93      1HPV 983
+ATOM    799  N   TRP B   6      21.532  25.120  -0.284  1.00 24.90      1HPV 984
+ATOM    800  CA  TRP B   6      21.821  24.347  -1.496  1.00 16.68      1HPV 985
+ATOM    801  C   TRP B   6      22.073  22.874  -1.163  1.00 31.82      1HPV 986
+ATOM    802  O   TRP B   6      21.912  21.984  -2.003  1.00 35.27      1HPV 987
+ATOM    803  CB  TRP B   6      23.009  24.943  -2.247  1.00 24.14      1HPV 988
+ATOM    804  CG  TRP B   6      22.654  26.231  -2.829  1.00 20.90      1HPV 989
+ATOM    805  CD1 TRP B   6      22.924  27.466  -2.324  1.00 25.30      1HPV 990
+ATOM    806  CD2 TRP B   6      21.850  26.428  -3.984  1.00 18.33      1HPV 991
+ATOM    807  NE1 TRP B   6      22.318  28.429  -3.092  1.00 30.92      1HPV 992
+ATOM    808  CE2 TRP B   6      21.653  27.818  -4.121  1.00 23.43      1HPV 993
+ATOM    809  CE3 TRP B   6      21.270  25.565  -4.917  1.00 16.02      1HPV 994
+ATOM    810  CZ2 TRP B   6      20.893  28.363  -5.162  1.00 23.56      1HPV 995
+ATOM    811  CZ3 TRP B   6      20.519  26.101  -5.943  1.00 22.77      1HPV 996
+ATOM    812  CH2 TRP B   6      20.336  27.488  -6.059  1.00 35.50      1HPV 997
+ATOM    813  N   GLN B   7      22.470  22.631   0.075  1.00 17.41      1HPV 998
+ATOM    814  CA  GLN B   7      22.705  21.292   0.563  1.00 15.31      1HPV 999
+ATOM    815  C   GLN B   7      22.039  21.198   1.923  1.00 18.23      1HPV1000
+ATOM    816  O   GLN B   7      21.843  22.217   2.583  1.00 20.47      1HPV1001
+ATOM    817  CB  GLN B   7      24.201  21.060   0.724  1.00 26.41      1HPV1002
+ATOM    818  CG  GLN B   7      24.913  20.828  -0.579  1.00 51.91      1HPV1003
+ATOM    819  CD  GLN B   7      26.371  20.489  -0.378  1.00 70.45      1HPV1004
+ATOM    820  OE1 GLN B   7      26.800  19.361  -0.636  1.00 62.56      1HPV1005
+ATOM    821  NE2 GLN B   7      27.139  21.455   0.116  1.00 42.57      1HPV1006
+ATOM    822  N   ARG B   8      21.705  19.984   2.354  1.00 21.15      1HPV1007
+ATOM    823  CA  ARG B   8      21.103  19.800   3.668  1.00 24.41      1HPV1008
+ATOM    824  C   ARG B   8      21.988  20.473   4.721  1.00 26.75      1HPV1009
+ATOM    825  O   ARG B   8      23.216  20.313   4.694  1.00 24.89      1HPV1010
+ATOM    826  CB  ARG B   8      20.997  18.315   3.995  1.00 26.71      1HPV1011
+ATOM    827  CG  ARG B   8      19.826  17.616   3.359  1.00 31.96      1HPV1012
+ATOM    828  CD  ARG B   8      19.753  16.195   3.854  1.00 35.26      1HPV1013
+ATOM    829  NE  ARG B   8      18.461  15.597   3.575  1.00 41.98      1HPV1014
+ATOM    830  CZ  ARG B   8      18.094  14.375   3.951  1.00 67.80      1HPV1015
+ATOM    831  NH1 ARG B   8      18.925  13.594   4.633  1.00 67.96      1HPV1016
+ATOM    832  NH2 ARG B   8      16.885  13.931   3.639  1.00 77.11      1HPV1017
+ATOM    833  N   PRO B   9      21.385  21.251   5.640  1.00 23.39      1HPV1018
+ATOM    834  CA  PRO B   9      22.110  21.954   6.703  1.00 18.70      1HPV1019
+ATOM    835  C   PRO B   9      22.486  21.013   7.843  1.00 17.50      1HPV1020
+ATOM    836  O   PRO B   9      21.801  20.960   8.869  1.00 17.44      1HPV1021
+ATOM    837  CB  PRO B   9      21.099  22.992   7.153  1.00 19.27      1HPV1022
+ATOM    838  CG  PRO B   9      19.820  22.218   7.047  1.00 20.66      1HPV1023
+ATOM    839  CD  PRO B   9      19.950  21.580   5.690  1.00 21.32      1HPV1024
+ATOM    840  N   LEU B  10      23.543  20.239   7.636  1.00 20.65      1HPV1025
+ATOM    841  CA  LEU B  10      23.999  19.284   8.640  1.00 22.02      1HPV1026
+ATOM    842  C   LEU B  10      25.039  19.902   9.519  1.00 15.62      1HPV1027
+ATOM    843  O   LEU B  10      25.896  20.643   9.057  1.00 26.58      1HPV1028
+ATOM    844  CB  LEU B  10      24.573  18.041   7.986  1.00 31.12      1HPV1029
+ATOM    845  CG  LEU B  10      23.605  17.141   7.240  1.00 20.77      1HPV1030
+ATOM    846  CD1 LEU B  10      24.410  16.056   6.553  1.00 42.65      1HPV1031
+ATOM    847  CD2 LEU B  10      22.621  16.526   8.216  1.00 35.78      1HPV1032
+ATOM    848  N   VAL B  11      24.996  19.557  10.787  1.00 16.06      1HPV1033
+ATOM    849  CA  VAL B  11      25.931  20.103  11.721  1.00 12.57      1HPV1034
+ATOM    850  C   VAL B  11      26.373  18.984  12.682  1.00 20.76      1HPV1035
+ATOM    851  O   VAL B  11      25.672  17.990  12.835  1.00 29.01      1HPV1036
+ATOM    852  CB  VAL B  11      25.257  21.279  12.444  1.00 24.75      1HPV1037
+ATOM    853  CG1 VAL B  11      24.438  20.795  13.638  1.00 15.42      1HPV1038
+ATOM    854  CG2 VAL B  11      26.273  22.336  12.791  1.00 36.27      1HPV1039
+ATOM    855  N   THR B  12      27.585  19.097  13.224  1.00 29.67      1HPV1040
+ATOM    856  CA  THR B  12      28.117  18.124  14.180  1.00 29.46      1HPV1041
+ATOM    857  C   THR B  12      27.659  18.442  15.611  1.00 25.73      1HPV1042
+ATOM    858  O   THR B  12      27.761  19.588  16.061  1.00 29.69      1HPV1043
+ATOM    859  CB  THR B  12      29.673  18.080  14.150  1.00 17.60      1HPV1044
+ATOM    860  OG1 THR B  12      30.117  17.725  12.836  1.00 32.27      1HPV1045
+ATOM    861  CG2 THR B  12      30.174  17.018  15.105  1.00 29.09      1HPV1046
+ATOM    862  N   ILE B  13      27.101  17.441  16.293  1.00 19.13      1HPV1047
+ATOM    863  CA  ILE B  13      26.639  17.607  17.675  1.00 21.71      1HPV1048
+ATOM    864  C   ILE B  13      27.341  16.598  18.593  1.00 30.38      1HPV1049
+ATOM    865  O   ILE B  13      27.900  15.603  18.130  1.00 23.25      1HPV1050
+ATOM    866  CB  ILE B  13      25.090  17.447  17.819  1.00 23.42      1HPV1051
+ATOM    867  CG1 ILE B  13      24.659  15.993  17.564  1.00 25.47      1HPV1052
+ATOM    868  CG2 ILE B  13      24.379  18.416  16.885  1.00 25.49      1HPV1053
+ATOM    869  CD1 ILE B  13      23.167  15.717  17.800  1.00 18.40      1HPV1054
+ATOM    870  N   LYS B  14      27.354  16.882  19.884  1.00 18.93      1HPV1055
+ATOM    871  CA  LYS B  14      27.946  15.983  20.848  1.00 20.10      1HPV1056
+ATOM    872  C   LYS B  14      26.929  15.812  21.986  1.00 20.94      1HPV1057
+ATOM    873  O   LYS B  14      26.580  16.781  22.659  1.00 20.94      1HPV1058
+ATOM    874  CB  LYS B  14      29.263  16.545  21.353  1.00 16.23      1HPV1059
+ATOM    875  CG  LYS B  14      29.998  15.570  22.244  1.00 25.50      1HPV1060
+ATOM    876  CD  LYS B  14      31.339  16.113  22.657  1.00 29.85      1HPV1061
+ATOM    877  CE  LYS B  14      31.874  15.302  23.815  1.00 35.27      1HPV1062
+ATOM    878  NZ  LYS B  14      33.252  15.691  24.164  1.00 35.42      1HPV1063
+ATOM    879  N   ILE B  15      26.434  14.589  22.164  1.00 19.26      1HPV1064
+ATOM    880  CA  ILE B  15      25.422  14.260  23.180  1.00 19.87      1HPV1065
+ATOM    881  C   ILE B  15      25.864  13.002  23.895  1.00 30.52      1HPV1066
+ATOM    882  O   ILE B  15      26.224  12.015  23.252  1.00 24.03      1HPV1067
+ATOM    883  CB  ILE B  15      24.045  13.846  22.558  1.00 24.86      1HPV1068
+ATOM    884  CG1 ILE B  15      23.955  14.264  21.109  1.00 26.65      1HPV1069
+ATOM    885  CG2 ILE B  15      22.877  14.335  23.391  1.00 16.91      1HPV1070
+ATOM    886  CD1 ILE B  15      24.624  13.290  20.200  1.00 33.86      1HPV1071
+ATOM    887  N   GLY B  16      25.780  13.015  25.218  1.00 22.50      1HPV1072
+ATOM    888  CA  GLY B  16      26.158  11.852  26.001  1.00 32.87      1HPV1073
+ATOM    889  C   GLY B  16      27.493  11.210  25.663  1.00 20.51      1HPV1074
+ATOM    890  O   GLY B  16      27.620   9.996  25.706  1.00 24.92      1HPV1075
+ATOM    891  N   GLY B  17      28.492  12.020  25.350  1.00 36.61      1HPV1076
+ATOM    892  CA  GLY B  17      29.798  11.486  25.022  1.00 16.54      1HPV1077
+ATOM    893  C   GLY B  17      29.963  10.942  23.621  1.00 28.56      1HPV1078
+ATOM    894  O   GLY B  17      31.028  10.406  23.307  1.00 28.64      1HPV1079
+ATOM    895  N   GLN B  18      28.950  11.111  22.770  1.00 23.97      1HPV1080
+ATOM    896  CA  GLN B  18      28.995  10.612  21.397  1.00 19.82      1HPV1081
+ATOM    897  C   GLN B  18      28.880  11.724  20.390  1.00 20.37      1HPV1082
+ATOM    898  O   GLN B  18      28.136  12.662  20.606  1.00 30.40      1HPV1083
+ATOM    899  CB  GLN B  18      27.854   9.627  21.158  1.00 17.97      1HPV1084
+ATOM    900  CG  GLN B  18      27.975   8.317  21.894  1.00 20.29      1HPV1085
+ATOM    901  CD  GLN B  18      26.664   7.581  21.988  1.00 18.79      1HPV1086
+ATOM    902  OE1 GLN B  18      26.161   7.045  21.001  1.00 44.77      1HPV1087
+ATOM    903  NE2 GLN B  18      26.116   7.516  23.193  1.00 21.80      1HPV1088
+ATOM    904  N   LEU B  19      29.535  11.549  19.245  1.00 17.12      1HPV1089
+ATOM    905  CA  LEU B  19      29.529  12.533  18.177  1.00 18.14      1HPV1090
+ATOM    906  C   LEU B  19      28.597  12.055  17.068  1.00 21.15      1HPV1091
+ATOM    907  O   LEU B  19      28.757  10.956  16.542  1.00 16.17      1HPV1092
+ATOM    908  CB  LEU B  19      30.946  12.730  17.643  1.00 25.28      1HPV1093
+ATOM    909  CG  LEU B  19      32.046  12.978  18.688  1.00 23.99      1HPV1094
+ATOM    910  CD1 LEU B  19      33.376  13.179  17.995  1.00 24.61      1HPV1095
+ATOM    911  CD2 LEU B  19      31.721  14.185  19.519  1.00 18.11      1HPV1096
+ATOM    912  N   LYS B  20      27.651  12.906  16.695  1.00 17.32      1HPV1097
+ATOM    913  CA  LYS B  20      26.657  12.605  15.668  1.00 18.84      1HPV1098
+ATOM    914  C   LYS B  20      26.435  13.811  14.782  1.00 18.82      1HPV1099
+ATOM    915  O   LYS B  20      26.823  14.916  15.148  1.00 24.17      1HPV1100
+ATOM    916  CB  LYS B  20      25.338  12.229  16.344  1.00 16.37      1HPV1101
+ATOM    917  CG  LYS B  20      25.345  10.789  16.845  1.00 21.79      1HPV1102
+ATOM    918  CD  LYS B  20      24.162  10.457  17.719  1.00 37.22      1HPV1103
+ATOM    919  CE  LYS B  20      23.948   8.951  17.775  1.00 59.04      1HPV1104
+ATOM    920  NZ  LYS B  20      25.152   8.169  18.191  1.00 45.95      1HPV1105
+ATOM    921  N   GLU B  21      25.904  13.597  13.579  1.00 24.42      1HPV1106
+ATOM    922  CA  GLU B  21      25.607  14.708  12.675  1.00 16.62      1HPV1107
+ATOM    923  C   GLU B  21      24.104  14.889  12.709  1.00 17.42      1HPV1108
+ATOM    924  O   GLU B  21      23.363  13.906  12.727  1.00 16.23      1HPV1109
+ATOM    925  CB  GLU B  21      26.064  14.427  11.240  1.00 13.90      1HPV1110
+ATOM    926  CG  GLU B  21      27.504  14.820  10.959  1.00 34.76      1HPV1111
+ATOM    927  CD  GLU B  21      27.874  14.723   9.477  1.00 34.69      1HPV1112
+ATOM    928  OE1 GLU B  21      27.706  15.733   8.767  1.00 67.01      1HPV1113
+ATOM    929  OE2 GLU B  21      28.347  13.653   9.026  1.00 51.53      1HPV1114
+ATOM    930  N   ALA B  22      23.652  16.134  12.739  1.00 16.47      1HPV1115
+ATOM    931  CA  ALA B  22      22.225  16.396  12.769  1.00 18.64      1HPV1116
+ATOM    932  C   ALA B  22      21.774  17.465  11.767  1.00 19.16      1HPV1117
+ATOM    933  O   ALA B  22      22.563  18.294  11.320  1.00 18.55      1HPV1118
+ATOM    934  CB  ALA B  22      21.796  16.764  14.175  1.00 27.08      1HPV1119
+ATOM    935  N   LEU B  23      20.491  17.421  11.428  1.00 20.77      1HPV1120
+ATOM    936  CA  LEU B  23      19.851  18.329  10.488  1.00 26.20      1HPV1121
+ATOM    937  C   LEU B  23      19.226  19.535  11.199  1.00 24.37      1HPV1122
+ATOM    938  O   LEU B  23      18.422  19.374  12.113  1.00 27.58      1HPV1123
+ATOM    939  CB  LEU B  23      18.751  17.547   9.758  1.00 28.28      1HPV1124
+ATOM    940  CG  LEU B  23      17.970  18.129   8.581  1.00 39.61      1HPV1125
+ATOM    941  CD1 LEU B  23      18.838  18.170   7.339  1.00 26.17      1HPV1126
+ATOM    942  CD2 LEU B  23      16.776  17.234   8.320  1.00 30.32      1HPV1127
+ATOM    943  N   LEU B  24      19.628  20.743  10.832  1.00 24.47      1HPV1128
+ATOM    944  CA  LEU B  24      19.016  21.915  11.453  1.00 24.13      1HPV1129
+ATOM    945  C   LEU B  24      17.656  21.961  10.772  1.00 30.44      1HPV1130
+ATOM    946  O   LEU B  24      17.575  22.171   9.570  1.00 23.90      1HPV1131
+ATOM    947  CB  LEU B  24      19.814  23.178  11.163  1.00 27.53      1HPV1132
+ATOM    948  CG  LEU B  24      21.226  23.248  11.744  1.00 17.61      1HPV1133
+ATOM    949  CD1 LEU B  24      21.756  24.641  11.486  1.00 22.55      1HPV1134
+ATOM    950  CD2 LEU B  24      21.204  22.945  13.240  1.00 18.85      1HPV1135
+ATOM    951  N   ASP B  25      16.599  21.787  11.552  1.00 15.87      1HPV1136
+ATOM    952  CA  ASP B  25      15.250  21.705  11.030  1.00 11.07      1HPV1137
+ATOM    953  C   ASP B  25      14.252  22.749  11.583  1.00 16.26      1HPV1138
+ATOM    954  O   ASP B  25      13.675  22.546  12.639  1.00 21.13      1HPV1139
+ATOM    955  CB  ASP B  25      14.763  20.278  11.348  1.00 13.65      1HPV1140
+ATOM    956  CG  ASP B  25      13.592  19.853  10.516  1.00 14.86      1HPV1141
+ATOM    957  OD1 ASP B  25      13.008  20.691   9.818  1.00 23.57      1HPV1142
+ATOM    958  OD2 ASP B  25      13.269  18.659  10.551  1.00 25.35      1HPV1143
+ATOM    959  N   THR B  26      13.965  23.806  10.822  1.00 20.20      1HPV1144
+ATOM    960  CA  THR B  26      13.009  24.838  11.263  1.00 13.99      1HPV1145
+ATOM    961  C   THR B  26      11.530  24.373  11.316  1.00 17.73      1HPV1146
+ATOM    962  O   THR B  26      10.699  24.981  11.988  1.00 19.88      1HPV1147
+ATOM    963  CB  THR B  26      13.137  26.134  10.416  1.00 20.52      1HPV1148
+ATOM    964  OG1 THR B  26      13.002  25.844   9.017  1.00 22.52      1HPV1149
+ATOM    965  CG2 THR B  26      14.492  26.792  10.648  1.00 19.07      1HPV1150
+ATOM    966  N   GLY B  27      11.222  23.280  10.626  1.00 25.99      1HPV1151
+ATOM    967  CA  GLY B  27       9.875  22.746  10.630  1.00 13.25      1HPV1152
+ATOM    968  C   GLY B  27       9.664  21.679  11.683  1.00 14.57      1HPV1153
+ATOM    969  O   GLY B  27       8.661  20.988  11.654  1.00 19.81      1HPV1154
+ATOM    970  N   ALA B  28      10.659  21.481  12.550  1.00 24.28      1HPV1155
+ATOM    971  CA  ALA B  28      10.575  20.504  13.632  1.00 23.77      1HPV1156
+ATOM    972  C   ALA B  28      10.433  21.298  14.918  1.00 23.39      1HPV1157
+ATOM    973  O   ALA B  28      11.262  22.144  15.216  1.00 18.88      1HPV1158
+ATOM    974  CB  ALA B  28      11.831  19.638  13.675  1.00 15.26      1HPV1159
+ATOM    975  N   ASP B  29       9.350  21.074  15.654  1.00 16.99      1HPV1160
+ATOM    976  CA  ASP B  29       9.140  21.801  16.898  1.00 15.48      1HPV1161
+ATOM    977  C   ASP B  29      10.091  21.275  17.944  1.00 15.34      1HPV1162
+ATOM    978  O   ASP B  29      10.591  22.032  18.767  1.00 23.28      1HPV1163
+ATOM    979  CB  ASP B  29       7.726  21.602  17.448  1.00 14.34      1HPV1164
+ATOM    980  CG  ASP B  29       6.654  21.956  16.461  1.00 21.52      1HPV1165
+ATOM    981  OD1 ASP B  29       6.677  23.061  15.863  1.00 23.19      1HPV1166
+ATOM    982  OD2 ASP B  29       5.773  21.099  16.291  1.00 44.95      1HPV1167
+ATOM    983  N   ASP B  30      10.267  19.954  17.940  1.00 15.96      1HPV1168
+ATOM    984  CA  ASP B  30      11.109  19.248  18.901  1.00 28.17      1HPV1169
+ATOM    985  C   ASP B  30      12.306  18.594  18.232  1.00 19.89      1HPV1170
+ATOM    986  O   ASP B  30      12.294  18.319  17.034  1.00 21.95      1HPV1171
+ATOM    987  CB  ASP B  30      10.324  18.114  19.567  1.00 38.38      1HPV1172
+ATOM    988  CG  ASP B  30       9.036  18.572  20.182  1.00 27.60      1HPV1173
+ATOM    989  OD1 ASP B  30       9.082  19.527  20.992  1.00 36.54      1HPV1174
+ATOM    990  OD2 ASP B  30       7.989  17.952  19.862  1.00 44.63      1HPV1175
+ATOM    991  N   THR B  31      13.277  18.246  19.064  1.00 28.08      1HPV1176
+ATOM    992  CA  THR B  31      14.506  17.600  18.648  1.00 17.86      1HPV1177
+ATOM    993  C   THR B  31      14.310  16.115  18.817  1.00 16.02      1HPV1178
+ATOM    994  O   THR B  31      13.931  15.641  19.884  1.00 23.23      1HPV1179
+ATOM    995  CB  THR B  31      15.662  18.072  19.515  1.00 16.17      1HPV1180
+ATOM    996  OG1 THR B  31      15.895  19.462  19.233  1.00 16.34      1HPV1181
+ATOM    997  CG2 THR B  31      16.932  17.263  19.248  1.00 10.98      1HPV1182
+ATOM    998  N   VAL B  32      14.519  15.388  17.739  1.00 22.02      1HPV1183
+ATOM    999  CA  VAL B  32      14.357  13.957  17.766  1.00 19.93      1HPV1184
+ATOM   1000  C   VAL B  32      15.599  13.305  17.175  1.00 31.50      1HPV1185
+ATOM   1001  O   VAL B  32      16.007  13.612  16.060  1.00 18.34      1HPV1186
+ATOM   1002  CB  VAL B  32      13.055  13.538  17.044  1.00 26.92      1HPV1187
+ATOM   1003  CG1 VAL B  32      12.993  14.105  15.649  1.00 30.48      1HPV1188
+ATOM   1004  CG2 VAL B  32      12.914  12.033  17.040  1.00 23.64      1HPV1189
+ATOM   1005  N   LEU B  33      16.226  12.456  17.980  1.00 17.67      1HPV1190
+ATOM   1006  CA  LEU B  33      17.441  11.743  17.635  1.00 24.04      1HPV1191
+ATOM   1007  C   LEU B  33      17.205  10.261  17.423  1.00 17.54      1HPV1192
+ATOM   1008  O   LEU B  33      16.321   9.653  18.045  1.00 17.04      1HPV1193
+ATOM   1009  CB  LEU B  33      18.463  11.889  18.764  1.00 14.16      1HPV1194
+ATOM   1010  CG  LEU B  33      19.451  13.039  18.797  1.00 25.42      1HPV1195
+ATOM   1011  CD1 LEU B  33      18.773  14.357  18.598  1.00 40.91      1HPV1196
+ATOM   1012  CD2 LEU B  33      20.139  12.999  20.136  1.00 28.64      1HPV1197
+ATOM   1013  N   GLU B  34      18.052   9.680  16.586  1.00 27.26      1HPV1198
+ATOM   1014  CA  GLU B  34      18.003   8.263  16.297  1.00 36.54      1HPV1199
+ATOM   1015  C   GLU B  34      18.323   7.493  17.594  1.00 29.16      1HPV1200
+ATOM   1016  O   GLU B  34      18.889   8.047  18.546  1.00 26.10      1HPV1201
+ATOM   1017  CB  GLU B  34      19.003   7.924  15.188  1.00 24.55      1HPV1202
+ATOM   1018  CG  GLU B  34      20.457   8.225  15.533  1.00 69.25      1HPV1203
+ATOM   1019  CD  GLU B  34      21.370   8.160  14.324  1.00 87.15      1HPV1204
+ATOM   1020  OE1 GLU B  34      20.857   7.958  13.196  1.00 76.90      1HPV1205
+ATOM   1021  OE2 GLU B  34      22.602   8.317  14.509  1.00 65.61      1HPV1206
+ATOM   1022  N   GLU B  35      17.918   6.230  17.646  1.00 30.28      1HPV1207
+ATOM   1023  CA  GLU B  35      18.137   5.410  18.819  1.00 38.19      1HPV1208
+ATOM   1024  C   GLU B  35      19.583   5.451  19.305  1.00 34.16      1HPV1209
+ATOM   1025  O   GLU B  35      20.519   5.173  18.553  1.00 34.45      1HPV1210
+ATOM   1026  CB  GLU B  35      17.687   3.986  18.537  1.00 34.21      1HPV1211
+ATOM   1027  CG  GLU B  35      16.320   3.688  19.105  1.00 45.61      1HPV1212
+ATOM   1028  CD  GLU B  35      16.297   3.738  20.624  1.00 50.21      1HPV1213
+ATOM   1029  OE1 GLU B  35      17.367   3.549  21.252  1.00 53.95      1HPV1214
+ATOM   1030  OE2 GLU B  35      15.209   3.973  21.189  1.00 62.70      1HPV1215
+ATOM   1031  N   MET B  36      19.769   5.756  20.580  1.00 28.39      1HPV1216
+ATOM   1032  CA  MET B  36      21.118   5.851  21.105  1.00 40.94      1HPV1217
+ATOM   1033  C   MET B  36      21.208   5.604  22.594  1.00 47.21      1HPV1218
+ATOM   1034  O   MET B  36      20.191   5.627  23.295  1.00 40.12      1HPV1219
+ATOM   1035  CB  MET B  36      21.716   7.218  20.774  1.00 41.35      1HPV1220
+ATOM   1036  CG  MET B  36      20.933   8.413  21.307  1.00 32.21      1HPV1221
+ATOM   1037  SD  MET B  36      21.919   9.863  21.044  1.00 40.27      1HPV1222
+ATOM   1038  CE  MET B  36      23.222   9.577  22.149  1.00 28.73      1HPV1223
+ATOM   1039  N   SER B  37      22.440   5.388  23.060  1.00 50.78      1HPV1224
+ATOM   1040  CA  SER B  37      22.728   5.128  24.462  1.00 59.75      1HPV1225
+ATOM   1041  C   SER B  37      22.735   6.455  25.231  1.00 59.06      1HPV1226
+ATOM   1042  O   SER B  37      23.636   7.291  25.063  1.00 43.38      1HPV1227
+ATOM   1043  CB  SER B  37      24.079   4.389  24.591  1.00 40.33      1HPV1228
+ATOM   1044  OG  SER B  37      24.234   3.737  25.845  1.00 78.19      1HPV1229
+ATOM   1045  N   LEU B  38      21.651   6.675  25.971  1.00 43.57      1HPV1230
+ATOM   1046  CA  LEU B  38      21.467   7.855  26.803  1.00 34.69      1HPV1231
+ATOM   1047  C   LEU B  38      21.080   7.375  28.204  1.00 56.07      1HPV1232
+ATOM   1048  O   LEU B  38      20.373   6.371  28.354  1.00 49.19      1HPV1233
+ATOM   1049  CB  LEU B  38      20.380   8.771  26.233  1.00 26.86      1HPV1234
+ATOM   1050  CG  LEU B  38      20.828   9.768  25.167  1.00 21.46      1HPV1235
+ATOM   1051  CD1 LEU B  38      19.645  10.495  24.576  1.00 23.95      1HPV1236
+ATOM   1052  CD2 LEU B  38      21.793  10.761  25.789  1.00 25.48      1HPV1237
+ATOM   1053  N   PRO B  39      21.653   8.008  29.238  1.00 57.75      1HPV1238
+ATOM   1054  CA  PRO B  39      21.416   7.700  30.647  1.00 50.40      1HPV1239
+ATOM   1055  C   PRO B  39      20.304   8.554  31.224  1.00 34.35      1HPV1240
+ATOM   1056  O   PRO B  39      20.091   9.691  30.798  1.00 47.93      1HPV1241
+ATOM   1057  CB  PRO B  39      22.739   8.089  31.288  1.00 45.06      1HPV1242
+ATOM   1058  CG  PRO B  39      23.042   9.345  30.554  1.00 45.46      1HPV1243
+ATOM   1059  CD  PRO B  39      22.779   8.952  29.112  1.00 56.15      1HPV1244
+ATOM   1060  N   GLY B  40      19.638   8.015  32.237  1.00 58.90      1HPV1245
+ATOM   1061  CA  GLY B  40      18.569   8.732  32.895  1.00 72.06      1HPV1246
+ATOM   1062  C   GLY B  40      17.216   8.098  32.670  1.00 60.12      1HPV1247
+ATOM   1063  O   GLY B  40      17.084   7.087  31.963  1.00 41.40      1HPV1248
+ATOM   1064  N   ARG B  41      16.209   8.657  33.329  1.00 33.55      1HPV1249
+ATOM   1065  CA  ARG B  41      14.873   8.144  33.164  1.00 48.88      1HPV1250
+ATOM   1066  C   ARG B  41      14.264   8.924  32.009  1.00 49.20      1HPV1251
+ATOM   1067  O   ARG B  41      14.699  10.044  31.701  1.00 50.13      1HPV1252
+ATOM   1068  CB  ARG B  41      14.055   8.274  34.459  1.00 68.93      1HPV1253
+ATOM   1069  CG  ARG B  41      13.373   9.614  34.707  1.00114.93      1HPV1254
+ATOM   1070  CD  ARG B  41      14.332  10.704  35.156  1.00128.18      1HPV1255
+ATOM   1071  NE  ARG B  41      13.631  11.980  35.270  1.00124.18      1HPV1256
+ATOM   1072  CZ  ARG B  41      13.174  12.687  34.237  1.00121.95      1HPV1257
+ATOM   1073  NH1 ARG B  41      13.354  12.261  32.991  1.00107.36      1HPV1258
+ATOM   1074  NH2 ARG B  41      12.543  13.831  34.453  1.00126.09      1HPV1259
+ATOM   1075  N   TRP B  42      13.305   8.307  31.339  1.00 40.11      1HPV1260
+ATOM   1076  CA  TRP B  42      12.635   8.937  30.227  1.00 34.99      1HPV1261
+ATOM   1077  C   TRP B  42      11.143   8.711  30.371  1.00 27.33      1HPV1262
+ATOM   1078  O   TRP B  42      10.702   7.984  31.264  1.00 47.69      1HPV1263
+ATOM   1079  CB  TRP B  42      13.150   8.350  28.917  1.00 39.75      1HPV1264
+ATOM   1080  CG  TRP B  42      13.230   6.863  28.912  1.00 37.99      1HPV1265
+ATOM   1081  CD1 TRP B  42      14.329   6.109  29.200  1.00 38.07      1HPV1266
+ATOM   1082  CD2 TRP B  42      12.185   5.945  28.586  1.00 33.20      1HPV1267
+ATOM   1083  NE1 TRP B  42      14.035   4.775  29.068  1.00 33.24      1HPV1268
+ATOM   1084  CE2 TRP B  42      12.723   4.645  28.694  1.00 46.96      1HPV1269
+ATOM   1085  CE3 TRP B  42      10.845   6.089  28.206  1.00 36.82      1HPV1270
+ATOM   1086  CZ2 TRP B  42      11.968   3.501  28.439  1.00 76.40      1HPV1271
+ATOM   1087  CZ3 TRP B  42      10.095   4.943  27.951  1.00 34.26      1HPV1272
+ATOM   1088  CH2 TRP B  42      10.659   3.670  28.069  1.00 49.01      1HPV1273
+ATOM   1089  N   LYS B  43      10.375   9.317  29.473  1.00 36.69      1HPV1274
+ATOM   1090  CA  LYS B  43       8.921   9.194  29.468  1.00 45.77      1HPV1275
+ATOM   1091  C   LYS B  43       8.480   8.783  28.062  1.00 37.58      1HPV1276
+ATOM   1092  O   LYS B  43       8.983   9.308  27.077  1.00 51.64      1HPV1277
+ATOM   1093  CB  LYS B  43       8.277  10.535  29.823  1.00 39.57      1HPV1278
+ATOM   1094  CG  LYS B  43       8.879  11.219  31.037  1.00 57.75      1HPV1279
+ATOM   1095  CD  LYS B  43       8.109  12.473  31.405  1.00 42.18      1HPV1280
+ATOM   1096  CE  LYS B  43       6.707  12.130  31.909  1.00 85.52      1HPV1281
+ATOM   1097  NZ  LYS B  43       5.931  13.341  32.335  1.00 77.67      1HPV1282
+ATOM   1098  N   PRO B  44       7.599   7.777  27.948  1.00 42.01      1HPV1283
+ATOM   1099  CA  PRO B  44       7.151   7.364  26.613  1.00 54.15      1HPV1284
+ATOM   1100  C   PRO B  44       6.141   8.341  26.005  1.00 51.71      1HPV1285
+ATOM   1101  O   PRO B  44       4.997   8.444  26.456  1.00 80.30      1HPV1286
+ATOM   1102  CB  PRO B  44       6.562   5.976  26.860  1.00 60.77      1HPV1287
+ATOM   1103  CG  PRO B  44       6.102   6.039  28.275  1.00 35.45      1HPV1288
+ATOM   1104  CD  PRO B  44       7.185   6.802  28.974  1.00 42.71      1HPV1289
+ATOM   1105  N   LYS B  45       6.623   9.115  25.040  1.00 50.93      1HPV1290
+ATOM   1106  CA  LYS B  45       5.833  10.106  24.318  1.00 34.43      1HPV1291
+ATOM   1107  C   LYS B  45       5.545   9.594  22.896  1.00 19.25      1HPV1292
+ATOM   1108  O   LYS B  45       6.033   8.539  22.497  1.00 28.62      1HPV1293
+ATOM   1109  CB  LYS B  45       6.640  11.410  24.248  1.00 39.28      1HPV1294
+ATOM   1110  CG  LYS B  45       5.908  12.594  23.658  1.00 46.08      1HPV1295
+ATOM   1111  CD  LYS B  45       6.866  13.725  23.336  1.00 47.46      1HPV1296
+ATOM   1112  CE  LYS B  45       6.147  15.037  23.023  1.00 61.28      1HPV1297
+ATOM   1113  NZ  LYS B  45       7.147  16.099  22.684  1.00 92.54      1HPV1298
+ATOM   1114  N   MET B  46       4.766  10.350  22.130  1.00 40.07      1HPV1299
+ATOM   1115  CA  MET B  46       4.437   9.986  20.752  1.00 41.88      1HPV1300
+ATOM   1116  C   MET B  46       4.316  11.216  19.891  1.00 28.63      1HPV1301
+ATOM   1117  O   MET B  46       3.621  12.158  20.260  1.00 32.03      1HPV1302
+ATOM   1118  CB  MET B  46       3.110   9.250  20.688  1.00 55.33      1HPV1303
+ATOM   1119  CG  MET B  46       3.239   7.768  20.683  1.00 69.21      1HPV1304
+ATOM   1120  SD  MET B  46       1.633   7.092  20.452  1.00 65.76      1HPV1305
+ATOM   1121  CE  MET B  46       1.605   7.025  18.682  1.00 50.50      1HPV1306
+ATOM   1122  N   ILE B  47       4.953  11.190  18.726  1.00 34.41      1HPV1307
+ATOM   1123  CA  ILE B  47       4.899  12.323  17.814  1.00 30.71      1HPV1308
+ATOM   1124  C   ILE B  47       4.435  11.944  16.420  1.00 23.68      1HPV1309
+ATOM   1125  O   ILE B  47       4.522  10.790  15.998  1.00 27.29      1HPV1310
+ATOM   1126  CB  ILE B  47       6.269  13.051  17.677  1.00 29.23      1HPV1311
+ATOM   1127  CG1 ILE B  47       7.370  12.087  17.248  1.00 26.21      1HPV1312
+ATOM   1128  CG2 ILE B  47       6.632  13.725  18.976  1.00 52.00      1HPV1313
+ATOM   1129  CD1 ILE B  47       8.654  12.777  16.846  1.00 34.18      1HPV1314
+ATOM   1130  N   GLY B  48       3.969  12.946  15.697  1.00 23.22      1HPV1315
+ATOM   1131  CA  GLY B  48       3.515  12.725  14.344  1.00 26.04      1HPV1316
+ATOM   1132  C   GLY B  48       4.238  13.635  13.366  1.00 31.91      1HPV1317
+ATOM   1133  O   GLY B  48       4.786  14.682  13.741  1.00 28.37      1HPV1318
+ATOM   1134  N   GLY B  49       4.249  13.206  12.109  1.00 26.63      1HPV1319
+ATOM   1135  CA  GLY B  49       4.864  13.960  11.039  1.00 31.34      1HPV1320
+ATOM   1136  C   GLY B  49       4.356  13.381   9.744  1.00 18.43      1HPV1321
+ATOM   1137  O   GLY B  49       3.319  12.727   9.706  1.00 38.83      1HPV1322
+ATOM   1138  N   ILE B  50       5.081  13.616   8.666  1.00 32.12      1HPV1323
+ATOM   1139  CA  ILE B  50       4.708  13.064   7.374  1.00 38.04      1HPV1324
+ATOM   1140  C   ILE B  50       4.856  11.549   7.460  1.00 39.08      1HPV1325
+ATOM   1141  O   ILE B  50       5.780  11.039   8.101  1.00 48.69      1HPV1326
+ATOM   1142  CB  ILE B  50       5.578  13.675   6.226  1.00 31.92      1HPV1327
+ATOM   1143  CG1 ILE B  50       4.849  14.865   5.600  1.00 29.88      1HPV1328
+ATOM   1144  CG2 ILE B  50       5.904  12.646   5.152  1.00 42.13      1HPV1329
+ATOM   1145  CD1 ILE B  50       5.545  15.467   4.396  1.00 72.44      1HPV1330
+ATOM   1146  N   GLY B  51       3.894  10.840   6.900  1.00 38.50      1HPV1331
+ATOM   1147  CA  GLY B  51       3.972   9.406   6.916  1.00 23.58      1HPV1332
+ATOM   1148  C   GLY B  51       3.324   8.766   8.125  1.00 40.63      1HPV1333
+ATOM   1149  O   GLY B  51       3.088   7.562   8.121  1.00 44.48      1HPV1334
+ATOM   1150  N   GLY B  52       3.051   9.545   9.167  1.00 43.91      1HPV1335
+ATOM   1151  CA  GLY B  52       2.422   8.963  10.341  1.00 32.55      1HPV1336
+ATOM   1152  C   GLY B  52       2.983   9.375  11.690  1.00 39.62      1HPV1337
+ATOM   1153  O   GLY B  52       3.547  10.455  11.835  1.00 34.26      1HPV1338
+ATOM   1154  N   PHE B  53       2.875   8.474  12.660  1.00 31.67      1HPV1339
+ATOM   1155  CA  PHE B  53       3.322   8.723  14.021  1.00 27.31      1HPV1340
+ATOM   1156  C   PHE B  53       4.385   7.738  14.491  1.00 44.11      1HPV1341
+ATOM   1157  O   PHE B  53       4.503   6.634  13.954  1.00 44.13      1HPV1342
+ATOM   1158  CB  PHE B  53       2.118   8.643  14.971  1.00 27.70      1HPV1343
+ATOM   1159  CG  PHE B  53       1.218   7.451  14.721  1.00 72.94      1HPV1344
+ATOM   1160  CD1 PHE B  53       1.574   6.176  15.168  1.00 97.70      1HPV1345
+ATOM   1161  CD2 PHE B  53       0.019   7.601  14.027  1.00 93.83      1HPV1346
+ATOM   1162  CE1 PHE B  53       0.753   5.074  14.923  1.00 96.32      1HPV1347
+ATOM   1163  CE2 PHE B  53      -0.811   6.498  13.779  1.00 94.33      1HPV1348
+ATOM   1164  CZ  PHE B  53      -0.441   5.238  14.229  1.00 95.57      1HPV1349
+ATOM   1165  N   ILE B  54       5.160   8.138  15.493  1.00 32.87      1HPV1350
+ATOM   1166  CA  ILE B  54       6.166   7.251  16.054  1.00 40.56      1HPV1351
+ATOM   1167  C   ILE B  54       6.193   7.358  17.580  1.00 33.11      1HPV1352
+ATOM   1168  O   ILE B  54       5.847   8.402  18.149  1.00 25.04      1HPV1353
+ATOM   1169  CB  ILE B  54       7.619   7.442  15.457  1.00 30.50      1HPV1354
+ATOM   1170  CG1 ILE B  54       8.210   8.810  15.798  1.00 32.55      1HPV1355
+ATOM   1171  CG2 ILE B  54       7.628   7.197  13.974  1.00 38.99      1HPV1356
+ATOM   1172  CD1 ILE B  54       9.681   8.900  15.455  1.00 20.11      1HPV1357
+ATOM   1173  N   LYS B  55       6.476   6.220  18.216  1.00 22.22      1HPV1358
+ATOM   1174  CA  LYS B  55       6.598   6.097  19.661  1.00 39.05      1HPV1359
+ATOM   1175  C   LYS B  55       8.021   6.568  19.892  1.00 17.13      1HPV1360
+ATOM   1176  O   LYS B  55       8.955   6.047  19.277  1.00 30.62      1HPV1361
+ATOM   1177  CB  LYS B  55       6.457   4.631  20.079  1.00 41.56      1HPV1362
+ATOM   1178  CG  LYS B  55       5.241   4.314  20.936  1.00 59.45      1HPV1363
+ATOM   1179  CD  LYS B  55       5.335   4.957  22.311  1.00 64.66      1HPV1364
+ATOM   1180  CE  LYS B  55       4.035   4.778  23.075  1.00 74.20      1HPV1365
+ATOM   1181  NZ  LYS B  55       3.926   5.748  24.200  1.00 56.90      1HPV1366
+ATOM   1182  N   VAL B  56       8.191   7.472  20.845  1.00 35.17      1HPV1367
+ATOM   1183  CA  VAL B  56       9.484   8.077  21.117  1.00 35.40      1HPV1368
+ATOM   1184  C   VAL B  56       9.728   8.157  22.644  1.00 23.73      1HPV1369
+ATOM   1185  O   VAL B  56       8.782   8.171  23.426  1.00 29.40      1HPV1370
+ATOM   1186  CB  VAL B  56       9.458   9.482  20.424  1.00 28.69      1HPV1371
+ATOM   1187  CG1 VAL B  56       9.600  10.614  21.410  1.00 25.05      1HPV1372
+ATOM   1188  CG2 VAL B  56      10.432   9.524  19.250  1.00 27.18      1HPV1373
+ATOM   1189  N   ARG B  57      10.984   8.132  23.078  1.00 21.96      1HPV1374
+ATOM   1190  CA  ARG B  57      11.290   8.236  24.502  1.00 19.99      1HPV1375
+ATOM   1191  C   ARG B  57      11.789   9.644  24.803  1.00 28.73      1HPV1376
+ATOM   1192  O   ARG B  57      12.772  10.100  24.234  1.00 31.26      1HPV1377
+ATOM   1193  CB  ARG B  57      12.349   7.216  24.903  1.00 26.93      1HPV1378
+ATOM   1194  CG  ARG B  57      11.953   5.786  24.626  1.00 44.86      1HPV1379
+ATOM   1195  CD  ARG B  57      13.039   4.826  25.082  1.00 64.35      1HPV1380
+ATOM   1196  NE  ARG B  57      14.266   4.938  24.291  1.00 40.71      1HPV1381
+ATOM   1197  CZ  ARG B  57      15.482   4.660  24.752  1.00 64.54      1HPV1382
+ATOM   1198  NH1 ARG B  57      15.632   4.255  26.009  1.00 84.93      1HPV1383
+ATOM   1199  NH2 ARG B  57      16.540   4.782  23.959  1.00 54.13      1HPV1384
+ATOM   1200  N   GLN B  58      11.102  10.338  25.689  1.00 21.88      1HPV1385
+ATOM   1201  CA  GLN B  58      11.472  11.696  26.052  1.00 21.41      1HPV1386
+ATOM   1202  C   GLN B  58      12.425  11.842  27.257  1.00 29.27      1HPV1387
+ATOM   1203  O   GLN B  58      12.135  11.378  28.365  1.00 37.89      1HPV1388
+ATOM   1204  CB  GLN B  58      10.195  12.486  26.296  1.00 29.16      1HPV1389
+ATOM   1205  CG  GLN B  58      10.427  13.874  26.840  1.00 53.94      1HPV1390
+ATOM   1206  CD  GLN B  58       9.134  14.581  27.191  1.00 66.02      1HPV1391
+ATOM   1207  OE1 GLN B  58       8.047  14.156  26.801  1.00 91.22      1HPV1392
+ATOM   1208  NE2 GLN B  58       9.247  15.664  27.946  1.00 37.11      1HPV1393
+ATOM   1209  N   TYR B  59      13.566  12.480  27.027  1.00 31.52      1HPV1394
+ATOM   1210  CA  TYR B  59      14.557  12.728  28.071  1.00 27.45      1HPV1395
+ATOM   1211  C   TYR B  59      14.610  14.242  28.208  1.00 17.98      1HPV1396
+ATOM   1212  O   TYR B  59      14.680  14.957  27.215  1.00 25.75      1HPV1397
+ATOM   1213  CB  TYR B  59      15.957  12.237  27.654  1.00 26.22      1HPV1398
+ATOM   1214  CG  TYR B  59      16.157  10.739  27.541  1.00 32.22      1HPV1399
+ATOM   1215  CD1 TYR B  59      15.559  10.008  26.511  1.00 31.50      1HPV1400
+ATOM   1216  CD2 TYR B  59      16.974  10.055  28.445  1.00 34.35      1HPV1401
+ATOM   1217  CE1 TYR B  59      15.759   8.640  26.384  1.00 25.20      1HPV1402
+ATOM   1218  CE2 TYR B  59      17.187   8.681  28.317  1.00 38.38      1HPV1403
+ATOM   1219  CZ  TYR B  59      16.570   7.986  27.283  1.00 28.45      1HPV1404
+ATOM   1220  OH  TYR B  59      16.761   6.635  27.138  1.00 45.59      1HPV1405
+ATOM   1221  N   ASP B  60      14.547  14.737  29.434  1.00 31.99      1HPV1406
+ATOM   1222  CA  ASP B  60      14.601  16.170  29.696  1.00 29.78      1HPV1407
+ATOM   1223  C   ASP B  60      15.986  16.504  30.227  1.00 21.02      1HPV1408
+ATOM   1224  O   ASP B  60      16.719  15.613  30.671  1.00 32.63      1HPV1409
+ATOM   1225  CB  ASP B  60      13.562  16.563  30.759  1.00 33.59      1HPV1410
+ATOM   1226  CG  ASP B  60      12.151  16.151  30.384  1.00 45.57      1HPV1411
+ATOM   1227  OD1 ASP B  60      11.775  16.353  29.211  1.00 58.57      1HPV1412
+ATOM   1228  OD2 ASP B  60      11.421  15.624  31.257  1.00 77.32      1HPV1413
+ATOM   1229  N   GLN B  61      16.320  17.787  30.206  1.00 25.16      1HPV1414
+ATOM   1230  CA  GLN B  61      17.597  18.277  30.699  1.00 29.08      1HPV1415
+ATOM   1231  C   GLN B  61      18.827  17.597  30.106  1.00 30.04      1HPV1416
+ATOM   1232  O   GLN B  61      19.801  17.351  30.798  1.00 29.23      1HPV1417
+ATOM   1233  CB  GLN B  61      17.637  18.218  32.231  1.00 48.34      1HPV1418
+ATOM   1234  CG  GLN B  61      16.696  19.187  32.917  1.00 54.56      1HPV1419
+ATOM   1235  CD  GLN B  61      16.927  20.606  32.454  1.00 72.50      1HPV1420
+ATOM   1236  OE1 GLN B  61      16.089  21.186  31.759  1.00 76.50      1HPV1421
+ATOM   1237  NE2 GLN B  61      18.089  21.158  32.790  1.00 68.97      1HPV1422
+ATOM   1238  N   ILE B  62      18.789  17.309  28.816  1.00 25.98      1HPV1423
+ATOM   1239  CA  ILE B  62      19.931  16.695  28.167  1.00 28.59      1HPV1424
+ATOM   1240  C   ILE B  62      20.827  17.804  27.592  1.00 34.30      1HPV1425
+ATOM   1241  O   ILE B  62      20.335  18.721  26.939  1.00 24.03      1HPV1426
+ATOM   1242  CB  ILE B  62      19.463  15.739  27.040  1.00 21.02      1HPV1427
+ATOM   1243  CG1 ILE B  62      18.700  14.563  27.637  1.00 29.16      1HPV1428
+ATOM   1244  CG2 ILE B  62      20.640  15.230  26.233  1.00 18.23      1HPV1429
+ATOM   1245  CD1 ILE B  62      19.506  13.788  28.674  1.00 24.64      1HPV1430
+ATOM   1246  N   LEU B  63      22.120  17.764  27.904  1.00 23.68      1HPV1431
+ATOM   1247  CA  LEU B  63      23.074  18.738  27.386  1.00 21.64      1HPV1432
+ATOM   1248  C   LEU B  63      23.524  18.256  26.012  1.00 16.34      1HPV1433
+ATOM   1249  O   LEU B  63      23.893  17.091  25.827  1.00 21.56      1HPV1434
+ATOM   1250  CB  LEU B  63      24.285  18.870  28.330  1.00 36.83      1HPV1435
+ATOM   1251  CG  LEU B  63      25.480  19.849  28.178  1.00 24.39      1HPV1436
+ATOM   1252  CD1 LEU B  63      26.626  19.202  27.465  1.00 35.64      1HPV1437
+ATOM   1253  CD2 LEU B  63      25.110  21.149  27.522  1.00 17.69      1HPV1438
+ATOM   1254  N   ILE B  64      23.486  19.171  25.059  1.00 14.98      1HPV1439
+ATOM   1255  CA  ILE B  64      23.881  18.905  23.696  1.00 21.18      1HPV1440
+ATOM   1256  C   ILE B  64      24.799  20.036  23.302  1.00 16.75      1HPV1441
+ATOM   1257  O   ILE B  64      24.571  21.186  23.652  1.00 19.71      1HPV1442
+ATOM   1258  CB  ILE B  64      22.665  18.907  22.714  1.00 28.36      1HPV1443
+ATOM   1259  CG1 ILE B  64      21.564  17.967  23.204  1.00 51.86      1HPV1444
+ATOM   1260  CG2 ILE B  64      23.091  18.434  21.327  1.00 26.70      1HPV1445
+ATOM   1261  CD1 ILE B  64      20.511  17.661  22.152  1.00 40.37      1HPV1446
+ATOM   1262  N   GLU B  65      25.890  19.698  22.644  1.00 17.15      1HPV1447
+ATOM   1263  CA  GLU B  65      26.794  20.707  22.156  1.00 18.18      1HPV1448
+ATOM   1264  C   GLU B  65      26.572  20.686  20.651  1.00 31.44      1HPV1449
+ATOM   1265  O   GLU B  65      26.789  19.665  20.005  1.00 28.77      1HPV1450
+ATOM   1266  CB  GLU B  65      28.241  20.376  22.533  1.00 28.08      1HPV1451
+ATOM   1267  CG  GLU B  65      28.503  20.490  24.030  1.00 34.44      1HPV1452
+ATOM   1268  CD  GLU B  65      29.890  20.032  24.433  1.00 49.58      1HPV1453
+ATOM   1269  OE1 GLU B  65      30.066  18.818  24.669  1.00 75.58      1HPV1454
+ATOM   1270  OE2 GLU B  65      30.801  20.884  24.507  1.00 83.71      1HPV1455
+ATOM   1271  N   ILE B  66      26.000  21.770  20.135  1.00 36.01      1HPV1456
+ATOM   1272  CA  ILE B  66      25.711  21.920  18.714  1.00 31.35      1HPV1457
+ATOM   1273  C   ILE B  66      26.671  22.942  18.131  1.00 26.42      1HPV1458
+ATOM   1274  O   ILE B  66      26.607  24.122  18.464  1.00 29.04      1HPV1459
+ATOM   1275  CB  ILE B  66      24.275  22.445  18.491  1.00 35.10      1HPV1460
+ATOM   1276  CG1 ILE B  66      23.248  21.539  19.187  1.00 25.52      1HPV1461
+ATOM   1277  CG2 ILE B  66      23.979  22.533  16.997  1.00 45.71      1HPV1462
+ATOM   1278  CD1 ILE B  66      21.911  22.205  19.420  1.00 13.81      1HPV1463
+ATOM   1279  N   CYS B  67      27.563  22.488  17.262  1.00 31.76      1HPV1464
+ATOM   1280  CA  CYS B  67      28.547  23.372  16.642  1.00 60.40      1HPV1465
+ATOM   1281  C   CYS B  67      29.254  24.216  17.721  1.00 65.99      1HPV1466
+ATOM   1282  O   CYS B  67      29.241  25.454  17.668  1.00 70.53      1HPV1467
+ATOM   1283  CB  CYS B  67      27.854  24.264  15.593  1.00 60.93      1HPV1468
+ATOM   1284  SG  CYS B  67      28.660  24.330  13.959  1.00 51.15      1HPV1469
+ATOM   1285  N   GLY B  68      29.807  23.539  18.732  1.00 34.90      1HPV1470
+ATOM   1286  CA  GLY B  68      30.498  24.238  19.805  1.00 50.93      1HPV1471
+ATOM   1287  C   GLY B  68      29.622  24.929  20.843  1.00 60.55      1HPV1472
+ATOM   1288  O   GLY B  68      30.051  25.145  21.979  1.00 55.48      1HPV1473
+ATOM   1289  N   HIS B  69      28.403  25.287  20.461  1.00 49.20      1HPV1474
+ATOM   1290  CA  HIS B  69      27.484  25.948  21.369  1.00 21.38      1HPV1475
+ATOM   1291  C   HIS B  69      26.808  24.886  22.222  1.00 24.43      1HPV1476
+ATOM   1292  O   HIS B  69      26.390  23.857  21.702  1.00 39.70      1HPV1477
+ATOM   1293  CB  HIS B  69      26.422  26.694  20.569  1.00 31.43      1HPV1478
+ATOM   1294  CG  HIS B  69      26.979  27.720  19.629  1.00 43.54      1HPV1479
+ATOM   1295  ND1 HIS B  69      27.050  27.520  18.269  1.00 67.71      1HPV1480
+ATOM   1296  CD2 HIS B  69      27.464  28.963  19.852  1.00 58.08      1HPV1481
+ATOM   1297  CE1 HIS B  69      27.554  28.597  17.690  1.00 72.92      1HPV1482
+ATOM   1298  NE2 HIS B  69      27.811  29.489  18.630  1.00 77.37      1HPV1483
+ATOM   1299  N   LYS B  70      26.717  25.112  23.525  1.00 36.00      1HPV1484
+ATOM   1300  CA  LYS B  70      26.056  24.161  24.404  1.00 30.78      1HPV1485
+ATOM   1301  C   LYS B  70      24.609  24.587  24.559  1.00 25.32      1HPV1486
+ATOM   1302  O   LYS B  70      24.283  25.778  24.466  1.00 33.47      1HPV1487
+ATOM   1303  CB  LYS B  70      26.699  24.165  25.779  1.00 29.15      1HPV1488
+ATOM   1304  CG  LYS B  70      28.145  23.886  25.763  1.00 27.49      1HPV1489
+ATOM   1305  CD  LYS B  70      28.678  24.094  27.146  1.00 34.96      1HPV1490
+ATOM   1306  CE  LYS B  70      30.129  23.728  27.200  1.00 51.82      1HPV1491
+ATOM   1307  NZ  LYS B  70      30.873  24.522  26.199  1.00 90.36      1HPV1492
+ATOM   1308  N   ALA B  71      23.760  23.618  24.869  1.00 24.16      1HPV1493
+ATOM   1309  CA  ALA B  71      22.340  23.853  25.081  1.00 19.26      1HPV1494
+ATOM   1310  C   ALA B  71      21.828  22.691  25.905  1.00 21.81      1HPV1495
+ATOM   1311  O   ALA B  71      22.356  21.585  25.820  1.00 33.81      1HPV1496
+ATOM   1312  CB  ALA B  71      21.614  23.914  23.744  1.00 24.00      1HPV1497
+ATOM   1313  N   ILE B  72      20.850  22.945  26.760  1.00 35.54      1HPV1498
+ATOM   1314  CA  ILE B  72      20.258  21.886  27.572  1.00 30.46      1HPV1499
+ATOM   1315  C   ILE B  72      18.770  21.871  27.256  1.00 30.64      1HPV1500
+ATOM   1316  O   ILE B  72      18.143  22.921  27.175  1.00 28.75      1HPV1501
+ATOM   1317  CB  ILE B  72      20.499  22.098  29.096  1.00 27.29      1HPV1502
+ATOM   1318  CG1 ILE B  72      21.954  21.746  29.438  1.00 29.15      1HPV1503
+ATOM   1319  CG2 ILE B  72      19.591  21.203  29.913  1.00 27.80      1HPV1504
+ATOM   1320  CD1 ILE B  72      22.282  21.790  30.904  1.00 25.40      1HPV1505
+ATOM   1321  N   GLY B  73      18.210  20.702  26.990  1.00 22.16      1HPV1506
+ATOM   1322  CA  GLY B  73      16.796  20.677  26.698  1.00 12.03      1HPV1507
+ATOM   1323  C   GLY B  73      16.251  19.286  26.527  1.00 19.05      1HPV1508
+ATOM   1324  O   GLY B  73      16.922  18.300  26.804  1.00 17.46      1HPV1509
+ATOM   1325  N   THR B  74      15.010  19.216  26.074  1.00 28.77      1HPV1510
+ATOM   1326  CA  THR B  74      14.358  17.940  25.861  1.00 23.01      1HPV1511
+ATOM   1327  C   THR B  74      14.828  17.337  24.553  1.00 19.97      1HPV1512
+ATOM   1328  O   THR B  74      14.946  18.039  23.554  1.00 18.06      1HPV1513
+ATOM   1329  CB  THR B  74      12.827  18.112  25.842  1.00 27.22      1HPV1514
+ATOM   1330  OG1 THR B  74      12.415  18.757  27.052  1.00 40.48      1HPV1515
+ATOM   1331  CG2 THR B  74      12.133  16.762  25.743  1.00 24.00      1HPV1516
+ATOM   1332  N   VAL B  75      15.099  16.041  24.579  1.00 19.87      1HPV1517
+ATOM   1333  CA  VAL B  75      15.526  15.297  23.415  1.00 19.05      1HPV1518
+ATOM   1334  C   VAL B  75      14.660  14.041  23.299  1.00 29.16      1HPV1519
+ATOM   1335  O   VAL B  75      14.473  13.313  24.272  1.00 26.51      1HPV1520
+ATOM   1336  CB  VAL B  75      17.006  14.861  23.536  1.00 21.47      1HPV1521
+ATOM   1337  CG1 VAL B  75      17.353  13.882  22.439  1.00 17.87      1HPV1522
+ATOM   1338  CG2 VAL B  75      17.918  16.079  23.453  1.00 22.93      1HPV1523
+ATOM   1339  N   LEU B  76      14.084  13.823  22.127  1.00 25.24      1HPV1524
+ATOM   1340  CA  LEU B  76      13.267  12.649  21.889  1.00 16.31      1HPV1525
+ATOM   1341  C   LEU B  76      14.159  11.677  21.131  1.00 18.62      1HPV1526
+ATOM   1342  O   LEU B  76      14.874  12.080  20.233  1.00 28.23      1HPV1527
+ATOM   1343  CB  LEU B  76      12.040  13.009  21.040  1.00 25.10      1HPV1528
+ATOM   1344  CG  LEU B  76      11.213  14.188  21.548  1.00 16.30      1HPV1529
+ATOM   1345  CD1 LEU B  76      10.034  14.416  20.629  1.00 26.92      1HPV1530
+ATOM   1346  CD2 LEU B  76      10.746  13.923  22.953  1.00 21.63      1HPV1531
+ATOM   1347  N   VAL B  77      14.138  10.411  21.521  1.00 15.54      1HPV1532
+ATOM   1348  CA  VAL B  77      14.950   9.379  20.894  1.00 16.54      1HPV1533
+ATOM   1349  C   VAL B  77      13.996   8.327  20.359  1.00 30.62      1HPV1534
+ATOM   1350  O   VAL B  77      13.091   7.883  21.062  1.00 38.51      1HPV1535
+ATOM   1351  CB  VAL B  77      15.913   8.756  21.925  1.00 16.07      1HPV1536
+ATOM   1352  CG1 VAL B  77      16.845   7.750  21.251  1.00 29.01      1HPV1537
+ATOM   1353  CG2 VAL B  77      16.715   9.866  22.601  1.00 19.29      1HPV1538
+ATOM   1354  N   GLY B  78      14.161   7.960  19.102  1.00 29.47      1HPV1539
+ATOM   1355  CA  GLY B  78      13.263   6.982  18.540  1.00 17.66      1HPV1540
+ATOM   1356  C   GLY B  78      13.531   6.695  17.080  1.00 30.58      1HPV1541
+ATOM   1357  O   GLY B  78      14.604   7.001  16.557  1.00 30.79      1HPV1542
+ATOM   1358  N   PRO B  79      12.544   6.124  16.388  1.00 22.70      1HPV1543
+ATOM   1359  CA  PRO B  79      12.591   5.748  14.973  1.00 32.06      1HPV1544
+ATOM   1360  C   PRO B  79      12.601   6.888  13.954  1.00 29.49      1HPV1545
+ATOM   1361  O   PRO B  79      11.652   7.051  13.173  1.00 48.42      1HPV1546
+ATOM   1362  CB  PRO B  79      11.352   4.859  14.821  1.00 44.94      1HPV1547
+ATOM   1363  CG  PRO B  79      11.117   4.340  16.219  1.00 34.34      1HPV1548
+ATOM   1364  CD  PRO B  79      11.330   5.584  17.016  1.00 21.68      1HPV1549
+ATOM   1365  N   THR B  80      13.689   7.647  13.927  1.00 38.57      1HPV1550
+ATOM   1366  CA  THR B  80      13.818   8.748  12.989  1.00 25.08      1HPV1551
+ATOM   1367  C   THR B  80      14.809   8.387  11.914  1.00 28.09      1HPV1552
+ATOM   1368  O   THR B  80      15.835   7.760  12.197  1.00 46.41      1HPV1553
+ATOM   1369  CB  THR B  80      14.386   9.976  13.649  1.00 26.52      1HPV1554
+ATOM   1370  OG1 THR B  80      13.906  10.045  14.991  1.00 40.60      1HPV1555
+ATOM   1371  CG2 THR B  80      13.966  11.214  12.864  1.00  7.69      1HPV1556
+ATOM   1372  N   PRO B  81      14.539   8.799  10.668  1.00 34.36      1HPV1557
+ATOM   1373  CA  PRO B  81      15.444   8.512   9.551  1.00 45.43      1HPV1558
+ATOM   1374  C   PRO B  81      16.733   9.340   9.703  1.00 40.80      1HPV1559
+ATOM   1375  O   PRO B  81      17.843   8.862   9.423  1.00 23.19      1HPV1560
+ATOM   1376  CB  PRO B  81      14.639   8.978   8.332  1.00 38.36      1HPV1561
+ATOM   1377  CG  PRO B  81      13.221   8.875   8.783  1.00 40.42      1HPV1562
+ATOM   1378  CD  PRO B  81      13.278   9.387  10.185  1.00 24.26      1HPV1563
+ATOM   1379  N   VAL B  82      16.566  10.573  10.183  1.00 26.99      1HPV1564
+ATOM   1380  CA  VAL B  82      17.666  11.509  10.369  1.00 29.30      1HPV1565
+ATOM   1381  C   VAL B  82      17.615  12.094  11.786  1.00 27.82      1HPV1566
+ATOM   1382  O   VAL B  82      16.569  12.060  12.427  1.00 22.83      1HPV1567
+ATOM   1383  CB  VAL B  82      17.552  12.681   9.350  1.00 27.15      1HPV1568
+ATOM   1384  CG1 VAL B  82      18.878  13.389   9.218  1.00 72.96      1HPV1569
+ATOM   1385  CG2 VAL B  82      17.119  12.183   8.001  1.00 35.01      1HPV1570
+ATOM   1386  N   ASN B  83      18.758  12.521  12.321  1.00 13.48      1HPV1571
+ATOM   1387  CA  ASN B  83      18.775  13.146  13.642  1.00 16.49      1HPV1572
+ATOM   1388  C   ASN B  83      18.291  14.548  13.328  1.00 20.24      1HPV1573
+ATOM   1389  O   ASN B  83      18.788  15.179  12.396  1.00 20.26      1HPV1574
+ATOM   1390  CB  ASN B  83      20.190  13.216  14.217  1.00 21.95      1HPV1575
+ATOM   1391  CG  ASN B  83      20.712  11.872  14.618  1.00 19.48      1HPV1576
+ATOM   1392  OD1 ASN B  83      19.991  11.063  15.180  1.00 26.08      1HPV1577
+ATOM   1393  ND2 ASN B  83      21.969  11.620  14.329  1.00 19.09      1HPV1578
+ATOM   1394  N   ILE B  84      17.322  15.032  14.089  1.00 31.61      1HPV1579
+ATOM   1395  CA  ILE B  84      16.737  16.343  13.855  1.00 19.09      1HPV1580
+ATOM   1396  C   ILE B  84      16.929  17.282  15.043  1.00 11.51      1HPV1581
+ATOM   1397  O   ILE B  84      16.767  16.871  16.186  1.00 15.82      1HPV1582
+ATOM   1398  CB  ILE B  84      15.213  16.165  13.529  1.00 16.22      1HPV1583
+ATOM   1399  CG1 ILE B  84      15.042  15.652  12.110  1.00 16.52      1HPV1584
+ATOM   1400  CG2 ILE B  84      14.445  17.428  13.714  1.00 19.37      1HPV1585
+ATOM   1401  CD1 ILE B  84      13.677  15.170  11.859  1.00 38.98      1HPV1586
+ATOM   1402  N   ILE B  85      17.362  18.513  14.773  1.00 16.30      1HPV1587
+ATOM   1403  CA  ILE B  85      17.497  19.518  15.818  1.00 15.05      1HPV1588
+ATOM   1404  C   ILE B  85      16.339  20.467  15.526  1.00 20.62      1HPV1589
+ATOM   1405  O   ILE B  85      16.302  21.084  14.468  1.00 19.85      1HPV1590
+ATOM   1406  CB  ILE B  85      18.811  20.303  15.741  1.00 16.87      1HPV1591
+ATOM   1407  CG1 ILE B  85      20.021  19.366  15.757  1.00 25.74      1HPV1592
+ATOM   1408  CG2 ILE B  85      18.905  21.226  16.942  1.00 11.08      1HPV1593
+ATOM   1409  CD1 ILE B  85      20.274  18.695  17.103  1.00 21.72      1HPV1594
+ATOM   1410  N   GLY B  86      15.360  20.505  16.421  1.00 16.50      1HPV1595
+ATOM   1411  CA  GLY B  86      14.207  21.349  16.221  1.00  9.40      1HPV1596
+ATOM   1412  C   GLY B  86      14.301  22.703  16.872  1.00 10.11      1HPV1597
+ATOM   1413  O   GLY B  86      15.320  23.065  17.454  1.00 20.13      1HPV1598
+ATOM   1414  N   ARG B  87      13.192  23.427  16.840  1.00 14.55      1HPV1599
+ATOM   1415  CA  ARG B  87      13.130  24.781  17.382  1.00 17.97      1HPV1600
+ATOM   1416  C   ARG B  87      13.372  24.939  18.870  1.00 17.27      1HPV1601
+ATOM   1417  O   ARG B  87      13.820  25.995  19.314  1.00 22.37      1HPV1602
+ATOM   1418  CB  ARG B  87      11.822  25.430  16.990  1.00 22.95      1HPV1603
+ATOM   1419  CG  ARG B  87      11.712  25.732  15.502  1.00 29.24      1HPV1604
+ATOM   1420  CD  ARG B  87      10.276  26.088  15.131  1.00 29.10      1HPV1605
+ATOM   1421  NE  ARG B  87       9.603  26.762  16.239  1.00 42.94      1HPV1606
+ATOM   1422  CZ  ARG B  87       8.467  26.338  16.774  1.00 24.66      1HPV1607
+ATOM   1423  NH1 ARG B  87       7.874  25.264  16.282  1.00 34.63      1HPV1608
+ATOM   1424  NH2 ARG B  87       7.921  26.990  17.784  1.00 39.46      1HPV1609
+ATOM   1425  N   ASN B  88      13.132  23.888  19.639  1.00 23.55      1HPV1610
+ATOM   1426  CA  ASN B  88      13.356  23.940  21.074  1.00 22.38      1HPV1611
+ATOM   1427  C   ASN B  88      14.841  24.132  21.390  1.00 18.05      1HPV1612
+ATOM   1428  O   ASN B  88      15.202  24.606  22.471  1.00 23.08      1HPV1613
+ATOM   1429  CB  ASN B  88      12.803  22.675  21.754  1.00 25.92      1HPV1614
+ATOM   1430  CG  ASN B  88      13.647  21.434  21.489  1.00 26.59      1HPV1615
+ATOM   1431  OD1 ASN B  88      13.877  21.058  20.349  1.00 25.77      1HPV1616
+ATOM   1432  ND2 ASN B  88      14.092  20.786  22.551  1.00 22.75      1HPV1617
+ATOM   1433  N   LEU B  89      15.706  23.742  20.464  1.00 21.64      1HPV1618
+ATOM   1434  CA  LEU B  89      17.140  23.904  20.677  1.00 30.78      1HPV1619
+ATOM   1435  C   LEU B  89      17.675  25.000  19.778  1.00 22.79      1HPV1620
+ATOM   1436  O   LEU B  89      18.627  25.683  20.138  1.00 24.25      1HPV1621
+ATOM   1437  CB  LEU B  89      17.887  22.589  20.433  1.00 13.77      1HPV1622
+ATOM   1438  CG  LEU B  89      18.248  21.744  21.653  1.00 24.68      1HPV1623
+ATOM   1439  CD1 LEU B  89      17.284  21.928  22.784  1.00 16.50      1HPV1624
+ATOM   1440  CD2 LEU B  89      18.338  20.314  21.242  1.00 18.85      1HPV1625
+ATOM   1441  N   LEU B  90      17.029  25.193  18.628  1.00 23.62      1HPV1626
+ATOM   1442  CA  LEU B  90      17.424  26.221  17.667  1.00 13.93      1HPV1627
+ATOM   1443  C   LEU B  90      17.290  27.623  18.241  1.00 16.50      1HPV1628
+ATOM   1444  O   LEU B  90      18.041  28.518  17.874  1.00 25.17      1HPV1629
+ATOM   1445  CB  LEU B  90      16.608  26.112  16.372  1.00 14.99      1HPV1630
+ATOM   1446  CG  LEU B  90      16.885  24.883  15.513  1.00 24.02      1HPV1631
+ATOM   1447  CD1 LEU B  90      15.942  24.862  14.339  1.00 19.24      1HPV1632
+ATOM   1448  CD2 LEU B  90      18.330  24.884  15.062  1.00 19.02      1HPV1633
+ATOM   1449  N   THR B  91      16.368  27.813  19.172  1.00 21.46      1HPV1634
+ATOM   1450  CA  THR B  91      16.201  29.125  19.763  1.00 21.36      1HPV1635
+ATOM   1451  C   THR B  91      17.319  29.386  20.780  1.00 29.63      1HPV1636
+ATOM   1452  O   THR B  91      17.786  30.520  20.922  1.00 47.30      1HPV1637
+ATOM   1453  CB  THR B  91      14.814  29.258  20.402  1.00 20.73      1HPV1638
+ATOM   1454  OG1 THR B  91      14.585  28.146  21.276  1.00 23.10      1HPV1639
+ATOM   1455  CG2 THR B  91      13.740  29.253  19.330  1.00 16.00      1HPV1640
+ATOM   1456  N   GLN B  92      17.770  28.328  21.459  1.00 32.86      1HPV1641
+ATOM   1457  CA  GLN B  92      18.853  28.452  22.443  1.00 20.84      1HPV1642
+ATOM   1458  C   GLN B  92      20.218  28.810  21.860  1.00 26.69      1HPV1643
+ATOM   1459  O   GLN B  92      21.049  29.387  22.556  1.00 38.99      1HPV1644
+ATOM   1460  CB  GLN B  92      18.973  27.201  23.300  1.00 19.67      1HPV1645
+ATOM   1461  CG  GLN B  92      18.010  27.193  24.473  1.00 25.23      1HPV1646
+ATOM   1462  CD  GLN B  92      18.373  26.139  25.502  1.00 57.95      1HPV1647
+ATOM   1463  OE1 GLN B  92      19.472  26.153  26.080  1.00 35.85      1HPV1648
+ATOM   1464  NE2 GLN B  92      17.456  25.211  25.732  1.00 48.39      1HPV1649
+ATOM   1465  N   ILE B  93      20.483  28.414  20.616  1.00 28.14      1HPV1650
+ATOM   1466  CA  ILE B  93      21.753  28.768  19.977  1.00 19.04      1HPV1651
+ATOM   1467  C   ILE B  93      21.647  30.065  19.156  1.00 15.59      1HPV1652
+ATOM   1468  O   ILE B  93      22.620  30.486  18.544  1.00 34.67      1HPV1653
+ATOM   1469  CB  ILE B  93      22.338  27.618  19.103  1.00 26.03      1HPV1654
+ATOM   1470  CG1 ILE B  93      21.328  27.124  18.079  1.00 20.46      1HPV1655
+ATOM   1471  CG2 ILE B  93      22.830  26.475  19.979  1.00 33.48      1HPV1656
+ATOM   1472  CD1 ILE B  93      21.866  26.036  17.206  1.00 36.33      1HPV1657
+ATOM   1473  N   GLY B  94      20.474  30.707  19.184  1.00 14.20      1HPV1658
+ATOM   1474  CA  GLY B  94      20.256  31.946  18.454  1.00 15.88      1HPV1659
+ATOM   1475  C   GLY B  94      20.103  31.837  16.943  1.00 30.55      1HPV1660
+ATOM   1476  O   GLY B  94      20.352  32.794  16.213  1.00 21.42      1HPV1661
+ATOM   1477  N   CYS B  95      19.589  30.706  16.485  1.00 18.77      1HPV1662
+ATOM   1478  CA  CYS B  95      19.418  30.456  15.063  1.00 30.99      1HPV1663
+ATOM   1479  C   CYS B  95      18.176  31.133  14.433  1.00 31.85      1HPV1664
+ATOM   1480  O   CYS B  95      17.057  30.952  14.919  1.00 26.85      1HPV1665
+ATOM   1481  CB  CYS B  95      19.394  28.941  14.869  1.00 31.84      1HPV1666
+ATOM   1482  SG  CYS B  95      19.322  28.390  13.191  1.00 41.34      1HPV1667
+ATOM   1483  N   THR B  96      18.366  31.878  13.341  1.00 36.17      1HPV1668
+ATOM   1484  CA  THR B  96      17.259  32.573  12.660  1.00 30.31      1HPV1669
+ATOM   1485  C   THR B  96      17.210  32.320  11.152  1.00 22.17      1HPV1670
+ATOM   1486  O   THR B  96      18.179  31.854  10.550  1.00 27.82      1HPV1671
+ATOM   1487  CB  THR B  96      17.314  34.128  12.859  1.00 30.26      1HPV1672
+ATOM   1488  OG1 THR B  96      18.598  34.632  12.486  1.00 21.62      1HPV1673
+ATOM   1489  CG2 THR B  96      17.013  34.513  14.300  1.00 35.06      1HPV1674
+ATOM   1490  N   LEU B  97      16.059  32.594  10.553  1.00 26.79      1HPV1675
+ATOM   1491  CA  LEU B  97      15.888  32.453   9.117  1.00 23.00      1HPV1676
+ATOM   1492  C   LEU B  97      15.984  33.853   8.542  1.00 32.10      1HPV1677
+ATOM   1493  O   LEU B  97      15.516  34.806   9.159  1.00 22.00      1HPV1678
+ATOM   1494  CB  LEU B  97      14.525  31.865   8.770  1.00 27.81      1HPV1679
+ATOM   1495  CG  LEU B  97      14.456  30.348   8.816  1.00 21.30      1HPV1680
+ATOM   1496  CD1 LEU B  97      13.087  29.904   8.365  1.00 32.13      1HPV1681
+ATOM   1497  CD2 LEU B  97      15.506  29.759   7.900  1.00 26.14      1HPV1682
+ATOM   1498  N   ASN B  98      16.585  33.982   7.367  1.00 24.55      1HPV1683
+ATOM   1499  CA  ASN B  98      16.725  35.279   6.738  1.00 21.17      1HPV1684
+ATOM   1500  C   ASN B  98      16.540  35.190   5.254  1.00 14.71      1HPV1685
+ATOM   1501  O   ASN B  98      17.041  34.277   4.623  1.00 22.45      1HPV1686
+ATOM   1502  CB  ASN B  98      18.119  35.846   6.989  1.00 26.42      1HPV1687
+ATOM   1503  CG  ASN B  98      18.185  36.717   8.213  1.00 56.46      1HPV1688
+ATOM   1504  OD1 ASN B  98      18.581  36.262   9.293  1.00 36.46      1HPV1689
+ATOM   1505  ND2 ASN B  98      17.823  37.993   8.051  1.00 60.66      1HPV1690
+ATOM   1506  N   PHE B  99      15.813  36.157   4.716  1.00 30.63      1HPV1691
+ATOM   1507  CA  PHE B  99      15.575  36.285   3.288  1.00 30.86      1HPV1692
+ATOM   1508  C   PHE B  99      15.057  37.707   3.026  1.00 34.97      1HPV1693
+ATOM   1509  O   PHE B  99      15.284  38.555   3.924  1.00 54.15      1HPV1694
+ATOM   1510  CB  PHE B  99      14.670  35.159   2.713  1.00 29.72      1HPV1695
+ATOM   1511  CG  PHE B  99      13.236  35.176   3.179  1.00 38.35      1HPV1696
+ATOM   1512  CD1 PHE B  99      12.865  34.532   4.355  1.00 45.27      1HPV1697
+ATOM   1513  CD2 PHE B  99      12.234  35.735   2.377  1.00 26.68      1HPV1698
+ATOM   1514  CE1 PHE B  99      11.520  34.435   4.729  1.00 29.45      1HPV1699
+ATOM   1515  CE2 PHE B  99      10.879  35.642   2.744  1.00 28.19      1HPV1700
+ATOM   1516  CZ  PHE B  99      10.525  34.984   3.927  1.00 32.04      1HPV1701
+ATOM   1517  OXT PHE B  99      14.472  37.985   1.959  1.00 60.80      1HPV1702
+TER    1518      PHE B  99                                              1HPV1703
+HETATM 1519  C1  478   200      11.169  14.977   2.445  1.00 29.50   1  1HPV1704
+HETATM 1520  C2  478   200       9.176  16.224   2.997  1.00 37.88   1  1HPV1705
+HETATM 1521  C3  478   200      10.149  15.702   5.999  1.00 14.28   1  1HPV1706
+HETATM 1522  C4  478   200      10.113  15.149   3.548  1.00 22.75   1  1HPV1707
+HETATM 1523  C5  478   200      10.960  16.662   8.145  1.00 34.86   1  1HPV1708
+HETATM 1524  C6  478   200      10.387  18.119   8.484  1.00 25.00   1  1HPV1709
+HETATM 1525  C7  478   200      12.416  16.278   8.652  1.00 23.87   1  1HPV1710
+HETATM 1526  C8  478   200      12.831  14.914   8.170  1.00 21.42   1  1HPV1711
+HETATM 1527  C9  478   200      13.636  14.825   6.978  1.00 27.85   1  1HPV1712
+HETATM 1528  C10 478   200      12.299  13.706   8.765  1.00 22.63   1  1HPV1713
+HETATM 1529  C11 478   200      13.891  13.566   6.331  1.00 39.00   1  1HPV1714
+HETATM 1530  C12 478   200      12.574  12.434   8.116  1.00 32.17   1  1HPV1715
+HETATM 1531  C13 478   200      13.371  12.357   6.887  1.00 31.81   1  1HPV1716
+HETATM 1532  C14 478   200       9.695  18.411   9.891  1.00 23.03   1  1HPV1717
+HETATM 1533  C15 478   200       7.381  17.697   9.170  1.00 34.56   1  1HPV1718
+HETATM 1534  C16 478   200       6.186  18.406   9.790  1.00 22.99   1  1HPV1719
+HETATM 1535  C17 478   200       8.832  16.381  12.886  1.00 37.56   1  1HPV1720
+HETATM 1536  C18 478   200      10.073  16.363  13.604  1.00 46.84   1  1HPV1721
+HETATM 1537  C19 478   200      10.092  16.692  14.992  1.00 30.32   1  1HPV1722
+HETATM 1538  C20 478   200       8.865  17.054  15.620  1.00 14.71   1  1HPV1723
+HETATM 1539  C21 478   200       7.652  17.006  14.926  1.00 20.72   1  1HPV1724
+HETATM 1540  C22 478   200       7.639  16.669  13.555  1.00 27.17   1  1HPV1725
+HETATM 1541  C23 478   200       6.146  19.937   9.614  1.00 23.87   1  1HPV1726
+HETATM 1542  C24 478   200       4.822  17.695   9.731  1.00 25.16   1  1HPV1727
+HETATM 1543  C25 478   200       9.751  16.626   1.633  1.00 21.54   1  1HPV1728
+HETATM 1544  N1  478   200      10.940  16.472   6.713  1.00 25.44   1  1HPV1729
+HETATM 1545  N2  478   200       8.516  17.580  10.228  1.00 27.81   1  1HPV1730
+HETATM 1546  N3  478   200       8.840  17.322  16.898  1.00 35.58   1  1HPV1731
+HETATM 1547  O1  478   200      10.726  15.662   4.731  1.00 33.88   1  1HPV1732
+HETATM 1548  O2  478   200       9.081  15.313   6.287  1.00 15.65   1  1HPV1733
+HETATM 1549  O3  478   200      11.432  19.030   8.466  1.00 30.47   1  1HPV1734
+HETATM 1550  O4  478   200      10.051  15.511  10.847  1.00 50.08   1  1HPV1735
+HETATM 1551  O5  478   200       7.707  15.160  11.071  1.00 33.92   1  1HPV1736
+HETATM 1552  O6  478   200      11.053  16.082   1.515  1.00 43.73   1  1HPV1737
+HETATM 1553  S1  478   200       8.765  16.112  11.200  1.00 38.86   1  1HPV1738
+HETATM 1554  O   HOH   201       8.009  13.804   8.675  1.00 25.63      1HPV1739
+HETATM 1555  O   HOH   202       8.905  19.797  -4.202  1.00 22.32      1HPV1740
+HETATM 1556  O   HOH   203      12.589  17.809  21.777  1.00 39.09      1HPV1741
+HETATM 1557  O   HOH   204      20.070  29.382   0.343  1.00 22.74      1HPV1742
+HETATM 1558  O   HOH   205      21.295  10.575  11.617  1.00 56.96      1HPV1743
+HETATM 1559  O   HOH   206      17.115  19.592   4.022  1.00 24.13      1HPV1744
+HETATM 1560  O   HOH   207      15.297  32.108  17.255  1.00 23.24      1HPV1745
+HETATM 1561  O   HOH   208       0.867  32.711  -7.652  1.00 32.89      1HPV1746
+HETATM 1562  O   HOH   209      -3.768  16.603   4.847  1.00 50.35      1HPV1747
+HETATM 1563  O   HOH   210       0.414  29.077  -9.322  1.00 29.64      1HPV1748
+HETATM 1564  O   HOH   211       8.965  23.543  20.629  1.00 41.74      1HPV1749
+HETATM 1565  O   HOH   212      -1.757  32.301  -8.656  1.00 41.84      1HPV1750
+HETATM 1566  O   HOH   213       5.180  33.142  11.567  1.00 60.21      1HPV1751
+HETATM 1567  O   HOH   214      11.498  36.197  21.481  1.00 38.23      1HPV1752
+HETATM 1568  O   HOH   215      -7.789  31.692  -1.597  1.00 35.20      1HPV1753
+HETATM 1569  O   HOH   216      26.063  28.637  -1.396  1.00 28.05      1HPV1754
+HETATM 1570  O   HOH   217       3.928  16.710  29.147  1.00 43.13      1HPV1755
+HETATM 1571  O   HOH   218      18.200   5.357  29.596  1.00 40.27      1HPV1756
+HETATM 1572  O   HOH   219      -0.004  24.609   6.621  1.00 38.16      1HPV1757
+HETATM 1573  O   HOH   220       2.071  28.054 -12.838  1.00 32.46      1HPV1758
+HETATM 1574  O   HOH   221      26.785  27.415   2.787  1.00 38.76      1HPV1759
+HETATM 1575  O   HOH   222       7.405  34.591  16.114  1.00 52.96      1HPV1760
+HETATM 1576  O   HOH   223      -4.622  29.432   7.127  1.00 91.38      1HPV1761
+HETATM 1577  O   HOH   224      29.142  14.784  25.897  1.00 40.00      1HPV1762
+HETATM 1578  O   HOH   225       1.439  25.503  11.580  1.00 48.78      1HPV1763
+HETATM 1579  O   HOH   226      27.657  16.931  25.194  1.00 35.92      1HPV1764
+HETATM 1580  O   HOH   227      20.360  18.670  -1.795  1.00 44.29      1HPV1765
+HETATM 1581  O   HOH   228       4.323  28.396  16.877  1.00 34.01      1HPV1766
+HETATM 1582  O   HOH   229      12.426   4.825  21.524  1.00 58.97      1HPV1767
+HETATM 1583  O   HOH   230      34.719  18.277  21.068  1.00 45.15      1HPV1768
+HETATM 1584  O   HOH   231      30.904   8.794  19.170  1.00 45.96      1HPV1769
+HETATM 1585  O   HOH   232      28.934  18.235   9.904  1.00 45.44      1HPV1770
+HETATM 1586  O   HOH   233      19.935  11.304   5.690  1.00 57.18      1HPV1771
+HETATM 1587  O   HOH   234      18.291   5.197  12.311  1.00 58.10      1HPV1772
+HETATM 1588  O   HOH   235      -3.569  28.699 -11.810  1.00 44.07      1HPV1773
+HETATM 1589  O   HOH   236      -6.984  29.893 -10.131  1.00 45.15      1HPV1774
+HETATM 1590  O   HOH   237      -5.653  13.383   3.531  1.00 44.19      1HPV1775
+HETATM 1591  O   HOH   238       2.175  36.265  -0.710  1.00 34.02      1HPV1776
+HETATM 1592  O   HOH   239      12.002  22.806  -8.134  1.00 32.07      1HPV1777
+HETATM 1593  O   HOH   240      16.251  20.123  -2.694  1.00 37.62      1HPV1778
+HETATM 1594  O   HOH   241      13.836  21.723  25.667  1.00 31.52      1HPV1779
+HETATM 1595  O   HOH   242      18.014  22.473  -3.104  1.00 36.74      1HPV1780
+HETATM 1596  O   HOH   243      23.105  23.739   4.343  1.00 41.86      1HPV1781
+HETATM 1597  O   HOH   244      10.690   6.531   6.650  1.00 32.81      1HPV1782
+HETATM 1598  O   HOH   245      22.179  12.663   9.885  1.00 56.51      1HPV1783
+HETATM 1599  O   HOH   246       5.053  14.181  29.677  1.00 35.75      1HPV1784
+HETATM 1600  O   HOH   247      14.425  19.986  29.346  1.00 44.80      1HPV1785
+HETATM 1601  O   HOH   248       8.151  24.325  13.560  1.00 19.83      1HPV1786
+HETATM 1602  O   HOH   249       8.663   4.414  10.251  1.00 46.51      1HPV1787
+HETATM 1603  O   HOH   250      14.046  26.995  24.260  1.00 47.16      1HPV1788
+HETATM 1604  O   HOH   251      14.502  25.080  -8.093  1.00 51.09      1HPV1789
+HETATM 1605  O   HOH   252      11.971  37.315  19.059  1.00 36.05      1HPV1790
+HETATM 1606  O   HOH   253       9.646  36.849  13.555  1.00 41.02      1HPV1791
+HETATM 1607  O   HOH   254      29.948  33.956   8.675  1.00 56.61      1HPV1792
+HETATM 1608  O   HOH   255       1.614  12.400   5.821  1.00 39.33      1HPV1793
+HETATM 1609  O   HOH   256       9.464  17.948  23.877  1.00 46.00      1HPV1794
+HETATM 1610  O   HOH   257      24.139  28.155  22.565  1.00 39.14      1HPV1795
+HETATM 1611  O   HOH   258      11.042  27.194  21.222  1.00 34.88      1HPV1796
+HETATM 1612  O   HOH   259      12.519  34.799  -5.509  1.00 54.32      1HPV1797
+HETATM 1613  O   HOH   260       4.352  36.041   4.682  1.00 37.66      1HPV1798
+HETATM 1614  O   HOH   261      -5.893  19.161  -7.950  1.00 60.09      1HPV1799
+HETATM 1615  O   HOH   262       3.857  18.016  13.412  1.00 42.01      1HPV1800
+HETATM 1616  O   HOH   263      25.154  18.336   3.258  1.00 33.58      1HPV1801
+HETATM 1617  O   HOH   264       0.572  33.004  11.517  1.00 56.59      1HPV1802
+HETATM 1618  O   HOH   265      -4.646  17.223 -16.279  1.00 55.24      1HPV1803
+HETATM 1619  O   HOH   266      15.239  15.936  -3.703  1.00 49.09      1HPV1804
+HETATM 1620  O   HOH   267       3.429   4.532   6.383  1.00 40.32      1HPV1805
+HETATM 1621  O   HOH   268       8.647  33.032  13.337  1.00 53.53      1HPV1806
+HETATM 1622  O   HOH   269      22.878  15.365  30.327  1.00 33.73      1HPV1807
+HETATM 1623  O   HOH   270      24.641  25.002   0.688  1.00 40.09      1HPV1808
+HETATM 1624  O   HOH   271       3.836  28.155  26.240  1.00 33.55      1HPV1809
+HETATM 1625  O   HOH   272      14.792  24.279  25.240  1.00 65.22      1HPV1810
+HETATM 1626  O   HOH   273      22.521  17.731   0.584  1.00 43.72      1HPV1811
+HETATM 1627  O   HOH   274      25.786  22.911   4.958  1.00 40.36      1HPV1812
+HETATM 1628  O   HOH   275       7.353  20.000  14.243  1.00 32.16      1HPV1813
+HETATM 1629  O   HOH   276       1.030  16.021  13.141  1.00 54.45      1HPV1814
+HETATM 1630  O   HOH   277      -9.379  19.745   3.905  1.00 51.00      1HPV1815
+HETATM 1631  O   HOH   278      -7.121  27.905   0.766  1.00 43.88      1HPV1816
+HETATM 1632  O   HOH   279      17.463  24.150  -5.589  1.00 39.22      1HPV1817
+HETATM 1633  O   HOH   280       0.093  25.836 -13.132  1.00 37.59      1HPV1818
+CONECT 1519 1522 1552                                                   1HPV1819
+CONECT 1520 1522 1543                                                   1HPV1820
+CONECT 1521 1544 1547 1548                                              1HPV1821
+CONECT 1522 1519 1520 1547                                              1HPV1822
+CONECT 1523 1524 1525 1544                                              1HPV1823
+CONECT 1524 1523 1532 1549                                              1HPV1824
+CONECT 1525 1523 1526                                                   1HPV1825
+CONECT 1526 1525 1527 1528                                              1HPV1826
+CONECT 1527 1526 1529                                                   1HPV1827
+CONECT 1528 1526 1530                                                   1HPV1828
+CONECT 1529 1527 1531                                                   1HPV1829
+CONECT 1530 1528 1531                                                   1HPV1830
+CONECT 1531 1529 1530                                                   1HPV1831
+CONECT 1532 1524 1545                                                   1HPV1832
+CONECT 1533 1534 1545                                                   1HPV1833
+CONECT 1534 1533 1541 1542                                              1HPV1834
+CONECT 1535 1536 1540 1553                                              1HPV1835
+CONECT 1536 1535 1537                                                   1HPV1836
+CONECT 1537 1536 1538                                                   1HPV1837
+CONECT 1538 1537 1539 1546                                              1HPV1838
+CONECT 1539 1538 1540                                                   1HPV1839
+CONECT 1540 1535 1539                                                   1HPV1840
+CONECT 1541 1534                                                        1HPV1841
+CONECT 1542 1534                                                        1HPV1842
+CONECT 1543 1520 1552                                                   1HPV1843
+CONECT 1544 1521 1523                                                   1HPV1844
+CONECT 1545 1532 1533 1553                                              1HPV1845
+CONECT 1546 1538                                                        1HPV1846
+CONECT 1547 1521 1522                                                   1HPV1847
+CONECT 1548 1521                                                        1HPV1848
+CONECT 1549 1524                                                        1HPV1849
+CONECT 1550 1553                                                        1HPV1850
+CONECT 1551 1553                                                        1HPV1851
+CONECT 1552 1519 1543                                                   1HPV1852
+CONECT 1553 1535 1545 1550 1551                                         1HPV1853
+MASTER      118    3    1    2   19    0    0    6 1631    2   35   16  1HPV1854
+END                                                                     1HPV1855

@@ -270,6 +270,8 @@ if __name__=='pymol.setting':
       auto_color            = 238
       ray_interior_color    = 240
       cartoon_highlight_color = 241
+      coulomb_units_factor  = 242
+      coulomb_dielectric    = 243
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
@@ -481,6 +483,31 @@ PYMOL API
          unlock()
       return r
 
+   def get(name,object='',state=0,quiet=1):
+      r = None
+      state = int(state)
+      if is_string(name):
+         i = _get_index(name)
+      else:
+         i = int(name)
+      if i<0:
+         print "Error: unknown setting"
+         raise QuietException
+      try:
+         lock()
+         r = _cmd.get_setting_text(i,str(object),state-1)
+      finally:
+         unlock()
+      if r!=None:
+         if not quiet:
+            if(object==''):
+               print " get: %s = %s"%(name,r)
+            elif state<=0:
+               print " get: %s = %s in object %s"%(name,r,object)
+            else:
+               print " get: %s = %s in object %s state %d"%(name,r,object,state)
+      return r
+   
    def get_setting_tuple(name,object='',state=0): # INTERNAL
       r = None
       if is_string(name):      i = _get_index(name)

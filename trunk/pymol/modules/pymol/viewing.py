@@ -631,12 +631,12 @@ SEE ALSO
             key = view_dict_sc.auto_err(key,'view')
             set_view(view_dict[key])
             if _feedback(fb_module.scene,fb_mask.actions): # redundant
-               print " view: '%s' recalled."%key
+               print " view: \"%s\" recalled."%key
          elif action=='store':
             view_dict_sc.append(key)
             view_dict[key]=cmd.get_view(0)
             if _feedback(fb_module.scene,fb_mask.actions):
-               print " view: view stored as '%s'."%key
+               print " view: view stored as \"%s\"."%key
          elif action=='delete':
             key = view_dict_sc.auto_err(key,'view')
             if view_dict.has_key(key):
@@ -701,7 +701,7 @@ SEE ALSO
                name = "_scene_"+key+"_"+rep
                cmd.show(rep,name)
             if _feedback(fb_module.scene,fb_mask.actions): # redundant
-               print " scene: '%s' recalled."%key
+               print " scene: \"%s\" recalled."%key
          elif action=='store':
             scene_dict_sc.append(key)
             scene_dict[key]=[cmd.get_view(0),
@@ -711,7 +711,7 @@ SEE ALSO
                name = "_scene_"+key+"_"+rep
                cmd.select(name,"rep "+rep)
             if _feedback(fb_module.scene,fb_mask.actions):
-               print " scene: scene stored as '%s'."%key
+               print " scene: scene stored as \"%s\"."%key
          elif action=='delete':
             key = scene_dict_sc.auto_err(key,'view')
             if scene_dict.has_key(key):
@@ -757,7 +757,7 @@ SEE ALSO
    if session_save_scenes not in pymol._session_save_tasks:
       pymol._session_save_tasks.append(session_save_scenes)
 
-   def stereo(state='on'):
+   def stereo(state='on',quiet=1):
       '''
 DESCRIPTION
 
@@ -786,9 +786,11 @@ PYMOL API
          lock()
          if state>1:
             if state==2: # cross-eye
-               cmd.set("stereo_mode","2",quiet=1)
+               cmd.set("stereo_mode","2",quiet=quiet)
             elif state==3: # quad
-               cmd.set("stereo_mode","1",quiet=1)
+               cmd.set("stereo_mode","1",quiet=quiet)
+            elif state==4: # wall-eye
+               cmd.set("stereo_mode","3",quiet=quiet)
             state=1
          if not _cmd.stereo(state):
             print "Error: Selected stereo mode is not available."
@@ -1026,7 +1028,7 @@ NOTES
          unlock()
       return r
 
-   def ray(width=0,height=0,renderer=-1):
+   def ray(width=0,height=0,renderer=-1,angle=0.0,shift=0.0):
       '''
 DESCRIPTION
 
@@ -1036,8 +1038,10 @@ DESCRIPTION
 
 USAGE
 
-   ray [width,height [,renderer ]]
+   ray [width,height [,renderer [,angle [,shift ]]]
 
+   angle and shift can be used to generate matched stereo pairs
+   
 EXAMPLES
 
    ray
@@ -1046,7 +1050,7 @@ EXAMPLES
 
 PYMOL API
 
-   cmd.ray(int width,int height,int renderer=-1,string prefix)
+   cmd.ray(int width,int height,int renderer=-1,float shift=0)
 
 NOTES
 
@@ -1065,7 +1069,8 @@ SEE ALSO
       '''
       try:
          lock()   
-         r = _cmd.render(int(width),int(height),int(renderer))
+         r = _cmd.render(int(width),int(height),
+                         int(renderer),float(angle),float(shift))
       finally:
          unlock()
       return r

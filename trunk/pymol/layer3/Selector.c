@@ -682,6 +682,59 @@ int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
   return cnt;
 }
 /*========================================================================*/
+int SelectorCountStates(int sele)
+{
+  SelectorType *I=&Selector;
+  int a;
+  int result=0;
+  int n_frame;
+  int at1;
+  ObjectMolecule *last=NULL;
+  ObjectMolecule *obj;
+  SelectorUpdateTable();
+  if(I->NAtom) {
+    for(a=cNDummyAtoms;a<I->NAtom;a++)
+      {
+        obj=I->Obj[I->Table[a].model];
+        if(obj!=last) {
+          at1=I->Table[a].atom;
+          if(SelectorIsMember(obj->AtomInfo[at1].selEntry,sele)) {
+            if(obj->Obj.fGetNFrame)
+              n_frame=obj->Obj.fGetNFrame((CObject*)obj);
+            if(result<n_frame)
+              result=n_frame;
+          }
+          last=obj;
+        }
+      }
+  }
+  return(result);
+}
+/*========================================================================*/
+int SelectorCountAtoms(int sele)
+{
+  SelectorType *I=&Selector;
+  int a;
+  int result=0;
+  int at1;
+  ObjectMolecule *obj;
+  
+  SelectorUpdateTable();
+  if(I->NAtom) {
+    for(a=cNDummyAtoms;a<I->NAtom;a++)
+      {
+        obj=I->Obj[I->Table[a].model];
+        at1=I->Table[a].atom;
+        if(SelectorIsMember(obj->AtomInfo[at1].selEntry,sele)) {
+          result++;
+        }
+      }
+  }
+  return(result);
+}
+
+
+/*========================================================================*/
 int *SelectorGetResidueVLA(int sele)
 {
   /* returns a VLA containing atom indices followed by residue integers
@@ -1494,7 +1547,7 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
 
 
 /*========================================================================*/
-int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer)
+int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer,int state)
 {
   SelectorType *I=&Selector;
   MapType *map;
@@ -1506,9 +1559,9 @@ int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer)
   AtomInfoType *ai;
   ObjectMolecule *obj;
   CoordSet *cs;
-  int state1;
+  int state1,state2;
+  int once_flag;
 
-  state1 = SceneGetState();
   c=0;
   n1=0;
   SelectorUpdateTable();
@@ -1520,23 +1573,32 @@ int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer)
     s=obj->AtomInfo[at].selEntry;
     if(SelectorIsMember(s,sele1))
       {
-        if(state1<obj->NCSet) 
-          cs=obj->CSet[state1];
-        else
-          cs=NULL;
-        if(cs) {
-          if(obj->DiscreteFlag) {
-            if(cs==obj->DiscreteCSet[at])
-              idx=obj->DiscreteAtmToIdx[at];
-            else
-              idx=-1;
-          } else 
-            idx=cs->AtmToIdx[at];
-          if(idx>=0) {
-            copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
-            I->Flag1[a]=true;
-            n1++;
+        once_flag=true;
+        for(state2=0;state2<obj->NCSet;state2++) {
+          if(state<0) once_flag=false;
+          if(!once_flag) 
+            state1=state2;
+          else
+            state1=state;
+          if(state1<obj->NCSet) 
+            cs=obj->CSet[state1];
+          else
+            cs=NULL;
+          if(cs) {
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[at])
+                idx=obj->DiscreteAtmToIdx[at];
+              else
+                idx=-1;
+            } else 
+              idx=cs->AtmToIdx[at];
+            if(idx>=0) {
+              copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+              I->Flag1[a]=true;
+              n1++;
+            }
           }
+          if(once_flag) break;
         }
       }
   }
@@ -1580,7 +1642,7 @@ int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer)
 
 
 /*========================================================================*/
-int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
+int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
 {
   SelectorType *I=&Selector;
   MapType *map;
@@ -1592,10 +1654,11 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
   AtomInfoType *ai;
   ObjectMolecule *obj;
   CoordSet *cs;
-  int state1;
+  int state1,state2;
   float *point=NULL,*fp;
   int *sfidx=NULL,*ip;
   int prot;
+  int once_flag;
   float d,e_val;
   double sum,sumsq;
   float mean,stdev;  
@@ -1794,9 +1857,15 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
     s=obj->AtomInfo[at].selEntry;
     if(SelectorIsMember(s,sele1))
       {
+        once_flag=true;
         for(state1=0;state1<obj->NCSet;state1++) {
-          if(state1<obj->NCSet) 
-            cs=obj->CSet[state1];
+          if(state<0) once_flag=false;
+          if(!once_flag) 
+            state2=state1;
+          else
+            state2=state;
+          if(state2<obj->NCSet) 
+            cs=obj->CSet[state2];
           else
             cs=NULL;
           if(cs) {
@@ -1811,6 +1880,7 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
               n1++;
             }
           }
+          if(once_flag) break;
         }
       }
   }
@@ -1825,11 +1895,15 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
     s=ai->selEntry;
     if(SelectorIsMember(s,sele1))
       {
-
+        once_flag=true;
         for(state1=0;state1<obj->NCSet;state1++) {
-
-          if(state1<obj->NCSet) 
-            cs=obj->CSet[state1];
+          if(state<0) once_flag=false;
+          if(!once_flag) 
+            state2=state1;
+          else
+            state2=state;
+          if(state2<obj->NCSet) 
+            cs=obj->CSet[state2];
           else
             cs=NULL;
           if(cs) {
@@ -1849,6 +1923,7 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
               *(ip++)=prot;
             }
           }
+          if(once_flag) break;
         }
       }
   }
@@ -1940,65 +2015,133 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer)
 
 
 /*========================================================================*/
-int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff)
+int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state)
 {
   SelectorType *I=&Selector;
   MapType *map;
   float *v2;
-  float distsq;
-  int n1,n2;
+  float dist;
+  float eff_charge;
   int a,b,c,i,j,h,k,l;
   int at;
   int s,idx;
   AtomInfoType *ai;
   ObjectMolecule *obj;
   CoordSet *cs;
-  int state1;
+  int state1,state2;
+  int once_flag;
+  int n_at=0;
+  double tot_charge = 0.0;
+  float *point=NULL;
+  float *charge=NULL;
+  int n_point = 0;
+  int n_occur;
+  float *v0,*v1;
+  float c_factor = 1.0F;
+  double average=0.0,face=0.0,edge=0.0;
+  int n_average=0,n_face=0,n_edge=0;
+  int e_cnt;
 
-  state1 = SceneGetState();
+  c_factor=SettingGet(cSetting_coulomb_units_factor)/
+    SettingGet(cSetting_coulomb_dielectric);
+
   c=0;
-  n1=0;
   SelectorUpdateTable();
 
+  point = VLAlloc(float,I->NAtom*3);
+  charge = VLAlloc(float,I->NAtom);
+    
+  /* first count # of times each atom appears */
+
   for(a=cNDummyAtoms;a<I->NAtom;a++) {
-	 I->Flag1[a]=false;
     at=I->Table[a].atom;
     obj=I->Obj[I->Table[a].model];
     s=obj->AtomInfo[at].selEntry;
+    ai = obj->AtomInfo + at;
     if(SelectorIsMember(s,sele1))
       {
-        if(state1<obj->NCSet) 
-          cs=obj->CSet[state1];
-        else
-          cs=NULL;
-        if(cs) {
-          if(obj->DiscreteFlag) {
-            if(cs==obj->DiscreteCSet[at])
-              idx=obj->DiscreteAtmToIdx[at];
+        n_occur = 0;
+        /* count */
+        once_flag=true;
+        for(state2=0;state2<obj->NCSet;state2++) {
+          if(state<0) once_flag=false;
+          if(!once_flag) 
+            state1=state2;
+          else
+            state1=state;
+          if(state1<obj->NCSet) 
+            cs=obj->CSet[state1];
+          else
+            cs=NULL;
+          if(cs) {
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[at])
+                idx=obj->DiscreteAtmToIdx[at];
+              else
+                idx=-1;
+            } else 
+              idx=cs->AtmToIdx[at];
+            if(idx>=0) {
+              n_occur++;
+              n_at++;
+            }
+          }
+          if(once_flag) break;
+        }
+        /* copy */
+        if(n_occur) {
+          once_flag=true;
+          for(state2=0;state2<obj->NCSet;state2++) {
+            if(state<0) once_flag=false;
+            if(!once_flag) 
+              state1=state2;
             else
-              idx=-1;
-          } else 
-            idx=cs->AtmToIdx[at];
-          if(idx>=0) {
-            copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
-            I->Flag1[a]=true;
-            n1++;
+              state1=state;
+            if(state1<obj->NCSet) 
+              cs=obj->CSet[state1];
+            else
+              cs=NULL;
+            if(cs) {
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[at])
+                  idx=obj->DiscreteAtmToIdx[at];
+                else
+                  idx=-1;
+              } else 
+                idx=cs->AtmToIdx[at];
+              if(idx>=0) {
+                VLACheck(point,float,3*n_point+2);
+                VLACheck(charge,float,n_point);
+                v0=cs->Coord+(3*idx);
+                v1=point+3*n_point;
+                copy3f(v0,v1);
+                charge[n_point]=ai->partialCharge*ai->q/n_occur;
+
+                tot_charge+=charge[n_point];
+                n_point++;
+              }
+            }
+            if(once_flag) break;
           }
         }
       }
   }
+
+  PRINTFB(FB_Selector,FB_Details)
+    " SelectorMapCoulomb: total charge %8.6f over %d vertices (%d atoms).\n",tot_charge,n_point,n_at
+    ENDFB;
+
   /* now create and apply voxel map */
   c=0;
-  if(n1) {
-	 n2=0;
-	 map=MapNewFlagged(-(cutoff),I->Vertex,I->NAtom,NULL,I->Flag1);
+  if(n_point) {
+	 map=MapNew(-(cutoff),point,n_point,NULL);
 	 if(map) {
 		MapSetupExpress(map);
       
       for(a=oMap->Min[0];a<oMap->Max[0];a++) {      
         for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
           for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
-            F3(oMap->Field->data,a,b,c)=0.0;            
+            F3(oMap->Field->data,a,b,c)=0.0F;            
             v2 = F4Ptr(oMap->Field->points,a,b,c,0);
 
             if(MapExclLocus(map,v2,&h,&k,&l)) {
@@ -2006,15 +2149,36 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff)
               if(i) {
                 j=map->EList[i++];
                 while(j>=0) {
-                  ai = I->Obj[I->Table[j].model]->AtomInfo+I->Table[j].atom;
-                  distsq = (float)diffsq3f(I->Vertex+3*j,v2);
-                  if(distsq>R_SMALL8) {
+                  dist = (float)diff3f(point+3*j,v2);
+                  eff_charge = charge[j];
+                  /* average charge over states and occupancy */
+                  if(dist>R_SMALL8) {
                     F3(oMap->Field->data,a,b,c)+=
-                      -ai->partialCharge/distsq;
+                      c_factor*eff_charge/dist;
+                    /*                    printf("%8.3f\n",F3(oMap->Field->data,a,b,c));*/
                   }
                   j=map->EList[i++];
                 }
               }
+            }
+            average+=F3(oMap->Field->data,a,b,c);
+            n_average++;
+
+            e_cnt=0;
+            if(!a) e_cnt++;
+            else if(a==oMap->Max[0]-1) e_cnt++;
+            if(!b) e_cnt++;
+            else if(b==oMap->Max[1]-1) e_cnt++;
+            if(!c) e_cnt++;
+            else if(c==oMap->Max[2]-1) e_cnt++;
+
+            if(e_cnt>0) {
+                face+=F3(oMap->Field->data,a,b,c);
+                n_face++;
+            } 
+            if(e_cnt>1) {
+                edge+=F3(oMap->Field->data,a,b,c);
+                n_edge++;
             }
           }
         }
@@ -2023,6 +2187,17 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff)
 		MapFree(map);
 	 }
   }
+  if(n_average&&n_face&&n_edge) {
+    PRINTFB(FB_Selector,FB_Details)
+      " SelectorMapCoulomb: averages: all = %8.4f, face = %8.4f, edge = %8.4f\n",
+      (float)(average/n_average),
+      (float)(face/n_face),
+      (float)(edge/n_edge)
+      ENDFB;
+  }
+
+  VLAFreeP(point);
+  VLAFreeP(charge);
   return(c);
 }
 
@@ -2729,6 +2904,13 @@ int SelectorIndexByName(char *sname)
    else
      strcpy(name,sname);		  
    i = WordIndex(I->Name,name,1,I->IgnoreCase);
+   if((i>=0)&&(name[0]!='_')) { /* don't do checking on internal selections */
+     char *best;
+     best = ExecutiveFindBestNameMatch(sname); /* suppress spurious matches
+                                                of selections with non-selections */
+     if((best!=sname)&&(strcmp(best,I->Name[i])))
+       i=-1;
+   }
    if(i>=0) i = I->ID[i];
  }
  return(i);
@@ -2802,7 +2984,7 @@ int SelectorGetTmp(char *input,char *store)
   OrthoLineType buffer;
   int count = 0;
   PRINTFD(FB_Selector)
-    " SelectorGetTmp-Debug: entered with '%s'.\n",input
+    " SelectorGetTmp-Debug: entered with \"%s\".\n",input
     ENDFD;
 
   if(input[0]=='(') {
@@ -2824,7 +3006,7 @@ int SelectorGetTmp(char *input,char *store)
     }
   }
   PRINTFD(FB_Selector)
-    " SelectorGetTmp-Debug: leaving with '%s'.\n",store
+    " SelectorGetTmp-Debug: leaving with \"%s\".\n",store
     ENDFD;
   return count;
 }
@@ -2949,7 +3131,7 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipic
   if(!name[0])
 	 {
       PRINTFB(FB_Selector,FB_Errors)
-        "Selector-Error: Invalid selection name '%s'.\n",sname
+        "Selector-Error: Invalid selection name \"%s\".\n",sname
         ENDFB;
 		OrthoRestorePrompt();
 	 }
@@ -3060,6 +3242,7 @@ int SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies)
 
   return(true);
 }
+
 /*========================================================================*/
 int SelectorUpdateTable(void)
 {
@@ -3159,7 +3342,7 @@ int *SelectorSelect(char *sele)
   WordType *parsed;
   int *result=NULL;
   PRINTFD(FB_Selector)
-    "SelectorSelect-DEBUG: sele = '%s'\n",sele
+    "SelectorSelect-DEBUG: sele = \"%s\"\n",sele
     ENDFD;
   SelectorUpdateTable();
   parsed=SelectorParse(sele);
@@ -3171,7 +3354,7 @@ int *SelectorSelect(char *sele)
         a = parsed;
         while(1) {
           if(!a[0][0]) break;
-          fprintf(stderr,"  '%s'\n",(a[0]));
+          fprintf(stderr,"  \"%s\"\n",(a[0]));
           a++;
         }
         fprintf(stderr,"SelectorSelect-DEBUG: end of tokens.\n");
@@ -3927,7 +4110,7 @@ int SelectorSelect1(EvalElem *base)
 		  }
 		else {
         PRINTFB(FB_Selector,FB_Errors)
-          " Selector-Error: invalid model '%s'.\n",base[1].text
+          " Selector-Error: invalid model \"%s\".\n",base[1].text
           ENDFB;
         ok=false;
       }

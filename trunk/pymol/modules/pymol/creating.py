@@ -30,13 +30,17 @@ if __name__=='pymol.creating':
 
    map_type_sc = Shortcut(map_type_dict.keys())
 
-   def map_new(name,type,grid=None,selection=None,buffer=0.0,box=None):
+   def map_new(name,type,grid=None,selection="(all)",buffer=0.0,box=None,state=0):
+      '''
+      state > 0: do indicated state
+      state = 0: independent states in independent extents
+      state = -1: current state
+      state = -2: independent states in unified extent
+      state = -3: all states in one map
+      '''
       # preprocess selection
       r = None
-      if selection!=None:
-         selection = selector.process(selection)
-      else:
-         selection = ""
+      selection = selector.process(selection)
       if box!=None: # box should be [[x1,y1,z1],[x2,y2,z2]]
          if cmd.is_string(box):
             box = eval(box)
@@ -52,7 +56,8 @@ if __name__=='pymol.creating':
       type = map_type_dict[map_type_sc.auto_err(str(type),'map type')]
       try:
          lock()
-         r = _cmd.map_new(str(name),int(type),grid,str(selection),float(buffer),box)
+         r = _cmd.map_new(str(name),int(type),grid,str(selection),
+                          float(buffer),box,int(state)-1)
       finally:
          unlock()
 
@@ -75,7 +80,7 @@ if __name__=='pymol.creating':
       finally:
          unlock()
 
-   def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,source=-1):
+   def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,source_state=0):
       '''
 DESCRIPTION
 
@@ -106,10 +111,20 @@ NOTES
    If the mesh object already exists, then the new mesh will be
    appended onto the object as a new state (unless you indicate a state).
 
+   state > 0: specific state
+   state = 0: all states
+   state = -1: current state
+   
+   source_state > 0: specific state
+   source_state = 0: include all states starting with 0
+   source_state = -1: current state
+   source_state = -2: last state in map
+
 SEE ALSO
 
    isodot, load
-      '''
+'''
+
       if selection!='':
          mopt = 1 # about a selection
       else:
@@ -124,13 +139,13 @@ SEE ALSO
          r = _cmd.isomesh(str(name),0,str(map),int(mopt),
                           "("+str(selection)+")",float(buffer),
                           float(level),0,int(state)-1,float(carve),
-                          int(source)-1)
+                          int(source_state)-1)
       finally:
          unlock()
       return r
 
    def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,
-                  source=-1,side=1):
+                  source_state=0,side=1):
       '''
 DESCRIPTION
 
@@ -179,7 +194,7 @@ SEE ALSO
          r = _cmd.isosurface(str(name),0,str(map),int(mopt),
                           "("+str(selection)+")",float(buffer),
                              float(level),0,int(state)-1,float(carve),
-                             int(source)-1,int(side))
+                             int(source_state)-1,int(side))
       finally:
          unlock()
       return r
@@ -224,6 +239,24 @@ SEE ALSO
                           "("+str(selection)+")",float(buffer),
                           float(level),1,int(state)-1,
                           float(carve),int(source)-1)
+      finally:
+         unlock()
+      return r
+
+   def isolevel(name,level=1.0,state=0):
+      '''
+DESCRIPTION
+
+   "isolevel" changes the contour level of a isodot, isosurface, or isomesh object.
+
+USAGE
+
+   isolevel name, level, state
+
+      '''
+      try:
+         lock()
+         r = _cmd.isolevel(str(name),float(level),int(state)-1)
       finally:
          unlock()
       return r

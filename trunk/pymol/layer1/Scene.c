@@ -316,6 +316,14 @@ void SceneDontCopyNext(void)
   I->CopyNextFlag=false;
 }
 /*========================================================================*/
+void SceneUpdateStereoMode(void)
+{
+  CScene *I=&Scene;
+  if(I->StereoMode) {
+    SceneSetStereo(true);
+  }
+}
+/*========================================================================*/
 void SceneSetStereo(int flag)
 {
   CScene *I=&Scene;
@@ -638,7 +646,8 @@ void SceneMakeMovieImage(void) {
 
   I->DirtyFlag=false;
   if(SettingGet(cSetting_ray_trace_frames)) {
-	SceneRay(0,0,SettingGet(cSetting_ray_default_renderer),NULL,NULL); 
+	SceneRay(0,0,SettingGet(cSetting_ray_default_renderer),NULL,NULL,
+            0.0F,0.0F); 
   } else {
 	 v=SettingGetfv(cSetting_bg_rgb);
     if(PMGUI) {
@@ -1192,7 +1201,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     SceneDirty();
     break;
   case cButModePickBond:
-
+  case cButModePkTorBnd:
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
@@ -1243,8 +1252,24 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           SelectorCreate(cEditorSele2,buffer,NULL,true,NULL);
           EditorSetActiveObject(objMol,
                                 SettingGetGlobal_i(cSetting_state)-1);
+
+
           WizardDoPick(1);
-          
+
+          if(mode==cButModePkTorBnd) {
+            /* get ready to drag */
+            SceneDontCopyNext();
+            switch(obj->type) {
+            case cObjectMolecule:
+              objMol = (ObjectMolecule*)obj;
+              EditorPrepareDrag(objMol,I->LastPicked.index,
+                                SettingGetGlobal_i(cSetting_state)-1);
+              I->SculptingFlag = 1;
+              I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protected;
+              objMol->AtomInfo[I->LastPicked.index].protected=2;
+              break;
+            }
+          }
         }
         break;
       case cObjectGadget:
@@ -1716,7 +1741,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 {
   CScene *I=&Scene;
   float scale,vScale;
-  float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
+  float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3],v3[3];
   float dx,dy,dt;
   float axis[3],axis2[3],theta,omega,old_z;
   int mode;
@@ -1787,7 +1812,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   case cButModeMovFrag:
   case cButModeTorFrag:
   case cButModeRotFrag:
-    
+  case cButModePkTorBnd:
     obj=(CObject*)I->LastPicked.ptr;
     if(obj)
       switch(obj->type) {
@@ -1805,10 +1830,16 @@ int SceneDrag(Block *block,int x,int y,int mod)
           v2[0] = (x-I->LastX)*vScale;
           v2[1] = (y-I->LastY)*vScale;
           v2[2] = 0;
+
+          v3[0] = 0.0F;
+          v3[1] = 0.0F;
+          v3[2] = 1.0F;
+
           /* transform into model coodinate space */
           MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
+          MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
           EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
-                     SettingGetGlobal_i(cSetting_state)-1,v1,v2);
+                     SettingGetGlobal_i(cSetting_state)-1,v1,v2,v3);
         }
         break;
       default:
@@ -2196,7 +2227,8 @@ void SceneResetNormal(int lines)
 }
 
 /*========================================================================*/
-void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **charVLA_ptr)
+void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
+              char **charVLA_ptr,float angle,float shift)
 {
   CScene *I=&Scene;
   ObjRec *rec=NULL;
@@ -2239,20 +2271,34 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
   MatrixLoadIdentity44f(rayView);
 
+
   /* move the camera to the location we are looking at */
   MatrixTranslate44f3f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
 
+  if(shift) {
+    MatrixTranslate44f3f(rayView,shift,0.0F,0.0F);
+  }
   /* move the camera so that we can see the origin 
 	* NOTE, vector is given in the coordinates of the world's motion
 	* relative to the camera */
-  
-  /* turn on depth cuing and all that jazz */
+
   
   /* 4. rotate about the origin (the the center of rotation) */
-  MatrixMultiply44f(I->RotMatrix,rayView);
-  
+
+  if(angle) {
+    float temp[16];
+    MatrixLoadIdentity44f(temp);
+    MatrixRotate44f3f(temp,-PI*angle/180,0.0F,1.0F,0.0F);
+    MatrixMultiply44f(I->RotMatrix,temp);
+    MatrixMultiply44f(temp,rayView);
+  } else {
+    MatrixMultiply44f(I->RotMatrix,rayView);
+  }
+
+
   /* 5. move the origin to the center of rotation */
   MatrixTranslate44f3f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
+
 
   if(Feedback(FB_Scene,FB_Debugging)) {
     fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
@@ -2291,7 +2337,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
     buffer=(GLvoid*)Alloc(char,buffer_size);
     ErrChkPtr(buffer);
     
-    RayRender(ray,ray_width,ray_height,buffer,I->Front,I->Back,timing);
+    RayRender(ray,ray_width,ray_height,buffer,I->Front,I->Back,timing,angle);
 
     /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
     
@@ -2316,10 +2362,12 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   case 1: /* mode 1 is povray */
     charVLA=VLAlloc(char,100000); 
     headerVLA=VLAlloc(char,2000);
-    RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,I->FrontSafe,I->Back,fov);
+    RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
+                 I->FrontSafe,I->Back,fov,angle);
     if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
       strcpy(prefix,SettingGet_s(NULL,NULL,cSetting_batch_prefix));
-      if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,ray_height,SettingGet(cSetting_antialias))) {
+      if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
+                       ray_height,SettingGet(cSetting_antialias))) {
         strcat(prefix,".png");
         SceneLoadPNG(prefix,false,false);
         I->DirtyFlag=false;
@@ -2452,7 +2500,7 @@ int SceneRenderCached(void)
 		  renderedFlag=true;
 		}
 	} else if(MoviePlaying()&&SettingGet(cSetting_ray_trace_frames)) {
-	  SceneRay(0,0,SettingGet(cSetting_ray_default_renderer),NULL,NULL); 
+	  SceneRay(0,0,SettingGet(cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F); 
 	} else {
 	  renderedFlag=false;
 	  I->CopyFlag = false;
@@ -2799,6 +2847,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
       switch(I->StereoMode) {
       case 2:
+      case 3:
         glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
         break;
       }
@@ -2848,6 +2897,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
       switch(I->StereoMode) {
       case 2:
+      case 3:
         glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
         break;
       }
@@ -2944,6 +2994,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         case 2: /* side by side */
           glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
+        case 3:
+          glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+          break;
         }
         
         glPushMatrix(); /* 1 */
@@ -2988,6 +3041,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         case 2: /* side by side */
           glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
+        case 3:
+          glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+          break;
         }
         
         glClear(GL_DEPTH_BUFFER_BIT);        
@@ -3024,6 +3080,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           glDrawBuffer(GL_BACK);
           break;
         case 2: /* side by side */
+        case 3:
           glDrawBuffer(GL_BACK);
           break;
         }

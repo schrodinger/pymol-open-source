@@ -144,6 +144,8 @@ OpenGL Core
  
       * make PyMOL a compliant extension for the Chimera environment
 
+      * statistics module, applicable to maps
+
 Main Goals for 1.0 Release
 
    * MOL2 and CML file formats
@@ -163,6 +165,17 @@ Current Bugs to Fix
 CHANGE LOG
 =========================================================================
 Changes up to 0.88
+
+   * get command allows settings to be queried from the command line
+
+   * added angle and shift options onto "ray" command for stereo figures
+     (this automatically adjusts the light position)
+
+   * added walleye stereo support
+
+   * can now pick and rotate bonds with a single click-and-drag
+
+   * overhauled map_new, isomesh, isosurface.  added new test case
 
    * scene commands
 

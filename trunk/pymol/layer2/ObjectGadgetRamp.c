@@ -430,9 +430,9 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
   scale = (1.0F+5*I->Gadget.GSet[0]->Coord[13*3]);
 
   I->Gadget.GSet[0]->Coord[13*3] = 0.0;
-  if(I->NColor>2) {
-    I->Level[0]*=scale;
-    I->Level[2]*=scale;
+  if(I->NColor==3) {
+    I->Level[0]=(I->Level[0]-I->Level[1])*scale+I->Level[1];
+    I->Level[2]=(I->Level[2]-I->Level[1])*scale+I->Level[1];
     ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);
   }
   if(I->Gadget.NGSet)

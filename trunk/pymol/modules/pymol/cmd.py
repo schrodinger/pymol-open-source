@@ -117,7 +117,7 @@ if __name__=='pymol.cmd':
    toggle_sc = Shortcut(toggle_dict.keys())
 
    stereo_dict = {'on':1,'off':0,'1':1,'0':0,'swap':-1,
-                  'crosseye':2,'quadbuffer':3} #,'walleye':3}
+                  'crosseye':2,'quadbuffer':3,'walleye':4}
    stereo_sc = Shortcut(stereo_dict.keys())
 
    space_sc = Shortcut(['cmyk','rgb','pymol'])
@@ -580,7 +580,7 @@ if __name__=='pymol.cmd':
             fname = re.sub("\.png$","",fname)
          fname = os.path.expanduser(fname)
          fname = os.path.expandvars(fname)
-         r = _cmd.mpng_(str(fname),arg[1],arg[2])
+         r = _cmd.mpng_(str(fname),int(arg[1]),int(arg[2]))
       finally:
          unlock()
       return r
@@ -944,6 +944,7 @@ if __name__=='pymol.cmd':
         create,             \
         fragment,           \
         isodot,             \
+        isolevel,           \
         isomesh,            \
         isosurface,         \
         symexp,             \
@@ -1157,6 +1158,7 @@ if __name__=='pymol.cmd':
    import setting
    from setting import \
         set,                 \
+        get,                 \
         unset,               \
         get_setting_legacy,  \
         get_setting_tuple,   \
@@ -1268,6 +1270,7 @@ if __name__=='pymol.cmd':
       'full_screen'   : [ full_screen       , 0 , 0 , ''  , parsing.STRICT ],
       'fuse'          : [ fuse              , 0 , 0 , ''  , parsing.STRICT ],
       'frame'         : [ frame             , 0 , 0 , ''  , parsing.STRICT ],
+      'get'           : [ get               , 0 , 0 , ''  , parsing.STRICT ],      
       'get_area'      : [ get_area          , 0 , 0 , ''  , parsing.STRICT ],
       'get_chains'    : [ get_chains        , 0 , 0 , ''  , parsing.STRICT ],
       'get_dihedral'  : [ get_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
@@ -1291,7 +1294,8 @@ if __name__=='pymol.cmd':
       'intra_rms'     : [ intra_rms         , 0 , 0 , ''  , parsing.STRICT ],
       'intra_rms_cur' : [ intra_rms_cur     , 0 , 0 , ''  , parsing.STRICT ],
       'invert'        : [ invert            , 0 , 0 , ''  , parsing.STRICT ],
-      'isodot'        : [ isodot            , 0 , 0 , ''  , parsing.LEGACY ],   
+      'isodot'        : [ isodot            , 0 , 0 , ''  , parsing.LEGACY ],
+      'isolevel'      : [ isolevel           , 0 , 0 , '' , parsing.STRICT ],      
       'isomesh'       : [ isomesh           , 0 , 0 , ''  , parsing.LEGACY ],
       'isosurface'    : [ isosurface        , 0 , 0 , ''  , parsing.LEGACY ],   
       'iterate'       : [ iterate           , 0 , 0 , ''  , parsing.LITERAL1 ],
@@ -1560,6 +1564,7 @@ if __name__=='pymol.cmd':
       'cartoon'        : [ viewing.cartoon_sc     , 'cartoon'         , ', ' ],
       'space'          : [ space_sc               , 'space'           , ''   ],      
       'set'            : [ setting.setting_sc     , 'setting'         , ','  ],
+      'get'            : [ setting.setting_sc     , 'setting'         , ','  ],      
       'flag'           : [ editing.flag_sc        , 'flag'            , ', ' ],
       'show'           : [ repres_sc              , 'representation'  , ', ' ],
       'hide'           : [ repres_sc              , 'representation'  , ', ' ],

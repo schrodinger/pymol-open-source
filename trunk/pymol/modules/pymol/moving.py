@@ -227,7 +227,8 @@ PYMOL API
       if thread.get_ident() ==pymol.glutThread:
          r = cmd._mpng(prefix,int(first)-1,int(last)-1)
       else:
-         r = _cmd.do("cmd._mpng('"+prefix+","+str(first)+","+str(last)+"')")
+         r = _cmd.do('cmd._mpng("'+prefix+'","'+
+                     str(int(first)-1)+'","'+str(int(last)-1)+'")')
       return r
 
    def mclear():

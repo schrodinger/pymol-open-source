@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"Triangle.h"
 #include"Color.h"
+#include"Matrix.h"
 
 #ifndef RAY_SMALL
 #define RAY_SMALL 0.00001
@@ -483,7 +484,9 @@ void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov
 }
 
 /*========================================================================*/
-void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charVLA_ptr,float front,float back,float fov)
+void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
+                  char **charVLA_ptr,float front,float back,float fov,
+                  float angle)
 {
   int antialias;
   int fogFlag=false;
@@ -498,7 +501,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
   OrthoLineType buffer;
   float *vert,*norm;
   float vert2[3];
-  float *light;
+  float light[3],*lightv;
   int cc,hc;
   int a;
   int smooth_color_triangle;
@@ -564,7 +567,14 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
           SettingGet(cSetting_spec_power)/4.0F);
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
-  light = SettingGet_3fv(NULL,NULL,cSetting_light);
+  lightv = SettingGet_3fv(NULL,NULL,cSetting_light);
+  copy3f(lightv,light);
+  if(angle) {
+    float temp[16];
+    MatrixLoadIdentity44f(temp);
+    MatrixRotate44f3f(temp,-PI*angle/180,0.0F,1.0F,0.0F);
+    MatrixTransform44fAs33f3f(temp,light,light);
+  }
   sprintf(buffer,"light_source{<%6.4f,%6.4f,%6.4f>  rgb<1.0,1.0,1.0>}\n",
           -light[0]*10000.0F,
           -light[1]*10000.0F,
@@ -744,15 +754,16 @@ void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,floa
 }
 
 /*========================================================================*/
-void RayRender(CRay *I,int width,int height,unsigned int *image,float front,float back,
-               double timing)
+void RayRender(CRay *I,int width,int height,unsigned int *image,
+               float front,float back,
+               double timing,float angle)
 {
   int x,y;
   int a,b;
   unsigned int *p;
   float excess=0.0F;
   float dotgle;
-  float bright,direct_cmp,reflect_cmp,*v,fc[4];
+  float bright,direct_cmp,reflect_cmp,*v,fc[4],light[3];
   float ambient,direct,lreflect,ft,ffact,ffact1m;
   unsigned int c[4],aa,za;
   unsigned int *image_copy = NULL;
@@ -906,10 +917,18 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     BasisInit(I->Basis+2);
     
     v=SettingGetfv(cSetting_light);
-    
-    I->Basis[2].LightNormal[0]=v[0];
-    I->Basis[2].LightNormal[1]=v[1];
-    I->Basis[2].LightNormal[2]=v[2];
+    copy3f(v,light);
+
+    if(angle) {
+      float temp[16];
+      MatrixLoadIdentity44f(temp);
+      MatrixRotate44f3f(temp,-PI*angle/180,0.0F,1.0F,0.0F);
+      MatrixTransform44fAs33f3f(temp,light,light);
+    }
+
+    I->Basis[2].LightNormal[0]=light[0];
+    I->Basis[2].LightNormal[1]=light[1];
+    I->Basis[2].LightNormal[2]=light[2];
     normalize3f(I->Basis[2].LightNormal);
     
     copy3f(I->Basis[2].LightNormal,spec_vector);
@@ -1028,11 +1047,14 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 dotgle=-r1.dotgle;
                               
                 if(r1.flat_dotgle<0.0F) {
+                  if((!two_sided_lighting)&&interior_color>=0) {
+                    interior_flag = true;
+                  }
+                }
+                if(dotgle<0.0F) {
                   if(two_sided_lighting) {
                     dotgle=-dotgle;
                     invert3f(r1.surfnormal);
-                  } else if(interior_color>=0) {
-                    interior_flag = true;
                   } else 
                     dotgle=0.0F;
                 }

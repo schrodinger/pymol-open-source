@@ -990,8 +990,6 @@ class PMGApp(AbstractApp):
                         variable = self.setting.all_states,
                         command = lambda s=self: s.setting.update('all_states'))
 
-
-
       self.menuBar.addmenu('Display', 'Display Control')
       
       self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
@@ -1008,6 +1006,10 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Stereo', 'command', 'Cross-Eye Stereo',
                                label='Cross-Eye Stereo',
                                command = lambda: cmd.do("_ stereo crosseye"))
+
+      self.menuBar.addmenuitem('Stereo', 'command', 'Wall-Eye Stereo',
+                               label='Wall-Eye Stereo',
+                               command = lambda: cmd.do("_ stereo walleye"))
 
       self.menuBar.addmenuitem('Stereo', 'command', 'Quad-Buffered Stereo',
                                label='Quad-Buffered Stereo',

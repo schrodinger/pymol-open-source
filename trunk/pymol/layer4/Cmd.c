@@ -243,6 +243,7 @@ static PyObject *CmdIndex(PyObject *dummy, PyObject *args);
 static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdInvert(PyObject *self, PyObject *args);
+static PyObject *CmdIsolevel(PyObject *self, 	PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args);
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
@@ -444,6 +445,7 @@ static PyMethodDef Cmd_methods[] = {
    {"index",                 CmdIndex,                METH_VARARGS },
 	{"intrafit",              CmdIntraFit,             METH_VARARGS },
    {"invert",                CmdInvert,               METH_VARARGS },
+	{"isolevel",              CmdIsolevel,             METH_VARARGS },
 	{"isomesh",	              CmdIsomesh,              METH_VARARGS },
 	{"isosurface",	           CmdIsosurface,           METH_VARARGS },
    {"wait_queue",            CmdWaitQueue,            METH_VARARGS },
@@ -539,7 +541,6 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
-
 
 
 static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args)
@@ -959,18 +960,19 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
   float grid[3];
   float buffer;
   int type;
+  int state;
   char *selection;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sifsf(ffffff)",&name,&type,&grid[0],&selection,&buffer,
+  ok = PyArg_ParseTuple(args,"sifsf(ffffff)i",&name,&type,&grid[0],&selection,&buffer,
                         &minCorner[0],&minCorner[1],&minCorner[2],
-                        &maxCorner[0],&maxCorner[1],&maxCorner[2]);
+                        &maxCorner[0],&maxCorner[1],&maxCorner[2],&state);
   if(ok) {
     grid[1]=grid[0];
     grid[2]=grid[0];
     APIEntry();
     SelectorGetTmp(selection,s1);
-    ok = ExecutiveMapNew(name,type,grid,s1,buffer,minCorner,maxCorner);
+    ok = ExecutiveMapNew(name,type,grid,s1,buffer,minCorner,maxCorner,state);
     SelectorFreeTmp(s1);
     APIExit();
   }
@@ -1615,7 +1617,7 @@ static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *header=NULL,*geom=NULL;
   APIEntry();
-  SceneRay(0,0,1,&header,&geom);
+  SceneRay(0,0,1,&header,&geom,0.0F,0.0F);
   if(header&&geom) {
     result = Py_BuildValue("(ss)",header,geom);
   }
@@ -1733,14 +1735,31 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
     }
     if(mObj) {
       mapObj = (ObjectMap*)mObj;
-      if(map_state==-2) {
-        map_state=0;
+      if(state==-1) {
         multi=true;
+        state=0;
+        map_state=0;
+      } else if(state==-2) {
+        state=SceneGetState();
+        if(map_state<0) 
+          map_state=state;
+      } else if(state==-3) { /* append mode */
+        state=0;
+        if(origObj)
+          if(origObj->fGetNFrame)
+            state=origObj->fGetNFrame(origObj);
       } else {
-        multi=false;
+        if(map_state==-1) {
+          map_state=0;
+          multi=true;
+        } else {
+          multi=false;
+        }
       }
       while(1) {
-        if(map_state==-1)
+        if(map_state==-2)
+          map_state=SceneGetState();
+        if(map_state==-3)
           map_state=ObjectMapGetNStates(mapObj)-1;
         ms = ObjectMapStateGetActive(mapObj,map_state);
         if(ms) {
@@ -1782,9 +1801,9 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
           PRINTFB(FB_ObjectMesh,FB_Actions)
             " Isomesh: created \"%s\", setting level to %5.3f\n",str1,lvl
             ENDFB;
-        } else {
-          PRINTFB(FB_ObjectMesh,FB_Errors)
-            " Isomesh: state %d not found in map.\n",map_state
+        } else if(!multi) {
+          PRINTFB(FB_ObjectMesh,FB_Warnings)
+            " Isomesh-Warning: state %d not present in map \"%s\".\n",map_state+1,str2
             ENDFB;
           ok=false;
         }
@@ -1800,7 +1819,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
       }
     } else {
       PRINTFB(FB_ObjectMesh,FB_Errors)
-        " Isomesh: Map or brick object '%s' not found.\n",str2
+        " Isomesh: Map or brick object \"%s\" not found.\n",str2
         ENDFB;
       ok=false;
     }
@@ -1850,14 +1869,31 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
     }
     if(mObj) {
       mapObj = (ObjectMap*)mObj;
-      if(map_state==-2) {
-        map_state=0;
+      if(state==-1) {
         multi=true;
+        state=0;
+        map_state=0;
+      } else if(state==-2) { /* current state */
+        state=SceneGetState();
+        if(map_state<0) 
+          map_state=state;
+      } else if(state==-3) { /* append mode */
+        state=0;
+        if(origObj)
+          if(origObj->fGetNFrame)
+            state=origObj->fGetNFrame(origObj);
       } else {
-        multi=false;
+        if(map_state==-1) {
+          map_state=0;
+          multi=true;
+        } else {
+          multi=false;
+        }
       }
       while(1) {
-        if(map_state==-1)
+        if(map_state==-2)
+          map_state=SceneGetState();
+        if(map_state==-3)
           map_state=ObjectMapGetNStates(mapObj)-1;
         ms = ObjectMapStateGetActive(mapObj,map_state);
         if(ms) {
@@ -1899,9 +1935,9 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
           PRINTFB(FB_ObjectSurface,FB_Actions)
             " Isosurface: created \"%s\", setting level to %5.3f\n",str1,lvl
             ENDFB;
-        } else {
-          PRINTFB(FB_ObjectMesh,FB_Errors)
-            " Isosurface: state %d not found in map.\n",map_state+1
+        } else if(!multi) {
+          PRINTFB(FB_ObjectMesh,FB_Warnings)
+            " Isosurface-Warning: state %d not present in map \"%s\".\n",map_state+1,str2
             ENDFB;
           ok=false;
         }
@@ -1917,7 +1953,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
       }
     } else {
       PRINTFB(FB_ObjectSurface,FB_Errors)
-        " Isosurface: Map or brick object '%s' not found.\n",str2
+        " Isosurface: Map or brick object \"%s\" not found.\n",str2
         ENDFB;
       ok=false;
     }
@@ -3127,14 +3163,14 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
 static PyObject *CmdRay(PyObject *self, 	PyObject *args)
 {
   int w,h,mode;
-
+  float angle,shift;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"iii",&w,&h,&mode);
+  ok = PyArg_ParseTuple(args,"iiiff",&w,&h,&mode,&angle,&shift);
   if (ok) {
     APIEntry();
     if(mode<0)
       mode=(int)SettingGet(cSetting_ray_default_renderer);
-    ExecutiveRay(w,h,mode); /* TODO STATUS */
+    ExecutiveRay(w,h,mode,angle,shift); /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));
@@ -4169,6 +4205,21 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
     SelectorGetTmp(str1,s1);
     ok = ExecutiveWindowZoom(s1,buffer,state,inclusive); 
     SelectorFreeTmp(s1);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
+{
+  float level;
+  int state;
+  char *name;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"sfi",&name,&level,&state);
+  if (ok) {
+    APIEntry();
+    ok = ExecutiveIsolevel(name,level,state);
     APIExit();
   }
   return(APIStatus(ok));
