@@ -90,7 +90,36 @@ def zoom(first,last,step=1,loop=1,axis='z'):
       # cmd.do(com)
       cmd.mdo("%d" % (first+a),"move %s,%8.3f" % (axis,s))
       a = a + 1
-      
+
+def nutate(first,last,angle=30,phase=0,loop=1,shift=math.pi/2.0,factor=0.01):
+   first=int(first)
+   last=int(last)
+   angle=float(angle)
+   phase=float(phase)
+   loop=int(loop)
+   nstep = (last-first)+1
+   if nstep<0:
+      nstep = 1
+   if loop:
+      subdiv = nstep
+   else:
+      subdiv = nstep+1
+   ang_cur = math.pi*phase/180
+   ang_inc = 2*math.pi/subdiv
+   ang_cur = ang_cur - ang_inc
+   a = 0
+   while a<nstep:
+      lastx = angle*math.sin(ang_cur)/2
+      lasty = angle*math.sin(ang_cur+shift)/2
+      ang_cur = ang_cur + ang_inc
+      nextx = angle*math.sin(ang_cur)/2
+      nexty = angle*math.sin(ang_cur+shift)/2      
+      # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
+      # cmd.do(com)
+      cmd.mdo("%d"%(first+a),"turn x,%8.3f;turn y,%8.3f;turn y,%8.3f;turn x,%8.3f"%
+              (-lastx,-lasty,nexty,nextx))
+      a = a + 1
+
 def screw(first,last,step=1,angle=30,phase=0,loop=1,axis='y'):
    # Author: Peter Haebel
    first=int(first)
