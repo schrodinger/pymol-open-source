@@ -87,6 +87,15 @@ typedef struct ObjectMoleculeOpRec {
   int nvv1,nvv2;
 } ObjectMoleculeOpRec;
 
+typedef struct {
+  float maxAngle;
+  float maxDistAtMaxAngle;
+  float maxDistAtZero;
+  float power_a,power_b;
+  float factor_a, factor_b; /* 0.5/(maxAngle^power_a), 0.5/(maxAngle^power_b)) */
+  float cone_dangle;
+} HBondCriteria;
+
 /* these four letter code are left over from an 
    earlier multicharacter constant implementation
    and should be replaced with something more verbose */
@@ -246,6 +255,16 @@ int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,in
 
 int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,struct CoordSet *cs,int searchFlag);
 float ObjectMoleculeGetMaxVDW(ObjectMolecule *I);
+int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
+                                        int index,float *v,float *seek);
+int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
+                                int don_atom,
+                                int don_state,
+                                ObjectMolecule *acc_obj,
+                                int acc_atom,
+                                int acc_state,
+                                HBondCriteria *hbc);
+void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc);
 
 #define cObjectMoleculeDummyOrigin 1
 #define cObjectMoleculeDummyCenter 2

@@ -248,7 +248,7 @@ SEE ALSO
          unlock()
 
 
-   def bond(atom1="(lb)",atom2="(rb)",order=1,edit=1):
+   def bond(atom1="(pk1)",atom2="(pk2)",order=1,edit=1):
       '''
 DESCRIPTION
 
@@ -796,6 +796,39 @@ SEE ALSO
          r = _cmd.rename(str(object),int(force))
       finally:
          unlock()
+      return r
+
+
+   def ss(selection="(all)",state=0,context=None,quiet=1):
+      '''
+DESCRIPTION
+
+   "ss" assigns secondary structure based on backbone geometry
+   and hydrogen bonding patterns.
+
+   This command will generate results which differ slightly from
+   
+USAGE
+
+   ss (selection),state
+
+EXAMPLES
+
+   ss
+
+      '''
+      # preprocess selections
+      selection = selector.process(selection)
+      if context==None:
+         context = ""
+      else:
+         context = selector.process(context)
+      #
+      try:
+         lock()
+         r = _cmd.ss(str(selection),int(state)-1,str(context),int(quiet))
+      finally:
+         unlock()   
       return r
 
    def alter(selection,expression,quiet=1):

@@ -1176,6 +1176,7 @@ SEE ALSO
         set_title,          \
         smooth,             \
         sort,               \
+        ss,                 \
         torsion,            \
         transform_object,   \
         transform_selection,\
@@ -1514,6 +1515,7 @@ SEE ALSO
       'spheroid'      : [ spheroid          , 0 , 0 , ''  , parsing.STRICT ],
       'splash'        : [ splash            , 0 , 0 , ''  , parsing.STRICT ],
       '_special'      : [ _special          , 0 , 0 , ''  , parsing.STRICT ],
+      'ss'            : [ ss                , 0 , 0 , ''  , parsing.STRICT ],
       'stereo'        : [ stereo            , 0 , 0 , ''  , parsing.STRICT ],
       'symexp'        : [ symexp            , 0 , 0 , ''  , parsing.LEGACY ],
       'system'        : [ system            , 0 , 0 , ''  , parsing.LITERAL ],

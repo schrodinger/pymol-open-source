@@ -4027,6 +4027,25 @@ static PyObject *CmdSort(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
+/* EXPERIMENTAL */
+{
+  char *name;
+  int ok=false;
+  int state,quiet;
+  char *str1,*str2;
+  OrthoLineType s1,s2;
+  ok = PyArg_ParseTuple(args,"sisi",&str1,&state,&str2,&quiet);
+  if (ok) {
+    APIEntry();
+    SelectorGetTmp(str1,s1);
+    SelectorGetTmp(str2,s2);
+    ok = ExecutiveAssignSS(s1,state,s2,quiet);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 /* EXPERIMENTAL */
 {
@@ -4485,6 +4504,7 @@ static PyMethodDef Cmd_methods[] = {
    {"spectrum",              CmdSpectrum,             METH_VARARGS },
    {"spheroid",              CmdSpheroid,             METH_VARARGS },
 	{"splash",                CmdSplash,               METH_VARARGS },
+	{"ss",   	              CmdAssignSS,             METH_VARARGS },
 	{"stereo",	              CmdStereo,               METH_VARARGS },
 	{"system",	              CmdSystem,               METH_VARARGS },
 	{"symexp",	              CmdSymExp,               METH_VARARGS },

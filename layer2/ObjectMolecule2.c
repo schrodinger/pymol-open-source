@@ -29,6 +29,290 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"AtomInfo.h"
 
+
+void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc)
+{
+  hbc->maxAngle = SettingGet_f(NULL,NULL,cSetting_h_bond_max_angle);
+  hbc->maxDistAtMaxAngle = SettingGet_f(NULL,NULL,cSetting_h_bond_cutoff_edge);
+  hbc->maxDistAtZero = SettingGet_f(NULL,NULL,cSetting_h_bond_cutoff_center);
+  hbc->power_a = SettingGet_f(NULL,NULL,cSetting_h_bond_power_a);
+  hbc->power_b = SettingGet_f(NULL,NULL,cSetting_h_bond_power_b);
+  hbc->cone_dangle = cos(PI*0.5*SettingGet_f(NULL,NULL,cSetting_h_bond_cone)/180.0F);
+  if(hbc->maxDistAtMaxAngle!=0.0F) {
+    hbc->factor_a = 0.5/pow(hbc->maxAngle,hbc->power_a);
+    hbc->factor_b = 0.5/pow(hbc->maxAngle,hbc->power_b);
+  }
+}
+
+    
+static int ObjectMoleculeTestHBond(float *donToAcc,float *donToH, float *hToAcc, 
+                          float *accPlane, HBondCriteria *hbc)
+{
+  float nDonToAcc[3],nDonToH[3],nAccPlane[3],nHToAcc[3];
+  double angle;
+  double cutoff;
+  double curve;
+  double dist;
+  float dangle;
+/* A ~~ H - D */
+
+  normalize23f(donToAcc,nDonToAcc);
+  normalize23f(hToAcc,nHToAcc);
+  if(accPlane) { /* remember, plane need not exist if it's water... */
+    normalize23f(accPlane,nAccPlane);
+    if(dot_product3f(nDonToAcc,nAccPlane)>(-hbc->cone_dangle)) /* don't allow D to be more than 30 degrees behind A */
+      return 0;
+    if(dot_product3f(nHToAcc,nAccPlane)>(-hbc->cone_dangle)) /* don't allow H to be more than 30 degrees behind A */
+      return 0;
+  }
+
+  normalize23f(donToH,nDonToH);
+  normalize23f(donToAcc,nDonToAcc);
+
+         
+  dangle = dot_product3f(nDonToH,nDonToAcc);
+  if((dangle<1.0F)&&(dangle>0.0F))
+    angle = 180.0 * acos((double)dangle) / PI;
+  else if(dangle>0.0F)
+    angle = 0.0;
+  else
+    angle = 90.0;
+
+  if(angle > hbc->maxAngle)
+    return 0;
+
+  /* interpolate cutoff based on ADH angle */
+
+  if(hbc->maxDistAtMaxAngle!=0.0F) {
+    curve = (pow(angle, hbc->power_a) * hbc->factor_a + 
+             pow(angle, hbc->power_b) * hbc->factor_b );
+    
+    cutoff = (hbc->maxDistAtMaxAngle * curve) + 
+      (hbc->maxDistAtZero * (1.0-curve));
+  } else {
+    cutoff = hbc->maxDistAtZero;
+  }
+
+  /*
+  printf("angle %8.3f curve %8.3f %8.3f %8.3f %8.3f\n",angle,
+         curve,cutoff,hbc->maxDistAtMaxAngle,hbc->maxDistAtZero);
+  */
+
+  dist = length3f(donToAcc);  
+
+  if(dist>cutoff) 
+    return 0;
+  else
+    return 1;
+
+}
+
+/*========================================================================*/
+
+static int ObjectMoleculeFindBestDonorH(ObjectMolecule *I,
+                            int atom,
+                            int state,
+                            float *dir,
+                            float *best)
+{
+  int result = 0;
+  CoordSet *cs;
+  int n,nn;
+  int idx;
+  int a1;
+  float cand[3],cand_dir[3];
+  float best_dot=0.0F,cand_dot;
+  float *orig;
+
+  ObjectMoleculeUpdateNeighbors(I);  
+
+  if((state>=0)&&
+     (state<I->NCSet)&&
+     (cs=I->CSet[state])&&
+     (atom<I->NAtom)) {
+    
+    if(I->DiscreteFlag) {
+      if(cs==I->DiscreteCSet[atom]) {
+        idx=I->DiscreteAtmToIdx[atom];
+      } else {
+        idx=-1;
+      }
+    } else {
+      idx=cs->AtmToIdx[atom];
+    }
+    
+    if(idx>=0) {
+
+      orig = cs->Coord + 3*idx;
+      
+      /*  do we need to add any new hydrogens? */
+      
+      n = I->Neighbor[atom];
+      nn = I->Neighbor[n++];
+
+      if(nn<I->AtomInfo[atom].valence) {       /* is there an implicit hydrogen? */
+        if(ObjectMoleculeFindOpenValenceVector(I,state,atom,best,dir)) {
+          result = true;
+          best_dot = dot_product3f(best,dir);
+          add3f(orig,best,best);
+        }
+      }
+      /* iterate through real hydrogens looking for best match
+         with desired direction */
+      
+      while(1) { /* look for an attached non-hydrogen as a base */
+        a1 = I->Neighbor[n];
+        n+=2; 
+        if(a1<0) break;
+        if(I->AtomInfo[a1].protons==1) { /* hydrogen */
+          if(ObjectMoleculeGetAtomVertex(I,state,a1,cand)) { /* present */
+            
+            subtract3f(cand,orig,cand_dir);
+            normalize3f(cand_dir);
+            cand_dot = dot_product3f(cand_dir,dir);
+            if(result) { /* improved */
+              if(best_dot<cand_dot) {
+                best_dot = cand_dot;
+                copy3f(cand,best);
+              }
+            } else { /* first */
+              result = true;
+              copy3f(cand,best);
+              best_dot = cand_dot;
+            }
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
+/*========================================================================*/
+
+int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
+                                int don_atom,
+                                int don_state,
+                                ObjectMolecule *acc_obj,
+                                int acc_atom,
+                                int acc_state,
+                                HBondCriteria *hbc)
+{
+  int result = 0;
+  CoordSet *csD, *csA;
+  int idxD,idxA;
+  float *vAcc,*vDon;
+  float donToAcc[3];
+  float donToH[3];
+  float bestH[3];
+  float hToAcc[3];
+  float accPlane[3],*vAccPlane = NULL;
+
+  /* first, check for existence of coordinate sets */
+  
+  if((don_state>=0)&&
+     (don_state<don_obj->NCSet)&&
+     (csD=don_obj->CSet[don_state])&&
+     (acc_state>=0)&&
+     (acc_state<acc_obj->NCSet)&&
+     (csA=acc_obj->CSet[acc_state])&&
+     (don_atom<don_obj->NAtom)&&
+     (acc_atom<acc_obj->NAtom)) {
+
+    /* now check for coordinates of these actual atoms */
+    
+    if(don_obj->DiscreteFlag) {
+      if(csD==don_obj->DiscreteCSet[don_atom]) {
+        idxD=don_obj->DiscreteAtmToIdx[don_atom];
+      } else {
+        idxD=-1;
+      }
+    } else {
+      idxD=csD->AtmToIdx[don_atom];
+    }
+    
+    if(acc_obj->DiscreteFlag) {
+      if(csA==acc_obj->DiscreteCSet[acc_atom]) {
+        idxA=acc_obj->DiscreteAtmToIdx[acc_atom];
+      } else {
+        idxA=-1;
+      }
+    } else {
+      idxA=csA->AtmToIdx[acc_atom];
+    }
+    
+    if((idxA>=0)&&(idxD>=0)) {
+      
+      /* now get local geometries, including 
+         real or virtual hydrogen atom positions */
+      
+      vDon = csD->Coord + 3*idxD;
+      vAcc = csA->Coord + 3*idxA;
+      
+      subtract3f(vAcc,vDon,donToAcc);
+
+
+      if(ObjectMoleculeFindBestDonorH(don_obj,
+                                      don_atom,
+                                      don_state,
+                                      donToAcc,
+                                      bestH))
+        {
+          subtract3f(bestH,vDon,donToH);
+          subtract3f(vAcc,bestH,hToAcc);
+          
+          if(ObjectMoleculeGetAvgHBondVector(acc_obj,acc_atom,acc_state,accPlane)>0.1) {
+            vAccPlane = &accPlane[0];
+          }
+
+#if 0
+          {
+            float tmp[3];
+            CGOLinewidth(DebugCGO,4.0F);
+            CGOBegin(DebugCGO,GL_LINES);
+
+            CGOColor(DebugCGO,0.0F,1.0F,0.0F); /* green */
+            CGOVertexv(DebugCGO,vDon);
+            normalize23f(donToAcc,tmp);
+            add3f(vDon,tmp,tmp);
+            CGOVertexv(DebugCGO,tmp);                        
+
+            CGOColor(DebugCGO,1.0F,0.0F,0.0F); /* red */
+            CGOVertexv(DebugCGO,bestH);
+            normalize23f(hToAcc,tmp);
+            add3f(bestH,tmp,tmp);
+            CGOVertexv(DebugCGO,tmp);            
+
+            CGOColor(DebugCGO,0.0F,1.0F,1.0F); /* cyan */
+            CGOVertexv(DebugCGO,vDon);
+            normalize23f(donToH,tmp);
+            add3f(vDon,tmp,tmp);
+            CGOVertexv(DebugCGO,tmp);                        
+
+            if(vAccPlane) {
+              CGOColor(DebugCGO,1.0F,1.0F,0.0F); /* yellow */
+              CGOVertexv(DebugCGO,vAcc);
+              normalize23f(vAccPlane,tmp);
+              add3f(vAcc,tmp,tmp);
+              CGOVertexv(DebugCGO,tmp);                        
+            }
+
+            CGOEnd(DebugCGO);
+
+          }
+#endif
+                       
+          result = ObjectMoleculeTestHBond(donToAcc,donToH,hToAcc, 
+                                           vAccPlane,hbc);
+        }
+    }
+  }
+  
+  return(result);
+}
+                                
+/*========================================================================*/
+
 float ObjectMoleculeGetMaxVDW(ObjectMolecule *I)
 {
   float max_vdw = 0.0F;
