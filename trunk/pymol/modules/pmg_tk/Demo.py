@@ -113,16 +113,17 @@ class Demo: # stateful class for doing effective demonstrations
    def raster3d(self,cleanup=0):
       if not cleanup:
          cmd.disable()
+         cmd.load("$TUT/1hpv.r3d","cgo1")
+#         cmd.delete("cgo1")
+#         cmd.delete("cgo2")
          cmd.do("cd $PYMOL_PATH")
-         cmd.delete("cgo1")
-         cmd.delete("cgo2")
-         cmd.do("cd $PYMOL_PATH")
-         cmd.load("test/dat/pept.r3d","cgo1")
-         cmd.load("test/dat/3al1.r3d","cgo2")
+#         cmd.load("test/dat/pept.r3d","cgo")
+#         cmd.load("test/dat/3al1.r3d","cgo")
+
          cmd.zoom()
       else:
          cmd.delete("cgo1")
-         cmd.delete("cgo2")
+#         cmd.delete("cgo")
 
    def cgo(self,cleanup=0):
       if not cleanup:

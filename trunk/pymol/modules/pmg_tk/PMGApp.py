@@ -1722,7 +1722,7 @@ class PMGApp(AbstractApp):
                                command = lambda s=self:s.demo('anime'))
 
 
-      self.menuBar.addmenuitem('Demo', 'command', 'Molscript/Raster3D Input',
+      self.menuBar.addmenuitem('Demo', 'command', 'MolScript/Raster3D Input',
                                label='Molscript/Raster3D Input',
                                command = lambda s=self:s.demo('raster3d'))
 

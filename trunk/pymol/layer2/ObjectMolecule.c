@@ -174,9 +174,9 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   #define GETTING_LOW 10000
 
   f=fopen(fname,"rb");
-  if(!f)
+  if(!f) {
 	 ok=ErrMessage("ObjectMoleculeLoadTOPFile","Unable to open file!");
-  else
+  } else
 	 {
       if(!I->CSTmpl) {
         PRINTFB(FB_Errors,FB_ObjectMolecule)
@@ -5815,9 +5815,12 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
   char *buffer,*p;
 
   f=fopen(fname,"rb");
-  if(!f)
-	 ok=ErrMessage("ObjectMoleculeLoadPDBFile","Unable to open file!");
-  else
+  if(!f) {
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "ObjectMolecule-ERROR: Unable to open file '%s'\n",fname
+      ENDFB;
+    ok=false;
+  } else
 	 {
       PRINTFB(FB_ObjectMolecule,FB_Blather)
         " ObjectMoleculeLoadPDBFile: Loading from %s.\n",fname
