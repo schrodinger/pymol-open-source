@@ -402,7 +402,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   ObjectMolecule *obj;
   int a,b,h,i,j,k,l,c,c1;
   MapType *map,*solv_map;
-  float v1[3],*v0,*v,*vn,*vn0,*extent=NULL;
+  float v1[3],*v0=NULL,*v,*vn=NULL,*vn0,*extent=NULL;
   float vdw;
   int SurfaceFlag = false;
   float probe_radius,probe_radius2;
