@@ -23,17 +23,43 @@ import _pm
 import string
 import traceback
 import thread
-import threading
 import __main__
+import os
 
 def ready():
    return _pm.ready()
+
+def copy(src,dst):
+   lock()
+   _pm.copy(src,dst)
+   unlock()   
 
 def alter(sele,expr):
    lock()
    _pm.alter(sele,expr)
    unlock()   
 
+def _stereo(flag):
+   if flag:
+      os.system("/usr/gfx/setmon -n 1024x768_96s")
+   else:
+      os.system("/usr/gfx/setmon -n 72hz")
+
+def stereo(a):
+   if a=="on":
+      lock()
+      if _pm.stereo(1):
+         _stereo(1)
+      else:
+         print " error: stereo not available"
+      unlock();
+   else:
+      lock()
+      if _pm.stereo(0):
+         _stereo(0)
+      unlock();
+   
+   
 def distance(*args):
    la = len(args)
    if la==0:
@@ -129,7 +155,7 @@ def real_system(a):
    _pm.system(a)
    
 def system(a):
-   threading.Thread(target=real_system,args=([a])).start()
+   real_system(a)
    lock()
    unlock()
 
@@ -508,6 +534,7 @@ keyword = {
    'beginning'   : [beginning    , 0 , 0 , ',' , 0 ],
    'clip'        : [clip         , 2 , 2 , ',' , 0 ],
    'color'       : [color        , 1 , 2 , ',' , 0 ],
+   'copy'        : [copy         , 2 , 2 , ',' , 0 ],   
    'delete'      : [delete       , 1 , 1 , ',' , 0 ],
    'disable'     : [disable      , 1 , 1 , ',' , 0 ],
    'dist'        : [distance     , 0 , 2 , ',' , 0 ],   
@@ -539,17 +566,18 @@ keyword = {
    'rewind'      : [beginning    , 0 , 0 , ',' , 0 ],
    'rock'        : [rock         , 0 , 0 , ',' , 0 ],
    'run'         : [dummy        , 1 , 2 , ',' , 2 ],
+   'save'        : [save         , 0 , 4 , ',' , 0 ],
    'select'      : [select       , 1 , 2 , '=' , 0 ],
    'sel'         : [select       , 1 , 2 , '=' , 0 ],
    'set'         : [set          , 2 , 2 , '=' , 0 ],
    'show'        : [show         , 1 , 2 , ',' , 0 ],
+   'stereo'      : [stereo       , 1 , 1 , ',' , 0 ],
    'system'      : [system       , 1 , 1 , ',' , 0 ],
    'turn'        : [turn         , 2 , 2 , ',' , 0 ],
    'quit'        : [quit         , 0 , 0 , ',' , 0 ],
    '_quit'       : [_quit        , 0 , 0 , ',' , 0 ],
    'png'         : [png          , 1 , 1 , ',' , 0 ],
    'viewport'    : [viewport     , 2 , 2 , ',' , 0 ],
-   'save'        : [save         , 0 , 4 , ',' , 0 ],
    'zoom'        : [zoom         , 1 , 1 , ',' , 0 ]
    }
 
@@ -562,6 +590,5 @@ repres = {
    'ribbon'      : 5,
    'surface'     : 6
 }
-
 
 

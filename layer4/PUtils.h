@@ -34,4 +34,6 @@ void PSleep(int usec);
 void PLock(int lock,PyThreadState **save);
 void PUnlock(int lock,PyThreadState **save);
 void PFlush(PyThreadState **save);
+void PStereoOff(void);
+
 #endif

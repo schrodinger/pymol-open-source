@@ -43,6 +43,7 @@ PyObject *PM_Globals = NULL;
 static PyObject *PMAlter(PyObject *self,   PyObject *args);
 static PyObject *PMClip(PyObject *self, 	PyObject *args);
 static PyObject *PMColor(PyObject *self, PyObject *args);
+static PyObject *PMCopy(PyObject *self, PyObject *args);
 static PyObject *PMDelete(PyObject *self, PyObject *args);
 static PyObject *PMDirty(PyObject *self, 	PyObject *args);
 static PyObject *PMDistance(PyObject *dummy, PyObject *args);
@@ -84,6 +85,7 @@ static PyObject *PMSystem(PyObject *dummy, PyObject *args);
 static PyObject *PMSet(PyObject *self, 	PyObject *args);
 static PyObject *PMSetFrame(PyObject *self, PyObject *args);
 static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args);
+static PyObject *PMStereo(PyObject *self, PyObject *args);
 static PyObject *PMTurn(PyObject *self, 	PyObject *args);
 static PyObject *PMViewport(PyObject *self, 	PyObject *args);
 static PyObject *PMZoom(PyObject *self, PyObject *args);
@@ -92,6 +94,7 @@ static PyMethodDef PM_methods[] = {
 	{"alter",	     PMAlter,        METH_VARARGS },
 	{"clip",	        PMClip,         METH_VARARGS },
 	{"color",	     PMColor,        METH_VARARGS },
+	{"copy",         PMCopy,         METH_VARARGS },
 	{"delete",       PMDelete,       METH_VARARGS },
 	{"dirty",        PMDirty,        METH_VARARGS },
 	{"distance",	  PMDistance,     METH_VARARGS },
@@ -132,6 +135,7 @@ static PyMethodDef PM_methods[] = {
 	{"showhide",     PMShowHide,     METH_VARARGS },
 	{"set_globals",  PMSetGlobals,   METH_VARARGS },
 	{"set_matrix",	  PMSetMatrix,    METH_VARARGS },
+	{"stereo",	     PMStereo,       METH_VARARGS },
 	{"system",	     PMSystem,       METH_VARARGS },
 	{"turn",	        PMTurn,         METH_VARARGS },
 	{"viewport",     PMViewport,     METH_VARARGS },
@@ -194,6 +198,15 @@ static PyObject *PMAlter(PyObject *self,   PyObject *args)
   Py_INCREF(Py_None);
   return Py_None;
 
+}
+
+static PyObject *PMCopy(PyObject *self,   PyObject *args)
+{
+  char *str1,*str2;
+  PyArg_ParseTuple(args,"ss",&str1,&str2);
+  ExecutiveCopy(str1,str2);
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 static PyObject *PMResetRate(PyObject *dummy, PyObject *args)
@@ -411,6 +424,21 @@ static PyObject *PMFrame(PyObject *self, PyObject *args)
   SceneSetFrame(0,frm);
   Py_INCREF(Py_None);
   return Py_None;
+}
+
+static PyObject *PMStereo(PyObject *self, PyObject *args)
+{
+  int i1;
+  PyObject *result;
+
+#ifdef _PYMOL_STEREO
+  PyArg_ParseTuple(args,"i",&i1);
+  ExecutiveStereo(i1);
+  result=Py_BuildValue("i",1);
+#else
+  result=Py_BuildValue("i",0);
+#endif
+  return result;
 }
 
 static PyObject *PMReset(PyObject *self, PyObject *args)

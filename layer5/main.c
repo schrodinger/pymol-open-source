@@ -55,7 +55,6 @@ void MainReshape(int width, int height);
 
 GLuint obj;
 
-int TheWindow;
 
  PyThreadState *_save;
 
@@ -67,6 +66,8 @@ static char **myArgv;
 static int myArgc;
 
 static int FinalInitFlag=1;
+
+int TheWindow;
 
 typedef struct {
   int DirtyFlag;
@@ -201,11 +202,11 @@ static void MainDraw(void)
 				  }
 		  }
 #endif
-
+      
 		OrthoRestorePrompt();
 		Py_UNBLOCK_THREADS;
 	 }
-  if(I->SwapFlag)
+  else if(I->SwapFlag)
     {
       if(PMGUI&&(!was_dirty)) SceneCopy(0);
       if(PMGUI) glutSwapBuffers();
@@ -399,10 +400,10 @@ void MainBusyIdle(void)
   }
   
   if(!wasDirty) {
-    if(false&&I->IdleFlag) { /* select to avoid racing the CPU */
+    if(I->IdleFlag) { /* select to avoid racing the CPU */
       
       PUnlock(cLockAPI,&_save);
-      PSleep(10000);
+      PSleep(50000);
       PLock(cLockAPI,&_save);
 
       if(I->SwapFlag) {
@@ -421,14 +422,18 @@ void MainBusyIdle(void)
   
   PUnlock(cLockAPI,&_save);
 }
+
+  CMain *I = &Main;
+
 /*========================================================================*/
 
 #ifndef _PYMOL_MODULE
 int main(int argc, char *argv[])
 {
+  int stereo;
   myArgc=argc;
   myArgv=argv;
-
+  
 #else
 void was_main(void) 
 {
@@ -455,8 +460,12 @@ void was_main(void)
     
     glutInit(&argc, argv);
     
-    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-    
+#ifdef _PYMOL_STEREO
+    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
+#else
+    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );      
+#endif
+
     glutInitWindowPosition(0, 175);
     glutInitWindowSize(WinX, WinY);
     
@@ -486,10 +495,10 @@ void was_main(void)
 
   if(PMGUI) {
     printf(" GL based graphics front end:\n");
-    printf("  GL_VENDOR: %s\n",glGetString(GL_VENDOR));
-    printf("  GL_RENDERER: %s\n",glGetString(GL_RENDERER));
-    printf("  GL_VERSION: %s\n",glGetString(GL_VERSION));
-    printf("  GL_EXTENSIONS: %s\n",glGetString(GL_EXTENSIONS));
+    printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
+    printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
+    printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
+    printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));
     glutMainLoop();
   } else {
     printf(" No graphics front end.\n");

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -134,14 +135,10 @@ void PUnlock(int lock,PyThreadState **save)
 
 void PInit(void)
 {
-
   /* Initialize the Python interpreter.  Required. */
 
 #ifndef _PYMOL_MODULE
   Py_Initialize();
-#endif
-
-#ifdef _PYMOL_THREADS
   PyEval_InitThreads();
 #endif
 
@@ -171,10 +168,8 @@ void PInit(void)
   PyRun_SimpleString("lock_oq = threading.RLock()");
   PyRun_SimpleString("lock_iq = threading.RLock()");
   PyRun_SimpleString("lock_api = threading.RLock()");
-  PyRun_SimpleString("import thread\n"); 
   PyRun_SimpleString("glutThread = thread.get_ident()");
 #endif
-
 
   PyRun_SimpleString("from pmp import *\n");
 
@@ -187,6 +182,11 @@ void PInit(void)
 #endif
 
   signal(SIGINT,my_interrupt);
+}
+
+void PStereoOff(void) 
+{
+  PyRun_SimpleString("pm._stereo(0)");
 }
 
 void PFree(void)
