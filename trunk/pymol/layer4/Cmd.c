@@ -92,7 +92,10 @@ static PyObject *Cmd_Failure;
 
 static void APIEntry(void)
 {
-  P_glut_thread_keep_out++;
+  /* NOTE: the keep_out variable can only be changed by the thread
+   holding the API lock, therefore it is safe even through increment
+   isn't atomic. */
+  P_glut_thread_keep_out++; 
   PUnblock();
 }
 
@@ -435,13 +438,13 @@ static PyObject *CmdButton(PyObject *self, 	PyObject *args)
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
   /* only called by the GLUT thread with unlocked API */
-  P_glut_thread_keep_out++;
+  P_glut_thread_keep_out++;  /* unnecc. right? */
   /*  if(!flush_count) {
       flush_count++;*/
   PFlushFast();
     /*    flush_count--;
           }*/
-  P_glut_thread_keep_out--;
+  P_glut_thread_keep_out--; /* unnecc. right? */
   Py_INCREF(Py_None);
   return Py_None;  
 }
