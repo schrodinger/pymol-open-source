@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"Util.h"
 
-static const float kR_SMALL4 = 0.0001;
+static const float kR_SMALL4 = 0.0001F;
 
 static float BasisFudge0;
 static float BasisFudge1;

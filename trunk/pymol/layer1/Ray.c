@@ -886,7 +886,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	_1		= 1.0F;
 	_p5		= 0.5F;
 	_255	= 255.0F;
-	_inv3	= _1/3.0;
+	_inv3	= _1/3.0F;
 	_persistLimit	= 0.0001F;
   	
 	/* SETUP */
@@ -1376,7 +1376,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
                double timing,float angle)
 {
   int x,y;
-  int a,b;
+  int a;
   unsigned int *p;
   float *v,light[3];
   unsigned int aa,za;
@@ -1566,7 +1566,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 		for(a=0;a<n_thread;a++) 
 		{
 			rt[a].ray = I;
-			rt[a].image = p;
 			rt[a].width = width;
 			rt[a].height = height;
 			rt[a].image = image;

@@ -890,7 +890,6 @@ void SceneDraw(Block *block)
   int overlay,text;
   int width,height;
   int double_pump;
-  GLint draw_buffer;
 
   if(PMGUI) {
     overlay = SettingGet(cSetting_overlay);
