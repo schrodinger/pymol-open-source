@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * additional support for weird concatenated PDB files such as those
+     output by MOE
+
    * fixed problem with rendering of discontinuous surfaces
 
    -- beta13

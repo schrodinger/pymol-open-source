@@ -326,6 +326,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   while(repeat_flag&&ok) {
     char *start_at = buffer;
     int is_repeat_pass = false;
+    int eff_frame = frame;
     CObject *tmpObj;
 
     VLACheck(processed,ProcPDBRec,n_processed);
@@ -344,10 +345,12 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
     next_pdb = NULL;
     if(!origObj) {
 
+      pdb_name[0]=0;
       obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
-                                             start_at,frame,discrete,
+                                             start_at,eff_frame,discrete,
                                              &current->m4x,pdb_name,
                                              &next_pdb,pdb_info);
+
       if(obj) {
         if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
           repeat_flag=true;
@@ -376,30 +379,41 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
               }
           }
         } else if(next_pdb) {
+          if(pdb_name[0]==0) {
+            sprintf(pdb_name,"%s_%d",oname,n_processed+1);
+          }
           ObjectSetName(obj,pdb_name); /* from PDB */
           ExecutiveDelete(pdb_name); /* just in case */
         } else {
-          ObjectSetName(obj,oname); /* from filename/parameter */
+          if(is_repeat_pass) {
+            if(pdb_name[0]==0) {
+              sprintf(pdb_name,"%s_%d",oname,n_processed+1);
+            }
+            ObjectSetName(obj,pdb_name); /* from PDB */
+            ExecutiveDelete(pdb_name); /* just in case */
+          } else {
+            ObjectSetName(obj,oname); /* from filename/parameter */
+          }
         }
 
         if(obj) {
           ExecutiveManageObject(obj,true,quiet);
-          if(frame<0)
-            frame = ((ObjectMolecule*)obj)->NCSet-1;
+          if(eff_frame<0)
+            eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
-                  fname,oname,frame+1);
+                  fname,oname,eff_frame+1);
         }
       }
     } else {
       ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
-                               start_at,frame,discrete,&current->m4x,
+                               start_at,eff_frame,discrete,&current->m4x,
                                pdb_name,&next_pdb,pdb_info);
       if(finish)
         ExecutiveUpdateObjectSelection(origObj);
-      if(frame<0)
-        frame = ((ObjectMolecule*)origObj)->NCSet-1;
+      if(eff_frame<0)
+        eff_frame = ((ObjectMolecule*)origObj)->NCSet-1;
       sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-              fname,oname,frame+1);
+              fname,oname,eff_frame+1);
       obj = origObj;
     }
 
@@ -418,7 +432,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
       ProcPDBRec *current = processed + a;
       if(!ExecutiveValidateObjectPtr((CObject*)current->obj,cObjectMolecule)) {
         PRINTFB(FB_Executive,FB_Errors)
-          " Error: Missing object! possible invalid/corrupt p5m file.\n"
+          " Error: Missing object! possible invalid/corrupt file.\n"
           ENDFB;
         ok=false;
         break;
