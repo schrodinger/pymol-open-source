@@ -360,21 +360,21 @@ static void SelectorDeleteIndex(int index)
 
 #define cSSMaxHBond 6
 
-#define cSSHelix3HBond        0x0001
-#define cSSHelix4HBond        0x0002
-#define cSSHelix5HBond        0x0004
-#define cSSGotPhiPsi          0x0008
-#define cSSPhiPsiHelix        0x0010
-#define cSSPhiPsiNotHelix     0x0020
-#define cSSPhiPsiBeta         0x0040
-#define cSSPhiPsiNotBeta      0x0080
-#define cSSAntiBetaSingleHB   0x0100
-#define cSSAntiBetaDoubleHB   0x0200
-#define cSSAntiBetaBuldgeHB   0x0400
-#define cSSAntiBetaSkip       0x0800
-#define cSSParaBetaSingleHB   0x1000
-#define cSSParaBetaDoubleHB   0x2000
-#define cSSParaBetaSkip       0x4000
+#define cSSHelix3HBond          0x0001
+#define cSSHelix4HBond          0x0002
+#define cSSHelix5HBond          0x0004
+#define cSSGotPhiPsi            0x0008
+#define cSSPhiPsiHelix          0x0010
+#define cSSPhiPsiNotHelix       0x0020
+#define cSSPhiPsiStrand         0x0040
+#define cSSPhiPsiNotStrand      0x0080
+#define cSSAntiStrandSingleHB   0x0100
+#define cSSAntiStrandDoubleHB   0x0200
+#define cSSAntiStrandBuldgeHB   0x0400
+#define cSSAntiStrandSkip       0x0800
+#define cSSParaStrandSingleHB   0x1000
+#define cSSParaStrandDoubleHB   0x2000
+#define cSSParaStrandSkip       0x4000
 
 #define cSSBreakSize 5
     
@@ -571,12 +571,17 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
     int a0,a1; /* SS res space */
     int as0,as1; /* selection space */
     int at0,at1; /* object-atom space */
+    int exclude;
 
     ObjectMolecule *obj0,*obj1;
 
     CoordSet *cs;
     float cutoff;
     HBondCriteria hbcRec,*hbc;
+    int *zero=NULL,*scratch=NULL;
+
+    zero=Calloc(int,I->NAtom);
+    scratch=Alloc(int,I->NAtom);
 
     hbc = &hbcRec;
     ObjectMoleculeInitHBondCriteria(hbc);
@@ -674,7 +679,6 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
         }
       }
     }
-
     
     if(n1) {
       map=MapNewFlagged(-cutoff,I->Vertex,I->NAtom,NULL,I->Flag1);
@@ -703,8 +707,15 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
                     obj1 = I->Obj[I->Table[as1].model];
                     at1 = I->Table[as1].atom;
 
+                    if(obj0==obj1) { /* don't count hbonds between adjacent residues */
+                      exclude = SelectorCheckNeighbors(5,obj0,at0,at1,
+                                             zero,scratch);
+                    } else {
+                      exclude = false;
+                    }
                     
-                    if(ObjectMoleculeGetCheckHBond(obj1, /* donor first */
+                    if((!exclude)&&
+                       ObjectMoleculeGetCheckHBond(obj1, /* donor first */
                                                    at1,
                                                    state,
                                                    obj0, /* then acceptor */
@@ -713,21 +724,21 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
                                                    hbc)) {
                       
                       /*                      printf(" found hbond between acceptor resi %s and donor resi %s\n",
-                                              res[a0].obj->AtomInfo[at0].resi,
-                                              res[I->Flag2[as1]].obj->AtomInfo[I->Table[as1].atom].resi);*/
+                             res[a0].obj->AtomInfo[at0].resi,
+                             res[I->Flag2[as1]].obj->AtomInfo[I->Table[as1].atom].resi);*/
                       
                       a1 = I->Flag2[as1]; /* index in SS n_res space */
-
+                      
                       /* store acceptor link */
-                    
+                      
                       n1 = res[a0].n_acc;
                       if(n1<(cSSMaxHBond-1)) {
                         res[a0].acc[n1] = a1;
                         res[a0].n_acc = n1+1;
                       }
-                  
+                      
                       /* store donor link */
-                    
+                      
                       n1 = res[a1].n_don;
                       if(n1<(cSSMaxHBond-1)) {
                         res[a1].don[n1] = a0;
@@ -744,46 +755,67 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
       }
       MapFree(map);
     }
+    FreeP(zero);
+    FreeP(scratch);
   }
 
   { /* compute phi, psi's */
 
     SSResi *r;
     int a;
-    int helix_delta;
-    int beta_delta;
 
+    int helix_psi_delta, helix_phi_delta;
+    int strand_psi_delta, strand_phi_delta;
+
+    float helix_psi_target = SettingGet_f(NULL,NULL,cSetting_ss_helix_psi_target);
+    float helix_psi_include = SettingGet_f(NULL,NULL,cSetting_ss_helix_psi_include);
+    float helix_psi_exclude = SettingGet_f(NULL,NULL,cSetting_ss_helix_psi_exclude);
+
+    float helix_phi_target = SettingGet_f(NULL,NULL,cSetting_ss_helix_phi_target);
+    float helix_phi_include = SettingGet_f(NULL,NULL,cSetting_ss_helix_phi_include);
+    float helix_phi_exclude = SettingGet_f(NULL,NULL,cSetting_ss_helix_phi_exclude);
+
+    float strand_psi_target = SettingGet_f(NULL,NULL,cSetting_ss_strand_psi_target);
+    float strand_psi_include = SettingGet_f(NULL,NULL,cSetting_ss_strand_psi_include);
+    float strand_psi_exclude = SettingGet_f(NULL,NULL,cSetting_ss_strand_psi_exclude);
+
+    float strand_phi_target = SettingGet_f(NULL,NULL,cSetting_ss_strand_phi_target);
+    float strand_phi_include = SettingGet_f(NULL,NULL,cSetting_ss_strand_phi_include);
+    float strand_phi_exclude = SettingGet_f(NULL,NULL,cSetting_ss_strand_phi_exclude);
+    
     for(a=0;a<n_res;a++) {
       r = res + a;
       if(r->real&&((r-1)->real)) {
         
         if(ObjectMoleculeGetPhiPsi(r->obj,I->Table[r->ca].atom,&r->phi,&r->psi,state)) {
           r->flags |= cSSGotPhiPsi;
+          
+          helix_psi_delta = (float)fabs(r->psi - helix_psi_target); 
+          strand_psi_delta  = (float)fabs(r->psi - strand_psi_target); 
+          helix_phi_delta = (float)fabs(r->phi - helix_phi_target); 
+          strand_phi_delta  = (float)fabs(r->phi - strand_phi_target); 
+          
+          if(helix_psi_delta>180.0F) helix_psi_delta = 360.0F-helix_psi_delta;
+          if(strand_psi_delta>180.0F) strand_psi_delta = 360.0F-strand_psi_delta;
+          if(helix_phi_delta>180.0F) helix_phi_delta = 360.0F-helix_phi_delta;
+          if(strand_phi_delta>180.0F) strand_phi_delta = 360.0F-strand_phi_delta;
 
-          if( r->phi > 30 ) {
-            r->flags |= ( cSSPhiPsiNotHelix | cSSPhiPsiNotBeta );
-          } else {
-            helix_delta = abs(r->psi-( -48.0));
-            if(helix_delta>180)
-              helix_delta = 360-helix_delta;
-            beta_delta  = abs(r->psi-( 124.0));
-            if(beta_delta>180)
-              beta_delta = 360-beta_delta;
-
-            /*            printf("helix %d beta %d\n",helix_delta,beta_delta);*/
+            /*            printf("helix %d strand %d\n",helix_delta,strand_delta);*/
               
-            if(helix_delta>90.0) {
-              r->flags |= cSSPhiPsiNotHelix;
-            } else if(helix_delta<45) {
-              r->flags |= cSSPhiPsiHelix;
-            }
-            if(beta_delta>90.0) {
-              r->flags |= cSSPhiPsiNotBeta;
-            } else if(beta_delta<66) {
-              if((r->phi<-60)&&(r->phi>-150)) {
-                r->flags |= cSSPhiPsiBeta;
-              }
-            }
+          if((helix_psi_delta>helix_psi_exclude)||
+             (helix_phi_delta>helix_phi_exclude)) {
+            r->flags |= cSSPhiPsiNotHelix;
+          } else if((helix_psi_delta<helix_psi_include) &&
+                    (helix_phi_delta<helix_phi_include)) {
+            r->flags |= cSSPhiPsiHelix;
+          }
+          
+          if((strand_psi_delta>strand_psi_exclude)||
+             (strand_phi_delta>strand_phi_exclude)) {
+            r->flags |= cSSPhiPsiNotStrand;
+          } else if((strand_psi_delta<strand_psi_include)&&
+                    (strand_phi_delta<strand_phi_include)) {
+            r->flags |= cSSPhiPsiStrand;
           }
         }
       }
@@ -853,8 +885,8 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
           if(r2->real) {
             for(c=0;c<r2->n_acc;c++) {
               if(r2->acc[c] == a) { /* found a pair */
-                r->flags |= cSSAntiBetaDoubleHB;
-                r2->flags |= cSSAntiBetaDoubleHB;
+                r->flags |= cSSAntiStrandDoubleHB;
+                r2->flags |= cSSAntiStrandDoubleHB;
 
                 /*                printf("anti double %s to %s\n",
                        r->obj->AtomInfo[I->Table[r->ca].atom].resi,
@@ -882,9 +914,9 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
           if(r2->real) {
             for(c=0;c<r2->n_acc;c++) {
               if(r2->acc[c] == a) { /* found a buldge */
-                r->flags      |= cSSAntiBetaDoubleHB;
-                r2->flags     |= cSSAntiBetaBuldgeHB;
-                (r2-1)->flags |= cSSAntiBetaBuldgeHB;
+                r->flags      |= cSSAntiStrandDoubleHB;
+                r2->flags     |= cSSAntiStrandBuldgeHB;
+                (r2-1)->flags |= cSSAntiStrandBuldgeHB;
 
                 /*                printf("anti BULDGE %s to %s %s\n",
                        r->obj->AtomInfo[I->Table[r->ca].atom].resi,
@@ -920,13 +952,13 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
                 
                 if(r2->acc[c] == a+2) { /* found a ladder */
                   
-                  (r    )->flags |= cSSAntiBetaSingleHB;
-                  (r  +1)->flags |= cSSAntiBetaSkip;
-                  (r  +2)->flags |= cSSAntiBetaSingleHB;
+                  (r    )->flags |= cSSAntiStrandSingleHB;
+                  (r  +1)->flags |= cSSAntiStrandSkip;
+                  (r  +2)->flags |= cSSAntiStrandSingleHB;
                   
-                  (r2   )->flags |= cSSAntiBetaSingleHB;
-                  (r2 +1)->flags |= cSSAntiBetaSkip;
-                  (r2 +2)->flags |= cSSAntiBetaSingleHB;
+                  (r2   )->flags |= cSSAntiStrandSingleHB;
+                  (r2 +1)->flags |= cSSAntiStrandSkip;
+                  (r2 +2)->flags |= cSSAntiStrandSingleHB;
                   
                   /*                  printf("anti ladder %s %s to %s %s\n",
                          r->obj->AtomInfo[I->Table[r->ca].atom].resi,
@@ -963,11 +995,11 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
                 
                 if(r2->acc[c] == a+2) { /* found a ladder */
                   
-                  (r    )->flags |= cSSParaBetaSingleHB;
-                  (r  +1)->flags |= cSSParaBetaSkip;
-                  (r  +2)->flags |= cSSParaBetaSingleHB;
+                  (r    )->flags |= cSSParaStrandSingleHB;
+                  (r  +1)->flags |= cSSParaStrandSkip;
+                  (r  +2)->flags |= cSSParaStrandSingleHB;
                   
-                  (r2   )->flags |= cSSParaBetaDoubleHB;
+                  (r2   )->flags |= cSSParaStrandDoubleHB;
                   
                   /*                                    printf("parallel ladder %s %s to %s \n",
                          r->obj->AtomInfo[I->Table[r->ca].atom].resi,
@@ -994,7 +1026,7 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
       r = res + a;
       
       if(r->real) {
-        /* clean internal helical residues are to find just using H-bonds */
+        /* clean internal helical residues are easy to find using H-bonds */
 
         if(((r-1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
            ((r  )->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
@@ -1003,6 +1035,32 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
             r->ss = 'H';
           }
         }
+
+        /*
+        if(((r-1)->flags & (cSSHelix3HBond )) &&
+           ((r  )->flags & (cSSHelix3HBond )) &&
+           ((r+1)->flags & (cSSHelix3HBond ))) {
+          if(!(r->flags & (cSSPhiPsiNotHelix))) {
+            r->ss = 'H';
+          }
+        }
+
+        if(((r-1)->flags & (cSSHelix4HBond)) &&
+           ((r  )->flags & (cSSHelix4HBond)) &&
+           ((r+1)->flags & (cSSHelix4HBond))) {
+          if(!(r->flags & (cSSPhiPsiNotHelix))) {
+            r->ss = 'H';
+          }
+        }
+
+        if(((r-1)->flags & (cSSHelix5HBond)) &&
+           ((r  )->flags & (cSSHelix5HBond)) &&
+           ((r+1)->flags & (cSSHelix5HBond))) {
+          if(!(r->flags & (cSSPhiPsiNotHelix))) {
+            r->ss = 'H';
+          }
+        }
+        */
 
       }
     }
@@ -1013,7 +1071,8 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
 
       if(r->real) {
 
-        /* occasionally they'll be one whacked out residue missing h-bonds... */
+        /* occasionally they'll be one whacked out residue missing h-bonds... 
+           in an otherwise good segment */
 
         if(((r-2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
            ((r-1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
@@ -1021,10 +1080,9 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
            ((r  )->flags & (cSSPhiPsiHelix                                  )) &&
            ((r+1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
            ((r+1)->flags & (cSSPhiPsiHelix                                  )) &&
-           ((r+2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond))) {
-          if(!(r->flags & (cSSPhiPsiNotHelix))) {
-            r->ss = 'h';
-          }
+           ((r+2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) 
+           ) {
+          r->ss = 'h';
         }
       }
     }
@@ -1045,7 +1103,6 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
 
       if(r->real) {
 
-
         /* deciding where the helix ends is trickier -- here we use helix geometry */
 
         if(((r  )->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
@@ -1053,7 +1110,8 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
            ((r+1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
            ((r+1)->flags & (cSSPhiPsiHelix                                  )) &&
            ((r+2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
-           ((r+2)->flags & (cSSPhiPsiHelix                                  ))
+           ((r+2)->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r+1)->ss=='H')
            ) {
           r->ss = 'H';
         }
@@ -1063,7 +1121,8 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
            ((r-1)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
            ((r-1)->flags & (cSSPhiPsiHelix                                  )) &&
            ((r-2)->flags & (cSSHelix3HBond | cSSHelix4HBond | cSSHelix5HBond)) &&
-           ((r-2)->flags & (cSSPhiPsiHelix                                  ))
+           ((r-2)->flags & (cSSPhiPsiHelix                                  )) &&
+           ((r-1)->ss=='H')
            ) {
           r->ss = 'H';
         }
@@ -1079,37 +1138,41 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
 
         /* Antiparallel Sheets */
 
-        if(((r  )->flags & (cSSAntiBetaDoubleHB))) {
+        if(((r  )->flags & (cSSAntiStrandDoubleHB))&&
+           (!((r->flags & (cSSPhiPsiNotStrand))))) {
           (r  )->ss = 'S';
         }
 
-        if(((r  )->flags & (cSSAntiBetaBuldgeHB))&&
-           ((r+1)->flags & (cSSAntiBetaBuldgeHB))) {
+        if(((r  )->flags & (cSSAntiStrandBuldgeHB))&&  /* no strand geometry filtering for buldges..*/
+           ((r+1)->flags & (cSSAntiStrandBuldgeHB))) {
           (r  )->ss = 'S';
           (r+1)->ss = 'S';
         }
 
-        if(((r-1)->flags & (cSSAntiBetaDoubleHB)) &&
-           ((r  )->flags & (cSSAntiBetaSkip))     &&
-           ((r+1)->flags & (cSSAntiBetaSingleHB | cSSAntiBetaDoubleHB))) {
+        if(((r-1)->flags & (cSSAntiStrandDoubleHB)) &&
+           ((r  )->flags & (cSSAntiStrandSkip))     &&
+           (!(((r  )->flags & (cSSPhiPsiNotStrand)))) &&
+           ((r+1)->flags & (cSSAntiStrandSingleHB | cSSAntiStrandDoubleHB))) {
 
           (r  )->ss = 'S';
         }
 
-        if(((r-1)->flags & (cSSAntiBetaSingleHB | cSSAntiBetaDoubleHB)) &&
-           ((r  )->flags & (cSSAntiBetaSkip))     &&
-           ((r+1)->flags & (cSSAntiBetaDoubleHB))) {
+        if(((r-1)->flags & (cSSAntiStrandSingleHB | cSSAntiStrandDoubleHB)) &&
+           ((r  )->flags & (cSSAntiStrandSkip))     &&
+           (!(((r  )->flags & (cSSPhiPsiNotStrand)))) &&
+           ((r+1)->flags & (cSSAntiStrandDoubleHB))) {
           (r  )->ss = 'S';
         }
 
         /* include open "ladders" if PHIPSI geometry supports assignment */
 
-        if(((r-1)->flags & (cSSAntiBetaSingleHB | cSSAntiBetaDoubleHB)) &&
-           ((r-1)->flags & (cSSPhiPsiBeta)) &&
-           ((r  )->flags & (cSSAntiBetaSkip))     &&
-           ((r  )->flags & (cSSPhiPsiBeta)) &&
-           ((r+1)->flags & (cSSAntiBetaSingleHB | cSSAntiBetaDoubleHB)) &&
-           ((r+1)->flags & (cSSPhiPsiBeta))) {
+        if(((r-1)->flags & (cSSAntiStrandSingleHB | cSSAntiStrandDoubleHB)) &&
+           ((r-1)->flags & (cSSPhiPsiStrand)) &&
+           (!(((r-1)->flags & (cSSPhiPsiNotStrand)))) &&           
+           ((r  )->flags & (cSSPhiPsiStrand)) &&
+           (!(((r-1)->flags & (cSSPhiPsiNotStrand)))) &&           
+           ((r+1)->flags & (cSSAntiStrandSingleHB | cSSAntiStrandDoubleHB)) &&
+           ((r+1)->flags & (cSSPhiPsiStrand))) {
           
           (r-1)->ss = 'S';
           (r  )->ss = 'S';
@@ -1118,30 +1181,34 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
 
         /* Parallel Sheets */
 
-        if(((r  )->flags & (cSSParaBetaDoubleHB))) {
+        if(((r  )->flags & (cSSParaStrandDoubleHB))&&
+           (!(((r  )->flags & (cSSPhiPsiNotStrand))))) {
           (r  )->ss = 'S';
         }
         
-        if(((r-1)->flags & (cSSParaBetaDoubleHB)) &&
-           ((r  )->flags & (cSSParaBetaSkip))     &&
-           ((r+1)->flags & (cSSParaBetaSingleHB | cSSParaBetaDoubleHB))) {
+        if(((r-1)->flags & (cSSParaStrandDoubleHB)) &&
+           ((r  )->flags & (cSSParaStrandSkip))     &&
+           (!(((r  )->flags & (cSSPhiPsiNotStrand))))&&
+           ((r+1)->flags & (cSSParaStrandSingleHB | cSSParaStrandDoubleHB))) {
+
           (r  )->ss = 'S';
         }
 
-        if(((r-1)->flags & (cSSParaBetaSingleHB | cSSParaBetaDoubleHB)) &&
-           ((r  )->flags & (cSSParaBetaSkip))     &&
-           ((r+1)->flags & (cSSParaBetaDoubleHB))) {
+        if(((r-1)->flags & (cSSParaStrandSingleHB | cSSParaStrandDoubleHB)) &&
+           ((r  )->flags & (cSSParaStrandSkip))     &&
+           (!(((r  )->flags & (cSSPhiPsiNotStrand))))&&
+           ((r+1)->flags & (cSSParaStrandDoubleHB))) {
           (r  )->ss = 'S';
         }
 
         /* include open "ladders" if PHIPSI geometry supports assignment */
 
-        if(((r-1)->flags & (cSSParaBetaSingleHB | cSSParaBetaDoubleHB)) &&
-           ((r-1)->flags & (cSSPhiPsiBeta)) &&
-           ((r  )->flags & (cSSParaBetaSkip))     &&
-           ((r  )->flags & (cSSPhiPsiBeta)) &&
-           ((r+1)->flags & (cSSParaBetaSingleHB | cSSParaBetaDoubleHB)) &&
-           ((r+1)->flags & (cSSPhiPsiBeta))) {
+        if(((r-1)->flags & (cSSParaStrandSingleHB | cSSParaStrandDoubleHB)) &&
+           ((r-1)->flags & (cSSPhiPsiStrand)) &&
+           ((r  )->flags & (cSSParaStrandSkip))     &&
+           ((r  )->flags & (cSSPhiPsiStrand)) &&
+           ((r+1)->flags & (cSSParaStrandSingleHB | cSSParaStrandDoubleHB)) &&
+           ((r+1)->flags & (cSSPhiPsiStrand))) {
             
             (r-1)->ss = 'S';
             (r  )->ss = 'S';
@@ -1151,8 +1218,7 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
       }
     }
   }
-  
-  
+    
   {
     int a,b;
     SSResi *r,*r2;
@@ -1167,26 +1233,39 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
         r = res + a;
         if(r->real) {
           
-          /* make sure we don't have any 2-residue strands */
+          /* make sure we don't have any 2-residue segments */
           
           if((r->ss == 'S')&&((r+1)->ss == 'S') &&
              ( ((r-1)->ss!='S') && ((r+2)->ss!='S') )) {
             r->ss = 'L';
             (r+1)->ss = 'L';
-            
+            repeat=true;
+          }
+          if((r->ss == 'H')&&((r+1)->ss == 'H') &&
+             ( ((r-1)->ss!='H') && ((r+2)->ss!='H') )) {
+            r->ss = 'L';
+            (r+1)->ss = 'L';
+            repeat=true;
+          }
+
+          /* make sure we don't have any 1-residue segments */
+          
+          if((r->ss == 'S') && ( ((r-1)->ss!='S') && ((r+1)->ss!='S') )) {
+            r->ss = 'L';
+            repeat=true;
+          }
+          if((r->ss == 'H') && ( ((r-1)->ss!='H') && ((r+1)->ss!='H') )) {
+            r->ss = 'L';
             repeat=true;
           }
           
           /* double-check to make sure every terminal strand residue 
              that should have a partner has one */
           
-          if((r->ss == 'S')&&(!(r->flags & 
-                                (cSSAntiBetaSkip | cSSParaBetaSkip |
-                                 cSSAntiBetaDoubleHB | cSSParaBetaDoubleHB))) &&
-             ( ((r-1)->ss!='S') || ((r+1)->ss!='S') )) {
+          if((r->ss == 'S') && (((r-1)->ss!='S') || ((r+1)->ss!='S') )) {
             
             found = false;
-
+            
             for(b=0;b<r->n_acc;b++) {
               r2 = res+r->acc[b];
               if(r2->ss == r->ss) {
@@ -1194,7 +1273,7 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
                 break;
               }
             }
-
+            
             if(!found) {
               for(b=0;b<r->n_don;b++) {
                 r2 = res+r->don[b];
@@ -1204,7 +1283,33 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
                 }
               }
             }
-
+            
+            if(!found) { /* allow these strand "skip" residues to persist if a neighbor has hydrogen bonds */
+              if(r->flags & (cSSAntiStrandSkip | cSSParaStrandSkip)) {
+                
+                if((r+1)->ss == r->ss)
+                  for(b=0;b<(r+1)->n_acc;b++) {
+                    r2 = res+(r+1)->acc[b];
+                    if(r2->ss == r->ss) {
+                      found=true;
+                      break;
+                    }
+                  }
+                
+                if(!found) {
+                  if((r-1)->ss == r->ss) {
+                    for(b=0;b<(r-1)->n_don;b++) {
+                      r2 = res+(r-1)->don[b];
+                      if(r2->ss == r->ss) {
+                        found=true;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            
             if(!found) {
               r->ss = 'L';
               repeat=true;
@@ -1214,7 +1319,7 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
       }
     }
   }
-
+  
   { 
     int a,aa;
     ObjectMolecule *obj=NULL,*last_obj = NULL;
@@ -1239,6 +1344,7 @@ int SelectorAssignSS(int target,int present,int state,int quiet)
         
         if(SelectorIsMember(ai->selEntry,target)) {
           ai->ssType[0] = res[a].ss;
+          ai->cartoon = 0; /* switch back to auto */
           ai->ssType[1] = 0;
           changed_flag=true;
         }

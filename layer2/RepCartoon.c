@@ -608,11 +608,10 @@ ENDFD;
             v4 = v3;
             v3 = v2;
             v2 = v1;
-            if(*ss==1)
+            if(*ss==1) /* helix */
               v1 = v;
-            else {
+            else { /* early termination ? */
               if(last<2) {
-
                 zero3f(t0);
                 if(v2&&v3) {
                   subtract3f(v2,v,t0);
@@ -643,6 +642,12 @@ ENDFD;
                     cross_product3f(t0,v0-12,vo-12);
                     normalize3f(vo-12);
                   }
+
+                  /* now make sure there's no goofy flip on the end...
+                   of a short, tight helix */
+
+                  if(dot_product3f(vo-9,vo-12)<-0.8F)
+                    invert3f(vo-12);
                 }
               }
               v1 = NULL;
@@ -789,9 +794,16 @@ ENDFD;
                 }
                 for(b=first+f;b<=last-f;b++) {
                   copy3f(tmp+b*3,pvo+b*3);
+                  /*                  normalize3f(pvo+b*3);*/
+                }
+                for(b=first+f;b<=last-f;b++) {
+                  subtract3f(pv+(b+1)*3,pv+(b-1)*3,tmp+b*3);
+                  normalize3f(tmp+b*3);
+                  remove_component3f(pvo+b*3,tmp+b*3,pvo+b*3);
                   normalize3f(pvo+b*3);
                 }
               }
+
               first = -1;
               last = -1;
               end_flag=false;
@@ -808,7 +820,6 @@ ENDFD;
             s++;
           }
         }
-
       }
 
       if(smooth_loops) {
