@@ -1044,6 +1044,7 @@ void EditorInactive(void)
   ExecutiveDelete(cEditorSele2);    
   ExecutiveDelete(cEditorSele3);    
   ExecutiveDelete(cEditorSele4);    
+  ExecutiveDelete(cEditorSet);
   ExecutiveDelete(cEditorRes);
   ExecutiveDelete(cEditorChain);  
   ExecutiveDelete(cEditorObject);

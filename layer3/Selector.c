@@ -2900,13 +2900,14 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
                             int sele3,int sele4,
                             char *fragPref,char *compName,int *bondMode)
 {
-  int a,a0,a1,a2;
+  int a0,a1,a2;
   int *atom=NULL;
   int *toDo=NULL;
   int *comp=NULL;
+  int *pkset=NULL;
+  int set_cnt=0;
   int nAtom;
   int nFrag = 0;
-  int *p1;
   int *stk=NULL;
   int stkDepth;
   int c,s;
@@ -2919,22 +2920,25 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
   SelectorDeletePrefixSet(pref);
   SelectorDeletePrefixSet(fragPref);
   ExecutiveDelete(cEditorLink);
+  ExecutiveDelete(cEditorSet);
   /* delete any existing matches */
   if(obj) {
     ObjectMoleculeUpdateNeighbors(obj);
     SelectorUpdateTableSingleObject(obj,true,NULL,0);
     nAtom=obj->NAtom;
     if(nAtom) {
-      comp = Alloc(int,nAtom);
-      p1=comp; /* first atom */
-      for(a=0;a<nAtom;a++) 
-        *(p1++)=0;
+      comp = Calloc(int,nAtom);
       atom = Alloc(int,nAtom);
       toDo = Alloc(int,nAtom);
+      pkset = Calloc(int,nAtom);
       stk=VLAlloc(int,100);
-      p1=toDo;
-      for(a=0;a<nAtom;a++) 
-        *(p1++)=true;
+
+      { 
+        int a;int *p1;
+        p1=toDo;
+        for(a=0;a<nAtom;a++)
+          *(p1++)=true;
+      }
 
       *bondMode = false;
 
@@ -2981,9 +2985,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               break;
             s+=2;
           }
-          p1=atom; /* first atom */
-          for(a=0;a<nAtom;a++) 
-            *(p1++)=0;
+          UtilZeroMem(atom,sizeof(int)*nAtom);
           atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
           comp[a0] = 1;
           sprintf(name,"%s%1d",fragPref,nFrag+1);
@@ -3057,9 +3059,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               s+=2;
             }
             
-            p1=atom; /* second atom */
-            for(a=0;a<nAtom;a++) 
-              *(p1++)=0;
+            UtilZeroMem(atom,sizeof(int)*nAtom);
             atom[a0] = 1; /* create selection for this atom alone as fragment base atom */
             comp[a0] = 1;
             sprintf(name,"%s%1d",fragPref,nFrag+1);
@@ -3080,6 +3080,8 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
         if(sele1>=0) {
           a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
           if(a0>=0) {
+            pkset[a0]=1;
+            set_cnt++;
             comp[a0]=1;
             stkDepth=0;
             s=obj->Neighbor[a0]; /* add neighbors onto the stack */
@@ -3091,9 +3093,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               if(toDo[a1]) {
                 stkDepth=1;
                 stk[0] = a1;
-                p1=atom; /* first atom */
-                for(a=0;a<nAtom;a++) 
-                  *(p1++)=0;
+                UtilZeroMem(atom,sizeof(int)*nAtom);
                 atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
                 comp[a1] = 1;
                 sprintf(name,"%s%1d",fragPref,nFrag+1);
@@ -3119,6 +3119,8 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
         if(sele2>=0) {
           a0 = ObjectMoleculeGetAtomIndex(obj,sele2);
           if(a0>=0) {
+            pkset[a0]=1;
+            set_cnt++;
             comp[a0]=1;
             stkDepth=0;
             s=obj->Neighbor[a0]; /* add neighbors onto the stack */
@@ -3130,9 +3132,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               if(toDo[a1]) {
                 stkDepth=1;
                 stk[0] = a1;
-                p1=atom; /* first atom */
-                for(a=0;a<nAtom;a++) 
-                  *(p1++)=0;
+                UtilZeroMem(atom,sizeof(int)*nAtom);
                 atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
                 comp[a1] = 1;
                 sprintf(name,"%s%1d",fragPref,nFrag+1);
@@ -3158,6 +3158,8 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
         if(sele3>=0) {
           a0 = ObjectMoleculeGetAtomIndex(obj,sele3);
           if(a0>=0) {
+            pkset[a0]=1;
+            set_cnt++;
             comp[a0]=1;
             stkDepth=0;
             s=obj->Neighbor[a0]; /* add neighbors onto the stack */
@@ -3169,9 +3171,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
               if(toDo[a1]) {
                 stkDepth=1;
                 stk[0] = a1;
-                p1=atom; /* first atom */
-                for(a=0;a<nAtom;a++) 
-                  *(p1++)=0;
+                UtilZeroMem(atom,sizeof(int)*nAtom);
                 atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
                 comp[a1] = 1;
                 sprintf(name,"%s%1d",fragPref,nFrag+1);
@@ -3196,6 +3196,8 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
         }
         
         if(sele4>=0) {
+          pkset[a0]=1;
+          set_cnt++;
           a0 = ObjectMoleculeGetAtomIndex(obj,sele4);
           if(a0>=0) {
             comp[a0]=1;
@@ -3203,15 +3205,16 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
             s=obj->Neighbor[a0]; /* add neighbors onto the stack */
             s++; /* skip count */
             while(1) {
+              pkset[a0]=1;
+              set_cnt++;
+
               a1 = obj->Neighbor[s];
               if(a1<0)
                 break;
               if(toDo[a1]) {
                 stkDepth=1;
                 stk[0] = a1;
-                p1=atom; /* first atom */
-                for(a=0;a<nAtom;a++) 
-                  *(p1++)=0;
+                UtilZeroMem(atom,sizeof(int)*nAtom);
                 atom[a1] = 1; /* create selection for this atom alone as fragment base atom */
                 comp[a1] = 1;
                 sprintf(name,"%s%1d",fragPref,nFrag+1);
@@ -3240,6 +3243,10 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
         VLAFreeP(extraStk);
       }
 
+      if(set_cnt>1) {
+        SelectorEmbedSelection(pkset,cEditorSet,NULL,true);                
+        }
+
       if(nFrag) {
         SelectorEmbedSelection(comp,compName,NULL,true);        
       }
@@ -3250,6 +3257,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
       FreeP(toDo);
       FreeP(atom);
       FreeP(comp);
+      FreeP(pkset);
       VLAFreeP(stk);
       SelectorClean();
     }
