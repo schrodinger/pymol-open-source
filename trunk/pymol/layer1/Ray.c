@@ -791,7 +791,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int interior_flag;
   int dummy;
 
-  interior_color = SettingGet(cSetting_ray_interior_color);
+  interior_color = (int)SettingGet(cSetting_ray_interior_color);
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
   shadows = (int)SettingGet(cSetting_ray_shadows);
   trans_shadows = (int)SettingGet(cSetting_ray_transparency_shadows);
