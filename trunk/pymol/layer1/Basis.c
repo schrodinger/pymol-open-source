@@ -1840,7 +1840,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
    const float _p5   = 0.5;
    
    PRINTFD(FB_Ray)
-      " BasisMakeMap: I->NVertex %d\n",I->NVertex
+     " BasisMakeMap: I->NVertex %d [(%8.3f, %8.3f, %8.3f),...]\n",I->NVertex,
+     I->Vertex[0],I->Vertex[1],I->Vertex[2]
    ENDFD;
    
    sep   = I->MinVoxel;
@@ -1853,26 +1854,14 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
    
    v   = I->Vertex;
    
-#if 0
-   for(c = 0; c < 3; c++)
-      min[c] = max[c] = v[c];
-#else
    min[0] = max[0] = v[0];
    min[1] = max[1] = v[1];
    min[2] = max[2] = v[2];
-#endif
    
    v   += 3;
    
    for(a = 1; a < I->NVertex; a++)
    {
-#if 0
-      for(c = 0; c < 3; c++)
-      {
-         if(min[c] > v[c])      min[c]   = v[c];
-         if(max[c] < v[c])      max[c]   = v[c];
-      }
-#else
       if(min[0] > v[0])      min[0]   = v[0];
       if(max[0] < v[0])      max[0]   = v[0];
 
@@ -1881,23 +1870,33 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 
       if(min[2] > v[2])      min[2]   = v[2];
       if(max[2] < v[2])      max[2]   = v[2];
-#endif
+
       v   += 3;
    }
    
    if(volume)
    {
+
+     /*
       if(min[0] > volume[0])      min[0]   = volume[0];
       if(max[0] < volume[1])      max[0]   = volume[1];
       if(min[1] > volume[2])      min[1]   = volume[2];
       if(max[1] < volume[3])      max[1]   = volume[3];
       if(min[2] > (-volume[5]))   min[2]   = (-volume[5]);
       if(max[2] < (-volume[4]))   max[2]   = (-volume[4]);
-      
-      if(Feedback(FB_Ray,FB_Debugging)) {
-         dump3f(volume," BasisMakeMap: volume");
-         dump3f(volume+3," BasisMakeMap: volume+3");
-      }
+     */
+
+      if(min[0] < volume[0])      min[0]   = volume[0];
+      if(max[0] > volume[1])      max[0]   = volume[1];
+      if(min[1] < volume[2])      min[1]   = volume[2];
+      if(max[1] > volume[3])      max[1]   = volume[3];
+      if(min[2] > (-volume[5]))   min[2]   = (-volume[5]);
+      if(max[2] < (-volume[4]))   max[2]   = (-volume[4]);
+
+      PRINTFB(FB_Ray,FB_Debugging)
+	" BasisMakeMap: (%8.3f,%8.3f),(%8.3f,%8.3f),(%8.3f,%8.3f)\n",
+	volume[0],volume[1],volume[2],volume[3],volume[4],volume[5]
+	ENDFB;
    }
    
    /* don't break up space unnecessarily if we only have a few vertices... */
@@ -1917,6 +1916,13 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       
       if(I->NVertex < (l1/sep))
          sep   = (l1/I->NVertex);
+   }
+
+   if(Feedback(FB_Ray,FB_Debugging)) {
+     dump3f(min," BasisMakeMap: min");
+     dump3f(max," BasisMakeMap: max");
+     dump3f(I->Vertex," BasisMakeMap: I->Vertex");
+     fflush(stdout);
    }
 
    sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
@@ -1983,8 +1989,6 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       vv   += n * 3;
       v   += n * 3;
 #endif
-    
-      
       for(a = 0; a < I->NVertex; a++)
       {
          prm   = prim + vert2prim[a];
@@ -2114,7 +2118,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
             break;
          }   /* end of switch */
       }
-  
+
+
       if(n > extra_vert)
       {
          printf("BasisMakeMap: %d>%d\n",n,extra_vert);
@@ -2124,46 +2129,44 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       if(volume)
       {
          v   = tempVertex;
-#if 0
-         for(c = 0; c < 3; c++)
-         {
-            min[c] = max[c]   = v[c];
-         }
-#else
+
          min[0]   = max[0]   = v[0];
          min[1]   = max[1]   = v[1];
          min[2]   = max[2]   = v[2];
-#endif
 
          v += 3;
+
+	 if(Feedback(FB_Ray,FB_Debugging)) {
+	   dump3f(min," BasisMakeMap: remapped min");
+	   dump3f(max," BasisMakeMap: remapped max");
+	   fflush(stdout);
+	 }
+
          
          for(a = 1; a < n; a++)
          {
-#if 0
-            for(c = 0; c < 3; c++)
-            {
-               if(min[c] > v[c])   min[c]   = v[c];
-               if(max[c] < v[c])   max[c]   = v[c];
-            }
-#else
-            if(min[0] > v[0])   min[0]   = v[0];
-            if(max[0] < v[0])   max[0]   = v[0];
-
-            if(min[1] > v[1])   min[1]   = v[1];
-            if(max[1] < v[1])   max[1]   = v[1];
-
-            if(min[2] > v[2])   min[2]   = v[2];
-            if(max[2] < v[2])   max[2]   = v[2];
-#endif
-            v   += 3;
+	   if(min[0] > v[0])   min[0]   = v[0];
+	   if(max[0] < v[0])   max[0]   = v[0];
+	   
+	   if(min[1] > v[1])   min[1]   = v[1];
+	   if(max[1] < v[1])   max[1]   = v[1];
+	   
+	   if(min[2] > v[2])   min[2]   = v[2];
+	   if(max[2] < v[2])   max[2]   = v[2];
+	   v   += 3;
          }
+
+	 if(Feedback(FB_Ray,FB_Debugging)) {
+	   dump3f(min," BasisMakeMap: remapped min");
+	   dump3f(max," BasisMakeMap: remapped max");
+	   fflush(stdout);
+	 }
+
          
          if(min[0] < volume[0])      min[0]   = volume[0];
          if(max[0] > volume[1])      max[0]   = volume[1];
          if(min[1] < volume[2])      min[1]   = volume[2];
          if(max[1] > volume[3])      max[1]   = volume[3];
-         
-         /*printf("%8.3f %8.3f\n",volume[4],volume[5]);*/
          
          if(min[2] < (-volume[5]))   min[2]   = (-volume[5]);
          if(max[2] > (-volume[4]))   max[2]   = (-volume[4]);
@@ -2174,8 +2177,10 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
          extent[3]   = max[1];
          extent[4]   = min[2];
          extent[5]   = max[2];
-         /*      printf("%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f",
-         extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]);*/
+	 PRINTFB(FB_Ray,FB_Blather)
+	   " BasisMakeMap: Extent %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
+	   extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]
+	   ENDFB;
          I->Map   = MapNewCached(-sep,tempVertex,n,extent,group_id,block_base);
       }
       else

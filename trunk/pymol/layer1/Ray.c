@@ -404,7 +404,7 @@ void RayExpandPrimitives(CRay *I)
 		nVert++;
 		break;
 	 case cPrimCylinder:
-    case cPrimSausage:
+	 case cPrimSausage:
 		I->Primitive[a].vert=nVert;
 		I->Vert2Prim[nVert]=a;
 		basis->Radius[nVert]=I->Primitive[a].r1;
