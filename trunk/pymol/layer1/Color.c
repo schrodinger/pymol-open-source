@@ -332,8 +332,21 @@ int ColorGetIndex(char *name)
   int i;
   int wm,best=0;
   int ext_best=0;
+  int is_numeric = 1;
 
-  if(((name[0]>='0')&&(name[0]<='9'))||(name[0]=='-'))
+  {
+    char *c;
+    c=name;
+    while(*c) {
+      if(!(((*c>='0')&&(*c<='9'))||(*c=='-'))) {
+        is_numeric=false;
+        break;
+      }
+      c++;
+    }
+  }
+  
+  if(is_numeric&&(((name[0]>='0')&&(name[0]<='9'))||(name[0]=='-')))
     if(sscanf(name,"%d",&i)) 
       if((i<I->NColor)&&(i>=0))
         return(i);

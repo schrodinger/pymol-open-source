@@ -1217,6 +1217,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SceneChanged();
     break;
   case cSetting_surface_color:
+  case cSetting_surface_ramp_above_mode:
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvColor);
     SceneChanged();
     break;
@@ -2270,6 +2271,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_cartoon_nucleic_acid_mode,0);
   SettingSet_color(I,cSetting_seq_view_color, "-1");
   SettingSet_i(I,cSetting_seq_view_label_mode,2);
+  SettingSet_i(I,cSetting_surface_ramp_above_mode,0);
 
 }
 

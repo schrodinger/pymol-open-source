@@ -984,8 +984,11 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   MapType *map;
   int a,i0,i,j,c1;
   float *v0,*vc,*c0;
+  float *n0;
   int *vi,*lv,*lc,*cc;
   int first_color;
+  float *v_pos,v_above[3];
+  int ramp_above;
   ObjectMolecule *obj;
   float probe_radius;
   float dist,minDist;
@@ -1008,12 +1011,14 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   float clear_cutoff;
   char *clear_selection = NULL;
   float *clear_vla = NULL;
+  
   MapType *clear_map = NULL;
 
   AtomInfoType *ai2,*ai1;
 
   obj=cs->Obj;
   surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+  ramp_above  = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_ramp_above_mode);
   surface_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_surface_color);
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
@@ -1129,6 +1134,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
             minDist=MAXFLOAT;
             i0=-1;
             v0 = I->V+3*a;
+            n0 = I->VN+3*a;
             vi = I->Vis+a;
             /* colors */
             i=*(MapLocusEStart(map,v0));
@@ -1214,7 +1220,18 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
             }
             if(ColorCheckRamped(c1)) {
               I->oneColorFlag=false;
-              ColorGetRamped(c1,v0,vc);
+              switch(ramp_above) {
+              case 1:
+                copy3f(n0,v_above);
+                scale3f(v_above,probe_radius,v_above);
+                add3f(v0,v_above,v_above);
+                v_pos = v_above;
+                break;
+              default:
+                v_pos = v0;
+                break;
+              }
+              ColorGetRamped(c1,v_pos,vc);
               vc+=3;
             } else {
               c0 = ColorGet(c1);
