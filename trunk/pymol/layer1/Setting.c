@@ -2434,6 +2434,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_presentation,0);
   SettingSet_i(I,cSetting_presentation_mode,1);
   SettingSet_b(I,cSetting_pdb_truncate_residue_name,false);
+  SettingSet_b(I,cSetting_scene_loop,0);
+  SettingSet_i(I,cSetting_sweep_mode,1);
+  SettingSet_f(I,cSetting_sweep_phase,0.0F);
+  
 }
 
 

@@ -1186,11 +1186,18 @@ DEVELOPMENT TO DO
                   scene_name = lst[ix]
                   cmd.set('scene_current_name', scene_name, quiet=1)
                   scene(scene_name,'recall',animate=animate)
-               else:
+               elif setting.get("scene_loop")=="on": # loop back to the beginning
+                  print setting.get("scene_loop")
+                  if len(lst):
+                     scene_name = lst[0]
+                     cmd.set('scene_current_name', scene_name, quiet=1)
+                     scene(scene_name,'recall',animate=animate)
+               else: # otherwise put up blank screen
                   cmd.set('scene_current_name','',quiet=1)
                   if len(lst):
                      cmd.disable() # just hide everything
                      cmd.wizard()
+                     
             elif action=='previous':
                lst = _scene_validate_list()            
                cur_scene = setting.get('scene_current_name',quiet=1)
@@ -1202,7 +1209,13 @@ DEVELOPMENT TO DO
                if ix>=0:
                   scene_name = lst[ix]
                   scene(scene_name,'recall',animate=animate)
-               else:
+               elif setting.get("scene_loop")=="on": # loop back to the beginning
+                  print setting.get("scene_loop")
+                  if len(lst):
+                     scene_name = lst[-1]
+                     cmd.set('scene_current_name', scene_name, quiet=1)
+                     scene(scene_name,'recall',animate=animate)
+               else: # otherwise put up blank screen
                   cmd.set('scene_current_name','',quiet=1)
                   if len(lst):
                      cmd.disable() # just hide everything

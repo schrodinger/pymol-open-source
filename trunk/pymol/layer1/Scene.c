@@ -115,6 +115,7 @@ struct _CScene {
   unsigned ImageBufferSize;
   double LastRender,RenderTime,LastFrameTime;
   double LastRock,LastRockTime;
+  float LastRockX,LastRockY;
   Pickable LastPicked;
   int StereoMode;
   OrthoLineType vendor,renderer,version;
@@ -415,14 +416,22 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
     changed_flag = true;
   }   
 
+
   if(elem->clip_flag) {
     SceneClipSet(G,elem->front,elem->back);
   }
   if(elem->ortho_flag) {
     SettingSetGlobal_b(G,cSetting_ortho,elem->ortho);
   }
-  if(changed_flag) 
+  if(changed_flag) {
+
+    I->LastRock = 0.0F; /* continue to defer rocking until this is done */
+    I->LastRockX = 0.0F;
+    I->LastRockY = 0.0F;
+    I->RockTime = 0.0;
+
     SceneRovingDirty(G);
+  }
 }
 
 void SceneCleanupStereo(PyMOLGlobals *G)
@@ -603,6 +612,8 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet,int animate)
   I->Origin[2] = *(p++);
 
   I->LastRock = 0.0F;
+  I->LastRockX = 0.0F;
+  I->LastRockY = 0.0F;
   I->RockTime = 0.0;
 
   SceneClipSet(G,p[0],p[1]);
@@ -1099,7 +1110,6 @@ void SceneIdle(PyMOLGlobals *G)
   double minTime;
   int frameFlag = false;
   int rockFlag = false;
-  float ang_cur,disp,diff;
 
   if(I->PossibleSingleClick==2) {
     double now = UtilGetSeconds(G);
@@ -1135,19 +1145,56 @@ void SceneIdle(PyMOLGlobals *G)
       }
     }
   if(ControlRocking(G)&&rockFlag) {
+    float ang_cur,disp,diff;
     float sweep_angle = SettingGet(G,cSetting_sweep_angle);
     float sweep_speed = SettingGet(G,cSetting_sweep_speed);
+    float sweep_phase = SettingGet(G,cSetting_sweep_phase);
+    int sweep_mode = SettingGet(G,cSetting_sweep_mode);
+    float shift = PI/2.0F;
+
     I->RockTime+=I->RenderTime;
 
-    if(sweep_angle<=0.0F) {
-      diff = (float)((3.1415/180.0)*I->RenderTime*10);
-    } else {
-      ang_cur = (float)(I->RockTime*sweep_speed);
-      disp = (float)(sweep_angle*(3.1415/180.0)*sin(ang_cur)/2);
-      diff = (float)(disp-I->LastRock);
-      I->LastRock = disp;
+    switch(sweep_mode) {
+    case 0:
+    case 1:
+    case 2:
+      if(sweep_angle<=0.0F) {
+        diff = (float)((PI/180.0F)*I->RenderTime*10);
+      } else {
+        ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
+        disp = (float)(sweep_angle*(PI/180.0F)*sin(ang_cur)/2);
+        diff = (float)(disp-I->LastRock);
+        I->LastRock = disp;
+      }
+      switch(sweep_mode) {
+      case 0:
+        SceneRotate(G,(float)(180*diff/PI),0.0F,1.0F,0.0F);
+        break;
+      case 1:
+        SceneRotate(G,(float)(180*diff/PI),1.0F,0.0F,0.0F);
+        break;
+      case 2: /* z-rotation...useless! */
+        SceneRotate(G,(float)(180*diff/PI),0.0F,0.0F,1.0F);
+        break;
+      }
+      break;
+    case 3: /* nutate */
+      SceneRotate(G,(float)(-I->LastRockY),0.0F,1.0F,0.0F);
+      SceneRotate(G,(float)(-I->LastRockX),1.0F,0.0F,0.0F);
+      ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
+      
+      I->LastRockX = (sweep_angle*sin(ang_cur)/2);
+      I->LastRockY = (sweep_angle*sin(ang_cur+shift)/2);
+      
+      if(I->RockTime*sweep_speed<PI) {
+        float factor = (I->RockTime*sweep_speed)/PI;
+        I->LastRockX *= factor;
+        I->LastRockY *= factor;
+      }
+      SceneRotate(G,(float)I->LastRockX,1.0F,0.0F,0.0F);
+      SceneRotate(G,(float)I->LastRockY,0.0F,1.0F,0.0F);
+      break;
     }
-    SceneRotate(G,(float)(180*diff/cPI),0.0F,1.0F,0.0F);
   }
   if(MoviePlaying(G)&&frameFlag)
 	 {
@@ -2779,6 +2826,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   int adjust_flag;
   CObject *obj;
 
+
   if(I->PossibleSingleClick) {
     double slowest_single_click_drag = 0.15;
     if((when-I->LastClickTime)>slowest_single_click_drag) {
@@ -2980,6 +3028,10 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   case cButModeClipN:    
   case cButModeClipF:    
     
+    if(I->cur_ani_elem < I->n_ani_elem ) { /* allow user to interrupt animation */
+      I->cur_ani_elem = I->n_ani_elem;
+    }
+
     eff_width = I->Width;
     if(I->StereoMode>1) {
       eff_width = I->Width/2;
@@ -4020,8 +4072,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     I->cur_ani_elem = cur;
     SceneFromViewElem(G,I->ani_elem+cur);
 
-    I->LastRock = 0.0F; /* continue to defer rocking until this is done */
-    I->RockTime = 0.0;
+
   }
 
   double_pump=SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono);
