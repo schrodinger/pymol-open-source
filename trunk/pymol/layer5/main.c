@@ -533,6 +533,9 @@ static void MainInit(void)
 
 }
 
+
+
+
 /*========================================================================*/
 void MainFree(void)
 {
@@ -705,6 +708,23 @@ void MainBusyIdle(void)
 
 /*========================================================================*/
 
+#ifdef WIN32
+BOOL WINAPI HandlerRoutine(
+						     DWORD dwCtrlType   //  control signal type
+)
+{
+	switch(dwCtrlType) {
+	case CTRL_CLOSE_EVENT:
+	case CTRL_BREAK_EVENT:
+	case CTRL_C_EVENT:
+		TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
+	
+		break;
+	}
+	return 1;
+}
+#endif
+
 void launch(void)
 {
   if(InternalGUI&&(!GameMode))
@@ -717,6 +737,14 @@ void launch(void)
     atexit(MainOnExit); /* register callback to help prevent crashes
                                  when GLUT spontaneously kills us */
     #endif
+
+#ifdef WIN32
+SetConsoleCtrlHandler(
+  HandlerRoutine,  // address of handler function
+  true                          // handler to add or remove
+);
+ 
+#endif
 
     p_glutInit(&myArgc, myArgv);
 

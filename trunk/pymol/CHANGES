@@ -166,6 +166,8 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * tearoff menus
+
    * pdb_standard_order setting 
 
    * calibrated CGO line widths to produce consistent results
