@@ -36,10 +36,17 @@ void PyMOLReadPixels(GLint x,
   glPixelStorei(GL_PACK_SKIP_ROWS, 0);
   glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  
+
+  /* call glFlush & glFinish first to avoid full system crash on buggy
+   * ATI Radeon drivers, such as Radeon 7000 & 9000 series.  (calling
+   * both is probably redundant and ultra-paranoid, but so what?) */
+  glFlush(); 
+  glFinish();
+
+  /* now get the pixels */
   glReadPixels(x,y,width,height,format,type,pixels);
   
-  /* Restore current pixel store state. */
+  /* and then estore current pixel store state. */
   glPixelStorei(GL_PACK_SWAP_BYTES, swapbytes);
   glPixelStorei(GL_PACK_LSB_FIRST, lsbfirst);
   glPixelStorei(GL_PACK_ROW_LENGTH, rowlength);
