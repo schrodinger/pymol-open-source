@@ -96,6 +96,12 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
 
+Changes up to 0.87
+
+   * stick_transparency setting
+
+   * ray_transparency_shadows setting
+
 Changes up to 0.86
 
    * added command history feature to external gui

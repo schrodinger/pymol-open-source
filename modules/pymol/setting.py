@@ -228,6 +228,7 @@ if __name__=='pymol.setting':
       ribbon_trace          =196
       security              =197
       stick_transparency    =198
+      ray_transparency_shadows = 199
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
