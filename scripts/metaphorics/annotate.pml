@@ -62,3 +62,6 @@ color white, name ca and ss ''+L and( rep cartoon and not rep sticks)
 color orange, name ca and ss S and rep cartoon and ((not rep sticks) or (nbr. nbr. nbr. rep cartoon))
 color magenta, name ca and ss H and rep cartoon and ((not rep sticks) or (nbr. nbr. nbr. rep cartoon))
 
+# set Ctrl Q to Quit 
+
+cmd.set_key('CTRL-Q',cmd.quit)
