@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# PyMOL startup script
+#
+# ==============================================================
+# Set PYMOL_PATH to point at the correct location on your system
+#
+export PYMOL_PATH=/usr/lib/python2.1/site-packages/pymol
+#export PYMOL_PATH=$(pwd)
+#
+# ==============================================================
+# (no changes usually required below here)
+#
+# python modules
+#
+if [ -z $PYTHONPATH ]; then
+  export PYTHONPATH=${PYMOL_PATH}/modules:${PYTHONPATH}
+else
+  export PYTHONPATH=${PYMOL_PATH}/modules
+fi
+#
+#
+#dbx /usr/bin/python 
+#gdb /usr/bin/python 
+/usr/bin/python2 $PYMOL_PATH/modules/launch_pymol.py $*
+
