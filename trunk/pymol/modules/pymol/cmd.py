@@ -559,7 +559,8 @@ if __name__=='pymol.cmd':
                r = _cmd.refresh()
          else:
             print "Error: Ignoring an unsafe call to cmd._refresh"
-      finally:      unlock()
+      finally:
+         unlock()
       return r
 
    # stereo (platform dependent )

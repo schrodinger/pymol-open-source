@@ -98,7 +98,10 @@ Current Bugs to Fix
 
 Changes up to 0.88
 
-   * huge cleanup of code to eliminate compiler warnings on VisualC and Windows & GCC32
+   * Finally fixed sporadic "GC object already in linked list" bug
+
+   * huge cleanup of code to eliminate compiler warnings on VisualC
+     and Windows & GCC32
       - at least one bug fixed
       - more careful handling of precision 
 

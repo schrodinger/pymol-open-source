@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-# PyMOL startup script
+# PyMOL startup script for "ext"-based installs
 #
 # ==============================================================
 # Set PYMOL_PATH to point at the correct location on your system
