@@ -15,10 +15,10 @@ Z* -------------------------------------------------------------------
 */
 
 #include"os_std.h"
+#include"os_gl.h"
 
 #include"CGO.h"
 #include"Base.h"
-#include"GL/gl.h"
 #include"OOMac.h"
 #include"Setting.h"
 #include"Sphere.h"
@@ -112,7 +112,7 @@ int CGOFromFloatArray(CGO *I,float *src,int len)
   int bad_entry=0;
   int sz;
   int a;
-  int cc;
+  int cc=0;
   float val;
   float *pc,*save_pc,*tf;
   VLACheck(I->op,float,I->c+len+32);
@@ -476,7 +476,24 @@ static void CGO_gl_linewidth(float *pc)
 
 static void CGO_gl_null(float *pc) {
 }
-    
+
+#ifdef WIN32
+
+/* Under windows, these functions needed to be wrapped....
+ * That may also be the case for any operating system which
+ * doesn't use canonical gl calls */
+
+static void CGO_gl_vertex(float *v) {
+  glVertex3fv(v);
+}
+static void CGO_gl_normal(float *v) {
+  glNormal3fv(v);
+}
+static void CGO_gl_color(float *v) {
+  glColor3fv(v);
+}
+#endif
+
 /* dispatch table for OpenGL */
 
 CGO_op_fn CGO_gl[] = {
@@ -484,10 +501,15 @@ CGO_op_fn CGO_gl[] = {
   CGO_gl_null,
   CGO_gl_begin,
   CGO_gl_end,
+#ifdef WIN32
+  CGO_gl_vertex,
+  CGO_gl_normal,
+  CGO_gl_color,
+#else
   (CGO_op_fn)glVertex3fv,
-  
   (CGO_op_fn)glNormal3fv,
   (CGO_op_fn)glColor3fv,
+#endif
   CGO_gl_null,
   CGO_gl_null,
   CGO_gl_null,
