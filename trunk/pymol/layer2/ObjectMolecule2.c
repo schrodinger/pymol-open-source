@@ -775,11 +775,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                       if(!AtomInfoSameResidue(ai1,ai2))
                                         flag=false;
                                   
-                                  if(ai1->bonded&&ai2->bonded) /* don't connect two atoms
-                                                                  which have bonds predefined 
-                                                                  for them */
-                                    flag = false;
-
                                   if(flag) {
                                     VLACheck((*bond),BondType,nBond);
                                     (*bond)[nBond].index[0] = a1;
@@ -934,7 +929,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                         }
                                       }
                                     }
-                                    (*bond)[nBond].order = order;
+                                    (*bond)[nBond].order = -order; /* store tentative valence as negative */
                                     nBond++;
                                   }
                                 }
@@ -948,7 +943,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
           break;
         case 2:  /* dictionary-based connectivity */
           /* TODO */
-          
           break;
         }
       }
@@ -1033,12 +1027,23 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
             *(ii1++)=*(ii2++); /* copy bond */
             nBond++;
           } else {
+            if((ii2->order>0)&&((ii1-1)->order<0))
+              (ii1-1)->order = ii2->order; /* use most certain valence */
             ii2++; /* skip bond */
           }
         }
       VLASize((*bond),BondType,nBond);
     }
   }
+  /* restore bond oder positivity */
+
+  ii1 = *bond;
+  for(a=0;a<nBond;a++) {
+    if(ii1->order<0)
+      ii1->order = -ii1->order;
+    ii1++;
+  }
+
   PRINTFD(FB_ObjectMolecule)
     " ObjectMoleculeConnect: leaving with %d bonds...\n",nBond
     ENDFD;
