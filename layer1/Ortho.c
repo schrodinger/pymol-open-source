@@ -181,6 +181,12 @@ int  OrthoCommandOut(char *buffer)
 	return(0);
 }
 /*========================================================================*/
+int  OrthoCommandWaiting(void)
+{
+  OrthoObject *I=&Ortho;
+  return(QueueStrCheck(I->cmds));
+}
+/*========================================================================*/
 void OrthoClear(void)
 {
   int a;
@@ -423,6 +429,10 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 	 }
   else switch(k)
 	 {
+	 case 4: /* ctrl D */
+      if((!I->CurChar)||(I->CurChar==I->PromptChar))
+        exit(0); 
+      /* otherwise */
     case 127: /* delete */
       if(I->CursorChar>=0) {
         if(I->CursorChar<I->CurChar)
@@ -447,9 +457,6 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
             I->Line[curLine][I->CurChar]=0;
           }
 		  }
-		break;
-	 case 4:
-      exit(0);
 		break;
     case 5: /* CTRL E -- ending */
       I->CursorChar=-1;

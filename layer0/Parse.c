@@ -36,6 +36,8 @@ char *ParseNextLine(char *p) {
 /*========================================================================*/
 char *ParseWordCopy(char *q,char *p,int n) { /* word copy */
   while(*p) {
+	 if((*p==0xD)||(*p==0xA)) /* don't skip end of lines */
+      break;
 	 if(*p<=32) 
 		p++;
 	 else

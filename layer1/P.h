@@ -48,6 +48,7 @@ void PBlockAndUnlockAPI(void);
 void PLockAPIAndUnblock(void);
 
 void PFlush(void);
+void PFlushFast(void);
 void PXDecRef(PyObject *obj);
 
 void PStereoOff(void);

@@ -103,6 +103,7 @@ static PyObject *CmdExportDots(PyObject *self, PyObject *args);
 static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
+static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
@@ -152,6 +153,7 @@ static PyObject *CmdTest(PyObject *self, 	PyObject *args);
 static PyObject *CmdTurn(PyObject *self, 	PyObject *args);
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args);
 static PyObject *CmdZoom(PyObject *self, PyObject *args);
+static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
 
 static PyMethodDef Cmd_methods[] = {
 	{"alter",	     CmdAlter,        METH_VARARGS },
@@ -174,6 +176,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"fit_pairs",    CmdFitPairs,     METH_VARARGS },
 	{"flag",         CmdFlag,         METH_VARARGS },
 	{"frame",	     CmdFrame,        METH_VARARGS },
+   {"flush_now",    CmdFlushNow,     METH_VARARGS },
 	{"get",	        CmdGet,          METH_VARARGS },
 	{"get_feedback", CmdGetFeedback,  METH_VARARGS },
 	{"get_matrix",	  CmdGetMatrix,    METH_VARARGS },
@@ -182,6 +185,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
 	{"isomesh",	     CmdIsomesh,      METH_VARARGS },
+   {"wait_queue",   CmdWaitQueue,    METH_VARARGS },
    {"label",        CmdLabel,        METH_VARARGS },
 	{"load",	        CmdLoad,         METH_VARARGS },
 	{"load_object",  CmdLoadObject,   METH_VARARGS },
@@ -224,6 +228,28 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
+{
+  /* only called by the GLUT thread with unlocked API */
+  P_glut_thread_keep_out++;
+  PFlushFast();
+  P_glut_thread_keep_out--;
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
+static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
+{
+  while(OrthoCommandWaiting())
+    {
+      PUnblock();
+      PSleep(10000);
+      PBlock();
+    }
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
 
 static PyObject *CmdPaste(PyObject *dummy, PyObject *args)
 {

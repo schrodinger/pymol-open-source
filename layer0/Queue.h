@@ -25,6 +25,7 @@ typedef struct {
 
 CQueue *QueueNew(unsigned int mask);
 void QueueFree(CQueue *I);
+int QueueStrCheck(CQueue *I);
 
 void QueueStrIn(CQueue *I,char *c);
 int QueueStrOut(CQueue *I,char *c);

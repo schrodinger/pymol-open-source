@@ -66,6 +66,7 @@ Additional help topics include:
    '''
    help('commands')
 
+
 def api():
    '''
 DESCRIPTION
@@ -256,8 +257,8 @@ DESCRIPTION
       elem <element symbol>       e;<element symbols>
       flag <number>               f;
       alt <code>                  -
-      n_type <numeric type>       nt; <numeric type>
-      t_type <text type>          tt; <text type>
+      numeric_type <numeric type> nt; <numeric type>
+      text_type <text type>       tt; <text type>
       b <operator> <value>        -
       formal_charge <op> <value>  fc; <operator> <value>
       partial_charge <op> <value> pc; <operator> <value>
@@ -799,13 +800,18 @@ INTERNAL
    pass
 #   pymol.lock_api = _cmd.get_globals()['lock_api']
 
-   
+
 def lock():
    '''
 INTERNAL
    '''
+   thred = thread.get_ident()
+   if thred == pymol.glutThread:
+      _cmd.flush_now()
+   else:
+      _cmd.wait_queue()
    lock_api.acquire(1)
-
+      
 def lock_attempt():
    '''
 INTERNAL

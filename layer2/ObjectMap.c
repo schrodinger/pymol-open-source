@@ -148,7 +148,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
       p = ParseNextLine(p);
     else if(sscanf(cc,"%i",&n)==1) {
       p=ParseWordCopy(cc,p,MAXLINELEN);
-      if(strstr(cc,"!NTITLE")) {
+      if(strstr(cc,"!NTITLE")||(!*cc)) {
         p=ParseNextLine(p);
         while(n--) {
           p=ParseNextLine(p);          

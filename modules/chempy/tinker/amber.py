@@ -653,6 +653,9 @@ class Subset:
             label.append(st)
             type.append(a)
             map[a] = st
+      # assign numeric types as per the parameter we're writing
+      for a in self.model.atom:
+         a.numeric_type = map[a.text_type]
       f = open(fname,'w')
       f.write('''
 forcefield              AMBER95
