@@ -4475,7 +4475,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
   OOAlloc(ObjectMolecule);
   (*I)=(*obj);
   I->Symmetry=NULL; /* TODO: add  copy */
-
+  I->Neighbor=NULL;
   I->CSet=VLAMalloc(I->NCSet,sizeof(CoordSet*),5,true); /* auto-zero */
   for(a=0;a<I->NCSet;a++) {
     I->CSet[a]=CoordSetCopy(obj->CSet[a]);

@@ -39,6 +39,8 @@ Bugs to Fix
 
 Changes up to 0.63
 
+   * fixed fatal bug with symexp
+
    * first attempt at support for CCP4's binary maps -- it works with my
      test maps, but will it work with others?
 
