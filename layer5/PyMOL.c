@@ -185,21 +185,6 @@ void PyMOL_Start(CPyMOL *I)
 {
   PyMOLGlobals *G=I->G;
 
-  if(G->HaveGUI) {
-
-    /* get us into a well defined GL state */
-    
-    glDisable(GL_LIGHTING);
-    glDisable(GL_FOG);
-    glDisable(GL_NORMALIZE);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LINE_SMOOTH);
-    glDisable(GL_POLYGON_SMOOTH);
-    glDisable(GL_DITHER);
-    glDisable(GL_BLEND);
-  }
-
   G->Context = OVContext_New();
   MemoryCacheInit(G);
   FeedbackInit(G,G->Option->quiet);
@@ -287,9 +272,29 @@ void PyMOL_Draw(CPyMOL *I)
 {
   PyMOLGlobals *G = I->G;
 
+  if(G->HaveGUI) {
+
+    G->ValidContext = true;
+
+    /* get us into a well defined GL state */
+    
+    glDisable(GL_LIGHTING);
+    glDisable(GL_FOG);
+    glDisable(GL_NORMALIZE);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_COLOR_MATERIAL);
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_POLYGON_SMOOTH);
+    glDisable(GL_DITHER);
+    glDisable(GL_BLEND);
+  } 
+
   I->RedisplayFlag = false;
   OrthoBusyPrime(G);
   ExecutiveDrawNow(G);
+
+  if(G->HaveGUI) G->ValidContext = false;
+
   /* don't claim to be ready until we've drawn at least once */
   G->Ready = true; 
 

@@ -94,6 +94,7 @@ struct _COrtho {
   CQueue *cmds;
   CQueue *feedback;
   int Pushed;
+  int HaveViewPort;
 };
 
 void OrthoParseCurrentLine(PyMOLGlobals *G);
@@ -903,6 +904,11 @@ void OrthoDoDraw(PyMOLGlobals *G)
   int skip_prompt = 0;
   int render = false;
 
+  if(G->HaveGUI) { /* update our viewport information */
+    if(!I->HaveViewPort)
+      glGetIntegerv(GL_VIEWPORT,I->ViewPort);
+  }
+
   if(SettingGetGlobal_b(G,cSetting_seq_view)) {
     SeqUpdate(G); 
     I->HaveSeqViewer = true;
@@ -1358,16 +1364,14 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
   BlockSetMargin(block,sceneTop,0,sceneBottom,sceneRight);
   BlockSetMargin(&I->LoopBlock,sceneTop,0,sceneBottom,sceneRight);
 
-  if(G->HaveGUI) 
-    glGetIntegerv(GL_VIEWPORT,I->ViewPort);
+  I->HaveViewPort = false;
 
-  OrthoPushMatrix(G);
+
   block=NULL;
   while(ListIterate(I->Blocks,block,next))
 	 if(block->fReshape) {
 		block->fReshape(block,width,height);			
     }
-  OrthoPopMatrix(G);
 
   WizardRefresh(G); /* safe to call even if no wizard exists */
   }
@@ -1572,6 +1576,7 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   ListInit(I->Blocks);
 
   I->Pushed = false;
+  I->HaveViewPort = false;
   I->cmds = QueueNew(G,0xFFFF);
   I->feedback = QueueNew(G,0xFFFF);
 
