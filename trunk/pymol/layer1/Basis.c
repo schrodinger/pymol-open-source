@@ -752,8 +752,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   /* don't break up space unnecessarily if we only have a few vertices... */
 
   if(I->NVertex) {
-    l2 = fabs(max[0]-min[0]);
-    if(l1<l2) l1 = l2;  
+    l1 = fabs(max[0]-min[0]);
     l2 = fabs(max[1]-min[1]);
     if(l1<l2) l1 = l2;  
     l2 = fabs(max[2]-min[2]);
