@@ -210,13 +210,13 @@ def ray_shadows(mode):
       cmd.set('gamma',1.3) 
    elif mode=='heavy':
       cmd.set('reflect_power',1.0)
-      cmd.set('spec_reflect',0.5)
+      cmd.set('spec_reflect',0.53)
       cmd.set('spec_power',90) # was 60
       cmd.set('ambient',0.08)
-      cmd.set('reflect',0.70) # was 0.65
+      cmd.set('reflect',0.75) # was 0.65
       cmd.set('direct',0.06)
       cmd.set('power',0.3)
-      cmd.set('gamma',1.4) # was 1.5
+      cmd.set('gamma',1.43) # was 1.5
    elif mode=='black':
       cmd.set('power',0.3)
       cmd.set('spec_reflect',0.6)
