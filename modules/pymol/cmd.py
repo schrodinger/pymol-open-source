@@ -997,12 +997,13 @@ INTERNAL
    thred = thread.get_ident()
    if (thred == pymol.glutThread):
       _cmd.flush_now()
+      lock_api.release()
    else:
-      while _cmd.wait_queue():
-         e = threading.Event()
+      lock_api.release()
+      while _cmd.wait_queue(): # wait till our instruction (if any)
+         e = threading.Event() # has been executed before continuing
          e.wait(0.05)
-         del e   
-   lock_api.release()
+         del e
 
 def export_dots(a,b):
    '''
