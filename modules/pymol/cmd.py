@@ -566,14 +566,8 @@ if __name__=='pymol.cmd':
          t.start()
          thread_list.append(t)
       _cmd.ray_hash_thread(thread_info[0])
-      while 1:
-         all_done = 1
-         for t in thread_list:
-            if t.isAlive():
-               all_done = 0
-         if all_done:
-            break;
-         time.sleep(0.01)
+      for t in thread_list:
+         t.join()
 
    def _ray_spawn(thread_info):
       thread_list = []
@@ -585,14 +579,8 @@ if __name__=='pymol.cmd':
       for t in thread_list:
          t.start()
       _cmd.ray_trace_thread(thread_info[0])
-      while 1:
-         all_done = 1
-         for t in thread_list:
-            if t.isAlive():
-               all_done = 0
-         if all_done:
-            break;
-         time.sleep(0.01)
+      for t in thread_list:
+         t.join()
          
    # status reporting
 

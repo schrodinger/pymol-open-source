@@ -763,7 +763,9 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
   int a;
   blocked = PAutoBlock();
 
-  printf(" Ray: Spawning %d threads.\n",n_thread);
+  PRINTFB(FB_Ray,FB_Details)
+    " Ray: Building voxels with %d threads...\n",n_thread
+  ENDFB;
   info_list = PyList_New(n_thread);
   for(a=0;a<n_thread;a++) {
     PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
@@ -786,7 +788,9 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   int a;
   blocked = PAutoBlock();
 
-  printf(" Ray: Spawning %d threads.\n",n_thread);
+  PRINTFB(FB_Ray,FB_Details)
+    " Ray: Rendering with %d threads...\n",n_thread
+  ENDFB;
   info_list = PyList_New(n_thread);
   for(a=0;a<n_thread;a++) {
     PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
@@ -887,9 +891,9 @@ int RayTraceThread(CRayThreadInfo *T)
   
   /* SETUP */
 
-  if(T->n_thread>1)
+  /*  if(T->n_thread>1)
     printf(" Ray: Thread %d: Spawned.\n",T->phase+1);
-
+  */
   I = T->ray;
 
   interior_shadows = (int)SettingGet(cSetting_ray_interior_shadows);
@@ -1239,8 +1243,8 @@ int RayTraceThread(CRayThreadInfo *T)
           break;
       }
   }
-  if(T->n_thread>1) 
-    printf(" Ray: Thread %d: Complete.\n",T->phase+1);
+  /*  if(T->n_thread>1) 
+      printf(" Ray: Thread %d: Complete.\n",T->phase+1);*/
   MapCacheFree(&cache);
   if(shadows&&(I->NBasis>1))
     MapCacheFree(&shadow_cache);
