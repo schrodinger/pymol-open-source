@@ -4,8 +4,8 @@ PyMOL>load lrg/map.ccp4
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.0110   -0.0000   -0.0000
- Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0110    0.0000    0.0000
+ Crystal:    0.0000    0.0110    0.0000
  Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
  Crystal:   91.1443    0.0000    0.0000
@@ -16,8 +16,8 @@ PyMOL>load lrg/map.ccp4
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.0110   -0.0000   -0.0000
- Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0110    0.0000    0.0000
+ Crystal:    0.0000    0.0110    0.0000
  Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
  Crystal:   91.1443    0.0000    0.0000
@@ -31,8 +31,8 @@ PyMOL>load lrg/map.ccp4,map2,format=ccp4
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.0110   -0.0000   -0.0000
- Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0110    0.0000    0.0000
+ Crystal:    0.0000    0.0110    0.0000
  Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
  Crystal:   91.1443    0.0000    0.0000
@@ -43,8 +43,8 @@ PyMOL>load lrg/map.ccp4,map2,format=ccp4
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.0110   -0.0000   -0.0000
- Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0110    0.0000    0.0000
+ Crystal:    0.0000    0.0110    0.0000
  Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
  Crystal:   91.1443    0.0000    0.0000
@@ -61,8 +61,8 @@ PyMOL>load lrg/map.ccp4,map3
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.0110   -0.0000   -0.0000
- Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0110    0.0000    0.0000
+ Crystal:    0.0000    0.0110    0.0000
  Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
  Crystal:   91.1443    0.0000    0.0000
@@ -73,8 +73,8 @@ PyMOL>load lrg/map.ccp4,map3
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.0110   -0.0000   -0.0000
- Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0110    0.0000    0.0000
+ Crystal:    0.0000    0.0110    0.0000
  Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
  Crystal:   91.1443    0.0000    0.0000

@@ -14,5 +14,5 @@ while 1:
    elif ll=='END-LOG':
       echo = 0
    elif echo:
-      string.replace(l,"-0.000"," 0.000") # squish annoying negative zeros
+      l=string.replace(l,"-0.000"," 0.000") # squish annoying negative zeros
       g.write(l)
