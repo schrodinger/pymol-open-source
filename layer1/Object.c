@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 
 int ObjectGetNFrames(Object *I);
 
-void ObjectDescribeElement(struct Object *I,int index);
+void ObjectDescribeElement(struct Object *I,int index,char *buffer);
 CSetting **ObjectGetSettingHandle(struct Object *I,int state);
 
 /*========================================================================*/
@@ -33,8 +33,9 @@ CSetting **ObjectGetSettingHandle(struct Object *I,int state)
   return(&I->Setting);
 }
 /*========================================================================*/
-void ObjectDescribeElement(struct Object *I,int index)
+void ObjectDescribeElement(struct Object *I,int index,char *buffer)
 {
+  buffer[0]=0;
 }
 /*========================================================================*/
 void ObjectSetRepVis(Object *I,int rep,int state)

@@ -16,7 +16,7 @@ bfct = []
 iterate (resn pro),bfct.append(b)
 print bfct
 
-# the following should have no effecit
+# the following should have no effect
 iterate (all),resn = 'NON'
 iterate (all),b = b + 10
 

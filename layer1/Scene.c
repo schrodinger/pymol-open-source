@@ -661,15 +661,20 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
       if(obj->type==cObjectMolecule) {
-        if(obj->fDescribeElement)
-          obj->fDescribeElement(obj,I->LastPicked.index);
+        if(Feedback(FB_ObjectMolecule,FB_Results)) {
+          if(obj->fDescribeElement)
+            obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+          PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
+          OrthoRestorePrompt();
+        }
+
         sprintf(buffer,"%s`%d",
                 obj->Name,I->LastPicked.index+1);    
-        SelectorCreate(cEditorSele1,buffer,NULL,false);
+        SelectorCreate(cEditorSele1,buffer,NULL,true);
         ExecutiveDelete(cEditorSele2);
         EditorSetActiveObject((ObjectMolecule*)obj,I->StateIndex);
         if(EditorActive()) {
-          SelectorCreate(cEditorRes,"(byres pk1)",NULL,false);
+          SelectorCreate(cEditorRes,"(byres pk1)",NULL,true);
           if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
         }
@@ -692,20 +697,29 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
       if(obj->type==cObjectMolecule) {
-        if(obj->fDescribeElement) 
-          obj->fDescribeElement(obj,I->LastPicked.index);
+        if(Feedback(FB_ObjectMolecule,FB_Results)) {
+          if(obj->fDescribeElement)
+            obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+          PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
+          OrthoRestorePrompt();
+        }
 		  sprintf(buffer,"%s`%d",
 					 obj->Name,I->LastPicked.index+1);    
-        SelectorCreate(cEditorSele1,buffer,NULL,false);
+        SelectorCreate(cEditorSele1,buffer,NULL,true);
         objMol = (ObjectMolecule*)obj;
         if(I->LastPicked.bond>=0) {
           atIndex = objMol->Bond[I->LastPicked.bond*3];
           if(atIndex == I->LastPicked.index)
             atIndex = objMol->Bond[I->LastPicked.bond*3+1];              
-          obj->fDescribeElement(obj,atIndex);
+          if(Feedback(FB_ObjectMolecule,FB_Results)) {
+            if(obj->fDescribeElement)
+              obj->fDescribeElement(obj,atIndex,buffer);
+            PRINTF " You clicked %s -> (%s)",buffer,cEditorSele2 ENDF;
+            OrthoRestorePrompt();
+          }
           sprintf(buffer,"%s`%d",
                   obj->Name,atIndex+1);    
-          SelectorCreate(cEditorSele2,buffer,NULL,false);
+          SelectorCreate(cEditorSele2,buffer,NULL,true);
           EditorSetActiveObject(objMol,I->StateIndex);
           WizardDoPick(1);
 
@@ -727,8 +741,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 SceneRender(&I->LastPicked,x,y);
 	 if(I->LastPicked.ptr) {
       obj=(Object*)I->LastPicked.ptr;
-      if(obj->fDescribeElement) 
-        obj->fDescribeElement(obj,I->LastPicked.index);
+      if(Feedback(FB_ObjectMolecule,FB_Results)) {
+        if(obj->fDescribeElement) 
+          obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+        PRINTF " You clicked %s",buffer ENDF;        
+        OrthoRestorePrompt();
+      }
       EditorPrepareDrag((ObjectMolecule*)obj,I->LastPicked.index,I->StateIndex);
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
@@ -751,10 +769,14 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 SceneRender(&I->LastPicked,x,y);
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
-      if(obj->fDescribeElement) 
-        obj->fDescribeElement(obj,I->LastPicked.index);
-		  sprintf(buffer,"%s`%d",
-					 obj->Name,I->LastPicked.index+1);
+      if(Feedback(FB_ObjectMolecule,FB_Results)) {
+        if(obj->fDescribeElement) 
+          obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+        PRINTF " You clicked %s",buffer ENDF;        
+        OrthoRestorePrompt();
+      }
+      sprintf(buffer,"%s`%d",
+              obj->Name,I->LastPicked.index+1);
 		switch(mode) {
       case cButModePk1:
       case cButModeAddToPk1:
