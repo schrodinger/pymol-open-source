@@ -7,7 +7,7 @@
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /home/local/warren/pymol22
+PYMOL_PATH = /home/local/warren/mindep
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
