@@ -623,6 +623,11 @@ def get_setting_updates(): # INTERNAL
 
 def log_open(fname='log.pml',mode='w'):
    try:
+      try:
+         if pymol._log_file!=None:
+            pymol._log_file.close()
+      except:
+         pass
       pymol._log_file = open(fname,mode)
       if _feedback(fb_module.cmd,fb_mask.details): # redundant
          if mode!='a':
