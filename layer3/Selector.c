@@ -263,7 +263,7 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
   float dir[3];
   float v1[3],v2[3];
   int flag;
-  float angle_cutoff;
+  float angle_cutoff=0.0;
 
   if(mode==1) {
     angle_cutoff = cos(PI*h_angle/180.8);
@@ -484,10 +484,10 @@ int *SelectorGetResidueVLA(int sele)
   int a;
   int c;
   AtomInfoType *ai1 = NULL,*ai2;
-  int at1,at2;
+  int at1=0,at2;
   unsigned int rcode;
   ResName rn;
-  int mod1;
+  int mod1=0;
   ObjectMolecule *obj;
 
   SelectorUpdateTable();
