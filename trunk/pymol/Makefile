@@ -61,11 +61,12 @@ contrib: .contrib
 
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
+	cc $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
-	cc $(BUILD) */*.o $(DEST)  $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
+	cc $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 unix-mindep: semistatic
 	$(PYTHON_EXE) modules/compile_pymol.py
