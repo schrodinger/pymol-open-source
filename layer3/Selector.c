@@ -1024,7 +1024,7 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet)
 		  else
 			 ExecutiveSetControlsOff(name);
 		}
-	 }
+	 } 
   FreeP(atom);
   FreeP(I->Table);
   FreeP(I->Obj);
@@ -1066,8 +1066,8 @@ int SelectorUpdateTable(void)
 			 obj=(ObjectMolecule*)o;
 			 c+=obj->NAtom;
 			 if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
+          modelCnt++;
 		  }
-		modelCnt++;
 	 }
   I->Table=Alloc(TableRec,c);
   ErrChkPtr(I->Table);
@@ -1077,9 +1077,9 @@ int SelectorUpdateTable(void)
   modelCnt=0;
   while(ExecutiveIterateObject(&o,&hidden))
 	 {
-		I->Obj[modelCnt]=NULL;
 		if(o->type==cObjectMolecule)
 		  {
+          I->Obj[modelCnt]=NULL;
 			 obj=(ObjectMolecule*)o;
 			 I->Obj[modelCnt]=obj;
           obj->SeleBase=c; /* make note of where this object starts */
@@ -1089,8 +1089,8 @@ int SelectorUpdateTable(void)
 				  I->Table[c].atom=a;
 				  c++;
 				}
+          modelCnt++;
 		  }
-		modelCnt++;
 	 }
   I->NModel=modelCnt;
   I->NAtom=c;

@@ -100,6 +100,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I);
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag);
+void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
 
 #endif
 
