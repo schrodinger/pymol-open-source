@@ -31,7 +31,7 @@ make-champ:
 
 clean: 
 	cd sglite;$(MAKE) clean
-	/bin/rm */*.o
+	/bin/rm -f */*.o
 
 distclean: clean
 	cd sglite;$(MAKE) distclean
