@@ -5135,8 +5135,9 @@ char *ExecutiveFindBestNameMatch(char *name)
     wm = WordMatch(name,rec->name,true);
     if(wm<0) {
       best_rec = rec;
+      best = wm;
       break;
-    } else if ((wm>0)&&(best<wm)) {
+    } else if ((best>0)&&(best<wm)) {
       best_rec=rec;
       best = wm;
     }

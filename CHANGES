@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * faster coulomb_local + menu changes
+
+   * fixed bug with object/selection renaming
+
+   * fixed bug with sequence viewer segment/chain display & spacing
+
+   * slices + associated settings.
+
    * fixed bug with symexp for when template atoms are outside the
      target cell...
 
