@@ -376,12 +376,11 @@ void PInitEmbedded(int argc,char **argv)
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
 #ifdef WIN32
-  PyRun_SimpleString("os.environ['PYMOL_PATH']=os.getcwd()\n");
-  PyRun_SimpleString("os.environ['PYTHONPATH']=os.getcwd()+'/modules'\n");
-  PyRun_SimpleString("sys.path.append(os.getcwd()+'/modules')\n");
-#else
-  PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
+  PyRun_SimpleString("if not os.environ.has_key('PYTHONPATH'): os.environ['PYTHONPATH']=''\n");
+  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYTHONPATH']=os.environ['PYTHONPATH']+';'+os.getcwd()+'/modules'\n");
+  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
+  PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 
   pymol = PyImport_AddModule("pymol"); /* get it */
