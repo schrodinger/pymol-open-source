@@ -6275,7 +6275,7 @@ int SelectorUpdateTable(PyMOLGlobals *G)
 			 I->Obj[modelCnt]=obj;
           obj->SeleBase=c; /* make note of where this object starts */
           { 
-            register n_atom = obj->NAtom;
+            register int n_atom = obj->NAtom;
             register TableRec *rec = I->Table + c;
             for(a=0;a<n_atom;a++) {
               rec->model=modelCnt;

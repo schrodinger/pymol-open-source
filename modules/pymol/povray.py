@@ -17,7 +17,7 @@ if __name__=='pymol.povray':
    import os
    import traceback
 
-   povray_exe = "x-povray"
+   povray_exe = "povray"
 
    def render_from_string(header,pov_inp,prefix,width,height,antialias):
       r = None
@@ -34,7 +34,7 @@ if __name__=='pymol.povray':
             ant="+A"
          else:
             ant=""
-         os.system("%s +I%s +O%s +W%d +H%d %s"%(
+         os.system("%s -D +I%s +O%s +W%d +H%d %s"%(
                    povray_exe,pov,png,width,height,ant))
          if os.path.exists(png):
             r = 1
