@@ -423,7 +423,8 @@ if __name__=='pymol.setting':
       animation_duration        = (389, '')
       scene_animation           = (390, '')
       line_stick_helper         = (391, '')
-
+      ray_orthoscopic           = (392, '')
+      
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

@@ -70,6 +70,7 @@ struct _CRayThreadInfo {
   unsigned int *edging;
   unsigned int edging_cutoff;
   int perspective;
+  float fov,pos[3];
 };
 
  struct _CRayHashThreadInfo {
@@ -484,7 +485,8 @@ void RayExpandPrimitives(CRay *I)
 		break;
 	 }
   }
-  /*  printf("minvoxel  %8.3f\n",basis->MinVoxel);
+  /*
+    printf("minvoxel  %8.3f\n",basis->MinVoxel);
 		printf("NPrimit  %d nvert %d\n",I->NPrimitive,nVert);*/
 }
 /*========================================================================*/
@@ -1192,7 +1194,7 @@ int RayTraceThread(CRayThreadInfo *T)
    int edge_sampling = false;
    unsigned int edge_avg[4];
    int edge_cnt=0;
-   float base[2];
+   float edge_base[2];
    float interior_normal[3];
    float edge_width = 0.35356F;
    float edge_height = 0.35356F;
@@ -1202,12 +1204,15 @@ int RayTraceThread(CRayThreadInfo *T)
    float blue_blend=0.0F;
    float green_blend=0.0F;
    float trans_cont;
+   float pixel_base[3];
    int trans_cont_flag = false;
    int blend_colors;
    int max_pass;
    float BasisFudge0,BasisFudge1;
    int perspective = T->perspective;
    float eye[3];
+   float half_height, front_ratio;
+   float height_range, width_range;
 
 	I = T->ray;
 
@@ -1324,17 +1329,35 @@ int RayTraceThread(CRayThreadInfo *T)
      invWdth             = _1 / (float) (T->width);
    }
 
+   if(perspective) {
+     zero3f(eye);
+
+     half_height = -T->pos[2] * tan((T->fov/2.0F)*PI/180.0F);
+     front_ratio = -T->front/T->pos[2];
+     height_range = front_ratio*2*half_height;
+     width_range = height_range*(I->Range[0]/I->Range[1]);
+   }
+
 	invFrontMinusBack	= _1 / (T->front - T->back);
-	invWdthRange        = invWdth * I->Range[0];
-   invHgtRange         = invHgt * I->Range[1];
+
+   if(perspective) {
+     invWdthRange        = invWdth * width_range;
+     invHgtRange         = invHgt * height_range;
+
+   } else {
+     invWdthRange        = invWdth * I->Range[0];
+     invHgtRange         = invHgt * I->Range[1];
+   }
+
    edge_width *= invWdthRange;
    edge_height *= invHgtRange;
-	vol0 = I->Volume[0];
-	vol2 = I->Volume[2];
+
    if(perspective) {
-     eye[0] = (vol0+I->Volume[1])/2.0F;
-     eye[1] = (vol2+I->Volume[3])/2.0F;
-     eye[2] = 0.0F;
+     vol0 = eye[0] - width_range/2.0F;
+     vol2 = eye[1] - height_range/2.0F;
+   } else {
+     vol0 = I->Volume[0];
+     vol2 = I->Volume[2];
    }
 
 	bp1  = I->Basis + 1;
@@ -1411,12 +1434,12 @@ int RayTraceThread(CRayThreadInfo *T)
 	
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
 		{	
-        r1.base[1]	= ((y+0.5F+border_offset) * invHgtRange) + vol2;
-			
+        pixel_base[1]	= ((y+0.5F+border_offset) * invHgtRange) + vol2;
+
 			for(x = T->x_start; (x < T->x_stop); x++)
 			{
 				
-           r1.base[0]	= (((x+0.5F+border_offset)) * invWdthRange)  + vol0;
+           pixel_base[0]	= (((x+0.5F+border_offset)) * invWdthRange)  + vol0;
 
             while(1) {
               if(T->edging) {
@@ -1432,8 +1455,8 @@ int RayTraceThread(CRayThreadInfo *T)
                       edge_avg[1] = (value>>8)&0xFF;
                       edge_avg[2] = (value>>16)&0xFF;
                       edge_avg[3] = (value>>24)&0xFF;
-                      base[0]=r1.base[0];
-                      base[1]=r1.base[1];
+                      edge_base[0]=pixel_base[0];
+                      edge_base[1]=pixel_base[1];
                     }
                   }
                 }
@@ -1454,34 +1477,37 @@ int RayTraceThread(CRayThreadInfo *T)
 
                     /**pixel = 0xFFFFFFFF-*pixel;*/
                     /* restore X,Y coordinates */
-                    r1.base[0]=base[0];
-                    r1.base[1]=base[1];
+                    r1.base[0]=pixel_base[0];
+                    r1.base[1]=pixel_base[1];
 
                     /**pixel = 0xFF00FFFF;*/
                   } else {
                     *pixel = T->background;
                     switch(edge_cnt) {
                     case 1:
-                      r1.base[0] = base[0]+edge_width;
-                      r1.base[1] = base[1]+edge_height;
+                      r1.base[0] = edge_base[0]+edge_width;
+                      r1.base[1] = edge_base[1]+edge_height;
                       break;
                     case 2:
-                      r1.base[0] = base[0]+edge_width;
-                      r1.base[1] = base[1]-edge_height;
+                      r1.base[0] = edge_base[0]+edge_width;
+                      r1.base[1] = edge_base[1]-edge_height;
                       break;
                     case 3:
-                      r1.base[0] = base[0]-edge_width;
-                      r1.base[1] = base[1]+edge_height;
+                      r1.base[0] = edge_base[0]-edge_width;
+                      r1.base[1] = edge_base[1]+edge_height;
                       break;
                     case 4:
-                      r1.base[0] = base[0]-edge_width;
-                      r1.base[1] = base[1]-edge_height;
+                      r1.base[0] = edge_base[0]-edge_width;
+                      r1.base[1] = edge_base[1]-edge_height;
                       break;
                     }
                   }
                 }
                 if(!edge_sampling) /* not oversampling this edge or already done... */
                   break;
+              } else {
+                r1.base[0] = pixel_base[0];
+                r1.base[1] = pixel_base[1];
               }
               
               exclude		= -1;
@@ -1492,10 +1518,10 @@ int RayTraceThread(CRayThreadInfo *T)
               new_front		= T->front;
 
               if(perspective) {
-                r1.base[2] = -new_front;
-                r1.dir[0] =  (r1.base[0] - eye[0]);
-                r1.dir[1] =  (r1.base[1] - eye[1]);
-                r1.dir[2] = r1.base[2] - eye[2];
+                r1.base[2] = -T->front;
+                r1.dir[0] = (r1.base[0] - eye[0]);
+                r1.dir[1] = (r1.base[1] - eye[1]);
+                r1.dir[2] = (r1.base[2] - eye[2]);
                 normalize3f(r1.dir);
               }
 
@@ -1665,7 +1691,11 @@ int RayTraceThread(CRayThreadInfo *T)
                       
                       if(fogFlag) 
                         {
-                          ffact = fog*(T->front - r1.dist) * invFrontMinusBack;
+                          if(perspective) {
+                            ffact = fog*(-r1.dist) * invFrontMinusBack;
+                          } else {
+                            ffact = fog*(T->front - r1.dist) * invFrontMinusBack;
+                          }
                           if(fogRangeFlag)
                             ffact = (ffact - fog_start) * inv1minusFogStart;
                           
@@ -2346,8 +2376,8 @@ extern int n_skipped;
 
 /*========================================================================*/
 void RayRender(CRay *I,int width,int height,unsigned int *image,
-               float front,float back,
-               double timing,float angle)
+               float front,float back,double timing,float angle,
+               float fov,float *pos)
 {
   int a;
   float *v,light[3];
@@ -2355,7 +2385,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   unsigned int back_mask,fore_mask=0;
   unsigned int background,buffer_size;
   int antialias;
-  int opaque_back=0;
+int opaque_back=0;
   int n_hit=0;
   float *bkrd_ptr,bkrd[3];
   double now;
@@ -2364,8 +2394,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int n_thread;
   int mag=1;
   int oversample_cutoff;
-  int perspective = 0;
-
+  int perspective = SettingGetGlobal_i(I->G,cSetting_ray_orthoscopic);
+  if(perspective<0)
+    perspective = SettingGetGlobal_b(I->G,cSetting_ortho);
+  perspective = !perspective;
+      
 #ifdef PROFILE_BASIS
   n_cells = 0;
   n_prims = 0;
@@ -2457,7 +2490,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     
     RayExpandPrimitives(I);
     RayTransformFirst(I);
-    
+
     now = UtilGetSeconds(I->G)-timing;
 
 	 PRINTFB(I->G,FB_Ray,FB_Blather)
@@ -2588,24 +2621,30 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       int x_start,y_start;
       int x_stop,y_stop;
 
-      x_start = (int)((width * (I->min_box[0] - I->Volume[0]))/I->Range[0]) - 2;
-      x_stop  = (int)((width * (I->max_box[0] - I->Volume[0]))/I->Range[0]) + 2;
-      
-      y_stop = (int)((height * (I->max_box[1] - I->Volume[2]))/I->Range[1]) + 2;
-      y_start  = (int)((height * (I->min_box[1] - I->Volume[2]))/I->Range[1]) - 2;
-                      
-      if(x_start<0) x_start = 0;
-      if(y_start<0) y_start = 0;
-      if(x_stop>width) x_stop = width;
-      if(y_stop>height) y_stop = height;
+      if(perspective) {
+        x_start = 0;
+        y_start = 0;
+        x_stop = width;
+        y_stop = height;
+      } else {
+        x_start = (int)((width * (I->min_box[0] - I->Volume[0]))/I->Range[0]) - 2;
+        x_stop  = (int)((width * (I->max_box[0] - I->Volume[0]))/I->Range[0]) + 2;
+        
+        y_stop = (int)((height * (I->max_box[1] - I->Volume[2]))/I->Range[1]) + 2;
+        y_start  = (int)((height * (I->min_box[1] - I->Volume[2]))/I->Range[1]) - 2;
+        
+        if(x_start<0) x_start = 0;
+        if(y_start<0) y_start = 0;
+        if(x_stop>width) x_stop = width;
+        if(y_stop>height) y_stop = height;
+      }
 
-      oversample_cutoff = SettingGetGlobal_i(I->G,cSetting_ray_oversample_cutoff);
+oversample_cutoff = SettingGetGlobal_i(I->G,cSetting_ray_oversample_cutoff);
 
       if(!antialias)
         oversample_cutoff = 0;
 
-		for(a=0;a<n_thread;a++) 
-		{
+		for(a=0;a<n_thread;a++) {
 			rt[a].ray = I;
 			rt[a].width = width;
 			rt[a].height = height;
@@ -2625,6 +2664,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
          rt[a].edging = NULL;
          rt[a].edging_cutoff = oversample_cutoff; /* info needed for busy indicator */
          rt[a].perspective = perspective;
+         rt[a].fov = fov;
+         rt[a].pos[2] = pos[2];
 			copy3f(spec_vector,rt[a].spec_vector);
 			}
 		

@@ -71,7 +71,7 @@ void MapCacheReset(MapCache *M);
 void MapCacheFree(MapCache *M,int group_id,int block_base);
 
 float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *diagonal);
-
+float MapGetDiv(MapType *I);
 /* special routines for raytracing */
 
 int MapInside(MapType *I,float *v,int *a,int *b,int *c);
