@@ -4,7 +4,22 @@ CHANGE LOG
 
 Changes up to 0.951
 
-   * added a "perceptive space" rainbow & switch this over to default
+   * reinitialize now stops rocking
+
+   * fixed logging of button presses in MacPyMOL
+
+   * added multi-line command paste support to MacPyMOL
+
+   * dropped support for "del all" in favor of "dele all"
+
+   * StereoPyMOL1280 mode on mac for higher-resolution stereo
+
+   * fixed a race condition that was causing OSX-X11-hybrid to crash
+     when "quit" was typed into the external Tcl/Tk GUI
+    
+   * added numarray into the osx-x11-hybrid version for BSI use
+
+   * added a "perceptive space" rainbow & switched this over to default
 
    * fixed ray-tracing bug with infinite loops on transparent surfaces
 

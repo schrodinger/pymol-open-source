@@ -6798,6 +6798,7 @@ int ExecutiveReinitialize(void)
   SettingInitGlobal(false,false);
   MovieReset();
   EditorInactivate();
+  ControlRock(0);
 
   blocked = PAutoBlock();
   PRunString("cmd.view('*','clear')");

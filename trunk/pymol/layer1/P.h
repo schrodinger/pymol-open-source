@@ -33,7 +33,8 @@ void PGetOptions(struct PyMOLOptionRec *rec);
 
 void PFree(void);
 void PExit(int code);
-void PParse(char *str);
+void PParse(char *str); /* only accepts one command */
+void PDo(char *str); /* accepts multple commands seperated by newlines */
 
 #define cLockAPI 1
 #define cLockInbox 2
