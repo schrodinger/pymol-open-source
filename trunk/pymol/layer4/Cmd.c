@@ -959,7 +959,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
 static PyObject *CmdUpdate(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
-  int *int1,*int2;
+  int int1,int2;
   OrthoLineType s1,s2;
   PyObject *result;
   PyArg_ParseTuple(args,"ssii",&str1,&str2,&int1,&int2);
