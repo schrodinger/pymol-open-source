@@ -2750,8 +2750,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                               else if(AtomInfoKnownWaterResName(G,ai2->resn))
                                 water_flag=true;
 
-                              cutoff = cutoff_h;
-                              
                               /* workaround for hydrogens and sulfurs... */
                               
                               if(ai1->hydrogen||ai2->hydrogen)

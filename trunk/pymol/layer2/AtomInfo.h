@@ -82,6 +82,8 @@ Z* -------------------------------------------------------------------
 
 
 #define cAN_H   1
+#define cAN_He  2
+#define cAN_B   5
 #define cAN_C   6
 #define cAN_N   7
 #define cAN_O   8
@@ -94,6 +96,7 @@ Z* -------------------------------------------------------------------
 #define cAN_Cl 17
 #define cAN_K  19
 #define cAN_Ca 20
+#define cAN_Mn 25
 #define cAN_Fe 26
 #define cAN_Cu 29
 #define cAN_Zn 30
