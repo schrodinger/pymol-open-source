@@ -232,10 +232,12 @@ def general_color(s):
 
 def preset_ligand_sites(s):
    return [[ 2, 'Ligand Sites:', ''],
-           [ 1, 'solid'   , 'preset.ligand_sites("'+s+'")'          ],
+           [ 1, 'cartoon'   , 'preset.ligand_cartoon("'+s+'")'          ],
+           [ 0, '', ''],
+           [ 1, 'solid surface'   , 'preset.ligand_sites("'+s+'")'          ],
            [ 1, 'solid (better)'   , 'preset.ligand_sites_hq("'+s+'")'          ],
            [ 0, '', ''],
-           [ 1, 'transparent'   , 'preset.ligand_sites_trans("'+s+'")'          ],
+           [ 1, 'transparent surface'   , 'preset.ligand_sites_trans("'+s+'")'          ],
            [ 1, 'transparent (better)'   , 'preset.ligand_sites_trans_hq("'+s+'")'          ],
            [ 0, '', ''],
            [ 1, 'dot surface'   , 'preset.ligand_sites_dots("'+s+'")'          ],

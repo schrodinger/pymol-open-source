@@ -559,26 +559,29 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
 {
   float scale;
 
-  scale = (1.0F+5*I->Gadget.GSet[0]->Coord[13*3]);
-
-  I->Gadget.GSet[0]->Coord[13*3] = 0.0;
-  if(I->NLevel==2) {
-    float mean = (I->Level[0]+I->Level[1])/2.0F;
-    I->Level[0]=(I->Level[0]-mean)*scale+mean;
-    I->Level[2]=(I->Level[1]-mean)*scale+mean;
-    ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
-  } else if(I->NLevel==3) {
-    I->Level[0]=(I->Level[0]-I->Level[1])*scale+I->Level[1];
-    I->Level[2]=(I->Level[2]-I->Level[1])*scale+I->Level[1];
-    ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
-  }
-  if(I->Gadget.NGSet)
-    if(I->Gadget.GSet[0]) {
-      ObjectGadgetRampUpdateCGO(I,I->Gadget.GSet[0]);
-      ObjectGadgetUpdateStates(&I->Gadget);
+  if(I->Gadget.Changed) {
+    scale = (1.0F+5*I->Gadget.GSet[0]->Coord[13*3]);
+    
+    I->Gadget.GSet[0]->Coord[13*3] = 0.0;
+    if(I->NLevel==2) {
+      float mean = (I->Level[0]+I->Level[1])/2.0F;
+      I->Level[0]=(I->Level[0]-mean)*scale+mean;
+      I->Level[2]=(I->Level[1]-mean)*scale+mean;
+      ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
+    } else if(I->NLevel==3) {
+      I->Level[0]=(I->Level[0]-I->Level[1])*scale+I->Level[1];
+      I->Level[2]=(I->Level[2]-I->Level[1])*scale+I->Level[1];
+      ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
     }
-  ObjectGadgetUpdateExtents(&I->Gadget);
-  SceneChanged(I->Gadget.Obj.G);
+    if(I->Gadget.NGSet)
+      if(I->Gadget.GSet[0]) {
+        ObjectGadgetRampUpdateCGO(I,I->Gadget.GSet[0]);
+        ObjectGadgetUpdateStates(&I->Gadget);
+      }
+    ObjectGadgetUpdateExtents(&I->Gadget);
+    I->Gadget.Changed=false;
+    SceneChanged(I->Gadget.Obj.G);
+  }
 }
 
 
@@ -662,6 +665,11 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map
 #endif
 }
 
+static void ObjectGadgetRampInvalidate(ObjectGadgetRamp *I,int rep,int level,int state)
+{
+  I->Gadget.Changed=true;
+}
+
 /*========================================================================*/
 ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G)
 {
@@ -677,6 +685,8 @@ ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G)
 
   I->Gadget.Obj.fUpdate =(void (*)(struct CObject *)) ObjectGadgetRampUpdate;
   I->Gadget.Obj.fFree =(void (*)(struct CObject *)) ObjectGadgetRampFree;
+  I->Gadget.Obj.fInvalidate = (void (*)(struct CObject *,int,int,int)) ObjectGadgetRampInvalidate;
+
   I->width = 0.9F;
   I->height = 0.06F;
   I->bar_height = 0.03F;

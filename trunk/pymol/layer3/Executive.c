@@ -89,8 +89,28 @@ static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
 static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
-     
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
+     
+ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals *G,char *sele)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  ObjectMolecule **result = NULL;
+  int s1=SelectorIndexByName(G,sele);  
+  if(s1>=0) {
+    ObjectMoleculeOpRec op;
+    ObjectMoleculeOpRecInit(&op);
+    op.code = OMOP_GetObjects;
+    op.obj1VLA=(ObjectMolecule**)VLAlloc(CObject*,10);
+    op.i1 = 0;
+    ExecutiveObjMolSeleOp(G,s1,&op);
+    result = (ObjectMolecule**)op.obj1VLA;
+    VLASize(result,ObjectMolecule*,op.i1);
+  }
+  return result;
+#endif
+}
 
 /* #define ExecLineHeight 18 */
 #define ExecClickMargin 2

@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * fixed bug with gadgetramp events
+
+   * updated presets
+
    * cartoon_side_chain_helper setting
 
    * putty, and associated selections (thanks in part to Cameron Mura)

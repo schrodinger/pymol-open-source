@@ -2981,6 +2981,37 @@ static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
   return(APISuccess());
 }
 
+static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+  int ok=false;
+  ObjectMolecule **list = NULL;
+  PyObject *result=NULL;
+
+  ok = PyArg_ParseTuple(args,"s",&str1);
+  
+  if (ok) {
+    APIEntry();
+    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    list = ExecutiveGetObjectMoleculeVLA(TempPyMOLGlobals, s1);
+    if(list) {
+      unsigned int size = VLAGetSize(list);
+      result = PyList_New(size);
+      if(result) {
+        int a;
+        for(a=0;a<size;a++) {
+          PyList_SetItem(result,a,PyString_FromString(list[a]->Obj.Name));
+        }
+      }
+      VLAFreeP(list);
+    }
+    SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
+  }
+  return(APIAutoNone(result));
+}
+
 static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
 {
   char *str1,*str2,*str3;
@@ -5082,6 +5113,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
 	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
    {"get_setting_updates",   CmdGetSettingUpdates,    METH_VARARGS },
+   {"get_object_list",       CmdGetObjectList,        METH_VARARGS },
    {"get_symmetry",          CmdGetCrystal,           METH_VARARGS },
 	{"get_state",             CmdGetState,             METH_VARARGS },
    {"get_title",             CmdGetTitle,             METH_VARARGS },
