@@ -48,7 +48,10 @@ if __name__=='pymol.invocation':
    options.win_x = 640
    options.win_y = 480
    options.win_px = 0 # signal to use platform-dependent default
-   options.win_py = 175 # should be 200 for native mac version, but how do we know?
+   if sys.platform == 'darwin':
+      options.win_py = 200
+   else:
+      options.win_py = 175 
    options.ext_y = 120 # external gui height (eg. for Tcl/Tk top bar)
 
    if sys.platform[:5] == 'linux':

@@ -51,7 +51,8 @@ class AbstractApp(Pmw.MegaWidget):
          self.frameXPos = inv.options.win_px
          self.frameHeight = inv.options.ext_y
          self.frameYPos = inv.options.win_py - (self.frameHeight + 31)
-         
+         if sys.platform=='win32':
+            self.frameYPos = self.frameYPos - 20
       self.root.geometry('%dx%d+%d+%d' % (
          self.frameWidth, self.frameHeight,
          self.frameXPos, self.frameYPos))
