@@ -79,10 +79,30 @@ void     p_glutIdleFunc(void (*func)(void)) { idleFunc = func; }
 #define NULL ((void*)0)
 #endif
 
+#ifndef false
+#define false 0
+#endif
+
+#ifndef true
+#define true 1
+#endif
+
 static void (*idleFunc)(void) = NULL;
 static void (*displayFunc)(void) = NULL;
 static void (*reshapeFunc)(int width,int height) = NULL;
+static void (*mouseFunc)(int button, int state,int x,int y) = NULL;
+static void (*motionFunc)(int x,int y) = NULL;
 static int WinX = 640,WinY=480;
+
+static int swap_buffer=false;
+static int redisplay=true;
+
+int p_glutGetRedisplay(void)
+{
+  int tmp = redisplay;
+  redisplay=false;
+  return(tmp);
+}
 
 void p_glutHandleEvent(p_glut_event *ev) {
   /* NOTE: this function should be called with an unblocked interpreter,
@@ -96,7 +116,13 @@ void p_glutHandleEvent(p_glut_event *ev) {
     if(displayFunc) displayFunc();
     break;
   case P_GLUT_RESHAPE_EVENT:
-    if(reshapeFunc) reshapeFunc(640,480);
+    if(reshapeFunc) reshapeFunc(ev->x,ev->y);
+    break;
+  case P_GLUT_MOUSE_EVENT:
+    if(mouseFunc) mouseFunc(ev->input,ev->state,ev->x,ev->y);
+    break;
+  case P_GLUT_MOTION_EVENT:
+    if(motionFunc) motionFunc(ev->x,ev->y);
     break;
   }
 }
@@ -110,7 +136,8 @@ void     p_glutMainLoop(void) {
      host windowing system can keep control of the main thread...*/
 }
 void     p_glutBitmapCharacter(void *font, int character){}
-void     p_glutSwapBuffers(void){}
+void     p_glutSwapBuffers(void){PBlock();PyRun_SimpleString("pymol._swap_buffers()");PUnblock();}
+
 
 void     p_glutPopWindow(void){}
 void     p_glutShowWindow(void){}
@@ -118,7 +145,7 @@ void     p_glutShowWindow(void){}
 void     p_glutReshapeWindow(int width, int height){ WinX=width;WinY=height;}
 
 void     p_glutFullScreen(void) {}
-void     p_glutPostRedisplay(void) {}
+void     p_glutPostRedisplay(void) {redisplay=true;}
 
 void     p_glutInit(int *argcp, char **argv) {}
 void     p_glutInitDisplayMode(unsigned int mode) {}
@@ -132,8 +159,8 @@ int      p_glutGetModifiers(void) {return 0;}
 void     p_glutDisplayFunc(void (*func)(void)) { displayFunc = func;}
 void     p_glutReshapeFunc(void (*func)(int width, int height)) { reshapeFunc = func;}
 void     p_glutKeyboardFunc(void (*func)(unsigned char key, int x, int y)) {}
-void     p_glutMouseFunc(void (*func)(int button, int state, int x, int y)) {}
-void     p_glutMotionFunc(void (*func)(int x, int y)) {}
+void     p_glutMouseFunc(void (*func)(int button, int state, int x, int y)) { mouseFunc = func;}
+void     p_glutMotionFunc(void (*func)(int x, int y)) { motionFunc=func;}
 void     p_glutSpecialFunc(void (*func)(int key, int x, int y)) {}
 void     p_glutIdleFunc(void (*func)(void)) { idleFunc = func; }
 

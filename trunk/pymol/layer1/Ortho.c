@@ -758,7 +758,8 @@ void OrthoAddOutput(char *str)
 	 }
   *q=0;
   I->CurChar = strlen(I->Line[curLine]);
-  OrthoDirty();
+  if((SettingGet(cSetting_internal_feedback)>1)||SettingGet(cSetting_overlay))
+    OrthoDirty();
 }
 /*========================================================================*/
 void OrthoNewLine(char *prompt)
