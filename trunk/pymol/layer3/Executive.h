@@ -154,7 +154,7 @@ int  ExecutiveUnsetSetting(int index,char *sele,
                            int state,int quiet,int updates);
 
 
-int  ExecutiveAssignSS(char *target,int state,char *context,int quiet);
+int  ExecutiveAssignSS(char *target,int state,char *context,int preserve,int quiet);
 
 int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state);
 

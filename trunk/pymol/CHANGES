@@ -182,7 +182,7 @@ Changes up to 0.91
    * fixed separate cartoon rendering bugs with helices and strands
 
    * added a fast C-based secondary structure assignment algorithm
-     
+     acessible through the "dss" command
 
    * cartoon_transparency setting
 

@@ -3865,6 +3865,7 @@ void ObjectMoleculePurge(ObjectMolecule *I)
     ENDFD;
 
   SelectorDelete(I->Obj.Name); /* remove the object selection and free up any selection entries*/
+  /* note that we don't delete atom selection members -- those may be needed in the new object */
 
   PRINTFD(FB_ObjectMolecule)
     " ObjMolPurge-Debug: step 2, purge coordinate sets\n"
@@ -7786,8 +7787,9 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
 void ObjectMoleculeFree(ObjectMolecule *I)
 {
   int a;
-  SceneObjectDel((CObject*)I);
 
+  SceneObjectDel((CObject*)I);
+  SelectorPurgeObjectMembers(I);
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) {
       if(I->CSet[a]->fFree)

@@ -799,23 +799,48 @@ SEE ALSO
       return r
 
 
-   def ss(selection="(all)",state=0,context=None,quiet=1):
+   def dss(selection="(all)",state=0,context=None,preserve=0,quiet=1):
       '''
 DESCRIPTION
 
-   "ss" assigns secondary structure based on backbone geometry
+   "dss" defines secondary structure based on backbone geometry
    and hydrogen bonding patterns.
 
-   This command will generate results which differ slightly from
+   With PyMOL, heavy emphasis is placed on cartoon aesthetics, and so
+   both hydrogen bonding patterns and backbone geometry are used in
+   the assignment process.  Depending upon the local context, helix
+   and strand assignments are made based on geometry, hydrogen
+   bonding, or both.
+
+   This command will generate results which differ slightly from DSSP
+   and other programs.  Most deviations occur in borderline or
+   transition regions.  Generally speaking, PyMOL is more strict, thus
+   assigning fewer helix/sheet residues, except for partially
+   distorted helices, which PyMOL tends to tolerate.
+   
+   WARNING: This algorithm has not yet been rigorously validated.
    
 USAGE
 
-   ss (selection),state
+   dss selection, state
 
+   state = state-index or 0 for all states
+   
 EXAMPLES
 
-   ss
+   dss
 
+NOTES
+
+   If you dislike one or more of the assignments made by dss, you can
+   use the alter command to make changes (followed by "rebuild").
+   For example:
+   
+      alter 123-125/, ss=\'L\'
+      alter pk1, ss=\'S\'
+      alter 90/, ss=\'H\'
+      rebuild
+      
       '''
       # preprocess selections
       selection = selector.process(selection)
@@ -826,7 +851,8 @@ EXAMPLES
       #
       try:
          lock()
-         r = _cmd.ss(str(selection),int(state)-1,str(context),int(quiet))
+         r = _cmd.dss(str(selection),int(state)-1,str(context),
+                     int(preserve),int(quiet))
       finally:
          unlock()   
       return r

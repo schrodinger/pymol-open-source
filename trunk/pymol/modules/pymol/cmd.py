@@ -1148,6 +1148,7 @@ SEE ALSO
         bond,               \
         cycle_valence,      \
         deprotect,          \
+        dss,                \
         edit,               \
         flag,               \
         fuse,               \
@@ -1176,7 +1177,6 @@ SEE ALSO
         set_title,          \
         smooth,             \
         sort,               \
-        ss,                 \
         torsion,            \
         transform_object,   \
         transform_selection,\
@@ -1376,6 +1376,7 @@ SEE ALSO
       'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
       'disable'       : [ disable           , 0 , 0 , ''  , parsing.STRICT ],
       'distance'      : [ distance          , 0 , 0 , ''  , parsing.LEGACY ],   
+      'dss'           : [ dss               , 0 , 0 , ''  , parsing.STRICT ],
       'dump'          : [ dump              , 0 , 0 , ''  , parsing.STRICT ],
       'dummy'         : [ dummy             , 0 , 0 , ''  , parsing.STRICT ],   
       'edit'          : [ edit              , 0 , 0 , ''  , parsing.STRICT ],
@@ -1515,7 +1516,6 @@ SEE ALSO
       'spheroid'      : [ spheroid          , 0 , 0 , ''  , parsing.STRICT ],
       'splash'        : [ splash            , 0 , 0 , ''  , parsing.STRICT ],
       '_special'      : [ _special          , 0 , 0 , ''  , parsing.STRICT ],
-      'ss'            : [ ss                , 0 , 0 , ''  , parsing.STRICT ],
       'stereo'        : [ stereo            , 0 , 0 , ''  , parsing.STRICT ],
       'symexp'        : [ symexp            , 0 , 0 , ''  , parsing.LEGACY ],
       'system'        : [ system            , 0 , 0 , ''  , parsing.LITERAL ],
