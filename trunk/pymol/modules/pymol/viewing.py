@@ -805,9 +805,9 @@ SEE ALSO
                   if is_list(message):
                      if len(message):
                         if(replace_flag):
-                           cmd.replace_wizard("message",*message)
+                           apply(cmd.replace_wizard,("message",)+tuple(message))
                         else:
-                           cmd.wizard("message",*message)
+                           apply(cmd.wizard,("message",)+tuple(message))
                         cmd.get_wizard().from_scene = 1
                         mess_flag = 1
                if replace_flag and not mess_flag:
