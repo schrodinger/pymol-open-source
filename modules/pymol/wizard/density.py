@@ -53,8 +53,9 @@ class Density(Wizard):
       
       self.menu['track'] = [
       [ 1, "Track & Zoom", 'cmd.get_wizard().set_track(0)'],
-      [ 1, "Track & Set Origin", 'cmd.get_wizard().set_track(1)'],
-      [ 1, "Track Off", 'cmd.get_wizard().set_track(2)'],
+      [ 1, "Track & Center", 'cmd.get_wizard().set_track(1)'],
+      [ 1, "Track & Set Origin", 'cmd.get_wizard().set_track(2)'],
+      [ 1, "Track Off", 'cmd.get_wizard().set_track(3)'],
       ]
 
       if (self.map[0] == '') and (self.map[1] == '') and (self.map[2]==''):
@@ -104,7 +105,7 @@ class Density(Wizard):
       cmd.refresh_wizard()
 
    def update_maps(self):
-      if 'pk1' in cmd.get_names('selections'):
+      if '_dw' in cmd.get_names('selections'):
          save = cmd.get_setting_text('auto_zoom')
          save = cmd.set('auto_zoom',0,quiet=1)                     
          c = 0
@@ -114,10 +115,10 @@ class Density(Wizard):
                color = 1
             else:
                color = 0
-            if len(a):
+            if len(a) and (a in cmd.get_names('objects')):
                if cmd.get_type(a)=='object:map':
                   cmd.isomesh(oname,a,self.level[c],
-                              "(pk1)",self.radius,state=1)
+                              "(_dw)",self.radius,state=1)
                if color:
                   if c == 0:
                      cmd.color('blue',oname)
@@ -127,17 +128,18 @@ class Density(Wizard):
                      cmd.color('magenta',oname)
             c = c + 1
          save = cmd.set('auto_zoom',save,quiet=1)            
-         if self.track<1:
-            cmd.zoom("(pk1)",self.radius)
-            cmd.clip("slab",self.radius-1)
-         elif self.track<2:
-            cmd.origin("(pk1)")
+         if self.track==0:
+            cmd.zoom("(_dw)",self.radius)
+         elif self.track==1:
+            cmd.center("(_dw)")
+         elif self.track==2:
+            cmd.origin("(_dw)")
       cmd.refresh_wizard()      
 # generic set routines
 
    def zoom(self):
-      if 'pk1' in cmd.get_names('selections'):
-         cmd.zoom("(pk1)",self.radius)
+      if '_dw' in cmd.get_names('selections'):
+         cmd.zoom("(_dw)",self.radius)
          cmd.clip("slab",self.radius-1)
       else:
          c = 0
@@ -184,17 +186,22 @@ class Density(Wizard):
    def do_pick(self,bondFlag):
       global dist_count
       if not bondFlag:
-         if self.track<2:
+         if self.track!=2:
+            cmd.select("_dw","pk1",quiet=1)
             self.update_maps()
-
+            cmd.unpick()
+            
    def next_res(self, d=1):
       # Donated by Tom Lee
-      if not ('pk1' in cmd.get_names('selections')):
-         print "Pick an atom in current residue."
+      if not cmd.count_atoms('?_dw'):
+         if cmd.count_atoms("?pk1"):
+            cmd.select("_dw","pk1")
+      if not ('_dw' in cmd.get_names('selections')):
+         print " Density-Wizard: Please pick an atom first."
       else:
-         obj = cmd.index('pk1')[0][0]
-         a0 = cmd.get_model('pk1').atom[0]
-         cmd.select("_res0", "byres (pk1)")
+         obj = cmd.index('_dw')[0][0]
+         a0 = cmd.get_model('_dw').atom[0]
+         cmd.select("_res0", "byres (_dw)")
          res0 = cmd.get_model("_res0")
          atn = a0.name
          for a in res0.atom:
@@ -207,7 +214,7 @@ class Density(Wizard):
             elif (a.name == 'C1\''):
                atn = 'C1\''
                break
-         n = cmd.select('_pk1', ''+obj+'/'+a0.segi+'/'+a0.chain+'/'+str(a0.resi_number+d)+'/'+atn)
+         n = cmd.select('_dw2', ''+obj+'/'+a0.segi+'/'+a0.chain+'/'+str(a0.resi_number+d)+'/'+atn)
          if (n == 0):  # deal with gaps in sequence:
             cmd.select('_chain', ''+obj+'/'+a0.segi+'/'+a0.chain+'//'+atn)
             chain = cmd.get_model('_chain')
@@ -220,10 +227,12 @@ class Density(Wizard):
             if ((next_i < 0) or (next_i >= len(resids))):
                print "Current residue is the end of a chain."
             else:
-               n = cmd.select('_pk1', ''+obj+'/'+a0.segi+'/'+a0.chain+'/'+resids[next_i]+'/'+atn)
+               n = cmd.select('_dw2', ''+obj+'/'+a0.segi+'/'+a0.chain+'/'+resids[next_i]+'/'+atn)
          if (n > 0):
-            cmd.hide("labels", "(pk1)") 
-            cmd.select('pk1', '_pk1')
-            cmd.select('pkresi', 'byres _pk1')
-            cmd.label('(pk1)', '"  %s %s/%s/" % (resn,chain,resi)')
+            cmd.hide("labels", "?_dw") 
+            cmd.select('dw_resi', 'byres _dw2')
+            cmd.disable('dw_resi')
+            cmd.label('(_dw2)', '"  %s %s/%s/" % (resn,chain,resi)')
+            cmd.select('_dw','_dw2')
+            cmd.delete('_dw2')
             self.update_maps()
