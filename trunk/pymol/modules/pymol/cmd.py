@@ -723,6 +723,8 @@ def log_open(fname='log.pml',mode='w'):
             print " Cmd: logging to '%s'."%fname
          else:
             print " Cmd: appending to '%s'."%fname            
+      if mode=='a':
+         pymol._log_file.write("\n") # always start on a new line
       if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",fname)):
          set("logging",2,quiet=1)
       else:
