@@ -242,10 +242,10 @@ __inline__ static double inline_sqrt1d(double f) { /* no good as a macro because
 
 __inline__ static void inline_normalize3f( float *v1 )
 {
-	double vlen = length3f(v1);
+   register double vlen = length3f(v1);
 	if(vlen > R_SMALLd_inline)
 	{
-		float	inV	= (float)(_1d_inline / vlen);
+		register float	inV	= (float)(_1d_inline / vlen);
 		v1[0] *= inV;
 		v1[1] *= inV;
 		v1[2] *= inV;
@@ -315,7 +315,7 @@ __inline__ static int inline_within3fsq(float *v1,float *v2,float dist,float dis
 
 __inline__ static void inline_remove_component3f ( float *v1, float *unit, float *result)
 {
-  float dot;
+  register float dot;
 
   dot = v1[0]*unit[0] + v1[1]*unit[1] + v1[2]*unit[2];
   result[0]=v1[0]-unit[0]*dot;
@@ -325,7 +325,7 @@ __inline__ static void inline_remove_component3f ( float *v1, float *unit, float
 
 __inline__ static float inline_project3f ( float *v1, float *v2, float *proj )
 {
-   float dot;
+  register float dot;
 
 	dot = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 	proj[0] = v2[0] * dot;

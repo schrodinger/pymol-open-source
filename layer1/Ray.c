@@ -154,6 +154,9 @@ void RayApplyContextToVertex(CRay *I,float *v)
       v[1]=v[1]*(I->Range[1]/th)+I->Volume[2];
       v[2]=v[2]*I->Range[2]-(I->Volume[4]+I->Volume[5])/2.0F;
       RayApplyMatrixInverse33(1,(float3*)v,I->ModelView,(float3*)v);    
+
+      /* TO DO: factor out the perspective division */
+
     }
     break;
   }
@@ -1544,14 +1547,14 @@ int RayTraceThread(CRayThreadInfo *T)
 
               if(perspective) {
                 r1.base[2] = -T->front;
+                r1.dir[0] = (r1.base[0] - eye[0]);
+                r1.dir[1] = (r1.base[1] - eye[1]);
+                r1.dir[2] = (r1.base[2] - eye[2]);
                 if(interior_color>=0) {
                   start[0] = r1.base[0];
                   start[1] = r1.base[1];
                   start[2] = r1.base[2];
                 }
-                r1.dir[0] = (r1.base[0] - eye[0]);
-                r1.dir[1] = (r1.base[1] - eye[1]);
-                r1.dir[2] = (r1.base[2] - eye[2]);
                 normalize3f(r1.dir);
               }
 

@@ -3475,15 +3475,30 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,char **heade
   OrthoBusyFast(G,0,20);
 
   {
+    int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
     int ray_pixel_width;
+
+    if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
+    
     if(SettingGetGlobal_b(G,cSetting_ray_pixel_scale_to_window)) {
       ray_pixel_width = I->Width;
     }  else {
       ray_pixel_width = ray_width;
     }
-    
+    if(ortho) {
       RayPrepare(ray,-width,width,-height,height,
                  I->FrontSafe,I->Back,rayView,I->RotMatrix,aspRat,ray_pixel_width);
+    } else {
+      float back_ratio;
+      float back_height;
+      float back_width;
+
+      back_ratio = -I->Back/I->Pos[2];
+      back_height = back_ratio*height;
+      back_width = aspRat * back_height;
+      RayPrepare(ray,-back_width, back_width, -back_height, back_height,
+                 I->FrontSafe,I->Back,rayView,I->RotMatrix,aspRat,ray_pixel_width);
+    }
   }
 
   while(ListIterate(I->Obj,rec,next))

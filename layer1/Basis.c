@@ -86,7 +86,7 @@ static int ZLineToSphere(float *base, float *point,float *dir,float radius,float
       {
          sphere[0]=dir0 * maxial + point[0];
          sphere[1]=dir1 * maxial + point[1];
-         sphere[2]=dir[2] * maxial + point[2];
+         sphere[2]=dir2 * maxial + point[2];
       }
       return(1);
    }
@@ -169,35 +169,54 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
 {
    /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
-   
 
-   float perpDist,radial,axial,axial_sum,dangle,ab_dangle,axial_perp;
-   float radialsq,tan_acos_dangle;
+  register float perpDist,radial,axial,axial_sum,dangle,ab_dangle,axial_perp;
+  register float radialsq,tan_acos_dangle;
+  register float perpAxis0, perpAxis1, perpAxis2;
+  register float intra0, intra1, intra2;
+  register float intra_p0, intra_p1, intra_p2;
+  register float vradial0, vradial1, vradial2;
+  register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
+  register float ray0 = ray[0], ray1 = ray[1], ray2 = ray[2];
+  register float dot;
 
-   float perpAxis[3],intra[3],intra_p[3],vradial[3];
+  const float _0   = 0.0f;
 
-   const float _0   = 0.0f;
-   float   dot;
-   
-   subtract3f(point,base,intra);
+   /* subtract3f(point,base,intra); */
+   intra0 = point[0] - base[0];
+   intra1 = point[1] - base[1];
+   intra2 = point[2] - base[2];
 
-   cross_product3f(ray,dir,perpAxis);
+   /*    cross_product3f(ray,dir,perpAxis); */
 
-   normalize3f(perpAxis);
+   perpAxis0 = ray1*dir2 - ray2*dir1;
+   perpAxis1 = ray2*dir0 - ray0*dir2;
+   perpAxis2 = ray0*dir1 - ray1*dir0;
 
+   /* normalize3f(perpAxis) */
+   {
+     register float len = (float)sqrt1d((perpAxis0 * perpAxis0) + (perpAxis1 * perpAxis1) + (perpAxis2 * perpAxis2));
+     if(len>R_SMALL8) {
+       perpAxis0 /= len;
+       perpAxis1 /= len;
+       perpAxis2 /= len;
+     }
+   }
    /* the perpAxis defines a perp-plane which includes the cyl-axis */
    
    /* get minimum distance between the lines */
-   
-   perpDist = dot_product3f(intra, perpAxis);
+
+   /* dot_product3f(intra, perpAxis); */
+   perpDist = intra0 * perpAxis0 +  intra1 * perpAxis1 +  intra2 * perpAxis2 ;
+
+   /*if(fabs(perpDist) > radius)   return 0; */
 
    if((perpDist < _0 ? -perpDist : perpDist) > radius)
       return 0;
-      
-   /*if(fabs(perpDist) > radius)   return 0; */
    
-   
-   dangle   = dot_product3f(ray, dir);
+   /* dangle  = dot_product3f(ray, dir);*/
+   dangle  = ray0 * dir0 + ray1 * dir1 + ray2 * dir2;
+
    ab_dangle   = (float)fabs(dangle);
 
    if(ab_dangle > (1.0f - kR_SMALL4))
@@ -210,9 +229,9 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
       }
       else
       {
-         sphere[0]=dir[0] * maxial + point[0];
-         sphere[1]=dir[1] * maxial + point[1];
-         sphere[2]=dir[2] * maxial + point[2];
+         sphere[0]=dir0 * maxial + point[0];
+         sphere[1]=dir1 * maxial + point[1];
+         sphere[2]=dir2 * maxial + point[2];
       }
       return(1);
    }
@@ -227,18 +246,21 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
    
    /* first, compute radial distance in the perp-plane between the two starting points */
    
-   dot = dot_product3f(intra,perpAxis);
-   intra_p[0] = intra[0]-perpAxis[0]*dot;
-   intra_p[1] = intra[1]-perpAxis[1]*dot;
-   intra_p[2] = intra[2]-perpAxis[2]*dot;
+   /* dot = dot_product3f(intra,perpAxis); */
+   dot = intra0 * perpAxis0 + intra1 * perpAxis1 + intra2 * perpAxis2 ;
    
-   dot = dot_product3f(intra_p, dir);
+   intra_p0 = intra0-perpAxis0*dot;
+   intra_p1 = intra1-perpAxis1*dot;
+   intra_p2 = intra2-perpAxis2*dot;
    
-   vradial[0]=intra_p[0]-dir[0]*dot;
-   vradial[1]=intra_p[1]-dir[1]*dot;
-   vradial[2]=intra_p[2]-dir[2]*dot;  
+   /* dot = dot_product3f(intra_p, dir); */
+   dot = intra_p0 * dir0 +  intra_p1 * dir1 +  intra_p2 * dir2;
+
+   vradial0=intra_p0-dir0*dot;
+   vradial1=intra_p1-dir1*dot;
+   vradial2=intra_p2-dir2*dot;  
    
-   radialsq   = ((vradial[0]*vradial[0]) + (vradial[1]*vradial[1]) + (vradial[2]*vradial[2]));
+   radialsq   = ((vradial0*vradial0) + (vradial1*vradial1) + (vradial2*vradial2));
    
    /* now figure out the axial distance along the cyl-line that will give us
      the point of closest approach */
@@ -248,11 +270,11 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
    else
       axial_perp   = (float)(sqrt1f(radialsq)/tan_acos_dangle);
   
-   axial = (float) sqrt1f( ( (intra_p[0]*intra_p[0]) + 
-                             (intra_p[1]*intra_p[1]) + 
-                             (intra_p[2]*intra_p[2])) - radialsq );
+   axial = (float) sqrt1f( ( (intra_p0*intra_p0) + 
+                             (intra_p1*intra_p1) + 
+                             (intra_p2*intra_p2)) - radialsq );
    
-   if( (intra_p[0]*dir[0] + intra_p[1]*dir[1] + intra_p[2]*dir[2] ) >= _0 )
+   if( (intra_p0*dir0 + intra_p1*dir1 + intra_p2*dir2 ) >= _0 )
       axial = axial_perp - axial;
    else
       axial = axial_perp + axial;
@@ -280,9 +302,9 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
    else if(axial_sum > maxial)
       axial_sum = maxial;
    
-   sphere[0] = dir[0] * axial_sum + point[0];
-   sphere[1] = dir[1] * axial_sum + point[1];
-   sphere[2] = dir[2] * axial_sum + point[2];
+   sphere[0] = dir0 * axial_sum + point[0];
+   sphere[1] = dir1 * axial_sum + point[1];
+   sphere[2] = dir2 * axial_sum + point[2];
    
    *asum = axial_sum;
    /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
@@ -855,18 +877,21 @@ static float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float 
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-static float LineClipPoint(float *base,float *normal, float *point, float *alongNormalSq, float cutoff)
+static int LineClipPoint(float *base,float *ray, 
+                           float *point, float *dist,
+                           float cutoff, float cutoff2)
 {
    register float hyp0, hyp1, hyp2;
    register float opp0, opp1, opp2;
    register float adj0, adj1, adj2;
+   register float ray0, ray1, ray2;
    register float proj;
    register double dcutoff = (double)cutoff;
    register float opp_len_sq;
-   register float n0 = normal[0], n1=normal[1], n2=normal[2];
 
+   
    /* this routine determines whether or not a vector starting at "base"
-     heading in the direction "normal" intersects a sphere located at "point".
+     heading in the direction "ray" intersects a sphere located at "point".
 
      It returns how far along the vector the intersection with the plane is or
      MAXFLOAT if there isn't a relevant intersection
@@ -876,50 +901,40 @@ static float LineClipPoint(float *base,float *normal, float *point, float *along
    */
 
    /* compute the hypo */
-
-   hyp0 = point[0] - base[0];
-   hyp1 = point[1] - base[1];
-   hyp2 = point[2] - base[2]; 
-
-   if(hyp2 >= 0.0F)
-     return MAXFLOAT;
    
+   hyp2 = point[2] - base[2]; 
+   hyp1 = point[1] - base[1];
+   hyp0 = point[0] - base[0];
+
+   ray0 = ray[0];
+   ray1 = ray[1];
+   ray2 = ray[2];
+     
    /* compute the adjacent edge (dot-projection) */
-
-   proj = (n0 * hyp0) + (n1 * hyp1) + (n2 * hyp2);
-   adj0 = n0 * proj;
-   adj1 = n1 * proj;
-   adj2 = n2 * proj;
-
-   /* compute the opposite edge */
-
+   
+   proj = (ray0 * hyp0) + (ray1 * hyp1) + (ray2 * hyp2);
+   
+   adj0 = ray0 * proj;
+   adj1 = ray1 * proj;
    opp0 = hyp0 - adj0;
+   adj2 = ray2 * proj;
+   if(fabs(opp0) > dcutoff)
+     return 0;
    opp1 = hyp1 - adj1;
    opp2 = hyp2 - adj2;
-
-   /*
-   
-   printf("hyp %8.3f %8.3f %8.3f %8.3f\n",hyp0,hyp1,hyp2,cutoff);
-   printf("adj %8.3f %8.3f %8.3f %8.3f\n",adj0,adj1,adj2,cutoff);
-   printf("opp %8.3f %8.3f %8.3f %8.3f\n",opp0,opp1,opp2,cutoff);
-   
-   exit(0);
-   */
-
-   /* bail out if we're not within reach */
-
-   if(fabs(opp0) > dcutoff)
-     return MAXFLOAT;
    if(fabs(opp1) > dcutoff)
-     return MAXFLOAT;
+     return 0;
    if(fabs(opp2) > dcutoff)
-     return MAXFLOAT;
+     return 0;
    
    opp_len_sq = (opp0 * opp0) + (opp1 * opp1) + (opp2 * opp2);
-
-   *alongNormalSq = (adj0 * adj0) + (adj1 * adj1) + (adj2 * adj2);
-
-   return opp_len_sq;
+   
+   if(opp_len_sq<=cutoff2) {
+     (*dist= proj - (float)sqrt1f(cutoff2-opp_len_sq));
+     return 1;
+   }
+   
+   return 0;
 }
 
 /*========================================================================*/
@@ -1035,31 +1050,46 @@ __inline__
 int BasisHitPerspective(BasisCallRec *BC)
 {
   CBasis *BI = BC->Basis;
+  MapType *map = BI->Map;
+  register int iMin0 = map->iMin[0];
+  register int iMin1 = map->iMin[1];
+  register int iMin2 = map->iMin[2];
+  register int iMax0 = map->iMax[0];
+  register int iMax1 = map->iMax[1];
+  register int iMax2 = map->iMax[2];
+  register int last_a = -1, last_b = -1, last_c = -1;
+  register int a,b,c;
+  register int minIndex=-1;
+  register float	iDiv	= map->recipDiv;
+  register float base0, base1, base2;
+  register float step0, step1, step2;
+  register float min0 = map->Min[0] * iDiv;
+  register float min1 = map->Min[1] * iDiv;
+  register float min2 = map->Min[2] * iDiv;
   RayInfo *r = BC->rr;
-  float   oppSq,dist,sph[3],vt[3],tri1,tri2; 
-  float   step[3];
-  int  a,b,c,h,*ip;
+  float   oppSq,sph[3],vt[3],tri1,tri2; 
+  const float   _0   = 0.0F, _1 = 1.0F;
+  float r_tri1=_0, r_tri2=_0, r_dist, dist; /* zero inits to suppress compiler warnings */
+  float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
+  int  h,*ip;
   int      excl_trans_flag;
   int      *elist, local_iflag = false;
   int     inside_code;
-  const float   _0   = 0.0F, _1 = 1.0F;
-  register int last_a = -1, last_b = -1, last_c = -1;
   int terminal = -1;
   const int *vert2prim = BC->vert2prim;
   const float back = BC->back - BC->front;
   const float excl_trans = BC->excl_trans;
   const float BasisFudge0 = BC->fudge0;
   const float BasisFudge1 = BC->fudge1;
-  register int minIndex=-1;
   int     v2p;
   int     i,ii;
   int except = BC->except;
   int check_interior_flag   = BC->check_interior;
   MapCache *cache = &BC->cache;   
-  float r_tri1=_0, r_tri2=_0, r_dist; /* zero inits to suppress compiler warnings */
-  float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
-  float base[3];
+
   CPrimitive *r_prim = NULL;  
+
+  elist   = map->EList;
 
   r_dist = MAXFLOAT;
   
@@ -1070,252 +1100,288 @@ int BasisHitPerspective(BasisCallRec *BC)
 
   MapCacheReset(cache);
 
-  copy3f(r->base, base);
+  base0 = r->base[0] * iDiv;
+  base1 = r->base[1] * iDiv;
+  base2 = r->base[2] * iDiv;
 
-  {
-    float div = MapGetDiv(BI->Map);
-    scale3f(r->dir,div,step);
+  copy3f(r->base, vt);
+
+  { /* take steps with a Z-size equil to the grid spacing */
+    register float div = iDiv * (-MapGetDiv(BI->Map)/r->dir[2]);
+    step0 = r->dir[0]*div;
+    step1 = r->dir[1]*div;
+    step2 = r->dir[2]*div;
   }
+  while(1) {
+    inside_code = 1;
+    
+    a	= (int)(base0 - min0) + MapBorder;
+    b	= (int)(base1 - min1) + MapBorder;
 
-  while( (inside_code = MapInside(BI->Map, base, &a, &b, &c )) >=0 ) {
-    if(inside_code && ((a!=last_a)||(b!=last_b)||(c!=last_c))) {
+    if(a < iMin0)  {
+      if((iMin0 - a) > 1)
+        break;
+      else 
+        a = iMin0; 
+    } else if(a > iMax0) { 
+      if((a - iMax0) > 1) 
+        break;
+      else 
+        a = iMax0; 
+    }
+    c	= (int)(base2 - min2) + MapBorder;
+    if(b < iMin1) { 
+      if((iMin1 - b) > 1) 
+        break;
+      else 
+        b = iMin1;
+    } else if(b > iMax1) {
+      if((b - iMax1) > 1)
+        break;
+      else 
+        b = iMax1;
+    }
 
-      register int new_min_index = -1;
+    if(c < iMin2) { 
+      if((iMin2 - c) > 1) 
+        break;
+      else 
+        c = iMin2;
+    } else if(c > iMax2)  {
+      if((c - iMax2) > 1)
+        inside_code = 0;
+      else 
+        c = iMax2;
+    }
 
-      last_a = a;
-      last_b = b;
-
-
+    if(inside_code && (((a!=last_a)||(b!=last_b)||(c!=last_c))) &&
+       (h  = *(map->EHead + (a * map->D1D2) + (b * map->Dim[2]) + c))) {
+      
+      register int new_min_index = -1;      
+      
       if((terminal>0)&&(last_c!=c)) {
         if(!terminal--)
           break;
       }
-
       
-      h  = *(BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]) + c);
-      if(h)
+      last_a = a;
+      last_b = b;
+      last_c = c;
+      
+      ip   = elist + h;
+      i   = *(ip++);
+      
+      while(i>=0)
         {
-          elist   = BI->Map->EList;
-
-          vt[0]         = r->base[0];
-          vt[1]         = r->base[1];
-          vt[2]         = r->base[2];
-
-          ip   = elist + h;
-          i   = *(ip++);
-          
-          while(i>=0)
+          v2p = vert2prim[i];
+          ii = *(ip++);
+          if((v2p != except) && (!MapCached(cache,v2p))) 
             {
-              v2p = vert2prim[i];
-              ii = *(ip++);
-              if((v2p != except) && (!MapCached(cache,v2p))) 
+              CPrimitive *prm = BC->prim + v2p;
+              MapCache(cache,v2p);
+              
+              switch(prm->type)  {
+              case cPrimTriangle:
+              case cPrimCharacter:
                 {
-                  CPrimitive *prm = BC->prim + v2p;
-                  MapCache(cache,v2p);
-                  
-                  switch(prm->type)  {
-                  case cPrimTriangle:
-                  case cPrimCharacter:
-                    {
-                      float pvec[3];
-                      float *d10 = BI->Precomp + BI->Vert2Normal[i] * 3;
-                      float *d20 = d10+3;
-                      float det,inv_det;
-                      float *dir = r->dir;
+                  float *d10 = BI->Precomp + BI->Vert2Normal[i] * 3;
+                  float *d20 = d10+3;
+                  float *dir = r->dir;
+                  register float det, inv_det;
+                  register float pvec0,pvec1, pvec2;
+                  register float d10_0 = d10[0], d10_1 = d10[1], d10_2 = d10[2];
+                  register float d20_0 = d20[0], d20_1 = d20[1], d20_2 = d20[2];
+                  register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
 
-                      cross_product3f(dir, d20, pvec);
-                      det = dot_product3f(pvec, d10);
+                  /* cross_product3f(dir, d20, pvec); */
+
+                  pvec0 = dir1*d20_2 - dir2*d20_1;
+                  pvec1 = dir2*d20_0 - dir0*d20_2;
+                  pvec2 = dir0*d20_1 - dir1*d20_0;
+
+                  /* det = dot_product3f(pvec, d10); */
+
+                  det = pvec0 * d10_0 + pvec1 * d10_1 + pvec2 * d10_2;
+                  
+                  if(fabs(det) >= EPSILON) {
+                    float *v0 = BI->Vertex + prm->vert*3;
+                    register float tvec0, tvec1, tvec2;
+                    register float qvec0, qvec1, qvec2;
+
+                    inv_det = _1/det;
+
+                    /* subtract3f(vt,v0,tvec); */
+                    
+                    tvec0 = vt[0] - v0[0];
+                    tvec1 = vt[1] - v0[1];
+                    tvec2 = vt[2] - v0[2];
+                    
+                    /* dot_product3f(tvec,pvec) * inv_det; */
+                    tri1 = (tvec0 * pvec0 + tvec1 * pvec1 + tvec2 * pvec2) * inv_det;
+                    
+                    /* cross_product3f(tvec,d10,qvec); */
+
+                    qvec0 = tvec1*d10_2 - tvec2*d10_1;
+                    qvec1 = tvec2*d10_0 - tvec0*d10_2;
+
+                    if( (tri1>= BasisFudge0) && (tri1<=BasisFudge1)) {
+                      qvec2 = tvec0*d10_1 - tvec1*d10_0;
                       
-                      if(fabs(det) >= EPSILON) {
-                        float *v0 = BI->Vertex + prm->vert*3;
-                        float tvec[3];
-                        float qvec[3];
-                        inv_det = _1/det;
-                        
-                        subtract3f(vt,v0,tvec);
-                        
-                        tri1 = dot_product3f(tvec,pvec) * inv_det;
-                        
-                        cross_product3f(tvec,d10,qvec);
-                        
-                        tri2 = dot_product3f(dir, qvec) * inv_det;
-                        
-                        if( !( (tri1 < BasisFudge0) || (tri2 < BasisFudge0) || 
-                               (tri1 > BasisFudge1) || ((tri1 + tri2) > BasisFudge1) ) )
+                      /* dot_product3f(dir, qvec) * inv_det; */
+                      tri2 = (dir0 * qvec0 + dir1 * qvec1 + dir2 * qvec2) * inv_det;
+                      
+                      /* dot_product3f(d20, qvec) * inv_det; */
+                      dist = (d20_0 * qvec0 + d20_1 * qvec1 + d20_2 * qvec2) * inv_det;
+
+                      if( (tri2 >= BasisFudge0) && (tri2 <= BasisFudge1) && ((tri1 + tri2) <= BasisFudge1))
+                      {
+                        if( (dist < r_dist) && (dist >= _0) && 
+                            (dist <= back) && (prm->trans != _1) ) 
                           {
-                            dist   = dot_product3f(d20, qvec) * inv_det;
-                            
-                            if( (dist < r_dist) && (dist >= 0) && 
-                                (dist <= back) && (prm->trans != _1) ) 
-                              {
-                                new_min_index   = prm->vert;
-                                r_tri1      = tri1;
-                                r_tri2      = tri2;
-                                r_dist      = dist;
-                              }
+                            new_min_index   = prm->vert;
+                            r_tri1      = tri1;
+                            r_tri2      = tri2;
+                            r_dist      = dist;
                           }
                       }
                     }
-                    break;
-                  case cPrimSphere:
+                  }
+                }
+                break;
+              case cPrimSphere:
+                {
+
+                  if(LineClipPoint( r->base, r->dir, BI->Vertex + i*3, &dist, BI->Radius[i] , BI->Radius2[i]))
                     {
-                      oppSq = LineClipPoint( r->base, r->dir, BI->Vertex + i*3, &dist, BI->Radius[i] );
-                        
-                      if(oppSq <= BI->Radius2[i])
+                      if((dist < r_dist) && (prm->trans != _1))
                         {
-                          dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
-                          
-                          if((dist < r_dist) && (prm->trans != _1))
-                            {
-                              if((dist >= _0) && (dist <= back)) {
-                                new_min_index = prm->vert;
-                                r_dist      = dist;
-                              } else if(check_interior_flag)  {
-                                if(diffsq3f(vt,BI->Vertex+i*3) < BI->Radius2[i]) {
-                                  
-                                  local_iflag   = true;
-                                  r_prim      = prm;
-                                  r_dist    = _0;
-                                  new_min_index   = prm->vert;
-                                }
-                              }
+                          if((dist >= _0) && (dist <= back)) {
+                            new_min_index = prm->vert;
+                            r_dist      = dist;
+                          } else if(check_interior_flag && (dist<=back))  {
+                            if(diffsq3f(vt,BI->Vertex+i*3) < BI->Radius2[i]) {
+                              
+                              local_iflag   = true;
+                              r_prim      = prm;
+                              r_dist    = _0;
+                              new_min_index   = prm->vert;
                             }
+                          }
                         }
                     }
-                    break;
-                    
-                  case cPrimCylinder:
-                    if(LineToSphereCapped(r->base,r->dir,BI->Vertex+i*3, 
-                                          BI->Normal+BI->Vert2Normal[i]*3,
-                                          BI->Radius[i], prm->l1,sph,&tri1,
-                                          prm->cap1,prm->cap2))
+                }
+                break;
+                
+              case cPrimCylinder:
+                if(LineToSphereCapped(r->base,r->dir,BI->Vertex+i*3, 
+                                      BI->Normal+BI->Vert2Normal[i]*3,
+                                      BI->Radius[i], prm->l1,sph,&tri1,
+                                      prm->cap1,prm->cap2))
+                  {
+                    if(LineClipPoint(r->base,r->dir,sph,&dist,BI->Radius[i],BI->Radius2[i]))
                       {
-                        oppSq = LineClipPoint(r->base,r->dir,sph,&dist,BI->Radius[i]);
-                        if(oppSq<=BI->Radius2[i])
+                        if((dist < r_dist) && (prm->trans != _1))
                           {
-                            dist   = (float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
-                            
-                            if((dist < r_dist) && (prm->trans != _1))
+                            if((dist >= _0) && (dist <= back)) 
                               {
-                                if((dist >= _0) && (dist <= back)) 
+                                if(prm->l1 > kR_SMALL4)
+                                  r_tri1   = tri1 / prm->l1;
+                                
+                                r_sphere0   = sph[0];
+                                r_sphere1   = sph[1];                              
+                                r_sphere2   = sph[2];
+                                new_min_index   = prm->vert;
+                                r_dist      = dist;
+                              }
+                            else if(check_interior_flag && (dist<=back))
+                              {
+                                if(FrontToInteriorSphereCapped(vt,
+                                                               BI->Vertex+i*3,
+                                                               BI->Normal+BI->Vert2Normal[i]*3,
+                                                               BI->Radius[i],
+                                                               BI->Radius2[i],
+                                                               prm->l1,
+                                                               prm->cap1,
+                                                               prm->cap2)) 
                                   {
+                                    local_iflag   = true;
+                                    r_prim      = prm;
+                                    r_dist      = _0;
+                                    
+                                    new_min_index   = prm->vert;
+                                  }
+                              }
+                          }
+                      }
+                  }
+                break;
+                
+              case cPrimSausage:
+                if(LineToSphere(r->base,r->dir, BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,
+                                BI->Radius[i],prm->l1,sph,&tri1))
+                  {
+
+                    if(LineClipPoint(r->base,r->dir,sph,&dist,BI->Radius[i],BI->Radius2[i])) 
+                      {
+
+
+                        int   tmp_flag = false;
+                        if((dist<r_dist)  && (prm->trans != _1) )
+                          {
+                            if((dist >= _0) && (dist <= back)) 
+                              {
+                                tmp_flag = true;
+                                if(excl_trans_flag) 
+                                  {
+                                    if( (prm->trans > _0) && (dist < excl_trans) )
+                                      tmp_flag = false;
+                                  }
+                                if(tmp_flag) 
+                                  {
+
                                     if(prm->l1 > kR_SMALL4)
                                       r_tri1   = tri1 / prm->l1;
                                     
                                     r_sphere0   = sph[0];
                                     r_sphere1   = sph[1];                              
                                     r_sphere2   = sph[2];
-                                    new_min_index   = prm->vert;
-                                    r_dist      = dist;
-                                  }
-                                else if(check_interior_flag)
-                                  {
-                                    if(FrontToInteriorSphereCapped(vt,
-                                                                   BI->Vertex+i*3,
-                                                                   BI->Normal+BI->Vert2Normal[i]*3,
-                                                                   BI->Radius[i],
-                                                                   BI->Radius2[i],
-                                                                   prm->l1,
-                                                                   prm->cap1,
-                                                                   prm->cap2)) 
-                                      {
-                                        local_iflag   = true;
-                                        r_prim      = prm;
-                                        r_dist      = _0;
-                                        
-                                        new_min_index   = prm->vert;
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                    break;
-                    
-                  case cPrimSausage:
-                    if(LineToSphere(r->base,r->dir, BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,
-                                    BI->Radius[i],prm->l1,sph,&tri1))
-                      {
-                        oppSq = LineClipPoint(r->base,r->dir,sph,&dist,BI->Radius[i]);
-                        if(oppSq <= BI->Radius2[i])
-                          {
-                            int   tmp_flag = false;
+                                    new_min_index      = prm->vert;
+                                    r_dist         = dist;
 
-                            dist   = (float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
-                            if((dist<r_dist)  && (prm->trans != _1) )
-                              {
-                                if((dist >= 0) && (dist <= back)) 
-                                  {
-                                    tmp_flag = true;
-                                    if(excl_trans_flag) 
-                                      {
-                                        if( (prm->trans > _0) && (dist < excl_trans) )
-                                          tmp_flag = false;
-                                      }
-                                    if(tmp_flag) 
-                                      {
-                                        if(prm->l1 > kR_SMALL4)
-                                          r_tri1   = tri1 / prm->l1;
-                                           
-                                        r_sphere0   = sph[0];
-                                        r_sphere1   = sph[1];                              
-                                        r_sphere2   = sph[2];
-                                        new_min_index      = prm->vert;
-                                        r_dist         = dist;
-                                      }
+                                    
                                   }
-                                else if(check_interior_flag) 
+                              }
+                            else if(check_interior_flag &&( dist<=back) ) 
+                              {
+                                if(FrontToInteriorSphere(vt, BI->Vertex+i*3, BI->Normal+BI->Vert2Normal[i]*3,
+                                                         BI->Radius[i], BI->Radius2[i], prm->l1)) 
                                   {
-                                    if(FrontToInteriorSphere(vt, BI->Vertex+i*3, BI->Normal+BI->Vert2Normal[i]*3,
-                                                             BI->Radius[i], BI->Radius2[i], prm->l1)) 
-                                      {
-                                        local_iflag   = true;
-                                        r_prim      = prm;
-                                        r_dist      = _0;
-                                        new_min_index   = prm->vert;
-                                      }
+                                    local_iflag   = true;
+                                    r_prim      = prm;
+                                    r_dist      = _0;
+                                    new_min_index   = prm->vert;
                                   }
                               }
                           }
                       }
-                    break;
-                  }   /* end of switch */
-                }   /* end of if */
-               
-              i = ii;
-               
-            } /* end of while */
-        }
-       
-      /* and of course stop when we hit the edge of the map */
-       
+                  }
+                break;
+              }   /* end of switch */
+            }   /* end of if */
+          
+          i = ii;
+          
+        } /* end of while */
+      
       if(local_iflag)
         break;
-
-#if 0       
-      /* we've processed all primitives associated with this voxel, 
-         so if an intersection has been found which occurs in front of
-         the next voxel, then we can stop */
-       
-      if( new_min_index > -1 ) 
-        {
-          int   aa,bb,cc;
-           
-          vt[2]   = r->base[2] - r_dist;
-          MapLocus(BI->Map,vt,&aa,&bb,&cc);
-          if(cc > c) 
-            break;
-          else
-            vt[2]   = r->base[2] - front;
-        }
-
-#endif
-       
+      
       if( new_min_index > -1 ) {
-         
+        
         minIndex = new_min_index;
-         
+        
         r_prim = BC->prim + vert2prim[minIndex];
-         
+        
         if(r_prim->type == cPrimSphere) 
           {
             const float   *vv   = BI->Vertex + minIndex * 3;
@@ -1323,7 +1389,7 @@ int BasisHitPerspective(BasisCallRec *BC)
             r_sphere1   = vv[1];
             r_sphere2   = vv[2];
           }
-         
+        
         BC->interior_flag = local_iflag;   
         r->tri1 = r_tri1;
         r->tri2 = r_tri2;
@@ -1339,11 +1405,13 @@ int BasisHitPerspective(BasisCallRec *BC)
       if(terminal<0)
         terminal = 2;
     }
-    
-    add3f(base,step,base); /* advance through the map one block at a time 
-                              TODO optimize step size */
+  
+    base0+=step0;
+    base1+=step1;
+    base2+=step2;
+    /* advance through the map one block at a time -- note that this is a crappy way to walk through the map... */
   }
-    
+  
   BC->interior_flag = local_iflag;
   return(minIndex);
 }
