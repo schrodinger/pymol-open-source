@@ -129,6 +129,7 @@ setup ( # Distribution meta-data
    "layer2/ObjectMolecule.c",
    "layer2/ObjectMolecule2.c",
    "layer2/ObjectSurface.c",
+   "layer2/ObjectSlice.c",
    "layer2/RepCartoon.c",
    "layer2/RepCylBond.c",
    "layer2/RepDistDash.c",

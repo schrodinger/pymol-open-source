@@ -38,17 +38,7 @@ Z* -------------------------------------------------------------------
 #include"Text.h"
 #include"Util.h"
 #include"ButMode.h"
-
-#define SLICE_TRADITIONAL 1
-#define SLICE_SLUDGE 2
-#define SLICE_OCEAN 3
-#define SLICE_HOT 4
-#define SLICE_GRAYABLE 5
-#define SLICE_RAINBOW 6
-#define SLICE_AFMHOT 7
-#define SLICE_GRAYSCALE 8
-
-#define OUT_OF_MAP 1
+#include"ObjectGadgetRamp.h"
 
 typedef struct ObjRec {
   struct CObject *obj;  
@@ -312,6 +302,30 @@ int ObjectSliceSetOpacity(ObjectSlice *I,float opacity,int state)
   return(ok);
 }
 
+static void ObjectSliceStateAssignColors(ObjectSliceState *oss, ObjectGadgetRamp *ogr)
+{
+    /* compute the colors */
+  if(oss && oss->values && oss->colors) {
+    int x,y;
+    int *min = oss->min;
+    int *max = oss->max;
+    float *value = oss->values;
+    int *flag = oss->flags;
+    float *color = oss->colors;
+    for(y=min[1];y<=max[1];y++) {
+      for(x=min[0];x<=max[0];x++) {
+        if(*flag) {
+          ObjectGadgetRampInterpolate(ogr, *value, color);
+        }
+        color +=3;
+        value++;
+        flag++;
+      }
+    }
+  }
+}
+
+
 static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
 {
   int ok=true;
@@ -408,7 +422,7 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
     }
 
     if(!oss->colors) {
-      oss->colors = VLAlloc(float, n_alloc*3);
+      oss->colors = VLACalloc(float, n_alloc*3);
     } else {
       VLACheck(oss->colors, float, n_alloc*3); /* note: this is a macro which reassigns the pointer */
     }
@@ -454,24 +468,6 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
     ObjectMapStateInterpolate(oms,oss->points, oss->values, oss->flags, oss->n_points);
   }
 
-  /* compute the colors */
-
-  if(ok) {
-    int x,y;
-    float *value = oss->values;
-    int *flag = oss->flags;
-    float *color = oss->colors;
-    for(y=min[1];y<=max[1];y++) {
-      for(x=min[0];x<=max[0];x++) {
-        if(*flag) {
-          ObjectSliceStateValue2RGB(oss,*value,color);
-        }
-        color +=3;
-        value++;
-        flag++;
-      }
-    }
-  }
 
   /* now generate efficient triangle strips based on the points that are present in the map */
 
@@ -572,42 +568,54 @@ static void ObjectSliceStateUpdate(ObjectSliceState *oss, ObjectMapState *oms)
 static void ObjectSliceUpdate(ObjectSlice *I) 
 {
 
-  ObjectSliceState *ms;
+  ObjectSliceState *oss;
   ObjectMapState *oms = NULL;
   ObjectMap *map = NULL;
+  ObjectGadgetRamp *ogr = NULL;
 
   int ok=true;
   int a;
-
   for(a=0;a<I->NState;a++) {
-    ms = I->State + a;
-    if(ms && ms->Active) {      
-      map = ExecutiveFindObjectMapByName(ms->MapName);
+    oss = I->State + a;
+    if(oss && oss->Active) {      
+      map = ExecutiveFindObjectMapByName(oss->MapName);
       if(!map) {
         ok=false;
         PRINTFB(FB_ObjectSlice,FB_Errors)
-          "ObjectSliceUpdate-Error: map '%s' has been deleted.\n",ms->MapName
+          "ObjectSliceUpdate-Error: map '%s' has been deleted.\n",oss->MapName
           ENDFB;
       }
       if(map) {
-        oms = ObjectMapGetState(map,ms->MapState);
+        oms = ObjectMapGetState(map,oss->MapState);
         if(!oms) ok=false;
       }
       if(oms) {
-        if(ms->RefreshFlag) {
-          ms->Crystal = *(oms->Crystal);
+        if(oss->RefreshFlag) {
+          oss->Crystal = *(oms->Crystal);
           if(I->Obj.RepVis[cRepCell]) {
-            if(ms->UnitCellCGO)
-              CGOFree(ms->UnitCellCGO);
-            ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
+            if(oss->UnitCellCGO)
+              CGOFree(oss->UnitCellCGO);
+            oss->UnitCellCGO = CrystalGetUnitCellCGO(&oss->Crystal);
           } 
-          ms->RefreshFlag=false;
+          oss->RefreshFlag=false;
           PRINTFB(FB_ObjectSlice,FB_Blather)
             " ObjectSlice: updating \"%s\".\n" , I->Obj.Name 
             ENDFB;
           if(oms->Field) {
-            ObjectSliceStateUpdate(ms, oms);
-          }	  
+            ObjectSliceStateUpdate(oss, oms);
+            ogr = ColorGetRamp(I->Obj.Color);
+            if(ogr) 
+              ObjectSliceStateAssignColors(oss, ogr);
+            else { /* solid color */
+              float *solid = ColorGet(I->Obj.Color);
+              float *color = oss->colors;
+              for(a=0;a<oss->n_points;a++) {
+                *(color++)=solid[0];
+                *(color++)=solid[1];             
+                *(color++)=solid[2];
+              }
+            }
+          }
         }
       }
       SceneDirty();
@@ -916,540 +924,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
     if(state>=0) break;
     cur_state = cur_state + 1;
     if(cur_state>=I->NState) break;
-
   }
-
-
-#if 0
-
-  int a=0;
-  int i,j,k;
-  float i_inc;
-  float j_inc;
-  float k_inc;
-  float * grid_p;
-  float * value_p;
-  float max_value = -100000;
-  float min_value = 100000;
-  float rgba[4];
-  /*  float aspRat = ((float) Scene.Width) / ((float) Scene.Height);*/
-  float fovx;
-  float fovy;
-  float inv_mv[16];
-  float tmp[3];
-  /* vector from the lower left corner to the upper left corner of the window between the clipping planes */
-  float win_x[3];
-  /* vector from the lower left corner to the lower right corner of the window between the clipping planes */
-  float win_y[3];
-  /* vector from the lower left corner to the viewer */
-  float clip_gap = Scene.Back-Scene.FrontSafe;
-  int vPort[4];
-  float scale_v;
-  char scale_v_s[10];
-  char * c_p;
-  float test_pos_n_color[6];
-  /* vertex/coord,norm,color/x,y,z 
-     we use 4 vertex because we want to build
-     squares with the triangles 
-  */
-  float triangle[4][3][3];
-  float tri_side[2][3];
-  char * flag;
-  /* sample every 10 pixels */
-  GLfloat modelview[16];
-  /* the 4 corners of the window */
-  GLdouble posX[4], posY[4], posZ[4];
-
-  ObjectSliceState *ms = NULL;
-  ObjectMap *map = NULL;
-  ObjectMapState *oms = NULL;
-
-  ObjectPrepareContext(&I->Obj,ray);
-  
-  if(state>=0) 
-    if(state<I->NState) 
-      if(I->State[state].Active)
-        ms=I->State+state;
-
-  while(1) {
-    if(state<0) { /* all_states */
-      ms = I->State + a;
-    } else {
-      if(!ms) {
-        if(I->NState&&
-           ((SettingGet(cSetting_static_singletons)&&(I->NState==1))))
-          ms=I->State;
-      }
-    }
-    if(ms) {
-      if(ms->Active) {	
-        if(ray){
-          if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
-                         I->Obj.Setting,NULL);
-
-          if(I->Obj.RepVis[cRepSlice]) {
-            map = ExecutiveFindObjectMapByName(ms->MapName);
-	      
-            if(!map) {
-              PRINTFB(FB_ObjectSlice,FB_Errors)
-                "ObjectSliceUpdate-Error: map '%s' has been deleted.\n",ms->MapName
-                ENDFB;
-              ms->RefreshFlag=false;
-            }
-            if(map) {
-              oms = ObjectMapGetState(map,ms->MapState);
-            }
-            if(oms){
-              /* ray trusts that all the interpolation was already done previously */
-              ray->fTransparentf(ray,1.0-ms->opacity);
-              for(i = 0;i<ms->x_samples*(ms->y_samples-1);i++){
-                grid_p = ms->points+3*i;
-                value_p = ms->values+i;
-                flag = ms->flags+i;
-
-                if( i % ms->x_samples == ms->x_samples-1){
-                  continue;		    
-                }
-
-                if(*flag & OUT_OF_MAP){
-                  continue;
-                }
-                ObjectSliceStateValue2RGB(ms,value_p[0],rgba);
-                /* set vertex and color */
-                triangle[0][0][0] = grid_p[0];
-                triangle[0][0][1] = grid_p[1];
-                triangle[0][0][2] = grid_p[2];
-                triangle[0][2][0] = rgba[0];
-                triangle[0][2][1] = rgba[1];
-                triangle[0][2][2] = rgba[2];
-	      
-                /* go right */
-                grid_p+=3;
-                value_p++;
-	      
-                if(*flag & OUT_OF_MAP){
-                  continue;
-                }
-                ObjectSliceStateValue2RGB(ms,value_p[0],rgba);
-                /* set vertex and color */
-                triangle[1][0][0] = grid_p[0];
-                triangle[1][0][1] = grid_p[1];
-                triangle[1][0][2] = grid_p[2];
-                triangle[1][2][0] = rgba[0];
-                triangle[1][2][1] = rgba[1];
-                triangle[1][2][2] = rgba[2];
-	      
-                /* one down */
-                grid_p +=  ms->x_samples*3;
-                value_p += ms->x_samples;
-                flag += ms->x_samples;
-	      
-                if(*flag & OUT_OF_MAP){
-                  continue;
-                }
-                ObjectSliceStateValue2RGB(ms,value_p[0],rgba);
-                /* set vertex and color */
-                triangle[2][0][0] = grid_p[0];
-                triangle[2][0][1] = grid_p[1];
-                triangle[2][0][2] = grid_p[2];
-                triangle[2][2][0] = rgba[0];
-                triangle[2][2][1] = rgba[1];
-                triangle[2][2][2] = rgba[2];
-	      
-                grid_p-=3;
-                value_p--;
-                flag--;
-
-                if(*flag & OUT_OF_MAP){
-                  continue;
-                }
-                ObjectSliceStateValue2RGB(ms,value_p[0],rgba);
-                /* set vertex and color */
-                triangle[3][0][0] = grid_p[0];
-                triangle[3][0][1] = grid_p[1];
-                triangle[3][0][2] = grid_p[2];
-                triangle[3][2][0] = rgba[0];
-                triangle[3][2][1] = rgba[1];
-                triangle[3][2][2] = rgba[2];
-
-	    
-                /* Calculate normals which happen to be all the same */
-
-                for(k = 0;k<2;k++){
-                  for(j = 0;j<3;j++){
-                    tri_side[k][j] = triangle[k+1][0][j]-triangle[k][0][j];
-                  }
-                }
-                /* use triangle[0] to do the calculations */
-                triangle[0][1][0] = tri_side[0][1]*tri_side[1][2]-tri_side[0][2]*tri_side[1][1];
-                triangle[0][1][1] = tri_side[0][0]*tri_side[1][2]-tri_side[0][2]*tri_side[1][0];
-                triangle[0][1][2] = tri_side[0][0]*tri_side[1][1]-tri_side[0][1]*tri_side[1][0];
-                /* normalize the normal */
-                tmp[0] = -sqrt(triangle[0][1][0]*triangle[0][1][0]+triangle[0][1][1]*triangle[0][1][1]+triangle[0][1][2]*triangle[0][1][2]);
-                triangle[0][1][0] /= tmp[0];
-                triangle[0][1][1] /= tmp[0];
-                triangle[0][1][2] /= tmp[0];
-                /*
-                  finally draw the 2 triangles  (0,1,2) and (0,2,3)
-	      
-                  0   1
-	      
-                  3   2
-                */
-                ray->fTriangle3fv(ray,triangle[0][0],triangle[1][0],triangle[2][0],
-                                  triangle[0][1],triangle[0][1],triangle[0][1],
-                                  triangle[0][2],triangle[1][2],triangle[2][2]);
-
-                ray->fTriangle3fv(ray,triangle[0][0],triangle[2][0],triangle[3][0],
-                                  triangle[0][1],triangle[0][1],triangle[0][1],
-                                  triangle[0][2],triangle[2][2],triangle[3][2]);
-              }
-            }
-          }
-          ray->fTransparentf(ray,0.0);
-        } else if(pick&&PMGUI) {
-        } else if(PMGUI) {
-          if(!pass) {
-       
-            int use_dlst;
-            if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-              CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
-                          I->Obj.Setting,NULL);
-       
-            SceneResetNormal(false);
-            ObjectUseColor(&I->Obj);
-            use_dlst = (int)SettingGet(cSetting_use_display_lists);
-            if(use_dlst&&ms->displayList&&ms->LockedFlag==0) {
-              glCallList(ms->displayList);
-            } else { 
-         
-              if(use_dlst) {
-                if(!ms->displayList) {
-                  ms->displayList = glGenLists(1);
-                  if(ms->displayList) {
-                    glNewList(ms->displayList,GL_COMPILE_AND_EXECUTE);
-                  }
-                }
-              }
-         
-              if(I->Obj.RepVis[cRepSlice]) {
-                glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
-           
-                map = ExecutiveFindObjectMapByName(ms->MapName);
-           
-                if(!map) {
-                  PRINTFB(FB_ObjectSlice,FB_Errors)
-                    "ObjectSliceUpdate-Error: map '%s' has been deleted.\n",ms->MapName
-                    ENDFB;
-                  ms->RefreshFlag=false;
-                }
-                if(map) {
-                  oms = ObjectMapGetState(map,ms->MapState);
-                }
-                if(oms) {
-
-                  /* why should the slice object need to know anything about the current scene? */
-             
-                  aspRat = 1.0;
-
-
-                  if(Scene.StereoMode>1)
-                    aspRat=aspRat/2;
-                  fovy=SettingGet(cSetting_field_of_view);
-                  fovy *= cPI/180.0;
-                  fovx=fovy*aspRat;
-
-                  posX[0] = -(Scene.FrontSafe+Scene.Back)/2*tan(fovx/2.0);
-                  posY[0] = -(Scene.FrontSafe+Scene.Back)/2*tan(fovy/2.0);
-                  posZ[0] = -(Scene.FrontSafe+Scene.Back)/2;
-
-                  posX[1] = -(Scene.FrontSafe+Scene.Back)/2*tan(fovx/2.0);
-                  posY[1] = (Scene.FrontSafe+Scene.Back)/2*tan(fovy/2.0);
-                  posZ[1] = -(Scene.FrontSafe+Scene.Back)/2;
-
-                  /* Up */
-                  posX[2] = -(Scene.FrontSafe+Scene.Back)/2*tan(fovx/2.0);
-                  posY[2] = -(Scene.FrontSafe+Scene.Back)/2*tan(fovy/2.0);
-                  posZ[2] = -(Scene.FrontSafe+Scene.Back)/2+0.2;
-
-                  posX[3] = (Scene.FrontSafe+Scene.Back)/2*tan(fovx/2.0);
-                  posY[3] = -(Scene.FrontSafe+Scene.Back)/2*tan(fovy/2.0);
-                  posZ[3] = -(Scene.FrontSafe+Scene.Back)/2;
-
-                  for(i = 0;i<4;i++){
-                    glGetFloatv( GL_MODELVIEW_MATRIX, modelview );
-		  
-                    MatrixInvert44f(modelview,inv_mv);
-                    tmp[0] = posX[i];
-                    tmp[1] = posY[i];
-                    tmp[2] = posZ[i];
-                    posX[i] = inv_mv[0]*tmp[0]+inv_mv[4]*tmp[1]+inv_mv[8]*tmp[2]+inv_mv[12];
-                    posY[i] = inv_mv[1]*tmp[0]+inv_mv[5]*tmp[1]+inv_mv[9]*tmp[2]+inv_mv[13];
-                    posZ[i] = inv_mv[2]*tmp[0]+inv_mv[6]*tmp[1]+inv_mv[10]*tmp[2]+inv_mv[14];
-                  }
-                  
-                  win_x[0] = posX[3]-posX[0];
-                  win_x[1] = posY[3]-posY[0];
-                  win_x[2] = posZ[3]-posZ[0];
-
-                  win_y[0] = posX[1]-posX[0];
-                  win_y[1] = posY[1]-posY[0];
-                  win_y[2] = posZ[1]-posZ[0];
-
-                  if(ms->LockedFlag) {		
-
-                    ms->up[0] = (posX[2]-posX[0])*clip_gap/4;
-                    ms->up[1] = (posY[2]-posY[0])*clip_gap/4;
-                    ms->up[2] = (posZ[2]-posZ[0])*clip_gap/4;
-
-                    i_inc = (oms->ExtentMax[0]-oms->ExtentMin[0])/(float)(oms->FDim[0]-1);
-                    j_inc = (oms->ExtentMax[1]-oms->ExtentMin[1])/(float)(oms->FDim[1]-1);
-                    k_inc = (oms->ExtentMax[2]-oms->ExtentMin[2])/(float)(oms->FDim[2]-1);
-                    grid_p = ms->points;
-                    value_p = ms->values;
-                    flag = ms->flags;
-                    for(j = 0;j<ms->y_samples;j++){
-                      for(i = 0;i<ms->x_samples;i++){
-                        /* in cartesian coordinates */
-                        grid_p[0] = posX[0]+(win_x[0]*i)/(ms->x_samples-1)+(win_y[0]*j)/(ms->y_samples-1);
-                        grid_p[1] = posY[0]+(win_x[1]*i)/(ms->x_samples-1)+(win_y[1]*j)/(ms->y_samples-1);
-                        grid_p[2] = posZ[0]+(win_x[2]*i)/(ms->x_samples-1)+(win_y[2]*j)/(ms->y_samples-1);
-                        /* convert to grid coordinates */
-                        transform33f3f(ms->Crystal.RealToFrac,grid_p,grid_p);
-                        grid_p[0] *= oms->Div[0];
-                        grid_p[1] *= oms->Div[1];
-                        grid_p[2] *= oms->Div[2];
-
-                        if(grid_p[0]<oms->Min[0] || grid_p[0]>oms->FDim[0]+oms->Min[0]-1 ||
-                           grid_p[1]<oms->Min[1] || grid_p[1]>oms->FDim[1]+oms->Min[1]-1 ||
-                           grid_p[2]<oms->Min[2] || grid_p[2]>oms->FDim[2]+oms->Min[2]-1
-                           ){
-                          *flag = OUT_OF_MAP;
-                        }else{
-                          *flag = 0;
-                        }
-            
-                        /*		      grid_p[0] = (grid_p[0])/i_inc;
-                                    grid_p[1] = (grid_p[1])/j_inc;
-                                    grid_p[2] = (grid_p[2])/k_inc;*/
-                        /*		      if(ObjectMapInterpolate(map,ms->MapState,grid_p,value_p,1) == false)
-                                    value_p[0] = 0;*/
-                        grid_p+=3;
-                        value_p++;
-                        flag++;
-                      }
-                    }
-                    ObjectMapInterpolate(map,ms->MapState,ms->points,ms->values,ms->x_samples*ms->y_samples);
-                    grid_p = ms->points;
-                    for(j = 0;j<ms->y_samples;j++){
-                      for(i = 0;i<ms->x_samples;i++){
-                        grid_p[0] = posX[0]+(win_x[0]*i)/(ms->x_samples-1)+(win_y[0]*j)/(ms->y_samples-1);
-                        grid_p[1] = posY[0]+(win_x[1]*i)/(ms->x_samples-1)+(win_y[1]*j)/(ms->y_samples-1);
-                        grid_p[2] = posZ[0]+(win_x[2]*i)/(ms->x_samples-1)+(win_y[2]*j)/(ms->y_samples-1);
-                        grid_p+=3;
-                      }
-                    }
-                    /* Normalize values */
-                    for(i = 0;i<ms->y_samples*ms->x_samples;i++){
-                      if(ms->values[i] > max_value)
-                        max_value = ms->values[i];
-                      if(ms->values[i] < min_value)
-                        min_value = ms->values[i];
-                    }
-                    ms->norm_constant = min_value;
-                    ms->norm_factor = (max_value-min_value);
-                    for(i = 0;i<ms->y_samples*ms->x_samples;i++){
-                      ms->values[i] = (ms->values[i]-ms->norm_constant)/ms->norm_factor;
-                    }
-                  }
-		  
-                  grid_p = ms->points;
-                  value_p = ms->values;		
-                  flag = ms->flags; 
-
-                  /*		glBegin(GL_TRIANGLE_STRIP);*/
-                  for(i = 0;i<ms->x_samples*(ms->y_samples-1);i++){
-                    /*		  if( i % ms->x_samples == ms->x_samples-1){
-                             grid_p+=3;
-                             value_p++;
-                             continue;
-                             }
-                    */
-                    if( i % ms->x_samples == 0){
-                      if(i != 0)
-                        glEnd();
-                      glBegin(GL_TRIANGLE_STRIP);
-                    }
-        
-                    /* one to the right */
-        
-                    /*
-                      grid_p+=3;
-                      value_p++;
-
-                      rgba[3] = ms->opacity;
-                      if(grid_p[0]<oms->ExtentMin[0] || 
-                      grid_p[0]>oms->ExtentMax[0] ||
-                      grid_p[1]<oms->ExtentMin[1] || 
-                      grid_p[1]>oms->ExtentMax[1] ||
-                      grid_p[2]<oms->ExtentMin[2] || 
-                      grid_p[2]>oms->ExtentMax[2])
-                      rgba[3] = 0;
-                      ObjectSliceStateValue2RGB(ms,value_p[0],rgba);
-        
-                      glColor4fv(rgba);
-                      glVertex3f(grid_p[0],
-                      grid_p[1],
-                      grid_p[2]);
-                    */
-                    /* one down */
-                    grid_p +=  ms->x_samples*3;
-                    value_p += ms->x_samples;
-                    flag += ms->x_samples;
-
-                    rgba[3] = ms->opacity;
-                    if(*flag & OUT_OF_MAP)
-                      rgba[3] = 0;
-                    ObjectSliceStateValue2RGB(ms,value_p[0],rgba);
-        
-                    glColor4fv(rgba);
-                    if(ms->HeightmapFlag){
-                      glVertex3f(grid_p[0]+ms->up[0]*(value_p[0]+ms->norm_constant/ms->norm_factor),
-                                 grid_p[1]+ms->up[1]*(value_p[0]+ms->norm_constant/ms->norm_factor),
-                                 grid_p[2]+ms->up[2]*(value_p[0]+ms->norm_constant/ms->norm_factor));
-                    } else {
-                      glVertex3f(grid_p[0],
-                                 grid_p[1],
-                                 grid_p[2]);
-                    }
-                    /* one to the left */
-                    /*		  grid_p-=3;
-                             value_p--;
-
-                             rgba[3] = ms->opacity;
-		  
-                             if(grid_p[0]<oms->ExtentMin[0] || 
-                             grid_p[0]>oms->ExtentMax[0] ||
-                             grid_p[1]<oms->ExtentMin[1] || 
-                             grid_p[1]>oms->ExtentMax[1] ||
-                             grid_p[2]<oms->ExtentMin[2] || 
-                             grid_p[2]>oms->ExtentMax[2])
-                             rgba[3] = 0;
-                             ObjectSliceStateValue2RGB(ms,value_p[0],rgba);
-
-                             glColor4fv(rgba);
-                             glVertex3f(grid_p[0],
-                             grid_p[1],
-                             grid_p[2]);
-                    */
-                    /* one up */
-		  
-                    grid_p-=3*ms->x_samples;
-                    value_p-=ms->x_samples;
-                    flag-=ms->x_samples;
-
-                    rgba[3] = ms->opacity;
-                    ObjectSliceStateValue2RGB(ms,value_p[0],rgba);
-
-                    if(*flag & OUT_OF_MAP){
-                      rgba[3] = 0;
-                    }
-		      
-
-                    glColor4fv(rgba);
-                    if(ms->HeightmapFlag){
-                      glVertex3f(grid_p[0]+ms->up[0]*(value_p[0]+ms->norm_constant/ms->norm_factor),
-                                 grid_p[1]+ms->up[1]*(value_p[0]+ms->norm_constant/ms->norm_factor),
-                                 grid_p[2]+ms->up[2]*(value_p[0]+ms->norm_constant/ms->norm_factor));
-                    }else{
-                      glVertex3f(grid_p[0],
-                                 grid_p[1],
-                                 grid_p[2]);
-                    }
-
-                    /* and now advance the pointer*/
-                    grid_p+=3;
-                    value_p++;
-                    flag++;
-                  }
-                  glEnd();
-
-                  if(I->Obj.RepVis[cRepLabel]){
-                    /* Change to 2D OpenGL*/
-                    /* use a 10 pixel wide vertical label on the top left corner */
-		  
-                    glGetIntegerv(GL_VIEWPORT, vPort);
-
-                    glMatrixMode(GL_PROJECTION);
-                    glPushMatrix();
-                    glLoadIdentity();
-                    glDisable(GL_LIGHTING);
-                    glDisable(GL_DEPTH_TEST);
-                    glOrtho(0, vPort[2], 0, vPort[3], -1, 1);
-                    glMatrixMode(GL_MODELVIEW);
-                    glPushMatrix();
-                    glLoadIdentity();
-                    glBegin(GL_QUADS);
-                    rgba[3] = 1;
-                    for(i = 0;i<20;i++){
-                      ObjectSliceStateValue2RGB(ms,(1.0/20.0)*(20-i),rgba);		      		    
-                      glColor4fv(rgba);
-                      /* top left */
-                      glVertex2f(5.0f,(float)Scene.Height-6*(i)-20);
-                      /* top right */
-                      glVertex2f(15.0f,(float)Scene.Height-6*(i)-20);
-                      ObjectSliceStateValue2RGB(ms,(1.0/20.0)*(20-i-1),rgba);		      		    
-                      glColor4fv(rgba);
-                      /* bottom right */
-                      glVertex2f(15.0f,(float)Scene.Height-6*(i+1)-20);
-                      /* bottom left */
-                      glVertex2f(5.0f,(float)Scene.Height-6*(i+1)-20);
-                    }
-                    glEnd();
-                    for(i = 0;i<=20;i++){
-                      scale_v = (1.0/20.0)*(20-i)*ms->norm_factor+ms->norm_constant;
-                      if(i%10 == 0){
-                        sprintf(scale_v_s,"%4.2f",scale_v);
-                        test_pos_n_color[0] = 17;
-                        test_pos_n_color[1] = (float)Scene.Height-6*(i)-20-4; /* the +4 is half of the font height */
-                        test_pos_n_color[2] = 0;
-                        test_pos_n_color[3] = 1;
-                        test_pos_n_color[4] = 1;
-                        test_pos_n_color[5] = 1;
-                        c_p = scale_v_s;
-                        TextSetPosNColor(test_pos_n_color,&(test_pos_n_color[3]));
-                        /* use old reliable GLUT 8x13 */
-                        TextRenderOpenGL(0,scale_v_s);
-                      }
-                    }
-
-                    /* Change Back */		  
-                    glMatrixMode(GL_PROJECTION);
-                    glPopMatrix();   
-                    glMatrixMode(GL_MODELVIEW);
-                    glPopMatrix();
-                    glEnable(GL_LIGHTING);
-                    glEnable(GL_DEPTH_TEST);	 
-                  }
-      
-      
-                }	      
-              }
-              if(use_dlst&&ms->displayList) {
-                glEndList();
-              }
-            
-            }
-          }
-        }
-      }
-    }
-    if(state>=0) break;
-    a = a + 1;
-    if(a>=I->NState) break;
-  }
-#endif
 
 }
 
@@ -1633,6 +1108,17 @@ void ObjectSliceRecomputeExtent(ObjectSlice *I)
   I->Obj.ExtentFlag=extent_flag;
 }
 
+#if 0
+
+#define SLICE_TRADITIONAL 1
+#define SLICE_SLUDGE 2
+#define SLICE_OCEAN 3
+#define SLICE_HOT 4
+#define SLICE_GRAYABLE 5
+#define SLICE_RAINBOW 6
+#define SLICE_AFMHOT 7
+#define SLICE_GRAYSCALE 8
+
 void ObjectSliceStateValue2RGB(ObjectSliceState * ms,float v,float * result)
 {
   int i;
@@ -1696,3 +1182,4 @@ void ObjectSliceStateValue2RGB(ObjectSliceState * ms,float v,float * result)
   }
 
 }
+#endif

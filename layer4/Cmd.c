@@ -1878,7 +1878,7 @@ static PyObject *CmdSliceMap(PyObject *self, 	PyObject *args)
   APIExit();
   return(APIStatus(ok));  
 }
-
+#if 0
 
 static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args) {
   int ok = true;
@@ -1935,6 +1935,7 @@ static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args) {
   }
   return(APIStatus(ok));  
 }
+
 
 static PyObject *CmdSliceHeightmap(PyObject *self, 	PyObject *args) {
   int ok = true;
@@ -2046,6 +2047,7 @@ static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args) {
   }
   return(APIStatus(ok));  
 }
+#endif
 
 static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
   char *str1,*str2,*str3;
@@ -5118,7 +5120,7 @@ static PyMethodDef Cmd_methods[] = {
    {"reinitialize",          CmdReinitialize,         METH_VARARGS },
 	{"reset",                 CmdReset,                METH_VARARGS },
 	{"reset_rate",	           CmdResetRate,            METH_VARARGS },
-	{"rgbfunction",       CmdRGBFunction,              METH_VARARGS },
+   /*	{"rgbfunction",       CmdRGBFunction,              METH_VARARGS },*/
 	{"rock",	                 CmdRock,                 METH_VARARGS },
 	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
 	{"runwxpymol",	           CmdRunWXPyMOL,           METH_VARARGS },
@@ -5149,8 +5151,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"setframe",	           CmdSetFrame,             METH_VARARGS },
 	{"showhide",              CmdShowHide,             METH_VARARGS },
 	{"slice_map",                 CmdSliceMap,              METH_VARARGS },
-	{"slice_setlock",             CmdSliceSetLock,              METH_VARARGS},
-	{"slice_heightmap",           CmdSliceHeightmap,              METH_VARARGS},
+   /*	{"slice_setlock",             CmdSliceSetLock,              METH_VARARGS}, */
+   /*	{"slice_heightmap",           CmdSliceHeightmap,              METH_VARARGS},*/
 	{"smooth",	              CmdSmooth,               METH_VARARGS },
 	{"sort",                  CmdSort,                 METH_VARARGS },
    {"spectrum",              CmdSpectrum,             METH_VARARGS },

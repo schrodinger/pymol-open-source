@@ -237,7 +237,6 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
       *(p++) = -(I->border+I->height+I->height);
       *(p++) = I->border;
       c++;
-
     }
 
   }
@@ -431,7 +430,12 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
   scale = (1.0F+5*I->Gadget.GSet[0]->Coord[13*3]);
 
   I->Gadget.GSet[0]->Coord[13*3] = 0.0;
-  if(I->NColor==3) {
+  if(I->NColor==2) {
+    float mean = (I->Level[0]+I->Level[1])/2.0F;
+    I->Level[0]=(I->Level[0]-mean)*scale+mean;
+    I->Level[2]=(I->Level[1]-mean)*scale+mean;
+    ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);
+  } else if(I->NColor==3) {
     I->Level[0]=(I->Level[0]-I->Level[1])*scale+I->Level[1];
     I->Level[2]=(I->Level[2]-I->Level[1])*scale+I->Level[1];
     ExecutiveInvalidateRep(cKeywordAll,cRepAll,cRepInvColor);

@@ -1660,7 +1660,7 @@ EXAMPLES
             unlock()
       return r
 
-
+   unused = """
    def slice_lock(name,state=-1):
       '''
 DESCRIPTION
@@ -1841,6 +1841,8 @@ NOTES
       finally:
          unlock()
       return r
+
+"""
 
 # Aliases for Mother England.
 
