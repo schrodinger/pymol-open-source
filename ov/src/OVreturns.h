@@ -1,7 +1,6 @@
 #ifndef _H_OVreturns
 #define _H_OVreturns
 
-
 typedef struct {
   ov_word status;
 } OVstatus;

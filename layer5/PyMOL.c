@@ -78,23 +78,29 @@ typedef struct _CPyMOL {
   
 } _CPyMOL;
 
-OVstatus PyMOL_InitAPI(CPyMOL *I)
+static OVstatus PyMOL_InitAPI(CPyMOL *I)
 {
   OVContext *C = I->G->Context;
   OVreturn_word result;
-  
   I->Lex = OVLexicon_New(C->heap);
-  if(I->Lex) {
-    if(OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"pdb")))) I->lex_pdb = result.word;
-  }
+  if(!I->Lex) 
+    return_OVstatus_FAILURE;
+  
+  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"pdb")))) 
+    return_OVstatus_FAILURE
+  else
+    I->lex_pdb = result.word;
+
+ return_OVstatus_SUCCESS;
 }
 
-OVstatus PyMOL_PurgeAPI(CPyMOL *I)
+static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
 {
   OVLexicon_DEL_AUTO_NULL(I->Lex);
+  return_OVstatus_SUCCESS;
 }
 
-void PyMOL_Load(CPyMOL *I,char *content, char *content_type, char *format, char *object, 
+static void PyMOL_Load(CPyMOL *I,char *content, char *content_type, char *format, char *object, 
                 int frame, int discrete, int finish, int quiet)
 {
   /*
