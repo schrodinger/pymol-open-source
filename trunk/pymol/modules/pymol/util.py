@@ -234,15 +234,15 @@ def cbc(selection='(all)',first_color=7,quiet=1):
    for a in cmd.get_chains(selection):
       if len(string.strip(a)):
          if not quiet: print (" util.cbc: color %d,(chain %s)"%(c,a))
-         cmd.color("%d"%c,"(chain %s)"%a,quiet=quiet)
+         cmd.color("%d"%c,"(chain %s and (%s))"%(a,selection),quiet=quiet)
          c = c + 1
       elif len(a): # note, PyMOL's selection language can't handle this right now
          if not quiet: print (" util.cbc: color %d,(chain ' ')"%(c))
-         cmd.color("%d"%c,"(chain '')",quiet=quiet)
+         cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
          c = c + 1
       else:
          if not quiet: print (" util.cbc: color %d,(chain '')"%(c))
-         cmd.color("%d"%c,"(chain '')",quiet=quiet)
+         cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
          c = c + 1
 
 def chainbow(selection='(all)',first_color=7): # NOT THREAD SAFE
@@ -251,9 +251,9 @@ def chainbow(selection='(all)',first_color=7): # NOT THREAD SAFE
    '''
    for a in cmd.get_chains(selection):
       if len(a):
-         cmd.spectrum('count',selection="(chain %s)"%a,byres=1)
+         cmd.spectrum('count',selection="(chain %s and (%s))"%(a,selection),byres=1)
       else:
-         cmd.spectrum('count',selection="(chain '')",byres=1)
+         cmd.spectrum('count',selection="(chain '' and (%s))"%selection,byres=1)
          
 color_chains = cbc
 
