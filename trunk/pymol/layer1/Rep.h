@@ -34,15 +34,31 @@ Z* -------------------------------------------------------------------
 
 #define cRepCnt       11
 
-#define cRepInvStatus 10
+
+/* Hierarchical invalidation scheme - 
+ * each higher level event implies all of the lower levels 
+ * These used to be used just for graphics, but are now
+ * used by the molecular editor as well */
+
+/* invalidate atom colors */
 #define cRepInvColor  15
+/* invalidate label text */
 #define cRepInvText   16
+/* invalidate visible atoms */
 #define cRepInvVisib  20
+/* invalidate picked atoms */
 #define cRepInvPick   21
+/* invalidate atomic properties */
 #define cRepInvProp   22
+/* invalidate coordinates */
 #define cRepInvCoord  30
+/* invalidate graphic representation */
+#define cRepInvRep    35
+/* invalidate bond structure */
 #define cRepInvBonds  40
+/* invalidate atomic structure */
 #define cRepInvAtoms  50
+/* invalidate everything about a structure */
 #define cRepInvAll    100
 
 struct CoordSet;

@@ -426,17 +426,22 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 	 }
   else switch(k)
 	 {
-	 case 4: /* ctrl D */
-      if((!I->CurChar)||(I->CurChar==I->PromptChar))
-        exit(0); 
-      /* otherwise */
-    case 127: /* delete */
-      if(I->CursorChar>=0) {
-        if(I->CursorChar<I->CurChar)
-          I->CursorChar++;
-        if(I->CursorChar==I->CurChar)
-          I->CursorChar=-1;
+    case 4:
+    case 127: /* delete */     
+      if((!I->CurChar)||(I->CurChar==I->PromptChar)) {
+        PBlockAndUnlockAPI();
+        sprintf(buffer,"cmd._ctrl('%c')",k+64);
+        PRunString(buffer);
+        PLockAPIAndUnblock();      
+      } else {
+        if(I->CursorChar>=0) {
+          if(I->CursorChar<I->CurChar)
+            I->CursorChar++;
+          if(I->CursorChar==I->CurChar)
+            I->CursorChar=-1;
+        }
       }
+      break;
 	 case 8:
 		if(I->CurChar>I->PromptChar)
 		  {
@@ -491,7 +496,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       break;
 	 default:
       PBlockAndUnlockAPI();
-      sprintf(buffer,"cmd._ctrl('%c')",k+65);
+      sprintf(buffer,"cmd._ctrl('%c')",k+64);
       PRunString(buffer);
       PLockAPIAndUnblock();      
 		break;

@@ -119,7 +119,7 @@ void ExecutiveRebuildAll(void)
   while(ListIterate(I->Spec,rec,next,SpecList)) {
     if(rec->type==cExecObject)
       if(rec->obj->type==cObjectMolecule) {
-        ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvAll);
+        ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep);
       }
   }
   SceneDirty();
@@ -175,7 +175,7 @@ void ExecutiveSort(char *name)
             if(sele>=0) {
               op.code=OMOP_INVA;
               op.i1=cRepAll; 
-              op.i2=cRepInvAll;
+              op.i2=cRepInvRep;
               ExecutiveObjMolSeleOp(sele,&op);
             }
           }
@@ -218,6 +218,18 @@ void ExecutiveRemoveAtoms(char *s1)
 	 }
   if(!flag) {
     ErrMessage("Remove","no atoms removed.");
+  }
+}
+/*========================================================================*/
+void ExecutiveAddHydrogens(char *s1)
+{
+  int sele1;
+  ObjectMoleculeOpRec op;
+  
+  sele1 = SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op.code = OMOP_AddHydrogens;
+    ExecutiveObjMolSeleOp(sele1,&op);    
   }
 }
 /*========================================================================*/

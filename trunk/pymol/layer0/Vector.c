@@ -74,6 +74,25 @@ void get_divergent3f(float *src,float *dst)
   }
 }
 
+void get_random3f(float *x)
+{
+  x[0]=0.5-(rand()/(1.0+RAND_MAX));
+  x[1]=0.5-(rand()/(1.0+RAND_MAX));
+  x[2]=0.5-(rand()/(1.0+RAND_MAX));
+  normalize3f(x);
+}
+
+void get_system3f(float *x,float *y,float *z) /* make random system */
+{
+  get_random3f(x);
+  get_divergent3f(x,y);
+  cross_product3f(x,y,z);
+  normalize3f(z);
+  cross_product3f(z,x,y);
+  normalize3f(y);
+  normalize3f(x);
+}
+
 void get_system1f3f(float *x,float *y,float *z) /* make system in direction of x */
 {
   get_divergent3f(x,y);

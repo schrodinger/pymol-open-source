@@ -97,10 +97,10 @@ void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 }
 void UtilZeroMem(void *ptr,unsigned int howMuch )
 {
-  unsigned char *c;
-  c=ptr;
+  char *c;
+  c=(char*)ptr;
   while(howMuch--)
-	 *c++=0;
+	 *(c++)=0;
 }
 
 void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)

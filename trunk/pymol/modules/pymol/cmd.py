@@ -1314,6 +1314,19 @@ def remove(sele):
       unlock()
    return r
 
+def h_add(*arg):
+   r = 1
+   if len(arg):
+      sele = arg[0]
+   else:
+      sele = "(all)"
+   try:
+      lock()   
+      r = _cmd.h_add(sele)
+   finally:
+      unlock()
+   return r
+   
 def protect(*arg):
    if len(arg):
       a=arg[0]
@@ -2978,6 +2991,7 @@ keyword = {
    'fork'          : [dummy        , 1 , 1 , ',' , 3 ],
    'forward'       : [forward      , 0 , 0 , ',' , 0 ],
    'frame'         : [frame        , 1 , 1 , ',' , 0 ],
+   'h_add'         : [h_add        , 0 , 1 , ',' , 0 ],
    'help'          : [help         , 0 , 1 , ',' , 0 ],
    'hide'          : [hide         , 0 , 2 , ',' , 0 ],
    'intra_fit'     : [intra_fit    , 1 , 2 , ',' , 0 ],
@@ -3127,15 +3141,16 @@ special = {
 
 ctrl = {
    'B' : [ None                   , 0 , None ],
-   'C' : [ replace                , 1 , ('C',4,4) ],   
-   'F' : [ None                   , 0 , None ],   
+   'C' : [ replace                , 1 , ('C',4,4) ],
+   'D' : [ remove                 , 1 , ("_ed1",) ],   
+   'F' : [ h_add                  , 1 , ("_ed1",) ],   
    'G' : [ None                   , 0 , None ],
    'H' : [ None                   , 0 , None ],   
    'J' : [ None                   , 0 , None ],
    'K' : [ None                   , 0 , None ],   
    'L' : [ None                   , 0 , None ],   
-   'N' : [ None                   , 0 , None ],   
-   'O' : [ None                   , 0 , None ],   
+   'N' : [ replace                , 1 , ('N',4,3) ],
+   'O' : [ replace                , 1 , ('O',4,2) ],   
    'P' : [ None                   , 0 , None ],
    'Q' : [ None                   , 0 , None ],   
    'R' : [ ray                    , 0 , None ],   
@@ -3148,6 +3163,7 @@ ctrl = {
    'Y' : [ None                   , 0 , None ],
    'Z' : [ None                   , 0 , None ],   
    }
+
 class loadable:
    pdb = 0
    mol = 1

@@ -59,25 +59,25 @@ void SettingSetfv(int index,float *v)
 	 SceneDirty();
 	 break;
   case cSetting_valence:
-    ExecutiveInvalidateRep("all",cRepLine,cRepInvAll);
+    ExecutiveInvalidateRep("all",cRepLine,cRepInvRep);
     I->Setting[index].Value[0]=v[0];
     SceneChanged();
     break;
   case cSetting_dash_length:
   case cSetting_dash_gap:
-    ExecutiveInvalidateRep("all",cRepDash,cRepInvAll);
+    ExecutiveInvalidateRep("all",cRepDash,cRepInvRep);
     I->Setting[index].Value[0]=v[0];
     SceneChanged();
     break;
   case cSetting_stick_radius:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
-    ExecutiveInvalidateRep("all",cRepCyl,cRepInvAll);
+    ExecutiveInvalidateRep("all",cRepCyl,cRepInvRep);
     I->Setting[index].Value[0]=v[0];
     SceneChanged();
     break;
   case cSetting_label_color:
-    ExecutiveInvalidateRep("all",cRepLabel,cRepInvAll);
+    ExecutiveInvalidateRep("all",cRepLabel,cRepInvRep);
     I->Setting[index].Value[0]=v[0];
     SceneChanged();
     break;
@@ -563,6 +563,11 @@ void SettingInit(void)
   I->Setting[cSetting_spheroid_fill].Value[0] = 1.30;
   strcpy(I->Setting[cSetting_spheroid_fill].Name,
 			"spheroid_fill");
+
+  I->NSetting++;
+  I->Setting[cSetting_autoshow_nonbonded].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_autoshow_nonbonded].Name,
+			"autoshow_nonbonded");
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS

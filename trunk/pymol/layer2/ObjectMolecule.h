@@ -89,6 +89,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_Remove 20
 #define OMOP_Protect 21
 #define OMOP_Mask 22
+#define OMOP_AddHydrogens 23
 
 #include"CoordSet.h"
 
@@ -138,6 +139,8 @@ void ObjectMoleculeGetUniqueName(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeCreateSpheroid(ObjectMolecule *I);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
+int ObjectMoleculeVerifyChemistry(ObjectMolecule *I);
+int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index);
 
 #endif
 

@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Color.h"
 #include"Setting.h"
+#include"Util.h"
 
 typedef struct {
   ObjectMolecule *Obj;
@@ -74,13 +75,12 @@ void EditorReplace(char *elem,int geom,int valence)
 {
   CEditor *I = &Editor;
   int i0,i1;
-  float v[3],v0[3],v1[3],v2[3];
-  float d0[3],n0[3],n1[3],n2[3];
+  float v0[3],v1[3];
   int sele0,sele1;
-  int c;
   int state;
   AtomInfoType ai;
   
+  UtilZeroMem(&ai,sizeof(AtomInfoType));
   if(I->Obj) {
     state = SceneGetState();
 
@@ -106,7 +106,9 @@ void EditorReplace(char *elem,int geom,int valence)
           ai.valence=valence;
           ObjectMoleculePrepareAtom(I->Obj,i0,&ai);
           ObjectMoleculePreposReplAtom(I->Obj,i0,&ai);
-          ObjectMoleculeReplaceAtom(I->Obj,i0,&ai);
+          ObjectMoleculeReplaceAtom(I->Obj,i0,&ai); /* invalidates */
+          ObjectMoleculeFillOpenValences(I->Obj,i0);
+          EditorSetActiveObject(NULL,0);
         }
       }
     }
@@ -248,6 +250,8 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   CEditor *I = &Editor;
   
   if(!I->Obj) { /* non-anchored */
+    /* need to modify this code to move a complete covalent structure */
+
     I->DragObject=obj;
     I->DragIndex=index;
     I->DragSelection=-1;

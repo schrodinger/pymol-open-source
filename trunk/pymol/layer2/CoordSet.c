@@ -73,6 +73,25 @@ void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
   }
 }
 /*========================================================================*/
+void CoordSetMerge(CoordSet *I,CoordSet *cs) /* must be non-overlapping */
+{
+  int nIndex;
+  int a,i0;
+
+  nIndex = I->NIndex+cs->NIndex;
+  I->IdxToAtm=Realloc(I->IdxToAtm,int,nIndex);
+  VLACheck(I->Coord,float,nIndex*3);
+  for(a=0;a<cs->NIndex;a++) {
+    i0 = a+I->NIndex;
+    I->IdxToAtm[i0] = cs->IdxToAtm[a];
+    I->AtmToIdx[cs->IdxToAtm[a]] = i0;
+    copy3f(cs->Coord+a*3,I->Coord+i0*3);
+  }
+  if(I->fInvalidateRep)
+    I->fInvalidateRep(I,cRepAll,cRepInvAll);
+  I->NIndex = nIndex;
+}
+/*========================================================================*/
 void CoordSetPurge(CoordSet *I) 
      /* performs first half of removal  */
 {
@@ -166,7 +185,7 @@ int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode)
 int CoordSetGetAtomVertex(CoordSet *I,int at,float *v)
 {
   ObjectMolecule *obj;
-  int a1 = 01;
+  int a1 = 0;
   int result = 0;
 
   obj = I->Obj;
@@ -183,7 +202,6 @@ int CoordSetGetAtomVertex(CoordSet *I,int at,float *v)
 
   return(result);
 }
-
 /*========================================================================*/
 int CoordSetSetAtomVertex(CoordSet *I,int at,float *v)
 {
@@ -363,6 +381,10 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 
   /*  printf("inv %d %d \n",type,level);fflush(stdout);*/
 
+  if(I->NSpheroid!=I->NIndex) {
+    FreeP(I->Spheroid);
+    FreeP(I->SpheroidNormal);
+  }
   if(level>=cRepInvColor) 
 	 VLAFreeP(I->Color);
   if(type>=0) {
@@ -501,7 +523,10 @@ CoordSet *CoordSetNew(void)
   I->Color = NULL;
   I->AtmToIdx = NULL;
   I->IdxToAtm = NULL;
+  I->NTmpBond = 0;
   I->TmpBond = NULL;
+  I->TmpLinkBond = NULL;
+  I->NTmpLinkBond = 0;
   /*  I->Rep=VLAlloc(Rep*,cRepCnt);*/
   I->NRep=cRepCnt;
   I->TmpSymmetry = NULL;
