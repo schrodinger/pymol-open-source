@@ -494,6 +494,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   int mode;
 
   mode = ButModeTranslate(button,mod);
+  I->Button=button;    
+
   switch(mode) {
   case cButModeRotXYZ:
   case cButModeTransXY:
@@ -510,7 +512,6 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 I->LastX=x;
 	 I->LastY=y;	 
 	 SceneDirty();
-	 I->Button=button;    
     break;
   case cButModePk1:
   case cButModePk2:

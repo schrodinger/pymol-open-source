@@ -2570,10 +2570,31 @@ def paste():
          else:
             break;
          lst[-1]=lst[-1][:-1]
-      _cmd.paste(lst)
-      
+      _cmd.paste(lst)      
    return r
 
+def button(but,mod,act):
+   r=1
+   try:
+      lock()
+      but = string.lower(but)
+      but = but[0]
+      mod = string.lower(mod)
+      act = string.lower(act)
+      if not button_code.has_key(but):
+         print "Error: unrecognized button name '%s'." % but
+      elif not but_mod_code.has_key(mod):
+         print "Error: unrecognized button modifier '%s'." % mod
+      elif not but_act_code.has_key(act):
+         print "Error: unrecognized button action '%s'." % act
+      else:
+         but_code = button_code[but] + 3*but_mod_code[mod]
+         act_code = but_act_code[act]
+         r = _cmd.button(but_code,act_code)
+   finally:
+      unlock()
+   return r
+   
 def mmatrix(a):
    '''
 DESCRIPTION
@@ -2731,6 +2752,7 @@ keyword = {
    'api'           : [api          , 0 , 0 , ',' , 0 ],
    'backward'      : [backward     , 0 , 0 , ',' , 0 ],
    'bond'          : [bond         , 0 , 3 , ',' , 0 ],
+   'button'        : [button       , 3 , 3 , ',' , 0 ],
    'clip'          : [clip         , 2 , 2 , ',' , 0 ],
    'cls'           : [cls          , 0 , 0 , ',' , 0 ],
    'color'         : [color        , 1 , 2 , ',' , 0 ],
@@ -2827,6 +2849,41 @@ repres = {
    'nonbonded'     : 9,
    'nb_spheres'    : 10,
 }
+
+button_code = {
+   'l' : 0,
+   'm' : 1,
+   'r' : 2,
+   }
+
+but_mod_code = {
+   ''      : 0,
+   'none'  : 0,
+   'shft'  : 1,
+   'ctrl'  : 2,
+   'ctsh'  : 3
+   }
+
+but_act_code = {
+   'rota' :  0 ,
+   'move' :  1 ,
+   'movz' :  2 ,
+   'clip' :  3 ,
+   'rotz' :  4 ,
+   'clpn' :  5 ,
+   'clpf' :  6 ,
+   'pk1'  :  7 ,
+   'pk2'  :  8 ,
+   'pk3'  :  9 ,
+   '+pk1' : 10 ,
+   '+pk2' : 11 ,
+   '+pk3' : 12 ,
+   'pkat' : 13 ,
+   'pkdd' : 14 ,
+   'rotf' : 15 ,
+   'torf' : 16 ,
+   'movf' : 17 ,
+   }
 
 special = {
    1        : [ 'F1'        , None                   , 0 , None ],

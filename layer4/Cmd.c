@@ -89,6 +89,7 @@ static void APIExit(void)
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
 static PyObject *CmdBond(PyObject *dummy, PyObject *args);
+static PyObject *CmdButton(PyObject *dummy, PyObject *args);
 static PyObject *CmdClip(PyObject *self, 	PyObject *args);
 static PyObject *CmdCls(PyObject *self, 	PyObject *args);
 static PyObject *CmdColor(PyObject *self, PyObject *args);
@@ -166,6 +167,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"alter",	     CmdAlter,        METH_VARARGS },
 	{"alter_state",  CmdAlterState,   METH_VARARGS },
 	{"bond",         CmdBond,         METH_VARARGS },
+   {"button",       CmdButton,       METH_VARARGS },
 	{"clip",	        CmdClip,         METH_VARARGS },
 	{"cls",	        CmdCls,          METH_VARARGS },
 	{"color",	     CmdColor,        METH_VARARGS },
@@ -240,6 +242,17 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *CmdButton(PyObject *self, 	PyObject *args)
+{
+  char *i1,*i2;
+  PyArg_ParseTuple(args,"ii",&i1,&i2);
+  APIEntry();
+  ButModeSet(i1,i2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
 
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
