@@ -1626,10 +1626,10 @@ int RayTraceThread(CRayThreadInfo *T)
                       
                       if(!opaque_back) {
                         if(i<0) { /* hit nothing -- so don't blend alpha*/
-                          fc[0] = (0xFF&(last_pixel>>24));
-                          fc[1] = (0xFF&(last_pixel>>16));
-                          fc[2] = (0xFF&(last_pixel>>8));
-                          fc[3] = (0xFF&(last_pixel));
+                          fc[0] = (float)(0xFF&(last_pixel>>24));
+                          fc[1] = (float)(0xFF&(last_pixel>>16));
+                          fc[2] = (float)(0xFF&(last_pixel>>8));
+                          fc[3] = (float)(0xFF&(last_pixel));
                         } else { /* hit something -- so keep blend and compute cumulative alpha*/
                           if(i>=0) { /* make sure opaque objects get opaque alpha*/
                             float o1,o2;
@@ -1713,15 +1713,15 @@ int RayTraceThread(CRayThreadInfo *T)
                 float blue_part;
 
                 if(I->BigEndian) {
-                  fc[0] = (0xFF&(*pixel>>24));
-                  fc[1] = (0xFF&(*pixel>>16));
-                  fc[2] = (0xFF&(*pixel>>8));
-                  cc3   = (0xFF&(*pixel));
+                  fc[0] = (float)(0xFF&(*pixel>>24));
+                  fc[1] = (float)(0xFF&(*pixel>>16));
+                  fc[2] = (float)(0xFF&(*pixel>>8));
+                  cc3   =        (0xFF&(*pixel));
                 } else {
-                  cc3   = (0xFF&(*pixel>>24));
-                  fc[2] = (0xFF&(*pixel>>16));
-                  fc[1] = (0xFF&(*pixel>>8));
-                  fc[0] = (0xFF&(*pixel));
+                  cc3   =        (0xFF&(*pixel>>24));
+                  fc[2] = (float)(0xFF&(*pixel>>16));
+                  fc[1] = (float)(0xFF&(*pixel>>8));
+                  fc[0] = (float)(0xFF&(*pixel));
                 }
 
                 red_part = red_blend * fc[0];

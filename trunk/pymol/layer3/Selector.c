@@ -408,10 +408,10 @@ static int IntInOrder(int *list,int a,int b)
 void SelectorComputeFragPos(ObjectMolecule *obj,int state,int n_frag, char *prefix,float **vla)
 {
   SelectorType *I=&Selector;
-  SelectorUpdateTableSingleObject(obj,true,NULL,0);
   WordType name;
   int *sele;
   int *cnt;
+  SelectorUpdateTableSingleObject(obj,true,NULL,0);
   sele = Alloc(int,n_frag);
   cnt = Calloc(int,n_frag);
   VLACheck(*vla,float,n_frag*3+2);
