@@ -88,9 +88,15 @@ class State:
    def load_model(self,model):
       self.model = model
 
+   def get_zmat_ordering(self):
+      lst = []
+      for z in self.model.get_internal_tuples():
+         lst.append(z[0])
+      return lst
+   
    def get_data_group(self,basis = None,zmat = 1):
       model = self.model
-
+         
       gmsList = []
       
       # write header records
@@ -101,8 +107,8 @@ class State:
       # write atom records in an ordering compatible with internal
       # coordinate generation
       c = 1
-      for z in model.get_internal_tuples():
-         a = model.atom[z[0]]
+      for z in self.get_zmat_ordering():
+         a = model.atom[z]
          if not len(a.name):
             name = a.symbol + "%02d"%c
          else:
@@ -338,10 +344,150 @@ class State:
       gmsList.append(" $END\n")
       return gmsList
 
-   def get_zmat_group(self,auto=1,dlc=1):
+   def get_zmat_ext_freeze_torsion(self,flag=3):
+      # requires PYMOL to read dihedrals from structure
+      # requires list of dihedrals from tinker.amber
+      #
+      from pymol import cmd
+      from tinker.amber import Topology      
+
+      cmd.load_model(self.model,'_gamess1')
+      model = self.model
+
+      # get mapping of model ordering to zmat ordering
+      m2z = {}
+      z2m = {}
+      c = 1 # GAMESS is one-based
+      for a in self.get_zmat_ordering():
+         m2z[a] = c
+         z2m[c] = a
+         c = c + 1
+
+      # get all torsions in the molecule
+
+      topo = Topology(self.model)
+
+      # find those where flag is set in all atoms
+
+      mask = 2 ** flag
+
+      frozen_list = []
+
+      for a in topo.torsion.keys():
+         if (model.atom[a[0]].flags&
+             model.atom[a[1]].flags&
+             model.atom[a[2]].flags&
+             model.atom[a[3]].flags)&mask:
+            frozen_list.append(a)
+
+      print " freeze-torsion: %d torsions will be frozen."%len(frozen_list)
+
+      irzmat = []
+      ifzmat = []
+      fvalue = []
+      if len(frozen_list):
+
+         for frozen in frozen_list:
+            # find additional torsions which need to be removed
+
+            remove = []
+
+            for a in topo.torsion.keys():
+               if (((a[1]==frozen[1])and(a[2]==frozen[2])) or
+                   ((a[2]==frozen[1])and(a[1]==frozen[2]))):
+                  if a!=frozen:
+                     remove.append(a)
+
+            # convert to internal coordinate ordering
+
+            frozen_z = (m2z[frozen[0]],m2z[frozen[1]],
+                        m2z[frozen[2]],m2z[frozen[3]])
+
+            remove_z = []
+            for a in remove:
+               remove_z.append(m2z[a[0]],m2z[a[1]],m2z[a[2]],m2z[a[3]])
+
+            # now reorder atoms in torsions to reflect z_matrix ordering
+            # (not sure this is necessary)
+
+            if frozen_z[0]>frozen_z[3]:
+               frozen_z = (frozen_z[3],frozen_z[2],frozen_z[1],frozen_z[0])
+            tmp_z = []
+            for a in remove_z:
+               if a[0]>a[3]:
+                  tmp_z.append((a[3],a[2],a[1],a[0]))
+               else:
+                  tmp_z.append(a)
+            remove_z = tmp_z
+
+            # get value of the fixed torsion
+
+            fixed = (z2m[frozen_z[0]],z2m[frozen_z[1]],
+                     z2m[frozen_z[2]],z2m[frozen_z[3]])
+
+            dihe = cmd.get_dihedral("(_gamess1 and id %d)"%fixed[0],
+                             "(_gamess1 and id %d)"%fixed[1],
+                             "(_gamess1 and id %d)"%fixed[2],
+                             "(_gamess1 and id %d)"%fixed[3])
+
+            # write out report for user edification
+
+            print " freeze-torsion: fixing freeze-torsion:"
+            print " freeze-torsion: %d-%d-%d-%d (pymol), %d-%d-%d-%d (gamess)"%(
+               fixed[0],fixed[1],fixed[2],fixed[3],
+               frozen_z[0],frozen_z[1],frozen_z[2],frozen_z[3])
+            print " freeze-torsion: at %5.3f"%dihe
+            print " freeze-torsion: removing redundant torsions:"
+            for a in remove_z[1:]:
+               print " freeze-torsion: %d-%d-%d-%d (pymol), %d-%d-%d-%d (gamess)"%(
+                  z2m[a[0]],z2m[a[1]],z2m[a[2]],z2m[a[3]],
+                  a[0],a[1],a[2],a[3])
+
+            # add parameters for this torsion into the list
+
+            ifzmat.append((3,frozen_z[0],frozen_z[1],frozen_z[2],frozen_z[3]))
+            fvalue.append(dihe)
+
+            if len(remove_z):
+               for a in remove_z[1:]:
+                  irzmat.append((3,a[0],a[1],a[2],a[3]))
+
+      # generate restrained dihedral information
+
+      zmat_ext = []
+      if len(ifzmat):
+         zmat_ext.append(" IFZMAT(1)=\n")
+         comma = ""
+         for a in ifzmat:
+            zmat_ext.append(comma+"%d,%d,%d,%d,%d\n"%a)
+            comma = ","
+      if len(fvalue):
+         zmat_ext.append(" FVALUE(1)=\n")
+         comma = ""
+         for a in fvalue:
+            zmat_ext.append(comma+"%1.7f\n"%a)
+            comma = ","
+      if len(irzmat):
+         zmat_ext.append(" IRZMAT(1)=\n")
+         comma = ""
+         for a in irzmat:
+            zmat_ext.append(comma+"%d,%d,%d,%d,%d\n"%a)
+            comma = ","
+
+      if len(zmat_ext):
+         return zmat_ext
+      else:
+         return None
+      
+   def get_zmat_group(self,auto=1,dlc=1,zmat_extend=None):
       gmsList = []
       if auto and dlc:
-         gmsList.append(" $ZMAT DLC=.TRUE. AUTO=.TRUE. $END\n")
+         if zmat_extend == None:
+            gmsList.append(" $ZMAT DLC=.TRUE. AUTO=.TRUE. $END\n")
+         else:
+            gmsList.append(" $ZMAT DLC=.TRUE. AUTO=.TRUE.\n")
+            gmsList.extend(zmat_extend)
+            gmsList.append(" $END\n")            
       else:
          raise RuntimeError
       return gmsList
@@ -389,13 +535,13 @@ class State:
          gmsList.append(" $SCF DIRSCF=.TRUE. $END\n")
       return gmsList
 
-   def get_optimize_job(self,dirscf=1):
+   def get_optimize_job(self,dirscf=1,zmat_extend=None):
       gmsList = []
       gmsList.extend(self.get_contrl_group(runtyp='OPTIMIZE'))
       gmsList.extend(self.get_basis_group())
       gmsList.extend(self.get_scf(dirscf=dirscf))
       gmsList.extend(self.get_data_group())
-      gmsList.extend(self.get_zmat_group())
+      gmsList.extend(self.get_zmat_group(zmat_extend=zmat_extend))
       gmsList.append(" $STATPT NSTEP=50 $END\n")
       return gmsList
          
@@ -470,7 +616,21 @@ class State:
                   run_prefix=run_prefix)
       self.read_output_list(result[0])
       self.read_punch_list(result[1])
-      
+
+   def get_energy(self,run_prefix=None):
+      gmsList = self.get_energy_job()
+      result = do(gmsList,output=1,punch=1,
+                  run_prefix=run_prefix)
+      self.read_output_list(result[0])
+      self.read_punch_list(result[1])
+
+   def get_optimized_energy(self,run_prefix=None,zmat_extend=None):
+      gmsList = self.get_optimize_job(zmat_extend=zmat_extend)
+      result = do(gmsList,output=1,punch=1,
+                  run_prefix=run_prefix)
+      self.read_output_list(result[0])
+      self.read_punch_list(result[1])
+
    def get_optimized_charges(self,run_prefix=None,skip=None):
       gmsList = self.get_optimize_charge_job()
       result = do(gmsList,output=1,punch=1,
