@@ -49,7 +49,9 @@ _ext_gui = None
 
 # include the modules directory
 
-sys.path.append(os.environ['PYMOL_PATH']+'/modules')
+modules_path = os.environ['PYMOL_PATH']+'/modules'
+if modules_path not in sys.path:
+   sys.path.append(modules_path)
 
 # include installed numpy on win32 
 

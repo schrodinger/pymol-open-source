@@ -732,7 +732,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 /*  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYTHONPATH']=os.environ['PYTHONPATH']+';'+os.getcwd()+'/modules'\n");*/
   PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
-  PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
+  PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 
   pymol = PyImport_AddModule("pymol"); /* get it */
