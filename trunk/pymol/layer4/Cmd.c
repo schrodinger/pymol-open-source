@@ -35,6 +35,11 @@ Z* -------------------------------------------------------------------
 
 */
    
+
+/* TODO: Put in some exception handling and reporting for the
+ * python calls, especially, PyArg_ParseTuple()
+ */
+
 #include<Python.h>
 
 #include"os_std.h"
@@ -97,6 +102,10 @@ static PyObject *Cmd_Failure;
 
 static void APIEntry(void)
 {
+  PRINTFD(FB_API)
+    " APIEntry-DEBUG: called.\n"
+    ENDFD;
+
 if(PyMOLTerminating) {/* try to bail */
 #ifdef WIN32
 	abort();
@@ -109,6 +118,9 @@ if(PyMOLTerminating) {/* try to bail */
 
 static void APIExit(void)
 {
+  PRINTFD(FB_API)
+    " APIExit-DEBUG: called.\n"
+    ENDFD;
   PBlock();
   P_glut_thread_keep_out--;
 }
@@ -165,6 +177,7 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
+static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdMask(PyObject *self, PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
 static PyObject *CmdLabel(PyObject *self,   PyObject *args);
@@ -209,6 +222,7 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetFeedbackMask(PyObject *dummy, PyObject *args);
 static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
 static PyObject *CmdSetTitle(PyObject *self, PyObject *args);
+static PyObject *CmdSetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
@@ -276,6 +290,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
 	{"get_state",             CmdGetState,             METH_VARARGS },
 	{"get_type",              CmdGetType,              METH_VARARGS },
+   {"get_view",              CmdGetView,              METH_VARARGS },
    {"get_wizard",            CmdGetWizard,            METH_VARARGS },
 	{"h_add",                 CmdHAdd,                 METH_VARARGS },
 	{"h_fill",                CmdHFill,                METH_VARARGS },
@@ -327,6 +342,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
 	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
+   {"set_view",              CmdSetView,              METH_VARARGS },
 	{"setframe",	           CmdSetFrame,             METH_VARARGS },
 	{"showhide",              CmdShowHide,             METH_VARARGS },
 	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
@@ -346,6 +362,42 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+static PyObject *CmdGetView(PyObject *self, 	PyObject *args)
+{
+  SceneViewType view;
+  APIEntry();
+  SceneGetView(view);
+  APIExit();
+  return(Py_BuildValue("(fffffffffffffffffffffffff)",
+                   view[ 0],view[ 1],view[ 2],view[ 3], /* 4x4 mat */
+                   view[ 4],view[ 5],view[ 6],view[ 7],
+                   view[ 8],view[ 9],view[10],view[11],
+                   view[12],view[13],view[14],view[15],
+                   view[16],view[17],view[18], /* pos */
+                   view[19],view[20],view[21], /* origin */
+                   view[22],view[23], /* clip */
+                   view[24] /* orthoscopic*/
+                       ));
+}
+static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
+{
+  SceneViewType view;
+  PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)",
+                   &view[ 0],&view[ 1],&view[ 2],&view[ 3], /* 4x4 mat */
+                   &view[ 4],&view[ 5],&view[ 6],&view[ 7],
+                   &view[ 8],&view[ 9],&view[10],&view[11],
+                   &view[12],&view[13],&view[14],&view[15],
+                   &view[16],&view[17],&view[18], /* pos */
+                   &view[19],&view[20],&view[21], /* origin */
+                   &view[22],&view[23], /* clip */
+                   &view[24] /* orthoscopic*/
+                   );
+  APIEntry();
+  SceneSetView(view);
+  APIExit();
+  Py_INCREF(Py_None);
+  return(Py_None);
+}
 static PyObject *CmdGetState(PyObject *self, 	PyObject *args)
 {
   int result;

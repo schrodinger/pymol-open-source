@@ -21,6 +21,17 @@ Z* -------------------------------------------------------------------
 #include"Object.h"
 #include"Ortho.h"
 
+typedef float SceneViewType[25]; 
+/* all information required to define the geometry of a particular view,
+   for shipping to and from python as a list of floats
+   0-15 = 4x4 rotation matrix 
+   16-18 = position
+   19-21 = origin
+   22    = front plane
+   23    = rear plane
+   24    = orthoscopic flag 
+*/
+
 void SceneInit(void);
 void SceneDone(void);
 void SceneUpdate(void);
@@ -71,7 +82,9 @@ void ScenePurgeCopy(void);
 void SceneDontCopyNext(void);
 void ScenePrepareExit(void);
 void SceneGetViewNormal(float *v);
-
+void SceneClipSet(float front,float back);
+void SceneGetView(SceneViewType view);
+void SceneSetView(SceneViewType view);
 
 #endif
 

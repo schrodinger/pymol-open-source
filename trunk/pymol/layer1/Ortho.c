@@ -471,7 +471,6 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
             if(I->CursorChar>=0) {
               if(I->CursorChar>I->PromptChar) {
                 strcpy(buffer,I->Line[curLine]+I->CursorChar);
-                I->Line[curLine][I->CursorChar]=k;
                 I->CursorChar--;
                 I->CurChar--;
                 strcpy(I->Line[curLine]+I->CursorChar,buffer);
@@ -515,7 +514,14 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
     case 4: /* CTRL D */
       if((!I->CurChar)||(I->CurChar==I->PromptChar)) {
         OrthoKeyControl(4);
-      } else {
+      } else if((I->CurChar>I->PromptChar)&&
+                (I->CursorChar>=0)&&
+                (I->CursorChar<I->CurChar)) { /* deleting */
+        curLine=I->CurLine&OrthoSaveLines;
+        strcpy(buffer,I->Line[curLine]+I->CursorChar+1);
+        I->CurChar--;
+        strcpy(I->Line[curLine]+I->CursorChar,buffer);
+      } else { /* filename completion query */
         curLine=I->CurLine&OrthoSaveLines;
         if(I->PromptChar) {
           strcpy(buffer,I->Line[curLine]);
@@ -523,6 +529,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
                     sizeof(OrthoLineType)-I->PromptChar); /* just print, don't complete */
         }
       }
+      break;
 	 case 9: /* CTRL I -- tab */
       if(mod&cOrthoCTRL) {
         OrthoKeyControl(k); 

@@ -104,6 +104,48 @@ int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
 
 /*========================================================================*/
+void SceneGetView(SceneViewType view)
+{
+  float *p;
+  int a;
+  CScene *I=&Scene;
+  p=view;
+  for(a=0;a<16;a++)
+    *(p++) = I->RotMatrix[a];
+  *(p++) = I->Pos[0];
+  *(p++) = I->Pos[1];
+  *(p++) = I->Pos[2];
+  *(p++) = I->Origin[0];
+  *(p++) = I->Origin[1];
+  *(p++) = I->Origin[2];
+  *(p++) = I->Front;
+  *(p++) = I->Back;
+  *(p++) = SettingGet(cSetting_ortho);
+}
+/*========================================================================*/
+void SceneSetView(SceneViewType view)
+{
+  float *p;
+  int a;
+  CScene *I=&Scene;
+  p=view;
+  for(a=0;a<16;a++)
+    I->RotMatrix[a] = *(p++); 
+  I->Pos[0] = *(p++);
+  I->Pos[1] = *(p++);
+  I->Pos[2] = *(p++);
+  I->Origin[0] = *(p++);
+  I->Origin[1] = *(p++);
+  I->Origin[2] = *(p++);
+  SceneClipSet(p[0],p[1]);
+  p+=2;
+  SettingSet(cSetting_ortho,*(p++));
+  PRINTFB(FB_Scene,FB_Actions)
+    " Scene: view updated."
+    ENDFB;
+
+}
+/*========================================================================*/
 void SceneDontCopyNext(void)
 /* disables automatic copying of the image for the next rendering run */
 {
@@ -134,20 +176,26 @@ void SceneTranslate(float x,float y, float z)
   SceneDirty();
 }
 /*========================================================================*/
-void SceneClip(int plane,float movement)
+void SceneClipSet(float front,float back)
 {
   CScene *I=&Scene;
-  if(plane) {
-	 I->Back-=movement;
-  } else {
-	 I->Front-=movement;
-  }
+  I->Front=front;
+  I->Back=back;
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
   if(I->Front<cFrontMin) I->Front=cFrontMin;
   I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
   SceneDirty();
-
+}
+/*========================================================================*/
+void SceneClip(int plane,float movement) /* 0=front, 1=back*/
+{
+  CScene *I=&Scene;
+  if(plane) {
+    SceneClipSet(I->Front,I->Back-movement);
+  } else {
+    SceneClipSet(I->Front-movement,I->Back);
+  }
 }
 /*========================================================================*/
 void SceneSetMatrix(float *m)
@@ -737,7 +785,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   scale = I->Height;
   if(scale > I->Width)
 	 scale = I->Width;
-  scale = 0.38 * scale;
+  scale = 0.45 * scale;
 
   SceneDontCopyNext();
   switch(mode) {

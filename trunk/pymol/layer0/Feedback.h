@@ -73,10 +73,83 @@ function name.
 */
 
 
-/* Feedback level bit masks */
 
 /* WARNING: The following constants are replicated in Python for the purpose
  * of minimize program startup time */
+
+/* Discrete Systems and/or Code Modules */
+
+#define FB_All               0 /* only used for setting */
+
+/* NOTE, the following don't have to be packed, or in order -- we just
+   need to record what the maximum index is.  Rember that that
+   feedback architecture is purely a performance hack, so expect some
+   inconvenience... 
+ */
+
+/* layer 0 */
+
+#define FB_Isosurf                   1
+#define FB_Map                       2
+#define FB_Matrix                    3
+#define FB_MyPNG                     4
+
+/* layer 1 */
+
+#define FB_Feedback                  12
+#define FB_Scene                     13
+#define FB_Threads                   14  /* part of P.c */
+#define FB_Symmetry                  15
+#define FB_Ray                       16
+#define FB_Settings                  17
+#define FB_Object                    18
+#define FB_Ortho                     19
+
+/* layer 2 */
+
+#define FB_CoordSet                  25
+#define FB_DistSet                   26
+
+#define FB_ObjectMolecule            30
+#define FB_ObjectMap                 31
+#define FB_ObjectMesh                32
+#define FB_ObjectDist                33 
+#define FB_ObjectCGO                 34
+#define FB_ObjectCallback            35
+
+#define FB_RepWireBond               45
+#define FB_RepCylBond                46
+
+#define FB_RepLabel                  48
+#define FB_RepSphere                 49
+#define FB_RepSurface                50
+#define FB_RepMesh                   51
+#define FB_RepDot                    52
+#define FB_RepNonbonded              53
+#define FB_RepNonbondedSphere        54
+#define FB_RepDistDash               55
+#define FB_RepDistLabel              56
+#define FB_RepRibbon                 57
+
+/* layer 3 */
+
+#define FB_Executive                 70
+#define FB_Selector                  71
+#define FB_Editor                    72
+
+/* layer 4 */
+
+#define FB_Export                    75
+#define FB_CCmd                      76  /* "cmd" is just the python version */
+#define FB_API                       77  /* APIEntry/Exit */
+
+/* layer 5 */
+
+#define FB_Main                      80  
+
+#define FB_Total                     81 /* highest index + 1 */
+
+/* Feedback level bit masks */
 
 #define FB_None            0x00
 
@@ -90,17 +163,6 @@ function name.
 
 #define FB_Everything      0xFF 
 
-/* Systems/Code Modules */
-
-#define FB_All               0 /* only used for setting */
-
-#define FB_Main              1   
-#define FB_Parser            2
-#define FB_Selector          3
-#define FB_Executive         4
-#define FB_Feedback          5
-#define FB_Threads           6
-#define FB_Total             7 /* total number of systems */
 extern char *FeedbackMask;
 
 void FeedbackInit(void);

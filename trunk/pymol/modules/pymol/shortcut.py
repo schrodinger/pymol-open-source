@@ -1,5 +1,9 @@
 
 import copy
+import types
+
+def is_string(obj):
+   return isinstance(obj,types.StringType)
 
 class Shortcut:
    
@@ -52,7 +56,7 @@ class Shortcut:
       self.keywords.append(kee)
       hash = self.shortcut
       for b in range(1,len(kee)+1):
-         sub = a[0:b]
+         sub = kee[0:b]
          if hash.has_key(sub):
             hash[sub]=0
          else:
@@ -60,6 +64,24 @@ class Shortcut:
       for a in self.keywords:
          hash[a]=a
 
+   def auto_err(self,kee,descrip=None):
+      result = None
+      if not self.shortcut.has_key(kee):
+         if descrip!=None:
+            print "Error: unknown %s: '%s'."%(
+               descrip,kee)
+            raise parsing.QuietException
+      else:
+         result = self.shortcut[kee]
+         if not is_string(result):
+            if descrip!=None:
+               print "Error: ambiguous %s:"%descrip
+               lst = parsing.list_to_str_list(result)
+               for a in lst:
+                  print a
+               raise QuietException
+      return result
+              
 if __name__=='__main__':
    list = [ 'warren','wasteland','electric','well' ]
    sc = Shortcut(list)
@@ -73,3 +95,5 @@ if __name__=='__main__':
    print tv==['warren', 'wasteland', 'well'],tv   
    tv = sc.ambiguous('e')
    print tv==None,tv   
+
+import parsing
