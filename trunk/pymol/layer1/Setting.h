@@ -510,10 +510,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_surface_ramp_above_mode    364
 #define cSetting_stereo                     365
 #define cSetting_wizard_prompt_mode         366
+#define cSetting_coulomb_cutoff             367
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       367
+#define cSetting_INIT                       368
 
 #endif
 

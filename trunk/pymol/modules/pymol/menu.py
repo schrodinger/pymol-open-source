@@ -246,6 +246,59 @@ def presets(s):
            [ 1, 'default'   ,'preset.default("'+s+'")'          ],           
            ]
 
+#def hydrogens(s):
+#   return [[ 2, 'Hydrogens:'       ,''                        ],     
+#           [ 1, 'add'   ,'cmd.h_add("'+s+'")'          ],           
+#           [ 1, 'remove'   ,'cmd.remove("('+s+') and hydro")'          ],
+#           ]
+
+def state(s):
+   return [[ 2, 'State:'       ,''                        ],
+           [ 1, 'freeze'  ,'cmd.set("state",cmd.get_state(),"'+s+'")'        ],
+           [ 1, 'thaw'  ,'cmd.set("state",0,"'+s+'")'        ],           
+           ]
+   
+def movement(s):
+   return [[ 2, 'Movement:'       ,''                        ],     
+           [ 1, 'protect'   ,'cmd.protect("'+s+'")'          ],
+           [ 1, 'deprotect'   ,'cmd.deprotect("'+s+'")'          ],           
+           ]
+   
+def selection(s):
+   return [[ 2, 'Selection:'       ,''                        ],     
+           [ 1, 'mask'   ,'cmd.mask("'+s+'")'          ],
+           [ 1, 'unmask'   ,'cmd.unmask("'+s+'")'          ],           
+           ]
+
+def compute(s):
+   return [[ 2, 'Compute:'       ,''                        ],     
+           [ 1, 'atom count'   ,'cmd.count_atoms("'+s+'",quiet=0)'          ],
+           [ 0, ''               ,''                             ],           
+           [ 1, 'formal charge sum'   ,'util.sum_formal_charges("'+s+'",quiet=0)'          ],
+           [ 1, 'partial charges sum'   ,'util.sum_partial_charges("'+s+'",quiet=0)'          ],                      
+           ]
+
+def vacuum(s):
+   return [[ 2, 'Vacuum Electrostatics:'       ,''                        ],
+           [ 2, '\\955WARNING:\\595 unvalidated and experimental!', '' ],
+           [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+s+'",quiet=0)'          ],
+           [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+s+'",absolute=0,quiet=0)'          ],
+           [ 2, '\\955NOTE:\\559 vacuum electrostatic potentials for', '' ],
+           [ 2, '\\559macromolecules are not really appropriate', '' ],
+           [ 2, '\\559or meaningful -- so please use with caution.', '' ],
+           ]
+   
+def mol_assign(s):
+   return [[ 2, 'Assign:'       ,''                        ],     
+           [ 1, 'Amber 99 atomic properties',  'util.assign_amber99("'+s+'")' ],
+           ]
+   
+def mol_generate(s):
+   return [[ 2, 'Generate:'       ,''                        ],
+           [ 1, 'vacuum electrostatics', vacuum(s) ],           
+#           [ 1, 'assign', mol_assign(s) ],
+           ]
+   
 def invert(s):
    return [[ 2, 'Invert:'       ,''                        ],     
            [ 1, 'within object(s)'     ,'cmd.select("'+s+'","((byobj '+s+') and not '+s+')",show=1)'    ],
@@ -347,13 +400,9 @@ def sele_action(s):
              'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
              ],                      
            [ 0, ''          ,''                                  ],
-           [ 1, 'mask'           ,'cmd.mask("'+s+'")'            ],
-           [ 1, 'unmask'         ,'cmd.unmask("'+s+'")'          ],
-           [ 0, ''          ,''                                              ],
-           [ 1, 'protect'        ,'cmd.protect("'+s+'")'         ],
-           [ 1, 'deprotect'      ,'cmd.deprotect("'+s+'")'       ],
-           [ 0, ''          ,''                                              ],
-           [ 1, 'count atoms'    ,'cmd.count_atoms("'+s+'",quiet=0)'     ],           
+           [ 1, 'selection'      , selection(s)         ],           
+           [ 1, 'movement'       , movement(s)         ],
+           [ 1, 'compute'        , compute(s)         ],           
            ]
 
 
@@ -365,30 +414,26 @@ def mol_action(s):
            [ 1, 'orient'       , 'cmd.orient("'+s+'")'    ],
            [ 0, ''          ,''                                              ],
            [ 1, 'preset'  , presets(s)       ],
+           [ 0, ''          ,''                                              ],           
+           [ 1, 'generate'  , mol_generate(s)       ],           
            [ 0, ''               ,''                             ],
            [ 1, 'assign sec. struc.'  ,'cmd.dss("'+s+'")'        ],
            [ 1, 'find polar contacts'  ,
              'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0)'
              ],                      
-           [ 0, ''          ,''                                              ],
-           [ 1, 'freeze state'  ,'cmd.set("state",cmd.get_state(),"'+s+'")'        ],
-           [ 1, 'thaw state'  ,'cmd.set("state",0,"'+s+'")'        ],           
            [ 0, ''             , ''                       ],
            [ 1, 'rename object', 'cmd.wizard("renaming","'+s+'")'          ],
            [ 1, 'duplicate object'    ,'cmd.create(None,"'+s+'")'     ],           
            [ 1, 'delete object'       , 'cmd.delete("'+s+'")'    ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
-           [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
-           [ 1, 'remove waters'  ,'cmd.remove("(resn HOH+WAT and ('+s+'))")'     ],           
+           [ 1, 'add hydrogens'  ,'cmd.h_add("'+s+'")'     ],           
+           [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+s+'))")'     ],           
+           [ 1, 'remove waters'  ,'cmd.remove("(resn HOH+WAT and ('+s+'))")'     ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'protect'  ,'cmd.protect("'+s+'")'        ],
-           [ 1, 'deprotect'  ,'cmd.deprotect("'+s+'")'        ],
-           [ 0, ''          ,''                                              ],
-           [ 1, 'mask'  ,'cmd.mask("'+s+'")'        ],
-           [ 1, 'unmask'  ,'cmd.unmask("'+s+'")'        ],
-           [ 0, ''          ,''                                              ],
-           [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'",quiet=0)'        ],
+           [ 1, 'state'      , state(s)         ],                      
+           [ 1, 'selection'      , selection(s)         ],           
+           [ 1, 'movement'       , movement(s)         ],           
+           [ 1, 'compute'        , compute(s)         ],
            ]
 
 def simple_action(s):
@@ -428,10 +473,9 @@ def all_action(s):
            [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
            [ 1, 'remove waters'  ,'cmd.remove("(resn HOH+WAT and ('+s+'))")'     ],                      
            [ 0, ''          ,''                                              ],
-           [ 1, 'protect'        ,'cmd.protect("'+s+'")'         ],
-           [ 1, 'deprotect'      ,'cmd.deprotect("'+s+'")'       ],
-           [ 0, ''             , ''                      ],
-           [ 1, 'count atoms'       , 'cmd.count_atoms("all",quiet=0)'     ]
+           [ 1, 'selection'      , selection(s)         ],                      
+           [ 1, 'movement'       , movement(s)         ],
+           [ 1, 'compute'        , compute(s)         ],                      
            ]
 
 
@@ -452,7 +496,8 @@ def mol_labels(s):
            [ 1, 'segment identifier'       , 'cmd.label("'+s+'","segi")'         ],           
            [ 0, ''               , ''                                  ],
            [ 1, 'b-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],
-           [ 1, 'occupancy'       , 'cmd.label("'+s+'","\'%1.2f\'%q")'  ],           
+           [ 1, 'occupancy'       , 'cmd.label("'+s+'","\'%1.2f\'%q")'  ],
+           [ 1, 'vdw radius'       , 'cmd.label("'+s+'","\'%1.2f\'%vdw")'  ],
            [ 0, ''               , ''                                  ],
            [ 1, 'partial charge(.2f)' ,            
   'cmd.label("'+s+'","\'%.2f\'%partial_charge")'                      ],
@@ -460,6 +505,7 @@ def mol_labels(s):
   'cmd.label("'+s+'","\'%.4f\'%partial_charge")'                      ],
            [ 1, 'formal charge' , 
   'cmd.label("'+s+'","\'%d\'%formal_charge")'                      ],
+           [ 1, 'bohr radius'       , 'cmd.label("'+s+'","\'%1.2f\'%bohr")'  ],                                 
            [ 0, ''               , ''                                  ],
            [ 1, 'text type'      , 'cmd.label("'+s+'","text_type")'    ],
            [ 1, 'numeric type'   , 'cmd.label("'+s+'","numeric_type")' ],

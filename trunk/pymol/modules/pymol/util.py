@@ -24,6 +24,101 @@ from pymol import movie
 mload = movie.load
 mrock = movie.rock
 mroll = movie.roll
+
+   
+def sum_formal_charges(selection="(all)",quiet=1):
+   pymol.stored._util_sum_fc = 0.0
+   cmd.iterate(selection,"stored._util_sum_fc=stored._util_sum_fc+formal_charge",quiet=1)
+   result = pymol.stored._util_sum_fc
+   if not quiet:
+      print " util.sum_formal_charges: sum = %0.1f"%result
+   return result
+
+def sum_partial_charges(selection="(all)",quiet=1):
+   pymol.stored._util_sum_pc = 0.0
+   cmd.iterate(selection,"stored._util_sum_pc=stored._util_sum_pc+partial_charge",quiet=1)
+   result = pymol.stored._util_sum_pc
+   if not quiet:
+      print " util.sum_partial_charges: sum = %0.3f"%result
+   return result
+
+def protein_vacuum_esp(selection, absolute=1,border=10.0,quiet = 1):
+
+   if ((string.split(selection)!=[selection]) or
+       selection not in cmd.get_names('objects')):
+      print " Error: must provide an object name"
+      raise cmd.QuietException
+   obj_name = selection + "_e_chg"
+   map_name = selection + "_e_map"
+   pot_name = selection + "_e_pot"
+   cmd.disable(selection)
+   cmd.delete(obj_name)
+   cmd.delete(map_name)
+   cmd.delete(pot_name)
+   cmd.create(obj_name,"polymer and ("+selection+") and (not resn A+C+T+G+U) and (not hydro)") # try to just get protein...
+
+   from chempy.champ import assign
+
+   # apply a few kludges
+
+   # remove alternate conformers
+
+   cmd.remove(obj_name+" and not alt ''+A")
+
+   # convent Seleno-methionine to methionine
+
+   cmd.alter(obj_name+"///MSE/SE","elem='S';name='SD'",quiet=1)
+   cmd.alter(obj_name+"///MSE/","resn='MET'",quiet=1)
+   cmd.flag("ignore",obj_name,"clear")
+   cmd.fix_chemistry(obj_name)
+
+   # make sure all atoms are included...
+   cmd.alter(obj_name,"q=1.0",quiet=1)
+   
+   print " Util: Fixing termini and assigning formal charges..."
+   
+   assign.missing_c_termini(obj_name,quiet=1)
+   if not assign.formal_charges(obj_name,quiet=1):
+      print " WARNING: unrecognized or incomplete residues are being deleted:"
+      cmd.iterate("(byres ("+obj_name+" and flag 23)) and flag 31",
+                  'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"',quiet=1)
+      cmd.remove("byres ("+obj_name+" and flag 23)") # get rid of residues that weren't assigned
+      assign.missing_c_termini(obj_name,quiet=1)
+      assign.formal_charges(obj_name,quiet=1)
+
+   print " Util: Assigning Amber 99 charges and radii..."
+   
+   cmd.h_add(obj_name)
+   if not assign.amber99(obj_name,quiet=1):
+      print " WARNING: some unassigned atoms are being deleted:"
+      cmd.iterate("byres ("+obj_name+" and flag 23)",
+                  'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/? ["+elem+"]"',quiet=1)
+      cmd.remove(obj_name+" and flag 23") # get rid of any atoms that weren't assigned
+      
+   # show the user what the net charges are...
+      
+   formal = sum_formal_charges(obj_name,quiet=0)
+   partial = sum_partial_charges(obj_name,quiet=0)
+   if abs(formal-partial)>0.0001:
+      print " WARNING: formal and partial charge sums don't match -- there is a problem!"
+      
+   ext = cmd.get_extent(obj_name)
+   max_length = max(abs(ext[0][0] - ext[1][0]),abs(ext[0][1] - ext[1][1]),abs(ext[0][2]-ext[1][2])) + 2*border
+
+   # compute an grid with a maximum dimension of 50, with 10 A borders around molecule, and a 1.0 A minimum grid
+
+   sep = max_length/50.0
+   if sep<1.0: sep = 1.0
+   print " Util: Calculating electrostatic potential..."
+   if absolute:
+      cmd.map_new(map_name,"coulomb",sep,obj_name,border)
+   else:
+      cmd.map_new(map_name,"coulomb_neutral",sep,obj_name,border)
+      
+   cmd.ramp_new(pot_name, map_name, selection=obj_name,zero=1)
+   cmd.hide("everything",obj_name)
+   cmd.show("surface",obj_name)
+   cmd.set("surface_color",pot_name,obj_name)
    
 def color_carbon(color,selection="(all)"):
    selection = str(selection)

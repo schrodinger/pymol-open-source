@@ -171,7 +171,9 @@ int  ExecutiveUnsetSetting(int index,char *sele,
 
 int  ExecutiveAssignSS(char *target,int state,char *context,int preserve,int quiet);
 
-int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state);
+int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,
+                        PyObject *color,int map_state,char *sele,
+                        float beyond,float within,float sigma,int zero);
 
 int ExecutiveValidateObjectPtr(CObject *ptr,int object_type);
 

@@ -3705,6 +3705,8 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
     ai->hetatm=ai0->hetatm;
     ai->flags=ai0->flags;
     ai->geom=ai0->geom; /* ?*/
+    ai->q=ai0->q;
+    ai->b=ai0->b;
     strcpy(ai->chain,ai0->chain);
     strcpy(ai->alt,ai0->alt);
     strcpy(ai->resi,ai0->resi);

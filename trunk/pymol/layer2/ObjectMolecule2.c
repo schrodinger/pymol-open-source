@@ -2283,7 +2283,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
 
                               ai1=ai+a1;
                               ai2=ai+a2;
-                                    
+                              
                               dst -= ((ai1->vdw+ai2->vdw)/2);
 
                               /* quick hack for water detection.  
@@ -2353,56 +2353,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     if(water_flag) /* hack to clean up water bonds */
                                       if(!AtomInfoSameResidue(ai1,ai2))
                                         flag=false;
-                                  #if 0
-
-                                  /* 
-                                     Problem: PQR files have bohr radii, not vdw radius.
-                                     Solution: add a separate atom property for bohr radius
-                                               that PyMOL assigns and remembers...
-                                     Alternative (NOT TAKEN): eliminate extraneous bonds (not USED).
-                                  */
-
-                                  if(flag&!water_flag) {
-                                    if(AtomInfoSameResidue(ai1,ai2)) {
-                                      switch(ai1->resn[0]) {
-                                      case 'H':
-                                        switch(ai1->resn[1]) {
-                                        case 'I':
-                                          switch(ai1->resn[2]) {
-                                          case 'S':
-                                          case 'E':
-                                          case 'D':
-                                            if(!strcmp(ai1->name,"CG")) {
-                                              if((!strcmp(ai2->name,"NE2"))&&
-                                                 (!strcmp(ai2->name,"CE1")))
-                                                flag=false;
-                                            } else if(!strcmp(ai1->name,"CD2")) {
-                                              if((!strcmp(ai2->name,"CE1"))&&
-                                                 (!strcmp(ai2->name,"ND1")))
-                                                flag=false;
-                                            } else if(!strcmp(ai1->name,"NE2")) {
-                                              if((!strcmp(ai2->name,"ND1"))&&
-                                                 (!strcmp(ai2->name,"CG")))
-                                                flag=false;
-                                            } else if(!strcmp(ai1->name,"CE1")) {
-                                              if((!strcmp(ai2->name,"CD2"))&&
-                                                 (!strcmp(ai2->name,"CG")))
-                                                flag=false;
-                                            } else if(!strcmp(ai1->name,"ND1")) {
-                                              if((!strcmp(ai2->name,"CD2"))&&
-                                                 (!strcmp(ai2->name,"NE2")))
-                                                flag=false;
-                                            }
-                                            break;
-                                          }
-                                          break;
-                                        }
-                                        break;
-                                      }
-                                    }
-                                  }
-
-                                  #endif
 
                                   if(flag) {
                                     VLACheck((*bond),BondType,nBond);
@@ -2410,7 +2360,27 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     (*bond)[nBond].index[1] = a2;
                                     (*bond)[nBond].stereo = 0;
                                     order = 1;
-                                    if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard disconnected PDB residue */
+                                    if(ai1->hetatm&&(!ai1->resn[3])) { /* common HETATMs we should know about... */
+                                      switch(ai1->resn[0]) {
+                                      case 'M':
+                                        switch(ai1->resn[1]) {
+                                        case 'S':
+                                          switch(ai1->resn[2]) {
+                                          case 'E':
+                                            if(((!ai1->name[1])&&(!ai2->name[1]))&&
+                                               (((ai1->name[0]=='C')&&(ai2->name[0]=='O'))||
+                                                ((ai1->name[0]=='O')&&(ai2->name[0]=='C')))) {
+                                              if(AtomInfoSameResidue(ai1,ai2)) {
+                                                order = 2;
+                                              }
+                                            }
+                                            break;
+                                          }
+                                          break;
+                                        }
+                                        break;
+                                      }
+                                    } else if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard disconnected PDB residue */
                                       if(AtomInfoSameResidue(ai1,ai2)) {
                                         /* nasty high-speed hack to get bond valences and formal charges 
                                            for standard residues */

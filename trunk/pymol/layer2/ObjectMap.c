@@ -54,6 +54,82 @@ typedef struct {
 } MyArrayObject;
 #endif
 
+int ObjectMapStateGetExcludedStats(ObjectMapState *ms,float *vert_vla, float beyond,float within, float *level)
+{
+  double sum=0.0,sumsq=0.0;
+  float mean,stdev;  
+  int cnt = 0;
+  int list_size = VLAGetSize(vert_vla)/3;
+
+  MapType *voxelmap = NULL;
+  if(list_size) 
+    voxelmap=MapNew(-within,vert_vla,list_size,NULL);
+  if(voxelmap||(!list_size)) {
+    int a,b,c;
+    int h,k,l,i,j;
+    int *fdim = ms->FDim;
+    float *v,f_val;
+    int within_flag;
+    int beyond_flag;
+    
+    Isofield *field = ms->Field;
+
+    if(list_size)
+      MapSetupExpress(voxelmap);  
+
+    within_flag=true;
+    beyond_flag=true;
+
+    for(c=0;c<fdim[2];c++) {
+      for(b=0;b<fdim[1];b++) {
+        for(a=0;a<fdim[0];a++) {
+          if(list_size) {
+            within_flag = false;
+            beyond_flag = true;
+
+            v = F4Ptr(field->points,a,b,c,0);
+            
+            MapLocus(voxelmap,v,&h,&k,&l);
+            i=*(MapEStart(voxelmap,h,k,l));
+            if(i) {
+              j=voxelmap->EList[i++];
+              while(j>=0) {
+                if(!within_flag) {
+                  if(within3f(vert_vla+3*j,v,within)) {                  
+                    within_flag=true;
+                  }
+                }
+                if(within3f(vert_vla+3*j,v,beyond)) {
+                  beyond_flag=false;
+                  break;
+                }
+                j=voxelmap->EList[i++];
+              }
+            }
+          }
+
+          if(within_flag&&beyond_flag) { /* point isn't too close to any vertex */
+            f_val = F3(field->data,a,b,c);
+            sum+=f_val;
+            sumsq+=(f_val*f_val);
+            cnt++;
+          }
+        }
+      }
+    }
+    if(voxelmap) 
+      MapFree(voxelmap);
+  }
+  if(cnt) {
+    mean = (float)(sum/cnt);
+    stdev = (float)sqrt1d((sumsq - (sum*sum/cnt))/(cnt));
+    level[1] = mean;
+    level[0] = mean-stdev;
+    level[2] = mean+stdev;
+  }
+  return cnt;
+}
+
 int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int n)
 {
   int ok=false;
@@ -84,7 +160,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
   case cMapSourceBRIX:
   case cMapSourceGRD:
     for(a=0;a<3;a++) {
-      div[a]=ms->Div[a]*2-1;
+      div[a]=ms->Div[a]*2;
       min[a]=ms->Min[a]*2;
       max[a]=ms->Max[a]*2;
       fdim[a]=ms->FDim[a]*2-1;
@@ -130,7 +206,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
   case cMapSourceDesc:
 
     for(a=0;a<3;a++) {
-      div[a]=ms->Div[a]*2-1;
+      div[a]=ms->Div[a]*2;
       grid[a]=ms->Grid[a]/2.0F;
       min[a]=ms->Min[a]*2;
       max[a]=ms->Max[a]*2;
@@ -791,12 +867,14 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
 
     copy3f(md->MinCorner,ms->Origin);
     copy3f(md->Grid,ms->Grid);
-    for(a=0;a<3;a++) ms->Range[a] = md->Grid[a] * md->Dim[a];
+    for(a=0;a<3;a++) ms->Range[a] = md->Grid[a] * (md->Dim[a]-1);
 
     /* these maps start at zero */
-    for(a=0;a<3;a++) ms->Min[a]=0; 
-    copy3f(md->Dim,ms->Max);
-
+    for(a=0;a<3;a++) {
+      ms->Min[a]=0; 
+      ms->Max[a]=md->Dim[a]-1;
+    }
+    
     /* define corners */
 
     for(a=0;a<8;a++) copy3f(ms->Origin,ms->Corner[a]);
@@ -815,7 +893,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
         }
       }
     }
-    for(a=0;a<3;a++) ms->FDim[a] = ms->Max[a];
+    for(a=0;a<3;a++) ms->FDim[a] = ms->Max[a]-ms->Min[a]+1;
     ms->FDim[3] = 3; 
 
     ms->Field=IsosurfFieldAlloc(ms->FDim);
@@ -1095,15 +1173,15 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
 
   ms->FDim[mapc] = nc;
   ms->Min[mapc] = ncstart;
-  ms->Max[mapc] = nc+ncstart;
+  ms->Max[mapc] = nc+ncstart-1;
 
   ms->FDim[mapr] = nr;
   ms->Min[mapr] = nrstart;
-  ms->Max[mapr] = nr+nrstart;
+  ms->Max[mapr] = nr+nrstart-1;
 
   ms->FDim[maps] = ns;
   ms->Min[maps] = nsstart;
-  ms->Max[maps] = ns+nsstart;
+  ms->Max[maps] = ns+nsstart-1;
 
   if(Feedback(FB_ObjectMap,FB_Blather)) {
     dump3i(ms->Div,"ms->Div");
@@ -2538,9 +2616,9 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     ms->Div[1]= ms->Div[1] - ms->Min[1];
     ms->Div[2]= ms->Div[2] - ms->Min[2];
 
-    ms->Max[0]=ms->Min[0]+ms->FDim[0];
-    ms->Max[1]=ms->Min[1]+ms->FDim[1];
-    ms->Max[2]=ms->Min[2]+ms->FDim[2];
+    ms->Max[0]=ms->Min[0]+ms->FDim[0]-1;
+    ms->Max[1]=ms->Min[1]+ms->FDim[1]-1;
+    ms->Max[2]=ms->Min[2]+ms->FDim[2]-1;
 
     ms->FDim[3]=3;
 

@@ -680,6 +680,13 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
    int n_tri = 0;
    int n_link = 1;
 
+   int avoid_flag = false;
+   if(carvebuffer<0.0F) {
+     avoid_flag = true;
+     carvebuffer = -carvebuffer;
+   }
+  
+     
    FieldZero(Point); /* sets initial links to zero */
    FieldZero(ActiveEdges);
    n_start = n_vert;
@@ -1215,8 +1222,13 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
              }
            }
          }
-         if(c<3) /* exclude this triangle from the surface */
-           tt->done=true;
+         if(avoid_flag) {
+           if(c>=3)
+             tt->done = true; /* exclude this triangle from the surface */
+         } else {
+           if(c<3) /* exclude this triangle from the surface */
+             tt->done=true;
+         }
        }
      }
 

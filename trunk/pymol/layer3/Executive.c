@@ -959,12 +959,14 @@ int ExecutiveValidateObjectPtr(CObject *ptr,int object_type)
   return(ok);
 }
 
-int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state)
+int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,
+                        PyObject *color,int map_state,char *sele,
+                        float beyond,float within,float sigma,int zero)
 {
   ObjectGadgetRamp *obj = NULL;
   int ok =true;
   CObject *map_obj;
-
+  float *vert_vla = NULL;
   map_obj = ExecutiveFindObjectByName(map_name);
   if(map_obj) {
     if(map_obj->type!=cObjectMap) {
@@ -979,11 +981,18 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
       ENDFB;
     ok = false;
   }
-  ok = ok && (obj=ObjectGadgetRampMapNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
+  if(sele&&sele[0]) {
+    vert_vla = ExecutiveGetVertexVLA(sele,map_state);
+  }
+  ok = ok && (obj=ObjectGadgetRampMapNewAsDefined((ObjectMap*)map_obj,
+                                                  range,color,map_state,
+                                                  vert_vla,beyond,within,
+                                                  sigma,zero));
   if(ok) ExecutiveDelete(name); 
   if(ok) ObjectSetName((CObject*)obj,name);
   if(ok) ColorRegisterExt(name,(void*)obj,cColorGadgetRamp);
   if(ok) ExecutiveManageObject((CObject*)obj,false,false);
+  VLAFreeP(vert_vla);
   return(ok);
 }
 
@@ -2030,7 +2039,10 @@ int ExecutiveMapNew(char *name,int type,float *grid,
                 SelectorMapMaskVDW(sele0,ms,0.0F,state);
                 break;
               case 1: /* coulomb */
-                SelectorMapCoulomb(sele0,ms,50.0F,state);
+                SelectorMapCoulomb(sele0,ms,SettingGetGlobal_f(cSetting_coulomb_cutoff),state,false);
+                break;
+              case 3: /* coulomb_neutral */
+                SelectorMapCoulomb(sele0,ms,SettingGetGlobal_f(cSetting_coulomb_cutoff),state,true);
                 break;
               case 2: /* gaussian */
                 SelectorMapGaussian(sele0,ms,0.0F,state);
@@ -2623,11 +2635,8 @@ float *ExecutiveGetVertexVLA(char *s1,int state)
       op1.code=OMOP_VERT;
     }
     ExecutiveObjMolSeleOp(sele1,&op1);
-    if(op1.nvv1) {
-      VLASize(op1.vv1,float,op1.nvv1*3);
-      result = op1.vv1;
-    } else 
-      VLAFreeP(op1.vv1);
+    VLASize(op1.vv1,float,op1.nvv1*3);
+    result = op1.vv1;
   }
   return(result);
 }

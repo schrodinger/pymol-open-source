@@ -63,7 +63,8 @@ typedef struct ObjectGadgetRamp {
 ObjectGadgetRamp *ObjectGadgetRampNew(void);
 
 ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level,
-                                               PyObject *color,int map_state);
+                                                  PyObject *color,int map_state,float *vert_vla,
+                                                  float beyond,float within,float sigma,int zero);
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color);
 int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color);

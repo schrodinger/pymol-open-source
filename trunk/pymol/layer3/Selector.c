@@ -4156,9 +4156,9 @@ int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer,int state)
 	 if(map) {
 		MapSetupExpress(map);
       
-      for(a=oMap->Min[0];a<oMap->Max[0];a++) {      
-        for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
-          for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
+      for(a=oMap->Min[0];a<=oMap->Max[0];a++) {      
+        for(b=oMap->Min[1];b<=oMap->Max[1];b++) {      
+          for(c=oMap->Min[2];c<=oMap->Max[2];c++) {      
             F3(oMap->Field->data,a,b,c)=0.0;            
 
             v2 = F4Ptr(oMap->Field->points,a,b,c,0);
@@ -4583,10 +4583,10 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
 		MapSetupExpress(map);
       sum = 0.0;
       sumsq = 0.0;
-      for(a=oMap->Min[0];a<oMap->Max[0];a++) {
+      for(a=oMap->Min[0];a<=oMap->Max[0];a++) {
         OrthoBusyFast(a-oMap->Min[0],oMap->Max[0]-oMap->Min[0]+1);
-        for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
-          for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
+        for(b=oMap->Min[1];b<=oMap->Max[1];b++) {      
+          for(c=oMap->Min[2];c<=oMap->Max[2];c++) {      
             e_val=0.0;
             v2 = F4Ptr(oMap->Field->points,a,b,c,0);
 
@@ -4631,9 +4631,9 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
         if(stdev<R_SMALL8)
           stdev=R_SMALL8;
         
-        for(a=oMap->Min[0];a<oMap->Max[0];a++) {      
-          for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
-            for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
+        for(a=oMap->Min[0];a<=oMap->Max[0];a++) {      
+          for(b=oMap->Min[1];b<=oMap->Max[1];b++) {      
+            for(c=oMap->Min[2];c<=oMap->Max[2];c++) {      
               fp = F3Ptr(oMap->Field->data,a,b,c);
               
               *fp = (*fp-mean)/stdev;
@@ -4661,14 +4661,13 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
 
 
 /*========================================================================*/
-int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state)
+int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,int neutral)
 {
   SelectorType *I=&Selector;
   MapType *map;
   float *v2;
-  float dist;
-  float eff_charge;
-  int a,b,c,i,j,h,k,l;
+  register int a,b,c,j,i;
+  int h,k,l;
   int at;
   int s,idx;
   AtomInfoType *ai;
@@ -4684,9 +4683,6 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state)
   int n_occur;
   float *v0,*v1;
   float c_factor = 1.0F;
-  double average=0.0,face=0.0,edge=0.0;
-  int n_average=0,n_face=0,n_edge=0;
-  int e_cnt;
 
   c_factor=SettingGet(cSetting_coulomb_units_factor)/
     SettingGet(cSetting_coulomb_dielectric);
@@ -4774,77 +4770,126 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state)
   }
 
   PRINTFB(FB_Selector,FB_Details)
-    " SelectorMapCoulomb: total charge %8.6f over %d vertices (%d atoms).\n",tot_charge,n_point,n_at
+    " SelectorMapCoulomb: Total charge is %0.3f for %d points (%d atoms).\n",tot_charge,n_point,n_at
     ENDFB;
+
+  if(neutral&&(fabs(tot_charge)>R_SMALL4)) {
+    float adjust;
+
+    adjust = -tot_charge/n_point;
+
+    for(a=0;a<n_point;a++) {
+      charge[a]+=adjust;
+    }
+
+    PRINTFB(FB_Selector,FB_Details)
+      " SelectorMapCoulomb: Setting net charge to zero...\n"
+      ENDFB;
+    
+  }
+
+  for(a=0;a<n_point;a++) { /* premultiply c_factor by charges */
+    charge[a]*=c_factor;
+  }
+
 
   /* now create and apply voxel map */
   c=0;
   if(n_point) {
-	 map=MapNew(-(cutoff),point,n_point,NULL);
-	 if(map) {
-		MapSetupExpress(map);
-      
-      for(a=oMap->Min[0];a<oMap->Max[0];a++) {      
-        for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
-          for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
-            F3(oMap->Field->data,a,b,c)=0.0F;            
-            v2 = F4Ptr(oMap->Field->points,a,b,c,0);
+    register int *min = oMap->Min;
+    register int *max = oMap->Max;
+    register CField *data= oMap->Field->data;
+    register CField *points = oMap->Field->points;
+    register float dist;
 
-            if(MapExclLocus(map,v2,&h,&k,&l)) {
-              i=*(MapEStart(map,h,k,l));
-              if(i) {
-                j=map->EList[i++];
-                while(j>=0) {
-                  dist = (float)diff3f(point+3*j,v2);
-                  eff_charge = charge[j];
-                  /* average charge over states and occupancy */
-                  if(dist>R_SMALL8) {
-                    F3(oMap->Field->data,a,b,c)+=
-                      c_factor*eff_charge/dist;
-                    /*                    printf("%8.3f\n",F3(oMap->Field->data,a,b,c));*/
+    if(cutoff>0.0F) {/* we are using a cutoff */
+      PRINTFB(FB_Selector,FB_Details)
+        " SelectorMapCoulomb: Evaluating Coulomb potential for grid (cutoff=%0.2f)...\n",cutoff
+        ENDFB;
+
+      map=MapNew(-(cutoff),point,n_point,NULL);
+      if(map) {
+        register int *elist;
+        register float dx,dy,dz;
+        register float cut = cutoff;
+        register float cut2 = cutoff*cutoff;
+        
+        MapSetupExpress(map);
+        elist = map->EList;      
+        for(a=min[0];a<=max[0];a++) {      
+          for(b=min[1];b<=max[1];b++) {      
+            for(c=min[2];c<=max[2];c++) {      
+              F3(data,a,b,c)=0.0F;            
+              v2 = F4Ptr(points,a,b,c,0);
+              
+              if(MapExclLocus(map,v2,&h,&k,&l)) {
+                i=*(MapEStart(map,h,k,l));
+                if(i) {
+                  j=elist[i++];
+                  while(j>=0) {
+                    v1 = point + 3*j;
+                    while(1) {
+                      
+                      dx = v1[0]-v2[0];
+                      dy = v1[1]-v2[1];
+                      dx = fabs(dx);
+                      dy = fabs(dy);
+                      if(dx>cut) break;
+                      dz = v1[2]-v2[2];
+                      dx = dx * dx;
+                      if(dy>cut) break;
+                      dz = fabs(dz);
+                      dy = dy * dy;
+                      if(dz>cut) break;
+                      dx = dx + dy;
+                      dz = dz * dz;
+                      if(dx>cut2) break;
+                      dy = dx+dz;
+                      if(dy>cut2) break;
+                      dist = (float)sqrt1f(dy);
+
+                      if(dist>R_SMALL4) {
+                        F3(data,a,b,c) +=  charge[j]/dist;
+                      }
+                      break;
+                    } 
+                    j=map->EList[i++];
                   }
-                  j=map->EList[i++];
                 }
               }
             }
-            average+=F3(oMap->Field->data,a,b,c);
-            n_average++;
+          }
+        }
+        MapFree(map);
+      } 
+	 } else {
+      register float *v1;
+      PRINTFB(FB_Selector,FB_Details)
+        " SelectorMapCoulomb: Evaluating Coulomb potential for grid (no cutoff)...\n"
+        ENDFB;
 
-            e_cnt=0;
-            if(!a) e_cnt++;
-            else if(a==oMap->Max[0]-1) e_cnt++;
-            if(!b) e_cnt++;
-            else if(b==oMap->Max[1]-1) e_cnt++;
-            if(!c) e_cnt++;
-            else if(c==oMap->Max[2]-1) e_cnt++;
-
-            if(e_cnt>0) {
-                face+=F3(oMap->Field->data,a,b,c);
-                n_face++;
-            } 
-            if(e_cnt>1) {
-                edge+=F3(oMap->Field->data,a,b,c);
-                n_edge++;
+      for(a=min[0];a<=max[0];a++) {      
+        for(b=min[1];b<=max[1];b++) {      
+          for(c=min[2];c<=max[2];c++) {  
+            F3(data,a,b,c)=0.0F;            
+            v1 = point;
+            v2 = F4Ptr(points,a,b,c,0);
+            for(j=0;j<n_point;j++) {
+              dist = diff3f(v1,v2);
+              v1+=3;
+              if(dist>R_SMALL4) {
+                F3(data,a,b,c) +=  charge[j]/dist;
+              }
             }
           }
         }
-		}
-      oMap->Active=true;
-		MapFree(map);
-	 }
+      }
+    }
+    oMap->Active=true;
   }
-  if(n_average&&n_face&&n_edge) {
-    PRINTFB(FB_Selector,FB_Details)
-      " SelectorMapCoulomb: averages: all = %8.4f, face = %8.4f, edge = %8.4f\n",
-      (float)(average/n_average),
-      (float)(face/n_face),
-      (float)(edge/n_edge)
-      ENDFB;
-  }
-
   VLAFreeP(point);
   VLAFreeP(charge);
-  return(c);
+  return(1);
 }
 
 /*========================================================================*/

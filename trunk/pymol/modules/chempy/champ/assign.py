@@ -19,7 +19,7 @@ from chempy import champ
 from chempy.champ import Champ
 from pymol import cmd
 
-def missing_c_termini(selection="(all)"):
+def missing_c_termini(selection="(all)",quiet=0):
 
    # assumes that hydogens are not present!
    
@@ -43,8 +43,8 @@ def missing_c_termini(selection="(all)"):
    cmd.delete(tmp_sele1)
    
    
-def formal_charges(selection="(all)"):
-
+def formal_charges(selection="(all)",quiet=0):
+   result = 1
    # assumes that hydogens are not present!
    
    # first, set all formal charges to zero
@@ -53,7 +53,7 @@ def formal_charges(selection="(all)"):
 
    # next, flag all atoms so that we'll be able to detect what we miss
    
-   cmd.flag(31,selection,'set')
+   cmd.flag(23,selection,'set')
 
    # get the residue dictionary for formal charges
    
@@ -81,9 +81,9 @@ def formal_charges(selection="(all)"):
                   if len(atom_tag[1])==1: # one and only one match
                      tag = atom_tag[1][0]
                      formal_charge = rule[1][tag]
-                     # the following expression both changes the formal charge and resets flag 31
+                     # the following expression both changes the formal charge and resets flag 23
                      alter_list.append([atom_tag[0],
-                                        "formal_charge=%d;flags=flags&0x7FFFFFFF"%formal_charge])
+                                        "formal_charge=%d;flags=flags&0x-8388609"%formal_charge])
 
    if 1: # n-terminal amine
       # non-proline 
@@ -97,9 +97,9 @@ def formal_charges(selection="(all)"):
             for atom_tag in result[0]: # just iterate over atom tags
                if len(atom_tag[1])==1: # one and only one match
                   if atom_tag[1][0]==0:
-                     # the following expression both changes the formal charge and resets flag 31
+                     # the following expression both changes the formal charge and resets flag 23
                      alter_list.append([atom_tag[0],
-                                        "formal_charge=1;flags=flags&0x7FFFFFFF"])
+                                        "formal_charge=1;flags=flags&-8388609"])
       # proline residues
       ch=Champ()
       model = cmd.get_model(selection)
@@ -111,9 +111,9 @@ def formal_charges(selection="(all)"):
             for atom_tag in result[0]: # just iterate over atom tags
                if len(atom_tag[1])==1: # one and only one match
                   if atom_tag[1][0]==0:
-                     # the following expression both changes the formal charge and resets flag 31
+                     # the following expression both changes the formal charge and resets flag 23
                      alter_list.append([atom_tag[0],
-                                        "formal_charge=1;flags=flags&0x7FFFFFFF"])
+                                        "formal_charge=1;flags=flags&-8388609"])
       
                      
    if 1: # c-terminal acid
@@ -127,27 +127,29 @@ def formal_charges(selection="(all)"):
             for atom_tag in result[0]: # just iterate over atom tags
                if len(atom_tag[1])==1: # one and only one match
                   if atom_tag[1][0]==1:
-                     # the following expression both changes the formal charge and resets flag 31
+                     # the following expression both changes the formal charge and resets flag 23
                      alter_list.append([atom_tag[0],
-                                        "formal_charge=-1;flags=flags&0x7FFFFFFF"])
+                                        "formal_charge=-1;flags=flags&-8388609"])
       
    # now evaluate all of these expressions efficiently en-masse 
    cmd.alter_list(selection,alter_list)
 
    # see if we missed any atoms
-   missed_count = cmd.count_atoms("flag 31")
+   missed_count = cmd.count_atoms("("+selection+") and flag 23")
 
    if missed_count>0:
-      # looks like we did, so alter the user
-      print "WARNING: %d atoms did not have formal charges assigned"%missed_count
-
+      if not quiet:
+         # looks like we did, so alter the user
+         print " WARNING: %d atoms did not have formal charges assigned"%missed_count
+      result = 0
    # remove the temporary selection we used to select appropriate residues
    
    cmd.delete(tmp_sele1)
    
+   return result
 
-def amber99(selection="(all)"):
-
+def amber99(selection="(all)",quiet=0):
+   result = 1
    # first, set all parameters to zero
 
    cmd.alter(selection,"name=''")
@@ -157,7 +159,7 @@ def amber99(selection="(all)"):
 
    # next, flag all atoms so that we'll be able to detect what we miss
    
-   cmd.flag(31,selection,'set')
+   cmd.flag(23,selection,'set')
 
    # get the amber99 dictionary
    
@@ -185,23 +187,26 @@ def amber99(selection="(all)"):
                   if len(atom_tag[1])==1: # one and only one match
                      tag = atom_tag[1][0]
                      prop_list = rule[1][tag]
-                     # the following expression both changes the formal charge and resets flag 31
+                     # the following expression both changes the formal charge and resets flag 23
                      alter_list.append([atom_tag[0],
-         "name='''%s''';text_type='''%s''';partial_charge=%f;bohr=%f;flags=flags&0x7FFFFFFF"%prop_list])
+         "name='''%s''';text_type='''%s''';partial_charge=%f;bohr=%f;flags=flags&-8388609"%prop_list])
 
    # now evaluate all of these expressions efficiently en-masse 
    cmd.alter_list(selection,alter_list)
 
    # see if we missed any atoms
-   missed_count = cmd.count_atoms("flag 31")
+   missed_count = cmd.count_atoms("("+selection+") and flag 23")
 
    if missed_count>0:
-      # looks like we did, so alter the user
-      print "WARNING: %d atoms did not have properties assigned"%missed_count
+      if not quiet:
+         # looks like we did, so alter the user
+         print " WARNING: %d atoms did not have properties assigned"%missed_count
+      result = 0
 
    # remove the temporary selection we used to select appropriate residues
    
    cmd.delete(tmp_sele1)
-   
+
+   return result
 
    

@@ -810,11 +810,20 @@ static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args)
   int ok = false;
   char *map;
   int map_state;
+  char *sele;
+  float beyond,within;
+  float sigma;
+  int zero;
+  OrthoLineType s1;
   PyObject *range,*color;
-  ok = PyArg_ParseTuple(args,"ssOOi",&name,&map,&range,&color,&map_state);
+  ok = PyArg_ParseTuple(args,"ssOOisfffi",&name,&map,&range,&color,
+                        &map_state,&sele,&beyond,&within,
+                        &sigma,&zero);
   if(ok) {
     APIEntry();
-    ok = ExecutiveRampMapNew(name,map,range,color,map_state);
+    SelectorGetTmp(sele,s1);
+    ok = ExecutiveRampMapNew(name,map,range,color,map_state,s1,beyond,within,sigma,zero);
+    SelectorFreeTmp(s1);
     APIExit();
   }
   return(APIStatus(ok));
@@ -1707,15 +1716,15 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
               mn[c] = ms->Corner[0][c];
               mx[c] = ms->Corner[7][c];
             }
-            carve = -1.0; /* impossible */
+            carve = -0.0; /* impossible */
             break;
           case 1:
             SelectorGetTmp(str3,s1);
             ExecutiveGetExtent(s1,mn,mx,false,-1,false); /* TODO state */
-            if(carve>=0.0) {
+            if(carve!=0.0) {
               vert_vla = ExecutiveGetVertexVLA(s1,state);
               if(fbuf<=R_SMALL4)
-                fbuf = carve;
+                fbuf = fabs(carve);
             }
             SelectorFreeTmp(s1);
             for(c=0;c<3;c++) {
@@ -1841,15 +1850,15 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
               mn[c] = ms->Corner[0][c];
               mx[c] = ms->Corner[7][c];
             }
-            carve = false; /* impossible */
+            carve = 0.0F;
             break;
           case 1:
             SelectorGetTmp(str3,s1);
             ExecutiveGetExtent(s1,mn,mx,false,-1,false); /* TODO state */
-            if(carve>=0.0) {
+            if(carve!=0.0F) {
               vert_vla = ExecutiveGetVertexVLA(s1,state);
               if(fbuf<=R_SMALL4)
-                fbuf = carve;
+                fbuf = fabs(carve);
             }
             SelectorFreeTmp(s1);
             for(c=0;c<3;c++) {

@@ -4,6 +4,13 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * added experimental ability to calculate vacuum electrostatic 
+     potentials
+
+   * fixed bugs with map_double, map_new, and color ramping
+
+   -- beta 15
+
    * annotation wizard (e.g. for SD files -- experimental)
 
    -- beta 14

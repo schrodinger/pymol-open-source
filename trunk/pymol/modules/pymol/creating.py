@@ -26,6 +26,7 @@ if __name__=='pymol.creating':
       'vdw' : 0,
       'coulomb' : 1,
       'gaussian' : 2,
+      'coulomb_neutral' : 3,
       }
 
    map_type_sc = Shortcut(map_type_dict.keys())
@@ -67,10 +68,14 @@ if __name__=='pymol.creating':
 
    def ramp_new(name,map_name,range=[-1.0,0.0,1.0],
                 color=['red',[1.0,1.0,1.0],'blue'],
-                map_state=1):
+                map_state=1,selection='',
+                beyond=2.0,within=6.0,
+                sigma=2.0,zero=1):
       # preprocess selection
       color = eval(str(color))
       new_color = []
+      if selection!='':
+         selection = selector.process(selection)      
       for a in color:
          if not is_list(a):
             new_color.append(list(cmd.get_color_tuple(a)))
@@ -80,7 +85,8 @@ if __name__=='pymol.creating':
       try:
          lock()
          r = _cmd.ramp_new(str(name),str(map_name),list(eval(str(range))),list(new_color),
-                           int(map_state)-1)
+                           int(map_state)-1,str(selection),float(beyond),float(within),
+                           float(sigma),int(zero))
       finally:
          unlock()
 
@@ -139,7 +145,7 @@ SEE ALSO
          selection = "("+selection+")"
       #
       if carve==None:
-         carve=-1.0
+         carve=0.0
       try:
          lock()
          r = _cmd.isomesh(str(name),0,str(map),int(mopt),
@@ -196,7 +202,7 @@ SEE ALSO
          selection = "("+selection+")"
      #
       if carve==None:
-         carve=-1.0
+         carve=0.0
       try:
          lock()
          r = _cmd.isosurface(str(name),0,str(map),int(mopt),
@@ -244,7 +250,7 @@ SEE ALSO
          selection = "("+selection+")"
       #
       if carve==None:
-         carve=-1.0
+         carve=0.0
       try:
          lock()
          r = _cmd.isomesh(str(name),0,str(map),int(mopt),
