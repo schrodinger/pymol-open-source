@@ -33,10 +33,17 @@ Z* -------------------------------------------------------------------
 #define cRepInvVisib 10
 #define cRepInvColor 20
 #define cRepInvCoord 30
+#define cRepInvAll 100
+
+struct CoordSet;
 
 typedef struct Rep {
   void (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
   void (*fFree)(struct Rep* I);
+  void (*fUpdate)(struct Rep *I,struct CoordSet *cs);
+  void (*fRecolor)(struct Rep *I,struct CoordSet *cs);
+  void (*fInvalidate)(struct Rep *I,int level);
+  int MaxInvalid;
   Pickable *P;
 } Rep;
 

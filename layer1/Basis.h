@@ -29,7 +29,6 @@ typedef struct {
   float n0[3],n1[3],n2[3],n3[3];
   float c1[3],c2[3],c3[3];
   float r1,l1; 
-
 } CPrimitive;
 
 typedef struct {
@@ -46,7 +45,7 @@ typedef struct {
 
 typedef struct {
   float base[3];
-  int type;
+  CPrimitive *prim;
   float impact[3];
   float tri1,tri2;
   float sphere[3]; /* sphere location if reflecting off of one */
@@ -60,7 +59,7 @@ void BasisInit(CBasis *I);
 void BasisFinish(CBasis *I);
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *clipBox);
 void BasisSetupMatrix(CBasis *I);
-void BasisReflectTriangle(CBasis *I,RayInfo *r,int i);
+void BasisReflectTriangle(CBasis *I,RayInfo *r,int i,float *fc);
 void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
 
 int BasisHit(CBasis *I,RayInfo *r,int except,

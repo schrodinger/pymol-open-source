@@ -77,10 +77,8 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,unsigned int *c,AtomInfoType *ai,flo
 void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 {
   int a;
-
-  if(level>=cRepInvColor)
+  if(level>=cRepInvColor) 
 	 VLAFreeP(I->Color);
-
   if(type>=0) {
 	 if(type<I->NRep)	{
 		SceneChanged();
@@ -93,12 +91,23 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
   } else {
 	 for(a=0;a<I->NRep;a++)	{
 		SceneChanged();
-		
 		if(I->Rep[a]) {
-		  I->Rep[a]->fFree(I->Rep[a]);
-		  I->Rep[a] = NULL;
+		  switch(level) {
+		  case cRepInvColor:
+			 if(I->Rep[a]->fRecolor) {
+				I->Rep[a]->fInvalidate(I->Rep[a],level);
+			 } else {
+				I->Rep[a]->fFree(I->Rep[a]);
+				I->Rep[a] = NULL;
+			 }
+			 break;
+		  default:
+			 I->Rep[a]->fFree(I->Rep[a]);
+			 I->Rep[a] = NULL;
+			 break;
 		}
 	 }
+  }
   }
 }
 /*========================================================================*/
@@ -136,6 +145,9 @@ void CoordSetUpdate(CoordSet *I)
 		if(!I->Rep[cRepMesh]) {
 		  I->Rep[cRepMesh]=RepMeshNew(I);
 		  SceneDirty();
+		} else {
+		  I->Rep[cRepMesh]->fUpdate(I->Rep[cRepMesh],I);
+		  SceneDirty();
 		}
 	 	if(!I->Rep[cRepSphere]) {
 		  I->Rep[cRepSphere]=RepSphereNew(I);
@@ -148,7 +160,10 @@ void CoordSetUpdate(CoordSet *I)
 	 	if(!I->Rep[cRepSurface]) {
 		  I->Rep[cRepSurface]=RepSurfaceNew(I);
 		  SceneDirty();
-		  }
+		} else {
+		  I->Rep[a]->fUpdate(I->Rep[cRepSurface],I);
+		  SceneDirty();
+		}
 	 }
   OrthoBusyFast(1,1);
 }

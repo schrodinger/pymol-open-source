@@ -119,6 +119,7 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 
   OOAlloc(RepDot);
 
+  RepInit(&I->R);
   I->dotSize = SettingGet(cSetting_dot_size);
   cullByFlag = SettingGet(cSetting_trim_dots);
   inclH = SettingGet(cSetting_dot_hydrogens);
@@ -129,6 +130,7 @@ Rep *RepDotNew(CoordSet *cs,int mode)
   I->V=NULL;
   I->VC=NULL;
   I->VN=NULL;
+  I->R.fRecolor=NULL;
 
   if(SettingGet(cSetting_dot_surface)>0.0) {
 	 solv_rad = SettingGet(cSetting_solvent_radius);

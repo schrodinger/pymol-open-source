@@ -55,11 +55,8 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 c=I->N;
 	 
 	 while(c--) {
-		ray->fColor3fv(ray,v);
-		glColor3fv(v);
-		v+=3;
-		ray->fCylinder3fv(ray,v,v+3,0.15);
-		v+=6;
+		ray->fCylinder3fv(ray,v+3,v+6,0.15,v,v);
+		v+=9;
 	 }
 
   } else if(pick) {
@@ -127,6 +124,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   float *v,*v0,*v1,*v2,h[3];
   OOAlloc(RepWireBond);
 
+  RepInit(&I->R);
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepWireBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
@@ -136,6 +134,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->V=NULL;
   I->VP=NULL;
   I->R.P=NULL;
+  I->R.fRecolor=NULL;
 
   if(obj->NBond) {
 	 I->V=(float*)mmalloc(sizeof(float)*obj->NBond*9*3);

@@ -56,11 +56,8 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 	 v=I->VR;
 	 c=I->NR;
 	 while(c--) {
-		ray->fColor3fv(ray,v);
-		glColor3fv(v);
-		v+=3;
-		ray->fCylinder3fv(ray,v+1,v+4,*v);
-		v+=7;
+		ray->fCylinder3fv(ray,v+4,v+7,*(v+3),v,v);
+		v+=10;
 	 }
   } else if(pick) {
   } else {
@@ -130,6 +127,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 
   radius = SettingGet(cSetting_stick_radius);
 
+  RepInit(&I->R);
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepCylBondFree;
@@ -138,6 +136,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   I->VR = NULL;
   I->N = 0;
   I->NR = 0;
+  I->R.fRecolor=NULL;
 
   if(obj->NBond) {
 	 I->V = (float*)mmalloc(((obj->NBond)*((nEdge+2)*42)+20)*sizeof(float));

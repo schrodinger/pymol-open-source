@@ -135,6 +135,7 @@ Rep *RepSphereNew(CoordSet *cs)
 
   OOAlloc(RepSphere);
 
+  RepInit(&I->R);
  /* get current dot sampling */
   ds = (int)SettingGet(cSetting_dot_density);
   ds=1;
@@ -149,6 +150,7 @@ Rep *RepSphereNew(CoordSet *cs)
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
+  I->R.fRecolor=NULL;
 
   /* raytracing primitives */
   

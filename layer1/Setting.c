@@ -90,25 +90,25 @@ void SettingSetNamed(char *name,char *value)
 		if(strcmp(value,"molecular")==0) {
 		  v=0.0;
 		  SettingSetfv(index,&v);
-		  sprintf(buffer,"Setting: %s set to %s\n",I->Setting[index].Name,value);
+		  sprintf(buffer," Setting: %s set to %s\n",I->Setting[index].Name,value);
 		} else if(strcmp(value,"solvent_accessible")==0) {
 		  v=1.0;
 		  SettingSetfv(index,&v);
-		  sprintf(buffer,"Setting: %s set to %s\n",I->Setting[index].Name,value);
+		  sprintf(buffer," Setting: %s set to %s\n",I->Setting[index].Name,value);
 		}
 		break;
 	 case cSetting_bg_rgb:
 	 case cSetting_light:
 		if(sscanf(value,"%f%f%f",vv,vv+1,vv+2)==3) {
 		  SettingSetfv(index,vv);
-		  sprintf(buffer,"Setting: %s set to %8.3f %8.3f %8.3f\n",I->Setting[index].Name,
+		  sprintf(buffer," Setting: %s set to %8.3f %8.3f %8.3f\n",I->Setting[index].Name,
 					 *vv,*(vv+1),*(vv+2));
 		}
 		break;
 	 case cSetting_dot_density:
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
-		sprintf(buffer,"Setting: %s set to %d\n",I->Setting[index].Name,(int)v);
+		sprintf(buffer," Setting: %s set to %d\n",I->Setting[index].Name,(int)v);
 		break;
 	 case cSetting_sel_counter:
 		sscanf(value,"%f",&v);
@@ -117,7 +117,7 @@ void SettingSetNamed(char *name,char *value)
 	 default:
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
-		sprintf(buffer,"Setting: %s set to %8.3f\n",I->Setting[index].Name,v);
+		sprintf(buffer," Setting: %s set to %8.3f\n",I->Setting[index].Name,v);
 		break;
 	 }
   } else {

@@ -37,7 +37,7 @@ pymol: .includes .depends .update
 
 fast: .update
 	/bin/rm -f .update 
-	cc */*.o $(CFLAGS) -o pymol $(LIB_DIRS) $(LIBS)
+	cc $(BUILD) */*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
 
 depends: 
 	/bin/rm -f */*.p
