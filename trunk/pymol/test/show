@@ -1,0 +1,96 @@
+#!/usr/bin/python 
+
+import os
+import sys
+import re
+import glob
+import string
+
+# list of tests to run ...
+
+# prefixes
+# C = command line scripts
+# G = graphics and internal GUI
+
+standard_prefixes = ['C', 'G' ]
+
+# set module path for generic python stuff
+
+ppath = ''
+if os.environ.has_key('PYTHONPATH'):
+   ppath = os.environ['PYTHONPATH']
+ppath = ppath + ":" + os.getcwd() + "/../modules"
+
+os.environ['PYTHONPATH'] = ppath
+
+# uniform parameter handling
+
+argv = sys.argv
+
+if len(argv):
+   if re.search("\.py$",argv[0]):
+      argv = argv[1:]
+
+# ---
+
+pymol = "pymol"
+cmd = "../pymol.com "
+cmp = "cmp"
+ref = "ref"
+inp = "inp"
+if not os.path.exists(cmp):
+   os.mkdir(cmp)
+
+if len(argv)>1:
+   tests = argv
+else:
+   tests = standard_prefixes
+
+for test in tests:
+   flist = glob.glob( inp+"/"+test+"*" )
+   cvs = inp+"/CVS"
+   if cvs in flist:
+      flist.remove(cvs)
+   flist.sort()
+   for ifil in flist:
+      # get options
+      f = open(ifil)
+      opt = string.strip(f.readline())
+      opt = re.sub("^\s*\#","",opt)
+      f.close()
+      
+      tst = re.sub(r".*/","",ifil) # get exact test name without suffix
+      tst = re.sub(r"\..*","",tst)
+      
+      print " run_tests: "+tst+"..."
+
+      syscmd = cmd+" "+opt+" "+ifil+" | python trim.py | tee "+cmp+"/"+tst+".log 2>&1"
+      
+      os.system(syscmd)
+
+      # check log file and any other output files
+      
+      for ref_fil in ( glob.glob(ref+"/"+tst+".*")):
+         postfx = re.sub(r".*/","",ref_fil)
+         cmp_fil = cmp+"/"+postfx
+         if os.path.exists(cmp_fil):
+            if os.system("diff -q "+ref_fil+" "+cmp_fil+" >/dev/null"):
+               sys.stdout.flush()
+               df = os.popen("diff "+ref_fil+" "+cmp_fil)
+               diffs = df.readlines()
+               df.close()
+               print " run_tests: "+ \
+                  postfx+" DIFFERS over about %d lines." % int(len(diffs)/2)
+         else:
+            print " run_tests: "+postfx+" is missing."
+            
+      # check for extraneous, unverifiable files
+      
+      for cmp_fil in ( glob.glob(cmp+"/"+tst+".*")):
+         postfx = re.sub(r".*/","",cmp_fil)
+         ref_fil = ref+"/"+postfx
+         if not os.path.exists(ref_fil):
+            print " run_tests: no reference version for "+cmp+"/"+postfx+"."
+
+
+
