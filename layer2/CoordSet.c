@@ -47,7 +47,6 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level);
 void CoordSetExtendIndices(CoordSet *I,int nAtom);
 void CoordSetAppendIndices(CoordSet *I,int offset);
 
-
 /*========================================================================*/
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
@@ -205,39 +204,56 @@ void CoordSetAtomToTERStrVLA(char **charVLA,int *c,AtomInfoType *ai,int cnt)
 void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 {
   int a;
+
+  /*  printf("inv %d %d\n",type,level);*/
+
   if(level>=cRepInvColor) 
 	 VLAFreeP(I->Color);
   if(type>=0) {
 	 if(type<I->NRep)	{
-		SceneChanged();
-		
-		if(I->Rep[type]) {
-		  I->Rep[type]->fFree(I->Rep[type]);
-		  I->Rep[type] = NULL;
-		}
+      a=type;
+      if(I->Rep[a]) {
+        if(I->Rep[a]->fInvalidate) 
+          I->Rep[a]=I->Rep[a]->fInvalidate(I->Rep[a],I,level);
+        else {
+          I->Rep[a]->fFree(I->Rep[a]);
+          I->Rep[a] = NULL;
+        }
+      }
+      if(level>=cRepInvVisib) /* make active if visibility has changed */
+        I->Active[type]=true;
 	 }
-  } else {
+  } else { /* all representations are affected */
 	 for(a=0;a<I->NRep;a++)	{
-		SceneChanged();
+      if(level>=cRepInvVisib) /* make active if visibility has changed */
+        I->Active[a]=true;
 		if(I->Rep[a]) {
-		  switch(level) {
-		  case cRepInvColor:
-			 if(I->Rep[a]->fRecolor&&I->Rep[a]->fInvalidate) {
-            I->Rep[a]->fInvalidate(I->Rep[a],level);
-			 } else {
-				I->Rep[a]->fFree(I->Rep[a]);
-				I->Rep[a] = NULL;
-			 }
-			 break;
-		  default:
-			 I->Rep[a]->fFree(I->Rep[a]);
-			 I->Rep[a] = NULL;
-			 break;
+        if(I->Rep[a]->fInvalidate) 
+          I->Rep[a]=I->Rep[a]->fInvalidate(I->Rep[a],I,level);
+        else {
+          I->Rep[a]->fFree(I->Rep[a]);
+          I->Rep[a] = NULL;
+        }
 		}
 	 }
   }
-  }
+  SceneChanged();
 }
+/*========================================================================*/
+
+#define RepUpdateMacro(I,rep,new_fn) {\
+  if(I->Active[rep]) {\
+    if(!I->Rep[rep]) {\
+      I->Rep[rep]=new_fn(I);\
+      if(I->Rep[rep]) \
+         I->Rep[rep]->fNew=(struct Rep *(*)(struct CoordSet *))new_fn;\
+    } else {\
+      I->Rep[rep] = I->Rep[rep]->fUpdate(I->Rep[rep],I,rep);\
+    }\
+  }\
+OrthoBusyFast(rep,I->NRep);\
+}
+
 /*========================================================================*/
 void CoordSetUpdate(CoordSet *I)
 {
@@ -267,72 +283,23 @@ void CoordSetUpdate(CoordSet *I)
 		}
 	 }
   OrthoBusyFast(0,I->NRep);
-  if(!I->Rep[cRepLine]) {
-    I->Rep[cRepLine]=RepWireBondNew(I);
-    SceneDirty();
-  }
-  OrthoBusyFast(1,I->NRep);
-  if(!I->Rep[cRepCyl]) {
-    I->Rep[cRepCyl]=RepCylBondNew(I);
-    SceneDirty();
-  }
-  OrthoBusyFast(2,I->NRep);
-  if(!I->Rep[cRepDot]) {
-    I->Rep[cRepDot]=RepDotNew(I,0);
-    SceneDirty();
-  }
-  OrthoBusyFast(3,I->NRep);
-  if(!I->Rep[cRepMesh]) {
-    I->Rep[cRepMesh]=RepMeshNew(I);
-    SceneDirty();
-  } else {
-    I->Rep[cRepMesh]->fUpdate(I->Rep[cRepMesh],I);
-    SceneDirty();
-  }
-  OrthoBusyFast(4,I->NRep);
-  if(!I->Rep[cRepSphere]) {
-    I->Rep[cRepSphere]=RepSphereNew(I);
-    SceneDirty();
-  }
-  OrthoBusyFast(5,I->NRep);
-  if(!I->Rep[cRepRibbon]) {
-    I->Rep[cRepRibbon]=RepRibbonNew(I);
-    SceneDirty();
-  }
-  OrthoBusyFast(6,I->NRep);
-  if(!I->Rep[cRepSurface]) {
-    I->Rep[cRepSurface]=RepSurfaceNew(I);
-    SceneDirty();
-  } else if(I->Rep[cRepSurface]->fUpdate) {
-    I->Rep[cRepSurface]->fUpdate(I->Rep[cRepSurface],I);
-    SceneDirty();
-  } 
-  OrthoBusyFast(8,I->NRep);
-  if(!I->Rep[cRepLabel]) {
-    I->Rep[cRepLabel]=RepLabelNew(I);
-    SceneDirty();
-  } else if(I->Rep[cRepLabel]->fUpdate) {
-    I->Rep[cRepLabel]->fUpdate(I->Rep[cRepLabel],I);
-    SceneDirty();
-  } 
-  OrthoBusyFast(9,I->NRep);
-  if(!I->Rep[cRepNonbonded]) {
-    I->Rep[cRepNonbonded]=RepNonbondedNew(I);
-    SceneDirty();
-  } else if(I->Rep[cRepNonbonded]->fUpdate) {
-    I->Rep[cRepNonbonded]->fUpdate(I->Rep[cRepNonbonded],I);
-    SceneDirty();
-  } 
-  OrthoBusyFast(10,I->NRep);
-  
-  if(!I->Rep[cRepNonbondedSphere]) {
-    I->Rep[cRepNonbondedSphere]=RepNonbondedSphereNew(I);
-    SceneDirty();
-  } else if (I->Rep[cRepNonbondedSphere]->fUpdate) {
-    I->Rep[cRepNonbondedSphere]->fUpdate(I->Rep[cRepNonbondedSphere],I);
-    SceneDirty();
-  } 
-  
+
+  RepUpdateMacro(I, cRepLine,            RepWireBondNew        );
+  RepUpdateMacro(I, cRepCyl,             RepCylBondNew         );
+  RepUpdateMacro(I, cRepDot,             RepDotNew             );
+  RepUpdateMacro(I, cRepMesh,            RepMeshNew            );
+  RepUpdateMacro(I, cRepSphere,          RepSphereNew          );
+  RepUpdateMacro(I, cRepRibbon,          RepRibbonNew          );
+  RepUpdateMacro(I, cRepSurface,         RepSurfaceNew         );
+  RepUpdateMacro(I, cRepLabel,           RepLabelNew           );
+  RepUpdateMacro(I, cRepNonbonded,       RepNonbondedNew       );
+  RepUpdateMacro(I, cRepNonbondedSphere, RepNonbondedSphereNew );
+
+  for(a=0;a<I->NRep;a++) 
+    if(!I->Rep[a])
+      I->Active[a]=false;
+
+  SceneDirty();
   OrthoBusyFast(1,1);
 }
 /*========================================================================*/
@@ -343,17 +310,18 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick)
   if(I->Name[0])
     ButModeCaption(I->Name);
   for(a=0;a<I->NRep;a++)
-	 if(I->Rep[a]) 
-		{
-		  if(!ray) {
-			 ObjectUseColor((Object*)I->Obj);
-		  } else {
-			 ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
-		  }			 
-        if(I->Rep[a]->fRender) {
-          I->Rep[a]->fRender(I->Rep[a],ray,pick);
+    if(I->Active[a])
+      if(I->Rep[a]) 
+        {
+          if(!ray) {
+            ObjectUseColor((Object*)I->Obj);
+          } else {
+            ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
+          }			 
+          if(I->Rep[a]->fRender) {
+            I->Rep[a]->fRender(I->Rep[a],ray,pick);
+          }
         }
-		}
 }
 /*========================================================================*/
 CoordSet *CoordSetNew(void)
@@ -375,7 +343,7 @@ CoordSet *CoordSetNew(void)
   I->AtmToIdx = NULL;
   I->IdxToAtm = NULL;
   I->TmpBond = NULL;
-  I->Rep=VLAlloc(Rep*,cRepCnt);
+  /*  I->Rep=VLAlloc(Rep*,cRepCnt);*/
   I->NRep=cRepCnt;
   I->TmpSymmetry = NULL;
   I->Name[0]=0;
@@ -417,9 +385,13 @@ CoordSet *CoordSetCopy(CoordSet *cs)
   for(a=0;a<I->NIndex;a++)
     *(i0++)=*(i1++);
   
-  I->Rep=VLAlloc(Rep*,I->NRep);
-  for(a=0;a<I->NRep;a++)	
+  /*  I->Rep=VLAlloc(Rep*,I->NRep); */
+  i0=I->Active;
+  i1=cs->Active;
+  for(a=0;a<I->NRep;a++) {
+    *(i0++)=*(i1++);
     I->Rep[a] = NULL;
+  }
 
   I->TmpBond=NULL;
   I->Color=NULL;
@@ -469,8 +441,6 @@ void CoordSetExtendIndices(CoordSet *I,int nAtom)
 }
 /*========================================================================*/
 void CoordSetAppendIndices(CoordSet *I,int offset) 
-	  /* this is going to get impractical down the road...
-		  we need to revise the index system */
 {
   int a,b;
   ObjectMolecule *obj = I->Obj;
@@ -529,7 +499,7 @@ void CoordSetFree(CoordSet *I)
   int a;
   ObjectMolecule *obj;
   for(a=0;a<I->NRep;a++)
-	 if(I->Rep[a])
+	 if(I->Rep[a]) 
 		I->Rep[a]->fFree(I->Rep[a]);
   if(I)  {
     obj=I->Obj;
@@ -543,7 +513,7 @@ void CoordSetFree(CoordSet *I)
     FreeP(I->IdxToAtm);
     VLAFreeP(I->Color);
     VLAFreeP(I->Coord);
-    VLAFreeP(I->Rep);
+    /*    VLAFreeP(I->Rep);*/
     VLAFreeP(I->TmpBond);
     if(I->TmpSymmetry) SymmetryFree(I->TmpSymmetry);
     OOFreeP(I);

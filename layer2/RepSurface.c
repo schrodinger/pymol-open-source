@@ -48,11 +48,14 @@ typedef struct RepSurface {
   int oneColorFlag,oneColor;
   int allVisibleFlag;
   Object *Obj;
+  int *LastVisib;
+  int *LastColor;
 } RepSurface;
 
 
 void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick);
 void RepSurfaceFree(RepSurface *I);
+int RepSurfaceSameVis(RepSurface *I,CoordSet *cs);
 
 void RepSurfaceColor(RepSurface *I,CoordSet *cs);
 
@@ -62,6 +65,8 @@ void RepSurfaceFree(RepSurface *I)
   FreeP(I->VN);
   FreeP(I->VC);
   FreeP(I->Vis);
+  FreeP(I->LastColor);
+  FreeP(I->LastVisib);
   VLAFreeP(I->T);
   VLAFreeP(I->S);
   /*  VLAFreeP(I->N);*/
@@ -237,12 +242,38 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 
 #define solv_tole 0.02
 
+int RepSurfaceSameVis(RepSurface *I,CoordSet *cs)
+{
+  int same = true;
+  int *lv,*lc,*cc;
+  int a;
+  AtomInfoType *ai;
+
+  ai = cs->Obj->AtomInfo;
+  lv = I->LastVisib;
+  lc = I->LastColor;
+  cc = cs->Color;
+
+  for(a=0;a<cs->NIndex;a++)
+    {
+      if(*(lv++)!=(ai + cs->IdxToAtm[a])->visRep[cRepSurface] ) {
+        same=false;
+        break;
+      }
+      if(*(lc++)!=*(cc++)) {
+        same=false;
+        break;
+      }
+    }
+  return(same);
+}
+
 void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 {
   MapType *map;
   int a,i0,i,j,h,k,l,c1;
   float *v0,*vc,*c0;
-  int *vi;
+  int *vi,*lv,*lc,*cc;
   int first_color;
   ObjectMolecule *obj;
   float probe_radius;
@@ -261,8 +292,20 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   if(cutoff<(MAX_VDW+proximity))
     cutoff=MAX_VDW+proximity;
 
+  if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
+  if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
+  lv = I->LastVisib;
+  lc = I->LastColor;
+  cc = cs->Color;
+  obj=cs->Obj;
+  ai2=obj->AtomInfo;
+  for(a=0;a<cs->NIndex;a++)
+    {
+      *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSurface];
+      *(lc++) = *(cc++);
+    }
+  
   if(I->N) {
-	 obj=cs->Obj;
 	 I->oneColorFlag=true;
 	 first_color=-1;
 	 if(!I->VC) I->VC = Alloc(float,3*I->N);
@@ -291,7 +334,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 						 ((!cullByFlag)||(!(ai2->flags&0x2000000))))  
 						/* ignore atom if flag 25 is set */
 						{
-						  dist = diff3f(v0,cs->Coord+j*3);
+						  dist = diff3f(v0,cs->Coord+j*3)-ai2->vdw;
 						  if(dist<minDist)
 							 {
 								i0=j;
@@ -412,9 +455,12 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->Vis=NULL;
   I->VN=NULL;
   I->T=NULL;
+  I->LastVisib=NULL;
+  I->LastColor=NULL;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSurfaceRender;
   I->R.fFree=(void (*)(struct Rep *))RepSurfaceFree;
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
+  I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSurfaceSameVis;
   I->Obj = (Object*)(cs->Obj);
   I->Dot=NULL;
   I->allVisibleFlag=true;
@@ -429,7 +475,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
       I->allVisibleFlag=false;
   }
   if(SurfaceFlag) {
-
+      
 	 I->V=Alloc(float,cs->NIndex*3*sp->nDot*2);
     ErrChkPtr(I->V);
 	 I->VN=Alloc(float,cs->NIndex*3*sp->nDot*2);

@@ -34,7 +34,8 @@ typedef struct RepDot {
   int N,NC;
 } RepDot;
 
-Rep *RepDotNew(CoordSet *cset,int mode);
+Rep *RepDotNew(CoordSet *cset);
+Rep *RepDotDoNew(CoordSet *cs,int mode);
 void RepDotInit(void);
 
 #endif

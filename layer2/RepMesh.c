@@ -38,6 +38,8 @@ typedef struct RepMesh {
   float *Dot;
   int oneColorFlag;
   Object *Obj;
+  int *LastVisib;
+  int *LastColor;
 } RepMesh;
 
 #include"ObjectMolecule.h"
@@ -45,6 +47,7 @@ typedef struct RepMesh {
 void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick);
 void RepMeshFree(RepMesh *I);
 void RepMeshColor(RepMesh *I,CoordSet *cs);
+int RepMeshSameVis(RepMesh *I,CoordSet *cs);
 
 void RepMeshInit(void)
 {
@@ -56,6 +59,8 @@ void RepMeshFree(RepMesh *I)
   FreeP(I->VC);
   VLAFreeP(I->V);
   VLAFreeP(I->N);
+  FreeP(I->LastColor);
+  FreeP(I->LastVisib);
   OOFreeP(I);
 }
 
@@ -94,6 +99,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 		if(I->oneColorFlag) {
 		  while(*n)
 			 {
+            glColor3fv(vc);
 				c=*(n++);
 				glBegin(GL_LINE_STRIP);
 				SceneResetNormal(false);
@@ -125,12 +131,39 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
      }
   }
 
+int RepMeshSameVis(RepMesh *I,CoordSet *cs)
+{
+  int same = true;
+  int *lv,*lc,*cc;
+  int a;
+  AtomInfoType *ai;
+
+  ai = cs->Obj->AtomInfo;
+  lv = I->LastVisib;
+  lc = I->LastColor;
+  cc = cs->Color;
+
+  for(a=0;a<cs->NIndex;a++)
+    {
+      if(*(lv++)!=(ai + cs->IdxToAtm[a])->visRep[cRepMesh] ) {
+        same=false;
+        break;
+      }
+      if(*(lc++)!=*(cc++)) {
+        same=false;
+        break;
+      }
+    }
+  return(same);
+}
+
 
 void RepMeshColor(RepMesh *I,CoordSet *cs)
 {
   MapType *map;
   int a,i0,i,j,h,k,l,c1;
   float *v0,*vc,*c0;
+  int *lv,*lc,*cc;
   int first_color;
   ObjectMolecule *obj;
   float probe_radius;
@@ -143,6 +176,19 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   inclH = SettingGet(cSetting_dot_hydrogens);
 
   probe_radius = SettingGet(cSetting_solvent_radius);
+
+  if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
+  if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
+  lv = I->LastVisib;
+  lc = I->LastColor;
+  cc = cs->Color;
+  obj=cs->Obj;
+  ai2=obj->AtomInfo;
+  for(a=0;a<cs->NIndex;a++)
+    {
+      *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepMesh];
+      *(lc++) = *(cc++);
+    }
 
   if(I->NTot) {
 	 obj=cs->Obj;
@@ -173,7 +219,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
                     (!(ai2->flags&0x2000000))))  
 						/* ignore presence of atom if flag 25 is set BROKEN */
 						{
-						  dist = diff3f(v0,cs->Coord+j*3);
+						  dist = diff3f(v0,cs->Coord+j*3) - ai2->vdw;
 						  if(dist<minDist)
 							 {
 								i0=j;
@@ -255,6 +301,9 @@ Rep *RepMeshNew(CoordSet *cs)
   I->R.fFree=(void (*)(struct Rep *))RepMeshFree;
   I->Obj = (Object*)(cs->Obj);
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepMeshColor;
+  I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepMeshSameVis;
+  I->LastVisib=NULL;
+  I->LastColor=NULL;
 
   /* don't waist time computing a mesh unless we need it!! */
   for(a=0;a<cs->NIndex;a++) {

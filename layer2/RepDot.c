@@ -98,7 +98,12 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   }
 }
 
-Rep *RepDotNew(CoordSet *cs,int mode)
+Rep *RepDotNew(CoordSet *cs)
+{
+  RepDotDoNew(cs,cRepDotNormal);
+}
+
+Rep *RepDotDoNew(CoordSet *cs,int mode)
 {
   ObjectMolecule *obj;
   int a,b,flag,h,k,l,i,j,c1;

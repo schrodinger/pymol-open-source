@@ -20,24 +20,60 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Rep.h"
 #include"MemoryDebug.h"
-
+#include"CoordSet.h"
 /*========================================================================*/
 
 void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick);
-void RepInvalidate(struct Rep *I,int level);
-void RepUpdate(struct Rep *I,struct CoordSet *cs);
+void RepInvalidate(struct Rep *I,struct CoordSet *cs,int level);
+struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep);
+struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep);
 
 /*========================================================================*/
-void RepUpdate(struct Rep *I,struct CoordSet *cs)
+struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
 {
-  if(I->MaxInvalid>=cRepInvColor) {
-	 if(I->fRecolor)
-		I->fRecolor(I,cs);
-  }
-  I->MaxInvalid=0;
+  Rep *tmp = NULL;
+  if(I->fNew) {
+    tmp = I->fNew(cs);
+    if(tmp) {
+      tmp->fNew = I->fNew;
+      I->fFree(I);
+    }
+    else {
+      cs->Active[rep] = false; /* keep the old object around, but inactive */
+      tmp=I;
+    }
+  } else 
+    I->fFree(I); 
+  return(tmp);
 }
 /*========================================================================*/
-void RepInvalidate(struct Rep *I,int level)
+struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
+{
+  if(I->MaxInvalid) {
+    if(I->MaxInvalid<=cRepInvColor) {
+      if(I->fRecolor) {
+        I->fRecolor(I,cs);
+      } else if(I->fSameVis) {
+        if(!I->fSameVis(I,cs)) {
+          I=I->fRebuild(I,cs,rep);
+        }
+      } else 
+        I=I->fRebuild(I,cs,rep);
+    } else if(I->MaxInvalid<=cRepInvVisib) {
+      if(I->fSameVis) {
+        if(!I->fSameVis(I,cs))
+          I=I->fRebuild(I,cs,rep);
+      } else 
+        I=I->fRebuild(I,cs,rep);
+    } else 
+      I=I->fRebuild(I,cs,rep);    
+    if(I)
+      I->MaxInvalid=0;
+  }
+  return(I);
+}
+/*========================================================================*/
+void RepInvalidate(struct Rep *I,struct CoordSet *cs,int level)
 {
   if(level>I->MaxInvalid) I->MaxInvalid=level;
 }
@@ -47,7 +83,10 @@ void RepInit(Rep *I)
   I->fInvalidate = RepInvalidate;
   I->fUpdate = RepUpdate;
   I->fRender = RepRenderBox;
+  I->fRebuild = RepRebuild;
   I->fRecolor = NULL;
+  I->fSameVis = NULL;
+  I->fNew = NULL;
   I->P=NULL;
   I->MaxInvalid = 0;
 }
