@@ -3007,7 +3007,8 @@ void SelectorLogSele(PyMOLGlobals *G,char *name)
   }
 }
 /*========================================================================*/
-int SelectorIsMember(PyMOLGlobals *G,int s,int sele)
+#ifndef _PYMOL_INLINE
+int SelectorIsMemberSlow(PyMOLGlobals *G,int s,int sele)
 {
   register CSelector *I=G->Selector;
   register MemberType *member,*mem;
@@ -3026,6 +3027,25 @@ int SelectorIsMember(PyMOLGlobals *G,int s,int sele)
     }
   return false;
 }
+#else
+int _SelectorIsMemberInlinePartial(PyMOLGlobals *G,int s,int sele)
+{
+  register CSelector *I=G->Selector;
+  register MemberType *member,*mem;
+  member=I->Member;
+  while(s) 
+    {
+      mem = member+s;
+      if(mem->selection==sele) {
+        return mem->priority;
+        break;
+      }
+      s = mem->next;
+    }
+  return false;
+}
+#endif
+
 /*========================================================================*/
 #if 0
 int SelectorPurgeMember(PyMOLGlobals *G,AtomInfoType *ai,int sele)
@@ -6183,9 +6203,9 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_
 /*========================================================================*/
 int SelectorUpdateTable(PyMOLGlobals *G)
 {
-  int a=0;
-  int c=0;
-  int modelCnt;
+  register int a=0;
+  register int c=0;
+  register int modelCnt;
   CObject *o = NULL;
   void *hidden = NULL;
   ObjectMolecule *obj;
@@ -6219,7 +6239,7 @@ int SelectorUpdateTable(PyMOLGlobals *G)
   ErrChkPtr(G,I->Obj);
   
   c=0;
-  modelCnt=0;;
+  modelCnt=0;
 
   obj=I->Origin;
   if(obj) {
@@ -6254,15 +6274,19 @@ int SelectorUpdateTable(PyMOLGlobals *G)
 			 obj=(ObjectMolecule*)o;
 			 I->Obj[modelCnt]=obj;
           obj->SeleBase=c; /* make note of where this object starts */
-			 for(a=0;a<obj->NAtom;a++)
-				{
-				  I->Table[c].model=modelCnt;
-				  I->Table[c].atom=a;
-				  c++;
-				}
-          modelCnt++;
-		  }
-	 }
+          { 
+            register n_atom = obj->NAtom;
+            register TableRec *rec = I->Table + c;
+            for(a=0;a<n_atom;a++) {
+              rec->model=modelCnt;
+              rec->atom = a;
+              rec++;
+            }
+            c+=n_atom;
+            modelCnt++;
+          }
+        }
+    }
   I->NModel=modelCnt;
   I->NAtom=c;
   I->Flag1=Alloc(int,c);
