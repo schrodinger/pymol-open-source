@@ -107,6 +107,10 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer atoms, etc).
      sometimes it just fails period
 
+Changes up to 0.78
+
+   * revamped Makefiles for better portability and dependency handling.
+
 Changes up to 0.77
 
    * sculpting information now cached between changes to molecular structures
