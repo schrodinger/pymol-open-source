@@ -53,7 +53,7 @@ def map_new(name,type,grid=None,selection=None,buffer=0.0,box=None):
    finally:
       unlock()
       
-def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=0,carve=None):
+def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None):
    '''
 DESCRIPTION
  
@@ -72,8 +72,9 @@ USAGE
    "selection" is an atom selection about which to display the mesh with
       an additional "buffer" (if provided).
 
-   "state" is the state into which the object should be loaded.
-
+   "state" is the state into which the object should be loaded (default=1)
+      (set state=0 to append new mesh as a new state)
+      
    "carve" is a radius about each atom in the selection for which to
       include density. If "carve" is not provided, then the whole
       brick is displayed.
@@ -105,7 +106,7 @@ SEE ALSO
       unlock()
    return r
 
-def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=0,carve=None):
+def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None):
    '''
 DESCRIPTION
  
@@ -124,8 +125,9 @@ USAGE
    "selection" is an atom selection about which to display the mesh with
       an additional "buffer" (if provided).
 
-   "state" is the state into which the object should be loaded.
-
+   "state" is the state into which the object should be loaded (default=1)
+      (set state=0 to append new surface as a new state)
+      
    "carve" is a radius about each atom in the selection for which to
       include density. If "carve" is not provided, then the whole
       brick is displayed.

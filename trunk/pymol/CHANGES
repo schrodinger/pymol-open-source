@@ -107,6 +107,12 @@ Current Bugs to Fix
 
 Changes up to 0.82
 
+   * WARNING: default behavior of isomesh and isosurf changed!  By default, they
+     will now always load the mesh into state 1.  If you need the previous behavior,
+     then set the state argument to zero.
+
+Changes up to 0.82
+
    * modified "cmd.system" to take an argument for asynchronous execution
 
    * flag command no longer indicates atoms by default -- set "auto_indicate_flags"
