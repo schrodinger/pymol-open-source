@@ -10,7 +10,14 @@ import string
 
 standard_tests = ['cmd', 'chempy']
 
-#-------------
+# set module path for generic python stuff
+
+ppath = ''
+if os.environ.has_key('PYTHONPATH'):
+   ppath = os.environ['PYTHONPATH']
+ppath = ppath + ":" + os.getcwd() + "/../modules"
+
+os.environ['PYTHONPATH'] = ppath
 
 # uniform parameter handling
 
@@ -51,12 +58,19 @@ for test in tests:
          cmp_fil = cmp+"/"+postfx
          if os.path.exists(cmp_fil):
             if os.system("diff -q "+ref_fil+" "+cmp_fil+" >/dev/null"):
-               print " run_tests: DIFFERS: '"+postfx+"'"
+               sys.stdout.flush()
+               df = os.popen("diff "+ref_fil+" "+cmp_fil)
+               diffs = df.readlines()
+               df.close()
+               print " run_tests: "+ \
+                  postfx+" DIFFERS over about %d lines." % int(len(diffs)/2)
          else:
-            print " run_tests: MISSING: '"+postfx+"'"
+            print " run_tests: "+postfx+" is missing."
       for cmp_fil in ( glob.glob(cmp+"/"+tst+".*")):
          postfx = re.sub(r".*/","",cmp_fil)
          ref_fil = ref+"/"+postfx
          if not os.path.exists(ref_fil):
-            print " run_tests: no reference version for '"+postfx+"'"
+            print " run_tests: no reference version for "+postfx+"."
+
+
 

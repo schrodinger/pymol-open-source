@@ -1,0 +1,280 @@
+ chempy: reading "dat/pept.pdb".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "OD1".
+ chempy.models.Indexed: adding atom "OD2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "SG".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD1".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "CE2".
+ chempy.models.Indexed: adding atom "CE3".
+ chempy.models.Indexed: adding atom "NE1".
+ chempy.models.Indexed: adding atom "CZ2".
+ chempy.models.Indexed: adding atom "CZ3".
+ chempy.models.Indexed: adding atom "CH2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "ND1".
+ chempy.models.Indexed: adding atom "CE1".
+ chempy.models.Indexed: adding atom "NE2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD1".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD".
+ chempy.models.Indexed: adding atom "OE1".
+ chempy.models.Indexed: adding atom "OE2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD1".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG1".
+ chempy.models.Indexed: adding atom "CG2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD1".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "CE2".
+ chempy.models.Indexed: adding atom "CE3".
+ chempy.models.Indexed: adding atom "NE1".
+ chempy.models.Indexed: adding atom "CZ2".
+ chempy.models.Indexed: adding atom "CZ3".
+ chempy.models.Indexed: adding atom "CH2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "SG".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG2".
+ chempy.models.Indexed: adding atom "OG1".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "OXT".
+ chempy.protein: assigning types and bonds...
+ chempy.protein: adding hydrogens...
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "1HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "1HD".
+ chempy.models.Connected: adding atom "2HH".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "3HZ".
+ chempy.models.Connected: adding atom "2HZ".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "3HE".
+ chempy.models.Connected: adding atom "1HE".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "2HD".
+ chempy.models.Connected: adding atom "1HE".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HE".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "2HD2".
+ chempy.models.Connected: adding atom "1HD2".
+ chempy.models.Connected: adding atom "HG".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "1HD1".
+ chempy.models.Connected: adding atom "3HD2".
+ chempy.models.Connected: adding atom "3HD1".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HD1".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HA".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "3HG".
+ chempy.models.Connected: adding atom "2HG".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "2HD2".
+ chempy.models.Connected: adding atom "1HD2".
+ chempy.models.Connected: adding atom "HG".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "1HD1".
+ chempy.models.Connected: adding atom "3HD2".
+ chempy.models.Connected: adding atom "3HD1".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HD1".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HG1".
+ chempy.models.Connected: adding atom "HB".
+ chempy.models.Connected: adding atom "1HG2".
+ chempy.models.Connected: adding atom "1HG1".
+ chempy.models.Connected: adding atom "2HG1".
+ chempy.models.Connected: adding atom "3HG2".
+ chempy.models.Connected: adding atom "2HG2".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "1HD".
+ chempy.models.Connected: adding atom "2HH".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "3HZ".
+ chempy.models.Connected: adding atom "2HZ".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "3HE".
+ chempy.models.Connected: adding atom "1HE".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "HB".
+ chempy.models.Connected: adding atom "1HG".
+ chempy.models.Connected: adding atom "1HG2".
+ chempy.models.Connected: adding atom "3HG2".
+ chempy.models.Connected: adding atom "2HG2".
+ chempy.place: placing unknowns...
+ test: atom 0 position: [3.789, -15.753, 24.546]
+ chempy.tinker.state.State: starting dynamics run...
+ chempy: writing "tinker_inp.xyz".
+ chempy.tinker: creating temporary files "tinker_run.*"
+ chempy.tinker: launching dynamic...
+ chempy.tinker: input 1 = tinker_run
+ chempy.tinker: input 2 = 50
+ chempy.tinker: input 3 = 1.0
+ chempy.tinker: input 4 = 0.01
+ chempy.tinker: input 5 = 300.0
+ chempy.tinker: dynamic job complete. 
+ chempy.tinker: creating output files "tinker_out.*"
+ test: 5 frames returned.
+ test: atom 0 position: [3.957733, -15.942231, 24.422814]
+ chempy.tinker.state.State: starting dynamics run...
+ chempy: writing "tinker_inp.xyz".
+ chempy.tinker.state.State: using restart information...
+ chempy.tinker: creating temporary files "tinker_run.*"
+ chempy.tinker: launching dynamic...
+ chempy.tinker: input 1 = tinker_run
+ chempy.tinker: input 2 = 50
+ chempy.tinker: input 3 = 1.0
+ chempy.tinker: input 4 = 0.01
+ chempy.tinker: input 5 = 300.0
+ chempy.tinker: dynamic job complete. 
+ chempy.tinker: creating output files "tinker_out.*"
+ test: atom 0 position: [4.294662, -15.686922, 24.529556]
+ test: energy is -> 333.8827
+ test: summary  [1, 338.352, 157.8567, 180.4953, 308.95]
+ test: summary  [2, 338.2628, 150.7311, 187.5317, 320.99]
+ test: summary  [3, 338.2586, 149.0704, 189.1882, 323.82]
+ test: summary  [4, 338.2234, 154.1189, 184.1045, 315.12]
+ test: summary  [5, 337.9612, 158.0957, 179.8655, 307.87]
+ test: summary  [6, 337.7423, 156.5272, 181.2152, 310.18]
+ test: summary  [7, 337.8353, 155.3107, 182.5246, 312.42]
+ test: summary  [8, 337.8487, 157.7745, 180.0742, 308.22]
+ test: summary  [9, 337.6665, 159.9097, 177.7568, 304.26]
+ test: summary  [10, 337.7145, 162.0057, 175.7088, 300.75]
+ test: summary  [11, 337.9237, 166.5329, 171.3909, 293.36]
+ test: summary  [12, 337.8072, 166.6398, 171.1674, 292.98]
+ test: summary  [13, 337.5327, 156.8874, 180.6453, 309.2]
+ test: summary  [14, 337.6596, 148.5583, 189.1013, 323.68]
+ test: summary  [15, 337.8502, 151.9871, 185.8631, 318.13]
+ test: summary  [16, 337.4691, 156.9312, 180.5378, 309.02]
+ test: summary  [17, 336.998, 153.5684, 183.4297, 313.97]
+ test: summary  [18, 337.1882, 152.6373, 184.5509, 315.89]
+ test: summary  [19, 337.4379, 161.7893, 175.6486, 300.65]
+ test: summary  [20, 337.1722, 169.1507, 168.0215, 287.59]
+ test: summary  [21, 337.0818, 167.822, 169.2599, 289.71]
+ test: summary  [22, 337.3681, 164.4456, 172.9225, 295.98]
+ test: summary  [23, 337.3446, 159.3651, 177.9795, 304.64]
+ test: summary  [24, 337.1093, 149.7995, 187.3097, 320.61]
+ test: summary  [25, 337.1402, 143.3854, 193.7548, 331.64]
+ test: summary  [26, 337.0455, 144.0919, 192.9536, 330.27]
+ test: summary  [27, 336.5506, 143.981, 192.5696, 329.61]
+ test: summary  [28, 336.3231, 142.4637, 193.8594, 331.82]
+ test: summary  [29, 336.4913, 147.6042, 188.8872, 323.31]
+ test: summary  [30, 336.3715, 155.7779, 180.5936, 309.11]
+ test: summary  [31, 336.1293, 158.1048, 178.0245, 304.72]
+ test: summary  [32, 336.191, 156.4465, 179.7445, 307.66]
+ test: summary  [33, 336.1839, 153.6827, 182.5012, 312.38]
+ test: summary  [34, 335.934, 148.1397, 187.7943, 321.44]
+ test: summary  [35, 335.8581, 144.4661, 191.392, 327.6]
+ test: summary  [36, 335.9557, 148.3162, 187.6395, 321.17]
+ test: summary  [37, 335.6897, 151.8439, 183.8459, 314.68]
+ test: summary  [38, 335.3459, 146.9734, 188.3725, 322.43]
+ test: summary  [39, 335.3738, 140.5151, 194.8588, 333.53]
+ test: summary  [40, 335.3105, 138.9129, 196.3976, 336.16]
+ test: summary  [41, 335.0357, 140.154, 194.8817, 333.57]
+ test: summary  [42, 334.9339, 143.6111, 191.3228, 327.48]
+ test: summary  [43, 334.8363, 147.3074, 187.5289, 320.98]
+ test: summary  [44, 334.4258, 144.7824, 189.6433, 324.6]
+ test: summary  [45, 334.2714, 140.1191, 194.1522, 332.32]
+ test: summary  [46, 334.4967, 144.2912, 190.2055, 325.57]
+ test: summary  [47, 334.2873, 151.0646, 183.2227, 313.61]
+ test: summary  [48, 333.842, 148.003, 185.839, 318.09]
+ test: summary  [49, 333.8573, 140.3493, 193.508, 331.22]
+ test: summary  [50, 333.8827, 136.2655, 197.6172, 338.25]

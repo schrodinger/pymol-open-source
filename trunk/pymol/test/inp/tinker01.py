@@ -20,7 +20,7 @@ kw = [
    "lights\n",
    "verbose\n",
    "randomseed         1234567890\n",
-   "cutoff             8.0\n", 
+   "cutoff             6.0\n", 
    "overwrite\n",
    ]
 
@@ -37,14 +37,17 @@ tinker.run('dynamic',inp_prefix,out_prefix,
 					'10',
                '1.0',
 					'0.01',
-               '300'])
+               '300'],capture=1)
 
 io.xyz.updateFromFile(a,out_prefix+".001")
 
+c = 0
 for at in a.atom:
+   if c > 500: break
    print "%-4s %-4s %12.6f %12.6f %12.6f" % (
       at.name,at.resi,at.coord[0],at.coord[1],at.coord[2])
-
+   c = c + 1
+   
 os.system("touch .no_fail tinker_*")
 os.system("/bin/rm .no_fail tinker_*")
 

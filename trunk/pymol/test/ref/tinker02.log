@@ -1,0 +1,313 @@
+ chempy: reading "dat/pept.pdb".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "OD1".
+ chempy.models.Indexed: adding atom "OD2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "SG".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD1".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "CE2".
+ chempy.models.Indexed: adding atom "CE3".
+ chempy.models.Indexed: adding atom "NE1".
+ chempy.models.Indexed: adding atom "CZ2".
+ chempy.models.Indexed: adding atom "CZ3".
+ chempy.models.Indexed: adding atom "CH2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "ND1".
+ chempy.models.Indexed: adding atom "CE1".
+ chempy.models.Indexed: adding atom "NE2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD1".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD".
+ chempy.models.Indexed: adding atom "OE1".
+ chempy.models.Indexed: adding atom "OE2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD1".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG1".
+ chempy.models.Indexed: adding atom "CG2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG".
+ chempy.models.Indexed: adding atom "CD1".
+ chempy.models.Indexed: adding atom "CD2".
+ chempy.models.Indexed: adding atom "CE2".
+ chempy.models.Indexed: adding atom "CE3".
+ chempy.models.Indexed: adding atom "NE1".
+ chempy.models.Indexed: adding atom "CZ2".
+ chempy.models.Indexed: adding atom "CZ3".
+ chempy.models.Indexed: adding atom "CH2".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "SG".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "N".
+ chempy.models.Indexed: adding atom "CA".
+ chempy.models.Indexed: adding atom "CB".
+ chempy.models.Indexed: adding atom "CG2".
+ chempy.models.Indexed: adding atom "OG1".
+ chempy.models.Indexed: adding atom "C".
+ chempy.models.Indexed: adding atom "O".
+ chempy.models.Indexed: adding atom "OXT".
+ chempy.protein: assigning types and bonds...
+ chempy.protein: adding hydrogens...
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "1HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "1HD".
+ chempy.models.Connected: adding atom "2HH".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "3HZ".
+ chempy.models.Connected: adding atom "2HZ".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "3HE".
+ chempy.models.Connected: adding atom "1HE".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "2HD".
+ chempy.models.Connected: adding atom "1HE".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HE".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "2HD2".
+ chempy.models.Connected: adding atom "1HD2".
+ chempy.models.Connected: adding atom "HG".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "1HD1".
+ chempy.models.Connected: adding atom "3HD2".
+ chempy.models.Connected: adding atom "3HD1".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HD1".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HA".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "3HG".
+ chempy.models.Connected: adding atom "2HG".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "2HD2".
+ chempy.models.Connected: adding atom "1HD2".
+ chempy.models.Connected: adding atom "HG".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "1HD1".
+ chempy.models.Connected: adding atom "3HD2".
+ chempy.models.Connected: adding atom "3HD1".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HD1".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HG1".
+ chempy.models.Connected: adding atom "HB".
+ chempy.models.Connected: adding atom "1HG2".
+ chempy.models.Connected: adding atom "1HG1".
+ chempy.models.Connected: adding atom "2HG1".
+ chempy.models.Connected: adding atom "3HG2".
+ chempy.models.Connected: adding atom "2HG2".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "1HD".
+ chempy.models.Connected: adding atom "2HH".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "3HZ".
+ chempy.models.Connected: adding atom "2HZ".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "3HE".
+ chempy.models.Connected: adding atom "1HE".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "3HB".
+ chempy.models.Connected: adding atom "2HB".
+ chempy.models.Connected: adding atom "HA".
+ chempy.models.Connected: adding atom "H".
+ chempy.models.Connected: adding atom "HB".
+ chempy.models.Connected: adding atom "1HG".
+ chempy.models.Connected: adding atom "1HG2".
+ chempy.models.Connected: adding atom "3HG2".
+ chempy.models.Connected: adding atom "2HG2".
+ chempy.place: placing unknowns...
+ test: atom 0 position: [3.789, -15.753, 24.546]
+ chempy.tinker.state.State: starting minimization run...
+ chempy: writing "tinker_inp.xyz".
+ chempy.tinker: creating temporary files "tinker_run.*"
+ chempy.tinker: launching minimize...
+ chempy.tinker: input 1 = tinker_run
+ chempy.tinker: input 2 = 1.0
+ chempy.tinker: minimize job complete. 
+ chempy.tinker: creating output files "tinker_out.*"
+ test: energy is -> -32.5294
+[1, 116.2041, 18.4277, 34.8213, 0.0145, 0.0, 3, 'Success']
+[2, 84.8648, 17.143, 31.3393, 0.0213, 37.55, 5, 'Success']
+[3, 60.2927, 11.4813, 24.5722, 0.0213, 47.72, 7, 'Success']
+[4, 48.4007, 9.3094, 11.8919, 0.014, 40.96, 9, 'Success']
+[5, 40.0712, 7.8276, 8.3295, 0.0137, 48.53, 11, 'Success']
+[6, 33.8922, 6.8432, 6.1791, 0.0131, 52.83, 13, 'Success']
+[7, 29.7759, 4.8566, 4.1163, 0.0106, 55.25, 15, 'Success']
+[8, 27.3177, 4.6665, 2.4581, 0.008, 50.35, 17, 'Success']
+[9, 25.1591, 4.8639, 2.1586, 0.0085, 56.54, 19, 'Success']
+[10, 22.9608, 3.9895, 2.1983, 0.0097, 62.33, 20, 'Success']
+[11, 21.2152, 4.0834, 1.7456, 0.0089, 60.37, 22, 'Success']
+[12, 19.2095, 4.7206, 2.0058, 0.0115, 64.47, 25, 'Success']
+[13, 16.6214, 4.0742, 2.5881, 0.0158, 69.45, 28, 'Success']
+[14, 14.9196, 3.9975, 1.7018, 0.0112, 67.89, 30, 'Success']
+[15, 13.0601, 3.6388, 1.8595, 0.012, 69.04, 31, 'Success']
+[16, 11.453, 3.4885, 1.6071, 0.0122, 68.53, 33, 'Success']
+[17, 10.216, 3.5618, 1.237, 0.0109, 70.88, 35, 'Success']
+[18, 8.9582, 3.4723, 1.2578, 0.0115, 72.21, 36, 'Success']
+[19, 7.4658, 4.0018, 1.4924, 0.0144, 72.48, 39, 'Success']
+[20, 5.8447, 3.3602, 1.6212, 0.0151, 75.53, 40, 'Success']
+[21, 4.1626, 3.4835, 1.6821, 0.0174, 73.72, 41, 'Success']
+[22, 2.7668, 3.6782, 1.3958, 0.0164, 75.71, 43, 'Success']
+[23, 1.3832, 3.4019, 1.3836, 0.017, 77.01, 44, 'Success']
+[24, 0.099, 3.7496, 1.2842, 0.0173, 76.26, 45, 'Success']
+[25, -1.1362, 3.6478, 1.2353, 0.0161, 77.59, 46, 'Success']
+[26, -2.2206, 2.7826, 1.0843, 0.013, 76.59, 48, 'Success']
+[27, -3.0276, 2.7272, 0.807, 0.0097, 72.38, 50, 'Success']
+[28, -3.8888, 2.678, 0.8612, 0.0101, 72.85, 51, 'Success']
+[29, -4.8108, 2.7347, 0.9221, 0.0113, 73.36, 52, 'Success']
+[30, -5.6302, 2.6784, 0.8193, 0.0118, 75.25, 54, 'Success']
+[31, -6.3956, 2.7732, 0.7654, 0.0129, 76.2, 55, 'Success']
+[32, -7.0031, 2.5038, 0.6076, 0.0094, 76.3, 57, 'Success']
+[33, -7.6588, 2.3018, 0.6557, 0.0091, 74.45, 58, 'Success']
+[34, -8.426, 2.5367, 0.7672, 0.0122, 74.2, 61, 'Success']
+[35, -9.1221, 2.7349, 0.6961, 0.0131, 76.51, 62, 'Success']
+[36, -9.7443, 2.1335, 0.6222, 0.0103, 77.04, 64, 'Success']
+[37, -10.2132, 2.0821, 0.4689, 0.0077, 73.43, 66, 'Success']
+[38, -10.7047, 2.2692, 0.4915, 0.0081, 73.74, 67, 'Success']
+[39, -11.2343, 2.0522, 0.5296, 0.0087, 75.35, 68, 'Success']
+[40, -11.7968, 2.2682, 0.5625, 0.0101, 75.07, 69, 'Success']
+[41, -12.4629, 2.4817, 0.6661, 0.0134, 77.41, 72, 'Success']
+[42, -13.1421, 2.2033, 0.6793, 0.0138, 78.66, 73, 'Success']
+[43, -13.6689, 2.3165, 0.5268, 0.011, 77.37, 75, 'Success']
+[44, -14.2112, 2.1565, 0.5423, 0.0116, 78.59, 76, 'Success']
+[45, -14.6951, 2.0425, 0.4839, 0.0107, 77.86, 78, 'Success']
+[46, -15.0882, 1.8948, 0.3931, 0.0089, 77.34, 80, 'Success']
+[47, -15.5315, 1.8694, 0.4434, 0.0104, 76.9, 83, 'Success']
+[48, -15.8776, 1.807, 0.346, 0.0084, 77.19, 85, 'Success']
+[49, -16.2134, 1.7283, 0.3358, 0.0086, 76.98, 86, 'Success']
+[50, -16.5291, 1.8587, 0.3157, 0.0086, 76.78, 87, 'Success']
+[51, -16.8164, 1.7405, 0.2873, 0.0081, 77.81, 88, 'Success']
+[52, -17.1417, 1.6902, 0.3253, 0.008, 76.31, 91, 'Success']
+[53, -17.4712, 1.7807, 0.3295, 0.0078, 75.63, 92, 'Success']
+[54, -17.8449, 1.7889, 0.3737, 0.0092, 76.74, 95, 'Success']
+[55, -18.1916, 1.8633, 0.3467, 0.0095, 77.2, 96, 'Success']
+[56, -18.5023, 1.6447, 0.3107, 0.008, 77.88, 98, 'Success']
+[57, -18.8036, 1.9675, 0.3013, 0.0078, 75.83, 99, 'Success']
+[58, -19.1858, 1.9867, 0.3822, 0.0098, 78.42, 102, 'Success']
+[59, -19.5834, 1.7295, 0.3976, 0.0097, 78.46, 103, 'Success']
+[60, -20.0488, 2.0346, 0.4654, 0.0122, 77.15, 106, 'Success']
+[61, -20.4393, 1.9098, 0.3905, 0.0107, 79.65, 108, 'Success']
+[62, -20.7868, 1.7612, 0.3475, 0.0096, 79.04, 110, 'Success']
+[63, -21.1383, 1.9492, 0.3515, 0.0096, 78.07, 111, 'Success']
+[64, -21.5102, 1.8391, 0.3719, 0.0099, 79.38, 112, 'Success']
+[65, -21.9173, 1.6848, 0.407, 0.0109, 79.16, 113, 'Success']
+[66, -22.3279, 1.9094, 0.4106, 0.0127, 78.91, 114, 'Success']
+[67, -22.7223, 1.8403, 0.3944, 0.0133, 80.57, 115, 'Success']
+[68, -23.0681, 1.7831, 0.3458, 0.0112, 80.18, 117, 'Success']
+[69, -23.4418, 1.8169, 0.3737, 0.0111, 79.86, 118, 'Success']
+[70, -23.858, 1.9054, 0.4162, 0.0138, 80.4, 121, 'Success']
+[71, -24.1868, 1.8545, 0.3288, 0.0115, 81.37, 123, 'Success']
+[72, -24.5336, 1.5531, 0.3468, 0.0113, 80.9, 124, 'Success']
+[73, -24.8456, 1.7784, 0.3121, 0.0108, 79.1, 126, 'Success']
+[74, -25.1963, 1.8596, 0.3507, 0.0125, 80.85, 129, 'Success']
+[75, -25.5793, 1.6275, 0.383, 0.0128, 81.43, 130, 'Success']
+[76, -25.9237, 2.142, 0.3444, 0.014, 80.25, 131, 'Success']
+[77, -26.2726, 1.8152, 0.3489, 0.0128, 82.7, 132, 'Success']
+[78, -26.6635, 1.9371, 0.391, 0.013, 80.38, 135, 'Success']
+[79, -27.0748, 1.8127, 0.4112, 0.0129, 80.91, 136, 'Success']
+[80, -27.5053, 1.8883, 0.4305, 0.014, 80.6, 137, 'Success']
+[81, -27.9212, 2.0423, 0.416, 0.0154, 81.42, 138, 'Success']
+[82, -28.3023, 2.0362, 0.3811, 0.0149, 82.04, 139, 'Success']
+[83, -28.6964, 1.8408, 0.394, 0.0129, 81.57, 140, 'Success']
+[84, -29.0457, 1.9141, 0.3493, 0.0113, 80.23, 142, 'Success']
+[85, -29.4229, 1.5928, 0.3773, 0.0114, 80.7, 143, 'Success']
+[86, -29.7268, 1.6451, 0.3038, 0.0099, 78.84, 145, 'Success']
+[87, -30.0012, 1.5261, 0.2744, 0.0093, 79.6, 147, 'Success']
+[88, -30.2529, 1.4957, 0.2517, 0.0094, 78.85, 148, 'Success']
+[89, -30.4569, 1.3961, 0.204, 0.007, 78.61, 150, 'Success']
+[90, -30.6342, 1.3296, 0.1773, 0.006, 77.56, 152, 'Success']
+[91, -30.8256, 1.1821, 0.1913, 0.0061, 77.28, 153, 'Success']
+[92, -30.9867, 1.2259, 0.1612, 0.0058, 76.16, 155, 'Success']
+[93, -31.1502, 1.202, 0.1634, 0.0061, 77.48, 156, 'Success']
+[94, -31.3265, 1.099, 0.1764, 0.0064, 77.58, 157, 'Success']
+[95, -31.4888, 1.4823, 0.1622, 0.0072, 76.98, 158, 'Success']
+[96, -31.6817, 1.2333, 0.1929, 0.0081, 80.62, 161, 'Success']
+[97, -31.8387, 1.3766, 0.157, 0.0063, 78.15, 163, 'Success']
+[98, -32.056, 1.4163, 0.2173, 0.0088, 79.55, 166, 'Success']
+[99, -32.2977, 1.4429, 0.2417, 0.0099, 79.98, 169, 'Success']
+[100, -32.5294, 1.5068, 0.2317, 0.01, 80.28, 170, 'IterLimit']
+ test: atom 0 position: [3.740798, -16.04974, 24.415476]
