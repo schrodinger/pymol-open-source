@@ -2057,7 +2057,10 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_show_progress, 1);
 
-  SettingSet_i(I,cSetting_use_display_lists, 1);
+  SettingSet_i(I,cSetting_use_display_lists, 0); /* don't make this default
+                                                    until we have a way of
+                                                    reusing display list 
+                                                    identifiers */
 
 }
 

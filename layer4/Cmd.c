@@ -281,6 +281,7 @@ static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdGetWizardStack(PyObject *self, PyObject *args);
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetVis(PyObject *self, 	PyObject *args);
+static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args);
 static PyObject *CmdMask(PyObject *self, PyObject *args);
 static PyObject *CmdMDump(PyObject *self, PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
@@ -401,6 +402,7 @@ static PyMethodDef Cmd_methods[] = {
    {"debug",                 CmdDebug,                METH_VARARGS },
    {"decline",               CmdDecline,              METH_VARARGS },
    {"del_colorection",       CmdDelColorection,       METH_VARARGS },   
+   {"gl_delete_lists",       CmdGLDeleteLists,        METH_VARARGS },
 	{"delete",                CmdDelete,               METH_VARARGS },
 	{"dirty",                 CmdDirty,                METH_VARARGS },
 	{"distance",	           CmdDistance,             METH_VARARGS },
@@ -565,6 +567,16 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
+{
+  int int1,int2;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"ii",&int1,&int2);
+  if(ok) {
+    glDeleteLists(int1,int2);
+  }
+  return(APIStatus(1));
+}
 static PyObject *CmdRayAntiThread(PyObject *self, 	PyObject *args)
 {
   int ok=true;
@@ -2910,7 +2922,7 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry();
     if(str1[0]!='_') { /* suppress internal call-backs */
-      if(strncmp(str1,"cmd._",5)) {
+      if(strncmp(str1,"cmd._",5)&&(strncmp(str1,"_cmd.",5))) {
         OrthoAddOutput("PyMOL>");
         OrthoAddOutput(str1);
         OrthoNewLine(NULL,true);

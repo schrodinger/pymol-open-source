@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"MemoryDebug.h"
 #include"CoordSet.h"
+#include"P.h"
 /*========================================================================*/
 
 void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick);
@@ -127,8 +128,14 @@ void RepFree(Rep *I)
 {
   if(PMGUI) {
     if(I->displayList) {
-      glDeleteLists(I->displayList,1);
-      I->displayList = 0;
+      if(PIsGlutThread()) {
+        glDeleteLists(I->displayList,1);
+        I->displayList = 0;
+      } else {
+        char buffer[255]; /* pass this off to the main thread */
+        sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",I->displayList,1);
+        PParse(buffer);
+      }
     }
   }
   FreeP(I->P);
