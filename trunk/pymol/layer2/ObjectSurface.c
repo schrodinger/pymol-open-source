@@ -100,20 +100,8 @@ static void ObjectSurfaceInvalidate(ObjectSurface *I,int rep,int level,int state
 static void ObjectSurfaceUpdate(ObjectSurface *I) 
 {
   int a;
-  int c;
   ObjectSurfaceState *ms;
-  int *n;
-  float *v;
-  int *old_n;
-  float *old_v;
-  int n_cur;
-  int n_seg;
-  int n_line;
-  int flag;
-  int last_flag=0;
-  int h,k,l;
-  int i,j;
-  MapType *voxelmap; /* this has nothing to do with isosurfaces... */
+  MapType *voxelmap=NULL; /* this has nothing to do with isosurfaces... */
   
   for(a=0;a<I->NState;a++) {
     ms = I->State+a;
@@ -132,75 +120,23 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag=false;
           PRINTF " ObjectSurface: updating \"%s\".\n" , I->Obj.Name ENDF;
-          if(ms->Map->Field) TetsurfVolume(ms->Map->Field,
-                                           ms->Level,
-                                           &ms->N,&ms->V,
-                                           ms->Range,
-                                           ms->Mode); 
-          if(0&&ms->CarveFlag&&ms->AtomVertex&&
-             VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
-            /* cull my friend, cull */
-            voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
-            if(voxelmap) {
-            
-              MapSetupExpress(voxelmap);  
-            
-              old_n = ms->N;
-              old_v = ms->V;
-              ms->N=VLAlloc(int,VLAGetSize(old_n));
-              ms->V=VLAlloc(float,VLAGetSize(old_v));
-            
-              n = old_n;
-              v = old_v;
-              n_cur = 0;
-              n_seg = 0;
-              n_line = 0;
-              while(*n)
-                {
-                  last_flag=false;
-                  c=*(n++);
-                  while(c--) {
-                    flag=false;
-                    MapLocus(voxelmap,v,&h,&k,&l);
-                    i=*(MapEStart(voxelmap,h,k,l));
-                    if(i) {
-                      j=voxelmap->EList[i++];
-                      while(j>=0) {
-                        if(within3f(ms->AtomVertex+3*j,v,ms->CarveBuffer)) {
-                          flag=true;
-                          break;
-                        }
-                        j=voxelmap->EList[i++];
-                      }
-                    }
-                    if(flag&&(!last_flag)) {
-                      copy3f(v,ms->V+n_line*3);
-                      n_cur++;
-                      n_line++;
-                    }
-                    if(flag&&last_flag) { /* continue segment */
-                      copy3f(v,ms->V+n_line*3);
-                      n_cur++;
-                      n_line++;
-                    } if((!flag)&&last_flag) { /* terminate segment */
-                      ms->N[n_seg]=n_cur;
-                      n_seg++;
-                      n_cur=0;
-                    }
-                    last_flag=flag;
-                    v+=3;
-                  }
-                  if(last_flag) { /* terminate segment */
-                    ms->N[n_seg]=n_cur;
-                    n_seg++;
-                    n_cur=0;
-                  }
-                }
-              ms->N[n_seg]=0;
-              VLAFreeP(old_n);
-              VLAFreeP(old_v);
-              MapFree(voxelmap);
+          if(ms->Map->Field) {
+            if(ms->CarveFlag&&ms->AtomVertex) {
+              voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,
+                              VLAGetSize(ms->AtomVertex)/3,NULL);
+              if(voxelmap)
+                MapSetupExpress(voxelmap);  
             }
+            TetsurfVolume(ms->Map->Field,
+                          ms->Level,
+                          &ms->N,&ms->V,
+                          ms->Range,
+                          ms->Mode,
+                          voxelmap,
+                          ms->AtomVertex,
+                          ms->CarveBuffer); 
+            if(voxelmap)
+              MapFree(voxelmap);
           }
         }
       }
