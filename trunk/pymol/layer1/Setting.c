@@ -67,6 +67,8 @@ void SettingSetfv(int index,float *v)
   case cSetting_ortho:
   case cSetting_ambient:
 	 SceneDirty();
+  case cSetting_overlay:
+    OrthoDirty();
   default:
 	 I->Setting[index].Value[0]=v[0];
 	 break;
@@ -475,6 +477,16 @@ void SettingInit(void)
   I->Setting[cSetting_auto_zoom].Value[0] = 1.0;
   strcpy(I->Setting[cSetting_auto_zoom].Name,
 			"auto_zoom");
+
+  I->NSetting++;
+  I->Setting[cSetting_overlay].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_overlay].Name,
+			"overlay");
+
+  I->NSetting++;
+  I->Setting[cSetting_text].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_text].Name,
+			"text");
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS

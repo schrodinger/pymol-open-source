@@ -100,24 +100,41 @@ void SelectorPurgeMembers(int sele);
 static WordType Keyword[] = 
 {
   "not",      "NOT1",
+  "!",        "NOT1",
   "byresi",   "BYR1",
+  "b;",       "BYR1",
   "and",      "AND2",
+  "&",        "AND2",
   "or",       "OR_2",
+  "|",        "OR_2",
   "in",       "IN_2",
   "all",      "ALLz", /* 0 parameter */
+  "+",        "ALLz", /* 0 parameter */
   "none",     "NONz", /* 0 parameter */
   "hetatm",   "HETz", /* 0 parameter */
+  "het",      "HETz", /* 0 parameter */
   "hydro",    "HYDz", /* 0 parameter */
+  "h;",       "HYDz", /* 0 parameter */
   "around",   "ARD_", /* 1 parameter */
+  "a;",       "ARD_", /* 1 parameter */
   "expand",   "EXP_", /* 1 parameter */
+  "x;",       "EXP_", /* 1 parameter */
   "name",     "NAMs",
+  "n;",       "NAMs",
   "elem",     "ELEs",
+  "e;",       "ELEs",
   "resi",     "RSIs",
+  "i;",       "RSIs",
   "chain",    "CHNs",
+  "c;",       "CHNs",
   "segi",     "SEGs",
+  "s;",       "SEGs",
   "model",    "MODs",
+  "m;",       "MODs",
   "index",    "IDXs",
+  "i;",       "IDXs",
   "resn",     "RSNs",
+  "r;",       "RSNs",
   "%",        "SELs",
   "b",        "BVLx", /* 2 operand selection operator */ 
   ""
@@ -1483,7 +1500,15 @@ WordType *SelectorParse(char *s) {
 				  *q=0;
 				  w_flag=false;
 				  break;
-				case '(': /* single word terminators */ 
+            case ';': /* special word terminator */
+				  *q++=*p;
+				  *q=0;
+              w_flag=false;
+              break;
+				case '!': /* single words */ 
+				case '&': 
+				case '|': 
+				case '(': 
 				case ')':
 				case '>': 
 				case '<':
@@ -1506,12 +1531,24 @@ WordType *SelectorParse(char *s) {
 		  {
 			 switch(*p)
 				{
-				case '(': /* single word terminators */
+				case '*': /* special case */
+				  *q=0;
+				  q=r[c];
+				  c++;
+				  VLACheck(r,WordType,c);
+				  *q++='+';
+				  *q=0;
+				  w_flag=false;
+              break;
+				case '!': /* single words */ 
+				case '&': 
+				case '|': 
+				case '(': 
 				case ')':
 				case '>': 
 				case '<':
             case '=':
-			   case '%':
+				case '%':
 				  q=r[c];
 				  *q++=(*p);
 				  *q=0;

@@ -1226,7 +1226,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 MenuActivate(x,y,"all_action",rec->name);
                 break;
               case cExecSelection:
-                MenuActivate(x,y,"mol_action",rec->name);
+                MenuActivate(x,y,"sele_action",rec->name);
                 break;
               case cExecObject:
                 switch(rec->obj->type) {

@@ -62,6 +62,7 @@ void OrthoRestorePrompt(void);
 
 void OrthoDirty(void);
 void OrthoWorking(void);
+void OrthoClear(void);
 
 void OrthoBusyDraw(int force);
 void OrthoBusyMessage(char *message);
