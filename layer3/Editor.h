@@ -62,4 +62,6 @@ int EditorIsObjectNotCurrent(ObjectMolecule *obj);
 int EditorGetSinglePicked(char *name);
 int EditorIsBondMode(void);
 int EditorDeselectIfSelected(int index,int update);
+void EditorDefineExtraPks(void);
+
 #endif

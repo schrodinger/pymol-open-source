@@ -267,10 +267,13 @@ def all_action(s):
            [ 1, 'center (visible)' , 'cmd.center("(visible)")'     ],
            [ 1, 'origin (visible)' , 'cmd.origin("(visible)")'     ],
            [ 0, ''             , ''                      ],           
-           [ 1, 'delete everything'  , 'cmd.delete("all")'     ],
+           [ 1, 'delete everything'  , 'cmd.delete("all")'     ],           
            [ 0, ''          ,''                                              ],
            [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
-           [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
+           [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],           
+           [ 0, ''          ,''                                              ],
+           [ 1, 'protect'        ,'cmd.protect("'+s+'")'         ],
+           [ 1, 'deprotect'      ,'cmd.deprotect("'+s+'")'       ],
            [ 0, ''             , ''                      ],
            [ 1, 'count atoms'       , 'cmd.count_atoms("all",quiet=0)'     ]
            ]

@@ -54,6 +54,24 @@ typedef struct {
 
 CEditor Editor;
 
+void EditorDefineExtraPks(void)
+{
+  WordType name;
+  WordType buffer;
+
+  if(EditorGetSinglePicked(name)) {
+    sprintf(buffer,"(byres %s)",name);
+    SelectorCreate(cEditorRes,buffer,NULL,true,NULL);
+    sprintf(buffer,"(bychain %s)",name);
+    SelectorCreate(cEditorChain,buffer,NULL,true,NULL);
+    sprintf(buffer,"(byobject %s)",name);
+    SelectorCreate(cEditorObject,buffer,NULL,true,NULL);
+    
+    if(SettingGet(cSetting_auto_hide_selections))
+      ExecutiveHideSelections();
+  }
+}
+
 int EditorDeselectIfSelected(int index,int update)
 {
   CEditor *I = &Editor;
@@ -132,8 +150,10 @@ int EditorFromPyList(PyObject *list)
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&active_state);
     if(ok) {
       objMol=ExecutiveFindObjectMoleculeByName(obj_name);
-      if(objMol)
+      if(objMol) {
         EditorSetActiveObject(objMol,active_state);
+        EditorDefineExtraPks();
+      }
     } else {
       EditorInactive();
     }
@@ -456,7 +476,7 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
   int i1=-1;
   int i2=-1;
   int i3=-1;
-  int sele0,sele1,sele2,sele3;
+  int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
   int result=false;
   int ok = true;
   ObjectMolecule *obj0=NULL,*obj1=NULL,*obj2=NULL,*obj3=NULL,*consensus_obj=NULL;
@@ -512,8 +532,6 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
     ExecutiveDelete(cEditorSele4);
   }
 
-  /* TODO verify objects */
-
   if(ok) {
     if(obj0) {
       consensus_obj = obj0;
@@ -549,13 +567,9 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
     
     EditorSetActiveObject(consensus_obj,SceneGetState());        
 
-    if(pkresi&&((i0>=0)&&(i1<0)&&(i2<0)&&(i3<0))) {
-      SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
-      SelectorCreate(cEditorChain,"(bychain pk1)",NULL,true,NULL);
-      SelectorCreate(cEditorObject,"(byobject pk1)",NULL,true,NULL);
-      if(SettingGet(cSetting_auto_hide_selections))
-        ExecutiveHideSelections();
-    }
+    if(pkresi)
+      EditorDefineExtraPks();
+
     SceneDirty();
     result=true;
 
