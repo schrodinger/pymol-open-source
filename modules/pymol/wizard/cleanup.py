@@ -113,9 +113,11 @@ class Cleanup(Wizard):
          
    def set_target(self,target):
       self.target = target
-
+      cmd.refresh_wizard()
+      
    def set_ligand(self,ligand):
       self.ligand = ligand
+      cmd.refresh_wizard()
       
    def get_panel(self):
       return [

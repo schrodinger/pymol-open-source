@@ -342,8 +342,9 @@ SEE ALSO
    def edit_mode(active=1,quiet=1):
       # legacy function
       if len(mouse_ring):
+         bm = int(_cmd.get_setting("button_mode"))
+         mouse_mode = mouse_ring[bm]
          if active:
-            mouse_mode = mouse_ring[0]
             if mouse_mode[0:10]=='two_button':
                if mouse_mode!='two_button_editing':
                   mouse(action='two_button_editing',quiet=quiet)
@@ -351,7 +352,6 @@ SEE ALSO
                if mouse_mode!='three_button_editing':
                   mouse(action='three_button_editing',quiet=quiet)
          else:
-            mouse_mode = mouse_ring[0]
             if mouse_mode[0:10]=='two_button':
                if mouse_mode!='two_button_viewing':               
                   mouse(action='two_button_viewing',quiet=quiet)
