@@ -102,7 +102,7 @@ Main Goals for 1.0 Release
 
 Current Bugs to Fix
 
-   * superposition system fails with degenerate sets (planer atoms, etc).
+   * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
 
 Changes up to 0.82

@@ -1509,14 +1509,14 @@ int ExecutiveStereo(int flag)
       
       switch(stereo_mode) {
       case 1: /* hardware stereo-in-a-window*/
-        if(StereoCapable) {
+        if(StereoCapable||SceneGetStereo()) {
           SceneSetStereo(flag);
           PSGIStereo(flag);
         } else {
           ok=false;
         }
         break;
-      case 2: /* wall-eye stereo*/
+      case 2: /* cross-eye stereo*/
         SceneSetStereo(flag);
         break;
       }
