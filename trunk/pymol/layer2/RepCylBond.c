@@ -122,17 +122,20 @@ Rep *RepCylBondNew(CoordSet *cs)
   float *v,*vv1,*vv2,*v0,*vr;
   float v1[3],v2[3];
   float radius;
-  int nEdge = 8;
+  int nEdge;
+  int half_bonds;
   OOAlloc(RepCylBond);
 
 
+  nEdge = SettingGet(cSetting_stick_quality);
   radius = SettingGet(cSetting_stick_radius);
+  half_bonds = SettingGet(cSetting_half_bonds);  
 
   RepInit(&I->R);
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepCylBondFree;
-  
+
   I->V = NULL;
   I->VR = NULL;
   I->N = 0;
@@ -168,6 +171,12 @@ Rep *RepCylBondNew(CoordSet *cs)
 				
 				s1=obj->AtomInfo[b1].visRep[cRepCyl];
 				s2=obj->AtomInfo[b2].visRep[cRepCyl];
+
+				if(!(s1&&s2))
+              if(!half_bonds) {
+                s1 = 0;
+                s2 = 0;
+              }
 				
 				if(s1||s2)
 				  {
@@ -318,8 +327,8 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap)
   int c;
 
   tube_size = SettingGet(cSetting_stick_radius);
-  overlap = tube_size/3;
-  nub = tube_size/2;
+  overlap = tube_size*SettingGet(cSetting_stick_overlap);
+  nub = tube_size*SettingGet(cSetting_stick_nub);
 
  subdivide(nEdge,x,y);
 

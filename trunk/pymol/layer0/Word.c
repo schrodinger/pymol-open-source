@@ -20,7 +20,13 @@ Z* -------------------------------------------------------------------
 
 int WordMatch(char *p,char *q,int ignCase) 
 /* allows for terminal wildcard (*) in p
- * and allows for p to match when shorter than q */
+ * and allows for p to match when shorter than q.
+
+Returns:
+0 = no match
+positive = match out to N characters
+negative = perfect match  */
+
 {
   int i=1;
   while((*p)&&(*q))
@@ -59,6 +65,70 @@ int WordMatch(char *p,char *q,int ignCase)
   if(i&&((!*p)&&(!*q))) /*exact match*/
 	 i=-i;
   return(i);
+}
+
+int WordMatchComma(char *p,char *q,int ignCase) 
+     /* allows for comma list in p, also allows wildcards (*) in p */
+{
+  int i=0;
+  int best_i=0;
+  char *q_copy;
+  q_copy=q;
+  while((*p)&&(best_i>=0)) {
+    i=1;
+    q=q_copy;
+    while((*p)&&(*q))
+      {
+        if(*p==',')
+          break;
+        if(*p!=*q)
+          {
+            if(*p=='*')
+              {
+                i=-i;
+                break;
+              }
+            if(ignCase)
+              {
+                if(tolower(*p)!=tolower(*q))
+                  {
+                    i=0;
+                    break;
+                  }
+              }
+            else 
+              {
+                i=0;
+                break;
+              }
+          }
+        i++;
+        p++;
+        q++;
+      }
+    if((!*q)&&((*p=='*')||(*p==',')))
+      i=-i;
+    if((*p!='*')&&(*p!=',')) 
+      if((*p)&&(!*q))
+        i=0;
+    if(i&&((!*p)&&(!*q))) /*exact match*/
+      i=-i;
+
+    if(i<0)
+      best_i=i;
+    else if((best_i>=0))
+      if(i>best_i)
+        best_i=i;
+    if(best_i>=0) {
+      while(*p) {
+        if(*p==',')
+          break;
+        p++;
+      }
+      if(*p==',') p++;
+    }
+  }
+  return(best_i);
 }
 
 int WordCompare(char *p,char *q,int ignCase) 

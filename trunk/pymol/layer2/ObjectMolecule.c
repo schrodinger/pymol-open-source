@@ -36,9 +36,11 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"Scene.h"
 #include"PUtils.h"
+#include"Executive.h"
 
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
+CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *cset);
@@ -51,16 +53,15 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index);
 
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 void ObjectMoleculeExtendIndices(ObjectMolecule *I);
-void ObjectMoleculeSort(ObjectMolecule *I);
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs);
 
 int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff);
-void ObjectTransformTTTf(ObjectMolecule *I,float *ttt);
+void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 
 static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
 
-#define MAXLINELEN 255
+#define MAXLINELEN 1024
 
 /*========================================================================*/
 static int BondInOrder(int *a,int b1,int b2)
@@ -269,7 +270,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 p=ncopy(atInfo[a].name,p,3);
 			 UtilCleanStr(atInfo[a].name);
 			 
-			 atInfo[a].visRep[0] = true; /* show sticks by default */
+			 atInfo[a].visRep[0] = true; /* show lines by default */
 			 for(c=1;c<cRepCnt;c++) {
 				atInfo[a].visRep[c] = false;
 			 }
@@ -277,7 +278,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 		  if(ok&&atInfo) {
 			 strcpy(atInfo[a].resn,resn);
 			 atInfo[a].hetatm=true;
-			 AtomInfoAssignParameters(atInfo);
+			 AtomInfoAssignParameters(atInfo+a);
 			 switch ( atInfo[a].name[0] ) /* need to move this stuff into parameters */
 				{
 				case 'N' : color = NColor; break;
@@ -664,7 +665,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 				  else
 					 atInfo[atomCount].hetatm=1;
 
-				  AtomInfoAssignParameters(&atInfo[atomCount]);
+				  AtomInfoAssignParameters(atInfo+atomCount);
 
 				  switch ( atInfo[atomCount].name[0] ) /* need to move this stuff into parameters */
 					{
@@ -1024,17 +1025,19 @@ CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex)
 	 return(NULL);
 }
 /*========================================================================*/
-void ObjectTransformTTTf(ObjectMolecule *I,float *ttt) 
+void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame) 
 {
   int b;
   CoordSet *cs;
   for(b=0;b<I->NCSet;b++)
 	{
-	  cs=I->CSet[b];
-	  if(cs) {
-		cs->fInvalidateRep(I->CSet[b],cRepAll,0);
-		MatrixApplyTTTfn3f(cs->NIndex,cs->Coord,ttt,cs->Coord);
-	  }
+     if((frame<0)||(frame==b)) {
+       cs=I->CSet[b];
+       if(cs) {
+         cs->fInvalidateRep(I->CSet[b],cRepAll,0);
+         MatrixApplyTTTfn3f(cs->NIndex,cs->Coord,ttt,cs->Coord);
+       }
+     }
 	}
 }
 /*========================================================================*/
@@ -1042,18 +1045,19 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 {
   int a,b,s;
   int a1;
-  float r;
+  float r,rms,inv;
   float v1[3],v2,*vv1,*vv2;
   int inv_flag;
   int hit_flag = false;
   int ok = true;
-
+  OrthoLineType buffer;
+  int cnt,maxCnt;
   if(sele>=0) {
 	SelectorUpdateTable();
 	switch(op->code) {
 	case 'PDB1':
 	  for(b=0;b<I->NCSet;b++)
-		if(I->CSet[b])
+       if(I->CSet[b])
 		  {
 			if((b==op->i1)||(op->i1<0))
 			  for(a=0;a<I->NAtom;a++)
@@ -1073,11 +1077,90 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				}
 		  }
 	  break;
-	  
+	case 'AVRT': /* average vertex coordinate */
+     cnt=op->nvv1;
+     maxCnt=cnt;
+	  for(b=0;b<I->NCSet;b++) {
+       if(I->CSet[b])
+         {
+           op->nvv1=cnt;
+           cnt=0;
+           for(a=0;a<I->NAtom;a++)
+             {
+				   s=I->AtomInfo[a].selEntry;
+				   while(s) 
+                 {
+                   if(SelectorMatch(s,sele))
+                     {
+                       a1=I->CSet[b]->AtmToIdx[a];
+                       if(a1>=0) {
+                         if(!cnt) op->i1++;
+                         VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                         VLACheck(op->vc1,int,op->nvv1);
+                         vv2=I->CSet[b]->Coord+(3*a1);
+                         vv1=op->vv1+(op->nvv1*3);
+                         *(vv1++)+=*(vv2++);
+                         *(vv1++)+=*(vv2++);
+                         *(vv1++)+=*(vv2++);
+                         op->vc1[op->nvv1]++;
+                         op->nvv1++;
+                       }
+                     }
+                   s=SelectorNext(s);
+                 }
+             }
+           if(maxCnt<op->nvv1) maxCnt=op->nvv1;
+         }
+     }
+     op->nvv1=maxCnt;
+     break;
+	case 'SFIT': /* state fitting within a single object */
+	  for(b=0;b<I->NCSet;b++)
+       if(I->CSet[b]&&(b!=op->i1))
+         {
+           op->nvv1=0;
+           for(a=0;a<I->NAtom;a++)
+             {
+				   s=I->AtomInfo[a].selEntry;
+				   while(s) 
+					 {
+					   if(SelectorMatch(s,sele))
+                    {
+                      a1=I->CSet[b]->AtmToIdx[a];
+                      if(a1>=0) {
+                        VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                        vv2=I->CSet[b]->Coord+(3*a1);
+                        vv1=op->vv1+(op->nvv1*3);
+                        *(vv1++)=*(vv2++);
+                        *(vv1++)=*(vv2++);
+                        *(vv1++)=*(vv2++);
+                        op->nvv1++;
+                      }
+                    }
+                  s=SelectorNext(s);
+                }
+             }
+           if(op->nvv1!=op->nvv2) {
+             sprintf(buffer,"Atom counts between selections don't match (%d vs %d)\n",
+                     op->nvv1,op->nvv2);
+             ErrMessage("ExecutiveFit",buffer);
+             
+           } else if(op->nvv1) {
+             rms = MatrixFitRMS(op->nvv1,op->vv1,op->vv2,NULL,op->ttt);
+             printf(" ExecutiveFit: RMS = %8.3f (%d atoms)\n",
+                    rms,op->nvv1);
+             ObjectMoleculeTransformTTTf(I,op->ttt,b);
+           } else {
+             ErrMessage("ExecutiveFit","No atoms selected.");
+           }
+         }
+     
+     break;
+
 	default:
 	   for(a=0;a<I->NAtom;a++)
 		 {
-		   switch(op->code) {
+		   switch(op->code) { /* atom based loops */
 		   case 'COLR':
 		   case 'VISI':
 		   case 'TTTF':
@@ -1111,7 +1194,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				 s=SelectorNext(s);
 			   }
 			 break;
-		   default: /* coord-set based properties */
+		   default: /* coord-set based properties, iterating as coordsets within atoms */
 			 for(b=0;b<I->NCSet;b++)
 			   if(I->CSet[b])
 				 {
@@ -1144,19 +1227,32 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 							   inv_flag=true;
 							 break;
 						   case 'VERT': 
-							 a1=I->CSet[b]->AtmToIdx[a];
-							 if(a1>=0) {
-							   VLACheck(op->vv1,float,(op->nvv1*3)+2);
-							   vv2=I->CSet[b]->Coord+(3*a1);
-							   vv1=op->vv1+(op->nvv1*3);
-							   *(vv1++)=*(vv2++);
-							   *(vv1++)=*(vv2++);
-							   *(vv1++)=*(vv2++);
-							   op->nvv1++;
-							 }
-							 break;
-							 
-							 /* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
+                       a1=I->CSet[b]->AtmToIdx[a];
+                       if(a1>=0) {
+                         VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                         vv2=I->CSet[b]->Coord+(3*a1);
+                         vv1=op->vv1+(op->nvv1*3);
+                         *(vv1++)=*(vv2++);
+                         *(vv1++)=*(vv2++);
+                         *(vv1++)=*(vv2++);
+                         op->nvv1++;
+                       }
+							 break;	
+						   case 'SVRT': 
+                       if(b==op->i1) {
+                         a1=I->CSet[b]->AtmToIdx[a];
+                         if(a1>=0) {
+                           VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                           vv2=I->CSet[b]->Coord+(3*a1);
+                           vv1=op->vv1+(op->nvv1*3);
+                           *(vv1++)=*(vv2++);
+                           *(vv1++)=*(vv2++);
+                           *(vv1++)=*(vv2++);
+                           op->nvv1++;
+                         }
+                       }
+							 break;	
+ /* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
 						   case 'MOME': 
 							 a1=I->CSet[b]->AtmToIdx[a];
 							 if(a1>=0) {
@@ -1192,7 +1288,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	if(hit_flag) {
 	  switch(op->code) {
 	  case 'TTTF':
-		ObjectTransformTTTf(I,op->ttt);
+		ObjectMoleculeTransformTTTf(I,op->ttt,-1);
 		break;
 	  }
 	}
@@ -1239,11 +1335,18 @@ void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep)
 /*========================================================================*/
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick)
 {
-  if(frame<I->NCSet) {
+  int a;
+  if(frame<0) {
+    for(a=0;a<I->NCSet;a++)
+      if(I->CSet[a])
+        I->CSet[a]->fRender(I->CSet[a],ray,pick);        
+  } else if(frame<I->NCSet) {
 	 I->CurCSet=frame % I->NCSet;
 	 if(I->CSet[I->CurCSet]) {
 		I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],ray,pick);
 	 }
+  } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
+    I->CSet[0]->fRender(I->CSet[0],ray,pick);    
   }
 }
 /*========================================================================*/
@@ -1386,6 +1489,272 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
   UtilSortInPlace((*bond),nBond,sizeof(int)*2,(UtilOrderFn*)BondInOrder);
   return(nBond);
 }
+
+
+/*========================================================================*/
+CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
+{
+  char *p;
+  int nAtom,nBond;
+  int a,c,bPart,bOrder;
+  float *coord = NULL;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL;
+  char cc[MAXLINELEN];
+  float *f;
+  int *ii,*bond=NULL;
+  int NColor,CColor,HColor,OColor,SColor,MColor;
+  int color=0;
+  int ok=true;
+
+  NColor=ColorGetIndex("nitrogen");
+  CColor=ColorGetIndex("carbon");
+  HColor=ColorGetIndex("hydrogen");
+  OColor=ColorGetIndex("oxygen");
+  SColor=ColorGetIndex("sulfer");
+  MColor=ColorGetIndex("magenta");
+  
+  p=buffer;
+  nAtom=0;
+  if(atInfoPtr)
+	 atInfo = *atInfoPtr;
+
+  if(ok) {
+	 p=ncopy(cc,p,6);
+	 if(sscanf(cc,"%d",&nAtom)!=1)
+		ok=ErrMessage("ReadMMDFile","bad atom count");
+  }
+
+  if(ok) {
+	 coord=VLAlloc(float,3*nAtom);
+	 if(atInfo)
+		VLACheck(atInfo,AtomInfoType,nAtom);	 
+  }
+
+  nBond=0;
+  if(ok) {
+	 bond=VLAlloc(int,6*nAtom);  
+  }
+  p=nextline(p);
+
+  /* read coordinates and atom names */
+
+  if(ok) { 
+	 f=coord;
+	 ii=bond;
+	 for(a=0;a<nAtom;a++)
+		{
+        if(ok) {
+          p=ncopy(cc,p,4);
+          if(atInfo) 
+            if(sscanf(cc,"%d",&atInfo[a].customType)!=1)
+              ok=ErrMessage("ReadMMDFile","bad atom type");
+        }
+
+        for(c=0;c<6;c++) {
+          if(ok) {
+            p=ncopy(cc,p,8);
+            if(sscanf(cc,"%d%d",&bPart,&bOrder)!=2)
+              ok=ErrMessage("ReadMMDFile","bad bond record");
+            else {
+              if(bPart&&bOrder) {
+                nBond++;
+                *(ii++)=a;
+                *(ii++)=bPart-1;
+              }
+            }
+          }
+        }
+        if(ok) {
+          p=ncopy(cc,p,12);
+          if(sscanf(cc,"%f",f++)!=1)
+            ok=ErrMessage("ReadMMDFile","bad coordinate");
+        }
+        if(ok) {
+          p=ncopy(cc,p,12);
+          if(sscanf(cc,"%f",f++)!=1)
+            ok=ErrMessage("ReadMMDFile","bad coordinate");
+        }
+        if(ok) {
+          p=ncopy(cc,p,12);
+			 if(sscanf(cc,"%f",f++)!=1)
+				ok=ErrMessage("ReadMMDFile","bad coordinate");
+		  }
+        if(atInfo) {
+          if(ok) {
+            p+=31;
+            p=ncopy(cc,p,3);
+            strcpy(atInfo[a].resn,cc);
+            atInfo[a].hetatm=true;
+          }
+          if(ok) {
+            p+=3;
+            p=ncopy(atInfo[a].name,p,3);
+            UtilCleanStr(atInfo[a].name);
+            
+            atInfo[a].visRep[0] = true; /* show lines by default */
+            for(c=1;c<cRepCnt;c++) {
+              atInfo[a].visRep[c] = false;
+            }
+          }
+          if(ok&&atInfo) {
+            AtomInfoAssignParameters(atInfo+a);
+            switch ( atInfo[a].name[0] ) /* need to move this stuff into parameters */
+              {
+              case 'N' : color = NColor; break;
+              case 'C' : 
+                color=CColor;
+                if(atInfo[a].name[1]>'9') {
+                  switch(atInfo[a].name[1]) {
+                  case 0:
+                  case 32:
+                    color = CColor; break;
+                  case 'l':
+                  case 'L':
+                    color = MColor; break;
+                    break;
+                  default:
+                    break;
+                  }
+                }
+                break;
+              case 'O' : color = OColor; break;
+              case 'I' : color = MColor; break;
+              case 'P' : color = MColor; break;
+              case 'B' : color = MColor; break;
+              case 'S' : color = SColor; break;
+              case 'F' : color = MColor; break;
+              case 'H' : color=HColor; break;
+              default  : color=MColor; break;
+              }
+            atInfo[a].color=color;
+          }
+          if(!ok)
+            break;
+        }
+        p=nextline(p);
+        
+      }
+  }
+  if(ok) 
+    bond=VLASetSize(bond,2*sizeof(int)*nBond);
+  if(ok) {
+	 cset = CoordSetNew();
+	 cset->NIndex=nAtom;
+	 cset->Coord=coord;
+	 cset->NTmpBond=nBond;
+	 cset->TmpBond=bond;
+  } else {
+	 VLAFreeP(bond);
+	 VLAFreeP(coord);
+  }
+  if(atInfoPtr)
+	 *atInfoPtr = atInfo;
+  return(cset);
+}
+
+
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame)
+{
+  int ok = true;
+  CoordSet *cset=NULL;
+  AtomInfoType *atInfo;
+
+  atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+  cset=ObjectMoleculeMMDStr2CoordSet(MMDStr,&atInfo);  
+
+  if(!cset) 
+	 {
+		VLAFreeP(atInfo);
+		ok=false;
+	 }
+  
+  if(ok)
+	 {
+		if(!I) 
+		  I=(ObjectMolecule*)ObjectMoleculeNew();
+		if(frame<0)
+		  frame=I->NCSet;
+		if(I->NCSet<=frame)
+		  I->NCSet=frame+1;
+		VLACheck(I->CSet,CoordSet*,frame);
+		
+		cset->fAppendIndices(cset,I->NAtom);
+		cset->Obj=I;
+		ObjectMoleculeAppendAtoms(I,atInfo,cset);
+		I->CSet[frame] = cset;
+		I->CSet[frame]->fInvalidateRep(I->CSet[frame],-1,0);
+		SceneCountFrames();
+		ObjectMoleculeExtendIndices(I);
+	 }
+  return(I);
+}
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
+                                          int frame,char *sepPrefix)
+{
+  ObjectMolecule* I=NULL;
+  int ok=true;
+  FILE *f;
+  int oCnt=0;
+  fpos_t size;
+  char *buffer,*p;
+  char cc[MAXLINELEN],oName[ObjNameMax];
+  int nLines;
+  f=fopen(fname,"r");
+  if(!f)
+	 ok=ErrMessage("ObjectMoleculeLoadMMDFile","Unable to open file!");
+  else
+	 {
+		if(DebugState&DebugMolecule)
+		  {
+			 printf(" ObjectMoleculeLoadMMDFile: Loading from %s.\n",fname);
+			 fflush(stdout);
+		  }		
+		fseek(f,0,SEEK_END);
+		fgetpos(f,&size);
+		fseek(f,0,SEEK_SET);
+		buffer=(char*)mmalloc(size+255);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		p[size]=0;
+		fclose(f);
+      p=buffer;
+      while(ok) {
+        ncopy(cc,p,6);
+        if(sscanf(cc,"%d",&nLines)!=1)
+          ok=ErrMessage("LoadMMDFile","error reading file");
+        if(ok) {
+          if(sepPrefix) {
+            I=ObjectMoleculeReadMMDStr(NULL,p,frame);
+            oCnt++;
+            sprintf(oName,"%s-%02d",sepPrefix,oCnt);
+            ObjectSetName((Object*)I,oName);
+            ExecutiveManageObject((Object*)I);
+          } else {
+            I=ObjectMoleculeReadMMDStr(obj,p,frame);
+            obj=I;
+          }
+          p=nextline(p);
+          while(nLines--)
+            p=nextline(p);
+        }
+      }
+		mfree(buffer);
+	 }
+
+  return(I);
+}
+
+
+
+
+
+
+
 
 
 

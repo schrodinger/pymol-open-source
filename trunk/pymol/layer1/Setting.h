@@ -84,6 +84,11 @@ float SettingGetNamed(char *name);
 #define cSetting_stereo_shift         42
 #define cSetting_line_smooth          43
 #define cSetting_line_width           44
+#define cSetting_half_bonds           45
+#define cSetting_stick_quality        46
+#define cSetting_stick_overlap        47
+#define cSetting_stick_nub            48
+#define cSetting_all_states           49
 
 #endif
 

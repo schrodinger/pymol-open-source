@@ -51,6 +51,8 @@ static PyObject *PMDistance(PyObject *dummy, PyObject *args);
 static PyObject *PMDo(PyObject *self, 	PyObject *args);
 static PyObject *PMExportDots(PyObject *self, PyObject *args);
 static PyObject *PMFit(PyObject *dummy, PyObject *args);
+static PyObject *PMFitPairs(PyObject *dummy, PyObject *args);
+static PyObject *PMIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *PMFrame(PyObject *self, PyObject *args);
 static PyObject *PMGet(PyObject *self, 	PyObject *args);
 static PyObject *PMGetPDB(PyObject *dummy, PyObject *args);
@@ -104,6 +106,7 @@ static PyMethodDef PM_methods[] = {
 	{"do",	        PMDo,           METH_VARARGS },
 	{"export_dots",  PMExportDots,   METH_VARARGS },
 	{"fit",          PMFit,          METH_VARARGS },
+	{"fit_pairs",    PMFitPairs,     METH_VARARGS },
 	{"frame",	     PMFrame,        METH_VARARGS },
 	{"get",	        PMGet,          METH_VARARGS },
 	{"get_feedback", PMGetFeedback,  METH_VARARGS },
@@ -111,6 +114,7 @@ static PyMethodDef PM_methods[] = {
 	{"get_matrix",	  PMGetMatrix,    METH_VARARGS },
 	{"get_moment",	  PMGetMoment,    METH_VARARGS },
 	{"get_pdb",	     PMGetPDB,       METH_VARARGS },
+	{"intrafit",     PMIntraFit,     METH_VARARGS },
 	{"load",	        PMLoad,         METH_VARARGS },
 	{"mclear",	     PMMClear,       METH_VARARGS },
 	{"mdo",	        PMMDo,          METH_VARARGS },
@@ -147,35 +151,17 @@ static PyMethodDef PM_methods[] = {
 	{NULL,		     NULL}		/* sentinel */
 };
 
+
 static PyObject *PMDistance(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   OrthoLineType s1,s2;
-  int f1=false;
-  int f2=false;
-
   PyArg_ParseTuple(args,"ss",&str1,&str2);
-
-  if(str1[0]=='(') {
-	 SelectorCreate(tmpSele1,str1,NULL);
-	 strcpy(s1,tmpSele1);
-	 f1=true;
-  } else {
-	strcpy(s1,str1);
-  }
-
-  if(str2[0]=='(') {
-	 SelectorCreate(tmpSele2,str2,NULL);
-	 strcpy(s2,tmpSele2);
-	 f2=true;
-  } else {
-	strcpy(s2,str2);
-  }
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
   ExecutiveDistance(s1,s2);
-  if(f1)
-    ExecutiveDelete(s1);
-  if(f2)
-    ExecutiveDelete(s2);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -184,21 +170,11 @@ static PyObject *PMAlter(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
   OrthoLineType s1;
-  int f1=false;
 
   PyArg_ParseTuple(args,"ss",&str1,&str2);
-
-  if(str1[0]=='(') {
-	 SelectorCreate(tmpSele1,str1,NULL);
-	 strcpy(s1,tmpSele1);
-	 f1=true;
-  } else {
-	strcpy(s1,str1);
-  }
-
+  SelectorGetTmp(str1,s1);
   ExecutiveAlter(s1,str2);
-  if(f1)
-	ExecutiveDelete(s1);
+  SelectorFreeTmp(s1);
   Py_INCREF(Py_None);
   return Py_None;
 
@@ -261,81 +237,105 @@ static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args)
   return(result);
 }
 
+
 static PyObject *PMGetPDB(PyObject *dummy, PyObject *args)
 {
   char *str1;
   char *pdb = NULL;
   int state;
+  OrthoLineType s1;
+
   PyObject *result = NULL;
   
   PyArg_ParseTuple(args,"si",&str1,&state);
-
-  if(str1[0]=='(') {
-	SelectorCreate(tmpSele,str1,NULL);
-	pdb=ExecutiveSeleToPDBStr(tmpSele,state);
-	ExecutiveDelete(tmpSele);
-  } else {
-	pdb=ExecutiveSeleToPDBStr(str1,state);
-  }
+  SelectorGetTmp(str1,s1);
+  pdb=ExecutiveSeleToPDBStr(s1,state);
+  SelectorFreeTmp(s1);
   if(pdb)
-	result = Py_BuildValue("s",pdb);
+    result = Py_BuildValue("s",pdb);
   if(!result) {
-	result=Py_None;
-	Py_INCREF(result);
+    result=Py_None;
+    Py_INCREF(result);
   }
   FreeP(pdb);
   return(result);
 }
 
+
 static PyObject *PMOrient(PyObject *dummy, PyObject *args)
 {
   Matrix33d m;
   char *str1;
+  OrthoLineType s1;
 
   PyArg_ParseTuple(args,"s",&str1);
-
-  if(str1[0]=='(') {
-	 SelectorCreate(tmpSele,str1,NULL);
-	 if(ExecutiveGetMoment(tmpSele,m))
-		ExecutiveOrient(tmpSele,m);
-	 ExecutiveDelete(tmpSele);
-  } else {
-	 if(ExecutiveGetMoment(str1,m))
-		ExecutiveOrient(str1,m);
-  }
+  SelectorGetTmp(str1,s1);
+  if(ExecutiveGetMoment(s1,m))
+    ExecutiveOrient(s1,m);
+  SelectorFreeTmp(s1); 
   Py_INCREF(Py_None);
   return Py_None;
 }
+
+static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
+{
+  PyObject *list;
+  WordType *word = NULL;
+  int ln;
+  int a;
+  int ok=true;
+
+  PyArg_ParseTuple(args,"O",&list);
+  if(ln) {
+    ln = PyObject_Length(list);
+    if(ln&0x1)
+      ok=ErrMessage("FitPairs","must supply an even number of selections.");
+  } else ok=false;
+
+  if(ok) {
+    word = Alloc(WordType,ln);
+    
+    a=0;
+    while(a<ln) {
+      SelectorGetTmp(PyString_AsString(PySequence_GetItem(list,a)),word[a]);
+      a++;
+    }
+    ExecutiveFitPairs(word,ln/2);
+    for(a=0;a<ln;a++)
+      SelectorFreeTmp(word[a]);
+    FreeP(word);
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
+}
+
+static PyObject *PMIntraFit(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  int state;
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"si",&str1,&state);
+  SelectorGetTmp(str1,s1);
+  if(state<0) state=0;
+  ExecutiveFitStates(s1,state);
+  SelectorFreeTmp(s1);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 
 static PyObject *PMFit(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   OrthoLineType s1,s2;
-  int f1=false;
-  int f2=false;
 
   PyArg_ParseTuple(args,"ss",&str1,&str2);
-
-  if(str1[0]=='(') {
-	 SelectorCreate(tmpSele1,str1,NULL);
-	 strcpy(s1,tmpSele1);
-	 f1=true;
-  } else {
-	strcpy(s1,str1);
-  }
-
-  if(str2[0]=='(') {
-	 SelectorCreate(tmpSele2,str2,NULL);
-	 strcpy(s2,tmpSele2);
-	 f2=true;
-  } else {
-	strcpy(s2,str2);
-  }
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
   ExecutiveFit(s1,s2);
-  if(f1)
-	ExecutiveDelete(s1);
-  if(f2)
-	ExecutiveDelete(s2);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -598,16 +598,13 @@ static PyObject *PMViewport(PyObject *self, 	PyObject *args)
 
 static PyObject *PMColor(PyObject *self, 	PyObject *args)
 {
-  char *sname,*color;
+  char *str1,*color;
   int flags;
-  PyArg_ParseTuple(args,"ssi",&color,&sname,&flags);
-  if(sname[0]=='(') {
-	 SelectorCreate(tmpSele,sname,NULL);
-	 ExecutiveColor(tmpSele,color,flags);
-	 ExecutiveDelete(tmpSele);
-  } else {
-	 ExecutiveColor(sname,color,flags);
-  }
+  OrthoLineType s1;
+  PyArg_ParseTuple(args,"ssi",&color,&str1,&flags);
+  SelectorGetTmp(str1,s1);
+  ExecutiveColor(s1,color,flags);
+  SelectorFreeTmp(s1);
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -615,7 +612,6 @@ static PyObject *PMColor(PyObject *self, 	PyObject *args)
 static PyObject *PMColorDef(PyObject *self, 	PyObject *args)
 {
   char *color;
-  int flags;
   float v[3];
   PyArg_ParseTuple(args,"sfff",&color,v,v+1,v+2);
   ColorDef(color,v);
@@ -625,8 +621,6 @@ static PyObject *PMColorDef(PyObject *self, 	PyObject *args)
 
 static PyObject *PMRay(PyObject *self, 	PyObject *args)
 {
-  /*  PyArg_ParseTuple(args,"ss",&sname,&value);
-		ExecutiveSetSetting(sname,value);*/
   PyThreadState *_save;
   Py_UNBLOCK_THREADS;
 
@@ -731,15 +725,14 @@ static PyObject *PMShowHide(PyObject *self, 	PyObject *args)
   char *sname;
   int rep;
   int state;
+  OrthoLineType s1;
   PyArg_ParseTuple(args,"sii",&sname,&rep,&state);
   if(sname[0]=='!') {
 	 ExecutiveSetAllVisib(state);
-  } else if(sname[0]=='(') {
-	 SelectorCreate(tmpSele,sname,NULL);
-	 ExecutiveSetRepVisib(tmpSele,rep,state);
-	 ExecutiveDelete(tmpSele);
   } else {
-	 ExecutiveSetRepVisib(sname,rep,state);
+    SelectorGetTmp(sname,s1);
+	 ExecutiveSetRepVisib(s1,rep,state);
+	 SelectorFreeTmp(s1);
   }
   Py_INCREF(Py_None);
   return Py_None;
@@ -785,7 +778,8 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
   #define cLoadTypeMOL 1
   #define cLoadTypeSDF 2
   #define cLoadTypeMOLStr 3
-
+  #define cLoadTypeMMD 4
+  #define cLoadTypeMMDSeparate 5
   PyArg_ParseTuple(args,"ssii",&oname,&fname,&frame,&type);
 
   objMol=(ObjectMolecule*)ExecutiveFindObjectByName(oname);
@@ -838,8 +832,26 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 				  oname);
 	 }
 	 break;
+  case cLoadTypeMMD:
+	 obj=ObjectMoleculeLoadMMDFile(objMol,fname,frame,NULL);
+	 if(!objMol) {
+	   if(obj) {
+        ObjectSetName((Object*)obj,oname);
+        ExecutiveManageObject((Object*)obj);
+        sprintf(buf,"PMLoad: \"%s\" loaded into object \"%s\".\n",
+                fname,oname);		  
+	   }
+	 } else if(objMol) {
+		ExecutiveUpdateObjectSelection((Object*)objMol);
+		sprintf(buf,"PMAppend: \"%s\" appended into object \"%s\".\n",
+				  fname,oname);
+	 }
+    break;
+    
+  case cLoadTypeMMDSeparate:
+	 ObjectMoleculeLoadMMDFile(objMol,fname,frame,oname);
+    break;
   }
-
   if(objMol) {
 	 OrthoAddOutput(buf);
 	 OrthoRestorePrompt();
@@ -853,21 +865,11 @@ static PyObject *PMOrigin(PyObject *self, PyObject *args)
 {
   char *str1;
   OrthoLineType s1;
-  int f1=false;
 
   PyArg_ParseTuple(args,"s",&str1);
-
-  if(str1[0]=='(') {
-	 SelectorCreate(tmpSele1,str1,NULL);
-	 strcpy(s1,tmpSele1);
-	 f1=true;
-  } else {
-	strcpy(s1,str1);
-  }
+  SelectorGetTmp(str1,s1);
   ExecutiveCenter(s1,1);
-  if(f1) {
-    ExecutiveDelete(s1);
-  }
+  SelectorFreeTmp(s1);
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -884,23 +886,13 @@ static PyObject *PMSort(PyObject *self, PyObject *args)
 static PyObject *PMZoom(PyObject *self, PyObject *args)
 {
   char *str1;
-  OrthoLineType s1,s2;
-  int f1=false;
+  OrthoLineType s1;
 
   PyArg_ParseTuple(args,"s",&str1);
-
-  if(str1[0]=='(') {
-	 SelectorCreate(tmpSele1,str1,NULL);
-	 strcpy(s1,tmpSele1);
-	 f1=true;
-  } else {
-	strcpy(s1,str1);
-  }
+  SelectorGetTmp(str1,s1);
   ExecutiveCenter(s1,1);
   ExecutiveWindowZoom(s1);
-  if(f1) {
-    ExecutiveDelete(s1);
-  }
+  SelectorFreeTmp(s1);
   Py_INCREF(Py_None);
   return Py_None;
 }

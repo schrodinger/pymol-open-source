@@ -33,6 +33,9 @@ class Setting:
 		self.antialias = IntVar()
 		self.antialias.set(0)
 
+		self.all_states = IntVar()
+		self.all_states.set(0)
+
 		self.xref = { 
 'ray_trace_frames' : (lambda s,a: (
 	pm.set(a,("%1.0f" % s.ray_trace_frames.get())),
@@ -40,7 +43,8 @@ class Setting:
 	s.update('cache_frames'))),
 'cache_frames'  : (lambda s,a: (pm.set(a,("%1.0f" % s.cache_frames.get())))),
 'ortho'         : (lambda s,a: (pm.set(a,("%1.0f" % s.ortho.get())))),
-'antialias'     : (lambda s,a: (pm.set(a,("%1.0f" % s.antialias.get()))))
+'antialias'     : (lambda s,a: (pm.set(a,("%1.0f" % s.antialias.get())))),
+'all_states'    : (lambda s,a: (pm.set(a,("%1.0f" % s.all_states.get()))))
 			}
 		
 	def update(self,sttng):

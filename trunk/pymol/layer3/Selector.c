@@ -54,6 +54,7 @@ typedef struct {
 typedef struct {
   WordType *Name;
   int NSelection;
+  int TmpCounter;
   MemberType *Member;
   int NMember;
   ObjectMolecule **Obj;
@@ -64,7 +65,6 @@ typedef struct {
 } SelectorType;
 
 SelectorType Selector;
-int SelectorUpdateTable(void);
 
 
 int SelectorModulate1(EvalElem *base);
@@ -192,6 +192,24 @@ void SelectorDelete(char *sele) /* should (only) be called by Executive */
 		I->Name[n][0]=32; /*set to blank*/
 		I->Name[n][1]=0;
 	 }
+}
+/*========================================================================*/
+void SelectorGetTmp(char *input,char *store)
+{
+  SelectorType *I=&Selector;
+  WordType name;
+  if(input[0]=='(') {
+    sprintf(name,"_%d",I->TmpCounter++);
+	 SelectorCreate(name,input,NULL);
+	 strcpy(store,name);
+  } else {
+    strcpy(store,input);
+  }
+}
+/*========================================================================*/
+void SelectorFreeTmp(char *name)
+{
+  if(name[0]=='_') ExecutiveDelete(name);
 }
 /*========================================================================*/
 void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj) 
@@ -459,7 +477,9 @@ int SelectorSelect1(EvalElem *base)
 	 case 'NAMs':
 		for(a=0;a<I->NAtom;a++)
 		  {
-			 if(WordMatch(base[1].text,I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].name,I->IgnoreCase)<0)
+			 if(WordMatchComma(base[1].text,
+                       I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].name,
+                       I->IgnoreCase)<0)
 				{
 				  base[0].sele[a]=true;
 				  c++;
@@ -471,7 +491,7 @@ int SelectorSelect1(EvalElem *base)
 	 case 'SEGs':
 		for(a=0;a<I->NAtom;a++)
 		  {
-			 if(WordMatch(base[1].text,I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].segi,I->IgnoreCase)<0)
+			 if(WordMatchComma(base[1].text,I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].segi,I->IgnoreCase)<0)
 				{
 				  base[0].sele[a]=true;
 				  c++;
@@ -483,24 +503,16 @@ int SelectorSelect1(EvalElem *base)
 	 case 'CHNs':
 		for(a=0;a<I->NAtom;a++)
 		  {
-			 if(base[1].text==
-				 I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].chain)
+			 if(WordMatchComma(base[1].text,
+                            I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].chain,
+                            I->IgnoreCase)<0)
 				{
 				  base[0].sele[a]=true;
 				  c++;
 				}
-			 else if(I->IgnoreCase) 
-				if(tolower(base[1].text[0])==
-					(tolower(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].chain[0])))
-				  {
-					 base[0].sele[a]=true;
-					 c++;
-				  }
-				else
-				  base[0].sele[a]=false;
 			 else
 				base[0].sele[a]=false;
-		  }
+        }
 		break;
 	 case 'RSIs':
 		if((p=strstr(base[1].text,":"))) /* range */
@@ -526,7 +538,9 @@ int SelectorSelect1(EvalElem *base)
 		else /* not a range */
 		  for(a=0;a<I->NAtom;a++)
 			 {
-				if(WordMatch(base[1].text,I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resi,I->IgnoreCase)<0)
+				if(WordMatchComma(base[1].text,
+                         I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resi,
+                         I->IgnoreCase)<0)
 				  {
 					 base[0].sele[a]=true;
 					 c++;
@@ -538,7 +552,9 @@ int SelectorSelect1(EvalElem *base)
 	 case 'RSNs':
 		for(a=0;a<I->NAtom;a++)
 		  {
-			 if(WordMatch(base[1].text,I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resn,I->IgnoreCase)<0)
+			 if(WordMatchComma(base[1].text,
+                            I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resn,
+                            I->IgnoreCase)<0)
 				{
 				  base[0].sele[a]=true;
 				  c++;
@@ -1132,6 +1148,7 @@ void SelectorInit(void)
 {
   SelectorType *I = &Selector;
   I->NSelection = 0;
+  I->TmpCounter = 0;
   I->Name = VLAlloc(WordType,10);
   I->Member = (MemberType*)VLAMalloc(1000,sizeof(MemberType),5,true);
   I->NMember=0;
