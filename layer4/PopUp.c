@@ -27,6 +27,8 @@ Z* -------------------------------------------------------------------
 #include "P.h"
 
 #define cPopUpLineHeight 13
+#define cPopUpTitleHeight 15
+#define cPopUpBarHeight 4
 #define cPopUpCharWidth 8
 #define cPopUpCharMargin 2
 #define cPopUpCharLift 1
@@ -46,6 +48,8 @@ typedef struct {
 int PopUpRelease(Block *block,int button,int x,int y,int mod);
 void PopUpDraw(Block *block);
 int PopUpDrag(Block *block,int x,int y,int mod);
+int PopUpConvertY(CPopUp *I,int value,int mode);
+
 /*========================================================================*/
 void PopUpNew(int x,int y,PyObject *list)
 {
@@ -96,7 +100,7 @@ void PopUpNew(int x,int y,PyObject *list)
     if(l>mx) mx=l;
   }
   I->Width = (cmx * cPopUpCharWidth) + 2 * cPopUpCharMargin;
-  I->Height = (I->NLine * cPopUpLineHeight) + 2 * cPopUpCharMargin;
+  
 
   dim[0]=I->NLine+1;
   dim[1]=mx+1;
@@ -120,6 +124,11 @@ void PopUpNew(int x,int y,PyObject *list)
     strcpy(I->Command[a],PyString_AsString(PyList_GetItem(elem,2)));
   }
 
+  /* compute height */
+
+  I->Height = 2 * cPopUpCharMargin + PopUpConvertY(I,I->NLine,true);
+
+
   I->Block->rect.top=y;
   I->Block->rect.bottom=y-I->Height;
   I->Block->rect.left=x-(I->Width)/3;
@@ -132,6 +141,55 @@ void PopUpNew(int x,int y,PyObject *list)
   OrthoGrab(I->Block);
   OrthoDirty();
 
+}
+/*========================================================================*/
+int PopUpConvertY(CPopUp *I,int value,int mode)
+{
+  int result;
+  int a;
+  int flag;
+  if(mode) { 
+    result=0;
+    /* line to height */
+    for(a=0;a<I->NLine;a++)
+      {
+        if(a>=value)
+          break;
+        switch(I->Code[a]) {
+        case 0:
+          result+=cPopUpBarHeight;
+          break;
+        case 1:
+        case 2:
+          result+=cPopUpLineHeight;
+          break;
+        }
+      }
+  } else {
+    result = 0;
+    flag=false;
+    /* line to height */
+    for(a=0;a<I->NLine;a++)
+      {
+        switch(I->Code[a]) {
+        case 0:
+          if(value<cPopUpBarHeight)
+            flag=true;
+          value-=cPopUpBarHeight;
+          break;
+        case 1:
+        case 2:
+          if(value<cPopUpLineHeight)
+            flag=true;
+          value-=cPopUpLineHeight;
+          break;
+        }
+        if(flag) break;
+        result++;
+      }
+    /* height to line */
+  }
+  return(result);
 }
 /*========================================================================*/
 int PopUpRelease(Block *block,int button,int x,int y,int mod)
@@ -174,7 +232,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
   if((x<0)||(x>I->Width)) 
     I->Selected=-1;
   else {
-    a = y/cPopUpLineHeight;
+    a = PopUpConvertY(I,y,false);
     if(I->NLine&&(a==I->NLine))
       if((y-a*cPopUpLineHeight)<4)
         a=I->NLine-1;
@@ -198,6 +256,84 @@ void PopUpDraw(Block *block)
 
   if(PMGUI) {
 
+    /* put raised border around pop-up menu */
+
+    /* bottom */
+
+    glColor3f(0.2,0.2,0.4);
+    glBegin(GL_POLYGON);
+    glVertex2i(block->rect.left-2,block->rect.bottom-2);
+    glVertex2i(block->rect.right+2,block->rect.bottom-2);
+    glVertex2i(block->rect.right+2,block->rect.bottom+1);
+    glVertex2i(block->rect.left-2,block->rect.bottom+1);
+    glEnd();
+
+    glColor3f(0.4,0.4,0.6);
+    glBegin(GL_POLYGON);
+    glVertex2i(block->rect.left-1,block->rect.bottom-1);
+    glVertex2i(block->rect.right+1,block->rect.bottom-1);
+    glVertex2i(block->rect.right+1,block->rect.bottom+1);
+    glVertex2i(block->rect.left-1,block->rect.bottom+1);
+    glEnd();
+
+    /* right */
+
+    glColor3f(0.2,0.2,0.4);
+    glBegin(GL_POLYGON);
+    glVertex2i(block->rect.right,block->rect.bottom-2);
+    glVertex2i(block->rect.right+2,block->rect.bottom-2);
+    glVertex2i(block->rect.right+2,block->rect.top);
+    glVertex2i(block->rect.right,block->rect.top);
+    glEnd();
+
+    glColor3f(0.4,0.4,0.6);
+    glBegin(GL_POLYGON);
+    glVertex2i(block->rect.right,block->rect.bottom-1);
+    glVertex2i(block->rect.right+1,block->rect.bottom-1);
+    glVertex2i(block->rect.right+1,block->rect.top);
+    glVertex2i(block->rect.right,block->rect.top);
+    glEnd();
+
+    /* top */
+
+    glColor3f(0.5,0.5,0.7);
+    glBegin(GL_POLYGON);
+    glVertex2i(block->rect.left-2,block->rect.top+2);
+    glVertex2i(block->rect.right+2,block->rect.top+2);
+    glVertex2i(block->rect.right+2,block->rect.top);
+    glVertex2i(block->rect.left-2,block->rect.top);
+    glEnd();
+
+    glColor3f(0.6,0.6,0.8);
+    glBegin(GL_POLYGON);
+    glVertex2i(block->rect.left-1,block->rect.top+1);
+    glVertex2i(block->rect.right+1,block->rect.top+1);
+    glVertex2i(block->rect.right+1,block->rect.top);
+    glVertex2i(block->rect.left-1,block->rect.top);
+    glEnd();
+
+    /* left */
+
+    glColor3f(0.5,0.5,0.7);
+    glBegin(GL_POLYGON);
+    glVertex2i(block->rect.left-2,block->rect.bottom-2);
+    glVertex2i(block->rect.left,block->rect.bottom);
+    glVertex2i(block->rect.left,block->rect.top);
+    glVertex2i(block->rect.left-2,block->rect.top);
+    glEnd();
+
+    glColor3f(0.6,0.6,0.8);
+    glBegin(GL_POLYGON);
+    glVertex2i(block->rect.left-1,block->rect.bottom-1);
+    glVertex2i(block->rect.left,block->rect.bottom-1);
+    glVertex2i(block->rect.left,block->rect.top);
+    glVertex2i(block->rect.left-1,block->rect.top);
+    glEnd();
+
+
+
+
+
     glColor3fv(block->BackColor);
     BlockFill(block);
     glColor3fv(block->TextColor);
@@ -205,7 +341,7 @@ void PopUpDraw(Block *block)
     if(I->Selected>=0) {
 
       x = I->Block->rect.left;
-      y = I->Block->rect.top-(cPopUpLineHeight*I->Selected)-cPopUpCharMargin;
+      y = I->Block->rect.top-PopUpConvertY(I,I->Selected,true)-cPopUpCharMargin;
       
       glBegin(GL_POLYGON);
       glVertex2i(x,y);
@@ -215,9 +351,9 @@ void PopUpDraw(Block *block)
       glEnd();
     }
 
-    if(I->Code[0]==2) {
+    if(I->Code[0]==2) { /* menu name */
         
-      glColor3f(0.4,0.4,0.4);
+      glColor3f(0.3,0.3,0.6);
       x = I->Block->rect.left;
       y = I->Block->rect.top;
       
@@ -227,10 +363,17 @@ void PopUpDraw(Block *block)
       glVertex2i(x+I->Width,y-(cPopUpLineHeight+cPopUpCharMargin));
       glVertex2i(x,y-(cPopUpLineHeight+cPopUpCharMargin));
       glEnd();
+
+      glColor3f(0.2,0.2,0.4);
+      glBegin(GL_LINES);
+      glVertex2i(x+I->Width-1,y-(cPopUpLineHeight+cPopUpCharMargin));
+      glVertex2i(x,y-(cPopUpLineHeight+cPopUpCharMargin));
+      glEnd();
+      
     }
 
     x = I->Block->rect.left+cPopUpCharMargin;
-    y = (I->Block->rect.top-cPopUpLineHeight)-cPopUpCharMargin+1;
+    y = (I->Block->rect.top-cPopUpLineHeight)-cPopUpCharMargin+2;
   
     for(a=0;a<I->NLine;a++)
       {
@@ -258,17 +401,22 @@ void PopUpDraw(Block *block)
             p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
             xx = xx + 8;
           }
+          y-=cPopUpLineHeight;
         } else {
           glBegin(GL_LINES);
-          glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)-1);
-          glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight+cPopUpCharMargin)/2)-1);
+          glColor3f(0.3,0.3,0.5);
+          glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+2);
+          glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+2);
+          glColor3f(0.6,0.6,0.8);
+          glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+3);
+          glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+3);
           glEnd();
+          y-=cPopUpBarHeight;
         }
-        y-=cPopUpLineHeight;
-        if(!a) y--;
+        if(!a) y-=2;
       }
     glColor3fv(block->TextColor);
-    BlockOutline(block);
+    /*    BlockOutline(block);*/
   }
 }
   

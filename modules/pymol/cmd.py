@@ -6317,9 +6317,10 @@ map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
 
 auto_arg =[
    {
-   'color' : [ _get_color_sc, 'color', ',' ],
-   'cartoon' : [ cartoon_sc, 'cartoon', ',' ],      
+   'color' : [ _get_color_sc, 'color', ', ' ],
+   'cartoon' : [ cartoon_sc, 'cartoon', ', ' ],      
    'set' : [ setting.setting_sc, 'setting', '=' ],
+   'flag' : [ flag_sc , 'flag', ', ' ],
    'show' : [ repres_sc , 'representation',', ' ],
    'hide' : [ repres_sc , 'representation',', ' ],
    'stereo' : [ toggle_sc , 'option','' ],
@@ -6347,6 +6348,7 @@ auto_arg =[
    'color' : [ selection_sc , 'selection','' ],
    'select' : [ selection_sc , 'selection','' ],
    'save' : [ selection_sc , 'selection',', ' ],
+   'flag' : [ selection_sc , 'selection',', ' ],   
    'load' : [ selection_sc , 'selection',', ' ],
    'create' : [ selection_sc , 'selection',', ' ],
    'symexp' : [ object_sc , 'object',', ' ],   
@@ -6355,6 +6357,7 @@ auto_arg =[
    {
    'feedback' : [ fb_mask_sc , 'mask','' ],
    'button' : [ but_act_sc , 'button action','' ],
+   'flag' : [ flag_action_sc , 'flag action','' ],      
    }
    ]
    

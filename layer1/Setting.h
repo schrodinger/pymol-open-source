@@ -246,6 +246,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_mesh_mode                   145
 #define cSetting_mesh_color                  146
 #define cSetting_auto_indicate_flags         147
+#define cSetting_surface_debug               148
+#define cSetting_ray_improve_shadows         149
 
 #define cSetting_INIT                        150
 
