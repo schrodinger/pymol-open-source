@@ -1423,7 +1423,7 @@ USAGE
    '''
    if get_setting_legacy("internal_feedback")>0.1:
       set("text","1",quiet=1)
-   cmd = help_sc.auto_err(command,'topics')   
+   cmd = help_sc.auto_err(command,'topic')   
    if keyword.has_key(cmd):
       doc = keyword[cmd][0].__doc__
       if doc:
@@ -2562,7 +2562,7 @@ SEE ALSO
    r = 1
    try:
       lock()   
-      r = _cmd.remove(selection)
+      r = _cmd.remove("("+selection+")")
    finally:
       unlock()
    return r
@@ -5825,7 +5825,7 @@ def _interpret_color(color):
       if is_string(new_color):
          return new_color
       else:
-         color_sc.auto_err(color,'colors')
+         color_sc.auto_err(color,'color')
    else:
       return color
 
@@ -6175,43 +6175,44 @@ map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
 
 auto_arg =[
    {
-   'color' : [ _get_color_sc, 'colors', ',' ],   
-   'set' : [ setting.setting_sc, 'settings', '=' ],
-   'show' : [ repres_sc , 'representations',', ' ],
-   'hide' : [ repres_sc , 'representations',', ' ],
-   'stereo' : [ toggle_sc , 'options','' ],
-   'full_screen' : [ toggle_sc , 'options','' ],
-   'clip' : [ clip_action_sc , 'clipping actions',', ' ],
-   'feedback' : [ fb_action_sc , 'actions',', ' ],
-   'button' : [ button_sc , 'buttons',', ' ],
-   'zoom' : [ selection_sc , 'selections','' ],
-   'origin' : [ selection_sc , 'selections','' ],
-   'protect' : [ selection_sc , 'selections','' ],
-   'deprotect' : [ selection_sc , 'selections','' ],   
-   'mask' : [ selection_sc , 'selections','' ],
-   'unmask' : [ selection_sc , 'selections','' ],
-   'delete' : [ selection_sc , 'selections','' ],
-   'alter' : [ selection_sc , 'selections','' ],
-   'iterate' : [ selection_sc , 'selections','' ],
-   'iterate_state' : [ selection_sc , 'selections','' ],
-   'help' : [ help_sc , 'selections','' ],         
+   'color' : [ _get_color_sc, 'color', ',' ],
+   'cartoon' : [ cartoon_sc, 'cartoon', ',' ],      
+   'set' : [ setting.setting_sc, 'setting', '=' ],
+   'show' : [ repres_sc , 'representation',', ' ],
+   'hide' : [ repres_sc , 'representation',', ' ],
+   'stereo' : [ toggle_sc , 'option','' ],
+   'full_screen' : [ toggle_sc , 'option','' ],
+   'clip' : [ clip_action_sc , 'clipping action',', ' ],
+   'feedback' : [ fb_action_sc , 'action',', ' ],
+   'button' : [ button_sc , 'button',', ' ],
+   'zoom' : [ selection_sc , 'selection','' ],
+   'origin' : [ selection_sc , 'selection','' ],
+   'protect' : [ selection_sc , 'selection','' ],
+   'deprotect' : [ selection_sc , 'selection','' ],   
+   'mask' : [ selection_sc , 'selection','' ],
+   'unmask' : [ selection_sc , 'selection','' ],
+   'delete' : [ selection_sc , 'selection','' ],
+   'alter' : [ selection_sc , 'selection','' ],
+   'iterate' : [ selection_sc , 'selection','' ],
+   'iterate_state' : [ selection_sc , 'selection','' ],
+   'help' : [ help_sc , 'selection','' ],         
    },
    {
-   'feedback' : [ fb_module_sc , 'modules',', ' ],
-   'button' : [ but_mod_sc , 'modifiers',', ' ],
-   'show' : [ selection_sc , 'selections','' ],
-   'hide' : [ selection_sc , 'selections','' ],
-   'color' : [ selection_sc , 'selections','' ],
-   'select' : [ selection_sc , 'selections','' ],
-   'save' : [ selection_sc , 'selections',', ' ],
-   'load' : [ selection_sc , 'selections',', ' ],
-   'create' : [ selection_sc , 'selections',', ' ],
-   'symexp' : [ object_sc , 'objects',', ' ],   
-   'isomesh' : [ map_sc , 'map objects',', ' ],            
+   'feedback' : [ fb_module_sc , 'module',', ' ],
+   'button' : [ but_mod_sc , 'modifier',', ' ],
+   'show' : [ selection_sc , 'selection','' ],
+   'hide' : [ selection_sc , 'selection','' ],
+   'color' : [ selection_sc , 'selection','' ],
+   'select' : [ selection_sc , 'selection','' ],
+   'save' : [ selection_sc , 'selection',', ' ],
+   'load' : [ selection_sc , 'selection',', ' ],
+   'create' : [ selection_sc , 'selection',', ' ],
+   'symexp' : [ object_sc , 'object',', ' ],   
+   'isomesh' : [ map_sc , 'map object',', ' ],            
    },
    {
    'feedback' : [ fb_mask_sc , 'mask','' ],
-   'button' : [ but_act_sc , 'button actions','' ],
+   'button' : [ but_act_sc , 'button action','' ],
    }
    ]
    
