@@ -65,6 +65,9 @@ if __name__=='pymol.parser':
    com0[nest]=""
    cont[nest]=""
 
+   def exp_path(filename):
+      return os.path.expandvars(os.path.expanduser(filename))
+
    # main parser routine
 
    def parse(s):
@@ -180,37 +183,37 @@ if __name__=='pymol.parser':
                               elif kw[nest][4]==parsing.SPAWN:
                                  # spawn command
                                  if len(args[nest])==1: # default: module
-                                    parsing.run_as_module(args[nest][0],spawn=1)
+                                    parsing.run_as_module(exp_path(args[nest][0]),spawn=1)
                                  elif args[nest][1]=='main':
-                                    parsing.run_as_thread(args[nest][0],
+                                    parsing.run_as_thread(exp_path(args[nest][0]),
                                                           __main__.__dict__,
                                                           __main__.__dict__)
                                  elif args[nest][1]=='private':
-                                    parsing.run_as_thread(args[nest][0],
+                                    parsing.run_as_thread(exp_path(args[nest][0]),
                                                           __main__.__dict__,
                                                           {})
                                  elif args[nest][1]=='local':
-                                    parsing.run_as_thread(args[nest][0],
+                                    parsing.run_as_thread(exp_path(args[nest][0]),
                                                           pymol_names,{})
                                  elif args[nest][1]=='global':
-                                    parsing.run_as_thread(args[nest][0],
+                                    parsing.run_as_thread(exp_path(args[nest][0]),
                                                           pymol_names,pymol_names)
                                  elif args[nest][1]=='module':
-                                    parsing.run_as_module(args[nest][0],spawn=1)
+                                    parsing.run_as_module(exp_path(args[nest][0]),spawn=1)
                               elif kw[nest][4]==parsing.RUN:
                                  # run command
                                  if len(args[nest])==1: # default: global
-                                    execfile(args[nest][0],pymol_names,pymol_names)
+                                    execfile(exp_path(args[nest][0]),pymol_names,pymol_names)
                                  elif args[nest][1]=='main':
-                                    execfile(args[nest][0],__main__.__dict__,__main__.__dict__)
+                                    execfile(exp_path(args[nest][0]),__main__.__dict__,__main__.__dict__)
                                  elif args[nest][1]=='private':
-                                    execfile(args[nest][0],__main__.__dict__,{})
+                                    execfile(exp_path(args[nest][0]),__main__.__dict__,{})
                                  elif args[nest][1]=='local':
-                                    execfile(args[nest][0],pymol_names,{})
+                                    execfile(exp_path(args[nest][0]),pymol_names,{})
                                  elif args[nest][1]=='global':
-                                    execfile(args[nest][0],pymol_names,pymol_names)
+                                    execfile(exp_path(args[nest][0]),pymol_names,pymol_names)
                                  elif args[nest][1]=='module':
-                                    parsing.run_as_module(args[nest][0],spawn=0)
+                                    parsing.run_as_module(exp_path(args[nest][0]),spawn=0)
                               else:
                                  print 'Error: unknown keyword mode: '+str(kw[nest][4])
                                  raise QuietException

@@ -188,10 +188,9 @@ class DemoInfo:
    def cgo(self,cleanup=0):
       if not cleanup:
          cmd.disable()
-         cmd.do("cd $PYMOL_PATH")
          try:
             cmd.set("suspend_updates",1,quiet=1)
-            cmd.do("run examples/devel/cgo03.py")
+            cmd.do("run $PYMOL_DATA/demo/cgo03.py")
          finally:
             cmd.set("suspend_updates",0,quiet=1)
       else:
