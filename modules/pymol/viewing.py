@@ -998,8 +998,8 @@ DEVELOPMENT TO DO
          active = int(active)
          frame = int(frame)
          if animate<0:
-            if int(cmd.get_setting_legacy("scene_animation"))!=0.0:
-               animate = -1.0
+            if int(cmd.get_setting_legacy("scene_animation"))!=0:
+               animate = cmd.get_setting_legacy("scene_animation_duration")
          lock() # manipulating global data, so need lock
          if key=='*':
             action = view_sc.auto_err(action,'action')
