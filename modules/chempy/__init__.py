@@ -2,7 +2,6 @@
 import string
 import os
 
-
 #
 # Basic chempy types
 #
