@@ -49,6 +49,7 @@ Z* -------------------------------------------------------------------
 #include"Menu.h"
 #include"View.h"
 #include"ObjectSlice.h"
+#include"Text.h"
 
 #define cSliceMin 0.1F
 
@@ -2071,7 +2072,6 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v) 
 {
   register CScene *I=G->Scene;
-  float p0[3],p1[3];
   float scale = SceneGetScreenVertexScale(G,v);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();

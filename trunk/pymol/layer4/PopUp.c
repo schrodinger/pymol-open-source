@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include "P.h"
 #include "Util.h"
 #include "Color.h"
+#include "Text.h"
 
 #define cPopUpLineHeight 17
 #define cPopUpTitleHeight 19

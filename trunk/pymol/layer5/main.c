@@ -788,7 +788,13 @@ static void MainInit(PyMOLGlobals *G)
 void MainFree(void)
 {
   PyMOLGlobals *G = ClassPyMOLGetGlobals(PyMOLInstance); /* temporary -- will change */
-  int haveGUI = G->HaveGUI;
+
+#ifdef WIN32
+   int haveGUI = G->HaveGUI;
+#endif
+#ifdef _PyMOL_OSX
+   int haveGUI = G->HaveGUI;
+#endif
 
   PyMOLTerminating=true;
   TetsurfFree(G);

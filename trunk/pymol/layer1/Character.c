@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"OOMac.h"
 #include"Vector.h"
 #include"Text.h"
+#include"Texture.h"
 
 #define HASH_MASK 0x4FFF
 
@@ -137,7 +138,7 @@ int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
 }
 
 
-int CharacterRenderOpenGL(PyMOLGlobals *G,int id,float x_orig, float y_orig, float advance)
+void CharacterRenderOpenGL(PyMOLGlobals *G,int id,float x_orig, float y_orig, float advance)
 /* need orientation matrix */
 {
   register CCharacter *I = G->Character;
