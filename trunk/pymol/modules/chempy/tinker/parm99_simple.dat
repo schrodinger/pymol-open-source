@@ -289,6 +289,7 @@ D2-R3  172.0    1.890       WLD from DJ-R3
 D2-R4  171.0    2.075       WLD from DJ-R4
 D3-J1  450.0    1.300       WLD gross estimate
 D3-JA  448.0    1.365       WLD from D3-J3
+D3-Q1  570.0    1.229       WLD from DJ-Q1
 D3-R1  386.0    1.359       WLD from DA-R1
 D3-R2  310.0    1.724       WLD from DJ-R2
 D3-R3  172.0    1.890       WLD from DJ-R3
@@ -338,6 +339,9 @@ Q2-T4  525.0    1.500       WLD gross estimate
 TA-TA  166.0    2.038       WLD from T2-T2
 TA-T4  166.0    2.038       WLD from T2-T2
 T2-T4  166.0    2.038       WLD from T2-T2
+T2-S   166.0    2.038       WLD from S -S 
+DJ-N   490.0    1.335       WLD from C -N 
+C -J3  490.0    1.335       WLD from C -N 
 
 HW-OW-HW    100.      104.52    TIP3P water
 HW-HW-OW      0.      127.74    (found in crystallographic water with 3 bonds)
@@ -1417,6 +1421,16 @@ TA-D3-TA    70.0      118.00    WLD gross estimate
 TA-DA-TA    70.0      120.00    WLD from DA-DA-TA
 TA-D4-TA    70.0      109.00    WLD gross estimate
 TA-DJ-TA    70.0      120.00    WLD from DA-DA-TA
+A -J3-C     50.0      120.00    WLD from C -N -H 
+C -J3-D4    50.0      121.90    WLD from C -N -CT
+CT-S -T2    68.0      103.70    WLD from CT-S -S 
+CT-N -DJ    50.0      121.90    WLD from C -N -CT
+CT-C -J3    70.0      116.60    WLD from CT-C -N 
+D4-T2-S     68.0      103.70    WLD from CT-S -S 
+D4-DJ-N     70.0      116.60    WLD from CT-C -N 
+DJ-N -CT    50.0      121.90    WLD from C -N -CT
+J3-C -O     80.0      122.90    WLD from N -C -O 
+N  DJ-Q1    80.0      122.90    WLD from N -C -O 
 
 X -C -C -X    4   14.50        180.0             2.         Junmei et al, 1999
 X -C -CA-X    4   14.50        180.0             2.         intrpol.bsd.on C6H6
@@ -1675,9 +1689,6 @@ J3-D4-DJ-J3   1    1.700       180.000          -1.
 J3-D4-DJ-J3   1    2.000       180.000           2.
 DJ-J3-D4-DJ   1    0.850       180.000          -2.
 DJ-J3-D4-DJ   1    0.800         0.000           1.
-DJ-D4-J3-DJ   1    0.50        180.0            -4.         phi,psi,parm94
-DJ-D4-J3-DJ   1    0.15        180.0            -3.         phi,psi,parm94
-DJ-D4-J3-DJ   1    0.53          0.0             1.         phi,psi,parm94
 D4-T2-T2-D4   1    3.50          0.0            -2.         JDJ,7,(1986),230
 D4-T2-T2-D4   1    0.60          0.0             3.         JDJ,7,(1986),230
 D4-Q2-D4-Q2   1    0.10          0.0            -3.         Junmei et al, 1999
@@ -1691,6 +1702,9 @@ D4-D4-Q2-D4   1    0.383         0.0            -3.
 D4-D4-Q2-D4   1    0.1         180.0             2.
 D4-D4-J4-D4   1    0.30          0.0            -3.         Junmei et al, 1999
 D4-D4-J4-D4   1    0.48        180.0             2.         Junmei et al, 1999
+D4-D4-J3-DJ   1    0.50        180.0            -4.         phi,psi,parm94
+D4-D4-J3-DJ   1    0.15        180.0            -3.         phi,psi,parm94
+D4-D4-J3-DJ   1    0.53          0.0             1.         phi,psi,parm94
 D4-D4-DJ-J3   1    0.100         0.0            -4.         phi,psi,parm94
 D4-D4-DJ-J3   1    0.07          0.0             2.         phi,psi,parm94
 D4-D4-D4-D4   1    0.18          0.0            -3.         Junmei et al, 1999
@@ -1719,6 +1733,30 @@ A -D4-D3-D3   1    0.38        180.0            -3.         Junmei et al, 1999
 A -D4-D3-D3   1    1.15          0.0             1.         Junmei et al, 1999
 A -T2-T2-D4   1    3.50          0.0            -2.         WLD from D4-T2-T2-D4
 A -T2-T2-D4   1    0.60          0.0             3.         WLD from D4-T2-T2-D4
+X -C -J3-X    4   10.00        180.0             2.         WLD from X -C -N -X
+X -DJ-N -X    4   10.00        180.0             2.         WLD from X -C -N -X
+D4-T2-S -CT   1    3.50          0.0            -2.         WLD from CT-S-S-CT
+D4-T2-S -CT   1    0.60          0.0             3.         WLD from CT-S-S-CT
+N -D4-DJ-J3   1    2.000       180.000           2.         WLD from N-CT-C -N 
+DJ-CT-C -N    1    2.000       180.000           2.         WLD from N-CT-C -N 
+C -J3-D4-DJ   1    0.850       180.000          -2.         WLD from C-N -CT-C 
+C -J3-D4-DJ   1    0.800         0.000           1.         WLD from C-N -CT-C 
+DJ-N -CT-C    1    0.850       180.000          -2.         WLD from C-N -CT-C 
+DJ-N -CT-C    1    0.800         0.000           1.         WLD from C-N -CT-C 
+D4-D4-J3-C    1    0.50        180.0            -4.         WLD from CT-CT-N -C
+D4-D4-J3-C    1    0.15        180.0            -3.         WLD from CT-CT-N -C
+D4-D4-J3-C    1    0.53          0.0             1.         WLD from CT-CT-N -C
+CT-CT-N -DJ   1    0.50        180.0            -4.         WLD from CT-CT-N -C
+CT-CT-N -DJ   1    0.15        180.0            -3.         WLD from CT-CT-N -C
+CT-CT-N -DJ   1    0.53          0.0             1.         WLD from CT-CT-N -C
+D4-D4-DJ-N    1    0.100         0.0            -4.         WLD from CT-CT-C -N
+D4-D4-DJ-N    1    0.07          0.0             2.         WLD from CT-CT-C -N
+CT-CT-C -J3   1    0.100         0.0            -4.         WLD from CT-CT-C -N
+CT-CT-C -J3   1    0.07          0.0             2.         WLD from CT-CT-C -N
+H -N -DJ-Q1   1    2.50        180.0            -2.         WLD from H -N -C -O
+H -N -DJ-Q1   1    2.00          0.0             1.         WLD from H -N -C -O
+A -J3-C -O    1    2.50        180.0            -2.         WLD from H -N -C -O
+A -J3-C -O    1    2.00          0.0             1.         WLD from H -N -C -O
 
 X -X -C -O          10.5         180.          2.           JCC,7,(1986),230
 X -O2-C -O2         10.5         180.          2.           JCC,7,(1986),230
@@ -1761,14 +1799,14 @@ C -CT-N -H          1.1          180.          2.           Junmei et al.1999
 C -CT-N -O          1.1          180.          2.           Junmei et al.1999
 X -X -J3-DA         1.0          180.          2.           RSM, estimated
 X -X -J3-D4         10.5         180.          2.           RSM, korig = 1.0
-X -X -J3-A          10.5         180.          2.           RSM, korig = 1.0
-X -X -DJ-Q1         10.5         180.          2.           RSM, estimated
+X -X -J3-A          1.0          180.          2.           JDJ,7,(1986),230
+X -X -DJ-Q1         10.5         180.          2.           JDJ,7,(1986),230
 X -X -DA-TA         1.1          180.          2.           RSM, estimated
 X -X -DA-JA         1.1          180.          2.           RSM, estimated
 X -X -DA-J3         1.1          180.          2.           RSM, estimated
 X -X -DA-D4         1.1          180.          2.           RSM, estimated
 X -X -DA-D2         1.1          180.          2.           RSM, estimated
-X -X -DA-A          1.1          180.          2.           RSM, estimated
+X -X -DA-A          1.1          180.          2.           bsd.on C6H6 nmodes
 X -X -D3-A          1.1          180.          2.
 X -QN-DJ-QN         10.5         180.          2.           JDJ,7,(1986),230
 X -J3-DA-J3         10.5         180.          2.           JDJ,7,(1986),230
@@ -1872,7 +1910,7 @@ MOD4      RE
   TA          2.0000  0.2500             S  W. Cornell CH3SH and CH3SCH3 FEP's
   T2          2.0000  0.2500             S  W. Cornell CH3SH and CH3SCH3 FEP's
   T1          2.0000  0.2500             S  W. Cornell CH3SH and CH3SCH3 FEP's
-  
+
 END
 
 

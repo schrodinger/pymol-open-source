@@ -93,6 +93,7 @@ D2-R3  172.0    1.890       WLD from DJ-R3
 D2-R4  171.0    2.075       WLD from DJ-R4
 D3-J1  450.0    1.300       WLD gross estimate
 D3-JA  448.0    1.365       WLD from D3-J3
+D3-Q1  570.0    1.229       WLD from DJ-Q1
 D3-R1  386.0    1.359       WLD from DA-R1
 D3-R2  310.0    1.724       WLD from DJ-R2
 D3-R3  172.0    1.890       WLD from DJ-R3
@@ -963,9 +964,6 @@ J3-D4-DJ-J3   1    1.700       180.000          -1.
 J3-D4-DJ-J3   1    2.000       180.000           2.
 DJ-J3-D4-DJ   1    0.850       180.000          -2.
 DJ-J3-D4-DJ   1    0.800         0.000           1.
-DJ-D4-J3-DJ   1    0.50        180.0            -4.         phi,psi,parm94
-DJ-D4-J3-DJ   1    0.15        180.0            -3.         phi,psi,parm94
-DJ-D4-J3-DJ   1    0.53          0.0             1.         phi,psi,parm94
 D4-T2-T2-D4   1    3.50          0.0            -2.         JDJ,7,(1986),230
 D4-T2-T2-D4   1    0.60          0.0             3.         JDJ,7,(1986),230
 D4-Q2-D4-Q2   1    0.10          0.0            -3.         Junmei et al, 1999
@@ -979,6 +977,9 @@ D4-D4-Q2-D4   1    0.383         0.0            -3.
 D4-D4-Q2-D4   1    0.1         180.0             2.
 D4-D4-J4-D4   1    0.30          0.0            -3.         Junmei et al, 1999
 D4-D4-J4-D4   1    0.48        180.0             2.         Junmei et al, 1999
+D4-D4-J3-DJ   1    0.50        180.0            -4.         phi,psi,parm94
+D4-D4-J3-DJ   1    0.15        180.0            -3.         phi,psi,parm94
+D4-D4-J3-DJ   1    0.53          0.0             1.         phi,psi,parm94
 D4-D4-DJ-J3   1    0.100         0.0            -4.         phi,psi,parm94
 D4-D4-DJ-J3   1    0.07          0.0             2.         phi,psi,parm94
 D4-D4-D4-D4   1    0.18          0.0            -3.         Junmei et al, 1999
@@ -1010,14 +1011,14 @@ A -T2-T2-D4   1    0.60          0.0             3.         WLD from D4-T2-T2-D4
 
 X -X -J3-DA         1.0          180.          2.           RSM, estimated
 X -X -J3-D4         10.5         180.          2.           RSM, korig = 1.0
-X -X -J3-A          10.5         180.          2.           RSM, korig = 1.0
-X -X -DJ-Q1         10.5         180.          2.           RSM, estimated
+X -X -J3-A          1.0          180.          2.           JDJ,7,(1986),230
+X -X -DJ-Q1         10.5         180.          2.           JDJ,7,(1986),230
 X -X -DA-TA         1.1          180.          2.           RSM, estimated
 X -X -DA-JA         1.1          180.          2.           RSM, estimated
 X -X -DA-J3         1.1          180.          2.           RSM, estimated
 X -X -DA-D4         1.1          180.          2.           RSM, estimated
 X -X -DA-D2         1.1          180.          2.           RSM, estimated
-X -X -DA-A          1.1          180.          2.           RSM, estimated
+X -X -DA-A          1.1          180.          2.           bsd.on C6H6 nmodes
 X -X -D3-A          1.1          180.          2.
 X -QN-DJ-QN         10.5         180.          2.           JDJ,7,(1986),230
 X -J3-DA-J3         10.5         180.          2.           JDJ,7,(1986),230

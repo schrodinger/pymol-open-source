@@ -100,6 +100,7 @@ def load(self,fname):
       a5 = l[0:11]
       if not self.improper.has_key(a5):
          self.improper[a5] = []
+      sys.stderr.write(l[11:]+"\n")
       self.improper[a5].append([l[11:]])
    # skip
    while 1:
@@ -224,6 +225,7 @@ l = [
 
 'D3-J1  450.0    1.300       WLD gross estimate',
 'D3-JA  448.0    1.365       WLD from D3-J3',
+'D3-Q1  570.0    1.229       WLD from DJ-Q1',
 'D3-R1  386.0    1.359       WLD from DA-R1',
 'D3-R2  310.0    1.724       WLD from DJ-R2',
 'D3-R3  172.0    1.890       WLD from DJ-R3',

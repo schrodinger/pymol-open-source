@@ -21,17 +21,7 @@ l=f.readline()
 h.write(l)
 g.readline() # skip this stuff for now
 
-while 1:
-   l = f.readline()
-   if not len(string.strip(l)):
-      break
-   h.write(l)
-
-while 1:
-   l = g.readline()
-   h.write(l)
-   if not len(string.strip(l)):
-      break
+# BONDS
 
 while 1:
    l = f.readline()
@@ -41,9 +31,19 @@ while 1:
 
 while 1:
    l = g.readline()
-   h.write(l)
    if not len(string.strip(l)):
       break
+   h.write(l)
+for l in [
+'T2-S   166.0    2.038       WLD from S -S ',
+'DJ-N   490.0    1.335       WLD from C -N ',
+'C -J3  490.0    1.335       WLD from C -N ',
+
+]:
+   h.write(l+"\n")
+h.write("\n")
+
+# ANGLES
 
 while 1:
    l = f.readline()
@@ -53,9 +53,31 @@ while 1:
 
 while 1:
    l = g.readline()
-   h.write(l)
    if not len(string.strip(l)):
       break
+   h.write(l)
+
+for l in [
+'A -J3-C     50.0      120.00    WLD from C -N -H ',
+'C -J3-D4    50.0      121.90    WLD from C -N -CT',
+'CT-S -T2    68.0      103.70    WLD from CT-S -S ',
+'CT-N -DJ    50.0      121.90    WLD from C -N -CT',
+'CT-C -J3    70.0      116.60    WLD from CT-C -N ',
+'D4-T2-S     68.0      103.70    WLD from CT-S -S ',
+'D4-DJ-N     70.0      116.60    WLD from CT-C -N ',
+'DJ-N -CT    50.0      121.90    WLD from C -N -CT',
+'J3-C -O     80.0      122.90    WLD from N -C -O ',
+'N  DJ-Q1    80.0      122.90    WLD from N -C -O ',
+
+
+
+
+
+]:
+   h.write(l+"\n")
+h.write("\n")
+
+# TORSIONS
 
 while 1:
    l = f.readline()
@@ -65,9 +87,64 @@ while 1:
 
 while 1:
    l = g.readline()
-   h.write(l)
    if not len(string.strip(l)):
       break
+   h.write(l)
+
+for l in [
+'X -C -J3-X    4   10.00        180.0             2.         WLD from X -C -N -X',
+'X -DJ-N -X    4   10.00        180.0             2.         WLD from X -C -N -X',
+
+'D4-T2-S -CT   1    3.50          0.0            -2.         WLD from CT-S-S-CT',
+'D4-T2-S -CT   1    0.60          0.0             3.         WLD from CT-S-S-CT',
+
+
+'N -D4-DJ-J3   1    2.000       180.000           2.         WLD from N-CT-C -N ',
+'DJ-CT-C -N    1    2.000       180.000           2.         WLD from N-CT-C -N ',
+
+'C -J3-D4-DJ   1    0.850       180.000          -2.         WLD from C-N -CT-C ',
+'C -J3-D4-DJ   1    0.800         0.000           1.         WLD from C-N -CT-C ',
+
+'DJ-N -CT-C    1    0.850       180.000          -2.         WLD from C-N -CT-C ',
+'DJ-N -CT-C    1    0.800         0.000           1.         WLD from C-N -CT-C ',
+
+'D4-D4-J3-C    1    0.50        180.0            -4.         WLD from CT-CT-N -C',
+'D4-D4-J3-C    1    0.15        180.0            -3.         WLD from CT-CT-N -C',
+'D4-D4-J3-C    1    0.53          0.0             1.         WLD from CT-CT-N -C',
+
+'CT-CT-N -DJ   1    0.50        180.0            -4.         WLD from CT-CT-N -C',
+'CT-CT-N -DJ   1    0.15        180.0            -3.         WLD from CT-CT-N -C',
+'CT-CT-N -DJ   1    0.53          0.0             1.         WLD from CT-CT-N -C',
+
+'D4-D4-DJ-N    1    0.100         0.0            -4.         WLD from CT-CT-C -N',
+'D4-D4-DJ-N    1    0.07          0.0             2.         WLD from CT-CT-C -N',
+
+'CT-CT-C -J3   1    0.100         0.0            -4.         WLD from CT-CT-C -N',
+'CT-CT-C -J3   1    0.07          0.0             2.         WLD from CT-CT-C -N',
+
+'H -N -DJ-Q1   1    2.50        180.0            -2.         WLD from H -N -C -O',
+'H -N -DJ-Q1   1    2.00          0.0             1.         WLD from H -N -C -O',
+
+'A -J3-C -O    1    2.50        180.0            -2.         WLD from H -N -C -O',
+'A -J3-C -O    1    2.00          0.0             1.         WLD from H -N -C -O',
+
+]:
+   h.write(l+"\n")
+h.write("\n")
+
+while 1:
+   l = f.readline()
+   if not len(string.strip(l)):
+      break
+   h.write(l)
+
+while 1:
+   l = g.readline()
+   if not len(string.strip(l)):
+      break
+   h.write(l)
+
+h.write("\n")
 
 while 1:
    l = f.readline()
@@ -88,9 +165,11 @@ while 1:
 
 while 1:
    l = g.readline()
-   h.write(l)
    if not len(string.strip(l)):
       break
+   h.write(l)
+
+h.write("\n")
 
 h.write(f.readline())
 g.readline()

@@ -1,4 +1,4 @@
-PARM99 for DNA,RNA,AA, organic molecules, TIP3P wat. Polariz.& LP incl.02/04/99
+Modified Parm99.dat+RSM params for usage as an input file to make_simple.py
 DJ 12.01         0.616  !            sp2 C carbonyl group 
 CA 12.01         0.360               sp2 C pure aromatic (benzene)
 CB 12.01         0.360               sp2 aromatic C, 5&6 membered ring junction
@@ -709,9 +709,9 @@ N -CT-C -N    1    1.700       180.000          -1.
 N -CT-C -N    1    2.000       180.000           2.
 C -N -CT-C    1    0.850       180.000          -2.
 C -N -CT-C    1    0.800         0.000           1.
-C -CT-N -C    1    0.50        180.0            -4.         phi,psi,parm94
-C -CT-N -C    1    0.15        180.0            -3.         phi,psi,parm94
-C -CT-N -C    1    0.53          0.0             1.         phi,psi,parm94
+CT-CT-N -C    1    0.50        180.0            -4.         phi,psi,parm94
+CT-CT-N -C    1    0.15        180.0            -3.         phi,psi,parm94
+CT-CT-N -C    1    0.53          0.0             1.         phi,psi,parm94
 CT-CT-C -N    1    0.100         0.0            -4.         phi,psi,parm94
 CT-CT-C -N    1    0.07          0.0             2.         phi,psi,parm94
 H -N -C -O    1    2.50        180.0            -2.         JCC,7,(1986),230
@@ -775,21 +775,6 @@ HC-CT-CT-F    1    0.19          0.0             1.         Junmei et al, 1999
 HC-CT-CT-Cl   1    0.25          0.0             1.         Junmei et al, 1999
 HC-CT-CT-Br   1    0.55          0.0             1.         Junmei et al, 1999
 
-X -X -CC-O          10.5         180.          2.           RSM, estimated
-X -X -NA-H          10.5         180.          2.           RSM, korig = 1.0
-X -X -NA-CT         10.5         180.          2.           RSM, korig = 1.0
-X -X -N*-CA         1.0          180.          2.           RSM, estimated
-X -X -CA-NX         1.1          180.          2.           RSM, estimated
-X -X -CA-SX         1.1          180.          2.           RSM, estimated
-X -X -CF-H4         1.1          180.          2.           RSM, estimated
-X -X -CF-CT         1.1          180.          2.           RSM, estimated
-X -X -CF-CY         1.1          180.          2.           RSM, estimated
-X -X -CX-NA         1.1          180.          2.           RSM, estimated
-X -X -CX-NX         1.1          180.          2.           RSM, estimated
-X -X -CX-SX         1.1          180.          2.           RSM, estimated
-X -X -C*-H4         1.1          180.          2.           RSM, estimated
-X -X -C*-CT         1.1          180.          2.           RSM, estimated
-X -X -CR-CT         10.5         180.          2.           RSM, estimated
 X -X -C -O          10.5         180.          2.           JCC,7,(1986),230
 X -O2-C -O2         10.5         180.          2.           JCC,7,(1986),230
 X -X -N -H          1.0          180.          2.           JCC,7,(1986),230
@@ -807,6 +792,21 @@ X -X -CM-H4         1.1          180.          2.
 X -X -CM-HA         1.1          180.          2.
 X -X -CA-H4         1.1          180.          2.           bsd.on C6H6 nmodes 
 X -X -CA-H5         1.1          180.          2.           bsd.on C6H6 nmodes
+X -X -CC-O          10.5         180.          2.           RSM, estimated
+X -X -NA-H          10.5         180.          2.           RSM, korig = 1.0
+X -X -NA-CT         10.5         180.          2.           RSM, korig = 1.0
+X -X -N*-CA         1.0          180.          2.           RSM, estimated
+X -X -CA-NX         1.1          180.          2.           RSM, estimated
+X -X -CA-SX         1.1          180.          2.           RSM, estimated
+X -X -CF-H4         1.1          180.          2.           RSM, estimated
+X -X -CF-CT         1.1          180.          2.           RSM, estimated
+X -X -CF-CY         1.1          180.          2.           RSM, estimated
+X -X -CX-NA         1.1          180.          2.           RSM, estimated
+X -X -CX-NX         1.1          180.          2.           RSM, estimated
+X -X -CX-SX         1.1          180.          2.           RSM, estimated
+X -X -C*-H4         1.1          180.          2.           RSM, estimated
+X -X -C*-CT         1.1          180.          2.           RSM, estimated
+X -X -CR-CT         10.5         180.          2.           RSM, estimated
 CK-CB-N*-CT         1.0          180.          2.
 CM-C -N*-CT         1.0          180.          2.           dac guess, 9/94
 CM-C -CM-CT         1.1          180.          2. 
