@@ -254,6 +254,8 @@ int PAlterAtomState(float *v,char *expr,int read_only,
   PyObject *x_id1,*x_id2=NULL,*y_id1,*y_id2=NULL,*z_id1,*z_id2=NULL;
   char atype[7];
   dict = PyDict_New();
+  PyObject *flags_id1,*flags_id2=NULL;
+  int flags;
 
   if(at) {
     if(at->hetatm)
@@ -288,6 +290,9 @@ int PAlterAtomState(float *v,char *expr,int read_only,
     PConvIntToPyDictItem(dict,"color",at->color);
     PConvIntToPyDictItem(dict,"ID",at->id);
     PConvIntToPyDictItem(dict,"rank",at->rank);
+
+    /* mutables */
+    flags_id1 = PConvIntToPyDictItem(dict,"flags",at->flags);
   }
   x_id1 = PConvFloatToPyDictItem(dict,"x",v[0]);
   y_id1 = PConvFloatToPyDictItem(dict,"y",v[1]);
@@ -300,9 +305,11 @@ int PAlterAtomState(float *v,char *expr,int read_only,
     if(result) {
       if(!(x_id2 = PyDict_GetItemString(dict,"x")))
         result=false;
-      if(!(y_id2 = PyDict_GetItemString(dict,"y")))
+      else if(!(y_id2 = PyDict_GetItemString(dict,"y")))
         result=false;
-      if(!(z_id2 = PyDict_GetItemString(dict,"z")))
+      else if(!(z_id2 = PyDict_GetItemString(dict,"z")))
+        result=false;
+      else if(!(flags_id2 = PyDict_GetItemString(dict,"flags")))
         result=false;
       if(PyErr_Occurred()) {
         PyErr_Print();
@@ -314,6 +321,12 @@ int PAlterAtomState(float *v,char *expr,int read_only,
       f[0]=(float)PyFloat_AsDouble(x_id2);
       f[1]=(float)PyFloat_AsDouble(y_id2);
       f[2]=(float)PyFloat_AsDouble(z_id2);
+      if(flags_id1!=flags_id2) {
+        if(!PConvPyObjectToInt(flags_id2,&flags))
+          result=false;
+        else
+          at->flags = flags;
+      }
       if(PyErr_Occurred()) {
         PyErr_Print();
         result=false;

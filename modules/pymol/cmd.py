@@ -1958,6 +1958,7 @@ SEE ALSO
          {
          'align'          : [ selection_sc           , 'selection'       , ','  ],
          'alter'          : [ selection_sc           , 'selection'       , ''   ],
+         'as'             : [ repres_sc              , 'representation'  , ', ' ],
          'bg'             : [ _get_color_sc          , 'color'           , ''   ],      
          'button'         : [ controlling.button_sc  , 'button'          , ', ' ],
          'color'          : [ _get_color_sc          , 'color'           , ', ' ],
@@ -1999,6 +2000,7 @@ SEE ALSO
    # 2nd
          {
          'align'          : [ selection_sc           , 'selection'       , ''   ],
+         'as'             : [ selection_sc           , 'selection'       , ''   ],
          'feedback'       : [ fb_module_sc           , 'module'          , ', ' ],
          'button'         : [ controlling.but_mod_sc , 'modifier'        , ', ' ],
          'show'           : [ selection_sc           , 'selection'       , ''   ],

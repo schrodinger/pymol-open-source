@@ -82,8 +82,14 @@ static float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d
       add3f(push,d0to1,d0to1);
       subtract3f(d1to0,push,d1to0);
     } else { /* overlapping, so just push along X */
-      d0to1[0]-=dev_2;
-      d1to0[0]+=dev_2;
+      float rd[3];
+      get_random3f(rd);
+      d0to1[0]-=rd[0]*dev_2;
+      d1to0[0]+=rd[0]*dev_2;
+      d0to1[1]-=rd[1]*dev_2;
+      d1to0[1]+=rd[1]*dev_2;
+      d0to1[2]-=rd[2]*dev_2;
+      d1to0[2]+=rd[2]*dev_2;
     }
   } else
     result = 0.0;

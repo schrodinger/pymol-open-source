@@ -706,8 +706,7 @@ static CSeqRow* SeekerRelease(PyMOLGlobals *G,CSeqRow* rowVLA,int button,
   return NULL;
 }
 
-
-static char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
+char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
 {
   
   switch(abbr[0]) {

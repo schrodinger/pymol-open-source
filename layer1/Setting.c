@@ -1193,6 +1193,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_valence:
   case cSetting_valence_size:
   case cSetting_half_bonds:
+  case cSetting_stick_transparency:
   case cSetting_line_stick_helper:
     ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
@@ -1433,7 +1434,6 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_line_smooth:
   case cSetting_transparency:
   case cSetting_sphere_transparency:
-  case cSetting_stick_transparency:
   case cSetting_ortho:
   case cSetting_reflect:
   case cSetting_direct:

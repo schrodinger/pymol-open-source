@@ -514,6 +514,9 @@ Rep *RepWireBondNew(CoordSet *cs)
   line_stick_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                    cSetting_line_stick_helper);
 
+  if(line_stick_helper && (SettingGet_f(G,cs->Setting, obj->Obj.Setting,
+                                        cSetting_stick_transparency)>R_SMALL4))
+    line_stick_helper = false;
   half_bonds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
 
   b=obj->Bond;
