@@ -42,16 +42,17 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state);
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
                 float *pt,float *mov,float *z_dir);
 
-void EditorSetActiveObject(ObjectMolecule *obj,int state);
+void EditorSetActiveObject(ObjectMolecule *obj,int state,int enable_bond);
 ObjectMolecule *EditorDragObject(void);
 void EditorReplace(char *elem,int geom,int valence,char *name);
 void EditorAttach(char *elem,int geom,int valence,char *name);
 void EditorRemove(int hydrogen);
 void EditorHFill(void);
 void EditorCycleValence(void);
-void EditorInactive(void);
+void EditorInactivate(void);
+void EditorUpdateState(void);
 ObjectMolecule *EditorGetActiveObject(void);
-int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet);
+int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int quiet);
 int EditorTorsion(float angle);
 int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode);
 

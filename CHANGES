@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * pk1-4 now have different visual representations...
+
    * fixed hydrogen adding for amides/ureas
 
    * changed PyMOL file output to comply with PDB standards with respect

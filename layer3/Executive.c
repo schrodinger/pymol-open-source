@@ -2646,7 +2646,7 @@ int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state,i
                              * necessary because the editor 
                              * can only work on the current state...this
                              * needs to be changed.*/
-    EditorSelect(s2,s1,NULL,NULL,false,true);
+    EditorSelect(s2,s1,NULL,NULL,false,true,true);
     EditorTorsion(change);
     SceneSetFrame(-1,save_state);
     if(!quiet) {
@@ -2877,7 +2877,7 @@ void ExecutiveFuse(char *s0,char *s1,int mode)
   if(sele0>=0) {
     sele1 = SelectorIndexByName(s1);
     if(sele1>=0) {
-      EditorSetActiveObject(NULL,0);
+      EditorInactivate();
       obj0 = SelectorGetSingleObjectMolecule(sele0);
       obj1 = SelectorGetSingleObjectMolecule(sele1);
       if(obj0)
@@ -5861,7 +5861,7 @@ void ExecutiveDelete(char *name)
 			 if(all_flag||(WordMatch(name_copy,rec->obj->Name,true)<0))
 				{
               if(rec->obj==(CObject*)EditorGetActiveObject())
-                EditorSetActiveObject(NULL,0);
+                EditorInactivate();
               if(rec->visible) 
                 SceneObjectDel(rec->obj);
 				  SelectorDelete(rec->name);
@@ -6709,7 +6709,7 @@ int ExecutiveReinitialize(void)
   ColorReset();
   SettingInitGlobal(false,false);
   MovieReset();
-  EditorInactive();
+  EditorInactivate();
 
   blocked = PAutoBlock();
   PRunString("cmd.view('*','clear')");

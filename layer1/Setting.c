@@ -1080,6 +1080,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_label_font_id:
+    SceneChanged();
+    break;
   case cSetting_retain_order:
   case cSetting_pdb_hetatm_sort:
   case cSetting_pdb_insertions_go_first:
@@ -1788,7 +1791,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_log_conformations, 1);
 
-  SettingSet_f(I,cSetting_valence_size, 0.05F);
+  SettingSet_f(I,cSetting_valence_size, 0.050F);
 
   SettingSet_f(I,cSetting_surface_miserable, 0.8F);
 
@@ -2184,6 +2187,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
                                                         1 = pdb compliant,
                                                         2 = amber compliant 
                                                       */
+  SettingSet_b(I,cSetting_ray_pixel_scale_to_window,1);
+  SettingSet_i(I,cSetting_label_font_id,0);
 
 }
 

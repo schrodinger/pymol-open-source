@@ -4382,7 +4382,7 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
 static PyObject *CmdUnpick(PyObject *self, 	PyObject *args)
 {
   APIEntry();
-  EditorInactive();  /* TODO STATUS */
+  EditorInactivate();  /* TODO STATUS */
   APIExit();
   return(APISuccess());  
 }
@@ -4394,17 +4394,17 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
   OrthoLineType s1 = "";
   OrthoLineType s2 = "";
   OrthoLineType s3 = "";
-  int pkresi;
+  int pkresi,pkbond;
   int ok=false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"ssssii",&str0,&str1,&str2,&str3,&pkresi,&quiet);
+  ok = PyArg_ParseTuple(args,"ssssiii",&str0,&str1,&str2,&str3,&pkresi,&pkbond,&quiet);
   if (ok) {
     APIEntry();
     if(str0[0]) SelectorGetTmp(str0,s0);
     if(str1[0]) SelectorGetTmp(str1,s1);
     if(str2[0]) SelectorGetTmp(str2,s2);
     if(str3[0]) SelectorGetTmp(str3,s3);
-    ok = EditorSelect(s0,s1,s2,s3,pkresi,quiet);
+    ok = EditorSelect(s0,s1,s2,s3,pkresi,pkbond,quiet);
     if(s0[0]) SelectorFreeTmp(s0);
     if(s1[0]) SelectorFreeTmp(s1);
     if(s2[0]) SelectorFreeTmp(s2);

@@ -364,6 +364,8 @@ if __name__=='pymol.setting':
       transparency_picking_mode = 324
       virtual_trackball     = 325
       pdb_reformat_names_mode = 326
+      ray_pixel_scale_to_window = 327
+      label_font_id             = 328
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -374,7 +374,7 @@ static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, 
 
 }
 
-static draw_text(char *c,int xx,int yy,float *color)
+static void draw_text(char *c,int xx,int yy,float *color)
 {
   glColor3fv(color);
   while(*c) {

@@ -749,430 +749,6 @@ int n_sausages = 0;
 int n_skipped = 0;
 #endif
 
-#if ! SPLIT_BASIS
-
-/*========================================================================*/
-#ifdef _PYMOL_INLINE
-__inline__
-#endif
-int BasisHit(BasisCallRec *BC)
-              /*CBasis *BI,RayInfo *rr,int except,
-             int *vert2prim,CPrimitive *prim,
-             int shadow,float front,float back,
-             float excl_trans,int trans_shadows,
-             int *interior_flag,MapCache *cache)*/
-
-{
-   float   oppSq,dist,sph[3],vt[3],tri1,tri2; 
-   int      a,b,c,h,*ip;
-   int      excl_trans_flag;
-   int      check_interior_flag;
-   int      *elist, local_iflag = false;
-   const float   _0   = 0.0F;
-   
-   /* local copies (eliminate these extra copies later on) */
-
-   CBasis *BI = BC->Basis;
-   RayInfo *r = BC->rr;
-
-   if( MapInsideXY(BI->Map,r->base, &a, &b, &c) )
-   {
-      const int   *xxtmp   = BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]);
-      register int      minIndex=-1;
-      int     v2p;
-      int     i,ii;
-       
-      int except = BC->except;
-      const int *vert2prim = BC->vert2prim;
-      const int shadow = BC->shadow;
-      const int trans_shadows = BC->trans_shadows;
-      const float front = BC->front;
-      const float back = BC->back;
-      const float excl_trans = BC->excl_trans;
-      register MapCache *cache = &BC->cache;
-      
-      float r_tri1=_0, r_tri2=_0, r_dist=_0; /* zero inits to suppress compiler warnings */
-      float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
-      CPrimitive *r_prim = NULL;
-      
-      check_interior_flag   = BC->check_interior;
-      
-      /* assumption: always heading in the negative Z direction with our vector... */
-      vt[0]         = r->base[0];
-      vt[1]         = r->base[1];
-      
-      if(except >= 0)
-         except   = vert2prim[except];
-         
-      excl_trans_flag   = (excl_trans != _0);
-      
-      r_dist = MAXFLOAT;
-
-      xxtmp   = BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]);
-
-      MapCacheReset(cache);
-
-      elist   = BI->Map->EList;
-   
-      while(c >= MapBorder) 
-      {
-         h   = *(xxtmp + c);
-      
-         if(h)
-         {
-            ip   = elist + h;
-            i   = *(ip++);
-
-#ifdef PROFILE_BASIS
-            if ( i >= 0 ) 
-              n_cells++;
-#endif
-
-            while(i >= 0) 
-            {
-
-
-#ifdef PROFILE_BASIS
-              n_prims++;
-#endif
-               v2p = vert2prim[i];
-               ii = *(ip++);
-               if((v2p != except) && (!MapCached(cache,v2p))) 
-               {
-                  CPrimitive *prm = BC->prim + v2p;
-                  
-                  MapCache(cache,v2p);
-                  
-                  switch(prm->type) 
-                  {
-                     case cPrimTriangle:
-#ifdef PROFILE_BASIS
-                       n_triangles++;
-#endif
-                        if(shadow || (!prm->cull))
-                        {
-                           float   *pre   = BI->Precomp + BI->Vert2Normal[i] * 3;
-                           
-                           if( pre[6] )
-                           {
-                              float   *vert0   = BI->Vertex + prm->vert * 3;
-                              
-                              float   tvec0   = vt[0] - vert0[0];
-                              float   tvec1   = vt[1] - vert0[1];
-                              
-                              tri1      = (tvec0 * pre[4] - tvec1 * pre[3]) * pre[7];
-                              tri2      = -(tvec0 * pre[1] - tvec1 * pre[0]) * pre[7];
-                              
-                              if( !( (tri1 < BasisFudge0) || (tri2 < BasisFudge0) || (tri1 > BasisFudge1) || ((tri1 + tri2) > BasisFudge1) ) )
-                              {
-                                 dist   = (r->base[2] - (tri1*pre[2]) - (tri2*pre[5]) - vert0[2]);
-
-                                 if(shadow) 
-                                 {
-                                    if(prm->trans == _0 ) /* opaque? return immed. */
-                                    {
-                                       if((dist > -kR_SMALL4) && (dist < r_dist))
-                                       {
-                                          r->prim = prm;
-                                          return(1);
-                                       }
-                                    }
-                                    else if(trans_shadows) 
-                                    {
-                                       if((dist > -kR_SMALL4) && (dist < r_dist)) 
-                                       {
-                                          minIndex   = prm->vert;
-                                          r_tri1      = tri1;
-                                          r_tri2      = tri2;
-                                          r_dist      = dist;
-                                       }
-                                    }
-                                 }
-                                 else 
-                                 {
-                                    if( (dist < r_dist) && (dist >= front) && (dist <= back) ) 
-                                    {
-                                       minIndex   = prm->vert;
-                                       r_tri1      = tri1;
-                                       r_tri2      = tri2;
-                                       r_dist      = dist;
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     break;
-                     
-                     case cPrimSphere:
-#ifdef PROFILE_BASIS
-                       n_spheres++;
-#endif
-                        oppSq = ZLineClipPoint( r->base, BI->Vertex + i*3, &dist, BI->Radius[i] );
-                        if(oppSq <= BI->Radius2[i])
-                        {
-                           dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
-                           if(shadow) 
-                           {
-                              if(prm->trans == _0) 
-                              {
-                                 if((dist > -kR_SMALL4) && (dist < r_dist)) 
-                                 {
-                                    r->prim = prm;
-                                    return(1);
-                                 }
-                              }
-                              else if(trans_shadows)
-                              {
-                                 if((dist > -kR_SMALL4) && (dist < r_dist)) 
-                                 {
-                                    minIndex   = prm->vert;
-                                    r_dist      = dist;
-                                 }
-                              }
-                           }
-                           else 
-                           {
-                              if(dist < r_dist) 
-                              {
-                                 if((dist >= front) && (dist <= back)) 
-                                 {
-                                    minIndex   = prm->vert;
-                                    r_dist      = dist;
-                                 }
-                                 else if(check_interior_flag) 
-                                 {
-                                    vt[2]   = r->base[2] - front;
-                                    if(diffsq3f(vt,BI->Vertex+i*3) < BI->Radius2[i]) 
-                                    {
-                                       local_iflag   = true;
-                                       r_prim      = prm;
-                                       r_dist    = front;
-                                       minIndex   = prm->vert;
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     break;
-                     
-                     case cPrimCylinder:
-#ifdef PROFILE_BASIS
-                       n_cylinders++;
-#endif
-                        if(ZLineToSphereCapped(r->base,BI->Vertex+i*3, 
-                                               BI->Normal+BI->Vert2Normal[i]*3,
-                                               BI->Radius[i], prm->l1,sph,&tri1,prm->cap1,prm->cap2))
-                        {
-                           oppSq = ZLineClipPoint(r->base,sph,&dist,BI->Radius[i]);
-                           if(oppSq<=BI->Radius2[i])
-                           {
-                              dist=(float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
-                              if(shadow)
-                              {
-                                 if(prm->trans == _0) 
-                                 {
-                                    if((dist > -kR_SMALL4) && (dist < r_dist)) 
-                                    {
-                                       r->prim = prm;
-                                       return(1);
-                                    }
-                                 }
-                                 else if(trans_shadows) 
-                                 {
-                                    if((dist > -kR_SMALL4) && (dist < r_dist)) 
-                                    {
-                                       if(prm->l1 > kR_SMALL4)
-                                          r_tri1   = tri1 / prm->l1;
-                                          
-                                       r_sphere0   = sph[0];
-                                       r_sphere1   = sph[1];                              
-                                       r_sphere2   = sph[2];
-                                       minIndex      = prm->vert;
-                                       r_dist         = dist;
-                                    }
-                                 }
-                              }
-                              else 
-                              {
-                                 if(dist<r_dist) 
-                                 {
-                                    if((dist >= front) && (dist <= back)) 
-                                    {
-                                       if(prm->l1 > kR_SMALL4)
-                                          r_tri1   = tri1 / prm->l1;
-                                          
-                                       r_sphere0   = sph[0];
-                                       r_sphere1   = sph[1];                              
-                                       r_sphere2   = sph[2];
-                                       minIndex      = prm->vert;
-                                       r_dist         = dist;
-                                    }
-                                    else if(check_interior_flag)
-                                    {
-                                       vt[2]   = r->base[2] - front;
-                                       if(ZLineFrontToInteriorSphereCapped(vt,
-                                                 BI->Vertex+i*3,
-                                                 BI->Normal+BI->Vert2Normal[i]*3,
-                                                 BI->Radius[i],
-                                                 BI->Radius2[i],
-                                                 prm->l1,
-                                                 prm->cap1,
-                                                 prm->cap2)) 
-                                       {
-                                          local_iflag   = true;
-                                          r_prim      = prm;
-                                          r_dist      = front;
-                                          minIndex   = prm->vert;
-                                       }
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     break;
-                     
-                     case cPrimSausage:
-#ifdef PROFILE_BASIS
-                       n_sausages++;
-#endif
-                        if(ZLineToSphere(r->base,BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,BI->Radius[i],prm->l1,sph,&tri1))
-                        {
-                           oppSq = ZLineClipPoint(r->base,sph,&dist,BI->Radius[i]);
-                           if(oppSq<=BI->Radius2[i])
-                           {
-                              dist=(float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
-                              if(shadow)
-                              {
-                                 if(prm->trans == _0) 
-                                 {
-                                    if((dist > -kR_SMALL4) && (dist < r_dist)) 
-                                    {
-                                       r->prim = prm;
-                                       return(1);
-                                    }
-                                 }
-                                 else if(trans_shadows) 
-                                 {
-                                    if((dist > -kR_SMALL4) && (dist < r_dist)) 
-                                    {
-                                       if(prm->l1 > kR_SMALL4)
-                                          r_tri1   =tri1 / prm->l1;
-                                          
-                                       r_sphere0   = sph[0];
-                                       r_sphere1   = sph[1];                              
-                                       r_sphere2   = sph[2];
-                                       minIndex      = prm->vert;
-                                       r_dist         = dist;
-                                    }
-                                 }
-                              }
-                              else 
-                              {
-                                 int   tmp_flag = false;
-                                 if(dist<r_dist)
-                                 {
-                                    if((dist >= front) && (dist <= back)) 
-                                    {
-                                       tmp_flag = true;
-                                       if(excl_trans_flag) 
-                                       {
-                                          if( (prm->trans > _0) && (dist < excl_trans) )
-                                             tmp_flag=false;
-                                       }
-                                       if(tmp_flag) 
-                                       {
-                                          if(prm->l1 > kR_SMALL4)
-                                             r_tri1   = tri1 / prm->l1;
-                                             
-                                          r_sphere0   = sph[0];
-                                          r_sphere1   = sph[1];                              
-                                          r_sphere2   = sph[2];
-                                          minIndex      = prm->vert;
-                                          r_dist         = dist;
-                                       }
-                                    }
-                                    else if(check_interior_flag) 
-                                    {
-                                       vt[2] = r->base[2] - front;
-                                       if(ZLineFrontToInteriorSphere(vt, BI->Vertex+i*3, BI->Normal+BI->Vert2Normal[i]*3,
-                                                              BI->Radius[i], BI->Radius2[i], prm->l1)) 
-                                       {
-                                          local_iflag   = true;
-                                          r_prim      = prm;
-                                          r_dist      = front;
-                                          minIndex   = prm->vert;
-                                       }
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     break;
-                  }   /* end of switch */
-               }   /* end of if */
-               else { 
-#ifdef PROFILE_BASIS
-                 if (MapCached(cache,v2p))
-                   n_skipped++;
-#endif
-            }
-
-               i = ii;
-            } /* end of while */
-         }
-
-         /* and of course stop when we hit the edge of the map */
-         
-         if(local_iflag)
-            break;
-         
-         /* we've processed all primitives associated with this voxel, 
-         so if an intersection has been found which occurs in front of
-         the next voxel, then we can stop */
-         
-         if( minIndex > -1 ) 
-         {
-            int   aa,bb,cc;
-            
-            vt[2]   = r->base[2] - r_dist;
-            MapLocus(BI->Map,vt,&aa,&bb,&cc);
-            if(cc > c) 
-               break;
-         }
-         
-         c--;
-            
-      } /* end of while */
-      
-      if( minIndex > -1 ) 
-      {
-         r_prim = BC->prim + vert2prim[minIndex];
-         
-         if(r_prim->type == cPrimSphere) 
-         {
-            const float   *vv   = BI->Vertex + minIndex * 3;
-            r_sphere0   = vv[0];
-            r_sphere1   = vv[1];
-            r_sphere2   = vv[2];
-         }
-      }
-      
-      BC->interior_flag = local_iflag;   
-      r->tri1 = r_tri1;
-      r->tri2 = r_tri2;
-      r->prim = r_prim;
-      r->dist = r_dist;
-      r->sphere[0] = r_sphere0;
-      r->sphere[1] = r_sphere1;
-      r->sphere[2] = r_sphere2;
-      return(minIndex);
-   } /* end of if */   
-    BC->interior_flag = local_iflag;
-   return(-1);
-}
-
-
-#else
 
 
 #ifdef _PYMOL_INLINE
@@ -1248,6 +824,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
                   switch(prm->type) 
                   {
                      case cPrimTriangle:
+                  case cPrimCharacter:
                         if(!prm->cull)
                         {
                            float   *pre   = BI->Precomp + BI->Vert2Normal[i] * 3;
@@ -1461,9 +1038,6 @@ int BasisHitNoShadow(BasisCallRec *BC)
 
 
 
-
-
-
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
@@ -1475,7 +1049,7 @@ int BasisHitShadow(BasisCallRec *BC)
    int      check_interior_flag;
    int      *elist, local_iflag = false;
    const float   _0   = 0.0F;
-   
+   const float   _1   = 1.0F;
    /* local copies (eliminate these extra copies later on) */
 
    CBasis   *BI   = BC->Basis;
@@ -1538,7 +1112,63 @@ int BasisHitShadow(BasisCallRec *BC)
                   
                   switch(prm->type) 
                   {
-                     case cPrimTriangle:
+                  case cPrimCharacter: /* will need special handling for character shadows */
+                    {
+                      float   *pre   = BI->Precomp + BI->Vert2Normal[i] * 3;
+                      
+                      if( pre[6] )
+                        {
+                          float   *vert0   = BI->Vertex + prm->vert * 3;
+                          
+                          float   tvec0   = vt[0] - vert0[0];
+                          float   tvec1   = vt[1] - vert0[1];
+                          
+                          tri1      = (tvec0 * pre[4] - tvec1 * pre[3]) * pre[7];
+                          tri2      = -(tvec0 * pre[1] - tvec1 * pre[0]) * pre[7];
+                          
+                          if( !( (tri1 < BasisFudge0) || (tri2 < BasisFudge0) || (tri1 > BasisFudge1) || ((tri1 + tri2) > BasisFudge1) ) )
+                            {
+                              dist   = (r->base[2] - (tri1*pre[2]) - (tri2*pre[5]) - vert0[2]);
+                              
+                              {
+                                float fc[3];
+                                float trans;
+
+                                r->tri1 = tri1;
+                                r->tri2 = tri2;
+                                r->dist = dist;
+                                r->prim = prm;
+
+                                BasisGetTriangleNormal(BI,r,minIndex,fc);
+                                
+                                trans = CharacterInterpolate(prm->char_id,fc);
+
+                                if(trans == _0)  { /* opaque? return immed. */
+                                  
+                                  if((dist > -kR_SMALL4) && (dist < r_dist))
+                                    {
+                                      r->prim = prm;
+                                      r->trans = _0;
+                                      return(1);
+                                    }
+                                  
+                                } /*else if(trans_shadows) 
+                                  {
+                                    if((dist > -kR_SMALL4) && (dist < r_dist)) 
+                                      {
+                                        minIndex   = prm->vert;
+                                        r_tri1      = tri1;
+                                        r_tri2      = tri2;
+                                        r_dist      = dist;
+                                      }
+                                      }*/
+                              }
+                            }
+                        }
+                    }
+                    break;
+                    
+                  case cPrimTriangle:
                      {
                         float   *pre   = BI->Precomp + BI->Vert2Normal[i] * 3;
                         
@@ -1561,6 +1191,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                  if((dist > -kR_SMALL4) && (dist < r_dist))
                                  {
                                     r->prim = prm;
+                                    r->trans = _0;
                                     return(1);
                                  }
                               }
@@ -1572,6 +1203,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                     r_tri1      = tri1;
                                     r_tri2      = tri2;
                                     r_dist      = dist;
+                                    r->trans = prm->trans;
                                  }
                               }
                            }
@@ -1591,6 +1223,7 @@ int BasisHitShadow(BasisCallRec *BC)
                               if((dist > -kR_SMALL4) && (dist < r_dist)) 
                               {
                                  r->prim = prm;
+                                 r->trans = prm->trans;
                                  return(1);
                               }
                            }
@@ -1600,6 +1233,7 @@ int BasisHitShadow(BasisCallRec *BC)
                               {
                                  minIndex   = prm->vert;
                                  r_dist      = dist;
+                                 r->trans = prm->trans;
                               }
                            }
                         }
@@ -1621,6 +1255,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                  if((dist > -kR_SMALL4) && (dist < r_dist)) 
                                  {
                                     r->prim = prm;
+                                    r->trans = prm->trans;
                                     return(1);
                                  }
                               }
@@ -1635,6 +1270,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                     r_sphere1   = sph[1];                              
                                     r_sphere2   = sph[2];
                                     minIndex   = prm->vert;
+                                    r->trans = prm->trans;
                                     r_dist      = dist;
                                  }
                               }
@@ -1656,6 +1292,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                  if((dist > -kR_SMALL4) && (dist < r_dist)) 
                                  {
                                     r->prim = prm;
+                                    r->trans = prm->trans;
                                     return(1);
                                  }
                               }
@@ -1670,6 +1307,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                     r_sphere1   = sph[1];                              
                                     r_sphere2   = sph[2];
                                     minIndex   = prm->vert;
+                                    r->trans = prm->trans;
                                     r_dist      = dist;
                                  }
                               }
@@ -1734,7 +1372,6 @@ int BasisHitShadow(BasisCallRec *BC)
    return(-1);
 }
 
-#endif   /* BASIS_SPLIT */
 
 #if 0
 /*========================================================================*/
@@ -1811,6 +1448,7 @@ void BasisOptimizeMap(CBasis *I,float *vertex,int n,int *vert2prim)
 
 }
 #endif
+
 
 /*========================================================================*/
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
@@ -1940,6 +1578,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
          switch(prm->type)
          {
             case cPrimTriangle:
+                  case cPrimCharacter:
                if(a == prm->vert) { /* only do this calculation for one of the three vertices */
                   l1   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3);
                   l2   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3+3);
@@ -1994,8 +1633,9 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
          prm   = prim + vert2prim[a];
          
          switch(prm->type)
-         {
-            case cPrimTriangle:
+           {
+         case cPrimTriangle:
+         case cPrimCharacter:
                if(a == prm->vert)
                {
                   /* only do this calculation for one of the three vertices */

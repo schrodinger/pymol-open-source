@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"P.h"
 
+
 typedef struct {
   ObjectMolecule *Obj;
   WordType DragSeleName;
@@ -110,7 +111,7 @@ int EditorDeselectIfSelected(int index,int update)
         result = true;
       }
       if(result&&update)
-        EditorSetActiveObject(I->Obj,I->ActiveState);
+        EditorSetActiveObject(I->Obj,I->ActiveState,I->BondMode);
     }
   }
   
@@ -131,9 +132,10 @@ PyObject *EditorAsPyList(void)
   if(!EditorActive()) {
     result = PyList_New(0); /* not editing? return null list */
   } else {
-    result = PyList_New(2);
+    result = PyList_New(3);
     PyList_SetItem(result,0,PyString_FromString(I->Obj->Obj.Name));
     PyList_SetItem(result,1,PyInt_FromLong(I->ActiveState));
+    PyList_SetItem(result,2,PyInt_FromLong(I->BondMode));
   }
   return(PConvAutoNone(result));
 }
@@ -145,8 +147,9 @@ int EditorFromPyList(PyObject *list)
   ObjectMolecule *objMol;
   int active_state;
   WordType obj_name;
-  int ll;
-  
+  int ll = 0;
+  int bond_mode = true;
+
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
   if(ok) ll = PyList_Size(list);
@@ -154,22 +157,23 @@ int EditorFromPyList(PyObject *list)
    Always check ll when adding new PyList_GetItem's */
   if(ok) active_flag=(PyList_Size(list)!=0);
   if(!active_flag) {
-    EditorInactive();
+    EditorInactivate();
   } else {
     if(ok) ok=PConvPyStrToStr(PyList_GetItem(list,0),obj_name,sizeof(WordType));
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&active_state);
+    if(ok&&(ll>2)) ok=PConvPyIntToInt(PyList_GetItem(list,2),&bond_mode); /* newer session files */
     if(ok) {
       objMol=ExecutiveFindObjectMoleculeByName(obj_name);
       if(objMol) {
-        EditorSetActiveObject(objMol,active_state);
+        EditorSetActiveObject(objMol,active_state,bond_mode);
         EditorDefineExtraPks();
       }
     } else {
-      EditorInactive();
+      EditorInactivate();
     }
   }
   if(!ok) {
-    EditorInactive();
+    EditorInactivate();
   }
   return(ok);
 }
@@ -480,7 +484,7 @@ int EditorTorsion(float angle)
 }
 
 /*========================================================================*/
-int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
+int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int quiet)
 {
   int i0=-1;
   int i1=-1;
@@ -575,7 +579,7 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
     if(i2>=0) SelectorCreate(cEditorSele3,s2,NULL,quiet,NULL);
     if(i3>=0) SelectorCreate(cEditorSele4,s3,NULL,quiet,NULL);
     
-    EditorSetActiveObject(consensus_obj,SceneGetState());        
+    EditorSetActiveObject(consensus_obj,SceneGetState(),pkbond);        
 
     if(pkresi)
       EditorDefineExtraPks();
@@ -584,7 +588,7 @@ int EditorSelect(char *s0,char *s1,char *s2,char *s3,int pkresi,int quiet)
     result=true;
 
   } else {
-    EditorSetActiveObject(NULL,0);
+    EditorInactivate();
     ErrMessage("Editor","Invalid input.");    
   }
   return(result);
@@ -687,7 +691,7 @@ void EditorRemove(int hydrogen)
       if(sele1>=0) {
         /* bond mode */
         ObjectMoleculeRemoveBonds(I->Obj,sele0,sele1);
-        EditorSetActiveObject(NULL,0);        
+        EditorInactivate();
       } else {
 
         if(hydrogen) {
@@ -699,7 +703,7 @@ void EditorRemove(int hydrogen)
         i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
         if(i0>=0) {
           ExecutiveRemoveAtoms(cEditorSele1);
-          EditorSetActiveObject(NULL,0);
+          EditorInactivate();
         }
 
         if(h_flag) {
@@ -791,7 +795,7 @@ void EditorReplace(char *elem,int geom,int valence,char *name)
         ObjectMoleculeFillOpenValences(I->Obj,i0);
         ObjectMoleculeSort(I->Obj);
         ObjectMoleculeUpdateIDNumbers(I->Obj);
-        EditorSetActiveObject(NULL,0);
+        EditorInactivate();
       }
     }
   }
@@ -876,85 +880,145 @@ static void draw_bond(float *v0,float *v1)
 
 }
 
-static void draw_globe(float *v2)
+static void draw_globe(float *v2,int number)
 {
   float v[3];
   float n0[3],n1[3],n2[3];
   float x[50],y[50];
   int nEdge;
   int a,c;
-  float tube_size1=0.5F;
-  float tube_size2=0.07F;
+  float radius=0.5F;
+  float width_base=0.10F;
+  float width=0.0F;
+  float offset = 0.0F;
+  int cycle_counter;
 
   nEdge = (int)SettingGet(cSetting_stick_quality)*2;
   if(nEdge>50)
     nEdge=50;
   
   subdivide(nEdge,x,y);
-  
-  
+    
   n0[0]=1.0;
   n0[1]=0.0;
   n0[2]=0.0;
   get_system1f3f(n0,n1,n2);
   
   glColor3fv(ColorGet(0));
-  glBegin(GL_TRIANGLE_STRIP);
-  for(a=0;a<=nEdge;a++) {
-    c=a % nEdge;
-    v[0] =  n1[0]*x[c] + n2[0]*y[c];
-    v[1] =  n1[1]*x[c] + n2[1]*y[c];
-    v[2] =  n1[2]*x[c] + n2[2]*y[c];
-    normalize3f(v);
-    glNormal3fv(v);
-    v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n0[0]*tube_size2;
-    v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n0[1]*tube_size2;
-    v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n0[2]*tube_size2;
-    glVertex3fv(v);
-    v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n0[0]*tube_size2;
-    v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n0[1]*tube_size2;
-    v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n0[2]*tube_size2;
-    glVertex3fv(v);
+
+  cycle_counter = number;
+  while(cycle_counter) {
+    
+    switch(number) {
+    case 1:
+      width = width_base;
+      offset = 0.0F;
+      break;
+
+    case 2:
+      switch(cycle_counter) {
+      case 2:
+        width = width_base/2;
+        offset = width_base;
+        break;
+      case 1:
+        offset = -width_base;
+        break;
+      }
+      break;
+
+    case 3:
+      switch(cycle_counter) {
+      case 3:
+        width = width_base/2.8;
+        offset = 1.33*width_base;
+        break;
+      case 2:
+        offset = 0.0F;
+        break;
+      case 1:
+        offset = -1.33*width_base;
+        break;
+      }
+      break;
+
+    case 4:
+      switch(cycle_counter) {
+      case 4:
+        width = width_base/3.2;
+        offset = 2*width_base;
+        break;
+      case 3:
+        offset = 0.66F*width_base;
+        break;
+      case 2:
+        offset = -0.66F*width_base;
+        break;
+      case 1:
+        offset = -2*width_base;
+        break;
+      }
+    }
+
+    glBegin(GL_TRIANGLE_STRIP);
+    for(a=0;a<=nEdge;a++) {
+      c=a % nEdge;
+      v[0] =  n1[0]*x[c] + n2[0]*y[c];
+      v[1] =  n1[1]*x[c] + n2[1]*y[c];
+      v[2] =  n1[2]*x[c] + n2[2]*y[c];
+      normalize3f(v);
+      glNormal3fv(v);
+      v[0] = v2[0] + n1[0]*radius*x[c] + n2[0]*radius*y[c]+n0[0]*(offset+width);
+      v[1] = v2[1] + n1[1]*radius*x[c] + n2[1]*radius*y[c]+n0[1]*(offset+width);
+      v[2] = v2[2] + n1[2]*radius*x[c] + n2[2]*radius*y[c]+n0[2]*(offset+width);
+      glVertex3fv(v);
+      v[0] = v2[0] + n1[0]*radius*x[c] + n2[0]*radius*y[c]+n0[0]*(offset-width);
+      v[1] = v2[1] + n1[1]*radius*x[c] + n2[1]*radius*y[c]+n0[1]*(offset-width);
+      v[2] = v2[2] + n1[2]*radius*x[c] + n2[2]*radius*y[c]+n0[2]*(offset-width);
+      glVertex3fv(v);
+    }
+    glEnd();
+    
+    glBegin(GL_TRIANGLE_STRIP);
+    for(a=0;a<=nEdge;a++) {
+      c=a % nEdge;
+      v[0] =  n0[0]*x[c] + n2[0]*y[c];
+      v[1] =  n0[1]*x[c] + n2[1]*y[c];
+      v[2] =  n0[2]*x[c] + n2[2]*y[c];
+      normalize3f(v);
+      glNormal3fv(v);
+      v[0] = v2[0] + n0[0]*radius*x[c] + n2[0]*radius*y[c]+n1[0]*(offset+width);
+      v[1] = v2[1] + n0[1]*radius*x[c] + n2[1]*radius*y[c]+n1[1]*(offset+width);
+      v[2] = v2[2] + n0[2]*radius*x[c] + n2[2]*radius*y[c]+n1[2]*(offset+width);
+      glVertex3fv(v);
+      v[0] = v2[0] + n0[0]*radius*x[c] + n2[0]*radius*y[c]+n1[0]*(offset-width);
+      v[1] = v2[1] + n0[1]*radius*x[c] + n2[1]*radius*y[c]+n1[1]*(offset-width);
+      v[2] = v2[2] + n0[2]*radius*x[c] + n2[2]*radius*y[c]+n1[2]*(offset-width);
+      glVertex3fv(v);
+    }
+    glEnd();
+    
+    glBegin(GL_TRIANGLE_STRIP);
+    for(a=0;a<=nEdge;a++) {
+      c=a % nEdge;
+      v[0] =  n0[0]*x[c] + n1[0]*y[c];
+      v[1] =  n0[1]*x[c] + n1[1]*y[c];
+      v[2] =  n0[2]*x[c] + n1[2]*y[c];
+      normalize3f(v);
+      glNormal3fv(v);
+      v[0] = v2[0] + n0[0]*radius*x[c] + n1[0]*radius*y[c]+n2[0]*(offset+width);
+      v[1] = v2[1] + n0[1]*radius*x[c] + n1[1]*radius*y[c]+n2[1]*(offset+width);
+      v[2] = v2[2] + n0[2]*radius*x[c] + n1[2]*radius*y[c]+n2[2]*(offset+width);
+      glVertex3fv(v);
+      v[0] = v2[0] + n0[0]*radius*x[c] + n1[0]*radius*y[c]+n2[0]*(offset-width);
+      v[1] = v2[1] + n0[1]*radius*x[c] + n1[1]*radius*y[c]+n2[1]*(offset-width);
+      v[2] = v2[2] + n0[2]*radius*x[c] + n1[2]*radius*y[c]+n2[2]*(offset-width);
+      glVertex3fv(v);
+    }
+    glEnd();
+
+    cycle_counter--;
   }
-  glEnd();
-  
-  glBegin(GL_TRIANGLE_STRIP);
-  for(a=0;a<=nEdge;a++) {
-    c=a % nEdge;
-    v[0] =  n0[0]*x[c] + n2[0]*y[c];
-    v[1] =  n0[1]*x[c] + n2[1]*y[c];
-    v[2] =  n0[2]*x[c] + n2[2]*y[c];
-    normalize3f(v);
-    glNormal3fv(v);
-    v[0] = v2[0] + n0[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n1[0]*tube_size2;
-    v[1] = v2[1] + n0[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n1[1]*tube_size2;
-    v[2] = v2[2] + n0[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n1[2]*tube_size2;
-    glVertex3fv(v);
-    v[0] = v2[0] + n0[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n1[0]*tube_size2;
-    v[1] = v2[1] + n0[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n1[1]*tube_size2;
-    v[2] = v2[2] + n0[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n1[2]*tube_size2;
-    glVertex3fv(v);
-  }
-  glEnd();
-  
-  glBegin(GL_TRIANGLE_STRIP);
-  for(a=0;a<=nEdge;a++) {
-    c=a % nEdge;
-    v[0] =  n0[0]*x[c] + n1[0]*y[c];
-    v[1] =  n0[1]*x[c] + n1[1]*y[c];
-    v[2] =  n0[2]*x[c] + n1[2]*y[c];
-    normalize3f(v);
-    glNormal3fv(v);
-    v[0] = v2[0] + n0[0]*tube_size1*x[c] + n1[0]*tube_size1*y[c]+n2[0]*tube_size2;
-    v[1] = v2[1] + n0[1]*tube_size1*x[c] + n1[1]*tube_size1*y[c]+n2[1]*tube_size2;
-    v[2] = v2[2] + n0[2]*tube_size1*x[c] + n1[2]*tube_size1*y[c]+n2[2]*tube_size2;
-    glVertex3fv(v);
-    v[0] = v2[0] + n0[0]*tube_size1*x[c] + n1[0]*tube_size1*y[c]-n2[0]*tube_size2;
-    v[1] = v2[1] + n0[1]*tube_size1*x[c] + n1[1]*tube_size1*y[c]-n2[1]*tube_size2;
-    v[2] = v2[2] + n0[2]*tube_size1*x[c] + n1[2]*tube_size1*y[c]-n2[2]*tube_size2;
-    glVertex3fv(v);
-  }
-  glEnd();
   
 }
 
@@ -983,10 +1047,12 @@ void EditorRender(int state)
   int sele1,sele2,sele3,sele4;
   float v0[3],v1[3],v2[3];
 
-  if(I->Obj&&(state!=I->ActiveState))
+  /*  if(I->Obj&&(state!=I->ActiveState))
     {
-      EditorSetActiveObject(NULL,0);
+    EditorInactivate();
     }
+  */
+
   
   if(I->Obj) {
 
@@ -1017,26 +1083,26 @@ void EditorRender(int state)
         
         i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); /* slow */
         if(i0>=0) {
-          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
-          draw_globe(v2);
+          if(ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2))
+            draw_globe(v2,1);
         }
         
         i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele2); /* slow */
         if(i0>=0) {
-          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
-          draw_globe(v2);
+          if(ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2))
+            draw_globe(v2,2);
         }
 
         i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele3); /* slow */
         if(i0>=0) {
-          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
-          draw_globe(v2);
+          if(ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2))
+            draw_globe(v2,3);
         }
 
         i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele4); /* slow */
         if(i0>=0) {
-          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2);
-          draw_globe(v2);
+          if(ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v2))
+            draw_globe(v2,4);
         }
       }
       if(I->ShowFrags) {
@@ -1051,17 +1117,18 @@ void EditorRender(int state)
   }
 }
 /*========================================================================*/
-void EditorInactive(void)
+void EditorInactivate(void)
 {
   CEditor *I = &Editor;
 
   PRINTFD(FB_Editor)
-    " EditorInactive-Debug: callend.\n"
+    " EditorInactivate-Debug: callend.\n"
     ENDFD;
 
   I->Obj=NULL;
   I->BondMode = false;
   I->ShowFrags = false;
+  I->NFrag = 0;
   SelectorDeletePrefixSet(cEditorFragPref);
   SelectorDeletePrefixSet(cEditorBasePref);
   ExecutiveDelete(cEditorSele1);      
@@ -1081,7 +1148,7 @@ void EditorInactive(void)
   SceneDirty();
 }
 /*========================================================================*/
-void EditorSetActiveObject(ObjectMolecule *obj,int state)
+void EditorSetActiveObject(ObjectMolecule *obj,int state,int enable_bond)
 {
   int sele1,sele2,sele3,sele4;
 
@@ -1100,6 +1167,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
       ExecutiveDelete(cEditorChain);
       ExecutiveDelete(cEditorObject);
       
+      I->BondMode = enable_bond;
       I->NFrag = SelectorSubdivideObject(cEditorFragPref,obj,
                                          sele1,sele2,
                                          sele3,sele4,
@@ -1118,7 +1186,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
         ExecutiveHideSelections();
       
     } else {
-      EditorInactive();
+      EditorInactivate();
     }
   } else {
     I->NFrag = SelectorSubdivideObject(cEditorFragPref,NULL,
@@ -1126,7 +1194,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
                                        cEditorBasePref,
                                        cEditorComp,
                                        &I->BondMode);
-    EditorInactive();
+    EditorInactivate();
   }
 }
 /*========================================================================*/
@@ -1151,10 +1219,10 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     I->DragObject=obj;
     I->DragIndex=index;
     I->DragSelection=-1;
-  } else if(I->ActiveState!=state) {
-    EditorSetActiveObject(NULL,0); /* recurses */
-    return;
-  } else { /* anchored */
+  } else {
+
+
+    /* anchored */
     for(frg=1;frg<=I->NFrag;frg++) {
       sprintf(name,"%s%1d",cEditorFragPref,frg);
       drag_sele = SelectorIndexByName(name);
@@ -1354,6 +1422,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
   float opp,adj,theta;
   float m[16];
   int log_trans = (int)SettingGet(cSetting_log_conformations);
+
 
   PRINTFD(FB_Editor)
     " EditorDrag-Debug: entered. obj %p state %d index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", obj,state,index,mode,

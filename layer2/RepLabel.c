@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"main.h"
 #include"Scene.h"
+#include"Text.h"
 
 typedef struct RepLabel {
   Rep R;
@@ -56,8 +57,20 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
   float *v=I->V;
   int c=I->N;
   char *l=I->L;
-
+  int font_id = SettingGet_i(I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_id);
+  
   if(ray) {
+
+    if(c) {
+      while(c--) {
+        if(*l) {
+          TextSetPosNColor(v+3,v);
+          l = TextRenderRay(ray,font_id,l);
+        }
+        v+=6;
+      }
+    }
+    
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 
@@ -69,14 +82,10 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
       glDisable(GL_LIGHTING);
       while(c--) {
         if(*l) {
-          glColor3fv(v);
-          glRasterPos4f(v[3],v[4],v[5],1.0);
+          TextSetPosNColor(v+3,v);
+          l = TextRenderOpenGL(font_id,l);
         }
         v+=6;
-        while(*l) {
-          p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(l++));
-        }
-        l++;
       }
       glEnable(GL_LIGHTING);
       if(float_text)
@@ -118,6 +127,8 @@ Rep *RepLabelNew(CoordSet *cs)
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepLabelRender;
   I->R.fFree=(void (*)(struct Rep *))RepLabelFree;
   I->R.fRecolor=NULL;
+  I->R.obj=(CObject*)obj;
+  I->R.cs = cs;
 
   /* raytracing primitives */
 

@@ -1498,7 +1498,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         switch(mode) {
         case cButModeMenu:
           ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.index,buffer);
-          MenuActivate(I->LastWinX,I->LastWinY+20,I->LastWinX,I->LastWinY,"pick_menu",buffer);
+          ObjectMoleculeGetAtomSeleLog((ObjectMolecule*)obj,I->LastPicked.index,buf1);
+          MenuActivate2Arg(I->LastWinX,I->LastWinY+20,
+                           I->LastWinX,I->LastWinY,"pick_menu",buffer,buf1);
           break;
         case cButModePickAtom1:
           if(Feedback(FB_ObjectMolecule,FB_Results)) {
@@ -1515,11 +1517,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           OrthoRestorePrompt();
           sprintf(buffer,"%s`%d",
                   obj->Name,I->LastPicked.index+1);    
-          EditorInactive();
+          EditorInactivate();
           SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
           ExecutiveDelete(cEditorSele2);
           EditorSetActiveObject((ObjectMolecule*)obj,
-                                SettingGetGlobal_i(cSetting_state)-1);
+                                SettingGetGlobal_i(cSetting_state)-1,false);
           if(EditorActive()) {
             EditorDefineExtraPks();
           }
@@ -1531,7 +1533,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,I->LastPicked.index,buffer);
             if(EditorIsObjectNotCurrent((ObjectMolecule*)obj))
-              EditorInactive();
+              EditorInactivate();
             if((!EditorIsBondMode())&&EditorDeselectIfSelected(I->LastPicked.index,true)) {
               
               PRINTF " You unpicked %s.",buffer ENDF;
@@ -1539,7 +1541,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                 EditorDefineExtraPks();
             } else {
               if(EditorIsBondMode()&&EditorDeselectIfSelected(I->LastPicked.index,false)) {
-                EditorInactive();
+                EditorInactivate();
               }
               EditorGetNextMultiatom(name);
               PRINTF " You clicked %s -> (%s)\n",buffer,name ENDF;
@@ -1549,7 +1551,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               ExecutiveDelete(name);
               SelectorCreate(name,buffer,NULL,true,NULL);
               EditorSetActiveObject((ObjectMolecule*)obj,
-                                    SettingGetGlobal_i(cSetting_state)-1);
+                                    SettingGetGlobal_i(cSetting_state)-1,false);
               if(EditorActive()) {
                 EditorDefineExtraPks();
               }
@@ -1562,16 +1564,16 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cObjectGadget:
         break;
       default:
-        EditorSetActiveObject(NULL,0);
+        EditorInactivate();
         break;
       }
     } else { /* no atom picked */
       switch(mode) {
       case cButModeMenu:
-        MenuActivate(I->LastWinX,I->LastWinY,I->LastWinX,I->LastWinY,"main_menu","none");
+        MenuActivate0Arg(I->LastWinX,I->LastWinY,I->LastWinX,I->LastWinY,"main_menu");
         break;
       default:
-        EditorSetActiveObject(NULL,0);
+        EditorInactivate();
         break;
       }
     }
@@ -1597,7 +1599,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       switch(obj->type) {
       case cObjectMolecule:
 
-        EditorInactive();
+        EditorInactivate();
         if(Feedback(FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement)
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
@@ -1630,7 +1632,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                   obj->Name,atIndex+1);    
           SelectorCreate(cEditorSele2,buffer,NULL,true,NULL);
           EditorSetActiveObject(objMol,
-                                SettingGetGlobal_i(cSetting_state)-1);
+                                SettingGetGlobal_i(cSetting_state)-1,true);
 
 
           if(mode==cButModePkTorBnd) {
@@ -1657,11 +1659,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cObjectGadget:
         break;
       default:
-        EditorSetActiveObject(NULL,0);
+        EditorInactivate();
         break;
       }
     } else {
-      EditorSetActiveObject(NULL,0);
+      EditorInactivate();
     }
     SceneDirty();
     break;
@@ -1700,7 +1702,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cObjectGadget:
         break;
       default:
-        EditorSetActiveObject(NULL,0);
+        EditorInactivate();
         break;
       }
       /*
@@ -1846,7 +1848,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cObjectGadget:
         break;
       default:
-        EditorSetActiveObject(NULL,0);
+        EditorInactivate();
         break;
       }
 	 } else {
@@ -2836,8 +2838,17 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
 
   OrthoBusyFast(0,20);
 
-  RayPrepare(ray,-width,width,-height,height,
-             I->FrontSafe,I->Back,rayView,aspRat,ray_width);
+  {
+    int ray_pixel_width;
+    if(SettingGetGlobal_b(cSetting_ray_pixel_scale_to_window)) {
+      ray_pixel_width = I->Width;
+    }  else {
+      ray_pixel_width = ray_width;
+    }
+    
+      RayPrepare(ray,-width,width,-height,height,
+                 I->FrontSafe,I->Back,rayView,I->RotMatrix,aspRat,ray_pixel_width);
+  }
 
   while(ListIterate(I->Obj,rec,next))
 	 {

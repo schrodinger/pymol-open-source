@@ -3000,30 +3000,34 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
           *(p1++)=true;
       }
 
-      *bondMode = false;
+      if(*bondMode) {
+        /* verify bond mode, or clear the flag */
 
-      if((sele1>=0)&&(sele2>=0)&&(sele3<0)&&(sele4<0)) { /* might be bonded... */
+        *bondMode = false;
         
-        a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
-        a1 = ObjectMoleculeGetAtomIndex(obj,sele2);
-
-        if((a0>=0)&&(a1>=0)) { 
+        if((sele1>=0)&&(sele2>=0)&&(sele3<0)&&(sele4<0)) { /* might be bonded... */
           
-          s=obj->Neighbor[a0]; /* add neighbors onto the stack */
-          s++; /* skip count */
-          while(1) {
-            a2 = obj->Neighbor[s];
-            if(a2<0)
-              break;
-            if(a2==a1) {
-              *bondMode = true;
-              break;
+          a0 = ObjectMoleculeGetAtomIndex(obj,sele1);
+          a1 = ObjectMoleculeGetAtomIndex(obj,sele2);
+          
+          if((a0>=0)&&(a1>=0)) { 
+            
+            s=obj->Neighbor[a0]; /* add neighbors onto the stack */
+            s++; /* skip count */
+            while(1) {
+              a2 = obj->Neighbor[s];
+              if(a2<0)
+                break;
+              if(a2==a1) {
+                *bondMode = true;
+                break;
+              }
+              s+=2;
             }
-            s+=2;
           }
         }
       }
-
+      
       /* ===== BOND MODE ===== (sele0 and sele1 only) */ 
 
       if(*bondMode) {
