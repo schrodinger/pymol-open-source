@@ -949,6 +949,9 @@ if __name__=='pymol.cmd':
         mdo,               \
         mappend,           \
         mmatrix,           \
+        mdump,             \
+        accept,            \
+        decline,           \
         mpng,              \
         forward,           \
         backward,          \
@@ -1051,6 +1054,7 @@ if __name__=='pymol.cmd':
       #       all new commands should use NO_CHECK or STRICT modes
       #       which make much better use of built-in python features.
       'abort'         : [ dummy             , 0 , 0 , ''  , parsing.ABORT ],
+      'accept'        : [ accept            , 0 , 0 , ''  , parsing.STRICT ],
       'alias'         : [ alias             , 0 , 0 , ''  , parsing.LITERAL1 ],
       'align'         : [ align             , 0 , 0 , ''  , parsing.STRICT ],
       'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ],
@@ -1078,7 +1082,8 @@ if __name__=='pymol.cmd':
       'count_frames'  : [ count_frames      , 0 , 0 , ''  , parsing.STRICT ],   
       'count_states'  : [ count_states      , 0 , 0 , ''  , parsing.STRICT ],
       'cycle_valence' : [ cycle_valence     , 0 , 0 , ''  , parsing.STRICT ],
-      'create'        : [ create            , 0 , 0 , ''  , parsing.LEGACY ],   
+      'create'        : [ create            , 0 , 0 , ''  , parsing.LEGACY ],
+      'decline'       : [ decline           , 0 , 0 , ''  , parsing.STRICT ],      
       'delete'        : [ delete            , 0 , 0 , ''  , parsing.STRICT ],
       'def'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],   
       'del'           : [ dummy_python      , 0 , 0 , ''  , parsing.PYTHON ],
@@ -1155,6 +1160,7 @@ if __name__=='pymol.cmd':
       'move'          : [ move              , 0 , 0 , ''  , parsing.STRICT ],
       'mset'          : [ mset              , 0 , 0 , ''  , parsing.STRICT ],
       'mdo'           : [ mdo               , 2 , 2 , ':' , parsing.SINGLE ],
+      'mdump'         : [ mdump             , 0 , 0 , ''  , parsing.STRICT ],      
       'mpng'          : [ mpng              , 0 , 0 , ''  , parsing.STRICT ],
       'mplay'         : [ mplay             , 0 , 0 , ''  , parsing.STRICT ],
       'mray'          : [ mray              , 0 , 0 , ''  , parsing.STRICT ],

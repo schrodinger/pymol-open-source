@@ -320,10 +320,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_frame                       194
 #define cSetting_ray_shadows                 195
 #define cSetting_ribbon_trace                196
-
+#define cSetting_security                    197
+ 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        197
+#define cSetting_INIT                        198
 
 #endif
 

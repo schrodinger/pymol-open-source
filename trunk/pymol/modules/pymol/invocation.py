@@ -44,7 +44,8 @@ if __name__=='pymol.invocation':
    options.read_stdin = 0
    # Greg Landrum
    options.rpcServer = 0
-
+   options.security = 1
+   
    pml_re = re.compile(r"pymolrc$|\.pml$|\.PML$")
    py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
    pyc_re = re.compile(r"\.pyc$|\.PYC$") # not yet used
@@ -134,6 +135,8 @@ if __name__=='pymol.invocation':
                options.deferred.append("_do_log_open %s"%av.pop())
             if "p" in a:
                options.read_stdin = 1
+            if "o" in a:
+               options.security = 0
             if "X" in a:
                options.rpcServer = 1
             if "g" in a:

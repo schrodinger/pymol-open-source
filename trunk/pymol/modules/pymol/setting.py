@@ -226,7 +226,8 @@ if __name__=='pymol.setting':
       frame                 =194
       ray_shadows           =195
       ribbon_trace          =196
-
+      security              =197
+      
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

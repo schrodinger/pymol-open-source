@@ -155,6 +155,25 @@ class PMGApp(AbstractApp):
       else: # autocenter, deiconify, and run mainloop
          win.destroy()
 
+   def back(self):
+      if not self.history_cur:
+         self.history[0] = self.command.get()
+      self.history_cur = (self.history_cur + 1) & self.history_mask
+      self.command.set(self.history[self.history_cur])
+   
+   def forward(self):
+      if not self.history_cur:
+         self.history[0] = self.command.get()
+      self.history_cur = (self.history_cur - 1) & self.history_mask
+      self.command.set(self.history[self.history_cur])
+   
+   def do(self,cmmd):
+      self.history[0]=cmmd
+      self.history.insert(0,'') # always leave blank at 0
+      self.history.pop(self.history_mask+1)
+      self.history_cur = 0
+      cmd.do(cmmd)
+                    
    def createMain(self):
       self.command = StringVar()
       self.entry = self.createcomponent('entry', (), None,
@@ -164,31 +183,36 @@ class PMGApp(AbstractApp):
                            width=50,
                            textvariable=self.command)
       self.entry.pack(side=BOTTOM,expand=NO,fill=X)
-      self.entry.bind('<Return>',lambda event,w=self.command:
-         (cmd.do(w.get()),cmd.dirty(),w.set('')))
+      self.entry.bind('<Return>',lambda event,w=self.command,s=self:
+         (s.do(w.get()),cmd.dirty(),w.set('')))
 
       self.entry.bind('<Tab>',lambda event,w=self.command,
                       e=self.entry,s=self:
                       complete(event,w,e,s))
 
-#      self.entry.bind('<Up>',lambda event,w=self.command,
-#                      e=self.entry,s=self:cmd.do("print 1"))
+      self.history_mask = 0xFF
+      self.history = [''] * (self.history_mask+1)
+      self.history_cur = 0
+      
+      self.entry.bind('<Up>',lambda event,w=self.command,
+                      e=self.entry,s=self:s.back())
 
-#      self.entry.bind('<Down>',lambda event,w=self.command,
-#                      e=self.entry,s=self:
-#                      cmd.do("print 2"))
+      self.entry.bind('<Down>',lambda event,w=self.command,
+                      e=self.entry,s=self:s.forward())
 
       self.output = self.createcomponent('output', (), None,
                            Pmw.ScrolledText,
                            (self.get_dataArea(),))
 
       text = self.output.component('text')
+      self.text = text
+      self.font = 'lucida console'
       if sys.platform[:5]=='linux':
-         self.my_fw_font=('lucida console',12)
+         self.my_fw_font=(self.font,12)
       elif sys.platform[:3]=='win':
-         self.my_fw_font=('lucida console',8) # Courier 9
+         self.my_fw_font=(self.font,8) # Courier 9
       else:
-         self.my_fw_font=('lucida console',10)
+         self.my_fw_font=(self.font,10)
                                                                                
       text.configure(font = self.my_fw_font)
       text.configure(width=72)
@@ -1139,7 +1163,6 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('specular'))
 
 
-
       self.menuBar.addmenu('Setting', 'Configuration Control')
 
       self.menuBar.addmenuitem('Setting', 'command',
@@ -1152,6 +1175,34 @@ class PMGApp(AbstractApp):
                          label=self.pad+'Colors...',
                                command = lambda s=self: ColorEditor(s))
 
+
+      self.menuBar.addcascademenu('Setting', 'Output', 'Output Size',
+                                  label=self.pad+'Output Size')
+
+      self.menuBar.addmenuitem('Output', 'command', '8',
+                               label='8 Point',
+                               command = lambda s=self:
+                               s.text.configure(font=(s.font,8)))
+
+      self.menuBar.addmenuitem('Output', 'command', '9',
+                               label='9 Point',
+                               command = lambda s=self:
+                               s.text.configure(font=(s.font,9)))
+
+      self.menuBar.addmenuitem('Output', 'command', '10',
+                               label='10 Point',
+                               command = lambda s=self:
+                               s.text.configure(font=(s.font,10)))
+
+      self.menuBar.addmenuitem('Output', 'command', '11',
+                               label='11 Point',
+                               command = lambda s=self:
+                               s.text.configure(font=(s.font,11)))
+
+      self.menuBar.addmenuitem('Output', 'command', '12',
+                               label='12 Point',
+                               command = lambda s=self:
+                               s.text.configure(font=(s.font,12)))
 
       self.menuBar.addmenuitem('Setting', 'separator', '')
       
