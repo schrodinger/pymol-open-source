@@ -68,6 +68,10 @@ Z* -------------------------------------------------------------------
 #define cH_Dication   0x00000004
 #define cH_Anion      0x00000008
 #define cH_Dianion    0x00000010
+#define cH_Trication  0x00000020
+#define cH_Trianion   0x00000040
+#define cH_Tetcation  0x00000080
+#define cH_Tetanion   0x00000100
 
 /* cycles */
 
@@ -131,7 +135,9 @@ typedef struct {
   int class;
   int degree;
   int valence;
-  int imp_hydro; /* not current searchable & not yet bitmap */
+  int imp_hydro;
+  int tot_hydro; 
+  int hydro_flag; /* are we trying to match hydrogen counts? */
   char symbol[SYM_SIZE];
   char name[NAM_SIZE];
   char residue[RES_SIZE];
@@ -142,7 +148,7 @@ typedef struct {
   int not_class;
   int not_degree;
   int not_valence;
-  int imp_hydro_flag;
+  int comp_imp_hydro_flag; /* do we need to compute implicit hydrogens? */
   int stereo; /* 0 = unspecified, 1 = anti-clockwise, -1 = clockwise */
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
@@ -181,7 +187,7 @@ typedef struct {
   int not_class;
   int not_cycle;
   int direction; /* 0 = specified, 1 = up, -1 = down */
-  int mark_tmpl,mark_targ; /* traversal */
+  int mark_tmpl,mark_targ,mark_read; /* traversal */
   unsigned int tag,not_tag;
   PyObject *chempy_bond;
 } ListBond;

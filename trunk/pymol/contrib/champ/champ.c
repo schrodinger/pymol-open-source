@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 #include"vla.h"
 #include"champ.h"
 #include"strblock.h"
-
+#include"chiral.h"
 
 #define _MATCHDEBUG
 #define _MATCHDEBUG2
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
   int n_mat;
   int match_start;
   FeedbackInit();
-
+  
   switch(5) {
 
  case 5: /* N-way cross comparison */
@@ -1033,6 +1033,7 @@ void ChampCountBondsEtc(CChamp *I,int index)
     at = I->Atom + ai;
     at->valence=0;
     at->degree=0;
+    at->tot_hydro=0;
     ai = at->link;
   }
 
@@ -1047,6 +1048,8 @@ void ChampCountBondsEtc(CChamp *I,int index)
     at1 = I->Atom + ai1;
     at0->degree++;
     at1->degree++;
+    if(at0->atom&cH_H) at1->tot_hydro++;
+    if(at1->atom&cH_H) at0->tot_hydro++;
     switch(bd->order) {
     case cH_Single: 
       at0->valence++; 
@@ -1070,7 +1073,8 @@ void ChampCountBondsEtc(CChamp *I,int index)
     at = I->Atom + ai;
     at->degree = num_to_degree[at->degree];
 
-    if(at->imp_hydro_flag) {
+    if(at->comp_imp_hydro_flag) {
+      at->imp_hydro = 0;
       switch(at->charge) { /* adjust effective valence w.r.t charge */
       case cH_Neutral: val_adj=0; break;
       default: val_adj=0; break;
@@ -1080,7 +1084,6 @@ void ChampCountBondsEtc(CChamp *I,int index)
       case cH_Dianion: val_adj=2; break;
       }
       val_adj += at->valence;
-      at->imp_hydro=0;
       
       switch(at->atom) { /* now compute implicit hydrogens */
       case cH_B: 
@@ -1123,8 +1126,10 @@ void ChampCountBondsEtc(CChamp *I,int index)
             at->imp_hydro = 1 - val_adj;
           break;
       }
-      at->valence=at->imp_hydro; /* compute total valence */
+      at->valence+=at->imp_hydro; /* compute total valence */
     }
+    at->tot_hydro+=at->imp_hydro;
+    at->hydro_flag = true; /* we have a valid hydrogen count... */
     at->valence=num_to_valence[at->valence];
     ai = at->link;
   }
@@ -1598,6 +1603,7 @@ CChamp *ChampNew(void) {
   CChamp *I;
 
   FeedbackInit(); /* only has side-effects the first time */
+  ChiralInit(); 
 
   I = mac_calloc(CChamp); 
   I->Atom = (ListAtom*)ListNew(8000,sizeof(ListAtom));
@@ -2265,13 +2271,19 @@ int ChampMatch2(CChamp *I,int template,int target,
           printf("\n");
 #endif
           stereo_match = true;
-          if(0&&stereo_template) { /* must check stereochemistry */
+          if(stereo_template) { /* must check stereochemistry */
 
             int tmpl_idx2;
             int targ_idx2;
-            int n_pri = 0;
+            int bond_idx2;
+            int bond_off2;
+            int n_pri;
             int tmpl_pri[4];
             int targ_pri[4];
+            ListTmpl *tmpl_ent2;
+            ListTarg *targ_ent2;
+            ListBond *tmpl_bd,*targ_bd;
+            ListAtom *tmpl_at1,*targ_at1;
 
             tmpl_idx = tmpl_stack; /* prepare to traverse... */
             while(tmpl_idx) {
@@ -2282,18 +2294,133 @@ int ChampMatch2(CChamp *I,int template,int target,
             
             tmpl_idx = tmpl_stack;
             targ_idx = targ_stack;
-            while(tmpl_idx&&targ_idx) {
+            while(tmpl_idx&&targ_idx&&stereo_match) {
               tmpl_ent = I->Tmpl + tmpl_idx;
               targ_ent = I->Targ + targ_idx;
-              if(!I->Atom[tmpl_ent->atom].mark_read) { /* save non-virtual atom match */
-                I->Atom[tmpl_ent->atom].mark_read = true;
-                if(I->Atom[tmpl_ent->atom].stereo) {
-                  /* this is a stereo-center -- so locate the associated bond priorities  */
+              tmpl_at1 = I->Atom + tmpl_ent->atom;
+              targ_at1 = I->Atom + targ_ent->atom;
+              if(!tmpl_at1->mark_read) { /* only compare non-virtual atoms */
+                tmpl_at1->mark_read = true;
+                if(tmpl_at1->stereo) {
                   
+                  if(!targ_at1->stereo) {
+                    /*                    
+                                          printf("failure 1 %d %d %d %d \n",tmpl_at1->stereo,targ_at1->stereo,
+                                          tmpl_ent->atom,targ_ent->atom);*/
+                    stereo_match = false;
+                  }
+                  /* this is a stereo-center -- so locate the corresponding bond priorities in 
+                     template and the target */
 
+                  n_pri = 0;
+
+                  if(tmpl_at1->imp_hydro==1) { /* deal with implicit hydrogen case */
+                    tmpl_pri[n_pri]=0; /* considered first, since atom priorities always > 0 */
+                    if(targ_at1->imp_hydro==1)
+                      targ_pri[n_pri]=0;
+                    else if(targ_at1->tot_hydro==1) {
+                      /* track down the wayward hydrogen priority */
+                      bond_off2 = 0;
+                      bond_idx2 = targ_at1->bond[bond_off2];
+                      while(bond_idx2) {  /* iterate over all bonds */
+                        targ_bd = I->Bond + bond_idx2;
+                        if(I->Atom[targ_bd->atom[0]].atom&cH_H) {
+                          targ_pri[n_pri] = targ_bd->pri[0];
+                          break;
+                        } else if(I->Atom[targ_bd->atom[1]].atom&cH_H) {
+                          targ_pri[n_pri] = targ_bd->pri[1];
+                          break;
+                        }
+                        bond_off2++;
+                        bond_idx2 = targ_at1->bond[bond_off2];
+                        if(!bond_idx2) 
+                          err_message("ChampMatch2","can't locate explicit hydrogen on target!");
+                      }
+                      /* failure? */
+
+                    } else {
+                      printf("failure 2\n");
+                      stereo_match = false;
+                    }
+                    n_pri++;
+                  }
                   
+                  if(!stereo_match) 
+                    break;
+                    
+                  tmpl_idx2 = tmpl_stack; /* prepare to traverse bonds... */
+                  while(tmpl_idx2) {
+                    tmpl_ent2 = I->Tmpl + tmpl_idx2;
+                    if(tmpl_ent2->bond)
+                      I->Bond[tmpl_ent2->bond].mark_read = false;
+                    tmpl_idx2 = tmpl_ent2->link;
+                  }
 
+                  tmpl_idx2 = tmpl_stack;
+                  targ_idx2 = targ_stack;
+                  while(tmpl_idx2&&targ_idx2) {
+                    tmpl_ent2 = I->Tmpl + tmpl_idx2;
+                    targ_ent2 = I->Targ + targ_idx2;
+                    if(tmpl_ent2->bond&&targ_ent2->bond) {
+                      tmpl_bd = I->Bond + tmpl_ent2->bond;
+                      if(!tmpl_bd->mark_read) {
+                        tmpl_bd->mark_read = true;
+                        
+                        targ_bd = I->Bond + targ_ent2->bond;
 
+                        /* if matched bond touches this atom, then 
+                           get bond priority for the atom */
+                        
+                        if(tmpl_bd->atom[0]==tmpl_ent->atom) { 
+
+                          tmpl_pri[n_pri]=tmpl_bd->pri[0];
+                          if(targ_bd->atom[0]==targ_ent->atom) {
+                            targ_pri[n_pri]=targ_bd->pri[0];
+                          } else { /* assuming targ_bd->atom[1]==targ_ent->atom */
+                            targ_pri[n_pri]=targ_bd->pri[1];                            
+                          }
+                          if(n_pri<4) 
+                            n_pri++;
+                          else {
+                            err_message("ChampMatch2","too many connections on chiral atom!");
+                          }
+                        } else if(tmpl_bd->atom[1]==tmpl_ent->atom) {
+                          
+                          tmpl_pri[n_pri]=tmpl_bd->pri[1];
+                          if(targ_bd->atom[0]==targ_ent->atom) {
+                            targ_pri[n_pri]=targ_bd->pri[0];
+                          } else { /* assuming targ_bd->atom[1]==targ_ent->atom */
+                            targ_pri[n_pri]=targ_bd->pri[1];                            
+                          }
+                          if(n_pri<4) 
+                            n_pri++;
+                          else {
+                            err_message("ChampMatch2","too many connections on chiral atom!");
+                          }
+                        }
+                      }
+                    }
+                    tmpl_idx2 = tmpl_ent2->link;
+                    targ_idx2 = targ_ent2->link;
+                  }
+                  if(n_pri<4) {
+                    err_message("ChampMatch2","stereo comparison on achiral atom.");
+                    stereo_match = false;
+                  } else {
+                    /* now test for a handedness match */
+                    int tmpl_hand,targ_hand;
+                    tmpl_hand = ChiralHandedness(tmpl_pri);
+                    targ_hand = ChiralHandedness(targ_pri);
+                    if(tmpl_at1->stereo==targ_at1->stereo) { /* same clockwizedness */
+                      if(tmpl_hand!=targ_hand) { /* opposite handedness */
+                        stereo_match=false;
+                      }
+                    } else { /* opposite clockwizedness */
+                      if(tmpl_hand==targ_hand) { /* same handedness */
+                        stereo_match = false;
+                      }
+                    }
+                  }
                 }
               }
               tmpl_idx = tmpl_ent->link;
@@ -2569,7 +2696,7 @@ char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len,int im
   at=I->Atom+atom;
   at->atom |= mask;
   at->pos_flag = true;
-  at->imp_hydro_flag = imp_hyd;
+  at->comp_imp_hydro_flag = imp_hyd;
   PRINTFD(FB_smiles_parsing) 
     " ChampParseAliphaticAtom: called.\n"
     ENDFD;
@@ -2584,7 +2711,7 @@ char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp
   at->atom |= mask;
   at->class |= cH_Aromatic;
   at->pos_flag = true;
-  at->imp_hydro_flag = imp_hyd;
+  at->comp_imp_hydro_flag = imp_hyd;
   PRINTFD(FB_smiles_parsing) 
     " ChampParseAromaticAtom: called.\n"
     ENDFD;
@@ -2642,7 +2769,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
 
   at=I->Atom+cur_atom;
 
-  at->imp_hydro_flag = false;
+  at->comp_imp_hydro_flag = false;
   
   while(ok&&!done) {
     switch(*c) {
@@ -2780,7 +2907,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       break;      
     case 'G':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_G,1,not_flag);
-        atom_seen = true;
+      atom_seen = true;
       break;
     case 'H': 
       if(!atom_seen) {
@@ -2789,12 +2916,23 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       } else {
         num = ChampParseNumeral(c+1);
         if(num>=0) {
-          I->Atom[cur_atom].imp_hydro = num;
           c+=2;
         } else {
-          I->Atom[cur_atom].imp_hydro = 1;
+          num = 1;
           c++;
+          while(*c) {
+            if(*c!='H')
+              break;
+            else {
+              num++;
+              c++;
+            }
+          }
         }
+        I->Atom[cur_atom].imp_hydro = num;
+        I->Atom[cur_atom].tot_hydro = num;
+        I->Atom[cur_atom].hydro_flag = true; 
+        /* turn on hydrogen count matching for this atom */
       }
       break;
     case 'I':
@@ -2924,87 +3062,82 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       }
       break;
     case '+':
-      if(*(c+1)=='+') {
-        if(not_flag) {
-          I->Atom[cur_atom].neg_flag=true;
-          I->Atom[cur_atom].not_charge|=cH_Dication;
-        } else {
-          I->Atom[cur_atom].pos_flag=true;
-          I->Atom[cur_atom].charge|=cH_Dication;
-        }
+      num = ChampParseNumeral(c+1);
+      if(num>=0) {
         c+=2;
       } else {
-        num = ChampParseNumeral(c+1);
-        if(num>=0) {
-          if(not_flag) {
-            I->Atom[cur_atom].neg_flag=true;
-            switch(num) {
-            case 0: I->Atom[cur_atom].not_charge|=cH_Neutral; break;
-            case 1: I->Atom[cur_atom].not_charge|=cH_Cation; break;
-            case 2: I->Atom[cur_atom].not_charge|=cH_Dication; break;
-            }
-          } else {
-            I->Atom[cur_atom].pos_flag=true;
-            switch(num) {
-            case 0: I->Atom[cur_atom].charge|=cH_Neutral; break;
-            case 1: I->Atom[cur_atom].charge|=cH_Cation; break;
-            case 2: I->Atom[cur_atom].charge|=cH_Dication; break;
-            }
+        num = 1;
+        c++;
+        while(*c) {
+          if(*c!='+')
+            break;
+          else {
+            num++;
+            c++;
           }
-          c+=2;
-        } else {
-          if(not_flag) {
-            I->Atom[cur_atom].neg_flag=true;
-            I->Atom[cur_atom].not_charge|=cH_Cation;
-          } else {
-            I->Atom[cur_atom].pos_flag=true;
-            I->Atom[cur_atom].charge|=cH_Cation;
-          }
-          c++;
+        }
+      }
+      if(not_flag) {
+        I->Atom[cur_atom].neg_flag=true;
+        switch(num) {
+        case 0: I->Atom[cur_atom].not_charge|=cH_Neutral; break;
+        case 1: I->Atom[cur_atom].not_charge|=cH_Cation; break;
+        case 2: I->Atom[cur_atom].not_charge|=cH_Dication; break;
+        case 3: I->Atom[cur_atom].not_charge|=cH_Trication; break;
+        case 4: I->Atom[cur_atom].not_charge|=cH_Tetcation; break;
+          
+        }
+      } else {
+        I->Atom[cur_atom].pos_flag=true;
+        switch(num) {
+        case 0: I->Atom[cur_atom].charge|=cH_Neutral; break;
+        case 1: I->Atom[cur_atom].charge|=cH_Cation; break;
+        case 2: I->Atom[cur_atom].charge|=cH_Dication; break;
+        case 3: I->Atom[cur_atom].charge|=cH_Trication; break;
+        case 4: I->Atom[cur_atom].charge|=cH_Tetcation; break;
         }
       }
       break;
-
     case '-':
-      if(*(c+1)=='-') {
-        if(not_flag) {
-          I->Atom[cur_atom].neg_flag=true;
-          I->Atom[cur_atom].not_charge|=cH_Dianion;
-        } else {
-          I->Atom[cur_atom].pos_flag=true;
-          I->Atom[cur_atom].charge|=cH_Dianion;
-        }
+      num = ChampParseNumeral(c+1);
+      if(num>=0) {
         c+=2;
       } else {
-        num = ChampParseNumeral(c+1);
-        if(num>=0) {
-          if(not_flag) {
-            I->Atom[cur_atom].neg_flag=true;
-            switch(num) {
-            case 0: I->Atom[cur_atom].not_charge|=cH_Neutral; break;
-            case 1: I->Atom[cur_atom].not_charge|=cH_Anion; break;
-            case 2: I->Atom[cur_atom].not_charge|=cH_Dianion; break;
-            }
-          } else {
-            I->Atom[cur_atom].pos_flag=true;
-            switch(num) {
-            case 0: I->Atom[cur_atom].charge|=cH_Neutral; break;
-            case 1: I->Atom[cur_atom].charge|=cH_Anion; break;
-            case 2: I->Atom[cur_atom].charge|=cH_Dianion; break;
-            }
+        num = 1;
+        c++;
+        while(*c) {
+          if(*c!='-')
+            break;
+          else {
+            num++;
+            c++;
           }
-          c+=2;
-        } else {
-          if(not_flag) {
-            I->Atom[cur_atom].neg_flag=true;
-            I->Atom[cur_atom].not_charge|=cH_Anion;
-          } else {
-            I->Atom[cur_atom].pos_flag=true;
-            I->Atom[cur_atom].charge|=cH_Anion;
-          }
-          c++;
         }
       }
+      if(not_flag) {
+        I->Atom[cur_atom].neg_flag=true;
+        switch(num) {
+        case 0: I->Atom[cur_atom].not_charge|=cH_Neutral; break;
+        case 1: I->Atom[cur_atom].not_charge|=cH_Anion; break;
+        case 2: I->Atom[cur_atom].not_charge|=cH_Dianion; break;
+        case 3: I->Atom[cur_atom].not_charge|=cH_Trianion; break;
+        case 4: I->Atom[cur_atom].not_charge|=cH_Tetanion; break;
+        }
+      } else {
+        I->Atom[cur_atom].pos_flag=true;
+        switch(num) {
+        case 0: I->Atom[cur_atom].charge|=cH_Neutral; break;
+        case 1: I->Atom[cur_atom].charge|=cH_Anion; break;
+        case 2: I->Atom[cur_atom].charge|=cH_Dianion; break;
+        case 3: I->Atom[cur_atom].charge|=cH_Trianion; break;
+        case 4: I->Atom[cur_atom].charge|=cH_Tetanion; break;
+        }
+      }
+      break;
+    default:
+      PRINTFB(FB_smiles_parsing,FB_errors)
+        " champ: error parsing atom block at '%c' in: '%s'\n",*c,*c_ptr
+        ENDFB;
       break;
     }
   }
@@ -3379,11 +3512,11 @@ void ChampPatDump(CChamp *I,int index)
   while(cur_atom) {
     at = I->Atom+cur_atom;
     ChampAtomToString(I,cur_atom,buf);
-    printf(" atom %d %s 0x%08x",cur_atom,buf,at->atom);
+    printf(" atom %d %3s 0x%08x",cur_atom,buf,at->atom);
     printf(" cy: %x",at->cycle);
-    printf(" class: %x val: %x deg: %x chg: %d st: %d bonds: ",
+    printf(" cl: %x v: %02x D: %02x ch: %02x st: %d ih: %d hy: %d bo: ",
            at->class,at->valence,at->degree,at->charge,
-           at->stereo);
+           at->stereo,at->imp_hydro,at->tot_hydro);
     for(a=0;a<MAX_BOND;a++) {
       if(!at->bond[a]) break;
       else printf("%d ",at->bond[a]);
@@ -3961,8 +4094,15 @@ int ChampAtomMatch(ListAtom *p,ListAtom *a)
       if(p->symbol[0])
         if(strcmp(p->symbol,a->symbol))
           return 0;
+      if(p->hydro_flag) {
+        if(p->tot_hydro>a->tot_hydro) { /* must have at least as many hydrogens as pattern... */
+          return 0;
+        }
+      }
       return 1;
     }
+  /* what about implicit hydrogens? */
+
   return 0;
   
 }
