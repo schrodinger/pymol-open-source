@@ -96,6 +96,9 @@ void MainOnExit(void)
   */
   if(!PyMOLTerminating) {
     PyMOLTerminating=true;
+#ifdef WIN32
+	_exit(0);
+#endif
     PBlockForEmergencyShutdown();
     printf(" PyMOL: abrupt program termination.\n");
   }
@@ -341,6 +344,10 @@ void MainFree(void)
   
   MemoryDebugDump();
   printf(" PyMOL: normal program termination.\n");
+#ifdef WIN32
+	_exit(0);
+#endif
+
 }
 /*========================================================================*/
 void MainRefreshNow(void) 
