@@ -14,7 +14,8 @@
 
 import string
 from chempy import cpv
-import popen2
+#import popen2
+import os
 from pymol import cmd
 
 POINTS             = 0.0
@@ -55,12 +56,19 @@ def molauto(*arg):
       marg = arg[2]
    cmd.save("molauto.pdb",sele)
 
-   (stdout,stdin) = popen2.popen2("molauto %s -nocentre molauto.pdb | molscript -r"%marg)
+   os.system("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)
+   f = open("molauto.r3d")
+   rr = RenderReader(f)
+   f.close()
+   cmd.load_cgo(rr.obj,name)
 
-   if stdin:
-      stdin.close()
-      rr = RenderReader(stdout)
-      cmd.load_cgo(rr.obj,name)
+# the following implementation causes full-blown system crashes on some machines.
+#   (stdout,stdin) = popen2.popen2("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)
+#
+#   if stdin:
+#      stdin.close()
+#      rr = RenderReader(stdout)
+#      cmd.load_cgo(rr.obj,name)
 
 def from_r3d(fname):
    result = None

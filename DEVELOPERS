@@ -38,13 +38,12 @@ for the contrib directory should contain separate LICENSE statements
 and copyright notices.
 
 These are draft rules, and I would appreciate feedback and comments
-(email to warren@delanoscientific.com).  However, I am absolutely
-opposed to restricting PyMOL to the GNU Public License (GPL), so don't
-even ask.  Contrary to Richard Stallman and others at the Free
-Software Foundation (http://www.fsf.org), I believe that the
-open-source movement will benefit from source code with fewer
-restrictions, not more.  PyMOL, like Python, is truly free and
-open-source.
+(email to warren@delanoscientific.com).  However, I am totally opposed
+to restricting PyMOL to the GNU Public License (GPL), so don't even
+ask.  Contrary to the position of the Free Software Foundation
+(http://www.fsf.org), I believe that the open-source movement will
+benefit from source code with fewer restrictions, not more.  PyMOL,
+like Python, is truly free and open-source.
 
 Warren L. DeLano
 warren@delanoscientific.com
