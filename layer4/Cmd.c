@@ -41,7 +41,7 @@ Z* -------------------------------------------------------------------
  */
 
 #include"os_python.h"
-
+#include"os_gl.h"
 #include"os_std.h"
 
 #include"MemoryDebug.h"
@@ -254,6 +254,7 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args);
 static PyObject *CmdOrient(PyObject *dummy, PyObject *args);
 static PyObject *CmdOverlap(PyObject *self, 	PyObject *args);
 static PyObject *CmdPaste(PyObject *self, 	PyObject *args);
+static PyObject *CmdPGlutEvent(PyObject *self,   PyObject *args);
 static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
@@ -272,6 +273,7 @@ static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args);
 static PyObject *CmdReady(PyObject *dummy, PyObject *args);
 static PyObject *CmdRock(PyObject *self, PyObject *args);
 static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args);
+static PyObject *CmdRunWXPyMOL(PyObject *dummy, PyObject *args);
 static PyObject *CmdSculptPurge(PyObject *self, PyObject *args);
 static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args);
 static PyObject *CmdSculptActivate(PyObject *self, PyObject *args);
@@ -401,6 +403,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"orient",	              CmdOrient,               METH_VARARGS },
 	{"onoff",                 CmdOnOff,                METH_VARARGS },
 	{"overlap",               CmdOverlap,              METH_VARARGS },
+	{"p_glut_event",          CmdPGlutEvent,           METH_VARARGS },
 	{"paste",	              CmdPaste,                METH_VARARGS },
 	{"png",	                 CmdPNG,                  METH_VARARGS },
 	{"protect",	              CmdProtect,              METH_VARARGS },
@@ -421,6 +424,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"reset_rate",	           CmdResetRate,            METH_VARARGS },
 	{"rock",	                 CmdRock,                 METH_VARARGS },
 	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
+	{"runwxpymol",	           CmdRunWXPyMOL,           METH_VARARGS },
 	{"select",                CmdSelect,               METH_VARARGS },
 	{"set",	                 CmdSet,                  METH_VARARGS },
 	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
@@ -459,6 +463,22 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
+{
+  int ok=true;
+
+#ifdef _PYMOL_PRETEND_GLUT
+  p_glut_event ev;
+  ok = PyArg_ParseTuple(args,"i",&ev.event_code);
+  if(ok) {
+    PUnblock();
+    p_glutHandleEvent(&ev);
+    PBlock();
+  }
+#endif
+
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdSculptPurge(PyObject *self, PyObject *args)
 {
@@ -1623,12 +1643,28 @@ static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
 {
+#ifndef _PYMOL_WX_GLUT
+
   if(run_only_once) {
     run_only_once=false;
 #ifdef _PYMOL_MODULE
     was_main();
 #endif
   }
+#endif
+
+  return(APISuccess());
+}
+
+static PyObject *CmdRunWXPyMOL(PyObject *dummy, PyObject *args)
+{
+#ifdef _PYMOL_WX_GLUT
+  if(run_only_once) {
+    run_only_once=false;
+    was_main();
+  }
+#endif
+
   return(APISuccess());
 }
 

@@ -30,12 +30,19 @@ Z* -------------------------------------------------------------------
 
 #ifdef _PYMOL_NO_GLUT
 #define _PYMOL_PRETEND_GLUT
-#else
+#endif
+
 #ifdef _PYMOL_ACTIVEX
 #define _PYMOL_PRETEND_GLUT
 #endif
+
+#ifdef _PYMOL_MIN_GLUT
+#define _PYMOL_PRETEND_GLUT
 #endif
 
+#ifdef _PYMOL_WX_GLUT
+#define _PYMOL_PRETEND_GLUT
+#endif
 
 #ifndef _PYMOL_PRETEND_GLUT
 
@@ -98,6 +105,19 @@ Z* -------------------------------------------------------------------
 #define p_glutMainLoop             glutMainLoop
 
 #else
+
+#define P_GLUT_IDLE_EVENT            0
+#define P_GLUT_DISPLAY_EVENT         1
+#define P_GLUT_RESHAPE_EVENT         2
+
+typedef struct {
+  int event_code;
+  int x,y;
+} p_glut_event;
+
+/* here is the pretend GLUT event handler */
+
+void p_glutHandleEvent(p_glut_event *ev); 
 
 /* here is the interface and constants for a pretend GLUT */
 

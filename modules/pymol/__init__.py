@@ -64,9 +64,10 @@ lock_api = threading.RLock() # mutex for API
 lock_api_c = threading.RLock() # mutex for C management of python threads
 
 def start_pymol():
-	global glutThread
-	glutThread = thread.get_ident()
-	_cmd.runpymol()
+   global glutThread
+   glutThread = thread.get_ident()
+   _cmd.runpymol()
+   from pymol import wxpymol # never returns
 
 def exec_str(s):
    try:
