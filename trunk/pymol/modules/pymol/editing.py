@@ -20,7 +20,7 @@ import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 from chempy import cpv
 
-def sculpt_purge(object):
+def sculpt_purge():
    '''
    undocumented
 '''
