@@ -45,6 +45,7 @@ static PyObject *PMClip(PyObject *self, 	PyObject *args);
 static PyObject *PMColor(PyObject *self, PyObject *args);
 static PyObject *PMDelete(PyObject *self, PyObject *args);
 static PyObject *PMDirty(PyObject *self, 	PyObject *args);
+static PyObject *PMDistance(PyObject *dummy, PyObject *args);
 static PyObject *PMDo(PyObject *self, 	PyObject *args);
 static PyObject *PMExportDots(PyObject *self, PyObject *args);
 static PyObject *PMFit(PyObject *dummy, PyObject *args);
@@ -93,6 +94,7 @@ static PyMethodDef PM_methods[] = {
 	{"color",	     PMColor,        METH_VARARGS },
 	{"delete",       PMDelete,       METH_VARARGS },
 	{"dirty",        PMDirty,        METH_VARARGS },
+	{"distance",	  PMDistance,     METH_VARARGS },
 	{"do",	        PMDo,           METH_VARARGS },
 	{"export_dots",  PMExportDots,   METH_VARARGS },
 	{"fit",          PMFit,          METH_VARARGS },
@@ -136,6 +138,39 @@ static PyMethodDef PM_methods[] = {
 	{"zoom",	        PMZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *PMDistance(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  OrthoLineType s1,s2;
+  int f1=false;
+  int f2=false;
+
+  PyArg_ParseTuple(args,"ss",&str1,&str2);
+
+  if(str1[0]=='(') {
+	 SelectorCreate(tmpSele1,str1,NULL);
+	 strcpy(s1,tmpSele1);
+	 f1=true;
+  } else {
+	strcpy(s1,str1);
+  }
+
+  if(str2[0]=='(') {
+	 SelectorCreate(tmpSele2,str2,NULL);
+	 strcpy(s2,tmpSele2);
+	 f2=true;
+  } else {
+	strcpy(s2,str2);
+  }
+  ExecutiveDistance(s1,s2);
+  if(f1)
+    ExecutiveDelete(s1);
+  if(f2)
+    ExecutiveDelete(s2);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 static PyObject *PMAlter(PyObject *self,   PyObject *args)
 {

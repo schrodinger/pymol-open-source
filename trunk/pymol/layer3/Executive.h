@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
+void ExecutiveDistance(char *sele1,char *sele2);
 void ExecutiveAlter(char *s1,char *expr);
 void ExecutiveColor(char *name,char *color,int flags);
 void ExecutiveInit(void);

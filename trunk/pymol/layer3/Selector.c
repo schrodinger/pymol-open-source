@@ -433,6 +433,7 @@ int SelectorSelect1(EvalElem *base)
   int ok=true;
   int rmin,rmax,rtest,index;
   char *p;
+  
   SelectorType *I=&Selector;
   ObjectMolecule *obj;
   base->type=SELE_LIST;
@@ -563,7 +564,11 @@ int SelectorSelect1(EvalElem *base)
 						s=I->Member[s].next;
 					 }
 				}
-		  }
+		  } else {
+			 for(a=0;a<I->NAtom;a++)
+            base[0].sele[a]=false;
+          ok=ErrMessage("Selector","Invalid Selection Name.");          
+        }
 		break;
 	 case 'MODs':
 		model=0;
