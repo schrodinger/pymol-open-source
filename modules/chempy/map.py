@@ -13,9 +13,9 @@ class Map:
       # pack with defined types
       self.format = str(format)
       self.c_object = cobj
-      self.cell_ang = [ float(angle[0]),
-                        float(angle[1]),
-                        float(angle[2])]
+      self.cell_ang = [ float(cell_ang[0]),
+                        float(cell_ang[1]),
+                        float(cell_ang[2])]
       self.cell_dim = [ float(cell_dim[0]),
                         float(cell_dim[1]),
                         float(cell_dim[2])]
