@@ -2,7 +2,7 @@
 
 # full blown threading stability test, higher enent rate...
 #
-      
+from pymol import util
 import threading
 import time
 import whrandom
