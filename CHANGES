@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * ray_transparency_contrast setting, default=2.0, improves contrast
+     of the transparent surface relative to objects inside.  
+     COMPATIBILITY NOTICE: set ray_transparency_contrast=1.0 to 
+     recover pre-0.96 behavior.
+
+   * fixed save_session behavior to avoid accidental overwrites after
+     opening a new session (mac & tcl GUIs)
+
    * active_selections setting & changes to the selection paradigm 
      in preparation for the sequence alignment tool : )
 

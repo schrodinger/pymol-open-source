@@ -1121,6 +1121,8 @@ int RayTraceThread(CRayThreadInfo *T)
    float red_blend=0.0F;
    float blue_blend=0.0F;
    float green_blend=0.0F;
+   float trans_cont;
+   int trans_cont_flag = false;
    int blend_colors;
    int max_pass;
 
@@ -1150,6 +1152,9 @@ int RayTraceThread(CRayThreadInfo *T)
 	opaque_back			= (int)SettingGet(cSetting_ray_opaque_background);
 	two_sided_lighting	= (int)SettingGet(cSetting_two_sided_lighting);
 	ray_trans_spec		= SettingGet(cSetting_ray_transparency_specular);
+   trans_cont        = SettingGet(cSetting_ray_transparency_contrast);
+   if(trans_cont>1.0F)
+     trans_cont_flag = true;
 	ambient				= SettingGet(cSetting_ambient);
 	lreflect			= SettingGet(cSetting_reflect);
 	direct				= SettingGet(cSetting_direct);
@@ -1613,6 +1618,9 @@ int RayTraceThread(CRayThreadInfo *T)
                       ffact1m = 0.0F;
                       
                       pixel_flag	= true;
+                      if(trans_cont_flag)
+                        persist = pow(persist,trans_cont);
+                      
                     }
 
                   if(pixel_flag)
@@ -1661,7 +1669,12 @@ int RayTraceThread(CRayThreadInfo *T)
                       float mix_in;
                       if(i>=0) {
                         if(fogFlag) {
-                          mix_in = persist * (_1 - r1.trans*ffact);
+                          if(trans_cont_flag&&(ffact>_p5)) {
+                            mix_in = 2*(persist*(_1-ffact)+(pow(persist,trans_cont)*(ffact-_p5)))
+                              * (_1 - r1.trans*ffact);                            
+                          } else {
+                            mix_in = persist * (_1 - r1.trans*ffact);
+                          }
                         } else {
                           mix_in = persist * (_1 - r1.trans);
                         }

@@ -493,10 +493,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_surface_trim_factor        349
 #define cSetting_ray_max_passes             350
 #define cSetting_active_selections          351
+#define cSetting_ray_transparency_contrast  352
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        352
+#define cSetting_INIT                        353
 
 #endif
 

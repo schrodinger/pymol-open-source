@@ -1195,6 +1195,9 @@ int ExecutiveGetSession(PyObject *dict)
 
 static void ExecutiveMigrateSession(int session_version)
 {
+  if(session_version<96) {
+    SettingSetGlobal_f(cSetting_ray_transparency_contrast, 1.0F);
+  }
   if(session_version<95) {
 
     { /* adjust fog to reflect current importance of seeing to the Z-slab center w/o fog */
