@@ -472,6 +472,14 @@ void PFlush(void) {
   }
 }
 
+void PFlushFast(void) {
+  /* NOTE: ASSUMES we current have blocked Python threads and an unlocked API */ 
+ char buffer[OrthoLineLength+1];
+  if(OrthoCommandOut(buffer)) {
+   PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
+  }
+}
+
 void PBlock(void)
 {
   /* synchronize python */

@@ -1,4 +1,4 @@
-from chempy import Storage,Atom
+from chempy import Storage,Atom,feedback
 from chempy.models import Indexed,Connected
 import string
 import copy
@@ -56,22 +56,29 @@ class XYZ(Storage):
       
       list = []
 
-      list.append("%6d\n" % conn.nAtom)
-      if not mapping:
-         mapping = generics
-      c = 0
-      for a in conn.atom:
-         st = "%6d  %-3s%12.6f%12.6f%12.6f%6s" % (
-            c+1,a.text_type,a.coord[0],a.coord[1],a.coord[2],
-            str(mapping[a.text_type]))
-         for b in conn.bond[c]:
-            idx = b.index[0]
-            if idx == c:
-               idx = b.index[1]
-            st = st + "%6d" % (idx+1)
-         st = st + "\n"
-         list.append(st)
-         c = c + 1
+      if len(model.atom):
+         if not model.atom[0].has('numeric_type'):
+            if not mapping:
+               mapping = generics
+               if feedback['warnings']:
+                  print ' '+str(self.__class__)+': no numeric atom types found, using defaults.'
+         list.append("%6d\n" % conn.nAtom)
+         c = 0
+         for a in conn.atom:
+            if mapping:
+               n_type = str(mapping[a.text_type])
+            else:
+               n_type = str(a.numeric_type)
+            st = "%6d  %-3s%12.6f%12.6f%12.6f%6s" % (
+               c+1,a.text_type,a.coord[0],a.coord[1],a.coord[2],n_type)
+            for b in conn.bond[c]:
+               idx = b.index[0]
+               if idx == c:
+                  idx = b.index[1]
+               st = st + "%6d" % (idx+1)
+            st = st + "\n"
+            list.append(st)
+            c = c + 1
       return(list)
 
 #----------------------------------------------------------------------------

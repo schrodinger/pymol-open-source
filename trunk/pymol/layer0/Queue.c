@@ -25,6 +25,10 @@ void QueueStrIn(CQueue *I,char *c)
   I->inp=i; /* important not to do this until null has been written! */
 }
 
+int QueueStrCheck(CQueue *I)
+{
+  return(((I->inp+I->size)-I->out)&I->mask);
+}
 int QueueStrOut(CQueue *I,char *c)
 {
   if(((I->inp+I->size)-I->out)&I->mask) {

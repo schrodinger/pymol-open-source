@@ -150,7 +150,8 @@ class Storage:
       result = fp.writelines(apply(self.toList,(indexed,),params))
       fp.close()
 
-feedback = { 'terse'   : 1,
+feedback = { 'warnings': 1,
+             'terse'   : 1,
              'io'      : 1,
              'actions' : 1,
              'tinker'  : 1,

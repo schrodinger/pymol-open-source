@@ -1291,7 +1291,6 @@ void ExecutiveManageObject(Object *obj)
   int a;
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
-  char buffer[255];
   int exists=false;
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
