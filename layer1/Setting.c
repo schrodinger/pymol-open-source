@@ -2058,7 +2058,8 @@ void SettingInitGlobal(int alloc)
                                                     reusing display list 
                                                     identifiers */
 
-  SettingSet_i(I,cSetting_cache_memory, 0); 
+  SettingSet_i(I,cSetting_cache_memory, 0);  /* doesn't seem to do any good :( */
+
 
 }
 
