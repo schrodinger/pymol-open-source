@@ -25,6 +25,9 @@ PyMOL Release Checklist
    Check-out a pristine source distribution
    Create tarball
 
-   As time permits, create usr-local tarballs for IRIX and Linux
+7) Test clean Windows installations under Win2000 and Win98
 
-7) Release on Sourceforge
+8) Release files on Sourceforge
+
+9) As time permits, create usr-local tarballs for IRIX and Linux
+

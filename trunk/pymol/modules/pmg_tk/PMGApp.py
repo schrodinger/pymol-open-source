@@ -389,6 +389,7 @@ class PMGApp(AbstractApp):
          cmd.mpng(sfile)
 
    def demo1(self):
+      cmd.set("suspend_updates",1,quiet=1)
       cmd.disable()
       cmd.do("cd $PYMOL_PATH")
       cmd.delete("pept")
@@ -399,9 +400,10 @@ class PMGApp(AbstractApp):
       cmd.show("mesh","(pept and i;1,11,12,13)")
       cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
       cmd.show("dots","(i;8)")
-      cmd.dist("pept_dist","(i;1&n;OD2)","(i;13&n;OG1)")
+      cmd.dist("pept_dist","(pept and i;1&n;OD2)","(pept and i;13&n;OG1)")
       cmd.set("dot_width","2");
-
+      cmd.set("suspend_updates",0,quiet=1)
+      
    def demo2(self):
       cmd.disable()
       cmd.do("cd $PYMOL_PATH")
@@ -634,10 +636,10 @@ class PMGApp(AbstractApp):
                         command =  None)
 
 
-      self.menuBar.addmenuitem('Edit', 'command',
-                         'Test',
-                         label='Test',
-                        command =  lambda s=self: s.test())
+#      self.menuBar.addmenuitem('Edit', 'command',
+#                         'Test',
+#                         label='Test',
+#                        command =  lambda s=self: s.test())
 
       self.menuBar.addmenu('Movies', 'Movie Control')
 
