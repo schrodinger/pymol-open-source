@@ -88,6 +88,7 @@ static	CField *Coord,*Data;
 static	float	Level;
 static   int   Edge[6020]; /* 6017 */
 static   int   EdgeStart[256];
+static   int   TotPrim;
 
 int	TetsurfInit(void);
 int	TetsurfAlloc(void);
@@ -441,6 +442,8 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
    int range_store[6];
    int n_strip = 0;
    int n_vert = 0;
+
+   TotPrim=0;
    if(range) {
      for(c=0;c<3;c++)
        {
@@ -504,7 +507,11 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
       }
    
    if(Feedback(FB_Isosurface,FB_Actions)) { 
-     printf(" TetsurfVolume: Surface generated using %d vertices.\n",n_vert); 
+     if(mode!=2) {
+       printf(" TetsurfVolume: Surface generated using %d vertices.\n",n_vert); 
+     } else {
+       printf(" TetsurfVolume: Surface generated using %d triangles.\n",TotPrim); 
+     }
    }
 
    /* sentinel strip (0 length) */
@@ -1073,6 +1080,38 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float 
          }
        }
      }
+     /* now do an additional averaging cycle, no weighting */
+     for(a=0;a<n_tri;a++) {
+       tt = Tri + a;
+       add3f(tt->p[0]->Normal,tt->p[1]->Normal,tt->n);
+       add3f(tt->p[2]->Normal,tt->n,tt->n);
+       normalize3f(tt->n);
+       tt->p[0]->NormalFlag=false;
+       tt->p[1]->NormalFlag=false;
+       tt->p[2]->NormalFlag=false;
+     }
+     /* compute normals at active points */
+     for(a=0;a<n_tri;a++) {
+       float v[3];
+       tt = Tri + a;
+       for(b=0;b<3;b++) {
+         if(!tt->p[b]->NormalFlag) {
+           zero3f(v);
+           idx = tt->p[b]->Link;
+           while(idx>0) {
+             add3f(Tri[PtLink[idx].tri].n,v,v);
+             c++;
+             idx = PtLink[idx].link;
+           }
+           normalize23f(v,tt->p[b]->Normal);
+           tt->p[b]->NormalFlag=true;
+         }
+       }
+     }
+     
+
+
+
      /* now create triangle strips (not yet optimal) */
      for(a=0;a<n_tri;a++) {
        tt = Tri + a;
@@ -1157,6 +1196,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float 
          (*n_strip)++;
        }
      }
+     TotPrim+=n_tri;
      break;
      
    case 1:
