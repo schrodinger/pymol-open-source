@@ -381,8 +381,8 @@ def all_colors(s):
 def mol_color(s):
    return (
       [[ 2, 'Color:'     ,''                               ],
-       [ 1, 'by chain' , by_chain(s) ],
        [ 1, 'by element'  , by_elem(s) ],
+       [ 1, 'by chain' , by_chain(s) ],
        [ 1, 'by ss  '  , by_ss(s) ],
        [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(s) ],
        [ 0, ''                                , ''                 ]] +

@@ -2310,6 +2310,8 @@ static int SceneClick(Block *block,int button,int x,int y,
       PRINTFB(G,FB_Scene,FB_Warnings) 
         " SceneClick: no atom found nearby.\n"
         ENDFB(G);
+      SceneDirty(G); /* this here to prevent display weirdness after
+                        an unsuccessful picking pass... */
 		OrthoRestorePrompt(G);
 	 }
   }
@@ -4511,6 +4513,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
       glDisable(GL_FOG);
       glDisable(GL_LIGHTING);
       glDisable(GL_LIGHT1);
+      glDisable(GL_LIGHT0);
       glDisable(GL_COLOR_MATERIAL);
       glDisable(GL_DITHER);
     }
