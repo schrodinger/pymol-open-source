@@ -13,14 +13,17 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_PUtils
-#define _H_PUtils
+#ifndef _H_P
+#define _H_P
 
 #include<Python.h>
 
 #include"AtomInfo.h"
 
 void PInit(void);
+void PInitEmbedded(int argc,char **argv);
+void PGetOptions(int *pmgui,int *internal_gui,int *stereo_capable);
+
 void PFree(void);
 void PExit(int code);
 void PParse(char *str);
@@ -42,14 +45,18 @@ void PBlockAndUnlockAPI(void);
 void PLockAPIAndUnblock(void);
 
 void PFlush(void);
+void PXDecRef(PyObject *obj);
 
 void PStereoOff(void);
 void PDefineFloat(char *name,float value);
 
+void PRunString(char *str);
 
-extern PyObject *P_pm;
-extern PyObject *P_pmm;
-extern PyObject *P_pmx;
+extern PyObject *P_globals;
+
+extern PyObject *P_cmd;
+extern PyObject *P_menu;
+extern PyObject *P_xray;
 
 extern PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 extern PyThreadState *P_api_thread_state; /* this is the thread state for a non-glut API thread */

@@ -26,7 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Ortho.h"
 #include"Matrix.h"
-#include"PUtils.h"
+#include"P.h"
 #include"PConv.h"
 
 void SymmetryAttemptGeneration(CSymmetry *I)
@@ -40,7 +40,7 @@ void SymmetryAttemptGeneration(CSymmetry *I)
   } else {
     
     PBlock();
-    mats = PyObject_CallMethod(P_pmx,"sg_sym_to_mat_list","s",I->SpaceGroup);
+    mats = PyObject_CallMethod(P_xray,"sg_sym_to_mat_list","s",I->SpaceGroup);
     if(mats) {
       l = PyList_Size(mats);
       VLACheck(I->SymMatVLA,float,16*l);
@@ -68,7 +68,6 @@ void SymmetryFree(CSymmetry *I)
 
 CSymmetry *SymmetryNew(void)
 {
-  int a;
   OOAlloc(CSymmetry);
 
   I->Crystal=CrystalNew();

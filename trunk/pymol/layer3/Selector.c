@@ -35,6 +35,30 @@ Z* -------------------------------------------------------------------
 
 #define SelectorMaxDepth 100
 
+#define sa_NOT1 0x0101
+#define sa_BYR1 0x0201
+#define sa_AND2 0x0302
+#define sa_OR_2 0x0402
+#define sa_IN_2 0x0502
+#define sa_ALLz 0x0600
+#define sa_NONz 0x0700
+#define sa_HETz 0x0800
+#define sa_HYDz 0x0900
+#define sa_VISz 0x0A00
+#define sa_ARD_ 0x0B04
+#define sa_EXP_ 0x0C04
+#define sa_NAMs 0x0D05
+#define sa_ELEs 0x0E05
+#define sa_RSIs 0x0F05
+#define sa_CHNs 0x1005
+#define sa_SEGs 0x1105
+#define sa_MODs 0x1205 
+#define sa_IDXs 0x1305
+#define sa_RSNs 0x1405
+#define sa_SELs 0x1505
+#define sa_CHNs 0x1605
+#define sa_BVLx 0x1706
+
 typedef struct {
   int selection;
   int next;
@@ -861,6 +885,7 @@ int SelectorSelect0(EvalElem *base)
 			 base[0].sele[a]=true;
 			 c++;
 		  }
+      break;
 	 case 'VISz':
 		for(a=0;a<I->NAtom;a++)
 		  {

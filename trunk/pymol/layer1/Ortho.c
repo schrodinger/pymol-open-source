@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"ListMacros.h"
 #include"Ortho.h"
-#include"PUtils.h"
+#include"P.h"
 #include"Scene.h"
 #include"Executive.h"
 #include"ButMode.h"
@@ -604,19 +604,38 @@ void OrthoReshape(int width, int height)
   OrthoObject *I=&Ortho;
 
   Block *block = NULL;
+  int sceneBottom,sceneRight;
 
   I->Height=height;
   I->Width=width;
   I->ShowLines = height/cOrthoLineHeight;
 
+  sceneBottom = cOrthoBottomSceneMargin;
+    
+  if(!InternalGUI) {
+    sceneRight = 0;
+  } else {
+    sceneRight = cOrthoRightSceneMargin;
+  }
+
   block=SceneGetBlock();
-  BlockSetMargin(block,0,0,cOrthoBottomSceneMargin,cOrthoRightSceneMargin);
-  block=ExecutiveGetBlock();
-  BlockSetMargin(block,0,width-cOrthoRightSceneMargin,ExecutiveMargin,0);
-  block=ButModeGetBlock();
-  BlockSetMargin(block,height-ExecutiveMargin,width-cOrthoRightSceneMargin,ButModeMargin,0);
-  block=ControlGetBlock();
-  BlockSetMargin(block,height-ButModeMargin,width-cOrthoRightSceneMargin,ControlMargin,0);
+  BlockSetMargin(block,0,0,sceneBottom,sceneRight);
+
+  if(InternalGUI) {
+    block=ExecutiveGetBlock();
+    BlockSetMargin(block,0,width-cOrthoRightSceneMargin,ExecutiveMargin,0);
+    block=ButModeGetBlock();
+    BlockSetMargin(block,height-ExecutiveMargin,width-cOrthoRightSceneMargin,ButModeMargin,0);
+    block=ControlGetBlock();
+    BlockSetMargin(block,height-ButModeMargin,width-cOrthoRightSceneMargin,ControlMargin,0);
+  } else {
+    block=ExecutiveGetBlock();
+    block->active=false;
+    block=ButModeGetBlock();
+    block->active=false;
+    block=ControlGetBlock();
+    block->active=false;
+  }
   
   glGetIntegerv(GL_VIEWPORT,I->ViewPort);
 

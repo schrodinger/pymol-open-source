@@ -24,5 +24,5 @@ endif
 #
 #dbx $PYMOL_PATH/ext/bin/python 
 #gdb $PYMOL_PATH/ext/bin/python 
-$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/pymol.py $*
+$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/launch_pymol.py $*
 

@@ -19,9 +19,8 @@ Z* -------------------------------------------------------------------
 #include<Python.h>
 
 #include "Menu.h"
-#include "PM.h"
 #include "PopUp.h"
-#include "PUtils.h"
+#include "P.h"
 #include "Ortho.h"
 
 
@@ -34,7 +33,7 @@ void MenuActivate(int x,int y,char *name,char *sele)
 
   PBlock(); /* pmm doesn't currently call API, so leave it locked */
 
-  list = PyObject_CallMethod(P_pmm,name,"s",sele); 
+  list = PyObject_CallMethod(P_menu,name,"s",sele); 
   if(list) {
     PopUpNew(x,y,list);
     Py_DECREF(list);

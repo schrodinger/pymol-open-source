@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Base.h"
 #include"PConv.h"
-#include"PUtils.h"
+#include"P.h"
 
 PyObject *PConvFloatVLAToPyList(float *f)
 {
@@ -38,6 +38,17 @@ PyObject *PConvFloatVLAToPyList(float *f)
   result=PyList_New(l);
   for(a=0;a<l;a++) {
     PyList_SetItem(result,a,PyFloat_FromDouble((double)f[a]));
+  }
+  return(result);
+}
+
+PyObject *PConvStringListToPyList(int l,char **str)
+{
+  int a;
+  PyObject *result = Py_None;
+  result=PyList_New(l);
+  for(a=0;a<l;a++) {
+    PyList_SetItem(result,a,PyString_FromString(str[a]));
   }
   return(result);
 }

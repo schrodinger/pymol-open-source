@@ -26,7 +26,7 @@ Z* -------------------------------------------------------------------
 #include "PopUp.h"
 #include "Ortho.h"
 #include "Util.h"
-#include "PUtils.h"
+#include "P.h"
 
 #define cPopUpLineHeight 13
 #define cPopUpCharWidth 8
@@ -145,7 +145,7 @@ int PopUpRelease(Block *block,int x,int y,int mod)
 
   if(I->Selected>=0) {
     PBlockAndUnlockAPI();
-    PyRun_SimpleString(I->Command[I->Selected]);
+    PRunString(I->Command[I->Selected]);
     PLockAPIAndUnblock();
   }
   

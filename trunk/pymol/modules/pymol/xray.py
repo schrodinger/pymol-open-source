@@ -14,7 +14,7 @@
 
 import sglite
 
-# pmx.py 
+# xray.py 
 # This section contains python code for supporting
 # x-ray crystallography functions
 
