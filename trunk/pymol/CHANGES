@@ -179,6 +179,10 @@ CHANGE LOG
 
 Changes up to 0.91
 
+
+   * fixed "cake bug" in ray tracter for cylinders directly aligned
+     with incident light ray
+
    * taught sculpting engine to treat unbound waters as donor/acceptors */
 
    * stick_ball, and stick_ball_ratio can be used to quikly generate ball
