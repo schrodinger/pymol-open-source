@@ -53,6 +53,7 @@ def process(sele): # expand slash notation into a standard atom selection
             lst.append("n;"+residue)            
          else:
             residue = string.replace(residue,'+',',')
+            residue = string.replace(residue,'-',':')
             if ((string.find(residue,',')>=0) and # compound residue specification
                 (string.find(residue,':')>=0)):
                new_list = []
