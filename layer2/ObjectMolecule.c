@@ -3456,7 +3456,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	case OMOP_SFIT: /* state fitting within a single object */
 	  for(b=0;b<I->NCSet;b++) {
        rms = -1.0;
-       if(I->CSet[b]&&(b!=op->i1))
+       if(I->CSet[b]&&(b!=op->i2))
          {
            op->nvv1=0;
            for(a=0;a<I->NAtom;a++)

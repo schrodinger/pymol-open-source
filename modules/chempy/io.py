@@ -9,6 +9,7 @@ from chempy.mol import MOL
 from chempy.arc import ARC
 from chempy.gms import GMS
 from chempy.mmd import MMD
+from chempy.mae import MAE
 
 pkl = PKL() # general object io
 lst = LST() # general string-list io
@@ -21,5 +22,5 @@ mol = MOL()
 arc = ARC()
 gms = GMS() # OBSOLETE - PLEASE DO NOT USE
 mmd = MMD()
-
+mae = MAE()
 
