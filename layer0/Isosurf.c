@@ -370,6 +370,11 @@ int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
        printf(" IsosurfVolume: Surface generated using %d lines.\n",NLine); 
    }
 
+   /* shrinks sizes for more efficient RAM usage */
+
+   VLASize(Line,float,NLine*3);
+   VLASize(Num,int,NSeg+1);
+
 	*vert = Line;
 	*num = Num;
 	return(ok);

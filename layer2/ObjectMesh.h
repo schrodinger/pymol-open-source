@@ -27,6 +27,9 @@ typedef struct {
   int ExtentFlag;
   float Level,Radius;
   int ResurfaceFlag;
+  float *AtomVertex;
+  int CarveFlag;
+  float CarveBuffer;
   int DotFlag;
 } ObjectMeshState;
 
@@ -36,7 +39,10 @@ typedef struct ObjectMesh {
   int NState;
 } ObjectMesh;
 
-ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,int state,float *mn,float *mx,float level,int dotFlag);
+ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
+                              int state,float *mn,float *mx,
+                              float level,int dotFlag,
+                              float carve,float *vert_vla);
 void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
 
 #endif

@@ -42,9 +42,11 @@ static void ObjectMeshFree(ObjectMesh *I) {
   for(a=0;a<I->NState;a++) {
     VLAFreeP(I->State[a].N);
     VLAFreeP(I->State[a].V);
+    VLAFreeP(I->State[a].AtomVertex);
   }
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
+  
   OOFreeP(I);
 }
 
@@ -81,7 +83,20 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
 static void ObjectMeshUpdate(ObjectMesh *I) 
 {
   int a;
+  int c;
   ObjectMeshState *ms;
+  int *n;
+  float *v;
+  int *old_n;
+  float *old_v;
+  int n_cur;
+  int n_seg;
+  int n_line;
+  int flag;
+  int last_flag=0;
+  int h,k,l;
+  int i,j;
+  MapType *voxelmap; /* this has nothing to do with isosurfaces... */
 
   for(a=0;a<I->NState;a++) {
     ms = I->State+a;
@@ -89,12 +104,81 @@ static void ObjectMeshUpdate(ObjectMesh *I)
     if(ms->N&&ms->V) {
       if(ms->ResurfaceFlag) {
         ms->ResurfaceFlag=false;
-        PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF
-          if(ms->Map->Field) IsosurfVolume(ms->Map->Field,
-                                            ms->Level,
-                                            &ms->N,&ms->V,
-                                            ms->Range,
-                                            ms->DotFlag); 
+        PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF;
+        if(ms->Map->Field) IsosurfVolume(ms->Map->Field,
+                                         ms->Level,
+                                         &ms->N,&ms->V,
+                                         ms->Range,
+                                         ms->DotFlag); 
+        if(ms->CarveFlag&&ms->AtomVertex&&
+           VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
+          /* cull my friend, cull */
+          for(c=0;c<VLAGetSize(ms->AtomVertex)/3;c++)
+            dump3f(ms->AtomVertex+3*c," atomvertex");
+          voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
+          if(voxelmap) {
+            
+            MapSetupExpress(voxelmap);  
+            
+            old_n = ms->N;
+            old_v = ms->V;
+            ms->N=VLAlloc(int,VLAGetSize(old_n));
+            ms->V=VLAlloc(float,VLAGetSize(old_v));
+            
+            n = old_n;
+            v = old_v;
+            n_cur = 0;
+            n_seg = 0;
+            n_line = 0;
+            while(*n)
+              {
+                last_flag=false;
+                c=*(n++);
+                while(c--) {
+                  flag=false;
+                  MapLocus(voxelmap,v,&h,&k,&l);
+                  i=*(MapEStart(voxelmap,h,k,l));
+                  if(i) {
+                    j=voxelmap->EList[i++];
+                    while(j>=0) {
+                      if(within3f(ms->AtomVertex+3*j,v,ms->CarveBuffer)) {
+                        flag=true;
+                        break;
+                      }
+                      j=voxelmap->EList[i++];
+                    }
+                  }
+                  if(flag&&(!last_flag)) {
+                    copy3f(v,ms->V+n_line*3);
+                    n_cur++;
+                    n_line++;
+                  }
+                  if(flag&&last_flag) { /* continue segment */
+                    copy3f(v,ms->V+n_line*3);
+                    n_cur++;
+                    n_line++;
+                  } if((!flag)&&last_flag) { /* terminate segment */
+                    ms->N[n_seg]=n_cur;
+                    n_seg++;
+                    n_cur=0;
+                  }
+                  last_flag=flag;
+                  v+=3;
+                }
+                if(last_flag) { /* terminate segment */
+                  ms->N[n_seg]=n_cur;
+                  n_seg++;
+                  n_cur=0;
+                }
+              }
+            printf(" nseg %d nline %d\n",n_seg,n_line);
+            fflush(stdout);
+            ms->N[n_seg]=0;
+            VLAFreeP(old_n);
+            VLAFreeP(old_v);
+            MapFree(voxelmap);
+          }
+        }
       }
     }
   }
@@ -214,7 +298,6 @@ ObjectMesh *ObjectMeshNew(void)
   I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMeshRender;
 
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMeshGetNStates;
-  
   return(I);
 }
 
@@ -226,14 +309,20 @@ void ObjectMeshStateInit(ObjectMeshState *ms)
   }
   if(!ms->N) {
     ms->N = VLAlloc(int,10000);
+
   }
   ms->N[0]=0;
   ms->ResurfaceFlag=true;
   ms->ExtentFlag=false;
+  ms->CarveFlag=false;
+  ms->AtomVertex=NULL;
+
 }
 
 /*========================================================================*/
-ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,int state,float *mn,float *mx,float level,int dotFlag)
+ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,
+int state,float *mn,float *mx,float level,int dotFlag,
+float carve,float *vert_vla)
 {
   ObjectMesh *I;
   ObjectMeshState *ms;
@@ -260,6 +349,10 @@ ObjectMesh *ObjectMeshFromBox(ObjectMesh *obj,ObjectMap *map,int state,float *mn
   copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
   copy3f(mx,ms->ExtentMax);
   ms->ExtentFlag = true;
+  if(carve>=0.0) 
+  ms->CarveFlag=true;
+  ms->CarveBuffer = carve;
+  ms->AtomVertex = vert_vla;
   if(I) {
     ObjectMeshRecomputeExtent(I);
   }

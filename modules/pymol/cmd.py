@@ -1307,7 +1307,7 @@ SEE ALSO
       unlock()
    return r
 
-def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=0):
+def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=0,carve=None):
    '''
 DESCRIPTION
  
@@ -1315,19 +1315,27 @@ DESCRIPTION
  
 USAGE
  
-   isomesh name = map, level [,(selection) [,buffer [,state] ] ]
+   isomesh name, map, level [,(selection) [,buffer [,state [,carve ]]]]
 
-   "map" is the name of the map object to use.
+   "name" is the name for the new mesh isosurface object.
+   
+   "map" is the name of the map object to use for computing the mesh.
    
    "level" is the contour level.
-   
+
    "selection" is an atom selection about which to display the mesh with
       an additional "buffer" (if provided).
+
+   "state" is the state into which the object should be loaded.
+
+   "carve" is a radius about each atom in the selection for which to
+      include density. If "carve" is not provided, then the whole
+      brick is displayed.
 
 NOTES
 
    If the mesh object already exists, then the new mesh will be
-   appended onto the object as a new state.
+   appended onto the object as a new state (unless you indicate a state).
 
 SEE ALSO
 
@@ -1340,16 +1348,18 @@ SEE ALSO
    # preprocess selection
    selection = selector.process(selection)
    #
+   if carve==None:
+      carve=-1.0
    try:
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
                        str(selection),float(buffer),
-                       float(level),0,int(state)-1)
+                       float(level),0,int(state)-1,float(carve))
    finally:
       unlock()
    return r
 
-def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0):
+def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,carve=0):
    '''
 DESCRIPTION
  
@@ -1386,7 +1396,7 @@ SEE ALSO
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
                        str(selection),float(buffer),
-                       float(level),1,int(state)-1)
+                       float(level),1,int(state)-1,float(carve))
    finally:
       unlock()
    return r
