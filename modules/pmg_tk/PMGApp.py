@@ -335,11 +335,11 @@ class PMGApp(AbstractApp):
 
 		self.menuBar.addmenuitem('Mouse', 'command', 'Visualization',
                                label='Visualization',
-                               command = lambda: cmd.edit("off"))
+                               command = lambda: cmd.edit_mode("off"))
 
 		self.menuBar.addmenuitem('Mouse', 'command', 'Editing',
                                label='Editing',
-                               command = lambda: cmd.edit("on"))
+                               command = lambda: cmd.edit_mode("on"))
 
 
 

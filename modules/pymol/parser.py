@@ -21,6 +21,8 @@ import traceback
 import string
 import cmd
 import exceptions
+import threading
+import new
 
 from cmd import QuietException
       
@@ -106,15 +108,46 @@ def parse(s):
                         if kw[nest][4]<2:
                            result=apply(kw[nest][0],args[nest])
                         elif kw[nest][4]==3:
-                           thread.start_new_thread(execfile,
-                                                   (args[nest][0],
-                                                    pymol_names,local_names))
+                           if len(args[nest])==1:
+                              mod = new.module(args[nest][0])
+                              t = threading.Thread(target=execfile,
+                                                   args=(args[nest][0],
+                                                   mod.__dict__,
+                                                   mod.__dict__))
+                              t.setDaemon(1)
+                              t.start()
+                           elif args[nest][1]=='local':
+                              t = threading.Thread(target=execfile,
+                                                   args=(args[nest][0],
+                                                   pymol_names,local_names))
+                              t.setDaemon(1)
+                              t.start()
+                           elif args[nest][1]=='global':
+                              t = threading.Thread(target=execfile,
+                                                   args=(args[nest][0],
+                                                   pymol_names,pymol_names))
+                              t.setDaemon(1)
+                              t.start()
+                           elif args[nest][1]=='module':
+                              mod = new.module(args[nest][0])
+                              t = threading.Thread(target=execfile,
+                                                   args=(args[nest][0],
+                                                   mod.__dict__,
+                                                   mod.__dict__))
+                              t.setDaemon(1)
+                              t.start()
                         elif len(args[nest])==1:
-                           execfile(args[nest][0],pymol_names,local_names)
+                           mod = new.module(args[nest][0])
+                           execfile(args[nest][0],mod.__dict__,mod.__dict__)
+                           del mod
                         elif args[nest][1]=='local':
-                           execfile(args[nest][0],pymol_names,{})
+                           execfile(args[nest][0],pymol_names,local_names)
                         elif args[nest][1]=='global':
                            execfile(args[nest][0],pymol_names,pymol_names)
+                        elif args[nest][1]=='module':
+                           mod = new.module(args[nest][0])
+                           execfile(args[nest][0],mod.__dict__,mod.__dict__)
+                           del mod
                      else:
                         print 'Error: invalid arguments for %s command.' % com
                   elif len(input[nest][0]):
