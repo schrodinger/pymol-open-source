@@ -13,6 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
 #include"os_std.h"
 #include"os_gl.h"
 
@@ -34,12 +35,22 @@ int ButModeRelease(Block *block,int x,int y,int mod);
 void ButModeDraw(Block *block);
 int ButModeClick(Block *block,int button,int x,int y,int mod);
 
+/*========================================================================*/
 Block *ButModeGetBlock(void)
 {
   CButMode *I=&ButMode;
   {return(I->Block);}
 }
-
+/*========================================================================*/
+void ButModeSet(int button,int action)
+{
+  CButMode *I=&ButMode;
+  if((button>=0)&&(button<I->NBut)&&
+     (action>=0)&&(action<I->NCode)) {
+    I->Mode[button]=action;
+    OrthoDirty();
+  }
+}
 /*========================================================================*/
 void ButModeCaption(char *text)
 {
@@ -168,19 +179,20 @@ void ButModeInit(void)
   I->Caption[0] = 0;
 
   I->NCode = 18;
+  I->NBut = 12;
 
-  strcpy(I->Code[cButModeRotXYZ],  "RXYZ ");
+  strcpy(I->Code[cButModeRotXYZ],  "Rota ");
   strcpy(I->Code[cButModeRotZ],    "RotZ ");  
-  strcpy(I->Code[cButModeTransXY], "TrXY ");
-  strcpy(I->Code[cButModeTransZ],  "TraZ ");
+  strcpy(I->Code[cButModeTransXY], "Move ");
+  strcpy(I->Code[cButModeTransZ],  "MovZ ");
   strcpy(I->Code[cButModeClipNF],  "Clip ");
   strcpy(I->Code[cButModeClipN],   "ClpN ");  
   strcpy(I->Code[cButModeClipF],   "ClpF ");
   strcpy(I->Code[cButModePickAtom],"PkAt ");
   strcpy(I->Code[cButModePickBond],"PkBd ");
-  strcpy(I->Code[cButModeTorFrag], "Tors ");
-  strcpy(I->Code[cButModeRotFrag], "Rota ");
-  strcpy(I->Code[cButModeMovFrag], "Move ");
+  strcpy(I->Code[cButModeTorFrag], "TorF ");
+  strcpy(I->Code[cButModeRotFrag], "RotF ");
+  strcpy(I->Code[cButModeMovFrag], "MovF ");
   strcpy(I->Code[cButModePk1],     " Pk1 ");
   strcpy(I->Code[cButModePk2],     " Pk2 ");
   strcpy(I->Code[cButModePk3],     " Pk3 ");

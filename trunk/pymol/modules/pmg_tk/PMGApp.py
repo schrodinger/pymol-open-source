@@ -326,29 +326,9 @@ class PMGApp(AbstractApp):
 
 		self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
-		self.menuBar.addmenuitem('Mouse', 'command', 'Left Mode 1',
-                               label='Left Mode 1',
+		self.menuBar.addmenuitem('Mouse', 'command', 'Not Yet Implemented',
+                               label='Not Yet Implemented',
                                command = lambda: cmd.set("button_mode","0"))
-      
-		self.menuBar.addmenuitem('Mouse', 'command', 'Left Mode 2',
-                               label='Left Mode 2',
-                               command = lambda: cmd.set("button_mode","1"))      
-
-		self.menuBar.addmenuitem('Mouse', 'command', 'Left Mode 3',
-                               label='Left Mode 3',
-                               command = lambda: cmd.set("button_mode","2"))      
-
-		self.menuBar.addmenuitem('Mouse', 'command', 'Right Mode 1',
-                               label='Right Mode 1',
-                               command = lambda: cmd.set("button_mode","3"))
-      
-		self.menuBar.addmenuitem('Mouse', 'command', 'Right Mode 2',
-                               label='Right Mode 2',
-                               command = lambda: cmd.set("button_mode","4"))      
-
-		self.menuBar.addmenuitem('Mouse', 'command', 'Right Mode 3',
-                               label='Right Mode 3',
-                               command = lambda: cmd.set("button_mode","5"))      
 
 
 
