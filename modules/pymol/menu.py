@@ -541,7 +541,7 @@ def pick_option(title,s,object=0):
       [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
       [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
       [ 0, ''             , ''                      ],
-      [ 1, 'labels'      , mol_labels(s) ],      
+      [ 1, 'labels'      , mol_labels(s) ],
       ]
    
    if object:
@@ -553,6 +553,8 @@ def pick_option(title,s,object=0):
          ])
    else:
       result.extend([
+      [ 0, ''             , ''                      ],      
+      [ 1, 'create object','cmd.create(None,"'+s+'")'            ],      
       [ 0, ''             , ''                      ],
       [ 1, 'remove'      , 'cmd.remove("'+s+'")' ],     
                     ])
@@ -616,7 +618,7 @@ def seq_option(title,s,object=0):
       [ 1, 'orient'           ,'cmd.orient("'+s+'")'            ],
       [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
       [ 0, ''             , ''                      ],
-      [ 1, 'labels'      , mol_labels(s) ],      
+      [ 1, 'labels'      , mol_labels(s) ],
       ]
    
    if object:
@@ -628,6 +630,8 @@ def seq_option(title,s,object=0):
          ])
    else:
       result.extend([
+      [ 0, ''             , ''                      ],      
+      [ 1, 'create object','cmd.create(None,"'+s+'")'            ],            
       [ 0, ''             , ''                      ],
       [ 1, 'remove'      , 'cmd.remove("'+s+'")' ],     
                     ])

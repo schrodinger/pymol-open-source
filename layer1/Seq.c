@@ -344,7 +344,7 @@ static void SeqDraw(Block *block)
         row = I->Row+a;
         yy=y1-2;
         col = row->col;
-        if(row->label_flag) { 
+        if(row->label_flag&&row->nCol) { 
           row->title_width = col->offset+(col->stop-col->start);
           xx=x+I->CharMargin+I->CharWidth*(col->offset + (max_title_width-row->title_width));
           ch_wid = (col->stop-col->start);
