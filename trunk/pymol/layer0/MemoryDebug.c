@@ -29,21 +29,19 @@ void ZeroMem(char *p,char *q)
 {
   register unsigned long count;
   register long *a;
-  char *c;
   int mask;
   /*  fprintf(stderr,"ZeroMem: start %p stop %p\n",p,q);
       fflush(stderr);
   */
 
   count = q-p;
-  c=(char*)p;
   mask=sizeof(long)-1;
   /* get us word aligned */
-  while(count&&(((int)c)&mask)) {
+  while(count&&(((int)p)&mask)) {
     count--;
-    *c++=0;
+    *p++=0;
   }
-  a=(long*)c;
+  a=(long*)p;
   /* now blank efficiently */
   while(count>(sizeof(long)*16))
 	 {
