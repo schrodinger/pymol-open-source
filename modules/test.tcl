@@ -1,3 +1,0 @@
-wish
-puts [ selection get ]
-
