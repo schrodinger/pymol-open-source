@@ -42,7 +42,7 @@ void OrthoSetMargins(Block *block,int t,int l,int b,int r);
 Block *OrthoNewBlock(Block *block);
 void OrthoFreeBlock(Block *block);
 
-void OrthoReshape(int width,int height);
+void OrthoReshape(int width,int height,int force);
 int OrthoGetWidth(void);
 void OrthoDoDraw(void);
 

@@ -84,7 +84,7 @@ static int ControlDrag(Block *block,int x,int y,int mod)
       width = OrthoGetWidth()+delta;
     I->LastPos = x;
     SettingSet(cSetting_internal_gui_width,(float)gui_width);
-    OrthoReshape(-1,-1);
+    OrthoReshape(-1,-1,false);
     }
   } else {
     I->Active = which_button(x,y);

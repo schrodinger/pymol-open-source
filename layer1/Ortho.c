@@ -1219,7 +1219,7 @@ static void OrthoDrawWizardPrompt(void)
 }
 
 /*========================================================================*/
-void OrthoReshape(int width, int height)
+void OrthoReshape(int width, int height,int force)
 {
   OrthoObject *I=&Ortho;
 
@@ -1233,7 +1233,7 @@ void OrthoReshape(int width, int height)
     " OrthoReshape-Debug: %d %d\n",width,height
     ENDFD;
 
-  if((width!=I->Width)||(height!=I->Height)) {
+  if((width!=I->Width)||(height!=I->Height)||force) {
   if(width<0) width=I->Width;
   if(height<0) height=I->Height;
 
@@ -1268,21 +1268,29 @@ void OrthoReshape(int width, int height)
       block=SeqGetBlock();
       block->active=true;
 
-      BlockSetMargin(block,0,0,height-10,sceneRight);
-      if(block->fReshape)
-        block->fReshape(block,width,height);			
-      seqHeight = SeqGetHeight();
-      BlockSetMargin(block,0,0,height-seqHeight,sceneRight);
-      sceneTop = seqHeight;
+      if(SettingGetGlobal_b(cSetting_seq_view_location)) {
 
-      /* 
          BlockSetMargin(block,height-sceneBottom-10,0,sceneBottom,sceneRight);
          if(block->fReshape)
          block->fReshape(block,width,height);			
          seqHeight = SeqGetHeight();
          BlockSetMargin(block,height-sceneBottom-seqHeight,0,sceneBottom,sceneRight);
-         sceneBottom +=seqHeight;
-      */
+         if(!SettingGetGlobal_b(cSetting_seq_view_overlay)) {
+           sceneBottom +=seqHeight;
+         }
+
+      } else {
+        
+        BlockSetMargin(block,0,0,height-10,sceneRight);
+        if(block->fReshape)
+          block->fReshape(block,width,height);			
+        seqHeight = SeqGetHeight();
+        BlockSetMargin(block,0,0,height-seqHeight,sceneRight);
+        if(!SettingGetGlobal_b(cSetting_seq_view_overlay)) {
+          sceneTop = seqHeight;
+        }
+      }
+
     }
 
     block=ExecutiveGetBlock();
@@ -1579,7 +1587,6 @@ void OrthoInit(int showSplash)
   /*printf("orthoNewLine: CC: %d CL:%d PC: %d IF:L %d\n",I->CurChar,I->CurLine,
 	 I->PromptChar,I->InputFlag);*/
   
-  SeqInit();
   PopInit();
   for(a=0;a<=OrthoHistoryLines;a++)
     I->History[a][0]=0;
@@ -1591,7 +1598,6 @@ void OrthoFree(void)
 
   VLAFreeP(I->WizardPromptVLA);
   PopFree();
-  SeqFree();
   QueueFree(I->cmds);
   I->cmds=NULL;
   QueueFree(I->feedback);

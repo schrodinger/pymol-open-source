@@ -608,7 +608,7 @@ void MainReshape(int width, int height) /* called by Glut */
   h = ((float)height)/width;
   if(PMGUI) glViewport(0, 0, (GLint) width, (GLint) height);
   
-  OrthoReshape(width,height);
+  OrthoReshape(width,height,false);
 }
 /*========================================================================*/
 
@@ -618,7 +618,7 @@ PyObject *MainAsPyList(void)
   int width,height;
   result = PyList_New(2);
   BlockGetSize(SceneGetBlock(),&width,&height);
-  if(SettingGet(cSetting_seq_view))
+  if(SettingGetGlobal_b(cSetting_seq_view)&&!SettingGetGlobal_b(cSetting_seq_view_overlay))
     height+=SeqGetHeight();
   PyList_SetItem(result,0,PyInt_FromLong(width));
   PyList_SetItem(result,1,PyInt_FromLong(height));
@@ -649,10 +649,13 @@ void MainDoReshape(int width, int height) /* called internally */
 {
   int h,w;
   int internal_feedback;
+  int force =false;
+
   if(width<0) {
     BlockGetSize(SceneGetBlock(),&width,&h);
     if(SettingGetGlobal_b(cSetting_internal_gui))
       width+=SettingGetGlobal_i(cSetting_internal_gui_width);
+    force = true;
   }
 
   if(height<0) { 
@@ -660,12 +663,15 @@ void MainDoReshape(int width, int height) /* called internally */
     internal_feedback = (int)SettingGet(cSetting_internal_feedback);
     if(internal_feedback)
       height+=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
+    if(SettingGetGlobal_b(cSetting_seq_view)&&!SettingGetGlobal_b(cSetting_seq_view_overlay))
+      height+=SeqGetHeight();
+    force = true;
   }
   if(PMGUI) {
     p_glutReshapeWindow(width,height);
     glViewport(0, 0, (GLint) width, (GLint) height);
   }
-  OrthoReshape(width,height);
+  OrthoReshape(width,height,force);
   if(SettingGet(cSetting_full_screen))
     p_glutFullScreen();
 
@@ -717,6 +723,7 @@ static void MainInit(void)
   SelectorInit();
   MovieInit();
   SceneInit();
+  SeqInit();
   SeekerInit();
   ButModeInit();
   ControlInit();
@@ -745,6 +752,7 @@ void MainFree(void)
   ButModeFree();
   ControlFree();
   SeekerFree();
+  SeqFree();
   SceneFree();
   MovieFree();
   SelectorFree();

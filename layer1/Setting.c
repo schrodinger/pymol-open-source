@@ -1065,6 +1065,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_seq_view_format:
     SeqChanged();
     break;
+  case cSetting_seq_view_location:
+  case cSetting_seq_view_overlay:
+    PParse("cmd.viewport(-1,-1)");
+    break;
   case cSetting_stereo_mode:
     SceneUpdateStereoMode();
     break;
@@ -1258,6 +1262,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_transparency:
   case cSetting_cartoon_trace:
   case cSetting_cartoon_refine:
+  case cSetting_cartoon_nucleic_acid_mode:
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
   case cSetting_cartoon_loop_radius:
@@ -2256,6 +2261,10 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_seq_view_label_spacing,5);
   SettingSet_i(I,cSetting_seq_view_label_start,1);
   SettingSet_i(I,cSetting_seq_view_format,0);
+  SettingSet_i(I,cSetting_seq_view_location,0);
+  SettingSet_b(I,cSetting_seq_view_overlay,0);
+  SettingSet_b(I,cSetting_auto_classify_atoms,1);
+  SettingSet_i(I,cSetting_cartoon_nucleic_acid_mode,0);
 
 }
 

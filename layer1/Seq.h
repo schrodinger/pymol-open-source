@@ -28,6 +28,7 @@ typedef struct {
   int inverse;
   int spacer;
   int state;
+  int color;
 } CSeqCol;
   
 typedef struct {

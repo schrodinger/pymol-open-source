@@ -395,6 +395,10 @@ if __name__=='pymol.setting':
       seq_view_label_spacing = 355
       seq_view_label_start = 356
       seq_view_format      = 357
+      seq_view_location    = 358
+      seq_view_overlay     = 359
+      auto_classify_atoms  = 360
+      cartoon_nucleic_acid_mode = 361
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

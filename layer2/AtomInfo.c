@@ -28,6 +28,247 @@ Z* -------------------------------------------------------------------
 
 static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 
+int AtomInfoKnownWaterResName(char *resn) 
+{
+
+  switch(resn[0]) {
+  case 'H':
+    switch(resn[1]) {
+    case 'O': 
+      switch(resn[2]) {
+      case 'H':
+        return true;
+        break;
+      }
+      break;
+    case '2': 
+      switch(resn[2]) {
+      case 'O':
+        return true;
+        break;
+      }
+      break;
+    }
+  case 'T':
+    switch(resn[1]) {
+    case 'I': 
+      switch(resn[2]) {
+      case 'P':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  case 'W':
+    switch(resn[1]) {
+    case 'A': 
+      switch(resn[2]) {
+      case 'T':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  }
+  return false;
+}
+
+int AtomInfoKnownPolymerResName(char *resn) 
+{
+  switch(resn[0]) {
+  case 'A':
+    switch(resn[1]) {
+    case 0:
+      return true;
+    case 'L': 
+      if(resn[2]=='A')
+        return true;
+      break;
+    case 'R': 
+      if(resn[2]=='G')
+        return true;
+      break;
+    case 'S': 
+      switch(resn[2]) {
+      case 'P':
+        return true;
+        break;
+      case 'N':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  case 'C':
+    switch(resn[1]) {
+    case 0:
+      return true;
+    case 'Y': 
+      switch(resn[2]) {
+      case 'S':
+      case 'X':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  case 'G':
+    switch(resn[1]) {
+    case 0:
+      return true;
+      break;
+    case 'L': 
+      switch(resn[2]) {
+      case 'N':
+        return true;
+        break;
+      case 'U':
+        return true;
+        break;
+      case 'Y':
+        return true;
+        break;
+      }
+    }
+    break;
+  case 'H':
+    switch(resn[1]) {
+    case 'I': 
+      switch(resn[2]) {
+      case 'S':
+      case 'D':
+      case 'E':
+        return true;
+        break;
+      }
+      break;
+    }
+  case 'I':
+    switch(resn[1]) {
+    case 'L': 
+      switch(resn[2]) {
+      case 'E':
+        return true;
+        break;
+      }
+    }
+    break;
+  case 'L':
+    switch(resn[1]) {
+    case 'E': 
+      switch(resn[2]) {
+      case 'U':
+        return true;
+        break;
+      }
+      break;
+    case 'Y': 
+      switch(resn[2]) {
+      case 'S':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  case 'M':
+    switch(resn[1]) {
+    case 'E': 
+      switch(resn[2]) {
+      case 'T':
+        return true;
+        break;
+      }
+    case 'S':
+      switch(resn[2]) {
+      case 'E':
+        return true;
+        break;
+      }
+    }
+    break;
+  case 'P':
+    switch(resn[1]) {
+    case 'H':
+      switch(resn[2]) {
+      case 'E':
+        return true;
+        break;
+      }
+      break;     
+    case 'R': 
+      switch(resn[2]) {
+      case 'O':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  case 'S':
+    switch(resn[1]) {
+    case 'E': 
+      switch(resn[2]) {
+      case 'R':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  case 'T':
+    switch(resn[1]) {
+    case 0:
+      return true;
+    case 'H': 
+      switch(resn[2]) {
+      case 'R':
+        return true;
+        break;
+      }
+      break;
+    case 'R': 
+      switch(resn[2]) {
+      case 'P':
+        return true;
+        break;
+      }
+      break;
+    case 'Y': 
+      switch(resn[2]) {
+      case 'R':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  case 'U':
+    switch(resn[1]) {
+    case 0:
+      return true;
+      break;
+    } 
+    break;
+  case 'V':
+    switch(resn[1]) {
+    case 'A': 
+      switch(resn[2]) {
+      case 'L':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  }
+  return false;
+}
+
 
 /*========================================================================*/
 

@@ -211,6 +211,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
                                int nbr_sele);
 
 /* */
+int ObjectMoleculeIsAtomBondedToName(ObjectMolecule *obj,int a0,char *name);
 void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec *op);
 int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result);
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I);

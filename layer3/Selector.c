@@ -225,6 +225,11 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_FST1 ( 0x4000 | STYP_OPR1 | 0x20 )
 #define SELE_CAS1 ( 0x4100 | STYP_OPR1 | 0x20 )
 #define SELE_BEY_ ( 0x4200 | STYP_OP22 | 0x20 ) 
+#define SELE_POLz ( 0x4300 | STYP_SEL0 | 0x80 )
+#define SELE_SOLz ( 0x4400 | STYP_SEL0 | 0x80 )
+#define SELE_ORGz ( 0x4500 | STYP_SEL0 | 0x80 )
+#define SELE_INOz ( 0x4600 | STYP_SEL0 | 0x80 )
+#define SELE_GIDz ( 0x4700 | STYP_SEL0 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -394,6 +399,20 @@ static WordKeyValue Keyword[] =
   {  "beyond",   SELE_BEY_ },
   {  "be.",      SELE_BEY_ },
 
+  {  "polymer",  SELE_POLz },
+  {  "pol.",     SELE_POLz },
+
+  {  "organic",  SELE_ORGz },
+  {  "org.",     SELE_ORGz },
+
+  {  "inorganic",SELE_INOz },
+  {  "ino.",     SELE_INOz },
+
+  {  "solvent",  SELE_SOLz },
+  {  "sol.",     SELE_SOLz },
+
+  {  "guide",    SELE_GIDz },
+
   {  "present",  SELE_PREz },
   {  "pr.",      SELE_PREz },
 
@@ -425,6 +444,265 @@ static WordKeyValue AtOper[] =
 static int IntInOrder(int *list,int a,int b)
 {
   return(list[a]<=list[b]);
+}
+
+int SelectorClassifyAtoms(int sele, int preserve,ObjectMolecule *only_object)
+{
+  SelectorType *I=&Selector;
+  ObjectMolecule *obj,*last_obj,*obj0,*obj1 = NULL;
+  int a,aa,at,a0,a1;
+  AtomInfoType *ai,*last_ai=NULL,*ai0,*ai1;
+  unsigned int mask;
+  int n_dummies = 0;
+
+  if(only_object) {
+    SelectorUpdateTableSingleObject(only_object,true,NULL,0);  
+    n_dummies = 0;
+  } else {
+    SelectorUpdateTable();
+    n_dummies = cNDummyAtoms;
+  }
+  a=0;
+  while(a<I->NAtom) {
+    obj = I->Obj[I->Table[a].model];
+    at = I->Table[a].atom;
+    ai = obj->AtomInfo + at; 
+    
+    if(SelectorIsMember(ai->selEntry,sele) &&
+       ((!AtomInfoSameResidueP(ai,last_ai)))) {
+      
+      AtomInfoType *guide_atom = NULL;
+      
+      /* delimit residue */
+      
+      a0 = a-1;
+      while(a0>=n_dummies) {
+        obj0 = I->Obj[I->Table[a0].model];
+        if(obj0!=obj) 
+          break;
+        ai0 = obj0->AtomInfo + I->Table[a0].atom;
+        if(!AtomInfoSameResidue(ai0,ai))
+          break;
+        a0--;
+      }
+      
+      a1 = a+1;
+      while(a1<I->NAtom) {
+        obj1 = I->Obj[I->Table[a1].model];
+        if(obj1!=obj) 
+          break;
+        ai1 = obj1->AtomInfo + I->Table[a1].atom;
+        if(!AtomInfoSameResidue(ai1,ai))
+          break;
+        a1++;
+      }
+      
+      a0++;
+      a1--;
+
+      mask = 0;
+      if(AtomInfoKnownPolymerResName(ai->resn))
+        mask = cAtomFlag_polymer;
+      else if(AtomInfoKnownWaterResName(ai->resn))
+        mask = cAtomFlag_solvent;
+      else {
+
+        /* does this residue have a canonical atoms? */
+        
+        int found_ca = false;
+        int found_n = false;
+        int found_c = false;
+        int found_o = false;
+        int found_oh2 = false;
+        int found_carbon = false;
+        int found_cn_bond = false;
+        int found_nc_bond = false;
+        int found_o3_bond = false;
+        int found_o3star = false;
+        int found_c3star = false;
+        int found_c4star = false;
+        int found_c5star = false;
+        int found_o5star = false;
+        int found_p_bond = false;
+        if(obj!=last_obj) {
+          ObjectMoleculeUpdateNeighbors(obj);
+          last_obj = obj;
+        }
+
+        ai0 = obj->AtomInfo + I->Table[a0].atom;
+        for(aa=a0;aa<=a1;aa++) { 
+          if(ai0->protons == cAN_C) {
+            register char *name = ai0->name;
+            found_carbon = true;
+            switch(name[0]) {
+            case 'C':
+              switch(name[1]) {
+              case 0:
+                found_c = true;
+                found_cn_bond = ObjectMoleculeIsAtomBondedToName(obj,I->Table[aa].atom,"N");
+                break;
+              case 'A':
+                switch(name[2]) {
+                case 0:
+                  found_ca = true;
+                  guide_atom = ai0;
+                  break;
+                }
+              case '3':
+                switch(name[2]) {
+                case '*':
+                case '\'':
+                  guide_atom = ai0;
+                  found_c3star = true;
+                  break;
+                }
+                break;
+              case '4':
+                switch(name[2]) {
+                case '*':
+                case '\'':
+                  found_c4star = true;
+                  break;
+                }
+                break;
+              case '5':
+                switch(name[2]) {
+                case '*':
+                case '\'':
+                  found_c5star = true;
+                  break;
+                }
+                break;
+              }
+            }
+          } else if(ai0->protons == cAN_N) {
+            register char *name = ai0->name;
+            switch(name[0]) {
+            case 'N':
+              switch(name[1]) {
+              case 0:
+                found_n = true;
+                found_nc_bond = ObjectMoleculeIsAtomBondedToName(obj,I->Table[aa].atom,"C");
+                break;
+              }
+            }
+          } else if(ai0->protons == cAN_O) {
+            register char *name = ai0->name;
+            switch(name[0]) {
+            case 'O':
+              switch(name[1]) {
+              case 0:
+                found_o = true;
+                break;
+              case 'H':
+                switch(name[2]) {
+                case '2':
+                  found_oh2 = true;
+                  break;
+                }
+              case '3':
+                switch(name[2]) {
+                case '*':
+                case '\'':
+                  found_o3star = true;
+                  found_o3_bond = ObjectMoleculeIsAtomBondedToName(obj,I->Table[aa].atom,"P");
+                  break;
+                }
+                break;
+              case '5':
+                switch(name[2]) {
+                case '*':
+                case '\'':
+                  found_o5star = true;
+                  break;
+                }
+                break;
+              }
+            }
+          } else if(ai0->protons == cAN_P) {
+
+            register char *name = ai0->name;
+            switch(name[0]) {
+            case 'P':
+              switch(name[1]) {
+              case 0:
+                found_p_bond = (ObjectMoleculeIsAtomBondedToName(obj,I->Table[aa].atom,"O3*") ||
+                                ObjectMoleculeIsAtomBondedToName(obj,I->Table[aa].atom,"O3'"));
+                break;
+              }
+            }
+          }
+          ai0++;
+        }
+        
+        if((found_ca && found_n && found_c && found_o && (found_cn_bond||found_nc_bond))||
+           (found_o3star && found_c3star && found_c4star && found_c5star && found_o5star &&
+            (found_o3_bond||found_p_bond))) {
+          mask = cAtomFlag_polymer;
+        } else if(found_carbon)
+          mask = cAtomFlag_organic;
+        else if((found_o||found_oh2)&&(a1==a0))
+          mask = cAtomFlag_solvent; 
+        else
+          mask = cAtomFlag_inorganic;
+      }
+
+      /* mark which atoms we can write to */
+      
+      ai0 = obj->AtomInfo + I->Table[a0].atom;
+      if(preserve) {
+        for(aa=a0;aa<=a1;aa++) { 
+          if(SelectorIsMember(ai0->selEntry,sele))
+            if(!(ai0->flags & cAtomFlag_class_mask))
+              ai0->flags = (ai0->flags & cAtomFlag_class_mask) | mask;
+          ai0++;
+        }
+      } else {
+        for(aa=a0;aa<=a1;aa++) { 
+          if(SelectorIsMember(ai0->selEntry,sele))
+            ai0->flags = (ai0->flags & cAtomFlag_class_mask) | mask;
+          ai0++;
+        }
+      }
+
+      if((!guide_atom)&&(mask==cAtomFlag_polymer)) {
+        ai0 = obj->AtomInfo + I->Table[a0].atom;
+        for(aa=a0;aa<=a1;aa++) { 
+          if(ai0->protons == cAN_C) {
+            register char *name = ai0->name;
+            switch(name[0]) {
+            case 'C':
+              switch(name[1]) {
+              case 'A':
+                switch(name[2]) {
+                case 0:
+                  guide_atom = ai0;
+                  break;
+                }
+              case '4':
+                switch(name[2]) { /* use C4* as guide atom for nucleic acids */
+                case '*':
+                case '\'':
+                  guide_atom = ai0;
+                  break;
+                }
+                break;
+              }
+            }
+          }
+          ai0++;
+        }
+      }
+
+      if(guide_atom)
+        guide_atom->flags |= cAtomFlag_guide;
+      
+      if(a1>(a+1))
+        a = a1;
+    }
+    a++;
+  }
+  return true;
 }
 
 static void SelectionInfoInit(SelectionInfoRec *rec)
@@ -2607,6 +2885,8 @@ void SelectorUpdateObjectSele(ObjectMolecule *obj)
   if(obj->Obj.Name[0]) {
     SelectorDelete(obj->Obj.Name);  
     SelectorCreate(obj->Obj.Name,NULL,obj,true,NULL); /* create a selection with same name */ 
+    if(SettingGetGlobal_b(cSetting_auto_classify_atoms))
+      SelectorClassifyAtoms(0,false,obj);
   }
 }
 
@@ -3105,6 +3385,8 @@ int SelectorIsAtomBondedToSele(ObjectMolecule *obj,int sele1atom,int sele2)
   }
   return bonded;
 }
+
+
 
 static void update_min_walk_depth(WalkDepthRec *minWD,
                             int frag, WalkDepthRec *wd,
@@ -6112,10 +6394,13 @@ int SelectorModulate1(EvalElem *base)
   
 }
 /*========================================================================*/
-int SelectorSelect0(EvalElem *base)
+int SelectorSelect0(EvalElem *passed_base)
 {
-  SelectorType *I=&Selector;
-  int a,b,flag;
+  register SelectorType *I=&Selector;
+  register TableRec *i_table = I->Table;
+  register ObjectMolecule **i_obj = I->Obj;
+  register int a,b,flag;
+  register EvalElem *base = passed_base;
   int c=0;
   short int *vis;
   int state;
@@ -6123,6 +6408,7 @@ int SelectorSelect0(EvalElem *base)
   ObjectMolecule *obj,*cur_obj=NULL;
   CoordSet *cs;
   int at_idx;
+
   base->type=STYP_LIST;
   base->sele=Calloc(int,I->NAtom);
   ErrChkPtr(base->sele);
@@ -6136,8 +6422,8 @@ int SelectorSelect0(EvalElem *base)
         ObjectMolecule *lastObj=NULL,*obj;
         int at,s;
         for(a=cNDummyAtoms;a<I->NAtom;a++) {
-          at=I->Table[a].atom;
-          obj=I->Obj[I->Table[a].model];
+          at=i_table[a].atom;
+          obj=i_obj[i_table[a].model];
           s=obj->AtomInfo[at].selEntry;
           if(obj!=lastObj) {
             ObjectMoleculeUpdateNeighbors(obj);
@@ -6149,11 +6435,11 @@ int SelectorSelect0(EvalElem *base)
       switch(base->code) {
       case SELE_HBAs:
         for(a=cNDummyAtoms;a<I->NAtom;a++)
-          base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hb_acceptor;
+          base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hb_acceptor;
         break;
       case SELE_HBDs:
         for(a=cNDummyAtoms;a<I->NAtom;a++)
-          base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hb_donor;
+          base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hb_donor;
         break;
       }
       break;
@@ -6163,16 +6449,37 @@ int SelectorSelect0(EvalElem *base)
 		break;
 	 case SELE_BNDz:
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].bonded;
+        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].bonded;
 		break;
 	 case SELE_HETz:
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hetatm;
+        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hetatm;
 		break;
 	 case SELE_HYDz:
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hydrogen;
+        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hydrogen;
 		break;
+	 case SELE_POLz:
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_polymer;
+		break;
+	 case SELE_SOLz:
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_solvent;
+		break;
+	 case SELE_ORGz:
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_organic;
+		break;
+	 case SELE_INOz:
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_inorganic;
+		break;
+	 case SELE_GIDz:
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_guide;
+		break;
+
     case SELE_PREz:
       state = SceneGetState();
       static_singletons = (int)SettingGet(cSetting_static_singletons);
@@ -6181,7 +6488,7 @@ int SelectorSelect0(EvalElem *base)
       for(a=cNDummyAtoms;a<I->NAtom;a++)
         {
           base[0].sele[a]=false;
-          obj = I->Obj[I->Table[a].model];
+          obj = i_obj[i_table[a].model];
           if(obj!=cur_obj) { /* different object */
             if(state>=obj->NCSet)
               flag=false;
@@ -6200,7 +6507,7 @@ int SelectorSelect0(EvalElem *base)
             cur_obj = obj;
           }
           if(flag&&cs) {
-            at_idx = I->Table[a].atom;
+            at_idx = i_table[a].atom;
             if(obj->DiscreteFlag) {
               if(cs==obj->DiscreteCSet[at_idx]) {
                 if(obj->DiscreteAtmToIdx[at_idx]>=0) {
@@ -6250,9 +6557,9 @@ int SelectorSelect0(EvalElem *base)
         for(a=cNDummyAtoms;a<I->NAtom;a++)
           {
             flag = false;
-            obj = I->Obj[I->Table[a].model];
+            obj = i_obj[i_table[a].model];
             if(obj->Obj.Enabled) {
-              ai = obj->AtomInfo + I->Table[a].atom;
+              ai = obj->AtomInfo + i_table[a].atom;
               vis = ai->visRep;
               bonded = ai->bonded;
               
@@ -6301,7 +6608,7 @@ int SelectorSelect0(EvalElem *base)
 	 case SELE_ENAz:
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
 		  {
-          flag = (I->Obj[I->Table[a].model]->Obj.Enabled);
+          flag = (i_obj[i_table[a].model]->Obj.Enabled);
           base[0].sele[a]=flag;
           if(flag)
             c++;

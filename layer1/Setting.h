@@ -501,11 +501,14 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_seq_view_label_spacing     355
 #define cSetting_seq_view_label_start       356
 #define cSetting_seq_view_format            357
-
+#define cSetting_seq_view_location          358
+#define cSetting_seq_view_overlay           359
+#define cSetting_auto_classify_atoms        360
+#define cSetting_cartoon_nucleic_acid_mode  361
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        358
+#define cSetting_INIT                       362
 
 #endif
 

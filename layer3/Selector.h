@@ -68,6 +68,8 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
 
 int SelectorCountAtoms(int sele);
 int SelectorCountStates(int sele);
+int SelectorClassifyAtoms(int sele, int preserve,ObjectMolecule *only_object);
+
 
 void SelectorLogSele(char *name);
 int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer,int state);

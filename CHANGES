@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * new settings: auto_classify_atoms, selection operators:
+     polymer, solvent, organic, inorganic
+
    * transparency_mode now subordinates backface_cull and 
      two_sided_lighting in OpenGL and the ray tracer
 
