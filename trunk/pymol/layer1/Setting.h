@@ -473,10 +473,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_pdb_conect_all             329
 #define cSetting_button_mode_name           330
 #define cSetting_surface_type               331
+#define cSetting_dot_normals                332
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        332
+#define cSetting_INIT                        333
 
 #endif
 
