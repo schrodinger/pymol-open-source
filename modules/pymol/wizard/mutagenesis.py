@@ -197,12 +197,23 @@ class Mutagenesis(Wizard):
          cmd.iterate("(%s and n;ca)"%sele_name,"stored.segi=segi")
          cmd.alter("(%s)"%tmp_name,"segi=stored.segi")
          # move the fragment
-         cmd.pair_fit("(%s and n;ca)"%tmp_name,
-                       "(%s and n;ca)"%sele_name,
-                       "(%s and n;c)"%tmp_name,
-                       "(%s and n;c)"%sele_name,
-                       "(%s and n;n)"%tmp_name,
-                       "(%s and n;n)"%sele_name)
+         if ((cmd.count_atoms("(%s and n;cb)"%tmp_name)>0) and
+             (cmd.count_atoms("(%s and n;cb)"%sele_name)>0)):
+            cmd.pair_fit("(%s and n;ca)"%tmp_name,
+                         "(%s and n;ca)"%sele_name,
+                         "(%s and n;cb)"%tmp_name,
+                         "(%s and n;cb)"%sele_name,
+                         "(%s and n;c)"%tmp_name,
+                         "(%s and n;c)"%sele_name,
+                         "(%s and n;n)"%tmp_name,
+                         "(%s and n;n)"%sele_name)
+         else:
+            cmd.pair_fit("(%s and n;ca)"%tmp_name,
+                         "(%s and n;ca)"%sele_name,
+                         "(%s and n;c)"%tmp_name,
+                         "(%s and n;c)"%sele_name,
+                         "(%s and n;n)"%tmp_name,
+                         "(%s and n;n)"%sele_name)
          # fix the carbonyl position...
          cmd.iterate_state(1,"(%s and n;o)"%sele_name,"stored.list=[x,y,z]")
          cmd.alter_state(1,"(%s and n;o)"%tmp_name,"(x,y,z)=stored.list")
