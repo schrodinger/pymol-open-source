@@ -335,7 +335,15 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
     } else 
       strcpy(name,ai->name);
   } else {
-    strcpy(name,ai->name);
+    if(!((ai->name[0]>='0')&&(ai->name[0]<='9'))) {
+      name[0]=ai->name[3];
+      name[1]=ai->name[0];
+      name[2]=ai->name[1];
+      name[3]=ai->name[2];
+      name[4]=0;
+    } else {
+      strcpy(name,ai->name);
+    }
   }
   (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
                 aType,cnt+1,name,ai->alt,ai->resn,

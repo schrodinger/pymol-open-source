@@ -146,8 +146,11 @@ ObjectMolecule *ObjectMoleculeLoadPMOFile(ObjectMolecule *obj,char *fname,int fr
 ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
                                           int frame,char *sepPrefix,int discrete);
-
+ObjectMolecule *ObjectMoleculeLoadTOPFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,int frame,int discrete);
+
+ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
+
 ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int frame);
 
 ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
@@ -167,7 +170,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
 struct CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I);
-void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,struct CoordSet *cs,int bondSearchFlag);
+void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
+                         struct CoordSet *cs,int bondSearchFlag,
+                         int aic_mask);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
 void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I);
 int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode,int log);

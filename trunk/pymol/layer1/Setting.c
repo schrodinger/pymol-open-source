@@ -1305,6 +1305,8 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cgo_sphere_quality, 1.0F);
 
+  SettingSet_f(I,cSetting_pdb_literal_names, 0.0);
+
 }
 
 

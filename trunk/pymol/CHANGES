@@ -107,6 +107,13 @@ Current Bugs to Fix
 
 Changes up to 0.84
 
+   * Experimental ability to read Amber topology and trajectory files
+
+   * PyMOL now transforms 4-character atom names appropriately by default.
+     Thus, 3HG2 in PDB file becomes an atom named "HG23"
+
+     If you don't like this, "set pdb_literal_names=1".
+
    * PyMOL now preserves stereo field on MOL-files to better enable
      shuttling of 2D structures through PyMOL...
 

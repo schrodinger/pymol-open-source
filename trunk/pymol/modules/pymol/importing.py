@@ -239,7 +239,7 @@ SEE ALSO
                raise QuietException
       else:
          ftype = int(type)
-         
+
 # get object name
       if len(str(object))==0:
          oname = re.sub(r".*\/|.*\\","",filename) # strip path
@@ -264,8 +264,8 @@ SEE ALSO
          ftype = -1
 
 # special handling for AMBER trj failes
-      if ftype == loadable.trj:
-         ftype = -1
+#      if ftype == loadable.trj:
+#         ftype = -1
 
 # special handling of cex files
       if ftype == loadable.cex:

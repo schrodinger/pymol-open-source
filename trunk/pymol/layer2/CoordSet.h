@@ -50,6 +50,7 @@ typedef struct CoordSet {
   float *SpheroidNormal;
   int NSpheroid;
   int SpheroidSphereSize;
+  int IsPlaceHolder;
   CSetting *Setting;
 } CoordSet;
 
