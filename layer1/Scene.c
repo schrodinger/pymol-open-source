@@ -3252,21 +3252,27 @@ void SceneSetDefaultView(PyMOLGlobals *G) {
   register CScene *I=G->Scene;
 
   MatrixLoadIdentity44f(I->RotMatrix);
+  MatrixLoadIdentity44f(I->ModMatrix);
+  MatrixLoadIdentity44f(I->ProMatrix);
   SceneUpdateInvMatrix(G);
+  
+  I->ViewNormal[0]=0.0F;
+  I->ViewNormal[1]=0.0F;
+  I->ViewNormal[2]=1.0F;
+  
+  I->Pos[0] = 0.0F;
+  I->Pos[1] = 0.0F;
+  I->Pos[2] = -50.0F;
 
-  I->Pos[0] = 0.0;
-  I->Pos[1] = 0.0;
-  I->Pos[2] = -50.0;
+  I->Origin[0] = 0.0F;
+  I->Origin[1] = 0.0F;
+  I->Origin[2] = 0.0F;
 
-  I->Origin[0] = 0.0;
-  I->Origin[1] = 0.0;
-  I->Origin[2] = 0.0;
-
-  I->Front=40;
-  I->Back=100;
+  I->Front=40.0F;
+  I->Back=100.0F;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
   
-  I->Scale = 1.0;
+  I->Scale = 1.0F;
   
 }
 int SceneReinitialize(PyMOLGlobals *G)
@@ -3847,6 +3853,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,float *norm
           vv[2]=-1.0;
           vv[3]=0.0;
           glLightfv(GL_LIGHT0,GL_POSITION,vv);
+          glLightfv(GL_LIGHT1,GL_POSITION,vv);
 
           glOrtho(context->unit_left,
                   context->unit_right,
@@ -3866,6 +3873,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,float *norm
           vv[2]=1.0;
           vv[3]=0.0;
           glLightfv(GL_LIGHT0,GL_POSITION,vv);
+          glLightfv(GL_LIGHT1,GL_POSITION,vv);
 
           glPopMatrix();
           glMatrixMode(GL_PROJECTION);
@@ -4073,51 +4081,77 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
       if(G->Option->multisample)
         glEnable(0x809D); /* GL_MULTISAMPLE_ARB */
 
+      /* lighting */
+
+      /* set position */
+
+      copy3f(SettingGetGlobal_3fv(G,cSetting_light),vv);
+      normalize3f(vv);
+      MatrixInvTransform44fAs33f3f(I->RotMatrix,vv,vv); 
+      invert3f(vv);
+      vv[3]=0.0;
+      glLightfv(GL_LIGHT0,GL_POSITION,vv);
+       
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      
+      /* load up the default ambient and diffuse lighting values */
+
+      vv[0]=1.0F;
+      vv[1]=1.0F;
+      vv[2]=1.0F;
+      vv[3]=1.0F;
+      glLightfv(GL_LIGHT0,GL_DIFFUSE,vv);
+
+      /* use the material ambience to control ambient lighting effects */
+
       f=SettingGet(G,cSetting_gl_ambient);
       vv[0]=f;
       vv[1]=f;
       vv[2]=f;
       vv[3]=1.0;
 
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
+      glLightfv(GL_LIGHT0,GL_AMBIENT,vv);
       glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
+
       if(SettingGet(G,cSetting_two_sided_lighting)||
          (SettingGetGlobal_i(G,cSetting_transparency_mode)==1)) {
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
       } else {
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
-      }
+      }     
 
       f = SettingGet(G,cSetting_specular);
       if(f==1.0F) {
         f=SettingGet(G,cSetting_specular_intensity);
       } 
-      if(f>R_SMALL4) {
-        /*        glEnable(GL_LIGHT1);*/
-        /*        glLightfv(GL_LIGHT1,GL_AMBIENT,zero);*/
+      if(f>R_SMALL4) { /* setup specular reflections for LIGHT0 if needed */
+        
         vv[0]=f;
         vv[1]=f;
         vv[2]=f;
         vv[3]=1.0;
-
-        glEnable(GL_LIGHT1);
-        glLightfv(GL_LIGHT0,GL_SPECULAR,zero);
-        glLightfv(GL_LIGHT1,GL_SPECULAR,vv);
-        glLightfv(GL_LIGHT1,GL_DIFFUSE,zero);
+ 
+        glLightfv(GL_LIGHT0,GL_SPECULAR,vv);
+        
         glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
         vv[0]=SettingGet(G,cSetting_shininess);
         glMaterialfv(GL_FRONT,GL_SHININESS,vv);
 
-        copy3f(SettingGetGlobal_3fv(G,cSetting_light),vv);
-        normalize3f(vv);
-        MatrixInvTransform44fAs33f3f(I->RotMatrix,vv,vv); 
-        invert3f(vv);
-        vv[3]=0.0;
-        glLightfv(GL_LIGHT1,GL_POSITION,vv);
+      } else { /* no specular reflections */
 
-      } else {
+        vv[0]=0.0;
+        vv[1]=0.0;
+        vv[2]=0.0;
+        vv[3]=1.0;
+        
+        glLightfv(GL_LIGHT0, GL_SPECULAR, vv);
+
         glMaterialfv(GL_FRONT,GL_SPECULAR,zero); 
+        vv[0]=SettingGet(G,cSetting_shininess);
+        glMaterialfv(GL_FRONT,GL_SHININESS,vv);
+        
+        
       }
       if(SettingGet(G,cSetting_depth_cue)&&SettingGet(G,cSetting_fog)) {
         fog_start = (I->Back-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;
