@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 void MainFree(void);
 void MainDoReshape(int width, int height);
 void MainDirty(void);
+void MainResetIdle(void);
 void MainSwapBuffers(void);
 void MainRefreshNow(void);
 int MainSavingUnderWhileIdle(void);

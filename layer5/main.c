@@ -261,12 +261,18 @@ int MainSavingUnderWhileIdle(void)
   return(I->IdleMode==2);
 }
 /*========================================================================*/
+void MainResetIdle(void)
+{
+  CMain *I = &Main;
+  I->IdleMode = 0;
+}
+/*========================================================================*/
 void MainDirty(void)
 {
   CMain *I = &Main;
-  PRINTFD(FB_Main)
+  /*  PRINTFD(FB_Main)
     " MainDirty: called.\n"
-    ENDFD;
+    ENDFD; */
   I->DirtyFlag=true;
   I->IdleMode = 0;
 }
@@ -344,9 +350,15 @@ static void MainDrawLocked(void)
 /*========================================================================*/
 static void MainDraw(void)
 {
+  PRINTFD(FB_Main)
+    " MainDraw: called.\n"
+    ENDFD;
   PLockAPIAsGlut();
   MainDrawLocked();
   PUnlockAPIAsGlut();
+  PRINTFD(FB_Main)
+    " MainDraw: completed.\n"
+    ENDFD;
 }
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
@@ -581,6 +593,11 @@ void MainBusyIdle(void)
    */
 
   CMain *I = &Main;
+
+  PRINTFD(FB_Main)
+    " MainBusyIdle: called.\n"
+    ENDFD;
+
   /* flush command and output queues */
   
   /*  PRINTFD(FB_Main)
@@ -588,6 +605,10 @@ void MainBusyIdle(void)
     I->IdleMode,I->DirtyFlag,I->SwapFlag
     ENDFD;*/
   PLockAPIAsGlut();
+
+  PRINTFD(FB_Main)
+    " MainBusyIdle: got lock.\n"
+    ENDFD;
 
   if(ControlIdling()) {
     ExecutiveSculptIterateAll();
@@ -669,10 +690,10 @@ void MainBusyIdle(void)
     }
       
   }
-  /*  PRINTFD(FB_Main)
+  PRINTFD(FB_Main)
     " MainBusyIdle: leaving... IdleMode %d, DirtyFlag %d, SwapFlag %d\n",
     I->IdleMode,I->DirtyFlag,I->SwapFlag
-    ENDFD;*/
+    ENDFD;
 
 }
 

@@ -57,7 +57,8 @@ if __name__=='pymol.cmd':
    import parsing
    import sys
    import __main__
-
+   import time
+   
    from shortcut import Shortcut
 
    from chempy import io
@@ -152,28 +153,54 @@ if __name__=='pymol.cmd':
       lock_api_c.release()
 
    def lock(): # INTERNAL
-      lock_api.acquire(1) 
-
+#      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
+#      lock_api.acquire(1)
+      if not lock_api.acquire(0):
+         w = 0.001
+         while 1:
+            time.sleep(w)
+#            print " lock: ... as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
+#            e = threading.Event() # using this for portable delay
+#            e.wait(w)
+#            del e
+#            print " lock: ... as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)            
+            if lock_api.acquire(0):
+               break
+            if w<0.1:
+               w = w * 2 # wait twice as long each time until flushed
+#      print "lock: acquired by 0x%x"%thread.get_ident()
+      
    def lock_attempt(): # INTERNAL
-      return lock_api.acquire(blocking=0)
+#       print " lock: attempting as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
+       result = lock_api.acquire(blocking=0)
+#       if result:
+#          print "lock: acquired by 0x%x"%thread.get_ident()
+       return result
 
    def unlock(): # INTERNAL
       if (thread.get_ident() == pymol.glutThread):
          lock_api.release()
+#         print "lock: released by 0x%x (glut)"%thread.get_ident()
          _cmd.flush_now()
       else:
+#         print "lock: released by 0x%x (not glut), waiting queue"%thread.get_ident()
          lock_api.release()
          if _cmd.wait_queue(): # commands waiting to be executed?
             w = 0.0025 # NOTE: affects API perf. for "do" and delayed-exec
             while 1:
-               e = threading.Event() # using this for portable delay
-               e.wait(w)
-               del e
+               a = 0
+               for a in range(1,100):
+                  a = a + 1
+               time.sleep(w)
+#               e = threading.Event() # using this for portable delay
+#               e.wait(w)
+#               del e
                if not _cmd.wait_queue():
                   break
                if w > 0.1: # wait up 0.2 sec max for PyMOL to flush queue
                   if _feedback(fb_module.cmd,fb_mask.debugging):
                      fb_debug.write("Debug: avoiding possible dead-lock?\n")
+#                  print "dead locked as 0x%x"%thread.get_ident()
                   break
                w = w * 2 # wait twice as long each time until flushed
 

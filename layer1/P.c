@@ -69,6 +69,9 @@ PyObject *P_vfont = NULL;
 
 #define P_log_file_str "_log_file"
 
+#define xxxPYMOL_NEW_THREADS
+
+
 unsigned int PyThread_get_thread_ident(void); /* critical functionality */
 
 typedef struct {
@@ -76,7 +79,7 @@ typedef struct {
   PyThreadState *state;
 } SavedThreadRec;
 
-#define MAX_SAVED_THREAD 20
+#define MAX_SAVED_THREAD 10
 
 static SavedThreadRec SavedThread[MAX_SAVED_THREAD];
 
@@ -660,12 +663,12 @@ void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
 void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 {
   PRINTFD(FB_Threads)
-    " PLockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
+    "*PLockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
 
   PBlock();
   PRINTFD(FB_Threads)
-    " PLockAPIAsGlut-DEBUG: acquiring lock as thread 0x%x\n",PyThread_get_thread_ident()
+    "#PLockAPIAsGlut-DEBUG: acquiring lock as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
   while(P_glut_thread_keep_out) {
@@ -673,14 +676,14 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
     /* NOTE: the keep_out variable can only be changed by the thread
        holding the API lock, therefore it is safe even through increment
        isn't atomic. */
+    PRINTFD(FB_Threads)
+      "-PLockAPIAsGlut-DEBUG: glut_thread_keep_out 0x%x\n",PyThread_get_thread_ident()
+      ENDFD;
     
     PXDecRef(PyObject_CallFunction(P_unlock,NULL));
 #ifndef WIN32
     { 
       struct timeval tv;
-      PRINTFD(FB_Threads)
-        " PLockAPIAsGlut-DEBUG: glut_thread_keep_out 0x%x\n",PyThread_get_thread_ident()
-        ENDFD;
 
       PUnblock();
       tv.tv_sec=0;
@@ -696,6 +699,11 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
     PXDecRef(PyObject_CallFunction(P_lock,NULL)); 
   }
   PUnblock(); /* API is now locked, so we can free up Python...*/
+
+  PRINTFD(FB_Threads)
+    "=PLockAPIAsGlut-DEBUG: acquired\n"
+    ENDFD;
+
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
@@ -993,6 +1001,10 @@ void PInit(void)
   PyObject *pymol,*sys,*pcatch;
   int a;
 
+#ifdef PYMOL_NEW_THREADS
+   PyEval_InitThreads();
+#endif
+
 #ifdef WIN32
 #ifdef _PYMOL_MONOLITHIC
 	/* Win32 module build: includes pyopengl, numpy, and sglite */
@@ -1016,6 +1028,7 @@ void PInit(void)
 	initopenglutil_num();
 #endif
 #endif
+
 
   for(a=0;a<MAX_SAVED_THREAD;a++) {
     SavedThread[a].id=-1;
@@ -1313,6 +1326,7 @@ void PBlock(void)
   }
 }
 
+
 int PAutoBlock(void)
 {
 #ifndef _PYMOL_ACTIVEX
@@ -1321,32 +1335,67 @@ int PAutoBlock(void)
 
   id = PyThread_get_thread_ident();
   PRINTFD(FB_Threads)
-	 " PAutoBlock-DEBUG: searching for 0x%x (0x%x, 0x%x, ...)\n",id,
+	 " PAutoBlock-DEBUG: search 0x%x (0x%x, 0x%x, 0x%x)\n",id,
 	 SavedThread[MAX_SAVED_THREAD-1].id,
-	 SavedThread[MAX_SAVED_THREAD-2].id
+	 SavedThread[MAX_SAVED_THREAD-2].id,
+	 SavedThread[MAX_SAVED_THREAD-3].id
 	 ENDFD;
   a = MAX_SAVED_THREAD-1;
   while(a) {
-  if(!((SavedThread+a)->id-id)) { 
-	 /* astoundingly, equality test fails on ALPHA even 
-	  * though the ints are equal. Must be some kind of optimizer bug
-	  * or mis-assumption */
+    if(!((SavedThread+a)->id-id)) { 
+      /* astoundingly, equality test fails on ALPHA even 
+       * though the ints are equal. Must be some kind of optimizer bug
+       * or mis-assumption */
+      
+      PRINTFD(FB_Threads)
+        " PAutoBlock-DEBUG: seeking global lock 0x%x\n",id
+      ENDFD;
 
+#ifdef PYMOL_NEW_THREADS
+
+      PyEval_AcquireLock();
+
+      PRINTFD(FB_Threads)
+        " PAutoBlock-DEBUG: restoring 0x%x\n",id
+      ENDFD;
+      
+      PyThreadState_Swap((SavedThread+a)->state);
+
+#else
+      PRINTFD(FB_Threads)
+        " PAutoBlock-DEBUG: restoring 0x%x\n",id
+      ENDFD;
+      
       PyEval_RestoreThread((SavedThread+a)->state);
+#endif
+      
+      PRINTFD(FB_Threads)
+        " PAutoBlock-DEBUG: restored 0x%x\n",id
+      ENDFD;
+
+      PRINTFD(FB_Threads)
+        " PAutoBlock-DEBUG: clearing 0x%x\n",id
+      ENDFD;
 
       PXDecRef(PyObject_CallFunction(P_lock_c,NULL));
       SavedThread[a].id = -1; 
-		    /* this is the only safe time we can change things */
+      /* this is the only safe time we can change things */
       PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
-
+      
       PRINTFD(FB_Threads)
-        " PAutoBlock-DEBUG: blocked as thread 0x%x\n",PyThread_get_thread_ident()
+        " PAutoBlock-DEBUG: blocked 0x%x (0x%x, 0x%x, 0x%x)\n",PyThread_get_thread_ident(),
+        SavedThread[MAX_SAVED_THREAD-1].id,
+        SavedThread[MAX_SAVED_THREAD-2].id,
+        SavedThread[MAX_SAVED_THREAD-3].id
         ENDFD;
 
       return 1;
     }
     a--;
   }
+  PRINTFD(FB_Threads)
+    " PAutoBlock-DEBUG: 0x%x not found, thus already blocked.\n",PyThread_get_thread_ident()
+    ENDFD;
   return 0;
 #else
   return 1;
@@ -1374,15 +1423,24 @@ void PUnblock(void)
   while(a) {
     if((SavedThread+a)->id == -1 ) {
       (SavedThread+a)->id = PyThread_get_thread_ident();
+#ifdef PYMOL_NEW_THREADS
+      (SavedThread+a)->state = PyThreadState_Get();
+#endif
       break;
     }
     a--;
   }
-  PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
-  (SavedThread+a)->state = PyEval_SaveThread();  
   PRINTFD(FB_Threads)
     " PUnblock-DEBUG: 0x%x stored in slot %d\n",(SavedThread+a)->id,a
     ENDFD;
+  PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
+#ifdef PYMOL_NEW_THREADS
+  PyThreadState_Swap(NULL);
+  PyEval_ReleaseLock();
+#else
+  (SavedThread+a)->state = PyEval_SaveThread();  
+#endif
+  
 #endif
 }
 
