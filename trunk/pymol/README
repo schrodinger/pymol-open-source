@@ -25,7 +25,7 @@ Please see the LICENSE file for additional information.
 PyMOL has the following external dependencies:
   1. OpenGL
   2. GLUT library for OpenGL
-  3. Python (v 1.5.2 or better)
+  3. Python (v 1.5.2 or better) compiled WITH thread support
   4. libpng (can compiled without it, but image saves won't work)
 ----------------------------------------------------------------------
 see INSTALL for installation instructions
