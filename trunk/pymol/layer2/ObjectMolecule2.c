@@ -1778,7 +1778,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           }
           
           AtomInfoAssignParameters(G,ai);
-          ai->color=AtomInfoGetColor(G,ai);
+          AtomInfoAssignColors(G,ai);
 
           PRINTFD(G,FB_ObjectMolecule)
             "%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",

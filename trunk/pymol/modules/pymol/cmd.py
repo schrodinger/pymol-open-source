@@ -869,11 +869,10 @@ DEVELOPMENT TO DO
       global color_sc
       if color_sc == None: # update color shortcuts if needed
          lst = get_color_indices()
+         lst.extend([('default',-1),('auto',-2),('current',-3),('atomic',-4)])
          color_sc = Shortcut(map(lambda x:x[0],lst))
          color_dict = {}
          for a in lst: color_dict[a[0]]=a[1]
-         color_dict['default']=-1
-         color_dict['auto']=-2
 
    def _invalidate_color_sc():
       # WARNING: internal routine, subject to change

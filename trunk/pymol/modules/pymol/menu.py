@@ -168,6 +168,7 @@ def by_chain(s):
            [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
              'util.chainbow("('+s+')")'],                                 
       ]
+
 def mol_color(s):
    return [[ 2, 'Color:'     ,''                               ],
            [ 1, 'by chain' , by_chain(s) ],

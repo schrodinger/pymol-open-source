@@ -24,7 +24,6 @@ from pymol import movie
 mload = movie.load
 mrock = movie.rock
 mroll = movie.roll
-
    
 def sum_formal_charges(selection="(all)",quiet=1):
    pymol.stored._util_sum_fc = 0.0
@@ -140,101 +139,57 @@ def cbss(selection="(all)",helix_color="red",sheet_color="yellow",loop_color="gr
 
 def cbag(selection="(all)",quiet=1):
    s = str(selection)
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("carbon","(elem C and ("+s+"))",quiet=quiet)
 
 def cbac(selection="(all)",quiet=1):
    s = str(selection)
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("cyan","(elem C and ("+s+"))",quiet=quiet)
 
 def cbay(selection="(all)",quiet=1):
    s = str(selection)   
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("yellow","(elem C and ("+s+"))",quiet=quiet)
 
 def cbas(selection="(all)",quiet=1):
    s = str(selection)   
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("salmon","(elem C and ("+s+"))",quiet=quiet)
 
 def cbap(selection="(all)",quiet=1):
    s = str(selection)   
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("purple","(elem C and ("+s+"))",quiet=quiet)
 
 def cbak(selection="(all)",quiet=1):
    s = str(selection)   
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("pink","(elem C and ("+s+"))",quiet=quiet)
 
 def cbam(selection="(all)",quiet=1):
    s = str(selection)   
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("lightmagenta","(elem C and ("+s+"))",quiet=quiet)
 
 def cbaw(selection="(all)",quiet=1):
    s = str(selection)   
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("hydrogen","(elem C and ("+s+"))",quiet=quiet)
 
 def cbab(selection="(all)",quiet=1):
    s = str(selection)   
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("slate","(elem C and ("+s+"))",quiet=quiet)
 
 def cbao(selection="(all)",quiet=1):
    s = str(selection)   
-   cmd.color("magenta","(("+s+"))",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color("brightorange","(elem C and ("+s+"))",quiet=quiet)
 
 def cnc(selection="(all)",quiet=1):
    s = str(selection)
-   cmd.color("magenta","(("+s+") and not elem c)",quiet=quiet)
-   cmd.color("oxygen","(elem O and ("+s+"))",quiet=quiet)
-   cmd.color("nitrogen","(elem N and ("+s+"))",quiet=quiet)
-   cmd.color("sulfur","(elem S and ("+s+"))",quiet=quiet)
-   cmd.color("hydrogen","(elem H and ("+s+"))",quiet=quiet)   
+   cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
 
 def performance(mode):
    mode = int(mode)

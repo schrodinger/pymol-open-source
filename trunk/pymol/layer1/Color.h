@@ -24,7 +24,11 @@ Z* -------------------------------------------------------------------
 
 typedef char ColorName[64];
 
-#define cColorGadgetRamp 1
+#define cColorGadgetRamp  1
+
+#define cColorNewAuto     -2
+#define cColorCurAuto     -3
+#define cColorAtomic      -4
 
 typedef struct {
   ColorName Name;
