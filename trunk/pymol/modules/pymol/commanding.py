@@ -19,7 +19,7 @@ if __name__=='pymol.commanding':
    import re
    import os
    import time
-
+   import threading
    import traceback
 
    import cmd
