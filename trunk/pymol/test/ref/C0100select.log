@@ -90,3 +90,25 @@ PyMOL>select tst, pept w. 1 of pept
 PyMOL>print cmd.select("(none)")
  Selector: no atoms selected.
 0
+PyMOL>del all
+PyMOL>load dat/pept.pdb,mult
+ Executive: object "mult" created.
+PyMOL>load dat/il2.pdb,mult
+ CmdLoad: "dat/il2.pdb" appended into object "mult", state 2.
+PyMOL>frame 1
+PyMOL>select tst,mult and present
+ Selector: selection "tst" defined with 107 atoms.
+PyMOL>frame 2
+PyMOL>select tst,mult and present
+ Selector: selection "tst" defined with 2084 atoms.
+PyMOL>select tst,state 1
+ Selector: selection "tst" defined with 107 atoms.
+PyMOL>select tst,state 2
+ Selector: selection "tst" defined with 2084 atoms.
+PyMOL>hide
+PyMOL>show sph,name c
+PyMOL>select tst,present and vis
+ Selector: selection "tst" defined with 126 atoms.
+PyMOL>frame 1
+PyMOL>select tst,present and vis
+ Selector: selection "tst" defined with 13 atoms.
