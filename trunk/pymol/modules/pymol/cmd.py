@@ -974,7 +974,7 @@ SEE ALSO
       kwhash.append(name)
 
    def write_html_ref(file):
-      lst = cmd.globals()
+      lst = globals()
       f=open(file,'w')
       head = 'H2'
       f.write("<HTML><BODY><H1>Reference</H1>")
@@ -984,7 +984,11 @@ SEE ALSO
          if hasattr(lst[a],'__doc__'):
             if a[0:1]!='_' and (a not in ['string','thread',
                                           'setup_global_locks',
-                                          'real_system','sys','imp','glob'
+                                          'real_system','sys','imp','glob','vl','time',
+                                          'threading','repres','re','python_help','os',
+                                          'fb_debug','fb_dict','ctrl','auto_arg','alt','a',
+                                          'help_only','special','stereo_dict','toggle_dict',
+                                          'palette_dict','types'
                                           ]):
                doc = lst[a].__doc__
                if is_string(doc):

@@ -2258,13 +2258,13 @@ int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
     current=rad_to_deg(get_dihedral3f(v0,v1,v2,v3));
     change=value-current;
     save_state = SceneGetState();                
-    SceneSetFrame(6,state); /* KLUDGE ALERT!
+    SceneSetFrame(7,state); /* KLUDGE ALERT!
                              * necessary because the editor 
                              * can only work on the current state...this
                              * needs to be changed.*/
     EditorSelect(s2,s1,NULL,NULL,false,true);
     EditorTorsion(change);
-    SceneSetFrame(6,save_state);
+    SceneSetFrame(7,save_state);
     PRINTFB(FB_Editor,FB_Actions)
       " SetDihedral: adjusted to %5.3f\n",value
       ENDFB;

@@ -2133,8 +2133,7 @@ void SettingInitGlobal(int alloc)
   SettingSet_f(I,cSetting_ss_strand_phi_target, -129.0F); 
   SettingSet_f(I,cSetting_ss_strand_phi_include, 40.0F); 
   SettingSet_f(I,cSetting_ss_strand_phi_exclude, 100.0F);
+
+  SettingSet_b(I,cSetting_movie_loop, 1);
      
 }
-
-
-

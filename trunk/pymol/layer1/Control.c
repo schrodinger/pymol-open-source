@@ -191,7 +191,7 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
       PLog("cmd.rewind()",cPLog_pym);
 		break;
     case 1:
-      SceneSetFrame(1,-1);
+      SceneSetFrame(5,-1);
       PLog("cmd.back()",cPLog_pym);
       break;
 	 case 2:
@@ -207,7 +207,7 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
         if(mod&cOrthoCTRL) {
           PLog("cmd.rewind()",cPLog_pym);
           PLog("cmd.mplay()",cPLog_pym);
-          SceneSetFrame(0,0);		
+          SceneSetFrame(4,0);		
           MoviePlay(cMoviePlay);
         } else {
           PLog("cmd.mplay()",cPLog_pym);
@@ -221,7 +221,7 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
       }
 		break;
     case 4:
-      SceneSetFrame(1,1);
+      SceneSetFrame(5,1);
       PLog("cmd.forward()",cPLog_pym);
       break;
 	 case 5:
@@ -229,7 +229,7 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
 		  SceneSetFrame(3,0);
         PLog("cmd.middle()",cPLog_pym);
 		} else {
-		  SceneSetFrame(2,0);
+		  SceneSetFrame(6,0);
         PLog("cmd.ending()",cPLog_pym);
 		}
 		break;

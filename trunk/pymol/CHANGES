@@ -179,6 +179,13 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * movie_loop setting
+
+   * changed behavior of movie controls in the internal gui so that
+     the movie commands will run consistently
+
+Changes up to 0.91
+
    * fixed separate cartoon rendering bugs with helices and strands
 
    * added a fast C-based secondary structure assignment algorithm
