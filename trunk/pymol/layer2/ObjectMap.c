@@ -1982,8 +1982,10 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
   float calc_sigma=0.0F;
   float calc_mean=0.0F;
   int normalize;
+  int swap_bytes;
 
   normalize=(int)SettingGet(cSetting_normalize_o_maps);
+  swap_bytes=(int)SettingGet(cSetting_swap_dsn6_bytes);
   if(state<0) state=I->NState;
   if(I->NState<=state) {
     VLACheck(I->State,ObjectMapState,state);
@@ -2134,14 +2136,21 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
     char tmp_char;
     int a;
     int start_swap_at = 0;
+    int stop_swap_at = bytes;
+
     shint_ptr = (short int*)(p+18*2);
     if(*shint_ptr==100) {
       passed_endian_check = true;
       start_swap_at = 512; /* don't byte-swap header */
     }
     
+    if(!swap_bytes) {
+      stop_swap_at = 512;
+    }
+    /* for DSN6, always swap the bricks */
+
     p = BRIXStr + start_swap_at;
-    for( a=start_swap_at; a<bytes; a+=2) {
+    for( a=start_swap_at; a<stop_swap_at; a+=2) {
       tmp_char = *p;
       *p = *(p+1);
       *(p+1) = tmp_char;
@@ -2211,7 +2220,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
 
     
     PRINTFB(FB_Blather,FB_ObjectMap) 
-      " BRIXMapToStr: Prod = %8.3f, Plus = %8.3f\n",prod,plus
+      " BRIXStrToMap: Prod = %8.3f, Plus = %8.3f\n",prod,plus
       ENDFB;
 
     ms->FDim[0]=ms->Max[0]-ms->Min[0]+1;
@@ -2302,11 +2311,12 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       }
 
       if(ok&&normalize) {
+
         if(calc_sigma>R_SMALL8) {
           for(c=0;c<ms->FDim[2];c++) {
             for(b=0;b<ms->FDim[1];b++) {
               for(a=0;a<ms->FDim[0];a++) {
-                F3(ms->Field->data,a,b,c) /= calc_sigma;
+                F3(ms->Field->data,a,b,c) =  (F3(ms->Field->data,a,b,c)-calc_mean)/calc_sigma;
               }
             }
           }
@@ -2326,22 +2336,32 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
       
       PRINTFB(FB_Details,FB_ObjectMap) 
-        " BRIXMapToStr: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+        " BRIXStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
         ENDFB;
 
       if(got_sigma) {
         PRINTFB(FB_Details,FB_ObjectMap) 
-          " BRIXMapToStr: Reported Sigma = %8.3f\n",sigma
+          " BRIXStrToMap: Reported Sigma = %8.3f\n",sigma
           ENDFB;
       }
 
-      PRINTFB(FB_Details,FB_ObjectMap) 
-        " BRIXMapToStr: Calculated Mean = %8.3f, Sigma = %8.3f\n",calc_mean,calc_sigma
+      PRINTFB(FB_Details,FB_ObjectMap)
+        " BRIXStrToMap: Range = %5.6f to %5.6f\n",mind,maxd
         ENDFB;
+
+      PRINTFB(FB_Details,FB_ObjectMap) 
+        " BRIXStrToMap: Calculated Mean = %8.3f, Sigma = %8.3f\n",calc_mean,calc_sigma
+        ENDFB;
+
+      if(normalize) {
+        PRINTFB(FB_Details,FB_ObjectMap) 
+          " BRIXStrToMap: Normalizing...\n"
+          ENDFB;
+      }
 
       ms->Active=true;
       ObjectMapUpdateExtents(I);
-      printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
+
     }
   } else {
     PRINTFB(FB_Errors,FB_ObjectMap) 

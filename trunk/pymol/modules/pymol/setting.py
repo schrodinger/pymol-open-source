@@ -343,6 +343,7 @@ if __name__=='pymol.setting':
       cgo_dot_radius        = 303
       defer_updates         = 304
       normalize_o_maps      = 305
+      swap_dsn6_bytes       = 306
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
