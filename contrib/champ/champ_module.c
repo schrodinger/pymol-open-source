@@ -761,6 +761,7 @@ static PyObject *match_1v1_map(PyObject *self,      PyObject *args)
       targ = PyList_New(pair_cnt);
       j = mat->atom;
       for(b=0;b<pair_cnt;b++) {
+        /*        printf("%2d %2d\n",I->Int2[j].value[0],I->Int2[j].value[1]);*/
         PyList_SetItem(tmpl,b,PyInt_FromLong(I->Atom[I->Int2[j].value[0]].index));
         PyList_SetItem(targ,b,PyInt_FromLong(I->Atom[I->Int2[j].value[1]].index));
         j = I->Int2[j].link;
