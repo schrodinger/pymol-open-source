@@ -126,6 +126,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int fancy_helices;
   int fancy_sheets;
   int refine;
+  float refine_tips;
 
   OOAlloc(RepCartoon);
 
@@ -184,6 +185,7 @@ ENDFD;
   fancy_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_helices);
   fancy_sheets = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_sheets);
   refine = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine);
+  refine_tips = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_tips);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -445,22 +447,53 @@ ENDFD;
               v1 = v;
             else {
               if(last<2) {/* not 5+ turn helix, so just average the tangents */
+                /*                if(v2&&v3) {
+                                  copy3f(v0-3,t0);
+                                  copy3f(v0-6,t1);
+                                  if(dot_product3f(t0,t1)<0.0)
+                                  invert3f(t1);
+                                  add3f(t1,t0,t0);
+                                  if(v4) {
+                                  copy3f(v0-9,t1);
+                                  if(dot_product3f(t0,t1)<0.0)
+                                  invert3f(t1);
+                                  add3f(t1,t0,t0);
+                                  }
+                                  if(v5) {
+                                  copy3f(v0-12,t1);
+                                  if(dot_product3f(t0,t1)<0.0)
+                                  invert3f(t1);
+                                  add3f(t1,t0,t0);
+                                  }
+                                  normalize3f(t0);
+                                  cross_product3f(t0,v0-3,vo-3);
+                                  normalize3f(vo-3);
+                                  cross_product3f(t0,v0-6,vo-6);
+                                  normalize3f(vo-6);
+                                  if(v4) {
+                                  cross_product3f(t0,v0-9,vo-9);
+                                  normalize3f(vo-9);
+                                  }
+                                  if(v5) {
+                                  cross_product3f(t0,v0-12,vo-12);
+                                  normalize3f(vo-12);
+                                  }
+                */
+                zero3f(t0);
                 if(v2&&v3) {
-                  copy3f(v0-3,t0);
-                  copy3f(v0-6,t1);
-                  if(dot_product3f(t0,t1)<0.0)
-                    invert3f(t1);
+                  subtract3f(v2,v,t0);
+                  normalize3f(t0);
+                  subtract3f(v3,v2,t1);
+                  normalize3f(t1);
                   add3f(t1,t0,t0);
                   if(v4) {
-                    copy3f(v0-9,t1);
-                    if(dot_product3f(t0,t1)<0.0)
-                      invert3f(t1);
+                    subtract3f(v4,v3,t1);
+                    normalize3f(t1);
                     add3f(t1,t0,t0);
                   }
                   if(v5) {
-                    copy3f(v0-12,t1);
-                    if(dot_product3f(t0,t1)<0.0)
-                      invert3f(t1);
+                    subtract3f(v5,v4,t1);
+                    normalize3f(t1);
                     add3f(t1,t0,t0);
                   }
                   normalize3f(t0);
@@ -648,6 +681,7 @@ ENDFD;
       }
 
       if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)) {
+
         s = seg;
         v = pv;
         ss = sstype;
@@ -669,7 +703,15 @@ ENDFD;
                 end_flag=1;
             }
             if(end_flag) {
-              
+              if(a)
+                if(first)
+                  if(*(seg+first)==*(seg+first-1))
+                    first--;
+              if(last>0)
+                if(*s==*(s-1))
+                  if(last<(nAt-1)) 
+                    last++;
+
               for(f=1;f<2;f++) {
                 for(c=0;c<3;c++) {
                   for(b=first+f;b<=last-f;b++) { /* iterative averaging */
@@ -712,89 +754,292 @@ ENDFD;
             s++;
           }
         }
-
       }
 
+      /* special handling for flat sheets to avoid messing up loops */
 
-      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)||
-         SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)) {
+      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
 
-		/* recompute differences and normals */
-
-		s=seg;
-		v=pv;
-		v1=dv;
-		v2=nv;
-		d=dl;
-		for(a=0;a<(nAt-1);a++)
-		  {
-			 if(*s==*(s+1))
-				{
-				  subtract3f(v+3,v,v1);
-				  *d = length3f(v1);
-              if(*d>R_SMALL4) {
-                scale3f(v1,1.0/(*d),v2);
-              } else if(a)  {
-                copy3f(v2-3,v2); 
-              } else {
-                zero3f(v2);
+        /* recompute differences and normals */
+        
+        s=seg;
+        v=pv;
+        v1=dv;
+        v2=nv;
+        d=dl;
+        for(a=0;a<(nAt-1);a++)
+          {
+            if(*s==*(s+1))
+              {
+                subtract3f(v+3,v,v1);
+                *d = length3f(v1);
+                if(*d>R_SMALL4) {
+                  scale3f(v1,1.0/(*d),v2);
+                } else if(a)  {
+                  copy3f(v2-3,v2); 
+                } else {
+                  zero3f(v2);
+                }
               }
-				}
-          else {
-            zero3f(v2);	
+            else {
+              zero3f(v2);	
+            }
+            d++;
+            v+=3;
+            v1+=3;
+            v2+=3;
+            s++;
           }
-			 d++;
-			 v+=3;
-			 v1+=3;
-			 v2+=3;
-			 s++;
-		  }
-		
-		/* recompute tangents */
-		
-		s=seg;
-		v=nv;
-		
-		v1=tv;
-		
-		*(v1++)=*(v++); /* first segment */
-		*(v1++)=*(v++);
-		*(v1++)=*(v++);
-		s++;
-		
-		for(a=1;a<(nAt-1);a++)
-		  {
-			 if((*s==*(s-1))&&(*s==*(s+1)))
-				{
-				  add3f(v,(v-3),v1);
-				  normalize3f(v1);			 
-				}
-			 else if(*s==*(s-1))
-				{
-				  *(v1)=*(v-3);  /* end a segment */
-				  *(v1+1)=*(v-2); 
-				  *(v1+2)=*(v-1); 
-				}
-			 else if(*s==*(s+1))
-				{
-				  *(v1)=*(v);   /* new segment */
-				  *(v1+1)=*(v+1); 
-				  *(v1+2)=*(v+2); 
-				}
-			 v+=3;
-			 v1+=3;
-			 s++;
-		  }
-		
-		*(v1++)=*(v-3); /* last segment */
-		*(v1++)=*(v-2);
-		*(v1++)=*(v-1);
+        
+        /* now do something sneaky to straighten the ends of strands... */
 
+        s=seg+1;
+        ss = sstype+1;
+        v2=nv+3; /* normal */
+        v1=dv+3; /* direction vector, for alternate tangents */
+        for(a=1;a<(nAt-1);a++)
+          {
+            if((*ss==2)&&(*s==*(s+1))&&(*s==*(s-1))) { /* sheet in same segment */
+              if((*ss==*(ss+1))&&(*ss!=*(ss-1))) { /* start, bias forwards */
+                scale3f(v2,refine_tips,t0);
+                add3f(t0,v2-3,v2-3);
+                normalize3f(v2-3);
+              } 
+            }
+            v2+=3;
+            s++;
+            ss++;
+          }
 
+        /* compute leading tangents */
+        
+        s=seg;
+        v=nv;
+        
+        v1=tv;
+        
+        *(v1++)=*(v++); /* first segment */
+        *(v1++)=*(v++);
+        *(v1++)=*(v++);
+        s++;
+        
+        for(a=1;a<(nAt-1);a++)
+          {
+            if((*s==*(s-1))&&(*s==*(s+1)))
+              {
+                add3f(v,(v-3),v1);
+                normalize3f(v1);			 
+              }
+            else if(*s==*(s-1))
+              {
+                *(v1)=*(v-3);  /* end a segment */
+                *(v1+1)=*(v-2); 
+                *(v1+2)=*(v-1); 
+              }
+            else if(*s==*(s+1))
+              {
+                *(v1)=*(v);   /* new segment */
+                *(v1+1)=*(v+1); 
+                *(v1+2)=*(v+2); 
+              }
+            v+=3;
+            v1+=3;
+            s++;
+          }
+        
+        *(v1++)=*(v-3); /* last segment */
+        *(v1++)=*(v-2);
+        *(v1++)=*(v-1);
+
+        /* recompute differences and normals */
+        
+        s=seg;
+        v=pv;
+        v1=dv;
+        v2=nv;
+        d=dl;
+        for(a=0;a<(nAt-1);a++)
+          {
+            if(*s==*(s+1))
+              {
+                subtract3f(v+3,v,v1);
+                *d = length3f(v1);
+                if(*d>R_SMALL4) {
+                  scale3f(v1,1.0/(*d),v2);
+                } else if(a)  {
+                  copy3f(v2-3,v2); 
+                } else {
+                  zero3f(v2);
+                }
+              }
+            else {
+              zero3f(v2);	
+            }
+            d++;
+            v+=3;
+            v1+=3;
+            v2+=3;
+            s++;
+          }
+        
+        /* now do something sneaky to straighten the ends of strands... */
+
+        s=seg+1;
+        ss = sstype+1;
+        v2=nv+3; /* normal */
+        v1=dv+3; /* direction vector, for alternate tangents */
+        
+        for(a=1;a<(nAt-1);a++)
+          {
+            if((*ss==2)&&(*s==*(s+1))&&(*s==*(s-1))) { /* sheet in same segment */
+              if((*ss!=*(ss+1))&&(*ss==*(ss-1))) { /* end, bias backwards */
+                scale3f(v2-3,refine_tips,t0);
+                add3f(t0,v2,v2);
+                normalize3f(v2);
+              }
+            }
+            v2+=3;
+            s++;
+            ss++;
+          }
+
+        /* compute trailing tangents */
+        
+        s=seg;
+        v=nv;
+        
+        v1=dv;
+        
+        *(v1++)=*(v++); /* first segment */
+        *(v1++)=*(v++);
+        *(v1++)=*(v++);
+        s++;
+        
+        for(a=1;a<(nAt-1);a++)
+          {
+            if((*s==*(s-1))&&(*s==*(s+1)))
+              {
+                add3f(v,(v-3),v1);
+                normalize3f(v1);			 
+              }
+            else if(*s==*(s-1))
+              {
+                *(v1)=*(v-3);  /* end a segment */
+                *(v1+1)=*(v-2); 
+                *(v1+2)=*(v-1); 
+              }
+            else if(*s==*(s+1))
+              {
+                *(v1)=*(v);   /* new segment */
+                *(v1+1)=*(v+1); 
+                *(v1+2)=*(v+2); 
+              }
+            v+=3;
+            v1+=3;
+            s++;
+          }
+        
+        *(v1++)=*(v-3); /* last segment */
+        *(v1++)=*(v-2);
+        *(v1++)=*(v-1);
+
+      } else if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)) {
+        
+        /* recompute differences and normals */
+        
+        s=seg;
+        v=pv;
+        v1=dv;
+        v2=nv;
+        d=dl;
+        for(a=0;a<(nAt-1);a++)
+          {
+            if(*s==*(s+1))
+              {
+                subtract3f(v+3,v,v1);
+                *d = length3f(v1);
+                if(*d>R_SMALL4) {
+                  scale3f(v1,1.0/(*d),v2);
+                } else if(a)  {
+                  copy3f(v2-3,v2); 
+                } else {
+                  zero3f(v2);
+                }
+              }
+            else {
+              zero3f(v2);	
+            }
+            d++;
+            v+=3;
+            v1+=3;
+            v2+=3;
+            s++;
+          }
+        
+        /* recompute tangents */
+        
+        s=seg;
+        v=nv;
+        
+        v1=tv;
+        
+        *(v1++)=*(v++); /* first segment */
+        *(v1++)=*(v++);
+        *(v1++)=*(v++);
+        s++;
+        
+        for(a=1;a<(nAt-1);a++)
+          {
+            if((*s==*(s-1))&&(*s==*(s+1)))
+              {
+                add3f(v,(v-3),v1);
+                normalize3f(v1);			 
+              }
+            else if(*s==*(s-1))
+              {
+                *(v1)=*(v-3);  /* end a segment */
+                *(v1+1)=*(v-2); 
+                *(v1+2)=*(v-1); 
+              }
+            else if(*s==*(s+1))
+              {
+                *(v1)=*(v);   /* new segment */
+                *(v1+1)=*(v+1); 
+                *(v1+2)=*(v+2); 
+              }
+            v+=3;
+            v1+=3;
+            s++;
+          }
+        
+        *(v1++)=*(v-3); /* last segment */
+        *(v1++)=*(v-2);
+        *(v1++)=*(v-1);
+        
+        v1 = tv;
+        v2 = dv;
+        for(a=0;a<nAt;a++) { /* copy tangents to dv
+                              * tv will be leading tangents
+                              * dv will be trailing tangents
+                              */
+          *(v2++)=*(v1++);
+          *(v2++)=*(v1++);
+          *(v2++)=*(v1++);
+        }
+      } else {
+        v1 = tv;
+        v2 = dv;
+        for(a=0;a<nAt;a++) { /* copy tangents to dv
+                              * tv will be leading tangents
+                              * dv will be trailing tangents
+                              */
+          *(v2++)=*(v1++);
+          *(v2++)=*(v1++);
+          *(v2++)=*(v1++);
+        }
       }
     }
-
-
+  
   I->std = CGONew();
 
   /* debugging output */
@@ -847,9 +1092,8 @@ ENDFD;
     vn = ex->n;
     
 	 v1=pv; /* points */
-	 v2=tv; /* tangents */
-	 v3=dv; /* direction vector */
-    v4=nv; /* normal vector */
+	 v2=tv; /* leading tangents */
+	 v3=dv; /* trailing tangents */
     vo=pvo;
     d = dl;
 	 s=seg;
@@ -937,13 +1181,13 @@ ENDFD;
                   f4 = dev*f2*f3; /* displacement magnitude */
 
                   *(v++)=f1*v1[0]+f0*v1[3]+
-                    f4*( f3*v2[0]-f2*v2[3] );
+                    f4*( f3*v2[0]-f2*v3[3] );
 
                   *(v++)=f1*v1[1]+f0*v1[4]+
-                    f4*( f3*v2[1]-f2*v2[4] );
+                    f4*( f3*v2[1]-f2*v3[4] );
 
                   *(v++)=f1*v1[2]+f0*v1[5]+
-                    f4*( f3*v2[2]-f2*v2[5] );
+                    f4*( f3*v2[2]-f2*v3[5] );
 
                   /* compute orientation vector at point, and store
                    in second position of axes */
@@ -982,16 +1226,16 @@ ENDFD;
                 f4 = dev*f2*f3; /* displacement magnitude */
                 
                 *(v++)=f1*v1[0]+f0*v1[3]+
-                  f4*( f3*v2[0]-f2*v2[3] );
+                  f4*( f3*v2[0]-f2*v3[3] );
                 
                 *(v++)=f1*v1[1]+f0*v1[4]+
-                  f4*( f3*v2[1]-f2*v2[4] );
+                  f4*( f3*v2[1]-f2*v3[4] );
                 
                 *(v++)=f1*v1[2]+f0*v1[5]+
-                  f4*( f3*v2[2]-f2*v2[5] );
+                  f4*( f3*v2[2]-f2*v3[5] );
                 
-                remove_component3f(vo,v2,o0);
-                remove_component3f(vo+3,v2,o0+3);
+                /*                remove_component3f(vo,v2,o0);
+                                  remove_component3f(vo+3,v2,o0+3);*/
                 
                 vn+=3;
                 *(vn++)=f1*(vo[0]*f2)+f0*(vo[3]*f3);
@@ -1040,7 +1284,6 @@ ENDFD;
 		  v1+=3;
 		  v2+=3;
 		  v3+=3;
-        v4+=3;
         vo+=3;
         d++;
 		  atp+=1;

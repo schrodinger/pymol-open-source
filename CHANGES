@@ -33,6 +33,10 @@ Ongoing Goals
    * draw all solid representations before drawing lines
      in order to improve antialiasing.
 
+Changes up to 0.61
+
+   * move cartoon ribbons improvements -- flat fancy sheets now VERY nice.
+
 Changes up to 0.60
 
    * third generation fancy helices complete -- revamped interpolation code.

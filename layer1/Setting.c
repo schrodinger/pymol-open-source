@@ -534,6 +534,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_dumbbell_radius:
   case cSetting_cartoon_fancy_helices:
   case cSetting_cartoon_fancy_sheets:
+  case cSetting_cartoon_refine_tips:
   case cSetting_cartoon_throw:
   case cSetting_cartoon_debug:
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
@@ -995,6 +996,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_cartoon_throw, 1.35);  
 
   SettingSet_f(I,cSetting_cartoon_refine, 5);  
+
+  SettingSet_f(I,cSetting_cartoon_refine_tips, 10);  
 
 
 }
