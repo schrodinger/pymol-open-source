@@ -516,7 +516,7 @@ typedef struct _CPyMOL {
   ov_word lex_wildcard;
   ov_word lex_atom_name_wildcard;
   ov_word lex_ignore_case;
-
+  ov_word lex_presentation_auto_quit;
 } _CPyMOL;
 
 static int status_ok(int ok) {
@@ -1028,6 +1028,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(wildcard,412);
   LEX_SETTING(atom_name_wildcard,413);
   LEX_SETTING(ignore_case,414);
+  LEX_SETTING(presentation_auto_quit,415);
 
   return_OVstatus_SUCCESS;
 }
@@ -1548,7 +1549,7 @@ void PyMOL_Draw(CPyMOL *I)
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();*/
-         
+
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_AUTO_NORMAL);
     glDisable(GL_BLEND);

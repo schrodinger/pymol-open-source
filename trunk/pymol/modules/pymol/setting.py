@@ -446,7 +446,8 @@ if __name__=='pymol.setting':
       wildcard                  = (412, '')
       atom_name_wildcard        = (413, '')
       ignore_case               = (414, '')
-      
+      presentation_auto_quit    = (415, '')
+
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

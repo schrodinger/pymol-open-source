@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * presentation mode now auto-quits after blank screen on either end.
+
+   * fixed (or rather worked around) two bugs with nVidia on Mac
+
    * wildcards for the main selection operations (alt, name, resi, resn,
      chain, segi, text_type) 
 

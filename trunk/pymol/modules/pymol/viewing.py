@@ -45,7 +45,8 @@ if __name__=='pymol.viewing':
    scene_dict_sc = Shortcut([])
    scene_order = []
    scene_counter = 1
-   
+   scene_quit_on_action = ''
+
    def zoom(selection="all",buffer=0.0,state=0,complete=0,animate=0):
       '''
 DESCRIPTION
@@ -990,7 +991,8 @@ DEVELOPMENT TO DO
       
       '''
       global scene_dict,scene_dict_sc,scene_order
-      
+      global scene_quit_on_action
+
       try:
          view = int(view)
          rep = int(rep)
@@ -1183,18 +1185,24 @@ DEVELOPMENT TO DO
                else:
                   ix = 0
                   animate = 0
+                  if ((scene_quit_on_action==action) and
+                      (setting.get("presentation")=="on") and 
+                      (setting.get("presentation_auto_quit")=="on")):
+                     cmd.quit()
                if ix<len(lst):
                   scene_name = lst[ix]
                   cmd.set('scene_current_name', scene_name, quiet=1)
                   scene(scene_name,'recall',animate=animate)
                elif setting.get("scene_loop")=="on": # loop back to the beginning
-                  print setting.get("scene_loop")
                   if len(lst):
                      scene_name = lst[0]
                      cmd.set('scene_current_name', scene_name, quiet=1)
                      scene(scene_name,'recall',animate=animate)
                else: # otherwise put up blank screen
                   cmd.set('scene_current_name','',quiet=1)
+                  if ((setting.get("presentation")=="on") and 
+                      (setting.get("presentation_auto_quit")=="on")):
+                     scene_quit_on_action = action
                   if len(lst):
                      cmd.disable() # just hide everything
                      cmd.wizard()
@@ -1207,6 +1215,10 @@ DEVELOPMENT TO DO
                else:
                   ix = len(lst)-1
                   animate = 0
+                  if ((scene_quit_on_action==action) and
+                      (setting.get("presentation")=="on") and 
+                      (setting.get("presentation_auto_quit")=="on")):
+                     cmd.quit()
                if ix>=0:
                   scene_name = lst[ix]
                   scene(scene_name,'recall',animate=animate)
@@ -1218,6 +1230,9 @@ DEVELOPMENT TO DO
                      scene(scene_name,'recall',animate=animate)
                else: # otherwise put up blank screen
                   cmd.set('scene_current_name','',quiet=1)
+                  if ((setting.get("presentation")=="on") and 
+                      (setting.get("presentation_auto_quit")=="on")):
+                     scene_quit_on_action = action
                   if len(lst):
                      cmd.disable() # just hide everything
                      cmd.wizard()

@@ -5880,7 +5880,7 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
       SceneUpdate(G);
 
     OrthoDoDraw(G);
-    
+
     PyMOL_NeedSwap(G->PyMOL);
   }
 

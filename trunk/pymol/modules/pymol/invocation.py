@@ -174,7 +174,7 @@ if __name__=='pymol.invocation':
                if a[2:3] == "6": 
                   if not once_dict.has_key('A6'):
                      once_dict['A6'] = 1
-                     new_args = ["-QxiIeCUFP",
+                     new_args = ["-qxieICUPF",
                         ]
                # ===============================================
                new_args.reverse()
