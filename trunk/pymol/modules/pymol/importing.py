@@ -261,7 +261,7 @@ SEE ALSO
       if ftype == loadable.cex:
          ftype = -1
          if m4x!=None:
-            m4x.readCEX(fname,str(oname)) # state, format, discrete?
+            m4x.readcex(fname,str(oname)) # state, format, discrete?
          else:
             print " Error: CEX format not currently supported"
             raise QuietException

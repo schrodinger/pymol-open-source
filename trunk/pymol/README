@@ -18,6 +18,11 @@ PyMOL has the following external dependencies:
 ----------------------------------------------------------------------
 Specific Acknowledgments:
 
+* Thanks to Dave Weininger, Scott Dixon, Roger Sayle, Andrew Dalke, 
+  Anthony Nichols, Dick Cramer, and David Miller, as well as rest of 
+  the Daylight and OpenEye teams for thoughtful discussions on PyMOL
+  and open-source software during my 2001 pilgrimage to Sante Fe, NM.
+
 * Thanks to Ralf Grosse-Kunstleve for his contribution of the "sglite"
   space group and symmetry handling module.
 
@@ -56,13 +61,17 @@ The PyMOL Team:
 
       Warren L. DeLano
 
-   Major Authors and Contributors (1000+ lines of code):
+   Major Authors (5000+ lines of code):
 
       Ralf W. Grosse-Kunstleve (SGLite Module)
    
-   Other Authors and Contributors: These are the people who have gone
-      out of their way to help the project with their ideas, actions, 
-      advice, information, support, or code.
+   Minor Authors (500+ lines of code):
+
+      Scott Dixon (Metaphorics CEX support)
+
+   Other Contributors: These are the people who have gone out of
+      their way to help the project with their ideas, actions, 
+      advice, information, support, or code snippets.
       
       Daan van Aalten
       Paul Adams 
@@ -80,14 +89,14 @@ The PyMOL Team:
       Huub van Dam
       Byron DeLaBarre
       Bill DeGrado
-      Scott Dixon 
       Thomas Earnest
       Nathaniel Echols
       Tim Fenn
       Thierry Fischmann
-      Jonanthan Greene
+      Jonathan Greene
       Peter Haebel 
       Uwe Hoffmann
+      Carly Huitema
       Andrey Khavryuchenko
       David Konerding
       Greg Landrum
