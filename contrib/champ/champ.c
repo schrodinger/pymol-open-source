@@ -26,21 +26,20 @@ Z* -------------------------------------------------------------------
 #include"champ.h"
 #include"strblock.h"
 
+
 #define _MATCHDEBUG
 #define _MATCHDEBUG2
 #define _RINGDEBUG
+#define _AROMDEBUG
 
 char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd);
 char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd);
 char *ChampParseStringAtom(CChamp *I,char *c,int atom,int len);
 int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom);
 
-void ChampPatDump(CChamp *I,int index);
 void ChampAtomDump(CChamp *I,int index);
 void ChampAtomFlagDump(CChamp *I,int index);
 
-int ChampAtomToString(CChamp *I,int index,char *buf);
-int ChampBondToString(CChamp *I,int index,char *buf);
 int ChampAddBondToAtom(CChamp *I,int atom_index,int bond_index);
 
 int ChampMatch(CChamp *I,int template,int target,
@@ -56,12 +55,15 @@ void ChampUniqueListFree(CChamp *I,int unique_list);
 void ChampMatchDump(CChamp *I,int match_idx);
 void ChampMatchFree(CChamp *I,int match_idx);
 void ChampMatchFreeChain(CChamp *I,int match_idx);
-void ChampPatReindex(CChamp *I,int index);
 void ChampCountRings(CChamp *I,int index);
 void ChampPrepareTarget(CChamp *I,int index);
 void ChampPreparePattern(CChamp *I,int index);
+char *ChampParseBlockAtom(CChamp *I,char *c,int atom,int mask,int len,int not_flag);
+void ChampCountBondsEtc(CChamp *I,int index);
+void ChampCheckCharge(CChamp *I,int index);
 
-static int ring_mask[12] = { 
+
+static int num_to_ring[12] = { 
   0,
   0,
   0,
@@ -75,6 +77,30 @@ static int ring_mask[12] = {
   0,
   0,
   0,};
+
+static int num_to_valence[9] = {
+  cH_0Valence,
+  cH_1Valence,
+  cH_2Valence,
+  cH_3Valence,
+  cH_4Valence,
+  cH_5Valence,
+  cH_6Valence,
+  cH_7Valence,
+  cH_8Valence };
+
+static int num_to_degree[9] = {
+  cH_0Bond,
+  cH_1Bond,
+  cH_2Bond,
+  cH_3Bond,
+  cH_4Bond,
+  cH_5Bond,
+  cH_6Bond,
+  cH_7Bond,
+  cH_8Bond
+};
+
 
 #ifdef _HAPPY_UT
 
@@ -408,13 +434,16 @@ static int unrelated_lineage(CChamp *I,int index,int *lin_mask)
   return result;
 }
 
+
 void ChampCountRings(CChamp *I,int index)
 {
   ListPat *pat;
-  ListBond *bd;
-  ListAtom *at,*at0,*at1,*at2;
-  int a,a0,a1,ai,bi,ai0,ai1,ai2,a2,bd_a0,bd_a1;
-  int i2,i0,i1;
+  ListBond *bd,*bd0,*bd1,*bd2,*bd3;
+  ListAtom *at,*at0,*at1,*at2,*at3,*at4;
+  int a,a0,a1,ai,bi,ai0,ai1,ai2,a2,bd_a0,bd_a1,ai3,ai4;
+  int i2,i0,i1,i3;
+  int bi0,bi1,bi2,bi3;
+  
   int ni1;
   int n_atom = 0;
   int ring_size;
@@ -446,6 +475,10 @@ void ChampCountRings(CChamp *I,int index)
     ai = pat->atom;
     while(ai) { /* load array and provide back-reference in mark_targ */
       at = I->Atom + ai;
+
+      at->cycle = 0; /* initialize */
+      at->class = 0;
+
       atom[a] = at;
       atom_idx[a] = ai;
       at->mark_targ = a; /* used for back-link */
@@ -468,11 +501,23 @@ void ChampCountRings(CChamp *I,int index)
     bi = pat->bond;
     while(bi) {
       bd = I->Bond + bi;
-      ai0 = bd->atom[0]; /* global index */
-      a0 = I->Atom[ai0].mark_targ; /* local */
-      ai1 = bd->atom[1];
-      a1 = I->Atom[ai1].mark_targ;
       
+      bd->cycle = 0; /* initialize */
+      bd->class = 0;
+      
+      ai0 = bd->atom[0]; /* global index */
+      at0 = I->Atom+ai0;
+      a0 = at0->mark_targ; /* local */
+      ai1 = bd->atom[1];
+      at1 = I->Atom+ai1;
+      a1 = at1->mark_targ;
+
+      if((bd->order)&(cH_Double|cH_Triple)) { /* record bond & atoms with Pi bonds */
+        at0->class |= cH_Pi;
+        at1->class |= cH_Pi;
+        bd->class |= cH_Pi;
+      }
+
       bonds[a0] = ListElemPushInt(&I->Int,bonds[a0],bi); /* enter this bond */
       bonds[a1] = ListElemPushInt(&I->Int,bonds[a1],bi);
       neighbors[a0] = ListElemPushInt(&I->Int,neighbors[a0],a1); /* cross-enter neighbors */
@@ -495,7 +540,7 @@ void ChampCountRings(CChamp *I,int index)
     lin_mask_vla = (int**)VLAMalloc(100,lin_mask_size,5,1); /* auto-zero */
 
     /* okay, repeat the ring finding process for each atom in the molecule 
-       (optimize later to exclude dead-ends */
+       (optimize later to exclude dead-ends) */
     
     for(a=0;a<n_atom;a++) {
       int expand;
@@ -583,8 +628,8 @@ void ChampCountRings(CChamp *I,int index)
                                  &at1->first_targ,
                                  (int*)(((char*)lin_mask_vla)+(at1->first_tmpl*lin_mask_size)));
                   /* set the atom bits appropriately */
-                  at0->cycle|=ring_mask[ring_size];
-                  at1->cycle|=ring_mask[ring_size];
+                  at0->cycle|=num_to_ring[ring_size];
+                  at1->cycle|=num_to_ring[ring_size];
                   i0 = bonds[a0];
                   ai0 = atom_idx[a0];
                   ai1 = atom_idx[a1];
@@ -595,7 +640,7 @@ void ChampCountRings(CChamp *I,int index)
                     bd_a1=bd->atom[1];
                     if(((bd_a0==ai0)&&(bd_a1==ai1))||
                        ((bd_a1==ai0)&&(bd_a0==ai1)))
-                      bd->cycle|=ring_mask[ring_size];
+                      bd->cycle|=num_to_ring[ring_size];
                   }
                 }
             }
@@ -632,9 +677,9 @@ void ChampCountRings(CChamp *I,int index)
 #ifdef RINGDEBUG
                   printf(" ring: #### found even cycle %d %d %d\n",ring_size,i0,i2);
 #endif
-                  at0->cycle|=ring_mask[ring_size];
-                  at1->cycle|=ring_mask[ring_size];
-                  at2->cycle|=ring_mask[ring_size];
+                  at0->cycle|=num_to_ring[ring_size];
+                  at1->cycle|=num_to_ring[ring_size];
+                  at2->cycle|=num_to_ring[ring_size];
 
                   i1 = bonds[a1];
                   ai0 = atom_idx[a0];
@@ -649,7 +694,7 @@ void ChampCountRings(CChamp *I,int index)
                        ((bd_a1==ai0)&&(bd_a0==ai1))||
                        ((bd_a0==ai2)&&(bd_a1==ai1))||
                        ((bd_a1==ai2)&&(bd_a0==ai1)))
-                      bd->cycle|=ring_mask[ring_size];
+                      bd->cycle|=num_to_ring[ring_size];
                   }
 
                   /* we have a cycle of size sz*2 */
@@ -739,6 +784,167 @@ void ChampCountRings(CChamp *I,int index)
       }
     }
 
+#ifdef RINGDEBUG
+    for(a=0;a<n_atom;a++) {
+      i1 = bonds[a];
+      while(i1) { /* bonds of atom 1 */
+        i1 = ListElemGetInt(I->Int,i1,&bi1);
+        bd1 = I->Bond + bi1;
+        ai1 = bd1->atom[0];
+        ai2 = bd1->atom[1];
+        at1 = I->Atom + ai1;
+        at2 = I->Atom + ai2;
+        printf("%d %d %x\n",at1->mark_targ+1,at2->mark_targ+1,bd1->cycle);
+      }
+    }
+#endif
+
+    /* now determine which atoms/bonds are aromatic */
+
+    /* the following substructures are considered "aromatic" if they occur in rings of 5 or 6
+     * *=*-*=*
+     * *=*-*-*=*
+     * NOTE  this is not a chemically accurate definition of aromaticity, just one
+     * that is easy to program, and which covers most common occurences -- an 80-90% soln.
+     *
+     * I'll figure out something better later on...
+     */
+        
+    ai0 = pat->atom;
+    while(ai0) { /* cycle through each atom */
+      
+      at0 = I->Atom + ai0;
+      if(at0->cycle&(cH_Ring4|cH_Ring5|cH_Ring6)) {
+        /* atom 0 is cyclic */
+        i0 = bonds[at0->mark_targ];
+        while(i0) { /* bonds of atom 0 */
+          i0 = ListElemGetInt(I->Int,i0,&bi0);
+          bd0 = I->Bond + bi0;
+          if((bd0->order==cH_Double)&&(bd0->cycle&(cH_Ring4|cH_Ring5|cH_Ring6))) {
+            /* bond 0 is double */
+
+            ai1 = bd0->atom[0];
+            if(ai0==ai1) ai1 = bd0->atom[1];
+            at1 = I->Atom + ai1;
+
+            if(at1->cycle&(cH_Ring4|cH_Ring5|cH_Ring6)) {
+              /* atom 1 is cyclic */
+              
+              i1 = bonds[at1->mark_targ];
+              while(i1) { /* bonds of atom 1 */
+                i1 = ListElemGetInt(I->Int,i1,&bi1);
+                bd1 = I->Bond + bi1;
+                if((bd1->order==cH_Single)&&(bd1->cycle&(cH_Ring4|cH_Ring5|cH_Ring6))) {
+                  /* bond 1 is single */
+
+                  ai2 = bd1->atom[0];
+                  if(ai1==ai2) ai2 = bd1->atom[1];
+                  at2 = I->Atom + ai2;
+
+                  if(at2->cycle&(cH_Ring4|cH_Ring5|cH_Ring6)) {
+                    /* atom 2 is cyclic */
+
+                    i2 = bonds[at2->mark_targ];
+                    while(i2) {
+                      i2 = ListElemGetInt(I->Int,i2,&bi2);                        
+                      bd2 = I->Bond + bi2;
+                      if((bd2->order==cH_Double)&&(bd2->cycle&(cH_Ring4|cH_Ring5|cH_Ring6))) {
+                        /* bond 2 is double */
+                        
+                        ai3 = bd2->atom[0];
+                        if(ai2==ai3) ai3 = bd2->atom[1];
+                        at3 = I->Atom + ai3;
+                        
+                        if(at3->cycle&(cH_Ring4|cH_Ring5|cH_Ring6)) {
+                          /* atom 3 is cyclic, therefore system is aromatic */
+                          
+                          at3->class|=cH_Aromatic;
+                          at2->class|=cH_Aromatic;
+                          at1->class|=cH_Aromatic;
+                          at0->class|=cH_Aromatic;
+                          bd2->class|=cH_Aromatic;
+                          bd1->class|=cH_Aromatic;
+                          bd0->class|=cH_Aromatic;
+                        }
+                      }
+                    }
+                    
+                    i2 = bonds[at2->mark_targ];
+                    while(i2) {
+                      i2 = ListElemGetInt(I->Int,i2,&bi2);                        
+                      bd2 = I->Bond + bi2;
+                      if((bd2->order==cH_Single)&&(bd2->cycle&(cH_Ring4|cH_Ring5|cH_Ring6))) {
+                        /* bond 2 is single */
+                        
+                        ai3 = bd2->atom[0];
+                        if(ai2==ai3) ai3 = bd2->atom[1];
+                        
+                        if(ai3!=ai1) {
+                          /* avoid backtracking... */
+                          
+                          at3 = I->Atom + ai3;
+                          
+                          if(at3->cycle&(cH_Ring4|cH_Ring5|cH_Ring6)) {
+                            /* atom 3 is cyclic */
+
+                            i3 = bonds[at3->mark_targ];
+                            while(i3) {
+                              i3 = ListElemGetInt(I->Int,i3,&bi3);                        
+                              bd3 = I->Bond + bi3;
+                              if((bd3->order==cH_Double)&&(bd3->cycle&(cH_Ring4|cH_Ring5|cH_Ring6))) {
+                                /* bond 3 is double */
+                                
+                                ai4 = bd3->atom[0];
+                                if(ai3==ai4) ai4 = bd3->atom[1];
+                                at4 = I->Atom + ai4;
+                                
+                                if(at4->cycle&(cH_Ring4|cH_Ring5|cH_Ring6)) {
+                                  
+                                  /* atom 4 is cyclic, therefore system is aromatic */
+                                  
+                                  at4->class|=cH_Aromatic;                              
+                                  at3->class|=cH_Aromatic;
+                                  at2->class|=cH_Aromatic;
+                                  at1->class|=cH_Aromatic;
+                                  at0->class|=cH_Aromatic;
+                                  bd3->class|=cH_Aromatic;
+                                  bd2->class|=cH_Aromatic;
+                                  bd1->class|=cH_Aromatic;
+                                  bd0->class|=cH_Aromatic;
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      ai0 = at0->link;
+    }
+
+    for(a=0;a<n_atom;a++) { /* default conclusions */
+      at = atom[a];
+      if(!at->cycle)
+        at->cycle=cH_Acyclic;
+      if(!(at->class&(cH_Aromatic|cH_Aliphatic)))
+        at->class=cH_Aliphatic;
+    }
+
+    bi = pat->bond;
+    while(bi) {
+      bd = I->Bond + bi;
+      if(!bd->cycle)
+        bd->cycle=cH_Acyclic;
+      if(!(bd->class&(cH_Aromatic|cH_Aliphatic)))
+        bd->class=cH_Aliphatic;
+      bi = bd->link;
+    }
     /* now, clean up our efficient bond and neighbor lists */
 
     for(a=0;a<n_atom;a++) {
@@ -760,6 +966,139 @@ void ChampCountRings(CChamp *I,int index)
 #endif
 }
 
+void ChampCountBondsEtc(CChamp *I,int index)
+{
+
+  ListPat *pat;
+  ListAtom *at,*at0,*at1;
+  int ai,ai0,ai1,bi;
+  ListBond *bd;
+  int val_adj;
+
+  pat = I->Pat + index;
+
+  /* initialize */
+
+  ai = pat->atom;
+  while(ai) { 
+    at = I->Atom + ai;
+    at->valence=0;
+    at->degree=0;
+    ai = at->link;
+  }
+
+  /* count */
+  bi = pat->bond;
+  while(bi) {
+    bd = I->Bond + bi;
+    
+    ai0 = bd->atom[0];
+    ai1 = bd->atom[1];
+    at0 = I->Atom + ai0;
+    at1 = I->Atom + ai1;
+    at0->degree++;
+    at1->degree++;
+    switch(bd->order) {
+    case cH_Single: 
+      at0->valence++; 
+      at1->valence++; 
+      break;
+    case cH_Double:
+      at0->valence+=2;
+      at1->valence+=2;
+      break;
+    case cH_Triple: 
+      at0->valence+=3; 
+      at1->valence+=3; 
+      break;
+    }
+    bi = bd->link;
+  }
+ 
+  /* convert to bit masks */
+  ai = pat->atom;
+  while(ai) { 
+    at = I->Atom + ai;
+    at->degree = num_to_degree[at->degree];
+
+    if(at->imp_hydro_flag) {
+      switch(at->charge) { /* adjust effective valence w.r.t charge */
+      case cH_Neutral: val_adj=0; break;
+      default: val_adj=0; break;
+      case cH_Cation: val_adj=-1; break;
+      case cH_Dication: val_adj=-2; break;
+      case cH_Anion: val_adj=1; break;
+      case cH_Dianion: val_adj=2; break;
+      }
+      val_adj += at->valence;
+      at->imp_hydro=0;
+      
+      switch(at->atom) { /* now compute implicit hydrogens */
+      case cH_B: 
+        if(val_adj<2) 
+          at->imp_hydro = 2 - val_adj;
+        break;
+      case cH_C: 
+        if(val_adj<4)
+          at->imp_hydro = 4 - val_adj;
+        break;
+      case cH_N: 
+        if(val_adj<3)
+          at->imp_hydro = 3 - val_adj;
+        else if(val_adj<5)
+          at->imp_hydro = 5 - val_adj;
+        break;
+      case cH_O: 
+        if(val_adj<2)
+          at->imp_hydro = 2 - val_adj;
+        break;
+      case cH_S: 
+        if(val_adj<2)
+          at->imp_hydro = 2 - val_adj;
+        else if(val_adj<4)
+          at->imp_hydro = 4 - val_adj;
+        else if(val_adj<6)
+          at->imp_hydro = 6 - val_adj;
+        break;
+      case cH_P:
+        if(val_adj<3)
+          at->imp_hydro = 3 - val_adj;
+        else if(val_adj<5)
+          at->imp_hydro = 5 - val_adj;
+        break;
+      case cH_F:
+      case cH_Cl:
+      case cH_Br:
+      case cH_I:
+          if(val_adj<1)
+            at->imp_hydro = 1 - val_adj;
+          break;
+      }
+      at->valence=at->imp_hydro; /* compute total valence */
+    }
+    at->valence=num_to_valence[at->valence];
+    ai = at->link;
+  }
+}
+
+void ChampCheckCharge(CChamp *I,int index)
+{
+
+  ListPat *pat;
+  ListAtom *at;
+  int ai;
+
+  pat = I->Pat + index;
+
+  ai = pat->atom;
+  while(ai) { 
+    at = I->Atom + ai;
+    if(!at->charge) {
+      at->charge=cH_Neutral;
+    }
+    ai = at->link;
+  }
+}
 
 void ChampPrepareTarget(CChamp *I,int index)
 {
@@ -770,7 +1109,8 @@ void ChampPrepareTarget(CChamp *I,int index)
     pat->target_prep=1;
 
     ChampCountRings(I,index);
-    printf("index %d\n",index);
+    ChampCountBondsEtc(I,index);
+    ChampCheckCharge(I,index);
     if(pat->unique_atom) 
       ChampUniqueListFree(I,pat->unique_atom);
     pat->unique_atom = ChampUniqueListNew(I,pat->atom,0);
@@ -966,6 +1306,7 @@ int ChampModelToPat(CChamp *I,PyObject *model)
         at->link = last_atom;
         last_atom = cur_atom;
         at->chempy_atom = atom;
+        Py_INCREF(at->chempy_atom);
 
         atom_index[a] = cur_atom; /* for bonds */
 
@@ -1068,6 +1409,42 @@ int ChampModelToPat(CChamp *I,PyObject *model)
             ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1,false);
             std_flag = true;
             break;      
+          case 'E':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_E,1,false);
+            std_flag = true;
+            break;      
+          case 'G':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_G,1,false);
+            std_flag = true;
+            break;      
+          case 'J':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_J,1,false);
+            std_flag = true;
+            break;      
+          case 'L':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_L,1,false);
+            std_flag = true;
+            break;      
+          case 'M':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_M,1,false);
+            std_flag = true;
+            break;      
+          case 'Q':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_Q,1,false);
+            std_flag = true;
+            break;      
+          case 'T':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_T,1,false);
+            std_flag = true;
+            break;      
+          case 'X':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_X,1,false);
+            std_flag = true;
+            break;      
+          case 'Z':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_Z,1,false);
+            std_flag = true;
+            break;      
           }
           if(!std_flag) {
             ChampParseStringAtom(I,c,cur_atom,strlen(c));
@@ -1097,7 +1474,9 @@ int ChampModelToPat(CChamp *I,PyObject *model)
         bd = I->Bond + cur_bond;
         bd->link = last_bond;
         last_bond = cur_bond;
+
         bd->chempy_bond = bnd;
+        Py_INCREF(bd->chempy_bond);
 
         if(ok) {
           tmp = PyObject_GetAttrString(bnd,"order");
@@ -1137,7 +1516,7 @@ int ChampModelToPat(CChamp *I,PyObject *model)
   Py_XDECREF(bondList);
 
   if(PyObject_HasAttrString(model,"molecule")) {
-    molec = PyObject_GetAttrString(model,"molecule");
+    molec = PyObject_GetAttrString(model,"molecule"); /* returns new reference */
   } else {
     molec = NULL;
   }
@@ -1148,6 +1527,7 @@ int ChampModelToPat(CChamp *I,PyObject *model)
   I->Pat[result].atom = cur_atom;
   I->Pat[result].bond = cur_bond;
   I->Pat[result].chempy_molecule = molec;
+  
     
   if(result) ChampPatReindex(I,result);
   return(result);
@@ -1963,13 +2343,31 @@ int ChampMatch2(CChamp *I,int template,int target,
 /* =============================================================== 
  * Smiles
  * =============================================================== */
+char *ChampParseBlockAtom(CChamp *I,char *c,int atom,int mask,int len,int not_flag)
+{
+  ListAtom *at;
+  at=I->Atom+atom;
+  if(not_flag) {
+    at->not_atom |= mask;
+    at->neg_flag = true;
+  } else {
+    at->atom |= mask;
+    at->pos_flag = true;
+  }
+  PRINTFD(FB_smiles_parsing) 
+    " ChampParseBlockAtom: called.\n"
+    ENDFD;
+  /* need to include code for loading symbol */
+  return c+len;
+}
+
 char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp_hyd) 
 {
   ListAtom *at;
   at=I->Atom+atom;
   at->atom |= mask;
   at->pos_flag = true;
-  at->implicit_hydrogens = imp_hyd;
+  at->imp_hydro_flag = imp_hyd;
   PRINTFD(FB_smiles_parsing) 
     " ChampParseAliphaticAtom: called.\n"
     ENDFD;
@@ -1984,7 +2382,7 @@ char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len,int imp
   at->atom |= mask;
   at->class |= cH_Aromatic;
   at->pos_flag = true;
-  at->implicit_hydrogens = imp_hyd;
+  at->imp_hydro_flag = imp_hyd;
   PRINTFD(FB_smiles_parsing) 
     " ChampParseAromaticAtom: called.\n"
     ENDFD;
@@ -2005,107 +2403,343 @@ char *ChampParseStringAtom(CChamp *I,char *c,int atom,int len)
   return c+len;
 }
 
+int ChampParseNumeral(char *c);
+
+int ChampParseNumeral(char *c) {
+  switch(*c) {
+  case '0':
+  case '1':
+  case '2':
+  case '3':
+  case '4':
+  case '5':
+  case '6':
+  case '7':
+  case '8':
+  case '9':
+    return(*c-'0');
+    break;
+  default:
+    return(-1);
+  }
+}
+
 int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom) 
 {
   int ok = true;
   ListAtom *at;
   char *c;
-  int done;
+  int not_flag = false;
+  int num;
+  int done=false;
+
+  /*  int done;*/
 
   c=*c_ptr;
 
   at=I->Atom+cur_atom;
 
-  at->implicit_hydrogens = true;
-
-  /* part 1 - symbols */
-  switch(*c) {
-  case '*': /* nonstandard */
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Any,1,false);
-    break;
-  case '?': /* nonstandard */
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_NotH,1,false);
-    break;
-  case 'C':
-    switch(*(c+1)) {
-    case 'l':
-      c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2,false);
+  at->imp_hydro_flag = false;
+  
+  while(ok&&!done) {
+    switch(*c) {
+    case ']':
+      done=true;
+      c++;
       break;
-    default:
-      c = ChampParseAliphaticAtom(I,c,cur_atom,cH_C,1,false);
+    case 0:
+      done=true;
       break;
-    }
-    break;
-  case 'H':
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_H,1,false);
-    break;
-  case 'N':
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_N,1,false);
-    break;      
-  case 'O':
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_O,1,false);
-    break;      
-  case 'B':
-    switch(*(c+1)) {
-    case 'r':
-      c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2,false);
+    case '!':
+      c++;
+      not_flag=true;
       break;
-    default:
-      c = ChampParseAliphaticAtom(I,c,cur_atom,cH_B,1,false);
+    case ',':
+      c++;
       break;
-    }
-    break;
-  case 'P':
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_P,1,false);
-    break;      
-  case 'S':
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_S,1,false);
-    break;      
-  case 'F':
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1,false);
-    break;      
-  case 'I':
-    c = ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1,false);
-    break;      
-    /* standard implicit aromatic atoms */
-  case 'c':
-    c = ChampParseAromaticAtom(I,c,cur_atom,cH_C,1,false);
-    break;
-  case 'n':
-    c = ChampParseAromaticAtom(I,c,cur_atom,cH_N,1,false);
-    break;
-  case 'o':
-    c = ChampParseAromaticAtom(I,c,cur_atom,cH_O,1,false);
-    break;
-  case 's':
-    c = ChampParseAromaticAtom(I,c,cur_atom,cH_S,1,false);
-    break;
-  default:
-    if(((*c)>='A')&&((*c)<='Z')) {
-      if(((*c)>='a')&&((*c)<'z')) {
-        c = ChampParseStringAtom(I,c,cur_atom,2);        
+    case ';':
+      not_flag=false;
+      c++;
+      break;
+    case '*': /* nonstandard */
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_Any,1,not_flag);
+      break;
+    case '?': /* nonstandard */
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_NotH,1,not_flag);
+      break;
+    case 'A':
+      if(not_flag) {
+        I->Atom[cur_atom].neg_flag=true;
+        I->Atom[cur_atom].not_class|=cH_Aliphatic;      
       } else {
-        c = ChampParseStringAtom(I,c,cur_atom,1);        
+        I->Atom[cur_atom].pos_flag=true;
+        I->Atom[cur_atom].class|=cH_Aliphatic;
       }
+      c++;
+      break;
+    case 'a':
+      if(not_flag) {
+        I->Atom[cur_atom].neg_flag=true;
+        I->Atom[cur_atom].not_class|=cH_Aromatic;
+      } else {
+        I->Atom[cur_atom].class|=cH_Aromatic;
+        I->Atom[cur_atom].pos_flag=true;
+      }
+      c++;    
+      break;
+    case 'B':
+      switch(*(c+1)) {
+      case 'r':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Br,2,not_flag);
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_B,1,not_flag);
+        break;
+      }
+      break;
+    case 'C':
+      switch(*(c+1)) {
+      case 'a':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Ca,2,not_flag);
+        break;
+      case 'u':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Cu,2,not_flag);
+        break;
+      case 'l':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Cl,2,not_flag);
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_C,1,not_flag);
+        break;
+      }
+      break;
+    case 'D':
+      num = ChampParseNumeral(c+1);
+      if(num>=0) {
+        if(not_flag) {
+          I->Atom[cur_atom].neg_flag=true;
+          I->Atom[cur_atom].not_degree|=num_to_degree[num];
+        } else {
+          I->Atom[cur_atom].pos_flag=true;
+          I->Atom[cur_atom].degree|=num_to_degree[num];
+        }
+        c+=2;
+      } else
+        ok=false;
+      break;
+    case 'E':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_E,1,not_flag);
+      break;
+    case 'F':
+      switch(*(c+1)) {
+      case 'e':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Fe,2,not_flag);
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_F,1,not_flag);
+        break;
+      }
+      break;      
+    case 'G':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_G,1,not_flag);
+      break;
+    case 'H': 
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_H,1,not_flag);
+      break;
+    case 'I':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_I,1,not_flag);
+      break;      
+    case 'J':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_J,1,not_flag);
+      break;
+    case 'K':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_K,1,not_flag);
+      break;      
+    case 'L':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_L,1,not_flag);
+      break;      
+    case 'M':
+      switch(*(c+1)) {
+      case 'g':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Mg,2,not_flag);
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_M,1,not_flag);
+        break;
+      }
+      break;
+    case 'N':
+      switch(*(c+1)) {
+      case 'a':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Na,2,not_flag);      
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_N,1,not_flag);
+      }
+      break;      
+    case 'O':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_O,1,not_flag);
+      break;      
+    case 'P':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_P,1,not_flag);
+      break;      
+    case 'p': /* Pi system */
+      if(not_flag) {
+        I->Atom[cur_atom].neg_flag=true;
+        I->Atom[cur_atom].not_class|=cH_Pi;
+      } else {
+        I->Atom[cur_atom].pos_flag=true;
+        I->Atom[cur_atom].class|=cH_Pi;
+      }
+      c++;
+      break;      
+    case 'r':
+      num = ChampParseNumeral(c+1);
+      if(num>=0) {
+        if(not_flag) {
+          I->Atom[cur_atom].neg_flag=true;
+          I->Atom[cur_atom].not_cycle|=num_to_ring[num];
+        } else {
+          I->Atom[cur_atom].pos_flag=true;
+          I->Atom[cur_atom].cycle|=num_to_ring[num];
+        }
+        c+=2;
+      } else {
+        if(not_flag) {
+          I->Atom[cur_atom].neg_flag=true;
+          I->Atom[cur_atom].not_cycle|=cH_Ring3|cH_Ring4|cH_Ring5|cH_Ring6|cH_Ring7|cH_Ring8;
+        } else {
+          I->Atom[cur_atom].pos_flag=true;
+          I->Atom[cur_atom].cycle|=cH_Ring3|cH_Ring4|cH_Ring5|cH_Ring6|cH_Ring7|cH_Ring8;
+        }
+        c++;
+      }
+      break;
+    case 'Q':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_Q,1,not_flag);
+      break;      
+    case 'S':
+      switch(*(c+1)) {
+      case 'e':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Se,2,not_flag);
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_S,1,not_flag);
+        break;
+      }
+      break;      
+    case 'T':
+      c = ChampParseBlockAtom(I,c,cur_atom,cH_T,1,not_flag);
+      break;    
+    case 'v':
+      num = ChampParseNumeral(c+1);
+      if(num>=0) {
+        if(not_flag) {
+          I->Atom[cur_atom].neg_flag=true;
+          I->Atom[cur_atom].not_valence|=num_to_valence[num];
+        } else {
+          I->Atom[cur_atom].pos_flag=true;
+          I->Atom[cur_atom].degree|=num_to_valence[num];
+        }
+        c+=2;
+      } else 
+        ok=false;
+      break;
+    case 'Z':
+      switch(*(c+1)) {
+      case 'n':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Zn,2,not_flag);
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Z,1,not_flag);
+        break;
+      }
+      break;
+    case '+':
+      if(*(c+1)=='+') {
+        if(not_flag) {
+          I->Atom[cur_atom].neg_flag=true;
+          I->Atom[cur_atom].not_charge|=cH_Dication;
+        } else {
+          I->Atom[cur_atom].pos_flag=true;
+          I->Atom[cur_atom].charge|=cH_Dication;
+        }
+        c+=2;
+      } else {
+        num = ChampParseNumeral(c+1);
+        if(num>=0) {
+          if(not_flag) {
+            I->Atom[cur_atom].neg_flag=true;
+            switch(num) {
+            case 0: I->Atom[cur_atom].not_charge|=cH_Neutral; break;
+            case 1: I->Atom[cur_atom].not_charge|=cH_Cation; break;
+            case 2: I->Atom[cur_atom].not_charge|=cH_Dication; break;
+            }
+          } else {
+            I->Atom[cur_atom].pos_flag=true;
+            switch(num) {
+            case 0: I->Atom[cur_atom].charge|=cH_Neutral; break;
+            case 1: I->Atom[cur_atom].charge|=cH_Cation; break;
+            case 2: I->Atom[cur_atom].charge|=cH_Dication; break;
+            }
+          }
+          c+=2;
+        } else {
+          if(not_flag) {
+            I->Atom[cur_atom].neg_flag=true;
+            I->Atom[cur_atom].not_charge|=cH_Cation;
+          } else {
+            I->Atom[cur_atom].pos_flag=true;
+            I->Atom[cur_atom].charge|=cH_Cation;
+          }
+          c++;
+        }
+      }
+      break;
+
+    case '-':
+      if(*(c+1)=='-') {
+        if(not_flag) {
+          I->Atom[cur_atom].neg_flag=true;
+          I->Atom[cur_atom].not_charge|=cH_Dianion;
+        } else {
+          I->Atom[cur_atom].pos_flag=true;
+          I->Atom[cur_atom].charge|=cH_Dianion;
+        }
+        c+=2;
+      } else {
+        num = ChampParseNumeral(c+1);
+        if(num>=0) {
+          if(not_flag) {
+            I->Atom[cur_atom].neg_flag=true;
+            switch(num) {
+            case 0: I->Atom[cur_atom].not_charge|=cH_Neutral; break;
+            case 1: I->Atom[cur_atom].not_charge|=cH_Anion; break;
+            case 2: I->Atom[cur_atom].not_charge|=cH_Dianion; break;
+            }
+          } else {
+            I->Atom[cur_atom].pos_flag=true;
+            switch(num) {
+            case 0: I->Atom[cur_atom].charge|=cH_Neutral; break;
+            case 1: I->Atom[cur_atom].charge|=cH_Anion; break;
+            case 2: I->Atom[cur_atom].charge|=cH_Dianion; break;
+            }
+          }
+          c+=2;
+        } else {
+          if(not_flag) {
+            I->Atom[cur_atom].neg_flag=true;
+            I->Atom[cur_atom].not_charge|=cH_Anion;
+          } else {
+            I->Atom[cur_atom].pos_flag=true;
+            I->Atom[cur_atom].charge|=cH_Anion;
+          }
+          c++;
+        }
+      }
+      break;
     }
   }
-  /* stage 3 explicit hydrogen count */
-
-  /* stage 4 explicit hydrogen count */
-
-  /* okay, we've parsed the atom... */
-
-  /*
-    while((*c)&&ok&&!done) {
-    if(*c=='[') {
-    done = true;
-    c++;
-    break;
-    }
-    c++;
-    }
-  */
-
   *c_ptr = c;
   return ok;
 }
@@ -2120,6 +2754,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
 #define cSym_OpenBlock  6
 #define cSym_CloseBlock 7
 #define cSym_Separator  8
+#define cSym_Qualifier  9
 
 char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
 {
@@ -2344,8 +2979,8 @@ void ChampPatDump(CChamp *I,int index)
   cur_bond = I->Pat[index].bond;
   while(cur_bond) {
     bd = I->Bond+cur_bond;
-    printf(" bond %d 0x%01x atoms %d %d order 0x%01x cycle %x\n",
-           cur_bond,bd->order,bd->atom[0],bd->atom[1],bd->order,bd->cycle);
+    printf(" bond %d 0x%01x atoms %d %d order 0x%01x cycle %x class %x\n",
+           cur_bond,bd->order,bd->atom[0],bd->atom[1],bd->order,bd->cycle,bd->class);
     cur_bond = I->Bond[cur_bond].link;
   }
   fflush(stdout);
@@ -2387,9 +3022,8 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
     trivial = trivial && !(at->class&cH_Aliphatic);
     trivial = trivial && !((at->atom!=cH_Any) &&
                            at->atom&( cH_Na | cH_K  | cH_Ca | cH_Mg | cH_Zn | cH_Fe | cH_Cu | cH_Se |
-                                       cH_B | cH_A | cH_E | cH_G | cH_J | cH_L | cH_M |
-                                      cH_Q | cH_R | cH_T | cH_X | cH_M ));
-
+                                       cH_B | cH_X1 | cH_E | cH_G | cH_J | cH_L | cH_M |
+                                      cH_Q | cH_X2 | cH_T | cH_X | cH_Z ));
 
     if(trivial&&(at->atom!=cH_Any)) {
       /* check number of atoms represented */
@@ -2422,7 +3056,7 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
       } else {
         switch(at->atom) {
         case cH_Any: buf[0]='*'; buf[1]=0; break;
-        case cH_Any: buf[0]='?'; buf[1]=0; break;
+        case cH_NotH: buf[0]='?'; buf[1]=0; break;
         case cH_B: buf[0]='B'; buf[1]=0; break;
         case cH_C: buf[0]='C'; buf[1]=0; break;
         case cH_N: buf[0]='N'; buf[1]=0; break;
@@ -2441,7 +3075,7 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
       }
     }
     if(!trivial) {
-      strcpy(buf,"?");
+      strcpy(buf,"%");
     }
   } else 
     buf[0]=0;
@@ -2485,6 +3119,7 @@ int ChampSmiToPat(CChamp *I,char *c)
   int sym;
   int ok = true;
   int a;
+  int not_bond = false;
   
 #define save_bond() { if(last_bond) {I->Bond[last_bond].link=cur_bond;}\
           else {bond_list=cur_bond;}\
@@ -2534,7 +3169,7 @@ int ChampSmiToPat(CChamp *I,char *c)
           break;
         }
         break;
-      case '*': /* nonstandard */
+      case '*': /* nonstandard? */
         c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Any,1,false);
         sym = cSym_Atom;
         break;
@@ -2557,7 +3192,7 @@ int ChampSmiToPat(CChamp *I,char *c)
       case 'B':
         switch(*(c+1)) {
         case 'r':
-          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2,false);
+          c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2,true);
           sym = cSym_Atom;
           break;
         default:
@@ -2575,11 +3210,11 @@ int ChampSmiToPat(CChamp *I,char *c)
         sym = cSym_Atom;
         break;      
       case 'F':
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1,false);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1,true);
         sym = cSym_Atom;
         break;      
       case 'I':
-        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1,false);
+        c = ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1,true);
         sym = cSym_Atom;
         break;      
         /* standard implicit aromatic atoms */
@@ -2599,19 +3234,69 @@ int ChampSmiToPat(CChamp *I,char *c)
         c = ChampParseAromaticAtom(I,c,cur_atom,cH_S,1,true);
         sym = cSym_Atom;
         break;
+      case ';':
+        c++;
+        not_bond=false;
+        sym = cSym_Qualifier;
+        break;
+      case ',':
+        c++;
+        sym = cSym_Qualifier;
+        break;
+      case '!':
+        c++;
+        not_bond=true;
+        sym = cSym_Qualifier;
+        break;
       case '-':
         c++;
-        I->Bond[cur_bond].order = cH_Single;
+        if(not_bond) 
+          I->Bond[cur_bond].not_order |= cH_Single;
+        else 
+          I->Bond[cur_bond].order |= cH_Single;
         sym = cSym_Bond;
         break;
       case '=':
         c++;
-        I->Bond[cur_bond].order = cH_Double;
+        if(not_bond)
+          I->Bond[cur_bond].not_order |= cH_Double;
+        else
+          I->Bond[cur_bond].order |= cH_Double;
         sym = cSym_Bond;
         break;
       case '#':
         c++;
-        I->Bond[cur_bond].order = cH_Triple;
+        if(not_bond)
+          I->Bond[cur_bond].not_order |= cH_Triple;
+        else
+          I->Bond[cur_bond].order |= cH_Triple;
+        sym = cSym_Bond;
+        break;
+      case '~':
+        c++;
+        if(not_bond) {
+          I->Bond[cur_bond].not_order |= cH_AnyOrder;
+          I->Bond[cur_bond].not_class |= cH_AnyClass;
+        } else {
+          I->Bond[cur_bond].order |= cH_AnyOrder;
+          I->Bond[cur_bond].class |= cH_AnyClass;
+        }
+        sym = cSym_Bond;
+        break;
+      case '@':
+        c++;
+        if(not_bond)
+          I->Bond[cur_bond].not_cycle |= cH_Cyclic;
+        else
+          I->Bond[cur_bond].cycle |= cH_Cyclic;
+        sym = cSym_Bond;
+        break;
+      case ':':
+        c++;
+        if(not_bond)
+          I->Bond[cur_bond].not_class |= cH_Aromatic;
+        else
+          I->Bond[cur_bond].class |= cH_Aromatic;
         sym = cSym_Bond;
         break;
       case '.': /* separator */
@@ -2657,8 +3342,9 @@ int ChampSmiToPat(CChamp *I,char *c)
     if(ok) {
       /* =========== actions based on root level parsing ========== */
       switch(sym) {
-      case cSym_Atom:
       case cSym_OpenBlock:
+        ok = ChampParseAtomBlock(I,&c,cur_atom);
+      case cSym_Atom:
         /* was there a preceeding atom? if so, then form bond and save atom */
         if(base_atom) {
           PRINTFD(FB_smiles_parsing) 
@@ -2668,7 +3354,11 @@ int ChampSmiToPat(CChamp *I,char *c)
           I->Bond[cur_bond].atom[0] = base_atom;
           I->Bond[cur_bond].atom[1] = cur_atom;
           if(!bond_flag) {
-            I->Bond[cur_bond].order = cH_Single;
+            if((I->Atom[cur_atom].class&cH_Aromatic)&&
+               (I->Atom[base_atom].class&cH_Aromatic))
+              I->Bond[cur_bond].order = (cH_Single|cH_Aromatic); /* is this right? */
+            else
+              I->Bond[cur_bond].order = cH_Single;
           }
           ok = ChampAddBondToAtom(I,cur_atom,cur_bond);
           if(ok) {
@@ -2676,11 +3366,10 @@ int ChampSmiToPat(CChamp *I,char *c)
             save_bond();
           }
           bond_flag=false;
+          not_bond=false;
         } 
         base_atom = cur_atom;
         save_atom();
-        if(sym==cSym_OpenBlock) /* if this a block, parse as such */
-          ok = ChampParseAtomBlock(I,&c,cur_atom);
         break;
       case cSym_CloseBlock: /* should never be reached */
         break;
@@ -2718,6 +3407,7 @@ int ChampSmiToPat(CChamp *I,char *c)
             }
             mark[mark_code]=0;
             bond_flag=false;
+            not_bond=false;
           }
         } else {
           PRINTFB(FB_smiles_parsing,FB_errors)
@@ -2728,6 +3418,9 @@ int ChampSmiToPat(CChamp *I,char *c)
         break;
       case cSym_Separator:
         base_atom = 0;
+        break;
+      case cSym_Qualifier:
+        break;
       }
     }
   }

@@ -34,28 +34,28 @@ class Champ:
       '''
       self._champ = _champ.new()
 
-   def insert_smiles(self,smiles):
+   def insert_pattern_string(self,pattern):
       '''
-      adds a new smiles pattern, and
+      adds a new pattern, and
       returns the index to this pattern
       '''
-      (e,r) = _champ.insert_smiles(self._champ,str(smiles))
+      (e,r) = _champ.insert_pattern_string(self._champ,str(pattern))
       if e: raise RuntimeError
       return r
 
-   def free_pattern(self,index):
+   def pattern_free(self,index):
       '''
-      frees a smiles string
+      frees a pattern
       '''
-      (e,r) = _champ.free_pattern(self._champ,int(index))
+      (e,r) = _champ.pattern_free(self._champ,int(index))
       if e: raise RuntimeError
       return r
       
-   def get_smiles(self,index):
+   def get_pattern_string(self,index):
       '''
       retrieves the smiles string for a given pattern index
       '''
-      (e,r) = _champ.get_smiles(self._champ,int(index))
+      (e,r) = _champ.get_pattern_string(self._champ,int(index))
       if e: raise RuntimeError
       return r
    
@@ -67,12 +67,12 @@ class Champ:
       if e: raise RuntimeError
       return r
 
-   def list_prepend_smiles_list(self,handle,smiles):
+   def list_prepend_pattern_strings(self,handle,pattern):
       '''
-      adds smiles string at to the top of a list
+      adds pattern string to the top of a list
       and returns the new list identifier
       '''
-      (e,r) = _champ.list_prepend_smiles_list(self._champ,int(handle),smiles)
+      (e,r) = _champ.list_prepend_pattern_strings(self._champ,int(handle),pattern)
       if e: raise RuntimeError
       return r
 
@@ -92,7 +92,7 @@ class Champ:
       if e: raise RuntimeError
       return r
 
-   def list_get_pattern_list(self,handle):
+   def list_get_pattern_indices(self,handle):
       '''
       returns pattern indices in a list as a list
       '''
@@ -100,11 +100,11 @@ class Champ:
       if e: raise RuntimeError
       return r
 
-   def list_get_smiles_list(self,handle):
+   def list_get_pattern_strings(self,handle):
       '''
       returns list of smiles strings contained in a list
       '''
-      (e,r) = _champ.list_get_smiles_list(self._champ,int(handle))
+      (e,r) = _champ.list_get_pattern_strings(self._champ,int(handle))
       if e: raise RuntimeError
       return r
 
@@ -151,4 +151,37 @@ class Champ:
       (e,r) = _champ.pattern_get_cycle(self._champ,int(index))
       if e: raise RuntimeError
       return r
+
+   def pattern_get_class(self,index):
+      '''
+      debugging routine
+      '''
+      (e,r) = _champ.pattern_get_class(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
+   def pattern_get_codes(self,index):
+      '''
+      debugging routine
+      '''
+      (e,r) = _champ.pattern_get_codes(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
+   def pattern_get_atom_symbols(self,index):
+      '''
+      debugging routine
+      '''
+      (e,r) = _champ.pattern_get_atom_symbols(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
+   def pattern_dump(self,index):
+      '''
+      debugging routine
+      '''
+      (e,r) = _champ.pattern_dump(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
 
