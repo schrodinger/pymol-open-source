@@ -15,9 +15,7 @@ Z* -------------------------------------------------------------------
 */
 /* This file can be compiled under C as a .c file, or under C++ as a .cc file*/
 
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
+#include"os_std.h"
 
 #ifdef __cplusplus
 #include<new.h>

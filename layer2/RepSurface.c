@@ -13,8 +13,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<GL/gl.h>
-#include<math.h>
+
+#include"os_std.h"
+#include"os_gl.h"
 
 #include"Base.h"
 #include"MemoryDebug.h"
@@ -29,6 +30,10 @@ Z* -------------------------------------------------------------------
 #include"Triangle.h"
 #include"Vector.h"
 #include"main.h"
+
+#ifdef NT
+#undef NT
+#endif
 
 typedef struct RepSurface {
   Rep R;

@@ -24,9 +24,7 @@ Z* -------------------------------------------------------------------
 
 */
 
-#include<stdlib.h>
-#include<stdio.h>
-#include<math.h>
+#include"os_std.h"
 
 #include"Base.h"
 #include"Triangle.h"

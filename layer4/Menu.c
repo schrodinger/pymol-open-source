@@ -15,8 +15,9 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include<string.h>
 #include<Python.h>
+
+#include"os_std.h"
 
 #include "Menu.h"
 #include "PopUp.h"

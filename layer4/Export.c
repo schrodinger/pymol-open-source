@@ -15,9 +15,9 @@ Z* -------------------------------------------------------------------
 */
 /* Example of embedding Python in another program */
 
-#include<stdlib.h>
 #include<Python.h>
-#include<signal.h>
+
+#include"os_std.h"
 
 #include"MemoryDebug.h"
 #include"Base.h"

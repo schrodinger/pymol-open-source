@@ -35,8 +35,9 @@ Z* -------------------------------------------------------------------
 
 */
    
-#include<stdlib.h>
 #include<Python.h>
+
+#include"os_std.h"
 
 #include"MemoryDebug.h"
 #include"Err.h"

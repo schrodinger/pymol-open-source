@@ -13,9 +13,8 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+
+#include"os_std.h"
 
 #include"Isosurf.h"
 #include"MemoryDebug.h"

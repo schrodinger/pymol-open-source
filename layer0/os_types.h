@@ -13,18 +13,11 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_OOMac
-#define _H_OOMac
+#ifndef _H_os_types
+#define _H_os_types
 
-#include"Err.h"
-#include"MemoryDebug.h"
-
-#define OOAlloc(type) \
-type *I;\
-I = (type*)mmalloc(sizeof(type));\
-ErrChkPtr(I);
-
-#define OOFreeP(ptr) \
-{if(ptr) {mfree(ptr);ptr=NULL;}}
+#include<sys/types.h>
 
 #endif
+
+

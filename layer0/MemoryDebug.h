@@ -103,8 +103,6 @@ unsigned int VLAGetSize(void *ptr);
 #else
 /* _MemoryDebug_ON is defined */
 
-#include<stdio.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

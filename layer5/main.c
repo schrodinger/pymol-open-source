@@ -13,11 +13,10 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <GL/glut.h>
 #include <Python.h>
+
+#include"os_std.h"
+#include"os_gl.h"
 
 #ifdef _PYMOL_MODULE
 #ifdef _DRI_WORKAROUND

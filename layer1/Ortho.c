@@ -14,11 +14,9 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <GL/glut.h>
-#include <stdio.h>
+#include"os_std.h"
+#include"os_gl.h"
+
 #include <unistd.h>
 
 #include"main.h"

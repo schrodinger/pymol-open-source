@@ -14,7 +14,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include<GL/gl.h>
+#include"os_gl.h"
+
 #include"Base.h"
 #include"OOMac.h"
 #include"RepSphere.h"
@@ -23,6 +24,10 @@ Z* -------------------------------------------------------------------
 #include"Map.h"
 #include"Setting.h"
 #include"main.h"
+
+#ifdef NT
+#undef NT
+#endif
 
 typedef struct RepSphere {
   Rep R;

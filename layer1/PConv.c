@@ -15,15 +15,9 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-
-
-#include<stdlib.h>
 #include<Python.h>
-#include<signal.h>
-#include<string.h>
-#include<sys/types.h>
-#include<sys/time.h>
-#include<unistd.h>
+
+#include"os_std.h"
 
 #include"MemoryDebug.h"
 #include"Base.h"

@@ -13,7 +13,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include<stdio.h>
+
+#include"os_std.h"
+
 #include "MyPNG.h"
 #include"MemoryDebug.h"
 

@@ -14,7 +14,7 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include<ctype.h>
+#include"os_std.h"
 
 #include"AtomInfo.h"
 #include"Word.h"

@@ -14,13 +14,13 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <Util.h>
+
+#include"os_std.h"
+#include"os_gl.h"
+
 #include <unistd.h>
-#include <GL/glut.h>
+
+#include"Util.h"
 
 #include"Word.h"
 #include"main.h"

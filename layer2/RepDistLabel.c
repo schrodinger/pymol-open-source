@@ -15,9 +15,8 @@ Z* -------------------------------------------------------------------
 */
 
 
-#include<GL/gl.h>
-#include<GL/glut.h>
-#include<string.h>
+#include"os_std.h"
+#include"os_gl.h"
 
 #include"OOMac.h"
 #include"RepDistLabel.h"
