@@ -27,6 +27,8 @@ typedef int Vector3i[3];
 		  
 typedef float Matrix33f[3][3]; 
 typedef double Matrix33d[3][3]; 
+typedef float Matrix53f[5][3];
+typedef double Matrix53d[5][3];
 
 unsigned int optimizer_workaround1u(unsigned int value);
 
@@ -47,6 +49,9 @@ void get_divergent3f(float *src,float *dst);
 void get_random3f(float *x);
 void scatter3f(float *v,float weight);
 void wiggle3f(float *v,float *p,float *s);
+
+void mix3f(float *v1,float *v2,float fxn,float *v3);
+void mix3d(double *v1,double *v2,double fxn,double *v3);
 
 void get_system3f(float *x,float *y,float *z); /* make random system */
 void get_system1f3f(float *x,float *y,float *z); /* make system in direction of x */
@@ -87,9 +92,13 @@ void identity44f ( float *m1 );
 
 void copy44f44f ( float *src, float *dst );
 
+void copy44d33f ( double *src, float *dst );
+void copy33f44d ( float *src, double *dst );
+
 /* in the following matrix multiplies and transformations:
    the last two matrices can be the same matrix! */
 
+void transpose33f33f ( float  *m1, float  *m2);
 void transform33f3f ( float  *m1, float  *m2,  float  *m3 );
 void transform33Tf3f ( float  *m1, float  *m2,  float  *m3 ); /* uses transpose */
 
@@ -129,14 +138,17 @@ typedef float *oMatrix3f[3];
 typedef float *oMatrix3d[3];
 
 double matdiffsq ( float *v1, oMatrix5f m, float *v2 );
-void find_axis( oMatrix3d a, float *axis);
-void matcopy ( oMatrix5f to, oMatrix5f from );
-void mattran ( oMatrix5f nm, oMatrix5f om, int axis, float dist );
-void matrot ( oMatrix5f nm, oMatrix5f om, int axis, float angle );
-void matrix_to_rotation(oMatrix5f rot,float *axis, float *angle);
-void rotation_to_matrix(oMatrix5f rot,float *axis, float angle);
+void find_axis( Matrix33d a, float *axis);
 
-void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
+/*void matcopy ( oMatrix5f to, oMatrix5f from );
+  void mattran ( oMatrix5f nm, oMatrix5f om, int axis, float dist );
+  void matrot ( oMatrix5f nm, oMatrix5f om, int axis, float angle );*/
+
+
+void matrix_to_rotation(Matrix53f rot,float *axis, float *angle);
+void rotation_to_matrix(Matrix53f rot,float *axis, float angle);
+
+void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
 								float *axis,float angle,float tAngle,
 								int linear,int tLinear,float fxn);
 

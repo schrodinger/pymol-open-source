@@ -943,7 +943,7 @@ void SeekerUpdate(void)
   AtomInfoType *ai;
   ObjectMolecule *obj;
   int nRow = 0;
-  int label_flag = true;
+  int label_flag = false;
   int codes = 0;
   int max_row = 50;
   int default_color = 0;
@@ -1024,6 +1024,21 @@ void SeekerUpdate(void)
         UtilFillVLA(&row->txt,&row->len,' ',st_len);
         r1->stop = row->len;
         r1->spacer = true;
+        nCol++;
+      } else if(!label_flag) { /* no label rows, so put object name into left-hand column */
+
+        /* copy label text */
+
+        VLACheck(row->col,CSeqCol,nCol);
+        r1 = row->col + nCol;
+        r1->start = row->len;
+        UtilConcatVLA(&row->txt,&row->len,"/");
+        UtilConcatVLA(&row->txt,&row->len,obj->Obj.Name);
+        UtilConcatVLA(&row->txt,&row->len," ");
+        r1->stop = row->len;
+        r1->spacer = true;
+        row->column_label_flag = true;
+        row->title_width = row->len;
         nCol++;
       }
 

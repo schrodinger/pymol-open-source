@@ -1297,6 +1297,7 @@ SEE ALSO
         accept,            \
         decline,           \
         mpng,              \
+        mview,             \
         forward,           \
         backward,          \
         rewind,            \
@@ -1536,7 +1537,8 @@ SEE ALSO
       'minimize'      : [ minimize          , 0 , 4 , ',' , parsing.SIMPLE ], # TO REMOVE
       'mmatrix'       : [ mmatrix           , 0 , 0 , ''  , parsing.STRICT ],
       'mouse'         : [ mouse             , 0 , 0 , ''  , parsing.STRICT ],
-      'multisave'     : [ multisave         , 0 , 0 , ''  , parsing.STRICT ],   
+      'multisave'     : [ multisave         , 0 , 0 , ''  , parsing.STRICT ],
+      'mview'         : [ mview             , 0 , 0 , ''  , parsing.STRICT ],
       'origin'        : [ origin            , 0 , 0 , ''  , parsing.STRICT ],
       'orient'        : [ orient            , 0 , 0 , ''  , parsing.STRICT ],
       'overlap'       : [ overlap           , 0 , 0 , ''  , parsing.STRICT ],

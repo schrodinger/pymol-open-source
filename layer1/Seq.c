@@ -337,7 +337,7 @@ static void SeqDraw(Block *block)
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
         col = row->col;
-        if(row->label_flag) { 
+        if(row->label_flag || row->column_label_flag) { 
           row->title_width = col->offset+(col->stop-col->start);
           if(max_title_width<row->title_width)
             max_title_width = row->title_width;
@@ -352,7 +352,7 @@ static void SeqDraw(Block *block)
         row = I->Row+a;
         yy=y1-2;
         col = row->col;
-        if(row->label_flag&&row->nCol) { 
+        if((row->label_flag||row->column_label_flag)&&row->nCol) { 
           row->title_width = col->offset+(col->stop-col->start);
           xx=x+I->CharMargin+I->CharWidth*(col->offset + (max_title_width-row->title_width));
           ch_wid = (col->stop-col->start);
@@ -383,7 +383,10 @@ static void SeqDraw(Block *block)
               first_allowed = I->NSkip + row->title_width + 1;
             else
               first_allowed = I->NSkip + row->title_width;
-           }else
+           }
+          else if(row->column_label_flag) 
+            first_allowed = I->NSkip + max_title_width;
+          else
             first_allowed = I->NSkip;
 
           if(col->offset>=first_allowed) {
@@ -448,7 +451,7 @@ static void SeqDraw(Block *block)
             yy=y+((I->NRow-1)-box_row)*I->LineHeight-2;
             xx=x+I->CharMargin+I->CharWidth*(col->offset-I->NSkip);
             xx2=x+I->CharMargin+I->CharWidth*(col2->offset+(col2->stop-col2->start)-I->NSkip);
-            
+            glColor3fv(overlay_color);
             glBegin(GL_LINE_LOOP);
             glVertex2i(xx,yy);
             glVertex2i(xx,yy+I->LineHeight-2);

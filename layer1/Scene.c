@@ -48,6 +48,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectGadget.h"
 #include"Seq.h"
 #include"Menu.h"
+#include"View.h"
 
 #define cSliceMin 0.1F
 
@@ -107,6 +108,7 @@ typedef struct {
   int RovingCleanupFlag;
   double RovingLastUpdate;
   int Threshold, ThresholdX, ThresholdY;
+  CView *View;
 } CScene;
 
 CScene Scene;
@@ -173,6 +175,121 @@ static int SceneGetObjState(CObject *obj,int state)
   return(state);
 }
 #endif
+
+void SceneToViewElem(CViewElem *elem)
+{
+  float *fp;
+  double *dp;
+  CScene *I=&Scene;
+
+  /* copy rotation matrix */
+  elem->matrix_flag = true;
+  dp = elem->matrix;
+  fp = I->RotMatrix;
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+
+  /* copy position */
+  elem->pre_flag = true;
+  dp = elem->pre;
+  fp = I->Pos;
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+
+  /* copy origin (negative) */
+  elem->post_flag = true;
+  dp = elem->post;
+  fp = I->Origin;
+  *(dp++) = (double) (-*(fp++));
+  *(dp++) = (double) (-*(fp++));
+  *(dp++) = (double) (-*(fp++));
+
+  elem->clip_flag = true;
+  elem->front = I->Front;
+  elem->back = I->Back;
+
+  elem->ortho_flag = true;
+  elem->ortho = SettingGet(cSetting_ortho);
+  
+}
+
+void SceneFromViewElem(CViewElem *elem)
+{
+  CScene *I=&Scene;
+  float *fp;
+  double *dp;
+  int changed_flag = false;
+
+  if(elem->matrix_flag) {
+    dp = elem->matrix;
+    fp = I->RotMatrix;
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    changed_flag = true;
+  }
+
+  if(elem->pre_flag) {
+    dp = elem->pre;
+    fp = I->Pos;
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    changed_flag = true;
+  }
+
+  if(elem->post_flag) {
+    dp = elem->post;
+    fp = I->Origin;
+    *(fp++) = (float) (-*(dp++));
+    *(fp++) = (float) (-*(dp++));
+    *(fp++) = (float) (-*(dp++));
+    changed_flag = true;
+  }   
+
+  if(elem->clip_flag) {
+    SceneClipSet(elem->front,elem->back);
+  }
+  if(elem->ortho_flag) {
+    SettingSet(cSetting_ortho,elem->ortho);
+  }
+  if(changed_flag) 
+    SceneRovingDirty();
+}
 
 void SceneCleanupStereo(void)
 {
@@ -2669,7 +2786,6 @@ void SceneFree(void)
   if(!I->MovieOwnsImageFlag)
 	 FreeP(I->ImageBuffer);
   
-
   CGOFree(DebugCGO);
 }
 /*========================================================================*/
@@ -3931,6 +4047,7 @@ void SceneRestartTimers(void)
 void ScenePrepareMatrix(int mode)
 {
   CScene *I=&Scene;
+
   float stAng,stShift;
   
 
@@ -3982,6 +4099,7 @@ void ScenePrepareMatrix(int mode)
     /* move the origin to the center of rotation */
     glTranslatef(-I->Origin[0],-I->Origin[1],-I->Origin[2]);
   }
+
 }
 /*========================================================================*/
 void SceneRotate(float angle,float x,float y,float z)

@@ -3027,6 +3027,19 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdMView(PyObject *self, 	PyObject *args)
+{
+  int ok=false;
+  int action,first,last;
+  ok = PyArg_ParseTuple(args,"iii",&action,&first,&last);
+  if (ok) {
+    APIEntry();
+    ok = MovieView(action,first,last);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
 {
   int w,h;
@@ -4586,6 +4599,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"mpng_",	              CmdMPNG,                 METH_VARARGS },
 	{"mmatrix",	              CmdMMatrix,              METH_VARARGS },
 	{"multisave",             CmdMultiSave,            METH_VARARGS },
+	{"mview",	              CmdMView,                METH_VARARGS },
 	{"origin",	              CmdOrigin,               METH_VARARGS },
 	{"orient",	              CmdOrient,               METH_VARARGS },
 	{"onoff",                 CmdOnOff,                METH_VARARGS },

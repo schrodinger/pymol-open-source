@@ -996,7 +996,7 @@ typedef doublereal E_f;	/* real function with -R not specified */
 
 
 
-static int rg_(
+int pymol_rg_(
 integer *nm, integer *n,
 doublereal *a, doublereal *wr, doublereal *wi,
 integer *matz,
@@ -1024,7 +1024,7 @@ int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v)
   for(x=0;x<9;x++) /* make a copy cause eispack trashes the matrix */
 	 at[x]=a[x];
 
-  rg_(&nm,&n,at,wr,wi,&matz,v,iv1,fv1,&ierr);
+  pymol_rg_(&nm,&n,at,wr,wi,&matz,v,iv1,fv1,&ierr);
 
   /* NOTE: the returned eigenvectors are stored one per row which is
 	  is actually the inverse of the normal eigenvalue matrix -
@@ -2822,7 +2822,7 @@ L1001:
     return 0;
 } /* hqr2_ */
 
-static int rg_(nm, n, a, wr, wi, matz, z__, iv1, fv1, ierr)
+int pymol_rg_(nm, n, a, wr, wi, matz, z__, iv1, fv1, ierr)
 integer *nm, *n;
 doublereal *a, *wr, *wi;
 integer *matz;

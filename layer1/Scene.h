@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"PyMOLObject.h"
 #include"Ortho.h"
-
+#include"View.h"
 
 #define cSceneViewSize 25
 typedef float SceneViewType[cSceneViewSize];
@@ -93,6 +93,9 @@ void SceneGetViewNormal(float *v);
 void SceneClipSet(float front,float back);
 void SceneGetView(SceneViewType view);
 void SceneSetView(SceneViewType view,int quiet);
+
+void SceneToViewElem(CViewElem *elem);
+void SceneFromViewElem(CViewElem *elem);
 void SceneGetPos(float *pos);
 void SceneGetWidthHeight(int *width,int *height);
 int SceneMultipick(Multipick *smp);
