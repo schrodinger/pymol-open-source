@@ -49,24 +49,7 @@ PYOGL_LIB = -framework OpenGL
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-#CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer -falign-loops=32 -g
 CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer -g
-
-# NOTE:  need to determine empricially which set of options gives best performance
-# So far, "-O3 -funroll-loops -fomit-frame-pointer -g" is winning...
-
-#--- GCC Optimized Even More
-#CCOPT2 = -O3 -funroll-loops -mcpu=G5 -mtune=G5 -falign-loops=16 -falign-loops-max-skip=32 \
-#  -falign-functions=32 -falign-jumps=16 -falign-jumps-max-skip=32 -mpowerpc-gpopt -force_cpusubtype_ALL -g
-  
-#-mpowerpc-gpopt -fomit-frame-pointer 
-# -fstrict-aliasing
-
-#--- GCC Optimized More
-#CCOPT2 = -O3 -funroll-loops -mtune=7400 -mpowerpc-gpopt -fomit-frame-pointer -force_cpusubtype_ALL -fstrict-aliasing
-
-#--- GCC Optimized More Profiling!!
-#CCOPT2 = -O3 -funroll-loops -mpowerpc-gpopt -fomit-frame-pointer -force_cpusubtype_ALL -fstrict-aliasing -g
 
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
