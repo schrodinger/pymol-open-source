@@ -29,7 +29,7 @@ EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
 LIBS = contrib/modules/*.o contrib/pyopengl/*.o contrib/sglite/*.o \
  $(PYTHON_LIB) ext/lib/libglut.a -lGL -lGLU -lXi -lXmu -ldl -lm \
 ext/lib/libtcl8.4.a ext/lib/libtk8.4.a \
-ext/lib/libpng.a $(ZLIB)
+ext/lib/libpng.a $(ZLIB) contrib/champ/*.o
 #--- PyMOL configuration
 DEFS = -D_PYMOL_MONOLITHIC -D_PYMOL_SETUP_TCLTK84 -D_PYMOL_SETUP_PY22
 #--- How we build shared libraries
