@@ -56,6 +56,8 @@ def parse_args(argv):
             options.gui = 'pmg_wx'
          if "l" in a:
             options.deferred.append("_do_spawn %s"%av.pop())
+         if "g" in a:
+            options.deferred.append("_do_run %s,global"%av.pop())
       else:
          options.deferred.append(a)
 

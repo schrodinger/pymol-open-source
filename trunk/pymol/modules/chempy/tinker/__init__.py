@@ -63,8 +63,8 @@ def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
 #      os.rename(src,dst)    rename can fail over NFS (remote action)  
       shutil.copy(src,dst)
       os.unlink(src)
-   for a in glob.glob(in_prefix+".*"):
-      os.unlink(a)
+#   for a in glob.glob(in_prefix+".*"):
+#      os.unlink(a)
    if feedback['tinker']:
       print " "+str(__name__)+': %s job complete. ' % command
       print " "+str(__name__)+': creating output files "%s.*"' % (out_prefix)
