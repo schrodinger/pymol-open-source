@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #include"RepSurface.h"
 #include"RepLabel.h"
 #include"RepNonbonded.h"
+#include"RepNonbondedSphere.h"
 
 void CoordSetUpdate(CoordSet *I);
 
