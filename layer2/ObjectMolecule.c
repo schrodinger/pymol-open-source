@@ -7722,7 +7722,7 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
         I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],ray,pick,pass);
 	 }
   } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
-    if(SettingGet(cSetting_static_singletons))
+    if(SettingGet_b(I->Obj.Setting,NULL,cSetting_static_singletons))
       if(I->CSet[0]->fRender)
         I->CSet[0]->fRender(I->CSet[0],ray,pick,pass);    
   }

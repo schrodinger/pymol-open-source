@@ -486,9 +486,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_surface_carve_selection    342
 #define cSetting_surface_carve_state        343
 #define cSetting_surface_carve_cutoff       344
+#define cSetting_surface_clear_selection    345
+#define cSetting_surface_clear_state        346
+#define cSetting_surface_clear_cutoff       347
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        345
+#define cSetting_INIT                        348
 
 #endif
 
