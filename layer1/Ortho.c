@@ -1097,13 +1097,17 @@ void OrthoSplash(void)
   PRINTF ".\n" ENDF;
   PRINTF " Copyright (C) 1998-2001 by DeLano Scientific.\n All Rights Reserved.\n \n" ENDF;
 
-  PRINTF "    Created by:   Warren L. DeLano, Ph.D. \n \n" ENDF;
+  PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF;
 
-  PRINTF "    Other Major Authors and Contributors:\n" ENDF;
+  PRINTF "    Other Major Authors and Contributors:\n\n" ENDF;
   PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF;
 
   PRINTF "    This software is open source and freely available.\n" ENDF;
   PRINTF "    Updates can be found at \"http://www.pymol.org\".\n \n" ENDF;
+
+  PRINTF "    Please cite PYMOL in publications and presentations:\n\n" ENDF;
+  PRINTF "       Warren L. DeLano \"The PyMOL Molecular Graphics System.\"\n" ENDF;
+  PRINTF "       DeLano Scientific, Belmont, CA, USA. http://www.pymol.org \n\n" ENDF;
 
   PRINTF "    Enter \"help release\" for release notes (PLEASE READ!).\n" ENDF;
   PRINTF "    Enter \"help commands\" for a list of commands.\n" ENDF;

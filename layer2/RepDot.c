@@ -52,7 +52,6 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   int cc=0;
 
   if(ray) {
-	 glBegin(GL_POINTS);
 	 while(c--)
 		{
 		  if(!cc) /* load up the current vertex color */
@@ -63,12 +62,9 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 			 }
 		  v+=3;
 		  ray->fSphere3fv(ray,v,I->dotSize);
-		  glVertex3fv(v);
 		  v+=3;
 		  cc--;
 		}
-	 glEnd();
-
 	 /*	 v=I->VC;
 	 c=I->NC;
 	 while(c--) {

@@ -25,9 +25,9 @@ LINE_STRIP         = 3.0
 TRIANGLES          = 4.0
 TRIANGLE_STRIP     = 5.0
 TRIANGLE_FAN       = 6.0
-QUADS              = 7.0
-QUAD_STRIP         = 8.0
-POLYGON            = 9.0                                                            
+#QUADS              = 7.0
+#QUAD_STRIP         = 8.0
+#POLYGON            = 9.0                                                            
 
 STOP               =  0.0
 NULL               =  1.0

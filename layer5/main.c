@@ -494,7 +494,7 @@ void launch(void)
   PyMOLReady = true;
 
   if(PMGUI) {
-    printf(" GL based graphics front end:\n");
+    printf(" OpenGL based graphics front end:\n");
     printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
     printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
     printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
