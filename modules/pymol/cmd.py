@@ -60,12 +60,14 @@ import copy
 import selector
 import operator
 import time
+import math
 
 from shortcut import Shortcut
 
 from glob import glob
 
 from chempy import io
+from chempy import cpv
 from chempy.sdf import SDF,SDFRec
 from chempy import fragments
 
@@ -3240,7 +3242,66 @@ SEE ALSO
       unlock()
    return r
 
-def move(axis,angle):
+def translate(selection="all",vector=[0.0,0.0,0.0],state=0,camera=1):
+   # INCOMPLETE:
+   # needs to be modified so that selection can be something other
+   # than an object name -- some work needs to be done on the
+   # underlying C code
+   r = 1
+   if is_string(vector):
+      vector = eval(vector)
+   if not is_list(vector):
+      print "Error: bad vector."
+      raise QuietException
+   else:
+      vector = [float(vector[0]),float(vector[1]),float(vector[2])]
+      selection = selector.process(selection)
+      view = get_view(0)
+      if camera:
+         mat = [ view[0:3],view[3:6],view[6:9] ]
+         shift = cpv.transform(mat,vector)
+      else:
+         shift = vector
+      ttt = [1.0,0.0,0.0,0.0,
+             0.0,1.0,0.0,0.0,
+             0.0,0.0,1.0,0.0,
+             shift[0],shift[1],shift[2],1.0]
+      r=transform_object(selection,ttt)
+   return r
+
+def rotate(selection="all",axis='x',angle=0.0,state=0,camera=1):
+   # INCOMPLETE:
+   # needs to be modified so that selection can be something other
+   # than an object name -- some work needs to be done on the
+   # underlying C code
+   r = 1
+   if axis in ['x','X']:
+      axis = [1.0,0.0,0.0]
+   elif axis in ['y','Y']:
+      axis = [0.0,1.0,0.0]
+   elif axis in ['z','Z']:
+      axis = [0.0,0.0,1.0]
+   else:
+      axis = eval(axis)
+   if not is_list(axis):
+      print "Error: bad axis."
+      raise QuietException
+   else:
+      axis = [float(axis[0]),float(axis[1]),float(axis[2])]
+      angle = math.pi*float(angle)/180.0
+      view = get_view(0)
+      if camera:
+         vmat = [ view[0:3],view[3:6],view[6:9] ]
+         axis = cpv.transform(vmat,axis)
+      mat = cpv.rotation_matrix(angle,axis)
+      ttt = [mat[0][0],mat[1][0],mat[2][0],-view[12],
+             mat[0][1],mat[1][1],mat[2][1],-view[13],
+             mat[0][2],mat[1][2],mat[2][2],-view[14],
+             view[12],view[13],view[14],view[15]]
+      r=transform_object(selection,ttt)
+   return r
+   
+def move(axis,distance):
    '''
 DESCRIPTION
   
@@ -3248,7 +3309,7 @@ DESCRIPTION
       
 USAGE
   
-   move axis,angle
+   move axis,distance
  
 EXAMPLES
  
@@ -3265,7 +3326,7 @@ SEE ALSO
    '''
    try:
       lock()   
-      r = _cmd.move(str(axis),float(angle))
+      r = _cmd.move(str(axis),float(distance))
    finally:
       unlock()
    return r
@@ -6198,6 +6259,7 @@ keyword = {
    'resume'        : [resume       , 0 , 0 , ''  , parsing.STRICT ],
    'rewind'        : [rewind       , 0 , 0 , ''  , parsing.STRICT ],
    'rock'          : [rock         , 0 , 0 , ''  , parsing.STRICT ],
+   'rotate'        : [rotate       , 0 , 0 , ''  , parsing.STRICT ],   
    'run'           : [run          , 1 , 2 , ',' , parsing.RUN    ],
    'rms'           : [rms          , 0 , 0 , ''  , parsing.STRICT ],
    'rms_cur'       : [rms_cur      , 0 , 0 , ''  , parsing.STRICT ],
@@ -6219,6 +6281,7 @@ keyword = {
    'system'        : [system       , 0 , 0 , ''  , parsing.STRICT ],
    'test'          : [test         , 0 , 0 , ''  , parsing.STRICT ],
    'torsion'       : [torsion      , 0 , 0 , ''  , parsing.STRICT ],
+   'translate'     : [translate    , 0 , 0 , ''  , parsing.STRICT ],
    'turn'          : [turn         , 0 , 0 , ''  , parsing.STRICT ],
    'quit'          : [quit         , 0 , 0 , ''  , parsing.STRICT ],
    '_quit'         : [_quit        , 0 , 0 , ''  , parsing.STRICT ],
