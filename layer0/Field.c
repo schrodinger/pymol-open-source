@@ -109,11 +109,11 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
   /* basic trilinear interpolation */
 
   float x1,y1,z1;
+  float result1=0.0F,result2=0.0F;
+  float product1,product2;
   x1=1.0F-x;
   y1=1.0F-y;
   z1=1.0F-z;
-  float result1=0.0F,result2=0.0F;
-  float product1,product2;
   
   if((product1 = x1*y1*z1)!=0.0F) result1 += product1 * Ffloat3(I,a  ,b  ,c  );
   if((product2 = x *y1*z1)!=0.0F) result2 += product2 * Ffloat3(I,a+1,b  ,c  );
