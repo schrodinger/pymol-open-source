@@ -255,7 +255,7 @@ class PMGApp(AbstractApp):
       self.bind_all('<F12>',lambda event,w=self.command,
                       e=self.entry,s=self:cmd.do("cmd._special(12,0,0)"))
 
-   def flush_commands(self):
+   def flush_commands_once(self):
       # flush the external GUI fifo command queue
       while not self.fifo.empty():
          try:
@@ -263,8 +263,15 @@ class PMGApp(AbstractApp):
             exec cmmd
          except:
             traceback.print_exc()
-      self.output.after(20,self.flush_commands) # 50X a second
+
+   def main(self):
+      self.flush_commands_once()
+      AbstractApp.main(self)
       
+   def flush_commands(self):
+      self.flush_commands_once()
+      self.output.after(20,self.flush_commands) # 50X a second
+
    def update_feedback(self):
       if self.focus_entry:
          self.focus_entry=0

@@ -1,4 +1,3 @@
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -1765,7 +1764,7 @@ PyObject *SelectorColorectionGet(char *prefix)
     found = false;
     for(b=0;b<n_used;b++) {
       if(used[b].color==color) {
-        tmp=used[0]; /* optimize */
+        tmp=used[0]; /* optimize to minimize N^2 effects */
         used[0]=used[b];
         used[b]=tmp;
         found=true;
@@ -1799,7 +1798,7 @@ PyObject *SelectorColorectionGet(char *prefix)
     color = ai->color;
     for(b=0;b<n_used;b++) {
       if(used[b].color==color) {
-        tmp=used[0]; /* optimize */
+        tmp=used[0]; /* optimize to minimize N^2 effects */
         used[0]=used[b];
         used[b]=tmp;
 
@@ -1813,6 +1812,7 @@ PyObject *SelectorColorectionGet(char *prefix)
           VLACheck(I->Member,MemberType,m);
         }
         I->Member[m].selection = used[0].sele;
+        I->Member[m].priority = 1;
         I->Member[m].next = ai->selEntry;
         ai->selEntry = m;
         break;
@@ -1855,16 +1855,15 @@ int SelectorColorectionApply(PyObject *list,char *prefix)
       obj = I->Obj[I->Table[a].model]; 
       ai = obj->AtomInfo+I->Table[a].atom;
       
-      for(b=0;b<n_used;b++) {        
+      for(b=0;b<n_used;b++) {       
         if(SelectorIsMember(ai->selEntry,used[b].sele)) {
           ai->color = used[b].color;
-          
           if(obj!=last) {
             ObjectMoleculeInvalidate(obj,cRepAll,cRepInvColor);
             last = obj;
           }
           break;
-        }
+        } 
       }
     }
   }
@@ -2614,7 +2613,7 @@ void SelectorLogSele(char *name)
 int SelectorIsMember(int s,int sele)
 {
   SelectorType *I=&Selector;
-  MemberType *member,*mem;
+  register MemberType *member,*mem;
   if(sele<0) return false; /* negative selections don't exist */
   if(!sele) return true; /* "all" is selection number 0, unordered */
   if(sele==1) return false; /* no atom is a member of none */
@@ -5143,10 +5142,10 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
 int SelectorSetName(char *new_name, char *old_name)
 {
  SelectorType *I=&Selector;
- int i= SelectorIndexByName(old_name);
+ int i;
+ i = SelectorWordIndex(I->Name,old_name,1,I->IgnoreCase);
  if(i>=0) {
    UtilNCopy(I->Name[i], new_name, ObjNameMax);
-   
    return true;
  } else {
    return false;

@@ -166,7 +166,7 @@ NOTES
          unlock()
       return r
 
-   def set_name(new_name, old_name):
+   def set_name(old_name, new_name):
       '''
 DESCRIPTION
 
@@ -174,18 +174,18 @@ DESCRIPTION
    
 USAGE
 
-   set_name new_name, old_name
+   set_name old_name, new_name
    
 PYMOL API
 
-   cmd.set_name(string new_name, string old_name)
+   cmd.set_name(string old_name, string new_name)
 
       '''
       r = 0
       try:
          lock()
-         r = _cmd.set_name(str(new_name),
-                           str(old_name))
+         r = _cmd.set_name(str(old_name),
+                           str(new_name))
       finally:
          unlock()
       return r

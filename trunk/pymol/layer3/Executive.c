@@ -154,7 +154,7 @@ int ExecutiveGetAtomVertex(char *s1,int state,int index,float *v)
   return ok;
 }
 
-int ExecutiveSetName(char *new_name, char *old_name)
+int ExecutiveSetName(char *old_name, char *new_name)
 {
   int ok=true;
   SpecRec *rec = NULL;
@@ -171,8 +171,15 @@ int ExecutiveSetName(char *new_name, char *old_name)
       case cExecObject:
         if(WordMatchExact(rec->obj->Name,old_name,true)) {
           UtilNCopy(rec->obj->Name,new_name,ObjNameMax);
-          OrthoDirty();
-          found = true;
+          if(rec->obj->type == cObjectMolecule) {
+            /*
+              SelectorDelete(old_name);
+              ExecutiveUpdateObjectSelection(rec->obj);
+            */
+            SelectorSetName(new_name, old_name);
+            OrthoDirty();
+            found = true;
+          }
         }
         break;
       case cExecSelection:

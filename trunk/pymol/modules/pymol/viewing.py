@@ -825,7 +825,7 @@ PYMOL API
 
 EXAMPLES
 
-   scene F1 ,store
+   scene F1, store
    scene F2, store, This view shows you the critical hydrogen bond.
 
    scene F1
