@@ -1,6 +1,7 @@
 PyMOL Release Checklist
 
 1) Compile and run command-line tests on Linux, IRIX, Windows, and Tru64
+   As time permits, also run threading and PDB stress tests.
 
 2) Update version numbers in layer0/Version.h and PMGApp.py
 
