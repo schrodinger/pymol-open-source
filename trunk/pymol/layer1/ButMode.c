@@ -52,7 +52,13 @@ void ButModeSetRate(float interval)
 	 I->Rate += 99;
   
 }
-
+/*========================================================================*/
+void ButModeResetRate(void)
+{
+  CButMode *I=&ButMode;
+  I->Samples=0.0;
+  I->Rate=0.0;
+}
 /*========================================================================*/
 void ButModeFree(void)
 {

@@ -24,8 +24,8 @@ select <selection-name>=<selection-string>
 
 color <color-name>,<molecule-or-selection-name>
 
-show <lines|sticks|dots|mesh|sphere|ribbon>,<molecule-or-selection-name>
-hide <lines|sticks|dots|mesh|sphere|ribbon>,<molecule-or-selection-name>
+show <lines|sticks|dots|mesh|spheres|ribbon>,<molecule-or-selection-name>
+hide <lines|sticks|dots|mesh|spheres|ribbon>,<molecule-or-selection-name>
 	Show or hide specific representations.
 
 enable <molecule-name>

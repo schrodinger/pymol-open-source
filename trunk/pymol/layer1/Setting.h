@@ -72,6 +72,7 @@ float SettingGetNamed(char *name);
 #define cSetting_ray_trace_frames     30
 #define cSetting_cache_frames         31
 #define cSetting_trim_dots            32
+#define cSetting_cull_spheres         33
 
 #endif
 

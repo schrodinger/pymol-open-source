@@ -153,6 +153,11 @@ def reset():
    lock()   
    _pm.reset(0)
    unlock()
+
+def reset_rate():
+   lock()   
+   _pm.reset_rate()
+   unlock()
       
 def delete(a):
    lock()   
@@ -474,6 +479,7 @@ keyword = {
    'refresh'     : [refresh      , 0 , 0 , ',' , 0 ],
    'render'      : [render       , 0 , 0 , ',' , 0 ],
    'reset'       : [reset        , 0 , 0 , ',' , 0 ],
+   'reset_rate'  : [reset_rate   , 0 , 0 , ',' , 0 ],
    'rewind'      : [beginning    , 0 , 0 , ',' , 0 ],
    'rock'        : [rock         , 0 , 0 , ',' , 0 ],
    'run'         : [dummy        , 1 , 2 , ',' , 2 ],
@@ -495,7 +501,7 @@ repres = {
    'sticks'      : 1,
    'dots'        : 2,
    'mesh'        : 3,
-   'sphere'      : 4,
+   'spheres'     : 4,
    'ribbon'      : 5
 }
 

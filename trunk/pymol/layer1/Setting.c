@@ -341,6 +341,11 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_trim_dots].Name,
 			"trim_dots");
 
+  I->NSetting++;
+  I->Setting[cSetting_cull_spheres].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_cull_spheres].Name,
+			"cull_spheres");
+
 
 }
 

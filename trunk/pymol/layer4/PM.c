@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 
 PyObject *PM_Globals = NULL;
 
+static PyObject *PMResetRate(PyObject *dummy, PyObject *args);
 static PyObject *PMQuit(PyObject *self, 	PyObject *args);
 static PyObject *PMLoad(PyObject *self, 	PyObject *args);
 static PyObject *PMOrigin(PyObject *self, PyObject *args);
@@ -117,6 +118,7 @@ static PyMethodDef PM_methods[] = {
 	{"refresh_now",  PMRefreshNow,   METH_VARARGS },
 	{"render",	     PMRay,          METH_VARARGS },
 	{"reset",        PMReset,        METH_VARARGS },
+	{"reset_rate",	     PMResetRate,         METH_VARARGS },
 	{"rock",	     PMRock,         METH_VARARGS },
 	{"runpymol",	 PMRunPyMOL,     METH_VARARGS },
 	{"select",       PMSelect,       METH_VARARGS },
@@ -131,6 +133,15 @@ static PyMethodDef PM_methods[] = {
 	{"zoom",	     PMZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *PMResetRate(PyObject *dummy, PyObject *args)
+{
+  PyObject *result = NULL;
+  result=Py_None;
+  ButModeResetRate();
+  Py_INCREF(result);
+  return(result);
+}
 
 static PyObject *PMReady(PyObject *dummy, PyObject *args)
 {
