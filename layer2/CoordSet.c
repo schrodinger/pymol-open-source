@@ -358,6 +358,7 @@ PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v,int index)
     PConvStringToPyObjAttr(atom,"resn",ai->resn);
     PConvStringToPyObjAttr(atom,"resi",ai->resi);
     PConvIntToPyObjAttr(atom,"resi_number",ai->resv);
+    PConvIntToPyObjAttr(atom,"stereo",ai->stereo);
     PConvStringToPyObjAttr(atom,"chain",ai->chain);
     if(ai->alt[0]) 
       PConvStringToPyObjAttr(atom,"alt",ai->alt); 

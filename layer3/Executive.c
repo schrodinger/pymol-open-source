@@ -3721,7 +3721,7 @@ void ExecutiveDump(char *fname,char *obj)
       if(rec->obj->type==cObjectMesh) {
         ObjectMeshDump((ObjectMesh*)rec->obj,fname,0);
       } else if(rec->obj->type==cObjectSurface) {
-          ObjectSurfaceDump((ObjectSurface*)rec->obj,fname,0);
+        ObjectSurfaceDump((ObjectSurface*)rec->obj,fname,0);
       } else {
         ErrMessage("ExecutiveDump","Invalid object type for this operation.");
       }

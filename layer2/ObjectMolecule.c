@@ -176,8 +176,10 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
   AtomInfoType *atInfo = NULL,*ai;
   AtomInfoType068 *atInfo068 = NULL;
   AtomInfoType076 *atInfo076 = NULL;
+  AtomInfoType083 *atInfo083 = NULL;
   BondType *bond=NULL;
   BondType068 *bond068=NULL;
+  BondType083 *bond083=NULL;
 
   int ok=true;
   int auto_show_lines;
@@ -215,15 +217,26 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
       atInfo068 = Alloc(AtomInfoType068,nAtom);
       ok = RawReadInto(pmo,cRaw_AtomInfo1,size,(char*)atInfo068);
       VLACheck(atInfo,AtomInfoType,nAtom);
-      UtilExpandArrayElements(atInfo068,atInfo,nAtom,sizeof(AtomInfoType068),sizeof(AtomInfoType));
+      UtilExpandArrayElements(atInfo068,atInfo,nAtom,
+                              sizeof(AtomInfoType068),sizeof(AtomInfoType));
       FreeP(atInfo068);
     } else if(version<77) { /* legacy atom format */
       nAtom = size/sizeof(AtomInfoType076);
       atInfo076 = Alloc(AtomInfoType076,nAtom);
       ok = RawReadInto(pmo,cRaw_AtomInfo1,size,(char*)atInfo076);
       VLACheck(atInfo,AtomInfoType,nAtom);
-      UtilExpandArrayElements(atInfo076,atInfo,nAtom,sizeof(AtomInfoType076),sizeof(AtomInfoType));
+      UtilExpandArrayElements(atInfo076,atInfo,nAtom,
+                              sizeof(AtomInfoType076),sizeof(AtomInfoType));
       FreeP(atInfo076);
+      
+    } else if(version<84) { /* legacy atom format */
+      nAtom = size/sizeof(AtomInfoType083);
+      atInfo083 = Alloc(AtomInfoType083,nAtom);
+      ok = RawReadInto(pmo,cRaw_AtomInfo1,size,(char*)atInfo083);
+      VLACheck(atInfo,AtomInfoType,nAtom);
+      UtilExpandArrayElements(atInfo083,atInfo,nAtom,
+                              sizeof(AtomInfoType083),sizeof(AtomInfoType));
+      FreeP(atInfo083);
       
     } else {
       nAtom = size/sizeof(AtomInfoType);
@@ -301,7 +314,15 @@ CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *res
                                   sizeof(BondType068),sizeof(BondType));
           FreeP(bond068);
           for(a=0;a<nBond;a++) bond[a].id=-1; /* initialize identifiers */
-        } else {
+        } else if(version<84) {
+          nBond = size/sizeof(BondType083);
+          bond083 = Alloc(BondType083,nBond);
+          ok = RawReadInto(pmo,cRaw_Bonds1,nBond*sizeof(BondType083),(char*)bond083);
+
+          bond=VLAlloc(BondType,nBond);
+          UtilExpandArrayElements(bond083,bond,nBond,
+                                  sizeof(BondType083),sizeof(BondType));
+          FreeP(bond083);
           
           bond=(BondType*)RawReadVLA(pmo,cRaw_Bonds1,sizeof(BondType),5,false);
           nBond = VLAGetSize(bond);
@@ -926,6 +947,7 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           ii->index[0] = b1;
           ii->index[1] = b2-1;
           ii->order = 1; /* missing bond order information */
+          ii->stereo = 0;
           ii->id = -1; /* no serial number */
         }
       }
@@ -1166,6 +1188,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
             cs->TmpLinkBond[a].index[0] = (nai+a)->temp1;
             cs->TmpLinkBond[a].index[1] = a;
             cs->TmpLinkBond[a].order = 1;
+            cs->TmpLinkBond[a].stereo = 0;
             cs->TmpLinkBond[a].id = -1;
           }
           cs->NTmpLinkBond = nH;
@@ -1333,6 +1356,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     cs->TmpLinkBond->index[0] = at0;
     cs->TmpLinkBond->index[1] = anch1;
     cs->TmpLinkBond->order = 1;
+    cs->TmpLinkBond->stereo = 0;
     cs->TmpLinkBond->id = -1;
     
     if(cs->fEnumIndices) cs->fEnumIndices(cs);
@@ -1489,6 +1513,8 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
   cs->TmpLinkBond->index[0]=index;
   cs->TmpLinkBond->index[1]=0;
   cs->TmpLinkBond->order=1;
+  cs->TmpLinkBond->stereo=0;
+  
   cs->TmpLinkBond->id = -1;
   if(cs->fEnumIndices) cs->fEnumIndices(cs);
   ObjectMoleculePrepareAtom(I,index,nai);
@@ -1541,6 +1567,8 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       cs->TmpLinkBond->index[0]=index;
       cs->TmpLinkBond->index[1]=0;
       cs->TmpLinkBond->order=1;
+      cs->TmpLinkBond->stereo=0;
+      
       cs->TmpLinkBond->id = -1;
       if(cs->fEnumIndices) cs->fEnumIndices(cs);
       nai = (AtomInfoType*)VLAMalloc(1,sizeof(AtomInfoType),1,true);
@@ -2093,6 +2121,7 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
             bnd->index[0]=a1;
             bnd->index[1]=a2;                      
             bnd->order=order;
+            bnd->stereo = 0;
             bnd->id=-1;
             I->NBond++;
             c++;
@@ -3161,6 +3190,19 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
         }
 
         if(ok) {
+          if(PTruthCallStr(atom,"has","stereo")) { 
+            tmp = PyObject_GetAttrString(atom,"stereo");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,&ai->stereo);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read stereo");
+            Py_XDECREF(tmp);
+          } else {
+            ai->stereo = 0;
+          }
+        }
+
+        if(ok) {
           if(PTruthCallStr(atom,"has","numeric_type")) { 
             tmp = PyObject_GetAttrString(atom,"numeric_type");
             if (tmp)
@@ -3308,6 +3350,7 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
             ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read symbol");
           Py_XDECREF(tmp);
         }
+
         
         for(c=0;c<cRepCnt;c++) {
           atInfo[a].visRep[c] = false;
@@ -3362,6 +3405,18 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
             ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read bond order");
           Py_XDECREF(tmp);
         }
+
+        if(ok) {
+          tmp = PyObject_GetAttrString(bnd,"stereo");
+          if (tmp)
+            ok = PConvPyObjectToInt(tmp,&ii->stereo);
+          else 
+            ii->stereo = 0;
+          if(!ok) 
+            ii->stereo = 0;
+          Py_XDECREF(tmp);
+        }
+
         ii->id=a;
         if(!ignore_ids) { 
           if(ok) { /* get unique chempy bond id if present */
@@ -3769,7 +3824,9 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
               atInfo[a].formalCharge = 4-atInfo[a].formalCharge;
             }
           }
-            
+          p=ncopy(cc,p,3);
+          if(sscanf(cc,"%d",&atInfo[a].stereo)!=1) 
+            atInfo[a].stereo=0;
         }
 		  if(ok&&atInfo) {
           atInfo[a].id = a+1;
@@ -3808,6 +3865,12 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 if(sscanf(cc,"%d",&ii->order)!=1)
 				ok=ErrMessage("ReadMOLFile","bad bond order");
 		  }
+        if(ok) {
+			 p=ncopy(cc,p,3);
+			 if(sscanf(cc,"%d",&ii->stereo)!=1)
+            ii->stereo=0;
+
+        }
         ii++;
 		  if(!ok)
 			 break;
@@ -4316,6 +4379,7 @@ void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *
 		ii->index[0]=cs->IdxToAtm[si->index[0]];
 		ii->index[1]=cs->IdxToAtm[si->index[1]];
       ii->order=si->order;
+      ii->stereo=si->stereo;
       ii->id=-1;
       ii++;
       si++;
@@ -5898,6 +5962,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     VLACheck((*bond),BondType,nBond);
                                     (*bond)[nBond].index[0] = a1;
                                     (*bond)[nBond].index[1] = a2;
+                                    (*bond)[nBond].stereo = 0;
                                     order = 1;
                                     if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard PDB residue */
                                       if(AtomInfoSameResidue(ai1,ai2)) {
@@ -6090,6 +6155,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
         ii1->index[0]=a1;
         ii1->index[1]=a2;
         ii1->order = ii2->order;
+        ii1->stereo = ii2->stereo;
         ii1++;
         ii2++;
 
@@ -6116,6 +6182,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
         ii1->index[0]=a1;
         ii1->index[1]=a2;
         ii1->order = ii2->order;
+        ii1->stereo = ii2->stereo;
         ii1++;
         ii2++;
       }
@@ -6505,10 +6572,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                     bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
                     bond[nBond].index[1]=b2;
                     bond[nBond].order=1;
+                    bond[nBond].stereo=0;
+                    
                   } else {
                     bond[nBond].index[0]=b2;
                     bond[nBond].index[1]=b1;
                     bond[nBond].order=1;
+                    bond[nBond].stereo=0;
                   }
                   nBond++;
                 }
@@ -6732,6 +6802,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           ii1->index[0]=ii2->index[0];
           ii1->index[1]=ii2->index[1];
           ii1->order=ii2->order;
+          ii1->stereo=ii2->stereo;
           nReal++;
         }
         ii2++;
@@ -6915,6 +6986,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
                 ii->index[0]=a;
                 ii->index[1]=bPart-1;
                 ii->order=bOrder;
+                ii->stereo=0;
                 ii->id=-1;
                 ii++;
               }

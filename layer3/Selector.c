@@ -1779,6 +1779,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
             PConvInt2ToPyObjAttr(bnd,"index",ii1->index);
             PConvIntToPyObjAttr(bnd,"order",ii1->order);
             PConvIntToPyObjAttr(bnd,"id",ii1->id);
+            PConvIntToPyObjAttr(bnd,"stereo",ii1->stereo);
             PyList_SetItem(bond_list,b,bnd);
           }
           ii1++;
@@ -1950,6 +1951,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
         bond[nBond].index[0]=I->Table[b1].index; /* store what will be the new index */
         bond[nBond].index[1]=I->Table[b2].index;
         bond[nBond].order=ii1->order;
+        bond[nBond].stereo=ii1->stereo;
         nBond++;
       }
       ii1++;

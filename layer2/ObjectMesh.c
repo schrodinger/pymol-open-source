@@ -81,7 +81,7 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
             }
             while(c--) {
               fprintf(f,"%10.4f%10.4f%10.4f\n",v[0],v[1],v[2]);
-              v+=6;
+              v+=3;
             }
           }
     }
