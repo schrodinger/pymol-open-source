@@ -1008,6 +1008,7 @@ void PGetOptions(PyMOLOptionRec *rec)
   rec->keep_thread_alive = PyInt_AsLong(PyObject_GetAttrString(options,"keep_thread_alive"));
   rec->quiet = PyInt_AsLong(PyObject_GetAttrString(options,"quiet"));
   rec->incentive_product = PyInt_AsLong(PyObject_GetAttrString(options,"incentive_product"));
+  rec->multisample = PyInt_AsLong(PyObject_GetAttrString(options,"multisample"));
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
   if(load_str) {
     if(load_str[0]) {

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * launch option: -P # (2,4,8,etc.) enables multisampling on Macs
+
    * session_migration setting
 
    * fixed problem with view matrix exploding on some proteins -- now

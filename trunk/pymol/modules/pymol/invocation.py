@@ -54,6 +54,7 @@ if __name__=='pymol.invocation':
    options.keep_thread_alive = 0
    options.after_load_script = ""
    options.quiet = 0
+   options.multisample = 0
    options.incentive_product = 0
    if sys.platform != 'win32':
       options.win_py = 200
@@ -173,6 +174,8 @@ if __name__=='pymol.invocation':
                options.internal_feedback = 0
             if "B" in a:
                options.blue_line = 1
+            if "P" in a:
+               options.multisample = int(av.pop())
             if "W" in a:
                options.win_x = int(av.pop())
             if "H" in a:

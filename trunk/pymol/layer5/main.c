@@ -117,6 +117,7 @@ static int InternalGUI = true;
 static int InternalFeedback = true;
 int ShowSplash=true;
 int PyMOLRegisterSigIntHandler = true;
+int PyMOLMultisample = 0;
 
 static PyMOLOptionRec PyMOLOptionGlobal = {
   true, /* pmgui */
@@ -139,6 +140,7 @@ static PyMOLOptionRec PyMOLOptionGlobal = {
   false, /* quiet */
   false, /* incentive product */
   "", /* after_load_script */
+  0, /* multisample */
 };
 
 struct PyMOLOptionRec *PyMOLOption = &PyMOLOptionGlobal;
@@ -878,7 +880,11 @@ void sharp3d_prepare_context(void);
 
 void launch(void)
 {
+  int multisample_mask = 0;
 
+  if(PyMOLOption->multisample)
+    multisample_mask = P_GLUT_MULTISAMPLE;
+  
   if(InternalGUI&&(!GameMode))
     WinX+=cOrthoRightSceneMargin;
   if(InternalFeedback&&(!GameMode))
@@ -917,14 +923,18 @@ SetConsoleCtrlHandler(
       WinPX = 0;
       WinPY = 0;
 
-      glutInitDisplayMode( GLUT_RGBA| GLUT_MULTISAMPLE|GLUT_DOUBLE|GLUT_STENCIL );
+      glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_MULTISAMPLE| P_GLUT_DOUBLE| P_GLUT_STENCIL );
       StereoCapable = 1;
 #else
 #ifndef _PYMOL_OSX
-      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
+      /* don't try stereo on OS X unless asked to do so */
+      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE | P_GLUT_STEREO );
       if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
 #endif
-        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
+        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE );
+        if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
+          p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
+        }
         StereoCapable = 0;
 #ifndef _PYMOL_OSX
       } else {
@@ -1069,8 +1079,8 @@ int was_main(void)
   WinPX = PyMOLOption->winPX;
   WinPY = PyMOLOption->winPY;
   ExternalGUI = PyMOLOption->external_gui;
+  PyMOLMultisample = PyMOLOption->multisample; /* currently only used by MacOSX */
 
-  
 #ifdef _PYMOL_SHARP3D
   InternalGUI = 0;
   InternalFeedback = 0;
