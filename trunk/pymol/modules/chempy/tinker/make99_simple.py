@@ -38,7 +38,9 @@ for l in [
 'T2-S   166.0    2.038       WLD from S -S ',
 'DJ-N   490.0    1.335       WLD from C -N ',
 'C -J3  490.0    1.335       WLD from C -N ',
-
+'D4-H1  340.0    1.090       WLD from CT-H1',
+'C -D4  317.0    1.522       WLD from C -CT',
+'D4-N   337.0    1.449       WLD from CT-N',
 ]:
    h.write(l+"\n")
 h.write("\n")
@@ -70,6 +72,16 @@ for l in [
 'J3-C -O     80.0      122.90    WLD from N -C -O ',
 'N -DJ-Q1    80.0      122.90    WLD from N -C -O ',
 'N -DJ-DJ    70.0      120.00    WLD from CA-C -OH',
+'C -N -D4    50.0      121.90    WLD from C -N -CT',
+'D4-C -N     70.0      116.60    WLD from CT-C -N ',
+'D4-C -O     80.0      120.40    WLD from CT-C -O ',
+'C -D4-D4    63.0      111.10    WLD from C -CT-CT',
+'C -D4-H1    50.0      109.50    WLD from C -CT-H1',
+'D4-N -H     50.0      118.04    WLD from CT-N -H ',
+'H1-D4-N     50.0      109.50    WLD from H1-CT-N ',
+'C -D4-N     63.0      110.10    WLD from C -CT-N ',
+'D4-D4-N     80.0      109.70    WLD from CT-CT-N ',
+'D4-D4-H1    50.0      109.50    WLD from CT-CT-H1',
 ]:
    h.write(l+"\n")
 h.write("\n")
