@@ -67,6 +67,10 @@ int   ListGetNAlloc(void *list);
 int   ListElemPop(void *list,int elem);
 int   ListElemPush(void *list_ptr_ptr,int elem);
 
+int   ListElemPushInt(ListInt **list,int elem,int value);
+int   ListElemPopInt(ListInt *list,int elem,int *value);
+int   ListElemGetInt(ListInt *list,int elem,int *value);
+
 #endif
 
 

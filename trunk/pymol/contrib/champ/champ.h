@@ -134,6 +134,7 @@ typedef struct {
   int tag; /* string index for tag */
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
+  int first_base; 
   PyObject *chempy_atom;
 } ListAtom;
 
@@ -172,6 +173,7 @@ typedef struct {
   int bond; /* root of bond list (Bond) */
   PyObject *chempy_molecule;
   int unique_atom; /* list of unique atoms (Int) */
+  int target_prep; /* has pattern been prepared as a target? */
 } ListPat;
 
 typedef struct {

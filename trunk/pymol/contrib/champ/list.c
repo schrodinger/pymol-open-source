@@ -142,6 +142,29 @@ int ListElemPush(void *list_ptr_ptr,int elem)
   return next;
 }
 
+int   ListElemPushInt(ListInt **list,int elem,int value)
+{
+  elem = ListElemPush(list,elem);
+  (*list)[elem].value=value;
+  return(elem);
+}
+
+int   ListElemPopInt(ListInt *list,int elem,int *value)
+{
+  *value = list[elem].value;
+  elem = ListElemPop(list,elem);
+  return(elem);
+}
+
+int   ListElemGetInt(ListInt *list,int elem,int *value)
+{
+  *value = list[elem].value;
+  elem = list[elem].link;
+  return(elem);
+}
+
+
+
 int ListElemNew(void *list_ptr_ptr)
 {
   return(ListElemPush(list_ptr_ptr,0));
