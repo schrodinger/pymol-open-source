@@ -27,5 +27,6 @@ void WizardFree(void);
 Block *WizardGetBlock(void);
 void WizardRefresh(void);
 void WizardDoPick(int bondFlag);
+void WizardDoSelect(char *name);
 
 #endif

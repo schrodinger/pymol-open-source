@@ -58,6 +58,21 @@ CWizard Wizard;
 #define cWizardTopMargin (-1)
 #define cWizardClickOffset 4
 
+void WizardDoSelect(char *name)
+{
+  OrthoLineType buf;
+  CWizard *I=&Wizard;
+  if(I->Wiz) {
+    sprintf(buf,"cmd.get_wizard().do_select('''%s''')",name);
+    PLog(buf,cPLog_pym);
+    PBlock(); 
+    if(PyObject_HasAttrString(I->Wiz,"do_select")) {
+      PXDecRef(PyObject_CallMethod(I->Wiz,"do_select","s",name));
+      if(PyErr_Occurred()) PyErr_Print();
+    }
+    PUnblock();
+  }
+}
 /*========================================================================*/
 void WizardRefresh(void)
 {
